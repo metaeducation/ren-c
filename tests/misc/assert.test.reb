@@ -67,14 +67,14 @@
 [
     (
         [[1 = 2] [2 = 3]] = collect [
-            assert/handler [1 = 2, 2 = 2, 2 = 3] [x] -> [keep x, ~ignore~]
+            assert:handler [1 = 2, 2 = 2, 2 = 3] [x] -> [keep x, ~ignore~]
         ]
     )
     (
         e: ~
         all [
             ["hooked"] = collect [e: sys.util/rescue [
-                assert/handler [1 = 2, 2 = 2, 2 = 3] [keep "hooked"]
+                assert:handler [1 = 2, 2 = 2, 2 = 3] [keep "hooked"]
             ]]
             e.id = 'assertion-failure
         ]

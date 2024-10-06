@@ -24,10 +24,10 @@
 (
     make-rule: func [/make-rule] [  ; refinement helps recognize in C Probe()
         use [rule position][
-            rule: compose/deep [
+            rule: compose:deep [
                 [[position: <here>, "a"]]
             ]
-            return use [x] compose/deep [
+            return use [x] compose:deep [
                 [(as group! rule) rule]
             ]
         ]
@@ -47,13 +47,13 @@
     (
         add1020: func [x] [return use [y] [y: 1020, $(((x + y)))]]
         add1324: func [x] [
-            return use [z] compose/label/deep [
+            return use [z] compose:label:deep [
                 z: 304
                 $(((z + (<*> add1020 x))))
             ] <*>
         ]
         add2020: func [x] [
-            return use [zz] compose/label/deep [
+            return use [zz] compose:label:deep [
                 zz: 696
                 $(((zz + (<*> add1324 x))))
             ] <*>
@@ -76,7 +76,7 @@
     ;
     (30 = eval group)
     (30 = eval compose [(group)])
-    (30 = eval compose/deep [eval [(group)]])
+    (30 = eval compose:deep [eval [(group)]])
     (30 = reeval unrun does [eval compose [(group)]])
 
     ; Unrelated USE should not interfere
@@ -95,12 +95,12 @@
 
 ; This was a little test made to compare speed with R3-Alpha, keeping it.
 (
-    data: array/initial 20 1
+    data: array:initial 20 1
     sum: 0
     for-each 'x data wrap [
         code: copy []  ; block captures binding that can see X
         for-each 'y data [  ; block can't see Y w/o overbind, let's COMPOSE it
-            append code spread compose/deep [sum: sum + eval [x + (y) + z]]
+            append code spread compose:deep [sum: sum + eval [x + (y) + z]]
         ]
         for-each 'z data code  ; FOR-EACH overbinds for Z visibility
     ]

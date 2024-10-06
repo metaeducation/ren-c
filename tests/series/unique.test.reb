@@ -12,7 +12,7 @@
     ]
 )
 (
-    [aa AA aA Aa "aa" "AA" "aA" "Aa" #"a" #"A"] == unique/case [
+    [aa AA aA Aa "aa" "AA" "aA" "Aa" #"a" #"A"] == unique:case [
         aa AA aa aA AA Aa aA Aa
         "aa" "AA" "aa" "aA" "AA" "Aa" "aA" "Aa"
         #"a" #"A" #"A" #"a"

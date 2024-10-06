@@ -9,10 +9,6 @@ REBOL [
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Issues: {
-        Is MOLD Missing a terminating newline? -CS
-        Add MOLD/options -CS
-    }
 ]
 
 
@@ -138,9 +134,9 @@ save: func [
     ;
     let data: either all_SAVE [
         if block? :value [
-            mold/all spread value
+            mold:all spread value
         ] else [
-            mold/all :value
+            mold:all :value
         ]
     ][
         if block? :value [
@@ -152,7 +148,7 @@ save: func [
 
     append data newline  ; MOLD does not append a newline
 
-    case/all [
+    case:all [
         let tmp: find maybe header 'checksum: [  ; e.g. says "checksum: true"
             ; Checksum uncompressed data, if requested
             change next tmp (checksum-core 'crc32 data)

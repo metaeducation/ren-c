@@ -26,8 +26,8 @@ make-diff: func [
     collect-logs old-log-contents: copy [] old-log
     collect-logs new-log-contents: copy [] new-log
 
-    sort/case/skip old-log-contents 2
-    sort/case/skip new-log-contents 2
+    sort:case:skip old-log-contents 2
+    sort:case:skip new-log-contents 2
 
     ; counter initialization
     let new-successes: 0
@@ -56,7 +56,7 @@ make-diff: func [
                     blank? old-test
                     all [
                         strict-not-equal? old-test new-test
-                        old-test == second sort/case reduce [new-test old-test]
+                        old-test == second sort:case reduce [new-test old-test]
                     ]
                     all [
                         old-test == new-test
@@ -65,7 +65,7 @@ make-diff: func [
                 ]
             ] [
                 ; fresh test
-                write/append diff-file spaced [
+                write:append diff-file spaced [
                     new-test
                     switch new-result [
                         'succeeded [
@@ -91,7 +91,7 @@ make-diff: func [
                     blank? new-test
                     all [
                         strict-not-equal? new-test old-test
-                        new-test == second sort/case reduce [old-test new-test]
+                        new-test == second sort:case reduce [old-test new-test]
                     ]
                     all [
                         new-test == old-test
@@ -101,7 +101,7 @@ make-diff: func [
             ] [
                 ; removed test
                 removed: removed + 1
-                write/append diff-file spaced [old-test "removed" newline]
+                write:append diff-file spaced [old-test "removed" newline]
             ]
             any [
                 old-result = new-result
@@ -109,7 +109,7 @@ make-diff: func [
             ] [unchanged: unchanged + 1]
             ; having one test with different results
             (
-                write/append diff-file new-test
+                write:append diff-file new-test
                 any [
                     old-result = 'succeeded
                     all [
@@ -120,7 +120,7 @@ make-diff: func [
             ) [
                 ; regression
                 regressions: regressions + 1
-                write/append diff-file spaced [
+                write:append diff-file spaced [
                     space "regression," new-result newline
                 ]
             ]
@@ -128,7 +128,7 @@ make-diff: func [
         else [
             ; progression
             progressions: progressions + 1
-            write/append diff-file spaced [
+            write:append diff-file spaced [
                 space "progression," new-result newline
             ]
         ]
@@ -137,14 +137,14 @@ make-diff: func [
             old-test
             any [
                 blank? new-test
-                old-test == first sort/case reduce [old-test new-test]
+                old-test == first sort:case reduce [old-test new-test]
             ]
         ]
         next-new-log: all [
             new-test
             any [
                 blank? old-test
-                new-test == first sort/case reduce [new-test old-test]
+                new-test == first sort:case reduce [new-test old-test]
             ]
         ]
         if next-old-log [
@@ -188,7 +188,7 @@ make-diff: func [
     ]
     print summary
 
-    write/append diff-file unspaced [
+    write:append diff-file unspaced [
         newline
         "Summary:" newline
         summary newline

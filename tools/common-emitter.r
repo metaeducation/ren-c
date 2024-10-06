@@ -58,7 +58,7 @@ export cscape: func [
 ][
     assert [text? last template]
 
-    let string: trim/auto copy last template
+    let string: trim:auto copy last template
 
     ; As we process the string, we CHANGE any substitution expressions into
     ; an INTEGER! for doing the replacements later with REWORD (and not
@@ -83,11 +83,11 @@ export cscape: func [
                     mode: #unspaced
                     pattern: unspaced ["$<" num ">"]
                     if space = last expr [  ; add space at end [1]
-                        take/last expr
+                        take:last expr
                         suffix: " "
                     ]
                     if #"," = last expr [  ; delimit with comma [2]
-                        take/last expr
+                        take:last expr
                         prefix: if suffix [
                             unspaced ["," suffix]  ; do both [3]
                         ] else [
@@ -96,14 +96,14 @@ export cscape: func [
                     ]
                 )
                     |
-                (prefix: copy/part start finish)
+                (prefix: copy:part start finish)
                 "$[" change [expr: across to "]"] (num-text) one (
                     mode: #delimit
                     pattern: unspaced ["$[" num "]"]
                 )
                 suffix: across to newline
                     |
-                (prefix: copy/part start finish)
+                (prefix: copy:part start finish)
                 "$(" change [expr: across to ")"] (num-text) one (
                     mode: #delimit
                     pattern: unspaced ["$(" num ")"]
@@ -128,7 +128,7 @@ export cscape: func [
         return string
     ]
 
-    list: unique/case list
+    list: unique:case list
 
     void-marker: "!?*VOID*?!"  ; should be taken out, good to disrupt if not
 
@@ -145,8 +145,8 @@ export cscape: func [
             prefix: degrade item.5
             suffix: degrade item.6
 
-            let any-upper: to-yesno find/case expr charset [#"A" - #"Z"]
-            let any-lower: to-yesno find/case expr charset [#"a" - #"z"]
+            let any-upper: to-yesno find:case expr charset [#"A" - #"Z"]
+            let any-lower: to-yesno find:case expr charset [#"a" - #"z"]
             keep maybe pattern
 
             ; With binding being case-sensitive, we lowercase the expression.
@@ -190,7 +190,7 @@ export cscape: func [
                     if block? sub [
                         any [
                             either prefix [
-                                delimit/tail prefix sub
+                                delimit:tail prefix sub
                             ][
                                 unspaced sub
                             ]
@@ -279,7 +279,7 @@ export cscape: func [
     ]
 
     for-each [start end] kill-lines [
-        remove/part start end
+        remove:part start end
     ]
 
     replace string void-marker ""
@@ -317,12 +317,12 @@ export make-emitter: func [
 
     temporary: boolean any [
         temporary
-        parse3/match stem ["tmp-" to <end>]
+        parse3:match stem ["tmp-" to <end>]
     ]
 
-    let is-c: did parse3/match stem [thru [".c" | ".h" | ".inc"] <end>]
+    let is-c: did parse3:match stem [thru [".c" | ".h" | ".inc"] <end>]
 
-    let is-js: did parse3/match stem [thru ".js" <end>]
+    let is-js: did parse3:match stem [thru ".js" <end>]
 
     let e: make object! compose [
         ;
@@ -343,9 +343,9 @@ export make-emitter: func [
             template [text! char?! block!]
             <with> buf-emit
         ][
-            case [  ; no switch/type in bootstrap
+            case [  ; no switch:type in bootstrap
                 text? template [
-                    append buf-emit trim/auto copy template
+                    append buf-emit trim:auto copy template
                 ]
                 char? template [
                     append buf-emit template
@@ -418,7 +418,7 @@ export make-emitter: func [
         e/emit newline
     ]
     else [
-        e/emit {REBOL }  ; no COMPOSE/DEEP in bootstrap shim, yet
+        e/emit {REBOL }  ; no COMPOSE:DEEP in bootstrap shim, yet
         e/emit mold spread compose [
             System: "REBOL [R3] Language Interpreter and Run-time Environment"
             Title: (title)

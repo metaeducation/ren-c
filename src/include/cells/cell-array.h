@@ -250,8 +250,8 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
 
 //=//// "SPLICES" (GROUP! Antiforms) //////////////////////////////////////=//
 //
-// Group antiforms are understood by routines like APPEND/INSERT/CHANGE to
-// mean that you intend to splice their content (the default is to append
+// Group antiforms are understood by routines like APPEND or INSERT or CHANGE
+// to mean that you intend to splice their content (the default is to append
 // as-is, which is changed from Rebol2/Red).  The typical way of making these
 // antiforms is the SPREAD function.
 //

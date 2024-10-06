@@ -49,7 +49,7 @@ import %% (repo-dir)/tools/read-deep.reb
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
-logfn: func [message][print mold new-line/all compose message 'no]
+logfn: func [message][print mold new-line:all compose message 'no]
 log: :logfn
 
 standard: context [
@@ -115,8 +115,8 @@ log-emit: func [
     label [tag!]
     body [block!]
 ][
-    body: new-line/all compose body 'no
-    append/line log spread (head insert body label)
+    body: new-line:all compose body 'no
+    append:line log spread (head insert body label)
 ]
 
 export analyse: context [
@@ -175,7 +175,7 @@ export analyse: context [
                 )
             ]
 
-            parse3/case data [
+            parse3:case data [
                 some [
                     position: <here>
                     malloc-check
@@ -351,8 +351,7 @@ export analyse: context [
         let whitespace-at-eol: copy []
         let inconsistent-eol: copy []
 
-        parse3/case data [
-
+        parse3:case data [
             last-pos: <here>
 
             opt [
@@ -421,7 +420,7 @@ list: context [
         let files: read-deep/full/strategy source-paths :source-files-seq
 
         sort files
-        new-line/all files 'yes
+        new-line:all files 'yes
 
         return files
     ]
@@ -465,7 +464,7 @@ c-parser-extension: context bind bind [
     braced: [lbrace opt some [braced | not ahead rbrace one] rbrace]
 
     function-spacing-rule: (
-        bind/copy standard.function-spacing c-lexical.grammar
+        bind:copy standard.function-spacing c-lexical.grammar
     )
 
     grammar.function-body: braced

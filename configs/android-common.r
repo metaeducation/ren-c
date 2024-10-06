@@ -43,7 +43,7 @@ ndk-root: local-to-file try get-env "ANDROID_NDK_ROOT" else [
 ndk-version: make object! [major: minor: patch: null]
 (
     use [major minor patch] [
-        parse3/match as text! read (join ndk-root %source.properties) [
+        parse3:match as text! read (join ndk-root %source.properties) [
             thru "Pkg.Revision = "
             major: across to "." one (major: to integer! major)
             minor: across to "." one (minor: to integer! minor)

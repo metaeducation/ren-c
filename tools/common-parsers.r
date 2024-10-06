@@ -37,17 +37,17 @@ load-until-double-newline: func [
 
     let dummy: ~  ; /NEXT3 requires arg (could shim for plain /NEXT, but...)
     let rebol-value: parsing-at 'x [
-        try transcode/next3 x 'dummy  ; transcode gives pos, null, or error
+        try transcode:next3 x 'dummy  ; transcode gives pos, null, or error
     ]
 
     let terminator: [opt wsp newline opt wsp newline]
 
-    parse3/match text [
+    parse3:match text [
         some [not ahead terminator rebol-value]
         opt wsp opt [newline opt newline] position: <here>
         to <end>
     ] then [
-        let values: load copy/part text position
+        let values: load copy:part text position
         return reduce [values position]
     ]
 
@@ -122,15 +122,15 @@ export proto-parser: context [
             )
         ]
 
-        ; We COPY/DEEP here because this part gets invasively modified by
+        ; We COPY:DEEP here because this part gets invasively modified by
         ; the source analysis tools.
         ;
-        other-segment: copy/deep [thru newline]
+        other-segment: copy:deep [thru newline]
 
-        ; we COPY/DEEP here because this part gets invasively modified by
+        ; we COPY:DEEP here because this part gets invasively modified by
         ; the source analysis tools.
         ;
-        format-func-section: copy/deep [
+        format-func-section: copy:deep [
             doubleslashed-lines
             ahead is-intro
             function-proto opt some white-space
@@ -170,8 +170,8 @@ export proto-parser: context [
         is-fileheader: parsing-at 'position [
             all [  ; note: not LOGIC!, a series
                 lines: try decode-lines lines {//} { }
-                parse3/match lines [data: across to {=///} to <end>]
-                data: load-until-double-newline trim/auto data
+                parse3:match lines [data: across to {=///} to <end>]
+                data: load-until-double-newline trim:auto data
                 all [
                     data.1
                     block? data.1
@@ -258,7 +258,7 @@ export rewrite-if-directives: func [
 ][
     until [
         let rewritten
-        parse3/match position [
+        parse3:match position [
             (rewritten: 'no)
             some [
                 [

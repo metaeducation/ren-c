@@ -29,9 +29,9 @@
 // action.  Slots in that frame that would have held TYPESET! information for
 // the parameter are replaced by the fixed value, which is type checked.
 //
-// Partial specialization uses a different mechanism.  `file-to-local/pass`
-// fulfills a frame slot value since /PASS has no arguments, but `append/part`
-// does not.  Distinctions of `get $append/dup/part` & `get $append/part/dup`
+// Partial specialization uses a different mechanism.  FILE-TO-LOCAL:PASS
+// fulfills a frame slot value since :PASS has no arguments, but APPEND:PART
+// does not.  Distinctions of (get $append:dup:part) and (get $append:part:dup)
 // require ordering information that has to be tracked outside of the
 // exemplar frame.
 //
@@ -143,12 +143,6 @@ VarList* Make_Varlist_For_Action_Push_Partials(
         // Unspecialized refinement slot.  It may be partially specialized,
         // e.g. we may have pushed to the stack from the PARTIALS for it.
         //
-        // !!! If partials were allowed to encompass things like /ONLY then
-        // we would have to use that to fill the slot here.  For the moment,
-        // a full new exemplar is generated for parameterless refinements
-        // which seems expensive for the likes of `get $append/only`, when we
-        // can make `get $append/dup` more compactly.  Rethink.
-
         // Check the passed-in refinements on the stack for usage.
         //
         StackIndex stackindex = highest_stackindex;
@@ -167,7 +161,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
             // If refinement named on stack takes no arguments, then it can't
             // be partially specialized...only fully, and won't be bound:
             //
-            //     >> specialize get $skip/unbounded [unbounded: ok]
+            //     >> specialize skip:unbounded/ [unbounded: ok]
             //     ** Error: unbounded not bound
             //
             Init_Okay(arg);
@@ -223,8 +217,8 @@ VarList* Make_Varlist_For_Action(
 //
 // The caller may provide information on the order in which refinements are
 // to be specialized, using the data stack.  These refinements should be
-// pushed in the *reverse* order of their invocation, so append/dup/part
-// has /DUP at TOP, and /PART under it.  List stops at lowest_stackindex.
+// pushed in the *reverse* order of their invocation, so APPEND:DUP:PART
+// has :DUP at TOP, and :PART under it.  List stops at lowest_stackindex.
 //
 bool Specialize_Action_Throws(
     Sink(Value*) out,
@@ -376,7 +370,7 @@ bool Specialize_Action_Throws(
         while (ordered_stackindex != TOP_INDEX) {
             ordered_stackindex += 1;
             StackValue(*) ordered = Data_Stack_At(ordered_stackindex);
-            if (not BINDING(ordered)) {  // specialize get $print/asdf
+            if (not BINDING(ordered)) {  // specialize print:asdf/
                 Refinify_Pushed_Refinement(cast(Element*, ordered));
                 fail (Error_Bad_Parameter_Raw(ordered));
             }
@@ -439,8 +433,8 @@ DECLARE_NATIVE(specialize)
 //
 // 1. Refinement specializations via path are pushed to the stack, giving
 //    order information that can't be meaningfully gleaned from an arbitrary
-//    code block (e.g. `specialize get $append [dup: x | if y [part: z]]`, we
-//    shouldn't think that intends any ordering of /dup/part or /part/dup)
+//    code block (specialize append/ [dup: x | if y [part: z]]), we shouldn't
+//    think that intends any ordering of :dup:part or :part:dup)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
@@ -453,7 +447,7 @@ DECLARE_NATIVE(specialize)
         def,
         STACK_BASE  // lowest ordered stackindex [1]
     )){
-        return THROWN;  // e.g. `specialize get $append/dup [value: throw 10]`
+        return THROWN;  // e.g. (specialize append:dup/ [value: throw 10])
     }
 
     return OUT;

@@ -444,10 +444,10 @@ static void Push_Composer_Level(
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
 //    and we need N + 1 flags.  Borrow the tail flag from the input array.
 //
-// 4. It is legal to COMPOSE/DEEP into lists that are antiforms or quoted
+// 4. It is legal to COMPOSE:DEEP into lists that are antiforms or quoted
 //    (or potentially both).  So we transfer the QUOTE_BYTE.
 //
-//        >> compose/deep [a ''~[(1 + 2)]~ b]
+//        >> compose:deep [a ''~[(1 + 2)]~ b]
 //        == [a ''~[3]~ b]
 //
 static void Finalize_Composer_Level(
@@ -523,7 +523,7 @@ static void Finalize_Composer_Level(
 //        >> compose [a ''(1 + 2) b]
 //        == [a ''3 b]
 //
-// 3. Splicing semantics match the rules for APPEND/etc.
+// 3. Splicing semantics match the rules for APPEND etc.
 //
 // 4. Only proxy newline flag from the template on *first* value spliced in,
 //    where it may have its own newline flag.  Not necessarily obvious; e.g.
@@ -555,7 +555,7 @@ Bounce Composer_Executor(Level* const L)
 
   //=//// EXTRACT REFINEMENTS FROM THE COMPOSE CALL ///////////////////////=//
 
-    // We have levels for each "recursion" that processes the /DEEP blocks in
+    // We have levels for each "recursion" that processes the :DEEP blocks in
     // the COMPOSE.  (These don't recurse as C functions, the levels are
     // stacklessly processed by the trampoline, see %c-trampoline.c)
     //
@@ -644,7 +644,7 @@ Bounce Composer_Executor(Level* const L)
     if (not Any_Group_Kind(heart)) {
         //
         // Don't compose at this level, but may need to walk deeply to
-        // find compositions if /DEEP and it's an array
+        // find compositions if :DEEP and it's an array
     }
     else {  // plain compose, if match
         if (not label or Match_For_Compose(at, unwrap label)) {
@@ -655,7 +655,7 @@ Bounce Composer_Executor(Level* const L)
 
     if (not match) {
         if (deep or Any_Sequence_Kind(heart)) {  // sequences same level
-            // compose/deep [does [(1 + 2)] nested] => [does [3] nested]
+            // compose:deep [does [(1 + 2)] nested] => [does [3] nested]
 
             Push_Composer_Level(OUT, main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
@@ -815,7 +815,7 @@ Bounce Composer_Executor(Level* const L)
     Drop_Level(SUBLEVEL);
 
     if (Is_Nulled(OUT)) {
-        // compose/deep [a (void)/(void) b] => path makes null, vaporize it
+        // compose:deep [a (void)/(void) b] => path makes null, vaporize it
     }
     else {
         assert(not Is_Antiform(OUT));

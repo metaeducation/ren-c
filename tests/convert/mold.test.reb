@@ -35,14 +35,14 @@
 ]
 
 [#77
-    ("#[block! [[1 2] 2]]" == mold/all next [1 2])
+    ("#[block! [[1 2] 2]]" == mold:all next [1 2])
 ]
 [#77
-    (null? find mold/flat make object! [a: 1] "    ")
+    (null? find mold:flat make object! [a: 1] "    ")
 ]
 
 [#84
-    (equal? mold/all (make bitset! #{80}) "#[bitset! #{80}]")
+    (equal? mold:all (make bitset! #{80}) "#[bitset! #{80}]")
 ]
 
 
@@ -95,13 +95,13 @@
     block: copy [a b c]
     new-line block 'yes
     new-line tail block 'yes
-    append/line block spread [d e f]
+    append:line block spread [d e f]
     {[^/    a b c^/    d e f^/]} = mold block
 )
 
 (
     block: copy []
-    append/line block spread [d e f]
+    append:line block spread [d e f]
     {[^/    d e f^/]} = mold block
 )
 
@@ -109,7 +109,7 @@
     block: copy [a b c]
     new-line block 'yes
     new-line tail block 'yes
-    append/line block spread [d e f]
+    append:line block spread [d e f]
     {[^/    a b c^/    d e f^/]} = mold block
 )
 
@@ -137,7 +137,7 @@
 ("[^/    a b]" = mold new-line [a b] 'yes)
 
 [https://github.com/metaeducation/ren-c/issues/1033 (
-    "[^/    1^/    2^/]" == mold new-line/all [1 2] 'yes
+    "[^/    1^/    2^/]" == mold new-line:all [1 2] 'yes
 )]
 
 [https://github.com/metaeducation/rebol-httpd/issues/10 (
@@ -160,16 +160,16 @@
 
 
 [#2405
-    ({"ab} = mold/limit "abcdefg" 3)
+    ({"ab} = mold:limit "abcdefg" 3)
     (
-        [str trunc]: mold/limit "abcdefg" 3
+        [str trunc]: mold:limit "abcdefg" 3
         all [
             str = {"ab}
             trunc = 3
         ]
     )
     (
-        [str trunc]: mold/limit "abcdefg" 300
+        [str trunc]: mold:limit "abcdefg" 300
         all [
             str = {"abcdefg"}
             trunc = null

@@ -16,13 +16,13 @@
 (#{62006200} = checksum 'adler32 "a")
 (#{5D06FB3A} = checksum 'adler32 "Mark Adler is cool")
 
-; Test /PART, which should skip codepoint counts in strings and byte
+; Test :PART, which should skip codepoint counts in strings and byte
 ; counts in BINARY!.  Cat emoji is 4 codepoints.
 [
     (text: {high🐱codepoint}
     bin: as binary! text
     bin = #{68696768F09F90B1636F6465706F696E74})
 
-    (#{6C04BC16} = checksum-core/part 'adler32 (skip text 4) 5)
-    (#{6C04BC16} = checksum-core/part 'adler32 (skip bin 4) 8)
+    (#{6C04BC16} = checksum-core:part 'adler32 (skip text 4) 5)
+    (#{6C04BC16} = checksum-core:part 'adler32 (skip bin 4) 8)
 ]

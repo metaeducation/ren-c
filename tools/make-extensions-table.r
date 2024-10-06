@@ -46,7 +46,7 @@ import <bootstrap-shim.r>
 import <common.r>
 import <common-emitter.r>
 
-args: parse-args system.script.args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO:ARGS
 output-dir: join system.options.path %prep/
 
 extensions: map-each 'e (split args/EXTENSIONS #":") [

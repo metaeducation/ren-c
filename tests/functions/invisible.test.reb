@@ -10,8 +10,8 @@
 ('~[]~ = (meta comment "a"))
 ((quote '~[]~) = ^(^ comment "a"))
 
-('~[]~ = meta eval/undecayed [comment "a"])
-((quote '~[]~) = ^(^ eval/undecayed [comment "a"]))
+('~[]~ = meta eval:undecayed [comment "a"])
+((quote '~[]~) = ^(^ eval:undecayed [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be enfix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -21,12 +21,12 @@
 ; https://forum.rebol.info/t/1582
 
 ~no-value~ !! (
-    [pos val]: evaluate/step [
+    [pos val]: evaluate:step [
         1 + comment "a" comment "b" 2 * 3 fail "too far"
     ]
 )
 (
-    [pos val]: evaluate/step [
+    [pos val]: evaluate:step [
         1 comment "a" + comment "b" 2 * 3 fail "too far"
     ]
     all [
@@ -35,7 +35,7 @@
     ]
 )
 (
-    [pos val]: evaluate/step [
+    [pos val]: evaluate:step [
         1 comment "a" comment "b" + 2 * 3 fail "too far"
     ]
     all [
@@ -56,7 +56,7 @@
     1 = eval [1 elide "a"]
 )
 (
-    '~[]~ = ^ eval/undecayed [elide "a"]
+    '~[]~ = ^ eval:undecayed [elide "a"]
 )
 (nihil? elide "a")
 ('~[]~ = ^ elide "a")
@@ -67,12 +67,12 @@
 )
 (
     code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
-    pos: evaluate/step code
-    pos: evaluate/step pos
+    pos: evaluate:step code
+    pos: evaluate:step pos
     pos = [elide "b" + 2 * 3 fail "too far"]
 )
 (
-    [pos val]: evaluate/step [
+    [pos val]: evaluate:step [
         1 + 2 * 3 elide "a" elide "b" fail "too far"
     ]
     all [
@@ -125,7 +125,7 @@
             tail? right,
             '|1| = look: take lookahead  ; hack...recognize selfs
         ] else [
-            fail/blame [
+            fail:blame [
                 "|1| expected single expression, found residual of" :look
             ] $right
         ]
@@ -137,7 +137,7 @@
 ]
 
 (
-    nihil? eval/undecayed [|||]
+    nihil? eval:undecayed [|||]
 )
 (
     3 = eval [1 + 2 ||| 10 + 20, 100 + 200]

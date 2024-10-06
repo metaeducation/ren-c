@@ -178,40 +178,40 @@
         valid-in-path: quoted? str
         set $str noquote str  ; use SET to avoid WRAP
 
-        [pos word]: transcode/next str
+        [pos word]: transcode:next str
         assert [pos = ""]
 
         assert [word = to word! str]
         assert [str = as text! word]
 
         if valid-in-path [
-            let ['pos path]: transcode/next unspaced ["a/" str "/b"]
+            let ['pos path]: transcode:next unspaced ["a/" str "/b"]
             assert [pos = ""]
             assert [path = compose $a/(word)/b]
         ] else [
             comment [  ; !!! Path scan with arrow words is buggy, scans tags
-                let e: trap [transcode/next unspaced ["a/" str "/b"]]
+                let e: trap [transcode:next unspaced ["a/" str "/b"]]
                 assert [e]
             ]
         ]
 
-        [pos block]: transcode/next unspaced ["[" str "]"]
+        [pos block]: transcode:next unspaced ["[" str "]"]
         assert [pos = ""]
         assert [block = reduce [word]]
 
-        [pos q]: transcode/next unspaced ["'" str]
+        [pos q]: transcode:next unspaced ["'" str]
         assert [pos = ""]
         assert [q = quote word]
 
-        [pos s]: transcode/next unspaced [str ":"]
+        [pos s]: transcode:next unspaced [str ":"]
         assert [pos = ""]
         assert [s = setify word]
 
-        [pos g]: transcode/next unspaced [":" str]
+        [pos g]: transcode:next unspaced [":" str]
         assert [pos = ""]
         assert [g = getify word]
 
-        [pos l]: transcode/next unspaced ["^^" str]
+        [pos l]: transcode:next unspaced ["^^" str]
         assert [pos = ""]
         assert [l = metafy word]
     ]

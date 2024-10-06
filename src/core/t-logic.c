@@ -530,7 +530,7 @@ REBTYPE(Antiform)
             // !!! For some reason, a random LOGIC! used OS_DELTA_TIME, while
             // it wasn't used elsewhere:
             //
-            //     /* random/seed false restarts; true randomizes */
+            //     /* RANDOM:SEED - false restarts; true randomizes */
             //     Set_Random(b1 ? OS_DELTA_TIME(0) : 1);
             //
             // This created a dependency on the host's model for time, which

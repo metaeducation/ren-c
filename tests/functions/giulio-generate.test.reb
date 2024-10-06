@@ -14,14 +14,14 @@
         let words: make block! 2
         for-each 'x reduce [init condition iteration] [
             if not block? x [continue]
-            let w: collect-words/deep/set x
+            let w: collect-words:deep:set x
             if not empty? intersect w [count result] [ fail [
                 "count: and result: set-words aren't allowed in" mold x
             ]]
             append words w
         ]
         let spec: compose [/reset [block!] <static> (spread unique words) count]
-        let body: compose/deep [
+        let body: compose:deep [
             if reset [count: reset return]
             if block? count [
                 let result: bind count 'count
@@ -52,7 +52,7 @@
         if file? src [src: open src]
 
         let pos
-        let rule: compose/deep either delimiter [
+        let rule: compose:deep either delimiter [
             either keep
             [ [thru (delimiter) pos: <here>] ]
             [ [to (delimiter) remove (delimiter) pos: <here>] ]
@@ -68,7 +68,7 @@
         return func compose [
             <static> buffer (to group! [make binary! 4096])
             <static> port (groupify src)
-        ] compose/deep [
+        ] compose:deep [
             let crlf: charset "^/^M"
             let data: null
             let eof: 'false
@@ -79,7 +79,7 @@
                 (spread if same? src system.ports.input
                     '[data: read port]
                     else
-                    '[data: read/part port 4096]
+                    '[data: read:part port 4096]
                 )
                 if empty? data [
                     eof: 'true
@@ -89,7 +89,7 @@
                 append buffer data
             ]
             if all [true? eof, empty? buffer] [return null]
-            (maybe spread if not binary '[to text!]) take/part buffer pos
+            (maybe spread if not binary '[to text!]) take:part buffer pos
         ]
     ]
 

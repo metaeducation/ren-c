@@ -27,13 +27,13 @@ REBOL [
             zip %new-zip.zip [%my-file "my data"]
 
         a entire directory:
-            zip/deep %new-zip.zip %my-directory/
+            zip:deep %new-zip.zip %my-directory/
 
         from a url:
             zip %new-zip.zip ftp://192.168.1.10/my-file.txt
 
         any combination of these:
-            zip/deep %new-zip.zip  [
+            zip:deep %new-zip.zip  [
                 %readme.txt "An example"
                 ftp://192.168.1.10/my-file.txt
                 %my-directory
@@ -219,7 +219,7 @@ zip: func [
     let info: if not verbose [:elide] else [:print]
 
     if match [file! url!] where [
-        where: open/write/new where  ; !!! /NEW is needed (should it be?)
+        where: open:write:new where  ; !!! /NEW is needed (should it be?)
     ]
 
     let offset: 0
@@ -320,7 +320,7 @@ unzip: func [
     let info: all [quiet, not verbose] then [:elide] else [:print]
     if not block? where [
         where: my dirize
-        if not exists? where [make-dir/deep where]
+        if not exists? where [make-dir:deep where]
     ]
     if match [file! url!] source [
         source: read source
@@ -519,7 +519,7 @@ unzip: func [
             ; against the information in the local directory entry.
             (
                 date.time: time
-                date: date - now/zone
+                date: date - now:zone
             )
 
             ; !!! TBD: Improve handling of flags.
@@ -539,15 +539,15 @@ unzip: func [
                     ; methods used for .ZIP compression in the wild today
 
                     if method-number = 0 [  ; STORE
-                        throw copy/part data compressed-size
+                        throw copy:part data compressed-size
                     ]
 
                     if method-number <> 8 [  ; DEFLATE
                         info ["-> failed [method" method-number "]"]
                         throw blank
                     ]
-                    data: copy/part data compressed-size
-                    data: inflate/max data uncompressed-size except [
+                    data: copy:part data compressed-size
+                    data: inflate:max data uncompressed-size except [
                         info "-> failed [deflate]"
                         throw blank
                     ]
@@ -586,12 +586,12 @@ unzip: func [
                     ; make directory and/or write file
                     either #"/" = last name [
                         if not exists? %% (where)/(name) [
-                            make-dir/deep %%(where)/(name)
+                            make-dir:deep %%(where)/(name)
                         ]
                     ][
                         let [path file]: split-path name
                         if not exists? %% (where)/(path) [
-                            make-dir/deep %% (where)/(path)
+                            make-dir:deep %% (where)/(path)
                         ]
                         if uncompressed-data [
                             write %% (where)/(name) uncompressed-data

@@ -45,11 +45,11 @@
     (6000 = (three 10 20 30))
     (6000 = (two-30 10 20))
 
-    ~bad-parameter~ !! (three/unavailable 10 20 30)
+    ~bad-parameter~ !! (three:unavailable 10 20 30)
 
-    (240000 = (three/available 10 20 30 40))
+    (240000 = (three:available 10 20 30 40))
 
-    (240000 = (two-30/available 10 20 40))
+    (240000 = (two-30:available 10 20 40))
 
     (
         one-20: specialize two-30/ [y: 20]

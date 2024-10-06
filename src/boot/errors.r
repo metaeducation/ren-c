@@ -79,7 +79,7 @@ Script: [
     no-value:           {No value in antiform BLOCK! pack: ~[]~ ("NIHIL")}
     bad-null:           [:arg1 {cannot be null}]
     type-of-null:       {TYPE OF NULL illegal (use TRY TYPE OF NULL if meant)}
-    bad-word-get:       [:arg1 {is} :arg2 {antiform (see ^^(...) and GET/ANY)}]
+    bad-word-get:       [:arg1 {is} :arg2 {antiform (see ^^(...) and GET:ANY)}]
     bad-antiform:       [{Invalid use of} :arg1 {antiform}]
     non-isotopic-type:  [{Quasiforms and antiforms not legal for value:} :arg1]
     illegal-keyword:    [{Illegal antiform keyword:} :arg1]
@@ -93,7 +93,7 @@ Script: [
     bad-utf8:           {invalid UTF-8 byte sequence found during decoding}
     codepoint-too-high: [{codepoint} :arg1 {too large (or data is not UTF-8)}]
     illegal-zero-byte:  {#{00} bytes illegal in ANY-STRING?, use BINARY!}
-    illegal-cr:         [{Illegal CR: See DELINE, and TO-TEXT/RELAX:} :arg1]
+    illegal-cr:         [{Illegal CR: See DELINE, and TO-TEXT:RELAX --} :arg1]
     mixed-cr-lf-found:  {DELINE requires files to be CR LF or LF consistently}
     bad-utf8-bin-edit:  {String aliased as BINARY! can't become invalid UTF-8}
 
@@ -123,7 +123,7 @@ Script: [
     do-running-frame:   [{Must COPY a FRAME! that's RUNNING? before DOing it}]
     expired-frame:      [{Cannot use a FRAME! whose stack storage expired}]
 
-    apply-too-many:     {Too many values in APPLY argument block (see /RELAX)}
+    apply-too-many:     {Too many values in APPLY argument block (see :RELAX)}
 
     hijack-blank:       {Hijacked function was captured but no body given yet}
 
@@ -131,8 +131,6 @@ Script: [
 
     enfix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]
     evaluative-quote:   {Can't quote non-literal from an evaluative source}
-
-    break-not-continue: {Use BREAK/WITH when body is the breaking condition}
 
     do-arity-non-zero:  {Use REEVAL or APPLY on actions of arity > 0, not DO}
 
@@ -190,7 +188,7 @@ Script: [
     invalid-chars:      {contains invalid characters}
     invalid-compare:    [{cannot compare} :arg1 {with} :arg2]
 
-    invalid-part:       [{invalid /part count:} :arg1]
+    invalid-part:       [{invalid :part count:} :arg1]
 
     no-return:          {block did not return a value}
 

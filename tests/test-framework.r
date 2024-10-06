@@ -24,7 +24,7 @@ log: func [
     return: [~]
     report [block!]
 ][
-    write/append log-file unspaced report
+    write:append log-file unspaced report
 
     ; By default we echo the log to the screen also.  This should be an option.
     ;
@@ -102,7 +102,7 @@ run-single-test: func [
         ]
 
         quasi? result [
-            "test returned antiform:" (mold/limit result 40)
+            "test returned antiform:" (mold:limit result 40)
         ]
         (elide result: unmeta result)
 
@@ -143,7 +143,7 @@ run-test-cluster: func [
     ;
     let isolate: module void [
         print: lambda [x] [
-            fail/blame "Don't use PRINT in tests" $x
+            fail:blame "Don't use PRINT in tests" $x
         ]
     ]
 
@@ -227,7 +227,7 @@ process-tests: func [
             'collect-tests body: block! (
                 log ["@collect-tests" space mold body]
 
-                let [_ collected]: module void compose/deep [collect [
+                let [_ collected]: module void compose:deep [collect [
                     let keep-test: adapt keep/ [
                         if not block? :value [
                             fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
@@ -285,9 +285,9 @@ export do-recover: func [
 
     log-file: clean-path join log-file-prefix unspaced [
         if code-checksum ["_"]
-        if code-checksum [copy/part (skip mold code-checksum 2) 6]
+        if code-checksum [copy:part (skip mold code-checksum 2) 6]
         "_"
-        copy/part (skip mold test-checksum 2) 6
+        copy:part (skip mold test-checksum 2) 6
         ".log"
     ]
 
@@ -319,7 +319,7 @@ export do-recover: func [
                     ; Test filenames appear in the log, %x.test.reb
                     "%" (
                         next-position: null  ; !!! for SET-WORD! gather
-                        [next-position value]: transcode/next position
+                        [next-position value]: transcode:next position
                     )
                     seek (next-position)
                         |
@@ -365,7 +365,7 @@ export do-recover: func [
                     |
                 (fail [
                     "Log file parse problem, see"
-                    mold/limit as text! position 240
+                    mold:limit as text! position 240
                 ])
             ]
             <end>

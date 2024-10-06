@@ -1204,7 +1204,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     }
   #endif
 
-    // If disabled by RECYCLE/OFF, exit now but set the pending flag.  (If
+    // If disabled by RECYCLE:OFF, exit now but set the pending flag.  (If
     // shutdown, ignore so recycling runs and can be checked for balance.)
     //
     if (g_gc.disabled) {
@@ -1515,7 +1515,7 @@ void Startup_GC(void)
             "** R3_RECYCLE_TORTURE is nonzero in environment variable!\n" \
             "** (or g_gc.ballast is set to 0 manually in the init code)\n" \
             "** Recycling on EVERY evaluator step, *EXTREMELY* SLOW!...\n" \
-            "** Useful in finding bugs before you can run RECYCLE/TORTURE\n" \
+            "** Useful in finding bugs before you can run RECYCLE:TORTURE\n" \
             "** But you might only want to do this with -O2 debug builds.\n"
             "**\n"
         );

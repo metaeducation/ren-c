@@ -240,7 +240,7 @@ void Write_IO(const Value* data, REBLEN len)
             if (rebUnbox("length of", data) == len)
                 Term_Insert(Term_IO, data);
             else {
-                Value* part = rebValue("copy/part", data, rebI(len));
+                Value* part = rebValue("copy:part", data, rebI(len));
                 Term_Insert(Term_IO, part);
                 rebRelease(part);
             }

@@ -45,9 +45,9 @@
 [
     (
         for-both: lambda [var blk1 blk2 body] [
-            unmeta/lite all [
-                meta/lite for-each var blk1 body
-                meta/lite for-each var blk2 body
+            unmeta:lite all [
+                meta:lite for-each var blk1 body
+                meta:lite for-each var blk2 body
             ]
         ]
 
@@ -58,14 +58,14 @@
     ; (the result "drops out" the bottom of lambdas, and there is no RETURN
     ; definition in effect).
     ;
-    ; ^-- Note that this uses META/LITE and not META (a.k.a. `^`)  The reason
+    ; ^-- Note that this uses META:LITE and not META (a.k.a. `^`)  The reason
     ; is that it wants to leave voids and nulls as-is, to serve as the signal
     ; for breaking or opting out of contributing to the final loop result:
     ;
     ;     >> meta void
     ;     == ~void~
     ;
-    ;     >> meta/lite void
+    ;     >> meta:lite void
     ;     == ~void~  ; anti
     ;
 
@@ -77,14 +77,14 @@
         assert [40 = for-both 'x [1 2] [3 4] [keep x, x * 10]]
     ])
 
-    ; Saves result from second loop output, due to META/LITE vanishing on the
+    ; Saves result from second loop output, due to META:LITE vanishing on the
     ; void produced by contract when FOR-EACH does not run.
 
     ([1 2] = collect [
         assert [20 = for-both 'x [1 2] [] [keep x, x * 10]]
     ])
 
-    ; The all-important support of BREAK... META/LITE of NULL remains NULL, and
+    ; The all-important support of BREAK... META:LITE of NULL remains NULL, and
     ; is falsey to short circuit the ALL.
 
     ([1] = collect [
@@ -136,7 +136,7 @@
     ; and effectively leave behind an `all []`.  Ren-C's working definition
     ; (motivated by this kind of example) is that should produce a VOID
     ; as well.  Technical reasons besides this scenario lead it to be favorable
-    ; for UNMETA/LITE to be willing to take VOID and return it as-is instead
+    ; for UNMETA:LITE to be willing to take VOID and return it as-is instead
     ; of raising an error, and that plays to our advantage here.
 
     (void? for-both 'x [] [] [fail "Body Never Runs"])

@@ -381,7 +381,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
 
   #if !defined(NDEBUG)
     //
-    // !!! TBD: the relevant file/line update when L->feed->array changes
+    // !!! TBD: the relevant file and line update when L->feed->array changes
     //
     L->file = File_UTF8_Of_Level(L);
     L->line = LineNumber_Of_Level(L);

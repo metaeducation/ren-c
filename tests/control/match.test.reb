@@ -25,11 +25,11 @@
 [
     ~need-non-null~ !! (match [~null~] null)
     ~need-non-null~ !! (match [null?] null)
-    ('~null~ = match/meta [null?] null)
+    ('~null~ = match:meta [null?] null)
 
     (null = match [integer!] void)
     ~???~ !! (match [void?] void)
-    ('~void~ = match/meta [void?] void)
+    ('~void~ = match:meta [void?] void)
 
     ('_ = match blank! blank)
     ('true = match [boolean?] 'true)
@@ -64,8 +64,8 @@
 
     ~need-non-null~ !! (non null null)
     ~???~ !! (non null 10)
-    (null = non/meta null null)
-    ((the '10) = non/meta null 10)
+    (null = non:meta null null)
+    ((the '10) = non:meta null 10)
 
     (null = non [logic?] okay)
 ]

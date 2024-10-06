@@ -83,7 +83,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
     ]
 
     dialect-hook: meth [
-        {Receives code block, parse/transform, send back to CONSOLE eval}
+        {Receives code block, parse and transform, send back to CONSOLE eval}
         return: [block!]
         b [block!]
     ][
@@ -227,7 +227,7 @@ backtrace*: func [
                     ;
                     ; !!! Review arbitrary symbolic choices.
                     ;
-                    keep/line []
+                    keep:line []
                     keep [*]
                 ]
 
@@ -281,7 +281,7 @@ backtrace*: func [
             keep number
         ]
 
-        keep/line spread []  ; !!! should VOID work here?
+        keep:line spread []  ; !!! should VOID work here?
     ]]
 
     ; If we ran out of stack levels before finding the single one requested

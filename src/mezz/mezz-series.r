@@ -62,12 +62,12 @@ array: func [
     if block? size [
         rest: next size else [
             ;
-            ; Might be reasonable to say `array/initial [] <x>` is `<x>` ?
+            ; Might be reasonable to say `array:initial [] <x>` is `<x>` ?
             ;
             fail "Empty ARRAY dimensions (file issue if you want a meaning)"
         ]
         if not integer? size: size.1 [
-            fail/blame [
+            fail:blame [
                 "Expect INTEGER! size in BLOCK!, not" type of size
             ] $size
         ]
@@ -78,16 +78,16 @@ array: func [
     block: make block! size
     case [
         block? rest [
-            repeat size [append block (array/initial rest :initial)]
+            repeat size [append block (array:initial rest :initial)]
         ]
         action? :initial [
             repeat size [append block initial]  ; Called every time
         ]
         any-series? initial [
-            repeat size [append block (copy/deep initial)]
+            repeat size [append block (copy:deep initial)]
         ]
     ] else [
-        append/dup block initial size
+        append:dup block initial size
     ]
     return block
 ]
@@ -113,7 +113,7 @@ replace: func [
     if void? :pattern [return target]
 
     let case_REPLACE: case
-    case: lib/case/
+    case: lib.case/
 
     pos: target
 
@@ -131,12 +131,12 @@ replace: func [
             ; They are passed as const so that the replacing function answers
             ; merely by providing the replacement.
             ;
-            value': ^ apply/relax :replacement [const pos, const tail]
+            value': ^ apply:relax :replacement [const pos, const tail]
         ] else [
             value': ^ replacement  ; inert value, might be null
         ]
 
-        pos: change/part pos (unmeta value') tail
+        pos: change:part pos (unmeta value') tail
 
         if one [break]
     ]
@@ -173,7 +173,7 @@ reword: func [
     )
 ][
     let case_REWORD: case
-    case: lib/case/
+    case: lib.case/
 
     let out: make (type of source) length of source
 
@@ -245,7 +245,7 @@ reword: func [
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep spread compose/label/deep [
+            keep spread compose:label:deep [
                 (<*> if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [
@@ -257,7 +257,7 @@ reword: func [
                 (keyword-match: '(<*> keyword))
             ] <*>
 
-            keep/line '|
+            keep:line '|
         ]
         keep 'bypass  ; add failure if no match, instead of removing last |
     ]
@@ -271,15 +271,15 @@ reword: func [
             [
                 [
                     any-keyword-suffix-rule (
-                        append/part out a offset? a b  ; output before prefix
+                        append:part out a offset? a b  ; output before prefix
 
                         let v: apply select/ [
                             values keyword-match
                             /case case_REWORD
                         ]
-                        append out switch/type v [
+                        append out switch:type v [
                             frame! [
-                                apply/relax v [:keyword-match]  ; arity-0 okay
+                                apply:relax v [:keyword-match]  ; arity-0 okay
                             ]
                             block! [eval v]
                         ] else [
@@ -321,7 +321,7 @@ move: func [
         offset: either to [offset - 1 * skip + 1] [offset * skip]
         part: part * skip
     ]
-    part: take/part source part
+    part: take:part source part
     insert either to [at head of source offset] [
         lib/skip source offset
     ] either any-list? source [spread part] [part]
@@ -363,11 +363,11 @@ alter: func [
     /case "Case-sensitive comparison"
 ][
     case_ALTER: case
-    case: lib/case/
+    case: lib.case/
 
     if bitset? series [
         if find series value [
-            remove/part series value
+            remove:part series value
             return null
         ]
         append series value
@@ -447,7 +447,7 @@ format: func [
     for-each 'rule rules [
         if word? rule [rule: get rule]
 
-        val: me + switch/type rule [
+        val: me + switch:type rule [
             integer! [abs rule]
             text! [length of rule]
             char?! [1]
@@ -455,13 +455,13 @@ format: func [
     ]
 
     let out: make text! val
-    insert/dup out pad val
+    insert:dup out pad val
 
     ; Process each rule:
     for-each 'rule rules [
         if word? rule [rule: get rule]
 
-        switch/type rule [
+        switch:type rule [
             integer! [
                 pad: rule
                 val: form first values
@@ -542,7 +542,7 @@ split: func [
                 series: skip series negate len
                 continue  ; don't add to output
             ]
-            copy/part series series: skip series len
+            copy:part series series: skip series len
         ]
     ]
 
@@ -554,7 +554,7 @@ split: func [
 
             if into [
                 let count: size - 1
-                let piece-size: to integer! round/down (length of series) / size
+                let piece-size: to integer! round:down (length of series) / size
                 if zero? piece-size [piece-size: 1]
 
                 [
@@ -580,7 +580,7 @@ split: func [
                 opt some [not <end> [
                     mk1: <here>
                     opt some [mk2: <here>, [dlm | <end>] break | one]
-                    (keep copy/part mk1 mk2)
+                    (keep copy:part mk1 mk2)
                 ]]
                 <end>
             ]
@@ -598,7 +598,7 @@ split: func [
     ] else [
         assert [quoted? dlm]
         let mk1
-        compose/label/deep [
+        compose:label:deep [
             some [not <end> [
                 mk1: across [to (<*> dlm) | to <end>]
                 (keep mk1)
@@ -618,7 +618,7 @@ split: func [
         if into [
             ; If the result is too short, i.e., less items than 'size, add
             ; empty items to fill it to 'size.  Loop here instead of using
-            ; INSERT/DUP, because that wouldn't copy the value inserted.
+            ; INSERT:DUP, because that wouldn't copy the value inserted.
             ;
             if size > length of result [
                 repeat (size - length of result) [add-fill-val]
@@ -628,7 +628,7 @@ split: func [
         ; If the last thing in the series is a delimiter, there is an
         ; implied empty field after it, which we add here.
         ;
-        switch/type dlm [
+        switch:type dlm [
             bitset! [boolean select dlm maybe last series]
             char?! [boolean dlm = last series]
             text! [

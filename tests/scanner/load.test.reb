@@ -22,9 +22,9 @@
 
 ~scan-invalid~ !! (load "1xyz#")
 
-; LOAD/NEXT removed, see #1703
+; :NEXT removed, see #1703
 ;
-~bad-parameter~ !! (load/next "1")
+~bad-parameter~ !! (load:next "1")
 
 
 [#1122 (
@@ -55,7 +55,7 @@
 ([1] = load "1")
 ([[1]] = load "[1]")
 ([1 2 3] = load "1 2 3")
-([1 2 3] = load/type "1 2 3" null)
+([1 2 3] = load:type "1 2 3" null)
 ([1 2 3] = load "rebol [] 1 2 3")
 (
     [d header]: load "rebol [] 1 2 3" 'header
@@ -91,22 +91,22 @@
     elide delete %test2.r
 )
 (
-    save/header %test.r [1 2 3] [title: "Test"]
+    save:header %test.r [1 2 3] [title: "Test"]
     [1 2 3] = load %test.r
     elide delete %test.r
 )
 (
-    save/header %test-checksum.r [1 2 3] [checksum: true]
+    save:header %test-checksum.r [1 2 3] [checksum: true]
     [1 2 3] = load %test-checksum.r
     elide delete %test-checksum.r
 )
 (
-    save/header %test-checksum.r [1 2 3] [checksum: true compress: true]
+    save:header %test-checksum.r [1 2 3] [checksum: true compress: true]
     [1 2 3] = load %test-checksum.r
     elide delete %test-checksum.r
 )
 (
-    save/header %test-checksum.r [1 2 3] [checksum: script compress: true]
+    save:header %test-checksum.r [1 2 3] [checksum: script compress: true]
     [1 2 3] = load %test-checksum.r
     elide delete %test-checksum.r
 )

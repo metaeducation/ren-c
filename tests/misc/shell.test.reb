@@ -17,9 +17,9 @@
 ; alternative is needing to use operators to indicate that it's a filename,
 ; which would produce code like `dir %% (base-dir)/*.txt`.
 [
-    ("ls -alF" = shell/inspect [ls -alF])
-    ("ls -alF /usr/local" = shell/inspect [ls -alF /usr/local])
-    ("ls -alF .travis.yml" = shell/inspect [ls -alF .travis.yml])
+    ("ls -alF" = shell:inspect [ls -alF])
+    ("ls -alF /usr/local" = shell:inspect [ls -alF /usr/local])
+    ("ls -alF .travis.yml" = shell:inspect [ls -alF .travis.yml])
 ]
 
 
@@ -29,15 +29,15 @@
 ; to generally handling all escapable characters).
 [
     (if system.version.4 = 3 [  ; Windows
-        ("ls -alF foo\bar.txt" = shell/inspect [ls -alF %foo/bar.txt])
+        ("ls -alF foo\bar.txt" = shell:inspect [ls -alF %foo/bar.txt])
     ] else [
-        ("ls -alF foo/bar.txt" = shell/inspect [ls -alF %foo/bar.txt])
+        ("ls -alF foo/bar.txt" = shell:inspect [ls -alF %foo/bar.txt])
     ])
 
     (if system.version.4 = 3 [  ; Windows
-        ({ls -alF "foo\b ar.txt"} = shell/inspect [ls -alF %"foo/b ar.txt"])
+        ({ls -alF "foo\b ar.txt"} = shell:inspect [ls -alF %"foo/b ar.txt"])
     ] else [
-        ({ls -alF "foo/b ar.txt"} = shell/inspect [ls -alF %"foo/b ar.txt"])
+        ({ls -alF "foo/b ar.txt"} = shell:inspect [ls -alF %"foo/b ar.txt"])
     ])
 ]
 
@@ -46,8 +46,8 @@
 ; Quotes are output regardless of whether braced strings are used or not.
 ; Internal quotes are escaped using C string literal rules
 [
-    ({ls -alF "/usr/local"} = shell/inspect [ls -alF "/usr/local"])
-    ({"Some \"Quoted\" Text"} = shell/inspect [{Some "Quoted" Text}])
+    ({ls -alF "/usr/local"} = shell:inspect [ls -alF "/usr/local"])
+    ({"Some \"Quoted\" Text"} = shell:inspect [{Some "Quoted" Text}])
 ]
 
 
@@ -55,15 +55,15 @@
 [
     (
         options: '-alF
-        "ls -alF" = shell/inspect [ls (options)]
+        "ls -alF" = shell:inspect [ls (options)]
     )
     (
         dir: '/usr/local
-        "ls -alF /usr/local" = shell/inspect [ls -alF (dir)]
+        "ls -alF /usr/local" = shell:inspect [ls -alF (dir)]
     )
     (
         file: '.travis.yml
-        "ls -alF .travis.yml" = shell/inspect [ls -alF (file)]
+        "ls -alF .travis.yml" = shell:inspect [ls -alF (file)]
     )
 ]
 
@@ -71,12 +71,12 @@
 ; Line continuation can be accomplished with `...`, either at the end
 ; of the line you are working on or the beginning of the next.
 [
-    ("one two^/three four^/five" = shell/inspect [one two
+    ("one two^/three four^/five" = shell:inspect [one two
         three four
         five
     ])
 
-    ("one two three four five" = shell/inspect [one two
+    ("one two three four five" = shell:inspect [one two
         ... three four
         ... five
     ])

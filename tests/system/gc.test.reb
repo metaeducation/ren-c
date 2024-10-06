@@ -7,7 +7,7 @@
     ok
 )]
 
-; !!! simplest possible LOAD/SAVE smoke test, expand!
+; !!! simplest possible LOAD and SAVE smoke test, expand!
 (
     file: %simple-save-test.r
     data: "Simple save test produced by %core-tests.r"

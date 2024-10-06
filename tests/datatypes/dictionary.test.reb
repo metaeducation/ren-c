@@ -35,9 +35,9 @@
 (0 = select make map! [foo 0] 'foo)
 
 [#2293 (
-    thing: copy/deep [a [b]]
+    thing: copy:deep [a [b]]
     m: make map! reduce [1 thing]
-    m2: copy/deep m
+    m2: copy:deep m
     thing2: select m2 1
     append thing.2 spread [c]
     append thing2 spread [d]
@@ -50,7 +50,7 @@
 ; Maps are able to hold multiple casings of the same keys, but a map in such
 ; a state must be accessed in such a way that there isn't ambiguity.  Using
 ; PATH! or plain SELECT will error if the key being asked about has more than
-; one case form.  The way to get past this is SELECT/CASE and PUT/CASE, which
+; one case form.  The way to get past this is SELECT:CASE and PUT:CASE, which
 ; use only the exact spelling of the key given.
 ;
 ; Creation through MAKE MAP! assumes case insensitivity.
@@ -60,12 +60,12 @@
         ok
     )
 
-    (10 = select/case m 'AA)
-    (20 = select/case m 'aa)
-    (30 = select/case m <BB>)
-    (40 = select/case m <bb>)
-    (50 = select/case m #"C")
-    (60 = select/case m #"c")
+    (10 = select:case m 'AA)
+    (20 = select:case m 'aa)
+    (30 = select:case m <BB>)
+    (40 = select:case m <bb>)
+    (50 = select:case m #"C")
+    (60 = select:case m #"c")
 
     ~conflicting-key~ !! (m.AA)
     ~conflicting-key~ !! (m.aa)
@@ -79,22 +79,22 @@
     ~conflicting-key~ !! (m.(#"C"): 90)
 
     (
-        put/case m 'Aa 100
-        put/case m <Bb> 110
-        put/case m #"C" 120
+        put:case m 'Aa 100
+        put:case m <Bb> 110
+        put:case m #"C" 120
         ok
     )
 
-    (100 = select/case m 'Aa)
-    (110 = select/case m <Bb>)
-    (120 = select/case m #"C")
+    (100 = select:case m 'Aa)
+    (110 = select:case m <Bb>)
+    (120 = select:case m #"C")
 
-    (10 = select/case m 'AA)
-    (20 = select/case m 'aa)
-    (30 = select/case m <BB>)
-    (40 = select/case m <bb>)
-    (120 = select/case m #"C")
-    (60 = select/case m #"c")
+    (10 = select:case m 'AA)
+    (20 = select:case m 'aa)
+    (30 = select:case m <BB>)
+    (40 = select:case m <bb>)
+    (120 = select:case m #"C")
+    (60 = select:case m #"c")
 ]
 
 ; Historically non-strict equality considered 'A and A to be equal, while strict
@@ -112,11 +112,11 @@
         ok
     )
 
-    (0 = select/case m the a)
-    (1 = select/case m the 'a)
-    (2 = select/case m the ''a)
-    (3 = select/case m the '''a)
-    (4 = select/case m the ''''a)
+    (0 = select:case m the a)
+    (1 = select:case m the 'a)
+    (2 = select:case m the ''a)
+    (3 = select:case m the '''a)
+    (4 = select:case m the ''''a)
 
     ~conflicting-key~ !! (select m the a)
     ~conflicting-key~ !! (m.(the a))

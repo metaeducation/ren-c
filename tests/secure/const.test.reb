@@ -74,12 +74,12 @@
 
     ~const-value~ !! (
         block: []
-        eval compose/deep [repeat 2 [append (block) <illegal>]]
+        eval compose:deep [repeat 2 [append (block) <illegal>]]
     )
 
     (
         block: mutable []
-        eval compose/deep [repeat 2 [append (block) <legal>]]
+        eval compose:deep [repeat 2 [append (block) <legal>]]
         block = [<legal> <legal>]
     )
 ]
@@ -101,14 +101,14 @@
     ]
 )(
     data: ~
-    repeat 1 [data: copy/deep [a [b [c]]]]
+    repeat 1 [data: copy:deep [a [b [c]]]]
     append data <success>
     append data.2 <success>
     append data.2.2 <success>
     data = [a [b [c <success>] <success>] <success>]
 )(
     sub: ~
-    repeat 1 [sub: copy/deep [b [c]]]
+    repeat 1 [sub: copy:deep [b [c]]]
     data: copy compose [a (sub)]
     append data <success>
     append data.2 <success>

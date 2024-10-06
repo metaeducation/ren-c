@@ -155,7 +155,7 @@
 
 (
     $0.0 == (
-        $0.000'000'000'000'001 - round/even/to $0.000'000'000'000'001'1 1e-15
+        $0.000'000'000'000'001 - round:even:to $0.000'000'000'000'001'1 1e-15
     )
 )
 
@@ -163,18 +163,18 @@
     not negative?
         1e-31
             - abs (to money! 26e-17)
-            - round/even/to $0.000'000'000'000'000'255 to money! 1e-17
+            - round:even:to $0.000'000'000'000'000'255 to money! 1e-17
 )
 (
     not negative?
         (to money! 1e-31)
             - abs (to money! -26e-17)
-            - round/even/to -$0.000'000'000'000'000'255 to money! 1e-17
+            - round:even:to -$0.000'000'000'000'000'255 to money! 1e-17
 )
 
 
 ; While Rebol2 would keep the units of the input as MONEY! if you used a non
 ; MONEY! value to round to, R3-Alpha seems to have changed this.  #1470
 ;
-(2.6 = round/even/to $2.55 1E-1)  ; adopts kind of rounding unit
-($2.6 = round/even/to $2.55 $1E-1)  ; keeps MONEY!
+(2.6 = round:even:to $2.55 1E-1)  ; adopts kind of rounding unit
+($2.6 = round:even:to $2.55 $1E-1)  ; keeps MONEY!

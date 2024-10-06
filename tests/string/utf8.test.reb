@@ -38,7 +38,7 @@
     (
         tcopy: copy t
         pos: find tcopy braille
-        change/part pos warning length of braille
+        change:part pos warning length of braille
         assert [pos.1 = as issue! warning]
         (length of tcopy) = (tlen + 1 - length of braille)
     )
@@ -57,7 +57,7 @@
         tcopy: copy t
         n: length of t
         c: ~
-        while [c: try take/last tcopy] [
+        while [c: try take:last tcopy] [
             assert [c = t.(n)]
             n: n - 1
         ]
@@ -139,22 +139,22 @@ https://github.com/metaeducation/ren-c/issues/817
 ("σԋα ƚαʅ" = as text! as binary! skip "ɾαx σԋα ƚαʅ" 4)
 
 
-; /PART for APPEND and insert speaks in terms of the limit of how much
+; :PART for APPEND and insert speaks in terms of the limit of how much
 ; the target series should be allowed to grow in terms of its units.  Thus
 ; you can copy partial UTF-8 out into a binary...
 ;
-; !!! Proposal is that /LIMIT would be used for this purpose, and /PART would
+; !!! Proposal is that :LIMIT would be used for this purpose, and :PART would
 ; refer to the amount of source material to be used.
 [
-    (#{} = append/part #{} "ò" 0)
-    (#{C3} = append/part #{} "ò" 1)
-    (#{C3B2} = append/part #{} "ò" 2)
-    (#{C3B2} = append/part #{} "ò" 3)
+    (#{} = append:part #{} "ò" 0)
+    (#{C3} = append:part #{} "ò" 1)
+    (#{C3B2} = append:part #{} "ò" 2)
+    (#{C3B2} = append:part #{} "ò" 3)
 
-    ("" = append/part "" #{C3B2} 0)
-    ("ò" = append/part "" #{C3B2} 1)
-    ("ò" = append/part "" #{C3B2} 2)
+    ("" = append:part "" #{C3B2} 0)
+    ("ò" = append:part "" #{C3B2} 1)
+    ("ò" = append:part "" #{C3B2} 2)
 
-    ("ò" = append/part "" #{C3B2DECAFBAD} 1)
-    ~bad-utf8-bin-edit~ !! (append/part "" #{C3B2FEFEFEFE} 2)
+    ("ò" = append:part "" #{C3B2DECAFBAD} 1)
+    ~bad-utf8-bin-edit~ !! (append:part "" #{C3B2FEFEFEFE} 2)
 ]

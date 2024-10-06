@@ -144,7 +144,7 @@
 ;     n: => 10
 ;     delta: => 10
 ;
-; C is called and captures its frame into F.  Then it uses REDO/SIBLING to
+; C is called and captures its frame into F.  Then it uses REDO:SIBLING to
 ; reuse the frame to call S.  S gets the variables and args that its knows
 ; about as C left them--such as N and a captured frame F--but values it takes
 ; for granted are reset, which includes specialized delta of 10.
@@ -192,7 +192,7 @@
            log [{C} n delta]
 
            captured-frame: binding of $n
-           redo/sibling $n :s
+           redo:sibling $n :s
 
            comment {fall through to base}
         ]

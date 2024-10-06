@@ -1586,7 +1586,7 @@ void API_rebJumps(
     if (p == nullptr)
         return;
 
-    fail ("rebJumps() was used to run code, but it didn't FAIL/QUIT/THROW!");
+    fail ("rebJumps() used to run code, but it didn't [FAIL QUIT THROW]");
 }
 
 

@@ -23,7 +23,7 @@ spec-of: func [
     ]
 
     return collect [
-        keep/line maybe ensure [~null~ text!] select adjunct 'description
+        keep:line maybe ensure [~null~ text!] select adjunct 'description
 
         let types: ensure [~null~ frame! object!] select adjunct 'parameter-types
         let notes: ensure [~null~ frame! object!] select adjunct 'parameter-notes
@@ -57,7 +57,7 @@ description-of: func [
     if action? :v [
         v: unrun v
     ]
-    return (switch/type :v [
+    return (switch:type :v [
         &any-list? [spaced ["list of length:" length of v]]
         type-block! [
             mold v
@@ -86,7 +86,7 @@ browse: func [
 print-general-help: func [
     return: [~]
 ][
-    print trim/auto copy {
+    print trim:auto copy {
         You are in a Rebol terminal.  QUIT or Ctrl-C should let you exit.
 
         Here are some basic commands:
@@ -161,7 +161,7 @@ help-action: func [
 
     let print-args: [list /indent-words] -> [
         for-each 'key list [
-            let param: meta/lite select frame to-word noquote key
+            let param: meta:lite select frame to-word noquote key
 
             print [_ _ _ _ @key @(maybe param.spec)]
             if param.text [
@@ -174,7 +174,7 @@ help-action: func [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    let return-param: meta/lite select frame 'return
+    let return-param: meta:lite select frame 'return
 
     print newline
     print [
@@ -242,7 +242,7 @@ help-value: func [
             help-action unmeta atom'
             return ~
         ]
-        let [molded truncated]: mold/limit atom' 2000  ; quasiform
+        let [molded truncated]: mold:limit atom' 2000  ; quasiform
         print unspaced [molded (if truncated ["..."]) _ _ "; anti"]
         return ~
     ]
@@ -261,7 +261,7 @@ help-value: func [
         ]
         return ~
     ]
-    let [molded truncated]: mold/limit value 2000
+    let [molded truncated]: mold:limit value 2000
     print unspaced [molded (if truncated ["..."])]
     return ~
 ]
@@ -371,13 +371,13 @@ help: func [
         libuser
     ]
 
-    switch/type topic [
+    switch:type topic [
         group! [
-            help-value eval/undecayed topic
+            help-value eval:undecayed topic
         ]
 
         word! tuple! path! [
-            let value: get/any topic except e -> [
+            let value: get:any topic except e -> [
                 print form e  ; not bound, etc.
                 return ~
             ]
@@ -431,7 +431,7 @@ source: func [
 ][
     let name
     let f
-    switch/type arg [
+    switch:type arg [
         tag! [
             f: copy "unknown tag"
             for-each 'location words of system.locale.library [
@@ -485,7 +485,7 @@ source: func [
     ; used.  For the moment, BODY OF hands back limited information.  Review.
     ;
     let body: body of :f
-    switch/type body [
+    switch:type body [
         block! [  ; FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
             print [mold body "]"]
         ]
@@ -528,7 +528,7 @@ what: func [
             size: max size length of to-text word
         ]
     ]
-    let list: sort/skip list 2
+    let list: sort:skip list 2
 
     name: make text! size
     if as-block [
@@ -536,7 +536,7 @@ what: func [
     ]
 
     for-each [word arg] list [
-        append/dup clear name #" " size
+        append:dup clear name #" " size
         change name word
         print [
             name
@@ -591,7 +591,7 @@ require-commit: func [
 
             "by using the `do @dl-renc` tool and look for"
             unspaced [
-                "r3-" copy/part id 7 "*"
+                "r3-" copy:part id 7 "*"
                 if find-last form system.version "0.3.4" [%.exe]
             ]
         ]

@@ -7,12 +7,12 @@
     s: {abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ}
     t: {----------------------------------------------------}
     cfor n 2 50 1 [
-        let sub: copy/part s n
+        let sub: copy:part s n
         parse sub [some [
             remove one
             insert ("-")
         ]]
-        if sub != copy/part t n [fail "Incorrect Replacement"]
+        if sub != copy:part t n [fail "Incorrect Replacement"]
     ]
     ok
 )]

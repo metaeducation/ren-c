@@ -19,7 +19,7 @@
         value [group?]
         <local> r comb
     ][
-        r: meta eval/undecayed value except e -> [fail e]  ; can't raise
+        r: meta eval:undecayed value except e -> [fail e]  ; can't raise
 
         if r = ^null [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match

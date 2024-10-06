@@ -128,7 +128,7 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
 //  Find_Binstr_In_Binstr: C
 //
 // General purpose find a substring.  Supports cased and uncased searches,
-// and forward/reverse (use negative skip for reverse).  Works with either
+// and forward vs. reverse (use negative skip for reverse).  Works with either
 // UTF-8 or binary values by sensing the types of the cells.
 //
 // IMPORTANT: You can search for a string in a binary but searching for binary
@@ -209,14 +209,14 @@ REBINT Find_Binstr_In_Binstr(
     //
     REBINT index1 = VAL_INDEX(binstr1);
 
-    // "`index` and `end` integrate the /PART.  If the /PART was negative,
+    // "`index` and `end` integrate the :PART.  If the :PART was negative,
     // then index would have been swapped to be the lower value...making what
     // was previously the index the limit.  However, that does not work with
     // negative `skip` values, which by default considers 0 the limit of the
-    // backkwards search but otherwise presumably want a /PART to limit it.
+    // backkwards search but otherwise presumably want a :PART to limit it.
     // Passing in a real "limit" vs. an end which could be greater or less
     // than the index would be one way of resolving this problem.  But it's
-    // a missing feature for now to do FIND/SKIP/PART with a negative skip."
+    // a missing feature for now to do FIND:SKIP:PART with a negative skip."
     //
     // !!! ^-- is this comment still relevant?
     //
@@ -269,11 +269,11 @@ REBINT Find_Binstr_In_Binstr(
     Codepoint c1;  // c1 is the currently tested character for str1
     if (skip1 < 0) {
         //
-        // Note: `find/skip tail "abcdef" "def" -3` is "def", so first search
+        // Note: `find:skip tail "abcdef" "def" -3` is "def", so first search
         // position should be at the `d`.  We can reduce the amount of work
         // we do in the later loop checking against String_Len(str1) `len` by
         // up-front finding the earliest point we can look modulo `skip`,
-        // e.g. `find/skip tail "abcdef" "cdef" -2` should start at `c`.
+        // e.g. `find:skip tail "abcdef" "cdef" -2` should start at `c`.
         //
         do {
             index1 += skip1;
@@ -381,7 +381,7 @@ REBINT Find_Binstr_In_Binstr(
         index1 += skip1;
 
         if (skip1 < 0) {
-            if (index1 < 0)  // !!! What about /PART with negative skips?
+            if (index1 < 0)  // !!! What about :PART with negative skips?
                 return NOT_FOUND;
 
             if (is_1_str)
@@ -427,7 +427,7 @@ REBINT Find_Binstr_In_Binstr(
 // General purpose find a bitset char in a string or binary.  Returns NOT_FOUND
 // (-1) on failure.
 //
-// Supports: forward/reverse with skip, cased/uncase, Unicode/byte.
+// Supports: forward or reverse with skip, cased or uncased, Unicode or bytes.
 //
 // Skip can be set positive or negative (for reverse).
 //

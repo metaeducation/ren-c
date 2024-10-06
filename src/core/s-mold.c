@@ -37,7 +37,7 @@
 // with `mold next [a b c]`, because there is no natural representation for a
 // series that is not at its head.  These problems were addressed with
 // "construction syntax", e.g. #[word! "123"] or #[block! [a b c] 1].  But
-// to get this behavior MOLD/ALL had to be used, and it was implemented in
+// to get this behavior MOLD:ALL had to be used, and it was implemented in
 // something of an ad-hoc way.
 //
 // !!! These are some fuzzy concepts, and though the name MOLD may have made
@@ -134,7 +134,7 @@ void End_Mold_Core(REB_MOLD *mo, bool all)
 //
 //  Post_Mold: C
 //
-// For series that has an index, add the index for mold/all.
+// For series that has an index, add the index for mold:all
 // Add closing block.
 //
 void Post_Mold(REB_MOLD *mo, const Cell* v)

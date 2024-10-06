@@ -75,7 +75,7 @@ print "------ Generate tmp-natives.r"
 
 src-dir: join repo-dir %src/
 output-dir: join system.options.path %prep/
-mkdir/deep join output-dir %boot/
+mkdir:deep join output-dir %boot/
 
 all-protos: copy []
 
@@ -226,7 +226,7 @@ write-if-changed (join output-dir %boot/tmp-generic-names.r) unspaced [
 ; still have the individual specs for the natives on hand.  The generics need
 ; to be parsed.
 
-mkdir/deep (join output-dir %include/)
+mkdir:deep (join output-dir %include/)
 
 e-params: make-emitter "PARAM() and REFINE() Automatic Macros" (
     join output-dir %include/tmp-paramlists.h

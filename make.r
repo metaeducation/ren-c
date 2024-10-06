@@ -77,7 +77,7 @@ user-config: make object! load (join repo-dir %configs/default-config.r)
 ; COMMAND = WORD
 ; OPTION = 'NAME=VALUE' | 'NAME: VALUE'
 ;
-args: parse-args system.script.args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO:ARGS
 
 ; now args are ordered and separated by bar:
 ; [NAME VALUE ... '| COMMAND ...]
@@ -836,7 +836,7 @@ parse-ext-build-spec: func [
     if has ext 'options [
         ensure block! ext.options
         config: null  ; default for locals in modern Ren-C
-        parse3/match ext.options [
+        parse3:match ext.options [
             opt some [
                 word! block! opt text! config: group!
             ]
@@ -948,7 +948,7 @@ for-each 'x targets [
         append target-names (noquote x)
         append target-names '|
     ] else [
-        take/last target-names
+        take:last target-names
         append target-names newline
     ]
 ]
@@ -1103,14 +1103,14 @@ set-exec-path: func [
     tool [object!]
     path
 ][
-    switch type of path [  ; can't use SWITCH/TYPE in bootstrap
+    switch type of path [  ; can't use switch:type in bootstrap
         blank! [tool/check]
         file! text! [tool.exec-file: path]
         fail "Tool path has to be a file!"
     ]
 ]
 
-parse3/match user-config.toolset [
+parse3:match user-config.toolset [
     opt some [
         'gcc opt cc-exec: [file! | text! | blank!] (
             rebmake.default-compiler: rebmake.gcc
@@ -1339,16 +1339,16 @@ append app-config.ldflags spread switch user-config.static [
 
 ; Not quite sure what counts as system definitions (?)  Review.
 
-append app-config.definitions spread flatten/deep (
+append app-config.definitions spread flatten:deep (
     reduce bind (copy platform-config.definitions) platform-definitions
 )
 
-append app-config.cflags spread flatten/deep (  ; !!! can be string?
+append app-config.cflags spread flatten:deep (  ; !!! can be string?
     reduce bind copy platform-config.cflags compiler-flags
 )
 
 append app-config.libraries spread (
-    let value: flatten/deep reduce (
+    let value: flatten:deep reduce (
         bind copy platform-config.libraries platform-libraries
     )
     map-each 'w flatten value [
@@ -1358,7 +1358,7 @@ append app-config.libraries spread (
     ]
 )
 
-append app-config.ldflags spread flatten/deep (
+append app-config.ldflags spread flatten:deep (
     reduce bind copy platform-config.ldflags linker-flags
 )
 
@@ -1656,7 +1656,7 @@ calculate-sequence: func [
 ]
 
 for-each 'ext extensions [calculate-sequence ext]
-sort/compare extensions func [a b] [return a.sequence < b.sequence]
+sort:compare extensions func [a b] [return a.sequence < b.sequence]
 
 
 === "PRODUCE COMPILER/LINKER PROCESSABLE OBJECTS FROM EXTENSION SPECS" ===
@@ -1899,7 +1899,7 @@ prep: make rebmake.entry-class [
     target: 'prep ; phony target
 
     commands: collect [
-        keep: adapt get $keep [
+        keep: adapt keep/ [
             if block? value [
                 value: spaced value  ; old append semantics
             ] else [
@@ -1941,7 +1941,7 @@ prep: make rebmake.entry-class [
                 ; compile in const data for the header, and tables of API
                 ; functions to make available with `tcc_add_symbol()`)
                 ;
-                hook-script: file-to-local/full (
+                hook-script: file-to-local:full (
                     join repo-dir spread reduce [
                         "extensions/" (ext.directory) (ext.hook)
                     ]

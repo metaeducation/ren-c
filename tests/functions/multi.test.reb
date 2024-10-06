@@ -95,12 +95,12 @@
 
 [(
     all wrap [
-        'abc = [rest @]: transcode/next "abc def"
+        'abc = [rest @]: transcode:next "abc def"
         rest = " def"
     ]
 )(
     all wrap [
-        'abc = [rest @(void)]: transcode/next "abc def"
+        'abc = [rest @(void)]: transcode:next "abc def"
         rest = " def"
     ]
 )(
@@ -113,14 +113,14 @@
     (
         a: b: ~
         all [
-            (the '{ B}) = [^b ^a]: transcode/next "A B"
+            (the '{ B}) = [^b ^a]: transcode:next "A B"
             a = the 'A
             b = the '{ B}
         ]
     )(
         a: b: ~
         all [
-            (the '{ B}) = [^ ^a]: transcode/next "A B"
+            (the '{ B}) = [^ ^a]: transcode:next "A B"
             a = the 'A
             unset? $b
         ]
@@ -133,7 +133,7 @@
     (
         value: rest: ~
         all [
-            "fake" = [rest /value]: transcode/next "ab cd" then ["fake"]
+            "fake" = [rest /value]: transcode:next "ab cd" then ["fake"]
             value = null
             rest = "fake"
         ]
@@ -141,7 +141,7 @@
     (
         value: rest: ~
         all [
-            <item!> = [rest /value]: transcode/next "ab cd" then [<item!>]
+            <item!> = [rest /value]: transcode:next "ab cd" then [<item!>]
             value = null
             rest = <item!>
         ]
@@ -182,7 +182,7 @@
 ; You can use a @ without a variable to get a return result
 ;
 (all wrap [
-    " cd" = [@ item]: transcode/next "ab cd"
+    " cd" = [@ item]: transcode:next "ab cd"
     item = 'ab
 ])
 

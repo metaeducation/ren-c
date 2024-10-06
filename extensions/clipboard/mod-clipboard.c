@@ -129,7 +129,7 @@ static Bounce Clipboard_Actor(
         if (rebNot("text?", data))
             fail (Error_Invalid_Port_Arg_Raw(data));
 
-        // Handle /part refinement:
+        // Handle :PART refinement:
         //
         REBINT len = Cell_Series_Len_At(data);
         if (REF(part) and VAL_INT32(ARG(part)) < len)
@@ -159,7 +159,7 @@ static Bounce Clipboard_Actor(
         //
         Length check = rebSpellIntoWide(wide, num_wchars, data);
         assert(check == num_wchars);
-        assert(len <= check); // may only be writing /PART of the string
+        assert(len <= check);  // may only be writing :PART of the string
         UNUSED(check);
 
         GlobalUnlock(h);

@@ -140,8 +140,8 @@
 
 ; No quote levels is legal for QUOTE to add also, if /DEPTH is 0
 [
-    (<x> = quote/depth <x> 0)
-    ~expect-arg~ !! (void? quote/depth void 0)  ; can't quote voids, only meta
+    (<x> = quote:depth <x> 0)
+    ~expect-arg~ !! (void? quote:depth void 0)  ; can't quote voids, only meta
 ]
 
 ; low level "KIND"
@@ -168,8 +168,8 @@
 ((the '''a/b/c/d/e/f) = requote join the '''a/b/c '/d/e/f)
 
 [
-    ((the '[1]) = (requote parse3/match the '[1] [some integer!]))
-    (null = (requote parse3/match the '[a] [some integer!]))
+    ((the '[1]) = (requote parse3:match the '[1] [some integer!]))
+    (null = (requote parse3:match the '[a] [some integer!]))
 ]
 
 ; COPY should be implemented for all types, QUOTED! included.
@@ -253,12 +253,12 @@
     ] wrap [
         e1: e2: equal1: equal2: ~
 
-        lit-item: quote get/any $item
+        lit-item: quote get:any $item
 
         comment "Just testing for crashes; discards mold result"
         mold :lit-item
 
-        (e1: trap [equal1: equal? get/any $item get/any $item]) also [
+        (e1: trap [equal1: equal? get:any $item get:any $item]) also [
             e1.where: e1.near: null
         ]
         (e2: trap [equal2: :lit-item = :lit-item]) also [
@@ -267,7 +267,7 @@
         if e1 [e1.line: null]  ; ignore line difference (file should be same)
         if e2 [e2.line: null]
         if :e1 != :e2 [
-            print mold type of get/any $item
+            print mold type of get:any $item
             print mold e1
             print mold e2
             fail "no error parity"
@@ -285,12 +285,12 @@
     x: ~
     all [
         quasi? x: '~()~
-        quasi? get/any $x
+        quasi? get:any $x
     ]
 )
 
 [
-    (do "Rebol [] quit/value ['] = reduce ['']")
-    (do "Rebol [] quit/value [''] = reduce [''']")
-    (do "Rebol [] quit/value [' '' ''' ''''] = reduce ['' ''' '''' ''''']")
+    (do "Rebol [] quit:value ['] = reduce ['']")
+    (do "Rebol [] quit:value [''] = reduce [''']")
+    (do "Rebol [] quit:value [' '' ''' ''''] = reduce ['' ''' '''' ''''']")
 ]

@@ -31,7 +31,7 @@
     block: [1 2]
 
     [3 -1] = collect [
-        destructure/multi [1 2] wrap [
+        destructure:multi [1 2] wrap [
             x: [integer!] y: [&any-value?]
             m: [&any-value?] n: [integer!]
 

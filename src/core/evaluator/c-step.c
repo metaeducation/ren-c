@@ -922,7 +922,7 @@ Bounce Stepper_Executor(Level* L)
     // For now, we defer to what GET does.
     //
     // Tuples looking up to nothing (~ antiform) are handled consistently with
-    // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
+    // WORD! and GET-WORD!, and will error...directing you use GET:ANY if
     // fetching nothing is what you actually intended.
 
       case REB_TUPLE: {
@@ -1704,7 +1704,7 @@ Bounce Stepper_Executor(Level* L)
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.
     //
-    //    [pos val]: evaluate/step [1 + 2 * 3]
+    //    [pos val]: evaluate:step [1 + 2 * 3]
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,

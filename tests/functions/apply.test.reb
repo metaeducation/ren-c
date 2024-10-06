@@ -26,7 +26,7 @@
     ([a b c d e] = apply append/ [/value spread [d e] [a b c]])
 ]
 
-; Giving too many arguments is an error, unless you use /RELAX
+; Giving too many arguments is an error, unless you use :RELAX
 [
     ~apply-too-many~ !! (
         apply append/ [[a b c] spread [d e] [f g]]
@@ -35,8 +35,8 @@
         apply append/ [/value spread [d e] [a b c] [f g]]
     )
 
-    ([a b c d e] = apply/relax append/ [[a b c] spread [d e] [f g]])
-    ([a b c d e] = apply/relax append/ [/value spread [d e] [a b c] [f g]])
+    ([a b c d e] = apply:relax append/ [[a b c] spread [d e] [f g]])
+    ([a b c d e] = apply:relax append/ [/value spread [d e] [a b c] [f g]])
 ]
 
 ; You can use commas so long as they are at interstitial positions
@@ -136,7 +136,7 @@
 
     ; !!! More complex forms not implemented yet, just WORD!, but will be
     ;
-    ; ([a b c [e f] [e f]] = append/dup // [[a b c] [e f] 2])
+    ; ([a b c [e f] [e f]] = append:dup // [[a b c] [e f] 2])
 
     ~???~ !! (// [a b c])  ; must be used as infix operator
 

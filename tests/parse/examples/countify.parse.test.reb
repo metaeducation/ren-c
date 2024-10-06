@@ -11,12 +11,12 @@
             for-each 't things [
                 counts.(t): 0
                 keep t
-                keep compose/deep $(counts.(t): me + 1)
-                keep/line '|
+                keep compose:deep $(counts.(t): me + 1)
+                keep:line '|
             ]
             keep 'bypass
         ]
-        parse data (compose/deep [
+        parse data (compose:deep [
             opt some [(spread rules)]  ; could also be `opt some [rules]`
         ]) except [
             return <outlier>

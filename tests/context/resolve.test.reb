@@ -26,7 +26,7 @@
         <local> steps
     ][
         unmeta (
-            (non/meta [defaultable?] [steps @]: resolve target) else [
+            (non:meta [defaultable?] [steps @]: resolve target) else [
                 meta set steps eval branch
             ]
         )

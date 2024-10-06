@@ -285,7 +285,7 @@ int main(int argc, char *argv_ansi[])
     // kinds of errors.  Hence there is a /PROVOKE refinement to CONSOLE
     // which feeds it an instruction, as if the console gave it to itself.
 
-    Value* result = rebValue("console/provoke", rebR(code));
+    Value* result = rebValue("console:provoke", rebR(code));
 
     int exit_status = rebUnboxInteger(rebR(result));
 

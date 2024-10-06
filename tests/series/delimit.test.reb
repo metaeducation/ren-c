@@ -72,19 +72,19 @@
     )
 ]
 
-; DELIMIT/HEAD/TAIL
+; DELIMIT:HEAD:TAIL
 [
-    ("a,b,c," = delimit/tail "," ["a" "b" "c"])
-    ("a," = delimit/tail "," "a")
+    ("a,b,c," = delimit:tail "," ["a" "b" "c"])
+    ("a," = delimit:tail "," "a")
 
-    (",a,b,c" = delimit/head "," ["a" "b" "c"])
-    (",a" = delimit/head "," "a")
+    (",a,b,c" = delimit:head "," ["a" "b" "c"])
+    (",a" = delimit:head "," "a")
 
-    (",a,b,c," = delimit/head/tail "," ["a" "b" "c"])
-    (",a," = delimit/head/tail "," "a")
+    (",a,b,c," = delimit:head:tail "," ["a" "b" "c"])
+    (",a," = delimit:head:tail "," "a")
 
-    (null = delimit/head/tail "," [void])
-    (null = delimit/head/tail "," void)
+    (null = delimit:head:tail "," [void])
+    (null = delimit:head:tail "," void)
 ]
 
 ; BLOCK!s to subvert delimiting (works one level deep)

@@ -632,7 +632,7 @@ DECLARE_NATIVE(let)
 
     //=//// GENERATE NEW BLOCK IF QUOTED? OR GROUP! ELEMENTS ///////////////=//
 
-    // Writes rebound copy of `vars` to SPARE if it's a SET-WORD!/SET-BLOCK!
+    // Writes rebound copy of `vars` to SPARE if it's a SET-WORD! or SET-BLOCK!
     // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
     // just writes the rebound copy into the OUT cell.
 
@@ -653,7 +653,7 @@ DECLARE_NATIVE(let)
         else
             where = stable_OUT;
 
-        Copy_Cell_Header(where, vars);  // keep quasi state and word/setword
+        Copy_Cell_Header(where, vars);  // keep quasi state and word or setword
         Tweak_Cell_Word_Symbol(where, symbol);
         Tweak_Cell_Word_Index(where, INDEX_PATCHED);
         BINDING(where) = bindings;

@@ -48,7 +48,7 @@ transcode-header: func [
     <local> key hdr rest line
 ][
     line: 1
-    [rest /key]: transcode/next // [  ; "REBOL"
+    [rest /key]: transcode:next // [  ; "REBOL"
         data
         /file file
         /line $line
@@ -58,7 +58,7 @@ transcode-header: func [
     if not rest [
         return pack [null null null]  ; !!! rethink interface, impure null
     ]
-    [rest /hdr]: transcode/next // [ ; BLOCK!
+    [rest /hdr]: transcode:next // [ ; BLOCK!
         rest
         /file file
         /line $line
@@ -126,7 +126,7 @@ load-header: func [
 
     === TRY TO MATCH PATTERN OF "REBOL [...]" ===
 
-    let [hdr rest 'line]: transcode-header/file data file except e -> [
+    let [hdr rest 'line]: transcode-header:file data file except e -> [
         return raise e  ; TRANSCODE choked, wasn't valid at all
     ]
 
@@ -143,11 +143,11 @@ load-header: func [
         return pack [null body line final]  ; !!! impure null
     ]
 
-    hdr: construct/with (inert hdr) system.standard.header except [
+    hdr: construct:with (inert hdr) system.standard.header except [
         return raise "bad-header"
     ]
 
-    if not match/meta [~null~ block!] hdr.options [
+    if not match:meta [~null~ block!] hdr.options [
         return raise "bad-header"
     ]
 
@@ -189,14 +189,14 @@ load-header: func [
                     ; you know the kind of compression and are looking
                     ; for its signature (gzip is 0x1f8b)
                     ;
-                    rest: gunzip/part rest end
+                    rest: gunzip:part rest end
                 ]
                 not error? sys.util/rescue [  ; e.g. not error
                     ; BINARY! literal ("'SCRIPT encoded").  Since it
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.
                     ;
-                    [rest binary]: transcode/next/file/line rest file $line
+                    [rest binary]: transcode:next:file:line rest file $line
                     rest: gunzip binary
                 ]
             ]
@@ -285,7 +285,7 @@ load: func [
 
     ensure [text! binary!] data
 
-    [header data line]: load-header/file data file except e -> [return raise e]
+    [header data line]: load-header:file data file except e -> [return raise e]
 
     if word? header [cause-error 'syntax header source]
 
@@ -296,7 +296,7 @@ load: func [
 
     if not block? data [
         assert [match [binary! text!] data]  ; UTF-8
-        data: (transcode/file/line data file $line) except e -> [
+        data: (transcode:file:line data file $line) except e -> [
             return raise e
         ]
     ]
@@ -463,7 +463,7 @@ import*: func [
         let name: (adjunct-of source).name else [
             return pack [source 'nameless]  ; just RESOLVE to get variables
         ]
-        let mod: (select/skip system.modules name 2) else [
+        let mod: (select:skip system.modules name 2) else [
             append system.modules spread :[name source]  ; not in mod list, add
             return pack [source 'registered]
         ]
@@ -521,7 +521,7 @@ import*: func [
         dir: as text! source
         let [before file]: find-last dir slash
         assert [before]
-        dir: as (type of source) copy/part dir file
+        dir: as (type of source) copy:part dir file
     ]
 
     if url? source [
@@ -538,17 +538,17 @@ import*: func [
     ; !!! Noticing changes would be extremely helpful by not forcing you to
     ; quit and restart to see module changes.  This suggests storing a hash.
 
-    let file: match [file! url!] source  ; used for file/line info during scan
+    let file: match [file! url!] source  ; for file and line info during scan
 
     let data: match [binary! text!] source else [read source]
 
-    let [hdr code line]: load-header/file data file
+    let [hdr code line]: load-header:file data file
     if not hdr [
         fail ["IMPORT and DO require a header on:" (any [file, "<source>"])]
     ]
 
     let name: select maybe hdr 'name
-    (select/skip system.modules maybe name 2) then cached -> [
+    (select:skip system.modules maybe name 2) then cached -> [
         return pack [cached 'cached]
     ]
 
@@ -623,9 +623,9 @@ import*: func [
     ; that happened after that...
 
     if not block? code [  ; review assumption of lib here (header guided?)
-        code: inside lib transcode/file/line code file line
+        code: inside lib transcode:file:line code file line
     ]
-    let [mod ^product']: module/into hdr code into
+    let [mod ^product']: module:into hdr code into
 
     ensure module! mod
 
@@ -686,7 +686,7 @@ export*: func [
     items: what
 
     while [not tail? items] [
-        val: get/any inside items word: match word! items.1 else [
+        val: get:any inside items word: match word! items.1 else [
             fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]
         ; !!! notation for exporting antiforms?

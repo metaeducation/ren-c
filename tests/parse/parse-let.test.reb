@@ -47,6 +47,6 @@
            ]
         ]
 
-        parse x: copy/deep [(-hi-there- 1 2 3 (hello 2 3 4))] function-rule
+        parse x: copy:deep [(-hi-there- 1 2 3 (hello 2 3 4))] function-rule
     ]
 )

@@ -123,9 +123,9 @@ REBTYPE(Blank)
         UNUSED(ARG(location));
         return RAISE(Error_Bad_Pick_Raw(ARG(picker))); }
 
-      case SYM_COPY: { // since `copy/deep [1 _ 2]` is legal, allow `copy _`
+      case SYM_COPY: {  // since (copy:deep [1 _ 2]) is legal, allow (copy _)
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(ARG(value)); // already referenced as `unit`
+        UNUSED(ARG(value));
 
         if (REF(part))
             fail (Error_Bad_Refines_Raw());

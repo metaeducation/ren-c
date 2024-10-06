@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-write %hello-tcc.c trim/auto {
+write %hello-tcc.c trim:auto {
     /*
      * hello-tcc.c
      * Simple test of compiling a file from disk w/TCC extension

@@ -11,7 +11,7 @@
         body [block!]
         <local> context
     ][
-        [vars context]: wrap/set compose vars
+        [vars context]: wrap:set compose vars
         body: overbind context body
         return while [(not empty? maybe blk1) or (not empty? maybe blk2)] [
             (vars): pack [(try first maybe blk1) (try first maybe blk2)]
@@ -39,7 +39,7 @@
     (^null = ^ for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
     ('~[~null~]~ = ^ for-parallel [x y] [a b] [1 2] [null])
 
-    ('z = for-parallel [x y] [a b] [1 2] [if x = 'b [continue/with 'z]])
+    ('z = for-parallel [x y] [a b] [1 2] [if x = 'b [continue:with 'z]])
     ([a b 2] = collect [
         for-parallel [x y] [a b] [1 2] [keep x if y = '1 [continue] keep y]
     ])

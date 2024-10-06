@@ -577,7 +577,7 @@ https://github.com/metaeducation/ren-c/issues/939
         out == res
     )
 
-    (take/last append str "¿", ok)
+    (take:last append str "¿", ok)
 
     (
         c: ~

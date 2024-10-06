@@ -112,7 +112,7 @@
 (
     o: make object! []
     append o 'self
-    '~ = ^ get/any @o.self
+    '~ = ^ get:any @o.self
 )(
     o: make object! []
     append o spread [self: 1]
@@ -160,7 +160,7 @@
                 (as word! unspaced ["meth-" n]): meth [] (collect [
                     keep 'return
                     count-up 'i n [
-                        keep spread compose/deep [
+                        keep spread compose:deep [
                             .(as word! unspaced ["var-" i]) (if i <> n ['+])
                         ]
                     ]

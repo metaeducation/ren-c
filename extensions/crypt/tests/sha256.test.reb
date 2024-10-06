@@ -58,16 +58,16 @@
             key: sha256 key
         ]
         if blocksize > length of key [
-            insert/dup tail key #{00} (blocksize - length of key)
+            insert:dup tail key #{00} (blocksize - length of key)
         ]
-        insert/dup let opad: copy #{} #{5C} blocksize
-        insert/dup let ipad: copy #{} #{36} blocksize
+        insert:dup let opad: copy #{} #{5C} blocksize
+        insert:dup let ipad: copy #{} #{36} blocksize
         let o_key_pad: opad xor+ key
         let i_key_pad: ipad xor+ key
         return sha256 join o_key_pad (sha256 join i_key_pad message)
     ]
 
-    random/seed "Deterministic Behavior Desired"
+    random:seed "Deterministic Behavior Desired"
     repeat 100 [
         data-len: random 1024
         data: make binary! data-len

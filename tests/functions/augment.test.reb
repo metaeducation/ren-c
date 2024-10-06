@@ -27,7 +27,7 @@
     ]
     all [
         1020 = mix 1000 20
-        980 = mix/sub 1000 20
+        980 = mix:sub 1000 20
     ]
 )
 
@@ -44,8 +44,8 @@
     ok)
 
     (1020 = switch-d 'b ['b [1000 + 20]])
-    (1020 = switch-d/default 'b ['b [1000 + 20]] [300 + 4])
-    (304 = switch-d/default 'j ['b [1000 + 20]] [300 + 4])
+    (1020 = switch-d:default 'b ['b [1000 + 20]] [300 + 4])
+    (304 = switch-d:default 'j ['b [1000 + 20]] [300 + 4])
 ]
 
 ; Augmenting a specialized function
@@ -69,7 +69,7 @@
 
     all [
         10 = two-a-plus-six-plus-four-c 2
-        50 = two-a-plus-six-plus-four-c/c 2 10
+        50 = two-a-plus-six-plus-four-c:c 2 10
     ]
 )
 
@@ -77,7 +77,7 @@
 [(
     all wrap [
         orig: func ["description" a "a" /b "b"] [return <unused>]
-        aug: meta/lite augment orig/ [c "c" /d "d"]
+        aug: meta:lite augment orig/ [c "c" /d "d"]
         if m: adjunct-of aug [
             m.description = null  ; description not inherited ATM
         ]

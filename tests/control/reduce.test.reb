@@ -42,7 +42,7 @@
     [a b [c d] c d e f] = flatten [[a] [b [c d]] c d [e f]]
 )
 (
-    [a b c d c d e f] = flatten/deep [[a] [b [c d]] c d [e f]]
+    [a b c d c d e f] = flatten:deep [[a] [b [c d]] c d [e f]]
 )
 
 ; Invisibles tests
@@ -82,34 +82,34 @@
     ])
 ]
 
-~expect-arg~ !! (reduce/predicate [null] cascade [null?/ non/])
+~expect-arg~ !! (reduce:predicate [null] cascade [null?/ non/])
 
 ; Voids are offered, but omitted if predicate doesn't take them.
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
 ;
-([3 ~void~ 300] = reduce/predicate [
+([3 ~void~ 300] = reduce:predicate [
     1 + 2 if null [10 + 20] 100 + 200
 ] reify/)
 
-([-3 -300] = reduce/predicate [1 + 2 if null [10 + 20] 100 + 200] negate/)
-([3 300] = reduce/predicate [1 + 2 if null [10 + 20] 100 + 200] maybe/)
+([-3 -300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] negate/)
+([3 300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] maybe/)
 
-([3 ~null~ 300] = reduce/predicate [1 + 2 if ok [null] 100 + 200] reify/)
-([3 300] = reduce/predicate [1 + 2 if ok [null] 100 + 200] maybe/)
+([3 ~null~ 300] = reduce:predicate [1 + 2 if ok [null] 100 + 200] reify/)
+([3 300] = reduce:predicate [1 + 2 if ok [null] 100 + 200] maybe/)
 
-([3 ~null~ 300] = reduce/predicate [1 + 2 null 100 + 200] reify/)
-([3 300] = reduce/predicate [1 + 2 null 100 + 200] maybe/)
+([3 ~null~ 300] = reduce:predicate [1 + 2 null 100 + 200] reify/)
+([3 300] = reduce:predicate [1 + 2 null 100 + 200] maybe/)
 
 ; REDUCE* is a specialization of REDUCE with MAYBE
 ;
 ([3 300] = reduce* [1 + 2 null 100 + 200])
 
-~bad-antiform~ !! (reduce/predicate [1 + 2 3 + 4] func [x] [x * 10])
-([30 70] = reduce/predicate [1 + 2 3 + 4] func [x] [return x * 10])
+~bad-antiform~ !! (reduce:predicate [1 + 2 3 + 4] func [x] [x * 10])
+([30 70] = reduce:predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
-([~okay~ ~null~] = reduce/predicate [2 + 2 3 + 4] cascade [even?/ reify/])
+([~okay~ ~null~] = reduce:predicate [2 + 2 3 + 4] cascade [even?/ reify/])
 
-([true false] = reduce/predicate [2 + 2 3 + 4] cascade [even?/ boolean/])
+([true false] = reduce:predicate [2 + 2 3 + 4] cascade [even?/ boolean/])
 
 
 ; REDUCE-EACH is a variant which lets you intercept the values, and thus

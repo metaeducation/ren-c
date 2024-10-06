@@ -26,7 +26,7 @@
 ]
 
 (a: 1 reeval reify func [return: [integer!]] [set $a return 2] a = 1)
-(a: 1 run func [return: [integer!]] [set/any $a return 2] a = 1)
+(a: 1 run func [return: [integer!]] [set:any $a return 2] a = 1)
 
 [#1509 ; the "result" of return should not be passable to functions
     (a: 1 reeval reify func [return: [integer!]] [a: error? return 2] a = 1)
@@ -64,7 +64,7 @@
     a = 1
 )]
 (a: 1 reeval reify func [return: [~]] [set $a return ~] :a =? 1)
-(a: 1 reeval reify func [return: [~]] [set/any $a return ~] :a =? 1)
+(a: 1 reeval reify func [return: [~]] [set:any $a return ~] :a =? 1)
 [#1509 (  ; the "result" of a return should not be passable to functions
     a: 1
     run func [return: [~]] [a: error? return ~]
@@ -81,7 +81,7 @@
 
 ; === TAIL CALLS ===
 
-; RETURN/RUN with current values of frame arguments
+; RETURN:RUN with current values of frame arguments
 (
     foo: func [return: [tag!] n <local> clear-me] [
         assert [unset? $clear-me]
@@ -90,13 +90,13 @@
         ]
         n: n - 1
         clear-me: #some-junk
-        return/run <redo>
+        return:run <redo>
     ]
 
     <success> = foo 100
 )
 
-; RETURN/RUN with a new call (doesn't reuse arg cells, because it needs the
+; RETURN:RUN with a new call (doesn't reuse arg cells, because it needs the
 ; old values while calculating the new ones)
 (
     foo: func [return: [tag!] n <local> clear-me] [
@@ -105,17 +105,17 @@
            return <success>
         ]
         clear-me: #some-junk
-        return/run :foo n - 1
+        return:run :foo n - 1
     ]
 
     <success> = foo 100
 )
 
-; RETURN/RUN can call any function, not just the one you're returning from
+; RETURN:RUN can call any function, not just the one you're returning from
 ; (But the savings are less, as it's only reusing the Level structure)
 (
     foo: func [return: [tag!] block] [
-        return/run :append block [d e]
+        return:run :append block [d e]
     ]
 
     [a b c [d e]] = foo [a b c]
@@ -131,7 +131,7 @@
         ]
         n: n - 1
         i: #some-junk  ; type check should fail on redo
-        return/run <redo>
+        return:run <redo>
     ]
 
     foo 100 1020
@@ -145,7 +145,7 @@
             return <success>
         ]
         n: 0
-        return/run <redo>  ; should redo INNER, not outer
+        return:run <redo>  ; should redo INNER, not outer
     ]
 
     outer: adapt inner/ [

@@ -29,7 +29,7 @@ make-port*: func [
     ; The first job is to identify the scheme specified:
 
     let name
-    switch/type spec [
+    switch:type spec [
         file! [
             name: either (dir? spec) 'dir 'file
             spec: make object! [

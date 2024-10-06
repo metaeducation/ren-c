@@ -382,17 +382,17 @@
 
 ; PREDICATES
 
-(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] even?/)
-(10 = any/predicate [1 + 2 3 + 4 5 + 5 6 + 7] cascade [odd?/ not/])
-(10 = any/predicate [1 + 2, comment "Hello", 3 + 4, 5 + 5, 6 + 7] even?/)
+(10 = any:predicate [1 + 2 3 + 4 5 + 5 6 + 7] even?/)
+(10 = any:predicate [1 + 2 3 + 4 5 + 5 6 + 7] cascade [odd?/ not/])
+(10 = any:predicate [1 + 2, comment "Hello", 3 + 4, 5 + 5, 6 + 7] even?/)
 (10 = apply any/ [
     [1 + 2, 3 + 4 comment "No Comma" 5 + 5, 6 + 7]
     /predicate cascade [odd?/ not/]
 ])
 
-('~[~null~]~ = ^ any/predicate [1 null 2] :not)
-('~[~null~]~ = ^ any/predicate [1 null 2] :not)
-("this is why" = (any/predicate [1 null 2] :not then ["this is why"]))
+('~[~null~]~ = ^ any:predicate [1 null 2] :not)
+('~[~null~]~ = ^ any:predicate [1 null 2] :not)
+("this is why" = (any:predicate [1 null 2] :not then ["this is why"]))
 
 (10 = any [(10 elide "stale")])
 

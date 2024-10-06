@@ -9,6 +9,6 @@
     ~bad-compression~ !! (inflate #{AAAAAAAAAAAAAAAAAAAA})
 ]
 
-~bad-parameter~ !! (inflate/adler #{AAAAAAAAAAAAAAAAAAAA})
+~bad-parameter~ !! (inflate:adler #{AAAAAAAAAAAAAAAAAAAA})
 
 ~???~ !! (gunzip #{AAAAAAAAAAAAAAAAAAAA})

@@ -106,7 +106,7 @@ join: func [
         ] else [
             base: copy []
         ]
-        set/any $value spread value  ; act like a splice
+        set:any $value spread value  ; act like a splice
     ] else [
         type: type of base
     ]
@@ -119,11 +119,11 @@ join: func [
     ; the append of two slashes in a row.  That is done by the MAKE-FILE code,
     ; and should be reviewed if it belongs here too.
     ;
-    if find/case reduce [url! issue! text! file! email! tag!] type [
+    if find:case reduce [url! issue! text! file! email! tag!] type [
         return as type append (to text! base) :value
     ]
 
-    if find/case reduce [
+    if find:case reduce [
         block! the-block! meta-block!
         group! the-group! meta-group!
     ] type [
@@ -131,10 +131,10 @@ join: func [
     ]
 
     let sep
-    if find/case reduce [path! the-path! meta-path! type-path!] type [
+    if find:case reduce [path! the-path! meta-path! type-path!] type [
         sep: '/
     ] else [
-        assert [find/case reduce [
+        assert [find:case reduce [
             tuple! the-tuple! meta-tuple! type-tuple!
         ] type]
         sep: '.
@@ -168,12 +168,12 @@ join: func [
                     ]
                 ]
                 (not blank? last base) and (not blank? first item) [
-                    fail/blame [
+                    fail:blame [
                         "Elements must be separated with" sep
                     ] $item
                 ]
                 (blank? last base) and (not blank? first item) [
-                    take/last base
+                    take:last base
                     append base spread as block! item
                 ]
             ] else [
@@ -187,7 +187,7 @@ join: func [
             case [
                 empty? base [append base item]
                 blank? last base [change back tail base item]
-                fail/blame ["Elements must be separated with" sep] $item
+                fail:blame ["Elements must be separated with" sep] $item
             ]
         ]
     ]
@@ -262,7 +262,7 @@ trim: func [
         any-list? series [
             if any [auto lines with] [
                 ;
-                ; Note: /WITH might be able to work, e.g. if it were a MAP!
+                ; Note: :WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
                 fail 'core/bad-refines
@@ -276,7 +276,7 @@ trim: func [
 
         any-string? series [
             ; These are errors raised by the C version of TRIM in R3-Alpha.
-            ; One could question why /with implies /all.
+            ; One could question why :with implies :all.
             ;
             if any [
                 all [
@@ -328,7 +328,7 @@ trim: func [
         return series
     ]
 
-    case/all [
+    case:all [
         head_TRIM [
             parse3 series [remove [opt some rule] to <end>]
         ]
@@ -348,7 +348,7 @@ trim: func [
     if lines [
         parse3 series [opt some [change [some rule] (space) one | one]]
         if space = first series [take series]
-        if space = last series [take/last series]
+        if space = last series [take:last series]
         return series
     ]
 
@@ -361,7 +361,7 @@ trim: func [
     let e
     if auto [
         parse3 series [
-            ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
+            ; Don't count empty lines, (e.g. trim:auto {^/^/^/    asdf})
             opt remove some LF
 
             (indent: 0)

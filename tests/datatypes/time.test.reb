@@ -67,17 +67,17 @@
 ; !!! There's no particularly good reason for these to be refinements of NOW,
 ; as it's just reproducing the interface of the DATE! datatype.
 [
-    (integer? now/year)
-    (integer? now/month)
-    (integer? now/day)
-    (time? now/time)
-    (time? now/zone)
-    (date? now/date)
-    (integer? now/weekday)
-    (integer? now/yearday)
-    (date? now/precise)
-    (date? now/utc)
-    (date? now/local)
+    (integer? now:year)
+    (integer? now:month)
+    (integer? now:day)
+    (time? now:time)
+    (time? now:zone)
+    (date? now:date)
+    (integer? now:weekday)
+    (integer? now:yearday)
+    (date? now:precise)
+    (date? now:utc)
+    (date? now:local)
 ]
 
 ; Mutating times should write back to the container, which is where the

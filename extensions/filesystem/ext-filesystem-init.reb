@@ -19,7 +19,7 @@ sys.util/make-scheme [
     ]
 ]
 
-sys.util/make-scheme/with [
+sys.util/make-scheme:with [
     title: "File Directory Access"
     name: 'dir
     actor: get-dir-actor-handle

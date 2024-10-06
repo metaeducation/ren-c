@@ -24,11 +24,11 @@
     179    181    191    193    197    199    211    223    227    229
     233    239    241    251]
 
-    random/seed "Deterministic!"
+    random:seed "Deterministic!"
     repeat 1000 [
         until [
-            g: random/only byte-primes
-            p: random/only byte-primes
+            g: random:only byte-primes
+            p: random:only byte-primes
             not any [
                p = 2
                p = 3

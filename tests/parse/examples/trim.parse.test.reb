@@ -19,7 +19,7 @@ utrim: func [
     /auto "Auto indents lines relative to first line"
     /lines "Removes all line breaks and extra spaces"
     /all "Removes all whitespace"
-    /with "Same as /all, but removes specific characters"
+    /with "Same as :ALL but removes specific characters"
         [char? text! binary! integer! block! bitset!]
 ][
     let tail_TRIM: :tail
@@ -55,7 +55,7 @@ utrim: func [
         any-list? series [
             if any [auto lines with] [
                 ;
-                ; Note: /WITH might be able to work, e.g. if it were a MAP!
+                ; Note: :WITH might be able to work, e.g. if it were a MAP!
                 ; or BLOCK! of values to remove.
                 ;
                 fail 'core/bad-refines
@@ -69,7 +69,7 @@ utrim: func [
 
         any-string? series [
             ; These are errors raised by the C version of utrim in R3-Alpha.
-            ; One could question why /with implies /all.
+            ; One could question why :WITH implies :ALL
             ;
             if any [
                 all [
@@ -121,7 +121,7 @@ utrim: func [
         return series
     ]
 
-    case/all [
+    case:all [
         head_TRIM [
             parse series [opt remove [some rule] to <end>]
         ]
@@ -141,7 +141,7 @@ utrim: func [
     if lines [
         parse series [opt some [change [some rule] (space) <next> | <next>]]
         if space = first series [take series]
-        if space = last series [take/last series]
+        if space = last series [take:last series]
         return series
     ]
 
@@ -189,48 +189,48 @@ ok)
     ; refinement order
     #83
     (strict-equal?
-        utrim/all/with "a" "a"
-        utrim/with/all "a" "a"
+        utrim:all:with "a" "a"
+        utrim:with:all "a" "a"
     )
 
     #1948
     ("foo^/" = utrim "  foo ^/")
 
     (#{BFD3} = utrim #{0000BFD30000})
-    (#{10200304} = utrim/with #{AEAEAE10200304BDBDBD} #{AEBD})
+    (#{10200304} = utrim:with #{AEAEAE10200304BDBDBD} #{AEBD})
 
     (did s: copy "")
 
-    ~bad-refines~ !! (utrim/auto/head s)
-    ~bad-refines~ !! (utrim/auto/tail s)
-    ~bad-refines~ !! (utrim/auto/lines s)
-    ~bad-refines~ !! (utrim/auto/all s)
-    ~bad-refines~ !! (utrim/all/head s)
-    ~bad-refines~ !! (utrim/all/tail s)
-    ~bad-refines~ !! (utrim/all/lines s)
-    ~bad-refines~ !! (utrim/auto/with s {*})
-    ~bad-refines~ !! (utrim/head/with s {*})
-    ~bad-refines~ !! (utrim/tail/with s {*})
-    ~bad-refines~ !! (utrim/lines/with s {*})
+    ~bad-refines~ !! (utrim:auto:head s)
+    ~bad-refines~ !! (utrim:auto:tail s)
+    ~bad-refines~ !! (utrim:auto:lines s)
+    ~bad-refines~ !! (utrim:auto:all s)
+    ~bad-refines~ !! (utrim:all:head s)
+    ~bad-refines~ !! (utrim:all:tail s)
+    ~bad-refines~ !! (utrim:all:lines s)
+    ~bad-refines~ !! (utrim:auto:with s {*})
+    ~bad-refines~ !! (utrim:head:with s {*})
+    ~bad-refines~ !! (utrim:tail:with s {*})
+    ~bad-refines~ !! (utrim:lines:with s {*})
 
     (s = {})
 
-    ("a  ^/  b  " = utrim/head "  a  ^/  b  ")
-    ("  a  ^/  b" = utrim/tail "  a  ^/  b  ")
+    ("a  ^/  b  " = utrim:head "  a  ^/  b  ")
+    ("  a  ^/  b" = utrim:tail "  a  ^/  b  ")
     ("foo^/^/bar^/" = utrim "  foo  ^/ ^/  bar  ^/  ^/  ")
-    ("foobar" = utrim/all "  foo  ^/ ^/  bar  ^/  ^/  ")
-    ("foo bar" = utrim/lines "  foo  ^/ ^/  bar  ^/  ^/  ")
-    ("x^/" = utrim/auto "^/  ^/x^/")
-    ("x^/" = utrim/auto "  ^/x^/")
-    ("x^/ y^/ z^/" = utrim/auto "  x^/ y^/   z^/")
-    ("x^/y" = utrim/auto "^/^/  x^/  y")
+    ("foobar" = utrim:all "  foo  ^/ ^/  bar  ^/  ^/  ")
+    ("foo bar" = utrim:lines "  foo  ^/ ^/  bar  ^/  ^/  ")
+    ("x^/" = utrim:auto "^/  ^/x^/")
+    ("x^/" = utrim:auto "  ^/x^/")
+    ("x^/ y^/ z^/" = utrim:auto "  x^/ y^/   z^/")
+    ("x^/y" = utrim:auto "^/^/  x^/  y")
 
     ([a b] = utrim [a b])
     ([a b] = utrim [a b _])
     ([a b] = utrim [_ a b _])
     ([a _ b] = utrim [_ a _ b _])
-    ([a b] = utrim/all [_ a _ b _])
-    ([_ _ a _ b] = utrim/tail [_ _ a _ b _ _])
-    ([a _ b _ _] = utrim/head [_ _ a _ b _ _])
-    ([a _ b] = utrim/head/tail [_ _ a _ b _ _])
+    ([a b] = utrim:all [_ a _ b _])
+    ([_ _ a _ b] = utrim:tail [_ _ a _ b _ _])
+    ([a _ b _ _] = utrim:head [_ _ a _ b _ _])
+    ([a _ b] = utrim:head:tail [_ _ a _ b _ _])
 ]

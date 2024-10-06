@@ -517,7 +517,7 @@ bool Trampoline_Throws(Atom* out, Level* root)
 //  Startup_Signals: C
 //
 // When allocations are performed, they may set flags for signaling the need
-// for a recycle/etc.  Therefore the bits of trampoline state related to
+// for a recycle etc.  Therefore the bits of trampoline state related to
 // evaluation counting and signal management must be initialized very early.
 //
 void Startup_Signals(void)

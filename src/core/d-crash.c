@@ -228,7 +228,7 @@ DECLARE_NATIVE(panic)
 
     // panic() on the string value itself will report information about the
     // string cell...but panic() on UTF-8 character data assumes you mean to
-    // report the contained message.  PANIC/VALUE for the latter intent.
+    // report the contained message.  PANIC:VALUE for the latter intent.
 
     const void *p;
 

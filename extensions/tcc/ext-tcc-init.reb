@@ -64,7 +64,7 @@ compile: func [
     ; being available in some builds.  It gets added to lib but is somehow not
     ; available here.  This is a bug to look into.
     ;
-    get-env: runs $lib/get-env
+    get-env: lib.get-env/
 
     if 0 = length of compilables [
         fail ["COMPILABLES must have at least one element"]
@@ -112,9 +112,9 @@ compile: func [
 
         if block? var [  ; at present, this always means multiple paths
             for-each 'item compose [(arg)] [
-                switch/type item [
+                switch:type item [
                     text! []
-                    file! [item: file-to-local/full item]
+                    file! [item: file-to-local:full item]
                     fail ["Invalid item type for" key "-" type of item]
                 ]
 
@@ -135,7 +135,7 @@ compile: func [
                     config.output-type: arg
                 ]
                 'output-file 'runtime-path 'librebol-path [
-                    config.(key): switch/type arg [
+                    config.(key): switch:type arg [
                         file! [arg]
                         text! [local-to-file arg]
                         fail [key "must be TEXT! or FILE!"]
@@ -152,7 +152,7 @@ compile: func [
         if not config.output-file [
             fail "If OUTPUT-TYPE is not MEMORY then OUTPUT-FILE must be set"
         ]
-        config.output-file: my file-to-local/full
+        config.output-file: my file-to-local:full
     ]
 
     ; !!! The pending concept is that there are embedded files in the TCC
@@ -211,12 +211,12 @@ compile: func [
 
     if 3 = fourth system.version [  ; e.g. Windows (32-bit or 64-bit)
         if empty? config.include-path [
-            append config.include-path file-to-local/full make-file [
+            append config.include-path file-to-local:full make-file [
                 (config.runtime-path) win32/include /
             ]
         ]
         if empty? config.library-path [
-            append config.library-path file-to-local/full make-file [
+            append config.library-path file-to-local:full make-file [
                 (config.runtime-path) win32/library /
             ]
         ]
@@ -226,7 +226,7 @@ compile: func [
         ; that TCC can find %libtcc1.a.  So adding the runtime path as a
         ; normal library directory.
         ;
-        insert config.library-path file-to-local/full config.runtime-path
+        insert config.library-path file-to-local:full config.runtime-path
     ]
 
     ; Note: The few header files in %tcc/include/ must out-prioritize the ones
@@ -236,7 +236,7 @@ compile: func [
     ;
     ; https://stackoverflow.com/questions/53154898/
 
-    insert config.include-path file-to-local/full make-file [
+    insert config.include-path file-to-local:full make-file [
         (config.runtime-path) include /
     ]
 
@@ -324,7 +324,7 @@ compile: func [
     compilables: map-each 'item compilables [
         if match [word! path!] :item [item: get item]
 
-        switch/type :item [
+        switch:type :item [
             action?! [
                 use-librebol: 'yes
                 unrun :item
@@ -340,7 +340,7 @@ compile: func [
     ]
 
     if use-librebol [
-        insert compilables trim/auto mutable {
+        insert compilables trim:auto mutable {
             /* TCC's override of <stddef.h> defines int64_t in a way that
              * might not be compatible with glibc's <stdint.h> (which at time
              * of writing defines it as a `__int64_t`.)  You might get:
@@ -382,7 +382,7 @@ compile: func [
             ; Needs to go before the librebol inclusion that was put at the
             ; head of the compilables above!
             ;
-            insert compilables trim/auto mutable {#define LIBREBOL_NO_STDLIB}
+            insert compilables trim:auto mutable {#define LIBREBOL_NO_STDLIB}
 
             ; TCC adds -lc (by calling `tcc_add_library_err(s1, "c");`) by
             ; default during link, unless you override it with this switch.
@@ -405,7 +405,7 @@ compile: func [
 
         ; We are going to test for %rebol.h in the path, so need a FILE!
         ;
-        switch/type config.librebol-path [
+        switch:type config.librebol-path [
             text! [config.librebol-path: my local-to-file]
             file! []
             null?! [
@@ -439,8 +439,8 @@ compile: func [
     ; Having paths as Rebol FILE! is useful for doing work, but the TCC calls
     ; want local paths.  Convert.
     ;
-    config.runtime-path: my file-to-local/full
-    config.librebol-path: '~taken-into-account~  ; COMPILE* does not read
+    config.runtime-path: my file-to-local:full
+    config.librebol-path: ~<taken into account>~  ; COMPILE* does not read
 
     let result: applique :compile* [
         compilables: compilables
@@ -579,11 +579,11 @@ c99: func [
             )
         ]
 
-        parse/case command [some [rule [some space | <end>]]] except [
+        parse:case command [some [rule [some space | <end>]]] except [
             fail [
                 elide trunc: ~
                 "Could not parse C99 command line at:"
-                append [@ trunc]: (mold/limit last-pos 40) if trunc ["..."]
+                append [@ trunc]: (mold:limit last-pos 40) if trunc ["..."]
             ]
         ]
     ]

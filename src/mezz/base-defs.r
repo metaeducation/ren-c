@@ -55,11 +55,11 @@ probe: func* [
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 ;
-did*: get $did/decay
-didn't*: get $didn't/decay
-*then: get $then/decay
-*also: get $also/decay
-*else: get $else/decay
+did*: did:decay/
+didn't*: didn't:decay/
+*then: then:decay/
+*also: also:decay/
+*else: else:decay/
 
 ; Give special operations their special properties
 ;
@@ -191,7 +191,7 @@ each: quote/
 ; lower-level version CASCADE* that just takes a block of frames.
 ;
 cascade: adapt cascade*/ [
-    pipeline: reduce/predicate pipeline unrun/
+    pipeline: reduce:predicate pipeline unrun/
 ]
 
 
@@ -211,7 +211,7 @@ requote: reframer lambda [
     f.(p): noquote f.(p)
 
     light (eval f then result -> [  ; !!! proper light-null handling here?
-        quote/depth get/any $result num-quotes
+        quote:depth get:any $result num-quotes
     ] else [null])
 ]
 
@@ -360,11 +360,11 @@ echo: func* [
         ]
     ]
     write-stdout form map-each 'item line [
-        switch/type item [
+        switch:type item [
             the-word!
             the-tuple!
             the-group! [
-                get/groups inside line item
+                get:groups inside line item
             ]
         ] else [
             item

@@ -493,7 +493,7 @@ bool Process_Group_For_Parse_Throws(
     }
 
     // !!! The input is not locked from modification by agents other than the
-    // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
+    // PARSE's own REMOVE etc.  This is a sketchy idea, but as long as it's
     // allowed, each time arbitrary user code runs, rules have to be adjusted
     //
     if (P_POS > P_INPUT_LEN)
@@ -1796,7 +1796,7 @@ DECLARE_NATIVE(subparse)
       case REB_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
         bool strict = true;
         if (0 == CT_String(rule, Root_Here_Tag, strict)) {
-            FETCH_NEXT_RULE(L);  // not being assigned w/set-word!, no-op
+            FETCH_NEXT_RULE(L);  // not being assigned with set-word!, no-op
             goto pre_rule;
         }
         if (0 == CT_String(rule, Root_End_Tag, strict)) {
@@ -2225,7 +2225,7 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
 
                 if (not Is_Group(rule))
-                    fail ("Splicing (...) only in PARSE3's CHANGE/INSERT");
+                    fail ("Splicing (...) only in PARSE3's CHANGE or INSERT");
 
                 DECLARE_VALUE (evaluated);
                 Context* derived = Derive_Binding(

@@ -79,9 +79,9 @@ REBTYPE(Quasiform)
     Value* quasi = D_ARG(1);
 
     switch (Symbol_Id(verb)) {
-      case SYM_COPY: { // since `copy/deep [1 ~ 2]` is legal, allow `copy ~`
+      case SYM_COPY: {  // since (copy:deep [1 ~ 2]) is legal, allow (copy '~)
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(ARG(value)); // already referenced as `unit`
+        UNUSED(ARG(value));
 
         if (REF(part))
             fail (Error_Bad_Refines_Raw());

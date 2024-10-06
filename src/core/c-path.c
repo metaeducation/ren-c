@@ -182,7 +182,7 @@ DECLARE_NATIVE(poke)
     // operations are likely accidents and should raise errors.
     //
     if (r != nullptr and not REF(immediate))
-        fail ("POKE of immediate won't change value, use /IMMEDIATE if okay");
+        fail ("POKE of immediate won't change value, use :IMMEDIATE if okay");
 
     return COPY(v);  // return the value we got in
 }

@@ -16,7 +16,7 @@
 ;
 (a: 1 error? trap [a: 1 / 0] :a =? 1)
 (a: 1 error? trap [set $a 1 / 0] :a =? 1)
-(a: 1 error? trap [set/any $a 1 / 0] :a =? 1)
+(a: 1 error? trap [set:any $a 1 / 0] :a =? 1)
 
 [#2190
     ~zero-divide~ !! (
@@ -157,8 +157,8 @@
     all [
         e1.id = 'zero-divide
         e2.id = 'zero-divide
-        [divide 1 0] = copy/part e1.near 3
-        [divide 2 0] = copy/part e2.near 3
+        [divide 1 0] = copy:part e1.near 3
+        [divide 2 0] = copy:part e2.near 3
         e1 <> e2
     ]
 )

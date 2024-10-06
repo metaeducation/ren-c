@@ -53,7 +53,7 @@
 #endif
 
 
-// The BSD legacy names S_IREAD/S_IWRITE are not defined several places.
+// The BSD legacy names S_IREAD and S_IWRITE are not defined several places.
 // That includes building on Android, or if you compile as C99.
 
 #ifndef S_IREAD

@@ -30,15 +30,15 @@ decode-lines: func [
         pos: <here>
         pattern
         rest: <here>
-        (rest: remove/part pos rest)
+        (rest: remove:part pos rest)
         seek rest
         thru newline
     ]
-    parse3/match text [opt some line-rule] else [
+    parse3:match text [opt some line-rule] else [
         return raise [
-            {Expected line} (reify text-line-of text pos)
-            {to begin with} (mold line-prefix)
-            {and end with newline.}
+            "Expected line" (reify text-line-of text pos)
+            "to begin with" (mold line-prefix)
+            "and end with newline."
         ]
     ]
     if pos: back tail-of text [remove pos]
@@ -128,7 +128,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         )
     ]
 
-    parse3/match text [
+    parse3:match text [
         opt some [
             bol: <here>
             to newline
@@ -161,7 +161,7 @@ text-line-of: func [
     let advance-rule: [one (line: line + 1)]
 
     let cursor
-    parse3/match text [
+    parse3:match text [
         opt some [
             to newline cursor: <here>
 

@@ -1,20 +1,20 @@
 ; functions/series/sort.r
 ([1 2 3] = sort [1 3 2])
-([3 2 1] = sort/reverse [1 3 2])
+([3 2 1] = sort:reverse [1 3 2])
 [#1152 ; SORT not stable (order not preserved)
     (strict-equal? ["A" "a"] sort ["A" "a"])
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["A" "a"] sort/reverse ["A" "a"])
+    (strict-equal? ["A" "a"] sort:reverse ["A" "a"])
 ]
 [#1152 ; SORT not stable (order not preserved)
     (strict-equal? ["a" "A"] sort ["a" "A"])
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["A" "a"] sort/case ["a" "A"])
+    (strict-equal? ["A" "a"] sort:case ["a" "A"])
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (strict-equal? ["A" "a"] sort/case ["A" "a"])
+    (strict-equal? ["A" "a"] sort:case ["A" "a"])
 ]
 [#1152 ; SORT not stable (order not preserved)
     (
@@ -30,13 +30,13 @@
     )
 ]
 [#1152 ; SORT not stable (order not preserved)
-    (equal? [1 9 1 5 1 7] sort/skip/compare [1 9 1 5 1 7] 2 1)
+    (equal? [1 9 1 5 1 7] sort:skip:compare [1 9 1 5 1 7] 2 1)
 ]
-([1 2 3] = sort/compare [1 3 2] :<)
-([3 2 1] = sort/compare [1 3 2] :>)
+([1 2 3] = sort:compare [1 3 2] :<)
+([3 2 1] = sort:compare [1 3 2] :>)
 
-[#1516 ; SORT/compare ignores the typespec of its function argument
-    ~need-non-null~ !! (sort/compare reduce [1 2 _] :>)
+[#1516 ; SORT:COMPARE ignores the typespec of its function argument
+    ~need-non-null~ !! (sort:compare reduce [1 2 _] :>)
 ]
 
 ; String sorting is temporarily only available for UTF-8 strings which are all

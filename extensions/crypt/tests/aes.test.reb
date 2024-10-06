@@ -10,7 +10,7 @@
         ctx: aes-key/decrypt key-128 _
         decrypted: aes-stream ctx encrypted
         return all [
-            bin = copy/part decrypted bin-len
+            bin = copy:part decrypted bin-len
             check = encrypted
         ]
     ] ok)

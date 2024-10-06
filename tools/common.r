@@ -203,15 +203,15 @@ export binary-to-c: func [
 
     let out: make text! 6 * (length of data)  ; array, not string literal [1]
     while [not empty? maybe data] [
-        let hexed: enbase/base (copy/part data 8) 16
+        let hexed: enbase:base (copy:part data 8) 16
         data: skip data 8
         for-each [digit1 digit2] hexed [
             append out unspaced [{0x} digit1 digit2 {,} space]
         ]
 
-        take/last out  ; drop the last space
+        take:last out  ; drop the last space
         if empty? maybe data [
-            take/last out  ; lose that last comma
+            take:last out  ; lose that last comma
         ]
         append out newline  ; newline after each group, and at end
     ]
@@ -239,11 +239,11 @@ export parse-args: func [
         let value: args.1
         case [
             let idx: find value #"=" [; name=value
-                name: to word! copy/part value (index of idx) - 1
+                name: to word! copy:part value (index of idx) - 1
                 value: copy next idx
             ]
             #":" = last value [; name=value
-                name: to word! copy/part value (length of value) - 1
+                name: to word! copy:part value (length of value) - 1
                 args: next args
                 if empty? args [
                     fail ["Missing value after" value]
@@ -328,7 +328,7 @@ export relative-to-path: func [
     assert [dir? base]
     target: split clean-path target "/"
     base: split clean-path base "/"
-    if "" = last base [take/last base]
+    if "" = last base [take:last base]
     while [all [
         not tail? target
         not tail? base
@@ -347,7 +347,7 @@ export relative-to-path: func [
 
 
 export stripload: func [
-    "Get an equivalent to MOLD/FLAT (plus no comments) without using LOAD"
+    "Get an equivalent to MOLD:FLAT (plus no comments) without using LOAD"
 
     return: "contents, w/o comments or indentation"
         [text!]
@@ -393,11 +393,11 @@ export stripload: func [
             |
             "{" (if <Q> != last pushed [append pushed <B>])
             |
-            "}" (if <B> = last pushed [take/last pushed])
+            "}" (if <B> = last pushed [take:last pushed])
             |
             {"} (
                 case [
-                    <Q> = last pushed [take/last pushed]
+                    <Q> = last pushed [take:last pushed]
                     empty? pushed [append pushed <Q>]
                 ]
             )
@@ -431,15 +431,15 @@ export stripload: func [
         append (ensure block! get gather) spread collect [
             for-next 't text [
                 let newline-pos: find t newline else [tail text]
-                if not let colon-pos: find/part t ":" newline-pos [
+                if not let colon-pos: find:part t ":" newline-pos [
                     t: newline-pos
                     continue
                 ]
-                if let space-pos: find/part t space colon-pos [
+                if let space-pos: find:part t space colon-pos [
                     t: newline-pos
                     continue
                 ]
-                str: copy/part t colon-pos
+                str: copy:part t colon-pos
                 all [
                     not find str ";"
                     not find str "{"
@@ -447,11 +447,11 @@ export stripload: func [
                     not find str {"}
                     any [
                         not find str "/"
-                        parse3/match str [some "/"]
+                        parse3:match str [some "/"]
                     ]
                     any [
                         not find str "."
-                        parse3/match str [some "."]
+                        parse3:match str [some "."]
                     ]
                 ] then [
                     keep as word! str
@@ -462,16 +462,16 @@ export stripload: func [
     ]
 
     if header [
-        if not let hdr: copy/part (next find text "[") (find text "^/]") [
+        if not let hdr: copy:part (next find text "[") (find text "^/]") [
             fail ["Couldn't locate header in STRIPLOAD of" file]
         ]
-        parse3/match hdr rule else [
+        parse3:match hdr rule else [
             fail ["STRIPLOAD failed to munge header of" file]
         ]
         set header hdr
     ]
 
-    parse3/match contents rule else [
+    parse3:match contents rule else [
         fail ["STRIPLOAD failed to munge contents of" file]
     ]
 

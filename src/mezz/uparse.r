@@ -117,7 +117,7 @@ combinator: func [
             return either f.state.hook [
                 run f.state.hook f
             ][
-                eval/undecayed f
+                eval:undecayed f
             ]
         ]
     )
@@ -138,7 +138,7 @@ combinator: func [
                 pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
             ]
-            spread compose/deep [
+            spread compose:deep [
                 return: (maybe description)
                     [~[(types) any-series? [blank! block!]]~]
             ]
@@ -191,7 +191,7 @@ combinator: func [
                         <local> result' remainder subpending
                     ][
                         [^result' remainder subpending]:
-                            eval/undecayed f2 except e -> [
+                            eval:undecayed f2 except e -> [
                                 return raise e
                             ]
                         pending: glom pending spread subpending
@@ -203,7 +203,7 @@ combinator: func [
             ]
         ])
 
-        return: lambda [^atom] compose/deep [
+        return: lambda [^atom] compose:deep [
             (unrun :return) pack [
                 unmeta atom except e -> [(unrun :return) raise e]
                 remainder
@@ -305,7 +305,7 @@ default-combinators: make map! reduce [
         if not negatable-parser? :parser [
             fail "NOT called on non-negatable combinator"
         ]
-        return [@ remainder]: parser/negated input except e -> [
+        return [@ remainder]: parser:negated input except e -> [
             return raise e
         ]
     ]
@@ -441,12 +441,12 @@ default-combinators: make map! reduce [
         append state.loops binding of $return
 
         [^result' input]: parser input except e -> [
-            take/last state.loops
+            take:last state.loops
             return raise e
         ]
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
             [^result' input]: parser input except [
-                take/last state.loops
+                take:last state.loops
                 remainder: input
                 return unmeta result'
             ]
@@ -468,7 +468,7 @@ default-combinators: make map! reduce [
 
         cycle [
             [^ input]: condition-parser input except [
-                take/last state.loops
+                take:last state.loops
                 remainder: input
                 return unmeta result'
             ]
@@ -516,7 +516,7 @@ default-combinators: make map! reduce [
         count: 0
         cycle [
             [^ input]: parser input except [
-                take/last state.loops
+                take:last state.loops
                 remainder: input
                 return count
             ]
@@ -530,7 +530,7 @@ default-combinators: make map! reduce [
         return: []
         <local> f
     ][
-        f: take/last state.loops except [
+        f: take:last state.loops except [
             fail "No PARSE iteration to BREAK"
         ]
 
@@ -551,7 +551,7 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        f: take/last state.loops except [
+        f: take:last state.loops except [
             fail "No PARSE iteration to STOP"
         ]
 
@@ -675,7 +675,7 @@ default-combinators: make map! reduce [
 
         ; CHANGE returns tail, use as new remainder
         ;
-        remainder: change/part input (unmeta replacement') remainder
+        remainder: change:part input (unmeta replacement') remainder
         return ~<change>~
     ]
 
@@ -688,7 +688,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
 
-        remainder: remove/part input remainder
+        remainder: remove:part input remainder
         return ~<remove>~
     ]
 
@@ -802,7 +802,7 @@ default-combinators: make map! reduce [
                 limit: next limit
                 continue  ; don't try to assign the `[^ remainder]:`
             ]
-            return copy/part start limit
+            return copy:part start limit
         ]
         fail ~<unreachable>~
     ]
@@ -876,12 +876,12 @@ default-combinators: make map! reduce [
             return raise e
         ]
         if any-list? input [
-            return as block! copy/part input remainder
+            return as block! copy:part input remainder
         ]
         if any-string? input [
-            return as text! copy/part input remainder
+            return as text! copy:part input remainder
         ]
-        return copy/part input remainder
+        return copy:part input remainder
     ]
 
     'copy combinator [
@@ -1344,7 +1344,7 @@ default-combinators: make map! reduce [
                     remainder: next input
                     return input.1
                 ]
-                [_ remainder]: find/match/case input value else [
+                [_ remainder]: find:match:case input value else [
                     return raise [
                         "String at parse position does not match ISSUE!"
                     ]
@@ -1363,7 +1363,7 @@ default-combinators: make map! reduce [
                     remainder: next input
                     return codepoint-to-char input.1
                 ]
-                [_ remainder]: find/match/case input value else [
+                [_ remainder]: find:match:case input value else [
                     return raise [
                         "Binary at parse position does not match ISSUE!"
                     ]
@@ -1395,7 +1395,7 @@ default-combinators: make map! reduce [
             ]
             <default> [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                [_ remainder]: find/match input value else [
+                [_ remainder]: find:match input value else [
                     return raise [
                         "Content at parse position does not match BINARY!"
                     ]
@@ -1478,7 +1478,7 @@ default-combinators: make map! reduce [
         ]
 
         pending: _
-        return eval/undecayed value  ; !!! Pass on definitional failure?
+        return eval:undecayed value  ; !!! Pass on definitional failure?
     ]
 
     'phase combinator [
@@ -1554,7 +1554,7 @@ default-combinators: make map! reduce [
         value [get-group?]
         <local> r comb
     ][
-        r: meta eval/undecayed value.2 except e -> [fail e]  ; can't raise [1]
+        r: meta eval:undecayed value.2 except e -> [fail e]  ; can't raise [1]
 
         if r = ^null [  ; like [:(1 = 0)]
             return raise "GET-GROUP! evaluated to NULL"  ; means no match [2]
@@ -1857,7 +1857,7 @@ default-combinators: make map! reduce [
             remainder: input
             return null
         ]
-        switch/type unmeta times' [
+        switch:type unmeta times' [
             blank! [  ; should blank be tolerated if void is?
                 remainder: input
                 return void  ; `[repeat (_) rule]` is a no-op
@@ -1903,7 +1903,7 @@ default-combinators: make map! reduce [
             ; potentially returns...only do the assignment if it does not.
             ;
             [^result' input]: parser input except [
-                take/last state.loops
+                take:last state.loops
                 if i <= min [  ; `<=` not `<` as this iteration failed!
                     return raise "REPEAT did not reach minimum repetitions"
                 ]
@@ -1912,7 +1912,7 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        take/last state.loops
+        take:last state.loops
         remainder: input
         return unmeta result'
     ]
@@ -1960,7 +1960,7 @@ default-combinators: make map! reduce [
             if negated [
                 fail "TYPE-BLOCK! only supported negated for array input"
             ]
-            [remainder item]: transcode/next input except e -> [return raise e]
+            [remainder item]: transcode:next input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -1991,7 +1991,7 @@ default-combinators: make map! reduce [
             remainder: next input
             return input.1
         ][
-            [remainder item]: transcode/next input except e -> [return raise e]
+            [remainder item]: transcode:next input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -2033,7 +2033,7 @@ default-combinators: make map! reduce [
             if negated [
                 fail "TYPE-WORD! only supported negated for array input"
             ]
-            [remainder item]: transcode/next input except e -> [return raise e]
+            [remainder item]: transcode:next input except e -> [return raise e]
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -2422,7 +2422,7 @@ default-combinators: make map! reduce [
         rule-start: null
         rule-end: null
 
-        switch/type r: get value [
+        switch:type r: get value [
             ;
             ; BLOCK!s are accepted as rules, and looked up via combinator.
             ; Most common case, make them first to shortcut earlier.
@@ -2517,7 +2517,7 @@ default-combinators: make map! reduce [
             [element?]  ; lie and take any element to report better error
         <local> result' block
     ][
-        switch/type :arg [
+        switch:type :arg [
             group! [
                 if not block? block: eval arg [
                     fail ["The ANY combinator requires a BLOCK! of alternates"]
@@ -2645,7 +2645,7 @@ default-combinators: make map! reduce [
                     remainder: tail of pos
                     return unmeta result'
                 ]
-                sublimit: find/part rules [...] limit
+                sublimit: find:part rules [...] limit
 
                 ; !!! Once this used ACTION OF BINDING OF $RETURN,
                 ; the fusion of actions and frames removed ACTION OF.  So the
@@ -2673,11 +2673,11 @@ default-combinators: make map! reduce [
             if not error? temp: entrap f [
                 [^temp pos subpending]: unmeta temp
                 if unset? $pos [
-                    print mold/limit rules 200
+                    print mold:limit rules 200
                     fail "Combinator did not set remainder"
                 ]
                 if unset? $subpending [
-                    print mold/limit rules 200
+                    print mold:limit rules 200
                     fail "Combinator did not set pending"
                 ]
                 if temp <> '~[]~ [
@@ -2752,7 +2752,7 @@ default-combinators: make map! reduce [
             message: to text! reason
         ]
         set-location-of-error e binding of $reason
-        e.near: mold/limit input 80
+        e.near: mold:limit input 80
         fail e
     ]
 ]
@@ -3009,7 +3009,7 @@ parsify: func [
         ]
 
         (path? r) and (blank? first r) [  ; "action combinator" [5]
-            if not frame? let gotten: unrun get/any r [
+            if not frame? let gotten: unrun get:any r [
                 fail "In UPARSE PATH starting in / must be action or frame"
             ]
             if not comb: select state.combinators frame! [
@@ -3043,7 +3043,7 @@ parsify: func [
                 ]
             ]
 
-            return combinatorize/value comb rules state gotten
+            return combinatorize:value comb rules state gotten
         ]
 
         ; !!! Here is where we would let GET-TUPLE! and GET-WORD! be used to
@@ -3066,7 +3066,7 @@ parsify: func [
         fail ["Unhandled type in PARSIFY:" mold type of r "-" mold r]
     ]
 
-    return combinatorize/value comb rules state r
+    return combinatorize:value comb rules state r
 ]
 
 
@@ -3083,17 +3083,17 @@ parsify: func [
 ;
 ;     result: parse data rules except [...]
 ;
-; But there's a variant called PARSE/MATCH which returns the input matched,
+; But there's a variant called PARSE:MATCH which returns the input matched,
 ; or it returns null:
 ;
-;     >> parse/match "aaa" [some #a]
+;     >> parse:match "aaa" [some #a]
 ;     == "aaa"
 ;
 ;     >> validate "aaa" [some #b]
 ;     == ~null~  ; anti
 ;
 ; So for those who prefer to use IF to know about a parse's success or failure
-; they can just use PARSE/MATCH instead.
+; they can just use PARSE:MATCH instead.
 ;
 ; There is a core implementation for this called PARSE*, which is exposed
 ; separately in order to allow handling the case when pending values have
@@ -3115,7 +3115,7 @@ parse*: func [
         [map!]
     /case "Do case-sensitive matching"
     /relax "Don't require reaching the tail of the input for success"
-    /part "FAKE /PART FEATURE - runs on a copy of the series!"
+    /part "FAKE :PART FEATURE - runs on a copy of the series!"
         [integer! any-series?]
     /hook "Call a hook on dispatch of each combinator"
         [<unrun> frame!]
@@ -3146,15 +3146,15 @@ parse*: func [
     ;
     env: rules
 
-    ; !!! Red has a /PART feature and so in order to run the tests pertaining
-    ; to that we go ahead and fake it.  Actually implementing /PART would be
+    ; !!! Red has a :PART feature and so in order to run the tests pertaining
+    ; to that we go ahead and fake it.  Actually implementing :PART would be
     ; quite a tax on the combinators...so thinking about a system-wide slice
     ; capability would be more sensible.  The series will not have the same
     ; identity, so mutating operations will mutate the wrong series...we
     ; could copy back, but that just shows what a slippery slope this is.
     ;
     if part [
-        input: copy/part input part
+        input: copy:part input part
     ]
 
     combinators: default [default-combinators]
@@ -3187,15 +3187,15 @@ parse*: func [
     f.rule-start: null
     f.rule-end: null
 
-    sys.util/rescue/relax [  ; /RELAX allows RETURN from block
-        [^synthesized' remainder pending]: eval/undecayed f except e -> [
+    sys.util/rescue:relax [  ; :RELAX allows RETURN from block
+        [^synthesized' remainder pending]: eval:undecayed f except e -> [
             assert [empty? state.loops]
             pending: _  ; didn't get assigned due to error
             return raise e  ; wrappers catch
         ]
     ] then e -> [
         print "!!! HARD FAIL DURING PARSE !!!"
-        print mold/limit state.rules 200
+        print mold:limit state.rules 200
         fail e
     ]
 
@@ -3222,7 +3222,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, definitional error on failure}
 ] ]
     enclose parse*/ func [f] [
-        let [^synthesized' pending]: eval/undecayed f except e -> [
+        let [^synthesized' pending]: eval:undecayed f except e -> [
             return raise e
         ]
         if not empty? pending [
@@ -3238,7 +3238,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
     enclose parse*/ func [f] [
         f.rules: compose [(f.rules) || accept <here>]
 
-        let [^synthesized' pending]: eval/undecayed f except [
+        let [^synthesized' pending]: eval:undecayed f except [
             return null
         ]
         if not empty? pending [
@@ -3264,10 +3264,10 @@ parse-trace-hook: func [
     let state: f.state
 
     if f.rule-start [
-        print ["RULE:" mold spread copy/part f.rule-start f.rule-end]
+        print ["RULE:" mold spread copy:part f.rule-start f.rule-end]
     ]
 
-    let result': ^ eval/undecayed f except e -> [
+    let result': ^ eval:undecayed f except e -> [
         print ["RESULT': FAIL"]
         return raise e
     ]
@@ -3285,7 +3285,7 @@ parse-furthest-hook: func [
     f [frame!]
     var [word! tuple!]
 ][
-    let result': ^ eval/undecayed f except e -> [
+    let result': ^ eval:undecayed f except e -> [
         return raise e
     ]
 

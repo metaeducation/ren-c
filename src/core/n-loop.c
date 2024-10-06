@@ -74,7 +74,7 @@ bool Try_Catch_Break_Or_Continue(
         and BINDING(label) == loop_level->varlist
     ){
         CATCH_THROWN(out, loop_level);
-        Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable /WITH
+        Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
         *breaking = false;
         return true;
     }
@@ -134,7 +134,7 @@ DECLARE_NATIVE(definitional_continue)
 // stack.  It uses the value of its own native function as the name of the
 // throw, like `throw/name value :continue`.
 //
-// 1. Continue with no argument acts like CONTINUE/WITH VOID.  This makes
+// 1. Continue with no argument acts like CONTINUE:WITH VOID.  This makes
 //    sense in cases like MAP-EACH (plain CONTINUE should not add a value).
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
@@ -2058,7 +2058,7 @@ DECLARE_NATIVE(until)
 //
 // 1. When CONTINUE has an argument, it acts as if the loop body evaluated to
 //    that argument.  But UNTIL's condition and body are the same.  That means
-//    CONTINUE/WITH TRUE will stop the UNTIL and return TRUE, CONTINUE/WITH 10
+//    CONTINUE:WITH OKAY will stop the UNTIL and return OKAY, CONTINUE:WITH 10
 //    will stop and return 10, etc.
 //
 // 2. Testing the body result for truthiness or falseyness means that the

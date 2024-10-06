@@ -173,5 +173,5 @@
 ]
 
 [https://github.com/red/red/issues/3427
-    ("23" == parse/part %234 ["23" thru [<end>]] 3)
+    ("23" == parse:part %234 ["23" thru [<end>]] 3)
 ]

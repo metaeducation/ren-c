@@ -51,7 +51,7 @@
 )]
 
 [#1637 (
-    d: now/date
+    d: now:date
     all [
         null? d.time
         null? d.zone
@@ -59,7 +59,7 @@
 )]
 
 (
-    [n d]: transcode/next "1975-04-21/10:20:03.04"
+    [n d]: transcode:next "1975-04-21/10:20:03.04"
     all [
         date? d
         n = ""

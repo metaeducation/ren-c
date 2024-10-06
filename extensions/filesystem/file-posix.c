@@ -236,7 +236,7 @@ Value* Open_File(const Value* port, int flags)
         }
     }
 
-    char *path_utf8 = rebSpell("file-to-local/full", file->path);
+    char *path_utf8 = rebSpell("file-to-local:full", file->path);
 
     uv_fs_t req;
     int h;
@@ -450,7 +450,7 @@ Value* Create_Directory(const Value* port)
     // about leaving the tail slash on calling mkdir() on some implementation.
     //
     char *path_utf8 = rebSpell(
-        "file-to-local/full/no-tail-slash", dir->path
+        "file-to-local:full:no-tail-slash", dir->path
     );
 
     uv_fs_t req;
@@ -478,7 +478,7 @@ Value* Delete_File_Or_Directory(const Value* port)
     // for directory removal, because it seemed to be supported.  Review if
     // there is any reason to remove it.
     //
-    char *path_utf8 = rebSpell("file-to-local/full", file->path);
+    char *path_utf8 = rebSpell("file-to-local:full", file->path);
 
     uv_fs_t req;
     int result;
@@ -504,9 +504,9 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
     FILEREQ *file = File_Of_Port(port);
 
     char *from_utf8 = rebSpell(
-        "file-to-local/full/no-tail-slash", file->path
+        "file-to-local:full:no-tail-slash", file->path
     );
-    char *to_utf8 = rebSpell("file-to-local/full/no-tail-slash", to);
+    char *to_utf8 = rebSpell("file-to-local:full:no-tail-slash", to);
 
     uv_fs_t req;
     int result = uv_fs_rename(
@@ -694,7 +694,7 @@ Value* Query_File_Or_Directory(const Value* port)
     //
     // https://superuser.com/questions/240743/
     //
-    char *path_utf8 = rebSpell("file-to-local/full", file->path);
+    char *path_utf8 = rebSpell("file-to-local:full", file->path);
 
     uv_fs_t req;
     int result = uv_fs_stat(uv_default_loop(), &req, path_utf8, nullptr);
@@ -751,7 +751,7 @@ Value* Get_Current_Dir_Value(void)
     // "On Unix the path no longer ends in a slash"...the /DIR option should
     // make it end in a slash for the result.
 
-    Value* result = rebValue("local-to-file/dir", rebT(path_utf8));
+    Value* result = rebValue("local-to-file:dir", rebT(path_utf8));
 
     rebFree(path_utf8);
     return result;
@@ -765,7 +765,7 @@ Value* Get_Current_Dir_Value(void)
 //
 bool Set_Current_Dir_Value(const Value* path)
 {
-    char *path_utf8 = rebSpell("file-to-local/full", path);
+    char *path_utf8 = rebSpell("file-to-local:full", path);
 
     int result = uv_chdir(path_utf8);
 

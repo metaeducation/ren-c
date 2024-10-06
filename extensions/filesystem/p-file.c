@@ -262,8 +262,8 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         }
 
         // We need to know the file size in order to know either how much to
-        // read (if a /PART was not supplied) or in order to bound it (the
-        // /PART has traditionally meant a maximum limit, and it has not
+        // read (if a :PART was not supplied) or in order to bound it (the
+        // :PART has traditionally meant a maximum limit, and it has not
         // errored if it gave back less).  The size might be cached in which
         // case there's no need to do a fstat (cache integrity is checked in
         // the debug build at the top of the File_Actor).
@@ -280,7 +280,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // In the specific case of being at the end of file and doing a READ,
         // we return NULL.  (It is probably also desirable to follow the
         // precedent of READ-LINE and offer an end-of-file flag, so that you
-        // can know if a /PART read was cut off.)
+        // can know if a :PART read was cut off.)
         //
         if (file_size == file->offset) {
             result = nullptr;
@@ -293,7 +293,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             int64_t limit = VAL_INT64(ARG(part));
             if (limit < 0) {
                 result = rebValue(
-                    "make error! {Negative /PART passed to READ of file}"
+                    "make error! {Negative :PART passed to READ of file}"
                 );
                 goto cleanup_read;
             }
@@ -321,7 +321,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
     //=//// APPEND ////////////////////////////////////////////////////////=//
     //
-    // !!! R3-Alpha made APPEND to a FILE! port act as WRITE/APPEND.  This
+    // !!! R3-Alpha made APPEND to a FILE! port act as WRITE:APPEND.  This
     // raises fundamental questions regarding "is this a good idea, and
     // if so, should it be handled in a generalized way":
     //
@@ -337,7 +337,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             fail (Error_Bad_Refines_Raw());
 
         assert(Is_Port(ARG(series)));  // !!! poorly named
-        return rebValue("write/append @", ARG(series), "@", ARG(value)); }
+        return rebValue("write:append @", ARG(series), "@", ARG(value)); }
 
     //=//// WRITE //////////////////////////////////////////////////////////=//
 
@@ -394,9 +394,9 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         if (REF(append)) {
             //
-            // We assume WRITE/APPEND has the same semantics as WRITE/SEEK to
+            // We assume WRITE:APPEND has the same semantics as WRITE:SEEK to
             // the end of the file.  This means the position before the call is
-            // lost, and WRITE after a WRITE/APPEND will always write to the
+            // lost, and WRITE after a WRITE:APPEND will always write to the
             // new end of the file.
             //
             assert(not REF(seek));  // checked above
@@ -411,7 +411,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
                 int64_t seek = VAL_INT64(ARG(seek));
                 if (seek <= 0)
                     result = rebValue(
-                        "make error! {Negative /PART passed to READ of file}"
+                        "make error! {Negative :PART passed to READ of file}"
                     );
                 file->offset = seek;
             }
@@ -439,7 +439,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             DECLARE_MOLD (mo);
             Push_Mold(mo);
 
-            REBLEN remain = len;  // only want as many items as in the /PART
+            REBLEN remain = len;  // only want as many items as in the :PART
             const Element* item = Cell_List_Item_At(data);
             for (; remain != 0; --remain, ++item) {
                 Form_Element(mo, item);
@@ -632,16 +632,16 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
     //=//// CREATE /////////////////////////////////////////////////////////=//
     //
     // CREATE did not exist in Rebol2, and R3-Alpha seemed to use it as a
-    // way of saying `open/new/read/write`.  Red does not allow CREATE to take
+    // way of saying `open:new:read:write`.  Red does not allow CREATE to take
     // a FILE! (despite saying so in its spec).  It is removed here for now,
-    // though it does seem like a nicer way of saying OPEN/NEW.
+    // though it does seem like a nicer way of saying OPEN:NEW.
     //
     // !!! Note: reasoning of why it created a file of zero size and then
     // closed it is reverse-engineered as likely trying to parallel the CREATE
     // intent for directories.
 
       case SYM_CREATE: {
-        fail ("CREATE on file PORT! was ill-defined, use OPEN/NEW for now"); }
+        fail ("CREATE on file PORT! was ill-defined, use OPEN:NEW for now"); }
 
     //=//// QUERY //////////////////////////////////////////////////////////=//
     //
@@ -677,7 +677,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         INCLUDE_PARAMS_OF_SKIP;
 
         UNUSED(PARAM(series));
-        UNUSED(REF(unbounded));  // !!! Should /UNBOUNDED behave differently?
+        UNUSED(REF(unbounded));  // !!! Should :UNBOUNDED behave differently?
 
         int64_t offset = VAL_INT64(ARG(offset));
         if (offset < 0 and cast(uint64_t, -offset) > file->offset) {
@@ -685,7 +685,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             // !!! Can't go negative with indices; consider using signed
             // int64_t instead of uint64_t in the files.  Problem is that
             // while SKIP for series can return NULL conservatively out of
-            // range unless you use /UNBOUNDED, no similar solution exists
+            // range unless you use :UNBOUNDED, no similar solution exists
             // for ports since they all share the index.
             //
             return RAISE(

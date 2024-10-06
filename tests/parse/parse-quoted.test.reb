@@ -144,12 +144,12 @@
     (strict-equal? 'a (parse [a] ['a]))
     (strict-equal? 'A (parse [a] ['A]))
 
-    (strict-equal? 'a (parse/case [a] ['a]))
-    ~parse-mismatch~ !! (parse/case [a] ['A])
+    (strict-equal? 'a (parse:case [a] ['a]))
+    ~parse-mismatch~ !! (parse:case [a] ['A])
 
     (strict-equal? 'p/a (parse [p/a] ['p/a]))
     (strict-equal? 'p/A (parse [p/a] ['p/A]))
 
-    (strict-equal? 'p/a (parse/case [p/a] ['p/a]))
-    ~parse-mismatch~ !! (parse/case [p/a] ['p/A])
+    (strict-equal? 'p/a (parse:case [p/a] ['p/a]))
+    ~parse-mismatch~ !! (parse:case [p/a] ['p/A])
 ]

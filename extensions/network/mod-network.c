@@ -565,17 +565,17 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
             goto post_read_finished_event;
         }
         else {
-            // If we had a /PART setting on the READ, we follow the Rebol
+            // If we had a :PART setting on the READ, we follow the Rebol
             // convention of allowing less than that to be accepted, which
             // FILE! does as well:
             //
             //     >> write %test.dat #{01}
             //
-            //     >> read/part %test.dat 100000
+            //     >> read:part %test.dat 100000
             //     == #{01}
             //
             // Hence it is the caller's responsibility to check how much
-            // data they actually got with a READ/PART call.  But this is
+            // data they actually got with a READ:PART call.  But this is
             // where you could handle that situation differently.
 
             assert(rebreq->actual < *(unwrap rebreq->length));
@@ -854,10 +854,10 @@ static Bounce Transport_Actor(
             rebreq->length = &rebreq->length_store;
         }
         else {
-            // !!! R3-Alpha didn't have a working READ/PART for networking; it
+            // !!! R3-Alpha didn't have a working READ:PART for networking; it
             // would just accrue data as each chunk came in.  The inability
             // to limit the read length meant it was difficult to implement
-            // network protocols.  Ren-C has R3-Alpha's behavior if no /PART
+            // network protocols.  Ren-C has R3-Alpha's behavior if no :PART
             // is specified.
             //
             rebreq->length = UNLIMITED;  // -1, e.g. "read as much as you can"
@@ -922,14 +922,14 @@ static Bounce Transport_Actor(
         // and {cbacba} sometimes.  With multithreading it could be worse if
         // the reverse happened in mid-transfer.  :-/
         //
-        // We also want to make sure the /PART is handled correctly, so by
-        // delegating to COPY/PART we get that for free.
+        // We also want to make sure the :PART is handled correctly, so by
+        // delegating to COPY:PART we get that for free.
         //
         // !!! If you FREEZE the data then a copy is not necessary, review
         // this as an angle on efficiency.
         //
         rebreq->binary = rebValue(
-            "as binary! copy/part", data, rebQ(ARG(part))
+            "as binary! copy:part", data, rebQ(ARG(part))
         );
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 

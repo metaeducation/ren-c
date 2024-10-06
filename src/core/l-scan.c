@@ -2446,7 +2446,7 @@ Bounce Scanner_Executor(Level* const L) {
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // must do after recursion [2]
     }
 
-    if (Get_Scan_Executor_Flag(L, JUST_ONCE))  // e.g. TRANSCODE/NEXT
+    if (Get_Scan_Executor_Flag(L, JUST_ONCE))  // e.g. TRANSCODE:NEXT
         goto done;
 
     goto loop;

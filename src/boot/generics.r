@@ -568,13 +568,13 @@ close: generic [
 ]
 
 read: generic [
-    {Read from a file, URL, or other port.}
+    "Read from a file, URL, or other port"
     return: "null on (some) failures (REVIEW as part of port model review)" [
         ~null~ binary!  ; should all READ return a BINARY!?
-        text!  ; READ/STRING returned TEXT!
-        block!  ; READ/LINES returned BLOCK!
+        text!  ; READ:STRING returned TEXT!
+        block!  ; READ:LINES returned BLOCK!
         port!  ; asynchronous READ on PORT!s returned the PORT!
-        tuple!  ; READ/DNS returned tuple!
+        tuple!  ; READ:DNS returned tuple!
         quasi?  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
     ]
     source [port! file! url! block!]

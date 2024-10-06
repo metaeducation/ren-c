@@ -1,12 +1,12 @@
 ; functions/series/reverse.r
-[#1810 ; REVERSE/part does not work for tuple!
-    (3.2.1.4.5 = reverse/part 1.2.3.4.5 3)
+[#1810 ; REVERSE:PART does not work for tuple!
+    (3.2.1.4.5 = reverse:part 1.2.3.4.5 3)
 ]
 
 
 [#2326 (
     data: collect [
-        keep/line spread [1 2] keep/line spread [3 4 5] keep/line spread [6]
+        keep:line spread [1 2] keep:line spread [3 4 5] keep:line spread [6]
     ]
     ; == [
     ;     1 2

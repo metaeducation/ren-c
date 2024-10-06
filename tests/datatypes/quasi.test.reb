@@ -51,13 +51,13 @@
 (
     x: 10
     all [
-        '~[]~ = x: ^ eval/undecayed []
+        '~[]~ = x: ^ eval:undecayed []
         nihil? unmeta x
     ]
 )
 (
     x: 10
-    10 = (x eval/undecayed [])
+    10 = (x eval:undecayed [])
 )
 
 [
@@ -129,10 +129,10 @@
 
 ; locals are unset before they are assigned
 (
-    f: func [<local> loc] [return get/any $loc]
+    f: func [<local> loc] [return get:any $loc]
     nothing? f
 )(
-    f: func [<local> loc] [return reify get/any $loc]
+    f: func [<local> loc] [return reify get:any $loc]
     f = '~
 )(
     f: func [<local> loc] [return ^loc]
@@ -151,7 +151,7 @@
 ; would demand some kind of prior declaration of intent to use the name).
 ;
 (
-    e: sys.util/rescue [get/any $asiieiajiaosdfbjakbsjxbjkchasdf]
+    e: sys.util/rescue [get:any $asiieiajiaosdfbjakbsjxbjkchasdf]
     all [
         e.id = 'not-bound
         e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
@@ -161,11 +161,11 @@
 ; Note: QUITs are definitional and provided by things like DO when they run
 ; a script, or IMPORT.  They are variants of THROW.
 [
-    (1 = do "Rebol [] quit/value 1")
+    (1 = do "Rebol [] quit:value 1")
     (nothing? do "Rebol [] quit 0")
     (do "Rebol [] quit 1" except e -> [e.exit-code = 1])
-    (quasi? do "Rebol [] quit/value ^^ raise {some error}")  ; ^^ escapes ^
-    (raised? do "Rebol [] quit/value raise* make error! {some error}")
+    (quasi? do "Rebol [] quit:value ^^ raise {some error}")  ; ^^ escapes ^
+    (raised? do "Rebol [] quit:value raise* make error! {some error}")
 ]
 
 ; Antiforms make it easier to write generic routines that handle QUASI-WORD?
@@ -232,34 +232,34 @@
     ((the '''a) = reify the '''a)
 ]
 
-; META/LITE does not produce quasiforms
+; META:LITE does not produce quasiforms
 ; It passes through keywords, and makes antiforms their plain forms
 ; Other types receive a quoting level
 [
-    (null = meta/lite null)
-    (void = meta/lite void)
-    (okay = meta/lite okay)
+    (null = meta:lite null)
+    (void = meta:lite void)
+    (okay = meta:lite okay)
 
-    (['1 '2] = meta/lite pack [1 2])
+    (['1 '2] = meta:lite pack [1 2])
 
-    (the '[1 2] = meta/lite [1 2])
-    (the ''a = meta/lite first ['a])
+    (the '[1 2] = meta:lite [1 2])
+    (the ''a = meta:lite first ['a])
 ]
 
-; UNMETA/LITE works on keywords, but not other "antiform" forms as a trick
+; UNMETA:LITE works on keywords, but not other "antiform" forms as a trick
 ; meta forms are plain forms, not quasiforms
 [
-    (void? unmeta/lite void)
-    (null? unmeta/lite null)
-    (okay? unmeta/lite okay)
+    (void? unmeta:lite void)
+    (null? unmeta:lite null)
+    (okay? unmeta:lite okay)
 
     ~expect-arg~ !! (
-        unmeta/lite ~(a b c)~
+        unmeta:lite ~(a b c)~
     )
 
     ~???~ !! (
-        unmeta/lite '~(a b c)~
+        unmeta:lite '~(a b c)~
     )
-    (splice? unmeta/lite the (a b c))
-    (pack? unmeta/lite ['1 '2])
+    (splice? unmeta:lite the (a b c))
+    (pack? unmeta:lite ['1 '2])
 ]

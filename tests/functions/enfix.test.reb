@@ -71,13 +71,13 @@
             fail "foo should not run, it's prefix and runs on *next* step"
         ]
         all wrap [
-            1020 == [pos @]: evaluate/step [1020 foo 304]
+            1020 == [pos @]: evaluate:step [1020 foo 304]
             pos == [foo 304]
         ]
     )(
         enfoo: enfix func [] [return <enfoo>]
         all wrap [
-            <enfoo> == [pos @]: evaluate/step [1020 enfoo 304]
+            <enfoo> == [pos @]: evaluate:step [1020 enfoo 304]
             pos = [304]
         ]
         comment "0-arity function, but enfixed so runs in *same* step"
@@ -86,7 +86,7 @@
     (
         bar: func [return: [~[]~]] [bar: null, return ~[]~]
         all wrap [
-            [pos var]: evaluate/step [1020 bar 304]
+            [pos var]: evaluate:step [1020 bar 304]
             pos = [bar 304]
             var == 1020
             action? :bar
@@ -97,7 +97,7 @@
     )(
         enbar: enfix func [left] [enbar: null, return left]
         all wrap [
-            [pos var]: evaluate/step [1020 enbar 304]
+            [pos var]: evaluate:step [1020 enbar 304]
             pos = [304]
             var == 1020
             null? enbar

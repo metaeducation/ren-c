@@ -253,7 +253,7 @@ INLINE Value* Value_From_Value_Id(heapaddr_t id) {
 // be bound while that native is on the stack.  For now, if you're writing
 // any JavaScript native it will presume binding in the user context.
 //
-// (A refinement could be added to control this, e.g. JS-NATIVE/CONTEXT.
+// (A refinement could be added to control this, e.g. JS-NATIVE:CONTEXT.
 // But generally the caller of the API can override with their own binding.)
 //
 // For the JS-native-specific information, it uses a HANDLE!...but only to

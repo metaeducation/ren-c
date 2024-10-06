@@ -11,12 +11,12 @@ to-text: func [
     uuid [binary!]
 ][
     return delimit "-" map-each 'w reduce [
-        copy/part uuid 4
-        copy/part (skip uuid 4) 2
-        copy/part (skip uuid 6) 2
-        copy/part (skip uuid 8) 2
-        copy/part (skip uuid 10) 6
+        copy:part uuid 4
+        copy:part (skip uuid 4) 2
+        copy:part (skip uuid 6) 2
+        copy:part (skip uuid 8) 2
+        copy:part (skip uuid 10) 6
     ][
-        enbase/base w 16
+        enbase:base w 16
     ]
 ]

@@ -46,7 +46,7 @@
 // fundamental type safely.  But skewing that pointer to not be aligned in
 // a way for that type (e.g. by a byte above) means assignments and reads of
 // types with more demanding alignment will fail.  e.g. a double often needs
-// to read/write to pointers where `((uintptr_t)ptr % sizeof(double)) == 0`
+// to read or write at pointers where `((uintptr_t)ptr % sizeof(double)) == 0`
 //
 // (Note: Often, not always.  For instance, Linux systems with System V ABI
 // for i386 are permitted to use 4 byte boundaries instead of 8 byte for

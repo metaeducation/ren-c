@@ -13,8 +13,8 @@
 ; https://forum.rebol.info/t/1264/2
 
 
-; CR codepoints (^M) are ILLEGAL in TO-conversion unless /RELAX is used.
-; CR codepoints (^M) are LEGAL in AS-conversion unless /STRICT is used.
+; CR codepoints (^M) are ILLEGAL in TO-conversion unless :RELAX is used.
+; CR codepoints (^M) are LEGAL in AS-conversion unless :STRICT is used.
 [
     (
         str: "a^M^/b"
@@ -25,30 +25,30 @@
 
     ('illegal-cr = pick trap [to text! t-bin] 'id)
     ('illegal-cr = pick trap [to-text t-bin] 'id)
-    (str = to-text/relax t-bin)
+    (str = to-text:relax t-bin)
 
     ('illegal-cr = pick trap [to text! a-bin] 'id)
     ('illegal-cr = pick trap [to-text a-bin] 'id)
-    (str = to-text/relax a-bin)
+    (str = to-text:relax a-bin)
 
     (str = as text! t-bin)
     (str = as-text t-bin)
-    ('illegal-cr = pick trap [as-text/strict t-bin] 'id)
+    ('illegal-cr = pick trap [as-text:strict t-bin] 'id)
 
     (str = as text! a-bin)
     (str = as-text a-bin)
-    ('illegal-cr = pick trap [as-text/strict a-bin] 'id)
+    ('illegal-cr = pick trap [as-text:strict a-bin] 'id)
 ]
 
-; #{00} bytes are illegal in strings regardless of /RELAX or /STRICT
+; #{00} bytes are illegal in strings regardless of :RELAX or :STRICT
 [
     ~illegal-zero-byte~ !! (to text! #{00})
     ~illegal-zero-byte~ !! (to-text #{00})
-    ~illegal-zero-byte~ !! (to-text/relax #{00})
+    ~illegal-zero-byte~ !! (to-text:relax #{00})
 
     ~illegal-zero-byte~ !! (as text! #{00})
     ~illegal-zero-byte~ !! (as-text #{00})
-    ~illegal-zero-byte~ !! (as-text/strict #{00})
+    ~illegal-zero-byte~ !! (as-text:strict #{00})
 ]
 
 ; Ren-C DELINE allows either all LF or all CR LF
@@ -106,7 +106,7 @@
         ]
     )
 
-    ('illegal-cr = pick trap [read/string %enlined.tmp] 'id)
+    ('illegal-cr = pick trap [read:string %enlined.tmp] 'id)
     ('illegal-cr = pick trap [to text! read %enlined.tmp] 'id)
     ("a^M^/b" = as text! read %enlined.tmp)
     ("a^/b" = deline read %enlined.tmp)
@@ -122,10 +122,10 @@
 
 
 [#648
-    (["a"] = deline/lines "a")
+    (["a"] = deline:lines "a")
 ]
 [#1794
-    (1 = length of deline/lines "Slovenščina")
+    (1 = length of deline:lines "Slovenščina")
 ]
 
 [https://github.com/metaeducation/ren-c/issues/923

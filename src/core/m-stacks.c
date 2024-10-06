@@ -228,7 +228,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // Pops computed values from the stack to make a new ARRAY.
 //
-// !!! How can we pass in callsite file/line for tracking info?
+// !!! How can we pass in callsite file and line for tracking info?
 //
 Array* Pop_Stack_Values_Core_Masked(
     StackIndex base,

@@ -106,39 +106,39 @@
     insert b a
     a == b
 )
-; insert/part
+; insert:part
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b 1
+    insert:part a spread b 1
     a == [5]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b 5
+    insert:part a spread b 5
     a == [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b 6
+    insert:part a spread b 6
     a == [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b 2147483647
+    insert:part a spread b 2147483647
     a == [5 6 7 8 9]
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b 0
+    insert:part a spread b 0
     empty? a
 )
 
-; !!! There has been confusion over what the /PART (added in R3-Alpha) means
+; !!! There has been confusion over what the :PART (added in R3-Alpha) means
 ; as applied to INSERT, APPEND, and CHANGE:
 ;
 ; https://github.com/rebol/rebol-issues/issues/2096
@@ -150,25 +150,25 @@
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b -1
+    insert:part a spread b -1
     a == []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b -4
+    insert:part a spread b -4
     a == []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b -5
+    insert:part a spread b -5
     a == []
 )
 (
     a: make block! 0
     b: at [1 2 3 4 5 6 7 8 9] 5
-    insert/part a spread b -2147483648
+    insert:part a spread b -2147483648
     a == []
 )
 
@@ -179,30 +179,30 @@
     insert a b
     same? b first a
 )
-; insert/dup
+; insert:dup
 (
     a: make block! 0
-    insert/dup a 0 2
+    insert:dup a 0 2
     a == [0 0]
 )
 (
     a: make block! 0
-    insert/dup a 0 0
+    insert:dup a 0 0
     a == []
 )
 (
     a: make block! 0
-    insert/dup a 0 -1
+    insert:dup a 0 -1
     a == []
 )
 (
     a: make block! 0
-    insert/dup a 0 -2147483648
+    insert:dup a 0 -2147483648
     a == []
 )
 (
     a: make block! 0
-    insert/dup a 0 -2147483648
+    insert:dup a 0 -2147483648
     empty? a
 )
 

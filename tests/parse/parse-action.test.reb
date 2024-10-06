@@ -8,7 +8,7 @@
 (
     data: copy ""
     all [
-        "aa" = parse ["a"] [/append/dup (data) text! (2)]
+        "aa" = parse ["a"] [/append:dup (data) text! (2)]
         data = "aa"
     ]
 )

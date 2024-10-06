@@ -59,6 +59,6 @@
 ;         y: x: maybe (~)  ; antiform ~ is nothing, unset variable
 ;         some "b"
 ;     ]
-;     '~ = ^ get/any $x
+;     '~ = ^ get:any $x
 ;     unset? $y
 ; ])

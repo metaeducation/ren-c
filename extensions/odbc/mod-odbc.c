@@ -267,7 +267,7 @@ Value* Error_ODBC_Core(
     return rebValue("make error! {Undocumented SQLRESULT in SQLGetDiagRecW}");
 }
 
-#if !defined(NDEBUG)  // report file/line info with mystery errors
+#if !defined(NDEBUG)  // report file and line info with mystery errors
     #define Error_ODBC(handleType,handle) \
         Error_ODBC_Core((handleType), (handle), __FILE__, __LINE__)
 #else
@@ -570,7 +570,7 @@ SQLRETURN ODBC_BindParameter(
     //
     // https://forum.rebol.info/t/689/2
     //
-    SQLSMALLINT c_type = rebUnboxInteger("switch/type @", v, "[",
+    SQLSMALLINT c_type = rebUnboxInteger("switch:type @", v, "[",
         "word! [",
             "switch @", v, "[",
                 "'null [", rebI(SQL_C_DEFAULT), "]",
@@ -723,10 +723,10 @@ SQLRETURN ODBC_BindParameter(
         stamp->hour = rebUnboxInteger("pick", time, "'hour");
         stamp->minute = rebUnboxInteger("pick", time, "'minute");
         stamp->second = rebUnboxInteger(
-            "to integer! round/down", second_and_fraction
+            "to integer! round:down", second_and_fraction
         );
         stamp->fraction = rebUnboxInteger(  // see note above
-            "to integer! round/down (",
+            "to integer! round:down (",
                 second_and_fraction, "mod 1",
             ") * 1000000000"
         );
@@ -1233,7 +1233,7 @@ DECLARE_NATIVE(insert_odbc)
     bool use_cache = false;
 
     bool get_catalog = rebUnboxBoolean(
-        "switch/type first sql [",
+        "switch:type first sql [",
             "&lit-word? ['true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! ['false]",
         "] else [",
@@ -1358,8 +1358,8 @@ DECLARE_NATIVE(insert_odbc)
 
     //=//// RETURN RECORD COUNT IF NO RESULT ROWS /////////////////////////=//
     //
-    // Insert/Update/Delete statements do not return records, and this is
-    // indicated by a 0 count for columns in the return result.
+    // Insert or Update or Delete statements do not return records, and this
+    // is indicated by a 0 count for columns in the return result.
 
     SQLSMALLINT num_columns;
     rc = SQLNumResultCols(hstmt, &num_columns);

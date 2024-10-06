@@ -21,7 +21,7 @@
 ; the components are not there, but the loss of a datatype (e.g. null vs. %"")
 ; may complicate the result when trying to join back.
 (
-    split-path-tests: compose/deep [
+    split-path-tests: compose:deep [
         %foo                            [_ %foo]
         %""                             [_ _]
         %/c/rebol/tools/test/test.r     [%/c/rebol/tools/test/ %test.r]
@@ -48,7 +48,7 @@
 
         ; Ren-C disallows filenames of . or .. so if they are to be used as
         ; a directory they must have terminal slash.  SPLIT-PATH raises an
-        ; error on these cases if you don't use the /RELAX refinement, but
+        ; error on these cases if you don't use the :RELAX refinement, but
         ; we use it here in case the client wants to handle it.
         ;
         %.                              [_ %.]
@@ -81,7 +81,7 @@
         (at %/vol/dir/file.r 6)         [%dir/ %file.r]
     ]
     for-each [test result] split-path-tests wrap [
-        [dir file]: split-path/relax test
+        [dir file]: split-path:relax test
         if result <> actual: reduce [any [dir _], any [file _]] [
             fail [mold test 'expected mold result "but got" mold actual]
         ]

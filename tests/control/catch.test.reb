@@ -31,7 +31,7 @@
     (a: 1 catch [a: throw 2] :a =? 1)
 ]
 (a: 1 catch [set $a throw 2] :a =? 1)
-(a: 1 catch [set/any $a throw 2] :a =? 1)
+(a: 1 catch [set:any $a throw 2] :a =? 1)
 [#1509 ; the "result" of throw should not be passable to functions
     (a: 1 catch [a: error? throw 2] :a =? 1)
 ]
@@ -102,7 +102,7 @@
 ; (1 = catch/name [reduce [throw/name 1 'a]] 'a)
 ; (a: 1 catch/name [a: throw/name 2 'b] 'b :a =? 1)
 ; (a: 1 catch/name [set $a throw/name 2 'b] 'b :a =? 1)
-; (a: 1 catch/name [set/any $a throw/name 2 'b] 'b :a =? 1)
+; (a: 1 catch/name [set:any $a throw/name 2 'b] 'b :a =? 1)
 ; (a: 1 catch/name [a: error? throw/name 2 'b] 'b :a =? 1)
 ; (a: 1 catch/name [a: error? trap [throw/name 2 'b]] 'b :a =? 1)
 

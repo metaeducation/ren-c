@@ -1,22 +1,22 @@
 ; system/file.r
 
 (#{C3A4C3B6C3BC} == read %../fixtures/umlauts-utf8.txt)
-("äöü" == read/string %../fixtures/umlauts-utf8.txt)
-(["äöü"] == read/lines %../fixtures/umlauts-utf8.txt)
+("äöü" == read:string %../fixtures/umlauts-utf8.txt)
+(["äöü"] == read:lines %../fixtures/umlauts-utf8.txt)
 
 ; UTF-8 With Byte-Order Mark, not transparent in READ, #2280
 
 (#{EFBBBFC3A4C3B6C3BC} == read %../fixtures/umlauts-utf8bom.txt)
-("^(FEFF)äöü" == read/string %../fixtures/umlauts-utf8bom.txt)
-(["^(FEFF)äöü"] == read/lines %../fixtures/umlauts-utf8bom.txt)
+("^(FEFF)äöü" == read:string %../fixtures/umlauts-utf8bom.txt)
+(["^(FEFF)äöü"] == read:lines %../fixtures/umlauts-utf8bom.txt)
 
 ; Byte order mark only transparent via LOAD with text codecs supporting it
 
 (#{FFFEE400F600FC00} == read %../fixtures/umlauts-utf16le.txt)
-("äöü" == load/type %../fixtures/umlauts-utf16le.txt 'utf-16le)
+("äöü" == load:type %../fixtures/umlauts-utf16le.txt 'utf-16le)
 
 (#{FEFF00E400F600FC} == read %../fixtures/umlauts-utf16be.txt)
-("äöü" == load/type %../fixtures/umlauts-utf16be.txt 'utf-16be)
+("äöü" == load:type %../fixtures/umlauts-utf16be.txt 'utf-16be)
 
 ; No codec support started yet for UTF-32
 
@@ -39,7 +39,7 @@
         636F6D205B73756220626C6F636B5D0A
     })
 
-    ((save/header blank data [Title: "my code"]) = #{
+    ((save:header blank data [Title: "my code"]) = #{
         5245424F4C205B0A202020205469746C653A20226D7920636F6465220A5D0A31
         20312E322031303A3230202274657374222075736572406578616D706C652E63
         6F6D205B73756220626C6F636B5D0A
@@ -54,14 +54,14 @@
     ; So do not test for exact matches of BINARY! products of compression.
     ; Decompression should be consistent, however.
 
-    ([] = load (save/compress blank [] 'raw))
+    ([] = load (save:compress blank [] 'raw))
 
     ([] = load #{
         5245424F4C205B0A202020204F7074696F6E733A205B636F6D70726573735D0A
         5D0A1F8B080000000000000AE302009306D73201000000
     })
 
-    (data = load (save/compress blank data 'raw))
+    (data = load (save:compress blank data 'raw))
 
     (data = load #{
         5245424F4C205B0A202020204F7074696F6E733A205B636F6D70726573735D0A
@@ -70,7 +70,7 @@
         8CB030000000
     })
 
-    (data = load (save/compress blank data 'base64))
+    (data = load (save:compress blank data 'base64))
 
     (
         data = load #{
@@ -84,7 +84,7 @@
 
     (
         [loaded header]: load (
-            save/header/compress blank data [Title: "my code"] 'raw
+            save:header:compress blank data [Title: "my code"] 'raw
         )
         all [
             header.title = "my code"
@@ -109,7 +109,7 @@
 
     (
         [loaded header]: load (
-            save/header/compress blank data [Title: "my code"] 'base64
+            save:header:compress blank data [Title: "my code"] 'base64
         )
         all [
             header.title = "my code"
@@ -135,7 +135,7 @@
 
     (
         [loaded header]: load (
-            save/header blank data [Title: "my code" Options: [compress]]
+            save:header blank data [Title: "my code" Options: [compress]]
         )
         all [
             header.title = "my code"

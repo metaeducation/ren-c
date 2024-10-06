@@ -69,7 +69,7 @@
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep/line compose [
+            keep:line compose [
                 (if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [
@@ -91,12 +91,12 @@
             prefix  ; consume prefix (if no-op, may not be at start of match)
             ||
             [let keyword-match: any (keyword-suffix-rules), (
-                append/part out a offset? a b  ; output before prefix
+                append:part out a offset? a b  ; output before prefix
 
                 let v: select // [values keyword-match, /case case_REWORD]
-                append out switch/type v [
+                append out switch:type v [
                     frame! [
-                        apply/relax v [:keyword-match]  ; arity-0 ok
+                        apply:relax v [:keyword-match]  ; arity-0 ok
                     ]
                     block! [eval v]
                 ] else [
@@ -116,21 +116,21 @@
 ]
 ok)
 
-("Multiple Search and Replace" = uparse-reword/escape "Multiple Foo and Bar" [
+("Multiple Search and Replace" = uparse-reword:escape "Multiple Foo and Bar" [
     "Foo" "Search" "Bar" "Replace"
 ] "")
 
 ("This is that." = uparse-reword "$1 is $2." [1 "This" 2 "that"])
 
-("A fox is brown." = uparse-reword/escape "A %%a is %%b." [a "fox" b "brown"] "%%")
+("A fox is brown." = uparse-reword:escape "A %%a is %%b." [a "fox" b "brown"] "%%")
 
 (
-    "BrianH is answering Adrian." = uparse-reword/escape "I am answering you." [
+    "BrianH is answering Adrian." = uparse-reword:escape "I am answering you." [
         "I am" "BrianH is"
         you "Adrian"
     ] ""
 )(
-    "Hello is Goodbye" = uparse-reword/escape "$$$a$$$ is $$$b$$$" [
+    "Hello is Goodbye" = uparse-reword:escape "$$$a$$$ is $$$b$$$" [
        a Hello
        b Goodbye
     ] ["$$$" "$$$"]
@@ -151,5 +151,5 @@ ok)
 (
     subs: ["1" "foo" "10" "bar"]
     text: "$<10>"
-    "bar" = uparse-reword/escape text subs ["$<" ">"]
+    "bar" = uparse-reword:escape text subs ["$<" ">"]
 )]

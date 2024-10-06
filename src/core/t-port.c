@@ -40,8 +40,8 @@ REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 //
 //  MAKE_Port: C
 //
-// Create a new port. This is done by calling the MAKE_PORT
-// function stored in the system/intrinsic object.
+// Create a new port. This is done by calling the MAKE-PORT* function in
+// the system context.
 //
 Bounce MAKE_Port(
     Level* level_,

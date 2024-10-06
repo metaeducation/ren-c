@@ -47,7 +47,7 @@ REBOL [
 ]
 
 import %../../tools/common.r
-args: parse-args system.script.args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO:ARGS
 
 import %../../tools/platforms.r
 platform-config: configure-platform args/OS_ID
@@ -149,6 +149,6 @@ print ["MAKING ZIP FILE:" (join output-dir %tcc-encap.zip)]
 ; !!! The /VERBOSE option in the bootstrap build fails because it uses PRINT
 ; on a plain FILE! that's not in a block.  Review.
 ;
-zip/deep (join output-dir %tcc-encap.zip) encap
+zip:deep (join output-dir %tcc-encap.zip) encap
 
 print ["(ULTIMATELY WE WANT TO ENCAP THAT DIRECTLY INTO THE TCC EXTENSION)"]

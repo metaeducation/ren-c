@@ -17,7 +17,7 @@ REBOL [
 ]
 
 loop: func [] [
-    fail/blame [
+    fail:blame [
         "Short word LOOP is reserved for a generalized looping dialect:"
         https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878
     ] $return
@@ -30,7 +30,7 @@ loop: func [] [
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
 function: method: func [/dummy] [
-    fail/blame [
+    fail:blame [
         {The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was}
         {the gathering of SET-WORD! as locals.  This behavior led to many}
         {problems with gathering irrelevant locals in the frame (e.g. any}
@@ -43,7 +43,7 @@ function: method: func [/dummy] [
 
 
 REBOL: func [] [
-    fail/blame [
+    fail:blame [
         "The REBOL [] header of a script must be interpreted by LOAD (and"
         "functions like DO).  It cannot be executed directly."
     ] $return
@@ -51,7 +51,7 @@ REBOL: func [] [
 
 
 input: func [] [
-    fail/blame [
+    fail:blame [
         "Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):"
         https://forum.rebol.info/t/1124
     ] $return
@@ -59,21 +59,21 @@ input: func [] [
 
 
 repend: func [] [
-    fail/blame [
+    fail:blame [
         "REPEND is just `adapt append/ [value: reduce :value]`, and is not"
         "provided in the box."
     ] $return
 ]
 
 remold: func [] [
-    fail/blame [
+    fail:blame [
         "REMOLD is just `adapt mold/ [value: reduce :value]`, but is not"
         "provided in the box."
     ] $return
 ]
 
 rejoin: func [] [
-    fail/blame [
+    fail:blame [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by JOIN, which accepts datatypes as a first parameter,"
         "e.g. `join binary! spread [{ABC} 1 + 2 3 + 4]`"
@@ -159,7 +159,7 @@ prin: func [
     return: [~]
     value [~null~ element?]
 ][
-    write-stdout switch/type value [
+    write-stdout switch:type value [
         null?! [return ~]  ; type of VOID is currently null
         text! issue! [value]
         block! [spaced value]
@@ -179,7 +179,7 @@ forever: cycle/
 
 find: adapt (augment :find [/reverse /last]) [
     if reverse or last [
-        fail/blame [
+        fail:blame [
             {/REVERSE and /LAST on FIND have been deprecated.  Use FIND-LAST}
             {or FIND-REVERSE specializations: https://forum.rebol.info/t/1126}
         ] $reverse

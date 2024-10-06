@@ -237,7 +237,7 @@ latest-of: func [
     if variant = 'checked [
         variant: 'debug
     ]
-    if not find/case build-variants variant [
+    if not find:case build-variants variant [
         fail ["Build variant must be one of:" mold build-variants]
     ]
     let suffix: if variant = 'release [null] else [join "-" variant]
@@ -255,13 +255,13 @@ latest-of: func [
     ; (Invalidating cloudfront caches is possible, but you get charged for it.)
     ;
     ; Note: Current interpreter may or may not have a commit built into it.
-    ; If it has one, the short hash is `copy/part system.commit 7`
+    ; If it has one, the short hash is `copy:part system.commit 7`
 
     commit: default [
         let last-deploy: to url! unspaced [
             s3root os %/last-deploy.short-hash  ; don't use cloudfront, use S3!
         ]
-        trim/tail as text! read last-deploy
+        trim:tail as text! read last-deploy
     ]
 
 
@@ -286,7 +286,7 @@ latest-of: func [
     let info: info? url  ; If this fails, the build is not available
 
     if verbose [
-        print ["File size:" (round/to divide info.size 1000000 0.01) "Mb"]
+        print ["File size:" (round:to divide info.size 1000000 0.01) "Mb"]
         print ["Date:" any [info.date, "<unknown>"]]
     ]
 

@@ -44,7 +44,7 @@
 
 //=//// SCAN_EXECUTOR_FLAG_JUST_ONCE //////////////////////////////////////=//
 //
-// Supporting flag for TRANSCODE/NEXT
+// Supporting flag for TRANSCODE:NEXT
 //
 #define SCAN_EXECUTOR_FLAG_JUST_ONCE \
     LEVEL_FLAG_25

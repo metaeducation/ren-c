@@ -38,7 +38,7 @@ export test-source-rule: [
 
         ["{" | {"}] :(  ; handle string using TRANSCODE, see note
             trap [
-                [position _]: transcode/next position
+                [position _]: transcode:next position
             ] then [
                 'bypass  ; result for :() is rule to say stop the parse
             ] else [
@@ -127,7 +127,7 @@ export collect-tests: func [
                 ; Treat a top level group (...) as if you wrote [(...)].
                 ; Put it in a block, along with its optional expected error ID.
                 ;
-                keep/line reduce [(maybe expected) (if expected '!!) group]
+                keep:line reduce [(maybe expected) (if expected '!!) group]
             )]
             |
             ; A BLOCK! groups together several tests that rely on common
@@ -138,7 +138,7 @@ export collect-tests: func [
             ;
             [let block: block! (
                 keep flags, flags: copy []
-                keep/line block
+                keep:line block
             )]
             |
             ; ISSUE! and URL! have historically just been ignored, they are a
@@ -165,7 +165,7 @@ export collect-tests: func [
             ;
             [let referenced-file: file! (
                 change-dir maybe split-path file
-                collect-tests/into referenced-file into
+                collect-tests:into referenced-file into
                 change-dir current-dir
             )]
             |
@@ -211,7 +211,7 @@ export collect-logs: func [
             opt some whitespace
             [
                 position: "%"
-                (next-position: transcode/next (the value:) position)
+                (next-position: transcode:next (the value:) position)
                 seek next-position
                     |
                 ; dialect failure?

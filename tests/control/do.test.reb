@@ -1,22 +1,22 @@
 ; functions/control/do.r
 
 [
-    (nihil? eval/undecayed [])
-    ('~[]~ = ^(eval/undecayed []))
+    (nihil? eval:undecayed [])
+    ('~[]~ = ^(eval:undecayed []))
 
-    (nihil? (eval/undecayed []))
-    (3 = (1 + 2 eval/undecayed []))
-    (3 = (1 + 2 unmeta ^ eval/undecayed []))
+    (nihil? (eval:undecayed []))
+    (3 = (1 + 2 eval:undecayed []))
+    (3 = (1 + 2 unmeta ^ eval:undecayed []))
 
-    (''30 = ^ (10 + 20 eval/undecayed []))
+    (''30 = ^ (10 + 20 eval:undecayed []))
     (^void = ^ (10 + 20 eval [void]))
-    (''30 = ^ (10 + 20 eval/undecayed [comment "hi"]))
-    (''30 = ^ (10 + 20 eval/undecayed make frame! func [] [return ~[]~]))
+    (''30 = ^ (10 + 20 eval:undecayed [comment "hi"]))
+    (''30 = ^ (10 + 20 eval:undecayed make frame! func [] [return ~[]~]))
 
     (didn't eval [null])
-    ('~[~null~]~ = ^ eval/undecayed [if okay [null]])
-    (^void = ^ eval/undecayed [if null [<a>]])
-    (^void = ^ eval/undecayed [10 + 20 if null [<a>]])
+    ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
+    (^void = ^ eval:undecayed [if null [<a>]])
+    (^void = ^ eval:undecayed [10 + 20 if null [<a>]])
 
     (all [
         let x: ~
@@ -26,53 +26,53 @@
 
     (all [
         let x: ~
-        '~[]~ = (x: ^(comment "HI") ^ eval/undecayed [comment "HI"])
+        '~[]~ = (x: ^(comment "HI") ^ eval:undecayed [comment "HI"])
         '~[]~ = x
     ])
 
-    ('~[]~ = (10 + 20 ^(eval/undecayed [])))
-    ('~[]~ = (10 + 20 ^(eval/undecayed [comment "hi"])))
-    (^void = (10 + 20 ^(eval/undecayed make frame! lambda [] [void])))
+    ('~[]~ = (10 + 20 ^(eval:undecayed [])))
+    ('~[]~ = (10 + 20 ^(eval:undecayed [comment "hi"])))
+    (^void = (10 + 20 ^(eval:undecayed make frame! lambda [] [void])))
     (^null = ^(eval [null]))
-    ('~[~null~]~ = ^(eval/undecayed [if okay [null]]))
+    ('~[~null~]~ = ^(eval:undecayed [if okay [null]]))
 
-    (30 = (10 + 20 eval/undecayed []))
-    (30 = (10 + 20 eval/undecayed [comment "hi"]))
-    (30 = (10 + 20 eval/undecayed make frame! func [] [return ~[]~]))
-    (^null = ^(eval/undecayed [null]))
-    ('~[~null~]~ = ^ eval/undecayed [heavy null])
-    ('~[~null~]~ = ^ eval/undecayed [if okay [null]])
+    (30 = (10 + 20 eval:undecayed []))
+    (30 = (10 + 20 eval:undecayed [comment "hi"]))
+    (30 = (10 + 20 eval:undecayed make frame! func [] [return ~[]~]))
+    (^null = ^(eval:undecayed [null]))
+    ('~[~null~]~ = ^ eval:undecayed [heavy null])
+    ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
 
     ; Try standalone ^ operator so long as we're at it.
-    ('~[]~ = ^ eval/undecayed [])
-    ('~[]~ = ^ eval/undecayed [comment "hi"])
-    ('~[]~ = ^ eval/undecayed make frame! func [] [return ~[]~])
-    (^void = ^ eval/undecayed [void])
+    ('~[]~ = ^ eval:undecayed [])
+    ('~[]~ = ^ eval:undecayed [comment "hi"])
+    ('~[]~ = ^ eval:undecayed make frame! func [] [return ~[]~])
+    (^void = ^ eval:undecayed [void])
 
-    (^null = ^ eval/undecayed [null])
-    (^null = ^(eval/undecayed [null]))
-    (^null = ^ (eval/undecayed [null]))
-    (^null = meta eval/undecayed [null])
+    (^null = ^ eval:undecayed [null])
+    (^null = ^(eval:undecayed [null]))
+    (^null = ^ (eval:undecayed [null]))
+    (^null = meta eval:undecayed [null])
 
-    ('~[~null~]~ = ^ eval/undecayed [heavy null])
-    ('~[~null~]~ = ^(eval/undecayed [heavy null]))
-    ('~[~null~]~ = ^ (eval/undecayed [heavy null]))
-    ('~[~null~]~ = meta eval/undecayed [heavy null])
+    ('~[~null~]~ = ^ eval:undecayed [heavy null])
+    ('~[~null~]~ = ^(eval:undecayed [heavy null]))
+    ('~[~null~]~ = ^ (eval:undecayed [heavy null]))
+    ('~[~null~]~ = meta eval:undecayed [heavy null])
 
-    ('~[~null~]~ = ^ eval/undecayed [if ok [null]])
+    ('~[~null~]~ = ^ eval:undecayed [if ok [null]])
 ]
 
 
 [
-    (''3 = ^ (1 + 2 eval/undecayed [comment "HI"]))
-    ('~[]~ = ^ eval/undecayed [comment "HI"])
+    (''3 = ^ (1 + 2 eval:undecayed [comment "HI"]))
+    ('~[]~ = ^ eval:undecayed [comment "HI"])
 
-    (3 = (1 + 2 eval/undecayed [comment "HI"]))
-    (nihil? eval/undecayed [comment "HI"])
+    (3 = (1 + 2 eval:undecayed [comment "HI"]))
+    (nihil? eval:undecayed [comment "HI"])
 
     (
         y: <overwritten>
-        x: (1 + 2 y: (void eval/undecayed [comment "HI"]))
+        x: (1 + 2 y: (void eval:undecayed [comment "HI"]))
         all [
             void? x
             void? y
@@ -197,7 +197,7 @@
 )
 (nothing? do "Rebol []")
 (nothing? do "Rebol [] 1")
-(2 = do "Rebol [] 1 quit/value 2 3")
+(2 = do "Rebol [] 1 quit:value 2 3")
 
 ; RETURN stops the evaluation
 (
@@ -228,11 +228,11 @@
 ; evaluate block tests
 (
     success: 'false
-    pos: evaluate/step [success: 'true success: 'false]
+    pos: evaluate:step [success: 'true success: 'false]
     (true? success) and (pos = [success: 'false])
 )
 (
-    [b value]: evaluate/step [1 2]
+    [b value]: evaluate:step [1 2]
     all [
         1 = value
         [2] = b
@@ -240,33 +240,33 @@
 )
 (
     all wrap [
-        null? [pos /value]: evaluate/step/undecayed []
+        null? [pos /value]: evaluate:step:undecayed []
         pos = null
         null? value
     ]
 )
 (
-    [pos value]: evaluate/step [trap [1 / 0]]
+    [pos value]: evaluate:step [trap [1 / 0]]
     all [
         error? value
         pos = []
     ]
 )
 
-; META/EXCEPT: intercept errors
+; META:EXCEPT: intercept errors
 [
     (
-        result': meta/except eval [1 + 2 1 / 0]
+        result': meta:except eval [1 + 2 1 / 0]
         all [
             error? result'
             result'.id = 'zero-divide
         ]
     )
     ~zero-divide~ !! (  ; full eval can only trap last error (is that correct?)
-        result': meta/except eval [1 / 0 1 + 2]
+        result': meta:except eval [1 / 0 1 + 2]
     )
     (
-        result': meta/except [pos @]: eval/step [1 / 0 1 + 2]
+        result': meta:except [pos @]: eval:step [1 / 0 1 + 2]
         all [
             error? result'
             result'.id = 'zero-divide
@@ -276,7 +276,7 @@
     (
         block: [1 + 2 1 / 0 10 + 20]
         [3 ~zero-divide~ 30] = collect [
-            while [[block ^/result']: eval/step block] [
+            while [[block ^/result']: eval:step block] [
                 if raised? unmeta result' [
                     keep quasi (unquasi result').id
                 ] else [
@@ -294,7 +294,7 @@
 )
 ; recursive behaviour
 (1 = eval [eval [1]])
-(1 = do "Rebol [] quit/value eval [1]")
+(1 = do "Rebol [] quit:value eval [1]")
 (1 == 1)
 (3 = reeval unrun :reeval unrun :add 1 2)
 ; infinite recursion for block

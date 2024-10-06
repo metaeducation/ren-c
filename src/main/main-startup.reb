@@ -44,7 +44,7 @@ make-banner: func [
     fmt [block!]
 ][
     let str: make text! 200
-    let star: append/dup make text! 74 #"*" 74
+    let star: append:dup make text! 74 #"*" 74
     let spc: format ["**" 70 "**"] ""
 
     let [a b s]
@@ -121,7 +121,7 @@ usage: func [
 ;       --version tuple  Script must be this version or greater
 ;       Perhaps add --reqired version-tuple for above TBD
 
-    print trim/auto copy {
+    print trim:auto copy {
     Command line usage:
 
         REBOL [options] [script] [arguments]
@@ -213,7 +213,7 @@ main-startup: func [
     main-startup  ; unset when finished with itself
     about usage license  ; exported to lib, see notes
     <static>
-        o (system.options)  ; shorthand since options are often read/written
+        o (system.options)  ; shorthand since options are often read or written
 ][
     ; We hook the RETURN function so that it actually returns an instruction
     ; that the code can build up from multiple EMIT statements.
@@ -235,17 +235,17 @@ main-startup: func [
             [block! issue! text!]
         <with> instruction
     ][
-        switch/type item [
+        switch:type item [
             issue! [
-                if not empty? instruction [append/line instruction ',]
+                if not empty? instruction [append:line instruction ',]
                 insert instruction item
             ]
             text! [
-                append/line instruction spread compose [comment (item)]
+                append:line instruction spread compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append/line instruction ',]
-                append/line instruction spread compose/deep/label item <*>
+                if not empty? instruction [append:line instruction ',]
+                append:line instruction spread compose:deep:label item <*>
             ]
             fail ~<unreachable>~
         ]
@@ -276,7 +276,7 @@ main-startup: func [
             run return-to-c instruction
         ]
 
-        return-to-c switch/type state [
+        return-to-c switch:type state [
             integer! [  ; just tells the calling C loop to exit() process
                 if not empty? instruction [
                     print mold instruction
@@ -334,7 +334,7 @@ main-startup: func [
     ; then decide if it wants to fall back on argv[0]
     ;
     if defined? $get-current-exec [
-        switch/type system.options.boot: get-current-exec [
+        switch:type system.options.boot: get-current-exec [
             file! []  ; found it
             null?! []  ; also okay (not foolproof!)
             fail "GET-CURRENT-EXEC returned unexpected datatype"
@@ -374,7 +374,7 @@ main-startup: func [
     ][
         return all [
             not empty? dir
-            exists? dir: clean-path/dir local-to-file dir
+            exists? dir: clean-path:dir local-to-file dir
             dir
         ]
     ]
@@ -499,7 +499,7 @@ main-startup: func [
 
     let param
 
-    o.args: copy parse3/case argv [opt some [ ; COPY to drop processed argv
+    o.args: copy parse3:case argv [opt some [ ; COPY to drop processed argv
 
         ; Double-dash means end of command line arguments, and the rest of the
         ; arguments are going to be positional.  In Rebol's case, that means a
@@ -781,7 +781,7 @@ main-startup: func [
         url? o.script
     ] then [
         emit [
-            (do/args (<*> o.script) (<*> script-args)) except e -> [
+            (do:args (<*> o.script) (<*> script-args)) except e -> [
                 quit e.exit-code
             ]
         ]

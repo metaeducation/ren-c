@@ -8,11 +8,11 @@
 ; the end of the fulfillment list.  This is the same mechanism that REORDER
 ; exploits in its implemenation.
 ;
-([a b c <item>] = append/series <item> [a b c])
+([a b c <item>] = append:series <item> [a b c])
 
 ; Baseline operation of REORDER.  Refinements are still available.
 (
-    itemfirst: reorder :append [value series]
+    itemfirst: reorder append/ [value series]
     all [
         [a b c <item>] = itemfirst <item> [a b c]
         [value series /part /dup /line] = parameters of :itemfirst
@@ -21,16 +21,16 @@
 
 ; Asking for the original order gives back an equivalent function.
 (
-    seriesfirst: reorder :append [series value]
+    seriesfirst: reorder append/ [series value]
     all [
         [a b c <item>] = seriesfirst [a b c] <item>
-        (parameters of :seriesfirst) = (parameters of :append)
+        (parameters of seriesfirst/) = (parameters of append/)
     ]
 )
 
 ; All required arguments must be mentioned in the ordering.
 (
-    e: sys.util/rescue [reorder :append [series]]
+    e: sys.util/rescue [reorder append/ [series]]
     all [
         e.id = 'no-arg
         e.arg1 = 'append
@@ -40,13 +40,13 @@
 
 ; Optional arguments may be incorporated as well
 (
-    val-dup-ser: reorder :append [value dup series]
+    val-dup-ser: reorder append/ [value dup series]
     [a b c <item> <item> <item>] = val-dup-ser <item> 3 [a b c]
 )
 
 ; Naming a refinement more than once is an error
 (
-    e: sys.util/rescue [reorder :append [series value series]]
+    e: sys.util/rescue [reorder append/ [series value series]]
     all [
         e.id = 'bad-parameter
         e.arg1 = 'series
@@ -55,7 +55,7 @@
 
 ; Unrecognized parameters cause errors
 (
-    e: sys.util/rescue [reorder :append [series value fhqwhgads]]
+    e: sys.util/rescue [reorder append/ [series value fhqwhgads]]
     all [
         e.id = 'bad-parameter
         e.arg1 = 'fhqwhgads
@@ -90,7 +90,7 @@
     nohelp: reorder* :append [value series]  ; cheaper/faster to create
     all [
         [a b c <item>] = nohelp <item> [a b c]  ; works the same
-        null = adjunct-of :nohelp  ; ...but has no parameter information
+        null = adjunct-of nohelp/  ; ...but has no parameter information
     ]
 )
 

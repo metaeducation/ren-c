@@ -388,7 +388,7 @@ REBINT Find_In_Array(
     REBINT start;
     if (skip < 0) {
         start = 0;
-        --index;  // `find/skip tail [1 2] 2 -1` should start at the *2*
+        --index;  // (find:skip tail [1 2] 2 -1) should start at the *2*
     }
     else
         start = index;
@@ -449,7 +449,7 @@ REBINT Find_In_Array(
 
     if (Any_Type_Value(pattern) and not (flags & AM_FIND_CASE))
         fail (
-            "FIND without /CASE temporarily not taking TYPE-XXX! use MATCHES"
+            "FIND without :CASE temporarily not taking TYPE-XXX! use MATCHES"
             " see https://forum.rebol.info/t/1881"
         );
 
@@ -1009,7 +1009,7 @@ REBTYPE(List)
             len = Part_Limit_Append_Insert(ARG(part));
 
         // Note that while inserting or appending VOID is a no-op, CHANGE with
-        // a /PART can actually erase data.
+        // a :PART can actually erase data.
         //
         if (Is_Void(arg) and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
@@ -1209,7 +1209,7 @@ REBTYPE(List)
         flags.reverse = REF(reverse);
         flags.all = REF(all);  // !!! not used?
 
-        Value* cmp = ARG(compare);  // null if no /COMPARE
+        Value* cmp = ARG(compare);  // null if no :COMPARE
         Deactivate_If_Action(cmp);
         if (Is_Frame(cmp)) {
             flags.comparator = cmp;
@@ -1472,7 +1472,7 @@ DECLARE_NATIVE(glom)
     Value* accumulator = ARG(accumulator);
     Value* result = ARG(result);
 
-    // !!! This logic is repeated in APPEND/etc.  It should be factored out.
+    // !!! This logic is repeated in APPEND etc.  It should be factored out.
     //
     bool splice = false;
 

@@ -65,7 +65,7 @@ throw: func* [] [
 ]
 
 quit: func* [] [
-    fail "QUIT archetype called when none no DO/IMPORT/console is providing it"
+    fail "QUIT archetype called when no [DO IMPORT CONSOLE] is providing it"
 ]
 
 catch: specialize catch*/ [name: 'throw]
@@ -170,7 +170,7 @@ func: func* [
     |
         '<in> (
             new-body: default [
-                copy/deep body
+                copy:deep body
             ]
         )
         opt some [
@@ -202,7 +202,7 @@ func: func* [
         '<static> (
             statics: default [copy inside spec '[]]
             new-body: default [
-                copy/deep body
+                copy:deep body
             ]
         )
         opt some [
@@ -314,7 +314,7 @@ unset?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return nothing? get/any var
+    return nothing? get:any var
 ]
 
 vacant?: func [
@@ -322,7 +322,7 @@ vacant?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return vacancy? get/any var
+    return vacancy? get:any var
 ]
 
 set?: func [
@@ -330,7 +330,7 @@ set?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return something? get/any var
+    return something? get:any var
 ]
 
 defined?: func [
@@ -354,7 +354,7 @@ unspecialized?: func [
     return: [logic?]
     var [word! tuple!]
 ][
-    return hole? get/any var
+    return hole? get:any var
 ]
 
 specialized?: func [
@@ -362,7 +362,7 @@ specialized?: func [
     return: [logic?]
     var [word! tuple!]
 ][
-    return not hole? get/any var
+    return not hole? get:any var
 ]
 
 
@@ -439,8 +439,8 @@ so: enfix func [
     feed "Needs value to return as result e.g. (x: even? 4 so 10 + 20)"
         [<end> any-value? <variadic>]
 ][
-    if not get/any $condition [
-        fail/blame make error! [
+    if not get:any $condition [
+        fail:blame make error! [
             type: 'Script
             id: 'assertion-failure
             arg1: compose [~null~ so]
@@ -457,7 +457,7 @@ was: enfix redescribe [
 ](
     lambda [left [any-value?] right [any-value?]] [
         if :left != :right [
-            fail/blame make error! [
+            fail:blame make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [(:left) is (:right)]
@@ -496,10 +496,10 @@ gunzip: redescribe [
 ensure: redescribe [
     "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
-    enclose get $match/meta lambda [f] [
+    enclose match:meta/ lambda [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
-        eval f else [  ; /META allows any value, must UNMETA
-            ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
+        eval f else [  ; :META allows any value, must UNMETA
+            ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
@@ -517,7 +517,7 @@ ensure: redescribe [
 ; with the failure signal.  You need to use
 ;
 non: redescribe [
-    "Pass through value if it *doesn't* match test, else null (MATCH/NOT)"
+    "Pass through value if it *doesn't* match test, else null"
 ](
     enclose match/ func [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
@@ -527,12 +527,12 @@ non: redescribe [
 )
 
 prohibit: redescribe [
-    {Pass through value if it *doesn't* match test, else fail (ENSURE/NOT)}
+    "Pass through value if it *doesn't* match test, else fail"
 ](
-    enclose get $match/meta lambda [f] [
+    enclose match:meta/ lambda [f] [
         let value: :f.value  ; EVAL makes frame arguments unavailable
         eval f then [
-            ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
+            ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
@@ -566,7 +566,7 @@ find-last: redescribe [
 ](
     adapt find-reverse/ [
         if not any-series? series [
-            fail/blame "Can only use FIND-LAST on ANY-SERIES?" $series
+            fail:blame "Can only use FIND-LAST on ANY-SERIES?" $series
         ]
 
         series: tail of series  ; can't use plain TAIL due to /TAIL refinement
@@ -704,8 +704,8 @@ count-up: func [
             assert [start = end]  ; should only happen if body never runs
             return ^void
         ]
-        if limit <> # [  ; Note: /WITH not ^META, decays PACK! etc
-            stop/with heavy unmeta result'  ; the limit was actually reached
+        if limit <> # [  ; Note: :WITH not ^META, decays PACK! etc
+            stop:with heavy unmeta result'  ; the limit was actually reached
         ]
         ; otherwise keep going...
         end: end + 100
@@ -816,7 +816,7 @@ raise: func [
     /blame "Point to variable or parameter to blame"
         [word! frame!]
 ][
-    if tripwire? get/any $reason [
+    if tripwire? get:any $reason [
         reason: as text! unquasi ^reason  ; antiform tag! ~<unreachable>~
     ]
     all [error? reason, not blame] then [
@@ -833,9 +833,9 @@ raise: func [
     ; the error if captured (e.g. error.id and `error.key-name`.  Another
     ; option would be something like:
     ;
-    ;     fail/with [{The key} :key-name {is invalid}] [key-name: key]
+    ;     fail:with [{The key} :key-name {is invalid}] [key-name: key]
 
-    let error: switch/type :reason [
+    let error: switch:type :reason [
         error! [reason]
         the-word! [
             blame: default [to word! reason]

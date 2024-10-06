@@ -219,7 +219,7 @@ emit: func [
         ]
         else [
             let result
-            if [code /result]: evaluate/step code [
+            if [code /result]: evaluate:step code [
                 if void? :result [continue]  ; invisible
                 append ctx.msg ensure binary! :result
             ]
@@ -343,11 +343,11 @@ parse-asn: func [
                 size: byte and+ 127
                 if not zero? (byte and+ 128) [  ; long form
                     let old-size: size
-                    size: debin [be +] copy/part next data old-size
+                    size: debin [be +] copy:part next data old-size
                     data: skip data old-size
                 ]
                 if zero? size [
-                    keep/line compose/deep [
+                    keep:line compose:deep [
                         (tag) [
                             (either constructed ["constructed"] ["primitive"])
                             (index)
@@ -364,8 +364,8 @@ parse-asn: func [
             #value [
                 switch class [
                     @universal [
-                        val: copy/part data size
-                        keep/line compose/deep [
+                        val: copy:part data size
+                        keep:line compose:deep [
                             (tag) [
                                 (either constructed ["constructed"] ["primitive"])
                                 (index)
@@ -376,8 +376,8 @@ parse-asn: func [
                     ]
 
                     @context-specific [
-                        keep/line compose/deep [(tag) [(val) (size)]]
-                        parse-asn copy/part data size  ; !!! ensures valid?
+                        keep:line compose:deep [(tag) [(val) (size)]]
+                        parse-asn copy:part data size  ; !!! ensures valid?
                     ]
                 ]
 
@@ -507,8 +507,8 @@ client-hello: func [
     ; } Random;
     ;
     let epoch: 1-Jan-1970/0:00+0:00
-    ctx.client-random: to-4bin to-integer difference now/precise epoch
-    random/seed now/time/precise
+    ctx.client-random: to-4bin to-integer difference now:precise epoch
+    random:seed now:time:precise
     repeat 28 [append ctx.client-random (random-secure 256) - 1]
 
     let cs-data: make binary! map-each 'item cipher-suites [
@@ -678,7 +678,7 @@ client-key-exchange: func [
         <rsa> [
             ; generate pre-master-secret
             ctx.pre-master-secret: copy ctx.ver-bytes
-            random/seed now/time/precise
+            random:seed now:time:precise
             repeat 46 [append ctx.pre-master-secret (random-secure 256) - 1]
 
             ; encrypt pre-master-secret
@@ -750,10 +750,10 @@ client-key-exchange: func [
     make-key-block ctx
 
     ; update keys
-    ctx.client-mac-key: copy/part ctx.key-block ctx.hash-size
-    ctx.server-mac-key: copy/part skip ctx.key-block ctx.hash-size ctx.hash-size
-    ctx.client-crypt-key: copy/part skip ctx.key-block 2 * ctx.hash-size ctx.crypt-size
-    ctx.server-crypt-key: copy/part skip ctx.key-block (2 * ctx.hash-size) + ctx.crypt-size ctx.crypt-size
+    ctx.client-mac-key: copy:part ctx.key-block ctx.hash-size
+    ctx.server-mac-key: copy:part skip ctx.key-block ctx.hash-size ctx.hash-size
+    ctx.client-crypt-key: copy:part skip ctx.key-block 2 * ctx.hash-size ctx.crypt-size
+    ctx.server-crypt-key: copy:part skip ctx.key-block (2 * ctx.hash-size) + ctx.crypt-size ctx.crypt-size
 
     if ctx.block-size [
         if ctx.version = 1.0 [
@@ -761,8 +761,8 @@ client-key-exchange: func [
             ; Block ciphers in TLS 1.0 used an implicit initialization vector
             ; (IV) to seed the encryption process.  This has vulnerabilities.
             ;
-            ctx.client-iv: copy/part skip ctx.key-block 2 * (ctx.hash-size + ctx.crypt-size) ctx.block-size
-            ctx.server-iv: copy/part skip ctx.key-block (2 * (ctx.hash-size + ctx.crypt-size)) + ctx.block-size ctx.block-size
+            ctx.client-iv: copy:part skip ctx.key-block 2 * (ctx.hash-size + ctx.crypt-size) ctx.block-size
+            ctx.server-iv: copy:part skip ctx.key-block (2 * (ctx.hash-size + ctx.crypt-size)) + ctx.block-size ctx.block-size
         ] else [
             ;
             ; Each encrypted message in TLS 1.1 and above carry a plaintext
@@ -917,7 +917,7 @@ encrypt-data: func [
             remainder (1 + (length of data)) ctx.block-size
         )
         let len: 1 + padding
-        append data head of insert/dup make binary! len to-1bin padding len
+        append data head of insert:dup make binary! len to-1bin padding len
     ]
 
     switch ctx.crypt-method [
@@ -993,9 +993,9 @@ parse-protocol: func [
         type: select protocol-types data.1 else [
             fail ["unknown/invalid protocol type:" data.1]
         ]
-        version: select bytes-to-version copy/part at data 2 2
-        size: debin [be +] copy/part at data 4 2
-        messages: copy/part at data 6 size
+        version: select bytes-to-version copy:part at data 2 2
+        size: debin [be +] copy:part at data 4 2
+        messages: copy:part at data 6 size
     ]
 ]
 
@@ -1013,8 +1013,8 @@ grab: enfix func [
         [integer!]
 ][
     let data: ensure binary! get var
-    let result: copy/part data n
-    let actual: length of result  ; /PART accepts truncated data
+    let result: copy:part data n
+    let actual: length of result  ; :PART accepts truncated data
     if n != actual  [
         fail ["Expected" n "bytes for" as word! left "but received" actual]
     ]
@@ -1090,7 +1090,7 @@ parse-messages: func [
             ; Grab the server's initialization vector, which will be new for
             ; each message.
             ;
-            ctx.server-iv: take/part data ctx.block-size
+            ctx.server-iv: take:part data ctx.block-size
         ]
 
         change data decrypt-data ctx data
@@ -1098,7 +1098,7 @@ parse-messages: func [
 
         if ctx.block-size [
             ; deal with padding in CBC mode
-            data: copy/part data (
+            data: copy:part data (
                 ((length of data) - 1) - (last data)
             )
             debug ["depadding..."]
@@ -1144,12 +1144,12 @@ parse-messages: func [
                     ]
                 )
 
-                let len: debin [be +] copy/part (skip data 1) 3
+                let len: debin [be +] copy:part (skip data 1) 3
 
                 ; We don't mess with the data pointer itself as we use it, so
                 ; make a copy of the data.  Skip the 4 bytes we used.
                 ;
-                let bin: copy/part (skip data 4) len
+                let bin: copy:part (skip data 4) len
 
                 append result switch msg-type [
                     <server-hello> [
@@ -1337,7 +1337,7 @@ parse-messages: func [
                                     assert [server-public-length = 65]
                                     prefix: grab bin 1
                                     assert [prefix = #{04}]
-                                    ctx.ecdh-pub: copy/part bin 64
+                                    ctx.ecdh-pub: copy:part bin 64
                                     x: grab bin 32
                                     y: grab bin 32
 
@@ -1447,17 +1447,17 @@ parse-messages: func [
                     ]
                 ]
 
-                append ctx.handshake-messages copy/part data len + 4
+                append ctx.handshake-messages copy:part data len + 4
 
                 let skip-amount: either yes? ctx.is-encrypted [
-                    let mac: copy/part skip data len + 4 ctx.hash-size
+                    let mac: copy:part skip data len + 4 ctx.hash-size
 
                     let mac-check: checksum/key ctx.hash-method make binary! [
                         to-8bin ctx.seq-num-r   ; 64-bit sequence number
                         #{16}                   ; msg type
                         ctx.ver-bytes           ; version
                         to-2bin len + 4         ; msg content length
-                        copy/part data len + 4
+                        copy:part data len + 4
                     ] ctx.server-mac-key
 
                     if mac <> mac-check [
@@ -1483,10 +1483,10 @@ parse-messages: func [
         #application [
             append result let msg-obj: context [
                 type: 'app-data
-                content: copy/part data (length of data) - ctx.hash-size
+                content: copy:part data (length of data) - ctx.hash-size
             ]
             let len: length of msg-obj.content
-            let mac: copy/part skip data len ctx.hash-size
+            let mac: copy:part skip data len ctx.hash-size
             let mac-check: checksum/key ctx.hash-method make binary! [
                 to-8bin ctx.seq-num-r   ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
@@ -1559,7 +1559,7 @@ prf: func [
         let len: length of secret
         let mid: to integer! (0.5 * (len + either odd? len [1] [0]))
 
-        let s-1: copy/part secret mid
+        let s-1: copy:part secret mid
         let s-2: copy at secret mid + either odd? len [0] [1]
 
         let p-md5: copy #{}
@@ -1576,8 +1576,8 @@ prf: func [
             append p-sha1 checksum/key 'sha1 (join a seed) s-2
         ]
         return (
-            (copy/part p-md5 output-length)
-            xor+ (copy/part p-sha1 output-length)
+            (copy:part p-md5 output-length)
+            xor+ (copy:part p-sha1 output-length)
         )
     ]
 
@@ -1589,7 +1589,7 @@ prf: func [
         a: checksum/key ctx.prf-method a secret
         append p-shaX checksum/key ctx.prf-method (join a seed) secret
     ]
-    take/last/part p-shaX ((length of p-shaX) - output-length)
+    take:last:part p-shaX ((length of p-shaX) - output-length)
     return p-shaX
 ]
 
@@ -1708,12 +1708,12 @@ tls-read-data: func [
     ; !!! Why is this making a copy (5 = length of copy...) when just trying
     ; to test a size?
     ;
-    while [5 = length of copy/part data 5] [
-        let len: 5 + debin [be +] copy/part at data 4 2
+    while [5 = length of copy:part data 5] [
+        let len: 5 + debin [be +] copy:part at data 4 2
 
         debug ["reading bytes:" len]
 
-        let fragment: copy/part data len
+        let fragment: copy:part data len
 
         if len > length of fragment [
             debug [

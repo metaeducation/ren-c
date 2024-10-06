@@ -35,7 +35,7 @@ import <platforms.r>
 
 change-dir join repo-dir %src/boot/
 
-args: parse-args system.script.args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO:ARGS
 platform-config: configure-platform args.OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
@@ -56,9 +56,9 @@ if args.GIT_COMMIT = "unknown" [
 
 prep-dir: join system.options.path %prep/
 
-mkdir/deep join prep-dir %include/
-mkdir/deep join prep-dir %boot/
-mkdir/deep join prep-dir %core/
+mkdir:deep join prep-dir %include/
+mkdir:deep join prep-dir %boot/
+mkdir:deep join prep-dir %core/
 
 
 === "MAKE VERSION INFORMATION AVAILABLE TO CORE C CODE" ===
@@ -158,7 +158,7 @@ for-each-datatype: func [
     var: has obj var
 
     heart*: 1  ; 0 is reserved
-    parse3/match type-table [some [not <end>
+    parse3:match type-table [some [not <end>
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
 
         name*: word!
@@ -180,8 +180,8 @@ for-each-datatype: func [
                 description: ensure text! description*
                 typesets: map-each 'any-name! typesets* [
                     decorated: to text! any-name!
-                    assert [#"?" = take/last decorated]
-                    assert ["any-" = take/part decorated 4]
+                    assert [#"?" = take:last decorated]
+                    assert ["any-" = take:part decorated 4]
                     decorated  ; has now been undecorated
                 ]
                 class: class*
@@ -220,7 +220,7 @@ for-each-typerange: func [
 
     heart*: 1  ; 0 is reserved
     cycle [  ; need to be in loop for BREAK to work
-        parse3/match type-table [some [
+        parse3:match type-table [some [
             opt some [name*: tag! (
                 name*: to text! name*
                 lowercase name*
@@ -231,7 +231,7 @@ for-each-typerange: func [
                 ; The name ANY-META-VALUE! is used to produce functions like
                 ; ANY_META() in the C code.  Extract relevant name part.
                 ;
-                parse3/match name* [
+                parse3:match name* [
                     opt remove "any-"
                     to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
                     remove "?"
@@ -243,11 +243,11 @@ for-each-typerange: func [
                     append stack spread reduce [heart* any-name!*]
                     types*: copy []
                 ] else [
-                    assert [any-name!* = take/last stack]
+                    assert [any-name!* = take:last stack]
                     set var make object! [
                         name: name*
                         any-name!: any-name!*
-                        start: ensure integer! take/last stack
+                        start: ensure integer! take:last stack
                         end: heart*
                         types: types*
                     ]
@@ -671,7 +671,7 @@ e-typesets/write-emitted
 for-each 'term load %lib-words.r [
     if issue? term [
         if not find syms-words as text! term [
-            fail ["Expected symbol for" term "from native/generic/type"]
+            fail ["Expected symbol for" term "from [native generic type]"]
         ]
     ] else [
         add-sym term
@@ -737,7 +737,7 @@ for-each 'term load %symbols.r [
     ] else [
         assert [issue? term]
         if not find syms-words as text! term [
-            fail ["Expected symbol for" term "from native/generic/type"]
+            fail ["Expected symbol for" term "from [native generic type]"]
         ]
     ]
 ]
@@ -894,11 +894,11 @@ for-each [sw-cat list] boot-errors [
 
         ; Camel Case and make legal for C (e.g. "not-found*" => "Not_Found_P")
         ;
-        f-name: uppercase/part to-c-name id 1
+        f-name: uppercase:part to-c-name id 1
         parse3 f-name [
             opt some [
                 "_" w: <here>
-                (uppercase/part w 1)
+                (uppercase:part w 1)
                 |
                 one
             ]
@@ -957,16 +957,16 @@ sys-toplevel: copy []
 
 for-each 'section [boot-base boot-system-util boot-mezz] [
     set (inside [] section) s: make text! 20000
-    append/line s "["
+    append:line s "["
     for-each 'file first mezz-files [  ; doesn't use LOAD to strip
         gather:  [null]
         text: stripload:gather (
             join %../mezz/ file
         ) if section = 'boot-system-util [$sys-toplevel]
-        append/line s text
+        append:line s text
     ]
-    append/line s "~done~"
-    append/line s "]"
+    append:line s "~done~"
+    append:line s "]"
 
     mezz-files: next mezz-files
 ]
@@ -1077,16 +1077,16 @@ boot-typespecs: collect [
 ; Create main code section (compressed)
 
 boot-molded: copy ""
-append/line boot-molded "["
+append:line boot-molded "["
 for-each 'sec sections [
     if get-word? sec [  ; wasn't LOAD-ed (no bootstrap compatibility issues)
         append boot-molded (get inside sections sec)
     ]
     else [  ; was LOAD-ed for easier analysis (makes bootstrap complicated)
-        append/line boot-molded mold/flat (get inside sections sec)
+        append:line boot-molded mold:flat (get inside sections sec)
     ]
 ]
-append/line boot-molded "]"
+append:line boot-molded "]"
 
 write-if-changed (join prep-dir %boot/tmp-boot-block.r) boot-molded
 data: as binary! boot-molded
@@ -1119,7 +1119,7 @@ e-boot: make-emitter "Bootstrap Structure and Root Module" (
 fields: collect [
     for-each 'word sections [
         word: form as word! word
-        remove/part word 5  ; 5 leading characters, [boot-]xxx
+        remove:part word 5  ; 5 leading characters, [boot-]xxx
         word: to-c-name word
         keep cscape [word {Element ${word}}]
     ]

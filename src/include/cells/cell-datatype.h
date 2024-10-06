@@ -27,10 +27,10 @@
 //    r3-alpha>> reduce [integer! block!]
 //    == [integer! block!]
 //
-// You would have to use something like MOLD/ALL to reveal a LOAD-able syntax
+// You would have to use something like MOLD:ALL to reveal a LOAD-able syntax
 // that would get you a DATATYPE! and not a WORD!:
 //
-//    r3-alpha>> mold/all reduce [integer! block!]
+//    r3-alpha>> mold:all reduce [integer! block!]
 //    == "[#[datatype! integer!] #[datatype! block!]]"
 //
 // Ren-C's approach is to introduce several lexical types to represent types

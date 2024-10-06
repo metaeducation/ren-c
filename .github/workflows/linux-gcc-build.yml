@@ -331,7 +331,7 @@ jobs:
           r3time: now
           print ["R3 Time reported as:" r3time]
 
-          call/shell/output "date --iso-8601=seconds" unixtime: copy ""
+          call:shell:output "date --iso-8601=seconds" unixtime: copy ""
           print ["UNIX Time (date --iso-8601) reported as:" unixtime]
 
           parse unixtime [

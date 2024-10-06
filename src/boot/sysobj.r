@@ -49,14 +49,14 @@ contexts: make object! [
 state: make object! [
     ; Mutable system state variables
     note: "contains protected hidden fields"
-    policies: make object! [  ; Security policies
+    policies: make object! [  ; !!! was for removed SECURE code
         file:    ; file access
         net:     ; network access
         eval:    ; evaluation limit
         memory:  ; memory limit
         protect: ; protect function
         debug:   ; debugging features
-        envr:    ; read/write
+        envr:    ; read and write
         call:    ; execute only
         browse:  ; execute only
             0.0.0
@@ -163,7 +163,7 @@ standard: make object! [
                 fail ["Invalid Return type, expects:" types of 'return]
             ]
             [
-                unwind/with
+                unwind:with
                     (binding of inside [] 'return)  ; $ not in bootstrap
                     typecheck 'return unmeta value
             ]

@@ -27,7 +27,7 @@
 (e: sys.util/rescue [fail 'some-error-id], e.id = 'some-error-id)
 
 
-; FAIL can be given a /BLAME parameter.  This gives a more informative message,
+; FAIL can be given a :BLAME parameter.  This gives a more informative message,
 ; even when no text is provided.
 [
     (
@@ -39,15 +39,15 @@
             e.arg1 = 'foo
             e.arg2 = 'x
             e.arg3 = 10
-            [foo 10] = copy/part e.near 2  ; implicates callsite
+            [foo 10] = copy:part e.near 2  ; implicates callsite
         ]
     )(
-        foo: func [x] [fail/blame "error reason" $x]
+        foo: func [x] [fail:blame "error reason" $x]
 
         e: sys.util/rescue [foo 10]
         all [
             e.id = null  ; no longer an invalid arg error
-            [foo 10] = copy/part e.near 2  ; still implicates callsite
+            [foo 10] = copy:part e.near 2  ; still implicates callsite
         ]
     )
 ]

@@ -331,7 +331,7 @@ Array* Startup_Natives(const Element* boot_natives)
     // error if you try to assign to something attached to Lib before being
     // explicitly added.  So we have to go over the SET-WORD!s naming natives
     // (first one at time of writing is `api-transient: native [...]`) and
-    // BIND/SET them.
+    // BIND:SET them.
     //
     Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Module);
 

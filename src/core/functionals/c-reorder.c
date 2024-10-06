@@ -47,10 +47,10 @@
 // of applying a second pass over the frame (using indices accrued during the
 // first pass) is used to achieve it:
 //
-//     >> append/series <item> [a b c]  ; use series parameter on 2nd pass
+//     >> append:series <item> [a b c]  ; use series parameter on 2nd pass
 //     == [a b c <item>]
 //
-// But `get $append/dup/series` is not very intuitive for getting the order
+// But `get $append:dup:series` is not very intuitive for getting the order
 // of [value dup series] (and gets more counterintuitive the more normal
 // parameters a function has).
 //

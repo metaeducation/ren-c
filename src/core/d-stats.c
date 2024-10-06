@@ -110,7 +110,7 @@ DECLARE_NATIVE(callgrind)
 //
 //     valgrind --tool=callgrind --instr-atstart=no --collect-atstart=no ./r3
 //
-// For easy copy/paste into the shell, here's a useful command line:
+// For easy copying and pasting into the shell, here's a useful command line:
 /*
      valgrind --tool=callgrind \
           --collect-jumps=yes \

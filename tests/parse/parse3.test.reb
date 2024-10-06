@@ -203,12 +203,12 @@
 )]
 [#2130 (
     val: pos: ~
-    res: parse3/match ser: "foo" [pos: <here>, val: across one]
+    res: parse3:match ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
 [#2130 (
     val: pos: ~
-    res: parse3/match ser: "foo" [pos: <here>, val: across one]
+    res: parse3:match ser: "foo" [pos: <here>, val: across one]
     all [res = null, val = "f", pos = ser]
 )]
 
@@ -611,7 +611,7 @@
     )
 
     ~parse3-incomplete~ !! (
-        parse3/case bincat [{c😺t}]
+        parse3:case bincat [{c😺t}]
     )
 ]
 
@@ -663,12 +663,12 @@
     s: {abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ}
     t: {----------------------------------------------------}
     cfor n 2 50 1 [
-        let sub: copy/part s n
+        let sub: copy:part s n
         parse3 sub [some [
             remove one
             insert ("-")
         ]]
-        if sub != copy/part t n [fail "Incorrect Replacement"]
+        if sub != copy:part t n [fail "Incorrect Replacement"]
     ]
     ok
 )]
@@ -680,12 +680,12 @@
             for-each 't things [
                 counts.(t): 0
                 keep t
-                keep compose/deep $(counts.(t): me + 1)
-                keep/line '|
+                keep compose:deep $(counts.(t): me + 1)
+                keep:line '|
             ]
             keep 'bypass
         ]
-        parse3 data (compose/deep [
+        parse3 data (compose:deep [
             opt some [(spread rules)]  ; could also be `opt some [rules]`
         ]) except [
             return <outlier>

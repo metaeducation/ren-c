@@ -60,7 +60,7 @@
     value: <value>
     pos: <pos>
     result: eval [
-        let ['pos value]: transcode/next "[first item] #residue"
+        let ['pos value]: transcode:next "[first item] #residue"
         reduce [value pos]
     ]
     all [
@@ -78,7 +78,7 @@
     pos: <pos>
     word: 'value
     result: eval [
-        let ['pos (word)]: transcode/next "[first item] #residue"
+        let ['pos (word)]: transcode:next "[first item] #residue"
         reduce [value pos]
     ]
     all [
@@ -150,14 +150,14 @@
 ; derived, e.g. the meeting of two blocks with LET chains in their binding.
 (
     block1: eval [let x: 10, [x + y]]
-    block2: eval compose/deep [let y: 20, [(block1)]]
+    block2: eval compose:deep [let y: 20, [(block1)]]
     30 = eval first block2
 )
 
 ; Slightly more complex version...use functions
 (
     block1: run func [] [let x: 10, [x + y]]
-    block2: run func [] compose/deep [let y: 20, [(block1)]]
+    block2: run func [] compose:deep [let y: 20, [(block1)]]
     30 = eval first block2
 )
 
@@ -236,10 +236,10 @@
 ; BLANK! and ISSUE! should be legal in LET.
 [(
     var: #  ; v-- second result is discarded, but request did partial transcode
-    'abc = let [(var) _]: transcode/next "abc def"
+    'abc = let [(var) _]: transcode:next "abc def"
 )(
     var: null  ; opting out of second result, hence full transcode
-    [abc def] = let [_ (var)]: transcode/next "abc def"
+    [abc def] = let [_ (var)]: transcode:next "abc def"
 )]
 
 ; This is all very shaky and speculative, and missing any semblance of
@@ -279,9 +279,9 @@
 ; There was a bug seen if a failure happened in mid-multi-return, with
 ; torture recycling on.
 (
-    recycle/torture
+    recycle:torture
     e: let [x]: trap [1 / 0]
-    recycle/on  ; semantics are to restore to basic ballast setting
+    recycle:on  ; semantics are to restore to basic ballast setting
     e.id = 'zero-divide
 )
 

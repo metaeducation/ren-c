@@ -215,7 +215,7 @@ Bounce Call_Core(Level* level_) {
             // There is some nuance in the translation of a BLOCK! into a
             // string for the bash shell.  For example, if you write:
             //
-            //     call/shell [r3 --suppress "*"]
+            //     call:shell [r3 --suppress "*"]
             //
             // You have used two WORD!s and a TEXT!.  But there are two very
             // different interpretations, as:
@@ -236,7 +236,7 @@ Bounce Call_Core(Level* level_) {
             // quotes in it escaped.  But something like the above would
             // leave the `*` as-is.  So one would need to write:
             //
-            //     call/shell [r3 --suppress {"*"}]
+            //     call:shell [r3 --suppress {"*"}]
             //
             shcmd = rebSpell("argv-block-to-command*", command);
         }

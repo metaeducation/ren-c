@@ -218,7 +218,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         //
         // Note: All set operations share a compatible spec.  The way that
         // UNIQUE is compatible is via a dummy argument in the second
-        // parameter slot, so that the /CASE and /SKIP arguments line up.
+        // parameter slot, so that the :CASE and :SKIP arguments line up.
         //
         INCLUDE_PARAMS_OF_DIFFERENCE;  // should all have compatible specs
         UNUSED(ARG(value1));  // covered by `value`

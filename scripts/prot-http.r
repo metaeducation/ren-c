@@ -144,7 +144,7 @@ do-request: func [
         (port.state.mode = <ready>) or (port.state.mode = <close>)
     ]
 
-    net-log/C as text! req  ; Note: may contain CR (can't use TO TEXT!)
+    net-log:C as text! req  ; Note: may contain CR (can't use TO TEXT!)
 
     if port.state and (port.spec.method = 'HEAD) [
         ;
@@ -200,21 +200,21 @@ check-response: func [
             all [
                 d1: find conn.data crlfbin
                 [@ d2]: find d1 crlf2bin  ; want tail, use multireturn
-                net-log/C "server standard content separator of #{0D0A0D0A}"
+                net-log:C "server standard content separator of #{0D0A0D0A}"
             ]
             all [
                 d1: find conn.data #{0A}
                 [@ d2]: find d1 #{0A0A}  ; want tail, use multireturn
-                net-log/C "server malformed line separator of #{0A0A}"
+                net-log:C "server malformed line separator of #{0A0A}"
             ]
         ] else [
             read conn
             continue
         ]
 
-        info.response-line: line: to text! copy/part conn.data d1
+        info.response-line: line: to text! copy:part conn.data d1
 
-        ; !!! In R3-Alpha, CONSTRUCT/WITH allowed passing in data that could
+        ; !!! In R3-Alpha, CONSTRUCT:WITH allowed passing in data that could
         ; be a STRING! or a BINARY! which would be interpreted as an HTTP/SMTP
         ; header.  The code that did it was in a function Scan_Net_Header(),
         ; that has been extracted into a completely separate native.  It
@@ -223,7 +223,7 @@ check-response: func [
         assert [binary? d1]
         d1: scan-net-header d1
 
-        info.headers: headers: construct/with (inert d1) http-response-headers
+        info.headers: headers: construct:with (inert d1) http-response-headers
         info.name: to file! any [spec.path %/]
         if headers.content-length [
             info.size: (
@@ -233,7 +233,7 @@ check-response: func [
         if headers.last-modified [
             info.date: try idate-to-date headers.last-modified
         ]
-        remove/part conn.data d2
+        remove:part conn.data d2
         state.mode: <reading-data>
     ]
 
@@ -285,7 +285,7 @@ check-response: func [
         spec.debug: info
     ]
 
-    switch/all info.response-parsed [
+    switch:all info.response-parsed [
         ;
         ; "The client will expect to receive a 100-Continue response from the
         ; server to indicate that the client should send the data to be posted.
@@ -492,7 +492,7 @@ read-body: func [
                 ;
                 let chunk-size
                 let mk1
-                while [not parse3/match conn.data [
+                while [not parse3:match conn.data [
                     copy chunk-size: some hex-digits, thru crlfbin
                     mk1: <here>, to <end>
                 ]][
@@ -507,7 +507,7 @@ read-body: func [
                 if odd? length of chunk-size [
                     insert chunk-size #0
                 ]
-                chunk-size: debin [be +] (debase/base as text! chunk-size 16)
+                chunk-size: debin [be +] (debase:base as text! chunk-size 16)
 
                 ; A chunk size of zero signals no more chunks.  Stop cycling.
                 ;
@@ -518,7 +518,7 @@ read-body: func [
                 ; Now we have the chunk size but may not have the chunk data.
                 ; Loop until enough data is gathered.
                 ;
-                while [not parse3/match mk1 [
+                while [not parse3:match mk1 [
                     repeat (chunk-size) one, mk2: <here>, crlfbin, to <end>
                 ]][
                     read conn
@@ -528,8 +528,8 @@ read-body: func [
                 ; remove that data (as well as the chunk size and CR LFs)
                 ; from the input.
                 ;
-                append/part port.data mk1 ((index of mk2) - (index of mk1))
-                remove/part conn.data skip mk2 2
+                append:part port.data mk1 ((index of mk2) - (index of mk1))
+                remove:part conn.data skip mk2 2
             ]
 
             ; "The Trailer response header allows the sender to include
@@ -539,7 +539,7 @@ read-body: func [
             ;
             ; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
             ;
-            if parse3/match mk1 [
+            if parse3:match mk1 [
                 crlfbin (trailer: "") to <end>
                     |
                 copy trailer to crlf2bin to <end>
@@ -557,17 +557,17 @@ read-body: func [
             ; If the header gave a content length, then that should be how
             ; much we read.
             ;
-            ; !!! Note: This could be done with READ/PART, but TLS does not
-            ; implement /PART at this time...so it reads in a loop manually.
-            ; Note that TAKE/PART removes *at most* that amount.
+            ; !!! Note: This could be done with READ:PART, but TLS does not
+            ; implement :PART at this time...so it reads in a loop manually.
+            ; Note that TAKE:PART removes *at most* that amount.
             ;
             assert [not port.data]
             port.data: make binary! headers.content-length
-            append port.data take/part conn.data headers.content-length
+            append port.data take:part conn.data headers.content-length
 
             while [headers.content-length > length of port.data] [
                 read conn
-                append port.data take/part conn.data (
+                append port.data take:part conn.data (
                     headers.content-length - length of port.data
                 )
             ]
@@ -768,7 +768,7 @@ sys.util/make-scheme [
     ]
 ]
 
-sys.util/make-scheme/with [
+sys.util/make-scheme:with [
     name: 'https
     title: "Secure HyperText Transport Protocol v1.1"
     spec: make spec [

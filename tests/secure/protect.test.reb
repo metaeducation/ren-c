@@ -48,14 +48,14 @@
     (rescue-protected? [append value 4])
     (rescue-protected? [change value 4])
     (rescue-protected? [poke value 1 4])
-    (rescue-protected? [remove/part value 1])
+    (rescue-protected? [remove:part value 1])
     (rescue-protected? [take value])
     (rescue-protected? [reverse value])
     (rescue-protected? [clear value])
 ]
 
 [#1764
-    (blk: ~ protect/deep $blk, ok)
+    (blk: ~ protect:deep $blk, ok)
     (unprotect $blk, ok)
 ]
 
@@ -86,7 +86,7 @@
         20 = get word
         [x y] = words of obj  ; starts out visible
 
-        elide protect/hide $obj.y
+        elide protect:hide $obj.y
         [x] = words of obj  ; hidden
         20 = get word  ; but you can still see it
 

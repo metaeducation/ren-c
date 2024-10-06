@@ -386,10 +386,10 @@
 
 ; PREDICATES
 
-(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] odd?/)
-(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] cascade [even?/ not/])
-(15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] odd?/)
-(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] cascade [even?/ not/])
+(15 = all:predicate [1 + 2 3 + 4 5 + 6 7 + 8] odd?/)
+(15 = all:predicate [1 + 2 3 + 4 5 + 6 7 + 8] cascade [even?/ not/])
+(15 = all:predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] odd?/)
+(15 = all:predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] cascade [even?/ not/])
 
 ; ALL returns void when contents completely erase
 [

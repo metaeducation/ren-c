@@ -43,7 +43,7 @@ import <native-emitters.r>  ; scans C source for native specs, emits macros
 ; code into the %prep/<name-of-extension> directory, which is added to the
 ; include path for the build of the extension
 
-args: parse-args system.script.args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO:ARGS
 
 ; !!! At time of writing, SRC=extensions/name/mod-name.c is what this script
 ; gets on the command line.  This is split out to make a directory to put the
@@ -61,7 +61,7 @@ output-dir: join what-dir spread reduce [%prep/ in-dir]
 
 src: join repo-dir src
 
-mkdir/deep output-dir
+mkdir:deep output-dir
 
 
 platform-config: configure-platform args/OS_ID
@@ -88,7 +88,7 @@ c-src: join repo-dir (as file! ensure text! args/SRC)
 print ["building" m-name "from" c-src]
 
 script-name: copy c-src
-parse3/match script-name [
+parse3:match script-name [
     some [thru "/"]
     change "mod-" ("ext-")
     to "."
@@ -102,7 +102,7 @@ parse3/match script-name [
 ]
 
 split-path3/file c-src inside [] 'inc-name
-parse3/match inc-name [
+parse3:match inc-name [
     change "mod-" ("tmp-mod-")
     to "."
     change "." ("-init.")

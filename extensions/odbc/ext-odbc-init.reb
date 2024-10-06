@@ -141,7 +141,7 @@ sys.util/make-scheme [
         ]
 
         copy: func [port [port!] /part [integer!]] [
-            return copy-odbc/part port.locals part
+            return copy-odbc:part port.locals part
         ]
     ]
 ]
@@ -158,7 +158,7 @@ sqlform: func [
     value "Item to form"
         [element?]
 ][
-    return switch/type value [
+    return switch:type value [
         comma! [join #"," space]  ; avoid spacing before the comma
 
         integer! word! [as text! value]
@@ -189,7 +189,7 @@ sqlform: func [
         ]
 
         the-word! the-tuple! the-path! [  ; !!! Should THE-PATH be allowed?
-            append parameters get/groups value
+            append parameters get:groups value
             "?"
         ]
 
@@ -200,7 +200,7 @@ sqlform: func [
 
         meta-word! meta-tuple! meta-path! [
             any [
-                try as text! get/groups value
+                try as text! get:groups value
                 {}
             ]
         ]
@@ -215,7 +215,7 @@ sqlform: func [
         ]
     ]
     else [
-        fail ["Invalid type for ODBC-EXECUTE dialect:" mold/limit :value 60]
+        fail ["Invalid type for ODBC-EXECUTE dialect:" mold:limit :value 60]
     ]
 ]
 

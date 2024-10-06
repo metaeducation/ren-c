@@ -14,7 +14,7 @@
 )
 
 (
-    metaraise: cascade [raise/ get $meta/except]
+    metaraise: cascade [raise/ meta:except/]
     e: metaraise 'test
     all [
         error? e
@@ -23,7 +23,7 @@
 )
 
 (
-    metatranscode: cascade [transcode/ get $meta/except]
+    metatranscode: cascade [transcode/ meta:except/]
     e: metatranscode "1&e"
     all [
         error? e

@@ -28,7 +28,7 @@
 //
 // Note that although the code for running blocks and frames is implemented
 // here as C, the handler for processing STRING!, FILE!, TAG!, URL!, etc. is
-// dispatched out to some Rebol code.  See `system/intrinsic/do*`.
+// dispatched out to some Rebol code that implements DO.
 //
 
 #include "sys-core.h"
@@ -334,7 +334,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     if (Any_List(source)) {
         if (Cell_Series_Len_At(source) == 0) {
-            if (REF(step))  // `eval/step []` doesn't "count" [3]
+            if (REF(step))  // `eval:step []` doesn't "count" [3]
                 return nullptr;  // need pure null for THEN/ELSE to work right
 
             if (REF(undecayed))

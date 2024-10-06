@@ -230,7 +230,7 @@ export console!: make object! [
                 ; PORT!s are returned by many operations on files, to
                 ; permit chaining.  They contain many fields so their
                 ; molding is excessive, and there's not a ton to learn
-                ; about them.  Cut down the output more than the mold/limit.
+                ; about them.  Cut down the output more than the mold:limit.
                 ;
                 print [result "#[port! [...] [...]]"]
             ]
@@ -238,7 +238,7 @@ export console!: make object! [
         else [
             ; print the first 20 lines of the first 2048 characters of mold
             ;
-            let molded: mold/limit v 2048
+            let molded: mold:limit v 2048
             let pos: molded
             repeat 20 [
                 pos: next (find pos newline else [break])
@@ -270,7 +270,7 @@ export console!: make object! [
     === BEHAVIOR (can be overridden) ===
 
     input-hook: meth [
-        "Receives line input, parse/transform, send back to CONSOLE eval"
+        "Receives line input, parse and transform, send back to CONSOLE eval"
 
         return: "~escape~ if canceled, else line of text input"
             [text! '~escape~]
@@ -306,7 +306,7 @@ export console!: make object! [
     ;    unbound block cases aren't the only ones to consider.
     ;
     dialect-hook: meth [
-        "Receives code block, parse/transform/bind, send back to CONSOLE eval"
+        "Receives full code block, bind and process, send back to CONSOLE eval"
         return: [block!]
         b [block!]
     ][
@@ -314,7 +314,7 @@ export console!: make object! [
         return inside system.contexts.user b  ; two operations for now [2]
     ]
 
-    shortcuts: make object! compose/deep [
+    shortcuts: make object! compose:deep [
         d: [dump]
         h: [help]
         q: [quit 0]
@@ -354,7 +354,7 @@ start-console: func [
     /skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
     <static>
-        o (system.options)  ; shorthand since options are often read/written
+        o (system.options)  ; shorthand since options are often read or written
 ][
     === MAKE CONSOLE! INSTANCE FOR SKINNING ===
 
@@ -492,17 +492,17 @@ console*: func [
             [block! issue! text!]
         <with> instruction
     ][
-        switch/type item [
+        switch:type item [
             issue! [
-                if not empty? instruction [append/line instruction ',]
+                if not empty? instruction [append:line instruction ',]
                 insert instruction item
             ]
             text! [
-                append/line instruction spread compose [comment (item)]
+                append:line instruction spread compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append/line instruction ',]
-                append/line instruction spread compose/label/deep item <*>
+                if not empty? instruction [append:line instruction ',]
+                append:line instruction spread compose:label:deep item <*>
             ]
             fail
         ]
@@ -541,7 +541,7 @@ console*: func [
             return-to-c instruction
         ]
 
-        return-to-c switch/type state [
+        return-to-c switch:type state [
             integer! [  ; just tells the calling C loop to exit() process
                 assert [empty? instruction]
                 state
@@ -580,7 +580,7 @@ console*: func [
             unset? $system.console
             not system.console
         ] then [
-            emit [start-console/skin (<*> ^ skin)]
+            emit [start-console:skin (<*> ^ skin)]
         ]
         return <prompt>
     ]
@@ -602,7 +602,7 @@ console*: func [
     ]
 
     if find directives #start-console [
-        emit [start-console/skin (<*> ^ skin)]
+        emit [start-console:skin (<*> ^ skin)]
         return <prompt>
     ]
 
@@ -613,13 +613,13 @@ console*: func [
     all [
         error? result
         result.id = 'no-catch
-        result.arg2 = unrun :halt  ; throw's /NAME
+        result.arg2 = unrun lib.halt/  ; throw's :NAME
     ] then [
         if find directives #quit-if-halt [
             return 128 + 2 ; standard cancellation exit status for bash
         ]
         if find directives #console-if-halt [
-            emit [start-console/skin (<*> ^ skin)]
+            emit [start-console:skin (<*> ^ skin)]
             return <prompt>
         ]
         if find directives #unskin-if-halt [
@@ -653,7 +653,7 @@ console*: func [
         has lib 'resume
         error? result
         result.id = 'no-catch
-        result.arg2 = unrun lib/resume/  ; throw's /NAME
+        result.arg2 = unrun lib.resume/  ; throw's :NAME
     ] then [
         assert [match [meta-group! handle!] result.arg1]
         if no? resumable [

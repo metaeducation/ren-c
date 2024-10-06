@@ -42,7 +42,7 @@
         map-each 'item block [quote item]  ; should REDUCE do this for @[...] ?
     ]
     else [
-        reduce/predicate block :meta
+        reduce:predicate block :meta
     ]
 
     let result': ^void
@@ -56,7 +56,7 @@
         if vars.1 = <...> [
             continue  ; ignore all other values (but must reduce all)
         ]
-        switch/type vars.1 [
+        switch:type vars.1 [
             blank! []  ; no assignment
             word! tuple! [set inside vars vars.1 unmeta val']
             meta-word! meta-tuple! [set inside vars vars.1 val']
@@ -109,13 +109,13 @@
 
 (
     a: <before>
-    '~null~ = [a]: pack-old inert reduce/predicate [null] :reify
+    '~null~ = [a]: pack-old inert reduce:predicate [null] :reify
     '~null~ = a
 )
 (
     a: <a-before>
     b: <b-before>
-    2 = [a b]: pack-old inert reduce/predicate [2 null] :reify
+    2 = [a b]: pack-old inert reduce:predicate [2 null] :reify
     a = 2
     '~null~ = b
 )

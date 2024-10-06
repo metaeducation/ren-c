@@ -599,7 +599,7 @@ jobs:
           adb shell chmod +x $TMP/r3
 
           $ADB_R3 --do \"print [{Hello} \'World]\"
-          $ADB_R3 --do \"print mold/limit as text! read https://example.com 200\"
+          $ADB_R3 --do \"print mold:limit as text! read https://example.com 200\"
 
           adb push build/tcc-encap.zip $TMP/tcc-encap.zip
           $ADB_R3 --do \"cd $TMP/, unzip %tcc/ %tcc-encap.zip\"

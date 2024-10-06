@@ -47,7 +47,7 @@
     )
     (
        write %scratch/leftover2.txt "leftover 2"
-       "leftover 2" = read/string %scratch/leftover2.txt
+       "leftover 2" = read:string %scratch/leftover2.txt
     )
     ('file = exists? %scratch/leftover1.txt)
     ('file = exists? %scratch/leftover2.txt)
@@ -72,7 +72,7 @@
 
 ; We used CREATE above to make a directory, now try MAKE-DIR
 [
-    (make-dir/deep %scratch/sub1/sub2/, ok)
+    (make-dir:deep %scratch/sub1/sub2/, ok)
 
     ('dir = exists? %scratch/sub1/)
     ('dir = exists? %scratch/sub1/sub2/)
@@ -87,17 +87,17 @@
 ; === EMPTY FILE TESTS ===
 [
     (
-        p: open/new %empty.dat
+        p: open:new %empty.dat
         close p
         'file = exists? %empty.dat
     )
     (null = read %empty.dat)
-    (null = read/part %empty.dat 100)
+    (null = read:part %empty.dat 100)
     (
         p: open %empty.dat
         all [
             null = read p
-            null = read/part p 100
+            null = read:part p 100
             0 = length of p
         ]
         elide close p
@@ -109,12 +109,12 @@
             (elide skip p 100)
             (100 = offset of p)
             (trap [read p] then e -> [e.id = 'out-of-range])
-            (trap [read/part p 100] then e -> [e.id = 'out-of-range])
+            (trap [read:part p 100] then e -> [e.id = 'out-of-range])
 
             (elide skip p -100)
             (0 = offset of p)
             (null = read p)
-            (null = read/part p 100)
+            (null = read:part p 100)
 
             ; !!! The libuv file indices are unsigned 64-bit integers.  We
             ; could use signed integers and allow you to go negative like
@@ -134,29 +134,29 @@
 ; === SMALL FILE TESTS ===
 [
     (
-        p: open/new %small.dat
+        p: open:new %small.dat
         write p "He"
-        write/part p "lloDECAFBAD" 3
+        write:part p "lloDECAFBAD" 3
         write p space
         write p as binary! "Wo"
-        write/part p as binary! "rldBAADF00D" 3
+        write:part p as binary! "rldBAADF00D" 3
         close p
         'file = exists? %small.dat
     )
     ("Hello World" = as text! read %small.dat)
-    ("Hello" = read/string/part %small.dat 5)
-    ("World" = read/string/seek/part %small.dat 6 5)
+    ("Hello" = read:string:part %small.dat 5)
+    ("World" = read:string:seek:part %small.dat 6 5)
     (
         p: open %small.dat
         all [
             11 = length of p
-            "H" = read/string/part p 1
+            "H" = read:string:part p 1
             10 = length of p
-            "ello World" = read/string p
+            "ello World" = read:string p
             0 = length of p
 
-            "ell" = read/string/seek/part p 1 3
-            "o" = as text! read/part p 1
+            "ell" = read:string:seek:part p 1 3
+            "o" = as text! read:part p 1
         ]
         elide close p
     )
@@ -164,12 +164,12 @@
         p: open %small.dat
         all [
             (elide skip p 6)
-            "World" = read/string p
-            null = read/string/part p 100
+            "World" = read:string p
+            null = read:string:part p 100
             (elide skip p -7)
-            "o W" = read/string/part p 3
-            "orld" = read/string/part p 100
-            null = read/string p
+            "o W" = read:string:part p 3
+            "orld" = read:string:part p 100
+            null = read:string p
         ]
         elide close p
     )
@@ -180,42 +180,42 @@
     (
         write %block.txt ["abc" "def"]
         all [
-            "abcdef" = read/string %block.txt  ; no spaces
-            ["abcdef"] = read/lines %block.txt  ; /STRING implicit
-            ["abcdef"] = read/string/lines %block.txt
+            "abcdef" = read:string %block.txt  ; no spaces
+            ["abcdef"] = read:lines %block.txt  ; /STRING implicit
+            ["abcdef"] = read:string:lines %block.txt
         ]
     )
     (
-        write/lines %lines.txt ["abc" "def"]
+        write:lines %lines.txt ["abc" "def"]
         all [
-            "abc^/def^/" = read/string %lines.txt
-            ["abc" "def"] = read/lines %lines.txt
+            "abc^/def^/" = read:string %lines.txt
+            ["abc" "def"] = read:lines %lines.txt
         ]
     )
     (
-        write/part %partial.txt ["foo" "baz" "bar"] 2
+        write:part %partial.txt ["foo" "baz" "bar"] 2
         all [
-            "foobaz" = read/string %partial.txt  ; no spaces
-            ["foobaz"] = read/lines %partial.txt  ; /STRING implicit
-            ["foobaz"] = read/string/lines %partial.txt
+            "foobaz" = read:string %partial.txt  ; no spaces
+            ["foobaz"] = read:lines %partial.txt  ; /STRING implicit
+            ["foobaz"] = read:string:lines %partial.txt
         ]
     )
     (
-        write/append %partial.txt "bar"
-        "foobazbar" = read/string %partial.txt
+        write:append %partial.txt "bar"
+        "foobazbar" = read:string %partial.txt
     )
     (
         p: open %partial.txt
         write p "begins"
         close p
-        "beginsbar" = read/string %partial.txt
+        "beginsbar" = read:string %partial.txt
     )
     (
         p: open %partial.txt
-        write/append p "end"
+        write:append p "end"
         write p "ing"
         close p
-        "beginsbarending" = read/string %partial.txt
+        "beginsbarending" = read:string %partial.txt
     )
 ]
 
@@ -225,7 +225,7 @@
 ; with actual writing.  The theory would be that when the process is done, we
 ; wind up with a buffer that's equal to the file contents.
 [(
-    p: open/new %fuzz.dat
+    p: open:new %fuzz.dat
 
     buffer: copy #{}
     pos: buffer
@@ -242,7 +242,7 @@
         if seek [
             pos: skip buffer seek
         ]
-        pos: change // [pos (copy/part data part) /part part]
+        pos: change // [pos (copy:part data part) /part part]
     ]
 
     repeat 128 wrap [
@@ -255,7 +255,7 @@
         applique fuzzwrite/ [
             destination: p
             data: data
-            if 4 = random 4 [  ; give it a /PART every 4th write or so
+            if 4 = random 4 [  ; give it a :PART every 4th write or so
                 part: random len
             ]
             all [

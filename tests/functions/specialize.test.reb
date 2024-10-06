@@ -10,30 +10,30 @@
     (
         foo: func [/A [integer!] /B [integer!] /C [integer!]] [
             return compose [
-                /A (reify A) /B (reify B) /C (reify C)
+                :A (reify A) :B (reify B) :C (reify C)
             ]
         ]
 
-        fooBC: get $foo/B/C
-        fooCB: get $foo/C/B
+        fooBC: get $foo:B:C
+        fooCB: get $foo:C:B
         ok
     )
 
-    ([/A ~null~ /B 10 /C 20] = fooBC 10 20)
-    ([/A 30 /B 10 /C 20] = fooBC/A 10 20 30)
+    ([:A ~null~ :B 10 :C 20] = fooBC 10 20)
+    ([:A 30 :B 10 :C 20] = fooBC:A 10 20 30)
 
-    ([/A ~null~ /B 20 /C 10] = fooCB 10 20)
-    ([/A 30 /B 20 /C 10] = fooCB/A 10 20 30)
+    ([:A ~null~ :B 20 :C 10] = fooCB 10 20)
+    ([:A 30 :B 20 :C 10] = fooCB:A 10 20 30)
 
-    ~bad-parameter~ !! (fooBC/B 1 2 3 4 5 6)
-    ~bad-parameter~ !! (fooBC/C 1 2 3 4 5 6)
-    ~bad-parameter~ !! (fooCB/B 1 2 3 4 5 6)
-    ~bad-parameter~ !! (fooCB/C 1 2 3 4 5 6)
+    ~bad-parameter~ !! (fooBC:B 1 2 3 4 5 6)
+    ~bad-parameter~ !! (fooBC:C 1 2 3 4 5 6)
+    ~bad-parameter~ !! (fooCB:B 1 2 3 4 5 6)
+    ~bad-parameter~ !! (fooCB:C 1 2 3 4 5 6)
 ]
 
 (
     append-123: specialize append/ [value: [1 2 3]]  ; quoted by specialize
-    [a b c [1 2 3] [1 2 3]] = append-123/dup copy [a b c] 2
+    [a b c [1 2 3] [1 2 3]] = append-123:dup copy [a b c] 2
 )
 (
     append-123: specialize append/ [value: [1 2 3]]
@@ -71,7 +71,7 @@
 
 [
     (
-        apd: get $append/part/dup
+        apd: get $append:part:dup
         apd3: specialize apd/ [dup: 3]
         ap2d: specialize apd/ [part: 2]
 
@@ -82,30 +82,30 @@
     )
 
     (r = apd copy xy spread abc 2 3)
-    (r = applique :apd [
+    (r = applique apd/ [
         series: copy xy
-        set/any inside [] 'value: spread abc
+        set:any inside [] 'value: spread abc
         part: 2, dup: 3
     ])
 
     (r = apd3 copy xy spread abc 2)
-    (r = applique :apd3 [
+    (r = applique apd3/ [
         series: copy xy
-        set/any inside [] 'value: spread abc
+        set:any inside [] 'value: spread abc
         part: 2
     ])
 
     (r = ap2d copy xy spread abc 3)
-    (r = applique :ap2d [
+    (r = applique ap2d/ [
         series: copy xy
-        set/any inside [] 'value: spread abc
+        set:any inside [] 'value: spread abc
         dup: 3
     ])
 ]
 
 [
     (
-        adp: get $append/dup/part
+        adp: get $append:dup:part
         adp2: specialize adp/ [part: 2]
         ad3p: specialize adp/ [dup: 3]
 
@@ -116,23 +116,23 @@
     )
 
     (r = adp copy xy spread abc 3 2)
-    (r = applique :adp [
+    (r = applique adp/ [
         series: copy xy
-        set/any inside [] 'value: spread abc
+        set:any inside [] 'value: spread abc
         dup: 3, part: 2
     ])
 
     (r = adp2 copy xy spread abc 3)
-    (r = applique :adp2 [
+    (r = applique adp2/ [
         series: copy xy
-        set/any inside [] 'value: spread abc
+        set:any inside [] 'value: spread abc
         dup: 3
     ])
 
     (r = ad3p copy xy spread abc 2)
-    (r = applique :ad3p [
+    (r = applique ad3p/ [
         series: copy xy
-        set/any inside [] 'value: spread abc
+        set:any inside [] 'value: spread abc
         part: 2
     ])
 ]
@@ -155,10 +155,10 @@
     error: null
 
     for-each 'code [
-        [specialize get $append/asdf []]
+        [specialize append:asdf/ []]
         [
-            flp: specialize get $file-to-local/pass []
-            specialize get $flp/pass []
+            flp: specialize file-to-local:pass/ []
+            specialize flp:pass/ []
         ]
     ][
         error: me or (
@@ -171,8 +171,8 @@
 
 
 (
-    ap10d: specialize get $append/dup [value: 10]
-    f: make frame! unrun :ap10d
+    ap10d: specialize append:dup/ [value: 10]
+    f: make frame! ap10d/
     f.series: copy [a b c]
     all [
         [a b c 10] = eval copy f
@@ -185,7 +185,7 @@
 (
     data: [a b c]
 
-    f: make frame! unrun :append
+    f: make frame! append/
     f.series: data
 
     apd: runs f

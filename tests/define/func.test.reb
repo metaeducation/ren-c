@@ -23,7 +23,7 @@
 ; DATATYPE!s and type checking work...)
 [(
     all wrap [  ; try with no RETURN:
-        foo: meta/lite func ["description" a "a" b "b"] []
+        foo: meta:lite func ["description" a "a" b "b"] []
         m: adjunct-of foo
         m.description = "description"
         (unquasi ^foo.return).spec = null
@@ -35,7 +35,7 @@
     ]
 )(
     all wrap [  ; try RETURN: with no type
-        foo: meta/lite func ["description" return: "returns" a "a" b "b"] []
+        foo: meta:lite func ["description" return: "returns" a "a" b "b"] []
         m: adjunct-of foo
         m.description = "description"
         (unquasi ^foo.return).spec = null
@@ -47,7 +47,7 @@
     ]
 )(
     all wrap [  ; try RETURN: with type
-        foo: meta/lite func [
+        foo: meta:lite func [
             "description" return: [integer!] "returns" a "a" b "b"
         ][
         ]
@@ -62,7 +62,7 @@
     ]
 )(
     all wrap [  ; try without description
-        foo: meta/lite func [return: [integer!] "returns" a "a" /b "b"] []
+        foo: meta:lite func [return: [integer!] "returns" a "a" /b "b"] []
         if m: adjunct-of foo [
             m.description = null
         ]

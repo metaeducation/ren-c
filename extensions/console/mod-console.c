@@ -1,6 +1,6 @@
 //
 //  File: %mod-console.c
-//  Summary: "Read/Eval/Print Loop (REPL) Skinnable Console for Rebol"
+//  Summary: "[Read Eval Print] Loop (REPL) Skinnable Console for Rebol"
 //  Section: Extension
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -338,7 +338,7 @@ DECLARE_NATIVE(console)
     // 3. This once used a META-GROUP! to reduce the amount of code on the
     //    stack which the user might see in a backtrace.  So instead of:
     //
-    //        metaresult: meta eval/undecayed [print "hi"]
+    //        metaresult: meta eval:undecayed [print "hi"]
     //
     //    It would just execute the code directly:
     //
@@ -383,8 +383,8 @@ DECLARE_NATIVE(console)
 
         "sys.util/rescue [",  // pollutes stack trace [3]
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
-                "sys.contexts.user.quit: sys.util.make-quit/console :quit*",
-                "metaresult: meta eval/undecayed code",
+                "sys.contexts.user.quit: sys.util/make-quit:console :quit*",
+                "metaresult: meta eval:undecayed code",
             "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
                 "metaresult: caught",  // INTEGER! due to /CONSOLE, out of band
             "]",

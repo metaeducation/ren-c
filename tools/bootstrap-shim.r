@@ -943,7 +943,7 @@ cscape-inside: func3 [
         ] else [
             assert [word? item]
             append obj spread reduce [item 0]
-            obj.(item): get/any item
+            obj.(item): get:any item
         ]
     ]
     bind code obj  ; simulates ability to bind to single words

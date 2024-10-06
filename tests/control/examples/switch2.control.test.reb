@@ -86,7 +86,7 @@ ok)
 (#t = switch2 <ren-c> [match integer! => [#i], match tag! => [#t]])
 
 ([<integer!> <any-value?>] = collect [
-    switch2/multi 1 [
+    switch2:multi 1 [
         match integer! => [keep <integer!>]
         match &any-value? => [keep <any-value?>]
     ]

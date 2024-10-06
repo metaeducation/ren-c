@@ -32,11 +32,11 @@
 //     rebol2>> exclude "dcba" "bd"
 //     == "ca"
 //
-// Making things more complex was the introduction of a /SKIP parameter, which
+// Making things more complex was the introduction of a :SKIP parameter, which
 // had a somewhat dubious definition of treating the series as fixed-length
 // spans where the set operation was based on the first element of that span.
 //
-//     rebol2>> exclude/skip [a b c d] [c] 2
+//     rebol2>> exclude:skip [a b c d] [c] 2
 //     == [a b]
 //
 // The operations are kept here mostly in their R3-Alpha form, though they
@@ -163,7 +163,7 @@ Flex* Make_Set_Operation_Flex(
             if (i != Array_Len(array1)) {
                 //
                 // In the current philosophy, the semantics of what to do
-                // with things like `intersect/skip [1 2 3] [7] 2` is too
+                // with things like (intersect:skip [1 2 3] [7] 2) is too
                 // shaky to deal with, so an error is reported if it does
                 // not work out evenly to the skip size.
                 //

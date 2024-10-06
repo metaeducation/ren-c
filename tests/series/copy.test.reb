@@ -13,21 +13,21 @@
         not same? blk copy blk
     ]
 )
-([1] = copy/part tail of [1] -1)
-([1] = copy/part tail of [1] -2147483647)
+([1] = copy:part tail of [1] -1)
+([1] = copy:part tail of [1] -2147483647)
 [#853 #1118
-    ([1] = copy/part tail of [1] -2147483648)
+    ([1] = copy:part tail of [1] -2147483648)
 ]
-([] = copy/part [] 0)
-([] = copy/part [] 1)
-([] = copy/part [] 2147483647)
+([] = copy:part [] 0)
+([] = copy:part [] 1)
+([] = copy:part [] 2147483647)
 (unraised? copy blank)
 
 ;[#877
 ;    ~stack-overflow~ !! (
 ;        a: copy []
 ;        insert a a
-;        error? trap [copy/deep a]
+;        error? trap [copy:deep a]
 ;        ok
 ;    )
 ;]
@@ -41,5 +41,5 @@
 
 [#138 (
     b: make binary! 100
-    #{} = copy/part b 50
+    #{} = copy:part b 50
 )]

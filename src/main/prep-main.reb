@@ -30,12 +30,12 @@ if not find (words of import/) 'into [  ; See %import-shim.r
 import <../../tools/common.r>  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
 import <../../tools/common-emitter.r>  ; for splicing Rebol in templated strings
 
-args: parse-args system.script.args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO:ARGS
 
 ; Assume we start up in the directory where the build/prep products should be
 ;
 output-dir: join what-dir %prep/
-mkdir/deep (join output-dir %main/)
+mkdir:deep (join output-dir %main/)
 
 
 buf: make text! 200000
@@ -68,7 +68,7 @@ for-each 'file reduce [
     %src/main/main-startup.reb
 ][
     header: ~
-    contents: stripload/header file inside [] 'header
+    contents: stripload:header file $header
     ensure text! header
 
     ; The import will happen in the lib context, so the body block being
@@ -79,11 +79,11 @@ for-each 'file reduce [
     ; unsustainable pattern set by historical Redbols that needs to be
     ; rethought.
     ;
-    append/line buf "sys.util/import* lib module ["
-    append/line buf header
-    append/line buf "]["  ; use unquoted block so modules inherit lib
-    append/line buf contents
-    append/line buf "]"
+    append:line buf "sys.util/import* lib module ["
+    append:line buf header
+    append:line buf "]["  ; use unquoted block so modules inherit lib
+    append:line buf contents
+    append:line buf "]"
 ]
 
 ; The code evaluates to the MAIN-STARTUP function, so it is easily found
@@ -92,7 +92,7 @@ for-each 'file reduce [
 ; (This organization lets us separate the moment of loading from the moment
 ; of running, in case that were interesting.)
 ;
-append/line buf "main-startup/"  ; need newline, else `[...]reify...`
+append:line buf "main-startup/"  ; need newline, else `[...]reify...`
 
 
 ; It's helpful to have an uncompressed readable copy of the bundled and

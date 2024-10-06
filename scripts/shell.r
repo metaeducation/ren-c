@@ -21,7 +21,7 @@ REBOL [
         or fetch Ren-C variables:
 
             >> extension: "txt"
-            >> shell/inspect [ls -alF *.(extension)]
+            >> shell:inspect [ls -alF *.(extension)]
             == {ls -alF *.txt}
 
         TEXT! strings will literally include their quotes, and GROUP!s imply
@@ -29,7 +29,7 @@ REBOL [
         it in quotes, use a GET-GROUP!
 
             >> command: "ls -alF"
-            >> shell/inspect [(command)]
+            >> shell:inspect [(command)]
             == {"ls -alF"}
 
             >> command "ls -alF"
@@ -78,7 +78,7 @@ shell: func [
         let item: first block
         if group? item [item: eval inside block item]
 
-        return switch/type item [
+        return switch:type item [
             text! word! [unspaced ["${" item "}"]]
 
             fail ["SHELL expects [ENV] blocks to be WORD! or TEXT!:" mold item]
@@ -131,7 +131,7 @@ shell: func [
         ; To bypass this behavior, use GET-GROUP! or GET-BLOCK!
 
         let splice-it: <default>
-        switch/type item [
+        switch:type item [
             group! [splice-it: 'no, item: eval inside code item]
 
             &get-group? [splice-it: 'yes, item: eval inside code item]
@@ -147,7 +147,7 @@ shell: func [
             return text? item  ; `$ ls "/foo"` puts quotes on "/foo"
         ]
 
-        item: switch/type item [
+        item: switch:type item [
             blank! [continue]  ; !!! should you have to use #_ for undercore?
 
             integer! decimal! [form item]
@@ -167,7 +167,7 @@ shell: func [
             ; were to be used.
             ;
             path! tuple! block! [
-                as issue! make-file/predicate item :shellify-tag
+                as issue! make-file:predicate item shellify-tag/
             ]
 
             fail ["SHELL doesn't know what this means:" mold item]
@@ -189,12 +189,12 @@ shell: func [
     if not command [return null]  ; SPACED components all vaporized
 
     if not pipe [
-        lib/call/shell command  ; must use LIB (binding issue)
+        lib/call:shell command  ; must use LIB (binding issue)
         return  ; don't show any result in console
     ]
 
     let output: copy ""
-    lib/call/shell/output command output  ; must use LIB (binding issue)
+    lib/call:shell:output command output  ; must use LIB (binding issue)
     return output
 ]
 

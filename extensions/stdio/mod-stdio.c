@@ -420,7 +420,7 @@ DECLARE_NATIVE(read_char)
         timeout_msec = 0;  // "no timeout" in Try_Get_One_Console_Event() [1]
     else {
         timeout_msec = rebUnboxInteger("case [",
-            "decimal?", ARG(timeout), "[1000 * round/up", ARG(timeout), "]",
+            "decimal?", ARG(timeout), "[1000 * round:up", ARG(timeout), "]",
             "integer?", ARG(timeout), "[1000 *", ARG(timeout), "]",
             "fail ~<unreachable>~",
         "]");

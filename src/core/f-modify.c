@@ -36,7 +36,7 @@ REBLEN Modify_Array(
     SymId op,  // INSERT, APPEND, CHANGE
     const Value* src_val,  // source
     REBLEN flags,  // AM_SPLICE, AM_PART, AM_LINE
-    REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND/INSERT)
+    REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     REBINT dups  // dup count of how many times to insert the src content
 ){
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
@@ -73,14 +73,14 @@ REBLEN Modify_Array(
     bool tail_newline = did (flags & AM_LINE);
     REBLEN ilen;
 
-    // Check /PART, compute LEN:
+    // Check :PART, compute LEN:
     if (flags & AM_SPLICE) {
         assert(Any_List(src_val));
 
         REBLEN len_at = Cell_Series_Len_At(src_val);
         ilen = len_at;
 
-        // Adjust length of insertion if changing /PART:
+        // Adjust length of insertion if changing :PART
         if (op != SYM_CHANGE and (flags & AM_PART)) {
             if (part < ilen)
                 ilen = part;
@@ -189,7 +189,7 @@ REBLEN Modify_Array(
         //
         // !!! Testing this heuristic: if someone adds a line to a list
         // with the /LINE flag explicitly, force the head element to have a
-        // newline.  This allows `x: copy [] | append/line x [a b c]` to give
+        // newline.  This allows `x: copy [] | append:line x [a b c]` to give
         // a more common result.  The head line can be removed easily.
         //
         Set_Cell_Flag(Array_Head(dst_arr), NEWLINE_BEFORE);
@@ -225,10 +225,10 @@ REBLEN Modify_Array(
 //
 REBLEN Modify_String_Or_Binary(
     Value* dst,  // ANY-STRING? or BINARY! value to modify
-    SymId op,  // SYM_APPEND @ tail, SYM_INSERT/SYM_CHANGE @ index
+    SymId op,  // SYM_APPEND @ tail, SYM_INSERT or SYM_CHANGE @ index
     const Value* src,  // argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
-    REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND/INSERT)
+    REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     REBINT dups  // dup count of how many times to insert the src content
 ){
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
@@ -270,7 +270,7 @@ REBLEN Modify_String_Or_Binary(
         src = EMPTY_TEXT;  // give same behavior as CHANGE to empty string
     }
 
-    // For INSERT/PART and APPEND/PART
+    // For INSERT:PART and APPEND:PART
     //
     REBLEN limit;
     if (op != SYM_CHANGE and (flags & AM_PART))
@@ -306,9 +306,9 @@ REBLEN Modify_String_Or_Binary(
     if (Is_Issue(src)) {  // characters store their encoding in their payload
         //
         // !!! We pass in UNLIMITED for the limit of how long the input is
-        // because currently /PART speaks in terms of the destination series.
+        // because currently :PART speaks in terms of the destination series.
         // However, if that were changed to /LIMIT then we would want to
-        // be cropping the /PART of the input via passing a parameter here.
+        // be cropping the :PART of the input via passing a parameter here.
         //
         src_ptr = Cell_Utf8_Len_Size_At_Limit(
             &src_len_raw,
@@ -345,9 +345,9 @@ REBLEN Modify_String_Or_Binary(
         src_ptr = Cell_String_At(src);
 
         // !!! We pass in UNLIMITED for the limit of how long the input is
-        // because currently /PART speaks in terms of the destination series.
-        // However, if that were changed to /LIMIT then we would want to
-        // be cropping the /PART of the input via passing a parameter here.
+        // because currently :PART speaks in terms of the destination series.
+        // However, if that were changed to :LIMIT then we would want to
+        // be cropping the :PART of the input via passing a parameter here.
         //
         src_size_raw = Cell_String_Size_Limit_At(&src_len_raw, src, UNLIMITED);
         if (not Is_Stub_String(dst_flex))
@@ -375,7 +375,7 @@ REBLEN Modify_String_Or_Binary(
 
         if (not Is_Stub_String(dst_flex)) {
             if (limit > 0 and limit < src_size_raw)
-                src_size_raw = limit;  // /PART is in bytes for binary! dest
+                src_size_raw = limit;  // :PART is byte count for binary! dest
             src_len_raw = src_size_raw;
         }
         else {
@@ -422,7 +422,7 @@ REBLEN Modify_String_Or_Binary(
                     ++src_len_raw;
 
                     if (limit == src_len_raw)
-                        break;  // Note: /PART is in codepoints
+                        break;  // Note: :PART is count in codepoints
                 }
             }
         }
@@ -443,7 +443,7 @@ REBLEN Modify_String_Or_Binary(
     }
     else if (Is_Group(src)) {
         //
-        // !!! For APPEND and INSERT, the /PART should apply to *block* units,
+        // !!! For APPEND and INSERT, the :PART should apply to *block* units,
         // and not character units from the generated string.
 
         if (Is_Binary(dst)) {
@@ -461,7 +461,7 @@ REBLEN Modify_String_Or_Binary(
         else {
             Push_Mold(mo);
 
-            // !!! The logic for append/insert/change on ANY-STRING? with a
+            // !!! The logic for APPEND or INSERT or CHAINGE on ANY-STRING? of
             // BLOCK! has been to form them without reducing, and no spaces
             // between.  There is some rationale to this, though implications
             // for operations like TO TEXT! of a BLOCK! are unclear...
@@ -490,8 +490,8 @@ REBLEN Modify_String_Or_Binary(
             src_len_raw = src_size_raw;
     }
 
-    // Here we are accounting for a /PART where we know the source series
-    // data is valid UTF-8.  (If the source were a BINARY!, where the /PART
+    // Here we are accounting for a :PART where we know the source series
+    // data is valid UTF-8.  (If the source were a BINARY!, where the :PART
     // counts in bytes, it would have jumped below here with limit set up.)
     //
     // !!! Bad first implementation; improve.

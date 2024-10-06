@@ -29,7 +29,7 @@ destructure: func [
         |
         let pattern: *in* block!, '=>, let branch: *in* block!
         (
-            if validate/combinators input pattern combinators (
+            if validate:combinators input pattern combinators (
                 branch
             ) also ^r' -> [
                 if not multi [

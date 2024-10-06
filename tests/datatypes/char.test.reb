@@ -227,7 +227,7 @@
 (#"Ǿ" = add #"^(ff)" #"^(ff)")
 
 (
-    random/seed "let's be deterministic"
+    random:seed "let's be deterministic"
     codepoints: [
         #"b"  ; 1 utf-8 byte
         #"à"  ; 2 utf-8 bytes encoded
@@ -244,7 +244,7 @@
             e: copy ""
             picks: copy []
             count-up 'i len [
-                append s random/only codepoints
+                append s random:only codepoints
                 append e c
                 append picks i
             ]

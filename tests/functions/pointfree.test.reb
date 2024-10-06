@@ -22,7 +22,7 @@
     ;
     ; 2. If we did a GET of a PATH! it comes back as a partially specialized
     ;    function, where the refinements are reported as normal args at the
-    ;    right spot in the evaluation order.  (e.g. GET $APPEND/DUP returns a
+    ;    right spot in the evaluation order.  (e.g. GET $APPEND:DUP returns a
     ;    function where DUP is a plain WORD! parameter in the third spot).
     ;
     ; 3. If the user does (pointfree :append [_ [d e]]) then the blank signals
@@ -54,7 +54,7 @@
                 ]
 
                 match word! param [  ; ordinary parameter
-                    [block frame.(param)]: evaluate/step block
+                    [block frame.(param)]: evaluate:step block
                 ]
 
                 all [
@@ -73,7 +73,7 @@
         ]
 
         if not tail? block [
-            fail/blame [
+            fail:blame [
                 "Unused argument data at end of POINTFREE block"
             ] $block
         ]
@@ -90,8 +90,8 @@
     ;
     pointfree: specialize (adapt pointfree*/ [
         frame: (match frame! any [  ; no SET-WORD! namecache
-            if match [word! path!] block.1 [
-                unrun get/any inside block block.1
+            if match [word! chain! path!] block.1 [
+                unrun get:any inside block block.1
             ]
         ]) else [
             fail "POINTFREE requires FRAME! argument at head of block"
@@ -99,7 +99,7 @@
 
         block: skip block 1  ; Note: NEXT not defined yet
     ])[
-        frame: unrun get $panic/value  ; overwritten, best to be something mean
+        frame: unrun get $panic:value  ; overwritten, best to be something mean
     ]
 
     ; <- is a variadic operator that lets you express a pointfree expression
@@ -167,14 +167,14 @@
     )
 
     (
-        ap1twice: (<- append/dup _ 1 2)
+        ap1twice: (<- append:dup _ 1 2)
         [a b c 1 1] = ap1twice [a b c]
     )
 
 (
     x: [1 2 3 4 5 6]
     all [
-        5 = until/predicate [take x] (<- greater? _ 4)
+        5 = until:predicate [take x] (<- greater? _ 4)
         x = [6]
     ]
 )]

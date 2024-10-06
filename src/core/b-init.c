@@ -558,7 +558,7 @@ void Startup_Core(void)
 
 //=//// INITIALIZE MEMORY AND ALLOCATORS //////////////////////////////////=//
 
-    Startup_Signals();  // allocation can set signal flags for recycle/etc.
+    Startup_Signals();  // allocation can set signal flags for recycle etc.
 
     Startup_Pools(0);  // performs allocation, calls Set_Trampoline_Flag()
     Startup_GC();
@@ -777,7 +777,7 @@ void Startup_Core(void)
         //
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind/only/set", &boot->base, Lib_Module,
+        "bind:only:set", &boot->base, Lib_Module,
         "evaluate inside", Lib_Module, rebQ(&boot->base)
         //
         // Note: ENSURE not available yet.
@@ -809,7 +809,7 @@ void Startup_Core(void)
         //
         "sys.util:", Sys_Util_Module,
 
-        "bind/only/set", &boot->system_util, Sys_Util_Module,
+        "bind:only:set", &boot->system_util, Sys_Util_Module,
         "if not equal? '~done~",
           "^ evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
             "[fail {sys.util}]",
@@ -829,7 +829,7 @@ void Startup_Core(void)
     // protect the entire system object and still run the interpreter.  That
     // was commented out in R3-Alpha
     //
-    //    comment [if :get $lib/secure [protect-system-object]]
+    //    comment [if get $lib/secure [protect-system-object]]
 
   //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
 
@@ -841,7 +841,7 @@ void Startup_Core(void)
 
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind/only/set", &boot->mezz, Lib_Module,
+        "bind:only:set", &boot->mezz, Lib_Module,
         "evaluate inside", Lib_Module, rebQ(&boot->mezz)
     );
 

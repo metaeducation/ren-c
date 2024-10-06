@@ -92,7 +92,7 @@
 
 ; #1906
 (
-    b: copy [] insert/dup b 1 32768 compose b
+    b: copy [] insert:dup b 1 32768 compose b
     sum: 0
     for-each 'i b [sum: me + i]
     sum = 32768
@@ -111,20 +111,20 @@
 ; COMPOSE with pattern, beginning tests
 
 (
-    [(1 + 2) 3] = compose/label [(1 + 2) (<*> 1 + 2)] <*>
+    [(1 + 2) 3] = compose:label [(1 + 2) (<*> 1 + 2)] <*>
 )(
-    [(1 + 2)] = compose/label [(1 + 2) (<*>)] <*>
+    [(1 + 2)] = compose:label [(1 + 2) (<*>)] <*>
 )(
-    'a/(b)/3/c = compose/label @ a/(b)/(<?> 1 + 2)/c <?>
+    'a/(b)/3/c = compose:label @ a/(b)/(<?> 1 + 2)/c <?>
 )(
-    [(a b c) [((d) 1 + 2)]] = compose/deep/label [
+    [(a b c) [((d) 1 + 2)]] = compose:deep:label [
         (a (</> 'b) c) [((d) 1 + 2)]
     ] </>
 )
 
 (
     [(left alone) [c b a] c b a ((left alone))]
-    = compose/label [
+    = compose:label [
         (left alone)
         (<$> reverse copy [a b c])
         (<$> spread reverse copy [a b c])
@@ -142,7 +142,7 @@
 
 ; Quoting should be preserved by deep composition
 
-([a ''[b 3 c] d] == compose/deep [a ''[b (1 + 2) c] d])
+([a ''[b 3 c] d] == compose:deep [a ''[b (1 + 2) c] d])
 
 
 ; COMPOSE no longer tries to convert set-forms
@@ -279,13 +279,13 @@
     ~conflated-sequence~ !! (compose $(blank).(blank))
     ~conflated-sequence~ !! (compose $(void).(void))
 
-    (the / = compose/conflate $(blank)/(blank))
-    (the . = compose/conflate $(blank).(blank))
-    (null? compose/conflate $(void).(void))
+    (the / = compose:conflate $(blank)/(blank))
+    (the . = compose:conflate $(blank).(blank))
+    (null? compose:conflate $(void).(void))
 
-    (_ = compose/conflate $(void).(_))
-    (_ = compose/conflate $(_).(void))
-    ('a = compose/conflate $(void).('a))
-    ('a = compose/conflate $('a).(void))
-    (@a = compose/conflate the @('a).(void))
+    (_ = compose:conflate $(void).(_))
+    (_ = compose:conflate $(_).(void))
+    ('a = compose:conflate $(void).('a))
+    ('a = compose:conflate $('a).(void))
+    (@a = compose:conflate the @('a).(void))
 ]

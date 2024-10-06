@@ -73,47 +73,47 @@
     zero? a - load-value mold a
 )]
 
-; MOLD/ALL decimal accuracy tests
+; MOLD:ALL decimal accuracy tests
 ; 64-bit IEEE 754 maximum
 [#897
-    (zero? 1.7976931348623157e308 - load-value mold/all 1.7976931348623157e308)
+    (zero? 1.7976931348623157e308 - load-value mold:all 1.7976931348623157e308)
 ]
-(same? 1.7976931348623157e308 load-value mold/all 1.7976931348623157e308)
+(same? 1.7976931348623157e308 load-value mold:all 1.7976931348623157e308)
 ; Minimal positive normalized
-(zero? 2.2250738585072014E-308 - load-value mold/all 2.2250738585072014E-308)
-(same? 2.2250738585072014E-308 load-value mold/all 2.2250738585072014E-308)
+(zero? 2.2250738585072014E-308 - load-value mold:all 2.2250738585072014E-308)
+(same? 2.2250738585072014E-308 load-value mold:all 2.2250738585072014E-308)
 ; Maximal positive denormalized
-(zero? 2.225073858507201E-308 - load-value mold/all 2.225073858507201E-308)
-(same? 2.225073858507201E-308 load-value mold/all 2.225073858507201E-308)
+(zero? 2.225073858507201E-308 - load-value mold:all 2.225073858507201E-308)
+(same? 2.225073858507201E-308 load-value mold:all 2.225073858507201E-308)
 ; Minimal positive denormalized
-(zero? 4.9406564584124654E-324 - load-value mold/all 4.9406564584124654E-324)
-(same? 4.9406564584124654E-324 load-value mold/all 4.9406564584124654E-324)
+(zero? 4.9406564584124654E-324 - load-value mold:all 4.9406564584124654E-324)
+(same? 4.9406564584124654E-324 load-value mold:all 4.9406564584124654E-324)
 ; Positive zero
-(zero? 0.0 - load-value mold/all 0.0)
-(same? 0.0 load-value mold/all 0.0)
+(zero? 0.0 - load-value mold:all 0.0)
+(same? 0.0 load-value mold:all 0.0)
 ; Negative zero
-(zero? -0.0 - load-value mold/all -0.0)
-(same? -0.0 load-value mold/all -0.0)
+(zero? -0.0 - load-value mold:all -0.0)
+(same? -0.0 load-value mold:all -0.0)
 ; Maximal negative denormalized
-(zero? -4.9406564584124654E-324 - load-value mold/all -4.9406564584124654E-324)
-(same? -4.9406564584124654E-324 load-value mold/all -4.9406564584124654E-324)
+(zero? -4.9406564584124654E-324 - load-value mold:all -4.9406564584124654E-324)
+(same? -4.9406564584124654E-324 load-value mold:all -4.9406564584124654E-324)
 ; Minimal negative denormalized
-(zero? -2.225073858507201E-308 - load-value mold/all -2.225073858507201E-308)
-(same? -2.225073858507201E-308 load-value mold/all -2.225073858507201E-308)
+(zero? -2.225073858507201E-308 - load-value mold:all -2.225073858507201E-308)
+(same? -2.225073858507201E-308 load-value mold:all -2.225073858507201E-308)
 ; Maximal negative normalized
-(zero? -2.2250738585072014E-308 - load-value mold/all -2.2250738585072014E-308)
-(same? -2.2250738585072014E-308 load-value mold/all -2.2250738585072014E-308)
+(zero? -2.2250738585072014E-308 - load-value mold:all -2.2250738585072014E-308)
+(same? -2.2250738585072014E-308 load-value mold:all -2.2250738585072014E-308)
 ; 64-bit IEEE 754 minimum
-(zero? -1.7976931348623157E308 - load-value mold/all -1.7976931348623157e308)
-(same? -1.7976931348623157E308 load-value mold/all -1.7976931348623157e308)
-(zero? 0.10000000000000001 - load-value mold/all 0.10000000000000001)
-(same? 0.10000000000000001 load-value mold/all 0.10000000000000001)
-(zero? 0.29999999999999999 - load-value mold/all 0.29999999999999999)
-(same? 0.29999999999999999 load-value mold/all 0.29999999999999999)
-(zero? 0.30000000000000004 - load-value mold/all 0.30000000000000004)
-(same? 0.30000000000000004 load-value mold/all 0.30000000000000004)
-(zero? 9.9999999999999926e152 - load-value mold/all 9.9999999999999926e152)
-(same? 9.9999999999999926e152 load-value mold/all 9.9999999999999926e152)
+(zero? -1.7976931348623157E308 - load-value mold:all -1.7976931348623157e308)
+(same? -1.7976931348623157E308 load-value mold:all -1.7976931348623157e308)
+(zero? 0.10000000000000001 - load-value mold:all 0.10000000000000001)
+(same? 0.10000000000000001 load-value mold:all 0.10000000000000001)
+(zero? 0.29999999999999999 - load-value mold:all 0.29999999999999999)
+(same? 0.29999999999999999 load-value mold:all 0.29999999999999999)
+(zero? 0.30000000000000004 - load-value mold:all 0.30000000000000004)
+(same? 0.30000000000000004 load-value mold:all 0.30000000000000004)
+(zero? 9.9999999999999926e152 - load-value mold:all 9.9999999999999926e152)
+(same? 9.9999999999999926e152 load-value mold:all 9.9999999999999926e152)
 
 ; LOAD decimal accuracy tests
 (equal? to binary! 2.2250738585072004e-308 #{000FFFFFFFFFFFFE})
@@ -129,7 +129,7 @@
 (equal? to binary! 2.2250738585072014e-308 #{0010000000000000})
 
 [#1753 (
-    c: last mold/all 1e16
+    c: last mold:all 1e16
     (#0 <= c) and (#9 >= c)
 )]
 

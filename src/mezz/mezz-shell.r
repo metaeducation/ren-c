@@ -28,7 +28,7 @@ cd: func [
     'path [<end> file! word! path! tuple! text!]
         "Accepts %file, :variables and just words (as dirs)"
 ][
-    switch/type path [
+    switch:type path [
         null?! []
         file! [change-dir path]
         text! [
@@ -50,7 +50,7 @@ more: lambda [
     'file "Accepts %file and also just words (as file names)"
         [file! word! path! text!]
 ][
-    print deline to-text read switch/type file [
+    print deline to-text read switch:type file [
         file! [file]
         text! [local-to-file file]
         word! path! [to-file file]

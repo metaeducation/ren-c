@@ -12,8 +12,8 @@
         block: copy block
         replace block placeholder $flow-result
         while [not tail? block] [
-            insert block $ 'flow-result:
-            [block flow-result]: evaluate/step block
+            insert block $flow-result:
+            [block flow-result]: evaluate:step block
         ]
         return flow-result
     ]

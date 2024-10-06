@@ -84,13 +84,13 @@
 //     rebElide("print [pick", Varlist_Archetype(c), "'field]");
 //
 // The archetype stores the varlist, and since it has a value header it also
-// encodes which specific type of context (OBJECT!, FRAME!, MODULE!...) the
+// encodes which specific type of context [OBJECT! FRAME! MODULE! ...] the
 // context represents.
 //
 // In the case of a FRAME!, the archetype also stores an ACTION! pointer that
 // represents the action the frame is for.  Since this information can be
 // found in the archetype, non-archetype cells can use the cell slot for
-// purposes other than storing the archetypal action (see PHASE/LABEL section)
+// purposes other than storing the archetype action (see PHASE v LABEL section)
 //
 // Note: Other context types could use the slots for binding and phase for
 // other purposes.  For instance, MODULE! could store its header information.

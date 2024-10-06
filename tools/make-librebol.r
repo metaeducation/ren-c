@@ -26,14 +26,14 @@ import <common-emitter.r>
 
 print "--- Make Reb-Lib Headers ---"
 
-args: parse-args system.script.args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO:ARGS
 
 ; Assume we start up in the directory where we want build products to go
 ;
 prep-dir: join what-dir %prep/
 
-mkdir/deep join prep-dir %include/
-mkdir/deep join prep-dir %core/
+mkdir:deep join prep-dir %include/
+mkdir:deep join prep-dir %core/
 
 ver: load-value join repo-dir %src/boot/version.r
 
@@ -91,7 +91,7 @@ emit-proto: func [return: [~] proto] [
     ]
 
     paramlist: collect [
-        parse3/match proto [
+        parse3:match proto [
             return-type: across to "API_" "API_" name: across to "(" one
             ["void)" | some [  ; C void, or at least one parameter expected
                 [param: across to "," one | param: across to ")" to <end>] (
@@ -99,7 +99,7 @@ emit-proto: func [return: [~] proto] [
                     ; Separate type from parameter name.  Step backwards from
                     ; the tail to find space, or non-[letter digit underscore]
                     ;
-                    trim/head/tail param
+                    trim:head:tail param
                     identifier-chars: charset [
                         #"A" - #"Z"
                         #"a" - #"z"
@@ -112,7 +112,7 @@ emit-proto: func [return: [~] proto] [
                     while [pick identifier-chars pos.1] [
                         pos: back pos
                     ]
-                    keep trim/tail copy/part param next pos  ; TEXT! of type
+                    keep trim:tail copy:part param next pos  ; TEXT! of type
                     keep to word! next pos  ; WORD! of the parameter name
                 )
             ]]
@@ -129,7 +129,7 @@ emit-proto: func [return: [~] proto] [
     ]
 
     if yes? is-variadic: to-yesno find paramlist 'vaptr [
-        parse3/match paramlist [  ; Note: block! parsing
+        parse3:match paramlist [  ; Note: block! parsing
             ;
             ; Any generalized "modes" or "flags" should come first, which
             ; facilitates C99 macros that want two places to splice arguments:
@@ -157,7 +157,7 @@ emit-proto: func [return: [~] proto] [
     append api-objects make object! compose [
         spec: match block! third header  ; Rebol metadata API comment
         name: (ensure text! name)
-        return-type: (ensure text! trim/tail return-type)
+        return-type: (ensure text! trim:tail return-type)
         paramlist: (ensure block! paramlist)
         proto: (ensure text! proto)
         is-variadic: (quote is-variadic)
@@ -337,10 +337,10 @@ variadic-api-c89-alias-macros: map-each-api [
 ;     #endif
 ;
 
-assert [newline = take/last last variadic-api-c-helpers]
-assert [newline = take/last last variadic-api-c++-helpers]
-assert [newline = take/last last variadic-api-binding-capturing-macros]
-assert [newline = take/last last variadic-api-explicit-binding-macros]
+assert [newline = take:last last variadic-api-c-helpers]
+assert [newline = take:last last variadic-api-c++-helpers]
+assert [newline = take:last last variadic-api-binding-capturing-macros]
+assert [newline = take:last last variadic-api-explicit-binding-macros]
 
 
 === "GENERATE REBOL.H" ===

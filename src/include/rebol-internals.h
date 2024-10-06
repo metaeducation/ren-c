@@ -340,7 +340,7 @@ typedef struct {
     bool recycling;  // True when the GC is in a recycle
     intptr_t depletion;  // bytes left to allocate until automatic GC is forced
     intptr_t ballast;  // what depletion is reset to after a GC
-    bool disabled;  // true when RECYCLE/OFF is run
+    bool disabled;  // true when RECYCLE:OFF is run
     Flex* guarded;  // stack of GC protected Flexes and (maybe erased) Cells
     Flex* mark_stack;  // Flexes pending to mark their reachables as live
     Flex* manuals;  // Manually memory managed (not by GC)

@@ -45,13 +45,13 @@
 (
     x: [2 4 6 8 7 9 11 30]
     all [
-        7 = until/predicate [take x] cascade [even?/ not/]
+        7 = until:predicate [take x] cascade [even?/ not/]
         x = [9 11 30]
     ]
 )(
     x: [1 "hi" <foo> _ <bar> "baz" 2]
     all [
-        blank? until/predicate [take x] z -> [blank? z]
+        blank? until:predicate [take x] z -> [blank? z]
         x = [<bar> "baz" 2]
     ]
 )
@@ -71,5 +71,5 @@
 
 (
     n: 1
-    9 = until/predicate [n: n + 2] lambda [x] [x > 7]
+    9 = until:predicate [n: n + 2] lambda [x] [x > 7]
 )

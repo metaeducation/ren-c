@@ -412,7 +412,7 @@ REBTYPE(Binary)
             len = Part_Limit_Append_Insert(ARG(part));
 
         // Note that while inserting or appending VOID is a no-op, CHANGE with
-        // a /PART can actually erase data.
+        // a :PART can actually erase data.
         //
         if (Is_Void(arg) and len == 0) {
             if (id == SYM_APPEND) // append always returns head
@@ -532,7 +532,7 @@ REBTYPE(Binary)
         } else
             len = 1;
 
-        // Note that /PART can change index
+        // Note that :PART can change index
 
         REBINT tail = Cell_Series_Len_Head(v);
 
@@ -553,7 +553,7 @@ REBTYPE(Binary)
             return Init_Series(OUT, heart, Make_Binary(0));
         }
 
-        // if no /PART, just return value, else return string
+        // if no :PART, just return value, else return string
         //
         if (not REF(part)) {
             Init_Integer(OUT, *Cell_Blob_At(v));
@@ -592,7 +592,7 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_COPY;
 
         UNUSED(PARAM(value));
-        UNUSED(REF(deep));  // /DEEP is historically ignored on BINARY!
+        UNUSED(REF(deep));  // :DEEP is historically ignored on BINARY!
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 

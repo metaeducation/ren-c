@@ -45,31 +45,31 @@ dump: func [
         ] else [
             let trunc
             append (
-                [@ trunc]: mold/limit :val system.options.dump-size
+                [@ trunc]: mold:limit :val system.options.dump-size
             ) if trunc ["..."]
         ]
     ]
 
     let dump-one: func [return: [~] item] [
-        switch/type item [
+        switch:type item [
             &refinement?  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
                 let trunc
                 print unspaced [
-                    [@ trunc]: mold/limit item system.options.dump-size
+                    [@ trunc]: mold:limit item system.options.dump-size
                     if trunc ["..."]
                 ]
             ]
 
             word! tuple! group! [
-                print [@(setify item) val-to-text get/groups/any item]
+                print [@(setify item) val-to-text get:groups:any item]
             ]
 
             issue! [
                 enablements.(prefix): item
             ]
 
-            fail/blame [
+            fail:blame [
                 "Item not TEXT!, INTEGER!, WORD!, TUPLE!, PATH!, GROUP!:" :item
             ] $value
         ]
@@ -78,7 +78,7 @@ dump: func [
     let swp
     case [
         swp: match [set-word? set-tuple?] :value [  ; `dump x: 1 + 2`
-            let [pos result]: evaluate/step extra
+            let [pos result]: evaluate:step extra
             set swp :result
             print [swp, result]
         ]
@@ -86,7 +86,7 @@ dump: func [
         let b: match block! value [
             while [not tail? b] [
                 if swp: match [set-word? set-tuple?] :b.1 [  ; `dump [x: 1 + 2]`
-                    [b result]: evaluate/step b
+                    [b result]: evaluate:step b
                     print [swp, result]
                 ] else [
                     dump-one b.1
@@ -163,7 +163,7 @@ dumps: enfix func [
         ; have a way to be called--in spirit they are like enfix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        d: func [return: [~[]~] /on /off <static> d'] compose/deep [
+        d: func [return: [~[]~] /on /off <static> d'] compose:deep [
             let d': default [
                 let d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
@@ -209,7 +209,7 @@ summarize-obj: func [
         size
     ][
         let val: form val
-        insert/dup (tail of val) space (size - length of val)
+        insert:dup (tail of val) space (size - length of val)
         val
     ]
 
@@ -219,7 +219,7 @@ summarize-obj: func [
         for-each [word val] obj [
             if unset? $val [continue]  ; don't consider unset fields
 
-            let type: type of noantiform get/any $val
+            let type: type of noantiform get:any $val
 
             let str: if type = object! [
                 spaced [word, form words of val]
@@ -227,7 +227,7 @@ summarize-obj: func [
                 form word
             ]
 
-            switch/type pattern [  ; filter out any non-matching items
+            switch:type pattern [  ; filter out any non-matching items
                 null?! []
 
                 type-block! [
@@ -244,10 +244,10 @@ summarize-obj: func [
                 fail @pattern
             ]
 
-            let desc: description-of noantiform get/any $val
+            let desc: description-of noantiform get:any $val
             if desc [
                 if 48 < length of desc [
-                    desc: append copy/part desc 45 "..."
+                    desc: append copy:part desc 45 "..."
                 ]
             ]
 

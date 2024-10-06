@@ -75,10 +75,10 @@
             count-up 't b - 1 [append a ". "]
             append a "Q "
             count-up 't n - b [append a ". "]
-            take/last a  ; don't want trailing space
+            take:last a  ; don't want trailing space
             append a newline
         ]
-        take/last a  ; don't want trailing newline
+        take:last a  ; don't want trailing newline
         return a
     ]
 
@@ -302,5 +302,5 @@
     ]
 )
 
-    (92 = solve-n-queens/countonly 8)
+    (92 = solve-n-queens:countonly 8)
 ]

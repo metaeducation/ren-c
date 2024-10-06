@@ -30,12 +30,12 @@
 )
 (
     block: copy [a b c]
-    block: my append/part/dup spread [d e f] 2 3
+    block: my append:part:dup spread [d e f] 2 3
     [a b c d e d e d e] = block
 )
 (
     block: copy [a b c]
-    block: my append/part/dup spread '(d e f) 2 3
+    block: my append:part:dup spread '(d e f) 2 3
     [a b c d e d e d e] = block
 )
 
@@ -141,9 +141,9 @@
 ]
 
 [#2383 (
-    "abcde" = append/part "abc" spread ["defg"] 2
+    "abcde" = append:part "abc" spread ["defg"] 2
 )(
-    "abcdefgh" = append/part "abc" spread ["defg" "hijk"] 5
+    "abcdefgh" = append:part "abc" spread ["defg" "hijk"] 5
 )]
 
 ~illegal-zero-byte~ !! (append "abc" codepoint-to-char 0)
@@ -171,9 +171,9 @@
 
 ([a b c ~void~] = append [a b c] the ~void~)
 
-; Added support for /PART on ISSUE!
+; Added support for :PART on ISSUE!
 ;
-("abcdef" = append/part "abc" #defghi 3)
+("abcdef" = append:part "abc" #defghi 3)
 
 ; Appending to a void returns null
 [

@@ -342,7 +342,7 @@
 [#19
     ~bad-parameter~ !! (
         f: func [/r [integer!]] [return x]
-        2 == f/r/r 1 2  ; Review: could be a syntax for variadic refinements?
+        2 == f:r:r 1 2  ; Review: could be a syntax for variadic refinements?
     )
 ]
 
@@ -411,7 +411,7 @@
         return case [
             count = 0 [reduce [data]]
             <default> [
-               append (f/count count - 1) data
+               append (f:count count - 1) data
             ]
         ]
     ]
@@ -434,7 +434,7 @@
 ; /LOCAL is an ordinary refinement in Ren-C
 (
     a-value: func [/local [integer!]] [return local]
-    1 == a-value/local 1
+    1 == a-value:local 1
 )
 
 [#539 https://github.com/metaeducation/ren-c/issues/755 (

@@ -89,7 +89,7 @@
 
     ("c😺t" == parse bincat [{c😺t}])
 
-    ~parse-mismatch~ !! (parse/case bincat [{c😺t} <end>])
+    ~parse-mismatch~ !! (parse:case bincat [{c😺t} <end>])
 ]
 
 (
@@ -116,21 +116,21 @@
 [
     ("A" == parse "a" ["A"])
     ~parse-mismatch~ !! (parse "a" [#A])
-    ~parse-mismatch~ !! (parse/case "a" ["A"])
-    ~parse-mismatch~ !! (parse/case "a" [#A])
-    ("a" == parse/case "a" ["a"])
-    (#a == parse/case "a" [#a])
-    ("A" == parse/case "A" ["A"])
-    (#A == parse/case "A" [#A])
+    ~parse-mismatch~ !! (parse:case "a" ["A"])
+    ~parse-mismatch~ !! (parse:case "a" [#A])
+    ("a" == parse:case "a" ["a"])
+    (#a == parse:case "a" [#a])
+    ("A" == parse:case "A" ["A"])
+    (#A == parse:case "A" [#A])
     ("test" == parse "TeSt" ["test"])
-    ~parse-mismatch~ !! (parse/case "TeSt" ["test"])
-    ("TeSt" == parse/case "TeSt" ["TeSt"])
+    ~parse-mismatch~ !! (parse:case "TeSt" ["test"])
+    ("TeSt" == parse:case "TeSt" ["TeSt"])
 ]
 
 ; Casing in a block
 [
-    ("a" = parse/case ["a"] ["a"])
-    ~parse-mismatch~ !! (parse/case ["a"] ["A"])
+    ("a" = parse:case ["a"] ["a"])
+    ~parse-mismatch~ !! (parse:case ["a"] ["A"])
 ]
 
 ; String unicode

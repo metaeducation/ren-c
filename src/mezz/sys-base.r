@@ -57,7 +57,7 @@ make-quit: lambda [
     quit* [action?]
     /console "Just integer, no argument acts like quit 0"  ; [1]
 ][
-    func compose/deep [
+    func compose:deep [
         ^result "If not /value, integer! exit code (non-zero is failure)"
             [any-atom? (if console [<end>])]  ; endability has pitfalls [2]
         /value "Return any value, non-raised are exit code 0"
@@ -141,8 +141,10 @@ module: func [
     ]
 
     if block? spec [  ; turn spec into an object if it was a block
-        ;; !!! unbind/deep spec
-        spec: construct/with (inert spec) system.standard.header  ; see def.
+        comment [
+            unbind:deep spec  ; !!! preserve binding?
+        ]
+        spec: construct:with (inert spec) system.standard.header  ; see def.
     ]
 
     if spec [  ; validate the important fields of the header, if there is one
@@ -152,7 +154,7 @@ module: func [
             spec.version [~null~ tuple!]
             spec.options [~null~ block!]
         ][
-            if not (match/meta inside [] types get inside [] var) [
+            if not (match:meta inside [] types get inside [] var) [
                 fail ["Module" var "must be in" mold types "- not" ^(get var)]
             ]
         ]
@@ -270,5 +272,5 @@ do: func [
     /args "Args passed as system.script.args to a script (normally a string)"
         [element?]
 ][
-    return [_ _ @]: import*/args null source args
+    return [_ _ @]: import*:args null source args
 ]

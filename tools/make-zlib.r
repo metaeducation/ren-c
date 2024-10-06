@@ -70,13 +70,13 @@ disable-user-includes: func [
     ]
 
     for-next 'line-iter lines [
-        parse3/match line-iter.1 [
+        parse3:match line-iter.1 [
             opt some space {#}
             opt some space {include}
             some space, include-rule, to <end>
         ] then [
             if let pos: find try inline (as file! name) [
-                change/part line-iter (read/lines join path-zlib name) 1
+                change:part line-iter (read:lines join path-zlib name) 1
                 take pos
             ] else [
                 insert line unspaced [{//} space]
@@ -137,7 +137,7 @@ make-warning-lines: lamda [name [file!] title [text!]] [
         { *}
         unspaced [{ * Title: } title]
         { * Build: A0}
-        unspaced [{ * Date:  } now/date]
+        unspaced [{ * Date:  } now:date]
         unspaced [{ * File:  } to text! name]
         { *}
         { * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)}
@@ -151,7 +151,7 @@ fix-kr: func [
 ][
     let tmp-start
     let name
-    let single-param: bind copy/deep [
+    let single-param: bind copy:deep [
         identifier  ; (part of)type
         some [
             opt some white-space
@@ -174,7 +174,7 @@ fix-kr: func [
     let param-ser
     let param-spec
     let check-point
-    parse3 source bind copy/deep [
+    parse3 source bind copy:deep [
         opt some [
             fn: across identifier
             opt some white-space
@@ -189,13 +189,13 @@ fix-kr: func [
                 opt some white-space
             ]
             "{" check-point: <here> (
-                remove/part param-ser length of param-spec
+                remove:part param-ser length of param-spec
                 insert param-ser newline
                 let length-diff: 1 - (length of param-spec)
 
                 let param-len: (index of close-paren) - (index of open-paren)
-                let params: copy/part open-paren param-len
-                remove/part open-paren param-len
+                let params: copy:part open-paren param-len
+                remove:part open-paren param-len
                 let length-diff: length-diff - param-len
 
                 let param-block: make block! 8
@@ -229,7 +229,7 @@ fix-kr: func [
                         (typed: 'yes)
                         single-param-start: <here>, single-param (
                             spec-type: (
-                                copy/part single-param-start
+                                copy:part single-param-start
                                     (index of name-start)
                                     - (index of single-param-start)
                             )
@@ -240,9 +240,9 @@ fix-kr: func [
                                 ; case 2)
                                 ; spec-type should be "int "
                                 ; name should be "i"
-                                poke (find/skip param-block name 2) 2
+                                poke (find:skip param-block name 2) 2
                                     either yes? typed [
-                                        (copy/part single-param-start
+                                        (copy:part single-param-start
                                             (index of param-end)
                                             - (index of single-param-start)
                                         )
@@ -250,7 +250,7 @@ fix-kr: func [
                                     ; handling "j" in case 2)
                                         unspaced [
                                             spec-type    ; "int "
-                                            (copy/part single-param-start
+                                            (copy:part single-param-start
                                                 (index of param-end)
                                                 - (index of single-param-start)
                                             ) ; " *j"
@@ -266,9 +266,9 @@ fix-kr: func [
                         opt some white-space
                         [param-end: <here>] ";"
                         (
-                           poke (find/skip param-block name 2) 2
+                           poke (find:skip param-block name 2) 2
                                either yes? typed [
-                                   (copy/part single-param-start
+                                   (copy:part single-param-start
                                         (index of param-end)
                                         - (index of single-param-start)
                                     )
@@ -276,7 +276,7 @@ fix-kr: func [
                                    ; handling "k" in case 2)
                                    unspaced [
                                        spec-type  ; "int "
-                                       (copy/part single-param-start
+                                       (copy:part single-param-start
                                             (index of param-end)
                                             - (index of single-param-start)
                                        )  ; " **k"
@@ -289,7 +289,7 @@ fix-kr: func [
 
                 let new-param
                 insert open-paren new-param: delimit ",^/    " (
-                    extract/index param-block 2 2
+                    extract:index param-block 2 2
                 )
                 insert open-paren "^/    "
 
@@ -309,7 +309,7 @@ fix-kr: func [
 fix-const-char: func [
     source
 ][
-    parse3 source bind copy/deep [
+    parse3 source bind copy:deep [
         opt some [
             "strm" opt some white-space "->" opt some white-space
             "msg" opt some white-space "=" opt some white-space
@@ -334,7 +334,7 @@ for-each 'h-file [
     %zlib.h
     %deflate.h
 ] [
-    append header-lines spread read/lines join path-zlib h-file
+    append header-lines spread read:lines join path-zlib h-file
 ]
 
 disable-user-includes header-lines
@@ -351,7 +351,7 @@ insert header-lines spread [
 
 insert header-lines spread make-warning-lines file-include {ZLIB aggregated header}
 
-write/lines (join path-include file-include) header-lines
+write:lines (join path-include file-include) header-lines
 
 
 
@@ -361,7 +361,7 @@ write/lines (join path-include file-include) header-lines
 
 source-lines: copy []
 
-append source-lines spread read/lines (join path-zlib %crc32.c)
+append source-lines spread read:lines (join path-zlib %crc32.c)
 
 ;
 ; Macros DO1 and DO8 are defined differently in crc32.c, and if you don't
@@ -388,7 +388,7 @@ for-each 'c-file [
     %inffast.c
     %inflate.c
 ][
-    append source-lines spread read/lines (join path-zlib c-file)
+    append source-lines spread read:lines (join path-zlib c-file)
 ]
 
 disable-user-includes:stdio:inline source-lines copy [

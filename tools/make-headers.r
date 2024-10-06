@@ -32,10 +32,10 @@ file-base: make object! load join repo-dir %tools/file-base.r
 
 tools-dir: system.options.current-path
 output-dir: join system.options.path %prep/
-mkdir/deep (join output-dir %include/)
+mkdir:deep (join output-dir %include/)
 
-mkdir/deep (join output-dir %include/)
-mkdir/deep (join output-dir %core/)
+mkdir:deep (join output-dir %include/)
+mkdir:deep (join output-dir %core/)
 
 change-dir join repo-dir %src/core/
 
@@ -124,7 +124,7 @@ process-conditional: func [
     ; !!! Note this reaches into the emitter and modifies the buffer.
     ;
     all [
-        find/match directive "#endif"
+        find:match directive "#endif"
         let position: find-last tail-of emitter.buf-emit "#if"
         elide rewrite-if-directives position
     ]
@@ -200,8 +200,8 @@ for-each 'item file-base.core [
 
     assert [
         %.c = suffix? file
-        not find/match file "host-"
-        not find/match file "os-"
+        not find:match file "host-"
+        not find:match file "os-"
     ]
 
     process file
@@ -287,7 +287,7 @@ sys-globals-parser: context [
 ]
 
 
-sys-globals-parser/process read/string %../include/sys-globals.h
+sys-globals-parser/process read:string %../include/sys-globals.h
 
 ;-------------------------------------------------------------------------
 
@@ -302,13 +302,13 @@ e-strings/emit {
      * to conveniently make the global data available in other source files.
      */
 }
-for-each 'line read/lines %a-constants.c [
+for-each 'line read:lines %a-constants.c [
     case [
-        parse3/match line ["#define" to <end>] [
+        parse3:match line ["#define" to <end>] [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse3/match line [to {const } constd: across to { =} to <end>] [
+        parse3:match line [to {const } constd: across to { =} to <end>] [
             e-strings/emit [constd {
                 extern $<Constd>;
             }]

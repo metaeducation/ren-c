@@ -34,7 +34,7 @@
 //
 //         f/(p): noquote f/(p)
 //
-//         return quote/depth eval f num-quotes
+//         return quote:depth eval f num-quotes
 //     ]
 //
 //     >> item: the '''[a b c]

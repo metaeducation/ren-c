@@ -17,7 +17,7 @@
 (
     num1: 4
     num2: 1
-    fact: copy/deep the (
+    fact: copy:deep the (
         either num1 = 1 [num2] [num2: num1 * num2 num1: num1 - 1]
     )
     insert tail of last fact fact

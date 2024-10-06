@@ -366,7 +366,7 @@ REBTYPE(Sequence)
 
         // ANY-SEQUENCE? is immutable, so a shallow copy should be a no-op,
         // but it should be cheap for any similarly marked array.  Also, a
-        // /DEEP copy of a path may copy groups that are mutable.
+        // :DEEP copy of a path may copy groups that are mutable.
         //
       case SYM_COPY: {
         if (not Any_Listlike(sequence))

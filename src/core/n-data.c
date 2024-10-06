@@ -163,7 +163,7 @@ DECLARE_NATIVE(bind)
         if (Try_Bind_Word(context, v))
             return COPY(v);
 
-        // not in context, bind/new means add it if it's not.
+        // not in context, BIND:NEW means add it if it's not.
         //
         if (REF(new) or (Is_Set_Word(v) and REF(set))) {
             Init_Nothing(Append_Context_Bind_Word(Cell_Varlist(context), v));
@@ -1122,7 +1122,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
     for (at = head; at != tail; ++at) {
         if (Is_Group(at)) {
             if (not steps_out)
-                return Error_User("GET/GROUPS must be used to eval in GET");
+                return Error_User("GET:GROUPS must be used to eval in GET");
 
             if (Eval_Any_List_At_Throws(cast(Atom*, out), at, at_binding)) {
                 Drop_Data_Stack_To(base);
@@ -1527,7 +1527,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 
         if (Is_Blank(item)) {
             assert(!"Illegal internal blank found in path");
-            fail (path);  // should be illegal to make e.g. append//dup
+            fail (path);  // should be illegal to make e.g. append::dup
         }
         else if (Is_Word(item)) {
             Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(item));
@@ -2739,7 +2739,7 @@ DECLARE_NATIVE(as)
                     REB_TEXT,
                     v,
                     0,  // no quotes
-                    STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
+                    STRMODE_ALL_CODEPOINTS  // See AS-TEXT:STRICT for stricter
                 )){
                     goto bad_cast;
                 }
@@ -2761,7 +2761,7 @@ DECLARE_NATIVE(as)
             new_heart,
             v,
             0,  // no quotes
-            STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
+            STRMODE_ALL_CODEPOINTS  // See AS-TEXT:STRICT for stricter
         )){
             goto bad_cast;
         }

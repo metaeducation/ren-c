@@ -199,7 +199,7 @@ ask: func [
 
     let prompt: null
     let type: text!
-    switch/type question [
+    switch:type question [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
         type-block! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
@@ -266,7 +266,7 @@ confirm: func [
         block? with
         length of with > 2
 
-        fail/blame [
+        fail:blame [
             "maximum 2 arguments allowed for with [true false]"
             "got:" mold with
         ] $with
@@ -276,8 +276,8 @@ confirm: func [
 
     return case [
         empty? with [okay]
-        text? with [did find/match response with]
-        length of with < 2 [did find/match response first with]
+        text? with [did find:match response with]
+        length of with < 2 [did find:match response first with]
         find first with response [okay]
         find second with response [okay]
     ]
@@ -306,7 +306,7 @@ list-dir: func [
         fail ["No directory listing protocol registered for" save-dir]
     ]
 
-    switch/type :path [
+    switch:type :path [
         null?! []  ; Stay here
         file! [change-dir path]
         text! [change-dir local-to-file path]
@@ -335,7 +335,7 @@ list-dir: func [
 
         if text? l [
             append l file
-            append/dup l #" " 15 - remainder length of l 15
+            append:dup l #" " 15 - remainder length of l 15
             if greater? length of l 60 [print l clear l]
         ] else [
             let info: get (words of query file)
@@ -400,12 +400,12 @@ to-relative-file: func [
     if text? file [ ; Local file
         comment [
             ; file-to-local drops trailing / in R2, not in R3
-            if [@ tmp]: find/match file file-to-local what-dir [
+            if [@ tmp]: find:match file file-to-local what-dir [
                 file: next tmp
             ]
         ]
         let pos
-        if [@ pos]: find/match file (file-to-local what-dir) [
+        if [@ pos]: find:match file (file-to-local what-dir) [
             file: pos  ; !!! https://forum.rebol.info/t/1582/6
         ]
         if as-rebol [
@@ -414,7 +414,7 @@ to-relative-file: func [
         ]
     ] else [
         let pos
-        if [@ pos]: find/match file what-dir [
+        if [@ pos]: find:match file what-dir [
             file: pos  ; !!! https://forum.rebol.info/t/1582/6
         ]
         if as-local [

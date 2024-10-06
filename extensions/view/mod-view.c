@@ -138,7 +138,7 @@ DECLARE_NATIVE(request_file_p)
                 "if find item tab [fail {TAB chars not legal in filters}]",
             "]"
         );
-        filter_utf16 = rebSpellWide("delimit/tail tab filter");
+        filter_utf16 = rebSpellWide("delimit:tail tab filter");
         WCHAR* pwc;
         for (pwc = filter_utf16; *pwc != 0; ++pwc) {
             if (*pwc == '\t')
@@ -172,7 +172,7 @@ DECLARE_NATIVE(request_file_p)
 
     WCHAR *initial_dir_utf16;
     if (rebNot("empty? maybe initial")) {
-        WCHAR* initial_utf16 = rebSpellWide("file-to-local/full initial");
+        WCHAR* initial_utf16 = rebSpellWide("file-to-local:full initial");
         size_t initial_len = wcslen(initial_utf16);
 
         // If the last character doesn't indicate a directory, that means

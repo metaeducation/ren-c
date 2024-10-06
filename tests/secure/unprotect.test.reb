@@ -29,7 +29,7 @@
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    [+ 2 + 3] = remove/part value 1
+    [+ 2 + 3] = remove:part value 1
 )
 (
     value: copy original: [1 + 2 + 3]
@@ -78,7 +78,7 @@
     value: copy original: "1 + 2 + 3"
     protect value
     unprotect value
-    " + 2 + 3" = remove/part value 1
+    " + 2 + 3" = remove:part value 1
 )
 (
     value: copy original: "1 + 2 + 3"

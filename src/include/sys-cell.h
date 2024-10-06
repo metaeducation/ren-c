@@ -728,9 +728,9 @@ INLINE Value* Constify(Value* v) {
 // * Although Erase_Cell() is very cheap in release builds (just writing a
 //   zero in the header), it still costs *something*.  And in debug builds it
 //   can cost more, because DEBUG_TRACK_EXTEND_CELLS makes Erase_Cell() write
-//   the file/line/tick where the cell was initialized in the extended space.
-//   So it should generally be favored to put these declarations at the
-//   outermost scope of a function, vs. inside a loop.
+//   the file, line, and tick where the cell was initialized in the extended
+//   space.  So it should generally be favored to put these declarations at
+//   the outermost scope of a function, vs. inside a loop.
 //
 
 #define DECLARE_ATOM(name) \

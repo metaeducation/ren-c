@@ -297,7 +297,7 @@ to-js-type: func [
         ;
         ; https://developers.google.com/web/updates/2018/05/bigint
         ;
-        find/case [
+        find:case [
             "int"
             "unsigned int"
             "double"
@@ -313,7 +313,7 @@ to-js-type: func [
         ; The differences between undefined and null are subtle and easy to
         ; get wrong, but a void-returning function should map to undefined.
         ;
-        (parse3/match s ["void" opt some space]) [
+        (parse3:match s ["void" opt some space]) [
             "undefined"
         ]
     ]
@@ -393,7 +393,7 @@ for-each-api [
     ]
 
     no-reb-name: null
-    parse3/match name ["reb" no-reb-name: across to <end>] else [
+    parse3:match name ["reb" no-reb-name: across to <end>] else [
         fail ["API name must start with `reb`" name]
     ]
 
@@ -452,7 +452,7 @@ for-each-api [
         null
     ]
 
-    code-for-returning: trim/auto copy (switch js-return-type [
+    code-for-returning: trim:auto copy (switch js-return-type [
         "'string'" [
             ;
             ; If `char *` is returned, it was rebAlloc'd and needs to be freed
@@ -924,7 +924,7 @@ json-collect: func [
     <local> results  ; !!! CSCAPE does not work with LET right now
 ][
     results: collect compose [
-        keep: adapt get $keep [  ; Emscripten prefixes functions w/underscore
+        keep: adapt keep/ [  ; Emscripten prefixes functions w/underscore
             if text? value [
                 value: unspaced [{"} {_} value {"}]  ; bootstrap semantics
             ]

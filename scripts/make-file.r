@@ -79,7 +79,7 @@ make-file-block-parts: func [
 
         item: predicate item
 
-        switch/type item [
+        switch:type item [
             void?! []
 
             path! [
@@ -146,7 +146,7 @@ make-file-tuple-parts: func [
 ][
     tuple: as block! tuple
     return collect [iterate @tuple [
-        item: switch/type tuple.1 [
+        item: switch:type tuple.1 [
             group! [eval inside tuple tuple.1]
             block! [fail "Blocks in tuples should reduce or something"]
         ] else [
@@ -155,7 +155,7 @@ make-file-tuple-parts: func [
 
         item: predicate item
 
-        text: switch/type item [
+        text: switch:type item [
             blank! [null]
             text! [item]
             file! [as text! item]
@@ -186,7 +186,7 @@ make-file-path-parts: func [
 
         item: predicate item
 
-        switch/type item [
+        switch:type item [
             blank! []  ; just there as placeholder to get the "/"
 
             word! [
@@ -241,7 +241,7 @@ make-file: func [
     ; paths, and no support for generic tuples.  It only offers the BLOCK!
     ; dialect form.
 
-    result: as file! unspaced switch/type def [
+    result: as file! unspaced switch:type def [
         ; consolidate to BLOCK!-oriented file spec
         word! [to text! predicate def]
         path! [make-file-path-parts def :predicate]

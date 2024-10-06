@@ -443,7 +443,7 @@ struct BytesExtraStruct {
 };
 
 union AnyUnion {  // needed to beat strict aliasing, used in payload
-    bool bit;  // "wasteful" to just use for one flag, but fast to read/write
+    bool bit;  // "wasteful" to just use for one flag, but fast read and write
 
     Flags flags;
 

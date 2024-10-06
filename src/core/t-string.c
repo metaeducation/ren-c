@@ -308,7 +308,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
         DECLARE_VALUE (temp);
         Init_Text(temp, Pop_Molded_String(mo));
 
-        // Effectively do a CHANGE/PART to overwrite the reversed portion of
+        // Effectively do a CHANGE:PART to overwrite the reversed portion of
         // the string (from the input value's index to the tail).
 
         DECLARE_VALUE (string);  // !!! Temp value, string type is irrelevant
@@ -833,7 +833,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     Heart heart = Cell_Heart(v);
     assert(Any_Utf8_Kind(heart));
 
-    // Special format for MOLD/ALL string series when not at head
+    // Special format for MOLD:ALL string series when not at head
     //
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0) {
         Pre_Mold(mo, v); // e.g. #[file! part
@@ -1040,7 +1040,7 @@ REBTYPE(String)
             len = Part_Limit_Append_Insert(ARG(part));
 
         // Note that while inserting or appending NULL is a no-op, CHANGE with
-        // a /PART can actually erase data.
+        // a :PART can actually erase data.
         //
         if (Is_Void(arg) and len == 0) {
             if (id == SYM_APPEND) // append always returns head
@@ -1166,7 +1166,7 @@ REBTYPE(String)
         } else
             len = 1;
 
-        // Note that /PART can change index
+        // Note that :PART can change index
 
         REBLEN tail = Cell_Series_Len_Head(v);
 
@@ -1186,7 +1186,7 @@ REBTYPE(String)
             return Init_Any_String(OUT, heart, Make_String(0));
         }
 
-        // if no /PART, just return value, else return string
+        // if no :PART, just return value, else return string
         //
         if (REF(part)) {
             Heart heart = Cell_Heart_Ensure_Noquote(v);
@@ -1227,7 +1227,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_COPY;
 
         UNUSED(PARAM(value));
-        UNUSED(REF(deep));  // /DEEP is historically ignored on ANY-STRING?
+        UNUSED(REF(deep));  // :DEEP is historically ignored on ANY-STRING?
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 

@@ -128,7 +128,7 @@ DECLARE_NATIVE(breakpoint_p)
     // could splice in a value in place of what comes after it.
     //
     if (not Is_Quasi_Word(SPARE))
-        fail ("BREAKPOINT is invisible, can't RESUME/WITH code (use PAUSE)");
+        fail ("BREAKPOINT is invisible, can't RESUME:WITH code (use PAUSE)");
 
     return NOTHING;
 }
@@ -140,7 +140,7 @@ DECLARE_NATIVE(breakpoint_p)
 //  "Pause in the debugger before running the provided code"
 //
 //      return: [any-value?]
-//          "Result of the code evaluation, or RESUME/WITH value if override"
+//          "Result of the code evaluation, or RESUME:WITH value if override"
 //      @code [group!]  ; or LIT-WORD! name or BLOCK! for dialect
 //          "Run the given code if breakpoint does not override"
 //  ]

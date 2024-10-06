@@ -81,7 +81,7 @@ filter-flag: func [
 
     let header
     let option
-    parse3/match to text! flag [
+    parse3:match to text! flag [
         header: across to ":"
         ":" option: across to <end>
     ] else [
@@ -99,8 +99,8 @@ run-command: func [
     cmd [block! text!]
 ][
     let x: copy ""
-    call/shell/output cmd x
-    return trim/with x "^/^M"
+    call:shell:output cmd x
+    return trim:with x "^/^M"
 ]
 
 pkg-config: func [  ; !!! Note: Does not appear to be used
@@ -465,9 +465,9 @@ gcc: make compiler-class [
         version: copy ""
 
         .exec-file: exec: default ["gcc"]
-        call/output [(exec) "--version"] version
+        call:output [(exec) "--version"] version
         let letter: charset [#"a" - #"z" #"A" - #"Z"]
-        parse3/match version [
+        parse3:match version [
             "gcc (" some [letter | digit | #"_"] ")" space
             major: across some digit "."
             minor: across some digit "."
@@ -497,7 +497,7 @@ gcc: make compiler-class [
     ][
         return spaced collect [
             keep any [
-                file-to-local/pass maybe .exec-file
+                file-to-local:pass maybe .exec-file
                 to text! name  ; the "gcc" may get overridden as "g++"
             ]
 
@@ -609,7 +609,7 @@ cl: make compiler-class [
         :E "only preprocessing"
     ][
         return spaced collect [
-            keep any [(file-to-local/pass maybe .exec-file) "cl"]
+            keep any [(file-to-local:pass maybe .exec-file) "cl"]
             keep "/nologo"  ; don't show startup banner (must be lowercase)
             keep either E ["/P"]["/c"]
 
@@ -686,7 +686,7 @@ cl: make compiler-class [
                 ]
             ]
 
-            keep file-to-local/pass source
+            keep file-to-local:pass source
         ]
     ]
 ]
@@ -740,7 +740,7 @@ ld: make linker-class [
             target-platform.exe-suffix
         ]
         return spaced collect [
-            keep any [(file-to-local/pass maybe .exec-file) "gcc"]
+            keep any [(file-to-local:pass maybe .exec-file) "gcc"]
 
             ; !!! This was breaking emcc.  However, it is needed in order to
             ; get shared libraries on Posix.  That feature is being resurrected
@@ -822,7 +822,7 @@ ld: make linker-class [
     ][
         let version: copy ""
         .exec-file: exec: default ["gcc"]
-        call/output [(exec) "--version"] version
+        call:output [(exec) "--version"] version
         return null  ; !!! Ever called?
     ]
 ]
@@ -848,7 +848,7 @@ llvm-link: make linker-class [
         ]
 
         return spaced collect [
-            keep any [(file-to-local/pass maybe .exec-file) "llvm-link"]
+            keep any [(file-to-local:pass maybe .exec-file) "llvm-link"]
 
             keep "-o"
 
@@ -931,7 +931,7 @@ link: make linker-class [
             target-platform.exe-suffix
         ]
         return spaced collect [
-            keep any [(file-to-local/pass maybe .exec-file) "link"]
+            keep any [(file-to-local:pass maybe .exec-file) "link"]
 
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
             if all [debug, on? debug] [keep "/DEBUG"]
@@ -977,7 +977,7 @@ link: make linker-class [
                     filter-flag dep.output id
                 ][
                     ;dump dep.output
-                    file-to-local/pass either ends-with? dep.output ".lib" [
+                    file-to-local:pass either ends-with? dep.output ".lib" [
                         dep.output
                     ][
                         join dep.output ".lib"
@@ -1019,9 +1019,9 @@ strip-class: make object! [
         params [~null~ blank! block! any-string?]
     ][
         return reduce [spaced collect [
-            keep any [(file-to-local/pass maybe .exec-file) "strip"]
+            keep any [(file-to-local:pass maybe .exec-file) "strip"]
             params: default [options]
-            switch type of params [  ; switch/type not in bootstrap
+            switch type of params [  ; switch:type not in bootstrap
                 block! [
                     for-each 'flag params [
                         keep filter-flag flag id
@@ -1245,14 +1245,14 @@ generator-class: make object! [
         let val
         while [no? stop][
             stop: 'yes
-            parse3/match cmd [
+            parse3:match cmd [
                 opt some [
                     change [
                         [
                             "$(" name: across some [letter | digit | #"_"] ")"
                             | "$" name: across letter
                         ] (
-                            val: file-to-local/pass select vars name
+                            val: file-to-local:pass select vars name
                             stop: 'no
                         )
                     ] (val)
@@ -1340,7 +1340,7 @@ generator-class: make object! [
             ]
             ends-with? project.output maybe suffix [
                 basename: either suffix [
-                    copy/part project.output
+                    copy:part project.output
                         (length of project.output) - (length of suffix)
                 ][
                     copy project.output
@@ -1355,7 +1355,7 @@ generator-class: make object! [
     ]
 
     setup-outputs: meth [
-        {Set the output/implib for the project tree}
+        "Set the output and implib for the project tree"
         return: [~]
         project [object!]
     ][
@@ -1396,7 +1396,7 @@ makefile: make generator-class [
             [text!]
         entry [object!]
     ][
-        return delimit/tail newline collect [switch entry.class [
+        return delimit:tail newline collect [switch entry.class [
 
             ; Makefile variable, defined on a line by itself
             ;
@@ -1621,12 +1621,12 @@ export execution: make generator-class [
                     for-each 'cmd target.commands [
                         cmd: .do-substitutions/ cmd
                         print ["Running:" cmd]
-                        call/shell cmd
+                        call:shell cmd
                     ]
                 ][
                     let cmd: .do-substitutions/ target.commands
                     print ["Running:" cmd]
-                    call/shell cmd
+                    call:shell cmd
                 ]
             ]
             (elide dump target)

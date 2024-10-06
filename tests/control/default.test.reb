@@ -49,11 +49,11 @@
 ; running refined path, won't be with CHAIN!)
 (
     x: "not an integer"
-    x: ->- default/predicate [10 + 20] :integer?
+    x: ->- default:predicate [10 + 20] integer?/
     x = 30
 )(
     x: 304
-    x: ->- default/predicate [10 + 20] :integer?
+    x: ->- default:predicate [10 + 20] integer?/
     x = 304
 )
 

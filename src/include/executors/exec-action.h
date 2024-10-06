@@ -96,8 +96,8 @@ STATIC_ASSERT(
 //=//// ACTION_EXECUTOR_FLAG_IN_DISPATCH //////////////////////////////////=//
 //
 // When the action dispatcher is fulfilling arguments, it needs frame state
-// for tracking the current key/argument/parameter.  During that time it can
-// also use the STATE byte in the frame for arbitrary purposes.  But once
+// for tracking the current key + argument + parameter.  During that time it
+// can also use the STATE byte in the frame for arbitrary purposes.  But once
 // it starts running dispatch it has to leave the byte to the dispatcher.
 //
 #define ACTION_EXECUTOR_FLAG_IN_DISPATCH \

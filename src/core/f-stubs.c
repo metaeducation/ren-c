@@ -338,7 +338,7 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
 //  Part_Len_May_Modify_Index: C
 //
 // This is the common way of normalizing a series with a position against a
-// /PART limit, so that the series index points to the beginning of the
+// :PART limit, so that the series index points to the beginning of the
 // subsetted range and gives back a length to the end of that subset.
 //
 // It determines if the position for the part is before or after the series
@@ -348,18 +348,18 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
 //
 REBLEN Part_Len_May_Modify_Index(
     Value* series,  // ANY-SERIES? value whose index may be modified
-    const Value* part  // /PART (number, position in value, or BLANK! cell)
+    const Value* part  // :PART (number, position in value, or BLANK! cell)
 ){
     if (Any_Sequence(series)) {
         if (not Is_Nulled(part))
-            fail ("/PART cannot be used with ANY-SEQUENCE");
+            fail (":PART cannot be used with ANY-SEQUENCE");
 
         return Cell_Sequence_Len(series);
     }
 
     assert(Is_Issue(series) or Any_Series(series));
 
-    if (Is_Nulled(part)) {  // indicates /PART refinement unused
+    if (Is_Nulled(part)) {  // indicates :PART refinement unused
         if (not Is_Issue(series))
             return Cell_Series_Len_At(series);  // leave index alone, use plain length
 
@@ -406,11 +406,11 @@ REBLEN Part_Len_May_Modify_Index(
 
     if (len > UINT32_MAX) {
         //
-        // Tests had `[1] = copy/part tail [1] -2147483648`, where trying to
+        // Tests had `[1] = copy:part tail [1] -2147483648`, where trying to
         // do `len = -len` couldn't make a positive 32-bit version of that
         // negative value.  For now, use REBI64 to do the calculation.
         //
-        fail ("Length out of range for /PART refinement");
+        fail ("Length out of range for :PART refinement");
     }
 
     assert(len >= 0);
@@ -436,7 +436,7 @@ REBLEN Part_Tail_May_Modify_Index(Value* series, const Value* limit)
 //
 //  Part_Limit_Append_Insert: C
 //
-// This is for the specific cases of INSERT and APPEND interacting with /PART,
+// This is for the specific cases of INSERT and APPEND interacting with :PART,
 // implementing a somewhat controversial behavior of only accepting an
 // INTEGER! and only speaking in terms of units limited to:
 //
@@ -459,7 +459,7 @@ REBLEN Part_Limit_Append_Insert(const Value* part) {
         return i;
     }
 
-    fail ("APPEND and INSERT only take /PART limit as INTEGER!");
+    fail ("APPEND and INSERT only take :PART limit as INTEGER!");
 }
 
 

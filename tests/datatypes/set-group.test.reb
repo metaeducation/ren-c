@@ -40,7 +40,7 @@
     o: make object! [rest: ~]
     block: [o.rest @value]
     all [
-        10 = (block): transcode/next "10 20"
+        10 = (block): transcode:next "10 20"
         10 = value
         o.rest = " 20"
     ]
@@ -73,7 +73,7 @@
         wrapper: returnproxy :test
         all [
             1020 = wrapper 20
-            1020 = wrapper/return 20 $y
+            1020 = wrapper:return 20 $y
             1020 = y
         ]
     )

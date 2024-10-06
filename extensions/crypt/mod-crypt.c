@@ -211,13 +211,13 @@ DECLARE_NATIVE(checksum)
 // introduces the question of signedness, which was inconsistent.  Moving to
 // where checksum is always a BINARY! is probably what should be done.
 //
-// !!! There was a /SECURE option which wasn't used for anything.
+// !!! There was a :SECURE option which wasn't used for anything.
 //
-// !!! There was a /PART feature which was removed when %sys-core.h dependency
+// !!! There was a :PART feature which was removed when %sys-core.h dependency
 // was removed, for simplicity.  Generic "slice" functionality is under
-// consideration so every routine doesn't need to reinvent /PART.
+// consideration so every routine doesn't need to reinvent :PART.
 //
-// !!! There was a /HASH option that took an integer and claimed to "return
+// !!! There was a :HASH option that took an integer and claimed to "return
 // a hash value with given size".  But what it did was:
 //
 //    REBINT sum = VAL_INT32(ARG(hash));

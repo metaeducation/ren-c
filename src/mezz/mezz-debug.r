@@ -21,7 +21,7 @@ verify: func [
         [<unrun> block! frame!]
     <local> pos result
 ][
-    while [[pos /result]: evaluate/step conditions] [
+    while [[pos /result]: evaluate:step conditions] [
         all [
             not void? :result
             not :result
@@ -30,8 +30,8 @@ verify: func [
                 let reaction: ^ if block? handler [
                     eval handler
                 ] else [
-                    apply/relax handler [  ; arity 0 or 1 is okay
-                        copy/part conditions pos
+                    apply:relax handler [  ; arity 0 or 1 is okay
+                        copy:part conditions pos
                         result
                     ]
                 ]
@@ -44,11 +44,11 @@ verify: func [
                 reaction != '~ignore~
             ]
         ] then [
-            fail/blame make error! [
+            fail:blame make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [
-                    (spread copy/part conditions pos) ** (reify result)
+                    (spread copy:part conditions pos) ** (reify result)
                 ]
             ] $conditions
         ]
@@ -80,7 +80,7 @@ delta-time: func [
     {Returns the time it takes to evaluate the block}
     block [block!]
 ][
-    let timer: unrun get $lib/now/precise  ; Note: NOW comes from an Extension
+    let timer: unrun get $lib/now:precise  ; Note: NOW comes from an Extension
     results: reduce reduce [  ; resolve word lookups first, run fetched items
         timer
         (unrun elide/) (unrun eval/) block
@@ -94,9 +94,9 @@ delta-profile: func [
     block [block!]
     <local> start end
 ][
-    start: values of stats/profile
+    start: values of stats:profile
     eval block
-    end: values of stats/profile
+    end: values of stats:profile
     for-each 'num start [
         change end end/1 - num
         end: next end
@@ -126,7 +126,7 @@ speed?: func [
             calc: [100'000 / secs / 100] ; arbitrary calc
         ][
             let tmp: make binary! 500'000
-            insert/dup tmp "abcdefghij" 50000
+            insert:dup tmp "abcdefghij" 50000
             repeat 10 [
                 random tmp
                 gunzip gzip tmp
@@ -134,7 +134,7 @@ speed?: func [
             calc: [(length of tmp) * 10 / secs / 1900]
         ][
             count-up 'n 40 [
-                change/dup tmp to-char n 500'000
+                change:dup tmp to-char n 500'000
             ]
             calc: [(length of tmp) * 40 / secs / 1024 / 1024]
         ][
@@ -142,7 +142,7 @@ speed?: func [
                 let file: %tmp-junk.txt
                 write file "" ; force security request before timer
                 let tmp: make text! 32000 * 5
-                insert/dup tmp "test^/" 32000
+                insert:dup tmp "test^/" 32000
                 repeat 100 [
                     write file tmp
                     read file
@@ -152,11 +152,11 @@ speed?: func [
             ]
         ]
     ][
-        let secs: now/precise
+        let secs: now:precise
         calc: 0
         recycle
         eval block
-        secs: to decimal! difference now/precise secs
+        secs: to decimal! difference now:precise secs
         append result to integer! eval calc
         if times [append result secs]
     ]

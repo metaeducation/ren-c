@@ -156,8 +156,8 @@
 
     ~???~ !! (1 obj/magic 2)  ; must use shove
 
-    (3 = (1 ->- obj.magic 2))
-    (-1 = (1 ->- obj.magic/minus 2))
+    (3 = (1 ->- obj/magic 2))
+    (-1 = (1 ->- obj/magic:minus 2))
 ]
 
 ; PATH! cannot be directly quoted left, must use ->-

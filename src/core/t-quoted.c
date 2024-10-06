@@ -132,7 +132,7 @@ REBTYPE(Quoted)
         break;
     }
 
-    fail ("QUOTED? has no GENERIC operations (use NOQUOTE/REQUOTE)");
+    fail ("QUOTED? has no GENERIC operations (use NOQUOTE or REQUOTE)");
 }
 
 
@@ -183,7 +183,7 @@ DECLARE_NATIVE(the)
 //
 DECLARE_INTRINSIC(just)
 //
-// Note: JUST/SOFT doesn't make any sense, it cannot evaluate without binding.
+// Note: JUST:SOFT doesn't make any sense, it cannot evaluate without binding.
 {
     UNUSED(phase);
 
@@ -221,7 +221,7 @@ DECLARE_NATIVE(quote)
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
-//      return: "Keywords and plain forms if /LITE, plain ERROR! ok if /EXCEPT"
+//      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
 //          [quoted? quasi? keyword? element? error!]
 //      ^atom [any-atom?]
 //      /lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
@@ -248,14 +248,14 @@ DECLARE_NATIVE(meta)
     }
 
     if (
-        REF(lite)  // META/LITE handles quasiforms specially
+        REF(lite)  // META:LITE handles quasiforms specially
         and Is_Quasiform(meta)
     ){
         if (HEART_BYTE(meta) == REB_WORD) {  // keywords pass thru
             QUOTE_BYTE(meta) = ANTIFORM_0_COERCE_ONLY;  // ^META validated [1]
             return COPY(meta);
         }
-        QUOTE_BYTE(meta) = NOQUOTE_1;  // META/LITE gives plain for the rest.
+        QUOTE_BYTE(meta) = NOQUOTE_1;  // META:LITE gives plain for the rest.
         return COPY(meta);
     }
 
@@ -406,7 +406,7 @@ DECLARE_NATIVE(anti)
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
 //      return: [any-atom?]
-//      value "Can be plain or antiform like ~null~ or ~void~ if /LITE"
+//      value "Can be plain or antiform like ~null~ or ~void~ if :LITE"
 //          [keyword? element? quoted? quasi?]
 //      /lite "Pass thru ~null~ and ~void~ antiforms as-is"
 //  ]
@@ -419,19 +419,19 @@ DECLARE_NATIVE(unmeta)
 
     if (QUOTE_BYTE(meta) == ANTIFORM_0) {
         if (not REF(lite) or not Is_Keyword(meta))
-            fail ("UNMETA only keyword antiforms (e.g. ~null~) if /LITE");
+            fail ("UNMETA only keyword antiforms (e.g. ~null~) if :LITE");
         return COPY(meta);
     }
 
     if (QUOTE_BYTE(meta) == NOQUOTE_1) {
         if (not REF(lite))
-            fail ("UNMETA only takes non-quoted non-quasi things if /LITE");
+            fail ("UNMETA only takes non-quoted non-quasi things if :LITE");
         Copy_Cell(OUT, meta);
         return Coerce_To_Antiform(OUT);
     }
 
     if (QUOTE_BYTE(meta) == QUASIFORM_2 and REF(lite))
-        fail ("UNMETA/LITE does not accept quasiforms (plain forms are meta)");
+        fail ("UNMETA:LITE does not accept quasiforms (plain forms are meta)");
 
     return UNMETA(cast(Element*, meta));  // quoted or quasi
 }
@@ -546,7 +546,7 @@ DECLARE_NATIVE(lazy)
 }
 
 
-// 1. In REDUCE, /PREDICATE functions are offered things like nihil and void
+// 1. In REDUCE, :PREDICATE functions are offered things like nihil and void
 //    if they can accept them (which META can).  But COMMA! antiforms that
 //    result from evaluating commas are -not- offered to any predicates.  This
 //    is by design, so we get:
@@ -575,7 +575,7 @@ INLINE bool Pack_Native_Core_Throws(
 
     if (rebRunThrows(
         cast(Value*, out),  // output cell
-        Canon(QUASI), "reduce/predicate",  // commas excluded by /PREDICATE [1]
+        Canon(QUASI), "reduce:predicate",  // commas excluded by :PREDICATE [1]
             rebQ(block), rebQ(predicate)
     )){
         return true;

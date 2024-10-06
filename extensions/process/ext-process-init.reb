@@ -11,7 +11,7 @@ REBOL [
 ; FILE! into local paths are done here.
 ;
 call*: adapt call-internal*/ [
-    command: switch/type command [
+    command: switch:type command [
         text! [
             ; A TEXT! is passed through as-is, and will be interpreted by
             ; the shell (e.g. `sh -c your text` or `cmd.exe /C your text`)
@@ -38,7 +38,7 @@ call*: adapt call-internal*/ [
             ; the CALL block that looks a bit more like a shell invocation.
             ;
             map-each 'arg compose command [
-                switch/type arg [
+                switch:type arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
                     url! [as text! arg]
@@ -66,10 +66,10 @@ call*: adapt call-internal*/ [
 ; /WAIT by default.
 ;
 ; BUT... also, this wrapper raises a (definitional!) error by default on
-; non-zero exit codes.  Use the /RELAX option to get it to return an integer.
+; non-zero exit codes.  Use the :RELAX option to get it to return an integer.
 ; Nice default!
 ;
-; 1. Since CALL without /RELAX will raise a definitional error on non-zero
+; 1. Since CALL without :RELAX will raise a definitional error on non-zero
 ;    exit codes, you don't have to worry about checking the result...but also
 ;    you won't get any information by checking the result.  Comparisons with
 ;    nothing are disallowed to help draw attention to misunderstandings of
@@ -77,7 +77,7 @@ call*: adapt call-internal*/ [
 ;
 ;      https://forum.rebol.info/t/2068/2
 ;
-;    It also means things like (call/shell "dir") won't put `== 0` after the
+;    It also means things like (call:shell "dir") won't put `== 0` after the
 ;    result when shown in the terminal.
 ;
 call: enclose (
@@ -91,7 +91,7 @@ call: enclose (
         return result
     ]
     if result = 0 [
-        return ~  ;  avoid `if 1 = call/shell "dir" [...]`, see [1]
+        return ~  ;  avoid `if 1 = call:shell "dir" [...]`, see [1]
     ]
     return raise make error! compose [
         message: ["Process returned non-zero exit code:" exit-code]
@@ -124,7 +124,7 @@ parse-command-to-argv*: func [
     ] except [
         fail [
             "Could not parse command line into argv[] block." LF
-            "Use CALL/SHELL to defer the shell to parse, or if you believe"
+            "Use CALL:SHELL to defer the shell to parse, or if you believe"
             "the command line is valid then help fix PARSE-COMMAND-TO-ARGV*"
         ]
     ]
@@ -176,7 +176,7 @@ browse*: func [
     ;
     for-each 'template get-os-browsers [
         let command: replace (copy template) "%1" location
-        call/shell command except [  ; CALL is synchronous by default
+        call:shell command except [  ; CALL is synchronous by default
             continue  ; just keep trying
         ]
         return ~

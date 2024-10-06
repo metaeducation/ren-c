@@ -236,7 +236,7 @@ STD_TERM *Init_Terminal(void)
     // you have SetConsoleMode() with ENABLE_LINE_INPUT (the default mode).
     //
     // While truly "raw" input might seem nice, on Windows there are behaviors
-    // like Cut/Copy/Paste/Find which are tied to keystrokes.  To get that
+    // like [Cut Copy Paste Find] which are tied to keystrokes.  To get that
     // we have to use ENABLED_PROCESSED_INPUT, which prevents overriding
     // things like Ctrl-A to mean "jump to beginning of line".  We might
     // set it up so depending on the console mode these keys aren't used.
@@ -248,7 +248,7 @@ STD_TERM *Init_Terminal(void)
         Stdin_Handle,
             ENABLE_PROCESSED_INPUT  // makes Copy, Paste, Find, etc. work
             | ENABLE_EXTENDED_FLAGS  // needed for QUICK_EDIT
-            | ENABLE_QUICK_EDIT_MODE  // user can copy/paste
+            | ENABLE_QUICK_EDIT_MODE  // user can copy or paste
     )){
         return nullptr;
     }
@@ -834,7 +834,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
                 e_buffered = rebText("");
 
             rebElide(
-                "append/dup", e_buffered, rebR(rebChar(codepoint)),
+                "append:dup", e_buffered, rebR(rebChar(codepoint)),
                     rebI(key_event->wRepeatCount)
             );
 

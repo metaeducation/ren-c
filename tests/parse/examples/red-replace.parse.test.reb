@@ -18,7 +18,7 @@
         rule: if action? :f.replacement '[
             head: <here>
             change [f.pattern, tail: <here>] (
-                apply/relax :f.replacement [const head, const tail]
+                apply:relax f.replacement/ [const head, const tail]
             )
         ] else '[
             change f.pattern (f.replacement)
@@ -34,7 +34,7 @@
 
     ; These are the tests Red had demonstrating the feature
 
-    ("!racadabra" = replace/one "abracadabra" ["ra" | "ab"] #"!")
+    ("!racadabra" = replace:one "abracadabra" ["ra" | "ab"] #"!")
     ("!!cad!!" = replace "abracadabra" ["ra" | "ab"] #"!")
     ("!!cad!!" = replace "abracadabra" ["ra" | "ab"] does ["!"])
     (
@@ -43,7 +43,7 @@
             uppercase s.1
         ]
     )
-    ("a-babAA-" = replace/case "aAbbabAAAa" ["Ab" | "Aa"] "-")
+    ("a-babAA-" = replace:case "aAbbabAAAa" ["Ab" | "Aa"] "-")
 
     ; We actually do better than that, by passing in const references to the
     ; functions for the head and tail of the replacement if desired.
@@ -53,7 +53,7 @@
         all [
             ["(real)" "(powerful)" "(magic)"] = collect [
                 replace data [between "(" ")"] func [head tail] [
-                    let item: copy/part head tail
+                    let item: copy:part head tail
                     keep item
                     if item = "(powerful)" [item: copy "(ren-c)"]
                     return uppercase item

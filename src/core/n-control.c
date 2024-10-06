@@ -717,15 +717,15 @@ DECLARE_NATIVE(match)
 //
 // 2. Passing in NULL for *value* creates a problem, because it conflates the
 //    "didn't match" signal with the "did match" signal.  To solve this problem
-//    requires MATCH/META:
+//    requires MATCH:META
 //
-//        >> match/meta [~null~ integer!] 10
+//        >> match:meta [~null~ integer!] 10
 //        == '10
 //
-//        >> match/meta [~null~ integer!] null
+//        >> match:meta [~null~ integer!] null
 //        == ~null~
 //
-//        >> match/meta [~null~ integer!] <some-tag>
+//        >> match:meta [~null~ integer!] <some-tag>
 //        == ~null~  ; anti
 {
     INCLUDE_PARAMS_OF_MATCH;
@@ -765,7 +765,7 @@ DECLARE_NATIVE(match)
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
     if (Is_Void(v) and not REF(meta))  // not a good case of void-in-null-out
-        fail ("~void~ antiform requires MATCH/META if in set being tested");
+        fail ("~void~ antiform requires MATCH:META if in set being tested");
 
     Copy_Cell(OUT, v);
 
@@ -813,7 +813,7 @@ DECLARE_NATIVE(all)
 //
 // 3. The only way a falsey evaluation should make it to the end is if a
 //    predicate let it pass.  Don't want that to trip up `if all` so make it
-//    heavy...but this way `(all/predicate [null] :not?) then [<runs>]`
+//    heavy...but this way `(all:predicate [null] :not?) then [<runs>]`
 {
     INCLUDE_PARAMS_OF_ALL;
 
@@ -1101,12 +1101,12 @@ DECLARE_NATIVE(case)
 //        == 30
 //
 //    It's a little bit like a quick-and-dirty ELSE (or /DEFAULT), however
-//    when you use CASE/ALL it's what is returned even if there's a match:
+//    when you use CASE:ALL it's what is returned even if there's a match:
 //
-//        >> case/all [1 < 2 [<a>] 3 < 4 [<b>]]
+//        >> case:all [1 < 2 [<a>] 3 < 4 [<b>]]
 //        == <b>
 //
-//        >> case/all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
+//        >> case:all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
 //        == 30  ; so not the same as an ELSE, it's just "fallout"
 //
 //    This counts as a "branch taken", so void and null are boxed into an
@@ -1395,7 +1395,7 @@ DECLARE_NATIVE(switch)
         Decay_If_Unstable(SPARE);
 
         if (not Any_Type_Value(SPARE))
-            fail ("SWITCH/TYPE requires comparisons to TYPE-XXX!");
+            fail ("switch:type requires comparisons to TYPE-XXX!");
 
         if (not Typecheck_Atom(stable_SPARE, left))
             goto next_switch_step;
@@ -1521,7 +1521,7 @@ DECLARE_NATIVE(default)
 
     Option(Error*) error = Trap_Get_Var_Maybe_Vacant(
         OUT,
-        steps,  // use steps to avoid double-evaluation on GET/SET pair [1]
+        steps,  // use steps to avoid double-evaluation on GET + SET pair [1]
         target,
         SPECIFIED
     );

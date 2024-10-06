@@ -138,7 +138,7 @@ EXTERN_C int __wrap_fcntl64(int fd, int cmd, ...)
       case F_ADD_SEALS: goto takes_int;
       case F_GET_SEALS: goto takes_void;
 
-      // File read/write hints (Linux 4.13+)
+      // File read or write hints (Linux 4.13+)
       //
       case F_GET_RW_HINT: goto takes_uint64_t_ptr;
       case F_SET_RW_HINT: goto takes_uint64_t_ptr;

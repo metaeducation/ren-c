@@ -727,7 +727,7 @@ DECLARE_NATIVE(enline)
     //
     // !!! The Utf8(*) interface isn't technically necessary if one is
     // counting to the end (one could just go by bytes instead of characters)
-    // but this would not work if someone added, say, an ENLINE/PART...since
+    // but this would not work if someone added, say, an ENLINE:PART...since
     // the byte ending position of interest might not be end of the string.
 
     Utf8(*) cp = String_At(s, idx);
