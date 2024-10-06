@@ -843,7 +843,8 @@ Bounce Stepper_Executor(Level* L)
             fail ("No current eval behavior for things like :1 or <tag>:");
         }
 
-        fail ("CHAIN! will dispatch functions soon enough!"); }
+        HEART_BYTE(CURRENT) = REB_PATH;
+        goto path_common; }
 
 
     //=//// GET-WORD! /////////////////////////////////////////////////////=//
@@ -1029,8 +1030,17 @@ Bounce Stepper_Executor(Level* L)
         }
 
         assert(Is_Action(OUT));
-        if (slash_at_tail)
-            goto lookahead;  // do not run action, just return it [5]
+        if (slash_at_tail) {  // do not run action, just return it [5]
+            if (BASELINE->stack_base != TOP_INDEX) {
+                if (Specialize_Action_Throws(
+                    SPARE, stable_OUT, nullptr, BASELINE->stack_base
+                )){
+                    goto return_thrown;
+                }
+                Move_Cell(OUT, SPARE);
+            }
+            goto lookahead;
+        }
 
         if (Is_Enfixed(OUT)) {  // too late, left already evaluated [6]
             Drop_Data_Stack_To(BASELINE->stack_base);
@@ -1622,6 +1632,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_VAR_WORD:
       case REB_VAR_PATH:
       case REB_VAR_TUPLE:
+      case REB_VAR_CHAIN:
       case REB_VAR_GROUP:
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
         HEART_BYTE(OUT) = Plainify_Any_Var_Kind(STATE);

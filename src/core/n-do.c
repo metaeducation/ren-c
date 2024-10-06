@@ -896,7 +896,7 @@ DECLARE_NATIVE(apply)
 //  "Infix version of APPLY with name of thing to apply literally on left"
 //
 //      return: [any-atom?]
-//      ':operation [<unrun> word! tuple! path! frame! action?]
+//      ':operation [<unrun> word! tuple! chain! path! frame! action?]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
 //      /relax "Don't worry about too many arguments to the APPLY"

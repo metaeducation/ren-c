@@ -1225,7 +1225,10 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         return nullptr;
     }
 
-    if (Any_Path(var)) {  // META-PATH! is not META'd, all act the same
+    if (
+        Any_Chain(var)
+        or Any_Path(var)  // META-PATH! is not META'd, all act the same
+    ){
         StackIndex base = TOP_INDEX;
 
         DECLARE_ATOM (safe);
@@ -1428,6 +1431,19 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         if (error)
             fail (unwrap error);  // must be abrupt
     }
+    else if (Is_Chain(head)) {
+        if ((head + 1 != tail) and not Is_Blank(head + 1))
+            fail ("CHAIN! can only be last item in a path right now");
+        Option(Error*) error = Trap_Get_Path_Push_Refinements(
+            out,
+            safe,
+            c_cast(Element*, head),
+            Derive_Binding(Derive_Binding(context, path), head)
+        );
+        if (error)
+            return error;
+        return nullptr;
+    }
     else
         fail (head);  // what else could it have been?
 
@@ -1437,6 +1453,21 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
     // LIB and make sure it is an action.
     //
     if (Any_Context(out)) {
+
+        if (Is_Chain(head)) {  // lib/append:dup
+            if (head + 1 != tail and not Is_Blank(head + 1))
+                fail ("CHAIN! can only be last item in a path right now");
+            Option(Error*) error = Trap_Get_Path_Push_Refinements(
+                out,
+                safe,
+                c_cast(Element*, head),
+                Cell_Varlist(out)  // need to find head of chain in object
+            );
+            if (error)
+                return error;
+            return nullptr;
+        }
+
         Quotify(out, 1);  // may be FRAME!, would run if seen literally in EVAL
 
         DECLARE_ATOM (temp);
@@ -1498,8 +1529,9 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             assert(!"Illegal internal blank found in path");
             fail (path);  // should be illegal to make e.g. append//dup
         }
-        else if (Is_Word(item))
+        else if (Is_Word(item)) {
             Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(item));
+        }
         else if (Is_Path(item) and Is_Refinement(item)) {
             // Not strictly necessary, but kind of neat to allow
             Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(item));
@@ -1564,8 +1596,7 @@ DECLARE_NATIVE(resolve)
 //
 //      return: [any-value?]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<maybe> any-word? any-sequence? any-group?
-//          any-get-value? any-set-value? the-block!]
+//          [<maybe> any-word? any-sequence? any-group? any-chain? the-block!]
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -1575,8 +1606,14 @@ DECLARE_NATIVE(get)
     INCLUDE_PARAMS_OF_GET;
 
     Element* source = cast(Element*, ARG(source));
-    if (Any_Chain(source))  // GET-WORD, SET-WORD, SET-GROUP, etc.
-        Unchain(source);
+    if (Any_Chain(source)) {  // GET-WORD, SET-WORD, SET-GROUP, etc.
+        bool leading_blank;
+        Option(Heart) heart = Try_Get_Sequence_Singleheart(
+            &leading_blank, source
+        );
+        if (heart)
+            Unchain(source);  // want to GET or SET normally
+    }
 
     Value* steps;
     if (REF(groups))

@@ -21,11 +21,12 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A "Sequence" is a constrained "arraylike" type with elements separated by
-// interstitial delimiters.  The two basic forms are PATH! (separated by `/`)
-// and TUPLE! (separated by `.`)
+// interstitial delimiters.  Three basic forms are TUPLE! (separated by `.`),
+// CHAIN! (separated by ':'), and PATH! (separated by `/`)
 //
-//     append/dup        ; a 2-element PATH!
 //     192.168.0.1       ; a 4-element TUPLE!
+//     append:dup:part   ; a 3-element CHAIN!
+//     lib/insert        ; a 2-element PATH!
 //
 // Because they are defined by separators *between* elements, sequences of
 // zero or one item are not legal.  (This is one reason why they are immutable:
