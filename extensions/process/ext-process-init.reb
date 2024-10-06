@@ -128,7 +128,7 @@ parse-command-to-argv*: func [
             "the command line is valid then help fix PARSE-COMMAND-TO-ARGV*"
         ]
     ]
-    for-each 'item result [replace/all item {\"} {"}]
+    for-each 'item result [replace item {\"} {"}]
     return result
 ]
 
@@ -145,7 +145,7 @@ argv-block-to-command*: func [
             find arg {"}
         ] then [  ; have to put it in quotes, but also escape any quotes
             arg: copy arg
-            replace/all arg {"} {\"}
+            replace arg {"} {\"}
             insert arg {"}
             append arg {"}
         ]
@@ -175,7 +175,7 @@ browse*: func [
     ; easy to do rather than have to add processing on the C side.  Review.
     ;
     for-each 'template get-os-browsers [
-        let command: replace/all (copy template) "%1" location
+        let command: replace (copy template) "%1" location
         call/shell command except [  ; CALL is synchronous by default
             continue  ; just keep trying
         ]

@@ -154,7 +154,7 @@ shell: func [
 
             word! issue! [item]  ; never quoted or escaped
 
-            text! [replace/all copy item {"} {\"}]  ; sometimes spliced
+            text! [replace copy item {"} {\"}]  ; sometimes spliced
 
             file! [item]
 

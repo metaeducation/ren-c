@@ -79,8 +79,8 @@ export extract-native-protos: func [
                 "[" thru "//  ]"
             ]
             (
-                replace/all proto unspaced [newline "//"] newline
-                replace/all proto "//  " {}
+                replace proto unspaced [newline "//"] newline
+                replace proto "//  " {}
 
                 keep make native-info! compose [
                     proto: (proto)
@@ -125,7 +125,7 @@ export emit-include-params-macro: func [
     ]
     let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
-    replace/all spec "^^" {}
+    replace spec "^^" {}
 
     ; We used stripload to get the function specs, so it has @output form
     ; parameters.  The bootstrap executable thinks that's an illegal email.
@@ -133,9 +133,9 @@ export emit-include-params-macro: func [
     ;
     let output-param?: :issue?
     let output-param!: issue!
-    replace/all spec "'@" {#}
-    replace/all spec "@" {#}
-    replace/all spec "':" ":"  ; escapable literal
+    replace spec "'@" {#}
+    replace spec "@" {#}
+    replace spec "':" ":"  ; escapable literal
 
     spec: load-value spec
 

@@ -150,7 +150,7 @@ for-each [name value] options [
             ]
         ]
     ] else [
-        name: to-word replace:all to text! name #"_" #"-"
+        name: to-word replace to text! name #"_" #"-"
         set (has user-config name) load-value value  ; !!! else [value] ???
     ]
 ]
@@ -960,7 +960,7 @@ indent: func [
     text [text!]
     :space
 ][
-    return apply get $replace/all [
+    return apply replace/ [
         text
         either space [" "] [newline]
         "^/    "
@@ -1373,7 +1373,7 @@ print ["optimization:" app-config.optimization]
 append app-config.definitions spread reduce [
     unspaced ["TO_" uppercase to-text platform-config.os-base "=1"]
     unspaced [
-        "TO_" (uppercase replace/all to-text platform-config.os-name "-" "_") "=1"
+        "TO_" (uppercase replace to-text platform-config.os-name "-" "_") "=1"
     ]
 ]
 

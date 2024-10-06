@@ -25,7 +25,7 @@
         ]
         parse // [/case f.case, f.target [
             while [thru rule] (
-                if not f.all [return f.target]
+                if f.one [return f.target]
             )
             to <end>
         ]]
@@ -34,16 +34,16 @@
 
     ; These are the tests Red had demonstrating the feature
 
-    ("!racadabra" = replace "abracadabra" ["ra" | "ab"] #"!")
-    ("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] #"!")
-    ("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] does ["!"])
+    ("!racadabra" = replace/one "abracadabra" ["ra" | "ab"] #"!")
+    ("!!cad!!" = replace "abracadabra" ["ra" | "ab"] #"!")
+    ("!!cad!!" = replace "abracadabra" ["ra" | "ab"] does ["!"])
     (
         s: ~
-        "AbrACAdAbrA" == replace/all "abracadabra" [s: ["a" | "c"]] does [
+        "AbrACAdAbrA" == replace "abracadabra" [s: ["a" | "c"]] does [
             uppercase s.1
         ]
     )
-    ("a-babAA-" = replace/case/all "aAbbabAAAa" ["Ab" | "Aa"] "-")
+    ("a-babAA-" = replace/case "aAbbabAAAa" ["Ab" | "Aa"] "-")
 
     ; We actually do better than that, by passing in const references to the
     ; functions for the head and tail of the replacement if desired.
@@ -52,7 +52,7 @@
         data: "(real)1020(powerful)0304(magic)"
         all [
             ["(real)" "(powerful)" "(magic)"] = collect [
-                replace/all data [between "(" ")"] func [head tail] [
+                replace data [between "(" ")"] func [head tail] [
                     let item: copy/part head tail
                     keep item
                     if item = "(powerful)" [item: copy "(ren-c)"]

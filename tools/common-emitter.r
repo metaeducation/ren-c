@@ -224,7 +224,7 @@ export cscape: func [
             ; breaks continue at the same column.
             ;
             let indent: unspaced [newline maybe :prefix]
-            replace/all sub newline indent
+            replace sub newline indent
 
             keep sub
         ]
@@ -282,7 +282,7 @@ export cscape: func [
         remove/part start end
     ]
 
-    replace/all string void-marker ""
+    replace string void-marker ""
 
     return string
 ]
@@ -371,7 +371,7 @@ export make-emitter: func [
             ]
 
             if tabbed [
-                replace/all buf-emit spaced-tab tab
+                replace buf-emit spaced-tab tab
             ]
 
             print ["WRITING =>" file]

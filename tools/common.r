@@ -136,7 +136,7 @@ export to-c-name: func [
         #"^^"  "_c" ; !!! Bug in shim loading requres a paired ^^ !!!
         #"@" "_z"   ; a was taken, doesn't make less sense than * => p
     ][
-        replace/all string (form reb) c
+        replace string (form reb) c
     ]
 
     if empty? string [

@@ -104,16 +104,14 @@ replace: func [
     replacement "Value to replace with (called each time if action)"
         [~void~ element? splice? action?]
 
-    ; !!! Note these refinements alias ALL, CASE natives!
-    /all "Replace all occurrences"
+    ; !!! Note this aliases CASE native!
+    /one "Replace all occurrences"
     /case "Case-sensitive replacement"
 
     <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
     if void? :pattern [return target]
 
-    let all_REPLACE: all
-    all: lib/all/
     let case_REPLACE: case
     case: lib/case/
 
@@ -140,7 +138,7 @@ replace: func [
 
         pos: change/part pos (unmeta value') tail
 
-        if not all_REPLACE [break]
+        if one [break]
     ]
 
     return target

@@ -10,7 +10,7 @@
     ][
         placeholder: default [_]
         block: copy block
-        replace/all block placeholder $flow-result
+        replace block placeholder $flow-result
         while [not tail? block] [
             insert block $ 'flow-result:
             [block flow-result]: evaluate/step block

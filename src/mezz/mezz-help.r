@@ -352,7 +352,7 @@ help: func [
             ">" "-gt"
             "|" "-bar"
         ][
-            replace/all item a b
+            replace item a b
         ]
 
         browse to url! compose [

@@ -28,7 +28,7 @@ request-file: adapt request-file*/ [
 request-dir: cascade [
     adapt request-dir*/ [
         if path [
-            dir: lib/replace/all file-to-local dir "/" "//"
+            dir: lib/replace file-to-local dir "/" "//"
         ]
     ]
     func [result] [

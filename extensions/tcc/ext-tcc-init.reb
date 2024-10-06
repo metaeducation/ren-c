@@ -497,7 +497,7 @@ c99: func [
                 ; after the shell processed it, so those quotes would be
                 ; unescaped here.  Add the escaping back in for TCC.
                 ;
-                replace/all option {"} {\"}
+                replace option {"} {\"}
 
                 keep spread compose [options (option)]
             )

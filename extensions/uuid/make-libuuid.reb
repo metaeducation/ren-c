@@ -166,7 +166,7 @@ for-each [file fix] files [
 
     if not blank? fix [data: run fix data]  ; correct compiler warnings
 
-    replace/all data tab {    }  ; spaces not tabs
+    replace data tab {    }  ; spaces not tabs
 
     write target data
 ]

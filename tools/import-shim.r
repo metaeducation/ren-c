@@ -197,14 +197,14 @@ do: enclose :lib3/do lib3/func [
 
         ; Wrap the whole thing in an object if needed
         ;
-        replace f.source unspaced [newline "]"] unspaced compose [
+        lib3/replace/one f.source unspaced [newline "]"] unspaced compose [
             newline
             "]" newline
             (if yes? wrap-module ["make object! ["]) newline
         ]
         if yes? wrap-module [
-            append f.source newline
-            append f.source "]  ; end wrapping MAKE OBJECT!"
+            lib3/append f.source newline
+            lib3/append f.source ("]  ; end wrapping MAKE OBJECT!")
         ]
         wrap-module: 'no  ; only wrap one level of DO
     ]
@@ -262,7 +262,7 @@ import: enfix lib3/func [
     change-dir full-script-dir  ; modules expect to run in their directory
 
     ret: #quit
-    catch/quit [
+    lib3/catch/quit [
         ret: if :set-word [
             wrap-module: 'yes
             set set-word do script-filename
