@@ -317,9 +317,9 @@
 ; symmetry
 (equal? strict-equal? 'a first ['a] strict-equal? first ['a] 'a)
 ; different word types
-(not strict-equal? 'a /a)
+(not strict-equal? 'a '/a)
 ; symmetry
-(equal? strict-equal? 'a /a strict-equal? /a 'a)
+(equal? strict-equal? 'a '/a strict-equal? '/a 'a)
 ; different word types
 (not strict-equal? 'a first [a:])
 ; symmetry
@@ -331,9 +331,9 @@
 ; symmetry
 (equal? strict-equal? first [:a] first ['a] strict-equal? first ['a] first [:a])
 ; different word types
-(not strict-equal? first [:a] /a)
+(not strict-equal? first [:a] '/a)
 ; symmetry
-(equal? strict-equal? first [:a] /a strict-equal? /a first [:a])
+(equal? strict-equal? first [:a] '/a strict-equal? '/a first [:a])
 ; different word types
 (not strict-equal? first [:a] first [a:])
 ; symmetry
@@ -341,19 +341,19 @@
 ; reflexivity
 (strict-equal? first ['a] first ['a])
 ; different word types
-(not strict-equal? first ['a] /a)
+(not strict-equal? first ['a] '/a)
 ; symmetry
-(equal? strict-equal? first ['a] /a strict-equal? /a first ['a])
+(equal? strict-equal? first ['a] '/a strict-equal? '/a first ['a])
 ; different word types
 (not strict-equal? first ['a] first [a:])
 ; symmetry
 (equal? strict-equal? first ['a] first [a:] strict-equal? first [a:] first ['a])
 ; reflexivity
-(strict-equal? /a /a)
+(strict-equal? '/a '/a)
 ; different word types
-(not strict-equal? /a first [a:])
+(not strict-equal? '/a first [a:])
 ; symmetry
-(equal? strict-equal? /a first [a:] strict-equal? first [a:] /a)
+(equal? strict-equal? '/a first [a:] strict-equal? first [a:] '/a)
 ; reflexivity
 (strict-equal? first [a:] first [a:])
 ; logic? values

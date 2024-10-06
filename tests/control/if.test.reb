@@ -71,7 +71,7 @@
 (if first [()] [okay])
 (if 'a/b [okay])
 (if make port! http:// [okay])
-(if /a [okay])
+(if '/a [okay])
 (if first [a.b:] [okay])
 (if first [a:] [okay])
 (if "" [okay])

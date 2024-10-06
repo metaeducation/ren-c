@@ -106,7 +106,7 @@
     a-value: make port! http://
     port? any [:a-value]
 )
-(/a == any [/a])
+('/a == any ['/a])
 ; routine test?
 (
     a-value: first [a.b:]
@@ -205,7 +205,7 @@
     a-value: make port! http://
     port? any [null :a-value]
 )
-(/a == any [null /a])
+('/a == any [null '/a])
 (
     a-value: first [a.b:]
     :a-value == any [null :a-value]
@@ -301,7 +301,7 @@
     a-value: make port! http://
     port? any [:a-value null]
 )
-(/a == any [/a null])
+('/a == any ['/a null])
 (
     a-value: first [a.b:]
     :a-value == any [:a-value null]

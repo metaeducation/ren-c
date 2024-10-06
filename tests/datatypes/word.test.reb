@@ -116,7 +116,7 @@
     port? a-value
 )
 (
-    a-value: /a
+    a-value: '/a
     :a-value == a-value
 )
 ; routine test?

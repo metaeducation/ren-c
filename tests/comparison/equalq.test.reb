@@ -402,11 +402,11 @@
 (equal? the 'a first ['a])
 ; word! vs. lit-word? symmetry
 (equal? equal? 'a first ['a] equal? first ['a] 'a)
-; word! vs. refinement? (changed in Ren-C)
-(not equal? 'a /a)
-(equal? 'a second /a)
-; word! vs. refinement? symmetry
-(equal? equal? 'a /a equal? /a 'a)
+; word! vs. path (changed in Ren-C)
+(not equal? 'a '/a)
+(equal? 'a second '/a)
+; word! vs. path symmetry
+(equal? equal? 'a '/a equal? '/a 'a)
 ; word! vs. set-word!
 (not equal? 'a first [a:])
 ; word! vs. set-word! symmetry
@@ -417,30 +417,30 @@
 (not equal? first [:a] first ['a])
 ; get-word! vs. lit-word? symmetry
 (equal? equal? first [:a] first ['a] equal? first ['a] first [:a])
-; get-word! vs. refinement?
-(not equal? first [:a] /a)
-; get-word! vs. refinement? symmetry
-(equal? equal? first [:a] /a equal? /a first [:a])
+; get-word! vs. path?
+(not equal? first [:a] '/a)
+; get-word! vs. path? symmetry
+(equal? equal? first [:a] '/a equal? '/a first [:a])
 ; get-word! vs. set-word!
 (not equal? first [:a] first [a:])
 ; get-word! vs. set-word! symmetry
 (equal? equal? first [:a] first [a:] equal? first [a:] first [:a])
 ; lit-word? reflexivity
 (equal? first ['a] first ['a])
-; lit-word? vs. refinement?
-(not equal? first ['a] /a)
-; lit-word? vs. refinement? symmetry
-(equal? equal? first ['a] /a equal? /a first ['a])
+; lit-word? vs. path?
+(not equal? first ['a] '/a)
+; lit-word? vs. path? symmetry
+(equal? equal? first ['a] '/a equal? '/a first ['a])
 ; lit-word? vs. set-word!
 (not equal? first ['a] first [a:])
 ; lit-word? vs. set-word! symmetry
 (equal? equal? first ['a] first [a:] equal? first [a:] first ['a])
-; refinement? reflexivity
-(equal? /a /a)
-; refinement? vs. set-word!
-(not equal? /a first [a:])
+; path? reflexivity
+(equal? '/a '/a)
+; path? vs. set-word!
+(not equal? '/a first [a:])
 ; refinement? vs. set-word! symmetry
-(equal? equal? /a first [a:] equal? first [a:] /a)
+(equal? equal? '/a first [a:] equal? first [a:] '/a)
 ; set-word! reflexivity
 (equal? first [a:] first [a:])
 (equal? okay okay)

@@ -983,12 +983,14 @@ Bounce Stepper_Executor(Level* L)
 
     //=//// PATH! //////////////////////////////////////////////////////////=//
     //
-    // Ren-C has moved to member-access model of "dots instead of slashes".
-    // So by default, PATH! should only be used for picking refinements on
-    // functions.  TUPLE! should be used for picking members out of structures.
-    // This has benefits because function dispatch is more complex than the
-    // usual PICK process, and being able to say that "slashing" is not
-    // methodized the way "dotting" is gives some hope of optimizing it.
+    // Ren-C moved to member access with "dots instead of slashes" (TUPLE!)
+    // and refinements are done with "colons instead of slashes" (CHAIN!).
+    // So PATH!s role has come to be specificially dealing with functions:
+    //
+    // * abc/     - means ABC is a function, return it as-is
+    // * /abc     - means ensure ABC is a function and run it
+    // * abc/def  - means ABC is a context, DEF is a function, run it
+    // * abc/def/ - means ABC and DEF are functions, compose them
     //
     // 1. It's likely that paths like 1/2 or otherwise inert-headed will be
     //    inert and evaluate to themselves.
@@ -1023,27 +1025,45 @@ Bounce Stepper_Executor(Level* L)
       path_common:
       case REB_PATH: {
         bool slash_at_head;
-        Copy_Sequence_At(SPARE, L_current, 0);
-        if (Any_Inert(SPARE)) {
-            if (Is_Blank(SPARE))
-                slash_at_head = true;  // leading slash means run action
-            else {
-                Derelativize(OUT, L_current, L_binding);  // inert [2]
-                goto lookahead;
+        bool slash_at_tail;
+        Heart heart = maybe Try_Get_Sequence_Singleheart(
+            &slash_at_head, L_current
+        );
+        switch (heart) {
+          case REB_0: {
+            Copy_Sequence_At(SPARE, L_current, 0);
+            if (Any_Inert(SPARE)) {
+                if (Is_Blank(SPARE))
+                    slash_at_head = true;
+                else {
+                    Derelativize(OUT, L_current, L_binding);  // inert [2]
+                    goto lookahead;
+                }
             }
-        }
-        else
-            slash_at_head = false;
+            else
+                slash_at_head = false;
 
-        if (slash_at_head) {  // refinement behavior (for now)
-            /* Derelativize(OUT, L_current, L_binding); */  // inert [2]
-            Copy_Cell(OUT, L_current);  // try unbound (for now)
-            goto lookahead;
-        }
+            Length len = Cell_Sequence_Len(L_current);
+            Copy_Sequence_At(SPARE, L_current, len - 1);
+            slash_at_tail = Is_Blank(SPARE);
+            break; }
 
-        Length len = Cell_Sequence_Len(L_current);
-        Copy_Sequence_At(SPARE, L_current, len - 1);
-        bool slash_at_tail = Is_Blank(SPARE);
+          case REB_WORD: {
+            if (slash_at_head)
+                fail ("Killing off refinement evaluations!");
+            slash_at_tail = true;
+            break; }
+
+          case REB_CHAIN:  // /abc: or abc:/
+            if (slash_at_head)
+                fail ("Coming soon: chains in paths");
+            slash_at_tail = true;
+            break;
+
+          default:
+            slash_at_tail = not slash_at_head;
+            break;
+        }
 
         Option(Error*) error = Trap_Get_Path_Push_Refinements(
             OUT,  // where to write action

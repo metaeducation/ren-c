@@ -176,13 +176,11 @@
     ]
 )
 
-; PATH! beginning with an inert item will itself be inert
-;
 [
-    ~bad-sequence-item~ !! (to path! [/ref inement path])
-    ~bad-sequence-item~ !! (to path! [/refinement 2])
-    ((/refinement).2 = 'refinement)
-    (r: /refinement, r.2 = 'refinement)
+    ~bad-sequence-item~ !! (to path! [/run inement path])
+    ~bad-sequence-item~ !! (to path! [/run 2])
+    (('/run).2 = 'run)
+    (r: '/run, r.2 = 'run)
 ][
     ("te"/xt/path = to path! ["te" xt path])
     ("text"/3 = to path! ["text" 3])

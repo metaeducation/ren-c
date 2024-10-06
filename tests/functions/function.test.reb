@@ -149,8 +149,8 @@
     port? f
 )
 (
-    f: does [/a]
-    /a == f
+    f: does ['/a]
+    '/a == f
 )
 (
     a-value: first [a.b:]

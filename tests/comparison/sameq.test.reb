@@ -336,9 +336,9 @@
 ; symmetry
 (equal? same? 'a first ['a] same? first ['a] 'a)
 ; different word types
-(not same? 'a /a)
+(not same? 'a '/a)
 ; symmetry
-(equal? same? 'a /a same? /a 'a)
+(equal? same? 'a '/a same? '/a 'a)
 ; different word types
 (not same? 'a first [a:])
 ; symmetry
@@ -350,9 +350,9 @@
 ; symmetry
 (equal? same? first [:a] first ['a] same? first ['a] first [:a])
 ; different word types
-(not same? first [:a] /a)
+(not same? first [:a] '/a)
 ; symmetry
-(equal? same? first [:a] /a same? /a first [:a])
+(equal? same? first [:a] '/a same? '/a first [:a])
 ; different word types
 (not same? first [:a] first [a:])
 ; symmetry
@@ -360,19 +360,19 @@
 ; reflexivity
 (same? first ['a] first ['a])
 ; different word types
-(not same? first ['a] /a)
+(not same? first ['a] '/a)
 ; symmetry
-(equal? same? first ['a] /a same? /a first ['a])
+(equal? same? first ['a] '/a same? '/a first ['a])
 ; different word types
 (not same? first ['a] first [a:])
 ; symmetry
 (equal? same? first ['a] first [a:] same? first [a:] first ['a])
 ; reflexivity
-(same? /a /a)
+(same? '/a '/a)
 ; different word types
-(not same? /a first [a:])
+(not same? '/a first [a:])
 ; symmetry
-(equal? same? /a first [a:] same? first [a:] /a)
+(equal? same? '/a first [a:] same? first [a:] '/a)
 ; reflexivity
 (same? first [a:] first [a:])
 ; logic? values

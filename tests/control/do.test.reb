@@ -159,7 +159,7 @@
     a-value: make port! http://
     port? eval reduce [:a-value]
 )
-(/a == eval [/a])
+('/a == eval ['/a])
 (
     a-value: first [a.b:]
     :a-value == eval [:a-value]

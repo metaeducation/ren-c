@@ -27,7 +27,7 @@
 (null = not first [()])
 (null = not first [a/b])
 (null = not make port! http://)
-(null = not /refinement)
+(null = not '/refinement)
 (null = not first [a.b:])
 (null = not first [a:])
 (null = not "")

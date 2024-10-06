@@ -115,7 +115,7 @@
     a-value: make port! http://
     port? all [:a-value]
 )
-(/a == all [/a])
+('/a == all ['/a])
 (
     a-value: first [a.b:]
     :a-value == all [:a-value]
@@ -211,7 +211,7 @@
     a-value: make port! http://
     port? all [okay :a-value]
 )
-(/a == all [okay /a])
+('/a == all [okay '/a])
 (
     a-value: first [a.b:]
     :a-value == all [okay :a-value]
@@ -306,7 +306,7 @@
     a-value: make port! http://
     okay = all [:a-value okay]
 )
-(okay = all [/a okay])
+(okay = all ['/a okay])
 (
     a-value: first [a.b:]
     okay = all [:a-value okay]
