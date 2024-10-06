@@ -56,7 +56,7 @@ decode-key-value-text: function [
     ]
 
     emit-meta: func [<local> key] [
-        key: replace/all copy/part position eof #" " #"-"
+        key: replace copy/part position eof #" " #"-"
         remove back tail-of key
         append meta reduce [
             to word! key

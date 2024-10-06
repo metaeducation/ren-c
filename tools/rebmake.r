@@ -439,7 +439,7 @@ gcc: make compiler-class [
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
                     if find [gcc g++ cl] name [
-                        flg: replace/all copy flg {"} {\"}
+                        flg: replace copy flg {"} {\"}
                     ]
 
                     keep ["-D" (filter-flag flg id else [continue])]
@@ -613,7 +613,7 @@ cl: make compiler-class [
                     ; This is a stopgap workaround that ultimately would
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
-                    flg: replace/all copy flg {"} {\"}
+                    flg: replace copy flg {"} {\"}
 
                     keep ["/D" (filter-flag flg id else [continue])]
                 ]

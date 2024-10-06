@@ -29,7 +29,7 @@ browse*: function [
     ; easy to do rather than have to add processing on the C side.  Review.
     ;
     for-each template get-os-browsers [
-        command: replace/all (copy template) "%1" either file? location [
+        command: replace (copy template) "%1" either file? location [
             file-to-local location
         ][
             location

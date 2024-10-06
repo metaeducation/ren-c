@@ -126,7 +126,7 @@ to-c-name: function [
 
                 ]
                 if c = <bad> [continue]
-                replace/all string (form reb) c
+                replace string (form reb) c
             ]
 
             string

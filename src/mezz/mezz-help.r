@@ -260,7 +260,7 @@ help: function [
                 ">" "-gt"
                 "|" "-bar"
             ][
-                replace/all item a b
+                replace item a b
             ]
 
             browse (join https://github.com/gchiu/reboldocs/blob/master/

@@ -71,7 +71,7 @@ for-each [name value] options [
             ]
         ]
         default [
-            set in user-config (to-word replace/all to text! name #"_" #"-")
+            set in user-config (to-word replace to text! name #"_" #"-")
                 load value
         ]
     ]
@@ -881,13 +881,13 @@ append app-config/ldflags switch user-config/static [
 
 ;add system settings
 add-app-def: adapt specialize :append [series: app-config/definitions] [
-    value: replace/all (
+    value: replace (
         flatten/deep reduce bind value system-definitions
     ) blank []
 ]
 add-app-cflags: adapt specialize :append [series: app-config/cflags] [
     value: either block? value [
-        replace/all (
+        replace (
             flatten/deep reduce bind value compiler-flags
         ) blank []
     ][
@@ -936,7 +936,7 @@ print ["optimization:" mold app-config/optimization]
 
 append app-config/definitions reduce [
     unspaced ["TO_" uppercase to-text system-config/os-base]
-    unspaced ["TO_" uppercase replace/all to-text system-config/os-name "-" "_"]
+    unspaced ["TO_" uppercase replace to-text system-config/os-name "-" "_"]
 ]
 
 ;; Add user settings

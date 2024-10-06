@@ -98,7 +98,7 @@ replace: function [
         [~void~ any-value!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
-    /all "Replace all occurrences"
+    /one "Replace one occurrence"
     /case "Case-sensitive replacement"
     /tail "Return target after the last replacement position"
 
@@ -106,8 +106,6 @@ replace: function [
 ][
     if void? :pattern [return target]
 
-    all_REPLACE: all
-    all: :lib/all
     case_REPLACE: case
     case: :lib/case
     tail_REPLACE: tail
@@ -165,7 +163,7 @@ replace: function [
 
         target: change/part pos :value len
 
-        if not all_REPLACE [break]
+        if one [break]
     ]
 
     either tail_REPLACE [target] [save-target]

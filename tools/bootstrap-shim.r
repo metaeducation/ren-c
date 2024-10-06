@@ -344,8 +344,8 @@ modernize-action: function [
                 ;
                 if block? spec/1 [
                     typespec: copy spec/1
-                    replace/all typespec '~null~ <opt>
-                    replace/all typespec '~void~ <opt>
+                    replace typespec '~null~ <opt>
+                    replace typespec '~void~ <opt>
                     if find typespec <maybe> [
                         replace typespec <maybe> 'blank!
                         append blankers compose [
@@ -380,6 +380,8 @@ trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
         ]
     ]
 ]
+
+replace: specialize 'replace [all: /all]
 
 transcode: lib/function [
     return: "full block or remainder if /next3, or 'definitional' error"

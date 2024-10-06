@@ -153,7 +153,7 @@ cscape: function [
             ; breaks continue at the same column.
             ;
             indent: unspaced collect [keep newline  keep prefix]
-            replace/all sub newline indent
+            replace sub newline indent
 
             keep sub
         ]
@@ -284,7 +284,7 @@ make-emitter: function [
             ]
 
             if tabbed [
-                replace/all buf-emit spaced-tab tab
+                replace buf-emit spaced-tab tab
             ]
 
             print [{WRITING =>} file]
