@@ -689,8 +689,10 @@ DECLARE_NATIVE(apply)
         ST_APPLY_UNLABELED_EVAL_STEP
     };
 
-    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Level_Flag(level_, ABRUPT_FAILURE)) {  // fail() in this dispatcher
+        Clear_Level_Flag(level_, ABRUPT_FAILURE);
         goto finalize_apply;
+    }
 
     switch (STATE) {
       case ST_APPLY_INITIAL_ENTRY :
@@ -770,10 +772,10 @@ DECLARE_NATIVE(apply)
     Corrupt_Pointer_If_Debug(param);
   #endif
 
-    if (Is_Path(at) and Is_Refinement(at)) {  // /REFINEMENT names next arg
+    if (Is_Get_Word(at)) {  // :REFINEMENT names next arg
         STATE = ST_APPLY_LABELED_EVAL_STEP;
 
-        const Symbol* symbol = VAL_REFINEMENT_SYMBOL(At_Level(L));
+        const Symbol* symbol = Cell_Word_Symbol(At_Level(L));
 
         Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
         if (not index)
@@ -793,7 +795,7 @@ DECLARE_NATIVE(apply)
         if (at == nullptr or Is_Comma(at))
             fail (Error_Need_Non_End_Raw(lookback));
 
-        if (Is_Path(at) and Is_Refinement(at))  // catch e.g. /DUP /LINE [1]
+        if (Is_Get_Word(at))  // catch e.g. :DUP :LINE [1]
             fail (Error_Need_Non_End_Raw(lookback));
 
         Init_Integer(ARG(index), unwrap index);
@@ -873,6 +875,14 @@ DECLARE_NATIVE(apply)
 
 } finalize_apply: {  /////////////////////////////////////////////////////////
 
+    // 1. It's not clear that the sublevel should have been dropped on an
+    //    abrupt failure, as there may be information we need in it to do
+    //    cleanup.  Review.
+    //
+    // 2. We don't want to get any further notifications of abrupt failures
+    //    that happen after we have delegated to the function.  But should
+    //    DELEGATE itself rule that out automatically?
+
     if (Is_Unreadable(iterator))
         assert(REF(relax));
     else {
@@ -882,12 +892,12 @@ DECLARE_NATIVE(apply)
         Init_Unreadable(iterator);
     }
 
-    if (THROWING)  // assume Drop_Level() called on SUBLEVEL?
+    if (THROWING)  // !!! SUBLEVEL auto-dropped on abrupt failure [1]
         return THROWN;
 
-    Drop_Level(SUBLEVEL);
+    Drop_Level(SUBLEVEL);  // !!! auto dropped on abrupt failure, should it?
 
-    Clear_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // necessary?
+    Clear_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // !!! necessary? [2]
 
     return DELEGATE(OUT, frame);
 }}
@@ -909,10 +919,16 @@ DECLARE_NATIVE(apply)
 DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 // 1. See notes on APPLY for the required frame compatibility.
+//
+// 2. After every state past the beginning STATE_0, we want to tunnel through
+//    to APPLY for whatever it would do with the continuations.  However, we
+//    know that it has its own handler for abrupt failures.  Use a special
+//    state byte accessor to convey that we know that, and aren't reading the
+//    byte and proceeding obliviously about the abrupt failure.
 {
     INCLUDE_PARAMS_OF_APPLY;  // needs to be frame-compatible [1]
 
-    if (STATE != STATE_0)  // not initial entry, APPLY bouncing trampoline
+    if (Level_State_Byte_Maybe_Abrupt_Failure(LEVEL) != STATE_0)  // [2]
         return N_apply(level_);
 
     Element* operation = cast(Element*, ARG(operation));

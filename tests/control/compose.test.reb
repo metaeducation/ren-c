@@ -208,7 +208,7 @@
 [
     ([<a> ~null~ <b>] = compose // [
         [<a> (if ok [null]) <b>]
-        /predicate cascade [eval/ reify/]
+        :predicate cascade [eval/ reify/]
     ])
     ([<a>] = compose [<a> (~()~)])
     ([<a>] = compose [<a> (~void~)])  ; exception made for pure void

@@ -1282,8 +1282,8 @@ default-combinators: make map! reduce [
             any-string? input [
                 [_ remainder]: find // [
                     input value
-                    /match ok
-                    /case state.case
+                    :match ok
+                    :case state.case
                 ] else [
                     return raise "String at parse position does not match TEXT!"
                 ]
@@ -1292,8 +1292,8 @@ default-combinators: make map! reduce [
                 assert [binary? input]
                 [_ remainder]: find // [
                     input value
-                    /match ok
-                    /case state.case
+                    :match ok
+                    :case state.case
                 ] else [
                     return raise "Binary at parse position does not match TEXT!"
                 ]

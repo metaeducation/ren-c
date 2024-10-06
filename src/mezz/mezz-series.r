@@ -110,7 +110,7 @@ replace: func [
 
     <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
-    if void? :pattern [return target]
+    if void? get $pattern [return target]
 
     let case_REPLACE: case
     case: lib.case/
@@ -119,10 +119,10 @@ replace: func [
 
     while [[pos /tail]: find // [
         pos
-        :pattern
-        /case case_REPLACE
+        get $pattern
+        :case case_REPLACE
     ]][
-        if action? :replacement [
+        if action? get $replacement [
             ;
             ; If arity-0 action, pos and tail discarded
             ; If arity-1 action, pos will be argument to replacement
@@ -131,7 +131,7 @@ replace: func [
             ; They are passed as const so that the replacing function answers
             ; merely by providing the replacement.
             ;
-            value': ^ apply:relax :replacement [const pos, const tail]
+            value': ^ apply:relax replacement/ [const pos, const tail]
         ] else [
             value': ^ replacement  ; inert value, might be null
         ]
@@ -275,7 +275,7 @@ reword: func [
 
                         let v: apply select/ [
                             values keyword-match
-                            /case case_REWORD
+                            :case case_REWORD
                         ]
                         append out switch:type v [
                             frame! [
@@ -296,7 +296,7 @@ reword: func [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply parse3/ [source rule /case case_REWORD]  ; should succeed
+    apply parse3/ [source rule :case case_REWORD]  ; should succeed
     return out
 ]
 
@@ -373,7 +373,7 @@ alter: func [
         append series value
         return okay
     ]
-    if remove find // [series value, /case case_ALTER] [
+    if remove find // [series value :case case_ALTER] [
         append series value
         return okay
     ]

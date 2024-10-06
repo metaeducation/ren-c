@@ -243,15 +243,16 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     return L->label;
 }
 
+#define Level_State_Byte_Maybe_Abrupt_Failure(L) \
+    SECOND_BYTE(ensure(Level*, L))
 
 #if (! CPLUSPLUS_11)
     #define Level_State_Byte(L) \
         SECOND_BYTE(ensure(Level*, L))
 #else
-    // Having a special accessor in the C++ build serves two purposes.  One,
-    // it can actually type check that `L` is a level.  But secondly, it also
-    // is a good place to inject an assertion that you're not ignoring the
-    // fact that a level "self-errored" and was notified of an abrupt failure.
+    // Having a special accessor in the C++ build is a good place to inject an
+    // assertion that you're not ignoring the fact that a level "self-errored"
+    // and was notified of an abrupt failure.
     //
     INLINE Byte& Level_State_Byte(Level* L) {
         assert(Not_Level_Flag(L, ABRUPT_FAILURE));

@@ -93,7 +93,7 @@
             [let keyword-match: any (keyword-suffix-rules), (
                 append:part out a offset? a b  ; output before prefix
 
-                let v: select // [values keyword-match, /case case_REWORD]
+                let v: select // [values keyword-match, :case case_REWORD]
                 append out switch:type v [
                     frame! [
                         apply:relax v [:keyword-match]  ; arity-0 ok
@@ -111,7 +111,7 @@
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    parse- // [source rule, /case case_REWORD] else [fail]  ; why fail?
+    parse- // [source rule :case case_REWORD] else [fail]  ; why fail?
     return out
 ]
 ok)

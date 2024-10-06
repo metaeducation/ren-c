@@ -242,7 +242,7 @@
         if seek [
             pos: skip buffer seek
         ]
-        pos: change // [pos (copy:part data part) /part part]
+        pos: change // [pos (copy:part data part) :part part]
     ]
 
     repeat 128 wrap [
