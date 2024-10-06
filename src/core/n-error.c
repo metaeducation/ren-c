@@ -250,7 +250,7 @@ DECLARE_NATIVE(except)
 
 
 //
-//  raised?: native/intrinsic [
+//  raised?: native:intrinsic [
 //
 //  "Tells you if argument is an ERROR! antiform, doesn't fail if it is"
 //
@@ -267,7 +267,7 @@ DECLARE_INTRINSIC(raised_q)
 
 
 //
-//  unraised?: native/intrinsic [
+//  unraised?: native:intrinsic [
 //
 //  "Tells you if argument is not an ERROR! antiform, doesn't fail if it is"
 //

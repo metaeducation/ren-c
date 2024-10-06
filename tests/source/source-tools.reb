@@ -226,8 +226,8 @@ export analyse: context [
                     opt 'enfix
                     [
                         'native
-                        | 'native/combinator
-                        | 'native/intrinsic
+                        | 'native:combinator
+                        | 'native:intrinsic
                     ]
                     accept ('true)
                     |

@@ -467,7 +467,7 @@ bool Try_Get_Binding_Of(Sink(Value*) out, const Value* v)
 
 
 //
-//  refinement?: native/intrinsic [
+//  refinement?: native:intrinsic [
 //
 //  "Test if an argument is a path with a leading blank"
 //
@@ -484,7 +484,7 @@ DECLARE_INTRINSIC(refinement_q)
 
 
 //
-//  set-word?: native/intrinsic [
+//  set-word?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a word and trailing blank"
 //
@@ -501,7 +501,7 @@ DECLARE_INTRINSIC(set_word_q)
 
 
 //
-//  get-word?: native/intrinsic [
+//  get-word?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a word"
 //
@@ -518,7 +518,7 @@ DECLARE_INTRINSIC(get_word_q)
 
 
 //
-//  set-tuple?: native/intrinsic [
+//  set-tuple?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a tuple and trailing blank"
 //
@@ -535,7 +535,7 @@ DECLARE_INTRINSIC(set_tuple_q)
 
 
 //
-//  get-tuple?: native/intrinsic [
+//  get-tuple?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a tuple"
 //
@@ -552,7 +552,7 @@ DECLARE_INTRINSIC(get_tuple_q)
 
 
 //
-//  set-group?: native/intrinsic [
+//  set-group?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a group and trailing blank"
 //
@@ -569,7 +569,7 @@ DECLARE_INTRINSIC(set_group_q)
 
 
 //
-//  get-group?: native/intrinsic [
+//  get-group?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a group"
 //
@@ -586,7 +586,7 @@ DECLARE_INTRINSIC(get_group_q)
 
 
 //
-//  set-block?: native/intrinsic [
+//  set-block?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a block and trailing blank"
 //
@@ -603,7 +603,7 @@ DECLARE_INTRINSIC(set_block_q)
 
 
 //
-//  get-block?: native/intrinsic [
+//  get-block?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a block"
 //
@@ -620,7 +620,7 @@ DECLARE_INTRINSIC(get_block_q)
 
 
 //
-//  any-set-value?: native/intrinsic [
+//  any-set-value?: native:intrinsic [
 //
 //  "Test if an argument is a 2-element chain with a trailing blank"
 //
@@ -637,7 +637,7 @@ DECLARE_INTRINSIC(any_set_value_q)
 
 
 //
-//  any-get-value?: native/intrinsic [
+//  any-get-value?: native:intrinsic [
 //
 //  "Test if an argument is a 2-element chain with a leading blank"
 //
@@ -654,7 +654,7 @@ DECLARE_INTRINSIC(any_get_value_q)
 
 
 //
-//  quasi-word?: native/intrinsic [
+//  quasi-word?: native:intrinsic [
 //
 //  "Test if an argument is an QUASI form of word"
 //
@@ -671,7 +671,7 @@ DECLARE_INTRINSIC(quasi_word_q)
 
 
 //
-//  char?: native/intrinsic [
+//  char?: native:intrinsic [
 //
 //  "Test if an argument is an issue with one character"
 //
@@ -688,7 +688,7 @@ DECLARE_INTRINSIC(char_q)
 
 
 //
-//  lit-word?: native/intrinsic [
+//  lit-word?: native:intrinsic [
 //
 //  "Test if an argument is quoted word"
 //
@@ -708,7 +708,7 @@ DECLARE_INTRINSIC(lit_word_q)
 
 
 //
-//  lit-path?: native/intrinsic [
+//  lit-path?: native:intrinsic [
 //
 //  "Test if an argument is a quoted path"
 //
@@ -725,7 +725,7 @@ DECLARE_INTRINSIC(lit_path_q)
 
 
 //
-//  any-inert?: native/intrinsic [
+//  any-inert?: native:intrinsic [
 //
 //  "Test if a value type always produces itself in the evaluator"
 //
@@ -1234,9 +1234,15 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         DECLARE_ATOM (safe);
         Push_GC_Guard(safe);
 
-        Option(Error*) error = Trap_Get_Path_Push_Refinements(
-            out, safe, var, context
-        );
+        Option(Error*) error;
+        if (Is_Chain(var))
+            error = Trap_Get_Chain_Push_Refinements(
+                out, safe, var, context
+            );
+        else
+            error = Trap_Get_Path_Push_Refinements(
+                out, safe, var, context
+            );
         Drop_GC_Guard(safe);
 
         if (error)
@@ -1344,6 +1350,103 @@ Value* Get_Var_May_Fail(
 
 
 //
+//  Trap_Get_Chain_Push_Refinements: C
+//
+Option(Error*) Trap_Get_Chain_Push_Refinements(
+    Sink(Value*) out,
+    Sink(Value*) spare,
+    const Element* chain,
+    Context* context
+){
+  #if DEBUG
+  blockscope {
+    bool leading_blank;
+    Option(Heart) heart = Try_Get_Sequence_Singleheart(&leading_blank, chain);
+    assert(not heart);  // don't call with chains that start or end with blank
+    UNUSED(leading_blank);
+  }
+  #endif
+
+    const Element* tail;
+    const Element* head = Cell_List_At(&tail, chain);
+
+    Context* derived = Derive_Binding(context, chain);
+
+    // The first item must resolve to an action.
+
+    if (Is_Group(head)) {  // historical Rebol didn't allow group at head
+        if (Eval_Value_Throws(out, head, derived))
+            return Error_No_Catch_For_Throw(TOP_LEVEL);
+    }
+    else if (Is_Tuple(head)) {
+        fail ("TUPLE! in CHAIN! not supported at this time");
+    /*
+        DECLARE_VALUE (steps);
+        Option(Error*) error = Trap_Get_Any_Tuple(  // vacant is error
+            out, steps, head, derived
+        );
+        if (error)
+            fail (unwrap error);  // must be abrupt
+    */
+    }
+    else if (Is_Word(head)) {
+        Option(Error*) error = Trap_Get_Any_Word(out, head, derived);
+        if (error)
+            fail (unwrap error);  // must be abrupt
+    }
+    else
+        fail (head);  // what else could it have been?
+
+    ++head;
+
+    if (Is_Action(out))
+        NOOP;  // it's good
+    else if (Is_Antiform(out))
+        return Error_Bad_Antiform(out);
+    else if (Is_Frame(out))
+        Actionify(out);
+    else
+        return Error_User("Head of CHAIN! did not evaluate to an ACTION!");
+
+    // We push the remainder of the chain in *reverse order* as words to act
+    // as refinements to the function.  The action execution machinery will
+    // decide if they are valid or not.
+    //
+    const Value* at = tail - 1;
+
+    for (; at != head - 1; --at) {
+        assert(not Is_Blank(at));  // no internal blanks
+
+        const Value* item = at;
+        if (Is_Group(at)) {
+            if (Eval_Value_Throws(
+                cast(Atom*, spare),
+                c_cast(Element*, at),
+                Derive_Binding(derived, at)
+            )){
+                return Error_No_Catch_For_Throw(TOP_LEVEL);
+            }
+            item = Decay_If_Unstable(cast(Atom*, spare));
+
+            if (Is_Void(item))
+                continue;  // just skip it (voids are ignored, NULLs error)
+
+            if (Is_Antiform(item))
+                return Error_Bad_Antiform(item);
+        }
+
+        if (Is_Word(item)) {
+            Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(item));
+        }
+        else
+            fail (item);
+    }
+
+    return nullptr;
+}
+
+
+//
 //  Trap_Get_Path_Push_Refinements: C
 //
 // This form of Get_Path() is low-level, and may return a non-ACTION! value
@@ -1357,9 +1460,19 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 ){
     UNUSED(safe);
 
-    if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
-        Derelativize(out, path, context);  // inert
-        return nullptr;
+    if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed
+        Copy_Cell(out, path);
+        goto ensure_out_is_action;  // will fail, it's not an action
+
+      ensure_out_is_action: //////////////////////////////////////////////////
+
+        if (Is_Action(out))
+            return nullptr;
+        if (Is_Frame(out)) {
+            Actionify(out);
+            return nullptr;
+        }
+        fail ("PATH! must retrieve an action or frame");
     }
 
     const Node* node1 = Cell_Node1(path);
@@ -1372,20 +1485,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         if (error)
             return error;
 
-        if (Get_Cell_Flag(path, REFINEMENT_LIKE))  // `/a` - maybe an action
-            return nullptr;
-
-        // `a/` means it has to be an action, or error.  Frames allowed.
-        //
-      } trailing_slash_means_out_must_be_action: {
-
-        if (Is_Action(out))
-            return nullptr;
-        if (Is_Frame(out)) {
-            Actionify(out);
-            return nullptr;
-        }
-        fail ("Trailing slash notation must retrieve an action or frame."); }
+        goto ensure_out_is_action; }
 
       case FLAVOR_ARRAY : {}
         break;
@@ -1400,10 +1500,6 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
     if (Is_Blank(head)) {  // leading slash means execute (but we're GET-ing)
         ++head;
         assert(not Is_Blank(head));  // two blanks would be `/` as WORD!
-    }
-    else if (Any_Inert(head)) {
-        Derelativize(out, path, context);
-        return nullptr;
     }
 
     if (Is_Group(head)) {
@@ -1434,7 +1530,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
     else if (Is_Chain(head)) {
         if ((head + 1 != tail) and not Is_Blank(head + 1))
             fail ("CHAIN! can only be last item in a path right now");
-        Option(Error*) error = Trap_Get_Path_Push_Refinements(
+        Option(Error*) error = Trap_Get_Chain_Push_Refinements(
             out,
             safe,
             c_cast(Element*, head),
@@ -1449,15 +1545,18 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 
     ++head;
 
+    if (head + 1 != tail and not Is_Blank(head + 1))
+        fail ("PATH! can only be two items long right now");
+
+    if (Is_Action(out))
+        return nullptr;  // e.g. lib.path/
+
     // When we see `lib/append` for instance, we want to pick APPEND out of
     // LIB and make sure it is an action.
     //
     if (Any_Context(out)) {
-
         if (Is_Chain(head)) {  // lib/append:dup
-            if (head + 1 != tail and not Is_Blank(head + 1))
-                fail ("CHAIN! can only be last item in a path right now");
-            Option(Error*) error = Trap_Get_Path_Push_Refinements(
+            Option(Error*) error = Trap_Get_Chain_Push_Refinements(
                 out,
                 safe,
                 c_cast(Element*, head),
@@ -1482,68 +1581,10 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         Copy_Cell(out, Decay_If_Unstable(temp));
         ++head;
     }
-
-    if (Is_Action(out))
-        NOOP;  // it's good
-    else if (Is_Antiform(out))
-        return Error_Bad_Antiform(out);
-    else if (Is_Frame(out))
-        Actionify(out);
     else
-        return Error_User("Head of PATH! did not evaluate to an ACTION!");
+        fail (path);
 
-    // We push the remainder of the path in *reverse order* as words to act
-    // as refinements to the function.  The action execution machinery will
-    // decide if they are valid or not.
-    //
-    const Value* at = tail - 1;
-
-    bool last_is_blank = false;
-    if (Is_Blank(at)) {
-        --at;
-        last_is_blank = true;
-    }
-
-    for (; at != head - 1; --at) {
-        const Value* item = at;
-
-        DECLARE_ATOM (temp);
-        if (Is_Group(at)) {
-            Context* derived = Derive_Binding(context, at);
-            if (Eval_Value_Throws(temp, c_cast(Element*, at), derived))
-                return Error_No_Catch_For_Throw(TOP_LEVEL);
-
-            item = Decay_If_Unstable(temp);
-
-            if (Is_Void(item))
-                continue;  // just skip it (voids are ignored, NULLs error)
-
-            if (Is_Antiform(item))
-                return Error_Bad_Antiform(item);
-        }
-
-        // Note: NULL not supported intentionally, could represent an accident
-        // User is expected to do `maybe var` to show they know it's null
-
-        if (Is_Blank(item)) {
-            assert(!"Illegal internal blank found in path");
-            fail (path);  // should be illegal to make e.g. append::dup
-        }
-        else if (Is_Word(item)) {
-            Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(item));
-        }
-        else if (Is_Path(item) and Is_Refinement(item)) {
-            // Not strictly necessary, but kind of neat to allow
-            Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(item));
-        }
-        else
-            fail (item);
-    }
-
-    if (last_is_blank)
-        goto trailing_slash_means_out_must_be_action;
-
-    return nullptr;
+    goto ensure_out_is_action;
 }
 
 
@@ -2145,7 +2186,7 @@ DECLARE_NATIVE(proxy_exports)
 
 
 //
-//  enfix?: native/intrinsic [
+//  enfix?: native:intrinsic [
 //
 //  "TRUE if looks up to a function and gets first argument before the call"
 //
@@ -2162,7 +2203,7 @@ DECLARE_INTRINSIC(enfix_q)
 
 
 //
-//  enfix: native/intrinsic [
+//  enfix: native:intrinsic [
 //
 //  "For making enfix functions, e.g `+: enfix :add`"
 //
@@ -2181,7 +2222,7 @@ DECLARE_INTRINSIC(enfix)
 
 
 //
-//  unenfix: native/intrinsic [
+//  unenfix: native:intrinsic [
 //
 //  "For removing enfixedness from functions (prefix is a common var name)"
 //
@@ -2526,7 +2567,7 @@ DECLARE_NATIVE(as)
                         tweak = Copy_Cell(Array_At(two, 0), v);
                         Init_Blank(Array_At(two, 1));
                     }
-                    HEART_BYTE(tweak) = unwrap MIRROR_BYTE(a);
+                    HEART_BYTE(tweak) = MIRROR_BYTE(a);
                     Clear_Cell_Flag(tweak, REFINEMENT_LIKE);
                     Init_Block(v, two);
                 }
@@ -2893,7 +2934,7 @@ DECLARE_NATIVE(aliases_q)
 
 
 //
-//  null?: native/intrinsic [
+//  null?: native:intrinsic [
 //
 //  "Tells you if the argument is a ~null~ antiform (branch inhibitor)"
 //
@@ -2910,7 +2951,7 @@ DECLARE_INTRINSIC(null_q)
 
 
 //
-//  okay?: native/intrinsic [
+//  okay?: native:intrinsic [
 //
 //  "Tells you if the argument is an ~okay~ antiform (canon branch trigger)"
 //
@@ -2927,7 +2968,7 @@ DECLARE_INTRINSIC(okay_q)
 
 
 //
-//  any-value?: native/intrinsic [
+//  any-value?: native:intrinsic [
 //
 //  "Tells you if the argument (taken as meta) is storable in a variable"
 //
@@ -2947,7 +2988,7 @@ DECLARE_INTRINSIC(any_value_q)
 
 
 //
-//  element?: native/intrinsic [
+//  element?: native:intrinsic [
 //
 //  "Tells you if the argument is storable in a list"
 //
@@ -2964,7 +3005,7 @@ DECLARE_INTRINSIC(element_q)
 
 
 //
-//  non-void-value?: native/intrinsic [
+//  non-void-value?: native:intrinsic [
 //
 //  "If the argument (taken as meta) non void, and storable in a variable"
 //
@@ -2994,7 +3035,7 @@ DECLARE_INTRINSIC(non_void_value_q)
 
 
 //
-//  any-atom?: native/intrinsic [
+//  any-atom?: native:intrinsic [
 //
 //  "Accepts absolutely any argument state (unstable antiforms included)"
 //
@@ -3012,7 +3053,7 @@ DECLARE_INTRINSIC(any_atom_q)
 
 
 //
-//  logic?: native/intrinsic [
+//  logic?: native:intrinsic [
 //
 //  "Tells you if the argument is NULL or #"
 //
@@ -3029,7 +3070,7 @@ DECLARE_INTRINSIC(logic_q)
 
 
 //
-//  logical: native/intrinsic [
+//  logical: native:intrinsic [
 //
 //  "Produces NULL for 0, or # for all other integers"
 //
@@ -3046,7 +3087,7 @@ DECLARE_INTRINSIC(logical)
 
 
 //
-//  boolean?: native/intrinsic [
+//  boolean?: native:intrinsic [
 //
 //  "Tells you if the argument is the TRUE or FALSE word"
 //
@@ -3063,7 +3104,7 @@ DECLARE_INTRINSIC(boolean_q)
 
 
 //
-//  onoff?: native/intrinsic [
+//  onoff?: native:intrinsic [
 //
 //  "Tells you if the argument is the ON or OFF word"
 //
@@ -3080,7 +3121,7 @@ DECLARE_INTRINSIC(onoff_q)
 
 
 //
-//  yesno?: native/intrinsic [
+//  yesno?: native:intrinsic [
 //
 //  "Tells you if the argument is the YES or NO word"
 //
@@ -3098,7 +3139,7 @@ DECLARE_INTRINSIC(yesno_q)
 
 
 //
-//  nihil?: native/intrinsic [
+//  nihil?: native:intrinsic [
 //
 //  "Tells you if argument is an ~[]~ antiform, e.g. an empty pack"
 //
@@ -3115,7 +3156,7 @@ DECLARE_INTRINSIC(nihil_q)
 
 
 //
-//  barrier?: native/intrinsic [
+//  barrier?: native:intrinsic [
 //
 //  "Tells you if argument is a comma antiform (unstable)"
 //
@@ -3132,7 +3173,7 @@ DECLARE_INTRINSIC(barrier_q)
 
 
 //
-//  elision?: native/intrinsic [
+//  elision?: native:intrinsic [
 //
 //  "If argument is either nihil or a barrier (empty pack or antiform comma)"
 //
@@ -3149,7 +3190,7 @@ DECLARE_INTRINSIC(elision_q)
 
 
 //
-//  void?: native/intrinsic [
+//  void?: native:intrinsic [
 //
 //  "Tells you if argument is void"
 //
@@ -3166,7 +3207,7 @@ DECLARE_INTRINSIC(void_q)
 
 
 //
-//  nothing?: native/intrinsic [
+//  nothing?: native:intrinsic [
 //
 //  "Tells you if argument is the state used to indicate an unset variable"
 //
@@ -3184,7 +3225,7 @@ DECLARE_INTRINSIC(nothing_q)
 
 
 //
-//  tripwire?: native/intrinsic [
+//  tripwire?: native:intrinsic [
 //
 //  "Tells you if argument is a named variant of nothing (acts like unset)"
 //
@@ -3202,7 +3243,7 @@ DECLARE_INTRINSIC(tripwire_q)
 
 
 //
-//  trash?: native/intrinsic [
+//  trash?: native:intrinsic [
 //
 //  "Tells you if argument is a quasiform blank (~), most routines don't take"
 //
@@ -3220,7 +3261,7 @@ DECLARE_INTRINSIC(trash_q)
 
 
 //
-//  space?: native/intrinsic [
+//  space?: native:intrinsic [
 //
 //  "Tells you if argument is a space character (#)"
 //
@@ -3294,7 +3335,7 @@ DECLARE_NATIVE(light) {
 
 
 //
-//  decay: native/intrinsic [
+//  decay: native:intrinsic [
 //
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
@@ -3319,7 +3360,7 @@ DECLARE_INTRINSIC(decay)
 
 
 //
-//  reify: native/intrinsic [
+//  reify: native:intrinsic [
 //
 //  "Make antiforms into their quasiforms, quote all other values"
 //
@@ -3346,7 +3387,7 @@ DECLARE_INTRINSIC(reify)
 
 
 //
-//  noquasi: native/intrinsic [
+//  noquasi: native:intrinsic [
 //
 //  "Make quasiforms into their plain forms, pass through all other elements"
 //
@@ -3383,7 +3424,7 @@ DECLARE_NATIVE(degrade)
 
 
 //
-//  noantiform: native/intrinsic [
+//  noantiform: native:intrinsic [
 //
 //  "Turn antiforms into their plain forms, pass thru other values"
 //

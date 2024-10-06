@@ -181,7 +181,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     StackIndex base = TOP_INDEX;
 
-    if (Is_Word(v) or Is_Tuple(v) or Is_Path(v))
+    if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v))
         Get_Var_May_Fail(out, v, FEED_BINDING(feed));  // !!! throws?
     else
         Derelativize(out, v, FEED_BINDING(feed));

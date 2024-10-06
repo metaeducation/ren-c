@@ -93,7 +93,7 @@ emit-proto: func [
         ]
         ; Natives handled by searching for DECLARE_NATIVE() currently.  If it
         ; checked for the word NATIVE it would also have to look for paths
-        ; if natives took refinements (as they once took NATIVE/BODY)
+        ; if natives took refinements (as they once took NATIVE:BODY)
 
         fail "%make-headers.r only understands C functions"
     ]

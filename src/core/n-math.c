@@ -571,7 +571,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 
 
 //
-//  something?: native/intrinsic [
+//  something?: native:intrinsic [
 //
 //  "Tells you if the argument is not antiform blank (e.g. not nothing)"
 //
@@ -592,7 +592,7 @@ DECLARE_INTRINSIC(something_q)
 
 
 //
-//  vacancy?: native/intrinsic [
+//  vacancy?: native:intrinsic [
 //
 //  "Tells you if the argument causes errors on WORD! access (and defaultable)"
 //
@@ -614,7 +614,7 @@ DECLARE_INTRINSIC(vacancy_q)
 
 
 //
-//  defaultable?: native/intrinsic [
+//  defaultable?: native:intrinsic [
 //
 //  "Tells you if default would overwrite a value (VACANCY?, NULL?, VOID?)"
 //

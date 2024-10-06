@@ -130,7 +130,10 @@ DECLARE_NATIVE(shove)
     Option(const Symbol*) label = nullptr;
 
     const Element* right = At_Level(L);
-    if (Is_Word(right) or Is_Path(right) or Is_Tuple(right)) {
+    if (
+        Is_Word(right) or Is_Tuple(right)
+        or Is_Path(right) or Is_Chain(right)
+    ){
         Get_Var_May_Fail(
             OUT,  // can't eval directly into arg slot
             At_Level(L),

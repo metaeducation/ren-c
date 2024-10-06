@@ -334,7 +334,7 @@ void Push_Parser_Sublevel(
 
 
 //
-//  opt-combinator: native/combinator [
+//  opt-combinator: native:combinator [
 //
 //  {If supplied parser fails, succeed anyway without advancing the input}
 //
@@ -386,7 +386,7 @@ DECLARE_NATIVE(opt_combinator)
 
 
 //
-//  text!-combinator: native/combinator [
+//  text!-combinator: native:combinator [
 //
 //  {Match a TEXT! value as a list item or at current position of bin/string}
 //
@@ -446,7 +446,7 @@ DECLARE_NATIVE(text_x_combinator)
 
 
 //
-//  some-combinator: native/combinator [
+//  some-combinator: native:combinator [
 //
 //  {Must run at least one match}
 //
@@ -541,7 +541,7 @@ DECLARE_NATIVE(some_combinator)
 
 
 //
-//  further-combinator: native/combinator [
+//  further-combinator: native:combinator [
 //
 //  {Pass through the result only if the input was advanced by the rule}
 //

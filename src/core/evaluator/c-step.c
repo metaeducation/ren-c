@@ -843,8 +843,36 @@ Bounce Stepper_Executor(Level* L)
             fail ("No current eval behavior for things like :1 or <tag>:");
         }
 
-        HEART_BYTE(CURRENT) = REB_PATH;
-        goto path_common; }
+        Option(Error*) error = Trap_Get_Chain_Push_Refinements(
+            OUT,  // where to write action
+            SPARE,  // temporary GC-safe scratch space
+            L_current,
+            L_binding
+        );
+        if (error)  // lookup failed, a GROUP! in path threw, etc.
+            fail (unwrap error);  // don't definitional error for now
+
+        assert(Is_Action(OUT));
+
+        if (Is_Enfixed(OUT)) {  // too late, left already evaluated
+            Drop_Data_Stack_To(BASELINE->stack_base);
+            fail ("Use `->-` to shove left enfix operands into CHAIN!s");
+        }
+        goto handle_action_in_out_with_refinements_pushed; }
+
+     handle_action_in_out_with_refinements_pushed: { /////////////////////////
+
+        Level* sub = Make_Action_Sublevel(L);
+        sub->baseline.stack_base = BASELINE->stack_base;  // refinements
+
+        Action* action = VAL_ACTION(OUT);
+        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
+        Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
+
+        Push_Level(OUT, sub);
+        Push_Action(sub, action, coupling);
+        Begin_Prefix_Action(sub, label);
+        goto process_action; }
 
 
     //=//// GET-WORD! /////////////////////////////////////////////////////=//
@@ -1047,17 +1075,7 @@ Bounce Stepper_Executor(Level* L)
             fail ("Use `->-` to shove left enfix operands into PATH!s");
         }
 
-        Level* sub = Make_Action_Sublevel(L);
-        sub->baseline.stack_base = BASELINE->stack_base;  // refinements
-
-        Action* action = VAL_ACTION(OUT);
-        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
-        Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
-
-        Push_Level(OUT, sub);
-        Push_Action(sub, action, coupling);
-        Begin_Prefix_Action(sub, label);
-        goto process_action; }
+        goto handle_action_in_out_with_refinements_pushed; }
 
 
     //=//// TUPLE! or WORD! VARIABLE ASSIGNMENT ///////////////////////////=//

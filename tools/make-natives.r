@@ -110,7 +110,7 @@ gather-natives join src-dir %core/
 
 ; The construction `native: native [...]` obviously has to be treated in a
 ; special way.  Startup constructs it manually, before skipping it and invoking
-; the evaluator to do the other `xxx: native/yyy [...]` evaluations.
+; the evaluator to do the other `xxx: native:yyy [...]` evaluations.
 
 leaders: [
     native
@@ -256,7 +256,7 @@ e-params/write-emitted
 
 === "EMIT DECLARE_NATIVE() or DECLARE_INTRINSIC() FORWARD DECLS" ===
 
-e-forward: make-emitter "DECLARE_NATIVE/INTRINSIC() forward decls" (
+e-forward: make-emitter "DECLARE_NATIVE() DECLARE_INTRINSIC() forward decls" (
     join output-dir %include/tmp-native-fwd-decls.h
 )
 

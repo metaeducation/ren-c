@@ -172,7 +172,7 @@ DECLARE_NATIVE(the)
 
 
 //
-//  just: native/intrinsic [
+//  just: native:intrinsic [
 //
 //  "Returns value passed in without evaluation, and no additional binding"
 //
@@ -264,7 +264,7 @@ DECLARE_NATIVE(meta)
 
 
 //
-//  meta*: native/intrinsic [
+//  meta*: native:intrinsic [
 //
 //  "META operator that works on any value (errors, packs, barriers, etc.)"
 //
@@ -334,7 +334,7 @@ DECLARE_NATIVE(quasi)
 
 
 //
-//  unquasi: native/intrinsic [
+//  unquasi: native:intrinsic [
 //
 //  "Turn quasiforms into common forms"
 //
@@ -352,7 +352,7 @@ DECLARE_INTRINSIC(unquasi)
 
 
 //
-//  antiform?: native/intrinsic [
+//  antiform?: native:intrinsic [
 //
 //  "Tells you whether argument is a stable or unstable antiform"
 //
@@ -438,7 +438,7 @@ DECLARE_NATIVE(unmeta)
 
 
 //
-//  unmeta*: native/intrinsic [
+//  unmeta*: native:intrinsic [
 //
 //  "Variant of UNMETA that can synthesize any atom (raised, pack, barrier...)"
 //
@@ -456,7 +456,7 @@ DECLARE_INTRINSIC(unmeta_p)
 
 
 //
-//  spread: native/intrinsic [
+//  spread: native:intrinsic [
 //
 //  "Make block arguments splice"
 //
@@ -681,7 +681,7 @@ DECLARE_NATIVE(matches)
 
 
 //
-//  splice?: native/intrinsic [
+//  splice?: native:intrinsic [
 //
 //  "Tells you if argument is a splice (antiform group)"
 //
@@ -698,7 +698,7 @@ DECLARE_INTRINSIC(splice_q)
 
 
 //
-//  lazy?: native/intrinsic [
+//  lazy?: native:intrinsic [
 //
 //  "Tells you if argument is a lazy value (antiform object)"
 //
@@ -715,7 +715,7 @@ DECLARE_INTRINSIC(lazy_q)
 
 
 //
-//  pack?: native/intrinsic [
+//  pack?: native:intrinsic [
 //
 //  "Tells you if argument is a parameter pack (antiform block)"
 //
@@ -732,7 +732,7 @@ DECLARE_INTRINSIC(pack_q)
 
 
 //
-//  keyword?: native/intrinsic [
+//  keyword?: native:intrinsic [
 //
 //  "Tells you if argument is an antiform word, reserved for special purposes"
 //
@@ -749,7 +749,7 @@ DECLARE_INTRINSIC(keyword_q)
 
 
 //
-//  action?: native/intrinsic [
+//  action?: native:intrinsic [
 //
 //  "Tells you if argument is an action (antiform frame)"
 //
@@ -766,7 +766,7 @@ DECLARE_INTRINSIC(action_q)
 
 
 //
-//  runs: native/intrinsic [
+//  runs: native:intrinsic [
 //
 //  "Make frames run when fetched through word access"
 //
@@ -804,7 +804,7 @@ DECLARE_INTRINSIC(runs)
 
 
 //
-//  unrun: native/intrinsic [
+//  unrun: native:intrinsic [
 //
 //  "Give back a frame! for action? input"
 //
@@ -822,7 +822,7 @@ DECLARE_INTRINSIC(unrun)
 
 
 //
-//  maybe: native/intrinsic [
+//  maybe: native:intrinsic [
 //
 //  "If argument is null, make it void (also pass through voids)"
 //
@@ -856,7 +856,7 @@ DECLARE_INTRINSIC(maybe)
 
 
 //
-//  quoted?: native/intrinsic [
+//  quoted?: native:intrinsic [
 //
 //  "Tells you if the argument is QUOTED! or not"
 //
@@ -873,7 +873,7 @@ DECLARE_INTRINSIC(quoted_q)
 
 
 //
-//  quasi?: native/intrinsic [
+//  quasi?: native:intrinsic [
 //
 //  "Tells you if the argument is a quasiform or not"
 //
@@ -890,7 +890,7 @@ DECLARE_INTRINSIC(quasi_q)
 
 
 //
-//  noquote: native/intrinsic [
+//  noquote: native:intrinsic [
 //
 //  "Removes all levels of quoting from a quoted value"
 //
@@ -908,7 +908,7 @@ DECLARE_INTRINSIC(noquote)
 
 
 //
-//  atom?: native/intrinsic [
+//  atom?: native:intrinsic [
 //
 //  "Tells you if argument is truly anything--e.g. packs, raised, voids, etc."
 //

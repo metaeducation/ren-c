@@ -278,7 +278,7 @@ DECLARE_NATIVE(null_if_zero)
 
 
 //
-//  not: native/intrinsic [
+//  not: native:intrinsic [
 //
 //  "Returns the logic complement (inverts the nullness of what's passed in)"
 //

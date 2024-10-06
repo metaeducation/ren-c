@@ -97,7 +97,7 @@ Phase* Make_Native(
     CFunction* cfunc,  // may be Dispatcher*, may be Intrinsic*
     VarList* module
 ){
-    // There are implicit parameters to both NATIVE/COMBINATOR and usermode
+    // There are implicit parameters to both NATIVE:COMBINATOR and usermode
     // COMBINATOR.  The native needs the full spec.
     //
     // !!! Note: This will manage the combinator's array.  Changing this would

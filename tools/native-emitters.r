@@ -31,7 +31,7 @@ import <text-lines.reb>
 native-info!: make object! [
     ;
     ; Note: The proto is everything, including the SET-WORD! text, native or
-    ; native/combinator, and then the spec block.  (Terminology-wise we say
+    ; native:combinator, and then the spec block.  (Terminology-wise we say
     ; "spec" just refers to the block component.)
     ;
     proto: ~
@@ -73,8 +73,8 @@ export extract-native-protos: func [
                 not ahead space name: across to ":" one space
                 opt ["enfix" space]
                 ["native" (native-type: 'normal)
-                    opt ["/combinator" (native-type: 'combinator)]
-                    opt ["/intrinsic" (native-type: 'intrinsic)]
+                    opt [":combinator" (native-type: 'combinator)]
+                    opt [":intrinsic" (native-type: 'intrinsic)]
                 ] space
                 "[" thru "//  ]"
             ]
@@ -112,7 +112,7 @@ export emit-include-params-macro: func [
     proto [text!]
     :extension [text!] "extension name"  ; once used not used now
 ][
-    if find proto "native/intrinsic" [
+    if find proto "native:intrinsic" [
         return ~  ; intrinsics don't have INCLUDE_PARAMS_OF macros
     ]
 
@@ -140,11 +140,11 @@ export emit-include-params-macro: func [
     spec: load-value spec
 
     let paramlist
-    if not find proto "native/combinator" [
+    if not find proto "native:combinator" [
         paramlist: spec
     ]
     else [
-        ; NATIVE-COMBINATOR instances have implicit parameters just
+        ; NATIVE:COMBINATOR instances have implicit parameters just
         ; like usermode COMBINATORs do.  We want those implicit
         ; parameters in the ARG() macro list so the native bodies
         ; see them (again, just as the usermode combinators can use
