@@ -29,11 +29,11 @@
         "..."  ->  ...
 
         "/a"  ->  [_ a]
-        "//a"  !!  ~scan-invalid~
+        "//a"  !!  ~bad-sequence-blank~
         "a/"  ->  [a _]
-        "a//"  !!  ~scan-invalid~
+        "a//"  !!  ~bad-sequence-item~
         "/a/"  ->  [_ a _]
-        "//a//"  !!  ~scan-invalid~
+        "//a//"  !!  ~bad-sequence-blank~
 
         "(a b)/c"  ->  [^(a b) c]
         "(a b) /c"  ->  ^(a b)  [_ c]
@@ -49,9 +49,9 @@
 
         "[a].(b)"  ->  (^[a] ^(b))
 
-        "a.. b"  !!  ~scan-invalid~
-        "a.. /b"  !!  ~scan-invalid~
-        "a../b"  !!  ~scan-invalid~
+        "a.. b"  !!  ~bad-sequence-item~
+        "a.. /b"  !!  ~bad-sequence-item~
+        "a../b"  !!  ~bad-sequence-item~
 
         "/./(a b)/./"  ->  [_ . ^(a b) . _]
 
@@ -70,8 +70,8 @@
         ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, TAG!, and their quasiforms
         ; are currently allowed in either sequence form.
 
-        "/#a"  !!  ~scan-invalid~
-        "blk/#{}"  !!  ~scan-invalid~
+        "/#a"  !!  ~bad-sequence-item~
+        "blk/#{}"  !!  ~bad-sequence-item~
 
         === CHAIN TESTS ===
 
@@ -152,11 +152,11 @@
             items: transcode text
         ] then error -> [
             if iter.1 <> '!! [
-                fail ["Unexpected failure on" mold text "->" error.id]
+                fail ["Unexpected failure on" @text "->" @error.id]
             ]
             iter: my next
             if iter.1 <> quasi error.id [
-                fail ["Error mismatch" mold text "->" error.id "and not" iter.1]
+                fail ["Error mismatch" @text "->" @error.id "and not" @iter.1]
             ]
             iter: my next
             any [
@@ -167,8 +167,8 @@
             ]
             if error.arg1 <> iter.1 [
                 fail [
-                    "Error argument mismatch on" mold text "->" error.arg1
-                        "and not" iter.1
+                    "Error argument mismatch on" @text "->" @error.arg1
+                        "and not" @iter.1
                     ]
             ]
             iter: my next
