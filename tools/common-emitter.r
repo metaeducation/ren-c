@@ -313,7 +313,7 @@ export make-emitter: func [
     print unspaced [{Generating "} title {" (via } by {)}]
 
     let stem
-    split-path3/file file inside [] 'stem
+    split-path3/file file $stem
 
     temporary: boolean any [
         temporary

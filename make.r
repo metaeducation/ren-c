@@ -1079,7 +1079,7 @@ help: func [
 ; process help: {-h | -help | --help} [TOPIC]
 
 if commands [
-    iterate (inert inside [] 'commands) [
+    iterate (inert $commands) [
         if find ["-h" "-help" "--help"] commands.1 [
             if second commands [  ; bootstrap commands.2 errors if null
                 help:topic second commands

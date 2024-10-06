@@ -32,18 +32,18 @@
     ]
 )
 
-; Test basic binding, e.g. to make sure functions detect SET-WORD!
+; Test basic binding
 
 (
     x: 10
-    set inside [] 'x: 20
+    set $x: 20
     x = 20
 )(
     x: 10
     y: null
     foo: func [<local> x] [
-        set inside [] 'x: 20
-        set inside [] 'y x
+        set $x: 20
+        set $y x
     ]
     foo
     (x = 10) and (y = 20)
@@ -53,7 +53,7 @@
 
 (
     x: 10
-    set inside [] 'x: 20
+    set $x: 20
     x = 20
 )(
     x: 10

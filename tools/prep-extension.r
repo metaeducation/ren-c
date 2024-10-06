@@ -53,7 +53,7 @@ args: parse-args system.script.args  ; either from command line or DO:ARGS
 ; just point at a directory and follow the specification.
 ;
 src: to file! :args.SRC
-in-dir: split-path3/file src inside [] 'file-name
+in-dir: split-path3/file src $file-name
 
 ; Assume we start up in the directory where build products are being made
 ;
@@ -101,7 +101,7 @@ parse3:match script-name [
     ]  ; auto-generating version of initial (and poor) manual naming scheme
 ]
 
-split-path3/file c-src inside [] 'inc-name
+split-path3/file c-src $inc-name
 parse3:match inc-name [
     change "mod-" ("tmp-mod-")
     to "."

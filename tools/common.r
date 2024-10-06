@@ -234,7 +234,7 @@ export parse-args: func [
 ][
     let ret: make block! 4
     let standalone: make block! 4
-    iterate (inert inside [] 'args) [
+    iterate (inert $args) [
         let name: null
         let value: args.1
         case [
@@ -337,7 +337,7 @@ export relative-to-path: func [
         base: next base
         target: next target
     ]
-    iterate (inert inside [] 'base) [base.1: %..]
+    iterate (inert $base) [base.1: %..]
     append base spread target
 
     base: to-file delimit "/" base

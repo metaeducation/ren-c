@@ -164,7 +164,7 @@ standard: make object! [
             ]
             [
                 unwind:with
-                    (binding of inside [] 'return)  ; $ not in bootstrap
+                    (binding of $return)
                     typecheck 'return unmeta value
             ]
         ] #BODY

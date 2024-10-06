@@ -3,7 +3,7 @@
 (
     foo: func [return: [block!] arg <local> local frame] [
        local: 10
-       frame: binding of inside [] 'return
+       frame: binding of $return
        return words of frame
     ]
 
