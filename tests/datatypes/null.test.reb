@@ -60,8 +60,9 @@
     ('~[~null~]~ = ^ if ok [null])
     ('~[~null~]~ = ^ if ok [heavy null])
     ('~[~void~]~ = ^ if ok [])
-    ('~custom~ = ^ if ok [~custom~])
-    (''~custom~ = ^ if ok ['~custom~])
+
+    ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
+    (''~asdf~ = ^ if ok ['~asdf~])  ; but okay as quasiforms
 
     (^void <> ^ ~()~)
     (not ^void = first [~()~])
@@ -70,6 +71,7 @@
     ('~null~ = if ok ^[null])
     ('~[~null~]~ = if ok ^[heavy null])
     (^void = if ok ^[])
-    ('~custom~ = if ok ^[~custom~])
-    (''~custom~ = if ok ^['~custom~])
+
+    ~illegal-keyword~ !! (if ok ^[~asdf~])
+    (''~asdf~ = if ok ^['~asdf~])
 ]

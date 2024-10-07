@@ -122,19 +122,19 @@
 [
     (/foo: func [] [return void], ok)
     (foo else [okay])
-    (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
+    (1020 = (1000 + 20 elide-if-void (foo then [fail ~<unreachable>~])))
 ]
 
 [
-    (/foo: lambda [] [if null [~ignore~]], ok)
+    (/foo: lambda [] [if null [fail ~<unreachable>~]], ok)
     (foo else [okay])
-    (void? (1000 + 20 foo then [fail [~unreachable~]]))
+    (void? (1000 + 20 foo then [fail ~<unreachable>~]))
 ]
 
 [
     (/foo: lambda [] [], ok)
     (foo else [okay])
-    (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
+    (1020 = (1000 + 20 elide-if-void (foo then [fail ~<unreachable>~])))
 ]
 
 ; https://forum.rebol.info/t/2176

@@ -340,7 +340,7 @@ Array* Startup_Natives(const Element* boot_natives)
     DECLARE_ATOM (discarded);
     if (Eval_Any_List_At_Throws(discarded, skipped, context))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-    if (not Is_Anti_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
+    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);
 
   #if !defined(NDEBUG)

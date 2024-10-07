@@ -955,6 +955,12 @@ mezz-files: load %../mezz/boot-files.r  ; base, sys, mezz
 
 sys-toplevel: copy []
 
+; 1. The boot process makes sure that the evaluation produces a QUASI-WORD!
+;    with the symbol "DONE".  We don't use a keyword here because ~done~
+;    doesn't have a legal antiform (at this time), and we don't use a tripwire
+;    like ~<done>~ because the bootstrap executable doesn't know how to load
+;    tripwires.  The quasi-word is sufficient.
+;
 for-each 'section [boot-base boot-system-util boot-mezz] [
     set (inside [] section) s: make text! 20000
     append:line s "["
@@ -965,7 +971,7 @@ for-each 'section [boot-base boot-system-util boot-mezz] [
         ) if section = 'boot-system-util [$sys-toplevel]
         append:line s text
     ]
-    append:line s "~done~"
+    append:line s "'~done~"  ; sanity check [1]
     append:line s "]"
 
     mezz-files: next mezz-files

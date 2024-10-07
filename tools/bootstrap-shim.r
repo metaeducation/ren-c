@@ -298,15 +298,6 @@ ok: okay: true
     fail:blame "Use SPLIT-PATH3 in Bootstrap (no multi-return)" $return
 ]
 
-=== "THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF" ===
-
-; Done is used as a signal in the boot files that the expected end is reached.
-; This is a QUASI-WORD? in modern Ren-C, but a plain word in the bootstrap EXE.
-; Must use SET because even though we don't run this in modern Ren-C, the file
-; gets scanned...and `~done~:` would be invalid.
-;
-set '~done~ does [~]
-
 
 === "FAKE UP QUASIFORM! AND THE-WORD! TYPES" ===
 

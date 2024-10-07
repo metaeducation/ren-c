@@ -467,9 +467,8 @@ Bounce Stepper_Executor(Level* L)
     assert(Is_Fresh(OUT));
 
     if (QUOTE_BYTE(L_current) != NOQUOTE_1) {  // quasiform or quoted [1]
-        assert(QUOTE_BYTE(L_current) != ANTIFORM_0);
         Copy_Cell(OUT, L_current);
-        QUOTE_BYTE(OUT) -= 2;  // QUASI_2 => ANTIFORM_0, or drops one quote
+        Meta_Unquotify_Undecayed(OUT);  // checks that antiform is legal
     }
     else switch ((STATE = HEART_BYTE(L_current))) {  // states include type [2]
 

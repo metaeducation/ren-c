@@ -21,8 +21,6 @@
         bad: load-value str
         assert [quasi? bad]
         assert [word = unquasi bad]
-        quasiform: ^ eval reduce [bad]
-        assert [bad = quasiform]
     ]
     ok
 )
@@ -188,7 +186,7 @@
     parse3 [~foo~ ~foo~] [some foo]
 )
 ~bad-antiform~ !! (
-    foo: ~foo~
+    foo: ~NaN~
     parse3 [~foo~ ~foo~] [some foo]
 )
 
@@ -224,7 +222,7 @@
 
 
 [
-    ('foo = noquasi reify ~foo~)
+    ('null = noquasi reify ~null~)
     ('~null~ = reify null)
     ('~null~ = reify ~null~)
 

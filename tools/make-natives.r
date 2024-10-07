@@ -190,7 +190,7 @@ for-each 'info all-protos [
 
 append output-buffer unspaced [
     newline
-    "~done~  ; C code expects evaluation to end in ~done~" newline
+    "'~done~  ; C code checks for this eval product" newline
     newline
 ]
 
@@ -210,7 +210,7 @@ stripped-generics: stripload:gather (join src-dir %boot/generics.r) $generic-nam
 write-if-changed (join output-dir %boot/tmp-generics-stripped.r) unspaced [
     "[" newline
     stripped-generics
-    "~done~  ; C code expects evaluation to end in ~done~" newline
+    "'~done~  ; C code checks for this eval product" newline
     "]" newline
 ]
 

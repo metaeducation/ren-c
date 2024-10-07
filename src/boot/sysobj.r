@@ -382,5 +382,5 @@ cgi: make object! [ ; CGI environment variables
        other-headers: []
 ]
 
-; Boot process does a sanity check that this evaluation ends with ~done~
-~done~
+; Boot process does sanity check that this eval ends with ~done~ QUASI-WORD!
+'~done~

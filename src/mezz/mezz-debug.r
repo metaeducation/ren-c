@@ -37,11 +37,11 @@ REBOL [
                 ]
 
                 ; If the handler doesn't itself fail--and does not return
-                ; ~ignore~, then we go ahead and fail.  This lets you
+                ; ~<ignore>~, then we go ahead and fail.  This lets you
                 ; write simple handlers that just print you a message...like
                 ; some context for the assert.
                 ;
-                reaction != '~ignore~
+                reaction != '~<ignore>~
             ]
         ] then [
             fail:blame make error! [

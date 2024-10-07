@@ -151,6 +151,4 @@
 
 ~bad-void~ !! (case [(void) okay [1]])
 
-~bad-antiform~ !! (case [~antiform~ [print "Causes error"]])
-
 ([a] = case [okay '[a]])

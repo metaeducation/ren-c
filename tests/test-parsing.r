@@ -147,7 +147,7 @@ export /collect-tests: func [
             ; tests could keep track of how often a particular issue or URL
             ; had a bad test and mark it as "active"?
             ;
-            [url! | issue!] (~noop~)
+            [url! | issue!]  ; ignore
             |
             ; Tags represent flags which can control the behavior of tests.
             ; Each test grouping resets the flags here, but that suggests

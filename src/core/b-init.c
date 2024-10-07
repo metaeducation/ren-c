@@ -467,7 +467,7 @@ static void Init_System_Object(
     DECLARE_ATOM (result);
     if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         panic (result);
-    if (not Is_Anti_Word_With_Id(Decay_If_Unstable(result), SYM_DONE))
+    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(result), SYM_DONE))
         panic (result);
 
     // Init_Action_Adjunct_Shim() made Root_Action_Adjunct as a bootstrap hack
@@ -809,7 +809,7 @@ void Startup_Core(void)
 
         "wrap*", Sys_Util_Module, rebQ(&boot->system_util),
         "if not equal? '~done~",
-          "^ evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
+          "evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
             "[fail {sys.util}]",
 
         // SYS contains the implementation of the module machinery itself, so
