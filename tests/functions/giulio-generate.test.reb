@@ -5,7 +5,7 @@
 ;
 [(
     giulio-generate: func [
-        {Make a generator}
+        "Make a generator"
         return: [action?]
         init [block!] "Init code"
         condition [block! blank!] "While condition"
@@ -20,7 +20,7 @@
             ]]
             append words w
         ]
-        let spec: compose [/reset [block!] <static> (spread unique words) count]
+        let spec: compose [:reset [block!] <static> (spread unique words) count]
         let body: compose:deep [
             if reset [count: reset return]
             if block? count [
@@ -41,12 +41,12 @@
     ]
 
     read-lines: func [
-        {Makes a generator that yields lines from a file or port}
+        "Makes a generator that yields lines from a file or port"
         return: [action?]
         src [~null~ port! file!]
-        /delimiter [binary! char? text! bitset!]
-        /keep "Don't remove delimiter"
-        /binary "Return BINARY instead of TEXT"
+        :delimiter [binary! char? text! bitset!]
+        :keep "Don't remove delimiter"
+        :binary "Return BINARY instead of TEXT"
     ][
         if null? src [src: system.ports.input]
         if file? src [src: open src]

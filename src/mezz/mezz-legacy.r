@@ -29,7 +29,7 @@ loop: func [] [
 ;
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
-function: method: func [/dummy] [
+function: method: func [] [
     fail:blame [
         {The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was}
         {the gathering of SET-WORD! as locals.  This behavior led to many}
@@ -38,7 +38,7 @@ function: method: func [/dummy] [
         {to abstract functions.  With virtual binding, there is now LET...}
         {which has some runtime cost but is much more versatile.  If you}
         {don't want to pay the cost then use <local> in the spec.}
-    ] $dummy
+    ] $return
 ]
 
 
@@ -177,10 +177,10 @@ prin: func [
 forever: cycle/
 
 
-find: adapt (augment :find [/reverse /last]) [
+find: adapt (augment find/ [:reverse :last]) [
     if reverse or last [
         fail:blame [
-            {/REVERSE and /LAST on FIND have been deprecated.  Use FIND-LAST}
+            {:REVERSE and :LAST on FIND have been deprecated.  Use FIND-LAST}
             {or FIND-REVERSE specializations: https://forum.rebol.info/t/1126}
         ] $reverse
     ]

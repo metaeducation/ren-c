@@ -117,8 +117,7 @@ static void Arc_Trans(
 //
 //      return: [decimal!]
 //      angle [any-number?]
-//      /radians
-//          "Value is specified in radians (in degrees by default)"
+//      :radians "ANGLE is specified in radians (in degrees by default)"
 //  ]
 //
 DECLARE_NATIVE(cosine)
@@ -140,8 +139,7 @@ DECLARE_NATIVE(cosine)
 //
 //      return: [decimal!]
 //      angle [any-number?]
-//      /radians
-//          "Value is specified in radians (in degrees by default)"
+//      :radians "ANGLE is specified in radians (in degrees by default)"
 //  ]
 //
 DECLARE_NATIVE(sine)
@@ -163,8 +161,7 @@ DECLARE_NATIVE(sine)
 //
 //      return: [decimal!]
 //      angle [any-number?]
-//      /radians
-//          "Value is specified in radians (in degrees by default)"
+//      :radians "ANGLE is specified in radians (in degrees by default)"
 //  ]
 //
 DECLARE_NATIVE(tangent)
@@ -186,8 +183,7 @@ DECLARE_NATIVE(tangent)
 //
 //      return: [decimal!]
 //      cosine [any-number?]
-//      /radians
-//          "Returns result in radians (in degrees by default)"
+//      :radians "Returns result in radians (in degrees by default)"
 //  ]
 //
 DECLARE_NATIVE(arccosine)
@@ -206,8 +202,7 @@ DECLARE_NATIVE(arccosine)
 //
 //      return: [decimal!]
 //      sine [any-number?]
-//      /radians
-//          "Returns result in radians (in degrees by default)"
+//      :radians "Returns result in radians (in degrees by default)"
 //  ]
 //
 DECLARE_NATIVE(arcsine)
@@ -226,8 +221,7 @@ DECLARE_NATIVE(arcsine)
 //
 //      return: [decimal!]
 //      tangent [any-number?]
-//      /radians
-//          "Returns result in radians (in degrees by default)"
+//      :radians "Returns result in radians (in degrees by default)"
 //  ]
 //
 DECLARE_NATIVE(arctangent)
@@ -368,10 +362,9 @@ DECLARE_NATIVE(square_root)
 //
 //      return: [integer!]
 //      value [integer!]
-//      bits [integer!]
-//          "Positive for left shift, negative for right shift"
-//      /logical
-//          "Logical shift (sign bit ignored)"
+//      bits "Positive for left shift, negative for right shift"
+//          [integer!]
+//      :logical "Logical shift (sign bit ignored)"
 //  ]
 //
 DECLARE_NATIVE(shift)

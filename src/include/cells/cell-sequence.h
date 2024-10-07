@@ -758,57 +758,6 @@ INLINE void Get_Tuple_Bytes(
 
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
-INLINE Element* Refinify(Element* e) {
-    Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        e, REB_PATH, CELL_FLAG_REFINEMENT_LIKE
-    );
-    if (error)
-        fail (unwrap error);
-    return e;
-}
-
-INLINE bool IS_REFINEMENT_CELL(const Cell* v) {
-    assert(Any_Path_Kind(Cell_Heart(v)));
-    if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
-        return false;
-
-    const Node* node1 = Cell_Node1(v);
-    if (Is_Node_A_Cell(node1))
-        return false;
-
-    if (Stub_Flavor(c_cast(Flex*, node1)) != FLAVOR_SYMBOL)
-        return false;
-
-    return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
-}
-
-INLINE bool Is_Refinement(const Value* v) {
-    assert(Any_Path(v));
-    return IS_REFINEMENT_CELL(v);
-}
-
-INLINE bool IS_PREDICATE1_CELL(const Cell* v) {
-    if (Cell_Heart(v) != REB_TUPLE)
-        return false;
-
-    if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
-        return false;
-
-    const Node* node1 = Cell_Node1(v);
-    if (Is_Node_A_Cell(node1))
-        return false;
-
-    if (Stub_Flavor(c_cast(Flex*, node1)) != FLAVOR_SYMBOL)
-        return false;
-
-    return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
-}
-
-INLINE const Symbol* VAL_REFINEMENT_SYMBOL(const Cell* v) {
-    assert(IS_REFINEMENT_CELL(v));
-    return c_cast(Symbol*, Cell_Node1(v));
-}
-
 // !!! Temporary workaround for what was IS_META_PATH() (now not its own type)
 //
 INLINE bool IS_QUOTED_PATH(const Cell* v) {
@@ -992,4 +941,22 @@ INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
         and Try_Get_Sequence_Singleheart(&leading_blank, v)
         and leading_blank
     );
+}
+
+INLINE Element* Refinify(Element* e) {
+    Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
+        e, REB_CHAIN, CELL_FLAG_REFINEMENT_LIKE
+    );
+    if (error)
+        fail (unwrap error);
+    return e;
+}
+
+#define IS_REFINEMENT_CELL Is_Like_Get_Word
+
+#define Is_Refinement Is_Get_Word
+
+INLINE const Symbol* VAL_REFINEMENT_SYMBOL(const Cell* v) {
+    assert(Is_Like_Get_Word(v));
+    return Cell_Word_Symbol(v);
 }

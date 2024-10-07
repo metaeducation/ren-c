@@ -13,14 +13,14 @@ REBOL [
 ]
 
 dump: func [
-    {Show the name of a value or expressions with the value (See Also: --)}
+    "Show the name of a value or expressions with the value (See Also: --)"
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
         [~[]~]
     @(value) [any-value?]
     @extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [element? <variadic>]
-    /prefix "Put a custom marker at the beginning of each output line"
+    :prefix "Put a custom marker at the beginning of each output line"
         [text!]
 
     <static> enablements (make map! [])
@@ -134,7 +134,7 @@ dump-to-newline: adapt dump/ [
 ]
 
 dumps: enfix func [
-    {Fast generator for dumping function that uses assigned name for prefix}
+    "Fast generator for dumping function that uses assigned name for prefix"
 
     return: [action?]
     @(name) [set-word?]
@@ -195,12 +195,12 @@ dumps: enfix func [
 ; (as part of a general help review)
 ;
 summarize-obj: func [
-    {Returns a block of information about an object or port}
+    "Returns a block of information about an object or port"
 
     return: "Block of short lines (fitting in roughly 80 columns)"
         [~null~ block!]
     obj [object! port! module!]
-    /pattern "Include only fields that match a string or datatype"
+    :pattern "Include only fields that match a string or datatype"
         [text! type-block!]
 ][
     let form-pad: lambda [
@@ -274,7 +274,7 @@ summarize-obj: func [
 ; is detected, and lets that element be the last commented element.
 ;
 **: func [
-    {Comment until end of line, or end of current BLOCK!/GROUP!}
+    "Comment until end of line, or end of current list"
 
     return: [~[]~]
     'args [element? <variadic>]

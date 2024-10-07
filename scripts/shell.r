@@ -59,12 +59,12 @@ REBOL [
 
 
 shell: func [
-    {Run code in the shell dialect}
+    "Run code in the shell dialect"
     return: [text!]
     code "Dialected shell code"
         [block!]
-    /pipe
-    /inspect "Return the shell command as TEXT!"
+    :pipe
+    :inspect "Return the shell command as TEXT!"
 ][
     ; NOTE: We don't use GET-ENV to fill in <ENV> variables, because this
     ; code runs before the CALL and wouldn't pick up changes to the
@@ -203,8 +203,8 @@ shell+: func [  ; was $ but that now has a binding purpose
     "Run SHELL code to end of line (or continue on next line with `...`)"
     @(args) "See documentation for SHELL"
         [any-value? <variadic>]
-    /inspect
-    /pipe
+    :inspect
+    :pipe
     <local> code item
 ][
     code: collect [

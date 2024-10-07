@@ -527,8 +527,8 @@ DECLARE_NATIVE(wrap_p)
 //      return: "List with added binding, and context created for variables"
 //          [~[any-list? object!]~]
 //      list [<maybe> any-list?]
-//      /deep "Look for assigning constructs deeply"
-//      /set "Use semantics for WRAP of a SET-BLOCK for list argument"
+//      :deep "Look for assigning constructs deeply"
+//      :set "Use semantics for WRAP of a SET-BLOCK for list argument"
 //  ]
 //
 DECLARE_NATIVE(wrap)
@@ -573,9 +573,9 @@ DECLARE_NATIVE(wrap)
 //
 //      return: [block!]
 //      block [block!]
-//      /deep "Include nested blocks"
-//      /set "Only include set-words"
-//      /ignore "Ignore these words"
+//      :deep "Include nested blocks"
+//      :set "Only include set-words"
+//      :ignore "Ignore these words"
 //          [block! object!]
 //  ]
 //

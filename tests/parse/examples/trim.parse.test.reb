@@ -14,12 +14,12 @@ utrim: func [
     return: [any-string? any-list? binary! any-context?]
     series "Series (modified) or object (made)"
         [any-string? any-list? binary! any-context?]
-    /head "Removes only from the head"
-    /tail "Removes only from the tail"
-    /auto "Auto indents lines relative to first line"
-    /lines "Removes all line breaks and extra spaces"
-    /all "Removes all whitespace"
-    /with "Same as :ALL but removes specific characters"
+    :head "Removes only from the head"
+    :tail "Removes only from the tail"
+    :auto "Auto indents lines relative to first line"
+    :lines "Removes all line breaks and extra spaces"
+    :all "Removes all whitespace"
+    :with "Same as :ALL but removes specific characters"
         [char? text! binary! integer! block! bitset!]
 ][
     let tail_TRIM: :tail

@@ -19,9 +19,9 @@
     (udefault: enfix lambda [
         @target "Word or path which might be set appropriately (or not)"
             [set-group? set-word? set-tuple?]  ; to left of DEFAULT
-        ':branch "If target needs default, this is evaluated and stored there"
+        @(branch) "If target needs default, this is evaluated and stored there"
             [any-branch?]
-        /predicate "Test for what's considered empty (default is null + void)"
+        :predicate "Test for what's considered empty (default is null + void)"
             [<unrun> frame!]
         <local> steps
     ][

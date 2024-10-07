@@ -39,7 +39,7 @@ loud-print: redescribe [
 )
 
 make-banner: func [
-    {Build startup banner}
+    "Build startup banner"
     return: [text!]
     fmt [block!]
 ][
@@ -170,11 +170,11 @@ license: func [
 ]
 
 host-script-pre-load: func [
-    {Code registered as a hook when a module or script are loaded}
+    "Code registered as a hook when a module or script are loaded"
     return: [~]
     is-module [yesno?]
-    hdr [~null~ object!]
-        {Header object (missing for DO of BINARY! with no header)}
+    hdr "Header object (missing for DO of BINARY! with no header)"
+        [~null~ object!]
 ][
     ; Print out the script info
     boot-print [
@@ -228,7 +228,7 @@ main-startup: func [
     let instruction: copy '[]  ; quote for no binding, want console binding [1]
 
     let emit: func [
-        {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
+        "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         return: [~]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
@@ -252,7 +252,7 @@ main-startup: func [
     ]
 
     return: func [
-        {Hooked RETURN function which finalizes any gathered EMIT lines}
+        "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         return: []
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
@@ -346,11 +346,11 @@ main-startup: func [
     === HELPER FUNCTIONS ===
 
     let die: lambda [
-        {A graceful way to "FAIL" during startup}
+        "A graceful way to "FAIL" during startup"
 
         reason "Error message"
             [text! block!]
-        /error "Error object, shown if --verbose option used"
+        :error "Error object, shown if --verbose option used"
             [error!]
     ][
         print "Startup encountered an error!"
@@ -366,7 +366,7 @@ main-startup: func [
     ]
 
     let to-dir: func [
-        {Convert string path to absolute dir! path}
+        "Convert string path to absolute dir! path"
 
         return: "Null if not found"
             [~null~ file!]
@@ -380,7 +380,7 @@ main-startup: func [
     ]
 
     let get-home-path: func [
-        {Return HOME path (e.g. $HOME on *nix)}
+        "Return HOME path (e.g. $HOME on *nix)"
         return: [~null~ element? file!]
     ][
         let get-env: if select system.modules 'Process [
@@ -404,7 +404,7 @@ main-startup: func [
     ]
 
     let get-resources-path: func [
-        {Return platform specific resources path.}
+        "Return platform specific resources path"
         return: [~null~ file!]
     ][
         ; lives under systems.options.home
@@ -462,7 +462,7 @@ main-startup: func [
     ]
 
     let param-missing: func [
-        {Take --option argv and then check if param arg is present, else die}
+        "Take --option argv and then check if param arg is present, else die"
         return: []
         option [text!] {Name of command-line option (switch) used}
     ][
@@ -709,7 +709,7 @@ main-startup: func [
             append o.loaded (join o.bin %rebol.reb)
             loud-print ["Finished evaluating script:" (join o.bin %rebol.reb)]
         ] then e -> [
-            die/error "Error found in rebol.reb script" e
+            die:error "Error found in rebol.reb script" e
         ]
     ]
 
@@ -727,7 +727,7 @@ main-startup: func [
             append o.loaded join o.resources %user.reb
             loud-print ["Finished evaluating:" join o.resources %user.reb]
         ] then e -> [
-            die/error "Error found in user.reb script" e
+            die:error "Error found in user.reb script" e
         ]
     ]
 

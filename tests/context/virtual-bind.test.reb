@@ -22,7 +22,7 @@
 ; which exposed an issue with virtual binding and PARSE (which was applying
 ; bindings twice in cases of fetched words).  This is isolated from that
 (
-    make-rule: func [/make-rule] [  ; refinement helps recognize in C Probe()
+    make-rule: func [:make-rule] [  ; refinement helps recognize in C Probe()
         use [rule position][
             rule: compose:deep [
                 [[position: <here>, "a"]]

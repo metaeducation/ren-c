@@ -25,7 +25,7 @@
 // another block serving as the "spec" for parameters and HELP:
 //
 //     >> print-sum-twice: func [
-//            {Prints the sum of two integers, and return the sum}
+//            "Prints the sum of two integers, and return the sum"
 //            return: "The sum" [integer!]
 //            x "First Value" [integer!]
 //            y "Second Value" [integer!]
@@ -521,7 +521,7 @@ bool Typecheck_Coerce_Return(
 //
 //      return: []
 //      ^value [any-atom?]
-//      /run "Reuse stack level for another call (<redo> uses locals/args too)"
+//      :run "Reuse stack level for another call (<redo> uses locals/args too)"
 //      ;   [<variadic> any-value?]  ; would force this frame managed
 //  ]
 //

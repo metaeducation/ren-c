@@ -512,19 +512,9 @@ DECLARE_NATIVE(let)
 //    "escape out of" a LET in some boilerplate.  And it would be consistent
 //    with the behavior of `let ['x]: <whatever>`
 //
-// 4. Right now what is permitted is conservative, due to things like the
-//    potential confusion when someone writes:
-//
-//        get-word: first [:b]
-//        let [a (get-word) c]: transcode "<whatever>"
-//
-//    They could reasonably think that this would behave as if they had
-//    written in source `let [a :b c]: transcode <whatever>`.  If that meant
-//    to look up the word B to find out were to actually write, we wouldn't
-//    want to create a LET binding for B...but for what B looked up to.
-//
-//    Bias it so that if you want something to just "pass through the LET"
-//    that you use a quote mark on it, and the LET will ignore it.
+// 4. Right now what is permitted is conservative.  Bias it so that if you
+//    want something to just "pass through the LET" that you use a quote mark
+//    on it, and the LET will ignore it.
 //
 // 5. In the "LET dialect", quoted words are a way to pass through things with
 //    their existing binding, but allowing them to participate in the same

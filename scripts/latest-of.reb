@@ -133,10 +133,10 @@ latest-of: func [
 
     os "https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r"
         [<end> blank! tuple!]
-    /variant ['debug 'release]
-    /commit "Link for specific commit number (defaults to latest commit)"
+    :variant ['debug 'release]
+    :commit "Link for specific commit number (defaults to latest commit)"
         [text!]
-    /verbose "Print file size, commit, hash information"
+    :verbose "Print file size, commit, hash information"
 ][
     if not os [
         print warning

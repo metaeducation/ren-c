@@ -113,8 +113,8 @@
 //
 // 3. Allowing a void branch can be useful, consider:
 //
-//        switch-d: enclose (augment :switch [
-//            /default "Default case if no others are found"
+//        switch-d: enclose (augment switch/ [
+//            :default "Default case if no others are found"
 //            [block!]
 //        ]) lambda [f [frame!]] [
 //            let def: f.default
@@ -259,8 +259,8 @@ DECLARE_NATIVE(either)
 //    branches if applicable.  But the decision on whether it's a THEN or
 //    ELSE case comes from the first parameter in the pack.
 //
-// 3. With the exception of ~[~null~]~ and ~[~void~]~ when /DECAY is used, a "pack"
-//    (antiform block) will always run a THEN and not an ELSE.  If a function
+// 3. With the exception of ~[~null~]~ and ~[~void~]~ when :DECAY is used,
+//    a "pack" (antiform block) always runs THEN and not ELSE.  If a function
 //    wants to tweak this, it needs to return a lazy object with customized
 //    then/else behavior that otherwise reifies to a pack.
 //
@@ -418,7 +418,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //      return: [logic?]
 //      ^atom "Argument to test"
 //          [any-atom?]
-//      /decay
+//      :decay
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
@@ -513,7 +513,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //      return: [logic?]
 //      ^atom "Argument to test"
 //          [any-atom?]
-//      /decay
+//      :decay
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
@@ -544,7 +544,7 @@ DECLARE_NATIVE(didnt)
 //          [any-atom?]
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
-//      /decay
+//      :decay
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> ~void~ any-branch?]
 //  ]
@@ -587,7 +587,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 //          [any-atom?]
 //      ^atom "<deferred argument> Run branch if this is null"
 //          [any-atom?]
-//      /decay
+//      :decay
 //      @(branch) [<unrun> ~void~ any-branch?]
 //  ]
 //
@@ -629,7 +629,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 //          [any-atom?]
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
-//      /decay
+//      :decay
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> ~void~ any-branch?]
 //  ]
@@ -693,7 +693,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
 //          [~null~ block! type-word! type-group! type-block! parameter!]
 //      value "If not /META, NULL values illegal, and VOID returns NULL"  ; [2]
 //          [any-value?]
-//      /meta "Return the ^^META result (allows checks on NULL and VOID)"
+//      :meta "Return the ^^META result (allows checks on NULL and VOID)"
 //  ]
 //
 DECLARE_NATIVE(match)
@@ -788,7 +788,7 @@ DECLARE_NATIVE(match)
 //          [any-value?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
-//      /predicate "Test for whether an evaluation passes (default is DID)"
+//      :predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
 //      <local> scratch
 //  ]
@@ -937,7 +937,7 @@ DECLARE_NATIVE(all)
 //          [any-value?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
-//      /predicate "Test for whether an evaluation passes (default is DID)"
+//      :predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
 //  ]
 //
@@ -1067,8 +1067,8 @@ DECLARE_NATIVE(any)
 //          [any-value?]
 //      cases "Conditions followed by branches"
 //          [block!]
-//      /all "Do not stop after finding first logically true case"
-//      /predicate "Unary case-processing action (default is DID)"
+//      :all "Do not stop after finding first logically true case"
+//      :predicate "Unary case-processing action (default is DID)"
 //          [<unrun> frame!]
 //      <local> branch
 //  ]
@@ -1275,9 +1275,9 @@ DECLARE_NATIVE(case)
 //      value [any-value?]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
-//      /all "Evaluate all matches (not just first one)"
-//      /type "Match based on type constraints, not equality"
-//      /predicate "Binary switch-processing action (default is EQUAL?)"
+//      :all "Evaluate all matches (not just first one)"
+//      :type "Match based on type constraints, not equality"
+//      :predicate "Binary switch-processing action (default is EQUAL?)"
 //          [<unrun> frame!]
 //      <local> scratch
 //  ]
@@ -1474,7 +1474,7 @@ DECLARE_NATIVE(switch)
 //          [set-group? set-word? set-tuple?]  ; to left of DEFAULT
 //      @(branch) "If target needs default, this is evaluated and stored there"
 //          [any-branch?]
-//      /predicate "Test for what's considered *not* needing to be defaulted"
+//      :predicate "Test for what's considered *not* needing to be defaulted"
 //          [<unrun> frame!]
 //  ]
 //

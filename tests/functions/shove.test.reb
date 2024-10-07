@@ -148,7 +148,7 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        magic: enfix lambda [a b /minus] [
+        magic: enfix lambda [a b :minus] [
             either minus [a - b] [a + b]
         ]
     ])

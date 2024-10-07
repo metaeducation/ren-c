@@ -5,7 +5,7 @@
 [(
     flow: func [
         block [block!]
-        /placeholder [element?]
+        :placeholder [element?]
         <local> flow-result
     ][
         placeholder: default [_]

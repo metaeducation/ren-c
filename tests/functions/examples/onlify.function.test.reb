@@ -9,12 +9,12 @@
 onlify: func [
     return: [action?]
     frame [<unrun> frame!]
-    /param [word!]
+    :param [word!]
 ][
     param: default ['value]
     return adapt (
         augment frame [
-            /only "Use value literally (don't splice blocks or unquote)"
+            :only "Use value literally (don't splice blocks or unquote)"
         ]
     ) compose:deep [
         all [not only, any-list? series, any-list? (param)] then [

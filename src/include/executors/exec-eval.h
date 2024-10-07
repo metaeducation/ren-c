@@ -85,7 +85,7 @@
 // Inert operations wind up costing a bit more because they're pushing a frame
 // when it seems "they don't need to"; but it provides flexibility for code
 // that sometimes wants to evaluate and sometimes doesn't, and also the
-// /PREDICATE can change what the rules are so that inert items don't all
+// :PREDICATE can change what the rules are so that inert items don't all
 // count as true.
 //
 #define EVAL_EXECUTOR_FLAG_NO_EVALUATIONS \

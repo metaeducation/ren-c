@@ -69,7 +69,7 @@ to-ishort: specialize enbin/ [settings: [LE + 2]]  ; Little endian 2-byte + int
 to-long: specialize enbin/ [settings: [BE + 4]]  ; Big endian 4-byte + int
 
 to-msdos-time: func [
-    {Converts to a MS-DOS time}
+    "Converts to a MS-DOS time"
     return: [binary!]
     time [time!] "AnyValue to convert"
 ][
@@ -79,7 +79,7 @@ to-msdos-time: func [
 ]
 
 to-msdos-date: func [
-    {Converts to a MS-DOS date}
+    "Converts to a MS-DOS date"
     return: [binary!]
     date [date!]
 ][
@@ -88,7 +88,7 @@ to-msdos-date: func [
 ]
 
 get-msdos-time: func [
-    {Converts from a MS-DOS time}
+    "Converts from a MS-DOS time"
     return: [time!]
     binary [binary!]
 ][
@@ -101,7 +101,7 @@ get-msdos-time: func [
 ]
 
 get-msdos-date: func [
-    {Converts from a MS-DOS date}
+    "Converts from a MS-DOS date"
     return: [date!]
     binary [binary!]
 ][
@@ -114,7 +114,7 @@ get-msdos-date: func [
 ]
 
 zip-entry: func [
-    {Compresses a file}
+    "Compresses a file"
 
     return: "local header and central directory entry"
         [~[binary! binary!]~]
@@ -191,7 +191,7 @@ zip-entry: func [
 ]
 
 to-path-file: func [
-    {Converts url! to file! and removes heading "/"}
+    "Converts url! to file! and removes / from beginning"
     return: [file!]
     value [file! url!] "AnyValue to convert"
 ][
@@ -204,7 +204,7 @@ to-path-file: func [
 ]
 
 zip: func [
-    {Build zip archive from a file or dialected data specification block}
+    "Build zip archive from a file or dialected data specification block"
 
     return: "Number of entries in archive"
         [integer!]
@@ -212,9 +212,9 @@ zip: func [
         [file! url! binary! text!]
     source "Files to archive (only STORE and DEFLATE supported)"
         [file! url! block!]
-    /deep "Includes files in subdirectories"
-    /verbose "Lists files while compressing"
-    /only "Include the root source directory"
+    :deep "Includes files in subdirectories"
+    :verbose "Lists files while compressing"
+    :only "Include the root source directory"
 ][
     let info: if not verbose [:elide] else [:print]
 
@@ -305,7 +305,7 @@ zip: func [
 ]
 
 unzip: func [
-    {Decompresses a zip archive to a directory or a block}
+    "Decompresses a zip archive to a directory or a block"
 
     return: "If `where` was a block, then position after archive insertion"
         [~ block!]
@@ -313,8 +313,8 @@ unzip: func [
         [file! block!]
     source "Archive to decompress (only STORE and DEFLATE supported)"
         [file! url! binary!]
-    /verbose "Lists files while decompressing (default)"
-    /quiet "Don't lists files while decompressing"
+    :verbose "Lists files while decompressing (default)"
+    :quiet "Don't lists files while decompressing"
 ][
     let num-errors: 0
     let info: all [quiet, not verbose] then [:elide] else [:print]

@@ -55,8 +55,7 @@
 //
 //      return: [~null~]
 //      mode [integer! logic?]
-//      /function
-//          "Traces functions only (less output)"
+//      :function "Traces functions only (less output)"
 //  ]
 //
 DECLARE_NATIVE(trace)

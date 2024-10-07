@@ -106,7 +106,7 @@ sys.util/rescue [
     ; bootstrap executable..and much faster (at time of writing) than UPARSE.
 
     export /parse: func [] [
-        fail:where "Use PARSE3 in Bootstrap Process, not UPARSE/PARSE" 'return
+        fail:blame "Use PARSE3 in Bootstrap Process, not UPARSE/PARSE" $return
     ]
 
     export /split-path3: enclose (
@@ -118,7 +118,7 @@ sys.util/rescue [
         unmeta results.1
     ]
     export /split-path: func [] [
-        fail:where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
+        fail:blame "Use SPLIT-PATH3 in Bootstrap (no multi-return)" $return
     ]
 
     export /transcode: enclose (
@@ -135,17 +135,17 @@ sys.util/rescue [
 
     export /cscape-inside: inside/  ; modern string interpolation tool
 
-    ; LOAD changed to have no /ALL, so it always enforces getting a block.
+    ; LOAD changed to have no :ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
     export /load-all: load/
 
     export /for: func [] [
-        fail:where "FOR is being repurposed, use CFOR" 'return
+        fail:blame "FOR is being repurposed, use CFOR" $return
     ]
 
-    export /unless: func [/dummy] [
-        fail:where "Don't use UNLESS in Bootstrap, definition in flux" 'dummy
+    export /unless: func [] [
+        fail:blame "Don't use UNLESS in Bootstrap, definition in flux" $return
     ]
 
     export /boolean?!: boolean?/
@@ -192,12 +192,14 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     mold3:                      ; MOLD takes splices instead of MOLD/ONLY
     and3:                       ; AND takes GROUP!s on right (not BLOCK!)
     or3:                        ; OR takes GROUP!s on right (not BLOCK!)
+    refinement3?                ; Former refinements of /FOO now :FOO
+    refinement3!                ; ...
 ][
     ; Assign the alias what the existing version (minus the terminal "3") is
     ; (e.g. func3: :func)
     ;
     name: copy as text! alias
-    assert [#"3" = take/last name]
+    parse name [to "3" remove "3" to <end>]
     name: to word! name
     lib3/append system.contexts.user reduce [alias :lib3.(name)]
 
@@ -393,6 +395,18 @@ blank-to-void: func3 [x [~null~ any-value!]] [
 ; Not sure if LOGIC! will be able to act as its own type in the future, so
 ; using "weird" definition for now.
 
+; LIT-WORD and REFINEMENT will never be datatypes, so shim the type constraint
+; so it works in old parse.
+
+set '&any-word? any-word!  ; modern any-word is type constraint
+set '&lit-word? lit-word!  ; modern lit-word is QUOTED! constraint
+set '&refinement? get-word!  ; modern refinement is CHAIN! constraint
+run-word?: :refinement3?
+run-word!: refinement3!
+set '&run-word? refinement3!
+refinement!: get-word!
+refinement?: :get-word?
+
 char?!: char!  ; modern char is ISSUE! constraint
 logic?!: logic!  ; modern logic is ANTIFORM! constraint
 set-word?!: set-word!  ; modern set-word is CHAIN constraint
@@ -416,13 +430,6 @@ setify: func3 [plain [word! path!]] [
     either word? plain [to-set-word plain] [to-set-path plain]
 ]
 
-
-; LIT-WORD and REFINEMENT will never be datatypes, so shim the type constraint
-; so it works in old parse.
-
-set '&any-word? any-word!  ; modern any-word is type constraint
-set '&lit-word? lit-word!  ; modern lit-word is QUOTED! constraint
-set '&refinement? refinement!  ; modern refinement is PATH! constraint
 
 element?: :any-value?  ; used to exclude null
 any-value?: func3 [x] [true]  ; now inclusive of null
@@ -690,13 +697,13 @@ modernize-action: func3 [
                 continue
             ]
 
-            if lib3/refinement? spec.1 [  ; old refinement
+            if refinement3? spec.1 [  ; old /REFINEMENT
                 fail/where ["Old refinement in spec:" mold spec] 'spec
             ]
 
-            if get-word? spec.1 [  ; new refinement (GET-WORD is ANY-WORD!)
+            if refinement? spec.1 [  ; new :REFINEMENT
                 last-refine-word: as word! spec.1
-                keep3/only to refinement! spec.1
+                keep3/only to refinement3! spec.1
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
@@ -782,7 +789,7 @@ modernize-action: func3 [
                 ]
             ]
 
-            if get-word? spec.1 [  ; new refinement
+            if refinement? spec.1 [  ; new :REFINEMENT
                 continue
             ]
 
@@ -861,7 +868,7 @@ apply: func3 [
     ; Get all the normal parameters applied
     ;
     result: _
-    while [all [:params.1, not refinement? :params.1]] [
+    while [all [:params.1, not refinement3? :params.1]] [
         args: evaluate/set args 'result
         f.(to word! :params.1): :result
         params: next params
@@ -870,14 +877,14 @@ apply: func3 [
     ; Now go by the refinements.  If it's a refinement that takes an argument,
     ; we have to set the refinement to true
     ;
-    while [get-word? :args.1] [  ; new-style refinements are GET-WORD! in boot
-        pos: find params to refinement! args.1 else [
+    while [refinement? :args.1] [  ; new refinements are GET-WORD! in boot
+        pos: find params to refinement3! args.1 else [
             fail ["Unknown refinement" args.1]
         ]
         args: evaluate/set (next args) 'result
         any [
             not :pos.2
-            refinement? pos.2  ; old refinement in params block
+            refinement3? pos.2  ; old refinement in params block
         ] then [  ; doesn't take an argument, set it to the logical next value
             case [
                 any [

@@ -226,8 +226,8 @@ DECLARE_NATIVE(read_stdin)
 //          [~null~ text! raised?]
 //      source "Where to read from (stdin currently only place supported)"
 //          ['@stdin]
-//      /raw "Include the newline, and allow reaching end of file with no line"
-//      /hide "Mask input with a * character (not implemented)"
+//      :raw "Include the newline, and allow reaching end of file with no line"
+//      :hide "Mask input with a * character (not implemented)"
 //  ]
 //
 DECLARE_NATIVE(read_line)
@@ -386,8 +386,8 @@ DECLARE_NATIVE(read_line)
 //          [~null~ char? word! raised?]
 //      source "Where to read from (stdin currently only place supported)"
 //          ['@stdin]
-//      /raw "Return keys like Up, Ctrl-A, or ESCAPE literally"
-//      /timeout "Seconds to wait before returning ~timeout~ if no input"
+//      :raw "Return keys like Up, Ctrl-A, or ESCAPE literally"
+//      :timeout "Seconds to wait before returning ~timeout~ if no input"
 //          [integer! decimal!]
 //  ]
 //

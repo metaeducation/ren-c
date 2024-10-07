@@ -240,7 +240,7 @@
 )
 (
     all wrap [
-        null? [pos /value]: evaluate:step:undecayed []
+        null? [pos :value]: evaluate:step:undecayed []
         pos = null
         null? value
     ]
@@ -276,7 +276,7 @@
     (
         block: [1 + 2 1 / 0 10 + 20]
         [3 ~zero-divide~ 30] = collect [
-            while [[block ^/result']: eval:step block] [
+            while [[block ^:result']: eval:step block] [
                 if raised? unmeta result' [
                     keep quasi (unquasi result').id
                 ] else [

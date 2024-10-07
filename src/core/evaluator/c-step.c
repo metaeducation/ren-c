@@ -1270,7 +1270,7 @@ Bounce Stepper_Executor(Level* L)
     //     >> [a b]: pack [1]
     //     ** Error: pack doesn't have enough values to set b
     //
-    //     >> [a /b]: pack [1]
+    //     >> [a :b]: pack [1]
     //     == 1
     //
     //     >> b
@@ -1332,18 +1332,18 @@ Bounce Stepper_Executor(Level* L)
 
             bool is_optional;
             if (
-                (heart == REB_PATH or heart == REB_META_PATH)
+                (heart == REB_CHAIN or heart == REB_META_CHAIN)
                 and Cell_Sequence_Len(check) == 2
                 and Is_Blank(Copy_Sequence_At(CURRENT, check, 0))
             ){
-                is_optional = true;  // leading slash means optional
+                is_optional = true;  // leading colon means optional
                 Derelativize_Sequence_At(
                     CURRENT,
                     check,
                     check_binding,
                     1
                 );
-                if (heart == REB_META_PATH)
+                if (heart == REB_META_CHAIN)
                     Metafy(CURRENT);
                 heart = Cell_Heart(CURRENT);
             }
@@ -1861,7 +1861,7 @@ Bounce Stepper_Executor(Level* L)
         // Left-quoting by enfix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
         //
-        //     left-the: enfix func [:value] [:value]
+        //     left-the: enfix func [@value] [value]
         //     the <something> left-the
         //
         // But due to the existence of <end>-able parameters, the left quoting

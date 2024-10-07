@@ -335,7 +335,7 @@ void Push_Parser_Sublevel(
 //
 //  opt-combinator: native:combinator [
 //
-//  {If supplied parser fails, succeed anyway without advancing the input}
+//  "If supplied parser fails, succeed anyway without advancing the input"
 //
 //      return: "PARSER's result if it succeeds, otherwise NULL"
 //          [any-value?]
@@ -388,7 +388,7 @@ DECLARE_NATIVE(opt_combinator)
 //
 //  text!-combinator: native:combinator [
 //
-//  {Match a TEXT! value as a list item or at current position of bin/string}
+//  "Match a TEXT! value as a list item or at current position of bin/string"
 //
 //      return: "The rule series matched against (not input value)"
 //          [~null~ text!]
@@ -449,7 +449,7 @@ DECLARE_NATIVE(text_x_combinator)
 //
 //  some-combinator: native:combinator [
 //
-//  {Must run at least one match}
+//  "Must run at least one match"
 //
 //      return: "Result of last successful match"
 //          [any-value?]
@@ -545,7 +545,7 @@ DECLARE_NATIVE(some_combinator)
 //
 //  further-combinator: native:combinator [
 //
-//  {Pass through the result only if the input was advanced by the rule}
+//  "Pass through the result only if the input was advanced by the rule"
 //
 //      return: "parser result if it succeeded and advanced input, else NULL"
 //          [any-value?]
@@ -745,8 +745,8 @@ static bool Combinator_Param_Hook(
 //          [frame!]
 //      rules [block!]
 //      state "Parse State" [frame!]
-//      /value "Initiating value (if datatype)" [element?]
-//      /path "Invoking Path" [path!]
+//      :value "Initiating value (if datatype)" [element?]
+//      :path "Invoking Path" [path!]
 //      <local> rule-start
 //  ]
 //

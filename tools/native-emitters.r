@@ -202,7 +202,7 @@ export emit-include-params-macro: func [
             if group? item [
                 item: first item
             ]
-            if not match [&any-word? &refinement? &lit-word?] item [
+            if not match [word! &refinement? &lit-word?] item [
                 continue
             ]
 

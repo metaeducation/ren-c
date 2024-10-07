@@ -9,7 +9,7 @@ log: elide/
 switch2: func [
     value [any-value?]
     cases [block!]
-    /multi
+    :multi
     <local> more found result' condition branch
 ][
     found: 'no

@@ -3,7 +3,7 @@
 
 (
     foo: lambda [x] [x]
-    bar: augment :foo [y]
+    bar: augment foo/ [y]
     all [
         [x y] = parameters of :bar
         10 = bar 10 20
@@ -22,7 +22,7 @@
     ]
     1020 = sum 1000 20
 )(
-    mix: adapt augment (x -> [x]) [y /sub] [
+    mix: adapt augment (x -> [x]) [y :sub] [
         x: reeval (either sub [:subtract] [:add]) x y
     ]
     all [
@@ -34,8 +34,8 @@
 
 ; Tests with ENCLOSE
 [
-    (switch-d: enclose (augment :switch [
-        /default "Default case if no others are found"
+    (switch-d: enclose (augment switch/ [
+        :default "Default case if no others are found"
             [block!]
     ]) lambda [f [frame!]] [
         let def: f.default
@@ -50,13 +50,13 @@
 
 ; Augmenting a specialized function
 (
-    two-a-plus-three-b: lambda [a [integer!] /b [integer!]] [
+    two-a-plus-three-b: lambda [a [integer!] :b [integer!]] [
         (2 * a) + either b [3 * b] [0]
     ]
     two-a-plus-six: specialize two-a-plus-three-b/ [b: 2]
 
     two-a-plus-six-plus-four-c: enclose augment two-a-plus-six/ [
-        /c [integer!]
+        :c [integer!]
     ] lambda [f [frame!]] [
         let old-c: f.c
         let x: eval f
@@ -76,8 +76,8 @@
 ; Check to see that AUGMENT of the help expands it.
 [(
     all wrap [
-        orig: func ["description" a "a" /b "b"] [return <unused>]
-        aug: meta:lite augment orig/ [c "c" /d "d"]
+        orig: func ["description" a "a" :b "b"] [return <unused>]
+        aug: meta:lite augment orig/ [c "c" :d "d"]
         if m: adjunct-of aug [
             m.description = null  ; description not inherited ATM
         ]

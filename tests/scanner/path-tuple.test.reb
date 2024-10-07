@@ -111,7 +111,7 @@
 
 
     transform: func [
-        {Turn PATH!/TUPLE!s into BLOCK!/GROUP!s for validation testing}
+        "Turn sequences into lists for validation testing"
 
         value [element?]
         <local> mtype

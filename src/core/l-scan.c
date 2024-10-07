@@ -2807,10 +2807,10 @@ void Shutdown_Scanner(void)
 //          [~null~ element? pack?]
 //      source "If BINARY!, must be UTF-8 encoded"
 //          [text! binary!]
-//      /next "Translate one value and give back next position"
-//      /file "File to be associated with BLOCK!s and GROUP!s in source"
+//      :next "Translate one value and give back next position"
+//      :file "File to be associated with BLOCK!s and GROUP!s in source"
 //          [file! url!]
-//      /line "Line number for start of scan, word variable will be updated"
+//      :line "Line number for start of scan, word variable will be updated"
 //          [integer! any-word?]
 //  ]
 //

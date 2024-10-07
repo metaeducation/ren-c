@@ -54,9 +54,9 @@ DECLARE_NATIVE(form)
 //      return: "null if input is void, if truncated returns integer /LIMIT "
 //          [~null~ ~[text! [~null~ integer!]]~]
 //      value [<maybe> element? splice?]
-//      /all "Use construction syntax"
-//      /flat "No indentation"
-//      /limit "Limit to a certain length"
+//      :all "Use construction syntax"
+//      :flat "No indentation"
+//      :limit "Limit to a certain length"
 //          [integer!]
 //  ]
 //
@@ -154,8 +154,8 @@ DECLARE_NATIVE(write_stdout)
 //          [block! group!]
 //      mark "Set YES for newline, NO for no newline"
 //          [yesno?]
-//      /all "Set/clear marker to end of series"
-//      /skip "Set/clear marker periodically to the end of the series"
+//      :all "Set or clear marker to end of series"
+//      :skip "Set or clear marker periodically to the end of the series"
 //          [integer!]
 //  ]
 //

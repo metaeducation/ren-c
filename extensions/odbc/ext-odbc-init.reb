@@ -41,7 +41,7 @@ statement-prototype: context [
 ]
 
 export odbc-statement-of: func [
-    {Get a statement port from a connection port}
+    "Get a statement port from a connection port"
     return: [port!]
     port [port!]
 ][
@@ -69,9 +69,9 @@ sys.util/make-scheme [
 
     actor: context [
         open: func [
-            {Open a database port}
-            port [port!]
-                {WORD! spec then assume DSN, else BLOCK! DSN-less datasource}
+            "Open a database port"
+            port "WORD! spec then assume DSN, else BLOCK! DSN-less datasource"
+                [port!]
         ][
             port.state: context [
                 access: 'write
@@ -91,8 +91,7 @@ sys.util/make-scheme [
 
         pick: func [
             port [port!]
-            index
-                {Index to pick from (only supports 1, for FIRST)}
+            index "Index to pick from (only supports 1, for FIRST)"
         ][
             fail "This is now ODBC-STATEMENT-OF"
         ]
@@ -109,7 +108,7 @@ sys.util/make-scheme [
         ]
 
         close: func [
-            {Closes a statement port only or a database port w/all statements}
+            "Closes a statement port only or a database port w/all statements"
             return: [port!]
             port [port!]
         ][
@@ -134,13 +133,13 @@ sys.util/make-scheme [
         insert: func [
             return: [integer! block!]
             port [port!]
-            sql [text! word! block!]
-                {SQL statement or catalog, parameter blocks are reduced first}
+            sql "SQL statement or catalog, parameter blocks reduced first"
+                [text! word! block!]
         ][
             return insert-odbc port.locals blockify sql
         ]
 
-        copy: func [port [port!] /part [integer!]] [
+        copy: func [port [port!] :part [integer!]] [
             return copy-odbc:part port.locals part
         ]
     ]
@@ -148,7 +147,7 @@ sys.util/make-scheme [
 
 
 sqlform: func [
-    {Helper for producing SQL string from SQL dialect}
+    "Helper for producing SQL string from SQL dialect"
 
     return: "Formed SQL string with ? in parameter spots"
         [text! issue!]  ; issue will not have spaces around it when rendered
@@ -223,14 +222,14 @@ sqlform: func [
 ; https://forum.rebol.info/t/1234
 ;
 odbc-execute: func [
-    {Run a query in the ODBC extension using the Rebol SQL query dialect}
+    "Run a query in the ODBC extension using the Rebol SQL query dialect"
 
     statement [port!]
     query "SQL text, or block that runs SPACED with ^^(...) as parameters"
         [text! block!]
-    /parameters "Explicit parameters (used if SQL string contains `?`)"
+    :parameters "Explicit parameters (used if SQL string contains `?`)"
         [block!]
-    /verbose "Show the SQL string before running it"
+    :verbose "Show the SQL string before running it"
 ][
     parameters: default [copy []]
 

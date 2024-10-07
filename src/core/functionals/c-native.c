@@ -201,8 +201,8 @@ Phase* Make_Native(
 //
 //      return: [antiform!]  ; [action?] needs NATIVE to define it!
 //      spec [block!]
-//      /combinator "This native is an implementation of a PARSE keyword"
-//      /intrinsic "This native can be called without building a frame"
+//      :combinator "This native is an implementation of a PARSE keyword"
+//      :intrinsic "This native can be called without building a frame"
 //  ]
 //
 DECLARE_NATIVE(native)

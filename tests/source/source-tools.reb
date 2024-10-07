@@ -108,7 +108,7 @@ whitelisted: [
 
 
 log-emit: func [
-    {Append a COMPOSE'd block to a log block, clearing any new-line flags}
+    "Append a COMPOSE'd block to a log block, clearing any new-line flags"
 
     return: [~]
     log [block!]
@@ -122,7 +122,7 @@ log-emit: func [
 export analyse: context [
 
     files: func [
-        {Analyse the source files of REBOL.}
+        "Analyse the source files of Rebol"
         return: [block!]
     ][
         return collect [
@@ -135,7 +135,7 @@ export analyse: context [
     ]
 
     file: func [
-        {Analyse a file returning facts.}
+        "Analyse a file returning facts"
         return: [~null~ block!]
         file
     ][
@@ -151,10 +151,10 @@ export analyse: context [
     source: context [
 
         c: func [
-            {Analyse a C file at the C preprocessing token level}
+            "Analyse a C file at the C preprocessing token level"
 
-            return: [block!]
-                "Facts about the file (lines that are too long, etc.)"
+            return: "Facts about the file (lines that are too long, etc)"
+                [block!]
             file [file!]
             data [binary!]
             <local> position  ; used sketchily in rules, no LET in parse :-/
@@ -278,7 +278,7 @@ export analyse: context [
         ]
 
         rebol: func [
-            {Analyse a Rebol file (no checks beyond those for text yet)}
+            "Analyse a Rebol file (no checks beyond those for text yet)"
 
             return: [block!]
                 "Facts about the file (end of line whitespace, etc.)"
@@ -291,7 +291,7 @@ export analyse: context [
     ]
 
     text: func [
-        {Analyse textual formatting irrespective of language}
+        "Analyse textual formatting irrespective of language"
 
         return: [block!]
             "Facts about the text file (inconsistent line endings, etc)"
@@ -415,7 +415,7 @@ export analyse: context [
 list: context [
 
     source-files: func [
-        {Retrieves a list of source files (relative paths).}
+        "Retrieves a list of source files (relative paths)"
     ][
         let files: read-deep/full/strategy source-paths :source-files-seq
 
@@ -426,7 +426,7 @@ list: context [
     ]
 
     source-files-seq: func [
-        {Take next file from a sequence that is represented by a queue.}
+        "Take next file from a sequence that is represented by a queue"
         return: [~null~ file!]
         queue [block!]
     ][
@@ -481,7 +481,7 @@ c-parser-extension: context bind bind [
 ] proto-parser c-lexical.grammar
 
 extension-of: func [
-    {Return file extension for file.}
+    "Return file extension for file"
     return: [file!]
     file [file!]
 ][

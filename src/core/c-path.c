@@ -144,7 +144,7 @@ DECLARE_NATIVE(pick)
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element?]
 //      value [any-value?]
-//      /immediate "Allow modification even if it will not mutate location"
+//      :immediate "Allow modification even if it will not mutate location"
 //  ]
 //
 DECLARE_NATIVE(poke)

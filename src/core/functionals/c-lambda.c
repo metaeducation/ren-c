@@ -177,9 +177,6 @@ DECLARE_NATIVE(lambda)
             pclass = PARAMCLASS_META;
             symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Get_Word(item)) {
-            fail ("SOFT parameter quoting no longer necessary");
-        }
         else if (Is_Quoted(item)) {
             if (Cell_Num_Quotes(item) != 1)
                 fail (item);
@@ -195,7 +192,7 @@ DECLARE_NATIVE(lambda)
             pclass = PARAMCLASS_THE;
             symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Path(item) and Is_Refinement(item)) {
+        else if (Is_Refinement(item)) {
             pclass = PARAMCLASS_NORMAL;
             symbol = VAL_REFINEMENT_SYMBOL(item);
             param_flags |= PARAMETER_FLAG_REFINEMENT;

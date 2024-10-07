@@ -228,11 +228,11 @@ make-file-path-parts: func [
 ]
 
 make-file: func [
-    {Create a FILE! using the file path specification dialect}
+    "Create a FILE! using the file path specification dialect"
 
     return: [~null~ file!]
     def [<maybe> word! path! tuple! block!]
-    /predicate [action?]
+    :predicate [action?]
     <local> result
 ][
     predicate: default [:identity]

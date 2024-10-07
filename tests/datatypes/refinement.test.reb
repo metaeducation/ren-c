@@ -1,4 +1,4 @@
 ; datatypes/refinement.r
-(refinement? '/a)
+(refinement? ':a)
 (not refinement? 1)
-(path! = type of '/a)
+(chain! = type of ':a)

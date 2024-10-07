@@ -30,7 +30,7 @@ c-break-debug: c-debug-break/  ; easy to mix up
 eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
 probe: func* [
-    {Debug print a molded value and returns that same value.}
+    "Debug print a molded value and returns that same value"
 
     return: "Same as the input value"
         [any-atom?]
@@ -154,7 +154,7 @@ elide: func* [
 ]
 
 elide-if-void: func* [
-    {Argument is evaluative, but discarded if void}
+    "Argument is evaluative, but discarded if void"
 
     return: [any-value? pack?]
     ^value' "Evaluated value to be ignored"
@@ -170,7 +170,7 @@ elide-if-void: func* [
 ||: func* [] [return ~,~]
 
 |||: func* [
-    {Inertly consumes all subsequent data, evaluating to previous result.}
+    "Inertly consumes all subsequent data, evaluating to previous result"
 
     return: [~[]~]
     'omit [element? <variadic>]
@@ -308,7 +308,7 @@ to-lit-path: func* [return: [quoted?] value [element?]] [
 ]
 
 print: func* [
-    {Output SPACED text with newline (evaluating elements if BLOCK!)}
+    "Output SPACED text with newline (evaluating elements if BLOCK!)"
 
     return: "Returns null if line outputs nothing, e.g. print [void]"
         [~ ~null~]
@@ -340,7 +340,7 @@ print: func* [
 ]
 
 echo: func* [
-    {Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes}
+    "Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes"
 
     return: [~]
     @args "If a BLOCK!, then just that block's contents--else to end of line"

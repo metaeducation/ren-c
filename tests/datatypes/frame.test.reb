@@ -108,9 +108,9 @@
         f-inner-augment: ~
         private: <not-in-prelude>
 
-        augmented-foo: adapt (augment :adapted-foo [
+        augmented-foo: adapt (augment adapted-foo/ [
             additional [integer!]
-            /private [tag!]  ; reusing name, for different variable!
+            :private [tag!]  ; reusing name, for different variable!
         ]) [
             private: <reused>
             f-inner-augment: binding of $private
@@ -155,7 +155,7 @@
 
         f-prelude: null
 
-        bar: adapt augment :foo [/private [tag!]] [
+        bar: adapt augment foo/ [:private [tag!]] [
             f-prelude: binding of $private
         ]
 
@@ -181,10 +181,10 @@
 ; This is a speculative technique, but it is being tried.
 [
     (
-        f: lambda [x /augmented [frame!]] [
+        f: lambda [x :augmented [frame!]] [
             reduce [x if augmented [augmented.y]]
         ]
-        a: adapt augment :f [y] [augmented: binding of $y]
+        a: adapt augment f/ [y] [augmented: binding of $y]
         all [
             [10] = f 10
             [10 20] = a 10 20

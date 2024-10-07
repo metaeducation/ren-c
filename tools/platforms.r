@@ -506,7 +506,7 @@ export for-each-platform: func [
             cflags: across [opt some tag!] (
                 cflags: map-each 'x cflags [to-word to-text x]
             )
-            ldflags: across [opt some &refinement?] (
+            ldflags: across [opt some &run-word?] (
                 ldflags: map-each 'x ldflags [to-word x]
             )
             libraries: across [opt some file!] (

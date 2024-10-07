@@ -30,9 +30,9 @@
 //
 //     requote: reframer func [f [frame!]] [
 //         p: first parameters of f
-//         num-quotes: quotes of f/(p)
+//         num-quotes: quotes of f.(p)
 //
-//         f/(p): noquote f/(p)
+//         f.(p): noquote f.(p)
 //
 //         return quote:depth eval f num-quotes
 //     ]
@@ -339,7 +339,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 //      return: [action?]
 //      shim "The action that has a FRAME! (or QUOTED?) argument to supply"
 //          [<unrun> frame!]
-//      /parameter "Shim parameter receiving the frame--defaults to last"
+//      :parameter "Shim parameter receiving the frame--defaults to last"
 //          [word!]
 //  ]
 //

@@ -1218,8 +1218,7 @@ generator-class: make object! [
     ]
 
     do-substitutions: meth [
-        {Substitute variables in the command with its value}
-        {(will recursively substitute if the value has variables)}
+        "Substitute variables (recursively) in the command with its value"
 
         return: [~null~ object! any-string?]
         cmd [object! any-string?]

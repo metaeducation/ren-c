@@ -30,7 +30,7 @@ REBOL [
         //          [integer!]
         //      argument "Argument description here"
         //          [text!]
-        //      /refinement "Refinement description here"
+        //      :refinement "Refinement description here"
         //  ]
         //
         DECLARE_NATIVE(native_name) {

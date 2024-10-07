@@ -255,8 +255,8 @@ DECLARE_NATIVE(shove)
 //          error!  ; raise the error
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      /undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
-//      /step "Do one step of evaluation (return null position if at tail)"
+//      :undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
+//      :step "Do one step of evaluation (return null position if at tail)"
 //  ]
 //
 DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
@@ -384,13 +384,13 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
       case REB_FRAME : {
         //
-        // !!! It is likely that the return result for the /STEP will actually
+        // !!! It is likely that the return result for the :STEP will actually
         // be a FRAME! when the input to EVALUATE is a BLOCK!, so that the
         // LET bindings can be preserved.  Binding is still a mess when it
         // comes to questions like backtracking in blocks, so review.
         //
         if (REF(step))
-            fail ("/STEP Behavior not implemented for FRAME! in EVALUATE");
+            fail (":STEP Behavior not implemented for FRAME! in EVALUATE");
 
         if (Is_Frame_Details(source))
             if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
@@ -499,7 +499,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 //      return: []
 //      restartee "Frame to restart, or bound word (e.g. REDO $RETURN)"
 //          [frame! any-word?]
-//      /sibling "Restart execution in a frame-compatible function"
+//      :sibling "Restart execution in a frame-compatible function"
 //          [<unrun> frame!]
 //  ]
 //
@@ -661,7 +661,7 @@ DECLARE_NATIVE(applique)
 //      operation [<unrun> frame!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
-//      /relax "Don't worry about too many arguments to the APPLY"
+//      :relax "Don't worry about too many arguments to the APPLY"
 //      <local> frame index  ; update // native if ANY of this changes [1]
 //  ]
 //
@@ -912,7 +912,7 @@ DECLARE_NATIVE(apply)
 //      @(operation) [<unrun> word! tuple! chain! path! frame! action?]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
-//      /relax "Don't worry about too many arguments to the APPLY"
+//      :relax "Don't worry about too many arguments to the APPLY"
 //      <local> frame index  ; need frame compatibility with APPLY
 //  ]
 //

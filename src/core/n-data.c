@@ -112,10 +112,10 @@ DECLARE_NATIVE(as_pair)
 //          [any-list? any-path? any-word? quoted?]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word? any-context?]
-//      /copy "Bind and return a deep copy of a block, don't modify original"
-//      /only "Bind only first block (not deep)"
-//      /new "Add to context any new words found"
-//      /set "Add to context any new set-words found"
+//      :copy "Bind and return a deep copy of a block, don't modify original"
+//      :only "Bind only first block (not deep)"
+//      :new "Add to context any new words found"
+//      :set "Add to context any new set-words found"
 //  ]
 //
 DECLARE_NATIVE(bind)
@@ -479,7 +479,7 @@ DECLARE_INTRINSIC(refinement_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Path(arg) and Is_Refinement(arg));
+    Init_Logic(out, Is_Get_Word(arg));
 }
 
 
@@ -752,7 +752,7 @@ DECLARE_INTRINSIC(any_inert_q)
 //      return: [block! any-word? set-word?]
 //      word [block! any-word? set-word?]
 //          "A word or block (modified) (returned)"
-//      /deep
+//      :deep
 //          "Process nested blocks"
 //  ]
 //
@@ -926,10 +926,10 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
 //
 //  Trap_Get_From_Steps_On_Stack_Maybe_Vacant: C
 //
-// The GET and SET operations are able to tolerate /GROUPS, whereby you can
+// The GET and SET operations are able to tolerate :GROUPS, whereby you can
 // run somewhat-arbitrary code that appears in groups in tuples.  This can
 // mean that running GET on something and then SET on it could run that code
-// twice.  If you want to avoid that, a sequence of /STEPS can be requested
+// twice.  If you want to avoid that, a sequence of :STEPS can be requested
 // that can be used to find the same location after initially calculating
 // the groups, without doubly evaluating.
 //
@@ -1495,71 +1495,65 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
     }
 
     const Element* tail;
-    const Element* head = Cell_List_At(&tail, path);
+    const Element* at = Cell_List_At(&tail, path);
 
-    if (Is_Blank(head)) {  // leading slash means execute (but we're GET-ing)
-        ++head;
-        assert(not Is_Blank(head));  // two blanks would be `/` as WORD!
+    Context* derived = Derive_Binding(context, path);
+
+    if (Is_Blank(at)) {  // leading slash means execute (but we're GET-ing)
+        ++at;
+        assert(not Is_Blank(at));  // two blanks would be `/` as WORD!
     }
 
-    if (Is_Group(head)) {
-        //
-        // Note: Historical Rebol did not allow GROUP! at the head of path.
-        // We can thus restrict head-of-path evaluations to ACTION!.
-        //
-        Context* derived = Derive_Binding(context, path);
-        if (Eval_Value_Throws(out, head, derived))
+    if (Is_Group(at)) {
+        if (Eval_Value_Throws(out, at, derived))
             return Error_No_Catch_For_Throw(TOP_LEVEL);
     }
-    else if (Is_Tuple(head)) {
-        Context* derived = Derive_Binding(context, path);
-
+    else if (Is_Tuple(at)) {
         DECLARE_VALUE (steps);
         Option(Error*) error = Trap_Get_Any_Tuple(  // vacant is error
-            out, steps, head, derived
+            out, steps, at, derived
         );
         if (error)
             fail (unwrap error);  // must be abrupt
     }
-    else if (Is_Word(head)) {
-        Context* derived = Derive_Binding(context, path);
-        Option(Error*) error = Trap_Get_Any_Word(out, head, derived);
+    else if (Is_Word(at)) {
+        Option(Error*) error = Trap_Get_Any_Word(out, at, derived);
         if (error)
             fail (unwrap error);  // must be abrupt
     }
-    else if (Is_Chain(head)) {
-        if ((head + 1 != tail) and not Is_Blank(head + 1))
+    else if (Is_Chain(at)) {
+        if ((at + 1 != tail) and not Is_Blank(at + 1))
             fail ("CHAIN! can only be last item in a path right now");
         Option(Error*) error = Trap_Get_Chain_Push_Refinements(
             out,
             safe,
-            c_cast(Element*, head),
-            Derive_Binding(Derive_Binding(context, path), head)
+            c_cast(Element*, at),
+            Derive_Binding(derived, at)
         );
         if (error)
             return error;
         return nullptr;
     }
     else
-        fail (head);  // what else could it have been?
+        fail (at);  // what else could it have been?
 
-    ++head;
+    ++at;
 
-    if (head + 1 != tail and not Is_Blank(head + 1))
-        fail ("PATH! can only be two items long right now");
+    if (at == tail or Is_Blank(at))
+        goto ensure_out_is_action;
 
-    if (Is_Action(out))
-        return nullptr;  // e.g. lib.path/
+    if (at + 1 != tail and not Is_Blank(at + 1))
+        fail ("PATH! can only be two items max at this time");
 
     // When we see `lib/append` for instance, we want to pick APPEND out of
     // LIB and make sure it is an action.
     //
     if (Any_Context(out)) {
-        if (Is_Chain(head)) {  // lib/append:dup
+        if (Is_Chain(at)) {  // lib/append:dup
             Option(Error*) error = Trap_Get_Chain_Push_Refinements(
                 out,
                 safe,
-                c_cast(Element*, head),
+                c_cast(Element*, at),
                 Cell_Varlist(out)  // need to find head of chain in object
             );
             if (error)
@@ -1574,12 +1568,11 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             cast(RebolValue*, temp),
             Canon(PICK_P),
             cast(const RebolValue*, out),  // was quoted above
-            rebQ(cast(const RebolValue*, head)))  // Cell, but is Element*
+            rebQ(cast(const RebolValue*, at)))  // Cell, but is Element*
         ){
             return Error_No_Catch_For_Throw(TOP_LEVEL);
         }
         Copy_Cell(out, Decay_If_Unstable(temp));
-        ++head;
     }
     else
         fail (path);
@@ -1638,8 +1631,8 @@ DECLARE_NATIVE(resolve)
 //      return: [any-value?]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
 //          [<maybe> any-word? any-sequence? any-group? any-chain? the-block!]
-//      /any "Do not error on unset words"
-//      /groups "Allow GROUP! Evaluations"
+//      :any "Do not error on unset words"
+//      :groups "Allow GROUP! Evaluations"
 //  ]
 //
 DECLARE_NATIVE(get)
@@ -2009,8 +2002,8 @@ void Set_Var_May_Fail(
 //          [~void~ any-word? any-sequence? any-group?
 //          any-get-value? any-set-value? the-block!]
 //      ^value [raised? any-value?]  ; tunnels failure
-//      /any "Do not error on unset words"
-//      /groups "Allow GROUP! Evaluations"
+//      :any "Do not error on unset words"
+//      :groups "Allow GROUP! Evaluations"
 //  ]
 //
 DECLARE_NATIVE(set)
@@ -2883,7 +2876,7 @@ DECLARE_NATIVE(as)
 //
 //      return: [~null~ text!]
 //      value [<maybe> any-value?]
-//      /strict "Don't allow CR LF sequences in the alias"
+//      :strict "Don't allow CR LF sequences in the alias"
 //  ]
 //
 DECLARE_NATIVE(as_text)

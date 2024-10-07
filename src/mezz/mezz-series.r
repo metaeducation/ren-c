@@ -38,7 +38,7 @@ last?: single?: lambda [
 extend: func [
     "Extend an object, map, or block type with word and value pair."
     return: [any-value?]
-    obj [object! map!] {object to extend (modified)}
+    obj [object! map!] "object to extend (modified)"
     word [any-word?]
     val [any-value?]
 ][
@@ -48,13 +48,13 @@ extend: func [
 
 
 array: func [
-    {Makes and initializes a block of a given size}
+    "Makes and initializes a block of a given size"
 
     return: "Generated block or null if blank input"
         [block!]
     size "Size or block of sizes for each dimension"
         [<maybe> integer! block!]
-    /initial "Initial value (will be called each time if action)"
+    :initial "Initial value (will be called each time if action)"
         [element? action?]
     <local> rest block
 ][
@@ -94,7 +94,7 @@ array: func [
 
 
 replace: func [
-    {Replaces a search value with the replace value within the target series}
+    "Replaces a search value with the replace value within the target series"
 
     return: [any-series?]
     target "Series to replace within (modified)"
@@ -105,8 +105,8 @@ replace: func [
         [~void~ element? splice? action?]
 
     ; !!! Note this aliases CASE native!
-    /one "Replace all occurrences"
-    /case "Case-sensitive replacement"
+    :one "Replace all occurrences"
+    :case "Case-sensitive replacement"
 
     <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
@@ -117,7 +117,7 @@ replace: func [
 
     pos: target
 
-    while [[pos /tail]: find // [
+    while [[pos :tail]: find // [
         pos
         get $pattern
         :case case_REPLACE
@@ -149,15 +149,15 @@ replace: func [
 ; reword "$1 is $2." [1 "This" 2 "that"] => "This is that."
 ;
 reword: func [
-    {Make a string or binary based on a template and substitution values}
+    "Make a string or binary based on a template and substitution values"
 
     return: [any-string? binary!]
     source "Template series with escape sequences"
         [any-string? binary!]
     values "Keyword literals and value expressions"
         [map! object! block!]
-    /case "Characters are case-sensitive"
-    /escape "Escape char(s) or [prefix suffix] delimiters (default is $)"
+    :case "Characters are case-sensitive"
+    :escape "Escape char(s) or [prefix suffix] delimiters (default is $)"
         [char? any-string? word! binary! block!]
 
     <static>
@@ -279,7 +279,7 @@ reword: func [
                         ]
                         append out switch:type v [
                             frame! [
-                                apply:relax v [:keyword-match]  ; arity-0 okay
+                                apply:relax v [keyword-match]  ; arity-0 okay
                             ]
                             block! [eval v]
                         ] else [
@@ -302,18 +302,18 @@ reword: func [
 
 
 move: func [
-    {Move a value or span of values in a series}
+    "Move a value or span of values in a series"
 
     return: [~]  ; !!! Define return value?
     source "Source series (modified)"
         [any-series?]
     offset "Offset to move by, or index to move to"
         [integer!]
-    /part "Move part of a series by length"
+    :part "Move part of a series by length"
         [integer!]
-    /skip "Treat the series as records of fixed size"
+    :skip "Treat the series as records of fixed size"
         [integer!]
-    /to "Move to an index relative to the head of the series"
+    :to "Move to an index relative to the head of the series"
 ][
     part: default [1]
     if skip [
@@ -329,12 +329,12 @@ move: func [
 
 
 extract: func [
-    {Extracts a value from a series at regular intervals}
+    "Extracts a value from a series at regular intervals"
 
     series [any-series?]
     width "Size of each entry (the skip), negative for backwards step"
         [integer!]
-    /index "Extract from offset position"
+    :index "Extract from offset position"
         [integer!]
 ][
     if zero? width [return make (type of series) 0]  ; avoid an infinite loop
@@ -355,12 +355,12 @@ extract: func [
 
 
 alter: func [
-    {Append value if not found, else remove it; returns true if added}
+    "Append value if not found, else remove it; returns true if added"
 
     return: [logic?]
     series [any-series? port! bitset!] {(modified)}
     value
-    /case "Case-sensitive comparison"
+    :case "Case-sensitive comparison"
 ][
     case_ALTER: case
     case: lib.case/
@@ -382,7 +382,7 @@ alter: func [
 
 
 collect*: func [
-    {Evaluate body, and return block of values collected via keep function}
+    "Evaluate body, and return block of values collected via keep function"
 
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
         [~null~ block!]
@@ -429,9 +429,9 @@ collect: redescribe [
 
 format: func [
     "Format a string according to the format dialect."
-    rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}
+    rules "A block in the format dialect. E.g. [10 -10 #- 4]"
     values
-    /pad [char? integer!] {char or char code, but 0 -> #"0"}
+    :pad [char? integer!] "char or char code, but 0 -> #0"
 ][
     pad: default [space]
     case [
@@ -499,7 +499,7 @@ printf: func [
 
 
 split: func [
-    {Split series in pieces: fixed/variable size, fixed number, or delimited}
+    "Split series in pieces: fixed/variable size, fixed number, or delimited"
 
     return: [~null~ block!]
     series "The series to split"
@@ -516,7 +516,7 @@ split: func [
             splice?  ; split on a splice's literal contents
             quasiform!  ; alternate way to pass in splice or void
         ]
-    /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
+    :into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
     if (void? dlm) or ('~void~ = dlm) [
         return reduce [series]
@@ -608,7 +608,7 @@ split: func [
     ]]
 
     ; Special processing, to handle cases where the spec'd more items in
-    ; /into than the series contains (so we want to append empty items),
+    ; :into than the series contains (so we want to append empty items),
     ; or where the dlm was a char/string/charset and it was the last char
     ; (so we want to append an empty field that the above rule misses).
     ;
@@ -655,11 +655,11 @@ find-all: func [
     "Find all occurrences of a value within a series (allows modification)."
 
     return: [~]
-    'series [word!]
-        "Variable for block, string, or other series"
+    'series "Variable for block, string, or other series"
+        [word!]
     value
-    body [block!]
-        "Evaluated for each occurrence"
+    body "Evaluated for each occurrence"
+        [block!]
 ][
     verify [any-series? orig: get series]
     while [any [

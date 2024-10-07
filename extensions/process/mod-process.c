@@ -77,19 +77,19 @@
 //
 //  "Run another program by spawning a new process"
 //
-//      return: "If /WAIT, the forked process ID, else exit code"
+//      return: "If :WAIT, the forked process ID, else exit code"
 //          [integer!]
 //      command "OS-local command line, block with arguments, executable file"
 //          [text! block! file!]
-//      /wait "Wait for command to terminate before returning"
-//      /console "Runs command with I/O redirected to console"
-//      /shell "Forces command to be run from shell"
-//      /info "Returns process information object"
-//      /input "Redirects stdin (none = /dev/null)"
+//      :wait "Wait for command to terminate before returning"
+//      :console "Runs command with I/O redirected to console"
+//      :shell "Forces command to be run from shell"
+//      :info "Returns process information object"
+//      :input "Redirects stdin (none = /dev/null)"
 //          ['none 'inherit text! binary! file!]
-//      /output "Redirects stdout (none = /dev/null)"
+//      :output "Redirects stdout (none = /dev/null)"
 //          ['none 'inherit text! binary! file!]
-//      /error "Redirects stderr (none = /dev/null)"
+//      :error "Redirects stderr (none = /dev/null)"
 //          ['none 'inherit text! binary! file!]
 //  ]
 //
@@ -107,8 +107,8 @@ DECLARE_NATIVE(call_internal_p)
 //
 //  "Ask the OS or registry what command(s) to use for starting a browser"
 //
-//      return: [block!]
-//          {Block of strings, where %1 should be substituted with the string}
+//      return: "Block of strings, %1 should be substituted with the string"
+//          [block!]
 //  ]
 //
 DECLARE_NATIVE(get_os_browsers)
@@ -207,8 +207,8 @@ DECLARE_NATIVE(get_os_browsers)
 //  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)"
 //
 //      return: [~]
-//      duration [integer! decimal! time!]
-//          {Length to sleep (integer and decimal are measuring seconds)}
+//      duration "Length to sleep (integer and decimal measure seconds)"
+//          [integer! decimal! time!]
 //  ]
 //
 DECLARE_NATIVE(sleep)

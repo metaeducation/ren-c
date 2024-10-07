@@ -1611,7 +1611,7 @@ Value* ODBC_Column_To_Rebol_Value(
 //      return: "Block of row blocks for selects and catalog functions"
 //          [block!]
 //      statement [object!]
-//      /part [integer!]
+//      :part [integer!]
 //  ]
 //
 DECLARE_NATIVE(copy_odbc)

@@ -25,7 +25,7 @@
 //
 //     >> victim: func [] [print "This gets hijacked."]
 //
-//     >> reference: :victim  ; both words point to the same function identity
+//     >> reference: victim/  ; both words point to the same function identity
 //
 //     >> victim
 //     This gets hijacked.
@@ -33,7 +33,7 @@
 //     >> reference
 //     This gets hijacked.
 //
-//     >> hijack :victim (func [] [print "HIJACK!"])
+//     >> hijack victim/ (func [] [print "HIJACK!"])
 //
 //     >> victim
 //     HIJACK!
@@ -51,7 +51,7 @@
 //   hold "references" to functions internally.  These references are also
 //   affected by the hijacking, which means it's easy to get infinite loops:
 //
-//       >> hijack :load (adapt load/ [print "LOADING!"])
+//       >> hijack load/ (adapt load/ [print "LOADING!"])
 //
 //       >> load "<for example>"
 //       LOADING!
@@ -63,7 +63,7 @@
 //   that has the adaptation.  Working around this problem means remembering
 //   to ADAPT a COPY:
 //
-//       >> hijack :load (adapt copy :load [print "LOADING!"])
+//       >> hijack load/ (adapt copy load/ [print "LOADING!"])
 //
 //       >> load "<for example>"
 //       LOADING!
@@ -89,8 +89,8 @@
 // and repetition of logic in Eval_Core.  Because R3-Alpha refinements took
 // multiple arguments, it could also fail with "adversarial" prototypes:
 //
-//     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
-//                    foo/b 1 2  =>  bar/b 1 2
+//     foo: func [a :b c] [...]  =>  bar: func [:b d e] [...]
+//                    foo:b 1 2  =>  bar:b 1 2
 //
 void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 {

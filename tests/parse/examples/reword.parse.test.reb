@@ -7,8 +7,8 @@
     return: [any-string? binary!]
     source [any-string? binary!]
     values [map! object! block!]
-    /case
-    /escape [char?! any-string? word! binary! block!]
+    :case
+    :escape [char?! any-string? word! binary! block!]
 
     <static>
 
@@ -38,7 +38,7 @@
                 prefix: [_ (void) | any (delimiter-types)]
                 suffix: [_ (void) | any (delimiter-types)]
             ] else [
-                fail ["Invalid /ESCAPE delimiter block" escape]
+                fail ["Invalid :ESCAPE delimiter block" escape]
             ]
         ]
     ] else [
@@ -96,7 +96,7 @@
                 let v: select // [values keyword-match, :case case_REWORD]
                 append out switch:type v [
                     frame! [
-                        apply:relax v [:keyword-match]  ; arity-0 ok
+                        apply:relax v [keyword-match]  ; arity-0 ok
                     ]
                     block! [eval v]
                 ] else [

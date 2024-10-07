@@ -83,7 +83,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
     ]
 
     dialect-hook: meth [
-        {Receives code block, parse and transform, send back to CONSOLE eval}
+        "Receives code block, parse and transform, send back to CONSOLE eval"
         return: [block!]
         b [block!]
     ][
@@ -117,9 +117,9 @@ backtrace*: func [
         "Where to consider the trace point as starting from"
     level [blank! integer!]
         "Stack level to return frame for (blank to list)"
-    /limit "Max number of frames (pending and active), false for no limit"
+    :limit "Max number of frames (pending and active), false for no limit"
         [logic? integer!]
-    /brief "Do not list depths, just function labels on one line"
+    :brief "Do not list depths, just function labels on one line"
 ][
     let get-frame: not blank? :level
 
@@ -296,7 +296,7 @@ backtrace*: func [
 
 
 backtrace: func [
-    {Prints out a backtrace at the current location}
+    "Prints out a backtrace at the current location"
 
     return: [~]
 ][
@@ -336,10 +336,10 @@ interrupt: adapt breakpoint*/ [
 
 
 debug: func [
-    {Dialect for interactive debugging, see documentation for details}
+    "Dialect for interactive debugging, see documentation for details"
     return: [~]
-    'value [~null~ integer! frame! block!]
-        {Stack level to inspect or dialect block, or enter debug mode}
+    'value "Stack level to inspect or dialect block, or enter debug mode"
+        [~null~ integer! frame! block!]
 ][
     if not integer? :value [
         fail "Since switching to usermode, for now DEBUG only takes INTEGER!"

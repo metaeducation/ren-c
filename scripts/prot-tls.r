@@ -201,7 +201,7 @@ bytes-to-version: reverse copy version-to-bytes
 
 
 emit: func [
-    {Emits binary data, optionally marking positions with SET-WORD!}
+    "Emits binary data, optionally marking positions with SET-WORD!"
 
     return: [~]
     ctx [object!]
@@ -219,7 +219,7 @@ emit: func [
         ]
         else [
             let result
-            if [code /result]: evaluate:step code [
+            if [code :result]: evaluate:step code [
                 if void? :result [continue]  ; invisible
                 append ctx.msg ensure binary! :result
             ]
@@ -270,7 +270,7 @@ make-tls-error: lambda [
 ; Yet it's a good, short, real-world case to look at through a Rebol lens.
 
 parse-asn: func [
-    {Create a legible Rebol-structured BLOCK! from an ASN.1 BINARY! encoding}
+    "Create a legible Rebol-structured BLOCK! from an ASN.1 BINARY! encoding"
 
     return: [~null~ block!]
     data [binary!]
@@ -461,7 +461,7 @@ update-write-state: make-state-updater 'write [
 client-hello: func [
     return: [~]
     ctx [object!]
-    /version "TLS version to request (block is [lowest highest] allowed)"
+    :version "TLS version to request (block is [lowest highest] allowed)"
         [decimal! block!]
 ][
     version: default '[1.0 1.2]
@@ -877,8 +877,8 @@ encrypt-data: func [
     return: [binary!]
     ctx [object!]
     content [binary!]
-    /type
-        [binary!] "application data is default"
+    :type "application data is default"
+        [binary!]
 ][
     type: default [#{17}]  ; #application
 
@@ -1001,7 +1001,7 @@ parse-protocol: func [
 
 
 grab: enfix func [
-    {Extracts N bytes from a BINARY!, and also updates its position}
+    "Extracts N bytes from a BINARY!, and also updates its position"
 
     return: "BINARY! (or INTEGER! if GRAB-INT enclosure is used)"
         [binary! integer!]
@@ -1534,7 +1534,7 @@ parse-response: func [
 
 
 prf: func [
-    {(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries}
+    "(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries"
 
     return: [binary!]
     ctx [object!]  ; needed for ctx.version, prf changed in TLS 1.2

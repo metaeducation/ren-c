@@ -35,10 +35,10 @@
 //  "Provides status and statistics information about the interpreter"
 //
 //      return: [~null~ time! integer! object!]
-//      /show "Print formatted results to console"
-//      /profile "Returns profiler object"
-//      /evals "Number of values evaluated by interpreter"
-//      /pool "Dump all flex in pool"
+//      :show "Print formatted results to console"
+//      :profile "Returns profiler object"
+//      :evals "Number of values evaluated by interpreter"
+//      :pool "Dump all flex in pool"
 //          [integer!]
 //  ]
 //

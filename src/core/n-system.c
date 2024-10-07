@@ -49,7 +49,7 @@ DECLARE_NATIVE(halt)
 //      return: []
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [integer!]
-//      /abrupt "Don't shut down, end process immediately (leaks in Valgrind)"
+//      :abrupt "Don't shut down, end process immediately (leaks in Valgrind)"
 //  ]
 //
 DECLARE_NATIVE(exit)  // moved to SYS.UTIL/EXIT by boot code, for safety
@@ -72,13 +72,13 @@ DECLARE_NATIVE(exit)  // moved to SYS.UTIL/EXIT by boot code, for safety
 //
 //      return: "Number of Flex Nodes recycled (if applicable)"
 //          [~null~ integer!]
-//      /off "Disable auto-recycling"
-//      /on "Enable auto-recycling"
-//      /ballast "Trigger for auto-recycle (memory used)"
+//      :off "Disable auto-recycling"
+//      :on "Enable auto-recycling"
+//      :ballast "Trigger for auto-recycle (memory used)"
 //          [integer!]
-//      /torture "Constant recycle (for internal debugging)"
-//      /watch "Monitor recycling (debug only)"
-//      /verbose "Dump information about Flexes being recycled (debug only)"
+//      :torture "Constant recycle (for internal debugging)"
+//      :watch "Monitor recycling (debug only)"
+//      :verbose "Dump information about Flexes being recycled (debug only)"
 //  ]
 //
 DECLARE_NATIVE(recycle)
@@ -288,8 +288,7 @@ DECLARE_NATIVE(c_debug_tick)
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
-//      return: [~[]~]
-//          "Invisibly returns what the expression to the right would have"
+//      return: [~[]~] "Invisible"
 //  ]
 //
 DECLARE_NATIVE(c_debug_break)

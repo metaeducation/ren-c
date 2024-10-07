@@ -141,7 +141,7 @@
             [integer! ~[integer! block!]~]
         n "The number queens on to place the board of size nxn"
             [integer!]
-        /countonly "Only print the number of solutions found"
+        :countonly "Only print the number of solutions found"
     ][
         ; We need to know this within our recursive function
         either countonly [
@@ -238,7 +238,7 @@
     [num boards]: solve-n-queens 5
     all [
         num = 10
-        boards = reduce // [:predicate :trim, [
+        boards = reduce // [:predicate trim/, [
            {Q . . . .
             . . Q . .
             . . . . Q

@@ -40,11 +40,11 @@ REBOL [
 
 
 compile: func [
-    {Compiles one or more native functions at the same time, with options.}
+    "Compiles one or more native functions at the same time, with options"
 
     return: [~]
     compilables "Functions from MAKE-NATIVE, TEXT! strings of code, ..."
-    /settings [block!] {
+    :settings [block!] {
         The block supports the following dialect:
             options [block! text!]
             include-path [block! file! text!]
@@ -56,9 +56,9 @@ compile: func [
             output-file [file! text!]
             debug [word!]  ; !!! currently unimplemented
     }
-    /files "COMPILABLES represents a list of disk files (TEXT! paths)"
-    /inspect "Return the C source code as text, but don't compile it"
-    /nostdlib "Do not include <stdlib.h> automatically with librebol"
+    :files "COMPILABLES represents a list of disk files (TEXT! paths)"
+    :inspect "Return the C source code as text, but don't compile it"
+    :nostdlib "Do not include <stdlib.h> automatically with librebol"
 ][
     ; !!! Due to module dependencies there's some problem with GET-ENV not
     ; being available in some builds.  It gets added to lib but is somehow not
@@ -460,14 +460,14 @@ compile: func [
 
 
 c99: func [
-    {http://pubs.opengroup.org/onlinepubs/9699919799/utilities/c99.html}
+    "http://pubs.opengroup.org/onlinepubs/9699919799/utilities/c99.html"
 
     return: "Exit status code (try to match gcc/tcc)"
         [integer!]
     command "POSIX c99 invocation string (system.options.args if <end>)"
         [<end> block! text!]
-    /inspect
-    /runtime "Alternate way of specifying CONFIG_TCCDIR environment variable"
+    :inspect
+    :runtime "Alternate way of specifying CONFIG_TCCDIR environment variable"
         [text! file!]
 ][
     command: spaced any [command, system.options.args]
@@ -634,10 +634,10 @@ c99: func [
 
 
 bootstrap: func [
-    {Download Rebol sources from GitHub and build using TCC}
+    "Download Rebol sources from GitHub and build using TCC"
     return: [~]
-    /options "Use system.options.ARGS to get additional make.r options"
-    /cheat "Use CALL to do the download and unzip vs. internal (faster)"
+    :options "Use system.options.ARGS to get additional make.r options"
+    :cheat "Use CALL to do the download and unzip vs. internal (faster)"
 ][
     ; We fetch the .ZIP file of the master branch from GitHub.  Note that this
     ; actually contains a subdirectory called `ren-c-master` which the

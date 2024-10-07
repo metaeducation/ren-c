@@ -369,10 +369,10 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 //      value [
 //          any-word? any-tuple? any-series? bitset! map! object! module!
 //      ]
-//      /deep "Protect all sub-series/objects as well"
-//      /words "Process list as words (and path words)"
-//      /values "Process list of values (implied GET)"
-//      /hide "Hide variables (avoid binding and lookup)"
+//      :deep "Protect all sub-series/objects as well"
+//      :words "Process list as words (and path words)"
+//      :values "Process list of values (implied GET)"
+//      :hide "Hide variables (avoid binding and lookup)"
 //  ]
 //
 DECLARE_NATIVE(protect)
@@ -422,10 +422,10 @@ DECLARE_NATIVE(protect)
 //
 //      return: [word! any-series? bitset! map! object! module!]
 //      value [word! any-series? bitset! map! object! module!]
-//      /deep "Protect all sub-series as well"
-//      /words "Block is a list of words"
-//      /values "Process list of values (implied GET)"
-//      /hide "HACK to make PROTECT and UNPROTECT have the same signature"
+//      :deep "Protect all sub-series as well"
+//      :words "Block is a list of words"
+//      :values "Process list of values (implied GET)"
+//      :hide "HACK to make PROTECT and UNPROTECT have the same signature"
 //  ]
 //
 DECLARE_NATIVE(unprotect)
@@ -570,8 +570,8 @@ void Force_Value_Frozen_Core(
 //      return: [any-value?]
 //      value "Value to make permanently immutable"
 //          [any-value?]
-//      /deep "Freeze deeply"
-//  ;   /blame "What to report as source of lock in error"
+//      :deep "Freeze deeply"
+//  ;   :blame "What to report as source of lock in error"
 //  ;       [any-series?]  ; not exposed for the moment
 //  ]
 //

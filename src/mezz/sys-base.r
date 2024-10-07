@@ -55,12 +55,12 @@ lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
 make-quit: lambda [
     "Make a quit function out of a plain THROW"
     quit* [action?]
-    /console "Just integer, no argument acts like quit 0"  ; [1]
+    :console "Just integer, no argument acts like quit 0"  ; [1]
 ][
     func compose:deep [
-        ^result "If not /value, integer! exit code (non-zero is failure)"
+        ^result "If not :value, integer! exit code (non-zero is failure)"
             [any-atom? (if console [<end>])]  ; endability has pitfalls [2]
-        /value "Return any value, non-raised are exit code 0"
+        :value "Return any value, non-raised are exit code 0"
     ][
         result: default [just '0]
         if value [  ; not an exit status integer
@@ -126,9 +126,9 @@ module: func [
         [~void~ block! object!]
     body "The body of the module"
         [block!]
-    /mixin "Bind body to this additional object before executing"
+    :mixin "Bind body to this additional object before executing"
         [object!]
-    /into "Add data to existing MODULE! context (vs making a new one)"
+    :into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
     <local>
         mod product'  ; note: overwrites MODULO shorthand in this function
@@ -269,7 +269,7 @@ do: func [
             tag!  ; load relative to system.script.name
             the-word!  ; module name (URL! looked up from table)
         ]
-    /args "Args passed as system.script.args to a script (normally a string)"
+    :args "Args passed as system.script.args to a script (normally a string)"
         [element?]
 ][
     return [_ _ @]: import*:args null source args

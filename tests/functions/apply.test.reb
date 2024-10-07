@@ -91,7 +91,7 @@
 ; Refinements that take no argument can only be OKAY or NULL
 [
     (
-        testme: func [/refine] [return refine]
+        testme: func [:refine] [return refine]
         ok
     )
 

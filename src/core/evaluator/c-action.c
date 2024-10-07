@@ -249,13 +249,13 @@ Bounce Action_Executor(Level* L)
         // match the "consumption order" of the expressions that need to
         // be fetched from the callsite.  For instance:
         //
-        //     foo: func [a /b [integer!] /c [integer!]] [...]
+        //     foo: func [a :b [integer!] :c [integer!]] [...]
         //
-        //     foo/b/c 10 20 30
-        //     foo/c/b 10 20 30
+        //     foo:b:c 10 20 30
+        //     foo:c:b 10 20 30
         //
-        // The first PATH! pushes /B to the top of stack, with /C below.
-        // The second PATH! pushes /C to the top of stack, with /B below
+        // The first CHAIN! pushes :B to the top of stack, with :C below.
+        // The second CHAIN! pushes :C to the top of stack, with :B below
         //
         // While historically Rebol paths for invoking functions could only
         // use refinements for optional parameters, Ren-C leverages the same

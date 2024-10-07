@@ -20,7 +20,7 @@
 ; specializing hijacked functions afterward.
 [
     (
-        three: func [x y z /available "add me" [integer!]] [
+        three: func [x y z :available "add me" [integer!]] [
             return x + y + z + either available [available] [0]
         ]
         60 = (three 10 20 30)
@@ -35,7 +35,7 @@
 
     (
         hijack three/ func [
-            a b c /unavailable /available "mul me" [integer!]
+            a b c :unavailable :available "mul me" [integer!]
         ][
             return a * b * c * either available [available] [1]
         ]

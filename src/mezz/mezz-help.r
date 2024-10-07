@@ -13,7 +13,7 @@ REBOL [
 
 
 spec-of: func [
-    {Generate a block which could be used as a "spec block" from an action.}
+    "Generate a block which could be used as a 'spec block' from an action"
 
     return: [block!]
     action [<unrun> frame!]
@@ -49,7 +49,7 @@ spec-of: func [
 
 
 description-of: func [
-    {One-line summary of a value's purpose}
+    "One-line summary of a value's purpose"
 
     return: [~null~ text!]
     v [<maybe> any-value?]
@@ -121,7 +121,7 @@ print-general-help: func [
 help-action: func [
     return: [~]
     frame [<unrun> frame!]
-    /name [word! tuple! path!]
+    :name [word! tuple! path!]
 ][
     name: default [label of frame]
     if name [
@@ -138,10 +138,11 @@ help-action: func [
     parse parameters of frame [
         args: across opt some [
             word! | meta-word! | the-word! | &quoted?  ; quoted too generic?
+            | the-group!
         ]
-        refinements: across opt some path!  ; as mentioned, these are at tail
+        refinements: across opt some &refinement?  ; these are at tail
     ] except [
-        fail ["Unknown results in PARAMETERS OF:" mold parameters of frame]
+        fail ["Unknown results in PARAMETERS OF:" @(parameters of frame)]
     ]
 
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
@@ -159,7 +160,7 @@ help-action: func [
     print "DESCRIPTION:"
     print [_ _ _ _ (any [select maybe adjunct 'description, "(undocumented)"])]
 
-    let print-args: [list /indent-words] -> [
+    let print-args: [list :indent-words] -> [
         for-each 'key list [
             let param: meta:lite select frame to-word noquote key
 
@@ -197,7 +198,7 @@ help-action: func [
     if not empty? refinements [
         print newline
         print "REFINEMENTS:"
-        print-args/indent-words refinements
+        print-args:indent-words refinements
     ]
 
     return ~
@@ -209,7 +210,7 @@ help-value: func [
 
     return: [~]
     ^atom' [any-atom?]
-    /name [word! tuple! path!]
+    :name [word! tuple! path!]
 ][
     if name [
         name: uppercase form name
@@ -316,7 +317,7 @@ help: func [
     return: [~]
     @topic "WORD! to explain, or other HELP target (if no args, general help)"
         [<end> element?]
-    /web "Open web browser to related documentation."
+    :web "Open web browser to related documentation."
 ][
     if null? topic [  ; just `>> help` or `eval [help]` or similar
         print-general-help
@@ -394,7 +395,7 @@ help: func [
         ]
 
         text! [  ; substring search for help
-            if let types: summarize-obj/pattern make-libuser topic [
+            if let types: summarize-obj:pattern make-libuser topic [
                 print "Found these related words:"
                 for-each 'line sort types [
                     print line
@@ -405,7 +406,7 @@ help: func [
         ]
 
         type-word! [
-            if instances: summarize-obj/pattern make-libuser value [
+            if instances: summarize-obj:pattern make-libuser value [
                 print ["Found these" (uppercase form topic) "words:"]
                 for-each 'line instances [
                     print line
@@ -502,13 +503,13 @@ source: func [
 
 
 what: func [
-    {Prints a list of known actions}
+    "Prints a list of known actions"
 
     return: [~ block!]
     @name [<end> word! lit-word?]
         "Optional module name"
-    /args "Show arguments not titles"
-    /as-block "Return data as block"
+    :args "Show arguments not titles"
+    :as-block "Return data as block"
 ][
     let list: make block! 400
     let size: 0

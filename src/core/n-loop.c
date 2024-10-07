@@ -124,7 +124,7 @@ DECLARE_NATIVE(definitional_break)
 //  "Throws control back to top of loop for next iteration"
 //
 //      return: []
-//      /with "Act as if loop body finished with this value"
+//      :with "Act as if loop body finished with this value"
 //          [any-value?]
 //  ]
 //
@@ -646,7 +646,7 @@ DECLARE_NATIVE(for_skip)
 //  "End the current iteration of CYCLE, optionally returning a value"
 //
 //      return: []
-//      /with "Act as if loop body finished with this value"
+//      :with "Act as if loop body finished with this value"
 //          [any-value?]
 //  ]
 //
@@ -1198,8 +1198,8 @@ DECLARE_NATIVE(for_each)
 //
 //  "Iterate and return null if any previous body evaluations were falsey"
 //
-//      return: [any-value?]
-//          {null on BREAK, blank on empty, false or the last truthy value}
+//      return: "null on BREAK, void on empty, null or the last non-null value"
+//          [any-value?]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [blank! word! the-word! block!]
 //      data "The series to traverse"
@@ -2050,7 +2050,7 @@ DECLARE_NATIVE(for)
 //      return: "Last body result, or null if a BREAK occurred"
 //          [any-value?]
 //      body [<const> block!]
-//      /predicate "Function to apply to body result"
+//      :predicate "Function to apply to body result"
 //          [<unrun> frame!]
 //  ]
 //

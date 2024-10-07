@@ -37,8 +37,8 @@
 //      delimiter [~null~ blank! char? text!]
 //      line "Will be copied if already a text value"
 //          [<maybe> text! block! the-block! issue!]
-//      /head "Include delimiter at head of result (if non-NULL)"
-//      /tail "Include delimiter at tail of result (if non-NULL)"
+//      :head "Include delimiter at head of a non-NULL result"
+//      :tail "Include delimiter at tail of a non-NULL result"
 //  ]
 //
 DECLARE_NATIVE(delimit)
@@ -259,7 +259,7 @@ DECLARE_NATIVE(delimit)
 //
 //      return: [binary!]
 //      value [binary! text!]
-//      /base "The base to convert from: 64, 16, or 2 (defaults to 64)"
+//      :base "The base to convert from: 64, 16, or 2 (defaults to 64)"
 //          [integer!]
 //  ]
 //
@@ -292,7 +292,7 @@ DECLARE_NATIVE(debase)
 //      return: [text!]
 //      value "If text, will be UTF-8 encoded"
 //          [binary! text!]
-//      /base "Binary base to use: 64, 16, or 2 (BASE-64 default)"
+//      :base "Binary base to use: 64, 16, or 2 (BASE-64 default)"
 //          [integer!]
 //  ]
 //
@@ -339,10 +339,10 @@ DECLARE_NATIVE(enbase)
 //
 //  "Converts string to use URL-style hex encoding (%XX)"
 //
-//      return: [any-string?]
-//          "See http://en.wikipedia.org/wiki/Percent-encoding"
-//      string [any-string?]
-//          "String to encode, all non-ASCII or illegal URL bytes encoded"
+//      return: "See http://en.wikipedia.org/wiki/Percent-encoding"
+//          [any-string?]
+//      string "String to encode, all non-ASCII or illegal URL bytes encoded"
+//          [any-string?]
 //  ]
 //
 DECLARE_NATIVE(enhex)
@@ -504,10 +504,10 @@ DECLARE_NATIVE(enhex)
 //
 //  "Converts URL-style encoded strings, %XX is interpreted as UTF-8 byte"
 //
-//      return: [any-string?]
-//          "Decoded string, with the same string type as the input"
-//      string [any-string?]
-//          "See http://en.wikipedia.org/wiki/Percent-encoding"
+//      return: "Decoded string, with the same string type as the input"
+//          [any-string?]
+//      string "See http://en.wikipedia.org/wiki/Percent-encoding"
+//          [any-string?]
 //  ]
 //
 DECLARE_NATIVE(dehex)
@@ -627,9 +627,9 @@ DECLARE_NATIVE(dehex)
 //  "Converts string terminators to standard format, e.g. CR LF to LF"
 //
 //      return: [text! block!]
-//      input "Will be modified (unless /LINES used)"
+//      input "Will be modified (unless :LINES used)"
 //          [text! binary!]
-//      /lines "Return block of lines (works for LF, CR-LF endings)"
+//      :lines "Return block of lines (works for LF, CR-LF endings)"
 //  ]
 //
 DECLARE_NATIVE(deline)
@@ -795,7 +795,7 @@ DECLARE_NATIVE(enline)
 //      return: [any-string?]
 //      string "(modified)"
 //          [any-string?]
-//      /size "Specifies the number of spaces per tab"
+//      :size "Specifies the number of spaces per tab"
 //          [integer!]
 //  ]
 //
@@ -871,7 +871,7 @@ DECLARE_NATIVE(entab)
 //      return: [any-string?]
 //      string "(modified)"
 //          [any-string?]
-//      /size "Specifies the number of spaces per tab"
+//      :size "Specifies the number of spaces per tab"
 //          [integer!]
 //  ]
 //
@@ -930,7 +930,7 @@ DECLARE_NATIVE(detab)
 //      return: [any-string? char?]
 //      string "(modified if series)"
 //          [any-string? char?]
-//      /part "Limits to a given length or position"
+//      :part "Limits to a given length or position"
 //          [any-number? any-string?]
 //  ]
 //
@@ -951,7 +951,7 @@ DECLARE_NATIVE(lowercase)
 //      return: [any-string? char?]
 //      string "(modified if series)"
 //          [any-string? char?]
-//      /part "Limits to a given length or position"
+//      :part "Limits to a given length or position"
 //          [any-number? any-string?]
 //  ]
 //
@@ -971,7 +971,7 @@ DECLARE_NATIVE(uppercase)
 //
 //      return: [issue!]
 //      value [integer! tuple!]
-//      /size "Specify number of hex digits in result"
+//      :size "Specify number of hex digits in result"
 //          [integer!]
 //  ]
 //

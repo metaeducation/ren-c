@@ -198,7 +198,7 @@ uint32_t Compute_IPC(const unsigned char* data, size_t size)
 //          [word!]
 //      data "Input data to digest (TEXT! is interpreted as UTF-8 bytes)"
 //          [binary! text!]
-//      /key "Returns keyed HMAC value"
+//      :key "Returns keyed HMAC value"
 //          [binary! text!]
 //  ]
 //
@@ -464,9 +464,9 @@ void Get_Padding_And_Hash_From_Spec(
 //          [~[object! object!]~]
 //      num-bits "How much data this key can encrypt (less when not [raw])"
 //          [integer!]
-//      /padding "Pad method and hash, [raw] [pkcs1-v15 #sha512] [pkcs1-v21]"
+//      :padding "Pad method and hash, [raw] [pkcs1-v15 #sha512] [pkcs1-v21]"
 //          [block!]
-//      /insecure "Allow insecure key sizes--for teaching purposes only"
+//      :insecure "Allow insecure key sizes--for teaching purposes only"
 //  ]
 //
 DECLARE_NATIVE(rsa_generate_keypair)
@@ -995,7 +995,7 @@ DECLARE_NATIVE(rsa_decrypt)
 //          [binary!]
 //      base "Public 'g', generator, less than modulus and usually prime"
 //          [binary!]
-//      /insecure "Don't raise errors if base/modulus choice becomes suspect"
+//      :insecure "Don't raise errors if base/modulus choice becomes suspect"
 //  ]
 //
 DECLARE_NATIVE(dh_generate_keypair)
@@ -1367,7 +1367,7 @@ static void cleanup_aes_ctx(const Value* v)
 //      key [binary!]
 //      iv "Optional initialization vector"
 //          [binary! blank!]
-//      /decrypt "Make cipher context for decryption (default is to encrypt)"
+//      :decrypt "Make cipher context for decryption (default is to encrypt)"
 //  ]
 //
 DECLARE_NATIVE(aes_key)

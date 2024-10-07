@@ -36,7 +36,7 @@
 //          [element?]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [<maybe> element?]
-//      /predicate "Applied after evaluation, default is IDENTITY"
+//      :predicate "Applied after evaluation, default is IDENTITY"
 //          [<unrun> frame!]
 //  ]
 //
@@ -849,11 +849,11 @@ Bounce Composer_Executor(Level* const L)
 //      ]
 //      template "The template to fill in (no-op if WORD!)"
 //          [<maybe> any-list? any-sequence? any-word? action?]
-//      /deep "Compose deeply into nested lists and sequences"
-//      /label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
+//      :deep "Compose deeply into nested lists and sequences"
+//      :label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [tag! file!]
-//      /conflate "Let illegal sequence compositions produce lookalike WORD!s"
-//      /predicate "Function to run on composed slots (default: META)"
+//      :conflate "Let illegal sequence compositions produce lookalike WORD!s"
+//      :predicate "Function to run on composed slots (default: META)"
 //          [<unrun> frame!]
 //  ]
 //
@@ -952,10 +952,8 @@ static void Flatten_Core(
 //  "Flattens a block of blocks"
 //
 //      return: [block!]
-//          {The flattened result block}
 //      block [block!]
-//          {The nested source block}
-//      /deep
+//      :deep
 //  ]
 //
 DECLARE_NATIVE(flatten)

@@ -341,7 +341,7 @@
 
 [#19
     ~bad-parameter~ !! (
-        f: func [/r [integer!]] [return x]
+        f: func [:r [integer!]] [return x]
         2 == f:r:r 1 2  ; Review: could be a syntax for variadic refinements?
     )
 ]
@@ -401,7 +401,7 @@
     n: 20
 
     f: func [
-        /count [integer!]
+        :count [integer!]
         <in> o1 o1.o2
         <with> outer
         <static> static (10 + n)
@@ -427,13 +427,13 @@
 [
     ~dup-vars~ !! (func [a b a] [return 0])
     ~dup-vars~ !! (lambda [a b a] [return 0])
-    ~dup-vars~ !! (func [/test /test] [return 0])
-    ~dup-vars~ !! (lambda [/test /test] [return 0])
+    ~dup-vars~ !! (func [:test :test] [return 0])
+    ~dup-vars~ !! (lambda [:test :test] [return 0])
 ]
 
-; /LOCAL is an ordinary refinement in Ren-C
+; :LOCAL is an ordinary refinement in Ren-C
 (
-    a-value: func [/local [integer!]] [return local]
+    a-value: func [:local [integer!]] [return local]
     1 == a-value:local 1
 )
 

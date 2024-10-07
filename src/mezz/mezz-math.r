@@ -29,7 +29,7 @@ modulo: func [
     return: [any-number? money! time!]
     a [any-number? money! time!]
     b [any-number? money! time!] "Must be nonzero."
-    /adjusted "Set 'almost zero' and 'almost B' to zero"
+    :adjusted "Set 'almost zero' and 'almost B' to zero"
 ][
     ; This function tries to find the remainder that is "almost non-negative"
     ; Example: 0.15 - 0.05 - 0.1 // 0.1 is negative,
@@ -68,14 +68,14 @@ sign-of: func [
 ]
 
 extreme-of: func [
-    {Finds the value with a property in a series that is the most "extreme"}
+    "Finds the value with a property in a series that is the most extreme"
 
     return: "Position where the extreme value was found"
         [any-series?]
     series [any-series?]
     comparator "Comparator to use, e.g. LESSER? for MINIMUM-OF"
         [<unrun> frame!]
-    /skip "Treat the series as records of fixed size"
+    :skip "Treat the series as records of fixed size"
         [integer!]
 ][
     skip: default [1]

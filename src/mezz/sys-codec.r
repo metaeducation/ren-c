@@ -78,12 +78,12 @@ append system.options.file-types spread switch fourth system.version [
 
 
 decode: func [
-    {Decodes a series of bytes into the related datatype (e.g. image!).}
+    "Decodes a series of bytes into the related datatype (e.g. image!)"
 
-    type [word!]
-        {Media type (jpeg, png, etc.)}
-    data [binary!]
-        {The data to decode}
+    type "Media type (jpeg, png, etc.)"
+        [word!]
+    data "The data to decode"
+        [binary!]
 ][
     all [
         let cod: select system.codecs type
@@ -96,13 +96,13 @@ decode: func [
 
 
 encode: func [
-    {Encodes a datatype (e.g. image!) into a series of bytes.}
+    "Encodes a datatype (e.g. image!) into a series of bytes"
 
     return: [binary!]
     type "Media type (jpeg, png, etc.)"
         [word!]
     data [element?]
-    /options "Encoding options"
+    :options "Encoding options"
         [block!]  ; !!! Not currently used
 ][
     all [

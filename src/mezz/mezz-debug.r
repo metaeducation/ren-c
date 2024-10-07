@@ -12,16 +12,16 @@ REBOL [
 ]
 
 verify: func [
-    {Verify all the conditions in the passed-in block are conditionally true}
+    "Verify all the conditions in the passed-in block are conditionally true"
 
     return: [~[]~]
     conditions "Conditions to check"
         [block!]
-    /handler "Optional code to run if the assertion fails, receives condition"
+    :handler "Optional code to run if the assertion fails, receives condition"
         [<unrun> block! frame!]
     <local> pos result
 ][
-    while [[pos /result]: evaluate:step conditions] [
+    while [[pos :result]: evaluate:step conditions] [
         all [
             not void? :result
             not :result
@@ -77,7 +77,7 @@ hijack assert/ verify/
 
 
 delta-time: func [
-    {Returns the time it takes to evaluate the block}
+    "Returns the time it takes to evaluate the block"
     block [block!]
 ][
     let timer: unrun get $lib/now:precise  ; Note: NOW comes from an Extension
@@ -90,7 +90,7 @@ delta-time: func [
 ]
 
 delta-profile: func [
-    {Delta-profile of running a specific block.}
+    "Delta-profile of running a specific block"
     block [block!]
     <local> start end
 ][
@@ -107,9 +107,9 @@ delta-profile: func [
 ]
 
 speed?: func [
-    "Returns approximate speed benchmarks [eval cpu memory file-io]."
-    /no-io "Skip the I/O test"
-    /times "Show time for each test"
+    "Returns approximate speed benchmarks [eval cpu memory file-io]"
+    :no-io "Skip the IO test"
+    :times "Show time for each test"
 ][
     let result: copy []
     let calc
@@ -163,7 +163,7 @@ speed?: func [
     return result
 ]
 
-net-log: lambda [txt /C /S][txt]
+net-log: lambda [txt :C :S][txt]
 
 net-trace: func [
     "Switch between using a no-op or a print operation for net-tracing"
@@ -172,7 +172,7 @@ net-trace: func [
     val [logic?]
 ][
     either val [
-        hijack net-log/ func [txt /C /S][
+        hijack net-log/ func [txt :C :S][
             print [
                 (if c ["C:"]) (if s ["S:"])
                     either block? txt [spaced txt] [txt]
@@ -181,6 +181,6 @@ net-trace: func [
         ]
         print "Net-trace is now on"
     ][
-        hijack net-log/ func [txt /C /S][txt]
+        hijack net-log/ func [txt :C :S][txt]
     ]
 ]

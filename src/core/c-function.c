@@ -61,9 +61,11 @@ static bool Params_Of_Hook(
             Metafy(TOP);
             break;
 
-          case PARAMCLASS_SOFT:
-            Quotify(Getify(cast(Element*, TOP)), 1);
-            break;
+          case PARAMCLASS_SOFT: {
+            Array *a = Alloc_Singular(NODE_FLAG_MANAGED);
+            Move_Cell(Stub_Cell(a), TOP);
+            Init_Any_List(TOP, REB_THE_GROUP, a);
+            break; }
 
           case PARAMCLASS_JUST:
             Quotify(TOP, 1);
@@ -241,48 +243,37 @@ void Push_Keys_And_Parameters_May_Fail(
 
         bool refinement = false;  // paths with blanks at head are refinements
         bool local = false;
-        if (Any_Path_Kind(heart)) {
-            if (not IS_REFINEMENT_CELL(item))
-                fail (Error_Bad_Func_Def_Raw(item));
-
-            refinement = true;
-
-            // !!! There's currently the ability to shift back into parameter
-            // mode via [<local> x /foo y].  This is used to create dummy
-            // variables in mid-spec.  Review.
-            //
-            mode = SPEC_MODE_DEFAULT;
-
-            symbol = VAL_REFINEMENT_SYMBOL(item);
-
-            if (heart == REB_PATH) {
-                if (quoted)
-                    pclass = PARAMCLASS_JUST;
-                else
-                    pclass = PARAMCLASS_NORMAL;
-            }
-            else if (heart == REB_META_PATH) {
-                pclass = PARAMCLASS_META;
-            }
-        }
-        else if (Any_Tuple_Kind(heart)) {
-            //
-            // !!! Tuples are theorized as a way to "name parameters out of
-            // the way" so there can be an interface name, but then a local
-            // name...so that something like /ALL can be named out of the
-            // way without disrupting use of ALL:
-            //
-            // https://forum.rebol.info/t/1793
-            //
-            fail ("TUPLE! behavior in func spec not defined at present");
-        }
-        else if (heart == REB_CHAIN) {
+        if (heart == REB_CHAIN or heart == REB_META_CHAIN) {
             bool leading_blank;
             Option(Heart) h = Try_Get_Sequence_Singleheart(
                 &leading_blank, item
             );
             if (h) {  // xxx: or :xxx, where xxx is BLOCK!/WORD!/TUPLE!/etc.
-                if (not leading_blank) {
+                if (leading_blank) {
+                    if (
+                        h == REB_WORD
+                    ){
+                        refinement = true;
+                        symbol = VAL_REFINEMENT_SYMBOL(item);
+                        if (heart == REB_META_PATH) {
+                            if (not quoted)
+                                pclass = PARAMCLASS_META;
+                        }
+                        else {
+                            if (quoted)
+                                pclass = PARAMCLASS_JUST;
+                            else
+                                pclass = PARAMCLASS_NORMAL;
+                        }
+
+                        // !!! There's currently the ability to shift to
+                        // parameter mode via [<local> x :foo y].  This is
+                        // used to create dummy variables in mid-spec.  Review.
+                        //
+                        mode = SPEC_MODE_DEFAULT;
+                    }
+                }
+                else {  // trailing blank, so xxx:
                     if (
                         h == REB_WORD and not quoted
                         and Cell_Word_Id(item) == SYM_RETURN
@@ -626,7 +617,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 // approval of wanting a definitional return by the generator.  This helps
 // because Red's model for specifying returns uses a SET-WORD!
 //
-//     func [return: [integer!] {returns an integer}]
+//     func [return: [integer!] "returns an integer"]
 //
 // In Ren-C's case it just means you want a local called return, but the
 // generator will be "initializing it with a definitional return" for you.

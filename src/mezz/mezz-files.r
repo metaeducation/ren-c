@@ -34,8 +34,8 @@ clean-path: func [
 
     return: [file! url! text!]
     path [file! url! text! tag! the-word!]
-    /only "Do not prepend current directory"
-    /dir "Add a trailing / if missing"
+    :only "Do not prepend current directory"
+    :dir "Add a trailing / if missing"
 ][
     if tag? path [  ; path relative to currently running script [1]
         if #"/" = first path [
@@ -187,7 +187,7 @@ ask: func [
         [any-value?]
     question "Prompt to user, datatype to request, or dialect block"
         [block! text! type-block!]
-    /hide "mask input with * (Rebol2 feature, not yet implemented)"
+    :hide "mask input with * (Rebol2 feature, not yet implemented)"
     ; !!! What about /MULTILINE ?
 ][
     if hide [
@@ -253,12 +253,12 @@ ask: func [
 
 
 confirm: func [
-    {Confirms a user choice}
+    "Confirms a user choice"
 
     return: [logic?]
     question "Prompt to user"
         [any-series?]
-    /with [text! block!]
+    :with [text! block!]
 ][
     with: default [["y" "yes"] ["n" "no"]]
 
@@ -285,17 +285,17 @@ confirm: func [
 
 
 list-dir: func [
-    "Print contents of a directory (ls)."
+    "Print contents of a directory (ls)"
 
     return: [~]
     'path [<end> file! word! path! text!]
         "Accepts %file, :variables, and just words (as dirs)"
-    /l "Line of info format"
-    /f "Files only"
-    /d "Dirs only"
-;   /t "Time order"
-    /r "Recursive"
-    /i "Indent"
+    :l "Line of info format"
+    :f "Files only"
+    :d "Dirs only"
+;   :t "Time order"
+    :r "Recursive"
+    :i "Indent"
         [integer! text!]
 ][
     i: default [""]
@@ -355,7 +355,7 @@ list-dir: func [
 
 
 undirize: func [
-    {Returns a copy of the path with any trailing "/" removed.}
+    "Returns a copy of the path with any trailing / removed"
 
     return: [file! text! url!]
     path [file! text! url!]
@@ -387,14 +387,14 @@ in-dir: func [
 
 
 to-relative-file: func [
-    {Returns relative portion of a file if in subdirectory, original if not.}
+    "Returns relative portion of a file if in subdirectory, original if not"
 
     return: [file! text!]
     file "File to check (local if text!)"
         [file! text!]
-    /no-copy "Don't copy, just reference"
-    /as-rebol "Convert to Rebol-style filename if not"
-    /as-local "Convert to local-style filename if not"
+    :no-copy "Don't copy, just reference"
+    :as-rebol "Convert to Rebol-style filename if not"
+    :as-local "Convert to local-style filename if not"
 ][
     if text? file [ ; Local file
         comment [
@@ -443,7 +443,7 @@ detab-file: func [
 
 ; temporary location
 set-net: func [
-    {sets the system.user.identity email smtp pop3 esmtp-usr esmtp-pass fqdn}
+    "sets the system.user.identity email smtp pop3 esmtp-usr esmtp-pass fqdn"
 
     bl [block!]
 ][

@@ -44,7 +44,7 @@
         for-each 'param (parameters of frame) [
             if tail? block [break]  ; no more args, leave rest unspecialized
 
-            match [word! lit-word? get-word?] param else [
+            match [word! lit-word? the-group!] param else [
                 continue  ; skip unused refinements [2]
             ]
 

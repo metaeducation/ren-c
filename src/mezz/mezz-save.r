@@ -42,18 +42,18 @@ mold64: func [
 ;    thinking points.
 ;
 save: func [
-    {Saves a value, block, or other data to a file, URL, binary, or text}
+    "Saves a value, block, or other data to a file, URL, binary, or text"
 
     ; !!! what RETURN values make sense?
     where "Where to save (suffix determines encoding)"
         [file! url! binary! text! blank!]
     value "Value(s) to save"
         [<const> element?]
-    /header "Provide REBOL header block/object, or INCLUDED if in value"
+    :header "Provide REBOL header block/object, or INCLUDED if in value"
         [block! object! 'included]
-    /all "Save in serialized format"
-    /length "Save the length of the script content in the header"
-    /compress "Detect from header if not supplied"  ; weird old feature [1]
+    :all "Save in serialized format"
+    :length "Save the length of the script content in the header"
+    :compress "Detect from header if not supplied"  ; weird old feature [1]
         ['none 'raw 'base64]
 ][
     ; Recover common natives for words used as refinements.

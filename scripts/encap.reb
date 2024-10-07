@@ -231,8 +231,8 @@ elf-format: context [
     ]
 
     find-section: meth [
-        return: [~null~ integer!]
-            {The index of the section header with encap (sh_xxx vars set)}
+        return: "The index of the section header with encap (sh_xxx vars set)"
+            [~null~ integer!]
         name [text!]
         section-headers [binary!]
         string-section [binary!]
@@ -257,7 +257,7 @@ elf-format: context [
     ]
 
     update-offsets: meth [
-        {Adjust headers to account for insertion or removal of data @ offset}
+        "Adjust headers to account for insertion or removal of data @ offset"
 
         return: [~]
         executable [binary!]
@@ -294,8 +294,8 @@ elf-format: context [
 
     update-embedding: meth [
         return: [~]
-        executable [binary!]
-            {Executable to be mutated to either add or update an embedding}
+        executable "Executable to mutate to either add or update an embedding"
+            [binary!]
         embedding [binary!]
     ][
         ; Up front, let's check to see if the executable has data past the
@@ -568,7 +568,7 @@ pe-format: context [
         return: [block!]
         name [word!]
         rule [block!]
-        /ignore "Do not collect these words"
+        :ignore "Do not collect these words"
             [word! block!]
     ][
         let def: make block! 1
@@ -996,8 +996,8 @@ pe-format: context [
         return: [~null~ binary!]
         exe-data [binary!]
         section-name [text!]
-        /header "Return only the section header"
-        /data "Return only the section data"
+        :header "Return only the section header"
+        :data "Return only the section data"
     ][
         parse-exe exe-data except [return null]
 
@@ -1239,7 +1239,7 @@ encap: func [
         [file!]
     spec "Single script to embed, directory to zip with main.reb, or dialect"
         [file! block!]
-    /rebol "Path to a Rebol to encap instead of using the current one"
+    :rebol "Path to a Rebol to encap instead of using the current one"
         [file! url!]
 ][
     let in-rebol-path: any [rebol, system.options.boot]

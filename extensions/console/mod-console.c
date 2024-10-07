@@ -206,10 +206,10 @@ void Enable_Ctrl_C(void)
 //
 //      return: "Exit code, RESUME instruction, or handle to evaluator hook"
 //          [integer! meta-group! handle!]
-//      /provoke "Block must return a console state, group is cancellable"
+//      :provoke "Block must return a console state, group is cancellable"
 //          [block! group!]
-//      /resumable "Allow RESUME instruction (will return a META-GROUP!)"
-//      /skin "File containing console skin, or MAKE CONSOLE! derived object"
+//      :resumable "Allow RESUME instruction (will return a META-GROUP!)"
+//      :skin "File containing console skin, or MAKE CONSOLE! derived object"
 //          [file! object!]
 //      <local>
 //          old-console

@@ -8,12 +8,11 @@
 ; It is not working at time of writing but is moved into tests.
 
 (math: func [
-    {Process expression taking "usual" operator precedence into account.}
+    "Process expression taking 'usual' operator precedence into account"
 
-    expr [block!]
-        {Block to evaluate}
-    /only
-        {Translate operators to their prefix calls, but don't execute}
+    expr "Block to evaluate"
+        [block!]
+    :only "Translate operators to their prefix calls, but don't execute"
 
     ; !!! This creation of static rules helps avoid creating those rules
     ; every time, but has the problem that the references to what should

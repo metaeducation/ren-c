@@ -18,12 +18,12 @@ REBOL [
 ]
 
 assert: func* [
-    {Ensure conditions are branch triggers if hooked by debugging}
+    "Ensure conditions are branch triggers if hooked by debugging"
 
     return: [~[]~]
     conditions "Block of conditions to evaluate and test for logical truth"
         [block!]
-    /handler "Optional code to run if the assertion fails, receives condition"
+    :handler "Optional code to run if the assertion fails, receives condition"
         [<unrun> block! frame!]
 ][
     ; ASSERT has no default implementation, but can be HIJACKed by a debug
@@ -33,7 +33,7 @@ assert: func* [
 ]
 
 steal: lambda [
-    {Return a variable's value prior to an assignment, then do the assignment}
+    "Return a variable's value prior to an assignment, then do the assignment"
 
     evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
         [any-value? <variadic>]
@@ -71,7 +71,7 @@ quit: func* [] [
 catch: specialize catch*/ [name: 'throw]
 
 func: func* [
-    {Augment action with <static>, <in>, <with> features}
+    "Augment action with <static>, <in>, <with> features"
 
     return: [action?]
     spec "Help string (opt) followed by arg words (and opt type and string)"
@@ -259,7 +259,7 @@ func: func* [
 ===: func [
     return: [~[]~]
     'remarks [element? <variadic>]
-    /visibility [onoff?]
+    :visibility [onoff?]
     <static> showing ('no)
 ][
     if visibility [showing: visibility, return ~[]~]
@@ -276,14 +276,14 @@ func: func* [
 ]
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
-    {Returns the current directory path}
+    "Returns the current directory path"
     return: [~null~ file! url!]
 ][
     return system.options.current-path
 ]
 
 change-dir: func [  ; This can be HIJACK'd by a "smarter" version
-    {Changes the current path (where scripts with relative paths will be run).}
+    "Changes the current path (where scripts with relative paths will be run)"
     return: [file! url!]
     path [file! url!]
 ][
@@ -292,7 +292,7 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
 
 
 redescribe: func [
-    {Mutate action description with new title and/or new argument notes.}
+    "Mutate action description with new title and/or new argument notes"
 
     return: [action?]
     spec "Either a string description, or a spec block"
@@ -306,13 +306,13 @@ redescribe: func [
 
 
 unset: redescribe [
-    {Clear the value of a word to the unset state (in its current context)}
+    "Clear the value of a word to the unset state (in its current context)"
 ](
     specialize set/ [value: meta ~]  ; SET's value is a ^META parameter
 )
 
 unset?: func [
-    {Determine if a variable looks up to a `~` antiform}
+    "Determine if a variable looks up to a `~` antiform"
     return: [logic?]
     var [word! path! tuple!]
 ][
@@ -328,7 +328,7 @@ vacant?: func [
 ]
 
 set?: func [
-    {Determine if a variable does not look up to  `~` antiform}
+    "Determine if a variable does not look up to the ~ antiform"
     return: [logic?]
     var [word! path! tuple!]
 ][
@@ -336,7 +336,7 @@ set?: func [
 ]
 
 defined?: func [
-    {Determine if a variable is both "attached", and not unset}
+    "Determine if a variable has a binding and is not unset"
     return: [logic?]
     var [word! path! tuple!]
 ][
@@ -344,7 +344,7 @@ defined?: func [
 ]
 
 undefined?: func [
-    {Determine if a variable is "unattached" or unset}
+    "Determine if a variable does not have a binding or is unset"
     return: [logic?]
     var [word! path! tuple!]
 ][
@@ -369,7 +369,7 @@ specialized?: func [
 
 
 curtail: reframer func [
-    {Voids an expression if it raises any NEED-NON-NULL failures}
+    "Voids an expression if it raises any NEED-NON-NULL failures"
     return: [any-value?]
     frame [frame!]
 ][
@@ -417,7 +417,7 @@ curtail: reframer func [
 ; semantics in SHOVE pertaining to fetched values.
 
 me: enfix redescribe [
-    {Update variable using it as the left hand argument to an enfix operator}
+    "Update variable using it as the left hand argument to an enfix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
         :[left, unchain left, right]
@@ -425,7 +425,7 @@ me: enfix redescribe [
 )
 
 my: enfix redescribe [
-    {Update variable using it as the first argument to a prefix operator}
+    "Update variable using it as the first argument to a prefix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
         :[left, right, unchain left]
@@ -433,7 +433,7 @@ my: enfix redescribe [
 )
 
 so: enfix func [
-    {Postfix assertion which stops running if left expression is inhibitor}
+    "Postfix assertion which stops running if left expression is inhibitor"
 
     return: [any-value?]
     condition "Condition to test, must resolve to logic (use DID, NOT)"
@@ -472,25 +472,25 @@ tweak was/ 'postpone 'on
 
 
 zdeflate: redescribe [
-    {Deflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB}
+    "Deflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB"
 ](
     specialize deflate/ [envelope: 'zlib]
 )
 
 zinflate: redescribe [
-    {Inflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB}
+    "Inflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB"
 ](
     specialize inflate/ [envelope: 'zlib]
 )
 
 gzip: redescribe [
-    {Deflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip}
+    "Deflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip"
 ](
     specialize deflate/ [envelope: 'gzip]
 )
 
 gunzip: redescribe [
-    {Inflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip}
+    "Inflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip"
 ](
     specialize inflate/ [envelope: 'gzip]  ; What about GZIP-BADSIZE?
 )
@@ -558,13 +558,13 @@ upshot: specialize n-shot/ [n: -1]
 ;
 
 find-reverse: redescribe [
-    {Variant of FIND that uses a /SKIP of -1}
+    "Variant of FIND that uses a /SKIP of -1"
 ](
     specialize find/ [skip: -1]
 )
 
 find-last: redescribe [
-    {Variant of FIND that uses a /SKIP of -1 and seeks the TAIL of a series}
+    "Variant of FIND that uses a /SKIP of -1 and seeks the TAIL of a series"
 ](
     adapt find-reverse/ [
         if not any-series? series [
@@ -576,7 +576,7 @@ find-last: redescribe [
 )
 
 attempt: func [
-    {Evaluate a block and returns result or NULL if an expression fails}
+    "Evaluate a block and returns result or NULL if an expression fails"
 
     return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
         [any-value?]
@@ -588,7 +588,7 @@ attempt: func [
 ]
 
 trap: func [
-    {If evaluation raises an error, return it, otherwise NULL}
+    "If evaluation raises an error, return it, otherwise NULL"
 
     return: [~null~ error!]
     code [block!]
@@ -597,7 +597,7 @@ trap: func [
 ]
 
 trap+: func [
-    {Experimental variation of TRAP using THENable mechanics}
+    "Experimental variation of TRAP using THENable mechanics"
 
     return: [pack?]
     code [block!]
@@ -676,7 +676,7 @@ iterate-back: redescribe [
 
 
 count-up: func [
-    {Loop the body, setting a word from 1 up to the end value given}
+    "Loop the body, setting a word from 1 up to the end value given"
     return: [any-value?]
     var [word!]
     limit [<maybe> integer! issue!]
@@ -735,7 +735,7 @@ lock-of: redescribe [
 )
 
 eval-all: func [
-    {Evaluate any number of expressions and discard them}
+    "Evaluate any number of expressions and discard them"
 
     return: [~[]~]
     expressions "Any number of expressions on the right"
@@ -778,7 +778,7 @@ accessor: enfix func [
 
 
 cause-error: func [
-    "Causes an immediate error throw with the provided information."
+    "Causes an immediate error throw with the provided information"
     err-type [word!]
     err-id [word!]
     args
@@ -802,7 +802,7 @@ cause-error: func [
 ; Though HIJACK would have to be aware of it and preserve the rule.
 ;
 raise: func [
-    {Interrupts execution by reporting an error (a TRAP can intercept it).}
+    "Interrupts execution by reporting an error (a TRAP can intercept it)"
 
     return: []
     reason "ERROR! value, ID, URL, message text, or failure spec"
@@ -815,7 +815,7 @@ raise: func [
             block!  ; mixture of object error spec and message
             word! path! url!  ; increasing specificity of error ID
         ]
-    /blame "Point to variable or parameter to blame"
+    :blame "Point to variable or parameter to blame"
         [word! frame!]
 ][
     if tripwire? get:any $reason [

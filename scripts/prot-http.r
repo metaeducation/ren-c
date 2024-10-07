@@ -107,7 +107,7 @@ make-http-request: func [
 ]
 
 do-request: func [
-    {Synchronously process an HTTP request on a port}
+    "Synchronously process an HTTP request on a port"
 
     return: "Result of the request (BLOCK! for HEAD requests, BINARY! read...)"
         [binary! block!]
@@ -164,7 +164,7 @@ do-request: func [
 ; 302 redirects will not be followed
 ;
 parse-write-dialect: func [
-    {Sets PORT.SPEC fields: DEBUG, FOLLOW, METHOD, PATH, HEADERS, CONTENT}
+    "Sets PORT.SPEC fields: DEBUG, FOLLOW, METHOD, PATH, HEADERS, CONTENT"
 
     return: [~]
     port [port!]
@@ -463,7 +463,7 @@ do-redirect: func [
 ]
 
 read-body: func [
-    {Based on the information in the HTTP headers, read body into PORT.DATA}
+    "Based on the information in the HTTP headers, read body into PORT.DATA"
     return: [~]
     port [port!]
 ][
@@ -610,8 +610,8 @@ sys.util/make-scheme [
         read: func [
             return: [binary!]
             port [port!]
-            /lines
-            /string
+            :lines
+            :string
             <local> data
         ][
             let need-close: 'no

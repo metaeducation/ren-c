@@ -91,7 +91,7 @@
 (
     global: 1
 
-    inner: func [return: [text!] n /captured-frame [frame!]] [
+    inner: func [return: [text!] n :captured-frame [frame!]] [
         if n = 0 [
            return "inner phase run by redo"
         ]
@@ -177,7 +177,7 @@
         elide (:dump)  comment {un-elide to get output}
     )
 
-    base: func [return: [text!] n delta /captured-frame [frame!]] [
+    base: func [return: [text!] n delta :captured-frame [frame!]] [
         log [{BASE} n delta]
 
         n: n - delta

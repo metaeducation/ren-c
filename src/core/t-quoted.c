@@ -144,7 +144,7 @@ REBTYPE(Quoted)
 //      return: "Input value, verbatim--unless /SOFT and soft quoted type"
 //          [any-value?]
 //      @value [element?]
-//      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-TUPLE!"
+//      :soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-TUPLE!"
 //  ]
 //
 DECLARE_NATIVE(the)
@@ -199,7 +199,7 @@ DECLARE_INTRINSIC(just)
 //      return: "Quoted value (if depth = 0, may not be quoted)"
 //          [element?]
 //      optional [element?]
-//      /depth "Number of quoting levels to apply (default 1)"
+//      :depth "Number of quoting levels to apply (default 1)"
 //          [integer!]
 //  ]
 //
@@ -224,8 +224,8 @@ DECLARE_NATIVE(quote)
 //      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
 //          [quoted? quasi? keyword? element? error!]
 //      ^atom [any-atom?]
-//      /lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
-//      /except "If argument is antiform ERROR!, give back as plain ERROR!"
+//      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
+//      :except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
 //
 DECLARE_NATIVE(meta)
@@ -287,7 +287,7 @@ DECLARE_INTRINSIC(meta_p)
 //
 //      return: [element?]
 //      value [element?]
-//      /depth "Number of quoting levels to remove (default 1)"
+//      :depth "Number of quoting levels to remove (default 1)"
 //          [integer!]
 //  ]
 //
@@ -408,7 +408,7 @@ DECLARE_NATIVE(anti)
 //      return: [any-atom?]
 //      value "Can be plain or antiform like ~null~ or ~void~ if :LITE"
 //          [keyword? element? quoted? quasi?]
-//      /lite "Pass thru ~null~ and ~void~ antiforms as-is"
+//      :lite "Pass thru ~null~ and ~void~ antiforms as-is"
 //  ]
 //
 DECLARE_NATIVE(unmeta)

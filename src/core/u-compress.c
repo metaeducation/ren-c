@@ -384,7 +384,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
 //      method ['adler32 'crc32]
 //      data "Data to encode (using UTF-8 if TEXT!)"
 //          [binary! text!]
-//      /part "Length of data"
+//      :part "Length of data"
 //          [integer! binary! text!]
 //  ]
 //
@@ -456,9 +456,9 @@ DECLARE_NATIVE(checksum_core)
 //      return: [binary!]
 //      data "If text, it will be UTF-8 encoded"
 //          [binary! text!]
-//      /part "Length of data (elements)"
+//      :part "Length of data (elements)"
 //          [integer! binary! text!]
-//      /envelope "ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)"
+//      :envelope "ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)"
 //          ['zlib 'gzip]
 //  ]
 //
@@ -505,11 +505,11 @@ DECLARE_NATIVE(deflate)
 //
 //      return: [binary!]
 //      data [binary! handle!]
-//      /part "Length of compressed data (must match end marker)"
+//      :part "Length of compressed data (must match end marker)"
 //          [integer! binary!]
-//      /max "Error out if result is larger than this"
+//      :max "Error out if result is larger than this"
 //          [integer!]
-//      /envelope "ZLIB, GZIP, or DETECT (http://stackoverflow.com/a/9213826)"
+//      :envelope "ZLIB, GZIP, or DETECT (http://stackoverflow.com/a/9213826)"
 //          ['zlib 'gzip 'detect]
 //  ]
 //

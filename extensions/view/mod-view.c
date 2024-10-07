@@ -95,13 +95,13 @@ typedef RebolValue Value;
 //
 //      return: "Null if canceled, otherwise a path or block of paths"
 //          [~null~ file! block!]
-//      /save "File save mode"
-//      /multi "Allows multiple file selection, returned as a block"
-//      /initial "Default file name or directory"
+//      :save "File save mode"
+//      :multi "Allows multiple file selection, returned as a block"
+//      :initial "Default file name or directory"
 //          [file!]
-//      /title "Window title"
+//      :title "Window title"
 //          [text!]
-//      /filter "Block of filters (filter-name filter)"
+//      :filter "Block of filters (filter-name filter)"
 //          [block!]
 //  ]
 //
@@ -474,9 +474,9 @@ int CALLBACK ReqDirCallbackProc(
 //  "Asks user to select a directory and returns it as file path"
 //
 //      return: [file!]
-//      /title "Custom dialog title text"
+//      :title "Custom dialog title text"
 //          [text!]
-//      /path "Default directory path"
+//      :path "Default directory path"
 //          [file!]
 //  ]
 //

@@ -37,18 +37,18 @@ REBOL [
 
 
 transcode-header: func [
-    {Try to match a data binary! as being a script, definitional fail if not}
+    "Try to match a data binary! as being a script, definitional fail if not"
 
     return: "Null, or the ~[header rest line]~"
         [~[[~null~ block!] [~null~ binary!] [~null~ integer!]]~ raised?]
 
     data [binary!]
-    /file [file! url!]
+    :file [file! url!]
 
     <local> key hdr rest line
 ][
     line: 1
-    [rest /key]: transcode:next // [  ; "REBOL"
+    [rest :key]: transcode:next // [  ; "REBOL"
         data
         :file file
         :line $line
@@ -58,7 +58,7 @@ transcode-header: func [
     if not rest [
         return pack [null null null]  ; !!! rethink interface, impure null
     ]
-    [rest /hdr]: transcode:next // [ ; BLOCK!
+    [rest :hdr]: transcode:next // [ ; BLOCK!
         rest
         :file file
         :line $line
@@ -100,16 +100,16 @@ transcode-header: func [
 ;    bad-compress
 ;
 load-header: func [
-    {Loads script header object and body binary (not loaded)}
+    "Loads script header object and body binary (not loaded)"
 
     return: "header OBJECT! if present, ~[hdr body line final]~"
         [~[[~null~ object!] [binary! text!] [~null~ integer!] binary!]~]
     source "Source code (text! will be UTF-8 encoded)"
         [binary! text!]
-    /file "Where source is being loaded from"
+    :file "Where source is being loaded from"
         [file! url!]
-    /only "Only process header, don't decompress body"
-    /required "Script header is required"
+    :only "Only process header, don't decompress body"
+    :required "Script header is required"
 
     <static>
     non-ws (make bitset! [not 1 - 32])
@@ -230,13 +230,13 @@ load-header: func [
 
 
 load: func [
-    {Loads code or data from a file, URL, text string, or binary.}
+    "Loads code or data from a file, URL, text string, or binary"
 
     return: "BLOCK! if Rebol code (or codec value) plus optional header"
         [~null~ ~[element? [~null~ object!]]~]
     source "Source of the information being loaded"
         [<maybe> file! url! tag! the-word! text! binary!]
-    /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
+    :type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
     <local> header file line data
@@ -311,7 +311,7 @@ load: func [
 ]
 
 load-value: redescribe [
-    {Do a LOAD of a single value}
+    "Do a LOAD of a single value"
 ](
     cascade [
         load/
@@ -410,7 +410,7 @@ adjust-url-for-raw: func [
 ; or URL was used.  We should also use hashes to tell when things change.
 ;
 import*: func [
-    {Imports a module; locate, load, make, and setup its bindings}
+    "Imports a module; locate, load, make, and setup its bindings"
 
     return: "Loaded module and evaluative product (if execution needed)"
         [
@@ -428,9 +428,9 @@ import*: func [
         word!  ; not entirely clear on what WORD! does.  :-/
         module!  ; register the module and import its exports--do not create
     ]
-    /args "Args passed as system.script.args to a script (normally a string)"
+    :args "Args passed as system.script.args to a script (normally a string)"
         [element?]
-    /into "e.g. reuse VarList* already made for NATIVEs loading from extension"
+    :into "e.g. reuse VarList* already made for NATIVEs loading from extension"
         [module!]
     <static>
         importing-remotely ('no)
@@ -645,14 +645,14 @@ import*: func [
 
 
 export*: func [
-    {Add words to module's `Exports: []` list}
+    "Add words to module's (Exports: []) list"
 
     return: "Evaluated expression if used with SET-WORD!"
         [any-value?]
     where "Specialized for each module via EXPORT"
         [module!]
     @what [set-word? set-group? block!]
-    args "`export x: ...` for single or `export [...]` for words list"
+    args "(export x: ...) for single or (export [...]) for words list"
         [any-value? <variadic>]
     <local>
         hdr exports val word types items

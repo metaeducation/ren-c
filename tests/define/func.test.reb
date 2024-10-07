@@ -62,7 +62,7 @@
     ]
 )(
     all wrap [  ; try without description
-        foo: meta:lite func [return: [integer!] "returns" a "a" /b "b"] []
+        foo: meta:lite func [return: [integer!] "returns" a "a" :b "b"] []
         if m: adjunct-of foo [
             m.description = null
         ]

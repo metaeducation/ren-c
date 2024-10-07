@@ -47,7 +47,7 @@
     b: 20
     c: 30
     all [
-        null? [a b /c]: pack [null 99]  ; /c marks it optional
+        null? [a b :c]: pack [null 99]  ; /c marks it optional
         null? a
         b = 99
         c = null

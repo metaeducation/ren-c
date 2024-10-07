@@ -2340,9 +2340,9 @@ DECLARE_NATIVE(subparse)
 //          [<maybe> any-series? any-sequence? url!]
 //      rules "Rules to parse by"
 //          [<maybe> block!]
-//      /case "Uses case-sensitive comparison"
-//      /match "Return PARSE input instead of synthesized result"
-//      /relax "Don't require reaching the tail of the input for success"
+//      :case "Uses case-sensitive comparison"
+//      :match "Return PARSE input instead of synthesized result"
+//      :relax "Don't require reaching the tail of the input for success"
 //  ]
 //
 DECLARE_NATIVE(parse3)

@@ -12,13 +12,13 @@ REBOL [
 ]
 
 launch: func [
-    {Runs a script as a separate process; return immediately.}
+    "Runs a script as a separate process; return immediately"
 
     script "The name of the script"
         [<maybe> file! text!]
-    /args "Arguments to the script"
+    :args "Arguments to the script"
         [text! block!]
-    /wait "Wait for the process to terminate"
+    :wait "Wait for the process to terminate"
 ][
     if file? script [script: file-to-local clean-path script]
     let command: reduce [file-to-local system.options.boot script]

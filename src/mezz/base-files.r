@@ -17,10 +17,10 @@ REBOL [
 ]
 
 info?: func [
-    {Returns an info object about a file or url.}
+    "Returns an info object about a file or url"
     return: [~null~ object! word!]
     target [file! url!]
-    /only {for urls, returns 'file or blank}
+    :only "for urls, returns 'file or blank"
 ][
     if file? target [
         return query target
@@ -38,7 +38,7 @@ info?: func [
 ]
 
 exists?: func [
-    {Returns the type of a file or URL if it exists, otherwise blank.}
+    "Returns the type of a file or URL if it exists, otherwise blank"
     return: [~null~ word!]
         "FILE, DIR, or null"  ; should return LOGIC!, FILETYPE OF separate
     target [file! url! blank!]
@@ -46,14 +46,14 @@ exists?: func [
     if blank? target [return null]  ; https://forum.rebol.info/t/954
 
     if url? target [
-        return info?/only target
+        return info?:only target
     ]
 
     return select maybe query target 'type
 ]
 
 size-of: size?: func [
-    {Returns the size of a file.}
+    "Returns the size of a file"
     return: [~null~ integer!]
     target [file! url!]
 ][
@@ -64,7 +64,7 @@ size-of: size?: func [
 ]
 
 modified?: func [
-    {Returns the last modified date of a file.}
+    "Returns the last modified date of a file"
     return: [~null~ date!]
     target [file! url!]
 ][
@@ -75,7 +75,7 @@ modified?: func [
 ]
 
 suffix-of: func [
-    "Return the file suffix of a filename or url. Else, null."
+    "Return the file suffix of a filename or url, else null"
     return: [~null~ file!]
     path [file! url! text!]
 ][
@@ -88,7 +88,7 @@ suffix-of: func [
 ]
 
 dir?: func [
-    {Returns TRUE if the file or url ends with a slash (or backslash).}
+    "Returns TRUE if the file or url ends with a slash (or backslash)"
     return: [logic?]
     target [file! url!]
 ][
@@ -96,7 +96,7 @@ dir?: func [
 ]
 
 dirize: func [
-    {Returns a copy (always) of the path as a directory (ending slash).}
+    "Returns a copy (always) of the path as a directory (ending slash)"
     path [file! text! url!]
 ][
     path: copy path
@@ -105,11 +105,11 @@ dirize: func [
 ]
 
 make-dir: func [
-    {Creates the specified directory, no error if already exists}
+    "Creates the specified directory, no error if already exists"
 
     return: [file! url!]
     path [file! url!]
-    /deep "Create subdirectories too"
+    :deep "Create subdirectories too"
     <local> dirs end created
 ][
     path: dirize path  ; append slash (if needed)
@@ -132,7 +132,7 @@ make-dir: func [
             remove back tail of path ; trailing slash
         ]
     ][
-        if (not [@ /end]: find-last path slash) [
+        if (not [@ :end]: find-last path slash) [
             end: path
         ]
         insert dirs copy end
@@ -156,7 +156,7 @@ make-dir: func [
 ]
 
 delete-dir: func [
-    {Deletes a directory including all files and subdirectories.}
+    "Deletes a directory including all files and subdirectories"
     dir [file! url!]
     <local> files
 ][
@@ -173,7 +173,7 @@ delete-dir: func [
 ]
 
 script?: func [
-    {Checks file, url, or text string for a valid script header.}
+    "Checks file, url, or text string for a valid script header"
 
     return: [~null~ binary!]
     source [file! url! binary! text!]
@@ -204,7 +204,7 @@ split-path: func [  ; /FILE used in bootstrap vs. multi-return
     return: [~[[~null~ file! url!] [~null~ file! url!]]~]
 
     target [file! url!]
-    /relax "Allow filenames to be . and .."
+    :relax "Allow filenames to be . and .."
     <local> directory filename
 ][
     parse3 as text! target [

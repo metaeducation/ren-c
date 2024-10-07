@@ -490,7 +490,7 @@ Bounce TO_String(Level* level_, Kind k, const Value* arg)
 //
 //      return: [~null~ text!]
 //      value [<maybe> element?]
-//      /relax "Allow invisible codepoints like CR when converting BINARY!"
+//      :relax "Allow invisible codepoints like CR when converting BINARY!"
 //  ]
 //
 DECLARE_NATIVE(to_text)

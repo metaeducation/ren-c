@@ -202,7 +202,7 @@ make-port*: func [
     ; That should be reviewed.
     ;
     decode-url: func [  ; this function is bound in sys.util/*parse-url
-        {Decode a URL according to rules of sys.util/*parse-url}
+        "Decode a URL according to rules of sys.util/*parse-url"
         return: [object!]
         url [url! text!]
     ][
@@ -217,12 +217,12 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
 ;-- Native Schemes -----------------------------------------------------------
 
 make-scheme: func [
-    {Make a scheme from a specification and add it to the system}
+    "Make a scheme from a specification and add it to the system"
 
     return: [~]
     def "Scheme specification"
         [block!]
-    /with "Scheme name to use as base"
+    :with "Scheme name to use as base"
         [word!]
 ][
     with: either with [system.schemes.(with)] [system.standard.scheme]

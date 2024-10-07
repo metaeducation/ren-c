@@ -101,7 +101,7 @@ Rebol [
 ; manage it yourself, otherwise it will be automagic.
 
 combinator: func [
-    {Make stylized code that fulfills the interface of a combinator}
+    "Make stylized code that fulfills the interface of a combinator"
 
     return: [frame!]
 
@@ -110,7 +110,7 @@ combinator: func [
 
     <static> wrapper (
         func [
-            {Enclosing function for hooking all combinators}
+            "Enclosing function for hooking all combinators"
             return: [pack?]
             f [frame!]
         ][
@@ -144,16 +144,16 @@ combinator: func [
             ]
         )
 
-        /remainder [any-series?]  ; all combinators have remainder
+        :remainder [any-series?]  ; all combinators have remainder
 
-        (if '/pending = try spec.1 [
+        (if ':pending = try spec.1 [
             assert [spec.2 = [blank! block!]]
             autopipe: 'no  ; they're asking to handle pending themselves
-            spread reduce ['/pending spec.2]
+            spread reduce [':pending spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: 'yes  ; they didn't mention pending, handle automatically
-            spread [/pending [blank! block!]]
+            spread [:pending [blank! block!]]
         ])
 
         state [frame!]
@@ -186,7 +186,7 @@ combinator: func [
                     ; rigged so that their results append to an aggregator in
                     ; the order they are run (if they succeed).
                     ;
-                    f.(key): enclose (augment :val [/modded]) func [
+                    f.(key): enclose (augment val/ [:modded]) func [
                         f2
                         <local> result' remainder subpending
                     ][
@@ -229,8 +229,8 @@ combinator: func [
     ; after each combinator is executed.
     ;
     return unrun enclose augment action/ [
-        /rule-start [block!] /rule-end [block!]
-    ] :wrapper  ; returns plain ACTION!
+        :rule-start [block!] :rule-end [block!]
+    ] wrapper/  ; returns plain ACTION!
 ]
 
 
@@ -238,7 +238,7 @@ combinator: func [
 ; rigorous way than this.  But just check the parameters for now.
 ;
 combinator?: func [
-    {Crude test to try and determine if an ACTION! is a combinator}
+    "Crude test to try and determine if an ACTION! is a combinator"
     return: [logic?]
     frame [<unrun> frame!]
     <local> keys
@@ -292,10 +292,10 @@ default-combinators: make map! reduce [
     ; the usefulness is high enough that it's believed worth it.
 
     'not combinator [
-        {If the parser argument is negatable, invoke it in the negated sense}
+        "If the parser argument is negatable, invoke it in the negated sense"
         return: [any-value? pack?]
         parser [action?]
-        /negated
+        :negated
     ][
         if negated [  ; NOT NOT, e.g. call parser without negating it
             return [@ remainder]: parser input except e -> [
@@ -335,7 +335,7 @@ default-combinators: make map! reduce [
     'bypass combinator [
         "Stop the current rule chain, and skip to the next `|` alternate"
         return: []
-        ; /negated  <- could this be negated to not bypass?
+        ; :negated  <- could this be negated to not bypass?
     ][
         return raise "BYPASS to next alternate rule requested"
     ]
@@ -343,7 +343,7 @@ default-combinators: make map! reduce [
     === BASIC KEYWORDS ===
 
     'try combinator [
-        {If applying parser fails, succeed and return NULL; don't advance input}
+        "If parser fails, succeed and return NULL; don't advance input"
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-value? pack?]
         parser [action?]
@@ -353,7 +353,7 @@ default-combinators: make map! reduce [
     ]
 
     'optional combinator [
-        {If applying parser fails, succeed and return NULL; don't advance input}
+        "If parser fails, succeed and return NULL; don't advance input"
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-value? pack?]
         parser [action?]
@@ -367,7 +367,7 @@ default-combinators: make map! reduce [
     ]
 
     'spread combinator [
-        {Return antiform group for list arguments}
+        "Return antiform group for list arguments"
         return: "Splice antiform if input is list"
             [~null~ ~void~ element? splice?]
         parser [action?]
@@ -383,11 +383,11 @@ default-combinators: make map! reduce [
     ]
 
     'ahead combinator [
-        {Leave the parse position at the same location, but fail if no match}
+        "Leave the parse position at the same location, but fail if no match"
         return: "parser result if success, NULL if failure"
             [any-value? pack? ~<not>~]
         parser [action?]
-        /negated
+        :negated
     ][
         remainder: input  ; never advances
         if negated [
@@ -400,7 +400,7 @@ default-combinators: make map! reduce [
     ]
 
     'further combinator [
-        {Pass through the result only if the input was advanced by the rule}
+        "Pass through the result only if the input was advanced by the rule"
         return: "parser result if it succeeded and advanced input, else NULL"
             [any-value? pack?]
         parser [action?]
@@ -432,7 +432,7 @@ default-combinators: make map! reduce [
     ; https://forum.rebol.info/t/1581/2
 
     'some combinator [
-        {Run the parser argument in a loop, requiring at least one match}
+        "Run the parser argument in a loop, requiring at least one match"
         return: "Result of last successful match"
             [any-value? pack?]
         parser [action?]
@@ -455,7 +455,7 @@ default-combinators: make map! reduce [
     ]
 
     'while combinator [
-        {Run the body parser in a loop, for as long as condition matches}
+        "Run the body parser in a loop, for as long as condition matches"
         return: "Result of last body parser (or void if body never matched)"
             [any-value? pack?]
         condition-parser [action?]
@@ -485,7 +485,7 @@ default-combinators: make map! reduce [
     ]
 
     'cycle combinator [
-        {Run the body parser continuously in a loop until BREAK or STOP}
+        "Run the body parser continuously in a loop until BREAK or STOP"
         return: "Result of last body parser (or void if body never matched)"
             [any-value? pack?]
         parser [action?]
@@ -505,7 +505,7 @@ default-combinators: make map! reduce [
     ]
 
     'tally combinator [
-        {Iterate a rule and count the number of times it matches}
+        "Iterate a rule and count the number of times it matches"
         return: "Number of matches (can be 0)"
             [integer!]
         parser [action?]
@@ -526,7 +526,7 @@ default-combinators: make map! reduce [
     ]
 
     'break combinator [
-        {Break an iterated construct like SOME or REPEAT, failing the match}
+        "Break an iterated construct like SOME or REPEAT, failing the match"
         return: []
         <local> f
     ][
@@ -539,7 +539,7 @@ default-combinators: make map! reduce [
     ]
 
     'stop combinator [
-        {Break an iterated construct like SOME or REPEAT, succeeding the match}
+        "Break an iterated construct like SOME or REPEAT, succeeding the match"
         return: []
         parser [<end> action?]
         <local> f result'
@@ -573,7 +573,7 @@ default-combinators: make map! reduce [
     ; so it's fit for purpose.
 
     'accept combinator [
-        {Return a value explicitly from the parse, terminating early}
+        "Return a value explicitly from the parse, terminating early"
         return: []
         parser [action?]
         <local> value'
@@ -615,7 +615,7 @@ default-combinators: make map! reduce [
     ;     == 6
 
     <index> combinator [
-        {Get the current series index of the PARSE operation}
+        "Get the current series index of the PARSE operation"
         return: "The INDEX OF the parse position"
             [integer!]
     ][
@@ -624,7 +624,7 @@ default-combinators: make map! reduce [
     ]
 
     'measure combinator [
-        {Get the length of a matched portion of content}
+        "Get the length of a matched portion of content"
         return: "Length in series units"
             [integer!]
         parser [action?]
@@ -659,7 +659,7 @@ default-combinators: make map! reduce [
     ; !!! Review what happens if the input rule can modify, too.
 
     'change combinator [
-        {Substitute a match with new data}
+        "Substitute a match with new data"
         return: [~<change>~]
         parser [action?]
         replacer [action?]  ; !!! How to say result is used here?
@@ -680,7 +680,7 @@ default-combinators: make map! reduce [
     ]
 
     'remove combinator [
-        {Remove data that matches a parse rule}
+        "Remove data that matches a parse rule"
         return: [~<remove>~]
         parser [action?]
     ][
@@ -693,7 +693,7 @@ default-combinators: make map! reduce [
     ]
 
     'insert combinator [
-        {Insert literal data into the input series}
+        "Insert literal data into the input series"
         return: [~<insert>~]
         parser [action?]
         <local> insertion'
@@ -709,7 +709,7 @@ default-combinators: make map! reduce [
     === SEEKING KEYWORDS ===
 
     'to combinator [
-        {Match up TO a certain rule (result position before succeeding rule)}
+        "Match up TO a certain rule (result position before succeeding rule)"
         return: "The rule's product"
             [any-value? pack?]
         parser [action?]
@@ -730,7 +730,7 @@ default-combinators: make map! reduce [
     ]
 
     'thru combinator [
-        {Match up THRU a certain rule (result position after succeeding rule)}
+        "Match up THRU a certain rule (result position after succeeding rule)"
         return: "The rule's product"
             [any-value? pack?]
         parser [action?]
@@ -814,7 +814,7 @@ default-combinators: make map! reduce [
     ; with the user variables in wordspace.
 
     <here> combinator [
-        {Get the current parse input position, without advancing input}
+        "Get the current parse input position, without advancing input"
         return: "parse position"
             [any-series?]
     ][
@@ -823,9 +823,9 @@ default-combinators: make map! reduce [
     ]
 
     <end> combinator [
-        {Only match if the input is at the end}
+        "Only match if the input is at the end"
         return: [~[]~]
-        /negated
+        :negated
     ][
         remainder: input  ; never advances
         if tail? input [
@@ -841,7 +841,7 @@ default-combinators: make map! reduce [
     ]
 
     <input> combinator [
-        {Get the original input of the PARSE operation}
+        "Get the original input of the PARSE operation"
         return: "parse position"
             [any-series?]
     ][
@@ -850,7 +850,7 @@ default-combinators: make map! reduce [
     ]
 
     <subinput> combinator [
-        {Get the input of the SUBPARSE operation}
+        "Get the input of the SUBPARSE operation"
         return: "parse position"
             [any-series?]
     ][
@@ -867,7 +867,7 @@ default-combinators: make map! reduce [
     ; being different things, which is not intuitive.
 
     'across combinator [
-        {Copy from the current parse position through a rule}
+        "Copy from the current parse position through a rule"
         return: "Copied series"
             [any-series?]
         parser [action?]
@@ -885,7 +885,7 @@ default-combinators: make map! reduce [
     ]
 
     'copy combinator [
-        {Disabled combinator, included to help guide to use ACROSS}
+        "Disabled combinator, included to help guide to use ACROSS"
         return: []
     ][
         fail [
@@ -1033,7 +1033,7 @@ default-combinators: make map! reduce [
     'collect combinator [
         return: "Block of collected values"
             [block!]
-        /pending [blank! block!]
+        :pending [blank! block!]
         parser [action?]
         <local> collected
     ][
@@ -1062,7 +1062,7 @@ default-combinators: make map! reduce [
     'keep combinator [
         return: "The kept value (same as input)"
             [any-value?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         parser [action?]
         <local> result'
     ][
@@ -1151,7 +1151,7 @@ default-combinators: make map! reduce [
     'gather combinator [
         return: "The gathered object"
             [object!]
-        /pending [blank! block!]
+        :pending [blank! block!]
         parser [action?]
         <local> obj
     ][
@@ -1176,7 +1176,7 @@ default-combinators: make map! reduce [
     'emit combinator [
         return: "The emitted value"
             [any-value?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         @target [set-word? set-group?]
         parser [action?]
         <local> result'
@@ -1240,7 +1240,7 @@ default-combinators: make map! reduce [
     ]
 
     'set combinator [
-        {Disabled combinator, included to help guide to use SET-WORD!}
+        "Disabled combinator, included to help guide to use SET-WORD!"
         return: []
     ][
         fail [
@@ -1314,7 +1314,7 @@ default-combinators: make map! reduce [
         return: "The token matched against (not input value)"
             [issue!]
         value [issue!]
-        /negated
+        :negated
     ][
         if tail? input [
             return raise "ISSUE! cannot match at end of input"
@@ -1459,7 +1459,7 @@ default-combinators: make map! reduce [
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value? pack?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
     ][
         remainder: input
@@ -1484,7 +1484,7 @@ default-combinators: make map! reduce [
     'phase combinator [
         return: "Result of the parser evaluation"
             [any-value? pack?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         parser [action?]
         <local> result'
     ][
@@ -1549,7 +1549,7 @@ default-combinators: make map! reduce [
     ':* combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack?]
-        /pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
+        :pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [get-group?]
         <local> r comb
@@ -1652,9 +1652,9 @@ default-combinators: make map! reduce [
     quoted! combinator [
         return: "The matched value"
             [element?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [quoted?]
-        /negated
+        :negated
         <local> comb neq?
     ][
         if tail? input [
@@ -1702,7 +1702,7 @@ default-combinators: make map! reduce [
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
         return: "Literal value" [element?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         'value [element?]
         <local> comb
     ][
@@ -1736,7 +1736,7 @@ default-combinators: make map! reduce [
 
     quasiform! combinator compose [
         (spread quasi-return-spec)
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [quasi?]
         <local> comb neq?
     ][
@@ -1937,7 +1937,7 @@ default-combinators: make map! reduce [
         return: "Matched or synthesized value"
             [element?]
         value [type-block!]
-        /negated
+        :negated
         <local> item error
     ][
         if tail? input [
@@ -2010,7 +2010,7 @@ default-combinators: make map! reduce [
         return: "Matched or synthesized value"
             [element?]
         value [type-word!]
-        /negated
+        :negated
         <local> item error
     ][
         if tail? input [
@@ -2106,7 +2106,7 @@ default-combinators: make map! reduce [
 
     the-word! combinator compose [
         (spread quasi-return-spec)
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [the-word!]
         <local> comb lookup'
     ][
@@ -2120,7 +2120,7 @@ default-combinators: make map! reduce [
 
     the-tuple! combinator compose [
         (spread quasi-return-spec)
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [the-tuple!]
         <local> comb lookup'
     ][
@@ -2132,7 +2132,7 @@ default-combinators: make map! reduce [
 
     the-group! combinator compose [
         (spread quasi-return-spec)
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [the-group!]
         <local> result' comb subpending single
     ][
@@ -2155,7 +2155,7 @@ default-combinators: make map! reduce [
 
     the-block! combinator compose [  ; matching literal block is redundant [4]
         (spread quasi-return-spec)
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [the-block!]
         <local> result' comb subpending
     ][
@@ -2200,7 +2200,7 @@ default-combinators: make map! reduce [
 
     meta-word! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [meta-word!]
         <local> comb
     ][
@@ -2211,7 +2211,7 @@ default-combinators: make map! reduce [
 
     meta-tuple! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [meta-tuple!]
         <local> comb
     ][
@@ -2222,7 +2222,7 @@ default-combinators: make map! reduce [
 
     meta-path! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [meta-path!]
         <local> comb
     ][
@@ -2233,7 +2233,7 @@ default-combinators: make map! reduce [
 
     meta-group! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [meta-group!]
         <local> comb
     ][
@@ -2244,7 +2244,7 @@ default-combinators: make map! reduce [
 
     meta-block! combinator [
         return: "Meta quoted" [~null~ quasi? quoted?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [meta-block!]
         <local> comb
     ][
@@ -2261,7 +2261,7 @@ default-combinators: make map! reduce [
     ; gives a result and you do not want it to, use ELIDE.
 
     'elide combinator [
-        {Transform a result-bearing combinator into one that has no result}
+        "Transform a result-bearing combinator into one that has no result"
         return: [~[]~]
         parser [action?]
     ][
@@ -2270,7 +2270,7 @@ default-combinators: make map! reduce [
     ]
 
     'comment combinator [
-        {Comment out an arbitrary amount of PARSE material}
+        "Comment out an arbitrary amount of PARSE material"
         return: [~[]~]
         'ignored [block! text! tag! issue!]
     ][
@@ -2296,7 +2296,7 @@ default-combinators: make map! reduce [
     ]
 
     'skip combinator [
-        {Skip an integral number of items}
+        "Skip an integral number of items"
         return: [~[]~]
         parser [action?]
         <local> result
@@ -2353,13 +2353,13 @@ default-combinators: make map! reduce [
     ; ACTION!, but whose arguments are fulfilled via PARSE.
 
     frame! combinator [
-        {Run an ordinary action with parse rule products as its arguments}
+        "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
             [any-value? pack?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
-        /parsers "Sneaky argument of parsers collected from arguments"
+        :parsers "Sneaky argument of parsers collected from arguments"
             [block!]
         <local> arg subpending
     ][
@@ -2378,7 +2378,7 @@ default-combinators: make map! reduce [
 
         let f: make frame! value
         for-each 'param (parameters of f) [
-            if not path? param [
+            if not refinement? param [
                 ensure frame! parsers.1
                 if meta-word? param [
                     param: to word! param
@@ -2415,7 +2415,7 @@ default-combinators: make map! reduce [
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-value? pack?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [word! tuple!]
         <local> r comb rule-start rule-end
     ][
@@ -2512,7 +2512,7 @@ default-combinators: make map! reduce [
     'any combinator [
         return: "Last result value"
             [any-value? pack?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         @arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [element?]  ; lie and take any element to report better error
         <local> result' block
@@ -2565,11 +2565,11 @@ default-combinators: make map! reduce [
     block! (block-combinator: combinator [
         return: "Last result value"
             [any-value? pack?]
-        /pending [blank! block!]
+        :pending [blank! block!]
         value [block!]
-        /limit "Limit of how far to consider (used by ... recursion)"
+        :limit "Limit of how far to consider (used by ... recursion)"
             [block!]
-        /thru "Keep trying rule until end of block"
+        :thru "Keep trying rule until end of block"
         <local> rules pos result' f sublimit subpending temp old-env
     ][
         rules: value  ; alias for clarity
@@ -2785,7 +2785,7 @@ comment [
 
 comment [combinatorize: func [
 
-    {Analyze combinator parameters in rules to produce a specialized "parser"}
+    "Analyze combinator parameters in rules to produce a specialized parser"
 
     return: "Parser function taking only input, and advanced rules position"
         [~[action? block!]~]
@@ -2793,7 +2793,7 @@ comment [combinatorize: func [
         [frame!]
     rules [block!]
     state "Parse State" [frame!]
-    /value "Initiating value (if datatype)" [element?]
+    :value "Initiating value (if datatype)" [element?]
     <local> r f rule-start
 ][
     rule-start: back rules  ; value may not be set if WORD! dispatch
@@ -2822,11 +2822,11 @@ comment [combinatorize: func [
                 ; All combinators should have an input.  But the
                 ; idea is that we leave this unspecialized.
             ]
-            param = '/remainder [
+            param = ':remainder [
                 ; The remainder is a return; responsibility of the caller, also
                 ; left unspecialized.
             ]
-            param = '/pending [
+            param = ':pending [
                 ; same for pending, this is the data being gathered that may
                 ; need to be discarded (gives impression of "rollback") and
                 ; is the feature behind COLLECT etc.
@@ -2837,10 +2837,10 @@ comment [combinatorize: func [
             param = 'state [  ; the "state" is currently the UPARSE frame
                 f.state: state
             ]
-            param = '/rule-start [
+            param = ':rule-start [
                 f.rule-start: rule-start
             ]
-            param = '/rule-end [
+            param = ':rule-end [
                 ; skip (filled in at end)
             ]
             quoted? param [  ; literal element captured from rules
@@ -3019,7 +3019,7 @@ parsify: func [
             comb: unrun adapt (augment comb inside [] collect [
                 let n: 1
                 for-each 'param parameters of gotten [
-                    if not path? param [
+                    if not refinement? param [
                         keep spread compose [
                             (to word! unspaced ["param" n]) [action?]
                         ]
@@ -3036,7 +3036,7 @@ parsify: func [
 
                 let n: 1
                 for-each 'param (parameters of value) [
-                    if not path? param [
+                    if not refinement? param [
                         append parsers unrun :f.(as word! unspaced ["param" n])
                         n: n + 1
                     ]
@@ -3111,13 +3111,13 @@ parse*: func [
         [<maybe> any-series? url! any-sequence?]
     rules "Block of parse rules"
         [block!]
-    /combinators "List of keyword and datatype handlers used for this parse"
+    :combinators "List of keyword and datatype handlers used for this parse"
         [map!]
-    /case "Do case-sensitive matching"
-    /relax "Don't require reaching the tail of the input for success"
-    /part "FAKE :PART FEATURE - runs on a copy of the series!"
+    :case "Do case-sensitive matching"
+    :relax "Don't require reaching the tail of the input for success"
+    :part "FAKE :PART FEATURE - runs on a copy of the series!"
         [integer! any-series?]
-    /hook "Call a hook on dispatch of each combinator"
+    :hook "Call a hook on dispatch of each combinator"
         [<unrun> frame!]
 
     <local> loops furthest synthesized' remainder pending env
@@ -3297,7 +3297,7 @@ parse-furthest-hook: func [
     return unmeta result'
 ]
 
-parse-furthest: adapt augment :parse [
+parse-furthest: adapt augment parse/ [
     var "Variable to hold furthest position reached"
         [word! tuple!]
 ][

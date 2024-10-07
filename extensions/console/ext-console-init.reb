@@ -85,8 +85,8 @@ export console!: make object! [
   ABOUT   - Information about your Rebol}
 
     print-greeting: meth [
-        return: [~]
         "Adds live elements to static greeting content (build #, version)"
+        return: [~]
     ][
         boot-print [
             "Rebol 3 (Ren-C branch)"
@@ -351,7 +351,7 @@ start-console: func [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
     return: [~]
-    /skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
+    :skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
     <static>
         o (system.options)  ; shorthand since options are often read or written

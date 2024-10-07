@@ -93,8 +93,8 @@ detect-ndk-host: func [
 tool-for-host: func [
     return: [file! text!]
     tool [tag!] "<COMPILER> or <LINKER>"
-    /host [word!] "defaults to detecting current system, e.g. linux-x86_64"
-    /abi [word!] "defaults to 32-bit ARM (arm-linux-androideabi)"
+    :host [word!] "defaults to detecting current system, e.g. linux-x86_64"
+    :abi [word!] "defaults to 32-bit ARM (arm-linux-androideabi)"
 ] [
     host: default [detect-ndk-host]
     abi: default ['arm-linux-androideabi]  ; But ARM64 is up-and-coming... :-/
@@ -254,7 +254,7 @@ sysroot-for-compile: func [
 ;
 sysroot-for-link: func [
     return: [text!]
-    /host [word!] "defaults to detecting current system, e.g. linux-x86_64"
+    :host [word!] "defaults to detecting current system, e.g. linux-x86_64"
 ][
     host: default [detect-ndk-host]
 

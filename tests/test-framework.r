@@ -46,7 +46,7 @@ test-block: ~
 error: ~
 
 run-single-test: func [
-    {Run code and write the success or failure to the log file}
+    "Run code and write the success or failure to the log file"
 
     return: [~]
     code "Code GROUP! from test file, assumed bound into isolated module"
@@ -257,7 +257,7 @@ process-tests: func [
 ]
 
 export do-recover: func [
-    {Executes tests in the FILE and recovers from crash}
+    "Executes tests in the FILE and recovers from crash"
 
     return: "The log file that was generated, and textual summary of results"
         [~[file! text!]~]

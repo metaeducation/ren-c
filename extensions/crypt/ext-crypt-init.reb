@@ -7,7 +7,7 @@ REBOL [
 ]
 
 export rsa-make-key: func [
-    {Creates a key object for RSA algorithm.}
+    "Creates a key object for RSA algorithm"
 ][
     return make object! [
         padding:    ;spec block for pad, e.g. [raw] or [pcks1-v15 #md5]

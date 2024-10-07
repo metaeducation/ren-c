@@ -76,7 +76,7 @@ last: redescribe [
 ; but JOIN isn't the right place for it.
 ;
 join: func [
-    {Concatenates values to the end of a copy of a value}
+    "Concatenates values to the end of a copy of a value"
 
     return:
         [any-series? issue! url! any-sequence? port!
@@ -200,11 +200,11 @@ join: func [
 ; in "Base" - see TRIM.
 ;
 charset: func [
-    {Makes a bitset of chars for the parse function.}
+    "Makes a bitset of chars for the parse function"
 
     return: [bitset!]
     chars [text! block! binary! char? integer!]
-    /length "Preallocate this many bits (must be > 0)"
+    :length "Preallocate this many bits (must be > 0)"
         [integer!]
 ][
     let init: either length [length] [[]]
@@ -216,17 +216,17 @@ charset: func [
 ; not "Mezzanine", so this can't be in %mezz-series at the moment.  Review.
 ;
 trim: func [
-    {Removes spaces from strings or blanks from blocks or objects.}
+    "Removes spaces from strings or blanks from blocks or objects"
 
     return: [any-string? any-list? binary! any-context?]
     series "Series (modified) or object (made)"
         [any-string? any-list? binary! any-context?]
-    /head "Removes only from the head"
-    /tail "Removes only from the tail"
-    /auto "Auto indents lines relative to first line"
-    /lines "Removes all line breaks and extra spaces"
-    /all "Removes all whitespace"
-    /with "Same as /all, but removes specific characters"
+    :head "Removes only from the head"
+    :tail "Removes only from the tail"
+    :auto "Auto indents lines relative to first line"
+    :lines "Removes all line breaks and extra spaces"
+    :all "Removes all whitespace"
+    :with "Same as :ALL, but removes specific characters"
         [char? text! binary! integer! block! bitset!]
 ][
     let tail_TRIM: tail

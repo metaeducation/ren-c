@@ -133,7 +133,7 @@
     (
         value: rest: ~
         all [
-            "fake" = [rest /value]: transcode:next "ab cd" then ["fake"]
+            "fake" = [rest :value]: transcode:next "ab cd" then ["fake"]
             value = null
             rest = "fake"
         ]
@@ -141,7 +141,7 @@
     (
         value: rest: ~
         all [
-            <item!> = [rest /value]: transcode:next "ab cd" then [<item!>]
+            <item!> = [rest :value]: transcode:next "ab cd" then [<item!>]
             value = null
             rest = <item!>
         ]
@@ -152,7 +152,7 @@
             return pack [20 10]
         ]
         all wrap [
-            '~<weird>~ = [^x /y]: (foo then [~<weird>~])
+            '~<weird>~ = [^x :y]: (foo then [~<weird>~])
             x = '~<weird>~
             y = null
         ]
@@ -189,7 +189,7 @@
 ; Propagates nihil signals, but sets variables to null
 [
     (all wrap [
-        null? [/x]: comment "hi"
+        null? [:x]: comment "hi"
         null? x
     ])
 ]
@@ -224,7 +224,7 @@
     ~???~ !! ([a b]: 10)
     (
         all wrap [
-            10 = [a /b]: 10
+            10 = [a :b]: 10
             a = 10
             b = null
         ]
@@ -249,12 +249,12 @@
 [
     (
         x: ~
-        [^/x]: null
+        [^:x]: null
         x = ^null
     )
     (
         x: ~
-        [^/x]: comment "hi"
+        [^:x]: comment "hi"
         x = null
     )
 ]

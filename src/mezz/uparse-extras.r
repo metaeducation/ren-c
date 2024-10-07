@@ -18,7 +18,7 @@ Rebol [
 destructure: func [
     input [any-series?]
     dialect [block!]
-    /multi "Run multiple branches"
+    :multi "Run multiple branches"
 ][
     let result': ^void
     let combinators: copy default-combinators

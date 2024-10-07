@@ -205,7 +205,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //      return: []
 //      reason "Cause of the panic"
 //          [any-value?]
-//      /value "Interpret reason as a value cell to debug dump, vs. a message"
+//      :value "Interpret reason as a value cell to debug dump, vs. a message"
 //  ]
 //
 DECLARE_NATIVE(panic)
@@ -246,7 +246,7 @@ DECLARE_NATIVE(panic)
             p = Cell_Varlist(v);
         }
         else {
-            assert(!"Called PANIC without /VALUE on non-TEXT!, non-ERROR!");
+            assert(!"Called PANIC without :VALUE on non-TEXT!, non-ERROR!");
             p = v;
         }
     }
@@ -281,7 +281,7 @@ DECLARE_NATIVE(raise_p)
 //
 //      return: []
 //      reason [any-value?]  ; permissive to avoid callsite error
-//      /blame [word!]
+//      :blame [word!]
 //  ]
 //
 DECLARE_NATIVE(fail)

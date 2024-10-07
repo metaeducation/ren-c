@@ -35,7 +35,7 @@
 //          [error! quoted? quasi? blank!]
 //      code "Code to sandbox and monitor"
 //          [<unrun> frame! any-list?]
-//      /relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
+//      :relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
 //  ]
 //
 DECLARE_NATIVE(enrescue)

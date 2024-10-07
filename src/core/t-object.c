@@ -1650,7 +1650,7 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
 //      return: [~null~ object!]
 //      spec "Object spec block, top-level SET-WORD!s will be object keys"
 //          [<maybe> block! the-block!]
-//      /with "Use a parent/prototype context"
+//      :with "Use a parent/prototype context"
 //          [object!]
 //  ]
 //

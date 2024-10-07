@@ -535,7 +535,7 @@ REBTYPE(Issue)
 //
 //      return: [integer!]
 //      first-byte [integer!]
-//      /extended "Permit 4 or 5 trailing bytes, not legal in the UTF-8 spec"
+//      :extended "Permit 4 or 5 trailing bytes, not legal in the UTF-8 spec"
 //  ]
 //
 DECLARE_NATIVE(trailing_bytes_for_utf8)

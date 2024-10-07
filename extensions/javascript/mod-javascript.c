@@ -789,7 +789,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
 //      spec "Function specification (similar to the one used by FUNCTION)"
 //          [block!]
 //      source "JavaScript code as a text string" [text!]
-//      /awaiter "Uses async JS function, invocation will implicitly `await`"
+//      :awaiter "Uses async JS function, invocation will implicitly `await`"
 //  ]
 //
 DECLARE_NATIVE(js_native)
@@ -973,8 +973,8 @@ DECLARE_NATIVE(js_native)
 //      return: "Note: Only supports types that reb.Box() supports"
 //          [~ ~null~ logic? integer! text!]
 //      source "JavaScript code as a text string" [text!]
-//      /local "Evaluate in local scope (as opposed to global)"
-//      /value "Return a Rebol value"
+//      :local "Evaluate in local scope (as opposed to global)"
+//      :value "Return a Rebol value"
 //  ]
 //
 DECLARE_NATIVE(js_eval_p)

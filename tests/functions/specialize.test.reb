@@ -8,7 +8,7 @@
 
 [
     (
-        foo: func [/A [integer!] /B [integer!] /C [integer!]] [
+        foo: func [:A [integer!] :B [integer!] :C [integer!]] [
             return compose [
                 :A (reify A) :B (reify B) :C (reify C)
             ]

@@ -300,7 +300,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 //          [block!]
 //      source "C source of the native implementation"
 //          [text!]
-//      /linkname "Provide a specific linker name (default is auto-generated)"
+//      :linkname "Provide a specific linker name (default is auto-generated)"
 //          [text!]
 //  ]
 //
@@ -386,9 +386,9 @@ DECLARE_NATIVE(make_native)
 //          [~null~ text!]
 //      compilables [block!] "Should be just TEXT! and user native ACTION!s"
 //      config [object!] "Vetted and simplified form of /OPTIONS block"
-//      /inspect "Return the C source code as text, but don't compile it"
-//      /librebol "Connect symbols to running EXE libRebol (rebValue(), etc.)"
-//      /files "COMPILABLES is a list of TEXT! specifying local filenames"
+//      :inspect "Return the C source code as text, but don't compile it"
+//      :librebol "Connect symbols to running EXE libRebol (rebValue(), etc.)"
+//      :files "COMPILABLES is a list of TEXT! specifying local filenames"
 //  ]
 //
 DECLARE_NATIVE(compile_p)

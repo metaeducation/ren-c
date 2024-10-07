@@ -7,7 +7,7 @@
 ; For now, it is not a combinator in use.
 ;
 ;     'maybe combinator [
-;        {If applying parser fails, succeed and vanish; don't advance input}
+;        "If applying parser fails, succeed and vanish; don't advance input"
 ;        return: "PARSER's result if it succeeds w/non-NULL, otherwise vanish"
 ;            [any-value?]
 ;        parser [action?]

@@ -82,7 +82,7 @@ call*: adapt call-internal*/ [
 ;
 call: enclose (
     augment (specialize call*/ [wait: ok]) [
-        /relax "If exit code is non-zero, return the integer vs. raising error"
+        :relax "If exit code is non-zero, return the integer vs. raising error"
     ]
 ) func [f [frame!]] [
     let relax: f.relax
@@ -100,7 +100,7 @@ call: enclose (
 ]
 
 parse-command-to-argv*: func [
-    {Helper for when POSIX gets a TEXT! and the /SHELL refinement not used}
+    "Helper for when POSIX gets a TEXT! and the /SHELL refinement not used"
 
     return: [block!]
     command [text!]
@@ -134,7 +134,7 @@ parse-command-to-argv*: func [
 
 
 argv-block-to-command*: func [
-    {Helper for when Windows gets an argv BLOCK! and needs a command line}
+    "Helper for when Windows gets an argv BLOCK! and needs a command line"
 
     return: [text!]
     argv [block!]

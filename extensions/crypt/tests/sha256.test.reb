@@ -46,7 +46,7 @@
     ; code breaks for some reason than anything wrong with mbedTLS).
     ;
     hmac-sha256: func [
-       "Computes the hmac-sha256 for message m using key k"
+        "Computes the hmac-sha256 for message m using key k"
 
         m [binary! text!]
         k [binary! text!]
