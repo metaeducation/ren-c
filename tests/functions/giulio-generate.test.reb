@@ -4,7 +4,7 @@
 ; of stackless YIELDER and GENERATOR.
 ;
 [(
-    giulio-generate: func [
+    /giulio-generate: func [
         "Make a generator"
         return: [action?]
         init [block!] "Init code"
@@ -35,12 +35,12 @@
                 [compose [ return if (to group! condition) [result] ]]
             )
         ]
-        let f: func spec body
+        let /f: func spec body
         f/reset init
         return :f
     ]
 
-    read-lines: func [
+    /read-lines: func [
         "Makes a generator that yields lines from a file or port"
         return: [action?]
         src [~null~ port! file!]

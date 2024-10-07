@@ -115,7 +115,7 @@ syms-cscape: copy []
 ;
 sym-n: 1  ; counts up as symbols are added
 
-add-sym: func [
+/add-sym: func [
     "Add SYM_XXX to enumeration"
     return: [~null~ integer!]
     word [word! text!]
@@ -142,7 +142,7 @@ add-sym: func [
 
 type-table: load %types.r
 
-for-each-datatype: func [
+/for-each-datatype: func [
     "Iterate type table by creating an object for each row"
 
     var "Word to set each time to the row made into an object record"
@@ -202,7 +202,7 @@ for-each-datatype: func [
     ]
 ]
 
-for-each-typerange: func [
+/for-each-typerange: func [
     "Iterate type table and create object for each <TYPE!>...</TYPE!> range"
 
     var "Word to set each time to the typerange as an object record"
@@ -517,7 +517,7 @@ e-hooks: make-emitter "Built-in Type Hooks" (
     join prep-dir %core/tmp-type-hooks.c
 )
 
-hookname: enfix func [
+/hookname: enfix func [
     return: [text!]
     prefix [text!] "e.g. T_ for T_Action"
     t [object!] "type record (e.g. a row out of %types.r)"
@@ -749,7 +749,7 @@ e-sysobj: make-emitter "System Object" (
     join prep-dir %include/tmp-sysobj.h
 )
 
-at-value: func [field] [return next find boot-sysobj to-set-word field]
+/at-value: func [field] [return next find boot-sysobj to-set-word field]
 
 boot-sysobj: load %sysobj.r
 change (at-value 'version) version
@@ -769,9 +769,9 @@ c-debug-break: :void
 
 ob: make object! boot-sysobj
 
-c-debug-break: get $lib/c-debug-break
+/c-debug-break: get $lib/c-debug-break
 
-make-obj-defs: func [
+/make-obj-defs: func [
     "Given a Rebol OBJECT!, write C structs that can access its raw variables"
 
     return: [~]

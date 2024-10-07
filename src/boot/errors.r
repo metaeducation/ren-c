@@ -28,10 +28,10 @@ REBOL [
         the messages are stored in an "errors catalog".  For this reason,
         standard errors evoked from usermode as well as C are found here.
 
-        !!! TBD: method of extending the error catalog and managing the
+        !!! TBD: way of extending the error catalog and managing the
         ecology of identity of new errors (possibly via URL uniqueness).
 
-        !!! TBD: method of cleaning up errors not referenced from the code.
+        !!! TBD: way of cleaning up errors not referenced from the code.
     }
 ]
 

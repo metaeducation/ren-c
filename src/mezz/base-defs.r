@@ -25,11 +25,11 @@ REBOL [
 
 ; Start with basic debugging
 
-c-break-debug: c-debug-break/  ; easy to mix up
+/c-break-debug: c-debug-break/  ; easy to mix up
 
-eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
+/eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
-probe: func* [
+/probe: func* [
     "Debug print a molded value and returns that same value"
 
     return: "Same as the input value"
@@ -49,17 +49,17 @@ probe: func* [
     return unmeta value'
 ]
 
-??: probe/  ; shorthand for debug sessions, not to be committed
+/??: probe/  ; shorthand for debug sessions, not to be committed
 
 ; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 ;
-did*: did:decay/
-didn't*: didn't:decay/
-*then: then:decay/
-*also: also:decay/
-*else: else:decay/
+/did*: did:decay/
+/didn't*: didn't:decay/
+/*then: then:decay/
+/*also: also:decay/
+/*else: else:decay/
 
 ; Give special operations their special properties
 ;
@@ -80,19 +80,19 @@ tweak *else/ 'defer 'on
 ;
 ; Note that `/` is rather trickily not a PATH!, but a decayed form as a WORD!
 
-+: enfix add/
--: enfix subtract/
-*: enfix multiply/
+/+: enfix add/
+/-: enfix subtract/
+/*: enfix multiply/
 /: enfix divide/
 
 
 ; SET OPERATORS
 
-not+: bitwise-not/
-and+: enfix bitwise-and/
-or+: enfix bitwise-or/
-xor+: enfix bitwise-xor/
-and-not+: enfix bitwise-and-not/
+/not+: bitwise-not/
+/and+: enfix bitwise-and/
+/or+: enfix bitwise-or/
+/xor+: enfix bitwise-xor/
+/and-not+: enfix bitwise-and-not/
 
 
 ; COMPARISON OPERATORS
@@ -117,8 +117,8 @@ and-not+: enfix bitwise-and-not/
 ; being unused as a result.  Compromise `=>` just to reinforce what is lost
 ; by not retraining: https://forum.rebol.info/t/349/11
 ;
-equal-or-greater?: greater-or-equal?/
-lesser-or-equal?: equal-or-lesser?/
+/equal-or-greater?: greater-or-equal?/
+/lesser-or-equal?: equal-or-lesser?/
 =>: enfix equal-or-greater?/
 <=: enfix lesser-or-equal?/
 
@@ -131,7 +131,7 @@ lesser-or-equal?: equal-or-lesser?/
 
 ; Common "Invisibles"
 
-comment: func* [
+/comment: func* [
     "Ignores the argument value, but does no evaluation (see also ELIDE)"
 
     return: "Evaluator will skip over the result (not seen)"
@@ -142,7 +142,7 @@ comment: func* [
     return ~[]~
 ]
 
-elide: func* [
+/elide: func* [
     "Argument is evaluative, but discarded (see also COMMENT)"
 
     return: "The evaluator will skip over the result (not seen)"
@@ -153,7 +153,7 @@ elide: func* [
     return ~[]~
 ]
 
-elide-if-void: func* [
+/elide-if-void: func* [
     "Argument is evaluative, but discarded if void"
 
     return: [any-value? pack?]
@@ -167,9 +167,9 @@ elide-if-void: func* [
 ; COMMA! is the new expression barrier.  But `||` is included as a way to
 ; make comma antiforms to show how to create custom barrier-like constructs.
 ;
-||: func* [] [return ~,~]
+/||: func* [] [return ~,~]
 
-|||: func* [
+/|||: func* [
     "Inertly consumes all subsequent data, evaluating to previous result"
 
     return: [~[]~]
@@ -190,7 +190,7 @@ each: quote/
 ; It's easier to pre-process CASCADE's block in usermode, which also offers a
 ; lower-level version CASCADE* that just takes a block of frames.
 ;
-cascade: adapt cascade*/ [
+/cascade: adapt cascade*/ [
     pipeline: reduce:predicate pipeline unrun/
 ]
 
@@ -235,21 +235,21 @@ requote: reframer lambda [
 ; specializations they don't fit easily into the NEXT OF SERIES model--this
 ; is a problem which hasn't been addressed.
 ;
-next: specialize skip/ [offset: 1]
-back: specialize skip/ [offset: -1]
+/next: specialize skip/ [offset: 1]
+/back: specialize skip/ [offset: -1]
 
 ; Function synonyms
 
-min: minimum/
-max: maximum/
-abs: absolute/
+/min: minimum/
+/max: maximum/
+/abs: absolute/
 
-unspaced: specialize delimit/ [delimiter: null]
-spaced: specialize delimit/ [delimiter: space]
-newlined: specialize delimit/ [delimiter: newline, tail: ok]
+/unspaced: specialize delimit/ [delimiter: null]
+/spaced: specialize delimit/ [delimiter: space]
+/newlined: specialize delimit/ [delimiter: newline, tail: ok]
 
-an: lambda [
-    {Prepends the correct "a" or "an" to a string, based on leading character}
+/an: lambda [
+    "Prepends the correct 'a' or 'an' to a string, based on leading character"
     value <local> s
 ][
     if null? value [fail @value]
@@ -275,13 +275,13 @@ an: lambda [
 ; {Returns TRUE if port is open.}
 ; port [port!]
 
-head?: specialize reflect/ [property: 'head?]
-tail?: specialize reflect/ [property: 'tail?]
-past?: specialize reflect/ [property: 'past?]
-open?: specialize reflect/ [property: 'open?]
+/head?: specialize reflect/ [property: 'head?]
+/tail?: specialize reflect/ [property: 'tail?]
+/past?: specialize reflect/ [property: 'past?]
+/open?: specialize reflect/ [property: 'open?]
 
 
-empty?: func* [
+/empty?: func* [
     "OKAY if blank or void, if empty, or if index is at or beyond its tail"
     return: [logic?]
     container [
@@ -299,15 +299,15 @@ empty?: func* [
 ; bridge compatibility, as LIT-WORD! and LIT-PATH! are no longer fundamental
 ; datatypes... but type constraints (LIT-WORD? and LIT-PATH?)
 
-to-lit-word: func* [return: [quoted?] value [element?]] [
+/to-lit-word: func* [return: [quoted?] value [element?]] [
     return quote to word! noquote value
 ]
 
-to-lit-path: func* [return: [quoted?] value [element?]] [
+/to-lit-path: func* [return: [quoted?] value [element?]] [
     return quote to path! noquote value
 ]
 
-print: func* [
+/print: func* [
     "Output SPACED text with newline (evaluating elements if BLOCK!)"
 
     return: "Returns null if line outputs nothing, e.g. print [void]"
@@ -339,7 +339,7 @@ print: func* [
     ]
 ]
 
-echo: func* [
+/echo: func* [
     "Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes"
 
     return: [~]

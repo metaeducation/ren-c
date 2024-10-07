@@ -15,7 +15,7 @@ Rebol [
 
 import %test-parsing.r
 
-log-filter: func [
+/log-filter: func [
     return: [~]
     source-log [file!]
 ][

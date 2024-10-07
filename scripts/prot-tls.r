@@ -189,7 +189,7 @@ debug: (comment [print/] blank)
 ; SHA1 was removed from the core.  We could do it in userspace if it were
 ; deemed important.
 ;
-random-secure: lambda [range [integer!]] [random range]
+/random-secure: lambda [range [integer!]] [random range]
 
 
 version-to-bytes: [
@@ -200,7 +200,7 @@ version-to-bytes: [
 bytes-to-version: reverse copy version-to-bytes
 
 
-emit: func [
+/emit: func [
     "Emits binary data, optionally marking positions with SET-WORD!"
 
     return: [~]
@@ -235,13 +235,13 @@ emit: func [
 ; !!! These shorthands cover what's needed and are chosen to clearly separate
 ; the number of bytes from the number being encoded (both integers).
 ;
-to-1bin: specialize enbin/ [settings: [be + 1]]
-to-2bin: specialize enbin/ [settings: [be + 2]]
-to-3bin: specialize enbin/ [settings: [be + 3]]
-to-4bin: specialize enbin/ [settings: [be + 4]]
-to-8bin: specialize enbin/ [settings: [be + 8]]
+/to-1bin: specialize enbin/ [settings: [be + 1]]
+/to-2bin: specialize enbin/ [settings: [be + 2]]
+/to-3bin: specialize enbin/ [settings: [be + 3]]
+/to-4bin: specialize enbin/ [settings: [be + 4]]
+/to-8bin: specialize enbin/ [settings: [be + 8]]
 
-make-tls-error: lambda [
+/make-tls-error: lambda [
     message [text! block!]
 ][
     if block? message [message: unspaced message]
@@ -269,7 +269,7 @@ make-tls-error: lambda [
 ;
 ; Yet it's a good, short, real-world case to look at through a Rebol lens.
 
-parse-asn: func [
+/parse-asn: func [
     "Create a legible Rebol-structured BLOCK! from an ASN.1 BINARY! encoding"
 
     return: [~null~ block!]
@@ -396,7 +396,7 @@ parse-asn: func [
 ; represents a state that can be final, and a TAG! represents a state that may
 ; move to the competed state.
 
-make-state-updater: func [
+/make-state-updater: func [
     return: [action?]
     direction ['read 'write]
     transdialect "dialected mapping from state to legal next states"
@@ -458,7 +458,7 @@ update-write-state: make-state-updater 'write [
 
 === TLS PROTOCOL CODE ===
 
-client-hello: func [
+/client-hello: func [
     return: [~]
     ctx [object!]
     :version "TLS version to request (block is [lowest highest] allowed)"
@@ -668,7 +668,7 @@ client-hello: func [
 ]
 
 
-client-key-exchange: func [
+/client-key-exchange: func [
     return: [~]
     ctx [object!]
 ][
@@ -777,7 +777,7 @@ client-key-exchange: func [
 ]
 
 
-change-cipher-spec: func [
+/change-cipher-spec: func [
     return: [~]
     ctx [object!]
 ][
@@ -790,7 +790,7 @@ change-cipher-spec: func [
 ]
 
 
-encrypted-handshake-msg: func [
+/encrypted-handshake-msg: func [
     return: [~]
     ctx [object!]
     unencrypted [binary!]
@@ -806,7 +806,7 @@ encrypted-handshake-msg: func [
 ]
 
 
-application-data: func [
+/application-data: func [
     return: [~]
     ctx [object!]
     unencrypted [binary! text!]
@@ -821,7 +821,7 @@ application-data: func [
 ]
 
 
-alert-close-notify: func [
+/alert-close-notify: func [
     return: [~]
     ctx [object!]
 ][
@@ -835,7 +835,7 @@ alert-close-notify: func [
 ]
 
 
-finished: func [
+/finished: func [
     return: [binary!]
     ctx [object!]
 ][
@@ -873,7 +873,7 @@ finished: func [
 ]
 
 
-encrypt-data: func [
+/encrypt-data: func [
     return: [binary!]
     ctx [object!]
     content [binary!]
@@ -949,7 +949,7 @@ encrypt-data: func [
 ]
 
 
-decrypt-data: func [
+/decrypt-data: func [
     return: [binary!]
     ctx [object!]
     data [binary!]
@@ -976,7 +976,7 @@ decrypt-data: func [
 ]
 
 
-parse-protocol: func [
+/parse-protocol: func [
     return: [object!]
     data [binary!]
 
@@ -1000,7 +1000,7 @@ parse-protocol: func [
 ]
 
 
-grab: enfix func [
+/grab: enfix func [
     "Extracts N bytes from a BINARY!, and also updates its position"
 
     return: "BINARY! (or INTEGER! if GRAB-INT enclosure is used)"
@@ -1022,12 +1022,12 @@ grab: enfix func [
     return set left result  ; must manually assign if SET-WORD! overridden
 ]
 
-grab-int: enfix enclose grab/ lambda [f [frame!]] [
+/grab-int: enfix enclose grab/ lambda [f [frame!]] [
     set f.left (debin [be +] eval copy f)
 ]
 
 
-parse-messages: func [
+/parse-messages: func [
     return: [block!]
 
     ctx [object!]
@@ -1506,7 +1506,7 @@ parse-messages: func [
 ]
 
 
-parse-response: func [
+/parse-response: func [
     return: [object!]
     ctx [object!]
     msg [binary!]
@@ -1533,7 +1533,7 @@ parse-response: func [
 ]
 
 
-prf: func [
+/prf: func [
     "(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries"
 
     return: [binary!]
@@ -1594,7 +1594,7 @@ prf: func [
 ]
 
 
-make-key-block: func [
+/make-key-block: func [
     return: [binary!]
     ctx [object!]
 ][
@@ -1611,7 +1611,7 @@ make-key-block: func [
 ]
 
 
-make-master-secret: func [
+/make-master-secret: func [
     return: [binary!]
     ctx [object!]
     pre-master-secret [binary!]
@@ -1626,7 +1626,7 @@ make-master-secret: func [
 ]
 
 
-do-commands: func [
+/do-commands: func [
     return: [~]  ; some paths returned LOGIC!, others none...was unused
     tls-port [port!]
     commands [block!]
@@ -1684,7 +1684,7 @@ do-commands: func [
 === TLS SCHEME ===
 
 
-tls-init: func [
+/tls-init: func [
     return: [~]
     ctx [object!]
 ][
@@ -1696,7 +1696,7 @@ tls-init: func [
 ]
 
 
-tls-read-data: func [
+/tls-read-data: func [
     return: [logic?]
     ctx [object!]
     port-data [binary!]
@@ -1747,7 +1747,7 @@ tls-read-data: func [
 ]
 
 
-perform-read: func [
+/perform-read: func [
     return: [~]
     port [port!]
 ][
@@ -1758,7 +1758,7 @@ perform-read: func [
     ]
 ]
 
-check-response: func [
+/check-response: func [
     return: [logic?]
     tls-port [port!]
 ][
@@ -1815,7 +1815,7 @@ sys.util/make-scheme [
     title: "TLS protocol v1.0"
     spec: make system.standard.port-spec-net []
     actor: [
-        read: func [
+        /read: func [
             return: [port!]
             port [port!]
         ][
@@ -1823,7 +1823,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        write: func [
+        /write: func [
             return: [~null~ port!]
             port [port!]
             value [any-value?]
@@ -1848,7 +1848,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        open: func [
+        /open: func [
             return: [port!]
             port [port!]
         ][
@@ -1986,7 +1986,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        connect: func [port [port!]] [
+        /connect: func [port [port!]] [
             connect port.state.connection
 
             tls-init port.state
@@ -2003,7 +2003,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        reflect: func [port [port!] property [word!]] [
+        /reflect: func [port [port!] property [word!]] [
             return switch property [
                 'open? [
                     all [port.state, open? port.state.connection]
@@ -2017,7 +2017,7 @@ sys.util/make-scheme [
             ]
         ]
 
-        close: func [return: [port!] port [port!]] [
+        /close: func [return: [port!] port [port!]] [
             if not port.state [return port]
 
             close port.state.connection
@@ -2053,11 +2053,11 @@ sys.util/make-scheme [
             return port
         ]
 
-        copy: func [port [port!]] [
+        /copy: func [port [port!]] [
             return if port.data [copy port.data]
         ]
 
-        query: func [return: [~null~ object!] port [port!]] [
+        /query: func [return: [~null~ object!] port [port!]] [
             return all [port.state, query port.state.connection]
         ]
     ]

@@ -48,7 +48,7 @@
 )
 ; functions are word-active
 (
-    a-value: does [1]
+    /a-value: does [1]
     1 == a-value
 )
 (
@@ -171,7 +171,7 @@
 
         {-<=>-} {-<>-} {>=<}
     ] wrap [
-        assert: specialize lib/assert/ [
+        /assert: specialize lib.assert/ [
             handler: [echo Failure on: @str]
         ]
 

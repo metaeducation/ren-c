@@ -227,7 +227,7 @@ struct FeedStruct {
     // instance, this would cause a problem:
     //
     //     obj: make object! [x: 10]
-    //     foo: does [append obj [y: 20]]
+    //     /foo: does [append obj [y: 20]]
     //     eval in obj [foo x]
     //                   ^-- consider the moment of lookahead, here
     //

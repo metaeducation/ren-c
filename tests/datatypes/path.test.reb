@@ -112,11 +112,11 @@
 
 ; calling functions through paths: function in object
 (
-    obj: make object! [fun: func [] [return 1]]
+    obj: make object! [/fun: func [] [return 1]]
     1 == obj/fun
 )
 (
-    obj: make object! [fun: func [:ref [integer!]] [return ref]]
+    obj: make object! [/fun: func [:ref [integer!]] [return ref]]
     1 == obj/fun:ref 1
 )
 
@@ -162,7 +162,7 @@
     )
 ]
 [#1977
-    ~scan-invalid~ !! (f: func [:r] [1], do load-value "f/r/%")
+    ~scan-invalid~ !! (/f: func [:r] [1], do load-value "f/r/%")
 ]
 
 ; path evaluation order

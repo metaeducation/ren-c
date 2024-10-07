@@ -38,7 +38,7 @@ REBOL [
 
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
-idate-to-date: lambda [
+/idate-to-date: lambda [
     idate [text!]
     <local> day month year time zone
 ][
@@ -58,9 +58,8 @@ idate-to-date: lambda [
     to date! unspaced [day "-" month "-" year "/" time zone]
 ]
 
-make-http-error: lambda [
-    {Make an error for the HTTP protocol}
-
+/make-http-error: lambda [
+    "Make an error for the HTTP protocol"
     message [text! block!]
 ][
     make error! compose [
@@ -70,16 +69,16 @@ make-http-error: lambda [
     ]
 ]
 
-make-http-request: func [
+/make-http-request: func [
     return: [binary!]
-    method [word! text!] "E.g. GET, HEAD, POST etc."
-    target [file! text!]
-        {In case of text!, no escaping is performed.}
-        {(eg. useful to override escaping etc.). Careful!}
-    headers [block!] "Request headers (set-word? text! pairs)"
-    content [~null~ text! binary!]
-        {Request contents (Content-Length is created automatically).}
-        {Empty string not exactly like blank.}
+    method "E.g. GET, HEAD, POST etc."
+        [word! text!]
+    target "In case of TEXT! no escaping is performed...careful!"
+        [file! text!]
+    headers "Request headers (set-word? text! pairs)"
+        [block!]
+    content "Content-Length is created automatically"
+        [~null~ text! binary!]
     <local> result
 ][
     ; The HTTP 1.1 protocol requires a `Host:` header.  Simple logic used
@@ -106,7 +105,7 @@ make-http-request: func [
     return result
 ]
 
-do-request: func [
+/do-request: func [
     "Synchronously process an HTTP request on a port"
 
     return: "Result of the request (BLOCK! for HEAD requests, BINARY! read...)"
@@ -163,7 +162,7 @@ do-request: func [
 ; if a no-redirect keyword is found in the write dialect after 'headers then
 ; 302 redirects will not be followed
 ;
-parse-write-dialect: func [
+/parse-write-dialect: func [
     "Sets PORT.SPEC fields: DEBUG, FOLLOW, METHOD, PATH, HEADERS, CONTENT"
 
     return: [~]
@@ -182,7 +181,7 @@ parse-write-dialect: func [
     ]
 ]
 
-check-response: func [
+/check-response: func [
     return: [~]
     port [port!]
 ][
@@ -395,7 +394,7 @@ http-response-headers: context [
     Last-Modified: null
 ]
 
-do-redirect: func [
+/do-redirect: func [
     return: [~]
     port [port!]
     new-uri [url! text! file!]
@@ -462,7 +461,7 @@ do-redirect: func [
     port.data: data
 ]
 
-read-body: func [
+/read-body: func [
     "Based on the information in the HTTP headers, read body into PORT.DATA"
     return: [~]
     port [port!]
@@ -607,7 +606,7 @@ sys.util/make-scheme [
     ]
 
     actor: [
-        read: func [
+        /read: func [
             return: [binary!]
             port [port!]
             :lines
@@ -646,7 +645,7 @@ sys.util/make-scheme [
             return data
         ]
 
-        write: func [
+        /write: func [
             port [port!]
             value
             <local> data
@@ -686,7 +685,7 @@ sys.util/make-scheme [
             return data
         ]
 
-        open: func [
+        /open: func [
             port [port!]
             <local> conn
         ][
@@ -715,7 +714,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        reflect: func [port [port!] property [word!]] [
+        /reflect: func [port [port!] property [word!]] [
             return switch property [
                 'open? [
                     all [port.state, open? port.state.connection]
@@ -727,7 +726,7 @@ sys.util/make-scheme [
             ]
         ]
 
-        close: func [
+        /close: func [
             port [port!]
         ][
             let state: port.state
@@ -756,7 +755,7 @@ sys.util/make-scheme [
             return port
         ]
 
-        query: lambda [
+        /query: lambda [
             port [port!]
             <local> error state
         ][

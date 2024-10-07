@@ -79,11 +79,11 @@
 ; by APPLY, because the fundamental frame mechanics do not intervene.
 [
     (
-        non-detector: lambda [arg] [arg]
+        /non-detector: lambda [arg] [arg]
         'a = apply non-detector/ [~['a 'b]~]
     )
     (
-        detector: lambda [^arg] [arg]
+        /detector: lambda [^arg] [arg]
         '~['a 'b]~ = apply detector/ [~['a 'b]~]
     )
 ]
@@ -91,7 +91,7 @@
 ; Refinements that take no argument can only be OKAY or NULL
 [
     (
-        testme: func [:refine] [return refine]
+        /testme: func [:refine] [return refine]
         ok
     )
 

@@ -39,7 +39,7 @@ REBOL [
 ]
 
 
-compile: func [
+/compile: func [
     "Compiles one or more native functions at the same time, with options"
 
     return: [~]
@@ -459,7 +459,7 @@ compile: func [
 ]
 
 
-c99: func [
+/c99: func [
     "http://pubs.opengroup.org/onlinepubs/9699919799/utilities/c99.html"
 
     return: "Exit status code (try to match gcc/tcc)"
@@ -633,7 +633,7 @@ c99: func [
 ]
 
 
-bootstrap: func [
+/bootstrap: func [
     "Download Rebol sources from GitHub and build using TCC"
     return: [~]
     :options "Use system.options.ARGS to get additional make.r options"

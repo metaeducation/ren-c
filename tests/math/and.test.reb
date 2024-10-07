@@ -151,8 +151,8 @@
         y: okay  ; truesum: does [x: x * 2 'true]
         n: null  ; falsesum: does [x: x * 3 'false]
         o: make object! [
-            y: okay  ; :truesum
-            n: null  ; :falsesum
+            y: okay  ; truesum/
+            n: null  ; falsesum/
         ]
         okay
     )

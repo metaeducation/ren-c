@@ -2220,9 +2220,9 @@ DECLARE_INTRINSIC(enfix_q)
 //
 //  /enfix: native:intrinsic [
 //
-//  "For making enfix functions, e.g `+: enfix :add`"
+//  "For making enfix functions, e.g (/+: enfix :add)"
 //
-//      return: "Isotopic action"
+//      return: "Antiform action action"
 //          [antiform?]  ; [action?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]

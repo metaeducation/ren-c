@@ -775,7 +775,7 @@ void Startup_Core(void)
         //
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind:only:set", &boot->base, Lib_Module,
+        "wrap*", Lib_Module, rebQ(&boot->base),
         "evaluate inside", Lib_Module, rebQ(&boot->base)
         //
         // Note: ENSURE not available yet.
@@ -807,7 +807,7 @@ void Startup_Core(void)
         //
         "sys.util:", Sys_Util_Module,
 
-        "bind:only:set", &boot->system_util, Sys_Util_Module,
+        "wrap*", Sys_Util_Module, rebQ(&boot->system_util),
         "if not equal? '~done~",
           "^ evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
             "[fail {sys.util}]",
@@ -839,7 +839,7 @@ void Startup_Core(void)
 
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind:only:set", &boot->mezz, Lib_Module,
+        "wrap*", Lib_Module, rebQ(&boot->mezz),
         "evaluate inside", Lib_Module, rebQ(&boot->mezz)
     );
 

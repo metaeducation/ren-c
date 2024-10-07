@@ -18,7 +18,7 @@
 ("_" = mold blank)
 
 [#1666 #1650 (
-    f: does [_]
+    /f: does [_]
     blank = f
 )]
 

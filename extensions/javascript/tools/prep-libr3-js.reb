@@ -924,7 +924,7 @@ json-collect: func [
     <local> results  ; !!! CSCAPE does not work with LET right now
 ][
     results: collect compose [
-        keep: adapt keep/ [  ; Emscripten prefixes functions w/underscore
+        /keep: adapt keep/ [  ; Emscripten prefixes functions w/underscore
             if text? value [
                 value: unspaced [{"} {_} value {"}]  ; bootstrap semantics
             ]

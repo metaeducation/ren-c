@@ -85,7 +85,7 @@ all-protos: copy []
 output-buffer: make text! 20000
 
 
-gather-natives: func [
+/gather-natives: func [
     return: [~]
     dir
 ][

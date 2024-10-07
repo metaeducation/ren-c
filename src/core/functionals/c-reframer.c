@@ -134,7 +134,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 
     assert(Not_Node_Managed(L->varlist));  // shouldn't be [3]
 
-    return L;  // may not be at end or thrown, e.g. (x: does+ just y x = 'y)
+    return L;  // may not be at end or thrown, e.g. (/x: does+ just y x = 'y)
 }
 
 

@@ -20,16 +20,16 @@
     ]
 )
 (
-    foo: enfix :add
+    /foo: enfix add/
     all [
-        enfix? :foo
+        enfix? foo/
         1 foo 2 = 3
     ]
 )
 (
-    postfix-thing: enfix lambda [x] [x * 2]
+    /postfix-thing: enfix lambda [x] [x * 2]
     all [
-       enfix? :postfix-thing
+       enfix? postfix-thing/
        20 = (10 postfix-thing)
     ]
 )
@@ -55,7 +55,7 @@
 (
     count: 0
     o: make object! [x: null]
-    nuller: func [y] [return null]
+    /nuller: func [y] [return null]
     o.(count: count + 1, first [x]): my nuller
     all [
         :o.x = null
@@ -67,7 +67,7 @@
     https://github.com/metaeducation/ren-c/issues/581
 
     (
-        foo: func [] [
+        /foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"
         ]
         all wrap [
@@ -75,7 +75,7 @@
             pos == [foo 304]
         ]
     )(
-        enfoo: enfix func [] [return <enfoo>]
+        /enfoo: enfix func [] [return <enfoo>]
         all wrap [
             <enfoo> == [pos @]: evaluate:step [1020 enfoo 304]
             pos = [304]
@@ -84,7 +84,7 @@
     )
 
     (
-        bar: func [return: [~[]~]] [bar: null, return ~[]~]
+        /bar: func [return: [~[]~]] [bar: null, return ~[]~]
         all wrap [
             [pos var]: evaluate:step [1020 bar 304]
             pos = [bar 304]
@@ -95,7 +95,7 @@
         ]
         comment {Invisible normal arity-0 function should run on next eval}
     )(
-        enbar: enfix func [left] [enbar: null, return left]
+        /enbar: enfix func [left] [enbar: null, return left]
         all wrap [
             [pos var]: evaluate:step [1020 enbar 304]
             pos = [304]
@@ -111,13 +111,13 @@
 ; first.
 [
     (
-        rightq: lambda [@(x)] [compose [<rightq> was (x)]]
-        leftq: enfix lambda [@(y)] [compose [<leftq> was (y)]]
+        /rightq: lambda [@(x)] [compose [<rightq> was (x)]]
+        /leftq: enfix lambda [@(y)] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )(
-        rightq: lambda [@(x)] [compose [<rightq> was (x)]]
-        leftq: enfix lambda ['y] [compose [<leftq> was (y)]]
+        /rightq: lambda [@(x)] [compose [<rightq> was (x)]]
+        /leftq: enfix lambda ['y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )

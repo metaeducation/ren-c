@@ -126,7 +126,7 @@ build-variants: [debug release]
 
 
 
-latest-of: func [
+/latest-of: func [
     "INTERNAL USE ONLY!  Link to unstable S3 CI build of the interpreter"
 
     return: [url!]

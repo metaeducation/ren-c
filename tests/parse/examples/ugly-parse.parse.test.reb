@@ -64,7 +64,7 @@
         return ~[]~
     ]
 
-    ugly-parse: specialize parse/ [combinators: ugly-combinators]
+    /ugly-parse: specialize parse/ [combinators: ugly-combinators]
 
     ok
 )

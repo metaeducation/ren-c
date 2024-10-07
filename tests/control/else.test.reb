@@ -30,11 +30,11 @@
 )
 
 [https://github.com/metaeducation/ren-c/issues/510 (
-    c: func [return: [integer!] i] [
+    /c: func [return: [integer!] i] [
         return if i < 15 [30] else [4]
     ]
 
-    d: func [return: [integer!] i] [
+    /d: func [return: [integer!] i] [
         return (if i < 15 [30] else [4])
     ]
 
@@ -48,8 +48,8 @@
 
 ; Hard quotes need to account for enfix deferral
 (
-    foo: func [return: [integer!] y] [return the 1 then (x -> [x + y])]
-    bar: func [return: [integer!] y] [return 1 then (x -> [x + y])]
+    /foo: func [return: [integer!] y] [return the 1 then (x -> [x + y])]
+    /bar: func [return: [integer!] y] [return 1 then (x -> [x + y])]
     all [
         11 = foo 10
         1 = bar 10
@@ -58,8 +58,8 @@
 
 ; The above should work whether you use a GROUP! or not (-> quote left wins)
 (
-    foo: func [return: [integer!] y] [return the 1 then x -> [x + y]]
-    bar: func [return: [integer!] y] [return 1 then x -> [x + y]]
+    /foo: func [return: [integer!] y] [return the 1 then x -> [x + y]]
+    /bar: func [return: [integer!] y] [return 1 then x -> [x + y]]
     all [
         11 = foo 10
         1 = bar 10
@@ -120,19 +120,19 @@
 ]
 
 [
-    (foo: func [] [return void], ok)
+    (/foo: func [] [return void], ok)
     (foo else [okay])
     (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
 ]
 
 [
-    (foo: lambda [] [if null [~ignore~]], ok)
+    (/foo: lambda [] [if null [~ignore~]], ok)
     (foo else [okay])
     (void? (1000 + 20 foo then [fail [~unreachable~]]))
 ]
 
 [
-    (foo: lambda [] [], ok)
+    (/foo: lambda [] [], ok)
     (foo else [okay])
     (1020 = (1000 + 20 elide-if-void (foo then [fail [~unreachable~]])))
 ]

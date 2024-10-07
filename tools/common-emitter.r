@@ -47,7 +47,7 @@ import <platforms.r>  ; for BOOT-VERSION
 ;
 ; 3. These can be combined, so that $<xxx, > will delimit with ", "
 ;
-export cscape: func [
+export /cscape: func [
     "Escape Rebol expressions in templated C source, returns new string"
 
     return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
@@ -288,9 +288,9 @@ export cscape: func [
 ]
 
 
-export boot-version: load-value %../src/boot/version.r
+export /boot-version: load-value %../src/boot/version.r
 
-export make-emitter: func [
+export /make-emitter: func [
     "Create a buffered output text file emitter"
 
     return: [object!]
@@ -336,7 +336,7 @@ export make-emitter: func [
         file: (file)
         title: (title)
 
-        emit: func [
+        /emit: func [
             "Write data to the emitter using CSCAPE templating (see HELP)"
 
             return: [~]
@@ -355,7 +355,7 @@ export make-emitter: func [
             ]
         ]
 
-        write-emitted: func [
+        /write-emitted: func [
             return: [~]
             :tabbed
             <with> file buf-emit

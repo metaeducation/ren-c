@@ -17,7 +17,7 @@
 (error? if ok [trap [1 / 0]])
 ; RETURN stops the evaluation
 (
-    f1: func [return: [integer!]] [
+    /f1: func [return: [integer!]] [
         if ok [return 1 2]
         2
     ]
@@ -113,7 +113,7 @@
 
 ; RETURN stops the evaluation
 (
-    f1: func [return: [integer!]] [
+    /f1: func [return: [integer!]] [
         if not null [return 1 2]
         2
     ]

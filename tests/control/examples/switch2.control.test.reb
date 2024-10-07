@@ -4,9 +4,9 @@
 ; creative matching of partial clauses
 
 [(
-log: elide/
+/log: elide/
 
-switch2: func [
+/switch2: func [
     value [any-value?]
     cases [block!]
     :multi

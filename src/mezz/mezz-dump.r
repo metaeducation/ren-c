@@ -12,7 +12,7 @@ REBOL [
     }
 ]
 
-dump: func [
+/dump: func [
     "Show the name of a value or expressions with the value (See Also: --)"
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
@@ -25,7 +25,7 @@ dump: func [
 
     <static> enablements (make map! [])
 ][
-    let print: enclose lib/print/ lambda [f [frame!]] [
+    let /print: enclose lib.print/ lambda [f [frame!]] [
         if prefix [
             if #on <> select enablements prefix [return ~]
             write-stdout prefix
@@ -34,7 +34,7 @@ dump: func [
         eval f
     ]
 
-    let val-to-text: func [return: [text!] ^val [any-value?]] [
+    let /val-to-text: func [return: [text!] ^val [any-value?]] [
         return case [
             void? val ["; void"]
             quasi? val [unspaced [mold val space space "; anti"]]
@@ -50,7 +50,7 @@ dump: func [
         ]
     ]
 
-    let dump-one: func [return: [~] item] [
+    let /dump-one: func [return: [~] item] [
         switch:type item [
             &refinement?  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
@@ -100,7 +100,7 @@ dump: func [
     return ~[]~
 ]
 
-contains-newline: func [return: [logic?] pos [block! group!]] [
+/contains-newline: func [return: [logic?] pos [block! group!]] [
     while [pos] [
         any [
             new-line? pos
@@ -116,7 +116,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
     return null
 ]
 
-dump-to-newline: adapt dump/ [
+/dump-to-newline: adapt dump/ [
     if not tail? extra [
         ;
         ; Mutate VARARGS! into a BLOCK!, with passed-in value at the head
@@ -133,7 +133,7 @@ dump-to-newline: adapt dump/ [
     ]
 ]
 
-dumps: enfix func [
+/dumps: enfix func [
     "Fast generator for dumping function that uses assigned name for prefix"
 
     return: [action?]
@@ -145,7 +145,7 @@ dumps: enfix func [
 ][
     let d
     if issue? value [
-        d: specialize dump-to-newline/ [prefix: as text! unchain name]
+        /d: specialize dump-to-newline/ [prefix: as text! unchain name]
         if value <> #off [d #on]  ; note: d hard quotes its argument
     ] else [
         ; Make it easy to declare and dump a variable at the same time.
@@ -163,15 +163,15 @@ dumps: enfix func [
         ; have a way to be called--in spirit they are like enfix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        d: func [return: [~[]~] /on /off <static> d'] compose:deep [
-            let d': default [
-                let d'': specialize dump/ [prefix: (as text! name)]
+        /d: func [return: [~[]~] /on /off <static> d'] compose:deep [
+            let /d': default [
+                let /d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
             ]
             case [
                 on [d' #on]
                 off [d' #off]
-                /else [d' (value)]
+                #else [d' (value)]
             ]
             return ~[]~
         ]
@@ -194,7 +194,7 @@ dumps: enfix func [
 ; so it uses that as a string pattern.  Review how to better factor that
 ; (as part of a general help review)
 ;
-summarize-obj: func [
+/summarize-obj: func [
     "Returns a block of information about an object or port"
 
     return: "Block of short lines (fitting in roughly 80 columns)"
@@ -203,8 +203,8 @@ summarize-obj: func [
     :pattern "Include only fields that match a string or datatype"
         [text! type-block!]
 ][
-    let form-pad: lambda [
-        {Form a value with fixed size (space padding follows)}
+    let /form-pad: lambda [
+        "Form a value with fixed size (space padding follows)"
         val
         size
     ][
@@ -273,7 +273,7 @@ summarize-obj: func [
 ; Notice that if line breaks occur internal to an element on the line, that
 ; is detected, and lets that element be the last commented element.
 ;
-**: func [
+/**: func [
     "Comment until end of line, or end of current list"
 
     return: [~[]~]

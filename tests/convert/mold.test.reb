@@ -115,7 +115,7 @@
 
 [#145 (
     test-block: [a b c d e f]
-    f: func [
+    /f: func [
         <local> buff
     ][
         buff: copy ""

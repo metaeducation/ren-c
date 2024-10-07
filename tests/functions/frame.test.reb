@@ -1,14 +1,14 @@
 ; frame.test.reb
 
 (
-    foo: func [return: [block!] arg <local> local frame] [
+    /foo: func [return: [block!] arg <local> local frame] [
        local: 10
        frame: binding of $return
        return words of frame
     ]
 
     all [
-       [arg] = parameters of :foo  ; doesn't expose locals
+       [arg] = parameters of foo/  ; doesn't expose locals
        [return arg local frame] = foo 20  ; exposes locals as WORD!s
     ]
 )

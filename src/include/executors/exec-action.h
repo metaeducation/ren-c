@@ -242,12 +242,12 @@ enum {
     // don't want to...so we can treat it as an expression barrier--whether
     // it's produced by a COMMA! evaluating, or otherwise.
     //
-    //    foo: func [x [integer! <end>]] [...]
+    //    /foo: func [x [integer! <end>]] [...]
     //
     //    (foo,)  ; sees an end
     //    (foo anti ',)  ; also sees an end
     //
-    //    bar: func [^y [barrier? integer!]] [...]
+    //    /bar: func [^y [barrier? integer!]] [...]
     //
     //    (bar,)  ; sees an barrier antiform ~,~
     //    (bar anti ',)  ; same

@@ -23,7 +23,7 @@
 // that does some amount of pre-processing (which can include modifying the
 // arguments), before the original implementation is called:
 //
-//     >> ap1: adapt append/ [if integer? :value [value: value + 716]]
+//     >> /ap1: adapt append/ [if integer? :value [value: value + 716]]
 //
 //     >> ap1 [a b c] 304
 //     == [a b c 1020]
@@ -34,7 +34,7 @@
 // "adaptee", as failure to do so could pass bad bit patterns to natives
 // and lead to crashes.
 //
-//    >> negbad: adapt negate/ [number: to text! number]
+//    >> /negbad: adapt negate/ [number: to text! number]
 //
 //    >> negbad 1020
 //    ** Error: Internal phase disallows TEXT! for its `number` argument

@@ -2,7 +2,7 @@
 
 ; REDO via a direct FRAME! value
 (
-    foo: func [return: [tag!] n] [
+    /foo: func [return: [tag!] n] [
         let frame: binding of $n
         if n = 0 [
             return <success>
@@ -17,7 +17,7 @@
 ; REDO via extraction of FRAME! from an ANY-WORD?
 ; (has binding to a FRAME! to lookup variable value)
 (
-    foo: func [return: [tag!] n] [
+    /foo: func [return: [tag!] n] [
         if n = 0 [
            return <success>
         ]
@@ -31,7 +31,7 @@
 ; REDO locals clearing test
 ; (locals should be cleared on each redo)
 (
-    foo: func [return: [tag!] n <local> unset-me] [
+    /foo: func [return: [tag!] n <local> unset-me] [
         if set? $unset-me [
             return "local not cleared"
         ]
@@ -50,7 +50,7 @@
 ; (args and refinements must pass function's type checking)
 ;
 ~expect-arg~ !! (
-    foo: func [return: [tag!] n i [integer!]] [
+    /foo: func [return: [tag!] n i [integer!]] [
         if n = 0 [
             return <success>  ; impossible for this case
         ]
@@ -65,7 +65,7 @@
 ; REDO phase test
 ; (shared frame compositions should redo the appropriate "phase")
 (
-    inner: func [return: [tag!] n] [
+    /inner: func [return: [tag!] n] [
         if n = 0 [
             return <success>
         ]
@@ -73,7 +73,7 @@
         redo $n  comment {should redo INNER, not outer}
     ]
 
-    outer: adapt inner/ [
+    /outer: adapt inner/ [
         if n = 0 [
             return "outer phase run by redo"
         ]
@@ -91,7 +91,7 @@
 (
     global: 1
 
-    inner: func [return: [text!] n :captured-frame [frame!]] [
+    /inner: func [return: [text!] n :captured-frame [frame!]] [
         if n = 0 [
            return "inner phase run by redo"
         ]
@@ -99,7 +99,7 @@
         redo captured-frame  ; should redo OUTER, not INNER
     ]
 
-    outer: enclose inner/ func [return: [tag!] f] [
+    /outer: enclose inner/ func [return: [tag!] f] [
         if global = 0 [  ; was F.N, see note about that being wrong
             return <success>
         ]
@@ -177,7 +177,7 @@
         elide (:dump)  comment {un-elide to get output}
     )
 
-    base: func [return: [text!] n delta :captured-frame [frame!]] [
+    /base: func [return: [text!] n delta :captured-frame [frame!]] [
         log [{BASE} n delta]
 
         n: n - delta
@@ -205,7 +205,7 @@
         ]
     ]
 
-    s: specialize adapt base/ [
+    /s: specialize adapt base/ [
         log [{S} n delta]
 
         if n = 1 [n: 10]

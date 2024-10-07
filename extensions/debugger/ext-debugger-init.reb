@@ -45,7 +45,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
     focus-frame: null
     focus-index: null
 
-    print-greeting: meth [return: [~]] [
+    /print-greeting: meth [return: [~]] [
         ;
         ; We override in order to avoid printing out the redundant Rebol
         ; version information (and to print the greeting only once, which
@@ -61,7 +61,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
         focus-index: 1
     ]
 
-    print-prompt: func [return: [~]] [
+    /print-prompt: func [return: [~]] [
         ;
         ; If a debug frame is in focus then show it in the prompt, e.g.
         ; as `if:|4|>>` to indicate stack frame 4 is being examined, and
@@ -82,7 +82,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
         write-stdout space
     ]
 
-    dialect-hook: meth [
+    /dialect-hook: meth [
         "Receives code block, parse and transform, send back to CONSOLE eval"
         return: [block!]
         b [block!]
@@ -108,7 +108,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
 ]
 
 
-backtrace*: func [
+/backtrace*: func [
     "Backtrace to find a specific FRAME!, or other queried property."
 
     return: [~null~ block! frame!]
@@ -295,7 +295,7 @@ backtrace*: func [
 ]
 
 
-backtrace: func [
+/backtrace: func [
     "Prints out a backtrace at the current location"
 
     return: [~]
@@ -312,7 +312,7 @@ backtrace: func [
 ; message.  (By using ADAPT you won't see both BREAKPOINT and BREAKPOINT* on
 ; the stack during BACKTRACE...it uses only one frame.)
 ;
-breakpoint: adapt breakpoint*/ [
+/breakpoint: adapt breakpoint*/ [
     system.console/print-info "BREAKPOINT hit"
 ]
 
@@ -327,7 +327,7 @@ breakpoint: adapt breakpoint*/ [
 ; thin air by using INTERRUPT, which is like a breakpoint but that the
 ; backtrace mechanics can choose not to show.
 ;
-interrupt: adapt breakpoint*/ [
+/interrupt: adapt breakpoint*/ [
     ;
     ; !!! INTERRUPT doesn't currently print anything; it's assumed that
     ; changing the prompt would be enough (though a status bar message would
@@ -335,7 +335,7 @@ interrupt: adapt breakpoint*/ [
 ]
 
 
-debug: func [
+/debug: func [
     "Dialect for interactive debugging, see documentation for details"
     return: [~]
     'value "Stack level to inspect or dialect block, or enter debug mode"
@@ -354,12 +354,12 @@ debug: func [
 ]
 
 
-locals: func [return: [~]] [
+/locals: func [return: [~]] [
     print [debug-console-skin.focus-frame]
 ]
 
 
-debug-console: adapt console/ [
+/debug-console: adapt console/ [
     resumable: 'yes
 
     ; The debug skin is made as a global object, so changes to the skin will

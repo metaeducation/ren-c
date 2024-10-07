@@ -38,7 +38,7 @@ loud-print: redescribe [
     enclose print/ f -> [if yes? system.options.verbose [eval f]]
 )
 
-make-banner: func [
+/make-banner: func [
     "Build startup banner"
     return: [text!]
     fmt [block!]
@@ -97,7 +97,7 @@ boot-banner: [
     *
 ]
 
-about: func [
+/about: func [
     "Information about REBOL"
     return: [~]
 ][
@@ -113,7 +113,7 @@ about: func [
 ; like an ordinary ACTION!, and all the proxying is handled for the user.
 ; Work done on the dialect here could be shared in common.
 ;
-usage: func [
+/usage: func [
     "Prints command-line arguments."
     return: [~]
 ][
@@ -162,14 +162,14 @@ usage: func [
     }
 ]
 
-license: func [
+/license: func [
     "Prints the REBOL/core license agreement."
     return: [~]
 ][
     print system.license
 ]
 
-host-script-pre-load: func [
+/host-script-pre-load: func [
     "Code registered as a hook when a module or script are loaded"
     return: [~]
     is-module [yesno?]
@@ -203,7 +203,7 @@ host-script-pre-load: func [
 ; These are implicitly picked up from LIB but would need to be done different
 
 
-main-startup: func [
+/main-startup: func [
     "Usermode command-line processing: handles args, security, scripts"
 
     return: [any-value?] "!!! Narrow down return type?"
@@ -227,7 +227,7 @@ main-startup: func [
 
     let instruction: copy '[]  ; quote for no binding, want console binding [1]
 
-    let emit: func [
+    let /emit: func [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         return: [~]
@@ -251,7 +251,7 @@ main-startup: func [
         ]
     ]
 
-    return: func [
+    /return: func [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         return: []
@@ -345,7 +345,7 @@ main-startup: func [
 
     === HELPER FUNCTIONS ===
 
-    let die: lambda [
+    let /die: lambda [
         "A graceful way to "FAIL" during startup"
 
         reason "Error message"
@@ -365,7 +365,7 @@ main-startup: func [
         return <die>
     ]
 
-    let to-dir: func [
+    let /to-dir: func [
         "Convert string path to absolute dir! path"
 
         return: "Null if not found"
@@ -379,7 +379,7 @@ main-startup: func [
         ]
     ]
 
-    let get-home-path: func [
+    let /get-home-path: func [
         "Return HOME path (e.g. $HOME on *nix)"
         return: [~null~ element? file!]
     ][
@@ -403,7 +403,7 @@ main-startup: func [
         ]
     ]
 
-    let get-resources-path: func [
+    let /get-resources-path: func [
         "Return platform specific resources path"
         return: [~null~ file!]
     ][
@@ -461,7 +461,7 @@ main-startup: func [
         o.bin: null
     ]
 
-    let param-missing: func [
+    let /param-missing: func [
         "Take --option argv and then check if param arg is present, else die"
         return: []
         option [text!] {Name of command-line option (switch) used}

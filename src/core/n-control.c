@@ -59,7 +59,7 @@
 // means that if you use a GROUP! there, the parameter gathering process will
 // pre-evaluate it.
 //
-//     >> branchy: func [flag] [either flag '[<a>] '[<b>]]
+//     >> /branchy: func [flag] [either flag '[<a>] '[<b>]]
 //
 //     >> either okay (print "a" branchy true) (print "b" branchy false)
 //     a
@@ -113,7 +113,7 @@
 //
 // 3. Allowing a void branch can be useful, consider:
 //
-//        switch-d: enclose (augment switch/ [
+//        /switch-d: enclose (augment switch/ [
 //            :default "Default case if no others are found"
 //            [block!]
 //        ]) lambda [f [frame!]] [

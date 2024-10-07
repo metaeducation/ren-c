@@ -36,7 +36,7 @@ REBOL [
 ; brought back once the code solidifies.
 
 
-transcode-header: func [
+/transcode-header: func [
     "Try to match a data binary! as being a script, definitional fail if not"
 
     return: "Null, or the ~[header rest line]~"
@@ -99,7 +99,7 @@ transcode-header: func [
 ;    bad-header
 ;    bad-compress
 ;
-load-header: func [
+/load-header: func [
     "Loads script header object and body binary (not loaded)"
 
     return: "header OBJECT! if present, ~[hdr body line final]~"
@@ -229,7 +229,7 @@ load-header: func [
 ]
 
 
-load: func [
+/load: func [
     "Loads code or data from a file, URL, text string, or binary"
 
     return: "BLOCK! if Rebol code (or codec value) plus optional header"
@@ -344,7 +344,7 @@ load-value: redescribe [
 ; interop routines (like JS-DO and CSS-DO) want the same thing, and use
 ; this routine as well.
 
-adjust-url-for-raw: func [
+/adjust-url-for-raw: func [
     return: [~null~ url!]
     url [<maybe> url!]
 ][
@@ -409,7 +409,7 @@ adjust-url-for-raw: func [
 ; a URL! or reading from a file.  But we could notice when the same filename
 ; or URL was used.  We should also use hashes to tell when things change.
 ;
-import*: func [
+/import*: func [
     "Imports a module; locate, load, make, and setup its bindings"
 
     return: "Loaded module and evaluative product (if execution needed)"
@@ -435,7 +435,7 @@ import*: func [
     <static>
         importing-remotely ('no)
 ][
-    return: adapt return/ [  ; make sure all return paths actually import vars
+    /return: adapt return/ [  ; make sure all return paths actually import vars
         ;
         ; Note: `value` below is the argument to RETURN.  It is a ^META
         ; parameter so should be a quoted pack containing a module.  We don't
@@ -644,7 +644,7 @@ import*: func [
 ]
 
 
-export*: func [
+/export*: func [
     "Add words to module's (Exports: []) list"
 
     return: "Evaluated expression if used with SET-WORD!"

@@ -112,7 +112,7 @@
         ]
     )
 
-    (|1|: lambda [
+    (/|1|: lambda [
         {Barrier that's willing to only run one expression after it}
 
         right [any-value? <variadic>]
@@ -169,22 +169,22 @@
 ; Non-variadic
 [
     (
-        left-normal: enfix right-normal:
+        /left-normal: enfix /right-normal:
             func [return: [~null~ word!] x [word!]] [return x]
-        left-normal*: enfix right-normal*:
+        /left-normal*: enfix /right-normal*:
             func [return: [~null~ word!] x [word! <end>]] [return x]
 
-        left-defer: enfix tweak (copy unrun :left-normal) 'defer 'on
-        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
+        /left-defer: enfix tweak (copy left-normal/) 'defer 'on
+        /left-defer*: enfix tweak (copy left-normal/) 'defer 'on
 
-        left-soft: enfix right-soft:
+        /left-soft: enfix /right-soft:
             func [return: [~null~ word!] @(x) [word!]] [return x]
-        left-soft*: enfix right-soft*:
+        /left-soft*: enfix /right-soft*:
             func [return: [~null~ word!] @(x) [word! <end>]] [return x]
 
-        left-hard: enfix right-hard:
+        /left-hard: enfix /right-hard:
             func [return: [~null~ word!] 'x [word!]] [return x]
-        left-hard*: enfix right-hard*:
+        /left-hard*: enfix /right-hard*:
             func [return: [~null~ word!] 'x [word! <end>]] [return x]
 
         ok
@@ -223,32 +223,32 @@
 ; Variadic
 [
     (
-        left-normal: enfix right-normal:
+        /left-normal: enfix /right-normal:
             func [return: [~null~ word!] x [word! <variadic>]] [
                 return take x
             ]
-        left-normal*: enfix right-normal*:
+        /left-normal*: enfix /right-normal*:
             func [return: [~null~ word!] x [word! <variadic> <end>]] [
                 return try take x
             ]
 
-        left-defer: enfix tweak (copy unrun :left-normal) 'defer 'on
-        left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
+        /left-defer: enfix tweak (copy left-normal/) 'defer 'on
+        /left-defer*: enfix tweak (copy left-normal/) 'defer 'on
 
-        left-soft: enfix right-soft:
+        /left-soft: enfix /right-soft:
             func [return: [~null~ word!] @(x) [word! <variadic>]] [
                 return take x
             ]
-        left-soft*: enfix right-soft*:
+        /left-soft*: enfix /right-soft*:
             func [return: [~null~ word!] @(x) [word! <variadic> <end>]] [
                 return try take x
             ]
 
-        left-hard: enfix right-hard:
+        /left-hard: enfix /right-hard:
             func [return: [~null~ word!] 'x [word! <variadic>]] [
                 return take x
             ]
-        left-hard*: enfix right-hard*:
+        /left-hard*: enfix /right-hard*:
             func [return: [~null~ word!] 'x [word! <variadic> <end>]] [
                 return try take x
             ]
@@ -371,7 +371,7 @@
 ; "Opportunistic Invisibility" means that functions can treat invisibility as
 ; a return type, decided on after they've already started running.
 [
-    (vanish-if-odd: func [return: [~[]~ integer!] x] [
+    (/vanish-if-odd: func [return: [~[]~ integer!] x] [
         if even? x [return x]
         return ~[]~
     ] ok)
@@ -379,7 +379,7 @@
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
-    (vanish-if-even: func [return: [~[]~ integer!] y] [
+    (/vanish-if-even: func [return: [~[]~ integer!] y] [
         return unmeta ^(vanish-if-odd y + 1)
     ] ok)
 
@@ -392,15 +392,15 @@
 ; by default if not.
 [
     (
-        no-spec: func [x] [return ~[]~]
+        /no-spec: func [x] [return ~[]~]
         <test> = (<test> no-spec 10)
     )
     ~bad-return-type~ !! (
-        int-spec: func [return: [integer!] x] [return ~[]~]
+        /int-spec: func [return: [integer!] x] [return ~[]~]
         int-spec 10
     )
     (
-        invis-spec: func [return: [~[]~ integer!] x] [
+        /invis-spec: func [return: [~[]~ integer!] x] [
             return ~[]~
         ]
         <test> = (<test> invis-spec 10)
@@ -417,7 +417,7 @@
 ; It's not clear that this is an interesting feature, especially in light of
 ; COMMA!'s new mechanic getting its barrier-ness from returning nihil.
 ;
-;    foo: lambda [x [~[]~ integer!]] [if unset? $x [<unset>] else [x]]
+;    /foo: lambda [x [~[]~ integer!]] [if unset? $x [<unset>] else [x]]
 ;    all [
 ;        <unset> = foo comment "hi"
 ;        1020 = foo 1000 + 20
@@ -426,7 +426,7 @@
 (
     num-runs: 0
 
-    add-period: func [x [<maybe> text!]] [
+    /add-period: func [x [<maybe> text!]] [
         num-runs: me + 1
         return append x "."
     ]

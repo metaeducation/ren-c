@@ -41,7 +41,7 @@
 ; in all copies or substantial portions of the Software.
 
 [(
-    factorial: func [n [integer!]] [
+    /factorial: func [n [integer!]] [
         if n < 2 [return 1]
         let res: 1
         for 'i n - 1 [res: i + 1 * res]
@@ -77,7 +77,7 @@
         subparse group! expression | &any-number? | word!
     ]
 
-    emit-node: func [
+    /emit-node: func [
         return: [~]
         output [block!]
         node [object! any-number? word!]
@@ -105,7 +105,7 @@
         ]
     ]
 
-    tree-to-code: func [
+    /tree-to-code: func [
         return: [block!]
         tree [object! any-number? word!]
     ][
@@ -114,7 +114,7 @@
         return output
     ]
 
-    parse-expression: func [
+    /parse-expression: func [
         return: [block!]
         expr [block!]
     ][

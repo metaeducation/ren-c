@@ -17,7 +17,7 @@ REBOL [
     }
 ]
 
-assert: func* [
+/assert: func* [
     "Ensure conditions are branch triggers if hooked by debugging"
 
     return: [~[]~]
@@ -32,7 +32,7 @@ assert: func* [
     return ~[]~
 ]
 
-steal: lambda [
+/steal: lambda [
     "Return a variable's value prior to an assignment, then do the assignment"
 
     evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
@@ -44,33 +44,33 @@ steal: lambda [
 ]
 
 assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
-return: func* [] [
+/return: func* [] [
     fail "RETURN archetype called when no generator is providing it"
 ]
 
-continue: func* [] [
+/continue: func* [] [
     fail "CONTINUE archetype called when no loop is providing it"
 ]
 
-break: func* [] [
+/break: func* [] [
     fail "BREAK archetype called when no loop is providing it"
 ]
 
-stop: func* [] [
+/stop: func* [] [
     fail "STOP archetype called when no loop is providing it"
 ]
 
-throw: func* [] [
+/throw: func* [] [
     fail "THROW archetype called when no catch is providing it"
 ]
 
-quit: func* [] [
+/quit: func* [] [
     fail "QUIT archetype called when no [DO IMPORT CONSOLE] is providing it"
 ]
 
-catch: specialize catch*/ [name: 'throw]
+/catch: specialize catch*/ [name: 'throw]
 
-func: func* [
+/func: func* [
     "Augment action with <static>, <in>, <with> features"
 
     return: [action?]
@@ -256,7 +256,7 @@ func: func* [
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-===: func [
+/===: func [
     return: [~[]~]
     'remarks [element? <variadic>]
     :visibility [onoff?]
@@ -275,14 +275,14 @@ func: func* [
     return ~[]~
 ]
 
-what-dir: func [  ; This can be HIJACK'd by a "smarter" version
+/what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     "Returns the current directory path"
     return: [~null~ file! url!]
 ][
     return system.options.current-path
 ]
 
-change-dir: func [  ; This can be HIJACK'd by a "smarter" version
+/change-dir: func [  ; This can be HIJACK'd by a "smarter" version
     "Changes the current path (where scripts with relative paths will be run)"
     return: [file! url!]
     path [file! url!]
@@ -291,7 +291,7 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
 ]
 
 
-redescribe: func [
+/redescribe: func [
     "Mutate action description with new title and/or new argument notes"
 
     return: [action?]
@@ -305,13 +305,13 @@ redescribe: func [
 ]
 
 
-unset: redescribe [
+/unset: redescribe [
     "Clear the value of a word to the unset state (in its current context)"
 ](
     specialize set/ [value: meta ~]  ; SET's value is a ^META parameter
 )
 
-unset?: func [
+/unset?: func [
     "Determine if a variable looks up to a `~` antiform"
     return: [logic?]
     var [word! path! tuple!]
@@ -319,7 +319,7 @@ unset?: func [
     return nothing? get:any var
 ]
 
-vacant?: func [
+/vacant?: func [
     "Determine if a variable is nothing, antiform tag, or antiform parameter"
     return: [logic?]
     var [word! path! tuple!]
@@ -327,7 +327,7 @@ vacant?: func [
     return vacancy? get:any var
 ]
 
-set?: func [
+/set?: func [
     "Determine if a variable does not look up to the ~ antiform"
     return: [logic?]
     var [word! path! tuple!]
@@ -335,7 +335,7 @@ set?: func [
     return something? get:any var
 ]
 
-defined?: func [
+/defined?: func [
     "Determine if a variable has a binding and is not unset"
     return: [logic?]
     var [word! path! tuple!]
@@ -343,7 +343,7 @@ defined?: func [
     return not trap [get var]
 ]
 
-undefined?: func [
+/undefined?: func [
     "Determine if a variable does not have a binding or is unset"
     return: [logic?]
     var [word! path! tuple!]
@@ -351,7 +351,7 @@ undefined?: func [
     return did trap [get var]
 ]
 
-unspecialized?: func [
+/unspecialized?: func [
     "Determine if a variable looks up to a parameter antiform"
     return: [logic?]
     var [word! tuple!]
@@ -359,7 +359,7 @@ unspecialized?: func [
     return hole? get:any var
 ]
 
-specialized?: func [
+/specialized?: func [
     "Determine if a variable doesn't look up to a parameter antiform"
     return: [logic?]
     var [word! tuple!]
@@ -368,7 +368,7 @@ specialized?: func [
 ]
 
 
-curtail: reframer func [
+/curtail: reframer func [
     "Voids an expression if it raises any NEED-NON-NULL failures"
     return: [any-value?]
     frame [frame!]
@@ -416,7 +416,7 @@ curtail: reframer func [
 ; code with SHOVE, but are currently done using macro due to unfinished binding
 ; semantics in SHOVE pertaining to fetched values.
 
-me: enfix redescribe [
+/me: enfix redescribe [
     "Update variable using it as the left hand argument to an enfix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
@@ -424,7 +424,7 @@ me: enfix redescribe [
     ]
 )
 
-my: enfix redescribe [
+/my: enfix redescribe [
     "Update variable using it as the first argument to a prefix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
@@ -432,7 +432,7 @@ my: enfix redescribe [
     ]
 )
 
-so: enfix func [
+/so: enfix func [
     "Postfix assertion which stops running if left expression is inhibitor"
 
     return: [any-value?]
@@ -454,7 +454,7 @@ so: enfix func [
 tweak so/ 'postpone 'on
 
 
-was: enfix redescribe [
+/was: enfix redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
     lambda [left [any-value?] right [any-value?]] [
@@ -471,31 +471,31 @@ was: enfix redescribe [
 tweak was/ 'postpone 'on
 
 
-zdeflate: redescribe [
+/zdeflate: redescribe [
     "Deflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB"
 ](
     specialize deflate/ [envelope: 'zlib]
 )
 
-zinflate: redescribe [
+/zinflate: redescribe [
     "Inflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB"
 ](
     specialize inflate/ [envelope: 'zlib]
 )
 
-gzip: redescribe [
+/gzip: redescribe [
     "Deflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip"
 ](
     specialize deflate/ [envelope: 'gzip]
 )
 
-gunzip: redescribe [
+/gunzip: redescribe [
     "Inflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip"
 ](
     specialize inflate/ [envelope: 'gzip]  ; What about GZIP-BADSIZE?
 )
 
-ensure: redescribe [
+/ensure: redescribe [
     "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
     enclose match:meta/ lambda [f] [
@@ -518,7 +518,7 @@ ensure: redescribe [
 ; if you give back NULL ("it passed, it wasn't an integer") this conflates
 ; with the failure signal.  You need to use
 ;
-non: redescribe [
+/non: redescribe [
     "Pass through value if it *doesn't* match test, else null"
 ](
     enclose match/ func [f] [
@@ -528,7 +528,7 @@ non: redescribe [
     ]
 )
 
-prohibit: redescribe [
+/prohibit: redescribe [
     "Pass through value if it *doesn't* match test, else fail"
 ](
     enclose match:meta/ lambda [f] [
@@ -548,8 +548,8 @@ prohibit: redescribe [
 )
 
 
-oneshot: specialize n-shot/ [n: 1]
-upshot: specialize n-shot/ [n: -1]
+/oneshot: specialize n-shot/ [n: 1]
+/upshot: specialize n-shot/ [n: -1]
 
 ;
 ; !!! The /REVERSE and /LAST refinements of FIND and SELECT caused a lot of
@@ -557,13 +557,13 @@ upshot: specialize n-shot/ [n: -1]
 ; the combinatorics in the C code.  If needed, they could be made for SELECT.
 ;
 
-find-reverse: redescribe [
+/find-reverse: redescribe [
     "Variant of FIND that uses a /SKIP of -1"
 ](
     specialize find/ [skip: -1]
 )
 
-find-last: redescribe [
+/find-last: redescribe [
     "Variant of FIND that uses a /SKIP of -1 and seeks the TAIL of a series"
 ](
     adapt find-reverse/ [
@@ -575,7 +575,7 @@ find-last: redescribe [
     ]
 )
 
-attempt: func [
+/attempt: func [
     "Evaluate a block and returns result or NULL if an expression fails"
 
     return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
@@ -587,7 +587,7 @@ attempt: func [
     return unmeta temp
 ]
 
-trap: func [
+/trap: func [
     "If evaluation raises an error, return it, otherwise NULL"
 
     return: [~null~ error!]
@@ -596,7 +596,7 @@ trap: func [
     return match error! entrap code
 ]
 
-trap+: func [
+/trap+: func [
     "Experimental variation of TRAP using THENable mechanics"
 
     return: [pack?]
@@ -619,25 +619,25 @@ trap+: func [
     ]
 ]
 
-reduce*: redescribe [
+/reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
     specialize reduce/ [predicate: maybe/]
 )
 
-for-next: redescribe [
+/for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"
 ](
     specialize for-skip/ [skip: 1]
 )
 
-for-back: redescribe [
+/for-back: redescribe [
     "Evaluates a block for each position until the start, using BACK to skip"
 ](
     specialize for-skip/ [skip: -1]
 )
 
-iterate-skip: redescribe [
+/iterate-skip: redescribe [
     "Variant of FOR-SKIP that directly modifies a series variable in a word"
 ](
     specialize enclose for-skip/ func [f] [
@@ -662,20 +662,20 @@ iterate-skip: redescribe [
     ]
 )
 
-iterate: iterate-next: redescribe [
+/iterate: iterate-next: redescribe [
     "Variant of FOR-NEXT that directly modifies a series variable in a word"
 ](
     specialize iterate-skip/ [skip: 1]
 )
 
-iterate-back: redescribe [
+/iterate-back: redescribe [
     "Variant of FOR-BACK that directly modifies a series variable in a word"
 ](
     specialize iterate-skip/ [skip: -1]
 )
 
 
-count-up: func [
+/count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
     return: [any-value?]
     var [word!]
@@ -715,7 +715,7 @@ count-up: func [
     ]
 ]
 
-count-down: redescribe [
+/count-down: redescribe [
     "Loop the body, setting a word from the end value given down to 1"
 ](
     specialize adapt cfor/ [
@@ -728,13 +728,13 @@ count-down: redescribe [
 )
 
 
-lock-of: redescribe [
+/lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
     cascade [specialize copy/ [deep: ok], freeze/]
 )
 
-eval-all: func [
+/eval-all: func [
     "Evaluate any number of expressions and discard them"
 
     return: [~[]~]
@@ -751,7 +751,7 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: [~[]~]`) permit a more flexible version of the mechanic.
 
-<|: runs tweak copy unrun eval-all/ 'postpone 'on
+/<|: runs tweak copy unrun eval-all/ 'postpone 'on
 
 
 ; Currently, METH is just a synonym for FUNC as a way of annotating that you
@@ -760,7 +760,7 @@ eval-all: func [
 ; user with COUPLE or an implicit coupling will be supplied when a function
 ; is invoked from a TUPLE! where an object is on the left hand side.
 ;
-meth: func/
+/meth: func/
 
 
 ; It's a bit odd that `foo: accessor does [...]` will evaluate to nothing.
@@ -768,7 +768,7 @@ meth: func/
 ; (or to provide the prior value of the variable?)  It seems wasteful to
 ; call the accessor when 99 times out of 100 the value would be discarded.
 ;
-accessor: enfix func [
+/accessor: enfix func [
     return: [~]
     var [set-word?]
     action [action?]
@@ -777,7 +777,7 @@ accessor: enfix func [
 ]
 
 
-cause-error: func [
+/cause-error: func [
     "Causes an immediate error throw with the provided information"
     err-type [word!]
     err-id [word!]
@@ -801,7 +801,7 @@ cause-error: func [
 ;
 ; Though HIJACK would have to be aware of it and preserve the rule.
 ;
-raise: func [
+/raise: func [
     "Interrupts execution by reporting an error (a TRAP can intercept it)"
 
     return: []

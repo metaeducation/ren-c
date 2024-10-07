@@ -46,7 +46,7 @@ log-file-prefix: join %r spread collect [
 
 === TEST RUNNER FUNCTION ===
 
-run-tests: func [
+/run-tests: func [
     return: [~]
     file [file!]
 ][

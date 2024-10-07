@@ -69,7 +69,7 @@
     same? a-value all [a-value]
 )
 (
-    a-value: does []
+    /a-value: does []
     same? :a-value all [:a-value]
 )
 (
@@ -167,12 +167,12 @@
     same? a-value all [okay a-value]
 )
 (
-    a-value: does []
+    /a-value: does []
     same? :a-value all [okay :a-value]
 )
 (
     a-value: first [:a]
-    same? :a-value all [okay :a-value]
+    same? a-value all [okay a-value]
 )
 (NUL == all [okay NUL])
 
@@ -262,7 +262,7 @@
     okay = all [a-value okay]
 )
 (
-    a-value: does []
+    /a-value: does []
     okay = all [:a-value okay]
 )
 (
@@ -350,7 +350,7 @@
 )
 ; RETURN stops evaluation
 (
-    f1: func [return: [integer!]] [all [return 1 2] 2]
+    /f1: func [return: [integer!]] [all [return 1 2] 2]
     1 = f1
 )
 ; THROW stops evaluation

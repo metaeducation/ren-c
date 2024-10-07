@@ -129,7 +129,9 @@ sys.util/rescue [
         ]
         f.next: okay
         let [dummy block]
-        block: compose [dummy (to path! f.next3)]  ; no SET-BLOCK, @, in boot
+        block: (  ; no SET-BLOCK, @, in boot
+            compose [dummy (to chain! reduce [_ f.next3])]
+        )
         return eval compose [(setify block) eval f]
     ]
 
@@ -338,10 +340,10 @@ unquasi: func3 [v <local> spelling] [
 ; hand side, but a GROUP! would be run.  That was deemed ugly, so group
 ; now short-circuits.
 ;
-and: enfix :and3 [assert [not block? right] right: as block! :right]
-or: enfix :or3 [assert [not block? right] right: as block! :right]
+/and: enfix :and3 [assert [not block? right] right: as block! :right]
+/or: enfix :or3 [assert [not block? right] right: as block! :right]
 
-to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
+/to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
     case [
         void? :optional [fail "Can't turn void (null proxied) TO-LOGIC"]
         null? :optional [false]

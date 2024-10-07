@@ -12,7 +12,7 @@ REBOL [
 ]
 
 
-spec-of: func [
+/spec-of: func [
     "Generate a block which could be used as a 'spec block' from an action"
 
     return: [block!]
@@ -48,7 +48,7 @@ spec-of: func [
 ]
 
 
-description-of: func [
+/description-of: func [
     "One-line summary of a value's purpose"
 
     return: [~null~ text!]
@@ -73,7 +73,7 @@ description-of: func [
     ] else [null])
 ]
 
-browse: func [
+/browse: func [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
     return: [~]
@@ -83,7 +83,7 @@ browse: func [
 ]
 
 
-print-general-help: func [
+/print-general-help: func [
     return: [~]
 ][
     print trim:auto copy {
@@ -118,7 +118,7 @@ print-general-help: func [
 ]
 
 
-help-action: func [
+/help-action: func [
     return: [~]
     frame [<unrun> frame!]
     :name [word! tuple! path!]
@@ -205,7 +205,7 @@ help-action: func [
 ]
 
 
-help-value: func [
+/help-value: func [
     "Give non-dialected help for an atom with any datatype"
 
     return: [~]
@@ -268,7 +268,7 @@ help-value: func [
 ]
 
 
-help: func [
+/help: func [
     {HELP is a dialected function.  If you want non-dialected help on any
     particular value, then pass that value in a GROUP! to get some very
     literal information back:
@@ -362,7 +362,7 @@ help: func [
         return ~
     ]
 
-    let make-libuser: does [  ; hacky unified context for searching
+    let /make-libuser: does [  ; hacky unified context for searching
         let libuser: copy system.contexts.lib
         for-each [key val] system.contexts.user [
             if not vacant? $val [
@@ -382,10 +382,10 @@ help: func [
                 print form e  ; not bound, etc.
                 return ~
             ]
-            if action? :value [
-                help-action/name :value topic  ; bypass print name
+            if action? get $value [
+                help-action:name value/ topic  ; bypass print name
             ] else [
-                help-value/name value topic  ; prints name (should it?)
+                help-value:name value topic  ; prints name (should it?)
             ]
         ]
 
@@ -424,7 +424,7 @@ help: func [
 ]
 
 
-source: func [
+/source: func [
     "Prints the source code for an ACTION! (if available)"
 
     return: [~]
@@ -502,7 +502,7 @@ source: func [
 ]
 
 
-what: func [
+/what: func [
     "Prints a list of known actions"
 
     return: [~ block!]
@@ -548,7 +548,7 @@ what: func [
 ]
 
 
-bugs: func [return: [~]] [
+/bugs: func [return: [~]] [
     "View bug database."
 ][
     browse https://github.com/metaeducation/ren-c/issues
@@ -557,7 +557,7 @@ bugs: func [return: [~]] [
 
 ; temporary solution to ensuring scripts run on a minimum build
 ;
-require-commit: func [
+/require-commit: func [
     "checks current commit against required commit"
 
     return: [~]

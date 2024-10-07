@@ -11,192 +11,192 @@
 
 ; return-less return value tests
 (
-    f: does [null]
+    /f: does [null]
     null? f
 )
 (
-    f: does [:abs]
+    /f: does [:abs]
     :abs = f
 )
 (
     a-value: #{}
-    f: does [a-value]
+    /f: does [a-value]
     same? a-value f
 )
 (
     a-value: charset ""
-    f: does [a-value]
+    /f: does [a-value]
     same? a-value f
 )
 (
     a-value: []
-    f: does [a-value]
+    /f: does [a-value]
     same? a-value f
 )
 (
     a-value: blank!
-    f: does [a-value]
+    /f: does [a-value]
     same? a-value f
 )
 (
-    f: does [1/Jan/0000]
+    /f: does [1/Jan/0000]
     1/Jan/0000 = f
 )
 (
-    f: does [0.0]
+    /f: does [0.0]
     0.0 == f
 )
 (
-    f: does [1.0]
+    /f: does [1.0]
     1.0 == f
 )
 (
     a-value: me@here.com
-    f: does [a-value]
+    /f: does [a-value]
     same? a-value f
 )
 (
-    f: does [trap [1 / 0]]
+    /f: does [trap [1 / 0]]
     error? f
 )
 (
     a-value: %""
-    f: does [a-value]
+    /f: does [a-value]
     same? a-value f
 )
 (
-    a-value: does []
-    f: does [:a-value]
+    /a-value: does []
+    /f: does [:a-value]
     same? :a-value f
 )
 (
     a-value: first [:a]
-    f: does [:a-value]
+    /f: does [:a-value]
     (same? :a-value f) and (:a-value == f)
 )
 (
-    f: does [#"^M"]
+    /f: does [#"^M"]
     #"^M" == f
 )
 (
-    f: does [0]
+    /f: does [0]
     0 == f
 )
 (
-    f: does [1]
+    /f: does [1]
     1 == f
 )
 (
-    f: does [#a]
+    /f: does [#a]
     #a == f
 )
 (
     a-value: first ['a/b]
-    f: does [:a-value]
+    /f: does [:a-value]
     :a-value == f
 )
 (
     a-value: first ['a]
-    f: does [:a-value]
+    /f: does [:a-value]
     :a-value == f
 )
 (
-    f: does ['true]
+    /f: does ['true]
     'true = f
 )
 (
-    f: does ['false]
+    /f: does ['false]
     'false = f
 )
 (
-    f: does [$1]
+    /f: does [$1]
     $1 == f
 )
 (
-    f: does [:append]
+    /f: does [:append]
     same? :append f
 )
 (
-    f: does [_]
+    /f: does [_]
     blank? f
 )
 (
     a-value: make object! []
-    f: does [:a-value]
+    /f: does [:a-value]
     same? :a-value f
 )
 (
     a-value: first [()]
-    f: does [:a-value]
+    /f: does [:a-value]
     same? :a-value f
 )
 (
-    f: does [+/]
+    /f: does [+/]
     same? +/ f
 )
 (
-    f: does [0x0]
+    /f: does [0x0]
     0x0 == f
 )
 (
     a-value: 'a/b
-    f: does [:a-value]
+    /f: does [:a-value]
     :a-value == f
 )
 (
     a-value: make port! http://
-    f: does [:a-value]
+    /f: does [:a-value]
     port? f
 )
 (
-    f: does ['/a]
+    /f: does ['/a]
     '/a == f
 )
 (
     a-value: first [a.b:]
-    f: does [:a-value]
+    /f: does [:a-value]
     :a-value == f
 )
 (
     a-value: first [a:]
-    f: does [:a-value]
+    /f: does [:a-value]
     :a-value == all [:a-value]
 )
 (
     a-value: ""
-    f: does [:a-value]
+    /f: does [:a-value]
     same? :a-value f
 )
 (
     a-value: make tag! ""
-    f: does [:a-value]
+    /f: does [:a-value]
     same? :a-value f
 )
 (
-    f: does [0:00]
+    /f: does [0:00]
     0:00 == f
 )
 (
-    f: does [0.0.0]
+    /f: does [0.0.0]
     0.0.0 == f
 )
 (
-    f: does [()]
+    /f: does [()]
     ^void = ^ f
 )
 (
-    f: does ['a]
+    /f: does ['a]
     'a == f
 )
 ; two-function return tests
 (
-    g: func [return: [integer!] f [action?]] [f [return 1] 2]
+    /g: func [return: [integer!] f [action?]] [f [return 1] 2]
     1 = g :eval
 )
 ; BREAK out of a function
 (
     null? repeat 1 [
-        let f: does [break]
+        let /f: does [break]
         f
         2
     ]
@@ -204,7 +204,7 @@
 ; THROW out of a function
 (
     1 = catch [
-        let f: does [throw 1]
+        let /f: does [throw 1]
         f
         2
     ]
@@ -212,7 +212,7 @@
 
 ~zero-divide~ !! (
     error? trap [
-        let f: does [1 / 0 2]  ; "error out" of a function
+        let /f: does [1 / 0 2]  ; "error out" of a function
         f
         2
     ]
@@ -221,7 +221,7 @@
 ; The BREAK designates breaking the outer repeat (definitional BREAK)
 (
     null = repeat 1 wrap [
-        f: lambda [x] [
+        /f: lambda [x] [
             either x = 1 [
                 repeat 1 [f 2]
                 x
@@ -235,7 +235,7 @@
     result: <before>
     all [
         2 = catch wrap [  ; outer catch
-            f: lambda [x] [
+            /f: lambda [x] [
                 either x = 1 [
                     catch [f 2]  ; inner catch--no throws in block
                     x
@@ -249,7 +249,7 @@
 
 ; "error out" leaves a "running" function in a "clean" state
 (
-    f: lambda [x] [
+    /f: lambda [x] [
         either x = 1 [
             error? trap [f 2]
             x = 1
@@ -261,7 +261,7 @@
 ; Argument passing of "hard literal arguments"
 [
     (
-        hard: func ['x] [return :x]
+        /hard: func ['x] [return :x]
         ok
     )
 
@@ -280,11 +280,11 @@
 ; Argument passing of "escapable (soft) literal arguments"
 [
     (
-        soft: func [@(x) <with> got] [got: :x, return 1000]
-        Lsoft: enfix :soft
+        /soft: func [@(x) <with> got] [got: :x, return 1000]
+        /Lsoft: enfix soft/
 
         got: null
-        test: lambda [expr [block!]] [
+        /test: lambda [expr [block!]] [
             got: '~junk~
             compose [(eval expr), (:got)]
         ]
@@ -302,11 +302,11 @@
     )
 
     (
-        +Q: enfix lambda ['x [<end> integer!] y] [if x [x + y] else [<null>]]
+        /+Q: enfix lambda ['x [<end> integer!] y] [if x [x + y] else [<null>]]
         [1000, 30] = test [soft 10 +Q 20]
     )
     (
-        +Q: enfix lambda ['x y] [x + y]
+        /+Q: enfix lambda ['x y] [x + y]
         [1000, 30] = test [soft 10 +Q 20]
     )
 
@@ -317,7 +317,7 @@
 ; basic test for recursive action invocation
 (
     i: 0
-    countdown: lambda [n] [if n > 0 [i: i + 1, countdown n - 1]]
+    /countdown: lambda [n] [if n > 0 [i: i + 1, countdown n - 1]]
     countdown 10
     i = 10
 )
@@ -328,20 +328,20 @@
 ; !!! Review: Fix these tests.
 
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code [$value] [eval code]]
+    /f: func [code value] [return either blank? code [$value] [eval code]]
     f-value: f blank blank
     f compose [2 * (f-value)] 21  ; re-entering same function
 )
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code [$value] [eval code]]
-    g: func [code value] [return either blank? code [$value] [eval code]]
+    /f: func [code value] [return either blank? code [$value] [eval code]]
+    /g: func [code value] [return either blank? code [$value] [eval code]]
     f-value: f blank blank
     g compose [2 * (f-value)] 21  ; re-entering different function
 )
 
 [#19
     ~bad-parameter~ !! (
-        f: func [:r [integer!]] [return x]
+        /f: func [:r [integer!]] [return x]
         2 == f:r:r 1 2  ; Review: could be a syntax for variadic refinements?
     )
 ]
@@ -354,7 +354,7 @@
 
 ; inline function test
 [#1659 (
-    f: does (reduce [unrun does [okay]])
+    /f: does (reduce [unrun does [okay]])
     f
 )]
 
@@ -365,11 +365,11 @@
 ; R3-Alpha recycles variables based on stack searching (non-specific binding).
 (
     c: ~
-    a: lambda [b] [
+    /a: lambda [b] [
         a: null  ; erases a so only first call saves c
         c: b
     ]
-    f: lambda [d] [
+    /f: lambda [d] [
         a [d]
         eval c
     ]
@@ -383,14 +383,14 @@
         assert [undefined? $x, undefined? $y]
 
         body: [return x + y]
-        f: func [x] body
-        g: func [y] body
+        /f: func [x] body
+        /g: func [y] body
         (f 1)
     )
 ]
 
 [#2044 (
-    o: make object! [f: func [x] [return $x]]
+    o: make object! [/f: func [x] [return $x]]
     p: make o []
     not same? o/f 1 p/f 1
 )]
@@ -400,7 +400,7 @@
     outer: "outer"
     n: 20
 
-    f: func [
+    /f: func [
         :count [integer!]
         <in> o1 o1.o2
         <with> outer
@@ -433,12 +433,12 @@
 
 ; :LOCAL is an ordinary refinement in Ren-C
 (
-    a-value: func [:local [integer!]] [return local]
+    /a-value: func [:local [integer!]] [return local]
     1 == a-value:local 1
 )
 
 [#539 https://github.com/metaeducation/ren-c/issues/755 (
-    f: func [return: [~]] [
+    /f: func [return: [~]] [
         use [x] [return ~]
         42
     ]
@@ -446,7 +446,7 @@
 )]
 
 (
-    foo: lambda [^arg [~null~ pack? <end> ~void~ integer!]] [arg]
+    /foo: lambda [^arg [~null~ pack? <end> ~void~ integer!]] [arg]
     all [
         (the '1020) = (foo 1020)
         '~[]~ = (foo comment "HI")
@@ -458,6 +458,6 @@
 ; Test that undefined types or predicates cause an error and don't crash
 [
     ~bad-value~ !! (
-        to-the-limit: lambda [everybody [integer! fhqwhgads?]] []
+        /to-the-limit: lambda [everybody [integer! fhqwhgads?]] []
     )
 ]

@@ -11,7 +11,7 @@
 ;
 ; A naive implementation of this in Rebol2 might look like:
 ;
-;     for-both-naive: func ['var blk1 blk2 body] [
+;     /for-both-naive: func ['var blk1 blk2 body] [
 ;         foreach (var) blk1 body
 ;         foreach (var) blk2 body
 ;     ]
@@ -44,7 +44,7 @@
 
 [
     (
-        for-both: lambda [var blk1 blk2 body] [
+        /for-both: lambda [var blk1 blk2 body] [
             unmeta:lite all [
                 meta:lite for-each var blk1 body
                 meta:lite for-each var blk2 body

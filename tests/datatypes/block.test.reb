@@ -40,7 +40,7 @@
 ; Making a block from an action will iterate the action until it gives null
 
 (
-    make-one-thru-five: func [
+    /make-one-thru-five: func [
         return: [~null~ integer!]
         <static> count (0)
     ][
@@ -62,8 +62,8 @@
 ([[~ ~ ~] [~ ~ ~]] = array [2 3])
 ([[0 0 0] [0 0 0]] = array:initial [2 3] 0)
 (
-    counter: func [<static> n (0)] [return n: n + 1]
-    [1 2 3 4 5] = array:initial 5 :counter
+    /counter: func [<static> n (0)] [return n: n + 1]
+    [1 2 3 4 5] = array:initial 5 counter/
 )
 
 [

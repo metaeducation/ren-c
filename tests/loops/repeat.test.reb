@@ -38,7 +38,7 @@
 )
 ; Test that return stops the loop
 (
-    f1: func [return: [integer!]] [repeat 1 [return 1 2]]
+    /f1: func [return: [integer!]] [repeat 1 [return 1 2]]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned
@@ -57,7 +57,7 @@
 )
 ; recursive use of 'break
 (
-    f: lambda [x] [
+    /f: lambda [x] [
         repeat 1 [
             either x = 1 [
                 use [break] [
@@ -85,7 +85,7 @@
 ;
 ; Note: At one time the branch was:
 ;
-;     branch: does [if nbreak = n [break] n: n + 1]
+;     /branch: does [if nbreak = n [break] n: n + 1]
 ;
 ; Definitional BREAK doesn't allow this--that would be a call to a dummy BREAK
 ; function that says "no loop tied to break".  So there's currently no way for
@@ -93,7 +93,7 @@
 ; specific loop's break somehow).
 ;
 [
-    (did branch: does [if nbreak = n [break] n: n + 1])
+    (did /branch: does [if nbreak = n [break] n: n + 1])
 
     (nbreak: ('...), n: 0, void? repeat 0 :branch)
     (nbreak: ('...), n: 0, 3 = repeat 3 :branch)

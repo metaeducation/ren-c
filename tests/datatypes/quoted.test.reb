@@ -41,7 +41,7 @@
 )(
     x: 10
     y: null
-    foo: func [<local> x] [
+    /foo: func [<local> x] [
         set $x: 20
         set $y x
     ]
@@ -58,7 +58,7 @@
 )(
     x: 10
     y: null
-    foo: func [return: [~] <local> x] [
+    /foo: func [return: [~] <local> x] [
         set unquote the 'x: 20
         set unquote the 'y x
     ]
@@ -75,7 +75,7 @@
 )(
     x: 10
     y: null
-    foo: func [
+    /foo: func [
         return: [~]
         <local> x
     ][
@@ -105,7 +105,7 @@
         (2 = get noquote w2)
     ]
 )(
-    foo: func [] [
+    /foo: func [] [
         let a: 0
         let o1: make object! [a: 1]
         let o2: make object! [a: 2]

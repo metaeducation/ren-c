@@ -11,7 +11,7 @@
 ; bad idea implemented.
 
 [
-    (replace: enclose get $lib/replace func [f [frame!] <local> head tail rule] [
+    (/replace: enclose lib.replace/ func [f [frame!] <local> head tail rule] [
         if not all [match [text! binary!] f.target, block? f.pattern] [
             return eval f
         ]

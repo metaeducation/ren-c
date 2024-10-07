@@ -60,7 +60,7 @@
 ; RETURN should stop the loop
 (
     cycling: 'yes
-    f1: func [return: [integer!]] [
+    /f1: func [return: [integer!]] [
         while [yes? cycling] [
             cycling: 'no
             return 1
@@ -71,7 +71,7 @@
 )
 (  ; bug#1519
     cycling: 'yes
-    f1: func [return: [integer!]] [
+    /f1: func [return: [integer!]] [
         return while [if yes? cycling [return 1], yes? cycling] [
             cycling: 'no
             2
@@ -142,7 +142,7 @@
 
 ; CONTINUE and BREAK are definitional
 (
-    implemented-with-loops: func [body [block!]] [
+    /implemented-with-loops: func [body [block!]] [
         let sum: 0
         let result
         while [result: eval body] [

@@ -84,7 +84,7 @@ export console!: make object! [
   HELP    - For starting information
   ABOUT   - Information about your Rebol}
 
-    print-greeting: meth [
+    /print-greeting: meth [
         "Adds live elements to static greeting content (build #, version)"
         return: [~]
     ][
@@ -97,7 +97,7 @@ export console!: make object! [
         boot-print greeting
     ]
 
-    print-prompt: meth [return: [~]] [
+    /print-prompt: meth [return: [~]] [
         ;
         ; Note: See example override in skin in the Debugger extension, which
         ; adds the stack "level" number and "current" function name.
@@ -109,7 +109,7 @@ export console!: make object! [
         write-stdout space
     ]
 
-    print-result: meth [
+    /print-result: meth [
         return: [~]
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-atom?]
@@ -249,27 +249,27 @@ export console!: make object! [
         ]
     ]
 
-    print-warning: meth [return: [~] s] [print [warning reduce s]]
+    /print-warning: meth [return: [~] s] [print [warning reduce s]]
 
-    print-error: meth [return: [~] e [error!]] [
+    /print-error: meth [return: [~] e [error!]] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
         print form e
     ]
 
-    print-halted: meth [return: [~]] [
+    /print-halted: meth [return: [~]] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    print-info: meth [return: [~] s] [print [info reduce s]]
+    /print-info: meth [return: [~] s] [print [info reduce s]]
 
-    print-gap: meth [return: [~]] [print newline]
+    /print-gap: meth [return: [~]] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
-    input-hook: meth [
+    /input-hook: meth [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
         return: "~escape~ if canceled, else line of text input"
@@ -305,7 +305,7 @@ export console!: make object! [
     ;    whatever binding was on the block.  Leave it open for now, as these
     ;    unbound block cases aren't the only ones to consider.
     ;
-    dialect-hook: meth [
+    /dialect-hook: meth [
         "Receives full code block, bind and process, send back to CONSOLE eval"
         return: [block!]
         b [block!]
@@ -336,7 +336,7 @@ export console!: make object! [
 
     === HELPERS (could be overridden!) ===
 
-    add-shortcut: meth [
+    /add-shortcut: meth [
         "Add/Change console shortcut"
         return: [~]
         name [any-word?] "Shortcut name"
@@ -347,7 +347,7 @@ export console!: make object! [
 ]
 
 
-start-console: func [
+/start-console: func [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
     return: [~]
@@ -409,7 +409,7 @@ start-console: func [
     ; hook to save the last error printed.  Also inform people of the
     ; existence of the WHY function on the first error delivery.
     ;
-    proto-skin.print-error: adapt proto-skin/print-error/ [
+    /proto-skin.print-error: adapt proto-skin.print-error/ [
         if not system.state.last-error [
             system.console/print-info "Info: use WHY for error information"
         ]
@@ -449,7 +449,7 @@ start-console: func [
 ]
 
 
-console*: func [
+/console*: func [
     "Rebol ACTION! that is called from C in a loop to implement the console"
 
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
@@ -484,7 +484,7 @@ console*: func [
 
     let instruction: copy []
 
-    let emit: func [
+    let /emit: func [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         return: [~]
@@ -508,7 +508,7 @@ console*: func [
         ]
     ]
 
-    return: func [
+    /return: func [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
@@ -857,7 +857,7 @@ console*: func [
 ; means these will be seen by scripts, e.g. `do "why"` will work.
 ;
 
-export why: func [
+export /why: func [
     "Explain the last error in more detail."
     return: [~]
     'err [<end> word! path! error!] "Optional error value"
@@ -878,7 +878,7 @@ export why: func [
 ]
 
 
-export upgrade: func [
+export /upgrade: func [
     "Check for newer versions."
     return: [~]
 ][

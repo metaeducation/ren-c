@@ -26,7 +26,7 @@ REBOL [
 ;
 ; WAIT* expects block to be pre-reduced, to ease stackless implementation
 ;
-export wait: adapt wait*/ [if block? :value [value: reduce value]]
+export /wait: adapt wait*/ [if block? :value [value: reduce value]]
 
 sys.util/make-scheme [
     title: "TCP Networking"

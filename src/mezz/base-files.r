@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-info?: func [
+/info?: func [
     "Returns an info object about a file or url"
     return: [~null~ object! word!]
     target [file! url!]
@@ -37,7 +37,7 @@ info?: func [
     ]
 ]
 
-exists?: func [
+/exists?: func [
     "Returns the type of a file or URL if it exists, otherwise blank"
     return: [~null~ word!]
         "FILE, DIR, or null"  ; should return LOGIC!, FILETYPE OF separate
@@ -52,7 +52,7 @@ exists?: func [
     return select maybe query target 'type
 ]
 
-size-of: size?: func [
+/size-of: size?: func [
     "Returns the size of a file"
     return: [~null~ integer!]
     target [file! url!]
@@ -63,7 +63,7 @@ size-of: size?: func [
     ]
 ]
 
-modified?: func [
+/modified?: func [
     "Returns the last modified date of a file"
     return: [~null~ date!]
     target [file! url!]
@@ -74,7 +74,7 @@ modified?: func [
     ]
 ]
 
-suffix-of: func [
+/suffix-of: func [
     "Return the file suffix of a filename or url, else null"
     return: [~null~ file!]
     path [file! url! text!]
@@ -87,7 +87,7 @@ suffix-of: func [
     ]
 ]
 
-dir?: func [
+/dir?: func [
     "Returns TRUE if the file or url ends with a slash (or backslash)"
     return: [logic?]
     target [file! url!]
@@ -95,7 +95,7 @@ dir?: func [
     return did find "/\" last target
 ]
 
-dirize: func [
+/dirize: func [
     "Returns a copy (always) of the path as a directory (ending slash)"
     path [file! text! url!]
 ][
@@ -104,7 +104,7 @@ dirize: func [
     return path
 ]
 
-make-dir: func [
+/make-dir: func [
     "Creates the specified directory, no error if already exists"
 
     return: [file! url!]
@@ -155,7 +155,7 @@ make-dir: func [
     return path
 ]
 
-delete-dir: func [
+/delete-dir: func [
     "Deletes a directory including all files and subdirectories"
     dir [file! url!]
     <local> files
@@ -172,7 +172,7 @@ delete-dir: func [
     ]
 ]
 
-script?: func [
+/script?: func [
     "Checks file, url, or text string for a valid script header"
 
     return: [~null~ binary!]
@@ -188,7 +188,7 @@ script?: func [
     ]
 ]
 
-file-type?: func [
+/file-type?: func [
     "Return the identifying word for a specific file type (or null)"
     return: [~null~ word!]
     file [file! url!]
@@ -199,7 +199,7 @@ file-type?: func [
     ]
 ]
 
-split-path: func [  ; /FILE used in bootstrap vs. multi-return
+/split-path: func [  ; /FILE used in bootstrap vs. multi-return
     "Splits and returns ~[directory filename]~ (either may be null)"
     return: [~[[~null~ file! url!] [~null~ file! url!]]~]
 

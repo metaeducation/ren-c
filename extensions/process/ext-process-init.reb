@@ -10,7 +10,7 @@ REBOL [
 ; amount of C code that CALL has to run.  So things like transforming any
 ; FILE! into local paths are done here.
 ;
-call*: adapt call-internal*/ [
+/call*: adapt call-internal*/ [
     command: switch:type command [
         text! [
             ; A TEXT! is passed through as-is, and will be interpreted by
@@ -80,7 +80,7 @@ call*: adapt call-internal*/ [
 ;    It also means things like (call:shell "dir") won't put `== 0` after the
 ;    result when shown in the terminal.
 ;
-call: enclose (
+/call: enclose (
     augment (specialize call*/ [wait: ok]) [
         :relax "If exit code is non-zero, return the integer vs. raising error"
     ]
@@ -99,7 +99,7 @@ call: enclose (
     ]
 ]
 
-parse-command-to-argv*: func [
+/parse-command-to-argv*: func [
     "Helper for when POSIX gets a TEXT! and the /SHELL refinement not used"
 
     return: [block!]
@@ -133,7 +133,7 @@ parse-command-to-argv*: func [
 ]
 
 
-argv-block-to-command*: func [
+/argv-block-to-command*: func [
     "Helper for when Windows gets an argv BLOCK! and needs a command line"
 
     return: [text!]
@@ -158,7 +158,7 @@ argv-block-to-command*: func [
 ; as some potentially OS-specific detection on how to launch URLs (e.g. looks
 ; at registry keys on Windows)
 
-browse*: func [
+/browse*: func [
     "Open web browser to a URL or local file."
 
     return: [~]

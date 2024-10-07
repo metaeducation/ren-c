@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-loop: func [] [
+/loop: func [] [
     fail:blame [
         "Short word LOOP is reserved for a generalized looping dialect:"
         https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878
@@ -29,7 +29,7 @@ loop: func [] [
 ;
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
-function: method: func [] [
+/function: method: func [] [
     fail:blame [
         {The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was}
         {the gathering of SET-WORD! as locals.  This behavior led to many}
@@ -42,7 +42,7 @@ function: method: func [] [
 ]
 
 
-REBOL: func [] [
+/REBOL: func [] [
     fail:blame [
         "The REBOL [] header of a script must be interpreted by LOAD (and"
         "functions like DO).  It cannot be executed directly."
@@ -50,7 +50,7 @@ REBOL: func [] [
 ]
 
 
-input: func [] [
+/input: func [] [
     fail:blame [
         "Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):"
         https://forum.rebol.info/t/1124
@@ -58,21 +58,21 @@ input: func [] [
 ]
 
 
-repend: func [] [
+/repend: func [] [
     fail:blame [
         "REPEND is just `adapt append/ [value: reduce :value]`, and is not"
         "provided in the box."
     ] $return
 ]
 
-remold: func [] [
+/remold: func [] [
     fail:blame [
         "REMOLD is just `adapt mold/ [value: reduce :value]`, but is not"
         "provided in the box."
     ] $return
 ]
 
-rejoin: func [] [
+/rejoin: func [] [
     fail:blame [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by JOIN, which accepts datatypes as a first parameter,"
@@ -90,7 +90,7 @@ rejoin: func [] [
 ; ability to tolerate a spec of `[a:]` by transforming it to `[a: none].
 ; Ren-C hasn't decided yet, but will likely support `construct [a: b: c:]`
 ;
-context: specialize make/ [type: object!]
+/context: specialize make/ [type: object!]
 
 
 ; To be more visually pleasing, properties like LENGTH can be extracted using
@@ -114,17 +114,17 @@ context: specialize make/ [type: object!]
 ; no information about specific return types, which could be given here
 ; with REDESCRIBE.
 ;
-length-of: specialize reflect/ [property: 'length]
-words-of: specialize reflect/ [property: 'words]
-values-of: specialize reflect/ [property: 'values]
-index-of: specialize reflect/ [property: 'index]
-type-of: specialize reflect/ [property: 'type]
-binding-of: specialize reflect/ [property: 'binding]
-head-of: specialize reflect/ [property: 'head]
-tail-of: specialize reflect/ [property: 'tail]
-file-of: specialize reflect/ [property: 'file]
-line-of: specialize reflect/ [property: 'line]
-body-of: specialize reflect/ [property: 'body]
+/length-of: specialize reflect/ [property: 'length]
+/words-of: specialize reflect/ [property: 'words]
+/values-of: specialize reflect/ [property: 'values]
+/index-of: specialize reflect/ [property: 'index]
+/type-of: specialize reflect/ [property: 'type]
+/binding-of: specialize reflect/ [property: 'binding]
+/head-of: specialize reflect/ [property: 'head]
+/tail-of: specialize reflect/ [property: 'tail]
+/file-of: specialize reflect/ [property: 'file]
+/line-of: specialize reflect/ [property: 'line]
+/body-of: specialize reflect/ [property: 'body]
 
 
 ; General renamings away from non-LOGIC!-ending-in-?-functions
@@ -153,7 +153,7 @@ comment [
 
 ; The legacy PRIN construct is replaced by WRITE-STDOUT SPACED and similar
 ;
-prin: func [
+/prin: func [
     "Print without implicit line break, blocks are SPACED."
 
     return: [~]
@@ -174,10 +174,10 @@ prin: func [
 ; permanence.  It also is unique among loop constructs by supporting a value
 ; return via STOP, since it has no "normal" loop termination condition.
 ;
-forever: cycle/
+/forever: cycle/
 
 
-find: adapt (augment find/ [:reverse :last]) [
+/find: adapt (augment find/ [:reverse :last]) [
     if reverse or last [
         fail:blame [
             {:REVERSE and :LAST on FIND have been deprecated.  Use FIND-LAST}

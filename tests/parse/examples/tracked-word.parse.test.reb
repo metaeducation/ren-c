@@ -27,7 +27,7 @@
 [(
     stack: ~
 
-    tracked-word!: enclose get:groups $default-combinators.(word!) func [
+    tracked-word!-combinator: unrun enclose default-combinators.(word!)/ func [
         return: [~null~ pack?]
         f [frame!]
         <static> indent (0)
@@ -68,11 +68,11 @@
     ]
 
     tracked-combinators: copy default-combinators
-    tracked-combinators.(word!): unrun :tracked-word!
+    tracked-combinators.(word!): tracked-word!-combinator
 
-    trackparse*: specialize parse/ [combinators: tracked-combinators]
+    /trackparse*: specialize parse/ [combinators: tracked-combinators]
 
-    trackparse: enclose trackparse*/ lambda [f [frame!]] [
+    /trackparse: enclose trackparse*/ lambda [f [frame!]] [
         stack: copy []
         eval f then [
             append stack ""  ; give final newline

@@ -17,7 +17,7 @@
 ; BIND works 'as expected' in function body
 [#1549 (
     b1: [self]
-    f: lambda [<local> b2] [
+    /f: lambda [<local> b2] [
         let b2: [self]
         same? first b2 first bind:copy b1 binding of $b2
     ]

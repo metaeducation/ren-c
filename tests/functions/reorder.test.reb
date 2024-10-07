@@ -64,22 +64,22 @@
 
 ; Functions modified with ADAPT, SPECIALIZE, etc. can be reordered.
 (
-    aplus: adapt append/ [value: value + 1000]
-    newaplus: reorder aplus/ [value series]
+    /aplus: adapt append/ [value: value + 1000]
+    /newaplus: reorder aplus/ [value series]
     [a b c 1020] = newaplus 20 [a b c]
 )
 
 ; Reordered functions also preserve their reordering across compositions.
 (
-    newa: reorder append/ [value series]
-    newaplus: adapt newa/ [value: value + 1000]
+    /newa: reorder append/ [value series]
+    /newaplus: adapt newa/ [value: value + 1000]
     [a b c 1020] = newaplus 20 [a b c]
 )
 
 ; Very experimental idea for making REORDER a bit more cooperative with
 ; existing parameter list formats, to leave in refinements but ignore them.
 (
-    ar: reorder :append [value /dup series]
+    /ar: reorder append/ [value :dup series]
     [a b c 10] = ar 10 [a b c]
 )
 
@@ -87,7 +87,7 @@
 ; inherit a copy of the HELP meta-information, while REORDER wraps on top of
 ; that with the usermode code that does the inherit.
 (
-    nohelp: reorder* :append [value series]  ; cheaper/faster to create
+    /nohelp: reorder* append/ [value series]  ; cheaper/faster to create
     all [
         [a b c <item>] = nohelp <item> [a b c]  ; works the same
         null = adjunct-of nohelp/  ; ...but has no parameter information

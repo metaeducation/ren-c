@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-to-text: func [
+/to-text: func [
     "Convert the UUID to the text string form ({8-4-4-4-12})"
     uuid [binary!]
 ][

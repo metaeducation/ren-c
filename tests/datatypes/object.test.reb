@@ -32,7 +32,7 @@
 )
 ; RETURN out of make object!
 [#848 (
-    f: func [return: [integer!]] [
+    /f: func [return: [integer!]] [
         make object! [return 1]
         2
     ]
@@ -41,9 +41,9 @@
 ; object cloning
 [#2045 (
     a: 1
-    f: lambda [] [a]
-    g: get $f
-    o: make object! [a: 2 g: get $f]
+    /f: lambda [] [a]
+    /g: get $f
+    o: make object! [a: 2 /g: get $f]
     p: make o [a: 3]
     1 == p/g
 )]
@@ -125,12 +125,12 @@
 ; binding set up with BIND to get the derived behavior, which is done
 ; "magically" by METHOD.
 (
-    o1: make object! [a: 10 b: func [] [f: lambda [] [a] return f]]
+    o1: make object! [a: 10 /b: func [] [/f: lambda [] [a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 10
 )(
-    o1: make object! [a: 10 b: meth [] [f: lambda [] [.a] return f]]
+    o1: make object! [a: 10 /b: meth [] [/f: lambda [] [.a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 20
@@ -151,13 +151,13 @@
         ]
         count-up 'n 256 [
             ;
-            ; fun-1: meth [] [.var-1]
-            ; fun-2: meth [] [.var-1 + .var-2]
+            ; /fun-1: meth [] [.var-1]
+            ; /fun-2: meth [] [.var-1 + .var-2]
             ; ...
-            ; fun-256: meth [] [.var-1 + .var-2 ... + .var-256]
+            ; /fun-256: meth [] [.var-1 + .var-2 ... + .var-256]
             ;
             keep spread compose [
-                (as word! unspaced ["meth-" n]): meth [] (collect [
+                /(as word! unspaced ["meth-" n]): meth [] (collect [
                     keep 'return
                     count-up 'i n [
                         keep spread compose:deep [

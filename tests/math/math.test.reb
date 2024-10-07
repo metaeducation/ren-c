@@ -7,7 +7,7 @@
 ;
 ; It is not working at time of writing but is moved into tests.
 
-(math: func [
+(/math: func [
     "Process expression taking 'usual' operator precedence into account"
 
     expr "Block to evaluate"

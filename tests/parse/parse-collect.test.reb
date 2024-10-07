@@ -475,7 +475,7 @@ https://github.com/metaeducation/ren-c/issues/935
 
 [https://github.com/red/red/issues/3108
     (
-        partition3108: func [elems [block!] size [integer!]] [
+        /partition3108: func [elems [block!] size [integer!]] [
             return parse elems [
                 collect some [not <end> ||
                     keep across repeat (size) one
@@ -486,7 +486,7 @@ https://github.com/metaeducation/ren-c/issues/935
         [[1 2] [3 4] [5 6] [7 8] [9]] = partition3108 [1 2 3 4 5 6 7 8 9] 2
     )
     (
-        partition3108: func [elems [block!] size [integer!]] [
+        /partition3108: func [elems [block!] size [integer!]] [
             return parse elems [
                 collect some [not <end> ||
                     keep across repeat (size) one
@@ -510,7 +510,7 @@ https://github.com/metaeducation/ren-c/issues/935
 
 [
     (
-        foo: func [value] [return value]
+        /foo: func [value] [return value]
         let p
         res: parse [a 3 4 t [t 9] "test" 8] [
             collect [

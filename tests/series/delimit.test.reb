@@ -24,9 +24,9 @@
 (
     project: 'Ren-C
     bad-thing: "Software Complexity"
-    new?: does [project <> 'Rebol]
+    /new?: does [project <> 'Rebol]
 
-    str: spaced [#<< project #>> _ {The} (if new? 'NEW) {War On} bad-thing]
+    str: spaced [#<< project #>> _ "The" (if new? 'NEW) "War On" bad-thing]
 
     str = "<<Ren-C>> The NEW War On Software Complexity"
 )

@@ -14,13 +14,13 @@
     ('~baddie~ = if ok [~baddie~] then ^x -> [x])
 
     (
-        tester: ^x -> [if x = '~()~ [<void>] else [<nonvoid>]]
+        /tester: ^x -> [if x = '~()~ [<void>] else [<nonvoid>]]
         <void> = tester comment "this should work"
     )
 
     ; this is true of funcs with no type specs on arguments as well
     (
-        tester: func [^x] [if x = '~()~ [<void>] else [<nonvoid>]]
+        /tester: func [^x] [if x = '~()~ [<void>] else [<nonvoid>]]
         <void> = tester comment "this should work"
     )
 ]
@@ -30,11 +30,11 @@
     (quoter: 'x -> [x], (the a) = quoter a)
 ]
 
-; Lambdas can be invisible
+; Lambdas are void by default, for invisibility you need explicit return
 [
-    (lammy: x -> [], void? lammy 1)
-    (lammy: lambda '[x y] [elide x + y], void? lammy 1 2)
-    (lammy: lambda [x y <local> z] [elide x + y], void? lammy 1 2)
+    (/lammy: x -> [], void? lammy 1)
+    (/lammy: lambda '[x y] [elide x + y], void? lammy 1 2)
+    (/lammy: lambda [x y <local> z] [elide x + y], void? lammy 1 2)
 ]
 
 (

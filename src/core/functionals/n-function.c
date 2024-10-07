@@ -24,7 +24,7 @@
 // FUNC is a common means for creating an action from a BLOCK! of code, with
 // another block serving as the "spec" for parameters and HELP:
 //
-//     >> print-sum-twice: func [
+//     >> /print-sum-twice: func [
 //            "Prints the sum of two integers, and return the sum"
 //            return: "The sum" [integer!]
 //            x "First Value" [integer!]
@@ -180,7 +180,7 @@ Bounce Func_Dispatcher(Level* const L)
 // the body will introduce a RETURN specific to each action invocation, thus
 // acting more like:
 //
-//     return: lambda
+//     /return: lambda
 //         [{Returns a value from a function.} ^value [any-atom?]]
 //         [unwind:with (binding of $return) unmeta value]
 //     ]
@@ -274,7 +274,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     // Capture the mutability flag that was in effect when this action was
     // created.  This allows the following to work:
     //
-    //    >> eval mutable [f: func [] [b: [1 2 3] clear b]]
+    //    >> eval mutable [/f: func [] [b: [1 2 3] clear b]]
     //    >> f
     //    == []
     //

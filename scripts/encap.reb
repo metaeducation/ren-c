@@ -109,7 +109,7 @@ elf-format: context [
     ; explicit at the callsites.
     ;
     mode: ~
-    handler: func [return: [~] @name [word!] num-bytes [integer!]] [
+    /handler: func [return: [~] @name [word!] num-bytes [integer!]] [
         assert [
             binary? begin, num-bytes <= length of begin,
             find [read write] mode
@@ -230,7 +230,7 @@ elf-format: context [
         (mode: null)
     ]
 
-    find-section: meth [
+    /find-section: meth [
         return: "The index of the section header with encap (sh_xxx vars set)"
             [~null~ integer!]
         name [text!]
@@ -256,7 +256,7 @@ elf-format: context [
         return null
     ]
 
-    update-offsets: meth [
+    /update-offsets: meth [
         "Adjust headers to account for insertion or removal of data @ offset"
 
         return: [~]
@@ -292,7 +292,7 @@ elf-format: context [
         ]
     ]
 
-    update-embedding: meth [
+    /update-embedding: meth [
         return: [~]
         executable "Executable to mutate to either add or update an embedding"
             [binary!]
@@ -488,7 +488,7 @@ elf-format: context [
         ]
     ]
 
-    get-embedding: meth [
+    /get-embedding: meth [
         return: [~null~ binary!]
         file [file!]
     ][
@@ -563,7 +563,7 @@ pe-format: context [
 
     uintptr-le: uintptr-32-le  ; assume 32-bit unless discovered otherwise
 
-    gen-rule: func [
+    /gen-rule: func [
         "Collect set-words in @rule to make into an object saved in @name"
         return: [block!]
         name [word!]
@@ -572,7 +572,7 @@ pe-format: context [
             [word! block!]
     ][
         let def: make block! 1
-        let find-a-word: func [
+        let /find-a-word: func [
             return: [~]
             word [word!]
         ][
@@ -772,21 +772,21 @@ pe-format: context [
     ]
     size-of-section-header: 40  ; Size of one entry
 
-    to-u32-le: func [
+    /to-u32-le: func [
         return: [binary!]
         i [integer!]
     ][
         return reverse skip (to binary! i) 4
     ]
 
-    to-u16-le: func [
+    /to-u16-le: func [
         return: [binary!]
         i [integer!]
     ][
         return reverse skip (to binary! i) 6
     ]
 
-    align-to: func [
+    /align-to: func [
         return: [integer!]
         offset [integer!]
         align [integer!]
@@ -798,7 +798,7 @@ pe-format: context [
         ]
     ]
 
-    reset: does [
+    /reset: does [
         err: null
         fail-at: ~
         start-of-section-header: ~
@@ -812,7 +812,7 @@ pe-format: context [
         clear data-directories
     ]
 
-    parse-exe: func [
+    /parse-exe: func [
         return: [logic?]
         exe-data [binary!]
     ][
@@ -827,7 +827,7 @@ pe-format: context [
         return okay
     ]
 
-    update-section-header: func [
+    /update-section-header: func [
         return: [~]
         pos [binary!]
         section [object!]
@@ -860,7 +860,7 @@ pe-format: context [
         assert [size-of-section-header = length of new-section]
     ]
 
-    add-section: func [
+    /add-section: func [
         "Add a new section to the exe, modify in place"
         exe-data [binary!]
         section-name [text!]
@@ -991,7 +991,7 @@ pe-format: context [
         return head of exe-data
     ]
 
-    find-section: func [
+    /find-section: func [
         "Find a section to the exe"
         return: [~null~ binary!]
         exe-data [binary!]
@@ -1032,7 +1032,7 @@ pe-format: context [
         ]
     ]
 
-    update-section: func [
+    /update-section: func [
         return: [binary!]
         exe-data [binary!]
         section-name [text!]
@@ -1084,7 +1084,7 @@ pe-format: context [
         return (head of exe-data, elide reset)
     ]
 
-    remove-section: func [
+    /remove-section: func [
         exe-data [binary!]
         section-name [text!]
     ][
@@ -1148,11 +1148,11 @@ pe-format: context [
         return (head of exe-data, elide reset)
     ]
 
-    update-embedding: specialize update-section/ [
+    /update-embedding: specialize update-section/ [
         section-name: encap-section-name
     ]
 
-    get-embedding: func [
+    /get-embedding: func [
         return: [~null~ binary!]
         file [file!]
     ][
@@ -1167,7 +1167,7 @@ generic-format: context [
     signature: to-binary "ENCAP000"
     sig-length: length of signature
 
-    update-embedding: meth [
+    /update-embedding: meth [
         return: [~]
         executable "Executable to mutate to either add or update an embedding"
             [binary!]
@@ -1211,7 +1211,7 @@ generic-format: context [
         append executable signature
     ]
 
-    get-embedding: meth [
+    /get-embedding: meth [
         return: [~null~ binary!]
         file [file!]
     ][
@@ -1234,7 +1234,7 @@ generic-format: context [
 ]
 
 
-encap: func [
+/encap: func [
     return: "Path location of the resulting output"
         [file!]
     spec "Single script to embed, directory to zip with main.reb, or dialect"
@@ -1292,7 +1292,7 @@ encap: func [
 ]
 
 
-get-encap: func [
+/get-encap: func [
     return: "NULL if no encapping found, unzipped BLOCK! results if found"
         [~null~ block!]
     rebol-path "The executable to search for the encap information in"

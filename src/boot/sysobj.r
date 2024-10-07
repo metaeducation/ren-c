@@ -156,8 +156,8 @@ standard: make object! [
     ; to find #BODY, just asserts the position is an ISSUE!.
 
     func-body: [
-        return: lambda [
-            {(pseudocode) returns a value from an action} ^atom [atom?]
+        /return: lambda [
+            "(pseudocode) returns a value from an action" ^atom [atom?]
         ][
             if not typecheck 'return unmeta atom [
                 fail ["Invalid Return type, expects:" types of 'return]

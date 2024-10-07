@@ -47,7 +47,7 @@ e-funcs: make-emitter "Internal API" (
 
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
-emit-proto: func [
+/emit-proto: func [
     return: [~]
     proto
 ][
@@ -109,7 +109,7 @@ emit-proto: func [
     }]
 ]
 
-process-conditional: func [
+/process-conditional: func [
     return: [~]
     directive
     dir-position
@@ -130,11 +130,11 @@ process-conditional: func [
     ]
 ]
 
-emit-directive: func [return: [~] directive] [
+/emit-directive: func [return: [~] directive] [
     process-conditional directive proto-parser.parse-position e-funcs
 ]
 
-process: func [return: [~] file] [
+/process: func [return: [~] file] [
     proto-parser.emit-proto: :emit-proto
     proto-parser.file: file
     proto-parser.emit-directive: :emit-directive
@@ -228,7 +228,7 @@ sys-globals-parser: context [
     parse-position: ~
     id: null
 
-    process: func [return: [~] text] [
+    /process: func [return: [~] text] [
         parse3 text grammar.rule  ; Review: no END (return result unused?)
     ]
 

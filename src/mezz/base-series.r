@@ -75,7 +75,7 @@ last: redescribe [
 ; to just cause confusion.  Weirdos who want features *like that* can make them
 ; but JOIN isn't the right place for it.
 ;
-join: func [
+/join: func [
     "Concatenates values to the end of a copy of a value"
 
     return:
@@ -199,7 +199,7 @@ join: func [
 ; CHARSET was moved from "Mezzanine" because it is called by TRIM which is
 ; in "Base" - see TRIM.
 ;
-charset: func [
+/charset: func [
     "Makes a bitset of chars for the parse function"
 
     return: [bitset!]
@@ -215,7 +215,7 @@ charset: func [
 ; TRIM is used by PORT! implementations, which currently rely on "Base" and
 ; not "Mezzanine", so this can't be in %mezz-series at the moment.  Review.
 ;
-trim: func [
+/trim: func [
     "Removes spaces from strings or blanks from blocks or objects"
 
     return: [any-string? any-list? binary! any-context?]

@@ -50,11 +50,3 @@ use [word] [
         )
     ]
 ]
-
-
-; !!! Refinements are actually PATH! now, but TO PATH! of a WORD! assumes you
-; want a 2-element path with a blank at the head that looks like a refinement
-;
-to-refinement: to-path/
-
-reify-logic: lambda [logic [logic?]] [reify logic]

@@ -11,16 +11,16 @@ REBOL [
     }
 ]
 
-ls: list-dir/
-pwd: what-dir/
+/ls: list-dir/
+/pwd: what-dir/
 
-rm: does [
+/rm: does [
     fail "Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)"
 ]
 
-mkdir: make-dir/
+/mkdir: make-dir/
 
-cd: func [
+/cd: func [
     "Change directory (shell shortcut function)."
 
     return: "The directory after the change"
@@ -44,8 +44,8 @@ cd: func [
     return what-dir
 ]
 
-more: lambda [
-    {Print file (shell shortcut function).}
+/more: lambda [
+    "Print file (shell shortcut function)"
 
     'file "Accepts %file and also just words (as file names)"
         [file! word! path! text!]

@@ -5,7 +5,7 @@
 
 (
     backup: block: copy [a b]
-    f: does [append block [c d]]
+    /f: does [append block [c d]]
     f
     block: copy [x y]
     f
@@ -26,7 +26,7 @@
 
     (
         backup: block: copy [a b]
-        f: does+ append block [c d]
+        /f: does+ append block [c d]
         f
         block: copy [x y]
         f
@@ -40,7 +40,7 @@
         x: 10
         y: 20
         flag: 'true
-        z: does+ all [x: x + 1, true? flag, y: y + 2, <finish>]
+        /z: does+ all [x: x + 1, true? flag, y: y + 2, <finish>]
         all [
             z = <finish>, x = 11, y = 22
             elide (flag: 'false)
@@ -49,7 +49,7 @@
     )
 
     (
-        catcher: does+ catch [throw 10]
+        /catcher: does+ catch [throw 10]
         catcher = 10
     )
 ]
@@ -57,7 +57,7 @@
 (
     o1: make object! [
         a: 10
-        b: does [if ok [.a]]
+        /b: does [if ok [.a]]
     ]
     o2: make o1 [a: 20]
 
@@ -65,7 +65,7 @@
 )(
     o1: make object! [
         a: 10
-        b: does [f: does [.a] f]
+        /b: does [/f: does [.a] f]
     ]
     o2: make o1 [a: 20]
 
@@ -73,7 +73,7 @@
 )(
     o1: make object! [
         a: 10
-        b: does [f: lambda [] [.a] f]
+        /b: does [/f: lambda [] [.a] f]
     ]
     o2: make o1 [a: 20]
 
@@ -81,7 +81,7 @@
 )(
     o1: make object! [
         a: 10
-        b: meth [] [f: does [a], return f]
+        /b: meth [] [/f: does [a], return f]
     ]
     o2: make o1 [a: 20]
 

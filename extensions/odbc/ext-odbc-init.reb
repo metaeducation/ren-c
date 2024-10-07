@@ -40,7 +40,7 @@ statement-prototype: context [
     columns: null
 ]
 
-export odbc-statement-of: func [
+export /odbc-statement-of: func [
     "Get a statement port from a connection port"
     return: [port!]
     port [port!]
@@ -68,7 +68,7 @@ sys.util/make-scheme [
     title: "ODBC Open Database Connectivity Scheme"
 
     actor: context [
-        open: func [
+        /open: func [
             "Open a database port"
             port "WORD! spec then assume DSN, else BLOCK! DSN-less datasource"
                 [port!]
@@ -89,14 +89,14 @@ sys.util/make-scheme [
             return port
         ]
 
-        pick: func [
+        /pick: func [
             port [port!]
             index "Index to pick from (only supports 1, for FIRST)"
         ][
             fail "This is now ODBC-STATEMENT-OF"
         ]
 
-        update: func [return: [port!] port [port!]] [
+        /update: func [return: [port!] port [port!]] [
             if get in connection: port.locals 'hdbc [
                 (update-odbc
                     connection
@@ -107,7 +107,7 @@ sys.util/make-scheme [
             ]
         ]
 
-        close: func [
+        /close: func [
             "Closes a statement port only or a database port w/all statements"
             return: [port!]
             port [port!]
@@ -130,7 +130,7 @@ sys.util/make-scheme [
             return port  ; !!! should this error?
         ]
 
-        insert: func [
+        /insert: func [
             return: [integer! block!]
             port [port!]
             sql "SQL statement or catalog, parameter blocks reduced first"
@@ -139,14 +139,14 @@ sys.util/make-scheme [
             return insert-odbc port.locals blockify sql
         ]
 
-        copy: func [port [port!] :part [integer!]] [
+        /copy: func [port [port!] :part [integer!]] [
             return copy-odbc:part port.locals part
         ]
     ]
 ]
 
 
-sqlform: func [
+/sqlform: func [
     "Helper for producing SQL string from SQL dialect"
 
     return: "Formed SQL string with ? in parameter spots"
@@ -221,7 +221,7 @@ sqlform: func [
 
 ; https://forum.rebol.info/t/1234
 ;
-odbc-execute: func [
+/odbc-execute: func [
     "Run a query in the ODBC extension using the Rebol SQL query dialect"
 
     statement [port!]

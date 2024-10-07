@@ -6,8 +6,8 @@
 (strict-equal? :+ :+)
 ; reflexivity test for action
 (
-    a-value: func [] []
-    strict-equal? :a-value :a-value
+    /a-value: func [] []
+    strict-equal? a-value/ a-value/
 )
 ; no structural equality for action
 (not strict-equal? func [] [] func [] [])

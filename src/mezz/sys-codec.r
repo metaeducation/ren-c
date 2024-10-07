@@ -23,7 +23,7 @@ REBOL [
 ;
 ; !!! There should also be an unregister-codec*
 ;
-register-codec*: func [
+/register-codec*: func [
     return: [object!]
     name [word!]
         {Descriptive name of the codec.}
@@ -77,7 +77,7 @@ append system.options.file-types spread switch fourth system.version [
 ]
 
 
-decode: func [
+/decode: func [
     "Decodes a series of bytes into the related datatype (e.g. image!)"
 
     type "Media type (jpeg, png, etc.)"
@@ -95,7 +95,7 @@ decode: func [
 ]
 
 
-encode: func [
+/encode: func [
     "Encodes a datatype (e.g. image!) into a series of bytes"
 
     return: [binary!]
@@ -115,7 +115,7 @@ encode: func [
 ]
 
 
-encoding-of: func [
+/encoding-of: func [
     "Returns the media codec name for given binary data. (identify)"
 
     return: [~null~ word!]

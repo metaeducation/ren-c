@@ -1,10 +1,10 @@
 ; better than-nothing HIJACK tests
 
 (
-    foo: func [x] [return x + 1]
-    another-foo: :foo
+    /foo: func [x] [return x + 1]
+    /another-foo: foo/
 
-    old-foo: copy :foo
+    old-foo: copy foo/
 
     all [
         (old-foo 10) = 11
@@ -20,14 +20,14 @@
 ; specializing hijacked functions afterward.
 [
     (
-        three: func [x y z :available "add me" [integer!]] [
+        /three: func [x y z :available "add me" [integer!]] [
             return x + y + z + either available [available] [0]
         ]
         60 = (three 10 20 30)
     )
 
     (
-        old-three: copy three/
+        /old-three: copy three/
 
         two-30: specialize three/ [z: 30]
         60 = (two-30 10 20)
@@ -75,8 +75,8 @@
 
 ; HIJACK of a specialization (needs to notice paramlist has "hidden" params)
 (
-    two: func [a b] [a + b]
-    one: specialize two/ [a: 10]
+    /two: func [a b] [a + b]
+    /one: specialize two/ [a: 10]
     hijack one/ lambda [b] [20 - b]
     0 = one 20
 )

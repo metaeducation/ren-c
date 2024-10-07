@@ -62,13 +62,13 @@ central-file-sig: #{504B0102}
 end-of-central-sig: #{504B0506}
 data-descriptor-sig: #{504B0708}
 
-to-ilong: specialize enbin/ [settings: [LE + 4]]  ; Little endian 4-byte + int
+/to-ilong: specialize enbin/ [settings: [LE + 4]]  ; Little endian 4-byte + int
 
-to-ishort: specialize enbin/ [settings: [LE + 2]]  ; Little endian 2-byte + int
+/to-ishort: specialize enbin/ [settings: [LE + 2]]  ; Little endian 2-byte + int
 
-to-long: specialize enbin/ [settings: [BE + 4]]  ; Big endian 4-byte + int
+/to-long: specialize enbin/ [settings: [BE + 4]]  ; Big endian 4-byte + int
 
-to-msdos-time: func [
+/to-msdos-time: func [
     "Converts to a MS-DOS time"
     return: [binary!]
     time [time!] "AnyValue to convert"
@@ -78,7 +78,7 @@ to-msdos-time: func [
         or+ to integer! time.second / 2
 ]
 
-to-msdos-date: func [
+/to-msdos-date: func [
     "Converts to a MS-DOS date"
     return: [binary!]
     date [date!]
@@ -87,7 +87,7 @@ to-msdos-date: func [
         or+ (date.month * 32) or+ date.day
 ]
 
-get-msdos-time: func [
+/get-msdos-time: func [
     "Converts from a MS-DOS time"
     return: [time!]
     binary [binary!]
@@ -100,7 +100,7 @@ get-msdos-time: func [
     ]
 ]
 
-get-msdos-date: func [
+/get-msdos-date: func [
     "Converts from a MS-DOS date"
     return: [date!]
     binary [binary!]
@@ -113,7 +113,7 @@ get-msdos-date: func [
     ]
 ]
 
-zip-entry: func [
+/zip-entry: func [
     "Compresses a file"
 
     return: "local header and central directory entry"
@@ -190,7 +190,7 @@ zip-entry: func [
     return pack [local-file-entry central-dir-entry]
 ]
 
-to-path-file: func [
+/to-path-file: func [
     "Converts url! to file! and removes / from beginning"
     return: [file!]
     value [file! url!] "AnyValue to convert"
@@ -203,7 +203,7 @@ to-path-file: func [
     return join %"" spread reduce [value.host "/" value.path value.target]
 ]
 
-zip: func [
+/zip: func [
     "Build zip archive from a file or dialected data specification block"
 
     return: "Number of entries in archive"
@@ -304,7 +304,7 @@ zip: func [
     return num-entries
 ]
 
-unzip: func [
+/unzip: func [
     "Decompresses a zip archive to a directory or a block"
 
     return: "If `where` was a block, then position after archive insertion"

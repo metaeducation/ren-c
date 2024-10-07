@@ -68,7 +68,7 @@ ndk-version: make object! [major: minor: patch: null]
 ; for now let's just assume that if you're cross-compiling to Android and
 ; you are on a Windows machine, you intend to run the make on Windows.  (!)
 ;
-detect-ndk-host: func [
+/detect-ndk-host: func [
     return: [word!]
 ][
     return switch let os: system/version/4 [
@@ -90,7 +90,7 @@ detect-ndk-host: func [
 ; front end does...but it seems there's directory set up done by the clang
 ; and gcc you miss out on, so it won't find libraries and has other errors.
 ;
-tool-for-host: func [
+/tool-for-host: func [
     return: [file! text!]
     tool [tag!] "<COMPILER> or <LINKER>"
     :host [word!] "defaults to detecting current system, e.g. linux-x86_64"
@@ -99,7 +99,7 @@ tool-for-host: func [
     host: default [detect-ndk-host]
     abi: default ['arm-linux-androideabi]  ; But ARM64 is up-and-coming... :-/
 
-    let path: either ndk-version/major < 18 [  ; GCC build still available
+    let path: either ndk-version.major < 18 [  ; GCC build still available
         ;
         ; !!! Review the 4.9 non-sequitur in this older method.  What's that?
         ;
@@ -156,7 +156,7 @@ tool-for-host: func [
     ;
     comment [
         all [
-            ndk-version/major >= 18
+            ndk-version.major >= 18
             tool = <linker>  ; will give warning if used with plain compile
         ] then [
             return spaced [path "-fuse-ld=lld"]
@@ -188,7 +188,7 @@ tool-for-host: func [
 ; but also looking to see what the maximum offered by your installed NDK
 ; has in its $NDK/platforms directory.  But just get it working for now...
 ;
-android-api-level: either ndk-version/major < 18 [
+android-api-level: either ndk-version.major < 18 [
     19  ; A low common denominator
 ][
     29  ; Make sure we can build something Google Play Store could accept
@@ -206,11 +206,11 @@ android-api-level: either ndk-version/major < 18 [
 ;
 ; The new unified header usage became mandatory in r16.
 ;
-sysroot-for-compile: func [
+/sysroot-for-compile: func [
     return: [text!]
 ][
     let path: spaced [
-        "--sysroot" (file-to-local either ndk-version/major < 18 [
+        "--sysroot" (file-to-local either ndk-version.major < 18 [
              [
                 ;
                 ; Old convention: per-API-Level header files
@@ -252,14 +252,14 @@ sysroot-for-compile: func [
 ; the inclusion of -lgcc (and thus libunwind) in C programs with linker option
 ; `-rtlib=compiler-rt`...but then you can't do things like integer division.
 ;
-sysroot-for-link: func [
+/sysroot-for-link: func [
     return: [text!]
     :host [word!] "defaults to detecting current system, e.g. linux-x86_64"
 ][
     host: default [detect-ndk-host]
 
     let path: spaced [
-        "--sysroot" (file-to-local either ndk-version/major < 18 [
+        "--sysroot" (file-to-local either ndk-version.major < 18 [
             ;
             ; Old convention: linker sysroot lives in %platforms/
             ;

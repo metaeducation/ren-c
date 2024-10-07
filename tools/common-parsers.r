@@ -28,7 +28,7 @@ c-lexical: import <c-lexicals.r>
 import <text-lines.reb>
 import <parsing-tools.reb>
 
-load-until-double-newline: func [
+/load-until-double-newline: func [
     "Load rebol values from text until double newline."
     text [text!]
     <local> position  ; no LET in parse :-/
@@ -78,7 +78,7 @@ export proto-parser: context [
 
     count: ~
 
-    process: func [return: [~] text] [
+    /process: func [return: [~] text] [
         parse3 text grammar.rule
     ]
 
@@ -251,7 +251,7 @@ export proto-parser: context [
     ] c-lexical.grammar
 ]
 
-export rewrite-if-directives: func [
+export /rewrite-if-directives: func [
     "Bottom up rewrite conditional directives to remove unnecessary sections"
     return: [~]
     position

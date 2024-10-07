@@ -21,7 +21,7 @@
 //
 // Making a typechecker can be easy:
 //
-//     >> integer?: lambda [v [any-value?]] [integer! = type of :v]
+//     >> /integer?: lambda [v [any-value?]] [integer! = type of :v]
 //
 //     >> integer? 10
 //     == ~true~  ; anti
@@ -419,7 +419,7 @@ bool Typecheck_Atom_Core(
 // the basic type checking.
 //
 // 1. !!! Should explicit mutability override, so people can say things
-//    like `foo: func [...] mutable [...]` ?  This seems bad, because the
+//    like (/foo: func [...] mutable [...]) ?  This seems bad, because the
 //    contract of the function hasn't been "tweaked" with reskinning.
 //
 bool Typecheck_Coerce_Argument(

@@ -11,7 +11,7 @@
 
 ; Returning of Rebol values from called to calling script via QUIT w/arg.
 (
-    do-script-returning: lambda [value <local> script] [
+    /do-script-returning: lambda [value <local> script] [
         script: %tmp-inner.reb
         save:header script compose [quit:value (value)] []
         do script

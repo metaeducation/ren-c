@@ -1,7 +1,7 @@
 ; better-than-nothing ENCLOSE tests
 
 (
-    e-multiply: enclose multiply/ lambda [f [frame!]] [
+    /e-multiply: enclose multiply/ lambda [f [frame!]] [
         let diff: abs (f.value1 - f.value2)
         diff + eval f
     ]
@@ -9,7 +9,7 @@
     73 = e-multiply 7 10
 )
 (
-    n-add: enclose add/ lambda [f [frame!]] [
+    /n-add: enclose add/ lambda [f [frame!]] [
         if 10 <> f.value1 [
             f.value1: 5
             eval f
@@ -25,10 +25,10 @@
 ; Enclose should be able to be invisible
 [(
     var: #before
-    inner: func [] [
+    /inner: func [] [
         return var: 1020
     ]
-    outer: enclose inner/ func [f] [
+    /outer: enclose inner/ func [f] [
         assert [1020 = eval f]
         return ~[]~
     ]
@@ -39,11 +39,11 @@
     ]
 )(
     var: #before
-    inner: func [return: [~[]~]] [
+    /inner: func [return: [~[]~]] [
         var: 1020
         return ~[]~
     ]
-    outer: enclose inner/ func [return: [quoted? quasiform!] f] [
+    /outer: enclose inner/ func [return: [quoted? quasiform!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
     all [
@@ -52,11 +52,11 @@
     ]
 )(
     var: #before
-    inner: func [return: [~[]~]] [
+    /inner: func [return: [~[]~]] [
         var: 1020
         return ~[]~
     ]
-    outer: enclose inner/ func [return: [~[]~ any-value?] f] [
+    /outer: enclose inner/ func [return: [~[]~ any-value?] f] [
         return eval f  ; now try unquoting
     ]
     all [
@@ -66,7 +66,7 @@
 )]
 
 (
-    wrapped: enclose (
+    /wrapped: enclose (
         func [in] [return pack [~, in + 1]]
     ) f -> wrap [
         x: f.in
@@ -77,7 +77,7 @@
 )
 
 ~bad-pick~ !! (
-    wrapped: enclose (
+    /wrapped: enclose (
         func [in] [return pack [~, in + 1]]
     ) f -> [
         let x: f.in

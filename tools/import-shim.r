@@ -153,7 +153,7 @@ rewrite-source-for-bootstrap-exe: lib3/func [
 ; modularization in Rebol2).
 ;
 ; However, this will erase all top level SET-WORD!s in the module.  So you
-; can't use any words you redefine.  e.g. if you say `func: func [...] [...]`
+; can't use any words you redefine.  e.g. if you say `/func: func [...] [...]`
 ; then that won't work because `make object! [func: ...]` unsets FUNC in
 ; advance.  We only use the trick if they're trying to set a result back,
 ; such as with:
@@ -163,7 +163,7 @@ rewrite-source-for-bootstrap-exe: lib3/func [
 wrap-module: 'no
 
 old-do: :lib3/do
-do: enclose :lib3/do lib3/func [
+do: lib3/enclose :lib3/do lib3/func [
     f [frame!]
     <local> old-system-script file
     <with> wrap-module
@@ -216,7 +216,7 @@ already-imported: make map! []  ; avoid importing things twice
 
 
 ; see header notes: `Exports` broken
-import: enfix lib3/func [
+/import: enfix lib3/func [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
     :set-word "optional left argument, used by `rebmake: import <rebmake.r>`"
@@ -283,7 +283,7 @@ import: enfix lib3/func [
 === "LOAD WRAPPING" ===
 
 ; see header notes: `Exports` broken
-load: adapt get $lib3/load [  ; source [file! url! text! binary! block!]
+/load: adapt lib3.load/ [  ; source [file! url! text! binary! block!]
     if all [  ; ALL THEN does not seem to work in bootstrap EXE
         file? source
         not dir? source

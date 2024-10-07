@@ -30,7 +30,7 @@
 // blocks, but it can take any other data type that DO will accept...such as
 // a FILE! or URL!:
 //
-//     >> d: does https://example.com/some-script.reb
+//     >> /d: does https://example.com/some-script.reb
 //
 //     >> d
 //     ; Will act like `do https://example/some-script.reb`
@@ -38,7 +38,7 @@
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
 // * One experimental feature was removed, to allow specialization by example.
-//   For instance `c: does catch [throw <like-this>]`.  This was inspired by
+//   For instance (/c: does catch [throw <like-this>]).  This was inspired by
 //   code golf.  However, it altered the interface (to quote its argument and
 //   be variadic) and it also brought in distracting complexity that is better
 //   kept in the implementations of REFRAMER and POINTFREE.
@@ -61,12 +61,12 @@ DECLARE_NATIVE(does)
 // 1. There is an open question if you should be able to pass DOES anything
 //    that you could pass and use as a branch, e.g.:
 //
-//       >> foo: does 'something
+//       >> /foo: does 'something
 //       >> foo
 //       == 'something
 //
 //       >> bar: 10
-//       >> foo: does @bar
+//       >> /foo: does @bar
 //       >> foo
 //       == 10
 //

@@ -8,7 +8,7 @@
 ;
 
 [(
-utrim: func [
+/utrim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
     return: [any-string? any-list? binary! any-context?]

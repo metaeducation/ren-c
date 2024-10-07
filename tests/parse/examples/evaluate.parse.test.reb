@@ -18,7 +18,7 @@
     ok)
 
 (
-    keeper-saver: func [
+    /keeper-saver: func [
         return: "Saved as secondary result"
             [~[block! block!]~]
         input [block!]

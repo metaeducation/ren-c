@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A specialization is an ACTION! which has some of its parameters fixed.
-// e.g. `ap10: specialize append/ [value: 5 + 5]` makes ap10 have all the same
+// e.g. (/ap10: specialize append/ [value: 5 + 5]) makes ap10 have all the same
 // refinements available as APPEND, but otherwise just takes one series arg,
 // as it will always be appending 10.
 //
@@ -460,7 +460,7 @@ DECLARE_NATIVE(specialize)
 // We have to take into account specialization of refinements in order to know
 // the correct order.  If someone has:
 //
-//     foo: func [a [integer!] :b [integer!] :c [integer!]] [...]
+//     /foo: func [a [integer!] :b [integer!] :c [integer!]] [...]
 //
 // They can partially specialize this as foo:c:b/ - this makes it seem to the
 // caller a function originally written with spec:
@@ -637,7 +637,7 @@ static bool Last_Param_Hook(
 //
 // This can be somewhat complex in the worst case:
 //
-//     >> foo: func [:a [block!] :b [block!] :c [block!] :d [block!]] [...]
+//     >> /foo: func [:a [block!] :b [block!] :c [block!] :d [block!]] [...]
 //     >> foo-d: foo:d/
 //
 // This means that the last parameter (D) is actually the first of FOO-D.

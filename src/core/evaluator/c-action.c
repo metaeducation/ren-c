@@ -86,7 +86,7 @@
 // evaluator to do it.  But they need to use the logic of the evaluator for
 // noticing when to defer enfix:
 //
-//     foo: func [...] [
+//     /foo: func [...] [
 //          return the 1 then ["this needs to be returned"]
 //     ]
 //
@@ -249,7 +249,7 @@ Bounce Action_Executor(Level* L)
         // match the "consumption order" of the expressions that need to
         // be fetched from the callsite.  For instance:
         //
-        //     foo: func [a :b [integer!] :c [integer!]] [...]
+        //     /foo: func [a :b [integer!] :c [integer!]] [...]
         //
         //     foo:b:c 10 20 30
         //     foo:c:b 10 20 30
@@ -469,7 +469,7 @@ Bounce Action_Executor(Level* L)
         // `(1 + non-enfix-action <we-are-here>) * 3`.  Contrast with the
         // zero-arity case:
         //
-        //     >> two: does [2]
+        //     >> /two: does [2]
         //     >> 1 + two * 3
         //     == 9
         //
@@ -498,7 +498,7 @@ Bounce Action_Executor(Level* L)
         //
         // The situation also arises in multiple arity infix:
         //
-        //     arity-3-op: func [a b c] [...]
+        //     /arity-3-op: func [a b c] [...]
         //
         //     1 arity-3-op 2 + 3 <ambiguous>
         //     1 arity-3-op (2 + 3) <unambiguous>
@@ -821,7 +821,7 @@ Bounce Action_Executor(Level* L)
   //    It's also needed to keep L->original.  Think about how to improve.
   //
   // 2. This happens if you have something intending to act as enfix but
-  //    that does not consume arguments, e.g. `x: enfix func [] []`.  An
+  //    that does not consume arguments, e.g. (/x: enfix func [] []).  An
   //    enfixed function with no arguments might sound dumb, but it allows
   //    a 0-arity function to run in the same evaluation step as the left
   //    hand side.  This is how expression work (see `|:`)
@@ -949,7 +949,7 @@ Bounce Action_Executor(Level* L)
   // 1. !!! This used to assert rather than fail, but it turns out this can
   //    actually happen:
   //
-  //      >> left-soft: enfix func ['x [word!]] [return x]
+  //      >> /left-soft: enfix func ['x [word!]] [return x]
   //      >> (|| left-soft)
   //
   //    The LEFT-SOFT looked back, and would have been able to take the ||
@@ -960,8 +960,8 @@ Bounce Action_Executor(Level* L)
   // 2. Want to keep this flag between an operation and an ensuing enfix in
   //    the same level, so can't clear in Drop_Action(), e.g. due to:
   //
-  //      left-the: enfix :the
-  //      o: make object! [f: does [1]]
+  //      /left-the: enfix :the
+  //      o: make object! [/f: does [1]]
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
     if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // [1]

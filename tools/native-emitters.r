@@ -58,7 +58,7 @@ native-info!: make object! [
 ; Hence this instead extracts a tiny bit of information, and returns the spec
 ; as a text string.
 ;
-export extract-native-protos: func [
+export /extract-native-protos: func [
     return: "Returns block of NATIVE-INFO! objects"
         [block!]
     c-source-file [file!]
@@ -109,7 +109,7 @@ export extract-native-protos: func [
 ; to take in the textual spec, "massage" it in a way that doesn't destroy the
 ; information being captured, and then LOAD it.
 ;
-export emit-include-params-macro: func [
+export /emit-include-params-macro: func [
     "Emit macros for a native's parameters"
 
     return: [~]

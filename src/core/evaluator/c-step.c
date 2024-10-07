@@ -1012,7 +1012,7 @@ Bounce Stepper_Executor(Level* L)
     //    that something is an action, and that you'd like to fetch it in a
     //    way that does not take arguments:
     //
-    //         for-next: specialize for-skip/ [skip: 1]
+    //         /for-next: specialize for-skip/ [skip: 1]
     //         ;                         ---^
     //         ; slash helps show block is not argument
     //
@@ -1883,7 +1883,7 @@ Bounce Stepper_Executor(Level* L)
         // Left-quoting by enfix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
         //
-        //     left-the: enfix func [@value] [value]
+        //     /left-the: enfix func [@value] [value]
         //     the <something> left-the
         //
         // But due to the existence of <end>-able parameters, the left quoting
@@ -2019,8 +2019,8 @@ Bounce Stepper_Executor(Level* L)
     // Want to keep this flag between an operation and an ensuing enfix in
     // the same level, so can't clear in Drop_Action(), e.g. due to:
     //
-    //     left-the: enfix :the
-    //     o: make object! [f: does [1]]
+    //     /left-the: enfix :the
+    //     o: make object! [/f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
     Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);

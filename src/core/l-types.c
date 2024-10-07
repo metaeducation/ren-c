@@ -92,10 +92,10 @@ DECLARE_NATIVE(make)
     // See notes in DECLARE_NATIVE(do) for why this is the easiest way to pass
     // a flag to Do_Any_List(), to help us discern the likes of:
     //
-    //     foo: does [make object! [x: [1 2 3]]]  ; x inherits frame const
+    //     /foo: does [make object! [x: [1 2 3]]]  ; x inherits frame const
     //
     //     data: [x: [1 2 3]]
-    //     bar: does [make object! data]  ; x wasn't const, don't add it
+    //     /bar: does [make object! data]  ; x wasn't const, don't add it
     //
     // So if the MAKE is evaluative (as OBJECT! is) this stops the "wave" of
     // evaluativeness of a frame (e.g. body of DOES) from applying.

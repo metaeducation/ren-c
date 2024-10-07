@@ -64,7 +64,7 @@
 ; Test that return stops the loop
 (
     blk: [1]
-    f1: func [return: [integer!]] [for 'i each blk [return 1 2]]
+    /f1: func [return: [integer!]] [for 'i each blk [return 1 2]]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned

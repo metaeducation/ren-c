@@ -18,7 +18,7 @@ REBOL [
 ; if all it's doing is plain subtraction it seems like a poor primitive to
 ; be stuck with giving a name and suggested greater semantics to.  Review.
 ;
-offset-of: lambda [
+/offset-of: lambda [
     "Returns the offset between two series positions."
     series1 [any-series?]
     series2 [any-series?]
@@ -27,7 +27,7 @@ offset-of: lambda [
 ]
 
 
-last?: single?: lambda [
+/last?: /single?: lambda [
     "Returns okay if the series length is 1."
     series [any-series? port! map! tuple! bitset! object! any-word?]
 ][
@@ -35,7 +35,7 @@ last?: single?: lambda [
 ]
 
 
-extend: func [
+/extend: func [
     "Extend an object, map, or block type with word and value pair."
     return: [any-value?]
     obj [object! map!] "object to extend (modified)"
@@ -47,7 +47,7 @@ extend: func [
 ]
 
 
-array: func [
+/array: func [
     "Makes and initializes a block of a given size"
 
     return: "Generated block or null if blank input"
@@ -93,7 +93,7 @@ array: func [
 ]
 
 
-replace: func [
+/replace: func [
     "Replaces a search value with the replace value within the target series"
 
     return: [any-series?]
@@ -148,7 +148,7 @@ replace: func [
 ;
 ; reword "$1 is $2." [1 "This" 2 "that"] => "This is that."
 ;
-reword: func [
+/reword: func [
     "Make a string or binary based on a template and substitution values"
 
     return: [any-string? binary!]
@@ -301,7 +301,7 @@ reword: func [
 ]
 
 
-move: func [
+/move: func [
     "Move a value or span of values in a series"
 
     return: [~]  ; !!! Define return value?
@@ -328,7 +328,7 @@ move: func [
 ]
 
 
-extract: func [
+/extract: func [
     "Extracts a value from a series at regular intervals"
 
     series [any-series?]
@@ -354,7 +354,7 @@ extract: func [
 ]
 
 
-alter: func [
+/alter: func [
     "Append value if not found, else remove it; returns true if added"
 
     return: [logic?]
@@ -381,7 +381,7 @@ alter: func [
 ]
 
 
-collect*: func [
+/collect*: func [
     "Evaluate body, and return block of values collected via keep function"
 
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
@@ -390,7 +390,7 @@ collect*: func [
         [<maybe> block!]
 ][
     let out: null
-    let keeper: specialize (  ; SPECIALIZE to hide series argument
+    let /keeper: specialize (  ; SPECIALIZE to hide series argument
         enclose append/ lambda [  ; Derive from APPEND for /LINE /DUP
             f [frame!]
             <with> out
@@ -419,15 +419,14 @@ collect*: func [
 ; Classic version of COLLECT which returns an empty block if nothing is
 ; collected, as opposed to the NULL that COLLECT* returns.
 ;
-collect: redescribe [
-    {Evaluate body, and return block of values collected via KEEP function.
-    Returns empty block if nothing KEEPed.}
+/collect: redescribe [
+    "Evaluate body, and return block of values collected via KEEP function"
 ] cascade [
     collect*/
     specialize else/ [branch: [copy []]]
 ]
 
-format: func [
+/format: func [
     "Format a string according to the format dialect."
     rules "A block in the format dialect. E.g. [10 -10 #- 4]"
     values
@@ -488,7 +487,7 @@ format: func [
 ]
 
 
-printf: func [
+/printf: func [
     "Formatted print."
     return: [~]
     fmt "Format"
@@ -498,7 +497,7 @@ printf: func [
 ]
 
 
-split: func [
+/split: func [
     "Split series in pieces: fixed/variable size, fixed number, or delimited"
 
     return: [~null~ block!]
@@ -612,8 +611,8 @@ split: func [
     ; or where the dlm was a char/string/charset and it was the last char
     ; (so we want to append an empty field that the above rule misses).
     ;
-    let fill-val: does [copy either any-list? series [[]] [""]]
-    let add-fill-val: does [append result fill-val]
+    let /fill-val: does [copy either any-list? series [[]] [""]]
+    let /add-fill-val: does [append result fill-val]
     if integer? dlm [
         if into [
             ; If the result is too short, i.e., less items than 'size, add
@@ -651,7 +650,7 @@ split: func [
 ]
 
 
-find-all: func [
+/find-all: func [
     "Find all occurrences of a value within a series (allows modification)."
 
     return: [~]

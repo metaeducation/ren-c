@@ -1,5 +1,5 @@
 (
-    foo: lambda [x [integer! <variadic>]] [
+    /foo: lambda [x [integer! <variadic>]] [
         let sum: 0
         while [not tail? x] [
             sum: sum + take x
@@ -11,7 +11,7 @@
     all [y = 5, z = 6, 0 = (foo)]
 )
 (
-    foo: func [x [integer! <variadic>]] [return make block! x]
+    /foo: func [x [integer! <variadic>]] [return make block! x]
     [1 2 3 4] = foo 1 2 3 4
 )
 
@@ -22,7 +22,7 @@
 )
 
 (
-    f: func [args [any-value? <variadic>]] [
+    /f: func [args [any-value? <variadic>]] [
        let b: take args
        return either tail? args [b] ["not at end"]
     ]
@@ -31,8 +31,8 @@
 )
 
 (
-    f: lambda ['look [<variadic>]] [try first look]
-    null? applique :f [look: make varargs! []]
+    /f: lambda ['look [<variadic>]] [try first look]
+    null? applique f/ [look: make varargs! []]
 )
 
 ; !!! Experimental behavior of enfixed variadics, is to act as either 0 or 1
@@ -41,7 +41,7 @@
 ; the TAKE is called, but theorized that's still more useful than erroring.
 [
     (
-        normal: enfix func [return: [integer!] v [integer! <variadic>]] [
+        /normal: enfix func [return: [integer!] v [integer! <variadic>]] [
             let sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -58,7 +58,7 @@
     (30 = eval [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
-        defers: enfix func [return: [integer!] v [integer! <variadic>]] [
+        /defers: enfix func [return: [integer!] v [integer! <variadic>]] [
             let sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -76,7 +76,7 @@
     (28 = eval [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
-        soft: enfix func [@(v) [any-value? <variadic>]] [
+        /soft: enfix func [@(v) [any-value? <variadic>]] [
             return collect [
                 while [not tail? v] [
                     keep take v
@@ -94,7 +94,7 @@
     ([7] = eval [(1 + 2) (3 + 4) soft])
 ][
     (
-        hard: enfix func ['v [any-value? <variadic>]] [
+        /hard: enfix func ['v [any-value? <variadic>]] [
             return collect [
                 while [not tail? v] [
                     keep take v
@@ -138,8 +138,8 @@
 
 (
     vblock: collect wrap [
-        log: adapt keep/ [set:any $value spread reduce value]
-        variadic2: func [return: [text!] v [any-value? <variadic>]] [
+        /log: adapt keep/ [set:any $value spread reduce value]
+        /variadic2: func [return: [text!] v [any-value? <variadic>]] [
            log [<1> take v]
            log [<2> take v]
            if not tail? v [fail "THEN SHOULD APPEAR AS IF IT IS VARARGS END"]
@@ -150,8 +150,8 @@
     ]
 
     nblock: collect wrap [
-        log: adapt keep/ [set:any $value spread reduce value]
-        normal2: func [return: [text!] n1 n2] [
+        /log: adapt keep/ [set:any $value spread reduce value]
+        /normal2: func [return: [text!] n1 n2] [
             log [<1> n1 <2> n2]
             return "returned"
         ]

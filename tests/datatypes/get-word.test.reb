@@ -93,7 +93,7 @@
 ; !!! This set of features is currently under review.
 [(
   comment [
-    (did a: does ["active"])
+    (did /a: does ["active"])
 
     ("active" = a)
     (/a = /a)

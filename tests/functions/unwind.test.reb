@@ -6,7 +6,7 @@
 ; UNWIND the IF should stop the loop
 (
     cycling: 'yes
-    f1: does [
+    /f1: does [
         if 1 < 2 [
             while [yes? cycling] [cycling: 'no, unwind :if ~]
             <bad>
@@ -20,7 +20,7 @@
 (
     cycling: 'yes
     if-not: adapt if/ [condition: not get:any $condition]
-    f1: does [
+    /f1: does [
         if-not 1 > 2 [
             while [if yes? cycling [unwind :if-not <ret>] cycle?] [
                 cycling: 'no

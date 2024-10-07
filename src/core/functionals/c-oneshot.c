@@ -23,16 +23,16 @@
 // idea of making a code block executor that will run code once and then
 // return NULL every time thereafter:
 //
-//     >> once: oneshot
+//     >> /once: oneshot
 //
 //     >> once [5 + 5]
 //     == 10
 //
 //     >> once [5 + 5]
-//     ; null
+//     == ~null~  ; anti
 //
 //     >> once [5 + 5]
-//     ; null
+//     == ~null~  ; anti
 //
 // !!! This experiment predates "stackless" and generators, which would make
 // it easy to create this via a counter state and YIELD, ultimately ending the

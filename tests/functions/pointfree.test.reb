@@ -30,7 +30,7 @@
     ;
     ;        specialize append/ [value: [d e]]  ; leave series unspecialized
     ;
-    pointfree*: func* [
+    /pointfree*: func* [
         "Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming"
 
         return: [action?]
@@ -88,7 +88,7 @@
     ;      =>
     ;      pointfree* :append [_ [d e]]
     ;
-    pointfree: specialize (adapt pointfree*/ [
+    /pointfree: specialize (adapt pointfree*/ [
         frame: (match frame! any [  ; no SET-WORD! namecache
             if match [word! chain! path!] block.1 [
                 unrun get:any inside block block.1

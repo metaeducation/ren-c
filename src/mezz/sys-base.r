@@ -29,14 +29,14 @@ REBOL [
 ;
 script-pre-load-hook: ~
 
-enrescue: lib/enrescue/
-lib.enrescue: ~  ; forcing long name of SYS.UTIL/ENRESCUE hints it is dangerous
-
-; Returns NULL if no error, otherwise the error
-;
-rescue: enclose enrescue/ lambda [f] [
+/enrescue: lib.enrescue/
+/rescue: enclose enrescue/ lambda [f] [
     match error! eval f
 ]
+
+lib.enrescue: ~<See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871>~
+append lib 'rescue
+lib.rescue: ~<See SYS.UTIL/RESCUE and https://forum.rebol.info/t/1871>~
 
 exit: lib/exit/
 lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
@@ -52,7 +52,7 @@ lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
 ;    the console's QUIT does this--for convenience.  All other places must
 ;    write out the "long" form of (quit 0)
 ;
-make-quit: lambda [
+/make-quit: lambda [
     "Make a quit function out of a plain THROW"
     quit* [action?]
     :console "Just integer, no argument acts like quit 0"  ; [1]
@@ -117,7 +117,7 @@ make-quit: lambda [
 ;    fill it in with a custom THROW word to catch it.  If we don't catch it,
 ;    the result is just set to be NOTHING.
 ;
-module: func [
+/module: func [
     "Creates a new module (used by both IMPORT and DO)"
 
     return: "Module and meta-result of running the body (may be raised)"  ; [1]
@@ -208,7 +208,7 @@ module: func [
         product': quasi error
     ]
 
-    mod.quit: func [atom] [
+    /mod.quit: func [atom] [
         fail // [
             "Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)"
             :blame $atom
@@ -254,7 +254,7 @@ module: func [
 ; return the same context every time it is called--so modules are loaded only
 ; once--while DO performs an action that you can run any number of times.
 ;
-do: func [
+/do: func [
     "Execution facility for Rebol or other Languages/Dialects (see also: EVAL)"
 
     return: "Evaluative product, or error"

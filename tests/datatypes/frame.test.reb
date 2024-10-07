@@ -37,7 +37,7 @@
 
 [
     (
-        foo: func [
+        /foo: func [
             return: [frame!]
             public
             <local> private
@@ -46,7 +46,7 @@
             return binding of $public  ; frame as seen from interior
         ]
 
-        f-outer: make frame! unrun :foo  ; frame as seen from exterior
+        f-outer: make frame! foo/  ; frame as seen from exterior
         f-outer.public: 1020
 
         f-inner: eval copy f-outer
@@ -72,7 +72,7 @@
     (
         f-inner-prelude: '~junk~
         private: <not-in-prelude>
-        adapted-foo: adapt foo/ [
+        /adapted-foo: adapt foo/ [
             f-inner-prelude: binding of $public
             assert [private = <not-in-prelude>]  ; should not be bound
         ]
@@ -108,7 +108,7 @@
         f-inner-augment: ~
         private: <not-in-prelude>
 
-        augmented-foo: adapt (augment adapted-foo/ [
+        /augmented-foo: adapt (augment adapted-foo/ [
             additional [integer!]
             :private [tag!]  ; reusing name, for different variable!
         ]) [
@@ -144,7 +144,7 @@
 
 [
     (
-        foo: func [
+        /foo: func [
             return: [frame!]
             public
             <local> private
@@ -155,7 +155,7 @@
 
         f-prelude: null
 
-        bar: adapt augment foo/ [:private [tag!]] [
+        /bar: adapt augment foo/ [:private [tag!]] [
             f-prelude: binding of $private
         ]
 
@@ -184,7 +184,7 @@
         f: lambda [x :augmented [frame!]] [
             reduce [x if augmented [augmented.y]]
         ]
-        a: adapt augment f/ [y] [augmented: binding of $y]
+        /a: adapt augment f/ [y] [augmented: binding of $y]
         all [
             [10] = f 10
             [10 20] = a 10 20

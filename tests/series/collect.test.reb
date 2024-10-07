@@ -26,7 +26,7 @@
         KEEPed blocks become spaced TEXT!.}
     ] adapt collect/ [  ; https://forum.rebol.info/t/945/1
         body: compose [
-            keep: adapt specialize keep/ [
+            /keep: adapt specialize keep/ [
                 line: ok
                 part: null
             ][
@@ -51,7 +51,7 @@
     ] cascade [  ; https://forum.rebol.info/t/945/2
         adapt collect/ [
             body: compose [
-                keep: adapt specialize keep/ [
+                /keep: adapt specialize keep/ [
                     line: null
                     part: null
                 ][

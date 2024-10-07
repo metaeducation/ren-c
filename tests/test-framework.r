@@ -20,7 +20,7 @@ import %test-parsing.r
 
 log-file: ~
 
-log: func [
+/log: func [
     return: [~]
     report [block!]
 ][
@@ -45,7 +45,7 @@ test-block: ~
 
 error: ~
 
-run-single-test: func [
+/run-single-test: func [
     "Run code and write the success or failure to the log file"
 
     return: [~]
@@ -115,7 +115,7 @@ run-single-test: func [
     ]
 ]
 
-run-test-cluster: func [
+/run-test-cluster: func [
     return: [~]
     flags [block!]
     cluster "Block of GROUP!s to be run together in a common isolated context"
@@ -139,10 +139,8 @@ run-test-cluster: func [
     ; could put service functions that tests could use there, e.g. such as
     ; specialized versions of assert.
     ;
-    ; Modules created with module "inherit" from LIB by default.
-    ;
-    let isolate: module void [
-        print: lambda [x] [
+    let isolate: module void inside lib '[
+        /print: lambda [x] [
             fail:blame "Don't use PRINT in tests" $x
         ]
     ]
@@ -190,7 +188,7 @@ run-test-cluster: func [
 ; The tests are collected in a pre-phase with COLLECT-TESTS.  It produces a
 ; long list of BLOCK!s that are test groups.
 ;
-process-tests: func [
+/process-tests: func [
     return: [~]
     test-sources [block!]
     handler [action?]
@@ -228,7 +226,7 @@ process-tests: func [
                 log ["@collect-tests" space mold body]
 
                 let [_ collected]: module void compose:deep [collect [
-                    let keep-test: adapt keep/ [
+                    let /keep-test: adapt keep/ [
                         if not block? :value [
                             fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
                         ]
@@ -256,7 +254,7 @@ process-tests: func [
     ]
 ]
 
-export do-recover: func [
+export /do-recover: func [
     "Executes tests in the FILE and recovers from crash"
 
     return: "The log file that was generated, and textual summary of results"

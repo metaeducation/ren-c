@@ -29,7 +29,7 @@ decode-url: sys.util/decode-url/
 ;    not just links on individuals' websites.  There should also be some kind
 ;    of local caching facility.
 ;
-clean-path: func [
+/clean-path: func [
     "Returns new directory path with `.` and `..` processed"
 
     return: [file! url! text!]
@@ -180,7 +180,7 @@ clean-path: func [
 ;    of errors.  Scrub out all the extra information from the error so it isn't
 ;    as verbose.
 ;
-ask: func [
+/ask: func [
     "Ask the user for input"
 
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
@@ -252,7 +252,7 @@ ask: func [
 ]
 
 
-confirm: func [
+/confirm: func [
     "Confirms a user choice"
 
     return: [logic?]
@@ -284,7 +284,7 @@ confirm: func [
 ]
 
 
-list-dir: func [
+/list-dir: func [
     "Print contents of a directory (ls)"
 
     return: [~]
@@ -354,7 +354,7 @@ list-dir: func [
 ]
 
 
-undirize: func [
+/undirize: func [
     "Returns a copy of the path with any trailing / removed"
 
     return: [file! text! url!]
@@ -366,7 +366,7 @@ undirize: func [
 ]
 
 
-in-dir: func [
+/in-dir: func [
     "Evaluate a block in a directory, and restore current directory when done"
     return: [any-value?]
     dir [file!]
@@ -386,7 +386,7 @@ in-dir: func [
 ]
 
 
-to-relative-file: func [
+/to-relative-file: func [
     "Returns relative portion of a file if in subdirectory, original if not"
 
     return: [file! text!]
@@ -432,7 +432,7 @@ to-relative-file: func [
 ;
 ; http://www.rebol.com/r3/docs/concepts/scripts-style.html#section-4
 ;
-detab-file: func [
+/detab-file: func [
     "detabs a disk file"
 
     return: [~]
@@ -442,7 +442,7 @@ detab-file: func [
 ]
 
 ; temporary location
-set-net: func [
+/set-net: func [
     "sets the system.user.identity email smtp pop3 esmtp-usr esmtp-pass fqdn"
 
     bl [block!]

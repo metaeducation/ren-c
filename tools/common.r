@@ -30,7 +30,7 @@ export repo-dir: clean-path %../
 
 export spaced-tab: unspaced [space space space space]
 
-export to-c-name: func [
+export /to-c-name: func [
     "Take a Rebol value and transliterate it as a (likely) valid C identifier"
 
     return: [~null~ text!]
@@ -193,7 +193,7 @@ export to-c-name: func [
 ;
 ; 2. There should be one more byte in source than commas out.
 ;
-export binary-to-c: func [
+export /binary-to-c: func [
     "Converts a binary to a string of C source to initialize a char array"
 
     return: [text!]
@@ -228,7 +228,7 @@ export binary-to-c: func [
 ]
 
 
-export parse-args: func [
+export /parse-args: func [
     return: [block!]
     args [block!]
 ][
@@ -270,21 +270,21 @@ export parse-args: func [
     return ret
 ]
 
-export uppercase-of: func [
+export /uppercase-of: func [
     "Copying variant of UPPERCASE, also FORMs words"
     string [text! word!]
 ][
     return uppercase form string
 ]
 
-export lowercase-of: func [
+export /lowercase-of: func [
     "Copying variant of LOWERCASE, also FORMs words"
     string [text! word!]
 ][
     return lowercase form string
 ]
 
-export propercase: func [text [text!]] [
+export /propercase: func [text [text!]] [
     assert [not empty? text]
     change text uppercase text.1
     pos: next text
@@ -295,14 +295,14 @@ export propercase: func [text [text!]] [
     return text
 ]
 
-export propercase-of: func [
+export /propercase-of: func [
     "Make a copy of a string with just the first character uppercase"
     string [text! word!]
 ][
     return propercase form string
 ]
 
-export write-if-changed: func [
+export /write-if-changed: func [
     return: [~]
     dest [file!]
     content [text! block!]
@@ -319,7 +319,7 @@ export write-if-changed: func [
     ]
 ]
 
-export relative-to-path: func [
+export /relative-to-path: func [
     return: [file!]
     target [file!]
     base [file!]
@@ -346,7 +346,7 @@ export relative-to-path: func [
 ]
 
 
-export stripload: func [
+export /stripload: func [
     "Get an equivalent to MOLD:FLAT (plus no comments) without using LOAD"
 
     return: "contents, w/o comments or indentation"

@@ -186,7 +186,7 @@ if commands [user-config.target: null]  ; was `target: load commands`  Why? :-/
 platform-config: configure-platform user-config.os-id
 rebmake/set-target-platform platform-config.os-base
 
-to-obj-path: func [
+/to-obj-path: func [
     return: [file!]
     file [any-string?]
 ][
@@ -199,7 +199,7 @@ to-obj-path: func [
     return join %objs/ file
 ]
 
-gen-obj: func [
+/gen-obj: func [
     return: "Rebmake specification object for OBJ"
         [object!]
     s "file representation, or list if block"
@@ -803,7 +803,7 @@ extension-class: make object! [
     sequence: null  ; the sequence in which the extension should be loaded
     visited: 'no
 
-    directory: meth [
+    /directory: meth [
         return: [text!]  ; Should this be [file!]?
     ][
         return lowercase to text! name  ; !!! Should remember where it was found
@@ -815,7 +815,7 @@ extension-class: make object! [
 
 extensions: copy []
 
-parse-ext-build-spec: func [
+/parse-ext-build-spec: func [
     return: [object!]
     spec [block!]
 ][
@@ -956,7 +956,7 @@ for-each 'x targets [
 
 === "HELP" ===
 
-indent: func [
+/indent: func [
     text [text!]
     :space
 ][
@@ -1052,7 +1052,7 @@ CURRENT VALUE:
 replace help-topics.usage "HELP-TOPICS" ;\
     form append (map-each 'x help-topics [either text? x ['|] [x]]) 'all
 
-help: func [
+/help: func [
     return: [~]
     :topic [text!]
 ][
@@ -1098,7 +1098,7 @@ if yes? launched-from-root [
     print ["Launched from root dir, so building in:" output-dir]
 ]
 
-set-exec-path: func [
+/set-exec-path: func [
     return: [~]
     tool [object!]
     path
@@ -1450,7 +1450,7 @@ pthread: make rebmake.ext-dynamic-class [
 
 folders: copy [%objs/ %objs/main/]
 
-add-new-obj-folders: func [
+/add-new-obj-folders: func [
     return: [~]
     objs
     folders
@@ -1572,7 +1572,7 @@ for-each [mode label] [
 ]
 
 
-add-project-flags: func [
+/add-project-flags: func [
     return: [~]
     project [object!]
     :I "includes" [block!]
@@ -1629,7 +1629,7 @@ add-project-flags: func [
 ; when a dynamically loaded extension requires some other extension (which
 ; may or may not be dynamic.)
 
-calculate-sequence: func [
+/calculate-sequence: func [
     return: [integer!]
     ext
 ][
@@ -1899,7 +1899,7 @@ prep: make rebmake.entry-class [
     target: 'prep ; phony target
 
     commands: collect [
-        keep: adapt keep/ [
+        /keep: adapt keep/ [
             if block? value [
                 value: spaced value  ; old append semantics
             ] else [

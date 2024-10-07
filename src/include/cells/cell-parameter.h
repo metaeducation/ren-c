@@ -27,7 +27,7 @@
 //
 // So for example, for the paramlist generated from the following spec:
 //
-//     foo: func [
+//     /foo: func [
 //         return: [integer!]  ; PARAMCLASS_RETURN
 //         arg [~null~ block!]  ; PARAMCLASS_NORMAL
 //         'qarg [word!]       ; PARAMCLASS_QUOTED

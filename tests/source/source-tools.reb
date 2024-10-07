@@ -49,8 +49,8 @@ import %% (repo-dir)/tools/read-deep.reb
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
-logfn: func [message][print mold new-line:all compose message 'no]
-log: :logfn
+/logfn: func [message][print mold new-line:all compose message 'no]
+/log: logfn/
 
 standard: context [
     ;
@@ -107,7 +107,7 @@ whitelisted: [
 ]
 
 
-log-emit: func [
+/log-emit: func [
     "Append a COMPOSE'd block to a log block, clearing any new-line flags"
 
     return: [~]
@@ -121,7 +121,7 @@ log-emit: func [
 
 export analyse: context [
 
-    files: func [
+    /files: func [
         "Analyse the source files of Rebol"
         return: [block!]
     ][
@@ -134,7 +134,7 @@ export analyse: context [
         ]
     ]
 
-    file: func [
+    /file: func [
         "Analyse a file returning facts"
         return: [~null~ block!]
         file
@@ -150,7 +150,7 @@ export analyse: context [
 
     source: context [
 
-        c: func [
+        /c: func [
             "Analyse a C file at the C preprocessing token level"
 
             return: "Facts about the file (lines that are too long, etc)"
@@ -160,7 +160,7 @@ export analyse: context [
             <local> position  ; used sketchily in rules, no LET in parse :-/
         ][
             let analysis: analyse/text file data
-            let emit: specialize log-emit/ [log: analysis]
+            let /emit: specialize log-emit/ [log: analysis]
 
             data: as text! data
 
@@ -196,7 +196,7 @@ export analyse: context [
 
             let non-std-func-space: null
 
-            let emit-proto: func [return: [~] proto] [
+            let /emit-proto: func [return: [~] proto] [
                 if not block? proto-parser.data [return ~]
 
                 eval overbind c-parser-extension [
@@ -277,7 +277,7 @@ export analyse: context [
             return analysis
         ]
 
-        rebol: func [
+        /rebol: func [
             "Analyse a Rebol file (no checks beyond those for text yet)"
 
             return: [block!]
@@ -290,7 +290,7 @@ export analyse: context [
         ]
     ]
 
-    text: func [
+    /text: func [
         "Analyse textual formatting irrespective of language"
 
         return: [block!]
@@ -300,7 +300,7 @@ export analyse: context [
         <local> position last-pos line-ending alt-ending  ; no PARSE let :-/
     ][
         let analysis: copy []
-        let emit: specialize log-emit/ [log: analysis]
+        let /emit: specialize log-emit/ [log: analysis]
 
         data: read %% (repo-dir)/(file)
 
@@ -414,10 +414,10 @@ export analyse: context [
 
 list: context [
 
-    source-files: func [
+    /source-files: func [
         "Retrieves a list of source files (relative paths)"
     ][
-        let files: read-deep/full/strategy source-paths :source-files-seq
+        let files: read-deep:full:strategy source-paths source-files-seq/
 
         sort files
         new-line:all files 'yes
@@ -425,7 +425,7 @@ list: context [
         return files
     ]
 
-    source-files-seq: func [
+    /source-files-seq: func [
         "Take next file from a sequence that is represented by a queue"
         return: [~null~ file!]
         queue [block!]
@@ -480,7 +480,7 @@ c-parser-extension: context bind bind [
 
 ] proto-parser c-lexical.grammar
 
-extension-of: func [
+/extension-of: func [
     "Return file extension for file"
     return: [file!]
     file [file!]

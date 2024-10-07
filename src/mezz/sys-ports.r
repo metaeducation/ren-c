@@ -19,7 +19,7 @@ REBOL [
 
 parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~
 
-make-port*: func [
+/make-port*: func [
     "SYS: Called by system on MAKE of PORT! port from a scheme."
 
     return: [port!]
@@ -201,7 +201,7 @@ make-port*: func [
     ; list of fields but breaks them down differently and uses different names.
     ; That should be reviewed.
     ;
-    decode-url: func [  ; this function is bound in sys.util/*parse-url
+    /decode-url: func [  ; this function is bound in sys.util/*parse-url
         "Decode a URL according to rules of sys.util/*parse-url"
         return: [object!]
         url [url! text!]
@@ -216,7 +216,7 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
 
 ;-- Native Schemes -----------------------------------------------------------
 
-make-scheme: func [
+/make-scheme: func [
     "Make a scheme from a specification and add it to the system"
 
     return: [~]
@@ -236,7 +236,7 @@ make-scheme: func [
         let actor: make object! (length of scheme.actor) / 4
         for-each [name op args body] scheme.actor [
             assert [
-                set-word? name
+                set-run-word? name
                 find [func lambda function] op  ; why'd R3-Alpha constrain this?
                 block? args
                 block? body

@@ -116,7 +116,7 @@
     same? a-value eval reduce [a-value]
 )
 (
-    a-value: does []
+    /a-value: does []
     same? :a-value eval [:a-value]
 )
 (
@@ -201,7 +201,7 @@
 
 ; RETURN stops the evaluation
 (
-    f1: func [return: [integer!]] [eval [return 1 2] 2]
+    /f1: func [return: [integer!]] [eval [return 1 2] 2]
     1 = f1
 )
 ; THROW stops evaluation
@@ -289,7 +289,7 @@
 
 
 (
-    f1: func [return: [integer!]] [evaluate [return 1 2] 2]
+    /f1: func [return: [integer!]] [evaluate [return 1 2] 2]
     1 = f1
 )
 ; recursive behaviour
@@ -327,6 +327,6 @@
 
 ; evaluating quoted argument
 (
-    rtest: lambda ['op [word!] 'thing] [reeval op thing]
+    /rtest: lambda ['op [word!] 'thing] [reeval op thing]
     -1 = rtest negate 1
 )

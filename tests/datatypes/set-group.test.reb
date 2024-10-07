@@ -61,7 +61,7 @@
 
 ; Example of an interesting use of the void case
 [
-    (returnproxy: lambda [frame [<unrun> frame!]] [
+    (/returnproxy: lambda [frame [<unrun> frame!]] [
         enclose (augment frame [:return [word!]]) f -> [
             (maybe f.return): eval f
         ]
@@ -69,8 +69,8 @@
 
     (
         y: ~
-        test: lambda [x] [x + 1000]
-        wrapper: returnproxy :test
+        /test: lambda [x] [x + 1000]
+        /wrapper: returnproxy test/
         all [
             1020 = wrapper 20
             1020 = wrapper:return 20 $y

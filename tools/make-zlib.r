@@ -52,7 +52,7 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 ; Disable #include "foo.h" style inclusions (but not #include <foo.h> style)
 ; Optionally will inline a list of files at the inclusion point
 ;
-disable-user-includes: func [
+/disable-user-includes: func [
     return: [~]
     lines [block!] "Block of strings"
     :inline [block!] "Block of filenames to inline if seen"
@@ -145,7 +145,7 @@ make-warning-lines: lamda [name [file!] title [text!]] [
     ]
 ]
 
-fix-kr: func [
+/fix-kr: func [
     "Fix K&R style C function definition"
     source
 ][
@@ -306,7 +306,7 @@ fix-kr: func [
     return source
 ]
 
-fix-const-char: func [
+/fix-const-char: func [
     source
 ][
     parse3 source bind copy:deep [
