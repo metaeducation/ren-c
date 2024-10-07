@@ -280,7 +280,7 @@
 ; Argument passing of "escapable (soft) literal arguments"
 [
     (
-        soft: func [':x <with> got] [got: :x, return 1000]
+        soft: func [@(x) <with> got] [got: :x, return 1000]
         Lsoft: enfix :soft
 
         got: null

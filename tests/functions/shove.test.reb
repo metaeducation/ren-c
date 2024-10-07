@@ -99,16 +99,15 @@
     ])
 ]
 
-; '(LITERAL) as-is soft parameter (note: ':param notation for now)
+; @(LITERAL) as-is soft parameter
 ;
 ; 1. There was only one convention for what needs to be two: @(LITERAL) and
-;    '(LITERAL).  The current ':param is a hybrid of both, and needs to
-;    be correctly broken into the two forms.
+;    '(LITERAL).
 [
-    (left-soft-as-is: enfix lambda [':left right] [
+    (left-soft-as-is: enfix lambda [@(left) right] [
         reduce [left right]
     ]
-    right-soft-as-is: enfix lambda [':one two] [
+    right-soft-as-is: enfix lambda [@(one) two] [
         reduce [one two]
     ]
     value: <whatever>

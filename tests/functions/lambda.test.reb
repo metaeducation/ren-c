@@ -46,7 +46,7 @@
 )
 
 (
-    test: [':x] -> [x]  ; ':x -> [x] subverts *lambda's* parameter convention!
+    test: [@(x)] -> [x]  ; ':x -> [x] subverts *lambda's* parameter convention!
     3 = test (1 + 2)
 )
 

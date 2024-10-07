@@ -178,9 +178,9 @@
         left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
 
         left-soft: enfix right-soft:
-            func [return: [~null~ word!] ':x [word!]] [return x]
+            func [return: [~null~ word!] @(x) [word!]] [return x]
         left-soft*: enfix right-soft*:
-            func [return: [~null~ word!] ':x [word! <end>]] [return x]
+            func [return: [~null~ word!] @(x) [word! <end>]] [return x]
 
         left-hard: enfix right-hard:
             func [return: [~null~ word!] 'x [word!]] [return x]
@@ -236,11 +236,11 @@
         left-defer*: enfix tweak (copy unrun :left-normal*) 'defer 'on
 
         left-soft: enfix right-soft:
-            func [return: [~null~ word!] ':x [word! <variadic>]] [
+            func [return: [~null~ word!] @(x) [word! <variadic>]] [
                 return take x
             ]
         left-soft*: enfix right-soft*:
-            func [return: [~null~ word!] ':x [word! <variadic> <end>]] [
+            func [return: [~null~ word!] @(x) [word! <variadic> <end>]] [
                 return try take x
             ]
 

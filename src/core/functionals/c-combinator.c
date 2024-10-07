@@ -179,7 +179,6 @@ Array* Expanded_Combinator_Spec(const Value* original)
     ++item;
 
     const Byte utf8[] =
-        "/remainder [any-series?]\n"
         "state [frame!]\n"
         "input [any-series?]\n";
 
@@ -341,6 +340,7 @@ void Push_Parser_Sublevel(
 //      return: "PARSER's result if it succeeds, otherwise NULL"
 //          [any-value?]
 //      parser [action?]
+//      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(opt_combinator)
@@ -393,6 +393,7 @@ DECLARE_NATIVE(opt_combinator)
 //      return: "The rule series matched against (not input value)"
 //          [~null~ text!]
 //      value [text!]
+//      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(text_x_combinator)
@@ -453,6 +454,7 @@ DECLARE_NATIVE(text_x_combinator)
 //      return: "Result of last successful match"
 //          [any-value?]
 //      parser [action?]
+//      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(some_combinator)
@@ -548,6 +550,7 @@ DECLARE_NATIVE(some_combinator)
 //      return: "parser result if it succeeded and advanced input, else NULL"
 //          [any-value?]
 //      parser [action?]
+//      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(further_combinator)

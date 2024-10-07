@@ -6,7 +6,7 @@
 [https://github.com/metaeducation/ren-c/issues/1032 (
     s: {abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ}
     t: {----------------------------------------------------}
-    cfor n 2 50 1 [
+    cfor 'n 2 50 1 [
         let sub: copy:part s n
         parse sub [some [
             remove one

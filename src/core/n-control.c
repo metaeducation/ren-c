@@ -175,12 +175,12 @@ Bounce The_Group_Branch_Executor(Level* level_)
 //
 //  if: native [
 //
-//  "When TO LOGIC! CONDITION is true, execute branch"
+//  "When CONDITION is not NULL, execute branch"
 //
 //      return: "void if branch not run, otherwise branch result (see HEAVY)"
 //          [any-atom?]
 //      condition [any-value?]  ; non-void-value? possible, but slower
-//      ':branch "If arity-1 ACTION!, receives the evaluated condition"
+//      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
 //  ]
 //
@@ -211,13 +211,13 @@ DECLARE_NATIVE(if)
 //
 //  either: native [
 //
-//  "Choose a branch to execute, based on TO-LOGIC of the CONDITION value"
+//  "Choose a branch to execute, based on whether CONDITION is NULL"
 //
 //      return: [any-atom?]
 //      condition [any-value?]  ; non-void-value? possible, but slower
-//      ':true-branch "If arity-1 ACTION!, receives the evaluated condition"
+//      @(okay-branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
-//      ':false-branch
+//      @(null-branch)
 //          [any-branch?]
 //  ]
 //
@@ -228,8 +228,8 @@ DECLARE_NATIVE(either)
     Value* condition = ARG(condition);
 
     Value* branch = Is_Trigger(condition)  // [1] on IF native
-        ? ARG(true_branch)
-        : ARG(false_branch);
+        ? ARG(okay_branch)
+        : ARG(null_branch);
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // [2] on IF native
 }
@@ -545,7 +545,7 @@ DECLARE_NATIVE(didnt)
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      /decay
-//      ':branch "If arity-1 ACTION!, receives value that triggered branch"
+//      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> ~void~ any-branch?]
 //  ]
 //
@@ -588,7 +588,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 //      ^atom "<deferred argument> Run branch if this is null"
 //          [any-atom?]
 //      /decay
-//      ':branch [<unrun> ~void~ any-branch?]
+//      @(branch) [<unrun> ~void~ any-branch?]
 //  ]
 //
 DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
@@ -630,7 +630,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      /decay
-//      ':branch "If arity-1 ACTION!, receives value that triggered branch"
+//      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> ~void~ any-branch?]
 //  ]
 //
@@ -1472,7 +1472,7 @@ DECLARE_NATIVE(switch)
 //          [any-value?]
 //      @target "Word or path which might be set (or not)"
 //          [set-group? set-word? set-tuple?]  ; to left of DEFAULT
-//      ':branch "If target needs default, this is evaluated and stored there"
+//      @(branch) "If target needs default, this is evaluated and stored there"
 //          [any-branch?]
 //      /predicate "Test for what's considered *not* needing to be defaulted"
 //          [<unrun> frame!]

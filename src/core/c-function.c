@@ -291,11 +291,14 @@ void Push_Keys_And_Parameters_May_Fail(
                         pclass = PARAMCLASS_RETURN;
                     }
                 }
-                else {
-                    if (h == REB_WORD and quoted) {  // ':x -> will be changed
-                        pclass = PARAMCLASS_SOFT;
-                        symbol = Cell_Word_Symbol(item);
-                    }
+            }
+        }
+        else if (Is_The_Group(item)) {  // @(...) is PARAMCLASS_SOFT for now
+            if (Cell_Series_Len_At(item) == 1) {
+                const Element* word = Cell_List_Item_At(item);
+                if (Is_Word(word)) {
+                    pclass = PARAMCLASS_SOFT;
+                    symbol = Cell_Word_Symbol(word);
                 }
             }
         }

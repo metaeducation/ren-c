@@ -129,13 +129,12 @@ export emit-include-params-macro: func [
 
     ; We used stripload to get the function specs, so it has @output form
     ; parameters.  The bootstrap executable thinks that's an illegal email.
-    ; So to process these, we replace the @ with # to get ISSUE!.
+    ; So to process these, we replace the @ with nothing
     ;
-    let output-param?: :issue?
-    let output-param!: issue!
-    replace spec "'@" {#}
-    replace spec "@" {#}
-    replace spec "':" ":"  ; escapable literal
+    ; !!! Review replacing with / when specs are changed, so /(...) and /xxx
+    ; will both work.
+    ;
+    replace spec "@" ""
 
     spec: load-value spec
 
@@ -167,9 +166,7 @@ export emit-include-params-macro: func [
             keep spec.1
             spec: my next
 
-            keep spread compose [
-                (to output-param! 'remainder) [any-series?]
-
+            keep spread [
                 state [frame!]
                 input [any-series?]
             ]
@@ -202,19 +199,16 @@ export emit-include-params-macro: func [
         ]
 
         for-each 'item paramlist [
-            if not match [&any-word? &refinement? &lit-word? output-param!] item [
+            if group? item [
+                item: first item
+            ]
+            if not match [&any-word? &refinement? &lit-word?] item [
                 continue
             ]
 
             let param-name: as text! to word! noquote item
             keep cscape [n param-name {DECLARE_PARAM($<n>, ${param-name})}]
             n: n + 1
-
-            if output-param? item [
-                ;
-                ; Used to be special handling here...but that's not needed
-                ; currently.  What might be done?
-            ]
         ]
     ]
 

@@ -234,10 +234,10 @@ typedef enum {
     //
     PARAMCLASS_THE,
 
-    // `PARAMCLASS_SOFT` is cued by a QUOTED GET-WORD! in the function spec
+    // `PARAMCLASS_SOFT` is cued by a THE-GROUP! in the function spec
     // dialect.  It quotes with the exception of GROUP!, which is evaluated:
     //
-    //     >> foo: function [':a] [print [{a is} a]
+    //     >> foo: function [@(a)] [print [{a is} a]
     //
     //     >> foo x
     //     a is x
@@ -253,7 +253,7 @@ typedef enum {
     // different from hard quoting, regarding how it resolves contention
     // with other hard quotes.  If you have a situation like:
     //
-    //     right-soft: func [':arg] [...]
+    //     right-soft: func [@(arg)] [...]
     //     left-literal: enfix func [@left right] [...]
     //
     // Soft quoting will "tie break" by assuming the soft literal operation

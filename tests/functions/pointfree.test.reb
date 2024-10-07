@@ -121,9 +121,9 @@
         "Declare action by example instantiation, missing args unspecialized"
 
         return: [action?]
-        ':left "Enforces nothing to the left of the pointfree expression"
+        @(left) "Enforces nothing to the left of the pointfree expression"
             [<end>]
-        ':expression "POINTFREE expression, BLANK!s are unspecialized arg slots"
+        @expression "POINTFREE expression, BLANK!s are unspecialized arg slots"
             [element? <variadic>]
     ][
         return pointfree make block! expression  ; !!! vararg param, efficiency?

@@ -212,7 +212,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //          [any-atom?]  ; [1]
 //      ^atom "<deferred argument> Run branch if this is definitional fail"
 //          [any-atom?]
-//      ':branch "If arity-1 ACTION!, receives value that triggered branch"
+//      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
 //  ]
 //

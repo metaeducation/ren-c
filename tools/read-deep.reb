@@ -62,7 +62,7 @@ export read-deep: func [
     if not full [
         remove result ; No need for root in result.
         let len: length of root
-        cfor i 1 length of result 1 [
+        cfor 'i 1 length of result 1 [
             ; Strip off root path from locked paths.
             poke result i copy skip result.(i) len
         ]

@@ -456,7 +456,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 //  "Evaluate a block over a range of values (See also: REPEAT)"
 //
 //      return: [any-value?]
-//      ':word [word!]
+//      word [word!]
 //          "Variable to hold current value"
 //      start [any-series? any-number?]
 //          "Starting value"
@@ -1713,7 +1713,7 @@ DECLARE_NATIVE(map_each)
 //          [blank! word! the-word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
 //          [<maybe> blank! quoted? action?]
-//      ':body "Block to evaluate each time"
+//      @(body) "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
 //

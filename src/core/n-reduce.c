@@ -231,7 +231,7 @@ DECLARE_NATIVE(reduce)
 //
 //      return: "Last body result"
 //          [any-atom?]
-//      ':vars "Variable to receive each reduced value (multiple TBD)"
+//      @(vars) "Variable to receive each reduced value (multiple TBD)"
 //          [word! meta-word!]
 //      block "Input block of expressions (@[block] acts like FOR-EACH)"
 //          [block! the-block!]

@@ -123,7 +123,9 @@ func: func* [
     parse3 spec [opt some [
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
             var: [
-                &set-word? | &get-word? | &any-word? | &refinement? | quoted!
+                &set-word? | &get-word? | &any-word? | &refinement?
+                | quoted!
+                | the-group!  ; new soft-literal format
             ] (
                 append new-spec var
             )

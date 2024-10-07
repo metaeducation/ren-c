@@ -2,7 +2,7 @@
 
 (
     blk: copy out: copy []
-    cfor i 1 25 1 [append blk i]
+    cfor 'i 1 25 1 [append blk i]
     iterate-skip @blk 3 [append out blk.1]
     out = [1 4 7 10 13 16 19 22 25]
 )

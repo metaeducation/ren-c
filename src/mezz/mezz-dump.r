@@ -17,8 +17,8 @@ dump: func [
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
         [~[]~]
-    ':value [any-value?]
-    'extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
+    @(value) [any-value?]
+    @extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [element? <variadic>]
     /prefix "Put a custom marker at the beginning of each output line"
         [text!]
@@ -137,8 +137,8 @@ dumps: enfix func [
     {Fast generator for dumping function that uses assigned name for prefix}
 
     return: [action?]
-    ':name [set-word?]
-    ':value "If issue, create non-specialized dumper...#on or #off by default"
+    @(name) [set-word?]
+    @(value) "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word? set-tuple? group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
         [~null~ any-value? <variadic>]
