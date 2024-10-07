@@ -362,6 +362,15 @@
 %../extensions/process/tests/call.test.reb
 %../extensions/dns/tests/dns.test.reb
 
+%../extensions/crypt/tests/aes.test.reb
+%../extensions/crypt/tests/adler32.test.reb
+%../extensions/crypt/tests/crc32.test.reb
+%../extensions/crypt/tests/dh.test.reb
+%../extensions/crypt/tests/ecc.test.reb
+%../extensions/crypt/tests/md5.test.reb
+%../extensions/crypt/tests/rsa.test.reb
+%../extensions/crypt/tests/sha1.test.reb
+%../extensions/crypt/tests/sha256.test.reb
 
 %misc/assert.test.reb
 %misc/fail.test.reb

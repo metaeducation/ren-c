@@ -17,7 +17,7 @@
     ; plain hash test
     (
         for-each [data hash] pairs [
-            if hash != sha256 data [
+            if hash != checksum 'sha256 data [
                 fail ["bad sha256 for" mold data]
             ]
         ]
@@ -27,8 +27,8 @@
     ; non-series head test
     (
         for-each [data hash] pairs [
-            longer: join either binary? data [#{57911240}] ["MetÆ"] data
-            if hash != sha256 skip longer 4 [
+            let longer: join either binary? data [#{57911240}] ["MetÆ"] data
+            if hash != checksum 'sha256 skip longer 4 [
                 fail ["bad sha256 for skip 4 of" mold longer]
             ]
         ]
@@ -46,29 +46,31 @@
     ; code breaks for some reason than anything wrong with mbedTLS).
     ;
     hmac-sha256: func [
-        {computes the hmac-sha256 for message m using key k}
+       "Computes the hmac-sha256 for message m using key k"
 
-        m [binary! text!]
-        k [binary! text!]
+        m [binary! text!]
+        k [binary! text!]
     ][
-        let key: as binary! copy k
-        let message: as binary! copy m
-        let blocksize: 64
-        if blocksize < length of key [
-            key: sha256 key
-        ]
-        if blocksize > length of key [
-            insert:dup tail key #{00} (blocksize - length of key)
-        ]
-        insert:dup let opad: copy #{} #{5C} blocksize
-        insert:dup let ipad: copy #{} #{36} blocksize
-        let o_key_pad: opad xor+ key
-        let i_key_pad: ipad xor+ key
-        return sha256 join o_key_pad (sha256 join i_key_pad message)
+        let key: as binary! copy k
+        let message: as binary! copy m
+        let blocksize: 64
+        if blocksize < length of key [
+            key: checksum 'sha256 key
+        ]
+        if blocksize > length of key [
+            insert:dup tail key #{00} (blocksize - length of key)
+        ]
+        insert:dup let opad: copy #{} #{5C} blocksize
+        insert:dup let ipad: copy #{} #{36} blocksize
+        let o_key_pad: opad xor+ key
+        let i_key_pad: ipad xor+ key
+        return checksum 'sha256 (
+            join o_key_pad (checksum 'sha256 join i_key_pad message)
+        )
     ]
 
     random:seed "Deterministic Behavior Desired"
-    repeat 100 [
+    repeat 100 (wrap [
         data-len: random 1024
         data: make binary! data-len
         repeat data-len [append data (random 256) - 1]
@@ -78,10 +80,10 @@
         repeat key-len [append data (random 256) - 1]
 
         a: hmac-sha256 data key
-        b: checksum/key 'sha256 data key
+        b: checksum:key 'sha256 data key
         if a != b [
             fail ["Mismatched HMAC-SHA256 for" mold data "with" mold key]
         ]
-    ]
+    ])
     ok
 )

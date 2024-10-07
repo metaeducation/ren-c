@@ -146,14 +146,14 @@ int get_random(void *p_rng, unsigned char* output, size_t output_len)
 //=//// CHECKSUM "EXTENSIBLE WITH PLUG-INS" NATIVE ////////////////////////=//
 //
 // Rather than pollute the namespace with functions that had every name of
-// every algorithm (`sha256 my-data`, `md5 my-data`) Rebol had a CHECKSUM
-// that effectively namespaced it (e.g. `checksum/method my-data 'sha256`).
+// every algorithm (sha256 my-data), (md5 my-data) Rebol had a CHECKSUM
+// that effectively namespaced it (checksum:method my-data 'sha256).
 // This suffered from somewhat the same problem as ENCODE and DECODE in that
 // parameterization was not sorted out; instead leading to a hodgepodge of
 // refinements that may or may not apply to each algorithm.
 //
 // Additionally: the idea that there is some default CHECKSUM the language
-// would endorse for all time when no /METHOD is given is suspect.  It may
+// would endorse for all time when no :METHOD is given is suspect.  It may
 // be that a transient "only good for this run" sum (which wouldn't serialize)
 // could be repurposed for this use.
 //
@@ -226,86 +226,74 @@ DECLARE_NATIVE(checksum)
 //    Init_Integer(OUT, Hash_Bytes(data, len) % sum);
 //
 // As nothing used it, it's not clear what this was for.  Currently removed.
+//
+// 1. Turn the method into a string and look it up in the table that mbedTLS
+//    builds in when you `#include "md.h"`.  How many entries are in this
+//    table depend on the config settings (see %mbedtls-rebol-config.h)
+//
+// 2. See %crc24-unused.c for explanation; all internal fast hashes now
+//    use zlib's crc32_z(), since it is a sunk cost.  Would be:
+//
+//        uint32_t crc24 = Compute_CRC24(data, size);
+//        return rebValue("enbin [le + 3]", crc24);
+//
+// 3. The interpreter uses zlib (e.g. to unpack the embedded boot code) and
+//    so its hashes are a sunk cost, whether you build with any crypt
+//    extension or ont.  CRC32 is typically an unsigned 32-bit number and uses
+//    the full range of values.  Yet R3-Alpha chose to export this as a signed
+//    integer via CHECKSUM, presumably to generate a value that could be used
+//    by Rebol2, as it only had 32-bit signed INTEGER!.
+//
+// 4. ADLER32 is a hash available in zlib which is a sunk cost, so it was
+//    exposed by Saphirion.  That happened after 64-bit integers were added,
+//    and did not convert the unsigned result of the adler calculation to a
+//    signed integer.
+//
+// 5. !!! This was an "Internet TCP 16-bit checksum" that was initially a
+//    refinement (presumably because adding table entries was a pain).  It
+//    does not seem to be used?
 {
     INCLUDE_PARAMS_OF_CHECKSUM;
+
+    Value* error = nullptr;
+    Value* result = nullptr;
 
     size_t size;
     unsigned char* data = rebBytes(&size, "data");
 
-    // Turn the method into a string and look it up in the table that mbedTLS
-    // builds in when you `#include "md.h"`.  How many entries are in this
-    // table depend on the config settings (see %mbedtls-rebol-config.h)
-    //
-    char* method_utf8 = rebSpell("uppercase to text! method");
-
+    char* method_utf8 = rebSpell("uppercase to text! method");  //  [1]
     const mbedtls_md_info_t* info = mbedtls_md_info_from_string(method_utf8);
-    if (info) {
-        rebFree(method_utf8);
-        goto found_tls_info;
-    }
+    if (info)
+        goto found_tls_info;  // otherwise, we look up some internal hashes
 
-    // Look up some internally available methods.
-    //
-    if (0 == strcmp(method_utf8, "CRC24")) {
-        rebFree(method_utf8);
-        //
-        // See %crc24-unused.c for explanation; all internal fast hashes now
-        // use zlib's crc32_z(), since it is a sunk cost.
-        //
-        // Would be:
-        //
-        //   uint32_t crc24 = Compute_CRC24(data, size);
-        //   return rebValue("enbin [le + 3]", crc24);
-        //
-        rebJumps (
-            "fail {CRC24 currently disabled, speak up if you use it}"
-        );
+    if (0 == strcmp(method_utf8, "CRC24")) {  // prefer CRC32 (sunk cost) [2]
+        error = rebValue("make error! [",
+            "{CRC24 removed: speak up if CRC32 and ADLER32 won't suffice}",
+        "]");
     }
-    if (0 == strcmp(method_utf8, "CRC32")) {
-        //
-        // CRC32 is a hash needed for gzip which is a sunk cost, and it
-        // was exposed in R3-Alpha.  It is typically an unsigned 32-bit
-        // number and uses the full range of values.  Yet R3-Alpha chose to
-        // export this as a signed integer via CHECKSUM, presumably to
-        // generate a value that could be used by Rebol2, as it only had
-        // 32-bit signed INTEGER!.
-        //
-        rebFree(method_utf8);
+    if (0 == strcmp(method_utf8, "CRC32")) {  // internals need for gzip [3]
         uint32_t crc = crc32_z(0L, data, size);
-        return rebValue("enbin [le + 4]", rebI(crc));
+        result = rebValue("enbin [le + 4]", rebI(crc));
     }
-    else if (0 == strcmp(method_utf8, "ADLER32")) {
-        //
-        // ADLER32 is a hash available in zlib which is a sunk cost, so
-        // it was exposed by Saphirion.  That happened after 64-bit
-        // integers were available, and did not convert the unsigned
-        // result of the adler calculation to a signed integer.
-        //
-        rebFree(method_utf8);
+    else if (0 == strcmp(method_utf8, "ADLER32")) {  // included with zlib [4]
         uint32_t adler = z_adler32(1L, data, size);  // Note the 1L (!)
-        return rebValue("enbin [le + 4]", rebI(adler));
+        result = rebValue("enbin [le + 4]", rebI(adler));
     }
-    else if (0 == strcmp(method_utf8, "TCP")) {
-        //
-        // !!! This was an "Internet TCP 16-bit checksum" that was initially
-        // a refinement (presumably because adding table entries was a pain).
-        // It does not seem to be used?
-        //
-        rebFree(method_utf8);
+    else if (0 == strcmp(method_utf8, "TCP")) {  // !!! not used? [5]
         int ipc = Compute_IPC(data, size);
-        return rebValue("enbin [le + 2]", rebI(ipc));
+        result = rebValue("enbin [le + 2]", rebI(ipc));
     }
+    else
+        error = rebValue("make error! [{Unknown CHECKSUM method:} method]");
 
-    rebJumps ("fail [{Unknown CHECKSUM method:} method]");
+    goto return_result_or_fail;
 
-  found_tls_info: {
+  found_tls_info: { //////////////////////////////////////////////////////////
+
     int hmac = rebDid("key") ? 1 : 0;  // !!! int, but seems to be a boolean?
 
     unsigned char md_size = mbedtls_md_get_size(info);
     unsigned char* output = rebAllocN(unsigned char, md_size);
-
-    Value* error = nullptr;
-    Value* result = nullptr;
 
     struct mbedtls_md_context_t ctx;
     mbedtls_md_init(&ctx);
@@ -330,18 +318,22 @@ DECLARE_NATIVE(checksum)
     }
 
     result = rebRepossess(output, md_size);
+    goto cleanup;
 
-  cleanup:
+  cleanup: ///////////////////////////////////////////////////////////////////
 
     mbedtls_md_free(&ctx);
+    goto return_result_or_fail;
 
+} return_result_or_fail: /////////////////////////////////////////////////////
+
+    rebFree(method_utf8);
     rebFree(data);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return result;
-  }
 }
 
 
@@ -1469,6 +1461,14 @@ DECLARE_NATIVE(aes_key)
 //  ]
 //
 DECLARE_NATIVE(aes_stream)
+//
+// 1. !!! Saphir's AES code worked with zero-padded chunks, so you always
+//    got a multiple of 16 bytes out.  That doesn't seem optimal for a
+//    "streaming cipher" because for the output to be useful, your input
+//    has to come pre-chunked; you should be able to add one byte at a time
+//    if you want.  For starters the code is kept compatible just to excise
+//    the old AES implementation--but this needs to change, maybe to
+//    a PORT! model of some kind.
 {
     INCLUDE_PARAMS_OF_AES_STREAM;
 
@@ -1496,28 +1496,15 @@ DECLARE_NATIVE(aes_stream)
     size_t blocksize = mbedtls_cipher_get_block_size(ctx);
     assert(blocksize == 16);  // !!! to be generalized...
 
-    // !!! Saphir's AES code worked with zero-padded chunks, so you always
-    // got a multiple of 16 bytes out.  That doesn't seem optimal for a
-    // "streaming cipher" because for the output to be useful, your input
-    // has to come pre-chunked; you should be able to add one byte at a time
-    // if you want.  For starters the code is kept compatible just to excise
-    // the old AES implementation--but this needs to change, maybe to
-    // a PORT! model of some kind.
-    //
-    size_t pad_len = (((ilen - 1) >> 4) << 4) + blocksize;
+    size_t pad_len = (((ilen - 1) >> 4) << 4) + blocksize;  // !!! review [1]
 
-    unsigned char* pad_data;
-    if (ilen < pad_len) {
-        //
-        //  make new data input with zero-padding
-        //
-        pad_data = rebAllocN(unsigned char, pad_len);
+    if (ilen < pad_len) {  // need new input data with zero padding
+        unsigned char* pad_data = rebAllocN(unsigned char, pad_len);
         memset(pad_data, 0, pad_len);
         memcpy(pad_data, input, ilen);
+        rebFree(input);
         input = pad_data;
     }
-    else
-        pad_data = nullptr;
 
     unsigned char* output = rebAllocN(unsigned char, ilen + blocksize);
 
@@ -1526,16 +1513,14 @@ DECLARE_NATIVE(aes_stream)
         mbedtls_cipher_update(ctx, input, pad_len, output, &olen)
     );
 
-    rebFree(input);
-
     result = rebRepossess(output, olen);
 
   cleanup:
 
-    rebFreeMaybe(pad_data);
+    rebFree(input);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", error);
 
     return result;
 }

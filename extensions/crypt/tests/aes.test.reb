@@ -2,13 +2,13 @@
 
 [
     (test: func [data check] [
-        bin: as binary! data
-        bin-len: length of bin
-        key-128: #{01020304050607080910111213141516}
-        ctx: aes-key key-128 _
-        encrypted: aes-stream ctx as binary! data
-        ctx: aes-key/decrypt key-128 _
-        decrypted: aes-stream ctx encrypted
+        let bin: as binary! data
+        let bin-len: length of bin
+        let key-128: #{01020304050607080910111213141516}
+        let e: aes-key key-128 _
+        let encrypted: aes-stream e as binary! data
+        let d: aes-key:decrypt key-128 _
+        let decrypted: aes-stream d encrypted
         return all [
             bin = copy:part decrypted bin-len
             check = encrypted

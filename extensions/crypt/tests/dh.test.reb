@@ -12,7 +12,7 @@
 ;
 ; http://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf
 ;
-; However, the /INSECURE refinement causes DH-GENERATE-KEYPAIR to keep trying
+; However, the :INSECURE refinement causes DH-GENERATE-KEYPAIR to keep trying
 ; until it gets a private/public keypair that is deemed "secure" (in as much
 ; as you can ever get "secure" in 8 bits...so *relative* security!)
 (
@@ -25,7 +25,8 @@
     233    239    241    251]
 
     random:seed "Deterministic!"
-    repeat 1000 [
+    repeat 1000 (wrap [
+        g: p: ~
         until [
             g: random:only byte-primes
             p: random:only byte-primes
@@ -39,13 +40,13 @@
         modulus: enbin [be + 1] p
         base: enbin [be + 1] g
 
-        repeat 1 [
-            mine: dh-generate-keypair/insecure modulus base
+        repeat 1 (wrap [
+            mine: dh-generate-keypair:insecure modulus base
             mine.modulus = modulus
             (length of modulus) = length of mine.public-key
             (length of modulus) = length of mine.private-key
 
-            theirs: dh-generate-keypair/insecure modulus base
+            theirs: dh-generate-keypair:insecure modulus base
             theirs.modulus = modulus
             (length of modulus) = length of theirs.public-key
             (length of modulus) = length of theirs.private-key
@@ -60,8 +61,8 @@
                     "did not arrive at the same shared secret"
                 ]
             ]
-         ]
-    ]
+        ])
+    ])
     ok
 )
 

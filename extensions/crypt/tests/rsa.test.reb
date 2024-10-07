@@ -4,10 +4,10 @@
 
 ; Test the raw mode RSA with a small example.
 [
-    ; use /INSECURE to override errors that tell you the key is too small
+    ; use :INSECURE to override errors that tell you the key is too small
     ; (makes examples more readable)
     (
-        [public private]: rsa-generate-keypair/padding/insecure 128 [raw]
+        [public private]: rsa-generate-keypair:padding:insecure 128 [raw]
         16 = length of public.n
     )
 
@@ -26,14 +26,14 @@
 
     ; Should return same result every time...
     ;
-    (repeat 10 [
+    (repeat 10 (wrap [
         cryptcheck: rsa-encrypt plaintext private
         if cryptcheck <> encrypted [
             fail [
                 "Different encrypt:" mold cryptcheck "vs" mold encrypted
             ]
         ]
-    ], ok)
+    ]), ok)
 
     (plaintext = rsa-decrypt encrypted private)
 ]
@@ -48,14 +48,17 @@
 )
 
 ; Now try with key, padding, and hash combinations
+;
+; !!! This is an annoyingly slow test.  Run it only every once in a while.
 (
+  if 1 = random 12 [
     hash-sizes: [#md5 16 #sha512 64]
 
     rsa-capacity: func [num-key-bits padding] [
-        hash-size: if not second padding [
+        let hash-size: if not try padding.2 [
             0
         ] else [
-            select hash-sizes second padding
+            select hash-sizes padding.2
         ]
 
         let num-key-bytes: num-key-bits / 8
@@ -87,7 +90,7 @@
             ; Can't use pkcs1-v21 without hashing as just `[pkcs1-v21]`
             [pkcs1-v21 #md5]
             [pkcs1-v21 #sha512]
-        ][
+        ] (wrap [
             ; Skip impossible combinations (512 bit hash needs two hashes
             ; in pkcs1-v21, plus two bytes, and 1024 isn't enough for that)
             ;
@@ -97,7 +100,7 @@
                 continue
             ]
 
-            [public private]: rsa-generate-keypair/padding num-key-bits padding
+            [public private]: rsa-generate-keypair:padding num-key-bits padding
             assert [num-key-bits = length of public.n * 8]
 
             plaintext: copy #{}
@@ -109,7 +112,7 @@
             ; happens incidentally that's an incredibly rare fluke.
             ;
             encrypted-list: copy []
-            repeat 10 [
+            repeat 10 (wrap [
                 encrypted: rsa-encrypt plaintext public
                 if find encrypted-list encrypted [
                     fail [
@@ -122,9 +125,10 @@
                         "Decrypt expected:" mold plaintext "got" mold decrypted
                     ]
                 ]
-            ]
-        ]
+            ])
+        ])
     ]
+  ]
 
     ok
 )
