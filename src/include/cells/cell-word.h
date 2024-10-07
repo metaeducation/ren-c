@@ -127,7 +127,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
 
 #define Init_Any_Word_Bound(out,heart,symbol,context,index) \
     TRACK(Init_Any_Word_Bound_Untracked((out), \
-            (heart), (symbol), Varlist_Array(context), (index)))
+            (heart), (symbol), (context), (index)))
 
 #define Init_Quasi_Word(out,label) \
     TRACK(Coerce_To_Quasiform( \

@@ -479,7 +479,7 @@ Option(Stub*) Get_Word_Container(
 //      return: "Expression result if SET form, else gives the new vars"
 //          [any-value?]
 //      'vars "Variable(s) to create"  ; can't soft quote ATM [0]
-//          [word! block! group! set-word? set-block? set-group?]
+//          [word! block! group! set-run-word? set-word? set-block? set-group?]
 //      @expression "Optional Expression to assign"
 //          [<variadic> element?]
 //  ]
@@ -607,7 +607,10 @@ DECLARE_NATIVE(let)
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
             fail ("QUOTED? escapes not supported at top level of LET");
 
-        if (Is_Set_Word(stable_SPARE) or Is_Set_Block(stable_SPARE)) {
+        if (
+            Try_Get_Settable_Word_Symbol(cast(Element*, SPARE))
+            or Is_Set_Block(stable_SPARE)
+        ){
             // Allow `(set-word):` to ignore redundant colon [2]
         }
         else if (Is_Word(stable_SPARE) or Is_Block(stable_SPARE)) {
@@ -625,28 +628,48 @@ DECLARE_NATIVE(let)
     // Writes rebound copy of `vars` to SPARE if it's a SET-WORD! or SET-BLOCK!
     // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
     // just writes the rebound copy into the OUT cell.
+    //
+    // 1. It would be nice if we could just copy the input variable and
+    //    rewrite the binding, but at time of writing /foo: is not binding
+    //    compatible with WORD!...it has a pairing allocation for the chain
+    //    holding the word and a blank, and no binding index of its own.
+    //    This will all be reviewed at some point, but for now we do a
+    //    convoluted rebuilding of the matching structure from a word basis.
 
     Context* bindings = L_binding;  // context chain we may be adding to
 
     if (bindings and Not_Node_Managed(bindings))
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
-    if (Is_Word(vars) or Is_Set_Word(vars)) {
-        const Symbol* symbol = Cell_Word_Symbol(vars);
+    const Symbol* symbol;
+    if (
+        (Is_Word(vars) and (symbol = Cell_Word_Symbol(vars)))
+        or
+        (symbol = maybe Try_Get_Settable_Word_Symbol(cast(Element*, vars)))
+    ){
         bindings = Make_Let_Variable(symbol, bindings);
 
-        Value* where;
-        if (Is_Set_Word(vars)) {
+        Sink(Element*) where;
+        if (Is_Word(vars))
+            where = OUT;
+        else {
             STATE = ST_LET_EVAL_STEP;
-            where = stable_SPARE;
+            where = SPARE;
         }
-        else
-            where = stable_OUT;
 
-        Copy_Cell_Header(where, vars);  // keep quasi state and word or setword
-        Tweak_Cell_Word_Symbol(where, symbol);
-        Tweak_Cell_Word_Index(where, INDEX_PATCHED);
-        BINDING(where) = bindings;
+        Init_Any_Word_Bound(where, REB_WORD, symbol, bindings, INDEX_PATCHED);
+        if (HEART_BYTE(vars) != REB_WORD) {  // more complex than we'd like [1]
+            Setify(where);
+            if (HEART_BYTE(vars) == REB_PATH) {
+                Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
+                    where, REB_PATH, CELL_FLAG_LEADING_BLANK
+                );
+                assert(not error);  // was a path when we got it!
+                UNUSED(error);
+            }
+            else
+                assert(HEART_BYTE(vars) == REB_CHAIN);
+        }
 
         Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
@@ -701,7 +724,7 @@ DECLARE_NATIVE(let)
               case REB_META_WORD:
               case REB_THE_WORD: {
                 Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
-                const Symbol* symbol = Cell_Word_Symbol(temp);
+                symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Variable(symbol, bindings);
                 CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
                 BINDING(TOP) = bindings;
@@ -744,7 +767,7 @@ DECLARE_NATIVE(let)
     // We want the left hand side to use the *new* LET bindings, but the right
     // hand side should use the *old* bindings.  For instance:
     //
-    //     let assert: specialize assert/ [handler: [print "should work!"]]
+    //     let /assert: specialize assert/ [handler: [print "should work!"]]
     //
     // Leverage same mechanism as REEVAL to preload the next execution step
     // with the rebound SET-WORD! or SET-BLOCK!
@@ -757,7 +780,10 @@ DECLARE_NATIVE(let)
         goto update_feed_binding;
     }
 
-    assert(Is_Set_Word(stable_SPARE) or Is_Set_Block(stable_SPARE));
+    assert(
+        Try_Get_Settable_Word_Symbol(cast(Element*, SPARE))
+        or Is_Set_Block(stable_SPARE)
+    );
 
     Flags flags =
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
