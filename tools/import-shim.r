@@ -63,7 +63,7 @@ any-value?!: any-value!
 
 === "EXPORT" ===
 
-export: lib3/func [
+/export: lib3/func [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
 
     :set-word [<skip> set-word?!]  ; old style unescapable literal, old <skip>!
@@ -99,7 +99,7 @@ export: lib3/func [
 
 === "SOURCE CONVERSION" ===
 
-rewrite-source-for-bootstrap-exe: lib3/func [
+/rewrite-source-for-bootstrap-exe: lib3/func [
     "turn -{...}- to {...}"
     source [text!]
     <local> pushed rule
@@ -130,7 +130,7 @@ rewrite-source-for-bootstrap-exe: lib3/func [
         <end>
     ]
 
-    lib3/parse/match source rule else [
+    lib3/parse:match source rule else [
         fail "REWRITE-SOURCE-FOR-BOOTSTRAP-EXE did not work"
     ]
     return source
@@ -162,8 +162,8 @@ rewrite-source-for-bootstrap-exe: lib3/func [
 ;
 wrap-module: 'no
 
-old-do: :lib3/do
-do: lib3/enclose :lib3/do lib3/func [
+/old-do: lib3.do/
+/do: lib3/enclose lib3.do/ lib3/func [
     f [frame!]
     <local> old-system-script file
     <with> wrap-module
@@ -236,15 +236,15 @@ already-imported: make map! []  ; avoid importing things twice
     <with> wrap-module already-imported
 ][
     if into [
-        fail "/INTO not actually available, just makes IMPORT look modern"
+        fail ":INTO not actually available, just makes IMPORT look modern"
     ]
 
     f: as file! f
 
-    dir: lib3/split-path/file f 'script-filename
+    dir: lib3/split-path:file f $script-filename
 
-    assert [#"/" <> dir/1]  ; should be relative
-    assert [#"%" <> dir/1]  ; accidental `import <%foo.r>`
+    assert [#"/" <> dir.1]  ; should be relative
+    assert [#"%" <> dir.1]  ; accidental `import <%foo.r>`
 
     full-script-dir: clean-path lib3/append copy any [
         system.script.path system.options.path
@@ -262,7 +262,7 @@ already-imported: make map! []  ; avoid importing things twice
     change-dir full-script-dir  ; modules expect to run in their directory
 
     ret: #quit
-    catch/quit [
+    catch:quit [
         ret: if :set-word [
             wrap-module: 'yes
             set set-word do script-filename
@@ -297,11 +297,10 @@ already-imported: make map! []  ; avoid importing things twice
 ;
 append lib compose [
     lib3: (lib3)
-    import: (:import)
-    do: (:do)
-    eval: (:eval)
-    export: (:export)
-    load: (:load)
+    import: (import/)
+    do: (do/)
+    export: (export/)
+    load: (load/)
 ]
 
 print "COMPLETE!"

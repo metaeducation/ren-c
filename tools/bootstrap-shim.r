@@ -49,7 +49,7 @@ REBOL [
 
 
 if not find (words of import/) 'into [
-    ; no /INTO means error here, so old r3 without import shim
+    ; no :INTO means error here, so old r3 without import shim
 
     ; Don't use -{...}- in this error message, because if this message is
     ; being reported then this interpreter will not understand it.
@@ -106,7 +106,7 @@ sys.util/rescue [
     ; bootstrap executable..and much faster (at time of writing) than UPARSE.
 
     export /parse: func [] [
-        fail:blame "Use PARSE3 in Bootstrap Process, not UPARSE/PARSE" $return
+        fail:blame "Use PARSE3 in Bootstrap Code, not PARSE" $return
     ]
 
     export /split-path3: enclose (
@@ -179,9 +179,10 @@ sys.util/rescue [
 ; 1. Using SET-WORD!s here also helps searchability if you're looking for
 ;    where `func3: ...` is defined.
 
-eval: :do
+/eval: do/
 
 for-each [alias] [  ; SET-WORD!s for readability + findability [1]
+    parse3:                     ; PARSE is a completely new model ("UPARSE")
     func3:                      ; FUNC refinements are their own args, more...
     function3:                  ; no FUNCTION at present (TBD: FUNC synonym)
     append3:                    ; APPEND handles splices
@@ -198,10 +199,10 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     refinement3!                ; ...
 ][
     ; Assign the alias what the existing version (minus the terminal "3") is
-    ; (e.g. func3: :func)
+    ; (e.g. func3: func/)
     ;
     name: copy as text! alias
-    parse name [to "3" remove "3" to <end>]
+    lib3/parse name [to "3" remove "3" to <end>]
     name: to word! name
     lib3/append system.contexts.user reduce [alias :lib3.(name)]
 
@@ -212,12 +213,12 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
         (lib/mold name) "not shimmed yet, see" as word! (lib/mold alias)
     ]
     system.contexts.user.(name): lib3/func [] lib3/compose [
-        fail/where (error) 'return
+        fail:blame (error) $return
     ]
 ]
 
-function3: func3 [] [
-    fail/where "FUNCTION slated for synonym of FUNC, so no FUNCTION3" 'return
+/function3: func3 [] [
+    fail:blame "FUNCTION slated for synonym of FUNC, so no FUNCTION3" 'return
 ]
 
 
@@ -227,45 +228,45 @@ function3: func3 [] [
 ; are used as the currency of logic, while IF only tests for nullness (or
 ; NaN-ness).
 
-if: adapt :if [
+/if: adapt lib3.if/ [
     all [
         :condition
         find [true false yes no on off] :condition
-        fail/where "IF not supposed to take [true false yes no off]" 'return
+        fail:blame "IF not supposed to take [true false yes no off]" $return
     ]
 ]
 
-either: adapt :either [
+/either: adapt lib3.either/ [
     all [
         :condition
         find [true false yes no on off] :condition
-        fail/where "EITHER not supposed to take [true false yes no off]" 'return
+        fail:blame "EITHER not supposed to take [true false yes no off]" $return
     ]
 ]
 
-boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
-yesno?: func3 [x] [any [:x = 'on, :x = 'off]]
-onoff?: func3 [x] [any [:x = 'yes, :x = 'no]]
+/boolean?: func3 [x] [any [:x = 'true, :x = 'false]]
+/yesno?: func3 [x] [any [:x = 'on, :x = 'off]]
+/onoff?: func3 [x] [any [:x = 'yes, :x = 'no]]
 
 boolean?!: word!
 onoff?!: word!
 yesno?!: word!
 
 logic?!: make typeset! [~null~ nothing!]
-to-logic: func3 [x] [
+/to-logic: func3 [x] [
     either x [~] [null]
 ]
 
-boolean: func3 [x [~null~ any-value!]] [
+/boolean: func3 [x [~null~ any-value!]] [
     either x ['true] ['false]
 ]
 
-to-yesno: func3 [x [~null~ any-value!]] [  ; should this be DID?
+/to-yesno: func3 [x [~null~ any-value!]] [  ; should this be DID?
     either x ['yes] ['no]
 ]
 
 ok: okay: true
-okay?: :true?
+/okay?: true?/
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -274,9 +275,9 @@ okay?: :true?
 ; to not remember that the KEEP is the kind that takes /ONLY.  Renaming the
 ; keeper to KEEP3 makes that clearer.
 
-collect3: adapt get $collect3 [
+/collect3: adapt lib3.collect/ [
     body: compose3 [
-        keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
+        keep3: keep/  ; help point out keep3 will splice blocks, has /ONLY
         keep: ~
         (body)  ; splices block body because it's COMPOSE3
     ]
@@ -289,14 +290,12 @@ collect3: adapt get $collect3 [
 ; can't be emulated by older executables.  Here we raise errors in the old
 ; executable on any undecorated functions that have no emulation equivalent.
 
-parse3: get $lib/parse
-
-parse: does [
-    fail "Only PARSE3 is available in bootstrap executable, not PARSE"
+/parse: func3 [] [
+    fail:blame "Use PARSE3 in bootstrap code, not PARSE" $return
 ]
 
-split-path: func3 [] [
-    fail/where "Use SPLIT-PATH3 in Bootstrap (no multi-return)" 'return
+/split-path: func3 [] [
+    fail:blame "Use SPLIT-PATH3 in Bootstrap (no multi-return)" $return
 ]
 
 === "THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF" ===
@@ -320,18 +319,18 @@ set '~done~ does [~]
 inert: func3 [word [word!]] [return to-issue word]
 
 quasiform!: word!  ; conflated, but can work in a very limited sense
-quasi?: func3 [v <local> spelling] [
+/quasi?: func3 [v <local> spelling] [
     if not word? v [return false]
     spelling: as text! v
     if #"~" <> first spelling [return false]
     if #"~" <> last spelling [return false]
     return true
 ]
-unquasi: func3 [v <local> spelling] [
+/unquasi: func3 [v <local> spelling] [
     assert [quasi? v]
     spelling: to text! v
     assert [#"~" = take spelling]
-    assert [#"~" = take/last spelling]
+    assert [#"~" = take:last spelling]
     return as word! spelling
 ]
 
@@ -352,42 +351,42 @@ unquasi: func3 [v <local> spelling] [
     ]
 ]
 
-unrun: func3 [] [
-    fail/where "No UNRUN in bootstrap, but could be done w/make FRAME!" 'return
+/unrun: func3 [] [
+    fail:blame "No UNRUN in bootstrap, but could be done w/make FRAME!" $return
 ]
 
-has: :in  ; old IN behavior of word lookup achieved by HAS now
-overbind: :in  ; works in a limited sense
-bindable: func3 [what] [:what]
-inside: func3 [where value] [:value]  ; no-op in bootstrap
+/has: in/  ; old IN behavior of word lookup achieved by HAS now
+/overbind: in/  ; works in a limited sense
+/bindable: func3 [what] [:what]
+/inside: func3 [where value] [:value]  ; no-op in bootstrap
 
-in: func3 [] [
-    fail/where "Use HAS or OVERBIND instead of IN in bootstrap" 'return
+/in: func3 [] [
+    fail:blame "Use HAS or OVERBIND instead of IN in bootstrap" $return
 ]
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
-load-value: get $load
-load-all: get $load/all
+load-value: load/
+load-all: load:all/
 
 ; Tricky way of getting simple non-definitional break extraction that looks
 ; like getting a definitional break.
 ;
-set '^break does [does [:break]]
-set '^continue does [does [:continue]]
+set '^break does [does [break/]]
+set '^continue does [does [continue/]]
 
-quote: func3 [x [~null~ any-value!]] [  ; see the more general UNEVAL
+/quote: func3 [x [~null~ any-value!]] [  ; see the more general UNEVAL
     switch type of x [
         word! [to lit-word! x]  ; to lit-word! not legal in new EXE
         path! [to lit-path! x]  ; to lit-path! not legal in new EXE
 
-        fail/where [
+        fail:blame [
             "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
-        ] 'x
+        ] $x
     ]
 ]
 
-blank-to-void: func3 [x [~null~ any-value!]] [
+/blank-to-void: func3 [x [~null~ any-value!]] [
     either blank? :x [void] [:x]
 ]
 
@@ -403,11 +402,11 @@ blank-to-void: func3 [x [~null~ any-value!]] [
 set '&any-word? any-word!  ; modern any-word is type constraint
 set '&lit-word? lit-word!  ; modern lit-word is QUOTED! constraint
 set '&refinement? get-word!  ; modern refinement is CHAIN! constraint
-run-word?: :refinement3?
+/run-word?: refinement3?/
 run-word!: refinement3!
 set '&run-word? refinement3!
 refinement!: get-word!
-refinement?: :get-word?
+/refinement?: get-word?/
 
 char?!: char!  ; modern char is ISSUE! constraint
 logic?!: logic!  ; modern logic is ANTIFORM! constraint
@@ -416,27 +415,27 @@ get-word?!: get-word!  ; modern get-word is CHAIN constraint
 set-tuple?!: set-path!  ; modern tuple exists, set-tuple is CHAIN constraint
 get-tuple?!: get-path!  ; modern tuple exists, set-tuple is CHAIN constraint
 set-word!: func3 [] [
-    fail/where "SET-WORD! is now a CHAIN!, try SET-WORD?!" 'return
+    fail:blame "SET-WORD! is now a CHAIN!, try SET-WORD?!" $return
 ]
 get-word!: func3 [] [
-    fail/where "GET-WORD! is now a CHAIN!, try GET-WORD?!" 'return
+    fail:blame "GET-WORD! is now a CHAIN!, try GET-WORD?!" $return
 ]
 set-path!: func3 [] [
-    fail/where "SET-PATH! can no longer exist, try SET-TUPLE?!" 'return
+    fail:blame "SET-PATH! can no longer exist, try SET-TUPLE?!" $return
 ]
 get-path!: func3 [] [
-    fail/where "GET-PATH! can no longer exist, try GET-TUPLE?!" 'return
+    fail:blame "GET-PATH! can no longer exist, try GET-TUPLE?!" $return
 ]
 
-setify: func3 [plain [word! path!]] [
+/setify: func3 [plain [word! path!]] [
     either word? plain [to-set-word plain] [to-set-path plain]
 ]
 
 
-element?: :any-value?  ; used to exclude null
-any-value?: func3 [x] [true]  ; now inclusive of null
+/any-value?: func3 [x] [true]  ; now inclusive of null
+/element?: any-value?/  ; used to exclude null
 
-matches: func3 [x [~null~ datatype! typeset! block!]] [
+/matches: func3 [x [~null~ datatype! typeset! block!]] [
     if :x [if block? x [make typeset! x] else [x]]
 ]
 
@@ -456,7 +455,7 @@ matches: func3 [x [~null~ datatype! typeset! block!]] [
 ; bootstrap executable can build itself with the prior bootstrap executable.
 ; These few shims have worked well enough.
 
-spread: func3 [
+/spread: func3 [
     return: [~void~ ~null~ block!]
     x [~null~ blank! block!]
 ][
@@ -467,7 +466,7 @@ spread: func3 [
     ]
 ]
 
-append: func3 [series value [any-value!] /line <local> only] [
+/append: func3 [series value [any-value!] /line <local> only] [
     any [
         object? series
         map? series
@@ -476,7 +475,7 @@ append: func3 [series value [any-value!] /line <local> only] [
             block? value
             #splice! = (first value)
         ] else [
-            fail/where "Bootstrap shim for OBJECT! only APPENDs SPLICEs" 'return
+            fail:blame "Bootstrap shim for OBJECT! only APPENDs SPLICEs" $return
         ]
         return append3 series second value
     ]
@@ -484,7 +483,7 @@ append: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
         logic? :value [
-            fail/where "APPEND LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." 'value
+            fail:blame "APPEND LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." $value
         ]
         block? :value [
             if #splice! = (first value) [
@@ -499,14 +498,14 @@ append: func3 [series value [any-value!] /line <local> only] [
             ]
         ]
     ]
-    append3/(blank-to-void only)/(blank-to-void line) series :value
+    append3:(blank-to-void only):(blank-to-void line) series :value
 ]
 
-insert: func3 [series value [any-value!] /line <local> only] [
+/insert: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
         logic? :value [
-            fail/where "INSERT LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." 'value
+            fail:blame "INSERT LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." $value
         ]
         block? :value [
             if #splice! = (first value) [
@@ -521,14 +520,14 @@ insert: func3 [series value [any-value!] /line <local> only] [
             ]
         ]
     ]
-    insert3/(blank-to-void only)/(blank-to-void line) series :value
+    insert3:(blank-to-void only):(blank-to-void line) series :value
 ]
 
-change: func3 [series value [any-value!] /line <local> only] [
+/change: func3 [series value [any-value!] /line <local> only] [
     only: 'only
     case [
         logic? :value [
-            fail/where "CHANGE LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." 'value
+            fail:blame "CHANGE LOGIC! ILLEGAL, use REIFY, BOOLEAN, etc." $value
         ]
         block? :value [
             if #splice! = (first value) [
@@ -540,27 +539,27 @@ change: func3 [series value [any-value!] /line <local> only] [
             ]
         ]
     ]
-    change3/(blank-to-void only)/(blank-to-void line) series :value
+    change3:(blank-to-void only):(blank-to-void line) series :value
 ]
 
-join: func3 [
+/join: func3 [
     base [binary! any-string! path!]
     value [void! any-value!]
 ][
     if void? :value [
         return copy base
     ]
-    append copy base :value  ; not APPEND3, shim APPEND w/SPLICE behavior
+    append copy base :value  ; not APPEND3, shim APPEND with SPLICE behavior
 ]
 
-collect*: func3 [  ; variant giving NULL if no actual material kept
+/collect*: func3 [  ; variant giving NULL if no actual material kept
     return: [~null~ block!]
     body [block!]
     <local> out keeper
 ][
     out: null
     keeper: specialize (  ; SPECIALIZE to remove series argument
-        enclose 'append func3 [f [frame!] <with> out] [  ; gets /LINE, /DUP
+        enclose 'append func3 [f [frame!] <with> out] [  ; gets :LINE, :DUP
             assert [not action? get $f.value]
             if void? f.value [return void]  ; doesn't "count" as collected
 
@@ -572,19 +571,19 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
         series: <replaced>
     ]
 
-    reeval func3 [keep [action!] <with> return] body get $keeper
+    reeval func3 [keep [action!] <with> return] body keeper/
 
     out
 ]
 
-collect: cascade [  ; Gives empty block instead of null if no keeps
+/collect: cascade [  ; Gives empty block instead of null if no keeps
     :collect*  ; note: does not support , in bootstrap build
     specialize 'else [branch: [copy []]]
 ]
 
-compose: func3 [block [block!] /deep <local> result pos product count] [
+/compose: func3 [block [block!] /deep <local> result pos product count] [
     if deep [
-        fail/where "COMPOSE bootstrap shim doesn't recurse, yet" 'block
+        fail:blame "COMPOSE bootstrap shim doesn't recurse, yet" $block
     ]
     pos: result: copy block
     while [not tail? pos] [
@@ -600,17 +599,17 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
         ] then [
             ; Doing the change can insert more than one item, update pos
             ;
-            pos: change3/part pos second product 1
+            pos: change3:part pos second product 1
         ] else [
             case [
                 void? :product [
-                    change3/part pos void 1
+                    change3:part pos void 1
                 ]
                 nothing? :product [  ; e.g. compose [(if ok [null])]
-                    fail/where "nothing compose found" 'return
+                    fail:blame "nothing compose found" $return
                 ]
             ] else [
-                change3/only pos :product
+                change3:only pos :product
                 pos: next pos
             ]
         ]
@@ -632,9 +631,9 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 ; any case, "enfixed" suggests creating a tweaked version distinct from
 ; mutating directly.
 ;
-enfixed: enfix :enfix
+/enfixed: enfix enfix/
 
-collect-lets: func3 [
+/collect-lets: func3 [
     return: [block!]
     list [block! group!]
     <local> lets
@@ -657,14 +656,14 @@ collect-lets: func3 [
 ]
 
 
-let: func3 [
+/let: func3 [
     return: []  ; [] was old-style invisibility
     :look [any-value! <...>]  ; old-style variadic
 ][
     if word? first look [take look]  ; otherwise leave SET-WORD! to runs
 ]
 
-modernize-typespec: func3 [
+/modernize-typespec: func3 [
     return: [block!]
     types [block!]
 ][
@@ -678,7 +677,7 @@ modernize-typespec: func3 [
     return types
 ]
 
-modernize-action: func3 [
+/modernize-action: func3 [
     "Account for <maybe> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
@@ -694,18 +693,18 @@ modernize-action: func3 [
         while [not tail? spec] [
             if tag? spec.1 [
                 last-refine-word: null
-                keep3/only spec.1
+                keep3:only spec.1
                 spec: my next
                 continue
             ]
 
             if refinement3? spec.1 [  ; old /REFINEMENT
-                fail/where ["Old refinement in spec:" mold spec] 'spec
+                fail:blame ["Old refinement in spec:" mold spec] $spec
             ]
 
             if refinement? spec.1 [  ; new :REFINEMENT
                 last-refine-word: as word! spec.1
-                keep3/only to refinement3! spec.1
+                keep3:only to refinement3! spec.1
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
@@ -713,7 +712,7 @@ modernize-action: func3 [
                     if (tail? spec: my next) [break]
                     text? spec.1
                 ][
-                    keep3/only spec.1
+                    keep3:only spec.1
                 ]
 
                 ; If there's a block specifying argument types, we need to
@@ -724,8 +723,8 @@ modernize-action: func3 [
                 ]
 
                 proxy: as word! unspaced [last-refine-word "-arg"]
-                keep3/only proxy
-                keep3/only modernize-typespec spec.1
+                keep3:only proxy
+                keep3:only modernize-typespec spec.1
 
                 append3 proxiers compose [
                     (to-set-word last-refine-word) (to-get-word proxy)
@@ -744,7 +743,7 @@ modernize-action: func3 [
                     if tail? spec [continue]
                     if text? spec.1 [keep3 spec.1, spec: my next]
                     if block? spec.1 [
-                        keep3/only modernize-typespec spec.1
+                        keep3:only modernize-typespec spec.1
                         spec: my next
                     ]
                     if tail? spec [continue]
@@ -763,9 +762,9 @@ modernize-action: func3 [
                 ]
 
                 if last-refine-word [
-                    fail/where [
+                    fail:blame [
                         "Refinements now *are* the arguments:" mold head spec
-                    ] 'spec
+                    ] $spec
                 ]
 
                 ; Feed through any TEXT!s following the ANY-WORD!
@@ -774,18 +773,18 @@ modernize-action: func3 [
                     if (tail? spec: my next) [break]
                     text? spec.1
                 ][
-                    keep3/only spec.1
+                    keep3:only spec.1
                 ]
 
                 if spec.1 = [nihil?] [
-                    keep3/only []  ; old cue for invisibility
+                    keep3:only []  ; old cue for invisibility
                     spec: my next
                     continue
                 ]
 
                 if types: match block! spec.1 [
                     types: modernize-typespec types
-                    keep3/only types
+                    keep3:only types
                     spec: my next
                     continue
                 ]
@@ -795,7 +794,7 @@ modernize-action: func3 [
                 continue
             ]
 
-            keep3/only spec.1
+            keep3:only spec.1
             spec: my next
         ]
     ]
@@ -816,26 +815,26 @@ modernize-action: func3 [
     return reduce [new-spec new-body]
 ]
 
-func: adapt get $func3 [set [spec body] modernize-action spec body]
-lambda: func3 [spec body] [
+/func: adapt func3/ [set [spec body] modernize-action spec body]
+/lambda: func3 [spec body] [
     set [spec body] modernize-action spec body
     if not tail? next find spec <local> [
         fail "Lambda bootstrap doesn't support <local>"
     ]
     take find spec <local>
-    make action! compose3/only [(spec) (body)]  ; gets no RETURN
+    make action! compose3:only [(spec) (body)]  ; gets no RETURN
 ]
 
-function: does [
-    fail "gathering FUNCTION deprecated (will be synonym for FUNC, eventually)"
+/function: func3 [] [
+    fail:blame "FUNCTION deprecated (will be FUNC synonym, eventually)" $return
 ]
 
-meth: enfix adapt get $lib/meth [set [spec body] modernize-action spec body]
-method: func3 [] [
-    fail/where "METHOD deprecated temporarily, use METH" 'return
+/meth: enfix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
+/method: func3 [] [
+    fail:blame "METHOD deprecated temporarily, use METH" $return
 ]
 
-mold: adapt get $lib/mold [  ; update so MOLD SPREAD works
+/mold: adapt mold3/ [  ; update so MOLD SPREAD works
     if all [
         block? value
         #splice! = first value
@@ -845,7 +844,7 @@ mold: adapt get $lib/mold [  ; update so MOLD SPREAD works
     ]
 ]
 
-noquote: func3 [x [~null~ any-value!]] [
+/noquote: func3 [x [~null~ any-value!]] [
     assert [not action? get $x]
     switch type of x [
         lit-word! [return to word! x]
@@ -859,7 +858,7 @@ noquote: func3 [x [~null~ any-value!]] [
 ;
 ; https://forum.rebol.info/t/1813
 ;
-apply: func3 [
+/apply: func3 [
     action [action!]
     args [block!]
     <local> f params result pos
@@ -870,9 +869,9 @@ apply: func3 [
     ; Get all the normal parameters applied
     ;
     result: _
-    while [all [:params.1, not refinement3? :params.1]] [
+    while [all [params.1, not refinement3? params.1]] [
         args: evaluate/set args 'result
-        f.(to word! :params.1): :result
+        f.(to word! params.1): :result
         params: next params
     ]
 
@@ -883,7 +882,7 @@ apply: func3 [
         pos: find params to refinement3! args.1 else [
             fail ["Unknown refinement" args.1]
         ]
-        args: evaluate/set (next args) 'result
+        args: evaluate:set (next args) 'result
         any [
             not :pos.2
             refinement3? pos.2  ; old refinement in params block
@@ -921,7 +920,7 @@ apply: func3 [
 
 ; For commentary purposes, e.g. old-append: runs lib.append
 ;
-runs: func3 [action [~void~ action!]] [
+/runs: func3 [action [~void~ action!]] [
     if void? action [return null]
     return action
 ]
@@ -932,7 +931,7 @@ runs: func3 [action [~void~ action!]] [
 ; context or lib have to be mentioned explicitly inside the block.  If you
 ; want to bind to an object as well, name it with a GET-WORD!.
 ;
-cscape-inside: func3 [
+/cscape-inside: func3 [
     return: [block!]
     template [block!]
     code [block!]
