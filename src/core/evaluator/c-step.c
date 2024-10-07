@@ -1026,10 +1026,10 @@ Bounce Stepper_Executor(Level* L)
       case REB_PATH: {
         bool slash_at_head;
         bool slash_at_tail;
-        Heart heart = maybe Try_Get_Sequence_Singleheart(
+        Heart path_heart = maybe Try_Get_Sequence_Singleheart(
             &slash_at_head, L_current
         );
-        switch (heart) {
+        switch (path_heart) {
           case REB_0: {
             Copy_Sequence_At(SPARE, L_current, 0);
             if (Any_Inert(SPARE)) {
@@ -1054,9 +1054,29 @@ Bounce Stepper_Executor(Level* L)
             slash_at_tail = true;
             break; }
 
-          case REB_CHAIN:  // /abc: or abc:/
-            if (slash_at_head)
-                fail ("Coming soon: chains in paths");
+          case REB_CHAIN:  // /abc: or /abc:def or abc:def/ or /abc.def: ...
+            if (slash_at_head) {
+                Unpath(CURRENT);
+                bool colon_at_head;
+                Option(Heart) chain_heart = Try_Get_Sequence_Singleheart(
+                    &colon_at_head, L_current
+                );
+                if (colon_at_head)
+                    fail ("No evaluator meaning for /:xxx at this time");
+                if (chain_heart == REB_WORD) {
+                    Unchain(CURRENT);
+                    Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+                    STATE = ST_STEPPER_SET_WORD;
+                    goto handle_generic_set;
+                }
+                if (chain_heart == REB_TUPLE) {
+                    Unchain(CURRENT);
+                    Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+                    STATE = ST_STEPPER_SET_TUPLE;
+                    goto handle_generic_set;
+                }
+                fail ("Unknown evaluator case for /xxx:...");
+            }
             slash_at_tail = true;
             break;
 
@@ -1154,11 +1174,13 @@ Bounce Stepper_Executor(Level* L)
         else {
             Decay_If_Unstable(OUT);  // !!! should likely pass through packs
 
-            if (  // !!! Review: When to update labels?  Use tuple word?
-                Is_Action(OUT)
-                and STATE == ST_STEPPER_SET_WORD
-            ){
-                INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
+            if (Is_Action(OUT)) {  // !!! Review: When to update labels?
+                if (STATE == ST_STEPPER_SET_WORD)
+                    INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
+            }
+            else {  // assignments of /foo: or /obj.field: require action
+                if (Get_Cell_Flag(L_current, CURRENT_NOTE_SET_ACTION))
+                    fail ("/word: and /obj.field: assignments need action");
             }
 
             if (Set_Var_Core_Throws(  // cheaper on fail vs. Set_Var_May_Fail()

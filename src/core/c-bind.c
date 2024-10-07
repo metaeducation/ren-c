@@ -59,7 +59,7 @@ void Bind_Values_Inner_Loop(
                 add_midstream_types == SYM_ANY
                 or (
                     add_midstream_types == SYM_SET
-                    and Is_Like_Set_Word(v)
+                    and Is_Set_Word(v)
                 )
             ){
                 Init_Nothing(Append_Context_Bind_Word(context, v));
@@ -86,7 +86,7 @@ void Bind_Values_Inner_Loop(
                 add_midstream_types == SYM_ANY
                 or (
                     add_midstream_types == SYM_SET
-                    and Is_Like_Set_Word(v)
+                    and Is_Set_Word(v)
                 )
             ){
                 //
@@ -423,7 +423,7 @@ Option(Stub*) Get_Word_Container(
 
         if (  // some USEs only affect SET-WORD!s
             Get_Cell_Flag(Stub_Cell(c), USE_NOTE_SET_WORDS)
-            and not Is_Like_Set_Word(any_word)
+            and not Is_Set_Word(any_word)
         ){
             goto next_context;
         }
@@ -631,12 +631,12 @@ DECLARE_NATIVE(let)
     if (bindings and Not_Node_Managed(bindings))
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
-    if (Cell_Heart(vars) == REB_WORD or Is_Like_Set_Word(vars)) {
+    if (Is_Word(vars) or Is_Set_Word(vars)) {
         const Symbol* symbol = Cell_Word_Symbol(vars);
         bindings = Make_Let_Variable(symbol, bindings);
 
         Value* where;
-        if (Is_Like_Set_Word(vars)) {
+        if (Is_Set_Word(vars)) {
             STATE = ST_LET_EVAL_STEP;
             where = stable_SPARE;
         }

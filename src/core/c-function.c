@@ -254,7 +254,7 @@ void Push_Keys_And_Parameters_May_Fail(
                         h == REB_WORD
                     ){
                         refinement = true;
-                        symbol = VAL_REFINEMENT_SYMBOL(item);
+                        symbol = Cell_Refinement_Symbol(item);
                         if (heart == REB_META_PATH) {
                             if (not quoted)
                                 pclass = PARAMCLASS_META;

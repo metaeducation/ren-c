@@ -182,8 +182,6 @@ DECLARE_NATIVE(lambda)
                 fail (item);
             if (Cell_Heart(item) == REB_WORD)
                 pclass = PARAMCLASS_JUST;
-            else if (Is_Like_Get_Word(item))
-                pclass = PARAMCLASS_SOFT;
             else
                 fail (item);
             symbol = Cell_Word_Symbol(item);
@@ -194,7 +192,7 @@ DECLARE_NATIVE(lambda)
         }
         else if (Is_Refinement(item)) {
             pclass = PARAMCLASS_NORMAL;
-            symbol = VAL_REFINEMENT_SYMBOL(item);
+            symbol = Cell_Refinement_Symbol(item);
             param_flags |= PARAMETER_FLAG_REFINEMENT;
             param_flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }

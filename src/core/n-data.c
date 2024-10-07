@@ -1789,7 +1789,7 @@ bool Set_Var_Core_Updater_Throws(
         }
         else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
-            if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
+            if (Get_Cell_Flag(var, LEADING_BLANK))  // `/a` or `.a`
                goto set_target;
 
             // `a/` or `a.`
@@ -2532,7 +2532,7 @@ DECLARE_NATIVE(as)
               case FLAVOR_SYMBOL: {
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Flex_Len(a, 2);
-                if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
+                if (Get_Cell_Flag(v, LEADING_BLANK)) {
                     Init_Blank(Array_At(a, 0));
                     Copy_Cell(Array_At(a, 1), v);
                     HEART_BYTE(Array_At(a, 1)) = REB_WORD;
@@ -2552,7 +2552,7 @@ DECLARE_NATIVE(as)
                     Array* two = Make_Array(2);
                     Set_Flex_Len(two, 2);
                     Cell* tweak;
-                    if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
+                    if (Get_Cell_Flag(v, LEADING_BLANK)) {
                         Init_Blank(Array_At(two, 0));
                         tweak = Copy_Cell(Array_At(two, 1), v);
                     }
@@ -2561,7 +2561,7 @@ DECLARE_NATIVE(as)
                         Init_Blank(Array_At(two, 1));
                     }
                     HEART_BYTE(tweak) = MIRROR_BYTE(a);
-                    Clear_Cell_Flag(tweak, REFINEMENT_LIKE);
+                    Clear_Cell_Flag(tweak, LEADING_BLANK);
                     Init_Block(v, two);
                 }
                 else {

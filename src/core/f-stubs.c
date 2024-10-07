@@ -508,13 +508,13 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 
 
 //
-//  Trap_Unchain: C
+//  Trap_Unsingleheart: C
 //
-// Evolve a cell containing a chain that's just an element and a blank into
+// Evolve a cell containing a sequence that's just an element and a blank into
 // the element alone, e.g. `a:` -> `a` or `:[a b]` -> `[a b]`
 //
-Option(Error*) Trap_Unchain(Element* out) {
-    assert(Any_Chain_Kind(Cell_Heart(out)));
+Option(Error*) Trap_Unsingleheart(Element* out) {
+    assert(Any_Sequence_Kind(Cell_Heart(out)));
     assert(Get_Cell_Flag(out, SEQUENCE_HAS_NODE));  // not compressed bytes
 
     const Node* node1 = Cell_Node1(out);
@@ -537,14 +537,14 @@ Option(Error*) Trap_Unchain(Element* out) {
     const Stub* s = c_cast(Stub*, node1);
     if (Is_Stub_Symbol(s)) {
         HEART_BYTE(out) = REB_WORD;
-        Clear_Cell_Flag(out, REFINEMENT_LIKE);  // !!! necessary?
+        Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary?
         return nullptr;
     }
 
     Heart h = u_cast(Heart, MIRROR_BYTE(s));
     if (h != REB_0) {  // no length 2 sequence arrays unless mirror
         HEART_BYTE(out) = h;
-        Clear_Cell_Flag(out, REFINEMENT_LIKE);  // !!! necessary
+        Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary
         return nullptr;
     }
 
@@ -554,19 +554,6 @@ Option(Error*) Trap_Unchain(Element* out) {
         "Can only UNCHAIN length 2 chains (when 1 item is blank)"
     );
 }}
-
-
-//
-//  Unchain: C
-//
-// Version of Unchain when you don't expect it to fail.
-//
-Element* Unchain(Element* out) {
-    Option(Error*) error = Trap_Unchain(out);
-    assert(not error);
-    UNUSED(error);
-    return out;
-}
 
 
 //
@@ -595,7 +582,7 @@ DECLARE_NATIVE(setify)
 //
 Element* Getify(Element* out) {  // called on stack values; can't call eval
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        out, REB_CHAIN, CELL_FLAG_REFINEMENT_LIKE
+        out, REB_CHAIN, CELL_FLAG_LEADING_BLANK
     );
     if (error)
         fail (unwrap error);
@@ -784,7 +771,7 @@ DECLARE_NATIVE(unchain)
 
     Element* e = cast(Element*, ARG(chain));
 
-    Option(Error*) error = Trap_Unchain(e);
+    Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
         return RAISE(unwrap error);
 

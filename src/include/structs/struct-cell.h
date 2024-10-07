@@ -241,7 +241,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // This flag is used for one bit that is custom to the datatype, and is
 // persisted when the cell is copied.
 //
-// CELL_FLAG_REFINEMENT_LIKE (for ANY-SEQUENCE?)
+// CELL_FLAG_LEADING_BLANK (for ANY-SEQUENCE?)
 //
 // 2-element sequences can be stored in an optimized form if one of the two
 // elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
@@ -253,7 +253,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_FLAG_TYPE_SPECIFIC \
     FLAG_LEFT_BIT(25)
 
-#define CELL_FLAG_REFINEMENT_LIKE   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE?
+#define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE?
 
 #define CELL_FLAG_ENFIX_FRAME   CELL_FLAG_TYPE_SPECIFIC  // FRAME!
 
@@ -294,6 +294,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_FLAG_FEED_NOTE_META CELL_FLAG_NOTE
 #define CELL_FLAG_USE_NOTE_SET_WORDS CELL_FLAG_NOTE
 #define CELL_FLAG_VAR_NOTE_ACCESSOR CELL_FLAG_NOTE
+#define CELL_FLAG_CURRENT_NOTE_SET_ACTION CELL_FLAG_NOTE
 
 
 //=//// CELL_FLAG_NEWLINE_BEFORE //////////////////////////////////////////=//

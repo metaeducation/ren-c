@@ -319,7 +319,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
         Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
             cast(Element*, stable_OUT),
             heart,
-            CELL_FLAG_REFINEMENT_LIKE
+            CELL_FLAG_LEADING_BLANK
         );
         if (error)
             return RAISE(unwrap error);

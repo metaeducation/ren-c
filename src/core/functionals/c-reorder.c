@@ -158,7 +158,7 @@ DECLARE_NATIVE(reorder)
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Refinement(item)) {
-            symbol = VAL_REFINEMENT_SYMBOL(item);
+            symbol = Cell_Refinement_Symbol(item);
             ignore = true;  // to use a refinement, don't /refine it
         }
         else if (Is_Quoted(item)) {

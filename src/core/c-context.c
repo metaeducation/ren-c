@@ -412,14 +412,18 @@ static void Collect_Inner_Loop(
     const Element* head,
     const Element* tail
 ){
-    const Element* v = head;
-    for (; v != tail; ++v) {
-        if (
-            Is_Set_Word(v)
-            or ((flags & COLLECT_ANY_WORD) and Any_Wordlike(v))
-        ){
-            const Symbol* symbol = Cell_Word_Symbol(v);
+    const Element* e = head;
+    for (; e != tail; ++e) {
+        const Symbol* symbol;
 
+        if (
+            (symbol = maybe Try_Get_Settable_Word_Symbol(e))
+            or (
+                (flags & COLLECT_ANY_WORD)
+                and Any_Wordlike(e)
+                and (symbol = Cell_Word_Symbol(e))
+            )
+        ){
             if (cl->sea) {
                 bool strict = true;
                 if (MOD_VAR(unwrap cl->sea, symbol, strict))
@@ -445,9 +449,9 @@ static void Collect_Inner_Loop(
             continue;
         }
 
-        if (Is_Set_Block(v)) {  // `[[a b] ^c :d (e)]:` collects all but E
+        if (Is_Set_Block(e)) {  // `[[a b] ^c :d (e)]:` collects all but E
             const Element* sub_tail;
-            const Element* sub_at = Cell_List_At(&sub_tail, v);
+            const Element* sub_at = Cell_List_At(&sub_tail, e);
             Collect_Inner_Loop(
                 cl,
                 COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS,
@@ -458,14 +462,14 @@ static void Collect_Inner_Loop(
         }
 
         if (
-            not ((flags & COLLECT_ANY_LIST_DEEP) and Any_List(v))  // !!! paths? [1]
-            and not ((flags & COLLECT_DEEP_BLOCKS) and Is_Block(v))
+            not ((flags & COLLECT_ANY_LIST_DEEP) and Any_List(e))  // !!! [1]
+            and not ((flags & COLLECT_DEEP_BLOCKS) and Is_Block(e))
         ){
             continue;
         }
 
         const Element* sub_tail;
-        const Element* sub_at = Cell_List_At(&sub_tail, v);
+        const Element* sub_at = Cell_List_At(&sub_tail, e);
         Collect_Inner_Loop(cl, flags, sub_at, sub_tail);
     }
 }

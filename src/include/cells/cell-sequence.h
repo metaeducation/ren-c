@@ -93,7 +93,7 @@
 //   - Pair compression has the first node with NODE_FLAG_CELL
 //
 //   - Single WORD! forms have the first node as FLAVOR_SYMBOL
-//        If CELL_FLAG_REFINEMENT_LIKE it is either a `/foo` or `.foo` case
+//        If CELL_FLAG_LEADING_BLANK it is either a `/foo` or `.foo` case
 //        Without the flag, it is either a `foo/` or `foo.` case
 //
 //   - Uncompressed forms have the first node as FLAVOR_ARRAY
@@ -194,7 +194,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     Heart heart,
     Flags flag
 ){
-    assert(flag == CELL_MASK_0 or flag == CELL_FLAG_REFINEMENT_LIKE);
+    assert(flag == CELL_MASK_0 or flag == CELL_FLAG_LEADING_BLANK);
     assert(Any_Sequence_Kind(heart));
 
     Option(Error*) error = Trap_Check_Sequence_Element(heart, e);
@@ -228,7 +228,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     }
 
     Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);
-    if (flag == CELL_FLAG_REFINEMENT_LIKE) {
+    if (flag == CELL_FLAG_LEADING_BLANK) {
         Init_Blank(Pairing_First(p));
         Copy_Cell(Pairing_Second(p), e);
     }
@@ -366,7 +366,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     if (Is_Blank(first)) {  // try optimize e.g. `/a` or `.a` or `:a` etc.
         Copy_Cell(out, second);
         return Trap_Blank_Head_Or_Tail_Sequencify(
-            out, heart, CELL_FLAG_REFINEMENT_LIKE
+            out, heart, CELL_FLAG_LEADING_BLANK
         );
     }
     else if (Is_Blank(second)) {
@@ -631,7 +631,7 @@ INLINE Element* Derelativize_Sequence_At(
     switch (Stub_Flavor(x_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
-        if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
+        if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
             return Init_Blank(out);
 
         Derelativize(out, sequence, context);  // [2]
@@ -643,7 +643,7 @@ INLINE Element* Derelativize_Sequence_At(
         const Array* a = c_cast(Array*, Cell_Node1(sequence));
         if (MIRROR_BYTE(a) != REB_0) {  // [4]
             assert(n < 2);
-            if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
+            if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
                 return Init_Blank(out);
 
             Derelativize(out, sequence, context);
@@ -774,7 +774,7 @@ INLINE Element* Init_Set_Word(Sink(Element*) out, const Symbol* s) {
 INLINE Element* Init_Get_Word(Sink(Element*) out, const Symbol* s) {
     Init_Word(out, s);
     HEART_BYTE(out) = REB_CHAIN;
-    Set_Cell_Flag(out, REFINEMENT_LIKE);
+    Set_Cell_Flag(out, LEADING_BLANK);
     return out;
 }
 
@@ -803,21 +803,21 @@ INLINE Option(Heart) Try_Get_Sequence_Singleheart(
 
     const Stub* s = u_cast(const Stub*, Cell_Node1(c));
     if (Stub_Flavor(s) == FLAVOR_SYMBOL) {
-        *leading_blank = did (c->header.bits & CELL_FLAG_REFINEMENT_LIKE);
+        *leading_blank = did (c->header.bits & CELL_FLAG_LEADING_BLANK);
         return REB_WORD;
     }
 
     Heart h = u_cast(Heart, MIRROR_BYTE(s));
     if (h == REB_0)  // s actually is the sequence elements, not one element
         return REB_0;
-    *leading_blank = did (c->header.bits & CELL_FLAG_REFINEMENT_LIKE);
+    *leading_blank = did (c->header.bits & CELL_FLAG_LEADING_BLANK);
     return h;
 }
 
 
 // GET-WORD! and SET-WORD!
 
-INLINE bool Is_Like_Get_Word(const Cell* c) {
+INLINE bool Is_Get_Word_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -827,9 +827,9 @@ INLINE bool Is_Like_Get_Word(const Cell* c) {
 }
 
 INLINE bool Is_Get_Word(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Get_Word(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Word_Cell(v); }
 
-INLINE bool Is_Like_Set_Word(const Cell* c) {
+INLINE bool Is_Set_Word_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -839,12 +839,41 @@ INLINE bool Is_Like_Set_Word(const Cell* c) {
 }
 
 INLINE bool Is_Set_Word(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Set_Word(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Set_Word_Cell(v); }
+
+
+// The new /foo: assignment form ensures that the thing being assigned is
+// an action.  Places that want to see this as a SET-WORD! (like WRAP) tend
+// to be doing so because they want a symbol.  This is a combined interface
+// that subsumes testing for both foo: and /foo: and gives the symbol.
+//
+INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(const Element* e) {
+    if (QUOTE_BYTE(e) != NOQUOTE_1)
+        return nullptr;
+    if (Is_Set_Word_Cell(e))
+        return Cell_Word_Symbol(e);
+    if (HEART_BYTE(e) != REB_PATH)
+        return nullptr;
+    bool leading_slash;
+    Option(Heart) path_heart = Try_Get_Sequence_Singleheart(&leading_slash, e);
+    if (not leading_slash or path_heart != REB_CHAIN)
+        return nullptr;
+    DECLARE_ELEMENT (temp);  // !!! should be able to optimize and not need this
+    Copy_Sequence_At(temp, e, 1);
+    assert(Is_Chain(temp));
+    bool leading_colon;
+    Option(Heart) chain_heart = Try_Get_Sequence_Singleheart(
+        &leading_colon, temp
+    );
+    if (leading_colon or chain_heart != REB_WORD)
+        return nullptr;
+    return Cell_Word_Symbol(temp);
+}
 
 
 // GET-TUPLE! and SET-TUPLE!
 
-INLINE bool Is_Like_Get_Tuple(const Cell* c) {
+INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -854,9 +883,9 @@ INLINE bool Is_Like_Get_Tuple(const Cell* c) {
 }
 
 INLINE bool Is_Get_Tuple(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Get_Tuple(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Tuple_Cell(v); }
 
-INLINE bool Is_Like_Set_Tuple(const Cell* c) {
+INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -866,12 +895,12 @@ INLINE bool Is_Like_Set_Tuple(const Cell* c) {
 }
 
 INLINE bool Is_Set_Tuple(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Set_Tuple(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Set_Tuple_Cell(v); }
 
 
 // GET-BLOCK! and SET-BLOCK!
 
-INLINE bool Is_Like_Get_Block(const Cell* c) {
+INLINE bool Is_Get_Block_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -881,9 +910,9 @@ INLINE bool Is_Like_Get_Block(const Cell* c) {
 }
 
 INLINE bool Is_Get_Block(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Get_Block(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Block_Cell(v); }
 
-INLINE bool Is_Like_Set_Block(const Cell* c) {
+INLINE bool Is_Set_Block_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -893,12 +922,12 @@ INLINE bool Is_Like_Set_Block(const Cell* c) {
 }
 
 INLINE bool Is_Set_Block(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Set_Block(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Set_Block_Cell(v); }
 
 
 // GET-GROUP! and SET-GROUP!
 
-INLINE bool Is_Like_Get_Group(const Cell* c) {
+INLINE bool Is_Get_Group_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -908,9 +937,9 @@ INLINE bool Is_Like_Get_Group(const Cell* c) {
 }
 
 INLINE bool Is_Get_Group(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Get_Group(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Group_Cell(v); }
 
-INLINE bool Is_Like_Set_Group(const Cell* c) {
+INLINE bool Is_Set_Group_Cell(const Cell* c) {
     bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
@@ -920,7 +949,7 @@ INLINE bool Is_Like_Set_Group(const Cell* c) {
 }
 
 INLINE bool Is_Set_Group(const Value* v)
-  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Like_Set_Group(v); }
+  { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Set_Group_Cell(v); }
 
 
 INLINE bool Any_Set_Value(const Value* v) {  // !!! optimize?
@@ -945,18 +974,48 @@ INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
 
 INLINE Element* Refinify(Element* e) {
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        e, REB_CHAIN, CELL_FLAG_REFINEMENT_LIKE
+        e, REB_CHAIN, CELL_FLAG_LEADING_BLANK
     );
     if (error)
         fail (unwrap error);
     return e;
 }
 
-#define IS_REFINEMENT_CELL Is_Like_Get_Word
-
 #define Is_Refinement Is_Get_Word
 
-INLINE const Symbol* VAL_REFINEMENT_SYMBOL(const Cell* v) {
-    assert(Is_Like_Get_Word(v));
+INLINE const Symbol* Cell_Refinement_Symbol(const Cell* v) {
+    assert(Is_Get_Word_Cell(v));
     return Cell_Word_Symbol(v);
+}
+
+
+// Degrade in place, simple singular chains like [a b]: -> [a b], or :a -> a
+//
+INLINE Element* Unchain(Element* out) {
+    assert(Any_Chain(out));
+    Option(Error*) error = Trap_Unsingleheart(out);
+    assert(not error);
+    UNUSED(error);
+    return out;
+}
+
+
+// Degrade in-place, simple singular paths like [a b]/ -> [a b], or /a -> a
+//
+INLINE Element* Unpath(Element* out) {
+    assert(Any_Path(out));
+    Option(Error*) error = Trap_Unsingleheart(out);
+    assert(not error);
+    UNUSED(error);
+    return out;
+}
+
+// Degrade in-place, simple singular tuples like [a b]. -> [a b], or .a -> a
+//
+INLINE Element* Untuple(Element* out) {
+    assert(Any_Tuple(out));
+    Option(Error*) error = Trap_Unsingleheart(out);
+    assert(not error);
+    UNUSED(error);
+    return out;
 }
