@@ -307,6 +307,9 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     for (Offset i = 0; i < utf8_size; ++i) {
         assert(not Is_Lex_Whitespace(utf8[i]));  // spaces/newlines illegal
 
+        if (utf8[i] == 0xC2 and utf8[i + 1] == 0xA0)
+            fail ("Non-breaking space illegal in WORD!");
+
         assert(
             utf8[i] != '$'
             and utf8[i] != '@'
