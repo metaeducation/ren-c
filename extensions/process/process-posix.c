@@ -10,7 +10,7 @@ static void kill_process(pid_t pid, int signal);
 #if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 
 //
-//  get-pid: native [
+//  /get-pid: native [
 //
 //  "Get ID of the process"
 //
@@ -27,7 +27,7 @@ DECLARE_NATIVE(get_pid)
 
 
 //
-//  get-uid: native [
+//  /get-uid: native [
 //
 //  "Get real user ID of the process"
 //
@@ -43,7 +43,7 @@ DECLARE_NATIVE(get_uid)
 
 
 //
-//  get-euid: native [
+//  /get-euid: native [
 //
 //  "Get effective user ID of the process"
 //
@@ -59,7 +59,7 @@ DECLARE_NATIVE(get_euid)
 
 
 //
-//  get-gid: native [
+//  /get-gid: native [
 //
 //  "Get real group ID of the process"
 //
@@ -75,7 +75,7 @@ DECLARE_NATIVE(get_gid)
 
 
 //
-//  get-egid: native [
+//  /get-egid: native [
 //
 //  "Get effective group ID of the process"
 //
@@ -91,7 +91,7 @@ DECLARE_NATIVE(get_egid)
 
 
 //
-//  set-uid: native [
+//  /set-uid: native [
 //
 //  "Set real user ID of the process"
 //
@@ -122,7 +122,7 @@ DECLARE_NATIVE(set_uid)
 
 
 //
-//  set-euid: native [
+//  /set-euid: native [
 //
 //  "Get effective user ID of the process"
 //
@@ -153,7 +153,7 @@ DECLARE_NATIVE(set_euid)
 
 
 //
-//  set-gid: native [
+//  /set-gid: native [
 //
 //  "Set real group ID of the process"
 //
@@ -184,7 +184,7 @@ DECLARE_NATIVE(set_gid)
 
 
 //
-//  set-egid: native [
+//  /set-egid: native [
 //
 //  "Get effective group ID of the process"
 //
@@ -216,15 +216,15 @@ DECLARE_NATIVE(set_egid)
 
 
 //
-//  send-signal: native [
+//  /send-signal: native [
 //
 //  "Send signal to a process"
 //
 //      return: [~]  ; !!! might this return pid or signal (?)
-//      pid [integer!]
-//          {The process ID}
-//      signal [integer!]
-//          {The signal number}
+//      pid "The process ID"
+//          [integer!]
+//      signal "The signal number"
+//          [integer!]
 //  ]
 //
 DECLARE_NATIVE(send_signal)

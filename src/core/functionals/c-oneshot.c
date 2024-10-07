@@ -85,7 +85,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 
 
 //
-//  do-branch: native [
+//  /do-branch: native [
 //
 //  "Sample Interface for a Simplified EVAL that just runs a Branch"
 //
@@ -109,7 +109,7 @@ DECLARE_NATIVE(do_branch)
 
 
 //
-//  n-shot: native [
+//  /n-shot: native [
 //
 //  "Create an EVAL variant that executes what it's given for N times"
 //

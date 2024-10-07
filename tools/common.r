@@ -440,6 +440,9 @@ export stripload: func [
                     continue
                 ]
                 str: copy:part t colon-pos
+                if not parse3:match str [some "/"] [  ; symbols like ///:
+                    if str.1 = #"/" [str: next str]  ; /foo: -> foo as name
+                ]
                 all [
                     not find str ";"
                     not find str "{"

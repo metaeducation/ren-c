@@ -1316,7 +1316,7 @@ REBTYPE(List)
 
 
 //
-//  blockify: native [
+//  /blockify: native [
 //
 //  "If a value isn't already a BLOCK!, enclose it in a block, else return it"
 //
@@ -1349,7 +1349,7 @@ DECLARE_NATIVE(blockify)
 
 
 //
-//  groupify: native [
+//  /groupify: native [
 //
 //  "If a value isn't already a GROUP!, enclose it in a group, else return it"
 //
@@ -1382,7 +1382,7 @@ DECLARE_NATIVE(groupify)
 
 
 //
-//  enblock: native [
+//  /enblock: native [
 //
 //  "Enclose a value in a BLOCK!, even if it's already a block"
 //
@@ -1413,7 +1413,7 @@ DECLARE_NATIVE(enblock)
 
 
 //
-//  engroup: native [
+//  /engroup: native [
 //
 //  "Enclose a value in a GROUP!, even if it's already a group"
 //
@@ -1444,7 +1444,7 @@ DECLARE_NATIVE(engroup)
 
 
 //
-//  glom: native [
+//  /glom: native [
 //
 //  "Efficient destructive appending operation that will reuse appended memory"
 //

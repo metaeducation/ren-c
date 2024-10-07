@@ -1033,7 +1033,7 @@ static Bounce UDP_Actor(Level* level_, Value* port, const Symbol* verb)
 
 
 //
-//  export get-tcp-actor-handle: native [
+//  /get-tcp-actor-handle: native [
 //
 //  "Retrieve handle to the native actor for TCP"
 //
@@ -1050,7 +1050,7 @@ DECLARE_NATIVE(get_tcp_actor_handle)
 
 
 //
-//  export get-udp-actor-handle: native [
+//  /get-udp-actor-handle: native [
 //
 //  "Retrieve handle to the native actor for UDP"
 //
@@ -1095,7 +1095,7 @@ void halt_poll_timer_callback(uv_timer_t* handle) {
 
 
 //
-//  startup*: native [
+//  /startup*: native [
 //
 //  "Initialize Network Extension (e.g. call WSAStartup() on Windows)"
 //
@@ -1139,7 +1139,7 @@ DECLARE_NATIVE(startup_p)
 
 
 //
-//  shutdown*: native [
+//  /shutdown*: native [
 //
 //  "Shutdown Network Extension"
 //
@@ -1162,7 +1162,7 @@ DECLARE_NATIVE(shutdown_p)
 
 
 //
-//  export wait*: native [
+//  export /wait*: native [
 //
 //  "Waits for a duration, port, or both"
 //

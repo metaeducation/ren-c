@@ -45,7 +45,7 @@ REBOL [
     }
 ]
 
-reflect: generic [
+/reflect: generic [
     "Returns specific details about a value (used by OF, e.g. LENGTH OF)"
     return: [any-value?]
     value [any-value?]
@@ -56,42 +56,42 @@ reflect: generic [
 
 ; Binary Math & Logic
 
-add: generic [
+/add: generic [
     "Returns the addition of two values"
     return: [char? any-scalar? date! binary!]
     value1 [char? any-scalar? date! binary!]
     value2 [char? any-scalar? date!]
 ]
 
-subtract: generic [
+/subtract: generic [
     "Returns the second value subtracted from the first"
     return: [char? any-scalar? date! binary!]
     value1 [char? any-scalar? date! binary!]
     value2 [char? any-scalar? date!]
 ]
 
-multiply: generic [
+/multiply: generic [
     "Returns the first value multiplied by the second"
     return: [char? any-scalar?]
     value1 [char? any-scalar?]
     value2 [char? any-scalar?]
 ]
 
-divide: generic [
+/divide: generic [
     "Returns the first value divided by the second"
     return: [char? any-scalar?]
     value1 [char? any-scalar?]
     value2 [char? any-scalar?]
 ]
 
-remainder: generic [
+/remainder: generic [
     "Returns the remainder of first value divided by second"
     return: [char? any-scalar?]
     value1 [char? any-scalar?]
     value2 [char? any-scalar?]
 ]
 
-power: generic [
+/power: generic [
     "Returns the first number raised to the second number"
     return: [any-number?]
     number [any-number?]
@@ -99,28 +99,28 @@ power: generic [
 ]
 
 
-bitwise-and: generic [
+/bitwise-and: generic [
     "Bitwise AND of two values"
     return: [logic? integer! char? tuple! binary!]
     value1 [logic? integer! char? tuple! binary!]
     value2 [logic? integer! char? tuple! binary!]
 ]
 
-bitwise-or: generic [
+/bitwise-or: generic [
     "Bitwise OR of two values"
     return: [logic? integer! char? tuple! binary!]
     value1 [logic? integer! char? tuple! binary!]
     value2 [logic? integer! char? tuple! binary!]
 ]
 
-bitwise-xor: generic [
+/bitwise-xor: generic [
     "Bitwise XOR of two values"
     return: [logic? integer! char? tuple! binary!]
     value1 [logic? integer! char? tuple! binary!]
     value2 [logic? integer! char? tuple! binary!]
 ]
 
-bitwise-and-not: generic [
+/bitwise-and-not: generic [
     "Bitwise AND NOT of two values"
     return: [logic? integer! char? tuple! binary!]
     value1 [logic? integer! char? tuple! binary!]
@@ -128,7 +128,7 @@ bitwise-and-not: generic [
 ]
 
 
-intersect: generic [
+/intersect: generic [
     "Returns the intersection (AND) of two sets"
 
     return: [
@@ -151,7 +151,7 @@ intersect: generic [
         [integer!]
 ]
 
-union: generic [
+/union: generic [
     "Returns the union (OR) of two sets"
 
     return: [
@@ -174,7 +174,7 @@ union: generic [
         [integer!]
 ]
 
-difference: generic [
+/difference: generic [
     "Returns the special difference (XOR) of two sets"
 
     return: [
@@ -200,7 +200,7 @@ difference: generic [
         [integer!]
 ]
 
-exclude: generic [
+/exclude: generic [
     "Returns the first data set less the second data set"
 
     return: [any-list? any-string? binary! bitset!]
@@ -216,25 +216,25 @@ exclude: generic [
 
 ; Unary
 
-negate: generic [
+/negate: generic [
     "Changes the sign of a number (see COMPLEMENT for inversion of sets)"
     return: [any-number? pair! money! time!]
     number [any-number? pair! money! time!]
 ]
 
-bitwise-not: generic [
+/bitwise-not: generic [
     "Returns the one's complement value"
     return: [logic? integer! tuple! binary!]
     value [logic? integer! tuple! binary!]
 ]
 
-complement: generic [
+/complement: generic [
     "Returns the inversion of a set"
     return: [bitset!]
     value [bitset!]
 ]
 
-unique: generic [
+/unique: generic [
     "Returns the data set with duplicates removed"
 
     return: [any-list? any-string? binary! bitset!]
@@ -245,13 +245,13 @@ unique: generic [
         [integer!]
 ]
 
-absolute: generic [
+/absolute: generic [
     "Returns the absolute value"
     return: [any-number? pair! money! time!]
     value [any-number? pair! money! time!]
 ]
 
-round: generic [
+/round: generic [
     "Rounds a numeric value; halves round up (away from zero) by default"
 
     return: [any-number? pair! money! time!]
@@ -267,7 +267,7 @@ round: generic [
     :half-ceiling "Halves round in positive direction"
 ]
 
-random: generic [
+/random: generic [
     "Returns a random value of the same datatype; or shuffles series"
     return: [~ element?]  ; !!! returns nothing if /SEED, should be RANDOMIZE?
     value "Maximum value of result (modified when series)"
@@ -276,13 +276,13 @@ random: generic [
     :only "Pick a random value from a series"
 ]
 
-odd?: generic [
+/odd?: generic [
     "Returns OKAY if the number is odd"
     return: [logic?]
     number [any-number? char? date! money! time! pair!]
 ]
 
-even?: generic [
+/even?: generic [
     "Returns OKAY if the number is even"
     return: [logic?]
     number [any-number? char? date! money! time! pair!]
@@ -290,7 +290,7 @@ even?: generic [
 
 ; Series Navigation
 
-skip: generic [
+/skip: generic [
     "Returns the series forward or backward from the current position"
     return: "Input skipped by offset, or null if out of bounds"
         [~null~ any-series? port!]
@@ -299,7 +299,7 @@ skip: generic [
     :unbounded "Return out of bounds series if before tail or after head"
 ]
 
-at: generic [
+/at: generic [
     "Returns the series at the specified index"
     return: "Input at the given index, not clipped to head/tail by default"
         [~null~ any-series? port!]
@@ -310,7 +310,7 @@ at: generic [
 
 ; Series Search
 
-find: generic [
+/find: generic [
     "Searches for the position where a matching value is found"
 
     return: "position found and tail of find, else null"
@@ -326,7 +326,7 @@ find: generic [
     :match "Performs comparison and returns the tail of the match"
 ]
 
-select: generic [
+/select: generic [
     "Searches for a value; returns the value that follows, else null"
 
     return: [any-value?]
@@ -341,7 +341,7 @@ select: generic [
 ]
 
 
-pick*: generic [
+/pick*: generic [
     "Low-level hook for PICK, used also by TUPLE!"
 
     return: "PICK: the retrieved value"
@@ -353,7 +353,7 @@ pick*: generic [
 ]
 
 
-poke*: generic [
+/poke*: generic [
     "Low-level hook for POKE, used also by SET-TUPLE!"
 
     return: "Bits referencing cell must update (nullptr if no update needed)"
@@ -367,7 +367,7 @@ poke*: generic [
 ]
 
 
-protect*: generic [
+/protect*: generic [
     "Low-level hook for PROTECT, used as /UPDATER with SET"
 
     return: "Bits referencing cell must update (nullptr if no update needed)"
@@ -385,7 +385,7 @@ protect*: generic [
 ; be ideal, but it's something you can't do with path access, so adopting it
 ; for the time-being.  Only implemented for MAP!s at the moment
 ;
-put: generic [
+/put: generic [
     "Replaces the value following a key, and returns the new value"
     return: [element?]
     series [map!]
@@ -396,7 +396,7 @@ put: generic [
 
 ; Making, copying, modifying
 
-copy: generic [
+/copy: generic [
     "Copies a series, object, or other value"
 
     return: "Return type will match the input type"
@@ -409,7 +409,7 @@ copy: generic [
     ; Once had :TYPES, but that is disabled for now
 ]
 
-take: generic [
+/take: generic [
     "Removes and returns one or more elements"
 
     return: [any-value?]  ; !!! Variadic TAKE may evaluate, rethink
@@ -424,7 +424,7 @@ take: generic [
 ; !!! INSERT, APPEND, CHANGE expect to have compatible frames...same params
 ; at the same position, with same types!
 ;
-insert: generic [
+/insert: generic [
     "Inserts element(s); for series, returns just past the insert"
 
     return: "Just past the insert"
@@ -444,7 +444,7 @@ insert: generic [
 ; !!! INSERT, APPEND, CHANGE expect to have compatible frames...same params
 ; at the same position, with same types!
 ;
-append: generic [
+/append: generic [
     "Inserts element(s) at tail; for series, returns head"
 
     return: [any-series? port! map! object! module! bitset!]
@@ -462,7 +462,7 @@ append: generic [
 ; !!! INSERT, APPEND, CHANGE expect to have compatible frames...same params
 ; at the same position, with same types!
 ;
-change: generic [
+/change: generic [
     "Replaces element(s); returns just past the change"
 
     return: [any-series? port!]
@@ -477,7 +477,7 @@ change: generic [
     :line "Data should be its own line (use as formatting cue if ANY-LIST?)"
 ]
 
-remove: generic [
+/remove: generic [
     "Removes element(s); returns same position"
 
     return: [any-series? map! port! bitset!]
@@ -487,7 +487,7 @@ remove: generic [
         [any-number? any-series? pair! char?]
 ]
 
-clear: generic [
+/clear: generic [
     "Removes elements from current position to tail; returns at new tail"
 
     return: [any-series? port! map! bitset!]
@@ -495,7 +495,7 @@ clear: generic [
         [<maybe> any-series? port! map! bitset!]
 ]
 
-swap: generic [
+/swap: generic [
     "Swaps elements between two series or the same series"
 
     return: [any-series?]
@@ -503,7 +503,7 @@ swap: generic [
     series2 [any-series?] {At position (modified)}
 ]
 
-reverse: generic [
+/reverse: generic [
     "Reverses the order of elements; returns at same position"
 
     return: [any-series? any-sequence? pair!]
@@ -513,7 +513,7 @@ reverse: generic [
         [any-number? any-series?]
 ]
 
-sort: generic [
+/sort: generic [
     "Sorts a series; default sort order is ascending"
 
     return: [any-series?]
@@ -532,19 +532,19 @@ sort: generic [
 
 ; Port actions:
 
-create: generic [
+/create: generic [
     "Send port a create request"
     return: [port!]
     port [port! file! url! block!]
 ]
 
-delete: generic [
+/delete: generic [
     "Send port a delete request"
     return: [port!]
     port [port! file! url! block!]
 ]
 
-open: generic [
+/open: generic [
     "Opens a port; makes a new port from a specification if necessary"
 
     return: [port!]
@@ -554,20 +554,20 @@ open: generic [
     :write "Open for write access"
 ]
 
-connect: generic [
+/connect: generic [
     "Connects a port (used to be 'second open step')"
 
     return: [port!]
     spec [port!]
 ]
 
-close: generic [
+/close: generic [
     "Closes a port"  ; !!! Used to also close LIBRARY!
     return: [port!]  ; !!! Is returning the port useful?
     port [port!]
 ]
 
-read: generic [
+/read: generic [
     "Read from a file, URL, or other port"
     return: "null on (some) failures (REVIEW as part of port model review)" [
         ~null~ binary!  ; should all READ return a BINARY!?
@@ -586,7 +586,7 @@ read: generic [
     :lines "Convert to block of strings (implies /string)"
 ]
 
-write: generic [
+/write: generic [
     "Writes to a file, URL, or port - auto-converts text strings"
 
     return: [port! block!]  ; !!! http write returns BLOCK!, why?
@@ -601,14 +601,14 @@ write: generic [
     :lines "Write each value in a block as a separate line"
 ]
 
-query: generic [
+/query: generic [
     "Returns information about a port, file, or URL"
 
     return: [~null~ object!]
     target [port! file! url! block!]
 ]
 
-modify: generic [
+/modify: generic [
     "Change mode or control for port or file"
     return: [logic?]
         "TRUE if successful, FALSE if unsuccessful (!!! REVIEW)"
@@ -617,7 +617,7 @@ modify: generic [
     value
 ]
 
-rename: generic [
+/rename: generic [
     "Rename a file"
     return: [port! file! url!]
     from [port! file! url! block!]

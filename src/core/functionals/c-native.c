@@ -78,7 +78,7 @@ Bounce Intrinsic_Dispatcher(Level* const L)
 //
 // Entries look like:
 //
-//    some-name: native [spec content]
+//    /some-name: native [spec content]
 //
 // It is optional to put ENFIX between the SET-WORD! and the spec.
 //
@@ -195,7 +195,7 @@ Phase* Make_Native(
 
 
 //
-//  native: native [
+//  /native: native [
 //
 //  "(Internal Function) Create a native, using compiled C code"
 //
@@ -270,18 +270,29 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 // Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
 //
+// 1. The LIB module starts out empty, and we're not able to assign any words
+//    into it via SET-WORD! or otherwise until there are variables.  So we
+//    use the same mechanics that power WRAP* to look for things like FOO:
+//    and /FOO: and [FOO BAR]: that are at the top level of the natives list.
+//    (at this time that's only going to find /FOO:)
+//
 Array* Startup_Natives(const Element* boot_natives)
 {
+    assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
+
+    Context* context = Lib_Context;
+
+    CollectFlags flags = COLLECT_ONLY_SET_WORDS;
+    Wrap_Extend_Core(context, boot_natives, flags);  // top-level decls [1]
+
     Array* catalog = Make_Array(g_num_core_natives);
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
     Init_Action_Adjunct_Shim();
 
-    assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const Element* tail;
-    Element* item = Cell_List_At_Known_Mutable(&tail, boot_natives);
-    Context* binding = Cell_List_Binding(boot_natives);
+    Element* at = Cell_List_At_Known_Mutable(&tail, boot_natives);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
     // function which carries those arguments, which would be cleaner.  The
@@ -292,18 +303,18 @@ Array* Startup_Natives(const Element* boot_natives)
     assert(PG_Currently_Loading_Module == nullptr);
     PG_Currently_Loading_Module = Lib_Context;
 
-    // Due to the recursive nature of `native: native [...]`, we can't actually
+    // Due to the bootstrapping of `/native: native [...]`, we can't actually
     // create NATIVE itself that way.  So the prep process should have moved
     // it to be the first native in the list, and we make it manually.
     //
-    assert(Is_Set_Word(item) and Cell_Word_Id(item) == SYM_NATIVE);
-    ++item;
-    assert(Is_Word(item) and Cell_Word_Id(item) == SYM_NATIVE);
-    ++item;
-    assert(Is_Block(item));
+    assert(Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(at)) == SYM_NATIVE);
+    ++at;
+    assert(Is_Word(at) and Cell_Word_Id(at) == SYM_NATIVE);
+    ++at;
+    assert(Is_Block(at));
     DECLARE_ELEMENT (spec);
-    Derelativize(spec, item, binding);
-    ++item;
+    Derelativize(spec, at, context);
+    ++at;
 
     Phase* the_native_action = Make_Native(
         spec,
@@ -313,8 +324,9 @@ Array* Startup_Natives(const Element* boot_natives)
     );
     ++g_native_cfunc_pos;
 
+    bool strict = true;
     Init_Action(
-        Append_Context(Lib_Context, Canon(NATIVE)),
+        MOD_VAR(Lib_Context, Canon(NATIVE), strict),
         the_native_action,
         Canon(NATIVE),  // label
         UNBOUND
@@ -322,24 +334,11 @@ Array* Startup_Natives(const Element* boot_natives)
 
     assert(VAL_ACTION(Lib(NATIVE)) == the_native_action);
 
-    // The current rule in "Sea of Words" is that all SET-WORD!s that are just
-    // "attached" to a context can materialize variables.  It's not as safe
-    // as something like JavaScript's strict mode...but rather than institute
-    // some new policy we go with the somewhat laissez faire historical rule.
-    //
-    // *HOWEVER* the rule does not apply to Lib_Context.  You will get an
-    // error if you try to assign to something attached to Lib before being
-    // explicitly added.  So we have to go over the SET-WORD!s naming natives
-    // (first one at time of writing is `api-transient: native [...]`) and
-    // BIND:SET them.
-    //
-    Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Module);
-
     DECLARE_ATOM (skipped);
     Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_ATOM (discarded);
-    if (Eval_Any_List_At_Throws(discarded, skipped, binding))
+    if (Eval_Any_List_At_Throws(discarded, skipped, context))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Anti_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);

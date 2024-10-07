@@ -418,7 +418,7 @@ bool Specialize_Action_Throws(
 
 
 //
-//  specialize: native [
+//  /specialize: native [
 //
 //  "Create a new action through partial or full specialization of another"
 //

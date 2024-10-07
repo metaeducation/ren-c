@@ -232,7 +232,7 @@ Bounce Cascader_Dispatcher(Level* const L)
 
 
 //
-//  cascade*: native [
+//  /cascade*: native [
 //
 //  "Create a processing pipeline of actions, each consuming the last result"
 //

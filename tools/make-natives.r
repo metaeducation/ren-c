@@ -22,7 +22,7 @@ REBOL [
         Typically the declarations wind up looking like this:
 
         //
-        //  native-name: native [
+        //  /native-name: native [
         //
         //  "Description of native would go here"
         //
@@ -106,16 +106,16 @@ gather-natives: func [
 gather-natives join src-dir %core/
 
 
-=== "MOVE `NATIVE: NATIVE` and `ENFIX: NATIVE` TO FRONT OF GATHERED LIST" ===
+=== "MOVE `/NATIVE: NATIVE` AND TYPE CONSTRAINTS TO START OF BOOT" ===
 
-; The construction `native: native [...]` obviously has to be treated in a
+; The construction `/native: native [...]` obviously has to be treated in a
 ; special way.  Startup constructs it manually, before skipping it and invoking
-; the evaluator to do the other `xxx: native:yyy [...]` evaluations.
+; the evaluator to do the other `/xxx: native:yyy [...]` evaluations.
 
 leaders: [
     native
-    antiform?
     logic?
+    antiform?
     action?
     enfix
     any-value?

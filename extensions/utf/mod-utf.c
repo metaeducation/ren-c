@@ -142,7 +142,7 @@ static String* Decode_UCS2(  // [1]
 
 
 //
-//  export identify-text?: native [
+//  export /identify-text?: native [
 //
 //  "Codec for identifying BINARY! data for a .TXT file"
 //
@@ -161,7 +161,7 @@ DECLARE_NATIVE(identify_text_q)
 
 
 //
-//  export decode-text: native [
+//  export /decode-text: native [
 //
 //  "Codec for decoding BINARY! data for a .TXT file"
 //
@@ -190,7 +190,7 @@ DECLARE_NATIVE(decode_text)
 
 
 //
-//  export encode-text: native [
+//  export /encode-text: native [
 //
 //  "Codec for encoding a .TXT file"
 //
@@ -247,7 +247,7 @@ static Binary* Encode_UCS2(  // [1]
 
 
 //
-//  export identify-utf16le?: native [
+//  export /identify-utf16le?: native [
 //
 //  "Codec for identifying BINARY! data for a little-endian UTF16 file"
 //
@@ -271,7 +271,7 @@ DECLARE_NATIVE(identify_utf16le_q)
 
 
 //
-//  export decode-utf16le: native [
+//  export /decode-utf16le: native [
 //
 //  "Codec for decoding BINARY! data for a little-endian UTF16 file"
 //
@@ -300,7 +300,7 @@ DECLARE_NATIVE(decode_utf16le)
 
 
 //
-//  export encode-utf16le: native [
+//  export /encode-utf16le: native [
 //
 //  "Codec for encoding a little-endian UTF16 file"
 //
@@ -326,7 +326,7 @@ DECLARE_NATIVE(encode_utf16le)
 
 
 //
-//  export identify-utf16be?: native [
+//  export /identify-utf16be?: native [
 //
 //  "Codec for identifying BINARY! data for a big-endian UTF16 file"
 //
@@ -350,7 +350,7 @@ DECLARE_NATIVE(identify_utf16be_q)
 
 
 //
-//  export decode-utf16be: native [
+//  export /decode-utf16be: native [
 //
 //  "Codec for decoding BINARY! data for a big-endian UTF16 file"
 //
@@ -379,7 +379,7 @@ DECLARE_NATIVE(decode_utf16be)
 
 
 //
-//  export encode-utf16be: native [
+//  export /encode-utf16be: native [
 //
 //  "Codec for encoding a big-endian UTF16 file"
 //

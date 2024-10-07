@@ -98,7 +98,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 
 
 //
-//  pick: native [
+//  /pick: native [
 //
 //  "Perform a path picking operation, same as `:(location).(picker)`"
 //
@@ -133,7 +133,7 @@ DECLARE_NATIVE(pick)
 
 
 //
-//  poke: native [
+//  /poke: native [
 //
 //  "Perform a path poking operation, same as `(location).(picker): :value`"
 //

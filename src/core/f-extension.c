@@ -55,7 +55,7 @@ void Shutdown_Extension_Loader(void)
 
 
 //
-//  builtin-extensions: native [
+//  /builtin-extensions: native [
 //
 //  "Gets the list of (uninitialized) builtin extensions for the executable"
 //
@@ -103,7 +103,7 @@ DECLARE_NATIVE(builtin_extensions)
 
 
 //
-//  load-extension: native [
+//  /load-extension: native [
 //
 //  "Extension module loader (for DLLs or built-in extensions)"
 //
@@ -274,7 +274,7 @@ static const Value* Unloaded_Dispatcher(Level* L)
 
 
 //
-//  unload-extension: native [
+//  /unload-extension: native [
 //
 //  "Unload an extension"
 //

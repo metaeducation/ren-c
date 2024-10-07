@@ -1215,7 +1215,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 
 
 //
-//  subparse: native [
+//  /subparse: native [
 //
 //  "Internal support function for PARSE (acts as variadic to consume rules)"
 //
@@ -2329,7 +2329,7 @@ DECLARE_NATIVE(subparse)
 
 
 //
-//  parse3: native [
+//  /parse3: native [
 //
 //  "Parse series according to grammar rules"
 //
@@ -2433,7 +2433,7 @@ DECLARE_NATIVE(parse3)
 
 
 //
-//  parse-accept: native [
+//  /parse-accept: native [
 //
 //  "Accept argument as parse result (Internal Implementation Detail ATM)"
 //
@@ -2450,7 +2450,7 @@ DECLARE_NATIVE(parse_accept)
 
 
 //
-//  parse-break: native [
+//  /parse-break: native [
 //
 //  "Break the current parse rule (Internal Implementation Detail ATM)"
 //
@@ -2467,7 +2467,7 @@ DECLARE_NATIVE(parse_break)
 
 
 //
-//  parse-reject: native [
+//  /parse-reject: native [
 //
 //  "Reject the current parse rule (Internal Implementation Detail ATM)"
 //

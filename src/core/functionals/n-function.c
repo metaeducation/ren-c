@@ -301,7 +301,7 @@ Phase* Make_Interpreted_Action_May_Fail(
 
 
 //
-//  func*: native [
+//  /func*: native [
 //
 //  "Defines an ACTION! with given spec and body"
 //
@@ -332,7 +332,7 @@ DECLARE_NATIVE(func_p)
 
 
 //
-//  endable?: native [
+//  /endable?: native [
 //
 //  "Tell whether a parameter is registered as <end> or not"
 //
@@ -436,7 +436,7 @@ Bounce Init_Thrown_Unwind_Value(
 
 
 //
-//  unwind: native [
+//  /unwind: native [
 //
 //  "Jump up the stack to return from a specific frame or call"
 //
@@ -515,7 +515,7 @@ bool Typecheck_Coerce_Return(
 
 
 //
-//  definitional-return: native [
+//  /definitional-return: native [
 //
 //  "RETURN, giving a result to the caller"
 //

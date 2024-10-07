@@ -173,7 +173,7 @@ Bounce The_Group_Branch_Executor(Level* level_)
 
 
 //
-//  if: native [
+//  /if: native [
 //
 //  "When CONDITION is not NULL, execute branch"
 //
@@ -209,7 +209,7 @@ DECLARE_NATIVE(if)
 
 
 //
-//  either: native [
+//  /either: native [
 //
 //  "Choose a branch to execute, based on whether CONDITION is NULL"
 //
@@ -411,7 +411,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
 
 //
-//  did: native [
+//  /did: native [
 //
 //  "Tests for not being a 'pure' null or void (IF DID is prefix THEN)"
 //
@@ -506,7 +506,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
 
 //
-//  didn't: native [
+//  /didn't: native [
 //
 //  "Test for being a 'pure' null or void (`IF DIDN'T` is prefix `ELSE`)"
 //
@@ -536,7 +536,7 @@ DECLARE_NATIVE(didnt)
 
 
 //
-//  then: enfix native [
+//  /then: enfix native [
 //
 //  "If input is null, return null, otherwise evaluate the branch"
 //
@@ -579,7 +579,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 
 
 //
-//  else: enfix native [
+//  /else: enfix native [
 //
 //  "If input is not null, return that value, otherwise evaluate the branch"
 //
@@ -621,7 +621,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 
 
 //
-//  also: enfix native [
+//  /also: enfix native [
 //
 //  "For non-null input, evaluate and discard branch (like a pass-thru THEN)"
 //
@@ -683,7 +683,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
 
 
 //
-//  match: native [
+//  /match: native [
 //
 //  "Check value using the same typechecking that functions use for parameters"
 //
@@ -780,7 +780,7 @@ DECLARE_NATIVE(match)
 
 
 //
-//  all: native [
+//  /all: native [
 //
 //  "Short-circuiting variant of AND, using a block of expressions as input"
 //
@@ -929,7 +929,7 @@ DECLARE_NATIVE(all)
 
 
 //
-//  any: native [
+//  /any: native [
 //
 //  "Short-circuiting version of OR, using a block of expressions as input"
 //
@@ -1059,7 +1059,7 @@ DECLARE_NATIVE(any)
 
 
 //
-//  case: native [
+//  /case: native [
 //
 //  "Evaluates each condition, and when true, evaluates what follows it"
 //
@@ -1266,7 +1266,7 @@ DECLARE_NATIVE(case)
 
 
 //
-//  switch: native [
+//  /switch: native [
 //
 //  "Selects a choice and evaluates the block that follows it"
 //
@@ -1464,7 +1464,7 @@ DECLARE_NATIVE(switch)
 
 
 //
-//  default: enfix native [
+//  /default: enfix native [
 //
 //  "Set word or path to a calculated value if it is not set"
 //
@@ -1559,7 +1559,7 @@ DECLARE_NATIVE(default)
 
 
 //
-//  catch*: native [
+//  /catch*: native [
 //
 //  "Catches a throw from a block and returns its value"
 //
@@ -1630,7 +1630,7 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
 
 
 //
-//  definitional-throw: native [
+//  /definitional-throw: native [
 //
 //  "Throws control back to a previous catch"
 //

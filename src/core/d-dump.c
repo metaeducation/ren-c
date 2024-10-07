@@ -142,7 +142,7 @@ void Dump_Stack(Level* L)
 
 
 //
-//  dump: native [
+//  /dump: native [
 //
 //  "Temporary debug dump"
 //

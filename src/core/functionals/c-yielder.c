@@ -257,7 +257,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 
 //
-//  yielder: native [
+//  /yielder: native [
 //
 //      return: "Action that can be called repeatedly until it yields NULL"
 //          [action?]
@@ -306,7 +306,7 @@ DECLARE_NATIVE(yielder)
 
 
 //
-//  generator: native [
+//  /generator: native [
 //
 //      return: "Arity-0 action you can call repeatedly until it yields NULL"
 //          [action?]
@@ -323,7 +323,7 @@ DECLARE_NATIVE(generator)
 
 
 //
-//  yield: native [
+//  /yield: native [
 //
 //  "Function used with GENERATOR and YIELDER to give back results"
 //

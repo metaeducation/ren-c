@@ -1165,7 +1165,7 @@ REBTYPE(Date)
 
 
 //
-//  make-date-ymdsnz: native [
+//  /make-date-ymdsnz: native [
 //
 //  "Make a date from Year, Month, Day, Seconds, Nanoseconds, time Zone"
 //
@@ -1213,7 +1213,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
 
 
 //
-//  make-time-sn: native [
+//  /make-time-sn: native [
 //
 //  "Make a TIME! from Seconds and Nanoseconds"
 //

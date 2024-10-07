@@ -162,7 +162,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
 
 //
-//  enclose: native [
+//  /enclose: native [
 //
 //  "Wrap code around a frame with access to its instance and return value"
 //

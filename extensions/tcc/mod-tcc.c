@@ -290,7 +290,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 
 
 //
-//  export make-native: native [
+//  export /make-native: native [
 //
 //  "Create an ACTION! which is compiled from a C source TEXT!"
 //
@@ -378,7 +378,7 @@ DECLARE_NATIVE(make_native)
 
 
 //
-//  compile*: native [
+//  /compile*: native [
 //
 //  "INTERNAL USE ONLY: Expects arguments to be fully vetted by COMPILE"
 //

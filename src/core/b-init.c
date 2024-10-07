@@ -676,14 +676,12 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
-    BINDING(&boot->natives) = Lib_Context;
     Array* natives_catalog = Startup_Natives(&boot->natives);
     Manage_Flex(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
-    BINDING(&boot->generics) = Lib_Context;
     Array* generics_catalog = Startup_Generics(&boot->generics);
     Manage_Flex(generics_catalog);
     Push_GC_Guard(generics_catalog);

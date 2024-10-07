@@ -484,7 +484,7 @@ Bounce TO_String(Level* level_, Kind k, const Value* arg)
 
 
 //
-//  to-text: native [
+//  /to-text: native [
 //
 //  "Variant of TO TEXT! with option to tolerate invisible codepoints"
 //

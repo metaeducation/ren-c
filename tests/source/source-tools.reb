@@ -234,13 +234,13 @@ export analyse: context [
                     accept ('false)
                 ]) [
                     ;
-                    ; It's a `some-name?: native [...]`, so we expect
+                    ; It's a `/some-name?: native [...]`, so we expect
                     ; `DECLARE_NATIVE(some_name_q)` to be correctly lined up
                     ; as the "to-c-name" of the Rebol set-word
                     ;
                     if (
                         proto-parser.proto-arg-1
-                        <> to-c-name/scope name #prefixed
+                        <> to-c-name:scope name #prefixed
                     )[
                         let line: text-line-of proto-parser.parse-position
                         emit <id-mismatch> [

@@ -332,7 +332,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 
 
 //
-//  reframer: native [
+//  /reframer: native [
 //
 //  "Make a function that manipulates an invocation at the callsite"
 //

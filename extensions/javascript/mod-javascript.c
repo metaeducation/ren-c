@@ -781,7 +781,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
 
 //
-//  export js-native: native [
+//  export /js-native: native [
 //
 //  "Create ACTION! from textual JavaScript code"
 //
@@ -966,7 +966,7 @@ DECLARE_NATIVE(js_native)
 
 
 //
-//  export js-eval*: native [
+//  export /js-eval*: native [
 //
 //  "Evaluate textual JavaScript code"
 //
@@ -1065,7 +1065,7 @@ DECLARE_NATIVE(js_eval_p)
 
 
 //
-//  startup*: native [
+//  /startup*: native [
 //
 //  "Initialize the JavaScript Extension"
 //
@@ -1097,7 +1097,7 @@ DECLARE_NATIVE(startup_p)
 
 
 //
-//  export js-trace: native [
+//  export /js-trace: native [
 //
 //  "Internal debug tool for seeing what's going on in JavaScript dispatch"
 //

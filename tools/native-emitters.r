@@ -70,7 +70,12 @@ export extract-native-protos: func [
             "//" space space proto: across [
                 (exported: 'no)
                 opt ["export" space (exported: 'yes)]
-                not ahead space name: across to ":" one space
+                not ahead space [
+                    name: across some "/" ":"  ; things like //:
+                    |
+                    "/" name: across to ":" one  ; all else is like /foo:
+                ]
+                space
                 opt ["enfix" space]
                 ["native" (native-type: 'normal)
                     opt [":combinator" (native-type: 'combinator)]
@@ -119,7 +124,12 @@ export emit-include-params-macro: func [
     let native-name: ~
     parse3:match proto [
         opt some newline  ; stripload preserves newlines
-        opt ["export" space] native-name: across to ":" to <end>
+        opt ["export" space] [
+            native-name: across some "/" ":"  ; e.g. //:
+            |
+            "/" native-name: across to ":" one  ; everything else is /foo:
+        ]
+        accept (okay)
     ] else [
         fail "Could not extract native name in emit-include-params-macro"
     ]

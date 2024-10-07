@@ -68,24 +68,28 @@ Bounce Generic_Dispatcher(Level* L)
 
 
 //
-//  generic: enfix native [
+//  /generic: enfix native [
 //
 //  "Creates datatype action (currently for internal use only)"
 //
 //      return: [~]
-//      @verb [set-word?]
+//      @verb [set-run-word?]
 //      spec [block!]
 //  ]
 //
 DECLARE_NATIVE(generic)
 //
-// The `generic` native is designed to be an enfix function that quotes its
-// first argument, so when you write `foo: generic [...]`, the FOO: gets quoted
-// to be passed in as the "verb".
+// The `generic` native is designed to be an infix function that takes its
+// first argument literally, so when you write (/foo: generic [...]), the
+// /FOO: gets quoted to be passed in as the "verb".
 {
     INCLUDE_PARAMS_OF_GENERIC;
 
     Element* verb = cast(Element*, ARG(verb));
+    Unpath(verb);
+    Unchain(verb);
+    assert(Is_Word(verb));
+
     Element* spec = cast(Element*, ARG(spec));
 
     VarList* meta;
@@ -125,37 +129,42 @@ DECLARE_NATIVE(generic)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
+// 1. The Startup_Natives() used Wrap_Extend_Core() to add all the natives
+//    as variables in the LIB module so it could assign them.  We now do
+//    the same thing for the generics so they can be assigned.
+//
+//    !!! Review if combining all the definitions into one pass could be
+//    better...or if the boot process could be special-cased to create the
+//    top level variables as it transcodes.
+//
 Array* Startup_Generics(const Element* boot_generics)
 {
-    assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    const Element* tail;
-    Element* head = Cell_List_At_Known_Mutable(&tail, boot_generics);
-    Context* context = Cell_List_Binding(boot_generics);
+    assert(VAL_INDEX(boot_generics) == 0);  // should be at head, sanity check
 
-    // Add SET-WORD!s that are top-level in the generics block to the lib
-    // context, so there is a variable for each action.  This means that the
-    // assignments can execute.
-    //
-    Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Module);
+    Context* context = Lib_Context;
+
+    CollectFlags flags = COLLECT_ONLY_SET_WORDS;
+    Wrap_Extend_Core(context, boot_generics, flags);  // top-level decls [1]
 
     DECLARE_ATOM (discarded);
-    if (Eval_Any_List_At_Throws(discarded, boot_generics, SPECIFIED))
+    if (Eval_Any_List_At_Throws(discarded, boot_generics, context))
         panic (discarded);
     if (not Is_Anti_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);
 
-    // Sanity check the symbol transformation
-    //
-    if (0 != strcmp("open", String_UTF8(Canon(OPEN))))
+    if (0 != strcmp("open", String_UTF8(Canon(OPEN))))  // sanity check
         panic (Canon(OPEN));
 
     StackIndex base = TOP_INDEX;
 
-    Element* item = head;
-    for (; item != tail; ++item)
-        if (Is_Set_Word(item)) {
-            Derelativize(PUSH(), item, context);
-            HEART_BYTE(TOP) = REB_WORD;  // change pushed to WORD!
+    const Element* tail;
+    Element* at = Cell_List_At_Known_Mutable(&tail, boot_generics);
+
+    for (; at != tail; ++at)
+        if (Try_Get_Settable_Word_Symbol(at)) {  // all generics as /foo:
+            Derelativize(PUSH(), at, context);
+            Unpath(cast(Element*, TOP));  // change /foo: -> foo:
+            Unchain(cast(Element*, TOP));  // change foo: -> foo
         }
 
     return Pop_Stack_Values(base);  // catalog of generics

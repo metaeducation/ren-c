@@ -153,27 +153,21 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
     Heart heart = cast(Heart, k);
 
     if (Any_Sequence(arg)) {  // (to word! '/a) or (to word! 'a:) etc.
-        Freshen_Cell(OUT);
+        Copy_Cell(OUT, arg);
+        do {
+            Option(Error*) error = Trap_Unsingleheart(cast(Element*, OUT));
+            if (error)
+                goto sequence_didnt_decay_to_word;
+        } while (Any_Sequence(OUT));
 
-        DECLARE_ATOM (temp);
+        if (Any_Word(OUT))
+            return OUT;
 
-        REBLEN len = Cell_Sequence_Len(arg);
-        REBLEN i;
-        for (i = 0; i < len; ++i) {
-            const Element* item = Copy_Sequence_At(temp, arg, i);
-            if (Is_Blank(item))
-                continue;
-            if (not Is_Fresh(OUT) or not Is_Word(item))
-                return RAISE(
-                    "Can't make ANY-WORD? from sequence unless it's one WORD!"
-                );
-            Derelativize(OUT, item, Cell_Sequence_Binding(arg));
-        }
+      sequence_didnt_decay_to_word:
 
-        assert(not Is_Fresh(OUT));
-
-        HEART_BYTE(OUT) = heart;
-        return OUT;
+        return RAISE(
+            "Can't make ANY-WORD? from sequence unless it's one WORD!"
+        );
     }
 
     if (Any_List(arg)) {

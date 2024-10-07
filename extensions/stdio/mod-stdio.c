@@ -47,7 +47,7 @@ extern Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb);
 
 
 //
-//  get-console-actor-handle: native [
+//  /get-console-actor-handle: native [
 //
 //  "Retrieve handle to the native actor for console"
 //
@@ -62,7 +62,7 @@ DECLARE_NATIVE(get_console_actor_handle)
 
 
 //
-//  startup*: native [  ; Note: DO NOT EXPORT!
+//  /startup*: native [  ; Note: DO NOT EXPORT!
 //
 //      return: [~]
 //  ]
@@ -83,7 +83,7 @@ DECLARE_NATIVE(startup_p)
 
 
 //
-//  export write-stdout: native [
+//  export /write-stdout: native [
 //
 //  "Write text or raw BINARY! to stdout (for control codes / CGI)"  ; [1]
 //
@@ -157,7 +157,7 @@ static Value* Make_Non_Halt_Error(const char* name) {
 
 
 //
-//  export read-stdin: native [
+//  export /read-stdin: native [
 //
 //  "Read binary data from standard input"
 //
@@ -218,7 +218,7 @@ DECLARE_NATIVE(read_stdin)
 
 
 //
-//  export read-line: native [
+//  export /read-line: native [
 //
 //  "Read a line from standard input, with smart line editing if available"
 //
@@ -378,7 +378,7 @@ DECLARE_NATIVE(read_line)
 
 
 //
-//  export read-char: native [
+//  export /read-char: native [
 //
 //  "Inputs a single character from the input"
 //
@@ -535,7 +535,7 @@ DECLARE_NATIVE(read_char)
 
 
 //
-//  shutdown*: native [  ; Note: DO NOT EXPORT!
+//  /shutdown*: native [  ; Note: DO NOT EXPORT!
 //
 //  "Shut down the stdio and terminal devices, called on extension unload"
 //

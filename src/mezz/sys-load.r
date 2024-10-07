@@ -651,7 +651,7 @@ export*: func [
         [any-value?]
     where "Specialized for each module via EXPORT"
         [module!]
-    @what [set-word? set-group? block!]
+    @what [set-word? set-run-word? set-group? block!]
     args "(export x: ...) for single or (export [...]) for words list"
         [any-value? <variadic>]
     <local>
@@ -667,6 +667,7 @@ export*: func [
                 ^void = what [word: null]
                 word? unmeta what [word: unmeta what]
                 set-word? unmeta what [word: unchain unmeta what]
+                set-run-word? unmeta what [word: unchain unpath unmeta what]
                 fail "EXPORT of SET-GROUP! must be VOID, WORD! or SET-WORD?"
             ]
         ] else [

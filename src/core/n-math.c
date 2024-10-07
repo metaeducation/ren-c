@@ -111,7 +111,7 @@ static void Arc_Trans(
 
 
 //
-//  cosine: native [
+//  /cosine: native [
 //
 //  "Returns the trigonometric cosine"
 //
@@ -133,7 +133,7 @@ DECLARE_NATIVE(cosine)
 
 
 //
-//  sine: native [
+//  /sine: native [
 //
 //  "Returns the trigonometric sine"
 //
@@ -155,7 +155,7 @@ DECLARE_NATIVE(sine)
 
 
 //
-//  tangent: native [
+//  /tangent: native [
 //
 //  "Returns the trigonometric tangent"
 //
@@ -177,7 +177,7 @@ DECLARE_NATIVE(tangent)
 
 
 //
-//  arccosine: native [
+//  /arccosine: native [
 //
 //  "Returns the trigonometric arccosine"
 //
@@ -196,7 +196,7 @@ DECLARE_NATIVE(arccosine)
 
 
 //
-//  arcsine: native [
+//  /arcsine: native [
 //
 //  "Returns the trigonometric arcsine"
 //
@@ -215,7 +215,7 @@ DECLARE_NATIVE(arcsine)
 
 
 //
-//  arctangent: native [
+//  /arctangent: native [
 //
 //  "Returns the trigonometric arctangent"
 //
@@ -234,7 +234,7 @@ DECLARE_NATIVE(arctangent)
 
 
 //
-//  exp: native [
+//  /exp: native [
 //
 //  "Raises E (the base of natural logarithm) to the power specified"
 //
@@ -256,7 +256,7 @@ DECLARE_NATIVE(exp)
 
 
 //
-//  log-10: native [
+//  /log-10: native [
 //
 //  "Returns the base-10 logarithm"
 //
@@ -277,7 +277,7 @@ DECLARE_NATIVE(log_10)
 
 
 //
-//  log-2: native [
+//  /log-2: native [
 //
 //  "Return the base-2 logarithm"
 //
@@ -298,7 +298,7 @@ DECLARE_NATIVE(log_2)
 
 
 //
-//  log-e: native [
+//  /log-e: native [
 //
 //  "Returns the natural (base-E) logarithm of the given value"
 //
@@ -319,7 +319,7 @@ DECLARE_NATIVE(log_e)
 
 
 //
-//  square-root: native [
+//  /square-root: native [
 //
 //  "Returns the square root of a number"
 //
@@ -356,7 +356,7 @@ DECLARE_NATIVE(square_root)
 
 
 //
-//  shift: native [
+//  /shift: native [
 //
 //  "Shifts an integer left or right by a number of bits"
 //
@@ -564,7 +564,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 
 
 //
-//  something?: native:intrinsic [
+//  /something?: native:intrinsic [
 //
 //  "Tells you if the argument is not antiform blank (e.g. not nothing)"
 //
@@ -585,7 +585,7 @@ DECLARE_INTRINSIC(something_q)
 
 
 //
-//  vacancy?: native:intrinsic [
+//  /vacancy?: native:intrinsic [
 //
 //  "Tells you if the argument causes errors on WORD! access (and defaultable)"
 //
@@ -607,7 +607,7 @@ DECLARE_INTRINSIC(vacancy_q)
 
 
 //
-//  defaultable?: native:intrinsic [
+//  /defaultable?: native:intrinsic [
 //
 //  "Tells you if default would overwrite a value (VACANCY?, NULL?, VOID?)"
 //
@@ -631,7 +631,7 @@ DECLARE_INTRINSIC(defaultable_q)
 //  EQUAL? < EQUIV? < STRICT-EQUAL? < SAME?
 
 //
-//  equal?: native [
+//  /equal?: native [
 //
 //  "TRUE if the values are equal"
 //
@@ -651,7 +651,7 @@ DECLARE_NATIVE(equal_q)
 
 
 //
-//  not-equal?: native [
+//  /not-equal?: native [
 //
 //  "TRUE if the values are not equal"
 //
@@ -671,7 +671,7 @@ DECLARE_NATIVE(not_equal_q)
 
 
 //
-//  strict-equal?: native [
+//  /strict-equal?: native [
 //
 //  "TRUE if the values are strictly equal"
 //
@@ -694,7 +694,7 @@ DECLARE_NATIVE(strict_equal_q)
 
 
 //
-//  strict-not-equal?: native [
+//  /strict-not-equal?: native [
 //
 //  "TRUE if the values are not strictly equal"
 //
@@ -717,7 +717,7 @@ DECLARE_NATIVE(strict_not_equal_q)
 
 
 //
-//  same?: native [
+//  /same?: native [
 //
 //  "TRUE if the values are identical"
 //
@@ -805,7 +805,7 @@ DECLARE_NATIVE(same_q)
 
 
 //
-//  lesser?: native [
+//  /lesser?: native [
 //
 //  "TRUE if the first value is less than the second value"
 //
@@ -844,7 +844,7 @@ DECLARE_NATIVE(lesser_q)
 
 
 //
-//  equal-or-lesser?: native [
+//  /equal-or-lesser?: native [
 //
 //  "TRUE if the first value is equal to or less than the second value"
 //
@@ -864,7 +864,7 @@ DECLARE_NATIVE(equal_or_lesser_q)
 
 
 //
-//  greater?: native [
+//  /greater?: native [
 //
 //  "TRUE if the first value is greater than the second value"
 //
@@ -887,7 +887,7 @@ DECLARE_NATIVE(greater_q)
 
 
 //
-//  greater-or-equal?: native [
+//  /greater-or-equal?: native [
 //
 //  "TRUE if the first value is greater than or equal to the second value"
 //
@@ -907,7 +907,7 @@ DECLARE_NATIVE(greater_or_equal_q)
 
 
 //
-//  maximum: native [
+//  /maximum: native [
 //
 //  "Returns the greater of the two values"
 //
@@ -946,7 +946,7 @@ DECLARE_NATIVE(maximum)
 
 
 //
-//  minimum: native [
+//  /minimum: native [
 //
 //  "Returns the lesser of the two values"
 //
@@ -1005,7 +1005,7 @@ INLINE Element* Init_Zeroed_Hack(Sink(Element*) out, Heart heart) {
 
 
 //
-//  negative?: native [
+//  /negative?: native [
 //
 //  "Returns TRUE if the number is negative"
 //
@@ -1027,7 +1027,7 @@ DECLARE_NATIVE(negative_q)
 
 
 //
-//  positive?: native [
+//  /positive?: native [
 //
 //  "Returns TRUE if the value is positive"
 //
@@ -1049,7 +1049,7 @@ DECLARE_NATIVE(positive_q)
 
 
 //
-//  zero?: native [
+//  /zero?: native [
 //
 //  "Returns TRUE if the value is zero (for its datatype)"
 //

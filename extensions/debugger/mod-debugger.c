@@ -103,7 +103,7 @@ bool Do_Breakpoint_Throws(
 
 
 //
-//  export breakpoint*: native [
+//  export /breakpoint*: native [
 //
 //  "Signal breakpoint to the host, but do not participate in evaluation"
 //
@@ -135,7 +135,7 @@ DECLARE_NATIVE(breakpoint_p)
 
 
 //
-//  export pause: native [
+//  export /pause: native [
 //
 //  "Pause in the debugger before running the provided code"
 //
@@ -164,7 +164,7 @@ DECLARE_NATIVE(pause)
 
 
 //
-//  export resume: native [
+//  export /resume: native [
 //
 //  "Resume after a breakpoint, can evaluate code in the breaking context"
 //
@@ -223,7 +223,7 @@ DECLARE_NATIVE(resume)
 
 
 //
-//  export step: native [
+//  export /step: native [
 //
 //  "Perform a step in the debugger"
 //

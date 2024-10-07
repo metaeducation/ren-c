@@ -930,7 +930,7 @@ REBTYPE(Fail)
 
 
 //
-//  tweak: native [
+//  /tweak: native [
 //
 //  "Modify a special property (currently only for ACTION!)"
 //
@@ -987,7 +987,7 @@ DECLARE_NATIVE(tweak)
 
 
 //
-//  couple: native [
+//  /couple: native [
 //
 //  "Associate an ACTION! with OBJECT! to use for `.field` member references"
 //

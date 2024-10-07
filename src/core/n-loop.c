@@ -84,7 +84,7 @@ bool Try_Catch_Break_Or_Continue(
 
 
 //
-//  definitional_break: native [
+//  /definitional_break: native [
 //
 //  "Exit the current iteration of a loop and stop iterating further"
 //
@@ -119,7 +119,7 @@ DECLARE_NATIVE(definitional_break)
 
 
 //
-//  definitional-continue: native [
+//  /definitional-continue: native [
 //
 //  "Throws control back to top of loop for next iteration"
 //
@@ -451,7 +451,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 
 
 //
-//  cfor: native [
+//  /cfor: native [
 //
 //  "Evaluate a block over a range of values (See also: REPEAT)"
 //
@@ -532,7 +532,7 @@ DECLARE_NATIVE(cfor)
 
 
 //
-//  for-skip: native [
+//  /for-skip: native [
 //
 //  "Evaluates a block for periodic values in a series"
 //
@@ -641,7 +641,7 @@ DECLARE_NATIVE(for_skip)
 
 
 //
-//  definitional-stop: native [
+//  /definitional-stop: native [
 //
 //  "End the current iteration of CYCLE, optionally returning a value"
 //
@@ -701,7 +701,7 @@ void Add_Definitional_Stop(
 
 
 //
-//  cycle: native [
+//  /cycle: native [
 //
 //  "Evaluates a block endlessly, until a BREAK or a STOP is hit"
 //
@@ -1094,7 +1094,7 @@ void Shutdown_Loop_Each(Value* iterator)
 
 
 //
-//  for-each: native [
+//  /for-each: native [
 //
 //  "Evaluates a block for each value(s) in a series"
 //
@@ -1194,7 +1194,7 @@ DECLARE_NATIVE(for_each)
 
 
 //
-//  every: native [
+//  /every: native [
 //
 //  "Iterate and return null if any previous body evaluations were falsey"
 //
@@ -1315,7 +1315,7 @@ DECLARE_NATIVE(every)
 
 
 //
-//  remove-each: native [
+//  /remove-each: native [
 //
 //  "Removes values for each block that returns true"
 //
@@ -1658,7 +1658,7 @@ DECLARE_NATIVE(remove_each)
 
 
 //
-//  map-each: native [
+//  /map-each: native [
 //
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
@@ -1703,7 +1703,7 @@ DECLARE_NATIVE(map_each)
 
 
 //
-//  map: native [
+//  /map: native [
 //
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
@@ -1855,7 +1855,7 @@ DECLARE_NATIVE(map)
 
 
 //
-//  repeat: native [
+//  /repeat: native [
 //
 //  "Evaluates a block a specified number of times"
 //
@@ -1939,7 +1939,7 @@ DECLARE_NATIVE(repeat)
 
 
 //
-//  for: native [
+//  /for: native [
 //
 //  "Evaluates a branch a number of times or over a series, return last result"
 //
@@ -2043,7 +2043,7 @@ DECLARE_NATIVE(for)
 
 
 //
-//  until: native [
+//  /until: native [
 //
 //  "Evaluates the body until it produces a conditionally true value"
 //
@@ -2141,7 +2141,7 @@ DECLARE_NATIVE(until)
 
 
 //
-//  while: native [
+//  /while: native [
 //
 //  "So long as a condition is truthy, evaluate the body"
 //

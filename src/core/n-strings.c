@@ -28,7 +28,7 @@
 
 
 //
-//  delimit: native [
+//  /delimit: native [
 //
 //  "Joins a block of values into TEXT! with delimiters"
 //
@@ -253,7 +253,7 @@ DECLARE_NATIVE(delimit)
 
 
 //
-//  debase: native [
+//  /debase: native [
 //
 //  "Decodes base-coded string (BASE-64 default) to binary value"
 //
@@ -285,7 +285,7 @@ DECLARE_NATIVE(debase)
 
 
 //
-//  enbase: native [
+//  /enbase: native [
 //
 //  "Encodes data into a binary, hexadecimal, or base-64 ASCII string"
 //
@@ -335,7 +335,7 @@ DECLARE_NATIVE(enbase)
 
 
 //
-//  enhex: native [
+//  /enhex: native [
 //
 //  "Converts string to use URL-style hex encoding (%XX)"
 //
@@ -500,7 +500,7 @@ DECLARE_NATIVE(enhex)
 
 
 //
-//  dehex: native [
+//  /dehex: native [
 //
 //  "Converts URL-style encoded strings, %XX is interpreted as UTF-8 byte"
 //
@@ -622,7 +622,7 @@ DECLARE_NATIVE(dehex)
 
 
 //
-//  deline: native [
+//  /deline: native [
 //
 //  "Converts string terminators to standard format, e.g. CR LF to LF"
 //
@@ -700,7 +700,7 @@ DECLARE_NATIVE(deline)
 
 
 //
-//  enline: native [
+//  /enline: native [
 //
 //  "Converts string terminators to native OS format, e.g. LF to CRLF"
 //
@@ -788,7 +788,7 @@ DECLARE_NATIVE(enline)
 
 
 //
-//  entab: native [
+//  /entab: native [
 //
 //  "Converts spaces to tabs (default tab size is 4)"
 //
@@ -864,7 +864,7 @@ DECLARE_NATIVE(entab)
 
 
 //
-//  detab: native [
+//  /detab: native [
 //
 //  "Converts tabs to spaces (default tab size is 4)"
 //
@@ -923,7 +923,7 @@ DECLARE_NATIVE(detab)
 
 
 //
-//  lowercase: native [
+//  /lowercase: native [
 //
 //  "Converts string of characters to lowercase"
 //
@@ -944,7 +944,7 @@ DECLARE_NATIVE(lowercase)
 
 
 //
-//  uppercase: native [
+//  /uppercase: native [
 //
 //  "Converts string of characters to uppercase"
 //
@@ -965,7 +965,7 @@ DECLARE_NATIVE(uppercase)
 
 
 //
-//  to-hex: native [
+//  /to-hex: native [
 //
 //  "Converts numeric value to a hex issue! datatype (with leading # and 0's)"
 //
@@ -1027,7 +1027,7 @@ DECLARE_NATIVE(to_hex)
 
 
 //
-//  invalid-utf8?: native [
+//  /invalid-utf8?: native [
 //
 //  "Checks UTF-8 encoding"
 //

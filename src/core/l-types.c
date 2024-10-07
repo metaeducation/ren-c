@@ -70,7 +70,7 @@ Bounce MAKE_Unhooked(
 
 
 //
-//  make: native [
+//  /make: native [
 //
 //  "Constructs or allocates the specified datatype"
 //
@@ -161,7 +161,7 @@ Bounce TO_Unhooked(Value* out, Kind kind, const Value* arg)
 
 
 //
-//  to: native [
+//  /to: native [
 //
 //  "Converts to a specified datatype, copying any underying data"
 //
@@ -288,7 +288,7 @@ Bounce Reflect_Core(Level* level_)
 
 
 //
-//  of: enfix native [
+//  /of: enfix native [
 //
 //  "Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)"
 //
@@ -1019,7 +1019,7 @@ Option(const Byte*) Try_Scan_Unencoded_String_To_Stack(
 
 
 //
-//  scan-net-header: native [
+//  /scan-net-header: native [
 //
 //  "Scan an Internet-style header (HTTP, SMTP)"
 //

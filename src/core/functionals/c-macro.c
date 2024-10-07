@@ -154,7 +154,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
 
 //
-//  macro: native [
+//  /macro: native [
 //
 //  "Makes function that generates code to splice into the execution stream"
 //
@@ -185,7 +185,7 @@ DECLARE_NATIVE(macro)
 
 
 //
-//  inline: native [
+//  /inline: native [
 //
 //  "Inject a list of content into the execution stream, or single value"
 //

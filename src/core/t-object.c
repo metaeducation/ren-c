@@ -692,7 +692,7 @@ Bounce TO_Context(Level* level_, Kind kind, const Value* arg)
 
 
 //
-//  adjunct-of: native [
+//  /adjunct-of: native [
 //
 //  "Get a reference to the 'adjunct' context associated with a value"
 //
@@ -726,7 +726,7 @@ DECLARE_NATIVE(adjunct_of)
 
 
 //
-//  set-adjunct: native [
+//  /set-adjunct: native [
 //
 //  "Set 'adjunct' object associated with all references to a value"
 //
@@ -1643,7 +1643,7 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
 
 
 //
-//  construct: native [
+//  /construct: native [
 //
 //  "Creates an OBJECT! from a spec that is not bound into the object"
 //

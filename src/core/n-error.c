@@ -27,7 +27,7 @@
 
 
 //
-//  enrescue: native [
+//  /enrescue: native [
 //
 //  "Sandbox code to intercept failures at ANY depth (including typos)"
 //
@@ -111,7 +111,7 @@ DECLARE_NATIVE(enrescue)
 
 
 //
-//  entrap: native [
+//  /entrap: native [
 //
 //  "Tries to EVAL a block, trapping raised errors"
 //
@@ -204,7 +204,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 
 
 //
-//  except: enfix native [
+//  /except: enfix native [
 //
 //  "Analogue to something like a THEN which traps definitional errors"
 //
@@ -250,7 +250,7 @@ DECLARE_NATIVE(except)
 
 
 //
-//  raised?: native:intrinsic [
+//  /raised?: native:intrinsic [
 //
 //  "Tells you if argument is an ERROR! antiform, doesn't fail if it is"
 //
@@ -267,7 +267,7 @@ DECLARE_INTRINSIC(raised_q)
 
 
 //
-//  unraised?: native:intrinsic [
+//  /unraised?: native:intrinsic [
 //
 //  "Tells you if argument is not an ERROR! antiform, doesn't fail if it is"
 //
@@ -284,7 +284,7 @@ DECLARE_INTRINSIC(unraised_q)
 
 
 //
-//  set-location-of-error: native [
+//  /set-location-of-error: native [
 //
 //  "Sets the WHERE, NEAR, FILE, and LINE fields of an error"
 //

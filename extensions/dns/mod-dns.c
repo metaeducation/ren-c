@@ -281,7 +281,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 
 
 //
-//  export get-dns-actor-handle: native [
+//  export /get-dns-actor-handle: native [
 //
 //  "Retrieve handle to the native actor for DNS"
 //

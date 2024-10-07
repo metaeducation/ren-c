@@ -73,7 +73,7 @@
 
 
 //
-//  export call-internal*: native [
+//  export /call-internal*: native [
 //
 //  "Run another program by spawning a new process"
 //
@@ -103,7 +103,7 @@ DECLARE_NATIVE(call_internal_p)
 
 
 //
-//  export get-os-browsers: native [
+//  export /get-os-browsers: native [
 //
 //  "Ask the OS or registry what command(s) to use for starting a browser"
 //
@@ -202,7 +202,7 @@ DECLARE_NATIVE(get_os_browsers)
 
 
 //
-//  export sleep: native [
+//  export /sleep: native [
 //
 //  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)"
 //
@@ -261,7 +261,7 @@ static void kill_process(pid_t pid, int signal)
 
 
 //
-//  export terminate: native [
+//  export /terminate: native [
 //
 //  "Terminate a process (not current one)"
 //
@@ -331,7 +331,7 @@ DECLARE_NATIVE(terminate)
 
 
 //
-//  export get-env: native [
+//  export /get-env: native [
 //
 //  "Returns the value of an OS environment variable (for current process)"
 //
@@ -443,7 +443,7 @@ DECLARE_NATIVE(get_env)
 
 
 //
-//  export set-env: native [
+//  export /set-env: native [
 //
 //  "Sets value of operating system environment variable for current process"
 //
@@ -545,7 +545,7 @@ DECLARE_NATIVE(set_env)
 
 
 //
-//  export list-env: native [
+//  export /list-env: native [
 //
 //  "Returns a map of OS environment variables (for current process)"
 //

@@ -348,7 +348,7 @@ void Set_Parameter_Spec(
 
 
 //
-//  hole?: native:intrinsic [
+//  /hole?: native:intrinsic [
 //
 //  "Tells you if argument is parameter antiform, used for unspecialized args"
 //

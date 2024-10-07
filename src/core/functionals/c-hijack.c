@@ -188,7 +188,7 @@ Bounce Hijacker_Dispatcher(Level* level_)
 
 
 //
-//  hijack: native [
+//  /hijack: native [
 //
 //  "Cause all existing references to a frame to invoke another frame"
 //

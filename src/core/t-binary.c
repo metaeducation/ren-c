@@ -889,7 +889,7 @@ REBTYPE(Binary)
 
 
 //
-//  enbin: native [
+//  /enbin: native [
 //
 //  "Encode value as a Little Endian or Big Endian BINARY!, signed/unsigned"
 //
@@ -993,7 +993,7 @@ DECLARE_NATIVE(enbin)
 
 
 //
-//  debin: native [
+//  /debin: native [
 //
 //  "Decode BINARY! as Little Endian or Big Endian, signed/unsigned value"
 //

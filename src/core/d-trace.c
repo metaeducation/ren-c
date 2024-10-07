@@ -49,7 +49,7 @@
 
 
 //
-//  trace: native [
+//  /trace: native [
 //
 //  "Enables and disables evaluation tracing and backtrace"
 //

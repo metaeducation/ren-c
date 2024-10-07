@@ -472,7 +472,7 @@ Option(Stub*) Get_Word_Container(
 
 
 //
-//  let: native [
+//  /let: native [
 //
 //  "Dynamically add a new binding into the stream of evaluation"
 //
@@ -799,7 +799,7 @@ DECLARE_NATIVE(let)
 
 
 //
-//  add-let-binding: native [
+//  /add-let-binding: native [
 //
 //  "Experimental function for adding a new variable binding"
 //
@@ -850,7 +850,7 @@ DECLARE_NATIVE(add_let_binding)
 
 
 //
-//  add-use-object: native [
+//  /add-use-object: native [
 //
 //  "Experimental function for adding an object's worth of binding to a frame"
 //

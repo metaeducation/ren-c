@@ -476,7 +476,36 @@ static void Collect_Inner_Loop(
 
 
 //
-//  wrap*: native [
+//  Wrap_Extend_Core: C
+//
+// This exposes the functionality of WRAP* so it can be used by the boot
+// process on LIB before natives can be called.
+//
+void Wrap_Extend_Core(
+    Context* context,
+    const Element* list,
+    CollectFlags flags
+){
+    DECLARE_COLLECTOR (cl);
+    Collect_Start(cl, flags, context);  // may not preload binder if module
+
+    const Element* tail;
+    const Element* at = Cell_List_At(&tail, list);
+
+    Collect_Inner_Loop(cl, flags, at, tail);
+
+    StackIndex i;
+    for (i = cl->stack_base + 1; i <= TOP_INDEX; ++i) {
+        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_At(i));
+        Init_Nothing(Append_Context(context, symbol));
+    }
+
+    Collect_End(cl);
+}
+
+
+//
+//  /wrap*: native [
 //
 //  "Expand context with top-level set-words from a block"
 //
@@ -496,23 +525,10 @@ DECLARE_NATIVE(wrap_p)
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
 
-    DECLARE_COLLECTOR (cl);
     Context* context = Cell_Varlist(ARG(context));
-    Collect_Start(cl, flags, context);  // may not preload binder if module
-
     Element* list = cast(Element*, ARG(list));
-    const Element* tail;
-    const Element* at = Cell_List_At(&tail, list);
 
-    Collect_Inner_Loop(cl, flags, at, tail);
-
-    StackIndex i;
-    for (i = cl->stack_base + 1; i <= TOP_INDEX; ++i) {
-        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_At(i));
-        Init_Nothing(Append_Context(context, symbol));
-    }
-
-    Collect_End(cl);
+    Wrap_Extend_Core(context, list, flags);
 
     /* Virtual_Bind_Deep_To_Existing_Context(  // !!! what should do what? [1]
         list, context, nullptr, CELL_MASK_0
@@ -524,7 +540,7 @@ DECLARE_NATIVE(wrap_p)
 
 
 //
-//  wrap: native [
+//  /wrap: native [
 //
 //  "Bind code in context made from top-level set-words from a block"
 //
@@ -571,7 +587,7 @@ DECLARE_NATIVE(wrap)
 
 
 //
-//  collect-words: native [
+//  /collect-words: native [
 //
 //  "Collect unique words used in a block (used for context construction)"
 //

@@ -18,13 +18,13 @@ REBOL [
 ; C in order to interface with ODBC.  The scheme code is the usermode support
 ; to provide a higher level interface.
 ;
-; open-connection: native [spec [text!]]
-; open-statement: native [connection [object!] statement [object!]]
-; insert-odbc: native [statement [object!] sql [block!]]
-; copy-odbc: native [statement [object!] length [integer!]]
-; close-statement: native [statement [object!]]
-; close-connection: native [connection [object!]]
-; update-odbc: native [connection [object!] access [logic?] commit [logic?]]
+; /open-connection: native [spec [text!]]
+; /open-statement: native [connection [object!] statement [object!]]
+; /insert-odbc: native [statement [object!] sql [block!]]
+; /copy-odbc: native [statement [object!] length [integer!]]
+; /close-statement: native [statement [object!]]
+; /close-connection: native [connection [object!]]
+; /update-odbc: native [connection [object!] access [logic?] commit [logic?]]
 
 
 database-prototype: context [

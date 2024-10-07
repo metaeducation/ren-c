@@ -58,7 +58,7 @@
 
 
 //
-//  test-librebol: native [
+//  /test-librebol: native [
 //
 //  "libRebol tests (ultimately should build as separate EXEs)"
 //
@@ -178,7 +178,7 @@ DECLARE_NATIVE(test_librebol)
 
 
 //
-//  diagnose: native [
+//  /diagnose: native [
 //
 //  "Prints some basic internal information about the value (debug only)"
 //
@@ -218,7 +218,7 @@ DECLARE_NATIVE(diagnose)
 
 
 //
-//  fuzz: native [
+//  /fuzz: native [
 //
 //  "Introduce periodic or deterministic fuzzing of out of memory errors"
 //

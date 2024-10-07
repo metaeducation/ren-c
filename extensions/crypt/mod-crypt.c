@@ -188,7 +188,7 @@ uint32_t Compute_IPC(const unsigned char* data, size_t size)
 
 
 //
-//  export checksum: native [
+//  export /checksum: native [
 //
 //  "Computes a checksum, CRC, or hash"
 //
@@ -456,7 +456,7 @@ void Get_Padding_And_Hash_From_Spec(
 
 
 //
-//  export rsa-generate-keypair: native [
+//  export /rsa-generate-keypair: native [
 //
 //  "Generate a public and private key for encoding at most NUM-BITS of data"
 //
@@ -609,7 +609,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
 
 
 //
-//  export rsa-encrypt: native [
+//  export /rsa-encrypt: native [
 //
 //  "Encrypt a *small* amount of data using the expensive RSA algorithm"
 //
@@ -742,7 +742,7 @@ DECLARE_NATIVE(rsa_encrypt)
 
 
 //
-//  export rsa-decrypt: native [
+//  export /rsa-decrypt: native [
 //
 //  "Decrypt a *small* amount of data using the RSA algorithm"
 //
@@ -985,7 +985,7 @@ DECLARE_NATIVE(rsa_decrypt)
 
 
 //
-//  export dh-generate-keypair: native [
+//  export /dh-generate-keypair: native [
 //
 //  "Generate a new Diffie-Hellman private/public key pair"
 //
@@ -1199,7 +1199,7 @@ DECLARE_NATIVE(dh_generate_keypair)
 
 
 //
-//  export dh-compute-secret: native [
+//  export /dh-compute-secret: native [
 //
 //  "Compute secret from a private/public key pair and the peer's public key"
 //
@@ -1358,7 +1358,7 @@ static void cleanup_aes_ctx(const Value* v)
 
 
 //
-//  export aes-key: native [
+//  export /aes-key: native [
 //
 //  "Encrypt/decrypt data using AES algorithm"
 //
@@ -1449,7 +1449,7 @@ DECLARE_NATIVE(aes_key)
 
 
 //
-//  export aes-stream: native [
+//  export /aes-stream: native [
 //
 //  "Encrypt/decrypt data using AES algorithm"
 //
@@ -1553,7 +1553,7 @@ static const struct mbedtls_ecp_curve_info* Ecp_Curve_Info_From_Name(
 
 
 //
-//  export ecc-generate-keypair: native [
+//  export /ecc-generate-keypair: native [
 //
 //  "Generates an uncompressed secp256r1 key"
 //
@@ -1643,7 +1643,7 @@ DECLARE_NATIVE(ecc_generate_keypair)
 
 
 //
-//  export ecdh-shared-secret: native [
+//  export /ecdh-shared-secret: native [
 //      return: "secret"
 //          [binary!]
 //      group "Elliptic curve group [CURVE25519 SECP256R1 ...]"
@@ -1760,7 +1760,7 @@ EXTERN_C int tf_snprintf(char* s, size_t n, const char* fmt, ...);
 
 
 //
-//  startup*: native [
+//  /startup*: native [
 //
 //  "Initialize random number generators and OS-provided crypto services"
 //
@@ -1811,7 +1811,7 @@ DECLARE_NATIVE(startup_p)
 
 
 //
-//  shutdown*: native [
+//  /shutdown*: native [
 //
 //  "Shut down random number generators and OS-provided crypto services"
 //

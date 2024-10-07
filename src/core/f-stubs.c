@@ -515,7 +515,11 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 //
 Option(Error*) Trap_Unsingleheart(Element* out) {
     assert(Any_Sequence_Kind(Cell_Heart(out)));
-    assert(Get_Cell_Flag(out, SEQUENCE_HAS_NODE));  // not compressed bytes
+    if (Not_Cell_Flag(out, SEQUENCE_HAS_NODE)) {
+        goto unchain_error;  // compressed bytes don't encode blanks
+    }
+
+  { //////////////////////////////////////////////////////////////////////////
 
     const Node* node1 = Cell_Node1(out);
     if (Is_Node_A_Cell(node1)) {  // compressed 2-elements, sizeof(Stub)
@@ -548,16 +552,16 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
         return nullptr;
     }
 
-} unchain_error: {
+}} unchain_error: {
 
     return Error_User(
-        "Can only UNCHAIN length 2 chains (when 1 item is blank)"
+        "UNCHAIN/UNPATH/UNTUPLE only on length 2 chains (when 1 item is blank)"
     );
 }}
 
 
 //
-//  setify: native [
+//  /setify: native [
 //
 //  "If possible, convert a value to a SET-XXX! representation"
 //
@@ -591,7 +595,7 @@ Element* Getify(Element* out) {  // called on stack values; can't call eval
 
 
 //
-//  getify: native [
+//  /getify: native [
 //
 //  "If possible, convert a value to a GET-XXX! representation"
 //
@@ -642,7 +646,7 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
 
 
 //
-//  metafy: native [
+//  /metafy: native [
 //
 //  "If possible, convert a value to a META-XXX! representation"
 //
@@ -691,7 +695,7 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
 
 
 //
-//  inert: native [
+//  /inert: native [
 //
 //  "If possible, convert a value to a THE-XXX! representation"
 //
@@ -738,7 +742,7 @@ Element* Plainify(Element* e) {
 
 
 //
-//  plain: native [
+//  /plain: native [
 //
 //  "Convert a value into its plain representation"
 //
@@ -757,17 +761,63 @@ DECLARE_NATIVE(plain)
 
 
 //
-//  unchain: native [
+//  /unchain: native [
 //
 //  "Remove CHAIN!, e.g. leading colon or trailing colon from an element"
 //
 //      return: [~null~ element?]
-//      chain [<maybe> chain! set-word? set-tuple?]
+//      chain [<maybe> chain!]
 //  ]
 //
 DECLARE_NATIVE(unchain)
 {
     INCLUDE_PARAMS_OF_UNCHAIN;
+
+    Element* e = cast(Element*, ARG(chain));
+
+    Option(Error*) error = Trap_Unsingleheart(e);
+    if (error)
+        return RAISE(unwrap error);
+
+    return COPY(e);
+}
+
+
+//
+//  /unpath: native [
+//
+//  "Remove PATH!, e.g. leading slash or trailing slash from an element"
+//
+//      return: [~null~ element?]
+//      chain [<maybe> path!]
+//  ]
+//
+DECLARE_NATIVE(unpath)
+{
+    INCLUDE_PARAMS_OF_UNPATH;
+
+    Element* e = cast(Element*, ARG(chain));
+
+    Option(Error*) error = Trap_Unsingleheart(e);
+    if (error)
+        return RAISE(unwrap error);
+
+    return COPY(e);
+}
+
+
+//
+//  /untuple: native [
+//
+//  "Remove TUPLE!, e.g. leading dot or trailing dot from a tuple"
+//
+//      return: [~null~ element?]
+//      chain [<maybe> tuple!]
+//  ]
+//
+DECLARE_NATIVE(untuple)
+{
+    INCLUDE_PARAMS_OF_UNTUPLE;
 
     Element* e = cast(Element*, ARG(chain));
 

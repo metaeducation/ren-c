@@ -30,7 +30,7 @@
 
 
 //
-//  stats: native [
+//  /stats: native [
 //
 //  "Provides status and statistics information about the interpreter"
 //
@@ -94,7 +94,7 @@ DECLARE_NATIVE(stats)
 #endif
 
 //
-//  callgrind: native [
+//  /callgrind: native [
 //
 //  "Provide access to services in <valgrind/callgrind.h>"
 //

@@ -35,7 +35,7 @@
 
 
 //
-//  reeval: native [
+//  /reeval: native [
 //
 //  "Process an evaluated argument *inline* as an evaluator step would"
 //
@@ -76,7 +76,7 @@ DECLARE_NATIVE(reeval)
 
 
 //
-//  shove: native [
+//  /shove: native [
 //
 //  "Shove a parameter into an ACTION! as its first argument"
 //
@@ -242,7 +242,7 @@ DECLARE_NATIVE(shove)
 
 
 //
-//  evaluate: native [
+//  /evaluate: native [
 //
 //  "Perform a single evaluator step, returning the next source position"
 //
@@ -492,7 +492,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
 
 //
-//  redo: native [
+//  /redo: native [
 //
 //  "Restart a frame's action from the top with its current state"
 //
@@ -584,7 +584,7 @@ DECLARE_NATIVE(redo)
 
 
 //
-//  applique: native [
+//  /applique: native [
 //
 //  "Invoke an ACTION! with all required arguments specified"
 //
@@ -653,7 +653,7 @@ DECLARE_NATIVE(applique)
 
 
 //
-//  apply: native [  ; !!! MUST UPDATE SPEC FOR // NATIVE IF CHANGED [1]
+//  /apply: native [  ; !!! MUST UPDATE SPEC FOR // NATIVE IF CHANGED [1]
 //
 //  "Invoke an action with all required arguments specified"
 //
@@ -963,7 +963,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 
 
 //
-//  run: native [
+//  /run: native [
 //
 //  "Invoke code inline as if it had been invoked via a WORD!"
 //
