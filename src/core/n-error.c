@@ -204,7 +204,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 
 
 //
-//  /except: enfix:defer native [
+//  /except: infix:defer native [
 //
 //  "Analogue to something like a THEN which traps definitional errors"
 //
@@ -226,7 +226,7 @@ DECLARE_NATIVE(except)
 //
 //    If you intend this to work with arbitrary code and store a meta-NIHIL
 //    in non-erroring cases, then EXCEPT must tolerate the NIHIL, since the
-//    enfix defer rules mean this acts as ^ (eval f except e -> [...]).  If
+//    infix defer rules mean this acts as ^ (eval f except e -> [...]).  If
 //    you couldn't do that, this gets laborious to where you have to write
 //    something like:
 //

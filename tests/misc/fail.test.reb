@@ -58,7 +58,7 @@
     (raised? [@]: raise "hi")
 ]
 
-; A ^META'd failure still does a lookahead step for enfix, and if that step
+; A ^META'd failure still does a lookahead step for infix, and if that step
 ; does not need to lookahead it should respect the meta'd status and not
 ; raise an error.
 [

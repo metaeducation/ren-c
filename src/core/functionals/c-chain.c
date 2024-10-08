@@ -124,10 +124,10 @@ Bounce Cascader_Dispatcher(Level* const L)
 //    just uses Cascader_Dispatcher() as its executor, so we get called back.
 //
 // 3. At the head of the pipeline we start at the dispatching phase since the
-//    frame is already filled, but each step after that uses enfix and runs
+//    frame is already filled, but each step after that uses infix and runs
 //    from the top.)
 //
-// 4. We use the same mechanism as enfix operations do...give the next cascade
+// 4. We use the same mechanism as infix operations do...give the next cascade
 //    step its first argument coming from L->out.
 //
 //    !!! One side effect of this is that unless CASCADE is changed to check,
@@ -210,7 +210,7 @@ Bounce Cascader_Dispatcher(Level* const L)
 
     Begin_Action(sub, VAL_FRAME_LABEL(pipeline_at), PREFIX_0);
 
-    Level_State_Byte(sub) = ST_ACTION_INITIAL_ENTRY_ENFIX;  // [4]
+    Level_State_Byte(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
     Clear_Level_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);

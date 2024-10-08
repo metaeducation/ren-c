@@ -54,8 +54,8 @@ pi: 3.14159265358979323846
     return r
 ]
 
-/mod: enfix modulo/
-/pow: enfix power/
+/mod: infix modulo/
+/pow: infix power/
 
 /sign-of: func [
     "Returns sign of number as 1, 0, or -1 (to use as multiplier)."

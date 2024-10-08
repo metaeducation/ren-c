@@ -68,7 +68,7 @@ Bounce Generic_Dispatcher(Level* L)
 
 
 //
-//  /generic: enfix native [
+//  /generic: infix native [
 //
 //  "Creates datatype action (currently for internal use only)"
 //

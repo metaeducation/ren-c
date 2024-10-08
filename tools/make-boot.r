@@ -517,7 +517,7 @@ e-hooks: make-emitter "Built-in Type Hooks" (
     join prep-dir %core/tmp-type-hooks.c
 )
 
-/hookname: enfix func [
+/hookname: infix func [
     return: [text!]
     prefix [text!] "e.g. T_ for T_Action"
     t [object!] "type record (e.g. a row out of %types.r)"

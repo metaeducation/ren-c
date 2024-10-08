@@ -1,6 +1,6 @@
 ; %except.test.reb
 ;
-; Like CATCH from some other languages, as an enfix operation in the
+; Like CATCH from some other languages, as an infix operation in the
 ; spirit of THEN/ELSE which reacts to failures.  (THEN and ELSE do not,
 ; passing any failures along, which will raise an alarm if not
 ; consumed by some ^META receiving site.

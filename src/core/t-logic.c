@@ -326,7 +326,7 @@ INLINE bool Do_Logic_Right_Side_Throws(
 
 
 //
-//  /and: enfix native [
+//  /and: infix native [
 //
 //  "Boolean AND, right hand side must be in GROUP! to allow short-circuit"
 //
@@ -354,7 +354,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 
 
 //
-//  /or: enfix native [
+//  /or: infix native [
 //
 //  "Boolean OR, right hand side must be in GROUP! to allow short-circuit"
 //
@@ -382,7 +382,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 
 
 //
-//  /xor: enfix native [
+//  /xor: infix native [
 //
 //  "Boolean XOR (operation cannot be short-circuited)"
 //
@@ -410,7 +410,7 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 
 
 //
-//  /unless: enfix native [
+//  /unless: infix native [
 //
 //  "Give left hand side when right hand side is not null or void"
 //

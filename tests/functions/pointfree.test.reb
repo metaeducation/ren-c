@@ -117,7 +117,7 @@
     ;
     ; Hopefully you see some of the ambition, here--what I am trying to do.
     ;
-    <-: enfix func* [
+    <-: infix func* [
         "Declare action by example instantiation, missing args unspecialized"
 
         return: [action?]

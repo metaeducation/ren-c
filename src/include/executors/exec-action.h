@@ -28,13 +28,13 @@
 //=//// ACTION_EXECUTOR_FLAG_INFIX_A //////////////////////////////////////=//
 //
 // Due to the unusual influences of partial refinement specialization, a frame
-// may wind up with its enfix parameter as being something like the last cell
+// may wind up with its infix parameter as being something like the last cell
 // in the argument list...when it has to then go back and fill earlier args
 // as normal.  There's no good place to hold the memory that one is doing an
-// enfix fulfillment besides a bit on the frame itself.
+// infix fulfillment besides a bit on the frame itself.
 //
 // It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
-// to run an ACTION! cell as enfix or not.  The reason this may be overridden
+// to run an ACTION! cell as infix or not.  The reason this may be overridden
 // on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
 //
 #define ACTION_EXECUTOR_FLAG_INFIX_A \
@@ -58,9 +58,9 @@
 //
 // Note: It was tried to do this with ST_ACTION_DOING_PICKUPS as a state byte,
 // which are not as scarce as executor flags.  But that overwrote the case
-// of ST_ACTION_FULFILLING_ENFIX_FROM_OUT, and sometimes the enfix argument
+// of ST_ACTION_FULFILLING_INFIX_FROM_OUT, and sometimes the infix argument
 // is actually a pickup (e.g. a refinement specialized to be the first
-// ordinary argument).  There's a good reason for ENFIX_FROM_OUT to be a state
+// ordinary argument).  There's a good reason for INFIX_FROM_OUT to be a state
 // byte, so this moved to being a flag.
 //
 // Note: This flag only applies when not IN_DISPATCH, so could have a distinct
@@ -70,7 +70,7 @@
     LEVEL_FLAG_5   // !!! temporary, was LEVEL_FLAG_25
 
 
-//=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX //////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX //////////////////////=//
 //
 // !!! TEMPORARILY DISABLED (defined to 0) - SHORT ON FLAGS AND NEED FOR
 // ANOTHER MORE IMPORTANT PURPOSE - KEPT AS DOCUMENTATION !!!
@@ -78,7 +78,7 @@
 // There are advanced features that "abuse" the evaluator, e.g. by making it
 // create a specialization exemplar by example from a stream of code.  These
 // cases are designed to operate in isolation, and are incompatible with the
-// idea of enfix operations that stay pending in the evaluation queue, e.g.
+// idea of infix operations that stay pending in the evaluation queue, e.g.
 //
 //     match+ parse "aab" [some "a"] else [print "what should this do?"]
 //
@@ -96,7 +96,7 @@
 //
 // The best answer for right now is just to raise an error.
 //
-#define ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX \
+#define ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX \
     0  // !!! DISABLED FOR NOW, BUT CALLSITES CAN STILL REFERENCE
 
 
@@ -239,10 +239,10 @@ enum {
     // Using the state byte to convey the next argument should come from OUT
     // serves an additional purpose, because STATE_0 would mean that OUT has
     // to be stale.  This allows the caller to subvert that rule as well as
-    // have the enfix-from-out signal without needing a separate flag.
+    // have the infix-from-out signal without needing a separate flag.
     //
-    ST_ACTION_INITIAL_ENTRY_ENFIX,
-    ST_ACTION_FULFILLING_ENFIX_FROM_OUT,
+    ST_ACTION_INITIAL_ENTRY_INFIX,
+    ST_ACTION_FULFILLING_INFIX_FROM_OUT,
 
     // While some special-purpose functions intentionally receive barrier, most
     // don't want to...so we can treat it as an expression barrier--whether

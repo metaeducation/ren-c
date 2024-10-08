@@ -85,7 +85,7 @@ DECLARE_NATIVE(shove)
 //
 // PATH!s do not do infix lookup in Rebol, and there are good reasons for this
 // in terms of both performance and semantics.  However, it is sometimes
-// needed to dispatch via a path--for instance to call an enfix function that
+// needed to dispatch via a path--for instance to call an infix function that
 // lives in a context.
 //
 // The SHOVE operation is used to push values from the left to act as the
@@ -161,8 +161,8 @@ DECLARE_NATIVE(shove)
   //=//// PROCESS LITERALLY-TAKEN LEFT FOR PARAMETER CONVENTION ///////////=//
   //
   // 1. Because the SHOVE operator takes the left hand side as a hard literal,
-  //    evaluating that and shoving into a right hand enfix function will
-  //    out-prioritize an enfix operation's completion on the left:
+  //    evaluating that and shoving into a right hand infix function will
+  //    out-prioritize an infix operation's completion on the left:
   //
   //        >> 1 + (1 + 1) * 3
   //        == 9  ; e.g. (1 + (1 + 1)) * 3
@@ -182,7 +182,7 @@ DECLARE_NATIVE(shove)
     ParamClass pclass = Cell_ParamClass(param);
 
     switch (Cell_ParamClass(param)) {
-      case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative enfix [1]
+      case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative infix [1]
       case PARAMCLASS_META: {
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // will decay if normal
         if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
@@ -190,7 +190,7 @@ DECLARE_NATIVE(shove)
         if (pclass == PARAMCLASS_NORMAL)
             Decay_If_Unstable(OUT);
         else {
-            // The enfix fulfillment code will Meta_Quotify() OUT
+            // The infix fulfillment code will Meta_Quotify() OUT
         }
         break; }
 
@@ -202,7 +202,7 @@ DECLARE_NATIVE(shove)
         Derelativize(OUT, left, Level_Binding(L));
         break;
 
-      case PARAMCLASS_SOFT:  // !!! can we trust enfix to just do this part?
+      case PARAMCLASS_SOFT:  // !!! can we trust infix to just do this part?
         Derelativize(OUT, left, Level_Binding(L));
         break;
 
@@ -213,22 +213,22 @@ DECLARE_NATIVE(shove)
 
   //=//// DISPATCH WITH FIRST ARG IN OUT SLOT /////////////////////////////=//
   //
-  // 1. This uses the enfix mechanic regardless of whether the function we are
-  //    shoving into is enfix or not.  It's the easiest way to get the
+  // 1. This uses the infix mechanic regardless of whether the function we are
+  //    shoving into is infix or not.  It's the easiest way to get the
   //    argument into the first slot of the function.
   //
-  // 2. While the evaluator state may be geared to running enfix parameter
+  // 2. While the evaluator state may be geared to running infix parameter
   //    acquisition, we still pass in a flag to Begin_Action() so that it
-  //    knows whether it was enfix or not.  This makes a difference, e.g.:
+  //    knows whether it was infix or not.  This makes a difference, e.g.:
   //
   //        >> 1 + 2 ->- negate * 3
   //
 
-    Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);  // [1]
+    Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_INFIX);  // [1]
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
     Push_Action(sub, VAL_ACTION(shovee), Cell_Frame_Coupling(shovee));
-    Begin_Action(sub, label, infix_mode);  // can know if it's enfix [2]
+    Begin_Action(sub, label, infix_mode);  // can know if it's infix [2]
 
     Push_Level(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
@@ -898,7 +898,7 @@ DECLARE_NATIVE(apply)
 
 
 //
-//  //: enfix native [  ; !!! MUST UPDATE SPEC FOR APPLY NATIVE IF CHANGED [1]
+//  //: infix native [  ; !!! MUST UPDATE SPEC FOR APPLY NATIVE IF CHANGED [1]
 //
 //  "Infix version of APPLY with name of thing to apply literally on left"
 //

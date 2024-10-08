@@ -236,7 +236,7 @@ typedef enum {
     // with other hard quotes.  If you have a situation like:
     //
     //     /right-soft: func [@(arg)] [...]
-    //     /left-literal: enfix func [@left right] [...]
+    //     /left-literal: infix func [@left right] [...]
     //
     // Soft quoting will "tie break" by assuming the soft literal operation
     // is willing to let the hard literal operation run:

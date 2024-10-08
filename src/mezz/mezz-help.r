@@ -147,7 +147,7 @@ REBOL [
 
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ;
-    all [enfix? frame, not empty? args] then [
+    all [infix? frame, not empty? args] then [
         print [_ _ _ _ @args.1 name @(spread next args)]
     ] else [
         print [_ _ _ _ name @(spread args) @(spread refinements)]

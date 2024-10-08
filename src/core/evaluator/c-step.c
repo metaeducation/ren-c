@@ -136,7 +136,7 @@ STATIC_ASSERT(
 // SET-WORD! and SET-TUPLE! want to do roughly the same thing as the first step
 // of their evaluation.  They evaluate the right hand side into L->out.
 //
-// 1. Note that any enfix quoting operators that would quote backwards to see
+// 1. Note that any infix quoting operators that would quote backwards to see
 //    the `x:` would have intercepted it during a lookahead...pre-empting any
 //    of this code.
 //
@@ -212,7 +212,7 @@ Bounce Stepper_Executor(Level* L)
         // not to redundantly apply LET bindings.  See `L_binding` above.
 
         // Note: What if the re-evaluate functionality doesn't want to heed
-        // the enfix state in the action itself>
+        // the infix state in the action itself?
         //
         Freshen_Cell(OUT);
         L_current_gotten = nullptr;  // !!! allow/require to be passed in?
@@ -290,7 +290,7 @@ Bounce Stepper_Executor(Level* L)
 
     // ^-- doesn't advance expression index: `reeval x` starts with `reeval`
 
-  //=//// LOOKAHEAD FOR ENFIXED FUNCTIONS THAT QUOTE THEIR LEFT ARG ///////=//
+  //=//// LOOKAHEAD FOR INFIX FUNCTIONS THAT QUOTE THEIR LEFT ARG /////////=//
 
     if (Is_Level_At_End(L))
         goto give_up_backward_quote_priority;
@@ -310,7 +310,7 @@ Bounce Stepper_Executor(Level* L)
             not L_next_gotten
             or not Is_Action(unwrap L_next_gotten)
         ){
-            goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
+            goto give_up_backward_quote_priority;
         }
     }
     else
@@ -321,14 +321,14 @@ Bounce Stepper_Executor(Level* L)
         goto give_up_backward_quote_priority;
 
   blockscope {
-    Action* enfixed = VAL_ACTION(unwrap L_next_gotten);
-    Array* paramlist = ACT_PARAMLIST(enfixed);
+    Action* infixed = VAL_ACTION(unwrap L_next_gotten);
+    Array* paramlist = ACT_PARAMLIST(infixed);
 
     if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST))
         goto give_up_backward_quote_priority;
 
     ParamClass pclass = Cell_ParamClass(  // !!! Should cache this in frame
-        First_Unspecialized_Param(nullptr, enfixed)
+        First_Unspecialized_Param(nullptr, infixed)
     );
 
     // If the action soft quotes its left, that means it's aware that its
@@ -350,11 +350,11 @@ Bounce Stepper_Executor(Level* L)
     // Put the backwards quoted value into OUT.  (Do this before next
     // step because we need value for type check)
     //
-    if (pclass == PARAMCLASS_JUST)  // enfix func ['x ...] [...]
+    if (pclass == PARAMCLASS_JUST)  // infix func ['x ...] [...]
         Copy_Cell(OUT, L_current);
     else {
         assert(
-            pclass == PARAMCLASS_THE  // enfix func [@x ...] [...]
+            pclass == PARAMCLASS_THE  // infix func [@x ...] [...]
             or pclass == PARAMCLASS_SOFT
         );
         Derelativize(OUT, L_current, L_binding);
@@ -402,7 +402,7 @@ Bounce Stepper_Executor(Level* L)
     }
   }
 
-    // Wasn't the at-end exception, so run normal enfix with right winning.
+    // Wasn't the at-end exception, so run normal infix with right winning.
     //
   blockscope {
     Level* sub = Make_Action_Sublevel(L);
@@ -482,7 +482,7 @@ Bounce Stepper_Executor(Level* L)
     // Most FRAME! evaluations come from the antiform ("actions") triggered
     // from a WORD! or PATH! case.)
     //
-    // 1. If an enfix function is run at this moment, it will not have a left
+    // 1. If an infix function is run at this moment, it will not have a left
     //    hand side argument.
 
       case REB_FRAME: {
@@ -588,10 +588,10 @@ Bounce Stepper_Executor(Level* L)
             Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
 
             if (sigil == SIGIL_THE)
-                The_Next_In_Feed(L->out, L->feed);  // !!! review enfix interop
+                The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
             else {
                 assert(sigil == SIGIL_QUOTE);
-                Just_Next_In_Feed(L->out, L->feed);  // !!! review enfix
+                Just_Next_In_Feed(L->out, L->feed);  // !!! review infix
             }
 
             if (antiform)  // exception [2]
@@ -648,9 +648,9 @@ Bounce Stepper_Executor(Level* L)
     // set, but to the antiform of blank e.g. NOTHING).  Should the word
     // look up to an antiform FRAME!, then that "Action" will be invoked.
     //
-    // NOTE: The usual dispatch of enfix functions is *not* via a REB_WORD in
+    // NOTE: The usual dispatch of infix functions is *not* via a REB_WORD in
     // this switch, it's by some code at the `lookahead:` label.  You only see
-    // enfix here when there was nothing to the left, so cases like `(+ 1 2)`
+    // infix here when there was nothing to the left, so cases like `(+ 1 2)`
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
 
       word_common: ///////////////////////////////////////////////////////////
@@ -665,13 +665,13 @@ Bounce Stepper_Executor(Level* L)
             Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
             Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
             const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
-            Erase_Cell(OUT);  // sanity check, plus don't want enfix to see
+            Erase_Cell(OUT);  // sanity check, plus don't want infix to see
 
             if (infix_mode) {
                 if (infix_mode != INFIX_TIGHT) {  // defer or postpone
                     if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
                         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
-                        Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
+                        Set_Feed_Flag(L->feed, DEFERRING_INFIX);
                         goto finished;
                     }
                 }
@@ -720,7 +720,7 @@ Bounce Stepper_Executor(Level* L)
                     fail ("Unsupported parameter convention for intrinsic");
                 }
 
-                Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
+                Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
                 Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
                 Push_Level(SPARE, sub);
@@ -828,7 +828,7 @@ Bounce Stepper_Executor(Level* L)
 
         if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated
             Drop_Data_Stack_To(BASELINE->stack_base);
-            fail ("Use `->-` to shove left enfix operands into CHAIN!s");
+            fail ("Use `->-` to shove left infix operands into CHAIN!s");
         }
         goto handle_action_in_out_with_refinements_pushed; }
 
@@ -988,10 +988,10 @@ Bounce Stepper_Executor(Level* L)
     //         ;                         ---^
     //         ; slash helps show block is not argument
     //
-    // 6. The left hand side does not look ahead at paths to find enfix
+    // 6. The left hand side does not look ahead at paths to find infix
     //    functions.  This is because PATH! dispatch is costly and can error
-    //    in more ways than sniffing a simple WORD! for enfix can.  So the
-    //    prescribed way of running enfix with paths is `left ->- right/side`,
+    //    in more ways than sniffing a simple WORD! for infix can.  So the
+    //    prescribed way of running infix with paths is `left ->- right/side`,
     //    which uses an infix WORD! to mediate the interaction.
 
       path_common:
@@ -1084,7 +1084,7 @@ Bounce Stepper_Executor(Level* L)
 
         if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated [6]
             Drop_Data_Stack_To(BASELINE->stack_base);
-            fail ("Use `->-` to shove left enfix operands into PATH!s");
+            fail ("Use `->-` to shove left infix operands into PATH!s");
         }
 
         goto handle_action_in_out_with_refinements_pushed; }
@@ -1566,7 +1566,7 @@ Bounce Stepper_Executor(Level* L)
         //     304 = [a]: test 1020
         //     a = 304
         //
-        // The `a` was fetched and found to not be enfix, and in the process
+        // The `a` was fetched and found to not be infix, and in the process
         // its value was known.  But then we assigned that a with a new value
         // in the implementation of SET-BLOCK! here, so, it's incorrect.
         //
@@ -1734,14 +1734,14 @@ Bounce Stepper_Executor(Level* L)
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
 
     // We're sitting at what "looks like the end" of an evaluation step.
-    // But we still have to consider enfix.  e.g.
+    // But we still have to consider infix.  e.g.
     //
     //    [pos val]: evaluate:step [1 + 2 * 3]
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
     // and consider its job done.  It has to notice that the word `+` looks up
-    // to an ACTION! that was assigned with SET/ENFIX, and keep going.
+    // to an ACTION! whose cell has an InfixMode set in the header.
     //
     // Next, there's a subtlety with FEED_FLAG_NO_LOOKAHEAD which explains why
     // processing of the 2 argument doesn't greedily continue to advance, but
@@ -1749,9 +1749,9 @@ Bounce Stepper_Executor(Level* L)
     // of math operations tend to be declared #tight.
     //
     // If that's not enough to consider :-) it can even be the case that
-    // subsequent enfix gets "deferred".  Then, possibly later the evaluated
+    // subsequent infix gets "deferred".  Then, possibly later the evaluated
     // value gets re-fed back in, and we jump right to this post-switch point
-    // to give it a "second chance" to take the enfix.  (See 'deferred'.)
+    // to give it a "second chance" to take the infix.  (See 'deferred'.)
     //
     // So this post-switch step is where all of it happens, and it's tricky!
 
@@ -1786,7 +1786,7 @@ Bounce Stepper_Executor(Level* L)
   //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION ///////////=//
 
     // For long-pondered technical reasons, only WORD! is able to dispatch
-    // enfix.  If it's necessary to dispatch an enfix function via path, then
+    // infix.  If it's necessary to dispatch an infix function via path, then
     // a word is used to do it, like `>-` in `x: >- lib/method [...] [...]`.
 
     if (Is_Feed_At_End(L->feed)) {
@@ -1811,13 +1811,13 @@ Bounce Stepper_Executor(Level* L)
         goto finished;
     }
 
-  //=//// FETCH WORD! TO PERFORM SPECIAL HANDLING FOR ENFIX/INVISIBLES ////=//
+  //=//// FETCH WORD! TO PERFORM SPECIAL HANDLING FOR INFIX/INVISIBLES ////=//
 
     // First things first, we fetch the WORD! (if not previously fetched) so
     // we can see if it looks up to any kind of ACTION! at all.
 
 
-  //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-ENFIX ///////////=//
+  //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-INFIX ///////////=//
 
     // These cases represent finding the start of a new expression.
     //
@@ -1840,24 +1840,21 @@ Bounce Stepper_Executor(Level* L)
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
         Clear_Eval_Executor_Flag(L, INERT_OPTIMIZATION);
 
-        // Since it's a new expression, EVALUATE doesn't want to run it
-        // even if invisible, as it's not completely invisible (enfixed)
-        //
         goto finished;
     }
 
-  //=//// IS WORD ENFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
+  //=//// IS WORD INFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
 
   blockscope {
-    Action* enfixed = VAL_ACTION(unwrap L_next_gotten);
-    Array* paramlist = ACT_PARAMLIST(enfixed);
+    Action* infixed = VAL_ACTION(unwrap L_next_gotten);
+    Array* paramlist = ACT_PARAMLIST(infixed);
 
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST)) {
         //
-        // Left-quoting by enfix needs to be done in the lookahead before an
+        // Left-quoting by infix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
         //
-        //     /left-the: enfix func [@value] [value]
+        //     /left-the: infix func [@value] [value]
         //     the <something> left-the
         //
         // But due to the existence of <end>-able parameters, the left quoting
@@ -1868,7 +1865,7 @@ Bounce Stepper_Executor(Level* L)
         if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
             fail (Error_Literal_Left_Path_Raw());
 
-        const Param* first = First_Unspecialized_Param(nullptr, enfixed);
+        const Param* first = First_Unspecialized_Param(nullptr, infixed);
         if (Cell_ParamClass(first) == PARAMCLASS_SOFT) {
             if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
@@ -1888,12 +1885,12 @@ Bounce Stepper_Executor(Level* L)
                             // ^-- (1 + if null [2] else [3]) => 4
     ){
         if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
-            // Don't do enfix lookahead if asked *not* to look.
+            // Don't do infix lookahead if asked *not* to look.
 
             Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
-            assert(Not_Feed_Flag(L->feed, DEFERRING_ENFIX));
-            Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
+            assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX));
+            Set_Feed_Flag(L->feed, DEFERRING_INFIX);
 
             goto finished;
         }
@@ -1916,13 +1913,13 @@ Bounce Stepper_Executor(Level* L)
             infix_mode == INFIX_POSTPONE
             or (
                 infix_mode == INFIX_DEFER
-                and Not_Feed_Flag(L->feed, DEFERRING_ENFIX)
+                and Not_Feed_Flag(L->feed, DEFERRING_INFIX)
             )
         )
     ){
         if (
             Is_Action_Level(L->prior)
-            and Get_Executor_Flag(ACTION, L->prior, ERROR_ON_DEFERRED_ENFIX)
+            and Get_Executor_Flag(ACTION, L->prior, ERROR_ON_DEFERRED_INFIX)
         ){
             // Operations that inline functions by proxy (such as MATCH and
             // ENSURE) cannot directly interoperate with THEN or ELSE...they
@@ -1957,9 +1954,9 @@ Bounce Stepper_Executor(Level* L)
             goto finished;
         }
 
-        Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
+        Set_Feed_Flag(L->feed, DEFERRING_INFIX);
 
-        // Leave enfix operator pending in the feed.  It's up to the parent
+        // Leave infix operator pending in the feed.  It's up to the parent
         // level to decide whether to ST_STEPPER_LOOKING_AHEAD to jump
         // back in and finish fulfilling this arg or not.  If it does resume
         // and we get to this check again, L->prior->deferred can't be null,
@@ -1968,7 +1965,7 @@ Bounce Stepper_Executor(Level* L)
         goto finished;
     }
 
-    Clear_Feed_Flag(L->feed, DEFERRING_ENFIX);
+    Clear_Feed_Flag(L->feed, DEFERRING_INFIX);
 
     // An evaluative lookback argument we don't want to defer, e.g. a normal
     // argument or a deferable one which is not being requested in the context
@@ -1977,7 +1974,7 @@ Bounce Stepper_Executor(Level* L)
 
     Level* sub = Make_Action_Sublevel(L);
     Push_Level(OUT, sub);
-    Push_Action(sub, enfixed, Cell_Frame_Coupling(unwrap L_next_gotten));
+    Push_Action(sub, infixed, Cell_Frame_Coupling(unwrap L_next_gotten));
 
     Option(const Symbol*) label = Is_Word(L_next)
         ? Cell_Word_Symbol(L_next)
@@ -1990,10 +1987,10 @@ Bounce Stepper_Executor(Level* L)
 
   finished:
 
-    // Want to keep this flag between an operation and an ensuing enfix in
+    // Want to keep this flag between an operation and an ensuing infix in
     // the same level, so can't clear in Drop_Action(), e.g. due to:
     //
-    //     /left-the: enfix :the
+    //     /left-the: infix the/
     //     o: make object! [/f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //

@@ -905,7 +905,7 @@ static void Mark_Level_Stack_Deep(void)
             Is_Level_Fulfilling(L)
             and (
                 Level_State_Byte(L) == ST_ACTION_INITIAL_ENTRY
-                or Level_State_Byte(L) == ST_ACTION_INITIAL_ENTRY_ENFIX
+                or Level_State_Byte(L) == ST_ACTION_INITIAL_ENTRY_INFIX
             )
         ){
             goto propagate_and_continue;  // args and locals poison/garbage

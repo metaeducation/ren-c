@@ -2,7 +2,7 @@
 ;
 ; The SHOVE operator (->-) lets you push a left hand side argument
 ; into something on the right.  This is particularly useful for
-; calling enfix functions that need to be accessed via PATH!, as
+; calling infix functions that need to be accessed via PATH!, as
 ; the evaluator will not do path evaluations speculatively (due
 ; to impacts on performance and potentially bad semantics).
 ;
@@ -11,10 +11,10 @@
 
 ; NORMAL parameter
 [
-    (/left-normal: enfix lambda [left right] [
+    (/left-normal: infix lambda [left right] [
         reduce [left right]
     ]
-    /right-normal: enfix lambda [one two] [
+    /right-normal: infix lambda [one two] [
         reduce [one two]
     ]
     value: [whatever]
@@ -28,10 +28,10 @@
 
 ; ^META parameter
 [
-    (/left-meta: enfix lambda [^left right] [
+    (/left-meta: infix lambda [^left right] [
         reduce [left right]
     ]
-    /right-meta: enfix lambda [^one two] [
+    /right-meta: infix lambda [^one two] [
         reduce [one two]
     ]
     ok)
@@ -44,10 +44,10 @@
 
 ; @LITERAL bound parameter
 [
-    (/left-lit-bound: enfix lambda [@left right] [
+    (/left-lit-bound: infix lambda [@left right] [
         reduce [left right]
     ]
-    /right-lit-bound: enfix lambda [@one two] [
+    /right-lit-bound: infix lambda [@one two] [
         reduce [one two]
     ]
     ok)
@@ -72,10 +72,10 @@
 
 ; 'LITERAL as-is parameter
 [
-    (/left-lit-as-is: enfix lambda ['left right] [
+    (/left-lit-as-is: infix lambda ['left right] [
         reduce [left right]
     ]
-    /right-lit-as-is: enfix lambda ['one two] [
+    /right-lit-as-is: infix lambda ['one two] [
         reduce [one two]
     ]
     value: <whatever>
@@ -104,10 +104,10 @@
 ; 1. There was only one convention for what needs to be two: @(LITERAL) and
 ;    '(LITERAL).
 [
-    (/left-soft-as-is: enfix lambda [@(left) right] [
+    (/left-soft-as-is: infix lambda [@(left) right] [
         reduce [left right]
     ]
-    /right-soft-as-is: enfix lambda [@(one) two] [
+    /right-soft-as-is: infix lambda [@(one) two] [
         reduce [one two]
     ]
     value: <whatever>
@@ -148,7 +148,7 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        /magic: enfix lambda [a b :minus] [
+        /magic: infix lambda [a b :minus] [
             either minus [a - b] [a + b]
         ]
     ])
@@ -162,7 +162,7 @@
 ; PATH! cannot be directly quoted left, must use ->-
 [
     (
-        /left-the: enfix :the
+        /left-the: infix :the
         o: make object! [i: 10 /f: does [20]]
         ok
     )

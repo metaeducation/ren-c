@@ -382,7 +382,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 
 ; ->- is the SHOVE operator.  It uses the item immediately to its left for
 ; the first argument to whatever operation is on its right hand side.  While
-; most useful for calling enfix functions from PATH! (which can't be done
+; most useful for calling infix functions from PATH! (which can't be done
 ; otherwise), it can also be used with ordinary functions...and precedence
 ; will be handled accordingly:
 ;
@@ -394,7 +394,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 ;
 ; SHOVE's left hand side is taken as one literal unit, and then pre-processed
 ; for the parameter conventions of the right hand side's first argument.  But
-; since literal arguments out-prioritize evaluative right enfix, these
+; since literal arguments out-prioritize evaluative right infix, these
 ; "simulated evaluative left parameters" will act differently than if SHOVE
 ; were not being used:
 ;
@@ -408,7 +408,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 ; worth the cost, when you can just put the left hand side in parentheses
 ; if this isn't what you want.
 ;
-->-: enfix shove/
+->-: infix shove/
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
@@ -416,15 +416,15 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 ; code with SHOVE, but are currently done using macro due to unfinished binding
 ; semantics in SHOVE pertaining to fetched values.
 
-/me: enfix redescribe [
-    "Update variable using it as the left hand argument to an enfix operator"
+/me: infix redescribe [
+    "Update variable using it as the left hand argument to an infix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
         :[left, unchain left, right]
     ]
 )
 
-/my: enfix redescribe [
+/my: infix redescribe [
     "Update variable using it as the first argument to a prefix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
@@ -432,7 +432,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
     ]
 )
 
-/so: enfix:postpone func [
+/so: infix:postpone func [
     "Postfix assertion which stops running if left expression is inhibitor"
 
     return: [any-value?]
@@ -453,7 +453,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 ]
 
 
-/was: enfix:postpone redescribe [
+/was: infix:postpone redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
     lambda [left [any-value?] right [any-value?]] [
@@ -744,12 +744,12 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 ]
 
 
-; These constructs used to be enfix to complete their left hand side.  Yet
+; These constructs used to be infix to complete their left hand side.  Yet
 ; that form of completion was only one expression's worth, when they wanted
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: [~[]~]`) permit a more flexible version of the mechanic.
 
-<|: enfix:postpone eval-all/
+<|: infix:postpone eval-all/
 
 
 ; Currently, METH is just a synonym for FUNC as a way of annotating that you
@@ -766,7 +766,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
 ; (or to provide the prior value of the variable?)  It seems wasteful to
 ; call the accessor when 99 times out of 100 the value would be discarded.
 ;
-/accessor: enfix func [
+/accessor: infix func [
     return: [~]
     var [set-word?]
     action [action?]

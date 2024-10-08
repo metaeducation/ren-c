@@ -84,7 +84,7 @@
 
 // When arguments are hard quoted or soft-quoted, they don't call into the
 // evaluator to do it.  But they need to use the logic of the evaluator for
-// noticing when to defer enfix:
+// noticing when to defer infix:
 //
 //     /foo: func [...] [
 //          return the 1 then ["this needs to be returned"]
@@ -96,8 +96,8 @@
 //
 // Returns TRUE if it set the flag.
 //
-bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
-    assert(Not_Feed_Flag(feed, DEFERRING_ENFIX));
+bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
+    assert(Not_Feed_Flag(feed, DEFERRING_INFIX));
     assert(not feed->gotten);
 
     Clear_Feed_Flag(feed, NO_LOOKAHEAD);
@@ -122,7 +122,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
         return false;
 
     if (infix_mode == INFIX_DEFER)
-        Set_Feed_Flag(feed, DEFERRING_ENFIX);
+        Set_Feed_Flag(feed, DEFERRING_INFIX);
     return true;
 }
 
@@ -153,8 +153,8 @@ Bounce Action_Executor(Level* L)
             STATE = ST_ACTION_FULFILLING_ARGS;
             goto fulfill;
 
-          case ST_ACTION_INITIAL_ENTRY_ENFIX:
-            STATE = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;
+          case ST_ACTION_INITIAL_ENTRY_INFIX:
+            STATE = ST_ACTION_FULFILLING_INFIX_FROM_OUT;
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
@@ -171,7 +171,7 @@ Bounce Action_Executor(Level* L)
           case ST_ACTION_TYPECHECKING:
             goto typecheck_then_dispatch;
 
-          case ST_ACTION_FULFILLING_ENFIX_FROM_OUT:  // no evals during this
+          case ST_ACTION_FULFILLING_INFIX_FROM_OUT:  // no evals during this
           default:
             assert(false);
         }
@@ -319,7 +319,7 @@ Bounce Action_Executor(Level* L)
             goto continue_fulfilling;
         }
 
-  //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. ENFIX, CHAIN) ///////////=//
+  //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. INFIX, CHAIN) ///////////=//
 
     // 1. Seeing a fresh  output slot could mean that there was really
     //    "nothing" to the left:
@@ -337,12 +337,12 @@ Bounce Action_Executor(Level* L)
     //    since we remembered what happened we can give an informative error
     //    instead of a perplexing one.
     //
-    // 3. If an enfixed function finds it has a variadic in its first slot,
+    // 3. If an infix function finds it has a variadic in its first slot,
     //    then nothing available on the left is o.k.  It means we have to put
     //    a VARARGS! in that argument slot which will react with TRUE to TAIL?,
     //    so feed it from the global empty array.
     //
-    // 4. Enfix functions with variadics on the left can also deal with a
+    // 4. Infix functions with variadics on the left can also deal with a
     //    single value.  An unevaluated is stored into an array-form variadic,
     //    so the user can do 0 or 1 TAKEs of it.
     //
@@ -360,7 +360,7 @@ Bounce Action_Executor(Level* L)
             goto continue_fulfilling;
         }
 
-        if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {
+        if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {
             STATE = ST_ACTION_FULFILLING_ARGS;
 
             if (Is_Fresh(OUT)) {  // "nothing" to left, but [1]
@@ -368,7 +368,7 @@ Bounce Action_Executor(Level* L)
                     fail (Error_Literal_Left_Path_Raw());  // [2]
 
                 if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // empty is ok [3]
-                    Init_Varargs_Untyped_Enfix(ARG, nullptr);
+                    Init_Varargs_Untyped_Infix(ARG, nullptr);
                     goto continue_fulfilling;
                 }
 
@@ -382,7 +382,7 @@ Bounce Action_Executor(Level* L)
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
                 assert(not Is_Nothing(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
-                Init_Varargs_Untyped_Enfix(ARG, stable_OUT);
+                Init_Varargs_Untyped_Infix(ARG, stable_OUT);
                 Freshen_Cell(OUT);
             }
             else switch (pclass) {
@@ -430,7 +430,7 @@ Bounce Action_Executor(Level* L)
             // won't do lookahead that will be cleared when function
             // takes an argument *or* when a new expression starts.
             //
-            // This effectively puts the enfix into a *single step defer*.
+            // This effectively puts the infix into a *single step defer*.
             //
             Option(InfixMode) infix_mode = Get_Level_Infix_Mode(L);
             if (infix_mode) {
@@ -443,7 +443,7 @@ Bounce Action_Executor(Level* L)
             goto continue_fulfilling;
         }
 
-  //=//// NON-ENFIX VARIADIC ARG (doesn't consume anything *yet*) /////////=//
+  //=//// NON-INFIX VARIADIC ARG (doesn't consume anything *yet*) /////////=//
 
         // Evaluation argument "hook" parameters (marked in FUNC by
         // `<variadic>`).  They point back to this call through a reified
@@ -458,12 +458,12 @@ Bounce Action_Executor(Level* L)
 
   //=//// AFTER THIS, PARAMS CONSUME FROM CALLSITE IF NOT APPLY ///////////=//
 
-        // If this is a non-enfix action, we're at least at *second* slot:
+        // If this is a non-infix action, we're at least at *second* slot:
         //
-        //     1 + non-enfix-action <we-are-here> * 3
+        //     1 + non-infix-action <we-are-here> * 3
         //
         // That's enough to indicate we're not going to read this as
-        // `(1 + non-enfix-action <we-are-here>) * 3`.  Contrast with the
+        // `(1 + non-infix-action <we-are-here>) * 3`.  Contrast with the
         // zero-arity case:
         //
         //     >> /two: does [2]
@@ -472,7 +472,7 @@ Bounce Action_Executor(Level* L)
         //
         // We don't get here to clear the flag, so it's `(1 + two) * 3`
         //
-        // But if it's enfix, arg gathering could still be like:
+        // But if it's infix, arg gathering could still be like:
         //
         //      1 + <we-are-here> * 3
         //
@@ -500,7 +500,7 @@ Bounce Action_Executor(Level* L)
         //     1 arity-3-op 2 + 3 <ambiguous>
         //     1 arity-3-op (2 + 3) <unambiguous>
         //
-        if (Get_Feed_Flag(L->feed, DEFERRING_ENFIX))
+        if (Get_Feed_Flag(L->feed, DEFERRING_INFIX))
             fail (Error_Ambiguous_Infix_Raw());
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
@@ -533,18 +533,18 @@ Bounce Action_Executor(Level* L)
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
-    // 1. Have to account for enfix deferrals in cases like:
+    // 1. Have to account for infix deferrals in cases like:
     //
     //        return the 10 then (x => [x + 10])
 
           case PARAMCLASS_JUST:
             Just_Next_In_Feed(ARG, L->feed);  // don't pick up binding
-            Lookahead_To_Sync_Enfix_Defer_Flag(L->feed);  // [1]
+            Lookahead_To_Sync_Infix_Defer_Flag(L->feed);  // [1]
             goto continue_fulfilling;
 
           case PARAMCLASS_THE:
             The_Next_In_Feed(ARG, L->feed);  // pick up binding
-            Lookahead_To_Sync_Enfix_Defer_Flag(L->feed);  // [1]
+            Lookahead_To_Sync_Infix_Defer_Flag(L->feed);  // [1]
             goto continue_fulfilling;
 
   //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  //////////////////////////////=//
@@ -569,26 +569,26 @@ Bounce Action_Executor(Level* L)
     //
     // First, we cache the quoted argument into the frame slot.  This is
     // the common case of what is desired.  But if we advance the feed and
-    // notice a quoting enfix construct afterward looking left, we call
+    // notice a quoting infix construct afterward looking left, we call
     // into a nested evaluator before finishing the operation.
 
           case PARAMCLASS_SOFT:
             The_Next_In_Feed(ARG, L->feed);
 
-            // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
-            // have to account for enfix deferrals in cases like:
+            // See remarks on Lookahead_To_Sync_Infix_Defer_Flag().  We
+            // have to account for infix deferrals in cases like:
             //
             //     return if null '[foo] else '[bar]
             //
             // Note that this quoting lookahead ("lookback?") is exempt
-            // from the usual "no lookahead" rule while gathering enfix
+            // from the usual "no lookahead" rule while gathering infix
             // arguments.  This supports `null then x -> [1] else [2]`,
             // being 2.  See details at:
             //
             // https://forum.rebol.info/t/1361
             //
             if (
-                Lookahead_To_Sync_Enfix_Defer_Flag(L->feed) and  // ensure got
+                Lookahead_To_Sync_Infix_Defer_Flag(L->feed) and  // ensure got
                 (Get_Subclass_Flag(
                     VARLIST,
                     ACT_PARAMLIST(VAL_ACTION(unwrap L->feed->gotten)),
@@ -630,7 +630,7 @@ Bounce Action_Executor(Level* L)
 
         // If FEED_FLAG_NO_LOOKAHEAD was set going into the argument
         // gathering above, it should have been cleared or converted into
-        // FEED_FLAG_DEFER_ENFIX.
+        // FEED_FLAG_DEFERRING_INFIX.
         //
         //     1 + 2 * 3
         //           ^-- this deferred its chance, so 1 + 2 will complete
@@ -742,7 +742,7 @@ Bounce Action_Executor(Level* L)
   //
   // 4. Store the offset so that both the arg and param locations can quickly
   //    be recovered, while using only a single slot in the cell.  Sign denotes
-  //    whether the parameter was enfixed or not.
+  //    whether the parameter was infix or not.
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
@@ -794,9 +794,9 @@ Bounce Action_Executor(Level* L)
 
             Tweak_Cell_Varargs_Phase(ARG, Level_Phase(L));
 
-            bool enfix = false;  // !!! how does enfix matter?
+            bool infix = false;  // !!! how does infix matter?
             VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [4]
-                enfix
+                infix
                     ? -(ARG - cast(Atom*, Level_Args_Head(L)) + 1)
                     : ARG - cast(Atom*, Level_Args_Head(L)) + 1;
 
@@ -817,9 +817,9 @@ Bounce Action_Executor(Level* L)
   //    consider (variables can be stored to write back to for multi-return).
   //    It's also needed to keep L->original.  Think about how to improve.
   //
-  // 2. This happens if you have something intending to act as enfix but
-  //    that does not consume arguments, e.g. (/x: enfix func [] []).  An
-  //    enfixed function with no arguments might sound dumb, but it allows
+  // 2. This happens if you have something intending to act as infix but
+  //    that does not consume arguments, e.g. (/x: infix func [] []).  An
+  //    infix function with no arguments might sound dumb, but it allows
   //    a 0-arity function to run in the same evaluation step as the left
   //    hand side.  This is how expression work (see `|:`)
   //
@@ -837,7 +837,7 @@ Bounce Action_Executor(Level* L)
     L->u.action.original = save_original;  // ...er, mostly.  [1]
     L->u.action.dispatcher_base = TOP_INDEX;
 
-    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {  // can happen [2]
+    if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
         if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
             fail (Error_Literal_Left_Path_Raw());
 
@@ -946,7 +946,7 @@ Bounce Action_Executor(Level* L)
   // 1. !!! This used to assert rather than fail, but it turns out this can
   //    actually happen:
   //
-  //      >> /left-soft: enfix func ['x [word!]] [return x]
+  //      >> /left-soft: infix func ['x [word!]] [return x]
   //      >> (|| left-soft)
   //
   //    The LEFT-SOFT looked back, and would have been able to take the ||
@@ -954,14 +954,14 @@ Bounce Action_Executor(Level* L)
   //    to win the context (this is how HELP can quote things that quote
   //    left and would usually win, but don't when they have no args).
   //
-  // 2. Want to keep this flag between an operation and an ensuing enfix in
+  // 2. Want to keep this flag between an operation and an ensuing infix in
   //    the same level, so can't clear in Drop_Action(), e.g. due to:
   //
-  //      /left-the: enfix :the
+  //      /left-the: infix the/
   //      o: make object! [/f: does [1]]
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
-    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // [1]
+    if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // [1]
         fail ("Left lookback toward thing that took no args, look at later");
 
     Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);  // [2]
@@ -1163,18 +1163,18 @@ void Begin_Action(
     }
     else {
         // While ST_ACTION_FULFILLING_ARG_FROM_OUT is set only during the first
-        // argument of an enfix call, the type of infix we launched from is
+        // argument of an infix call, the type of infix we launched from is
         // set for the whole duration.
         //
         Set_Level_Infix_Mode(L, infix_mode);
 
-        // All the enfix call sites cleared this flag on the feed, so it was
-        // moved into the Begin_Action() for enfix.  Note this has to be done
+        // All the infix call sites cleared this flag on the feed, so it was
+        // moved into the Begin_Action() for infix.  Note this has to be done
         // *after* the existing flag state has been captured for invisibles.
         //
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
-        Level_State_Byte(L) = ST_ACTION_INITIAL_ENTRY_ENFIX;
+        Level_State_Byte(L) = ST_ACTION_INITIAL_ENTRY_INFIX;
     }
 }
 

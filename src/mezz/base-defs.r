@@ -66,19 +66,19 @@ REBOL [
 ;
 ; Note that `/` is rather trickily not a PATH!, but a decayed form as a WORD!
 
-/+: enfix add/
-/-: enfix subtract/
-/*: enfix multiply/
-/: enfix divide/
+/+: infix add/
+/-: infix subtract/
+/*: infix multiply/
+/: infix divide/
 
 
 ; SET OPERATORS
 
 /not+: bitwise-not/
-/and+: enfix bitwise-and/
-/or+: enfix bitwise-or/
-/xor+: enfix bitwise-xor/
-/and-not+: enfix bitwise-and-not/
+/and+: infix bitwise-and/
+/or+: infix bitwise-or/
+/xor+: infix bitwise-xor/
+/and-not+: infix bitwise-and-not/
 
 
 ; COMPARISON OPERATORS
@@ -86,17 +86,17 @@ REBOL [
 ; !!! See discussion about the future of comparison operators:
 ; https://forum.rebol.info/t/349
 
-=: enfix equal?/
-<>: enfix not-equal?/
-<: enfix lesser?/
->: enfix greater?/
+=: infix equal?/
+<>: infix not-equal?/
+<: infix lesser?/
+>: infix greater?/
 
 ; "Official" forms of the comparison operators.  This is what we would use
 ; if starting from scratch, and didn't have to deal with expectations people
 ; have coming from other languages: https://forum.rebol.info/t/349/
 ;
->=: enfix greater-or-equal?/
-=<: enfix equal-or-lesser?/
+>=: infix greater-or-equal?/
+=<: infix equal-or-lesser?/
 
 ; Compatibility Compromise: sacrifice what looks like left and right arrows
 ; for usage as comparison, even though the perfectly good `=<` winds up
@@ -105,14 +105,14 @@ REBOL [
 ;
 /equal-or-greater?: greater-or-equal?/
 /lesser-or-equal?: equal-or-lesser?/
-=>: enfix equal-or-greater?/
-<=: enfix lesser-or-equal?/
+=>: infix equal-or-greater?/
+<=: infix lesser-or-equal?/
 
-!=: enfix not-equal?/  ; http://www.rebol.net/r3blogs/0017.html
-==: enfix strict-equal?/  ; !!! https://forum.rebol.info/t/349
-!==: enfix strict-not-equal?/  ; !!! bad pairing, most would think !=
+!=: infix not-equal?/  ; http://www.rebol.net/r3blogs/0017.html
+==: infix strict-equal?/  ; !!! https://forum.rebol.info/t/349
+!==: infix strict-not-equal?/  ; !!! bad pairing, most would think !=
 
-=?: enfix same?/
+=?: infix same?/
 
 
 ; Common "Invisibles"
@@ -205,7 +205,7 @@ requote: reframer lambda [
 ; If <end> is used, e.g. `x: -> [print "hi"]` then this will act like DOES.
 ; (It's still up in the air whether DOES has different semantics or not.)
 ;
-->: enfix lambda [
+->: infix lambda [
     'words "Names of arguments (will not be type checked)"
         [blank! word! lit-word? meta-word! refinement? block! group!]
     body "Code to execute"

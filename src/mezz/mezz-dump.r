@@ -133,7 +133,7 @@ REBOL [
     ]
 ]
 
-/dumps: enfix func [
+/dumps: infix func [
     "Fast generator for dumping function that uses assigned name for prefix"
 
     return: [action?]
@@ -160,7 +160,7 @@ REBOL [
         ; refinements for now.
         ;
         ; !!! This actually can't work as invisibles with refinements do not
-        ; have a way to be called--in spirit they are like enfix functions,
+        ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
         /d: func [return: [~[]~] /on /off <static> d'] compose:deep [

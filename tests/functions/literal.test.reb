@@ -13,7 +13,7 @@
     ('~[]~ = detector (comment "hi"))
     (null = detector)
 
-    (did /left-detector: enfix :detector)
+    (did /left-detector: infix detector/)
 
     ((the '1) = (1 left-detector))
     (null = left-detector)

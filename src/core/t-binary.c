@@ -683,7 +683,7 @@ REBTYPE(Binary)
     //
     // Since Rebol is a language with mutable semantics by default, `add x y`
     // will mutate x by default (if X is not an immediate type).  `+` is an
-    // enfixing of `add-of` which copies the first argument before adding.
+    // infixing of `add-of` which copies the first argument before adding.
     //
     // To try and maximize usefulness, the semantic chosen is that any
     // arithmetic that would go beyond the bounds of the length is considered

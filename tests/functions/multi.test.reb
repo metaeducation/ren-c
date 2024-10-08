@@ -127,7 +127,7 @@
     )
 ]
 
-; Enfix processing when using a multi-return should match the processing when
+; Infix processing when using a multi-return should match the processing when
 ; you are using an ordinary return.
 [
     (

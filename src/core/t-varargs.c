@@ -72,7 +72,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         // Same rule applies for "tight" arguments, `sum 1 2 3 + 4` with
         // sum being variadic and tight needs to act as `(sum 1 2 3) + 4`
         //
-        // Look ahead, and if actively bound see if it's to an enfix function
+        // Look ahead, and if actively bound see if it's to an infix function
         // and the rules apply.
 
         const Value* child_gotten = maybe Lookup_Word(look, binding);
@@ -171,7 +171,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             goto type_check_and_return;
         }
 
-        // Note this may be Is_Varargs_Enfix(), where the left hand side was
+        // Note this may be Is_Varargs_Infix(), where the left hand side was
         // synthesized into an array-style varargs with either 0 or 1 item to
         // be taken.
         //
@@ -261,10 +261,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
 
-        // The enfixed case always synthesizes an array to hold the evaluated
-        // left hand side value.  (See notes on Is_Varargs_Enfix().)
+        // The infixed case always synthesizes an array to hold the evaluated
+        // left hand side value.  (See notes on Is_Varargs_Infix().)
         //
-        assert(not Is_Varargs_Enfix(vararg));
+        assert(not Is_Varargs_Infix(vararg));
 
         vararg_level = L;
 

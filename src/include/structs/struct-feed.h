@@ -35,9 +35,9 @@ STATIC_ASSERT(FEED_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
 STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 
 
-//=//// FEED_FLAG_DEFERRING_ENFIX /////////////////////////////////////////=//
+//=//// FEED_FLAG_DEFERRING_INFIX /////////////////////////////////////////=//
 //
-// Defer notes when there is a pending enfix operation that was seen while an
+// Defer notes when there is a pending infix operation that was seen while an
 // argument was being gathered, that decided not to run yet.  It will run only
 // if it turns out that was the last argument that was being gathered...
 // otherwise it will error.
@@ -55,7 +55,7 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 // that made its behavior harder to characterize.  This means that only a
 // flag is needed, vs complex marking of a parameter to re-enter eval with.)
 //
-#define FEED_FLAG_DEFERRING_ENFIX \
+#define FEED_FLAG_DEFERRING_INFIX \
     FLAG_LEFT_BIT(2)
 
 
@@ -217,11 +217,9 @@ struct FeedStruct {
     Stub singular;
 
     // There is a lookahead step to see if the next item in an array is a
-    // WORD!.  If so it is checked to see if that word is a "lookback word"
-    // (e.g. one that refers to an ACTION! value set with SET/ENFIX).
-    // Performing that lookup has the same cost as getting the variable value.
-    // Considering that the value will need to be used anyway--infix or not--
-    // the pointer is held in this field for WORD!s.
+    // WORD!, and the value it looks up to is tested to see if it is an
+    // infix action.  Considering that the value will need to be used anyway,
+    // infix or not, the pointer is held in this field for WORD!s.
     //
     // However, reusing the work is not possible in the general case.  For
     // instance, this would cause a problem:

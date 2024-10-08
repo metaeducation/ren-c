@@ -19,11 +19,11 @@
 )
 
 ; !!! Macros are sketchy in terms of the implementation.  It's possible to do
-; them enfixedly, but there are a number of sanity checking asserts that are
+; them infixedly, but there are a number of sanity checking asserts that are
 ; blocking it at this time.  The asserts are more valuable than the feature,
 ; so it's on hold until things can be clarified more
 ;
-;    m: enfix macro [discard] [[+ 2]]  ; !!! discard needed ATM
+;    m: infix macro [discard] [[+ 2]]  ; !!! discard needed ATM
 ;    1 m = 3
 
 

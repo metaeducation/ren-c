@@ -330,8 +330,8 @@ quasiform!: word!  ; conflated, but can work in a very limited sense
 ; hand side, but a GROUP! would be run.  That was deemed ugly, so group
 ; now short-circuits.
 ;
-/and: enfix :and3 [assert [not block? right] right: as block! :right]
-/or: enfix :or3 [assert [not block? right] right: as block! :right]
+/and: infix and3/ [assert [not block? right] right: as block! :right]
+/or: infix or3/ [assert [not block? right] right: as block! :right]
 
 /to-logic: func3 [return: [logic!] optional [~null~ any-value!]] [
     case [
@@ -805,7 +805,7 @@ get-path!: func3 [] [
     fail:blame "FUNCTION deprecated (will be FUNC synonym, eventually)" $return
 ]
 
-/meth: enfix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
+/meth: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
 /method: func3 [] [
     fail:blame "METHOD deprecated temporarily, use METH" $return
 ]
@@ -890,7 +890,7 @@ get-path!: func3 [] [
     eval f
 ]
 
-//: enfix func3 ['left [word! path!] right [block!]] [
+//: infix func3 ['left [word! path!] right [block!]] [
     apply get left right
 ]
 

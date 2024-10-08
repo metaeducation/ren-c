@@ -1000,7 +1000,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 
-/grab: enfix func [
+/grab: infix func [
     "Extracts N bytes from a BINARY!, and also updates its position"
 
     return: "BINARY! (or INTEGER! if GRAB-INT enclosure is used)"
@@ -1022,7 +1022,7 @@ update-write-state: make-state-updater 'write [
     return set left result  ; must manually assign if SET-WORD! overridden
 ]
 
-/grab-int: enfix enclose grab/ lambda [f [frame!]] [
+/grab-int: infix enclose grab/ lambda [f [frame!]] [
     set f.left (debin [be +] eval copy f)
 ]
 

@@ -315,7 +315,7 @@ e1/write-emitted
 ;    ; the array that NATIVE steps through on each call to find the C code!
 ;    ;
 ;    export /alpha: native [...]  ; v-- see EXPORT note below
-;    /beta: enfix native [...]
+;    /beta: infix native [...]
 ;
 ;    ; The rest of the code was the body of %ext-xxx-init.reb
 ;    ;

@@ -84,7 +84,7 @@
     all [
         let code: [1 / 2]
         let obj: make object! [
-            /: enfix func [a b] [
+            /: infix func [a b] [
                 return reduce @(b a)
             ]
         ]

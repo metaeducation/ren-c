@@ -550,7 +550,7 @@ DECLARE_NATIVE(let)
 //        >> x: 10, let x: 1000 + let x: x + 10, print [x]
 //        1020
 //
-// 8. When it was looking at enfix, the evaluator caches the fetched value of
+// 8. When it was looking at infix, the evaluator caches the fetched value of
 //    the word for the next execution.  But we are pulling the rug out from
 //    under that if the immediately following item is the same as what we
 //    have... or a path starting with it, etc.

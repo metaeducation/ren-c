@@ -142,7 +142,7 @@
 ; a synonym for that word or path in a GROUP.
 
 ; !!! Once this allowed running functions.  Currently it does not.  There
-; are some problems with that idea, e.g. if they  are enfix...so ruling them
+; are some problems with that idea, e.g. if they are infix...so ruling them
 ; out is the most conervative choice.
 
 [

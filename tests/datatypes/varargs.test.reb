@@ -35,13 +35,13 @@
     null? applique f/ [look: make varargs! []]
 )
 
-; !!! Experimental behavior of enfixed variadics, is to act as either 0 or 1
+; !!! Experimental behavior of infix variadics, is to act as either 0 or 1
 ; items.  0 is parallel to <end>, and 1 is parallel to a single parameter.
 ; It's a little wonky because the evaluation of the parameter happens *before*
 ; the TAKE is called, but theorized that's still more useful than erroring.
 [
     (
-        /normal: enfix func [return: [integer!] v [integer! <variadic>]] [
+        /normal: infix func [return: [integer!] v [integer! <variadic>]] [
             let sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -58,7 +58,7 @@
     (30 = eval [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
-        /defers: enfix:defer func [return: [integer!] v [integer! <variadic>]] [
+        /defers: infix:defer func [return: [integer!] v [integer! <variadic>]] [
             let sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -75,7 +75,7 @@
     (28 = eval [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
-        /soft: enfix func [@(v) [any-value? <variadic>]] [
+        /soft: infix func [@(v) [any-value? <variadic>]] [
             return collect [
                 while [not tail? v] [
                     keep take v
@@ -93,7 +93,7 @@
     ([7] = eval [(1 + 2) (3 + 4) soft])
 ][
     (
-        /hard: enfix func ['v [any-value? <variadic>]] [
+        /hard: infix func ['v [any-value? <variadic>]] [
             return collect [
                 while [not tail? v] [
                     keep take v
@@ -115,7 +115,7 @@
 ; Testing the variadic behavior of |> and <| is easier than rewriting tests
 ; here to do the same thing.
 
-; <| and |> were originally enfix, so the following tests would have meant x
+; <| and |> were originally infix, so the following tests would have meant x
 ; would be unset
 (
     value: ~

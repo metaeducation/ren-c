@@ -216,7 +216,7 @@ already-imported: make map! []  ; avoid importing things twice
 
 
 ; see header notes: `Exports` broken
-/import: enfix lib3/func [
+/import: infix lib3/func [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
     :set-word "optional left argument, used by `rebmake: import <rebmake.r>`"

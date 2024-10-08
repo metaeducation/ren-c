@@ -21,7 +21,7 @@
 //
 // LAMBDA is an efficient form of ACTION! which has no RETURN, has no type
 // checking, and which does not copy the block that serves as its body.  It
-// is enfixed as `->` and is intended for uses like light branching.
+// is infixed as `->` and is intended for uses like light branching.
 //
 //     >> if ok [10] then x -> [print ["The branch produced" x]]
 //     The branch produced 10

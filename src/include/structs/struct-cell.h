@@ -609,7 +609,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     Details* details;  // has MISC.dispatcher, LINK.specialty
     //
     // VARARGS!  // see %sys-varargs.h
-    //     REBINT signed_param_index;  // if negative, consider arg enfixed
+    //     REBINT signed_param_index;  // if negative, consider arg infix
     //     Action* phase;  // where to look up parameter by its offset
 
     struct CharacterPayloadStruct Character;

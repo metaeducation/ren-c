@@ -2201,15 +2201,15 @@ DECLARE_NATIVE(proxy_exports)
 
 
 //
-//  /enfix?: native:intrinsic [
+//  /infix?: native:intrinsic [
 //
-//  "TRUE if looks up to a function and gets first argument before the call"
+//  "non-null if a function that gets first argument before the call"
 //
 //      return: [logic?]
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_INTRINSIC(enfix_q)
+DECLARE_INTRINSIC(infix_q)
 {
     UNUSED(phase);
 
@@ -2218,21 +2218,21 @@ DECLARE_INTRINSIC(enfix_q)
 
 
 //
-//  /enfix: native [
+//  /infix: native [
 //
-//  "For making enfix functions, e.g (/+: enfix get $add)"
+//  "For functions that gets 1st argument from left, e.g (/+: infix get $add)"
 //
 //      return: "Antiform action"
-//          [antiform?]  ; [action?] comes after ENFIX in bootstrap
+//          [antiform?]  ; [action?] comes after INFIX in bootstrap
 //      action [<unrun> frame!]
 //      :off "Give back a non-infix version of the passed in function"
 //      :defer "Allow one full expression on the left to evaluate"
 //      :postpone "Allow arbitrary numbers of expressions on left to evaluate"
 //  ]
 //
-DECLARE_NATIVE(enfix)
+DECLARE_NATIVE(infix)
 {
-    INCLUDE_PARAMS_OF_ENFIX;
+    INCLUDE_PARAMS_OF_INFIX;
 
     Actionify(Copy_Cell(OUT, ARG(action)));
 

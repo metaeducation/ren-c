@@ -114,7 +114,7 @@ INLINE Element* Deactivate_If_Action(Need(Value*) v) {
 //
 // Historical Rebol had a separate datatype (OP!) for infix functions.  In
 // Ren-C, each cell holding a FRAME! has in its header a 2-bit quantity
-// (a "Crumb") which encodes one of four possible infix states.  This can be
+// (a "Crumb") which encodes one of four possible infix modes.  This can be
 // checked quickly by the evaluator.
 //
 

@@ -117,7 +117,7 @@ leaders: [
     logic?
     antiform?
     action?
-    enfix
+    infix
     any-value?
     any-atom?
     element?

@@ -82,7 +82,7 @@ INLINE Element* Init_Varargs_Untyped_Normal(Sink(Element*) out, Level* L) {
     return out;
 }
 
-INLINE Element* Init_Varargs_Untyped_Enfix(
+INLINE Element* Init_Varargs_Untyped_Infix(
     Sink(Element*) out,
     Option(const Value*) left
 ){
@@ -172,12 +172,12 @@ INLINE bool Is_Level_Style_Varargs_May_Fail(
 // or normal).
 //
 // This new interpretation has not been fully realized, as SHOVE is very
-// tricky.  So this enfix varargs implementation for userspace is old, where
+// tricky.  So this infix varargs implementation for userspace is old, where
 // it lets the left hand side evaluate into a temporary array.  It really is
 // just a placeholder for trying to rewire the mechanics used by SHOVE so that
 // they can be offered to any userspace routine.
 //
-#define Is_Varargs_Enfix(v) \
+#define Is_Varargs_Infix(v) \
     (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0)
 
 
@@ -190,7 +190,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
     Action* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {
         Array* paramlist = Varlist_Array(ACT_EXEMPLAR(phase));
-        if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. enfix
+        if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. infix
             if (key)
                 *key = ACT_KEY(
                     phase,

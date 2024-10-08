@@ -1,10 +1,10 @@
-; %enfix.test.reb
+; %infix.test.reb
 
-(antiform! = type of :+)
-(enfix? :+)
+(antiform! = type of +/)
+(infix? +/)
 
-(enfix? :+)
-~expect-arg~ !! (enfix? 1)
+(infix? +/)
+~expect-arg~ !! (infix? 1)
 (action? +/)
 
 ; #1934
@@ -15,26 +15,26 @@
 (
     foo: :+
     all [
-        enfix? :foo
+        infix? foo/
         3 = (1 foo 2)
     ]
 )
 (
-    /foo: enfix add/
+    /foo: infix add/
     all [
-        enfix? foo/
+        infix? foo/
         1 foo 2 = 3
     ]
 )
 (
-    /postfix-thing: enfix lambda [x] [x * 2]
+    /postfix-thing: infix lambda [x] [x * 2]
     all [
-       enfix? postfix-thing/
+       infix? postfix-thing/
        20 = (10 postfix-thing)
     ]
 )
 
-~no-arg~ !! (eval reduce [unrun +/ 1 2])  ; enfix no argument
+~no-arg~ !! (eval reduce [unrun +/ 1 2])  ; infix no argument
 
 
 (
@@ -75,34 +75,48 @@
             pos == [foo 304]
         ]
     )(
-        /enfoo: enfix func [] [return <enfoo>]
+        /i-foo: infix func [
+            "0-arity function, but infix so runs in *same* step"
+        ][
+            return <i-foo>
+        ]
         all wrap [
-            <enfoo> == [pos @]: evaluate:step [1020 enfoo 304]
+            <i-foo> == [pos @]: evaluate:step [1020 i-foo 304]
             pos = [304]
         ]
-        comment "0-arity function, but enfixed so runs in *same* step"
+        comment
     )
 
     (
-        /bar: func [return: [~[]~]] [bar: null, return ~[]~]
+        /bar: func [
+            "Invisible normal arity-0 function should run on next eval"
+            return: [~[]~]
+        ][
+            bar: null
+            return ~[]~
+        ]
         all wrap [
             [pos var]: evaluate:step [1020 bar 304]
             pos = [bar 304]
             var == 1020
-            action? :bar
+            action? bar/
             bar
             null? bar
         ]
-        comment {Invisible normal arity-0 function should run on next eval}
     )(
-        /enbar: enfix func [left] [enbar: null, return left]
+        /i-bar: infix func [
+            "Invisible infix arity-0 function should run on same step"
+            left
+        ][
+            i-bar: null
+            return left
+        ]
         all wrap [
-            [pos var]: evaluate:step [1020 enbar 304]
+            [pos var]: evaluate:step [1020 i-bar 304]
             pos = [304]
             var == 1020
-            null? enbar
+            null? i-bar
         ]
-        comment {Invisible enfix arity-0 function should run on same step}
     )
 ]
 
@@ -112,12 +126,12 @@
 [
     (
         /rightq: lambda [@(x)] [compose [<rightq> was (x)]]
-        /leftq: enfix lambda [@(y)] [compose [<leftq> was (y)]]
+        /leftq: infix lambda [@(y)] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )(
         /rightq: lambda [@(x)] [compose [<rightq> was (x)]]
-        /leftq: enfix lambda ['y] [compose [<leftq> was (y)]]
+        /leftq: infix lambda ['y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )

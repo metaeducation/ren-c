@@ -296,8 +296,8 @@ bool Specialize_Action_Throws(
 
     StackIndex ordered_stackindex = lowest_stackindex;
 
-    // If you specialize out the first argument of an enfixed function, then
-    // it ceases being enfix.
+    // If you specialize out the first argument of an infixed function, then
+    // it ceases being infix.
     //
     // !!! Needs handling for interaction with REORDER.
     //
@@ -325,7 +325,7 @@ bool Specialize_Action_Throws(
         if (Not_Specialized(arg)) {
             Copy_Cell(arg, param);
             if (first_param)
-                first_param = false;  // leave enfix as is
+                first_param = false;  // leave infix as is
             continue;
         }
 
@@ -342,7 +342,7 @@ bool Specialize_Action_Throws(
 
         if (first_param) {
             first_param = false;
-            enfix = false;  // specialized out the first parameter
+            infix = false;  // specialized out the first parameter
         }
     }
 
@@ -410,7 +410,7 @@ bool Specialize_Action_Throws(
 
     Init_Action(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
 
-    if (enfix)  // incoming was enfix, and we didn't specialize out first arg
+    if (infix)  // incoming was infix, and we didn't specialize out first arg
         Set_Cell_Infix_Mode(out, INFIX_TIGHT);
 
     return false;  // code block did not throw

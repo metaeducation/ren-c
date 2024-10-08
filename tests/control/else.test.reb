@@ -46,7 +46,7 @@
     ]
 )]
 
-; Hard quotes need to account for enfix deferral
+; Hard quotes need to account for infix deferral
 (
     /foo: func [return: [integer!] y] [return the 1 then (x -> [x + y])]
     /bar: func [return: [integer!] y] [return 1 then (x -> [x + y])]
@@ -106,7 +106,7 @@
 
 [
     ~no-arg~ !! (else [~unused~])
-    ~???~ !! (() else [okay])  ; should NIHIL with enfix look like no value?
+    ~???~ !! (() else [okay])  ; should NIHIL with infix look like no value?
     ~???~ !! (1000 + 20 () then [fail ~<unreachable>~])
 
     (void else [okay])

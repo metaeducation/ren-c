@@ -223,7 +223,7 @@ export analyse: context [
                 if true? (parse3 proto-parser.data [
                     opt 'export
                     name: &set-word? (name: to-word name)
-                    opt ['enfix | 'enfix:defer | 'enfix:postpone]
+                    opt ['infix | 'infix:defer | 'infix:postpone]
                     [
                         'native
                         | 'native:combinator

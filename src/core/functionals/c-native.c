@@ -80,7 +80,7 @@ Bounce Intrinsic_Dispatcher(Level* const L)
 //
 //    /some-name: native [spec content]
 //
-// It is optional to put ENFIX between the SET-WORD! and the spec.
+// It is optional to put INFIX between the assignment and NATIVE.
 //
 // If refinements are added, this will have to get more sophisticated.
 //

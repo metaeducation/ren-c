@@ -281,7 +281,7 @@
 [
     (
         /soft: func [@(x) <with> got] [got: :x, return 1000]
-        /Lsoft: enfix soft/
+        /Lsoft: infix soft/
 
         got: null
         /test: lambda [expr [block!]] [
@@ -302,11 +302,11 @@
     )
 
     (
-        /+Q: enfix lambda ['x [<end> integer!] y] [if x [x + y] else [<null>]]
+        /+Q: infix lambda ['x [<end> integer!] y] [if x [x + y] else [<null>]]
         [1000, 30] = test [soft 10 +Q 20]
     )
     (
-        /+Q: enfix lambda ['x y] [x + y]
+        /+Q: infix lambda ['x y] [x + y]
         [1000, 30] = test [soft 10 +Q 20]
     )
 

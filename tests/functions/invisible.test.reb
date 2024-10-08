@@ -13,7 +13,7 @@
 ('~[]~ = meta eval:undecayed [comment "a"])
 ((quote '~[]~) = ^(^ eval:undecayed [comment "a"]))
 
-; !!! At one time, comment mechanics allowed comments to be enfix such that
+; !!! At one time, comment mechanics allowed comments to be infix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
 ; as invisible mechanics no longer permit interstitials--which helps make
 ; the evaluator more sane, without losing the primary advantages of invisibles.
@@ -43,11 +43,6 @@
         pos = [comment "a" comment "b" + 2 * 3 fail "too far"]
     ]
 )
-
-; ELIDE is not fully invisible, but trades this off to be able to run its
-; code "in turn", instead of being slaved to eager enfix evaluation order.
-;
-; https://trello.com/c/snnG8xwW
 
 (
     1 = eval [elide "a" 1]
@@ -169,22 +164,22 @@
 ; Non-variadic
 [
     (
-        /left-normal: enfix /right-normal:
+        /left-normal: infix /right-normal:
             func [return: [~null~ word!] x [word!]] [return x]
-        /left-normal*: enfix /right-normal*:
+        /left-normal*: infix /right-normal*:
             func [return: [~null~ word!] x [word! <end>]] [return x]
 
-        /left-defer: enfix:defer left-normal/
-        /left-defer*: enfix:defer left-normal/
+        /left-defer: infix:defer left-normal/
+        /left-defer*: infix:defer left-normal/
 
-        /left-soft: enfix /right-soft:
+        /left-soft: infix /right-soft:
             func [return: [~null~ word!] @(x) [word!]] [return x]
-        /left-soft*: enfix /right-soft*:
+        /left-soft*: infix /right-soft*:
             func [return: [~null~ word!] @(x) [word! <end>]] [return x]
 
-        /left-hard: enfix /right-hard:
+        /left-hard: infix /right-hard:
             func [return: [~null~ word!] 'x [word!]] [return x]
-        /left-hard*: enfix /right-hard*:
+        /left-hard*: infix /right-hard*:
             func [return: [~null~ word!] 'x [word! <end>]] [return x]
 
         ok
@@ -223,32 +218,32 @@
 ; Variadic
 [
     (
-        /left-normal: enfix /right-normal:
+        /left-normal: infix /right-normal:
             func [return: [~null~ word!] x [word! <variadic>]] [
                 return take x
             ]
-        /left-normal*: enfix /right-normal*:
+        /left-normal*: infix /right-normal*:
             func [return: [~null~ word!] x [word! <variadic> <end>]] [
                 return try take x
             ]
 
-        /left-defer: enfix:defer left-normal/
-        /left-defer*: enfix:defer left-normal/
+        /left-defer: infix:defer left-normal/
+        /left-defer*: infix:defer left-normal/
 
-        /left-soft: enfix /right-soft:
+        /left-soft: infix /right-soft:
             func [return: [~null~ word!] @(x) [word! <variadic>]] [
                 return take x
             ]
-        /left-soft*: enfix /right-soft*:
+        /left-soft*: infix /right-soft*:
             func [return: [~null~ word!] @(x) [word! <variadic> <end>]] [
                 return try take x
             ]
 
-        /left-hard: enfix /right-hard:
+        /left-hard: infix /right-hard:
             func [return: [~null~ word!] 'x [word! <variadic>]] [
                 return take x
             ]
-        /left-hard*: enfix /right-hard*:
+        /left-hard*: infix /right-hard*:
             func [return: [~null~ word!] 'x [word! <variadic> <end>]] [
                 return try take x
             ]
@@ -357,7 +352,7 @@
 
 
 ; GROUP!s "vaporize" if they are empty or invisible, but can't be used as
-; inputs to enfix.
+; inputs to infix.
 ;
 ; https://forum.rebol.info/t/permissive-group-invisibility/1153
 ;

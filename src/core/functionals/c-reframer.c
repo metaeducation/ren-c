@@ -45,7 +45,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Enfix handling is not yet implemented, e.g. `requote '''1 + 2`
+// * Infix handling is not yet implemented, e.g. `requote '''1 + 2`
 //
 // * Because reframers need to know the function they are operating on, they
 //   are unable to "see through" a GROUP! to get it, as a group could contain
@@ -104,7 +104,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     Push_Level(out, L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
-        L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
+        L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
 
     Push_Action(L, VAL_ACTION(action), Cell_Frame_Coupling(action));
     Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);

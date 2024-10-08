@@ -2,14 +2,14 @@
 ;
 ; Prior to the creation of antiform-BLOCK!-packs, this function was created
 ; to replace the idiom of using SET on a BLOCK! that you REDUCE.  It used
-; enfix to relate a SET-BLOCK! on the left to reduced expressions on the right,
+; infix to relate a SET-BLOCK! on the left to reduced expressions on the right,
 ; to work around issues related to antiform states that can't be in blocks.
 ;
 ; This was then achieved in a generalized fashion in the evaluator with the
 ; antiform blocks, and their intrinsic relationship with SET-BLOCK!.
 ;
 ; The old code is kept here just as a test that exercises some features (and
-; as a demonstration that usermode enfix is quite powerful for implementing
+; as a demonstration that usermode infix is quite powerful for implementing
 ; dialecting multi-returns for those who want something different from what
 ; the system's SET-BLOCK! offers).
 ;
@@ -23,7 +23,7 @@
 ; dialected notion of what the words represent.
 
 
-[(/pack-old: enfix func [
+[(/pack-old: infix func [
     "Prepare a BLOCK! of values for storing each in a SET-BLOCK!"
     return: [any-value?]
     @vars [set-block? set-group?]
