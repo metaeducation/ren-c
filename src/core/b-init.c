@@ -818,7 +818,7 @@ void Startup_Core(void)
         //
         "set-adjunct sys.util make object! [",
             "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
-            "Exports: [do module load load-value decode encode encoding-of]",
+            "Exports: [do module load decode encode encoding-of]",
         "]",
         "sys.util/import*", Lib_Module, Sys_Util_Module
     );

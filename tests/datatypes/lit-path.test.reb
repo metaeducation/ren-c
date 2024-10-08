@@ -10,8 +10,8 @@
 ; minimum
 
 [#1947
-    (lit-path? load-value "'[a]/1")
-    (lit-path? quote load-value "[a]/1")
+    (lit-path? transcode:one "'[a]/1")
+    (lit-path? quote transcode:one "[a]/1")
 ]
 
 ; lit-paths are active

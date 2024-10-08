@@ -67,7 +67,7 @@ e-version: make-emitter "Version Information" (
     join prep-dir %include/tmp-version.h
 )
 
-version: load-value %version.r
+version: transcode:one read %version.r
 version: to tuple! reduce [
     version.1 version.2 version.3 platform-config.id.2 platform-config.id.3
 ]
@@ -710,7 +710,7 @@ for-each 'name native-names [
 
 first-generic-sym: sym-n
 
-generic-names: load-value join prep-dir %boot/tmp-generic-names.r
+generic-names: transcode:one read join prep-dir %boot/tmp-generic-names.r
 boot-generics: as text! read join prep-dir %boot/tmp-generics-stripped.r
 
 for-each 'name generic-names [

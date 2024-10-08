@@ -137,11 +137,6 @@ sys.util/rescue [
 
     export /cscape-inside: inside/  ; modern string interpolation tool
 
-    ; LOAD changed to have no :ALL, so it always enforces getting a block.
-    ; But LOAD-VALUE comes in the box to load a single value.
-    ;
-    export /load-all: load/
-
     export /for: func [] [
         fail:blame "FOR is being repurposed, use CFOR" $return
     ]
@@ -354,11 +349,6 @@ quasiform!: word!  ; conflated, but can work in a very limited sense
 /in: func3 [] [
     fail:blame "Use HAS or OVERBIND instead of IN in bootstrap" $return
 ]
-
-; !!! This isn't perfect, but it should work for the cases in rebmake
-;
-load-value: load/
-load-all: load:all/
 
 ; Tricky way of getting simple non-definitional break extraction that looks
 ; like getting a definitional break.

@@ -27,7 +27,7 @@
                 "</" thru ">" stop
                 |
                 "<" name: across to ">" <next>
-                keep (load-value name) opt keep rule
+                keep (transcode:one name) opt keep rule
                 |
                 str: across to "<" keep (str)
             ]

@@ -1,6 +1,6 @@
 ; minimum
 [#1947
-    (get-tuple? load-value ":[a].1")
+    (get-tuple? transcode:one ":[a].1")
 ]
 
 ; GET-TUPLE! and GET-WORD! should preserve the name of the function in the

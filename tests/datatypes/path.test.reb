@@ -5,13 +5,13 @@
 (path! = type of 'a/b)
 ; the minimum
 [#1947
-    (path? load-value "[a]/1")
+    (path? transcode:one "[a]/1")
 ]
 
 ; ANY-PATH? are no longer positional
 ;(
 ;    all [
-;        path? a: load-value "[a b c]/2"
+;        path? a: transcode:one "[a b c]/2"
 ;        2 == index? a
 ;    ]
 ;)
@@ -162,7 +162,7 @@
     )
 ]
 [#1977
-    ~scan-invalid~ !! (/f: func [:r] [1], do load-value "f/r/%")
+    ~scan-invalid~ !! (/f: func [:r] [1], do transcode:one "f/r/%")
 ]
 
 ; path evaluation order
@@ -190,7 +190,7 @@
 
 ; ISSUE! has internal slashes (like FILE!), and does not load as a path
 [
-    ("iss/ue/path" = as text! ensure issue! load-value "#iss/ue/path")
+    ("iss/ue/path" = as text! ensure issue! transcode:one "#iss/ue/path")
 ]
 
 ; https://gitter.im/red/red?at=5b23be5d1ee2d149ecc4c3fd

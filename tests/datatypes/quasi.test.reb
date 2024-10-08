@@ -18,7 +18,7 @@
     valid: ["~abc~" "~a|b~"]
     for-each 'str valid wrap [
         word: parse str [/to-word between '~ '~]
-        bad: load-value str
+        bad: transcode:one str
         assert [quasi? bad]
         assert [word = unquasi bad]
     ]
@@ -28,7 +28,7 @@
 (
     invalid: ["~~" "~~~" "~a" "~~~a"]
     for-each 'str invalid [
-        load-value str except e -> [
+        transcode:one str except e -> [
             assert [e.id = 'scan-invalid]
         ]
     ]

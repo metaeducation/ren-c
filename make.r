@@ -151,7 +151,7 @@ for-each [name value] options [
         ]
     ] else [
         name: to-word replace to text! name #"_" #"-"
-        set (has user-config name) load-value value  ; !!! else [value] ???
+        set (has user-config name) transcode:one value  ; !!! else [value] ???
     ]
 ]
 

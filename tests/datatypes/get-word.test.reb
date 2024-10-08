@@ -25,7 +25,7 @@
 
 [#1477
     (
-        x: load-value ":/"
+        x: transcode:one ":/"
         all [
             ':/ = x
             get-word? x
@@ -33,7 +33,7 @@
     )
 
     (
-        x: load-value "://"
+        x: transcode:one "://"
         all [
             ':// = x
             get-word? x
@@ -41,7 +41,7 @@
     )
 
     (
-        x: load-value ":///"
+        x: transcode:one ":///"
         all [
             ':/// = x
             get-word? x

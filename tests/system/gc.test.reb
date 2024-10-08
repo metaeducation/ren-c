@@ -10,9 +10,9 @@
 ; !!! simplest possible LOAD and SAVE smoke test, expand!
 (
     file: %simple-save-test.r
-    data: "Simple save test produced by %core-tests.r"
+    data: ["Simple save test produced by %core-tests.r"]
     save file data
-    (load-value file) = data
+    (load file) = data
     elide delete %simple-save-test.r
 )
 

@@ -155,8 +155,6 @@ export /cscape: func [
             ; inconvenient to deep traverse the splice after loading to only
             ; lowercase ANY-WORD!s, so this is considered fine
             ;
-            ; !!! Needs LOAD-ALL shim hack for bootstrap since /ALL deprecated
-            ;
             let code: transcode lowercase expr
 
             code: cscape-inside template code
@@ -288,7 +286,7 @@ export /cscape: func [
 ]
 
 
-export /boot-version: load-value %../src/boot/version.r
+export /boot-version: transcode:one read %../src/boot/version.r
 
 export /make-emitter: func [
     "Create a buffered output text file emitter"

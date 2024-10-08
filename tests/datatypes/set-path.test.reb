@@ -3,7 +3,7 @@
 (set-tuple? first [a.b:])
 ; the minimum
 [#1947
-    (set-tuple? load-value "[a].1:")
+    (set-tuple? transcode:one "[a].1:")
 ]
 
 ("a.b:" = mold first [a.b:])

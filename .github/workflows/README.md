@@ -339,7 +339,7 @@ the next steps:
 
 ## {Braces} For %make.r String Parameters
 
-At time of writing, %make.r uses LOAD-VALUE to load its arguments.  This is
+At time of writing, %make.r uses TRANSCODE:ONE to load its arguments.  This is
 so that it gets numeric or tuple values as tuples, and words as words.
 
 But string parameters like the GIT_COMMIT present a problem, because they

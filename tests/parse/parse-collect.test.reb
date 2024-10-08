@@ -42,7 +42,7 @@
         v: ~
         [#2] = parse "123" [
             collect [some [
-                keep [v: digit, elide when (even? load-value as text! v)]
+                keep [v: digit, elide when (even? transcode:one as text! v)]
                 |
                 <next>
             ]]
@@ -64,7 +64,7 @@
         digit: charset "0123456789"
         d: ~
         [1 2 3] = parse "123" [
-            collect [some [d: across digit keep (load-value d)]]
+            collect [some [d: across digit keep (transcode:one d)]]
         ]
     )
     (

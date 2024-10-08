@@ -1818,8 +1818,6 @@ void Init_Scan_Level(
 //    transcode state would be when it made the discovery it was unmatched).
 //
 
-#define NORMAL_RAISE RAISE
-
 INLINE Bounce Scanner_Raise_Helper(
     TranscodeState* transcode,
     Level* level_,
@@ -1837,7 +1835,7 @@ INLINE Bounce Scanner_Raise_Helper(
         Update_Error_Near_For_Line(
             error, transcode, transcode->line, transcode->line_head
         );
-    return NORMAL_RAISE(error);
+    return Native_Raised_Result(level_, error);
 }
 
 #undef RAISE
@@ -2717,8 +2715,7 @@ Bounce Scanner_Executor(Level* const L) {
 //=//// UNDEFINE THE AUGMENTED SCANNER RAISE //////////////////////////////=//
 
 #undef RAISE
-#define RAISE NORMAL_RAISE
-#undef NORMAL_RAISE
+#define RAISE(p) Native_Raised_Result(level_, (p))
 
 
 //
@@ -2801,13 +2798,14 @@ void Shutdown_Scanner(void)
 //
 //  /transcode: native [
 //
-//  "Translates UTF-8 source (from a text or binary) to values"
+//  "Translates UTF-8 source (from a text or binary) to Rebol elements"
 //
 //      return: "Transcoded elements block, or ~[remainder element]~ if /NEXT"
-//          [~null~ element? pack?]
+//          [~null~ block! ~[[text! binary!] element?]~ element?]
 //      source "If BINARY!, must be UTF-8 encoded"
 //          [text! binary!]
-//      :next "Translate one value and give back next position"
+//      :next "Translate one element and give back next position"
+//      :one "Transcode one element and return it"
 //      :file "File to be associated with BLOCK!s and GROUP!s in source"
 //          [file! url!]
 //      :line "Line number for start of scan, word variable will be updated"
@@ -2828,7 +2826,8 @@ DECLARE_NATIVE(transcode)
 
     enum {
         ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
-        ST_TRANSCODE_SCANNING
+        ST_TRANSCODE_SCANNING,
+        ST_TRANSCODE_ENSURE_NO_MORE
     };
 
     switch (STATE) {
@@ -2841,6 +2840,26 @@ DECLARE_NATIVE(transcode)
             Binary_Head(Cell_Binary_Known_Mutable(ss_buffer))
         );
         goto scan_to_stack_maybe_failed;
+
+      case ST_TRANSCODE_ENSURE_NO_MORE:
+        if (not Is_Raised(OUT)) {  // !!! return this error, or new one?
+            if (TOP_INDEX == STACK_BASE + 1)  // didn't scan anything else
+                Move_Drop_Top_Stack_Element(OUT);
+            else {  // scanned another item, we only wanted one!
+                assert(TOP_INDEX == STACK_BASE + 2);
+                Drop_Data_Stack_To(STACK_BASE);
+                Init_Error(
+                    OUT,
+                    Error_User("TRANSCODE:ONE scanned more than one element")
+                );
+                Raisify(OUT);
+            }
+        }
+        Drop_Level(SUBLEVEL);
+        return OUT;
+
+      default:
+        assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -2914,7 +2933,7 @@ DECLARE_NATIVE(transcode)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
         | LEVEL_FLAG_RAISED_RESULT_OK;  // want to pass on definitional error
 
-    if (REF(next))
+    if (REF(next) or REF(one))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Binary* bin = Make_Binary(sizeof(TranscodeState));
@@ -2942,6 +2961,14 @@ DECLARE_NATIVE(transcode)
     if (Is_Raised(OUT)) {
         Drop_Level(SUBLEVEL);
         return OUT;  // the raised error
+    }
+
+    if (REF(one)) {  // want *exactly* one element
+        if (TOP_INDEX == STACK_BASE)
+            return RAISE("Transcode was empty (or all comments)");
+        assert(TOP_INDEX == STACK_BASE + 1);
+        STATE = ST_TRANSCODE_ENSURE_NO_MORE;
+        return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
     if (REF(next)) {

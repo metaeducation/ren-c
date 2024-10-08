@@ -28,15 +28,15 @@
     (
         x: ~
         "6" == parse "246" [some [
-            x: across one elide when (even? load-value x)
+            x: across one elide when (even? transcode:one x)
         ]]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse "1" [x: across one elide when (even? load-value x)]
+        parse "1" [x: across one elide when (even? transcode:one x)]
     )
     ~parse-mismatch~ !! (
         x: ~
-        parse "15" [some [x: across one elide when (even? load-value x)]]
+        parse "15" [some [x: across one elide when (even? transcode:one x)]]
     )
 ]

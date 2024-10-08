@@ -48,7 +48,7 @@
         case [
             issue? x [
                 assert [1 = length of as text! x]
-                assert [x = as issue! load-value mold x]
+                assert [x = as issue! transcode:one mold x]
             ]
             text? x [
                 let id: (match error! trap [load x]).id

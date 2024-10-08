@@ -35,7 +35,7 @@ prep-dir: join what-dir %prep/
 mkdir:deep join prep-dir %include/
 mkdir:deep join prep-dir %core/
 
-ver: load-value join repo-dir %src/boot/version.r
+ver: transcode:one read join repo-dir %src/boot/version.r
 
 
 === "PROCESS %a-lib.h TO PRODUCE DESCRIPTION OBJECTS FOR EACH API" ===

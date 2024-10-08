@@ -43,7 +43,7 @@
 ; Due to the spacing rule, the traditional "comma means decimal point" rule
 ; is still able to work--though it is less desirable for it to do so.
 ;
-(1.1 = load-value "1,1")
+(1.1 = transcode:one "1,1")
 
 ; R3-Alpha's PARSE implementation was not particularly orderly in terms of
 ; holding the state of expressions, so detecting the interstitial points is

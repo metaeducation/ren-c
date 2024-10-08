@@ -13,8 +13,8 @@
 ; https://trello.com/c/F59eH4MQ
 ; #2011
 (
-    url1: load-value "http://a.b.c/d?e=f%26"
-    url2: load-value "http://a.b.c/d?e=f&"
+    url1: transcode:one "http://a.b.c/d?e=f%26"
+    url2: transcode:one "http://a.b.c/d?e=f&"
     all [
         not equal? url1 url2
         url1 == http://a.b.c/d?e=f%26
@@ -26,7 +26,7 @@
 ; https://github.com/metaeducation/ren-c/issues/1046
 ;
 (
-    b: load-value "[http://example.com/abc{def}]"
+    b: transcode:one "[http://example.com/abc{def}]"
     all [
         (length of b) = 1
         (as text! first b) = "http://example.com/abc{def}"

@@ -146,7 +146,7 @@ export /emit-include-params-macro: func [
     ;
     replace spec "@" ""
 
-    spec: load-value spec
+    spec: transcode:one spec
 
     let paramlist
     if not find proto "native:combinator" [

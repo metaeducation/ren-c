@@ -4,10 +4,10 @@
     ([1] = load "1")
 ]
 [#22 ; a
-    ((quote the :a) = load-value "':a")
+    ((quote the :a) = transcode:one "':a")
 ]
 [#22 (all [
-    let v: load-value "':a:"
+    let v: transcode:one "':a:"
     quoted? v
     v: match chain! unquote v
     3 = length of v
@@ -17,7 +17,7 @@
 ])]
 [#858 (
     a: [ < ]
-    a = load-value mold a
+    a = transcode:one mold a
 )]
 
 ~scan-invalid~ !! (load "1xyz#")
@@ -30,7 +30,7 @@
 [#1122 (
     any [
         error? sys.util/rescue [load "9999999999999999999"]
-        greater? load-value "9999999999999999999" load-value "9223372036854775807"
+        greater? transcode:one "9999999999999999999" transcode:one "9223372036854775807"
     ]
 )]
 
@@ -82,7 +82,7 @@
 )
 (
     save %test1.r 1
-    1 = load-value %test1.r
+    1 = transcode:one read %test1.r
     elide delete %test1.r
 )
 (

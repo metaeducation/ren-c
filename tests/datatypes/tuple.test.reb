@@ -24,7 +24,7 @@
 
 (tuple? 255.255.255.255.255.255.255)
 (
-    tuple: load-value "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1"
+    tuple: transcode:one "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1"
     all [
         30 = length of tuple  ; too big to fit in cell on 32-bit -or- 64-bit
         (cfor 'i 1 30 1 [

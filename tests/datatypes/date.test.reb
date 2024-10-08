@@ -35,7 +35,7 @@
     ~scan-invalid~ !! (
         load "1/11--0"
     )
-    ((load-value "1-11-0") = (load-value "1-11-00"))
+    ((transcode:one "1-11-0") = (transcode:one "1-11-00"))
 ]
 
 [#213 (

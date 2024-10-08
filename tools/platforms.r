@@ -601,7 +601,7 @@ export /configure-platform: func [
     ]
 
     let version: switch type of hint [  ; no switch:type in bootstrap
-        text! [load-value hint]
+        text! [transcode:one hint]
         tuple! [hint]
         fail
     ]

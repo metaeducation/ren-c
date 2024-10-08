@@ -32,7 +32,7 @@
 )]
 
 [#1477 (
-    set-slash: load-value "/:"
+    set-slash: transcode:one "/:"
     all [
         set-word? set-slash
         '/: = set-slash

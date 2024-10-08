@@ -117,7 +117,7 @@
     ('illegal-cr = pick trap [do "Rebol [] 1^M^/+ 2"] 'id)
     ('illegal-cr = pick trap [load "1^M^/+ 2"] 'id)
     ('illegal-cr = pick trap [load unspaced ["{a" "^M^/" "b}"]] 'id)
-    ({a^M^/b} = load-value "{a^^M^^/b}")
+    ({a^M^/b} = transcode:one "{a^^M^^/b}")
 ]
 
 

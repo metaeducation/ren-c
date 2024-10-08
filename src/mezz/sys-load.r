@@ -310,26 +310,6 @@ REBOL [
     return pack [(inside mod data) header]
 ]
 
-load-value: redescribe [
-    "Do a LOAD of a single value"
-](
-    cascade [
-        load/
-        lambda [^x [raised? block!]] [
-            either raised? unmeta x [
-                unmeta x  ; pipe error
-            ][
-                x: unmeta x
-                either 1 = length of ensure block! x [
-                    first x
-                ][
-                    raise ["LOAD-VALUE got length" length of x "block, not 1"]
-                ]
-            ]
-        ]
-    ]
-)
-
 
 ; Some URLs that represent executable code have a HTML presentation layer on
 ; them.  This is why a GitHub link has a "raw" offering without all that extra

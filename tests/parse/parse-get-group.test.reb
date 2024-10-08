@@ -110,7 +110,7 @@
         ][
             let [r l x]
             r: [
-                l: across one (l: load-value l)
+                l: across one (l: transcode:one l)
                 x: across repeat (l) one
                 [
                     #","
