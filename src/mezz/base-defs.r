@@ -51,13 +51,13 @@ probe: func [
 
 ; Common "Invisibles"
 
-comment: enfix func [
+comment: infix func [
     {Ignores the argument value, but does no evaluation (see also ELIDE).}
 
     return: []
         {The evaluator will skip over the result (not seen, not even void)}
     #returned [~null~ <end> any-value!]
-        {The returned value.} ;-- by protocol of enfixed `return: []`
+        {The returned value.} ;-- by protocol of infixed `return: []`
     :discarded [block! any-string! binary! any-scalar!]
         "Literal value to be ignored." ;-- `comment print "hi"` disallowed
 ][
@@ -73,7 +73,7 @@ elide: func [
 ][
 ]
 
-nihil: enfix func [
+nihil: infix func [
     {Arity-0 form of COMMENT}
     return: [] {Evaluator will skip result}
 ][

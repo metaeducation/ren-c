@@ -138,9 +138,9 @@
 %functions/chain.test.reb
 %functions/does.test.reb
 %functions/enclose.test.reb
-%functions/enfix.test.reb
 %functions/frame.test.reb
 %functions/hijack.test.reb
+%functions/infix.test.reb
 %functions/invisible.test.reb
 %functions/oneshot.test.reb
 %functions/redo.test.reb

@@ -309,7 +309,7 @@ DECLARE_NATIVE(either_test)
 
 
 //
-//  else: enfix native [
+//  else: infix native [
 //
 //  {If input is not null, return that value, otherwise evaluate the branch}
 //
@@ -336,7 +336,7 @@ DECLARE_NATIVE(else)
 
 
 //
-//  then: enfix native [
+//  then: infix native [
 //
 //  {If input is null, return null, otherwise evaluate the branch}
 //
@@ -364,7 +364,7 @@ DECLARE_NATIVE(then)
 
 
 //
-//  also: enfix native [
+//  also: infix native [
 //
 //  {For non-null input, evaluate and discard branch (like a pass-thru THEN)}
 //
@@ -912,7 +912,7 @@ DECLARE_NATIVE(switch)
 
 
 //
-//  default: enfix native [
+//  default: infix native [
 //
 //  {Set word or path to a default value if it is not set yet or blank.}
 //

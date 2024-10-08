@@ -18,12 +18,11 @@ REBOL [
         `1 + 2 * 3` would be 9.
 
         Ren-C does not have an "OP!" function type, it just has ACTION!, but
-        a WORD! can be SET with the /ENFIX refinement.  This indicates that
-        when the function is dispatched through that word, it should get its
-        first parameter from the left.  However it will obey the parameter
-        conventions of the original function (including quoting).  Hence since
-        ADD has normal parameter conventions, `+: enfix :add` would wind up
-        with `1 + 2 * 3` as 7.
+        cells can carry VALUE_FLAG_INFIX.  This indicates that the function is
+        dispatched it should get is first parameter from the left.  However it
+        will obey the parameter conventions of the original function (including
+        quoting).  Hence since ADD has normal parameter conventions,
+        `+: infix :add` would wind up with `1 + 2 * 3` as 7.
 
         So a new parameter convention indicated by ISSUE! is provided to get
         the "#tight" behavior of OP! arguments in R3-Alpha.
@@ -53,7 +52,7 @@ r3-alpha-quote: func [:spelling [word! text!]] [
 +: -: *: and+: or+: xor+: null
 
 append lib [/]  ; `/:` is not legal in bootstrap, use painful workaround
-do compose/deep [lib/(the /): enfix tighten :divide]
+do compose/deep [lib/(the /): infix tighten :divide]
 
 for-each [math-op function-name] [
     +       add
@@ -68,7 +67,7 @@ for-each [math-op function-name] [
     ; But since the prefix functions themselves have normal parameters, this
     ; would require a wrapping function...adding a level of inefficiency:
     ;
-    ;     +: enfix func [#a #b] [add :a :b]
+    ;     +: infix func [#a #b] [add :a :b]
     ;
     ; TIGHTEN optimizes this by making a "re-skinned" version of the function
     ; with tight parameters, without adding extra overhead when called.  This
@@ -78,7 +77,7 @@ for-each [math-op function-name] [
     ; Note: TIGHTEN currently changes all normal parameters to #tight, which
     ; which for the set operations creates an awkward looking /SKIP's SIZE.
     ;
-    set math-op enfix (tighten get function-name)
+    set math-op infix (tighten get function-name)
 ]
 
 
@@ -119,29 +118,29 @@ for-each [comparison-op function-name] compose [
     ; all things considered is still pretty natural (and popular in many
     ; languages)...and a small price to pay.  Hence no TIGHTEN call here.
     ;
-    set comparison-op enfix (get function-name)
+    set comparison-op infix (get function-name)
 ]
 
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
 ; `some-var: me + 1` or `some-var: me / 2` in a generic way.
 ;
-; !!! This depends on a fairly lame hack called EVAL-ENFIX at the moment, but
+; !!! This depends on a fairly lame hack called EVAL-INFIX at the moment, but
 ; that evaluator exposure should be generalized more cleverly.
 ;
-me: enfix func [
-    {Update variable using it as the left hand argument to an enfix operator}
+me: infix func [
+    {Update variable using it as the left hand argument to an infix operator}
 
     return: [~null~ any-value!]
     :var [set-word! set-path!]
-        {Variable to assign (and use as the left hand enfix argument)}
+        {Variable to assign (and use as the left hand infix argument)}
     :rest [any-value! <...>]
-        {Code to run with var as left (first element should be enfixed)}
+        {Code to run with var as left (first element should be infixed)}
 ][
-    set var eval-enfix (get var) rest
+    set var eval-infix (get var) rest
 ]
 
-my: enfix func [
+my: infix func [
     {Update variable using it as the first argument to a prefix operator}
 
     return: [~null~ any-value!]
@@ -150,19 +149,19 @@ my: enfix func [
     :rest [any-value! <...>]
         {Code to run with var as left (first element should be prefix)}
 ][
-    set var eval-enfix/prefix (get var) rest
+    set var eval-infix/prefix (get var) rest
 ]
 
 
 ; Lambdas are experimental quick function generators via a symbol.  The
-; identity is used to shake up enfix ordering.
+; identity is used to shake up infix ordering.
 ;
-set (r3-alpha-quote "->") enfix :lambda
-set (r3-alpha-quote "<-") :identity  ; Note: NOT ENFIX
-set (r3-alpha-quote ">-") enfix :shove
+set (r3-alpha-quote "->") infix :lambda
+set (r3-alpha-quote "<-") :identity  ; Note: NOT INFIX
+set (r3-alpha-quote ">-") infix :shove
 
 
-; These constructs used to be enfix to complete their left hand side.  Yet
+; These constructs used to be infix to complete their left hand side.  Yet
 ; that form of completion was only one expression's worth, when they wanted
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: []`) permit a more flexible version of the mechanic.

@@ -85,18 +85,18 @@ DECLARE_NATIVE(reeval)
 
 
 //
-//  shove: enfix native [
+//  shove: infix native [
 //
-//  {Shove a left hand parameter into an ACTION!, effectively making it enfix}
+//  {Shove a left hand parameter into an ACTION!, effectively making it infix}
 //
 //      return: [~null~ any-value!]
-//          "REVIEW: How might this handle shoving enfix invisibles?"
+//          "REVIEW: How might this handle shoving infix invisibles?"
 //      :left [<...> <end> any-value!]
-//          "Requests parameter convention based on enfixee's first argument"
-//      :enfixee [<end> word! path! group! action!]
+//          "Requests parameter convention based on infixee's first argument"
+//      :infixee [<end> word! path! group! action!]
 //          "Needs ACTION!...but WORD!s fetched, PATH!s/GROUP!s evaluated"
 //      :args [<...> <end> any-value!]
-//          "Will handle args the way the enfixee expects"
+//          "Will handle args the way the infixee expects"
 //  ]
 //
 DECLARE_NATIVE(shove)
@@ -104,22 +104,22 @@ DECLARE_NATIVE(shove)
     INCLUDE_PARAMS_OF_SHOVE;
 
     UNUSED(ARG(left));
-    UNUSED(ARG(enfixee));
+    UNUSED(ARG(infixee));
     UNUSED(ARG(args));
 
     // !!! It's nice to imagine the system evolving to where actions this odd
     // could be written generically vs. being hardcoded in the evaluator.
     // But for now it is too "meta", and Eval_Core_Throws() detects
-    // NAT_ACTION(shove) when used as enfix...and implements it there.
+    // NAT_ACTION(shove) when used as infix...and implements it there.
     //
-    // Only way this native would be called would be if it were not enfixed.
+    // Only way this native would be called would be if it were not infixed.
 
-    fail ("SHOVE may only be run as an ENFIX operation");
+    fail ("SHOVE may only be run as an INFIX operation");
 }
 
 
 //
-//  eval-enfix: native [
+//  eval-infix: native [
 //
 //  {Service routine for implementing ME (needs review/generalization)}
 //
@@ -127,18 +127,18 @@ DECLARE_NATIVE(shove)
 //      left [~null~ any-value!]
 //          {Value to preload as the left hand-argument (won't reevaluate)}
 //      rest [varargs!]
-//          {The code stream to execute (head element must be enfixed)}
+//          {The code stream to execute (head element must be infixed)}
 //      /prefix
 //          {Variant used when rest is prefix (e.g. for MY operator vs. ME)}
 //  ]
 //
-DECLARE_NATIVE(eval_enfix)
+DECLARE_NATIVE(eval_infix)
 //
 // !!! Being able to write `some-var: me + 10` isn't as "simple" <ahem> as:
 //
 // * making ME a backwards quoting operator that fetches the value of some-var
 // * quoting its next argument (e.g. +) to get a word looking up to a function
-// * making the next argument variadic, and normal-enfix TAKE-ing it
+// * making the next argument variadic, and normal-infix TAKE-ing it
 // * APPLYing the quoted function on those two values
 // * setting the left set-word (e.g. some-var:) to the result
 //
@@ -149,12 +149,12 @@ DECLARE_NATIVE(eval_enfix)
 // way of slipping the value of some-var into the flow of normal evaluation.
 //
 // But generalizing this mechanic is...non-obvious.  It needs to be done, but
-// this hacks up the specific case of "enfix with left hand side and variadic
+// this hacks up the specific case of "infix with left hand side and variadic
 // feed" by loading the given value into OUT and then re-entering the
 // evaluator via the DO_FLAG_POST_SWITCH mechanic (which was actuallly
-// designed for backtracking on enfix normal deferment.)
+// designed for backtracking on infix normal deferment.)
 {
-    INCLUDE_PARAMS_OF_EVAL_ENFIX;
+    INCLUDE_PARAMS_OF_EVAL_INFIX;
 
     Level* L;
     if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(rest))) {
@@ -163,7 +163,7 @@ DECLARE_NATIVE(eval_enfix)
         // this routine is a hack to implement ME, don't make it any longer
         // than it needs to be.
         //
-        fail ("EVAL-ENFIX is not made to support MAKE VARARGS! [...] rest");
+        fail ("EVAL-INFIX is not made to support MAKE VARARGS! [...] rest");
     }
 
     if (IS_END(L->value)) // no PATH! yet...
@@ -188,22 +188,22 @@ DECLARE_NATIVE(eval_enfix)
         fail ("ME and MY only work if right hand WORD! is an ACTION!");
 
     // Here we do something devious.  We subvert the system by setting
-    // L->gotten to an enfixed version of the function even if it is
-    // not enfixed.  This lets us slip in a first argument to a function
-    // *as if* it were enfixed, e.g. `series: my next`.
+    // L->gotten to an infixed version of the function even if it is
+    // not infixed.  This lets us slip in a first argument to a function
+    // *as if* it were infixed, e.g. `series: my next`.
     //
-    SET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED);
+    SET_VAL_FLAG(temp, VALUE_FLAG_INFIX);
     Push_GC_Guard(temp);
     L->gotten = temp;
 
-    // !!! If we were to give an error on using ME with non-enfix or MY with
-    // non-prefix, we'd need to know the fetched enfix state.  At the moment,
+    // !!! If we were to give an error on using ME with non-infix or MY with
+    // non-prefix, we'd need to know the fetched infix state.  At the moment,
     // Get_If_Word_Or_Path_Throws() does not pass back that information.  But
-    // if PATH! is going to do enfix dispatch, it should be addressed then.
+    // if PATH! is going to do infix dispatch, it should be addressed then.
     //
     UNUSED(REF(prefix));
 
-    // Since enfix dispatch only works for words (for the moment), we lie
+    // Since infix dispatch only works for words (for the moment), we lie
     // and use the label found in path processing as a word.
     //
     DECLARE_VALUE (word);
@@ -211,7 +211,7 @@ DECLARE_NATIVE(eval_enfix)
     L->value = word;
 
     // Simulate as if the passed-in value was calculated into the output slot,
-    // which is where enfix functions usually find their left hand values.
+    // which is where infix functions usually find their left hand values.
     //
     Copy_Cell(OUT, ARG(left));
 
@@ -221,7 +221,7 @@ DECLARE_NATIVE(eval_enfix)
     //
     // Note that while f may have a "prior" already, its prior will become
     // this frame...so when it asserts about "L->prior->deferred" it means
-    // the frame of EVAL-ENFIX that is invoking it.
+    // the frame of EVAL-INFIX that is invoking it.
     //
     assert(Is_Pointer_Corrupt_Debug(TOP_LEVEL->u.defer.arg));
     TOP_LEVEL->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack

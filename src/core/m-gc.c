@@ -1107,14 +1107,14 @@ static void Mark_Level_Stack_Deep(void)
         // code that a frame runs that might disrupt that relationship so it
         // would fetch differently should have meant clearing L->gotten.
         //
-        // However, the SHOVE operation is special, and puts an enfix ACTION!
+        // However, the SHOVE operation is special, and puts an infix ACTION!
         // into the frame's `shove` cell and points L->gotten to that.  It
         // needs to be marked here.
         //
         if (not L->gotten)
             NOOP;
         else if (L->gotten == Level_Shove(L)) {
-            assert(GET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_ENFIXED));
+            assert(GET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_INFIX));
             Queue_Mark_Value_Deep(Level_Shove(L));
         }
         else

@@ -365,7 +365,7 @@ parse2/match native-list [
     some [
         opt 'export
         set name: set-word! (name: to-word name)
-        opt 'enfix
+        opt 'infix
         ['native | and path! into ['native to end]]
         set spec: block!
         opt block! ;-- optional body if native/body

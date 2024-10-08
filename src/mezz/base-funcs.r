@@ -34,7 +34,7 @@ raise: func [error [error!]] [  ; poor man's definitional error
     return error
 ]
 
-so: enfix func [
+so: infix func [
     {Postfix assertion which won't keep running if left expression is false}
 
     return: [~]
@@ -455,7 +455,7 @@ gunzip: redescribe [
 )
 
 
-default*: enfix redescribe [
+default*: infix redescribe [
     {Would be the same as DEFAULT/ONLY if paths could dispatch infix}
 ](
     specialize 'default [only: true]
@@ -584,11 +584,6 @@ lock-of: redescribe [
 )
 
 
-; To help for discoverability, there is SET-INFIX and INFIX?.  However, the
-; term can be a misnomer if the function is more advanced, and using the
-; "lookback" capabilities in another way.  Hence these return descriptive
-; errors when people are "outside the bounds" of assurance RE:infixedness.
-
 arity-of: function [
     "Get the number of fixed parameters (not refinements or refinement args)"
     value [any-word! any-path! action!]
@@ -617,46 +612,6 @@ arity-of: function [
     ]
     arity
 ]
-
-nfix?: function [
-    n [integer!]
-    name [text!]
-    source [any-word! any-path!]
-][
-    case [
-        not enfixed? source [false]
-        equal? n arity: arity-of source [true]
-        n < arity [
-            ; If the queried arity is lower than the arity of the function,
-            ; assume it's ok...e.g. PREFIX? callers know INFIX? exists (but
-            ; we don't assume INFIX? callers know PREFIX?/ENDFIX? exist)
-            false
-        ]
-    ] else [
-        fail [
-            name "used on enfixed function with arity" arity
-            "Use ENFIXED? for generalized (tricky) testing"
-        ]
-    ]
-]
-
-postfix?: redescribe [
-    {TRUE if an arity 1 function is ENFIX to act as postfix.}
-](
-    specialize :nfix? [
-        n: 1
-        name: "POSTFIX?"
-    ]
-)
-
-infix?: redescribe [
-    {TRUE if an arity 2 function is ENFIX to act as infix.}
-](
-    specialize :nfix? [
-        n: 2
-        name: "INFIX?"
-    ]
-)
 
 
 ;-- -> cannot be loaded by R3-Alpha, or even earlier Ren-C
@@ -775,7 +730,7 @@ once-bar: func [
     ]
 ]
 
-method: enfix func [
+method: infix func [
     {FUNCTION variant that creates an ACTION! implicitly bound in a context}
 
     return: [action!]
@@ -790,7 +745,7 @@ method: enfix func [
     set member bind (function compose [(spec) <in> (context)] body) context
 ]
 
-meth: enfix func [
+meth: infix func [
     {FUNC variant that creates an ACTION! implicitly bound in a context}
 
     return: [action!]

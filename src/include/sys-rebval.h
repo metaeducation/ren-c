@@ -176,18 +176,27 @@
     FLAG_LEFT_BIT(20)
 
 
-//=//// VALUE_FLAG_ENFIXED ////////////////////////////////////////////////=//
+//=//// VALUE_FLAG_INFIX ////////////////////////////////////////////////=//
 //
 // In Ren-C, there is only one kind of function (ACTION!).  But it's possible
-// to tag a function value cell in a context as being "enfixed", hence it
-// will acquire its first argument from the left.  See ENFIX.
+// to tag a function value cell in a context as being "infixed", hence it
+// will acquire its first argument from the left.
 //
 // The reasion it is a generic VALUE_FLAG_XXX and not an ACTION_FLAG_XXX is
 // so that it can be dealt with without specifically knowing that the cell
-// involved is an action.  One benefit is that testing for an enfix action
+// involved is an action.  One benefit is that testing for an infix action
 // can be done just by looking at this bit--since only actions have it set.
 //
-#define VALUE_FLAG_ENFIXED \
+// !!! Note that in the bootstrap executable, there is only one kind of INFIX,
+// whereas the modern executable has 3 at time of writing (INFIX_TIGHT,
+// INFIX_DEFER, and INFIX_POSTPONE).  The strange behaviors such as evaluating
+// one expression to the left to enable things like THEN and ELSE actually
+// come from parameter conventions on the functions.  This concept that there
+// would be "tight" parameters that could apply to the right hand side was not
+// carried forward.  The bootstrap executable will likely stay using these
+// old ideas, however...until it is retired in favor of a modern executable.
+//
+#define VALUE_FLAG_INFIX \
     FLAG_LEFT_BIT(21)
 
 
@@ -264,7 +273,7 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 // Additionally, operations that copy need to not copy any of those bits that
 // are owned by the cell, plus additional bits that would be reset in the
 // cell if overwritten but not copied.  For now, this is why `foo: :+` does
-// not make foo an enfixed operation.
+// not make foo an infixed operation.
 //
 // Note that this will clear NODE_FLAG_FREE, so it should be checked by the
 // debug build before resetting.

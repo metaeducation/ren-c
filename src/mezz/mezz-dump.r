@@ -122,7 +122,7 @@ dump-to-newline: adapt 'dump [
     ]
 ]
 
-dumps: enfix function [
+dumps: infix function [
     {Fast generator for dumping function that uses assigned name for prefix}
 
     return: [action!]
@@ -148,7 +148,7 @@ dumps: enfix function [
         ; refinements for now.
         ;
         ; !!! This actually can't work as invisibles with refinements do not
-        ; have a way to be called--in spirit they are like enfix functions,
+        ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (->) would be used, but it doesn't work yet...review.)
         ;
         d: function [return: [] /on /off <static> d'] compose/deep [
@@ -275,11 +275,11 @@ dump-obj: function [
 ; Notice that if line breaks occur internal to an element on the line, that
 ; is detected, and lets that element be the last commented element.
 ;
-**: enfix function [
+**: infix function [
     {Comment until end of line, or end of current BLOCK!/GROUP!}
 
     return: []
-    left "Enfix required for 'fully invisible' enfix behavior (ignored)"
+    left "Enfix required for 'fully invisible' infix behavior (ignored)"
         [~null~ <end> any-value!]
     :args [any-value! <...>]
 ][

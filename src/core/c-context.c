@@ -1244,7 +1244,7 @@ void Resolve_Context(
                 if (m < 0)
                     Init_Nothing(var);  // treat as undefined in source context
                 else
-                    Move_Var(var, Varlist_Slot(source, m)); // preserves enfix
+                    Move_Var(var, Varlist_Slot(source, m));
             }
         }
     }
@@ -1259,7 +1259,7 @@ void Resolve_Context(
                 // Note: no protect check is needed here
                 //
                 var = Append_Context(target, nullptr, canon);
-                Move_Var(var, Varlist_Slot(source, n)); // preserves enfix
+                Move_Var(var, Varlist_Slot(source, n));
             }
         }
     }

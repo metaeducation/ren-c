@@ -227,8 +227,8 @@ bool Next_Path_Throws(REBPVS *pvs)
                 pvs->u.ref.cell,
                 pvs->u.ref.specifier
             );
-            if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_ENFIXED))
-                SET_VAL_FLAG(pvs->out, VALUE_FLAG_ENFIXED);
+            if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_INFIX))
+                SET_VAL_FLAG(pvs->out, VALUE_FLAG_INFIX);
 
             // Leave the pvs->u.ref as-is in case the next update turns out
             // to be BOUNCE_IMMEDIATE, and it is needed.
@@ -355,8 +355,8 @@ bool Eval_Path_Throws_Core(
         Copy_Cell(pvs->out, KNOWN(pvs->u.ref.cell));
 
         if (Is_Action(pvs->out)) {
-            if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_ENFIXED))
-                SET_VAL_FLAG(pvs->out, VALUE_FLAG_ENFIXED);
+            if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_INFIX))
+                SET_VAL_FLAG(pvs->out, VALUE_FLAG_INFIX);
 
             pvs->opt_label = Cell_Word_Symbol(pvs->value);
         }
@@ -703,7 +703,7 @@ DECLARE_NATIVE(poke)
 
 
 //
-//  path-0: enfix native [
+//  path-0: infix native [
 //
 //  {Temporary native in lieu of PD_Xxx() dispatch so `/` performs division}
 //

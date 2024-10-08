@@ -323,7 +323,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
 
     if (L->gotten) {
         if (L->gotten == Level_Shove(L->prior))
-            assert(GET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_ENFIXED));
+            assert(GET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_INFIX));
         else {
             assert(Is_Word(L->value));
             assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);

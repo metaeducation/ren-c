@@ -167,7 +167,7 @@ enum Reb_Param_Class {
     //
     PARAM_CLASS_REFINEMENT = 0x03,
 
-    // `PARAM_CLASS_TIGHT` makes enfixed first arguments "lazy" and other
+    // `PARAM_CLASS_TIGHT` makes infixed first arguments "lazy" and other
     // arguments will use the DO_FLAG_NO_LOOKAHEAD.
     //
     // R3-Alpha's notion of infix OP!s changed the way parameters were
@@ -183,7 +183,7 @@ enum Reb_Param_Class {
     // Ren-C decouples this property so that it may be applied to any
     // parameter, and calls it "tight".  By default, however, expressions are
     // completed as far as they can be on both the left and right hand side of
-    // enfixed expressions.
+    // infixed expressions.
     //
     PARAM_CLASS_TIGHT = 0x04,
 

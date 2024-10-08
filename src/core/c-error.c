@@ -1509,7 +1509,7 @@ DECLARE_NATIVE(trap)
 
 
 //
-//  except: enfix native [
+//  except: infix native [
 //
 //  "If left hand side is an ERROR!, run the branch"
 //

@@ -750,9 +750,9 @@ DECLARE_NATIVE(tighten)
 //
 // This routine exists to avoid the overhead of a user-function stub where
 // all the parameters are #tight, e.g. the behavior of R3-Alpha's OP!s.
-// So `+: enfix tighten :add` is a faster equivalent of:
+// So `+: infix tighten :add` is a faster equivalent of:
 //
-//     +: enfix func [#arg1 [any-value!] #arg2 [any-value!] [
+//     +: infix func [#arg1 [any-value!] #arg2 [any-value!] [
 //         add :arg1 :arg2
 //     ]
 //

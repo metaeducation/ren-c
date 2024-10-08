@@ -325,7 +325,7 @@ static void Startup_True_And_False(void)
 
 
 //
-//  generic: enfix native [
+//  generic: infix native [
 //
 //  {Creates datatype action (for internal usage only).}
 //
@@ -339,9 +339,9 @@ DECLARE_NATIVE(generic)
 // The `generics` native is searched for explicitly by %make-natives.r and put
 // in second place for initialization (after the `native` native).
 //
-// It is designed to be an enfix function that quotes its first argument,
+// It is designed to be an infix function that quotes its first argument,
 // so when you write FOO: ACTION [...], the FOO: gets quoted to be the verb.
-// The ENFIX is done by the bootstrap, after the natives are loaded.
+// The INFIX is done by the bootstrap, after the natives are loaded.
 {
     INCLUDE_PARAMS_OF_GENERIC;
 
@@ -417,7 +417,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 
         "<>", // not equal (the chosen meaning, as opposed to "empty tag")
 
-        ">-", // enfix path op, "SHOVE": https://trello.com/c/Kg9A45b5
+        ">-", // infix path op, "SHOVE": https://trello.com/c/Kg9A45b5
 
         "->", // lambda function
         "<-", // Non-null implicit GROUP! begin, e.g. `7 = 1 + <- 2 * 3`
@@ -528,7 +528,7 @@ static void Shutdown_Action_Meta_Shim(void) {
 //
 //    some-name: native/body [spec content] [equivalent user code]
 //
-// It is optional to put ENFIX between the SET-WORD! and the spec.
+// It is optional to put INFIX between the SET-WORD! and the spec.
 //
 // If more refinements are added, this will have to get more sophisticated.
 //
@@ -555,13 +555,13 @@ Value* Make_Native(
     Value* name = KNOWN(*item);
     ++*item;
 
-    bool enfix;
-    if (Is_Word(*item) and Cell_Word_Id(*item) == SYM_ENFIX) {
-        enfix = true;
+    bool infix;
+    if (Is_Word(*item) and Cell_Word_Id(*item) == SYM_INFIX) {
+        infix = true;
         ++*item;
     }
     else
-        enfix = false;
+        infix = false;
 
     // See if it's being invoked with NATIVE or NATIVE/BODY
     //
@@ -637,8 +637,8 @@ Value* Make_Native(
     //
     Value* var = Append_Context(Cell_Varlist(module), name, nullptr);
     Init_Action_Unbound(var, act);
-    if (enfix)
-        SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
+    if (infix)
+        SET_VAL_FLAG(var, VALUE_FLAG_INFIX);
 
     return var;
 }
@@ -707,7 +707,7 @@ static Array* Startup_Natives(const Value* boot_natives)
         // does not change, see uses via NAT_VALUE() and NAT_ACT().
         //
         Erase_Cell(&Natives[n]);
-        Copy_Cell(&Natives[n], native); // Note: Loses enfixedness (!)
+        Copy_Cell(&Natives[n], native);
         SET_VAL_FLAG(&Natives[n], CELL_FLAG_PROTECTED);
 
         Value* catalog_item = Copy_Cell(Alloc_Tail_Array(catalog), name);

@@ -298,7 +298,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 
         int _23_unused:1;
         int _22_eval_flip:1;
-        int _21_enfixed:1;
+        int _21_infixed:1;
         int _20_unevaluated:1;
         int _19_newline_before:1;
         int _18_falsey:1;
@@ -434,7 +434,7 @@ union HeaderUnion {
 //   evaluation to be done, such as in `[1 + 2 elide (print "Hi")]`, where
 //   something like ALL would want to hold onto the 3 without needing to
 //   cache it in some other location.  Stale out cells cannot be used as
-//   left side input for enfix.
+//   left side input for infix.
 //
 // **IMPORTANT**: This means that a routine being passed an arbitrary value
 //   should not make assumptions about the marked bit.  It should only be

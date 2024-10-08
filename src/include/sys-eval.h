@@ -792,7 +792,7 @@ INLINE bool Eval_Step_Mid_Level_Throws(Level* L, Flags flags) {
 // !!! This operation used to try and optimize some cases without using a
 // subframe.  But checking for whether an optimization would be legal or not
 // was complex, as even something inert like `1` cannot be evaluated into a
-// slot as `1` unless you are sure there's no `+` or other enfixed operation.
+// slot as `1` unless you are sure there's no `+` or other infixed operation.
 // Over time as the evaluator got more complicated, the redundant work and
 // conditional code paths showed a slight *slowdown* over just having an
 // inline function that built a frame and recursed Eval_Core_Throws().

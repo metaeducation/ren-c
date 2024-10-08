@@ -1,26 +1,26 @@
-; %enfix.test.reb
+; %infix.test.reb
 
-(action! = type of :+)
-(true = enfixed? '+)
+(action! = type of +/)
+(true = infix? +/)
 
 (
     foo: :+
     did all [
-        enfixed? 'foo
+        infix? foo/
         3 = 1 foo 2
     ]
 )
 (
-    foo: enfix tighten :add
+    foo: infix tighten :add
     did all [
-        enfixed? 'foo
+        infix? foo/
         3 = 1 foo 2
     ]
 )
 (
-    postfix-thing: enfix func [x] [x * 2]
+    postfix-thing: infix func [x] [x * 2]
     all [
-       enfixed? 'postfix-thing
+       infix? postfix-thing/
        20 = (10 postfix-thing)
     ]
 )
@@ -34,7 +34,7 @@
 [
     (
         skippy: func [:x [<skip> integer!] y] [reduce [reify :x y]]
-        lefty: enfix :skippy
+        lefty: infix :skippy
         true
     )
 
@@ -102,7 +102,7 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        magic: enfix func [#a #b /minus] [
+        magic: infix func [#a #b /minus] [
             either minus [a - b] [a + b]
         ]
     ])

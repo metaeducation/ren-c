@@ -108,8 +108,6 @@ Script: [
 
     evaluate-null:      {null cannot be evaluated (see UNEVAL)}
 
-    enfix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]
-
     break-not-continue: {Use BREAK/WITH when body is the breaking condition}
 
     use-eval-for-eval:  {Use REEVAL or APPLY on actions of arity > 0, not DO}

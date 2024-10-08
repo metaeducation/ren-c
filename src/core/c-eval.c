@@ -323,7 +323,7 @@ INLINE void Finalize_Current_Arg(Level* L) {
 //
 // Despite being implemented less elegantly than it should be, this is an
 // important feature, since it's how `case [true [a] default [b]]` gets the
-// enfixed DEFAULT function to realize the left side is a BLOCK! and not
+// infix DEFAULT function to realize the left side is a BLOCK! and not
 // either a SET-WORD! or a SET-PATH!, so it <skip>s the opportunity to hard
 // quote it and defers execution...in this case, meaning it won't run at all.
 //
@@ -469,7 +469,7 @@ bool Eval_Core_Throws(Level* const L)
         | DO_FLAG_REEVALUATE_CELL
     )){
         if (L->flags.bits & DO_FLAG_POST_SWITCH) {
-            assert(L->prior->u.defer.arg); // !!! EVAL-ENFIX crudely preserves
+            assert(L->prior->u.defer.arg); // !!! EVAL-INFIX crudely preserves
             assert(NOT_END(L->out));
 
             L->flags.bits &= ~DO_FLAG_POST_SWITCH;
@@ -477,7 +477,7 @@ bool Eval_Core_Throws(Level* const L)
         }
 
         if (L->flags.bits & DO_FLAG_PROCESS_ACTION) {
-            assert(L->refine == ORDINARY_ARG); // !!! should APPLY do enfix?
+            assert(L->refine == ORDINARY_ARG); // !!! should APPLY do infix?
 
             L->out->header.bits |= OUT_MARKED_STALE;
 
@@ -538,7 +538,7 @@ bool Eval_Core_Throws(Level* const L)
 
     //==////////////////////////////////////////////////////////////////==//
     //
-    // LOOKAHEAD TO ENABLE ENFIXED FUNCTIONS THAT QUOTE THEIR LEFT ARG
+    // LOOKAHEAD TO ENABLE INFIX FUNCTIONS THAT QUOTE THEIR LEFT ARG
     //
     //==////////////////////////////////////////////////////////////////==//
 
@@ -556,12 +556,12 @@ bool Eval_Core_Throws(Level* const L)
 
     assert(not L->gotten); // Fetch_Next_In_Level() cleared it
     L->gotten = Try_Get_Opt_Var(L->value, L->specifier);
-    if (not L->gotten or NOT_VAL_FLAG(L->gotten, VALUE_FLAG_ENFIXED))
+    if (not L->gotten or NOT_VAL_FLAG(L->gotten, VALUE_FLAG_INFIX))
         goto give_up_backward_quote_priority;
 
     // SHOVE says it quotes its left argument, even if it doesn't know that
     // is what it ultimately wants...because it wants a shot at its most
-    // aggressive scenario.  Once it finds out the enfixee wants normal or
+    // aggressive scenario.  Once it finds out the infixee wants normal or
     // tight, though, it could get in trouble.
     //
     if (VAL_ACTION(L->gotten) == NAT_ACTION(shove)) {
@@ -611,14 +611,14 @@ bool Eval_Core_Throws(Level* const L)
         else
             fail ("SHOVE only accepts WORD!, PATH!, GROUP!, or ACTION!");
 
-        // Even if the function isn't enfix, say it is.  This permits things
+        // Even if the function isn't infix, say it is.  This permits things
         // like `5 + 5 >- subtract 7` to give 3.
         //
-        SET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_ENFIXED);
+        SET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_INFIX);
         L->gotten = Level_Shove(L);
     }
 
-    // It's known to be an ACTION! since only actions can be enfix...
+    // It's known to be an ACTION! since only actions can be infix...
     //
     if (NOT_VAL_FLAG(L->gotten, ACTION_FLAG_QUOTES_FIRST_ARG))
         goto give_up_backward_quote_priority;
@@ -632,7 +632,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     //     foo: (the =>) [print the]
     //
-    // This is a good argument for not making enfixed operations that
+    // This is a good argument for not making infixed operations that
     // hard-quote things that can dispatch functions.  A soft-quote would give
     // more flexibility to override the left hand side's precedence:
     //
@@ -649,7 +649,7 @@ bool Eval_Core_Throws(Level* const L)
         if (
             current_gotten
             and Is_Action(current_gotten)
-            and NOT_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)
+            and NOT_VAL_FLAG(current_gotten, VALUE_FLAG_INFIX)
             and GET_VAL_FLAG(current_gotten, ACTION_FLAG_QUOTES_FIRST_ARG)
         ){
             Seek_First_Param(L, VAL_ACTION(current_gotten));
@@ -694,7 +694,7 @@ bool Eval_Core_Throws(Level* const L)
             if (
                 var_at
                 and Is_Action(var_at)
-                and NOT_VAL_FLAG(var_at, VALUE_FLAG_ENFIXED)
+                and NOT_VAL_FLAG(var_at, VALUE_FLAG_INFIX)
                 and GET_VAL_FLAG(var_at, ACTION_FLAG_QUOTES_FIRST_ARG)
             ){
                 goto give_up_backward_quote_priority;
@@ -707,7 +707,7 @@ bool Eval_Core_Throws(Level* const L)
         //
         // A literal ACTION! in a BLOCK! may also forward quote
         //
-        assert(NOT_VAL_FLAG(current, VALUE_FLAG_ENFIXED)); // not WORD!/PATH!
+        assert(NOT_VAL_FLAG(current, VALUE_FLAG_INFIX)); // not WORD!/PATH!
         if (GET_VAL_FLAG(current, ACTION_FLAG_QUOTES_FIRST_ARG))
             goto give_up_backward_quote_priority;
     }
@@ -769,7 +769,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case REB_ACTION: {
-        if (GET_VAL_FLAG(current, VALUE_FLAG_ENFIXED))
+        if (GET_VAL_FLAG(current, VALUE_FLAG_INFIX))
             fail ("Bootstrap EXE only dispatches infix from WORD!");
 
         if (not EVALUATING(current))
@@ -1121,7 +1121,7 @@ bool Eval_Core_Throws(Level* const L)
                     //
                     //     if + 2 [...]
                     //
-                    // If an enfixed function finds it has a variadic in its
+                    // If an infixed function finds it has a variadic in its
                     // first slot, then nothing available on the left is o.k.
                     // It means we have to put a VARARGS! in that argument
                     // slot which will react with TRUE to TAIL?, so feed it
@@ -1131,7 +1131,7 @@ bool Eval_Core_Throws(Level* const L)
                         RESET_VAL_HEADER_EXTRA(
                             L->arg,
                             REB_VARARGS,
-                            VARARGS_FLAG_ENFIXED // in case anyone cares
+                            VARARGS_FLAG_INFIX // in case anyone cares
                         );
                         INIT_BINDING(L->arg, EMPTY_ARRAY); // feed finished
 
@@ -1189,7 +1189,7 @@ bool Eval_Core_Throws(Level* const L)
                 // Now that we've gotten the argument figured out, make a
                 // singular array to feed it to the variadic.
                 //
-                // !!! See notes on VARARGS_FLAG_ENFIXED about how this is
+                // !!! See notes on VARARGS_FLAG_INFIX about how this is
                 // somewhat shady, as any evaluations happen *before* the
                 // TAKE on the VARARGS.  Experimental feature.
                 //
@@ -1208,7 +1208,7 @@ bool Eval_Core_Throws(Level* const L)
                     RESET_VAL_HEADER_EXTRA(
                         L->arg,
                         REB_VARARGS,
-                        VARARGS_FLAG_ENFIXED // don't evaluate *again* on TAKE
+                        VARARGS_FLAG_INFIX  // don't evaluate *again* on TAKE
                     );
                     INIT_BINDING(L->arg, array1);
                 }
@@ -1236,7 +1236,7 @@ bool Eval_Core_Throws(Level* const L)
 
             assert(L->refine == ORDINARY_ARG or Is_Refinement(L->refine));
 
-    //=//// START BY HANDLING ANY DEFERRED ENFIX PROCESSING //////////////=//
+    //=//// START BY HANDLING ANY DEFERRED INFIX PROCESSING //////////////=//
 
             // `if 10 and (20) [...]` starts by filling IF's `condition` slot
             // with 10, because AND has a "non-tight" (normal) left hand
@@ -1247,7 +1247,7 @@ bool Eval_Core_Throws(Level* const L)
             //
             // We kept a `L->defer` field that points at the previous filled
             // slot.  So we can re-enter a sub-frame and give the IF's
-            // `condition` slot a second chance to run the enfix processing it
+            // `condition` slot a second chance to run the infix processing it
             // put off before, this time using the 10 as AND's left-hand arg.
             //
             if (L->u.defer.arg) {
@@ -1260,12 +1260,12 @@ bool Eval_Core_Throws(Level* const L)
                 if (Is_Level_Gotten_Shoved(L)) {
                     Erase_Cell(Level_Shove(child));
                     Copy_Cell(Level_Shove(child), L->gotten);
-                    SET_VAL_FLAG(Level_Shove(child), VALUE_FLAG_ENFIXED);
+                    SET_VAL_FLAG(Level_Shove(child), VALUE_FLAG_INFIX);
                     L->gotten = Level_Shove(child);
                 }
 
                 if (Eval_Step_In_Subframe_Throws(
-                    L->u.defer.arg, // preload previous L->arg as left enfix
+                    L->u.defer.arg, // preload previous L->arg as left infix
                     L,
                     flags | DO_FLAG_POST_SWITCH,
                     child
@@ -1700,7 +1700,7 @@ bool Eval_Core_Throws(Level* const L)
             Push_Action(L, VAL_ACTION(TOP), VAL_BINDING(TOP));
             DROP();
 
-            // We use the same mechanism as enfix operations do...give the
+            // We use the same mechanism as infix operations do...give the
             // next chain step its first argument coming from L->out
             //
             // !!! One side effect of this is that unless CHAIN is changed
@@ -1740,15 +1740,15 @@ bool Eval_Core_Throws(Level* const L)
                 VAL_BINDING(current_gotten)
             );
 
-            // Note: The usual dispatch of enfix functions is not via a
+            // Note: The usual dispatch of infix functions is not via a
             // REB_WORD in this switch, it's by some code at the end of
-            // the switch.  So you only see enfix in cases like `(+ 1 2)`,
+            // the switch.  So you only see infix in cases like `(+ 1 2)`,
             // or after ACTION_FLAG_INVISIBLE e.g. `10 comment "hi" + 20`.
             //
             Begin_Action(
                 L,
                 Cell_Word_Symbol(current), // use word as stack frame label
-                GET_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)
+                GET_VAL_FLAG(current_gotten, VALUE_FLAG_INFIX)
                     ? LOOKBACK_ARG
                     : ORDINARY_ARG
             );
@@ -1944,7 +1944,7 @@ bool Eval_Core_Throws(Level* const L)
 
         if (Is_Action(L->out)) {
             //
-            // !!! While it is (or would be) possible to fetch an enfix or
+            // !!! While it is (or would be) possible to fetch an infix or
             // invisible function from a PATH!, at this point it would be too
             // late in the current scheme...since the lookahead step only
             // honors WORD!.  PATH! support is expected for the future, but
@@ -1952,17 +1952,17 @@ bool Eval_Core_Throws(Level* const L)
             //
             if (
                 GET_VAL_FLAG(L->out, ACTION_FLAG_INVISIBLE)
-                or GET_VAL_FLAG(L->out, VALUE_FLAG_ENFIXED)
+                or GET_VAL_FLAG(L->out, VALUE_FLAG_INFIX)
             ){
-                fail ("Use `>-` to shove left enfix operands into PATH!s");
+                fail ("Use `>-` to shove left infix operands into PATH!s");
             }
 
             Push_Action(L, VAL_ACTION(L->out), VAL_BINDING(L->out));
 
-            // !!! Paths are currently never enfixed.  It's a problem which is
+            // !!! Paths are currently never infixed.  It's a problem which is
             // difficult to do efficiently, as well as introduces questions of
             // running GROUP! in paths twice--once for lookahead, and then
-            // possibly once again if the lookahead reported non-enfix.  It's
+            // possibly once again if the lookahead reported non-infix.  It's
             // something that really should be made to work *when it can*.
             //
             Begin_Action(L, opt_label, ORDINARY_ARG);
@@ -2189,14 +2189,14 @@ bool Eval_Core_Throws(Level* const L)
     //==////////////////////////////////////////////////////////////////==//
 
     // We're sitting at what "looks like the end" of an evaluation step.
-    // But we still have to consider enfix.  e.g.
+    // But we still have to consider infix.  e.g.
     //
     //    evaluate/set [1 + 2 * 3] 'val
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
     // and consider its job done.  It has to notice that the word `+` looks up
-    // to an ACTION! that had its ENFIX flag set, and keep going.
+    // to an ACTION! that had its INFIX flag set, and keep going.
     //
     // Next, there's a subtlety with DO_FLAG_NO_LOOKAHEAD which explains why
     // processing of the 2 argument doesn't greedily continue to advance, but
@@ -2213,9 +2213,9 @@ bool Eval_Core_Throws(Level* const L)
     // been processed.
     //
     // If that's not enough to consider :-) it can even be the case that
-    // subsequent enfix gets "deferred".  Then, possibly later the evaluated
+    // subsequent infix gets "deferred".  Then, possibly later the evaluated
     // value gets re-fed back in, and we jump right to this post-switch point
-    // to give it a "second chance" to take the enfix.  (See 'deferred'.)
+    // to give it a "second chance" to take the infix.  (See 'deferred'.)
     //
     // So this post-switch step is where all of it happens, and it's tricky!
 
@@ -2226,7 +2226,7 @@ bool Eval_Core_Throws(Level* const L)
 //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION /////////////=//
 
     // For long-pondered technical reasons, only WORD! is able to dispatch
-    // enfix.  If it's necessary to dispatch an enfix function via path, then
+    // infix.  If it's necessary to dispatch an infix function via path, then
     // a word must be used to do it, e.g. `x: >- lib/method [...] [...]`.
     // That word can be an action with a variadic left argument, that can
     // decide what parameter convention to use to the left based on what it
@@ -2281,7 +2281,7 @@ bool Eval_Core_Throws(Level* const L)
         goto do_next;
     }
 
-//=//// FETCH WORD! TO PERFORM SPECIAL HANDLING FOR ENFIX/INVISIBLES //////=//
+//=//// FETCH WORD! TO PERFORM SPECIAL HANDLING FOR INFIX/INVISIBLES //////=//
 
     // First things first, we fetch the WORD! (if not previously fetched) so
     // we can see if it looks up to any kind of ACTION! at all.
@@ -2289,10 +2289,10 @@ bool Eval_Core_Throws(Level* const L)
     if (not L->gotten)
         L->gotten = Try_Get_Opt_Var(L->value, L->specifier);
     else {
-        // !!! a particularly egregious hack in EVAL-ENFIX lets us simulate
-        // enfix for a function whose value is not enfix.  This means the
+        // !!! a particularly egregious hack in EVAL-INFIX lets us simulate
+        // infix for a function whose value is not infix.  This means the
         // value in L->gotten isn't the fetched function, but the function
-        // plus a VALUE_FLAG_ENFIXED.  We discern this hacky case by noting
+        // plus a VALUE_FLAG_INFIX.  We discern this hacky case by noting
         // if L->u.defer.arg is precisely equal to BLANK_VALUE.
         //
         assert(
@@ -2301,7 +2301,7 @@ bool Eval_Core_Throws(Level* const L)
         );
     }
 
-//=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-ENFIX /////////////=//
+//=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-INFIX /////////////=//
 
     // These cases represent finding the start of a new expression, which
     // continues the evaluator loop if DO_FLAG_TO_END, but will stop with
@@ -2311,15 +2311,15 @@ bool Eval_Core_Throws(Level* const L)
     // unbound word).  It'll be an error, but that code path raises it for us.
 
     if (
-        not L->gotten // note that only ACTIONs have VALUE_FLAG_ENFIXED
-        or NOT_VAL_FLAG(VAL(L->gotten), VALUE_FLAG_ENFIXED)
+        not L->gotten // note that only ACTIONs have VALUE_FLAG_INFIX
+        or NOT_VAL_FLAG(VAL(L->gotten), VALUE_FLAG_INFIX)
     ){
       lookback_quote_too_late:; // run as if starting new expression
 
         if (not (L->flags.bits & DO_FLAG_TO_END)) {
             //
             // Since it's a new expression, EVALUATE doesn't want to run it
-            // even if invisible, as it's not completely invisible (enfixed)
+            // even if invisible, as it's not completely invisible (infixed)
             //
             goto finished;
         }
@@ -2354,20 +2354,20 @@ bool Eval_Core_Throws(Level* const L)
         //
         // `reevaluate` accounts for the extra lookahead of after something
         // like IF TRUE [], where you have a case that even though LENGTH
-        // isn't enfix itself, enfix accounting must be done by looking ahead
-        // to see if something after it (like OF) is enfix and quotes back!
+        // isn't infix itself, infix accounting must be done by looking ahead
+        // to see if something after it (like OF) is infix and quotes back!
         //
         goto reevaluate;
     }
 
-//=//// IT'S A WORD ENFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") /////=//
+//=//// IT'S INFIX (MAY BE "INVISIBLE") ///////////////////////////////////=//
 
     if (GET_VAL_FLAG(L->gotten, ACTION_FLAG_QUOTES_FIRST_ARG)) {
         //
-        // Left-quoting by enfix needs to be done in the lookahead before an
+        // Left-quoting by infix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
         //
-        //     left-the: enfix func [:value] [:value]
+        //     left-the: infix func [:value] [:value]
         //     the <something> left-the
         //
         // But due to the existence of <end>-able and <skip>-able parameters,
@@ -2383,7 +2383,7 @@ bool Eval_Core_Throws(Level* const L)
         (L->flags.bits & DO_FLAG_NO_LOOKAHEAD)
         and NOT_VAL_FLAG(L->gotten, ACTION_FLAG_INVISIBLE)
     ){
-        // Don't do enfix lookahead if asked *not* to look.  See the
+        // Don't do infix lookahead if asked *not* to look.  See the
         // PARAM_CLASS_TIGHT parameter convention for the use of this, as
         // well as it being set if DO_FLAG_TO_END wants to clear out the
         // invisibles at this frame level before returning.
@@ -2391,7 +2391,7 @@ bool Eval_Core_Throws(Level* const L)
         if (Is_Level_Gotten_Shoved(L)) {
             Erase_Cell(Level_Shove(L->prior));
             Copy_Cell(Level_Shove(L->prior), L->gotten);
-            SET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_ENFIXED);
+            SET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_INFIX);
             L->gotten = Level_Shove(L->prior);
         }
         goto finished;
@@ -2401,7 +2401,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     //    "If we get there and there's a deferral, it doesn't matter if it
     //     was this frame or the parent frame who deferred it...it's the
-    //     same enfix function in the same spot, and it's only willing to
+    //     same infix function in the same spot, and it's only willing to
     //     give up *one* of its chances to run."
     //
     // But it now defers indefinitely so long as it is fulfilling arguments,
@@ -2409,7 +2409,7 @@ bool Eval_Core_Throws(Level* const L)
     // endability control this may not be the best idea, but it keeps from
     // introducing a new parameter convention or recognizing the specific
     // function.  It's a rare enough property that one might imagine it to be
-    // unlikely such functions would want to run before deferred enfix.
+    // unlikely such functions would want to run before deferred infix.
     //
     if (
         GET_VAL_FLAG(L->gotten, ACTION_FLAG_DEFERS_LOOKBACK)
@@ -2431,11 +2431,11 @@ bool Eval_Core_Throws(Level* const L)
         if (Is_Level_Gotten_Shoved(L)) {
             Erase_Cell(Level_Shove(L->prior));
             Copy_Cell(Level_Shove(L->prior), L->gotten);
-            SET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_ENFIXED);
+            SET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_INFIX);
             L->gotten = Level_Shove(L->prior);
         }
 
-        // Leave the enfix operator pending in the frame, and it's up to the
+        // Leave the infix operator pending in the frame, and it's up to the
         // parent frame to decide whether to use DO_FLAG_POST_SWITCH to jump
         // back in and finish fulfilling this arg or not.  If it does resume
         // and we get to this check again, L->prior->deferred can't be null,

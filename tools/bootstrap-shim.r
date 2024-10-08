@@ -123,6 +123,23 @@ print: lib/print: lib/func [value <local> pos] [
 ]
 
 
+
+;; === "ENFIX => INFIX RENAMING" ===
+
+; Because Ren-C's "infix" functions really just took the first argument from
+; the left, they weren't necessarily arity-2.  So they were called "N-ary-fix"
+; or "N-FIX"... and functions were said to be "enfixed".  This really just
+; confused people, and it's easier to say that infix functions are only infix
+; for their first two arguments...and if they have any more than that they
+; will just take them normally.
+;
+; The bootstrap executable had a strange idea of doing infixedness through
+; SET/ENFIX, and then ENFIX was itself an enfixed function which did that
+; set on the word to its left.  :-/
+
+infix: enfix :enfix
+
+
 ; Use /BLAME instead of /WHERE in FAIL (eliminates an annoying inconsistency)
 ;
 fail-with-where: :lib/fail
@@ -194,7 +211,7 @@ either: adapt :either [
     ]
 ]
 
-wordtester: enfix func ['name [set-word!] want [word!] dont [word!]] [
+wordtester: infix func ['name [set-word!] want [word!] dont [word!]] [
     set name func [x] [
         case [
             :x = want [true]
@@ -393,8 +410,8 @@ modernize-action: function [
 func: adapt 'func [set [spec body] modernize-action spec body]
 function: adapt 'function [set [spec body] modernize-action spec body]
 
-meth: enfix adapt 'meth [set [spec body] modernize-action spec body]
-method: enfix adapt 'method [set [spec body] modernize-action spec body]
+meth: infix adapt 'meth [set [spec body] modernize-action spec body]
+method: infix adapt 'method [set [spec body] modernize-action spec body]
 
 trim: adapt 'trim [ ; there's a bug in TRIM/AUTO in 8994d23
     if auto [

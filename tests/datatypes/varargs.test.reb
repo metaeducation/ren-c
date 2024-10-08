@@ -32,13 +32,13 @@
     '~null~ = applique 'f [look: make varargs! []]
 )
 
-; !!! Experimental behavior of enfixed variadics, is to act as either 0 or 1
+; !!! Experimental behavior of infixed variadics, is to act as either 0 or 1
 ; items.  0 is parallel to <end>, and 1 is parallel to a single parameter.
 ; It's a little wonky because the evaluation of the parameter happens *before*
 ; the TAKE is called, but theorized that's still more useful than erroring.
 [
     (
-        normal: enfix function [v [integer! <...>]] [
+        normal: infix function [v [integer! <...>]] [
             sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -55,7 +55,7 @@
     (do [multiply 3 9 normal] = 27) ;-- seen as ((multiply 3 9) normal)
 ][
     (
-        tight: enfix function [#v [integer! <...>]] [
+        tight: infix function [#v [integer! <...>]] [
             sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -72,7 +72,7 @@
     (do [multiply 3 9 tight] = 27) ;-- seen as (multiply 3 (9 tight))
 ][
     (
-        soft: enfix function ['v [any-value! <...>]] [
+        soft: infix function ['v [any-value! <...>]] [
             stuff: copy []
             while [not tail? v] [
                 append/only stuff take v
@@ -87,7 +87,7 @@
     (do [(1 + 2) (3 + 4) soft] = [7])
 ][
     (
-        hard: enfix function [:v [any-value! <...>]] [
+        hard: infix function [:v [any-value! <...>]] [
             stuff: copy []
             while [not tail? v] [
                 append/only stuff take v
@@ -106,8 +106,8 @@
 ; Testing the variadic behavior of |> and <| is easier than rewriting tests
 ; here to do the same thing.
 
-; <| and |> were originally enfix, so the following tests would have meant x
-; would be trash
+; <| and |> were originally infix, so the following tests would have meant x
+; would be nothing
 (
     value: ~
     x: ~

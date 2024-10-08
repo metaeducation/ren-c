@@ -1,5 +1,5 @@
 ; In historical Rebol, UNLESS was a synonym for IF NOT.  This somewhat
-; unambitious use of the word has been replaced in Ren-C with an enfix
+; unambitious use of the word has been replaced in Ren-C with an infix
 ; operator that is siilar to a non-short-circuit OR, but prefers the right
 ; hand side's result:
 ;

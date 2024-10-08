@@ -575,8 +575,8 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
         // `set 'foo/bar 1` acts as `foo/bar: 1`
         // Set_Path_Core() will raise an error if there are any GROUP!s
         //
-        // Though you can't dispatch enfix from a path (at least not at
-        // present), the flag tells it to enfix a word in a context, or
+        // Though you can't dispatch infix from a path (at least not at
+        // present), the flag tells it to infix a word in a context, or
         // it will error if that's not what it looks up to.
         //
         Set_Path_Core(target, target_specifier, specific);
@@ -587,7 +587,7 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 
 
 //
-//  enfix: native [
+//  infix: native [
 //
 //  {Give a version of the action with the infix bit set to on or off}
 //
@@ -596,16 +596,19 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 //      /off "turn the infix bit off instead of on"
 //  ]
 //
-DECLARE_NATIVE(enfix) {
-    INCLUDE_PARAMS_OF_ENFIX;
+DECLARE_NATIVE(infix)
+//
+// !!! See notes on VALUE_FLAG_INFIX about old vs. modern interpretation.
+{
+    INCLUDE_PARAMS_OF_INFIX;
 
     Value* v = ARG(action);
 
     Copy_Cell(OUT, v);
     if (REF(off))
-        CLEAR_VAL_FLAG(OUT, VALUE_FLAG_ENFIXED);
+        CLEAR_VAL_FLAG(OUT, VALUE_FLAG_INFIX);
     else
-        SET_VAL_FLAG(OUT, VALUE_FLAG_ENFIXED);
+        SET_VAL_FLAG(OUT, VALUE_FLAG_INFIX);
 
     return OUT;
 }
@@ -856,33 +859,19 @@ DECLARE_NATIVE(resolve)
 
 
 //
-//  enfixed?: native [
+//  infix?: native [
 //
-//  {TRUE if looks up to a function and gets first argument before the call}
+//  {TRUE if function gets first argument before the call}
 //
-//      source [any-word! any-path!]
+//      action [action!]
 //  ]
 //
-DECLARE_NATIVE(enfixed_q)
+DECLARE_NATIVE(infix_q)
 {
-    INCLUDE_PARAMS_OF_ENFIXED_Q;
+    INCLUDE_PARAMS_OF_INFIX_Q;
 
-    Value* source = ARG(source);
-
-    if (Any_Word(source)) {
-        const Value* var = Get_Opt_Var_May_Fail(source, SPECIFIED);
-
-        assert(NOT_VAL_FLAG(var, VALUE_FLAG_ENFIXED) or Is_Action(var));
-        return Init_Logic(OUT, GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));
-    }
-    else {
-        assert(Any_Path(source));
-
-        DECLARE_VALUE (temp);
-        Get_Path_Core(temp, source, SPECIFIED);
-        assert(NOT_VAL_FLAG(temp, VALUE_FLAG_ENFIXED) or Is_Action(temp));
-        return Init_Logic(OUT, GET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED));
-    }
+    Value* action = ARG(action);
+    return Init_Logic(OUT, GET_VAL_FLAG(action, VALUE_FLAG_INFIX));
 }
 
 
@@ -893,7 +882,7 @@ DECLARE_NATIVE(enfixed_q)
 //
 //      return: [~null~ any-value!]
 //      value [<end> ~null~ any-value!]
-//          {!!! <end> flag is hack to limit enfix reach to the left}
+//          {!!! <end> flag is hack to limit infix reach to the left}
 //  ]
 //
 DECLARE_NATIVE(identity)

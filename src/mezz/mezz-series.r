@@ -152,11 +152,6 @@ replace: function [
             ; If arity > 1, end of block will cause an error
             ;
             value: replacement pos
-
-            ; Note: ACTION! parameter couldn't be passed as enfix ("no such
-            ; thing as enfix actions, just bindings").  So REPLACEMENT can't
-            ; quote backwards and (for instance) fetch value...but it *could*
-            ; quote pos and find out it's called `pos` (for instance).
         ][
             value: :replacement ;-- inert value, might be null
         ]
@@ -403,7 +398,7 @@ extract: func [
 ][  ; Default value is "" for any-string! output
 
     default_EXTRACT: default
-    default: enfix :lib/default
+    default: infix :lib/default
 
     if zero? width [return make (type of series) 0]  ; avoid an infinite loop
     len: either positive? width [  ; Length to preallocate

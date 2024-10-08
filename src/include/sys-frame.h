@@ -171,7 +171,7 @@ INLINE int LVL_LINE(Level* L) {
 INLINE bool Is_Level_Gotten_Shoved(Level* L) {
     if (L->gotten != Level_Shove(L))
         return false;
-    assert(GET_VAL_FLAG(L->gotten, VALUE_FLAG_ENFIXED));
+    assert(GET_VAL_FLAG(L->gotten, VALUE_FLAG_INFIX));
     return true; // see DECLARE_NATIVE(shove)
 }
 

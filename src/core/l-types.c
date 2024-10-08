@@ -300,7 +300,7 @@ DECLARE_NATIVE(reflect)
 
 
 //
-//  of: enfix native [
+//  of: infix native [
 //
 //  {Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)}
 //

@@ -166,9 +166,9 @@ help: function [
     ]
 
     ; HELP quotes, but someone might want to use an expression, e.g.
-    ; `help (...)`.  However, enfix functions which hard quote the left would
-    ; win over a soft-quoting non-enfix function that quotes to the right.
-    ; (It is generally discouraged to make hard-quoting left enfix functions,
+    ; `help (...)`.  However, infix functions which hard quote the left would
+    ; win over a soft-quoting non-infix function that quotes to the right.
+    ; (It is generally discouraged to make hard-quoting left infix functions,
     ; but they exist...e.g. DEFAULT.)  To make sure HELP DEFAULT works, HELP
     ; must hard quote and simulate its own soft quote semantics.
     ;
@@ -227,8 +227,6 @@ help: function [
             ] then [
                 return
             ]
-
-            enfixed: enfixed? topic
         ]
     ] else [
         if free? :topic [
@@ -327,9 +325,9 @@ help: function [
     ]
 
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
-    ; !!! Should refinement args be shown for enfixed case??
+    ; !!! Should refinement args be shown for infixed case??
     ;
-    if enfixed and [not empty? args] [
+    if (infix? :value) and [not empty? args] [
         print unspaced [
             space4 spaced [args/1 (uppercase mold topic) next args]
         ]

@@ -1443,7 +1443,7 @@ INLINE Value* Copy_Cell(Cell* out, const Value* v)
 
 
 // When doing something like a COPY of an OBJECT!, the var cells have to be
-// handled specially, e.g. by preserving VALUE_FLAG_ENFIXED.
+// handled specially, e.g. by preserving VALUE_FLAG_INFIX.
 //
 // !!! What about other non-copyable properties like CELL_FLAG_PROTECTED?
 //

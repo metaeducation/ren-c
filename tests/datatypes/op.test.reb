@@ -1,6 +1,6 @@
 ; datatypes/op.r
-(enfixed? '+)
-(error? sys/util/rescue [enfixed? 1])
+(infix? +/)
+(error? sys/util/rescue [infix? 1])
 (action? get '+)
 
 ; #1934

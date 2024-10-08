@@ -38,7 +38,7 @@
 )
 
 ; ELIDE is not fully invisible, but trades this off to be able to run its
-; code "in turn", instead of being slaved to eager enfix evaluation order.
+; code "in turn", instead of being slaved to eager infix evaluation order.
 ;
 ; https://trello.com/c/snnG8xwW
 

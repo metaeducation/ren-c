@@ -54,7 +54,7 @@
 #endif
 
 
-// While it would be possible to say that enfixing a function whose first
+// While it would be possible to say that infixing a function whose first
 // argument is a VARARGS! is plainly illegal, we experimentally allow the
 // left hand side of an evaluation to be a source of "0 or 1" arguments for
 // a VARARGS!.
@@ -71,9 +71,9 @@
 //
 // But despite the lack of "purity", one might argue it's better to do
 // something vs. just give an error.  Especially since people are unlikely to
-// enfix a variadic on accident, and may be fine with these rules.
+// infix a variadic on accident, and may be fine with these rules.
 //
-#define VARARGS_FLAG_ENFIXED VARARGS_FLAG(0)
+#define VARARGS_FLAG_INFIX VARARGS_FLAG(0)
 
 
 INLINE bool Is_Block_Style_Varargs(

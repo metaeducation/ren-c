@@ -65,7 +65,7 @@ export ;-- used in extensions
 pick
 poke
 
-enfix
+infix
 native
 self
 blank

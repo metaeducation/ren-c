@@ -2323,7 +2323,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             // A proxy needs to be imported from lib to context.
             //
             Expand_Context(ss->context, 1);
-            Move_Var( // preserve enfix state
+            Move_Var( // preserve infix state
                 Append_Context(ss->context, TOP, nullptr),
                 Varlist_Slot(ss->lib, MISC(canon).bind_index.lib)
             );

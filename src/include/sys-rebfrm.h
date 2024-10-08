@@ -100,7 +100,7 @@
 //=//// DO_FLAG_PRESERVE_STALE ////////////////////////////////////////////=//
 //
 // The evaluator tags the output value while running with OUT_FLAG_STALE
-// to keep track of whether it can be valid input for an enfix operation.  So
+// to keep track of whether it can be valid input for an infix operation.  So
 // when you do `[1 () + 2]`, there can be an error even though the `()`
 // vaporizes, as the 1 gets the flag..  If this bit weren't cleared, then
 // doing `[1 ()]` would return a stale 1 value, and stale values cannot be
@@ -439,7 +439,7 @@ struct LevelStruct {
     // `shove`
     //
     // The SHOVE operation is used to push values from the left--which may
-    // need further evaluation if tight or enfix normal--in to act as the left
+    // need further evaluation if tight or infix normal--in to act as the left
     // hand side of an operation, e.g.:
     //
     //      add 1 2 >- lib/(print "Hi!" first [multiply]) 10
@@ -447,7 +447,7 @@ struct LevelStruct {
     // The right side of the operator can do arbitrary evaluation, producing
     // a synthetic ACTION! as the target.  To make matters worse, once this
     // synthetic value is made it still may be necessary to go back and run
-    // more code on the left side (e.g. enfix only saw the `2` on the left
+    // more code on the left side (e.g. infix only saw the `2` on the left
     // when the `->` was first encountered, and it has to run the add BEFORE
     // feeding it into the multiply.)
     //
@@ -552,7 +552,7 @@ struct LevelStruct {
     //
     // There is a lookahead step to see if the next item in an array is a
     // WORD!.  If so it is checked to see if that word is a "lookback word"
-    // (e.g. one that refers to an ACTION! value set with the ENFIX flag).
+    // (e.g. one that refers to an ACTION! value set with the INFIX flag).
     // Performing that lookup has the same cost as getting the variable value.
     // Considering that the value will need to be used anyway--infix or not--
     // the pointer is held in this field for WORD!s (and sometimes ACTION!)
@@ -704,7 +704,7 @@ struct LevelStruct {
     // `deferred`
     //
     // The deferred pointer is used to mark an argument cell which *might*
-    // need to do more enfix processing in the frame--but only if it turns out
+    // need to do more infix processing in the frame--but only if it turns out
     // to be the last argument being processed.  For instance, in both of
     // these cases the AND finds itself gathering an argument to a function
     // where there is an evaluated 10 on the left hand side:
