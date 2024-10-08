@@ -141,7 +141,7 @@ confirm: function [
     choices: default [["y" "yes"] ["n" "no"]]
 
     if block? choices and [length of choices > 2] [
-        fail/where [
+        fail/blame [
             "maximum 2 arguments allowed for choices [true false]"
             "got:" mold choices
         ] 'choices

@@ -135,7 +135,7 @@ spaced-text: cascade [
 newlined: cascade [
     adapt specialize 'delimit [delimiter: newline] [
         if text? :line [
-            fail/where "NEWLINED on TEXT! semantics being debated" 'line
+            fail/blame "NEWLINED on TEXT! semantics being debated" 'line
         ]
     ]
     func [t [~null~ text!]] [

@@ -42,7 +42,7 @@ so: enfix func [
         [~null~ any-value!]
 ][
     any [condition false] else [
-        fail/where ["Postfix 'SO assertion' failed"] 'condition
+        fail/blame ["Postfix 'SO assertion' failed"] 'condition
     ]
 ]
 
@@ -474,7 +474,7 @@ ensure: redescribe [
     specialize 'either-test [
         branch: func [arg [~null~ any-value!]] [
             ;
-            ; !!! Can't use FAIL/WHERE until there is a good way to SPECIALIZE
+            ; !!! Can't use FAIL/BLAME until there is a good way to SPECIALIZE
             ; a conditional with a branch referring to invocation parameters:
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
@@ -502,7 +502,7 @@ oneshot: specialize 'n-shot [n: 1]
 upshot: specialize 'n-shot [n: -1]
 
 attempt: func [] [
-    fail/where "Use SYS/UTIL/RESCUE instead of ATTEMPT" 'return
+    fail/blame "Use SYS/UTIL/RESCUE instead of ATTEMPT" 'return
 ]
 
 for-next: redescribe [
@@ -769,7 +769,7 @@ once-bar: func [
         tail? right
         '|| = look: take lookahead ;-- hack...recognize selfs
     ] else [
-        fail/where [
+        fail/blame [
             "|| expected single expression, found residual of" :look
         ] 'right
     ]
@@ -1006,7 +1006,7 @@ fail: function [
 
     reason "ERROR! value, message text, or failure spec"
         [<end> error! text! block!]
-    /where "Specify an originating location other than the FAIL itself"
+    /blame "Specify an originating location other than the FAIL itself"
     location "Frame or parameter at which to indicate the error originated"
         [frame! any-word!]
 ][

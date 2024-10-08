@@ -64,7 +64,7 @@ dump: function [
                 enablements/(sigil): item
             ]
 
-            fail/where [
+            fail/blame [
                 "Item not TEXT!, INTEGER!, WORD!, PATH!, GROUP!:" :item
             ] 'value
         ]

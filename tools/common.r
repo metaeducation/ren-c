@@ -60,13 +60,13 @@ to-c-name: function [
         return copy "bar_1"
     ]
 
-    fail: specialize :lib/fail [where: true location: 'value]
+    fail: specialize :lib/fail [blame: true location: 'value]
 
     all [
         text? value
         empty? value
     ] then [
-        fail/where ["TO-C-NAME received empty input"] 'value
+        fail/blame ["TO-C-NAME received empty input"] 'value
     ]
 
     c-chars: charset [

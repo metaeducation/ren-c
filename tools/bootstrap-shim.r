@@ -61,7 +61,13 @@ read: lib/read: adapt 'lib/read [
 ; For bootstrap purposes here, use MAYBE+ to make blank opt-outs and MAYBE-
 ; to make null opt-outs.  The newer executable produces voids for both.
 ;
-maybe: func [] [fail/where "MAYBE+ => blank or MAYBE- => null" 'return]
+; 1. The older bootstrap executable calls blame "WHERE".  We shim this below
+;    but it's not shim'd at the moment of this definition (shouldn't matter
+;    unless it's called before the shim).
+;
+maybe: func [] [
+    fail/blame "MAYBE+ => blank or MAYBE- => null" 'return  ; BLAME shim'd [1]
+]
 
 
 ; The snapshotted Ren-C existed right before <maybe> was legal to mark an
@@ -87,7 +93,7 @@ trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
     parse2: :parse/redbol  ; no `pos: <here>`, etc.
 
     parse: func [] [
-        fail/where "Use PARSE2 in Bootstrap" 'return
+        fail/blame "Use PARSE2 in Bootstrap" 'return
     ]
 
     quit/with system/options/path  ; see [1]
@@ -117,6 +123,23 @@ print: lib/print: lib/func [value <local> pos] [
 ]
 
 
+; Use /BLAME instead of /WHERE in FAIL (eliminates an annoying inconsistency)
+;
+fail-with-where: :lib/fail
+
+lib/fail: fail: func [
+    reason [<end> error! text! block!]
+    /blame location [frame! any-word!]
+][
+    if not reason [  ; <end> becomes null, not legal arg to fail
+        reason: "<end>"
+    ]
+    if not blame [
+        fail-with-where reason
+    ]
+    fail-with-where/where reason location
+]
+
 ; With definitional errors, we're moving away from the buggy practice of
 ; intercepting abrupt failures casually.  The RESCUE routine is put in
 ; SYS/UTIL/RESCUE...and that's what old-school TRAP was.
@@ -124,7 +147,7 @@ print: lib/print: lib/func [value <local> pos] [
 append sys 'util
 sys/util: make object! [rescue: 1]
 sys/util/rescue: :trap
-trap: func [] [fail/where "USE RESCUE instead of TRAP for bootstrap" 'return]
+trap: func [] [fail/blame "USE RESCUE instead of TRAP for bootstrap" 'return]
 
 
 ; The bootstrap executable was picked without noticing it had an issue with
@@ -146,7 +169,7 @@ lib/read: read: enclose :lib-read function [f [frame!]] [
             ]
             to end
         ] then [
-            fail/where ["READ could not find file" saved-source] 'f
+            fail/blame ["READ could not find file" saved-source] 'f
         ]
         print ["Some READ error besides FILE-NOT-FOUND:" saved-source]
         fail e
@@ -159,7 +182,7 @@ if: adapt :if [
     all [
         :condition
         find [true false yes no on off] :condition
-        fail/where "IF not supposed to take [true false yes no off]" 'return
+        fail/blame "IF not supposed to take [true false yes no off]" 'return
     ]
 ]
 
@@ -167,7 +190,7 @@ either: adapt :either [
     all [
         :condition
         find [true false yes no on off] :condition
-        fail/where "EITHER not supposed to take [true false yes no off]" 'return
+        fail/blame "EITHER not supposed to take [true false yes no off]" 'return
     ]
 ]
 
@@ -193,7 +216,7 @@ maybe+: :try  ; see [2]
 maybe-: func [x [<opt> any-value!]] [either blank? :x [null] [:x]]
 
 null-to-blank: :try  ; if we put null in variables, word accesses will fail
-opt: func [] [fail/where "Use REIFY instead of OPT for bootstrap" 'return]
+opt: func [] [fail/blame "Use REIFY instead of OPT for bootstrap" 'return]
 try: func [value [<opt> any-value!]] [  ; poor man's definitional error handler
     if error? :value [return null]
     return :value
@@ -201,7 +224,7 @@ try: func [value [<opt> any-value!]] [  ; poor man's definitional error handler
 
 trash: :void
 nothing!: :void!
-void!: func [] [fail/where "No VOID! in bootstrap-shim" 'return]
+void!: func [] [fail/blame "No VOID! in bootstrap-shim" 'return]
 void: :null
 
 reify: func [value [<opt> any-value!]] [
@@ -286,7 +309,7 @@ parse2: func [input rules /case /match] [
 ]
 
 parse: func [] [
-    fail/where "Use PARSE2 in Bootstrap" 'return
+    fail/blame "Use PARSE2 in Bootstrap" 'return
 ]
 
 ; Older Ren-C considers nulled variables to be "unset".
@@ -303,7 +326,7 @@ applique: :apply
 unset 'apply
 
 the: :quote
-quote: func [] [fail/where "Use THE instead of QUOTE for literalizing" 'return]
+quote: func [] [fail/blame "Use THE instead of QUOTE for literalizing" 'return]
 
 collect*: :collect
 collect: :collect-block

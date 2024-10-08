@@ -21,7 +21,7 @@ verify: function [
 ][
     while [pos: evaluate/set conditions 'result] [
         if not :result [
-            fail/where [
+            fail/blame [
                 "Assertion condition returned"
                  choose [
                     (unset? 'result) "nothing"
