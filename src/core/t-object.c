@@ -1719,11 +1719,10 @@ DECLARE_NATIVE(construct)
             continue;
         }
 
-        if (not Is_Set_Word(at))
-            fail (Error_Invalid_Type(VAL_TYPE(at)));
+        if (not Try_Get_Settable_Word_Symbol(at))  // /foo: or foo:
+            fail (at);
 
         do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
-            assert(Is_Set_Word(at));
             Copy_Cell(PUSH(), at);
 
             Fetch_Next_In_Feed(SUBLEVEL->feed);
@@ -1735,7 +1734,7 @@ DECLARE_NATIVE(construct)
             if (Is_Comma(at))
                 fail ("Unexpected COMMA! after SET-WORD! in CONTEXT");
 
-        } while (Is_Set_Word(at));
+        } while (Try_Get_Settable_Word_Symbol(at));
 
         STATE = ST_CONSTRUCT_EVAL_STEP;
         return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -1750,11 +1749,13 @@ DECLARE_NATIVE(construct)
     VarList* varlist = Cell_Varlist(OUT);
 
     while (TOP_INDEX != BASELINE->stack_base) {
-        assert(Is_Set_Word(TOP));
+        const Symbol* symbol = unwrap Try_Get_Settable_Word_Symbol(
+            cast(Element*, TOP)
+        );
 
         Option(Index) index = Find_Symbol_In_Context(
             Varlist_Archetype(varlist),
-            Cell_Word_Symbol(TOP),
+            symbol,
             true
         );
         assert(index);  // created a key for every SET-WORD! above!
