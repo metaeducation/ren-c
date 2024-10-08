@@ -88,22 +88,24 @@ static Bounce Clipboard_Actor(
             return Init_Blank(OUT);
         }
 
-        if (not OpenClipboard(NULL))
-            rebJumps("fail {OpenClipboard() fail while reading}");
+        if (not OpenClipboard(nullptr))
+            return rebDelegate("fail {OpenClipboard() fail while reading}");
 
         HANDLE h = GetClipboardData(CF_UNICODETEXT);
-        if (h == NULL) {
+        if (h == nullptr) {
             CloseClipboard();
-            rebJumps (
+            return rebDelegate(
                 "fail",
                 "{IsClipboardFormatAvailable()/GetClipboardData() mismatch}"
             );
         }
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
-        if (wide == NULL) {
+        if (wide == nullptr) {
             CloseClipboard();
-            rebJumps("fail {Couldn't GlobalLock() UCS2 clipboard data}");
+            return rebDelegate(
+                "fail {Couldn't GlobalLock() UCS2 clipboard data}"
+            );
         }
 
         Value* str = rebTextWide(wide);
@@ -135,11 +137,15 @@ static Bounce Clipboard_Actor(
         if (REF(part) and VAL_INT32(ARG(part)) < len)
             len = VAL_INT32(ARG(part));
 
-        if (not OpenClipboard(NULL))
-            rebJumps("fail {OpenClipboard() fail on clipboard write}");
+        if (not OpenClipboard(nullptr))
+            return rebDelegate(
+                "fail {OpenClipboard() fail on clipboard write}"
+            );
 
         if (not EmptyClipboard()) // !!! is this superfluous?
-            rebJumps("fail {EmptyClipboard() fail on clipboard write}");
+            return rebDelegate(
+                "fail {EmptyClipboard() fail on clipboard write}"
+            );
 
         // Clipboard wants a Windows memory handle with UCS2 data.  Allocate a
         // sufficienctly sized handle, decode Rebol STRING! into it, transfer
@@ -148,12 +154,12 @@ static Bounce Clipboard_Actor(
         unsigned int num_wchars = rebSpellIntoWide(nullptr, 0, data);
 
         HANDLE h = GlobalAlloc(GHND, sizeof(WCHAR) * (num_wchars + 1));
-        if (h == NULL) // per documentation, not INVALID_HANDLE_VALUE
-            rebJumps("fail {GlobalAlloc() fail on clipboard write}");
+        if (h == nullptr)  // per documentation, not INVALID_HANDLE_VALUE
+            return rebDelegate("fail {GlobalAlloc() fail on clipboard write}");
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
-        if (wide == NULL)
-            rebJumps("fail {GlobalLock() fail on clipboard write}");
+        if (wide == nullptr)
+            return rebDelegate("fail {GlobalLock() fail on clipboard write}");
 
         // Extract text as UTF-16
         //
@@ -167,8 +173,8 @@ static Bounce Clipboard_Actor(
         HANDLE h_check = SetClipboardData(CF_UNICODETEXT, h);
         CloseClipboard();
 
-        if (h_check == NULL)
-            rebJumps("fail {SetClipboardData() failed.}");
+        if (h_check == nullptr)
+            return rebDelegate("fail {SetClipboardData() failed.}");
 
         assert(h_check == h);
 

@@ -416,7 +416,7 @@ DECLARE_NATIVE(request_file_p)
     // be freed before the failure.
     //
     if (error)
-        rebJumps ("fail", rebR(error));
+        return rebDelegate("fail", rebR(error));
 
     if (rebUnboxLogic("empty?", results)) {
         rebRelease(results);
@@ -563,7 +563,7 @@ DECLARE_NATIVE(request_dir_p)
   #endif
 
     if (error != nullptr)
-        rebJumps ("fail", rebR(error));
+        return rebDelegate("fail", rebR(error));
 
     return result;
 }

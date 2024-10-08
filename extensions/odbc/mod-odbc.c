@@ -420,7 +420,7 @@ DECLARE_NATIVE(open_connection)
     if (henv == SQL_NULL_HANDLE) {
         rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
         if (not SQL_SUCCEEDED(rc))
-            rebJumps ("fail", Error_ODBC_Env(SQL_NULL_HENV));
+            return rebDelegate("fail", Error_ODBC_Env(SQL_NULL_HENV));
 
         rc = SQLSetEnvAttr(
             henv,
@@ -432,7 +432,7 @@ DECLARE_NATIVE(open_connection)
             Value* error = Error_ODBC_Env(henv);
             SQLFreeHandle(SQL_HANDLE_ENV, henv);
             henv = SQL_NULL_HANDLE;
-            rebJumps ("fail", error);
+            return rebDelegate("fail", error);
         }
     }
 
@@ -443,7 +443,7 @@ DECLARE_NATIVE(open_connection)
     if (not SQL_SUCCEEDED(rc)) {
         Value* error = Error_ODBC_Env(henv);
         SQLFreeHandle(SQL_HANDLE_ENV, henv);
-        rebJumps ("fail", error);
+        return rebDelegate("fail", error);
     }
 
     rc = SQLSetConnectAttr(
@@ -455,7 +455,7 @@ DECLARE_NATIVE(open_connection)
     if (not SQL_SUCCEEDED(rc)) {
         Value* error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-        rebJumps ("fail", error);
+        return rebDelegate("fail", error);
     }
 
     // Connect to the Driver
@@ -478,7 +478,7 @@ DECLARE_NATIVE(open_connection)
     if (not SQL_SUCCEEDED(rc)) {
         Value* error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-        rebJumps ("fail", error);
+        return rebDelegate("fail", error);
     }
 
     // Extension SHUTDOWN* might happen with HDBC handles outstanding, so we
@@ -486,7 +486,9 @@ DECLARE_NATIVE(open_connection)
     //
     Connection* conn = rebTryAlloc(Connection);
     if (conn == nullptr)
-        rebJumps ("fail {Could not allocate Connection tracking object}");
+        return rebDelegate(
+            "fail {Could not allocate Connection tracking object}"
+        );
     rebUnmanageMemory(conn);
 
     conn->hdbc = hdbc;
@@ -529,7 +531,7 @@ DECLARE_NATIVE(open_statement)
     SQLHSTMT hstmt;
     rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
     if (not SQL_SUCCEEDED(rc))
-        rebJumps ("fail", Error_ODBC_Dbc(hdbc));
+        return rebDelegate("fail", Error_ODBC_Dbc(hdbc));
 
     Value* hstmt_value = rebHandle(hstmt, sizeof(hstmt), nullptr);
 
@@ -1271,7 +1273,7 @@ DECLARE_NATIVE(insert_odbc)
                 SQL_NTS  // Null-Terminated String
             );
             if (not SQL_SUCCEEDED(rc))
-                rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+                return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
             rebFree(sql_string);
 
@@ -1307,7 +1309,7 @@ DECLARE_NATIVE(insert_odbc)
                 );
                 rebRelease(value);
                 if (not SQL_SUCCEEDED(rc))
-                    rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+                    return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
             }
         }
 
@@ -1335,23 +1337,23 @@ DECLARE_NATIVE(insert_odbc)
 
           case SQL_NEED_DATA:
             assert(!"SQL_NEED_DATA seen...only happens w/data @ execution");
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
           case SQL_STILL_EXECUTING:
             assert(!"SQL_STILL_EXECUTING seen...only w/async calls");
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
           case SQL_ERROR:
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
           case SQL_INVALID_HANDLE:
             assert(!"SQL_INVALID_HANDLE seen...should never happen");
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
         #if ODBCVER >= 0x0380
           case SQL_PARAM_DATA_AVAILABLE:
             assert(!"SQL_PARAM_DATA_AVAILABLE seen...only in ODBC 3.8");
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
         #endif
         }
     }
@@ -1364,13 +1366,13 @@ DECLARE_NATIVE(insert_odbc)
     SQLSMALLINT num_columns;
     rc = SQLNumResultCols(hstmt, &num_columns);
     if (not SQL_SUCCEEDED(rc))
-        rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+        return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
     if (num_columns == 0) {
         SQLLEN num_rows;
         rc = SQLRowCount(hstmt, &num_rows);
         if (not SQL_SUCCEEDED(rc))
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
         return rebInteger(num_rows);
     }
@@ -1628,14 +1630,14 @@ DECLARE_NATIVE(copy_odbc)
     Column* columns = list->columns;
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
-        rebJumps ("fail {Invalid statement object!}");
+        return rebDelegate("fail {Invalid statement object!}");
 
     SQLRETURN rc;
 
     SQLSMALLINT num_columns;
     rc = SQLNumResultCols(hstmt, &num_columns);
     if (not SQL_SUCCEEDED(rc))
-        rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+        return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
     // compares-0 based row against num_rows, so -1 is chosen to never match
     // and hence mean "as many rows as available"
@@ -1695,7 +1697,7 @@ DECLARE_NATIVE(copy_odbc)
           case SQL_STILL_EXECUTING:
           case SQL_ERROR:
           default:  // No other return codes were listed
-            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+            return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
         }
 
         Value* record = rebValue("make block!", rebI(num_columns));
@@ -1718,7 +1720,7 @@ DECLARE_NATIVE(copy_odbc)
             );
 
             if (col->buffer == nullptr and len == SQL_NO_TOTAL)
-                rebJumps (
+                return rebDelegate(
                     "fail {ODBC driver gave SQL_NO_TOTAL for var-sized field}"
                 );
 
@@ -1752,7 +1754,7 @@ DECLARE_NATIVE(copy_odbc)
                     &len_check
                 );
                 if (rc != SQL_SUCCESS)
-                    rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+                    return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
 
                 assert(len_check == len);
                 break;
@@ -1765,7 +1767,7 @@ DECLARE_NATIVE(copy_odbc)
               case SQL_STILL_EXECUTING:
               case SQL_INVALID_HANDLE:
               default:  // No other return codes were listed
-                rebJumps ("fail", Error_ODBC_Stmt(hstmt));
+                return rebDelegate("fail", Error_ODBC_Stmt(hstmt));
             }
 
             Value* temp = ODBC_Column_To_Rebol_Value(col, allocated, len);
@@ -1817,7 +1819,7 @@ DECLARE_NATIVE(update_odbc)
     );
 
     if (not SQL_SUCCEEDED(rc))
-        rebJumps ("fail", Error_ODBC_Dbc(hdbc));
+        return rebDelegate("fail", Error_ODBC_Dbc(hdbc));
 
     bool commit = rebUnboxLogic("commit");
     rc = SQLSetConnectAttr(
@@ -1831,7 +1833,7 @@ DECLARE_NATIVE(update_odbc)
     );
 
     if (not SQL_SUCCEEDED(rc))
-        rebJumps ("fail", Error_ODBC_Dbc(hdbc));
+        return rebDelegate("fail", Error_ODBC_Dbc(hdbc));
 
     return rebNothing();
 }

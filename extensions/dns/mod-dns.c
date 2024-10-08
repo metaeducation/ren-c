@@ -243,13 +243,17 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
             return Init_Nulled(OUT);  // "expected" failures, signal w/null
 
           case NO_RECOVERY:
-            rebJumps("fail {A nonrecoverable name server error occurred}");
+            return rebDelegate(
+              "fail {A nonrecoverable name server error occurred}"
+            );
 
           case TRY_AGAIN:
-            rebJumps("fail {Temporary error on authoritative name server}");
+            return rebDelegate(
+              "fail {Temporary error on authoritative name server}"
+            );
 
           default:
-            rebJumps("fail {Unknown host error}");
+            return rebDelegate("fail {Unknown host error}");
         } }
 
       case SYM_OPEN: {

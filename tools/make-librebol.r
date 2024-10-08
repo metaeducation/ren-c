@@ -662,7 +662,9 @@ e-lib/emit [ver {
      * !!! Technically this is a Node* ... but we do not export the derived
      * relationship between Value and Node in C++ builds (and cannot do so in
      * a C build).  So a void* is the only way to get a `return` in a libRebol
-     * native to accept either RebolNodeInternal* or RebolValue*.
+     * native to accept either RebolNodeInternal* or RebolValue*.  This has
+     * an advantage though, as the C++ build checks variadic APIs to make sure
+     * they are not passed `void*`, so you can't accidentaly pass them Bounce.
      */
 
     typedef void* RebolBounce;

@@ -483,11 +483,11 @@ DECLARE_NATIVE(rsa_generate_keypair)
 
     bool insecure = rebDid("insecure");
     if (not insecure and num_key_bits < 1024)
-        rebJumps (
+        return rebDelegate(
             "fail {RSA key must be >= 1024 bits in size unless /INSECURE}"
         );
     if (num_key_bits > MBEDTLS_MPI_MAX_BITS)
-        rebJumps (
+        return rebDelegate(
             "fail {RSA key bits exceeds MBEDTLS_MPI_MAX_BITS}"
         );
 
@@ -602,7 +602,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
     mbedtls_rsa_free(&ctx);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return rebDelegate("pack [", rebR(public_key), rebR(private_key), "]");
 }
@@ -641,7 +641,9 @@ DECLARE_NATIVE(rsa_encrypt)
     Value* e = rebValue("ensure [~null~ binary!] public-key.e");
 
     if (not n or not e)
-        rebJumps ("fail {RSA requires N and E components of key object}");
+        return rebDelegate(
+            "fail {RSA requires N and E components of key object}"
+        );
 
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
@@ -735,7 +737,7 @@ DECLARE_NATIVE(rsa_encrypt)
     mbedtls_rsa_free(&ctx);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return result;
 }
@@ -787,18 +789,18 @@ DECLARE_NATIVE(rsa_decrypt)
     }
     else if (not p and not q) {
         if (not n or not e or not d)
-            rebJumps (
+            return rebDelegate(
                 "fail {N, E, and D needed to decrypt if P and Q are missing}"
             );
     }
     else if (not d and not n) {
         if (not e or not p or not q)
-            rebJumps (
+            return rebDelegate(
                 "fail {E, P, and Q needed to decrypt if D or N are missing}"
             );
     }
     else
-        rebJumps (
+        return rebDelegate(
             "fail {Missing field combination in private key not allowed}"
         );
 
@@ -815,7 +817,7 @@ DECLARE_NATIVE(rsa_decrypt)
         chinese_remainder_speedup = true;
     }
     else
-        rebJumps (
+        return rebDelegate(
             "fail {All of DP, DQ, and QINV fields must be given, or none}"
         );
 
@@ -978,7 +980,7 @@ DECLARE_NATIVE(rsa_decrypt)
     mbedtls_rsa_free(&ctx);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return result;
 }
@@ -1192,7 +1194,7 @@ DECLARE_NATIVE(dh_generate_keypair)
     mbedtls_dhm_free(&ctx);  // should free any assigned bignum fields
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return result;
 }
@@ -1342,7 +1344,7 @@ DECLARE_NATIVE(dh_compute_secret)
     mbedtls_dhm_free(&ctx);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return result;
 }
@@ -1379,7 +1381,7 @@ DECLARE_NATIVE(aes_key)
 
     int key_bitlen = key_size * 8;
     if (key_bitlen != 128 and key_bitlen != 192 and key_bitlen != 256) {
-        rebJumps(
+        return rebDelegate(
             "fail [{AES bits must be [128 192 256], not}", rebI(key_bitlen), "]"
         );
     }
@@ -1437,7 +1439,7 @@ DECLARE_NATIVE(aes_key)
   cleanup:
     if (error) {
         mbedtls_cipher_free(ctx);
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
     }
 
     return rebHandle(
@@ -1473,7 +1475,7 @@ DECLARE_NATIVE(aes_stream)
     INCLUDE_PARAMS_OF_AES_STREAM;
 
     if (rebExtractHandleCleaner("ctx") != cleanup_aes_ctx)
-        rebJumps(
+        return rebDelegate(
             "fail [{Not a AES context HANDLE!:} ctx]"
         );
 
@@ -1636,7 +1638,7 @@ DECLARE_NATIVE(ecc_generate_keypair)
     mbedtls_ecdh_free(&ctx);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return result;
 }
@@ -1751,7 +1753,7 @@ DECLARE_NATIVE(ecdh_shared_secret)
     mbedtls_ecdh_free(&ctx);
 
     if (error)
-        rebJumps ("fail", error);
+        return rebDelegate("fail", rebR(error));
 
     return result;
 }
@@ -1804,7 +1806,7 @@ DECLARE_NATIVE(startup_p)
     // !!! Should we fail here, or wait to fail until the system tries to
     // generate random data and cannot?
     //
-    rebJumps (
+    return rebDelegate(
         "fail {Crypto STARTUP* couldn't initialize random number generation}"
     );
 }

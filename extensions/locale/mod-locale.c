@@ -89,7 +89,7 @@ DECLARE_NATIVE(locale)
 
     return text;
   #else
-    rebJumps(
+    return rebDelegate(
         "fail {LOCALE not implemented natively for non-Windows}"  // [1]
     );
   #endif
@@ -167,7 +167,7 @@ DECLARE_NATIVE(setlocale)
     rebRelease(map);
 
     if (cat == -1)
-        rebJumps("fail [{Invalid locale category:} category]");
+        return rebDelegate("fail [{Invalid locale category:} category]");
 
     char* value_utf8 = rebSpell("value");
     const char *result = setlocale(cat, value_utf8);

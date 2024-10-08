@@ -265,20 +265,6 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     (((L)->flags.bits & LEVEL_FLAG_##name) == 0)
 
 
-// An attempt was made for Bounce to be a smart pointer class, with the idea
-// that if it was `struct Bounce { Node* node; }` that it would be able to
-// do checks on the types it received while being compatible with a void*
-// in the dispatchers using %rebol.h.  So these would be compatible:
-//
-//    typedef Bounce (Dispatcher)(Level* level_);       // %sys-core.h clients
-//    typedef void* (Dispatcher)(RebolLevel* level_);   // %rebol.h clients
-//
-// As it turns out the compiler doesn't generate compatible output, even
-// with Bounce being a standard_layout struct.  :-/  So it's just Node*.
-//
-typedef Node* Bounce;
-
-
 // C function implementing a native ACTION!
 //
 typedef Bounce (Executor)(Level* level_);

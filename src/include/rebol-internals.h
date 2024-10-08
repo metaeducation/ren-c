@@ -82,6 +82,26 @@
 //    the internals of the code use Get_Context_From_Stack() in the null
 //    case for the behavior.
 //
+// 1. An attempt was made for Bounce to be a smart pointer, when I thought
+//    that if it was `struct Bounce { Node* node; }` that it would be able to
+//    do checks on the types it received while being compatible with a void*
+//    in the dispatchers using %rebol.h.  So these would be compatible:
+//
+//      typedef Bounce (Dispatcher)(Level* level_);  // %sys-core.h clients
+//      typedef void* (Dispatcher)(RebolLevel* level_);  // %rebol.h clients
+//
+//    As it turns out the compiler doesn't generate compatible output, even
+//    with Bounce being a standard_layout struct.  :-/
+//
+//    So at best, Bounce could just be Node* in order to prevent you from
+//    using non-Node* values.  However, the C++ inheritance understanding
+//    necessary to understand the relationship between RebolValue* and
+//    RebolNode* would then have to be exported, which we don't want to do.
+//
+//     So it's just a void*.  This has at least one advantage, which is that
+//     you can't accidentally pass a Bounce to a varaidic API function, because
+//     the C++ build checks that you don't pass void pointers.
+//
 
 #include <stdlib.h>  // size_t and other types used in rebol.h
 #include <stdint.h>
@@ -90,6 +110,7 @@
 /*#define LIBREBOL_BINDING Get_Context_From_Stack() */  // not needed [1]
 #include "rebol.h"
 typedef RebolValue Value;
+typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//

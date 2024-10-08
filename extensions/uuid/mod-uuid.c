@@ -129,7 +129,7 @@ DECLARE_NATIVE(generate)
 
   #else
 
-    rebJumps ("fail {UUID is not implemented}");
+    return rebDelegate("fail {UUID is not implemented}");
 
   #endif
 }

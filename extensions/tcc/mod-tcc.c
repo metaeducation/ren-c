@@ -468,7 +468,7 @@ DECLARE_NATIVE(compile_p)
     );
 
     if (tcc_set_output_type(state, output_type) < 0)
-        rebJumps("fail [",
+        return rebDelegate("fail [",
             "{TCC failed to set output to} pick", config, "'output-type",
         "]");
 
@@ -579,7 +579,7 @@ DECLARE_NATIVE(compile_p)
                 cs_cast(Binary_At(mo->string, mo->base.size))
             ) < 0
         ){
-            rebJumps ("fail [",
+            return rebDelegate("fail [",
                 "{TCC failed to compile the code}", compilables,
             "]");
         }
@@ -675,7 +675,7 @@ DECLARE_NATIVE(compile_p)
         rebFree(name_utf8);
 
         if (not sym)
-            rebJumps ("fail [",
+            return rebDelegate("fail [",
                 "{TCC failed to find symbol:}", linkname,
             "]");
 

@@ -436,7 +436,7 @@ DECLARE_NATIVE(get_env)
     // without leaking temporary buffers.
     //
     if (error != nullptr)
-        rebJumps ("fail", rebR(error));
+        return rebDelegate("fail", rebR(error));
 
     return OUT;
 }
@@ -471,7 +471,7 @@ DECLARE_NATIVE(set_env)
         maybe val_wide  // null means unset the environment variable
     )){
         Value* error = rebError_OS(GetLastError());
-        rebJumps ("fail", rebR(error));
+        return rebDelegate("fail", rebR(error));
     }
 
     rebFree(maybe val_wide);  // nulls no-op for rebFree()
@@ -482,7 +482,9 @@ DECLARE_NATIVE(set_env)
     if (Is_Nulled(value)) {  // distinct setenv() and unsetenv() calls
       #ifdef unsetenv
         if (unsetenv(key_utf8) == -1)
-            rebJumps ("fail {unsetenv() couldn't unset environment variable}");
+            return rebDelegate(
+              "fail {unsetenv() couldn't unset environment variable}"
+            );
       #else
         // WARNING: SPECIFIC PORTABILITY ISSUE
         //
@@ -495,7 +497,9 @@ DECLARE_NATIVE(set_env)
         // going to hope this case doesn't hold onto the string...
         //
         if (putenv(key_utf8) == -1) // !!! Why mutable?
-            rebJumps ("fail {putenv() couldn't unset environment variable}");
+            return rebDelegate(
+              "fail {putenv() couldn't unset environment variable}"
+            );
       #endif
     }
     else {
@@ -503,7 +507,9 @@ DECLARE_NATIVE(set_env)
         char *val_utf8 = rebSpell(value);
 
         if (setenv(key_utf8, val_utf8, 1) == -1) // the 1 means "overwrite"
-            rebJumps ("fail {setenv() couldn't set environment variable}");
+            return rebDelegate(
+              "fail {setenv() couldn't set environment variable}"
+            );
 
         rebFree(val_utf8);
       #else
@@ -531,7 +537,9 @@ DECLARE_NATIVE(set_env)
         char *duplicate = strdup(key_equals_val_utf8);
 
         if (putenv(duplicate) == -1)  // leak!  (why mutable?  :-/)
-            rebJumps ("fail {putenv() couldn't set environment variable}");
+            return rebDelegate(
+              "fail {putenv() couldn't set environment variable}"
+            );
 
         rebFree(key_equals_val_utf8);
       #endif

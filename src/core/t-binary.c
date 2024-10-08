@@ -972,7 +972,7 @@ DECLARE_NATIVE(enbin)
         ++n;
     }
     if (i != 0)
-        rebJumps(
+        return rebDelegate(
             "fail [", ARG(value), "{exceeds}", rebI(num_bytes), "{bytes}]"
         );
 
@@ -980,7 +980,7 @@ DECLARE_NATIVE(enbin)
     // something with the high bit set in a signed representation.
     //
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
-        rebJumps(
+        return rebDelegate(
             "fail [",
                 ARG(value), "{aliases a negative value with signed}",
                 "{encoding of only}", rebI(num_bytes), "{bytes}",

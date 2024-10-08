@@ -865,7 +865,7 @@ Bounce Call_Core(Level* level_) {
         //
         assert(false);
         rebFreeMaybe(infobuf);
-        rebJumps("fail {Child process is stopped}");
+        return rebDelegate("fail {Child process is stopped}");
     }
     else {
         non_errno_ret = -2048;  // !!! randomly picked
@@ -906,7 +906,7 @@ Bounce Call_Core(Level* level_) {
     // the process exit code (that's written into the pointer arg 'exit_code')
 
     if (non_errno_ret > 0) {
-        rebJumps(
+        return rebDelegate(
             "fail [",
                 "{Child process is terminated by signal:}",
                 rebI(non_errno_ret),
@@ -914,7 +914,7 @@ Bounce Call_Core(Level* level_) {
         );
     }
     else if (non_errno_ret < 0)
-        rebJumps("fail {Unknown error happened in CALL}");
+        return rebDelegate("fail {Unknown error happened in CALL}");
 
 
     // Call may not succeed if r != 0, but we still have to run cleanup

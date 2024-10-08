@@ -311,7 +311,7 @@ DECLARE_NATIVE(console)
 
     if (rebUnboxLogic("error? @", metacode)) {  // error in CONSOLE* itself [2]
         if (rebUnboxLogic("no? can-recover"))
-            rebJumps("panic @", metacode);
+            return rebDelegate("panic @", rebR(metacode));
 
         rebElide(
             "code: [#host-console-error]",

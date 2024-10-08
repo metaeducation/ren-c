@@ -1547,15 +1547,25 @@ void API_rebElide(
 //      #noreturn
 //  ]
 //
-// rebJumps() is like rebElide, but has the noreturn attribute.  This helps
+//=//// WARNING: USE OF rebJumps() SHOULD BE AVOIDED IF POSSIBLE //////////=//
+//
+// It's preferable to gracefully give control back to the trampoline and let
+// it run jumping constructs like FAIL or THROW, e.g. by using rebDelegate().
+//
+//    return rebDelegate("fail {This is a better way to jump!}");
+//
+// This prevents your code from having its own stack crossed by whatever
+// exception or jumping model is used (which could be longjump(), exceptions,
+// or possibly an interpreter compiled with no exceptions whatsoever...but
+// it can still handle a cooperative FAIL).
+//
+//=//// IF YOU MUST DISREGARD THAT, HERE'S WHAT rebJumps() DOES... ////////=//
+//
+// rebJumps() is like rebElide(), but has the noreturn attribute.  This helps
 // inform the compiler that the routine is not expected to return.  Use it
 // with things like `rebJumps("fail", ...)` or `rebJumps("THROW", ...)`.  If
 // by some chance the code passed to it does not jump and finishes normally,
 // then an error will be raised.
-//
-// (Note: Capitalizing the "FAIL" or other non-returning operation is just a
-// suggestion to help emphasize the operation.  Capitalizing rebJUMPS was
-// considered, but looked odd.)
 //
 // !!! The name is not ideal, but other possibilites aren't great:
 //
@@ -1570,7 +1580,7 @@ void API_rebJumps(
     ENTER_API;
 
     DECLARE_VALUE (dummy);
-    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, dummy,p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, dummy, p, vaptr);
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
     // higher optimization levels it can conclude that API_rebJumps() never
@@ -1586,7 +1596,7 @@ void API_rebJumps(
     if (p == nullptr)
         return;
 
-    fail ("rebJumps() used to run code, but it didn't [FAIL QUIT THROW]");
+    fail ("rebJumps() ran code, but it didn't FAIL or QUIT or THROW, etc.");
 }
 
 
