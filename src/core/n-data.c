@@ -2213,45 +2213,46 @@ DECLARE_INTRINSIC(enfix_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Enfixed(arg));
+    Init_Logic(out, Is_Cell_Infix(arg));
 }
 
 
 //
-//  /enfix: native:intrinsic [
+//  /enfix: native [
 //
-//  "For making enfix functions, e.g (/+: enfix :add)"
+//  "For making enfix functions, e.g (/+: enfix get $add)"
 //
-//      return: "Antiform action action"
+//      return: "Antiform action"
 //          [antiform?]  ; [action?] comes after ENFIX in bootstrap
-//      original [<unrun> frame!]
+//      action [<unrun> frame!]
+//      :off "Give back a non-infix version of the passed in function"
+//      :defer "Allow one full expression on the left to evaluate"
+//      :postpone "Allow arbitrary numbers of expressions on left to evaluate"
 //  ]
 //
-DECLARE_INTRINSIC(enfix)
+DECLARE_NATIVE(enfix)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ENFIX;
 
-    Actionify(Copy_Cell(out, arg));
-    Set_Cell_Flag(out, ENFIX_FRAME);
-}
+    Actionify(Copy_Cell(OUT, ARG(action)));
 
+    if (REF(off)) {
+        if (REF(defer) or REF(postpone))
+            fail (Error_Bad_Refines_Raw());
+        Set_Cell_Infix_Mode(OUT, PREFIX_0);
+    }
+    else if (REF(defer)) {  // not OFF, already checked
+        if (REF(postpone))
+            fail (Error_Bad_Refines_Raw());
+        Set_Cell_Infix_Mode(OUT, INFIX_DEFER);
+    }
+    else if (REF(postpone)) {  // not OFF or DEFER, we checked
+        Set_Cell_Infix_Mode(OUT, INFIX_POSTPONE);
+    }
+    else
+        Set_Cell_Infix_Mode(OUT, INFIX_TIGHT);
 
-//
-//  /unenfix: native:intrinsic [
-//
-//  "For removing enfixedness from functions (prefix is a common var name)"
-//
-//      return: "Isotopic action"
-//          [antiform?]  ; [action?] comes after ENFIX in bootstrap
-//      original [<unrun> frame!]
-//  ]
-//
-DECLARE_INTRINSIC(unenfix)
-{
-    UNUSED(phase);
-
-    Actionify(Copy_Cell(out, arg));
-    Clear_Cell_Flag(out, ENFIX_FRAME);
+    return OUT;
 }
 
 

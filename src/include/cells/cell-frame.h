@@ -110,10 +110,25 @@ INLINE Element* Deactivate_If_Action(Need(Value*) v) {
 }
 
 
-INLINE bool Is_Enfixed(const Cell* v) {
-    assert(HEART_BYTE(v) == REB_FRAME);
-    return Get_Cell_Flag_Unchecked(v, ENFIX_FRAME);
+//=//// CELL INFIX MODE ///////////////////////////////////////////////////=//
+//
+// Historical Rebol had a separate datatype (OP!) for infix functions.  In
+// Ren-C, each cell holding a FRAME! has in its header a 2-bit quantity
+// (a "Crumb") which encodes one of four possible infix states.  This can be
+// checked quickly by the evaluator.
+//
+
+INLINE Option(InfixMode) Get_Cell_Infix_Mode(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_FRAME);
+    return u_cast(InfixMode, Get_Cell_Crumb(c));
 }
 
-#define Not_Enfixed(v) \
-    (not Is_Enfixed(v))
+INLINE void Set_Cell_Infix_Mode(Cell* c, Option(InfixMode) mode) {
+    assert(HEART_BYTE(c) == REB_FRAME);
+    Set_Cell_Crumb(c, maybe mode);
+}
+
+INLINE bool Is_Cell_Infix(Cell* c) {  // slightly faster than != PREFIX_0 check
+    assert(HEART_BYTE(c) == REB_FRAME);
+    return did (c->header.bits & CELL_MASK_CRUMB);
+}

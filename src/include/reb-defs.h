@@ -44,6 +44,15 @@
 #define Byte unsigned char  // don't change to uint8_t, see note
 
 
+//=//// 2-BIT UNSIGNED TYPE ///////////////////////////////////////////////=//
+//
+// This is called a "crumb".  We could check it more rigorously in C++ to
+// be sure it's only initialized with a value between 0 and 3, but for now
+// it is just documentation.
+//
+#define Crumb unsigned char
+
+
 //=//// FLAGS TYPE ////////////////////////////////////////////////////////=//
 //
 // !!! Originally the Flags type was a `uint_fast32_t`.  However, there were
@@ -328,6 +337,45 @@ enum Reb_Vararg_Op {
     VARARG_OP_FIRST, // "lookahead"
     VARARG_OP_TAKE // doesn't modify underlying data stream--advances index
 };
+
+
+//=//// INFIX MODES ///////////////////////////////////////////////////////=//
+//
+// * PREFIX_0 - this is not infix at all... so standard prefix.
+//
+// * INFIX_TIGHT - this corresponds to the traditional idea where infix
+//   will run greedily as part of the same evaluation step as the thing to
+//   its left:
+//
+//       >> add 1 2 * 3  ; multiply runs greedily when it sees the 2
+//       == 7
+//
+//   Despite that greediness, an already in progress infix operation will be
+//   allowed to complete before another starts:
+//
+//       >> 1 + 2 * 3  ; plus sets FEED_FLAG_NO_LOOKAHEAD, suppresses multiply
+//       == 9
+//
+// * INFIX_DEFER - this mode of infix doesn't run immediately the first
+//   time it can after an evaluation on the left, but it runs a step after.
+//   This is how things like (all [...] then [...]) allow the THEN to see
+//   the result of the ALL, instead of acting as (all ([...] then [...]))
+//   as traditional greedy infix would.
+//
+// * INFIX_POSTPONE - postponing causes everything on the left of an
+//   operator to run before it will.  Like a deferring operator, it is only
+//   allowed to appear after the last parameter of an expression except it
+//   closes out *all* the parameters on the stack vs. just one.
+//
+enum InfixModeEnum {
+    PREFIX_0 = 0,  // zero so you can test (not infix_mode) for prefix
+    INFIX_TIGHT,  // "normal"? "immediate"?
+    INFIX_DEFER,
+    INFIX_POSTPONE,
+    INFIX_MODE_MAX = INFIX_POSTPONE
+};
+typedef enum InfixModeEnum InfixMode;
+STATIC_ASSERT(INFIX_MODE_MAX == 3);  // must fit in Crumb
 
 
 //=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//

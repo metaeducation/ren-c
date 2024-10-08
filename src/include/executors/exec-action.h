@@ -25,19 +25,26 @@
 #define EXECUTOR_ACTION &Action_Executor   // shorthand in Xxx_Executor_Flag()
 
 
-//=//// ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH ////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_INFIX_A //////////////////////////////////////=//
 //
-// See EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH for an explanation.
+// Due to the unusual influences of partial refinement specialization, a frame
+// may wind up with its enfix parameter as being something like the last cell
+// in the argument list...when it has to then go back and fill earlier args
+// as normal.  There's no good place to hold the memory that one is doing an
+// enfix fulfillment besides a bit on the frame itself.
 //
-// !!! Does this need both an ACTION and EVAL executor flag?
+// It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
+// to run an ACTION! cell as enfix or not.  The reason this may be overridden
+// on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
 //
-#define ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
+#define ACTION_EXECUTOR_FLAG_INFIX_A \
     LEVEL_FLAG_24
 
-STATIC_ASSERT(
-    ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-    == EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-);
+
+//=//// ACTION_EXECUTOR_FLAG_INFIX_B //////////////////////////////////////=//
+//
+#define ACTION_EXECUTOR_FLAG_INFIX_B \
+    LEVEL_FLAG_25
 
 
 //=//// ACTION_EXECUTOR_FLAG_DOING_PICKUPS ////////////////////////////////=//
@@ -60,7 +67,7 @@ STATIC_ASSERT(
 // meaning during dispatch if desired (e.g. DELEGATE_CONTROL)
 //
 #define ACTION_EXECUTOR_FLAG_DOING_PICKUPS \
-    LEVEL_FLAG_25
+    LEVEL_FLAG_5   // !!! temporary, was LEVEL_FLAG_25
 
 
 //=//// ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX //////////////////////=//
@@ -129,20 +136,19 @@ STATIC_ASSERT(
     LEVEL_FLAG_27
 
 
-//=//// ACTION_EXECUTOR_FLAG_RUNNING_ENFIX ////////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH ////////////////////////=//
 //
-// Due to the unusual influences of partial refinement specialization, a frame
-// may wind up with its enfix parameter as being something like the last cell
-// in the argument list...when it has to then go back and fill earlier args
-// as normal.  There's no good place to hold the memory that one is doing an
-// enfix fulfillment besides a bit on the frame itself.
+// See EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH for an explanation.
 //
-// It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
-// to run an ACTION! cell as enfix or not.  The reason this may be overridden
-// on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
+// !!! Does this need both an ACTION and EVAL executor flag?
 //
-#define ACTION_EXECUTOR_FLAG_RUNNING_ENFIX \
+#define ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
     LEVEL_FLAG_28
+
+STATIC_ASSERT(
+    ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+    == EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+);
 
 
 //=//// ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES ///////////////////////////=//

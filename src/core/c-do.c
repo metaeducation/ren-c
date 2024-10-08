@@ -54,7 +54,7 @@ void Prep_Action_Level(
     Option(const Atom*) with
 ){
     Push_Action(L, VAL_ACTION(action), Cell_Frame_Coupling(action));
-    Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
+    Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 
     const Key* key = L->u.action.key;
     const Param* param = L->u.action.param;
@@ -144,7 +144,7 @@ void Push_Frame_Continuation(
 
     L->u.action.original = Level_Phase(L);
 
-    Begin_Prefix_Action(L, VAL_FRAME_LABEL(frame));
+    Begin_Action(L, VAL_FRAME_LABEL(frame), PREFIX_0);
 
     Push_Level(out, L);
 }
@@ -241,7 +241,7 @@ bool Pushed_Continuation(
 
         const Value* action = Lib(REDUCE);
         Push_Action(L, VAL_ACTION(action), Cell_Frame_Coupling(action));
-        Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
+        Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 
         const Key* key = L->u.action.key;
         const Param* param = L->u.action.param;

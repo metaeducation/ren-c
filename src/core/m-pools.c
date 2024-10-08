@@ -1278,7 +1278,7 @@ void Assert_Pointer_Detection_Working(void)
 {
     uintptr_t cell_flag = NODE_FLAG_CELL;
     assert(FIRST_BYTE(&cell_flag) == 0x01);
-    uintptr_t protected_flag = CELL_FLAG_PROTECTED;
+    uintptr_t protected_flag = CELL_FLAG_TYPE_SPECIFIC_A;
     assert(FOURTH_BYTE(&protected_flag) == 0x80);
 
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);

@@ -106,7 +106,6 @@ DECLARE_NATIVE(reduce)
 
     Copy_Cell(&sub->u.eval.current, v);
     sub->u.eval.current_gotten = nullptr;
-    sub->u.eval.enfix_reevaluate = 'N';  // detect?
 
     return DELEGATE_SUBLEVEL(sub);
 

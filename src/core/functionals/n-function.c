@@ -635,7 +635,7 @@ DECLARE_NATIVE(definitional_return)
             VAL_ACTION(atom),
             Cell_Frame_Coupling(atom)
         );
-        Begin_Prefix_Action(target_level, VAL_FRAME_LABEL(atom));
+        Begin_Action(target_level, VAL_FRAME_LABEL(atom), PREFIX_0);
 
         Release_Feed(target_level->feed);
         target_level->feed = return_level->feed;

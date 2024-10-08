@@ -219,8 +219,46 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //
-// (description here)
+// Because the header for cells is only 32 bits on 32-bit platforms, there
+// are only 8 bits left over when you've used up the NODE_BYTE, HEART_BYTE,
+// and QUOTE_BYTE.  These 8 scarce remaining cell bits have to be used very
+// carefully...and are multiplexed across types that can be tricky.
 //
+
+
+//=//// CELL_FLAG_TYPE_SPECIFIC_A /////////////////////////////////////////=//
+//
+// This flag may be used independently, or as part of CELL_MASK_CRUMB.
+//
+#define CELL_FLAG_TYPE_SPECIFIC_A \
+    FLAG_LEFT_BIT(24)
+
+
+//=//// CELL_FLAG_TYPE_SPECIFIC_B /////////////////////////////////////////=//
+//
+// This flag may be used independently, or as part of CELL_MASK_CRUMB.
+//
+// If independent, it's one bit that is custom to the datatype, and is
+// persisted when the cell is copied.
+//
+// CELL_FLAG_LEADING_BLANK (for ANY-SEQUENCE?)
+//
+// 2-element sequences can be stored in an optimized form if one of the two
+// elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
+// a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
+// the nonblank thing is a WORD!.
+//
+#define CELL_FLAG_TYPE_SPECIFIC_B \
+    FLAG_LEFT_BIT(25)
+
+#define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC_B  // ANY-SEQUENCE?
+
+
+//=//// CELL_FLAG_26 ///////////////////////////////////////////////////////=//
+//
+#define CELL_FLAG_26 \
+    FLAG_LEFT_BIT(26)
+
 
 //=//// CELL_FLAG_PROTECTED ///////////////////////////////////////////////=//
 //
@@ -233,40 +271,6 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // be checked at once...hence there's not "NODE_FLAG_PROTECTED" in common.)
 //
 #define CELL_FLAG_PROTECTED \
-    FLAG_LEFT_BIT(24)
-
-
-//=//// CELL_FLAG_TYPE_SPECIFIC ////////////////////////////////////////////=//
-//
-// This flag is used for one bit that is custom to the datatype, and is
-// persisted when the cell is copied.
-//
-// CELL_FLAG_LEADING_BLANK (for ANY-SEQUENCE?)
-//
-// 2-element sequences can be stored in an optimized form if one of the two
-// elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
-// a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
-// the nonblank thing is a WORD!.
-//
-// FRAME! uses this to encode enfixedness for actions
-//
-#define CELL_FLAG_TYPE_SPECIFIC \
-    FLAG_LEFT_BIT(25)
-
-#define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE?
-
-#define CELL_FLAG_ENFIX_FRAME   CELL_FLAG_TYPE_SPECIFIC  // FRAME!
-
-
-//=//// CELL_FLAG_26 ///////////////////////////////////////////////////////=//
-//
-#define CELL_FLAG_26 \
-    FLAG_LEFT_BIT(26)
-
-
-//=//// CELL_FLAG_27 //////////////////////////////////////////////////////=//
-//
-#define CELL_FLAG_27 \
     FLAG_LEFT_BIT(27)
 
 
@@ -313,6 +317,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // !!! Currently, ANY-PATH? rendering just ignores this bit.  Some way of
 // representing paths with newlines in them may be needed.
 //
+// !!! Note: Antiforms could use this for something else.
+//
 #define CELL_FLAG_NEWLINE_BEFORE \
     FLAG_LEFT_BIT(29)
 
@@ -323,6 +329,11 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // to, regardless of whether that data is in a locked Flex or not.  It is
 // possible to get a mutable view on a const value by using MUTABLE, and a
 // const view on a mutable value with CONST.
+//
+// !!! Note: values that don't have meaning for const might use this for
+// other things, e.g. actions might use it for "PURE".  But beware that
+// types like INTEGER! might have mutable forms like BIGINT, so think twice
+// before reusing this bit.
 //
 #define CELL_FLAG_CONST \
     FLAG_LEFT_BIT(30)  // NOTE: Must be SAME BIT as FEED_FLAG_CONST
@@ -691,45 +702,6 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     memset(cast(void*, (dst)), (val), (size))  // [4]
 
 
-//=//// HOOKABLE HEART_BYTE() ACCESSOR ////////////////////////////////////=//
-//
-// This has to be defined after `Cell` is fully defined.
-//
-// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
-//    a field called ->header with .bits in it is good enough.  All methods of
-//    checking seem to add overhead in the debug build that isn't worth it.
-//    To help avoid accidentally passing stubs, the HeaderUnion in a Stub
-//    is named "leader" instead of "header".
-//
-// 2. It can often be helpful to inject code to when the HEART_BYTE() is being
-//    assigned.  This mechanism also intercepts reads of the HEART_BYTE() too,
-//    which is done pervasively.  It slows down the code in debug builds by
-//    a noticeable amount, so we don't put it in all debug builds...only
-//    special situations.
-//
-#if (! DEBUG_HOOK_HEART_BYTE)
-    #define HEART_BYTE(cell) \
-        SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
-#else
-    struct HeartHolder {  // class for intercepting heart assignments [2]
-        Cell* & ref;
-
-        HeartHolder(const Cell* const& ref)
-            : ref (const_cast<Cell* &>(ref))
-          {}
-
-        void operator=(Byte right) {
-            SECOND_BYTE(&(ref)->header.bits) = right;
-        }
-
-        operator Heart () const
-          { return static_cast<Heart>(SECOND_BYTE(&(ref)->header.bits)); }
-    };
-    #define HEART_BYTE(cell) \
-        HeartHolder {cell}
-#endif
-
-
 //=//// CELL SUBCLASSES FOR QUARANTINING STABLE AND UNSTABLE ANTIFORMS /////=//
 //
 // Systemically, we want to stop antiforms from being put into the array
@@ -836,3 +808,70 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
         *e = nullptr;
     }
 #endif
+
+
+//=//// HOOKABLE HEART_BYTE() ACCESSOR ////////////////////////////////////=//
+//
+// This has to be defined after `Cell` is fully defined.
+//
+// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
+//    a field called ->header with .bits in it is good enough.  All methods of
+//    checking seem to add overhead in the debug build that isn't worth it.
+//    To help avoid accidentally passing stubs, the HeaderUnion in a Stub
+//    is named "leader" instead of "header".
+//
+// 2. It can often be helpful to inject code to when the HEART_BYTE() is being
+//    assigned.  This mechanism also intercepts reads of the HEART_BYTE() too,
+//    which is done pervasively.  It slows down the code in debug builds by
+//    a noticeable amount, so we don't put it in all debug builds...only
+//    special situations.
+//
+#if (! DEBUG_HOOK_HEART_BYTE)
+    #define HEART_BYTE(cell) \
+        SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
+#else
+    struct HeartHolder {  // class for intercepting heart assignments [2]
+        Cell* & ref;
+
+        HeartHolder(const Cell* const& ref)
+            : ref (const_cast<Cell* &>(ref))
+          {}
+
+        void operator=(Byte right) {
+            SECOND_BYTE(&(ref)->header.bits) = right;
+        }
+
+        operator Heart () const
+          { return static_cast<Heart>(SECOND_BYTE(&(ref)->header.bits)); }
+    };
+    #define HEART_BYTE(cell) \
+        HeartHolder {cell}
+#endif
+
+
+//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
+//
+// The cell flags are structured so that the top two bits of the byte are
+// "type specific", so that you can bit shift the byte right by 6 and get four
+// possible states for the type.  This 2-bit state (called a "crumb") holds
+// the one of four possible infix states for actions--for example.
+//
+
+STATIC_ASSERT(
+    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(24)
+    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(25)
+);
+
+#define CELL_MASK_CRUMB \
+    (CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B)
+
+#define Get_Cell_Crumb(c) \
+    (FOURTH_BYTE(&(c)->header.bits) >> 6)
+
+#define FLAG_CELL_CRUMB(crumb) \
+    FLAG_FOURTH_BYTE((crumb) << 6)
+
+INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
+    c->header.bits &= ~(CELL_MASK_CRUMB);
+    c->header.bits |= FLAG_CELL_CRUMB(crumb);
+}

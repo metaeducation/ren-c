@@ -165,10 +165,6 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
     return sub;
 }
 
-bool Is_Action_Deferring(Value* v) {
-    return Get_Action_Flag(VAL_ACTION(v), DEFERS_LOOKBACK);
-}
-
 
 //
 //  Stepper_Executor: C
@@ -215,33 +211,11 @@ Bounce Stepper_Executor(Level* L)
         // during the switch state, because that's how the evaluator knows
         // not to redundantly apply LET bindings.  See `L_binding` above.
 
-        // The re-evaluate functionality may not want to heed the enfix state
-        // in the action itself.  See DECLARE_NATIVE(shove)'s /ENFIX for instance.
-        // So we go by the state of a flag on entry.
+        // Note: What if the re-evaluate functionality doesn't want to heed
+        // the enfix state in the action itself>
         //
-        if (L->u.eval.enfix_reevaluate == 'N') {
-            // either not enfix or not an action
-        }
-        else {
-            assert(L->u.eval.enfix_reevaluate == 'Y');
-
-            Level* sub = Make_Action_Sublevel(L);
-            Push_Level(OUT, sub);
-            Push_Action(
-                sub,
-                VAL_ACTION(L_current),
-                Cell_Frame_Coupling(L_current)
-            );
-            Begin_Enfix_Action(sub, VAL_FRAME_LABEL(L_current));
-                // ^-- invisibles cache NO_LOOKAHEAD
-
-            assert(Is_Fresh(SPARE));
-            goto process_action;
-        }
-
         Freshen_Cell(OUT);
-
-        L_current_gotten = nullptr;  // !!! allow/require to be passe in?
+        L_current_gotten = nullptr;  // !!! allow/require to be passed in?
         goto evaluate; }
 
       intrinsic_arg_in_spare:
@@ -342,7 +316,8 @@ Bounce Stepper_Executor(Level* L)
     else
         goto give_up_backward_quote_priority;
 
-    if (Not_Enfixed(unwrap L_next_gotten))
+  { Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(unwrap L_next_gotten);
+    if (not infix_mode)
         goto give_up_backward_quote_priority;
 
   blockscope {
@@ -361,7 +336,7 @@ Bounce Stepper_Executor(Level* L)
     // material on the left, treat it like it's in a group.
     //
     if (
-        Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
+        infix_mode == INFIX_POSTPONE
         or (
             Get_Feed_Flag(L->feed, NO_LOOKAHEAD)
             and not Any_Set_Value(L_current)
@@ -437,12 +412,13 @@ Bounce Stepper_Executor(Level* L)
         VAL_ACTION(unwrap L_current_gotten),
         Cell_Frame_Coupling(unwrap L_current_gotten)
     );
-    if (Is_Word(L_current))
-        Begin_Enfix_Action(sub, Cell_Word_Symbol(L_current));
-    else
-        Begin_Enfix_Action(sub, VAL_FRAME_LABEL(L_current));
 
-    goto process_action; }
+    Option(const Symbol*) label = Is_Word(L_current)
+        ? Cell_Word_Symbol(L_current)
+        : VAL_FRAME_LABEL(L_current);
+
+    Begin_Action(sub, label, infix_mode);
+    goto process_action; }}
 
   give_up_backward_quote_priority:
 
@@ -520,9 +496,9 @@ Bounce Stepper_Executor(Level* L)
             VAL_ACTION(L_current),
             Cell_Frame_Coupling(L_current)
         );
-        bool enfix = Is_Enfixed(L_current);
+        Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(L_current);
         assert(Is_Fresh(OUT));  // so nothing on left [1]
-        Begin_Action_Core(sub, VAL_FRAME_LABEL(L_current), enfix);
+        Begin_Action(sub, VAL_FRAME_LABEL(L_current), infix_mode);
 
         goto process_action; }
 
@@ -686,16 +662,13 @@ Bounce Stepper_Executor(Level* L)
 
         if (Is_Action(OUT)) {
             Action* action = VAL_ACTION(OUT);
-            bool enfixed = Is_Enfixed(OUT);
+            Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
             Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
             const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
             Erase_Cell(OUT);  // sanity check, plus don't want enfix to see
 
-            if (enfixed) {
-                if (
-                    Get_Action_Flag(action, POSTPONES_ENTIRELY)
-                    or Get_Action_Flag(action, DEFERS_LOOKBACK)
-                ){
+            if (infix_mode) {
+                if (infix_mode != INFIX_TIGHT) {  // defer or postpone
                     if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
                         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
                         Set_Feed_Flag(L->feed, DEFERRING_ENFIX);
@@ -705,14 +678,14 @@ Bounce Stepper_Executor(Level* L)
             }
 
             if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH)) {
-                if (enfixed)
+                if (infix_mode)
                     assert(false);  // !!! this won't work, can it happen?
 
                 Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
             }
 
             if (
-                not enfixed  // too rare a case for intrinsic optimization
+                not infix_mode  // too rare a case for intrinsic optimization
                 and ACT_DISPATCHER(action) == &Intrinsic_Dispatcher
                 and Is_Stub_Details(action)  // don't do specializations
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
@@ -758,7 +731,7 @@ Bounce Stepper_Executor(Level* L)
             Level* sub = Make_Action_Sublevel(L);
             Push_Level(OUT, sub);
             Push_Action(sub, action, coupling);
-            Begin_Action_Core(sub, label, enfixed);
+            Begin_Action(sub, label, infix_mode);
 
             goto process_action;
         }
@@ -853,7 +826,7 @@ Bounce Stepper_Executor(Level* L)
 
         assert(Is_Action(OUT));
 
-        if (Is_Enfixed(OUT)) {  // too late, left already evaluated
+        if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated
             Drop_Data_Stack_To(BASELINE->stack_base);
             fail ("Use `->-` to shove left enfix operands into CHAIN!s");
         }
@@ -870,7 +843,7 @@ Bounce Stepper_Executor(Level* L)
 
         Push_Level(OUT, sub);
         Push_Action(sub, action, coupling);
-        Begin_Prefix_Action(sub, label);
+        Begin_Action(sub, label, PREFIX_0);
         goto process_action; }
 
 
@@ -1109,7 +1082,7 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;
         }
 
-        if (Is_Enfixed(OUT)) {  // too late, left already evaluated [6]
+        if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated [6]
             Drop_Data_Stack_To(BASELINE->stack_base);
             fail ("Use `->-` to shove left enfix operands into PATH!s");
         }
@@ -1851,6 +1824,8 @@ Bounce Stepper_Executor(Level* L)
     // Fall back on word-like "dispatch" even if ->gotten is null (unset or
     // unbound word).  It'll be an error, but that code path raises it for us.
 
+ { Option(InfixMode) infix_mode;
+
     if (
         not L_next_gotten
         or (
@@ -1858,7 +1833,7 @@ Bounce Stepper_Executor(Level* L)
             and not Is_Frame(L_next)
             and not Is_Sigil(L_next)
         )
-        or Not_Enfixed(unwrap L_next_gotten)
+        or not (infix_mode = Get_Cell_Infix_Mode(unwrap L_next_gotten))
     ){
       lookback_quote_too_late: // run as if starting new expression
 
@@ -1909,9 +1884,8 @@ Bounce Stepper_Executor(Level* L)
 
     if (
         Get_Eval_Executor_Flag(L, FULFILLING_ARG)
-        and not (Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
-                                       // ^-- `1 + if null [2] else [3]` => 4
-        )
+        and infix_mode != INFIX_DEFER
+                            // ^-- (1 + if null [2] else [3]) => 4
     ){
         if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
             // Don't do enfix lookahead if asked *not* to look.
@@ -1939,9 +1913,9 @@ Bounce Stepper_Executor(Level* L)
     if (
         Get_Eval_Executor_Flag(L, FULFILLING_ARG)
         and (
-            Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
+            infix_mode == INFIX_POSTPONE
             or (
-                Get_Action_Flag(enfixed, DEFERS_LOOKBACK)
+                infix_mode == INFIX_DEFER
                 and Not_Feed_Flag(L->feed, DEFERRING_ENFIX)
             )
         )
@@ -2004,14 +1978,15 @@ Bounce Stepper_Executor(Level* L)
     Level* sub = Make_Action_Sublevel(L);
     Push_Level(OUT, sub);
     Push_Action(sub, enfixed, Cell_Frame_Coupling(unwrap L_next_gotten));
-    Begin_Enfix_Action(
-        sub,
-        Is_Frame(L_next) ? VAL_FRAME_LABEL(L_next) : Cell_Word_Symbol(L_next)
-    );
 
+    Option(const Symbol*) label = Is_Word(L_next)
+        ? Cell_Word_Symbol(L_next)
+        : VAL_FRAME_LABEL(L_next);
+
+    Begin_Action(sub, label, infix_mode);
     Fetch_Next_In_Feed(L->feed);
 
-    goto process_action; }
+    goto process_action; }}
 
   finished:
 

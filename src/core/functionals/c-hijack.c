@@ -139,7 +139,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 
     Push_Level(out, L2);
     Push_Action(L2, VAL_ACTION(run), Cell_Frame_Coupling(run));
-    Begin_Prefix_Action(L2, VAL_FRAME_LABEL(run));
+    Begin_Action(L2, VAL_FRAME_LABEL(run), PREFIX_0);
 }
 
 

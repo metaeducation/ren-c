@@ -56,17 +56,11 @@ DECLARE_NATIVE(reeval)
 
     Element* v = cast(Element*, ARG(value));
 
-    bool enfix =
-        Is_Quasiform(v)
-        and HEART_BYTE(v) == REB_FRAME
-        and Is_Enfixed(v);
-
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
     Copy_Cell(&sub->u.eval.current, v);
     sub->u.eval.current_gotten = nullptr;
-    sub->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
 
     if (Trampoline_Throws(OUT, sub))  // review: rewrite stackless
         return THROWN;
@@ -152,11 +146,11 @@ DECLARE_NATIVE(shove)
 
     Deactivate_If_Action(shovee);  // allow ACTION! to be run
 
-    bool enfix;
+    Option(InfixMode) infix_mode;
     if (Is_Frame(shovee)) {
         if (not label)
             label = VAL_FRAME_LABEL(shovee);
-        enfix = Is_Enfixed(shovee);
+        infix_mode = Get_Cell_Infix_Mode(shovee);
     }
     else {
         fail ("SHOVE's immediate right must be FRAME! at this time");  // [1]
@@ -234,7 +228,7 @@ DECLARE_NATIVE(shove)
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
     Push_Action(sub, VAL_ACTION(shovee), Cell_Frame_Coupling(shovee));
-    Begin_Action_Core(sub, label, enfix);  // still can know if it's enfix [2]
+    Begin_Action(sub, label, infix_mode);  // can know if it's enfix [2]
 
     Push_Level(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
@@ -986,7 +980,7 @@ DECLARE_NATIVE(run)
         VAL_ACTION(action),
         Cell_Frame_Coupling(action)
     );
-    Begin_Prefix_Action(sub, VAL_FRAME_LABEL(action));
+    Begin_Action(sub, VAL_FRAME_LABEL(action), PREFIX_0);
 
     return DELEGATE_SUBLEVEL(sub);
 }

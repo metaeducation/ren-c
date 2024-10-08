@@ -78,10 +78,11 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         const Value* child_gotten = maybe Lookup_Word(look, binding);
 
         if (child_gotten and Is_Action(child_gotten)) {
-            if (Is_Enfixed(child_gotten)) {
+            Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(child_gotten);
+            if (infix_mode) {
                 if (
                     pclass == PARAMCLASS_NORMAL or
-                    Get_Action_Flag(VAL_ACTION(child_gotten), DEFERS_LOOKBACK)
+                    infix_mode == INFIX_DEFER
                 ){
                     Init_For_Vararg_End(out, op);
                     return true;

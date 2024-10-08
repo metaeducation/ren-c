@@ -609,21 +609,6 @@ get-path!: func3 [] [
 ]
 
 
-; Enfixedness was conceived as not a property of an action itself, but of a
-; particular relationship between a word and an action.  While this had some
-; benefits, it became less and less relevant in a world of "opportunistic
-; left quoting constructs":
-;
-; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
-;
-; Since the old version of ENFIX didn't affect its argument, you didn't need
-; to say `+: enfix copy :add`.  But for efficiency, you likely would want to
-; mutate most functions directly (though this concept is being reviewed).  In
-; any case, "enfixed" suggests creating a tweaked version distinct from
-; mutating directly.
-;
-/enfixed: enfix enfix/
-
 /collect-lets: func3 [
     return: [block!]
     list [block! group!]

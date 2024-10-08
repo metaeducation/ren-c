@@ -124,6 +124,38 @@ INLINE void Restart_Action_Level(Level* L) {
 }
 
 
+#define LEVEL_MASK_CRUMB \
+    (ACTION_EXECUTOR_FLAG_INFIX_A | ACTION_EXECUTOR_FLAG_INFIX_B)
+
+STATIC_ASSERT(LEVEL_MASK_CRUMB == CELL_MASK_CRUMB);
+
+#define Get_Level_Crumb(L) \
+    (FOURTH_BYTE(&(L)->flags.bits) >> 6)
+
+#define FLAG_LEVEL_CRUMB(crumb) \
+    FLAG_FOURTH_BYTE((crumb) << 6)
+
+INLINE void Set_Level_Crumb(Level* L, Crumb crumb) {
+    L->flags.bits &= ~(LEVEL_MASK_CRUMB);
+    L->flags.bits |= FLAG_LEVEL_CRUMB(crumb);
+}
+
+INLINE Option(InfixMode) Get_Level_Infix_Mode(Level* L) {
+    assert(Is_Action_Level(L));
+    return u_cast(InfixMode, Get_Level_Crumb(L));
+}
+
+INLINE void Set_Level_Infix_Mode(Level* L, Option(InfixMode) mode) {
+    assert(Is_Action_Level(L));
+    Set_Level_Crumb(L, maybe mode);
+}
+
+INLINE bool Is_Level_Infix(Level* L) {  // a bit faster than != PREFIX_0
+    assert(Is_Action_Level(L));
+    return (did (L->flags.bits & LEVEL_MASK_CRUMB));
+}
+
+
 INLINE bool Level_Is_Variadic(Level* L) {
     return FEED_IS_VARIADIC(L->feed);
 }
@@ -508,13 +540,6 @@ INLINE Level* Prep_Level_Core(
 
 #define Make_End_Level(executor,flags) \
     Make_Level((executor), TG_End_Feed, (flags))
-
-
-#define Begin_Enfix_Action(L,label) \
-    Begin_Action_Core((L), (label), true)
-
-#define Begin_Prefix_Action(L,label) \
-    Begin_Action_Core((L), (label), false)
 
 
 //=//// ARGUMENT AND PARAMETER ACCESS HELPERS ////=///////////////////////////

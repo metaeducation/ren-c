@@ -320,7 +320,7 @@ bool Typecheck_Atom_Core(
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
             Push_Action(L, VAL_ACTION(test), Cell_Frame_Coupling(test));
-            Begin_Prefix_Action(L, VAL_FRAME_LABEL(test));
+            Begin_Action(L, VAL_FRAME_LABEL(test), PREFIX_0);
 
             const Key* key = L->u.action.key;
             const Param* param = L->u.action.param;

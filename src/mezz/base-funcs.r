@@ -432,7 +432,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
     ]
 )
 
-/so: enfix func [
+/so: enfix:postpone func [
     "Postfix assertion which stops running if left expression is inhibitor"
 
     return: [any-value?]
@@ -451,10 +451,9 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
     if tail? feed [return ~]
     return take feed
 ]
-tweak so/ 'postpone 'on
 
 
-/was: enfix redescribe [
+/was: enfix:postpone redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
     lambda [left [any-value?] right [any-value?]] [
@@ -468,7 +467,6 @@ tweak so/ 'postpone 'on
         :left  ; choose left in case binding or case matters somehow
     ]
 )
-tweak was/ 'postpone 'on
 
 
 /zdeflate: redescribe [
@@ -751,7 +749,7 @@ tweak was/ 'postpone 'on
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: [~[]~]`) permit a more flexible version of the mechanic.
 
-/<|: runs tweak copy unrun eval-all/ 'postpone 'on
+<|: enfix:postpone eval-all/
 
 
 ; Currently, METH is just a synonym for FUNC as a way of annotating that you

@@ -204,7 +204,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 
 
 //
-//  /except: enfix native [
+//  /except: enfix:defer native [
 //
 //  "Analogue to something like a THEN which traps definitional errors"
 //

@@ -302,7 +302,7 @@ bool Specialize_Action_Throws(
     // !!! Needs handling for interaction with REORDER.
     //
     bool first_param = true;
-    bool enfix = Is_Enfixed(specializee);
+    bool infix = Is_Cell_Infix(specializee);
 
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param)) {  // was specialized in underlying phase
@@ -411,7 +411,7 @@ bool Specialize_Action_Throws(
     Init_Action(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
 
     if (enfix)  // incoming was enfix, and we didn't specialize out first arg
-        Set_Cell_Flag(out, ENFIX_FRAME);
+        Set_Cell_Infix_Mode(out, INFIX_TIGHT);
 
     return false;  // code block did not throw
 }

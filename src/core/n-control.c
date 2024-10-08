@@ -536,7 +536,7 @@ DECLARE_NATIVE(didnt)
 
 
 //
-//  /then: enfix native [
+//  /then: enfix:defer native [
 //
 //  "If input is null, return null, otherwise evaluate the branch"
 //
@@ -579,7 +579,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 
 
 //
-//  /else: enfix native [
+//  /else: enfix:defer native [
 //
 //  "If input is not null, return that value, otherwise evaluate the branch"
 //
@@ -621,7 +621,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 
 
 //
-//  /also: enfix native [
+//  /also: enfix:defer native [
 //
 //  "For non-null input, evaluate and discard branch (like a pass-thru THEN)"
 //

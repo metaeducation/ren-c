@@ -58,14 +58,13 @@
     (30 = eval [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
-        /defers: enfix func [return: [integer!] v [integer! <variadic>]] [
+        /defers: enfix:defer func [return: [integer!] v [integer! <variadic>]] [
             let sum: 0
             while [not tail? v] [
                 sum: sum + take v
             ]
             return sum + 1
         ]
-        tweak :defers 'defer 'on
         ok
     )
 

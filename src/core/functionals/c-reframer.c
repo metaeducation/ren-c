@@ -76,9 +76,8 @@ enum {
 //    for now we just try to get multiple returns to work which are part of
 //    the evaluator and hence can do trickier things.
 //
-// 2. At the moment, Begin_Prefix_Action() marks the frame as having been
-//    invoked...but since it didn't get managed it drops the flag in
-//    Drop_Action().
+// 2. At the moment, Begin_Action() marks the frame as having been invoked...
+//    but since it didn't get managed it drops the flag in Drop_Action().
 //
 //    !!! The flag is new, as a gambit to try and avoid copying frames for
 //    DO-ing just in order to expire the old identity.  Under development.
@@ -108,7 +107,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
 
     Push_Action(L, VAL_ACTION(action), Cell_Frame_Coupling(action));
-    Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
+    Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 
     Set_Executor_Flag(ACTION, L, FULFILL_ONLY);  // Push_Action() won't allow
 

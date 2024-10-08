@@ -78,6 +78,10 @@ STATIC_ASSERT(LEVEL_FLAG_2 == NODE_FLAG_MANAGED);  // if useful
 
 //=//// LEVEL_FLAG_5 ///////////////////////////////////////////////////////=//
 //
+// Temporarily ACTION_EXECUTOR_FLAG_DOING_PICKUPS because action executor
+// flags are scarce.  The action executor design needs review to see if it
+// can use fewer flags.
+//
 #define LEVEL_FLAG_5 \
     FLAG_LEFT_BIT(5)
 

@@ -793,7 +793,6 @@ DECLARE_NATIVE(let)
     Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
     Copy_Cell(&sub->u.eval.current, cast(Element*, SPARE));
     sub->u.eval.current_gotten = nullptr;
-    sub->u.eval.enfix_reevaluate = 'N';  // detect?
 
     Push_Level(OUT, sub);
 

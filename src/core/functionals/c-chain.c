@@ -208,7 +208,7 @@ Bounce Cascader_Dispatcher(Level* const L)
     Restart_Action_Level(sub);  // see notes
     Push_Action(sub, VAL_ACTION(pipeline_at), Cell_Frame_Coupling(pipeline_at));
 
-    Begin_Prefix_Action(sub, VAL_FRAME_LABEL(pipeline_at));
+    Begin_Action(sub, VAL_FRAME_LABEL(pipeline_at), PREFIX_0);
 
     Level_State_Byte(sub) = ST_ACTION_INITIAL_ENTRY_ENFIX;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);

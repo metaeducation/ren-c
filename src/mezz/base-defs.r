@@ -61,20 +61,6 @@ REBOL [
 /*also: also:decay/
 /*else: else:decay/
 
-; Give special operations their special properties
-;
-; !!! There may be a function spec property for these, but it's not currently
-; known what would be best for them.  They aren't parameter conventions, they
-; apply to the whole action.
-;
-tweak then/ 'defer 'on
-tweak also/ 'defer 'on
-tweak else/ 'defer 'on
-tweak except/ 'defer 'on
-tweak *then/ 'defer 'on
-tweak *also/ 'defer 'on
-tweak *else/ 'defer 'on
-
 
 ; ARITHMETIC OPERATORS
 ;

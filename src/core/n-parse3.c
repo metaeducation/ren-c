@@ -244,7 +244,7 @@ static bool Subparse_Throws(
 
     Push_Action(L, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 
-    Begin_Prefix_Action(L, Canon(SUBPARSE));
+    Begin_Action(L, Canon(SUBPARSE), PREFIX_0);
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle

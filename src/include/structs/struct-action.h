@@ -53,14 +53,9 @@
 #define ARRAY_FLAG_IS_KEYLIST FLEX_FLAG_IS_KEYLIKE
 
 
-//=//// DETAILS_FLAG_POSTPONES_ENTIRELY ///////////////////////////////////=//
+//=//// DETAILS_FLAG_24 ///////////////////////////////////////////////////=//
 //
-// A postponing operator causes everything on its left to run before it will.
-// Like a deferring operator, it is only allowed to appear after the last
-// parameter of an expression except it closes out *all* the parameters on
-// the stack vs. just one.
-//
-#define DETAILS_FLAG_POSTPONES_ENTIRELY \
+#define DETAILS_FLAG_24 \
     FLEX_FLAG_24
 
 
@@ -70,15 +65,10 @@
     FLEX_FLAG_25
 
 
-//=//// DETAILS_FLAG_DEFERS_LOOKBACK //////////////////////////////////////=//
+//=//// DETAILS_FLAG_26 ///////////////////////////////////////////////////=//
 //
-// Special action property set with TWEAK.  Used by THEN, ELSE, and ALSO.
 //
-// Tells you whether a function defers its first real argument when used as a
-// lookback.  Because lookback dispatches cannot use refinements, the answer
-// is always the same for invocation via a plain word.
-//
-#define DETAILS_FLAG_DEFERS_LOOKBACK \
+#define DETAILS_FLAG_26 \
     FLEX_FLAG_26
 
 
@@ -128,14 +118,6 @@ typedef enum {
 //
 #define DETAILS_FLAG_31 \
     FLEX_FLAG_31
-
-
-// These flags should be copied when specializing or adapting.  They may not
-// be derivable from the paramlist (e.g. a native with no RETURN does not
-// track if it requotes beyond the paramlist).
-//
-#define DETAILS_MASK_INHERIT \
-    (DETAILS_FLAG_DEFERS_LOOKBACK | DETAILS_FLAG_POSTPONES_ENTIRELY)
 
 
 #define Set_Action_Flag(act,name) \

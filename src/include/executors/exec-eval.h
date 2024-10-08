@@ -25,23 +25,9 @@
 #define EXECUTOR_EVAL &Stepper_Executor  // shorthand in Xxx_Executor_Flag()
 
 
-//=//// EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH //////////////////////////=//
+//=//// EVAL_EXECUTOR_FLAG_24 /////////////////////////////////////////////=//
 //
-// There is a contention between operators that want to quote their left hand
-// side and ones that want to quote their right hand side.  The left hand side
-// wins in order for things like `help default` to work.  But deciding on
-// whether the left hand side should win or not if it's a PATH! is a tricky
-// case, as one must evaluate the path to know if it winds up producing a
-// right quoting action or not.
-//
-// So paths win automatically unless a special (rare) override is used.  But
-// if that path doesn't end up being a right quoting operator, it's less
-// confusing to give an error message informing the user to use >- vs. just
-// make it appear there was no left hand side.
-//
-// There is a parallel flag in ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
-//
-#define EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
+#define EVAL_EXECUTOR_FLAG_24 \
     LEVEL_FLAG_24
 
 
@@ -64,12 +50,6 @@
     LEVEL_FLAG_26
 
 
-//=//// EVAL_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
-//
-#define EVAL_EXECUTOR_FLAG_27 \
-    LEVEL_FLAG_27
-
-
 //=//// EVAL_EXECUTOR_FLAG_NO_EVALUATIONS /////////////////////////////////=//
 //
 // It might seem strange to have an evaluator mode in which no evaluations are
@@ -89,6 +69,26 @@
 // count as true.
 //
 #define EVAL_EXECUTOR_FLAG_NO_EVALUATIONS \
+    LEVEL_FLAG_27
+
+
+//=//// EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH //////////////////////////=//
+//
+// There is a contention between operators that want to quote their left hand
+// side and ones that want to quote their right hand side.  The left hand side
+// wins in order for things like `help default` to work.  But deciding on
+// whether the left hand side should win or not if it's a PATH! is a tricky
+// case, as one must evaluate the path to know if it winds up producing a
+// right quoting action or not.
+//
+// So paths win automatically unless a special (rare) override is used.  But
+// if that path doesn't end up being a right quoting operator, it's less
+// confusing to give an error message informing the user to use >- vs. just
+// make it appear there was no left hand side.
+//
+// There is a parallel flag in ACTION_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH
+//
+#define EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_PATH \
     LEVEL_FLAG_28
 
 
@@ -149,8 +149,6 @@ struct EvaluatorExecutorStateStruct {
     Cell current;  // raw vs. derived class due to union/destructor combo
 
     Option(const Value*) current_gotten;
-
-    char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)
 
     StackIndex stackindex_circled;  // used only by multi-return
 };

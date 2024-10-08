@@ -147,7 +147,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
     assert(Is_Level_Dispatching(L));
     Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]
-    Clear_Executor_Flag(ACTION, L, RUNNING_ENFIX);
+    Set_Level_Infix_Mode(L, PREFIX_0);  // clear out for reuse...?
 
     Option(const Symbol*) original_label = L->label;
     Corrupt_Pointer_If_Debug(L->label);  // Begin_Action() requires

@@ -1531,10 +1531,6 @@ REBTYPE(Frame)
 
         if (Get_Action_Flag(act, IS_NATIVE))
             Set_Action_Flag(proxy, IS_NATIVE);
-        if (Get_Action_Flag(act, DEFERS_LOOKBACK))
-            Set_Action_Flag(proxy, DEFERS_LOOKBACK);
-        if (Get_Action_Flag(act, POSTPONES_ENTIRELY))
-            Set_Action_Flag(proxy, POSTPONES_ENTIRELY);
 
         Clear_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // changing it
         Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(act));

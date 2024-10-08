@@ -174,8 +174,8 @@
         /left-normal*: enfix /right-normal*:
             func [return: [~null~ word!] x [word! <end>]] [return x]
 
-        /left-defer: enfix tweak (copy left-normal/) 'defer 'on
-        /left-defer*: enfix tweak (copy left-normal/) 'defer 'on
+        /left-defer: enfix:defer left-normal/
+        /left-defer*: enfix:defer left-normal/
 
         /left-soft: enfix /right-soft:
             func [return: [~null~ word!] @(x) [word!]] [return x]
@@ -232,8 +232,8 @@
                 return try take x
             ]
 
-        /left-defer: enfix tweak (copy left-normal/) 'defer 'on
-        /left-defer*: enfix tweak (copy left-normal/) 'defer 'on
+        /left-defer: enfix:defer left-normal/
+        /left-defer*: enfix:defer left-normal/
 
         /left-soft: enfix /right-soft:
             func [return: [~null~ word!] @(x) [word! <variadic>]] [

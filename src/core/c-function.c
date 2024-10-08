@@ -930,63 +930,6 @@ REBTYPE(Fail)
 
 
 //
-//  /tweak: native [
-//
-//  "Modify a special property (currently only for ACTION!)"
-//
-//      return: "Same action identity as input"
-//          [action?]
-//      frame "(modified) Action to modify property of"
-//          [<unrun> frame!]
-//      property ['defer 'postpone]
-//      enable ; should be ONOFF?, but constraint not loaded yet (native order)
-//  ]
-//
-DECLARE_NATIVE(tweak)
-{
-    INCLUDE_PARAMS_OF_TWEAK;
-
-    Action* act = VAL_ACTION(ARG(frame));
-    const Param* first = First_Unspecialized_Param(nullptr, act);
-
-    ParamClass pclass = first
-        ? Cell_ParamClass(first)
-        : PARAMCLASS_NORMAL;  // imagine it as <end>able
-
-    Flags flag;
-
-    switch (Cell_Word_Id(ARG(property))) {
-      case SYM_DEFER:  // Special enfix behavior used by THEN, ELSE, ALSO...
-        if (pclass != PARAMCLASS_NORMAL and pclass != PARAMCLASS_META)
-            fail ("TWEAK defer only actions with evaluative 1st params");
-        flag = DETAILS_FLAG_DEFERS_LOOKBACK;
-        break;
-
-      case SYM_POSTPONE:  // Wait as long as it can to run w/o changing order
-        if (
-            pclass != PARAMCLASS_NORMAL
-            and pclass != PARAMCLASS_SOFT
-            and pclass != PARAMCLASS_META
-        ){
-            fail ("TWEAK postpone only actions with evaluative 1st params");
-        }
-        flag = DETAILS_FLAG_POSTPONES_ENTIRELY;
-        break;
-
-      default:
-        fail ("TWEAK currently only supports [barrier defer postpone]");
-    }
-
-    if (Cell_On(ARG(enable)))
-        ACT_IDENTITY(act)->leader.bits |= flag;
-    else
-        ACT_IDENTITY(act)->leader.bits &= ~flag;
-
-    return Actionify(Copy_Cell(OUT, ARG(frame)));;
-}
-
-
-//
 //  /couple: native [
 //
 //  "Associate an ACTION! with OBJECT! to use for `.field` member references"

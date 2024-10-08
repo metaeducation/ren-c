@@ -117,10 +117,11 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
         return false;
     }
 
-    if (Not_Enfixed(unwrap feed->gotten))
+    Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(unwrap feed->gotten);
+    if (not infix_mode)
         return false;
 
-    if (Get_Action_Flag(VAL_ACTION(unwrap feed->gotten), DEFERS_LOOKBACK))
+    if (infix_mode == INFIX_DEFER)
         Set_Feed_Flag(feed, DEFERRING_ENFIX);
     return true;
 }
@@ -431,15 +432,11 @@ Bounce Action_Executor(Level* L)
             //
             // This effectively puts the enfix into a *single step defer*.
             //
-            if (Get_Action_Executor_Flag(L, RUNNING_ENFIX)) {
+            Option(InfixMode) infix_mode = Get_Level_Infix_Mode(L);
+            if (infix_mode) {
                 assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
-                if (
-                    Not_Action_Flag(Level_Phase(L), POSTPONES_ENTIRELY)
-                    and
-                    Not_Action_Flag(Level_Phase(L), DEFERS_LOOKBACK)
-                ){
+                if (infix_mode == INFIX_TIGHT)  // not postpone or defer
                     Set_Feed_Flag(L->feed, NO_LOOKAHEAD);
-                }
             }
 
             assert(Is_Fresh(OUT));  // output should have been "used up"
@@ -485,7 +482,7 @@ Bounce Action_Executor(Level* L)
         //      >> 1 + 2 * 3
         //      == 9
         //
-        if (Not_Action_Executor_Flag(L, RUNNING_ENFIX))
+        if (not Is_Level_Infix(L))
             Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
         // Once a deferred flag is set, it must be cleared during the
@@ -844,7 +841,7 @@ Bounce Action_Executor(Level* L)
         if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
             fail (Error_Literal_Left_Path_Raw());
 
-        assert(Get_Action_Executor_Flag(L, RUNNING_ENFIX));
+        assert(Is_Level_Infix(L));
         Freshen_Cell(OUT);
     }
 
@@ -1059,7 +1056,7 @@ void Push_Action(
     assert(L->executor == &Action_Executor);
 
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
-    assert(Not_Action_Executor_Flag(L, RUNNING_ENFIX));
+    assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
 
     Length num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 
@@ -1135,18 +1132,18 @@ void Push_Action(
 
 
 //
-//  Begin_Action_Core: C
+//  Begin_Action: C
 //
-void Begin_Action_Core(
+void Begin_Action(
     Level* L,
     Option(const Symbol*) label,
-    bool enfix
+    Option(InfixMode) infix_mode
 ){
     // These assertions were blocking code sharing with SET-BLOCK! mechanics.
     // Review where the right place to put them is.
     //
-    /*assert(Not_Action_Executor_Flag(L, RUNNING_ENFIX));
-    assert(Not_Feed_Flag(L->feed, DEFERRING_ENFIX));*/
+    /*assert(not Is_Level_Infix(L));
+    assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX));*/
 
     assert(Not_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
@@ -1161,16 +1158,18 @@ void Begin_Action_Core(
     L->label_utf8 = Level_Label_Or_Anonymous_UTF8(L);
   #endif
 
-    if (enfix) {
-        //
+    if (not infix_mode) {
+        assert(not Is_Level_Infix(L));
+    }
+    else {
         // While ST_ACTION_FULFILLING_ARG_FROM_OUT is set only during the first
-        // argument of an enfix call, ACTION_EXECUTOR_FLAG_RUNNING_ENFIX is
+        // argument of an enfix call, the type of infix we launched from is
         // set for the whole duration.
         //
-        Set_Action_Executor_Flag(L, RUNNING_ENFIX);
+        Set_Level_Infix_Mode(L, infix_mode);
 
         // All the enfix call sites cleared this flag on the feed, so it was
-        // moved into the Begin_Enfix_Action() case.  Note this has to be done
+        // moved into the Begin_Action() for enfix.  Note this has to be done
         // *after* the existing flag state has been captured for invisibles.
         //
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
@@ -1208,7 +1207,7 @@ void Begin_Action_Core(
 //    set...and right now, only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
 //
 void Drop_Action(Level* L) {
-    Clear_Action_Executor_Flag(L, RUNNING_ENFIX);
+    Set_Level_Infix_Mode(L, PREFIX_0);  // clear out for reuse...?
     Clear_Action_Executor_Flag(L, FULFILL_ONLY);
 
     assert(BONUS(KeySource, L->varlist) == L);
