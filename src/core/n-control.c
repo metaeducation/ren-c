@@ -1498,7 +1498,7 @@ DECLARE_NATIVE(default)
     Value* branch = ARG(branch);
     Value* predicate = ARG(predicate);
 
-    Sink(Element*) steps = ARG(return);  // reuse to save resolved steps [1]
+    Sink(Element) steps = ARG(return);  // reuse to save resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,

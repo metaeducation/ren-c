@@ -110,7 +110,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-Element* Init_Decimal_Bits(Sink(Element*) out, const Byte* bp)
+Element* Init_Decimal_Bits(Sink(Element) out, const Byte* bp)
 {
     Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
 

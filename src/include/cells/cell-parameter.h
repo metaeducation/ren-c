@@ -301,7 +301,7 @@ INLINE bool Is_Specialized(const Value* v) {
 
 
 INLINE Param* Init_Unconstrained_Parameter_Untracked(
-    Sink(Value*) out,
+    Sink(Value) out,
     Flags flags
 ){
     ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));

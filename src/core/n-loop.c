@@ -47,7 +47,7 @@
 //        for-each 'x [1 2 3] [if x != 3 [x]]  =>  ~[~void~]~ antiform
 //
 bool Try_Catch_Break_Or_Continue(
-    Sink(Value*) out,
+    Sink(Value) out,
     Level* loop_level,
     bool* breaking
 ){

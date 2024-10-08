@@ -323,7 +323,7 @@ void Normalize_Time(REBI64 *sp, REBLEN *dp)
 // date value.
 //
 static Element* Init_Normalized_Date(
-    Sink(Element*) out,
+    Sink(Element) out,
     REBINT day,
     REBINT month,
     REBINT year,
@@ -471,7 +471,7 @@ void Adjust_Date_UTC(Cell* d)
 // Called by DIFFERENCE function.
 //
 Value* Time_Between_Dates(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Value* d1,
     const Value* d2
 ){
@@ -654,7 +654,7 @@ static REBINT Int_From_Date_Arg(const Value* poke) {
 //  Pick_Or_Poke_Date: C
 //
 void Pick_Or_Poke_Date(
-    Option(Sink(Value*)) opt_out,
+    Option(Sink(Value)) opt_out,
     Value* v,
     const Value* picker,
     Option(const Value*) opt_poke

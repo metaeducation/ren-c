@@ -44,7 +44,7 @@
 //     2. If no integer found, pointer doesn't change position.
 //     3. Integers may contain REBOL tick (') marks.
 //
-Option(const Byte*) Try_Grab_Int(Sink(REBINT*) out, const Byte* cp)
+Option(const Byte*) Try_Grab_Int(Sink(REBINT) out, const Byte* cp)
 {
     const Byte* bp = cp;
     REBINT value = 0;
@@ -77,7 +77,7 @@ Option(const Byte*) Try_Grab_Int(Sink(REBINT*) out, const Byte* cp)
 // Used for the decimal part of numbers (e.g. times).
 //
 const Byte* Grab_Int_Scale_Zero_Default(
-    Sink(REBINT*) out,
+    Sink(REBINT) out,
     const Byte* cp,
     REBLEN scale
 ){

@@ -794,7 +794,7 @@ Phase* Make_Action(
 // dispatchers to code to get the BODY OF an ACTION.  For the moment, just
 // handle common kinds so the SOURCE command works adquately, revisit later.
 //
-void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
+void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
 {
     Option(VarList*) coupling = Cell_Frame_Coupling(action);
     Action* a = VAL_ACTION(action);

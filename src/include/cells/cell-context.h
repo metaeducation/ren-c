@@ -98,7 +98,7 @@ INLINE void INIT_VAL_FRAME_LABEL(
 // the 0 slot of the context's varlist ("archetype")
 //
 INLINE Element* Init_Context_Cell(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     VarList* c
 ){
@@ -119,7 +119,7 @@ INLINE Element* Init_Context_Cell(
     Init_Context_Cell((out), REB_PORT, (c))
 
 INLINE Element* Init_Frame(
-    Sink(Element*) out,
+    Sink(Element) out,
     VarList* c,
     Option(const String*) label  // nullptr (ANONYMOUS) is okay
 ){

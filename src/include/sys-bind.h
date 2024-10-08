@@ -92,7 +92,7 @@ INLINE Context* Derive_Binding(
 );
 
 INLINE Element* Derelativize_Untracked(
-    Sink(Element*) out,  // relative dest overwritten w/specific value
+    Sink(Element) out,  // relative dest overwritten w/specific value
     const Element* v,
     Context* context
 ){
@@ -166,7 +166,7 @@ INLINE Element* Derelativize_Untracked(
 // routines want to do things like raise errors, and when they do they need
 // to strip the quotes off (typically).
 //
-INLINE Element* Copy_Dequoted_Cell(Sink(Element*) out, const Cell* in) {
+INLINE Element* Copy_Dequoted_Cell(Sink(Element) out, const Cell* in) {
     assert(QUOTE_BYTE(in) != ANTIFORM_0);
     Copy_Cell(out, c_cast(Element*, in));
     QUOTE_BYTE(out) = NOQUOTE_1;
@@ -398,7 +398,7 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
 //
 
 INLINE Option(Error*) Trap_Lookup_Word(
-    Sink(const Value**) out,  // returns read-only pointer to cell
+    Sink(const Value*) out,  // returns read-only pointer to cell
     const Element* word,
     Context* context
 ){
@@ -475,7 +475,7 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     return var;
 }
 
-INLINE Sink(Value*) Sink_Word_May_Fail(
+INLINE Sink(Value) Sink_Word_May_Fail(
     const Element* any_word,
     Context* context
 ){

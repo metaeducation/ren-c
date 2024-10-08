@@ -231,7 +231,7 @@ INLINE Option(SymId) VAL_CMD(const Cell* v) {
 //
 static bool Subparse_Throws(
     bool *interrupted_out,
-    Sink(Value*) out,
+    Sink(Value) out,
     const Cell* input,
     Context* input_binding,
     Level* const L,
@@ -397,7 +397,7 @@ static void Print_Parse_Index(Level* level_) {
 // a quasiform.  Fetched quasiforms are errors.
 //
 static const Element* Get_Parse_Value(
-    Sink(Value*) sink,  // storage for fetched values; must be GC protected
+    Sink(Value) sink,  // storage for fetched values; must be GC protected
     const Element* rule,
     Context* context
 ){
@@ -450,7 +450,7 @@ static const Element* Get_Parse_Value(
 // like a COMPOSE that runs each time they are visited.
 //
 bool Process_Group_For_Parse_Throws(
-    Sink(Element*) out,
+    Sink(Element) out,
     Level* level_,
     const Element* group  // can't be same as out
 ){

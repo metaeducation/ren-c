@@ -1316,7 +1316,7 @@
     struct SinkWrapper {
         T* p;
 
-        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value*))
+        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value))
         SinkWrapper(nullptr_t) : p (nullptr) {}
 
         template<
@@ -1370,9 +1370,9 @@
         T* operator->() const { return p; }
     };
 
-    #define Sink(T) SinkWrapper<typename std::remove_pointer<T>::type, false>
-    #define Need(T) SinkWrapper<typename std::remove_pointer<T>::type, true>
+    #define Sink(T) SinkWrapper<T, false>
+    #define Need(TP) SinkWrapper<typename std::remove_pointer<TP>::type, true>
 #else
-    #define Sink(T) T
-    #define Need(T) T
+    #define Sink(T) T *
+    #define Need(TP) TP
 #endif

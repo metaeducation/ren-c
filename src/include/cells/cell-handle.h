@@ -112,7 +112,7 @@ INLINE void Tweak_Cell_Handle_Cfunc(Cell* v, CFunction* cfunc) {
 }
 
 INLINE Element* Init_Handle_Cdata(
-    Sink(Element*) out,
+    Sink(Element) out,
     void *cdata,
     uintptr_t length
 ){
@@ -130,7 +130,7 @@ INLINE Element* Init_Handle_Cdata(
 }
 
 INLINE Element* Init_Handle_Cfunc(
-    Sink(Element*) out,
+    Sink(Element) out,
     CFunction* cfunc
 ){
     Reset_Cell_Header_Untracked(
@@ -178,7 +178,7 @@ INLINE void Init_Handle_Managed_Common(
 }
 
 INLINE Element* Init_Handle_Cdata_Managed(
-    Sink(Element*) out,
+    Sink(Element) out,
     void *cdata,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -193,7 +193,7 @@ INLINE Element* Init_Handle_Cdata_Managed(
 }
 
 INLINE Element* Init_Handle_Cdata_Managed_Cfunc(
-    Sink(Element*) out,
+    Sink(Element) out,
     CFunction* cfunc,
     CLEANUP_CFUNC *cleaner
 ){

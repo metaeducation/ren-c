@@ -77,7 +77,7 @@
 // * Needed to close the socket on the success path
 // * Called gethostname() for no obvious reason
 //
-static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value*) out)
+static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value) out)
 {
     const char* target_name = "8.8.8.8";  // Google's DNS server IP
     const char* target_port = "53";  // DNS port

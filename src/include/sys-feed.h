@@ -199,7 +199,7 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 //    (it will error, the @ code in the evaluator uses a different function).
 //
 INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
-    Sink(Element*) out,
+    Sink(Element) out,
     const Cell* cell
 ){
     if (Is_Nulled(cell))
@@ -508,7 +508,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 //       mutable (e.g. with MUTABLE) it takes the flag from the feed.
 //
 INLINE void Inertly_Derelativize_Inheriting_Const(
-    Sink(Element*) out,
+    Sink(Element) out,
     const Element* v,
     Feed* feed
 ){
@@ -518,12 +518,12 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
-INLINE void The_Next_In_Feed(Sink(Element*) out, Feed* feed) {
+INLINE void The_Next_In_Feed(Sink(Element) out, Feed* feed) {
     Inertly_Derelativize_Inheriting_Const(out, At_Feed(feed), feed);
     Fetch_Next_In_Feed(feed);
 }
 
-INLINE void Just_Next_In_Feed(Sink(Element*) out, Feed* feed) {
+INLINE void Just_Next_In_Feed(Sink(Element) out, Feed* feed) {
     Copy_Cell(out, At_Feed(feed));
     if (Not_Cell_Flag(At_Feed(feed), EXPLICITLY_MUTABLE))
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);

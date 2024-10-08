@@ -303,7 +303,7 @@ DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 // WORD!, or TUPLE!.
 //
 INLINE bool Do_Logic_Right_Side_Throws(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Element* right
 ){
     if (Is_Group(right)) {

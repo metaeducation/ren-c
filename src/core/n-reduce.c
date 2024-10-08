@@ -450,7 +450,7 @@ static void Push_Composer_Level(
 //        == [a ''~[3]~ b]
 //
 static void Finalize_Composer_Level(
-    Sink(Value*) out,
+    Sink(Value) out,
     Level* L,
     const Element* composee,  // special handling if the output is a sequence
     bool conflate

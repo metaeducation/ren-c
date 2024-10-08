@@ -397,7 +397,7 @@ DECLARE_NATIVE(use)
 //
 //  Try_Get_Binding_Of: C
 //
-bool Try_Get_Binding_Of(Sink(Value*) out, const Value* v)
+bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 {
     switch (VAL_TYPE(v)) {
     case REB_WORD:
@@ -865,7 +865,7 @@ DECLARE_NATIVE(set_accessor)
 // special adjustments for sequences like `.a`
 //
 static Option(Error*) Trap_Get_Any_Wordlike_Maybe_Vacant(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context  // context for `.xxx` tuples not adjusted
 ){
@@ -912,7 +912,7 @@ static Option(Error*) Trap_Get_Any_Wordlike_Maybe_Vacant(
 // ANY-WORD! variable.
 //
 Option(Error*) Trap_Get_Any_Word(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context
 ){
@@ -936,7 +936,7 @@ Option(Error*) Trap_Get_Any_Word(
 // "nothing" (antiform blank) or "tripwire" (antiform tag) vs. give an error.
 //
 Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context
 ){
@@ -960,7 +960,7 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
 // in the case evaluations were performed).
 //
 Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
-    Sink(Value*) out,
+    Sink(Value) out,
     StackIndex base
 ){
     StackIndex stackindex = base + 1;
@@ -1074,7 +1074,7 @@ static Context* Adjust_Context_For_Coupling(Context* c) {
 //    look up differently inside a function's body.
 //
 Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
-    Sink(Value*) out,
+    Sink(Value) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
@@ -1194,7 +1194,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
 // Convenience wrapper for getting tuples that errors on nothing and tripwires.
 //
 Option(Error*) Trap_Get_Any_Tuple(
-    Sink(Value*) out,
+    Sink(Value) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
@@ -1225,7 +1225,7 @@ Option(Error*) Trap_Get_Any_Tuple(
 //    on the stack directly.  That avoids making an intermediate action.
 //
 Option(Error*) Trap_Get_Var_Maybe_Vacant(
-    Sink(Value*) out,
+    Sink(Value) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
     Context* context
@@ -1328,7 +1328,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
 // May generate specializations for paths.  See Trap_Get_Var_Maybe_Vacant()
 //
 Option(Error*) Trap_Get_Var(
-    Sink(Value*) out,
+    Sink(Value) out,
     Option(Value*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
     Context* context
@@ -1354,7 +1354,7 @@ Option(Error*) Trap_Get_Var(
 // appropriate Trap_Get_XXXX() interface if this is too simplistic.
 //
 Value* Get_Var_May_Fail(
-    Sink(Value*) out,  // variables never store unstable Atom* values
+    Sink(Value) out,  // variables never store unstable Atom* values
     const Element* var,
     Context* context
 ){
@@ -1375,8 +1375,8 @@ Value* Get_Var_May_Fail(
 //  Trap_Get_Chain_Push_Refinements: C
 //
 Option(Error*) Trap_Get_Chain_Push_Refinements(
-    Sink(Value*) out,
-    Sink(Value*) spare,
+    Sink(Value) out,
+    Sink(Value) spare,
     const Element* chain,
     Context* context
 ){
@@ -1475,8 +1475,8 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
 // if the path is inert (e.g. `/abc` or `.a.b/c/d`).
 //
 Option(Error*) Trap_Get_Path_Push_Refinements(
-    Sink(Value*) out,
-    Sink(Value*) safe,
+    Sink(Value) out,
+    Sink(Value) safe,
     const Element* path,
     Context* context
 ){
@@ -1735,7 +1735,7 @@ DECLARE_NATIVE(get)
 // in the course of the assignment.
 //
 bool Set_Var_Core_Updater_Throws(
-    Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
+    Sink(Value) out,  // GC-safe cell to write steps to, or put thrown value
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,
@@ -1977,7 +1977,7 @@ bool Set_Var_Core_Updater_Throws(
 //  Set_Var_Core_Throws: C
 //
 bool Set_Var_Core_Throws(
-    Sink(Value*) out,  // GC-safe cell to write steps to
+    Sink(Value) out,  // GC-safe cell to write steps to
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,
@@ -2349,7 +2349,7 @@ DECLARE_NATIVE(free_q)
 // Shared code from the refinement-bearing AS-TEXT and AS TEXT!.
 //
 bool Try_As_String(
-    Sink(Value*) out,
+    Sink(Value) out,
     Heart new_heart,
     const Value* v,
     REBLEN quotes,

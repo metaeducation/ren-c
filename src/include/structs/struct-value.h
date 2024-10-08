@@ -61,9 +61,9 @@
 // In the debug build we can give this extra teeth by wiping the contents
 // of the atom, to ensure they are not examined.
 //
-#if DEBUG_USE_CELL_SUBCLASSES  // Note: Sink(Value*) wrapper has runtime cost
+#if DEBUG_USE_CELL_SUBCLASSES  // Note: Sink(Value) wrapper has runtime cost
     template<>
-    struct c_cast_helper<Byte*, Sink(Value*) const&>
+    struct c_cast_helper<Byte*, Sink(Value) const&>
       { typedef Byte* type; };
 
     template<typename V, typename T>

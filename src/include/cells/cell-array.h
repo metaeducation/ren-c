@@ -46,7 +46,7 @@ INLINE const Array* Cell_Array(const Cell* v) {
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
 INLINE const Element* Cell_List_Len_At(
-    Option(Sink(Length*)) len_at_out,
+    Option(Sink(Length)) len_at_out,
     const Cell* v
 ){
     const Node* node = Cell_Node1(v);
@@ -204,7 +204,7 @@ INLINE Cell* Init_Relative_Block_At(
 //      == <b>
 //
 
-INLINE Atom* Init_Pack_Untracked(Sink(Atom*) out, Array* a) {
+INLINE Atom* Init_Pack_Untracked(Sink(Atom) out, Array* a) {
     Init_Any_List_At_Core_Untracked(out, REB_BLOCK, a, 0, SPECIFIED);
     return Coerce_To_Unstable_Antiform(out);
 }
@@ -271,7 +271,7 @@ INLINE Value* Splicify(Need(Value*) v) {
     return Coerce_To_Stable_Antiform(v);
 }
 
-INLINE Value* Init_Splice_Untracked(Sink(Value*) out, Array* a) {
+INLINE Value* Init_Splice_Untracked(Sink(Value) out, Array* a) {
     Init_Group(out, a);
     return Coerce_To_Stable_Antiform(out);
 }

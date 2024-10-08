@@ -330,7 +330,7 @@ INLINE VarList* Varlist_Of_Level_Force_Managed(Level* L) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-INLINE void Get_Level_Label_Or_Nulled(Sink(Value*) out, Level* L) {
+INLINE void Get_Level_Label_Or_Nulled(Sink(Value) out, Level* L) {
     assert(Is_Action_Level(L));
     if (L->label)
         Init_Word(out, unwrap L->label);  // WORD!, PATH!, or stored invoke

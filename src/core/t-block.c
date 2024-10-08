@@ -374,7 +374,7 @@ Bounce TO_List(Level* level_, Kind k, const Value* arg) {
 //    the pattern to complement the "never matches" option of NULL.
 //
 REBINT Find_In_Array(
-    Sink(Length*) len,
+    Sink(Length) len,
     const Array* array,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
@@ -682,7 +682,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 // Fills out with NULL if no pick.
 //
 bool Try_Pick_Block(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Value* block,
     const Value* picker
 ){

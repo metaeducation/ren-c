@@ -38,7 +38,7 @@ INLINE char Symbol_For_Sigil(Sigil sigil) {
     }
 }
 
-INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
+INLINE Element* Init_Sigil(Sink(Element) out, Sigil sigil) {
     if (sigil == SIGIL_QUASI)
         Init_Issue_Utf8(out, cb_cast("~~"), 2, 2);  // codepoints 2, size 2
     else

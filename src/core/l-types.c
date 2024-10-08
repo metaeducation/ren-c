@@ -334,7 +334,7 @@ DECLARE_NATIVE(of)
 // If minlen is zero, and no string, that's a valid zero value.
 //
 Option(const Byte*) Try_Scan_Hex_Integer(
-    Sink(Element*) out,
+    Sink(Element) out,
     const Byte* cp,
     REBLEN minlen,
     REBLEN maxlen

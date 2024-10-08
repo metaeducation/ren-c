@@ -61,7 +61,7 @@ bool All_Bytes_ASCII(Byte* bp, Size size)
 // It should be reviewed.
 //
 const Byte* Analyze_String_For_Scan(
-    Option(Sink(Size*)) size_out,
+    Option(Sink(Size)) size_out,
     const Value* any_string,
     REBLEN max_len  // maximum length in *codepoints*
 ){
@@ -148,7 +148,7 @@ void Trim_Tail(REB_MOLD *mo, Byte ascii)
 // Common code for string case handling.
 //
 void Change_Case(
-    Sink(Value*) out,
+    Sink(Value) out,
     Value* val, // !!! Not const--uses Partial(), may change index, review
     const Value* part,
     bool upper

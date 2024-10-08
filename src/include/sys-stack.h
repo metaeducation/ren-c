@@ -123,10 +123,8 @@
         }
 
         operator Value* () const { return p; }
-        operator Sink(Value*) () const { return p; }
-        operator Sink(const Value*) () const { return p; }
-        operator Sink(Element*) () const { return p; }
-        operator Sink(const Element*) () const { return p; }
+        operator Sink(Value) () const { return p; }
+        operator Sink(Element) () const { return p; }
         operator Need(Value*) () const { return p; }
         operator Need(const Value*) () const { return p; }
         operator Need(Element*) () const { return p; }
@@ -293,10 +291,10 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
         DROP();
 }
 
-INLINE Value* Move_Drop_Top_Stack_Value(Sink(Value*) out)
+INLINE Value* Move_Drop_Top_Stack_Value(Sink(Value) out)
   { Move_Cell(out, TOP); DROP(); return out; }
 
-INLINE Element* Move_Drop_Top_Stack_Element(Sink(Element*) out) {
+INLINE Element* Move_Drop_Top_Stack_Element(Sink(Element) out) {
     assert(not Is_Antiform(TOP));
     Move_Cell(out, cast(Element*, TOP));
     DROP();

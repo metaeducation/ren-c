@@ -47,7 +47,7 @@
 //   such cases.  So the only difference is that the release build does not
 //   raise alerts about the bit being set--not that the bit isn't there.
 
-INLINE Element* Init_Unreadable_Untracked(Sink(Element*) out) {
+INLINE Element* Init_Unreadable_Untracked(Sink(Element) out) {
     Init_Quasi_Word(out, Canon(UNREADABLE));
     Set_Node_Free_Bit(out);  // won't be readable, but still writable
     return out;

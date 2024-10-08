@@ -49,7 +49,7 @@ INLINE void INIT_VAL_ACTION_LABEL(
 // no label.
 //
 INLINE Element* Init_Frame_Details_Core(
-    Sink(Element*) out,
+    Sink(Element) out,
     Phase* a,
     Option(const Symbol*) label,
     Option(VarList*) coupling
@@ -95,10 +95,10 @@ INLINE Element* Init_Frame_Details_Core(
 
 #define Init_Action(out,a,label,binding) \
     Actionify(cast(Value*, Init_Frame_Details_Core( \
-        ensure(Sink(Value*), TRACK(out)), (a), (label), (binding)) \
+        ensure(Sink(Value), TRACK(out)), (a), (label), (binding)) \
     ))
 
-INLINE Value* Actionify(Sink(Value*) v) {
+INLINE Value* Actionify(Sink(Value) v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     return Coerce_To_Stable_Antiform(v);
 }

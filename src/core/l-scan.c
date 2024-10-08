@@ -555,7 +555,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //    like FIND, etc., so use BINARY! if you need UTF-8 with '\0' in it.
 //
 static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-    Sink(const Byte**) out,
+    Sink(const Byte*) out,
     REB_MOLD *mo,
     const Byte* src,
     ScanState* S
@@ -1001,7 +1001,7 @@ static LexFlags Prescan_Token(ScanState* S)
 // are currently in the ASCII range (< 128).
 //
 static Option(Error*) Trap_Locate_Token_May_Push_Mold(
-    Sink(Token*) token_out,
+    Sink(Token) token_out,
     REB_MOLD *mo,
     Level* L
 ){
@@ -3034,7 +3034,7 @@ DECLARE_NATIVE(transcode)
 // Returns symbol number, or zero for errors.
 //
 const Byte* Scan_Any_Word(
-    Sink(Value*) out,
+    Sink(Value) out,
     Heart heart,
     const Byte* utf8,
     Size size

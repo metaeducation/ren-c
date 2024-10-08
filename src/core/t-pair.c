@@ -127,7 +127,7 @@ Bounce TO_Pair(Level* level_, Kind kind, const Value* arg)
 //  Min_Max_Pair: C
 //
 void Min_Max_Pair(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Value* a,
     const Value* b,
     bool maxed

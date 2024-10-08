@@ -148,7 +148,7 @@ void Hex_String_To_Integer(Value* out, const Value* value)  // !!! UNUSED
 // If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
 //
 Option(Error*) Trap_Value_To_Int64(
-    Sink(Value*) out,
+    Sink(Value) out,
     const Value* value,
     bool no_sign
 ){

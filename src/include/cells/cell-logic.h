@@ -82,7 +82,7 @@ INLINE bool Is_Logic(Need(const Value*) v) {
 #define Init_Okay(out) \
     Init_Anti_Word((out), Canon(OKAY))
 
-INLINE Value* Init_Logic(Sink(Value*) out, bool flag) {
+INLINE Value* Init_Logic(Sink(Value) out, bool flag) {
     return Init_Anti_Word(out, flag ? Canon(OKAY) : Canon(NULL));
 }
 

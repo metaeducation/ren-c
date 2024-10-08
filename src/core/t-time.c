@@ -373,7 +373,7 @@ Bounce TO_Time(Level* level_, Kind kind, const Value* arg)
 //
 //  Pick_Time: C
 //
-void Pick_Time(Sink(Value*) out, const Cell* value, const Value* picker)
+void Pick_Time(Sink(Value) out, const Cell* value, const Value* picker)
 {
     REBINT i;
     if (Is_Word(picker)) {

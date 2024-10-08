@@ -221,7 +221,7 @@ VarList* Make_Varlist_For_Action(
 // has :DUP at TOP, and :PART under it.  List stops at lowest_stackindex.
 //
 bool Specialize_Action_Throws(
-    Sink(Value*) out,
+    Sink(Value) out,
     Value* specializee,
     Option(Value*) def,  // !!! REVIEW: binding modified directly, not copied
     StackIndex lowest_stackindex

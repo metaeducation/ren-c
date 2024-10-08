@@ -33,7 +33,7 @@
 // REVIEW: This tries to do optimizations on the array you give it.
 //
 Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const Array* a,
     Offset offset

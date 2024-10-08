@@ -110,7 +110,7 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
 }
 
 INLINE Size Cell_String_Size_Limit_At(
-    Option(Sink(Length*)) length_out,  // length in chars to end or limit
+    Option(Sink(Length)) length_out,  // length in chars to end or limit
     const Cell* v,
     Option(const Length*) limit
 ){
@@ -174,7 +174,7 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 INLINE Element* Init_Any_String_At(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const_if_c String* s,
     REBLEN index
@@ -191,7 +191,7 @@ INLINE Element* Init_Any_String_At(
 
 #if CPLUSPLUS_11
     INLINE Element* Init_Any_String_At(
-        Sink(Element*) out,
+        Sink(Element) out,
         Heart heart,
         const String* s,
         REBLEN index

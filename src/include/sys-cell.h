@@ -521,8 +521,8 @@ INLINE Cell* Freshen_Cell_Untracked_Inline(Cell* c) {
 //    be able to study to the cell to do the initialization?
 //
 // 3. These overloads are the best I could come up with...but they conflict
-//    if written naively.  The variant for (Sink(Element*), const Element*)
-//    will compete with one as (Sink(Value*), const Value*) when the second
+//    if written naively.  The variant for (Sink(Element), const Element*)
+//    will compete with one as (Sink(Value), const Value*) when the second
 //    argument is Element*, since Element can be passed where Value is taken.
 //    Template magic lets an overload exclude itself to break the contention.
 
@@ -575,7 +575,7 @@ INLINE Cell* Copy_Cell_Untracked(
     #define Copy_Cell(out,v) \
         TRACK(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY))
 #else
-    INLINE Element* Copy_Cell_Overload(Sink(Element*) out, const Element* v) {
+    INLINE Element* Copy_Cell_Overload(Sink(Element) out, const Element* v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
@@ -587,12 +587,12 @@ INLINE Cell* Copy_Cell_Untracked(
             && !std::is_convertible<T,const Element*>::value
         >::type* = nullptr
     >
-    INLINE Value* Copy_Cell_Overload(Sink(Value*) out, T v) {
+    INLINE Value* Copy_Cell_Overload(Sink(Value) out, T v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
 
-    INLINE Atom* Copy_Cell_Overload(Sink(Atom*) out, const Atom* v) {
+    INLINE Atom* Copy_Cell_Overload(Sink(Atom) out, const Atom* v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
@@ -639,7 +639,7 @@ INLINE Cell* Move_Cell_Untracked(
     #define Move_Cell(out,v) \
         TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
 #else
-    INLINE Element* Move_Cell_Overload(Sink(Element*) out, Element* v) {
+    INLINE Element* Move_Cell_Overload(Sink(Element) out, Element* v) {
         Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
@@ -651,12 +651,12 @@ INLINE Cell* Move_Cell_Untracked(
             && !std::is_convertible<T,Element*>::value
         >::type* = nullptr
     >
-    INLINE Value* Move_Cell_Overload(Sink(Value*) out, T v) {
+    INLINE Value* Move_Cell_Overload(Sink(Value) out, T v) {
         Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
 
-    INLINE Atom* Move_Cell_Overload(Sink(Atom*) out, Atom* v) {
+    INLINE Atom* Move_Cell_Overload(Sink(Atom) out, Atom* v) {
         Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }

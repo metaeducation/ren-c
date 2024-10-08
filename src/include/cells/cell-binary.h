@@ -13,7 +13,7 @@ INLINE const Binary* Cell_Binary(const Cell* v) {
 
 
 INLINE const Byte* Cell_Binary_Size_At(
-    Option(Sink(Size*)) size_at_out,
+    Option(Sink(Size)) size_at_out,
     const Cell* v
 ){
     const Binary* b = Cell_Binary(v);

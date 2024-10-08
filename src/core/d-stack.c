@@ -84,7 +84,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-Element* Init_Near_For_Level(Sink(Element*) out, Level* L)
+Element* Init_Near_For_Level(Sink(Element) out, Level* L)
 {
     StackIndex base = TOP_INDEX;
 

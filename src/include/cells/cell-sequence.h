@@ -267,7 +267,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
 // revisit this low-priority idea at that time.
 
 INLINE Element* Init_Any_Sequence_Bytes(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const Byte* data,
     Size size
@@ -300,7 +300,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     Init_Any_Sequence_Bytes((out), REB_TUPLE, (data), (len));
 
 INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const Value* head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
@@ -341,7 +341,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
 INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const Element* first,
     const Element* second
@@ -416,7 +416,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
 
 
 INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const Element* first,
     const Element* second
@@ -434,7 +434,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
 }
 
 INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     StackIndex base
 ){
@@ -473,7 +473,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
 }
 
 INLINE Option(Error*) Trap_Pop_Sequence(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     StackIndex base
 ){
@@ -507,7 +507,7 @@ INLINE Option(Error*) Trap_Pop_Sequence(
 // like `///` if that were deemed interesting.
 //
 INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
-    Sink(Value*) out,
+    Sink(Value) out,
     Heart sequence_heart,
     StackIndex base
 ){
@@ -606,7 +606,7 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
 //    the small series optimization.
 //
 INLINE Element* Derelativize_Sequence_At(
-    Sink(Element*) out,
+    Sink(Element) out,
     const Element* sequence,
     Context* context,
     REBLEN n
@@ -765,13 +765,13 @@ INLINE bool IS_QUOTED_PATH(const Cell* v) {
         and Cell_Heart(v) == REB_PATH;
 }
 
-INLINE Element* Init_Set_Word(Sink(Element*) out, const Symbol* s) {
+INLINE Element* Init_Set_Word(Sink(Element) out, const Symbol* s) {
     Init_Word(out, s);
     HEART_BYTE(out) = REB_CHAIN;
     return out;
 }
 
-INLINE Element* Init_Get_Word(Sink(Element*) out, const Symbol* s) {
+INLINE Element* Init_Get_Word(Sink(Element) out, const Symbol* s) {
     Init_Word(out, s);
     HEART_BYTE(out) = REB_CHAIN;
     Set_Cell_Flag(out, LEADING_BLANK);
@@ -780,7 +780,7 @@ INLINE Element* Init_Get_Word(Sink(Element*) out, const Symbol* s) {
 
 
 INLINE Option(Heart) Try_Get_Sequence_Singleheart(
-    Sink(bool*) leading_blank,
+    Sink(bool) leading_blank,
     const Cell* c
 ){
     assert(Any_Sequence_Kind(Cell_Heart(c)));

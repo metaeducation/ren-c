@@ -555,7 +555,7 @@ DECLARE_NATIVE(lazy)
 //        == ~[3 ~[]~ ']
 //
 INLINE bool Pack_Native_Core_Throws(
-    Sink(Atom*) out,
+    Sink(Atom) out,
     const Value* block,
     const Value* predicate
 ){
@@ -647,7 +647,7 @@ DECLARE_NATIVE(pack_p)
 //
 // Give back an action antiform which can act as a matcher for a datatype.
 //
-Value* Init_Matcher(Sink(Value*) out, const Element* types) {
+Value* Init_Matcher(Sink(Value) out, const Element* types) {
     if (Is_Type_Block(types)) {
         Kind kind = VAL_TYPE_KIND(types);
         Offset n = cast(Offset, kind);

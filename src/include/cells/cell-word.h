@@ -69,7 +69,7 @@ INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
 }
 
 INLINE Element* Init_Any_Word_Untracked(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const Symbol* sym
 ){
@@ -96,7 +96,7 @@ INLINE Element* Init_Any_Word_Untracked(
 #define Init_Var_Word(out,str)      Init_Any_Word((out), REB_VAR_WORD, (str))
 
 INLINE Value* Init_Any_Word_Bound_Untracked(
-    Sink(Element*) out,
+    Sink(Element) out,
     Heart heart,
     const Symbol* symbol,
     Context* binding,  // spelling determined by linked-to thing

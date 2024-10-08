@@ -649,7 +649,7 @@ DECLARE_NATIVE(let)
     ){
         bindings = Make_Let_Variable(symbol, bindings);
 
-        Sink(Element*) where;
+        Sink(Element) where;
         if (Is_Word(vars))
             where = OUT;
         else {
