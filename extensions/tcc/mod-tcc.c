@@ -477,7 +477,7 @@ DECLARE_NATIVE(compile_p)
 
     Value* compilables = ARG(compilables);
 
-    StackIndex base = TOP_INDEX;  // natives are pushed to the stack
+    assert(TOP_INDEX == STACK_BASE);  // natives are pushed to the stack
 
     if (REF(files)) {
         const Element* tail;
@@ -569,7 +569,7 @@ DECLARE_NATIVE(compile_p)
         //
         if (REF(inspect)) {
             Drop_GC_Guard(handle);
-            Drop_Data_Stack_To(base);  // don't modify collected natives
+            Drop_Data_Stack_To(STACK_BASE);  // don't modify collected natives
             return Init_Text(OUT, Pop_Molded_String(mo));
         }
 
@@ -648,7 +648,7 @@ DECLARE_NATIVE(compile_p)
             fail ("TCC failed to relocate the code");
     }
     else {
-        assert(TOP_INDEX == base);  // no user natives if outputting file!
+        assert(TOP_INDEX == STACK_BASE);  // no user natives if outputting file
 
         char *output_file_utf8 = rebSpell(
             "ensure text! pick", config, "'output-file"
@@ -663,7 +663,7 @@ DECLARE_NATIVE(compile_p)
     // With compilation complete, find the matching linker names and get
     // their function pointers to substitute in for the dispatcher.
     //
-    while (TOP_INDEX != base) {
+    while (TOP_INDEX != STACK_BASE) {
         Action* action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 

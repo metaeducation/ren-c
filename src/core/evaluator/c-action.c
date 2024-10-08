@@ -263,9 +263,9 @@ Bounce Action_Executor(Level* L)
         // two-pass mechanism to implement the reordering of non-optional
         // parameters at the callsite.
 
-        if (TOP_INDEX != BASELINE->stack_base) {  // reorderings/refinements
+        if (TOP_INDEX != STACK_BASE) {  // reorderings/refinements
             StackValue(*) ordered = TOP;
-            StackValue(*) lowest_ordered = Data_Stack_At(BASELINE->stack_base);
+            StackValue(*) lowest_ordered = Data_Stack_At(STACK_BASE);
             const Symbol* param_symbol = Key_Symbol(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
@@ -661,7 +661,7 @@ Bounce Action_Executor(Level* L)
     // second time through, and we were just jumping up to check the
     // parameters in response to a BOUNCE_REDO_CHECKED; if so, skip this.
     //
-    if (TOP_INDEX != BASELINE->stack_base) {
+    if (TOP_INDEX != STACK_BASE) {
 
       next_pickup:
 
@@ -685,7 +685,7 @@ Bounce Action_Executor(Level* L)
         DROP();
 
         if (Is_Parameter_Unconstrained(PARAM)) {  // no callsite arg, just drop
-            if (TOP_INDEX != BASELINE->stack_base)
+            if (TOP_INDEX != STACK_BASE)
                 goto next_pickup;
 
             goto fulfill_and_any_pickups_done;
@@ -835,7 +835,6 @@ Bounce Action_Executor(Level* L)
     Action* save_original = L->u.action.original;
     Corrupt_If_Debug(L->u);  // freed for dispatcher use...
     L->u.action.original = save_original;  // ...er, mostly.  [1]
-    L->u.action.dispatcher_base = TOP_INDEX;
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
         if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
@@ -933,7 +932,7 @@ Bounce Action_Executor(Level* L)
   #endif
 
     if (not Is_Raised(OUT))  // !!! Should there be an R_FAIL ?
-        assert(L->u.action.dispatcher_base == TOP_INDEX);
+        assert(STACK_BASE == TOP_INDEX);
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 

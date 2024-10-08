@@ -958,8 +958,6 @@ DECLARE_NATIVE(flatten)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 
-    StackIndex base = TOP_INDEX;
-
     const Element* tail;
     Element* at = Cell_List_At_Ensure_Mutable(&tail, ARG(block));
     Flatten_Core(
@@ -969,5 +967,5 @@ DECLARE_NATIVE(flatten)
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
-    return Init_Block(OUT, Pop_Stack_Values(base));
+    return Init_Block(OUT, Pop_Stack_Values(STACK_BASE));
 }

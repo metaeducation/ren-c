@@ -183,7 +183,7 @@ Bounce Stepper_Executor(Level* L)
     if (THROWING)
         return THROWN;  // no state to clean up
 
-    assert(TOP_INDEX >= BASELINE->stack_base);  // e.g. REDUCE accrues
+    assert(TOP_INDEX >= STACK_BASE);  // e.g. REDUCE accrues
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
     // Given how the evaluator is written, it's inevitable that there will
@@ -826,7 +826,7 @@ Bounce Stepper_Executor(Level* L)
         assert(Is_Action(OUT));
 
         if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated
-            Drop_Data_Stack_To(BASELINE->stack_base);
+            Drop_Data_Stack_To(STACK_BASE);
             fail ("Use `->-` to shove left infix operands into CHAIN!s");
         }
         goto handle_action_in_out_with_refinements_pushed; }
@@ -834,7 +834,7 @@ Bounce Stepper_Executor(Level* L)
      handle_action_in_out_with_refinements_pushed: { /////////////////////////
 
         Level* sub = Make_Action_Sublevel(L);
-        sub->baseline.stack_base = BASELINE->stack_base;  // refinements
+        sub->baseline.stack_base = STACK_BASE;  // refinements
 
         Action* action = VAL_ACTION(OUT);
         Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
@@ -1070,9 +1070,9 @@ Bounce Stepper_Executor(Level* L)
 
         assert(Is_Action(OUT));
         if (slash_at_tail) {  // do not run action, just return it [5]
-            if (BASELINE->stack_base != TOP_INDEX) {
+            if (STACK_BASE != TOP_INDEX) {
                 if (Specialize_Action_Throws(
-                    SPARE, stable_OUT, nullptr, BASELINE->stack_base
+                    SPARE, stable_OUT, nullptr, STACK_BASE
                 )){
                     goto return_thrown;
                 }
@@ -1082,7 +1082,7 @@ Bounce Stepper_Executor(Level* L)
         }
 
         if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated [6]
-            Drop_Data_Stack_To(BASELINE->stack_base);
+            Drop_Data_Stack_To(STACK_BASE);
             fail ("Use `->-` to shove left infix operands into PATH!s");
         }
 
@@ -1351,7 +1351,7 @@ Bounce Stepper_Executor(Level* L)
                 or heart == REB_META_GROUP
             ){
                 if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
-                    Drop_Data_Stack_To(BASELINE->stack_base);
+                    Drop_Data_Stack_To(STACK_BASE);
                     goto return_thrown;
                 }
                 Decay_If_Unstable(SPARE);
@@ -1400,7 +1400,7 @@ Bounce Stepper_Executor(Level* L)
         }
 
         if (stackindex_circled == 0)
-            stackindex_circled = BASELINE->stack_base + 1;  // main [3]
+            stackindex_circled = STACK_BASE + 1;  // main [3]
 
         level_->u.eval.stackindex_circled = stackindex_circled;  // remember it
 
@@ -1461,7 +1461,7 @@ Bounce Stepper_Executor(Level* L)
             pack_array = nullptr;
         }
 
-        StackIndex stackindex_var = BASELINE->stack_base + 1;  // [2]
+        StackIndex stackindex_var = STACK_BASE + 1;  // [2]
         StackIndex stackindex_circled = level_->u.eval.stackindex_circled;
 
         for (
@@ -1547,7 +1547,7 @@ Bounce Stepper_Executor(Level* L)
 
             if (stackindex_circled == stackindex_var) {
                 assert(
-                    stackindex_circled == BASELINE->stack_base + 1
+                    stackindex_circled == STACK_BASE + 1
                     or (
                         var_heart == REB_SIGIL
                         and Cell_Sigil(var) == SIGIL_THE
@@ -1576,7 +1576,7 @@ Bounce Stepper_Executor(Level* L)
 
     } set_block_drop_stack_and_continue: {  //////////////////////////////////
 
-        Drop_Data_Stack_To(BASELINE->stack_base);  // drop writeback variables
+        Drop_Data_Stack_To(STACK_BASE);  // drop writeback variables
         goto lookahead; }
 
 

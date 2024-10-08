@@ -680,7 +680,7 @@ DECLARE_NATIVE(let)
         const Element* item = Cell_List_At(&tail, vars);
         Context* item_binding = Cell_List_Binding(vars);
 
-        StackIndex base = TOP_INDEX;
+        assert(TOP_INDEX == STACK_BASE);
 
         bool altered = false;
 
@@ -748,11 +748,11 @@ DECLARE_NATIVE(let)
             Setify(Init_Any_List(
                 where,  // may be SPARE, and vars may point to it
                 REB_BLOCK,
-                Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
+                Pop_Stack_Values_Core(STACK_BASE, NODE_FLAG_MANAGED)
             ));
         }
         else {
-            Drop_Data_Stack_To(base);
+            Drop_Data_Stack_To(STACK_BASE);
 
             if (vars != where)
                 Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed

@@ -226,8 +226,6 @@ struct ActionExecutorStateStruct {
     // that space is used to hold the specialized value cell.
     //
     const Param* param;
-
-    StackIndex dispatcher_base;
 };
 
 

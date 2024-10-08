@@ -83,8 +83,6 @@ DECLARE_NATIVE(test_librebol)
   #else
     RebolContext* librebol_binding = nullptr;
 
-    StackIndex base = TOP_INDEX;
-
   // !!! NOTICE: We are pushing values to the data stack, but we can't hold
   // a pointer to the stack via PUSH() on the same line as doing an API
   // call, because API calls can move the stack.  This doesn't always make
@@ -172,7 +170,7 @@ DECLARE_NATIVE(test_librebol)
   #endif
   }
 
-    return Init_Block(OUT, Pop_Stack_Values(base));
+    return Init_Block(OUT, Pop_Stack_Values(STACK_BASE));
   #endif
 }
 

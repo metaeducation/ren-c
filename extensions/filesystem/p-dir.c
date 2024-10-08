@@ -165,7 +165,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         if (REF(part) or REF(seek) or REF(string) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
-        StackIndex base = TOP_INDEX;
+        assert(TOP_INDEX == STACK_BASE);
         while (true) {
             Value* result = Try_Read_Directory_Entry(dir);
             if (result == nullptr)
@@ -182,7 +182,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
             rebRelease(result);
         }
 
-        Init_Block(OUT, Pop_Stack_Values(base));
+        Init_Block(OUT, Pop_Stack_Values(STACK_BASE));
         return OUT; }
 
     //=//// CREATE /////////////////////////////////////////////////////////=//

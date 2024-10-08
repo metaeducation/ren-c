@@ -708,9 +708,6 @@ INLINE Atom* Native_Copy_Result_Untracked(
 
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
-    #define STACK_BASE \
-        (assert(Is_Action_Level(level_)), level_->u.action.dispatcher_base)
-
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
     #define NOTHING     Native_Nothing_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
@@ -725,6 +722,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define UNHANDLED   Error_Cannot_Use(verb, D_ARG(1))
 
     #define BASELINE   (&level_->baseline)
+    #define STACK_BASE (level_->baseline.stack_base)
 #endif
 
 

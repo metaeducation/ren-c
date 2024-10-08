@@ -80,8 +80,6 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     Corrupt_Function_Pointer_If_Debug(L->executor);  // caller must set
     Corrupt_Pointer_If_Debug(L->label);
 
-    sub->u.action.dispatcher_base = L->u.action.dispatcher_base;
-
     Corrupt_If_Debug(L->u);  // no longer action; corrupt after get stack base
 
     return sub;

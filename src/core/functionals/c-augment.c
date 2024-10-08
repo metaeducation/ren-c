@@ -79,7 +79,6 @@ DECLARE_NATIVE(augment)
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.
 
-    StackIndex base = TOP_INDEX;
     StackIndex return_stackindex = 0;
 
     Flags flags = MKF_MASK_NONE;
@@ -124,7 +123,7 @@ DECLARE_NATIVE(augment)
 
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct,
-        base,
+        STACK_BASE,
         flags,
         return_stackindex
     );

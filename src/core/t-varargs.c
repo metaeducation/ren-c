@@ -499,7 +499,7 @@ REBTYPE(Varargs)
             return OUT;
         }
 
-        StackIndex base = TOP_INDEX;
+        assert(TOP_INDEX == STACK_BASE);
 
         if (not Is_Integer(ARG(part)))
             fail (PARAM(part));
@@ -523,7 +523,7 @@ REBTYPE(Varargs)
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
         //
-        return Init_Block(OUT, Pop_Stack_Values(base)); }
+        return Init_Block(OUT, Pop_Stack_Values(STACK_BASE)); }
 
     default:
         break;

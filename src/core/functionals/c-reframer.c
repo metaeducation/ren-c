@@ -349,13 +349,11 @@ DECLARE_NATIVE(reframer)
     Action* shim = VAL_ACTION(ARG(shim));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(shim));
 
-    StackIndex base = TOP_INDEX;
-
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
     VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
         ARG(shim),
-        base,
+        STACK_BASE,
         &binder
     );
 
@@ -363,7 +361,7 @@ DECLARE_NATIVE(reframer)
 
     REBLEN param_index = 0;
 
-    if (TOP_INDEX != base) {
+    if (TOP_INDEX != STACK_BASE) {
         error = Error_User("REFRAMER can't use partial specializions ATM");
         goto cleanup_binder;
     }

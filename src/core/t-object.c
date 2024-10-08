@@ -1744,7 +1744,7 @@ DECLARE_NATIVE(construct)
 
     VarList* varlist = Cell_Varlist(OUT);
 
-    while (TOP_INDEX != BASELINE->stack_base) {
+    while (TOP_INDEX != STACK_BASE) {
         const Symbol* symbol = unwrap Try_Get_Settable_Word_Symbol(
             cast(Element*, TOP)
         );
