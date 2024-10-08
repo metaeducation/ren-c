@@ -232,7 +232,6 @@ static void Append_To_Context(VarList* context, Value* arg)
             break; // fix bug#708
         }
         else {
-            assert(NOT_VAL_FLAG(&word[1], VALUE_FLAG_ENFIXED));
             Derelativize(var, &word[1], VAL_SPECIFIER(arg));
         }
     }
@@ -548,7 +547,7 @@ VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
     //
     Value* src = Varlist_Slots_Head(original);
     for (; NOT_END(src); ++src, ++dest)
-        Move_Var(dest, src); // keep VALUE_FLAG_ENFIXED, ARG_MARKED_CHECKED
+        Move_Var(dest, src); // keep ARG_MARKED_CHECKED
 
     Term_Array_Len(varlist, Varlist_Len(original) + 1);
 

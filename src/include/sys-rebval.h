@@ -180,17 +180,12 @@
 //
 // In Ren-C, there is only one kind of function (ACTION!).  But it's possible
 // to tag a function value cell in a context as being "enfixed", hence it
-// will acquire its first argument from the left.  See SET/ENFIX and ENFIX.
+// will acquire its first argument from the left.  See ENFIX.
 //
 // The reasion it is a generic VALUE_FLAG_XXX and not an ACTION_FLAG_XXX is
 // so that it can be dealt with without specifically knowing that the cell
 // involved is an action.  One benefit is that testing for an enfix action
 // can be done just by looking at this bit--since only actions have it set.
-//
-// But also, this bit is not copied by Copy_Cell.  As a result, if you say
-// something like `foo: :+`, foo will contain the non-enfixed form of the
-// function.  To do that would require more nuance in Copy_Cell if it were
-// an ACTION_FLAG_XXX, testing for action-ness vs. just masking it out.
 //
 #define VALUE_FLAG_ENFIXED \
     FLAG_LEFT_BIT(21)
@@ -286,7 +281,7 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED \
-        | VALUE_FLAG_ENFIXED | VALUE_FLAG_EVAL_FLIP)
+        | VALUE_FLAG_EVAL_FLIP)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

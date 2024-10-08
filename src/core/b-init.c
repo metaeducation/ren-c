@@ -341,7 +341,7 @@ DECLARE_NATIVE(generic)
 //
 // It is designed to be an enfix function that quotes its first argument,
 // so when you write FOO: ACTION [...], the FOO: gets quoted to be the verb.
-// The SET/ENFIX is done by the bootstrap, after the natives are loaded.
+// The ENFIX is done by the bootstrap, after the natives are loaded.
 {
     INCLUDE_PARAMS_OF_GENERIC;
 

@@ -101,7 +101,7 @@
 )
 (
     a-value: get '+
-    (a-value 1 2) == 3
+    (1 a-value 2) == 3
 )
 (
     a-value: 0x0

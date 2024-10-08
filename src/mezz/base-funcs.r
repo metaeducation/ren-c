@@ -641,7 +641,7 @@ nfix?: function [
 ]
 
 postfix?: redescribe [
-    {TRUE if an arity 1 function is SET/ENFIX to act as postfix.}
+    {TRUE if an arity 1 function is ENFIX to act as postfix.}
 ](
     specialize :nfix? [
         n: 1
@@ -650,7 +650,7 @@ postfix?: redescribe [
 )
 
 infix?: redescribe [
-    {TRUE if an arity 2 function is SET/ENFIX to act as infix.}
+    {TRUE if an arity 2 function is ENFIX to act as infix.}
 ](
     specialize :nfix? [
         n: 2

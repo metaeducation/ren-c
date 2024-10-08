@@ -143,8 +143,7 @@ INLINE bool Set_Path_Throws_Core(
 INLINE void Set_Path_Core(
     const Cell* any_path,
     Specifier* specifier,
-    const Value* setval,
-    bool enfix
+    const Value* setval
 ){
     assert(Any_Path(any_path)); // *could* work on Any_List(), actually
 
@@ -154,8 +153,6 @@ INLINE void Set_Path_Core(
     DECLARE_VALUE (out);
 
     Flags flags = DO_FLAG_NO_PATH_GROUPS;
-    if (enfix)
-        flags |= DO_FLAG_SET_PATH_ENFIXED;
 
     if (Eval_Path_Throws_Core(
         out,

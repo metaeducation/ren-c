@@ -562,17 +562,11 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
     const Cell* target,
     Specifier* target_specifier,
     const Cell* value,
-    Specifier* value_specifier,
-    bool enfix
+    Specifier* value_specifier
 ){
-    if (enfix and not Is_Action(value))
-        fail ("Attempt to SET/ENFIX on a non-ACTION!");
-
     if (Any_Word(target)) {
         Value* var = Sink_Var_May_Fail(target, target_specifier);
         Derelativize(var, value, value_specifier);
-        if (enfix)
-            SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
     }
     else if (Any_Path(target)) {
         DECLARE_VALUE (specific);
@@ -585,11 +579,37 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
         // present), the flag tells it to enfix a word in a context, or
         // it will error if that's not what it looks up to.
         //
-        Set_Path_Core(target, target_specifier, specific, enfix);
+        Set_Path_Core(target, target_specifier, specific);
     }
     else
         fail (Error_Invalid_Core(target, target_specifier));
 }
+
+
+//
+//  enfix: native [
+//
+//  {Give a version of the action with the infix bit set to on or off}
+//
+//      return: [action!]
+//      action [action!]
+//      /off "turn the infix bit off instead of on"
+//  ]
+//
+DECLARE_NATIVE(enfix) {
+    INCLUDE_PARAMS_OF_ENFIX;
+
+    Value* v = ARG(action);
+
+    Copy_Cell(OUT, v);
+    if (REF(off))
+        CLEAR_VAL_FLAG(OUT, VALUE_FLAG_ENFIXED);
+    else
+        SET_VAL_FLAG(OUT, VALUE_FLAG_ENFIXED);
+
+    return OUT;
+}
+
 
 
 //
@@ -605,7 +625,6 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 //          "Value or block of values"
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."
-//      /enfix "ACTION! calls through this word get first arg from left"
 //      /any "do not error on unset words"
 //  ]
 //
@@ -645,8 +664,7 @@ DECLARE_NATIVE(set)
             target,
             SPECIFIED,
             Is_Blank(value) and REF(some) ? NULLED_CELL : value,
-            SPECIFIED,
-            REF(enfix)
+            SPECIFIED
         );
 
         RETURN (value);
@@ -678,8 +696,7 @@ DECLARE_NATIVE(set)
             IS_END(v) ? BLANK_VALUE : v, // R3-Alpha/Red blank after END
             (Is_Block(value) and not REF(single))
                 ? VAL_SPECIFIER(value)
-                : SPECIFIED,
-            REF(enfix)
+                : SPECIFIED
         );
     }
 

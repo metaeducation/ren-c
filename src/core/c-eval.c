@@ -769,7 +769,8 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case REB_ACTION: {
-        assert(NOT_VAL_FLAG(current, VALUE_FLAG_ENFIXED)); // WORD!/PATH! only
+        if (GET_VAL_FLAG(current, VALUE_FLAG_ENFIXED))
+            fail ("Bootstrap EXE only dispatches infix from WORD!");
 
         if (not EVALUATING(current))
             goto inert;
@@ -2195,7 +2196,7 @@ bool Eval_Core_Throws(Level* const L)
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
     // and consider its job done.  It has to notice that the word `+` looks up
-    // to an ACTION! that was assigned with SET/ENFIX, and keep going.
+    // to an ACTION! that had its ENFIX flag set, and keep going.
     //
     // Next, there's a subtlety with DO_FLAG_NO_LOOKAHEAD which explains why
     // processing of the 2 argument doesn't greedily continue to advance, but

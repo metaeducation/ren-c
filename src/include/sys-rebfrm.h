@@ -218,17 +218,9 @@
     FLAG_LEFT_BIT(19)
 
 
-//=//// DO_FLAG_SET_PATH_ENFIXED //////////////////////////////////////////=//
+//=//// DO_FLAG_20 ////////////////////////////////////////////////////////=//
 //
-// The way setting of paths is historically designed, it can't absolutely
-// give back a location of a variable to be set...since sometimes the result
-// is generated, or accessed as a modification of an immediate value.  This
-// complicates the interface to where the path dispatcher must be handed
-// the value to set and copy itself if necessary.  But CELL_MASK_COPIED does
-// not carry forward VALUE_FLAG_ENFIXED in the assignment.  This flag tells
-// a frame used with SET-PATH! semantics to make its final assignment enfix.
-//
-#define DO_FLAG_SET_PATH_ENFIXED \
+#define DO_FLAG_20 \
     FLAG_LEFT_BIT(20)
 
 
@@ -560,7 +552,7 @@ struct LevelStruct {
     //
     // There is a lookahead step to see if the next item in an array is a
     // WORD!.  If so it is checked to see if that word is a "lookback word"
-    // (e.g. one that refers to an ACTION! value set with SET/ENFIX).
+    // (e.g. one that refers to an ACTION! value set with the ENFIX flag).
     // Performing that lookup has the same cost as getting the variable value.
     // Considering that the value will need to be used anyway--infix or not--
     // the pointer is held in this field for WORD!s (and sometimes ACTION!)

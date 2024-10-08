@@ -30,8 +30,8 @@
 [#1152 ; SORT not stable (order not preserved)
     (equal? [1 9 1 5 1 7] sort/skip/compare [1 9 1 5 1 7] 2 1)
 ]
-([1 2 3] = sort/compare [1 3 2] :<)
-([3 2 1] = sort/compare [1 3 2] :>)
+([1 2 3] = sort/compare [1 3 2] :lesser?)
+([3 2 1] = sort/compare [1 3 2] :greater?)
 [#1516 ; SORT/compare ignores the typespec of its function argument
     (error? sys/util/rescue [sort/compare reduce [1 2 _] :>])
 ]

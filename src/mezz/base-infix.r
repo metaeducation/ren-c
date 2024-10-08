@@ -78,7 +78,7 @@ for-each [math-op function-name] [
     ; Note: TIGHTEN currently changes all normal parameters to #tight, which
     ; which for the set operations creates an awkward looking /SKIP's SIZE.
     ;
-    set/enfix math-op (tighten get function-name)
+    set math-op enfix (tighten get function-name)
 ]
 
 
@@ -119,7 +119,7 @@ for-each [comparison-op function-name] compose [
     ; all things considered is still pretty natural (and popular in many
     ; languages)...and a small price to pay.  Hence no TIGHTEN call here.
     ;
-    set/enfix comparison-op (get function-name)
+    set comparison-op enfix (get function-name)
 ]
 
 
@@ -157,9 +157,9 @@ my: enfix func [
 ; Lambdas are experimental quick function generators via a symbol.  The
 ; identity is used to shake up enfix ordering.
 ;
-set/enfix (r3-alpha-quote "->") :lambda
-set (r3-alpha-quote "<-") :identity ;-- not enfix, just affects enfix
-set/enfix (r3-alpha-quote ">-") :shove
+set (r3-alpha-quote "->") enfix :lambda
+set (r3-alpha-quote "<-") :identity  ; Note: NOT ENFIX
+set (r3-alpha-quote ">-") enfix :shove
 
 
 ; These constructs used to be enfix to complete their left hand side.  Yet

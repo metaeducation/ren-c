@@ -1455,9 +1455,7 @@ INLINE Value* Move_Var(Cell* out, const Value* v)
     // the whole potential reification process...double-set header for now.)
 
     Copy_Cell(out, v);
-    out->header.bits |= (
-        v->header.bits & (VALUE_FLAG_ENFIXED | ARG_MARKED_CHECKED)
-    );
+    out->header.bits |= (v->header.bits & ARG_MARKED_CHECKED);
     return KNOWN(out);
 }
 

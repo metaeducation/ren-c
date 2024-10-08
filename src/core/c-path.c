@@ -144,17 +144,10 @@ bool Next_Path_Throws(REBPVS *pvs)
             panic ("Path dispatch isn't allowed to throw, only GROUP!s");
 
         case REB_R_INVISIBLE: // dispatcher assigned target with opt_setval
-            if (pvs->flags.bits & DO_FLAG_SET_PATH_ENFIXED)
-                fail ("Path setting was not via an enfixable reference");
             break; // nothing left to do, have to take the dispatcher's word
 
         case REB_R_REFERENCE: { // dispatcher wants a set *if* at end of path
             Copy_Cell(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
-
-            if (pvs->flags.bits & DO_FLAG_SET_PATH_ENFIXED) {
-                assert(Is_Action(PVS_OPT_SETVAL(pvs)));
-                SET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_ENFIXED);
-            }
             break; }
 
         case REB_R_IMMEDIATE: {
@@ -172,9 +165,6 @@ bool Next_Path_Throws(REBPVS *pvs)
             // pvs->u.ref.  So in the example case of `month/year:`, that
             // would be the Varlist_Slot() where month was found initially, and so
             // we write the updated bits from pvs->out there.
-
-            if (pvs->flags.bits & DO_FLAG_SET_PATH_ENFIXED)
-                fail ("Can't enfix a write into an immediate value");
 
             if (not pvs->u.ref.cell)
                 fail ("Can't update temporary immediate value via SET-PATH!");
@@ -304,9 +294,6 @@ bool Eval_Path_Throws_Core(
     const Value* opt_setval, // Note: may be the same as out!
     Flags flags
 ){
-    if (flags & DO_FLAG_SET_PATH_ENFIXED)
-        assert(opt_setval); // doesn't make any sense for GET-PATH! or PATH!
-
     // Treat a 0-length PATH! as if it gives back an ACTION! which does "what
     // a zero length path would do", e.g. an analogue to division (though in
     // the future, types might define this some other way.)

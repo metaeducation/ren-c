@@ -49,18 +49,6 @@ probe: func [
 ]
 
 
-; Convenience helper for making enfixed functions
-
-set/enfix the enfix: func [
-    "Convenience version of SET/ENFIX, e.g `+: enfix :add`"
-    return: [~] "`x: y: enfix :z` wouldn't enfix x, so returns void"
-    :target [set-word! set-path!]
-    action [action!]
-][
-    set/enfix target :action
-]
-
-
 ; Common "Invisibles"
 
 comment: enfix func [

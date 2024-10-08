@@ -962,12 +962,11 @@ DECLARE_NATIVE(default)
     if (Do_Branch_Throws(OUT, ARG(branch)))
         return BOUNCE_THROWN;
 
-    const bool enfix = false;
     if (Is_Set_Word(target))
         Copy_Cell(Sink_Var_May_Fail(target, SPECIFIED), OUT);
     else {
         assert(Is_Set_Path(target));
-        Set_Path_Core(target, SPECIFIED, OUT, enfix);
+        Set_Path_Core(target, SPECIFIED, OUT);
     }
     return OUT;
 }
