@@ -2712,12 +2712,13 @@ void Shutdown_Scanner(void)
 //
 //  {Translates UTF-8 binary source to values.}
 //
-//      return: [~null~ block! binary! text! error!]
+//      return: [~null~ any-value! block! binary! text! error!]
 //      source [<maybe> binary! text!]
 //          "Must be Unicode UTF-8 encoded"
 //      /next3
 //          {Translate next complete value (blocks as single value)}
 //          next-arg [any-word!]  ; word to set to transcoded value
+//      /one "Return a single value, error if more material than that"
 //      /file
 //          file-name [file! url!]
 //      /line
@@ -2827,6 +2828,16 @@ DECLARE_NATIVE(transcode)
         Copy_Cell(nvar, TOP);
         DROP();
         return OUT;  // position set above
+    }
+
+    if (REF(one)) {
+        if (TOP_INDEX == base)
+            fail ("TRANSCODE:ONE got zero values");
+        if (TOP_INDEX > base + 1)
+            fail ("TRANSCODE:ONE got more than one value");
+        Copy_Cell(OUT, TOP);
+        DROP();
+        return OUT;
     }
 
     Array* a = Pop_Stack_Values_Core(
