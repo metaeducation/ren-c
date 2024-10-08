@@ -170,6 +170,15 @@ DECLARE_NATIVE(test_librebol)
   #endif
   }
 
+  blockscope {  // !!! Note: FEED_FLAG_NEEDS_SYNC needs review
+    Set_Cell_Flag(Init_Integer(PUSH(), 8), NEWLINE_BEFORE);
+
+    Value* noop = rebValue("");
+    assert(Is_Void(noop));
+    rebRelease(noop);
+    Init_Meta_Of_Void(PUSH());
+  }
+
     return Init_Block(OUT, Pop_Stack_Values(STACK_BASE));
   #endif
 }
