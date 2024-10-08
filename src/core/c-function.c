@@ -766,7 +766,7 @@ Phase* Make_Action(
           case PARAMCLASS_SOFT:
           case PARAMCLASS_JUST:
           case PARAMCLASS_THE:
-            Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST);
+            Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST);
             break;
 
           default:

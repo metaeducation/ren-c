@@ -192,7 +192,7 @@ Bounce Stepper_Executor(Level* L)
     //
     switch (STATE) {
       case ST_STEPPER_INITIAL_ENTRY:
-        goto initial_entry;
+        goto start_new_expression;
 
       case ST_STEPPER_FETCHING_INERTLY:  // see definition for rationale
         if (Is_Feed_At_End(L->feed))
@@ -215,7 +215,7 @@ Bounce Stepper_Executor(Level* L)
         //
         Freshen_Cell(OUT);
         L_current_gotten = nullptr;  // !!! allow/require to be passed in?
-        goto evaluate; }
+        goto look_ahead_for_left_literal_infix; }
 
       intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
@@ -268,9 +268,7 @@ Bounce Stepper_Executor(Level* L)
     Evaluator_Expression_Checks_Debug(L);
   #endif
 
-  initial_entry: {  //////////////////////////////////////////////////////////
-
-  // This starts a new expression.
+  start_new_expression: {  ///////////////////////////////////////////////////
 
     Sync_Feed_At_Cell_Or_End_May_Fail(L->feed);
 
@@ -285,86 +283,95 @@ Bounce Stepper_Executor(Level* L)
     Copy_Cell(CURRENT, L_next);
     Fetch_Next_In_Feed(L->feed);
 
-} evaluate: ;  // meaningful semicolon--subsequent macro may declare things
+} look_ahead_for_left_literal_infix: { ///////////////////////////////////////
 
-    // ^-- doesn't advance expression index: `reeval x` starts with `reeval`
-
-  //=//// LOOKAHEAD FOR INFIX FUNCTIONS THAT QUOTE THEIR LEFT ARG /////////=//
+    // The first thing we do in an evaluation step has to be to look ahead for
+    // any function that takes its left hand side literally.  Lambda functions
+    // are a good example:
+    //
+    //     >> x: does [print "Running X the function"]
+    //
+    //     >> all [1 2 3] then x -> [print "Result of ALL was" x]
+    //     Result of ALL was 3
+    //
+    // When we moved on from THEN to evaluate X, it had to notice that -> is
+    // an infix function that takes its first argument literally.  That meant
+    // running the X function is suppressed, and instead the X word! gets
+    // passed as the first argument to ->
+    //
+    // 1. REEVALUATE jumps here.  Note that jumping to this label doesn't
+    //    advance the expression index, so as far as error messages and such
+    //    are concerned, `reeval x` will still start with `reeval`.
+    //
+    // 2. !!! Using L_binding here instead of FEED_BINDING(L->feed) seems to
+    //    break `let x: me + 1`, due to something about the conditionality on
+    //    reevaluation.  L_binding's conditionality should be reviewed for
+    //    relevance in the modern binding model.
 
     if (Is_Level_At_End(L))
         goto give_up_backward_quote_priority;
 
     assert(not L_next_gotten);  // Fetch_Next_In_Feed() cleared it
 
-    if (VAL_TYPE_UNCHECKED(L_next) == REB_WORD) {  // right's kind
-        //
-        // !!! Using L_binding here instead of FEED_BINDING(L->feed)
-        // seems to break `let x: me + 1`, due to something about the
-        // conditionality on reevaluation.  L_binding's conditionality
-        // should be reviewed for relevance in the modern binding model.
-        //
-        L_next_gotten = Lookup_Word(L_next, FEED_BINDING(L->feed));
+    if (QUOTE_BYTE(L_next) != NOQUOTE_1)  // quoted right can't look back
+        goto give_up_backward_quote_priority;
 
+    Option(InfixMode) infix_mode;
+    Action* infixed;
+
+    switch (HEART_BYTE(L_next)) {  // words and chains on right may look back
+      case REB_WORD: {
+        L_next_gotten = Lookup_Word(
+            L_next,
+            FEED_BINDING(L->feed)  // L_binding breaks here [2]
+        );
         if (
             not L_next_gotten
             or not Is_Action(unwrap L_next_gotten)
+            or not (infix_mode = Get_Cell_Infix_Mode(unwrap L_next_gotten))
         ){
             goto give_up_backward_quote_priority;
         }
-    }
-    else
+        infixed = VAL_ACTION(unwrap L_next_gotten);
+        break; }
+
+      case REB_CHAIN:
+        goto give_up_backward_quote_priority;  // should be enfixable!
+
+      default:
         goto give_up_backward_quote_priority;
-
-  { Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(unwrap L_next_gotten);
-    if (not infix_mode)
-        goto give_up_backward_quote_priority;
-
-  blockscope {
-    Action* infixed = VAL_ACTION(unwrap L_next_gotten);
-    Array* paramlist = ACT_PARAMLIST(infixed);
-
-    if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST))
-        goto give_up_backward_quote_priority;
-
-    ParamClass pclass = Cell_ParamClass(  // !!! Should cache this in frame
-        First_Unspecialized_Param(nullptr, infixed)
-    );
-
-    // If the action soft quotes its left, that means it's aware that its
-    // "quoted" argument may be evaluated sometimes.  If there's evaluative
-    // material on the left, treat it like it's in a group.
-    //
-    if (
-        infix_mode == INFIX_POSTPONE
-        or (
-            Get_Feed_Flag(L->feed, NO_LOOKAHEAD)
-            and not Any_Set_Value(L_current)
-        )
-    ){
-        if (pclass == PARAMCLASS_NORMAL or pclass == PARAMCLASS_META)
-            goto give_up_backward_quote_priority;  // yield as an exemption
     }
 
-    // Lookback args are fetched from OUT, then copied into an arg slot.
-    // Put the backwards quoted value into OUT.  (Do this before next
-    // step because we need value for type check)
+    goto check_first_infix_parameter_class;
+
+  check_first_infix_parameter_class: { ///////////////////////////////////////
+
+    // 1. Lookback args are fetched from OUT, then copied into an arg slot.
+    //    Put the backwards quoted value into OUT.  (Do this before next
+    //    step because we need value for type check)
     //
+    // 2. We make a special exemption for left-stealing arguments, when they
+    //    have nothing to their right.  They lose their priority and we run
+    //    the left hand side with them as a priority instead.  This lets us
+    //    do (the ->) or (help of)
+
+    Option(ParamClass) pclass = Get_First_Param_Literal_Class(infixed);
+    if (not pclass)
+        goto give_up_backward_quote_priority;
+
     if (pclass == PARAMCLASS_JUST)  // infix func ['x ...] [...]
-        Copy_Cell(OUT, L_current);
+        Copy_Cell(OUT, L_current);  // put left side in OUT [1]
     else {
         assert(
             pclass == PARAMCLASS_THE  // infix func [@x ...] [...]
             or pclass == PARAMCLASS_SOFT
         );
-        Derelativize(OUT, L_current, L_binding);
+        Derelativize(OUT, L_current, L_binding);  // put left side in OUT [1]
     }
 
-    // We skip over the word that invoked the action (e.g. ->-, OF, =>).
-    // CURRENT will then hold that word.  (OUT holds what was to the left)
-    //
     L_current_gotten = L_next_gotten;
-    Copy_Cell(CURRENT, L_next);
-    Fetch_Next_In_Feed(L->feed);
+    Copy_Cell(CURRENT, L_next);  // CURRENT now invoking word (->-, OF, =>)
+    Fetch_Next_In_Feed(L->feed);  // ...now skip that invoking word
 
     if (
         Is_Feed_At_End(L->feed)  // v-- OUT is what used to be on left
@@ -372,15 +379,7 @@ Bounce Stepper_Executor(Level* L)
             VAL_TYPE_UNCHECKED(OUT) == REB_WORD
             or VAL_TYPE_UNCHECKED(OUT) == REB_PATH
         )
-    ){
-        // We make a special exemption for left-stealing arguments, when
-        // they have nothing to their right.  They lose their priority
-        // and we run the left hand side with them as a priority instead.
-        // This lets us do (the ->) or (help of)
-        //
-        // Swap it around so that what we had put in OUT goes to being in
-        // CURRENT, and the current is put back into the feed.
-
+    ){  // exemption: put OUT back in CURRENT and CURRENT back in feed [2]
         Move_Cell(&L->feed->fetched, CURRENT);
         L->feed->p = &L->feed->fetched;
         L->feed->gotten = L_current_gotten;
@@ -399,11 +398,11 @@ Bounce Stepper_Executor(Level* L)
         STATE = REB_PATH;
         goto path_common;
     }
-  }
 
-    // Wasn't the at-end exception, so run normal infix with right winning.
-    //
-  blockscope {
+    goto right_hand_literal_infix_wins;
+
+} right_hand_literal_infix_wins: { ///////////////////////////////////////////
+
     Level* sub = Make_Action_Sublevel(L);
     Push_Level(OUT, sub);
     Push_Action(
@@ -417,9 +416,9 @@ Bounce Stepper_Executor(Level* L)
         : VAL_FRAME_LABEL(L_current);
 
     Begin_Action(sub, label, infix_mode);
-    goto process_action; }}
+    goto process_action;
 
-  give_up_backward_quote_priority:
+}} give_up_backward_quote_priority:
 
   //=//// BEGIN MAIN SWITCH STATEMENT /////////////////////////////////////=//
 
@@ -1848,7 +1847,7 @@ Bounce Stepper_Executor(Level* L)
     Action* infixed = VAL_ACTION(unwrap L_next_gotten);
     Array* paramlist = ACT_PARAMLIST(infixed);
 
-    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST)) {
+    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {
         //
         // Left-quoting by infix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:

@@ -592,7 +592,7 @@ Bounce Action_Executor(Level* L)
                 (Get_Subclass_Flag(
                     VARLIST,
                     ACT_PARAMLIST(VAL_ACTION(unwrap L->feed->gotten)),
-                    PARAMLIST_QUOTES_FIRST
+                    PARAMLIST_LITERAL_FIRST
                 ))
             ){
                 // We need to defer and let the right hand quote that is

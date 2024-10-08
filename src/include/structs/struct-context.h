@@ -208,7 +208,7 @@ typedef Context Use;
     FLEX_FLAG_24
 
 
-//=//// VARLIST_FLAG_PARAMLIST_QUOTES_FIRST ///////////////////////////////=//
+//=//// VARLIST_FLAG_PARAMLIST_LITERAL_FIRST ///////////////////////////////=//
 //
 // This is a calculated property, which is cached by Make_Action().
 //
@@ -216,7 +216,7 @@ typedef Context Use;
 // so frequently, and it's quicker to check a bit on the function than to
 // walk the parameter list every time that function is called.
 //
-#define VARLIST_FLAG_PARAMLIST_QUOTES_FIRST \
+#define VARLIST_FLAG_PARAMLIST_LITERAL_FIRST \
     FLEX_FLAG_25
 
 

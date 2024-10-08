@@ -657,6 +657,29 @@ const Param* First_Unspecialized_Param(const Key* * key, Action* act)
 
 
 //
+//  Get_First_Param_Literal_Class: C
+//
+// !!! This is very inefficient, and the parameter class should be cached
+// in the frame somehow.
+//
+Option(ParamClass) Get_First_Param_Literal_Class(Action* action) {
+    Array* paramlist = ACT_PARAMLIST(action);
+    if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
+        return PARAMCLASS_0;
+
+    ParamClass pclass = Cell_ParamClass(
+        First_Unspecialized_Param(nullptr, action)
+    );
+    assert(  // !!! said it quoted its first parameter!
+        pclass == PARAMCLASS_JUST
+        or pclass == PARAMCLASS_THE
+        or pclass == PARAMCLASS_SOFT
+    );
+    return pclass;
+}
+
+
+//
 //  Last_Unspecialized_Param: C
 //
 // See notes on First_Unspecialized_Param() regarding complexity
