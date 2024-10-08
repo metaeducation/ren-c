@@ -927,7 +927,7 @@ REBTYPE(List)
 
         Copy_Cell(OUT, list);
         VAL_INDEX(OUT) = Modify_Array(
-            unwrap(Cell_Word_Id(verb)),
+            unwrap Cell_Word_Id(verb),
             arr,
             index,
             arg,

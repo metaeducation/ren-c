@@ -268,7 +268,7 @@ DECLARE_NATIVE(panic)
     Option(String*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
-        Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
+        Binary* bin = Make_Utf8_From_String(unwrap file);  // leak ok, panic
         file_utf8 = cast(const char*, Binary_Head(bin));
     }
     else
@@ -299,7 +299,7 @@ DECLARE_NATIVE(panic_value)
     Option(String*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
-        Binary* bin = Make_Utf8_From_String(unwrap(file));  // leak ok, panic
+        Binary* bin = Make_Utf8_From_String(unwrap file);  // leak ok, panic
         file_utf8 = cast(const char*, Binary_Head(bin));
     }
     else

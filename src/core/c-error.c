@@ -458,7 +458,7 @@ void Set_Location_Of_Error(
         LineNumber line = MISC(L->source->array).line;
 
         if (file)
-            Init_File(&vars->file, unwrap(file));
+            Init_File(&vars->file, unwrap file);
         if (line != 0)
             Init_Integer(&vars->line, line);
     }

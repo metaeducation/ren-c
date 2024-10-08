@@ -182,7 +182,7 @@ INLINE void Push_Level_Core(Level* L)
     //
     Option(String*) file = File_Of_Level(L);
     if (file)
-        L->file_ucs2 = String_Head(unwrap(file));  // sadly UCS-2 in old branch
+        L->file_ucs2 = String_Head(unwrap file);  // sadly UCS-2 in old branch
     else
         L->file_ucs2 = nullptr;
     L->line = LVL_LINE(L);
@@ -406,7 +406,7 @@ INLINE void Set_Level_Detected_Fetch(
         Shutdown_Interning_Binder(&binder, transcode.context);
 
         if (error)
-            fail (unwrap(error));
+            fail (unwrap error);
 
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the "source".

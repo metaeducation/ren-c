@@ -216,7 +216,7 @@ Value* Append_Context(
     Array* keylist = Keylist_Of_Varlist(context);
     if (any_word) {
         assert(not symbol);
-        symbol = Cell_Word_Symbol(unwrap(any_word));
+        symbol = Cell_Word_Symbol(unwrap any_word);
     }
     else
         assert(symbol);
@@ -232,7 +232,7 @@ Value* Append_Context(
     Value* key = Init_Typeset(
         Array_Last(keylist), // !!! non-dynamic, could optimize
         TS_VALUE, // !!! Currently not paid attention to
-        unwrap(symbol)
+        unwrap symbol
     );
     UNUSED(key);
     Term_Array_Len(keylist, Array_Len(keylist));
@@ -251,14 +251,14 @@ Value* Append_Context(
         // We want to not just add a key/value pairing to the context, but we
         // want to bind a word while we are at it.  Make sure symbol is valid.
         //
-        INIT_BINDING(unwrap(any_word), context);
-        INIT_WORD_INDEX(unwrap(any_word), index);
+        INIT_BINDING(unwrap any_word, context);
+        INIT_WORD_INDEX(unwrap any_word, index);
     }
 
     // Make sure fast cache of index in lib in canon symbol is up to date
     //
     if (context == Lib_Context)
-        MISC(Canon_Symbol(unwrap(symbol))).bind_index.lib = index;
+        MISC(Canon_Symbol(unwrap symbol)).bind_index.lib = index;
 
     return value;  // location we just added (void cell)
 }

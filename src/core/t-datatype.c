@@ -47,10 +47,10 @@ REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 Bounce MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (Is_Word(arg)) {
         Option(SymId) sym = Cell_Word_Id(arg);
-        if (not sym or unwrap(sym) >= SYM_FROM_KIND(REB_MAX))
+        if (not sym or (unwrap sym >= SYM_FROM_KIND(REB_MAX)))
             goto bad_make;
 
-        return Init_Datatype(out, KIND_FROM_SYM(unwrap(sym)));
+        return Init_Datatype(out, KIND_FROM_SYM(unwrap sym));
     }
 
   bad_make:;

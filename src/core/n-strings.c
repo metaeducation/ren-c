@@ -180,7 +180,7 @@ DECLARE_NATIVE(checksum)
 
     SymId sym;
     if (REF(method)) {
-        sym = try_unwrap(Cell_Word_Id(ARG(word)));
+        sym = maybe Cell_Word_Id(ARG(word));
         if (sym == SYM_0) // not in %words.r, no SYM_XXX constant
             fail (Error_Invalid(ARG(word)));
     }

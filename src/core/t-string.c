@@ -150,7 +150,7 @@ static void reverse_string(Value* v, REBLEN len)
     Init_Word(verb, Canon(SYM_CHANGE));
     Modify_String(
         v,
-        unwrap(Cell_Word_Id(verb)),
+        unwrap Cell_Word_Id(verb),
         temp,
         0, // not AM_PART, we want to change all len bytes
         len,
@@ -1241,7 +1241,7 @@ REBTYPE(String)
 
             VAL_INDEX(v) = Modify_Binary(
                 v,
-                unwrap(Cell_Word_Id(verb)),
+                unwrap Cell_Word_Id(verb),
                 arg,
                 flags,
                 len,
@@ -1254,7 +1254,7 @@ REBTYPE(String)
 
             VAL_INDEX(v) = Modify_String(
                 v,
-                unwrap(Cell_Word_Id(verb)),
+                unwrap Cell_Word_Id(verb),
                 arg,
                 flags,
                 len,

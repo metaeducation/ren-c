@@ -786,7 +786,7 @@ REBTYPE(Context)
             Option(String*) file = File_Of_Level(L);
             if (not file)
                 return nullptr;
-            return Init_File(OUT, unwrap(file)); }
+            return Init_File(OUT, unwrap file); }
 
           case SYM_LINE: {
             LineNumber line = LVL_LINE(L);

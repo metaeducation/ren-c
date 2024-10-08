@@ -136,9 +136,9 @@ INLINE Option(String*) File_Of_Level(Level* L) {
 
     Option(String*) file = LINK(L->source->array).file;
     if (file)
-        assert(Is_Flex_Ucs2(unwrap(file)));
+        assert(Is_Flex_Ucs2(unwrap file));
 
-    return try_unwrap(file);
+    return file;
 }
 
 INLINE int LVL_LINE(Level* L) {

@@ -675,7 +675,7 @@ static void Update_Error_Near_For_Line(
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
 
     if (ss->file)
-        Init_File(&vars->file, unwrap(ss->file));
+        Init_File(&vars->file, unwrap ss->file);
     else
         Init_Nulled(&vars->file);
 }
@@ -1651,7 +1651,7 @@ void Init_Transcode_Vaptr(
 ){
     transcode->vaptr = vaptr;
 
-    transcode->at = unwrap(begin);  // if null, first fetch from vaptr
+    transcode->at = unwrap begin;  // if null, first fetch from vaptr
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
@@ -1664,7 +1664,7 @@ void Init_Transcode_Vaptr(
     transcode->line = line;
 
     if (file)
-        assert(Is_Flex_Ucs2(unwrap(file)));
+        assert(Is_Flex_Ucs2(unwrap file));
     transcode->file = file;
 
     transcode->binder = nullptr;
@@ -1696,7 +1696,7 @@ void Init_Transcode(
     transcode->line = line;
 
     if (file)
-        assert(Is_Flex_Ucs2(unwrap(file)));
+        assert(Is_Flex_Ucs2(unwrap file));
     transcode->file = file;
 
     transcode->binder = nullptr;
@@ -1863,7 +1863,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     Drop_Mold_If_Pushed(mo);
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, S);
     if (error)
-        return RAISE(unwrap(error));  // no definitional errors
+        return RAISE(unwrap error);  // no definitional errors
   }
 
     if (token == TOKEN_END) {  // reached '\0'
@@ -1949,7 +1949,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             &array, S, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
         );
         if (error)
-            return RAISE(unwrap(error));
+            return RAISE(unwrap error);
 
         Init_Any_List(
             PUSH(),
@@ -2199,7 +2199,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         Array* array;
         Option(Error*) error = Trap_Scan_Array(&array, S, ']');
         if (error)
-            return RAISE(unwrap(error));
+            return RAISE(unwrap error);
 
         // !!! Should the scanner be doing binding at all, and if so why
         // just Lib_Context?  Not binding would break functions entirely,
@@ -2217,8 +2217,8 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         if (not id)
             return RAISE(Error_Syntax(S, token));
 
-        if (IS_KIND_SYM(unwrap(id))) {
-            enum Reb_Kind kind = KIND_FROM_SYM(unwrap(id));
+        if (IS_KIND_SYM(unwrap id)) {
+            enum Reb_Kind kind = KIND_FROM_SYM(unwrap id);
 
             MAKE_HOOK hook = Make_Hooks[kind];
 
@@ -2431,7 +2431,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
             Option(Error*) error = Scan_To_Stack(&child);
             if (error)
-                return RAISE(unwrap(error));
+                return RAISE(unwrap error);
 
             captured_newline_pending = child.newline_pending;
         }
@@ -2463,7 +2463,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // Tag array with line where the beginning slash was found
         //
         MISC(a).line = captured_line;
-        LINK(a).file = try_unwrap(ss->file);
+        LINK(a).file = maybe ss->file;
         Set_Array_Flag(a, HAS_FILE_LINE);
 
         assert(not Is_Get_Word(Array_Head(a)));
@@ -2609,7 +2609,7 @@ static Option(Error*) Trap_Scan_Array(Array** out, ScanState* S, Byte mode)
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     MISC(a).line = ss->line;
-    LINK(a).file = try_unwrap(ss->file);
+    LINK(a).file = maybe ss->file;
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     *out = a;
@@ -2637,7 +2637,7 @@ Array* Scan_UTF8_Managed(
     StackIndex base = TOP_INDEX;
     Option(Error*) error = Scan_To_Stack(&scan);
     if (error)
-        fail (unwrap(error));
+        fail (unwrap error);
 
     Array* a = Pop_Stack_Values_Core(
         base,
@@ -2646,7 +2646,7 @@ Array* Scan_UTF8_Managed(
     );
 
     MISC(a).line = transcode.line;
-    LINK(a).file = try_unwrap(transcode.file);
+    LINK(a).file = maybe transcode.file;
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     return a;
@@ -2788,7 +2788,7 @@ DECLARE_NATIVE(transcode)
     if (error) {
         if (converted)
             Free_Unmanaged_Flex(converted);  // release temporary binary
-        return Init_Error(OUT, unwrap(error));
+        return Init_Error(OUT, unwrap error);
     }
 
     if (Is_Word(ARG(line_number))) {
@@ -2835,7 +2835,7 @@ DECLARE_NATIVE(transcode)
             | (scan.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
     MISC(a).line = transcode.line;
-    LINK(a).file = try_unwrap(transcode.file);
+    LINK(a).file = maybe transcode.file;
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     return Init_Block(OUT, a);
@@ -2868,7 +2868,7 @@ const Byte *Scan_Any_Word(
     Token token;
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, &scan);
     if (error)
-        fail (unwrap(error));
+        fail (unwrap error);
 
     if (token != TOKEN_WORD)
         return nullptr;
