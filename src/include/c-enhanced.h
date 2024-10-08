@@ -503,6 +503,7 @@
 
     template<typename TQP>
     struct x_cast_pointer_helper {
+        static_assert(std::is_pointer<TQP>::value, "x_cast() non pointer!");
         typedef typename std::remove_pointer<TQP>::type TQ;
         typedef typename std::add_const<TQ>::type TC;
         typedef typename std::add_pointer<TC>::type type;
@@ -522,6 +523,7 @@
 
     template<typename TP, typename VQPR>
     struct c_cast_helper {
+        static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
         typedef typename std::remove_reference<VQPR>::type VQP;
         typedef typename std::remove_pointer<VQP>::type VQ;
         typedef typename std::remove_pointer<TP>::type T;
