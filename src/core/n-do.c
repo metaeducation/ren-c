@@ -835,7 +835,7 @@ DECLARE_NATIVE(apply)
     else
         Clear_Level_Flag(SUBLEVEL, META_RESULT);
 
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
     return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////

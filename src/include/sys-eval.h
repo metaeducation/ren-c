@@ -106,10 +106,17 @@ INLINE Atom* Alloc_Evaluator_Primed_Result() {
     return atom_PUSH();
 }
 
-INLINE void Restart_Stepper_Level(Level* L) {
-    assert(L->executor == &Stepper_Executor);
-    Level_State_Byte(L) = STATE_0;
-}
+#if DEBUG
+    INLINE void Assert_Stepper_Level_Ready(Level* L) {
+        assert(L->executor == &Stepper_Executor);
+        assert(
+            Level_State_Byte(L) == STATE_0
+            or Level_State_Byte(L) == ST_STEPPER_FETCHING_INERTLY
+        );
+    }
+#else
+    #define Assert_Stepper_Level_Ready(L) NOOP
+#endif
 
 #define Init_Pushed_Refinement(out,symbol) \
     Init_Any_Word((out), REB_THE_WORD, symbol)

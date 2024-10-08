@@ -215,7 +215,7 @@ Bounce MAKE_Path(
 
     StackIndex base = TOP_INDEX;
 
-    for (; Not_Level_At_End(L); Restart_Stepper_Level(L)) {
+    for (; Not_Level_At_End(L); Assert_Stepper_Level_Ready(L)) {
         if (Eval_Step_Throws(OUT, L)) {
             Drop_Level(L);
             return BOUNCE_THROWN;

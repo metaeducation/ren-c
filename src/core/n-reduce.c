@@ -132,7 +132,7 @@ DECLARE_NATIVE(reduce)
 
     SUBLEVEL->executor = &Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_result_in_out: {  //////////////////////////////////////////////
@@ -289,7 +289,7 @@ DECLARE_NATIVE(reduce_each)
         Add_Definitional_Break_Continue(body, level_);
 
     if (Is_The_Block(block))
-        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
+        flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
 
     Level* sub = Make_Level_At(&Stepper_Executor, block, flags);
     Push_Level(SPARE, sub);
@@ -303,7 +303,7 @@ DECLARE_NATIVE(reduce_each)
     SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
@@ -413,8 +413,7 @@ static void Push_Composer_Level(
         &Composer_Executor,
         adjusted ? adjusted : e,
         Derive_Binding(context, adjusted ? adjusted : e),
-        EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
-            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
     );
     Push_Level(out, sub);  // sublevel may raise definitional failure

@@ -848,7 +848,7 @@ DECLARE_NATIVE(all)
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (Is_The_Block(block))
-        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
+        flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
 
     Level* sub = Make_Level_At(&Stepper_Executor, block, flags);
     Push_Level(SPARE, sub);
@@ -864,7 +864,7 @@ DECLARE_NATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        Restart_Stepper_Level(SUBLEVEL);
+        Assert_Stepper_Level_Ready(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
@@ -914,7 +914,7 @@ DECLARE_NATIVE(all)
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -981,7 +981,7 @@ DECLARE_NATIVE(any)
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (Is_The_Block(block))
-        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
+        flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
 
     Level* sub = Make_Level_At(&Stepper_Executor, block, flags);
     Push_Level(OUT, sub);
@@ -997,7 +997,7 @@ DECLARE_NATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        Restart_Stepper_Level(SUBLEVEL);
+        Assert_Stepper_Level_Ready(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
@@ -1039,7 +1039,7 @@ DECLARE_NATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } return_out: {  /////////////////////////////////////////////////////////////
@@ -1169,7 +1169,7 @@ DECLARE_NATIVE(case)
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
     SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
 
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
@@ -1380,7 +1380,7 @@ DECLARE_NATIVE(switch)
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
     SUBLEVEL->executor = &Stepper_Executor;
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
 } right_result_in_spare: {  //////////////////////////////////////////////////

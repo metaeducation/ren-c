@@ -144,7 +144,7 @@ Bounce Evaluator_Executor(Level* const L)
 
   #if DEBUG
     if (L != TOP_LEVEL) {  // detect if a sublevel was used [2]
-        Restart_Stepper_Level(SUBLEVEL);
+        Assert_Stepper_Level_Ready(SUBLEVEL);
         return BOUNCE_CONTINUE;
     }
   #endif

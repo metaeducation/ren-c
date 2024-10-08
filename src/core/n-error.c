@@ -193,7 +193,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     if (Is_Level_At_End(SUBLEVEL))
         goto finished;
 
-    Restart_Stepper_Level(SUBLEVEL);
+    Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } finished: {  ///////////////////////////////////////////////////////////////

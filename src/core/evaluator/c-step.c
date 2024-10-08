@@ -186,14 +186,6 @@ Bounce Stepper_Executor(Level* L)
     assert(TOP_INDEX >= BASELINE->stack_base);  // e.g. REDUCE accrues
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
-    if (Get_Eval_Executor_Flag(L, NO_EVALUATIONS)) {  // see flag for rationale
-        if (Is_Feed_At_End(L->feed))
-            return OUT;
-        Derelativize(OUT, At_Feed(L->feed), FEED_BINDING(L->feed));
-        Fetch_Next_In_Feed(L->feed);
-        return OUT;
-    }
-
     // Given how the evaluator is written, it's inevitable that there will
     // have to be a test for points to `goto` before running normal eval.
     // This cost is paid on every entry to Eval_Core().
@@ -201,6 +193,13 @@ Bounce Stepper_Executor(Level* L)
     switch (STATE) {
       case ST_STEPPER_INITIAL_ENTRY:
         goto initial_entry;
+
+      case ST_STEPPER_FETCHING_INERTLY:  // see definition for rationale
+        if (Is_Feed_At_End(L->feed))
+            return OUT;
+        Derelativize(OUT, At_Feed(L->feed), FEED_BINDING(L->feed));
+        Fetch_Next_In_Feed(L->feed);
+        return OUT;
 
       case ST_STEPPER_LOOKING_AHEAD:
         goto lookahead;
@@ -2001,6 +2000,7 @@ Bounce Stepper_Executor(Level* L)
   #endif
 
     assert(not Is_Fresh(OUT));  // should have been assigned
+    STATE = STATE_0;  // Make frame reusable for another step
     return OUT;
 
   return_thrown:

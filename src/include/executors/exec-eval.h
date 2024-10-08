@@ -50,25 +50,9 @@
     LEVEL_FLAG_26
 
 
-//=//// EVAL_EXECUTOR_FLAG_NO_EVALUATIONS /////////////////////////////////=//
+//=//// EVAL_EXECUTOR_FLAG_27 /////////////////////////////////////////////=//
 //
-// It might seem strange to have an evaluator mode in which no evaluations are
-// performed.  However, this simplifies the implementation of operators such
-// as ANY and ALL, which wish to run in an "inert" mode:
-//
-//     >> any [1 + 2]
-//     == 3
-//
-//     >> any @[1 + 2]
-//     == 1
-//
-// Inert operations wind up costing a bit more because they're pushing a frame
-// when it seems "they don't need to"; but it provides flexibility for code
-// that sometimes wants to evaluate and sometimes doesn't, and also the
-// :PREDICATE can change what the rules are so that inert items don't all
-// count as true.
-//
-#define EVAL_EXECUTOR_FLAG_NO_EVALUATIONS \
+#define EVAL_EXECUTOR_FLAG_27 \
     LEVEL_FLAG_27
 
 
@@ -162,12 +146,38 @@ struct EvaluatorExecutorStateStruct {
 enum {
     ST_STEPPER_INITIAL_ENTRY = STATE_0,
 
+
+  //=//// STEPPER STATES BELOW REB_MAX RESERVED FOR DATATYPE //////////////=//
+
     // The stepper uses REB_XXX types of the current cell being processed
     // for the STATE byte in those cases.  This is helpful for knowing what
     // the mode of an evaluator level is, and makes the value on hand for
     // easy use in the "hot" level header location.
 
-    ST_STEPPER_LOOKING_AHEAD = REB_MAX,
+    ST_STEPPER_REB_MAX = REB_MAX,
+
+
+  //=//// STEPPER STATES ABOVE REB_MAX ////////////////////////////////////=//
+
+    // ST_STEPPER_FETCHING_INERTLY - It might seem strange to have an eval
+    // mode in which no evaluations are performed.  But this simplifies the
+    // implementation of operators that can run in an "inert" mode:
+    //
+    //     >> any [1 + 2]
+    //     == 3
+    //
+    //     >> any @[1 + 2]
+    //     == 1
+    //
+    // Inert operations wind up costing a bit more because they push a frame
+    // when it seems "they don't need to".  But it means the code can be
+    // written in a regularized form that applies whether evaluations are done
+    // or not, and it handles all the things like locking the array from
+    // modification during the iteration, etc.
+    //
+    ST_STEPPER_FETCHING_INERTLY,
+
+    ST_STEPPER_LOOKING_AHEAD,
     ST_STEPPER_REEVALUATING,
     ST_STEPPER_CALCULATING_INTRINSIC_ARG,
 

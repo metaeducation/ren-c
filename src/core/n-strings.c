@@ -124,7 +124,7 @@ DECLARE_NATIVE(delimit)
 
     Flags flags = LEVEL_MASK_NONE;
     if (Is_The_Block(ARG(line)))
-        flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
+        flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
     else
         assert(Is_Block(line));
 
@@ -189,7 +189,7 @@ DECLARE_NATIVE(delimit)
             if (Eval_Step_Throws(OUT, L))
                 goto threw;
 
-            Restart_Stepper_Level(L);
+            Assert_Stepper_Level_Ready(L);
         }
 
         if (Is_Elision(OUT))  // spaced [elide print "hi"], etc
