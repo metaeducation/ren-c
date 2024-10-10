@@ -180,9 +180,9 @@ Flex* Make_Set_Operation_Flex(
         Free_Unmanaged_Flex(cast_Array(buffer));
     }
     else if (Any_String(val1)) {
-        DECLARE_MOLD (mo);
+        DECLARE_MOLDER (mo);
 
-        // ask mo->series to have at least `i` capacity beyond mo->start
+        // ask mo->utf8flex to have at least `i` capacity beyond mo->start
         //
         SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
         mo->reserve = i;
@@ -216,17 +216,17 @@ Flex* Make_Set_Operation_Flex(
                 if (
                     NOT_FOUND == Find_Str_Char(
                         uc, // c2 (the character to find)
-                        mo->series, // flex
+                        mo->utf8flex, // flex
                         mo->start, // head
                         mo->start, // index
-                        Flex_Len(mo->series), // tail
+                        Flex_Len(mo->utf8flex), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
                     )
                 ){
                     DECLARE_VALUE (temp);
                     Init_Any_Series_At(temp, REB_TEXT, flex, i);
-                    Append_Utf8_String(mo->series, temp, skip);
+                    Append_Utf8_String(mo->utf8flex, temp, skip);
                 }
             }
 
@@ -248,14 +248,14 @@ Flex* Make_Set_Operation_Flex(
     else {
         assert(Is_Binary(val1) and Is_Binary(val2));
 
-        DECLARE_MOLD (mo);
+        DECLARE_MOLDER (mo);
 
         // All binaries use "case-sensitive" comparison (e.g. each byte
         // is treated distinctly)
         //
         cased = true;
 
-        // ask mo->series to have at least `i` capacity beyond mo->start
+        // ask mo->utf8flex to have at least `i` capacity beyond mo->start
         //
         SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
         mo->reserve = i;
@@ -289,10 +289,10 @@ Flex* Make_Set_Operation_Flex(
                 if (
                     NOT_FOUND == Find_Str_Char(
                         uc, // c2 (the character to find)
-                        mo->series, // flex
+                        mo->utf8flex, // flex
                         mo->start, // head
                         mo->start, // index
-                        Flex_Len(mo->series), // tail
+                        Flex_Len(mo->utf8flex), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
                     )
@@ -302,7 +302,7 @@ Flex* Make_Set_Operation_Flex(
                     //
                     fail ("Binary set operations temporarily unsupported.");
 
-                    // Append_String(mo->series, flex, i, skip);
+                    // Append_String(mo->utf8flex, flex, i, skip);
                 }
             }
 

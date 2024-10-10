@@ -232,7 +232,7 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
     for (n = 0; n < count; n++, value++) {
         if (n > 0 && VAL_TYPE(value) <= REB_BLANK) Debug_Chars('.', 1);
         else {
-            DECLARE_MOLD (mo);
+            DECLARE_MOLDER (mo);
             if (limit != 0) {
                 SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
                 mo->limit = limit;
@@ -242,17 +242,17 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
             Mold_Value(mo, value);
             Throttle_Mold(mo); // not using Pop_Mold(), must do explicitly
 
-            for (i1 = i2 = mo->start; i1 < Flex_Len(mo->series); i1++) {
-                uc = GET_ANY_CHAR(mo->series, i1);
+            for (i1 = i2 = mo->start; i1 < Flex_Len(mo->utf8flex); i1++) {
+                uc = GET_ANY_CHAR(mo->utf8flex, i1);
                 if (uc < ' ') uc = ' ';
                 if (uc > ' ' || pc > ' ')
-                    SET_ANY_CHAR(mo->series, i2++, uc);
+                    SET_ANY_CHAR(mo->utf8flex, i2++, uc);
                 pc = uc;
             }
-            SET_ANY_CHAR(mo->series, i2, '\0');
+            SET_ANY_CHAR(mo->utf8flex, i2, '\0');
 
             Debug_String_No_Newline(
-                Binary_At(mo->series, mo->start), i2 - mo->start
+                Binary_At(mo->utf8flex, mo->start), i2 - mo->start
             );
 
             Drop_Mold(mo);
@@ -289,13 +289,13 @@ void Debug_Buf_No_Newline(const char *fmt, va_list *vaptr)
     bool disabled = GC_Disabled;
     GC_Disabled = true;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     Form_Args_Core(mo, fmt, vaptr);
 
     Debug_String_No_Newline(
-        Binary_At(mo->series, mo->start), Flex_Len(mo->series) - mo->start
+        Binary_At(mo->utf8flex, mo->start), Flex_Len(mo->utf8flex) - mo->start
     );
 
     Drop_Mold(mo);
@@ -461,13 +461,13 @@ Byte *Form_RGB_Utf8(Byte *utf8, const Byte *dp)
 // calls and unicode support.  It simplified the code, at the cost of
 // becoming slightly more "bootstrapped".
 //
-void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
+void Form_Args_Core(Molder* mo, const char *fmt, va_list *vaptr)
 {
     Byte *cp;
     REBINT pad;
     Byte desc;
     Byte padding;
-    Binary* flex = mo->series;
+    Binary* flex = mo->utf8flex;
     Byte buf[MAX_SCAN_DECIMAL];
 
     DECLARE_VALUE (value);
@@ -483,7 +483,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
         // Copy format string until next % escape
         //
         while ((*fmt != '\0') && (*fmt != '%'))
-            Append_Utf8_Codepoint(flex, *fmt++);
+            Append_Codepoint(flex, *fmt++);
 
         if (*fmt != '%') break;
 
@@ -522,7 +522,7 @@ pick:
                 pad = -pad;
                 pad -= LEN_BYTES(cp);
                 for (; pad > 0; pad--)
-                    Append_Utf8_Codepoint(flex, ' ');
+                    Append_Codepoint(flex, ' ');
             }
             Append_Unencoded(flex, s_cast(cp));
 
@@ -533,7 +533,7 @@ pick:
             pad -= LEN_BYTES(cp);
 
             for (; pad > 0; pad--)
-                Append_Utf8_Codepoint(flex, ' ');
+                Append_Codepoint(flex, ' ');
             break;
 
         case 'r':   // use Mold
@@ -554,14 +554,14 @@ pick:
             break;
 
         case 'c':
-            Append_Utf8_Codepoint(
+            Append_Codepoint(
                 flex,
                 cast(Byte, va_arg(*vaptr, REBINT))
             );
             break;
 
         case 'x':
-            Append_Utf8_Codepoint(flex, '#');
+            Append_Codepoint(flex, '#');
             if (pad == 1) pad = 8;
             cp = Form_Hex_Pad(
                 buf,
@@ -572,7 +572,7 @@ pick:
             break;
 
         default:
-            Append_Utf8_Codepoint(flex, *fmt);
+            Append_Codepoint(flex, *fmt);
         }
     }
 
@@ -583,7 +583,7 @@ pick:
 //
 //  Form_Args: C
 //
-void Form_Args(REB_MOLD *mo, const char *fmt, ...)
+void Form_Args(Molder* mo, const char *fmt, ...)
 {
     va_list args;
 

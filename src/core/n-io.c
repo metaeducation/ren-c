@@ -73,7 +73,7 @@ DECLARE_NATIVE(mold)
 {
     INCLUDE_PARAMS_OF_MOLD;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     if (REF(all))
         SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     if (REF(flat))

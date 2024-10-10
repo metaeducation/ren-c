@@ -251,7 +251,7 @@ REBTYPE(Event)
 //
 //  MF_Event: C
 //
-void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Event(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -261,7 +261,7 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
     };
 
     Pre_Mold(mo, v);
-    Append_Utf8_Codepoint(mo->series, '[');
+    Append_Codepoint(mo->utf8flex, '[');
     mo->indent++;
 
     DECLARE_VALUE (var); // declare outside loop (has init code)
@@ -274,16 +274,16 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
         New_Indented_Line(mo);
 
         Symbol* canon = Canon(fields[field]);
-        Append_Utf8_Utf8(mo->series, Symbol_Head(canon), Symbol_Size(canon));
-        Append_Unencoded(mo->series, ": ");
+        Append_Utf8_Utf8(mo->utf8flex, Symbol_Head(canon), Symbol_Size(canon));
+        Append_Unencoded(mo->utf8flex, ": ");
         if (Is_Word(var))
-            Append_Utf8_Codepoint(mo->series, '\'');
+            Append_Codepoint(mo->utf8flex, '\'');
         Mold_Value(mo, var);
     }
 
     mo->indent--;
     New_Indented_Line(mo);
-    Append_Utf8_Codepoint(mo->series, ']');
+    Append_Codepoint(mo->utf8flex, ']');
 
     End_Mold(mo);
 }

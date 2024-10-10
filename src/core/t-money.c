@@ -110,7 +110,7 @@ Bounce TO_Money(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  MF_Money: C
 //
-void MF_Money(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Money(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -121,7 +121,7 @@ void MF_Money(REB_MOLD *mo, const Cell* v, bool form)
 
     Byte buf[60];
     REBINT len = deci_to_string(buf, VAL_MONEY_AMOUNT(v), '$', '.');
-    Append_Unencoded_Len(mo->series, s_cast(buf), len);
+    Append_Unencoded_Len(mo->utf8flex, s_cast(buf), len);
 }
 
 

@@ -85,7 +85,7 @@ REBINT CT_Date(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
+void MF_Date(Molder* mo, const Cell* v_orig, bool form)
 {
     // We don't want to modify the incoming date value we are molding,
     // so we make a copy that we can tweak during the emit process
@@ -99,7 +99,7 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
         || VAL_DAY(v) == 0
         || VAL_DAY(v) > 31
     ) {
-        Append_Unencoded(mo->series, "?date?");
+        Append_Unencoded(mo->utf8flex, "?date?");
         return;
     }
 
@@ -121,10 +121,10 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
     bp = Form_Int_Pad(bp, cast(REBINT, VAL_YEAR(v)), 6, -4, '0');
     *bp = '\0';
 
-    Append_Unencoded(mo->series, s_cast(buf));
+    Append_Unencoded(mo->utf8flex, s_cast(buf));
 
     if (GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME)) {
-        Append_Utf8_Codepoint(mo->series, '/');
+        Append_Codepoint(mo->utf8flex, '/');
         MF_Time(mo, v, form);
 
         if (GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE)) {
@@ -143,7 +143,7 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
             bp = Form_Int_Pad(bp, (tz & 3) * 15, 2, 2, '0');
             *bp = 0;
 
-            Append_Unencoded(mo->series, s_cast(buf));
+            Append_Unencoded(mo->utf8flex, s_cast(buf));
         }
     }
 }

@@ -134,14 +134,14 @@ Bounce TO_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  MF_Word: C
 //
-void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
+void MF_Word(Molder* mo, const Cell* v, bool form) {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
     Symbol* symbol = Cell_Word_Symbol(v);
     const char *head = Symbol_Head(symbol);  // UTF-8
     size_t size = Symbol_Size(symbol);  // number of UTF-8 bytes
 
-    Binary* s = mo->series;
+    Binary* s = mo->utf8flex;
 
     switch (VAL_TYPE(v)) {
     case REB_WORD: {
@@ -150,26 +150,26 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
 
     case REB_SET_WORD:
         Append_Utf8_Utf8(s, head, size);
-        Append_Utf8_Codepoint(s, ':');
+        Append_Codepoint(s, ':');
         break;
 
     case REB_GET_WORD:
-        Append_Utf8_Codepoint(s, ':');
+        Append_Codepoint(s, ':');
         Append_Utf8_Utf8(s, head, size);
         break;
 
     case REB_LIT_WORD:
-        Append_Utf8_Codepoint(s, '\'');
+        Append_Codepoint(s, '\'');
         Append_Utf8_Utf8(s, head, size);
         break;
 
     case REB_REFINEMENT:
-        Append_Utf8_Codepoint(s, '/');
+        Append_Codepoint(s, '/');
         Append_Utf8_Utf8(s, head, size);
         break;
 
     case REB_ISSUE:
-        Append_Utf8_Codepoint(s, '#');
+        Append_Codepoint(s, '#');
         Append_Utf8_Utf8(s, head, size);
         break;
 

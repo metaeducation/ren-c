@@ -588,9 +588,9 @@ VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
 //
 //  MF_Context: C
 //
-void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Context(Molder* mo, const Cell* v, bool form)
 {
-    Binary* out = mo->series;
+    Binary* out = mo->utf8flex;
 
     VarList* c = Cell_Varlist(v);
 
@@ -599,12 +599,12 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
     if (Find_Pointer_In_Flex(TG_Mold_Stack, c) != NOT_FOUND) {
         if (not form) {
             Pre_Mold(mo, v); // If molding, get #[object! etc.
-            Append_Utf8_Codepoint(out, '[');
+            Append_Codepoint(out, '[');
         }
         Append_Unencoded(out, "...");
 
         if (not form) {
-            Append_Utf8_Codepoint(out, ']');
+            Append_Codepoint(out, ']');
             End_Mold(mo);
         }
         return;
@@ -640,7 +640,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     Pre_Mold(mo, v);
 
-    Append_Utf8_Codepoint(out, '[');
+    Append_Codepoint(out, '[');
 
     // !!! New experimental Ren-C code for the [[spec][body]] format of the
     // non-evaluative MAKE OBJECT!.
@@ -682,7 +682,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     mo->indent--;
     New_Indented_Line(mo);
-    Append_Utf8_Codepoint(out, ']');
+    Append_Codepoint(out, ']');
 
     End_Mold(mo);
 

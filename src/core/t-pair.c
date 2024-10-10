@@ -226,12 +226,12 @@ Bounce PD_Pair(
 //
 //  MF_Pair: C
 //
-void MF_Pair(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Pair(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // currently no distinction between MOLD and FORM
 
     Mold_Value(mo, VAL_PAIR_FIRST(v));
-    Append_Utf8_Codepoint(mo->series, 'x');
+    Append_Codepoint(mo->utf8flex, 'x');
     Mold_Value(mo, VAL_PAIR_SECOND(v));
 }
 

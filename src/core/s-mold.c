@@ -61,12 +61,12 @@
 //   of types can share behavior, several types are sometimes handled in the
 //   same hook.  See %types.r for these categorizations in the "mold" column.
 //
-// * Molding is done into a REB_MOLD structure, which in addition to the
-//   series to mold into contains options for the mold--including length
+// * Molding is done into a Molder structure, which in addition to the
+//   UTF8 Flex to mold into contains options for the mold--including length
 //   limits, whether commas or periods should be used for decimal points,
 //   indentation rules, etc.
 //
-// * If you create the REB_MOLD using the Push_Mold() function, then it will
+// * If you create the Molder using the Push_Mold() function, then it will
 //   append in a stacklike way to the thread-local "mold buffer".  This
 //   allows new molds to start running and use that buffer while another is in
 //   progress, so long as it pops or drops the buffer before returning to the
@@ -90,9 +90,9 @@
 // some callsites avoided using it because it would be ostensibly slower
 // than calling the functions directly.
 //
-void Emit(REB_MOLD *mo, const char *fmt, ...)
+void Emit(Molder* mo, const char *fmt, ...)
 {
-    Binary* s = mo->series;
+    Binary* s = mo->utf8flex;
     assert(Flex_Wide(s) == 1);
 
     va_list va;
@@ -120,7 +120,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             break;
 
         case 'C': // Char
-            Append_Utf8_Codepoint(s, va_arg(va, uint32_t));
+            Append_Codepoint(s, va_arg(va, uint32_t));
             break;
 
         case 'I': // Integer
@@ -157,21 +157,21 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             if (ender != '\0') {
                 Symbol* canon = Canon(cast(SymId, va_arg(va, int)));
                 Append_Utf8_Utf8(s, Symbol_Head(canon), Symbol_Size(canon));
-                Append_Utf8_Codepoint(s, ' ');
+                Append_Codepoint(s, ' ');
             }
             else
                 va_arg(va, REBLEN); // ignore it
             break;
 
         default:
-            Append_Utf8_Codepoint(s, *fmt);
+            Append_Codepoint(s, *fmt);
         }
     }
 
     va_end(va);
 
     if (ender != '\0')
-        Append_Utf8_Codepoint(s, ender);
+        Append_Codepoint(s, ender);
 }
 
 
@@ -197,11 +197,11 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 // invalid UTF-8 character as an end-of-buffer signal, much as END markers are
 // used by the data stack)
 //
-Byte *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
+Byte *Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 {
-    REBLEN tail = Flex_Len(mo->series);
-    Expand_Flex_Tail(mo->series, num_bytes); // terminates, if guessed right
-    return Binary_At(mo->series, tail);
+    REBLEN tail = Flex_Len(mo->utf8flex);
+    Expand_Flex_Tail(mo->utf8flex, num_bytes); // terminates, if guessed right
+    return Binary_At(mo->utf8flex, tail);
 }
 
 
@@ -210,7 +210,7 @@ Byte *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 //
 // Emit the initial datatype function, depending on /ALL option
 //
-void Pre_Mold(REB_MOLD *mo, const Cell* v)
+void Pre_Mold(Molder* mo, const Cell* v)
 {
     Emit(mo, GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) ? "#[T " : "make T ", v);
 }
@@ -221,10 +221,10 @@ void Pre_Mold(REB_MOLD *mo, const Cell* v)
 //
 // Finish the mold, depending on /ALL with close block.
 //
-void End_Mold(REB_MOLD *mo)
+void End_Mold(Molder* mo)
 {
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Utf8_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->utf8flex, ']');
 }
 
 
@@ -234,14 +234,14 @@ void End_Mold(REB_MOLD *mo)
 // For series that has an index, add the index for mold/all.
 // Add closing block.
 //
-void Post_Mold(REB_MOLD *mo, const Cell* v)
+void Post_Mold(Molder* mo, const Cell* v)
 {
     if (VAL_INDEX(v)) {
-        Append_Utf8_Codepoint(mo->series, ' ');
-        Append_Int(mo->series, VAL_INDEX(v) + 1);
+        Append_Codepoint(mo->utf8flex, ' ');
+        Append_Int(mo->utf8flex, VAL_INDEX(v) + 1);
     }
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Utf8_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->utf8flex, ']');
 }
 
 
@@ -250,15 +250,15 @@ void Post_Mold(REB_MOLD *mo, const Cell* v)
 //
 // Create a newline with auto-indent on next line if needed.
 //
-void New_Indented_Line(REB_MOLD *mo)
+void New_Indented_Line(Molder* mo)
 {
     // Check output string has content already but no terminator:
     //
     Byte *bp;
-    if (Flex_Len(mo->series) == 0)
+    if (Flex_Len(mo->utf8flex) == 0)
         bp = nullptr;
     else {
-        bp = Binary_Last(mo->series);
+        bp = Binary_Last(mo->utf8flex);
         if (*bp == ' ' || *bp == '\t')
             *bp = '\n';
         else
@@ -267,13 +267,13 @@ void New_Indented_Line(REB_MOLD *mo)
 
     // Add terminator:
     if (bp == nullptr)
-        Append_Utf8_Codepoint(mo->series, '\n');
+        Append_Codepoint(mo->utf8flex, '\n');
 
     // Add proper indentation:
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_INDENT)) {
         REBINT n;
         for (n = 0; n < mo->indent; n++)
-            Append_Unencoded(mo->series, "    ");
+            Append_Unencoded(mo->utf8flex, "    ");
     }
 }
 
@@ -340,7 +340,7 @@ void Drop_Pointer_From_Flex(Flex* s, void *p)
 //  Mold_Array_At: C
 //
 void Mold_Array_At(
-    REB_MOLD *mo,
+    Molder* mo,
     Array* a,
     REBLEN index,
     const char *sep
@@ -356,7 +356,7 @@ void Mold_Array_At(
     bool indented = false;
 
     if (sep[1])
-        Append_Utf8_Codepoint(mo->series, sep[0]);
+        Append_Codepoint(mo->utf8flex, sep[0]);
 
     Cell* item = Array_At(a, index);
     while (NOT_END(item)) {
@@ -380,9 +380,9 @@ void Mold_Array_At(
             break;
 
         if (sep[0] == '/')
-            Append_Utf8_Codepoint(mo->series, '/'); // !!! ignores newline
+            Append_Codepoint(mo->utf8flex, '/'); // !!! ignores newline
         else if (NOT_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE))
-            Append_Utf8_Codepoint(mo->series, ' ');
+            Append_Codepoint(mo->utf8flex, ' ');
     }
 
     if (indented)
@@ -391,7 +391,7 @@ void Mold_Array_At(
     if (sep[1] != '\0') {
         if (Get_Array_Flag(a, NEWLINE_AT_TAIL))
             New_Indented_Line(mo); // but not any indentation from *this* mold
-        Append_Utf8_Codepoint(mo->series, sep[1]);
+        Append_Codepoint(mo->utf8flex, sep[1]);
     }
 
     Drop_Pointer_From_Flex(TG_Mold_Stack, a);
@@ -402,7 +402,7 @@ void Mold_Array_At(
 //  Form_Array_At: C
 //
 void Form_Array_At(
-    REB_MOLD *mo,
+    Molder* mo,
     Array* array,
     REBLEN index,
     VarList* opt_context
@@ -424,15 +424,15 @@ void Form_Array_At(
         Mold_Or_Form_Value(mo, item, wval == nullptr);
         n++;
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
-            Append_Utf8_Codepoint(mo->series, LF);
+            Append_Codepoint(mo->utf8flex, LF);
         }
         else {
             // Add a space if needed:
-            if (n < len && Flex_Len(mo->series)
-                && *Binary_Last(mo->series) != LF
+            if (n < len && Flex_Len(mo->utf8flex)
+                && *Binary_Last(mo->utf8flex) != LF
                 && NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
-                Append_Utf8_Codepoint(mo->series, ' ');
+                Append_Codepoint(mo->utf8flex, ' ');
             }
         }
     }
@@ -442,7 +442,7 @@ void Form_Array_At(
 //
 //  MF_Fail: C
 //
-void MF_Fail(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Fail(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -456,7 +456,7 @@ void MF_Fail(REB_MOLD *mo, const Cell* v, bool form)
         panic (v);
     #else
         printf("!!! Request to MOLD or FORM a REB_0 value !!!\n");
-        Append_Unencoded(mo->series, "!!!REB_0!!!");
+        Append_Unencoded(mo->utf8flex, "!!!REB_0!!!");
         debug_break(); // don't crash if under a debugger, just "pause"
     #endif
     }
@@ -468,7 +468,7 @@ void MF_Fail(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  MF_Unhooked: C
 //
-void MF_Unhooked(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Unhooked(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);
@@ -485,11 +485,11 @@ void MF_Unhooked(REB_MOLD *mo, const Cell* v, bool form)
 //
 // Mold or form any value to string series tail.
 //
-void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
+void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
 {
     assert(not THROWN(v)); // !!! Note: Thrown bit is being eliminated
 
-    Binary* s = mo->series;
+    Binary* s = mo->utf8flex;
     assert(Flex_Wide(s) == sizeof(Byte));
     Assert_Flex_Term(s);
 
@@ -543,7 +543,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 //
 String* Copy_Mold_Or_Form_Value(const Cell* v, Flags opts, bool form)
 {
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     mo->opts = opts;
 
     Push_Mold(mo);
@@ -578,7 +578,7 @@ bool Form_Reduce_Throws(
         or Is_Char(delimiter) or Is_Text(delimiter)
     );
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     DECLARE_LEVEL (L);
@@ -608,11 +608,11 @@ bool Form_Reduce_Throws(
         nothing = false;
 
         if (Is_Blank(out)) {  // acting like a space character seems useful
-            Append_Utf8_Codepoint(mo->series, ' ');
+            Append_Codepoint(mo->utf8flex, ' ');
             pending = false;
         }
         else if (Is_Char(out)) { // no delimit on CHAR! (e.g. space, newline)
-            Append_Utf8_Codepoint(mo->series, VAL_CHAR(out));
+            Append_Codepoint(mo->utf8flex, VAL_CHAR(out));
             pending = false;
         }
         else if (Is_Nulled(delimiter) or Is_Void(delimiter))
@@ -642,7 +642,7 @@ bool Form_Reduce_Throws(
 //
 String* Form_Tight_Block(const Value* blk)
 {
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     Push_Mold(mo);
 
@@ -657,7 +657,7 @@ String* Form_Tight_Block(const Value* blk)
 //
 //  Push_Mold: C
 //
-void Push_Mold(REB_MOLD *mo)
+void Push_Mold(Molder* mo)
 {
   #if !defined(NDEBUG)
     //
@@ -681,12 +681,12 @@ void Push_Mold(REB_MOLD *mo)
         assert(mo->limit != 0);
   #endif
 
-    // Set by DECLARE_MOLD/pops so you don't same `mo` twice w/o popping.
+    // Set by DECLARE_MOLDER/pops so you don't same `mo` twice w/o popping.
     // Is assigned even in debug build, scanner uses to determine if pushed.
     //
-    assert(mo->series == nullptr);
+    assert(mo->utf8flex == nullptr);
 
-    Binary* s = mo->series = MOLD_BUF;
+    Binary* s = mo->utf8flex = MOLD_BUF;
     mo->start = Flex_Len(s);
 
     Assert_Flex_Term(s);
@@ -754,13 +754,13 @@ void Push_Mold(REB_MOLD *mo)
 //
 // Contain a mold's series to its limit (if it has one).
 //
-void Throttle_Mold(REB_MOLD *mo) {
+void Throttle_Mold(Molder* mo) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         return;
 
-    if (Flex_Len(mo->series) > mo->limit) {
-        Set_Flex_Len(mo->series, mo->limit - 3); // account for ellipsis
-        Append_Unencoded(mo->series, "..."); // adds a null at the tail
+    if (Flex_Len(mo->utf8flex) > mo->limit) {
+        Set_Flex_Len(mo->utf8flex, mo->limit - 3); // account for ellipsis
+        Append_Unencoded(mo->utf8flex, "..."); // adds a null at the tail
     }
 }
 
@@ -780,19 +780,19 @@ void Throttle_Mold(REB_MOLD *mo) {
 // it will be copied up to `len`.  If there are not enough characters then
 // the debug build will assert.
 //
-String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
+String* Pop_Molded_String_Core(Molder* mo, REBLEN len)
 {
-    assert(mo->series);  // if nullptr there was no Push_Mold()
+    assert(mo->utf8flex);  // if nullptr there was no Push_Mold()
 
-    Assert_Flex_Term(mo->series);
+    Assert_Flex_Term(mo->utf8flex);
     Throttle_Mold(mo);
 
-    assert(Flex_Len(mo->series) >= mo->start);
+    assert(Flex_Len(mo->utf8flex) >= mo->start);
     if (len == UNKNOWN)
-        len = Flex_Len(mo->series) - mo->start;
+        len = Flex_Len(mo->utf8flex) - mo->start;
 
     String* result = Make_Sized_String_UTF8(
-        cs_cast(Binary_At(mo->series, mo->start)),
+        cs_cast(Binary_At(mo->utf8flex, mo->start)),
         len
     );
     assert(Flex_Wide(result) == sizeof(REBUNI));
@@ -803,9 +803,9 @@ String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    Term_Binary_Len(mo->series, mo->start);
+    Term_Binary_Len(mo->utf8flex, mo->start);
 
-    mo->series = nullptr;  // indicates mold is not currently pushed
+    mo->utf8flex = nullptr;  // indicates mold is not currently pushed
     return result;
 }
 
@@ -816,15 +816,15 @@ String* Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 // Same as Pop_Molded_String() except gives back the data in UTF8 byte-size
 // series form.
 //
-Flex* Pop_Molded_UTF8(REB_MOLD *mo)
+Flex* Pop_Molded_UTF8(Molder* mo)
 {
-    assert(Flex_Len(mo->series) >= mo->start);
+    assert(Flex_Len(mo->utf8flex) >= mo->start);
 
-    Assert_Flex_Term(mo->series);
+    Assert_Flex_Term(mo->utf8flex);
     Throttle_Mold(mo);
 
     Flex* bytes = Copy_Sequence_At_Len(
-        mo->series, mo->start, Flex_Len(mo->series) - mo->start
+        mo->utf8flex, mo->start, Flex_Len(mo->utf8flex) - mo->start
     );
     assert(BYTE_SIZE(bytes));
 
@@ -834,9 +834,9 @@ Flex* Pop_Molded_UTF8(REB_MOLD *mo)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    Term_Binary_Len(mo->series, mo->start);
+    Term_Binary_Len(mo->utf8flex, mo->start);
 
-    mo->series = nullptr;  // indicates mold is not currently pushed
+    mo->utf8flex = nullptr;  // indicates mold is not currently pushed
     return bytes;
 }
 
@@ -850,7 +850,7 @@ Flex* Pop_Molded_UTF8(REB_MOLD *mo)
 // In its current form, the implementation is not distinguishable from
 // Pop_Molded_UTF8.
 //
-Flex* Pop_Molded_Binary(REB_MOLD *mo)
+Flex* Pop_Molded_Binary(Molder* mo)
 {
     return Pop_Molded_UTF8(mo);
 }
@@ -864,7 +864,7 @@ Flex* Pop_Molded_Binary(REB_MOLD *mo)
 // information in the mold has done its job and Pop_Molded_String() is not
 // required, just call this to drop back to the state of the last push.
 //
-void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
+void Drop_Mold_Core(Molder* mo, bool not_pushed_ok)
 {
     // The tokenizer can often identify tokens to load by their start and end
     // pointers in the UTF8 data it is loading alone.  However, scanning
@@ -882,19 +882,19 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
     // to "drop" a mold that hasn't ever been pushed is the easiest way to
     // avoid intervening.  Drop_Mold_If_Pushed(mo) macro makes this clearer.
     //
-    if (not_pushed_ok && mo->series == nullptr)
+    if (not_pushed_ok && mo->utf8flex == nullptr)
         return;
 
-    assert(mo->series != nullptr);  // if nullptr there was no Push_Mold
+    assert(mo->utf8flex != nullptr);  // if nullptr there was no Push_Mold
 
-    // When pushed data are to be discarded, mo->series may be unterminated.
+    // When pushed data are to be discarded, mo->utf8flex may be unterminated.
     // (Indeed that happens when Scan_Item_Push_Mold returns nullptr.)
     //
-    Note_Flex_Maybe_Term(mo->series);
+    Note_Flex_Maybe_Term(mo->utf8flex);
 
-    Term_Binary_Len(mo->series, mo->start); // see Pop_Molded_String() notes
+    Term_Binary_Len(mo->utf8flex, mo->start); // see Pop_Molded_String() notes
 
-    mo->series = nullptr;  // indicates mold is not currently pushed
+    mo->utf8flex = nullptr;  // indicates mold is not currently pushed
 }
 
 

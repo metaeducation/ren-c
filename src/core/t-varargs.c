@@ -571,18 +571,18 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, REBINT mode)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
+void MF_Varargs(Molder* mo, const Cell* v, bool form) {
     UNUSED(form);
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!
 
-    Append_Utf8_Codepoint(mo->series, '[');
+    Append_Codepoint(mo->utf8flex, '[');
 
     enum Reb_Param_Class pclass;
     const Cell* param = Param_For_Varargs_Maybe_Null(v);
     if (param == nullptr) {
         pclass = PARAM_CLASS_HARD_QUOTE;
-        Append_Unencoded(mo->series, "???"); // never bound to an argument
+        Append_Unencoded(mo->utf8flex, "???"); // never bound to an argument
     }
     else {
         enum Reb_Kind kind;
@@ -612,34 +612,34 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         Mold_Value(mo, param_word);
     }
 
-    Append_Unencoded(mo->series, " => ");
+    Append_Unencoded(mo->utf8flex, " => ");
 
     Level* L;
     Value* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (IS_END(shared))
-            Append_Unencoded(mo->series, "[]");
+            Append_Unencoded(mo->utf8flex, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
         else
-            Append_Unencoded(mo->series, "[...]"); // can't look ahead
+            Append_Unencoded(mo->utf8flex, "[...]"); // can't look ahead
     }
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
         if (L == nullptr)
-            Append_Unencoded(mo->series, "!!!");
+            Append_Unencoded(mo->utf8flex, "!!!");
         else if (IS_END(L->value))
-            Append_Unencoded(mo->series, "[]");
+            Append_Unencoded(mo->utf8flex, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE) {
-            Append_Unencoded(mo->series, "[");
+            Append_Unencoded(mo->utf8flex, "[");
             Mold_Value(mo, L->value); // one value can be shown if hard quoted
-            Append_Unencoded(mo->series, " ...]");
+            Append_Unencoded(mo->utf8flex, " ...]");
         }
-        Append_Unencoded(mo->series, "[...]");
+        Append_Unencoded(mo->utf8flex, "[...]");
     }
     else
         assert(false);
 
-    Append_Utf8_Codepoint(mo->series, ']');
+    Append_Codepoint(mo->utf8flex, ']');
 
     End_Mold(mo);
 }

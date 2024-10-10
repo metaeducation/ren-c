@@ -136,9 +136,9 @@ static REBINT Math_Arg_For_Char(Value* arg, Value* verb)
 //
 //  MF_Char: C
 //
-void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Char(Molder* mo, const Cell* v, bool form)
 {
-    Binary* out = mo->series;
+    Binary* out = mo->utf8flex;
 
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     REBUNI chr = VAL_CHAR(v);

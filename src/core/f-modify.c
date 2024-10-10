@@ -476,7 +476,7 @@ REBLEN Modify_String(
 
     if (flags & AM_LINE) {
         assert(needs_free); // don't want to modify input series
-        Append_Codepoint(src_ser, '\n');
+        Append_Codepoint_UCS2(src_ser, '\n');
         ++src_len;
     }
 

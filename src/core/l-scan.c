@@ -420,7 +420,7 @@ INLINE bool Is_Interstitial(char c)
 // is the goal.
 //
 static const Byte *Scan_Quote_Push_Mold(
-    REB_MOLD *mo,
+    Molder* mo,
     const Byte *src,
     TranscodeState* ss
 ){
@@ -437,12 +437,12 @@ static const Byte *Scan_Quote_Push_Mold(
         switch (chr) {
 
         case 0:
-            Term_Binary(mo->series);
+            Term_Binary(mo->utf8flex);
             return nullptr; // Scan_state shows error location.
 
         case '^':
             if ((src = Scan_UTF8_Char_Escapable(&chr, src)) == nullptr) {
-                Term_Binary(mo->series);
+                Term_Binary(mo->utf8flex);
                 return nullptr;
             }
             --src;
@@ -463,7 +463,7 @@ static const Byte *Scan_Quote_Push_Mold(
             // fall thru
         case LF:
             if (term == '"') {
-                Term_Binary(mo->series);
+                Term_Binary(mo->utf8flex);
                 return nullptr;
             }
             lines++;
@@ -473,7 +473,7 @@ static const Byte *Scan_Quote_Push_Mold(
         default:
             if (chr >= 0x80) {
                 if ((src = Back_Scan_UTF8_Char(&chr, src, nullptr)) == nullptr) {
-                    Term_Binary(mo->series);
+                    Term_Binary(mo->utf8flex);
                     return nullptr;
                 }
             }
@@ -485,18 +485,18 @@ static const Byte *Scan_Quote_Push_Mold(
         //
         // https://stackoverflow.com/a/9533324/211160
         //
-        if (Flex_Len(mo->series) + 4 >= Flex_Rest(mo->series)) // incl term
-            Extend_Flex(mo->series, 4);
+        if (Flex_Len(mo->utf8flex) + 4 >= Flex_Rest(mo->utf8flex)) // incl term
+            Extend_Flex(mo->utf8flex, 4);
 
-        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), chr);
-        Set_Flex_Len(mo->series, Flex_Len(mo->series) + encoded_len);
+        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->utf8flex), chr);
+        Set_Flex_Len(mo->utf8flex, Flex_Len(mo->utf8flex) + encoded_len);
     }
 
     src++; // Skip ending quote or brace.
 
     ss->line += lines;
 
-    Term_Binary(mo->series);
+    Term_Binary(mo->utf8flex);
     return src;
 }
 
@@ -514,7 +514,7 @@ static const Byte *Scan_Quote_Push_Mold(
 // interim time of changing the mold buffer from 16-bit codepoints to UTF-8
 //
 const Byte *Scan_Item_Push_Mold(
-    REB_MOLD *mo,
+    Molder* mo,
     const Byte *bp,
     const Byte *ep,
     Byte opt_term, // '\0' if file like %foo - '"' if file like %"foo bar"
@@ -582,17 +582,17 @@ const Byte *Scan_Item_Push_Mold(
         //
         // https://stackoverflow.com/a/9533324/211160
         //
-        if (Flex_Len(mo->series) + 4 >= Flex_Rest(mo->series)) // incl term
-            Extend_Flex(mo->series, 4);
+        if (Flex_Len(mo->utf8flex) + 4 >= Flex_Rest(mo->utf8flex)) // incl term
+            Extend_Flex(mo->utf8flex, 4);
 
-        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), c);
-        Set_Flex_Len(mo->series, Flex_Len(mo->series) + encoded_len);
+        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->utf8flex), c);
+        Set_Flex_Len(mo->utf8flex, Flex_Len(mo->utf8flex) + encoded_len);
     }
 
     if (*bp != '\0' and *bp == opt_term)
         ++bp;
 
-    Term_Binary(mo->series);
+    Term_Binary(mo->utf8flex);
 
     return bp;
 }
@@ -664,12 +664,12 @@ static void Update_Error_Near_For_Line(
     // !!! This should likely be separated into an integer and a string, so
     // that those processing the error don't have to parse it back out.
     //
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
-    Append_Unencoded(mo->series, "(line ");
-    Append_Int(mo->series, line);
-    Append_Unencoded(mo->series, ") ");
-    Append_Utf8_Utf8(mo->series, cs_cast(bp), len);
+    Append_Unencoded(mo->utf8flex, "(line ");
+    Append_Int(mo->utf8flex, line);
+    Append_Unencoded(mo->utf8flex, ") ");
+    Append_Utf8_Utf8(mo->utf8flex, cs_cast(bp), len);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
@@ -945,7 +945,7 @@ static REBLEN Prescan_Token(ScanState* S)
 //
 static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     Token* token_out,
-    REB_MOLD *mo,
+    Molder* mo,
     ScanState* S
 ) {
     TranscodeState* ss = S->ss;
@@ -1846,7 +1846,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     assert(S->quotes_pending == 0);
     assert(not S->sigil_pending);
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     if (C_STACK_OVERFLOWING(&mo))
         Fail_Stack_Overflow();
@@ -2874,7 +2874,7 @@ const Byte *Scan_Any_Word(
     ScanState scan;
     Init_Scan_Level(&scan, SCAN_MASK_NONE, &transcode, '\0');
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     Token token;
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, &scan);

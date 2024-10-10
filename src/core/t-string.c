@@ -126,7 +126,7 @@ static void reverse_string(Value* v, REBLEN len)
     //
     // https://stackoverflow.com/q/199260/
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     REBLEN val_len_head = VAL_LEN_HEAD(v);
@@ -137,7 +137,7 @@ static void reverse_string(Value* v, REBLEN len)
     for (n = 0; n < len; ++n) {
         REBUNI c;
         up = Ucs2_Back(&c, up);
-        Append_Utf8_Codepoint(mo->series, c);
+        Append_Codepoint(mo->utf8flex, c);
     }
 
     DECLARE_VALUE (temp);
@@ -658,14 +658,14 @@ Bounce PD_String(
         //
         REBLEN len = Flex_Len(copy);
         if (len == 0)
-            Append_Codepoint(copy, '/');
+            Append_Codepoint_UCS2(copy, '/');
         else {
             REBUNI ch_last = GET_ANY_CHAR(copy, len - 1);
             if (ch_last != '/')
-                Append_Codepoint(copy, '/');
+                Append_Codepoint_UCS2(copy, '/');
         }
 
-        DECLARE_MOLD (mo);
+        DECLARE_MOLDER (mo);
         Push_Mold(mo);
 
         Form_Value(mo, picker);
@@ -680,7 +680,7 @@ Bounce PD_String(
         // !!! Review if this makes sense under a larger philosophy of string
         // path composition.
         //
-        REBUNI ch_start = GET_ANY_CHAR(mo->series, mo->start);
+        REBUNI ch_start = GET_ANY_CHAR(mo->utf8flex, mo->start);
         REBLEN skip = (ch_start == '/' || ch_start == '\\') ? 1 : 0;
 
         // !!! Would be nice if there was a better way of doing this that didn't
@@ -689,8 +689,8 @@ Bounce PD_String(
         const bool crlf_to_lf = false;
         Append_UTF8_May_Fail(
             copy, // dst
-            cs_cast(Binary_At(mo->series, mo->start + skip)), // src
-            Flex_Len(mo->series) - mo->start - skip, // len
+            cs_cast(Binary_At(mo->utf8flex, mo->start + skip)), // src
+            Flex_Len(mo->utf8flex) - mo->start - skip, // len
             crlf_to_lf
         );
 
@@ -897,12 +897,12 @@ Byte *Emit_Uni_Char(Byte *bp, REBUNI chr, bool parened)
 //  Mold_Text_Series_At: C
 //
 void Mold_Text_Series_At(
-    REB_MOLD *mo,
+    Molder* mo,
     String* str,
     REBLEN index
 ){
     if (index >= String_Len(str)) {
-        Append_Unencoded(mo->series, "\"\"");
+        Append_Unencoded(mo->utf8flex, "\"\"");
         return;
     }
 
@@ -939,7 +939,7 @@ void Mold_Text_Series_At(
         *dp++ = '"';
         *dp = '\0';
 
-        Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
+        Term_Binary_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
         return;
     }
 
@@ -986,7 +986,7 @@ void Mold_Text_Series_At(
     *dp++ = '}';
     *dp = '\0';
 
-    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
+    Term_Binary_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
 }
 
 
@@ -1003,7 +1003,7 @@ void Mold_Text_Series_At(
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-static void Mold_Url(REB_MOLD *mo, const Cell* v)
+static void Mold_Url(Molder* mo, const Cell* v)
 {
     Flex* series = Cell_Flex(v);
     REBLEN len = Cell_Series_Len_At(v);
@@ -1015,11 +1015,11 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series)); // correction
+    Set_Flex_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex)); // correction
 }
 
 
-static void Mold_File(REB_MOLD *mo, const Cell* v)
+static void Mold_File(Molder* mo, const Cell* v)
 {
     Flex* series = Cell_Flex(v);
     REBLEN len = Cell_Series_Len_At(v);
@@ -1051,27 +1051,27 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series)); // correction
+    Set_Flex_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex)); // correction
 }
 
 
-static void Mold_Tag(REB_MOLD *mo, const Cell* v)
+static void Mold_Tag(Molder* mo, const Cell* v)
 {
-    Append_Utf8_Codepoint(mo->series, '<');
+    Append_Codepoint(mo->utf8flex, '<');
 
     Size offset;
     Size size;
     Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
-    Append_Utf8_Utf8(mo->series, cs_cast(Binary_At(temp, offset)), size);
+    Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
 
-    Append_Utf8_Codepoint(mo->series, '>');
+    Append_Codepoint(mo->utf8flex, '>');
 }
 
 
 //
 //  MF_Binary: C
 //
-void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Binary(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -1090,24 +1090,24 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 
     case 64: {
         const bool brk = (len > 64);
-        Append_Unencoded(mo->series, "64");
+        Append_Unencoded(mo->utf8flex, "64");
         enbased = Encode_Base64(Cell_Blob_At(v), len, brk);
         break; }
 
     case 2: {
         const bool brk = (len > 8);
-        Append_Utf8_Codepoint(mo->series, '2');
+        Append_Codepoint(mo->utf8flex, '2');
         enbased = Encode_Base2(Cell_Blob_At(v), len, brk);
         break; }
     }
 
-    Append_Unencoded(mo->series, "#{");
+    Append_Unencoded(mo->utf8flex, "#{");
     Append_Utf8_Utf8(
-        mo->series,
+        mo->utf8flex,
         cs_cast(Binary_Head(enbased)),
         Binary_Len(enbased)
     );
-    Append_Unencoded(mo->series, "}");
+    Append_Unencoded(mo->utf8flex, "}");
 
     Free_Unmanaged_Flex(enbased);
 
@@ -1119,9 +1119,9 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  MF_String: C
 //
-void MF_String(REB_MOLD *mo, const Cell* v, bool form)
+void MF_String(Molder* mo, const Cell* v, bool form)
 {
-    Binary* s = mo->series;
+    Binary* s = mo->utf8flex;
 
     assert(Any_String(v));
 
@@ -1142,7 +1142,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
         Size size;
         Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
 
-        Append_Utf8_Utf8(mo->series, cs_cast(Binary_At(temp, offset)), size);
+        Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
         return;
     }
 

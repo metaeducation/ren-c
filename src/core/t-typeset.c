@@ -278,13 +278,13 @@ Array* Typeset_To_Array(const Value* tset)
 //
 //  MF_Typeset: C
 //
-void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Typeset(Molder* mo, const Cell* v, bool form)
 {
     REBINT n;
 
     if (not form) {
         Pre_Mold(mo, v);  // #[typeset! or make typeset!
-        Append_Utf8_Codepoint(mo->series, '[');
+        Append_Codepoint(mo->utf8flex, '[');
     }
 
 #if !defined(NDEBUG)
@@ -304,16 +304,16 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
         // In debug builds we're probably more interested in the symbol than
         // the typesets, if we are looking at a PARAMLIST or KEYLIST.
         //
-        Append_Unencoded(mo->series, "(");
+        Append_Unencoded(mo->utf8flex, "(");
 
-        Append_Utf8_Utf8(mo->series, Symbol_Head(symbol), Symbol_Size(symbol));
-        Append_Unencoded(mo->series, ") ");
+        Append_Utf8_Utf8(mo->utf8flex, Symbol_Head(symbol), Symbol_Size(symbol));
+        Append_Unencoded(mo->utf8flex, ") ");
 
         // REVIEW: should detect when a lot of types are active and condense
         // only if the number of types is unreasonable (often for keys/params)
         //
         if (true) {
-            Append_Unencoded(mo->series, "...");
+            Append_Unencoded(mo->utf8flex, "...");
             goto skip_types;
         }
     }
@@ -328,14 +328,14 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
             Emit(mo, "+DN ", SYM_DATATYPE_X, Canon(cast(SymId, n)));
         }
     }
-    Trim_Tail(mo->series, ' ');
+    Trim_Tail(mo->utf8flex, ' ');
 
 #if !defined(NDEBUG)
 skip_types:
 #endif
 
     if (not form) {
-        Append_Utf8_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->utf8flex, ']');
         End_Mold(mo);
     }
 }

@@ -79,7 +79,7 @@ Binary* Make_Bitset(REBLEN len)
 //
 //  MF_Bitset: C
 //
-void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Bitset(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // all bitsets are "molded" at this time
 
@@ -88,14 +88,14 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
     Binary* s = Cell_Bitset(v);
 
     if (BITS_NOT(s))
-        Append_Unencoded(mo->series, "[not bits ");
+        Append_Unencoded(mo->utf8flex, "[not bits ");
 
     DECLARE_VALUE (alias);
     Init_Blob(alias, s);  // MF_Binary expects positional BINARY!
     MF_Binary(mo, alias, false); // false = mold, don't form
 
     if (BITS_NOT(s))
-        Append_Utf8_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->utf8flex, ']');
 
     End_Mold(mo);
 }

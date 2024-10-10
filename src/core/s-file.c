@@ -54,7 +54,7 @@ Flex* To_REBOL_Path(const Cell* string, Flags flags)
 {
     assert(Is_Text(string));
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     bool lead_slash = false; // did we restart to insert a leading slash?
@@ -84,15 +84,15 @@ restart:;
                 //
                 // Change C:/ to /C/ (and C:X to /C/X)
                 //
-                Term_Non_Array_Flex_Len(mo->series, mo->start); // drop mold so far
-                Append_Utf8_Codepoint(mo->series, '/'); // insert a /
+                Term_Non_Array_Flex_Len(mo->utf8flex, mo->start); // drop mold so far
+                Append_Codepoint(mo->utf8flex, '/'); // insert a /
                 lead_slash = true; // don't do this the second time around
                 goto restart;
             }
 
             saw_colon = true;
 
-            Append_Utf8_Codepoint(mo->series, '/'); // replace : with a /
+            Append_Codepoint(mo->utf8flex, '/'); // replace : with a /
 
             if (i < len) {
                 up = Ucs2_Next(&c, up);
@@ -120,14 +120,14 @@ restart:;
         else
             last_was_slash = false;
 
-        Append_Utf8_Codepoint(mo->series, c);
+        Append_Codepoint(mo->utf8flex, c);
     }
 
     // If this is supposed to be a directory and the last character is not a
     // slash, make it one (this is Rebol's rule for FILE!s that are dirs)
     //
     if ((flags & PATH_OPT_SRC_IS_DIR) and c != '/') // watch for %/c/ case
-        Append_Utf8_Codepoint(mo->series, '/');
+        Append_Codepoint(mo->utf8flex, '/');
 
     return Pop_Molded_String(mo);
 }
@@ -139,7 +139,7 @@ restart:;
 // Implementation routine of To_Local_Path which leaves the path in the mold
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
-void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
+void Mold_File_To_Local(Molder* mo, const Cell* file, Flags flags) {
     assert(Is_File(file));
 
     Ucs2(const*) up = Cell_String_At(file);
@@ -176,20 +176,20 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
                 dp = up;
             if (d == '/') { // %/c/ => "c:/"
                 ++i;
-                Append_Utf8_Codepoint(mo->series, c);
-                Append_Utf8_Codepoint(mo->series, ':');
+                Append_Codepoint(mo->utf8flex, c);
+                Append_Codepoint(mo->utf8flex, ':');
                 up = Ucs2_Next(&c, dp);
                 ++i;
             }
             else {
                 // %/cc %//cc => "//cc"
                 //
-                Append_Utf8_Codepoint(mo->series, OS_DIR_SEP);
+                Append_Codepoint(mo->utf8flex, OS_DIR_SEP);
             }
         }
     #endif
 
-        Append_Utf8_Codepoint(mo->series, OS_DIR_SEP);
+        Append_Codepoint(mo->utf8flex, OS_DIR_SEP);
     }
     else if (flags & REB_FILETOLOCAL_FULL) {
         //
@@ -232,7 +232,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
                     // . character we'd found before the peek ahead and break
                     // to the next loop that copies without further `.` search
                     //
-                    Append_Utf8_Codepoint(mo->series, '.');
+                    Append_Codepoint(mo->utf8flex, '.');
                     goto segment_loop;
                 }
 
@@ -247,25 +247,25 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
                     // Seek back to the previous slash in the mold buffer and
                     // truncate it there, to trim off one path segment.
                     //
-                    REBLEN n = Flex_Len(mo->series);
+                    REBLEN n = Flex_Len(mo->utf8flex);
                     if (n > mo->start) {
                         --n;
-                        assert(*Binary_At(mo->series, n) == OS_DIR_SEP);
+                        assert(*Binary_At(mo->utf8flex, n) == OS_DIR_SEP);
                         if (n > mo->start)
                             --n; // don't want the *ending* slash
 
                         while (
                             n > mo->start
-                            and *Binary_At(mo->series, n) != OS_DIR_SEP
+                            and *Binary_At(mo->utf8flex, n) != OS_DIR_SEP
                         ){
                             --n;
                         }
-                        Term_Non_Array_Flex_Len(mo->series, n); // loses /
+                        Term_Non_Array_Flex_Len(mo->utf8flex, n); // loses /
                     }
 
                     // Add separator and keep looking (%../../ can happen)
                     //
-                    Append_Utf8_Codepoint(mo->series, OS_DIR_SEP);
+                    Append_Codepoint(mo->utf8flex, OS_DIR_SEP);
                     continue;
                 }
 
@@ -273,8 +273,8 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
                 // pending `..` and fall through to the loop that doesn't look
                 // further at .
                 //
-                Append_Utf8_Codepoint(mo->series, '.');
-                Append_Utf8_Codepoint(mo->series, '.');
+                Append_Codepoint(mo->utf8flex, '.');
+                Append_Codepoint(mo->utf8flex, '.');
             }
         }
 
@@ -285,14 +285,14 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
             // a slash or hit the end of the input path string.
             //
             if (c != '/') {
-                Append_Utf8_Codepoint(mo->series, c);
+                Append_Codepoint(mo->utf8flex, c);
                 continue;
             }
 
-            REBLEN n = Flex_Len(mo->series);
+            REBLEN n = Flex_Len(mo->utf8flex);
             if (
                 n > mo->start
-                and *Binary_At(mo->series, n - 1) == OS_DIR_SEP
+                and *Binary_At(mo->utf8flex, n - 1) == OS_DIR_SEP
             ){
                 // Collapse multiple sequential slashes into just one, by
                 // skipping to the next character without adding to mold.
@@ -309,7 +309,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
 
             // Accept the slash, but translate to backslash on Windows.
             //
-            Append_Utf8_Codepoint(mo->series, OS_DIR_SEP);
+            Append_Codepoint(mo->utf8flex, OS_DIR_SEP);
             break;
         }
 
@@ -327,16 +327,16 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
     // is included in the filename (move, delete), so it might not be wanted.
     //
     if (flags & REB_FILETOLOCAL_NO_TAIL_SLASH) {
-        REBLEN n = Flex_Len(mo->series);
-        if (n > mo->start and *Binary_At(mo->series, n - 1) == OS_DIR_SEP)
-            Term_Non_Array_Flex_Len(mo->series, n - 1);
+        REBLEN n = Flex_Len(mo->utf8flex);
+        if (n > mo->start and *Binary_At(mo->utf8flex, n - 1) == OS_DIR_SEP)
+            Term_Non_Array_Flex_Len(mo->utf8flex, n - 1);
     }
 
     // If one is to list a directory's contents, you might want the name to
     // be `c:\foo\*` instead of just `c:\foo` (Windows needs this)
     //
     if (flags & REB_FILETOLOCAL_WILD)
-        Append_Utf8_Codepoint(mo->series, '*');
+        Append_Codepoint(mo->utf8flex, '*');
 }
 
 
@@ -347,7 +347,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
 // opposite operation of To_REBOL_Path.
 //
 Flex* To_Local_Path(const Cell* file, Flags flags) {
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     Mold_File_To_Local(mo, file, flags);

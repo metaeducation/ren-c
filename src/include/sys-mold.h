@@ -27,8 +27,8 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-struct rebol_mold {
-    Binary* series;     // destination series (uni)
+struct MolderStruct {
+    Binary* utf8flex;     // mold buffer stored as utf-8
     REBLEN start;       // index where this mold starts within series
     Flags opts;        // special option flags
     REBLEN limit;       // how many characters before cutting off with "..."
@@ -90,12 +90,12 @@ enum REB_Mold_Opts {
 #define MOLD_FLAG_NON_ANSI_PARENED \
     MOLD_FLAG_ALL // Non ANSI chars are ^() escaped
 
-#define DECLARE_MOLD(name) \
-    REB_MOLD mold_struct; \
-    mold_struct.series = nullptr; /* used to tell if pushed or not */ \
-    mold_struct.opts = 0; \
-    mold_struct.indent = 0; \
-    REB_MOLD *name = &mold_struct; \
+#define DECLARE_MOLDER(name) \
+    Molder name##_struct; \
+    name##_struct.utf8flex = nullptr; /* used to tell if pushed or not */ \
+    name##_struct.opts = 0; \
+    name##_struct.indent = 0; \
+    Molder* name = &name##_struct; \
 
 #define SET_MOLD_FLAG(mo,f) \
     ((mo)->opts |= (f))

@@ -1339,14 +1339,14 @@ void Shutdown_Stackoverflow(void)
 
 // Limited molder (used, e.g., for errors)
 //
-static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBLEN len)
+static void Mold_Value_Limit(Molder* mo, Cell* v, REBLEN len)
 {
-    REBLEN start = Flex_Len(mo->series);
+    REBLEN start = Flex_Len(mo->utf8flex);
     Mold_Value(mo, v);
 
-    if (Flex_Len(mo->series) - start > len) {
-        Set_Flex_Len(mo->series, start + len);
-        Append_Unencoded(mo->series, "...");
+    if (Flex_Len(mo->utf8flex) - start > len) {
+        Set_Flex_Len(mo->utf8flex, start + len);
+        Append_Unencoded(mo->utf8flex, "...");
     }
 }
 
@@ -1354,7 +1354,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBLEN len)
 //
 //  MF_Error: C
 //
-void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Error(Molder* mo, const Cell* v, bool form)
 {
     // Protect against recursion. !!!!
     //
@@ -1380,7 +1380,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     else if (Is_Text(&vars->message))
         Form_Value(mo, &vars->message);
     else
-        Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
+        Append_Unencoded(mo->utf8flex, RM_BAD_ERROR_FORMAT);
 
     // Form: ** Where: function
     Value* where = KNOWN(&vars->where);
@@ -1388,16 +1388,16 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
         not Is_Nulled(where)
         and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
     ){
-        Append_Utf8_Codepoint(mo->series, '\n');
-        Append_Unencoded(mo->series, RM_ERROR_WHERE);
+        Append_Codepoint(mo->utf8flex, '\n');
+        Append_Unencoded(mo->utf8flex, RM_ERROR_WHERE);
         Form_Value(mo, where);
     }
 
     // Form: ** Near: location
     Value* nearest = KNOWN(&vars->nearest);
     if (not Is_Nulled(nearest)) {
-        Append_Utf8_Codepoint(mo->series, '\n');
-        Append_Unencoded(mo->series, RM_ERROR_NEAR);
+        Append_Codepoint(mo->utf8flex, '\n');
+        Append_Unencoded(mo->utf8flex, RM_ERROR_NEAR);
 
         if (Is_Text(nearest)) {
             //
@@ -1407,12 +1407,12 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
             // error, because otherwise it obscures the LOAD call where the
             // scanner was invoked.  Review.
             //
-            Append_Utf8_String(mo->series, nearest, VAL_LEN_HEAD(nearest));
+            Append_Utf8_String(mo->utf8flex, nearest, VAL_LEN_HEAD(nearest));
         }
         else if (Any_List(nearest))
             Mold_Value_Limit(mo, nearest, 60);
         else
-            Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
+            Append_Unencoded(mo->utf8flex, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** File: filename
@@ -1424,23 +1424,23 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     //
     Value* file = KNOWN(&vars->file);
     if (not Is_Nulled(file)) {
-        Append_Utf8_Codepoint(mo->series, '\n');
-        Append_Unencoded(mo->series, RM_ERROR_FILE);
+        Append_Codepoint(mo->utf8flex, '\n');
+        Append_Unencoded(mo->utf8flex, RM_ERROR_FILE);
         if (Is_File(file))
             Form_Value(mo, file);
         else
-            Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
+            Append_Unencoded(mo->utf8flex, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** Line: line-number
     Value* line = KNOWN(&vars->line);
     if (not Is_Nulled(line)) {
-        Append_Utf8_Codepoint(mo->series, '\n');
-        Append_Unencoded(mo->series, RM_ERROR_LINE);
+        Append_Codepoint(mo->utf8flex, '\n');
+        Append_Unencoded(mo->utf8flex, RM_ERROR_LINE);
         if (Is_Integer(line))
             Form_Value(mo, line);
         else
-            Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
+            Append_Unencoded(mo->utf8flex, RM_BAD_ERROR_FORMAT);
     }
 }
 

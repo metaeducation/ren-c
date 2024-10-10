@@ -630,13 +630,13 @@ VarList* Alloc_Context_From_Map(REBMAP *map)
 //
 //  MF_Map: C
 //
-void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Map(Molder* mo, const Cell* v, bool form)
 {
     REBMAP *m = VAL_MAP(v);
 
     // Prevent endless mold loop:
     if (Find_Pointer_In_Flex(TG_Mold_Stack, m) != NOT_FOUND) {
-        Append_Unencoded(mo->series, "...]");
+        Append_Unencoded(mo->utf8flex, "...]");
         return;
     }
 
@@ -644,7 +644,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 
     if (not form) {
         Pre_Mold(mo, v);
-        Append_Utf8_Codepoint(mo->series, '[');
+        Append_Codepoint(mo->utf8flex, '[');
     }
 
     // Mold all entries that are set.  As with contexts, void values are not
@@ -662,13 +662,13 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
             New_Indented_Line(mo);
         Emit(mo, "V V", key, key + 1);
         if (form)
-            Append_Utf8_Codepoint(mo->series, '\n');
+            Append_Codepoint(mo->utf8flex, '\n');
     }
     mo->indent--;
 
     if (not form) {
         New_Indented_Line(mo);
-        Append_Utf8_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->utf8flex, ']');
     }
 
     End_Mold(mo);

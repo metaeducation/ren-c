@@ -1004,7 +1004,7 @@ const Byte *Scan_File(
         invalid = cb_cast(":;()[]\"");
     }
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     cp = Scan_Item_Push_Mold(mo, cp, cp + len, term, invalid);
     if (cp == nullptr) {

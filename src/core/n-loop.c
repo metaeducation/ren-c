@@ -1114,7 +1114,7 @@ struct Remove_Each_State {
     const Value* body;
     VarList* context;
     REBLEN start;
-    REB_MOLD *mo;
+    Molder* mo;
 };
 
 
@@ -1185,7 +1185,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         REBLEN orig_len = VAL_LEN_HEAD(res->data);
         assert(res->start <= orig_len);
         Append_Unencoded_Len(
-            res->mo->series,
+            res->mo->utf8flex,
             cs_cast(Binary_At(cast(Binary*, res->series), res->start)),
             orig_len - res->start
         );
@@ -1220,8 +1220,8 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(res->start <= orig_len);
 
         for (; res->start != orig_len; ++res->start) {
-            Append_Utf8_Codepoint(
-                res->mo->series,
+            Append_Codepoint(
+                res->mo->utf8flex,
                 GET_ANY_CHAR(res->series, res->start)
             );
         }
@@ -1340,7 +1340,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
                 assert(res->start <= len);
                 if (Is_Binary(res->data)) {
                     Append_Unencoded_Len(
-                        res->mo->series,
+                        res->mo->utf8flex,
                         cs_cast(
                             Binary_At(cast(Binary*, res->series), res->start)
                         ),
@@ -1348,8 +1348,8 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
                     );
                 }
                 else {
-                    Append_Utf8_Codepoint(
-                        res->mo->series, GET_ANY_CHAR(res->series, res->start)
+                    Append_Codepoint(
+                        res->mo->utf8flex, GET_ANY_CHAR(res->series, res->start)
                     );
                 }
                 ++res->start;
@@ -1429,7 +1429,7 @@ DECLARE_NATIVE(remove_each)
 
     res.start = VAL_INDEX(res.data);
 
-    REB_MOLD mold_struct;
+    MolderStruct mold_struct;
     if (Any_List(res.data)) {
         //
         // We're going to use NODE_FLAG_MARKED on the elements of data's

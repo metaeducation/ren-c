@@ -186,7 +186,7 @@ const Byte *Scan_Time(Value* out, const Byte *cp, REBLEN len)
 //
 //  MF_Time: C
 //
-void MF_Time(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Time(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
@@ -200,7 +200,7 @@ void MF_Time(REB_MOLD *mo, const Cell* v, bool form)
         fmt = "I:2:2";
 
     if (VAL_NANO(v) < cast(REBI64, 0))
-        Append_Utf8_Codepoint(mo->series, '-');
+        Append_Codepoint(mo->utf8flex, '-');
 
     Emit(mo, fmt, tf.h, tf.m, tf.s, 0);
 

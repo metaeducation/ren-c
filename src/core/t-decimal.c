@@ -299,7 +299,7 @@ REBINT CT_Decimal(const Cell* a, const Cell* b, REBINT mode)
 //
 // Notice this covers both DECIMAL! and PERCENT!
 //
-void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Decimal(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -314,7 +314,7 @@ void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
             GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
             mo->digits
         );
-        Append_Unencoded_Len(mo->series, s_cast(buf), len);
+        Append_Unencoded_Len(mo->utf8flex, s_cast(buf), len);
         break; }
 
     default:

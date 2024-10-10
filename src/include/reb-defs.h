@@ -256,9 +256,9 @@ typedef Bounce (*TO_HOOK)(Value*, enum Reb_Kind, const Value*);
 
 //=//// MOLDING ///////////////////////////////////////////////////////////=//
 //
-struct rebol_mold;
-typedef struct rebol_mold REB_MOLD;
-typedef void (*MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
+struct MolderStruct;
+typedef struct MolderStruct Molder;
+typedef void (*MOLD_HOOK)(Molder* mo, const Cell* v, bool form);
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in

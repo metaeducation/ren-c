@@ -179,7 +179,7 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
         // Form the values of the block
         // !! Could be made more efficient if we broke the FORM
         // into 32K chunks for writing.
-        DECLARE_MOLD (mo);
+        DECLARE_MOLDER (mo);
         Push_Mold(mo);
         if (lines)
             SET_MOLD_FLAG(mo, MOLD_FLAG_LINES);

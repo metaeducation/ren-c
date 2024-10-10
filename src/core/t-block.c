@@ -694,7 +694,7 @@ Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
 //
 //  MF_List: C
 //
-void MF_List(REB_MOLD *mo, const Cell* v, bool form)
+void MF_List(Molder* mo, const Cell* v, bool form)
 {
     if (form && (Is_Block(v) || Is_Group(v))) {
         Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), 0);
@@ -717,10 +717,10 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
         SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
         Pre_Mold(mo, v); // #[block! part
 
-        Append_Utf8_Codepoint(mo->series, '[');
+        Append_Codepoint(mo->utf8flex, '[');
         Mold_Array_At(mo, Cell_Array(v), 0, "[]");
         Post_Mold(mo, v);
-        Append_Utf8_Codepoint(mo->series, ']');
+        Append_Codepoint(mo->utf8flex, ']');
     }
     else {
         const char *sep;
@@ -741,12 +741,12 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
             break;
 
         case REB_GET_PATH:
-            Append_Utf8_Codepoint(mo->series, ':');
+            Append_Codepoint(mo->utf8flex, ':');
             sep = "/";
             break;
 
         case REB_LIT_PATH:
-            Append_Utf8_Codepoint(mo->series, '\'');
+            Append_Codepoint(mo->utf8flex, '\'');
             // fall through
         case REB_PATH:
         case REB_SET_PATH:
@@ -760,7 +760,7 @@ void MF_List(REB_MOLD *mo, const Cell* v, bool form)
         Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
         if (VAL_TYPE(v) == REB_SET_PATH)
-            Append_Utf8_Codepoint(mo->series, ':');
+            Append_Codepoint(mo->utf8flex, ':');
     }
 }
 

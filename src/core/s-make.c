@@ -151,11 +151,11 @@ Binary* Append_Unencoded(Binary* dst, const char *src)
 
 
 //
-//  Append_Codepoint: C
+//  Append_Codepoint_UCS2: C
 //
 // Append a non-encoded character to a string.
 //
-String* Append_Codepoint(String* dst, REBUNI codepoint)
+String* Append_Codepoint_UCS2(String* dst, REBUNI codepoint)
 {
     assert(Flex_Wide(dst) == sizeof(REBUNI)); // invariant for "Latin1 Nowhere"
 
@@ -171,11 +171,11 @@ String* Append_Codepoint(String* dst, REBUNI codepoint)
 
 
 //
-//  Append_Utf8_Codepoint: C
+//  Append_Codepoint: C
 //
 // Encode a codepoint onto a UTF-8 binary series.
 //
-Binary* Append_Utf8_Codepoint(Binary* dst, uint32_t codepoint)
+Binary* Append_Codepoint(Binary* dst, uint32_t codepoint)
 {
     assert(Flex_Wide(dst) == sizeof(Byte));
 

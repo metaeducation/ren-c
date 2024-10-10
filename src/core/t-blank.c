@@ -66,21 +66,21 @@ Bounce TO_Unit(Value* out, enum Reb_Kind kind, const Value* data) {
 //
 //  MF_Unit: C
 //
-void MF_Unit(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Unit(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // no distinction between MOLD and FORM
 
     switch (VAL_TYPE(v)) {
       case REB_BLANK:
-        Append_Unencoded(mo->series, "_");
+        Append_Unencoded(mo->utf8flex, "_");
         break;
 
       case REB_NOTHING:  // In modern Ren-C, nothing is an antiform of blank
-        Append_Unencoded(mo->series, "~");
+        Append_Unencoded(mo->utf8flex, "~");
         break;
 
       case REB_VOID:  // In modern Ren-C, void is the antiform of the word VOID
-        Append_Unencoded(mo->series, "~void~");
+        Append_Unencoded(mo->utf8flex, "~void~");
         break;
 
       default:
@@ -201,7 +201,7 @@ REBINT CT_Handle(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MF_Handle: C
 //
-void MF_Handle(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Handle(Molder* mo, const Cell* v, bool form)
 {
     // Value has no printable form, so just print its name.
 

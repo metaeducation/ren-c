@@ -551,7 +551,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
 //
 //  MF_Logic: C
 //
-void MF_Logic(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Logic(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // currently no distinction between MOLD and FORM
 

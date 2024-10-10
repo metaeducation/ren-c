@@ -277,7 +277,7 @@ Bounce PD_Tuple(
 //
 //  MF_Tuple: C
 //
-void MF_Tuple(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Tuple(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -305,7 +305,7 @@ void MF_Tuple(REB_MOLD *mo, const Cell* v, bool form)
     }
     *--out = 0;
 
-    Append_Unencoded_Len(mo->series, s_cast(buf), out - buf);
+    Append_Unencoded_Len(mo->utf8flex, s_cast(buf), out - buf);
 }
 
 

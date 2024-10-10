@@ -363,13 +363,13 @@ DECLARE_NATIVE(to_integer)
 //
 //  MF_Integer: C
 //
-void MF_Integer(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Integer(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
     Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
-    Append_Unencoded_Len(mo->series, s_cast(buf), len);
+    Append_Unencoded_Len(mo->utf8flex, s_cast(buf), len);
 }
 
 

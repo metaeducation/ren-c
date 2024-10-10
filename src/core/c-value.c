@@ -129,11 +129,11 @@ INLINE void Probe_Print_Helper(
 
 INLINE void Probe_Molded_Value(const Value* v)
 {
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
     Mold_Value(mo, v);
 
-    printf("%s\n", s_cast(Binary_At(mo->series, mo->start)));
+    printf("%s\n", s_cast(Binary_At(mo->utf8flex, mo->start)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -150,7 +150,7 @@ void* Probe_Core_Debug(
     const char *file,
     int line
 ){
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     bool was_disabled = GC_Disabled;
@@ -183,7 +183,7 @@ void* Probe_Core_Debug(
             const char *head = Symbol_Head(sym);  // UTF-8
             size_t size = Symbol_Size(sym);  // number of UTF-8 bytes
 
-            Append_Utf8_Utf8(mo->series, head, size);
+            Append_Utf8_Utf8(mo->utf8flex, head, size);
         }
         else if (Flex_Wide(s) == sizeof(Byte)) {
             Probe_Print_Helper(p, "Byte-Size Flex", file, line);
@@ -197,12 +197,12 @@ void* Probe_Core_Debug(
                 Binary_Len(bin),
                 brk
             );
-            Append_Unencoded(mo->series, "#{");
+            Append_Unencoded(mo->utf8flex, "#{");
             Append_Utf8_Utf8(
-                mo->series,
+                mo->utf8flex,
                 cs_cast(Binary_Head(enbased)), Binary_Len(enbased)
             );
-            Append_Unencoded(mo->series, "}");
+            Append_Unencoded(mo->utf8flex, "}");
             Free_Unmanaged_Flex(enbased);
         }
         else if (Flex_Wide(s) == sizeof(REBUNI)) {
@@ -251,8 +251,8 @@ void* Probe_Core_Debug(
         panic (p);
     }
 
-    if (mo->start != Flex_Len(mo->series))
-        printf("%s\n", s_cast(Binary_At(mo->series, mo->start)));
+    if (mo->start != Flex_Len(mo->utf8flex))
+        printf("%s\n", s_cast(Binary_At(mo->utf8flex, mo->start)));
     fflush(stdout);
 
     Drop_Mold(mo);

@@ -577,7 +577,7 @@ DECLARE_NATIVE(enhex)
 
     REBLEN len = Cell_Series_Len_At(ARG(string));
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold (mo);
 
     // !!! For now, we conservatively assume that the mold buffer might need
@@ -701,7 +701,7 @@ DECLARE_NATIVE(enhex)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series));
+    Set_Flex_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
 
     return Init_Any_Series(
         OUT,
@@ -728,7 +728,7 @@ DECLARE_NATIVE(dehex)
 
     REBLEN len = Cell_Series_Len_At(ARG(string));
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     // Conservatively assume no %NNs, and output is same length as input, with
@@ -829,7 +829,7 @@ DECLARE_NATIVE(dehex)
 
     *dp = '\0';
 
-    Set_Flex_Len(mo->series, dp - Binary_Head(mo->series));
+    Set_Flex_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
 
     return Init_Any_Series(
         OUT,
@@ -990,7 +990,7 @@ DECLARE_NATIVE(entab)
     else
         tabsize = TAB_SIZE;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     REBLEN len = Cell_Series_Len_At(val);
@@ -1035,7 +1035,7 @@ DECLARE_NATIVE(entab)
         }
     }
 
-    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
+    Term_Binary_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
@@ -1067,7 +1067,7 @@ DECLARE_NATIVE(detab)
     else
         tabsize = TAB_SIZE;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     // Estimate new length based on tab expansion:
 
@@ -1114,7 +1114,7 @@ DECLARE_NATIVE(detab)
         dp += Encode_UTF8_Char(dp, c);
     }
 
-    Term_Binary_Len(mo->series, dp - Binary_Head(mo->series));
+    Term_Binary_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
 
     return Init_Any_Series(OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
