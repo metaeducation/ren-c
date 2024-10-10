@@ -418,7 +418,7 @@ union HeaderUnion {
 //
 // Because "pairings" can wind up marking what looks like both a value cell
 // and a series, it's a bit dangerous to try exploiting this bit on a generic
-// clel.  If one is *certain* that a value is not "paired" (e.g. it's in
+// cell.  If one is *certain* that a value is not "paired" (e.g. it's in
 // a function arglist, or array slot), it may be used for other things, e.g.
 //
 // * ARG_MARKED_CHECKED -- This uses the NODE_FLAG_MARKED bit on args in

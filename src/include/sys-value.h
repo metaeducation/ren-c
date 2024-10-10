@@ -689,6 +689,8 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 #define Init_Nulled(out) \
     RESET_CELL_EXTRA((out), REB_MAX_NULLED, CELL_FLAG_FALSEY)
 
+#define CELL_FLAG_NULL_IS_ENDISH FLAG_TYPE_SPECIFIC_BIT(0)
+
 // !!! A theory was that the "evaluated" flag would help a function that took
 // both ~null~ and <end>, which are converted to nulls, distinguish what kind
 // of null it is.  This may or may not be a good idea, but unevaluating it
@@ -696,10 +698,10 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 //
 #define Init_Endish_Nulled(out) \
     RESET_CELL_EXTRA((out), REB_MAX_NULLED, \
-        CELL_FLAG_FALSEY | CELL_FLAG_ENDISH)
+        CELL_FLAG_FALSEY | CELL_FLAG_NULL_IS_ENDISH)
 
 INLINE bool Is_Endish_Nulled(const Cell* v) {
-    return Is_Nulled(v) and Get_Cell_Flag(v, ENDISH);
+    return Is_Nulled(v) and Get_Cell_Flag(v, NULL_IS_ENDISH);
 }
 
 

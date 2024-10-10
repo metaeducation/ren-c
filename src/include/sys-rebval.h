@@ -168,13 +168,14 @@
     FLAG_LEFT_BIT(19)
 
 
-//=//// CELL_FLAG_ENDISH /////////////////////////////////////////////////=//
+//=//// CELL_FLAG_NOTE ////////////////////////////////////////////////////=//
 //
-// Somewhat wasteful use of flag to indicate "endish" nulleds.
+// So the CELL_FLAG_NOTE is another general tool that can be used on a
+// cell-by-cell basis and not be copied from the location where it is
+// applied... but it will be overwritten if you put another value in that
+// particular location.
 //
-// Should be at least a "type specific" bit on the null.
-//
-#define CELL_FLAG_ENDISH \
+#define CELL_FLAG_NOTE \
     FLAG_LEFT_BIT(20)
 
 
@@ -300,7 +301,7 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED \
-        | CELL_FLAG_EVAL_FLIP)
+        | CELL_FLAG_EVAL_FLIP | CELL_FLAG_NOTE)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
