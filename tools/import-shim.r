@@ -6,13 +6,11 @@ Rebol [
     Description: --{
         This shim redefines IMPORT and EXPORT for the bootstrap executable:
 
-        * It preprocesses the source, so that -{...}- strings are turned into
-          legacy {...} strings.  ({...} are FENCE! lists in modern Ren-C)
+        * It handles a basic simulation of the IMPORT and EXPORT commands
+          that does not use modules, but objects and puts things into
+          the lib context.
 
-        * It removes commas from non-strings in source, so that commas can be
-          used in boostrap code.  This doesn't act as expression barriers, but
-          helps with readability (and new executables will see them as
-          expression barriers and enforce them).
+        * It is also able to preprocess the source, if necessary.
     }--
     Usage: --{
         To affect how code is loaded, the import shim has to be hooked in
@@ -36,11 +34,8 @@ Rebol [
 ]
 
 
-if did find (words of import/) 'into [  ; non-bootstrap Ren-C
-    print ""
-    print "!!! %import-shim.r is only for use with old Ren-C EXEs"
-    print ""
-    quit 1
+if find (words of import/) 'into [  ; non-bootstrap Ren-C
+    fail "%import-shim.r is only for use with old Ren-C EXEs"
 ]
 
 
@@ -99,8 +94,18 @@ any-value?!: any-value!
 
 === "SOURCE CONVERSION" ===
 
+; At one point this was used to remove commas from non-string contexts, but
+; that behavior was added to the bootstrap executable.
+;
+; It was also planned to have it preprocess the source to convert -{...}-
+; strings into legacy {...} strings, but support for dashed strings was added
+; to the bootstrap executable as well.
+;
+; So it's left around in case it comes in handy for some change that is
+; easier to make here than the bootstrap executable.
+
 /rewrite-source-for-bootstrap-exe: lib3/func [
-    "turn -{...}- to {...}"
+    "Hookpoint that allows rewriting source"
     source [text!]
     <local> pushed rule
 ][

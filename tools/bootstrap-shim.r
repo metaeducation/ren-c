@@ -49,23 +49,7 @@ REBOL [
 
 
 if not find (words of import/) 'into [
-    ; no :INTO means error here, so old r3 without import shim
-
-    ; Don't use -{...}- in this error message, because if this message is
-    ; being reported then this interpreter will not understand it.
-
-    print ""
-    print "!!! Bootstrapping with older Ren-C requires passing %import-shim.r"
-    print "on the command line with the --import option, e.g."
-    print ""
-    print "    r3 --import import-shim.r make.r"
-    print ""
-    print "...instead of just `r3 make.r`.  Otherwise make.r can't use things"
-    print "like -{...}- strings in older Ren-C."
-    print ""
-    print "(See %import-shim.r for more details)"
-    print ""
-    quit 1
+    fail "%import-shim.r must be loaded before %bootstrap-shim.r"
 ]
 
 
