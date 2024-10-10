@@ -70,11 +70,16 @@
 INLINE bool Is_Lex_Interstitial(Byte b)
   { return b == '/' or b == '.' or b == ':'; }
 
-INLINE bool Is_Interstitial_Scan(ScanState *S) {
-    return Is_Lex_Interstitial(S->mode);  // !!! will have fast flag!
+INLINE bool Is_Interstitial_Scan(Level* L)  // speedy check via flag
+  { return Get_Scan_Executor_Flag(L, INTERSTITIAL_SCAN); }
+
+INLINE bool Is_List_Scan(Level* L) {  // only used in errors, need not be fast
+    Byte mode = Level_State_Byte(L);
+    return mode == ']' or mode == ')';
 }
 
-bool Is_Lex_Sub_Interstitial(Byte mode, Byte sub) {
+INLINE bool Is_Lex_Sub_Interstitial(Level *L, Byte sub) {
+    Byte mode = Level_State_Byte(L);
     assert(Is_Lex_Interstitial(mode));
     assert(Is_Lex_Interstitial(sub));
     assert(mode != sub);
@@ -95,6 +100,11 @@ INLINE bool Interstitial_Match(Byte b, Byte mode) {
     assert(Is_Lex_Interstitial(mode));
     assert(Is_Lex_Interstitial(b));
     return b == mode;
+}
+
+INLINE bool Scan_Mode_Matches(Level* L, Byte mode) {
+    assert(Is_Lex_Interstitial(mode) or Is_Lex_End_List(mode));
+    return Level_State_Byte(L) == mode;
 }
 
 INLINE Sigil Sigil_From_Token(Token t) {
@@ -1794,30 +1804,36 @@ void Init_Transcode(
 
 
 //
-//  Init_Scan_Level: C
+//  Make_Scan_Level: C
 //
 // Initialize the per-level scanner state structure.  Note that whether this
 // will be a variadic transcode or not is based on the Level's "Feed".
 //
-void Init_Scan_Level(
-    Level* L,
+Level* Make_Scan_Level(
     TranscodeState* transcode,
-    Byte mode
+    Feed* feed,
+    Flags flags
 ){
-    assert(L->executor == &Scanner_Executor);
-    ScanState* S = &L->u.scan;
+    Level* L = Make_Level(&Scanner_Executor, feed, flags);
 
+    Byte mode = Level_State_Byte(L);
+    assert(mode != 0);  // must use non-zero state byte
+    if (mode == '/' or mode == ':' or mode == '.')
+        assert(flags & SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN);
+    UNUSED(mode);
+
+    ScanState* S = &L->u.scan;
     S->ss = transcode;
 
     S->start_line_head = transcode->line_head;
     S->start_line = transcode->line;
-    S->mode = mode;
-
     S->quotes_pending = 0;
     S->sigil_pending = SIGIL_0;
 
     Corrupt_Pointer_If_Debug(S->begin);
     Corrupt_Pointer_If_Debug(S->end);
+
+    return L;
 }
 
 
@@ -1927,28 +1943,35 @@ Bounce Scanner_Executor(Level* const L) {
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
+  #if DEBUG
+    char scan_mode = Level_State_Byte(L);  // to see in C debug watchlist
+    if (scan_mode == '/' or scan_mode == ':' or scan_mode == '.')
+        assert(Get_Scan_Executor_Flag(L, INTERSTITIAL_SCAN));
+    else
+        assert(Not_Scan_Executor_Flag(L, INTERSTITIAL_SCAN));
+    USED(scan_mode);
+  #endif
+
     ScanState* S = &level_->u.scan;
     TranscodeState* transcode = S->ss;
 
     DECLARE_MOLD (mo);
 
-    enum {
-        ST_SCANNER_INITIAL_ENTRY = STATE_0,
-        ST_SCANNER_SCANNING_CHILD_ARRAY,
-        ST_SCANNER_SCANNING_CONSTRUCT
-    };
-
     switch (STATE) {
-      case ST_SCANNER_INITIAL_ENTRY :
-        goto initial_entry;
-
-      case ST_SCANNER_SCANNING_CHILD_ARRAY :
+      case ST_SCANNER_OUTERMOST_SCAN:
+      case ST_SCANNER_TUPLE_MODE:
+      case ST_SCANNER_PATH_MODE:
+      case ST_SCANNER_CHAIN_MODE:
+      case ST_SCANNER_GROUP_MODE:
+      case ST_SCANNER_BLOCK_MODE:
+      case ST_SCANNER_FENCE_MODE:  // coming soon!
+        if (L == TOP_LEVEL)
+            goto initial_entry;  // assume no sublevel means initial entry
+        assert(TOP_LEVEL->prior = L);
         goto child_array_scanned;
 
-      case ST_SCANNER_SCANNING_CONSTRUCT:
-        goto construct_scan_to_stack_finished;
-
-      default : assert(false);
+      default:
+        assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -1973,8 +1996,8 @@ Bounce Scanner_Executor(Level* const L) {
         // an ending `]` or `)` and jumped to `done`.  If an end token gets
         // hit first, there was never a proper closing.
         //
-        if (Is_Lex_End_List(S->mode))
-            return RAISE(Error_Missing(S, S->mode));
+        if (Is_List_Scan(L))
+            return RAISE(Error_Missing(S, STATE));
 
         Option(Error*) error = Trap_Flush_Pending_Sigils(S);
         if (error)
@@ -1998,7 +2021,7 @@ Bounce Scanner_Executor(Level* const L) {
         Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
         transcode->line_head = transcode->at;
 
-        if (not Is_Interstitial_Scan(S))
+        if (not Is_Interstitial_Scan(L))
             goto loop;
         break; }
 
@@ -2025,7 +2048,7 @@ Bounce Scanner_Executor(Level* const L) {
             else if (S->quotes_pending) {
                 // fall through normally, want [', 10] => ', 10
             }
-            if (Is_Interstitial_Scan(S)) {
+            if (Is_Interstitial_Scan(L)) {
                 //
                 // We only see a comma during a PATH! or TUPLE! scan in cases
                 // where a blank is needed.  So we'll get here with [/a/ , xxx]
@@ -2132,20 +2155,14 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
-        Level* sub = Make_Level(
-            &Scanner_Executor,
+        Level* sub = Make_Scan_Level(
+            transcode,
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | LEVEL_FLAG_RAISED_RESULT_OK
+                | FLAG_STATE_BYTE(token == TOKEN_BLOCK_BEGIN ? ']' : ')')
         );
-        Init_Scan_Level(
-            sub,
-            transcode,
-            token == TOKEN_BLOCK_BEGIN ? ']' : ')'
-        );
-
-        STATE = ST_SCANNER_SCANNING_CHILD_ARRAY;
         Push_Level(OUT, sub);
         return CATCH_CONTINUE_SUBLEVEL(sub); }
 
@@ -2200,17 +2217,17 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(unwrap error);
 
         Byte end_delimiter = *S->begin;
-        if (S->mode == end_delimiter)
+        if (Scan_Mode_Matches(L, end_delimiter))
             goto done;
 
-        if (Is_Interstitial_Scan(S)) {  // implicit end [the /] (abc/)
+        if (Is_Interstitial_Scan(L)) {  // implicit end [the /] (abc/)
             assert(transcode->at == S->end);  // falsely accepted end_delimiter
             --transcode->at;  // unaccept, and end the interstitial scan first
             goto done;
         }
 
-        if (S->mode != '\0')  // expected ']' before ')' or vice-versa
-            return RAISE(Error_Mismatch(S->mode, end_delimiter));
+        if (Is_List_Scan(L))  // expected ']' before ')' or vice-versa
+            return RAISE(Error_Mismatch(STATE, end_delimiter));
 
         return RAISE(Error_Extra(end_delimiter)); }
 
@@ -2223,7 +2240,7 @@ Bounce Scanner_Executor(Level* const L) {
         //
         // (Imagine we're in a tuple scan and INTEGER! 10 was pushed, and are
         // at "20.30" in the 10.20.30 case.  Locate_Token() would need access
-        // to S->mode to know that the tuple scan was happening, else
+        // to the scan mode to know that the tuple scan was happening, else
         // it would have to conclude "20.30" was TOKEN_DECIMAL.  Deeper study
         // would be needed to know if giving Locate_Token() more information
         // is wise.  But that study would likely lead to the conclusion that
@@ -2239,7 +2256,7 @@ Bounce Scanner_Executor(Level* const L) {
                 *S->end == '.'
                 or *S->end == ','  // still allow `1,2` as `1.2` synonym
             )
-            and not Is_Interstitial_Scan(S)  // not in PATH!/TUPLE! (yet)
+            and not Is_Interstitial_Scan(L)  // not in PATH!/TUPLE! (yet)
             and Is_Lex_Number(S->end[1])  // If # digit, we're seeing `###.#???`
         ){
             // If we will be scanning a TUPLE!, then we're at the head of it.
@@ -2296,7 +2313,7 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_DATE: {
         const Byte* ep = S->end;
-        while (*ep == '/' and S->mode != '/') {  // Is date/time?
+        while (*ep == '/' and not Scan_Mode_Matches(L, '/')) {  // Is date/time?
             ep++;
             while (*ep == '.' or *ep == ':' or Is_Lex_Not_Delimit(*ep))
                 ++ep;
@@ -2372,25 +2389,37 @@ Bounce Scanner_Executor(Level* const L) {
         break;
 
       case TOKEN_CONSTRUCT: {
-        Level* sub = Make_Level(
-            &Scanner_Executor,
+        Level* sub = Make_Scan_Level(
+            transcode,
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | LEVEL_FLAG_RAISED_RESULT_OK
+                | FLAG_STATE_BYTE(ST_SCANNER_BLOCK_MODE)
         );
-        Init_Scan_Level(sub, transcode, ']');
 
-        STATE = ST_SCANNER_SCANNING_CONSTRUCT;
-        Push_Level(OUT, sub);
-        return CATCH_CONTINUE_SUBLEVEL(sub); }
+        Push_Level(OUT, sub);  // do stackful, for now
+
+        bool threw = Trampoline_With_Top_As_Root_Throws();
+
+        if (threw) {
+            Drop_Level(sub);  // should not have accured stack if threw
+            fail (Error_No_Catch_For_Throw(L));
+        }
+
+        if (Is_Raised(OUT)) {
+            Drop_Level(sub);
+            return OUT;
+        }
+
+        goto construct_scan_to_stack_finished; }
 
       case TOKEN_END:  // handled way above, before the switch()
       default:
         panic ("Invalid TOKEN in Scanner.");
     }
 
-} lookahead_for_sequencing_token: {  /////////////////////////////////////////
+} lookahead_for_sequencing_character: {  /////////////////////////////////////
 
   // Quasiforms are currently legal in PATH!/CHAIN!/TUPLE!.  There's not a
   // particularly great reason as to why...it's just that `~/foo/bar.txt` is
@@ -2423,8 +2452,8 @@ Bounce Scanner_Executor(Level* const L) {
     // on the "b", it goes on "b.c", which is why we do not apply any sigils
     // or quotes until a sequence (or subsequence) scan is complete.
 
-    if (Is_Interstitial_Scan(S)) {  // adding to existing path/chain/tuple
-        if (*transcode->at == S->mode) {
+    if (Is_Interstitial_Scan(L)) {  // adding to existing path/chain/tuple
+        if (STATE == *transcode->at) {
             Option(Error*) error = Trap_Apply_Pending_Decorations(S, TOP);
             if (error)
                 return RAISE(unwrap error);
@@ -2445,8 +2474,8 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
         if (Is_Lex_Interstitial(*transcode->at)) {
-            if (Is_Lex_Sub_Interstitial(S->mode, *transcode->at))
-                goto scan_sequence_at_is_delimiter_top_is_head;  // foo:bar.
+            if (Is_Lex_Sub_Interstitial(L, *transcode->at))
+                goto scan_sequence_top_is_head;  // foo:bar.
 
             // Here, consider something like "/foo:bar/" or "foo:bar/" where
             // we are in a lower precedence interstitial scan mode (:) and
@@ -2470,19 +2499,19 @@ Bounce Scanner_Executor(Level* const L) {
             goto done;
         }
 
-        fail ("Transcode got here, now what?");
+        return RAISE("Malformed sequence scan...something like a.b()");
     }
     else if (Is_Lex_Interstitial(*transcode->at)) {  // a new path/chain/tuple
         //
         // We're noticing a sequence was actually starting with the element
         // that just got pushed, so it should be a part of that path.
         //
-        goto scan_sequence_at_is_delimiter_top_is_head;
+        goto scan_sequence_top_is_head;
     }
 
   //=//// APPLY PENDING SIGILS AND QUOTES (NON-INTERSTITIAL) //////////////=//
 
-    assert(not Is_Interstitial_Scan(S));
+    assert(not Is_Interstitial_Scan(L));
 
     // 2. Set the newline on the new value, indicating molding should put a
     //    line break *before* this value (needs to be done after recursion to
@@ -2506,18 +2535,20 @@ Bounce Scanner_Executor(Level* const L) {
 
 } child_array_scanned: {  ////////////////////////////////////////////////////
 
-    if (Is_Raised(OUT))
-        goto handle_failure;
+    if (Is_Raised(OUT)) {
+        Drop_Level(SUBLEVEL);
+        return OUT;
+    }
 
     Flags flags = NODE_FLAG_MANAGED;
     if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     Heart heart;
-    if (SUBLEVEL->u.scan.mode == ']')
+    if (Level_State_Byte(SUBLEVEL) == ST_SCANNER_BLOCK_MODE)
         heart = REB_BLOCK;
     else {
-        assert(SUBLEVEL->u.scan.mode == ')');
+        assert(Level_State_Byte(SUBLEVEL) == ST_SCANNER_GROUP_MODE);
         heart = REB_GROUP;
     }
 
@@ -2536,30 +2567,29 @@ Bounce Scanner_Executor(Level* const L) {
 
     Init_Any_List(PUSH(), heart, a);
 
-    goto lookahead_for_sequencing_token;
+    if (transcode->at == nullptr)
+        goto done;
 
-} scan_sequence_at_is_delimiter_top_is_head: { ///////////////////////////////
+    goto lookahead_for_sequencing_character;
 
-    Token token;
+} scan_sequence_top_is_head: { ///////////////////////////////////////////////
+
     Heart heart;
     Byte sub_mode = *transcode->at;
 
     switch (sub_mode) {
       case '/':
-        assert(S->mode != '/');  // should have continued existing scan
-        token = TOKEN_PATH;
+        assert(not Scan_Mode_Matches(L, '/'));  // should have continued
         heart = REB_PATH;
         break;
 
       case ':':
-        assert(S->mode != ':');  // should have continued existing scan
-        token = TOKEN_CHAIN;
+        assert(not Scan_Mode_Matches(L, ':'));  // should have continued
         heart = REB_CHAIN;
         break;
 
       case '.':
-        assert(S->mode != '.');  // should have continued existing scan
-        token = TOKEN_TUPLE;
+        assert(not Scan_Mode_Matches(L, '.'));  // should have continued
         heart = REB_TUPLE;
         break;
 
@@ -2586,13 +2616,13 @@ Bounce Scanner_Executor(Level* const L) {
         Init_Blank(PUSH());
     }
     else {
-        Level* sub = Make_Level(
-            &Scanner_Executor,
+        Level* sub = Make_Scan_Level(
+            transcode,
             L->feed,
             LEVEL_FLAG_RAISED_RESULT_OK
+                | FLAG_STATE_BYTE(sub_mode)
+                | SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN
         );
-        Init_Scan_Level(sub, transcode, sub_mode);
-
         Push_Level(OUT, sub);
 
         bool threw = Trampoline_With_Top_As_Root_Throws();
@@ -2619,13 +2649,13 @@ Bounce Scanner_Executor(Level* const L) {
     // tuple) and mutate that into an email address.  Clearly this is
     // bad, but details of scanning isn't the focus at this time.
     //
-    if (token == TOKEN_TUPLE) {
+    if (sub_mode == ST_SCANNER_TUPLE_MODE) {
         bool any_email = false;
         StackIndex stackindex = TOP_INDEX;
         for (; stackindex != stackindex_path_head - 1; --stackindex) {
             if (Is_Email(Data_Stack_At(stackindex))) {
                 if (any_email)
-                    return RAISE(Error_Syntax(S, token));
+                    return RAISE(Error_Syntax(S, TOKEN_TUPLE));
                 any_email = true;
             }
         }
@@ -2696,12 +2726,9 @@ Bounce Scanner_Executor(Level* const L) {
     if (transcode->at == nullptr)  // reached e.g. with a/'
         goto done;
 
-    goto lookahead_for_sequencing_token;
+    goto lookahead_for_sequencing_character;
 
 } construct_scan_to_stack_finished: {  ///////////////////////////////////////
-
-    if (Is_Raised(OUT))
-        goto handle_failure;
 
     Flags flags = NODE_FLAG_MANAGED;
     if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
@@ -2753,7 +2780,7 @@ Bounce Scanner_Executor(Level* const L) {
         return RAISE(Error_Malconstruct_Raw(temp));
     }
 
-    goto lookahead_for_sequencing_token;
+    goto lookahead_for_sequencing_character;
 
 } done: {  ///////////////////////////////////////////////////////////////////
 
@@ -2766,12 +2793,6 @@ Bounce Scanner_Executor(Level* const L) {
 
     return NOTHING;
 
-} handle_failure: {  /////////////////////////////////////////////////////////
-
-    assert(Is_Raised(OUT));
-
-    Drop_Level(SUBLEVEL);  // could `return RAISE(Cell_Varlist(OUT))`
-    return OUT;
 }}
 
 
@@ -2994,7 +3015,8 @@ DECLARE_NATIVE(transcode)
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | LEVEL_FLAG_RAISED_RESULT_OK;  // want to pass on definitional error
+        | LEVEL_FLAG_RAISED_RESULT_OK  // want to pass on definitional error
+        | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
 
     if (REF(next) or REF(one))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
@@ -3007,8 +3029,7 @@ DECLARE_NATIVE(transcode)
 
     UNUSED(size);  // currently we don't use this information
 
-    Level* sub = Make_Level(&Scanner_Executor, feed, flags);
-    Init_Scan_Level(sub, ss, '\0');
+    Level* sub = Make_Scan_Level(ss, feed, flags);
 
     Push_Level(OUT, sub);
     STATE = ST_TRANSCODE_SCANNING;
@@ -3134,8 +3155,8 @@ const Byte* Scan_Any_Word(
     const LineNumber start_line = 1;
     Init_Transcode(&ss, file, start_line, utf8);
 
-    Level* L = Make_End_Level(&Scanner_Executor, LEVEL_MASK_NONE);
-    Init_Scan_Level(L, &ss, '\0');
+    Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
+    Level* L = Make_Scan_Level(&ss, TG_End_Feed, flags);
 
     DECLARE_MOLD (mo);
 
@@ -3253,8 +3274,8 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
         nullptr  // let scanner fetch feed->p Utf8 as new S->begin
     );
 
-    Level* L = Make_Level(&Scanner_Executor, feed, LEVEL_MASK_NONE);
-    Init_Scan_Level(L, &ss, '\0');
+    Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
+    Level* L = Make_Scan_Level(&ss, feed, flags);
 
     DECLARE_ATOM (temp);
     Push_Level(temp, L);
@@ -3266,10 +3287,9 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
         return nullptr;
     }
 
-    Flags flags = NODE_FLAG_MANAGED;
     Array* reified = Pop_Stack_Values_Core_Keep_Notes(
         L->baseline.stack_base,
-        flags
+        NODE_FLAG_MANAGED
     );
     Drop_Level(L);
     return reified;

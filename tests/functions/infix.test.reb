@@ -84,7 +84,6 @@
             <i-foo> == [pos @]: evaluate:step [1020 i-foo 304]
             pos = [304]
         ]
-        comment
     )
 
     (

@@ -70,15 +70,14 @@
     LEVEL_FLAG_27
 
 
-//=//// SCAN_EXECUTOR_27 //////////////////////////////////////////////////=//
+//=//// SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN //////////////////////////////=//
 //
-#define SCAN_EXECUTOR_FLAG_27 \
-    LEVEL_FLAG_27
-
-
-//=//// SCAN_EXECUTOR_FLAG_24 /////////////////////////////////////////////=//
+// We know from the Level_State_Byte() of the scanner that it's interstitial
+// if the character is "." or ":" or "/", but instead of comparing that
+// state byte against those three characters we can do it in one quick flag
+// check by putting this flag on the scan.
 //
-#define SCAN_EXECUTOR_FLAG_28 \
+#define SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN \
     LEVEL_FLAG_28
 
 
@@ -128,17 +127,6 @@ typedef struct TranscodeStateStruct TranscodeState;
 struct ScannerExecutorStateStruct {  // each array scan has a level
     TranscodeState* ss;  // shared state of where the scanner head currently is
 
-    // '\0' => top level scan
-    // ']' => this level is scanning a block
-    // ')' => this level is scanning a group
-    // '/' => this level is scanning a path
-    // '.' => this level is scanning a tuple
-    //
-    // (Chosen as the terminal character to use in error messages for the
-    // character we are seeking to find a match for).
-    //
-    Byte mode;
-
     // Beginning and end positions of currently processed token.
     //
     const Byte* begin;
@@ -152,3 +140,37 @@ struct ScannerExecutorStateStruct {  // each array scan has a level
 };
 
 typedef struct ScannerExecutorStateStruct ScanState;
+
+
+//=//// SCANNER LEVEL STATE BYTES /////////////////////////////////////////=//
+//
+// To try and squeak out a little bit of efficiency, the state byte for the
+// level is equal to the character mode of the scan.  It's grafted onto the
+// flags when the level is created (already a sunk cost).  And it keeps from
+// needing to find another place to put the byte.
+//
+// 1. Because you can't run BOUNCE_CONTINUE while the state is zero, we have
+//    a non-zero state used as the generic state for the outermost scan.
+//    And since the state byte is used to encode the current scanning mode,
+//    it can't be overwritten during a continuation to be a signal to jump
+//    to a different location in the code when the continuation finishes.
+//    Instead, the decision is based made on whether there's a sublevel
+//    pushed or not.  (If it isn't, then it's an initial entry.  If it is,
+//    then a child scan was running.)
+//
+// 2. For lists, we use the terminal character--which makes it fast to compare
+//    with what we are seeking to find a match for (and also more useful in
+//    error messages)
+//
+enum {
+    ST_SCANNER_UNUSED_STATE = STATE_0,  // won't work with BOUNCE_CONTINUE [1]
+
+    ST_SCANNER_OUTERMOST_SCAN,  // used instead of STATE_0 [1]
+
+    ST_SCANNER_GROUP_MODE = 41,  // ')' terminal character [2]
+    ST_SCANNER_TUPLE_MODE = 46,  // '.'
+    ST_SCANNER_PATH_MODE = 47,  // '/'
+    ST_SCANNER_CHAIN_MODE = 58,  // ':'
+    ST_SCANNER_BLOCK_MODE = 93,  // ']' terminal character [2]
+    ST_SCANNER_FENCE_MODE = 125  // '}'
+};
