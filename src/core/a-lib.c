@@ -1291,11 +1291,11 @@ RebolValue* API_rebBinary(const void *bytes, size_t size)
 
 
 //
-//  SizeedText: API
+//  rebSizedText: API
 //
 // If utf8 does not contain valid UTF-8 data, this may fail().
 //
-RebolValue* API_SizeedText(const char *utf8, size_t size)
+RebolValue* API_rebSizedText(const char *utf8, size_t size)
 {
     return Init_Text(Alloc_Value(), Make_Sized_String_UTF8(utf8, size));
 }
@@ -1306,7 +1306,7 @@ RebolValue* API_SizeedText(const char *utf8, size_t size)
 //
 RebolValue* API_rebText(const char *utf8)
 {
-    return SizeedText(utf8, strsize(utf8));
+    return rebSizedText(utf8, strsize(utf8));
 }
 
 
