@@ -571,7 +571,7 @@ REBOL [
     ;
     all [
         let date: select c 'date
-        system/build < date
+        system.build < date
 
         fail [
             "This script needs a build newer or equal to" date

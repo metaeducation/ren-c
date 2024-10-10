@@ -71,11 +71,11 @@ ndk-version: make object! [major: minor: patch: null]
 /detect-ndk-host: func [
     return: [word!]
 ][
-    return switch let os: system/version/4 [
+    return switch let os: system.version.4 [
         2 ['darwin-x86_64]  ; Mac
         3 ['windows-x86_64]  ; Windows  !!! 32bit is just `windows`, ignore atm
         4 ['linux-x86_64]  ; Linux
-        fail ["Unsupported Cross-Compilation Host:" system/version]
+        fail ["Unsupported Cross-Compilation Host:" system.version]
     ]
 ]
 

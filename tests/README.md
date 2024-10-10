@@ -40,7 +40,7 @@ A run-recover.r result in Kubuntu running a build of the 2.101.0.4.4 interpreter
 
 The first character of the log file name, #"r" is common to all run-recover log files. The next part describes the version of the interpreter, the following 6 characters are a part of the interpreter executable checksum, and the last 6 characters preceding the file extension are a part of the core-tests.r file checksum.
 
-*(Note: The test framework needs a path to the interpreter executable to be able to calculate the interpreter checksum.  If the full path to the interpreter executable isn't obtained from the command line, the argument of the run-recover.r script will be used as the path to the executable.  Otherwise, the system/build variable will be used.)*
+*(Note: The test framework needs a path to the interpreter executable to be able to calculate the interpreter checksum.  If the full path to the interpreter executable isn't obtained from the command line, the argument of the run-recover.r script will be used as the path to the executable.  Otherwise, the system.build variable will be used.)*
 
 
 # Test File Format

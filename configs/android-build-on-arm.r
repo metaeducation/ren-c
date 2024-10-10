@@ -5,8 +5,8 @@ REBOL [
 
 
 toolset: compose [
-    gcc (tool-for-host/host <compiler> 'linux-arm)
-    ld  (tool-for-host/host <linker> 'linux-arm)
+    gcc (tool-for-host:host <compiler> 'linux-arm)
+    ld  (tool-for-host:host <linker> 'linux-arm)
 ]
 
 
