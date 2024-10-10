@@ -190,3 +190,11 @@
         str.2: codepoint-to-char 0
     )
 ]
+
+; === NEW REN-C STRING MODE ===
+;
+; Dashes are used to build braces into asymmetric delimiters.
+
+("a {b} c" = {a {b} c})
+("a {b c" = -{a {b c}-)
+("a ---{b}--- c" = -{a ---{b}--- c}-)

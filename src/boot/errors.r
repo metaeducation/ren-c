@@ -62,7 +62,7 @@ Internal: [
 ]
 
 Syntax: [
-    scan-invalid:       [{invalid} :arg1 {--} :arg2]
+    scan-invalid:       ["invalid" :arg1 "--" :arg2]
     scan-missing:       [{missing} :arg1]
     scan-extra:         [{extra} :arg1]
     scan-mismatch:      [{expected} :arg1 {but got} :arg2]

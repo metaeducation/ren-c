@@ -562,12 +562,15 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 }
 
 
+#define CELL_FLAG_STACK_NOTE_BRACED CELL_FLAG_NOTE
+
+
 //
-//  Trap_Scan_Quoted_Or_Braced_String_Push_Mold: C
+//  Trap_Scan_String_Push_Mold: C
 //
-// Scan a quoted string, handling all the escape characters.  e.g. an input
-// stream might have "a^(1234)b" and need to turn "^(1234)" into the right
-// UTF-8 bytes for that codepoint in the string.
+// Scan a quoted or braced string, handling all the escape characters.  e.g.
+// an input stream might have "a^(1234)b" and need to turn "^(1234)" into the
+// right UTF-8 bytes for that codepoint in the string.
 //
 // 1. Historically CR LF was scanned as just an LF.  While a tolerant mode of
 //    the scanner might be created someday, for the moment we are being more
@@ -580,77 +583,143 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //    as easy as possible to work with BINARY! using string-based routines
 //    like FIND, etc., so use BINARY! if you need UTF-8 with '\0' in it.
 //
-static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
+static Option(Error*) Trap_Scan_String_Push_Mold(
     Sink(const Byte*) out,
     REB_MOLD *mo,
-    const Byte* src,
-    ScanState* S
+    const Byte* bp,
+    Count dashes,
+    ScanState* S  // used for errors
 ){
+    StackIndex base = TOP_INDEX;  // accrue nest counts on stack
+
     Push_Mold(mo);
-    const Byte* bp = src;
+    const Byte* cp = bp;
 
-    Codepoint term; // pick termination
-    if (*bp == '{')
-        term = '}';
-    else {
-        assert(*bp == '"');
-        term = '"';
-    }
-    ++bp;
+    Init_Integer(PUSH(), dashes);  // so nest code is uniform
 
-    REBINT nest = 0;
-    REBLEN lines = 0;
-    while (*bp != term or nest > 0) {
-        Codepoint c = *bp;
+    if (*cp == '{')
+        Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
+    else
+        assert(*cp == '"');
+
+    ++cp;
+
+    while (true) {  // keep going until nesting levels all closed
+        Codepoint c = *cp;
 
         switch (c) {
-          case '\0':
-            return Error_Missing(S, term);
+          case '\0': {
+            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                return Error_Missing(S, '}');
+            return Error_Missing(S, '"'); }
 
           case '^':
-            if (not (bp = maybe Try_Scan_UTF8_Char_Escapable(&c, bp)))
+            if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
                 return Error_User("Bad character literal in string");
-            --bp;  // unlike Back_Scan_XXX, no compensation for ++bp later
+            --cp;  // unlike Back_Scan_XXX, no compensation for ++cp later
             break;
 
-          case '{':
-            if (term != '"')
-                ++nest;
+          case '{': {  // brace with no leading dashes, nests if {a {b} c}
+            if (
+                Get_Cell_Flag(TOP, STACK_NOTE_BRACED)
+                and 0 == VAL_INT32(TOP)  // > 0, e.g. -{a {b c}- won't nest
+            ){
+                Init_Integer(PUSH(), 0);
+                Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
+            }
+            break; }
+
+          case '-': {  // look for nesting levels -{a --{b}-- c}- is one string
+            Count count = 1;
+            Append_Codepoint(mo->string, '-');
+            ++cp;
+            while (*cp == '-') {
+                ++count;
+                Append_Codepoint(mo->string, '-');
+                ++cp;
+            }
+            if (
+                *cp == '{'
+                and Get_Cell_Flag(TOP, STACK_NOTE_BRACED)
+                and count >= VAL_INT32(TOP)
+            ){
+                Init_Integer(PUSH(), count);
+                Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
+                Append_Codepoint(mo->string, '{');
+                ++cp;
+            }
+            /* else if (  // don't want "--" to start nested --" scan, rethink
+                *cp == '"'
+                and Not_Cell_Flag(TOP, STACK_NOTE_BRACED)
+                and count >= VAL_INT32(TOP)
+            ){
+                Init_Integer(PUSH(), count);
+                Append_Codepoint(mo->string, '"');
+            } */
+            continue; }  // already appended all relevant codepoints
+
+          case '"':
+            if (Not_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                goto handle_closer;
             break;
 
           case '}':
-            if (term != '"' and nest > 0)
-                --nest;
+            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                goto handle_closer;
             break;
+
+          handle_closer: {
+            ++cp;
+            Count count = 0;
+            while (*cp == '-') {
+                ++count;
+                ++cp;
+            }
+            if (count > VAL_INT32(TOP))
+                return Error_User("Nested }-- level closure too long");
+            if (count == VAL_INT32(TOP)) {
+                DROP();
+                if (TOP_INDEX == base)
+                    goto finished;  // end overall scan, don't add codepoints
+            }
+
+            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                Append_Codepoint(mo->string, '}');
+            else
+                Append_Codepoint(mo->string, '"');
+
+            for (; count != 0; --count)
+                Append_Codepoint(mo->string, '-');
+            continue; }  // codepoints were appended already
 
           case CR: {
             enum Reb_Strmode strmode = STRMODE_NO_CR;  // avoid CR [1]
             if (strmode == STRMODE_CRLF_TO_LF) {
-                if (bp[1] == LF) {
-                    ++bp;
+                if (cp[1] == LF) {
+                    ++cp;
                     c = LF;
                     goto linefeed;
                 }
             }
             else
                 assert(strmode == STRMODE_NO_CR);
-            return (Error_Illegal_Cr(bp, src)); }
+            return (Error_Illegal_Cr(cp, S->begin)); }
 
           case LF:
           linefeed:
-            if (term == '"')
+            if (Not_Cell_Flag(TOP, STACK_NOTE_BRACED))
                 return Error_User("Plain quoted strings not multi-line");
-            ++lines;
+            ++S->ss->line;
             break;
 
           default:
             if (c >= 0x80) {
-                if ((bp = Back_Scan_UTF8_Char(&c, bp, nullptr)) == nullptr)
+                if ((cp = Back_Scan_UTF8_Char(&c, cp, nullptr)) == nullptr)
                     return Error_Bad_Utf8_Raw();
             }
         }
 
-        ++bp;
+        ++cp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
             fail (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
@@ -658,10 +727,9 @@ static Option(Error*) Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
         Append_Codepoint(mo->string, c);
     }
 
-    S->ss->line += lines;
+  finished:
 
-    ++bp;  // Skip ending quote or brace.
-    *out = bp;
+    *out = cp;
     return nullptr;  // not an error (success)
 }
 
@@ -840,7 +908,7 @@ static Error* Error_Mismatch(Byte wanted, Byte seen) {
 
 
 //
-//  Prescan_Token: C
+//  Prescan_Fingerprint: C
 //
 // This function updates `S->begin` to skip past leading whitespace.  If the
 // first character it finds after that is a LEX_DELIMITER (`"`, `[`, `)`, `{`,
@@ -865,7 +933,7 @@ static Error* Error_Mismatch(Byte wanted, Byte seen) {
 // Get_Lex_Class(S->begin[0]).  Fingerprinting just helps accelerate further
 // categorization.
 //
-static LexFlags Prescan_Token(ScanState* S)
+static LexFlags Prescan_Fingerprint(ScanState* S)
 {
     assert(Is_Pointer_Corrupt_Debug(S->end));  // prescan only uses ->begin
 
@@ -1123,23 +1191,37 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             L->feed->p = *FEED_PACKED(L->feed)++;
     }
 
-    LexFlags flags = Prescan_Token(S);  // sets ->begin, ->end
+    LexFlags flags = Prescan_Fingerprint(S);  // sets ->begin, skips whitespace
 
     const Byte* cp = S->begin;
 
-    if (*cp == '^') {
+    if (*cp == '-') {  // first priority: -{...}- --{...}--
+        Count dashes = 1;
+        const Byte* dp = cp;
+        for (++dp; *dp == '-'; ++dp)
+            ++dashes;
+        if (*dp == '{' or *dp == '"') {
+            Option(Error*) error = Trap_Scan_String_Push_Mold(
+                &cp, mo, dp, dashes, S
+            );
+            if (error)
+                return error;
+            goto check_str;
+        }
+    }
+    else if (*cp == '^') {
         S->end = cp + 1;
         return LOCATED(TOKEN_CARET);
     }
-    if (*cp == '@') {
+    else if (*cp == '@') {
         S->end = cp + 1;
         return LOCATED(TOKEN_AT);
     }
-    if (*cp == '&') {
+    else if (*cp == '&') {
         S->end = cp + 1;
         return LOCATED(TOKEN_AMPERSAND);
     }
-    if (*cp == '$' and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
+    else if (*cp == '$' and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
         S->end = cp + 1;
         return LOCATED(TOKEN_DOLLAR);
     }
@@ -1249,16 +1331,16 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             return LOCATED(TOKEN_GROUP_END);
 
           case LEX_DELIMIT_DOUBLE_QUOTE: {  // "QUOTES"
-            Option(Error*) error = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                &cp, mo, cp, S
+            Option(Error*) error = Trap_Scan_String_Push_Mold(
+                &cp, mo, cp, 0, S
             );
             if (error)
                 return error;
             goto check_str; }
 
           case LEX_DELIMIT_LEFT_BRACE: {  // {BRACES}
-            Option(Error*) error = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                &cp, mo, cp, S
+            Option(Error*) error = Trap_Scan_String_Push_Mold(
+                &cp, mo, cp, 0, S
             );
             if (error)
                 return error;
@@ -1412,8 +1494,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 return Error_Syntax(S, token);
             }
             if (*cp == '"') {
-                Option(Error*) e = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                    &cp, mo, cp, S
+                Option(Error*) e = Trap_Scan_String_Push_Mold(
+                    &cp, mo, cp, 0, S
                 );
                 if (e)
                     return e;
@@ -1524,8 +1606,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
                 S->end = S->begin;  // save start
                 S->begin = cp;
-                Option(Error*) e = Trap_Scan_Quoted_Or_Braced_String_Push_Mold(
-                    &cp, mo, cp, S
+                Option(Error*) e = Trap_Scan_String_Push_Mold(
+                    &cp, mo, cp, 0, S
                 );
                 if (e)
                     return e;

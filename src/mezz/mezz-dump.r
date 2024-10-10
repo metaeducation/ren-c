@@ -179,15 +179,6 @@ REBOL [
     return set name d/
 ]
 
-; Handy specialization for dumping, prefer to DUMP when doing temp output
-;
-; !!! What should `---` and `----` do?  One fairly sensible idea would be to
-; increase the amount of debug output, as if a longer dash meant "give me
-; more output".  They could also be lower and lower verbosity levels, but
-; verbosity could also be cued by an INTEGER!, e.g. `-- 2 [x y]`
-;
---: dumps #on
-
 
 ; !!! R3-Alpha labeled this "MOVE THIS INTERNAL FUNC" but it is actually used
 ; to search for patterns in HELP when you type in something that isn't bound,

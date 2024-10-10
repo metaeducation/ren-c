@@ -391,9 +391,9 @@ export /stripload: func [
             |
             {^^"}  ; (actually `^"`) escaped quote, never count
             |
-            "{" (if <Q> != last pushed [append pushed <B>])
+            "-{" (if <Q> != last pushed [append pushed <B>])
             |
-            "}" (if <B> = last pushed [take:last pushed])
+            "}-" (if <B> = last pushed [take:last pushed])
             |
             {"} (
                 case [
