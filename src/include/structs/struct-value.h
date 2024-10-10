@@ -98,12 +98,13 @@
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
 // overloads of Value* vs. Element* vs Cell* will wind up being ambiguous.
-// For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
+// For instance, VAL_DECIMAL(OnStack(Value*)) can't tell which checked overload
 // to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Value*, stackval)).
 //
 #if (! DEBUG_EXTANT_STACK_POINTERS)
-    #define StackValue(p) Value*
+    #define OnStack(TP) TP
 #else
-    struct StackValuePointer;
-    #define StackValue(p) StackValuePointer
+    template<typename T>
+    struct OnStackPointer;
+    #define OnStack(TP) OnStackPointer<typename std::remove_pointer<TP>::type>
 #endif

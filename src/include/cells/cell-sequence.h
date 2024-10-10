@@ -449,13 +449,11 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
     }
 
     if (TOP_INDEX - base == 2) {  // two-element path optimization
-        assert(not Is_Antiform(TOP - 1));
-        assert(not Is_Antiform(TOP));
         Option(Error*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             out,
             heart,
-            cast(Element*, TOP - 1),
-            cast(Element*, TOP)
+            TOP_ELEMENT - 1,
+            TOP_ELEMENT
         );
         Drop_Data_Stack_To(base);
         return trap;
@@ -464,7 +462,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
     if (Try_Init_Any_Sequence_All_Integers(  // optimize e.g. 192.0.0.1
         out,
         heart,
-        Data_Stack_At(base) + 1,
+        Data_Stack_At(Element, base) + 1,
         TOP_INDEX - base
     )){
         Drop_Data_Stack_To(base);  // optimization worked! drop stack...

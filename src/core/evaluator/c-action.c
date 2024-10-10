@@ -264,11 +264,11 @@ Bounce Action_Executor(Level* L)
         // parameters at the callsite.
 
         if (TOP_INDEX != STACK_BASE) {  // reorderings/refinements
-            StackValue(*) ordered = TOP;
-            StackValue(*) lowest_ordered = Data_Stack_At(STACK_BASE);
+            OnStack(Element*) ordered = TOP_ELEMENT;
+            OnStack(Element*) lowest = Data_Stack_At(Element, STACK_BASE);
             const Symbol* param_symbol = Key_Symbol(KEY);
 
-            for (; ordered != lowest_ordered; --ordered) {
+            for (; ordered != lowest; --ordered) {
                 assert(Is_Pushed_Refinement(ordered));
 
                 if (Cell_Word_Symbol(ordered) != param_symbol)
@@ -668,7 +668,7 @@ Bounce Action_Executor(Level* L)
         assert(Is_Pushed_Refinement(TOP));
 
         if (not BINDING(TOP)) {  // the loop didn't index it
-            Refinify_Pushed_Refinement(cast(Element*, TOP));
+            Refinify_Pushed_Refinement(TOP_ELEMENT);
             fail (Error_Bad_Parameter_Raw(TOP));  // so duplicate or junk
         }
 

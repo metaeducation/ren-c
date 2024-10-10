@@ -84,7 +84,9 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     REBLEN num_added = Collector_Index_If_Pushed(cl) - first_new_index;
     Expand_Varlist(c, num_added);
 
-    StackValue(*) new_word = Data_Stack_At(cl->stack_base) + first_new_index;
+    OnStack(Element*) new_word =
+        Data_Stack_At(Element, cl->stack_base) + first_new_index;
+
     for (; new_word != TOP + 1; ++new_word)
         Init_Nothing(Append_Context(c, Cell_Word_Symbol(new_word)));
   }
@@ -1746,7 +1748,7 @@ DECLARE_NATIVE(construct)
 
     while (TOP_INDEX != STACK_BASE) {
         const Symbol* symbol = unwrap Try_Get_Settable_Word_Symbol(
-            cast(Element*, TOP)
+            TOP_ELEMENT
         );
 
         Option(Index) index = Find_Symbol_In_Context(

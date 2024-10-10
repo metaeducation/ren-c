@@ -1469,12 +1469,12 @@ Bounce Stepper_Executor(Level* L)
             ++stackindex_var, ++pack_meta_at
         ){
             bool is_optional = Get_Cell_Flag(
-                Data_Stack_At(stackindex_var),
+                Data_Stack_Cell_At(stackindex_var),
                 STACK_NOTE_OPTIONAL
             );
 
             Element* var = CURRENT;  // stable location, safe across SET of var
-            Copy_Cell(var, cast(Element*, Data_Stack_At(stackindex_var)));
+            Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
             assert(not Is_Quoted(var));
             Heart var_heart = Cell_Heart(var);

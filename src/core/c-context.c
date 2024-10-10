@@ -496,7 +496,7 @@ void Wrap_Extend_Core(
 
     StackIndex i;
     for (i = cl->stack_base + 1; i <= TOP_INDEX; ++i) {
-        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_At(i));
+        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_Cell_At(i));
         Init_Nothing(Append_Context(context, symbol));
     }
 
@@ -679,7 +679,7 @@ DECLARE_NATIVE(collect_words)
     Collect_Inner_Loop(cl, flags, block_at, block_tail);
 
     Array* array = Copy_Values_Len_Shallow_Core(  // let Collect_End() pop [1]
-        Data_Stack_At(cl->stack_base + 1),
+        Data_Stack_At(Element, cl->stack_base + 1),
         TOP_INDEX - cl->stack_base,
         NODE_FLAG_MANAGED
     );
@@ -776,7 +776,7 @@ VarList* Make_Varlist_Detect_Managed(
             FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
         );
 
-        StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
+        OnStack(Element*) word = Data_Stack_At(Element, cl->stack_base) + 1;
         Key* key = Flex_Head(Key, keylist);
         for (; word != TOP + 1; ++word, ++key)
             Init_Key(key, Cell_Word_Symbol(word));
@@ -858,7 +858,7 @@ Array* Context_To_Array(const Value* context, REBINT mode)
             assert(e.index != 0);
             Init_Word(PUSH(), Key_Symbol(e.key));
             if (mode & 2)
-                Setify(cast(Element*, TOP));
+                Setify(TOP_ELEMENT);
             if (Is_Module(context)) {
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
                 BINDING(TOP) = MOD_PATCH(

@@ -244,7 +244,7 @@ Array* Pop_Stack_Values_Core_Masked(
     Flavor flavor = Stub_Flavor(a);  // flavor comes from flags
 
     Count count = 0;
-    Atom* src = Data_Stack_At(base + 1);  // not const, will be Freshen_Cell()
+    Value* src = Data_Stack_At(Value, base + 1);  // moving, not const!
     Value* dest = Flex_Head(Value, a);
     for (; count < len; ++count, ++src, ++dest) {
         if (Is_Antiform(src)) {  // only ok in some arrays

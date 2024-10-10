@@ -966,8 +966,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     StackIndex stackindex = base + 1;
 
   blockscope {
-    StackValue(*) at = Data_Stack_At(stackindex);
-    assert(not Is_Antiform(at));
+    OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
@@ -993,7 +992,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
         QUOTE_BYTE(temp) = ONEQUOTE_3;
-        const Node* ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
+        const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
         if (rebRunCoreThrows_internal(
             out,  // <-- output cell
             EVAL_EXECUTOR_FLAG_NO_RESIDUE
@@ -1879,8 +1878,7 @@ bool Set_Var_Core_Updater_Throws(
     StackIndex stackindex = base + 1;
 
   blockscope {
-    StackValue(*) at = Data_Stack_At(stackindex);
-    assert(not Is_Antiform(at));
+    OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
@@ -1905,7 +1903,7 @@ bool Set_Var_Core_Updater_Throws(
     while (stackindex != stackindex_top) {
         Move_Cell(temp, out);
         Quotify(temp, 1);
-        const Node* ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
+        const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
             Canon(PICK_P), temp, ins
@@ -1922,7 +1920,7 @@ bool Set_Var_Core_Updater_Throws(
     Move_Cell(temp, out);
     Byte quote_byte = QUOTE_BYTE(temp);
     QUOTE_BYTE(temp) = ONEQUOTE_3;
-    const Node* ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
+    const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
     assert(Is_Action(updater));
     if (rebRunThrows(
         out,  // <-- output cell
@@ -1948,12 +1946,12 @@ bool Set_Var_Core_Updater_Throws(
             goto poke_again;
 
         // can't use POKE, need to use SET
-        if (not Is_Word(Data_Stack_At(base + 1)))
+        if (not Is_Word(Data_Stack_At(Element, base + 1)))
             fail ("Can't POKE back immediate value unless it's to a WORD!");
 
         Copy_Cell(
             Sink_Word_May_Fail(
-                cast(Element*, Data_Stack_At(base + 1)),
+                Data_Stack_At(Element, base + 1),
                 SPECIFIED
             ),
             setval

@@ -1861,7 +1861,7 @@ static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
 
 static Option(Error*) Trap_Apply_Pending_Decorations(
     ScanState* S,
-    StackValue(*) e
+    OnStack(Value*) e
 ){
     if (S->sigil_pending) {
         Heart heart = Cell_Heart_Ensure_Noquote(e);
@@ -2293,7 +2293,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (S->begin[len - 1] == '%') {
             HEART_BYTE(TOP) = REB_PERCENT;
-            VAL_DECIMAL(x_cast(Value*, TOP)) /= 100.0;
+            VAL_DECIMAL(TOP) /= 100.0;
         }
         break;
 
@@ -2653,7 +2653,7 @@ Bounce Scanner_Executor(Level* const L) {
         bool any_email = false;
         StackIndex stackindex = TOP_INDEX;
         for (; stackindex != stackindex_path_head - 1; --stackindex) {
-            if (Is_Email(Data_Stack_At(stackindex))) {
+            if (Is_Email(Data_Stack_At(Element, stackindex))) {
                 if (any_email)
                     return RAISE(Error_Syntax(S, TOKEN_TUPLE));
                 any_email = true;

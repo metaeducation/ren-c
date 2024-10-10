@@ -606,7 +606,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // Each PUSH() on the data stack can potentially move all the pointers on the
 // stack.  Hence there is a debug setting for managing these pointers in a
-// special C++ container called StackValue(*).  This counts to see how many
+// special C++ container called OnStack(Value*).  This counts to see how many
 // stack pointers the user has in local variables, and if that number is not
 // zero then it asserts when a push or pop is requested, or upon evaluation.
 //

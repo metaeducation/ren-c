@@ -782,12 +782,12 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     VAL_YEAR(TOP) = year;
     VAL_MONTH(TOP) = month;
     VAL_DAY(TOP) = day;
-    VAL_ZONE(cast(Element*, TOP)) = NO_DATE_ZONE;  // Adjust_Date_Zone() needs
+    VAL_ZONE(cast(Cell*, TOP)) = NO_DATE_ZONE;  // Adjust_Date_Zone() needs
     PAYLOAD(Time, TOP).nanoseconds = nanoseconds;
 
     Adjust_Date_Zone_Core(TOP, tz);
 
-    VAL_ZONE(cast(Element*, TOP)) = tz;
+    VAL_ZONE(cast(Cell*, TOP)) = tz;
 
     return cp;
 }

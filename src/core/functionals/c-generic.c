@@ -163,8 +163,8 @@ Array* Startup_Generics(const Element* boot_generics)
     for (; at != tail; ++at)
         if (Try_Get_Settable_Word_Symbol(at)) {  // all generics as /foo:
             Derelativize(PUSH(), at, context);
-            Unpath(cast(Element*, TOP));  // change /foo: -> foo:
-            Unchain(cast(Element*, TOP));  // change foo: -> foo
+            Unpath(TOP_ELEMENT);  // change /foo: -> foo:
+            Unchain(TOP_ELEMENT);  // change foo: -> foo
         }
 
     return Pop_Stack_Values(base);  // catalog of generics

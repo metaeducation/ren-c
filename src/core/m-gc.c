@@ -733,7 +733,7 @@ static void Mark_Root_Stubs(void)
 static void Mark_Data_Stack(void)
 {
     const Cell* head = Flex_Head(Cell, g_ds.array);  // unstable allowed
-    assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) is deliberately invalid
+    assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) deliberately invalid
 
     Cell* stackval = g_ds.movable_top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)

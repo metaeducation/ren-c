@@ -36,7 +36,7 @@
   #if CPLUSPLUS_11
     template<typename T>
     INLINE T Track_Cell_Debug(
-        T v,  // polymorphism allows Cell* or Value* or StackValue(*)
+        T v,  // polymorphism allows Cell* or Value* or OnStack(Value*)
         const char *file,
         int line
     ){

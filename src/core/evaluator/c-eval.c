@@ -106,7 +106,7 @@ Bounce Evaluator_Executor(Level* const L)
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
         assert(Not_Level_Flag(L, TRAMPOLINE_KEEPALIVE));
-        assert(Is_Nihil(atom_TOP) or Is_Void(TOP));  // primed [1]
+        assert(Is_Nihil(TOP_ATOM) or Is_Void(TOP));  // primed [1]
         goto initial_entry;
 
       default:
@@ -122,7 +122,7 @@ Bounce Evaluator_Executor(Level* const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Feed_At_End(L->feed)) {
-        Copy_Cell(OUT, atom_TOP);
+        Copy_Cell(OUT, TOP_ATOM);
         return OUT;
     }
 
@@ -170,7 +170,7 @@ Bounce Evaluator_Executor(Level* const L)
             Erase_Cell(OUT);
             goto new_step;  // leave previous result as-is on stack
         }
-        Move_Cell(OUT, atom_TOP);  // finished, so extract result from stack
+        Move_Cell(OUT, TOP_ATOM);  // finished, so extract result from stack
         goto finished;
     }
 
@@ -180,7 +180,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Raised(OUT))   // raise errors synchronously if not at end [3]
         fail (Cell_Error(OUT));
 
-    Move_Cell(atom_TOP, OUT);  // make current result the preserved one
+    Move_Cell(TOP_ATOM, OUT);  // make current result the preserved one
     goto new_step;
 
 } finished: {  ///////////////////////////////////////////////////////////////

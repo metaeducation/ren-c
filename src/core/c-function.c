@@ -49,7 +49,7 @@ static bool Params_Of_Hook(
             not (flags & PHF_UNREFINED)
             and Get_Parameter_Flag(param, REFINEMENT)
         ){
-            Refinify(cast(Element*, TOP));
+            Refinify(TOP_ELEMENT);
         }
 
         switch (Cell_ParamClass(param)) {
@@ -216,7 +216,7 @@ void Push_Keys_And_Parameters_May_Fail(
             if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
                 fail (Error_Bad_Func_Def_Raw(item));
 
-            StackValue(*) param = TOP;
+            OnStack(Value*) param = TOP;
 
             if (Cell_Parameter_Spec(param))  // `func [x [integer!] [blank!]]`
                 fail (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
@@ -365,7 +365,7 @@ void Push_Keys_And_Parameters_May_Fail(
             }
         }
 
-        StackValue(*) param = PUSH();
+        OnStack(Value*) param = PUSH();
 
         // Non-annotated arguments allow all parameter types.
 
@@ -433,7 +433,8 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         }
         else {
             assert(
-                Cell_Word_Id(Data_Stack_At(return_stackindex)) == SYM_RETURN
+                Cell_Word_Id(Data_Stack_At(Element, return_stackindex))
+                    == SYM_RETURN
             );
         }
 
@@ -478,17 +479,17 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     if (return_stackindex != 0) {
         assert(flags & MKF_RETURN);
-        *key = Cell_Word_Symbol(Data_Stack_At(return_stackindex));
+        *key = Cell_Word_Symbol(Data_Stack_At(Element, return_stackindex));
         ++key;
 
-        Copy_Cell(param, Data_Stack_At(return_stackindex + 1));
+        Copy_Cell(param, Data_Stack_At(Element, return_stackindex + 1));
         ++param;
     }
 
     StackIndex stackindex = base + 1;  // empty stack base would be 0, bad cell
     for (; stackindex <= TOP_INDEX; stackindex += 2) {
-        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_At(stackindex));
-        StackValue(*) slot = Data_Stack_At(stackindex + 1);
+        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_Cell_At(stackindex));
+        OnStack(Element*) slot = Data_Stack_At(Element, stackindex + 1);
 
         assert(Not_Cell_Flag(slot, VAR_MARKED_HIDDEN));  // use NOTE_SEALED
 

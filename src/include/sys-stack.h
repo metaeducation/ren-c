@@ -51,7 +51,7 @@
 //=// NOTES ///////////////////////////////////////////////////////////////=//
 //
 // * Do not store the result of a PUSH() directly into a Value* variable.
-//   Instead, use the StackValue(*) type, which makes sure that you don't try
+//   Instead, use the OnStack(Value*) type, which makes sure that you don't try
 //   to hold a pointer into the stack across another push or an evaluation.
 //
 // * The data stack is limited in size, and this means code that uses it may
@@ -66,7 +66,7 @@
 //   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 
-// The result of PUSH() and TOP is not Value*, but StackValue(*).  In an
+// The result of PUSH() and TOP is not Value*, but OnStack(Value*).  In an
 // unchecked build this is just a Value*, but with DEBUG_EXTANT_STACK_POINTERS
 // it becomes a checked C++ wrapper class...which keeps track of how many
 // such stack values are extant.  If the number is not zero, then you will
@@ -92,28 +92,29 @@
     #define Assert_No_DataStack_Pointers_Extant() \
         do { if (g_ds.num_refs_extant != 0) { \
             if (not g_gc.disabled or g_ds.movable_top == g_ds.movable_tail) \
-                assert(!"PUSH() while StackValue(*) pointers are extant"); \
+                assert(!"PUSH() while OnStack(Value*) pointers are extant"); \
         } } while (0)
 
-    struct StackValuePointer {
-        Value* p;
+    template<typename T>
+    struct OnStackPointer {
+        T* p;
 
       public:
-        StackValuePointer () : p (nullptr) {}
-        StackValuePointer (Value* v) : p (v) {
+        OnStackPointer () : p (nullptr) {}
+        OnStackPointer (T* p) : p (p) {
             if (p != nullptr)
                 ++g_ds.num_refs_extant;
         }
-        StackValuePointer (const StackValuePointer &stk) : p (stk.p) {
+        OnStackPointer (const OnStackPointer &stk) : p (stk.p) {
             if (p != nullptr)
                 ++g_ds.num_refs_extant;
         }
-        ~StackValuePointer() {
+        ~OnStackPointer() {
             if (p != nullptr)
                 --g_ds.num_refs_extant;
         }
 
-        StackValuePointer& operator=(const StackValuePointer& other) {
+        OnStackPointer& operator=(const OnStackPointer& other) {
             if (p != nullptr)
                 --g_ds.num_refs_extant;
             p = other.p;
@@ -122,7 +123,7 @@
             return *this;
         }
 
-        operator Value* () const { return p; }
+        operator T* () const { return p; }
         operator Sink(Value) () const { return p; }
         operator Sink(Element) () const { return p; }
         operator Need(Value*) () const { return p; }
@@ -132,57 +133,57 @@
 
         explicit operator Byte* () const { return cast(Byte*, p); }
 
-        Value* operator->() { return p; }
+        T* operator->() { return p; }
 
-        bool operator==(const StackValuePointer &other)
+        bool operator==(const OnStackPointer &other)
             { return this->p == other.p; }
-        bool operator!=(const StackValuePointer &other)
+        bool operator!=(const OnStackPointer &other)
             { return this->p != other.p; }
-        bool operator<(const StackValuePointer &other)
+        bool operator<(const OnStackPointer &other)
             { return this->p < other.p; }
-        bool operator<=(const StackValuePointer &other)
+        bool operator<=(const OnStackPointer &other)
             { return this->p <= other.p; }
-       bool operator>(const StackValuePointer &other)
+       bool operator>(const OnStackPointer &other)
             { return this->p > other.p; }
-        bool operator>=(const StackValuePointer &other)
+        bool operator>=(const OnStackPointer &other)
             { return this->p >= other.p; }
 
-        StackValuePointer operator+(ptrdiff_t diff)
+        OnStackPointer operator+(ptrdiff_t diff)
             { return this->p + diff; }
-        StackValuePointer& operator+=(ptrdiff_t diff)
+        OnStackPointer& operator+=(ptrdiff_t diff)
             { this->p += diff; return *this; }
-        StackValuePointer operator-(ptrdiff_t diff)
+        OnStackPointer operator-(ptrdiff_t diff)
             { return this->p - diff; }
-        StackValuePointer& operator-=(ptrdiff_t diff)
+        OnStackPointer& operator-=(ptrdiff_t diff)
             { this->p -= diff; return *this; }
 
-        StackValuePointer& operator--()  // prefix decrement
+        OnStackPointer& operator--()  // prefix decrement
             { --this->p; return *this; }
-        StackValuePointer operator--(int)  // postfix decrement
+        OnStackPointer operator--(int)  // postfix decrement
         {
-           StackValuePointer temp = *this;
+           OnStackPointer temp = *this;
            --*this;
            return temp;
         }
 
-        StackValuePointer& operator++()  // prefix increment
+        OnStackPointer& operator++()  // prefix increment
             { ++this->p; return *this; }
-        StackValuePointer operator++(int)  // postfix increment
+        OnStackPointer operator++(int)  // postfix increment
         {
-           StackValuePointer temp = *this;
+           OnStackPointer temp = *this;
            ++*this;
            return temp;
         }
     };
 
     template<>
-    struct c_cast_helper<Byte*, StackValue(*) const&> {
+    struct c_cast_helper<Byte*, OnStack(Value*) const&> {
         typedef Byte* type;
     };
 
-    template<typename T>
-    struct cast_helper<StackValuePointer,T>
-      { static T convert(StackValuePointer v) { return (T)(v.p);} };
+    template<typename S, typename T>
+    struct cast_helper<OnStackPointer<S>,T>
+      { static T convert(OnStackPointer<S> stk) { return (T)(stk.p);} };
 #endif
 
 #define TOP_INDEX \
@@ -191,9 +192,13 @@
 // TOP is the most recently pushed item.
 //
 #define TOP \
-    cast(StackValue(*), cast(Value*, g_ds.movable_top))
+    cast(OnStack(Value*), cast(Value*, g_ds.movable_top))
 
-#define atom_TOP \
+#define TOP_ELEMENT \
+    (assert(QUOTE_BYTE(g_ds.movable_top) != ANTIFORM_0), \
+        cast(OnStack(Element*), cast(Element*, g_ds.movable_top)))
+
+#define TOP_ATOM \
     cast(Atom*, g_ds.movable_top)  // only legal in narrow cases
 
 
@@ -209,8 +214,8 @@
 //    position after top.  This is used by things like Pop_Stack() which want
 //    to know the address after the content.
 //
-INLINE StackValue(*) Data_Stack_At(StackIndex i) {
-    Value* at = cast(Value*, g_ds.array->content.dynamic.data) + i;  // [1]
+INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
+    Cell* at = cast(Cell*, g_ds.array->content.dynamic.data) + i;  // [1]
 
     if (i == 0) {
         assert(Is_Cell_Poisoned(at));
@@ -229,6 +234,14 @@ INLINE StackValue(*) Data_Stack_At(StackIndex i) {
     return at;
 }
 
+#if DEBUG_USE_CELL_SUBCLASSES
+    #define Data_Stack_At(T,i) \
+        cast(OnStack(T*), cast(T*, Data_Stack_Cell_At(i)))
+#else
+    #define Data_Stack_At(T,i) \
+        cast(OnStack(Value*), Data_Stack_Cell_At(i))
+#endif
+
 #if !defined(NDEBUG)
     #define IN_DATA_STACK_DEBUG(v) \
         IS_VALUE_IN_ARRAY_DEBUG(g_ds.array, (v))
@@ -246,7 +259,7 @@ INLINE StackValue(*) Data_Stack_At(StackIndex i) {
 
 // Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
-INLINE StackValue(*) PUSH(void) {
+INLINE OnStack(Value*) PUSH(void) {
     Assert_No_DataStack_Pointers_Extant();
 
     ++g_ds.index;
@@ -296,7 +309,7 @@ INLINE Value* Move_Drop_Top_Stack_Value(Sink(Value) out)
 
 INLINE Element* Move_Drop_Top_Stack_Element(Sink(Element) out) {
     assert(not Is_Antiform(TOP));
-    Move_Cell(out, cast(Element*, TOP));
+    Move_Cell(out, TOP_ELEMENT);
     DROP();
     return out;
 }
