@@ -188,11 +188,11 @@ Binary* Append_Codepoint(Binary* dst, Codepoint codepoint)
 
 
 //
-//  Make_Ser_Codepoint: C
+//  Make_Codepoint_String: C
 //
 // Create a string that holds a single codepoint.
 //
-String* Make_Ser_Codepoint(REBLEN codepoint)
+String* Make_Codepoint_String(REBLEN codepoint)
 {
     assert(codepoint < (1 << 16));
 

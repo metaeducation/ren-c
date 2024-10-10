@@ -57,6 +57,7 @@ Internal: [
     hash-overflow:      {Hash ran out of space}
 
     bad-utf8:           {invalid UTF-8 byte sequence found during decoding}
+    illegal-zero-byte:  {#{00} bytes illegal in ANY-STRING?, use BINARY!}
     codepoint-too-high: [{codepoint} :arg1 {too large (or data is not UTF-8)}]
 
     debug-only:         {Feature available only in DEBUG builds}

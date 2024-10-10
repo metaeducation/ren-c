@@ -1451,3 +1451,9 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
     Erase_Cell(cast(Value*, &name##_pair)); \
     Value* const name = cast(Value*, &name##_pair) + 1; \
     Erase_Cell(name)
+
+#define DECLARE_ELEMENT(name) /* compatibility w/modern EXE synonym */ \
+    Value name##_pair[2]; \
+    Erase_Cell(cast(Value*, &name##_pair)); \
+    Value* const name = cast(Value*, &name##_pair) + 1; \
+    Erase_Cell(name)

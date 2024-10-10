@@ -287,7 +287,7 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
     }
     // MAKE/TO <type> #"A"
     else if (Is_Char(arg)) {
-        flex = Make_Ser_Codepoint(VAL_CHAR(arg));
+        flex = Make_Codepoint_String(VAL_CHAR(arg));
     }
     else
         flex = Copy_Form_Value(arg, MOLD_FLAG_TIGHT);

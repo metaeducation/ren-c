@@ -2,22 +2,11 @@
 (binary? #{00})
 (not binary? 1)
 (binary! = type of #{00})
-(
-    system/options/binary-base: 2
-    "2#{00000000}" == mold #{00}
-)
-(
-    system/options/binary-base: 64
-    "64#{AAAA}" == mold #{000000}
-)
-(
-    system/options/binary-base: 16
-    "#{00}" == mold #{00}
-)
+
 (#{00} == 2#{00000000})
 (#{000000} == 64#{AAAA})
 (#{} == make binary! 0)
-(#{00} == to binary! "^(00)")
+(error? sys/util/rescue [transcode {"^^(00)"}])
 ; minimum
 (binary? #{})
 ; alternative literal representation

@@ -46,6 +46,17 @@
 #include "sys-core.h"
 
 
+
+static bool Is_Interstitial_Scan(ScanState* S)
+  { return S->mode == '.' or S->mode == '/'; }
+
+INLINE bool Is_Lex_Interstitial(Byte b)
+  { return b == '/' or b == '.' or b == ':'; }
+
+INLINE bool Is_Lex_End_List(Byte b)
+  { return b == ']' or b == ')'; }
+
+
 //
 // Maps each character to its lexical attributes, using
 // a frequency optimized encoding.
@@ -294,7 +305,172 @@ const Byte Lower_Case[256] =
 
 
 //
-//  Scan_UTF8_Char_Escapable: C
+//  Update_Error_Near_For_Line: C
+//
+// The NEAR information in an error is typically expressed in terms of loaded
+// Rebol code.  Scanner errors have historically used the NEAR not to tell you
+// where the LOAD that is failing is in Rebol, but to form a string of the
+// "best place" to report the textual error.
+//
+// While this is probably a bad overloading of NEAR, it is being made more
+// clear that this is what's happening for the moment.
+//
+static void Update_Error_Near_For_Line(
+    Error* error,
+    TranscodeState* ss,
+    REBLEN line,
+    const Byte *line_head
+){
+    // Skip indentation (don't include in the NEAR)
+    //
+    const Byte *cp = line_head;
+    while (Is_Lex_Space(*cp))
+        ++cp;
+
+    // Find end of line to capture in error message
+    //
+    REBLEN len = 0;
+    const Byte *bp = cp;
+    while (!ANY_CR_LF_END(*cp)) {
+        cp++;
+        len++;
+    }
+
+    // Put the line count and the line's text into a string.
+    //
+    // !!! This should likely be separated into an integer and a string, so
+    // that those processing the error don't have to parse it back out.
+    //
+    DECLARE_MOLDER (mo);
+    Push_Mold(mo);
+    Append_Unencoded(mo->utf8flex, "(line ");
+    Append_Int(mo->utf8flex, line);
+    Append_Unencoded(mo->utf8flex, ") ");
+    Append_Utf8_Utf8(mo->utf8flex, cs_cast(bp), len);
+
+    ERROR_VARS *vars = ERR_VARS(error);
+    Init_Text(&vars->nearest, Pop_Molded_String(mo));
+
+    if (ss->file)
+        Init_File(&vars->file, unwrap ss->file);
+    else
+        Init_Nulled(&vars->file);
+}
+
+
+//
+//  Error_Syntax: C
+//
+// Catch-all scanner error handler.  Reports the name of the token that gives
+// the complaint, and gives the substring of the token's text.  Populates
+// the NEAR field of the error with the "current" line number and line text,
+// e.g. where the end point of the token is seen.
+//
+static Error* Error_Syntax(ScanState* S, Token token) {
+    assert(S->begin and not Is_Pointer_Corrupt_Debug(S->begin));
+    assert(S->end and not Is_Pointer_Corrupt_Debug(S->end));
+    assert(S->end >= S->begin);
+
+    DECLARE_VALUE (token_name);
+    Init_Text(
+        token_name,
+        Make_String_UTF8(Token_Names[token])
+    );
+
+    DECLARE_VALUE (token_text);
+    Init_Text(
+        token_text,
+        Make_Sized_String_UTF8(
+            cs_cast(S->begin), cast(REBLEN, S->end - S->begin)
+        )
+    );
+    return Error_Scan_Invalid_Raw(token_name, token_text);
+}
+
+
+//
+//  Error_Missing: C
+//
+// Caused by code like: `load "( abc"`.
+//
+// Note: This error is useful for things like multi-line input, because it
+// indicates a state which could be reconciled by adding more text.  A
+// better form of this error would walk the scan state stack and be able to
+// report all the unclosed terms.
+//
+// We have two options of where to implicate the error...either the start
+// of the thing being scanned, or where we are now (or, both).  But we
+// only have the start line information for GROUP! and BLOCK!...strings
+// don't cause recursions.  So using a start line on a string would point
+// at the block the string is in, which isn't as useful.
+//
+static Error* Error_Missing(ScanState* S, Byte wanted) {
+    DECLARE_ELEMENT (expected);
+    Init_Text(expected, Make_Codepoint_String(wanted));
+
+    Error* error = Error_Scan_Missing_Raw(expected);
+
+    if (Is_Lex_End_List(wanted))
+        Update_Error_Near_For_Line(
+            error,
+            S->ss,
+            S->start_line,
+            S->start_line_head
+        );
+    else
+        Update_Error_Near_For_Line(
+            error,
+            S->ss,
+            S->ss->line,
+            S->ss->line_head
+        );
+    return error;
+}
+
+
+//
+//  Error_Extra: C
+//
+// For instance, `load "abc ]"`
+//
+static Error* Error_Extra(char seen) {
+    DECLARE_VALUE (unexpected);
+    Init_Text(unexpected, Make_Codepoint_String(seen));
+    return Error_Scan_Extra_Raw(unexpected);
+}
+
+
+//
+//  Error_Mismatch: C
+//
+// For instance, `load "( abc ]"`
+//
+// Note: This answer would be more useful for syntax highlighting or other
+// applications if it would point out the locations of both points.  R3-Alpha
+// only pointed out the location of the start token.
+//
+static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
+    Error* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
+    Update_Error_Near_For_Line(error, S->ss, S->start_line, S->start_line_head);
+    return error;
+}
+
+
+// Conveying the part of a string which contains a CR byte is helpful.  But
+// we may see this CR during a scan...e.g. the bytes that come after it have
+// not been checked to see if they are valid UTF-8.  We assume all the bytes
+// *prior* are known to be valid.
+//
+INLINE Error* Error_Illegal_Cr(const Byte* at, const Byte* start)
+{
+    UNUSED(at);
+    UNUSED(start);
+    return Error_User("Illegal CR");
+}
+
+
+//
+//  Try_Scan_UTF8_Char_Escapable: C
 //
 // Scan a char, handling ^A, ^/, ^(null), ^(1234)
 //
@@ -305,8 +481,10 @@ const Byte Lower_Case[256] =
 //
 // test: to-integer load to-binary mold to-char 1234
 //
-static const Byte *Scan_UTF8_Char_Escapable(Ucs2Unit* out, const Byte *bp)
-{
+static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
+    Ucs2Unit* out,
+    const Byte *bp
+){
     const Byte *cp;
     Byte c;
     Byte lex;
@@ -398,14 +576,187 @@ static const Byte *Scan_UTF8_Char_Escapable(Ucs2Unit* out, const Byte *bp)
 }
 
 
-static bool Is_Interstitial_Scan(ScanState* S) {
-    return S->mode == '.' or S->mode == '/';
+#define CELL_FLAG_STACK_NOTE_BRACED CELL_FLAG_NOTE
+
+// For compatibility to copy code to and from the bootstrap EXE, this code
+// uses Mold_Buffer(mo) to abstract the difference from `mo->utf8flex`.
+// (Calling the bootstrap exe's mold buffer a "string" would be potentially
+// confusing since "String" doesn't use UTF-8 internally in that codebase.)
+//
+#define Mold_Buffer(mo) mo->utf8flex
+
+
+//
+//  Trap_Scan_String_Push_Mold: C
+//
+// Scan a quoted or braced string, handling all the escape characters.  e.g.
+// an input stream might have "a^(1234)b" and need to turn "^(1234)" into the
+// right UTF-8 bytes for that codepoint in the string.
+//
+// 1. Historically CR LF was scanned as just an LF.  While a tolerant mode of
+//    the scanner might be created someday, for the moment we are being more
+//    prescriptive about it by default.
+//
+// 2. The '\0' codepoint is not legal in ANY-STRING!.  Among the many reasons
+//    to disallow it is that APIs like rebSpell() for getting string data
+//    return only a pointer--not a pointer and a size, so clients must assume
+//    that '\0' is the termination.  With UTF-8 everywhere, Ren-C has made it
+//    as easy as possible to work with BINARY! using string-based routines
+//    like FIND, etc., so use BINARY! if you need UTF-8 with '\0' in it.
+//
+static Option(Error*) Trap_Scan_String_Push_Mold(
+    const Byte** out,
+    Molder* mo,
+    const Byte* bp,
+    Count dashes,
+    ScanState* S  // used for errors
+){
+    StackIndex base = TOP_INDEX;  // accrue nest counts on stack
+
+    Push_Mold(mo);
+    const Byte* cp = bp;
+
+    Init_Integer(PUSH(), dashes);  // so nest code is uniform
+
+    if (*cp == '{')
+        Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
+    else
+        assert(*cp == '"');
+
+    ++cp;
+
+    while (true) {  // keep going until nesting levels all closed
+        Ucs2Unit c = *cp;
+
+        switch (c) {
+          case '\0': {
+            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                return Error_Missing(S, '}');
+            return Error_Missing(S, '"'); }
+
+          case '^':
+            if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
+                return Error_User("Bad character literal in string");
+            --cp;  // unlike Back_Scan_XXX, no compensation for ++cp later
+            break;
+
+          case '{': {  // brace with no leading dashes, nests if {a {b} c}
+            if (
+                Get_Cell_Flag(TOP, STACK_NOTE_BRACED)
+                and 0 == VAL_INT32(TOP)  // > 0, e.g. -{a {b c}- won't nest
+            ){
+                Init_Integer(PUSH(), 0);
+                Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
+            }
+            break; }
+
+          case '-': {  // look for nesting levels -{a --{b}-- c}- is one string
+            Count count = 1;
+            Append_Codepoint(Mold_Buffer(mo), '-');
+            ++cp;
+            while (*cp == '-') {
+                ++count;
+                Append_Codepoint(Mold_Buffer(mo), '-');
+                ++cp;
+            }
+            if (
+                *cp == '{'
+                and Get_Cell_Flag(TOP, STACK_NOTE_BRACED)
+                and count >= VAL_INT32(TOP)
+            ){
+                Init_Integer(PUSH(), count);
+                Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
+                Append_Codepoint(Mold_Buffer(mo), '{');
+                ++cp;
+            }
+          #if 0
+             else if (  // don't want "--" to start nested --" scan, rethink
+                *cp == '"'
+                and Not_Cell_Flag(TOP, STACK_NOTE_BRACED)
+                and count >= VAL_INT32(TOP)
+            ){
+                Init_Integer(PUSH(), count);
+                Append_Codepoint(Mold_Buffer(mo), '"');
+            }
+          #endif
+            continue; }  // already appended all relevant codepoints
+
+          case '"':
+            if (Not_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                goto handle_closer;
+            break;
+
+          case '}':
+            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                goto handle_closer;
+            break;
+
+          handle_closer: {
+            ++cp;
+            Count count = 0;
+            while (*cp == '-') {
+                ++count;
+                ++cp;
+            }
+            if (count > VAL_INT32(TOP))
+                return Error_User("Nested }-- level closure too long");
+            if (count == VAL_INT32(TOP)) {
+                DROP();
+                if (TOP_INDEX == base)
+                    goto finished;  // end overall scan, don't add codepoints
+            }
+
+            if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                Append_Codepoint(Mold_Buffer(mo), '}');
+            else
+                Append_Codepoint(Mold_Buffer(mo), '"');
+
+            for (; count != 0; --count)
+                Append_Codepoint(Mold_Buffer(mo), '-');
+            continue; }  // codepoints were appended already
+
+          case CR: {
+            enum Reb_Strmode strmode = STRMODE_NO_CR;  // avoid CR [1]
+            if (strmode == STRMODE_CRLF_TO_LF) {
+                if (cp[1] == LF) {
+                    ++cp;
+                    c = LF;
+                    goto linefeed;
+                }
+            }
+            else
+                assert(strmode == STRMODE_NO_CR);
+            return (Error_Illegal_Cr(cp, S->begin)); }
+
+          case LF:
+          linefeed:
+            if (Not_Cell_Flag(TOP, STACK_NOTE_BRACED))
+                return Error_User("Plain quoted strings not multi-line");
+            ++S->ss->line;
+            break;
+
+          default:
+            if (c >= 0x80) {
+                if ((cp = Back_Scan_UTF8_Char(&c, cp, nullptr)) == nullptr)
+                    return Error_Bad_Utf8_Raw();
+            }
+        }
+
+        ++cp;
+
+        if (c == '\0')  // e.g. ^(00) or ^@
+            fail (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
+
+        Append_Codepoint(Mold_Buffer(mo), c);
+    }
+
+  finished:
+
+    *out = cp;
+    return nullptr;  // not an error (success)
 }
 
-INLINE bool Is_Interstitial(char c)
-  { return c == '/' or c == '.' or c == ':'; }
-
-
+/*
 //
 //  Scan_Quote_Push_Mold: C
 //
@@ -481,15 +832,7 @@ static const Byte *Scan_Quote_Push_Mold(
 
         src++;
 
-        // 4 bytes maximum for UTF-8 encoded character (6 is a lie)
-        //
-        // https://stackoverflow.com/a/9533324/211160
-        //
-        if (Flex_Len(mo->utf8flex) + 4 >= Flex_Rest(mo->utf8flex)) // incl term
-            Extend_Flex(mo->utf8flex, 4);
-
-        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->utf8flex), chr);
-        Set_Flex_Len(mo->utf8flex, Flex_Len(mo->utf8flex) + encoded_len);
+        Append_Codepoint(mo->utf8flex, chr);
     }
 
     src++; // Skip ending quote or brace.
@@ -499,6 +842,7 @@ static const Byte *Scan_Quote_Push_Mold(
     Term_Binary(mo->utf8flex);
     return src;
 }
+*/
 
 
 //
@@ -558,7 +902,7 @@ const Byte *Scan_Item_Push_Mold(
         else if (c == '^') { // Accept ^X encoded char:
             if (bp + 1 == ep)
                 return nullptr; // error if nothing follows ^
-            if (nullptr == (bp = Scan_UTF8_Char_Escapable(&c, bp)))
+            if (nullptr == (bp = maybe Try_Scan_UTF8_Char_Escapable(&c, bp)))
                 return nullptr;
             if (opt_term == '\0' and IS_WHITE(c))
                 break;
@@ -624,135 +968,6 @@ static const Byte *Skip_Tag(const Byte *cp)
         return cp + 1;
 
     return nullptr;
-}
-
-
-//
-//  Update_Error_Near_For_Line: C
-//
-// The NEAR information in an error is typically expressed in terms of loaded
-// Rebol code.  Scanner errors have historically used the NEAR not to tell you
-// where the LOAD that is failing is in Rebol, but to form a string of the
-// "best place" to report the textual error.
-//
-// While this is probably a bad overloading of NEAR, it is being made more
-// clear that this is what's happening for the moment.
-//
-static void Update_Error_Near_For_Line(
-    Error* error,
-    TranscodeState* ss,
-    REBLEN line,
-    const Byte *line_head
-){
-    // Skip indentation (don't include in the NEAR)
-    //
-    const Byte *cp = line_head;
-    while (Is_Lex_Space(*cp))
-        ++cp;
-
-    // Find end of line to capture in error message
-    //
-    REBLEN len = 0;
-    const Byte *bp = cp;
-    while (!ANY_CR_LF_END(*cp)) {
-        cp++;
-        len++;
-    }
-
-    // Put the line count and the line's text into a string.
-    //
-    // !!! This should likely be separated into an integer and a string, so
-    // that those processing the error don't have to parse it back out.
-    //
-    DECLARE_MOLDER (mo);
-    Push_Mold(mo);
-    Append_Unencoded(mo->utf8flex, "(line ");
-    Append_Int(mo->utf8flex, line);
-    Append_Unencoded(mo->utf8flex, ") ");
-    Append_Utf8_Utf8(mo->utf8flex, cs_cast(bp), len);
-
-    ERROR_VARS *vars = ERR_VARS(error);
-    Init_Text(&vars->nearest, Pop_Molded_String(mo));
-
-    if (ss->file)
-        Init_File(&vars->file, unwrap ss->file);
-    else
-        Init_Nulled(&vars->file);
-}
-
-
-//
-//  Error_Syntax: C
-//
-// Catch-all scanner error handler.  Reports the name of the token that gives
-// the complaint, and gives the substring of the token's text.  Populates
-// the NEAR field of the error with the "current" line number and line text,
-// e.g. where the end point of the token is seen.
-//
-static Error* Error_Syntax(ScanState* S, Token token) {
-    assert(S->begin and not Is_Pointer_Corrupt_Debug(S->begin));
-    assert(S->end and not Is_Pointer_Corrupt_Debug(S->end));
-    assert(S->end >= S->begin);
-
-    DECLARE_VALUE (token_name);
-    Init_Text(
-        token_name,
-        Make_String_UTF8(Token_Names[token])
-    );
-
-    DECLARE_VALUE (token_text);
-    Init_Text(
-        token_text,
-        Make_Sized_String_UTF8(
-            cs_cast(S->begin), cast(REBLEN, S->end - S->begin)
-        )
-    );
-    return Error_Scan_Invalid_Raw(token_name, token_text);
-}
-
-
-//
-//  Error_Missing: C
-//
-// For instance, `load "( abc"`.
-//
-// Note: This error is useful for things like multi-line input, because it
-// indicates a state which could be reconciled by adding more text.  A
-// better form of this error would walk the scan state stack and be able to
-// report all the unclosed terms.
-//
-static Error* Error_Missing(char wanted) {
-    DECLARE_VALUE (expected);
-    Init_Text(expected, Make_Ser_Codepoint(wanted));
-    return Error_Scan_Missing_Raw(expected);;
-}
-
-
-//
-//  Error_Extra: C
-//
-// For instance, `load "abc ]"`
-//
-static Error* Error_Extra(char seen) {
-    DECLARE_VALUE (unexpected);
-    Init_Text(unexpected, Make_Ser_Codepoint(seen));
-    return Error_Scan_Extra_Raw(unexpected);
-}
-
-
-//
-//  Error_Mismatch: C
-//
-// For instance, `load "( abc ]"`
-//
-// Note: This answer would be more useful for syntax highlighting or other
-// applications if it would point out the locations of both points.  R3-Alpha
-// only pointed out the location of the start token.
-//
-static Error* Error_Mismatch(ScanState* S, char wanted, char seen) {
-    Error* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
-    Update_Error_Near_For_Line(error, S->ss, S->start_line, S->start_line_head);
-    return error;
 }
 
 
@@ -1092,6 +1307,21 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     const Byte *cp = S->begin;
 
+    if (*cp == '-') {  // first priority: -{...}- --{...}--
+        Count dashes = 1;
+        const Byte* dp = cp;
+        for (++dp; *dp == '-'; ++dp)
+            ++dashes;
+        if (*dp == '{' or *dp == '"') {
+            Option(Error*) error = Trap_Scan_String_Push_Mold(
+                &cp, mo, dp, dashes, S
+            );
+            if (error)
+                return error;
+            goto check_str;
+        }
+    }
+
     switch (Get_Lex_Class(*cp)) {
 
     case LEX_CLASS_DELIMIT:
@@ -1134,12 +1364,22 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
         // "QUOTES" and {BRACES}
 
-        case LEX_DELIMIT_DOUBLE_QUOTE:
-            cp = Scan_Quote_Push_Mold(mo, cp, ss);
-            goto check_str;
+        case LEX_DELIMIT_DOUBLE_QUOTE: {
+            Option(Error*) error = Trap_Scan_String_Push_Mold(
+                &cp, mo, cp, 0, S
+            );
+            if (error)
+                return error;
+            goto check_str; }
 
-        case LEX_DELIMIT_LEFT_BRACE:
-            cp = Scan_Quote_Push_Mold(mo, cp, ss);
+        case LEX_DELIMIT_LEFT_BRACE: {
+            Option(Error*) error = Trap_Scan_String_Push_Mold(
+                &cp, mo, cp, 0, S
+            );
+            if (error)
+                return error;
+            goto check_str; }
+
         check_str:
             if (cp) {
                 S->end = cp;
@@ -1151,9 +1391,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 ++cp;
             S->end = cp;
             if (S->begin[0] == '"')
-                return Error_Missing('"');
+                return Error_Missing(S, '"');
             if (S->begin[0] == '{')
-                return Error_Missing('}');
+                return Error_Missing(S, '}');
             panic ("Invalid string start delimiter");
 
         case LEX_DELIMIT_RIGHT_BRACE:
@@ -1177,7 +1417,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     Is_Lex_Whitespace(cp[1])
                     or cp[1] == ']'
                     or cp[1] == ')'
-                    or (cp[1] != which and Is_Interstitial(cp[1]))
+                    or (cp[1] != which and Is_Lex_Interstitial(cp[1]))
                 ){
                     S->end = cp + 1;
                     if (which == ':' and cp[1] == '/')
@@ -1240,9 +1480,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         case LEX_SPECIAL_PERCENT:       /* %filename */
             cp = S->end;
             if (*cp == '"') {
-                cp = Scan_Quote_Push_Mold(mo, cp, ss);
-                if (cp == nullptr)
-                    return Error_Syntax(S, TOKEN_FILE);
+                Option(Error*) e = Trap_Scan_String_Push_Mold(
+                    &cp, mo, cp, 0, S
+                );
+                if (e)
+                    return e;
                 S->end = cp;
                 return LOCATED(TOKEN_FILE);
             }
@@ -1359,7 +1601,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '"') { /* CHAR #"C" */
                 Ucs2Unit dummy;
                 cp++;
-                cp = Scan_UTF8_Char_Escapable(&dummy, cp);
+                cp = maybe Try_Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp != nullptr and *cp == '"') {
                     S->end = cp + 1;
                     return LOCATED(TOKEN_CHAR);
@@ -1374,8 +1616,12 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '{') { /* BINARY #{12343132023902902302938290382} */
                 S->end = S->begin;  /* save start */
                 S->begin = cp;
-                cp = Scan_Quote_Push_Mold(mo, cp, ss);
-                S->begin = S->end;  /* restore start */
+                Option(Error*) e = Trap_Scan_String_Push_Mold(
+                    &cp, mo, cp, 0, S
+                );
+                if (e)
+                    return e;
+                S->begin = S->end;  // restore start
                 if (cp) {
                     S->end = cp;
                     return LOCATED(TOKEN_BINARY);
@@ -1538,7 +1784,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             ++cp;
             while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
                 ++cp;  // not delimiter, e.g. `http://example.com]` stops it
-        } while (Is_Interstitial(*cp));  // slash, dots, and colons legal
+        } while (Is_Lex_Interstitial(*cp));  // slash, dots, and colons legal
         S->end = cp;
         return LOCATED(TOKEN_URL);
     }
@@ -1872,7 +2118,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // to `done`.  If it didn't, we never got a proper closing.
         //
         if (S->mode == ']' or S->mode == ')')
-            return RAISE(Error_Missing(S->mode));
+            return RAISE(Error_Missing(S, S->mode));
 
         goto done;
     }
@@ -1975,7 +2221,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         assert(*S->begin == ':' and len == 1);
         if (S->sigil_pending)
             return RAISE(Error_Syntax(S, TOKEN_CHAIN));
-        if (Is_Interstitial(S->mode))
+        if (Is_Lex_Interstitial(S->mode))
             return RAISE(Error_Syntax(S, TOKEN_CHAIN));  // foo/:bar illegal
         S->sigil_pending = true;
         goto loop;
@@ -2021,7 +2267,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         if (S->mode == end_delimiter)
             goto done;
 
-        if (Is_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
+        if (Is_Lex_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
             Init_Blank(PUSH());  // add a blank
             assert(ss->at == S->end);  // falsely accepted end_delimiter
             --ss->at;  // unaccept, and end the interstitial scan first
@@ -2148,7 +2394,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
       case TOKEN_CHAR: {
         const Byte* bp = S->begin + 2;  // skip #"
         const Byte* ep = S->end - 1;  // drop "
-        if (ep != Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
+        if (ep != Try_Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
             return RAISE(Error_Syntax(S, token));
         RESET_VAL_HEADER(TOP, REB_CHAR);
         break; }

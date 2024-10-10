@@ -7,7 +7,12 @@
 ; alternative literal form
 ("" == #[text! ""])
 ("" == make text! 0)
-("^@" = "^(00)")
+
+; Nulls not legal in strings in modern executables
+(error? sys.util/rescue [transcode {"^^(null)"}])
+(error? sys.util/rescue [transcode {"^^(00)"}])
+(error? sys.util/rescue [transcode {"^^@"}])
+
 ("^A" = "^(01)")
 ("^B" = "^(02)")
 ("^C" = "^(03)")
@@ -135,7 +140,7 @@
 ("}" = "^(7D)")
 ("~" = "^(7E)")
 ("^~" = "^(7F)")
-("^(null)" = "^(00)")
+
 ("^(line)" = "^(0A)")
 ("^/" = "^(0A)")
 ("^(tab)" = "^(09)")

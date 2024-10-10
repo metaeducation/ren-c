@@ -60,10 +60,19 @@ make object! [
         opt some [
             position: <here>
 
+            ; can't transcode "^(00)" as string but want #"^(00)" to work
+            ; look ahead for non-escaped quote, accounting for special case
+            ; when a double caret might precede a quote.
+            ;
+            {#"} some [{^^"} | {^^^^} | not ahead {"} one] {"}
+                |
             ["{" | {"}] (
                 ; handle string using TRANSCODE
                 success-rule: trap [
-                    position: transcode/next3 position 'dummy
+                    if error? position: transcode/next3 position 'dummy [
+                        print form position
+                        quit
+                    ]
                 ] then [
                     [<end> one]
                 ] else [

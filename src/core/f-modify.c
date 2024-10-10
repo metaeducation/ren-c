@@ -420,7 +420,7 @@ REBLEN Modify_String(
     REBLEN src_len;
     bool needs_free;
     if (Is_Char(src_val)) {
-        src_ser = Make_Ser_Codepoint(VAL_CHAR(src_val));
+        src_ser = Make_Codepoint_String(VAL_CHAR(src_val));
         src_len = Flex_Len(src_ser);
 
         needs_free = true;

@@ -33,17 +33,11 @@
 ]
 
 [#77
-    ("#[block! [[1 2] 2]]" == mold/all next [1 2])
-]
-[#77
     (null? find mold/flat make object! [a: 1] "    ")
 ]
 
 [#84
-    (equal? mold make bitset! "^(00)" "make bitset! #{80}")
-]
-[#84
-    (equal? mold/all make bitset! "^(00)" "#[bitset! #{80}]")
+    (equal? mold make bitset! #"^(00)" "#[bitset! #{80}]")
 ]
 
 

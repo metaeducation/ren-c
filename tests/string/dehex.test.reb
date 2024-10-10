@@ -5,7 +5,10 @@
 (error? sys/util/rescue ["a%b" = dehex "a%b"])
 (error? sys/util/rescue ["a%~b" = dehex "a%~b"])
 
-("a^@b" = dehex "a%00b")
+; No 0 bytes in string...offer dehex as BINARY! ?
+;
+(error? sys.util/rescue [dehex "a%00b"])
+
 ("a b" = dehex "a%20b")
 ("a%b" = dehex "a%25b")
 ("a+b" = dehex "a%2bb")

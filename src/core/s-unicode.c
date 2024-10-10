@@ -873,6 +873,9 @@ size_t Size_As_UTF8(const Ucs2Unit *up, REBLEN len)
 // Converts a single char to UTF8 code-point.
 // Returns length of char stored in dst.
 // Be sure dst has at least 4 bytes available.
+// 4 bytes maximum for UTF-8 encoded character (6 is a lie)
+//
+// https://stackoverflow.com/a/9533324/211160
 //
 REBLEN Encode_UTF8_Char(Byte *dst, uint32_t c)
 {
