@@ -118,7 +118,7 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 // as bitsets.
 //
 // Yet there needed to be a place to put the parameter's class.  So it is
-// packed in with the TYPESET_FLAG_XXX bits.
+// packed in to the typeset header (via the CUSTOM_BYTE())
 //
 // Note: It was checked to see if giving the VAL_PARAM_CLASS() the entire byte
 // and not need to mask out the flags would make a difference, but performance
@@ -244,9 +244,9 @@ INLINE void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Typesets could use flags encoded as TYPESET_FLAG_XXX in the type-specific
-// flags byte of the header.  However, that gets somewhat cramped because
-// three of those bits are used for the PARAM_CLASS.
+// Typesets could use flags encoded in the type-specific flags byte of the
+// header.  However, that gets somewhat cramped because three of those bits
+// are used for the PARAM_CLASS.
 //
 // Hence an alternative option is to use out-of-range of 1...REB_MAX datatypes
 // as "psuedo-types" in the typeset bits.
@@ -318,26 +318,6 @@ INLINE void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
 //
 #define REB_TS_NOOP_IF_VOID \
     REB_MAX_PLUS_FIVE
-
-
-#ifdef NDEBUG
-    #define TYPESET_FLAG(n) \
-        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
-#else
-    #define TYPESET_FLAG(n) \
-        (FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n)) | FLAG_KIND_BYTE(REB_TYPESET))
-#endif
-
-
-// ^-- STOP AT TYPESET_FLAG(-1) (e.g. don't use them) --^
-//
-// !!! TYPESET_FLAG_XXX is not currently in use, only "pseudotype" flags are.
-// This is so a whole byte is taken for the parameter class, to make fetching
-// and setting it faster.
-//
-#if CPLUSPLUS_11
-static_assert(0 < 8 - PCLASS_NUM_BITS, "TYPESET_FLAG_XXX too high");
-#endif
 
 
 //=//// PARAMETER SYMBOL //////////////////////////////////////////////////=//

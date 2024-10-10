@@ -256,61 +256,15 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// VALUE_FLAG_XXX flags are applicable to all types.  Type-specific flags are
-// named things like TYPESET_FLAG_XXX or WORD_FLAG_XXX and only apply to the
-// type that they reference.  Both use these XXX_VAL_FLAG accessors.
-//
-
-// For safety in the debug build, all the type-specific flags include a
-// type (or type representing a category) as part of the flag.  This type
-// is checked first, and then masked out to use the single-bit-flag value
-// which is intended.
-//
-// But flag testing routines are called *a lot*, and debug builds do not
-// inline functions.  So it's worth doing a sketchy macro so this somewhat
-// borderline assert doesn't wind up taking up 20% of the debug's runtime.
-//
-#if DEBUG
-    #define CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(flag) \
-      do { \
-        STATIC_ASSERT_LVALUE(flag); \
-        enum Reb_Kind category = cast(enum Reb_Kind, SECOND_BYTE(&flag)); \
-        assert(kind < REB_MAX_PLUS_MAX); /* see REB_MAX_PLUS_MAX */ \
-        if (category != REB_0) { \
-            if (kind != category) { \
-                if (category == REB_WORD) \
-                    assert(Any_Word_Kind(kind)); \
-                else if (category == REB_OBJECT) \
-                    assert(Any_Context_Kind(kind)); \
-                else \
-                    assert(false); \
-            } \
-            SECOND_BYTE(&flag) = 0; \
-        } \
-      } while (0);
-#else
-    #define CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(flag) \
-        USED(kind);
-#endif
-
 INLINE void SET_VAL_FLAG(Cell* v, uintptr_t f) {
-    enum Reb_Kind kind = VAL_TYPE_RAW(v); \
-    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(f);
-    assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
     v->header.bits |= f;
 }
 
 INLINE bool GET_VAL_FLAG(const Cell* v, uintptr_t f) {
-    enum Reb_Kind kind = VAL_TYPE_RAW(v); \
-    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(f);
-    assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
     return did (v->header.bits & f);
 }
 
 INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
-    enum Reb_Kind kind = VAL_TYPE_RAW(v); \
-    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(f);
-    assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
     v->header.bits &= ~f;
 }
 
@@ -388,13 +342,6 @@ INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
   #endif
 ){
     Assert_Cell_Writable(v, file, line);
-
-    // The debug build puts some extra type information onto flags
-    // which needs to be cleared out.  (e.g. ACTION_FLAG_XXX has the bit
-    // pattern for REB_ACTION inside of it, to help make sure that flag
-    // doesn't get used with things that aren't actions.)
-    //
-    CHECK_AND_EXTRACT_VALUE_FLAG_DEBUG(extra);
 
     v->header.bits &= CELL_MASK_PERSIST;
     v->header.bits |= FLAG_KIND_BYTE(kind) | extra;

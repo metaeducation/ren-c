@@ -229,6 +229,14 @@
 
 #define TYPE_SPECIFIC_BIT (24)
 
+#ifdef NDEBUG
+    #define FLAG_TYPE_SPECIFIC_BIT(n) \
+        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
+#else
+    #define FLAG_TYPE_SPECIFIC_BIT(n) \
+        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
+#endif
+
 
 // Endlike headers have the second byte clear (to pass the IS_END() test).
 // But they also have leading bits `10` so they don't look like a UTF-8
@@ -518,10 +526,10 @@ struct Reb_Varargs_Payload {
 #define REB_X_PARTIAL REB_MAX_PLUS_ONE
 
 #define PARTIAL_FLAG_IN_USE \
-    FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT)
+    FLAG_TYPE_SPECIFIC_BIT(0)
 
 #define PARTIAL_FLAG_SAW_NULL_ARG \
-    FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + 1)
+    FLAG_TYPE_SPECIFIC_BIT(1)
 
 struct Reb_Partial_Payload {
     StackIndex stackindex;  // for this partial slot (if ordered on the stack)

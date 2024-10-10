@@ -45,14 +45,6 @@
 // is shared between the instances, to reflect the state.
 //
 
-#ifdef NDEBUG
-    #define VARARGS_FLAG(n) \
-        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
-#else
-    #define VARARGS_FLAG(n) \
-        (FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n)) | FLAG_KIND_BYTE(REB_VARARGS))
-#endif
-
 
 // While it would be possible to say that infixing a function whose first
 // argument is a VARARGS! is plainly illegal, we experimentally allow the
@@ -73,7 +65,7 @@
 // something vs. just give an error.  Especially since people are unlikely to
 // infix a variadic on accident, and may be fine with these rules.
 //
-#define VARARGS_FLAG_INFIX VARARGS_FLAG(0)
+#define VARARGS_FLAG_INFIX FLAG_TYPE_SPECIFIC_BIT(0)
 
 
 INLINE bool Is_Block_Style_Varargs(

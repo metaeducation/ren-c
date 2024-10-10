@@ -28,27 +28,19 @@
 //
 //
 
-#ifdef NDEBUG
-    #define DATE_FLAG(n) \
-        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
-#else
-    #define DATE_FLAG(n) \
-        (FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n)) | FLAG_KIND_BYTE(REB_DATE))
-#endif
-
 // `DATE_FLAG_HAS_TIME` answers whether a date's Reb_Time payload is valid.
 // All dates have REBYMD information in their ->extra field, but not all
 // of them also have associated time information.
 //
 #define DATE_FLAG_HAS_TIME \
-    DATE_FLAG(0)
+    FLAG_TYPE_SPECIFIC_BIT(0)
 
 // `DATE_FLAG_HAS_ZONE` tells whether a date's time zone bits are valid.
 // There is a difference between a time zone of 0 (explicitly GMT) and
 // choosing to be an agnostic local time.
 //
 #define DATE_FLAG_HAS_ZONE \
-    DATE_FLAG(1)
+    FLAG_TYPE_SPECIFIC_BIT(1)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

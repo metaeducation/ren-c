@@ -46,20 +46,12 @@
 // and changing one won't change the others.
 //
 
-#ifdef NDEBUG
-    #define HANDLE_FLAG(n) \
-        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
-#else
-    #define HANDLE_FLAG(n) \
-        (FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n)) | FLAG_KIND_BYTE(REB_HANDLE))
-#endif
-
 // Note: In the C language, sizeof(void*) may not be the same size as a
 // function pointer; hence they can't necessarily be cast between each other.
 // In practice, a void* is generally big enough to hold a CFUNC*, and many
 // APIs do assume this.
 //
-#define HANDLE_FLAG_CFUNC HANDLE_FLAG(0)
+#define HANDLE_FLAG_CFUNC FLAG_TYPE_SPECIFIC_BIT(0)
 
 
 INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {

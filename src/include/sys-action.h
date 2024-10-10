@@ -192,21 +192,13 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#ifdef NDEBUG
-    #define ACTION_FLAG(n) \
-        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
-#else
-    #define ACTION_FLAG(n) \
-        (FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n)) | FLAG_KIND_BYTE(REB_ACTION))
-#endif
-
 // RETURN in the last paramlist slot
 //
-#define ACTION_FLAG_RETURN ACTION_FLAG(0)
+#define ACTION_FLAG_RETURN FLAG_TYPE_SPECIFIC_BIT(0)
 
 // Uses the Eraser_Dispatcher() (implies ACTION_FLAG_RETURN + arity-0 RETURN)
 //
-#define ACTION_FLAG_TRASHER ACTION_FLAG(1)
+#define ACTION_FLAG_TRASHER FLAG_TYPE_SPECIFIC_BIT(1)
 
 // DEFERS_LOOKBACK_ARG flag is a cached property, which tells you whether a
 // function defers its first real argument when used as a lookback.  Because
@@ -214,13 +206,13 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 // static for invocation via a plain word.  This property is calculated at
 // the time of Make_Action().
 //
-#define ACTION_FLAG_DEFERS_LOOKBACK ACTION_FLAG(2)
+#define ACTION_FLAG_DEFERS_LOOKBACK FLAG_TYPE_SPECIFIC_BIT(2)
 
 // This is another cached property, needed because lookahead/lookback is done
 // so frequently, and it's quicker to check a bit on the function than to
 // walk the parameter list every time that function is called.
 //
-#define ACTION_FLAG_QUOTES_FIRST_ARG ACTION_FLAG(3)
+#define ACTION_FLAG_QUOTES_FIRST_ARG FLAG_TYPE_SPECIFIC_BIT(3)
 
 // Native functions are flagged that their dispatcher represents a native in
 // order to say that their ACT_DETAILS() follow the protocol that the [0]
@@ -229,13 +221,13 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 // rebValue() etc. should consider for binding, in addition to lib.  A BLANK!
 // in the 1 slot means no additional consideration...bind to lib only.
 //
-#define ACTION_FLAG_NATIVE ACTION_FLAG(4)
+#define ACTION_FLAG_NATIVE FLAG_TYPE_SPECIFIC_BIT(4)
 
-#define ACTION_FLAG_UNUSED_5 ACTION_FLAG(5)
+#define ACTION_FLAG_UNUSED_5 FLAG_TYPE_SPECIFIC_BIT(5)
 
 // This flag is set when the native (e.g. extensions) can be unloaded
 //
-#define ACTION_FLAG_UNLOADABLE_NATIVE ACTION_FLAG(6)
+#define ACTION_FLAG_UNLOADABLE_NATIVE FLAG_TYPE_SPECIFIC_BIT(6)
 
 // An "invisible" function is one that does not touch its frame output cell,
 // leaving it completely alone.  This is how `10 comment ["hi"] + 20` can
@@ -246,9 +238,9 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 // quoted in soft-quoted positions.  This would require fetching something
 // that might not otherwise need to be fetched, to test the flag.  Review.
 //
-#define ACTION_FLAG_INVISIBLE ACTION_FLAG(7)
+#define ACTION_FLAG_INVISIBLE FLAG_TYPE_SPECIFIC_BIT(7)
 
-// ^--- !!! STOP AT ACTION_FLAG(7) !!! ---^
+// ^--- !!! STOP AT FLAG_TYPE_SPECIFIC_BIT(7) !!! ---^
 
 // These are the flags which are scanned for and set during Make_Action
 //

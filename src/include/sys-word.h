@@ -36,18 +36,9 @@
 // !!! Today's words are different from ANY-STRING! values.  This is because
 // they are interned (only one copy of the string data for all instances),
 // read-only, use UTF-8 instead of a variable 1 or 2-bytes per character,
-// and permit binding.  Ren-C intends to pare away these differences, perhaps
-// even to the point of allowing mutable WORD!s and bindable STRING!s.  This
-// is at the idea stage, but is evolving.
+// and permit binding.  Ren-C reduced these differences by making strings
+// UTF-8, so words may be aliased as read-only strings.
 //
-
-#ifdef NDEBUG
-    #define WORD_FLAG(n) \
-        FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
-#else
-    #define WORD_FLAG(n) \
-        (FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n)) | FLAG_KIND_BYTE(REB_WORD))
-#endif
 
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
