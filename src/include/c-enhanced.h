@@ -419,26 +419,25 @@
 
 //=//// CASTING MACROS ////////////////////////////////////////////////////=//
 //
-// This code is based on ideas in "Casts for the Masses (in C)":
+// This code is an evolution of ideas from "Casts for the Masses (in C)":
 //
 //   http://blog.hostilefork.com/c-casts-for-the-masses/
 //
-// It provides easier-to-spot variants of the parentheses cast, which when
-// built under C++ can be made to implement the macros with safer and
-// narrower implementations:
+// It provides *easier-to-spot* variants of the parentheses cast, and also
+// helps document at the callsite what the purpose of the cast is.  But when
+// built under C++11 with access to <type_traits>, the variants are able to
+// enforce their narrower policies.
 //
-//   * Plain 'cast' is reinterpret_cast for pointers, static_cast otherwise
-//   * The 'm_cast' is when getting [M]utablity on a const is okay
-//   * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
-//
-// Additionally there is x_cast(), for cases where you don't know if your
-// input pointer is const or not, and want to cast to a mutable pointer.
-// C++ doesn't let you use old-style casts to accomplish this, so it has to
-// be done using two casts and type_traits magic.
+// Also, the casts are designed to be "hookable" so that checks can be done
+// in instrumented C++ debug builds to ensure that the cast is good.  This
+// lets the callsites remain simple and clean while still getting the
+// advantage of debug checks when desired.
 //
 // These casts should not cost anything at runtime--unless non-constexpr
 // helpers are invoked.  Those are only used in the codebase for debug
-// features in the C++ builds, and release builds do not use them.
+// features in the C++ builds, and release builds do not use them.  But since
+// they can slow the debug build down a bit, judicious use of the unchecked
+// u_cast() operation is worth it for speeding it up in certain functions.
 //
 // 1. The C preprocessor doesn't know about templates, so it parses things
 //    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
