@@ -109,30 +109,47 @@
 //
 INLINE Option(Error*) Trap_Check_Sequence_Element(
     Heart sequence_heart,
-    const Element* e
+    const Element* e,
+    bool is_head
 ){
     assert(Any_Sequence_Kind(sequence_heart));
 
-    if (Is_Quoted(e))  // allow quasiforms, but not quoteds [1]
+    Heart h = Cell_Heart(e);
+
+    if (is_head) {
+        if (
+            Is_Quoted(e)  // note quasiforms legal, even at head [1]
+            or Sigil_Of_Kind(h)
+        ){
+            return Error_Bad_Sequence_Item_Raw(e);
+        }
+    }
+
+    if (Any_Path_Kind(h))  // path can't put be put in path, tuple, or chain
         return Error_Bad_Sequence_Item_Raw(e);
 
-    Heart h = Cell_Heart(e);
-    if (
-        h == REB_INTEGER
-        or h == REB_GROUP
-        or h == REB_BLOCK
-        or h == REB_TEXT
-        or h == REB_TAG
-    ){
-        return nullptr;
+    if (Any_Chain_Kind(h)) {  // inserting a chain
+        if (Any_Path_Kind(sequence_heart))
+            return nullptr;  // chains can only be put in paths
+        return Error_Bad_Sequence_Item_Raw(e);
+    }
+
+    if (Any_Tuple_Kind(h)) {  // inserting a tuple
+        if (not Any_Tuple_Kind(sequence_heart))
+            return nullptr;  // legal in non-tuple sequences (path, chain)
+        return Error_Bad_Sequence_Item_Raw(e);
     }
 
     if (h == REB_BLANK) {
         if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform blank (trash)
             return nullptr;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
 
+        assert(not is_head); // callers should check blank at head or tail
         return Error_Bad_Sequence_Blank_Raw();  // blank only legal at head
     }
+
+    if (not Any_Sequencable_Kind(h))
+        return Error_Bad_Sequence_Item_Raw(e);
 
     if (h == REB_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(e);
@@ -146,25 +163,9 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
             return nullptr;
         if (Get_Subclass_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
             return Error_Bad_Sequence_Item_Raw(e);  // e.g. contains a slash
-        return nullptr;  // all other words should be okay
     }
 
-    if (h == REB_PATH)  // inserting path, can't put in path, tuple, or chain
-        return Error_Bad_Sequence_Item_Raw(e);
-
-    if (h == REB_CHAIN) {  // inserting a chain
-        if (sequence_heart != REB_CHAIN and sequence_heart != REB_TUPLE)
-            return nullptr;  // legal in any sequence that isn't tuple/chain
-        return Error_Bad_Sequence_Item_Raw(e);
-    }
-
-    if (h == REB_TUPLE) {  // inserting a tuple
-        if (sequence_heart != REB_TUPLE)
-            return nullptr;  // legal in any sequence that isn't tuple
-        return Error_Bad_Sequence_Item_Raw(e);
-    }
-
-    return Error_Bad_Sequence_Item_Raw(e);
+    return nullptr;  // all other words should be okay
 }
 
 
@@ -197,7 +198,11 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     assert(flag == CELL_MASK_0 or flag == CELL_FLAG_LEADING_BLANK);
     assert(Any_Sequence_Kind(heart));
 
-    Option(Error*) error = Trap_Check_Sequence_Element(heart, e);
+    Option(Error*) error = Trap_Check_Sequence_Element(
+        heart,
+        e,
+        flag == CELL_MASK_0  // 0 means no leading blank, item is "head"
+    );
     if (error)
         return error;
 
@@ -390,11 +395,11 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         // fall through
     }
 
-    Option(Error*) err1 = Trap_Check_Sequence_Element(heart, first);
+    Option(Error*) err1 = Trap_Check_Sequence_Element(heart, first, true);
     if (err1)
         return err1;
 
-    Option(Error*) err2 = Trap_Check_Sequence_Element(heart, second);
+    Option(Error*) err2 = Trap_Check_Sequence_Element(heart, second, false);
     if (err2)
         return err2;
 
@@ -522,7 +527,8 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
         if (not Is_Blank(out)) {  // allow _.(void) to be _ if COMPOSE'd
             Option(Error*) error = Trap_Check_Sequence_Element(
                 sequence_heart,
-                cast(Element*, out)
+                cast(Element*, out),
+                false  // don't think of it as head, or do?
             );
             if (error)
                 return error;

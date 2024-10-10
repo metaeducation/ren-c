@@ -101,7 +101,7 @@ date        "day, month, year, time of day, and timezone"
 
 integer     "64 bit integer"
             (CELL_MASK_NO_NODES)  ; would change with bignum ints
-            [any-number? any-scalar? any-inert?]
+            [any-number? any-scalar? any-inert? any-sequencable?]
             [integer     +       +]
 
 parameter   "function parameter description"
@@ -141,7 +141,7 @@ binary      "series of bytes"
 
     text        "text string series of characters"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-utf8? any-inert?]
+                [any-series? any-utf8? any-inert? any-sequencable?]
                 [string      *       *]
 
     file        "file name or path"
@@ -156,7 +156,7 @@ binary      "series of bytes"
 
     tag         "markup string (HTML or XML)"
     ~tripwire~  (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-utf8? any-inert?]
+                [any-series? any-utf8? any-inert? any-sequencable?]
                 [string      *       *]
 
 </ANY-STRING?>
@@ -169,7 +169,7 @@ issue       "immutable codepoint or codepoint sequence"
 
 sigil       "Decorators like $ : ^ & @ (:: means decoration of ANY-SET-TYPE?)"
             ()
-            [any-utf8?]  ; NOT inert
+            [any-utf8? any-sequencable?]  ; NOT inert
             [issue        *       +]  ; UTF-8 content in cell, like ISSUE?
 
 
@@ -238,27 +238,27 @@ pair        "two dimensional point or size"
 
     word        "evaluates a variable or action"
     ~keyword~   (CELL_FLAG_FIRST_IS_NODE)
-                [any-utf8? any-plain-value?]
+                [any-utf8? any-plain-value? any-sequencable?]
                 [word        *       *]
 
     meta-word   "word that quotes product or turns quasiforms to antiforms"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-utf8? any-meta-value?]
+                [any-utf8? any-meta-value? any-sequencable?]
                 [word        *       *]
 
     type-word   "inert form of word"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-utf8? any-type-value?]
+                [any-utf8? any-type-value? any-sequencable?]
                 [word        *       *]
 
     the-word    "inert form of word"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-utf8? any-the-value?]
+                [any-utf8? any-the-value? any-sequencable?]
                 [word        *       *]
 
     var-word    "word that evaluates to the bound version of the word"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-utf8? any-var-value?]
+                [any-utf8? any-var-value? any-sequencable?]
                 [word        *       *]
 
 </ANY-WORD?>
@@ -362,27 +362,27 @@ pair        "two dimensional point or size"
 
     block       "list of elements that blocks evaluation unless EVAL is used"
     ~pack~      (CELL_FLAG_FIRST_IS_NODE)
-    #unstable   [any-series? any-branch? any-plain-value?]
+    #unstable   [any-series? any-branch? any-plain-value? any-sequencable?]
                 [list        *       *]
 
     meta-block  "block that evaluates to produce a quoted block"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-branch? any-meta-value?]
+                [any-series? any-branch? any-meta-value? any-sequencable?]
                 [list        *       *]
 
     type-block  "alternative inert form of block"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-branch? any-type-value?]
+                [any-series? any-branch? any-type-value? any-sequencable?]
                 [list        *       *]
 
     the-block   "alternative inert form of block"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-branch? any-the-value?]
+                [any-series? any-branch? any-the-value? any-sequencable?]
                 [list        *       *]
 
     var-block   "block that evaluates to the bound version of the block"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-branch? any-var-value?]
+                [any-series? any-branch? any-var-value? any-sequencable?]
                 [list        *       *]
 
   </ANY-BLOCK?>
@@ -392,27 +392,27 @@ pair        "two dimensional point or size"
 
     group       "list that evaluates expressions as an isolated group"
     ~splice~    (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-plain-value?]
+                [any-series? any-plain-value? any-sequencable?]
                 [list        *       *]
 
     meta-group  "group that quotes product or turns antiforms to quasiforms"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-meta-value?]
+                [any-series? any-meta-value? any-sequencable?]
                 [list        *       *]
 
     type-group  "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-type-value?]
+                [any-series? any-type-value? any-sequencable?]
                 [list        *       *]
 
     the-group   "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-the-value? any-branch?]
+                [any-series? any-the-value? any-branch? any-sequencable?]
                 [list        *       *]
 
     var-group   "group that evaluates to the bound version of the group"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series? any-var-value?]
+                [any-series? any-var-value? any-sequencable?]
                 [list        *       *]
 
   </ANY-GROUP?>
@@ -443,7 +443,7 @@ pair        "two dimensional point or size"
 quasiform   "value which evaluates to an antiform"
             ()
             []
-            [quasiform    +       -]
+            [quasiform    +       - ]
 
 quoted      "container for arbitrary levels of quoting"
             ()

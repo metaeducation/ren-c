@@ -60,6 +60,32 @@
         "~/projects/"  ->  [~ projects _]
         "~a~.~b~/~c~"  ->  [(~a~ ~b~) ~c~]
 
+        === INTERNAL SIGIL TESTS ===
+
+        ; There should be many more of these, as well as tests of the outer
+        ; sigil application.
+
+        "a/$"  ->  [a $]
+        "a/$ b/$"  ->  [a $]  [b $]
+
+        "a/$b"  ->  [a $b]
+        "a/$b/"  ->  [a $b _]
+
+        "a/b.$c"  ->  [a (b $c)]
+
+        === INTERNAL QUOTE TESTS ===
+
+        ; Again there should be many more of these.
+
+        "a/'"  ->  [a ']
+        "a/' b/'"  ->  [a '] [b ']
+        "a.'' b.'''" -> (a '') (b ''')
+
+        "a/'b"  ->  [a 'b]
+        "a/'b/"  ->  [a 'b _]
+
+        "a/b.'c"  ->  [a (b 'c)]
+
         === COMMA TESTS ===
 
         "/a/, b."  -> [_ a _] , (b _)
@@ -173,6 +199,10 @@
             ]
             iter: my next
             continue
+        ]
+
+        if (iter.1 == '!!) [
+            fail ["Unexpected success on" @text "->" (mold spread items)]
         ]
 
         assert [iter.1 = '->]

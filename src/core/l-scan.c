@@ -70,6 +70,21 @@
 INLINE bool Is_Lex_Interstitial(Byte b)
   { return b == '/' or b == '.' or b == ':'; }
 
+INLINE bool Is_Interstitial_Scan(ScanState *S) {
+    return Is_Lex_Interstitial(S->mode);  // !!! will have fast flag!
+}
+
+bool Is_Lex_Sub_Interstitial(Byte mode, Byte sub) {
+    assert(Is_Lex_Interstitial(mode));
+    assert(Is_Lex_Interstitial(sub));
+    assert(mode != sub);
+    if (mode == '/')
+        return true;  // . and : are sub /
+    if (mode == ':')
+        return sub == '.';  // : is sub /, while / is above :
+    return false;  // no sub-interstitial of tuple
+}
+
 INLINE bool Is_Lex_End_List(Byte b)
   { return b == ']' or b == ')'; }
 
@@ -78,6 +93,7 @@ INLINE bool Is_Dot_Or_Slash(Byte b)  // !!! Review lingering instances
 
 INLINE bool Interstitial_Match(Byte b, Byte mode) {
     assert(Is_Lex_Interstitial(mode));
+    assert(Is_Lex_Interstitial(b));
     return b == mode;
 }
 
@@ -1805,6 +1821,52 @@ void Init_Scan_Level(
 }
 
 
+static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
+    if (S->sigil_pending) {
+        assert(S->sigil_pending != SIGIL_QUOTE);
+        if (S->sigil_pending == SIGIL_QUASI)
+            Init_Trash(PUSH());  // When flushing we want ~ and not ~~
+        else
+            Init_Sigil(PUSH(), unwrap S->sigil_pending);
+        S->sigil_pending = SIGIL_0;
+        if (S->quotes_pending) {
+            Quotify(TOP, S->quotes_pending);
+            S->quotes_pending = 0;
+        }
+    }
+    else if (S->quotes_pending != 0) {
+        Init_Sigil(PUSH(), SIGIL_QUOTE);
+        Quotify(TOP, S->quotes_pending - 1);
+        S->quotes_pending = 0;
+    }
+
+    return nullptr;
+}
+
+static Option(Error*) Trap_Apply_Pending_Decorations(
+    ScanState* S,
+    StackValue(*) e
+){
+    if (S->sigil_pending) {
+        Heart heart = Cell_Heart_Ensure_Noquote(e);
+        if (not Any_Plain_Kind(heart))
+            return Error_Syntax(S, TOKEN_BLANK);  // !!! token?
+
+        HEART_BYTE(e) = Sigilize_Any_Plain_Kind(
+            unwrap S->sigil_pending,
+            heart
+        );
+        S->sigil_pending = SIGIL_0;
+    }
+    if (S->quotes_pending != 0) {
+        assert(QUOTE_BYTE(e) <= QUASIFORM_2);
+        Quotify(e, S->quotes_pending);
+        S->quotes_pending = 0;
+    }
+    return nullptr;
+}
+
+
 //=//// SCANNER-SPECIFIC RAISE HELPER /////////////////////////////////////=//
 //
 // Override the RAISE macro for returning definitional errors.  It adds a
@@ -1914,6 +1976,10 @@ Bounce Scanner_Executor(Level* const L) {
         if (Is_Lex_End_List(S->mode))
             return RAISE(Error_Missing(S, S->mode));
 
+        Option(Error*) error = Trap_Flush_Pending_Sigils(S);
+        if (error)
+            return RAISE(unwrap error);
+
         goto done;
     }
 
@@ -1924,65 +1990,72 @@ Bounce Scanner_Executor(Level* const L) {
     transcode->at = S->end;  // accept token, may adjust below if token "grows"
 
     switch (token) {
-      case TOKEN_NEWLINE:
+      case TOKEN_NEWLINE: {
+        Option(Error*) error = Trap_Flush_Pending_Sigils(S);
+        if (error)
+            return RAISE(unwrap error);
+
         Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
         transcode->line_head = transcode->at;
-        goto loop;
+
+        if (not Is_Interstitial_Scan(S))
+            goto loop;
+        break; }
 
       case TOKEN_BLANK:
         assert(*S->begin == '_' and len == 1);
         Init_Blank(PUSH());
         break;
 
-      case TOKEN_COMMA:
+      case TOKEN_COMMA: {
         assert(*S->begin == ',' and len == 1);
-        if (Is_Lex_Interstitial(S->mode)) {
-            //
-            // We only see a comma during a PATH! or TUPLE! scan in cases where
-            // a blank is needed.  So we'll get here with [/a/ , xxx] but won't
-            // get here with [/a , xxx].
-            //
-            // Note that `[/a/, xxx]` will bypass the recursion, so we also
-            // only get here if there's space before the comma.
-            //
-            Init_Blank(PUSH());
-            assert(transcode->at == S->end);  // token was "accepted"
-            --transcode->at;  // "unaccept" token so interstitial scan sees `,`
-            goto done;
+
+        if (*S->end == '~') {
+            if (S->sigil_pending != SIGIL_QUASI)
+                fail ("Comma only followed by ~ for ~,~ quasiform");
+            Quasify(Init_Comma(PUSH()));
+            S->sigil_pending = SIGIL_0;
         }
-        Init_Comma(PUSH());
-        break;
+        else {
+            if (S->sigil_pending) {  // ['$, 10] => '$ , 10
+                Option(Error*) error = Trap_Flush_Pending_Sigils(S);
+                if (error)
+                    return RAISE(unwrap error);
+            }
+            else if (S->quotes_pending) {
+                // fall through normally, want [', 10] => ', 10
+            }
+            if (Is_Interstitial_Scan(S)) {
+                //
+                // We only see a comma during a PATH! or TUPLE! scan in cases
+                // where a blank is needed.  So we'll get here with [/a/ , xxx]
+                // but won't get here with [/a , xxx].
+                //
+                // Note that `[/a/, xxx]` will bypass the recursion, so we also
+                // only get here if there's space before the comma.
+                //
+                assert(transcode->at == S->end);  // token was "accepted"
+                --transcode->at;  // "unaccept" token so interstitial sees `,`
+                goto done;
+            }
+            Init_Comma(PUSH());
+        }
+        break; }
 
       case TOKEN_CARET:
         assert(*S->begin == '^' and len == 1);
-        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
-            Init_Sigil(PUSH(), SIGIL_META);
-            break;
-        }
         goto token_prefixable_sigil;
 
       case TOKEN_AT:
         assert(*S->begin == '@' and len == 1);
-        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
-            Init_Sigil(PUSH(), SIGIL_THE);
-            break;
-        }
         goto token_prefixable_sigil;
 
       case TOKEN_AMPERSAND:
         assert(*S->begin == '&' and len == 1);
-        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
-            Init_Sigil(PUSH(), SIGIL_TYPE);
-            break;
-        }
         goto token_prefixable_sigil;
 
       case TOKEN_DOLLAR:
         assert(*S->begin == '$' and len == 1);
-        if (Is_Lex_Whitespace(*S->end) or Is_Lex_End_List(*S->end)) {
-            Init_Sigil(PUSH(), SIGIL_VAR);  // $
-            break;
-        }
         goto token_prefixable_sigil;
 
       token_prefixable_sigil:
@@ -1990,7 +2063,7 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(S, token));  // no "GET-GET-WORD!"
 
         S->sigil_pending = Sigil_From_Token(token);
-        goto loop;
+        goto loop_if_next_token_modifiable;
 
       case TOKEN_WORD:
         assert(len != 0);
@@ -2008,24 +2081,8 @@ Bounce Scanner_Executor(Level* const L) {
         if (S->sigil_pending)  // can't do @'foo: or :'foo or ~'foo~
             return RAISE(Error_Syntax(S, token));
 
-        if (
-            Is_Lex_Whitespace(*S->end)
-            or Is_Lex_End_List(*S->end)
-            or *S->end == ';'
-        ){
-            assert(len > 0);
-            assert(S->quotes_pending == 0);
-
-            // A single ' is the SIGIL_QUOTE
-            // If you have something like '' then that is quoted quote SIGIL!
-            // The number of quote levels is len - 1
-            //
-            Init_Sigil(PUSH(), SIGIL_QUOTE);
-            Quotify(TOP, len - 1);
-        }
-        else
-            S->quotes_pending = len;  // apply quoting to next token
-        goto loop; }
+        S->quotes_pending = len;  // apply quoting to next token
+        goto loop_if_next_token_modifiable; }
 
       case TOKEN_TILDE: {
         assert(*S->begin == '~' and len == 1);
@@ -2049,25 +2106,29 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(S, token));
         }
 
-        if (
-            Is_Lex_Whitespace(*S->end)
-            or Is_Lex_End_List(*S->end)
-            or *S->end == ';'
-            or (
-                *S->end == ','  // (x: ~, y: 10) isn't quasi-comma
-                and S->end[1] != '~'
-            )
-        ){
-            // If we have something like [~] there won't be another token
-            // push coming along to apply the tildes to, so quasi a blank.
-            // This also applies to comments.
-            //
-            Init_Quasi_Blank(PUSH());
-            break;
-        }
-        else
-            S->sigil_pending = SIGIL_QUASI;  // apply quasi to next token
-        goto loop; }
+        S->sigil_pending = SIGIL_QUASI;  // apply to next token
+        goto loop_if_next_token_modifiable; }
+
+    // R3-Alpha's scanner was not designed to give back TOKEN_WHITESPACE, so
+    // if you are processing tokens and don't in that moment look ahead for
+    // for whitespace, the opportunity is lost.
+    //
+    // Let's say you have something like:
+    //
+    //     a/b/' c/d
+    //
+    // Then if the apostrophe pushes a quote pending, the next thing you will
+    // get is a TOKEN_WORD for "c".  This creates some pain, but it's likely
+    // more optimal to force "potentially-modifying tokens" to do a slight
+    // amount of lookahead than to introduce TOKEN_WHITESPACE.
+
+      loop_if_next_token_modifiable: {
+        if (not Is_Lex_Whitespace(*S->end) and not Is_Lex_End_List(*S->end))
+            goto loop;
+        Option(Error*) error = Trap_Flush_Pending_Sigils(S);
+        if (error)
+            return RAISE(unwrap error);
+        break; }
 
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
@@ -2134,12 +2195,15 @@ Bounce Scanner_Executor(Level* const L) {
         goto handle_list_end_delimiter;
 
       handle_list_end_delimiter: {
+        Option(Error*) error = Trap_Flush_Pending_Sigils(S);
+        if (error)
+            return RAISE(unwrap error);
+
         Byte end_delimiter = *S->begin;
         if (S->mode == end_delimiter)
             goto done;
 
-        if (Is_Lex_Interstitial(S->mode)) {  // implicit end [the /] (abc/)
-            Init_Blank(PUSH());  // add a blank
+        if (Is_Interstitial_Scan(S)) {  // implicit end [the /] (abc/)
             assert(transcode->at == S->end);  // falsely accepted end_delimiter
             --transcode->at;  // unaccept, and end the interstitial scan first
             goto done;
@@ -2175,7 +2239,7 @@ Bounce Scanner_Executor(Level* const L) {
                 *S->end == '.'
                 or *S->end == ','  // still allow `1,2` as `1.2` synonym
             )
-            and not Is_Lex_Interstitial(S->mode)  // not in PATH!/TUPLE! (yet)
+            and not Is_Interstitial_Scan(S)  // not in PATH!/TUPLE! (yet)
             and Is_Lex_Number(S->end[1])  // If # digit, we're seeing `###.#???`
         ){
             // If we will be scanning a TUPLE!, then we're at the head of it.
@@ -2349,56 +2413,64 @@ Bounce Scanner_Executor(Level* const L) {
 
     // At this point the item at TOP is the last token pushed.  It has
     // not had any `sigil_pending` or `quotes_pending` applied...so when
-    // processing something like `:foo/bar` on the first step we'd only see
+    // processing something like `'$foo/bar` on the first step we'd only see
     // `foo` pushed.  This is the point where we look for the `/` or `.`
     // to either start or continue a tuple or path.
+    //
+    // If we're starting a path or continuing, we want to wait to apply the
+    // sigils and quotes.  Perhaps obviously, with $a/b the $ does not go on
+    // the "a", but on the "a/b".  But also, with a/$b.c the $ does not go
+    // on the "b", it goes on "b.c", which is why we do not apply any sigils
+    // or quotes until a sequence (or subsequence) scan is complete.
 
-    if (Is_Lex_Interstitial(S->mode)) {  // adding to existing path/chain/tuple
-        //
-        // If we are scanning `a/b` and see `.c`, then we want the tuple
-        // to stick to the `b`...which means using the `b` as the head
-        // of a new child scan.
-        //
-        if (S->mode == '/') {
-            if (*transcode->at == '.' or *transcode->at == ':')
-                goto scan_sequence_at_is_delimiter_top_is_head;
+    if (Is_Interstitial_Scan(S)) {  // adding to existing path/chain/tuple
+        if (*transcode->at == S->mode) {
+            Option(Error*) error = Trap_Apply_Pending_Decorations(S, TOP);
+            if (error)
+                return RAISE(unwrap error);
+
+            ++transcode->at;  // consume the matching interstitial delimiter
+
+            if (
+                Is_Lex_Whitespace(*transcode->at)
+                or Is_Lex_End_List(*transcode->at)
+                or *transcode->at == ','
+                or *transcode->at == ';'
+            ){
+                Init_Blank(PUSH());
+                goto done;
+            }
+
+            goto loop;
         }
-        else if (S->mode == ':') {
-            if (*transcode->at == '.')
-                goto scan_sequence_at_is_delimiter_top_is_head;
+
+        if (Is_Lex_Interstitial(*transcode->at)) {
+            if (Is_Lex_Sub_Interstitial(S->mode, *transcode->at))
+                goto scan_sequence_at_is_delimiter_top_is_head;  // foo:bar.
+
+            // Here, consider something like "/foo:bar/" or "foo:bar/" where
+            // we are in a lower precedence interstitial scan mode (:) and
+            // encounter a higher priority interstitial character that
+            // may-or-may-not be part of an existing interstitial scan.  We
+            // don't know which it is, so we finish out our scan level and
+            // leave `transcode->at` where it is, deferring to higher levels.
+            //
+            goto done;  //  for instance foo.bar: must end the tuple scan
         }
-
-        // If we are scanning `a.b` and see `/c`, we want to defer to the
-        // path scanning and consider the tuple finished.  This means we
-        // want the level above to finish but then see the `/`.  Review.
-
-        if (S->mode == '.' and (*transcode->at == '/' or *transcode->at == ':'))
-            goto done;  // !!! need to return, but...?
-
-        if (S->mode == ':' and (*transcode->at == '/'))
-            goto done;  // !!! need to return, but...?
-
-        if (not Interstitial_Match(*transcode->at, S->mode))
-            goto done;  // e.g. `a/b`, just finished scanning b
-
-        ++transcode->at;
 
         if (
-            *transcode->at == '\0'
-            or Is_Lex_Space(*transcode->at)
-            or ANY_CR_LF_END(*transcode->at)
+            Is_Lex_Whitespace(*transcode->at)
             or Is_Lex_End_List(*transcode->at)
+            or *transcode->at == ','
+            or *transcode->at == ';'
         ){
-            Init_Blank(PUSH());
+            Option(Error*) error = Trap_Apply_Pending_Decorations(S, TOP);
+            if (error)
+                return RAISE(unwrap error);
             goto done;
         }
 
-        // Since we aren't "done" we are still in the sequence mode, which
-        // means we don't want the "lookahead" to run and see any colons
-        // that might be following, because it would apply them to the last
-        // thing pushed...which is supposed to go internally to the sequence.
-        //
-        goto loop;
+        fail ("Transcode got here, now what?");
     }
     else if (Is_Lex_Interstitial(*transcode->at)) {  // a new path/chain/tuple
         //
@@ -2408,44 +2480,27 @@ Bounce Scanner_Executor(Level* const L) {
         goto scan_sequence_at_is_delimiter_top_is_head;
     }
 
-  //=//// APPLY PENDING SIGILS AND QUOTES /////////////////////////////////=//
+  //=//// APPLY PENDING SIGILS AND QUOTES (NON-INTERSTITIAL) //////////////=//
 
-    // If we get here without jumping somewhere else, we have pushed a
-    // *complete* element (vs. just a component of a path).  We apply any
-    // pending sigils or quote levels that were noticed at the beginning of a
-    // token scan, but had to wait for the completed token to be used.
-    //
+    assert(not Is_Interstitial_Scan(S));
+
     // 2. Set the newline on the new value, indicating molding should put a
     //    line break *before* this value (needs to be done after recursion to
     //    process paths or other arrays...because the newline belongs on the
     //    whole array...not the first element of it).
 
-    if (S->sigil_pending) {
-        Heart heart = Cell_Heart_Ensure_Noquote(TOP);
-        if (not Any_Plain_Kind(heart))
-            return RAISE(Error_Syntax(S, TOKEN_BLANK));  // !!! token?
-
-        HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
-            unwrap S->sigil_pending,
-            heart
-        );
-
-        S->sigil_pending = SIGIL_0;
-    }
-
-    if (S->quotes_pending != 0) {  // make QUOTED? to account for '''
-        assert(QUOTE_BYTE(TOP) <= QUASIFORM_2);
-        Quotify(TOP, S->quotes_pending);
-        S->quotes_pending = 0;
-    }
+    Option(Error*) error = Trap_Apply_Pending_Decorations(S, TOP);
+    if (error)
+        return RAISE(unwrap error);
 
     if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
         Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // must do after recursion [2]
     }
 
-    if (Get_Scan_Executor_Flag(L, JUST_ONCE))  // e.g. TRANSCODE:NEXT
+    if (Get_Scan_Executor_Flag(L, JUST_ONCE)) {  // e.g. TRANSCODE:NEXT
         goto done;
+    }
 
     goto loop;
 
@@ -2487,20 +2542,23 @@ Bounce Scanner_Executor(Level* const L) {
 
     Token token;
     Heart heart;
-    Byte mode = *transcode->at;
+    Byte sub_mode = *transcode->at;
 
-    switch (mode) {
+    switch (sub_mode) {
       case '/':
+        assert(S->mode != '/');  // should have continued existing scan
         token = TOKEN_PATH;
         heart = REB_PATH;
         break;
 
       case ':':
+        assert(S->mode != ':');  // should have continued existing scan
         token = TOKEN_CHAIN;
         heart = REB_CHAIN;
         break;
 
       case '.':
+        assert(S->mode != '.');  // should have continued existing scan
         token = TOKEN_TUPLE;
         heart = REB_TUPLE;
         break;
@@ -2514,16 +2572,18 @@ Bounce Scanner_Executor(Level* const L) {
     StackIndex stackindex_path_head = TOP_INDEX;
 
     if (
-        *transcode->at == '\0'  // `foo/`
-        or Is_Lex_Whitespace(*transcode->at)  // `foo/ bar`
+        Is_Lex_Whitespace(*transcode->at)  // `foo/baz/ bar` (includes '\0')
+        or Is_Lex_End_List(*transcode->at)  // `foo/baz/]`
         or *transcode->at == ';'  // `foo/;bar`
         or *transcode->at == ','  // `a:, b`
     ){
-        // Optimization: Don't bother scanning recursively if we would just
-        // wind up pushing a blank.  Note this is not exhaustive, and there
-        // are other ways to get a blank...like `foo/)`
+        // If there's nothing to recursively scan, we could end up with an
+        // array that's too short.  This isn't just an optimization: due to
+        // the lack of a TOKEN_WHITESPACE we really have to take action now,
+        // because if we sub-scanned we'd not be able to tell when adding
+        // a blank to the tail was appropriate.
         //
-        Init_Blank(PUSH());  // don't recurse if we'd just push blank [1]
+        Init_Blank(PUSH());
     }
     else {
         Level* sub = Make_Level(
@@ -2531,7 +2591,7 @@ Bounce Scanner_Executor(Level* const L) {
             L->feed,
             LEVEL_FLAG_RAISED_RESULT_OK
         );
-        Init_Scan_Level(sub, transcode, mode);
+        Init_Scan_Level(sub, transcode, sub_mode);
 
         Push_Level(OUT, sub);
 
@@ -2632,6 +2692,9 @@ Bounce Scanner_Executor(Level* const L) {
         if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
             Set_Array_Flag(a, NEWLINE_AT_TAIL);
     }
+
+    if (transcode->at == nullptr)  // reached e.g. with a/'
+        goto done;
 
     goto lookahead_for_sequencing_token;
 

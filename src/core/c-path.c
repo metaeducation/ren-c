@@ -68,15 +68,19 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     }
 
     const Element* tail = Array_Tail(a);
-    const Element* at = Array_At(a, offset);
-    const Element* item = at;
-    for (; item != tail; ++item) {
-        if (item == at and Is_Blank(item))
+    const Element* head = Array_At(a, offset);  // head of what sequence uses
+    const Element* at = head;
+    for (; at != tail; ++at) {
+        if (at == head and Is_Blank(at))
             continue;  // blank valid at head
-        if (item == tail - 1 and Is_Blank(item))
+        if (at == tail - 1 and Is_Blank(at))
             continue;  // blank valid at tail
 
-        Option(Error*) error = Trap_Check_Sequence_Element(heart, item);
+        Option(Error*) error = Trap_Check_Sequence_Element(
+            heart,
+            at,
+            at == head  // sigils and quotes not legal at head
+        );
         if (error)
             return error;
     }
