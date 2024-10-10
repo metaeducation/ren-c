@@ -466,7 +466,7 @@ REBLEN Modify_String(
 
     if (flags & AM_LINE) {
         assert(needs_free); // don't want to modify input series
-        Append_Codepoint_UCS2(src_ser, '\n');
+        Append_String_Ucs2Unit(src_ser, '\n');
         ++src_len;
     }
 
@@ -493,7 +493,7 @@ REBLEN Modify_String(
         memcpy(
             String_At(dst_ser, dst_idx),
             String_At(src_ser, src_idx),
-            sizeof(REBUNI) * src_len
+            sizeof(Ucs2Unit) * src_len
         );
 
         dst_idx += src_len;

@@ -127,8 +127,8 @@ REBINT Compare_Uni_Str(
     bool uncase
 ){
     for (; len > 0; len--) {
-        REBUNI c1;
-        REBUNI c2;
+        Ucs2Unit c1;
+        Ucs2Unit c2;
 
         u1 = Ucs2_Next(&c1, u1);
         u2 = Ucs2_Next(&c2, u2);
@@ -195,7 +195,7 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 //
 REBINT Compare_UTF8(const Byte *s1, const Byte *s2, Size l2)
 {
-    REBUNI c1, c2;
+    Ucs2Unit c1, c2;
     Size l1 = LEN_BYTES(s1);
     REBINT result = 0;
 
@@ -305,9 +305,9 @@ REBLEN Find_Byte_Str(
 //
 REBLEN Find_Str_Str(Flex* ser1, REBLEN head, REBLEN index, REBLEN tail, REBINT skip, Flex* ser2, REBLEN index2, REBLEN len, REBLEN flags)
 {
-    REBUNI c1;
-    REBUNI c2;
-    REBUNI c3;
+    Ucs2Unit c1;
+    Ucs2Unit c2;
+    Ucs2Unit c3;
     REBLEN n = 0;
     bool uncase = not (flags & AM_FIND_CASE); // case insenstive
 
@@ -362,7 +362,7 @@ static REBLEN Find_Str_Char_Old(
     REBLEN index,
     REBLEN tail,
     REBINT skip,
-    REBUNI c2,
+    Ucs2Unit c2,
     REBLEN flags
 ) {
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
@@ -370,7 +370,7 @@ static REBLEN Find_Str_Char_Old(
     if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
     for (; index >= head && index < tail; index += skip) {
-        REBUNI c1 = GET_ANY_CHAR(flex, index);
+        Ucs2Unit c1 = GET_ANY_CHAR(flex, index);
         if (uncase && c1 < UNICODE_CASES)
             c1 = LO_CASE(c1);
 
@@ -408,8 +408,8 @@ static REBLEN Find_Str_Char_Old(
 // is coming from the optimized code.
 //
 REBLEN Find_Str_Char(
-    REBUNI uni,         // character to look for
-    Flex* series,     // series with width sizeof(Byte) or sizeof(REBUNI)
+    Ucs2Unit uni,         // character to look for
+    Flex* series,     // series with width sizeof(Byte) or sizeof(Ucs2Unit)
     REBLEN lowest,      // lowest return index
     REBLEN index_orig,  // first index to examine (if out of range, NOT_FOUND)
     REBLEN highest,     // *one past* highest return result (e.g. SER_LEN)
@@ -427,7 +427,7 @@ REBLEN Find_Str_Char(
     // using something like a '\0' in one cell if they are) because FIND is
     // able to seek NUL in strings.
     //
-    REBUNI casings[2];
+    Ucs2Unit casings[2];
 
     if (flags & AM_FIND_CASE) { // case-*sensitive*
         casings[0] = uni;
@@ -463,7 +463,7 @@ REBLEN Find_Str_Char(
     // replacement for match it would have to be handled separately anyway.
     //
     if (flags & AM_FIND_MATCH) {
-        REBUNI single = GET_ANY_CHAR(series, index_orig);
+        Ucs2Unit single = GET_ANY_CHAR(series, index_orig);
         if (single == casings[0] || single == casings[1])
             goto return_index;
         goto return_not_found;
@@ -569,7 +569,7 @@ REBLEN Find_Str_Char(
         }
     }
     else {
-        REBUNI *up = String_Head(cast(String*, series));
+        Ucs2Unit* up = String_Head(cast(String*, series));
         while (true) {
             if (up[index] == casings[0] || up[index] == casings[1])
                 goto return_index;
@@ -626,7 +626,7 @@ REBLEN Find_Str_Bitset(
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
     for (; index >= head && index < tail; index += skip) {
-        REBUNI c1 = GET_ANY_CHAR(flex, index);
+        Ucs2Unit c1 = GET_ANY_CHAR(flex, index);
 
         if (Check_Bit(bset, c1, uncase))
             return index;

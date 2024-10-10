@@ -931,8 +931,8 @@ static REBIXO To_Thru_Block_Rule(
                     fail (Error_Parse_Rule());
             }
             else { // String
-                REBUNI ch_unadjusted = GET_ANY_CHAR(P_INPUT, pos);
-                REBUNI ch;
+                Ucs2Unit ch_unadjusted = GET_ANY_CHAR(P_INPUT, pos);
+                Ucs2Unit ch;
                 if (!P_HAS_CASE)
                     ch = UP_CASE(ch_unadjusted);
                 else
@@ -940,7 +940,7 @@ static REBIXO To_Thru_Block_Rule(
 
                 // Handle special string types:
                 if (Is_Char(rule)) {
-                    REBUNI ch2 = VAL_CHAR(rule);
+                    Ucs2Unit ch2 = VAL_CHAR(rule);
                     if (!P_HAS_CASE)
                         ch2 = UP_CASE(ch2);
                     if (ch == ch2) {
@@ -985,7 +985,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (Any_String(rule)) {
-                    REBUNI ch2 = VAL_ANY_CHAR(rule);
+                    Ucs2Unit ch2 = VAL_ANY_CHAR(rule);
                     if (!P_HAS_CASE) ch2 = UP_CASE(ch2);
 
                     if (ch == ch2) {
@@ -1016,7 +1016,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (Is_Integer(rule)) {
-                    if (ch_unadjusted == cast(REBUNI, VAL_INT32(rule))) {
+                    if (ch_unadjusted == cast(Ucs2Unit, VAL_INT32(rule))) {
                         if (is_thru)
                             return pos + 1;
                         return pos;
@@ -2284,7 +2284,7 @@ DECLARE_NATIVE(subparse)
                             Value* var = Sink_Var_May_Fail(
                                 set_or_copy_word, P_RULE_SPECIFIER
                             );
-                            REBUNI ch = GET_ANY_CHAR(P_INPUT, begin);
+                            Ucs2Unit ch = GET_ANY_CHAR(P_INPUT, begin);
                             if (P_TYPE == REB_BINARY)
                                 Init_Integer(var, ch);
                             else

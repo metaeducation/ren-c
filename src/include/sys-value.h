@@ -933,7 +933,7 @@ INLINE bool VAL_LOGIC(const Cell* v) {
 #define VAL_CHAR(v) \
     ((v)->payload.character)
 
-INLINE Value* Init_Char(Cell* out, REBUNI uni) {
+INLINE Value* Init_Char(Cell* out, Ucs2Unit uni) {
     RESET_CELL(out, REB_CHAR);
     VAL_CHAR(out) = uni;
     return cast(Value*, out);

@@ -1,6 +1,6 @@
 //
 //  File: %sys-string.h
-//  Summary: {Definitions for Symbol (e.g. WORD!) and REBUNI (e.g. STRING!)}
+//  Summary: {Definitions for Symbol (e.g. WORD!) and Ucs2Unit (e.g. STRING!)}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -98,34 +98,34 @@ INLINE bool Is_Flex_Ucs2(Flex* s) {
     // There's no specific flag for UCS-2, but these are the only 2-byte
     // series at the moment.
     //
-    return Flex_Wide(s) == sizeof(REBUNI);
+    return Flex_Wide(s) == sizeof(Ucs2Unit);
 }
 
 INLINE REBLEN String_Len(String* s) {
-    assert(Flex_Wide(s) == sizeof(REBUNI));
+    assert(Flex_Wide(s) == sizeof(Ucs2Unit));
     return Flex_Len(s);
 }
 
 INLINE void Set_String_Len(String* s, REBLEN len) {
-    assert(Flex_Wide(s) == sizeof(REBUNI));
+    assert(Flex_Wide(s) == sizeof(Ucs2Unit));
     Set_Flex_Len(s, len);
 }
 
 INLINE Ucs2(*) String_At(String* s, REBLEN n)
-  { return Flex_At(REBUNI, (s), (n)); }
+  { return Flex_At(Ucs2Unit, (s), (n)); }
 
-INLINE REBUNI* String_Head(String* s)
-  { return Flex_Head(REBUNI, s); }
+INLINE Ucs2Unit* String_Head(String* s)
+  { return Flex_Head(Ucs2Unit, s); }
 
-INLINE REBUNI* String_Tail(String* s)
-  { return Flex_Tail(REBUNI, s); }
+INLINE Ucs2Unit* String_Tail(String* s)
+  { return Flex_Tail(Ucs2Unit, s); }
 
-INLINE REBUNI* String_Last(String* s)
-  { return Series_Last(REBUNI, s); }
+INLINE Ucs2Unit* String_Last(String* s)
+  { return Series_Last(Ucs2Unit, s); }
 
 INLINE void Term_String_Len(String* s, REBLEN len) {
     Set_Flex_Len(s, len);
-    *Flex_At(REBUNI, s, len) = '\0';
+    *Flex_At(Ucs2Unit, s, len) = '\0';
 }
 
 INLINE String* Cell_String(const Cell* cell) {
@@ -185,17 +185,17 @@ INLINE Size VAL_SIZE_LIMIT_AT(
 // create new strings, if possible.
 //
 
-INLINE REBUNI GET_ANY_CHAR(Flex* s, REBLEN n) {
-    return BYTE_SIZE(s) ? *Flex_At(Byte, s, n) : *Flex_At(REBUNI, s, n);
+INLINE Ucs2Unit GET_ANY_CHAR(Flex* s, REBLEN n) {
+    return BYTE_SIZE(s) ? *Flex_At(Byte, s, n) : *Flex_At(Ucs2Unit, s, n);
 }
 
-INLINE void SET_ANY_CHAR(Flex* s, REBLEN n, REBUNI c) {
+INLINE void SET_ANY_CHAR(Flex* s, REBLEN n, Ucs2Unit c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
         *Flex_At(Byte, s, n) = c;
     }
     else
-        *Flex_At(REBUNI, s, n) = c;
+        *Flex_At(Ucs2Unit, s, n) = c;
 }
 
 #define VAL_ANY_CHAR(v) \
@@ -231,14 +231,14 @@ INLINE void SET_ANY_CHAR(Flex* s, REBLEN n, REBUNI c) {
 // explicitly, use Back_Scan_UTF8_Char_Core().
 //
 // Though the machinery can decode a UTF32 32-bit codepoint, the interface
-// uses a 16-bit REBUNI (due to that being all that Rebol supports at this
+// uses a 16-bit Ucs2Unit (due to that being all that Rebol supports at this
 // time).  If a codepoint that won't fit in 16-bits is found, it will raise
 // an error vs. return nullptr.  This makes it clear that the problem is not
 // with the data itself being malformed (the usual assumption of callers)
 // but rather a limit of the implementation.
 //
 INLINE const Byte *Back_Scan_UTF8_Char(
-    REBUNI *out,
+    Ucs2Unit* out,
     const Byte *bp,
     Size *size
 ){
@@ -246,7 +246,7 @@ INLINE const Byte *Back_Scan_UTF8_Char(
     const Byte *bp_new = Back_Scan_UTF8_Char_Core(&ch, bp, size);
     if (bp_new and ch > 0xFFFF)
         fail (Error_Codepoint_Too_High_Raw(rebInteger(ch)));
-    *out = cast(REBUNI, ch);
+    *out = cast(Ucs2Unit, ch);
     return bp_new;
 }
 

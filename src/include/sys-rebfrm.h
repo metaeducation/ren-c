@@ -781,7 +781,7 @@ struct LevelStruct {
     // them.  As the feature gets better, it will certainly be useful to be
     // able to quickly see the information in the debugger for L->source.
     //
-    REBUNI* file_ucs2;  // is wide char, unfortunately, in this old branch
+    Ucs2Unit* file_ucs2;  // is wide char, unfortunately, in this old branch
     int line;
   #endif
 

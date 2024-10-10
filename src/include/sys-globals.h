@@ -67,8 +67,8 @@ PVAR VarList* Sys_Context;
 
 //-- Various char tables:
 PVAR Byte *White_Chars;
-PVAR REBUNI *Upper_Cases;
-PVAR REBUNI *Lower_Cases;
+PVAR Ucs2Unit* Upper_Cases;
+PVAR Ucs2Unit* Lower_Cases;
 
 // Other:
 PVAR Byte *PG_Pool_Map;   // Memory pool size map (created on boot)

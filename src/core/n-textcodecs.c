@@ -95,7 +95,7 @@ REBINT What_UTF(const Byte *bp, REBLEN len)
 // No terminator is added.
 //
 int Decode_UTF16_Negative_If_ASCII(
-    REBUNI *dst,
+    Ucs2Unit* dst,
     const Byte *src,
     REBLEN len,
     bool little_endian,
@@ -104,7 +104,7 @@ int Decode_UTF16_Negative_If_ASCII(
     bool expect_lf = false;
     bool ascii = true;
     uint32_t ch;
-    REBUNI *start = dst;
+    Ucs2Unit* start = dst;
 
     for (; len > 0; len--, src++) {
         //
@@ -135,7 +135,7 @@ int Decode_UTF16_Negative_If_ASCII(
         if (ch > 127)
             ascii = false;
 
-        *dst++ = cast(REBUNI, ch);
+        *dst++ = cast(Ucs2Unit, ch);
     }
 
     return ascii ? -(dst - start) : (dst - start);
@@ -228,11 +228,11 @@ static void Encode_Utf16_Core(
 
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {
-        REBUNI c;
+        Ucs2Unit c;
         cp = Ucs2_Next(&c, cp);
 
         // !!! TBD: handle large codepoints bigger than 0xffff, and encode
-        // as UTF16.  (REBUNI is only 16 bits at time of writing)
+        // as UTF16.  (Ucs2Unit is only 16 bits at time of writing)
 
     #if defined(ENDIAN_LITTLE)
         if (little_endian)

@@ -387,7 +387,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_BITSET: {
         Flex* s = v->payload.any_series.series;
 
-        assert(Flex_Wide(s) <= sizeof(REBUNI));
+        assert(Flex_Wide(s) <= sizeof(Ucs2Unit));
         assert(not v->extra.binding); // for future use
 
         if (Get_Flex_Info(s, INACCESSIBLE)) {

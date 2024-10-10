@@ -45,7 +45,7 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
     Ucs2(const*) up = Cell_String_At(val);
 
     for (; len > 0; len--) {
-        REBUNI c;
+        Ucs2Unit c;
         up = Ucs2_Next(&c, up);
 
         if (c > limit)
@@ -999,7 +999,7 @@ DECLARE_NATIVE(as)
             RETURN (v); // no-op
 
         // !!! Until UTF-8 Everywhere, turning ANY-WORD! into an ANY-STRING!
-        // means it has to be UTF-8 decoded into REBUNI (UCS-2).  We do that
+        // means it has to be UTF-8 decoded into Ucs2Unit (UCS-2).  We do that
         // but make sure it is locked, so that when it does give access to
         // WORD! you won't think you can mutate the data.  (Though mutable
         // WORD! should become a thing, if they're not bound or locked.)

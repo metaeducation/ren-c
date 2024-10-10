@@ -66,7 +66,7 @@ restart:;
     Ucs2(const*) up = Cell_String_At(string);
     REBLEN len = Cell_Series_Len_At(string);
 
-    REBUNI c = '\0'; // for test after loop (in case loop does not run)
+    Ucs2Unit c = '\0'; // for test after loop (in case loop does not run)
 
     REBLEN i;
     for (i = 0; i < len;) {
@@ -147,7 +147,7 @@ void Mold_File_To_Local(Molder* mo, const Cell* file, Flags flags) {
 
     REBLEN i = 0;
 
-    REBUNI c;
+    Ucs2Unit c;
     if (len == 0)
         c = '\0';
     else
@@ -168,7 +168,7 @@ void Mold_File_To_Local(Molder* mo, const Cell* file, Flags flags) {
             //
             // peek ahead for a '/'
             //
-            REBUNI d = '/';
+            Ucs2Unit d = '/';
             Ucs2(const*) dp;
             if (i < len)
                 dp = Ucs2_Next(&d, up);

@@ -226,7 +226,7 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
 {
     REBLEN i1;
     REBLEN i2;
-    REBUNI uc, pc = ' ';
+    Ucs2Unit uc, pc = ' ';
     REBLEN n;
 
     for (n = 0; n < count; n++, value++) {
@@ -400,7 +400,7 @@ Byte *Form_Hex2_UTF8(Byte *bp, REBLEN val)
 //
 // Convert byte-sized int to xx format. Very fast.
 //
-REBUNI *Form_Hex2_Uni(REBUNI *up, REBLEN val)
+Ucs2Unit* Form_Hex2_Uni(Ucs2Unit* up, REBLEN val)
 {
     up[0] = Hex_Digits[(val & 0xf0) >> 4];
     up[1] = Hex_Digits[val & 0xf];
@@ -472,7 +472,7 @@ void Form_Args_Core(Molder* mo, const char *fmt, va_list *vaptr)
 
     DECLARE_VALUE (value);
 
-    // buffer used for making byte-oriented renderings to add to the REBUNI
+    // buffer used for making byte-oriented renderings to add to the Ucs2Unit
     // mold series.  Should be more formally checked as it's used for
     // integers, hex, eventually perhaps other things.
     //

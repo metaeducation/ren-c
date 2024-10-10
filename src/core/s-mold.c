@@ -795,7 +795,7 @@ String* Pop_Molded_String_Core(Molder* mo, REBLEN len)
         cs_cast(Binary_At(mo->utf8flex, mo->start)),
         len
     );
-    assert(Flex_Wide(result) == sizeof(REBUNI));
+    assert(Flex_Wide(result) == sizeof(Ucs2Unit));
 
     // Though the protocol of Mold_Value does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we

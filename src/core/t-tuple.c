@@ -121,7 +121,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         VAL_TUPLE_LEN(out) = size;
         for (alen = 0; alen < size; alen++) {
             const bool unicode = false;
-            REBUNI ch;
+            Ucs2Unit ch;
             if (!Scan_Hex2(&ch, ap, unicode))
                 fail (Error_Invalid(arg));
             *vp++ = cast(Byte, ch);

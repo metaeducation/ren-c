@@ -174,7 +174,7 @@ REBINT Find_Max_Bit(const Cell* val)
         n = VAL_INDEX(val);
         Ucs2(const*) up = Cell_String_At(val);
         for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++) {
-            REBUNI c;
+            Ucs2Unit c;
             up = Ucs2_Next(&c, up);
             if (c > maxi)
                 maxi = c;
@@ -308,7 +308,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
         REBLEN i = VAL_INDEX(val);
         Ucs2(const*) up = Cell_String_At(val);
         for (; i < VAL_LEN_HEAD(val); ++i) {
-            REBUNI c;
+            Ucs2Unit c;
             up = Ucs2_Next(&c, up);
             Set_Bit(bset, c, set);
         }
@@ -336,7 +336,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 
         switch (VAL_TYPE(item)) {
         case REB_CHAR: {
-            REBUNI c = VAL_CHAR(item);
+            Ucs2Unit c = VAL_CHAR(item);
             if (
                 NOT_END(item + 1)
                 && Is_Word(item + 1)
@@ -367,7 +367,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 && Is_Word(item + 1)
                 && Cell_Word_Id(item + 1) == SYM_HYPHEN_1
             ){
-                REBUNI c = n;
+                Ucs2Unit c = n;
                 item += 2;
                 if (Is_Integer(item)) {
                     n = Int32s(KNOWN(item), 0);
@@ -401,7 +401,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             if (not Is_Binary(item))
                 return false;
             REBLEN n = Cell_Series_Len_At(item);
-            REBUNI c = Flex_Len(bset);
+            Ucs2Unit c = Flex_Len(bset);
             if (n >= c) {
                 Expand_Flex(bset, c, (n - c));
                 CLEAR(Binary_At(bset, c), (n - c));
@@ -445,7 +445,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
         REBLEN i = VAL_INDEX(val);
         Ucs2(const*) up = Cell_String_At(val);
         for (; i != VAL_LEN_HEAD(val); ++i) {
-            REBUNI c;
+            Ucs2Unit c;
             up = Ucs2_Next(&c, up);
             if (Check_Bit(bset, c, uncased))
                 return true;
@@ -465,7 +465,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
         switch (VAL_TYPE(item)) {
 
         case REB_CHAR: {
-            REBUNI c = VAL_CHAR(item);
+            Ucs2Unit c = VAL_CHAR(item);
             if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN_1) {
                 item += 2;
                 if (Is_Char(item)) {
@@ -489,7 +489,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
             if (n > 0xffff)
                 return false;
             if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN_1) {
-                REBUNI c = n;
+                Ucs2Unit c = n;
                 item += 2;
                 if (Is_Integer(item)) {
                     n = Int32s(KNOWN(item), 0);

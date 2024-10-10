@@ -1566,7 +1566,7 @@ REBU64 Inspect_Flex(bool show)
                 strs++;
                 str_size += Flex_Total_If_Dynamic(s);
             }
-            else if (Flex_Wide(s) == sizeof(REBUNI)) {
+            else if (Flex_Wide(s) == sizeof(Ucs2Unit)) {
                 unis++;
                 uni_size += Flex_Total_If_Dynamic(s);
             }

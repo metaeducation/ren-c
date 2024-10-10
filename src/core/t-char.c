@@ -77,7 +77,7 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
         if (len == 0)
             goto bad_make;
 
-        REBUNI uni;
+        Ucs2Unit uni;
         if (*bp <= 0x80) {
             if (len != 1)
                 goto bad_make;
@@ -141,7 +141,7 @@ void MF_Char(Molder* mo, const Cell* v, bool form)
     Binary* out = mo->utf8flex;
 
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
-    REBUNI chr = VAL_CHAR(v);
+    Ucs2Unit chr = VAL_CHAR(v);
 
     REBLEN tail = Flex_Len(out);
 
@@ -170,7 +170,7 @@ void MF_Char(Molder* mo, const Cell* v, bool form)
 //
 REBTYPE(Char)
 {
-    // Don't use a REBUNI for chr, because it does signed math and then will
+    // Don't use a Ucs2Unit for chr, because it does signed math and then will
     // detect overflow.
     //
     REBI64 chr = cast(REBI64, VAL_CHAR(D_ARG(1)));
@@ -222,25 +222,25 @@ REBTYPE(Char)
 
     case SYM_INTERSECT:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
-        chr &= cast(REBUNI, arg);
+        chr &= cast(Ucs2Unit, arg);
         break;
 
     case SYM_UNION:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
-        chr |= cast(REBUNI, arg);
+        chr |= cast(Ucs2Unit, arg);
         break;
 
     case SYM_DIFFERENCE:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
-        chr ^= cast(REBUNI, arg);
+        chr ^= cast(Ucs2Unit, arg);
         break;
 
     case SYM_COMPLEMENT:
-        chr = cast(REBUNI, ~chr);
+        chr = cast(Ucs2Unit, ~chr);
         break;
 
     case SYM_EVEN_Q:
-        return Init_Logic(OUT, did (cast(REBUNI, ~chr) & 1));
+        return Init_Logic(OUT, did (cast(Ucs2Unit, ~chr) & 1));
 
     case SYM_ODD_Q:
         return Init_Logic(OUT, did (chr & 1));
@@ -257,7 +257,7 @@ REBTYPE(Char)
             return nullptr;
         }
         if (chr == 0) break;
-        chr = cast(REBUNI, 1 + cast(REBLEN, Random_Int(REF(secure)) % chr));
+        chr = cast(Ucs2Unit, 1 + cast(REBLEN, Random_Int(REF(secure)) % chr));
         break; }
 
     default:
@@ -267,5 +267,5 @@ REBTYPE(Char)
     if (chr < 0 || chr > 0xffff)  // see main branch build for UTF-8 Everywhere
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_CHAR)));
 
-    return Init_Char(OUT, cast(REBUNI, chr));
+    return Init_Char(OUT, cast(Ucs2Unit, chr));
 }

@@ -31,7 +31,7 @@
 #include "sys-core.h"
 
 // Unicode 5.0 case folding table:
-static const REBUNI Char_Cases[] = {
+static const Ucs2Unit Char_Cases[] = {
     0x0041, 0x0061, // LATIN CAPITAL LETTER A
     0x0042, 0x0062, // LATIN CAPITAL LETTER B
     0x0043, 0x0063, // LATIN CAPITAL LETTER C
@@ -912,7 +912,7 @@ static const REBUNI Char_Cases[] = {
 //
 void Init_Char_Cases(void)
 {
-    const REBUNI *up;
+    const Ucs2Unit* up;
     int n;
 
     // Init whitespace table:
@@ -923,8 +923,8 @@ void Init_Char_Cases(void)
     White_Chars[0] = 0; // special
 
     // Casing tables:
-    Upper_Cases = ALLOC_N(REBUNI, UNICODE_CASES);
-    Lower_Cases = ALLOC_N(REBUNI, UNICODE_CASES);
+    Upper_Cases = ALLOC_N(Ucs2Unit, UNICODE_CASES);
+    Lower_Cases = ALLOC_N(Ucs2Unit, UNICODE_CASES);
 
     for (n = 0; n < UNICODE_CASES; n++) {
         UP_CASE(n) = n;
@@ -945,7 +945,7 @@ void Init_Char_Cases(void)
 //
 void Shutdown_Char_Cases(void)
 {
-    FREE_N(REBUNI, UNICODE_CASES, Upper_Cases);
-    FREE_N(REBUNI, UNICODE_CASES, Lower_Cases);
+    FREE_N(Ucs2Unit, UNICODE_CASES, Upper_Cases);
+    FREE_N(Ucs2Unit, UNICODE_CASES, Lower_Cases);
     FREE_N(Byte, 34, White_Chars);
 }

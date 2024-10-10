@@ -85,7 +85,7 @@ REBINT CT_String(const Cell* a, const Cell* b, REBINT mode)
 static void str_to_char(Value* out, Value* val, REBLEN idx)
 {
     // Note: out may equal val, do assignment in two steps
-    REBUNI codepoint = GET_ANY_CHAR(Cell_Flex(val), idx);
+    Ucs2Unit codepoint = GET_ANY_CHAR(Cell_Flex(val), idx);
     Init_Char(out, codepoint);
 }
 
@@ -95,8 +95,8 @@ static void swap_chars(Value* val1, Value* val2)
     Flex* s1 = Cell_Flex(val1);
     Flex* s2 = Cell_Flex(val2);
 
-    REBUNI c1 = GET_ANY_CHAR(s1, VAL_INDEX(val1));
-    REBUNI c2 = GET_ANY_CHAR(s2, VAL_INDEX(val2));
+    Ucs2Unit c1 = GET_ANY_CHAR(s1, VAL_INDEX(val1));
+    Ucs2Unit c2 = GET_ANY_CHAR(s2, VAL_INDEX(val2));
 
     SET_ANY_CHAR(s1, VAL_INDEX(val1), c2);
     SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
@@ -135,7 +135,7 @@ static void reverse_string(Value* v, REBLEN len)
     Ucs2(const*) up = String_Last(flex); // last exists due to len != 0
     REBLEN n;
     for (n = 0; n < len; ++n) {
-        REBUNI c;
+        Ucs2Unit c;
         up = Ucs2_Back(&c, up);
         Append_Codepoint(mo->utf8flex, c);
     }
@@ -242,7 +242,7 @@ static REBLEN find_string(
     }
     else if (Is_Integer(target)) {
         return Find_Str_Char(
-            cast(REBUNI, VAL_INT32(target)),
+            cast(Ucs2Unit, VAL_INT32(target)),
             series,
             start,
             index,
@@ -497,8 +497,8 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 {
     REBLEN * const flags = cast(REBLEN*, thunk);
 
-    REBUNI c1 = cast(REBUNI, *cast(const Byte*, v1));
-    REBUNI c2 = cast(REBUNI, *cast(const Byte*, v2));
+    Ucs2Unit c1 = cast(Ucs2Unit, *cast(const Byte*, v1));
+    Ucs2Unit c2 = cast(Ucs2Unit, *cast(const Byte*, v2));
 
     if (*flags & CC_FLAG_CASE) {
         if (*flags & CC_FLAG_REVERSE)
@@ -658,11 +658,11 @@ Bounce PD_String(
         //
         REBLEN len = Flex_Len(copy);
         if (len == 0)
-            Append_Codepoint_UCS2(copy, '/');
+            Append_String_Ucs2Unit(copy, '/');
         else {
-            REBUNI ch_last = GET_ANY_CHAR(copy, len - 1);
+            Ucs2Unit ch_last = GET_ANY_CHAR(copy, len - 1);
             if (ch_last != '/')
-                Append_Codepoint_UCS2(copy, '/');
+                Append_String_Ucs2Unit(copy, '/');
         }
 
         DECLARE_MOLDER (mo);
@@ -680,7 +680,7 @@ Bounce PD_String(
         // !!! Review if this makes sense under a larger philosophy of string
         // path composition.
         //
-        REBUNI ch_start = GET_ANY_CHAR(mo->utf8flex, mo->start);
+        Ucs2Unit ch_start = GET_ANY_CHAR(mo->utf8flex, mo->start);
         REBLEN skip = (ch_start == '/' || ch_start == '\\') ? 1 : 0;
 
         // !!! Would be nice if there was a better way of doing this that didn't
@@ -773,7 +773,7 @@ static void Sniff_String(String* str, REBLEN idx, REB_STRF *sf)
 
     REBLEN n;
     for (n = idx; n < String_Len(str); n++) {
-        REBUNI c;
+        Ucs2Unit c;
         up = Ucs2_Next(&c, up);
 
         switch (c) {
@@ -847,7 +847,7 @@ Byte *Form_Uni_Hex(Byte *out, REBLEN n)
 //
 // For now just preserve what was there, but do it as UTF8 bytes.
 //
-Byte *Emit_Uni_Char(Byte *bp, REBUNI chr, bool parened)
+Byte *Emit_Uni_Char(Byte *bp, Ucs2Unit chr, bool parened)
 {
     // !!! The UTF-8 "Byte Order Mark" is an insidious thing which is not
     // necessary for UTF-8, not recommended by the Unicode standard, and
@@ -929,7 +929,7 @@ void Mold_Text_Series_At(
 
         REBLEN n;
         for (n = index; n < String_Len(str); n++) {
-            REBUNI c;
+            Ucs2Unit c;
             up = Ucs2_Next(&c, up);
             dp = Emit_Uni_Char(
                 dp, c, GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
@@ -959,7 +959,7 @@ void Mold_Text_Series_At(
 
     REBLEN n;
     for (n = index; n < String_Len(str); n++) {
-        REBUNI c;
+        Ucs2Unit c;
         up = Ucs2_Next(&c, up);
 
         switch (c) {
@@ -1030,7 +1030,7 @@ static void Mold_File(Molder* mo, const Cell* v)
     //
     REBLEN n;
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n) {
-        REBUNI c = GET_ANY_CHAR(series, n);
+        Ucs2Unit c = GET_ANY_CHAR(series, n);
         if (IS_FILE_ESC(c))
             estimated_bytes -= 1; // %xx is 3 characters instead of 4
     }
@@ -1042,7 +1042,7 @@ static void Mold_File(Molder* mo, const Cell* v)
     *dp++ = '%';
 
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n) {
-        REBUNI c = GET_ANY_CHAR(series, n);
+        Ucs2Unit c = GET_ANY_CHAR(series, n);
         if (IS_FILE_ESC(c))
             dp = Form_Hex_Esc(dp, c); // c => %xx
         else
@@ -1614,7 +1614,7 @@ REBTYPE(String)
             //
             // Use the string contents as a seed.  R3-Alpha would try and
             // treat it as byte-sized hence only take half the data into
-            // account if it were REBUNI-wide.  This multiplies the number
+            // account if it were Ucs2Unit-wide.  This multiplies the number
             // of bytes by the width and offsets by the size.
             //
             Set_Random(

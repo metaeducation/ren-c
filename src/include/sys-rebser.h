@@ -658,7 +658,7 @@ union StubContentUnion {
 
       #if !defined(NDEBUG) // https://en.wikipedia.org/wiki/Type_punning
         char utf8_pun[sizeof(Cell)]; // debug watchlist insight into UTF-8
-        REBUNI ucs2_pun[sizeof(Cell)/sizeof(REBUNI)]; // wchar_t insight
+        Ucs2Unit ucs2_pun[sizeof(Cell)/sizeof(Ucs2Unit)]; // wchar_t insight
       #endif
     } fixed;
 };

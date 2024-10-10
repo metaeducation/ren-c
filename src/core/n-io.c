@@ -125,7 +125,7 @@ DECLARE_NATIVE(write_stdout)
         // Useful for `write-stdout newline`, etc.
         //
         // !!! Temporarily just support ASCII codepoints, since making a
-        // codepoint out of a string pre-UTF8-everywhere makes a REBUNI string.
+        // codepoint out of a string pre-UTF8-everywhere makes a Ucs2Unit string.
         //
         if (VAL_CHAR(v) > 0x7f)
             fail ("non-ASCII CHAR! output temporarily disabled.");

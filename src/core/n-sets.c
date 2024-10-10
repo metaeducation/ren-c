@@ -190,7 +190,7 @@ Flex* Make_Set_Operation_Flex(
 
         do {
             Flex* flex = Cell_Flex(val1); // val1 and val2 swapped 2nd pass!
-            REBUNI uc;
+            Ucs2Unit uc;
 
             // Iterate over first series
             //
@@ -263,7 +263,7 @@ Flex* Make_Set_Operation_Flex(
 
         do {
             Flex* flex = Cell_Flex(val1); // val1 and val2 swapped 2nd pass!
-            REBUNI uc;
+            Ucs2Unit uc;
 
             // Iterate over first series
             //

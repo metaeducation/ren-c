@@ -691,7 +691,7 @@ union Reb_Value_Payload {
     struct Reb_Track_Payload track; // NULL, NOTHING, BLANK!, LOGIC!, BAR!
   #endif
 
-    REBUNI character; // It's CHAR! (for now), but 'char' is a C keyword
+    Ucs2Unit character; // It's CHAR! (for now), but 'char' is a C keyword
     REBI64 integer;
     REBDEC decimal;
 

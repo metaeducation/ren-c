@@ -101,19 +101,21 @@ typedef uintptr_t Tick; // type the debug build uses for evaluator "ticks"
 
 //=//// UNICODE CODEPOINT /////////////////////////////////////////////////=//
 //
-// REBUNI is currently a two-byte representation of a Unicode codepoint.  It
+// Ucs2Unit is currently a two-byte representation of a Unicode codepoint.  It
 // is not UTF-16...it's simply limited to 16-bit codepoints (UCS-2).  R3-Alpha
 // did not have CHAR! values higher than that.
 //
 // Ren-C is being adapted to where this will become a full 32-bit value.  The
 // goal is to retrofit the code to use "UTF-8 Everywhere".  In the meantime,
-// REBUNI is used internally to store Rebol ANY-STRING!s.  When all references
+// Ucs2Unit is used internally to store Rebol ANY-STRING!s.  When all references
 // to it have been changed to use the Ucs2(*) interface for safe variable
 // sized encoding enumeration, a switch can be flipped and it can be upgraded.
 //
-typedef REBWCHAR REBUNI;
+typedef REBWCHAR Ucs2Unit;
 #define MAX_UNI \
-    ((1 << (8 * sizeof(REBUNI))) - 1)
+    ((1 << (8 * sizeof(Ucs2Unit))) - 1)
+
+typedef uint32_t Codepoint;
 
 
 //=//// MEMORY POOLS //////////////////////////////////////////////////////=//

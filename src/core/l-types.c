@@ -388,12 +388,12 @@ const Byte *Scan_Hex(
 // We don't allow a %00 in files, urls, email, etc... so
 // a return of 0 is used to indicate an error.
 //
-bool Scan_Hex2(REBUNI *out, const void *p, bool unicode)
+bool Scan_Hex2(Ucs2Unit* out, const void *p, bool unicode)
 {
-    REBUNI c1;
-    REBUNI c2;
+    Ucs2Unit c1;
+    Ucs2Unit c2;
     if (unicode) {
-        const REBUNI *up = cast(const REBUNI*, p);
+        const Ucs2Unit* up = cast(const Ucs2Unit*, p);
         c1 = up[0];
         c2 = up[1];
     }
@@ -413,7 +413,7 @@ bool Scan_Hex2(REBUNI *out, const void *p, bool unicode)
     if (lex2 < LEX_WORD || (d2 == 0 && lex2 < LEX_NUMBER))
         return false;
 
-    *out = cast(REBUNI, (d1 << 4) + d2);
+    *out = cast(Ucs2Unit, (d1 << 4) + d2);
 
     return true;
 }
@@ -991,7 +991,7 @@ const Byte *Scan_File(
         len--;
     }
 
-    REBUNI term = 0;
+    Ucs2Unit term = 0;
     const Byte *invalid;
     if (*cp == '"') {
         cp++;
@@ -1044,7 +1044,7 @@ const Byte *Scan_Email(
 
         if (*cp == '%') {
             const bool unicode = false;
-            REBUNI ch;
+            Ucs2Unit ch;
             if (len <= 2 || !Scan_Hex2(&ch, cp + 1, unicode))
                 return_NULL;
 

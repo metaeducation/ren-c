@@ -759,7 +759,7 @@ Byte *Check_UTF8(Byte *utf8, size_t size)
 //             // do ASCII stuff...
 //         }
 //         else {
-//             REBUNI uni;
+//             Ucs2Unit uni;
 //             bp = Back_Scan_UTF8_Char(&uni, bp, &len);
 //             // do UNICODE stuff...
 //         }
@@ -845,7 +845,7 @@ const Byte *Back_Scan_UTF8_Char_Core(
 // !!! There's a hardcoded table of byte lengths which is used other places,
 // it would probably speed this up.
 //
-size_t Size_As_UTF8(const REBUNI *up, REBLEN len)
+size_t Size_As_UTF8(const Ucs2Unit *up, REBLEN len)
 {
     size_t size = 0;
 
@@ -926,7 +926,7 @@ REBLEN Encode_UTF8_Char(Byte *dst, uint32_t c)
 REBLEN Encode_UTF8(
     Byte *dst,
     REBLEN max,
-    const REBUNI *src,
+    const Ucs2Unit *src,
     REBLEN *len
 ){
     Byte buf[8];
@@ -934,10 +934,10 @@ REBLEN Encode_UTF8(
     REBLEN cnt = *len;
 
     Byte *bs = dst; // save start
-    const REBUNI *up = src;
+    const Ucs2Unit *up = src;
 
     for (; max > 0 && cnt > 0; cnt--) {
-        REBUNI c = *up++;
+        Ucs2Unit c = *up++;
         if (c < 0x80) {
             *dst++ = cast(Byte, c);
             max--;
@@ -966,7 +966,7 @@ REBLEN Encode_UTF8(
 Binary* Make_Utf8_From_String(String* string) {
     assert(Is_Flex_Ucs2(string));
 
-    const REBUNI* data = String_Head(string);
+    const Ucs2Unit* data = String_Head(string);
     size_t size = Size_As_UTF8(data, String_Len(string));
     Binary* bin = Make_Binary(size);
     REBLEN len = 0;
@@ -988,7 +988,7 @@ Binary* Make_Utf8_From_Cell_String_At_Limit(
 ){
     assert(Any_String(any_string));
 
-    const REBUNI *data = Cell_String_At(any_string);
+    const Ucs2Unit *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
     Binary* bin = Make_Binary(size);
     Set_Flex_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));

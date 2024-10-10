@@ -74,7 +74,7 @@ Byte *Analyze_String_For_Scan(
     if (len == 0)
         fail (Error_Past_End_Raw());
 
-    REBUNI c;
+    Ucs2Unit c;
 
     // Skip leading whitespace
     //
@@ -304,7 +304,7 @@ void Shuffle_String(Value* value, bool secure)
     REBLEN k;
     Flex* series = Cell_Flex(value);
     REBLEN idx     = VAL_INDEX(value);
-    REBUNI swap;
+    Ucs2Unit swap;
 
     for (n = Cell_Series_Len_At(value); n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
@@ -325,7 +325,7 @@ void Trim_Tail(Binary* src, Byte chr)
 {
     REBLEN tail;
     for (tail = Binary_Len(src); tail > 0; tail--) {
-        REBUNI c = *Binary_At(src, tail - 1);
+        Ucs2Unit c = *Binary_At(src, tail - 1);
         if (c != chr)
             break;
     }
@@ -343,7 +343,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
     Copy_Cell(out, val);
 
     if (Is_Char(val)) {
-        REBUNI c = VAL_CHAR(val);
+        Ucs2Unit c = VAL_CHAR(val);
         if (c < UNICODE_CASES) {
             c = upper ? UP_CASE(c) : LO_CASE(c);
         }
@@ -368,7 +368,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
                 bp[n] = cast(Byte, LO_CASE(bp[n]));
         }
     } else {
-        REBUNI *up = Cell_String_At(val);
+        Ucs2Unit* up = Cell_String_At(val);
         if (upper) {
             for (; n != len; n++) {
                 if (up[n] < UNICODE_CASES)
@@ -415,7 +415,7 @@ Array* Split_Lines(const Value* str)
     if (i == len)
         return Make_Array(0);
 
-    REBUNI c;
+    Ucs2Unit c;
     up = Ucs2_Next(&c, up);
     ++i;
 

@@ -305,7 +305,7 @@ const Byte Lower_Case[256] =
 //
 // test: to-integer load to-binary mold to-char 1234
 //
-static const Byte *Scan_UTF8_Char_Escapable(REBUNI *out, const Byte *bp)
+static const Byte *Scan_UTF8_Char_Escapable(Ucs2Unit* out, const Byte *bp)
 {
     const Byte *cp;
     Byte c;
@@ -426,13 +426,13 @@ static const Byte *Scan_Quote_Push_Mold(
 ){
     Push_Mold(mo);
 
-    REBUNI term = (*src == '{') ? '}' : '"'; // pick termination
+    Ucs2Unit term = (*src == '{') ? '}' : '"'; // pick termination
     ++src;
 
     REBINT nest = 0;
     REBLEN lines = 0;
     while (*src != term or nest > 0) {
-        REBUNI chr = *src;
+        Ucs2Unit chr = *src;
 
         switch (chr) {
 
@@ -525,7 +525,7 @@ const Byte *Scan_Item_Push_Mold(
     Push_Mold(mo);
 
     while (bp < ep and *bp != opt_term) {
-        REBUNI c = *bp;
+        Ucs2Unit c = *bp;
 
         if (c == '\0')
             break; // End of stream
@@ -1357,7 +1357,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 return LOCATED(TOKEN_CONSTRUCT);
             }
             if (*cp == '"') { /* CHAR #"C" */
-                REBUNI dummy;
+                Ucs2Unit dummy;
                 cp++;
                 cp = Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp != nullptr and *cp == '"') {

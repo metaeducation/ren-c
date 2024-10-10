@@ -371,8 +371,8 @@ extern const Byte g_lex_map[256];
 //
 // So for instance: instead of simply saying:
 //
-//     REBUNI *ptr = String_Head(string_series);
-//     REBUNI c = *ptr++;
+//     Ucs2Unit* ptr = String_Head(string_series);
+//     Ucs2Unit c = *ptr++;
 //
 // ...the idea is you would write:
 //
@@ -381,7 +381,7 @@ extern const Byte g_lex_map[256];
 //
 // There was significantly more work after this point to get UTF-8 Everywhere
 // going, and it will never be patched into this bootstrap build.  So this
-// really is just all ripped down to being a synonym for REBUNI, a UCS-2
+// really is just all ripped down to being a synonym for Ucs2Unit, a UCS-2
 // character codepoint.  See the main branch for the much more interesting
 // and useful final product this was aiming at.
 //

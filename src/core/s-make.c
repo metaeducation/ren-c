@@ -55,7 +55,7 @@ Binary* Make_Binary(REBLEN capacity)
 //
 String* Make_String(REBLEN capacity)
 {
-    String* str = cast(String*, Make_Flex(capacity + 1, sizeof(REBUNI)));
+    String* str = cast(String*, Make_Flex(capacity + 1, sizeof(Ucs2Unit)));
     Term_Non_Array_Flex(str);
     return str;
 }
@@ -151,13 +151,13 @@ Binary* Append_Unencoded(Binary* dst, const char *src)
 
 
 //
-//  Append_Codepoint_UCS2: C
+//  Append_String_Ucs2Unit: C
 //
 // Append a non-encoded character to a string.
 //
-String* Append_Codepoint_UCS2(String* dst, REBUNI codepoint)
+String* Append_String_Ucs2Unit(String* dst, Ucs2Unit codepoint)
 {
-    assert(Flex_Wide(dst) == sizeof(REBUNI)); // invariant for "Latin1 Nowhere"
+    assert(Flex_Wide(dst) == sizeof(Ucs2Unit)); // invariant for "Latin1 Nowhere"
 
     REBLEN tail = Flex_Len(dst);
     Expand_Flex_Tail(dst, 1);
@@ -175,7 +175,7 @@ String* Append_Codepoint_UCS2(String* dst, REBUNI codepoint)
 //
 // Encode a codepoint onto a UTF-8 binary series.
 //
-Binary* Append_Codepoint(Binary* dst, uint32_t codepoint)
+Binary* Append_Codepoint(Binary* dst, Codepoint codepoint)
 {
     assert(Flex_Wide(dst) == sizeof(Byte));
 
@@ -297,7 +297,7 @@ String* Append_UTF8_May_Fail(
 
     Resize_Flex(temp, size + 1); // needs at most this many unicode chars
 
-    REBUNI *up = String_Head(temp);
+    Ucs2Unit* up = String_Head(temp);
     const Byte *src = cb_cast(utf8);
 
     bool all_ascii = true;
@@ -306,7 +306,7 @@ String* Append_UTF8_May_Fail(
 
     Size bytes_left = size; // see remarks on Back_Scan_UTF8_Char's 3rd arg
     for (; bytes_left > 0; --bytes_left, ++src) {
-        REBUNI ch = *src;
+        Ucs2Unit ch = *src;
         if (ch >= 0x80) {
             src = Back_Scan_UTF8_Char(&ch, src, &bytes_left);
             if (src == nullptr)

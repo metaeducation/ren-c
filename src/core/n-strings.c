@@ -597,7 +597,7 @@ DECLARE_NATIVE(enhex)
 
     REBLEN i = VAL_INDEX(ARG(string));
     for (; i < len; ++i) {
-        REBUNI c = GET_ANY_CHAR(s, i);
+        Ucs2Unit c = GET_ANY_CHAR(s, i);
 
         Byte encoded[4];
         REBLEN encoded_size;
@@ -747,7 +747,7 @@ DECLARE_NATIVE(dehex)
 
     REBLEN i = VAL_INDEX(ARG(string));
 
-    REBUNI c = GET_ANY_CHAR(s, i);
+    Ucs2Unit c = GET_ANY_CHAR(s, i);
     while (i < len) {
 
         if (c != '%') {
@@ -797,7 +797,7 @@ DECLARE_NATIVE(dehex)
         decode_codepoint:
             scan[scan_size] = '\0';
             const Byte *next; // goto would cross initialization
-            REBUNI decoded;
+            Ucs2Unit decoded;
             if (scan[0] < 0x80) {
                 decoded = scan[0];
                 next = &scan[0]; // last byte is only byte (see Back_Scan)
@@ -870,7 +870,7 @@ DECLARE_NATIVE(deline)
 
     REBLEN n;
     for (n = 0; n < len_at; ++n) {
-        REBUNI c;
+        Ucs2Unit c;
         src = Ucs2_Next(&c, src);
         ++n;
         if (c == CR) {
@@ -922,11 +922,11 @@ DECLARE_NATIVE(enline)
 
     Ucs2(*) cp = String_At(flex, idx);
 
-    REBUNI c_prev = '\0';
+    Ucs2Unit c_prev = '\0';
 
     REBLEN n;
     for (n = 0; n < len; ++n) {
-        REBUNI c;
+        Ucs2Unit c;
         cp = Ucs2_Next(&c, cp);
         if (c == LF and c_prev != CR)
             ++delta;
@@ -948,7 +948,7 @@ DECLARE_NATIVE(enline)
     // UCS-2 has the CR LF bytes in codepoint sequences that aren't CR LF.
     // So sliding is done in full character counts.
 
-    REBUNI *up = String_Head(flex); // expand may change the pointer
+    Ucs2Unit* up = String_Head(flex); // expand may change the pointer
     REBLEN tail = Flex_Len(flex); // length after expansion
 
     // Add missing CRs
@@ -1001,7 +1001,7 @@ DECLARE_NATIVE(entab)
 
     REBINT n = 0;
     for (; index < len; index++) {
-        REBUNI c;
+        Ucs2Unit c;
         up = Ucs2_Next(&c, up);
 
         // Count leading spaces, insert TAB for each tabsize:
@@ -1077,7 +1077,7 @@ DECLARE_NATIVE(detab)
     REBLEN count = 0;
     REBLEN n;
     for (n = index; n < len; n++) {
-        REBUNI c;
+        Ucs2Unit c;
         cp = Ucs2_Next(&c, cp);
         if (c == '\t') // tab character
             ++count;
@@ -1095,7 +1095,7 @@ DECLARE_NATIVE(detab)
 
     n = 0;
     for (; index < len; ++index) {
-        REBUNI c;
+        Ucs2Unit c;
         cp = Ucs2_Next(&c, cp);
 
         if (c == '\t') {

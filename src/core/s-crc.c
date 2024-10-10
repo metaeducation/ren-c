@@ -151,7 +151,7 @@ REBINT Hash_UTF8(const Byte *utf8, Size size)
         cast(REBINT, size) + cast(REBINT, cast(Byte, LO_CASE(*utf8)));
 
     for (; size != 0; ++utf8, --size) {
-        REBUNI n = *utf8;
+        Ucs2Unit n = *utf8;
 
         if (n >= 0x80) {
             utf8 = Back_Scan_UTF8_Char(&n, utf8, &size);
@@ -529,7 +529,7 @@ REBINT Compute_IPC(Byte *data, REBLEN length)
 // string does not have to be zero terminated and UTF8 is ok.
 //
 REBINT Hash_Bytes_Or_Uni(
-    const void *data, // Byte* or REBUNI*
+    const void *data, // Byte* or Ucs2Unit*
     REBLEN len, // chars, not bytes
     REBLEN wide // 1 = byte-sized, 2 = Unicode
 ){
@@ -537,7 +537,7 @@ REBINT Hash_Bytes_Or_Uni(
     uint32_t c2 = 0x00000000; // don't change, see [1] below
     REBLEN n;
     const Byte *b = cast(const Byte*, data);
-    const REBUNI *u = cast(const REBUNI*, data);
+    const Ucs2Unit* u = cast(const Ucs2Unit*, data);
 
     if (wide == 1) {
         for(n = 0; n != len; n++) {

@@ -202,7 +202,7 @@ Bounce PD_Word(
 
             Size size = Flex_Len(str);
             const Byte *bp = cb_cast(Symbol_Head(str));
-            REBUNI c;
+            Ucs2Unit c;
             do {
                 if (size == 0)
                     return nullptr; // character asked for is past end
@@ -257,7 +257,7 @@ REBTYPE(Word)
                 if (*bp < 0x80)
                     ++len;
                 else {
-                    REBUNI uni;
+                    Ucs2Unit uni;
                     if (not (bp = Back_Scan_UTF8_Char(&uni, bp, &size)))
                         fail (Error_Bad_Utf8_Raw());
                     ++len;

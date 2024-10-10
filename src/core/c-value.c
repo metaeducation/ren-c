@@ -205,7 +205,7 @@ void* Probe_Core_Debug(
             Append_Unencoded(mo->utf8flex, "}");
             Free_Unmanaged_Flex(enbased);
         }
-        else if (Flex_Wide(s) == sizeof(REBUNI)) {
+        else if (Flex_Wide(s) == sizeof(Ucs2Unit)) {
             Probe_Print_Helper(p, "REBWCHAR-Size Flex", file, line);
             String* str = cast(String*, m_cast(void*, p));
 
