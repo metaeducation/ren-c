@@ -262,7 +262,7 @@ static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 //
 //  MF_Sigil: C
 //
-void MF_Sigil(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Sigil(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -275,7 +275,7 @@ void MF_Sigil(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  MF_Issue: C
 //
-void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Issue(Molder* mo, const Cell* v, bool form)
 {
     if (form) {
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)

@@ -818,7 +818,7 @@ Option(const Byte*) Try_Scan_File_To_Stack(const Byte* cp, REBLEN len)
         invalids = cb_cast(":;()[]\"");
     }
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     cp = maybe Try_Scan_Utf8_Item_Push_Mold(mo, cp, cp + len, term, invalids);
     if (cp == nullptr) {

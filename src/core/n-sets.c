@@ -195,7 +195,7 @@ Flex* Make_Set_Operation_Flex(
         Free_Unmanaged_Flex(x_cast(Array*, buffer));
     }
     else if (Any_String(val1)) {
-        DECLARE_MOLD (mo);
+        DECLARE_MOLDER (mo);
 
         // ask mo->string to have at least `i` capacity beyond mo->base.size
         //

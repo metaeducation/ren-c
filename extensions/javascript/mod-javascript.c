@@ -872,7 +872,7 @@ DECLARE_NATIVE(js_native)
     //    maps a numeric ID (that we *can* hold onto) to the corresponding
     //    JavaScript function entity.
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     Append_Ascii(mo->string, "let f = ");  // variable we store function in

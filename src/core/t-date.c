@@ -101,7 +101,7 @@ REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
+void MF_Date(Molder* mo, const Cell* v_orig, bool form)
 {
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process

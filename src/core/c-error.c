@@ -1351,7 +1351,7 @@ void Shutdown_Stackoverflow(void)
 // to the mold.  It was only used in error molding and was kept working
 // without a general review of such a facility.  Review.
 //
-static void Mold_Element_Limit(REB_MOLD *mo, Element* v, REBLEN limit)
+static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
 {
     String* str = mo->string;
 
@@ -1381,7 +1381,7 @@ static void Mold_Element_Limit(REB_MOLD *mo, Element* v, REBLEN limit)
 //
 //  MF_Error: C
 //
-void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Error(Molder* mo, const Cell* v, bool form)
 {
     // Protect against recursion. !!!!
     //

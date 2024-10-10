@@ -805,7 +805,7 @@ RebolValue* API_rebLengthedTextWide(
 ){
     ENTER_API;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     for (; num_chars != 0; --num_chars, ++wstr)
@@ -824,7 +824,7 @@ RebolValue* API_rebTextWide(const REBWCHAR* wstr)
 {
     ENTER_API;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     while (*wstr != 0) {

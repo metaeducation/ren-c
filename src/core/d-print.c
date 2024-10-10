@@ -49,7 +49,7 @@
 // Form integer hex string and pad width with zeros.  Does not insert a #.
 //
 void Form_Hex_Pad(
-    REB_MOLD *mo,
+    Molder* mo,
     REBI64 val, // !!! was REBU64 in R3-Alpha, but code did sign comparisons!
     REBINT len
 ){
@@ -79,7 +79,7 @@ void Form_Hex_Pad(
 //
 // Convert byte-sized int to xx format.
 //
-void Form_Hex2(REB_MOLD *mo, Byte b)
+void Form_Hex2(Molder* mo, Byte b)
 {
     Append_Codepoint(mo->string, Hex_Digits[(b & 0xf0) >> 4]);
     Append_Codepoint(mo->string, Hex_Digits[b & 0xf]);
@@ -91,7 +91,7 @@ void Form_Hex2(REB_MOLD *mo, Byte b)
 //
 // Convert byte to %xx format
 //
-void Form_Hex_Esc(REB_MOLD *mo, Byte b)
+void Form_Hex_Esc(Molder* mo, Byte b)
 {
     Append_Codepoint(mo->string, '%');
     Append_Codepoint(mo->string, Hex_Digits[(b & 0xf0) >> 4]);
@@ -104,7 +104,7 @@ void Form_Hex_Esc(REB_MOLD *mo, Byte b)
 //
 // Convert 32 bit RGBA to xxxxxx format.
 //
-void Form_RGBA(REB_MOLD *mo, const Byte* dp)
+void Form_RGBA(Molder* mo, const Byte* dp)
 {
     REBLEN len_old = String_Len(mo->string);
     Size used_old = String_Size(mo->string);

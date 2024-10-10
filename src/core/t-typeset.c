@@ -396,7 +396,7 @@ Bounce TO_Parameter(Level* level_, Kind kind, const Value* arg)
 //
 //  MF_Parameter: C
 //
-void MF_Parameter(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Parameter(Molder* mo, const Cell* v, bool form)
 {
     if (not form) {
         Pre_Mold(mo, v);  // #[parameter! or make parameter!

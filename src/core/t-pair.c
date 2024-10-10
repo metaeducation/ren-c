@@ -151,7 +151,7 @@ void Min_Max_Pair(
 //
 //  MF_Pair: C
 //
-void MF_Pair(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Pair(Molder* mo, const Cell* v, bool form)
 {
     Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 

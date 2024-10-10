@@ -362,7 +362,7 @@ Option(Binary*) Decode_Enbased_Utf8_As_Binary(
 //
 // Base2 encode a range of arbitrary bytes as ASCII into the mold buffer.
 //
-void Form_Base2(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
+void Form_Base2(Molder* mo, const Byte* src, REBLEN len, bool brk)
 {
     if (len == 0)
         return;
@@ -397,7 +397,7 @@ void Form_Base2(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
 //
 // Base16 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-void Form_Base16(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
+void Form_Base16(Molder* mo, const Byte* src, REBLEN len, bool brk)
 {
     if (len == 0)
         return;
@@ -430,7 +430,7 @@ void Form_Base16(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
 // !!! Strongly parallels this code, may have originated from it:
 // http://web.mit.edu/freebsd/head/contrib/wpa/src/utils/base64.c
 //
-void Form_Base64(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
+void Form_Base64(Molder* mo, const Byte* src, REBLEN len, bool brk)
 {
     // !!! This used to predict the length, accounting for hex digits, lines,
     // and extra syntax ("slop factor") and preallocate size for that.  Now

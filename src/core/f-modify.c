@@ -295,7 +295,7 @@ REBLEN Modify_String_Or_Binary(
     // If the src is not an ANY-STRING?, then we need to create string data
     // from the value to use its content.
     //
-    DECLARE_MOLD (mo);  // mo->string will be non-null if Push_Mold() run
+    DECLARE_MOLDER (mo);  // mo->string will be non-null if Push_Mold() run
 
     const Byte* src_ptr;  // start of utf-8 encoded data to insert
     REBLEN src_len_raw;  // length in codepoints (if dest is string)

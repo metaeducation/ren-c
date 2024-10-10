@@ -136,7 +136,7 @@ INLINE void Probe_Print_Helper(
 
 INLINE void Probe_Molded_Value(const Value* v)
 {
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     if (Is_Antiform(v)) {
@@ -157,7 +157,7 @@ INLINE void Probe_Molded_Value(const Value* v)
 }
 
 void Probe_Cell_Print_Helper(
-  REB_MOLD *mo,
+  Molder* mo,
   const void *p,
   const char *expr,
   const char *file,
@@ -203,7 +203,7 @@ void* Probe_Core_Debug(
     const char *file,
     int line
 ){
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     bool was_disabled = g_gc.disabled;
@@ -450,7 +450,7 @@ void Where_Core_Debug(Level* L) {
     REBLEN index = FEED_INDEX(L->feed);
 
     if (index > 0) {
-        DECLARE_MOLD (mo);
+        DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
         mo->limit = 40 * 20;  // 20 lines of length 40, or so?
 
@@ -463,7 +463,7 @@ void Where_Core_Debug(Level* L) {
         Drop_Mold(mo);
     }
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
     mo->limit = 40 * 20;  // 20 lines of length 40, or so?
     Push_Mold(mo);

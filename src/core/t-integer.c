@@ -256,7 +256,7 @@ check_sign:
 //
 //  MF_Integer: C
 //
-void MF_Integer(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Integer(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 

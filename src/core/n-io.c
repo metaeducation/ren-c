@@ -66,7 +66,7 @@ DECLARE_NATIVE(mold)
 
     Value* v = ARG(value);
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     if (REF(all))
         SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     if (REF(flat))

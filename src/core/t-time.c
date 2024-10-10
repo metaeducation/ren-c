@@ -181,7 +181,7 @@ Option(const Byte*) Try_Scan_Time_To_Stack(
 //
 //  MF_Time: C
 //
-void MF_Time(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Time(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);  // no difference between MOLD and FORM at this time
 

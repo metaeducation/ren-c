@@ -436,7 +436,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             // behavior is that this would not introduce spaces, e.g. it is
             // not FORM-ing but doing what appending to an empty string would.
             //
-            DECLARE_MOLD (mo);
+            DECLARE_MOLDER (mo);
             Push_Mold(mo);
 
             REBLEN remain = len;  // only want as many items as in the :PART

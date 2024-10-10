@@ -318,8 +318,8 @@ enum Reb_Strmode {
 
 //=//// MOLDING ///////////////////////////////////////////////////////////=//
 //
-struct rebol_mold;
-typedef struct rebol_mold REB_MOLD;
+struct MolderStruct;
+typedef struct MolderStruct Molder;
 
 
 //=//// VARIADIC OPERATIONS ///////////////////////////////////////////////=//

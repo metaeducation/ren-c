@@ -67,7 +67,7 @@ DECLARE_NATIVE(delimit)
 
     assert(Is_Text(line) or Is_Issue(line));  // shortcut, no evals needed [1]
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     if (REF(head) and delimiter)
@@ -131,7 +131,7 @@ DECLARE_NATIVE(delimit)
     Level* L = Make_Level_At(&Stepper_Executor, line, flags);
     Push_Level(OUT, L);
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     bool pending = false;  // pending delimiter output, *if* more non-nulls
@@ -309,7 +309,7 @@ DECLARE_NATIVE(enbase)
     Size size;
     const Byte* bp = Cell_Bytes_At(&size, ARG(value));
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     const bool brk = false;
@@ -362,7 +362,7 @@ DECLARE_NATIVE(enhex)
             "-._~:/?#[]@!$&'()*+,;=";
   #endif
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold (mo);
 
     REBLEN len;
@@ -514,7 +514,7 @@ DECLARE_NATIVE(dehex)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     // RFC 3986 says the encoding/decoding must use UTF-8.  This temporary
@@ -809,7 +809,7 @@ DECLARE_NATIVE(entab)
     else
         tabsize = TAB_SIZE;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     REBLEN len = Cell_Series_Len_At(ARG(string));
@@ -887,7 +887,7 @@ DECLARE_NATIVE(detab)
     else
         tabsize = TAB_SIZE;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     // Estimate new length based on tab expansion:
@@ -987,7 +987,7 @@ DECLARE_NATIVE(to_hex)
     else
         len = 0;  // !!! avoid compiler warning--but rethink this routine
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     if (Is_Integer(arg)) {

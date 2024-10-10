@@ -33,7 +33,7 @@
 // escaped VOID was renderable as its ticks, followed by nothing.  This is
 // the "nothing" part, saving on a special-case for that.
 //
-void MF_Void(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Void(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);
@@ -64,7 +64,7 @@ void MF_Void(REB_MOLD *mo, const Cell* v, bool form)
 //    >> append "abc" _   ; is it better to support this than not?
 //    == "abc"
 //
-void MF_Blank(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Blank(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(v);
 
@@ -145,7 +145,7 @@ REBTYPE(Blank)
 //
 //  MF_Handle: C
 //
-void MF_Handle(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Handle(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);  // !!! Handles have "no printable form", what to do here?
     UNUSED(v);

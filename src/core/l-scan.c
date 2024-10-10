@@ -401,7 +401,7 @@ static void Update_Error_Near_For_Line(
         len++;
     }
 
-    DECLARE_MOLD (mo);  // put line count and line's text into string [3]
+    DECLARE_MOLDER (mo);  // put line count and line's text into string [3]
     Push_Mold(mo);
     Append_Ascii(mo->string, "(line ");
     Append_Int(mo->string, line);  // (maybe) different from line below
@@ -564,6 +564,12 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 
 #define CELL_FLAG_STACK_NOTE_BRACED CELL_FLAG_NOTE
 
+// For compatibility to copy code to and from the bootstrap EXE, this code
+// uses Mold_Buffer(mo) to abstract the difference from `mo->utf8flex`.
+// (Calling the bootstrap exe's mold buffer a "string" would be potentially
+// confusing since "String" doesn't use UTF-8 internally in that codebase.)
+//
+#define Mold_Buffer(mo) mo->string
 
 //
 //  Trap_Scan_String_Push_Mold: C
@@ -585,7 +591,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //
 static Option(Error*) Trap_Scan_String_Push_Mold(
     Sink(const Byte*) out,
-    REB_MOLD *mo,
+    Molder* mo,
     const Byte* bp,
     Count dashes,
     ScanState* S  // used for errors
@@ -631,11 +637,11 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
 
           case '-': {  // look for nesting levels -{a --{b}-- c}- is one string
             Count count = 1;
-            Append_Codepoint(mo->string, '-');
+            Append_Codepoint(Mold_Buffer(mo), '-');
             ++cp;
             while (*cp == '-') {
                 ++count;
-                Append_Codepoint(mo->string, '-');
+                Append_Codepoint(Mold_Buffer(mo), '-');
                 ++cp;
             }
             if (
@@ -645,7 +651,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
             ){
                 Init_Integer(PUSH(), count);
                 Set_Cell_Flag(TOP, STACK_NOTE_BRACED);
-                Append_Codepoint(mo->string, '{');
+                Append_Codepoint(Mold_Buffer(mo), '{');
                 ++cp;
             }
             /* else if (  // don't want "--" to start nested --" scan, rethink
@@ -654,7 +660,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
                 and count >= VAL_INT32(TOP)
             ){
                 Init_Integer(PUSH(), count);
-                Append_Codepoint(mo->string, '"');
+                Append_Codepoint(Mold_Buffer(mo), '"');
             } */
             continue; }  // already appended all relevant codepoints
 
@@ -684,12 +690,12 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
             }
 
             if (Get_Cell_Flag(TOP, STACK_NOTE_BRACED))
-                Append_Codepoint(mo->string, '}');
+                Append_Codepoint(Mold_Buffer(mo), '}');
             else
-                Append_Codepoint(mo->string, '"');
+                Append_Codepoint(Mold_Buffer(mo), '"');
 
             for (; count != 0; --count)
-                Append_Codepoint(mo->string, '-');
+                Append_Codepoint(Mold_Buffer(mo), '-');
             continue; }  // codepoints were appended already
 
           case CR: {
@@ -724,7 +730,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
         if (c == '\0')  // e.g. ^(00) or ^@
             fail (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
 
-        Append_Codepoint(mo->string, c);
+        Append_Codepoint(Mold_Buffer(mo), c);
     }
 
   finished:
@@ -754,7 +760,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
 //    applicable to FILE! too.)
 //
 Option(const Byte*) Try_Scan_Utf8_Item_Push_Mold(
-    REB_MOLD *mo,
+    Molder* mo,
     const Byte* bp,
     const Byte* ep,
     Option(Byte) term,  // '\0' if file like %foo - '"' if file like %"foo bar"
@@ -1096,7 +1102,7 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
 //
 static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     Sink(Token) token_out,
-    REB_MOLD *mo,
+    Molder* mo,
     Level* L
 ){
     ScanState* S = &L->u.scan;
@@ -2037,7 +2043,7 @@ Bounce Scanner_Executor(Level* const L) {
     ScanState* S = &level_->u.scan;
     TranscodeState* transcode = S->ss;
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     switch (STATE) {
       case ST_SCANNER_OUTERMOST_SCAN:
@@ -3240,7 +3246,7 @@ const Byte* Scan_Any_Word(
     Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
     Level* L = Make_Scan_Level(&ss, TG_End_Feed, flags);
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
 
     Token token;
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);

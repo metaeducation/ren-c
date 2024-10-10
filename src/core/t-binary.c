@@ -275,7 +275,7 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //    to the general variability of how a program would run, it was using
 //    a setting in the system object...which is not avaliable in early boot.
 //
-void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Binary(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 

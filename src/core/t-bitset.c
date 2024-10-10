@@ -65,7 +65,7 @@ Binary* Make_Bitset(REBLEN num_bits)
 //
 //  MF_Bitset: C
 //
-void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Bitset(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // all bitsets are "molded" at this time
 

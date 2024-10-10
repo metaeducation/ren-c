@@ -114,7 +114,7 @@ enum {
     PATH_OPT_SRC_IS_DIR = 1 << 0
 };
 
-INLINE bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
+INLINE bool Last_In_Mold_Is_Slash(Molder* mo) {
     if (mo->base.size == Flex_Used(mo->string))
         return false;  // nothing added yet
 
@@ -148,7 +148,7 @@ String* To_REBOL_Path(const Value* string, Flags flags)
 {
     assert(Is_Text(string));
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     bool lead_slash = false;  // did we restart to insert a leading slash?
@@ -243,7 +243,7 @@ enum {
 // Implementation routine of To_Local_Path which leaves the path in the mold
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
-void Mold_File_To_Local(REB_MOLD *mo, const Value* file, Flags flags) {
+void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
     assert(Is_File(file));
 
     Length len;
@@ -480,7 +480,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Value* file, Flags flags) {
 // opposite operation of To_REBOL_Path.
 //
 String* To_Local_Path(const Value* file, Flags flags) {
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     Mold_File_To_Local(mo, file, flags);

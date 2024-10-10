@@ -295,7 +295,7 @@ String* Append_UTF8_May_Fail(
 
     const Byte* bp = cb_cast(utf8);
 
-    DECLARE_MOLD (mo); // !!! REVIEW: don't need intermediate if no CRLF_TO_LF
+    DECLARE_MOLDER (mo); // !!! REVIEW: don't need intermediate if no CRLF_TO_LF
     Push_Mold(mo);
 
     bool all_ascii = true;

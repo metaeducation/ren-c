@@ -437,7 +437,7 @@ REBINT CT_Decimal(const Cell* a, const Cell* b, bool strict)
 //
 // Code mostly duplicated in MF_Percent.
 //
-void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Decimal(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -458,7 +458,7 @@ void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
 //
 // Code mostly duplicated in MF_Decimal.
 //
-void MF_Percent(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Percent(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 

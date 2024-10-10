@@ -518,7 +518,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 //
 //  MF_Map: C
 //
-void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Map(Molder* mo, const Cell* v, bool form)
 {
     const Map* m = VAL_MAP(v);
 

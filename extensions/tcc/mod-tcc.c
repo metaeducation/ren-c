@@ -505,7 +505,7 @@ DECLARE_NATIVE(compile_p)
         // and discard the data without ever making a TEXT! (as it would need
         // to if it were a client of the "external" libRebol API).
         //
-        DECLARE_MOLD (mo);  // Note: mold buffer is UTF-8
+        DECLARE_MOLDER (mo);  // Note: mold buffer is UTF-8
         Push_Mold(mo);
 
         const Element* tail;

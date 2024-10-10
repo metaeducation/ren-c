@@ -21,8 +21,8 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-struct rebol_mold {
-    String* string;  // destination String (utf8)
+struct MolderStruct {
+    String* string;  // destination String (utf8, as all String are)
     struct {
         REBLEN index;  // codepoint index where mold starts within String
         Size size;  // byte offset where mold starts within String
@@ -68,7 +68,7 @@ enum {
 };
 
 // Mold and form options:
-enum REB_Mold_Opts {
+enum {
     MOLD_FLAG_0 = 0,
     MOLD_FLAG_ALL = 1 << 0, // Output lexical types in #[type...] format
     MOLD_FLAG_COMMA_PT = 1 << 1, // Decimal point is a comma.
@@ -88,12 +88,12 @@ enum REB_Mold_Opts {
 #define MOLD_FLAG_NON_ANSI_PARENED \
     MOLD_FLAG_ALL // Non ANSI chars are ^() escaped
 
-#define DECLARE_MOLD(name) \
-    REB_MOLD mold_struct; \
-    mold_struct.string = nullptr; /* used to tell if pushed or not */ \
-    mold_struct.opts = 0; \
-    mold_struct.indent = 0; \
-    REB_MOLD *name = &mold_struct; \
+#define DECLARE_MOLDER(name) \
+    Molder name##_struct; \
+    name##_struct.string = nullptr; /* used to tell if pushed or not */ \
+    name##_struct.opts = 0; \
+    name##_struct.indent = 0; \
+    Molder* name = &name##_struct; \
 
 #define SET_MOLD_FLAG(mo,f) \
     ((mo)->opts |= (f))
@@ -121,13 +121,13 @@ enum {
 #define MAX_HEX_LEN     16
 
 
-INLINE void Pre_Mold(REB_MOLD *mo, const Cell* v)
+INLINE void Pre_Mold(Molder* mo, const Cell* v)
   { Pre_Mold_Core((mo), (v), GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)); }
 
 #define Pre_Mold_All(mo,v) \
     Pre_Mold_Core((mo), (v), true)
 
-INLINE void End_Mold(REB_MOLD *mo)
+INLINE void End_Mold(Molder* mo)
   { End_Mold_Core((mo), GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)); }
 
 #define End_Mold_All(mo) \

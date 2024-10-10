@@ -29,7 +29,7 @@
 // The special behavior of commas makes them "glue" their rendering to the
 // thing on their left.
 //
-void MF_Comma(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Comma(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
     UNUSED(v);

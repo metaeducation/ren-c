@@ -134,7 +134,7 @@ Bounce TO_Money(Level* level_, Kind kind, const Value* arg)
 //
 //  MF_Money: C
 //
-void MF_Money(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Money(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 

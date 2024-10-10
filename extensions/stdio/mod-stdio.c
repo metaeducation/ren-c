@@ -295,7 +295,7 @@ DECLARE_NATIVE(read_line)
 
   read_from_stdin: { //////////////////////////////////////////////////////=//
 
-    DECLARE_MOLD (mo);  // use of the internal API for efficiency [3]
+    DECLARE_MOLDER (mo);  // use of the internal API for efficiency [3]
     Push_Mold(mo);
 
     Byte encoded[UNI_ENCODED_MAX];

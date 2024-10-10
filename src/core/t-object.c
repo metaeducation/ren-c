@@ -923,7 +923,7 @@ VarList* Copy_Varlist_Extra_Managed(
 //
 //  MF_Context: C
 //
-void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Context(Molder* mo, const Cell* v, bool form)
 {
     String* s = mo->string;
 
@@ -1603,7 +1603,7 @@ REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
 //
 //  MF_Frame: C
 //
-void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
+void MF_Frame(Molder* mo, const Cell* v, bool form) {
 
     if (Is_Frame_Exemplar(v)) {
         MF_Context(mo, v, form);

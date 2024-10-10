@@ -700,7 +700,7 @@ bool Try_Pick_Block(
 //
 //  MF_List: C
 //
-void MF_List(REB_MOLD *mo, const Cell* v, bool form)
+void MF_List(Molder* mo, const Cell* v, bool form)
 {
     // Routine may be called on value that reports REB_QUOTED, even if it
     // has no additional payload and is aliasing the cell itself.  Checking

@@ -125,7 +125,7 @@ const Byte* Analyze_String_For_Scan(
 //
 // Used to trim off hanging spaces during FORM and MOLD.
 //
-void Trim_Tail(REB_MOLD *mo, Byte ascii)
+void Trim_Tail(Molder* mo, Byte ascii)
 {
     assert(ascii < 0x80);  // more work needed for multi-byte characters
 
@@ -234,7 +234,7 @@ Array* Split_Lines(const Element* str)
     if (i == len)
         return Make_Array(0);
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     Utf8(const*) cp = Cell_String_At(str);

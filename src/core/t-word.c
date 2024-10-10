@@ -188,7 +188,7 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
 //
 //  MF_Word: C
 //
-void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
+void MF_Word(Molder* mo, const Cell* v, bool form) {
     UNUSED(form);
 
     Option(Sigil) sigil = Sigil_Of_Kind(Cell_Heart(v));

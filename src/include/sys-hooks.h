@@ -100,7 +100,7 @@ typedef Bounce (TO_HOOK)(Level* level_, Kind, const Value*);
 // has a different handler than strings.  So not all molds are driven by
 // their class entirely.
 //
-typedef void (MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
+typedef void (MOLD_HOOK)(Molder* mo, const Cell* v, bool form);
 
 
 // Just requests what symbol a custom datatype wants to use for its type

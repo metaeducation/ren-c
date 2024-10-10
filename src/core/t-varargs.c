@@ -563,7 +563,7 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
+void MF_Varargs(Molder* mo, const Cell* v, bool form) {
     UNUSED(form);
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!

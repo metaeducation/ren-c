@@ -444,7 +444,7 @@ REBTYPE(Sequence)
 //            b c d
 //         ]/e
 //
-void MF_Sequence(REB_MOLD *mo, const Cell* c, bool form)
+void MF_Sequence(Molder* mo, const Cell* c, bool form)
 {
     UNUSED(form);
 

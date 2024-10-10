@@ -1395,7 +1395,7 @@ DECLARE_NATIVE(remove_each)
 
     REBLEN start = VAL_INDEX(data);
 
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     if (Any_List(data)) {
         //
         // We're going to use NODE_FLAG_MARKED on the elements of data's

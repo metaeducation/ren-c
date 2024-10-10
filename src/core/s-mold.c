@@ -53,12 +53,12 @@
 //   of types can share behavior, several types are sometimes handled in the
 //   same hook.  See %types.r for these categorizations in the "mold" column.
 //
-// * Molding is done via a REB_MOLD structure, which in addition to the
+// * Molding is done via a Molder structure, which in addition to the
 //   String to mold into contains options for the mold--including length
 //   limits, whether commas or periods should be used for decimal points,
 //   indentation rules, etc.
 //
-// * If you use the Push_Mold() function to fill a REB_MOLD, then it will
+// * If you use the Push_Mold() function to fill a Molder, then it will
 //   append in a stacklike way to the thread-local "mold buffer".  This
 //   allows new molds to start running and use that buffer while another is in
 //   progress, so long as it pops or drops the buffer before returning to the
@@ -91,7 +91,7 @@
 // techniques might use an invalid UTF-8 character as an end-of-buffer signal
 // and notice it during writes, how END markers are used by the data stack.
 //
-Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
+Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 {
     REBLEN tail = String_Len(mo->string);
     Expand_Flex_Tail(mo->string, num_bytes);  // terminates at guess
@@ -104,7 +104,7 @@ Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 //
 // Emit the initial datatype function, depending on /ALL option
 //
-void Pre_Mold_Core(REB_MOLD *mo, const Cell* v, bool all)
+void Pre_Mold_Core(Molder* mo, const Cell* v, bool all)
 {
     if (all)
         Append_Ascii(mo->string, "#[");
@@ -124,7 +124,7 @@ void Pre_Mold_Core(REB_MOLD *mo, const Cell* v, bool all)
 //
 // Finish the mold, depending on /ALL with close block.
 //
-void End_Mold_Core(REB_MOLD *mo, bool all)
+void End_Mold_Core(Molder* mo, bool all)
 {
     if (all)
         Append_Codepoint(mo->string, ']');
@@ -137,7 +137,7 @@ void End_Mold_Core(REB_MOLD *mo, bool all)
 // For series that has an index, add the index for mold:all
 // Add closing block.
 //
-void Post_Mold(REB_MOLD *mo, const Cell* v)
+void Post_Mold(Molder* mo, const Cell* v)
 {
     if (VAL_INDEX(v)) {
         Append_Codepoint(mo->string, ' ');
@@ -153,7 +153,7 @@ void Post_Mold(REB_MOLD *mo, const Cell* v)
 //
 // Create a newline with auto-indent on next line if needed.
 //
-void New_Indented_Line(REB_MOLD *mo)
+void New_Indented_Line(Molder* mo)
 {
     // Check output string has content already but no terminator:
     //
@@ -237,7 +237,7 @@ void Drop_Pointer_From_Flex(Flex* f, const void *p)
 //  Mold_Array_At: C
 //
 void Mold_Array_At(
-    REB_MOLD *mo,
+    Molder* mo,
     const Array* a,
     REBLEN index,
     const char *sep
@@ -308,7 +308,7 @@ void Mold_Array_At(
 //  Form_Array_At: C
 //
 void Form_Array_At(
-    REB_MOLD *mo,
+    Molder* mo,
     const Array* array,
     REBLEN index,
     Option(VarList*) context,
@@ -357,7 +357,7 @@ void Form_Array_At(
 //
 //  MF_Fail: C
 //
-void MF_Fail(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Fail(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
     UNUSED(mo);
@@ -374,7 +374,7 @@ void MF_Fail(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  MF_Unhooked: C
 //
-void MF_Unhooked(REB_MOLD *mo, const Cell* v, bool form)
+void MF_Unhooked(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);
@@ -392,7 +392,7 @@ void MF_Unhooked(REB_MOLD *mo, const Cell* v, bool form)
 // Variation which molds a cell, e.g. no quoting is considered.
 //
 void Mold_Or_Form_Cell_Ignore_Quotes(
-    REB_MOLD *mo,
+    Molder* mo,
     const Cell* cell,
     bool form
 ){
@@ -426,7 +426,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 //
 // Mold or form any reified value to string series tail.
 //
-void Mold_Or_Form_Element(REB_MOLD *mo, const Element* e, bool form)
+void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
 {
     // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
@@ -459,7 +459,7 @@ void Mold_Or_Form_Element(REB_MOLD *mo, const Element* e, bool form)
 //
 String* Copy_Mold_Or_Form_Element(const Element* v, Flags opts, bool form)
 {
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     mo->opts = opts;
 
     Push_Mold(mo);
@@ -476,7 +476,7 @@ String* Copy_Mold_Or_Form_Cell_Ignore_Quotes(
     Flags opts,
     bool form
 ){
-    DECLARE_MOLD (mo);
+    DECLARE_MOLDER (mo);
     mo->opts = opts;
 
     Push_Mold(mo);
@@ -493,14 +493,14 @@ String* Copy_Mold_Or_Form_Cell_Ignore_Quotes(
 // into a stack and must balance (with either a Pop() or Drop() of the nested
 // string).  The fail() mechanics will automatically balance the stack.
 //
-void Push_Mold(REB_MOLD *mo)
+void Push_Mold(Molder* mo)
 {
   #if !defined(NDEBUG)
     assert(not g_mold.currently_pushing);  // Can't mold during Push_Mold()
     g_mold.currently_pushing = true;
   #endif
 
-    assert(mo->string == nullptr);  // Indicates not pushed, see DECLARE_MOLD
+    assert(mo->string == nullptr);  // Indicates not pushed, see DECLARE_MOLDER
 
     String* s = g_mold.buffer;
     assert(LINK(Bookmarks, s) == nullptr);  // should never bookmark buffer
@@ -557,7 +557,7 @@ void Push_Mold(REB_MOLD *mo)
 //
 // Contain a mold's series to its limit (if it has one).
 //
-void Throttle_Mold(REB_MOLD *mo) {
+void Throttle_Mold(Molder* mo) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         return;
 
@@ -617,7 +617,7 @@ String* Pop_Molded_String_Core(String* buf, Size offset, Length index)
 // is a helper that extracts the data as a String Flex.  It resets the
 // buffer to its length at the time when the last push began.
 //
-String* Pop_Molded_String(REB_MOLD *mo)
+String* Pop_Molded_String(Molder* mo)
 {
     assert(mo->string != nullptr);  // if null, there was no Push_Mold()
     Assert_Flex_Term_If_Needed(mo->string);
@@ -644,7 +644,7 @@ String* Pop_Molded_String(REB_MOLD *mo)
 // !!! This particular use of the mold buffer might undermine tricks which
 // could be used with invalid UTF-8 bytes--for instance.  Review.
 //
-Binary* Pop_Molded_Binary(REB_MOLD *mo)
+Binary* Pop_Molded_Binary(Molder* mo)
 {
     assert(String_Len(mo->string) >= mo->base.size);
 
@@ -682,7 +682,7 @@ Binary* Pop_Molded_Binary(REB_MOLD *mo)
 // additional mold (that can be just about anything, even debug output...)
 //
 void Drop_Mold_Core(
-    REB_MOLD *mo,
+    Molder* mo,
     bool not_pushed_ok  // see Drop_Mold_If_Pushed()
 ){
     if (mo->string == nullptr) {  // there was no Push_Mold()

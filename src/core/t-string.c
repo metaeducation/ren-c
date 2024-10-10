@@ -292,7 +292,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
         //
         // https://stackoverflow.com/q/199260/
 
-        DECLARE_MOLD (mo);
+        DECLARE_MOLDER (mo);
         Push_Mold(mo);
 
         Length len_head = String_Len(str);
@@ -589,7 +589,7 @@ Byte* Form_Uni_Hex(Byte* out, REBLEN n)
 //
 // For now just preserve what was there, but do it as UTF8 bytes.
 //
-void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
+void Mold_Uni_Char(Molder* mo, Codepoint c, bool parened)
 {
     String* buf = mo->string;
 
@@ -651,7 +651,7 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 //
 //  Mold_Text_Flex_At: C
 //
-void Mold_Text_Flex_At(REB_MOLD *mo, const String* s, REBLEN index) {
+void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
     String* buf = mo->string;
 
     if (index >= String_Len(s)) {
@@ -788,13 +788,13 @@ void Mold_Text_Flex_At(REB_MOLD *mo, const String* s, REBLEN index) {
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-static void Mold_Url(REB_MOLD *mo, const Cell* v)
+static void Mold_Url(Molder* mo, const Cell* v)
 {
     Append_String(mo->string, v);
 }
 
 
-static void Mold_File(REB_MOLD *mo, const Cell* v)
+static void Mold_File(Molder* mo, const Cell* v)
 {
 
     Append_Codepoint(mo->string, '%');
@@ -815,7 +815,7 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
 }
 
 
-static void Mold_Tag(REB_MOLD *mo, const Cell* v)
+static void Mold_Tag(Molder* mo, const Cell* v)
 {
     Append_Codepoint(mo->string, '<');
     Append_String(mo->string, v);
@@ -826,7 +826,7 @@ static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 //
 //  MF_String: C
 //
-void MF_String(REB_MOLD *mo, const Cell* v, bool form)
+void MF_String(Molder* mo, const Cell* v, bool form)
 {
     String* buf = mo->string;
 
