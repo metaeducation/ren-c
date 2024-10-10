@@ -875,7 +875,9 @@ for-each [sw-cat list] boot-errors [
     add-sym cat  ; category might incidentally exist as SYM_XXX
 
     for-each [sw-id t-message] list [
-        assert [set-word? sw-id]
+        if not set-word? sw-id [
+            fail ["%errors.r parse error, not SET-WORD!" mold sw-id]
+        ]
         id: to word! sw-id
         message: t-message
 
