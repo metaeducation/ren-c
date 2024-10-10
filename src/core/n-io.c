@@ -213,9 +213,9 @@ DECLARE_NATIVE(new_line)
             continue;
 
         if (mark)
-            SET_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE);
+            Set_Cell_Flag(item, NEWLINE_BEFORE);
         else
-            CLEAR_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE);
+            Clear_Cell_Flag(item, NEWLINE_BEFORE);
 
         if (skip == 0)
             break;
@@ -279,7 +279,7 @@ DECLARE_NATIVE(new_line_q)
     if (NOT_END(item))
         return Init_Logic(
             OUT,
-            GET_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE)
+            Get_Cell_Flag(item, NEWLINE_BEFORE)
         );
 
     return Init_Logic(
@@ -328,8 +328,8 @@ DECLARE_NATIVE(now)
     // have enough granularity to give back date, time, and time zone.
     //
     assert(Is_Date(timestamp));
-    assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_TIME));
-    assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_ZONE));
+    assert(Get_Cell_Flag(timestamp, DATE_HAS_TIME));
+    assert(Get_Cell_Flag(timestamp, DATE_HAS_ZONE));
 
     Copy_Cell(OUT, timestamp);
     rebRelease(timestamp);
@@ -355,7 +355,7 @@ DECLARE_NATIVE(now)
         //
         // Clear out the time zone flag
         //
-        CLEAR_VAL_FLAG(OUT, DATE_FLAG_HAS_ZONE);
+        Clear_Cell_Flag(OUT, DATE_HAS_ZONE);
     }
     else {
         if (
@@ -375,8 +375,8 @@ DECLARE_NATIVE(now)
     REBINT n = -1;
 
     if (REF(date)) {
-        CLEAR_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
-        CLEAR_VAL_FLAG(OUT, DATE_FLAG_HAS_ZONE);
+        Clear_Cell_Flag(OUT, DATE_HAS_TIME);
+        Clear_Cell_Flag(OUT, DATE_HAS_ZONE);
     }
     else if (REF(time)) {
         RESET_VAL_HEADER(OUT, REB_TIME); // reset clears date flags

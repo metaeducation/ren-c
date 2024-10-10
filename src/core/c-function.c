@@ -258,7 +258,7 @@ Array* Make_Paramlist_Managed_May_Fail(
                 and Is_Word(Cell_List_At(item))
                 and Cell_Word_Id(Cell_List_At(item)) == SYM_TILDE_1
             ){
-                header_bits |= ACTION_FLAG_TRASHER;  // Eraser_Dispatcher()
+                header_bits |= CELL_FLAG_ACTION_TRASHER;  // Eraser_Dispatcher()
             }
 
             if (Is_Block(TOP)) // two blocks of types!
@@ -530,7 +530,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             // definitional_return handled specially when paramlist copied
             // off of the stack...
         }
-        header_bits |= ACTION_FLAG_RETURN;
+        header_bits |= CELL_FLAG_ACTION_RETURN;
     }
 
     // Slots, which is length +1 (includes the rootvar or rootparam)
@@ -855,7 +855,7 @@ REBACT *Make_Action(
 
     // Precalculate cached function flags.
     //
-    // Note: ACTION_FLAG_DEFERS_LOOKBACK is only relevant for un-refined-calls.
+    // Note: CELL_FLAG_ACTION_DEFERS_LOOKBACK is only relevant for un-refined-calls.
     // No lookback function calls trigger from PATH!.  HOWEVER: specialization
     // does come into play because it may change what the first "real"
     // argument is.  But again, we're only interested in specialization's
@@ -872,10 +872,10 @@ REBACT *Make_Action(
         case PARAM_CLASS_RETURN: {
             assert(Cell_Parameter_Id(param) == SYM_RETURN);
 
-            // See notes on ACTION_FLAG_INVISIBLE.
+            // See notes on CELL_FLAG_ACTION_INVISIBLE.
             //
             if (VAL_TYPESET_BITS(param) == 0)
-                SET_VAL_FLAG(rootparam, ACTION_FLAG_INVISIBLE);
+                Set_Cell_Flag(rootparam, ACTION_INVISIBLE);
             break; }
 
         case PARAM_CLASS_REFINEMENT:
@@ -892,7 +892,7 @@ REBACT *Make_Action(
             // to report that fact.
             //
             if (first_arg and not Is_Param_Hidden(param)) {
-                SET_VAL_FLAG(rootparam, ACTION_FLAG_DEFERS_LOOKBACK);
+                Set_Cell_Flag(rootparam, ACTION_DEFERS_LOOKBACK);
                 first_arg = false;
             }
             break;
@@ -919,7 +919,7 @@ REBACT *Make_Action(
         quote_check:;
 
             if (first_arg and not Is_Param_Hidden(param)) {
-                SET_VAL_FLAG(rootparam, ACTION_FLAG_QUOTES_FIRST_ARG);
+                Set_Cell_Flag(rootparam, ACTION_QUOTES_FIRST_ARG);
                 first_arg = false;
             }
             break;
@@ -1072,7 +1072,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 
         Cell* body = Array_Head(details);
 
-        // The ACTION_FLAG_LEAVE/ACTION_FLAG_RETURN tricks for definitional
+        // The CELL_FLAG_ACTION_LEAVE/CELL_FLAG_ACTION_RETURN tricks for definitional
         // scoping make it seem like a generator authored more code in the
         // action's body...but the code isn't *actually* there and an
         // optimized internal trick is used.  Fake the code if needed.
@@ -1083,7 +1083,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             example = Get_System(SYS_STANDARD, STD_PROC_BODY);
             real_body_index = 4;
         }
-        else if (GET_ACT_FLAG(a, ACTION_FLAG_RETURN)) {
+        else if (GET_ACT_FLAG(a, ACTION_RETURN)) {
             example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
             real_body_index = 4;
         }
@@ -1211,20 +1211,20 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
     // We look at the *actual* function flags; e.g. the person may have used
     // the FUNC generator (with MKF_RETURN) but then named a parameter RETURN
-    // which overrides it, so the value won't have ACTION_FLAG_RETURN.
+    // which overrides it, so the value won't have CELL_FLAG_ACTION_RETURN.
     //
     Value* value = ACT_ARCHETYPE(a);
 
     Array* copy;
     if (VAL_ARRAY_LEN_AT(code) == 0) { // optimize empty body case
 
-        if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE)) {
+        if (Get_Cell_Flag(value, ACTION_INVISIBLE)) {
             ACT_DISPATCHER(a) = &Commenter_Dispatcher;
         }
-        else if (GET_VAL_FLAG(value, ACTION_FLAG_TRASHER)) {
+        else if (Get_Cell_Flag(value, ACTION_TRASHER)) {
             ACT_DISPATCHER(a) = &Eraser_Dispatcher;
         }
-        else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN)) {
+        else if (Get_Cell_Flag(value, ACTION_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
             assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
             if (not TYPE_CHECK(typeset, REB_MAX_NULLED)) // what do [] returns
@@ -1240,11 +1240,11 @@ REBACT *Make_Interpreted_Action_May_Fail(
     }
     else { // body not empty, pick dispatcher based on output disposition
 
-        if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE))
+        if (Get_Cell_Flag(value, ACTION_INVISIBLE))
             ACT_DISPATCHER(a) = &Elider_Dispatcher; // no L->out mutation
-        else if (GET_VAL_FLAG(value, ACTION_FLAG_TRASHER))
+        else if (Get_Cell_Flag(value, ACTION_TRASHER))
             ACT_DISPATCHER(a) = &Eraser_Dispatcher; // forces L->out trash
-        else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN))
+        else if (Get_Cell_Flag(value, ACTION_RETURN))
             ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks L->out
         else
             ACT_DISPATCHER(a) = &Unchecked_Dispatcher; // unchecked L->out

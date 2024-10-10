@@ -227,8 +227,8 @@ bool Next_Path_Throws(REBPVS *pvs)
                 pvs->u.ref.cell,
                 pvs->u.ref.specifier
             );
-            if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_INFIX))
-                SET_VAL_FLAG(pvs->out, VALUE_FLAG_INFIX);
+            if (Get_Cell_Flag(pvs->u.ref.cell, INFIX_IF_ACTION))
+                Set_Cell_Flag(pvs->out, INFIX_IF_ACTION);
 
             // Leave the pvs->u.ref as-is in case the next update turns out
             // to be BOUNCE_IMMEDIATE, and it is needed.
@@ -355,8 +355,8 @@ bool Eval_Path_Throws_Core(
         Copy_Cell(pvs->out, KNOWN(pvs->u.ref.cell));
 
         if (Is_Action(pvs->out)) {
-            if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_INFIX))
-                SET_VAL_FLAG(pvs->out, VALUE_FLAG_INFIX);
+            if (Get_Cell_Flag(pvs->u.ref.cell, INFIX_IF_ACTION))
+                Set_Cell_Flag(pvs->out, INFIX_IF_ACTION);
 
             pvs->opt_label = Cell_Word_Symbol(pvs->value);
         }

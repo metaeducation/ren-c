@@ -80,10 +80,10 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         const Value* child_gotten = Try_Get_Opt_Var(opt_look, specifier);
 
         if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
-            if (GET_VAL_FLAG(child_gotten, VALUE_FLAG_INFIX)) {
+            if (Get_Cell_Flag(child_gotten, INFIX_IF_ACTION)) {
                 if (
                     pclass == PARAM_CLASS_TIGHT
-                    or GET_VAL_FLAG(child_gotten, ACTION_FLAG_DEFERS_LOOKBACK)
+                    or Get_Cell_Flag(child_gotten, ACTION_DEFERS_LOOKBACK)
                 ){
                     Init_For_Vararg_End(out, op);
                     return true;
@@ -168,9 +168,9 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             goto type_check_and_return;
         }
 
-        if (GET_VAL_FLAG(vararg, VARARGS_FLAG_INFIX)) {
+        if (Get_Cell_Flag(vararg, VARARGS_INFIX)) {
             //
-            // See notes on VARARGS_FLAG_INFIX about how the left hand side
+            // See notes on CELL_FLAG_VARARGS_INFIX about how the left hand side
             // is synthesized into an array-style varargs with either 0 or
             // 1 item to be taken.  But any evaluation has already happened
             // before the TAKE.  So although we honor the pclass to disallow
@@ -252,9 +252,9 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         // (so long as it is still live on the stack)
 
         // The infixed case always synthesizes an array to hold the evaluated
-        // left hand side value.  (See notes on VARARGS_FLAG_INFIX.)
+        // left hand side value.  (See notes on CELL_FLAG_VARARGS_INFIX.)
         //
-        assert(NOT_VAL_FLAG(vararg, VARARGS_FLAG_INFIX));
+        assert(Not_Cell_Flag(vararg, VARARGS_INFIX));
 
         opt_vararg_level = L;
 

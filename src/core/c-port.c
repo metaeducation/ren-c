@@ -339,7 +339,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     for (; NOT_END(L->param); ++L->param, ++L->arg, ++L->special) {
         if (Is_Param_Hidden(L->param))
             continue; // !!! is this still relevant?
-        if (GET_VAL_FLAG(L->special, ARG_MARKED_CHECKED))
+        if (Get_Cell_Flag(L->special, ARG_MARKED_CHECKED))
             continue; // a parameter that was "specialized out" of this phase
 
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(L->param);
@@ -381,7 +381,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
     else {
         Init_Path(first, Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED));
     }
-    SET_VAL_FLAG(first, VALUE_FLAG_EVAL_FLIP);  // make path/action active
+    Set_Cell_Flag(first, EVAL_FLIP);  // make path/action active
 
     // Invoke DO with the special mode requesting non-evaluation on all
     // args, as they were evaluated the first time around.

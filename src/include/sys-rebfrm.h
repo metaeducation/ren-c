@@ -247,7 +247,7 @@
 // behavior.
 //
 #define DO_FLAG_EXPLICIT_EVALUATE \
-    FLAG_LEFT_BIT(22) // IMPORTANT: Same bit as VALUE_FLAG_EVAL_FLIP
+    FLAG_LEFT_BIT(22) // IMPORTANT: Same bit as CELL_FLAG_EVAL_FLIP
 
 
 //=//// DO_FLAG_PUSH_PATH_REFINEMENTS /////////////////////////////////////=//
@@ -362,7 +362,7 @@
 //              fail (Error_No_Catch_For_Throw(out));
 //
 //      If you *do* handle it, be aware it's a throw label with
-//      VALUE_FLAG_THROWN set in its header, and shouldn't leak to the
+//      CELL_FLAG_THROW_SIGNAL set in its header, and shouldn't leak to the
 //      rest of the system.
 //
 // ===========================================================================
@@ -572,7 +572,7 @@ struct LevelStruct {
     // `ACT_ARCHETYPE(Level_Phase(L))` to get a pointer to a canon cell
     // representing that function (to examine its value flags, for instance).
     //
-    // !!! ACTION_FLAG_XXX should probably be used for frequently checks.
+    // !!! CELL_FLAG_ACTION_XXX should probably be used for frequently checks.
     //
     // Compositions of functions (adaptations, specializations, hijacks, etc)
     // update the FRAME!'s payload in the L->varlist archetype to say what

@@ -598,7 +598,7 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 //
 DECLARE_NATIVE(infix)
 //
-// !!! See notes on VALUE_FLAG_INFIX about old vs. modern interpretation.
+// !!! See CELL_FLAG_INFIX_IF_ACTION regarding old vs. modern interpretation.
 {
     INCLUDE_PARAMS_OF_INFIX;
 
@@ -606,9 +606,9 @@ DECLARE_NATIVE(infix)
 
     Copy_Cell(OUT, v);
     if (REF(off))
-        CLEAR_VAL_FLAG(OUT, VALUE_FLAG_INFIX);
+        Clear_Cell_Flag(OUT, INFIX_IF_ACTION);
     else
-        SET_VAL_FLAG(OUT, VALUE_FLAG_INFIX);
+        Set_Cell_Flag(OUT, INFIX_IF_ACTION);
 
     return OUT;
 }
@@ -871,7 +871,7 @@ DECLARE_NATIVE(infix_q)
     INCLUDE_PARAMS_OF_INFIX_Q;
 
     Value* action = ARG(action);
-    return Init_Logic(OUT, GET_VAL_FLAG(action, VALUE_FLAG_INFIX));
+    return Init_Logic(OUT, Get_Cell_Flag(action, INFIX_IF_ACTION));
 }
 
 

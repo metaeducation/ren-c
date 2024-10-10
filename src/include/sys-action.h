@@ -51,7 +51,7 @@
 #define BOUNCE_THROWN \
     cast(Value*, &PG_Bounce_Thrown)
 
-// See ACTION_FLAG_INVISIBLE...this is what any function with that flag needs
+// See CELL_FLAG_ACTION_INVISIBLE...this is what any function with that flag needs
 // to return.
 //
 // It is also used by path dispatch when it has taken performing a SET-PATH!
@@ -66,7 +66,7 @@
 // the L->phase in the frame.  This function may be changed by the dispatcher
 // from what was originally called.
 //
-// If VALUE_FLAG_FALSEY is not set on the cell, then the types will be checked
+// If CELL_FLAG_FALSEY is not set on the cell, then the types will be checked
 // again.  Note it is not safe to let arbitrary user code change values in a
 // frame from expected types, and then let those reach an underlying native
 // who thought the types had been checked.
@@ -119,7 +119,7 @@ INLINE Array* ACT_PARAMLIST(REBACT *a) {
 // !!! Review if (and how) a HIJACK might affect these flags (?)
 //
 #define GET_ACT_FLAG(a, flag) \
-    GET_VAL_FLAG(ACT_ARCHETYPE(a), (flag))
+    Get_Cell_Flag(ACT_ARCHETYPE(a), flag)
 
 #define ACT_DISPATCHER(a) \
     (MISC(ACT_ARCHETYPE(a)->payload.action.details).dispatcher)
@@ -128,7 +128,7 @@ INLINE Array* ACT_PARAMLIST(REBACT *a) {
     ACT_ARCHETYPE(a)->payload.action.details
 
 // These are indices into the details array agreed upon by actions which have
-// the ACTION_FLAG_NATIVE set.
+// the CELL_FLAG_ACTION_NATIVE set.
 //
 #define IDX_NATIVE_BODY 0 // text string source code of native (for SOURCE)
 #define IDX_NATIVE_CONTEXT 1 // libRebol binds strings here (and lib)
@@ -194,11 +194,11 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 
 // RETURN in the last paramlist slot
 //
-#define ACTION_FLAG_RETURN FLAG_TYPE_SPECIFIC_BIT(0)
+#define CELL_FLAG_ACTION_RETURN FLAG_TYPE_SPECIFIC_BIT(0)
 
-// Uses the Eraser_Dispatcher() (implies ACTION_FLAG_RETURN + arity-0 RETURN)
+// Uses the Eraser_Dispatcher() (implies CELL_FLAG_ACTION_RETURN + arity-0 RETURN)
 //
-#define ACTION_FLAG_TRASHER FLAG_TYPE_SPECIFIC_BIT(1)
+#define CELL_FLAG_ACTION_TRASHER FLAG_TYPE_SPECIFIC_BIT(1)
 
 // DEFERS_LOOKBACK_ARG flag is a cached property, which tells you whether a
 // function defers its first real argument when used as a lookback.  Because
@@ -206,13 +206,13 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 // static for invocation via a plain word.  This property is calculated at
 // the time of Make_Action().
 //
-#define ACTION_FLAG_DEFERS_LOOKBACK FLAG_TYPE_SPECIFIC_BIT(2)
+#define CELL_FLAG_ACTION_DEFERS_LOOKBACK FLAG_TYPE_SPECIFIC_BIT(2)
 
 // This is another cached property, needed because lookahead/lookback is done
 // so frequently, and it's quicker to check a bit on the function than to
 // walk the parameter list every time that function is called.
 //
-#define ACTION_FLAG_QUOTES_FIRST_ARG FLAG_TYPE_SPECIFIC_BIT(3)
+#define CELL_FLAG_ACTION_QUOTES_FIRST_ARG FLAG_TYPE_SPECIFIC_BIT(3)
 
 // Native functions are flagged that their dispatcher represents a native in
 // order to say that their ACT_DETAILS() follow the protocol that the [0]
@@ -221,13 +221,13 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 // rebValue() etc. should consider for binding, in addition to lib.  A BLANK!
 // in the 1 slot means no additional consideration...bind to lib only.
 //
-#define ACTION_FLAG_NATIVE FLAG_TYPE_SPECIFIC_BIT(4)
+#define CELL_FLAG_ACTION_NATIVE FLAG_TYPE_SPECIFIC_BIT(4)
 
-#define ACTION_FLAG_UNUSED_5 FLAG_TYPE_SPECIFIC_BIT(5)
+#define CELL_FLAG_ACTION_UNUSED_5 FLAG_TYPE_SPECIFIC_BIT(5)
 
 // This flag is set when the native (e.g. extensions) can be unloaded
 //
-#define ACTION_FLAG_UNLOADABLE_NATIVE FLAG_TYPE_SPECIFIC_BIT(6)
+#define CELL_FLAG_ACTION_UNLOADABLE_NATIVE FLAG_TYPE_SPECIFIC_BIT(6)
 
 // An "invisible" function is one that does not touch its frame output cell,
 // leaving it completely alone.  This is how `10 comment ["hi"] + 20` can
@@ -238,16 +238,16 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 // quoted in soft-quoted positions.  This would require fetching something
 // that might not otherwise need to be fetched, to test the flag.  Review.
 //
-#define ACTION_FLAG_INVISIBLE FLAG_TYPE_SPECIFIC_BIT(7)
+#define CELL_FLAG_ACTION_INVISIBLE FLAG_TYPE_SPECIFIC_BIT(7)
 
 // ^--- !!! STOP AT FLAG_TYPE_SPECIFIC_BIT(7) !!! ---^
 
 // These are the flags which are scanned for and set during Make_Action
 //
 INLINE void Clear_Action_Cached_Flags(Cell *v) {
-    CLEAR_VAL_FLAG(v, ACTION_FLAG_DEFERS_LOOKBACK);
-    CLEAR_VAL_FLAG(v, ACTION_FLAG_QUOTES_FIRST_ARG);
-    CLEAR_VAL_FLAG(v, ACTION_FLAG_INVISIBLE);
+    Clear_Cell_Flag(v, ACTION_DEFERS_LOOKBACK);
+    Clear_Cell_Flag(v, ACTION_QUOTES_FIRST_ARG);
+    Clear_Cell_Flag(v, ACTION_INVISIBLE);
 }
 
 

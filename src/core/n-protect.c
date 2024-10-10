@@ -46,9 +46,9 @@ static void Protect_Key(VarList* context, REBLEN index, Flags flags)
     //
     if (flags & PROT_WORD) {
         if (flags & PROT_SET)
-            SET_VAL_FLAG(var, CELL_FLAG_PROTECTED);
+            Set_Cell_Flag(var, PROTECTED);
         else
-            CLEAR_VAL_FLAG(var, CELL_FLAG_PROTECTED);
+            Clear_Cell_Flag(var, PROTECTED);
     }
 
     if (flags & PROT_HIDE) {

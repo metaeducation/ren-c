@@ -301,7 +301,7 @@ INLINE void Set_Level_Detected_Fetch(
     // supposed to be freeing it or releasing it, then it must be proxied
     // into a place where the data will be safe long enough for lookback.
 
-    if (NOT_VAL_FLAG(L->value, NODE_FLAG_ROOT)) {
+    if (Not_Node_Root_Bit_Set(L->value)) {
         if (opt_lookback)
             *opt_lookback = L->value; // non-API values must be stable/GC-safe
         goto detect;
@@ -332,8 +332,8 @@ INLINE void Set_Level_Detected_Fetch(
         // The Level_Spare(L) is used as the GC-safe location proxied to.
         //
         Copy_Cell(Level_Spare(L), KNOWN(L->value));
-        if (GET_VAL_FLAG(L->value, VALUE_FLAG_EVAL_FLIP))
-            SET_VAL_FLAG(Level_Spare(L), VALUE_FLAG_EVAL_FLIP);
+        if (Get_Cell_Flag(L->value, EVAL_FLIP))
+            Set_Cell_Flag(Level_Spare(L), EVAL_FLIP);
         *opt_lookback = Level_Spare(L);
     }
 
@@ -945,11 +945,11 @@ INLINE void Reify_Va_To_Array_In_Level(
         assert(L->source->pending == END_NODE);
 
         do {
-            // may be a NULLED cell.  Preserve VALUE_FLAG_EVAL_FLIP flag.
+            // may be a NULLED cell.  Preserve CELL_FLAG_EVAL_FLIP flag.
             //
             Derelativize(PUSH(), L->value, L->specifier);
-            if (GET_VAL_FLAG(L->value, VALUE_FLAG_EVAL_FLIP))
-                SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
+            if (Get_Cell_Flag(L->value, EVAL_FLIP))
+                Set_Cell_Flag(TOP, EVAL_FLIP);
 
             Fetch_Next_In_Level(nullptr, L);
         } while (NOT_END(L->value));
@@ -1059,7 +1059,7 @@ INLINE REBIXO Eval_Va_Core(
 
     if (
         (flags & DO_FLAG_TO_END) // not just an EVALUATE, but a full DO
-        or (L->out->header.bits & OUT_MARKED_STALE) // just ELIDEs and COMMENTs
+        or Get_Cell_Flag(L->out, OUT_MARKED_STALE) // just ELIDEs and COMMENTs
     ){
         assert(IS_END(L->value));
         return END_FLAG;
@@ -1106,7 +1106,7 @@ INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
     assert(not THROWN(r)); // only L->out can return thrown cells
 
   #if !defined(NDEBUG)
-    if (NOT_VAL_FLAG(r, NODE_FLAG_ROOT)) {
+    if (Not_Node_Root_Bit_Set(r)) {
         printf("dispatcher returned non-API value not in OUT\n");
         printf("during ACTION!: %s\n", L->label_utf8);
         printf("`return OUT;` or use `RETURN (non_api_cell);`\n");
@@ -1118,6 +1118,6 @@ INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
     Copy_Cell(L->out, r);
-    if (NOT_VAL_FLAG(r, NODE_FLAG_MANAGED))
+    if (Not_Node_Managed(r))
         rebRelease(r);
 }

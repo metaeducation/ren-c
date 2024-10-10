@@ -267,8 +267,8 @@ void Do_Process_Action_Checks_Debug(Level* L) {
     }
 
     if (L->refine == ORDINARY_ARG) {
-        if (not (L->out->header.bits & OUT_MARKED_STALE))
-            assert(GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE));
+        if (Not_Cell_Flag(L->out, OUT_MARKED_STALE))
+            assert(GET_ACT_FLAG(phase, ACTION_INVISIBLE));
     }
     else
         assert(L->refine == LOOKBACK_ARG);
@@ -298,13 +298,13 @@ void Do_After_Action_Checks_Debug(Level* L) {
     // double checks any function marked with RETURN in the debug build,
     // so native return types are checked instead of just trusting the C.
     //
-    if (GET_ACT_FLAG(phase, ACTION_FLAG_RETURN)) {
+    if (GET_ACT_FLAG(phase, ACTION_RETURN)) {
         Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
         assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
         if (
             not TYPE_CHECK(typeset, VAL_TYPE(L->out))
             and not (
-                GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE)
+                GET_ACT_FLAG(phase, ACTION_INVISIBLE)
                 and Is_Nulled(L->out) // this happens with `do [return]`
             )
         ){
@@ -323,7 +323,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
 
     if (L->gotten) {
         if (L->gotten == Level_Shove(L->prior))
-            assert(GET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_INFIX));
+            assert(Get_Cell_Flag(Level_Shove(L->prior), INFIX_IF_ACTION));
         else {
             assert(Is_Word(L->value));
             assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);

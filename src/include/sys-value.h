@@ -199,7 +199,7 @@
             (v->header.bits & (
                 NODE_FLAG_CELL
                 | NODE_FLAG_FREE
-                | VALUE_FLAG_FALSEY // all the "bad" types are also falsey
+                | CELL_FLAG_FALSEY // all the "bad" types are also falsey
             )) == NODE_FLAG_CELL
         ){
             assert(VAL_TYPE_RAW(v) <= REB_MAX);
@@ -252,24 +252,24 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  VALUE FLAGS
+//  CELL FLAGS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-INLINE void SET_VAL_FLAG(Cell* v, uintptr_t f) {
-    v->header.bits |= f;
-}
+// const status is ignored when setting or clearing flags in the header.
+//
 
-INLINE bool GET_VAL_FLAG(const Cell* v, uintptr_t f) {
-    return did (v->header.bits & f);
-}
+#define Get_Cell_Flag(c,name) \
+    (((c)->header.bits & CELL_FLAG_##name) != 0)
 
-INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
-    v->header.bits &= ~f;
-}
+#define Not_Cell_Flag(c,name) \
+    (((c)->header.bits & CELL_FLAG_##name) == 0)
 
-#define NOT_VAL_FLAG(v,f) \
-    (not GET_VAL_FLAG((v), (f)))
+#define Set_Cell_Flag(c,name) \
+    m_cast(union HeaderUnion*, &(c)->header)->bits |= CELL_FLAG_##name
+
+#define Clear_Cell_Flag(c,name) \
+    m_cast(union HeaderUnion*, &(c)->header)->bits &= ~CELL_FLAG_##name
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -536,7 +536,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
         Assert_Cell_Writable(v, file, line);
 
         SECOND_BYTE(&v->header) = REB_0_END;  // only line in release build
-        v->header.bits |= VALUE_FLAG_FALSEY;  // speeds VAL_TYPE_Debug() check
+        v->header.bits |= CELL_FLAG_FALSEY;  // speeds VAL_TYPE_Debug() check
 
         TRACK_CELL_IF_DEBUG(v, file, line);
         return cast(Value*, v);
@@ -687,7 +687,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     (VAL_TYPE(v) == REB_MAX_NULLED)
 
 #define Init_Nulled(out) \
-    RESET_CELL_EXTRA((out), REB_MAX_NULLED, VALUE_FLAG_FALSEY)
+    RESET_CELL_EXTRA((out), REB_MAX_NULLED, CELL_FLAG_FALSEY)
 
 // !!! A theory was that the "evaluated" flag would help a function that took
 // both ~null~ and <end>, which are converted to nulls, distinguish what kind
@@ -696,10 +696,10 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 //
 #define Init_Endish_Nulled(out) \
     RESET_CELL_EXTRA((out), REB_MAX_NULLED, \
-        VALUE_FLAG_FALSEY | VALUE_FLAG_ENDISH)
+        CELL_FLAG_FALSEY | CELL_FLAG_ENDISH)
 
 INLINE bool Is_Endish_Nulled(const Cell* v) {
-    return Is_Nulled(v) and GET_VAL_FLAG(v, VALUE_FLAG_ENDISH);
+    return Is_Nulled(v) and Get_Cell_Flag(v, ENDISH);
 }
 
 
@@ -799,13 +799,13 @@ INLINE Value* Nothingify_Branched(Value* cell) {
     c_cast(const Value*, &PG_Blank_Value[0])
 
 #define Init_Blank(v) \
-    RESET_CELL_EXTRA((v), REB_BLANK, VALUE_FLAG_FALSEY)
+    RESET_CELL_EXTRA((v), REB_BLANK, CELL_FLAG_FALSEY)
 
 #ifdef DEBUG_UNREADABLE_BLANKS
     INLINE Value* Init_Unreadable_Debug(
         Cell* out, const char *file, int line
     ){
-        RESET_CELL_EXTRA_Debug(out, REB_BLANK, VALUE_FLAG_FALSEY, file, line);
+        RESET_CELL_EXTRA_Debug(out, REB_BLANK, CELL_FLAG_FALSEY, file, line);
         assert(out->extra.tick > 0);
         out->extra.tick = -out->extra.tick;
         return KNOWN(out);
@@ -868,7 +868,7 @@ INLINE Value* Nothingify_Branched(Value* cell) {
 INLINE void FAIL_IF_ERROR(const Cell* c);
 
 INLINE bool IS_TRUTHY(const Cell* v) {
-    if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
+    if (Get_Cell_Flag(v, FALSEY))
         return false;
     if (Is_Void(v))
         fail (Error_Void_Conditional_Raw());
@@ -881,7 +881,7 @@ INLINE bool IS_TRUTHY(const Cell* v) {
 
 
 #define Init_Logic(out,b) \
-    RESET_CELL_EXTRA((out), REB_LOGIC, (b) ? 0 : VALUE_FLAG_FALSEY)
+    RESET_CELL_EXTRA((out), REB_LOGIC, (b) ? 0 : CELL_FLAG_FALSEY)
 
 #define Init_True(out) \
     Init_Logic((out), true)
@@ -891,7 +891,7 @@ INLINE bool IS_TRUTHY(const Cell* v) {
 
 INLINE bool VAL_LOGIC(const Cell* v) {
     assert(Is_Logic(v));
-    return NOT_VAL_FLAG((v), VALUE_FLAG_FALSEY);
+    return Not_Cell_Flag((v), FALSEY);
 }
 
 
@@ -1390,7 +1390,7 @@ INLINE Value* Copy_Cell(Cell* out, const Value* v)
 
 
 // When doing something like a COPY of an OBJECT!, the var cells have to be
-// handled specially, e.g. by preserving VALUE_FLAG_INFIX.
+// handled specially, e.g. by preserving the checked status.
 //
 // !!! What about other non-copyable properties like CELL_FLAG_PROTECTED?
 //
@@ -1402,7 +1402,7 @@ INLINE Value* Move_Var(Cell* out, const Value* v)
     // the whole potential reification process...double-set header for now.)
 
     Copy_Cell(out, v);
-    out->header.bits |= (v->header.bits & ARG_MARKED_CHECKED);
+    out->header.bits |= (v->header.bits & CELL_FLAG_ARG_MARKED_CHECKED);
     return KNOWN(out);
 }
 

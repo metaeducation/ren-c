@@ -121,8 +121,8 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     for (; count < len; ++count, ++src, ++dest) {
         Derelativize(dest, src, specifier);
         if (flags & ARRAY_FLAG_NULLEDS_LEGAL) {
-            if (GET_VAL_FLAG(src, VALUE_FLAG_EVAL_FLIP))
-                SET_VAL_FLAG(dest, VALUE_FLAG_EVAL_FLIP);
+            if (Get_Cell_Flag(src, EVAL_FLIP))
+                Set_Cell_Flag(dest, EVAL_FLIP);
         }
     }
 

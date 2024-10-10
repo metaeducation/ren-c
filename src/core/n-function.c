@@ -216,7 +216,7 @@ DECLARE_NATIVE(return)
     assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
 
     if (
-        GET_ACT_FLAG(target_fun, ACTION_FLAG_INVISIBLE)
+        GET_ACT_FLAG(target_fun, ACTION_INVISIBLE)
         and Is_Endish_Nulled(v)
     ){
         // The only legal way invisibles can use RETURN is with no argument.
@@ -540,7 +540,7 @@ DECLARE_NATIVE(enclose)
     rootparam->payload.action.paramlist = paramlist;
 
     // !!! We don't want to inherit the flags of the original action, such
-    // as ACTION_FLAG_NATIVE.  For now just clear out all the type-specific
+    // as CELL_FLAG_ACTION_NATIVE.  For now just clear out all the type-specific
     // bits and let Make_Action() cache the flags it needs.
     //
     CUSTOM_BYTE(rootparam) = 0;

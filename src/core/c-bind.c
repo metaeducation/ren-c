@@ -550,8 +550,8 @@ void Virtual_Bind_Deep_To_New_Context(
             TYPE_SET(key, REB_TS_UNBINDABLE);
             TYPE_SET(key, REB_TS_HIDDEN);
             Derelativize(var, item, specifier);
-            SET_VAL_FLAG(var, CELL_FLAG_PROTECTED);
-            SET_VAL_FLAG(var, VAR_MARKED_REUSE);
+            Set_Cell_Flag(var, PROTECTED);
+            Set_Cell_Flag(var, VAR_MARKED_REUSE);
 
             // We don't want to stop `for-each [:x :x] ...` necessarily,
             // because if we're saying we're using the existing binding they
@@ -636,9 +636,9 @@ void Virtual_Bind_Deep_To_New_Context(
         if (stored == 0)
             assert(duplicate);
         else if (stored > 0)
-            assert(NOT_VAL_FLAG(var, NODE_FLAG_MARKED));
+            assert(Not_Node_Marked(var));
         else
-            assert(GET_VAL_FLAG(var, NODE_FLAG_MARKED));
+            assert(Is_Node_Marked(var));
     }
 
     SHUTDOWN_BINDER(&binder);

@@ -290,7 +290,7 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
         // a limited sense.)
         //
         assert(value == Datatype_From_Kind(cast(enum Reb_Kind, n)));
-        SET_VAL_FLAG(Varlist_Slot(Lib_Context, n), CELL_FLAG_PROTECTED);
+        Set_Cell_Flag(Varlist_Slot(Lib_Context, n), PROTECTED);
 
         Append_Value(catalog, KNOWN(word));
     }
@@ -362,7 +362,7 @@ DECLARE_NATIVE(generic)
         IDX_NATIVE_MAX // details array capacity
     );
 
-    SET_VAL_FLAG(ACT_ARCHETYPE(generic), ACTION_FLAG_NATIVE);
+    Set_Cell_Flag(ACT_ARCHETYPE(generic), ACTION_NATIVE);
 
     Array* details = ACT_DETAILS(generic);
     Init_Word(Array_At(details, IDX_NATIVE_BODY), VAL_WORD_CANON(ARG(verb)));
@@ -610,7 +610,7 @@ Value* Make_Native(
         IDX_NATIVE_MAX // details array capacity
     );
 
-    SET_VAL_FLAG(ACT_ARCHETYPE(act), ACTION_FLAG_NATIVE);
+    Set_Cell_Flag(ACT_ARCHETYPE(act), ACTION_NATIVE);
 
     Array* details = ACT_DETAILS(act);
 
@@ -638,7 +638,7 @@ Value* Make_Native(
     Value* var = Append_Context(Cell_Varlist(module), name, nullptr);
     Init_Action_Unbound(var, act);
     if (infix)
-        SET_VAL_FLAG(var, VALUE_FLAG_INFIX);
+        Set_Cell_Flag(var, INFIX_IF_ACTION);
 
     return var;
 }
@@ -708,7 +708,7 @@ static Array* Startup_Natives(const Value* boot_natives)
         //
         Erase_Cell(&Natives[n]);
         Copy_Cell(&Natives[n], native);
-        SET_VAL_FLAG(&Natives[n], CELL_FLAG_PROTECTED);
+        Set_Cell_Flag(&Natives[n], PROTECTED);
 
         Value* catalog_item = Copy_Cell(Alloc_Tail_Array(catalog), name);
         CHANGE_VAL_TYPE_BITS(catalog_item, REB_WORD);
@@ -882,7 +882,7 @@ static void Init_Root_Vars(void)
     RESET_CELL_EXTRA(
         &PG_Bounce_Redo_Unchecked[0],
         REB_R_REDO,
-        VALUE_FLAG_FALSEY // understood by Eval_Core_Throws() as "unchecked"
+        CELL_FLAG_FALSEY // understood by Eval_Core_Throws() as "unchecked"
     );
     Poison_Cell(&PG_Bounce_Redo_Unchecked[1]);
 
@@ -891,7 +891,7 @@ static void Init_Root_Vars(void)
     RESET_CELL_EXTRA(
         &PG_Bounce_Redo_Checked[0],
         REB_R_REDO,
-        0 // no VALUE_FLAG_FALSEY is taken by Eval_Core_Throws() as "checked"
+        0 // no CELL_FLAG_FALSEY is taken by Eval_Core_Throws() as "checked"
     );
     Poison_Cell(&PG_Bounce_Redo_Checked[1]);
 

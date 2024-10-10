@@ -18,7 +18,7 @@ REBOL [
         `1 + 2 * 3` would be 9.
 
         Ren-C does not have an "OP!" function type, it just has ACTION!, but
-        cells can carry VALUE_FLAG_INFIX.  This indicates that the function is
+        cells can carry CELL_FLAG_INFIX_IF_ACTION.  Then when the function is
         dispatched it should get is first parameter from the left.  However it
         will obey the parameter conventions of the original function (including
         quoting).  Hence since ADD has normal parameter conventions,

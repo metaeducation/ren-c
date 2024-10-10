@@ -366,7 +366,7 @@ static Bounce Loop_Number_Common(
 // a flag to indicate a dereference is necessary.
 //
 Value* Real_Var_From_Pseudo(Value* pseudo_var) {
-    if (NOT_VAL_FLAG(pseudo_var, VAR_MARKED_REUSE))
+    if (Not_Cell_Flag(pseudo_var, VAR_MARKED_REUSE))
         return pseudo_var;
 
     // Note: these variables are fetched across running arbitrary user code.
@@ -1134,8 +1134,8 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         if (res->broke) { // cleanup markers, don't do removals
             Cell* temp = Cell_List_At(res->data);
             for (; NOT_END(temp); ++temp) {
-                if (GET_VAL_FLAG(temp, NODE_FLAG_MARKED))
-                    CLEAR_VAL_FLAG(temp, NODE_FLAG_MARKED);
+                if (Is_Node_Marked(temp))
+                    Clear_Node_Marked_Bit(temp);
             }
             return 0;
         }

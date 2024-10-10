@@ -288,7 +288,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     // when an `if (Do_XXX_Throws())` branch was taken and when the throw
     // should have been caught up the stack (before any more calls made).
     //
-    assert(not (v->header.bits & VALUE_FLAG_THROWN));
+    assert(Not_Cell_Flag(v, THROW_SIGNAL));
 
     // This switch is done via contiguous REB_XXX values, in order to
     // facilitate use of a "jump table optimization":
@@ -427,7 +427,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
                 // references at once), the data pointers in all but the
                 // shared singular value are nullptr.
                 //
-                if (GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC))
+                if (Get_Cell_Flag(v, HANDLE_CFUNC))
                     assert(
                         Is_CFunction_Corrupt_Debug(v->payload.handle.data.cfunc)
                     );
@@ -1114,7 +1114,7 @@ static void Mark_Level_Stack_Deep(void)
         if (not L->gotten)
             NOOP;
         else if (L->gotten == Level_Shove(L)) {
-            assert(GET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_INFIX));
+            assert(Get_Cell_Flag(Level_Shove(L), INFIX_IF_ACTION));
             Queue_Mark_Value_Deep(Level_Shove(L));
         }
         else

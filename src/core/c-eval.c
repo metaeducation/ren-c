@@ -93,7 +93,7 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
 
     UPDATE_EXPRESSION_START(L); // !!! See LVL_INDEX() for caveats
 
-    L->out->header.bits |= OUT_MARKED_STALE;
+    Set_Cell_Flag(L->out, OUT_MARKED_STALE);
     return false;
 }
 
@@ -112,11 +112,11 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
 // Either we're NOT evaluating and there's NO special exemption, or we ARE
 // evaluating and there IS a special exemption on the value saying not to.
 //
-// (Note: DO_FLAG_EXPLICIT_EVALUATE is same bit as VALUE_FLAG_EVAL_FLIP)
+// (Note: DO_FLAG_EXPLICIT_EVALUATE is same bit as CELL_FLAG_EVAL_FLIP)
 //
 #define EVALUATING(v) \
     ((L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE) \
-        == ((v)->header.bits & VALUE_FLAG_EVAL_FLIP))
+        == ((v)->header.bits & CELL_FLAG_EVAL_FLIP))
 
 
 #ifdef DEBUG_COUNT_TICKS
@@ -206,12 +206,12 @@ INLINE void Finalize_Arg(
             fail (Error_No_Arg(L_state, param));
 
         Init_Endish_Nulled(arg);
-        SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
+        Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
         return;
     }
 
   #if defined(DEBUG_STALE_ARGS) // see notes on flag definition
-    assert(NOT_VAL_FLAG(arg, ARG_MARKED_CHECKED));
+    assert(Not_Cell_Flag(arg, ARG_MARKED_CHECKED));
   #endif
 
     assert(
@@ -235,7 +235,7 @@ INLINE void Finalize_Arg(
             Init_Blank(refine); // can't re-enable...
 
             Init_Nulled(arg);  // canonize revoke state to null
-            SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
+            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
 
             refine = ARG_TO_REVOKED_REFINEMENT;
             return; // don't type check for optionality
@@ -246,7 +246,7 @@ INLINE void Finalize_Arg(
             // BLANK! means refinement already revoked, null is okay
             // false means refinement was never in use, so also okay
             //
-            SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
+            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             return;
         }
 
@@ -263,14 +263,14 @@ INLINE void Finalize_Arg(
     }
 
     if (Is_Void(arg) and TYPE_CHECK(param, REB_TS_NOOP_IF_VOID)) {
-        SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
+        Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
         LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
         return;
     }
 
     if (not Is_Param_Variadic(param)) {
         if (TYPE_CHECK(param, VAL_TYPE(arg))) {
-            SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
+            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             return;
         }
 
@@ -307,7 +307,7 @@ INLINE void Finalize_Arg(
     }
     else
         arg->payload.varargs.phase = Level_Phase(L_state);
-    SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
+    Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
 }
 
 INLINE void Finalize_Current_Arg(Level* L) {
@@ -333,7 +333,7 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
     for (; NOT_END(L->param); ++L->param, ++L->special) {
         if (
             L->special != L->param
-            and GET_VAL_FLAG(L->special, ARG_MARKED_CHECKED)
+            and Get_Cell_Flag(L->special, ARG_MARKED_CHECKED)
         ){
             continue;
         }
@@ -357,13 +357,13 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
 INLINE void Expire_Out_Cell_Unless_Invisible(Level* L) {
     REBACT *phase = LVL_PHASE_OR_DUMMY(L);
     if (phase != PG_Dummy_Action)
-        if (GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE)) {
-            if (not GET_ACT_FLAG(L->original, ACTION_FLAG_INVISIBLE))
+        if (GET_ACT_FLAG(phase, ACTION_INVISIBLE)) {
+            if (not GET_ACT_FLAG(L->original, ACTION_INVISIBLE))
                 fail ("All invisible action phases must be invisible");
             return;
         }
 
-    if (GET_ACT_FLAG(L->original, ACTION_FLAG_INVISIBLE))
+    if (GET_ACT_FLAG(L->original, ACTION_INVISIBLE))
         return;
 
   #ifdef DEBUG_UNREADABLE_BLANKS
@@ -380,12 +380,12 @@ INLINE void Expire_Out_Cell_Unless_Invisible(Level* L) {
     // !!! Should natives be able to count on L->out being END?  This was
     // at one time the case, but this code was in one instance.
     //
-    if (not GET_ACT_FLAG(LVL_PHASE_OR_DUMMY(L), ACTION_FLAG_INVISIBLE)) {
+    if (not GET_ACT_FLAG(LVL_PHASE_OR_DUMMY(L), ACTION_INVISIBLE)) {
         if (SPORADICALLY(2))
             Init_Unreadable(L->out);
         else
             SET_END(L->out);
-        L->out->header.bits |= OUT_MARKED_STALE;
+        Set_Cell_Flag(L->out, OUT_MARKED_STALE);
     }
   #endif
 }
@@ -479,7 +479,7 @@ bool Eval_Core_Throws(Level* const L)
         if (L->flags.bits & DO_FLAG_PROCESS_ACTION) {
             assert(L->refine == ORDINARY_ARG); // !!! should APPLY do infix?
 
-            L->out->header.bits |= OUT_MARKED_STALE;
+            Set_Cell_Flag(L->out, OUT_MARKED_STALE);
 
             L->flags.bits &= ~DO_FLAG_PROCESS_ACTION;
             goto process_action;
@@ -556,7 +556,7 @@ bool Eval_Core_Throws(Level* const L)
 
     assert(not L->gotten); // Fetch_Next_In_Level() cleared it
     L->gotten = Try_Get_Opt_Var(L->value, L->specifier);
-    if (not L->gotten or NOT_VAL_FLAG(L->gotten, VALUE_FLAG_INFIX))
+    if (not L->gotten or Not_Cell_Flag(L->gotten, INFIX_IF_ACTION))
         goto give_up_backward_quote_priority;
 
     // SHOVE says it quotes its left argument, even if it doesn't know that
@@ -614,13 +614,13 @@ bool Eval_Core_Throws(Level* const L)
         // Even if the function isn't infix, say it is.  This permits things
         // like `5 + 5 >- subtract 7` to give 3.
         //
-        SET_VAL_FLAG(Level_Shove(L), VALUE_FLAG_INFIX);
+        Set_Cell_Flag(Level_Shove(L), INFIX_IF_ACTION);
         L->gotten = Level_Shove(L);
     }
 
     // It's known to be an ACTION! since only actions can be infix...
     //
-    if (NOT_VAL_FLAG(L->gotten, ACTION_FLAG_QUOTES_FIRST_ARG))
+    if (Not_Cell_Flag(L->gotten, ACTION_QUOTES_FIRST_ARG))
         goto give_up_backward_quote_priority;
 
     // It's a backward quoter!  But...before allowing it to try, first give an
@@ -649,8 +649,8 @@ bool Eval_Core_Throws(Level* const L)
         if (
             current_gotten
             and Is_Action(current_gotten)
-            and NOT_VAL_FLAG(current_gotten, VALUE_FLAG_INFIX)
-            and GET_VAL_FLAG(current_gotten, ACTION_FLAG_QUOTES_FIRST_ARG)
+            and Not_Cell_Flag(current_gotten, INFIX_IF_ACTION)
+            and Get_Cell_Flag(current_gotten, ACTION_QUOTES_FIRST_ARG)
         ){
             Seek_First_Param(L, VAL_ACTION(current_gotten));
             if (Is_Param_Skippable(L->param))
@@ -694,8 +694,8 @@ bool Eval_Core_Throws(Level* const L)
             if (
                 var_at
                 and Is_Action(var_at)
-                and NOT_VAL_FLAG(var_at, VALUE_FLAG_INFIX)
-                and GET_VAL_FLAG(var_at, ACTION_FLAG_QUOTES_FIRST_ARG)
+                and Not_Cell_Flag(var_at, INFIX_IF_ACTION)
+                and Get_Cell_Flag(var_at, ACTION_QUOTES_FIRST_ARG)
             ){
                 goto give_up_backward_quote_priority;
             }
@@ -707,8 +707,8 @@ bool Eval_Core_Throws(Level* const L)
         //
         // A literal ACTION! in a BLOCK! may also forward quote
         //
-        assert(NOT_VAL_FLAG(current, VALUE_FLAG_INFIX)); // not WORD!/PATH!
-        if (GET_VAL_FLAG(current, ACTION_FLAG_QUOTES_FIRST_ARG))
+        assert(Not_Cell_Flag(current, INFIX_IF_ACTION)); // not WORD!/PATH!
+        if (Get_Cell_Flag(current, ACTION_QUOTES_FIRST_ARG))
             goto give_up_backward_quote_priority;
     }
 
@@ -769,7 +769,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case REB_ACTION: {
-        if (GET_VAL_FLAG(current, VALUE_FLAG_INFIX))
+        if (Get_Cell_Flag(current, INFIX_IF_ACTION))
             fail ("Bootstrap EXE only dispatches infix from WORD!");
 
         if (not EVALUATING(current))
@@ -886,7 +886,7 @@ bool Eval_Core_Throws(Level* const L)
                 // (jumping to unspecialized_refinement will take care of it)
 
                 if (Is_Nulled(L->special)) {
-                    assert(NOT_VAL_FLAG(L->special, ARG_MARKED_CHECKED));
+                    assert(Not_Cell_Flag(L->special, ARG_MARKED_CHECKED));
                     goto unspecialized_refinement; // second most common
                 }
 
@@ -903,7 +903,7 @@ bool Eval_Core_Throws(Level* const L)
                 // since at minimum it needs to accept any other refinement
                 // name to control it, but it could be considered.
                 //
-                if (NOT_VAL_FLAG(L->special, ARG_MARKED_CHECKED)) {
+                if (Not_Cell_Flag(L->special, ARG_MARKED_CHECKED)) {
                     if (IS_FALSEY(L->special)) // !!! error on void, needed?
                         goto unused_refinement;
 
@@ -996,14 +996,14 @@ bool Eval_Core_Throws(Level* const L)
 
                 L->refine = ARG_TO_UNUSED_REFINEMENT; // "don't consume"
                 Init_Blank(L->arg);
-                SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
               used_refinement:;
 
                 assert(not Is_Pointer_Corrupt_Debug(L->refine)); // must be set
                 Init_Refinement(L->arg, Cell_Parameter_Symbol(L->param));
-                SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
 
@@ -1021,14 +1021,14 @@ bool Eval_Core_Throws(Level* const L)
             switch (pclass) {
               case PARAM_CLASS_LOCAL:
                 Init_Nothing(L->arg);  // !!! L->special?
-                SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
               case PARAM_CLASS_RETURN:
                 assert(Cell_Parameter_Id(L->param) == SYM_RETURN);
                 Copy_Cell(L->arg, NAT_VALUE(return)); // !!! L->special?
                 INIT_BINDING(L->arg, L->varlist);
-                SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
               default:
@@ -1040,7 +1040,7 @@ bool Eval_Core_Throws(Level* const L)
             if (L->refine == SKIPPING_REFINEMENT_ARGS)
                 goto skip_this_arg_for_now;
 
-            if (GET_VAL_FLAG(L->special, ARG_MARKED_CHECKED)) {
+            if (Get_Cell_Flag(L->special, ARG_MARKED_CHECKED)) {
 
     //=//// SPECIALIZED OR OTHERWISE TYPECHECKED ARG //////////////////////=//
 
@@ -1072,7 +1072,7 @@ bool Eval_Core_Throws(Level* const L)
                     );
 
                     Copy_Cell(L->arg, L->special); // won't copy the bit
-                    SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                    Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 }
                 goto continue_arg_loop;
             }
@@ -1099,7 +1099,7 @@ bool Eval_Core_Throws(Level* const L)
                 // Overwrite if !(DO_FLAG_FULLY_SPECIALIZED) faster than check
                 //
                 Init_Nulled(L->arg);
-                SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
 
@@ -1112,7 +1112,7 @@ bool Eval_Core_Throws(Level* const L)
                 //
                 L->refine = ORDINARY_ARG;
 
-                if (L->out->header.bits & OUT_MARKED_STALE) {
+                if (Get_Cell_Flag(L->out, OUT_MARKED_STALE)) {
                     //
                     // Seeing an END in the output slot could mean that there
                     // was really "nothing" to the left, or it could be a
@@ -1131,7 +1131,7 @@ bool Eval_Core_Throws(Level* const L)
                         RESET_VAL_HEADER_EXTRA(
                             L->arg,
                             REB_VARARGS,
-                            VARARGS_FLAG_INFIX // in case anyone cares
+                            CELL_FLAG_VARARGS_INFIX // in case anyone cares
                         );
                         INIT_BINDING(L->arg, EMPTY_ARRAY); // feed finished
 
@@ -1143,7 +1143,7 @@ bool Eval_Core_Throws(Level* const L)
                         fail (Error_No_Arg(L, L->param));
 
                     Init_Endish_Nulled(L->arg);
-                    SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                    Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                     goto continue_arg_loop;
                 }
 
@@ -1189,7 +1189,7 @@ bool Eval_Core_Throws(Level* const L)
                 // Now that we've gotten the argument figured out, make a
                 // singular array to feed it to the variadic.
                 //
-                // !!! See notes on VARARGS_FLAG_INFIX about how this is
+                // !!! See notes on CELL_FLAG_VARARGS_INFIX about how this is
                 // somewhat shady, as any evaluations happen *before* the
                 // TAKE on the VARARGS.  Experimental feature.
                 //
@@ -1208,7 +1208,7 @@ bool Eval_Core_Throws(Level* const L)
                     RESET_VAL_HEADER_EXTRA(
                         L->arg,
                         REB_VARARGS,
-                        VARARGS_FLAG_INFIX  // don't evaluate *again* on TAKE
+                        CELL_FLAG_VARARGS_INFIX  // don't evaluate *again* on TAKE
                     );
                     INIT_BINDING(L->arg, array1);
                 }
@@ -1260,7 +1260,7 @@ bool Eval_Core_Throws(Level* const L)
                 if (Is_Level_Gotten_Shoved(L)) {
                     Erase_Cell(Level_Shove(child));
                     Copy_Cell(Level_Shove(child), L->gotten);
-                    SET_VAL_FLAG(Level_Shove(child), VALUE_FLAG_INFIX);
+                    Set_Cell_Flag(Level_Shove(child), INFIX_IF_ACTION);
                     L->gotten = Level_Shove(child);
                 }
 
@@ -1293,7 +1293,7 @@ bool Eval_Core_Throws(Level* const L)
                     fail (Error_No_Arg(L, L->param));
 
                 Init_Endish_Nulled(L->arg);
-                SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
 
@@ -1341,11 +1341,11 @@ bool Eval_Core_Throws(Level* const L)
                     if (not TYPE_CHECK(L->param, VAL_TYPE(L->value))) {
                         assert(Is_Param_Endable(L->param));
                         Init_Endish_Nulled(L->arg);
-                        SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                        Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                         goto continue_arg_loop;
                     }
                     Quote_Next_In_Level(L->arg, L);
-                    SET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED);
+                    Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                     goto continue_arg_loop;
                 }
                 Quote_Next_In_Level(L->arg, L);
@@ -1394,7 +1394,7 @@ bool Eval_Core_Throws(Level* const L)
 
           continue_arg_loop:;
 
-            assert(GET_VAL_FLAG(L->arg, ARG_MARKED_CHECKED));
+            assert(Get_Cell_Flag(L->arg, ARG_MARKED_CHECKED));
             continue;
 
           skip_this_arg_for_now:;
@@ -1510,7 +1510,7 @@ bool Eval_Core_Throws(Level* const L)
       }
 
         if (r == L->out) {
-            assert(not (L->out->header.bits & OUT_MARKED_STALE));
+            assert(Not_Cell_Flag(L->out, OUT_MARKED_STALE));
             assert(not THROWN(L->out));
         }
         else if (not r) { // API and internal code can both return `nullptr`
@@ -1617,7 +1617,7 @@ bool Eval_Core_Throws(Level* const L)
             // run the L->phase again.  The dispatcher may have changed the
             // value of what L->phase is, for instance.
 
-            if (GET_VAL_FLAG(r, VALUE_FLAG_FALSEY)) // BOUNCE_REDO_UNCHECKED
+            if (Get_Cell_Flag(r, FALSEY)) // BOUNCE_REDO_UNCHECKED
                 goto redo_unchecked;
 
           redo_checked:; // BOUNCE_REDO_CHECKED
@@ -1632,13 +1632,13 @@ bool Eval_Core_Throws(Level* const L)
             goto process_action;
 
           case REB_R_INVISIBLE: {
-            assert(GET_ACT_FLAG(Level_Phase(L), ACTION_FLAG_INVISIBLE));
+            assert(GET_ACT_FLAG(Level_Phase(L), ACTION_INVISIBLE));
 
             // !!! Ideally we would check that L->out hadn't changed, but
             // that would require saving the old value somewhere...
 
             if (
-                not (L->out->header.bits & OUT_MARKED_STALE)
+                Not_Cell_Flag(L->out, OUT_MARKED_STALE)
                 or IS_END(L->value)
             ){
                 goto skip_output_check;
@@ -1743,12 +1743,12 @@ bool Eval_Core_Throws(Level* const L)
             // Note: The usual dispatch of infix functions is not via a
             // REB_WORD in this switch, it's by some code at the end of
             // the switch.  So you only see infix in cases like `(+ 1 2)`,
-            // or after ACTION_FLAG_INVISIBLE e.g. `10 comment "hi" + 20`.
+            // or after CELL_FLAG_ACTION_INVISIBLE e.g. `10 comment "hi" + 20`.
             //
             Begin_Action(
                 L,
                 Cell_Word_Symbol(current), // use word as stack frame label
-                GET_VAL_FLAG(current_gotten, VALUE_FLAG_INFIX)
+                Get_Cell_Flag(current_gotten, INFIX_IF_ACTION)
                     ? LOOKBACK_ARG
                     : ORDINARY_ARG
             );
@@ -1951,8 +1951,8 @@ bool Eval_Core_Throws(Level* const L)
             // requires overhaul of the R3-Alpha path implementation.
             //
             if (
-                GET_VAL_FLAG(L->out, ACTION_FLAG_INVISIBLE)
-                or GET_VAL_FLAG(L->out, VALUE_FLAG_INFIX)
+                Get_Cell_Flag(L->out, ACTION_INVISIBLE)
+                or Get_Cell_Flag(L->out, INFIX_IF_ACTION)
             ){
                 fail ("Use `>-` to shove left infix operands into PATH!s");
             }
@@ -2154,7 +2154,7 @@ bool Eval_Core_Throws(Level* const L)
 //
 // NULLs are not an ANY-VALUE!.  Usually a DO shouldn't be able to see them.
 // An exception is in API calls, such as `rebValue("null?", some_null)`.  That
-// is legal due to VALUE_FLAG_EVAL_FLIP, which avoids "double evaluation",
+// is legal due to CELL_FLAG_EVAL_FLIP, which avoids "double evaluation",
 // and is used by the API when constructing runs of values from C va_args.
 //
 // Another way the evaluator can see NULL is EVAL, such as `eval first []`.
@@ -2203,7 +2203,7 @@ bool Eval_Core_Throws(Level* const L)
     // waits for `1 + 2` to finish.  This is because the right hand argument
     // of math operations tend to be declared #tight.
     //
-    // Slightly more nuanced is why ACTION_FLAG_INVISIBLE functions have to be
+    // Slightly more nuanced is why CELL_FLAG_ACTION_INVISIBLE functions have to be
     // considered in the lookahead also.  Consider this case:
     //
     //    evaluate/set [1 + 2 * comment ["hi"] 3 4 / 5] 'val
@@ -2237,7 +2237,7 @@ bool Eval_Core_Throws(Level* const L)
         // Tried to SHOVE, and didn't hit a situation like `add >- + 1`.  So
         // now the shoving process falls through, as in `10 >- + 1`.
         //
-        assert(NOT_VAL_FLAG(L->gotten, ACTION_FLAG_QUOTES_FIRST_ARG));
+        assert(Not_Cell_Flag(L->gotten, ACTION_QUOTES_FIRST_ARG));
         goto post_switch_shove_gotten;
     }
 
@@ -2292,7 +2292,7 @@ bool Eval_Core_Throws(Level* const L)
         // !!! a particularly egregious hack in EVAL-INFIX lets us simulate
         // infix for a function whose value is not infix.  This means the
         // value in L->gotten isn't the fetched function, but the function
-        // plus a VALUE_FLAG_INFIX.  We discern this hacky case by noting
+        // plus CELL_FLAG_INFIX_IF_ACTION. Discern this hacky case by noting
         // if L->u.defer.arg is precisely equal to BLANK_VALUE.
         //
         assert(
@@ -2311,8 +2311,8 @@ bool Eval_Core_Throws(Level* const L)
     // unbound word).  It'll be an error, but that code path raises it for us.
 
     if (
-        not L->gotten // note that only ACTIONs have VALUE_FLAG_INFIX
-        or NOT_VAL_FLAG(VAL(L->gotten), VALUE_FLAG_INFIX)
+        not L->gotten // note that only ACTIONs have CELL_FLAG_INFIX_IF_ACTION
+        or Not_Cell_Flag(VAL(L->gotten), INFIX_IF_ACTION)
     ){
       lookback_quote_too_late:; // run as if starting new expression
 
@@ -2327,7 +2327,7 @@ bool Eval_Core_Throws(Level* const L)
         if (
             L->gotten
             and Is_Action(VAL(L->gotten))
-            and GET_VAL_FLAG(VAL(L->gotten), ACTION_FLAG_INVISIBLE)
+            and Get_Cell_Flag(VAL(L->gotten), ACTION_INVISIBLE)
         ){
             // Even if not EVALUATE, we do not want START_NEW_EXPRESSION on
             // "invisible" functions.  e.g. `do [1 + 2 comment "hi"]` should
@@ -2362,7 +2362,7 @@ bool Eval_Core_Throws(Level* const L)
 
 //=//// IT'S INFIX (MAY BE "INVISIBLE") ///////////////////////////////////=//
 
-    if (GET_VAL_FLAG(L->gotten, ACTION_FLAG_QUOTES_FIRST_ARG)) {
+    if (Get_Cell_Flag(L->gotten, ACTION_QUOTES_FIRST_ARG)) {
         //
         // Left-quoting by infix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
@@ -2377,11 +2377,11 @@ bool Eval_Core_Throws(Level* const L)
         goto lookback_quote_too_late;
     }
 
-  post_switch_shove_gotten:; // assert(!ACTION_FLAG_QUOTES_FIRST_ARG) pre-goto
+  post_switch_shove_gotten:; // assert(!CELL_FLAG_ACTION_QUOTES_FIRST_ARG) pre-goto
 
     if (
         (L->flags.bits & DO_FLAG_NO_LOOKAHEAD)
-        and NOT_VAL_FLAG(L->gotten, ACTION_FLAG_INVISIBLE)
+        and Not_Cell_Flag(L->gotten, ACTION_INVISIBLE)
     ){
         // Don't do infix lookahead if asked *not* to look.  See the
         // PARAM_CLASS_TIGHT parameter convention for the use of this, as
@@ -2391,7 +2391,7 @@ bool Eval_Core_Throws(Level* const L)
         if (Is_Level_Gotten_Shoved(L)) {
             Erase_Cell(Level_Shove(L->prior));
             Copy_Cell(Level_Shove(L->prior), L->gotten);
-            SET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_INFIX);
+            Set_Cell_Flag(Level_Shove(L->prior), INFIX_IF_ACTION);
             L->gotten = Level_Shove(L->prior);
         }
         goto finished;
@@ -2412,7 +2412,7 @@ bool Eval_Core_Throws(Level* const L)
     // unlikely such functions would want to run before deferred infix.
     //
     if (
-        GET_VAL_FLAG(L->gotten, ACTION_FLAG_DEFERS_LOOKBACK)
+        Get_Cell_Flag(L->gotten, ACTION_DEFERS_LOOKBACK)
         and (L->flags.bits & DO_FLAG_FULFILLING_ARG)
         and not L->prior->u.defer.arg
         and not Is_Param_Endable(L->prior->param)
@@ -2431,7 +2431,7 @@ bool Eval_Core_Throws(Level* const L)
         if (Is_Level_Gotten_Shoved(L)) {
             Erase_Cell(Level_Shove(L->prior));
             Copy_Cell(Level_Shove(L->prior), L->gotten);
-            SET_VAL_FLAG(Level_Shove(L->prior), VALUE_FLAG_INFIX);
+            Set_Cell_Flag(Level_Shove(L->prior), INFIX_IF_ACTION);
             L->gotten = Level_Shove(L->prior);
         }
 
@@ -2489,7 +2489,7 @@ bool Eval_Core_Throws(Level* const L)
         & (L->flags.bits & DO_FLAG_PRESERVE_STALE)
     ));
     if (not (L->flags.bits & DO_FLAG_PRESERVE_STALE))
-        L->out->header.bits &= ~OUT_MARKED_STALE;
+        Clear_Cell_Flag(L->out, OUT_MARKED_STALE);
 
   #if !defined(NDEBUG)
     Eval_Core_Exit_Checks_Debug(L); // will get called unless a fail() longjmps

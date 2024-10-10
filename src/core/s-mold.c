@@ -360,7 +360,7 @@ void Mold_Array_At(
 
     Cell* item = Array_At(a, index);
     while (NOT_END(item)) {
-        if (GET_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE)) {
+        if (Get_Cell_Flag(item, NEWLINE_BEFORE)) {
            if (not indented and (sep[1] != '\0')) {
                 ++mo->indent;
                 indented = true;
@@ -381,7 +381,7 @@ void Mold_Array_At(
 
         if (sep[0] == '/')
             Append_Codepoint(mo->utf8flex, '/'); // !!! ignores newline
-        else if (NOT_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE))
+        else if (Not_Cell_Flag(item, NEWLINE_BEFORE))
             Append_Codepoint(mo->utf8flex, ' ');
     }
 

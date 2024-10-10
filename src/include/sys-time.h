@@ -28,18 +28,18 @@
 //
 //
 
-// `DATE_FLAG_HAS_TIME` answers whether a date's Reb_Time payload is valid.
+// `CELL_FLAG_DATE_HAS_TIME` answers whether a date's Reb_Time payload is valid.
 // All dates have REBYMD information in their ->extra field, but not all
 // of them also have associated time information.
 //
-#define DATE_FLAG_HAS_TIME \
+#define CELL_FLAG_DATE_HAS_TIME \
     FLAG_TYPE_SPECIFIC_BIT(0)
 
-// `DATE_FLAG_HAS_ZONE` tells whether a date's time zone bits are valid.
+// `CELL_FLAG_DATE_HAS_ZONE` tells whether a date's time zone bits are valid.
 // There is a difference between a time zone of 0 (explicitly GMT) and
 // choosing to be an agnostic local time.
 //
-#define DATE_FLAG_HAS_ZONE \
+#define CELL_FLAG_DATE_HAS_ZONE \
     FLAG_TYPE_SPECIFIC_BIT(1)
 
 
@@ -55,14 +55,14 @@
 #else
     INLINE REBI64 VAL_NANO(const Cell* v) {
         assert(
-            Is_Time(v) or (Is_Date(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            Is_Time(v) or (Is_Date(v) and Get_Cell_Flag(v, DATE_HAS_TIME))
         );
         return v->payload.time.nanoseconds;
     }
 
     INLINE REBI64 &VAL_NANO(Cell* v) {
         assert(
-            Is_Time(v) or (Is_Date(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            Is_Time(v) or (Is_Date(v) and Get_Cell_Flag(v, DATE_HAS_TIME))
         );
         return v->payload.time.nanoseconds;
     }
@@ -146,12 +146,12 @@ INLINE Value* Init_Time_Nanoseconds(Cell* v, REBI64 nanoseconds) {
 // VAL_ZONE() as an lvalue, because it is a bit field.
 //
 INLINE int VAL_ZONE(const Cell* v) {
-    assert(Is_Date(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
+    assert(Is_Date(v) && Get_Cell_Flag(v, DATE_HAS_ZONE));
     return v->extra.date.date.zone;
 }
 
 INLINE void INIT_VAL_ZONE(Cell* v, int zone) {
-    assert(Is_Date(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
+    assert(Is_Date(v) && Get_Cell_Flag(v, DATE_HAS_ZONE));
     v->extra.date.date.zone = zone;
 }
 

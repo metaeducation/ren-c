@@ -429,7 +429,7 @@ Array* Split_Lines(const Value* str)
                     up - start - 1
                 )
             );
-            SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+            Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             start = up;
             if (c == CR) {
                 up = Ucs2_Next(&c, up);
@@ -463,7 +463,7 @@ Array* Split_Lines(const Value* str)
                 up - start  // no -1, backed up if '\n'
             )
         );
-        SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 
     return Pop_Stack_Values_Core(base, ARRAY_FLAG_NEWLINE_AT_TAIL);

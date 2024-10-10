@@ -72,7 +72,7 @@ DECLARE_NATIVE(reeval)
     Flags flags = DO_FLAG_REEVALUATE_CELL;
     if (REF(only)) {
         flags |= DO_FLAG_EXPLICIT_EVALUATE;
-        ARG(value)->header.bits ^= VALUE_FLAG_EVAL_FLIP;
+        ARG(value)->header.bits ^= CELL_FLAG_EVAL_FLIP;
     }
 
     Init_Nothing(OUT);  // !!! R3C patch, better than error on `reeval :elide`
@@ -192,7 +192,7 @@ DECLARE_NATIVE(eval_infix)
     // not infixed.  This lets us slip in a first argument to a function
     // *as if* it were infixed, e.g. `series: my next`.
     //
-    SET_VAL_FLAG(temp, VALUE_FLAG_INFIX);
+    Set_Cell_Flag(temp, INFIX_IF_ACTION);
     Push_GC_Guard(temp);
     L->gotten = temp;
 
@@ -273,7 +273,7 @@ DECLARE_NATIVE(do)
 
     Value* source = ARG(source); // may be only GC reference, don't lose it!
   #if !defined(NDEBUG)
-    SET_VAL_FLAG(ARG(source), CELL_FLAG_PROTECTED);
+    Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 
     switch (VAL_TYPE(source)) {
@@ -490,7 +490,7 @@ DECLARE_NATIVE(evaluate)
 
     Value* source = ARG(source); // may be only GC reference, don't lose it!
   #if !defined(NDEBUG)
-    SET_VAL_FLAG(ARG(source), CELL_FLAG_PROTECTED);
+    Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 
     switch (VAL_TYPE(source)) {

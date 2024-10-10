@@ -576,7 +576,7 @@ Value* Alloc_Pairing(void) {
 // paired value) Cell header.  API handle Cells are all managed.
 //
 void Manage_Pairing(Value* paired) {
-    SET_VAL_FLAG(paired, NODE_FLAG_MANAGED);
+    Set_Node_Managed_Bit(paired);
 }
 
 
@@ -590,8 +590,8 @@ void Manage_Pairing(Value* paired) {
 // their lifetime.
 //
 void Unmanage_Pairing(Value* paired) {
-    assert(GET_VAL_FLAG(paired, NODE_FLAG_MANAGED));
-    CLEAR_VAL_FLAG(paired, NODE_FLAG_MANAGED);
+    assert(Is_Node_Managed(paired));
+    Clear_Node_Managed_Bit(paired);
 }
 
 
@@ -599,7 +599,7 @@ void Unmanage_Pairing(Value* paired) {
 //  Free_Pairing: C
 //
 void Free_Pairing(Value* paired) {
-    assert(NOT_VAL_FLAG(paired, NODE_FLAG_MANAGED));
+    assert(Not_Node_Managed(paired));
     Flex* s = cast(Flex*, paired);
     Free_Pooled(STUB_POOL, s);
 

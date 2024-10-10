@@ -51,7 +51,7 @@
 // In practice, a void* is generally big enough to hold a CFUNC*, and many
 // APIs do assume this.
 //
-#define HANDLE_FLAG_CFUNC FLAG_TYPE_SPECIFIC_BIT(0)
+#define CELL_FLAG_HANDLE_CFUNC FLAG_TYPE_SPECIFIC_BIT(0)
 
 
 INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
@@ -64,7 +64,7 @@ INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
 
 INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
     assert(Is_Handle(v));
-    assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
+    assert(Not_Cell_Flag(v, HANDLE_CFUNC));
     if (v->extra.singular)
         return Array_Head(v->extra.singular)->payload.handle.data.pointer;
     else
@@ -76,7 +76,7 @@ INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
 
 INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
     assert(Is_Handle(v));
-    assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
+    assert(Get_Cell_Flag(v, HANDLE_CFUNC));
     if (v->extra.singular)
         return Array_Head(v->extra.singular)->payload.handle.data.cfunc;
     else
@@ -99,7 +99,7 @@ INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
 
 INLINE void SET_HANDLE_POINTER(Cell* v, void *pointer) {
     assert(Is_Handle(v));
-    assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
+    assert(Not_Cell_Flag(v, HANDLE_CFUNC));
     if (v->extra.singular)
         Array_Head(v->extra.singular)->payload.handle.data.pointer = pointer;
     else
@@ -108,7 +108,7 @@ INLINE void SET_HANDLE_POINTER(Cell* v, void *pointer) {
 
 INLINE void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
     assert(Is_Handle(v));
-    assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
+    assert(Get_Cell_Flag(v, HANDLE_CFUNC));
     if (v->extra.singular)
         Array_Head(v->extra.singular)->payload.handle.data.cfunc = cfunc;
     else
@@ -132,7 +132,7 @@ INLINE Value* Init_Handle_Cfunc(
     CFUNC *cfunc,
     uintptr_t length
 ){
-    RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, HANDLE_FLAG_CFUNC);
+    RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
     out->extra.singular = nullptr;
     out->payload.handle.data.cfunc = cfunc;
     out->payload.handle.length = length;
@@ -195,12 +195,12 @@ INLINE Value* Init_Handle_Managed_Cfunc(
 
     // Leave the non-singular cfunc as corrupt; clients should not be using
     //
-    RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, HANDLE_FLAG_CFUNC);
+    RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
 
     RESET_VAL_HEADER_EXTRA(
         Array_Head(out->extra.singular),
         REB_HANDLE,
-        HANDLE_FLAG_CFUNC
+        CELL_FLAG_HANDLE_CFUNC
     );
     Array_Head(out->extra.singular)->payload.handle.data.cfunc = cfunc;
     return KNOWN(out);

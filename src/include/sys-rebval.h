@@ -98,7 +98,7 @@
     FLAG_LEFT_BIT(16)
 
 
-//=//// VALUE_FLAG_THROWN /////////////////////////////////////////////////=//
+//=//// CELL_FLAG_THROW_SIGNAL ////////////////////////////////////////////=//
 //
 // !!! This bit was historically a way of signaling a "throw" (e.g. a RETURN,
 // BREAK, CONTINUE, or generic THROW signal).  It is in the process of being
@@ -126,11 +126,11 @@
 //        /* handling code */
 //     }
 //
-#define VALUE_FLAG_THROWN \
+#define CELL_FLAG_THROW_SIGNAL \
     FLAG_LEFT_BIT(17)
 
 
-//=//// VALUE_FLAG_FALSEY /////////////////////////////////////////////////=//
+//=//// CELL_FLAG_FALSEY //////////////////////////////////////////////////=//
 //
 // This flag is used as a quick cache on NULL, BLANK! or LOGIC! false values.
 // These are the only three values that return true from the NOT native
@@ -144,11 +144,11 @@
 // payload... its data of being true or false is already covered by this
 // header bit.
 //
-#define VALUE_FLAG_FALSEY \
+#define CELL_FLAG_FALSEY \
     FLAG_LEFT_BIT(18)
 
 
-//=//// VALUE_FLAG_NEWLINE_BEFORE /////////////////////////////////////////=//
+//=//// CELL_FLAG_NEWLINE_BEFORE //////////////////////////////////////////=//
 //
 // When the array containing a value with this flag set is molding, that will
 // output a new line *before* molding the value.  This flag works in tandem
@@ -164,26 +164,28 @@
 // !!! Currently, ANY-PATH! rendering just ignores this bit.  Some way of
 // representing paths with newlines in them may be needed.
 //
-#define VALUE_FLAG_NEWLINE_BEFORE \
+#define CELL_FLAG_NEWLINE_BEFORE \
     FLAG_LEFT_BIT(19)
 
 
-//=//// VALUE_FLAG_ENDISH /////////////////////////////////////////////////=//
+//=//// CELL_FLAG_ENDISH /////////////////////////////////////////////////=//
 //
 // Somewhat wasteful use of flag to indicate "endish" nulleds.
 //
-#define VALUE_FLAG_ENDISH \
+// Should be at least a "type specific" bit on the null.
+//
+#define CELL_FLAG_ENDISH \
     FLAG_LEFT_BIT(20)
 
 
-//=//// VALUE_FLAG_INFIX ////////////////////////////////////////////////=//
+//=//// CELL_FLAG_INFIX_IF_ACTION /////////////////////////////////////////=//
 //
 // In Ren-C, there is only one kind of function (ACTION!).  But it's possible
 // to tag a function value cell in a context as being "infixed", hence it
 // will acquire its first argument from the left.
 //
-// The reasion it is a generic VALUE_FLAG_XXX and not an ACTION_FLAG_XXX is
-// so that it can be dealt with without specifically knowing that the cell
+// The reasion it is a generic VALUE_FLAG_XXX and not an CELL_FLAG_ACTION_XXX
+// is so that it can be dealt with without specifically knowing that the cell
 // involved is an action.  One benefit is that testing for an infix action
 // can be done just by looking at this bit--since only actions have it set.
 //
@@ -196,11 +198,11 @@
 // carried forward.  The bootstrap executable will likely stay using these
 // old ideas, however...until it is retired in favor of a modern executable.
 //
-#define VALUE_FLAG_INFIX \
+#define CELL_FLAG_INFIX_IF_ACTION \
     FLAG_LEFT_BIT(21)
 
 
-//=//// VALUE_FLAG_EVAL_FLIP //////////////////////////////////////////////=//
+//=//// CELL_FLAG_EVAL_FLIP ///////////////////////////////////////////////=//
 //
 // This is a bit which should not be present on cells in user-exposed arrays.
 //
@@ -209,16 +211,16 @@
 // value would signal a kind of quoting to suppress evaluation in ordinary
 // evaluation (without DO_FLAG_EXPLICIT_EVALUATE), hence it is a "flip" bit.
 //
-#define VALUE_FLAG_EVAL_FLIP \
+#define CELL_FLAG_EVAL_FLIP \
     FLAG_LEFT_BIT(22) // IMPORTANT: Same bit as DO_FLAG_EXPLICIT_EVALUATE
 
 
-//=//// VALUE_FLAG_UNUSED_23 //////////////////////////////////////////////=//
+//=//// CELL_FLAG_UNUSED_23 //////////////////////////////////////////////=//
 //
 // Currently available.  Possible use: HIDDEN bit, as the current situation of
 // PROTECT/HIDE being on keylists/paramlists means all instances are affected.
 //
-#define VALUE_FLAG_UNUSED_23 \
+#define CELL_FLAG_UNUSED_23 \
     FLAG_LEFT_BIT(23)
 
 
@@ -298,7 +300,7 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED \
-        | VALUE_FLAG_EVAL_FLIP)
+        | CELL_FLAG_EVAL_FLIP)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -525,10 +527,10 @@ struct Reb_Varargs_Payload {
 //
 #define REB_X_PARTIAL REB_MAX_PLUS_ONE
 
-#define PARTIAL_FLAG_IN_USE \
+#define CELL_FLAG_PARTIAL_IN_USE \
     FLAG_TYPE_SPECIFIC_BIT(0)
 
-#define PARTIAL_FLAG_SAW_NULL_ARG \
+#define CELL_FLAG_PARTIAL_SAW_NULL_ARG \
     FLAG_TYPE_SPECIFIC_BIT(1)
 
 struct Reb_Partial_Payload {

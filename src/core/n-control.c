@@ -503,7 +503,7 @@ DECLARE_NATIVE(all)
 
         // consider case of `all [true elide print "hi"]`
         //
-        OUT->header.bits &= ~OUT_MARKED_STALE;
+        Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
     }
 
     Drop_Level(L);
@@ -547,7 +547,7 @@ DECLARE_NATIVE(any)
 
         // consider case of `any [true elide print "hi"]`
         //
-        OUT->header.bits &= ~OUT_MARKED_STALE;
+        Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
     }
 
     Drop_Level(L);
@@ -591,7 +591,7 @@ DECLARE_NATIVE(none)
 
         // consider case of `none [true elide print "hi"]`
         //
-        OUT->header.bits &= ~OUT_MARKED_STALE;
+        Clear_Cell_Flag(OUT, OUT_MARKED_STALE);
     }
 
     Drop_Level(L);
@@ -1046,8 +1046,8 @@ DECLARE_NATIVE(catch)
         Value* temp1 = ARG(quit);
         Value* temp2 = ARG(any);
 
-        // !!! The reason we're copying isn't so the VALUE_FLAG_THROWN bit
-        // won't confuse the equality comparison...but would it have?
+        // !!! The reason we're copying isn't so the CELL_FLAG_THROW_SIGNAL
+        // bit won't confuse the equality comparison...but would it have?
 
         if (Is_Block(ARG(names))) {
             //

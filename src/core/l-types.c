@@ -901,10 +901,10 @@ const Byte *Scan_Date(
             return_NULL;
         }
 
-        RESET_VAL_HEADER_EXTRA(out, REB_DATE, DATE_FLAG_HAS_TIME);
+        RESET_VAL_HEADER_EXTRA(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
     }
     else
-        RESET_VAL_HEADER(out, REB_DATE); // no DATE_FLAG_HAS_TIME
+        RESET_VAL_HEADER(out, REB_DATE); // no CELL_FLAG_DATE_HAS_TIME
 
     // past this point, header is set, so `goto end_date` is legal.
 
@@ -952,7 +952,7 @@ const Byte *Scan_Date(
 
         cp = ep;
 
-        SET_VAL_FLAG(out, DATE_FLAG_HAS_ZONE);
+        Set_Cell_Flag(out, DATE_HAS_ZONE);
         INIT_VAL_ZONE(out, tz);
     }
 
@@ -962,8 +962,8 @@ end_date:
     VAL_MONTH(out) = month;
     VAL_DAY(out) = day;
 
-    // if VAL_NANO() was set, then DATE_FLAG_HAS_TIME should be true
-    // if VAL_ZONE() was set, then DATE_FLAG_HAS_ZONE should be true
+    // if VAL_NANO() was set, then CELL_FLAG_DATE_HAS_TIME should be true
+    // if VAL_ZONE() was set, then CELL_FLAG_DATE_HAS_ZONE should be true
 
     // This step used to be skipped if tz was 0, but now that is a
     // state distinguished from "not having a time zone"

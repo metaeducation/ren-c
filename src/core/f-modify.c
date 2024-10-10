@@ -106,10 +106,7 @@ REBLEN Modify_Array(
             else if (ilen == 0)
                 tail_newline = false;
             else
-                tail_newline = GET_VAL_FLAG(
-                    tail_cell,
-                    VALUE_FLAG_NEWLINE_BEFORE
-                );
+                tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
         }
 
         // Are we modifying ourselves? If so, copy src_val block first:
@@ -173,10 +170,7 @@ REBLEN Modify_Array(
             );
 
             if (dup_index == 0 and index == 0 and head_newline) {
-                SET_VAL_FLAG(
-                    Array_Head(dst_arr) + dst_idx,
-                    VALUE_FLAG_NEWLINE_BEFORE
-                );
+                Set_Cell_Flag(Array_Head(dst_arr) + dst_idx, NEWLINE_BEFORE);
 
                 // The array flag is not cleared until the loop actually
                 // makes a value that will carry on the bit.
@@ -185,12 +179,8 @@ REBLEN Modify_Array(
                 continue;
             }
 
-            if (dup_index > 0 and index == 0 and tail_newline) {
-                SET_VAL_FLAG(
-                    Array_Head(dst_arr) + dst_idx,
-                    VALUE_FLAG_NEWLINE_BEFORE
-                );
-            }
+            if (dup_index > 0 and index == 0 and tail_newline)
+                Set_Cell_Flag(Array_Head(dst_arr) + dst_idx, NEWLINE_BEFORE);
         }
     }
 
@@ -201,7 +191,7 @@ REBLEN Modify_Array(
         if (dst_idx == Array_Len(dst_arr))
             Set_Array_Flag(dst_arr, NEWLINE_AT_TAIL);
         else
-            SET_VAL_FLAG(Array_At(dst_arr, dst_idx), VALUE_FLAG_NEWLINE_BEFORE);
+            Set_Cell_Flag(Array_At(dst_arr, dst_idx), NEWLINE_BEFORE);
     }
 
     if (flags & AM_LINE) {
@@ -211,7 +201,7 @@ REBLEN Modify_Array(
         // newline.  This allows `x: copy [] | append/line x [a b c]` to give
         // a more common result.  The head line can be removed easily.
         //
-        SET_VAL_FLAG(Array_Head(dst_arr), VALUE_FLAG_NEWLINE_BEFORE);
+        Set_Cell_Flag(Array_Head(dst_arr), NEWLINE_BEFORE);
     }
 
     Assert_Array(dst_arr);

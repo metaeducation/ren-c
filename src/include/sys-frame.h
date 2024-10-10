@@ -53,7 +53,7 @@
 INLINE bool THROWN(const Cell* v) {
     assert(v->header.bits & NODE_FLAG_CELL);
 
-    if (v->header.bits & VALUE_FLAG_THROWN) {
+    if (Get_Cell_Flag(v, THROW_SIGNAL)) {
         assert(NOT_END(v)); // can't throw END, but allow THROWN() to test it
         return true;
     }
@@ -62,7 +62,7 @@ INLINE bool THROWN(const Cell* v) {
 
 INLINE void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
     assert(not THROWN(name));
-    SET_VAL_FLAG(name, VALUE_FLAG_THROWN);
+    Set_Cell_Flag(name, THROW_SIGNAL);
 
     Assert_Unreadable_If_Debug(&TG_Thrown_Arg);
 
@@ -74,7 +74,7 @@ INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
     // Note: arg_out and thrown may be the same pointer
     //
     assert(THROWN(thrown));
-    CLEAR_VAL_FLAG(thrown, VALUE_FLAG_THROWN);
+    Clear_Cell_Flag(thrown, THROW_SIGNAL);
 
     Assert_Readable_If_Debug(&TG_Thrown_Arg);
     Copy_Cell(arg_out, &TG_Thrown_Arg);
@@ -171,7 +171,7 @@ INLINE int LVL_LINE(Level* L) {
 INLINE bool Is_Level_Gotten_Shoved(Level* L) {
     if (L->gotten != Level_Shove(L))
         return false;
-    assert(GET_VAL_FLAG(L->gotten, VALUE_FLAG_INFIX));
+    assert(Get_Cell_Flag(L->gotten, INFIX_IF_ACTION));
     return true; // see DECLARE_NATIVE(shove)
 }
 

@@ -572,13 +572,13 @@ const void *API_rebEval(const RebolValue* v)
     Cell* single = ARR_SINGLE(instruction);
     Copy_Cell(single, v);
 
-    // !!! The presence of the VALUE_FLAG_EVAL_FLIP is a pretty good
+    // !!! The presence of the CELL_FLAG_EVAL_FLIP is a pretty good
     // indication that it's an eval instruction.  So it's not necessary to
     // fill in the ->link or ->misc fields.  But if there were more
     // instructions like this, there'd probably need to be a misc->opcode or
     // something to distinguish them.
     //
-    SET_VAL_FLAG(single, VALUE_FLAG_EVAL_FLIP);
+    Set_Cell_Flag(single, EVAL_FLIP);
 
     return instruction;
 }
@@ -608,7 +608,7 @@ const void *API_rebUneval(const RebolValue* v)
         //
         // !!! Would like to be using a NULLED cell here, but the current
         // indicator for whether something is a rebEval() or rebUneval() is
-        // if VALUE_FLAG_EVAL_FLIP is set, and we'd have to set that flag to
+        // if CELL_FLAG_EVAL_FLIP is set, and we'd have to set that flag to
         // get the evaluator not to choke on the nulled cell.  The mechanism
         // should be revisited where instructions encode what they are in the
         // header/info/link/misc.
@@ -1480,7 +1480,7 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // the va_list into an array to be executed after a timeout.
     //
     // Currently such spooling is not done except with a frame, and there are
-    // a lot of details to get right.  For instance, VALUE_FLAG_EVAL_FLIP and
+    // a lot of details to get right.  For instance, CELL_FLAG_EVAL_FLIP and
     // all the rest of that.  Plus there may be some binding context
     // information coming from the callsite (?).  So here we do a reuse of
     // the code the GC uses to reify va_lists in frames, which we presume does

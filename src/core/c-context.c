@@ -985,7 +985,7 @@ Array* Context_To_Array(VarList* context, REBINT mode)
                 );
 
                 if (mode & 2)
-                    SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                    Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
             if (mode & 2) {
                 //
@@ -1238,7 +1238,7 @@ void Resolve_Context(
         if (m != 0) {
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
-                NOT_VAL_FLAG(var, CELL_FLAG_PROTECTED)
+                Not_Cell_Flag(var, PROTECTED)
                 and (all or Is_Nothing(var))
             ){
                 if (m < 0)

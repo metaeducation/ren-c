@@ -98,7 +98,7 @@ bool Reduce_To_Stack_Throws(
     Push_Level(L, any_array);
 
     while (NOT_END(L->value)) {
-        bool line = GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE);
+        bool line = Get_Cell_Flag(L->value, NEWLINE_BEFORE);
 
         if (Eval_Step_Throws(SET_END(out), L)) {
             Drop_Data_Stack_To(base);
@@ -122,7 +122,7 @@ bool Reduce_To_Stack_Throws(
         else {
             Copy_Cell(PUSH(), out);
             if (line)
-                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
         }
     }
 
@@ -296,8 +296,8 @@ bool Compose_To_Stack_Throws(
                     // value spliced in (it may have its own newline flag)
                     //
                     Derelativize(PUSH(), push, VAL_SPECIFIER(out));
-                    if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
-                        SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                    if (Get_Cell_Flag(L->value, NEWLINE_BEFORE))
+                        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
                     while (++push, NOT_END(push))
                         Derelativize(PUSH(), push, VAL_SPECIFIER(out));
@@ -308,8 +308,8 @@ bool Compose_To_Stack_Throws(
                 // compose/only [([a b c]) unmerged] => [[a b c] unmerged]
 
                 Copy_Cell(PUSH(), out);  // Not legal to eval to stack direct!
-                if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
-                    SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                if (Get_Cell_Flag(L->value, NEWLINE_BEFORE))
+                    Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
 
           #ifdef DEBUG_UNREADABLE_BLANKS
@@ -344,8 +344,8 @@ bool Compose_To_Stack_Throws(
                 popped // can't push and pop in same step, need this variable!
             );
 
-            if (GET_VAL_FLAG(L->value, VALUE_FLAG_NEWLINE_BEFORE))
-                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+            if (Get_Cell_Flag(L->value, NEWLINE_BEFORE))
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
         }
         else {
             // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7] ;-- non-deep

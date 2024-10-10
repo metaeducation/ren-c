@@ -217,7 +217,7 @@ static void Append_To_Context(VarList* context, Value* arg)
         Value* key = Varlist_Key(context, i);
         Value* var = Varlist_Slot(context, i);
 
-        if (GET_VAL_FLAG(var, CELL_FLAG_PROTECTED)) {
+        if (Get_Cell_Flag(var, PROTECTED)) {
             error = Error_Protected_Key(key);
             goto collect_end;
         }
@@ -426,7 +426,7 @@ Bounce PD_Context(
     if (opt_setval) {
         FAIL_IF_READ_ONLY_CONTEXT(c);
 
-        if (GET_VAL_FLAG(Varlist_Slot(c, n), CELL_FLAG_PROTECTED))
+        if (Get_Cell_Flag(Varlist_Slot(c, n), PROTECTED))
             fail (Error_Protected_Word_Raw(picker));
     }
 

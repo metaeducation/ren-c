@@ -40,15 +40,15 @@
 REBINT CT_Date(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode == 1) {
-        if (GET_VAL_FLAG(a, DATE_FLAG_HAS_ZONE)) {
-            if (NOT_VAL_FLAG(b, DATE_FLAG_HAS_ZONE))
+        if (Get_Cell_Flag(a, DATE_HAS_ZONE)) {
+            if (Not_Cell_Flag(b, DATE_HAS_ZONE))
                 return 0; // can't be equal
 
             if (VAL_DATE(a).bits != VAL_DATE(b).bits)
                 return 0; // both have zones, all bits must be equal
         }
         else {
-            if (GET_VAL_FLAG(b, DATE_FLAG_HAS_ZONE))
+            if (Get_Cell_Flag(b, DATE_HAS_ZONE))
                 return 0; // a doesn't have, b does, can't be equal
 
             REBDAT dat_a = a->extra.date;
@@ -59,15 +59,15 @@ REBINT CT_Date(const Cell* a, const Cell* b, REBINT mode)
                 return 0; // canonized to 0 zone not equal
         }
 
-        if (GET_VAL_FLAG(a, DATE_FLAG_HAS_TIME)) {
-            if (NOT_VAL_FLAG(b, DATE_FLAG_HAS_TIME))
+        if (Get_Cell_Flag(a, DATE_HAS_TIME)) {
+            if (Not_Cell_Flag(b, DATE_HAS_TIME))
                 return 0; // can't be equal;
 
             if (VAL_NANO(a) != VAL_NANO(b))
                 return 0; // both have times, all bits must be equal
         }
         else {
-            if (GET_VAL_FLAG(b, DATE_FLAG_HAS_TIME))
+            if (Get_Cell_Flag(b, DATE_HAS_TIME))
                 return 0; // a doesn't have, b, does, can't be equal
 
             // neither have times so equal
@@ -103,7 +103,7 @@ void MF_Date(Molder* mo, const Cell* v_orig, bool form)
         return;
     }
 
-    if (GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE)) {
+    if (Get_Cell_Flag(v, DATE_HAS_ZONE)) {
         const bool to_utc = false;
         Adjust_Date_Zone(v, to_utc);
     }
@@ -123,11 +123,11 @@ void MF_Date(Molder* mo, const Cell* v_orig, bool form)
 
     Append_Unencoded(mo->utf8flex, s_cast(buf));
 
-    if (GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME)) {
+    if (Get_Cell_Flag(v, DATE_HAS_TIME)) {
         Append_Codepoint(mo->utf8flex, '/');
         MF_Time(mo, v, form);
 
-        if (GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE)) {
+        if (Get_Cell_Flag(v, DATE_HAS_ZONE)) {
             bp = &buf[0];
 
             REBINT tz = VAL_ZONE(v);
@@ -342,11 +342,11 @@ static REBDAT Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
 //
 void Adjust_Date_Zone(Value* d, bool to_utc)
 {
-    if (NOT_VAL_FLAG(d, DATE_FLAG_HAS_ZONE))
+    if (Not_Cell_Flag(d, DATE_HAS_ZONE))
         return;
 
-    if (NOT_VAL_FLAG(d, DATE_FLAG_HAS_TIME)) {
-        CLEAR_VAL_FLAG(d, DATE_FLAG_HAS_ZONE); // !!! Is this necessary?
+    if (Not_Cell_Flag(d, DATE_HAS_TIME)) {
+        Clear_Cell_Flag(d, DATE_HAS_ZONE); // !!! Is this necessary?
         return;
     }
 
@@ -387,13 +387,13 @@ void Subtract_Date(Value* d1, Value* d2, Value* result)
         fail (Error_Overflow_Raw());
 
     REBI64 t1;
-    if (GET_VAL_FLAG(d1, DATE_FLAG_HAS_TIME))
+    if (Get_Cell_Flag(d1, DATE_HAS_TIME))
         t1 = VAL_NANO(d1);
     else
         t1 = 0L;
 
     REBI64 t2;
-    if (GET_VAL_FLAG(d2, DATE_FLAG_HAS_TIME))
+    if (Get_Cell_Flag(d2, DATE_HAS_TIME))
         t2 = VAL_NANO(d2);
     else
         t2 = 0L;
@@ -412,14 +412,14 @@ REBINT Cmp_Date(const Cell* d1, const Cell* d2)
     if (diff != 0)
         return diff;
 
-    if (NOT_VAL_FLAG(d1, DATE_FLAG_HAS_TIME)) {
-        if (NOT_VAL_FLAG(d2, DATE_FLAG_HAS_TIME))
+    if (Not_Cell_Flag(d1, DATE_HAS_TIME)) {
+        if (Not_Cell_Flag(d2, DATE_HAS_TIME))
             return 0; // equal if no diff and neither has a time
 
         return -1; // d2 is bigger if no time on d1
     }
 
-    if (NOT_VAL_FLAG(d2, DATE_FLAG_HAS_TIME))
+    if (Not_Cell_Flag(d2, DATE_HAS_TIME))
         return 1; // d1 is bigger if no time on d2
 
     return Cmp_Time(d1, d2);
@@ -520,7 +520,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
 
         Normalize_Time(&secs, &day);
 
-        RESET_VAL_HEADER_EXTRA(out, REB_DATE, DATE_FLAG_HAS_TIME);
+        RESET_VAL_HEADER_EXTRA(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
         VAL_DATE(out) = Normalize_Date(day, month, year, tz);
         VAL_NANO(out) = secs;
 
@@ -605,7 +605,7 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_TIME:
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            if (Not_Cell_Flag(v, DATE_HAS_TIME))
                 Init_Nulled(opt_out);
             else {
                 Copy_Cell(opt_out, v); // want v's adjusted VAL_NANO()
@@ -615,11 +615,11 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_ZONE:
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_ZONE)) {
+            if (Not_Cell_Flag(v, DATE_HAS_ZONE)) {
                 Init_Nulled(opt_out);
             }
             else {
-                assert(GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME));
+                assert(Get_Cell_Flag(v, DATE_HAS_TIME));
 
                 Init_Time_Nanoseconds(
                     opt_out,
@@ -634,8 +634,8 @@ void Pick_Or_Poke_Date(
             const bool to_utc = false;
             Adjust_Date_Zone(opt_out, to_utc); // !!! necessary?
 
-            CLEAR_VAL_FLAG(opt_out, DATE_FLAG_HAS_TIME);
-            CLEAR_VAL_FLAG(opt_out, DATE_FLAG_HAS_ZONE);
+            Clear_Cell_Flag(opt_out, DATE_HAS_TIME);
+            Clear_Cell_Flag(opt_out, DATE_HAS_ZONE);
             break; }
 
         case SYM_WEEKDAY:
@@ -649,14 +649,14 @@ void Pick_Or_Poke_Date(
 
         case SYM_UTC: {
             Copy_Cell(opt_out, v);
-            SET_VAL_FLAG(opt_out, DATE_FLAG_HAS_ZONE);
+            Set_Cell_Flag(opt_out, DATE_HAS_ZONE);
             INIT_VAL_ZONE(opt_out, 0);
             const bool to_utc = true;
             Adjust_Date_Zone(opt_out, to_utc);
             break; }
 
         case SYM_HOUR:
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            if (Not_Cell_Flag(v, DATE_HAS_TIME))
                 Init_Nulled(opt_out);
             else {
                 REB_TIMEF time;
@@ -666,7 +666,7 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_MINUTE:
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            if (Not_Cell_Flag(v, DATE_HAS_TIME))
                 Init_Nulled(opt_out);
             else {
                 REB_TIMEF time;
@@ -676,7 +676,7 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_SECOND:
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            if (Not_Cell_Flag(v, DATE_HAS_TIME))
                 Init_Nulled(opt_out);
             else {
                 REB_TIMEF time;
@@ -710,8 +710,8 @@ void Pick_Or_Poke_Date(
         // the extracted "secs" or "tz" fields are valid by virtue of updating
         // the flags in the value itself.
         //
-        REBI64 secs = GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME) ? VAL_NANO(v) : 0;
-        REBINT tz = GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE) ? VAL_ZONE(v) : 0;
+        REBI64 secs = Get_Cell_Flag(v, DATE_HAS_TIME) ? VAL_NANO(v) : 0;
+        REBINT tz = Get_Cell_Flag(v, DATE_HAS_ZONE) ? VAL_ZONE(v) : 0;
 
         switch (sym) {
         case SYM_YEAR:
@@ -728,12 +728,12 @@ void Pick_Or_Poke_Date(
 
         case SYM_TIME:
             if (Is_Nulled(opt_poke)) { // clear out the time component
-                CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_TIME);
-                CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_ZONE);
+                Clear_Cell_Flag(v, DATE_HAS_TIME);
+                Clear_Cell_Flag(v, DATE_HAS_ZONE);
                 return;
             }
 
-            SET_VAL_FLAG(v, DATE_FLAG_HAS_TIME); // hence secs is applicable
+            Set_Cell_Flag(v, DATE_HAS_TIME); // hence secs is applicable
             if (Is_Time(opt_poke) || Is_Date(opt_poke))
                 secs = VAL_NANO(opt_poke);
             else if (Is_Integer(opt_poke))
@@ -746,14 +746,14 @@ void Pick_Or_Poke_Date(
 
         case SYM_ZONE:
             if (Is_Nulled(opt_poke)) { // clear out the zone component
-                CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_ZONE);
+                Clear_Cell_Flag(v, DATE_HAS_ZONE);
                 return;
             }
 
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
+            if (Not_Cell_Flag(v, DATE_HAS_TIME))
                 fail ("Can't set /ZONE in a DATE! with no time component");
 
-            SET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE); // hence tz is applicable
+            Set_Cell_Flag(v, DATE_HAS_ZONE); // hence tz is applicable
             if (Is_Time(opt_poke))
                 tz = cast(REBINT, VAL_NANO(opt_poke) / (ZONE_MINS * MIN_SEC));
             else if (Is_Date(opt_poke))
@@ -776,16 +776,16 @@ void Pick_Or_Poke_Date(
             // If the poked date's time zone bitfield is not in effect, that
             // needs to be copied to the date we're assigning.
             //
-            if (GET_VAL_FLAG(opt_poke, DATE_FLAG_HAS_ZONE))
-                SET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE);
+            if (Get_Cell_Flag(opt_poke, DATE_HAS_ZONE))
+                Set_Cell_Flag(v, DATE_HAS_ZONE);
             else
-                CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_ZONE);
+                Clear_Cell_Flag(v, DATE_HAS_ZONE);
             return;
 
         case SYM_HOUR: {
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME)) {
+            if (Not_Cell_Flag(v, DATE_HAS_TIME)) {
                 secs = 0;
-                SET_VAL_FLAG(v, DATE_FLAG_HAS_TIME); // secs is applicable
+                Set_Cell_Flag(v, DATE_HAS_TIME); // secs is applicable
             }
 
             REB_TIMEF time;
@@ -795,9 +795,9 @@ void Pick_Or_Poke_Date(
             break; }
 
         case SYM_MINUTE: {
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME)) {
+            if (Not_Cell_Flag(v, DATE_HAS_TIME)) {
                 secs = 0;
-                SET_VAL_FLAG(v, DATE_FLAG_HAS_TIME); // secs is applicable
+                Set_Cell_Flag(v, DATE_HAS_TIME); // secs is applicable
             }
 
             REB_TIMEF time;
@@ -807,9 +807,9 @@ void Pick_Or_Poke_Date(
             break; }
 
         case SYM_SECOND: {
-            if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME)) {
+            if (Not_Cell_Flag(v, DATE_HAS_TIME)) {
                 secs = 0;
-                SET_VAL_FLAG(v, DATE_FLAG_HAS_TIME); // secs is applicable
+                Set_Cell_Flag(v, DATE_HAS_TIME); // secs is applicable
             }
 
             REB_TIMEF time;
@@ -896,7 +896,7 @@ REBTYPE(Date)
     REBLEN day = VAL_DAY(val) - 1;
     REBLEN month = VAL_MONTH(val) - 1;
     REBLEN year = VAL_YEAR(val);
-    REBI64 secs = GET_VAL_FLAG(val, DATE_FLAG_HAS_TIME) ? VAL_NANO(val) : 0;
+    REBI64 secs = Get_Cell_Flag(val, DATE_HAS_TIME) ? VAL_NANO(val) : 0;
 
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
@@ -909,12 +909,12 @@ REBTYPE(Date)
         }
         else if (type == REB_TIME) {
             if (sym == SYM_ADD) {
-                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
+                Set_Cell_Flag(OUT, DATE_HAS_TIME);
                 secs += VAL_NANO(arg);
                 goto fixTime;
             }
             if (sym == SYM_SUBTRACT) {
-                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
+                Set_Cell_Flag(OUT, DATE_HAS_TIME);
                 secs -= VAL_NANO(arg);
                 goto fixTime;
             }
@@ -933,12 +933,12 @@ REBTYPE(Date)
         else if (type == REB_DECIMAL) {
             REBDEC dec = Dec64(arg);
             if (sym == SYM_ADD) {
-                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
+                Set_Cell_Flag(OUT, DATE_HAS_TIME);
                 secs += (REBI64)(dec * TIME_IN_DAY);
                 goto fixTime;
             }
             if (sym == SYM_SUBTRACT) {
-                SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
+                Set_Cell_Flag(OUT, DATE_HAS_TIME);
                 secs -= (REBI64)(dec * TIME_IN_DAY);
                 goto fixTime;
             }
@@ -980,7 +980,7 @@ REBTYPE(Date)
             month = cast(REBLEN, Random_Range(12, secure));
             day = cast(REBLEN, Random_Range(31, secure));
 
-            if (GET_VAL_FLAG(val, DATE_FLAG_HAS_TIME))
+            if (Get_Cell_Flag(val, DATE_HAS_TIME))
                 secs = Random_Range(TIME_IN_DAY, secure);
 
             goto fixDate;
@@ -1029,12 +1029,12 @@ fixDate:
         day,
         month,
         year,
-        GET_VAL_FLAG(val, DATE_FLAG_HAS_ZONE) ? VAL_ZONE(val) : 0
+        Get_Cell_Flag(val, DATE_HAS_ZONE) ? VAL_ZONE(val) : 0
     );
 
 setDate:
     VAL_DATE(OUT) = date;
-    if (GET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME))
+    if (Get_Cell_Flag(OUT, DATE_HAS_TIME))
         VAL_NANO(OUT) = secs;
     return OUT;
 }
@@ -1074,10 +1074,10 @@ DECLARE_NATIVE(make_date_ymdsnz)
     VAL_MONTH(OUT) = VAL_INT32(ARG(month));
     VAL_DAY(OUT) = VAL_INT32(ARG(day));
 
-    SET_VAL_FLAG(OUT, DATE_FLAG_HAS_ZONE);
+    Set_Cell_Flag(OUT, DATE_HAS_ZONE);
     INIT_VAL_ZONE(OUT, VAL_INT32(ARG(zone)) / ZONE_MINS);
 
-    SET_VAL_FLAG(OUT, DATE_FLAG_HAS_TIME);
+    Set_Cell_Flag(OUT, DATE_HAS_TIME);
     VAL_NANO(OUT)
         = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + VAL_INT64(ARG(nano));
 

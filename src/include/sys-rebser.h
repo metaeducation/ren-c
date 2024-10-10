@@ -234,7 +234,7 @@
 //
 // Identifies Arrays in which it is legal to have nulled elements.  This is
 // true for reified C va_list()s which treated slots as if they had already
-// abeen evaluated.  (See VALUE_FLAG_EVAL_FLIP).  When those va_lists need to
+// abeen evaluated.  (See CELL_FLAG_EVAL_FLIP).  When those va_lists need to
 // be put into arrays for the purposes of GC protection, they may contain
 // nulled cells.  (How to present this in the debugger will be a UI issue.)
 //

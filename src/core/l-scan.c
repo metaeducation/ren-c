@@ -886,7 +886,7 @@ static REBLEN Prescan_Token(ScanState* S)
 // Newlines that should be internal to a non-ANY-ARRAY! type are included in
 // the scanned range between the `begin` and `end`.  But newlines that are
 // found outside of a string are returned as TOKEN_NEWLINE.  (These are used
-// to set the VALUE_FLAG_NEWLINE_BEFORE bits on the next value.)
+// to set the CELL_FLAG_NEWLINE_BEFORE bits on the next value.)
 //
 // Determining the end point of token types that need escaping requires
 // processing (for instance `{a^}b}` can't see the first close brace as ending
@@ -994,12 +994,12 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             // the non-user-visible EVAL_FLIP bit, which is usually not copied
             // by Copy_Cell.
             //
-            if (GET_VAL_FLAG(splice, VALUE_FLAG_EVAL_FLIP))
-                SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
+            if (Get_Cell_Flag(splice, EVAL_FLIP))
+                Set_Cell_Flag(TOP, EVAL_FLIP);
 
             if (S->newline_pending) {
                 S->newline_pending = false;
-                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
 
             if (S->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
@@ -1022,14 +1022,14 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             Array* instruction = cast(Array*, m_cast(void*, p));
             Value* single = KNOWN(ARR_SINGLE(instruction));
 
-            if (GET_VAL_FLAG(single, VALUE_FLAG_EVAL_FLIP)) { // rebEval()
+            if (Get_Cell_Flag(single, EVAL_FLIP)) { // rebEval()
                 if (not (S->opts & SCAN_FLAG_NULLEDS_LEGAL))
                     return Error_User(
                         "can only use rebEval() at top level of run"
                     );
 
                 Copy_Cell(PUSH(), single);
-                SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
+                Set_Cell_Flag(TOP, EVAL_FLIP);
             }
             else { // rebUneval()
                 assert(
@@ -1048,7 +1048,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             }
 
             if (S->newline_pending) {
-                SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);
                 S->newline_pending = false;
             }
 
@@ -2485,7 +2485,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     // not legal in ordinary user arrays--just as voids aren't--only in
     // arrays which are internally held by the evaluator)
     //
-    SET_VAL_FLAG(TOP, VALUE_FLAG_EVAL_FLIP);
+    Set_Cell_Flag(TOP, EVAL_FLIP);
 
     if (S->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
         Flex* locker = nullptr;
@@ -2548,7 +2548,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
     // whole array...not the first element of it).
     //
     if (S->newline_pending) {
-        SET_VAL_FLAG(TOP, VALUE_FLAG_NEWLINE_BEFORE);
+        Set_Cell_Flag(TOP, NEWLINE_BEFORE);
         S->newline_pending = false;
     }
 

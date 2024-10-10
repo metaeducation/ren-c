@@ -70,7 +70,7 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
             Init_Any_List_At(item, kind, copy, 0); // at 0 now
             assert(IS_SPECIFIC(item));
             assert(
-                NOT_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE) // gets cleared
+                Not_Cell_Flag(item, NEWLINE_BEFORE) // gets cleared
             );
         }
     }
