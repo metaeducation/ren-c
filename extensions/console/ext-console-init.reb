@@ -4,15 +4,15 @@ REBOL [
     Name: console
     Type: Module
 
-    Rights: {
+    Rights: --{
         Copyright 2016-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         This is a rich, skinnable console for Rebol--where basically all the
         implementation is itself userspace Rebol code.  Documentation for the
         skinning hooks exist here:
@@ -36,7 +36,7 @@ REBOL [
         time on Windows and Linux (vs. using APIs that read entire lines at
         once), so it could theoretically offer more flexibility such as tab
         completion--but hooks to expose that haven't been developed.
-    }
+    }--
 ]
 
 

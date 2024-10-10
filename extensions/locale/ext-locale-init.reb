@@ -3,7 +3,7 @@ REBOL [
     Name: Locale
     Type: Module
     Version: 1.0.0
-    License: {Apache 2.0}
+    License: "Apache 2.0"
 ]
 
 if 'Windows <> first system.platform [

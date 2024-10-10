@@ -1,15 +1,15 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Make sys-zlib.h and u-zlib.c"
-    Rights: {
+    Rights: --{
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Purpose: {
+    }--
+    Purpose: --{
         In order to limit build dependencies, Rebol makes a snapshot of a
         subset of certain libraries to include in the source distribution.
         This script will extract just the parts of ZLIB that Rebol needs
@@ -21,8 +21,8 @@ REBOL [
         Any significant reorganization of the ZLIB codebase would require
         updating this script accordingly.  It was last tested on 1.2.11
         (released 15-Jan-2017)
-    }
-    Note: {
+    }--
+    Note: --{
         "This runs relative to ../tools directory."
 
         !!! TBD: The `register` keyword has been deprecated.  If zlib doesn't
@@ -31,7 +31,7 @@ REBOL [
         rid of them (note `register` is used in comments too):
 
         https://stackoverflow.com/a/30809775
-    }
+    }--
 ]
 
 c-lexical: import %c-lexicals.r

@@ -3,15 +3,15 @@ REBOL [
     Title: "Host Script and Resource Embedding Services ('encapping')"
     Type: module
     Name: Encap
-    Rights: {
+    Rights: --{
         Copyright 2017 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         Encapping grafts data into an already-compiled executable, to add
         resources to it "after the fact".  Note that there are different
         executable formats used on different operating systems, each with a
@@ -47,7 +47,7 @@ REBOL [
 
         For formats not supported currently by the encapper, the simple
         appending strategy is used.
-    }
+    }--
 ]
 
 

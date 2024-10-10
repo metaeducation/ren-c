@@ -424,7 +424,7 @@
 //   http://blog.hostilefork.com/c-casts-for-the-masses/
 //
 // It provides *easier-to-spot* variants of the parentheses cast, and also
-// helps document at the callsite what the purpose of the cast is.  But when
+// helps document at the callsite what the purpose of the cast is.  When
 // built under C++11 with access to <type_traits>, the variants are able to
 // enforce their narrower policies.
 //

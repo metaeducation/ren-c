@@ -1,20 +1,20 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "REBOL 3 Boot Sys: Port and Scheme Functions"
-    Rights: {
+    Rights: --{
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Context: sys
-    Note: {
+    Note: --{
         The boot binding of this module is SYS then LIB deep.
         Any non-local words not found in those contexts WILL BE
         UNBOUND and will error out at runtime!
-    }
+    }--
 ]
 
 parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~

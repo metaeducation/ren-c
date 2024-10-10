@@ -1,16 +1,16 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generic function interface definitions"
-    Rights: {
+    Rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0.
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         The sense of the term "generic" used here is that of a function which
         has no default implementation--rather each data type supplies its own
         implementation.  The code that runs is based on the argument types:
@@ -25,8 +25,8 @@ REBOL [
         !!! The dispatch model in Rebol, and how it might be extended beyond
         the list here (to either more generics, or to user-defined datatypes)
         was not fleshed out, and needs to get attention at some point.
-    }
-    Notes: {
+    }--
+    Notes: --{
         Historical Rebol called generics "ACTION!"--a term that has been
         retaken for the "one function datatype":
 
@@ -42,7 +42,7 @@ REBOL [
         The build process scans this file for the SET-WORD!s also, in order
         to add SYM_XXX constants to the word list--so that switch() statements
         in C can be used during dispatch.
-    }
+    }--
 ]
 
 /reflect: generic [

@@ -5,15 +5,15 @@ REBOL [
     Type: module
     Name: Rebmake
 
-    Rights: {
+    Rights: --{
         Copyright 2017 Atronix Engineering
         Copyright 2017-2018 Ren-C Open Source Contributors
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         R3-Alpha's bootstrap process depended on the GNU Make Tool, with a
         makefile generated from minor adjustments to a boilerplate copy of
         the makefile text.  As needs grew, a second build process arose
@@ -28,13 +28,13 @@ REBOL [
         In theory this code is abstracted such that it could be used by other
         projects.  In practice, it is tailored to the specific needs and
         settings of the Rebol project.
-    }
-    Warning: {
+    }--
+    Warning: --{
         This code is not representative of modern practices, because it has
         to run in a very old bootstrap executable.  It is also very much a
         hodgepodge just to keep things running.  It's the absolute wrong place
         to be looking for exemplary Ren-C code.
-    }
+    }--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r

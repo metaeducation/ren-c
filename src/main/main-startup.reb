@@ -4,16 +4,16 @@ REBOL [
     File: %main-startup.r
     Type: module
     Name: Ren-C-Startup
-    Rights: {
+    Rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         This is the Rebol code called by %main.c that handles things like
         loading boot extensions, doing command-line processing, and getting
         things otherwise set up for running the console.
@@ -23,7 +23,7 @@ REBOL [
         not be running any user code directly.  Instead it should return a
         request of code to be handed to the console extension to be provoked
         with (see the /PROVOKE refinement of CONSOLE for more information).
-    }
+    }--
 ]
 
 boot-print: redescribe [

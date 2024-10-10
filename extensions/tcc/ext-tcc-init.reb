@@ -4,9 +4,9 @@ REBOL [
 
     Type: Module
     Version: 1.0.0
-    License: {Apache 2.0}
+    License: "Apache 2.0"
 
-    Description: {
+    Description: --{
         The COMPILE usermode function is the front-end to the actual COMPILE*
         native, which interfaces directly with the libtcc API.  The front
         end's job is basically to do all the work that *can* be done in Rebol,
@@ -35,7 +35,7 @@ REBOL [
         a generic "make" service for an embedded TCC.  It could do multiple
         compilation and linking units, allow you to use include files via
         URL!, etc.  For now, it is primarily in service to user natives.
-    }
+    }--
 ]
 
 

@@ -13,7 +13,7 @@ Rebol [
         using  ; TBD: will become new meaning of USE
     ]
 
-    Description: {
+    Description: --{
         Rebol's PARSE is a tool for performing RegEx-style tasks using an
         English-like dialect.  It permits breaking down complex expressions
         into named subrules, and has a very freeform model for escaping into
@@ -51,16 +51,16 @@ Rebol [
         to easily create overrides or variations of the dialect.  (For
         instance, a version that is compatible with older Rebols.)  But the
         goal is to facilitate even more ambitious features.
-    }
+    }--
 
-    Notes: {
+    Notes: --{
         * This implementation will be *extremely* slow for the foreseeable
           future.  But since it is built on usermode facilities, any
           optimizations that are applied to it will bring systemic benefits.
           Ultimately the goal is to merge this architecture in with the
           "messier" C code...hopefully preserving enough of the hackability
           while leveraging low-level optimizations where possible.
-    }
+    }--
 ]
 
 

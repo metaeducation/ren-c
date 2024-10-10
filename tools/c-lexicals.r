@@ -1,17 +1,17 @@
 REBOL [
     Title: "C Programming Language Lexical Definitions"
-    Rights: {
+    Rights: --{
         Copyright 2015 Brett Handley
-    }
+    }--
     Type: module
     Name: C-Lexicals
-    License: {
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Author: "Brett Handley"
-    Purpose: {Parse C source text into preprocessing tokens.}
-    Description: {
+    Purpose: "Parse C source text into preprocessing tokens"
+    Description: --{
         Based upon N1570 Committee Draft - April 12, 2011 ISO/IEC 9899:201x
 
         Trigraphs are not implemented.
@@ -19,7 +19,7 @@ REBOL [
         Do not put any actions (e.g. executable GROUP!s in the PARSE rules)
         in this file.  To use these rules, copy them, call them from your
         own rules or use rule injection to dynamically add emit actions.
-    }
+    }--
 ]
 
 grammar: [

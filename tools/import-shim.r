@@ -3,7 +3,7 @@ Rebol [
     File: %import-shim.r
     Type: script  ; R3-Alpha module system broken, see notes
 
-    Description: {
+    Description: --{
         This shim redefines IMPORT and EXPORT for the bootstrap executable:
 
         * It preprocesses the source, so that -{...}- strings are turned into
@@ -13,8 +13,8 @@ Rebol [
           used in boostrap code.  This doesn't act as expression barriers, but
           helps with readability (and new executables will see them as
           expression barriers and enforce them).
-    }
-    Usage: {
+    }--
+    Usage: --{
         To affect how code is loaded, the import shim has to be hooked in
         before your script is running (so you can't `do %import-shim.r`).
 
@@ -26,13 +26,13 @@ Rebol [
         Newer executables don't need this shim, just run the script plain:
 
             r3 make.r [OPTIONS]
-    }
-    Notes: {
+    }--
+    Notes: --{
       * !!! R3-Alpha Module System Was Completely Broken !!!, so we manually
         overwrite the definitions in lib instead of using Exports:  Not even
         that worked in pre-R3C builds, so it forced an update of the bootstrap
         executable to R3C when we started using the `--import` option.
-    }
+    }--
 ]
 
 

@@ -3,7 +3,7 @@ REBOL [
     Name: Process
     Type: Module
     Version: 1.0.0
-    License: {Apache 2.0}
+    License: "Apache 2.0"
 ]
 
 ; It's desirable to do as much usermode logic as possible, to reduce the

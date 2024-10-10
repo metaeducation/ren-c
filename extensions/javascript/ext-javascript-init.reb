@@ -9,7 +9,7 @@ REBOL [
 
     Rights: "Copyright (C) 2018-2019 hostilefork.com"
 
-    License: {LGPL 3.0}
+    License: "LGPL 3.0"
 ]
 
 export /js-awaiter: specialize js-native/ [awaiter: okay]

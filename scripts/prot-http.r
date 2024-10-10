@@ -1,19 +1,19 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "REBOL 3 HTTP protocol scheme"
-    Rights: {
+    Rights: --{
         Copyright 2012 Gabriele Santilli, Richard Smolak, and REBOL Technologies
         Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Type: module
     Name: HTTP-Protocol
     File: %prot-http.r
-    Description: {
+    Description: --{
         This file defines a "Port Scheme" for reading and writing data via
         the HTTP protocol.  The protocol is built on top of a Generic
         "connection" which can be plain TCP or be layered with the transport
@@ -33,7 +33,7 @@ REBOL [
         achieve parallelism.  But for now the limitation is that the reads and
         writes are synchronous, with the benefit of increasing the clarity
         of the code.
-    }
+    }--
 ]
 
 digit: charset [#"0" - #"9"]

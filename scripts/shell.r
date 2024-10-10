@@ -3,18 +3,18 @@ REBOL [
     Title: "OS Shell Interaction Dialect"
     Type: module
     Name: Shell-Dialect
-    Rights: {
+    Rights: --{
         Copyright 2015-2020 hostilefork.com
         Copyright 2020 Ren-C Open Source Contributors
 
         See README.md and CREDITS.md for more information.
-    }
-    License: {LGPL 3.0}
-    History: {
+    }--
+    License: "LGPL 3.0"
+    History: --{
         SHELL originated in the Ren Garden UI Experiment:
         https://youtu.be/0exDvv5WEv4?t=553
-    }
-    Description: {
+    }--
+    Description: --{
         The premise of this dialect is to make it possible to write shell
         commands in as natural a way as possible.  This means that WORD!s
         act as their literal spellings...needing GROUP!s to run Ren-C code
@@ -38,14 +38,14 @@ REBOL [
 
         For a literal form that does not escape with quotes, ISSUE! may be
         used.  Hence `#"foo bar"` acts the same as `:("foo bar")`.
-    }
-    Notes: {
+    }--
+    Notes: --{
         * A disadvantage of this implementation (compared to the Ren Garden
           implementation) is that each call to SHELL forgets the environment
           variable settings from the previous call.  If the CALL process could
           be held open (e.g. as a PORT!) then this could be addressed.  That
           is something that is definitely desired.
-    }
+    }--
 ]
 
 

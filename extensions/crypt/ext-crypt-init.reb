@@ -3,7 +3,7 @@ REBOL [
     Name: Crypt
     Type: Module
     Version: 1.0.0
-    License: {Apache 2.0}
+    License: "Apache 2.0"
 ]
 
 export /rsa-make-key: func [

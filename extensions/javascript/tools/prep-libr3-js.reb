@@ -7,9 +7,9 @@ REBOL [
 
     Rights: "Copyright (C) 2018-2020 hostilefork.com"
 
-    License: {LGPL 3.0}
+    License: "LGPL 3.0"
 
-    Description: {
+    Description: --{
         The WASM files produced by Emscripten produce JavaScript functions
         that expect their arguments to be in terms of the SharedArrayBuffer
         HEAP32 that the C code can see.  For common JavaScript types, the
@@ -22,7 +22,7 @@ REBOL [
         engineered form of `va_list` (which is beyond the C standard, and each
         compiler could implement it differently).  But now it does it with
         an ordinary packed array of C pointers.
-    }
+    }--
 ]
 
 ; Note: There are no `import` statements here because this is run by EVAL LOAD

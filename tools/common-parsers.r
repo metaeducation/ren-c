@@ -3,23 +3,23 @@ REBOL [
     Title: "Common Parsers for Tools"
     Type: module
     Name: Common-Parsers
-    Rights: {
+    Rights: --{
         Rebol is Copyright 1997-2015 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
 
         Ren-C is Copyright 2015-2018 MetaEducation
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Author: "@codebybrett"
     Version: 2.100.0
     Needs: 2.100.100
-    Purpose: {
+    Purpose: --{
         These are some common routines used by the utilities
         that build and test the system.
-    }
+    }--
 ]
 
 import <bootstrap-shim.r>

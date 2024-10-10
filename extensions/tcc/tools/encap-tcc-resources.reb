@@ -3,15 +3,15 @@ REBOL [
     Title: "Gather and Compress redistributable includes/libs for TCC"
     File: %encap-tcc-resources.reb  ; used by MAKE-EMITTER
 
-    Rights: {
+    Rights: --{
         Copyright 2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         In order for the TCC compiler to build useful programs, it depends
         on the C standard library.  This means the system you are compiling
         onto must have %include/ and %lib/ directories with appropriate
@@ -37,13 +37,13 @@ REBOL [
         include and lib stubs for Windows libc, in addition to the overrides
         like it has on linux.  This all should be packed into the executable
         as well.
-    }
-    Notes: {
+    }--
+    Notes: --{
         !!! This file is a work in progress.  As a first step, it just packs
         an auxiliary .zip file that users can download and unzip somewhere
         manually.  Ultimately it would be more turnkey, once there's a way
         for extensions to add their own subfolders to the encapping process.
-    }
+    }--
 ]
 
 import %../../tools/common.r

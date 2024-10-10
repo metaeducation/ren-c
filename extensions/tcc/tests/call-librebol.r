@@ -1,6 +1,6 @@
 REBOL [
     Title: "Test C Code Using Librebol Instead of Stdio.h"
-    Description: {
+    Description: --{
         In order to call C functions like printf(), you must have headers and
         libraries installed on your ARM platform.  This is difficult to do
         without something like BusyBox that establishes a sandbox environment
@@ -26,7 +26,7 @@ REBOL [
         the code you write isn't necessarily completely trivial.  But to be
         realistic, you are probably going to need functions like memcpy() and
         other standard functions.  So this is just a proof of concept.
-    }
+    }--
 ]
 
 

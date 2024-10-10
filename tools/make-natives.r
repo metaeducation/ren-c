@@ -2,16 +2,16 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate native specifications"
     File: %make-natives.r
-    Rights: {
+    Rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         "Natives" are Rebol functions whose implementations are C code (as
         opposed to blocks of user code, such as that made with FUNC).
 
@@ -58,7 +58,7 @@ REBOL [
         `INCLUDE_PARAMS_OF_XXX` macros are generated to give a more readable
         way of accessing the parameters than by numeric index.  See the
         REF() and ARG() macro definitions for more on this.
-    }
+    }--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r

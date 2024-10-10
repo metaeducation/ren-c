@@ -2,28 +2,28 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate extention native header files"
     File: %prep-extension.r  ; EMIT-HEADER uses to indicate emitting script
-    Rights: {
+    Rights: --{
         Copyright 2017 Atronix Engineering
         Copyright 2017-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Needs: 2.100.100
-    Description: {
+    Description: --{
         This script is used to preprocess C source files containing code for
         extension DLLs, designed to load new native code into the interpreter.
 
         Such code is very similar to that of the code which is built into
         the EXE itself.  Hence, features like scanning the C comments for
         native specifications is reused.
-    }
-    Notes: {
+    }--
+    Notes: --{
         The build process distinguishes between an extension that wants to use
         just "rebol.h" vs. using all of "rebol-internals.h".
-    }
+    }--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r

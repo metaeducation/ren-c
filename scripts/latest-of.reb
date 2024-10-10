@@ -3,7 +3,7 @@ Rebol [
     Date: [26-Mar-2019 24-Nov-2021]
     Version: 0.2.0
 
-    Description: {
+    Description: --{
         Continuous integration builds of Windows, Mac, and Linux executables of
         Ren-C are placed on S3 storage.  This is done despite the fact that
         these builds are made to exercise build configurations.  Hence they are
@@ -16,8 +16,8 @@ Rebol [
         basic operation; starting up and shutting down successfully, and being
         able to do a successful HTTPS read.  Further testing is the
         responsibility of the committers at this time.
-    }
-    Usage: {
+    }--
+    Usage: --{
         ; Currently this is not implemented as a module; but script isolation
         ; means the only way you can get a function out is as a return result
         ; of the script.  We are reviewing the packaging options as the module
@@ -54,8 +54,8 @@ Rebol [
 
         >> latest-of/commit 0.4.40 "9d15d31"
         == http://...r3-9d15d31-...
-    }
-    Notes: {
+    }--
+    Notes: --{
       * This is intended to work in the Web REPL as well as the desktop builds,
         as both currently support READ and INFO? for URLs.  Note that only
         servers that enable "CORS" for a URL can be read by browsers.  (The
@@ -84,7 +84,7 @@ Rebol [
         this is subject to bootstrap problems...your interpreter may become out
         of date so it cannot run the current incarnation of %latest-of.reb - if
         you hit that, run LATEST-OF in the Web Repl instead of a desktop build.
-    }
+    }--
 ]
 
 

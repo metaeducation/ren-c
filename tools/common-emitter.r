@@ -3,15 +3,15 @@ REBOL [
     Title: "Common Code for Emitting Text Files"
     Type: module
     Name: Common-Emitter
-    Rights: {
+    Rights: --{
         Copyright 2016-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Purpose: {
+    }--
+    Purpose: --{
         While emitting text files isn't exactly rocket science, it can help
         to have a few sanity checks on the process.
 
@@ -31,7 +31,7 @@ REBOL [
         * Being able to use the information of the file and title being
           generated to provide notifications of what work is currently in
           progress to make errors easier to locate.
-    }
+    }--
 ]
 
 import <bootstrap-shim.r>

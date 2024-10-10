@@ -9,10 +9,10 @@ Rebol [
         destructure
     ]
 
-    Description: {
+    Description: --{
         These routines are sensitive to UPARSE and should not be used in
         the bootstrap process at this time.
-    }
+    }--
 ]
 
 /destructure: func [

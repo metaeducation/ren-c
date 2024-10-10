@@ -1,14 +1,14 @@
 REBOL [
     Title: "Read-deep"
-    Rights: {
+    Rights: --{
         Copyright 2018 Brett Handley
-    }
+    }--
     Type: module
     Name: Read-Deep
-    License: {
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Author: "Brett Handley"
     Purpose: "Recursive READ strategies."
 ]

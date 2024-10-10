@@ -3,20 +3,20 @@ REBOL [
     Title: "Common Routines for Tools"
     Type: module
     Name: Prep-Common
-    Rights: {
+    Rights: --{
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Version: 2.100.0
     Needs: 2.100.100
-    Purpose: {
+    Purpose: --{
         These are some common routines used by the utilities
         that build the system, which are found in %src/tools/
-    }
+    }--
 ]
 
 import <bootstrap-shim.r>

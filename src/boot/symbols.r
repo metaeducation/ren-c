@@ -2,16 +2,16 @@ REBOL [
     System: "Ren-C Language Interpreter and Run-time Environment"
     Title: "Symbols That want SYM_XXX IDs But Are Not In Lib"
     File: %symbols.r
-    Rights: {
+    Rights: --{
         Copyright 2012-2021 Ren-C Open Source Contributors
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Purpose: {
+    }--
+    Purpose: --{
         These are words that are used internally by Rebol, which and are
         canonized with small integer SYM_XXX constants.  These constants can
         be quickly used in switch() statements, and a lookup table is on
@@ -23,7 +23,7 @@ REBOL [
         of symbols in this file.  See %lib-words.r for that application.
 
         ISSUE! is used to denote items that should already exist.
-    }
+    }--
 ]
 
 unreadable  ; needed for Init_Unreadable()

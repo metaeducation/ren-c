@@ -4,7 +4,7 @@ REBOL [
     Type: module
     Name: Make-File
     Exports: [make-file]
-    Description: {
+    Description: --{
         This is a very experimental starter file for defining a dialect that
         can take advantage of generic TUPLE! and PATH! to create FILE!s.
 
@@ -45,7 +45,7 @@ REBOL [
 
         This will be an ongoing project, as time permits...with hope that it
         evolves into something that can be the main behavior for MAKE FILE!.
-    }
+    }--
 ]
 
 /doubled-file-slash-error: lambda [item] [

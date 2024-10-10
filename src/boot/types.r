@@ -1,16 +1,16 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Rebol datatypes and their related attributes"
-    Rights: {
+    Rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Purpose: {
+    }--
+    Purpose: --{
         This table is used to make C defines and intialization tables.
 
             name            "description"
@@ -40,8 +40,8 @@ REBOL [
 
         Note that if there is `somename` in the class column, that means you
         will find the ACTION? dispatch for that type in `REBTYPE(Somename)`.
-    }
-    Notes: {
+    }--
+    Notes: --{
       * Code should avoid dependence on exact values of the heart bytes.
         Any relative ordering dependencies not captured in this type table
         should be captured as macros/functions in %sys-ordered.h
@@ -60,7 +60,7 @@ REBOL [
 
       * Historical Rebol had INTERNAL! and IMMEDIATE! "typesets".  Important
         to have a parallel in Ren-C type constraints?
-    }
+    }--
 ]
 
 

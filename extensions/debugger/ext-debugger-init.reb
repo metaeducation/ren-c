@@ -5,9 +5,9 @@ REBOL [
     Type: Module
 
     Version: 1.0.0
-    License: {Apache 2.0}
+    License: "Apache 2.0"
 
-    Description: {
+    Description: --{
         The goal of the debugger in Ren-C is to be mostly usermode code, and
         to rely on leveraging exposure of the FRAME! datatype.  One of the
         concepts involved in that is that things like mappings of integers
@@ -20,7 +20,7 @@ REBOL [
         the hoops one must jump through to implement a single-threaded
         debugger vs. a threaded/interprocess-focused implementation (e.g.
         via a debug://` PORT!)
-    }
+    }--
 ]
 
 

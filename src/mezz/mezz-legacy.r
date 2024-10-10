@@ -2,18 +2,18 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "REBOL 3 Mezzanine: Legacy compatibility"
     Homepage: https://trello.com/b/l385BE7a/porting-guide
-    Rights: {
+    Rights: --{
         Copyright 2012-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Description: {
+    }--
+    Description: --{
         These are a few compatibility scraps left over from extracting the
         R3-Alpha emulation layer into %redbol.reb.
-    }
+    }--
 ]
 
 /loop: func [] [

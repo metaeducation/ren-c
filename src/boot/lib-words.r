@@ -1,16 +1,16 @@
 REBOL [
     System: "Ren-C Language Interpreter and Run-time Environment"
     Title: "Canonical Words Where Order or Optimization in Lib Lookup Matters"
-    Rights: {
+    Rights: --{
         Copyright 2012-2021 Ren-C Open Source Contributors
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
-    Purpose: {
+    }--
+    Purpose: --{
         These are words that are used internally by Rebol, which and are
         canonized with small integer SYM_XXX constants.  These constants can
         be quickly used in switch() statements, and a lookup table is on
@@ -24,7 +24,7 @@ REBOL [
 
         Unordered words do not forcibly have slots in the optimized range of
         lib, so they are in a separate file.
-    }
+    }--
 ]
 
 void

@@ -1,7 +1,7 @@
 REBOL [
     File: %emscripten.r
 
-    Description: {
+    Description: --{
         Emscripten is the name for a tool suite that makes it easier to build
         C/C++ programs that will run in JavaScript/WebAssembly environments.
 
@@ -16,9 +16,9 @@ REBOL [
         implement the "JavaScript extension", which adds the JS-NATIVE and
         JS-EVAL functions to the Ren-C runtime in order to make it possible
         to smoothly integrate JavaScript and Ren-C.
-    }
+    }--
 
-    Notes: {
+    Notes: --{
       * EMCC Command-Line Options List
         https://emscripten.org/docs/tools_reference/emcc.html
 
@@ -37,7 +37,7 @@ REBOL [
         Emscripten, so that functions like reb.Value(...) are available to
         JavaScript in the build.  See %prep-libr3-js.reb for that somewhat
         intricate glue.
-    }
+    }--
 ]
 
 host: #web  ; #web, or #node (not recently tested)

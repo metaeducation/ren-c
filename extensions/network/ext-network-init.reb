@@ -3,7 +3,7 @@ REBOL [
     Name: Network
     Type: Module
     Version: 1.0.0
-    License: {Apache 2.0}
+    License: "Apache 2.0"
 ]
 
 ; The polymorphic WAIT function was once part of the "event" module.  But

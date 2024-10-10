@@ -4,15 +4,15 @@ REBOL [
     File: %native-emitters.r
     Type: module
     Name: Native-Emitters
-    Rights: {
+    Rights: --{
         Copyright 2017 Atronix Engineering
         Copyright 2017 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Needs: 2.100.100
 ]
 

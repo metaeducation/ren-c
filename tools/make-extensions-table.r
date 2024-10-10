@@ -2,17 +2,17 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate table of ExtensionCollators for all built-in extensions"
     File: %make-extensions-table.r  ; EMIT-HEADER uses this filename
-    Rights: {
+    Rights: --{
         Copyright 2017 Atronix Engineering
         Copyright 2017-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Needs: 2.100.100
-    Description: {
+    Description: --{
         Extensions are written in such a way that based on influencing some
         #define macros in %sys-ext.h, they can target being standalone DLLs,
         or as part of a Rebol EXE, or as part of Rebol built as a library.
@@ -34,7 +34,7 @@ REBOL [
         rebBuiltinExtensions() API to whatever client (C, JavaScript, etc.)
         that may want to start them up selectively...which must be at some
         point *after* rebStartup().
-    }
+    }--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r

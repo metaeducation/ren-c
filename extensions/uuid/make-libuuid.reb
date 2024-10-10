@@ -2,7 +2,7 @@ REBOL [
     Title: "Extract libUUID"
     File: %make-libuuid.reb
 
-    Description: {
+    Description: --{
         The Linux Kernel organization has something called `util-linux`, which
         is a standard package implementing various functionality:
 
@@ -16,7 +16,7 @@ REBOL [
 
         The extracted files are committed into the Ren-C repository, to reduce
         the number of external dependencies in the build.
-    }
+    }--
 ]
 
 ROOT: https://raw.githubusercontent.com/karelzak/util-linux/master/

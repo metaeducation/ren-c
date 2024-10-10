@@ -3,15 +3,15 @@ REBOL [
     Version: 1.0.0
     Type: module
     Name: Text-Lines
-    Rights: {
+    Rights: --{
         Copyright 2015 Brett Handley
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Author: "Brett Handley"
-    Purpose: {Functions operating on lines of text.}
+    Purpose: "Functions operating on lines of text"
 ]
 
 import <bootstrap-shim.r>

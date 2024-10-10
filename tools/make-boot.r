@@ -2,22 +2,22 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Make primary boot files"
     File: %make-boot.r  ; used by EMIT-HEADER to indicate emitting script
-    Rights: {
+    Rights: --{
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
-    }
-    License: {
+    }--
+    License: --{
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Version: 2.100.0
     Needs: 2.100.100
-    Purpose: {
+    Purpose: --{
         A lot of the REBOL system is built by REBOL, and this program
         does most of the serious work. It generates most of the C include
         files required to compile REBOL.
-    }
+    }--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r

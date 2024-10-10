@@ -1,6 +1,6 @@
 REBOL [
     Title: "Comparing User Native vs. Rebol Fibonacci Number Calculation"
-    Description: {
+    Description: --{
         @ShixinZeng created this as an initial test to compare the performance
         of a user native implementation of Fibonacci numbers, to an algorithm
         written in the exact same style using Rebol.
@@ -9,7 +9,7 @@ REBOL [
         it is run by an interpreter.  But a line of C generally translates
         into only a few instructions.  At time of writing, the TCC version is
         about 50x faster than an -O2 release build running the Rebol version.
-    }
+    }--
 ]
 
 c-fib: make-native [
