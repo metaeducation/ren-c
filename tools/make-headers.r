@@ -104,9 +104,9 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
     append prototypes proto
 
-    e-funcs/emit [proto proto-parser.file {
+    e-funcs/emit [proto proto-parser.file --{
         RL_API $<Proto>; /* $<proto-parser.file> */
-    }]
+    }--]
 ]
 
 /process-conditional: func [
@@ -115,9 +115,9 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
     dir-position
     emitter [object!]
 ][
-    emitter/emit [proto-parser.file dir-position text-line-of directive {
+    emitter/emit [proto-parser.file dir-position text-line-of directive --{
         $<Directive> /* $<proto-parser.file> #$<text-line-of dir-position> */
-    }]
+    }--]
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
     ;
@@ -150,7 +150,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 ; more solid mechanism.
 
 
-e-funcs/emit {
+e-funcs/emit --{
     /*
      * Once there was a rule that C++ builds would not be different in function
      * from a C build.  This way, an extension DLL could be compiled to run
@@ -164,12 +164,12 @@ e-funcs/emit {
      * This may be revisited in the future.
      */
     #if 0
-    extern "C" ^{
+    extern "C" {
     #endif
-}
+}--
 e-funcs/emit newline
 
-e-funcs/emit {
+e-funcs/emit --{
     /*
      * These are the functions that are scanned for in the %.c files by
      * %make-headers.r, and then their prototypes placed here.  This means it
@@ -177,7 +177,7 @@ e-funcs/emit {
      * functions living in different sources.  (`static` functions are skipped
      * by the scan.)
      */
-}
+}--
 e-funcs/emit newline
 
 for-each 'item file-base.core [
@@ -208,11 +208,11 @@ for-each 'item file-base.core [
 ]
 
 
-e-funcs/emit {
+e-funcs/emit --{
     #if 0
-    ^}  /* end of `extern "C" ^{` */
+    }  /* end of `extern "C" {` */
     #endif
-}
+}--
 
 e-funcs/write-emitted
 
@@ -295,23 +295,23 @@ e-strings: make-emitter "REBOL Constants with Global Linkage" (
     join output-dir %include/tmp-constants.h
 )
 
-e-strings/emit {
+e-strings/emit --{
     /*
      * This file comes from scraping %a-constants.c for any `const XXX =` or
      * `#define` definitions, and it is included in %sys-core.h in order to
      * to conveniently make the global data available in other source files.
      */
-}
+}--
 for-each 'line read:lines %a-constants.c [
     case [
         parse3:match line ["#define" to <end>] [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse3:match line [to {const } constd: across to { =} to <end>] [
-            e-strings/emit [constd {
+        parse3:match line [to -{const }- constd: across to -{ =}- to <end>] [
+            e-strings/emit [constd --{
                 extern $<Constd>;
-            }]
+            }--]
         ]
     ]
 ]

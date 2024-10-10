@@ -619,7 +619,7 @@ export /configure-platform: func [
 
     if not result [
         fail [
-            {No table entry for} version {found in %platforms.r}
+            "No table entry for" version "found in %platforms.r"
         ]
     ]
 

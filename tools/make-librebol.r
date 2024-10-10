@@ -183,7 +183,7 @@ process (join src-dir %a-lib.c)
 ; long generated lists, and then spliced into slots in that "big picture"
 
 extern-prototypes: map-each-api [
-    cscape [:api {RL_API $<Proto>}]
+    cscape [:api "RL_API $<Proto>"]
 ]
 
 lib-struct-fields: map-each-api [
@@ -196,7 +196,7 @@ lib-struct-fields: map-each-api [
     ]
     cfunc-params: default ["void"]
     cscape [:api
-        {$<Return-Type> (*$<Name>)($<Cfunc-Params>)}
+        "$<Return-Type> (*$<Name>)($<Cfunc-Params>)"
     ]
 ]
 
@@ -205,7 +205,7 @@ non-variadic-api-macros: map-each-api [
         continue
     ]
     if no? is-variadic [
-        cscape [:api {#define $<Name> LIBREBOL_PREFIX($<Name>)}]
+        cscape [:api "#define $<Name> LIBREBOL_PREFIX($<Name>)"]
     ]
 ]
 
@@ -240,7 +240,7 @@ for-each-api [
 
     return-keyword: if return-type != "void" ["return "] else [null]
 
-    append variadic-api-c-helpers cscape [:api {
+    append variadic-api-c-helpers cscape [:api --{
         $<Maybe Attributes>
         static inline $<Return-Type> $<Name>_helper(  /* C version */
             RebolContext** binding_ref,
@@ -257,9 +257,9 @@ for-each-api [
             );
             $<Maybe Epilogue>
         }
-    }]
+    }--]
 
-    append variadic-api-c++-helpers cscape [:api {
+    append variadic-api-c++-helpers cscape [:api --{
         template <typename... Ts>
         $<Maybe Attributes>
         inline $<Return-Type> $<Name>_helper(  /* C++ version */
@@ -277,7 +277,7 @@ for-each-api [
             );
             $<Maybe Epilogue>
         }
-    }]
+    }--]
 ]
 
 variadic-api-binding-capturing-macros: map-each-api [
@@ -286,13 +286,13 @@ variadic-api-binding-capturing-macros: map-each-api [
             to-text var
         ]
 
-        cscape [:api {
+        cscape [:api --{
             #define $<Name>($<Fixed-Params,>...) \
                 $<Name>_helper( \
                     LIBREBOL_BINDING,  /* captured from callsite! */ \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
-        }]
+        }--]
     ]
 ]
 
@@ -302,19 +302,19 @@ variadic-api-explicit-binding-macros: map-each-api [
             to-text var
         ]
 
-        cscape [:api {
+        cscape [:api --{
             #define $<Name>Core(binding_ref, $<Fixed-Params,>...) \
                 $<Name>_helper( \
                     binding_ref, \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
-        }]
+        }--]
     ]
 ]
 
 variadic-api-c89-alias-macros: map-each-api [
     if yes? is-variadic [
-        cscape [:api {#define $<Name>_c89 $<Name>_helper}]
+        cscape [:api "#define $<Name>_c89 $<Name>_helper"]
     ]
 ]
 
@@ -354,7 +354,7 @@ e-lib: make-emitter "Rebol External Library Interface" (
     join prep-dir %include/rebol.h
 )
 
-e-lib/emit [ver {
+e-lib/emit [ver --{
     #ifndef REBOL_H_1020_0304  /* "include guard" allows multiple #includes */
     #define REBOL_H_1020_0304  /* numbers in case REBOL_H defined elsewhere */
 
@@ -1025,27 +1025,27 @@ e-lib/emit [ver {
         #include <cstddef>  /* for std::nullptr_t */
 
         inline const void* to_rebarg(std::nullptr_t val)
-            { return val; }
+          { return val; }
 
         inline const void* to_rebarg(const RebolValue* val)
-            { return val; }
+          { return val; }
 
         inline const void* to_rebarg(const RebolNodeInternal* instruction)
-            { return instruction; }
+          { return instruction; }
 
         inline const void* to_rebarg(const char *source)
-            { return source; }  /* not TEXT!, but LOADable source code */
+          { return source; }  /* not TEXT!, but LOADable source code */
 
         inline const void* to_rebarg(int i)
-            { return rebI(i); }
+          { return rebI(i); }
 
         inline const void* to_rebarg(double d)
-            { return rebR(rebDecimal(d)); }
+          { return rebR(rebDecimal(d)); }
 
         inline const void* to_rebarg(const void* p) = delete;  // [1]
 
         inline const void* to_rebarg(bool b)  // no implicit conversion [1]
-            { return rebL(b); }
+          { return rebL(b); }
 
     #endif
 
@@ -1280,7 +1280,7 @@ e-lib/emit [ver {
 
 
     #endif  /* REBOL_H_1020_0304 */
-}]
+}--]
 
 e-lib/write-emitted
 
@@ -1300,13 +1300,13 @@ table-init-items: map-each-api [
     unspaced ["&" "API_" name]
 ]
 
-e-table/emit [table-init-items {
+e-table/emit [table-init-items --{
     #include "rebol.h"
 
     RebolApiTable g_librebol = {
         $(Table-Init-Items),
     };
-}]
+}--]
 
 e-table/write-emitted
 

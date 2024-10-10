@@ -59,29 +59,29 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
     :stdio "Disable stdio.h"
     <local> name line-iter line pos
     <static>
-    open-include (charset {"<})
-    close-include (charset {">})
+    open-include (charset -{"<}-)
+    close-include (charset -{">}-)
 ][
     let include-rule: compose [
         (if stdio [
             [open-include name: across "stdio.h" close-include |]
         ])
-        {"} name: across to {"}
+        -{"}- name: across to -{"}-
     ]
 
     for-next 'line-iter lines [
         parse3:match line-iter.1 [
-            opt some space {#}
-            opt some space {include}
+            opt some space "#"
+            opt some space "include"
             some space, include-rule, to <end>
         ] then [
             if let pos: find try inline (as file! name) [
                 change:part line-iter (read:lines join path-zlib name) 1
                 take pos
             ] else [
-                insert line unspaced [{//} space]
+                insert line unspaced ["//" space]
                 append line unspaced [
-                    space {/* REBOL: see make-zlib.r */}
+                    space -{/* REBOL: see make-zlib.r */}-
                 ]
             ]
         ]
@@ -89,8 +89,8 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 
     if inline and (not empty? inline) [
         fail [
-            {Not all headers inlined by make-zlib:} (mold headers) LF
-            {If we inline a header, should happen once and only once for each}
+            "Not all headers inlined by make-zlib:" (mold headers) LF
+            "If we inline a header, should happen once and only once for each"
         ]
     ]
 ]
@@ -100,48 +100,48 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 ; Stern warning not to edit the files
 ;
 
-make-warning-lines: lamda [name [file!] title [text!]] [
-    reduce [
-        {/*}
-        { * Extraction of ZLIB compression and decompression routines}
-        { * for REBOL [R3] Language Interpreter and Run-time Environment}
-        { * This is a code-generated file.}
-        { *}
-        { * ZLIB Copyright notice:}
-        { *}
-        { *   (C) 1995-2017 Jean-loup Gailly and Mark Adler}
-        { *}
-        { *   This software is provided 'as-is', without any express or implied}
-        { *   warranty.  In no event will the authors be held liable for any damages}
-        { *   arising from the use of this software.}
-        { *}
-        { *   Permission is granted to anyone to use this software for any purpose,}
-        { *   including commercial applications, and to alter it and redistribute it}
-        { *   freely, subject to the following restrictions:}
-        { *}
-        { *   1. The origin of this software must not be misrepresented; you must not}
-        { *      claim that you wrote the original software. If you use this software}
-        { *      in a product, an acknowledgment in the product documentation would be}
-        { *      appreciated but is not required.}
-        { *   2. Altered source versions must be plainly marked as such, and must not be}
-        { *      misrepresented as being the original software.}
-        { *   3. This notice may not be removed or altered from any source distribution.}
-        { *}
-        { *       Jean-loup Gailly        Mark Adler}
-        { *       jloup@gzip.org          madler@alumni.caltech.edu}
-        { *}
-        { * REBOL is a trademark of REBOL Technologies}
-        { * Licensed under the Apache License, Version 2.0}
-        { *}
-        { * **********************************************************************}
-        { *}
-        unspaced [{ * Title: } title]
-        { * Build: A0}
-        unspaced [{ * Date:  } now:date]
-        unspaced [{ * File:  } to text! name]
-        { *}
-        { * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)}
-        { */}
+make-warning-lines: lamda [name [file!] title [text!]] [  ; use CSCAPE?
+    reduce [--{
+        /*
+         * Extraction of ZLIB compression and decompression routines
+         * for REBOL [R3] Language Interpreter and Run-time Environment
+         * This is a code-generated file.
+         *
+         * ZLIB Copyright notice:
+         *
+         *   (C) 1995-2017 Jean-loup Gailly and Mark Adler
+         *
+         *   This software is provided 'as-is', without any express or implied
+         *   warranty.  In no event will the authors be held liable for any damages
+         *   arising from the use of this software.
+         *
+         *   Permission is granted to anyone to use this software for any purpose,
+         *   including commercial applications, and to alter it and redistribute it
+         *   freely, subject to the following restrictions:
+         *
+         *   1. The origin of this software must not be misrepresented; you must not
+         *      claim that you wrote the original software. If you use this software
+         *      in a product, an acknowledgment in the product documentation would be
+         *      appreciated but is not required.
+         *   2. Altered source versions must be plainly marked as such, and must not be
+         *      misrepresented as being the original software.
+         *   3. This notice may not be removed or altered from any source distribution.
+         *
+         *       Jean-loup Gailly        Mark Adler
+         *       jloup@gzip.org          madler@alumni.caltech.edu
+         *
+         * REBOL is a trademark of REBOL Technologies
+         * Licensed under the Apache License, Version 2.0
+         *
+         * **********************************************************************
+         *}--
+        unspaced [-{ * Title: }- title]
+        -{ * Build: A0}-
+        unspaced [-{ * Date:  }- now:date]
+        unspaced [-{ * File:  }- to text! name]
+        -{ *}-
+        -{ * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)}-
+        -{ */}-
     ]
 ]
 
@@ -339,15 +339,15 @@ for-each 'h-file [
 
 disable-user-includes header-lines
 
-insert header-lines spread [
-    {}
-    {// Ren-C}
-    {#define NO_DUMMY_DECL 1}
-    {#define Z_PREFIX 1}
-    {#define ZLIB_CONST}
-    {// **********************************************************************}
-    {}
-]
+insert header-lines --{
+
+    // Ren-C
+    #define NO_DUMMY_DECL 1
+    #define Z_PREFIX 1
+    #define ZLIB_CONST
+    // **********************************************************************
+
+}--
 
 insert header-lines spread make-warning-lines file-include {ZLIB aggregated header}
 
@@ -367,10 +367,10 @@ append source-lines spread read:lines (join path-zlib %crc32.c)
 ; Macros DO1 and DO8 are defined differently in crc32.c, and if you don't
 ; #undef them you'll get a redefinition warning.
 ;
-append source-lines spread [
-    {#undef DO1  /* REBOL: see make-zlib.r */}
-    {#undef DO8  /* REBOL: see make-zlib.r */}
-]
+append source-lines --{
+    #undef DO1  /* REBOL: see make-zlib.r */
+    #undef DO8  /* REBOL: see make-zlib.r */
+}--
 
 for-each 'c-file [
     %adler32.c
@@ -397,12 +397,12 @@ disable-user-includes:stdio:inline source-lines copy [
     %crc32.h
 ]
 
-insert source-lines spread [
-    {}
-    {#include "sys-zlib.h"  /* REBOL: see make-zlib.r */}
-    {#define local static}
-    {}
-]
+insert source-lines --{
+
+    #include "sys-zlib.h"  /* REBOL: see make-zlib.r */
+    #define local static
+
+}--
 
 insert source-lines spread make-warning-lines file-source {ZLIB aggregated source}
 

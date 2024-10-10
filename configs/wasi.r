@@ -126,7 +126,7 @@ extensions: make map! compose [
 ; Note environment variable EMCC_DEBUG for diagnostic output
 
 cflags: compose [
-    {--sysroot ${WASI_SYSROOT}}
+    "--sysroot ${WASI_SYSROOT}"
 
     ; "wasm lacks signal support; to enable minimal signal emulation..."
     ; also needs to link with `-lwasi-emulated-signal`
@@ -134,24 +134,24 @@ cflags: compose [
     ; It's not clear why things like %pstdint.h need <signal.h>, but it seems
     ; the minimal emulation is enough.
     ;
-    {-D_WASI_EMULATED_SIGNAL}
+    "-D_WASI_EMULATED_SIGNAL"
 
-    {-DREBOL_FAIL_JUST_ABORTS=1}  ; no exceptions or setjmp()/longjmp()
+    "-DREBOL_FAIL_JUST_ABORTS=1"  ; no exceptions or setjmp()/longjmp()
 
     (if yes? debug-wasi-extension [spread [
-        {-DDEBUG_HAS_PROBE=1}
-        {-DDEBUG_FANCY_PANIC=1}
-        {-DDEBUG_COUNT_TICKS=1}
-        {-DDEBUG_PRINTF_FAIL_LOCATIONS=1}
+        "-DDEBUG_HAS_PROBE=1"
+        "-DDEBUG_FANCY_PANIC=1"
+        "-DDEBUG_COUNT_TICKS=1"
+        "-DDEBUG_PRINTF_FAIL_LOCATIONS=1"
 
-        {-DDEBUG_COLLECT_STATS=1}  ; !!! maybe temporary, has cost but good info
+        "-DDEBUG_COLLECT_STATS=1"  ; !!! maybe temporary, has cost but good info
     ]])
 ]
 
 ldflags: compose [
     (unspaced ["-O" optimize])
 
-    {-lwasi-emulated-signal}  ; cflags needs {-D_WASI_EMULATED_SIGNAL}
+    "-lwasi-emulated-signal"  ; cflags needs "-D_WASI_EMULATED_SIGNAL"
 
-    (if yes? debug-wasi-extension [{-g}])
+    (if yes? debug-wasi-extension ["-g"])
 ]

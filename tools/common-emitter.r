@@ -308,7 +308,7 @@ export /make-emitter: func [
         ]
     ]
 
-    print unspaced [{Generating "} title {" (via } by {)}]
+    print unspaced [-{Generating "}- title -{" (via }- by -{)}-]
 
     let stem
     split-path3/file file $stem
@@ -384,7 +384,7 @@ export /make-emitter: func [
     ]
 
     any [is-c is-js] then [
-        e/emit [title boot-version stem by {
+        e/emit [title boot-version stem by -{
             /**********************************************************************
             **
             **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -399,39 +399,39 @@ export /make-emitter: func [
             **  Build: A$<Boot-Version/3>
             **  File: $<Mold Stem>
             **  Author: $<Mold By>
-            **  License: {
+            **  License: --{
             **      Licensed under the Apache License, Version 2.0.
             **      See: http://www.apache.org/licenses/LICENSE-2.0
-            **  }
-        }]
+            **  }--
+        }-]
         if true? temporary [
-            e/emit {
-                **  Note: {AUTO-GENERATED FILE - Do not modify.}
-            }
+            e/emit -{
+                **  Note: "AUTO-GENERATED FILE - Do not modify"
+            }-
         ]
-        e/emit {
+        e/emit -{
             **
             ***********************************************************************/
-        }
+        }-
         e/emit newline
     ]
     else [
-        e/emit {REBOL }  ; no COMPOSE:DEEP in bootstrap shim, yet
+        e/emit unspaced ["REBOL" space]  ; no COMPOSE:DEEP in bootstrap shim
         e/emit mold spread compose [
             System: "REBOL [R3] Language Interpreter and Run-time Environment"
             Title: (title)
             File: (stem)
-            Rights: {
+            Rights: --{
                 Copyright 2012 REBOL Technologies
                 Copyright 2012-2018 Ren-C Open Source Contributors
                 REBOL is a trademark of REBOL Technologies
-            }
-            License: {
+            }--
+            License: --{
                 Licensed under the Apache License, Version 2.0.
                 See: http://www.apache.org/licenses/LICENSE-2.0
-            }
+            }--
             (if true? temporary [
-                spread [Note: {AUTO-GENERATED FILE - Do not modify.}]
+                spread [Note: "AUTO-GENERATED FILE - Do not modify"]
             ])
         ]
         e/emit newline

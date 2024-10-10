@@ -189,7 +189,7 @@ export /to-c-name: func [
 ;
 ; 1. To be "strict" C standard compatible, we do not use a string literal due
 ;    to length limits (509 characters in C89, and 4095 characters in C99).
-;    Instead we produce an array formatted as '{0xYY, ...}', 8 bytes per line
+;    Instead we produce an array formatted as {0xYY, ...}, 8 bytes per line
 ;
 ; 2. There should be one more byte in source than commas out.
 ;
@@ -206,7 +206,7 @@ export /binary-to-c: func [
         let hexed: enbase:base (copy:part data 8) 16
         data: skip data 8
         for-each [digit1 digit2] hexed [
-            append out unspaced [{0x} digit1 digit2 {,} space]
+            append out unspaced [-{0x}- digit1 digit2 -{,}- space]
         ]
 
         take:last out  ; drop the last space
@@ -389,13 +389,13 @@ export /stripload: func [
             |
             "^^}"  ; (actually `^}`) escaped brace, never count
             |
-            {^^"}  ; (actually `^"`) escaped quote, never count
+            -{^^"}-  ; (actually `^"`) escaped quote, never count
             |
             "-{" (if <Q> != last pushed [append pushed <B>])
             |
             "}-" (if <B> = last pushed [take:last pushed])
             |
-            {"} (
+            -{"}- (
                 case [
                     <Q> = last pushed [take:last pushed]
                     empty? pushed [append pushed <Q>]
@@ -447,7 +447,7 @@ export /stripload: func [
                     not find str ";"
                     not find str "{"
                     not find str "}"
-                    not find str {"}
+                    not find str -{"}-
                     any [
                         not find str "/"
                         parse3:match str [some "/"]

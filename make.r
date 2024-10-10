@@ -26,6 +26,7 @@ if not find (words of import/) 'into [  ; See %import-shim.r
 import <tools/bootstrap-shim.r>
 
 import <tools/common.r>  ; Note: sets up `repo-dir`
+import <tools/common-emitter.r>
 import <tools/platforms.r>
 
 rebmake: import <tools/rebmake.r>
@@ -129,7 +130,7 @@ for-each [name value] options [
             change-dir saved-dir
         ]
         'EXTENSIONS [
-            ; [+|-|*] [NAME {+|-|*|[modules]}]...
+            ; [+|-|*] [NAME --{+|-|*|[modules]}--]...
             use [ext-file user-ext][
                 user-ext: load value
                 if not block? user-ext [
@@ -960,6 +961,9 @@ for-each 'x targets [
     text [text!]
     :space
 ][
+    if not space [
+        insert text "    "
+    ]
     return apply replace/ [
         text
         either space [" "] [newline]
@@ -967,113 +971,139 @@ for-each 'x targets [
     ]
 ]
 
-help-topics: reduce [
+help-spec: [
+  === USAGE ===
+  --{
+    > PATH/TO/r3-make PATH/TO/make.r [CONFIG | OPTION | TARGET ...]
 
-; Note: Use only 1 indentation level in help strings
+    NOTE 1: By default current dir is the build directory.
+      This holds all the generated stuff (%prep/, %objs/, %makefile, %r3 ...)
+      You can set up multiple out-of-source build directories.
 
-'usage copy {=== USAGE ===^/
-    > PATH/TO/r3-make PATH/TO/make.r [CONFIG | OPTION | TARGET ...]^/
-NOTE 1: current dir is the build dir,
-    that will contain all generated stuff
-    (%prep/, %objs/, %makefile, %r3 ...)
-    You can have multiple build dirs.^/
-NOTE 2: but if the current dir is the "root" dir
-    (where make.r is), then the build dir is %build/^/
-NOTE 3: order of configs and options IS relevant^/
-MORE HELP:^/
-    { -h | -help | --help } { HELP-TOPICS }
-    }
+    NOTE 2: But if the current dir is the "root" dir (where %make.r is),
+      then the build dir is %build/
 
-'targets unspaced [{=== TARGETS ===^/
-    }
-    indent form target-names
-    ]
+    NOTE 3: Order of configs and options IS relevant!
 
-'configs unspaced [ {=== CONFIGS ===^/
-    { config: | load: | do: } PATH/TO/CONFIG-FILE^/
-FILES IN %make/configs/ SUBFOLDER:^/
-    }
-    indent:space form sort map-each 'x ;\
+    MORE HELP (via { -h | -help | --help }):
+        { $<delimit " | " help-topics> }
+  }--
+
+  === TARGETS ===
+  --{
+    $<indent form target-names>
+  }--
+
+  === CONFIGS ===
+  --{
+    { config: | load: | do: } PATH/TO/CONFIG-FILE
+
+    FILES IN %make/configs/ SUBFOLDER:
+
+    $<indent:space form sort map-each 'x
         load (join repo-dir %configs/)
         [to-text x]
-    newline ]
+    >
+  }--
 
-'options unspaced [ {=== OPTIONS ===^/
-CURRENT VALUES:^/
-    }
-    indent mold user-config
-    {^/
-NOTES:^/
-    - names are case-insensitive
-    - `_` instead of '-' is ok
-    - NAME=VALUE is the same as NAME: VALUE
-    - e.g `OS_ID=0.4.3` === `os-id: 0.4.3`
-    } ]
+  === OPTIONS ===
+  --{
+    CURRENT VALUES:
 
-'os-id unspaced [ {=== OS-ID ===^/
-CURRENT OS:^/
-    }
-    indent mold configure-platform user-config.os-id
-    {^/
-LIST:^/
-    OS-ID:  OS-NAME:}
-    indent form collect [for-each-platform 'p [
-        keep unspaced [
-            newline format 8 p.id p.os-name
-        ]
-    ]]
-    newline
-    ]
+    $<indent mold user-config>
 
-'extensions unspaced [{=== EXTENSIONS ===^/
-    [FLAG] [ NAME {FLAG|[MODULES]} ... ]^/
-FLAG:
-    + => builtin
-    - => disable
-    * => dynamic^/
-NOTE: 1st 'anonymous' FLAG, if present, set the default^/
-NAME: one of
-    }
-    indent delimit " | " extension-names
-    {^/
-EXAMPLES:
-    extensions: +
-    => enable all extensions as builtin
-    extensions: "- gif + jpg * png [lodepng]"
-    => disable all extensions but gif (builtin),jpg and png (dynamic)^/
-CURRENT VALUE:
-    }
-    indent mold user-config.extensions
-    newline
-    ]
+    NOTES:
+
+      Names are case-insensitive
+      `_` instead of '-' is ok
+      NAME=VALUE (OS_ID=0.4.3) is the same as NAME: VALUE (os-id: 0.4.3)
+  }--
+
+  === OS-ID ===
+  --{
+    CURRENT OS:
+
+    $<indent mold configure-platform user-config.os-id>
+
+    AVAILABLE:
+
+    $<indent delimit newline collect [for-each-platform 'p [
+        keep spaced [format 8 p.id p.os-name]
+    ]]>
+  }--
+
+  === EXTENSIONS ===
+  --{
+    [FLAG] [ NAME {FLAG|[MODULES]} ... ]
+
+    FLAG:
+      + => builtin
+      - => disable
+      * => dynamic
+
+    NOTE: 1st 'anonymous' FLAG, if present, set the default
+
+    AVAILABLE:
+    $<indent delimit newline extension-names>
+
+    EXAMPLES:
+      extensions: +
+        => enable all extensions as builtin
+      extensions: "- gif + jpg * png [lodepng]"
+        => disable all extensions but gif (builtin),jpg and png (dynamic)
+
+    CURRENT VALUE:
+    $<indent mold user-config.extensions>
+  }--
 ]
 
-; dynamically fill help topics list ;-)
-replace help-topics.usage "HELP-TOPICS" ;\
-    form append (map-each 'x help-topics [either text? x ['|] [x]]) 'all
+help-topics: collect [parse3 help-spec [
+    some ['=== topic: word! '=== spec: text! (
+        keep to text! to word! topic
+    )]
+    (keep "all")
+]]
+
+; Now that HELP-TOPICS is gathered (used by HELP-SPEC), we always make the
+; HELP-OBJECT from the spec, vs. just when help is asked for.  This makes it
+; (more likely that it will stay working)
+
+help-object: make object! collect [parse3 help-spec [
+    some [
+        '=== topic: word! (keep setify topic) '===
+        spec: text! (
+            keep $cscape
+            let expanded: spaced ["    ===" topic "===" newline spec]
+            keep reduce [expanded]
+        )
+    ]
+]]
+
 
 /help: func [
     return: [~]
     :topic [text!]
 ][
-    if topic [
-        topic: to-word topic
+    if not topic [
+        print help-object.usage
+        return
     ]
+    topic: to-word topic
     print newline
-    case [
-        topic = 'all [
-            for-each [topic msg] help-topics [
-                print msg
-            ]
+    if topic = 'all [
+        for-each [topic msg] help-object [
+            print msg
         ]
-        all [
-            topic
-            let msg: select help-topics topic
-            elide print msg
-        ][]
-    ] else [
-        print help-topics.usage
+        return
     ]
+    let msg: select help-object topic
+    if not msg [
+        print ["Unknown topic:" topic]
+        print newline
+        print help-object.usage
+        return
+    ]
+    print msg
 ]
 
 ; process help: {-h | -help | --help} [TOPIC]
@@ -1540,7 +1570,7 @@ for-each 'ext extensions [
         ]
         '* [
             if not ext.loadable [
-                fail [{Extension} name {is not dynamically loadable}]
+                fail ["Extension" name "is not dynamically loadable"]
             ]
             ext.mode: <dynamic>
         ]
@@ -1553,7 +1583,7 @@ for-each 'ext extensions [
 
 for-each [name val] user-config.extensions [
     if val <> #recognized [
-        fail [{Unrecognized extension name:} name]
+        fail ["Unrecognized extension name:" name]
     ]
 ]
 

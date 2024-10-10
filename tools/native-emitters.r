@@ -202,8 +202,8 @@ export /emit-include-params-macro: func [
         if (the return:) <> :paramlist.1 [
             fail [native-name "does not have a RETURN: specification"]
         ] else [
-            keep {DECLARE_PARAM(1, return)}
-            keep {USED(ARG(return))}  ; Suppress warning about not using return
+            keep "DECLARE_PARAM(1, return)"
+            keep "USED(ARG(return))"  ; Suppress warning about not using return
             n: n + 1
             paramlist: next paramlist
         ]
@@ -217,7 +217,7 @@ export /emit-include-params-macro: func [
             ]
 
             let param-name: as text! to word! noquote item
-            keep cscape [n param-name {DECLARE_PARAM($<n>, ${param-name})}]
+            keep cscape [n param-name "DECLARE_PARAM($<n>, ${param-name})"]
             n: n + 1
         ]
     ]
@@ -235,11 +235,11 @@ export /emit-include-params-macro: func [
     ; it needs to clear this bit itself (and set it back when done).
     ;
     let prefix: all [extension unspaced [extension "_"]]
-    e/emit [prefix native-name items {
+    e/emit [prefix native-name items --{
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             Set_Flex_Info(level_->varlist, HOLD); \
             $[Items]; \
-    }]
+    }--]
     e/emit newline
     e/emit newline
 ]

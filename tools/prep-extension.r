@@ -180,7 +180,7 @@ e1: make-emitter "Module C Header File Preface" (
 )
 
 if yes? use-librebol [
-    e1/emit [{
+    e1/emit [--{
         /* extension configuration says [use-librebol: 'yes] */
 
         #define LIBREBOL_BINDING (&librebol_binding)
@@ -202,9 +202,9 @@ if yes? use-librebol [
          * one native is in the file, this works.
          */
         #define LIBREBOL_BINDING_USED() (void)librebol_binding
-    }]
+    }--]
 ] else [
-    e1/emit [{
+    e1/emit [--{
         /* extension configuration says [use-librebol: 'no] */
         #include "rebol-internals.h"  /* superset of %rebol.h */
 
@@ -213,33 +213,33 @@ if yes? use-librebol [
          * macro for the module init to compile.
          */
         #define LIBREBOL_BINDING_USED()
-    }]
+    }--]
 ]
 e1/emit newline
 
-e1/emit [{
+e1/emit [--{
     /*
      * Define DECLARE_NATIVE macro to include extension name.
      * This avoids name collisions with the core, or with other extensions.
      */
     #define DECLARE_NATIVE(name) \
         RebolBounce N_${MOD}_##name(RebolLevel* level_)
-}]
+}--]
 e1/emit newline
 
-e1/emit {
+e1/emit --{
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
-}
+}--
 e1/emit newline
 
 
 === "IF NOT USING LIBREBOL, DEFINE INCLUDE_PARAMS_OF_XXX MACROS" ===
 
-e1/emit {
+e1/emit --{
     /*
     ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
     */
-}
+}--
 e1/emit newline
 
 if yes? use-librebol [
@@ -253,13 +253,13 @@ if yes? use-librebol [
         ; We trickily shadow the global `librebol_binding` with a version
         ; extracted from the passed-in level.
         ;
-        e1/emit [info {
+        e1/emit [info --{
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 LIBREBOL_BINDING_USED();  /* global, before local define */ \
                 RebolContext* librebol_binding; \
                 librebol_binding = rebBindingFromLevel_internal(level_); \
                 LIBREBOL_BINDING_USED();  /* local, after shadowing */
-        }]
+        }--]
         e1/emit newline
     ]
 ]
@@ -284,16 +284,16 @@ dispatcher-forward-decls: collect [
         if info.native-type = 'intrinsic [  ; not that hard to do if needed
             fail "Intrinsics not currently supported in extensions"
         ]
-        keep cscape [name {DECLARE_NATIVE(${Name})}]
+        keep cscape [name "DECLARE_NATIVE(${Name})"]
     ]
 ]
 
-e1/emit [dispatcher-forward-decls {
+e1/emit [dispatcher-forward-decls --{
     /*
      * Forward-declare DECLARE_NATIVE() dispatcher prototypes
      */
     $[Dispatcher-Forward-Decls];
-}]
+}--]
 e1/emit newline
 
 e1/write-emitted
@@ -368,13 +368,13 @@ script-compressed: gzip script-uncompressed
 dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
     for-each 'info all-protos [
         name: info.name
-        keep cscape [mod name {N_${MOD}_${Name}}]
+        keep cscape [mod name "N_${MOD}_${Name}"]
     ]
 ]
 
 script-len: length of script-compressed
 
-e/emit [{
+e/emit [--{
     #include "assert.h"
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
 
@@ -457,6 +457,6 @@ e/emit [{
             $<num-natives>  /* number of NATIVE invocations in script */
         );
     }
-}]
+}--]
 
 e/write-emitted

@@ -5,6 +5,6 @@ REBOL [
 os-id: 0.4.40
 
 toolset: [
-    gcc {tcc}
-    ld {tcc}
+    gcc "tcc"
+    ld "tcc"
 ]

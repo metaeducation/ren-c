@@ -33,7 +33,7 @@ import <parsing-tools.reb>
     text [text!]
     <local> position  ; no LET in parse :-/
 ][
-    let wsp: compose [some (charset { ^-})]
+    let wsp: compose [some (charset -{ ^-}-)]
 
     let dummy: ~  ; /NEXT3 requires arg (could shim for plain /NEXT, but...)
     let rebol-value: parsing-at 'x [
@@ -147,7 +147,7 @@ export proto-parser: context [
                     print [
                         proto
                         newline
-                        {C-Style no args should be foo(void) and not foo()}
+                        "C-Style no args should be foo(void) and not foo()"
                         newline
                         http://stackoverflow.com/q/693788/c-void-arguments
                     ]
@@ -169,8 +169,8 @@ export proto-parser: context [
 
         is-fileheader: parsing-at 'position [
             all [  ; note: not LOGIC!, a series
-                lines: try decode-lines lines {//} { }
-                parse3:match lines [data: across to {=///} to <end>]
+                lines: try decode-lines lines -{//}- -{ }-
+                parse3:match lines [data: across to -{=///}- to <end>]
                 data: load-until-double-newline trim:auto data
                 all [
                     data.1
@@ -190,7 +190,7 @@ export proto-parser: context [
         ;
         is-intro: parsing-at 'position [
             all [
-                lines: try decode-lines lines {//} { }
+                lines: try decode-lines lines -{//}- -{ }-
                 data: load-until-double-newline lines
 
                 any [

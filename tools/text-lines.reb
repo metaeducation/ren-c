@@ -19,8 +19,8 @@ import <bootstrap-shim.r>
 /decode-lines: func [
     "Decode text encoded using a line prefix e.g. comments (modifies)"
     text [~null~ text! error!]  ; raised? in modern exe, not ERROR!
-    line-prefix [text! block!] "Usually ** or // - matched using parse"
-    indent [text! block!] {Usually "  ". Matched using parse.}
+    line-prefix [text! block!] "matched using parse, usually ** or // -"
+    indent [text! block!] -{Matched using parse, usually "  "}-
 ] [
     let pattern: compose [(line-prefix)]
     if not empty? indent [append pattern compose [opt (indent)]]

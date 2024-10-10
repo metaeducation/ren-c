@@ -57,7 +57,7 @@ e: make-emitter "Built-in Extensions" (
     join output-dir %core/tmp-builtin-extension-table.c
 )
 
-e/emit [extensions {
+e/emit [extensions --{
     #include "sys-core.h"  /* ExtensionCollator type, Value*, etc. */
     #include "sys-ext.h"   /* DECLARE_EXTENSION_COLLATOR(), etc. */
 
@@ -88,6 +88,6 @@ e/emit [extensions {
     #ifdef __cplusplus
         }  /* end extern "C" */
     #endif
-}]
+}--]
 
 e/write-emitted
