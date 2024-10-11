@@ -51,15 +51,10 @@ REBOL [
         [<const> element?]
     :header "Provide REBOL header block/object, or INCLUDED if in value"
         [block! object! 'included]
-    :all "Save in serialized format"
     :length "Save the length of the script content in the header"
     :compress "Detect from header if not supplied"  ; weird old feature [1]
         ['none 'raw 'base64]
 ][
-    ; Recover common natives for words used as refinements.
-    let all_SAVE: all
-    all: lib/all/
-
     ; Special datatypes use codecs directly (e.g. PNG image file):
     all [
         not header  ; User wants to save value as script, not data file
@@ -124,27 +119,10 @@ REBOL [
 
     compress: default ['none]
 
-    ; !!! Maybe /all should be the default?  See #2159
-    ;
-    ; !!! This logic may look weird but it really was the original logic from
-    ; R3-Alpha.  The idea was that if you SAVE'd a BLOCK! it assumed it was
-    ; meant as saving the items in the block, but anything else was saved
-    ; as is.  We have more options with isotopes now, but it's not clear
-    ; what the scope of application of LOAD and SAVE really are.  Review.
-    ;
-    let data: either all_SAVE [
-        if block? :value [
-            mold:all spread value
-        ] else [
-            mold:all :value
-        ]
-    ][
-        if block? :value [
-            mold spread :value
-        ] else [
-            mold :value
-        ]
+    if not block? value [
+        fail "Rebol code passed to SAVE must be BLOCK! (LOAD only gives block)"
     ]
+    let data: mold spread value
 
     append data newline  ; MOLD does not append a newline
 

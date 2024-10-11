@@ -279,9 +279,6 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0)
-        Pre_Mold(mo, v); // #[binary!
-
     Size size;
     const Byte* data = Cell_Binary_Size_At(&size, v);
 
@@ -313,9 +310,6 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
     }
 
     Append_Codepoint(mo->string, '}');
-
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0)
-        Post_Mold(mo, v);
 }
 
 

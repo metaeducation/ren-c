@@ -70,7 +70,7 @@ enum {
 // Mold and form options:
 enum {
     MOLD_FLAG_0 = 0,
-    MOLD_FLAG_ALL = 1 << 0, // Output lexical types in #[type...] format
+    MOLD_FLAG_1 = 1 << 0,
     MOLD_FLAG_COMMA_PT = 1 << 1, // Decimal point is a comma.
     MOLD_FLAG_SLASH_DATE = 1 << 2, // Date as 1/1/2000
     MOLD_FLAG_INDENT = 1 << 3, // Indentation
@@ -83,10 +83,6 @@ enum {
 };
 
 #define MOLD_MASK_NONE 0
-
-// Temporary:
-#define MOLD_FLAG_NON_ANSI_PARENED \
-    MOLD_FLAG_ALL // Non ANSI chars are ^() escaped
 
 #define DECLARE_MOLDER(name) \
     Molder name##_struct; \
@@ -119,16 +115,3 @@ enum {
 
 #define MAX_INT_LEN     21
 #define MAX_HEX_LEN     16
-
-
-INLINE void Pre_Mold(Molder* mo, const Cell* v)
-  { Pre_Mold_Core((mo), (v), GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)); }
-
-#define Pre_Mold_All(mo,v) \
-    Pre_Mold_Core((mo), (v), true)
-
-INLINE void End_Mold(Molder* mo)
-  { End_Mold_Core((mo), GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)); }
-
-#define End_Mold_All(mo) \
-    End_Mold_Core((mo), true)

@@ -54,7 +54,6 @@ DECLARE_NATIVE(form)
 //      return: "null if input is void, if truncated returns integer /LIMIT "
 //          [~null~ ~[text! [~null~ integer!]]~]
 //      value [<maybe> element? splice?]
-//      :all "Use construction syntax"
 //      :flat "No indentation"
 //      :limit "Limit to a certain length"
 //          [integer!]
@@ -67,8 +66,6 @@ DECLARE_NATIVE(mold)
     Value* v = ARG(value);
 
     DECLARE_MOLDER (mo);
-    if (REF(all))
-        SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     if (REF(flat))
         SET_MOLD_FLAG(mo, MOLD_FLAG_INDENT);
     if (REF(limit)) {

@@ -399,7 +399,7 @@ Bounce TO_Parameter(Level* level_, Kind kind, const Value* arg)
 void MF_Parameter(Molder* mo, const Cell* v, bool form)
 {
     if (not form) {
-        Pre_Mold(mo, v);  // #[parameter! or make parameter!
+        Begin_Non_Lexical_Mold(mo, v);  // #[parameter! or make parameter!
     }
 
     DECLARE_ELEMENT(temp);
@@ -414,7 +414,7 @@ void MF_Parameter(Molder* mo, const Cell* v, bool form)
     Drop_GC_Guard(temp);
 
     if (not form) {
-        End_Mold(mo);
+        End_Non_Lexical_Mold(mo);
     }
 }
 

@@ -21,8 +21,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// "Molding" is a term in Rebol for getting an ANY-STRING! representation of a
-// value that is intended to be LOADed back into the system.  So if you mold
+// "Molding" is a term in Rebol for getting a TEXT! representation of an
+// element that is intended to be LOADed back into the system.  So if you mold
 // a TEXT!, you would get back another TEXT! that would include the delimiters
 // for that string (and any required escaping, e.g. for embedded quotes).
 //
@@ -31,22 +31,24 @@
 // *not* add delimiters or escaping--just giving the string back as-is.
 //
 // There are several technical problems in molding regarding the handling of
-// values that do not have natural expressions in Rebol source.  For instance,
+// cells that do not have natural expressions in Rebol source.  For instance,
 // it was legal (in Rebol2) to `make word! "123"` but that can't be molded as
 // 123 because that would LOAD as an integer.  There are additional problems
 // with `mold next [a b c]`, because there is no natural representation for a
 // series that is not at its head.  These problems were addressed with
 // "construction syntax", e.g. #[word! "123"] or #[block! [a b c] 1].  But
-// to get this behavior MOLD:ALL had to be used, and it was implemented in
-// something of an ad-hoc way.
-//
-// !!! These are some fuzzy concepts, and though the name MOLD may have made
-// sense when Rebol was supposedly called "Clay", it now looks off-putting.
-// Most of Ren-C's focus has been on the evaluator, and few philosophical
-// problems of R3-Alpha's mold have been addressed.  However, the mechanical
-// side has changed to use UTF-8 (instead of UCS-2) and allow nested molds.
+// to get this output MOLD:ALL had to be used, and it was implemented in
+// something of an ad-hoc way.  :ALL was deemed too meaningless to wield
+// effectively and was removed.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * The name "mold" allegedly originates from when Rebol was supposedly
+//   called "Clay".  But it now looks random and off-putting, like it's
+//   referring to fungal mold.  Some progress has been made on reducing the
+//   need to use the term, e.g. (print @val) or (print ["val:" @(next val)])
+//   will perform the operation without needing to explicitly name it.  But
+//   further finessing the name is desirable.
 //
 // * Because molding and forming of a type share a lot of code, they are
 //   implemented in "(M)old or (F)orm" hooks (MF_Xxx).  Also, since classes
@@ -100,51 +102,37 @@ Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 
 
 //
-//  Pre_Mold_Core: C
+//  Begin_Non_Lexical_Mold: C
 //
-// Emit the initial datatype function, depending on /ALL option
+// For datatypes that don't have lexical representations, use a legacy
+// format (like #[object! ...]) just to have something to say.
 //
-void Pre_Mold_Core(Molder* mo, const Cell* v, bool all)
+// At one type an attempt was made to TRANSCODE these forms.  That idea is
+// under review, likely in favor of a more thought-out concept involving
+// FENCE! and UNMAKE:
+//
+// https://forum.rebol.info/t/2225
+//
+void Begin_Non_Lexical_Mold(Molder* mo, const Cell* v)
 {
-    if (all)
-        Append_Ascii(mo->string, "#[");
-    else
-        Append_Ascii(mo->string, "make ");
+    Append_Ascii(mo->string, "#[");
 
     const String* type_name = Canon_Symbol(SYM_FROM_KIND(Cell_Heart(v)));
     Append_Spelling(mo->string, type_name);
-    Append_Codepoint(mo->string, '!');  // !!! `make object!` not `make object`
+    Append_Codepoint(mo->string, '!');  // `#[object!` not `#[object`
 
     Append_Codepoint(mo->string, ' ');
 }
 
 
 //
-//  End_Mold_Core: C
+//  End_Non_Lexical_Mold: C
 //
-// Finish the mold, depending on /ALL with close block.
+// Finish the mold of types that don't have lexical representations.
 //
-void End_Mold_Core(Molder* mo, bool all)
+void End_Non_Lexical_Mold(Molder* mo)
 {
-    if (all)
-        Append_Codepoint(mo->string, ']');
-}
-
-
-//
-//  Post_Mold: C
-//
-// For series that has an index, add the index for mold:all
-// Add closing block.
-//
-void Post_Mold(Molder* mo, const Cell* v)
-{
-    if (VAL_INDEX(v)) {
-        Append_Codepoint(mo->string, ' ');
-        Append_Int(mo->string, VAL_INDEX(v) + 1);
-    }
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Codepoint(mo->string, ']');
+    Append_Codepoint(mo->string, ']');
 }
 
 

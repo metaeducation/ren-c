@@ -42,22 +42,22 @@
 ; 64-bit IEEE 754 maximum
 ; Minimal positive normalized
 [#1475
-    (same? 2.2250738585072014E-310% transcode:one mold:all 2.2250738585072014E-310%)
+    (same? 2.2250738585072014E-310% transcode:one mold 2.2250738585072014E-310%)
 ]
 ; Maximal positive denormalized
-(same? 2.2250738585072009E-310% transcode:one mold:all 2.2250738585072009E-310%)
+(same? 2.2250738585072009E-310% transcode:one mold 2.2250738585072009E-310%)
 ; Minimal positive denormalized
-(same? 4.9406564584124654E-322% transcode:one mold:all 4.9406564584124654E-322%)
+(same? 4.9406564584124654E-322% transcode:one mold 4.9406564584124654E-322%)
 ; Maximal negative normalized
-(same? -2.2250738585072014E-306% transcode:one mold:all -2.2250738585072014E-306%)
+(same? -2.2250738585072014E-306% transcode:one mold -2.2250738585072014E-306%)
 ; Minimal negative denormalized
-(same? -2.2250738585072009E-306% transcode:one mold:all -2.2250738585072009E-306%)
+(same? -2.2250738585072009E-306% transcode:one mold -2.2250738585072009E-306%)
 ; Maximal negative denormalized
-(same? -4.9406564584124654E-322% transcode:one mold:all -4.9406564584124654E-322%)
-(same? 10.000000000000001% transcode:one mold:all 10.000000000000001%)
-(same? 29.999999999999999% transcode:one mold:all 29.999999999999999%)
-(same? 30.000000000000004% transcode:one mold:all 30.000000000000004%)
-(same? 9.9999999999999926e154% transcode:one mold:all 9.9999999999999926e154%)
+(same? -4.9406564584124654E-322% transcode:one mold -4.9406564584124654E-322%)
+(same? 10.000000000000001% transcode:one mold 10.000000000000001%)
+(same? 29.999999999999999% transcode:one mold 29.999999999999999%)
+(same? 30.000000000000004% transcode:one mold 30.000000000000004%)
+(same? 9.9999999999999926e154% transcode:one mold 9.9999999999999926e154%)
 ; alternative form
 (1.1% == 1,1%)
 (110% = to percent! 110%)

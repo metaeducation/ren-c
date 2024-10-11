@@ -331,10 +331,10 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
 
     if (no_quotes or Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {  // !!! hack
         if (len == 1 and not no_quotes) {  // use historical CHAR! molding
-            bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
+            bool parened = true;  // !!! used to depend on MOLD's :ALL flag
 
             Append_Codepoint(mo->string, '"');
-            Mold_Uni_Char(mo, Cell_Codepoint(v), parened);
+            Mold_Codepoint(mo, Cell_Codepoint(v), parened);
             Append_Codepoint(mo->string, '"');
         }
         else

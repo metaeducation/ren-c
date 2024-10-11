@@ -531,7 +531,7 @@ void MF_Map(Molder* mo, const Cell* v, bool form)
     Push_Pointer_To_Flex(g_mold.stack, m);
 
     if (not form) {
-        Pre_Mold(mo, v);
+        Begin_Non_Lexical_Mold(mo, v);
         Append_Codepoint(mo->string, '[');
     }
 
@@ -562,7 +562,7 @@ void MF_Map(Molder* mo, const Cell* v, bool form)
         Append_Codepoint(mo->string, ']');
     }
 
-    End_Mold(mo);
+    End_Non_Lexical_Mold(mo);
 
     Drop_Pointer_From_Flex(g_mold.stack, m);
 }

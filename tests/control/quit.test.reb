@@ -25,7 +25,6 @@
         blank  ; forces quoting in save, see note
         http://somewhere
         1900-01-30
-        make object! [x: 42]
     ][
         assert [value = do-script-returning value]
     ]

@@ -580,7 +580,7 @@ Byte* Form_Uni_Hex(Byte* out, REBLEN n)
 
 
 //
-//  Mold_Uni_Char: C
+//  Mold_Codepoint: C
 //
 // !!! These heuristics were used in R3-Alpha to decide when to output
 // characters in strings as escape for molding.  It's not clear where to
@@ -589,7 +589,7 @@ Byte* Form_Uni_Hex(Byte* out, REBLEN n)
 //
 // For now just preserve what was there, but do it as UTF8 bytes.
 //
-void Mold_Uni_Char(Molder* mo, Codepoint c, bool parened)
+void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
 {
     String* buf = mo->string;
 
@@ -616,7 +616,7 @@ void Mold_Uni_Char(Molder* mo, Codepoint c, bool parened)
         //
         // !!! Comment here said "do not AND with the above"
         //
-        if (parened or c == 0x1E or c == 0xFEFF) {
+        if (non_ascii_parened or c == 0x1E or c == 0xFEFF) {
             Append_Ascii(buf, "^(");
 
             Length len_old = String_Len(buf);
@@ -661,7 +661,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
 
     Length len = String_Len(s) - index;
 
-    bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED);
+    bool non_ascii_parened = true;  // !!! used to be set to MOLD's :ALL flag
 
     // Scan to find out what special chars the string contains?
 
@@ -717,7 +717,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
     if (brace_in != brace_out)
         malign++;
 
-    if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
+    if (not non_ascii_parened)
         paren = 0;
 
     up = String_At(s, index);
@@ -731,7 +731,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
         for (n = index; n < String_Len(s); n++) {
             Codepoint c;
             up = Utf8_Next(&c, up);
-            Mold_Uni_Char(mo, c, parened);
+            Mold_Codepoint(mo, c, non_ascii_parened);
         }
 
         Append_Codepoint(buf, '"');
@@ -764,7 +764,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
             break;
 
           default:
-            Mold_Uni_Char(mo, c, parened);
+            Mold_Codepoint(mo, c, non_ascii_parened);
         }
     }
 
@@ -834,15 +834,6 @@ void MF_String(Molder* mo, const Cell* v, bool form)
 
     Heart heart = Cell_Heart(v);
     assert(Any_Utf8_Kind(heart));
-
-    // Special format for MOLD:ALL string series when not at head
-    //
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0) {
-        Pre_Mold(mo, v); // e.g. #[file! part
-        Mold_Text_Flex_At(mo, Cell_String(v), 0);
-        Post_Mold(mo, v);
-        return;
-    }
 
     // The R3-Alpha forming logic was that every string type besides TAG!
     // would form with no delimiters, e.g. `form #foo` is just foo

@@ -702,12 +702,7 @@ bool Try_Pick_Block(
 //
 void MF_List(Molder* mo, const Cell* v, bool form)
 {
-    // Routine may be called on value that reports REB_QUOTED, even if it
-    // has no additional payload and is aliasing the cell itself.  Checking
-    // the type could be avoided if each type had its own dispatcher, but
-    // this routine seems to need to be generic.
-    //
-    Heart heart = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);  // may be quoted, but mold renders the quotes
 
     if (form) {
         Option(VarList*) context = nullptr;
@@ -716,84 +711,63 @@ void MF_List(Molder* mo, const Cell* v, bool form)
         return;
     }
 
-    bool all;
-    if (VAL_INDEX(v) == 0) { // "and VAL_TYPE(v) <= REB_META_PATH" commented out
-        //
-        // Optimize when no index needed
-        //
-        all = false;
-    }
-    else
-        all = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
-
     assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
 
-    if (all) {
-        SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
-        Pre_Mold(mo, v); // #[block! part
+    const char *sep;
 
-        Append_Codepoint(mo->string, '[');
-        Mold_Array_At(mo, Cell_Array(v), 0, "[]");
-        Post_Mold(mo, v);
-        Append_Codepoint(mo->string, ']');
-    }
-    else {
-        const char *sep;
+    switch (heart) {
+      case REB_META_BLOCK:
+        Append_Codepoint(mo->string, '^');
+        goto block;
 
-        switch (heart) {
-          case REB_META_BLOCK:
-            Append_Codepoint(mo->string, '^');
-            goto block;
+      case REB_THE_BLOCK:
+        Append_Codepoint(mo->string, '@');
+        goto block;
 
-          case REB_THE_BLOCK:
-            Append_Codepoint(mo->string, '@');
-            goto block;
+      case REB_TYPE_BLOCK:
+        Append_Codepoint(mo->string, '&');
+        goto block;
 
-          case REB_TYPE_BLOCK:
-            Append_Codepoint(mo->string, '&');
-            goto block;
+      case REB_VAR_BLOCK:
+        Append_Codepoint(mo->string, '$');
+        goto block;
 
-          case REB_VAR_BLOCK:
-            Append_Codepoint(mo->string, '$');
-            goto block;
+      case REB_BLOCK:
+        block:
+        sep = "[]";
+        break;
 
-          case REB_BLOCK:
-          block:
-            sep = "[]";
-            break;
+      case REB_META_GROUP:
+        Append_Codepoint(mo->string, '^');
+        goto group;
 
-          case REB_META_GROUP:
-            Append_Codepoint(mo->string, '^');
-            goto group;
+      case REB_THE_GROUP:
+        Append_Codepoint(mo->string, '@');
+        goto group;
 
-          case REB_THE_GROUP:
-            Append_Codepoint(mo->string, '@');
-            goto group;
+      case REB_TYPE_GROUP:
+        Append_Codepoint(mo->string, '&');
+        goto group;
 
-          case REB_TYPE_GROUP:
-            Append_Codepoint(mo->string, '&');
-            goto group;
+      case REB_VAR_GROUP:
+        Append_Codepoint(mo->string, '$');
+        goto group;
 
-          case REB_VAR_GROUP:
-            Append_Codepoint(mo->string, '$');
-            goto group;
-
-          case REB_GROUP:
-          group:
-            if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
-                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
-                sep = "\000\000";
-            }
-            else
-                sep = "()";
-            break;
-
-          default:
-            panic ("Unknown list heart passed to MF_List");
+      case REB_GROUP:
+      group:
+        if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
+            CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
+            sep = "\000\000";
         }
+        else
+            sep = "()";
+        break;
 
-        Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
+      default:
+        panic ("Unknown list heart passed to MF_List");
     }
+
+    Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 }
 
 

@@ -566,7 +566,7 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
 void MF_Varargs(Molder* mo, const Cell* v, bool form) {
     UNUSED(form);
 
-    Pre_Mold(mo, v);  // #[varargs! or make varargs!
+    Begin_Non_Lexical_Mold(mo, v);  // #[varargs! or make varargs!
 
     Append_Codepoint(mo->string, '[');
 
@@ -633,7 +633,7 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
 
     Append_Codepoint(mo->string, ']');
 
-    End_Mold(mo);
+    End_Non_Lexical_Mold(mo);
 }
 
 

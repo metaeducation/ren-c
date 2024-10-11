@@ -69,7 +69,7 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // all bitsets are "molded" at this time
 
-    Pre_Mold(mo, v); // #[bitset! or make bitset!
+    Begin_Non_Lexical_Mold(mo, v); // #[bitset! or make bitset!
 
     const Binary* bset = VAL_BITSET(v);
 
@@ -83,7 +83,7 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
     if (BITS_NOT(bset))
         Append_Codepoint(mo->string, ']');
 
-    End_Mold(mo);
+    End_Non_Lexical_Mold(mo);
 }
 
 
