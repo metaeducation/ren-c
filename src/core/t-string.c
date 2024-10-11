@@ -928,7 +928,6 @@ void Mold_Text_Series_At(
 
         *dp++ = '"';
 
-        bool non_ascii_parened = true;
         REBLEN n;
         for (n = index; n < String_Len(str); n++) {
             Ucs2Unit c;
@@ -955,6 +954,7 @@ void Mold_Text_Series_At(
             + 2
     );
 
+    *dp++ = '-';
     *dp++ = '{';
 
     REBLEN n;
@@ -977,13 +977,13 @@ void Mold_Text_Series_At(
             break;
 
         default: {
-            bool non_ascii_parened = true;
             dp = Emit_Uni_Char(dp, c, non_ascii_parened);
             break; };
         }
     }
 
     *dp++ = '}';
+    *dp++ = '-';
     *dp = '\0';
 
     Term_Binary_Len(mo->utf8flex, dp - Binary_Head(mo->utf8flex));
@@ -1097,6 +1097,10 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
         Append_Codepoint(mo->utf8flex, '2');
         enbased = Encode_Base2(Cell_Blob_At(v), len, brk);
         break; }
+
+      default:
+        assert(false);
+        enbased = nullptr;
     }
 
     Append_Unencoded(mo->utf8flex, "#{");
