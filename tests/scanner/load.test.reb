@@ -81,7 +81,7 @@
     elide delete %test.txt
 )
 (
-    save %test1.r 1
+    write %test1.r "1"
     1 = transcode:one read %test1.r
     elide delete %test1.r
 )

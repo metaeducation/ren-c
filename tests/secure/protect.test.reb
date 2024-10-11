@@ -23,7 +23,7 @@
         /rescue-protected?: func [code [block!]] [
             for-each 'original [
                 [1 + 2 + 3]
-                {1 + 2 + 3}
+                -{1 + 2 + 3}-
                 #{01FF02FF03}
             ] (wrap [
                 protect value: copy original

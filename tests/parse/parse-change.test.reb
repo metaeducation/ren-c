@@ -28,21 +28,21 @@
 )
 
 (
-    s: {a}
+    s: "a"
     all [
         raised? parse s [opt change "b" ("x")]
-        s = {a}
+        s = "a"
     ]
 )
 
 (
-    s: {aba}
+    s: "aba"
     all [
         '~<change>~ = ^ parse s [some [
             opt change "b" ("x")
             elide one
         ]]
-        s = {axa}
+        s = "axa"
     ]
 )
 

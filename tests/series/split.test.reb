@@ -67,7 +67,7 @@
 (equal? ["1" ""] split "1^/" #"^/")
 (equal? ["1" "2" ""] split "1^/2^/" #"^/")
 
-(2 = length? trim first split {х^/+й} "+")
+(2 = length? trim first split -{х^/+й}- "+")
 
 ; VOID has nothing to split by, return original input (but in a block, to
 ; match the other outputs).

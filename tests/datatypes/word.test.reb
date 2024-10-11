@@ -159,17 +159,17 @@
 
 [#1461 #1478 (
     for-each 'str [
-        {<>} {<+>} {<|>} {<=>} {<->} {<>>} {<<>}
+        -{<>}- -{<+>}- -{<|>}- -{<=>}- -{<->}- -{<>>}- -{<<>}-
 
-        {<} '{+} '{=} '{-} {>}  ; tick marks mean unescaped in path
+        -{<}- '-{+}- '-{=}- '-{-}- -{>}-  ; tick marks mean unescaped in path
 
-        {|} {|->} {|>} {|>>}
+        -{|}- -{|->}- -{|>}- -{|>>}-
 
-        {>=} {=|<} {<><} {-=>} {<-<=}
+        -{>=}- -{=|<}- -{<><}- -{-=>}- -{<-<=}-
 
-        {<<} {>>} {>>=} {<<=} {>>=<->}
+        -{<<}- -{>>}- -{>>=}- -{<<=}- -{>>=<->}-
 
-        {-<=>-} {-<>-} {>=<}
+        -{-<=>-}- -{-<>-}- -{>=<}-
     ] wrap [
         /assert: specialize lib.assert/ [
             handler: [echo Failure on: @str]
@@ -220,7 +220,7 @@
 
 [(
     for-each 'bad [  ; !!! This could be a much longer list of bad things!
-        {<ab>cd} {>ab<cd} {<<ab-cd} {>abcd}
+        -{<ab>cd}- -{>ab<cd}- -{<<ab-cd}- -{>abcd}-
     ][
         assert ['scan-invalid = (trap [load bad]).id]
     ]

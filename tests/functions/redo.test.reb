@@ -70,7 +70,7 @@
             return <success>
         ]
         n: 0
-        redo $n  comment {should redo INNER, not outer}
+        redo $n  comment "should redo INNER, not outer"
     ]
 
     /outer: adapt inner/ [
@@ -173,12 +173,12 @@
 ; a tag and signals success.
 (
     log: (
-        func ['x] []  comment {no-op}
-        elide (:dump)  comment {un-elide to get output}
+        func ['x] []  comment "no-op"
+        elide (:dump)  comment "un-elide to get output"
     )
 
     /base: func [return: [text!] n delta :captured-frame [frame!]] [
-        log [{BASE} n delta]
+        log ["BASE" n delta]
 
         n: n - delta
         if n < 0 [return "base less than zero"]
@@ -189,12 +189,12 @@
 
     c: cascade [
         adapt base/ [
-           log [{C} n delta]
+           log ["C" n delta]
 
            captured-frame: binding of $n
            redo:sibling $n :s
 
-           comment {fall through to base}
+           comment "fall through to base"
         ]
         lambda [x] [
             if x = "base done" [
@@ -206,7 +206,7 @@
     ]
 
     /s: specialize adapt base/ [
-        log [{S} n delta]
+        log ["S" n delta]
 
         if n = 1 [n: 10]
     ][

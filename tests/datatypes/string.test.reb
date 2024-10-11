@@ -157,7 +157,7 @@
 ("^(del)" = "^(7f)")
 ("ahoj" = make text! "ahoj")
 ("1" = to text! 1)
-({""} = mold "")
+(-{""}- = mold "")
 
 
 [#854 (
@@ -195,6 +195,6 @@
 ;
 ; Dashes are used to build braces into asymmetric delimiters.
 
-("a {b} c" = {a {b} c})
+("a {b} c" = -{a {b} c}-)
 ("a {b c" = -{a {b c}-)
 ("a ---{b}--- c" = -{a ---{b}--- c}-)

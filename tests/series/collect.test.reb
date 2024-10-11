@@ -22,8 +22,7 @@
 
 [
     (collect-lines: redescribe [
-        {Evaluate body, and return block of values collected via KEEP function.
-        KEEPed blocks become spaced TEXT!.}
+        "Evaluate body, and return block of spaced TEXT! from kept blocks"
     ] adapt collect/ [  ; https://forum.rebol.info/t/945/1
         body: compose [
             /keep: adapt specialize keep/ [
@@ -46,8 +45,7 @@
 
 [
     (collect-text: redescribe [
-        {Evaluate body, and return block of values collected via KEEP function.
-        Returns all values as a single spaced TEXT!, individual KEEPed blocks get UNSPACED.}
+        "Evaluate body, returning single spaced TEXT!, KEEPed blocks UNSPACED"
     ] cascade [  ; https://forum.rebol.info/t/945/2
         adapt collect/ [
             body: compose [

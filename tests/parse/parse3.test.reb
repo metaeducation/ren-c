@@ -596,29 +596,29 @@
 
 [
     (
-        bincat: to-binary {C😺T}
+        bincat: to-binary -{C😺T}-
         bincat = #{43F09F98BA54}
     )
 
     (
-        parse3 bincat [{C😺T}]
+        parse3 bincat [-{C😺T}-]
         ok
     )
 
     (
-        parse3 bincat [{c😺t}]
+        parse3 bincat [-{c😺t}-]
         ok
     )
 
     ~parse3-incomplete~ !! (
-        parse3:case bincat [{c😺t}]
+        parse3:case bincat [-{c😺t}-]
     )
 ]
 
 (
-    test: to-binary {The C😺T Test}
+    test: to-binary -{The C😺T Test}-
     x: ~
-    parse3 test [to {c😺t} x: across to space to <end>]
+    parse3 test [to -{c😺t}- x: across to space to <end>]
     all [
         x = #{43F09F98BA54}
         "C😺T" = to-text x
@@ -660,8 +660,8 @@
 ]
 
 [https://github.com/metaeducation/ren-c/issues/1032 (
-    s: {abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ}
-    t: {----------------------------------------------------}
+    s: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    t: "----------------------------------------------------"
     cfor 'n 2 50 1 [
         let sub: copy:part s n
         parse3 sub [some [

@@ -26,12 +26,12 @@
     ~bad-refines~ !! (trim:all:head s)
     ~bad-refines~ !! (trim:all:tail s)
     ~bad-refines~ !! (trim:all:lines s)
-    ~bad-refines~ !! (trim:auto:with s {*})
-    ~bad-refines~ !! (trim:head:with s {*})
-    ~bad-refines~ !! (trim:tail:with s {*})
-    ~bad-refines~ !! (trim:lines:with s {*})
+    ~bad-refines~ !! (trim:auto:with s -{*}-)
+    ~bad-refines~ !! (trim:head:with s -{*}-)
+    ~bad-refines~ !! (trim:tail:with s -{*}-)
+    ~bad-refines~ !! (trim:lines:with s -{*}-)
 
-    (s = {})
+    (s = "")
 ]
 
 ("a  ^/  b  " = trim:head "  a  ^/  b  ")
@@ -67,7 +67,7 @@
 
 [
     (
-        mstr: {   a ^-1^/    ab2^-  ^/  ac3  ^/  ^/^/}
+        mstr: --{   a ^-1^/    ab2^-  ^/  ac3  ^/  ^/^/}--
         ok
     )
 
@@ -87,10 +87,10 @@
     ; ("    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim:with copy mstr 97)
 ]
 
-("a1ab2ac3" = trim:all { a ^-1^/ ab2^- ^/ ac3 ^/ ^/^/})
+("a1ab2ac3" = trim:all -{ a ^-1^/ ab2^- ^/ ac3 ^/ ^/^/}-)
 
 ; https://github.com/red/red/issues/5076
-(2 = length of trim first split {х^/+й} "+")
+(2 = length of trim first split -{х^/+й}- "+")
 
 [
     (#{} = trim #{00})

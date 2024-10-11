@@ -186,8 +186,8 @@
 (#"^(del)" = #"^(7f)")
 
 ; Quotes are removed if not necessary in molding
-({#a} = mold #"a")
-({#a} = mold #a)
+(-{#a}- = mold #"a")
+(-{#a}- = mold #a)
 
 (
     c: codepoint-to-char 0

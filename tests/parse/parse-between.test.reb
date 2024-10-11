@@ -15,9 +15,9 @@
 (
     all [
         let x
-        <c> == parse [<a> <b> * * * {Thing!} * * <c>] [
+        <c> == parse [<a> <b> * * * -{Thing!}- * * <c>] [
             some tag!, x: between [repeat 3 '*] [repeat 2 '*], some tag!
         ]
-        x = [{Thing!}]
+        x = [-{Thing!}-]
     ]
 )

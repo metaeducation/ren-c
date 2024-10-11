@@ -184,7 +184,7 @@
                 (get inside lib (as word! type-name)) = type of :value
             ]
             set-adjunct :tester make system.standard.action-adjunct [
-                description: spaced [{Return TRUE if value is} an type-name]
+                description: spaced ["Return TRUE if value is" an type-name]
                 return-type: [logic?]
             ]
         ]

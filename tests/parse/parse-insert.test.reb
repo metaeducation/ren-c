@@ -4,8 +4,8 @@
 ; were removed from Topaz entirely) but they are being given a shot.
 
 [https://github.com/metaeducation/ren-c/issues/1032 (
-    s: {abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ}
-    t: {----------------------------------------------------}
+    s: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    t: "----------------------------------------------------"
     cfor 'n 2 50 1 [
         let sub: copy:part s n
         parse sub [some [

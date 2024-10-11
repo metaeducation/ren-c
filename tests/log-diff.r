@@ -2,13 +2,13 @@ Rebol [
     Title: "Log diff"
     File: %log-diff.r
     Copyright: [2012 "Saphirion AG"]
-    License: {
+    License: --{
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
 
         http://www.apache.org/licenses/LICENSE-2.0
-    }
+    }--
     Author: "Ladislav Mecir"
     Purpose: "Test framework"
 ]
@@ -150,7 +150,7 @@ import %test-parsing.r
         if next-old-log [
             if old-test == pick old-log-contents 1 [
                 print old-test
-                fail {duplicate test in old-log}
+                fail "duplicate test in old-log"
             ]
             set [old-test old-result] old-log-contents
             old-log-contents: skip old-log-contents 2
@@ -158,7 +158,7 @@ import %test-parsing.r
         if next-new-log [
             if new-test == pick new-log-contents 1 [
                 print new-test
-                fail {duplicate test in new-log}
+                fail "duplicate test in new-log"
             ]
             set [new-test new-result] new-log-contents
             new-log-contents: skip new-log-contents 2

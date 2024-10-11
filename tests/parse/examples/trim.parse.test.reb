@@ -9,7 +9,7 @@
 
 [(
 /utrim: func [
-    {Removes spaces from strings or blanks from blocks or objects.}
+    "Removes spaces from strings or blanks from blocks or objects"
 
     return: [any-string? any-list? binary! any-context?]
     series "Series (modified) or object (made)"
@@ -114,7 +114,7 @@
         fail "Unsupported type passed to utrim"
     ]
 
-    ; /ALL just removes all whitespace entirely.  No subtlety needed.
+    ; :ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
         parse series [opt some [remove rule | <next> | stop]]
@@ -135,7 +135,7 @@
 
     assert [any-string? series]
 
-    ; /LINES collapses all runs of whitespace down to just one space character
+    ; :LINES collapses all runs of whitespace down to just one space character
     ; with leading and trailing whitespace removed.
     ;
     if lines [
@@ -208,12 +208,12 @@ ok)
     ~bad-refines~ !! (utrim:all:head s)
     ~bad-refines~ !! (utrim:all:tail s)
     ~bad-refines~ !! (utrim:all:lines s)
-    ~bad-refines~ !! (utrim:auto:with s {*})
-    ~bad-refines~ !! (utrim:head:with s {*})
-    ~bad-refines~ !! (utrim:tail:with s {*})
-    ~bad-refines~ !! (utrim:lines:with s {*})
+    ~bad-refines~ !! (utrim:auto:with s -{*}-)
+    ~bad-refines~ !! (utrim:head:with s -{*}-)
+    ~bad-refines~ !! (utrim:tail:with s -{*}-)
+    ~bad-refines~ !! (utrim:lines:with s -{*}-)
 
-    (s = {})
+    (s = "")
 
     ("a  ^/  b  " = utrim:head "  a  ^/  b  ")
     ("  a  ^/  b" = utrim:tail "  a  ^/  b  ")

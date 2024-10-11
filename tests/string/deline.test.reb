@@ -18,8 +18,8 @@
 [
     (
         str: "a^M^/b"
-        a-bin: as binary! str  comment {remembers it was utf-8, optimizes!}
-        t-bin: to binary! str  comment {makes dissociated/unconstrained copy}
+        a-bin: as binary! str  comment "remembers it was utf-8, optimizes!"
+        t-bin: to binary! str  comment "makes dissociated/unconstrained copy"
         ok
     )
 
@@ -60,7 +60,7 @@
         str: "^M^/"
         all [
             "^/" = deline str
-            "^/" = str  comment {Modifies}
+            "^/" = str  comment "Modifies"
         ]
     )
 
@@ -84,11 +84,11 @@
 
 [
     (
-        comment {WRITE of TEXT! disallows CR by default}
+        comment "WRITE of TEXT! disallows CR by default"
         'illegal-cr = pick trap [write %enlined.tmp enline "a^/b"] 'id
     )
     (
-        comment {Bypass by writing BINARY!, *but* ENLINE modifies}
+        comment "Bypass by writing BINARY!, *but* ENLINE modifies"
         str: "a^/b"
         write %enlined.tmp as binary! enline str
         all [
@@ -97,7 +97,7 @@
         ]
     )
     (
-        comment {WRITE-ENLINED doesn't modify, easy interface}
+        comment "WRITE-ENLINED doesn't modify, easy interface"
         str: "a^/b"
         write-enlined %enlined.tmp str
         all [

@@ -108,7 +108,7 @@
     )
 
     (/|1|: lambda [
-        {Barrier that's willing to only run one expression after it}
+        "Barrier that's willing to only run one expression after it"
 
         right [any-value? <variadic>]
         'lookahead [element? <variadic>]

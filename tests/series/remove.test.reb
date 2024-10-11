@@ -77,7 +77,7 @@
     )
 
     ~bad-utf8-bin-edit~ !! (pick trap [take:part bin 2])
-    (str = {Tæke Pært})
+    (str = "Tæke Pært")
 
     ((as binary! "Tæ") = take:part bin 3)
     (str = "ke Pært")

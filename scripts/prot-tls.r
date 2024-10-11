@@ -523,22 +523,22 @@ update-write-state: make-state-updater 'write [
         to-2bin length of cs-data   ; cipher suites length
         cs-data                     ; cipher suites list
 
-        comment {
+        comment -{
             "Secure clients will advertise that they do not support
             compression (by passing "null" as the only algorithm) to avoid
             the CRIME attack": https://en.wikipedia.org/wiki/CRIME
-        }
+        }-
         #{01}                       ; compression method length
         #{00}                       ; no compression
 
-        comment {
+        comment -{
             "The presence of extensions can be detected by determining whether
             there are bytes following the compression_methods at the end of
             the ClientHello.  Note that this method of detecting optional data
             differs from the normal TLS method of having a variable-length
             field, but it is used for compatibility with TLS before extensions
             were defined."
-        }
+        }-
       ExtensionsLength:
         #{00 00}                    ; filled in later
       Extensions:

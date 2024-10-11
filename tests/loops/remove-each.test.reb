@@ -106,7 +106,7 @@
         returned-null: 'true
     ]
     all [
-        string = "1234" comment {not changed if BREAK}
+        string = "1234" comment "not changed if BREAK"
         returned-null = 'true
     ]
 )
@@ -157,7 +157,7 @@
         returned-null: 'true
     ]
     all [
-        binary = #{01020304} comment {Not changed with BREAK}
+        binary = #{01020304} comment "Not changed with BREAK"
         returned-null = 'true
     ]
 )

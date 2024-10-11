@@ -35,9 +35,9 @@
     ])
 
     (if system.version.4 = 3 [  ; Windows
-        ({ls -alF "foo\b ar.txt"} = shell:inspect [ls -alF %"foo/b ar.txt"])
+        (-{ls -alF "foo\b ar.txt"}- = shell:inspect [ls -alF %"foo/b ar.txt"])
     ] else [
-        ({ls -alF "foo/b ar.txt"} = shell:inspect [ls -alF %"foo/b ar.txt"])
+        (-{ls -alF "foo/b ar.txt"}- = shell:inspect [ls -alF %"foo/b ar.txt"])
     ])
 ]
 
@@ -46,8 +46,8 @@
 ; Quotes are output regardless of whether braced strings are used or not.
 ; Internal quotes are escaped using C string literal rules
 [
-    ({ls -alF "/usr/local"} = shell:inspect [ls -alF "/usr/local"])
-    ({"Some \"Quoted\" Text"} = shell:inspect [{Some "Quoted" Text}])
+    (-{ls -alF "/usr/local"}- = shell:inspect [ls -alF "/usr/local"])
+    (-{"Some \"Quoted\" Text"}- = shell:inspect [-{Some "Quoted" Text}-])
 ]
 
 

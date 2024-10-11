@@ -7,7 +7,7 @@
     e.exit-code = 42
 )
 
-(99 = do {Rebol [] try do {Rebol [] quit 42} quit:value 99})
+(99 = do -{Rebol [] try do -{Rebol [] quit 42}- quit:value 99}-)
 
 ; Returning of Rebol values from called to calling script via QUIT w/arg.
 (
@@ -20,7 +20,7 @@
     for-each 'value reduce [
         0
         42
-        {foo}
+        -{foo}-
         #{CAFE}
         blank  ; forces quoting in save, see note
         http://somewhere
