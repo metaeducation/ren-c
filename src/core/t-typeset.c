@@ -280,12 +280,12 @@ Array* Typeset_To_Array(const Value* tset)
 //
 void MF_Typeset(Molder* mo, const Cell* v, bool form)
 {
+    UNUSED(form);
+
     REBINT n;
 
-    if (not form) {
-        Pre_Mold(mo, v);  // #[typeset! or make typeset!
-        Append_Codepoint(mo->utf8flex, '[');
-    }
+    Begin_Non_Lexical_Mold(mo, v);  // #[typeset! or make typeset!
+    Append_Codepoint(mo->utf8flex, '[');
 
 #if !defined(NDEBUG)
     Symbol* symbol = Key_Symbol(v);
@@ -334,10 +334,8 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
 skip_types:
 #endif
 
-    if (not form) {
-        Append_Codepoint(mo->utf8flex, ']');
-        End_Mold(mo);
-    }
+    Append_Codepoint(mo->utf8flex, ']');
+    End_Non_Lexical_Mold(mo);
 }
 
 

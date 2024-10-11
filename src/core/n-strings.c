@@ -781,6 +781,10 @@ DECLARE_NATIVE(dehex)
             // in order to not gloss over incomplete UTF-8 sequences.
             //
             Byte b = (d1 << 4) + d2;
+
+            if (b == 0)
+                fail (Error_Illegal_Zero_Byte_Raw());
+
             scan[scan_size++] = b;
         }
 

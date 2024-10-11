@@ -147,10 +147,8 @@ void Emit(Molder* mo, const char *fmt, ...)
             break; }
 
         case '+': // Add #[ if mold/all
-            if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)) {
-                Append_Unencoded(s, "#[");
-                ender = ']';
-            }
+            Append_Unencoded(s, "#[");
+            ender = ']';
             break;
 
         case 'D': // Datatype symbol: #[type
@@ -206,42 +204,31 @@ Byte *Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 
 
 //
-//  Pre_Mold: C
+//  Begin_Non_Lexical_Mold: C
 //
-// Emit the initial datatype function, depending on /ALL option
+// For datatypes that don't have lexical representations, use a legacy
+// format (like #[object! ...]) just to have something to say.
 //
-void Pre_Mold(Molder* mo, const Cell* v)
+// At one type an attempt was made to TRANSCODE these forms.  That idea is
+// under review, likely in favor of a more thought-out concept involving
+// FENCE! and UNMAKE:
+//
+// https://forum.rebol.info/t/2225
+//
+void Begin_Non_Lexical_Mold(Molder* mo, const Cell* v)
 {
-    Emit(mo, GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) ? "#[T " : "make T ", v);
+    Emit(mo, "#[T ", v);
 }
 
 
 //
-//  End_Mold: C
+//  End_Non_Lexical_Mold: C
 //
 // Finish the mold, depending on /ALL with close block.
 //
-void End_Mold(Molder* mo)
+void End_Non_Lexical_Mold(Molder* mo)
 {
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Codepoint(mo->utf8flex, ']');
-}
-
-
-//
-//  Post_Mold: C
-//
-// For series that has an index, add the index for mold/all.
-// Add closing block.
-//
-void Post_Mold(Molder* mo, const Cell* v)
-{
-    if (VAL_INDEX(v)) {
-        Append_Codepoint(mo->utf8flex, ' ');
-        Append_Int(mo->utf8flex, VAL_INDEX(v) + 1);
-    }
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Codepoint(mo->utf8flex, ']');
+    Append_Codepoint(mo->utf8flex, ']');
 }
 
 
@@ -718,30 +705,7 @@ void Push_Mold(Molder* mo)
         );
     }
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        mo->digits = MAX_DIGITS;
-    else {
-        // If there is no notification when the option is changed, this
-        // must be retrieved each time.
-        //
-        // !!! It may be necessary to mold out values before the options
-        // block is loaded, and this 'Get_System_Int' is a bottleneck which
-        // crashes that in early debugging.  BOOT_ERRORS is sufficient.
-        //
-        if (PG_Boot_Phase >= BOOT_ERRORS) {
-            REBINT idigits = Get_System_Int(
-                SYS_OPTIONS, OPTIONS_DECIMAL_DIGITS, MAX_DIGITS
-            );
-            if (idigits < 0)
-                mo->digits = 0;
-            else if (idigits > MAX_DIGITS)
-                mo->digits = cast(REBLEN, idigits);
-            else
-                mo->digits = MAX_DIGITS;
-        }
-        else
-            mo->digits = MAX_DIGITS;
-    }
+    mo->digits = MAX_DIGITS;
 
   #if !defined(NDEBUG)
     TG_Pushing_Mold = false;

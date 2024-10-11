@@ -701,67 +701,46 @@ void MF_List(Molder* mo, const Cell* v, bool form)
         return;
     }
 
-    bool all;
-    if (VAL_INDEX(v) == 0) { // "&& VAL_TYPE(v) <= REB_LIT_PATH" commented out
-        //
-        // Optimize when no index needed
-        //
-        all = false;
-    }
-    else
-        all = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
-
     assert(VAL_INDEX(v) <= VAL_LEN_HEAD(v));
 
-    if (all) {
-        SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
-        Pre_Mold(mo, v); // #[block! part
+    const char *sep;
 
-        Append_Codepoint(mo->utf8flex, '[');
-        Mold_Array_At(mo, Cell_Array(v), 0, "[]");
-        Post_Mold(mo, v);
-        Append_Codepoint(mo->utf8flex, ']');
-    }
-    else {
-        const char *sep;
-
-        enum Reb_Kind kind = VAL_TYPE(v);
-        switch(kind) {
-        case REB_BLOCK:
-            if (GET_MOLD_FLAG(mo, MOLD_FLAG_ONLY)) {
-                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_ONLY); // only top level
-                sep = "\000\000";
-            }
-            else
-                sep = "[]";
-            break;
-
-        case REB_GROUP:
-            sep = "()";
-            break;
-
-        case REB_GET_PATH:
-            Append_Codepoint(mo->utf8flex, ':');
-            sep = "/";
-            break;
-
-        case REB_LIT_PATH:
-            Append_Codepoint(mo->utf8flex, '\'');
-            // fall through
-        case REB_PATH:
-        case REB_SET_PATH:
-            sep = "/";
-            break;
-
-        default:
-            sep = nullptr;
+    enum Reb_Kind kind = VAL_TYPE(v);
+    switch(kind) {
+      case REB_BLOCK:
+        if (GET_MOLD_FLAG(mo, MOLD_FLAG_ONLY)) {
+            CLEAR_MOLD_FLAG(mo, MOLD_FLAG_ONLY); // only top level
+            sep = "\000\000";
         }
+        else
+            sep = "[]";
+        break;
 
-        Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
+      case REB_GROUP:
+        sep = "()";
+        break;
 
-        if (VAL_TYPE(v) == REB_SET_PATH)
-            Append_Codepoint(mo->utf8flex, ':');
+      case REB_GET_PATH:
+        Append_Codepoint(mo->utf8flex, ':');
+        sep = "/";
+        break;
+
+      case REB_LIT_PATH:
+        Append_Codepoint(mo->utf8flex, '\'');
+        // fall through
+      case REB_PATH:
+      case REB_SET_PATH:
+        sep = "/";
+        break;
+
+      default:
+        sep = nullptr;
     }
+
+    Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
+
+    if (VAL_TYPE(v) == REB_SET_PATH)
+        Append_Codepoint(mo->utf8flex, ':');
 }
 
 

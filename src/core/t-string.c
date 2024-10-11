@@ -911,7 +911,8 @@ void Mold_Text_Series_At(
     REB_STRF sf;
     CLEARS(&sf);
     Sniff_String(str, index, &sf);
-    if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
+    bool non_ascii_parened = true;
+    if (not non_ascii_parened)
         sf.paren = 0;
 
     Ucs2(const*) up = String_At(str, index);
@@ -927,13 +928,12 @@ void Mold_Text_Series_At(
 
         *dp++ = '"';
 
+        bool non_ascii_parened = true;
         REBLEN n;
         for (n = index; n < String_Len(str); n++) {
             Ucs2Unit c;
             up = Ucs2_Next(&c, up);
-            dp = Emit_Uni_Char(
-                dp, c, GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
-            );
+            dp = Emit_Uni_Char(dp, c, non_ascii_parened);
         }
 
         *dp++ = '"';
@@ -976,10 +976,10 @@ void Mold_Text_Series_At(
             *dp++ = c;
             break;
 
-        default:
-            dp = Emit_Uni_Char(
-                dp, c, GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
-            );
+        default: {
+            bool non_ascii_parened = true;
+            dp = Emit_Uni_Char(dp, c, non_ascii_parened);
+            break; };
         }
     }
 
@@ -1075,26 +1075,24 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
-        Pre_Mold(mo, v); // #[binary!
-
     REBLEN len = Cell_Series_Len_At(v);
 
+    REBLEN binary_base = 16;  // used to depend on global option, bad
+
     Binary* enbased;
-    switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
-    default:
-    case 16: {
+    switch (binary_base) {
+      case 16: {
         const bool brk = (len > 32);
         enbased = Encode_Base16(Cell_Blob_At(v), len, brk);
         break; }
 
-    case 64: {
+      case 64: {
         const bool brk = (len > 64);
         Append_Unencoded(mo->utf8flex, "64");
         enbased = Encode_Base64(Cell_Blob_At(v), len, brk);
         break; }
 
-    case 2: {
+      case 2: {
         const bool brk = (len > 8);
         Append_Codepoint(mo->utf8flex, '2');
         enbased = Encode_Base2(Cell_Blob_At(v), len, brk);
@@ -1110,9 +1108,6 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
     Append_Unencoded(mo->utf8flex, "}");
 
     Free_Unmanaged_Flex(enbased);
-
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
-        Post_Mold(mo, v);
 }
 
 
@@ -1124,15 +1119,6 @@ void MF_String(Molder* mo, const Cell* v, bool form)
     Binary* s = mo->utf8flex;
 
     assert(Any_String(v));
-
-    // Special format for MOLD/ALL string series when not at head
-    //
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0) {
-        Pre_Mold(mo, v); // e.g. #[file! part
-        Mold_Text_Series_At(mo, Cell_String(v), 0);
-        Post_Mold(mo, v);
-        return;
-    }
 
     // The R3-Alpha forming logic was that every string type besides TAG!
     // would form with no delimiters, e.g. `form #foo` is just foo

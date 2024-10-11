@@ -75,7 +75,7 @@ enum {
 // Mold and form options:
 enum REB_Mold_Opts {
     MOLD_FLAG_0 = 0,
-    MOLD_FLAG_ALL = 1 << 0, // Output lexical types in #[type...] format
+    MOLD_FLAG_1 = 1 << 0,
     MOLD_FLAG_COMMA_PT = 1 << 1, // Decimal point is a comma.
     MOLD_FLAG_SLASH_DATE = 1 << 2, // Date as 1/1/2000
     MOLD_FLAG_INDENT = 1 << 3, // Indentation
@@ -85,10 +85,6 @@ enum REB_Mold_Opts {
     MOLD_FLAG_LIMIT = 1 << 7, // Limit length to mold->limit, then "..."
     MOLD_FLAG_RESERVE = 1 << 8  // At outset, reserve capacity for buffer
 };
-
-// Temporary:
-#define MOLD_FLAG_NON_ANSI_PARENED \
-    MOLD_FLAG_ALL // Non ANSI chars are ^() escaped
 
 #define DECLARE_MOLDER(name) \
     Molder name##_struct; \

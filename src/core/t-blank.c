@@ -205,10 +205,8 @@ void MF_Handle(Molder* mo, const Cell* v, bool form)
 {
     // Value has no printable form, so just print its name.
 
-    if (form)
-        Emit(mo, "?T?", v);
-    else
-        Emit(mo, "+T", v);
+    UNUSED(form);
+    Emit(mo, "+T", v);
 }
 
 

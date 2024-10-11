@@ -18,12 +18,12 @@ REBOL [
 mold64: function [
     "Temporary function to mold binary base 64." ; fix the need for this! -CS
     data
+    <local> molded
 ][
-    base: system/options/binary-base
-    system/options/binary-base: 64
-    data: mold :data
-    system/options/binary-base: :base
-    data
+    molded: enbase data  ; default
+    insert molded "64#{"
+    append molded "}"
+    return molded
 ]
 
 save: function [

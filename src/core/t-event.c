@@ -260,7 +260,7 @@ void MF_Event(Molder* mo, const Cell* v, bool form)
         SYM_TYPE, SYM_PORT, SYM_0_internal
     };
 
-    Pre_Mold(mo, v);
+    Begin_Non_Lexical_Mold(mo, v);
     Append_Codepoint(mo->utf8flex, '[');
     mo->indent++;
 
@@ -285,5 +285,5 @@ void MF_Event(Molder* mo, const Cell* v, bool form)
     New_Indented_Line(mo);
     Append_Codepoint(mo->utf8flex, ']');
 
-    End_Mold(mo);
+    End_Non_Lexical_Mold(mo);
 }

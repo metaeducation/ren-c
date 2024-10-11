@@ -140,7 +140,7 @@ void MF_Char(Molder* mo, const Cell* v, bool form)
 {
     Binary* out = mo->utf8flex;
 
-    bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
+    bool non_ascii_parened = true;
     Ucs2Unit chr = VAL_CHAR(v);
 
     REBLEN tail = Flex_Len(out);
@@ -156,7 +156,7 @@ void MF_Char(Molder* mo, const Cell* v, bool form)
         Byte *bp = Binary_At(out, tail);
         *bp++ = '#';
         *bp++ = '"';
-        bp = Emit_Uni_Char(bp, chr, parened);
+        bp = Emit_Uni_Char(bp, chr, non_ascii_parened);
         *bp++ = '"';
 
         Set_Flex_Len(out, bp - Binary_Head(out));

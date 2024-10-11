@@ -130,7 +130,7 @@ void MF_Action(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    Pre_Mold(mo, v);
+    Begin_Non_Lexical_Mold(mo, v);
 
     Append_Codepoint(mo->utf8flex, '[');
 
@@ -151,7 +151,7 @@ void MF_Action(Molder* mo, const Cell* v, bool form)
     Append_Unencoded(mo->utf8flex, " [...]");
 
     Append_Codepoint(mo->utf8flex, ']');
-    End_Mold(mo);
+    End_Non_Lexical_Mold(mo);
 }
 
 

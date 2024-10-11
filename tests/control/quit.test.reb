@@ -20,7 +20,7 @@
         blank
         http://somewhere
         1900-01-30
-        make object! [x: 42]
+        ; make object! [x: 42]  ; construction syntax for LOAD not enabled
     ][
         value = do-script-returning value
     ]

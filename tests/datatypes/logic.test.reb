@@ -11,5 +11,5 @@
 (true = to logic! 0)
 (true = to logic! 1)
 (true = to logic! "f")
-("true" = mold true)
-("false" = mold false)
+("#[true]" = mold true)
+("#[false]" = mold false)

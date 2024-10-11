@@ -29,7 +29,7 @@
 ; Form recursive object...
 (
     o: make object! [a: 1 r: _] o/r: o
-    (unspaced ["<" form o  ">"]) = "<a: 1^/r: make object! [...]>"
+    (unspaced ["<" form o  ">"]) = "<a: 1^/r: #[object! [...]]>"
 )
 ; detab...
 (

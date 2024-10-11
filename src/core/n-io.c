@@ -56,16 +56,11 @@ DECLARE_NATIVE(form)
 //
 //  "Converts a value to a REBOL-readable string."
 //
-//      value [any-value!]
-//          "The value to mold"
-//      /only
-//          {For a block value, mold only its contents, no outer []}
-//      /all
-//          "Use construction syntax"
-//      /flat
-//          "No indentation"
-//      /limit
-//          "Limit to a certain length"
+//      value "The value to mold"
+//          [any-value!]
+//      /only "For a block value, mold only its contents, no outer []"
+//      /flat "No indentation"
+//      /limit "Limit to a certain length"
 //      amount [integer!]
 //  ]
 //
@@ -74,8 +69,6 @@ DECLARE_NATIVE(mold)
     INCLUDE_PARAMS_OF_MOLD;
 
     DECLARE_MOLDER (mo);
-    if (REF(all))
-        SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     if (REF(flat))
         SET_MOLD_FLAG(mo, MOLD_FLAG_INDENT);
     if (REF(limit)) {

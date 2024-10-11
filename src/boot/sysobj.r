@@ -120,8 +120,6 @@ options: construct [] [  ; Options supplied to REBOL during startup
     no-window: false
     verbose: false
 
-    binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
-    decimal-digits: 15 ; Max number of decimal digits to print.
     module-paths: [%./]
     default-suffix: %.reb ; Used by IMPORT if no suffix is provided
     file-types: copy [

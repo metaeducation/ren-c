@@ -598,14 +598,14 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
     //
     if (Find_Pointer_In_Flex(TG_Mold_Stack, c) != NOT_FOUND) {
         if (not form) {
-            Pre_Mold(mo, v); // If molding, get #[object! etc.
+            Begin_Non_Lexical_Mold(mo, v); // If molding, get #[object! etc.
             Append_Codepoint(out, '[');
         }
         Append_Unencoded(out, "...");
 
         if (not form) {
             Append_Codepoint(out, ']');
-            End_Mold(mo);
+            End_Non_Lexical_Mold(mo);
         }
         return;
     }
@@ -638,7 +638,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
 
     // Otherwise we are molding
 
-    Pre_Mold(mo, v);
+    Begin_Non_Lexical_Mold(mo, v);
 
     Append_Codepoint(out, '[');
 
@@ -684,7 +684,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
     New_Indented_Line(mo);
     Append_Codepoint(out, ']');
 
-    End_Mold(mo);
+    End_Non_Lexical_Mold(mo);
 
     Drop_Pointer_From_Flex(TG_Mold_Stack, c);
 }
