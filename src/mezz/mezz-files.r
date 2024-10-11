@@ -53,7 +53,7 @@ decode-url: sys.util/decode-url/
         path: switch as tag! path  ; !!! list actually used tags, should change
             (load system.locale.library.utilities)
         else [
-            fail [{Module} path {not in system.locale.library.utilities}]
+            fail ["Module" path "not in system.locale.library.utilities"]
         ]
     ]
 
@@ -207,7 +207,7 @@ decode-url: sys.util/decode-url/
                 opt prompt: text!
                 opt let word: *in* word! (type: ensure type-block! get word)
             ] except [
-                fail "ASK currently only supports [{Prompt:} type-block!]"
+                fail -{ASK currently only supports ["Prompt:" type-block!]}-
             ]
         ]
         fail ~<unreachable>~

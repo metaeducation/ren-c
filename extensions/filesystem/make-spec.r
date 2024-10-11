@@ -388,6 +388,6 @@ depends: compose [
 
 ldflags: compose [
     (if "1" = get-env "USE_BACKDATED_GLIBC" [
-        {-Wl,--wrap=fcntl64 -Wl,--wrap=log -Wl,--wrap=pow}
+        "-Wl,--wrap=fcntl64 -Wl,--wrap=log -Wl,--wrap=pow"
     ])
 ]

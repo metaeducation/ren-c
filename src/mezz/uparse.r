@@ -1143,7 +1143,7 @@ default-combinators: make map! reduce [
     ;     import parse [1 "hi"] [
     ;         return gather [emit x: integer!, emit y: text!]
     ;     ]
-    ;     print [x "is one and" y "is {hi}"]
+    ;     print [x "is one and" y "is -{hi}-"]
     ;
     ; The idea is interesting enough that it suggests being able to EMIT with
     ; no GATHER in effect, and then have the RETURN GATHER semantic.
@@ -1923,8 +1923,8 @@ default-combinators: make map! reduce [
     ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
     ; transcoding:
     ;
-    ;     >> parse "{Neat!} 1020" [t: text! i: integer!]
-    ;     == "{Neat!} 1020"
+    ;     >> parse "-{Neat!}- 1020" [t: text! i: integer!]
+    ;     == "-{Neat!}- 1020"
     ;
     ;     >> t
     ;     == "Neat!"
@@ -3219,7 +3219,7 @@ comment [/combinatorize: func [
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)
-    {Process input in the parse dialect, definitional error on failure}
+    "Process input in the parse dialect, definitional error on failure"
 ] ]
     enclose parse*/ func [f] [
         let [^synthesized' pending]: eval:undecayed f except e -> [
@@ -3233,7 +3233,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 )
 
 parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
-    {Process input in the parse dialect, return how far reached}
+    "Process input in the parse dialect, return how far reached"
 ] ]
     enclose parse*/ func [f] [
         f.rules: compose [(f.rules) || accept <here>]

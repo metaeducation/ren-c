@@ -121,7 +121,7 @@ boot-banner: [
 ;       --version tuple  Script must be this version or greater
 ;       Perhaps add --reqired version-tuple for above TBD
 
-    print trim:auto copy {
+    print trim:auto copy --{
     Command line usage:
 
         REBOL [options] [script] [arguments]
@@ -159,7 +159,7 @@ boot-banner: [
 
         REBOL
         REBOL -q --about --suppress "%rebol.reb %user.reb"
-    }
+    }--
 ]
 
 /license: func [
@@ -285,7 +285,7 @@ boot-banner: [
                 state
             ]
             type-block! [  ; type assertion, how to enforce this?
-                emit spaced ["^-- Result should be" an state]
+                emit spaced ["^^-- Result should be" an state]
                 instruction
             ]
             group! [  ; means "submit user code"
@@ -293,7 +293,7 @@ boot-banner: [
                 state
             ]
         ] else [
-            emit [fail [{Bad console instruction:} (<*> mold state)]]
+            emit [fail ["Bad console instruction:" (<*> mold state)]]
         ]
     ]
 
@@ -464,9 +464,9 @@ boot-banner: [
     let /param-missing: func [
         "Take --option argv and then check if param arg is present, else die"
         return: []
-        option [text!] {Name of command-line option (switch) used}
+        option [text!] "Name of command-line option (switch) used"
     ][
-        die [option {parameter missing}]
+        die [option "parameter missing"]
     ]
 
     ; As we process command line arguments, we build up an "instruction" block
@@ -526,7 +526,7 @@ boot-banner: [
     |
         "--do" [param: text! | (param-missing "DO")] (
             ;
-            ; A string of code to run, e.g. `r3 --do "print {Hello}"`
+            ; A string of code to run, e.g. `r3 --do "print -{Hello}-"`
             ;
             o.quiet: 'yes  ; don't print banner, just run code string
             quit-when-done: default ['yes]
@@ -634,7 +634,7 @@ boot-banner: [
         let cli-option: [["--" | "-" | "+"] to <end>] (
             die [
                 "Unknown command line option:" cli-option LF
-                {!! For a full list of command-line options use: --help}
+                "!! For a full list of command-line options use: --help"
             ]
         )
     |

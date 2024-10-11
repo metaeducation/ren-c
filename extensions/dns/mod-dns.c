@@ -155,7 +155,9 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         Option(SymId) property = Cell_Word_Id(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
-            fail ("DNS 'ports' do not currently support OPEN?, only READ");
+            return rebDelegate("fail [",
+                "-{DNS 'ports' do not currently support OPEN?, only READ}-",
+            "]");
 
           default:
             break;
@@ -199,7 +201,9 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
             //
           reverse_lookup:
             if (Cell_Sequence_Len(host) != 4)
-                fail ("Reverse DNS lookup requires length 4 TUPLE!");
+                return rebDelegate("fail [",
+                    "-{Reverse DNS lookup requires length 4 TUPLE!}-"
+                "]");
 
             // 93.184.216.34 => example.com
             char buf[MAX_TUPLE];
@@ -244,16 +248,16 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 
           case NO_RECOVERY:
             return rebDelegate(
-              "fail {A nonrecoverable name server error occurred}"
+              "fail -{A nonrecoverable name server error occurred}-"
             );
 
           case TRY_AGAIN:
             return rebDelegate(
-              "fail {Temporary error on authoritative name server}"
+              "fail -{Temporary error on authoritative name server}-"
             );
 
           default:
-            return rebDelegate("fail {Unknown host error}");
+            return rebDelegate("fail -{Unknown host error}-");
         } }
 
       case SYM_OPEN: {
@@ -271,10 +275,13 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         //
         // So for the moment we error if you try to open a DNS port.
 
-        fail ("DNS 'ports' do not currently support OPEN, only READ"); }
+        goto open_or_close_fail; }
 
-      case SYM_CLOSE: {
-        fail ("DNS 'ports' do not currently support CLOSE, only READ"); }
+      open_or_close_fail:
+      case SYM_CLOSE:
+        return rebDelegate("fail [",
+            "-{DNS 'ports' do not currently support OPEN/CLOSE, only READ}-",
+        "]");
 
       default:
         break;

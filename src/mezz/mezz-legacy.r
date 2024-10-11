@@ -31,13 +31,13 @@ REBOL [
 ;
 /function: method: func [] [
     fail:blame [
-        {The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was}
-        {the gathering of SET-WORD! as locals.  This behavior led to many}
-        {problems with gathering irrelevant locals in the frame (e.g. any}
-        {object fields for MAKE OBJECT! [KEY: ...]), and also made it hard}
-        {to abstract functions.  With virtual binding, there is now LET...}
-        {which has some runtime cost but is much more versatile.  If you}
-        {don't want to pay the cost then use <local> in the spec.}
+        "The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was"
+        "the gathering of SET-WORD! as locals.  This behavior led to many"
+        "problems with gathering irrelevant locals in the frame (e.g. any"
+        "object fields for MAKE OBJECT! [KEY: ...]), and also made it hard"
+        "to abstract functions.  With virtual binding, there is now LET..."
+        "which has some runtime cost but is much more versatile.  If you"
+        "don't want to pay the cost then use <local> in the spec."
     ] $return
 ]
 
@@ -76,7 +76,7 @@ REBOL [
     fail:blame [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by JOIN, which accepts datatypes as a first parameter,"
-        "e.g. `join binary! spread [{ABC} 1 + 2 3 + 4]`"
+        "e.g. `join binary! spread [-{ABC}- 1 + 2 3 + 4]`"
         https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/
     ] $return
 ]
@@ -180,8 +180,8 @@ comment [
 /find: adapt (augment find/ [:reverse :last]) [
     if reverse or last [
         fail:blame [
-            {:REVERSE and :LAST on FIND have been deprecated.  Use FIND-LAST}
-            {or FIND-REVERSE specializations: https://forum.rebol.info/t/1126}
+            ":REVERSE and :LAST on FIND have been deprecated.  Use FIND-LAST"
+            "or FIND-REVERSE specializations: https://forum.rebol.info/t/1126"
         ] $reverse
     ]
 ]

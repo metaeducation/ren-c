@@ -914,18 +914,18 @@ DECLARE_NATIVE(enbin)
     bool little = rebUnboxBoolean(
         "switch first", settings, "[",
             "'BE ['false] 'LE ['true]",
-            "fail {First element of ENBIN settings must be BE or LE}",
+            "fail -{First element of ENBIN settings must be BE or LE}-",
         "]"
     );
     bool no_sign = rebUnboxBoolean(
         "switch second", settings, "[",
             "'+ ['true] '+/- ['false]",
-            "fail {Second element of ENBIN settings must be + or +/-}",
+            "fail -{Second element of ENBIN settings must be + or +/-}-",
         "]"
     );
     REBINT num_bytes = rebUnboxInteger(
         "(match integer! third", settings, ") else [",
-            "fail {Third element of ENBIN settings must be an integer}",
+            "fail -{Third element of ENBIN settings must be an integer}-",
         "]"
     );
     if (num_bytes <= 0)
@@ -973,7 +973,7 @@ DECLARE_NATIVE(enbin)
     }
     if (i != 0)
         return rebDelegate(
-            "fail [", ARG(value), "{exceeds}", rebI(num_bytes), "{bytes}]"
+            "fail [", ARG(value), "-{exceeds}-", rebI(num_bytes), "-{bytes}-]"
         );
 
     // The process of byte production of a positive number shouldn't give us
@@ -982,8 +982,8 @@ DECLARE_NATIVE(enbin)
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
         return rebDelegate(
             "fail [",
-                ARG(value), "{aliases a negative value with signed}",
-                "{encoding of only}", rebI(num_bytes), "{bytes}",
+                ARG(value), "-{aliases a negative value with signed}-",
+                "-{encoding of only}-", rebI(num_bytes), "-{bytes}-",
             "]"
         );
 
@@ -1023,13 +1023,13 @@ DECLARE_NATIVE(debin)
     bool little = rebUnboxBoolean(
         "switch first", settings, "[",
             "'BE ['false] 'LE ['true]",
-            "fail {First element of DEBIN settings must be BE or LE}",
+            "fail -{First element of DEBIN settings must be BE or LE}-",
         "]"
     );
     bool no_sign = rebUnboxBoolean(  // signed is C keyword
         "switch second", settings, "[",
             "'+ ['true] '+/- ['false]",
-            "fail {Second element of DEBIN settings must be + or +/-}",
+            "fail -{Second element of DEBIN settings must be + or +/-}-",
         "]"
     );
     REBLEN num_bytes;
@@ -1038,7 +1038,7 @@ DECLARE_NATIVE(debin)
     else {
         num_bytes = rebUnboxInteger(
             "(match integer! third", settings, ") else [",
-                "fail {Third element of DEBIN settings must be an integer}",
+                "fail -{Third element of DEBIN settings must be an integer}-",
             "]"
         );
         if (bin_size != num_bytes)

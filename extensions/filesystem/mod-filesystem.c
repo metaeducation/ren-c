@@ -507,7 +507,9 @@ DECLARE_NATIVE(local_to_file)
     Value* path = ARG(path);
     if (Is_File(path)) {
         if (not REF(pass))
-            fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
+            return rebDelegate("fail [",
+                "-{LOCAL-TO-FILE only passes through FILE! if :PASS used}-",
+            "]");
 
         return Init_File(OUT, Copy_String_At(path));  // many callers modify
     }
@@ -540,7 +542,9 @@ DECLARE_NATIVE(file_to_local)
     Value* path = ARG(path);
     if (Is_Text(path)) {
         if (not REF(pass))
-            fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
+            return rebDelegate("fail [",
+                "-{FILE-TO-LOCAL only passes through STRING! if :PASS used}-",
+            "]");
 
         return Init_Text(OUT, Copy_String_At(path));  // callers modify
     }

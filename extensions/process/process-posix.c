@@ -97,7 +97,7 @@ DECLARE_NATIVE(get_egid)
 //
 //      return: "Same ID as input"
 //          [integer!]
-//      uid {The effective user ID}
+//      uid "The effective user ID"
 //          [integer!]
 //  ]
 //

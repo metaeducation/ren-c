@@ -418,7 +418,7 @@ http-response-headers: context [
 
     if not find [http https] new-uri.scheme [  ; !!! scheme is quoted
         fail make-http-error
-            {Redirect to a protocol different from HTTP or HTTPS not supported}
+            "Redirect to a protocol different from HTTP or HTTPS not supported"
     ]
 
     all [

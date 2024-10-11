@@ -46,7 +46,7 @@
     }
 
     static const char* Sum_Plus_1000_Spec = "[ \
-        {Demonstration native that shadows ASSERT and ADD} \
+        -{Demonstration native that shadows ASSERT and ADD}- \
         assert [integer!] \
         add [integer!] \
     ]";
@@ -97,10 +97,10 @@ DECLARE_NATIVE(test_librebol)
 
   blockscope {
     Set_Cell_Flag(Init_Integer(PUSH(), 2), NEWLINE_BEFORE);
-    intptr_t getter = rebUnboxInteger("api-transient {Hello}");
+    intptr_t getter = rebUnboxInteger("api-transient -{Hello}-");
     Recycle();  // transient should survive a recycle
     Node* getter_node = p_cast(Node*, getter);
-    bool equal = rebUnboxLogic("{Hello} = @", getter_node);
+    bool equal = rebUnboxLogic("-{Hello}- = @", getter_node);
 
     Init_Boolean(PUSH(), equal);  // ^-- see NOTICE
   }
@@ -151,7 +151,7 @@ DECLARE_NATIVE(test_librebol)
     Init_Integer(PUSH(), 1020);  // fake success result
   #else
     Value* action = rebFunction(R"([
-        {Demonstration native that shadows ASSERT and ADD (C++ version)}
+        -{Demonstration native that shadows ASSERT and ADD (C++ version)}-
         assert [integer!]
         add [integer!]
     ])",

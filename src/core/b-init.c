@@ -810,7 +810,7 @@ void Startup_Core(void)
         "wrap*", Sys_Util_Module, rebQ(&boot->system_util),
         "if not equal? '~done~",
           "evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
-            "[fail {sys.util}]",
+            "[fail -{sys.util}-]",
 
         // SYS contains the implementation of the module machinery itself, so
         // we don't have MODULE or EXPORT available.  Do the exports manually,

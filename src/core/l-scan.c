@@ -2761,7 +2761,7 @@ Bounce Scanner_Executor(Level* const L) {
                 Pop_Stack_Values(stackindex_path_head - 1)
             );
             Push_GC_Guard(items);
-            Value* email = rebValue("as email! delimit {.}", items);
+            Value* email = rebValue("as email! delimit -{.}-", items);
             Drop_GC_Guard(items);
             Copy_Cell(temp, email);
             rebRelease(email);

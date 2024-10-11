@@ -116,7 +116,7 @@ int tf_snprintf(char *s, size_t n, const char *fmt, ...)
 
                 // Replace with a Ren-C panic
                 rebJumps("panic [",
-                   "{unsupported tf_snprintf specifier, see tf_snprintf.c}",
+                   "-{unsupported tf_snprintf specifier, see tf_snprintf.c}-",
                 "]");
             }
             fmt++;

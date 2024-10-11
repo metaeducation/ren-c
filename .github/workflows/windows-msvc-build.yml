@@ -221,7 +221,7 @@ jobs:
   #====# BUILD STEPS #========================================================#
 
 
-    # See README: {Braces} For %make.r String Parameters
+    # See README: -{Braces}- For %make.r String Parameters
     #
     - name: Use Rebmake to Generate an NMAKE Makefile
       run: |

@@ -135,7 +135,7 @@ DECLARE_NATIVE(request_file_p)
         //
         rebElide(
             "for-each 'item filter [",
-                "if find item tab [fail {TAB chars not legal in filters}]",
+                "if find item tab [fail -{TAB chars not legal in filters}-]",
             "]"
         );
         filter_utf16 = rebSpellWide("delimit:tail tab filter");
@@ -241,11 +241,11 @@ DECLARE_NATIVE(request_file_p)
         }
         else if (cderr == FNERR_BUFFERTOOSMALL) // ofn.nMaxFile too small
             error = rebValue(
-                "make error! {dialog buffer too small for selection}"
+                "make error! -{dialog buffer too small for selection}-"
             );
         else
             error = rebValue(
-                "make error! {common dialog failure CDERR_XXX}"
+                "make error! -{common dialog failure CDERR_XXX}-"
             );
     }
     else {
@@ -361,7 +361,7 @@ DECLARE_NATIVE(request_file_p)
 
             if (folder == nullptr)
                 error = rebValue(
-                    "make error! {folder can't be represented locally}"
+                    "make error! -{folder can't be represented locally}-"
                 );
             else {
                 GSList *list = gtk_file_chooser_get_filenames(chooser);
@@ -408,7 +408,7 @@ DECLARE_NATIVE(request_file_p)
     UNUSED(multi);
 
     error = rebValue(
-        "make error! {REQUEST-FILE only on GTK and Windows at this time}"
+        "make error! -{REQUEST-FILE only on GTK and Windows at this time}-"
     );
   #endif
 
@@ -549,7 +549,7 @@ DECLARE_NATIVE(request_dir_p)
     if (pFolder == nullptr)
         assert(result == nullptr);
     else if (not SHGetPathFromIDList(pFolder, folder))
-        error = rebValue("make error! {SHGetPathFromIDList failed}");
+        error = rebValue("make error! -{SHGetPathFromIDList failed}-");
     else {
         result = rebValue("as file!", rebT(folder));
     }
@@ -558,7 +558,7 @@ DECLARE_NATIVE(request_dir_p)
     rebFreeMaybe(path_utf16);
   #else
     error = rebValue(
-        "make error {Temporary implementation of REQ-DIR only on Windows}"
+        "make error -{Temporary implementation of REQ-DIR only on Windows}-"
     );
   #endif
 

@@ -22,7 +22,7 @@ REBOL [
 
             >> extension: "txt"
             >> shell:inspect [ls -alF *.(extension)]
-            == {ls -alF *.txt}
+            == --{ls -alF *.txt}--
 
         TEXT! strings will literally include their quotes, and GROUP!s imply
         quotation as well.  In order to "splice in" a TEXT! without putting
@@ -30,11 +30,11 @@ REBOL [
 
             >> command: "ls -alF"
             >> shell:inspect [(command)]
-            == {"ls -alF"}
+            == --{"ls -alF"}--
 
             >> command "ls -alF"
             >> shell [:(command)]
-            == {ls -alF}
+            == --{ls -alF}--
 
         For a literal form that does not escape with quotes, ISSUE! may be
         used.  Hence `#"foo bar"` acts the same as `:("foo bar")`.
@@ -50,7 +50,7 @@ REBOL [
 
 
 %%: lambda [
-    {Quoting MAKE FILE! Operator}
+    "Quoting MAKE FILE! Operator"
     @value [word! path! tuple! block! group!]
 ][
     if group? value [value: eval value]
@@ -154,7 +154,7 @@ REBOL [
 
             word! issue! [item]  ; never quoted or escaped
 
-            text! [replace copy item {"} {\"}]  ; sometimes spliced
+            text! [replace copy item -{"}- -{\"}-]  ; sometimes spliced
 
             file! [item]
 
@@ -175,7 +175,7 @@ REBOL [
 
         if needs-quotes? item [
             if file? item [item: file-to-local item]
-            keep unspaced [{"} form item {"}]  ; !!! better escape for strings
+            keep unspaced [-{"}- form item -{"}-]  ; !!! better escape?
         ] else [
             if file? item [item: file-to-local item]
             keep form item

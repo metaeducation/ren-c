@@ -676,8 +676,8 @@ REBOL [
         (types: match block! maybe try items.1) then [
             (match types val) else [
                 fail [
-                    {EXPORT expected} word {to be in} ^types
-                    {but it was} (mold type of val) else ["null"]
+                    "EXPORT expected" word "to be in" @types
+                    "but it was" (mold type of val) else ["null"]
                 ]
             ]
             items: next items

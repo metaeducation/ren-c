@@ -236,7 +236,7 @@ Bounce Call_Core(Level* level_) {
             // quotes in it escaped.  But something like the above would
             // leave the `*` as-is.  So one would need to write:
             //
-            //     call:shell [r3 --suppress {"*"}]
+            //     call:shell [r3 --suppress -{"*"}-]
             //
             shcmd = rebSpell("argv-block-to-command*", command);
         }
@@ -247,14 +247,14 @@ Bounce Call_Core(Level* level_) {
         // over weird getenv() quirks, but also gives a pointer we can free in
         // the argv block.
         //
-        char *sh = rebSpell("any [get-env {SHELL}, {/bin/sh}]");
+        char *sh = rebSpell("any [get-env -{SHELL}-, -{/bin/sh}-]");
         //                                       ---^
         // !!! Convention usually says the $SHELL is set.  But the GitHub CI
         // environment is a case that does not seem to pass it through to
         // processes called in steps, e.g.
         //
         //     echo "SHELL is $SHELL"  # this shows /bin/bash
-        //     ./r3 --do "print get-env {SHELL}"  # shows nothing
+        //     ./r3 --do "print get-env -{SHELL}-"  # shows nothing
         //
         // Other environment variables work all right, so it seems something is
         // off about $SHELL in particular.
@@ -267,7 +267,7 @@ Bounce Call_Core(Level* level_) {
         argc = 3;
         argv = rebAllocN(char*, 4);
         argv[0] = sh;
-        argv[1] = rebSpell("{-c}");
+        argv[1] = rebSpell("-{-c}-");
         argv[2] = shcmd;
         argv[3] = nullptr;
     }
@@ -865,7 +865,7 @@ Bounce Call_Core(Level* level_) {
         //
         assert(false);
         rebFreeMaybe(infobuf);
-        return rebDelegate("fail {Child process is stopped}");
+        return rebDelegate("fail -{Child process is stopped}-");
     }
     else {
         non_errno_ret = -2048;  // !!! randomly picked
@@ -908,13 +908,13 @@ Bounce Call_Core(Level* level_) {
     if (non_errno_ret > 0) {
         return rebDelegate(
             "fail [",
-                "{Child process is terminated by signal:}",
+                "-{Child process was terminated by signal:}-",
                 rebI(non_errno_ret),
             "]"
         );
     }
     else if (non_errno_ret < 0)
-        return rebDelegate("fail {Unknown error happened in CALL}");
+        return rebDelegate("fail -{Unknown error happened in CALL}-");
 
 
     // Call may not succeed if r != 0, but we still have to run cleanup

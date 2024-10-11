@@ -20,7 +20,7 @@ REBOL [
         You would call into the interpreter:
 
             int value = 10;
-            rebElide("print [{The value is}", rebI(value), "]");
+            rebElide("print [-{The value is}-", rebI(value), "]");
 
         The API provides memory alloction through rebAlloc() and rebFree(), so
         the code you write isn't necessarily completely trivial.  But to be
@@ -42,7 +42,7 @@ call-librebol: make-native [
     n [integer!]
 ]{
     int n = rebUnboxInteger("n");
-    rebElide("print [{Hello, libRebol World:}", rebI(n), "]");
+    rebElide("print [-{Hello, libRebol World:}-", rebI(n), "]");
     return rebInteger(n + 20);
 }
 

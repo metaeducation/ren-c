@@ -9,7 +9,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 (
     data: ""
     call:shell // [
-        [(system.options.boot) --suppress {"*"} print.reb 100]  ; small
+        [(system.options.boot) --suppress -{"*"}- print.reb 100]  ; small
 
         :input 'none  ; avoid child process eating pastes of length test
         :output data
@@ -20,7 +20,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 (
     data: ""
     call:shell // [
-        [(system.options.boot) --suppress {"*"} print.reb 9000]  ; medium
+        [(system.options.boot) --suppress -{"*"}- print.reb 9000]  ; medium
 
         :input 'none  ; avoid child process eating pastes of length test
         :output data
@@ -31,7 +31,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 (
     data: ""
     call:shell // [
-        [(system.options.boot) --suppress {"*"} print.reb 80000]  ; large
+        [(system.options.boot) --suppress -{"*"}- print.reb 80000]  ; large
 
         :input 'none  ; avoid child process eating pastes of length test
         :output data
@@ -43,7 +43,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     ; extra large CALL:OUTPUT (500K+), test only run if can find git binary
     ;
     if not exists? %/usr/bin/git [okay] else [
-        data: {}
+        data: ""
         call:output [
             %/usr/bin/git log (spaced [
                 "--pretty=format:'["
@@ -67,7 +67,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 [
     (/echoer: enclose specialize call:input:output/ [
         command: [
-            (system.options.boot) --suppress {"*"} -q
+            (system.options.boot) --suppress -{"*"}- -q
             --do "write-stdout read system.ports.input"
         ]
     ] frame -> [

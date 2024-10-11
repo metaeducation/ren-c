@@ -826,14 +826,14 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
     ; Ultimately we might like FAIL to use some clever error-creating dialect
     ; when passed a block, maybe something like:
     ;
-    ;     fail [<invalid-key> {The key} key-name: key {is invalid}]
+    ;     fail [<invalid-key> "The key" key-name: key "is invalid"]
     ;
     ; That could provide an error ID, the format message, and the values to
     ; plug into the slots to make the message...which could be extracted from
     ; the error if captured (e.g. error.id and `error.key-name`.  Another
     ; option would be something like:
     ;
-    ;     fail:with [{The key} :key-name {is invalid}] [key-name: key]
+    ;     fail:with ["The key" :key-name "is invalid"] [key-name: key]
 
     let error: switch:type :reason [
         error! [reason]

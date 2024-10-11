@@ -245,7 +245,7 @@ static void kill_process(pid_t pid, int signal)
 
     switch (errno) {
       case EINVAL:
-        rebJumps("fail [{Invalid signal number:}", rebI(signal), "]");
+        rebJumps("fail [-{Invalid signal number:}-", rebI(signal), "]");
 
       case EPERM:
         Fail_Permission_Denied();
@@ -266,8 +266,8 @@ static void kill_process(pid_t pid, int signal)
 //  "Terminate a process (not current one)"
 //
 //      return: [~null~]
-//      pid [integer!]
-//          {The process ID}
+//      pid "The process ID"
+//          [integer!]
 //  ]
 //
 DECLARE_NATIVE(terminate)
@@ -396,9 +396,9 @@ DECLARE_NATIVE(get_env)
             DWORD dwerr = GetLastError();
             if (dwerr == 0) {  // in case this ever happens, give more info
                 error = rebValue("make error! spaced [",
-                    "{Mystery bug getting environment var} @", ARG(variable),
-                    "{with length reported as}", rebI(val_len_plus_one - 1),
-                    "{but returned length from fetching is}", rebI(val_len),
+                    "-{Mystery bug getting environment var}- @", ARG(variable),
+                    "-{with length reported as}-", rebI(val_len_plus_one - 1),
+                    "-{but returned length from fetching is}-", rebI(val_len),
                 "]");
             }
             else
@@ -483,7 +483,7 @@ DECLARE_NATIVE(set_env)
       #ifdef unsetenv
         if (unsetenv(key_utf8) == -1)
             return rebDelegate(
-              "fail {unsetenv() couldn't unset environment variable}"
+              "fail -{unsetenv() couldn't unset environment variable}-"
             );
       #else
         // WARNING: SPECIFIC PORTABILITY ISSUE
@@ -498,7 +498,7 @@ DECLARE_NATIVE(set_env)
         //
         if (putenv(key_utf8) == -1) // !!! Why mutable?
             return rebDelegate(
-              "fail {putenv() couldn't unset environment variable}"
+              "fail -{putenv() couldn't unset environment variable}-"
             );
       #endif
     }
@@ -508,7 +508,7 @@ DECLARE_NATIVE(set_env)
 
         if (setenv(key_utf8, val_utf8, 1) == -1) // the 1 means "overwrite"
             return rebDelegate(
-              "fail {setenv() couldn't set environment variable}"
+              "fail -{setenv() couldn't set environment variable}-"
             );
 
         rebFree(val_utf8);
@@ -538,7 +538,7 @@ DECLARE_NATIVE(set_env)
 
         if (putenv(duplicate) == -1)  // leak!  (why mutable?  :-/)
             return rebDelegate(
-              "fail {putenv() couldn't set environment variable}"
+              "fail -{putenv() couldn't set environment variable}-"
             );
 
         rebFree(key_equals_val_utf8);

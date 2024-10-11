@@ -44,10 +44,10 @@ typedef RebolValue Value;
 //
 //      return: [~null~ text!]
 //      category ['language 'language* 'territory 'territory*]
-//          {language: English name of the language,
+//          --{language: English name of the language,
 //          territory: English name of the country/region,
 //          language*: Full localized primary name of the language
-//          territory*: Full localized name of the country/region}
+//          territory*: Full localized name of the country/region}--
 //  ]
 //
 DECLARE_NATIVE(locale)
@@ -66,7 +66,7 @@ DECLARE_NATIVE(locale)
             "territory", rebI(LOCALE_SENGCOUNTRY),
             "territory*", rebI(LOCALE_SCOUNTRY),
         "] category else [",
-            "fail [{Invalid locale category:} category]",
+            "fail [-{Invalid locale category:}- category]",
         "]"  // !!! review using fail with ID-based errors
     );
 
@@ -90,7 +90,7 @@ DECLARE_NATIVE(locale)
     return text;
   #else
     return rebDelegate(
-        "fail {LOCALE not implemented natively for non-Windows}"  // [1]
+        "fail -{LOCALE not implemented natively for non-Windows}-"  // [1]
     );
   #endif
 }
@@ -167,7 +167,7 @@ DECLARE_NATIVE(setlocale)
     rebRelease(map);
 
     if (cat == -1)
-        return rebDelegate("fail [{Invalid locale category:} category]");
+        return rebDelegate("fail [-{Invalid locale category:}- category]");
 
     char* value_utf8 = rebSpell("value");
     const char *result = setlocale(cat, value_utf8);

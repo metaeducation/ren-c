@@ -742,6 +742,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
     if (malign == 0)
         brace_in = brace_out = 0;
 
+    Append_Codepoint(buf, '-');
     Append_Codepoint(buf, '{');
 
     REBLEN n;
@@ -768,6 +769,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
     }
 
     Append_Codepoint(buf, '}');
+    Append_Codepoint(buf, '-');
 
     USED(escape);
     USED(paren);

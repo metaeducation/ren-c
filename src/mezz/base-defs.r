@@ -183,8 +183,8 @@ each: quote/
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.
 ;
-requote: reframer lambda [
-    {Remove Quoting Levels From First Argument and Re-Apply to Result}
+/requote: reframer lambda [
+    "Remove Quoting Levels From First Argument and Re-Apply to Result"
     f [frame!]
     <local> p num-quotes result
 ][
@@ -246,19 +246,19 @@ requote: reframer lambda [
 ; !!! REDESCRIBE not defined yet
 ;
 ; head?
-; {Returns TRUE if a series is at its beginning.}
+; "Returns TRUE if a series is at its beginning"
 ; series [any-series? port!]
 ;
 ; tail?
-; {Returns TRUE if series is at or past its end; or empty for other types.}
+; "Returns TRUE if series is at or past its end; or empty for other types"
 ; series [any-series? object! port! bitset! map! blank! varargs!]
 ;
 ; past?
-; {Returns TRUE if series is past its end.}
+; "Returns TRUE if series is past its end"
 ; series [any-series? port!]
 ;
 ; open?
-; {Returns TRUE if port is open.}
+; "Returns TRUE if port is open"
 ; port [port!]
 
 /head?: specialize reflect/ [property: 'head?]

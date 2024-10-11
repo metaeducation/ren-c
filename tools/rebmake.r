@@ -524,7 +524,7 @@ gcc: make compiler-class [
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
                     if find [gcc g++ cl] name [
-                        flg: replace copy flg {"} {\"}
+                        flg: replace copy flg -{"}- -{\"}-
                     ]
 
                     ; Note: bootstrap executable hangs on:
@@ -638,7 +638,7 @@ cl: make compiler-class [
                     ; This is a stopgap workaround that ultimately would
                     ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
                     ;
-                    flg: replace copy flg {"} {\"}
+                    flg: replace copy flg -{"}- -{\"}-
 
                     ; Note: bootstrap executable hangs on:
                     ;

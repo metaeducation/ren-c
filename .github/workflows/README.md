@@ -337,19 +337,19 @@ the next steps:
     echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
 
 
-## {Braces} For %make.r String Parameters
+## ={Braces}- For %make.r String Parameters
 
 At time of writing, %make.r uses TRANSCODE:ONE to load its arguments.  This is
 so that it gets numeric or tuple values as tuples, and words as words.
 
 But string parameters like the GIT_COMMIT present a problem, because they
-aren't received with quotes or braces around them.  Strangely, the git commit
+aren't received with quotes or dash-braces around them.  Strangely, the commit
 is sometimes a valid word and sometimes not...depending on whether it starts
 with a letter or a digit.  This can lead to frustrating debug situations as
 diagnostic code changes the hash!
 
 The ergonomics need improvement.  For now, the commit needs to be passed in
-braces or escaped quotes to be received as a string.
+dash-braces or escaped quotes to be received as a string.
 
 ## YAML >- To Make One Line From Many
 

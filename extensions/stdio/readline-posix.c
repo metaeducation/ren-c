@@ -138,10 +138,10 @@ STD_TERM *Init_Terminal(void)
     // file across sessions.  It makes more sense for the logic doing that
     // to be doing it in Rebol.  For starters, we just make it fresh.
     //
-    Line_History = rebValue("[{}]");  // current line is empty string
+    Line_History = rebValue("[-{}-]");  // current line is empty string
     rebUnmanage(Line_History);  // allow Line_History to live indefinitely
 
-    t->buffer = rebValue("{}");
+    t->buffer = rebValue("-{}-");
     rebUnmanage(t->buffer);
 
     t->buf[0] = '\0';  // start read() byte buffer out at empty
@@ -529,7 +529,7 @@ Value* Unrecognized_Key_Sequence(STD_TERM *t, int delta)
     //
     Term_Abandon_Pending_Events(t);
 
-    return rebValue("as issue! {[KEY?]}");
+    return rebValue("as issue! -{[KEY?]}-");
 }
 
 
@@ -750,7 +750,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
         switch (first) {
           case 'H':   // !!! "home" (in what standard??)
           #if !defined(NDEBUG)
-            rebJumps("fail {ESC H: please report your system info}");
+            rebJumps("fail -{ESC H: please report your system info}-");
           #else
             e = xrebWord("home");
           #endif
@@ -758,7 +758,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 
           case 'F':  // !!! "end" (in what standard??)
           #if !defined(NDEBUG)
-            rebJumps("fail {ESC F: please report your system info}");
+            rebJumps("fail -{ESC F: please report your system info}-");
           #else
             e = xrebWord("end");
           #endif
@@ -790,7 +790,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
             // involved at that level.  Using sigaction() on SIGINT and
             // causing EINTR is how we would like to be triggering HALT.
             //
-            rebJumps("fail {Unexpected literal Ctrl-C in console}");
+            rebJumps("fail -{Unexpected literal Ctrl-C in console}-");
         }
         else switch (first) {
           case DEL:  // delete (C0)
@@ -828,7 +828,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
             if (first >= 1 and first <= 26) {  // Ctrl-A, Ctrl-B, etc.
                 e = rebValue(
                     "as word! unspaced [",
-                        "{ctrl-}", rebR(rebChar(first - 1 + 'a')),
+                        "--{ctrl-}--", rebR(rebChar(first - 1 + 'a')),
                     "]"
                 );
             }
@@ -937,7 +937,7 @@ void Term_Insert(STD_TERM *t, const Value* v) {
         //
         Value* v_no_tab = rebValue(
             "if find", v, "tab [",
-                "replace copy", v, "tab", "{    }"
+                "replace copy", v, "tab", "--{    }--"
             "] else [null]"
         );
 

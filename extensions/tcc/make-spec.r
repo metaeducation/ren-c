@@ -50,13 +50,13 @@ libtcc-lib-dir: any [
 
 cflags: compose [
     (if libtcc-include-dir [
-        unspaced [{-I} {"} file-to-local libtcc-include-dir {"}]
+        unspaced ["-I" -{"}- file-to-local libtcc-include-dir -{"}-]
     ])
 ]
 
 ldflags: compose [
     (if libtcc-lib-dir [
-        unspaced [{-L} {"} file-to-local libtcc-lib-dir {"}]
+        unspaced [{-L} -{"}- file-to-local libtcc-lib-dir -{"}-]
     ])
 ]
 

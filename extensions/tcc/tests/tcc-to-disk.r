@@ -16,7 +16,7 @@ REBOL [
     }--
 ]
 
-write %hello-tcc.c trim:auto {
+write %hello-tcc.c trim:auto --{
     /*
      * hello-tcc.c
      * Simple test of compiling a file from disk w/TCC extension
@@ -28,7 +28,7 @@ write %hello-tcc.c trim:auto {
         printf("Hello, TCC Disk File World!\n");
         return 0;
     }
-}
+}--
 
 /c99-logged: enclose c99/ function [f [frame!]] [
     ; f.runtime: "..."  ; set this to override CONFIG_TCCDIR

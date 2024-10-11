@@ -16,7 +16,7 @@ REBOL [
 ; checking on output that text does not contain CR bytes.
 ;
 /write-enlined: redescribe [
-    {Write out a TEXT! with its LF sequences translated to CR LF}
+    "Write out a TEXT! with its LF sequences translated to CR LF"
 ](
     adapt write/ [
         if not text? data [
@@ -171,7 +171,7 @@ REBOL [
         ]
 
         header [
-            insert data unspaced [{REBOL} _ (mold header) newline]
+            insert data unspaced ["REBOL" _ (mold header) newline]
         ]
     ]
 

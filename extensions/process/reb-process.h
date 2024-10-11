@@ -25,13 +25,13 @@
 
 ATTRIBUTE_NO_RETURN
 INLINE void Fail_Permission_Denied(void) {
-    rebJumps("fail {The process does not have enough permission}");
+    rebJumps("fail -{The process does not have enough permission}-");
 }
 
 ATTRIBUTE_NO_RETURN
 INLINE void Fail_No_Process(const Value* arg) {
     rebJumps(
-        "fail [{The target process (group) does not exist:}", arg, "]"
+        "fail [-{The target process (group) does not exist:}-", arg, "]"
     );
 }
 
@@ -39,7 +39,7 @@ INLINE void Fail_No_Process(const Value* arg) {
     ATTRIBUTE_NO_RETURN
     INLINE void Fail_Terminate_Failed(DWORD err) {  // GetLastError()
         rebJumps(
-            "fail [{Terminate failed with error number:}", rebI(err), "]"
+            "fail [-{Terminate failed with error number:}-", rebI(err), "]"
         );
     }
 #endif
@@ -65,7 +65,7 @@ INLINE char Get_Char_For_Stream_Mode(const RebolValue* mode) {
         "switch @", mode, "[",
             "'inherit [#i]",
             "'none [#n]",
-            "fail {WORD! for Stream Mode must be INHERIT or NONE}",
+            "fail -{WORD! for Stream Mode must be INHERIT or NONE}-",
         "]"
     );
 }

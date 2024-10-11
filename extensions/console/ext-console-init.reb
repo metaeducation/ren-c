@@ -79,10 +79,10 @@ export console!: make object! [
     error: "**"  ; errors FORM themselves, so this is not used yet
     info: "(i)"  ; was `to-text #{e29398}` for "(i)" symbol, caused problems
     greeting:
-{Welcome to Rebol.  For more information please type in the commands below:
+--{Welcome to Rebol.  For more information please type in the commands below:
 
   HELP    - For starting information
-  ABOUT   - Information about your Rebol}
+  ABOUT   - Information about your Rebol}--
 
     /print-greeting: meth [
         "Adds live elements to static greeting content (build #, version)"
@@ -207,7 +207,7 @@ export console!: make object! [
             ; Those quasiforms are received quoted by this routine like other
             ; ordinary values; this case is just for the antiforms.
             ;
-            print unspaced [result _ mold v _ _ {;} _ "anti"]
+            print unspaced [result _ mold v _ _ ";" _ "anti"]
             return ~
         ]
 
@@ -699,7 +699,7 @@ export console!: make object! [
                 ]
                 print newline
             ]
-            emit {Only gets here if user did not hit Ctrl-C}
+            emit "Only gets here if user did not hit Ctrl-C"
             return <die>
         ]
         if block? prior [
@@ -843,7 +843,7 @@ export console!: make object! [
     ;
     emit #unskin-if-halt  ; Ctrl-C during dialect hook is a problem
     emit [
-        comment {not all users may want CONST result, review configurability}
+        comment "not all users may want CONST result, review configurability"
         as group! system.console/dialect-hook '(<*> code)
     ]
     return group!  ; a group RESULT should come back to HOST-CONSOLE

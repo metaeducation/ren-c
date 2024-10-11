@@ -438,7 +438,7 @@ for-each-api [
         ; It can be useful for debugging to see the API entry points;
         ; using console.error() adds a stack trace to it.
         ;
-        unspaced [{console.error("Entering } name {");^/}]
+        unspaced [--{console.error("Entering }-- name --{");^/}--]
     ] else [
         null
     ]
@@ -447,7 +447,7 @@ for-each-api [
         ; Similar to debugging on entry, it can be useful on exit to see
         ; when APIs return...code comes *before* the return statement.
         ;
-        unspaced [{console.error("Exiting } name {");^/}]
+        unspaced [--{console.error("Exiting }-- name --{");^/}--]
     ] else [
         null
     ]
@@ -926,19 +926,19 @@ json-collect: func [
     results: collect compose [
         /keep: adapt keep/ [  ; Emscripten prefixes functions w/underscore
             if text? value [
-                value: unspaced [{"} {_} value {"}]  ; bootstrap semantics
+                value: unspaced [-{"_}- value -{"}-]  ; bootstrap semantics
             ]
             else [
-                value: quote unspaced [{"} {_} unquote value {"}]  ; ^META
+                value: quote unspaced [-{"_}- unquote value -{"}-]  ; ^META
             ]
         ]
         (spread body)
     ]
-    return cscape [results {
+    return cscape [results --{
         [
             $(Results),
         ]
-    }]
+    }--]
 ]
 
 write (join prep-dir %include/libr3.exports.json) json-collect [
@@ -976,7 +976,7 @@ write (join prep-dir %include/libr3.exports.json) json-collect [
 write (join prep-dir %include/asyncify-blacklist.json) delimit newline collect [
     keep "["
     for-next 'names load %../asyncify-blacklist.r [
-        keep unspaced [_ _ _ _ {"} names/1 {"} if not last? names [","]]
+        keep unspaced [_ _ _ _ -{"}- names.1 -{"}- if not last? names [","]]
     ]
     keep "]"
 ]

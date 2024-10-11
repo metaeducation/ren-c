@@ -391,7 +391,7 @@ REBOL [
     series [map!]
     key [element?]
     value [<maybe> element?]
-    :case {Perform a case-sensitive search}
+    :case "Perform a case-sensitive search"
 ]
 
 ; Making, copying, modifying
@@ -499,8 +499,8 @@ REBOL [
     "Swaps elements between two series or the same series"
 
     return: [any-series?]
-    series1 [any-series?] {At position (modified)}
-    series2 [any-series?] {At position (modified)}
+    series1 [any-series?] "At position (modified)"
+    series2 [any-series?] "At position (modified)"
 ]
 
 /reverse: generic [

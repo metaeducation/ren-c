@@ -21,7 +21,7 @@ run lambda [@terms [tag! set-word? <variadic>]] [
     let w
     while [<end> != w: take terms] [
         set w redescribe reduce [
-            spaced [{Returns the} to word! w {value of a series}]
+            spaced ["Returns the" to word! w "value of a series"]
         ](
             specialize pick/ [picker: n]
         )
@@ -35,7 +35,7 @@ run lambda [@terms [tag! set-word? <variadic>]] [
     <end>
 
 last: redescribe [
-    {Returns the last value of a series.}
+    "Returns the last value of a series"
 ](
     specialize adapt pick/ [
         picker: length of :location
@@ -361,7 +361,7 @@ last: redescribe [
     let e
     if auto [
         parse3 series [
-            ; Don't count empty lines, (e.g. trim:auto {^/^/^/    asdf})
+            ; Don't count empty lines, (e.g. trim:auto -{^/^/^/    asdf}-)
             opt remove some LF
 
             (indent: 0)

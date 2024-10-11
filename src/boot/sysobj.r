@@ -24,11 +24,15 @@ commit: null
 
 product: null  ; assigned by startup of the host ('core, 'view, 'ren-garden...)
 
-license: {Copyright 2012 REBOL Technologies
+license: --{Copyright 2012 REBOL Technologies
+Copyright 2012-2024 Ren-C Open Source Contributors
 REBOL is a trademark of REBOL Technologies
-Licensed under the Apache License, Version 2.0.
-See: http://www.apache.org/licenses/LICENSE-2.0
-}
+
+Licensed under the Lesser GPL, Version 3.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+https://www.gnu.org/licenses/lgpl-3.0.html
+}--
 
 catalog: make object! [
     ;

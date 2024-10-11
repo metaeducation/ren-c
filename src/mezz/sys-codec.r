@@ -25,10 +25,10 @@ REBOL [
 ;
 /register-codec*: func [
     return: [object!]
-    name [word!]
-        {Descriptive name of the codec.}
-    suffixes [file! block!]
-        {File extension or block of file extensions the codec processes}
+    name "Descriptive name of the codec"
+        [word!]
+    suffixes "File extension or block of file extensions the codec processes"
+        [file! block!]
     identify? [~null~ <unrun> frame!]
     decode [~null~ <unrun> frame!]
     encode [~null~ <unrun> frame!]

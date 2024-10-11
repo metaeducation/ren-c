@@ -72,7 +72,7 @@ typedef RebolValue Value;
 // (good place to set a breakpoint).
 //
 INLINE Value* rebMbedtlsError(int mbedtls_ret) {
-    Value* result = rebValue("make error! {mbedTLS error}");  // break here
+    Value* result = rebValue("make error! -{mbedTLS error}-");  // break here
     UNUSED(mbedtls_ret);  // corrupts mbedtls_ret in release build
     return result;
 }
@@ -138,7 +138,7 @@ int get_random(void *p_rng, unsigned char* output, size_t output_len)
         return 0;  // success
   #endif
 
-  rebJumps ("fail {Random number generation did not succeed}");
+  rebJumps ("fail -{Random number generation did not succeed}-");
 }
 
 
@@ -268,7 +268,7 @@ DECLARE_NATIVE(checksum)
 
     if (0 == strcmp(method_utf8, "CRC24")) {  // prefer CRC32 (sunk cost) [2]
         error = rebValue("make error! [",
-            "{CRC24 removed: speak up if CRC32 and ADLER32 won't suffice}",
+            "-{CRC24 removed: speak up if CRC32 and ADLER32 won't suffice}-",
         "]");
     }
     if (0 == strcmp(method_utf8, "CRC32")) {  // internals need for gzip [3]
@@ -284,7 +284,7 @@ DECLARE_NATIVE(checksum)
         result = rebValue("enbin [le + 2]", rebI(ipc));
     }
     else
-        error = rebValue("make error! [{Unknown CHECKSUM method:} method]");
+        error = rebValue("make error! [-{Unknown CHECKSUM method:}- method]");
 
     goto return_result_or_fail;
 
@@ -385,7 +385,7 @@ static Value* rebBinaryFromMpi(const mbedtls_mpi* X)
     int result = mbedtls_mpi_write_binary(X, buf, size);
 
     if (result != 0)
-        rebJumps ("fail {Fatal MPI decode error}");  // only from bugs (?)
+        rebJumps ("fail -{Fatal MPI decode error}-");  // only from bugs (?)
 
     return rebRepossess(buf, size);
 }
@@ -416,7 +416,7 @@ void Get_Padding_And_Hash_From_Spec(
             "pkcs1-v21", rebI(MBEDTLS_RSA_PKCS_V21),
         "]",
         "select padding-list first", padding_spec, "else [fail [",
-            "{First element of padding spec must be one of} mold padding-list",
+            "-{First element of padding spec must be one of}- @padding-list",
         "]]"
     );
 
@@ -427,7 +427,7 @@ void Get_Padding_And_Hash_From_Spec(
         //
         if (*padding == MBEDTLS_RSA_PKCS_V21)
             rebJumps (
-                "fail {pkcs1-v21 padding scheme needs hash to be specified}"
+                "fail -{pkcs1-v21 padding scheme needs hash to be specified}-"
             );
 
         *hash = MBEDTLS_MD_NONE;
@@ -445,12 +445,12 @@ void Get_Padding_And_Hash_From_Spec(
             "#ripemd160", rebI(MBEDTLS_MD_RIPEMD160),
         "]",
         "select hash-list second", padding_spec, "else [fail [",
-            "{Second element of padding spec must be one of} mold hash-list",
+            "-{Second element of padding spec must be one of}- @hash-list",
         "]]"
     ));
 
     rebElide("if 2 != length of", padding_spec, "[",
-        "fail {Padding spec must be pad method plus optional hash}"
+        "fail -{Padding spec must be pad method plus optional hash}-"
     "]");
 }
 
@@ -484,11 +484,11 @@ DECLARE_NATIVE(rsa_generate_keypair)
     bool insecure = rebDid("insecure");
     if (not insecure and num_key_bits < 1024)
         return rebDelegate(
-            "fail {RSA key must be >= 1024 bits in size unless /INSECURE}"
+            "fail -{RSA key must be >= 1024 bits in size unless :INSECURE}-"
         );
     if (num_key_bits > MBEDTLS_MPI_MAX_BITS)
         return rebDelegate(
-            "fail {RSA key bits exceeds MBEDTLS_MPI_MAX_BITS}"
+            "fail -{RSA key bits exceeds MBEDTLS_MPI_MAX_BITS}-"
         );
 
     Value* error = nullptr;
@@ -626,7 +626,7 @@ DECLARE_NATIVE(rsa_encrypt)
 
     Value* padding_spec = rebValue(
         "match block! public-key.padding else [",
-            "fail {RSA key objects must specify at least padding: [raw]}",
+            "fail -{RSA key objects must specify at least padding: [raw]}-",
         "]"
     );
 
@@ -642,7 +642,7 @@ DECLARE_NATIVE(rsa_encrypt)
 
     if (not n or not e)
         return rebDelegate(
-            "fail {RSA requires N and E components of key object}"
+            "fail -{RSA requires N and E components of key object}-"
         );
 
     struct mbedtls_rsa_context ctx;
@@ -693,9 +693,9 @@ DECLARE_NATIVE(rsa_encrypt)
 
     if (padding == MBEDTLS_RSA_RAW_HACK) {
         if (plaintext_size != key_size) {
-            error = rebValue(
-                "[raw] isn't padded, requires plaintext size to equal key size"
-            );
+            error = rebValue("make error! ["
+                "-{[raw] not padded,  plaintext size must equal key size}-"
+            "]");
             goto cleanup;
         }
 
@@ -763,7 +763,7 @@ DECLARE_NATIVE(rsa_decrypt)
 
     Value* padding_spec = rebValue(
         "match block! private-key.padding else [",
-            "fail {RSA key objects need at least padding: [raw]}"
+            "fail -{RSA key objects need at least padding: [raw]}-"
         "]"
     );
 
@@ -790,18 +790,18 @@ DECLARE_NATIVE(rsa_decrypt)
     else if (not p and not q) {
         if (not n or not e or not d)
             return rebDelegate(
-                "fail {N, E, and D needed to decrypt if P and Q are missing}"
+                "fail -{N, E, and D needed to decrypt if P and Q are missing}-"
             );
     }
     else if (not d and not n) {
         if (not e or not p or not q)
             return rebDelegate(
-                "fail {E, P, and Q needed to decrypt if D or N are missing}"
+                "fail -{E, P, and Q needed to decrypt if D or N are missing}-"
             );
     }
     else
         return rebDelegate(
-            "fail {Missing field combination in private key not allowed}"
+            "fail -{Missing field combination in private key not allowed}-"
         );
 
     Value* dp = rebValue("match binary! private-key.dp");
@@ -818,7 +818,7 @@ DECLARE_NATIVE(rsa_decrypt)
     }
     else
         return rebDelegate(
-            "fail {All of DP, DQ, and QINV fields must be given, or none}"
+            "fail -{All of DP, DQ, and QINV fields must be given, or none}-"
         );
 
   //=//// BEGIN MBEDTLS CODE REQUIRING CLEANUP /////////////////////////////=//
@@ -1047,8 +1047,8 @@ DECLARE_NATIVE(dh_generate_keypair)
     //
     if (mbedtls_mpi_cmp_mpi(&G, &P) >= 0) {
         error = rebValue("make error! ["
-            "{Don't use base >= modulus in Diffie-Hellman.}",
-            "{e.g. `2 mod 7` is the same as `9 mod 7` or `16 mod 7`}"
+            "-{Don't use base >= modulus in Diffie-Hellman.}-",
+            "-{e.g. `2 mod 7` is the same as `9 mod 7` or `16 mod 7`}-"
         "]");
         goto cleanup;
     }
@@ -1101,7 +1101,7 @@ DECLARE_NATIVE(dh_generate_keypair)
     if (ret == MBEDTLS_ERR_DHM_BAD_INPUT_DATA) {
         if (mbedtls_mpi_cmp_int(&P, 0) == 0) {
             error = rebValue(
-                "make error! {Cannot use 0 as modulus for Diffie-Hellman}"
+                "make error! -{Cannot use 0 as modulus for Diffie-Hellman}-"
             );
             goto cleanup;
         }
@@ -1111,10 +1111,10 @@ DECLARE_NATIVE(dh_generate_keypair)
 
         error = rebValue(
             "make error! [",
-                "{Suspiciously poor base and modulus usage was detected.}",
-                "{It's unwise to use arbitrary primes vs. constructed ones:}",
+                "-{Suspiciously poor base and modulus usage was detected.}-",
+                "-{Unwise to use arbitrary primes vs. constructed ones:}-",
                 "{https://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf}",
-                "{/INSECURE can override (for educational purposes, only!)}",
+                "-{:INSECURE can override (for educational purposes, only!)}-",
             "]"
         );
         goto cleanup;
@@ -1122,7 +1122,7 @@ DECLARE_NATIVE(dh_generate_keypair)
     else if (ret == MBEDTLS_ERR_DHM_MAKE_PUBLIC_FAILED) {
         if (mbedtls_mpi_cmp_int(&P, 5) < 0) {
             error = rebValue(
-                "make error! {Modulus cannot be less than 5 for Diffie-Hellman}"
+                "make error! -{Modulus can't be < 5 for Diffie-Hellman}-"
             );
             goto cleanup;
         }
@@ -1143,8 +1143,8 @@ DECLARE_NATIVE(dh_generate_keypair)
         if (test == MBEDTLS_ERR_MPI_NOT_ACCEPTABLE) {
             error = rebValue(
                 "make error! [",
-                    "{Couldn't use base and modulus to generate keys.}",
-                    "{Probabilistic test suggests modulus likely not prime?}"
+                    "-{Couldn't use base and modulus to generate keys.}-",
+                    "-{Probabilistic test hints modulus likely not prime?}-"
                 "]"
             );
             goto cleanup;
@@ -1152,8 +1152,8 @@ DECLARE_NATIVE(dh_generate_keypair)
 
         error = rebValue(
             "make error! [",
-                "{Couldn't use base and modulus to generate keys,}",
-                "{even though modulus does appear to be prime...}",
+                "-{Couldn't use base and modulus to generate keys,}-",
+                "-{even though modulus does appear to be prime...}-",
             "]"
         );
         goto cleanup;
@@ -1315,10 +1315,10 @@ DECLARE_NATIVE(dh_compute_secret)
     if (ret == MBEDTLS_ERR_DHM_BAD_INPUT_DATA) {
         error = rebValue(
             "make error! [",
-                "{Suspiciously poor base and modulus usage was detected.}",
-                "{It's unwise to use random primes vs. constructed ones.}",
-                "{https://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf}",
-                "{If keys originated from Rebol, please report this!}",
+                "-{Suspiciously poor base and modulus usage was detected.}-",
+                "-{Unwise to use random primes vs. constructed ones.}-",
+                "-{https://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf}-",
+                "-{If keys originated from Rebol, please report this!}-",
             "]"
         );
         goto cleanup;
@@ -1381,9 +1381,9 @@ DECLARE_NATIVE(aes_key)
 
     int key_bitlen = key_size * 8;
     if (key_bitlen != 128 and key_bitlen != 192 and key_bitlen != 256) {
-        return rebDelegate(
-            "fail [{AES bits must be [128 192 256], not}", rebI(key_bitlen), "]"
-        );
+        return rebDelegate("fail [",
+            "-{AES bits must be [128 192 256], not}-", rebI(key_bitlen),
+        "]");
     }
 
     const mbedtls_cipher_info_t* info = mbedtls_cipher_info_from_values(
@@ -1424,7 +1424,7 @@ DECLARE_NATIVE(aes_key)
 
         if (iv_size != blocksize) {
             error = rebValue("make error! [",
-                "Initialization vector block size not", rebI(blocksize),
+                "-{Initialization vector block size not}-", rebI(blocksize),
             "]");
             goto cleanup;
         }
@@ -1476,7 +1476,7 @@ DECLARE_NATIVE(aes_stream)
 
     if (rebExtractHandleCleaner("ctx") != cleanup_aes_ctx)
         return rebDelegate(
-            "fail [{Not a AES context HANDLE!:} ctx]"
+            "fail [-{Not a AES context HANDLE!:}- @ctx]"
         );
 
     struct mbedtls_cipher_context_t *ctx
@@ -1550,7 +1550,7 @@ static const struct mbedtls_ecp_curve_info* Ecp_Curve_Info_From_Name(
     if (info)
         return info;
 
-    rebJumps ("fail [{Unknown ECC curve specified:}", rebT(name), "]");
+    rebJumps ("fail [-{Unknown ECC curve specified:}-", rebT(name), "]");
 }
 
 
@@ -1679,8 +1679,8 @@ DECLARE_NATIVE(ecdh_shared_secret)
             "append (copy public-key.x) public-key.y"
         "]",
         "if", rebI(num_bytes * 2), "!= length of bin [",
-            "fail [{Public BINARY! must be}", rebI(num_bytes * 2),
-                "{bytes total for} group]",
+            "fail [-{Public BINARY! must be}-", rebI(num_bytes * 2),
+                "-{bytes total for}- group]",
         "]",
         "bin"
     ")");
@@ -1722,8 +1722,8 @@ DECLARE_NATIVE(ecdh_shared_secret)
 
     rebElide(
         "if", rebI(num_bytes), "!= length of private-key [",
-            "fail [{Size of PRIVATE key must be}",
-                rebI(num_bytes), "{for} group]"
+            "fail [-{Size of PRIVATE key must be}-",
+                rebI(num_bytes), "-{for}- group]"
         "]"
     );
 
@@ -1807,7 +1807,7 @@ DECLARE_NATIVE(startup_p)
     // generate random data and cannot?
     //
     return rebDelegate(
-        "fail {Crypto STARTUP* couldn't initialize random number generation}"
+        "fail -{Crypto STARTUP* couldn't initialize random number generation}-"
     );
 }
 

@@ -237,7 +237,7 @@ Bounce Call_Core(Level* level_) {
             // the facility.
             //
             cmd = rebSpellWide(
-                "unspaced [{cmd.exe /C \"}", ARG(command), "{\"}]"
+                "unspaced [--{cmd.exe /C \"}--", ARG(command), "--{\"}--]"
             );
         }
         else {

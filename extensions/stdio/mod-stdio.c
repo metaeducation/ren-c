@@ -143,7 +143,7 @@ DECLARE_NATIVE(write_stdout)
 static Value* Make_Escape_Error(const char* name) {
     return rebValue("make error! [",
         "id: 'escape",
-        "message: spaced [", rebT(name), "{cancelled by user (e.g. ESCAPE)}]"
+        "message: spaced [", rebT(name), "-{cancelled by user (e.g. ESCAPE)}-]"
     "]");
 }
 
@@ -151,7 +151,7 @@ static Value* Make_Escape_Error(const char* name) {
 static Value* Make_Non_Halt_Error(const char* name) {
     return rebValue("make error! [",
         "id: 'escape",
-        "message: spaced [", rebT(name), "{interrupted by non-HALT signal}]"
+        "message: spaced [", rebT(name), "-{interrupted by non-HALT signal}-]"
     "]");
 }
 
@@ -271,7 +271,7 @@ DECLARE_NATIVE(read_line)
 
     if (hide)  // an interesting feature, but a very low-priority one
         return rebDelegate("fail [",
-            "{READ-LINE/HIDE not yet implemented:}",
+            "-{READ-LINE/HIDE not yet implemented:}-",
             "https://github.com/rebol/rebol-issues/issues/476",
         "]");
 
@@ -316,7 +316,7 @@ DECLARE_NATIVE(read_line)
             if (raw)
                 break;  // caller should tell by no newline
             return rebDelegate("fail [",
-                "{READ-LINE without /RAW hit end of file with no newline}",
+                "-{READ-LINE without :RAW hit end of file with no newline}-",
             "]");
         }
 
@@ -338,7 +338,7 @@ DECLARE_NATIVE(read_line)
                 }
                 if (eof)
                     return rebDelegate(
-                        "fail {Incomplete UTF-8 sequence from stdin at EOF}"
+                        "fail -{Incomplete UTF-8 sequence from stdin at EOF}-"
                     );
                 ++size;
                 --trail;
@@ -346,7 +346,7 @@ DECLARE_NATIVE(read_line)
 
             if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
                 return rebDelegate(
-                    "fail {Invalid UTF-8 Sequence found in READ-LINE}"
+                    "fail -{Invalid UTF-8 Sequence found in READ-LINE}-"
                 );
         }
 
@@ -437,7 +437,7 @@ DECLARE_NATIVE(read_char)
 
         if (e == nullptr) {  // can smart terminal ever "disconnect" (?)
             return rebDelegate(
-                "fail {Unexpected EOF reached when using Smart Terminal API}"
+                "fail -{Unexpected EOF reached when using Smart Terminal API}-"
             );
         }
 
@@ -446,10 +446,10 @@ DECLARE_NATIVE(read_char)
                 return rebDelegate("halt");
 
             if (rebUnboxLogic(rebQ(e), "= '~timeout~"))
-                return rebDelegate("raise {Timeout in READ-CHAR}");
+                return rebDelegate("raise -{Timeout in READ-CHAR}-");
 
             return rebDelegate(  // Note: no other signals at time of writing
-                "fail {Unknown QUASI? signal in Try_Get_One_Console_Event()}"
+                "fail -{Unknown QUASI? signal in Try_Get_One_Console_Event()}-"
             );
         }
 
@@ -479,7 +479,7 @@ DECLARE_NATIVE(read_char)
         }
 
         return rebDelegate(
-            "fail {Unexpected type returned by Try_Get_One_Console_Event()}"
+            "fail -{Unexpected type returned by Try_Get_One_Console_Event()}-"
         );
     }
     else  // we have a smart console but aren't using it (redirected to file?)
@@ -517,7 +517,7 @@ DECLARE_NATIVE(read_char)
             }
             if (eof)
                 return rebDelegate(
-                    "fail {Incomplete UTF-8 sequence from stdin at EOF}"
+                    "fail -{Incomplete UTF-8 sequence from stdin at EOF}-"
                 );
 
             ++size;
@@ -526,7 +526,7 @@ DECLARE_NATIVE(read_char)
 
         if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
             return rebDelegate(
-                "fail {Invalid UTF-8 Sequence found in READ-CHAR}"
+                "fail -{Invalid UTF-8 Sequence found in READ-CHAR}-"
             );
     }
 

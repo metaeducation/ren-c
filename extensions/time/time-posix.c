@@ -124,7 +124,7 @@ Value* Get_Current_Datetime_Value(void)
     struct timeval tv;
     struct timezone * const tz_ptr = NULL; // obsolete
     if (gettimeofday(&tv, tz_ptr) != 0)
-        rebJumps("fail {gettimeofday() returned 0}");
+        rebJumps("fail -{gettimeofday() returned 0}-");
 
     // tv.tv_sec is the time in seconds 1 January 1970, 00:00:00 UTC
     // (epoch-1970).  It does not account for the time zone.  In POSIX, these

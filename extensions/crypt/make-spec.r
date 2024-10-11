@@ -13,7 +13,7 @@ includes: reduce [
     %prep/extensions/crypt/  ; for %tmp-extensions-crypt-init.inc
 ]
 definitions: [
-    {MBEDTLS_CONFIG_FILE="mbedtls-rebol-config.h"}
+    --{MBEDTLS_CONFIG_FILE="mbedtls-rebol-config.h"}--
 ]
 depends: [
     ; The oid.c dependency in RSA is contingent on #define MBEDTLS_PKCS1_V15

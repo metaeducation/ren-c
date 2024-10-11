@@ -38,8 +38,8 @@ REBOL [
 
 debug-console-skin: make console! [
     greeting:
-{!! Entering *EXPERIMENTAL* Debug Console that only barely works for a demo.
-Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
+--{!! Entering *EXPERIMENTAL* Debug Console that only barely works for a demo.
+Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
 
     base-frame: null
     focus-frame: null
@@ -125,7 +125,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
 
     if get-frame [
         any [limit brief] then [
-            fail "Can't use /LIMIT or /BRIEF unless getting a list of frames"
+            fail "Can't use :LIMIT or :BRIEF unless getting a list of frames"
         ]
 
         ; See notes on handling of breakpoint below for why 0 is accepted.
@@ -220,7 +220,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
 
                 if not brief [
                     ;
-                    ; In the non-/ONLY backtrace, the pairing of the ellipsis
+                    ; In the non-:ONLY backtrace, the pairing of the ellipsis
                     ; with a plus is used in order to keep the "record size"
                     ; of the list at an even 2.  Asterisk might have been
                     ; used but that is taken for "pending frames".
@@ -244,7 +244,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
             return f
         ]
 
-        ; !!! Should /BRIEF omit pending frames?  Should it have a less
+        ; !!! Should :BRIEF omit pending frames?  Should it have a less
         ; "loaded" name for the refinement?
         ;
         if brief [
@@ -345,7 +345,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
         fail "Since switching to usermode, for now DEBUG only takes INTEGER!"
     ]
 
-    frame: backtrace* debug-console-skin/base-frame value else [
+    frame: backtrace* debug-console-skin.base-frame value else [
         fail ["FRAME! does not exist for" value]
     ]
 

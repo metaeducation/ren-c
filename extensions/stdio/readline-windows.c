@@ -257,7 +257,7 @@ STD_TERM *Init_Terminal(void)
 
     t->original_mode = mode;
 
-    t->buffer = rebValue("{}");
+    t->buffer = rebValue("-{}-");
     rebUnmanage(t->buffer);
 
     t->in = t->in_tail = t->buf;  // start read() byte buffer out at empty
@@ -286,7 +286,7 @@ STD_TERM *Init_Terminal(void)
     // file across sessions.  It makes more sense for the logic doing that
     // to be doing it in Rebol.  For starters, we just make it fresh.
     //
-    Line_History = rebValue("[{}]");  // current line is empty string
+    Line_History = rebValue("[-{}-]");  // current line is empty string
     rebUnmanage(Line_History);  // allow Line_History to live indefinitely
 
     Term_Initialized = true;
@@ -462,7 +462,7 @@ static bool Read_Input_Records_Interrupted(STD_TERM *t)
 void Write_Char(uint32_t c, int n)
 {
     if (c > 0xFFFF)
-        rebJumps ("fail {Not yet working with codepoints >0xFFFF on Windows");
+        rebJumps ("fail -{Not yet supporting codepoints >0xFFFF on Windows}-");
 
     WCHAR c_wide = c;
 
@@ -636,7 +636,7 @@ void Move_Cursor(STD_TERM *t, int count)
 Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 {
     if (timeout_msec != 0)
-        rebJumps ("fail {TIMEOUT not implemented in Windows Stdio}");
+        rebJumps ("fail -{TIMEOUT not implemented in Windows Stdio}-");
 
     Value* e = nullptr;  // *unbuffered* event to return
     Value* e_buffered = nullptr;  // buffered event
@@ -891,7 +891,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
         if (not e and (wchar >= 1 and wchar <= 26)) {  // Ctrl-A, Ctrl-B, etc.
             e = rebValue(
                 "as word! unspaced [",
-                    "{ctrl-}", rebR(rebChar(wchar - 1 + 'a')),
+                    "--{ctrl-}--", rebR(rebChar(wchar - 1 + 'a')),
                 "]"
             );
         }
@@ -1046,7 +1046,7 @@ void Term_Insert(STD_TERM *t, const Value* v) {
         //
         Value* v_no_tab = rebValue(
             "if find", v, "tab [",
-                "replace copy", v, "tab", "{    }",
+                "replace copy", v, "tab", "--{    }--",
             "] else [null]"
         );
 

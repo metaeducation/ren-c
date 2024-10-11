@@ -26,7 +26,7 @@ mkdir %libuuid
 add-config-h: [
     to "/*" thru "*/"
     thru "^/"
-    insert {^/#include "config.h"^/}
+    insert -{^/#include "config.h"^/}-
 ]
 space: charset " ^-^/^M"
 
@@ -37,7 +37,7 @@ comment-out-includes: [
         [
             some space [
                 exclude-headers
-            ] (insert pos {//} pos: skip pos 2)
+            ] (insert pos -{//}- pos: skip pos 2)
             | one
         ] (pos: skip pos 8)
     ] seek pos
@@ -48,12 +48,12 @@ comment-out-includes: [
     text [text!]
 ][
     exclude-headers: [
-        {"c.h"}
+        -{"c.h"}-
     ]
 
     parse3 text [
         add-config-h
-        insert {^/#include <errno.h>^/}
+        insert -{^/#include <errno.h>^/}-
 
         opt some [
             comment-out-includes
@@ -61,12 +61,12 @@ comment-out-includes: [
             ; randutils.c:137:12: error:
             ; invalid conversion from ‘void*’ to ‘unsigned char*’
             ;
-            | change {cp = buf} {cp = (unsigned char*)buf}
+            | change -{cp = buf}- -{cp = (unsigned char*)buf}-
 
             ; Fix "error: invalid suffix on literal;
             ; C++11 requires a space between literal and identifier"
             ;
-            | change {"PRIu64"} {" PRIu64 "}
+            | change -{"PRIu64"}- -{" PRIu64 "}-
 
             | one
         ]
@@ -86,11 +86,11 @@ comment-out-includes: [
     space
 ][
     exclude-headers: [
-        {"all-io.h"}
-        | {"c.h"}
-        | {"strutils.h"}
-        | {"md5.h"}
-        | {"sha1.h"}
+        -{"all-io.h"}-
+        | -{"c.h"}-
+        | -{"strutils.h"}-
+        | -{"md5.h"}-
+        | -{"sha1.h"}-
     ]
 
     let definition
@@ -105,32 +105,36 @@ comment-out-includes: [
             comment-out-includes
 
             ; avoid "unused node_id" warning
-            | {get_node_id} thru #"^{" thru "^/" insert {^/^-(void)node_id;^/}
+            | "get_node_id" thru #"^{" thru "^/" insert "^/^-(void)node_id;^/"
 
             ; comment out uuid_generate_md5, we don't need this
             | change [
                 definition: across [
-                    {void uuid_generate_md5(} thru "^}"
+                    -{void uuid_generate_md5(}- thru "^}"
                   ]
-                  (target: unspaced [{#if 0^/} to text! definition {^/#endif^/}])
+                  (target: unspaced [
+                      -{#if 0^/}- to text! definition -{^/#endif^/}-
+                  ])
                 ]
                 target
 
             ; comment out uuid_generate_sha1, we don't need this
             | change [
                 definition: across [
-                    {void uuid_generate_sha1(} thru "^}"
+                    -{void uuid_generate_sha1(}- thru "^}"
                   ]
-                  (target: unspaced [{#if 0^/} to text! definition {^/#endif^/}])
+                  (target: unspaced [
+                      -{#if 0^/}- to text! definition -{^/#endif^/}-
+                  ])
                 ]
                 target
 
             ; comment out unused variable variant_bits
             | change [
                 unused: across [
-                    {static unsigned char variant_bits[]}
+                    "static unsigned char variant_bits[]"
                   ]
-                  (target: unspaced [{//} _ to text! unused])
+                  (target: unspaced [-{//}- _ to text! unused])
                 ] target
 
             | one
@@ -166,7 +170,7 @@ for-each [file fix] files [
 
     if not blank? fix [data: run fix data]  ; correct compiler warnings
 
-    replace data tab {    }  ; spaces not tabs
+    replace data tab --{    }--  ; spaces not tabs
 
     write target data
 ]

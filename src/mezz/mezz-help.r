@@ -86,7 +86,7 @@ REBOL [
 /print-general-help: func [
     return: [~]
 ][
-    print trim:auto copy {
+    print trim:auto copy --{
         You are in a Rebol terminal.  QUIT or Ctrl-C should let you exit.
 
         Here are some basic commands:
@@ -113,7 +113,7 @@ REBOL [
             why - explain more about last error (via web)
 
         Try HELP HELP for assistance on use of the help facility.
-    }
+    }--
     return ~
 ]
 
@@ -269,7 +269,7 @@ REBOL [
 
 
 /help: func [
-    {HELP is a dialected function.  If you want non-dialected help on any
+    --{HELP is a dialected function.  If you want non-dialected help on any
     particular value, then pass that value in a GROUP! to get some very
     literal information back:
 
@@ -312,7 +312,7 @@ REBOL [
     To see all words of a specific datatype:
 
         help object!
-        help type-block!}
+        help type-block!}--
 
     return: [~]
     @topic "WORD! to explain, or other HELP target (if no args, general help)"
@@ -412,7 +412,7 @@ REBOL [
                     print line
                 ]
             ] else [
-                print [no instances of {is a datatype}]
+                print ["no instances of" mold topic]
             ]
         ]
     ] else [

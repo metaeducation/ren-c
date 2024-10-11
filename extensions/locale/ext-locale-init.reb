@@ -296,7 +296,7 @@ if 'Windows <> first system.platform [
     "ch" "Chamorro"
     "ce" "Chechen"
     "zh" "Chinese"
-    "cu" {Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic}
+    "cu" -{Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic}-
     "cv" "Chuvash"
     "kw" "Cornish"
     "co" "Corsican"
@@ -339,7 +339,7 @@ if 'Windows <> first system.platform [
     "ii" "Sichuan Yi; Nuosu"
     "iu" "Inuktitut"
     "ie" "Interlingue; Occidental"
-    "ia" {Interlingua (International Auxiliary Language Association)}
+    "ia" -{Interlingua (International Auxiliary Language Association)}-
     "id" "Indonesian"
     "ik" "Inupiaq"
     "it" "Italian"

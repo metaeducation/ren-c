@@ -123,7 +123,7 @@ any-value?!: any-value!
             |
             "}" (if <B> = last pushed [take/last pushed])
             |
-            {"} (
+            -{"}- (
                 case [
                     <Q> = last pushed [take/last pushed]
                     empty? pushed [append pushed <Q>]

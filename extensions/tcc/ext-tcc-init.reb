@@ -44,7 +44,7 @@ REBOL [
 
     return: [~]
     compilables "Functions from MAKE-NATIVE, TEXT! strings of code, ..."
-    :settings [block!] {
+    :settings [block!] --{
         The block supports the following dialect:
             options [block! text!]
             include-path [block! file! text!]
@@ -55,7 +55,7 @@ REBOL [
             output-type ['memory 'exe 'dll 'obj 'preprocess]
             output-file [file! text!]
             debug [word!]  ; !!! currently unimplemented
-    }
+    }--
     :files "COMPILABLES represents a list of disk files (TEXT! paths)"
     :inspect "Return the C source code as text, but don't compile it"
     :nostdlib "Do not include <stdlib.h> automatically with librebol"
@@ -100,11 +100,11 @@ REBOL [
     let b: settings
     while [not tail? b] [
         var: get ((in config match word! key: b.1) else [
-            fail [{COMPILE/OPTIONS parameter} key {is not supported}]
+            fail ["COMPILE:SETTINGS parameter" key "is not supported"]
         ])
         b: next b
         if tail? b [
-            fail [{Missing argument to} key {in COMPILE}]
+            fail ["Missing argument to" key "in COMPILE"]
         ]
 
         let arg: b.1
@@ -175,27 +175,27 @@ REBOL [
 
     if not config.runtime-path [
         fail [
-            {CONFIG_TCCDIR must be set in the environment or `runtime-path`}
-            {must be provided in the /SETTINGS}
+            "CONFIG_TCCDIR must be set in the environment or RUNTIME-PATH"
+            "must be provided in the :SETTINGS"
         ]
     ]
 
     if not dir? config.runtime-path [
         print [
-            {Runtime path} config.runtime-path {doesn't end in a slash,}
-            {which violates the DIR? protocol, but as CONFIG_TCCDIR is often}
-            {documented as being used without slashes we're allowing it.}
+            "Runtime path" config.runtime-path "doesn't end in a slash,"
+            "which violates the DIR? protocol, but as CONFIG_TCCDIR is often"
+            "documented as being used without slashes we're allowing it."
         ]
         append config.runtime-path "/"
     ]
 
     if not exists? make-file [(config.runtime-path) include /] [
         fail [
-            {Runtime path} config.runtime-path {does not have an %include/}
-            {directory.  It should have files like %stddef.h and %stdarg.h}
-            {because TCC has its own definition of macros like va_arg(), that}
-            {use internal helpers like __va_start that are *not* in GNU libc}
-            {or the Microsoft C runtime.}
+            "Runtime path" config.runtime-path "does not have an %include/"
+            "directory.  It should have files like %stddef.h and %stdarg.h"
+            "because TCC has its own definition of macros like va_arg(), that"
+            "use internal helpers like __va_start that are *not* in GNU libc"
+            "or the Microsoft C runtime."
         ]
     ]
 
@@ -340,7 +340,7 @@ REBOL [
     ]
 
     if use-librebol [
-        insert compilables trim:auto mutable {
+        insert compilables trim:auto mutable --{
             /* TCC's override of <stddef.h> defines int64_t in a way that
              * might not be compatible with glibc's <stdint.h> (which at time
              * of writing defines it as a `__int64_t`.)  You might get:
@@ -350,12 +350,12 @@ REBOL [
              *
              * Since TCC's stddef.h has what rebol.h needs in it anyway, try
              * just including that.  Otherwise try getting a newer version of
-             * libtcc, a different gcc install, or just disable warnings.)
+             * libtcc, a different gcc install, or just disable warnings.
              */
             #define LIBREBOL_NO_STDINT 1
             #include <stddef.h>
             #include "rebol.h"
-        }
+        }--
 
         ; The nostdlib feature is specific to a bare-bones demo environment
         ; with only the r3 executable and the TCC-specific encap files.  The
@@ -382,7 +382,7 @@ REBOL [
             ; Needs to go before the librebol inclusion that was put at the
             ; head of the compilables above!
             ;
-            insert compilables trim:auto mutable {#define LIBREBOL_NO_STDLIB}
+            insert compilables trim:auto mutable "#define LIBREBOL_NO_STDLIB"
 
             ; TCC adds -lc (by calling `tcc_add_library_err(s1, "c");`) by
             ; default during link, unless you override it with this switch.
@@ -410,10 +410,10 @@ REBOL [
             file! []
             null?! [
                 fail [
-                    {LIBREBOL_INCLUDE_DIR currently must be set either as an}
-                    {environment variable or as LIBREBOL-PATH in /OPTIONS so}
-                    {that the TCC extension knows where to find "rebol.h"}
-                    {(e.g. in %make/prep/include)}
+                    "LIBREBOL_INCLUDE_DIR currently must be set either as an"
+                    "environment variable or as LIBREBOL-PATH in /OPTIONS so"
+                    -{that the TCC extension knows where to find "rebol.h"}-
+                    "(e.g. in %make/prep/include)"
                 ]
             ]
             fail ["Invalid LIBREBOL_INCLUDE_DIR:" config.librebol-path]
@@ -421,15 +421,15 @@ REBOL [
 
         if not dir? config.librebol-path [
             fail [
-                {LIBREBOL_INCLUDE_DIR or LIBREBOL-PATH} config.librebol-path
-                {should end in a slash to follow the DIR? protocol}
+                "LIBREBOL_INCLUDE_DIR or LIBREBOL-PATH" config.librebol-path
+                "should end in a slash to follow the DIR? protocol"
             ]
         ]
 
         if not exists? make-file [(config.librebol-path) rebol.h] [
             fail [
-                {Looked for %rebol.h in} config.librebol-path {and did not}
-                {find it.  Check your definition of LIBREBOL_INCLUDE_DIR}
+                "Looked for %rebol.h in" config.librebol-path "and did not"
+                "find it.  Check your definition of LIBREBOL_INCLUDE_DIR"
             ]
         ]
 
@@ -490,14 +490,14 @@ REBOL [
         let option-with-arg-rule: [
             opt space option: across to [space | <end>] (
                 ;
-                ; If you do something like `option {-DSTDIO_H="stdio.h"}, TCC
-                ; seems to process it like `-DSTDIO_H=stdio.h` which won't
+                ; If you do something like `option --{-DSTDIO_H="stdio.h"}--,
+                ; TCC seems to process it like `-DSTDIO_H=stdio.h` which won't
                 ; work with `#include STDIO_H`.  But if the command line had
                 ; said `-DSTDIO_H=\"stdio.h\"` we would be receiving it
                 ; after the shell processed it, so those quotes would be
                 ; unescaped here.  Add the escaping back in for TCC.
                 ;
-                replace option {"} {\"}
+                replace option -{"}- -{\"}-
 
                 keep spread compose [options (option)]
             )

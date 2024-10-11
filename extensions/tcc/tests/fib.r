@@ -15,7 +15,7 @@ REBOL [
 c-fib: make-native [
     "nth Fibonacci Number"
     n [integer!]
-]{
+] --{
     int n = rebUnboxInteger(rebArgR("n"));  // optimization over just "n"
 
     if (n < 0) { return rebInteger(-1); }
@@ -30,7 +30,7 @@ c-fib: make-native [
         --n;
     }
     return rebInteger(i1);
-}
+}--
 
 /rebol-fib: func [
     n [integer!]
@@ -55,7 +55,7 @@ compilables: [
     ; embedded in them (it's a tricky case that trips up mbedTLS if
     ; you don't support it correctly).
     ;
-    {#include STDIO_INCLUDE}
+    "#include STDIO_INCLUDE"
 
     c-fib
 ]
@@ -78,7 +78,7 @@ opts: [
     ; therefore add these quotes in for #defines, since the shell will
     ; strip out any backslashes provided.
     ;
-    options {-DSTDIO_INCLUDE=\"stdio.h\"}
+    options --{-DSTDIO_INCLUDE=\"stdio.h\"}--
 ]
 
 compile/inspect/settings compilables opts  ; print out for verbose info

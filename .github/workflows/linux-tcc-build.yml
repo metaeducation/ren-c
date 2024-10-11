@@ -182,7 +182,7 @@ jobs:
   #====# BUILD STEPS #========================================================#
 
 
-    # See README: {Braces} For %make.r String Parameters
+    # See README: -{Braces}- For %make.r String Parameters
     #
     - name: Generate Makefile for a TCC-Built R3 Including the TCC Extension
       run: |

@@ -88,7 +88,7 @@ Rebol [
 ]
 
 
-warning: {
+warning: --{
     !!! IMPORTANT WARNING !!!
 
     Ren-C is an experimental project whose primary focus is on the WebAssembly
@@ -105,7 +105,7 @@ warning: {
     sense for them.  Using these binaries instead is completely unsupported,
     and any complaints about them (size, speed, included features) will get
     you pointed to the sources to do your own builds.
-}
+}--
 
 
 ; Cloudfront does caching, and as such we don't want to use it to fetch the

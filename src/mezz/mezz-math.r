@@ -88,13 +88,13 @@ pi: 3.14159265358979323846
 ]
 
 minimum-of: redescribe [
-    {Finds the smallest value in a series}
+    "Finds the smallest value in a series"
 ](
     specialize extreme-of/ [comparator: lesser?/]
 )
 
 maximum-of: redescribe [
-    {Finds the largest value in a series}
+    "Finds the largest value in a series"
 ](
     specialize extreme-of/ [comparator: greater?/]
 )

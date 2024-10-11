@@ -223,7 +223,7 @@ REBOL [
         all [
             not relax
             find [%. %..] filename
-            fail {. and .. are invalid filenames}
+            fail ". and .. are invalid filenames"
         ]
     ]
     return pack [directory filename]
