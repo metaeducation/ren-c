@@ -680,8 +680,8 @@ degrade: func [value [any-value!]] [
 
 ; Simulate quasiform evaluation
 ;
-~true~: #[true]
-~false~: #[false]
+~true~: true
+~false~: false
 ~null~: null
 ~void~: void
 

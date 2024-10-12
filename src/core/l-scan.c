@@ -2447,12 +2447,6 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         if (error)
             return RAISE(unwrap error);
 
-        // !!! Should the scanner be doing binding at all, and if so why
-        // just Lib_Context?  Not binding would break functions entirely,
-        // but they can't round-trip anyway.  See #2262.
-        //
-        Bind_Values_All_Deep(Array_Head(array), Lib_Context);
-
         if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
             DECLARE_VALUE (temp);
             Init_Block(temp, array);
