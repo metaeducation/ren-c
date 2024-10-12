@@ -193,7 +193,7 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
         Manage_Flex(bin);
         req->common.data = Binary_Head(bin);
         len = Flex_Len(bin);
-        req->modes |= RFM_TEXT; // do LF => CR LF, e.g. on Windows
+        req->modes &= ~RFM_TEXT; // DO NOT do LF => CR LF, e.g. on Windows
     }
     else {
         req->common.data = Cell_Blob_At(data);
