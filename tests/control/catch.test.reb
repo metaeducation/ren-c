@@ -72,7 +72,7 @@
 )
 ; CATCH/QUIT
 (
-    catch/quit [quit]
+    catch/quit [quit 0]
     true
 )
 [#851

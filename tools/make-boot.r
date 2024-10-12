@@ -43,9 +43,10 @@ if args/GIT_COMMIT = "unknown" [
 ] else [
     git-commit: args/GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
-        print ["GIT_COMMIT should be a full hash, e.g." first-rebol-commit]
-        print ["Invalid hash was:" git-commit]
-        quit
+        fail [
+            "GIT_COMMIT should be a full hash, e.g." first-rebol-commit newline
+            "Invalid hash was:" git-commit
+        ]
     ]
 ]
 

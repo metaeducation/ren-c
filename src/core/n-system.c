@@ -54,10 +54,9 @@ DECLARE_NATIVE(halt)
 //
 //  {Stop evaluating and return control to command shell or calling script.}
 //
-//      /with
-//          {Yield a result (mapped to an integer if given to shell)}
-//      value [any-value!]
-//          "See: http://en.wikipedia.org/wiki/Exit_status"
+//      atom "See: http://en.wikipedia.org/wiki/Exit_status"
+//          [<end> any-value!]
+//      /value "Allow non-integers for yielding values to calling scripts"
 //  ]
 //
 DECLARE_NATIVE(quit)
@@ -68,19 +67,21 @@ DECLARE_NATIVE(quit)
 {
     INCLUDE_PARAMS_OF_QUIT;
 
+    Value* atom = ARG(atom);
+
+    if (REF(value)) {
+        // don't convert end to integer 0 for success synonym
+    }
+    else {
+        if (Is_Endish_Nulled(atom))
+            Init_Integer(atom, 1);
+        else if (not Is_Integer(atom))
+            fail ("QUIT must receive INTEGER! unless /VALUE used");
+    }
+
     Copy_Cell(OUT, NAT_VALUE(quit));
 
-    if (REF(with))
-        CONVERT_NAME_TO_THROWN(OUT, ARG(value));
-    else {
-        // Chosen to do it this way because returning to a calling script it
-        // will be no value by default, for parity with BREAK and EXIT without
-        // a /WITH.  Long view would have RETURN work this way too: CC#2241
-
-        // void translated to 0 if it gets caught for the shell, see #2241
-
-        CONVERT_NAME_TO_THROWN(OUT, NULLED_CELL);
-    }
+    CONVERT_NAME_TO_THROWN(OUT, ARG(atom));
 
     return BOUNCE_THROWN;
 }

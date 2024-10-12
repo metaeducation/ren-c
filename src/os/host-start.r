@@ -263,7 +263,7 @@ host-start: function [
                 emit [fail {^-- Shouldn't get here, due to HALT}]
             ]
             <die> [
-                emit [quit/with 1] ;-- catch-all bash code for general errors
+                emit [quit 1] ;-- catch-all bash code for general errors
                 emit [fail {^-- Shouldn't get here, due to QUIT}]
             ]
             <bad> [
@@ -540,7 +540,7 @@ host-start: function [
                 o/quiet: true ;-- don't print banner, just run code string
                 quit-when-done: default [true] ;-- override blank, not false
 
-                emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
+                emit {Use /ONLY so that QUIT/VALUE quits, vs. return DO value}
                 emit [do/only ((<*> param-or-die "DO"))]
             )
         |
@@ -720,14 +720,14 @@ host-start: function [
     ;     r3 --do "do %script1.reb" --do "do %script2.reb"
     ;
     if file? o/script [
-        emit {Use DO/ONLY so QUIT/WITH exits vs. being DO's return value}
+        emit {Use DO/ONLY so QUIT exits vs. being DO's return value}
         emit [do/only/args ((<*> o/script)) ((<*> script-args))]
     ]
 
     host-start: 'done
 
     if quit-when-done [
-        emit [quit/with 0]
+        emit [quit 0]
         return <unreachable>
     ]
 

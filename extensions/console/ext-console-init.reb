@@ -227,7 +227,7 @@ console!: make object! [
     shortcuts: make object! compose/deep [
         d: [dump]
         h: [help]
-        q: [quit]
+        q: [quit 0]
         dt: [delta-time]
         dp: [delta-profile]
 
@@ -422,7 +422,7 @@ ext-console-impl: function [
                 emit [fail {^-- Shouldn't get here, due to HALT}]
             ]
             <die> [
-                emit [quit/with 1] ;-- catch-all bash code for general errors
+                emit [quit 1] ;-- catch-all bash code for general errors
                 emit [fail {^-- Shouldn't get here, due to QUIT}]
             ]
             <bad> [
@@ -497,7 +497,7 @@ ext-console-impl: function [
     all [
         error? :result
         result/id = 'no-catch
-        :result/arg2 = :QUIT ;; name
+        :result/arg2 = :quit ;; name
     ] then [
         return switch type of :result/arg1 [
             null [0] ;-- plain QUIT, no /WITH, call that success
@@ -517,7 +517,7 @@ ext-console-impl: function [
     all [
         error? :result
         result/id = 'no-catch
-        :result/arg2 = :HALT ;; name
+        :result/arg2 = :halt ;; name
     ] then [
         if find directives #quit-if-halt [
             return 128 + 2 ; standard cancellation exit status for bash
@@ -705,7 +705,7 @@ ext-console-impl: function [
 
     if shortcut: select system/console/shortcuts maybe first code [
         ;
-        ; Shortcuts like `q => [quit]`, `d => [dump]`
+        ; Shortcuts like `q => [quit 0]`, `d => [dump]`
         ;
         if (bound? code/1) and [set? code/1] [
             ;

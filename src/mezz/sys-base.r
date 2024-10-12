@@ -107,7 +107,7 @@ do*: function [
         if original-script [system/script: original-script]
 
         if quit_FINALIZER and [only] [
-            quit/with get* 'value  ; "rethrow" the QUIT if DO/ONLY
+            quit/value get* 'value  ; "rethrow" the QUIT if DO/ONLY
         ]
 
         return get* 'value  ; returns from DO*, because of <with> return

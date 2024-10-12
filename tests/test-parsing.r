@@ -70,8 +70,7 @@ make object! [
                 ; handle string using TRANSCODE
                 success-rule: trap [
                     if error? position: transcode/next3 position 'dummy [
-                        print form position
-                        quit
+                        fail position
                     ]
                 ] then [
                     [<end> one]
