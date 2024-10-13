@@ -91,7 +91,7 @@ INLINE bool Is_Lex_Sub_Interstitial(Level *L, Byte sub) {
 }
 
 INLINE bool Is_Lex_End_List(Byte b)
-  { return b == ']' or b == ')'; }
+  { return b == ']' or b == ')' or b == '}'; }
 
 INLINE bool Is_Dot_Or_Slash(Byte b)  // !!! Review lingering instances
   { return b == '/' or b == '.'; }
@@ -1336,15 +1336,13 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case LEX_DELIMIT_RIGHT_PAREN:  // (GROUP) end
             return LOCATED(TOKEN_GROUP_END);
 
-          case LEX_DELIMIT_DOUBLE_QUOTE: {  // "QUOTES"
-            Option(Error*) error = Trap_Scan_String_Push_Mold(
-                &cp, mo, cp, 0, S
-            );
-            if (error)
-                return error;
-            goto check_str; }
+          case LEX_DELIMIT_LEFT_BRACE:  // {FENCE} begin
+            return LOCATED(TOKEN_FENCE_BEGIN);
 
-          case LEX_DELIMIT_LEFT_BRACE: {  // {BRACES}
+          case LEX_DELIMIT_RIGHT_BRACE:  // {FENCE} end
+            return LOCATED(TOKEN_FENCE_END);
+
+          case LEX_DELIMIT_DOUBLE_QUOTE: {  // "QUOTES"
             Option(Error*) error = Trap_Scan_String_Push_Mold(
                 &cp, mo, cp, 0, S
             );
@@ -1370,9 +1368,6 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 return Error_Missing(S, '}');
 
             panic ("Invalid string start delimiter");
-
-          case LEX_DELIMIT_RIGHT_BRACE:
-            return Error_Extra('}');
 
           case LEX_DELIMIT_SLASH:  // a /RUN-style PATH! or /// WORD!
             goto handle_delimit_interstitial;
@@ -2241,15 +2236,31 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(unwrap error);
         break; }
 
+      case TOKEN_FENCE_BEGIN:
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
+        Byte mode;
+        switch (token) {
+          case TOKEN_FENCE_BEGIN:
+            mode = ST_SCANNER_FENCE_MODE;
+            break;
+          case TOKEN_GROUP_BEGIN:
+            mode = ST_SCANNER_GROUP_MODE;
+            break;
+          case TOKEN_BLOCK_BEGIN:
+            mode = ST_SCANNER_BLOCK_MODE;
+            break;
+          default:
+            panic (L);
+        }
+
         Level* sub = Make_Scan_Level(
             transcode,
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
                 | LEVEL_FLAG_RAISED_RESULT_OK
-                | FLAG_STATE_BYTE(token == TOKEN_BLOCK_BEGIN ? ']' : ')')
+                | FLAG_STATE_BYTE(mode)
         );
         Push_Level(OUT, sub);
         return CATCH_CONTINUE_SUBLEVEL(sub); }
@@ -2297,6 +2308,10 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_GROUP_END:
         assert(*S->begin == ')' and len == 1);
+        goto handle_list_end_delimiter;
+
+      case TOKEN_FENCE_END:
+        assert(*S->begin == '}' and len == 1);
         goto handle_list_end_delimiter;
 
       handle_list_end_delimiter: {
@@ -2633,11 +2648,18 @@ Bounce Scanner_Executor(Level* const L) {
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     Heart heart;
-    if (Level_State_Byte(SUBLEVEL) == ST_SCANNER_BLOCK_MODE)
+    switch (Level_State_Byte(SUBLEVEL)) {
+      case ST_SCANNER_BLOCK_MODE:
         heart = REB_BLOCK;
-    else {
-        assert(Level_State_Byte(SUBLEVEL) == ST_SCANNER_GROUP_MODE);
+        break;
+      case ST_SCANNER_FENCE_MODE:
+        heart = REB_FENCE;
+        break;
+      case ST_SCANNER_GROUP_MODE:
         heart = REB_GROUP;
+        break;
+      default:
+        panic (L);
     }
 
     Array* a = Pop_Stack_Values_Core(

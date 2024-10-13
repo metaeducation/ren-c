@@ -388,6 +388,36 @@ pair        "two dimensional point or size"
   </ANY-BLOCK?>
 
 
+  <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+
+    fence       "list of elements that are used in construction via MAKE"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-series? any-branch? any-plain-value? any-sequencable?]
+                [list        *       *]
+
+    meta-fence  "fence that we don't know what it does yet"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-series? any-branch? any-meta-value? any-sequencable?]
+                [list        *       *]
+
+    type-fence  "alternative inert form of fence"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-series? any-branch? any-type-value? any-sequencable?]
+                [list        *       *]
+
+    the-fence   "alternative inert form of fence"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-series? any-branch? any-the-value? any-sequencable?]
+                [list        *       *]
+
+    var-fence   "fence that evaluates to the bound version of the fence"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-series? any-branch? any-var-value? any-sequencable?]
+                [list        *       *]
+
+  </ANY-FENCE?>
+
+
   <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     group       "list that evaluates expressions as an isolated group"

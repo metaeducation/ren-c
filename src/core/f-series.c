@@ -335,6 +335,12 @@ REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
       case REB_TYPE_BLOCK:
       case REB_VAR_BLOCK:
         //
+      case REB_FENCE:
+      case REB_META_FENCE:
+      case REB_THE_FENCE:
+      case REB_TYPE_FENCE:
+      case REB_VAR_FENCE:
+        //
       case REB_GROUP:
       case REB_META_GROUP:
       case REB_THE_GROUP:

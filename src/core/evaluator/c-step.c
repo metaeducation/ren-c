@@ -1595,6 +1595,21 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;
 
 
+    //=//// FENCE! ////////////////////////////////////////////////////////=//
+    //
+    // FENCE! is the newest part in the box, and it's not clear exactly how
+    // it will work yet.
+
+      case REB_FENCE:
+        fail ("Precise behavior of FENCE! not known yet");
+
+
+    //=//// META-FENCE! ///////////////////////////////////////////////////=//
+
+      case REB_META_FENCE:
+        fail ("Don't know what META-FENCE! is going to do yet");
+
+
     //=//// THE-XXX! //////////////////////////////////////////////////////=//
     //
     // Type that just leaves the sigil:
@@ -1626,14 +1641,14 @@ Bounce Stepper_Executor(Level* L)
     // Leaving the sigil means IMPORT can typecheck for THE-WORD! + THE-PATH!
     // and not have a degree of freedom that it can't distinguish from being
     // called as (import 'xml) or (import 'json/1.1.2)
-    //
-    //=////////////////////////////////////////////////////////////////////=//
 
       case REB_THE_BLOCK:
+      case REB_THE_FENCE:
+      case REB_THE_GROUP:
       case REB_THE_WORD:
       case REB_THE_PATH:
+      case REB_THE_CHAIN:
       case REB_THE_TUPLE:
-      case REB_THE_GROUP:
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
         goto lookahead;
 
@@ -1659,11 +1674,12 @@ Bounce Stepper_Executor(Level* L)
     //     ** Error: var is unbound
 
       case REB_VAR_BLOCK:
+      case REB_VAR_FENCE:
+      case REB_VAR_GROUP:
       case REB_VAR_WORD:
       case REB_VAR_PATH:
       case REB_VAR_TUPLE:
       case REB_VAR_CHAIN:
-      case REB_VAR_GROUP:
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
         HEART_BYTE(OUT) = Plainify_Any_Var_Kind(STATE);
         goto lookahead;
@@ -1711,10 +1727,12 @@ Bounce Stepper_Executor(Level* L)
         //
       case REB_PARAMETER:
         //
-      case REB_TYPE_WORD:
       case REB_TYPE_BLOCK:
+      case REB_TYPE_FENCE:
       case REB_TYPE_GROUP:
+      case REB_TYPE_WORD:
       case REB_TYPE_PATH:
+      case REB_TYPE_CHAIN:
       case REB_TYPE_TUPLE:
         //
       case REB_HANDLE:

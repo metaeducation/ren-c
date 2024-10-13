@@ -279,6 +279,9 @@ Let* Make_Let_Variable(
 }
 
 
+#define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
+
+
 //
 //  Get_Word_Container: C
 //
@@ -456,9 +459,6 @@ Option(Stub*) Get_Word_Container(
         for (; key != key_tail; ++key, ++index) {
             if (Key_Symbol(key) != symbol)
                 continue;
-
-            if (Get_Cell_Flag(Varlist_Slot(overload, index), BIND_NOTE_REUSE))
-                break;  // FOR-EACH uses context slots weirdly [4]
 
             *index_out = index;
             return overload;
@@ -1338,6 +1338,35 @@ VarList* Virtual_Bind_Deep_To_New_Context(
         );
 
     return c;
+}
+
+
+//
+//  Real_Var_From_Pseudo: C
+//
+// Virtual_Bind_To_New_Context() allows THE-WORD! syntax to reuse an existing
+// variables binding:
+//
+//     x: 10
+//     for-each @x [20 30 40] [...]
+//     ; The 10 will be overwritten, and x will be equal to 40, here
+//
+// It accomplishes this by putting a word into the "variable" slot, and having
+// a flag to indicate a dereference is necessary.
+//
+Value* Real_Var_From_Pseudo(Value* pseudo_var) {
+    if (Not_Cell_Flag(pseudo_var, BIND_NOTE_REUSE))
+        return pseudo_var;
+    if (Is_Blank(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
+        return nullptr;  // signal to throw generated quantity away
+
+    // Note: these variables are fetched across running arbitrary user code.
+    // So the address cannot be cached...e.g. the object it lives in might
+    // expand and invalidate the location.  (The `context` for fabricated
+    // variables is locked at fixed size.)
+    //
+    assert(Is_The_Word(pseudo_var));
+    return Lookup_Mutable_Word_May_Fail(cast(Element*, pseudo_var), SPECIFIED);
 }
 
 

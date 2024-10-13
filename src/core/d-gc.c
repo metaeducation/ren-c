@@ -332,6 +332,13 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_META_BLOCK:
       case REB_TYPE_BLOCK:
       case REB_VAR_BLOCK:
+        //
+      case REB_FENCE:
+      case REB_THE_FENCE:
+      case REB_META_FENCE:
+      case REB_TYPE_FENCE:
+      case REB_VAR_FENCE:
+        //
       case REB_GROUP:
       case REB_THE_GROUP:
       case REB_META_GROUP:

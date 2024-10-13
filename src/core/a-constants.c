@@ -121,6 +121,8 @@ const char * const Token_Names[] = {
     "group-begin",
     "block-end",
     "block-begin",
+    "fence-end",
+    "fence-begin",
     "money",
     "time",
     "date",

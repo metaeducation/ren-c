@@ -424,32 +424,6 @@ static Bounce Loop_Number_Common(
 }
 
 
-// Virtual_Bind_To_New_Context() allows THE-WORD! syntax to reuse an existing
-// variables binding:
-//
-//     x: 10
-//     for-each @x [20 30 40] [...]
-//     ; The 10 will be overwritten, and x will be equal to 40, here
-//
-// It accomplishes this by putting a word into the "variable" slot, and having
-// a flag to indicate a dereference is necessary.
-//
-Value* Real_Var_From_Pseudo(Value* pseudo_var) {
-    if (Not_Cell_Flag(pseudo_var, BIND_NOTE_REUSE))
-        return pseudo_var;
-    if (Is_Blank(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
-        return nullptr;  // signal to throw generated quantity away
-
-    // Note: these variables are fetched across running arbitrary user code.
-    // So the address cannot be cached...e.g. the object it lives in might
-    // expand and invalidate the location.  (The `context` for fabricated
-    // variables is locked at fixed size.)
-    //
-    assert(Is_The_Word(pseudo_var));
-    return Lookup_Mutable_Word_May_Fail(cast(Element*, pseudo_var), SPECIFIED);
-}
-
-
 //
 //  /cfor: native [
 //
@@ -905,8 +879,6 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;  // the `for` variable acquisition loop
         }
 
-        Heart heart;
-
         if (Is_Action(les->data)) {
             Value* generated = rebValue(rebRUN(les->data));
             if (generated) {
@@ -926,20 +898,12 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 if (var)
                     Init_Nulled(var);
             }
+            continue;
         }
-        else switch ((heart = Cell_Heart_Ensure_Noquote(les->data))) {
-          case REB_BLOCK:
-          case REB_META_BLOCK:
-          case REB_THE_BLOCK:
-          case REB_GROUP:
-          case REB_META_GROUP:
-          case REB_THE_GROUP:
-          case REB_PATH:
-          case REB_META_PATH:
-          case REB_THE_PATH:
-          case REB_TUPLE:
-          case REB_META_TUPLE:
-          case REB_THE_TUPLE:
+
+        Heart heart = Cell_Heart_Ensure_Noquote(les->data);
+
+        if (Any_List_Kind(heart)) {
             if (var)
                 Copy_Cell(
                     var,
@@ -950,13 +914,10 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
-            break;
+            continue;
+        }
 
-          case REB_OBJECT:
-          case REB_ERROR:
-          case REB_PORT:
-          case REB_MODULE:
-          case REB_FRAME: {
+        if (Any_Context_Kind(heart)) {
             if (var) {
                 assert(les->u.evars.index != 0);
                 Init_Any_Word(
@@ -995,9 +956,10 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 fail ("Loop enumeration of contexts must be 1 or 2 vars");
 
             les->more_data = Try_Advance_Evars(&les->u.evars);
-            break; }
+            continue;
+        }
 
-          case REB_MAP: {
+        if (heart == REB_MAP) {
             assert(les->u.eser.index % 2 == 0);  // should be on key slot
 
             const Value* key;
@@ -1037,21 +999,10 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             else
                 fail ("Loop enumeration of contexts must be 1 or 2 vars");
 
-            break; }
+            continue;
+        }
 
-          case REB_BINARY: {
-            const Binary* b = c_cast(Binary*, les->flex);
-            if (var)
-                Init_Integer(var, Binary_Head(b)[les->u.eser.index]);
-            if (++les->u.eser.index == les->u.eser.len)
-                les->more_data = false;
-            break; }
-
-          case REB_TEXT:
-          case REB_TAG:
-          case REB_FILE:
-          case REB_EMAIL:
-          case REB_URL:
+        if (Any_String_Kind(heart)) {
             if (var)
                 Init_Char_Unchecked(
                     var,
@@ -1059,11 +1010,19 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
-            break;
-
-          default:
-            panic ("Unsupported type");
+            continue;
         }
+
+        if (heart == REB_BINARY) {
+            const Binary* b = c_cast(Binary*, les->flex);
+            if (var)
+                Init_Integer(var, Binary_Head(b)[les->u.eser.index]);
+            if (++les->u.eser.index == les->u.eser.len)
+                les->more_data = false;
+            continue;
+        }
+
+        panic (les->data);
     }
 
     return true;

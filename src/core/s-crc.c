@@ -244,17 +244,24 @@ uint32_t Hash_Value(const Cell* cell)
 
       hash_any_list:
         //
+      case REB_BLOCK:
+      case REB_THE_BLOCK:
+      case REB_META_BLOCK:
+      case REB_TYPE_BLOCK:
+      case REB_VAR_BLOCK:
+        //
+      case REB_FENCE:
+      case REB_THE_FENCE:
+      case REB_META_FENCE:
+      case REB_TYPE_FENCE:
+      case REB_VAR_FENCE:
+        //
       case REB_GROUP:
       case REB_THE_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP:
       case REB_VAR_GROUP:
         //
-      case REB_BLOCK:
-      case REB_THE_BLOCK:
-      case REB_META_BLOCK:
-      case REB_TYPE_BLOCK:
-      case REB_VAR_BLOCK:
         //
         // !!! Lame hash just to get it working.  There will be lots of
         // collisions.  Intentionally bad to avoid writing something that

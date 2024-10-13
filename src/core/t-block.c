@@ -702,6 +702,8 @@ bool Try_Pick_Block(
 //
 void MF_List(Molder* mo, const Cell* v, bool form)
 {
+    assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
+
     Heart heart = Cell_Heart(v);  // may be quoted, but mold renders the quotes
 
     if (form) {
@@ -711,61 +713,45 @@ void MF_List(Molder* mo, const Cell* v, bool form)
         return;
     }
 
-    assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
-
-    const char *sep;
-
-    switch (heart) {
-      case REB_META_BLOCK:
-        Append_Codepoint(mo->string, '^');
-        goto block;
-
-      case REB_THE_BLOCK:
-        Append_Codepoint(mo->string, '@');
-        goto block;
-
-      case REB_TYPE_BLOCK:
-        Append_Codepoint(mo->string, '&');
-        goto block;
-
-      case REB_VAR_BLOCK:
-        Append_Codepoint(mo->string, '$');
-        goto block;
-
-      case REB_BLOCK:
-        block:
-        sep = "[]";
+    Sigil sigil = maybe Sigil_Of_Kind(heart);
+    switch (sigil) {
+      case SIGIL_0:  // no decoration
         break;
 
-      case REB_META_GROUP:
+      case SIGIL_META:
         Append_Codepoint(mo->string, '^');
-        goto group;
+        break;
 
-      case REB_THE_GROUP:
+      case SIGIL_THE:
         Append_Codepoint(mo->string, '@');
-        goto group;
+        break;
 
-      case REB_TYPE_GROUP:
+      case SIGIL_TYPE:
         Append_Codepoint(mo->string, '&');
-        goto group;
+        break;
 
-      case REB_VAR_GROUP:
+      case SIGIL_VAR:
         Append_Codepoint(mo->string, '$');
-        goto group;
-
-      case REB_GROUP:
-      group:
-        if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
-            CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
-            sep = "\000\000";
-        }
-        else
-            sep = "()";
         break;
 
       default:
-        panic ("Unknown list heart passed to MF_List");
+        panic (v);  // cell heart should not have quote/quasi sigils
     }
+
+    const char *sep;
+
+    if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
+        CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
+        sep = "\000\000";
+    }
+    else if (Any_Block_Kind(heart))
+        sep = "[]";
+    else if (Any_Group_Kind(heart))
+        sep = "()";
+    else if (Any_Fence_Kind(heart))
+        sep = "{}";
+    else
+        panic (v);
 
     Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 }
