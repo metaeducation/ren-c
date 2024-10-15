@@ -210,7 +210,7 @@ bool Update_Typeset_Bits_Core(
             VAL_TYPESET_BITS(typeset) |= VAL_TYPESET_BITS(item);
         }
         else
-            fail (Error_Invalid_Core(item, specifier));
+            fail (Error_Invalid_Core(maybe_word, specifier));
     }
 
     return true;
