@@ -19,7 +19,7 @@ verify: function [
         {Conditions to check}
     <local> result
 ][
-    while [pos: evaluate/set conditions 'result] [
+    while [pos: evaluate/step3 conditions 'result] [
         if not :result [
             fail/blame [
                 "Assertion condition returned"

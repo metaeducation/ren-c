@@ -26,7 +26,7 @@
             arg: block/1
             reify next block
         ] else [
-            reify evaluate/set block the arg:
+            reify evaluate/step3 block the arg:
         ]
 
         if refinement? first maybe params [

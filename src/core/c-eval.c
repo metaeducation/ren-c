@@ -2191,7 +2191,7 @@ bool Eval_Core_Throws(Level* const L)
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider infix.  e.g.
     //
-    //    evaluate/set [1 + 2 * 3] 'val
+    //    evaluate/step3 [1 + 2 * 3] 'val
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
@@ -2206,7 +2206,7 @@ bool Eval_Core_Throws(Level* const L)
     // Slightly more nuanced is why CELL_FLAG_ACTION_INVISIBLE functions have to be
     // considered in the lookahead also.  Consider this case:
     //
-    //    evaluate/set [1 + 2 * comment ["hi"] 3 4 / 5] 'val
+    //    evaluate/step3 [1 + 2 * comment ["hi"] 3 4 / 5] 'val
     //
     // We want `val = 9`, with `pos = [4 / 5]`.  To do this, we
     // can't consider an evaluation finished until all the "invisibles" have

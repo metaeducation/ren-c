@@ -223,11 +223,11 @@
 ; evaluate block tests
 (
     success: false
-    evaluate [success: true success: false]
+    evaluate/step3 [success: true success: false] 'dummy
     success
 )
 (
-    b: evaluate/set [1 2] 'value
+    b: evaluate/step3 [1 2] 'value
     did all [
         1 = value
         [2] = b
@@ -236,12 +236,12 @@
 (
     value: <untouched>
     did all [
-        null? evaluate/set [] 'value
+        null? evaluate/step3 [] 'value
         value = <untouched>
     ]
 )
 (
-    evaluate/set [sys/util/rescue [1 / 0]] 'value
+    evaluate/step3 [sys/util/rescue [1 / 0]] 'value
     error? value
 )
 (
@@ -265,6 +265,6 @@
 )]
 ; infinite recursion for evaluate
 (
-    blk: [b: evaluate blk]
+    blk: [b: evaluate/step3 blk 'dummy]
     error? sys/util/rescue blk
 )

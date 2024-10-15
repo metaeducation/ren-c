@@ -142,7 +142,7 @@ emit: function [
                 set code/1 tail ctx/msg ;-- save position
                 code: my next
             ] else [
-                code: evaluate/set code 'result else [break]
+                code: evaluate/step3 code 'result else [break]
                 append ctx/msg ensure binary! result
             ]
         ]

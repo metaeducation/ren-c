@@ -14,7 +14,7 @@
 
 (
     val: <overwritten>
-    pos: evaluate/set [1 + comment "a" comment "b" 2 * 3 fail "too far"] 'val
+    pos: evaluate/step3 [1 + comment "a" comment "b" 2 * 3 fail "too far"] 'val
     did all [
         val = 9
         pos = [fail "too far"]
@@ -22,7 +22,7 @@
 )
 (
     val: <overwritten>
-    pos: evaluate/set [1 comment "a" + comment "b" 2 * 3 fail "too far"] 'val
+    pos: evaluate/step3 [1 comment "a" + comment "b" 2 * 3 fail "too far"] 'val
     did all [
         val = 9
         pos = [fail "too far"]
@@ -30,7 +30,7 @@
 )
 (
     val: <overwritten>
-    pos: evaluate/set [1 comment "a" comment "b" + 2 * 3 fail "too far"] 'val
+    pos: evaluate/step3 [1 comment "a" comment "b" + 2 * 3 fail "too far"] 'val
     did all [
         val = 9
         pos = [fail "too far"]
@@ -54,16 +54,20 @@
 
 (
     error? sys/util/rescue [
-        evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
+        eval/step3 (
+            eval/step3 [1 elide "a" + elide "b" 2 * 3 fail "too far"] 'dummy
+        ) 'dummy
     ]
 )
 (
     error? sys/util/rescue [
-        evaluate evaluate [1 elide "a" elide "b" + 2 * 3 fail "too far"]
+        eval/step3 (
+            eval/step3 [1 elide "a" elide "b" + 2 * 3 fail "too far"] 'dummy
+        ) 'dummy
     ]
 )
 (
-    pos: evaluate/set [1 + 2 * 3 elide "a" elide "b" fail "too far"] 'val
+    pos: evaluate/step3 [1 + 2 * 3 elide "a" elide "b" fail "too far"] 'val
     did all [
         val = 9
         pos = [elide "a" elide "b" fail "too far"]

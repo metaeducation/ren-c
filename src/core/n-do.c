@@ -470,16 +470,18 @@ DECLARE_NATIVE(do)
 //
 //  evaluate: native [
 //
-//  {Perform a single evaluator step, returning the next source position}
+//  "Run a list through the evaluator iteratively, or take a single step"
 //
-//      return: [~null~ block! group! varargs!]
+//      return: "Evaluation product, or ~[position product]~ pack if /STEP3"
+//          [~null~ any-value!]  ; /STEP3 changes primary return product [1]
 //      source [
-//          <maybe> ;-- useful for `do maybe ...` scenarios when no match
-//          block! ;-- source code in block form
-//          group! ;-- same as block (or should it have some other nuance?)
-//          varargs! ;-- simulates as if frame! or block! is being executed
+//          <maybe>  ; useful for `evaluate maybe ...` scenarios
+//          any-list!  ; code
+//          frame!  ; invoke the frame (no arguments, see RUN)
+//          error!  ; raise the error
+//          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      /set "Store result in a variable (assuming something was evaluated)"
+//      /step3 "Take a step and store result in var"
 //      var [any-word!]
 //          "If not blank, then a variable updated with new position"
 //  ]
@@ -494,9 +496,6 @@ DECLARE_NATIVE(evaluate)
   #endif
 
     switch (VAL_TYPE(source)) {
-    case REB_BLANK:
-        return nullptr; // "blank in, null out" convention
-
     case REB_BLOCK:
     case REB_GROUP: {
         DECLARE_VALUE (temp);
@@ -506,7 +505,7 @@ DECLARE_NATIVE(evaluate)
             Cell_Array(source),
             VAL_INDEX(source),
             VAL_SPECIFIER(source),
-            DO_MASK_NONE
+            REF(step3) ? DO_MASK_NONE : DO_FLAG_TO_END
         );
 
         if (indexor == THROWN_FLAG) {
@@ -514,11 +513,15 @@ DECLARE_NATIVE(evaluate)
             return BOUNCE_THROWN;
         }
 
+        if (not REF(step3)) {
+            Copy_Cell(OUT, temp);
+            return OUT;
+        }
+
         if (indexor == END_FLAG or IS_END(temp))
             return nullptr; // no disruption of output result
 
-        if (REF(set))
-            Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
+        Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
 
         Copy_Cell(OUT, source);
         VAL_INDEX(OUT) = cast(REBLEN, indexor) - 1; // was one past
@@ -543,7 +546,7 @@ DECLARE_NATIVE(evaluate)
                 Cell_Array(position),
                 VAL_INDEX(position),
                 VAL_SPECIFIER(source),
-                DO_MASK_NONE
+                REF(step3) ? DO_MASK_NONE : DO_FLAG_TO_END
             );
 
             if (indexor == THROWN_FLAG) {
@@ -557,16 +560,24 @@ DECLARE_NATIVE(evaluate)
                 return BOUNCE_THROWN;
             }
 
+            if (not REF(step3)) {
+                Copy_Cell(OUT, temp);
+                return OUT;
+            }
+
+
             if (indexor == END_FLAG or IS_END(temp)) {
                 SET_END(position); // convention for shared data at end point
                 return nullptr;
             }
 
-            if (REF(set))
-                Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), source);
+            Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), source);
 
             RETURN (source); // original VARARGS! will have updated position
         }
+
+        if (not REF(step3))
+            fail ("Full evaluation of non-block varargs not in bootstrap");
 
         Level* L;
         if (not Is_Level_Style_Varargs_May_Fail(&L, source))
@@ -588,8 +599,7 @@ DECLARE_NATIVE(evaluate)
         if (IS_END(temp))
             return nullptr;
 
-        if (REF(set))
-            Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
+        Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
 
         RETURN (source); } // original VARARGS! will have an updated position
 

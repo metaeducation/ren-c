@@ -16,6 +16,8 @@ REBOL [
     }
 ]
 
+eval: :evaluate
+
 assert: func [
     {Ensure conditions are conditionally true if hooked by debugging}
 
@@ -705,7 +707,7 @@ right-bar: func [
         {Any number of expression.}
     <local> right
 ][
-    do <- evaluate/set expressions 'right else [return]
+    do <- evaluate/step3 expressions 'right else [return]
     :right
 ]
 

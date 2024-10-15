@@ -50,9 +50,9 @@
         var: ~
         block: [<tag> lefty "hi"]
         did all [
-            [lefty "hi"] = block: evaluate/set block 'var
+            [lefty "hi"] = block: evaluate/step3 block 'var
             <tag> = var
-            [] = evaluate/set block 'var
+            [] = evaluate/step3 block 'var
             [~null~ "hi"] = var
         ]
     )
@@ -64,9 +64,9 @@
         var: ~
         block: [the 1 lefty "hi"]
         did all [
-            [lefty "hi"] = block: evaluate/set block 'var
+            [lefty "hi"] = block: evaluate/step3 block 'var
             1 = var
-            [] evaluate/set block 'var
+            [] evaluate/step3 block 'var
             [~null~ "hi"] = var
         ]
     )
