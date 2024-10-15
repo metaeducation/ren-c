@@ -305,7 +305,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
             not TYPE_CHECK(typeset, VAL_TYPE(L->out))
             and not (
                 GET_ACT_FLAG(phase, ACTION_INVISIBLE)
-                and Is_Nulled(L->out) // this happens with `do [return]`
+                and Is_Nulled(L->out) // this happens with `eval [return]`
             )
         ){
             printf("Native code violated return type contract!\n");
@@ -343,8 +343,8 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     if (L->flags.bits & DO_FLAG_TO_END)
         assert(THROWN(L->out) or IS_END(L->value));
 
-    // We'd like `do [1 + comment "foo"]` to act identically to `do [1 +]`
-    // (as opposed to `do [1 + ()]`).  Eval_Core_Throws() thus distinguishes
+    // We'd like `eval [1 + comment "foo"]` to act identically to `eval [1 +]`
+    // (as opposed to `eval [1 + ()]`).  Eval_Core_Throws() thus distinguishes
     // an END for a fully "invisible" evaluation, as opposed to void.  This
     // distinction is only offered internally, at the moment.
     //

@@ -199,8 +199,8 @@ INLINE void Finalize_Arg(
 ){
     if (IS_END(arg)) {
 
-        // This is a legal result for COMMENT in `do [1 + comment "foo"]`.
-        // No different from `do [1 +]`, where Eval_Core_Throws() gives END.
+        // This is a legal result for COMMENT in `eval [1 + comment "foo"]`.
+        // No different from `eval [1 +]`, where Eval_Core_Throws() gives END.
 
         if (not Is_Param_Endable(param))
             fail (Error_No_Arg(L_state, param));
@@ -1649,7 +1649,7 @@ bool Eval_Core_Throws(Level* const L)
             // until it hits the end of the frame).  It should not do a
             // START_NEW_EXPRESSION()...the expression index doesn't update.
             //
-            //     do [comment "a" 1] => 1
+            //     eval [comment "a" 1] => 1
 
             current_gotten = L->gotten;
             Fetch_Next_In_Level(&current, L);
@@ -1783,7 +1783,7 @@ bool Eval_Core_Throws(Level* const L)
         if (not EVALUATING(current))
             goto inert;
 
-        if (IS_END(L->value)) // `do [a:]` is illegal
+        if (IS_END(L->value)) // `eval [a:]` is illegal
             fail (Error_Need_Non_End_Core(current, L->specifier));
 
         Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
@@ -2002,7 +2002,7 @@ bool Eval_Core_Throws(Level* const L)
         if (not EVALUATING(current))
             goto inert;
 
-        if (IS_END(L->value)) // `do [a/b:]` is illegal
+        if (IS_END(L->value)) // `eval [a/b:]` is illegal
             fail (Error_Need_Non_End_Core(current, L->specifier));
 
         Flags flags = (L->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
@@ -2330,7 +2330,7 @@ bool Eval_Core_Throws(Level* const L)
             and Get_Cell_Flag(VAL(L->gotten), ACTION_INVISIBLE)
         ){
             // Even if not EVALUATE, we do not want START_NEW_EXPRESSION on
-            // "invisible" functions.  e.g. `do [1 + 2 comment "hi"]` should
+            // "invisible" functions.  e.g. `eval [1 + 2 comment "hi"]` should
             // consider that one whole expression.  Reason being that the
             // comment cannot be broken out and thought of as having a return
             // result... `comment "hi"` alone cannot have any basis for

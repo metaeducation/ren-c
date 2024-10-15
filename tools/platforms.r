@@ -477,7 +477,7 @@ for-each-system: function [
             (
                 if os [
                     set var s
-                    do body
+                    eval body
                 ]
             )
         ]

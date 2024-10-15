@@ -188,7 +188,7 @@
 ; two-function return tests
 (
     g: func [f [action!]] [f [return 1] 2]
-    1 = g :do
+    1 = g :eval
 )
 ; BREAK out of a function
 (
@@ -302,13 +302,13 @@
 ; In Ren-C's specific binding, a function-local word that escapes the
 ; function's extent cannot be used when re-entering the same function later
 (
-    f: func [code value] [either blank? code ['value] [do code]]
+    f: func [code value] [either blank? code ['value] [eval code]]
     f-value: f blank blank
     error? sys/util/rescue [f compose [2 * (f-value)] 21]  ; re-entering same function
 )
 (
-    f: func [code value] [either blank? code ['value] [do code]]
-    g: func [code value] [either blank? code ['value] [do code]]
+    f: func [code value] [either blank? code ['value] [eval code]]
+    g: func [code value] [either blank? code ['value] [eval code]]
     f-value: f blank blank
     error? sys/util/rescue [g compose [2 * (f-value)] 21]  ; re-entering different function
 )
@@ -331,7 +331,7 @@
 ; `c` holds the `[d]` from the first call.
 (
     a: func [b] [a: _ c: b]
-    f: func [d] [a [d] do c]
+    f: func [d] [a [d] eval c]
     did all [
         1 = f 1
         error? sys/util/rescue [2 = f 2]

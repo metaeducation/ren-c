@@ -16,8 +16,6 @@ REBOL [
     }
 ]
 
-eval: :evaluate
-
 assert: func [
     {Ensure conditions are conditionally true if hooked by debugging}
 
@@ -134,7 +132,7 @@ function: func [
             ]
             defaulters: default [copy []]
             append defaulters compose/deep [
-                (as set-word! var) default [(uneval do other/1)]
+                (as set-word! var) default [(uneval eval other/1)]
             ]
         )
     |
@@ -148,7 +146,7 @@ function: func [
             if other [
                 defaulters: default [copy []]
                 append defaulters compose/deep [ ;-- always sets
-                    (as set-word! var) (uneval do other)
+                    (as set-word! var) (uneval eval other)
                 ]
             ]
         )]
@@ -529,7 +527,7 @@ iterate-skip: redescribe [
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
-            sys/util/rescue [set the result: do f] then lambda e [
+            sys/util/rescue [set the result: eval f] then lambda e [
                 set word saved
                 fail e
             ]
@@ -537,7 +535,7 @@ iterate-skip: redescribe [
             :result
         ]
 
-        do f
+        eval f
         elide set word saved
     ][
         series: <overwritten>
@@ -695,7 +693,7 @@ invisible-eval-all: func [
     expressions [~null~ any-value! <...>]
         {Any number of expressions on the right.}
 ][
-    do expressions
+    eval expressions
 ]
 
 right-bar: func [
@@ -707,7 +705,7 @@ right-bar: func [
         {Any number of expression.}
     <local> right
 ][
-    do <- evaluate/step3 expressions 'right else [return]
+    eval <- evaluate/step3 expressions 'right else [return]
     :right
 ]
 
@@ -828,7 +826,7 @@ module: func [
         spec/version [~null~ tuple!]
         spec/options [~null~ block!]
     ][
-        do compose [ensure ((types)) (var)] ;-- names to show if fails
+        eval compose [ensure ((types)) (var)] ;-- names to show if fails
     ]
 
     spec/options: default [copy []]
@@ -916,7 +914,7 @@ module: func [
     ]
 
     bind body mod ;-- redundant?
-    do body
+    eval body
 
     ;print ["Module created" spec/name spec/version]
     mod
@@ -1001,5 +999,5 @@ fail: function [
 
     ; Raise error to the nearest TRAP up the stack (if any)
     ;
-    do ensure error! error
+    eval ensure error! error
 ]

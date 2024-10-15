@@ -53,7 +53,7 @@ api-objects: make block! 50
 
 map-each-api: func [code [block!]] [
     map-each api api-objects compose/only [
-        do in api (code) ;-- want API variable available when code is running
+        eval in api (code) ;-- want API variable available when code is running
     ]
 ]
 
@@ -158,7 +158,7 @@ extern-prototypes: map-each-api [
 
 direct-call-inlines: make block! length of api-objects
 
-for-each api api-objects [do in api [
+for-each api api-objects [eval in api [
     if find [
         "rebEnterApi_internal" ; called as API_rebEnterApi_internal
     ] name [

@@ -185,7 +185,7 @@ rebsource: context [
                 emit-proto: function [return: [~] proto] [
                     if not block? proto-parser/data [return]
 
-                    do in c-parser-extension [
+                    eval in c-parser-extension [
                         if last-func-end [
                             all [
                                 parse2/match last-func-end [

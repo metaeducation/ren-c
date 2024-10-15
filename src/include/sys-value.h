@@ -711,7 +711,7 @@ INLINE bool Is_Endish_Nulled(const Cell* v) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// NOTHING! results are the default for `do []`, and unlike NULL nothing! *is*
+// NOTHING! results are the default for `eval []`, and unlike NULL nothing! *is*
 // a value...however a somewhat unfriendly one.  While NULLs are falsey,
 // nothin is *neither* truthy nor falsey.
 //

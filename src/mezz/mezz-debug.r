@@ -61,7 +61,7 @@ delta-time: function [
     block [block!]
 ][
     start: stats/timer
-    do block
+    eval block
     stats/timer - start
 ]
 
@@ -71,7 +71,7 @@ delta-profile: func [
     <local> start end
 ][
     start: values of stats/profile
-    do block
+    eval block
     end: values of stats/profile
     for-each num start [
         change end end/1 - num
@@ -129,9 +129,9 @@ speed?: function [
         secs: now/precise
         calc: 0
         recycle
-        do block
+        eval block
         secs: to decimal! difference now/precise secs
-        append result to integer! do calc
+        append result to integer! eval calc
         if times [append result secs]
     ]
     result

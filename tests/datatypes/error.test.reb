@@ -129,7 +129,7 @@
 
 ; are error reports for DO and EVALUATE consistent?
 (
-    val1: sys/util/rescue [do [1 / 0]]
+    val1: sys/util/rescue [eval [1 / 0]]
     val2: sys/util/rescue [evaluate [1 / 0]]
     val1/near = val2/near
 )

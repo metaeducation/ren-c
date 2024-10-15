@@ -11,7 +11,7 @@
 ; parens are active
 (
     a-value: first [(1)]
-    1 == do reduce [:a-value]
+    1 == eval reduce [:a-value]
 )
 ; finite recursion
 (
@@ -21,11 +21,11 @@
         either num1 = 1 [num2] [num2: num1 * num2 num1: num1 - 1]
     )
     insert/only tail of last fact fact
-    24 = do fact
+    24 = eval fact
 )
 ; infinite recursion
 [#1665 (
     fact: to group! []
     insert/only fact fact
-    error? sys/util/rescue [do fact]
+    error? sys/util/rescue [eval fact]
 )]

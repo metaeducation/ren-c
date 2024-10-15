@@ -119,7 +119,7 @@ cscape: function [
                     ]
                 ]
             ]
-            sub: do code
+            sub: eval code
 
             sub: case [
                 any [

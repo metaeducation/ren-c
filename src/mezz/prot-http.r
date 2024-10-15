@@ -54,7 +54,7 @@ sync-op: function [port body] [
     state: port/state
     state/awake: :read-sync-awake
 
-    do body
+    eval body
 
     if state/state = 'ready [do-request port]
 

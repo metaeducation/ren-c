@@ -58,7 +58,7 @@ finish-init-core: func [
     ; The mezzanine is currently considered part of what Startup_Core() will
     ; initialize for all clients.
     ;
-    do bind-lib boot-mezz
+    eval bind-lib boot-mezz
 
     finish-init-core: 'done
 ]

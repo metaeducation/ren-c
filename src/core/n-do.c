@@ -247,17 +247,11 @@ DECLARE_NATIVE(eval_infix)
 //      return: [~null~ any-value!]
 //      source [
 //          <maybe> ;-- useful for `do maybe ...` scenarios when no match
-//          block! ;-- source code in block form
-//          group! ;-- same as block (or should it have some other nuance?)
 //          text! ;-- source code in text form
 //          binary! ;-- treated as UTF-8
 //          url! ;-- load code from URL via protocol
 //          file! ;-- load code from file on local disk
 //          tag! ;-- module name (URL! looked up from table)
-//          error! ;-- should use FAIL instead
-//          action! ;-- will only run arity 0 actions (avoids DO variadic)
-//          frame! ;-- acts like APPLY (voids are optionals, not unspecialized)
-//          varargs! ;-- simulates as if frame! or block! is being executed
 //      ]
 //      /args
 //          {If value is a script, this will set its system/script/args}
@@ -283,7 +277,7 @@ DECLARE_NATIVE(do)
     case REB_BLOCK:
     case REB_GROUP: {
         REBIXO indexor = Eval_At_Core(
-            Init_Void(OUT),  // so `do []` vanishes
+            Init_Void(OUT),  // so `eval []` vanishes
             nullptr, // opt_head (interpreted as no head, not nulled cell)
             Cell_Array(source),
             VAL_INDEX(source),
@@ -293,59 +287,6 @@ DECLARE_NATIVE(do)
 
         if (indexor == THROWN_FLAG)
             return BOUNCE_THROWN;
-
-        return OUT; }
-
-    case REB_VARARGS: {
-        Value* position;
-        if (Is_Block_Style_Varargs(&position, source)) {
-            //
-            // We can execute the array, but we must "consume" elements out
-            // of it (e.g. advance the index shared across all instances)
-            //
-            // !!! If any VARARGS! op does not honor the "locked" flag on the
-            // array during execution, there will be problems if it is TAKE'n
-            // or DO'd while this operation is in progress.
-            //
-            REBIXO indexor = Eval_At_Core(
-                Init_Void(OUT),
-                nullptr, // opt_head (no head, not intepreted as nulled cell)
-                Cell_Array(position),
-                VAL_INDEX(position),
-                VAL_SPECIFIER(source),
-                DO_FLAG_TO_END
-            );
-
-            if (indexor == THROWN_FLAG) {
-                //
-                // !!! A BLOCK! varargs doesn't technically need to "go bad"
-                // on a throw, since the block is still around.  But a FRAME!
-                // varargs does.  This will cause an assert if reused, and
-                // having BLANK! mean "thrown" may evolve into a convention.
-                //
-                Init_Unreadable(position);
-                return BOUNCE_THROWN;
-            }
-
-            SET_END(position); // convention for shared data at end point
-            return OUT;
-        }
-
-        Level* L;
-        if (not Is_Level_Style_Varargs_May_Fail(&L, source))
-            panic (source); // Frame is the only other type
-
-        // By definition, we are in the middle of a function call in the frame
-        // the varargs came from.  It's still on the stack, and we don't want
-        // to disrupt its state.  Use a subframe.
-        //
-        DECLARE_SUBLEVEL (child, L);
-        Flags flags = 0;
-        Init_Nothing(OUT);
-        while (NOT_END(L->value)) {
-            if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child))
-                return BOUNCE_THROWN;
-        }
 
         return OUT; }
 
@@ -387,9 +328,84 @@ DECLARE_NATIVE(do)
         //
         fail (cast(Error*, Cell_Varlist(source)));
 
-    case REB_ACTION: {
-        //
-        // Ren-C will only run arity 0 functions from DO, otherwise EVAL
+    default:
+        break;
+    }
+
+    fail (Error_Use_Eval_For_Eval_Raw()); // https://trello.com/c/YMAb89dv
+}
+
+
+//
+//  evaluate: native [
+//
+//  "Run a list through the evaluator iteratively, or take a single step"
+//
+//      return: "Evaluation product, or ~[position product]~ pack if /STEP3"
+//          [~null~ any-value!]  ; /STEP3 changes primary return product [1]
+//      source [
+//          <maybe>  ; useful for `evaluate maybe ...` scenarios
+//          any-list!  ; code
+//          frame!  ; invoke the frame (no arguments, see RUN)
+//          error!  ; raise the error
+//          varargs!  ; simulates as if frame! or block! is being executed
+//      ]
+//      /step3 "Take a step and store result in var"
+//      var [~void~ any-word!]
+//          "If not void, then a variable updated with new position"
+//  ]
+//
+DECLARE_NATIVE(evaluate)
+{
+    INCLUDE_PARAMS_OF_EVALUATE;
+
+    Value* source = ARG(source); // may be only GC reference, don't lose it!
+  #if !defined(NDEBUG)
+    Set_Cell_Flag(ARG(source), PROTECTED);
+  #endif
+
+    Value* var = ARG(var);
+
+    switch (VAL_TYPE(source)) {
+      case REB_BLOCK:
+      case REB_GROUP: {
+        REBIXO indexor = Eval_At_Core(
+            SET_END(OUT), // use END to distinguish residual non-values
+            nullptr, // opt_head
+            Cell_Array(source),
+            VAL_INDEX(source),
+            VAL_SPECIFIER(source),
+            REF(step3) ? DO_MASK_NONE : DO_FLAG_TO_END
+        );
+
+        if (indexor == THROWN_FLAG)
+            return BOUNCE_THROWN;
+
+        if (not REF(step3)) {
+            if (IS_END(OUT))
+                Init_Void(OUT);
+            return OUT;
+        }
+
+        if (indexor == END_FLAG or IS_END(OUT)) {
+            if (not Is_Void(var))
+                Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
+            return nullptr; // no disruption of output result
+        }
+
+        if (not Is_Void(var))
+            Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
+
+        Copy_Cell(OUT, source);
+        VAL_INDEX(OUT) = cast(REBLEN, indexor) - 1; // was one past
+        assert(VAL_INDEX(OUT) <= VAL_LEN_HEAD(source));
+        return OUT; }
+
+      case REB_ACTION: {
+        if (REF(step3))
+            fail ("Can't use EVAL/STEP3 on actions");
+
+        // Ren-C will only run arity 0 functions from DO, otherwise REEVAL
         // must be used.  Look for the first non-local parameter to tell.
         //
         Value* param = ACT_PARAMS_HEAD(VAL_ACTION(source));
@@ -406,7 +422,10 @@ DECLARE_NATIVE(do)
             return BOUNCE_THROWN;
         return OUT; }
 
-    case REB_FRAME: {
+      case REB_FRAME: {
+        if (REF(step3))
+            fail ("Can't use EVAL/STEP3 on frames");
+
         VarList* c = Cell_Varlist(source); // checks for INACCESSIBLE
         REBACT *phase = VAL_PHASE(source);
 
@@ -459,76 +478,7 @@ DECLARE_NATIVE(do)
 
         return L->out; }
 
-    default:
-        break;
-    }
-
-    fail (Error_Use_Eval_For_Eval_Raw()); // https://trello.com/c/YMAb89dv
-}
-
-
-//
-//  evaluate: native [
-//
-//  "Run a list through the evaluator iteratively, or take a single step"
-//
-//      return: "Evaluation product, or ~[position product]~ pack if /STEP3"
-//          [~null~ any-value!]  ; /STEP3 changes primary return product [1]
-//      source [
-//          <maybe>  ; useful for `evaluate maybe ...` scenarios
-//          any-list!  ; code
-//          frame!  ; invoke the frame (no arguments, see RUN)
-//          error!  ; raise the error
-//          varargs!  ; simulates as if frame! or block! is being executed
-//      ]
-//      /step3 "Take a step and store result in var"
-//      var [any-word!]
-//          "If not blank, then a variable updated with new position"
-//  ]
-//
-DECLARE_NATIVE(evaluate)
-{
-    INCLUDE_PARAMS_OF_EVALUATE;
-
-    Value* source = ARG(source); // may be only GC reference, don't lose it!
-  #if !defined(NDEBUG)
-    Set_Cell_Flag(ARG(source), PROTECTED);
-  #endif
-
-    switch (VAL_TYPE(source)) {
-    case REB_BLOCK:
-    case REB_GROUP: {
-        DECLARE_VALUE (temp);
-        REBIXO indexor = Eval_At_Core(
-            SET_END(temp), // use END to distinguish residual non-values
-            nullptr, // opt_head
-            Cell_Array(source),
-            VAL_INDEX(source),
-            VAL_SPECIFIER(source),
-            REF(step3) ? DO_MASK_NONE : DO_FLAG_TO_END
-        );
-
-        if (indexor == THROWN_FLAG) {
-            Copy_Cell(OUT, temp);
-            return BOUNCE_THROWN;
-        }
-
-        if (not REF(step3)) {
-            Copy_Cell(OUT, temp);
-            return OUT;
-        }
-
-        if (indexor == END_FLAG or IS_END(temp))
-            return nullptr; // no disruption of output result
-
-        Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
-
-        Copy_Cell(OUT, source);
-        VAL_INDEX(OUT) = cast(REBLEN, indexor) - 1; // was one past
-        assert(VAL_INDEX(OUT) <= VAL_LEN_HEAD(source));
-        return OUT; }
-
-    case REB_VARARGS: {
+      case REB_VARARGS: {
         Value* position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
@@ -539,9 +489,8 @@ DECLARE_NATIVE(evaluate)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            DECLARE_VALUE (temp);
             REBIXO indexor = Eval_At_Core(
-                SET_END(temp),
+                SET_END(OUT),
                 nullptr, // opt_head (interpreted as nothing, not nulled cell)
                 Cell_Array(position),
                 VAL_INDEX(position),
@@ -561,23 +510,23 @@ DECLARE_NATIVE(evaluate)
             }
 
             if (not REF(step3)) {
-                Copy_Cell(OUT, temp);
+                if (IS_END(OUT))
+                    Init_Void(OUT);
                 return OUT;
             }
 
-
-            if (indexor == END_FLAG or IS_END(temp)) {
-                SET_END(position); // convention for shared data at end point
+            if (indexor == END_FLAG or IS_END(OUT)) {
+                SET_END(position);  // convention for shared data at end point
+                if (not Is_Void(var))
+                    Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
                 return nullptr;
             }
 
-            Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), source);
+            if (not Is_Void(var))
+                Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
 
-            RETURN (source); // original VARARGS! will have updated position
+            RETURN (source);  // original VARARGS! will have updated position
         }
-
-        if (not REF(step3))
-            fail ("Full evaluation of non-block varargs not in bootstrap");
 
         Level* L;
         if (not Is_Level_Style_Varargs_May_Fail(&L, source))
@@ -592,18 +541,43 @@ DECLARE_NATIVE(evaluate)
         if (IS_END(L->value))
             return nullptr;
 
-        DECLARE_VALUE (temp);
-        if (Eval_Step_In_Subframe_Throws(SET_END(temp), L, flags, child))
-            RETURN (temp);
+        while (NOT_END(L->value)) {
+            if (Eval_Step_In_Subframe_Throws(SET_END(OUT), L, flags, child))
+                return BOUNCE_THROWN;
 
-        if (IS_END(temp))
+            if (REF(step3))
+                break;
+        }
+
+        if (not REF(step3)) {
+            if (IS_END(OUT))
+                Init_Void(OUT);
+            return OUT;
+        }
+
+        if (IS_END(OUT)) {
+            if (not Is_Void(var))
+                Init_Nulled(Sink_Var_May_Fail(var, SPECIFIED));
             return nullptr;
+        }
 
-        Copy_Cell(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
+        if (not Is_Void(var))
+            Copy_Cell(Sink_Var_May_Fail(var, SPECIFIED), OUT);
 
         RETURN (source); } // original VARARGS! will have an updated position
 
-    default:
+      case REB_ERROR:
+        //
+        // FAIL is the preferred operation for triggering errors, as it has
+        // a natural behavior for blocks passed to construct readable messages
+        // and "FAIL X" more clearly communicates a failure than "EVAL X"
+        // does.  However EVAL of an ERROR! would have to raise an error
+        // anyway, so it might as well raise the one it is given...and this
+        // allows the more complex logic of FAIL to be written in Rebol code.
+        //
+        fail (cast(Error*, Cell_Varlist(source)));
+
+      default:
         panic (source);
     }
 }

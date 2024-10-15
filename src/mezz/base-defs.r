@@ -24,7 +24,7 @@ REBOL [
 
 
 unset: func [word [any-word!]] [set/any word ~]
-
+eval: :evaluate
 
 ; Start with basic debugging
 
@@ -202,7 +202,7 @@ make: enclose 'lib/make func [f] [
     if object? :f/type [
         return construct :f/type :f/def
     ]
-    do f
+    eval f
 ]
 
 

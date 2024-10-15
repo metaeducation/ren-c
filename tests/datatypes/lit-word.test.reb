@@ -5,7 +5,7 @@
 ; lit-words are active
 (
     a-value: first ['a]
-    strict-equal? to word! :a-value do reduce [:a-value]
+    strict-equal? to word! :a-value eval reduce [:a-value]
 )
 [#1342
     (word? '<)

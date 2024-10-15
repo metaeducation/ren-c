@@ -3,7 +3,7 @@
 (
     e-multiply: enclose 'multiply function [f [frame!]] [
         diff: abs (f/value1 - f/value2)
-        result: do f
+        result: eval f
         return result + diff
     ]
 
@@ -13,7 +13,7 @@
     n-add: enclose 'add function [f [frame!]] [
         if 10 = f/value1 [return blank]
         f/value1: 5
-        do f
+        eval f
     ]
 
     did all [

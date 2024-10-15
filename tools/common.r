@@ -249,7 +249,7 @@ for-each-record: function [
         ]
 
         set var make object! spec
-        do body
+        eval body
     ]
 ]
 

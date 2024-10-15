@@ -84,7 +84,7 @@ for-each-line: function [
         ]
         text: next eol
 
-        do body
+        eval body
     ]
 ]
 

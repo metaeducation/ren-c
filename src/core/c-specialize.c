@@ -919,7 +919,7 @@ DECLARE_NATIVE(specialize)
 // don't need to do anything special to a BLOCK! passed to DO...no copying
 // or otherwise.  Just run it when the function gets called.
 //
-// Yet `does [...]` isn't *quite* like `specialize 'do [source: [...]]`.  The
+// Yet `does [...]` isn't *quite* like `specialize 'eval [source: [...]]`.  The
 // difference is subtle, but important when interacting with bindings to
 // fields in derived objects.  That interaction cannot currently resolve such
 // bindings without a copy, so it is made on demand.
@@ -1024,7 +1024,7 @@ DECLARE_NATIVE(does)
     MISC(paramlist).meta = nullptr; // REDESCRIBE can be used to add help
 
     //
-    // `does [...]` and `does do [...]` are not exactly the same.  The
+    // `does [...]` and `does eval [...]` are not exactly the same.  The
     // generated ACTION! of the first form uses Block_Dispatcher() and
     // does on-demand relativization, so it's "kind of like" a `func []`
     // in forwarding references to members of derived objects.  Also, it

@@ -259,7 +259,7 @@ INLINE void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
 
 // Endability is distinct from optional, and it means that a parameter is
 // willing to accept being at the end of the input.  This means either
-// an infix dispatch's left argument is missing (e.g. `do [+ 5]`) or an
+// an infix dispatch's left argument is missing (e.g. `eval [+ 5]`) or an
 // ordinary argument hit the end (e.g. the trick used for `>> help` when
 // the arity is 1 usually as `>> help foo`)
 //

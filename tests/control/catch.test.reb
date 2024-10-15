@@ -12,7 +12,7 @@
 (null? catch [()])
 (error? catch [throw sys/util/rescue [1 / 0]])
 (1 = catch [throw 1])
-(void? catch [throw do []])
+(void? catch [throw eval []])
 (1 = catch [throw 1])
 ; catch/name results
 (null? catch/name [] 'catch)

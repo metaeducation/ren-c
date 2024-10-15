@@ -38,13 +38,13 @@ host-prot: default [_]
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    enclose 'print func [f] [if not system/options/quiet [do f]]
+    enclose 'print func [f] [if not system/options/quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    enclose 'print func [f] [if system/options/verbose [do f]]
+    enclose 'print func [f] [if system/options/verbose [eval f]]
 )
 
 make-banner: function [

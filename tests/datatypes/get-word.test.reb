@@ -4,7 +4,7 @@
 (get-word! = type of first [:a])
 (
     ; context-less get-word
-    e: sys/util/rescue [do make block! ":a"]
+    e: sys/util/rescue [eval make block! ":a"]
     e/id = 'not-bound
 )
 (

@@ -1096,7 +1096,7 @@ static void Mark_Level_Stack_Deep(void)
             Queue_Mark_Array_Deep(L->source->array);
 
         // END is possible, because the frame could be sitting at the end of
-        // a block when a function runs, e.g. `do [zero-arity]`.  That frame
+        // a block when a function runs, e.g. `eval [zero-arity]`.  That frame
         // will stay on the stack while the zero-arity function is running.
         // The array still might be used in an error, so can't GC it.
         //

@@ -1227,7 +1227,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         else if (Get_Cell_Flag(value, ACTION_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
             assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
-            if (not TYPE_CHECK(typeset, REB_MAX_NULLED)) // what do [] returns
+            if (not TYPE_CHECK(typeset, REB_MAX_NULLED)) // what eval [] returns
                 ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
         }
         else {

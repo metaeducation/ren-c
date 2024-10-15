@@ -107,7 +107,7 @@ help: function [
 ][
     if null? topic [
         ;
-        ; Was just `>> help` or `do [help]` or similar.
+        ; Was just `>> help` or `eval [help]` or similar.
         ; Print out generic help message.
         ;
         print trim/auto copy {

@@ -288,8 +288,8 @@ REBTYPE(Pair)
         Copy_Cell(D_ARG(2), second2);  // use extracted arg y vs pair arg
     Value* y_frame = rebValue("copy", frame);
 
-    Value* x = rebValue(rebEval(NAT_VALUE(do)), rebR(x_frame));
-    Value* y = rebValue(rebEval(NAT_VALUE(do)), rebR(y_frame));
+    Value* x = rebValue(rebEval(NAT_VALUE(evaluate)), rebR(x_frame));
+    Value* y = rebValue(rebEval(NAT_VALUE(evaluate)), rebR(y_frame));
 
     Init_Pair(OUT, x, y);
 

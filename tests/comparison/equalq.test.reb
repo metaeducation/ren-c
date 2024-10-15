@@ -594,5 +594,5 @@
 [#859 (
     a: copy the ()
     insert/only a a
-    error? sys/util/rescue [do a]
+    error? sys/util/rescue [eval a]
 )]

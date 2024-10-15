@@ -4,7 +4,7 @@
 (action! = type of :reduce)
 [#1659 (
     ; natives are active
-    same? blank! do reduce [
+    same? blank! eval reduce [
         (specialize 'of [property: 'type]) blank
     ]
 )]

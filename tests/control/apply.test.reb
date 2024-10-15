@@ -51,7 +51,7 @@
         ]
     ]
 
-    do frame  comment {nulls are optionals}
+    eval frame  comment {nulls are optionals}
 ])
 
 [#44 (

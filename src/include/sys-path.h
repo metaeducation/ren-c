@@ -63,7 +63,7 @@
 //     >> code: compose [(make set-path! [12-Dec-2012 day]) 1]
 //     == [12-Dec-2012/day: 1]
 //
-//     >> do code
+//     >> eval code
 //
 //     >> probe code
 //     [1-Dec-2012/day: 1]

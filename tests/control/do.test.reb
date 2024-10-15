@@ -1,7 +1,7 @@
 ; functions/control/do.r
 (
     success: false
-    do [success: true]
+    eval [success: true]
     success
 )
 (1 == reeval :abs -1)
@@ -13,99 +13,99 @@
     a-value: charset ""
     same? a-value reeval a-value
 )
-; do block start
-(void? do [])
-(:abs = do [:abs])
+; eval block start
+(void? eval [])
+(:abs = eval [:abs])
 (
     a-value: #{}
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: charset ""
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: []
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
-(same? blank! do reduce [blank!])
-(1/Jan/0000 = do [1/Jan/0000])
-(0.0 == do [0.0])
-(1.0 == do [1.0])
+(same? blank! eval reduce [blank!])
+(1/Jan/0000 = eval [1/Jan/0000])
+(0.0 == eval [0.0])
+(1.0 == eval [1.0])
 (
     a-value: me@here.com
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
-(error? do [sys/util/rescue [1 / 0]])
+(error? eval [sys/util/rescue [1 / 0]])
 (
     a-value: %""
-    same? a-value do reduce [a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: does []
-    same? :a-value do [:a-value]
+    same? :a-value eval [:a-value]
 )
 (
     a-value: first [:a-value]
-    :a-value == do reduce [:a-value]
+    :a-value == eval reduce [:a-value]
 )
-(#"^@" == do [#"^@"])
-(0 == do [0])
-(1 == do [1])
-(#a == do [#a])
+(#"^@" == eval [#"^@"])
+(0 == eval [0])
+(1 == eval [1])
+(#a == eval [#a])
 (
     a-value: first ['a/b]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: first ['a]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
-(#[true] == do [#[true]])
-(#[false] == do [#[false]])
-($1 == do [$1])
-(same? :append do [:append])
-(blank? do [_])
+(#[true] == eval [#[true]])
+(#[false] == eval [#[false]])
+($1 == eval [$1])
+(same? :append eval [:append])
+(blank? eval [_])
 (
     a-value: make object! []
-    same? :a-value do reduce [:a-value]
+    same? :a-value eval reduce [:a-value]
 )
 (
     a-value: first [()]
-    same? :a-value do [:a-value]
+    same? :a-value eval [:a-value]
 )
-(same? get '+ do [get '+])
-(0x0 == do [0x0])
+(same? get '+ eval [get '+])
+(0x0 == eval [0x0])
 (
     a-value: 'a/b
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: make port! http://
-    port? do reduce [:a-value]
+    port? eval reduce [:a-value]
 )
-(/a == do [/a])
+(/a == eval [/a])
 (
     a-value: first [a/b:]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: first [a:]
-    :a-value == do [:a-value]
+    :a-value == eval [:a-value]
 )
 (
     a-value: ""
-    same? :a-value do reduce [:a-value]
+    same? :a-value eval reduce [:a-value]
 )
 (
     a-value: make tag! ""
-    same? :a-value do reduce [:a-value]
+    same? :a-value eval reduce [:a-value]
 )
-(0:00 == do [0:00])
-(0.0.0 == do [0.0.0])
-(void? do [()])
-('a == do ['a])
-; do block end
+(0:00 == eval [0:00])
+(0.0.0 == eval [0.0.0])
+(void? eval [()])
+('a == eval ['a])
+; eval block end
 (
     a-value: blank!
     same? a-value reeval a-value
@@ -152,14 +152,14 @@
 (false = reeval false)
 ($1 == reeval $1)
 (null? reeval (specialize 'of [property: 'type]) null)
-(null? do void)
+(null? eval void)
 (
     a-value: make object! []
     same? :a-value reeval :a-value
 )
 (
     a-value: first [(2)]
-    2 == do as block! :a-value
+    2 == eval as block! :a-value
 )
 (
     a-value: 'a/b
@@ -197,13 +197,13 @@
 )
 ; RETURN stops the evaluation
 (
-    f1: func [] [do [return 1 2] 2]
+    f1: func [] [eval [return 1 2] 2]
     1 = f1
 )
 ; THROW stops evaluation
 (
     1 = catch [
-        do [
+        eval [
             throw 1
             2
         ]
@@ -213,7 +213,7 @@
 ; BREAK stops evaluation
 (
     null? repeat 1 [
-        do [
+        eval [
             break
             2
         ]
@@ -237,7 +237,7 @@
     value: <untouched>
     did all [
         null? evaluate/step3 [] 'value
-        value = <untouched>
+        null? value
     ]
 )
 (
@@ -249,13 +249,13 @@
     1 = f1
 )
 ; recursive behaviour
-(1 = do [do [1]])
-(1 = do "do [1]")
+(1 = eval [eval [1]])
+(1 = do "eval [1]")
 (1 == 1)
 (3 = reeval :reeval :add 1 2)
 ; infinite recursion for block
 (
-    blk: [do blk]
+    blk: [eval blk]
     error? sys/util/rescue blk
 )
 ; infinite recursion for string

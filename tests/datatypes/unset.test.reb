@@ -7,7 +7,7 @@
     is-barrier?: func [x [<end> integer!]] [null? x]
     is-barrier? ()
 )
-(void! = type of (do []))
+(void! = type of (eval []))
 (not nothing? 1)
 
 [

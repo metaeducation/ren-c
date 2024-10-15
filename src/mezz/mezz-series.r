@@ -329,7 +329,7 @@ reword: function [
                         v: select/(if case_REWORD [/case]) values keyword-match
                         append out case [
                             action? :v [v :keyword-match]
-                            block? :v [do :v]
+                            block? :v [eval :v]
                             default [:v]
                         ]
                     )
@@ -481,7 +481,7 @@ collect-with: func [
 
             f/series: out: default [make block! 16] ;-- won't return null now
             :f/value ;-- ELIDE leaves as result (F/VALUE invalid after DO F)
-            elide do f
+            elide eval f
         ]
     )[
         series: <replaced>
@@ -495,7 +495,7 @@ collect-with: func [
         ;-- lit-word! means variable exists, just set it and DO body as-is
 
         set name :keeper
-        do body
+        eval body
     ]
 
     :out
@@ -723,7 +723,7 @@ find-all: function [
         set series find get series :value
         (set series orig  false) ;-- reset series and break loop
     ]][
-        do body
+        eval body
         series: next series
     ]
 ]

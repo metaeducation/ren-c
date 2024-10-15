@@ -4,5 +4,5 @@
 (action? get '+)
 
 ; #1934
-(error? sys/util/rescue [do reduce [1 get '+ 2]])
-(error? sys/util/rescue [do reduce [:+ 1 2]])
+(error? sys/util/rescue [eval reduce [1 get '+ 2]])
+(error? sys/util/rescue [eval reduce [:+ 1 2]])

@@ -145,7 +145,7 @@ do*: function [
             ;
             ;     do "append {abc} {de}"
             ;
-            set the result: do code ;-- !!! pass args implicitly?
+            set the result: eval code ;-- !!! pass args implicitly?
         ] then :finalizer/quit
     ] else [
         ; Make the new script object
@@ -170,7 +170,7 @@ do*: function [
         ][
             intern code   ; Bind the user script
             catch/quit [
-                set the result: do code
+                set the result: eval code
             ] then :finalizer/quit
         ]
     ]

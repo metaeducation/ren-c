@@ -120,7 +120,7 @@ DECLARE_NATIVE(continue)
         Init_Void(ARG(value));
 
     Copy_Cell(OUT, NAT_VALUE(continue));
-    CONVERT_NAME_TO_THROWN(OUT, ARG(value)); // null if e.g. `do [continue]`
+    CONVERT_NAME_TO_THROWN(OUT, ARG(value)); // null if e.g. `eval [continue]`
 
     return BOUNCE_THROWN;
 }

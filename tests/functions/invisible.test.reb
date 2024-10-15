@@ -3,13 +3,13 @@
 ; https://trello.com/c/dWQnsspG
 
 (
-    1 = do [comment "a" 1]
+    1 = eval [comment "a" 1]
 )
 (
-    1 = do [1 comment "a"]
+    1 = eval [1 comment "a"]
 )
 (
-    void? do [comment "a"]
+    void? eval [comment "a"]
 )
 
 (
@@ -43,13 +43,13 @@
 ; https://trello.com/c/snnG8xwW
 
 (
-    1 = do [elide "a" 1]
+    1 = eval [elide "a" 1]
 )
 (
-    1 = do [1 elide "a"]
+    1 = eval [1 elide "a"]
 )
 (
-    void? do [elide "a"]
+    void? eval [elide "a"]
 )
 
 (
@@ -106,10 +106,10 @@
 )
 
 (
-    void? do [end]
+    void? eval [end]
 )
 (
-    3 = do [1 + 2 end 10 + 20 | 100 + 200]
+    3 = eval [1 + 2 end 10 + 20 | 100 + 200]
 )
 (
     ok? sys/util/rescue [reeval (func [x [<end>]] []) end 1 2 3]

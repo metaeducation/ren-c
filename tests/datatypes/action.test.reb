@@ -5,5 +5,5 @@
 (action! = type of :abs)
 ; actions are active
 [#1659
-    (1 == do reduce [:abs -1])
+    (1 == eval reduce [:abs -1])
 ]

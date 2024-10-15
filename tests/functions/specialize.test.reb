@@ -45,14 +45,14 @@
     append-10: specialize 'append [value: 10]
     f: make frame! :append-10
     f/series: copy [a b c]
-    do copy f ;-- COPY before DO allows reuse of F, only the copy is "stolen"
-    [a b c 10 10] = do f
+    eval copy f ;-- COPY before EVAL preserves F, only the copy is "stolen"
+    [a b c 10 10] = eval f
 )
 (
     f: make frame! 'append/only
     f/series: copy [a b c]
     f/value: [d e f]
-    [a b c [d e f]] = do f
+    [a b c [d e f]] = eval f
 )
 (
     foo: func [] [
@@ -125,7 +125,7 @@
         [specialize 'append/asdf []]
         [specialize the (specialize 'append/only [])/only []]
     ][
-        is-bad: me and ['bad-refine = (sys/util/rescue [do code])/id]
+        is-bad: me and ['bad-refine = (sys/util/rescue [eval code])/id]
     ]
 
     is-bad
@@ -137,8 +137,8 @@
     f: make frame! :ap10d
     f/series: copy [a b c]
     did all [
-        [a b c 10] = do copy f
+        [a b c 10] = eval copy f
         f/count: 2
-        [a b c 10 10 10] = do f
+        [a b c 10 10 10] = eval f
     ]
 )

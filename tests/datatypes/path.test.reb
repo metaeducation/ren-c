@@ -31,7 +31,7 @@
 )
 (
     blk: reduce [charset "a" 3]
-    3 == do reduce [as path! reduce ['blk charset "a"]]
+    3 == eval reduce [as path! reduce ['blk charset "a"]]
 )
 (
     blk: [[] 3]
@@ -39,11 +39,11 @@
 )
 (
     blk: [_ 3]
-    3 == do [blk/(_)]
+    3 == eval [blk/(_)]
 )
 (
     blk: [blank 3]
-    3 == do [blk/blank]
+    3 == eval [blk/blank]
 )
 (
     a-value: 1-Jan-0000

@@ -52,7 +52,7 @@ r3-alpha-quote: func [:spelling [word! text!]] [
 +: -: *: and+: or+: xor+: null
 
 append lib [/]  ; `/:` is not legal in bootstrap, use painful workaround
-do compose/deep [lib/(the /): infix tighten :divide]
+eval compose/deep [lib/(the /): infix tighten :divide]
 
 for-each [math-op function-name] [
     +       add

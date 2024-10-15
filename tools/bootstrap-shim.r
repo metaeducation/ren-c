@@ -101,6 +101,10 @@ trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
+; ALIAS DO AS EVAL
+;
+eval: evaluate: :do
+
 ; "WORKAROUND FOR BUGGY PRINT IN BOOTSTRAP EXECUTABLE"
 ;
 ; Commit #8994d23 circa Dec 2018 has sporadic problems printing large chunks
@@ -178,7 +182,7 @@ trap: func [] [fail/blame "USE RESCUE instead of TRAP for bootstrap" 'return]
 lib-read: copy :lib/read
 lib/read: read: enclose :lib-read function [f [frame!]] [
     saved-source: :f/source
-    if error? e: sys/util/rescue [bin: do f] [
+    if error? e: sys/util/rescue [bin: eval f] [
         parse2 e/message [
             [
                 {The system cannot find the } ["file" | "path"] { specified.}
@@ -316,9 +320,9 @@ parse2: func [input rules /case /match] [
     f/rules: rules
     f/case: case
     if match [
-        return either do f [input] [null]
+        return either eval f [input] [null]
     ]
-    do f else [
+    eval f else [
         probe rules
         fail "Error: PARSE rules did not match (or did not reach end)"
     ]

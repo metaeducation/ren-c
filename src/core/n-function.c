@@ -223,7 +223,7 @@ DECLARE_NATIVE(return)
     }
     else {
         if (Is_Endish_Nulled(v))
-            Init_Nothing(v);  // `do [return]` acts as `return trash`
+            Init_Nothing(v);  // `eval [return]` acts as `return trash`
 
         // Check type NOW instead of waiting and letting Eval_Core_Throws()
         // check it.  Reasoning is that the error can indicate the callsite,

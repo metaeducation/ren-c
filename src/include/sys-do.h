@@ -30,8 +30,8 @@
 // running to the end of its input, and always produces a single value...
 // typically the last value an evaluation step computed.
 //
-// If no evaluative product can be produced (as in `do [comment "hi"]` or
-// `do [| | ()]` or just plain `do []`) then Do_XXX() will synthesize a trash.
+// If no evaluative product can be produced (as in `eval [comment "hi"]` or
+// `eval [| | ()]` or just plain `eval []`) then Do_XXX() will synthesize a trash.
 //
 
 

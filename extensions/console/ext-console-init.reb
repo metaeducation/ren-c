@@ -52,14 +52,14 @@ boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
     ;; !!! Duplicates code in %host-start.r, where this isn't exported.
-    enclose 'print func [f] [if not system/options/quiet [do f]]
+    enclose 'print func [f] [if not system/options/quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
     ;; !!! Duplicates code in %host-start.r, where this isn't exported.
-    enclose 'print func [f] [if system/options/verbose [do f]]
+    enclose 'print func [f] [if system/options/verbose [eval f]]
 )
 
 boot-welcome:
@@ -138,7 +138,7 @@ console!: make object! [
         ]
 
         case [
-            void? :v [  ; nothingness (e.g. result of do [] or if false [...])
+            void? :v [  ; nothingness (e.g. result of eval [] or if false [...])
                 print [result "~void~  ; anti"]
             ]
 

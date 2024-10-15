@@ -41,7 +41,7 @@
         ; Rather than have MATCH return a falsey result in these cases of
         ; success, pass back a NOTHING in the hopes of drawing attention.
 
-        set the result: do f  ; can't access f/arg after the DO
+        set the result: eval f  ; can't access f/arg after the DO
 
         if not :arg and [not null? :result] [
             return ~  ; nothing if matched a falsey type
