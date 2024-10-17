@@ -238,10 +238,10 @@ DECLARE_NATIVE(shove)
 //
 //  /evaluate: native [
 //
-//  "Perform a single evaluator step, returning the next source position"
+//  "Run a list through the evaluator iteratively, or take a single step"
 //
-//      return: "Evaluation product, or ~[position product]~ pack if /NEXT"
-//          [any-atom?]  ; /NEXT changes primary return product [1]
+//      return: "Evaluation product, or ~[position product]~ pack if :STEP"
+//          [any-atom?]  ; :STEP changes primary return product [1]
 //      source [
 //          <maybe>  ; useful for `evaluate maybe ...` scenarios
 //          any-list? get-group? set-group? get-block? set-block?  ; code

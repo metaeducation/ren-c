@@ -192,7 +192,7 @@ wrap-module: 'no
         ; Note: want the file-like behavior of preserving the directory.  :-(
         ; Implement via wrapper.
         ;
-        f.source: rewrite-source-for-bootstrap-exe read/string file
+        f.source: rewrite-source-for-bootstrap-exe read:string file
 
         ; We do not want top-level set-words to be automatically cleared out,
         ; in case you plan to overwrite something like IF but are using the
@@ -213,7 +213,7 @@ wrap-module: 'no
         ]
         wrap-module: 'no  ; only wrap one level of DO
     ]
-    old-do f
+    eval f
     elide system.script: old-system-script
 ]
 
@@ -293,7 +293,7 @@ already-imported: make map! []  ; avoid importing things twice
         file? source
         not dir? source
     ][use [item] [
-        source: rewrite-source-for-bootstrap-exe read/string source
+        source: rewrite-source-for-bootstrap-exe read:string source
         source: next find source unspaced ["]" newline]  ; skip header
     ]]
 ]

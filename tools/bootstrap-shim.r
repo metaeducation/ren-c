@@ -158,8 +158,6 @@ sys.util/rescue [
 ; 1. Using SET-WORD!s here also helps searchability if you're looking for
 ;    where `func3: ...` is defined.
 
-/eval: do/
-
 for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     parse3:                     ; PARSE is a completely new model ("UPARSE")
     func3:                      ; FUNC refinements are their own args, more...
@@ -820,7 +818,7 @@ get-path!: func3 [] [
     ;
     result: _
     while [all [params.1, not refinement3? params.1]] [
-        args: evaluate/set args 'result
+        args: evaluate:step3 args 'result
         f.(to word! params.1): :result
         params: next params
     ]
@@ -832,7 +830,7 @@ get-path!: func3 [] [
         pos: find params to refinement3! args.1 else [
             fail ["Unknown refinement" args.1]
         ]
-        args: evaluate:set (next args) 'result
+        args: evaluate:step3 (next args) 'result
         any [
             not :pos.2
             refinement3? pos.2  ; old refinement in params block
