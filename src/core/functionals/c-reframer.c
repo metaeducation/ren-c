@@ -353,25 +353,22 @@ DECLARE_NATIVE(reframer)
         &binder
     );
 
-    Option(Error*) error = nullptr;  // can't fail() with binder in effect
-
     REBLEN param_index = 0;
 
     if (TOP_INDEX != STACK_BASE) {
-        error = Error_User("REFRAMER can't use partial specializions ATM");
-        goto cleanup_binder;
+        SHUTDOWN_BINDER(&binder);
+        fail ("REFRAMER can't use partial specializions ATM");
     }
 
-  blockscope {
     const Key* key;
     const Param* param;
 
     if (REF(parameter)) {
         const Symbol* symbol = Cell_Word_Symbol(ARG(parameter));
-        param_index = Get_Binder_Index_Else_0(&binder, symbol);
+        param_index = maybe Try_Get_Binder_Index(&binder, symbol);
         if (param_index == 0) {
-            error = Error_No_Arg(label, symbol);
-            goto cleanup_binder;
+            SHUTDOWN_BINDER(&binder);
+            fail (Error_No_Arg(label, symbol));
         }
         key = Varlist_Key(exemplar, param_index);
         param = cast_PAR(Varlist_Slot(exemplar, param_index));
@@ -380,6 +377,8 @@ DECLARE_NATIVE(reframer)
         param = Last_Unspecialized_Param(&key, shim);
         param_index = param - ACT_PARAMS_HEAD(shim) + 1;
     }
+
+    SHUTDOWN_BINDER(&binder);
 
     // Make sure the parameter is able to accept FRAME! arguments (the type
     // checking will ultimately use the same slot we overwrite here!)
@@ -401,21 +400,12 @@ DECLARE_NATIVE(reframer)
         DECLARE_ATOM (param_word);
         Init_Word(param_word, Key_Symbol(key));
 
-        error = Error_Expect_Arg_Raw(
+        fail (Error_Expect_Arg_Raw(
             label_word,
             Datatype_From_Kind(REB_FRAME),
             param_word
-        );
-        goto cleanup_binder;
+        ));
     }
-  }
-
-  cleanup_binder: {
-    SHUTDOWN_BINDER(&binder);
-
-    if (error)  // once binder is cleaned up, safe to raise errors
-        fail (unwrap error);
-  }
 
     // We need the dispatcher to be willing to start the reframing step even
     // though the frame to be processed isn't ready yet.  So we have to

@@ -314,8 +314,7 @@ void Collect_Start(
     Option(Context*) context
 ){
     cl->initial_flags = flags;
-
-    cl->stack_base = TOP_INDEX;
+    cl->next_index = 1;
 
     INIT_BINDER(&cl->binder);
 
@@ -335,6 +334,8 @@ void Collect_Start(
     }
     else
         cl->sea = nullptr;
+
+    cl->base_hitch = cl->binder.hitch_list;
 }
 
 
@@ -346,14 +347,6 @@ void Collect_Start(
 //
 void Collect_End(Collector *cl)
 {
-    StackIndex index = TOP_INDEX;
-    for (; index != cl->stack_base; --index) {
-        const Symbol* symbol = Cell_Word_Symbol(TOP);
-        assert(Get_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO));
-        UNUSED(symbol);
-        DROP();
-    }
-
     SHUTDOWN_BINDER(&cl->binder);
 
     Corrupt_If_Debug(*cl);
@@ -381,17 +374,17 @@ void Collect_Context_Keys(
 
     for (; key != tail; ++key) {
         const Symbol* symbol = Key_Symbol(key);
-        if (not Try_Add_Binder_Index(
+        if (Try_Add_Binder_Index(
             &cl->binder,
             symbol,
-            Collector_Index_If_Pushed(cl)
+            cl->next_index
         )){
+            ++cl->next_index;
+        }
+        else {  // don't collect if already in bind table
             if (duplicate and not *(unwrap duplicate))  // returns first dup
                 *(unwrap duplicate) = symbol;
-
-            continue;  // don't collect if already in bind table
         }
-        Init_Word(PUSH(), symbol);
     }
 }
 
@@ -431,11 +424,14 @@ static void Collect_Inner_Loop(
                     continue;
             }
 
-            if (not Try_Add_Binder_Index(
+            if (Try_Add_Binder_Index(
                 &cl->binder,
                 symbol,
-                Collector_Index_If_Pushed(cl)
+                cl->next_index
             )){
+                ++cl->next_index;
+            }
+            else {
                 if (flags & COLLECT_NO_DUP) {
                     Collect_End(cl);  // IMPORTANT: Can't fail with binder
 
@@ -443,10 +439,9 @@ static void Collect_Inner_Loop(
                     Init_Word(duplicate, symbol);
                     fail (Error_Dup_Vars_Raw(duplicate));  // cleans bindings
                 }
-                continue;  // tolerate duplicate
+                // tolerate duplicate
             }
 
-            Init_Word(PUSH(), symbol);
             continue;
         }
 
@@ -496,9 +491,9 @@ void Wrap_Extend_Core(
 
     Collect_Inner_Loop(cl, flags, at, tail);
 
-    StackIndex i;
-    for (i = cl->stack_base + 1; i <= TOP_INDEX; ++i) {
-        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_Cell_At(i));
+    Stub* hitch = cl->binder.hitch_list;
+    for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
+        const Symbol* symbol = INODE(BindSymbol, hitch);
         Init_Nothing(Append_Context(context, symbol));
     }
 
@@ -654,7 +649,7 @@ DECLARE_NATIVE(collect_words)
 
             if (not Try_Add_Binder_Index(&cl->binder, symbol, -1)) {
               #if !defined(NDEBUG)  // count dups, overkill [3]
-                REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
+                REBINT i = unwrap Try_Get_Binder_Index(&cl->binder, symbol);
                 assert(i < 0);
                 Update_Binder_Index(&cl->binder, symbol, i - 1);
               #endif
@@ -672,18 +667,22 @@ DECLARE_NATIVE(collect_words)
 
   //=//// RUN COMMON COLLECTION CODE //////////////////////////////////////=//
 
-    // 1. We don't use Pop_Stack_Values_Core() because we want the symbols
-    //    on the stack so that Collect_End() can remove them from the binder.
-
     const Element* block_tail;
     const Element* block_at = Cell_List_At(&block_tail, ARG(block));
     Collect_Inner_Loop(cl, flags, block_at, block_tail);
 
-    Array* array = Copy_Values_Len_Shallow_Core(  // let Collect_End() pop [1]
-        Data_Stack_At(Element, cl->stack_base + 1),
-        TOP_INDEX - cl->stack_base,
-        NODE_FLAG_MANAGED
-    );
+    StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
+
+    Stub* hitch = cl->binder.hitch_list;
+    for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
+        REBINT index = VAL_INT32(Stub_Cell(hitch));
+        assert(index != 0);
+        if (index < 0)
+            continue;
+        Init_Word(PUSH(), INODE(BindSymbol, hitch));
+    }
+
+    Array* array = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
 
   //=//// REMOVE DUMMY BINDINGS FOR THE IGNORED SYMBOLS ///////////////////=//
 
@@ -720,7 +719,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     Collect_Inner_Loop(cl, flags, head, tail);  // collect keys from array
 
-    Length len = TOP_INDEX - cl->stack_base;
+    Length len = cl->next_index - 1;  // is next index, so subtract 1
 
   //=//// CREATE NEW VARLIST AND CREATE (OR REUSE) KEYLIST ////////////////=//
 
@@ -749,12 +748,15 @@ VarList* Make_Varlist_Detect_Managed(
             FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
         );
 
-        OnStack(Element*) word = Data_Stack_At(Element, cl->stack_base) + 1;
-        Key* key = Flex_Head(Key, keylist);
-        for (; word != TOP + 1; ++word, ++key)
-            Init_Key(key, Cell_Word_Symbol(word));
-
         Set_Flex_Used(keylist, len);
+
+        Key* key = Flex_Tail(Key, keylist);  // keys are backwards order
+        Stub* hitch = cl->binder.hitch_list;  // want ALL, not cl->base_hitch
+        for (; hitch != nullptr; hitch = LINK(NextBind, hitch)) {
+            const Symbol* s = INODE(BindSymbol, hitch);
+            --key;
+            Init_Key(key, s);
+        }
 
         Tweak_Keylist_Of_Varlist_Unique(a, keylist);
         if (parent)

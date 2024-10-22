@@ -66,7 +66,7 @@ void Bind_Values_Inner_Loop(
             }
           }
           else {
-            REBINT n = Get_Binder_Index_Else_0(binder, symbol);
+            REBINT n = maybe Try_Get_Binder_Index(binder, symbol);
             if (n > 0) {
                 //
                 // A binder index of 0 should clearly not be bound.  But
@@ -935,7 +935,9 @@ void Clonify_And_Bind_Relative(
         and Any_Wordlike(v)
         and IS_WORD_UNBOUND(v)  // use unbound words as "in frame" cache [1]
     ){
-        REBINT n = Get_Binder_Index_Else_0(unwrap binder, Cell_Word_Symbol(v));
+        REBINT n = maybe Try_Get_Binder_Index(
+            unwrap binder, Cell_Word_Symbol(v)
+        );
         CELL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
         BINDING(v) = unwrap relative;
     }

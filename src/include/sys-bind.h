@@ -278,7 +278,7 @@ INLINE void Add_Binder_Index(
 }
 
 
-INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
+INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
     struct Reb_Binder *binder,
     const Symbol* s
 ){
@@ -321,17 +321,15 @@ INLINE void Update_Binder_Index(
 
 struct CollectorStruct {
     CollectFlags initial_flags;
-    StackIndex stack_base;
+    Stub* base_hitch;
     Option(SeaOfVars*) sea;
     struct Reb_Binder binder;
+    REBINT next_index;
 };
 
 #define DECLARE_COLLECTOR(name) \
-    struct CollectorStruct collector_struct; \
-    struct CollectorStruct* name = &collector_struct; \
-
-#define Collector_Index_If_Pushed(collector) \
-    ((TOP_INDEX - (collector)->stack_base) + 1)  // index of *next* item to add
+    Collector collector_struct; \
+    Collector* name = &collector_struct; \
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));

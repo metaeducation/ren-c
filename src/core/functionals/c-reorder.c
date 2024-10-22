@@ -176,7 +176,7 @@ DECLARE_NATIVE(reorder)
             goto cleanup_binder;
         }
 
-        REBLEN index = Get_Binder_Index_Else_0(&binder, symbol);
+        REBINT index = maybe Try_Get_Binder_Index(&binder, symbol);
         if (index <= 0) {
             error = Error_Bad_Parameter_Raw(item);
             goto cleanup_binder;
@@ -212,7 +212,7 @@ DECLARE_NATIVE(reorder)
 
         // If we saw the parameter, we set its index to -1.
         //
-        bool mentioned = (-1 == Get_Binder_Index_Else_0(&binder, symbol));
+        bool mentioned = (-1 == Try_Get_Binder_Index(&binder, symbol));
 
         if (
             not error  // don't report an error here if one is pending

@@ -49,7 +49,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
         c  // preload binder with words already in context
     );
 
-    REBLEN first_new_index = Collector_Index_If_Pushed(cl);
+    REBLEN start_len = cl->next_index - 1;
 
     // Do a pass to collect the [set-word: <value>] keys and add them to the
     // binder.  But don't modify the object yet, in case the block turns out
@@ -71,9 +71,9 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
         if (Try_Add_Binder_Index(
             &cl->binder,
             symbol,
-            Collector_Index_If_Pushed(cl)
+            cl->next_index
         )){
-            Init_Word(PUSH(), Cell_Word_Symbol(word));
+            ++cl->next_index;
         }
         if (word + 1 == tail)  // catch malformed case with no value (#708)
             break;
@@ -81,14 +81,21 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
   }
 
   blockscope {  // Append new words to obj
-    REBLEN num_added = Collector_Index_If_Pushed(cl) - first_new_index;
-    Expand_Varlist(c, num_added);
+    REBLEN len = cl->next_index - 1;
+    Expand_Varlist(c, len - start_len);  // expand by amount added
+    Set_Flex_Len(c, len + 1);  // include rootvar
+    Set_Flex_Len(Keylist_Of_Varlist(c), len);
 
-    OnStack(Element*) new_word =
-        Data_Stack_At(Element, cl->stack_base) + first_new_index;
+    Stub* hitch = cl->binder.hitch_list;
+    Value* var = Flex_Tail(Value, c);
+    Key* key = Flex_Tail(Key, Keylist_Of_Varlist(c));
 
-    for (; new_word != TOP + 1; ++new_word)
-        Init_Nothing(Append_Context(c, Cell_Word_Symbol(new_word)));
+    for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
+        --var;
+        --key;
+        Init_Nothing(var);
+        *key = INODE(BindSymbol, hitch);
+    }
   }
 
   blockscope {  // Set new values to obj words
@@ -96,7 +103,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     for (; word != tail; word += 2) {
         const Symbol* symbol = Cell_Word_Symbol(word);
 
-        REBLEN i = Get_Binder_Index_Else_0(&cl->binder, symbol);
+        REBLEN i = unwrap Try_Get_Binder_Index(&cl->binder, symbol);
         assert(i != 0);
         assert(*Varlist_Key(c, i) == symbol);
         Value* var = Varlist_Slot(c, i);
