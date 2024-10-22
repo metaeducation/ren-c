@@ -2148,8 +2148,8 @@ DECLARE_NATIVE(while)
 
     switch (STATE) {
       case ST_WHILE_INITIAL_ENTRY : goto initial_entry;
-      case ST_WHILE_EVALUATING_CONDITION : goto condition_was_evaluated;
-      case ST_WHILE_EVALUATING_BODY : goto body_was_evaluated;
+      case ST_WHILE_EVALUATING_CONDITION : goto condition_eval_in_spare;
+      case ST_WHILE_EVALUATING_BODY : goto body_eval_in_out;
       default: assert(false);
     }
 
@@ -2165,7 +2165,9 @@ DECLARE_NATIVE(while)
     STATE = ST_WHILE_EVALUATING_CONDITION;
     return CONTINUE(SPARE, condition);
 
-} condition_was_evaluated: {  ////////////////////////////////////////////////
+} condition_eval_in_spare: {  ////////////////////////////////////////////////
+
+    Decay_If_Unstable(SPARE);
 
     if (Is_Inhibitor(stable_SPARE)) {  // falsey condition => last body result
         if (Is_Fresh(OUT))
@@ -2177,7 +2179,7 @@ DECLARE_NATIVE(while)
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
     return CATCH_CONTINUE_BRANCH(OUT, body, SPARE);  // catch break/continue
 
-} body_was_evaluated: {  /////////////////////////////////////////////////////
+} body_eval_in_out: {  ///////////////////////////////////////////////////////
 
     if (THROWING) {
         bool breaking;
