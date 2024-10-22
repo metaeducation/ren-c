@@ -298,14 +298,14 @@ default-combinators: make map! reduce [
         :negated
     ][
         if negated [  ; NOT NOT, e.g. call parser without negating it
-            return [@ remainder]: parser input except e -> [
+            return [{~} remainder]: parser input except e -> [
                 return raise e
             ]
         ]
         if not negatable-parser? :parser [
             fail "NOT called on non-negatable combinator"
         ]
-        return [@ remainder]: parser:negated input except e -> [
+        return [{~} remainder]: parser:negated input except e -> [
             return raise e
         ]
     ]
@@ -578,7 +578,7 @@ default-combinators: make map! reduce [
         parser [action?]
         <local> value'
     ][
-        [^value' _]: parser input except e -> [
+        [^value' #]: parser input except e -> [
             return raise e
         ]
 
@@ -669,7 +669,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
 
-        [^replacement' _]: replacer input except e -> [
+        [^replacement' #]: replacer input except e -> [
             return raise e
         ]
 
@@ -698,7 +698,7 @@ default-combinators: make map! reduce [
         parser [action?]
         <local> insertion'
     ][
-        [^insertion' _]: parser input except e -> [  ; remainder ignored
+        [^insertion' #]: parser input except e -> [  ; remainder ignored
             return raise e
         ]
 
@@ -716,7 +716,7 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         cycle [
-            [^result' _]: parser input except [
+            [^result' #]: parser input except [
                 if tail? input [  ; could be `to <end>`, so check tail *after*
                     return raise "TO did not find desired pattern"
                 ]
@@ -1011,7 +1011,7 @@ default-combinators: make map! reduce [
         ; If the entirety of the item at the input list is matched by the
         ; supplied parser rule, then we advance past the item.
         ;
-        [_ subremainder]: subparser subseries except e -> [
+        [# subremainder]: subparser subseries except e -> [
             return raise e
         ]
         if not tail? subremainder [
@@ -1123,7 +1123,7 @@ default-combinators: make map! reduce [
         remainder: input
         cycle [
             append collected (
-                [@ remainder]: parser remainder except e -> [
+                [{#} remainder]: parser remainder except e -> [
                     return collected
                 ]
             )
@@ -1280,7 +1280,7 @@ default-combinators: make map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                [_ remainder]: find // [
+                [# remainder]: find // [
                     input value
                     :match ok
                     :case state.case
@@ -1290,7 +1290,7 @@ default-combinators: make map! reduce [
             ]
             <default> [
                 assert [binary? input]
-                [_ remainder]: find // [
+                [# remainder]: find // [
                     input value
                     :match ok
                     :case state.case
@@ -1344,7 +1344,7 @@ default-combinators: make map! reduce [
                     remainder: next input
                     return input.1
                 ]
-                [_ remainder]: find:match:case input value else [
+                [# remainder]: find:match:case input value else [
                     return raise [
                         "String at parse position does not match ISSUE!"
                     ]
@@ -1363,7 +1363,7 @@ default-combinators: make map! reduce [
                     remainder: next input
                     return codepoint-to-char input.1
                 ]
-                [_ remainder]: find:match:case input value else [
+                [# remainder]: find:match:case input value else [
                     return raise [
                         "Binary at parse position does not match ISSUE!"
                     ]
@@ -1395,7 +1395,7 @@ default-combinators: make map! reduce [
             ]
             <default> [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                [_ remainder]: find:match input value else [
+                [# remainder]: find:match input value else [
                     return raise [
                         "Content at parse position does not match BINARY!"
                     ]
@@ -1584,7 +1584,7 @@ default-combinators: make map! reduce [
             fail ["Unhandled type in GET-GROUP! combinator:" mold type of r]
         ]
 
-        return [@ remainder pending]: run comb state input r  ; [5]
+        return [{~} remainder pending]: run comb state input r  ; [5]
     ]
 
     === GET-BLOCK! COMBINATOR ===
@@ -1687,7 +1687,7 @@ default-combinators: make map! reduce [
             let text: append copy "" unquote value  ; !!! name for this? [2]
 
             comb: (state.combinators).(text!)
-            [@ remainder pending]: run comb state input text except e -> [
+            [~ remainder pending]: run comb state input text except e -> [
                 return raise e
             ]
             return unquote value
@@ -1697,7 +1697,7 @@ default-combinators: make map! reduce [
 
         value: to binary! unquote value
         comb: (state.combinators).(binary!)
-        return [@ remainder pending]: run comb state input value
+        return [{~} remainder pending]: run comb state input value
     ]
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
@@ -1710,7 +1710,7 @@ default-combinators: make map! reduce [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: (state.combinators).(quoted!)
-        return [@ remainder pending]: run comb state input ^value
+        return [{~} remainder pending]: run comb state input ^value
     ]
 
     === QUASIFORM! COMBINATOR ===
@@ -2113,7 +2113,7 @@ default-combinators: make map! reduce [
         lookup': meta get value
         ensure [quoted? quasi?] lookup'  ; quasi means antiform [2]
         comb: (state.combinators).(type of lookup')
-        return [@ remainder pending]: run comb state input lookup'
+        return [{~} remainder pending]: run comb state input lookup'
     ]
 
     ; THE-PATH! has no meaning at this time [3]
@@ -2127,7 +2127,7 @@ default-combinators: make map! reduce [
         lookup': meta get value
         ensure [quoted? quasi?] lookup'  ; quasi means antiform [2]
         comb: (state.combinators).(type of lookup')
-        return [@ remainder pending]: run comb state input lookup'
+        return [{~} remainder pending]: run comb state input lookup'
     ]
 
     the-group! combinator compose [
@@ -2301,7 +2301,7 @@ default-combinators: make map! reduce [
         parser [action?]
         <local> result
     ][
-        [result _]: parser input except e -> [return raise e]
+        [result #]: parser input except e -> [return raise e]
 
         if blank? :result [
             remainder: input
@@ -2388,7 +2388,7 @@ default-combinators: make map! reduce [
                         return raise e
                     ]
                 ] else [
-                    f.(param): [@ input subpending]: (
+                    f.(param): [{#} input subpending]: (
                         run parsers.1 input
                     ) except e -> [
                         return raise e
@@ -2489,7 +2489,7 @@ default-combinators: make map! reduce [
         ;
         ; !!! REVIEW: handle `rule-start` and `rule-end` ?
         ;
-        return [@ remainder pending]: run comb state input :r
+        return [{~} remainder pending]: run comb state input :r
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2665,7 +2665,7 @@ default-combinators: make map! reduce [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! unrun [@ rules]: parsify state rules
+                f: make frame! unrun [{#} rules]: parsify state rules
             ]
 
             f.input: pos
@@ -2884,7 +2884,7 @@ comment [/combinatorize: func [
                     f.(param): null
                 ]
                 else [
-                    f.(param): [@ rules]: parsify state rules
+                    f.(param): [{#} rules]: parsify state rules
                 ]
             ]
         ]

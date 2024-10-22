@@ -49,7 +49,7 @@
             fail ["Unhandled type in GROUP! combinator:" mold type of r]
         ]
 
-        return [@ remainder pending]: run comb state input r
+        return [{~} remainder pending]: run comb state input r
     ]
 
     ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,

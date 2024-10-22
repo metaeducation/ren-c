@@ -132,7 +132,7 @@ REBOL [
             remove back tail of path ; trailing slash
         ]
     ][
-        if (not [@ :end]: find-last path slash) [
+        if (not [# :end]: find-last path slash) [
             end: path
         ]
         insert dirs copy end

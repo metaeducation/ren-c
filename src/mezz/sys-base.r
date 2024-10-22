@@ -272,5 +272,5 @@ lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
     :args "Args passed as system.script.args to a script (normally a string)"
         [element?]
 ][
-    return [_ _ @]: import*:args null source args
+    return [# # {~}]: import*:args null source args
 ]

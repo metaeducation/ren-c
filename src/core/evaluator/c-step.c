@@ -123,7 +123,7 @@ STATIC_ASSERT(
 
 
 // When a SET-BLOCK! is being processed for multi-returns, it may encounter
-// leading-blank paths as in ([foo /bar]: 10).  Once the work of extracting
+// leading-blank chains as in ([foo :bar]: 10).  Once the work of extracting
 // the real variable from the path is done and pushed to the stack, this bit
 // is used to record that the variable was optional.  This makes it easier
 // for the phase after the right hand side is evaluated--vs. making it pick
@@ -1285,17 +1285,15 @@ Bounce Stepper_Executor(Level* L)
       //    wouldn't need to be since everything is on the stack before code
       //    is run on the right...but it might reduce confusion.
       //
-      // 3. @xxx indicates a desire for a "circled" result.  By default, the
+      // 3. {xxx} indicates a desire for a "circled" result.  By default, the
       //    ordinary return result will be returned.  (While checking we set
-      //    stackindex_circled when we see `[@ ...]: ...` to give an error if
-      //    more than one return were circled.)
+      //    stackindex_circled when we see `[{...} ...]: ...` to give an error
+      //    if more than one return were circled.)
       //
       // 4. ^xxx indicate a desire to get a "meta" result.
       //
-      //    !!! How to circle a ^META result?  Should it be legal to write
-      //    ^(@) or @(^) and not call into the evaluator so those cases do
-      //    not fail on missing arguments?  (Real solution is anticipated
-      //    as changing from using @ to using {fence} once it exists.)
+      //    !!! ^META composition with use-existing-binding is proposed as
+      //    ^[@x] but this has not been implemented yet.
       //
       //    !!! The multi-return mechanism doesn't allow an arbitrary number
       //    of meta steps, just one.  Should you be able to say ^(^(x)) or
@@ -1322,27 +1320,43 @@ Bounce Stepper_Executor(Level* L)
 
             Heart heart = Cell_Heart(check);
 
-            bool is_optional;
-            if (
-                (heart == REB_CHAIN or heart == REB_META_CHAIN)
-                and Cell_Sequence_Len(check) == 2
-                and Is_Blank(Copy_Sequence_At(CURRENT, check, 0))
-            ){
-                is_optional = true;  // leading colon means optional
-                Derelativize_Sequence_At(
-                    CURRENT,
-                    check,
-                    check_binding,
-                    1
-                );
-                if (heart == REB_META_CHAIN)
-                    Metafy(CURRENT);
+            bool is_circled;
+
+            if (heart == REB_FENCE) {  // [x {y}]: ... fence means eval to that
+                if (stackindex_circled != 0)
+                    fail ("Can't circle more than one multi-return result");
+                Length len_at = Cell_Series_Len_At(check);
+                if (len_at == 1) {
+                    Derelativize(
+                        CURRENT,
+                        Cell_List_Item_At(check),
+                        check_binding
+                    );
+                }
+                else  // !!! should {} be a synonym for {#} or {~} ?
+                    fail ("Circling in multi-return only allows 1 element");
+
+                is_circled = true;
                 heart = Cell_Heart(CURRENT);
             }
             else {
-                is_optional = false;  // no leading slash means required
-                Derelativize(CURRENT, check, check_binding);
+                is_circled = false;
+                Derelativize(CURRENT, check, check_binding);  // same heart
             }
+
+            bool is_optional;
+
+            if (heart == REB_CHAIN) {
+                heart = maybe Try_Get_Sequence_Singleheart(
+                    &is_optional,  // leading_blank
+                    CURRENT
+                );
+                if (heart == REB_0 or not is_optional)
+                    fail ("Only leading blank CHAIN! in SET-BLOCK! dialect");
+                Unchain(CURRENT);
+            }
+            else
+                is_optional = false;
 
             if (
                 heart == REB_GROUP
@@ -1359,7 +1373,7 @@ Bounce Stepper_Executor(Level* L)
                 else if (heart == REB_META_GROUP)
                     Metafy(stable_SPARE);  // transfer ^ decoration to product
                 else if (heart == REB_GROUP and Is_Void(SPARE))
-                    Init_Blank(SPARE);  // [(void)]: ... opts out of return
+                    Init_Trash(SPARE);  // [(void)]: ... pass thru
 
                 heart = Cell_Heart(SPARE);
                 Copy_Cell(PUSH(), stable_SPARE);
@@ -1370,32 +1384,26 @@ Bounce Stepper_Executor(Level* L)
             if (is_optional)  // so next phase won't worry about leading slash
                 Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
 
-            if (
-                // @xxx is indicator of circled result [3]
-                //
-                (heart == REB_SIGIL and Cell_Sigil(TOP) == SIGIL_THE)
-                or heart == REB_THE_WORD
-                or heart == REB_THE_TUPLE
-            ){
-                if (stackindex_circled != 0)
-                    fail ("Can't circle more than one multi-return result");
+            if (is_circled)
                 stackindex_circled = TOP_INDEX;
-                continue;
-            }
+
             if (
                 // ^xxx is indicator of a ^META result [4]
                 //
-                (heart == REB_SIGIL and Cell_Sigil(check) == SIGIL_META)
+                (heart == REB_SIGIL and Cell_Sigil(TOP) == SIGIL_META)
                 or heart == REB_META_WORD
                 or heart == REB_META_TUPLE
             ){
                 continue;
             }
 
-            if (heart == REB_BLANK or heart == REB_WORD or heart == REB_TUPLE)
-                continue;  // check this *after* special WORD! checks!
+            if (heart == REB_WORD or heart == REB_TUPLE)
+                continue;
 
-            fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or BLANK");
+            if (Is_Space(TOP) or Is_Trash(TOP))  // nameless decay vs. no decay
+                continue;
+
+            fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
         }
 
         if (stackindex_circled == 0)
@@ -1442,7 +1450,7 @@ Bounce Stepper_Executor(Level* L)
         const Element* pack_meta_at;  // pack block items are ^META'd
         const Element* pack_meta_tail;
 
-        if (Is_Barrier(OUT))  // !!! Hack, wnat ([/foo]: eval) to always work
+        if (Is_Barrier(OUT))  // !!! Hack, want ([:foo]: eval) to always work
             Init_Nihil(OUT);
 
         if (Is_Pack(OUT)) {  // antiform block
@@ -1476,7 +1484,7 @@ Bounce Stepper_Executor(Level* L)
             Element* var = CURRENT;  // stable location, safe across SET of var
             Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
-            assert(not Is_Quoted(var));
+            assert(QUOTE_BYTE(var) == NOQUOTE_1 or Is_Trash(var));
             Heart var_heart = Cell_Heart(var);
 
             if (pack_meta_at == pack_meta_tail) {
@@ -1509,10 +1517,8 @@ Bounce Stepper_Executor(Level* L)
 
             Meta_Unquotify_Undecayed(SPARE);
 
-            if (
-                var_heart == REB_SIGIL
-                and Cell_Sigil(var) == SIGIL_THE  // [@ ...]:
-            ){
+            if (var_heart == REB_BLANK) {
+                assert(Is_Trash(var));  // [~ ...]: -> no name, but don't decay
                 goto circled_check;
             }
 
@@ -1521,8 +1527,10 @@ Bounce Stepper_Executor(Level* L)
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
-            if (var_heart == REB_BLANK)  // [_ ...]:
+            if (var_heart == REB_ISSUE) {
+                assert(Is_Space(var));  // [# ...]: -> no name, but decay
                 goto circled_check;
+            }
 
             if (
                 var_heart == REB_WORD or var_heart == REB_TUPLE
@@ -1542,20 +1550,10 @@ Bounce Stepper_Executor(Level* L)
             else
                 assert(false);
 
-          circled_check :
+          circled_check:
 
-            if (stackindex_circled == stackindex_var) {
-                assert(
-                    stackindex_circled == STACK_BASE + 1
-                    or (
-                        var_heart == REB_SIGIL
-                        and Cell_Sigil(var) == SIGIL_THE
-                    )
-                    or var_heart == REB_THE_WORD
-                    or var_heart == REB_THE_TUPLE
-                );
+            if (stackindex_circled == stackindex_var)
                 Copy_Cell(OUT, SPARE);  // Note: might be void
-            }
         }
 
         // We've just changed the values of variables, and these variables

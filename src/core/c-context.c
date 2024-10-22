@@ -454,7 +454,7 @@ static void Collect_Inner_Loop(
             const Element* sub_at = Cell_List_At(&sub_tail, e);
             Collect_Inner_Loop(
                 cl,
-                COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS,
+                COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES,
                 sub_at,
                 sub_tail
             );
@@ -464,6 +464,7 @@ static void Collect_Inner_Loop(
         if (
             not ((flags & COLLECT_ANY_LIST_DEEP) and Any_List(e))  // !!! [1]
             and not ((flags & COLLECT_DEEP_BLOCKS) and Is_Block(e))
+            and not ((flags & COLLECT_DEEP_FENCES) and Is_Fence(e))
         ){
             continue;
         }
@@ -563,7 +564,7 @@ DECLARE_NATIVE(wrap)
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
     if (REF(set))
-        flags = COLLECT_DEEP_BLOCKS | COLLECT_ANY_WORD;
+        flags = COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES | COLLECT_ANY_WORD;
     if (REF(deep))
         flags |= COLLECT_ANY_LIST_DEEP;
 

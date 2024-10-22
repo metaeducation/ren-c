@@ -41,7 +41,7 @@
     ])
 
     (all wrap [
-        304 = [g _ h]: test 1020
+        304 = [g # h]: test 1020
         g = 304
         h = <z-result>
     ])
@@ -52,7 +52,7 @@
     (
         a: b: c: null
         all [
-            <y-result> = [a @b c]: test 1020
+            <y-result> = [a {b} c]: test 1020
             a = 304
             b = <y-result>
             c = <z-result>
@@ -60,7 +60,7 @@
     )(
         a: b: c: null
         all [
-            304 = [@a b c]: test 1020
+            304 = [{a} b c]: test 1020
             a = 304
             b = <y-result>
             c = <z-result>
@@ -68,7 +68,7 @@
     )(
         a: b: c: null
         all [
-            <z-result> = [a b @(inside [] first [c])]: test 1020
+            <z-result> = [a b {(inside [] first [c])}]: test 1020
             a = 304
             b = <y-result>
             c = <z-result>
@@ -76,7 +76,7 @@
     )(
         a: b: c: null
         all [
-            <z-result> = [a b @(void)]: test 1020
+            <z-result> = [a b {(void)}]: test 1020
             a = 304
             b = <y-result>
             c = null
@@ -89,22 +89,22 @@
         /foo: func [return: [~[integer! integer!]~] arg] [
             return pack [20 10]
         ]
-        null? until [[@ _]: foo break]
+        null? until [[{~} #]: foo break]
     )
 ]
 
 [(
     all wrap [
-        'abc = [rest @]: transcode:next "abc def"
+        'abc = [rest {#}]: transcode:next "abc def"
         rest = " def"
     ]
 )(
     all wrap [
-        'abc = [rest @(void)]: transcode:next "abc def"
+        'abc = [rest {(void)}]: transcode:next "abc def"
         rest = " def"
     ]
 )(
-    raised? [_]: raise "a"
+    raised? [#]: raise "a"
 )]
 
 ; The META-XXX! types can be used to ask for variables to be raised to a meta
@@ -113,14 +113,14 @@
     (
         a: b: ~
         all [
-            (the '-{ B}-) = [^b ^a]: transcode:next "A B"
+            (the '-{ B}-) = [{^b} ^a]: transcode:next "A B"
             a = the 'A
             b = the '-{ B}-
         ]
     )(
         a: b: ~
         all [
-            (the '-{ B}-) = [^ ^a]: transcode:next "A B"
+            (the '-{ B}-) = [{^} ^a]: transcode:next "A B"
             a = the 'A
             unset? $b
         ]
@@ -152,7 +152,7 @@
             return pack [20 10]
         ]
         all wrap [
-            '~<weird>~ = [^x :y]: (foo then [~<weird>~])
+            '~<weird>~ = [{^x} :y]: (foo then [~<weird>~])
             x = '~<weird>~
             y = null
         ]
@@ -179,10 +179,10 @@
     )
 ]
 
-; You can use a @ without a variable to get a return result
+; You can use a {} without a variable to get a return result
 ;
 (all wrap [
-    " cd" = [@ item]: transcode:next "ab cd"
+    " cd" = [# item]: transcode:next "ab cd"
     item = 'ab
 ])
 
@@ -237,10 +237,10 @@
         '~(a b c)~ = ^ [x]: spread [a b c]
     )
     (
-        '~(a b c)~ = ^ [@]: spread [a b c]
+        '~(a b c)~ = ^ [{~}]: spread [a b c]
     )
     (
-        '~(a b c)~ = ^ [_]: spread [a b c]  ; definitive behavior TBD
+        '~(a b c)~ = ^ [#]: spread [a b c]  ; definitive behavior TBD
     )
 ]
 
@@ -249,12 +249,12 @@
 [
     (
         x: ~
-        [^:x]: null
+        [:^x]: null
         x = ^null
     )
     (
         x: ~
-        [^:x]: comment "hi"
+        [:^x]: comment "hi"
         x = null
     )
 ]

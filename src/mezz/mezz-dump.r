@@ -45,7 +45,7 @@ REBOL [
         ] else [
             let trunc
             append (
-                [@ trunc]: mold:limit :val system.options.dump-size
+                [# trunc]: mold:limit :val system.options.dump-size
             ) if trunc ["..."]
         ]
     ]
@@ -56,7 +56,7 @@ REBOL [
             text! [  ; good for longer labeling when you need spaces/etc.
                 let trunc
                 print unspaced [
-                    [@ trunc]: mold:limit item system.options.dump-size
+                    [# trunc]: mold:limit item system.options.dump-size
                     if trunc ["..."]
                 ]
             ]

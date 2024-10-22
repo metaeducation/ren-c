@@ -718,7 +718,7 @@ static bool Combinator_Param_Hook(
                 assert(!"LET failed");
             Element* temp = cast(Element*, SPARE);
             Value* parser = rebValue(
-                "[@", temp, "]: parsify", rebQ(ARG(state)), ARG(rules)
+                "[#", temp, "]: parsify", rebQ(ARG(state)), ARG(rules)
             );
             Get_Var_May_Fail(ARG(rules), temp, SPECIFIED);
             Copy_Cell(var, parser);

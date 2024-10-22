@@ -632,12 +632,12 @@ REBOL [
             char?! [boolean dlm = last series]
             text! [
                 boolean (find series dlm) and (
-                    empty? [_ @]: find-last series dlm
+                    empty? [# {#}]: find-last series dlm
                 )
             ]
             quoted! [
                 boolean (find series unquote dlm) and (
-                    empty? [_ @]: find-last series unquote dlm
+                    empty? [# {#}]: find-last series unquote dlm
                 )
             ]
             block! ['false]

@@ -9,7 +9,7 @@
 (
     all wrap [
         s: [1 2]
-        s = [@ count]: remove-each 'i s [okay]
+        s = [# count]: remove-each 'i s [okay]
         empty? s
         count = 2
     ]
@@ -17,7 +17,7 @@
 (
     all wrap [
         s: [1 2]
-        s = [@ count]: remove-each 'i s: [1 2] [null]
+        s = [# count]: remove-each 'i s: [1 2] [null]
         [1 2] = s
         count = 0
     ]

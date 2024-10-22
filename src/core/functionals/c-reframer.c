@@ -157,10 +157,6 @@ bool Init_Invokable_From_Feed_Throws(
 ){
     const Element* v = first ? unwrap first : Try_At_Feed(feed);
 
-    // !!! The case of `([x]: @)` wants to make something which when it
-    // evaluates becomes invisible.  There's no QUOTED? value that can do
-    // that, so if the feature is to be supported it needs to be VOID.
-    //
     // Not all callers necessarily want to tolerate an end condition, so this
     // needs review.
     //

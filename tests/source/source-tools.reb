@@ -442,7 +442,7 @@ list: context [
             item: null
         ] else [
             any [
-                try parse [_ @]: lib/split-path item ["tmp-" ...]
+                try parse [# {#}]: lib/split-path item ["tmp-" ...]
                 not find extensions extension-of item
             ] then [
                 item: null

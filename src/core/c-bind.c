@@ -529,15 +529,11 @@ DECLARE_NATIVE(let)
 //    LET...it merely removes the quoting level and generates a new block as
 //    output which doesn't have the quote.
 //
-// 6. The multi-return dialect is planned to be able to use things like
-//    refinement names to reinforce the name of what is being returned.
-//
-//        words: [foo position]
-//        let [value /position (second words) 'error]: transcode "abc"
-//
-//    This doesn't have any meaning to LET and must be skipped...yet retained
-//    in the product.  Other things (like INTEGER!) might be useful also to
-//    consumers of the bound block product, so they are skipped.
+// 6. Once the multi-return dialect was planned to have more features like
+//    naming arguments literally.  That wouldn't have any meaning to LET and
+//    would be skipped.  That feature of naming outputs has been scrapped,
+//    though...so questions about what to do if things like integers etc.
+//    appear in blocks are open at this point.
 //
 // 7. The evaluation may have expanded the bindings, as in:
 //

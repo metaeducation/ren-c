@@ -30,15 +30,15 @@
 
 (
     all wrap [
-        1 = [pos @value]: transcode:next "1 [2] <3>"
+        1 = [pos {value}]: transcode:next "1 [2] <3>"
         value = 1
         pos = " [2] <3>"
 
-        [2] = [pos @value]: transcode:next pos
+        [2] = [pos {value}]: transcode:next pos
         value = [2]
         pos = " <3>"
 
-        <3> = [pos @value]: transcode:next pos
+        <3> = [pos {value}]: transcode:next pos
         value = <3>
         pos = ""
 
@@ -58,7 +58,7 @@
     str: "Cat😺: [😺 😺] (😺)"
 
     all wrap [
-        'Cat😺: = [pos @value]: transcode:next str
+        'Cat😺: = [pos {value}]: transcode:next str
         set-word? value
         value = 'Cat😺:
         pos = " [😺 😺] (😺)"
@@ -75,7 +75,7 @@
     bin =  #{436174F09F98BA3A205BF09F98BA20F09F98BA5D2028F09F98BA29}
 
     all wrap [
-        'Cat😺: = [pos @value]: transcode:next bin
+        'Cat😺: = [pos {value}]: transcode:next bin
         set-word? value
         value = 'Cat😺:
         pos = #{205BF09F98BA20F09F98BA5D2028F09F98BA29}
@@ -88,10 +88,10 @@
 )
 
 [
-    ([abc def] = [_]: transcode "abc def")
-    ('abc = [_ @]: transcode:next "abc def")
-    (raised? [_ @]: transcode:next "3o4")
-    ('scan-invalid = pick trap [[_ _]: transcode:next "3o4"] 'id)
+    ([abc def] = [#]: transcode "abc def")
+    ('abc = [# {#}]: transcode:next "abc def")
+    (raised? [# {#}]: transcode:next "3o4")
+    ('scan-invalid = pick trap [[# #]: transcode:next "3o4"] 'id)
 ]
 
 (

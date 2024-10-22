@@ -439,6 +439,7 @@ enum {
     COLLECT_ANY_WORD = 1 << 1,
     COLLECT_ANY_LIST_DEEP = 1 << 2,
     COLLECT_DEEP_BLOCKS = 1 << 3,  // only deep if BLOCK!
-    COLLECT_NO_DUP = 1 << 4  // Do not allow dups during collection (for specs)
+    COLLECT_DEEP_FENCES = 1 << 4,
+    COLLECT_NO_DUP = 1 << 5  // Do not allow dups during collection (for specs)
 };
 typedef Flags CollectFlags;

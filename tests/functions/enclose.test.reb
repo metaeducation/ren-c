@@ -70,7 +70,7 @@
         func [in] [return pack [~, in + 1]]
     ) f -> wrap [
         x: f.in
-        [_ o]: eval f
+        [# o]: eval f
         o * 10
     ]
     110 = wrapped 10

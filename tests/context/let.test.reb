@@ -236,10 +236,10 @@
 ; BLANK! and ISSUE! should be legal in LET.
 [(
     var: #  ; v-- second result is discarded, but request did partial transcode
-    'abc = let [(var) _]: transcode:next "abc def"
+    'abc = let [(var) #]: transcode:next "abc def"
 )(
     var: null  ; opting out of second result, hence full transcode
-    [abc def] = let [_ (var)]: transcode:next "abc def"
+    [abc def] = let [# (var)]: transcode:next "abc def"
 )]
 
 ; This is all very shaky and speculative, and missing any semblance of
@@ -331,7 +331,7 @@
         x = the '10
     ])
     (all [
-        20 = let [x @y]: pack [10 20]
+        20 = let [x {y}]: pack [10 20]
         y = 20
     ])
 ]
