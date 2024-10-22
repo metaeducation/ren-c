@@ -79,7 +79,7 @@ Bounce Specializer_Dispatcher(Level* L)
 VarList* Make_Varlist_For_Action_Push_Partials(
     const Value* action,  // need ->binding, so can't just be a Action*
     StackIndex lowest_stackindex,  // caller can add refinements
-    Option(struct Reb_Binder*) binder
+    Option(Binder*) binder
 ){
     StackIndex highest_stackindex = TOP_INDEX;
 
@@ -193,7 +193,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
 VarList* Make_Varlist_For_Action(
     const Value* action, // need ->binding, so can't just be a Action*
     StackIndex lowest_stackindex,
-    Option(struct Reb_Binder*) binder
+    Option(Binder*) binder
 ){
     VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
         action,
@@ -228,9 +228,9 @@ bool Specialize_Action_Throws(
 ){
     assert(out != specializee);
 
-    struct Reb_Binder binder;
+    DECLARE_BINDER (binder);
     if (def)
-        INIT_BINDER(&binder);
+        Construct_Binder(binder);
 
     Action* unspecialized = VAL_ACTION(specializee);
 
@@ -241,7 +241,7 @@ bool Specialize_Action_Throws(
     VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
         specializee,
         lowest_stackindex,
-        def ? &binder : nullptr
+        def ? binder : nullptr
     );
     Manage_Flex(exemplar); // destined to be managed, guarded
 
@@ -256,14 +256,14 @@ bool Specialize_Action_Throws(
         Virtual_Bind_Deep_To_Existing_Context(
             unwrap def,
             exemplar,
-            &binder,
+            binder,
             CELL_FLAG_USE_NOTE_SET_WORDS
         );
 
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
-        SHUTDOWN_BINDER(&binder);
+        Destruct_Binder(binder);
 
         // Run block and ignore result (unless it is thrown)
         //

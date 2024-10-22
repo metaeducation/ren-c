@@ -468,8 +468,8 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     // (This is why we wait until the parameter list gathering process
     // is over to do the duplicate checks--it can fail.)
     //
-    struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    DECLARE_BINDER (binder);
+    Construct_Binder(binder);
 
     const Symbol* duplicate = nullptr;
 
@@ -508,7 +508,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
             hidden = true;
         }
         else {
-            if (not Try_Add_Binder_Index(&binder, symbol, 1020))
+            if (not Try_Add_Binder_Index(binder, symbol, 1020))
                 duplicate = symbol;
 
             hidden = false;
@@ -551,7 +551,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     // Must remove binder indexes for all words, even if about to fail
     //
   blockscope {
-    SHUTDOWN_BINDER(&binder);
+    Destruct_Binder(binder);
 
     if (duplicate) {
         DECLARE_ATOM (word);

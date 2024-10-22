@@ -28,7 +28,7 @@
 // Currently it is assumed a symbol has zero or one of these linked bindings.
 // This would create problems if multiple threads were trying to bind at the
 // same time.  While threading was never realized in R3-Alpha, Ren-C doesn't
-// want to have any "less of a plan".  So the Reb_Binder is used by binding
+// want to have any "less of a plan".  So the BinderStruct is used by binding
 // clients as a placeholder for any state needed to interpret more than one
 // binding at a time.
 //
@@ -180,23 +180,27 @@ enum {
 };
 
 
-struct Reb_Binder {
+struct BinderStruct {
     Stub* hitch_list;
 
   #if DEBUG && CPLUSPLUS_11
     //
     // C++ debug build can help us make sure that no binder ever fails to
-    // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
+    // get an Construct_Binder() and Destruct_Binder() pair called on it, which
     // would leave lingering binding hitches on symbol stubs.
     //
     bool initialized;
-    Reb_Binder () { initialized = false; }
-    ~Reb_Binder () { assert(not initialized); }
+    BinderStruct () { initialized = false; }
+    ~BinderStruct () { assert(not initialized); }
   #endif
 };
 
+#define DECLARE_BINDER(name) \
+    Binder name##_struct; \
+    Binder* name = &name##_struct; \
 
-INLINE void INIT_BINDER(struct Reb_Binder *binder) {
+
+INLINE void Construct_Binder(Binder* binder) {
     binder->hitch_list = nullptr;
 
   #if DEBUG && CPLUSPLUS_11
@@ -205,7 +209,7 @@ INLINE void INIT_BINDER(struct Reb_Binder *binder) {
 }
 
 
-INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
+INLINE void Destruct_Binder(Binder* binder) {
     while (binder->hitch_list != nullptr) {
         Stub* hitch = binder->hitch_list;
         binder->hitch_list = LINK(NextBind, hitch);
@@ -238,7 +242,7 @@ INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 //    but do notice the GC never runs during a bind.
 //
 INLINE bool Try_Add_Binder_Index(
-    struct Reb_Binder *binder,
+    Binder* binder,
     const Symbol* s,
     REBINT index
 ){
@@ -268,7 +272,7 @@ INLINE bool Try_Add_Binder_Index(
 
 
 INLINE void Add_Binder_Index(
-    struct Reb_Binder *binder,
+    Binder* binder,
     const Symbol* s,
     REBINT index
 ){
@@ -279,7 +283,7 @@ INLINE void Add_Binder_Index(
 
 
 INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
-    struct Reb_Binder *binder,
+    Binder* binder,
     const Symbol* s
 ){
   #if CPLUSPLUS_11 && DEBUG
@@ -299,7 +303,7 @@ INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
 
 
 INLINE void Update_Binder_Index(
-    struct Reb_Binder *binder,
+    Binder* binder,
     const Symbol* s,
     REBINT index
 ){
@@ -321,15 +325,15 @@ INLINE void Update_Binder_Index(
 
 struct CollectorStruct {
     CollectFlags initial_flags;
+    Binder binder;
     Stub* base_hitch;
     Option(SeaOfVars*) sea;
-    struct Reb_Binder binder;
     REBINT next_index;
 };
 
 #define DECLARE_COLLECTOR(name) \
-    Collector collector_struct; \
-    Collector* name = &collector_struct; \
+    Collector name##_struct; \
+    Collector* name = &name##_struct; \
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));

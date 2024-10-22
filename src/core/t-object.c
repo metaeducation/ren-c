@@ -38,12 +38,12 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     const Element* item = Cell_List_At(&tail, block);
 
     // Can't actually fail() during a collect, so make sure any errors are
-    // set and then jump to a Collect_End()
+    // set and then jump to a Destruct_Collector()
     //
     Option(Error*) error = nullptr;
 
     DECLARE_COLLECTOR (cl);
-    Collect_Start(
+    Construct_Collector(
         cl,
         COLLECT_ONLY_SET_WORDS,
         c  // preload binder with words already in context
@@ -63,7 +63,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     for (word = item; word != tail; word += 2) {
         if (not Is_Word(word) and not Is_Set_Word(word)) {
             error = Error_Bad_Value(word);
-            goto collect_end;
+            goto Destruct_Collector;
         }
 
         const Symbol* symbol = Cell_Word_Symbol(word);
@@ -110,7 +110,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 
         if (Get_Cell_Flag(var, PROTECTED)) {
             error = Error_Protected_Key(symbol);
-            goto collect_end;
+            goto Destruct_Collector;
         }
 
         // !!! There was discussion in R3-Alpha that errors which exposed the
@@ -124,7 +124,7 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
         //
         if (Get_Cell_Flag(var, VAR_MARKED_HIDDEN)) {
             error = Error_Hidden_Raw();
-            goto collect_end;
+            goto Destruct_Collector;
         }
 
         if (word + 1 == tail) {
@@ -136,8 +136,8 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
     }
   }
 
-  collect_end:
-    Collect_End(cl);
+  Destruct_Collector:
+    Destruct_Collector(cl);
 
     if (error)
         fail (unwrap error);

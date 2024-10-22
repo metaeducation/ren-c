@@ -345,18 +345,18 @@ DECLARE_NATIVE(reframer)
     Action* shim = VAL_ACTION(ARG(shim));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(shim));
 
-    struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    DECLARE_BINDER (binder);
+    Construct_Binder(binder);
     VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
         ARG(shim),
         STACK_BASE,
-        &binder
+        binder
     );
 
     REBLEN param_index = 0;
 
     if (TOP_INDEX != STACK_BASE) {
-        SHUTDOWN_BINDER(&binder);
+        Destruct_Binder(binder);
         fail ("REFRAMER can't use partial specializions ATM");
     }
 
@@ -365,9 +365,9 @@ DECLARE_NATIVE(reframer)
 
     if (REF(parameter)) {
         const Symbol* symbol = Cell_Word_Symbol(ARG(parameter));
-        param_index = maybe Try_Get_Binder_Index(&binder, symbol);
+        param_index = maybe Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
-            SHUTDOWN_BINDER(&binder);
+            Destruct_Binder(binder);
             fail (Error_No_Arg(label, symbol));
         }
         key = Varlist_Key(exemplar, param_index);
@@ -378,7 +378,7 @@ DECLARE_NATIVE(reframer)
         param_index = param - ACT_PARAMS_HEAD(shim) + 1;
     }
 
-    SHUTDOWN_BINDER(&binder);
+    Destruct_Binder(binder);
 
     // Make sure the parameter is able to accept FRAME! arguments (the type
     // checking will ultimately use the same slot we overwrite here!)

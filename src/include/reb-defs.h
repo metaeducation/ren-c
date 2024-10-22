@@ -244,7 +244,8 @@ typedef struct BookmarkStruct Bookmark;
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 
-struct Reb_Binder;
+struct BinderStruct;
+typedef struct BinderStruct Binder;
 
 struct CollectorStruct;
 typedef struct CollectorStruct Collector;

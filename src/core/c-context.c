@@ -291,11 +291,11 @@ Value* Append_Context(Context* context, const Symbol* symbol)
 
 
 //
-//  Collect_Start: C
+//  Construct_Collector: C
 //
 // Begin using a "binder" to start mapping canon symbol names to integer
-// indices.  The symbols are collected on the stack.  Use Collect_End() to
-// free the binder.
+// indices.  The symbols are collected on the stack.  Use Destruct_Collector()
+// to free the binder.
 //
 // 1. If you're doing a collection on behalf of a module, its variables are
 //    already distributed across the symbol table.  There is no need to put
@@ -308,7 +308,7 @@ Value* Append_Context(Context* context, const Symbol* symbol)
 //    a binder link right on the symbol itself to be even faster.  (Review
 //    the actual performance tradeoffs of this, esp. for small objects).
 //
-void Collect_Start(
+void Construct_Collector(
     Collector* cl,
     CollectFlags flags,
     Option(Context*) context
@@ -316,7 +316,7 @@ void Collect_Start(
     cl->initial_flags = flags;
     cl->next_index = 1;
 
-    INIT_BINDER(&cl->binder);
+    Construct_Binder(&cl->binder);
 
     if (context) {
         if (CTX_TYPE(unwrap context) == REB_MODULE)  // no binder preload [1]
@@ -340,14 +340,14 @@ void Collect_Start(
 
 
 //
-//  Collect_End: C
+//  Destruct_Collector: C
 //
 // Reset the bind markers in the canon Stub Nodes so they can be reused,
 // and drop the collected words from the stack.
 //
-void Collect_End(Collector *cl)
+void Destruct_Collector(Collector *cl)
 {
-    SHUTDOWN_BINDER(&cl->binder);
+    Destruct_Binder(&cl->binder);
 
     Corrupt_If_Debug(*cl);
 }
@@ -433,7 +433,7 @@ static void Collect_Inner_Loop(
             }
             else {
                 if (flags & COLLECT_NO_DUP) {
-                    Collect_End(cl);  // IMPORTANT: Can't fail with binder
+                    Destruct_Collector(cl);  // IMPORTANT: Can't fail with binder
 
                     DECLARE_ATOM (duplicate);
                     Init_Word(duplicate, symbol);
@@ -484,7 +484,7 @@ void Wrap_Extend_Core(
     CollectFlags flags
 ){
     DECLARE_COLLECTOR (cl);
-    Collect_Start(cl, flags, context);  // may not preload binder if module
+    Construct_Collector(cl, flags, context);  // no-op preload if SeaOfVars
 
     const Element* tail;
     const Element* at = Cell_List_At(&tail, list);
@@ -497,7 +497,7 @@ void Wrap_Extend_Core(
         Init_Nothing(Append_Context(context, symbol));
     }
 
-    Collect_End(cl);
+    Destruct_Collector(cl);
 }
 
 
@@ -639,7 +639,7 @@ DECLARE_NATIVE(collect_words)
 
     DECLARE_COLLECTOR (cl);
     Option(Context*) no_context = nullptr;
-    Collect_Start(cl, flags, no_context);
+    Construct_Collector(cl, flags, no_context);
 
     if (Is_Block(ignore)) {  // ignore via dummy bindings [2]
         const Element* ignore_tail;
@@ -686,7 +686,7 @@ DECLARE_NATIVE(collect_words)
 
   //=//// REMOVE DUMMY BINDINGS FOR THE IGNORED SYMBOLS ///////////////////=//
 
-    Collect_End(cl);  // does removal automatically
+    Destruct_Collector(cl);  // does removal automatically
 
     return Init_Block(OUT, array);
 }
@@ -715,7 +715,7 @@ VarList* Make_Varlist_Detect_Managed(
   //=//// COLLECT KEYS (FROM PARENT AND WALKING HEAD->TAIL) ///////////////=//
 
     DECLARE_COLLECTOR (cl);
-    Collect_Start(cl, flags, parent);  // preload binder with parent's keys
+    Construct_Collector(cl, flags, parent);  // preload binder with parent's keys
 
     Collect_Inner_Loop(cl, flags, head, tail);  // collect keys from array
 
@@ -765,7 +765,7 @@ VarList* Make_Varlist_Detect_Managed(
             LINK(Ancestor, keylist) = keylist;  // ancestors terminate in self
     }
 
-    Collect_End(cl);  // !!! binder might be useful for ensuing operations...
+    Destruct_Collector(cl);  // !!! binder might be useful for ensuing operations...
 
   //=//// COPY INHERITED VALUES FROM PARENT, OR INIT TO NOTHING ///////////=//
 

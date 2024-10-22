@@ -36,7 +36,7 @@
 // this recursive routine to do the actual binding.
 //
 void Bind_Values_Inner_Loop(
-    struct Reb_Binder *binder,
+    Binder* binder,
     Element* head,
     const Element* tail,
     VarList* context,
@@ -129,9 +129,9 @@ void Bind_Values_Core(
     const Value* context,
     Option(SymId) add_midstream_types,
     Flags flags // see %sys-core.h for BIND_DEEP, etc.
-) {
-    struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+){
+    DECLARE_BINDER (binder);
+    Construct_Binder(binder);
 
     VarList* c = Cell_Varlist(context);
 
@@ -145,11 +145,11 @@ void Bind_Values_Core(
     const Key* key = Varlist_Keys(&key_tail, c);
     const Value* var = Varlist_Slots_Head(c);
     for (; key != key_tail; key++, var++, index++)
-        Add_Binder_Index(&binder, Key_Symbol(key), index);
+        Add_Binder_Index(binder, Key_Symbol(key), index);
   }
 
     Bind_Values_Inner_Loop(
-        &binder,
+        binder,
         head,
         tail,
         c,
@@ -157,7 +157,7 @@ void Bind_Values_Core(
         flags
     );
 
-    SHUTDOWN_BINDER(&binder);
+    Destruct_Binder(binder);
 }
 
 
@@ -923,7 +923,7 @@ void Clonify_And_Bind_Relative(
     Value* v,
     Flags flags,
     bool deeply,
-    Option(struct Reb_Binder*) binder,
+    Option(Binder*) binder,
     Option(Action*) relative
 ){
     assert(flags & NODE_FLAG_MANAGED);
@@ -1024,8 +1024,8 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     Action* relative,
     enum Reb_Var_Visibility visibility
 ){
-    struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    DECLARE_BINDER (binder);
+    Construct_Binder(binder);
 
     // Setup binding table from the argument word list.  Note that some cases
     // (like an ADAPT) reuse the exemplar from the function they are adapting,
@@ -1038,7 +1038,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     Init_Evars(&e, ACT_ARCHETYPE(relative));
     e.visibility = visibility;
     while (Try_Advance_Evars(&e))
-        Add_Binder_Index(&binder, Key_Symbol(e.key), e.index);
+        Add_Binder_Index(binder, Key_Symbol(e.key), e.index);
     Shutdown_Evars(&e);
   }
 
@@ -1073,13 +1073,13 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
             dest,
             flags | NODE_FLAG_MANAGED,
             deeply,
-            &binder,
+            binder,
             relative
         );
     }
   }
 
-    SHUTDOWN_BINDER(&binder);
+    Destruct_Binder(binder);
     return copy;
 }
 
@@ -1180,9 +1180,9 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     // in effect UNLESS the BUF_COLLECT contains information to undo it!
     // There's no BUF_COLLECT here, so don't fail while binder in effect.
     //
-    struct Reb_Binder binder;
+    DECLARE_BINDER (binder);
     if (rebinding)
-        INIT_BINDER(&binder);
+        Construct_Binder(binder);
 
     Option(Error*) error = nullptr;
 
@@ -1205,14 +1205,14 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             Set_Cell_Flag(var, PROTECTED);
 
             if (rebinding)
-                Add_Binder_Index(&binder, symbol, -1);  // for remove
+                Add_Binder_Index(binder, symbol, -1);  // for remove
         }
         else if (Is_Word(item) or Is_Meta_Word(item)) {
             assert(rebinding); // shouldn't get here unless we're rebinding
 
             symbol = Cell_Word_Symbol(item);
 
-            if (Try_Add_Binder_Index(&binder, symbol, index)) {
+            if (Try_Add_Binder_Index(binder, symbol, index)) {
                 Value* var = Append_Context(c, symbol);
                 Init_Nothing(var);  // code shared with USE, user may see
             }
@@ -1248,7 +1248,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
             Set_Cell_Flag(var, PROTECTED);
 
             if (rebinding)
-                Add_Binder_Index(&binder, symbol, -1);  // for remove
+                Add_Binder_Index(binder, symbol, -1);  // for remove
         }
         else {
             error = Error_User("Bad datatype in variable spec");
@@ -1276,7 +1276,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     /* Set_Flex_Flag(c, DONT_RELOCATE); */
 
     if (rebinding)  // even if failing, must remove bind indices for words
-        SHUTDOWN_BINDER(&binder);
+        Destruct_Binder(binder);
 
     if (error) {
         Free_Unmanaged_Flex(c);
@@ -1297,10 +1297,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     //
     if (rebinding)
         Virtual_Bind_Deep_To_Existing_Context(
-            body_in_out,
-            c,
-            &binder,
-            CELL_MASK_0
+            body_in_out, c, binder, CELL_MASK_0
         );
 
     return c;
@@ -1342,7 +1339,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 void Virtual_Bind_Deep_To_Existing_Context(
     Value* list,
     VarList* context,
-    struct Reb_Binder *binder,
+    Binder* binder,
     Flags note
 ){
     // Most of the time if the context isn't trivially small then it's

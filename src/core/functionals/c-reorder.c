@@ -113,8 +113,8 @@ DECLARE_NATIVE(reorder)
     // We need a binder to efficiently map arguments to their position in
     // the parameters array, and track which parameters are mentioned.
 
-    struct Reb_Binder binder;
-    INIT_BINDER(&binder);
+    DECLARE_BINDER (binder);
+    Construct_Binder(binder);
 
   blockscope {
     const Key* tail;
@@ -124,7 +124,7 @@ DECLARE_NATIVE(reorder)
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))
             continue;
-        Add_Binder_Index(&binder, Key_Symbol(key), index);
+        Add_Binder_Index(binder, Key_Symbol(key), index);
     }
   }
 
@@ -176,13 +176,13 @@ DECLARE_NATIVE(reorder)
             goto cleanup_binder;
         }
 
-        REBINT index = maybe Try_Get_Binder_Index(&binder, symbol);
+        REBINT index = maybe Try_Get_Binder_Index(binder, symbol);
         if (index <= 0) {
             error = Error_Bad_Parameter_Raw(item);
             goto cleanup_binder;
         }
 
-        Update_Binder_Index(&binder, symbol, -1);
+        Update_Binder_Index(binder, symbol, -1);
 
         if (ignore)
             continue;
@@ -212,7 +212,7 @@ DECLARE_NATIVE(reorder)
 
         // If we saw the parameter, we set its index to -1.
         //
-        bool mentioned = (-1 == Try_Get_Binder_Index(&binder, symbol));
+        bool mentioned = (-1 == Try_Get_Binder_Index(binder, symbol));
 
         if (
             not error  // don't report an error here if one is pending
@@ -224,7 +224,7 @@ DECLARE_NATIVE(reorder)
     }
   }
 
-    SHUTDOWN_BINDER(&binder);
+    Destruct_Binder(binder);
 
     if (error)  // *now* it's safe to fail...
         fail (unwrap error);
