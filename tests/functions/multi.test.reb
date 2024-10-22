@@ -189,7 +189,7 @@
 ; Propagates nihil signals, but sets variables to null
 [
     (all wrap [
-        null? [:x]: comment "hi"
+        nihil? [:x]: comment "hi"
         null? x
     ])
 ]
@@ -211,10 +211,10 @@
     )
     (
         all wrap [
-            [^e n]: pack* [1 / 0, 1 + 0]
+            [{^e} n]: pack* [1 / 0, 1 + 0]
             n = 1
             raised? unmeta e
-            'zero-divide =(noquasi e).id
+            'zero-divide = (noquasi e).id
         ]
     )
 ]

@@ -2195,7 +2195,7 @@ default-combinators: make map! reduce [
         return: "Meta quoted" [~null~ quasi? quoted?]
         parser [action?]
     ][
-        return [^ remainder]: parser input
+        return [{^} remainder]: parser input
     ]
 
     meta-word! combinator [
@@ -2206,7 +2206,7 @@ default-combinators: make map! reduce [
     ][
         value: as word! value
         comb: runs state.combinators.(word!)
-        return [^ remainder pending]: comb state input value  ; leave meta
+        return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-tuple! combinator [
@@ -2217,7 +2217,7 @@ default-combinators: make map! reduce [
     ][
         value: as tuple! value
         comb: runs state.combinators.(tuple!)
-        return [^ remainder pending]: comb state input value  ; leave meta
+        return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-path! combinator [
@@ -2228,7 +2228,7 @@ default-combinators: make map! reduce [
     ][
         value: as path! value
         comb: runs state.combinators.(path!)
-        return [^ remainder pending]: comb state input value  ; leave meta
+        return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-group! combinator [
@@ -2239,7 +2239,7 @@ default-combinators: make map! reduce [
     ][
         value: as group! value
         comb: runs state.combinators.(group!)
-        return [^ remainder pending]: comb state input value  ; leave meta
+        return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
     meta-block! combinator [
@@ -2250,7 +2250,7 @@ default-combinators: make map! reduce [
     ][
         value: as block! value
         comb: runs state.combinators.(block!)
-        return [^ remainder pending]: comb state input value  ; leave meta
+        return [{^} remainder pending]: comb state input value  ; leave meta
     ]
 
     === INVISIBLE COMBINATORS ===
@@ -2382,7 +2382,7 @@ default-combinators: make map! reduce [
                 ensure frame! parsers.1
                 if meta-word? param [
                     param: to word! param
-                    f.(param): [^ input subpending]: (
+                    f.(param): [{^} input subpending]: (
                         run parsers.1 input
                     ) except e -> [
                         return raise e

@@ -1286,9 +1286,9 @@ Bounce Stepper_Executor(Level* L)
       //    is run on the right...but it might reduce confusion.
       //
       // 3. {xxx} indicates a desire for a "circled" result.  By default, the
-      //    ordinary return result will be returned.  (While checking we set
-      //    stackindex_circled when we see `[{...} ...]: ...` to give an error
-      //    if more than one return were circled.)
+      //    whole input is returned.  (While checking we set stackindex_circled
+      //    when we see `[{...} ...]: ...` to give an error if more than one
+      //    return were circled.)
       //
       // 4. ^xxx indicate a desire to get a "meta" result.
       //
@@ -1312,7 +1312,7 @@ Bounce Stepper_Executor(Level* L)
 
         // we've extracted the array at and tail, can reuse current now
 
-        StackIndex stackindex_circled = 0;
+        Option(StackIndex) circled = 0;
 
         for (; check != tail; ++check) {  // push variables first [2]
             if (Is_Quoted(check))
@@ -1320,10 +1320,10 @@ Bounce Stepper_Executor(Level* L)
 
             Heart heart = Cell_Heart(check);
 
-            bool is_circled;
+            bool circle_this;
 
             if (heart == REB_FENCE) {  // [x {y}]: ... fence means eval to that
-                if (stackindex_circled != 0)
+                if (circled)
                     fail ("Can't circle more than one multi-return result");
                 Length len_at = Cell_Series_Len_At(check);
                 if (len_at == 1) {
@@ -1336,11 +1336,11 @@ Bounce Stepper_Executor(Level* L)
                 else  // !!! should {} be a synonym for {#} or {~} ?
                     fail ("Circling in multi-return only allows 1 element");
 
-                is_circled = true;
+                circle_this = true;
                 heart = Cell_Heart(CURRENT);
             }
             else {
-                is_circled = false;
+                circle_this = false;
                 Derelativize(CURRENT, check, check_binding);  // same heart
             }
 
@@ -1384,8 +1384,8 @@ Bounce Stepper_Executor(Level* L)
             if (is_optional)  // so next phase won't worry about leading slash
                 Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
 
-            if (is_circled)
-                stackindex_circled = TOP_INDEX;
+            if (circle_this)
+                circled = TOP_INDEX;
 
             if (
                 // ^xxx is indicator of a ^META result [4]
@@ -1406,10 +1406,7 @@ Bounce Stepper_Executor(Level* L)
             fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
         }
 
-        if (stackindex_circled == 0)
-            stackindex_circled = STACK_BASE + 1;  // main [3]
-
-        level_->u.eval.stackindex_circled = stackindex_circled;  // remember it
+        level_->u.eval.stackindex_circled = circled;  // remember it
 
         Level* sub = Maybe_Rightward_Continuation_Needed(L);
         if (not sub)
@@ -1469,7 +1466,7 @@ Bounce Stepper_Executor(Level* L)
         }
 
         StackIndex stackindex_var = STACK_BASE + 1;  // [2]
-        StackIndex stackindex_circled = level_->u.eval.stackindex_circled;
+        Option(StackIndex) circled = level_->u.eval.stackindex_circled;
 
         for (
             ;
@@ -1550,10 +1547,10 @@ Bounce Stepper_Executor(Level* L)
             else
                 assert(false);
 
-          circled_check:
+          circled_check:  // Note: no circling passes through the original OUT
 
-            if (stackindex_circled == stackindex_var)
-                Copy_Cell(OUT, SPARE);  // Note: might be void
+            if (circled == stackindex_var)
+                Copy_Cell(OUT, SPARE);
         }
 
         // We've just changed the values of variables, and these variables
@@ -1570,6 +1567,9 @@ Bounce Stepper_Executor(Level* L)
 
         if (pack_array)
             Drop_GC_Guard(pack_array);
+
+        if (not circled and not Is_Pack(OUT))  // reverse quotification
+            Meta_Unquotify_Undecayed(OUT);
 
     } set_block_drop_stack_and_continue: {  //////////////////////////////////
 

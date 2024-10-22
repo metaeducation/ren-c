@@ -134,7 +134,7 @@ struct EvaluatorExecutorStateStruct {
 
     Option(const Value*) current_gotten;
 
-    StackIndex stackindex_circled;  // used only by multi-return
+    Option(StackIndex) stackindex_circled;  // used only by multi-return
 };
 
 
