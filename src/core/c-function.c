@@ -551,23 +551,6 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     // Must remove binder indexes for all words, even if about to fail
     //
   blockscope {
-    const Key* key_tail = Flex_Tail(Key, keylist);
-    const Key* key = Flex_Head(Key, keylist);
-    const Param* param = Flex_At(Param, paramlist, 1);
-    for (; key != key_tail; ++key, ++param) {
-        //
-        // See notes in AUGMENT on why we don't do binder indices on "sealed"
-        // arguments (we can add `x` to the interface of a func with local `x`)
-        //
-        if (Get_Cell_Flag(param, VAR_MARKED_HIDDEN)) {
-            assert(Is_Specialized(param));
-        }
-        else {
-            if (Remove_Binder_Index_Else_0(&binder, Key_Symbol(key)) == 0)
-                assert(duplicate);  // erroring on this is pending
-        }
-    }
-
     SHUTDOWN_BINDER(&binder);
 
     if (duplicate) {

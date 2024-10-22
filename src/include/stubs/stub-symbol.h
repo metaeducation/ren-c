@@ -67,6 +67,12 @@
 #define MISC_Hitch_TYPE         Flex*
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
+#define LINK_NextBind_TYPE      Stub*
+#define HAS_LINK_NextBind       FLAVOR_HITCH
+
+#define INODE_BindSymbol_TYPE   const Symbol*
+#define HAS_INODE_BindSymbol    FLAVOR_HITCH
+
 
 //=//// SYMBOL_FLAG_24 ////////////////////////////////////////////////////=//
 //

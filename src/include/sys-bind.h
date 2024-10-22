@@ -181,53 +181,61 @@ enum {
 
 
 struct Reb_Binder {
-  #if DEBUG
-    Count count;
-    #if CPLUSPLUS_11
-        //
-        // C++ debug build can help us make sure that no binder ever fails to
-        // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
-        // would leave lingering binding values on symbol stubs.
-        //
-        bool initialized;
-        Reb_Binder () { initialized = false; }
-        ~Reb_Binder () { assert(not initialized); }
-    #endif
-  #else
-    int pedantic_warnings_dont_allow_empty_struct;
+    Stub* hitch_list;
+
+  #if DEBUG && CPLUSPLUS_11
+    //
+    // C++ debug build can help us make sure that no binder ever fails to
+    // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
+    // would leave lingering binding hitches on symbol stubs.
+    //
+    bool initialized;
+    Reb_Binder () { initialized = false; }
+    ~Reb_Binder () { assert(not initialized); }
   #endif
 };
 
 
 INLINE void INIT_BINDER(struct Reb_Binder *binder) {
-  #if DEBUG
-    binder->count = 0;
+    binder->hitch_list = nullptr;
 
-    #if CPLUSPLUS_11
-        binder->initialized = true;
-    #endif
+  #if DEBUG && CPLUSPLUS_11
+    binder->initialized = true;
   #endif
-
-    UNUSED(binder);
 }
 
 
 INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
-  #if DEBUG
-    assert(binder->count == 0);
+    while (binder->hitch_list != nullptr) {
+        Stub* hitch = binder->hitch_list;
+        binder->hitch_list = LINK(NextBind, hitch);
 
-    #if CPLUSPLUS_11
-        binder->initialized = false;
-    #endif
+        const Symbol* s = INODE(BindSymbol, hitch);
+        assert(Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO));
+        Clear_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
+        node_MISC(Hitch, s) = node_MISC(Hitch, hitch);
+
+        assert(not Is_Node_Free(hitch));
+        Set_Node_Free_Bit(hitch);
+        GC_Kill_Stub(hitch);  // expects node to be decayed/inaccessible (free)
+    }
+
+  #if DEBUG && CPLUSPLUS_11
+    binder->initialized = false;
   #endif
-
-    UNUSED(binder);
 }
 
 
 // Tries to set the binder index, but return false if already there.
 //
 // 1. GC does not run during binding, and we want this as cheap as possible.
+//
+// 2. When we clean up the binder, we have to remove the MISC_IS_BINDINFO
+//    flag for all the symbols we attached hitches to.  But all we have is
+//    a singly linked list of the hitches, so the symbol has to be poked
+//    somewhere.  We aren't using the INFO bits, so we make this the kind
+//    of stub that uses its info as a node, which we do by INFO_NEEDS_MARK,
+//    but do notice the GC never runs during a bind.
 //
 INLINE bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
@@ -242,20 +250,19 @@ INLINE bool Try_Add_Binder_Index(
     if (Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return false;  // already has a mapping
 
-    Stub* hitch = Make_Untracked_Stub(  // don't pay for manuals tracking [1]
+    Stub* hitch = Make_Untracked_Stub(  // don't pay for manuals tracking
         FLEX_FLAG_BLACK | FLAG_FLAVOR(HITCH)
+            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // symbol (but no GC runs!) [1]
     );
+    INODE(BindSymbol, hitch) = s;
     Init_Integer(Stub_Cell(hitch), index);
     node_MISC(Hitch, hitch) = node_MISC(Hitch, s);
+    LINK(NextBind, hitch) = binder->hitch_list;
+    binder->hitch_list = hitch;
 
     MISC(Hitch, s) = hitch;
     Set_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
 
-  #if defined(NDEBUG)
-    UNUSED(binder);
-  #else
-    ++binder->count;
-  #endif
     return true;
 }
 
@@ -284,49 +291,33 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
         return 0;
 
     Stub* hitch = MISC(Hitch, s);  // unmanaged stub used for binding
-    return VAL_INT32(Stub_Cell(hitch));
-}
-
-
-INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
-    struct Reb_Binder *binder,
-    const Symbol* s
-){
-  #if CPLUSPLUS_11 && DEBUG
-    assert(binder->initialized);
-  #endif
-
-    if (Not_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
-        return 0;
-
-    Stub* hitch = MISC(Hitch, s);
-
+    assert(INODE(BindSymbol, hitch) == s);
     REBINT index = VAL_INT32(Stub_Cell(hitch));
-    MISC(Hitch, s) = cast(Stub*, node_MISC(Hitch, hitch));
-    Clear_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
-
-    assert(not Is_Node_Free(hitch));
-    Set_Node_Free_Bit(hitch);
-    GC_Kill_Stub(hitch);  // expects node to be decayed/inaccessible (free)
-
-  #if defined(NDEBUG)
-    UNUSED(binder);
-  #else
-    assert(binder->count > 0);
-    --binder->count;
-  #endif
+    assert(index != 0);
     return index;
 }
 
 
-INLINE void Remove_Binder_Index(
+INLINE void Update_Binder_Index(
     struct Reb_Binder *binder,
-    const Symbol* s
+    const Symbol* s,
+    REBINT index
 ){
-    REBINT old_index = Remove_Binder_Index_Else_0(binder, s);
-    assert(old_index != 0);
-    UNUSED(old_index);
+    assert(index != 0);  // singly linked list, removal would be inefficient
+
+  #if CPLUSPLUS_11 && DEBUG
+    assert(binder->initialized);
+  #endif
+
+    UNUSED(binder);
+    assert(Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO));
+
+    Stub* hitch = MISC(Hitch, s);  // unmanaged stub used for binding
+    assert(INODE(BindSymbol, hitch) == s);
+    assert(VAL_INT32(Stub_Cell(hitch)) != 0);
+    Init_Integer(Stub_Cell(hitch), index);
 }
+
 
 struct CollectorStruct {
     CollectFlags initial_flags;

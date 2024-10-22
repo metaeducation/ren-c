@@ -411,19 +411,6 @@ DECLARE_NATIVE(reframer)
   }
 
   cleanup_binder: {
-    const Key* tail;
-    const Key* key = ACT_KEYS(&tail, shim);
-    const Param* param = ACT_PARAMS_HEAD(shim);
-    for (; key != tail; ++key, ++param) {
-        if (Is_Specialized(param))
-            continue;
-
-        const Symbol* symbol = Key_Symbol(key);
-        REBLEN index = Remove_Binder_Index_Else_0(&binder, symbol);
-        assert(index != 0);
-        UNUSED(index);
-    }
-
     SHUTDOWN_BINDER(&binder);
 
     if (error)  // once binder is cleaned up, safe to raise errors

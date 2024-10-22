@@ -263,15 +263,6 @@ bool Specialize_Action_Throws(
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
-        const Key* tail;
-        const Key* key = ACT_KEYS(&tail, unspecialized);
-        const Param* param = ACT_PARAMS_HEAD(unspecialized);
-        for (; key != tail; ++key, ++param) {
-            if (Is_Specialized(param))
-                continue;  // maybe refinement from stack, now specialized out
-
-            Remove_Binder_Index(&binder, Key_Symbol(key));
-        }
         SHUTDOWN_BINDER(&binder);
 
         // Run block and ignore result (unless it is thrown)

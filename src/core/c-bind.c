@@ -157,14 +157,6 @@ void Bind_Values_Core(
         flags
     );
 
-  if (not Is_Module(context)) {  // Reset all the binder indices to zero
-    const Key* key_tail;
-    const Key* key = Varlist_Keys(&key_tail, c);
-    const Value* var = Varlist_Slots_Head(c);
-    for (; key != key_tail; ++key, ++var)
-        Remove_Binder_Index(&binder, Key_Symbol(key));
-  }
-
     SHUTDOWN_BINDER(&binder);
 }
 
@@ -1085,15 +1077,6 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     }
   }
 
-  blockscope {  // Reset binding table, see notes above regarding locals
-    EVARS e;
-    Init_Evars(&e, ACT_ARCHETYPE(relative));
-    e.visibility = visibility;
-    while (Try_Advance_Evars(&e))
-        Remove_Binder_Index(&binder, Key_Symbol(e.key));
-    Shutdown_Evars(&e);
-  }
-
     SHUTDOWN_BINDER(&binder);
     return copy;
 }
@@ -1290,23 +1273,8 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     //
     /* Set_Flex_Flag(c, DONT_RELOCATE); */
 
-    if (rebinding) {  // even if failing, must remove bind indices for words
-        const Key* key_tail;
-        const Key* key = Varlist_Keys(&key_tail, c);
-        Value* var = Varlist_Slots_Head(c);  // only needed for debug
-        for (; key != key_tail; ++key, ++var) {
-            REBINT stored = Remove_Binder_Index_Else_0(
-                &binder, Key_Symbol(key)
-            );
-            assert(stored != 0);
-            if (stored > 0)
-                assert(Not_Cell_Flag(var, BIND_NOTE_REUSE));
-            else
-                assert(Get_Cell_Flag(var, BIND_NOTE_REUSE));
-        }
-
+    if (rebinding)  // even if failing, must remove bind indices for words
         SHUTDOWN_BINDER(&binder);
-    }
 
     if (error) {
         Free_Unmanaged_Flex(c);

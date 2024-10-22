@@ -176,11 +176,13 @@ DECLARE_NATIVE(reorder)
             goto cleanup_binder;
         }
 
-        REBLEN index = Remove_Binder_Index_Else_0(&binder, symbol);
-        if (index == 0) {
+        REBLEN index = Get_Binder_Index_Else_0(&binder, symbol);
+        if (index <= 0) {
             error = Error_Bad_Parameter_Raw(item);
             goto cleanup_binder;
         }
+
+        Update_Binder_Index(&binder, symbol, -1);
 
         if (ignore)
             continue;
@@ -208,9 +210,9 @@ DECLARE_NATIVE(reorder)
 
         const Symbol* symbol = Key_Symbol(key);
 
-        // If we saw the parameter, we removed its index from the binder.
+        // If we saw the parameter, we set its index to -1.
         //
-        bool mentioned = (0 == Remove_Binder_Index_Else_0(&binder, symbol));
+        bool mentioned = (-1 == Get_Binder_Index_Else_0(&binder, symbol));
 
         if (
             not error  // don't report an error here if one is pending

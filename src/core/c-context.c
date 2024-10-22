@@ -349,7 +349,8 @@ void Collect_End(Collector *cl)
     StackIndex index = TOP_INDEX;
     for (; index != cl->stack_base; --index) {
         const Symbol* symbol = Cell_Word_Symbol(TOP);
-        Remove_Binder_Index(&cl->binder, symbol);
+        assert(Get_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO));
+        UNUSED(symbol);
         DROP();
     }
 
@@ -655,8 +656,7 @@ DECLARE_NATIVE(collect_words)
               #if !defined(NDEBUG)  // count dups, overkill [3]
                 REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
                 assert(i < 0);
-                Remove_Binder_Index_Else_0(&cl->binder, symbol);
-                Add_Binder_Index(&cl->binder, symbol, i - 1);
+                Update_Binder_Index(&cl->binder, symbol, i - 1);
               #endif
             }
         }
@@ -687,35 +687,7 @@ DECLARE_NATIVE(collect_words)
 
   //=//// REMOVE DUMMY BINDINGS FOR THE IGNORED SYMBOLS ///////////////////=//
 
-    if (Is_Block(ignore)) {
-        const Element* ignore_tail;
-        const Element* ignore_at = Cell_List_At(&ignore_tail, ignore);
-        for (; ignore_at != ignore_tail; ++ignore_at) {
-            const Symbol* symbol = Cell_Word_Symbol(ignore_at);
-
-          #if !defined(NDEBUG)
-            REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
-            assert(i < 0);
-            if (i != -1) {
-                Remove_Binder_Index_Else_0(&cl->binder, symbol);
-                Add_Binder_Index(&cl->binder, symbol, i + 1);
-                continue;
-            }
-          #endif
-
-            Remove_Binder_Index(&cl->binder, symbol);
-        }
-    }
-    else if (Is_Object(ignore)) {
-        const Key* key_tail;
-        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignore));
-        for (; key != key_tail; ++key)
-            Remove_Binder_Index(&cl->binder, Key_Symbol(key));
-    }
-    else
-        assert(Is_Nulled(ignore));
-
-    Collect_End(cl);
+    Collect_End(cl);  // does removal automatically
 
     return Init_Block(OUT, array);
 }

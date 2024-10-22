@@ -613,3 +613,26 @@ void Shutdown_Interning(void)
     Free_Unmanaged_Flex(g_symbols.by_hash);
     g_symbols.by_hash = nullptr;
 }
+
+
+#if DEBUG
+
+//
+//  Assert_No_Symbols_Have_Bindinfo: C
+//
+void Assert_No_Symbols_Have_Bindinfo(void) {
+    Length num_slots = Flex_Used(g_symbols.by_hash);
+    Symbol** symbols_by_hash = Flex_Head(  // hold on temporarily [1]
+        Symbol*,
+        g_symbols.by_hash
+    );
+
+    Count i;
+    for (i = 0; i < num_slots; ++i) {
+        if (not symbols_by_hash[i] or symbols_by_hash[i] == DELETED_SYMBOL)
+            continue;
+        assert(Not_Subclass_Flag(SYMBOL, symbols_by_hash[i], MISC_IS_BINDINFO));
+    }
+}
+
+#endif
