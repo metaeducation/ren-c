@@ -181,7 +181,7 @@ INLINE bool Is_Space(const Value* v) {
     if (not IS_CHAR(v))
         return false;
 
-    return Cell_Codepoint(v) == 0;
+    return Cell_Codepoint(v) == ' ';
 }
 
 
