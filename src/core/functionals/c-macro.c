@@ -62,8 +62,8 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
     }
 
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
-        Stub* saved = Alloc_Singular(  // save old feed stub [2]
-            FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED  // no tracking
+        Stub* saved = Make_Untracked_Stub(  // save old feed stub [2]
+            FLAG_FLAVOR(FEED)
         );
         Mem_Copy(saved, FEED_SINGULAR(feed), sizeof(Stub));
         assert(Not_Node_Managed(saved));

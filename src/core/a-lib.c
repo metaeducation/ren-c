@@ -2578,17 +2578,14 @@ RebolNodeInternal* API_rebINLINE(const RebolValue* v)
 {
     ENTER_API;
 
-    Array* a = Alloc_Singular(
-        FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED  // lie!
-    );
-    Clear_Node_Managed_Bit(a);  // lying avoided manuals tracking!
+    Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(INSTRUCTION_SPLICE));
 
     if (not (Is_Block(v) or Is_Quoted(v) or Is_Blank(v)))
         fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/BLANK!");
 
-    Copy_Cell(Stub_Cell(a), v);
+    Copy_Cell(Stub_Cell(s), v);
 
-    return cast(RebolNodeInternal*, a);  // cast needed in C
+    return cast(RebolNodeInternal*, s);  // cast needed in C
 }
 
 

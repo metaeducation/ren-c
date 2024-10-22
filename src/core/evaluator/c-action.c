@@ -1067,7 +1067,6 @@ void Push_Action(
             | FLEX_FLAG_FIXED_SIZE  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
     );
-    s->info.any.flags = FLEX_INFO_MASK_NONE;
     Tweak_Bonus_Keysource(x_cast(Array*, s), L);  // maps varlist back to L
     MISC(VarlistAdjunct, s) = nullptr;
     node_LINK(NextVirtual, s) = nullptr;

@@ -227,6 +227,8 @@ INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 
 // Tries to set the binder index, but return false if already there.
 //
+// 1. GC does not run during binding, and we want this as cheap as possible.
+//
 INLINE bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
     const Symbol* s,
@@ -240,13 +242,9 @@ INLINE bool Try_Add_Binder_Index(
     if (Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return false;  // already has a mapping
 
-    // Not actually managed...but GC doesn't run while binders are active,
-    // and we don't want to pay for putting this in the manual tracking list.
-    //
-    Array* hitch = Alloc_Singular(
-        NODE_FLAG_MANAGED | FLEX_FLAG_BLACK | FLAG_FLAVOR(HITCH)
+    Stub* hitch = Make_Untracked_Stub(  // don't pay for manuals tracking [1]
+        FLEX_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
-    Clear_Node_Managed_Bit(hitch);
     Init_Integer(Stub_Cell(hitch), index);
     node_MISC(Hitch, hitch) = node_MISC(Hitch, s);
 
@@ -307,8 +305,9 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     MISC(Hitch, s) = cast(Stub*, node_MISC(Hitch, hitch));
     Clear_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
 
-    Set_Node_Managed_Bit(hitch);  // we didn't manuals track it
-    GC_Kill_Flex(hitch);
+    assert(not Is_Node_Free(hitch));
+    Set_Node_Free_Bit(hitch);
+    GC_Kill_Stub(hitch);  // expects node to be decayed/inaccessible (free)
 
   #if defined(NDEBUG)
     UNUSED(binder);

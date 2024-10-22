@@ -797,19 +797,23 @@ INLINE void Expand_Flex_Tail(Flex* f, REBLEN delta) {
 
 // Out of the 8 platform pointers that comprise a Flex Stub, only 3 actually
 // need to be initialized to get a functional non-dynamic Flex or Array of
-// length 0!  Only one is set here.  The info should be set by the caller.
+// length 0!  Only two are set here.
 //
 INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
     Stub *s = u_cast(Stub*, preallocated);
+    s->leader.bits = flags | NODE_FLAG_NODE;  // #1
 
-    s->leader.bits = NODE_FLAG_NODE | flags;  // #1
-
-  #if !defined(NDEBUG)
+  #if (! DEBUG)
+    s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
+  #else
     SafeCorrupt_Pointer_Debug(s->link.any.corrupt);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
-    SafeCorrupt_Pointer_Debug(s->info.any.corrupt);  // #7
+    if (flags & FLEX_FLAG_INFO_NODE_NEEDS_MARK)
+        Corrupt_Pointer_If_Debug(s->info.any.node);  // #7
+    else
+        s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
     SafeCorrupt_Pointer_Debug(s->misc.any.corrupt);  // #8
 
   #if DEBUG_FLEX_ORIGINS
@@ -825,6 +829,23 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
 
     return s;
 }
+
+
+// This is a lightweight alternative to Alloc_Singular() when the stub being
+// created does not need to be tracked.  It replaces a previous hack of
+// allocating the singular as NODE_FLAG_MANAGED so it didn't get into the
+// manuals tracking list, but then clearing the bit immediately afterward.
+//
+// (Because this leaks easily, it should really only be used by low-level code
+// that really knows what it's doing, and needs the performance.)
+//
+INLINE Stub* Make_Untracked_Stub(Flags flags) {
+    assert(not (flags & NODE_FLAG_MANAGED));
+    Stub* s = Prep_Stub(Alloc_Stub(), flags | FLEX_FLAG_FIXED_SIZE);
+    Erase_Cell(&s->content.fixed.cell);  // !!! should callers have to do this?
+    return s;
+}
+
 
 INLINE PoolId Pool_Id_For_Size(Size size) {
   #if DEBUG_ENABLE_ALWAYS_MALLOC
@@ -857,15 +878,6 @@ INLINE Flex* Make_Flex_Into(
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
     Stub* s = Prep_Stub(preallocated, flags);
-
-  #if defined(NDEBUG)
-    FLEX_INFO(s) = FLEX_INFO_MASK_NONE;
-  #else
-    if (flags & FLEX_FLAG_INFO_NODE_NEEDS_MARK)
-        Corrupt_Pointer_If_Debug(s->info.any.node);
-    else
-        FLEX_INFO(s) = FLEX_INFO_MASK_NONE;
-  #endif
 
     if (
         (flags & FLEX_FLAG_DYNAMIC)  // inlining will constant fold
