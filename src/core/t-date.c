@@ -498,7 +498,7 @@ Value* Time_Between_Dates(
 
     // Note: abs() takes `int`, but there is a labs(), and C99 has llabs()
     //
-    if (abs(cast(int, diff)) > (((1U << 31) - 1) / SECS_IN_DAY))
+    if (cast(unsigned, abs(cast(int, diff))) > (((1U << 31) - 1) / SECS_IN_DAY))
         fail (Error_Overflow_Raw());
 
 

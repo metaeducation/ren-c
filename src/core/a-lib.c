@@ -287,7 +287,7 @@ void API_rebFreeMaybe(void *ptr)
         return;
 
     Binary** pb = cast(Binary**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `b` underruns
+    Unpoison_Memory_If_Sanitize(pb, sizeof(Binary*));  // fetch `b` underruns
 
     Binary* b = *pb;
 
