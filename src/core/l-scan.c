@@ -1498,12 +1498,18 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 Option(Error*) e = Trap_Scan_String_Push_Mold(
                     &cp, mo, cp, 0, S
                 );
+                Drop_Mold(mo);  // !!! not used ??
                 if (e)
                     return e;
                 S->end = cp;
                 return LOCATED(token);
             }
-            while (*cp == '~' or Is_Lex_Interstitial(*cp)) {  // #: and #/ ok
+            while (
+                *cp == '~' or (
+                    token == TOKEN_FILE
+                    and Is_Lex_Interstitial(*cp)  // %: and %/ not sequences
+                )
+            ){
                 cp++;
 
                 while (Is_Lex_Not_Delimit(*cp))
@@ -1586,23 +1592,16 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 return LOCATED(TOKEN_CONSTRUCT);
             }
             if (*cp == '"') {  // CHAR #"C"
-                Codepoint dummy;
-                cp++;
-                if (*cp == '"') {  // #"" is NUL
-                    S->end = cp + 1;
-                    return LOCATED(TOKEN_CHAR);
-                }
-                cp = maybe Try_Scan_UTF8_Char_Escapable(&dummy, cp);
-                if (cp and *cp == '"') {
-                    S->end = cp + 1;
-                    return LOCATED(TOKEN_CHAR);
-                }
-                // try to recover at next new line...
-                cp = S->begin + 1;
-                while (not ANY_CR_LF_END(*cp))
-                    ++cp;
+                S->end = S->begin;
+                S->begin = cp;
+                Option(Error*) e = Trap_Scan_String_Push_Mold(
+                    &cp, mo, cp, 0, S
+                );
+                if (e)
+                    return e;
+                S->begin = S->end;  // restore start
                 S->end = cp;
-                return Error_Syntax(S, TOKEN_CHAR);
+                return LOCATED(TOKEN_CHAR);
             }
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
                 S->end = S->begin;  // save start
@@ -1610,6 +1609,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 Option(Error*) e = Trap_Scan_String_Push_Mold(
                     &cp, mo, cp, 0, S
                 );
+                Drop_Mold(mo);  // not used...?
                 if (e)
                     return e;
                 S->begin = S->end;  // restore start
@@ -1634,7 +1634,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (cp - 1 == S->begin) {
                 --cp;
                 token = TOKEN_ISSUE;
-                goto issue_or_file_token;  // same policies on including `/`
+                goto issue_or_file_token;  // different policies on / : .
             }
             return Error_Syntax(S, TOKEN_INTEGER);
 
@@ -2067,7 +2067,7 @@ Bounce Scanner_Executor(Level* const L) {
     Token token;
 
   blockscope {
-    Drop_Mold_If_Pushed(mo);
+    assert(mo->string == nullptr);  // pushed mold should have been handled
     Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
     if (error)
         return RAISE(unwrap error);
@@ -2430,20 +2430,14 @@ Bounce Scanner_Executor(Level* const L) {
         transcode->at = S->end;  // consume extended token
         break; }
 
-      case TOKEN_CHAR: {
-        Codepoint uni;
-        const Byte* bp = S->begin + 2;  // skip #"
-        const Byte* ep = S->end - 1;  // subtract 1 for "
-        if (bp == ep) {  // #"" is NUL
-            Init_Char_Unchecked(PUSH(), 0);
-            break;
-        }
-        if (ep != Try_Scan_UTF8_Char_Escapable(&uni, bp))
-            return RAISE(Error_Syntax(S, token));
-
-        Option(Error*) error = Trap_Init_Char(PUSH(), uni);
-        if (error)
-            return RAISE(unwrap error);
+      case TOKEN_CHAR: {  // now just "issue enclosed in quotes"
+        Init_Issue_Utf8(
+            PUSH(),
+            Binary_At(mo->string, mo->base.size),
+            String_Size(mo->string) - mo->base.size,
+            String_Len(mo->string) - mo->base.index
+        );
+        Drop_Mold(mo);
         break; }
 
       case TOKEN_STRING: {  // UTF-8 pre-scanned above, and put in mold buffer
@@ -2894,7 +2888,7 @@ Bounce Scanner_Executor(Level* const L) {
 
 } done: {  ///////////////////////////////////////////////////////////////////
 
-    Drop_Mold_If_Pushed(mo);
+    assert(mo->string == nullptr);  // mold should have been handled
 
     assert(S->quotes_pending == 0);
     assert(S->sigil_pending == SIGIL_0);
@@ -3275,8 +3269,10 @@ const Byte* Scan_Any_Word(
     if (error)
         fail (unwrap error);
 
-    if (token != TOKEN_WORD)
+    if (token != TOKEN_WORD) {
+        Drop_Mold_If_Pushed(mo);
         return nullptr;
+    }
 
     ScanState* S = &L->u.scan;
     assert(S->end >= S->begin);
@@ -3284,7 +3280,6 @@ const Byte* Scan_Any_Word(
         return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
 
     Init_Any_Word(out, heart, Intern_UTF8_Managed(utf8, size));
-    Drop_Mold_If_Pushed(mo);
     Free_Level_Internal(L);
     return S->begin;
 }
@@ -3317,21 +3312,12 @@ Option(const Byte*) Try_Scan_Issue_To_Stack(const Byte* cp, Size size)
             ++len;
 
         // Allows nearly every visible character that isn't a delimiter
-        // as a char surrogate, e.g. #\ or #@ are legal, as are #<< and #>>
+        // as a char surrogate, e.g. #@ is legal, as are #<< and #>>
+        // but #/ is a PATH! as is /#
         //
         switch (Get_Lex_Class(*bp)) {
           case LEX_CLASS_DELIMIT:
-            switch (Get_Lex_Delimit(*bp)) {
-              case LEX_DELIMIT_SLASH:  // `#/` is not a PATH!
-              case LEX_DELIMIT_COLON:  // `#:` is not a CHAIN!
-              case LEX_DELIMIT_PERIOD:  // `#.` is not a TUPLE!
-                break;
-
-              default:
-                // ultimately #{...} and #"..." should be "ISSUECHAR!"
-                return nullptr;  // other purposes, `#(` `#[`, etc.
-            }
-            break;
+            return nullptr;  // other purposes, `#(` `#[`, etc.
 
           case LEX_CLASS_WORD:
             if (*bp == '^')

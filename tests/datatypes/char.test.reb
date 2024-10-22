@@ -37,14 +37,15 @@
     )
 ]
 
-
-; !!! Workaround for test scanner's use of TRANSCODE that violates the ability
-; to actually work with 0 byte representations in strings (even for a test
-; that is character based).
-;
-(okay = eval load #{23225E4022203D2023225E2830302922})  ; ^ @ = ^ (00)
-(okay = eval load #{23225E286E756C6C2922203D2023225E2830302922})  ; ^ (null) = ^ (00)
-((transcode:one #{23225E2830302922}) = codepoint-to-char 0)  ; ^ (00)
+~illegal-zero-byte~ !! (
+    eval load #{23225E4022203D2023225E2830302922}  ; ^ @ = ^ (00)
+)
+~illegal-zero-byte~ !! (
+    eval load #{23225E286E756C6C2922203D2023225E2830302922}  ; ^ (null) = ^ (00)
+)
+~illegal-zero-byte~ !! (
+    transcode:one #{23225E2830302922}  ; ^ (00)
+)
 
 (#"^A" = #"^(01)")
 (#"^B" = #"^(02)")

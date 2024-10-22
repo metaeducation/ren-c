@@ -159,7 +159,7 @@
         ok
     )
 
-    (#. == parse str [thru "amet" one])
+    (#"." == parse str [thru "amet" one])
     (
         res: ~
         all [

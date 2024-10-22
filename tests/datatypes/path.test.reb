@@ -188,11 +188,6 @@
     (t: "text", t.3 = #"x")
 ]
 
-; ISSUE! has internal slashes (like FILE!), and does not load as a path
-[
-    ("iss/ue/path" = as text! ensure issue! transcode:one "#iss/ue/path")
-]
-
 ; https://gitter.im/red/red?at=5b23be5d1ee2d149ecc4c3fd
 (
     bl: [a 1 q/w [e/r 42]]

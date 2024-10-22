@@ -29,7 +29,7 @@ lib: system.contexts.lib
 
 ; Char constants
 
-nul: NUL:  #"^(NULL)" ; synonym for empty token, e.g. #""
+nul: NUL:  #""  ; ^(NULL) no longer legal internal to strings
 space:     #  ; more useful as space than as synonym for rarely-useful NUL
 sp: SP:    space
 backspace: #"^(BACK)"

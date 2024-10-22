@@ -157,7 +157,7 @@
 ; getify or setify things that aren't guaranteed to succeed (e.g. a string
 ; might have spaces in it, and can't be turned into a SET-WORD!)
 ;
-~bad-sequence-item~ !! ([x:] = compose [(#x):])
+([#x:] = compose [(#x):])
 ((reduce [to chain! ["x" _]]) = compose [("x"):])
 
 ; Can't put colons "on top" of paths

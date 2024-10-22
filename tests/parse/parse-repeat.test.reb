@@ -19,7 +19,7 @@
 ;    >> parse "aaa" [repeat (maybe num) "b", some "a"]
 ;    == "a"
 ;
-; It can also "opt all the way in" and become a synonym for MAYBE SOME with #:
+; It can also "opt all the way in" and become a synonym for MAYBE SOME with #
 ;
 ;    >> num: #
 ;    >> parse "aaaaaaaaaa" [repeat (num) "a"]

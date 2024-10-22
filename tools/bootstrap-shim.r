@@ -282,7 +282,7 @@ ok: okay: true
 ; the bootstrap executable) to mean that the variable has a binding already
 ; to use vs. create a new one.  It's essential to use with ITERATE in modern
 ; Ren-C, but we can't say `iterate @block [...]` in bootstrap (no @).  Hence
-; instead, INERT (which adds @ in new executables) is defined to add a #.
+; instead, INERT (which adds @ in new executables) is defined to add a #"."
 
 inert: func3 [word [word!]] [return to-issue word]
 

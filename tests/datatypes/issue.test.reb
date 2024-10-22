@@ -9,14 +9,23 @@
 
 (issue? #a)
 
-; Issues follow the rules for FILE! scanning, so they allow internal slashes.
+; Issues no longer follow FILE! scanning rules, so no internal slashes unless
+; they have been quoted.
 ;
-("/" = to text! #/)
-("/" = as text! #/)
-(#/ = as issue! "/")
-(#/ = to issue! "/")
-("iss/ue/nonpath" = as text! #iss/ue/nonpath)
-("issue/3" = as text! #issue/3)
+("/" = to text! #"/")
+("/" = as text! #"/")
+(#"/" = as issue! "/")
+(#"/" = to issue! "/")
+("iss/ue/#nonpath" = as text! #"iss/ue/#nonpath")
+("issue/3" = as text! #"issue/3")
+(all [
+    let p: #iss/ue/#path
+    3 = length of p
+    #iss = first p
+    'ue = second p
+    #path = third p
+])
+
 
 ; These are examples of something used in %pdf-maker.r
 ;
@@ -41,8 +50,8 @@
         "#{" "#}" #|  ; #{xx} will become "ISSUE!" when BINARY! is &{xx}
         -{#[}- -{#]}- #\
         #; #'  ; as with URL!, semicolons are allowed in the token
-        #: -{#"}-  ; quotes for ISSUE! with internal spaces (braces in future)
-        #"," #. #/  ; COMMA! is a delimiter, so `#,` is like `(#)`
+        #":" -{#"}-  ; quotes for ISSUE! with internal spaces (braces in future)
+        #"," #"." #"/"  ; COMMA! is a delimiter, so `#,` is like `(#)`
         #< #> #?
     ][
         case [

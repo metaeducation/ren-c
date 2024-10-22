@@ -58,8 +58,8 @@
         blk = [a]
     ])
     (all wrap [
-        3 == parse blk: [1 a 2 b 3] [some [change word! (#.) | integer!]]
-        blk = [1 #. 2 #. 3]
+        3 == parse blk: [1 a 2 b 3] [some [change word! (#".") | integer!]]
+        blk = [1 #"." 2 #"." 3]
     ])
     (all wrap [
         '~<change>~ == meta parse blk: [1 2 3] [change [some integer!] (99)]
@@ -96,7 +96,7 @@
         alpha: charset [#a - #z]
         all wrap [
             #3 == parse str: "1a2b3" [
-                some [change alpha (#.) | one]
+                some [change alpha (#".") | one]
             ]
             str = "1.2.3"
         ]

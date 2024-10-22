@@ -46,7 +46,7 @@
 //
 //  Form_Hex_Pad: C
 //
-// Form integer hex string and pad width with zeros.  Does not insert a #.
+// Form integer hex string and pad width with zeros.  Does not insert a #"."
 //
 void Form_Hex_Pad(
     Molder* mo,

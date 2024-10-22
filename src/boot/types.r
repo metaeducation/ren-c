@@ -164,7 +164,7 @@ binary      "series of bytes"
 
 issue       "immutable codepoint or codepoint sequence"
             ()  ; may or may not embed data in issue, affects FIRST_IS_NODE
-            [any-utf8? any-inert?]
+            [any-utf8? any-inert? any-sequencable?]
             [issue       *       *]
 
 sigil       "Decorators like $ : ^ & @ (:: means decoration of ANY-SET-TYPE?)"

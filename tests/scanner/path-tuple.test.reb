@@ -28,6 +28,10 @@
         ".."  ->  ..
         "..."  ->  ...
 
+        ":"  ->  :
+        "::"  ->  ::
+        ":::"  ->  :::
+
         "/a"  ->  [_ a]
         "//a"  !!  ~bad-sequence-blank~
         "a/"  ->  [a _]
@@ -88,7 +92,11 @@
 
         === COMMA TESTS ===
 
-        "/a/, b."  -> [_ a _] , (b _)
+        "/a/, b."  ->  [_ a _] , (b _)
+
+        === ISSUE TESTS ===
+
+        "/#a"  ->  [_ #a]
 
         === BAD PATH ELEMENT TESTS ===
 
@@ -96,20 +104,19 @@
         ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, TAG!, and their quasiforms
         ; are currently allowed in either sequence form.
 
-        "/#a"  !!  ~bad-sequence-item~
         "blk/#{}"  !!  ~bad-sequence-item~
 
         === CHAIN TESTS ===
 
         ; Various places do less exhaustive testing, they should be moved
 
-        "2022:"  ->  @[2022 _]
-        ":2022"  ->  @[_ 2022]
+        "2022:"  ->  {2022 _}
+        ":2022"  ->  {_ 2022}
 
         === CHAIN INSIDE OF PATH ===
 
-        "a/:b"  ->  [a @[_ b]]
-        "a/:b/c"  ->  [a @[_ b] c]
+        "a/:b"  ->  [a {_ b}]
+        "a/:b/c"  ->  [a {_ b} c]
 
         === TAG AMBIGUITY RESOLUTION ===
 
@@ -144,9 +151,10 @@
         <static> mapping (reduce [
             path! block!
             tuple! group!
-            chain! the-block!
+            chain! fence!
             block! meta-block!
             group! meta-group!
+            fence! meta-fence!
         ])
     ][
         mtype: select:skip:case mapping (type of get:any $value) 2

@@ -320,11 +320,8 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
             no_quotes = false;
             break;
         }
-        if (
-            Is_Lex_Delimit(cast(Byte, c))
-            and Is_Lex_Delimit_Hard(cast(Byte, c))
-        ){
-            no_quotes = false;  // comma, bracket, parentheses...
+        if (Is_Lex_Delimit(cast(Byte, c))) {
+            no_quotes = false;  // comma, bracket, parentheses, quotes...
             break;
         }
     }
