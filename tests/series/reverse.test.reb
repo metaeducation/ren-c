@@ -34,3 +34,11 @@
         after = [true true false false true false true]
     ]
 )]
+
+; !!! sequences are immutable, so a REVERSE operation that just ignores that
+; is not the greatest idea.  But this replaces mutable code that would
+; just corrupt memory, so it's better than that.
+[
+    ('d:c:b:a = reverse 'a:b:c:d)
+    (2.1.3.4 = reverse:part 1.2.3.4 2)
+]

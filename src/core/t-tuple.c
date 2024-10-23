@@ -404,26 +404,25 @@ REBTYPE(Sequence)
         Copy_Sequence_At(OUT, sequence, n);
         return OUT; }
 
+    // !!! Should REVERSE of a sequence be supported, when sequences are
+    // fundamentally immutable?  Probably not, but this replaces code that was
+    // outdated and completely buggy.
+
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
-
         UNUSED(PARAM(series));
 
-        REBLEN temp = len;
+        Length part = len;
 
         if (REF(part)) {
-            REBLEN part = Get_Num_From_Arg(ARG(part));
-            temp = MIN(part, Cell_Sequence_Len(sequence));
+            Length temp = Get_Num_From_Arg(ARG(part));
+            part = MIN(temp, len);
         }
-        if (len > 0) {
-            REBLEN i;
-            for (i = 0; i < temp/2; i++) {
-                REBINT a = vp[temp - i - 1];
-                vp[temp - i - 1] = vp[i];
-                vp[i] = a;
-            }
-        }
-        return Init_Tuple_Bytes(OUT, buf, len); }
+
+        return rebDelegate(
+            "let t: type of", rebQ(sequence),
+            "as t reverse:part to block!", rebQ(sequence), rebI(part)
+        ); }
 
       default:
         break;
