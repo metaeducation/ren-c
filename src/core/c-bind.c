@@ -1181,8 +1181,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     // There's no BUF_COLLECT here, so don't fail while binder in effect.
     //
     DECLARE_BINDER (binder);
-    if (rebinding)
-        Construct_Binder(binder);
+    Construct_Binder(binder);  // only used if `rebinding`
 
     Option(Error*) error = nullptr;
 
@@ -1275,8 +1274,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     //
     /* Set_Flex_Flag(c, DONT_RELOCATE); */
 
-    if (rebinding)  // even if failing, must remove bind indices for words
-        Destruct_Binder(binder);
+    Destruct_Binder(binder);  // must remove bind indices even if failing
 
     if (error) {
         Free_Unmanaged_Flex(c);

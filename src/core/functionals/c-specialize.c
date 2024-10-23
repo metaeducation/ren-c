@@ -230,7 +230,7 @@ bool Specialize_Action_Throws(
 
     DECLARE_BINDER (binder);
     if (def)
-        Construct_Binder(binder);
+        Construct_Binder_Core(binder);  // conditional, must use _Core()
 
     Action* unspecialized = VAL_ACTION(specializee);
 
@@ -263,7 +263,7 @@ bool Specialize_Action_Throws(
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
-        Destruct_Binder(binder);
+        Destruct_Binder_Core(binder);
 
         // Run block and ignore result (unless it is thrown)
         //

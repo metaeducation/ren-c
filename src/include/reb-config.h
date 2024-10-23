@@ -352,6 +352,35 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+//=//// DEBUG_STATIC_ANALYZING (BUILDING BLOCKS FOR MORE CHECKS) //////////=//
+//
+// Static analysis via tools such as Clang Static Analyzer aren't just useful
+// for the obvious reasons, but also because you can use their checks as a
+// box of parts for making custom checks that piggy-back on their powers.
+//
+// For instance: The ability to detect when you assign a variable the result
+// of a malloc() but do not pass it anywhere or free() it will be checked on
+// *all code paths* that return from a function.  This means that in a static
+// analysis build a construction primitive can be expressed as a macro that
+// spits out a dummy local variable assigned with a malloc, and a destruction
+// primitive can spit out a free() instruction for that dummy local.  Then
+// the static analysis can guarantee you run the destruction on all code
+// paths before they return!
+//
+// Note also the potentially useful attribute: `ownership_returns(malloc, N)`
+//
+//   https://stackoverflow.com/a/71249340
+//   https://github.com/llvm-mirror/clang/blob/master/lib/StaticAnalyzer/Checkers/MallocChecker.cpp
+//
+#if !defined(DEBUG_STATIC_ANALYZING)
+    #if defined(__clang_analyzer__)
+        #define DEBUG_STATIC_ANALYZING 1
+    #else
+        #define DEBUG_STATIC_ANALYZING DEBUG  // will be 0, but testing now
+    #endif
+#endif
+
+
 // Initially the debug build switches were all (default) or nothing (-DNDEBUG)
 // but needed to be broken down into a finer-grained list.  This way, more
 // constrained systems (like emscripten) can build in just the features it

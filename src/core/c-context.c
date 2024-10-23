@@ -291,7 +291,7 @@ Value* Append_Context(Context* context, const Symbol* symbol)
 
 
 //
-//  Construct_Collector: C
+//  Construct_Collector_Core: C
 //
 // Begin using a "binder" to start mapping canon symbol names to integer
 // indices.  The symbols are collected on the stack.  Use Destruct_Collector()
@@ -308,7 +308,7 @@ Value* Append_Context(Context* context, const Symbol* symbol)
 //    a binder link right on the symbol itself to be even faster.  (Review
 //    the actual performance tradeoffs of this, esp. for small objects).
 //
-void Construct_Collector(
+void Construct_Collector_Core(
     Collector* cl,
     CollectFlags flags,
     Option(Context*) context
@@ -316,7 +316,7 @@ void Construct_Collector(
     cl->initial_flags = flags;
     cl->next_index = 1;
 
-    Construct_Binder(&cl->binder);
+    Construct_Binder_Core(&cl->binder);
 
     if (context) {
         if (CTX_TYPE(unwrap context) == REB_MODULE)  // no binder preload [1]
@@ -340,14 +340,14 @@ void Construct_Collector(
 
 
 //
-//  Destruct_Collector: C
+//  Destruct_Collector_Core: C
 //
 // Reset the bind markers in the canon Stub Nodes so they can be reused,
 // and drop the collected words from the stack.
 //
-void Destruct_Collector(Collector *cl)
+void Destruct_Collector_Core(Collector *cl)
 {
-    Destruct_Binder(&cl->binder);
+    Destruct_Binder_Core(&cl->binder);
 
     Corrupt_If_Debug(*cl);
 }
@@ -433,7 +433,7 @@ static void Collect_Inner_Loop(
             }
             else {
                 if (flags & COLLECT_NO_DUP) {
-                    Destruct_Collector(cl);  // IMPORTANT: Can't fail with binder
+                    Destruct_Collector_Core(cl);  // Can't fail w/live binder
 
                     DECLARE_ATOM (duplicate);
                     Init_Word(duplicate, symbol);

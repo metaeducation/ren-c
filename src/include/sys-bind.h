@@ -200,7 +200,22 @@ struct BinderStruct {
     Binder* name = &name##_struct; \
 
 
-INLINE void Construct_Binder(Binder* binder) {
+#if DEBUG_STATIC_ANALYZING  // malloc leak check ensures destruct on all paths!
+    #define Construct_Binder(name) \
+        void* name##_guard = malloc(1); \
+        Construct_Binder_Core(name)
+
+    #define Destruct_Binder(name) do { \
+        free(name##_guard); \
+        Destruct_Binder_Core(name); \
+    } while (0);
+#else
+    #define Construct_Binder    Construct_Binder_Core
+    #define Destruct_Binder     Destruct_Binder_Core
+#endif
+
+
+INLINE void Construct_Binder_Core(Binder* binder) {
     binder->hitch_list = nullptr;
 
   #if DEBUG && CPLUSPLUS_11
@@ -208,8 +223,7 @@ INLINE void Construct_Binder(Binder* binder) {
   #endif
 }
 
-
-INLINE void Destruct_Binder(Binder* binder) {
+INLINE void Destruct_Binder_Core(Binder* binder) {
     while (binder->hitch_list != nullptr) {
         Stub* hitch = binder->hitch_list;
         binder->hitch_list = LINK(NextBind, hitch);
@@ -334,6 +348,21 @@ struct CollectorStruct {
 #define DECLARE_COLLECTOR(name) \
     Collector name##_struct; \
     Collector* name = &name##_struct; \
+
+#if DEBUG_STATIC_ANALYZING  // malloc leak check ensures destruct on all paths!
+    #define Construct_Collector(name,flags,context) \
+        void* name##_guard = malloc(1); \
+        Construct_Collector_Core(name, (flags), (context))
+
+    #define Destruct_Collector(name) do { \
+        free(name##_guard); \
+        Destruct_Collector_Core(name); \
+    } while (0);
+#else
+    #define Construct_Collector    Construct_Collector_Core
+    #define Destruct_Collector     Destruct_Collector_Core
+#endif
+
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));
