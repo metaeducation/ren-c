@@ -497,34 +497,46 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 }
 
 
-// stream-oriented libuv callback for reading.
+// on_read(): stream-oriented libuv callback for reading.
 //
-// !!! The model of libuv's streaming is such that you cannot make another
-// uv_read_start() request without calling uv_read_stop().  For now we stop and
-// start, but the right answer is to expose an interface more attuned to how
-// streaming actually works.
+// Note that "each buffer is used only once", e.g. there is a call to
+// on_read_alloc() for every read.
+//
+// 1. An error like "connection reset by peer" can occur before a call to
+//    on_read_alloc() is made, so the buffer might be null in that case.
+//    For safety's sake, assume this could also happen for 0 reads.
+//
+// 2. Asking to do a `uv_read_stop()` when on an error or EOF asserts:
+//
+//      https://github.com/joyent/libuv/issues/1534
+//
+// 3. Binary Blobs must be kept with proper termination in case the GC sees
+//    them.  This rule is maintained in case Blobs alias UTF-8 Strings, which
+//    are stored terminated with 0.
+//
+// 4. The model of libuv's streaming is such that you cannot make another
+//    uv_read_start() request without calling uv_read_stop().  For now we stop
+//    and start, but the right answer is to expose an interface more attuned
+//    to how streaming actually works.
+//
+//    RE: uv_read_stop() "This function will always succeed; hence, checking
+//    its return value is unnecessary. A non-zero return indicates that
+//    finishing releasing resources may be pending on the next input event on
+//    that TTY on Windows, and does not indicate failure."
 //
 void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
-    Reb_Read_Request *rebreq = cast(Reb_Read_Request*, stream->data);
+    Reb_Read_Request* rebreq = cast(Reb_Read_Request*, stream->data);
     VarList* port_ctx = rebreq->port_ctx;
 
     Value* port_data = Varlist_Slot(port_ctx, STD_PORT_DATA);
 
-    Binary* bin;
-    if (Is_Nulled(port_data)) {
-        //
-        // An error like "connection reset by peer" can occur before a call to
-        // on_read_alloc() is made, so the buffer might be null in that case.
-        // For safety's sake, assume this could also happen for 0 reads.
-        //
-        assert(nread <= 0);  // error or 0 read
-        bin = nullptr;
-    }
+    if (Is_Nulled(port_data))
+        assert(nread <= 0);  // can happen, e.g. "connection reset by peer" [1]
     else
-        bin = Cell_Binary_Known_Mutable(port_data);
+        assert(Is_Binary(port_data));
 
-    if (nread == 0) {  // Zero bytes read
+    if (nread == 0) {
         //
         // Note: "nread might be 0, which does not indicate an error or EOF.
         // This is equivalent to EAGAIN or EWOULDBLOCK under read(2)."
@@ -538,101 +550,67 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         // !!! How to handle corrupted data?  Clear the whole buffer?  Leave
         // it at the termination before the READ?  Clear it for now just to
         // catch errors where partial data would be used as if it were okay,
-        // but consider a defensive strategy that could use partial results.
-        // Note that on_read_alloc() may not have been called at all, as in
-        // the case of some "connection reset by peer" errors; so port_data
-        // might be a binary or it might be nulled.
-        //
-        Init_Nulled(port_data);
 
-        // Asking to do a `uv_read_stop()` when an error happens asserts:
-        // https://github.com/joyent/libuv/issues/1534
+        Init_Nulled(port_data);  // already null if no on_read_alloc() [1]
 
+        /* uv_read_stop(stream); */  // asserts when error or EOF [2]
         stream->data = nullptr;
-
         rebreq->result = rebError_UV(nread);
     }
     else if (nread == UV_EOF) {
+        /* uv_read_stop(stream); */  // asserts when error or EOF [2]
+
+        if (rebreq->length == UNLIMITED)  // "read as much as you can" hit eof
+            goto post_read_finished_event;
+
+        // If we had a :PART setting on the READ, follow the Rebol convention
+        // of allowing less to be accepted, which FILE! does as well:
         //
-        // Asking to do a `uv_read_stop()` when you've reached EOF asserts:
-        // https://github.com/joyent/libuv/issues/1534
+        //     rebol2>> write %test.dat #{01}
+        //
+        //     rebol2>> read:part %test.dat 100000
+        //     == #{01}
+        //
+        // Under this rule, it is the caller's responsibility to check how much
+        // data they actually got with a READ:PART call.  But this is where you
+        // could handle that situation differently.
 
-        if (rebreq->length == UNLIMITED) {
-            //
-            // -1 is the "read as much as you can" signal.  Reaching the end is
-            // an acceptable outcome.
-            //
-            goto post_read_finished_event;
-        }
-        else {
-            // If we had a :PART setting on the READ, we follow the Rebol
-            // convention of allowing less than that to be accepted, which
-            // FILE! does as well:
-            //
-            //     >> write %test.dat #{01}
-            //
-            //     >> read:part %test.dat 100000
-            //     == #{01}
-            //
-            // Hence it is the caller's responsibility to check how much
-            // data they actually got with a READ:PART call.  But this is
-            // where you could handle that situation differently.
-
-            assert(rebreq->actual < *(unwrap rebreq->length));
-
-            goto post_read_finished_event;
-        }
+        assert(rebreq->actual < *(unwrap rebreq->length));
+        goto post_read_finished_event;
     }
     else {
-        // Note that "each buffer is used only once", e.g. there is a call
-        // to on_read_alloc() for every read.
-        //
+        Binary* bin = Cell_Binary_Known_Mutable(port_data);
         assert(buf->base == s_cast(Binary_Tail(bin)));
         UNUSED(buf);
 
         rebreq->actual += nread;
+        Term_Binary_Len(bin, Binary_Len(bin) + nread);  // GC needs term [3]
 
-        // Blobs must be kept with proper termination in case the GC sees
-        // them.  This rule is maintained in case Blobs alias UTF-8 Strings,
-        // which are stored terminated with 0.
-        //
-        Term_Binary_Len(bin, Binary_Len(bin) + nread);
-
-        if (rebreq->length == UNLIMITED) {
-            //
-            // Reading an unlimited amount of data, so keep going.
-            //
-            goto post_read_finished_event;
-        }
+        if (rebreq->length == UNLIMITED)
+            goto post_read_finished_event;  // unlimited, so just keep going
 
         assert(*(unwrap rebreq->length) >= 0);
 
-        if (rebreq->actual == *(unwrap rebreq->length)) {
-            //
-            // We've read as much as we wanted to, so ask to stop reading.
-            //
-
-          post_read_finished_event:
-
-            // !!! See note at top of function on why we stop each READ
-
-            rebreq->result = rebBlank();
-
-            // RE: uv_read_stop() "This function will always succeed; hence,
-            // checking its return value is unnecessary. A non-zero return
-            // indicates that finishing releasing resources may be pending on
-            // the next input event on that TTY on Windows, and does not
-            // indicate failure."
-            //
-            uv_read_stop(stream);
-            stream->data = nullptr;
+        if (
+            rebreq->actual
+            == *(unwrap rebreq->length)  // we read as much as we wanted to
+        ){
+            goto post_read_finished_event;
         }
-        else {
-            // Less than the total was reached while reading a limited amount.
-            // Don't stop the stream or send an event, keep accruing data.
-        }
+
+        // Less than the total was reached while reading a limited amount.
+        // Don't stop the stream or send an event, keep accruing data.
     }
-}
+
+    return;
+
+  post_read_finished_event: { ////////////////////////////////////////////////
+
+    uv_read_stop(stream);  // stop on each read, no result to check [4]
+    stream->data = nullptr;
+
+    rebreq->result = rebBlank();
+}}
 
 
 // libuv callback when a write is finished.
