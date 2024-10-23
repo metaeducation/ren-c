@@ -456,6 +456,47 @@ DECLARE_NATIVE(get_env)
 //  ]
 //
 DECLARE_NATIVE(set_env)
+//
+// !!! WARNING: While reading environment variables from a C program is fine,
+// writing them is a generally sketchy proposition and should probably be
+// avoided.  On UNIX there is no thread-safe way to do it, and even in a
+// thread-safe program the underlying fact that the system doesn't know
+// where the pointers for the strings it has came from, leaks are inevitable.
+//
+//      http://stackoverflow.com/a/5876818/211160
+//
+// 1. rebDelegate() leaves the Level for this native on the stack.  An abrupt
+//    failure will climb the stack and handle any associated rebFree() that
+//    would need to be run associated with this level...so memory returned
+//    by API functions that use rebAlloc() such as rebSpell(), etc.
+//
+// 2. Note that putenv() IS *FATALLY FLAWED*!
+//
+//    putenv() takes a single "key=val" string, and takes it *mutably*.  :-(
+//    It is obsoleted by setenv() and unsetenv() in System V:
+//
+//    Once you've passed a string to putenv() you never know when that string
+//    will no longer be needed.  Thus it must either not be dynamic or you
+//    must leak it, or track a local copy of the environment yourself.
+//
+//    If you're stuck without setenv on some old platform, but really need to
+//    set an environment variable, here's a way that just leaks a string each
+//    time you call.  The code would have to keep track of each string added
+//    in some sort of a map...which is currently deemed not worth the work.
+//
+// 3. putenv("NAME") removing the variable from the environment is apparently
+//    a nonstandard extension of the GNU C library:
+//
+//      https://man7.org/linux/man-pages/man3/putenv.3.html
+//
+//    It does nothing on NetBSD for instance.  Prefer unsetenv() if available:
+//
+//      http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
+//
+// 4. The clang static analyzer notices when an allocated pointer is neither
+//    used nor freed.  We don't want to free the string in the static analyzer
+//    build (it's nice if a static analysis build still "works") so just fool
+//    it to thinking we "used" the pointer by putting it in a static variable.
 {
     INCLUDE_PARAMS_OF_SET_ENV;
 
@@ -471,33 +512,24 @@ DECLARE_NATIVE(set_env)
         maybe val_wide  // null means unset the environment variable
     )){
         Value* error = rebError_OS(GetLastError());
-        return rebDelegate("fail", rebR(error));
+        return rebDelegate("fail", rebR(error));  // fail frees rebAlloc() [1]
     }
 
-    rebFree(maybe val_wide);  // nulls no-op for rebFree()
+    rebFreeMaybe(maybe val_wide);
     rebFree(key_wide);
   #else
     char *key_utf8 = rebSpell(variable);
 
-    if (Is_Nulled(value)) {  // distinct setenv() and unsetenv() calls
-      #ifdef unsetenv
+    if (Is_Nulled(value)) {
+      #ifdef unsetenv  // use unsetenv() if available [2]
         if (unsetenv(key_utf8) == -1)
-            return rebDelegate(
+            return rebDelegate(  // fail frees rebAlloc() [1]
               "fail -{unsetenv() couldn't unset environment variable}-"
             );
       #else
-        // WARNING: SPECIFIC PORTABILITY ISSUE
-        //
-        // Simply saying putenv("FOO") will delete FOO from the environment,
-        // but it's not consistent...does nothing on NetBSD for instance.  But
-        // not all other systems have unsetenv...
-        //
-        // http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
-        //
-        // going to hope this case doesn't hold onto the string...
-        //
-        if (putenv(key_utf8) == -1) // !!! Why mutable?
-            return rebDelegate(
+        int res = putenv(key_utf8);  // GNU-specific: putenv("NAME") unsets [3]
+        if (res == -1)
+            return rebDelegate(  // fail frees rebAlloc() [1]
               "fail -{putenv() couldn't unset environment variable}-"
             );
       #endif
@@ -505,41 +537,31 @@ DECLARE_NATIVE(set_env)
     else {
       #ifdef setenv
         char *val_utf8 = rebSpell(value);
-
-        if (setenv(key_utf8, val_utf8, 1) == -1) // the 1 means "overwrite"
-            return rebDelegate(
+        int res = setenv(key_utf8, val_utf8, 1);  // the 1 means "overwrite"
+        if (res == -1)
+            return rebDelegate(  // fail frees rebAlloc() [1]
               "fail -{setenv() couldn't set environment variable}-"
             );
 
         rebFree(val_utf8);
       #else
-        // WARNING: SPECIFIC MEMORY LEAK!
-        //
-        // putenv takes its argument as a single "key=val" string.  It is
-        // *fatally flawed*, and obsoleted by setenv and unsetenv in System V:
-        //
-        // http://stackoverflow.com/a/5876818/211160
-        //
-        // Once you have passed a string to it you never know when that string
-        // will no longer be needed.  Thus it may either not be dynamic or you
-        // must leak it, or track a local copy of the environment yourself.
-        //
-        // If you're stuck without setenv on some old platform, but really
-        // need to set an environment variable, here's a way that just leaks a
-        // string each time you call.  The code would have to keep track of
-        // each string added in some sort of a map...which is currently deemed
-        // not worth the work.
-
         char *key_equals_val_utf8 = rebSpell(
             "unspaced [", variable, "{=}", value, "]"
         );
 
         char *duplicate = strdup(key_equals_val_utf8);
 
-        if (putenv(duplicate) == -1)  // leak!  (why mutable?  :-/)
-            return rebDelegate(
+        if (putenv(duplicate) == -1) {  // !!! putenv() holds onto string! [2]
+            free(duplicate);
+            return rebDelegate(  // fail frees rebAlloc() [1]
               "fail -{putenv() couldn't set environment variable}-"
             );
+        }
+
+      #if DEBUG_STATIC_ANALYZING  // trick analyzer to not see leak [4]
+        static char* fakeuse = duplicate;
+        USED(fakeuse);
+      #endif
 
         rebFree(key_equals_val_utf8);
       #endif
