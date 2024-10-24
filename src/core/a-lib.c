@@ -219,6 +219,7 @@ unsigned char* API_rebTryAllocBytes(size_t size)
         return p;
     } ON_ABRUPT_FAILURE (VarList* e) {
         UNUSED(e);
+        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return nullptr;
     }
 }
