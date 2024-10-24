@@ -104,8 +104,8 @@ https://github.com/metaeducation/ren-c/issues/817
     (append b #{C9A8}
     t = "ƈօʊʀֆօռǟɢɢօռɨ")
 
-    ~bad-utf8-bin-edit~ !! (
-        trap [insert b #{E08080}]
+    ~overlong-utf8~ !! (
+        insert b #{E08080}
     )
 
     ~const-value~ !! (
@@ -117,14 +117,14 @@ https://github.com/metaeducation/ren-c/issues/817
 ; AS aliasing of BINARY! as TEXT! can only be done on mutable binaries
 https://github.com/metaeducation/ren-c/issues/817
 [
-    ~bad-utf8-bin-edit~ !! (
+    ~overlong-utf8~ !! (
         b: #{64C990E1B49A64C9905A64C4B15A}
         t: as text! b
         t = "dɐᴚdɐZdıZ"
         append b #{E08080}
     )
 
-    ~bad-utf8~ !! (
+    ~overlong-utf8~ !! (
         b: #{64C990E1B49A64C9905A64C4B15A}
         append b #{E08080}
         as text! b
@@ -156,5 +156,5 @@ https://github.com/metaeducation/ren-c/issues/817
     ("ò" = append:part "" #{C3B2} 2)
 
     ("ò" = append:part "" #{C3B2DECAFBAD} 1)
-    ~bad-utf8-bin-edit~ !! (append:part "" #{C3B2FEFEFEFE} 2)
+    ~utf8-too-short~ !! (append:part "" #{C3B2FEFEFEFE} 2)
 ]

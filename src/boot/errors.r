@@ -90,9 +90,16 @@ Script: [
 
     assertion-failure:  ["assertion failure:" :arg1]
 
-    bad-utf8:           "invalid UTF-8 byte sequence found during decoding"
-    codepoint-too-high: ["codepoint" :arg1 "too large (or data is not UTF-8)"]
+    ; NOTE: Preallocated errors for quick UTF-8 failing
+    ;
+    overlong-utf8:      "Invalid or overlong UTF-8 encoding detected"
+    utf8-too-short:     "UTF-8 data too short for required trail bytes"
+    codepoint-too-high: "Points over Plane 17 (> 0x10FFFF) illegal in UTF-8"
+    no-utf8-surrogates: "UTF-16 surrogate values illegal in UTF-8"
     illegal-zero-byte:  "#{00} bytes illegal in ANY-STRING?, use BINARY!"
+    utf8-trail-bad-bit: "UTF-8 trailing bytes without high bit set"
+
+    bad-utf8:           "invalid UTF-8 byte sequence found during decoding"
     illegal-cr:         ["Illegal CR: See DELINE, and TO-TEXT:RELAX --" :arg1]
     mixed-cr-lf-found:  "DELINE requires files to be CR LF or LF consistently"
     bad-utf8-bin-edit:  "String aliased as BINARY! can't become invalid UTF-8"

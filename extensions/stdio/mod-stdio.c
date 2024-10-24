@@ -344,10 +344,10 @@ DECLARE_NATIVE(read_line)
                 --trail;
             }
 
-            if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
-                return rebDelegate(
-                    "fail -{Invalid UTF-8 Sequence found in READ-LINE}-"
-                );
+            const Byte* bp = encoded;
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
+            if (e)
+                return rebDelegate("fail", Varlist_Archetype(unwrap e));
         }
 
         if (c == '\n') {  // found a newline
@@ -524,10 +524,10 @@ DECLARE_NATIVE(read_char)
             --trail;
         }
 
-        if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
-            return rebDelegate(
-                "fail -{Invalid UTF-8 Sequence found in READ-CHAR}-"
-            );
+        const Byte* bp = encoded;
+        Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
+        if (e)
+            return rebDelegate("fail", Varlist_Archetype(unwrap e));
     }
 
     return rebChar(c);

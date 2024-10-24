@@ -66,6 +66,117 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 
 
 //
+//  Trap_Back_Scan_Utf8_Char: C
+//
+// Decodes a single encoded UTF-8 codepoint and updates the position *at the
+// the last byte of the character's data*.  (This differs from the usual
+// `Scan_XXX` interface of returning the position after the scanned element,
+// ready to read the next one.)
+//
+// The peculiar interface is useful in loops that process ordinary ASCII chars
+// directly -as well- as UTF-8 ones.  The loop can do a single byte pointer
+// increment after both kinds of elements, avoiding the need to call any kind
+// of `Scan_Ascii()`:
+//
+//     for (; size > 0; ++bp, --size) {
+//         if (*bp < 0x80) {
+//             // do ASCII stuff...
+//         }
+//         else {
+//             Codepoint uni;
+//             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&uni, &bp, &size);
+//             if (e) { /* handle error */ }
+//             // do UNICODE stuff...
+//         }
+//     }
+//
+// The third parameter is an optional size that will be decremented by
+// the number of "extra" bytes the UTF8 has beyond a single byte character.
+// This allows for decrement-style loops such as the above.
+//
+// If failure due to insufficient data or malformed bytes, then an error is
+// returned (size is not advanced).
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// 1. Note that Ren-C disallows internal zero bytes in ANY-STRING?, so that
+//    a single pointer can be given to C for the data in APIs like rebText(),
+//    with no length...and not have this be misleading or cause bugs.  Same
+//    for getting back a single pointer from rebSpell() for the data and
+//    not be missing some part of it.
+//
+// 2. This check was considered "too expensive" and omitted in R3-Alpha:
+//
+//      https://github.com/rebol/rebol-issues/issues/638
+//      https://en.wikipedia.org/wiki/UTF-8#Overlong_encodings
+//
+//    ...which meant that various illegal input patterns would be tolerated,
+//    so long as they didn't cause crashes.  You would just not have the
+//    input validated, and get garbage characters out.  The Ren-C philosophy
+//    is that since this check only applies to non-ASCII, it is worth it to
+//    do the validation.  And it only applies when scanning strings...once
+//    they are loaded into String* we use Back_Scan_Utf8_Char_Unchecked().
+//
+// 3. We want the erroring cases to be inexpensive, because UTF-8 characters
+//    are scanned for instance in FIND of a TEXT! in a binary BLOB! which may
+//    have lots of invalid UTF-8.  So all the errors used here are
+//    pre-allocated.  But those allocations only happen once the error
+//    machinery is ready.
+//
+Option(Error*) Trap_Back_Scan_Utf8_Char(
+    Sink(Codepoint) out,  // valid codepoint, no NUL or substitution chars [1]
+    const Byte** bp,  // left alone if error result, "back updated" if not
+    Option(Sink(Size)) size
+){
+    Codepoint c = 0;
+
+    const Byte* source = *bp;
+    uint_fast8_t trail = g_trailing_bytes_for_utf8[*source];
+
+    if (size) {  // Check that we have enough valid source bytes
+        if (cast(uint_fast8_t, trail + 1) > *(unwrap size))
+            return Cell_Error(g_error_utf8_too_short);  // cached [3]
+    }
+    else if (trail != 0) {
+        do {
+            if (source[trail] < 0x80)
+                return Cell_Error(g_error_utf8_trail_bad_bit);  // cached [3]
+        } while (--trail != 0);
+
+        trail = g_trailing_bytes_for_utf8[*source];
+    }
+
+    if (not Is_Legal_UTF8(source, trail + 1))  // was omitted in R3-Alpha [2]
+        return Cell_Error(g_error_overlong_utf8);  // cached [3]
+
+    switch (trail) {
+        case 5: c += *source++; c <<= 6;  // falls through
+        case 4: c += *source++; c <<= 6;  // falls through
+        case 3: c += *source++; c <<= 6;  // falls through
+        case 2: c += *source++; c <<= 6;  // falls through
+        case 1: c += *source++; c <<= 6;  // falls through
+        case 0: c += *source++;
+    }
+    c -= g_offsets_from_utf8[trail];
+
+    if (c > UNI_MAX_LEGAL_UTF32)
+        return Cell_Error(g_error_codepoint_too_high);  // cached [3]
+    if (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END)
+        return Cell_Error(g_error_no_utf8_surrogates);  // cached [3]
+
+    if (size)
+        *(unwrap size) -= trail;
+
+    if (c == 0)  // string types disallow internal 0 bytes in Ren-C [1]
+        return Cell_Error(g_error_illegal_zero_byte);  // cached [3]
+
+    *out = c;
+    *bp += trail;
+    return nullptr;  // no error to return, success!
+}
+
+
+//
 //  CT_Issue: C
 //
 // As the replacement for CHAR!, ISSUE! inherits the behavior that there are
@@ -129,10 +240,11 @@ Bounce MAKE_Issue(
             c = *bp;
         }
         else {
-            bp = Back_Scan_UTF8_Char(&c, bp, &size);
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
+            if (e)
+                return RAISE(unwrap e);  // must be valid UTF8
+
             --size;  // must decrement *after* (or Back_Scan() will fail)
-            if (bp == nullptr)
-                goto bad_make;  // must be valid UTF8
             if (size != 0)
                 return MAKE_String(level_, REB_ISSUE, nullptr, arg);
         }
@@ -200,8 +312,9 @@ DECLARE_NATIVE(utf8_to_char)
         fail ("Empty binary passed to UTF8-TO-CHAR");
 
     Codepoint c;
-    if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
-        fail ("Invalid UTF-8 Sequence found in UTF8-TO-CHAR");
+    Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &encoded, &size);
+    if (e)
+        fail (unwrap e);
 
     assert(size != 0);  // Back_Scan() assumes one byte decrement
 

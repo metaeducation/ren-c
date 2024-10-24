@@ -301,13 +301,13 @@ String* Append_UTF8_May_Fail(
     bool all_ascii = true;
     Length num_codepoints = 0;
 
-    Size bytes_left = size;  // see remarks on Back_Scan_UTF8_Char's 3rd arg
+    Size bytes_left = size;  // see remarks on Back_Scan_Utf8_Char's 3rd arg
     for (; bytes_left > 0; --bytes_left, ++bp) {
         Codepoint c = *bp;
         if (c >= 0x80) {
-            bp = Back_Scan_UTF8_Char(&c, bp, &bytes_left);
-            if (bp == NULL)
-                fail (Error_Bad_Utf8_Raw()); // !!! Should Back_Scan() fail?
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &bytes_left);
+            if (e)
+                fail (unwrap e);
 
             all_ascii = false;
         }

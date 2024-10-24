@@ -168,8 +168,8 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // to use for it.
     //
     if (
-        error != Cell_Varlist(Root_No_Memory_Error)
-        and error != Cell_Varlist(Root_Stackoverflow_Error)  // e.g. bad PUSH()
+        error != Cell_Varlist(g_error_no_memory)
+        and error != Cell_Varlist(g_error_stack_overflow)  // e.g. bad PUSH()
     ){
         Force_Location_Of_Error(error, TOP_LEVEL);  // needs PUSH(), etc.
     }
@@ -178,7 +178,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     if (PG_Probe_Failures) {  // see R3_PROBE_FAILURES environment variable
         static bool probing = false;
 
-        if (p == cast(void*, Cell_Varlist(Root_Stackoverflow_Error))) {
+        if (p == cast(void*, Cell_Varlist(g_error_stack_overflow))) {
             printf("PROBE(Stack Overflow): mold in PROBE would recurse\n");
             fflush(stdout);
         }
@@ -864,7 +864,7 @@ Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 Error* Error_No_Memory(REBLEN bytes)
 {
     UNUSED(bytes);  // !!! Revisit how this information could be tunneled
-    return cast(Error*, Cell_Varlist(Root_No_Memory_Error));
+    return Cell_Error(g_error_no_memory);
 }
 
 
@@ -1312,7 +1312,7 @@ VarList* Startup_Errors(const Element* boot_errors)
 //
 void Startup_Stackoverflow(void)
 {
-    Root_Stackoverflow_Error = Init_Error(
+    ensure(nullptr, g_error_stack_overflow) = Init_Error(
         Alloc_Value(),
         Error_Stack_Overflow_Raw()
     );
@@ -1326,7 +1326,7 @@ void Startup_Stackoverflow(void)
     DECLARE_ATOM (temp);
     Init_Integer(temp, 1020);
 
-    Root_No_Memory_Error = Init_Error(
+    ensure(nullptr, g_error_no_memory) = Init_Error(
         Alloc_Value(),
         Error_No_Memory_Raw(temp)
     );
@@ -1338,11 +1338,62 @@ void Startup_Stackoverflow(void)
 //
 void Shutdown_Stackoverflow(void)
 {
-    rebRelease(Root_Stackoverflow_Error);
-    Root_Stackoverflow_Error = nullptr;
+    rebReleaseAndNull(&g_error_stack_overflow);
+    rebReleaseAndNull(&g_error_no_memory);
+}
 
-    rebRelease(Root_No_Memory_Error);
-    Root_No_Memory_Error = nullptr;
+
+//
+//  Startup_Utf8_Errors: C
+//
+// Certain scenarios of using Trap_Back_Scan_Utf8_Char() would become slow and
+// leak lots of error allocations if we didn't preallocate these errors (for
+// instance, FIND of a TEXT! in a non-UTF-8 binary BLOB! could allocate
+// thousands of errors in a single search).
+//
+// None of these errors are parameterized, so there's no need for them to be
+// allocated on a per-instance basis.
+//
+void Startup_Utf8_Errors(void)
+{
+    ensure(nullptr, g_error_utf8_too_short) = Init_Error(
+        Alloc_Value(),
+        Error_Utf8_Too_Short_Raw()
+    );
+    ensure(nullptr, g_error_utf8_trail_bad_bit) = Init_Error(
+        Alloc_Value(),
+        Error_Utf8_Trail_Bad_Bit_Raw()
+    );
+    ensure(nullptr, g_error_overlong_utf8) = Init_Error(
+        Alloc_Value(),
+        Error_Overlong_Utf8_Raw()
+    );
+    ensure(nullptr, g_error_codepoint_too_high) = Init_Error(
+        Alloc_Value(),
+        Error_Codepoint_Too_High_Raw()
+    );
+    ensure(nullptr, g_error_no_utf8_surrogates) = Init_Error(
+        Alloc_Value(),
+        Error_No_Utf8_Surrogates_Raw()
+    );
+    ensure(nullptr, g_error_illegal_zero_byte) = Init_Error(
+        Alloc_Value(),
+        Error_Illegal_Zero_Byte_Raw()
+    );
+}
+
+
+//
+//  Shutdown_Utf8_Errors: C
+//
+void Shutdown_Utf8_Errors(void)
+{
+    rebReleaseAndNull(&g_error_utf8_too_short);
+    rebReleaseAndNull(&g_error_utf8_trail_bad_bit);
+    rebReleaseAndNull(&g_error_overlong_utf8);
+    rebReleaseAndNull(&g_error_codepoint_too_high);
+    rebReleaseAndNull(&g_error_no_utf8_surrogates);
+    rebReleaseAndNull(&g_error_illegal_zero_byte);
 }
 
 

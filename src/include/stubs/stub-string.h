@@ -86,7 +86,7 @@ INLINE Utf8(*) Utf8_Next(
     if (*bp < 0x80)
         *codepoint_out = *bp;
     else
-        bp = m_cast(Byte*, Back_Scan_UTF8_Char_Unchecked(codepoint_out, bp));
+        bp = m_cast(Byte*, Back_Scan_Utf8_Char_Unchecked(codepoint_out, bp));
     return cast(Utf8(*), bp + 1);  // see definition of Back_Scan() for why +1
 }
 

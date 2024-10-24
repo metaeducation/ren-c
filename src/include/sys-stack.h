@@ -336,4 +336,4 @@ INLINE Element* Move_Drop_Top_Stack_Element(Sink(Element) out) {
 // error allocations...just use an already made error.
 //
 #define Fail_Stack_Overflow() \
-    fail (Cell_Error(Root_Stackoverflow_Error));
+    fail (Cell_Error(g_error_stack_overflow));

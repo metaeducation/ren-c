@@ -687,13 +687,13 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 #include "cells/cell-string.h"
 #include "cells/cell-binary.h"
-#include "cells/cell-token.h"
-
-#include "cells/cell-sigil.h"  // requires quoted/quasi and char
 
 #include "cells/cell-context.h"
 #include "cells/cell-frame.h"
 #include "cells/cell-error.h"
+
+#include "cells/cell-token.h"
+#include "cells/cell-sigil.h"  // requires quoted/quasi and char
 
 #include "cells/cell-map.h"
 #include "cells/cell-varargs.h"

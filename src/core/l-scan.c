@@ -483,8 +483,11 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
         return nullptr;  // signal error if end of string
 
     if (c >= 0x80) {  // multibyte sequence
-        if (not (bp = Back_Scan_UTF8_Char(out, bp, nullptr)))
+        Option(Error*) e = Trap_Back_Scan_Utf8_Char(out, &bp, nullptr);
+        if (e) {
+            UNUSED(e);  // !!! This should be Trap_Scan_Utf8_Char_Escapable()
             return nullptr;
+        }
         return bp + 1;  // Back_Scan advances one less than the full encoding
     }
 
@@ -720,8 +723,9 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
 
           default:
             if (c >= 0x80) {
-                if ((cp = Back_Scan_UTF8_Char(&c, cp, nullptr)) == nullptr)
-                    return Error_Bad_Utf8_Raw();
+                Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &cp, nullptr);
+                if (e)
+                    return e;
             }
         }
 
@@ -802,8 +806,11 @@ Option(const Byte*) Try_Scan_Utf8_Item_Push_Mold(
             --bp;
         }
         else if (c >= 0x80) { // Accept UTF8 encoded char:
-            if (not (bp = Back_Scan_UTF8_Char(&c, bp, nullptr)))
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
+            if (e) {
+                UNUSED(e);  // should this be Trap_Scan_Utf8_Item_Push_Mold()?
                 return nullptr;
+            }
         }
         else if (invalids and strchr(cs_cast(unwrap invalids), c)) {
             //

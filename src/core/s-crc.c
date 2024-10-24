@@ -48,9 +48,9 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, Size size)
         Codepoint c = *utf8;
 
         if (c >= 0x80) {
-            utf8 = Back_Scan_UTF8_Char(&c, utf8, &size);
-            if (utf8 == nullptr)
-                fail (Error_Bad_Utf8_Raw());
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &utf8, &size);
+            if (e)
+                fail (unwrap e);
         }
 
         c = LO_CASE(c);

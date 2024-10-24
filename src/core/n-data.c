@@ -2399,9 +2399,11 @@ bool Try_As_String(
                 if (c < 0x80)
                     Validate_Ascii_Byte(bp, strmode, Binary_Head(bin));
                 else {
-                    bp = Back_Scan_UTF8_Char(&c, bp, &bytes_left);
-                    if (bp == NULL)  // !!! Should Back_Scan() fail?
-                        fail (Error_Bad_Utf8_Raw());
+                    Option(Error*) e = Trap_Back_Scan_Utf8_Char(
+                        &c, &bp, &bytes_left
+                    );
+                    if (e)
+                        fail (unwrap e);
 
                     all_ascii = false;
                 }

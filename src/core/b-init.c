@@ -720,6 +720,10 @@ void Startup_Core(void)
     //
     Startup_Stackoverflow();
 
+    // Pre-make UTF-8 decoding errors so that UTF-8 failures aren't slow
+    //
+    Startup_Utf8_Errors();
+
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
   //=//// INITIALIZE SYSTEM.CONTEXTS.LIB //////////////////////////////////=//
@@ -941,6 +945,7 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Data_Stack();
 
+    Shutdown_Utf8_Errors();
     Shutdown_Stackoverflow();
     Shutdown_Typesets();
 

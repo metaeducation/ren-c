@@ -101,12 +101,14 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
         c1 = *s1;
         c2 = *s2;
         if (c1 > 127) {
-            s1 = Back_Scan_UTF8_Char(&c1, s1, &l1);
-            assert(s1); // UTF8 should have already been verified good
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c1, &s1, &l1);
+            assert(not e);  // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
+            UNUSED(e);
         }
         if (c2 > 127) {
-            s2 = Back_Scan_UTF8_Char(&c2, s2, &l2);
-            assert(s2); // UTF8 should have already been verified good
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c2, &s2, &l2);
+            assert(not e);  // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
+            UNUSED(e);
         }
         if (c1 != c2) {
             if (LO_CASE(c1) != LO_CASE(c2))
@@ -224,7 +226,7 @@ REBINT Find_Binstr_In_Binstr(
 
     // If is_2_str then we have to treat the data in binstr1 as characters,
     // even if it's not validated UTF-8.  This requires knowing the size_at
-    // to pass to the checked version of Back_Scan_UTF8_Char().
+    // to pass to the checked version of Trap_Back_Scan_Utf8_Char().
     //
     const Byte* cp1;  // binstr1 position that is current test head of match
     Length len_head1;
@@ -256,7 +258,7 @@ REBINT Find_Binstr_In_Binstr(
         c2_canon = *head2;
         next2 = head2;
     } else
-        next2 = Back_Scan_UTF8_Char_Unchecked(&c2_canon, head2);
+        next2 = Back_Scan_Utf8_Char_Unchecked(&c2_canon, head2);
     ++next2;
 
     if (caseless) {
@@ -285,9 +287,11 @@ REBINT Find_Binstr_In_Binstr(
             else if (is_2_str) {  // have to treat binstr1 as a string anyway
                 cp1 += skip1;
                 size -= skip1;  // size grows by skip
-                const Byte* temp = Back_Scan_UTF8_Char(&c1, cp1, &size);
-                if (temp == nullptr)
+                Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c1, &cp1, &size);
+                if (e) {
+                    UNUSED(e);  // UTF-8 errors preallocated, cheap to ignore!
                     c1 = MAX_UNI + 1;  // won't match if `while` below breaks
+                }
             }
             else {  // treat binstr1 as the binary that it is
                 cp1 += skip1;
@@ -303,9 +307,11 @@ REBINT Find_Binstr_In_Binstr(
             c1 = Codepoint_At(cast(Utf8(const*), cp1));
         else if (is_2_str) {  // have to treat binstr1 as a string anyway
             Size size_temp = size;
-            const Byte* temp = Back_Scan_UTF8_Char(&c1, cp1, &size_temp);
-            if (temp == nullptr)
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c1, &cp1, &size_temp);
+            if (e) {
+                UNUSED(e);  // UTF-8 errors preallocated, cheap to ignore!
                 goto no_match_at_this_position;
+            }
         }
         else
             c1 = *cp1;
@@ -339,12 +345,15 @@ REBINT Find_Binstr_In_Binstr(
                 if (not is_2_str or *tp1 < 0x80)
                     c1 = *tp1;
                 else if (is_1_str)
-                    tp1 = Back_Scan_UTF8_Char_Unchecked(&c1, tp1);
+                    tp1 = Back_Scan_Utf8_Char_Unchecked(&c1, tp1);
                 else {  // treating binstr1 as UTF-8 despite being binary
-                    const Byte* temp = Back_Scan_UTF8_Char(&c1, tp1, &size);
-                    if (temp == nullptr)  // invalid or incomplete UTF-8
+                    Option(Error*) e = Trap_Back_Scan_Utf8_Char(
+                        &c1, &tp1, &size
+                    );
+                    if (e) {
+                        UNUSED(e);  // UTF-8 errors prealloc, cheap to ignore!
                         goto no_match_at_this_position;
-                    tp1 = temp;
+                    }
                 }
                 ++tp1;
 
@@ -353,7 +362,7 @@ REBINT Find_Binstr_In_Binstr(
                 if (not is_2_str or *tp2 < 0x80)
                     c2 = *tp2;
                 else
-                    tp2 = Back_Scan_UTF8_Char_Unchecked(&c2, tp2);
+                    tp2 = Back_Scan_Utf8_Char_Unchecked(&c2, tp2);
                 ++tp2;
 
                 if (c1 == c2)

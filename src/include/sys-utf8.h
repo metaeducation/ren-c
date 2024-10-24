@@ -196,6 +196,9 @@ INLINE bool Is_Codepoint_Space(Codepoint c)
 
 
 // Utility routine to tell whether a sequence of bytes is legal UTF-8.
+//
+// ( See: https://en.wikipedia.org/wiki/UTF-8#Overlong_encodings )
+//
 // This must be called with the length pre-determined by the first byte.
 // If not calling this from ConvertUTF8to*, then the length can be set by:
 //
@@ -250,114 +253,13 @@ INLINE bool Is_Legal_UTF8(const Byte* source, int length) {
 }
 
 
-//
-//  Back_Scan_UTF8_Char: C
-//
-// Converts a single UTF8 code-point and returns the position *at the
-// the last byte of the character's data*.  (This differs from the usual
-// `Scan_XXX` interface of returning the position after the scanned
-// element, ready to read the next one.)
-//
-// The peculiar interface is useful in loops that are processing
-// ordinary ASCII chars directly -as well- as UTF8 ones.  The loop can
-// do a single byte pointer increment after both kinds of
-// elements, avoiding the need to call any kind of `Scan_Ascii()`:
-//
-//     for (; size > 0; ++bp, --size) {
-//         if (*bp < 0x80) {
-//             // do ASCII stuff...
-//         }
-//         else {
-//             Codepoint uni;
-//             bp = Back_Scan_UTF8_Char(&uni, bp, &size);
-//             // do UNICODE stuff...
-//         }
-//     }
-//
-// The third parameter is an optional size that will be decremented by
-// the number of "extra" bytes the UTF8 has beyond a single byte character.
-// This allows for decrement-style loops such as the above.
-//
-// If failure due to insufficient data or malformed bytes, then nullptr is
-// returned (size is not advanced).
-//
-//=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// 1. Note that Ren-C disallows internal zero bytes in ANY-STRING?, so that
-//    a single pointer can be given to C for the data in APIs like rebText(),
-//    with no length...and not have this be misleading or cause bugs.  Same
-//    for getting back a single pointer from rebSpell() for the data and
-//    not be missing some part of it.
-//
-// 2. This check was considered "too expensive" and omitted in R3-Alpha:
-//
-//      https://github.com/rebol/rebol-issues/issues/638
-//
-//    ...which meant that various illegal input patterns would be tolerated,
-//    so long as they didn't cause crashes.  You would just not have the
-//    input validated, and get garbage characters out.  The Ren-C philosophy
-//    is that since this check only applies to non-ASCII, it is worth it to
-//    do the validation.  And it only applies when scanning strings...once
-//    they are loaded into String* we use Back_Scan_UTF8_Char_Unchecked().
-//
-INLINE const Byte* Back_Scan_UTF8_Char(
-    Codepoint *out,  // the valid codepoint, no NUL or substitution chars [1]
-    const Byte* bp,
-    Option(Sink(Size)) size
-){
-    *out = 0;
-
-    const Byte* source = bp;
-    uint_fast8_t trail = g_trailing_bytes_for_utf8[*source];
-
-    if (size) {  // Check that we have enough valid source bytes
-        if (cast(uint_fast8_t, trail + 1) > *(unwrap size))
-            return nullptr;
-    }
-    else if (trail != 0) {
-        do {
-            if (source[trail] < 0x80)
-                return nullptr;
-        } while (--trail != 0);
-
-        trail = g_trailing_bytes_for_utf8[*source];
-    }
-
-    if (not Is_Legal_UTF8(source, trail + 1))  // was omitted in R3-Alpha [2]
-        return nullptr;
-
-    switch (trail) {
-        case 5: *out += *source++; *out <<= 6;  // falls through
-        case 4: *out += *source++; *out <<= 6;  // falls through
-        case 3: *out += *source++; *out <<= 6;  // falls through
-        case 2: *out += *source++; *out <<= 6;  // falls through
-        case 1: *out += *source++; *out <<= 6;  // falls through
-        case 0: *out += *source++;
-    }
-    *out -= g_offsets_from_utf8[trail];
-
-    if (*out > UNI_MAX_LEGAL_UTF32)
-        return nullptr;  // anything over Plane 17 (> 0x10FFFF) is illegal
-    if (*out >= UNI_SUR_HIGH_START && *out <= UNI_SUR_LOW_END)
-        return nullptr;  // UTF-16 surrogate values illegal in UTF-8
-
-    if (size)
-        *(unwrap size) -= trail;
-
-    if (*out == 0)  // string types disallow internal 0 bytes in Ren-C [1]
-        return nullptr;
-
-    return bp + trail;
-}
-
-
 // This is the fast version of scanning a UTF-8 character where you assume it
 // is valid UTF-8...it seeks ahead until it finds a non-continuation byte.
-// Since it seeks ahead, it still has to follow the Back_Scan_UTF8_Char()
+// Since it seeks ahead, it still has to follow the Back_Scan_Utf8_Char()
 // strategy that splits ASCII codes to basic incrementation...otherwise it
 // would try to read continuation bytes past a `\0` string terminator.  :-/
 //
-INLINE const Byte* Back_Scan_UTF8_Char_Unchecked(
+INLINE const Byte* Back_Scan_Utf8_Char_Unchecked(
     Codepoint *out,
     const Byte* bp
 ){

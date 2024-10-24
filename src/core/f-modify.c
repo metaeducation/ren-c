@@ -206,6 +206,15 @@ REBLEN Modify_Array(
 }
 
 
+// !!! This should probably chain together with Error_Bad_Utf8_Bin_Edit_Raw()
+// to give some context for the error.  There are other examples of this
+// error chaining that need to be hammered out.
+//
+static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
+    return cause;
+}
+
+
 //
 //  Modify_String_Or_Binary: C
 //
@@ -412,12 +421,16 @@ REBLEN Modify_String_Or_Binary(
                     Codepoint c = *bp;
                     if (c < 0x80) {  // ASCII, just check for 0 bytes
                         if (c == '\0')
-                            fail (Error_Illegal_Zero_Byte_Raw());
+                            fail (Error_Bad_Utf8_Bin_Edit(
+                                Error_Illegal_Zero_Byte_Raw()
+                            ));
                     }
                     else {
-                        bp = Back_Scan_UTF8_Char(&c, bp, &bytes_left);
-                        if (not bp)  // !!! Should Back_Scan() fail?
-                            fail (Error_Bad_Utf8_Bin_Edit_Raw());
+                        Option(Error*) e = Trap_Back_Scan_Utf8_Char(
+                            &c, &bp, &bytes_left
+                        );
+                        if (e)
+                            fail (Error_Bad_Utf8_Bin_Edit(unwrap e));
                     }
                     ++src_len_raw;
 

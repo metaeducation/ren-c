@@ -122,8 +122,15 @@ PVAR Stub PG_Inaccessible_Stub;  // GC canonizes all inaccessible stubs to this
 
 PVAR Value* Root_Action_Adjunct;
 
-PVAR Value* Root_Stackoverflow_Error;  // made in advance, avoids extra calls
-PVAR Value* Root_No_Memory_Error;  // also must be made in advance
+PVAR Value* g_error_stack_overflow;  // made in advance, avoids extra calls
+PVAR Value* g_error_no_memory;  // also must be made in advance
+
+PVAR Value* g_error_utf8_too_short;
+PVAR Value* g_error_utf8_trail_bad_bit;
+PVAR Value* g_error_overlong_utf8;
+PVAR Value* g_error_codepoint_too_high;
+PVAR Value* g_error_no_utf8_surrogates;
+PVAR Value* g_error_illegal_zero_byte;
 
 TVAR Feed* TG_End_Feed;
 

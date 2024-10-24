@@ -581,9 +581,14 @@ DECLARE_NATIVE(dehex)
                 next = &scan[0]; // last byte is only byte (see Back_Scan)
             }
             else {
-                next = Back_Scan_UTF8_Char(&decoded, scan, &scan_size);
-                if (next == NULL)
+                next = scan;
+                Option(Error*) e = Trap_Back_Scan_Utf8_Char(
+                    &decoded, &next, &scan_size
+                );
+                if (e) {
+                    UNUSED(e);  // should this chain the error reports?
                     fail ("Bad UTF-8 sequence in %XX of dehex");
+                }
             }
 
             // !!! Should you be able to give a BINARY! to be dehexed and then

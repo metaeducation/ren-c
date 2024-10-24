@@ -85,10 +85,9 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     (#{466F6F} = echoer "Foo" #{})
     (#{DECAFBAD} = echoer #{DECAFBAD} #{})
 
-    ; !!! Different UTF-8 error results on Windows vs. Linux at the moment
     (
         e: sys.util/rescue [#{DECAFBAD} = echoer #{DECAFBAD} ""]
-        any [e.id = 'bad-utf8, e.id = 'bad-utf8-bin-edit]
+        e.id = 'overlong-utf8
     )
 ]
 

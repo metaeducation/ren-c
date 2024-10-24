@@ -74,7 +74,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* v) {
     assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
 
     Codepoint c;
-    Back_Scan_UTF8_Char_Unchecked(&c, PAYLOAD(Bytes, v).at_least_8);
+    Back_Scan_Utf8_Char_Unchecked(&c, PAYLOAD(Bytes, v).at_least_8);
     return c;
 }
 
@@ -157,11 +157,12 @@ INLINE Element* Init_Char_Unchecked_Untracked(Sink(Element) out, Codepoint c) {
 #define Init_Char_Unchecked(out,c) \
     TRACK(Init_Char_Unchecked_Untracked((out), (c)))
 
+// 1. The "codepoint too high" error was once parameterized with the large
+//    value, but see Startup_Utf8_Errors() for why these need to be cheap
+//
 INLINE Option(Error*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
-    if (c > MAX_UNI) {
-        DECLARE_ATOM (temp);
-        return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));
-    }
+    if (c > MAX_UNI)
+        return Cell_Error(g_error_codepoint_too_high);  // no parameter [1]
 
     // !!! Should other values that can't be read be forbidden?  Byte order
     // mark?  UTF-16 surrogate stuff?  If something is not legitimate in a
