@@ -285,9 +285,9 @@ DECLARE_NATIVE(combinator)
 //
 // This service routine does a faster version of something like:
 //
-//     Value* result = rebValue("applique @", ARG(parser), "[",
-//         "input:", rebQ(ARG(input)),  // quote avoids becoming const
-//         "remainder: @", ARG(remainder),
+//     Value* result = rebValue("apply", rebQ(ARG(parser)), "[",
+//         ":input", rebQ(ARG(input)),  // quote avoids becoming const
+//         ":remainder @", ARG(remainder),
 //     "]");
 //
 // But it only works on parsers that were created from specializations of

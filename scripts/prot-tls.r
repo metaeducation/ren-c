@@ -858,16 +858,16 @@ update-write-state: make-state-updater 'write [
         #{14}       ; protocol message type (20=Finished)
         #{00 00 0c} ; protocol message length (12 bytes)
 
-        applique :prf [
-            ctx: ctx
-            secret: ctx.master-secret
-            label: if yes? ctx.is-server [
+        prf // [
+            :ctx ctx
+            :secret ctx.master-secret
+            :label if yes? ctx.is-server [
                 "server finished"
             ] else [
                 "client finished"
             ]
-            seed: seed
-            output-length: 12
+            :seed seed
+            :output-length 12
         ]
     ]
 ]

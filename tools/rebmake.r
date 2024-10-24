@@ -1189,27 +1189,27 @@ generator-class: make object! [
     ][
         return switch cmd.class [
             #cmd-create [
-                applique any [
+                apply any [
                     get $.gen-cmd-create
                     get $target-platform/gen-cmd-create
-                ] compose [
-                    cmd: (cmd)
+                ][
+                    cmd
                 ]
             ]
             #cmd-delete [
-                applique any [
+                apply any [
                     get $.gen-cmd-delete
                     get $target-platform/gen-cmd-delete
-                ] compose [
-                    cmd: (cmd)
+                ][
+                    cmd
                 ]
             ]
             #cmd-strip [
-                applique any [
+                apply any [
                     get $.gen-cmd-strip
                     get $target-platform/gen-cmd-strip
                 ] compose [
-                    cmd: (cmd)
+                    cmd
                 ]
             ]
 

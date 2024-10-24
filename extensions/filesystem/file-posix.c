@@ -179,9 +179,9 @@ Value* Try_Read_Directory_Entry(FILEREQ *dir)
     bool is_dir = (dirent.type == UV_DIRENT_DIR);
 
     Value* path = rebValue(
-        "applique :local-to-file [",
-            "path:", rebT(dirent.name),
-            "dir:", rebQ(rebL(is_dir)),
+        "local-to-file // [",
+            ":path", rebT(dirent.name),
+            ":dir", rebQ(rebL(is_dir)),
         "]"
     );
 

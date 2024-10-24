@@ -442,12 +442,12 @@ REBOL [
     config.runtime-path: my file-to-local:full
     config.librebol-path: ~<taken into account>~  ; COMPILE* does not read
 
-    let result: applique :compile* [
-        compilables: compilables
-        config: config
-        files: files
-        inspect: inspect
-        librebol: yes? use-librebol
+    let result: compile* // [
+        :compilables compilables
+        :config config
+        :files files
+        :inspect inspect
+        :librebol: yes? use-librebol
     ]
 
     if inspect [
