@@ -227,15 +227,15 @@ void Protect_Varlist(VarList* varlist, Flags flags)
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
             if (flags & PROT_DEEP)
-                Set_Flex_Info(varlist, FROZEN_DEEP);
-            Set_Flex_Info(varlist, FROZEN_SHALLOW);
+                Set_Flex_Info(Varlist_Array(varlist), FROZEN_DEEP);
+            Set_Flex_Info(Varlist_Array(varlist), FROZEN_SHALLOW);
         }
         else
-            Set_Flex_Info(varlist, PROTECTED);
+            Set_Flex_Info(Varlist_Array(varlist), PROTECTED);
     }
     else {
         assert(not (flags & PROT_FREEZE));
-        Clear_Flex_Info(varlist, PROTECTED);
+        Clear_Flex_Info(Varlist_Array(varlist), PROTECTED);
     }
 
     if (not (flags & PROT_DEEP))
@@ -545,7 +545,7 @@ void Force_Value_Frozen_Core(
         else
             fail ("What does a shallow freeze of a context mean?");
         if (locker)
-            Set_Flex_Info(c, AUTO_LOCKED);
+            Set_Flex_Info(Varlist_Array(c), AUTO_LOCKED);
     }
     else if (Any_Series_Kind(heart)) {
         const Flex* f = Cell_Flex(v);

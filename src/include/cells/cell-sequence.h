@@ -801,15 +801,15 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return NOT_SINGLEHEART_0;
     }
 
-    const Stub* s = u_cast(const Stub*, Cell_Node1(c));
-    if (Stub_Flavor(s) == FLAVOR_SYMBOL) {
+    const Flex* f = u_cast(const Flex*, Cell_Node1(c));
+    if (Stub_Flavor(f) == FLAVOR_SYMBOL) {
         if (c->header.bits & CELL_FLAG_LEADING_BLANK)
             return Leading_Blank_And(REB_WORD);
 
         return Trailing_Blank_And(REB_WORD);
     }
 
-    Heart mirror = u_cast(Heart, MIRROR_BYTE(s));
+    Heart mirror = u_cast(Heart, MIRROR_BYTE(f));
     if (mirror == REB_0)  // s actually is sequence elements, not one element
         return NOT_SINGLEHEART_0;
 

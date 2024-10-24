@@ -516,7 +516,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // seemed to be a source of bugs, but it may be added again...in
         // which case the hashlist may be NULL.
         //
-        Flex* hashlist = LINK(Hashlist, a);
+        HashList* hashlist = LINK(Hashlist, a);
         assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
         UNUSED(hashlist);
     }

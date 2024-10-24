@@ -165,7 +165,8 @@ INLINE void Free_Value(Value* v)
         Unlink_Api_Handle_From_Level(stub);
 
     Poison_Cell(v);  // has to be last (removes NODE_FLAG_ROOT if set)
-    GC_Kill_Flex(stub);
+    Set_Node_Free_Bit(stub);
+    GC_Kill_Stub(stub);
 }
 
 

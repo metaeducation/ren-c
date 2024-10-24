@@ -63,15 +63,15 @@
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 
-INLINE bool Is_Flex_Black(const Flex* f) {
+INLINE bool Is_Flex_Black(const Stub* f) {
     return Get_Flex_Flag(f, BLACK);
 }
 
-INLINE bool Is_Flex_White(const Flex* f) {
+INLINE bool Is_Flex_White(const Stub* f) {
     return Not_Flex_Flag(f, BLACK);
 }
 
-INLINE void Flip_Flex_To_Black(const Flex* f) {
+INLINE void Flip_Flex_To_Black(const Stub* f) {
     assert(Not_Flex_Flag(f, BLACK));
     Set_Flex_Flag(f, BLACK);
   #if !defined(NDEBUG)
@@ -79,7 +79,7 @@ INLINE void Flip_Flex_To_Black(const Flex* f) {
   #endif
 }
 
-INLINE void Flip_Flex_To_White(const Flex* f) {
+INLINE void Flip_Flex_To_White(const Stub* f) {
     assert(Get_Flex_Flag(f, BLACK));
     Clear_Flex_Flag(f, BLACK);
   #if !defined(NDEBUG)

@@ -107,15 +107,15 @@ Flex* Make_Set_Operation_Flex(
     Flex* out_flex;
 
     if (Any_List(val1)) {
-        Flex* hflex = 0;   // hash table for series
-        Flex* hret;       // hash table for return series
+        HashList* hflex = 0;   // hash table for series
+        HashList* hret;       // hash table for return series
 
         // The buffer used for building the return series.  This creates
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
         Array* buffer = Make_Array(i);
-        hret = Make_Hash_Flex(i);   // allocated
+        hret = Make_Hashlist(i);   // allocated
 
         // Optimization note: !!
         // This code could be optimized for small blocks by not hashing them

@@ -479,7 +479,8 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
                     FEED_SPLICE(feed),
                     sizeof(Stub)
                 );
-                GC_Kill_Flex(splice);  // Array* would hold reference
+                Set_Node_Free_Bit(splice);
+                GC_Kill_Stub(splice);  // Array* would hold reference
                 goto retry_splice;
             }
         }

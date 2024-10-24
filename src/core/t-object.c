@@ -83,11 +83,11 @@ static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
   blockscope {  // Append new words to obj
     REBLEN len = cl->next_index - 1;
     Expand_Varlist(c, len - start_len);  // expand by amount added
-    Set_Flex_Len(c, len + 1);  // include rootvar
+    Set_Flex_Len(Varlist_Array(c), len + 1);  // include rootvar
     Set_Flex_Len(Keylist_Of_Varlist(c), len);
 
     Stub* hitch = cl->binder.hitch_list;
-    Value* var = Flex_Tail(Value, c);
+    Value* var = Flex_Tail(Value, Varlist_Array(c));
     Key* key = Flex_Tail(Key, Keylist_Of_Varlist(c));
 
     for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
@@ -237,7 +237,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             if (Get_Subclass_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
                 patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
-            Flex* found = nullptr;
+            Stub* found = nullptr;
 
             for (
                 ;

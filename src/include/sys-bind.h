@@ -118,13 +118,13 @@ INLINE Element* Derelativize_Untracked(
         }
         else {
             REBLEN index;
-            Flex* f = maybe Get_Word_Container(&index, v, context);
-            if (not f) {
+            Stub* s = maybe Get_Word_Container(&index, v, context);
+            if (not s) {
                 out->extra = v->extra;
             }
             else {
                 Tweak_Cell_Word_Index(out, index);
-                BINDING(out) = f;
+                BINDING(out) = s;
             }
         }
     }
@@ -424,18 +424,18 @@ INLINE Option(Error*) Trap_Lookup_Word(
     Context* context
 ){
     REBLEN index;
-    Flex* f = maybe Get_Word_Container(&index, word, context);
-    if (not f) {
+    Stub* s = maybe Get_Word_Container(&index, word, context);
+    if (not s) {
         *out = nullptr;  // avoid aggressive callsite warnings
         return Error_Not_Bound_Raw(word);
     }
 
-    if (Is_Stub_Let(f) or Is_Stub_Patch(f)) {
-        *out = Stub_Cell(f);
+    if (Is_Stub_Let(s) or Is_Stub_Patch(s)) {
+        *out = Stub_Cell(s);
         return nullptr;
     }
-    Assert_Node_Accessible(f);
-    VarList* c = cast(VarList*, f);
+    Assert_Node_Accessible(s);
+    VarList* c = cast(VarList*, s);
     *out = Varlist_Slot(c, index);
     return nullptr;
 }
@@ -445,15 +445,15 @@ INLINE Option(const Value*) Lookup_Word(
     Context* context
 ){
     REBLEN index;
-    Flex* f = maybe Get_Word_Container(&index, word, context);
-    if (not f)
+    Stub* s = maybe Get_Word_Container(&index, word, context);
+    if (not s)
         return nullptr;
 
-    if (Is_Stub_Let(f) or Is_Stub_Patch(f))
-        return Stub_Cell(f);
+    if (Is_Stub_Let(s) or Is_Stub_Patch(s))
+        return Stub_Cell(s);
 
-    Assert_Node_Accessible(f);
-    VarList* c = cast(VarList*, f);
+    Assert_Node_Accessible(s);
+    VarList* c = cast(VarList*, s);
     return Varlist_Slot(c, index);
 }
 
@@ -474,15 +474,15 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     Context* context
 ){
     REBLEN index;
-    Flex* f = maybe Get_Word_Container(&index, any_word, context);
-    if (not f)
+    Stub* s = maybe Get_Word_Container(&index, any_word, context);
+    if (not s)
         fail (Error_Not_Bound_Raw(any_word));
 
     Value* var;
-    if (Is_Stub_Let(f) or Is_Stub_Patch(f))
-        var = Stub_Cell(f);
+    if (Is_Stub_Let(s) or Is_Stub_Patch(s))
+        var = Stub_Cell(s);
     else {
-        VarList* c = cast(VarList*, f);
+        VarList* c = cast(VarList*, s);
         Fail_If_Read_Only_Flex(Varlist_Array(c));  // check lock bits [1]
         var = Varlist_Slot(c, index);
     }

@@ -62,7 +62,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
 Map* Make_Map(REBLEN capacity)
 {
     Array* pairlist = Make_Array_Core(capacity * 2, FLEX_MASK_PAIRLIST);
-    LINK(Hashlist, pairlist) = Make_Hash_Flex(capacity);
+    LINK(Hashlist, pairlist) = Make_Hashlist(capacity);
 
     return cast(Map*, pairlist);
 }
@@ -82,10 +82,10 @@ Map* Make_Map(REBLEN capacity)
 //     2 - search, return hash, else append value and return -1
 //
 REBINT Find_Key_Hashed(
-    Array* array,
-    Flex* hashlist,
+    Array* array,  // not always a pairlist, may group by amounts other than 2
+    HashList* hashlist,
     const Element* key,  // !!! assumes ++key finds the values
-    REBLEN wide,
+    REBLEN wide,  // how much to group by (2 for MAP! and PairList arrays)
     bool strict,
     Byte mode
 ){
@@ -181,10 +181,10 @@ REBINT Find_Key_Hashed(
 //
 static void Rehash_Map(Map* map)
 {
-    Flex* hashlist = MAP_HASHLIST(map);
+    HashList* hashlist = MAP_HASHLIST(map);
 
     REBLEN *hashes = Flex_Head(REBLEN, hashlist);
-    Array* pairlist = MAP_PAIRLIST(map);
+    PairList* pairlist = MAP_PAIRLIST(map);
 
     Value* key = Array_Head(pairlist);
     REBLEN n;
@@ -212,13 +212,13 @@ static void Rehash_Map(Map* map)
 
 
 //
-//  Expand_Hash: C
+//  Expand_Hashlist: C
 //
 // Expand hash flex. Clear it but set its tail.
 //
-void Expand_Hash(Flex* hashlist)
+void Expand_Hashlist(HashList* hashlist)
 {
-    assert(not Is_Stub_Array(hashlist));
+    assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
 
     REBINT prime = Get_Hash_Prime_May_Fail(Flex_Used(hashlist) + 1);
     Remake_Flex(
@@ -246,14 +246,14 @@ REBLEN Find_Map_Entry(
     Option(const Value*) val,  // nullptr is fetch only, void is remove
     bool strict
 ) {
-    Flex* hashlist = MAP_HASHLIST(map); // can be null
-    Array* pairlist = MAP_PAIRLIST(map);
+    HashList* hashlist = MAP_HASHLIST(map); // can be null
+    PairList* pairlist = MAP_PAIRLIST(map);
 
     assert(hashlist);
 
     // Get hash table, expand it if needed:
     if (Array_Len(pairlist) > Flex_Used(hashlist) / 2) {
-        Expand_Hash(hashlist); // modifies size value
+        Expand_Hashlist(hashlist);  // modifies size value
         Rehash_Map(map);
     }
 
@@ -372,11 +372,11 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
     // a literal copy of the hashlist can still be used, as a start (needs
     // its own copy so new map's hashes will reflect its own mutations)
     //
-    Flex* hashlist = Copy_Flex_Core(
+    HashList* hashlist = cast(HashList*, Copy_Flex_Core(
         MAP_HASHLIST(map),
         FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST)
             // ^-- !!! No NODE_FLAG_MANAGED?
-    );
+    ));
     LINK(Hashlist, copy) = hashlist;
 
     if (not deeply)

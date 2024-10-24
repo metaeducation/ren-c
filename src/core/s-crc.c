@@ -361,7 +361,7 @@ uint32_t Hash_Value(const Cell* cell)
 
 
 //
-//  Make_Hash_Flex: C
+//  Make_Hashlist: C
 //
 // Hashlists are added to the manuals list normally.  They don't participate
 // in GC initially, and hence may be freed if used in some kind of set union
@@ -371,14 +371,14 @@ uint32_t Hash_Value(const Cell* cell)
 // (Review making them non-managed, and freed in Decay_Flex(), since they
 // are not shared in maps.  Consider impacts on the set operations.)
 //
-Flex* Make_Hash_Flex(REBLEN len)
+HashList* Make_Hashlist(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
     Flex* f = Make_Flex_Core(n + 1, FLAG_FLAVOR(HASHLIST));
     Clear_Flex(f);
     Set_Flex_Len(f, n);
 
-    return f;
+    return cast(HashList*, f);
 }
 
 
@@ -406,15 +406,14 @@ Element* Init_Map(Sink(Element) out, Map* map)
 //
 //  Hash_Block: C
 //
-// Hash ALL values of a block. Return hash Flex.
+// Hash ALL values of a block. Return HashList.
 // Used for SET logic (unique, union, etc.)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
+HashList* Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
-    // Create the hash array (integer indexes):
-    Flex* hashlist = Make_Hash_Flex(Cell_Series_Len_At(block));
+    HashList* hashlist = Make_Hashlist(Cell_Series_Len_At(block));  // integers
 
     const Element* tail;
     const Element* value = Cell_List_At(&tail, block);
@@ -429,11 +428,12 @@ Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
     while (true) {
         REBLEN skip_index = skip;
 
+        REBLEN wide = 1;
         REBLEN hash = Find_Key_Hashed(
             m_cast(Array*, array),  // mode == 0, no modification, cast ok
             hashlist,
             value,
-            1,
+            wide,
             cased,
             0  // mode
         );

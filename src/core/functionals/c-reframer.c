@@ -422,7 +422,7 @@ DECLARE_NATIVE(reframer)
     // Make action with enough space to store the implementation phase and
     // which parameter to fill with the *real* frame instance.
     //
-    Manage_Flex(exemplar);
+    Manage_Flex(Varlist_Array(exemplar));
     Phase* reframer = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         label,

@@ -201,7 +201,7 @@ VarList* Make_Varlist_For_Action(
         binder
     );
 
-    Manage_Flex(exemplar);  // !!! was needed before, review
+    Manage_Flex(Varlist_Array(exemplar));  // !!! was needed before, review
     Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
@@ -243,7 +243,7 @@ bool Specialize_Action_Throws(
         lowest_stackindex,
         def ? binder : nullptr
     );
-    Manage_Flex(exemplar); // destined to be managed, guarded
+    Manage_Flex(Varlist_Array(exemplar));  // destined to be managed, guarded
 
     if (def) { // code that fills the frame...fully or partially
         //

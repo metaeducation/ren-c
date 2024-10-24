@@ -538,14 +538,14 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
 
   { //////////////////////////////////////////////////////////////////////////
 
-    const Stub* s = c_cast(Stub*, node1);
-    if (Is_Stub_Symbol(s)) {
+    const Flex* f = c_cast(Flex*, node1);
+    if (Is_Stub_Symbol(f)) {
         HEART_BYTE(out) = REB_WORD;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary?
         return nullptr;
     }
 
-    Heart h = u_cast(Heart, MIRROR_BYTE(s));
+    Heart h = u_cast(Heart, MIRROR_BYTE(f));
     if (h != REB_0) {  // no length 2 sequence arrays unless mirror
         HEART_BYTE(out) = h;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary

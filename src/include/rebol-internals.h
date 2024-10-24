@@ -218,15 +218,22 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"
 
-#include "structs/struct-stub.h"  // Stub definition (Flex), embeds Cell
+#include "structs/struct-stub.h"  // Stub definition, embeds Cell
+#include "structs/struct-flex.h"  // A Flex's identity is its Stub
+
+#include "structs/struct-pairing.h"  // Stub-sized (2 cells), but not a Stub
 
 #include "structs/struct-array.h"  // Flex subclass
-#include "structs/struct-action.h"  // Array subclass
-#include "structs/struct-context.h"  // Array subclass
+#include "structs/struct-action.h"  // Array subclass (Exemplar...)
+#include "structs/struct-context.h"  // Array subclass (VarList, SeaOfVars)
+#include "structs/struct-map.h"  // Array subclass (PairList)
 
 #include "structs/struct-patch.h"
 
+#include "structs/struct-binary.h"
+
 #include "structs/struct-char.h"  // Utf8(*) is Byte* in validated UTF8
+#include "structs/struct-string.h"
 
 #include "structs/struct-feed.h"
 #include "structs/struct-state.h"  // state of variables restored on jumps

@@ -127,7 +127,7 @@ bool Expand_Keylist_Of_Varlist_Core(VarList* varlist, REBLEN delta)
 //
 void Expand_Varlist(VarList* varlist, REBLEN delta)
 {
-    Extend_Flex_If_Necessary(varlist, delta);
+    Extend_Flex_If_Necessary(Varlist_Array(varlist), delta);
     Expand_Keylist_Of_Varlist_Core(varlist, delta);
 }
 
@@ -189,7 +189,7 @@ Value* Append_To_Sea_Core(
     //    added into the chain to help accelerate finding the slot to bind
     //    for that symbol.  We skip over those.
 
-    Flex* updating = m_cast(Symbol*, symbol);  // skip binding hitches [1]
+    Stub* updating = m_cast(Symbol*, symbol);  // skip binding hitches [1]
     if (Get_Subclass_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
         updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
 

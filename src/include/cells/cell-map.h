@@ -38,18 +38,17 @@
         | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
 
 
-
 // See LINK() macro for how this is used.
 //
-#define LINK_Hashlist_TYPE          Flex*
+#define LINK_Hashlist_TYPE          HashList*
 #define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
 
-INLINE Array* MAP_PAIRLIST(const_if_c Map* map)
-  { return x_cast(Array*, map); }
+INLINE PairList* MAP_PAIRLIST(const_if_c Map* map)
+  { return x_cast(PairList*, map); }
 
 #if CPLUSPLUS_11
-    INLINE const Array* MAP_PAIRLIST(const Map* map)
-      { return x_cast(const Array*, map); }
+    INLINE const PairList* MAP_PAIRLIST(const Map* map)
+      { return x_cast(const PairList*, map); }
 #endif
 
 #define MAP_HASHLIST(m) \
@@ -64,7 +63,7 @@ INLINE const Map* VAL_MAP(const Cell* v) {
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
-    return cast(Map*, Cell_Node1(v));  // pairlist
+    return cast(Map*, Cell_Node1(v));  // identity is the PairList
 }
 
 #define VAL_MAP_Ensure_Mutable(v) \

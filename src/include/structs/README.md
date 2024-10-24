@@ -8,7 +8,7 @@ All of these files are included *before* the inclusion of the automatically
 gathered header file, %tmp-internals.h.  Mechanically this allows anything that
 has to have its definition complete to be fully defined to be used by value in
 the interface.  That's not usually strictly necessary--because most things are
-taken as pointers not by value, and would only need a stub forward declared.
+taken as pointers not by value, and so only need a forward declaration.
 But when building as C++ in the debug build, some definitions become "smart
 pointers" which need full class definitions to be used in an interface. 
 

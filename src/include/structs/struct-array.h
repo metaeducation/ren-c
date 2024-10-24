@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,17 +20,29 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Arrays are Flexes whose element type is Cell.  The garbage collector has to
-// treat them specially, by visiting the cells and marking the pointers in
-// those cells as live.
+// Arrays are Flexes whose element type is Cell.  Arrays have many concerns
+// specific to them, including that the garbage collector has to treat them
+// specially, by visiting the cells and marking the pointers in those cells
+// as live.
 //
-// There are several subclasses (FLAVOR_XXX) whose elements are value cells,
-// and hence are arrays.  However the "plain" array, e.g. the kind used in
-// BLOCK!s and GROUP!s, is its own subclass...which interprets the subclass
-// bits in particular ways not relevant to other arrays (e.g. object variable
-// lists do not need a flag tracking if there's a newline that needs to be
-// output at the end of the varlist).
+//=//// NOTES /////////////////////////////////////////////////////////////=//
 //
+// * Several important types (Action* for function, VarList* for context) are
+//   actually stylized Arrays.  They are laid out with special values in their
+//   content (e.g. at the [0] index), or by links to other Flexes in their
+//   `->misc` and `->link` fields of the Flex Stub.
+//
+// * The default assumption of Array types is that they cannot hold antiforms.
+//   So functions like Array_At() will return `Element*`.  However, there are
+//   several subclasses of array with different FLAVOR_XXX bytes that can
+//   store stable antiforms (none store unstable ones, at time of writing).
+//
+// * Another difference between the default array type (e.g. the one used by
+//   BLOCK! and GROUP! and FENCE!) is that it has meaning for certain flex
+//   flags, such as tracking whether a newline is at the end of the array.
+//   Hence ARRAY_FLAG_XXX only applies to the FLAVOR_ARRAY default type,
+//   not to things like the VarList of an OBJECT!.
+
 
 // The C++ build derives Array from Flex...so it allows passing an Array to
 // a function that expects a Flex, but not vice-versa.  In the C build, an

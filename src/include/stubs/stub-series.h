@@ -415,11 +415,11 @@ INLINE Size Flex_Total(const Flex* f)
     #define FLEX_BONUS(f) \
         (f)->content.dynamic.bonus.node
 #else
-    INLINE const Node* const &FLEX_BONUS(const Flex* f) {
+    INLINE const Node* const &FLEX_BONUS(const Stub* f) {
         assert(Get_Flex_Flag(f, DYNAMIC));
         return f->content.dynamic.bonus.node;
     }
-    INLINE const Node* &FLEX_BONUS(Flex* f) {
+    INLINE const Node* &FLEX_BONUS(Stub* f) {
         assert(Get_Flex_Flag(f, DYNAMIC));
         return f->content.dynamic.bonus.node;
     }
@@ -877,7 +877,7 @@ INLINE Flex* Make_Flex_Into(
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
-    Stub* s = Prep_Stub(preallocated, flags);
+    Flex* s = cast(Flex*, Prep_Stub(preallocated, flags));
 
     if (
         (flags & FLEX_FLAG_DYNAMIC)  // inlining will constant fold

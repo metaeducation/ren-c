@@ -1277,11 +1277,11 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     Destruct_Binder(binder);  // must remove bind indices even if failing
 
     if (error) {
-        Free_Unmanaged_Flex(c);
+        Free_Unmanaged_Flex(Varlist_Array(c));
         fail (unwrap error);
     }
 
-    Manage_Flex(c);  // must be managed to use in binding
+    Manage_Flex(Varlist_Array(c));  // must be managed to use in binding
 
     // If the user gets ahold of these contexts, we don't want them to be
     // able to expand them...because things like FOR-EACH have historically

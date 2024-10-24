@@ -251,7 +251,7 @@ INLINE const Key* Varlist_Key(VarList* c, Index n) {  // 1-based
 
 INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
-    return cast(Value*, cast(Flex*, c)->content.dynamic.data) + n;
+    return cast(Value*, x_cast(Array*, c)->content.dynamic.data) + n;
 }
 
 INLINE const Value* Try_Lib_Var(SymId id) {

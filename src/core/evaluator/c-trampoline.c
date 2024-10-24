@@ -674,7 +674,8 @@ void Drop_Level_Core(Level* L) {
             Stub* s = cast(Stub*, n);
             n = LINK(ApiNext, s);
             Freshen_Cell(Stub_Cell(s));
-            GC_Kill_Flex(s);
+            Set_Node_Free_Bit(s);
+            GC_Kill_Stub(s);
         }
         Corrupt_Pointer_If_Debug(L->alloc_value_list);
 
