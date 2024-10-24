@@ -634,7 +634,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 #include "sys-cell.h"
 
-#include "stubs/stub-series.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
+#include "stubs/stub-flex.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
 
 #include "sys-gc.h"
 

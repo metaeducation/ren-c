@@ -1,6 +1,6 @@
 //
-//  File: %stub-series.h
-//  Summary: "any-series? defs AFTER %tmp-internals.h (see: %struct-stub.h)"
+//  File: %stub-flex.h
+//  Summary: "Flex definitions AFTER %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,9 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Flex is a low-level implementation of something similar to a resizable
-// vector or array in other languages...though its implementation is currently
-// more like a "deque" (double-ended-queue):
+// This file contains the basic API for dealing with a Flex.  It's similar
+// to a resizable vector or array in other languages...though its
+// implementation is currently more like a "deque" (double-ended-queue):
 //
 //   https://en.wikipedia.org/wiki/Double-ended_queue
 //
@@ -32,26 +32,14 @@
 // storing of a byte representing the "Flavor" of a Flex, as well as several
 // hidden pointers (Misc, Link) and many Flags (Leader, Info).
 //
+// (see %struct-flex.h for a more detailed explanation of the implementation.)
+//
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// * In R3-Alpha, Flex was called "REBSER".  Ren-C avoids calling this data
-//   structure "Series" because the usermode concept of ANY-SERIES? bundles
-//   added information (an Index and a Binding), and using the same term
-//   would cause confusion for those trying to delve into the implementation:
-//
-//     https://forum.rebol.info/t/2221
-//
-// * Flex subclasses Array, Context, Action, Map are defined which are
-//   explained where they are defined in separate header files.
-//
-// * It is desirable to have Flex subclasses be different types, even though
-//   there are some common routines for processing them.  e.g. not every
-//   function that would take a Flex* would actually be handled in the same
-//   way for a Array*.  Plus, just because a VarList* is implemented as a
-//   Array* with a link to another Array* doesn't mean most clients should
-//   be accessing the Array.  In a C++ build, very simple inheritance is used
-//   to implement these type safeties--but in a C build, all the sublcass
-//   names are just aliases for Flex, so there's less checking.
+// * One particularly powerful feature that distinguishes Ren-C's Flex
+//   implementation from the R3-Alpha "REBSER" counterpart is that if you
+//   build the code as C++, the `const` qualifier is used to systemically
+//   enforce explicit requests to gain mutable access to data.
 //
 
 

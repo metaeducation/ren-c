@@ -68,6 +68,13 @@
 //
 // * For the API of operations available on Flex types, see %stub-flex.h
 //
+// * In R3-Alpha, Flex was called "REBSER".  Ren-C avoids calling this data
+//   structure "Series" because the usermode concept of ANY-SERIES? bundles
+//   added information (an Index and a Binding), and using the same term
+//   would cause confusion for those trying to delve into the implementation:
+//
+//     https://forum.rebol.info/t/2221
+//
 // * In C++, Binary, String, Array, etc. are derived from Flex.  This gives
 //   desirable type checking properties (like being able to pass an Array to
 //   a routine that needs a Flex, but not vice versa).  And it also means
