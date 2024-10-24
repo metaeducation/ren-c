@@ -783,50 +783,49 @@ INLINE Element* Init_Get_Word(Sink(Element) out, const Symbol* s) {
 }
 
 
-INLINE Option(Heart) Try_Get_Sequence_Singleheart(
-    Sink(bool) leading_blank,
-    const Cell* c
-){
+INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
     assert(Any_Sequence_Kind(Cell_Heart(c)));
 
     if (Not_Cell_Flag(c, SEQUENCE_HAS_NODE))  // compressed bytes
-        return REB_0;
+        return NOT_SINGLEHEART_0;
 
     if (Is_Node_A_Cell(Cell_Node1(c))) {
         const Pairing* p = u_cast(const Pairing*, Cell_Node1(c));
-        if (Is_Blank(Pairing_First(p))) {
-            *leading_blank = true;
-            return Cell_Heart(Pairing_Second(p));
-        }
-        if (Is_Blank(Pairing_Second(p))) {
-            *leading_blank = false;
-            return Cell_Heart(Pairing_First(p));
-        }
-        return REB_0;
+
+        if (Is_Blank(Pairing_First(p)))
+            return Leading_Blank_And(Cell_Heart(Pairing_Second(p)));
+
+        if (Is_Blank(Pairing_Second(p)))
+            return Trailing_Blank_And(Cell_Heart(Pairing_First(p)));
+
+        return NOT_SINGLEHEART_0;
     }
 
     const Stub* s = u_cast(const Stub*, Cell_Node1(c));
     if (Stub_Flavor(s) == FLAVOR_SYMBOL) {
-        *leading_blank = did (c->header.bits & CELL_FLAG_LEADING_BLANK);
-        return REB_WORD;
+        if (c->header.bits & CELL_FLAG_LEADING_BLANK)
+            return Leading_Blank_And(REB_WORD);
+
+        return Trailing_Blank_And(REB_WORD);
     }
 
-    Heart h = u_cast(Heart, MIRROR_BYTE(s));
-    if (h == REB_0)  // s actually is the sequence elements, not one element
-        return REB_0;
-    *leading_blank = did (c->header.bits & CELL_FLAG_LEADING_BLANK);
-    return h;
+    Heart mirror = u_cast(Heart, MIRROR_BYTE(s));
+    if (mirror == REB_0)  // s actually is sequence elements, not one element
+        return NOT_SINGLEHEART_0;
+
+    if (c->header.bits & CELL_FLAG_LEADING_BLANK)
+        return Leading_Blank_And(mirror);
+
+    return Trailing_Blank_And(mirror);
 }
 
 
 // GET-WORD! and SET-WORD!
 
 INLINE bool Is_Get_Word_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_WORD == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and leading_blank
+        LEADING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -834,11 +833,9 @@ INLINE bool Is_Get_Word(const Value* v)
   { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Word_Cell(v); }
 
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_WORD == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and not leading_blank
+        TRAILING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -858,19 +855,15 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(const Element* e) {
         return Cell_Word_Symbol(e);
     if (HEART_BYTE(e) != REB_PATH)
         return nullptr;
-    bool leading_slash;
-    Option(Heart) path_heart = Try_Get_Sequence_Singleheart(&leading_slash, e);
-    if (not leading_slash or path_heart != REB_CHAIN)
-        return nullptr;
+    if (LEADING_BLANK_AND(CHAIN) != Try_Get_Sequence_Singleheart(e))
+        return nullptr;  // e is not /?:?:? style path
+
     DECLARE_ELEMENT (temp);  // !!! should be able to optimize and not need this
     Copy_Sequence_At(temp, e, 1);
     assert(Is_Chain(temp));
-    bool leading_colon;
-    Option(Heart) chain_heart = Try_Get_Sequence_Singleheart(
-        &leading_colon, temp
-    );
-    if (leading_colon or chain_heart != REB_WORD)
-        return nullptr;
+
+    if (TRAILING_BLANK_AND(WORD) != Try_Get_Sequence_Singleheart(temp))
+        return nullptr;  // e is not /foo: style path
     return Cell_Word_Symbol(temp);
 }
 
@@ -878,11 +871,9 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(const Element* e) {
 // GET-TUPLE! and SET-TUPLE!
 
 INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_TUPLE == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and leading_blank
+        LEADING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -890,11 +881,9 @@ INLINE bool Is_Get_Tuple(const Value* v)
   { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Tuple_Cell(v); }
 
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_TUPLE == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and not leading_blank
+        TRAILING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -905,11 +894,9 @@ INLINE bool Is_Set_Tuple(const Value* v)
 // GET-BLOCK! and SET-BLOCK!
 
 INLINE bool Is_Get_Block_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_BLOCK == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and leading_blank
+        LEADING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -917,11 +904,9 @@ INLINE bool Is_Get_Block(const Value* v)
   { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Block_Cell(v); }
 
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_BLOCK == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and not leading_blank
+        TRAILING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -932,11 +917,9 @@ INLINE bool Is_Set_Block(const Value* v)
 // GET-GROUP! and SET-GROUP!
 
 INLINE bool Is_Get_Group_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_GROUP == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and leading_blank
+        LEADING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -944,11 +927,9 @@ INLINE bool Is_Get_Group(const Value* v)
   { return QUOTE_BYTE(v) == NOQUOTE_1 and Is_Get_Group_Cell(v); }
 
 INLINE bool Is_Set_Group_Cell(const Cell* c) {
-    bool leading_blank;
     return (
         Cell_Heart(c) == REB_CHAIN and
-        REB_GROUP == Try_Get_Sequence_Singleheart(&leading_blank, c)
-        and not leading_blank
+        TRAILING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }
 
@@ -957,22 +938,22 @@ INLINE bool Is_Set_Group(const Value* v)
 
 
 INLINE bool Any_Set_Value(const Value* v) {  // !!! optimize?
-    bool leading_blank;
+    Option(SingleHeart) single;
     return (
         QUOTE_BYTE(v) == NOQUOTE_1
         and HEART_BYTE(v) == REB_CHAIN
-        and Try_Get_Sequence_Singleheart(&leading_blank, v)
-        and not leading_blank
+        and (single = Try_Get_Sequence_Singleheart(v))
+        and Singleheart_Has_Trailing_Blank(unwrap single)
     );
 }
 
 INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
-    bool leading_blank;
+    Option(SingleHeart) single;
     return (
         QUOTE_BYTE(v) == NOQUOTE_1
         and HEART_BYTE(v) == REB_CHAIN
-        and Try_Get_Sequence_Singleheart(&leading_blank, v)
-        and leading_blank
+        and (single = Try_Get_Sequence_Singleheart(v))
+        and Singleheart_Has_Leading_Blank(unwrap single)
     );
 }
 

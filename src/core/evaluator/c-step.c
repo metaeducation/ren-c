@@ -747,19 +747,11 @@ Bounce Stepper_Executor(Level* L)
     // and dispatch to the appropriate behavior.
 
       case REB_CHAIN: {
-        bool leading_blank;
-        switch (
-            Try_Get_Sequence_Singleheart(&leading_blank, L_current)
-        ){
-          case REB_0:
+        switch (Try_Get_Sequence_Singleheart(L_current)) {
+          case NOT_SINGLEHEART_0:
             break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
-          case REB_WORD:  // GET-WORD! or SET-WORD!
-            if (leading_blank) {  // will be refinement, likely error on eval
-                Unchain(CURRENT);
-                STATE = ST_STEPPER_GET_WORD;
-                goto handle_get_word;
-            }
+          case TRAILING_BLANK_AND(WORD):  // FOO:, set word
             Derelativize(  // !!! binding may be sensitive to "set-words only"
                 SPARE, L_current, L_binding
             );
@@ -767,35 +759,18 @@ Bounce Stepper_Executor(Level* L)
             STATE = ST_STEPPER_SET_WORD;
             goto handle_generic_set;
 
-          case REB_BLOCK:  // GET-BLOCK! or SET-BLOCK!
+          case TRAILING_BLANK_AND(TUPLE):  // a.b.c: is a set tuple
             Unchain(CURRENT);
-            if (leading_blank) {  // REDUCE, not the best idea...
-                Derelativize(SPARE, L_current, L_binding);
-                if (rebRunThrows(
-                    cast(Value*, OUT),  // <-- output, API won't make atoms
-                    Canon(REDUCE), SPARE
-                )){
-                    goto return_thrown;
-                }
-                goto lookahead;
-            }
-            STATE = ST_STEPPER_SET_BLOCK;
-            goto handle_set_block;
-
-          case REB_TUPLE:
-            Unchain(CURRENT);
-            if (leading_blank) {
-                STATE = ST_STEPPER_GET_TUPLE;
-                goto handle_get_tuple;
-            }
             STATE = ST_STEPPER_SET_TUPLE;
             goto handle_generic_set;
 
-          case REB_GROUP: {
+          case TRAILING_BLANK_AND(BLOCK):  // [a b]: multi-return assign
             Unchain(CURRENT);
-            if (leading_blank)
-                fail ("GET-GROUP! has no evaluator meaning at this time");
+            STATE = ST_STEPPER_SET_BLOCK;
+            goto handle_set_block;
 
+          case TRAILING_BLANK_AND(GROUP): {  // (xxx): -- generic retrigger set
+            Unchain(CURRENT);
             L_next_gotten = nullptr;  // arbitrary code changes fetched vars
             Init_Void(Alloc_Evaluator_Primed_Result());
             Level* sub = Make_Level_At_Core(
@@ -808,6 +783,31 @@ Bounce Stepper_Executor(Level* L)
 
             STATE = ST_STEPPER_SET_GROUP;
             return CATCH_CONTINUE_SUBLEVEL(sub); }
+
+          case LEADING_BLANK_AND(WORD):  // :FOO, refinement, error on eval?
+            Unchain(CURRENT);
+            STATE = ST_STEPPER_GET_WORD;
+            goto handle_get_word;
+
+          case LEADING_BLANK_AND(TUPLE):  // :a.b.c -- what will this do?
+            Unchain(CURRENT);
+            STATE = ST_STEPPER_GET_TUPLE;
+            goto handle_get_tuple;
+
+          case LEADING_BLANK_AND(BLOCK):  // !!! :[a b] reduces, not great...
+            Unchain(CURRENT);
+            Derelativize(SPARE, L_current, L_binding);
+            if (rebRunThrows(
+                cast(Value*, OUT),  // <-- output, API won't make atoms
+                Canon(REDUCE), SPARE
+            )){
+                goto return_thrown;
+            }
+            goto lookahead;
+
+          case LEADING_BLANK_AND(GROUP):
+            Unchain(CURRENT);
+            fail ("GET-GROUP! has no evaluator meaning at this time");
 
           default:  // it's just something like :1 or <tag>:
             fail ("No current eval behavior for things like :1 or <tag>:");
@@ -996,11 +996,9 @@ Bounce Stepper_Executor(Level* L)
       case REB_PATH: {
         bool slash_at_head;
         bool slash_at_tail;
-        Heart path_heart = maybe Try_Get_Sequence_Singleheart(
-            &slash_at_head, L_current
-        );
-        switch (path_heart) {
-          case REB_0: {
+        Option(SingleHeart) single = Try_Get_Sequence_Singleheart(L_current);
+
+        if (not single) {
             Copy_Sequence_At(SPARE, L_current, 0);
             if (Any_Inert(SPARE)) {
                 if (Is_Blank(SPARE))
@@ -1016,42 +1014,36 @@ Bounce Stepper_Executor(Level* L)
             Length len = Cell_Sequence_Len(L_current);
             Copy_Sequence_At(SPARE, L_current, len - 1);
             slash_at_tail = Is_Blank(SPARE);
-            break; }
+        }
+        else switch (unwrap single) {
+          case LEADING_BLANK_AND(WORD):
+            fail ("Killing off refinement evaluations!");
 
-          case REB_WORD: {
-            if (slash_at_head)
-                fail ("Killing off refinement evaluations!");
-            slash_at_tail = true;
-            break; }
+          case LEADING_BLANK_AND(CHAIN): {  // /abc: or /?:?:?
+            Unpath(CURRENT);
 
-          case REB_CHAIN:  // /abc: or /abc:def or abc:def/ or /abc.def: ...
-            if (slash_at_head) {
-                Unpath(CURRENT);
-                bool colon_at_head;
-                Option(Heart) chain_heart = Try_Get_Sequence_Singleheart(
-                    &colon_at_head, L_current
-                );
-                if (colon_at_head)
-                    fail ("No evaluator meaning for /:xxx at this time");
-                if (chain_heart == REB_WORD) {
-                    Unchain(CURRENT);
-                    Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
-                    STATE = ST_STEPPER_SET_WORD;
-                    goto handle_generic_set;
-                }
-                if (chain_heart == REB_TUPLE) {
-                    Unchain(CURRENT);
-                    Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
-                    STATE = ST_STEPPER_SET_TUPLE;
-                    goto handle_generic_set;
-                }
-                fail ("Unknown evaluator case for /xxx:...");
+            switch (Try_Get_Sequence_Singleheart(L_current)) {
+              case TRAILING_BLANK_AND(WORD):  // /abc: is set actions only
+                Unchain(CURRENT);
+                Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+                STATE = ST_STEPPER_SET_WORD;
+                goto handle_generic_set;
+
+              case TRAILING_BLANK_AND(TUPLE):  // /a.b.c: is set actions only
+                Unchain(CURRENT);
+                Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
+                STATE = ST_STEPPER_SET_TUPLE;
+                goto handle_generic_set;
+
+              default:
+                fail ("/a:b:c will mean guarantee a function call, in time");
             }
-            slash_at_tail = true;
-            break;
+            break; }
 
           default:
-            slash_at_tail = not slash_at_head;
+            slash_at_tail = Singleheart_Has_Trailing_Blank(unwrap single);
+            slash_at_head = Singleheart_Has_Leading_Blank(unwrap single);
+            assert(slash_at_head == not slash_at_tail);
             break;
         }
 
@@ -1085,6 +1077,7 @@ Bounce Stepper_Executor(Level* L)
             fail ("Use `->-` to shove left infix operands into PATH!s");
         }
 
+        UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as error?
         goto handle_action_in_out_with_refinements_pushed; }
 
 
@@ -1347,13 +1340,17 @@ Bounce Stepper_Executor(Level* L)
             bool is_optional;
 
             if (heart == REB_CHAIN) {
-                heart = maybe Try_Get_Sequence_Singleheart(
-                    &is_optional,  // leading_blank
-                    CURRENT
-                );
-                if (heart == REB_0 or not is_optional)
+                Option(SingleHeart) single;
+                if (
+                    not (single = Try_Get_Sequence_Singleheart(CURRENT))
+                    or not Singleheart_Has_Leading_Blank(unwrap single)
+                ){
                     fail ("Only leading blank CHAIN! in SET-BLOCK! dialect");
+                }
                 Unchain(CURRENT);
+                heart = Heart_Of_Singleheart(unwrap single);
+                assert(heart == Cell_Heart(CURRENT));
+                is_optional = true;
             }
             else
                 is_optional = false;

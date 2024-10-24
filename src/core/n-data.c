@@ -1379,14 +1379,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
     const Element* chain,
     Context* context
 ){
-  #if DEBUG
-  blockscope {
-    bool leading_blank;
-    Option(Heart) heart = Try_Get_Sequence_Singleheart(&leading_blank, chain);
-    assert(not heart);  // don't call with chains that start or end with blank
-    UNUSED(leading_blank);
-  }
-  #endif
+    assert(not Try_Get_Sequence_Singleheart(chain));  // don't use w/these
 
     const Element* tail;
     const Element* head = Cell_List_At(&tail, chain);
@@ -1661,12 +1654,9 @@ DECLARE_NATIVE(get)
     INCLUDE_PARAMS_OF_GET;
 
     Element* source = cast(Element*, ARG(source));
+
     if (Any_Chain(source)) {  // GET-WORD, SET-WORD, SET-GROUP, etc.
-        bool leading_blank;
-        Option(Heart) heart = Try_Get_Sequence_Singleheart(
-            &leading_blank, source
-        );
-        if (heart)
+        if (Try_Get_Sequence_Singleheart(source))
             Unchain(source);  // want to GET or SET normally
     }
 

@@ -309,6 +309,17 @@ kinds: collect [
     ]
 ]
 
+singlehearts: collect [  ; !!! Omit invalid singleheart values?
+    for-each-datatype 't [
+        keep cscape [t
+            --{SINGLEHEART_TAIL_BLANK_${T.NAME} = $<T.HEART * 256>}--
+        ]
+        keep cscape [t
+            --{SINGLEHEART_HEAD_BLANK_${T.NAME} = $<(T.HEART * 256) + 1>}--
+        ]
+    ]
+]
+
 e-hearts/emit [rebs --{
     /*
      * INTERNAL CELL HEART ENUM, e.g. REB_BLOCK or REB_TAG
@@ -338,13 +349,13 @@ e-hearts/emit [rebs --{
         };
     #else
         enum HeartEnum {
-            REB_0 = 0,  /* reserved */
+            REB_0 = 0,  /* reserved falsey case for Option(Heart) */
             $[Rebs],
             REB_MAX_HEART,  /* one past valid types */
         };
 
         enum KindEnum {
-            KIND_0 = 0,  /* reserved */
+            KIND_0 = 0,  /* reserved falsey case for Option(Kind) */
             $[Kinds],
             REB_QUASIFORM,
             REB_QUOTED,
@@ -357,6 +368,39 @@ e-hearts/emit [rebs --{
 
     STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
     STATIC_ASSERT(REB_MAX < 256);  /* Stored in bytes */
+
+    /*
+     * SINGLEHEART OPTIMIZED SEQUENCE DETECTION
+     *
+     * We want to use SingleHeart in switch() statements, but don't want them
+     * to be type-compatible with Heart or Kind types due to the extra flag of
+     * information they multiplex in.  Making a specialized enum type is
+     * kind of the only way to get that type checking, since implicit casts
+     * to integer to facilitate switching would let you use Heart or Kind.
+     */
+    enum SingleHeartEnum {
+        NOT_SINGLEHEART_0,  /* reserved falsey case for Option(SingleHeart) */
+
+        /*
+         * !!! VALUES INTENTIONALLY > 256, OUT OF RANGE OF HEART AND KIND !!!
+         *
+         * Distinct enum types won't compare directly due to -Wenum-compare.
+         * But pushing the values out of each others ranges is the only way to
+         * make C switch() give warnings when the wrong enum type is used in
+         * a `case` label.
+         */
+
+        /*
+         * !!! NOTE THAT ALL THESE COMBINATIONS ARE NOT ACTUALLY VALID !!!
+         *
+         * (e.g. there is no such thing as SINGLEHEART_TRAILING_BLANK_BLANK)
+         *
+         * It's just easier to make this enum and have the math work out by
+         * filling it with all the combinatorics...
+         */
+
+        $(Singlehearts),
+    };
 }--]
 e-hearts/emit newline
 

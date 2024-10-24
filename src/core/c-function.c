@@ -244,44 +244,37 @@ void Push_Keys_And_Parameters_May_Fail(
         bool refinement = false;  // paths with blanks at head are refinements
         bool local = false;
         if (heart == REB_CHAIN or heart == REB_META_CHAIN) {
-            bool leading_blank;
-            Option(Heart) h = Try_Get_Sequence_Singleheart(
-                &leading_blank, item
-            );
-            if (h) {  // xxx: or :xxx, where xxx is BLOCK!/WORD!/TUPLE!/etc.
-                if (leading_blank) {
-                    if (
-                        h == REB_WORD
-                    ){
-                        refinement = true;
-                        symbol = Cell_Refinement_Symbol(item);
-                        if (heart == REB_META_PATH) {
-                            if (not quoted)
-                                pclass = PARAMCLASS_META;
-                        }
-                        else {
-                            if (quoted)
-                                pclass = PARAMCLASS_JUST;
-                            else
-                                pclass = PARAMCLASS_NORMAL;
-                        }
+            switch (Try_Get_Sequence_Singleheart(item)) {
+              case LEADING_BLANK_AND(WORD): {
+                refinement = true;
+                symbol = Cell_Refinement_Symbol(item);
+                if (heart == REB_META_PATH) {
+                    if (not quoted)
+                        pclass = PARAMCLASS_META;
+                }
+                else {
+                    if (quoted)
+                        pclass = PARAMCLASS_JUST;
+                    else
+                        pclass = PARAMCLASS_NORMAL;
+                }
 
-                        // !!! There's currently the ability to shift to
-                        // parameter mode via [<local> x :foo y].  This is
-                        // used to create dummy variables in mid-spec.  Review.
-                        //
-                        mode = SPEC_MODE_DEFAULT;
-                    }
+                // !!! There's currently the ability to shift to
+                // parameter mode via [<local> x :foo y].  This is
+                // used to create dummy variables in mid-spec.  Review.
+                //
+                mode = SPEC_MODE_DEFAULT;
+                break; }
+
+              case TRAILING_BLANK_AND(WORD):
+                if (not quoted and Cell_Word_Id(item) == SYM_RETURN) {
+                    symbol = Cell_Word_Symbol(item);
+                    pclass = PARAMCLASS_RETURN;
                 }
-                else {  // trailing blank, so xxx:
-                    if (
-                        h == REB_WORD and not quoted
-                        and Cell_Word_Id(item) == SYM_RETURN
-                    ){
-                        symbol = Cell_Word_Symbol(item);
-                        pclass = PARAMCLASS_RETURN;
-                    }
-                }
+                break;
+
+              default:
+                break;
             }
         }
         else if (Is_The_Group(item)) {  // @(...) is PARAMCLASS_SOFT for now

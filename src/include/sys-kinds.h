@@ -102,3 +102,47 @@
           { return static_cast<SymId>(kind.byte);}
     };
 #endif
+
+
+//=//// SINGLEHEART OPTIMIZED SEQUENCE TYPE ///////////////////////////////=//
+//
+// In Ren-C, `/foo` is a 2-element PATH! with a blank at the head, and `bar:`
+// is a 2-element CHAIN! with a blank at the tail.  Due to how common these
+// are, and the fact that they are immutable sequences, there is investment
+// in optimizing them.  They are called "SingleHeart" sequences, and because
+// detection of these is so common there's a special type which multiplexes
+// both the Heart and whether there is a blank at the head or tail.
+//
+// (It's encoded in a single type, because if the leading blank or trailing
+// blank were separated from the heart type, you could accidentally check
+// the leading blank or trailing blank without verifying a sequence was a
+// single hearted type.  Static analysis caught bugs of that kind, and they
+// are easy to make.)
+//
+// This is defined as an enum type because we want to use it in a switch()
+// but don't want to generically turn it into an integer, because that would
+// mean you could accidentally test against Heart like REB_CHAIN etc. and
+// that would be incorrect, due to the multiplexed information.
+
+typedef enum SingleHeartEnum SingleHeart;
+
+#define Leading_Blank_And(heart)    u_cast(SingleHeart, ((heart) << 8) + 1)
+#define Trailing_Blank_And(heart)   u_cast(SingleHeart, (heart) << 8)
+
+#define LEADING_BLANK_AND(name)     Leading_Blank_And(REB_##name)
+#define TRAILING_BLANK_AND(name)    Trailing_Blank_And(REB_##name)
+
+INLINE bool Singleheart_Has_Leading_Blank(SingleHeart single) {
+    assert(single != NOT_SINGLEHEART_0);
+    return did (u_cast(uint_fast16_t, single) & 1);
+}
+
+#define Singleheart_Has_Trailing_Blank(single) \
+    (not Singleheart_Has_Leading_Blank(single))
+
+INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
+    assert(single != NOT_SINGLEHEART_0);
+    Heart heart = u_cast(Heart, u_cast(uint_fast16_t, single) >> 8);
+    assert(heart != REB_0 and heart != REB_BLANK);
+    return heart;
+}
