@@ -1224,9 +1224,9 @@ DECLARE_NATIVE(insert_odbc)
     );
 
     SQLRETURN rc;
-
     rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);  // !!! check rc?
     rc = SQLCloseCursor(hstmt);  // !!! check rc?
+    UNUSED(rc);
 
     //=//// MAKE SQL REQUEST FROM DIALECTED SQL BLOCK /////////////////////=//
     //

@@ -147,7 +147,7 @@ DECLARE_NATIVE(reorder)
     const Element* item;  // starts as tail
     const Element* at = Cell_List_At(&item, ARG(ordering));
     for (; at != item--; ) {
-        const Symbol* symbol = Cell_Word_Symbol(item);
+        const Symbol* symbol;
 
         // !!! As a bit of a weird demo of a potential future direction, we
         // don't just allow WORD!s but allow you to do things like pass the

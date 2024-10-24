@@ -176,10 +176,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         //  * Noticing when a HALT was requested
         //  * (future?) Allowing a break into an interactive debugger
         //
-        if (Do_Signals_Throws(LEVEL)) {
-            bounce = BOUNCE_THROWN;
+        if (Do_Signals_Throws(LEVEL))
             goto handle_thrown;
-        }
     }
 
     if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
@@ -337,6 +335,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     if (bounce == BOUNCE_THROWN) {
       handle_thrown:
+        UNUSED(bounce);  // ignore, as whatever jumped here wants to throw
 
         assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
 
