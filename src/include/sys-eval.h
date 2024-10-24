@@ -1,6 +1,6 @@
 //
 //  File: %sys-eval.h
-//  Summary: {Low-Level Internal Evaluator API}
+//  Summary: "Low-Level Internal Evaluator API"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

@@ -1,6 +1,6 @@
 //
 //  File: %cell-pair.h
-//  Summary: {Definitions for Pairing Nodes and the Pair Datatype}
+//  Summary: "Definitions for Pairing Nodes and the Pair Datatype"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

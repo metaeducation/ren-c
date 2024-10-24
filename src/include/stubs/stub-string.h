@@ -1,6 +1,6 @@
 //
 //  File: %stub-string.h
-//  Summary: {Definitions for REBSTR (e.g. WORD!) and Codepoint (e.g. STRING!)}
+//  Summary: "Definitions for String (and the Symbol subclass of String)"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

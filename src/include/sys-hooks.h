@@ -1,6 +1,6 @@
 //
 //  File: %sys-hooks.h
-//  Summary: {Function Pointer Definitions, defined before %tmp-internals.h}
+//  Summary: "Function Pointer Definitions, defined before %tmp-internals.h"
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

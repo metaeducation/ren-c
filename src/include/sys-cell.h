@@ -28,7 +28,7 @@
 // containing Array is garbage-collected.  This means that many pointers to
 // Cells are movable, and could become invalid if arbitrary user code
 // is run...this includes Cells on the data stack, which is implemented as
-// an Array under the hood.  (See %sys-stack.h)
+// an Array under the hood.  (See %sys-datastack.h)
 //
 // A Cell in a C stack variable does not have to worry about its memory
 // address becoming invalid--but by default the garbage collector does not

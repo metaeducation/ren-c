@@ -1,6 +1,6 @@
 //
-//  File: %sys-stack.h
-//  Summary: {Definitions for "Data Stack" and the C stack}
+//  File: %sys-datastack.h
+//  Summary: -{Definitions for the "Data Stack"}-
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,11 +20,11 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The data stack (DS_) is for pushing one individual Cell at a time.  The
-// values can then be popped in a Last-In-First-Out way.  It is also possible
-// to mark a stack position, do any number of pushes, and then ask for the
+// The data stack is for pushing one individual Cell at a time.  These cells
+// can then be popped in a Last-In-First-Out way.  It is also possible to mark
+// a stack position as a "Base", do any number of pushes, and then ask for the
 // range of values pushed since the mark to be placed into a newly-made Array.
-// As long as a value is on the data stack, any series it refers to will be
+// As long as a cell is on the data stack, any payload it refers to will be
 // protected from being garbage-collected.
 //
 // A notable usage of the data stack is by REDUCE and COMPOSE.  They use it

@@ -1,6 +1,6 @@
 //
 //  File: %cell-word.h
-//  Summary: {Definitions for the ANY-WORD? Datatypes}
+//  Summary: "Definitions for the ANY-WORD? Cells"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

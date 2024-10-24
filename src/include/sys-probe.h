@@ -1,6 +1,6 @@
 //
 //  File: %sys-probe.h
-//  Summary: {Polymorphic Pointer Probing Tool (Cell*, Stub*, Utf8*}
+//  Summary: "Polymorphic Pointer Probing Tool (Cell*, Stub*, Utf8*)"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

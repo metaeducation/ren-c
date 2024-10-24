@@ -662,7 +662,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 
 #include "cells/cell-quoted.h"  // has special handling for voids/nones
 
-#include "sys-stack.h"
+#include "sys-datastack.h"
 
 #include "cells/cell-blank.h"
 #include "cells/cell-integer.h"

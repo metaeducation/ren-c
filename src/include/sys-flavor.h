@@ -1,6 +1,6 @@
 //
 //  File: %sys-flavor.h
-//  Summary: {Series Subclass Type Enumeration}
+//  Summary: "Stub Subclass Type Enumeration"
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -18,10 +18,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A byte in the Flex Stub header is used to store an enumeration value of
-// the kind of Stub that it is.  This takes the place of storing a special
-// element "width" in the Flex (which R3-Alpha did).  Instead, the element
-// width is determined by the "Flavor".
+// A byte in the Stub header is used to store an enumeration value of the kind
+// of Stub that it is.  This takes the place of storing a special element
+// "width" in the Flex (which R3-Alpha did).  Instead, the element width is
+// determined by the "Flavor".
 //
 // In order to maximize the usefulness of this byte, the enumeration is
 // organized in a way where the ordering conveys information.  So all the

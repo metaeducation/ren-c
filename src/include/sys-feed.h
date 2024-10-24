@@ -1,6 +1,6 @@
 //
 //  File: %sys-feed.h
-//  Summary: {Accessors and Argument Pushers/Poppers for Function Call Levels}
+//  Summary: "Accessors and Argument Pushers/Poppers for Function Call Levels"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

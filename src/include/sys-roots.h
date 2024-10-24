@@ -1,6 +1,6 @@
 //
 //  File: %sys-roots.h
-//  Summary: {Definitions for allocating Value* API handles}
+//  Summary: "Definitions for allocating Value* API handles"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

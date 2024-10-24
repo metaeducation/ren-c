@@ -1,6 +1,6 @@
 //
 //  File: %cell-time.h
-//  Summary: {Definitions for the TIME! and DATE! Datatypes}
+//  Summary: "Definitions for the TIME! and DATE! Cells"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

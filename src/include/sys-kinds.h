@@ -1,6 +1,6 @@
 //
 //  File: %sys-kinds.h
-//  Summary: {Safe wrapper for distinguishing "Heart" and "Kind" if C++}
+//  Summary: -{Safe wrapper for distinguishing "Heart" and "Kind" if C++}-
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

@@ -93,7 +93,7 @@
 
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
-// See %sys-stack.h for a deeper explanation.
+// See %sys-datastack.h for a deeper explanation.
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct

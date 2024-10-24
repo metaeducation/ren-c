@@ -21,7 +21,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// See notes on the stacks in %sys-stack.h
+// See notes on the stacks in %sys-datastack.h
 //
 
 #include "sys-core.h"

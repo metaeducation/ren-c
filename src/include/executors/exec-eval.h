@@ -1,6 +1,6 @@
 //
 //  File: %exec-eval.h
-//  Summary: {Flags and State for Evaluator_Executor() and Stepper_Executor()}
+//  Summary: "Flags and State for Evaluator_Executor() and Stepper_Executor()"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

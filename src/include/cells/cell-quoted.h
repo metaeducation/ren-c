@@ -1,6 +1,6 @@
 //
 //  File: %cell-quoted.h
-//  Summary: {Definitions for QUOTED! Datatype}
+//  Summary: "Definitions for QUOTED! Cells"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

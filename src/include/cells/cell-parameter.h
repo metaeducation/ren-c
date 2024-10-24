@@ -1,6 +1,6 @@
 //
 //  File: %cell-parameter.h
-//  Summary: {Definitions for Parameter Values}
+//  Summary: "Definitions for PARAMETER! Cells"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

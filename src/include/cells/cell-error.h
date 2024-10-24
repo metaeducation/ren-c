@@ -1,6 +1,6 @@
 //
 //  File: %cell-context.h
-//  Summary: {Context definitions AFTER including %tmp-internals.h}
+//  Summary: "Context definitions AFTER including %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
