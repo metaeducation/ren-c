@@ -160,7 +160,7 @@ Bounce The_Group_Branch_Executor(Level* level_)
     Decay_If_Unstable(SPARE);
 
     if (Is_The_Group(SPARE))
-        fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
+        return FAIL(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
     if (Is_Void(SPARE)) {  // void branches giving their input is useful  [3]
         assert(with == OUT);
@@ -303,7 +303,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     Value* branch = ARG(branch);
 
     if (Is_Meta_Of_Nihil(in))
-        fail ("THEN/ELSE cannot operate on empty pack! input (e.g. NIHIL)");
+        return FAIL("THEN/ELSE can't operate on empty pack input (e.g. NIHIL)");
 
     Meta_Unquotify_Undecayed(in);  // [1]
 
@@ -369,7 +369,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         return DELEGATE(OUT, hook, branch);  // not DELEGATE_BRANCH [5]
 
     if (not Is_Frame(hook))  // if not full control, assume must use BRANCH
-        fail ("non-FRAME! found in THEN or ELSE method of lazy object");
+        return FAIL("non-FRAME! found in THEN or ELSE method of lazy object");
 
     return DELEGATE_BRANCH(OUT, hook, branch);  // BRANCH for safety [6]
 
@@ -656,7 +656,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Meta_Of_Nihil(in))
-        fail ("ALSO cannot operate on empty pack! input (e.g. NIHIL)");
+        return FAIL("ALSO cannot operate on empty pack! input (e.g. NIHIL)");
 
     if (Is_Meta_Of_Void(in))
         return VOID;  // telegraph invisible intent
@@ -735,12 +735,14 @@ DECLARE_NATIVE(match)
 
     if (not REF(meta)) {
         if (Is_Nulled(v))
-            fail (Error_Need_Non_Null_Raw());  // [1]
+            return FAIL(Error_Need_Non_Null_Raw());  // [1]
     }
 
     if (Is_Nulled(test)) {
         if (not REF(meta))
-            fail ("Can't give coherent answer for NULL matching without /META");
+            return FAIL(
+                "Can't give coherent answer for NULL matching without /META"
+            );
 
         if (Is_Nulled(v))
             return Init_Meta_Of_Null(OUT);
@@ -759,13 +761,14 @@ DECLARE_NATIVE(match)
         break;
 
       default:
-        fail (PARAM(test));  // all test types should be accounted for in switch
+        assert(false);  // all test types should be accounted for in switch
+        return FAIL(PARAM(test));
     }
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
     if (Is_Void(v) and not REF(meta))  // not a good case of void-in-null-out
-        fail ("~void~ antiform requires MATCH:META if in set being tested");
+        return FAIL("~void~ antiform needs MATCH:META if in set being tested");
 
     Copy_Cell(OUT, v);
 
@@ -887,7 +890,7 @@ DECLARE_NATIVE(all)
 } predicate_result_in_scratch: {  ////////////////////////////////////////////
 
     if (Is_Void(scratch))  // !!! Should void predicate results signal opt-out?
-        fail (Error_Bad_Void());
+        return FAIL(Error_Bad_Void());
 
     Packify_If_Inhibitor(SPARE);  // predicates can approve inhibitors [3]
 
@@ -1020,7 +1023,7 @@ DECLARE_NATIVE(any)
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
     if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
-        fail (Error_Bad_Void());
+        return FAIL(Error_Bad_Void());
 
     Packify_If_Inhibitor(OUT);  // predicates can approve inhibitors [3]
 
@@ -1193,7 +1196,7 @@ DECLARE_NATIVE(case)
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
     if (Is_Void(SPARE))  // error on void predicate results (not same as [2])
-        fail (Error_Bad_Void());
+        return FAIL(Error_Bad_Void());
 
     goto processed_result_in_spare;
 
@@ -1224,7 +1227,7 @@ DECLARE_NATIVE(case)
 
     if (not matched) {
         if (not Any_Branch(branch))
-            fail (Error_Bad_Value_Raw(branch));  // like IF [3]
+            return FAIL(Error_Bad_Value_Raw(branch));  // like IF [3]
 
         goto handle_next_clause;
     }
@@ -1354,7 +1357,7 @@ DECLARE_NATIVE(switch)
     assert(Is_Fresh(OUT));  // if no writes to out performed, we act void
 
     if (REF(type) and REF(predicate))
-        fail (Error_Bad_Refines_Raw());
+        return FAIL(Error_Bad_Refines_Raw());
 
     Level* sub = Make_Level_At(
         &Stepper_Executor,
@@ -1395,7 +1398,7 @@ DECLARE_NATIVE(switch)
         Decay_If_Unstable(SPARE);
 
         if (not Any_Type_Value(SPARE))
-            fail ("switch:type requires comparisons to TYPE-XXX!");
+            return FAIL("switch:type requires comparisons to TYPE-XXX!");
 
         if (not Typecheck_Atom(stable_SPARE, left))
             goto next_switch_step;
@@ -1526,7 +1529,7 @@ DECLARE_NATIVE(default)
         SPECIFIED
     );
     if (error)
-        fail (unwrap error);
+        return FAIL(unwrap error);
 
     if (not Is_Nulled(predicate)) {
         STATE = ST_DEFAULT_RUNNING_PREDICATE;
@@ -1551,7 +1554,7 @@ DECLARE_NATIVE(default)
 
     if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, stable_SPARE)) {
         assert(false);  // shouldn't be able to happen.
-        fail (Error_No_Catch_For_Throw(LEVEL));
+        return FAIL(Error_No_Catch_For_Throw(LEVEL));
     }
 
     return COPY(SPARE);
@@ -1650,7 +1653,7 @@ DECLARE_NATIVE(definitional_throw)
 
     Option(VarList*) coupling = Level_Coupling(throw_level);
     if (not coupling)
-        fail (Error_Archetype_Invoked_Raw());
+        return FAIL(Error_Archetype_Invoked_Raw());
 
     const Value* label = Varlist_Archetype(unwrap coupling);
     return Init_Thrown_With_Label(LEVEL, atom, label);

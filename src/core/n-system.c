@@ -111,9 +111,7 @@ DECLARE_NATIVE(recycle)
     REBLEN count;
 
     if (REF(verbose)) {
-      #if defined(NDEBUG)
-        fail (Error_Debug_Only_Raw());
-      #else
+      #if DEBUG
         Flex* sweeplist = Make_Flex_Core(100, FLAG_FLAVOR(NODELIST));
         count = Recycle_Core(sweeplist);
         assert(count == Flex_Used(sweeplist));
@@ -129,6 +127,8 @@ DECLARE_NATIVE(recycle)
 
         REBLEN recount = Recycle_Core(nullptr);
         assert(recount == count);
+      #else
+        return FAIL(Error_Debug_Only_Raw());
       #endif
     }
     else {
@@ -136,14 +136,14 @@ DECLARE_NATIVE(recycle)
     }
 
     if (REF(watch)) {
-      #if defined(NDEBUG)
-        fail (Error_Debug_Only_Raw());
-      #else
+      #if DEBUG
         // There might should be some kind of generic way to set these kinds
         // of flags individually, perhaps having them live in SYSTEM/...
         //
         g_gc.watch_recycle = not g_gc.watch_recycle;
         g_mem.watch_expand = not g_mem.watch_expand;
+      #else
+        return FAIL(Error_Debug_Only_Raw());
       #endif
     }
 
@@ -178,7 +178,7 @@ DECLARE_NATIVE(limit_usage)
             g_mem.usage_limit = Int64(ARG(limit));
     }
     else
-        fail (PARAM(field));
+        return FAIL(PARAM(field));
 
     return NOTHING;
 }
@@ -205,11 +205,7 @@ DECLARE_NATIVE(check)
 {
     INCLUDE_PARAMS_OF_CHECK;
 
-#ifdef NDEBUG
-    UNUSED(ARG(value));
-
-    fail (Error_Debug_Only_Raw());
-#else
+#if DEBUG
     Value* value = ARG(value);
 
     // For starters, check the memory (if it's bad, all other bets are off)
@@ -230,7 +226,10 @@ DECLARE_NATIVE(check)
     }
 
     return COPY(value);
-#endif
+  #else
+    UNUSED(ARG(value));
+    return FAIL(Error_Debug_Only_Raw());
+  #endif
 }
 
 
@@ -295,8 +294,8 @@ DECLARE_NATIVE(c_debug_break)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
-  #if !INCLUDE_C_DEBUG_BREAK_NATIVE
-    fail (Error_Debug_Only_Raw());
+  #if (! INCLUDE_C_DEBUG_BREAK_NATIVE)
+    return FAIL(Error_Debug_Only_Raw());
   #else
     #if DEBUG_COUNT_TICKS
         //

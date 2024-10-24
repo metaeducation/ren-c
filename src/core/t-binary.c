@@ -162,7 +162,9 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const Value* arg)
             Term_Binary_Len(b, len);
             return Init_Blob(OUT, b);
         }
-        fail ("TUPLE! did not consist entirely of INTEGER! values 0-255"); }
+        return FAIL(
+            "TUPLE! did not consist entirely of INTEGER! values 0-255"
+        ); }
 
       case REB_BITSET:
         return Init_Blob(
@@ -199,7 +201,7 @@ Bounce MAKE_Binary(
     assert(kind == REB_BINARY);
 
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap parent));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Integer(def)) {
         //
@@ -350,7 +352,7 @@ REBTYPE(Binary)
         const Value* picker = ARG(picker);
         REBINT n;
         if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
-            fail (Error_Out_Of_Range(picker));
+            return FAIL(Error_Out_Of_Range(picker));
 
         Value* setval = ARG(value);
 
@@ -365,11 +367,11 @@ REBTYPE(Binary)
             // !!! See notes in the REBTYPE(String) about alternate cases
             // for the POKE'd value.
             //
-            fail (PARAM(value));
+            return FAIL(PARAM(value));
         }
 
         if (i > 0xff)
-            fail (Error_Out_Of_Range(setval));
+            return FAIL(Error_Out_Of_Range(setval));
 
         Binary* b = Cell_Binary_Ensure_Mutable(v);
         Binary_Head(b)[n] = cast(Byte, i);
@@ -438,11 +440,10 @@ REBTYPE(Binary)
         else if (Is_Splice(arg)) {
             QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
         }
-        else if (Is_Antiform(arg)) {  // only SPLICE! in typecheck
-            fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
-        }
         else if (Any_List(arg) or Any_Sequence(arg))
-            fail (ARG(value));
+            return FAIL(ARG(value));
+        else
+            assert(not Is_Antiform(arg));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
@@ -462,7 +463,7 @@ REBTYPE(Binary)
 
         Value* pattern = ARG(pattern);
         if (Is_Antiform(pattern))
-            fail (pattern);
+            return FAIL(pattern);
 
         Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
@@ -514,7 +515,7 @@ REBTYPE(Binary)
         UNUSED(PARAM(series));
 
         if (REF(deep))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         REBINT len;
         if (REF(part)) {
@@ -604,7 +605,7 @@ REBTYPE(Binary)
       case SYM_BITWISE_AND_NOT: {
         Value* arg = D_ARG(2);
         if (not Is_Binary(arg))
-            fail (Error_Math_Args(VAL_TYPE(arg), verb));
+            return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
 
         Size t0;
         const Byte* p0 = Cell_Binary_Size_At(&t0, v);
@@ -700,9 +701,9 @@ REBTYPE(Binary)
         if (Is_Integer(arg))
             amount = VAL_INT32(arg);
         else if (Is_Binary(arg))
-            fail (arg); // should work
+            return FAIL(arg); // should work
         else
-            fail (arg); // what about other types?
+            return FAIL(arg); // what about other types?
 
         if (id == SYM_SUBTRACT)
             amount = -amount;
@@ -711,7 +712,7 @@ REBTYPE(Binary)
             return COPY(v);
 
         if (Cell_Series_Len_At(v) == 0) // add/subtract to #{} otherwise
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
 
         while (amount != 0) {
             REBLEN wheel = Cell_Series_Len_Head(v) - 1;
@@ -720,7 +721,7 @@ REBTYPE(Binary)
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
-                            fail (Error_Overflow_Raw());
+                            return FAIL(Error_Overflow_Raw());
 
                         *b = 0;
                         --wheel;
@@ -733,7 +734,7 @@ REBTYPE(Binary)
                 else {
                     if (*b == 0) {
                         if (wheel == VAL_INDEX(v))
-                            fail (Error_Overflow_Raw());
+                            return FAIL(Error_Overflow_Raw());
 
                         *b = 255;
                         --wheel;
@@ -753,7 +754,7 @@ REBTYPE(Binary)
         Value* arg = D_ARG(2);
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
-            fail (Error_Not_Same_Type_Raw());
+            return FAIL(Error_Not_Same_Type_Raw());
 
         Byte* v_at = Cell_Blob_At_Ensure_Mutable(v);
         Byte* arg_at = Cell_Blob_At_Ensure_Mutable(arg);
@@ -791,14 +792,14 @@ REBTYPE(Binary)
         UNUSED(PARAM(series));
 
         if (REF(all))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(case)) {
             // Ignored...all BINARY! sorts are case-sensitive.
         }
 
         if (REF(compare))
-            fail (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+            return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
         Flags thunk = 0;
 
@@ -816,7 +817,7 @@ REBTYPE(Binary)
         else {
             skip = Get_Num_From_Arg(ARG(skip));
             if (skip <= 0 or (len % skip != 0) or skip > len)
-                fail (PARAM(skip));
+                return FAIL(PARAM(skip));
         }
 
         Size size = 1;
@@ -878,7 +879,7 @@ REBTYPE(Binary)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 
@@ -904,7 +905,7 @@ DECLARE_NATIVE(enbin)
 
     Value* settings = rebValue("compose", ARG(settings));
     if (Cell_Series_Len_At(settings) != 3)
-        fail ("ENBIN requires list of length 3 for settings for now");
+        return FAIL("ENBIN requires list of length 3 for settings for now");
     bool little = rebUnboxBoolean(
         "switch first", settings, "[",
             "'BE ['false] 'LE ['true]",
@@ -923,7 +924,7 @@ DECLARE_NATIVE(enbin)
         "]"
     );
     if (num_bytes <= 0)
-        fail ("Size for ENBIN encoding must be at least 1");
+        return FAIL("Size for ENBIN encoding must be at least 1");
     rebRelease(settings);
 
     // !!! Implementation is somewhat inefficient, but trying to not violate
@@ -940,7 +941,7 @@ DECLARE_NATIVE(enbin)
 
     REBI64 i = VAL_INT64(ARG(value));
     if (no_sign and i < 0)
-        fail ("ENBIN request for unsigned but passed-in value is signed");
+        return FAIL("ENBIN request for unsigned but passed-in value is signed");
 
     // Negative numbers are encoded with two's complement: process we use here
     // is simple: take the absolute value, inverting each byte, add one.
@@ -1036,7 +1037,7 @@ DECLARE_NATIVE(debin)
             "]"
         );
         if (bin_size != num_bytes)
-            fail ("Input binary is longer than number of bytes to DEBIN");
+            return FAIL("Input binary is longer than number of bytes to DEBIN");
     }
     if (num_bytes <= 0) {
         //
@@ -1098,7 +1099,7 @@ DECLARE_NATIVE(debin)
     // leading 0x00 or 0xFF stripped away
     //
     if (n > 8)
-        fail (Error_Out_Of_Range(ARG(binary)));
+        return FAIL(Error_Out_Of_Range(ARG(binary)));
 
     REBI64 i = 0;
 
@@ -1118,12 +1119,8 @@ DECLARE_NATIVE(debin)
         n--;
     }
 
-    if (no_sign and i < 0) {
-        //
-        // bits may become signed via shift due to 63-bit limit
-        //
-        fail (Error_Out_Of_Range(ARG(binary)));
-    }
+    if (no_sign and i < 0)  // may become signed via shift due to 63-bit limit
+        return FAIL(Error_Out_Of_Range(ARG(binary)));
 
     return Init_Integer(OUT, i);
 }

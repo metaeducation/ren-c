@@ -167,7 +167,7 @@ DECLARE_NATIVE(reduce)
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    Erase_Cell(SPARE);  // in case it was used for error [3]
+    Erase_Atom_To_Suppress_Raised_Error(SPARE);  // aggressive assert [3]
 
     if (Is_Elision(OUT))
         goto next_reduce_step;  // void results are skipped by reduce
@@ -448,7 +448,7 @@ static void Push_Composer_Level(
 //        >> compose:deep [a ''~[(1 + 2)]~ b]
 //        == [a ''~[3]~ b]
 //
-static void Finalize_Composer_Level(
+static Option(Error*) Trap_Finalize_Composer_Level(
     Sink(Value) out,
     Level* L,
     const Element* composee,  // special handling if the output is a sequence
@@ -463,13 +463,13 @@ static void Finalize_Composer_Level(
             L->baseline.stack_base
         );
         if (error)
-            fail (unwrap error);
+            return error;
 
         if (
             not Any_Sequence(out)  // so instead, things like [~/~ . ///]
             and not conflate  // do not allow decay to "sequence-looking" words
         ){
-            fail (Error_Conflated_Sequence_Raw(out));
+            return Error_Conflated_Sequence_Raw(out);
         }
 
         assert(QUOTE_BYTE(composee) & NONQUASI_BIT);  // no antiform/quasiform
@@ -477,7 +477,7 @@ static void Finalize_Composer_Level(
 
         if (not Is_Nulled(out))  // don't add quoting levels (?)
             Quotify(out, num_quotes);
-        return;
+        return nullptr;
     }
 
     Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
@@ -492,6 +492,7 @@ static void Finalize_Composer_Level(
 
     BINDING(out) = BINDING(composee);  // preserve binding
     QUOTE_BYTE(out) = QUOTE_BYTE(composee);  // apply quote byte [4]
+    return nullptr;
 }
 
 
@@ -726,7 +727,9 @@ Bounce Composer_Executor(Level* const L)
         // quotedness of the apostrophe SIGIL! (e.g. that would be '' which
         // is a single-quoted apostrophe).  Probably not meaningful??
         //
-        fail ("COMPOSE of quoted VOIDs as quoted apostrophe SIGIL! disabled");
+        return FAIL(
+            "COMPOSE of quoted VOIDs as quoted apostrophe SIGIL! disabled"
+        );
     }
     else if (Is_Antiform(OUT))
         return RAISE(Error_Bad_Antiform(OUT));
@@ -744,7 +747,9 @@ Bounce Composer_Executor(Level* const L)
         Quotify(TOP, group_quote_byte / 2);  // add to existing quotes
     else {
         if (QUOTE_BYTE(TOP) != NOQUOTE_1)
-            fail ("COMPOSE cannot quasify items not at quote level 0");
+            return FAIL(
+                "COMPOSE cannot quasify items not at quote level 0"
+            );
         QUOTE_BYTE(TOP) = group_quote_byte;
     }
 
@@ -809,8 +814,13 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    Finalize_Composer_Level(OUT, SUBLEVEL, At_Level(L), conflate);
+    Option(Error*) e = Trap_Finalize_Composer_Level(
+        OUT, SUBLEVEL, At_Level(L), conflate
+    );
     Drop_Level(SUBLEVEL);
+
+    if (e)
+        return FAIL(unwrap e);
 
     if (Is_Nulled(OUT)) {
         // compose:deep [a (void)/(void) b] => path makes null, vaporize it
@@ -903,7 +913,11 @@ DECLARE_NATIVE(compose)
 
     if (not Is_Raised(OUT)) {  // sublevel was killed
         assert(Is_Trash(OUT));
-        Finalize_Composer_Level(OUT, SUBLEVEL, t, REF(conflate));
+        Option(Error*) e = Trap_Finalize_Composer_Level(
+            OUT, SUBLEVEL, t, REF(conflate)
+        );
+        if (e)
+            return FAIL(unwrap e);
     }
 
     Drop_Level(SUBLEVEL);

@@ -625,17 +625,17 @@ REBTYPE(Map)
           default:
             break;
         }
-        fail (Error_Cannot_Reflect(REB_MAP, property)); }
+        return FAIL(Error_Cannot_Reflect(REB_MAP, property)); }
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         if (Is_Antiform(ARG(value)))
-            fail (ARG(value));
+            return FAIL(ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
 
         if (REF(part) or REF(skip) or REF(match))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         const Map* m = VAL_MAP(map);
 
@@ -663,12 +663,12 @@ REBTYPE(Map)
         Value* val = ARG(value);
 
         if (Is_Void(key))
-            fail (Error_Bad_Void());  // tolerate?
+            return FAIL(Error_Bad_Void());  // tolerate?
         if (Is_Antiform(key))
-            fail (Error_Bad_Antiform(key));
+            return FAIL(Error_Bad_Antiform(key));
 
         if (Is_Antiform(val))  // Note: void is remove
-            fail (Error_Bad_Antiform(val));
+            return FAIL(Error_Bad_Antiform(val));
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),
@@ -690,14 +690,16 @@ REBTYPE(Map)
             return COPY(map);  // don't fail on read only if it would be a no-op
 
         if (not Is_Splice(value))
-            fail ("Appending to MAP! only accepts a splice block of key/value");
+            return FAIL(
+                "Appending to MAP! only accepts a splice block of key/value"
+            );
 
         QUOTE_BYTE(value) = NOQUOTE_1;
 
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
         if (REF(line) or REF(dup))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
         const Element* tail;
@@ -712,7 +714,7 @@ REBTYPE(Map)
         UNUSED(PARAM(value));
 
         if (REF(part))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), did REF(deep))); }
 
@@ -802,5 +804,5 @@ REBTYPE(Map)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

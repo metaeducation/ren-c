@@ -136,16 +136,16 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
         if (not Is_Object(spec))
-            fail (Error_Invalid_Spec_Raw(spec));
+            return FAIL(Error_Invalid_Spec_Raw(spec));
 
         Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-        if (path == NULL)
-            fail (Error_Invalid_Spec_Raw(spec));
+        if (path == nullptr)
+            return FAIL(Error_Invalid_Spec_Raw(spec));
 
         if (Is_Url(path))
             path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
         else if (not Is_File(path))
-            fail (Error_Invalid_Spec_Raw(path));
+            return FAIL(Error_Invalid_Spec_Raw(path));
 
         // Historically the native ports would store a C structure of data
         // in a BINARY! in the port state.  This makes it easier and more
@@ -239,7 +239,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         else {
             Value* open_error = Open_File(port, UV_FS_O_RDONLY);
             if (open_error != nullptr)
-                fail (Error_Cannot_Open_Raw(file->path, open_error));
+                return FAIL(Error_Cannot_Open_Raw(file->path, open_error));
 
             opened_temporarily = true;
         }
@@ -257,7 +257,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (REF(seek)) {
             int64_t seek = VAL_INT64(ARG(seek));
             if (seek <= 0)
-                fail (ARG(seek));
+                return FAIL(PARAM(seek));
             file->offset = seek;
         }
 
@@ -308,9 +308,9 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
             if (result and Is_Error(result))
-                fail (result);
+                return FAIL(result);
             if (close_error)
-                fail (close_error);
+                return FAIL(close_error);
         }
 
         if (result and Is_Error(result))
@@ -331,10 +331,10 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         INCLUDE_PARAMS_OF_APPEND;
 
         if (Is_Antiform(ARG(value)))
-            fail (ARG(value));
+            return FAIL(PARAM(value));
 
         if (REF(part) or REF(dup) or REF(line))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         assert(Is_Port(ARG(series)));  // !!! poorly named
         return rebValue("write:append @", ARG(series), "@", ARG(value)); }
@@ -347,7 +347,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         UNUSED(PARAM(destination));
 
         if (REF(seek) and REF(append))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         Value* data = ARG(data);  // binary, string, or block
 
@@ -363,7 +363,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             if (not (
                 (file->flags & UV_FS_O_WRONLY) or (file->flags & UV_FS_O_RDWR)
             )){
-                fail (Error_Read_Only_Raw(file->path));
+                return FAIL(Error_Read_Only_Raw(file->path));
             }
 
             opened_temporarily = false;
@@ -382,7 +382,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
             Value* open_error = Open_File(port, flags);
             if (open_error != nullptr)
-                fail (Error_Cannot_Open_Raw(file->path, open_error));
+                return FAIL(Error_Cannot_Open_Raw(file->path, open_error));
 
             opened_temporarily = true;
         }
@@ -463,13 +463,13 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
             if (result)
-                fail (result);
+                return FAIL(result);
             if (close_error)
-                fail (close_error);
+                return FAIL(close_error);
         }
 
         if (result)
-            fail (result);
+            return FAIL(result);
 
         return COPY(port); }
 
@@ -515,7 +515,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         Value* error = Open_File(port, flags);
         if (error != nullptr)
-            fail (Error_Cannot_Open_Raw(file->path, error));
+            return FAIL(Error_Cannot_Open_Raw(file->path, error));
 
         return COPY(port); }
 
@@ -530,7 +530,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         UNUSED(PARAM(value));
 
         if (REF(deep))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         return rebValue(Canon(APPLIQUE), Canon(READ), "[",
             "source:", port,
@@ -552,7 +552,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             Value* error = Close_File(port);
             assert(file->id == FILEHANDLE_NONE);
             if (error)
-                fail (error);
+                return FAIL(error);
         }
         return COPY(port); }
 
@@ -568,12 +568,12 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (file->id != FILEHANDLE_NONE) {
             Value* error = Close_File(port);
             if (error)
-                fail (error);
+                return FAIL(error);
         }
 
         Value* error = Delete_File_Or_Directory(port);
         if (error)
-            fail (error);
+            return FAIL(error);
 
         return COPY(port); }
 
@@ -601,7 +601,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
             Value* close_error = Close_File(port);
             if (close_error)
-                fail (close_error);
+                return FAIL(close_error);
 
             closed_temporarily = true;
         }
@@ -611,18 +611,18 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (closed_temporarily) {
             Value* open_error = Open_File(port, flags);
             if (rename_error) {
-                rebRelease(rename_error);
-                fail (Error_No_Rename_Raw(file->path));
+                rebRelease(rename_error);  // Note: FAIL would cleanup
+                return FAIL(Error_No_Rename_Raw(file->path));
             }
             if (open_error)
-                fail (open_error);
+                return FAIL(open_error);
 
             file->offset = index;
         }
 
         if (rename_error) {
-            rebRelease(rename_error);
-            fail (Error_No_Rename_Raw(file->path));
+            rebRelease(rename_error);  // Note: FAIL would cleanup
+            return FAIL(Error_No_Rename_Raw(file->path));
         }
 
         Copy_Cell(file->path, ARG(to));  // !!! this mutates the spec, bad?
@@ -640,8 +640,10 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
     // closed it is reverse-engineered as likely trying to parallel the CREATE
     // intent for directories.
 
-      case SYM_CREATE: {
-        fail ("CREATE on file PORT! was ill-defined, use OPEN:NEW for now"); }
+      case SYM_CREATE:
+        return FAIL(
+            "CREATE on file PORT! was ill-defined, use OPEN:NEW for now"
+        );
 
     //=//// QUERY //////////////////////////////////////////////////////////=//
     //
@@ -709,7 +711,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (file->id == FILEHANDLE_NONE) {
             Value* open_error = Open_File(port, UV_FS_O_WRONLY);
             if (open_error)
-                fail (open_error);
+                return FAIL(open_error);
 
             opened_temporarily = true;
         }
@@ -719,11 +721,11 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
             if (close_error)
-                fail (close_error);
+                return FAIL(close_error);
         }
 
         if (truncate_error)
-            fail (truncate_error);
+            return FAIL(truncate_error);
 
         return COPY(port); }
 
@@ -731,5 +733,5 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

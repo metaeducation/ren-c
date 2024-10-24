@@ -190,7 +190,7 @@ DECLARE_NATIVE(to)
     Bounce b = hook(level_, new_kind, v); // may fail();
     if (b == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
-        fail (Error_No_Catch_For_Throw(LEVEL));
+        return FAIL(Error_No_Catch_For_Throw(LEVEL));
     }
     Atom* r = Atom_From_Bounce(b);
     if (Is_Raised(r))
@@ -198,7 +198,7 @@ DECLARE_NATIVE(to)
 
     if (r == nullptr or VAL_TYPE(r) != new_kind) {
         assert(!"TO conversion did not return intended type");
-        return RAISE(Error_Invalid_Type(VAL_TYPE(r)));
+        return FAIL(Error_Invalid_Type(VAL_TYPE(r)));
     }
     return r;  // must be either OUT or an API handle
 }
@@ -243,7 +243,7 @@ Bounce Reflect_Core(Level* level_)
         // operate on SYMs in a switch().  Longer term, a more extensible
         // idea will be necessary.
         //
-        fail (Error_Cannot_Reflect(Cell_Heart(v), ARG(property)));
+        return FAIL(Error_Cannot_Reflect(Cell_Heart(v), ARG(property)));
     }
 
     switch (id) {
@@ -262,7 +262,7 @@ Bounce Reflect_Core(Level* level_)
 
       case SYM_SIGIL: {
         if (Is_Antiform(v))
-            fail ("Can't take SIGIL OF an antiform");
+            return FAIL("Can't take SIGIL OF an antiform");
 
         Option(Sigil) sigil = Sigil_Of(cast(Element*, v));
         if (not sigil)

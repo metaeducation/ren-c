@@ -174,7 +174,7 @@ DECLARE_NATIVE(delimit)
                 }
             }
             else
-                fail (item);
+                return FAIL(item);
 
             Fetch_Next_In_Feed(L->feed);
 
@@ -207,13 +207,13 @@ DECLARE_NATIVE(delimit)
             return RAISE(Error_Bad_Antiform(OUT));
 
         if (Any_List(OUT))  // guessing a behavior is bad [4]
-            fail ("Desired list rendering in DELIMIT not known");
+            return FAIL("Desired list rendering in DELIMIT not known");
 
         if (Sigil_Of(cast(Element*, OUT)))
-            fail ("DELIMIT requires @var to render elements with sigils");
+            return FAIL("DELIMIT requires @var to render elements with sigils");
 
         if (Is_Blank(OUT))
-            fail ("DELIMIT only treats source-level BLANK! as space");
+            return FAIL("DELIMIT only treats source-level BLANK! as space");
 
         nothing = false;
 
@@ -278,7 +278,7 @@ DECLARE_NATIVE(debase)
 
     Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&bp, size, base, 0);
     if (not decoded)
-        fail (Error_Invalid_Data_Raw(ARG(value)));
+        return FAIL(Error_Invalid_Data_Raw(ARG(value)));
 
     return Init_Blob(OUT, decoded);
 }
@@ -327,7 +327,7 @@ DECLARE_NATIVE(enbase)
         break;
 
       default:
-        fail (PARAM(base));
+        return FAIL(PARAM(base));
     }
 
     return Init_Text(OUT, Pop_Molded_String(mo));
@@ -536,7 +536,7 @@ DECLARE_NATIVE(dehex)
             Append_Codepoint(mo->string, c);
         else {
             if (i + 2 >= len)
-               fail ("Percent decode has less than two codepoints after %");
+               return FAIL("Percent decode has less than 2 codepoints after %");
 
             Codepoint c1;
             Codepoint c2;
@@ -554,7 +554,7 @@ DECLARE_NATIVE(dehex)
                 c2 > UINT8_MAX
                 or not Try_Get_Lex_Hexdigit(&nibble2, cast(Byte, c2))
             ){
-                fail ("Percent must be followed by 2 hex digits, e.g. %XX");
+                return FAIL("2 hex digits must follow percent, e.g. %XX");
             }
 
             Byte b = (nibble1 << 4) + nibble2;
@@ -587,7 +587,7 @@ DECLARE_NATIVE(dehex)
                 );
                 if (e) {
                     UNUSED(e);  // should this chain the error reports?
-                    fail ("Bad UTF-8 sequence in %XX of dehex");
+                    return FAIL("Bad UTF-8 sequence in %XX of dehex");
                 }
             }
 
@@ -596,7 +596,7 @@ DECLARE_NATIVE(dehex)
             // would not be guaranteeing UTF-8 compatibility.  Seems dodgy.
             //
             if (decoded == '\0')
-                fail (Error_Illegal_Zero_Byte_Raw());
+                return FAIL(Error_Illegal_Zero_Byte_Raw());
 
             Append_Codepoint(mo->string, decoded);
             --scan_size; // one less (see why it's called "Back_Scan")
@@ -676,13 +676,13 @@ DECLARE_NATIVE(deline)
         ++n;
         if (c == LF) {
             if (seen_a_cr_lf)
-                fail (Error_Mixed_Cr_Lf_Found_Raw());
+                return FAIL(Error_Mixed_Cr_Lf_Found_Raw());
             seen_a_lone_lf = true;
         }
 
         if (c == CR) {
             if (seen_a_lone_lf)
-                fail (Error_Mixed_Cr_Lf_Found_Raw());
+                return FAIL(Error_Mixed_Cr_Lf_Found_Raw());
 
             dest = Write_Codepoint(dest, LF);
             src = Utf8_Next(&c, src);
@@ -692,8 +692,9 @@ DECLARE_NATIVE(deline)
                 seen_a_cr_lf = true;
                 continue;
             }
-            // DELINE requires any CR to be followed by an LF
-            fail (Error_Illegal_Cr(Step_Back_Codepoint(src), String_Head(s)));
+            return FAIL(  // DELINE requires any CR to be followed by an LF
+                Error_Illegal_Cr(Step_Back_Codepoint(src), String_Head(s))
+            );
         }
         dest = Write_Codepoint(dest, c);
     }
@@ -747,7 +748,9 @@ DECLARE_NATIVE(enline)
         if (c == LF and (not relax or c_prev != CR))
             ++delta;
         if (c == CR and not relax)  // !!! Note: `relax` fixed at false, ATM
-            fail (Error_Illegal_Cr(Step_Back_Codepoint(cp), String_Head(s)));
+            return FAIL(
+                Error_Illegal_Cr(Step_Back_Codepoint(cp), String_Head(s))
+            );
         c_prev = c;
     }
 
@@ -1016,14 +1019,14 @@ DECLARE_NATIVE(to_hex)
             Form_Hex2(mo, 0);
     }
     else
-        fail (PARAM(value));
+        return FAIL(PARAM(value));
 
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
     assert(len == String_Size(mo->string) - mo->base.size);
     if (not Try_Scan_Issue_To_Stack(Binary_At(mo->string, mo->base.size), len))
-        fail (PARAM(value));
+        return FAIL(PARAM(value));
 
     Move_Drop_Top_Stack_Element(OUT);
     Drop_Mold(mo);

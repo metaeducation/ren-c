@@ -132,7 +132,7 @@ REBTYPE(Quoted)
         break;
     }
 
-    fail ("QUOTED? has no GENERIC operations (use NOQUOTE or REQUOTE)");
+    return FAIL("QUOTED? has no GENERIC operations (use NOQUOTE or REQUOTE)");
 }
 
 
@@ -210,7 +210,7 @@ DECLARE_NATIVE(quote)
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
     if (depth < 0)
-        fail (PARAM(depth));
+        return FAIL(PARAM(depth));
 
     return COPY(Quotify(ARG(optional), depth));
 }
@@ -241,7 +241,7 @@ DECLARE_NATIVE(meta)
 
     if (Is_Meta_Of_Raised(meta)) {
         if (not REF(except))
-            fail (Cell_Error(ARG(atom)));
+            return FAIL(Cell_Error(ARG(atom)));
 
         QUOTE_BYTE(meta) = NOQUOTE_1;
         return COPY(meta);  // no longer meta, just a plain ERROR!
@@ -300,10 +300,10 @@ DECLARE_NATIVE(unquote)
     Count depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
 
     if (depth < 0)
-        fail (PARAM(depth));
+        return FAIL(PARAM(depth));
 
     if (depth > Cell_Num_Quotes(v))
-        fail ("Value not quoted enough for unquote depth requested");
+        return FAIL("Value not quoted enough for unquote depth requested");
 
     Unquotify(Copy_Cell(OUT, v), depth);
     return OUT;
@@ -327,7 +327,7 @@ DECLARE_NATIVE(quasi)
     Value* v = ARG(value);
 
     if (Is_Quoted(v))
-        fail ("Quoted values do not have quasiforms");
+        return FAIL("Quoted values do not have quasiforms");
 
     return COPY(Quasify(v));
 }
@@ -390,10 +390,10 @@ DECLARE_NATIVE(anti)
     Element* e = cast(Element*, ARG(element));
 
     if (Is_Quoted(e))
-        fail ("QUOTED! values have no antiform (antiforms are quoted -1");
+        return FAIL("QUOTED! values have no antiform");
 
     if (Is_Quasiform(e))  // Review: Allow this?
-        fail ("QUASIFORM! values can be made into antiforms with UNMETA");
+        return FAIL("QUASIFORM! values can be made into antiforms with UNMETA");
 
     Copy_Cell(OUT, e);
     return Coerce_To_Antiform(OUT);
@@ -419,19 +419,21 @@ DECLARE_NATIVE(unmeta)
 
     if (QUOTE_BYTE(meta) == ANTIFORM_0) {
         if (not REF(lite) or not Is_Keyword(meta))
-            fail ("UNMETA only keyword antiforms (e.g. ~null~) if :LITE");
+            return FAIL("UNMETA only keyword antiforms (e.g. ~null~) if :LITE");
         return COPY(meta);
     }
 
     if (QUOTE_BYTE(meta) == NOQUOTE_1) {
         if (not REF(lite))
-            fail ("UNMETA only takes non-quoted non-quasi things if :LITE");
+            return FAIL("UNMETA only takes non quoted/quasi things if :LITE");
         Copy_Cell(OUT, meta);
         return Coerce_To_Antiform(OUT);
     }
 
     if (QUOTE_BYTE(meta) == QUASIFORM_2 and REF(lite))
-        fail ("UNMETA:LITE does not accept quasiforms (plain forms are meta)");
+        return FAIL(
+            "UNMETA:LITE does not accept quasiforms (plain forms are meta)"
+        );
 
     return UNMETA(cast(Element*, meta));  // quoted or quasi
 }

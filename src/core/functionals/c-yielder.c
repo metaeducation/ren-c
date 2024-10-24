@@ -81,13 +81,13 @@ Bounce Yielder_Dispatcher(Level* const L)
     // running, and it's the `state` we pay attention to.
 
     if (Is_Quasi_Blank(mode))  // currently on the stack and running
-        fail ("Yielder was re-entered");
+        return FAIL("Yielder was re-entered");
 
     if (Is_Boolean(mode)) {  // terminated due to finishing the body or error
         if (Cell_True(mode))  // terminated due to finishing the body
             return nullptr;
 
-        fail ("Yielder called again after raising an error");
+        return FAIL("Yielder called again after raising an error");
     }
 
     if (Is_Frame(mode))  // we were suspended by YIELD, and want to resume
@@ -361,11 +361,11 @@ DECLARE_NATIVE(yield)
 
     VarList* yielder_context = maybe Level_Coupling(yield_level);
     if (not yielder_context)
-        fail ("Must have yielder to jump to");
+        return FAIL("Must have yielder to jump to");
 
     Level* yielder_level = Level_Of_Varlist_May_Fail(yielder_context);
     if (not yielder_level)
-        fail ("Cannot yield to generator that has completed");
+        return FAIL("Cannot yield to generator that has completed");
 
     Phase* yielder_phase = Level_Phase(yielder_level);
     assert(ACT_DISPATCHER(yielder_phase) == &Yielder_Dispatcher);

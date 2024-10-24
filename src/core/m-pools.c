@@ -978,7 +978,7 @@ DECLARE_NATIVE(swap_contents)
     INCLUDE_PARAMS_OF_SWAP_CONTENTS;
 
     if (Any_List(ARG(series1)) != Any_List(ARG(series2)))
-        fail ("Can only SWAP-CONTENTS of arrays with other arrays");
+        return FAIL("Can only SWAP-CONTENTS of arrays with other arrays");
 
     // !!! This is a conservative check, as some binaries could be swapped
     // with ANY-STRING?.  However, that would require checking that the
@@ -987,7 +987,7 @@ DECLARE_NATIVE(swap_contents)
     // annoying to write.
     //
     if (Is_Binary(ARG(series1)) != Is_Binary(ARG(series2)))
-        fail ("Can only SWAP-CONTENTS of binaries with other binaries");
+        return FAIL("Can only SWAP-CONTENTS of binaries with other binaries");
 
     Flex* f1 = Cell_Flex_Ensure_Mutable(ARG(series1));
     Flex* f2 = Cell_Flex_Ensure_Mutable(ARG(series2));

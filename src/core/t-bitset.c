@@ -580,7 +580,7 @@ REBTYPE(Bitset)
             picker,
             BITS_NOT(bset) ? Is_Inhibitor(setval) : Is_Trigger(setval)
         )){
-            fail (PARAM(picker));
+            return FAIL(PARAM(picker));
         }
         return nullptr; }
 
@@ -609,12 +609,12 @@ REBTYPE(Bitset)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         if (Is_Antiform(ARG(value)))
-            fail (ARG(value));
+            return FAIL(ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
 
         if (REF(part) or REF(skip) or REF(match))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (not Check_Bits(VAL_BITSET(v), ARG(value), REF(case)))
             return nullptr;
@@ -635,7 +635,7 @@ REBTYPE(Bitset)
             return COPY(v);  // don't fail on read only if it would be a no-op
 
         if (Is_Antiform(arg))
-            fail (arg);
+            return FAIL(arg);
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
@@ -646,7 +646,7 @@ REBTYPE(Bitset)
             diff = true;
 
         if (not Set_Bits(bset, arg, diff))
-            fail (arg);
+            return FAIL(arg);
         return COPY(v); }
 
       case SYM_REMOVE: {
@@ -656,10 +656,10 @@ REBTYPE(Bitset)
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
         if (not REF(part))
-            fail (Error_Missing_Arg_Raw());
+            return FAIL(Error_Missing_Arg_Raw());
 
         if (not Set_Bits(bset, ARG(part), false))
-            fail (PARAM(part));
+            return FAIL(PARAM(part));
 
         return COPY(v); }
 
@@ -668,7 +668,7 @@ REBTYPE(Bitset)
         UNUSED(PARAM(value));
 
         if (REF(part) or REF(deep))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         Binary* copy = cast(
             Binary*,
@@ -690,13 +690,13 @@ REBTYPE(Bitset)
         Value* arg = D_ARG(2);
         if (Is_Bitset(arg)) {
             if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
-                fail ("Bitset negation not handled by set operations");
+                return FAIL("Bitset negation not handled by set operations");
             }
             const Binary* bset = VAL_BITSET(arg);
             Init_Blob(arg, bset);
         }
         else if (not Is_Binary(arg))
-            fail (Error_Math_Args(VAL_TYPE(arg), verb));
+            return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
 
         bool negated_result = false;
 
@@ -711,7 +711,9 @@ REBTYPE(Bitset)
                 sym = SYM_UNION;
             }
             else
-                fail ("Bitset negation not handled by (most) set operations");
+                return FAIL(
+                    "Bitset negation not handled by (most) set operations"
+                );
         }
 
         const Binary* bset = VAL_BITSET(v);
@@ -756,5 +758,5 @@ REBTYPE(Bitset)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

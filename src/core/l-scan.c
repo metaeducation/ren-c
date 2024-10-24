@@ -1991,13 +1991,8 @@ INLINE Bounce Scanner_Raise_Helper(
     Level* level_,
     const void* p
 ){
-    Error* error;
-    if (Detect_Rebol_Pointer(p) == DETECTED_AS_UTF8)
-        error = Error_User(u_cast(const char*, p));
-    else {
-        assert(Detect_Rebol_Pointer(p) == DETECTED_AS_STUB);
-        error = cast(Error*, m_cast(void*, p));
-    }
+    Error* error = Derive_Error_From_Pointer(p);
+
     ERROR_VARS *vars = ERR_VARS(error);
     if (Is_Nulled(&vars->nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
@@ -2008,6 +2003,25 @@ INLINE Bounce Scanner_Raise_Helper(
 
 #undef RAISE
 #define RAISE(p) Scanner_Raise_Helper(transcode, level_, (p))
+
+
+INLINE Bounce Scanner_Fail_Helper(
+    TranscodeState* transcode,
+    Level* level_,
+    const void* p
+){
+    Error* error = Derive_Error_From_Pointer(p);
+
+    ERROR_VARS *vars = ERR_VARS(error);
+    if (Is_Nulled(&vars->nearest))  // only update if it doesn't have it [1]
+        Update_Error_Near_For_Line(
+            error, transcode, transcode->line, transcode->line_head
+        );
+    return Native_Fail_Result(level_, error);
+}
+
+#undef FAIL
+#define FAIL(p) Scanner_Fail_Helper(transcode, level_, (p))
 
 
 //
@@ -2125,7 +2139,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (*S->end == '~') {
             if (S->sigil_pending != SIGIL_QUASI)
-                fail ("Comma only followed by ~ for ~,~ quasiform");
+                return FAIL("Comma only followed by ~ for ~,~ quasiform");
             Quasify(Init_Comma(PUSH()));
             S->sigil_pending = SIGIL_0;
         }
@@ -2508,7 +2522,7 @@ Bounce Scanner_Executor(Level* const L) {
 
         if (threw) {
             Drop_Level(sub);  // should not have accured stack if threw
-            fail (Error_No_Catch_For_Throw(L));
+            return FAIL(Error_No_Catch_For_Throw(L));
         }
 
         if (Is_Raised(OUT)) {
@@ -2741,7 +2755,7 @@ Bounce Scanner_Executor(Level* const L) {
         Drop_Level_Unbalanced(sub);  // allow stack accrual
 
         if (threw)  // drop failing stack before throwing
-            fail (Error_No_Catch_For_Throw(L));
+            return FAIL(Error_No_Catch_For_Throw(L));
 
         if (Is_Raised(OUT))
             return OUT;
@@ -2883,7 +2897,7 @@ Bounce Scanner_Executor(Level* const L) {
         //
         // Hence this doesn't really work in any general sense.
 
-        fail ("#[xxx! [...]] construction syntax no longer supported");
+        return FAIL("#[xxx! [...]] construction syntax no longer supported");
     }
     else {
         DECLARE_ATOM (temp);
@@ -2907,10 +2921,13 @@ Bounce Scanner_Executor(Level* const L) {
 }}
 
 
-//=//// UNDEFINE THE AUGMENTED SCANNER RAISE //////////////////////////////=//
+//=//// UNDEFINE THE AUGMENTED SCANNER RAISE AND FAIL /////////////////////=//
 
 #undef RAISE
 #define RAISE(p) Native_Raised_Result(level_, (p))
+
+#undef FAIL
+#define FAIL(p) Native_Fail_Result(level_, (p))
 
 
 //
@@ -3110,10 +3127,10 @@ DECLARE_NATIVE(transcode)
     else if (Is_Integer(line_number)) {
         start_line = VAL_INT32(line_number);
         if (start_line <= 0)
-            fail (PARAM(line));  // definitional?
+            return FAIL(PARAM(line));  // definitional?
     }
     else
-        fail ("/LINE must be an INTEGER! or an ANY-WORD? integer variable");
+        return FAIL(":LINE must be INTEGER! or an ANY-WORD? integer variable");
 
     // Because we're building a frame, we can't make a {bp, END} packed array
     // and start up a variadic feed...because the stack variable would go

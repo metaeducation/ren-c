@@ -445,7 +445,7 @@ REBINT Find_In_Array(
     }
 
     if (Is_Antiform(pattern))
-        fail ("Only Antiforms Supported by FIND are MATCHES and SPREAD");
+        fail ("Only Antiforms Supported by FIND are ACTION and SPLICE");
 
     if (Any_Type_Value(pattern) and not (flags & AM_FIND_CASE))
         fail (
@@ -806,11 +806,8 @@ REBTYPE(List)
 
         const Value* setval = ARG(value);
 
-        if (Is_Nulled(setval))
-            fail (Error_Need_Non_Null_Raw());  // also can't put in blocks
-
         if (Is_Antiform(setval))
-            fail (Error_Bad_Antiform(setval));  // can't put in blocks
+            return FAIL(Error_Bad_Antiform(setval));  // can't put in blocks
 
         // !!! If we are jumping here from getting updated bits, then
         // if the block isn't immutable or locked from modification, the
@@ -819,7 +816,7 @@ REBTYPE(List)
         //
         REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
         if (n < 0 or n >= Cell_Series_Len_Head(list))
-            fail (Error_Out_Of_Range(picker));
+            return FAIL(Error_Out_Of_Range(picker));
 
         Array* mut_arr = Cell_Array_Ensure_Mutable(list);
         Element* at = Array_At(mut_arr, n);
@@ -844,7 +841,7 @@ REBTYPE(List)
 
         UNUSED(PARAM(series));
         if (REF(deep))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         Array* arr = Cell_Array_Ensure_Mutable(list);
 
@@ -907,7 +904,7 @@ REBTYPE(List)
         if (REF(skip)) {
             skip = VAL_INT32(ARG(skip));
             if (skip == 0)
-                fail (PARAM(skip));
+                return FAIL(PARAM(skip));
         }
         else
             skip = 1;
@@ -991,8 +988,8 @@ REBTYPE(List)
             flags |= AM_SPLICE;
             QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
         }
-        else if (Is_Antiform(arg))  // only SPLICE! in typecheck
-            fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
+        else
+            assert(not Is_Antiform(arg));
 
         if (REF(part))
             flags |= AM_PART;
@@ -1058,9 +1055,12 @@ REBTYPE(List)
     //-- Special actions:
 
       case SYM_SWAP: {
-        Value* arg = D_ARG(2);
+        INCLUDE_PARAMS_OF_SWAP;
+        UNUSED(ARG(series1));
+
+        Value* arg = ARG(series2);
         if (not Any_List(arg))
-            fail (arg);
+            return FAIL(PARAM(series2));
 
         REBLEN index = VAL_INDEX(list);
 
@@ -1199,7 +1199,7 @@ REBTYPE(List)
         else {
             skip = Get_Num_From_Arg(ARG(skip));
             if (skip <= 0 or len % skip != 0 or skip > len)
-                fail (Error_Out_Of_Range(ARG(skip)));
+                return FAIL(Error_Out_Of_Range(ARG(skip)));
         }
 
         reb_qsort_r(
@@ -1219,7 +1219,7 @@ REBTYPE(List)
         REBLEN index = VAL_INDEX(list);
 
         if (REF(seed))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(only)) { // pick an element out of the list
             if (index >= Cell_Series_Len_Head(list))
@@ -1271,7 +1271,7 @@ REBTYPE(List)
         break; // fallthrough to error
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 

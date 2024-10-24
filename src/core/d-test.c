@@ -198,10 +198,7 @@ DECLARE_NATIVE(diagnose)
 {
   INCLUDE_PARAMS_OF_DIAGNOSE;
 
-  #if defined(NDEBUG)
-    UNUSED(ARG(value));
-    fail ("DIAGNOSE is only available in debug builds");
-  #else
+  #if DEBUG
     Value* v = ARG(value);
 
   #if DEBUG_COUNT_TICKS
@@ -220,6 +217,9 @@ DECLARE_NATIVE(diagnose)
     Dump_Value_Debug(v);
 
     return NOTHING;
+  #else
+    UNUSED(ARG(value));
+    return FAIL("DIAGNOSE is only available in debug builds");
   #endif
 }
 
@@ -235,25 +235,27 @@ DECLARE_NATIVE(diagnose)
 //  ]
 //
 DECLARE_NATIVE(fuzz)
+//
+// 1. A negative g_mem.fuzz_factor will just count ticks.
+//
+// 2. A positive g_mem.fuzz_factor is used with SPORADICALLY(10000) as the
+//    number it is compared against.  If the result is less than the specified
+//    amount it's a hit.  1.0 is thus 10000, which will always trigger.  0.0
+//    is thus 0 and will never trigger.
 {
     INCLUDE_PARAMS_OF_FUZZ;
 
-  #if defined(NDEBUG)
-    UNUSED(ARG(factor));
-    fail ("FUZZ is only availble in DEBUG builds");
-  #else
+  #if DEBUG
     if (Is_Integer(ARG(factor))) {
-        g_mem.fuzz_factor = - VAL_INT32(ARG(factor));  // negative counts ticks
+        g_mem.fuzz_factor = - VAL_INT32(ARG(factor));  // negative [1]
     }
     else {
-        // Positive number is used with SPORADICALLY(10000) as the number
-        // it is compared against.  If the result is less than the specified
-        // amount it's a hit.  1.0 is thus 10000, which will always trigger.
-        // 0.0 is thus 0, which never will.
-        //
         assert(Is_Percent(ARG(factor)));
-        g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(factor));
+        g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(factor));  // positive [2]
     }
     return NOTHING;
+  #else
+    UNUSED(ARG(factor));
+    return FAIL("FUZZ is only availble in DEBUG builds");
   #endif
 }

@@ -531,7 +531,7 @@ DECLARE_NATIVE(inflate)
     if (REF(max)) {
         max = Int32s(ARG(max), 1);
         if (max < 0)
-            fail (PARAM(max));
+            return FAIL(PARAM(max));
     }
     else
         max = -1;

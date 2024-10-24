@@ -244,7 +244,7 @@ Bounce MAKE_Time(
 ){
     assert(kind == REB_TIME);
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap parent));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap parent));
 
     switch (VAL_TYPE(arg)) {
       case REB_TIME: // just copy it (?)
@@ -263,7 +263,7 @@ Bounce MAKE_Time(
 
     case REB_INTEGER: // interpret as seconds
         if (VAL_INT64(arg) < -MAX_SECONDS || VAL_INT64(arg) > MAX_SECONDS)
-            fail (Error_Out_Of_Range(arg));
+            return FAIL(Error_Out_Of_Range(arg));
 
         return Init_Time_Nanoseconds(OUT, VAL_INT64(arg) * SEC_SEC);
 
@@ -272,7 +272,7 @@ Bounce MAKE_Time(
             VAL_DECIMAL(arg) < cast(REBDEC, -MAX_SECONDS)
             || VAL_DECIMAL(arg) > cast(REBDEC, MAX_SECONDS)
         ){
-            fail (Error_Out_Of_Range(arg));
+            return FAIL(Error_Out_Of_Range(arg));
         }
         return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
@@ -538,7 +538,7 @@ REBTYPE(Time)
 
               case SYM_DIVIDE:
                 if (secs2 == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
                 return Init_Decimal(
                     OUT,
                     cast(REBDEC, secs) / cast(REBDEC, secs2)
@@ -546,12 +546,12 @@ REBTYPE(Time)
 
               case SYM_REMAINDER:
                 if (secs2 == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
                 secs %= secs2;
                 return Init_Time_Nanoseconds(OUT, secs);
 
               default:
-                fail (Error_Math_Args(REB_TIME, verb));
+                return FAIL(Error_Math_Args(REB_TIME, verb));
             }
         }
         else if (type == REB_INTEGER) {     // handle TIME - INTEGER cases
@@ -569,24 +569,26 @@ REBTYPE(Time)
               case SYM_MULTIPLY:
                 secs *= num;
                 if (secs < -MAX_TIME || secs > MAX_TIME)
-                    fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_TIME)));
+                    return FAIL(
+                        Error_Type_Limit_Raw(Datatype_From_Kind(REB_TIME))
+                    );
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
                 if (num == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
                 secs /= num;
                 Init_Integer(OUT, secs);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_REMAINDER:
                 if (num == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
                 secs %= num;
                 return Init_Time_Nanoseconds(OUT, secs);
 
               default:
-                fail (Error_Math_Args(REB_TIME, verb));
+                return FAIL(Error_Math_Args(REB_TIME, verb));
             }
         }
         else if (type == REB_DECIMAL) {     // handle TIME - DECIMAL cases
@@ -617,7 +619,7 @@ REBTYPE(Time)
 
               case SYM_DIVIDE:
                 if (dec == 0.0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
                 secs = cast(int64_t, secs / dec);
                 return Init_Time_Nanoseconds(OUT, secs);
 
@@ -627,7 +629,7 @@ REBTYPE(Time)
                goto decTime; */
 
               default:
-                fail (Error_Math_Args(REB_TIME, verb));
+                return FAIL(Error_Math_Args(REB_TIME, verb));
             }
         }
         else if (type == REB_DATE and id == SYM_ADD) {
@@ -641,7 +643,7 @@ REBTYPE(Time)
             Move_Cell(D_ARG(2), stable_SPARE);
             return T_Date(level_, verb);
         }
-        fail (Error_Math_Args(REB_TIME, verb));
+        return FAIL(Error_Math_Args(REB_TIME, verb));
     }
     else {
         // unary actions
@@ -695,7 +697,7 @@ REBTYPE(Time)
                 return COPY(to);
             }
 
-            fail (PARAM(to)); }
+            return FAIL(PARAM(to)); }
 
           case SYM_RANDOM: {
             INCLUDE_PARAMS_OF_RANDOM;
@@ -703,7 +705,7 @@ REBTYPE(Time)
             UNUSED(PARAM(value));
 
             if (REF(only))
-                fail (Error_Bad_Refines_Raw());
+                return FAIL(Error_Bad_Refines_Raw());
 
             if (REF(seed)) {
                 Set_Random(secs);
@@ -717,5 +719,5 @@ REBTYPE(Time)
         }
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

@@ -941,7 +941,7 @@ REBTYPE(String)
         const Value* picker = ARG(picker);
         REBINT n;
         if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
-            fail (Error_Out_Of_Range(picker));
+            return FAIL(Error_Out_Of_Range(picker));
 
         Value* setval = ARG(value);
 
@@ -953,10 +953,10 @@ REBTYPE(String)
             c = Int32(setval);
         }
         else  // CHANGE is a better route for splicing/removal/etc.
-            fail (PARAM(value));
+            return FAIL(PARAM(value));
 
         if (c == 0)
-            fail (Error_Illegal_Zero_Byte_Raw());
+            return FAIL(Error_Illegal_Zero_Byte_Raw());
 
         String* s = Cell_String_Ensure_Mutable(v);
         Set_Char_At(s, n, c);
@@ -1062,11 +1062,10 @@ REBTYPE(String)
         else if (Is_Splice(arg)) {
             QUOTE_BYTE(arg) = NOQUOTE_1;
         }
-        else if (Is_Antiform(arg)) {  // only SPLICE! in typecheck
-            fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
-        }
         else if (Any_List(arg))
-            fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
+            return FAIL(ARG(value));  // no `append "abc" [d e]` w/o SPREAD
+        else
+            assert(not Is_Antiform(arg));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,
@@ -1083,7 +1082,7 @@ REBTYPE(String)
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
         if (Is_Antiform(ARG(pattern)))
-            fail (ARG(pattern));
+            return FAIL(PARAM(pattern));
 
         UNUSED(PARAM(series));
 
@@ -1098,7 +1097,7 @@ REBTYPE(String)
         if (REF(skip)) {
             skip = VAL_INT32(ARG(skip));
             if (skip == 0)
-                fail (PARAM(skip));
+                return FAIL(PARAM(skip));
         }
         else
             skip = 1;
@@ -1147,7 +1146,7 @@ REBTYPE(String)
         UNUSED(PARAM(series));
 
         if (REF(deep))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         REBLEN len;
         if (REF(part)) {
@@ -1236,7 +1235,7 @@ REBTYPE(String)
         Value* arg = D_ARG(2);
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
-            fail (Error_Not_Same_Type_Raw());
+            return FAIL(Error_Not_Same_Type_Raw());
 
         String* v_str = Cell_String_Ensure_Mutable(v);
         String* arg_str = Cell_String_Ensure_Mutable(arg);
@@ -1274,10 +1273,10 @@ REBTYPE(String)
         UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
 
         if (REF(all))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(compare))
-            fail (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+            return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
         Copy_Cell(OUT, v);  // before index modification
         REBLEN limit = Part_Len_May_Modify_Index(v, ARG(part));
@@ -1292,7 +1291,7 @@ REBTYPE(String)
         // that means every codepoint is one byte.
         //
         if (len != size)
-            fail ("Non-ASCII string sorting temporarily unavailable");
+            return FAIL("Non-ASCII string sorting temporarily unavailable");
 
         REBLEN skip;
         if (not REF(skip))
@@ -1300,7 +1299,7 @@ REBTYPE(String)
         else {
             skip = Get_Num_From_Arg(ARG(skip));
             if (skip <= 0 or len % skip != 0 or skip > len)
-                fail (PARAM(skip));
+                return FAIL(PARAM(skip));
         }
 
         // Use fast quicksort library function:
@@ -1356,7 +1355,7 @@ REBTYPE(String)
         String* str = Cell_String_Ensure_Mutable(v);
 
         if (not Is_String_Definitely_ASCII(str))
-            fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
+            return FAIL("UTF-8 Everywhere: String shuffle temp. unavailable");
 
         bool secure = REF(secure);
 
@@ -1382,7 +1381,7 @@ REBTYPE(String)
         }
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 

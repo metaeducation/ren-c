@@ -80,16 +80,16 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 
         Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
         if (not Is_Object(spec))
-            fail (Error_Invalid_Spec_Raw(spec));
+            return FAIL(Error_Invalid_Spec_Raw(spec));
 
         Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-        if (path == NULL)
-            fail (Error_Invalid_Spec_Raw(spec));
+        if (path == nullptr)
+            return FAIL(Error_Invalid_Spec_Raw(spec));
 
         if (Is_Url(path))
             path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
         else if (not Is_File(path))
-            fail (Error_Invalid_Spec_Raw(path));
+            return FAIL(Error_Invalid_Spec_Raw(path));
 
         // !!! In R3-Alpha, there were manipulations on the name representing
         // the directory, for instance by adding "*" onto the end so that
@@ -163,7 +163,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         UNUSED(PARAM(source));
 
         if (REF(part) or REF(seek) or REF(string) or REF(lines))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         assert(TOP_INDEX == STACK_BASE);
         while (true) {
@@ -175,7 +175,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
             // find the file specified" message that doesn't say the name)
             //
             if (Is_Error(result))
-                fail (Error_Cannot_Open_Raw(dir->path, result));
+                return FAIL(Error_Cannot_Open_Raw(dir->path, result));
 
             assert(Is_File(result));
             Copy_Cell(PUSH(), result);
@@ -189,12 +189,12 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 
       case SYM_CREATE: {
         if (Is_Block(state))
-            fail (Error_Already_Open_Raw(dir->path));
+            return FAIL(Error_Already_Open_Raw(dir->path));
 
         Value* error = Create_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            fail (Error_No_Create_Raw(dir->path));  // higher level error
+            return FAIL(Error_No_Create_Raw(dir->path));  // higher level error
         }
 
         return COPY(port); }
@@ -208,7 +208,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         Value* error = Rename_File_Or_Directory(port, ARG(to));
         if (error) {
             rebRelease(error);  // !!! throws away details
-            fail (Error_No_Rename_Raw(dir->path));  // higher level error
+            return FAIL(Error_No_Rename_Raw(dir->path));  // higher level error
         }
 
         Copy_Cell(dir->path, ARG(to));  // !!! this mutates the spec, bad?
@@ -221,7 +221,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         Value* error = Delete_File_Or_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            fail (Error_No_Delete_Raw(dir->path));  // higher level error
+            return FAIL(Error_No_Delete_Raw(dir->path));  // higher level error
         }
         return COPY(port); }
 
@@ -242,13 +242,13 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         UNUSED(PARAM(spec));
 
         if (REF(read) or REF(write))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(new)) {
             Value* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details
-                fail (Error_No_Create_Raw(dir->path));  // higher level error
+                return FAIL(Error_No_Create_Raw(dir->path));  // hi-level error
             }
         }
 
@@ -281,5 +281,5 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

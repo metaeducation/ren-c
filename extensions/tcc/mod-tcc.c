@@ -407,7 +407,7 @@ DECLARE_NATIVE(compile_p)
     //
     TCCState *state = tcc_new();
     if (not state)
-        fail ("TCC failed to create a TCC context");
+        return FAIL("TCC failed to create a TCC context");
 
     // We go ahead and put the state into a managed HANDLE!, so that the GC
     // can clean up the memory in the case of a fail().
@@ -486,7 +486,9 @@ DECLARE_NATIVE(compile_p)
         const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (not Is_Text(item))
-                fail ("If COMPILE*/FILES, compilables must be TEXT! paths");
+                return FAIL(
+                    "If COMPILE*/FILES, compilables must be TEXT! paths"
+                );
 
             char *filename_utf8 = rebSpell(item);
             tcc_add_file(state, filename_utf8);
@@ -560,7 +562,9 @@ DECLARE_NATIVE(compile_p)
             else {
                 // COMPILE should've vetted the list to only TEXT! and ACTION!
                 //
-                fail ("COMPILE input list must contain TEXT! and ACTION!s");
+                return FAIL(
+                    "COMPILE input list must contain TEXT! and ACTION!s"
+                );
             }
         }
 
@@ -647,7 +651,7 @@ DECLARE_NATIVE(compile_p)
 
     if (output_type == TCC_OUTPUT_MEMORY) {
         if (tcc_relocate_auto(state) < 0)
-            fail ("TCC failed to relocate the code");
+            return FAIL("TCC failed to relocate the code");
     }
     else {
         assert(TOP_INDEX == STACK_BASE);  // no user natives if outputting file
@@ -657,7 +661,7 @@ DECLARE_NATIVE(compile_p)
         );
 
         if (tcc_output_file(state, output_file_utf8) < 0)
-            fail ("TCC failed to output the file");
+            return FAIL("TCC failed to output the file");
 
         rebFree(output_file_utf8);
     }

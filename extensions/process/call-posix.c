@@ -241,7 +241,7 @@ Bounce Call_Core(Level* level_) {
             shcmd = rebSpell("argv-block-to-command*", command);
         }
         else
-            fail (PARAM(command));
+            return FAIL(PARAM(command));
 
         // Getting the environment variable via a usermode call helps paper
         // over weird getenv() quirks, but also gives a pointer we can free in
@@ -290,7 +290,7 @@ Bounce Call_Core(Level* level_) {
             rebRelease(parsed);
         }
         else if (not Is_Block(command))
-            fail (PARAM(command));
+            return FAIL(PARAM(command));
 
         const Value* block = ARG(command);
         argc = Cell_Series_Len_At(block);
@@ -301,7 +301,7 @@ Bounce Call_Core(Level* level_) {
         int i;
         for (i = 0; i < argc; ++param, ++i) {
             if (not Is_Text(param))  // usermode layer ensures FILE! converted
-                fail (PARAM(command));
+                return FAIL(PARAM(command));
             argv[i] = rebSpell(param);
         }
         argv[argc] = nullptr;

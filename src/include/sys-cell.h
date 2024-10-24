@@ -319,6 +319,11 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
 //
 // Note that an erased cell Is_Fresh(), but Ensure_Readable() will fail, and
 // so will Ensure_Writable().
+//
+// 1. If a cell contains a raised error, then any attempts to Init_Xxx() or
+//    other usages of Freshen_Cell() will assert.  Right now, erasing the
+//    cell is the way to bypass this.  We give a special alias to help
+//    find where this is happening.
 
 INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     Assert_Cell_Aligned(c);
@@ -331,6 +336,9 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 
 #define Is_Cell_Erased(v) \
     ((v)->header.bits == CELL_MASK_0)
+
+#define Erase_Atom_To_Suppress_Raised_Error(a) \
+    Erase_Cell(ensure(Atom*, a))  // [1]
 
 
 //=//// CELL "POISONING" //////////////////////////////////////////////////=//

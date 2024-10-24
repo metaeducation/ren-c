@@ -23,22 +23,19 @@
 //
 
 
-ATTRIBUTE_NO_RETURN
-INLINE void Fail_Permission_Denied(void) {
-    rebJumps("fail -{The process does not have enough permission}-");
+INLINE Bounce Delegate_Fail_Permission_Denied(void) {
+    return rebDelegate("fail -{The process does not have enough permission}-");
 }
 
-ATTRIBUTE_NO_RETURN
-INLINE void Fail_No_Process(const Value* arg) {
-    rebJumps(
+INLINE Bounce Delegate_Fail_No_Process(const Value* arg) {
+    return rebDelegate(
         "fail [-{The target process (group) does not exist:}-", arg, "]"
     );
 }
 
 #if TO_WINDOWS
-    ATTRIBUTE_NO_RETURN
-    INLINE void Fail_Terminate_Failed(DWORD err) {  // GetLastError()
-        rebJumps(
+    INLINE Bounce Delegate_Fail_Terminate_Failed(DWORD err) {  // GetLastError()
+        return rebDelegate(
             "fail [-{Terminate failed with error number:}-", rebI(err), "]"
         );
     }

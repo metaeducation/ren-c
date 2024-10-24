@@ -84,7 +84,7 @@ REBTYPE(Quasiform)
         UNUSED(ARG(value));
 
         if (REF(part))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(REF(deep));
 
@@ -93,5 +93,5 @@ REBTYPE(Quasiform)
       default: break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

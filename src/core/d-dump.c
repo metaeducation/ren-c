@@ -154,10 +154,7 @@ DECLARE_NATIVE(dump)
 {
     INCLUDE_PARAMS_OF_DUMP;
 
-#ifdef NDEBUG
-    UNUSED(ARG(value));
-    fail (Error_Debug_Only_Raw());
-#else
+  #if DEBUG
     Element* v = cast(Element*, ARG(value));
 
     PROBE(v);
@@ -175,5 +172,8 @@ DECLARE_NATIVE(dump)
     }
 
     return NOTHING;
-#endif
+  #else
+    UNUSED(ARG(value));
+    return FAIL(Error_Debug_Only_Raw());
+  #endif
 }

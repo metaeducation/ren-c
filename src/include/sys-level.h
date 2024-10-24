@@ -623,23 +623,7 @@ INLINE Bounce Native_Nothing_Result_Untracked(
 INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
     assert(not THROWING);
 
-    Error* error;
-    switch (Detect_Rebol_Pointer(p)) {
-      case DETECTED_AS_UTF8:
-        error = Error_User(c_cast(char*, p));
-        break;
-      case DETECTED_AS_STUB: {
-        error = cast(Error*, m_cast(void*, p));
-        break; }
-      case DETECTED_AS_CELL: {  // note: can be Is_Raised()
-        error = Cell_Error(c_cast(Cell*, p));
-        break; }
-      default:
-        assert(false);
-        error = nullptr;  // avoid uninitialized variable warning
-    }
-
-    assert(CTX_TYPE(error) == REB_ERROR);
+    Error* error = Derive_Error_From_Pointer(p);
     Force_Location_Of_Error(error, level_);
 
     while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
@@ -648,6 +632,30 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
     Init_Error(level_->out, error);
     return Raisify(level_->out);
 }
+
+// Doing `return FAIL()` from a native does all the same automatic cleanup
+// as if you triggered an abrupt failure, but doesn't go through the longjmp()
+// or C++ throw machinery.  This means it works even on systems that use
+// REBOL_FAIL_JUST_ABORTS.  It should be preferred wherever possible.
+//
+// 1. There might be a raised error in OUT (in fact, we may be FAIL()-ing
+//    the Cell_Error(OUT).  We want this to act like a cooperative version
+//    of the abrupt fail(), which wouldn't be concerned over the loss of a
+//    raised error, so suppress the assertion if it is a raised error.
+//
+INLINE Bounce Native_Fail_Result(Level* level_, const void *p) {
+    assert(not THROWING);
+
+    Error* error = Derive_Error_From_Pointer(p);
+    Force_Location_Of_Error(error, level_);
+
+    while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
+        Drop_Level_Unbalanced(TOP_LEVEL);  // Note: won't seem like THROW/Fail
+
+    Erase_Atom_To_Suppress_Raised_Error(level_->out);  // [1]
+    return Init_Thrown_Failure(level_, Varlist_Archetype(error));
+}
+
 
 // Convenience routine for returning a value which is *not* located in OUT.
 // (If at all possible, it's better to build values directly into OUT and
@@ -711,15 +719,16 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
     #define NOTHING     Native_Nothing_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
-    #define COPY(v)     (Native_Copy_Result_Untracked(TRACK(OUT), level_, (v)))
+    #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define RAISE(p)    Native_Raised_Result(level_, (p))
     #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
+    #define FAIL(p)     Native_Fail_Result(level_, (p))
 
-    // `fail (UNHANDLED)` is a shorthand for something that's written often
+    // `return UNHANDLED;` is a shorthand for something that's written often
     // enough in REBTYPE() handlers that it seems worthwhile.
     //
-    #define UNHANDLED   Error_Cannot_Use(verb, D_ARG(1))
+    #define UNHANDLED   FAIL(Error_Cannot_Use(verb, D_ARG(1)))
 
     #define BASELINE   (&level_->baseline)
     #define STACK_BASE (level_->baseline.stack_base)

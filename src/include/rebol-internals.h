@@ -82,7 +82,7 @@
 //    the internals of the code use Get_Context_From_Stack() in the null
 //    case for the behavior.
 //
-// 1. An attempt was made for Bounce to be a smart pointer, when I thought
+// 2. An attempt was made for Bounce to be a smart pointer, when I thought
 //    that if it was `struct Bounce { Node* node; }` that it would be able to
 //    do checks on the types it received while being compatible with a void*
 //    in the dispatchers using %rebol.h.  So these would be compatible:
@@ -98,9 +98,9 @@
 //    necessary to understand the relationship between RebolValue* and
 //    RebolNode* would then have to be exported, which we don't want to do.
 //
-//     So it's just a void*.  This has at least one advantage, which is that
-//     you can't accidentally pass a Bounce to a varaidic API function, because
-//     the C++ build checks that you don't pass void pointers.
+//    Hence it's just a void*.  This has at least one advantage, which is that
+//    you can't accidentally pass a Bounce to a varaidic API function, because
+//    the C++ build checks that you don't pass void pointers.
 //
 
 #include <stdlib.h>  // size_t and other types used in rebol.h

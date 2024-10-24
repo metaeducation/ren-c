@@ -302,7 +302,7 @@ DECLARE_NATIVE(set_location_of_error)
     VarList* context;
     if (Is_Word(location)) {
         if (not IS_WORD_BOUND(location))
-            fail ("SET-LOCATION-OF-ERROR requires bound WORD!");
+            return FAIL("SET-LOCATION-OF-ERROR requires bound WORD!");
         context = VAL_WORD_CONTEXT(location);
     }
     else {

@@ -357,7 +357,7 @@ DECLARE_NATIVE(reframer)
 
     if (TOP_INDEX != STACK_BASE) {
         Destruct_Binder(binder);
-        fail ("REFRAMER can't use partial specializions ATM");
+        return FAIL("REFRAMER can't use partial specializions ATM");
     }
 
     const Key* key;
@@ -368,7 +368,7 @@ DECLARE_NATIVE(reframer)
         param_index = maybe Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
             Destruct_Binder(binder);
-            fail (Error_No_Arg(label, symbol));
+            return FAIL(Error_No_Arg(label, symbol));
         }
         key = Varlist_Key(exemplar, param_index);
         param = cast_PAR(Varlist_Slot(exemplar, param_index));
@@ -400,7 +400,7 @@ DECLARE_NATIVE(reframer)
         DECLARE_ATOM (param_word);
         Init_Word(param_word, Key_Symbol(key));
 
-        fail (Error_Expect_Arg_Raw(
+        return FAIL(Error_Expect_Arg_Raw(
             label_word,
             Datatype_From_Kind(REB_FRAME),
             param_word

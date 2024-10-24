@@ -148,7 +148,9 @@ DECLARE_NATIVE(get_os_browsers)
         or num_bytes % 2 != 0 // byte count should be even for unicode
     ){
         RegCloseKey(key);
-        fail ("Could not read registry key for http\\shell\\open\\command");
+        return FAIL(
+            "Could not read registry key for http\\shell\\open\\command"
+        );
     }
 
     REBLEN len = num_bytes / 2;
@@ -161,7 +163,9 @@ DECLARE_NATIVE(get_os_browsers)
     RegCloseKey(key);
 
     if (flag != ERROR_SUCCESS)
-        fail ("Could not read registry key for http\\shell\\open\\command");
+        return FAIL(
+            "Could not read registry key for http\\shell\\open\\command"
+        );
 
     while (buffer[len - 1] == '\0') {
         //
@@ -238,23 +242,25 @@ DECLARE_NATIVE(sleep)
 
 
 #if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
-static void kill_process(pid_t pid, int signal)
+static Bounce Delegate_Kill_Process(pid_t pid, int signal)
 {
     if (kill(pid, signal) >= 0)
-        return; // success
+        return rebNothing();  // success
 
     switch (errno) {
       case EINVAL:
-        rebJumps("fail [-{Invalid signal number:}-", rebI(signal), "]");
+        return rebDelegate(
+          "fail [-{Invalid signal number:}-", rebI(signal), "]"
+        );
 
       case EPERM:
-        Fail_Permission_Denied();
+        return Delegate_Fail_Permission_Denied();
 
       case ESRCH:
-        Fail_No_Process(rebInteger(pid)); // failure releases integer handle
+        return Delegate_Fail_No_Process(rebInteger(pid));  // releases integer
 
       default:
-        rebFail_OS(errno);
+        return rebDelegate("fail", rebError_OS(errno));
     }
 }
 #endif
@@ -265,7 +271,7 @@ static void kill_process(pid_t pid, int signal)
 //
 //  "Terminate a process (not current one)"
 //
-//      return: [~null~]
+//      return: [~]
 //      pid "The process ID"
 //          [integer!]
 //  ]
@@ -287,40 +293,40 @@ DECLARE_NATIVE(terminate)
         err = GetLastError();
         switch (err) {
           case ERROR_ACCESS_DENIED:
-            Fail_Permission_Denied();
+            return Delegate_Fail_Permission_Denied();
 
           case ERROR_INVALID_PARAMETER:
-            Fail_No_Process(ARG(pid));
+            return Delegate_Fail_No_Process(ARG(pid));
 
           default:
-            Fail_Terminate_Failed(err);
+            return Delegate_Fail_Terminate_Failed(err);
         }
     }
 
     if (TerminateProcess(ph, 0)) {
         CloseHandle(ph);
-        return nullptr;
+        return NOTHING;
     }
 
     err = GetLastError();
     CloseHandle(ph);
     switch (err) {
       case ERROR_INVALID_HANDLE:
-        Fail_No_Process(ARG(pid));
+        return Delegate_Fail_No_Process(ARG(pid));
 
       default:
-        Fail_Terminate_Failed(err);
+        return Delegate_Fail_Terminate_Failed(err);
     }
 
   #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 
-    if (getpid() == VAL_INT32(ARG(pid))) {
-        // signal is not as reliable for this purpose
-        // it's caught in main.c as to stop the evaluation
-        fail ("QUIT or SYS.UTIL/EXIT to terminate current process, instead");
+    if (getpid() == VAL_INT32(ARG(pid))) {  // signal not reliable for this
+        return FAIL(
+            "QUIT or SYS.UTIL/EXIT to terminate current process, instead"
+        );
     }
-    kill_process(VAL_INT32(ARG(pid)), SIGTERM);
-    return nullptr;
+
+    return Delegate_Kill_Process(VAL_INT32(ARG(pid)), SIGTERM);
 
   #else
 

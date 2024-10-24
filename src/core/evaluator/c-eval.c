@@ -178,7 +178,7 @@ Bounce Evaluator_Executor(Level* const L)
         goto finished;  // OUT is not invisible, so it's the final result
 
     if (Is_Raised(OUT))   // raise errors synchronously if not at end [3]
-        fail (Cell_Error(OUT));
+        return FAIL(Cell_Error(OUT));
 
     Move_Cell(TOP_ATOM, OUT);  // make current result the preserved one
     goto new_step;

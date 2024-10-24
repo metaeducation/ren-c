@@ -65,7 +65,7 @@ DECLARE_NATIVE(stats)
             "recycles:", rebI(g_gc.recycle_counter),
         "]");
       #else
-        fail (Error_Debug_Only_Raw());
+        return FAIL(Error_Debug_Only_Raw());
       #endif
     }
 
@@ -84,7 +84,7 @@ DECLARE_NATIVE(stats)
     UNUSED(REF(show));
     UNUSED(ARG(pool));
 
-    fail (Error_Debug_Only_Raw());
+    return FAIL(Error_Debug_Only_Raw());
   #endif
 }
 
@@ -99,8 +99,7 @@ DECLARE_NATIVE(stats)
 //  "Provide access to services in <valgrind/callgrind.h>"
 //
 //      return: [~]
-//      'instruction "Currently just either ON or OFF"
-//          [word!]
+//      'instruction ['on 'off]
 //  ]
 //
 DECLARE_NATIVE(callgrind)
@@ -138,11 +137,11 @@ DECLARE_NATIVE(callgrind)
         break;
 
       default:
-        fail ("Currently CALLGRIND only supports ON and OFF");
+        return FAIL("Currently CALLGRIND only supports ON and OFF");
     }
     return NOTHING;
   #else
     UNUSED(ARG(instruction));
-    fail ("This executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
+    return FAIL("Executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
   #endif
 }

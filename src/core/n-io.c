@@ -121,16 +121,16 @@ DECLARE_NATIVE(write_stdout)
 
     Value* v = ARG(value);
 
-  #if !DEBUG_HAS_PROBE
+  #if (! DEBUG_HAS_PROBE)
     UNUSED(v);
-    fail ("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
+    return FAIL("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
   #else
     if (Is_Text(v)) {
-        printf("WRITE-STDOUT: %s\n", c_cast(char*, String_Head(Cell_String(v))));
+        printf("WRITE-STDOUT: %s\n", String_UTF8(Cell_String(v)));
         fflush(stdout);
     }
     else if (IS_CHAR(v)) {
-        printf("WRITE-STDOUT: char %lu\n", cast(unsigned long, Cell_Codepoint(v)));
+        printf("WRITE-STDOUT: codepoint %d\n", cast(int, Cell_Codepoint(v)));
     }
     else {
         assert(Is_Binary(v));
@@ -330,14 +330,14 @@ DECLARE_NATIVE(basic_read)
 {
     INCLUDE_PARAMS_OF_BASIC_READ;
 
-  #if !TO_WASI
+  #if (! TO_WASI)
     UNUSED(ARG(file));
-    fail ("BASIC-READ is a simple demo used in WASI only");
+    return FAIL("BASIC-READ is a simple demo used in WASI only");
   #else
     const String* filename = Cell_String(ARG(file));
     FILE* f = fopen(String_UTF8(filename), "rb");
     if (f == nullptr)
-        fail (rebError_OS(errno));
+        return FAIL(rebError_OS(errno));
     fseek(f, 0, SEEK_END);
     Size size = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -368,15 +368,15 @@ DECLARE_NATIVE(basic_write)
 {
     INCLUDE_PARAMS_OF_BASIC_WRITE;
 
-  #if !TO_WASI
+  #if (! TO_WASI)
     UNUSED(ARG(file));
     UNUSED(ARG(data));
-    fail ("BASIC-WRITE is a simple demo used in WASI only");
+    return FAIL("BASIC-WRITE is a simple demo used in WASI only");
   #else
     const String* filename = Cell_String(ARG(file));
     FILE* f = fopen(String_UTF8(filename), "wb");
     if (f == nullptr)
-        fail (rebError_OS(errno));
+        return FAIL(rebError_OS(errno));
 
     Size size;
     const Byte* data = Cell_Bytes_At(&size, ARG(data));

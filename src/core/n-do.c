@@ -103,7 +103,7 @@ DECLARE_NATIVE(shove)
 
     Level* L;
     if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(right)))
-        fail ("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
+        return FAIL("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
     Element* left = cast(Element*, ARG(left));
 
@@ -153,7 +153,9 @@ DECLARE_NATIVE(shove)
         infix_mode = Get_Cell_Infix_Mode(shovee);
     }
     else {
-        fail ("SHOVE's immediate right must be FRAME! at this time");  // [1]
+        return FAIL(  // used to allow shoving into set-words, but... [1]
+            "SHOVE's immediate right must be FRAME! at this time"
+        );
     }
 
     Fetch_Next_In_Feed(L->feed);
@@ -384,11 +386,11 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
         // comes to questions like backtracking in blocks, so review.
         //
         if (REF(step))
-            fail (":STEP Behavior not implemented for FRAME! in EVALUATE");
+            return FAIL(":STEP not implemented for FRAME! in EVALUATE");
 
         if (Is_Frame_Details(source))
             if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-                fail (Error_Do_Arity_Non_Zero_Raw());  // see notes in DO on error
+                return FAIL(Error_Do_Arity_Non_Zero_Raw());  // see notes in DO
 
         Option(const Atom*) with = nullptr;
         bool copy_frame = false;  // EVAL consumes by default
@@ -447,10 +449,11 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
         return DELEGATE_SUBLEVEL(sub); }
 
       case REB_ERROR :
-        fail (Cell_Error(source));  // would fail anyway [7]
+        return FAIL(Cell_Error(source));  // would fail anyway [7]
 
       default:
-        fail (PARAM(source));
+        assert(false);
+        return FAIL(PARAM(source));
     }
 
     DEAD_END;
@@ -523,10 +526,10 @@ DECLARE_NATIVE(redo)
     Value* restartee = ARG(restartee);
     if (not Is_Frame(restartee)) {
         if (not Try_Get_Binding_Of(OUT, restartee))
-            fail ("No context found from restartee in REDO");
+            return FAIL("No context found from restartee in REDO");
 
         if (not Is_Frame(OUT))
-            fail ("Context of restartee in REDO is not a FRAME!");
+            return FAIL("Context of restartee in REDO is not a FRAME!");
 
         Move_Cell(restartee, stable_OUT);
     }
@@ -535,7 +538,7 @@ DECLARE_NATIVE(redo)
 
     Level* L = Level_Of_Varlist_If_Running(c);
     if (L == NULL)
-        fail ("Use EVAL to start a not-currently running FRAME! (not REDO)");
+        return FAIL("EVAL starts a not-currently running FRAME! (not REDO)");
 
     if (REF(sibling)) {  // ensure frame compatibility [1]
         Value* sibling = ARG(sibling);
@@ -543,7 +546,7 @@ DECLARE_NATIVE(redo)
             ACT_KEYLIST(L->u.action.original)
             != ACT_KEYLIST(VAL_ACTION(sibling))
         ){
-            fail ("/OTHER function passed to REDO has incompatible FRAME!");
+            return FAIL(":OTHER passed to REDO has incompatible FRAME!");
         }
 
         Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(sibling)));
@@ -773,13 +776,13 @@ DECLARE_NATIVE(apply)
 
         Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
         if (not index)
-            fail (Error_Bad_Parameter_Raw(at));
+            return FAIL(Error_Bad_Parameter_Raw(at));
 
         var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
         param = ACT_PARAM(VAL_ACTION(op), unwrap index);
 
         if (Is_Specialized(var))
-            fail (Error_Bad_Parameter_Raw(at));
+            return FAIL(Error_Bad_Parameter_Raw(at));
 
         DECLARE_ELEMENT (lookback);  // for error
         Copy_Cell(lookback, At_Level(L));
@@ -787,10 +790,10 @@ DECLARE_NATIVE(apply)
         at = Try_At_Level(L);
 
         if (at == nullptr or Is_Comma(at))
-            fail (Error_Need_Non_End_Raw(lookback));
+            return FAIL(Error_Need_Non_End_Raw(lookback));
 
         if (Is_Get_Word(at))  // catch e.g. :DUP :LINE [1]
-            fail (Error_Need_Non_End_Raw(lookback));
+            return FAIL(Error_Need_Non_End_Raw(lookback));
 
         Init_Integer(ARG(index), unwrap index);
     }
@@ -806,7 +809,7 @@ DECLARE_NATIVE(apply)
         while (true) {
             if (not Try_Advance_Evars(e)) {
                 if (not REF(relax))
-                    fail (Error_Apply_Too_Many_Raw());
+                    return FAIL(Error_Apply_Too_Many_Raw());
 
                 Shutdown_Evars(e);
                 Free(EVARS, e);
@@ -931,10 +934,10 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
         SPARE, GROUPS_OK, operation, SPECIFIED
     );
     if (error)
-        fail (unwrap error);
+        return FAIL(unwrap error);
 
     if (not Is_Action(SPARE) and not Is_Frame(SPARE))
-        fail (SPARE);
+        return FAIL(SPARE);
     Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(operation)
 
     Copy_Cell(ARG(operation), stable_SPARE);

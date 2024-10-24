@@ -231,7 +231,7 @@ Bounce Stepper_Executor(Level* L)
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
             Option(const Symbol*) label = VAL_FRAME_LABEL(L_current);
             const Key* key = ACT_KEY(action, 2);
-            fail (Error_Arg_Type(label, key, param, stable_SPARE));
+            return FAIL(Error_Arg_Type(label, key, param, stable_SPARE));
         }
         (*intrinsic)(OUT, cast(Phase*, action), stable_SPARE);
         goto lookahead; }
@@ -485,7 +485,7 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_FRAME: {
         if (IS_FRAME_PHASED(L_current))  // running frame if phased
-            fail ("Use REDO to restart a running FRAME! (can't EVAL)");
+            return FAIL("Use REDO to restart a running FRAME! (can't EVAL)");
 
         Level* sub = Make_Action_Sublevel(L);
         Push_Level(OUT, sub);
@@ -577,7 +577,7 @@ Bounce Stepper_Executor(Level* L)
           case SIGIL_QUOTE:
           case SIGIL_THE: {
             if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
-                fail (Error_Need_Non_End(L_current));
+                return FAIL(Error_Need_Non_End(L_current));
 
             assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
             const Element* elem = c_cast(Element*, L->feed->p);
@@ -606,7 +606,7 @@ Bounce Stepper_Executor(Level* L)
             return CATCH_CONTINUE_SUBLEVEL(right); }
 
           case SIGIL_QUASI:  // ~~
-            fail ("No evaluator behavior defined for ~~ yet");
+            return FAIL("No evaluator behavior defined for ~~ yet");
 
           default:
             assert(false);
@@ -628,7 +628,7 @@ Bounce Stepper_Executor(Level* L)
 
           case SIGIL_VAR:  // $
             if (Is_Antiform(OUT))
-                fail ("$ operator cannot bind antiforms");
+                return FAIL("$ operator cannot bind antiforms");
             Derelativize(SPARE, cast(Element*, OUT), Level_Binding(L));
             Copy_Cell(OUT, SPARE);  // !!! inefficient
             break;
@@ -656,7 +656,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_WORD: {
         Option(Error*) error = Trap_Get_Any_Word(OUT, L_current, L_binding);
         if (error)
-            fail (unwrap error);  // else could conflate with function result
+            return FAIL(unwrap error);  // don't conflate with function result
 
         if (Is_Action(OUT)) {
             Action* action = VAL_ACTION(OUT);
@@ -715,7 +715,7 @@ Bounce Stepper_Executor(Level* L)
                     goto intrinsic_arg_in_spare;
 
                   default:
-                    fail ("Unsupported parameter convention for intrinsic");
+                    return FAIL("Unsupported Intrinsic parameter convention");
                 }
 
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
@@ -735,7 +735,7 @@ Bounce Stepper_Executor(Level* L)
         }
 
         if (Any_Vacancy(stable_OUT))  // checked second
-            fail (Error_Bad_Word_Get(L_current, OUT));
+            return FAIL(Error_Bad_Word_Get(L_current, OUT));
 
         goto lookahead; }
 
@@ -807,10 +807,10 @@ Bounce Stepper_Executor(Level* L)
 
           case LEADING_BLANK_AND(GROUP):
             Unchain(CURRENT);
-            fail ("GET-GROUP! has no evaluator meaning at this time");
+            return FAIL("GET-GROUP! has no evaluator meaning at this time");
 
           default:  // it's just something like :1 or <tag>:
-            fail ("No current eval behavior for things like :1 or <tag>:");
+            return FAIL("No current evaluation for things like :1 or <tag>:");
         }
 
         Option(Error*) error = Trap_Get_Chain_Push_Refinements(
@@ -820,13 +820,13 @@ Bounce Stepper_Executor(Level* L)
             L_binding
         );
         if (error)  // lookup failed, a GROUP! in path threw, etc.
-            fail (unwrap error);  // don't definitional error for now
+            return FAIL(unwrap error);  // don't definitional error for now
 
         assert(Is_Action(OUT));
 
         if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated
             Drop_Data_Stack_To(STACK_BASE);
-            fail ("Use `->-` to shove left infix operands into CHAIN!s");
+            return FAIL("Use `->-` to shove left infix operands into CHAIN!s");
         }
         goto handle_action_in_out_with_refinements_pushed; }
 
@@ -864,7 +864,7 @@ Bounce Stepper_Executor(Level* L)
             L_binding
         );
         if (error)
-            fail (unwrap error);
+            return FAIL(unwrap error);
 
         if (STATE == REB_META_WORD)
             Meta_Quotify(OUT);
@@ -946,7 +946,7 @@ Bounce Stepper_Executor(Level* L)
         }
 
         if (Is_Action(OUT))  // don't conflate with NOT-FOUND for TRY
-            fail ("Can't fetch actions (FRAME! antiform) with TUPLE!");
+            return FAIL("Can't fetch actions (FRAME! antiform) with TUPLE!");
 
         goto lookahead; }
 
@@ -1017,7 +1017,7 @@ Bounce Stepper_Executor(Level* L)
         }
         else switch (unwrap single) {
           case LEADING_BLANK_AND(WORD):
-            fail ("Killing off refinement evaluations!");
+            return FAIL("Killing off refinement evaluations!");
 
           case LEADING_BLANK_AND(CHAIN): {  // /abc: or /?:?:?
             Unpath(CURRENT);
@@ -1036,7 +1036,7 @@ Bounce Stepper_Executor(Level* L)
                 goto handle_generic_set;
 
               default:
-                fail ("/a:b:c will mean guarantee a function call, in time");
+                return FAIL("/a:b:c will guarantee a function call, in time");
             }
             break; }
 
@@ -1055,8 +1055,8 @@ Bounce Stepper_Executor(Level* L)
         );
         if (error) {  // lookup failed, a GROUP! in path threw, etc.
             if (not slash_at_tail)
-                fail (unwrap error);  // definitional error would conflate [3]
-            fail (unwrap error);  // don't definitional error for now [4]
+                return FAIL(unwrap error);  // RAISE error would conflate [3]
+            return FAIL(unwrap error);  // don't RAISE error for now [4]
         }
 
         assert(Is_Action(OUT));
@@ -1074,7 +1074,7 @@ Bounce Stepper_Executor(Level* L)
 
         if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated [6]
             Drop_Data_Stack_To(STACK_BASE);
-            fail ("Use `->-` to shove left infix operands into PATH!s");
+            return FAIL("Use `->-` to shove left infix operands into PATH!s");
         }
 
         UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as error?
@@ -1126,7 +1126,7 @@ Bounce Stepper_Executor(Level* L)
     } generic_set_rightside_in_out: {  ///////////////////////////////////////
 
         if (Is_Barrier(OUT))  // even `(void):,` needs to error
-            fail (Error_Need_Non_End(L_current));  // !!! vs. return_thrown ?
+            return FAIL(Error_Need_Non_End(L_current));
 
         if (STATE == ST_STEPPER_SET_VOID) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
@@ -1143,7 +1143,9 @@ Bounce Stepper_Executor(Level* L)
             }
             else {  // assignments of /foo: or /obj.field: require action
                 if (Get_Cell_Flag(L_current, CURRENT_NOTE_SET_ACTION))
-                    fail ("/word: and /obj.field: assignments need action");
+                    return FAIL(
+                        "/word: and /obj.field: assignments require Action"
+                    );
             }
 
             if (Set_Var_Core_Throws(  // cheaper on fail vs. Set_Var_May_Fail()
@@ -1187,7 +1189,7 @@ Bounce Stepper_Executor(Level* L)
             goto handle_generic_set;
 
           default:
-            fail ("Unknown type for use in SET-GROUP!");
+            return FAIL("Unknown type for use in SET-GROUP!");
         }
         goto lookahead; }
 
@@ -1297,7 +1299,7 @@ Bounce Stepper_Executor(Level* L)
         assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(L_current));
 
         if (Cell_Series_Len_At(L_current) == 0)  // not supported [1]
-            fail ("SET-BLOCK! must not be empty for now.");
+            return FAIL("SET-BLOCK! must not be empty for now.");
 
         const Element* tail;
         const Element* check = Cell_List_At(&tail, L_current);
@@ -1309,7 +1311,7 @@ Bounce Stepper_Executor(Level* L)
 
         for (; check != tail; ++check) {  // push variables first [2]
             if (Is_Quoted(check))
-                fail ("QUOTED? not currently permitted in SET-BLOCK!s");
+                return FAIL("QUOTED? not currently permitted in SET-BLOCK!s");
 
             Heart heart = Cell_Heart(check);
 
@@ -1317,7 +1319,7 @@ Bounce Stepper_Executor(Level* L)
 
             if (heart == REB_FENCE) {  // [x {y}]: ... fence means eval to that
                 if (circled)
-                    fail ("Can't circle more than one multi-return result");
+                    return FAIL("Can only {Circle} one multi-return result");
                 Length len_at = Cell_Series_Len_At(check);
                 if (len_at == 1) {
                     Derelativize(
@@ -1327,7 +1329,7 @@ Bounce Stepper_Executor(Level* L)
                     );
                 }
                 else  // !!! should {} be a synonym for {#} or {~} ?
-                    fail ("Circling in multi-return only allows 1 element");
+                    return FAIL("{Circle} only one element in multi-return");
 
                 circle_this = true;
                 heart = Cell_Heart(CURRENT);
@@ -1345,7 +1347,9 @@ Bounce Stepper_Executor(Level* L)
                     not (single = Try_Get_Sequence_Singleheart(CURRENT))
                     or not Singleheart_Has_Leading_Blank(unwrap single)
                 ){
-                    fail ("Only leading blank CHAIN! in SET-BLOCK! dialect");
+                    return FAIL(
+                        "Only leading blank CHAIN! in SET BLOCK! dialect"
+                    );
                 }
                 Unchain(CURRENT);
                 heart = Heart_Of_Singleheart(unwrap single);
@@ -1400,7 +1404,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Space(TOP) or Is_Trash(TOP))  // nameless decay vs. no decay
                 continue;
 
-            fail ("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
+            return FAIL("SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or ~/#");
         }
 
         level_->u.eval.stackindex_circled = circled;  // remember it
@@ -1433,11 +1437,11 @@ Bounce Stepper_Executor(Level* L)
             //
             if (Pushed_Decaying_Level(OUT, OUT, LEVEL_MASK_NONE)) {
                 if (Trampoline_With_Top_As_Root_Throws())
-                    fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+                    return FAIL(Error_No_Catch_For_Throw(TOP_LEVEL));
                 Drop_Level(TOP_LEVEL);
             }
             if (Is_Lazy(OUT))  // Lazy -> Lazy not allowed, Lazy -> Pack is ok
-                fail ("Lazy Object Reified to Lazy Object: Not Allowed");
+                return FAIL("Lazy Object Reified to Lazy Object: Not Allowed");
         }
 
         const Array* pack_array;  // needs GC guarding when OUT overwritten
@@ -1483,7 +1487,7 @@ Bounce Stepper_Executor(Level* L)
 
             if (pack_meta_at == pack_meta_tail) {
                 if (not is_optional)
-                    fail ("Not enough values for required multi-return");
+                    return FAIL("Not enough values for required multi-return");
 
                 // match typical input of meta which will be Meta_Unquotify'd
                 // (special handling in REB_META_WORD and REB_META_TUPLE
@@ -1517,7 +1521,7 @@ Bounce Stepper_Executor(Level* L)
             }
 
             if (Is_Raised(SPARE))  // don't pass thru raised errors if not @
-                fail (Cell_Error(SPARE));
+                return FAIL(Cell_Error(SPARE));
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
@@ -1538,7 +1542,7 @@ Bounce Stepper_Executor(Level* L)
                     SPECIFIED,
                     stable_SPARE
                 )){
-                    fail (Error_No_Catch_For_Throw(L));
+                    return FAIL(Error_No_Catch_For_Throw(L));
                 }
             }
             else
@@ -1596,13 +1600,13 @@ Bounce Stepper_Executor(Level* L)
     // it will work yet.
 
       case REB_FENCE:
-        fail ("Precise behavior of FENCE! not known yet");
+        return FAIL("Precise behavior of FENCE! not known yet");
 
 
     //=//// META-FENCE! ///////////////////////////////////////////////////=//
 
       case REB_META_FENCE:
-        fail ("Don't know what META-FENCE! is going to do yet");
+        return FAIL("Don't know what META-FENCE! is going to do yet");
 
 
     //=//// THE-XXX! //////////////////////////////////////////////////////=//
@@ -1791,7 +1795,7 @@ Bounce Stepper_Executor(Level* L)
     // retriggers and lets x run.
 
     if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-        fail (Error_Literal_Left_Path_Raw());
+        return FAIL(Error_Literal_Left_Path_Raw());
 
 
   //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION ///////////=//
@@ -1874,7 +1878,7 @@ Bounce Stepper_Executor(Level* L)
         //
         assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH));
         if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-            fail (Error_Literal_Left_Path_Raw());
+            return FAIL(Error_Literal_Left_Path_Raw());
 
         const Param* first = First_Unspecialized_Param(nullptr, infixed);
         if (Cell_ParamClass(first) == PARAMCLASS_SOFT) {
@@ -1938,7 +1942,7 @@ Bounce Stepper_Executor(Level* L)
             // running a deferred operation in the same step is not an option.
             // The expression to the left must be in a GROUP!.
             //
-            fail (Error_Ambiguous_Infix_Raw());
+            return FAIL(Error_Ambiguous_Infix_Raw());
         }
 
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);

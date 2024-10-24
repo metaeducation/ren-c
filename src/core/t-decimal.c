@@ -501,7 +501,7 @@ REBTYPE(Decimal)
     ){
         arg = D_ARG(2);
         if (QUOTE_BYTE(arg) != NOQUOTE_1)
-            fail (Error_Math_Args(VAL_TYPE(arg), verb));
+            return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
 
         heart = Cell_Heart(arg);
         if ((
@@ -566,7 +566,7 @@ REBTYPE(Decimal)
             case SYM_DIVIDE:
             case SYM_REMAINDER:
                 if (d2 == 0.0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
                 if (id == SYM_DIVIDE)
                     d1 /= d2;
                 else
@@ -590,10 +590,10 @@ REBTYPE(Decimal)
                 goto setDec;
 
             default:
-                fail (Error_Math_Args(VAL_TYPE(val), verb));
+                return FAIL(Error_Math_Args(VAL_TYPE(val), verb));
             }
         }
-        fail (Error_Math_Args(VAL_TYPE(val), verb));
+        return FAIL(Error_Math_Args(VAL_TYPE(val), verb));
     }
 
     heart = Cell_Heart_Ensure_Noquote(val);
@@ -637,7 +637,7 @@ REBTYPE(Decimal)
                 ));
 
             if (Is_Time(ARG(to)))
-                fail (PARAM(to));
+                return FAIL(PARAM(to));
 
             d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
             if (Is_Integer(ARG(to)))
@@ -659,7 +659,7 @@ REBTYPE(Decimal)
 
         UNUSED(PARAM(value));
         if (REF(only))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(seed)) {
             REBDEC d = VAL_DECIMAL(val);
@@ -679,11 +679,11 @@ REBTYPE(Decimal)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 
 setDec:
     if (not FINITE(d1))
-        fail (Error_Overflow_Raw());
+        return FAIL(Error_Overflow_Raw());
 
     Reset_Cell_Header_Untracked(
         TRACK(OUT),

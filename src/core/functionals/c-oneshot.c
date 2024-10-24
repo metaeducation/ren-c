@@ -104,7 +104,7 @@ DECLARE_NATIVE(do_branch)
     INCLUDE_PARAMS_OF_DO_BRANCH;
     UNUSED(ARG(branch));
 
-    fail ("DO-BRANCH is theoretical and not part of an API yet.");
+    return FAIL("DO-BRANCH is theoretical and not part of an API yet.");
 }
 
 

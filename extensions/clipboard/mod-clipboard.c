@@ -70,7 +70,7 @@ static Bounce Clipboard_Actor(
         UNUSED(ARG(source));  // implied by `port`
 
         if (REF(part) or REF(seek))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(REF(string));  // handled in dispatcher
         UNUSED(REF(lines));  // handled in dispatcher
@@ -120,7 +120,7 @@ static Bounce Clipboard_Actor(
         UNUSED(ARG(destination));  // implied by `port`
 
         if (REF(append) or REF(lines))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         Value* data = ARG(data);
 
@@ -129,7 +129,7 @@ static Bounce Clipboard_Actor(
         // the length only made sense if it was a string.  Review.
         //
         if (rebNot("text?", data))
-            fail (Error_Invalid_Port_Arg_Raw(data));
+            return FAIL(Error_Invalid_Port_Arg_Raw(data));
 
         // Handle :PART refinement:
         //
@@ -189,7 +189,7 @@ static Bounce Clipboard_Actor(
         UNUSED(PARAM(spec));
 
         if (REF(new) or REF(read) or REF(write))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         // !!! Currently just ignore (it didn't do anything)
 
@@ -205,7 +205,7 @@ static Bounce Clipboard_Actor(
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 

@@ -154,7 +154,8 @@ REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
     REBU64 sc, n, r, m, s;
 
     if (REF(to)) {
-        if (scale == 0) fail (Error_Zero_Divide_Raw());
+        if (scale == 0)
+            fail (Error_Zero_Divide_Raw());
         sc = Int_Abs(scale);
     }
     else sc = 1;
@@ -200,7 +201,8 @@ deci Round_Deci(deci num, Level* level_, deci scale)
     deci deci_one = {1u, 0u, 0u, 0u, 0};
 
     if (REF(to)) {
-        if (deci_is_zero(scale)) fail (Error_Zero_Divide_Raw());
+        if (deci_is_zero(scale))
+            fail (Error_Zero_Divide_Raw());
         scale = deci_abs(scale);
     }
     else scale = deci_one;

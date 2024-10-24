@@ -179,11 +179,11 @@ DECLARE_NATIVE(lambda)
         }
         else if (Is_Quoted(item)) {
             if (Cell_Num_Quotes(item) != 1)
-                fail (item);
+                return FAIL(item);
             if (Cell_Heart(item) == REB_WORD)
                 pclass = PARAMCLASS_JUST;
             else
-                fail (item);
+                return FAIL(item);
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_The_Word(item)) {
@@ -197,11 +197,13 @@ DECLARE_NATIVE(lambda)
             param_flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
         else if (Is_Set_Word(item) and Cell_Word_Id(item) == SYM_RETURN) {
-            fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
+            return FAIL(
+                "LAMBDA (->) does not offer RETURN facilities, use FUNCTION"
+            );
         }
         else {
             if (not Is_Block(spec))
-                fail ("Invalid LAMBDA specification");
+                return FAIL("Invalid LAMBDA specification");
 
             optimizable = false;
             Drop_Data_Stack_To(STACK_BASE);

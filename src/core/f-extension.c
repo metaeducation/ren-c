@@ -152,7 +152,7 @@ DECLARE_NATIVE(load_extension)
 
         if (not collated_block or not Is_Block(collated_block)) {
             rebElide("close", library);
-            fail (Error_Bad_Extension_Raw(ARG(where)));
+            return FAIL(Error_Bad_Extension_Raw(ARG(where)));
         }
 
         collated = Cell_Array_Ensure_Mutable(collated_block);
@@ -265,11 +265,10 @@ DECLARE_NATIVE(load_extension)
 // This will be the dispatcher for the natives in an extension after the
 // extension is unloaded.
 //
-static const Value* Unloaded_Dispatcher(Level* L)
+static Bounce Unloaded_Dispatcher(Level* level_)
 {
-    UNUSED(L);
-
-    fail (Error_Native_Unloaded_Raw(Phase_Archetype(Level_Phase(L))));
+    Phase* phase = Level_Phase(level_);
+    return FAIL(Error_Native_Unloaded_Raw(Phase_Archetype(phase)));
 }
 
 
@@ -309,7 +308,7 @@ DECLARE_NATIVE(unload_extension)
     // some other optimization.  Review.
     //
     if (not pos)
-        fail ("Could not find extension in loaded extensions list");
+        return FAIL("Could not find extension in loaded extensions list");
     rebElide(Canon(TAKE), rebR(pos));
 
     // There is a murky issue about how to disconnect DECLARE_NATIVE()s from
@@ -330,10 +329,10 @@ DECLARE_NATIVE(unload_extension)
     // Note: The mechanical act of unloading a DLL involved these calls.
     /*
         if (not IS_LIBRARY(lib))
-            fail (PARAM(ext));
+            return FAIL(PARAM(ext));
 
         if (IS_LIB_CLOSED(VAL_LIBRARY(lib)))
-            fail (Error_Bad_Library_Raw());
+            return FAIL(Error_Bad_Library_Raw());
 
         OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
     */

@@ -239,7 +239,7 @@ REBTYPE(Pair)
         Value* setval = ARG(value);
 
         if (not Is_Integer(setval))
-            fail (PARAM(value));
+            return FAIL(PARAM(value));
 
         Value* which = (n == 1) ? Cell_Pair_First(v) : Cell_Pair_Second(v);
         Copy_Cell(which, setval);

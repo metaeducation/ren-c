@@ -215,7 +215,7 @@ Bounce MAKE_Issue(
     UNUSED(k);
 
     if (parent)
-        fail (Error_Bad_Make_Parent(REB_ISSUE, unwrap parent));
+        return FAIL(Error_Bad_Make_Parent(REB_ISSUE, unwrap parent));
 
     switch(VAL_TYPE(arg)) {
       case REB_INTEGER:
@@ -255,7 +255,7 @@ Bounce MAKE_Issue(
 
       case REB_TEXT:
         if (Cell_Series_Len_At(arg) == 0)
-            fail ("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
+            return FAIL("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
         if (Cell_Series_Len_At(arg) == 1)
             return Init_Char_Unchecked(OUT, Codepoint_At(Cell_Utf8_At(arg)));
         return MAKE_String(level_, REB_ISSUE, nullptr, arg);
@@ -287,7 +287,7 @@ DECLARE_NATIVE(codepoint_to_char)
 
     Option(Error*) error = Trap_Init_Char(OUT, c);
     if (error)
-        fail (unwrap error);
+        return FAIL(unwrap error);
     return OUT;
 }
 
@@ -309,17 +309,17 @@ DECLARE_NATIVE(utf8_to_char)
     const Byte *encoded = Cell_Binary_Size_At(&size, ARG(utf8));
 
     if (size == 0)
-        fail ("Empty binary passed to UTF8-TO-CHAR");
+        return FAIL("Empty binary passed to UTF8-TO-CHAR");
 
     Codepoint c;
     Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &encoded, &size);
     if (e)
-        fail (unwrap e);
+        return FAIL(unwrap e);
 
     assert(size != 0);  // Back_Scan() assumes one byte decrement
 
     if (size != 1)
-        fail ("More than one codepoint found in UTF8-TO-CHAR conversion");
+        return FAIL("More than one codepoint found in UTF8-TO-CHAR conversion");
 
     Init_Char_Unchecked(OUT, c);  // !!! Guaranteed good character?
     return OUT;
@@ -490,7 +490,7 @@ REBTYPE(Issue)
           default:
             break;
         }
-        fail (PARAM(property)); }
+        return FAIL(PARAM(property)); }
 
       case SYM_COPY:  // since copy result is also immutable, Move() suffices
         return Copy_Cell(OUT, issue);
@@ -503,7 +503,7 @@ REBTYPE(Issue)
     // implementation, and will not work if the ISSUE! length is > 1.
     //
     if (not IS_CHAR(issue))
-        fail ("Math operations only usable on single-character ISSUE!");
+        return FAIL("Math operations only usable on single-character ISSUE!");
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
@@ -518,7 +518,7 @@ REBTYPE(Issue)
 
         const Value* picker = ARG(picker);
         if (not Is_Integer(picker))
-            fail (PARAM(picker));
+            return FAIL(PARAM(picker));
 
         REBI64 n = VAL_INT64(picker);
         if (n <= 0)
@@ -567,14 +567,14 @@ REBTYPE(Issue)
       case SYM_DIVIDE:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            return FAIL(Error_Zero_Divide_Raw());
         chr /= arg;
         break;
 
       case SYM_REMAINDER:
         arg = Math_Arg_For_Char(D_ARG(2), verb);
         if (arg == 0)
-            fail (Error_Zero_Divide_Raw());
+            return FAIL(Error_Zero_Divide_Raw());
         chr %= arg;
         break;
 
@@ -613,7 +613,7 @@ REBTYPE(Issue)
 
         UNUSED(PARAM(value));
         if (REF(only))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(seed)) {
             Set_Random(chr);
@@ -625,7 +625,7 @@ REBTYPE(Issue)
         break; }
 
       default:
-        fail (UNHANDLED);
+        return UNHANDLED;
     }
 
     if (chr < 0)
@@ -657,12 +657,14 @@ DECLARE_NATIVE(trailing_bytes_for_utf8)
 
     REBINT byte = VAL_INT32(ARG(first_byte));
     if (byte < 0 or byte > 255)
-        fail (Error_Out_Of_Range(ARG(first_byte)));
+        return FAIL(Error_Out_Of_Range(ARG(first_byte)));
 
     uint_fast8_t trail = g_trailing_bytes_for_utf8[cast(Byte, byte)];
     if (trail > 3 and not REF(extended)) {
         assert(trail == 4 or trail == 5);
-        fail ("Use /EXTENDED with TRAILNG-BYTES-FOR-UTF-8 for 4 or 5 bytes");
+        return FAIL(
+            "Use :EXTENDED with TRAILING-BYTES-FOR-UTF-8 for 4 or 5 bytes"
+        );
     }
 
     return Init_Integer(OUT, trail);

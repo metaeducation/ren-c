@@ -437,7 +437,7 @@ REBTYPE(Parameter)
 
         const Value* picker = ARG(picker);
         if (not Is_Word(picker))
-            fail (picker);
+            return FAIL(picker);
 
         switch (Cell_Word_Id(picker)) {
           case SYM_TEXT: {
@@ -470,14 +470,14 @@ REBTYPE(Parameter)
 
         const Value* picker = ARG(picker);
         if (not Is_Word(picker))
-            fail (picker);
+            return FAIL(picker);
 
         Value* setval = ARG(value);
 
         switch (Cell_Word_Id(picker)) {
           case SYM_TEXT: {
             if (not Is_Text(setval))
-                fail (setval);
+                return FAIL(setval);
             String* string = Copy_String_At(setval);
             Manage_Flex(string);
             Freeze_Flex(string);
@@ -488,11 +488,11 @@ REBTYPE(Parameter)
             break;
         }
 
-        fail (Error_Bad_Pick_Raw(picker)); }
+        return FAIL(Error_Bad_Pick_Raw(picker)); }
 
       default:
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

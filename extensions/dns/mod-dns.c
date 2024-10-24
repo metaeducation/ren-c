@@ -170,7 +170,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         UNUSED(PARAM(source));  // covered by `port`
 
         if (REF(part) or REF(seek))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(string)); // handled in dispatcher
         UNUSED(PARAM(lines)); // handled in dispatcher
@@ -239,7 +239,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
             // ...else fall through to error handling...
         }
         else
-            fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
+            return FAIL(Error_On_Port(SYM_INVALID_SPEC, port, -10));
 
         switch (h_errno) {
           case HOST_NOT_FOUND:  // The specified host is unknown
@@ -266,7 +266,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         UNUSED(PARAM(spec));
 
         if (REF(new) or REF(read) or REF(write))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         // !!! All the information the DNS needs is at the moment in the
         // port spec, so there's nothing that has to be done in the OPEN.
@@ -287,7 +287,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 

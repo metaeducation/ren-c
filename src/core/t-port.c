@@ -57,7 +57,7 @@ Bounce MAKE_Port(
         cast(Value*, OUT),  // <-- output cell
         rebRUN(SysUtil(MAKE_PORT_P)), rebQ(arg)
     )){
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        return FAIL(Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
     if (not Is_Port(OUT))  // should always create a port
@@ -137,6 +137,10 @@ REBTYPE(Port)
     //
     if (Is_Native_Port_Actor(actor)) {
         Bounce b = cast(PORT_HOOK*, Cell_Handle_Cfunc(actor))(level_, port, verb);
+        if (b == BOUNCE_THROWN) {
+            assert(Is_Error(VAL_THROWN_LABEL(TOP_LEVEL)));
+            return b;
+        }
 
         if (b == nullptr)
            Init_Nulled(OUT);
@@ -151,7 +155,7 @@ REBTYPE(Port)
     }
 
     if (not Is_Object(actor))
-        fail (Error_Invalid_Actor_Raw());
+        return FAIL(Error_Invalid_Actor_Raw());
 
     // Dispatch object function:
 
@@ -167,7 +171,7 @@ REBTYPE(Port)
     if (not action or not Is_Action(action)) {
         DECLARE_ATOM (verb_cell);
         Init_Word(verb_cell, verb);
-        fail (Error_No_Port_Action_Raw(verb_cell));
+        return FAIL(Error_No_Port_Action_Raw(verb_cell));
     }
 
     Push_Redo_Action_Level(OUT, level_, action);
@@ -196,7 +200,9 @@ REBTYPE(Port)
 
         if ((REF(string) or REF(lines)) and not Is_Text(OUT)) {
             if (not Is_Binary(OUT))
-                fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
+                return FAIL(
+                    "READ :STRING or :LINES used on a non-BINARY!/STRING! read"
+                );
 
             Size size;
             const Byte* data = Cell_Binary_Size_At(&size, OUT);
@@ -262,7 +268,7 @@ REBTYPE(Url)
         break;
 
       default:
-        fail ("URL! must be used with IO annotation if intentional");
+        return FAIL("URL! must be used with IO annotation if intentional");
     }
 
     Value* port = rebValue("make port!", url);

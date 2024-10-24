@@ -142,7 +142,7 @@ Bounce Macro_Dispatcher(Level* const L)
         return Init_Nihil(OUT);
 
     if (not Is_Block(OUT))
-        fail ("MACRO must return VOID or BLOCK! for the moment");
+        return FAIL("MACRO must return VOID or BLOCK! for the moment");
 
     Splice_Block_Into_Feed(L->feed, stable_OUT);
 

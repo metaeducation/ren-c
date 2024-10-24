@@ -593,7 +593,7 @@ DECLARE_NATIVE(let)
         Decay_If_Unstable(SPARE);
 
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
-            fail ("QUOTED? escapes not supported at top level of LET");
+            return FAIL("QUOTED? escapes not supported at top level of LET");
 
         if (
             Try_Get_Settable_Word_Symbol(cast(Element*, SPARE))
@@ -606,7 +606,7 @@ DECLARE_NATIVE(let)
                 Setify(cast(Element*, SPARE));  //  let ('word): -> let word:
         }
         else
-            fail ("LET GROUP! limited to WORD! and BLOCK!");  // [4]
+            return FAIL("LET GROUP! limited to WORD! and BLOCK!");  // [4]
 
         vars = stable_SPARE;
     }
@@ -691,7 +691,7 @@ DECLARE_NATIVE(let)
                     Init_Blank(OUT);
                 }
                 else if (Is_Antiform(OUT))
-                    fail (Error_Bad_Antiform(OUT));
+                    return FAIL(Error_Bad_Antiform(OUT));
 
                 temp = cast(Element*, OUT);
                 temp_binding = SPECIFIED;
@@ -719,7 +719,7 @@ DECLARE_NATIVE(let)
                 break; }
 
               default:
-                fail (temp);  // default to passthru [6]
+                return FAIL(temp);  // default to passthru [6]
             }
         }
 

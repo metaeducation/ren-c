@@ -128,7 +128,7 @@ DECLARE_NATIVE(breakpoint_p)
     // could splice in a value in place of what comes after it.
     //
     if (not Is_Quasi_Word(SPARE))
-        fail ("BREAKPOINT is invisible, can't RESUME:WITH code (use PAUSE)");
+        return FAIL("BREAKPOINT invisible, can't RESUME:WITH code (use PAUSE)");
 
     return NOTHING;
 }

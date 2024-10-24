@@ -128,7 +128,7 @@ REBTYPE(Blank)
         UNUSED(ARG(value));
 
         if (REF(part))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(REF(deep));
 
@@ -137,7 +137,7 @@ REBTYPE(Blank)
       default: break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 
@@ -233,5 +233,5 @@ REBTYPE(Handle)
     UNUSED(level_);
     UNUSED(verb);
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

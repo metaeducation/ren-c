@@ -575,7 +575,7 @@ DECLARE_NATIVE(what_dir)
 
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (Is_File(current_path) || Is_Nulled(current_path)) {
+    if (Is_File(current_path) or Is_Nulled(current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the
@@ -594,7 +594,7 @@ DECLARE_NATIVE(what_dir)
         // Lousy error, but ATM the user can directly edit system.options.
         // They shouldn't be able to (or if they can, it should be validated)
         //
-        fail (current_path);
+        return FAIL(current_path);
     }
 
     return rebValue(Canon(TRY), Canon(COPY), current_path);  // caller mutates
@@ -630,7 +630,7 @@ DECLARE_NATIVE(change_dir)
         bool success = Set_Current_Dir_Value(arg);
 
         if (not success)
-            fail (PARAM(path));
+            return FAIL(PARAM(path));
     }
 
     Copy_Cell(current_path, arg);

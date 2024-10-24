@@ -151,9 +151,9 @@ DECLARE_NATIVE(bind)
         assert(Any_Word(target));
 
         if (IS_WORD_UNBOUND(target))
-            fail (Error_Not_Bound_Raw(target));
+            return FAIL(Error_Not_Bound_Raw(target));
 
-        fail ("Binding to WORD! only implemented via INSIDE at this time.");
+        return FAIL("Bind to WORD! only implemented via INSIDE at this time");
     }
 
     if (Any_Wordlike(v)) {
@@ -170,11 +170,11 @@ DECLARE_NATIVE(bind)
             return COPY(v);
         }
 
-        fail (Error_Not_In_Context_Raw(v));
+        return FAIL(Error_Not_In_Context_Raw(v));
     }
 
     if (not Any_Listlike(v))  // QUOTED? could have wrapped any type
-        fail (Error_Invalid_Arg(level_, PARAM(value)));
+        return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
     Element* at;
     const Element* tail;
@@ -262,7 +262,7 @@ DECLARE_NATIVE(overbind)
 
     if (Is_Word(defs)) {
         if (IS_WORD_UNBOUND(defs))
-            fail (Error_Not_Bound_Raw(defs));
+            return FAIL(Error_Not_Bound_Raw(defs));
     }
     else
         assert(Any_Context(defs));
@@ -1008,7 +1008,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
         if (Is_Raised(cast(Atom*, out))) {
             Error* error = Cell_Error(out);  // extract error
             bool last_step = (stackindex == TOP_INDEX);
-            Erase_Cell(out);  // suppress assert about unhandled raised error
+            Erase_Atom_To_Suppress_Raised_Error(out);
 
             Drop_Data_Stack_To(base);  // Note: changes TOP_INDEX
             Drop_GC_Guard(temp);
@@ -1625,7 +1625,7 @@ DECLARE_NATIVE(resolve)
         OUT, stable_SPARE, source, SPECIFIED
     );
     if (error)
-        fail (unwrap error);
+        return FAIL(unwrap error);
 
     Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Set_Flex_Len(pack, 2);
@@ -1668,10 +1668,10 @@ DECLARE_NATIVE(get)
 
     if (Any_Group(source)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
         if (not REF(groups))
-            fail (Error_Bad_Get_Group_Raw(source));
+            return FAIL(Error_Bad_Get_Group_Raw(source));
 
         if (steps != GROUPS_OK)
-            fail ("GET on GROUP! with steps doesn't have answer ATM");
+            return FAIL("GET on GROUP! with steps doesn't have answer ATM");
 
         if (Eval_Any_List_At_Throws(SPARE, source, SPECIFIED))
             return Error_No_Catch_For_Throw(LEVEL);
@@ -1684,7 +1684,7 @@ DECLARE_NATIVE(get)
         if (not (
             Any_Word(SPARE) or Any_Sequence(SPARE) or Is_The_Block(SPARE))
         ){
-            fail (SPARE);
+            return FAIL(SPARE);
         }
 
         source = cast(Element*, SPARE);
@@ -2062,10 +2062,10 @@ DECLARE_NATIVE(set)
 
     if (Any_Group(target)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
         if (not REF(groups))
-            fail (Error_Bad_Get_Group_Raw(target));
+            return FAIL(Error_Bad_Get_Group_Raw(target));
 
         if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
-            fail (Error_No_Catch_For_Throw(LEVEL));
+            return FAIL(Error_No_Catch_For_Throw(LEVEL));
 
         Decay_If_Unstable(SPARE);
 
@@ -2162,7 +2162,7 @@ DECLARE_NATIVE(proxy_exports)
     const Element* v = Cell_List_At(&tail, ARG(exports));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
-            fail (ARG(exports));
+            return FAIL(ARG(exports));
 
         const Symbol* symbol = Cell_Word_Symbol(v);
 
@@ -2170,7 +2170,7 @@ DECLARE_NATIVE(proxy_exports)
 
         const Value* src = MOD_VAR(source, symbol, strict);
         if (src == nullptr)
-            fail (v);  // fail if unset value, also?
+            return FAIL(v);  // fail if unset value, also?
 
         Value* dest = MOD_VAR(where, symbol, strict);
         if (dest != nullptr) {
@@ -2226,12 +2226,12 @@ DECLARE_NATIVE(infix)
 
     if (REF(off)) {
         if (REF(defer) or REF(postpone))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
         Set_Cell_Infix_Mode(OUT, PREFIX_0);
     }
     else if (REF(defer)) {  // not OFF, already checked
         if (REF(postpone))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
         Set_Cell_Infix_Mode(OUT, INFIX_DEFER);
     }
     else if (REF(postpone)) {  // not OFF or DEFER, we checked
@@ -2281,10 +2281,10 @@ DECLARE_NATIVE(free)
         return NOTHING;
 
     if (Any_Context(v) or Is_Handle(v))
-        fail ("FREE only implemented for ANY-SERIES? at the moment");
+        return FAIL("FREE only implemented for ANY-SERIES? at the moment");
 
     if (Not_Node_Accessible(Cell_Node1(v)))
-        fail ("Cannot FREE already freed series");
+        return FAIL("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
     Decay_Flex(f);
@@ -2516,7 +2516,7 @@ DECLARE_NATIVE(as)
     Value* t = ARG(type);
     Kind new_kind = VAL_TYPE_KIND(t);
     if (new_kind >= REB_MAX_HEART)
-        fail ("New kind can't be quoted/quasiform/antiform");
+        return FAIL("New kind can't be quoted/quasiform/antiform");
 
     Heart new_heart = cast(Heart, new_kind);
     if (new_heart == Cell_Heart_Ensure_Noquote(v))
@@ -2528,7 +2528,7 @@ DECLARE_NATIVE(as)
 
         if (Any_Sequence(v)) {  // internals vary based on optimization
             if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
-                fail ("Array Conversions of byte-oriented sequences TBD");
+                return FAIL("Array Conversions of byte-oriented sequences TBD");
 
             const Node* node1 = Cell_Node1(v);
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [1]
@@ -2612,7 +2612,7 @@ DECLARE_NATIVE(as)
                 VAL_INDEX(v)
             );
             if (error)
-                fail (unwrap error);
+                return FAIL(unwrap error);
 
             /* BINDING(temp) = BINDING(v); */  // may be unfit after compress
             Derelativize(OUT, temp, BINDING(v));  // try this instead (?)
@@ -2657,7 +2657,7 @@ DECLARE_NATIVE(as)
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
             if (nullptr == Scan_Any_Word(OUT, new_heart, utf8, size))
-                fail (Error_Bad_Char_Raw(v));
+                return FAIL(Error_Bad_Char_Raw(v));
 
             return Inherit_Const(stable_OUT, v);
           }
@@ -2674,7 +2674,7 @@ DECLARE_NATIVE(as)
                 // in those cases where the efficient reuse works out.
 
                 if (Get_Cell_Flag(v, CONST))
-                    fail (Error_Alias_Constrains_Raw());
+                    return FAIL(Error_Alias_Constrains_Raw());
 
                 Freeze_Flex(Cell_Flex(v));
             }
@@ -2703,7 +2703,7 @@ DECLARE_NATIVE(as)
 
         if (Is_Binary(v)) {
             if (VAL_INDEX(v) != 0)  // ANY-WORD? stores binding, not position
-                fail ("Cannot convert BINARY! to WORD! unless at the head");
+                return FAIL("Can't alias BINARY! as WORD! unless at head");
 
             // We have to permanently freeze the underlying String from any
             // mutation to use it in a WORD! (and also, may add STRING flag);
@@ -2711,7 +2711,7 @@ DECLARE_NATIVE(as)
             const Binary* b = Cell_Binary(v);
             if (not Is_Flex_Frozen(b))
                 if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
-                    fail (Error_Alias_Constrains_Raw());
+                    return FAIL(Error_Alias_Constrains_Raw());
 
             const String* str;
             if (Is_Stub_String(b))
@@ -2749,7 +2749,7 @@ DECLARE_NATIVE(as)
     else switch (new_heart) {
       case REB_INTEGER: {
         if (not IS_CHAR(v))
-            fail ("AS INTEGER! only supports what-were-CHAR! issues ATM");
+            return FAIL("AS INTEGER! only supports what-were-CHAR! issues ATM");
         return Init_Integer(OUT, Cell_Codepoint(v)); }
 
       case REB_ISSUE: {
@@ -2841,7 +2841,7 @@ DECLARE_NATIVE(as)
             return Inherit_Const(stable_OUT, v);
         }
 
-        fail (v); }
+        return FAIL(v); }
 
     case REB_FRAME: {
       if (Is_Frame(v)) {
@@ -2862,14 +2862,14 @@ DECLARE_NATIVE(as)
         );
       }
 
-      fail (v); }
+      return FAIL(v); }
 
       default:  // all applicable types should be handled above
         break;
     }
 
   bad_cast:
-    fail (Error_Bad_Cast_Raw(v, ARG(type)));
+    return FAIL(Error_Bad_Cast_Raw(v, ARG(type)));
 
   adjust_v_heart:
     //
@@ -2899,7 +2899,7 @@ DECLARE_NATIVE(as_text)
     Value* v = ARG(value);
     Dequotify(v);  // number of incoming quotes not relevant
     if (not Any_Series(v) and not Any_Word(v) and not Any_Path(v))
-        fail (PARAM(value));
+        return FAIL(PARAM(value));
 
     const REBLEN quotes = 0;  // constant folding (see AS behavior)
 
@@ -2914,7 +2914,7 @@ DECLARE_NATIVE(as_text)
         quotes,
         REF(strict) ? STRMODE_NO_CR : STRMODE_ALL_CODEPOINTS
     )){
-        fail (Error_Bad_Cast_Raw(v, Datatype_From_Kind(REB_TEXT)));
+        return FAIL(Error_Bad_Cast_Raw(v, Datatype_From_Kind(REB_TEXT)));
     }
 
     return OUT;

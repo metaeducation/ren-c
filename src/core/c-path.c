@@ -186,7 +186,9 @@ DECLARE_NATIVE(poke)
     // operations are likely accidents and should raise errors.
     //
     if (r != nullptr and not REF(immediate))
-        fail ("POKE of immediate won't change value, use :IMMEDIATE if okay");
+        return FAIL(
+            "POKE of immediate won't change value, use :IMMEDIATE if okay"
+        );
 
     return COPY(v);  // return the value we got in
 }
@@ -211,7 +213,7 @@ Bounce MAKE_Path(
         return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (not Is_Block(arg))
-        fail (Error_Bad_Make(heart, arg)); // "make path! 0" has no meaning
+        return FAIL(Error_Bad_Make(heart, arg)); // "make path! 0" meaningless
 
     Level* L = Make_Level_At(&Stepper_Executor, arg, LEVEL_MASK_NONE);
 
@@ -234,7 +236,7 @@ Bounce MAKE_Path(
             return RAISE(Error_Need_Non_Null_Raw());
 
         if (Is_Antiform(OUT))
-            fail (Error_Bad_Antiform(OUT));
+            return FAIL(Error_Bad_Antiform(OUT));
 
         Move_Cell(PUSH(), cast(Element*, OUT));
         L->baseline.stack_base += 1;  // compensate for push
@@ -245,7 +247,7 @@ Bounce MAKE_Path(
     Drop_Level_Unbalanced(L); // !!! L's stack_base got captured each loop
 
     if (error)
-        fail (unwrap error);
+        return FAIL(unwrap error);
 
     return OUT;
 }

@@ -27,6 +27,83 @@
 
 
 //
+//  Derive_Error_From_Pointer: C
+//
+// This is the polymorphic code behind fail(), FAIL(), and RAISE():
+//
+//    fail ("UTF-8 string");  // delivers error with that text
+//    fail (api_value);       // ensure it's an ERROR!, release and use as-is
+//    fail (error_context);   // use the Error* as-is
+//    fail (PARAM(name));     // impliciate parameter as having a bad value
+//    fail (other_cell);      // just report as a generic "bad value"
+//
+// 1. We would face an ambiguity in taking API handles, as to whether that
+//    is an error, or if it is "some value" that is just a bad value.  Since
+//    internal code that would use this function does not deal often in
+//    API values, it's believed that assuming they are errors when passed
+//    to `fail()` or `FAIL()` or `RAISE()` is the best policy.
+//
+// 2. We check to see if the Cell is in the paramlist of the current running
+//    native.  (We could theoretically do this with ARG(), or have a nuance of
+//    behavior with ARG()...or even for the Key*...but failing on the PARAM()
+//    feels like the best way to "blame" that argument.)
+//
+Error* Derive_Error_From_Pointer(const void* p) {
+    if (p == nullptr)
+        return Error_Unknown_Error_Raw();
+
+    switch (Detect_Rebol_Pointer(p)) {
+      case DETECTED_AS_UTF8:
+        return Error_User(c_cast(char*, p));
+
+      case DETECTED_AS_STUB: {
+        Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
+        if (not Is_Stub_Varlist(f))
+            panic (f);  // only kind of Flex allowed are contexts of ERROR!
+        if (CTX_TYPE(cast(VarList*, f)) != REB_ERROR)
+            panic (f);
+        return cast(Error*, f); }
+
+      case DETECTED_AS_CELL: {
+        const Atom* atom = c_cast(Atom*, p);
+        assert(Is_Stable(atom));  // !!! Should unstable args be allowed?
+        UNUSED(atom);
+
+        const Value* v = c_cast(Value*, p);
+
+        if (Is_Node_Root_Bit_Set(v)) {  // API handles must be errors [1]
+            Error* error;
+            if (Is_Error(v)) {
+                error = Cell_Error(v);
+            }
+            else {
+                assert(!"fail() given API handle that is not an ERROR!");
+                error = Error_Bad_Value(v);
+            }
+            rebRelease(m_cast(Value*, v));  // released even if we didn't
+            return error;
+        }
+
+        if (not Is_Action_Level(TOP_LEVEL))
+            return Error_Bad_Value(v);
+
+        const Param* head = ACT_PARAMS_HEAD(Level_Phase(TOP_LEVEL));
+        REBLEN num_params = ACT_NUM_PARAMS(Level_Phase(TOP_LEVEL));
+
+        if (v >= head and v < head + num_params) {  // PARAM() error [2]
+            const Param* param = cast_PAR(c_cast(Value*, v));
+            return Error_Invalid_Arg(TOP_LEVEL, param);
+        }
+        return Error_Bad_Value(v); }
+
+      default:
+        break;
+    }
+    panic (p);
+}
+
+
+//
 //  Fail_Core: C
 //
 // Trigger failure of an error by longjmp'ing to enclosing RESCUE_SCOPE.  Note
@@ -82,68 +159,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     //
     assert(TOP_LEVEL->executor != nullptr);
 
-    Error* error;
-    if (p == nullptr) {
-        error = Error_Unknown_Error_Raw();
-    }
-    else switch (Detect_Rebol_Pointer(p)) {
-      case DETECTED_AS_UTF8:
-        error = Error_User(c_cast(char*, p));
-        break;
-
-      case DETECTED_AS_STUB: {
-        Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
-        if (not Is_Stub_Varlist(f))
-            panic (f);  // only kind of Flex allowed are contexts of ERROR!
-        error = cast(Error*, f);
-        break; }
-
-      case DETECTED_AS_CELL: {
-        const Atom* atom = c_cast(Atom*, p);
-        assert(Is_Stable(atom));  // !!! Should unstable args be allowed?
-        UNUSED(atom);
-
-        const Value* v = c_cast(Value*, p);
-
-        // Check to see if the Value* cell is in the paramlist of the current
-        // running native.  (We could theoretically do this with ARG(), or
-        // have a nuance of behavior with ARG()...or even for the Key* .)
-        //
-        if (Is_Node_Root_Bit_Set(v)) {
-            //
-            // If you call the internal fail() function on an API handle, that
-            // should be the handle of an error.  If we allowed it to take
-            // any value, then it would call into question the treatment of
-            // the error as an error and not erroring on "some value"
-            //
-            if (Is_Error(v)) {
-                error = Cell_Error(v);
-            }
-            else {
-                assert(!"fail() given API handle that is not an ERROR!");
-                error = Error_Bad_Value(v);
-            }
-            rebRelease(m_cast(Value*, v));  // released even if we didn't
-        }
-        else if (not Is_Action_Level(TOP_LEVEL))
-            error = Error_Bad_Value(v);
-        else {
-            const Param* head = ACT_PARAMS_HEAD(Level_Phase(TOP_LEVEL));
-            REBLEN num_params = ACT_NUM_PARAMS(Level_Phase(TOP_LEVEL));
-
-            if (v >= head and v < head + num_params) {
-                const Param* param = cast_PAR(c_cast(Value*, v));
-                error = Error_Invalid_Arg(TOP_LEVEL, param);
-            }
-            else
-                error = Error_Bad_Value(v);
-        }
-        break; }
-
-      default:
-        panic (p);  // suppress compiler error from non-smart compilers
-    }
-
+    Error* error = Derive_Error_From_Pointer(p);
     Assert_Varlist(error);
     assert(CTX_TYPE(error) == REB_ERROR);
 
@@ -410,7 +426,7 @@ Bounce MAKE_Error(
     UNUSED(kind);
 
     if (parent)  // !!! Should probably be able to work!
-        fail (Error_Bad_Make_Parent(kind, unwrap parent));
+        return FAIL(Error_Bad_Make_Parent(kind, unwrap parent));
 
     // Frame from the error object template defined in %sysobj.r
     //
@@ -559,7 +575,7 @@ Bounce MAKE_Error(
                 or Is_Nulled(&vars->message)
             )
         )){
-            fail (Error_Invalid_Error_Raw(Varlist_Archetype(e)));
+            return FAIL(Error_Invalid_Error_Raw(Varlist_Archetype(e)));
         }
     }
 

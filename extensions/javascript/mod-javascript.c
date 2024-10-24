@@ -677,10 +677,14 @@ Bounce JavaScript_Dispatcher(Level* const L)
         goto initial_entry;
 
       case ST_JS_NATIVE_RUNNING :
-        fail ("JavaScript_Dispatcher reentry while running, shouldn't happen");
+        return FAIL(
+            "JavaScript_Dispatcher reentry while running, shouldn't happen"
+        );
 
       case ST_JS_NATIVE_SUSPENDED :
-        fail ("JavaScript_Dispatcher when suspended, needed resolve/reject");
+        return FAIL(
+            "JavaScript_Dispatcher when suspended, needed resolve/reject"
+        );
 
       case ST_JS_NATIVE_RESOLVED :
         goto handle_resolved;
@@ -699,9 +703,13 @@ Bounce JavaScript_Dispatcher(Level* const L)
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
         if (info == nullptr)
-            fail ("JavaScript /AWAITER can only be called from rebPromise()");
+            return FAIL(
+                "JavaScript /AWAITER can only be called from rebPromise()"
+            );
         if (info->state != PROMISE_STATE_RUNNING)
-            fail ("Cannot call JavaScript /AWAITER during another await");
+            return FAIL(
+                "Cannot call JavaScript /AWAITER during another await"
+            );
     }
     else
         assert(not info or info->state == PROMISE_STATE_RUNNING);
@@ -742,12 +750,12 @@ Bounce JavaScript_Dispatcher(Level* const L)
     if (STATE == ST_JS_NATIVE_REJECTED)
         goto handle_rejected;
 
-    fail ("Unknown frame STATE value after reb.RunNative_internal()");
+    return FAIL("Unknown frame STATE value after reb.RunNative_internal()");
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
     if (not Typecheck_Coerce_Return(L, OUT))
-        fail (Error_Bad_Return_Type(L, OUT));
+        return FAIL(Error_Bad_Return_Type(L, OUT));
 
     return OUT;
 
@@ -775,8 +783,9 @@ Bounce JavaScript_Dispatcher(Level* const L)
     }
 
     TRACE("Calling fail() with error context");
-    VarList* ctx = Cell_Varlist(OUT);
-    fail (ctx);  // better than Init_Thrown_With_Label(), gives location
+
+    Error* e = Cell_Error(OUT);
+    return FAIL(e);
 }}
 
 
@@ -931,13 +940,13 @@ DECLARE_NATIVE(js_native)
         js,  /* JS code registering the function body (the `$0` parameter) */
         source
     );
-    Value* error = cast(Value*, Pointer_From_Heapaddr(error_addr));
-    if (error) {
-        VarList* ctx = Cell_Varlist(error);
-        rebRelease(error);  // !!! failing, so not actually needed (?)
+    Value* errval = cast(Value*, Pointer_From_Heapaddr(error_addr));
+    if (errval) {
+        Error* e = Cell_Error(errval);
+        rebRelease(errval);  // !!! failing, so not actually needed (?)
 
         TRACE("JS-NATIVE had malformed JS, calling fail() w/error context");
-        fail (ctx);
+        return FAIL(e);
     }
 
     Drop_Mold(mo);
@@ -1056,11 +1065,10 @@ DECLARE_NATIVE(js_eval_p)
 
 } handle_error: {  ///////////////////////////////////////////////////////////
 
-    Value* error = Value_From_Value_Id(addr);
-    assert(Is_Error(error));
-    VarList* ctx = Cell_Varlist(error);
-    rebRelease(error);
-    fail (ctx);  // better than Init_Thrown_With_Label(), identifies source
+    Value* errval = Value_From_Value_Id(addr);
+    Error* e = Cell_Error(errval);
+    rebRelease(errval);
+    return FAIL(e);
 }}
 
 
@@ -1111,11 +1119,12 @@ DECLARE_NATIVE(js_trace)
 
   #if DEBUG_JAVASCRIPT_EXTENSION
     PG_Probe_Failures = PG_JS_Trace = Cell_Logic(ARG(enable));
-  #else
-    fail ("JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r");
-  #endif
-
     return NOTHING;
+  #else
+    return FAIL(
+        "JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r"
+    );
+  #endif
 }
 
 

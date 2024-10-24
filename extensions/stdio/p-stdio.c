@@ -320,10 +320,10 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
         UNUSED(PARAM(source));
 
         if (REF(part))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(seek))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(string)); // handled in dispatcher
         UNUSED(PARAM(lines)); // handled in dispatcher
@@ -419,5 +419,5 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

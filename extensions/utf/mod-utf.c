@@ -204,7 +204,7 @@ DECLARE_NATIVE(encode_text)
 
     UNUSED(PARAM(string));
 
-    fail (".txt codec not currently implemented (what should it do?)");
+    return FAIL(".txt codec not currently implemented (what should it do?)");
 }
 
 

@@ -633,7 +633,7 @@ DECLARE_NATIVE(collect_words)
         const Element* check = Cell_List_At(&check_tail, ignore);
         for (; check != check_tail; ++check) {
             if (not Any_Word_Kind(Cell_Heart(check)))
-                fail (Error_Bad_Value(check));
+                return FAIL(Error_Bad_Value(check));
         }
     }
 

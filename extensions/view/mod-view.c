@@ -307,7 +307,7 @@ DECLARE_NATIVE(request_file_p)
     //
     int argc = 0;
     if (not gtk_init_check(&argc, nullptr))
-        fail ("gtk_init_check() failed");
+        return rebDelegate("fail -{gtk_init_check() failed}-");
 
     // Note: FILTER not implemented in GTK for Atronix R3
 
@@ -509,7 +509,7 @@ DECLARE_NATIVE(request_dir_p)
         // Already initialized on this thread
     }
     else
-        fail ("Failure during CoInitializeEx()");
+        return rebDelegate("fail -{Failure during CoInitializeEx()-}");
 
     BROWSEINFO bi;
     bi.hwndOwner = nullptr;

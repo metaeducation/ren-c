@@ -339,7 +339,7 @@ REBTYPE(Integer)
             default:
                 break;
             }
-            fail (Error_Math_Args(REB_INTEGER, verb));
+            return FAIL(Error_Math_Args(REB_INTEGER, verb));
         }
     }
     else
@@ -452,7 +452,7 @@ REBTYPE(Integer)
         }
 
         if (Is_Time(ARG(to)))
-            fail (PARAM(to));
+            return FAIL(PARAM(to));
 
         return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to))); }
 
@@ -462,19 +462,19 @@ REBTYPE(Integer)
         UNUSED(PARAM(value));
 
         if (REF(only))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(seed)) {
             Set_Random(num);
             return NOTHING;
         }
         if (num == 0)
-            fail (ARG(value));
+            return FAIL(ARG(value));
         return Init_Integer(OUT, Random_Range(num, REF(secure))); }
 
     default:
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

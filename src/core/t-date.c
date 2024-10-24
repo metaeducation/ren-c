@@ -1087,7 +1087,7 @@ REBTYPE(Date)
             UNUSED(PARAM(value));
 
             if (REF(only))
-                fail (Error_Bad_Refines_Raw());
+                return FAIL(Error_Bad_Refines_Raw());
 
             const bool secure = REF(secure);
 
@@ -1121,10 +1121,10 @@ REBTYPE(Date)
             Value* val2 = ARG(value2);
 
             if (REF(case))
-                fail (Error_Bad_Refines_Raw());
+                return FAIL(Error_Bad_Refines_Raw());
 
             if (REF(skip))
-                fail (Error_Bad_Refines_Raw());
+                return FAIL(Error_Bad_Refines_Raw());
 
             // !!! Plain SUBTRACT on dates has historically given INTEGER! of
             // days, while DIFFERENCE has given back a TIME!.  This is not
@@ -1134,7 +1134,9 @@ REBTYPE(Date)
             // https://forum.rebol.info/t/486
             //
             if (not Is_Date(val2))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                return FAIL(
+                    Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2))
+                );
 
             return Time_Between_Dates(OUT, val1, val2); }
 
@@ -1143,7 +1145,7 @@ REBTYPE(Date)
         }
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 
   fix_time:
     Normalize_Time(&secs, &day);

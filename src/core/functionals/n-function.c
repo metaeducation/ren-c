@@ -149,7 +149,9 @@ Bounce Func_Dispatcher(Level* const L)
     Init_Nothing(OUT);  // NOTHING, regardless of body result [2]
 
     if (not Typecheck_Coerce_Return(L, OUT))
-        fail ("End of function without a RETURN, but ~ not in RETURN: spec");
+        return FAIL(
+            "End of function without a RETURN, but ~ not in RETURN: spec"
+        );
 
     return OUT;
 }}
@@ -351,10 +353,10 @@ DECLARE_NATIVE(endable_q)
     Value* v = ARG(parameter);
 
     if (not Try_Get_Binding_Of(SPARE, v))
-        fail (PARAM(parameter));
+        return FAIL(PARAM(parameter));
 
     if (not Is_Frame(SPARE))
-        fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
+        return FAIL("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
     VarList* ctx = Cell_Varlist(SPARE);
     Action* act = CTX_FRAME_PHASE(ctx);
@@ -391,7 +393,7 @@ Bounce Init_Thrown_Unwind_Value(
         Level* L = target->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
-                fail (Error_Invalid_Exit_Raw());
+                return FAIL(Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Level(L))
                 continue; // only exit functions
@@ -410,12 +412,12 @@ Bounce Init_Thrown_Unwind_Value(
 
         REBLEN count = VAL_INT32(seek);
         if (count <= 0)
-            fail (Error_Invalid_Exit_Raw());
+            return FAIL(Error_Invalid_Exit_Raw());
 
         Level* L = target->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
-                fail (Error_Invalid_Exit_Raw());
+                return FAIL(Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Level(L))
                 continue; // only exit functions
@@ -557,13 +559,13 @@ DECLARE_NATIVE(definitional_return)
 
     Option(VarList*) coupling = Level_Coupling(return_level);
     if (not coupling)
-        fail (Error_Archetype_Invoked_Raw());
+        return FAIL(Error_Archetype_Invoked_Raw());
 
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return(target_level, atom))  // check now [2]
-            fail (Error_Bad_Return_Type(target_level, atom));
+            return FAIL(Error_Bad_Return_Type(target_level, atom));
 
         DECLARE_VALUE (label);
         Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
@@ -646,7 +648,7 @@ DECLARE_NATIVE(definitional_return)
         gather_args = Lib(OKAY);
     }
     else
-        fail ("RETURN/RUN requires action, frame, or <redo> as argument");
+        return FAIL("RETURN/RUN requires action, frame, or <redo> as argument");
 
     // We need to cooperatively throw a restart instruction up to the level
     // of the frame.  Use REDO as the throw label that Eval_Core() will

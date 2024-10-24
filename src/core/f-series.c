@@ -241,7 +241,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 

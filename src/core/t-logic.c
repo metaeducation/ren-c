@@ -490,7 +490,7 @@ REBTYPE(Antiform)
             return rebValue(Canon(RUNS), Canon(COPY), rebQ(D_ARG(1)));
         }
 
-        fail ("Antiform handler only supports LOGIC! (legacy workaround)");
+        return FAIL("Antiform handler only supports LOGIC! (legacy)");
     }
 
     bool b1 = Cell_Logic(D_ARG(1));
@@ -523,7 +523,7 @@ REBTYPE(Antiform)
         UNUSED(PARAM(value));
 
         if (REF(only))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(seed)) {
             //
@@ -538,7 +538,7 @@ REBTYPE(Antiform)
             // for getting a random LOGIC! was a non-sequitur which was in
             // the way of moving time to an extension, so it was removed.
             //
-            fail ("LOGIC! random seed currently not implemented");
+            return FAIL("LOGIC! random seed currently not implemented");
         }
 
         if (Random_Int(REF(secure)) & 1)
@@ -549,5 +549,5 @@ REBTYPE(Antiform)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

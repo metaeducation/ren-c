@@ -88,14 +88,14 @@ Bounce MAKE_Sequence(
         const Byte* ap = String_Head(spelling);
         Size size = String_Size(spelling);  // UTF-8 len
         if (size & 1)
-            fail (arg); // must have even # of chars
+            return FAIL(arg);  // must have even # of chars
         size /= 2;
         if (size > MAX_TUPLE)
-            fail (arg); // valid even for UTF-8
+            return FAIL(arg);  // valid even for UTF-8
         for (alen = 0; alen < size; alen++) {
             Byte decoded;
             if (not (ap = maybe Try_Scan_Hex2(&decoded, ap)))
-                fail (arg);
+                return FAIL(arg);
             *vp++ = decoded;
         }
         Init_Tuple_Bytes(OUT, buf, size);
@@ -146,7 +146,7 @@ REBTYPE(Sequence)
             return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(sequence)));
 
           default:
-            fail (UNHANDLED);  // !!! binding? etc.
+            return UNHANDLED;  // !!! binding? etc.
         }
         break; }
 
@@ -182,7 +182,7 @@ REBTYPE(Sequence)
             n = Int32(picker) - 1;
         }
         else
-            fail (picker);
+            return FAIL(picker);
 
         if (n < 0 or n >= Cell_Sequence_Len(sequence))
             return RAISE(Error_Bad_Pick_Raw(picker));
@@ -249,7 +249,7 @@ REBTYPE(Sequence)
         goto legacy_tuple_math;
 
       default:
-        fail (UNHANDLED);
+        return UNHANDLED;
     }
 
   legacy_tuple_math: { ///////////////////////////////////////////////////////
@@ -262,7 +262,7 @@ REBTYPE(Sequence)
     Byte buf[MAX_TUPLE];
 
     if (len > MAX_TUPLE or not Try_Get_Sequence_Bytes(buf, sequence, len))
-        fail ("Legacy TUPLE! math is only for short all-integer sequences");
+        return FAIL("Legacy TUPLE! math: only short all-integer sequences");
 
     Byte* vp = buf;
 
@@ -299,7 +299,7 @@ REBTYPE(Sequence)
             alen > MAX_TUPLE
             or not Try_Get_Sequence_Bytes(abuf, arg, alen)
         ){
-            fail ("Legacy TUPLE! math is only for short all-integer sequences");
+            return FAIL("Legacy TUPLE! math: only short all-integer sequences");
         }
 
         // Historical behavior: 1.1.1 + 2.2.2.2 => 3.3.3.2
@@ -313,7 +313,7 @@ REBTYPE(Sequence)
         ap = abuf;
     }
     else
-        fail (Error_Math_Args(REB_TUPLE, verb));
+        return FAIL(Error_Math_Args(REB_TUPLE, verb));
 
     REBLEN temp = len;
     for (; temp > 0; --temp, ++vp) {
@@ -336,7 +336,7 @@ REBTYPE(Sequence)
           case SYM_DIVIDE:
             if (Is_Decimal(arg) || Is_Percent(arg)) {
                 if (dec == 0.0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
 
                 // !!! After moving all the ROUND service routines to
                 // talk directly to ROUND frames, cases like this that
@@ -356,14 +356,14 @@ REBTYPE(Sequence)
             }
             else {
                 if (a == 0)
-                    fail (Error_Zero_Divide_Raw());
+                    return FAIL(Error_Zero_Divide_Raw());
                 v /= a;
             }
             break;
 
           case SYM_REMAINDER:
             if (a == 0)
-                fail (Error_Zero_Divide_Raw());
+                return FAIL(Error_Zero_Divide_Raw());
             v %= a;
             break;
 
@@ -384,7 +384,7 @@ REBTYPE(Sequence)
             break;
 
           default:
-            fail (UNHANDLED);
+            return UNHANDLED;
         }
 
         if (v > 255)

@@ -643,7 +643,9 @@ static Bounce Transport_Actor(
     enum Transport_Type transport
 ){
     if (transport == TRANSPORT_UDP)  // disabled for now
-        fail ("https://forum.rebol.info/t/fringe-udp-support-archiving/1730");
+        return FAIL(
+            "https://forum.rebol.info/t/fringe-udp-support-archiving/1730"
+        );
 
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
@@ -703,7 +705,7 @@ static Bounce Transport_Actor(
                 break;
             }
 
-            fail (Error_On_Port(SYM_NOT_OPEN, port, -12)); }
+            return FAIL(Error_On_Port(SYM_NOT_OPEN, port, -12)); }
 
           case SYM_OPEN: {
             Value* arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
@@ -720,7 +722,9 @@ static Bounce Transport_Actor(
             else if (Is_Integer(local_id))
                 sock->local_port_number = VAL_INT32(local_id);
             else
-                fail ("local-id field of PORT! spec must be NULL or INTEGER!");
+                return FAIL(
+                    "local-id field of PORT! spec must be NULL or INTEGER!"
+                );
 
             // !!! R3-Alpha would open the socket using `socket()` call, and
             // then do a DNS lookup afterward if necessary.  But the right
@@ -737,7 +741,7 @@ static Bounce Transport_Actor(
                 //
                 Value* lookup_error = Lookup_Socket_Synchronously(port, arg);
                 if (lookup_error)
-                    fail (lookup_error);
+                    return FAIL(lookup_error);
             }
             else if (Is_Tuple(arg)) {  // Host IP specified:
                 listen = false;
@@ -752,16 +756,16 @@ static Bounce Transport_Actor(
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 8000;
             }
             else
-                fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
+                return FAIL(Error_On_Port(SYM_INVALID_SPEC, port, -10));
 
             Value* open_error = Open_Socket(port);
             if (open_error)
-                fail (open_error);
+                return FAIL(open_error);
 
             if (listen) {
                 Value* listen_error = Start_Listening_On_Socket(port);
                 if (listen_error)
-                    fail (listen_error);
+                    return FAIL(listen_error);
             }
 
             return COPY(port); }
@@ -770,7 +774,7 @@ static Bounce Transport_Actor(
             return COPY(port);
 
           default:
-            fail (Error_On_Port(SYM_NOT_OPEN, port, -12));
+            return FAIL(Error_On_Port(SYM_NOT_OPEN, port, -12));
         }
     }
 
@@ -811,13 +815,13 @@ static Bounce Transport_Actor(
         UNUSED(PARAM(source));
 
         if (REF(seek))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(string)); // handled in dispatcher
         UNUSED(PARAM(lines)); // handled in dispatcher
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
-            fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
+            return FAIL(Error_On_Port(SYM_NOT_CONNECTED, port, -15));
 
         Reb_Read_Request *rebreq = rebAlloc(Reb_Read_Request);
         rebreq->port_ctx = Cell_Varlist(port);
@@ -826,7 +830,7 @@ static Bounce Transport_Actor(
 
         if (REF(part)) {
             if (not Is_Integer(ARG(part)))
-                fail (ARG(part));
+                return FAIL(PARAM(part));
 
             rebreq->length_store = VAL_INT32(ARG(part));
             rebreq->length = &rebreq->length_store;
@@ -867,10 +871,10 @@ static Bounce Transport_Actor(
         UNUSED(PARAM(destination));
 
         if (REF(seek) or REF(append) or REF(lines))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
-            fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
+            return FAIL(Error_On_Port(SYM_NOT_CONNECTED, port, -15));
 
         // !!! R3-Alpha did not lay out the invariants of the port model,
         // or what datatypes it would accept at what levels.  TEXT! could be
@@ -965,9 +969,9 @@ static Bounce Transport_Actor(
 
       case SYM_CLOSE: {
         if (sock->stream) {  // allows close of closed socket (?)
-            Value* error = Close_Socket(port);
-            if (error)
-                fail (error);
+            Value* errval = Close_Socket(port);
+            if (errval)
+                return FAIL(errval);
         }
         return COPY(port); }
 
@@ -978,9 +982,9 @@ static Bounce Transport_Actor(
         //
         // UDP is connectionless so it will not add to the connectors.
         //
-        Value* error = Request_Connect_Socket(port);
-        if (error != nullptr)
-            fail (error);
+        Value* errval = Request_Connect_Socket(port);
+        if (errval != nullptr)
+            return FAIL(errval);
 
         return COPY(port); }
 
@@ -988,7 +992,7 @@ static Bounce Transport_Actor(
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 
@@ -1206,7 +1210,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
             break;
 
           default:
-            fail (Error_Bad_Value(val));
+            return FAIL(Error_Bad_Value(val));
         }
     }
 
@@ -1252,7 +1256,9 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
         // with a keypress.  This needs to be thought out a bit more,
         // but may not involve much more than running `BREAKPOINT`.
         //
-        fail ("BREAKPOINT from TRAMPOLINE_FLAG_DEBUG_BREAK unimplemented");
+        return FAIL(
+            "BREAKPOINT from TRAMPOLINE_FLAG_DEBUG_BREAK unimplemented"
+        );
     }
 
     return nullptr;

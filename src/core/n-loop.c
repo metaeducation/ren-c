@@ -103,7 +103,7 @@ DECLARE_NATIVE(definitional_break)
 
     Option(VarList*) coupling = Level_Coupling(break_level);
     if (not coupling)
-        fail (Error_Archetype_Invoked_Raw());
+        return FAIL(Error_Archetype_Invoked_Raw());
 
     Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
@@ -147,7 +147,7 @@ DECLARE_NATIVE(definitional_continue)
 
     Option(VarList*) coupling = Level_Coupling(continue_level);
     if (not coupling)
-        fail (Error_Archetype_Invoked_Raw());
+        return FAIL(Error_Archetype_Invoked_Raw());
 
     Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
@@ -257,7 +257,7 @@ static Bounce Loop_Series_Common(
             VAL_TYPE(var) != VAL_TYPE(start)
             or Cell_Flex(var) != Cell_Flex(start)
         ){
-            fail ("Can only change series index, not series to iterate");
+            return FAIL("Can only change series index, not series to iterate");
         }
 
         // Note that since the array is not locked with FLEX_INFO_HOLD, it
@@ -329,10 +329,10 @@ static Bounce Loop_Integer_Common(
         }
 
         if (not Is_Integer(var))
-            fail (Error_Invalid_Type(VAL_TYPE(var)));
+            return FAIL(Error_Invalid_Type(VAL_TYPE(var)));
 
         if (REB_I64_ADD_OF(*state, bump, state))
-            fail (Error_Overflow_Raw());
+            return FAIL(Error_Overflow_Raw());
     }
 
     return BRANCHED(OUT);
@@ -356,7 +356,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(start) or Is_Percent(start))
         s = VAL_DECIMAL(start);
     else
-        fail (start);
+        return FAIL(start);
 
     REBDEC e;
     if (Is_Integer(end))
@@ -364,7 +364,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(end) or Is_Percent(end))
         e = VAL_DECIMAL(end);
     else
-        fail (end);
+        return FAIL(end);
 
     REBDEC b;
     if (Is_Integer(bump))
@@ -372,7 +372,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(bump) or Is_Percent(bump))
         b = VAL_DECIMAL(bump);
     else
-        fail (bump);
+        return FAIL(bump);
 
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
@@ -412,7 +412,7 @@ static Bounce Loop_Number_Common(
         }
 
         if (not Is_Decimal(var))
-            fail (Error_Invalid_Type(VAL_TYPE(var)));
+            return FAIL(Error_Invalid_Type(VAL_TYPE(var)));
 
         *state += b;
     }
@@ -595,9 +595,9 @@ DECLARE_NATIVE(for_skip)
         var = Real_Var_From_Pseudo(pseudo_var);
 
         if (Is_Nulled(var))
-            fail (PARAM(word));
+            return FAIL(PARAM(word));
         if (not Any_Series(var))
-            fail (var);
+            return FAIL(var);
 
         // Increment via skip, which may go before 0 or after the tail of
         // the series.
@@ -636,7 +636,7 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 
     Option(VarList*) coupling = Level_Coupling(stop_level);
     if (not coupling)
-        fail (Error_Archetype_Invoked_Raw());
+        return FAIL(Error_Archetype_Invoked_Raw());
 
     Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
@@ -1733,7 +1733,9 @@ DECLARE_NATIVE(map)
             or Any_Context(data)
         )
     ){
-        fail ("MAP only supports one-level QUOTED? series/path/context ATM");
+        return FAIL(
+            "MAP only supports one-level QUOTED? series/path/context ATM"
+        );
     }
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
@@ -1786,7 +1788,7 @@ DECLARE_NATIVE(map)
         goto finalize_map;
     }
     else if (Is_Nulled(SPARE)) {
-        fail (Error_Need_Non_Null_Raw());
+        return FAIL(Error_Need_Non_Null_Raw());
     }
     else
         Copy_Cell(PUSH(), stable_SPARE);  // non nulls added to result
@@ -1943,7 +1945,7 @@ DECLARE_NATIVE(for)
         Unquotify(value, 1);
 
         if (not (Any_Series(value) or Any_Sequence(value)))
-            fail (PARAM(value));
+            return FAIL(PARAM(value));
 
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
@@ -1988,13 +1990,13 @@ DECLARE_NATIVE(for)
     Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
 
     if (not Is_Integer(var))
-        fail (Error_Invalid_Type(VAL_TYPE(var)));
+        return FAIL(Error_Invalid_Type(VAL_TYPE(var)));
 
     if (VAL_INT64(var) == VAL_INT64(value))
         return BRANCHED(OUT);
 
     if (REB_I64_ADD_OF(VAL_INT64(var), 1, &mutable_VAL_INT64(var)))
-        fail (Error_Overflow_Raw());
+        return FAIL(Error_Overflow_Raw());
 
     STATE = ST_FOR_RUNNING_BODY;
     return CATCH_CONTINUE_BRANCH(OUT, body, var);

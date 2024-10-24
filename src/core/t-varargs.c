@@ -400,7 +400,7 @@ Bounce MAKE_Varargs(
 
     // !!! Permit FRAME! ?
 
-    fail (Error_Bad_Make(REB_VARARGS, arg));
+    return FAIL(Error_Bad_Make(REB_VARARGS, arg));
 }
 
 
@@ -458,10 +458,10 @@ REBTYPE(Varargs)
 
         const Value* picker = ARG(picker);
         if (not Is_Integer(picker))
-            fail (picker);
+            return FAIL(picker);
 
         if (VAL_INT32(picker) != 1)
-            fail (Error_Varargs_No_Look_Raw());
+            return FAIL(Error_Varargs_No_Look_Raw());
 
         if (Do_Vararg_Op_Maybe_End_Throws(
             OUT,
@@ -482,9 +482,9 @@ REBTYPE(Varargs)
 
         UNUSED(PARAM(series));
         if (REF(deep))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
         if (REF(last))
-            fail (Error_Varargs_Take_Last_Raw());
+            return FAIL(Error_Varargs_Take_Last_Raw());
 
         if (not REF(part)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
@@ -502,7 +502,7 @@ REBTYPE(Varargs)
         assert(TOP_INDEX == STACK_BASE);
 
         if (not Is_Integer(ARG(part)))
-            fail (PARAM(part));
+            return FAIL(PARAM(part));
 
         REBINT limit = VAL_INT32(ARG(part));
         if (limit < 0)
@@ -529,7 +529,7 @@ REBTYPE(Varargs)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 

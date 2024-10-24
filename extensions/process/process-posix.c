@@ -4,7 +4,7 @@
 // For simplicity that feature has been taken out at the moment.
 
 #if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
-static void kill_process(pid_t pid, int signal);
+static Bounce Delegate_Kill_Process(pid_t pid, int signal);
 #endif
 
 #if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
@@ -110,13 +110,13 @@ DECLARE_NATIVE(set_uid)
 
     switch (errno) {
       case EINVAL:
-        fail (PARAM(uid));
+        return FAIL(PARAM(uid));
 
       case EPERM:
-        Fail_Permission_Denied();
+        return Delegate_Fail_Permission_Denied();
 
       default:
-        rebFail_OS(errno);
+        return FAIL(rebError_OS(errno));
     }
 }
 
@@ -141,13 +141,13 @@ DECLARE_NATIVE(set_euid)
 
     switch (errno) {
       case EINVAL:
-        fail (PARAM(euid));
+        return FAIL(PARAM(euid));
 
       case EPERM:
-        Fail_Permission_Denied();
+        return Delegate_Fail_Permission_Denied();
 
       default:
-        rebFail_OS(errno);
+        return FAIL(rebError_OS(errno));
     }
 }
 
@@ -158,7 +158,7 @@ DECLARE_NATIVE(set_euid)
 //  "Set real group ID of the process"
 //
 //      return: "Same ID as input"
-//          [~null~]
+//          [integer!]
 //      gid "The effective group ID"
 //          [integer!]
 //  ]
@@ -172,13 +172,13 @@ DECLARE_NATIVE(set_gid)
 
     switch (errno) {
       case EINVAL:
-        fail (PARAM(gid));
+        return FAIL(PARAM(gid));
 
       case EPERM:
-        Fail_Permission_Denied();
+        return Delegate_Fail_Permission_Denied();
 
       default:
-        rebFail_OS(errno);
+        return FAIL(rebError_OS(errno));
     }
 }
 
@@ -203,13 +203,13 @@ DECLARE_NATIVE(set_egid)
 
     switch (errno) {
       case EINVAL:
-        fail (PARAM(egid));
+        return FAIL(PARAM(egid));
 
       case EPERM:
-        Fail_Permission_Denied();
+        return Delegate_Fail_Permission_Denied();
 
       default:
-        rebFail_OS(errno);
+        return FAIL(rebError_OS(errno));
     }
 }
 
@@ -236,9 +236,7 @@ DECLARE_NATIVE(send_signal)
 
     // !!! Is called `send-signal` but only seems to call kill (?)
     //
-    kill_process(pid, signal);
-
-    return NOTHING;
+    return Delegate_Kill_Process(pid, signal);
 }
 
 #endif  // TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU

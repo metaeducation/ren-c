@@ -365,7 +365,7 @@ Bounce Action_Executor(Level* L)
 
             if (Is_Fresh(OUT)) {  // "nothing" to left, but [1]
                 if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-                    fail (Error_Literal_Left_Path_Raw());  // [2]
+                    return FAIL(Error_Literal_Left_Path_Raw());  // [2]
 
                 if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // empty is ok [3]
                     Init_Varargs_Untyped_Infix(ARG, nullptr);
@@ -373,7 +373,7 @@ Bounce Action_Executor(Level* L)
                 }
 
                 if (Not_Parameter_Flag(PARAM, ENDABLE))
-                    fail (Error_No_Arg(L->label, Key_Symbol(KEY)));
+                    return FAIL(Error_No_Arg(L->label, Key_Symbol(KEY)));
 
                 Init_Nulled(ARG);
                 goto continue_fulfilling;
@@ -501,7 +501,7 @@ Bounce Action_Executor(Level* L)
         //     1 arity-3-op (2 + 3) <unambiguous>
         //
         if (Get_Feed_Flag(L->feed, DEFERRING_INFIX))
-            fail (Error_Ambiguous_Infix_Raw());
+            return FAIL(Error_Ambiguous_Infix_Raw());
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
@@ -669,7 +669,8 @@ Bounce Action_Executor(Level* L)
 
         if (not BINDING(TOP)) {  // the loop didn't index it
             Refinify_Pushed_Refinement(TOP_ELEMENT);
-            fail (Error_Bad_Parameter_Raw(TOP));  // so duplicate or junk
+            Copy_Cell(SPARE, TOP);  // FAIL() uses the data stack
+            return FAIL(Error_Bad_Parameter_Raw(SPARE));  // duplicate or junk
         }
 
         // Level_Args_Head offsets are 0-based, while index is 1-based.
@@ -783,14 +784,14 @@ Bounce Action_Executor(Level* L)
         }
         else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
             if (Not_Parameter_Flag(PARAM, ENDABLE))
-                fail (Error_No_Arg(L->label, Key_Symbol(KEY)));
+                return FAIL(Error_No_Arg(L->label, Key_Symbol(KEY)));
             Init_Nulled(ARG);  // more convenient, use ^META for nuance
             continue;
         }
 
         if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // can't check now [3]
             if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
-                fail (Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
+                return FAIL(Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
 
             Tweak_Cell_Varargs_Phase(ARG, Level_Phase(L));
 
@@ -805,7 +806,7 @@ Bounce Action_Executor(Level* L)
         }
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
-            fail (Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
+            return FAIL(Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
     }
 
   // Action arguments now gathered, begin dispatching
@@ -838,7 +839,7 @@ Bounce Action_Executor(Level* L)
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
         if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
-            fail (Error_Literal_Left_Path_Raw());
+            return FAIL(Error_Literal_Left_Path_Raw());
 
         assert(Is_Level_Infix(L));
         Freshen_Cell(OUT);
@@ -961,7 +962,7 @@ Bounce Action_Executor(Level* L)
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // [1]
-        fail ("Left lookback toward thing that took no args, look at later");
+        return FAIL("Left lookback toward thing that took no args");
 
     Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);  // [2]
 

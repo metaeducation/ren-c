@@ -538,8 +538,10 @@ Bounce MAKE_Frame(
         }
         else {
             Element* shared;
-            if (not Is_Block_Style_Varargs(&shared, arg))
-                fail ("Expected BLOCK!-style varargs");  // shouldn't happen
+            if (not Is_Block_Style_Varargs(&shared, arg)) {
+                assert(false);  // shouldn't happen
+                return FAIL("Expected BLOCK!-style varargs");
+            }
 
             feed = Make_At_Feed_Core(shared, SPECIFIED);
         }
@@ -755,7 +757,7 @@ DECLARE_NATIVE(set_adjunct)
     VarList* ctx;
     if (Any_Context(adjunct)) {
         if (Is_Frame(adjunct))
-            fail ("SET-ADJUNCT can't store bindings, FRAME! disallowed");
+            return FAIL("SET-ADJUNCT can't store bindings, FRAME! disallowed");
 
         ctx = Cell_Varlist(adjunct);
     }
@@ -1109,7 +1111,7 @@ REBTYPE(Context)
 
         // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
 
-        fail (Error_Cannot_Reflect(VAL_TYPE(context), property)); }
+        return FAIL(Error_Cannot_Reflect(VAL_TYPE(context), property)); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -1145,7 +1147,7 @@ REBTYPE(Context)
 
         Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
         if (not var)
-            fail (Error_Bad_Pick_Raw(picker));
+            return FAIL(Error_Bad_Pick_Raw(picker));
 
         assert(Not_Cell_Flag(var, PROTECTED));
         Copy_Cell(var, setval);
@@ -1165,10 +1167,10 @@ REBTYPE(Context)
 
         Value* var = m_cast(Value*, TRY_VAL_CONTEXT_VAR(context, symbol));
         if (not var)
-            fail (Error_Bad_Pick_Raw(picker));
+            return FAIL(Error_Bad_Pick_Raw(picker));
 
         if (not Is_Word(setval))
-            fail ("PROTECT* currently takes just WORD!");
+            return FAIL("PROTECT* currently takes just WORD!");
 
         switch (Cell_Word_Id(setval)) {
           case SYM_PROTECT:
@@ -1184,7 +1186,7 @@ REBTYPE(Context)
             break;
 
           default:
-            fail (var);
+            return FAIL(var);
         }
 
         return nullptr; }  // caller's VarList* is not stale, no update needed
@@ -1196,7 +1198,7 @@ REBTYPE(Context)
 
         Ensure_Mutable(context);
         if (not Is_Object(context) and not Is_Module(context))
-            fail ("APPEND only works on OBJECT! and MODULE! contexts");
+            return FAIL("APPEND only works on OBJECT! and MODULE! contexts");
 
         if (Is_Splice(arg)) {
             QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
@@ -1214,7 +1216,7 @@ REBTYPE(Context)
             return COPY(context);
         }
         else
-            fail (arg);
+            return FAIL(arg);
 
         Append_Vars_To_Context_From_Group(context, arg);
         return COPY(context); }
@@ -1224,7 +1226,7 @@ REBTYPE(Context)
         UNUSED(PARAM(value));  // covered by `context`
 
         if (REF(part))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         // !!! Special attention on copying frames is going to be needed,
         // because copying a frame will be expected to create a new identity
@@ -1251,11 +1253,11 @@ REBTYPE(Context)
         UNUSED(ARG(series));  // extracted as `c`
 
         if (REF(part) or REF(skip) or REF(match))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         Value* pattern = ARG(value);
         if (Is_Antiform(pattern))
-            fail (pattern);
+            return FAIL(pattern);
 
         if (not Is_Word(pattern))
             return nullptr;
@@ -1274,7 +1276,7 @@ REBTYPE(Context)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }
 
 
@@ -1466,7 +1468,7 @@ REBTYPE(Frame)
             return OUT; }
 
           default:
-            fail (Error_Cannot_Reflect(REB_FRAME, property));
+            return FAIL(Error_Cannot_Reflect(REB_FRAME, property));
         }
         break; }
 
@@ -1511,7 +1513,7 @@ REBTYPE(Frame)
         UNUSED(PARAM(value));
 
         if (REF(part))
-            fail (Error_Bad_Refines_Raw());
+            return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(deep)) {
             // !!! always "deep", allow it?
@@ -1725,7 +1727,7 @@ DECLARE_NATIVE(construct)
         }
 
         if (not Try_Get_Settable_Word_Symbol(at))  // /foo: or foo:
-            fail (at);
+            return FAIL(at);
 
         do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
             Copy_Cell(PUSH(), at);
@@ -1733,11 +1735,11 @@ DECLARE_NATIVE(construct)
             Fetch_Next_In_Feed(SUBLEVEL->feed);
 
             if (Is_Level_At_End(SUBLEVEL))
-                fail ("Unexpected end after SET-WORD! in CONTEXT");
+                return FAIL("Unexpected end after SET-WORD! in CONTEXT");
 
             at = At_Level(SUBLEVEL);
             if (Is_Comma(at))
-                fail ("Unexpected COMMA! after SET-WORD! in CONTEXT");
+                return FAIL("Unexpected COMMA! after SET-WORD! in CONTEXT");
 
         } while (Try_Get_Settable_Word_Symbol(at));
 

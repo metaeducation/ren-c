@@ -96,7 +96,7 @@ Bounce MAKE_Word(
     Heart heart = cast(Heart, k);
 
     if (parent)
-        fail (Error_Bad_Make_Parent(heart, unwrap parent));
+        return FAIL(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (Any_Word(arg)) {
         Copy_Cell(OUT, arg);
@@ -250,5 +250,5 @@ REBTYPE(Word)
         break;
     }
 
-    fail (UNHANDLED);
+    return UNHANDLED;
 }

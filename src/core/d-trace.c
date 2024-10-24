@@ -60,17 +60,22 @@
 //
 DECLARE_NATIVE(trace)
 //
+// Ren-C seeks to completely redesign tracing in a generalized way, such that
+// dialects can have their own tracing fit into the architecture.  The old
+// trace command was ripped out in favor of just using a debugger with the
+// C sources, since there aren't any real "users" who need the non-generalized
+// debug features at this time.
+//
 // !!! R3-Alpha had a kind of interesting concept of storing the backtrace in
 // a buffer, up to a certain number of lines.  So it wouldn't be visible and
 // interfering with your interactive typing, but you could ask for lines out
 // of it after the fact.  This makes more sense as a usermode feature, where
 // the backtrace is stored structurally, vs trying to implement in C.
-//
 {
     INCLUDE_PARAMS_OF_TRACE;
 
     UNUSED(ARG(mode));
     UNUSED(ARG(function));
 
-    fail ("TRACE is being redesigned in light of Trampolines/Stackless");
+    return FAIL("TRACE is being redesigned in light of Trampolines/Stackless");
 }
