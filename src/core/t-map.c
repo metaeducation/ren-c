@@ -38,6 +38,29 @@
 
 
 //
+//  Num_Map_Entries_Used: C
+//
+// Maps may have unused (zombie) slots in their capacity, so Array_Len() on
+// the pairlist divided by 2 doesn't tell you how many entries in the map.
+//
+// This count could be cached.
+//
+Count Num_Map_Entries_Used(const Map* map)
+{
+    const Element* tail = Array_Tail(MAP_PAIRLIST(map));
+    const Element* key = Array_Head(MAP_PAIRLIST(map));
+
+    Count count = 0;
+    for (; key != tail; key += 2) {
+        if (not Is_Zombie(key + 1))
+            ++count;
+    }
+
+    return count;
+}
+
+
+//
 //  CT_Map: C
 //
 // !!! Was never implemented in R3-Alpha; called into raw array comparison,
@@ -96,28 +119,28 @@ REBINT Find_Key_Hashed(
     //
     // https://en.wikipedia.org/wiki/Linear_probing
     //
-    // Used and skip are co-primes, so is guaranteed that repeatedly
-    // adding skip (and subtracting len when needed) all positions are
-    // visited.  1 <= skip < len, and len is prime, so this is guaranteed.
+    // num_slots and skip are co-primes, so is guaranteed that by repeatedly
+    // adding skip (and subtracting num_slots when needed) all positions are
+    // visited.  1 <= skip < num_slots (which is prime), so this is guaranteed.
     //
-    REBLEN used = Flex_Used(hashlist);
+    Count num_slots = Hashlist_Num_Slots(hashlist);
     REBLEN *indexes = Flex_Head(REBLEN, hashlist);
 
     uint32_t hash = Hash_Value(key);
-    REBLEN slot = hash % used;  // first slot to try for this hash
-    REBLEN skip = hash % (used - 1) + 1;  // skip by how much each collision
+    Offset slot = hash % num_slots;  // first slot to try for this hash
+    Count skip = hash % (num_slots - 1) + 1;  // skip by this each collision
 
     // Zombie slots are those which are left behind by removing items, with
     // void values that are illegal in maps, and indicate they can be reused.
     //
-    REBINT zombie_slot = -1; // no zombies seen yet...
+    Offset zombie_slot = -1; // no zombies seen yet...
 
     // You can store information case-insensitively in a MAP!, and it will
     // overwrite the value for at most one other key.  Reading information
     // case-insensitively out of a map can only be done if there aren't two
     // keys with the same spelling.
     //
-    REBINT synonym_slot = -1; // no synonyms seen yet...
+    Offset synonym_slot = -1; // no synonyms seen yet...
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
@@ -143,8 +166,8 @@ REBINT Find_Key_Hashed(
             zombie_slot = slot;
 
         slot += skip;
-        if (slot >= used)
-            slot -= used;
+        if (slot >= num_slots)
+            slot -= num_slots;
     }
 
     if (synonym_slot != -1) {
@@ -220,7 +243,7 @@ void Expand_Hashlist(HashList* hashlist)
 {
     assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
 
-    REBINT prime = Get_Hash_Prime_May_Fail(Flex_Used(hashlist) + 1);
+    REBINT prime = Get_Hash_Prime_May_Fail(Hashlist_Num_Slots(hashlist) + 1);
     Remake_Flex(
         hashlist,
         prime + 1,
@@ -252,7 +275,7 @@ REBLEN Find_Map_Entry(
     assert(hashlist);
 
     // Get hash table, expand it if needed:
-    if (Array_Len(pairlist) > Flex_Used(hashlist) / 2) {
+    if (Array_Len(pairlist) > Hashlist_Num_Slots(hashlist) / 2) {
         Expand_Hashlist(hashlist);  // modifies size value
         Rehash_Map(map);
     }
@@ -450,7 +473,7 @@ Bounce TO_Map(Level* level_, Kind kind, const Value* arg)
 //
 Array* Map_To_Array(const Map* map, REBINT what)
 {
-    REBLEN count = Length_Map(map);
+    Count count = Num_Map_Entries_Used(map);
     Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
     Element* dest = Array_Head(a);
@@ -480,7 +503,7 @@ Array* Map_To_Array(const Map* map, REBINT what)
 //
 VarList* Alloc_Varlist_From_Map(const Map* map)
 {
-    // Doesn't use Length_Map because it only wants to consider words.
+    // Doesn't use Num_Map_Entries_Used() because it only considers words.
     //
     // !!! Should this fail() if any of the keys aren't words?  It seems
     // a bit haphazard to have `make object! make map! [x 10 <y> 20]` and
@@ -585,7 +608,7 @@ REBTYPE(Map)
         Value* property = ARG(property);
         switch (Cell_Word_Id(property)) {
           case SYM_LENGTH:
-            return Init_Integer(OUT, Length_Map(m));
+            return Init_Integer(OUT, Num_Map_Entries_Used(m));
 
           case SYM_VALUES:
             return Init_Block(OUT, Map_To_Array(m, 1));
@@ -597,7 +620,7 @@ REBTYPE(Map)
             return Init_Block(OUT, Map_To_Array(m, 0));
 
           case SYM_TAIL_Q:
-            return Init_Logic(OUT, Length_Map(m) == 0);
+            return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
 
           default:
             break;

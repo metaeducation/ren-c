@@ -645,6 +645,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 #include "stubs/stub-string.h"  // SymId needed for typesets
 #include "stubs/stub-action.h"
 #include "stubs/stub-context.h"  // needs actions for FRAME! contexts
+#include "stubs/stub-map.h"
 
 
 //=//// GENERAL CELL SERVICES THAT NEED SERIES DEFINED ////////////////////=//

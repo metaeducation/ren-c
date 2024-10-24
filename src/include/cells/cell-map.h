@@ -20,43 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Maps are implemented as a light hashing layer on top of an array.  The
-// hash indices are stored in the series node's "misc", while the values are
-// retained in pairs as `[key val key val key val ...]`.
+// * VAL_MAP() not replaced because this is likely to become Cell_Dictionary()
+//   (but the discussion has not yet finaliezd).
 //
-// When there are too few values to warrant hashing, no hash indices are
-// made and the array is searched linearly.  This is indicated by the hashlist
-// being NULL.
-//
-// !!! Should there be a MAP_LEN()?  Current implementation has VOID in
-// slots that are unused, so can give a deceptive number.  But so can
-// objects with hidden fields, locals in paramlists, etc.
-//
-
-#define FLEX_MASK_PAIRLIST \
-    (FLAG_FLAVOR(PAIRLIST) \
-        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
-
-
-// See LINK() macro for how this is used.
-//
-#define LINK_Hashlist_TYPE          HashList*
-#define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
-
-INLINE PairList* MAP_PAIRLIST(const_if_c Map* map)
-  { return x_cast(PairList*, map); }
-
-#if CPLUSPLUS_11
-    INLINE const PairList* MAP_PAIRLIST(const Map* map)
-      { return x_cast(const PairList*, map); }
-#endif
-
-#define MAP_HASHLIST(m) \
-    LINK(Hashlist, MAP_PAIRLIST(m))
-
-#define MAP_HASHES(m) \
-    Flex_Head(MAP_HASHLIST(m))
-
 
 INLINE const Map* VAL_MAP(const Cell* v) {
     assert(Cell_Heart(v) == REB_MAP);
@@ -71,17 +37,3 @@ INLINE const Map* VAL_MAP(const Cell* v) {
 
 #define VAL_MAP_Known_Mutable(v) \
     m_cast(Map*, VAL_MAP(Known_Mutable(v)))
-
-INLINE REBLEN Length_Map(const Map* map)
-{
-    const Value* tail = Flex_Tail(Value, MAP_PAIRLIST(map));
-    const Value* v = Flex_Head(Value, MAP_PAIRLIST(map));
-
-    REBLEN count = 0;
-    for (; v != tail; v += 2) {
-        if (not Is_Nulled(v + 1))
-            ++count;
-    }
-
-    return count;
-}

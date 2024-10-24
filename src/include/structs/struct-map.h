@@ -20,6 +20,25 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// Maps are implemented as a light hashing layer on top of an array.  The
+// hash indices are stored in the series node's "misc", while the values are
+// retained in pairs as `[key val key val key val ...]`.
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * MAP! was new to R3-Alpha, and the code was brittle and mostly untested.
+//   Little attention has been paid to it in Ren-C at time of writing,
+//   though the ability to use any value as a key by locking it from being
+//   mutated was added.
+//
+// * In R3-Alpha, when there are too few values in a map to warrant hashing,
+//   no hash indices were made and the array was searched linearly.  This was
+//   indicated by the hashlist being NULL.  @giuliolunati removed this due
+//   to recurring bugs and the relative rarity of maps historically.  Ren-C
+//   has many tools for enforcing things like this rigorously, so this
+//   feature should be restored...though there are other questions about the
+//   implementation of the map (e.g. ordered invariant) that are bigger.
+//
 
 #if CPLUSPLUS_11
     struct HashList : public Flex {};  // list of integers
@@ -32,3 +51,13 @@
 
     typedef Flex Map;
 #endif
+
+#define FLEX_MASK_PAIRLIST \
+    (FLAG_FLAVOR(PAIRLIST) \
+        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
+
+
+// See LINK() macro for how this is used.
+//
+#define LINK_Hashlist_TYPE          HashList*
+#define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
