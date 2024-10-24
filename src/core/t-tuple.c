@@ -48,57 +48,6 @@ Bounce MAKE_Sequence(
     if (Is_Tuple(arg))
         return Copy_Cell(OUT, arg);
 
-    // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
-    // similar URL!s.  In Rebol3 these captures come back the same type
-    // as the input instead of as STRING!, which was a latent bug in the
-    // network code of the 12-Dec-2012 release:
-    //
-    // https://github.com/rebol/rebol/blob/master/src/mezz/sys-ports.r#L110
-    //
-    // All attempts to convert a URL!-flavored IP address failed.  Taking
-    // URL! here fixes it, though there are still open questions.
-    //
-    if (Is_Url(arg)) {
-        Size len;
-        const Byte* cp
-            = Analyze_String_For_Scan(&len, arg, MAX_SCAN_TUPLE);
-
-        if (len == 0)
-            fail (arg);
-
-        const Byte* ep;
-        REBLEN size = 1;
-        REBINT n;
-        for (n = len, ep = cp; n > 0; n--, ep++) { // count '.'
-            if (*ep == '.')
-                ++size;
-        }
-
-        if (size > MAX_TUPLE)
-            fail (arg);
-
-        if (size < 3)
-            size = 3;
-
-        Byte buf[MAX_TUPLE];
-
-        Byte* tp = buf;
-        for (ep = cp; len > ep - cp; ++ep) {
-            ep = maybe Try_Grab_Int(&n, ep);
-            if (not ep or n < 0 or n > 255)
-                return RAISE(arg);
-
-            *tp++ = cast(Byte, n);
-            if (*ep != '.')
-                break;
-        }
-
-        if (len > ep - cp)
-            return RAISE(arg);
-
-        return Init_Tuple_Bytes(OUT, buf, size);
-    }
-
     if (Any_List(arg)) {
         REBLEN len = 0;
         REBINT n;
