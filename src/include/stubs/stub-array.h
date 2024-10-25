@@ -94,35 +94,6 @@ INLINE bool Has_File_Line(const Array* a) {
 #define Array_Tail(a)           Flex_Tail(Element, (a))
 #define Array_Last(a)           Flex_Last(Element, (a))
 
-INLINE Value* Stub_Cell(const_if_c Stub* s) {
-    assert(Not_Flex_Flag(s, DYNAMIC));
-    assert(Is_Stub_Array(s));
-    return x_cast(Value*, &s->content.fixed.cell);
-}
-
-#if CPLUSPLUS_11
-    INLINE const Value* Stub_Cell(const Stub* s) {
-        assert(Not_Flex_Flag(s, DYNAMIC));
-        assert(Is_Stub_Array(s));
-        return u_cast(const Value*, &s->content.fixed.cell);
-    }
-#endif
-
-
-// It's possible to calculate the stub from just a cell if you know it's a
-// cell living in the stub.
-//
-INLINE Stub* Singular_From_Cell(const Cell* v) {
-    Stub* singular = cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
-        cast(void*,
-            cast(Byte*, m_cast(Cell*, v))
-            - offsetof(Stub, content)
-        )
-    );
-    assert(Not_Flex_Flag(singular, DYNAMIC));
-    return singular;
-}
-
 #define Array_Len(a) \
     Flex_Used(ensure(const Array*, (a)))
 
@@ -134,7 +105,7 @@ INLINE void Prep_Array(
     Array* a,
     REBLEN capacity  // Expand_Flex passes 0 on dynamic reallocation
 ){
-    assert(Get_Flex_Flag(a, DYNAMIC));
+    assert(Get_Stub_Flag(a, DYNAMIC));
 
     Cell* prep = Array_Head(a);
 
@@ -178,14 +149,14 @@ INLINE Array* Make_Array_Core_Into(
     Flags flags
 ){
   #if DEBUG_POISON_FLEX_TAILS  // non-dynamic arrays poisoned by bit pattern
-    if (capacity > 1 or (flags & FLEX_FLAG_DYNAMIC))
+    if (capacity > 1 or (flags & STUB_FLAG_DYNAMIC))
         capacity += 1;  // account for space needed for poison cell
   #endif
 
     Array* a = x_cast(Array*, Make_Flex_Into(preallocated, capacity, flags));
-    assert(Is_Stub_Array(a));  // flavor should have been an array flavor
+    assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
 
-    if (Get_Flex_Flag(a, DYNAMIC)) {
+    if (Get_Stub_Flag(a, DYNAMIC)) {
         Prep_Array(a, capacity);
 
       #if DEBUG_POISON_FLEX_TAILS
@@ -203,7 +174,7 @@ INLINE Array* Make_Array_Core_Into(
         Flavor_From_Flags(flags) == FLAVOR_ARRAY
         and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)  // hope callsites fold
     ){
-        assert(flags & FLEX_FLAG_LINK_NODE_NEEDS_MARK);
+        assert(flags & STUB_FLAG_LINK_NODE_NEEDS_MARK);
         if (
             not Level_Is_Variadic(TOP_LEVEL) and
             Get_Array_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
@@ -213,7 +184,7 @@ INLINE Array* Make_Array_Core_Into(
         }
         else {
             Clear_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-            Clear_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
+            Clear_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
         }
     }
 
@@ -279,13 +250,13 @@ INLINE Array* Make_Array_For_Copy(
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
 //
 INLINE Array* Alloc_Singular(Flags flags) {
-    assert(not (flags & FLEX_FLAG_DYNAMIC));
+    assert(not (flags & STUB_FLAG_DYNAMIC));
     Array* a = x_cast(Array*, Make_Flex_Into(
         Alloc_Stub(),
         1,
         flags | FLEX_FLAG_FIXED_SIZE
     ));
-    assert(Is_Stub_Array(a));  // flavor should have been an array flavor
+    assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
     Erase_Cell(Stub_Cell(a));  // poison means length 0, erased length 1
     return a;
 }
@@ -334,7 +305,7 @@ enum {
         Assert_Array_Core(a)
 
     INLINE void Assert_Flex(const Flex* f) {
-        if (Is_Stub_Array(f))
+        if (Stub_Holds_Cells(f))
             Assert_Array_Core(c_cast(Array*, f));  // calls _Flex_Basics()
         else
             Assert_Flex_Basics_Core(f);

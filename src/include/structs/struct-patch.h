@@ -39,7 +39,7 @@
 // !!! This feature currently doesn't seem to be active.
 //
 #define USE_FLAG_REUSED \
-    FLEX_FLAG_24
+    STUB_SUBCLASS_FLAG_24
 
 
 //=//// "PATCHES" FOR MODULE VARIABLES ////////////////////////////////////=//

@@ -837,7 +837,7 @@ VarList* Copy_Varlist_Extra_Managed(
         node_LINK(NextVirtual, varlist) = nullptr;
 
         VarList* copy = cast(VarList*, varlist); // now a well-formed context
-        assert(Get_Flex_Flag(varlist, DYNAMIC));
+        assert(Get_Stub_Flag(varlist, DYNAMIC));
 
         Symbol** psym = Flex_Head(Symbol*, g_symbols.by_hash);
         Symbol** psym_tail = Flex_Tail(Symbol*, g_symbols.by_hash);
@@ -891,7 +891,7 @@ VarList* Copy_Varlist_Extra_Managed(
 
     if (extra == 0)
         Tweak_Keylist_Of_Varlist_Shared(
-            Varlist_Array(copy),
+            copy,
             Keylist_Of_Varlist(original)
         );
     else {
@@ -907,7 +907,7 @@ VarList* Copy_Varlist_Extra_Managed(
 
         LINK(Ancestor, keylist) = Keylist_Of_Varlist(original);
 
-        Tweak_Keylist_Of_Varlist_Unique(Varlist_Array(copy), keylist);
+        Tweak_Keylist_Of_Varlist_Unique(copy, keylist);
     }
 
     // A FRAME! in particular needs to know if it points back to a stack

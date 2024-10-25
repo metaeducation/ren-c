@@ -320,6 +320,18 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
     pool->free++;
 }
 
+INLINE PoolId Pool_Id_For_Size(Size size) {
+  #if DEBUG_ENABLE_ALWAYS_MALLOC
+    if (g_mem.always_malloc)
+        return SYSTEM_POOL;
+  #endif
+
+    if (size < POOLS_BY_SIZE_LEN)
+        return g_mem.pools_by_size[size];
+
+    return SYSTEM_POOL;
+}
+
 
 //=//// MEMORY ALLOCATION AND FREEING MACROS //////////////////////////////=//
 //

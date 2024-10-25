@@ -53,7 +53,7 @@ void Bind_Values_Inner_Loop(
             Value* lookup = MOD_VAR(cast(SeaOfVars*, context), symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
-                BINDING(v) = Singular_From_Cell(lookup);
+                BINDING(v) = Compact_Stub_From_Cell(lookup);
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -247,8 +247,8 @@ Let* Make_Let_Variable(
     Stub* let = Alloc_Singular(  // payload is one variable
         FLAG_FLAVOR(LET)
             | NODE_FLAG_MANAGED
-            | FLEX_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
-            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
+            | STUB_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
+            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
     Init_Nothing(x_cast(Value*, Stub_Cell(let)));  // start as unset
@@ -359,7 +359,7 @@ Option(Stub*) Get_Word_Container(
                 Value* slot = MOD_VAR(cast(SeaOfVars*, vlist), symbol, true);
                 if (slot) {
                     *index_out = INDEX_PATCHED;
-                    return Singular_From_Cell(slot);
+                    return Compact_Stub_From_Cell(slot);
                 }
 
                 goto next_context;
@@ -429,7 +429,7 @@ Option(Stub*) Get_Word_Container(
             Value* var = MOD_VAR(sea, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
-                return Singular_From_Cell(var);
+                return Compact_Stub_From_Cell(var);
             }
             goto next_context;
         }
@@ -1277,11 +1277,11 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     Destruct_Binder(binder);  // must remove bind indices even if failing
 
     if (error) {
-        Free_Unmanaged_Flex(Varlist_Array(c));
+        Free_Unmanaged_Flex(c);
         fail (unwrap error);
     }
 
-    Manage_Flex(Varlist_Array(c));  // must be managed to use in binding
+    Manage_Flex(c);  // must be managed to use in binding
 
     // If the user gets ahold of these contexts, we don't want them to be
     // able to expand them...because things like FOR-EACH have historically

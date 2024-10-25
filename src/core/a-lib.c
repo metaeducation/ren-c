@@ -175,8 +175,8 @@ unsigned char* API_rebAllocBytes(size_t size)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates BINARY! ATM
             | NODE_FLAG_ROOT  // indicate this originated from the API
+            | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
             | FLEX_FLAG_DONT_RELOCATE  // direct data pointer handed back
-            | FLEX_FLAG_DYNAMIC  // rebRepossess() needs bias field
     );
 
     Byte* ptr = Binary_Head(b) + ALIGN_SIZE;
@@ -376,7 +376,7 @@ RebolValue* API_rebRepossess(void* ptr, size_t size)
     Clear_Node_Root_Bit(b);
     Clear_Flex_Flag(b, DONT_RELOCATE);
 
-    if (Get_Flex_Flag(b, DYNAMIC)) {
+    if (Get_Stub_Flag(b, DYNAMIC)) {
         //
         // Dynamic Flexes have the concept of a "bias", which is unused
         // allocated capacity at the head of the Flex.  Bump the "bias" to
@@ -2362,7 +2362,7 @@ RebolValue* API_rebRescueWith(
             // state) won't be covered by this, and must be unmanaged.
 
           proxy_result: {
-            Stub* stub = Singular_From_Cell(result);
+            Stub* stub = Compact_Stub_From_Cell(result);
             Unlink_Api_Handle_From_Level(stub);  // e.g. linked to f
             Link_Api_Handle_To_Level(stub, dummy->prior);  // link to caller
           }
@@ -2481,7 +2481,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
         }
 
         Value* v = Copy_Cell(Alloc_Value(), at);
-        stub = Singular_From_Cell(v);
+        stub = Compact_Stub_From_Cell(v);
         Set_Subclass_Flag(API, stub, RELEASE);
         break; }
 
@@ -2521,7 +2521,7 @@ RebolNodeInternal* API_rebUNQUOTING(const void* p)
 
       case DETECTED_AS_CELL: {
         Value* v = Copy_Cell(Alloc_Value(), c_cast(Value*, p));
-        stub = Singular_From_Cell(v);
+        stub = Compact_Stub_From_Cell(v);
         Set_Subclass_Flag(API, stub, RELEASE);
         break; }
 
@@ -2561,7 +2561,7 @@ RebolNodeInternal* API_rebRELEASING(RebolValue* v)
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
 
-    Stub* stub = Singular_From_Cell(v);
+    Stub* stub = Compact_Stub_From_Cell(v);
     if (Get_Subclass_Flag(API, stub, RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
@@ -2620,7 +2620,7 @@ RebolNodeInternal* API_rebRUN(const void* p)
             fail ("rebRUN() received null cell");
 
         Value* v = Copy_Cell(Alloc_Value(), at);
-        stub = Singular_From_Cell(v);
+        stub = Compact_Stub_From_Cell(v);
         Set_Subclass_Flag(API, stub, RELEASE);
         break; }
 
@@ -2654,7 +2654,7 @@ RebolValue* API_rebManage(RebolValue* v)
 
     assert(Is_Api_Value(v));
 
-    Stub* stub = Singular_From_Cell(v);
+    Stub* stub = Compact_Stub_From_Cell(v);
     assert(Is_Node_Root_Bit_Set(stub));
 
     if (Is_Node_Managed(stub))
@@ -2683,7 +2683,7 @@ void API_rebUnmanage(void *p)
     Value* v = cast(Value*, n);
     assert(Is_Api_Value(v));
 
-    Stub* stub = Singular_From_Cell(v);
+    Stub* stub = Compact_Stub_From_Cell(v);
     assert(Is_Node_Root_Bit_Set(stub));
 
     if (Not_Node_Managed(stub))
@@ -2979,7 +2979,7 @@ DECLARE_NATIVE(api_transient)
 
     Value* v = Copy_Cell(Alloc_Value(), ARG(value));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
-    Stub* stub = Singular_From_Cell(v);
+    Stub* stub = Compact_Stub_From_Cell(v);
     Set_Subclass_Flag(API, stub, RELEASE);
 
     // Regarding adddresses in WASM:

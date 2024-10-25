@@ -128,7 +128,7 @@ enum StubFlavorEnum {
 
     FLAVOR_PLUG,
 
-    FLAVOR_MAX_ARRAY = FLAVOR_PLUG,  //=//// ABOVE HERE WIDTH IS sizeof(Cell)
+    FLAVOR_MAX_HOLDS_CELLS = FLAVOR_PLUG,  //=//// ^-- WIDTH IS sizeof(Cell)
 
     // For the moment all Flexes that don't store Cells or or byte data of
     // WIDTH=1 store items of size pointer.
@@ -184,7 +184,7 @@ typedef enum StubFlavorEnum Flavor;
 
 
 INLINE Flavor Flavor_From_Flags(Flags flags)
-  { return u_cast(Flavor, THIRD_BYTE(&flags)); }
+  { return u_cast(Flavor, SECOND_BYTE(&flags)); }
 
 #define Stub_Flavor(f) \
     u_cast(Flavor, FLAVOR_BYTE(f))
@@ -199,7 +199,7 @@ INLINE Flavor Flavor_From_Flags(Flags flags)
 //
 INLINE Size Wide_For_Flavor(Flavor flavor) {
     assert(flavor != FLAVOR_CORRUPT);
-    if (flavor <= FLAVOR_MAX_ARRAY)
+    if (flavor <= FLAVOR_MAX_HOLDS_CELLS)
         return sizeof(Cell);
     if (flavor >= FLAVOR_MIN_BYTESIZE)
         return 1;
@@ -214,7 +214,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
     Wide_For_Flavor(Stub_Flavor(f))
 
 
-#define Is_Stub_Array(f)            (Stub_Flavor(f) <= FLAVOR_MAX_ARRAY)
+#define Stub_Holds_Cells(f)         (Stub_Flavor(f) <= FLAVOR_MAX_HOLDS_CELLS)
 
 #define Is_Stub_String(f)           (Stub_Flavor(f) >= FLAVOR_MIN_STRING)
 #define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)

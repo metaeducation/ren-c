@@ -91,7 +91,7 @@ typedef Context Let;
 //
 #if CPLUSPLUS_11
     struct KeyList : public Flex {};
-    struct VarList : public Context {};  // Array is implementation detail
+    struct VarList : public Flex {};  // Array is implementation detail
 #else
     typedef Flex KeyList;
     typedef Flex VarList;
@@ -179,7 +179,7 @@ typedef Context Use;
 // on DETAILS...e.g. the varlist of an exemplar context.
 //
 #define VARLIST_FLAG_PARAMLIST_HAS_RETURN \
-    FLEX_FLAG_24
+    STUB_SUBCLASS_FLAG_24
 
 
 //=//// FRAME_HAS_BEEN_INVOKED ////////////////////////////////////////////=//
@@ -205,7 +205,7 @@ typedef Context Use;
 // !!! This may not be the best place to put this flag, review.
 //
 #define VARLIST_FLAG_FRAME_HAS_BEEN_INVOKED \
-    FLEX_FLAG_24
+    STUB_SUBCLASS_FLAG_24
 
 
 //=//// VARLIST_FLAG_PARAMLIST_LITERAL_FIRST ///////////////////////////////=//
@@ -217,13 +217,13 @@ typedef Context Use;
 // walk the parameter list every time that function is called.
 //
 #define VARLIST_FLAG_PARAMLIST_LITERAL_FIRST \
-    FLEX_FLAG_25
+    STUB_SUBCLASS_FLAG_25
 
 
 //=//// VARLIST_FLAG_26 ///////////////////////////////////////////////////=//
 //
 #define VARLIST_FLAG_26 \
-    FLEX_FLAG_26
+    STUB_SUBCLASS_FLAG_26
 
 
 // These are the flags which are scanned for and set during Make_Action
@@ -246,15 +246,16 @@ typedef Context Use;
 // can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
 #define FLEX_MASK_VARLIST \
-    (NODE_FLAG_NODE | FLEX_FLAG_DYNAMIC \
+    (NODE_FLAG_NODE \
         | FLAG_FLAVOR(VARLIST) \
-        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
-        | FLEX_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
+        | STUB_FLAG_DYNAMIC \
+        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
+        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
 
 #define FLEX_MASK_KEYLIST \
     (NODE_FLAG_NODE  /* NOT always dynamic */ \
         | FLAG_FLAVOR(KEYLIST) \
-        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
+        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
 
 
 #define Varlist_Array(ctx) \

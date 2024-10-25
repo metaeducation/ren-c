@@ -53,7 +53,7 @@
 // function to release that handle after encountering it.
 //
 #define API_FLAG_RELEASE \
-    FLEX_FLAG_24
+    STUB_SUBCLASS_FLAG_24
 
 
 // What distinguishes an API value is that it has both the NODE_FLAG_CELL and
@@ -157,7 +157,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)
 
 INLINE void Free_Value(Value* v)
 {
-    Stub* stub = Singular_From_Cell(v);
+    Stub* stub = Compact_Stub_From_Cell(v);
     assert(FLAVOR_BYTE(stub) == FLAVOR_API);
     assert(Is_Node_Root_Bit_Set(stub));
 

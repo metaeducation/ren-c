@@ -2688,7 +2688,7 @@ Bounce Scanner_Executor(Level* const L) {
     a->misc.line = transcode->line;
     LINK(Filename, a) = maybe transcode->file;
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-    Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
+    Set_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
 
     Init_Any_List(PUSH(), heart, a);
 
@@ -2832,13 +2832,13 @@ Bounce Scanner_Executor(Level* const L) {
         Get_Cell_Flag(TOP, FIRST_IS_NODE)
         and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
         and not Is_Node_A_Cell(Cell_Node1(TOP))
-        and Is_Stub_Array(cast(Flex*, Cell_Node1(TOP)))
+        and Stub_Holds_Cells(cast(Flex*, Cell_Node1(TOP)))
     ){
         Array* a = cast(Array*, Cell_Node1(TOP));
         a->misc.line = transcode->line;
         LINK(Filename, a) = maybe transcode->file;
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-        Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
+        Set_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
 
         // !!! Does this mean anything for paths?  The initial code
         // had it, but it was exploratory and predates the ideas that
@@ -2871,7 +2871,7 @@ Bounce Scanner_Executor(Level* const L) {
     array->misc.line = transcode->line;
     LINK(Filename, array) = maybe transcode->file;
     Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
-    Set_Flex_Flag(array, LINK_NODE_NEEDS_MARK);
+    Set_Stub_Flag(array, LINK_NODE_NEEDS_MARK);
 
     if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
         DECLARE_ATOM (temp);
@@ -2981,7 +2981,7 @@ Array* Scan_UTF8_Managed(
     a->misc.line = 1;
     LINK(Filename, a) = maybe file;
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-    Set_Flex_Flag(a, LINK_NODE_NEEDS_MARK);
+    Set_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
 
     return a;
 }

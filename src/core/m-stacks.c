@@ -46,7 +46,7 @@ void Startup_Data_Stack(Length capacity)
         FLAG_FLAVOR(DATASTACK) | FLEX_FLAGS_NONE
     );
     Set_Flex_Len(g_ds.array, 1);
-    assert(Not_Flex_Flag(g_ds.array, DYNAMIC));
+    assert(Not_Stub_Flag(g_ds.array, DYNAMIC));
 
     Cell* head = Array_Head(g_ds.array);
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
@@ -66,7 +66,7 @@ void Startup_Data_Stack(Length capacity)
 
     DROP();  // drop the hypothetical thing that triggered the expand
 
-    assert(Get_Flex_Flag(g_ds.array, DYNAMIC));
+    assert(Get_Stub_Flag(g_ds.array, DYNAMIC));
     Poison_Cell(Array_Head(g_ds.array));  // new head
 }
 

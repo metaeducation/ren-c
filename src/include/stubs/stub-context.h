@@ -29,7 +29,7 @@
 //   (Appending to keylists involves making a copy if it is shared.)
 //
 // * Since varlists and keylists always have more than one element, they are
-//   allocated with FLEX_FLAG_DYNAMIC and do not need to check for whether
+//   allocated with STUB_FLAG_DYNAMIC and do not need to check for whether
 //   the singular optimization when being used.  This does not apply when a
 //   varlist becomes invalid (e.g. via FREE), when its data allocation is
 //   released and it is decayed to a singular.
@@ -56,7 +56,7 @@
 // the GC would have to clean up.
 //
 #define KEYLIST_FLAG_SHARED \
-    FLEX_FLAG_24
+    STUB_SUBCLASS_FLAG_24
 
 
 // VarList* properties (note: shares BONUS_KEYSOURCE() with Action*)
@@ -208,19 +208,19 @@ INLINE KeyList* Keylist_Of_Varlist(VarList* c) {
         //
         return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
-    return cast(KeyList*, node_BONUS(KeySource, Varlist_Array(c)));  // not Level
+    return cast(KeyList*, node_BONUS(KeySource, c));  // not Level
 }
 
-INLINE void Tweak_Keylist_Of_Varlist_Shared(Array* a, KeyList* keylist) {
-    assert(Is_Stub_Varlist(a));  // may not be complete yet
+INLINE void Tweak_Keylist_Of_Varlist_Shared(Flex* f, KeyList* keylist) {
+    assert(Is_Stub_Varlist(f));  // may not be complete yet
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
-    Tweak_Bonus_Keysource(a, keylist);
+    Tweak_Bonus_Keysource(f, keylist);
 }
 
-INLINE void Tweak_Keylist_Of_Varlist_Unique(Array* a, KeyList *keylist) {
-    assert(Is_Stub_Varlist(a));  // may not be complete yet
+INLINE void Tweak_Keylist_Of_Varlist_Unique(Flex* f, KeyList *keylist) {
+    assert(Is_Stub_Varlist(f));  // may not be complete yet
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
-    Tweak_Bonus_Keysource(a, keylist);
+    Tweak_Bonus_Keysource(f, keylist);
 }
 
 
@@ -235,13 +235,13 @@ INLINE void Tweak_Keylist_Of_Varlist_Unique(Array* a, KeyList *keylist) {
 //
 // Context's "length" does not count the [0] cell of either the varlist or
 // the keylist arrays.  Hence it must subtract 1.  FLEX_MASK_VARLIST
-// includes FLEX_FLAG_DYNAMIC, so a dyamic Array can be assumed so long
+// includes STUB_FLAG_DYNAMIC, so a dyamic Array can be assumed so long
 // as it is valid.
 //
 
 INLINE REBLEN Varlist_Len(VarList* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    return Varlist_Array(c)->content.dynamic.used - 1;  // -1 for archetype
+    return c->content.dynamic.used - 1;  // -1 for archetype
 }
 
 INLINE const Key* Varlist_Key(VarList* c, Index n) {  // 1-based
@@ -449,7 +449,7 @@ INLINE void Deep_Freeze_Context(VarList* c) {
 INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
     UNUSED(keysource);
 
-    Stub* stub = Varlist_Array(c);
+    Stub* stub = c;
 
     Stub* copy = Prep_Stub(  // don't Mem_Copy() the incoming stub [1]
         Alloc_Stub(),  // not preallocated

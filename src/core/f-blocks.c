@@ -216,10 +216,10 @@ Element* Alloc_Tail_Array(Array* a)
 //
 void Uncolor_Array(const Array* a)
 {
-    if (Is_Flex_White(a))
+    if (Is_Stub_White(a))
         return; // avoid loop
 
-    Flip_Flex_To_White(a);
+    Flip_Stub_To_White(a);
 
     const Element* tail = Array_Tail(a);
     const Element* v = Array_Head(a);
@@ -260,7 +260,7 @@ void Uncolor(const Value* v)
         //
         assert(
             not Any_Series(v)
-            or Is_Flex_White(Cell_Flex(v))
+            or Is_Stub_White(Cell_Flex(v))
         );
     }
 }

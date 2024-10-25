@@ -699,7 +699,7 @@ void Startup_Mold(REBLEN size)
 {
     g_mold.stack = Make_Flex_Core(10, FLAG_FLAVOR(MOLDSTACK));
 
-    ensure(nullptr, g_mold.buffer) = Make_String_Core(size, FLEX_FLAG_DYNAMIC);
+    ensure(nullptr, g_mold.buffer) = Make_String_Core(size, STUB_FLAG_DYNAMIC);
 }
 
 

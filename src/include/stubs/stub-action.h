@@ -111,7 +111,7 @@
 #define BONUS_KeySource_TYPE        Node*
 #define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
-INLINE void Tweak_Bonus_Keysource(Array* varlist, Node* keysource) {
+INLINE void Tweak_Bonus_Keysource(Flex* varlist, Node* keysource) {
     if (keysource != nullptr) {
         if (Is_Node_A_Stub(keysource))
             assert(Is_Stub_Keylist(cast(Flex*, keysource)));
@@ -194,7 +194,7 @@ INLINE Phase* ACT_IDENTITY(Action* action) {
 // archetype is updated to match its container.
 //
 // Note that the details array represented by the identity is not guaranteed
-// to be FLEX_FLAG_DYNAMIC, so we use Flex_Data() that handles it.
+// to be STUB_FLAG_DYNAMIC, so we use Flex_Data() that handles it.
 //
 #define ACT_ARCHETYPE(action) \
     cast(Element*, Flex_Data(ACT_IDENTITY(action)))
@@ -287,7 +287,7 @@ INLINE Param* ACT_PARAMS_HEAD(Action* a) {
     mutable_LINK_DISPATCHER(ACT_IDENTITY(a)) = cast(CFunction*, (cfunc))
 
 
-// The DETAILS array isn't guaranteed to be FLEX_FLAG_DYNAMIC (it may hold
+// The DETAILS array isn't guaranteed to be STUB_FLAG_DYNAMIC (it may hold
 // only the archetype, e.g. with a specialized function).  *BUT* if you are
 // asking for elements in the details array, you must know it is dynamic.
 //

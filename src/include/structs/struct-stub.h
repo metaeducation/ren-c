@@ -22,56 +22,46 @@
 //
 // Stubs are small fixed-size structures, that are the basic building block
 // of GC-trackable entities in the system.  They are tailored for implementing
-// the "Flex" resizable vector-like type...see %struct-flex.h...but are also
-// used for other purposes (all Flex are Stubs, but not all Stubs are Flex).
+// the "Flex" resizable vector-like type (see %struct-flex.h).  But while all
+// Flex are Stubs, not all Stubs are Flex...some use bits for other purposes.
 //
-// A Stub is normally the size of two Cells (though compiling with certain
-// debug flags can add tracking information).  See %struct-node.h for
-// explanations of how obeying the header-in-first-slot convention allows a
-// Stub to be distinguished from a Cell or a UTF-8 string and not run
-// afoul of strict aliasing requirements.
+// A Stub is typically 8 platform pointers in size (though certain debug flags
+// expand the size to add tracking information).  It is defined as a union
+// with with two different layouts:
 //
-// In order to help avoid confusion in optimizing macros that could be passed
-// a Cell vs. Stub unintentionally, the header in a stub is called `->leader`,
-// distinguishing it from the stub's `->header`.
+//      Dynamic: [leader link [allocation-tracking] info misc]
+//      Compact: [leader link [-sizeof(Cell)-data-] info misc]
 //
-// There are two layouts which the union can be interpreted as:
+// Choosing this size means that the same memory Pool that holds Stubs can
+// also hold GC-trackable entities representing two 4-platform-pointer-Cells:
 //
-//      Dynamic: [leader link [allocation tracking] info misc]
-//     Singular: [leader link [Cell] info misc]
+//      Pairing: [[-------Cell--------] [-------Cell--------]]
 //
-// The singular form has space the *size* of a Cell, but can be addressed as
-// raw bytes used for UTF-8 strings or other smallish data.  If a Stub is
-// aligned on a 64-bit boundary, the internal cell should be on a 64-bit
+// A Compact Stub has data space that fits a Cell, but can also be addressed
+// as raw bytes used for UTF-8 strings or other smallish data.  If a Stub is
+// aligned on a 64-bit boundary, a Compact Stub's Cell should be on a 64-bit
 // boundary as well, even on a 32-bit platform where the header and link are
 // each 32-bits.  See ALIGN_SIZE for notes on why this is important.
 //
-// `info` is not the start of a "Rebol Node" (e.g. either a Stub or Cell)
-// But in the singular case it is positioned right where the next cell after
-// the embedded Cell would be.  To lower the risk of stepping into that
-// location and thinking it is a cell, it keeps the info bit corresponding to
-// NODE_FLAG_CELL clear.
-//
-// Singulars have widespread applications in the system.  One is that a
-// "single-Element Array living in a Flex Stub" makes a very efficient
-// implementation of an API handle to a Value.  Plus it's used notably in the
-// efficient implementation of FRAME!.  They also narrow the gap in overhead
-// between COMPOSE [A (B) C] vs. REDUCE ['A B 'C] such that the memory cost
-// of the Array is nearly the same as just having another Cell in the array.
-//
-// Pairings are not Stubs, but allocated from the Stub pool in order to
-// help exchange a common "currency" of allocation size more efficiently.
-// They are used in the PAIR! datatype, but have other applications when
-// exactly two values are needed (e.g. paths or tuples like `a/b` or `a.b`)
-//
-//      Pairing: [[Cell] [Cell]]  ; sizeof(Pairing) = sizeof(Stub)
-//
-// Most of the time, code does not need to be concerned about distinguishing
-// Pairing from the Dynamic and Singular layouts--because it already knows
-// which kind it has.  Only the GC needs to be concerned when marking
-// and sweeping.
+// Compact Stubs have widespread applications in the system.  One is that a
+// "single-Cell living in a Compact Stub" offers an efficient way to implement
+// a tracking entity for API Value handles.  They also narrow the gap in
+// overhead between COMPOSE [A (B) C] vs. REDUCE ['A B 'C] such that memory
+// cost of a 1-element Array only adds 8 platform pointers.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * In order to help avoid confusion in optimizing macros that could be
+//   passed a Cell vs. Stub unintentionally, the header in a Stub is called
+//   `->leader`, distinguishing it from the stub's `->header`.
+//
+// * See %struct-node.h for how obeying the header-in-first-slot convention
+//   allows a Stub to be distinguished from a Cell or a UTF-8 string, and not
+//   run afoul of strict aliasing requirements!
+//
+// * While sizeof(Pairing) = sizeof(Stub), Pairings are not Stubs.  They are
+//   used in the PAIR! datatype, but have other applications when exactly two
+//   elements are needed (e.g. paths or tuples like `a/b` or `a.b`)
 //
 // * Because a Stub contains a union member that embeds a Cell directly,
 //   `Cell` must be fully defined before this file can compile.  Hence
@@ -79,102 +69,157 @@
 //
 
 
+#define STUB_FLAGS_NONE \
+    0  // helps locate places that want to say "no flags"
+
+
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// FLEX_FLAG_0 - FLEX_FLAG_7 are NODE_FLAG_XXX)
+// BITS 0-7: TAKEN FOR NODE_FLAG_XXX
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
 // At one time all the flags were aliased, like:
 //
-//     #define FLEX_FLAG_MANAGED NODE_FLAG_MANAGED
-//     #define FLEX_FLAG_FREE NODE_FLAG_FREE
+//     #define STUB_FLAG_MANAGED NODE_FLAG_MANAGED
+//     #define STUB_FLAG_FREE NODE_FLAG_FREE
 //     ...
 //
 // This created weird inconsistencies where it would make an equal amount of
-// sense to pass FLEX_FLAG_MANAGED or NODE_FLAG_MANAGED, and introduces the
+// sense to pass STUB_FLAG_MANAGED or NODE_FLAG_MANAGED, and introduces the
 // risk that the checks might be performed on pointers that don't know if
 // what they point at is a Cell or a Stub.  The duplication was removed, and
-// now you say `Is_Node_Managed(flex)` vs. `Get_Flex_Flag(flex, MANAGED)` etc.
+// now you say `Is_Node_Managed(stub)` vs. `Get_Stub_Flag(stub, MANAGED)` etc.
 //
 // Aliases for the NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are kept, as there
 // is no corresponding ambiguity.
 
 
-//=//// FLEX_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
+//=//// STUB_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a Flex's LINK() field is the `any.node`, and should
+// This indicates that a Stub's LINK() field is the `any.node`, and should
 // be marked (if not null).
 //
 // Note: Even if this flag is not set, *link.any might still be a node*...
 // just not one that should be marked.
 //
-#define FLEX_FLAG_LINK_NODE_NEEDS_MARK \
+#define STUB_FLAG_LINK_NODE_NEEDS_MARK \
     NODE_FLAG_GC_ONE
 
 
-//=//// FLEX_FLAG_MISC_NODE_NEEDS_MARK //////////////////////////////////=//
+//=//// STUB_FLAG_MISC_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a Flex's MISC() field is the `any.node`, and should
+// This indicates that a Stub's MISC() field is the `any.node`, and should
 // be marked (if not null).
 //
 // Note: Even if this flag is not set, *misc.any might still be a node*...
 // just not one that should be marked.
 //
-#define FLEX_FLAG_MISC_NODE_NEEDS_MARK \
+#define STUB_FLAG_MISC_NODE_NEEDS_MARK \
     NODE_FLAG_GC_TWO
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// FLEX <<HEADER>> FLAGS
+// BITS 8-15: STUB SUBCLASS ("FLAVOR")
 //
 //=////////////////////////////////////////////////////////////////////////=//
-//
-// Flex has two places to store flags...in the "header" and in the "info".
-// The following are the FLEX_FLAG_XXX that are used in the header, while
-// the FLEX_INFO_XXX flags will be found in the info.
-//
-// ** Make_Flex() takes FLEX_FLAG_XXX as a parameter, so anything that
-// controls Flex creation should be a _FLAG_ as opposed to an _INFO_! **
-//
-// (Other general rules might be that bits that are to be tested or set as
-// a group should be in the same flag group.  Perhaps things that don't change
-// for the lifetime of the Flex might prefer header to the info, too?
-// Such things might help with caching.)
-//
 
-#define FLEX_FLAGS_NONE \
-    0  // helps locate places that want to say "no flags"
-
-
-//=//// FLEX_FLAG_8 /////////////////////////////////////////////////////=//
+// Stub subclasses use a byte to tell which kind they are.  The byte is an
+// enum which is ordered in a way that offers information (e.g. all the
+// Stubs that hold Cells are in a range, all the Flexes with width of 1
+// are together...)
 //
-#define FLEX_FLAG_8 \
-    FLAG_LEFT_BIT(8)
+// 1. In lieu of typechecking Stub is-a Stub, we assume the macro finding
+//    a field called ->leader with .bits in it is good enough.  All methods of
+//    checking seem to add overhead in the debug build that isn't worth it.
+//    To help avoid accidentally passing cell, the HeaderUnion in a Stub
+//    is named "leader" instead of "header".
+
+#define FLAVOR_BYTE(stub) \
+    SECOND_BYTE(&(stub)->leader.bits)
+
+#define FLAG_FLAVOR_BYTE(flavor)        FLAG_SECOND_BYTE(flavor)
+#define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
 
 
-//=//// FLEX_FLAG_FIXED_SIZE ////////////////////////////////////////////=//
+//=////////////////////////////////////////////////////////////////////////=//
 //
-// This means a Flex cannot be expanded or contracted.  Values within the
-// Flex are still writable (assuming it isn't otherwise locked).
+// BITS 16-23: STUB (AND FLEX STUB) LEADER FLAGS
 //
-// !!! Is there checking in all paths?  Do Flex contractions check this?
-//
-// One important reason for ensuring a Flex is fixed size is to avoid
-// the possibility of the data pointer being reallocated.  This allows
-// code to ignore the usual rule that it is unsafe to hold a pointer to
-// a value in the Flex data (still might have to check for inaccessible).
-//
-// !!! Strictly speaking, FLEX_FLAG_NO_RELOCATE could be different
-// from fixed size... if there would be a reason to reallocate besides
-// changing size (such as memory compaction).  For now, just make the two
-// equivalent but let the callsite distinguish the intent.
-//
-#define FLEX_FLAG_FIXED_SIZE \
-    FLAG_LEFT_BIT(9)
+//=////////////////////////////////////////////////////////////////////////=//
 
-#define FLEX_FLAG_DONT_RELOCATE FLEX_FLAG_FIXED_SIZE
+// These relatively scarce flags are shared with Flex as being flags that
+// would apply to all Flex, regardless of subclass.  It would be technically
+// possible for non-Flex Stubs to have alternate purposes for any FLEX_FLAG
+// in this range, but it's simpler if they do whatever they do with a
+// flag applicable to their subclass.
+
+
+//=//// STUB_FLAG_INFO_NODE_NEEDS_MARK ////////////////////////////////////=//
+//
+// Bits are hard to come by in a Stub, especially a Compact Stub which
+// uses the cell content for an arbitrary value (e.g. API handles).  The
+// space for the INFO bits is thus sometimes claimed for a node ("INODE"),
+// which may need marking.
+//
+#define STUB_FLAG_INFO_NODE_NEEDS_MARK \
+    FLAG_LEFT_BIT(16)
+
+
+//=//// STUB_FLAG_DYNAMIC /////////////////////////////////////////////////=//
+//
+// (Note: While only Flex Stubs will set this flag, it is considered a Stub
+// flag and not a Flex flag, in order to make handling of the case where a
+// Stub contains a cell payload more uniform.)
+//
+// A small Flex will fit the data into the Flex Stub if it is small enough.
+// This flag is set when a Flex uses its `content` for tracking information
+// instead of the actual data itself.
+//
+// It can also be passed in at Flex creation time to force an allocation to
+// be dynamic.  This is because some code is more interested in performance
+// gained by being able to assume where to look for the data pointer and the
+// length (e.g. paramlists and context varlists/keylists).  So passing this
+// flag into Flex creation routines avoids creating the optimized form.
+//
+// Note: At one time the USED_BYTE() of 255 was the signal for this.  But
+// being able to pass in the flag to creation routines easily, and make the
+// test easier with Get_Stub_Flag(), was seen as better.  Also, this means
+// a dynamic Flex has an entire byte worth of free data available to use.
+//
+#define STUB_FLAG_DYNAMIC \
+    FLAG_LEFT_BIT(17)
+
+
+//=//// STUB_FLAG_BLACK /////////////////////////////////////////////////=//
+//
+// This is a generic bit for the "coloring API", e.g. Is_Stub_Black(),
+// Flip_Stub_White(), etc.  These let native routines engage in marking
+// and unmarking Flexes without potentially wrecking the garbage collector by
+// reusing NODE_FLAG_MARKED.  Purposes could be for recursion protection or
+// other features, to avoid having to make a map from Stub to bool.
+//
+#define STUB_FLAG_BLACK \
+    FLAG_LEFT_BIT(18)
+
+
+//=//// STUB_FLAG_19 ////////////////////////////////////////////////////=//
+//
+#define STUB_FLAG_19 \
+    FLAG_LEFT_BIT(19)
+
+
+//=//// STUB_FLAG_20 //////////////////////////////////////////////////////=//
+//
+#define STUB_FLAG_20 \
+    FLAG_LEFT_BIT(20)
+
+
+//=//// STUB_FLAG_21 ////////////////////////////////////////////////////=//
+//
+#define STUB_FLAG_21 \
+    FLAG_LEFT_BIT(21)
 
 
 //=//// FLEX_FLAG_POWER_OF_2 ////////////////////////////////////////////=//
@@ -197,105 +242,57 @@
 // was not necessary there.
 //
 #define FLEX_FLAG_POWER_OF_2 \
-    FLAG_LEFT_BIT(10)
+    FLAG_LEFT_BIT(22)
 
 
-//=//// FLEX_FLAG_DYNAMIC ///////////////////////////////////////////////=//
+//=//// FLEX_FLAG_FIXED_SIZE ////////////////////////////////////////////=//
 //
-// A small Flex will fit the data into the Flex Stub if it is small enough.
-// This flag is set when a Flex uses its `content` for tracking information
-// instead of the actual data itself.
+// This means a Flex cannot be expanded or contracted.  Values within the
+// Flex are still writable (assuming it isn't otherwise locked).
 //
-// It can also be passed in at Flex creation time to force an allocation to
-// be dynamic.  This is because some code is more interested in performance
-// gained by being able to assume where to look for the data pointer and the
-// length (e.g. paramlists and context varlists/keylists).  So passing this
-// flag into Flex creation routines avoids creating the optimized form.
+// !!! Is there checking in all paths?  Do Flex contractions check this?
 //
-// Note: At one time the USED_BYTE() of 255 was the signal for this.  But
-// being able to pass in the flag to creation routines easily, and make the
-// test easier with Get_Flex_Flag(), was seen as better.  Also, this means
-// a dynamic Flex has an entire byte worth of free data available to use.
+// One important reason for ensuring a Flex is fixed size is to avoid
+// the possibility of the data pointer being reallocated.  This allows
+// code to ignore the usual rule that it is unsafe to hold a pointer to
+// a value in the Flex data (still might have to check for inaccessible).
 //
-#define FLEX_FLAG_DYNAMIC \
-    FLAG_LEFT_BIT(11)
+// !!! Strictly speaking, FLEX_FLAG_NO_RELOCATE could be different
+// from fixed size... if there would be a reason to reallocate besides
+// changing size (such as memory compaction).  For now, just make the two
+// equivalent but let the callsite distinguish the intent.
+//
+#define FLEX_FLAG_FIXED_SIZE \
+    FLAG_LEFT_BIT(23)
+
+#define FLEX_FLAG_DONT_RELOCATE FLEX_FLAG_FIXED_SIZE
 
 
-//=//// FLEX_FLAG_INFO_NODE_NEEDS_MARK //////////////////////////////////=//
+//=////////////////////////////////////////////////////////////////////////=//
 //
-// Bits are hard to come by in a Stub, especially a singular Stub which
-// uses the cell content for an arbitrary value (e.g. API handles).  The
-// space for the INFO bits is thus sometimes claimed for a node ("INODE"),
-// which may need marking.
+// BITS 24-31: STUB SUBCLASS FLAGS
 //
-#define FLEX_FLAG_INFO_NODE_NEEDS_MARK \
-    FLAG_LEFT_BIT(12)
+//=////////////////////////////////////////////////////////////////////////=//
 
-
-//=//// FLEX_FLAG_13 ////////////////////////////////////////////////////=//
-//
-#define FLEX_FLAG_13 \
-    FLAG_LEFT_BIT(13)
-
-
-//=//// FLEX_FLAG_BLACK /////////////////////////////////////////////////=//
-//
-// This is a generic bit for the "coloring API", e.g. Is_Flex_Black(),
-// Flip_Flex_White(), etc.  These let native routines engage in marking
-// and unmarking Flexes without potentially wrecking the garbage collector by
-// reusing NODE_FLAG_MARKED.  Purposes could be for recursion protection or
-// other features, to avoid having to make a map from Flex to bool.
-//
-// !!! Not clear if this belongs in the FLEX_FLAG_XXX or not, but moving
-// it here for now.
-//
-#define FLEX_FLAG_BLACK \
-    FLAG_LEFT_BIT(14)
-
-
-//=//// FLEX_FLAG_15 ////////////////////////////////////////////////////=//
-//
-#define FLEX_FLAG_15 \
-    FLAG_LEFT_BIT(15)
-
-
-//=//// BITS 16-23: STUB SUBCLASS ("FLAVOR") //////////////////////////////=//
-//
-// Stub subclasses use a byte to tell which kind they are.  The byte is an
-// enum which is ordered in a way that offers information (e.g. all the
-// arrays are in a range, all the Flexes with width of 1 are together...)
-//
-// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
-//    a field called ->leader with .bits in it is good enough.  All methods of
-//    checking seem to add overhead in the debug build that isn't worth it.
-//    To help avoid accidentally passing cell, the HeaderUnion in a Cell
-//    is named "header" instead of "leader".
-//
-#define FLAVOR_BYTE(stub) \
-    THIRD_BYTE(&(stub)->leader.bits)
-
-#define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
-#define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
-
-
-//=//// BITS 24-31: SUBCLASS FLAGS ////////////////////////////////////////=//
-//
-// These flags are those that differ based on which Flex subclass is used.
+// These flags are those that differ based on which Stub Flavor is used.
 //
 // This space is used currently for Array flags to store things like whether
 // the array ends in a newline.  It's a hodepodge of other bits which were
 // rehomed while organizing the flavor bits.  These positions now have the
 // ability to be more thought out after the basics of flavors are solved.
 //
+// The bits are pushed out of the range of generic Flex flags to be safe.
+// But if more than 8 bits are needed for a non-Flex Stub, then it is
+// possible to reuse a Flex flag... if truly necessary (!)
 
-#define FLEX_FLAG_24    FLAG_LEFT_BIT(24)
-#define FLEX_FLAG_25    FLAG_LEFT_BIT(25)
-#define FLEX_FLAG_26    FLAG_LEFT_BIT(26)
-#define FLEX_FLAG_27    FLAG_LEFT_BIT(27)
-#define FLEX_FLAG_28    FLAG_LEFT_BIT(28)
-#define FLEX_FLAG_29    FLAG_LEFT_BIT(29)
-#define FLEX_FLAG_30    FLAG_LEFT_BIT(30)
-#define FLEX_FLAG_31    FLAG_LEFT_BIT(31)
+#define STUB_SUBCLASS_FLAG_24    FLAG_LEFT_BIT(24)
+#define STUB_SUBCLASS_FLAG_25    FLAG_LEFT_BIT(25)
+#define STUB_SUBCLASS_FLAG_26    FLAG_LEFT_BIT(26)
+#define STUB_SUBCLASS_FLAG_27    FLAG_LEFT_BIT(27)
+#define STUB_SUBCLASS_FLAG_28    FLAG_LEFT_BIT(28)
+#define STUB_SUBCLASS_FLAG_29    FLAG_LEFT_BIT(29)
+#define STUB_SUBCLASS_FLAG_30    FLAG_LEFT_BIT(30)
+#define STUB_SUBCLASS_FLAG_31    FLAG_LEFT_BIT(31)
 
 
 
@@ -363,7 +360,7 @@ union StubContentUnion {
     //
     struct StubDynamicStruct dynamic;
 
-    // If not(FLEX_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
+    // If not(STUB_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
     // the Flex Stub.  If the single Cell holds a "Poison", it's 0 length...
     // otherwise it's length 1.  This means Flex_Used() for non-dynamic
     // Arrays is technically available for other purposes.
@@ -390,7 +387,7 @@ union StubLinkUnion {
     void *fd;
 
     // If a Node* is stored in the link field, it has to use this union
-    // member for FLEX_INFO_LINK_NODE_NEEDS_MARK to see it.  To help make
+    // member for STUB_INFO_LINK_NODE_NEEDS_MARK to see it.  To help make
     // the reference sites be unique for each purpose and still be type safe,
     // see the LINK() macro helpers.
     //
@@ -431,7 +428,7 @@ union StubMiscUnion {
     bool negated;
 
     // If a Node* is stored in the misc field, it has to use this union
-    // member for FLEX_INFO_MISC_NODE_NEEDS_MARK to see it.  To help make
+    // member for STUB_INFO_MISC_NODE_NEEDS_MARK to see it.  To help make
     // the reference sites be unique for each purpose and still be type safe,
     // see the MISC() macro helpers.
     //
@@ -454,7 +451,7 @@ union StubInfoUnion {
 
 
 #if CPLUSPLUS_11
-    struct StubStruct : public Node
+    struct StubStruct : public Node  // Note: empty base class optimization
 #else
     struct StubStruct
 #endif
@@ -494,6 +491,12 @@ union StubInfoUnion {
     // that may need to be tested together as a group.  Make_Flex()
     // calls presume all the info bits are initialized to zero, so any flag
     // that controls the allocation should be a FLEX_FLAG_XXX instead.
+    //
+    // `info` is not the start of a "Rebol Node" (e.g. either a Stub or Cell)
+    // But in the Fixed case it is positioned right where the next cell after
+    // the embedded Cell would be.  To lower the risk of stepping into that
+    // location and thinking it is a cell, it keeps the info bit corresponding
+    // to NODE_FLAG_CELL clear.
     //
     // !!! Only 32-bits are used on 64-bit platforms.  There could be some
     // interesting added caching feature or otherwise that would use

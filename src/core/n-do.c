@@ -628,7 +628,7 @@ DECLARE_NATIVE(applique)
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // no binder needed
     );
-    Manage_Flex(Varlist_Array(exemplar));
+    Manage_Flex(exemplar);
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
@@ -728,7 +728,7 @@ DECLARE_NATIVE(apply)
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // doesn't use a Binder [2]
     );
-    Manage_Flex(Varlist_Array(exemplar)); // Putting into a frame
+    Manage_Flex(exemplar); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant

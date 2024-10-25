@@ -340,7 +340,7 @@ typedef struct {
   #endif
 
   #if DEBUG
-    intptr_t num_black_flex;
+    intptr_t num_black_stubs;
   #endif
 
   #if DEBUG_COLLECT_STATS
@@ -633,6 +633,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
 #endif
 
 #include "sys-cell.h"
+#include "sys-stub.h"
 
 #include "stubs/stub-flex.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
 

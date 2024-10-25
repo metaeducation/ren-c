@@ -400,7 +400,7 @@ DECLARE_NATIVE(yield)
     Value* mode = Details_At(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Blank(mode));  // should be signal for "currently running"
     Init_Frame(mode, Varlist_Of_Level_Force_Managed(yield_level), ANONYMOUS);
-    Assert_Flex_Managed(Varlist_Array(Cell_Varlist(mode)));
+    Assert_Flex_Managed(Cell_Varlist(mode));
     assert(Level_Of_Varlist_If_Running(Cell_Varlist(mode)) == yield_level);
 
     // We store the frame chain into the yielder, as a FRAME! value.  The

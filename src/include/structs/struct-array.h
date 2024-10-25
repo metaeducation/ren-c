@@ -67,10 +67,10 @@
 // ->misc and ->link fields for caching purposes in String.
 //
 #define ARRAY_FLAG_HAS_FILE_LINE_UNMASKED \
-    FLEX_FLAG_24
+    STUB_SUBCLASS_FLAG_24
 
 #define ARRAY_MASK_HAS_FILE_LINE \
-    (ARRAY_FLAG_HAS_FILE_LINE_UNMASKED | FLEX_FLAG_LINK_NODE_NEEDS_MARK)
+    (ARRAY_FLAG_HAS_FILE_LINE_UNMASKED | STUB_FLAG_LINK_NODE_NEEDS_MARK)
 
 #define LINK_Filename_TYPE          const String*
 #define HAS_LINK_Filename           FLAVOR_ARRAY
@@ -79,25 +79,25 @@
 //=//// ARRAY_FLAG_25 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_25 \
-    FLEX_FLAG_25
+    STUB_SUBCLASS_FLAG_25
 
 
 //=//// ARRAY_FLAG_26 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_26 \
-    FLEX_FLAG_26
+    STUB_SUBCLASS_FLAG_26
 
 
 //=//// ARRAY_FLAG_27 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_27 \
-    FLEX_FLAG_27
+    STUB_SUBCLASS_FLAG_27
 
 
 //=//// ARRAY_FLAG_28 /////////////////////////////////////////////////////=//
 //
 #define ARRAY_FLAG_28 \
-    FLEX_FLAG_28
+    STUB_SUBCLASS_FLAG_28
 
 
 //=//// ARRAY_FLAG_CONST_SHALLOW //////////////////////////////////////////=//
@@ -111,7 +111,7 @@
 // it is the same bit as the const flag one would find in the value.
 //
 #define ARRAY_FLAG_CONST_SHALLOW \
-    FLEX_FLAG_30
+    STUB_SUBCLASS_FLAG_30
 STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 
 
@@ -125,4 +125,4 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 // tail of an array.
 //
 #define ARRAY_FLAG_NEWLINE_AT_TAIL \
-    FLEX_FLAG_31
+    STUB_SUBCLASS_FLAG_31

@@ -59,7 +59,7 @@ void Dump_Flex(Flex* f, const char *memo)
         return;
 
     printf(" wide: %d\n", cast(int, Flex_Wide(f)));
-    if (Get_Flex_Flag(f, DYNAMIC)) {
+    if (Get_Stub_Flag(f, DYNAMIC)) {
         printf(" size: %ld\n", cast(unsigned long, Flex_Total(f)));
         printf(" bias: %d\n", cast(int, Flex_Bias(f)));
     }

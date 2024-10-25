@@ -189,7 +189,7 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
     //
     // This is not a problem, since all such small strings would also need
     // Stubs...and Ren-C has a better answer to embed the payload directly
-    // into the Stub when FLEX_FLAG_DYNAMIC is not set.  This wouldn't apply
+    // into the Stub when STUB_FLAG_DYNAMIC is not set.  This wouldn't apply
     // if you were trying to do very small allocations of strings that did not
     // have associated Stubs...but those don't exist in the code.
 
@@ -509,7 +509,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             }
 
             Flex* f = x_cast(Flex*, unit);
-            if (Not_Flex_Flag(f, DYNAMIC)) {
+            if (Not_Stub_Flag(f, DYNAMIC)) {
                 if (
                     p >= cast(void*, &f->content)
                     && p < cast(void*, &f->content + 1)
@@ -726,7 +726,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     Byte wide = Flex_Wide(f);
 
-    const bool was_dynamic = Get_Flex_Flag(f, DYNAMIC);
+    const bool was_dynamic = Get_Stub_Flag(f, DYNAMIC);
 
     if (was_dynamic and index == 0 and Flex_Bias(f) >= delta) {
 
@@ -738,7 +738,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         Subtract_Flex_Bias(f, delta);
 
       #if !defined(NDEBUG)
-        if (Is_Stub_Array(f)) {
+        if (Stub_Holds_Cells(f)) {
             //
             // When the bias region was marked, it was made "unsettable" if
             // this was a debug build.  Now that the memory is included in
@@ -782,7 +782,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         );
 
       #if !defined(NDEBUG)
-        if (Is_Stub_Array(f)) {
+        if (Stub_Holds_Cells(f)) {
             //
             // The opened up area needs to be set to "settable" in the
             // debug build.  This takes care of making "unsettable" values
@@ -860,13 +860,13 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
     // The new Flex will *always* be dynamic, because it would not be expanding
     // if a fixed size allocation was sufficient.
 
-    Set_Flex_Flag(f, DYNAMIC);
+    Set_Stub_Flag(f, DYNAMIC);
     Set_Flex_Flag(f, POWER_OF_2);
     if (not Try_Flex_Data_Alloc(f, used_old + delta + x))
         fail (Error_No_Memory((used_old + delta + x) * wide));
 
-    assert(Get_Flex_Flag(f, DYNAMIC));
-    if (Is_Stub_Array(f))
+    assert(Get_Stub_Flag(f, DYNAMIC));
+    if (Stub_Holds_Cells(f))
         Prep_Array(x_cast(Array*, f), 0);  // capacity doesn't matter to prep
 
     // If necessary, add Flex to the recently expanded list
@@ -922,18 +922,18 @@ void Swap_Flex_Content(Flex* a, Flex* b)
     // non-Array or vice versa.  Cases haven't come up for swapping Flexes
     // of varying width, either.
     //
-    assert(Is_Stub_Array(a) == Is_Stub_Array(b));
+    assert(Stub_Holds_Cells(a) == Stub_Holds_Cells(b));
     assert(Flex_Wide(a) == Flex_Wide(b));
 
-    bool a_dynamic = Get_Flex_Flag(a, DYNAMIC);
-    if (Get_Flex_Flag(b, DYNAMIC))
-        Set_Flex_Flag(a, DYNAMIC);
+    bool a_dynamic = Get_Stub_Flag(a, DYNAMIC);
+    if (Get_Stub_Flag(b, DYNAMIC))
+        Set_Stub_Flag(a, DYNAMIC);
     else
-        Clear_Flex_Flag(a, DYNAMIC);
+        Clear_Stub_Flag(a, DYNAMIC);
     if (a_dynamic)
-        Set_Flex_Flag(b, DYNAMIC);
+        Set_Stub_Flag(b, DYNAMIC);
     else
-        Clear_Flex_Flag(b, DYNAMIC);
+        Clear_Stub_Flag(b, DYNAMIC);
 
     // !!! Sequences that have put mirror bytes into arrays intend that to
     // encode a list type, and the sequence needs that to persist.  Review
@@ -1017,7 +1017,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
     assert(Not_Flex_Flag(f, FIXED_SIZE));
 
-    bool was_dynamic = Get_Flex_Flag(f, DYNAMIC);
+    bool was_dynamic = Get_Stub_Flag(f, DYNAMIC);
 
     REBINT bias_old;
     REBINT size_old;
@@ -1042,18 +1042,18 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
     f->leader.bits |= flags;
 
     // !!! Currently the remake won't make a Flex that fits entirely in
-    // a Stub (so always FLEX_FLAG_DYNAMIC).  All Flex code needs a general
+    // a Stub (so always STUB_FLAG_DYNAMIC).  All Flex code needs a general
     // audit, so that should be one of the things considered.
 
-    Set_Flex_Flag(f, DYNAMIC);
+    Set_Stub_Flag(f, DYNAMIC);
     if (not Try_Flex_Data_Alloc(f, units + 1)) {
         // Put Flex back how it was (there may be extant references)
         f->content.dynamic.data = cast(char*, data_old);
 
         fail (Error_No_Memory((units + 1) * wide));
     }
-    assert(Get_Flex_Flag(f, DYNAMIC));
-    if (Is_Stub_Array(f))
+    assert(Get_Stub_Flag(f, DYNAMIC));
+    if (Stub_Holds_Cells(f))
         Prep_Array(x_cast(Array*, f), 0);  // capacity doesn't matter to prep
 
     if (preserve) {
@@ -1147,7 +1147,7 @@ Stub *Decay_Flex(Flex* f)
             g_mem.prior_expand[n] = 0;
     }
 
-    if (Get_Flex_Flag(f, DYNAMIC)) {
+    if (Get_Stub_Flag(f, DYNAMIC)) {
         Byte wide = Flex_Wide(f);
         REBLEN bias = Flex_Bias(f);
         REBLEN total = (bias + Flex_Rest(f)) * wide;
@@ -1333,7 +1333,7 @@ REBLEN Check_Memory_Debug(void)
                 continue; // a pairing
 
             Flex* f = x_cast(Flex*, unit);
-            if (Not_Flex_Flag(f, DYNAMIC))
+            if (Not_Stub_Flag(f, DYNAMIC))
                 continue;  // data lives in the Flex Stub itself
 
             if (Flex_Rest(f) == 0)
@@ -1449,7 +1449,7 @@ void Dump_All_Flex_In_Pool(PoolId pool_id)
 
             Flex* f = x_cast(Flex*, unit);
             if (
-                Get_Flex_Flag(f, DYNAMIC)
+                Get_Stub_Flag(f, DYNAMIC)
                 and pool_id == Pool_Id_For_Size(Flex_Total(f))
             ){
                 Dump_Flex(f, "Dump_All_Flex_In_Pool");
@@ -1553,22 +1553,22 @@ REBU64 Inspect_Flex(bool show)
 
             Flex* f = x_cast(Flex*, unit);
 
-            if (Get_Flex_Flag(f, DYNAMIC))
+            if (Get_Stub_Flag(f, DYNAMIC))
                 tot_size += Flex_Total(f);
 
-            if (Is_Stub_Array(f)) {
+            if (Stub_Holds_Cells(f)) {
                 blks++;
-                if (Get_Flex_Flag(f, DYNAMIC))
+                if (Get_Stub_Flag(f, DYNAMIC))
                     blk_size += Flex_Total(f);
             }
             else if (Flex_Wide(f) == 1) {
                 strs++;
-                if (Get_Flex_Flag(f, DYNAMIC))
+                if (Get_Stub_Flag(f, DYNAMIC))
                     str_size += Flex_Total(f);
             }
             else if (Flex_Wide(f) != 0) {
                 odds++;
-                if (Get_Flex_Flag(f, DYNAMIC))
+                if (Get_Stub_Flag(f, DYNAMIC))
                     odd_size += Flex_Total(f);
             }
         }

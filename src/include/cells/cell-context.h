@@ -106,7 +106,7 @@ INLINE Element* Init_Context_Cell(
     Extra_Init_Context_Cell_Checks_Debug(heart, c);
   #endif
     UNUSED(heart);
-    Assert_Flex_Managed(Varlist_Array(c));
+    Assert_Flex_Managed(c);
     if (CTX_TYPE(c) != REB_MODULE)
         Assert_Flex_Managed(Keylist_Of_Varlist(c));
     return Copy_Cell(out, Varlist_Archetype(c));

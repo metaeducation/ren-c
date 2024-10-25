@@ -1518,7 +1518,7 @@ void Assert_Array_Core(const Array* a)
 
     Assert_Flex_Basics_Core(a);  // not marked free, etc.
 
-    if (not Is_Stub_Array(a))
+    if (not Stub_Holds_Cells(a))
         panic (a);
 
     const Cell* item = Array_Head(a);
@@ -1532,7 +1532,7 @@ void Assert_Array_Core(const Array* a)
         }
     }
 
-    if (Get_Flex_Flag(a, DYNAMIC)) {
+    if (Get_Stub_Flag(a, DYNAMIC)) {
         Length rest = Flex_Rest(a);
 
       #if DEBUG_POISON_FLEX_TAILS

@@ -61,7 +61,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;
 
         assert(Is_Node_Managed(binding));
-        assert(Is_Stub_Array(binding));
+        assert(Stub_Holds_Cells(binding));
 
         if (not Is_Stub_Varlist(binding))
             break;
@@ -159,7 +159,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         const Map* map = VAL_MAP(v);
         assert(Is_Node_Marked(map));
-        assert(Is_Stub_Array(MAP_PAIRLIST(map)));
+        assert(Stub_Holds_Cells(MAP_PAIRLIST(map)));
         break; }
 
       case REB_HANDLE: { // See %sys-handle.h
@@ -302,7 +302,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                     assert(Cell_Frame_Coupling(v) == Level_Coupling(L)); */
             }
             else
-                assert(Is_Stub_Let(Singular_From_Cell(v)));
+                assert(Is_Stub_Let(Compact_Stub_From_Cell(v)));
         }
 
         if (PAYLOAD(Any, v).second.node) {
@@ -444,7 +444,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // and that it hasn't been freed.
         //
         assert(not Is_Node_Free(a));
-        assert(Is_Stub_Array(a));
+        assert(Stub_Holds_Cells(a));
     #endif
 
     if (Is_Stub_Details(a)) {

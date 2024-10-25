@@ -61,11 +61,11 @@
 //
 // 2. INODE is not used yet (likely application: symbol for patches that
 //    represent lets).  Consider uses in patches that represent objects.  So
-//    no FLEX_FLAG_INFO_NODE_NEEDS_MARK yet.
+//    no STUB_FLAG_INFO_NODE_NEEDS_MARK yet.
 //
 // 3. MISC is a node, but it's used for linking patches to variants with
 //    different chains underneath them...and shouldn't keep that alternate
-//    version alive.  So no FLEX_FLAG_MISC_NODE_NEEDS_MARK.
+//    version alive.  So no STUB_FLAG_MISC_NODE_NEEDS_MARK.
 //
 // 4. There's currently no way to ask for the "binding of" a LET and get an
 //    answer for what the context is.  It's a free-floating stub that you
@@ -94,9 +94,9 @@ INLINE Use* Make_Use_Core(
     Stub* use = Alloc_Singular(
         FLAG_FLAVOR(USE)
             | NODE_FLAG_MANAGED
-            | FLEX_FLAG_LINK_NODE_NEEDS_MARK
-            /* FLEX_FLAG_INFO_NODE_NEEDS_MARK */  // inode not yet used [2]
-            /* FLEX_FLAG_MISC_NODE_NEEDS_MARK */  // node, but not marked [3]
+            | STUB_FLAG_LINK_NODE_NEEDS_MARK
+            /* STUB_FLAG_INFO_NODE_NEEDS_MARK */  // inode not yet used [2]
+            /* STUB_FLAG_MISC_NODE_NEEDS_MARK */  // node, but not marked [3]
     );
 
     assert(Any_Context(defs) or Is_Word(defs));

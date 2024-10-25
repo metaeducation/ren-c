@@ -196,7 +196,7 @@ REBLEN Modify_Array(
     }
 
   #if DEBUG_POISON_FLEX_TAILS
-    if (Get_Flex_Flag(dst_arr, DYNAMIC))
+    if (Get_Stub_Flag(dst_arr, DYNAMIC))
         Poison_Cell(Array_Tail(dst_arr));
   #endif
 

@@ -99,136 +99,6 @@
     m_cast(union HeaderUnion*, &(f)->leader)->bits &= ~FLEX_FLAG_##name
 
 
-//=//// FLEX SUBCLASS FLAGS ///////////////////////////////////////////////=//
-//
-// In the debug build, ensure_flavor() checks if a Flex Stub matches the
-// expected FLAVOR_XXX, and panics if it does not.  This is used by the
-// subclass testing macros as a check that you are testing the flag for the
-// Flavor that you expect.
-//
-// 1. See Set_Flex_Flag()/Clear_Flex_Flag() for why implicit mutability.
-
-#if (! CPLUSPLUS_11) || (! DEBUG)
-    #define ensure_flavor(flavor,flex) \
-        (flex)  // no-op in release build
-#else
-    template<typename T>
-    INLINE T ensure_flavor(Flavor flavor, T flex) {
-        if (Stub_Flavor(flex) != flavor) {
-            Flavor actual_flavor = Stub_Flavor(flex);
-            USED(actual_flavor);
-            assert(!"Flex Flavor did not match what caller expected");
-        }
-        return flex;
-    }
-#endif
-
-#define Get_Subclass_Flag(subclass,flex,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (flex))->leader.bits \
-        & subclass##_FLAG_##name) != 0)
-
-#define Not_Subclass_Flag(subclass,flex,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (flex))->leader.bits \
-        & subclass##_FLAG_##name) == 0)
-
-#define Set_Subclass_Flag(subclass,flex,name) \
-    m_cast(union HeaderUnion*, /* [1] */ \
-        &ensure_flavor(FLAVOR_##subclass, (flex))->leader)->bits \
-        |= subclass##_FLAG_##name
-
-#define Clear_Subclass_Flag(subclass,flex,name)\
-    m_cast(union HeaderUnion*, /* [1] */ \
-        &ensure_flavor(FLAVOR_##subclass, (flex))->leader)->bits \
-        &= ~subclass##_FLAG_##name
-
-
-//=//// LINK AND MISC HELPERS /////////////////////////////////////////////=//
-//
-// Every Flex node has two generic platform-pointer-sized slots, called LINK
-// and MISC, that can store arbitrary information.  How that is interpreted
-// depends on the Flex subtype (its FLAVOR_XXX byte).
-//
-// Some of these slots hold other Node pointers that need to be GC marked.  But
-// rather than a switch() statement based on subtype to decide what to mark
-// or not, the GC is guided by generic flags in the Flex header called
-// LINK_NEEDS_MARKED and MISC_NEEDS_MARKED.
-//
-// Yet the link and misc actually mean different things for different subtypes.
-// A FLAVOR_NONSYMBOL node's LINK points to a list that maps byte positions to
-// UTF-8 codepoint boundaries.  But a FLAVOR_SYMBOL Flex uses the LINK for a
-// pointer to another symbol's synonym.
-//
-// A C program could typically deal with this using a union, to name the same
-// memory offset in different ways.  Here `link` would be a union {}:
-//
-//      BookmarkList* books = string.link.bookmarks;
-//      string.link.bookmarks = books;
-//
-//      const Symbol* synonym = symbol.link.synonym;
-//      symbol.link.synonym = synonym;
-//
-// The GC could then read a generic field like `flex->link.node` when doing
-// its marking.  This would be fine in C so long as the types were compatible,
-// it's called "type punning".
-//
-// But that's not legal in C++!
-//
-//  "It's undefined behavior to read from the member of the union that
-//   wasn't most recently written."
-//
-//  https://en.cppreference.com/w/cpp/language/union
-//
-// We use a workaround that brings in some heavy debug build benefits.  The
-// LINK() and MISC() macros force all assignments and reads through a common
-// field.  e.g. the following assigns and reads the same field ("node"), but
-// the instances document it is for "bookmarks" or "synonym":
-//
-//      BookmarkList* books = LINK(Bookmarks, string);  // reads `node`
-//      LINK(Bookmarks, string) = books;
-//
-//      const Symbol* synonym = LINK(Synonym, symbol);  // also reads `node`
-//      LINK(Synonym, symbol) = synonym;
-//
-// The syntax is *almost* as readable, but throws in benefits of offering some
-// helpful debug runtime checks that you're accessing what the Flex holds.
-// It has yet another advantage because it allows new "members" to be "added"
-// by extension code that wouldn't be able to edit a union in a core header.
-//
-// To use the LINK() and MISC(), you must define two macros, like this:
-//
-//      #define LINK_Bookmarks_TYPE     BookmarkList*
-//      #define HAS_LINK_Bookmarks      FLAVOR_NONSYMBOL
-//
-// You get the desired properties of being easy to find cases of a particular
-// interpretation of the field, along with type checking on the assignment,
-// and a cast operation that does potentially heavy debug checks on the
-// extraction.
-//
-
-#if (! CPLUSPLUS_11) || (! DEBUG)
-    #define LINK(Field, flex) \
-        *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(flex)->link.any.node))
-
-    #define MISC(Field, flex) \
-        *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(flex)->misc.any.node))
-
-#else
-    #define LINK(Field, flex) \
-        NodeHolder<LINK_##Field##_TYPE>( \
-            ensure_flavor(HAS_LINK_##Field, (flex))->link.any.node)
-
-    #define MISC(Field, flex) \
-        NodeHolder<MISC_##Field##_TYPE>( \
-            ensure_flavor(HAS_MISC_##Field, (flex))->misc.any.node)
-#endif
-
-#define node_LINK(Field, flex) \
-    *m_cast(Node**, &(flex)->link.any.node)  // const ok for strict alias
-
-#define node_MISC(Field, flex) \
-    *m_cast(Node**, &(flex)->misc.any.node)  // const ok for strict alias
-
-
 //=//// FLEX "INFO" BITS (or INODE) ///////////////////////////////////////=//
 //
 // See definitions of FLEX_INFO_XXX.
@@ -250,7 +120,7 @@
         x_cast(Flex*, ensure(const Flex*, (f)))->info.any.flags  // [1]
 #else
     INLINE uintptr_t &FLEX_INFO(const Flex* f) {
-        assert(Not_Flex_Flag(f, INFO_NODE_NEEDS_MARK));  // [2]
+        assert(Not_Stub_Flag(f, INFO_NODE_NEEDS_MARK));  // [2]
         return m_cast(Flex*, f)->info.any.flags;  // [1]
     }
 #endif
@@ -266,18 +136,6 @@
 
 #define Clear_Flex_Info(f,name) \
     FLEX_INFO(f) &= ~FLEX_INFO_##name
-
-#if (! DEBUG) || (! CPLUSPLUS_11)
-    #define INODE(Field, flex) \
-        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(flex)->info.any.node))
-#else
-    #define INODE(Field,flex) \
-        NodeHolder<INODE_##Field##_TYPE>( \
-            ensure_flavor(HAS_INODE_##Field, (flex))->info.any.node)
-#endif
-
-#define node_INODE(Field, flex) \
-    *m_cast(Node**, &(flex)->info.any.node)  // const ok for strict alias
 
 
 //=//// HOOKABLE INFO SECOND_BYTE() [USED or MIRROR] //////////////////////=//
@@ -349,7 +207,7 @@
 //
 
 INLINE bool Is_Flex_Biased(const Flex* f) {
-    assert(Get_Flex_Flag(f, DYNAMIC));
+    assert(Get_Stub_Flag(f, DYNAMIC));
     return not Is_Stub_Varlist(f);
 }
 
@@ -378,10 +236,10 @@ INLINE void Subtract_Flex_Bias(Flex* f, REBLEN b) {
 }
 
 INLINE Length Flex_Rest(const Flex* f) {
-    if (Get_Flex_Flag(f, DYNAMIC))
+    if (Get_Stub_Flag(f, DYNAMIC))
         return f->content.dynamic.rest;
 
-    if (Is_Stub_Array(f))
+    if (Stub_Holds_Cells(f))
         return 1;  // capacity of singular non-dynamic arrays is exactly 1
 
     assert(sizeof(f->content) % Flex_Wide(f) == 0);
@@ -404,11 +262,11 @@ INLINE Size Flex_Total(const Flex* f)
         (f)->content.dynamic.bonus.node
 #else
     INLINE const Node* const &FLEX_BONUS(const Stub* f) {
-        assert(Get_Flex_Flag(f, DYNAMIC));
+        assert(Get_Stub_Flag(f, DYNAMIC));
         return f->content.dynamic.bonus.node;
     }
     INLINE const Node* &FLEX_BONUS(Stub* f) {
-        assert(Get_Flex_Flag(f, DYNAMIC));
+        assert(Get_Stub_Flag(f, DYNAMIC));
         return f->content.dynamic.bonus.node;
     }
 #endif
@@ -426,52 +284,9 @@ INLINE Size Flex_Total(const Flex* f)
     *m_cast(Node**, &FLEX_BONUS(s))  // const ok for strict alias
 
 
-//=//// FLEX "TOUCH" FOR DEBUGGING ////////////////////////////////////////=//
-//
-// **IMPORTANT** - This is defined early before code that does manipulation
-// on Flex, because it can be very useful in debugging the low-level code.
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// It's nice to be able to trigger a debug_break() after-the-fact on some kind
-// of guard which can show the stack where it was set.  Generally, Flex get
-// this guard put on it at allocation time.  But if you want to mark a moment
-// later as notable to trace back to, you can.
-//
-// This works with Address Sanitizer or with Valgrind, but the config flag to
-// enable it only comes automatically with address sanitizer.
-//
-// 1. In the general case, you can't assume the incoming stub has valid data,
-//    as the default is to call it after only the header bits are set.  But
-//    in case it helps, the s->guard is set to nullptr by Alloc_Stub(), so
-//    conditional instrumentation here can distinguish fresh from valid.
-//
-
-#if DEBUG_FLEX_ORIGINS || DEBUG_COUNT_TICKS
-    INLINE void Touch_Stub(Stub *s)  // if alloc, only header valid [1]
-    {
-      #if DEBUG_FLEX_ORIGINS
-        s->guard = cast(Byte*, malloc(sizeof(Byte)));  // smallest allocation
-        *s->guard = FREE_POOLUNIT_BYTE;  // irrelevant, but disruptive choice
-        free(s->guard);
-      #endif
-
-      #if DEBUG_COUNT_TICKS
-        s->tick = TG_tick;
-      #else
-        s->tick = 0;
-      #endif
-    }
-
-    #define Touch_Stub_If_Debug(s) Touch_Stub(s)
-#else
-    #define Touch_Stub_If_Debug(s) NOOP
-#endif
-
-
 //=//// NUMBER OF WIDTH-SIZED UNITS "USED" IN FLEX ////////////////////////=//
 //
-// There is an optimization based on FLEX_FLAG_DYNAMIC that allows data
+// There is an optimization based on STUB_FLAG_DYNAMIC that allows data
 // which is sizeof(Cell) or smaller to fit directly in the Flex Stub.
 //
 // 1. If a Flex is dynamically allocated out of the memory pools, then
@@ -488,9 +303,9 @@ INLINE Size Flex_Total(const Flex* f)
 //
 
 INLINE Length Flex_Used(const Flex* f) {
-    if (Get_Flex_Flag(f, DYNAMIC))
+    if (Get_Stub_Flag(f, DYNAMIC))
         return f->content.dynamic.used;  // length stored in header [1]
-    if (Is_Stub_Array(f)) {
+    if (Stub_Holds_Cells(f)) {
         if (Is_Cell_Poisoned(&f->content.fixed.cell))  // empty singular [2]
             return 0;
         return 1;  // one-element singular array [2]
@@ -499,7 +314,7 @@ INLINE Length Flex_Used(const Flex* f) {
 }
 
 INLINE Length Flex_Dynamic_Used(const Flex* f) {
-    assert(Get_Flex_Flag(f, DYNAMIC));
+    assert(Get_Stub_Flag(f, DYNAMIC));
     return f->content.dynamic.used;
 }
 
@@ -538,7 +353,7 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 //
 
 INLINE Byte* Flex_Data(const_if_c Flex* f) {  // assume valid [1]
-    return Get_Flex_Flag(f, DYNAMIC)  // inlined in Flex_Data_At() [2]
+    return Get_Stub_Flag(f, DYNAMIC)  // inlined in Flex_Data_At() [2]
         ? u_cast(Byte*, f->content.dynamic.data)
         : u_cast(Byte*, &f->content);
 }
@@ -561,7 +376,7 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
     assert(i <= Flex_Used(f));
 
     return ((w) * (i)) + (  // v-- inlining of Flex_Data() [2]
-        Get_Flex_Flag(f, DYNAMIC)
+        Get_Stub_Flag(f, DYNAMIC)
             ? cast(Byte*, f->content.dynamic.data)
             : cast(Byte*, &f->content)
         );
@@ -660,7 +475,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
                 ); */
             }
         }
-        else if (Is_Stub_Array(f) and Get_Flex_Flag(f, DYNAMIC)) {
+        else if (Stub_Holds_Cells(f) and Get_Stub_Flag(f, DYNAMIC)) {
             Cell* tail = Flex_At(Cell, f, f->content.dynamic.used);
             if (poison)
                 Poison_Cell(tail);
@@ -694,7 +509,7 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
           #endif
         }
     }
-    else if (Get_Flex_Flag(f, DYNAMIC) and Is_Stub_Array(f)) {
+    else if (Get_Stub_Flag(f, DYNAMIC) and Stub_Holds_Cells(f)) {
       #if DEBUG_POISON_FLEX_TAILS
         Poison_Cell(Flex_Tail(Cell, f));
       #endif
@@ -729,12 +544,12 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
 
 INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
     /* assert(Not_Flex_Flag(s, FIXED_SIZE)); */  // [1]
-    if (Get_Flex_Flag(f, DYNAMIC))
+    if (Get_Stub_Flag(f, DYNAMIC))
         f->content.dynamic.used = used;  // USED_BYTE() acts as MIRROR_BYTE()
     else {
         assert(used < Size_Of(f->content));
 
-        if (Is_Stub_Array(f)) {  // content used by cell, no room for length
+        if (Stub_Holds_Cells(f)) {  // content used by cell, no room for length
             if (used == 0)
                 Poison_Cell(&f->content.fixed.cell);  // poison means 0 used
             else {
@@ -782,72 +597,6 @@ INLINE void Expand_Flex_Tail(Flex* f, REBLEN delta) {
 }
 
 
-
-// Out of the 8 platform pointers that comprise a Flex Stub, only 3 actually
-// need to be initialized to get a functional non-dynamic Flex or Array of
-// length 0!  Only two are set here.
-//
-INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
-    assert(not (flags & NODE_FLAG_CELL));
-
-    Stub *s = u_cast(Stub*, preallocated);
-    s->leader.bits = flags | NODE_FLAG_NODE;  // #1
-
-  #if (! DEBUG)
-    s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
-  #else
-    SafeCorrupt_Pointer_Debug(s->link.any.corrupt);  // #2
-    Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
-    if (flags & FLEX_FLAG_INFO_NODE_NEEDS_MARK)
-        Corrupt_Pointer_If_Debug(s->info.any.node);  // #7
-    else
-        s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
-    SafeCorrupt_Pointer_Debug(s->misc.any.corrupt);  // #8
-
-  #if DEBUG_FLEX_ORIGINS
-    s->guard = nullptr;  // so Touch_Stub() can tell data is invalid
-  #endif
-
-    Touch_Stub_If_Debug(s);  // tag current C stack as Flex origin in ASAN
-  #endif
-
-  #if DEBUG_COLLECT_STATS
-    g_mem.num_flex_made += 1;
-  #endif
-
-    return s;
-}
-
-
-// This is a lightweight alternative to Alloc_Singular() when the stub being
-// created does not need to be tracked.  It replaces a previous hack of
-// allocating the singular as NODE_FLAG_MANAGED so it didn't get into the
-// manuals tracking list, but then clearing the bit immediately afterward.
-//
-// (Because this leaks easily, it should really only be used by low-level code
-// that really knows what it's doing, and needs the performance.)
-//
-INLINE Stub* Make_Untracked_Stub(Flags flags) {
-    assert(not (flags & NODE_FLAG_MANAGED));
-    Stub* s = Prep_Stub(Alloc_Stub(), flags | FLEX_FLAG_FIXED_SIZE);
-    Erase_Cell(&s->content.fixed.cell);  // !!! should callers have to do this?
-    return s;
-}
-
-
-INLINE PoolId Pool_Id_For_Size(Size size) {
-  #if DEBUG_ENABLE_ALWAYS_MALLOC
-    if (g_mem.always_malloc)
-        return SYSTEM_POOL;
-  #endif
-
-    if (size < POOLS_BY_SIZE_LEN)
-        return g_mem.pools_by_size[size];
-
-    return SYSTEM_POOL;
-}
-
-
 // If the data is tiny enough, it will be fit into the Flex Stub itself.
 // A Small Flex will be allocated from a memory pool.
 // A Large Flex will be allocated from system memory.
@@ -868,10 +617,10 @@ INLINE Flex* Make_Flex_Into(
     Flex* s = cast(Flex*, Prep_Stub(preallocated, flags));
 
     if (
-        (flags & FLEX_FLAG_DYNAMIC)  // inlining will constant fold
+        (flags & STUB_FLAG_DYNAMIC)  // inlining will constant fold
         or (capacity * wide > sizeof(s->content))  // data won't fit in stub
     ){
-        Set_Flex_Flag(s, DYNAMIC);
+        Set_Stub_Flag(s, DYNAMIC);
 
         if (not Try_Flex_Data_Alloc(s, capacity)) {
             Clear_Node_Managed_Bit(s);

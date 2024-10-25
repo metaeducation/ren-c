@@ -185,7 +185,7 @@ void Protect_Value(const Value* v, Flags flags)
 //
 void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
 {
-    if (Is_Flex_Black(f))
+    if (Is_Stub_Black(f))
         return;  // avoid loop
 
     if (flags & PROT_SET) {
@@ -202,10 +202,10 @@ void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
         Clear_Flex_Info(f, PROTECTED);
     }
 
-    if (not Is_Stub_Array(f) or not (flags & PROT_DEEP))
+    if (not Stub_Holds_Cells(f) or not (flags & PROT_DEEP))
         return;
 
-    Flip_Flex_To_Black(f);  // recursion protection
+    Flip_Stub_To_Black(f);  // recursion protection
 
     const Value* val_tail = Flex_Tail(Value, x_cast(Array*, f));
     const Value* val = Flex_At(Value, x_cast(Array*, f), index);
@@ -221,7 +221,7 @@ void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
 //
 void Protect_Varlist(VarList* varlist, Flags flags)
 {
-    if (Is_Flex_Black(varlist))
+    if (Is_Stub_Black(varlist))
         return; // avoid loop
 
     if (flags & PROT_SET) {
@@ -241,7 +241,7 @@ void Protect_Varlist(VarList* varlist, Flags flags)
     if (not (flags & PROT_DEEP))
         return;
 
-    Flip_Flex_To_Black(varlist);  // for recursion
+    Flip_Stub_To_Black(varlist);  // for recursion
 
     const Value* var_tail;
     Value* var = Varlist_Slots(&var_tail, varlist);

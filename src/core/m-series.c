@@ -58,7 +58,7 @@
 //    on an existing value, clear out the whole value for starters.
 //
 bool Try_Flex_Data_Alloc(Flex* s, REBLEN capacity) {
-    assert(Get_Flex_Flag(s, DYNAMIC));  // once set, never shrinks [1]
+    assert(Get_Stub_Flag(s, DYNAMIC));  // once set, never shrinks [1]
 
     Byte wide = Flex_Wide(s);
     assert(wide != 0);
@@ -148,7 +148,7 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 //
 Flex* Copy_Flex_Core(const Flex* f, Flags flags)
 {
-    assert(not Is_Stub_Array(f));
+    assert(not Stub_Holds_Cells(f));
 
     REBLEN used = Flex_Used(f);
     Flex* copy;
@@ -211,7 +211,7 @@ Flex* Copy_Flex_At_Len_Extra(
     REBLEN extra,
     Flags flags
 ){
-    assert(not Is_Stub_Array(f));
+    assert(not Stub_Holds_Cells(f));
 
     REBLEN capacity = len + extra;
     if (Flex_Wide(f) == 1)
@@ -240,7 +240,7 @@ void Remove_Flex_Units(Flex* f, Size byteoffset, REBLEN quantity)
     if (quantity == 0)
         return;
 
-    bool is_dynamic = Get_Flex_Flag(f, DYNAMIC);
+    bool is_dynamic = Get_Stub_Flag(f, DYNAMIC);
     REBLEN used_old = Flex_Used(f);
 
     REBLEN start = byteoffset * Flex_Wide(f);
@@ -394,7 +394,7 @@ void Unbias_Flex(Flex* f, bool keep)
 //
 void Reset_Array(Array* a)
 {
-    if (Get_Flex_Flag(a, DYNAMIC))
+    if (Get_Stub_Flag(a, DYNAMIC))
         Unbias_Flex(a, false);
     Set_Flex_Len(a, 0);
 }
@@ -410,7 +410,7 @@ void Clear_Flex(Flex* f)
 {
     assert(!Is_Flex_Read_Only(f));
 
-    if (Get_Flex_Flag(f, DYNAMIC)) {
+    if (Get_Stub_Flag(f, DYNAMIC)) {
         Unbias_Flex(f, false);
         memset(f->content.dynamic.data, 0, Flex_Rest(f) * Flex_Wide(f));
     }
@@ -447,9 +447,9 @@ Byte* Reset_Buffer(Flex* buf, REBLEN len)
 //
 void Assert_Flex_Term_Core(const Flex* f)
 {
-    if (Is_Stub_Array(f)) {
+    if (Stub_Holds_Cells(f)) {
       #if DEBUG_POISON_FLEX_TAILS
-        if (Get_Flex_Flag(f, DYNAMIC)) {
+        if (Get_Stub_Flag(f, DYNAMIC)) {
             const Cell* tail = Array_Tail(x_cast(Array*, f));
             if (not Is_Cell_Poisoned(tail))
                 panic (tail);

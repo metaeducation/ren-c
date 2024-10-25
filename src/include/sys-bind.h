@@ -269,8 +269,9 @@ INLINE bool Try_Add_Binder_Index(
         return false;  // already has a mapping
 
     Stub* hitch = Make_Untracked_Stub(  // don't pay for manuals tracking
-        FLEX_FLAG_BLACK | FLAG_FLAVOR(HITCH)
-            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // symbol (but no GC runs!) [1]
+        FLAG_FLAVOR(HITCH)
+            | STUB_FLAG_BLACK  // !!! does not get counted if created like this
+            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // symbol (but no GC runs!) [1]
     );
     INODE(BindSymbol, hitch) = s;
     Init_Integer(Stub_Cell(hitch), index);
@@ -393,7 +394,7 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
     Context* binding = BINDING(v);
     if (Is_Stub_Patch(binding)) {
         VarList* patch_context = INODE(PatchContext, binding);
-        binding = Varlist_Array(patch_context);
+        binding = patch_context;
     }
     else if (Is_Stub_Let(binding))
         fail ("LET variables have no context at this time");
@@ -483,7 +484,7 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
         var = Stub_Cell(s);
     else {
         VarList* c = cast(VarList*, s);
-        Fail_If_Read_Only_Flex(Varlist_Array(c));  // check lock bits [1]
+        Fail_If_Read_Only_Flex(c);  // check lock bits [1]
         var = Varlist_Slot(c, index);
     }
 

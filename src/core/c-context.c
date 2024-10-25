@@ -107,7 +107,7 @@ bool Expand_Keylist_Of_Varlist_Core(VarList* varlist, REBLEN delta)
             LINK(Ancestor, k_copy) = LINK(Ancestor, k);
 
         Manage_Flex(k_copy);
-        Tweak_Keylist_Of_Varlist_Unique(Varlist_Array(varlist), k_copy);
+        Tweak_Keylist_Of_Varlist_Unique(varlist, k_copy);
 
         return true;
     }
@@ -127,7 +127,7 @@ bool Expand_Keylist_Of_Varlist_Core(VarList* varlist, REBLEN delta)
 //
 void Expand_Varlist(VarList* varlist, REBLEN delta)
 {
-    Extend_Flex_If_Necessary(Varlist_Array(varlist), delta);
+    Extend_Flex_If_Necessary(varlist, delta);
     Expand_Keylist_Of_Varlist_Core(varlist, delta);
 }
 
@@ -173,7 +173,7 @@ Value* Append_To_Sea_Core(
         patch = Alloc_Singular(
             NODE_FLAG_MANAGED
             | FLAG_FLAVOR(PATCH)
-            | FLEX_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache [2]
+            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache [2]
         );
     }
 

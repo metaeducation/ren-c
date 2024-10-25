@@ -37,62 +37,12 @@
 //
 
 
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// FLEX COLORING API
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// R3-Alpha re-used the same marking flag from the GC in order to do various
-// other bit-twiddling tasks when the GC wasn't running.  This is an
-// unusually dangerous thing to be doing...because leaving a stray mark on
-// during some other traversal could lead the GC to think it had marked
-// things reachable from that Flex when it had not--thus freeing something
-// that was still in use.
-//
-// While leaving a stray mark on is a bug either way, GC bugs are particularly
-// hard to track down.  So one doesn't want to risk them if not absolutely
-// necessary.  Not to mention that sharing state with the GC that you can
-// only use when it's not running gets in the way of things like background
-// garbage collection, etc.
-//
-// Ren-C keeps the term "mark" for the GC, since that's standard nomenclature.
-// A lot of basic words are taken other places for other things (tags, flags)
-// so this just goes with a Flex "color" of black or white, with white as
-// the default.  The debug build keeps a count of how many black Flexes there
-// are and asserts it's 0 by the time each evaluation ends, to ensure balance.
-//
-
-INLINE bool Is_Flex_Black(const Stub* f) {
-    return Get_Flex_Flag(f, BLACK);
-}
-
-INLINE bool Is_Flex_White(const Stub* f) {
-    return Not_Flex_Flag(f, BLACK);
-}
-
-INLINE void Flip_Flex_To_Black(const Stub* f) {
-    assert(Not_Flex_Flag(f, BLACK));
-    Set_Flex_Flag(f, BLACK);
-  #if !defined(NDEBUG)
-    g_mem.num_black_flex += 1;
-  #endif
-}
-
-INLINE void Flip_Flex_To_White(const Stub* f) {
-    assert(Get_Flex_Flag(f, BLACK));
-    Clear_Flex_Flag(f, BLACK);
-  #if !defined(NDEBUG)
-    g_mem.num_black_flex -= 1;
-  #endif
-}
-
 //
 // Freezing and Locking
 //
 
 INLINE void Freeze_Flex(const Flex* f) {  // there is no unfreeze
-    assert(not Is_Stub_Array(f)); // use Deep_Freeze_Array
+    assert(not Stub_Holds_Cells(f)); // use Deep_Freeze_Array
 
     // We set the FROZEN_DEEP flag even though there is no structural depth
     // here, so that the generic test for deep-frozenness can be faster.
@@ -102,7 +52,7 @@ INLINE void Freeze_Flex(const Flex* f) {  // there is no unfreeze
 }
 
 INLINE bool Is_Flex_Frozen(const Flex* f) {
-    assert(not Is_Stub_Array(f));  // use Is_Array_Deeply_Frozen
+    assert(not Stub_Holds_Cells(f));  // use Is_Array_Deeply_Frozen
     if (Not_Flex_Info(f, FROZEN_SHALLOW))
         return false;
     assert(Get_Flex_Info(f, FROZEN_DEEP));  // true on frozen non-arrays

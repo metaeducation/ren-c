@@ -225,10 +225,8 @@ static void Queue_Mark_Node_Deep(const Node** npp) {
     Queue_Unmarked_Accessible_Flex_Deep(f);
 }
 
-// This is a generic mark routine, which can sense what type a node is and
-// automatically figure out how to mark it.  It takes into account if the
-// Flex was created by an extension and poked nodes into the `custom`
-// fields of LINK() and MISC(), which is the only way to "hook" the GC.
+// This is a generic mark routine, which can sense what type a Stub is and
+// automatically figure out how to mark it based on flags in the header.
 //
 // (Note: The data structure used for this processing is a "stack" and not
 // a "queue".  But when you use 'queue' as a verb, it has more leeway than as
@@ -253,10 +251,10 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
     // references that are intended to keep them live).  So the Flex header
     // flags control whether the marking is done or not.
 
-    if (Get_Flex_Flag(f, LINK_NODE_NEEDS_MARK) and f->link.any.node)
+    if (Get_Stub_Flag(f, LINK_NODE_NEEDS_MARK) and f->link.any.node)
         Queue_Mark_Node_Deep(&m_cast(Flex*, f)->link.any.node);
 
-    if (Get_Flex_Flag(f, MISC_NODE_NEEDS_MARK) and f->misc.any.node)
+    if (Get_Stub_Flag(f, MISC_NODE_NEEDS_MARK) and f->misc.any.node)
         Queue_Mark_Node_Deep(&m_cast(Flex*, f)->misc.any.node);
 
   //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
@@ -265,7 +263,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
     // flag is what determines whether the slot is used for info or not.  So
     // if it's available for non-info uses, it is always a live marked node.
 
-    if (Get_Flex_Flag(f, INFO_NODE_NEEDS_MARK) and node_INODE(Node, f))
+    if (Get_Stub_Flag(f, INFO_NODE_NEEDS_MARK) and node_INODE(Node, f))
         Queue_Mark_Node_Deep(&m_cast(Flex*, f)->info.any.node);
 
     if (Is_Stub_Keylist(f)) {
@@ -286,7 +284,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
             Queue_Unmarked_Accessible_Flex_Deep(*key);
         }
     }
-    else if (Is_Stub_Array(f)) {
+    else if (Stub_Holds_Cells(f)) {
         Array* a = x_cast(Array*, f);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
@@ -423,7 +421,7 @@ static void Propagate_All_GC_Marks(void)
         for (; v != tail; ++v) {
           #if DEBUG
             Flavor flavor = Stub_Flavor(a);
-            assert(flavor <= FLAVOR_MAX_ARRAY);
+            assert(flavor <= FLAVOR_MAX_HOLDS_CELLS);
 
             if (QUOTE_BYTE(v) == ANTIFORM_0) {
                 if (flavor < FLAVOR_MIN_ANTIFORMS_OK)
@@ -556,7 +554,7 @@ void Run_All_Handle_Cleaners(void) {
             Stub* stub = cast(Stub*, unit);
             if (stub == g_ds.array)
                 continue;
-            if (not Is_Stub_Array(stub))
+            if (not Stub_Holds_Cells(stub))
                 continue;
 
             const Cell* item_tail = Array_Tail(cast(Array*, stub));
@@ -647,7 +645,7 @@ static void Mark_Root_Stubs(void)
                     Add_GC_Mark(f);
                 }
 
-                if (Is_Stub_Array(f)) {  // It's an Alloc_Value()
+                if (Stub_Holds_Cells(f)) {  // It's an Alloc_Value()
                     //
                     // 1. Mark_Level_Stack_Deep() marks the owner.
                     //
@@ -672,7 +670,7 @@ static void Mark_Root_Stubs(void)
             // this marking rather than keeping the length up to date.  Review.
             //
             if (
-                Is_Stub_Array(f)
+                Stub_Holds_Cells(f)
                 and f != g_ds.array  // !!! Review g_ds.array exemption!
             ){
                 if (Is_Node_Managed(f))
@@ -700,10 +698,10 @@ static void Mark_Root_Stubs(void)
                     and not Is_Stub_Pairlist(a)
                 );
 
-                if (Get_Flex_Flag(a, LINK_NODE_NEEDS_MARK))
+                if (Get_Stub_Flag(a, LINK_NODE_NEEDS_MARK))
                     if (node_LINK(Node, a))
                         Queue_Mark_Node_Deep(&a->link.any.node);
-                if (Get_Flex_Flag(a, MISC_NODE_NEEDS_MARK))
+                if (Get_Stub_Flag(a, MISC_NODE_NEEDS_MARK))
                     if (node_MISC(Node, a))
                         Queue_Mark_Node_Deep(&a->misc.any.node);
 

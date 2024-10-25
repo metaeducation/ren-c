@@ -182,8 +182,8 @@ static void Startup_Lib(void)
             // the reason for this is when patches are cached in variables;
             // then the variable no longer refers directly to the module.
             //
-            | FLEX_FLAG_LINK_NODE_NEEDS_MARK
-            | FLEX_FLAG_INFO_NODE_NEEDS_MARK
+            | STUB_FLAG_LINK_NODE_NEEDS_MARK
+            | STUB_FLAG_INFO_NODE_NEEDS_MARK
         );
 
         INODE(PatchContext, patch) = nullptr;  // signals unused

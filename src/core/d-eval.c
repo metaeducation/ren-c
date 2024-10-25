@@ -136,11 +136,11 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 
     assert(L == TOP_LEVEL);
 
-    // If this fires, it means that Flip_Flex_To_White was not called an
-    // equal number of times after Flip_Flex_To_Black, which means that
-    // the custom marker on Flex accumulated.
+    // If this fires, it means that Flip_Stub_To_White was not called an
+    // equal number of times after Flip_Stub_To_Black, which means that
+    // the custom marker on Stubs accumulated.
     //
-    assert(g_mem.num_black_flex == 0);
+    assert(g_mem.num_black_stubs == 0);
 
     // We only have a label if we are in the middle of running a function.
     //

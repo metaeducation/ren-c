@@ -575,7 +575,7 @@ REBTYPE(Binary)
         // series is now empty, it reclaims the "bias" (unused capacity at
         // the head of the Flex).  One of many behaviors worth reviewing.
         //
-        if (index == 0 and Get_Flex_Flag(b, DYNAMIC))
+        if (index == 0 and Get_Stub_Flag(b, DYNAMIC))
             Unbias_Flex(b, false);
 
         Term_Binary_Len(b, index);  // may have string alias

@@ -104,8 +104,8 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 }
 
 
-#define PLUG_FLAG_HAS_DATA_STACK FLEX_FLAG_24
-#define PLUG_FLAG_HAS_MOLD FLEX_FLAG_25
+#define PLUG_FLAG_HAS_DATA_STACK    STUB_SUBCLASS_FLAG_24
+#define PLUG_FLAG_HAS_MOLD          STUB_SUBCLASS_FLAG_25
 
 
 //

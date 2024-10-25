@@ -93,7 +93,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         if (len < Size_Of(Cell)) {
             if (not Is_String_Symbol(s))
                 assert(
-                    Get_Flex_Flag(s, DYNAMIC)  // e.g. mold buffer
+                    Get_Stub_Flag(s, DYNAMIC)  // e.g. mold buffer
                     or not book  // mutations must ensure this
                 );
             goto scan_from_head;  // good locality, avoid bookmark logic
@@ -109,7 +109,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
             if (not Is_String_Symbol(s))
                 assert(
                     not book  // mutations must ensure this usually but...
-                    or Get_Flex_Flag(s, DYNAMIC)  // !!! mold buffer?
+                    or Get_Stub_Flag(s, DYNAMIC)  // !!! mold buffer?
                 );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }
@@ -1203,7 +1203,7 @@ REBTYPE(String)
         // series is now empty, it reclaims the "bias" (unused capacity at
         // the head of the series).  One of many behaviors worth reviewing.
         //
-        if (index == 0 and Get_Flex_Flag(s, DYNAMIC))
+        if (index == 0 and Get_Stub_Flag(s, DYNAMIC))
             Unbias_Flex(s, false);
 
         Free_Bookmarks_Maybe_Null(s);  // review!

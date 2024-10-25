@@ -56,32 +56,32 @@
 //=//// DETAILS_FLAG_24 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_24 \
-    FLEX_FLAG_24
+    STUB_SUBCLASS_FLAG_24
 
 
 //=//// DETAILS_FLAG_25 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_25 \
-    FLEX_FLAG_25
+    STUB_SUBCLASS_FLAG_25
 
 
 //=//// DETAILS_FLAG_26 ///////////////////////////////////////////////////=//
 //
 //
 #define DETAILS_FLAG_26 \
-    FLEX_FLAG_26
+    STUB_SUBCLASS_FLAG_26
 
 
 //=//// DETAILS_FLAG_27 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_27 \
-    FLEX_FLAG_27
+    STUB_SUBCLASS_FLAG_27
 
 
 //=//// DETAILS_FLAG_28 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_28 \
-    FLEX_FLAG_28
+    STUB_SUBCLASS_FLAG_28
 
 
 //=//// DETAILS_FLAG_IS_NATIVE ////////////////////////////////////////////=//
@@ -99,7 +99,7 @@
 // longer possible, so that was dropped...but it could be brought back.
 //
 #define DETAILS_FLAG_IS_NATIVE \
-    FLEX_FLAG_29
+    STUB_SUBCLASS_FLAG_29
 
 typedef enum {
     NATIVE_NORMAL,
@@ -111,13 +111,13 @@ typedef enum {
 //=//// DETAILS_FLAG_30 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_30 \
-    FLEX_FLAG_30
+    STUB_SUBCLASS_30
 
 
 //=//// DETAILS_FLAG_31 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_31 \
-    FLEX_FLAG_31
+    STUB_SUBCLASS_FLAG_31
 
 
 #define Set_Action_Flag(act,name) \
@@ -133,7 +133,7 @@ typedef enum {
     Not_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 
-// Includes FLEX_FLAG_DYNAMIC because an action's paramlist is always
+// Includes STUB_FLAG_DYNAMIC because an action's paramlist is always
 // allocated dynamically, in order to make access to the archetype and the
 // parameters faster than Array_At().  See code for ACT_KEY(), etc.
 //
@@ -146,10 +146,10 @@ typedef enum {
 
 #define FLEX_MASK_DETAILS \
     (NODE_FLAG_NODE \
-        | FLEX_FLAG_MISC_NODE_NEEDS_MARK  /* meta */ \
         | FLAG_FLAVOR(DETAILS) \
+        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* meta */ \
         /* LINK is dispatcher, a c function pointer, should not mark */ \
-        | FLEX_FLAG_INFO_NODE_NEEDS_MARK  /* exemplar */ )
+        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* exemplar */ )
 
 #define FLEX_MASK_PARTIALS \
     (NODE_FLAG_NODE \

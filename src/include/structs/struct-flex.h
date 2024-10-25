@@ -102,6 +102,31 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// FLEX <<HEADER>> FLAGS
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Flex has two places to store flags...in the "header" and in the "info".
+// The following are the FLEX_FLAG_XXX that are used in the header, while
+// the FLEX_INFO_XXX flags will be found in the info.
+//
+// ** Make_Flex() takes FLEX_FLAG_XXX as a parameter, so anything that
+// controls Flex creation should be a _FLAG_ as opposed to an _INFO_! **
+//
+// (Other general rules might be that bits that are to be tested or set as
+// a group should be in the same flag group.  Perhaps things that don't change
+// for the lifetime of the Flex might prefer header to the info, too?
+// Such things might help with caching.)
+//
+
+#define FLEX_FLAGS_NONE \
+    0  // helps locate places that want to say "no flags"
+
+
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
 // FLEX <<INFO>> BITS
 //
 //=////////////////////////////////////////////////////////////////////////=//
@@ -217,7 +242,7 @@ STATIC_ASSERT(FLEX_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 
 //=//// BITS 8-15 ARE Flex_Used() FOR NON-DYNAMIC NON-ARRAYS ////////////=//
 
-// FLEX_FLAG_DYNAMIC indicates that a Flex has a dynamically allocated
+// STUB_FLAG_DYNAMIC indicates that a Flex has a dynamically allocated
 // portion, and it has a whole uintptr_t to use for the length.  However, if
 // that flag is not set the payload is small, fitting in StubContentUnion
 // where the allocation tracking information would be.

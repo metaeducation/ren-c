@@ -54,7 +54,7 @@
 
 #define FLEX_MASK_PAIRLIST \
     (FLAG_FLAVOR(PAIRLIST) \
-        | FLEX_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
+        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
 
 
 // See LINK() macro for how this is used.

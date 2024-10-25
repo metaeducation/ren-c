@@ -110,7 +110,7 @@ void Push_Frame_Continuation(
 
     if (Get_Subclass_Flag(
         VARLIST,
-        Varlist_Array(Cell_Varlist(frame)),
+        Cell_Varlist(frame),
         FRAME_HAS_BEEN_INVOKED
     )){
         fail (Error_Stale_Frame_Raw());
