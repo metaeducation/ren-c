@@ -193,14 +193,14 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
             return nullptr;
     }
 
-  #if !defined(NDEBUG)
+  #if DEBUG_COUNT_TICKS
     if (g_mem.fuzz_factor != 0) {
         if (g_mem.fuzz_factor < 0) {
             ++g_mem.fuzz_factor;
             if (g_mem.fuzz_factor == 0)
                 return nullptr;
         }
-        else if ((TG_tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
+        else if ((g_ts.tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
             g_mem.fuzz_factor = 0;
             return nullptr;
         }
@@ -266,10 +266,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
 {
   #if DEBUG_MONITOR_FLEX
     if (p == g_mem.monitor_node) {
-        printf(
-            "Freeing Flex %p on tick #%d\n", p,
-            cast(int, TG_tick)
-        );
+        printf("Freeing Flex %p on TICK %" PRIu64 "\n", p, TICK);
         fflush(stdout);
     }
   #endif

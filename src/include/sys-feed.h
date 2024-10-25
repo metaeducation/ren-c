@@ -594,7 +594,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
    Feed* feed = u_cast(Feed*, preallocated);
 
   #if DEBUG_COUNT_TICKS
-    feed->tick = TG_tick;
+    feed->tick = g_ts.tick;
   #endif
 
     Erase_Cell(&feed->fetched);

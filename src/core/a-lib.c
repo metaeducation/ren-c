@@ -519,15 +519,15 @@ void API_rebShutdown(bool clean)
 // If the executable is built with tick counting, this will return the tick
 // without requiring any Rebol code to run (which would disrupt the tick).
 //
+// !!! Note that while Tick is a uint64_t, we currently don't want to make
+// the API rely on a uint64_t definition.  It is likely better to have a way
+// to disable the API_rebTick() for platforms without 64-bit numbers.
+//
 uintptr_t API_rebTick(void)
 {
     ENTER_API;
 
-  #if DEBUG_COUNT_TICKS
-    return cast(long, TG_tick);
-  #else
-    return 0;
-  #endif
+    return cast(uintptr_t, TICK);  // TICK is 0 if not DEBUG_COUNT_TICKS
 }
 
 

@@ -274,8 +274,8 @@ DECLARE_NATIVE(c_debug_tick)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_TICK;
 
-  #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
-    return Init_Integer(OUT, TG_tick);
+  #if DEBUG_COUNT_TICKS
+    return Init_Integer(OUT, g_ts.tick);
   #else
     return nullptr;
   #endif
@@ -291,6 +291,18 @@ DECLARE_NATIVE(c_debug_tick)
 //  ]
 //
 DECLARE_NATIVE(c_debug_break)
+//
+// 1. If we are counting ticks, we can put off actually breaking until the
+//    trampoline is right about to run the next step.  For instance with:
+//
+//        print c-debug-break mold value
+//
+//    Queue it so the break happens right before the MOLD.
+//
+// 2. In performant builds without DEBUG_COUNT_TICKS but that still have
+//    debugging information (e.g. callgrind builds) then C-DEBUG-BREAK can
+//    still be useful.  Break right here in this native call...you'll have to
+//    step up out into the evaluator stack manually to get to the next step.
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
@@ -298,23 +310,11 @@ DECLARE_NATIVE(c_debug_break)
     return FAIL(Error_Debug_Only_Raw());
   #else
     #if DEBUG_COUNT_TICKS
-        //
-        // For instance with:
-        //
-        //    print c-debug-break mold value
-        //
-        // Queue it so the break happens right before the MOLD, not after it
-        // happened and has been passed as an argument.
-        //
-        g_break_at_tick = level_->tick + 1;
+        g_break_at_tick = level_->tick + 1;  // queue break for next step [1]
         return Init_Nihil(OUT);
      #else
-        // No tick counting or tick-break checking, but still want some
-        // debug break functionality (e.g. callgrind build).  Break here--
-        // you'll have to step up out into the evaluator stack.
-        //
       #if DEBUG
-        debug_break();
+        debug_break();  // break right here, now [2]
       #endif
         return Init_Nihil(OUT);
       #endif

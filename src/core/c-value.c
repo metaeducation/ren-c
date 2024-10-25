@@ -123,11 +123,15 @@ INLINE void Probe_Print_Helper(
     const char *file,  // file where this PROBE() was invoked
     int line  // line where this PROBE() was invoked
 ){
-    printf("\n-- (%s)=0x%p : %s", expr, p, label);
-  #if DEBUG_COUNT_TICKS
-    printf(" : tick %d", cast(int, TG_tick));
-  #endif
-    printf(" %s @%d\n", file, line);
+    printf(
+        "\n-- (%s)=0x%p : %s : TICK %" PRIu64 " %s LINE %d\n",
+        expr,
+        p,
+        label,
+        TICK,  // 0 if not DEBUG_COUNT_TICKS
+        file,
+        line
+    );
 
     fflush(stdout);
     fflush(stderr);

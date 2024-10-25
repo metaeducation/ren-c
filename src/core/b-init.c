@@ -533,12 +533,6 @@ static void Init_System_Object(
 void Startup_Core(void)
 {
 
-//=//// INITIALIZE TICK COUNT /////////////////////////////////////////////=//
-
-  #if DEBUG_COUNT_TICKS
-    TG_tick = 0;
-  #endif
-
 //=//// INITIALIZE BASIC DIAGNOSTICS //////////////////////////////////////=//
 
   #if defined(TEST_EARLY_BOOT_PANIC)

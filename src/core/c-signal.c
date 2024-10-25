@@ -96,7 +96,7 @@ bool Do_Signals_Throws(Level* L)
     }
 
   #if DEBUG_COUNT_TICKS
-    assert(g_ts.total_eval_cycles == TG_tick);
+    assert(g_ts.total_eval_cycles == g_ts.tick);
   #endif
 
     g_ts.eval_countdown = g_ts.eval_dose;

@@ -110,7 +110,7 @@ Bounce Delegated_Executor(Level* L)
 Bounce Trampoline_From_Top_Maybe_Root(void)
 {
   #if DEBUG && CPLUSPLUS_11  // reference capture for easy view in watchlist
-    Tick & tick = TG_tick;
+    Tick & tick = TICK;
     USED(tick);
   #endif
 
@@ -521,11 +521,16 @@ bool Trampoline_Throws(Atom* out, Level* root)
 //
 void Startup_Signals(void)
 {
+  #if DEBUG_COUNT_TICKS
+    assert(g_ts.tick == 0);
+    g_ts.tick = 1;  // this way 0 for TICK helps signify no DEBUG_COUNT_TICKS
+  #endif
+
     g_ts.signal_flags = 0;
     g_ts.signal_mask = (~ cast(Flags, 0));  // heed all flags by default
     g_ts.eval_dose = EVAL_DOSE;
     g_ts.eval_countdown = g_ts.eval_dose;
-    g_ts.total_eval_cycles = 0;
+    g_ts.total_eval_cycles = 1;  // to match TICK when DEBUG_COUNT_TICKS
     g_ts.eval_cycles_limit = 0;
 }
 
@@ -651,6 +656,10 @@ void Shutdown_Trampoline(void)
         }
     }
   }
+  #endif
+
+  #if DEBUG_COUNT_TICKS
+    g_ts.tick = 0;
   #endif
 }
 

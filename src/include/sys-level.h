@@ -513,7 +513,7 @@ INLINE Level* Prep_Level_Core(
     Snap_State(&L->baseline);  // [2] (also see notes on `baseline` in Level)
 
   #if DEBUG_COUNT_TICKS
-    L->tick = TG_tick;
+    L->tick = g_ts.tick;
   #endif
 
     return L;
@@ -723,7 +723,10 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define RAISE(p)    Native_Raised_Result(level_, (p))
     #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
-    #define FAIL(p)     Native_Fail_Result(level_, (p))
+
+    #define FAIL(p) \
+        (Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+            Native_Fail_Result(level_, (p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
     // enough in REBTYPE() handlers that it seems worthwhile.

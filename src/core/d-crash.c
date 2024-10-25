@@ -209,19 +209,13 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //  ]
 //
 DECLARE_NATIVE(panic)
-//
-// If you write `panic ~bad-word~` and don't use /VALUE then the word is
-// treated as a message.
 {
     INCLUDE_PARAMS_OF_PANIC;
 
     Value* v = ARG(reason);  // remove quote level from @reason
 
-    // Use frame tick (if available) instead of TG_tick, so tick count dumped
-    // is the exact moment before the PANIC ACTION! was invoked.
-    //
   #if DEBUG_COUNT_TICKS
-    Tick tick = level_->tick;
+    Tick tick = level_->tick;  // use Level's tick instead of g_ts.tick
   #else
     Tick tick = 0;
   #endif

@@ -53,48 +53,26 @@
 //
 
 #if DEBUG_COUNT_TICKS
-    //
-    // !!! The TG_tick gets used in inline functions, and as a result it must
-    // be defined earlier than when the %sys-globals.h file can be included.
-    // This may be worked around by making sure all the types used in that
-    // file are present in %reb-defs.h ... review.
-    //
-    extern Tick g_break_at_tick;
+    #define TICK g_ts.tick
+#else
+    #define TICK 0  // make it easier to write DEBUG_COUNT_TICKS agnostic code
 #endif
 
-#if DEBUG_COUNT_TICKS
-    #if DEBUG_FANCY_PANIC
-        #define panic(v) \
-            Panic_Core((v), TG_tick, __FILE__, __LINE__)
 
-        #define panic_at(v,file,line) \
-            Panic_Core((v), TG_tick, (file), (line))
-    #else
-        #define panic(v) \
-            Panic_Core((v), TG_tick, NULL, 0)
+#if DEBUG_FANCY_PANIC
+    #define panic(v) \
+        Panic_Core((v), TICK, __FILE__, __LINE__)
 
-        #define panic_at(v,file,line) \
-            UNUSED(file); \
-            UNUSED(line); \
-            panic(v)
-
-    #endif
+    #define panic_at(v,file,line) \
+        Panic_Core((v), TICK, (file), (line))
 #else
-    #if DEBUG_FANCY_PANIC
-        #define panic(v) \
-            Panic_Core((v), 0, __FILE__, __LINE__)
+    #define panic(v) \
+        Panic_Core((v), TICK, nullptr, 0)
 
-        #define panic_at(v,file,line) \
-            Panic_Core((v), 0, (file), (line))
-    #else
-        #define panic(v) \
-            Panic_Core((v), 0, NULL, 0)
-
-        #define panic_at(v,file,line) \
-            UNUSED(file); \
-            UNUSED(line); \
-            panic(v)
-    #endif
+    #define panic_at(v,file,line) \
+        UNUSED(file); \
+        UNUSED(line); \
+        panic(v)
 #endif
 
 
@@ -123,19 +101,21 @@
 
 #define BREAK_NOW() /* macro means no C stack frame, breaks at callsite */ \
     do { \
-        printf("BREAK_ON_TICK() @ tick %ld\n", cast(long int, TG_tick)); \
+        printf("BREAK_ON_TICK(%" PRIu64 ")\n", TICK); \
         fflush(stdout); \
         Dump_Level_Location(TOP_LEVEL); \
         debug_break(); /* see %debug_break.h */ \
     } while (false)
 
-#define BREAK_ON_TICK(tick) \
-    if (tick == TG_tick) BREAK_NOW()
+#if DEBUG_COUNT_TICKS
+    #define BREAK_ON_TICK(tick) \
+        if (tick == g_ts.tick) BREAK_NOW()
+#endif
 
-#if defined(NDEBUG) || (! DEBUG_COUNT_TICKS)
+#if (! DEBUG) || (! DEBUG_COUNT_TICKS)
     #define SPORADICALLY(modulus) \
         false
 #else
     #define SPORADICALLY(modulus) \
-        (TG_tick % modulus == 0)
+        (g_ts.tick % modulus == 0)
 #endif

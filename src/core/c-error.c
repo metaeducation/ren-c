@@ -137,15 +137,6 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     assert(!"Fail_Core() called and REBOL_FAIL_JUST_ABORTS, shouldn't happen");
   #endif
 
-  #if DEBUG_PRINTF_FAIL_LOCATIONS && DEBUG_COUNT_TICKS
-    //
-    // File and line are printed by the calling macro to capture __FILE__ and
-    // __LINE__ without adding parameter overhead to this function for non
-    // debug builds.
-    //
-    printf("%ld\n", cast(long, TG_tick));  /* tick count prefix */
-  #endif
-
     // You can't abruptly fail during the handling of abrupt failure.  At the
     // moment we're assuming that once a level has failed it can't recover if
     // it originated the failure...but this may be revisited.

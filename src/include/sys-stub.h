@@ -122,11 +122,7 @@
         free(s->guard);
       #endif
 
-      #if DEBUG_COUNT_TICKS
-        s->tick = TG_tick;
-      #else
-        s->tick = 0;
-      #endif
+        s->tick = TICK;  // 0 if not DEBUG_COUNT_TICKS
     }
 
     #define Touch_Stub_If_Debug(s) Touch_Stub(s)

@@ -115,7 +115,7 @@
 
     INLINE void Javascript_Trace_Helper_Debug(const char *buf) {
         if (PG_JS_Trace) {
-            printf("@%ld: %s\n", cast(long, TG_tick), buf);  // prefix ticks
+            printf("TICK %" PRIu64 ": %s\n", TICK, buf);  // prefix ticks
             fflush(stdout);  // just to be safe
         }
     }

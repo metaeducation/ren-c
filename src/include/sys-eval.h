@@ -52,52 +52,6 @@
 //
 
 
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//     !!! EVALUATOR TICK COUNT - VERY USEFUL - READ THIS SECTION !!!
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// The evaluator `tick` should be visible in the C debugger watchlist as a
-// local variable on each evaluator stack level.  So if a fail() happens at a
-// deterministic moment in a run, capture the number from the level of interest
-// and recompile for a breakpoint at that tick.
-//
-// If the tick is AFTER command line processing is done, you can request a tick
-// breakpoint that way with `--breakpoint NNN`
-//
-// The debug build carries ticks many other places.  Stubs contain `Stub.tick`
-// when created, levels have a `Level.tick`, and the DEBUG_TRACK_EXTEND_CELLS
-// switch will double the size of cells so they can carry the tick, file, and
-// line where they were initialized.
-//
-// For custom updating of stored ticks to help debugging some scenarios, see
-// Touch_Stub() and Touch_Cell().  Note also that BREAK_NOW() can be called to
-// pause and dump state at any moment.
-//
-#if DEBUG && DEBUG_COUNT_TICKS
-    #define Update_Tick_If_Enabled() \
-        do { \
-            if (TG_tick < UINTPTR_MAX) /* avoid rollover */ \
-                TG_tick += 1; /* never zero for g_break_at_tick check */ \
-        } while (false)  // macro so that breakpoint is at right stack level!
-
-    #define Maybe_DebugBreak_On_Tick() \
-        do { \
-            if ( \
-                g_break_at_tick != 0 and TG_tick >= g_break_at_tick \
-            ){ \
-                printf("BREAK AT TICK %lu\n", cast(unsigned long, TG_tick)); \
-                Dump_Level_Location(level_); \
-                debug_break(); /* see %debug_break.h */ \
-                g_break_at_tick = 0; \
-            } \
-        } while (false)  // macro so that breakpoint is at right stack level!
-#else
-    #define Update_Tick_If_Enabled() NOOP
-    #define Maybe_DebugBreak_On_Tick() NOOP
-#endif
-
 
 // See Evaluator_Executor().  This helps document the places where the primed
 // result is being pushed, and gives a breakpoint opportunity for it.

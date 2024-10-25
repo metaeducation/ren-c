@@ -26,10 +26,10 @@
 //
 
 
-#if DEBUG_TRACK_EXTEND_CELLS  // assume DEBUG_COUNT_TICKS
+#if DEBUG_TRACK_EXTEND_CELLS
 
     #define Touch_Cell(c) \
-        ((c)->touch = TG_tick)
+        ((c)->touch = TICK)
 
     #define Touch_Cell_If_Debug(c) Touch_Cell(c)
 
@@ -42,7 +42,7 @@
     ){
         v->file = file;
         v->line = line;
-        v->tick = TG_tick;
+        v->tick = TICK;
         v->touch = 0;
         return v;
     }
@@ -54,7 +54,7 @@
     ){
         v->file = file;
         v->line = line;
-        v->tick = TG_tick;
+        v->tick = TICK;
         v->touch = 0;
         return cast(Value*, v);
     }

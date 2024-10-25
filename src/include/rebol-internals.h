@@ -131,6 +131,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include <string.h>
 #include <math.h>
 #include <stddef.h> // for offsetof()
+#include <inttypes.h>  // printf() abstractions e.g. for uint64_t (PRIu64)
 
 
 //=//// ALLOW ONLY MINIMAL USE OF STDIO.H IN RELEASE BUILDS ////////////////=//
@@ -327,7 +328,7 @@ typedef struct {
     uintptr_t usage;  // Overall memory used
     Option(uintptr_t) usage_limit;  // Memory limit set by SECURE
 
-  #if !defined(NDEBUG)  // Used by the FUZZ native to inject alloc failures
+  #if DEBUG_COUNT_TICKS  // Used by the FUZZ native to inject alloc failures
     intptr_t fuzz_factor;  // (-) => a countdown, (+) percent of 10000
   #endif
 
@@ -401,6 +402,10 @@ typedef struct {
 } DataStackState;
 
 typedef struct {
+  #if DEBUG_COUNT_TICKS
+    Tick tick;  // Note: starts out at 1 so that 0 means (! DEBUG_COUNT_TICKS)
+  #endif
+
     Level* top_level;
     Level* bottom_level;
 
@@ -466,7 +471,7 @@ typedef struct {
     #endif
 #endif
 
-#include "sys-globals.h"  // includes things like TG_tick, used by panic()
+#include "sys-globals.h"  // includes things like g_ts.tick, used by panic()
 
 
 #include "sys-panic.h"  // "blue screen of death"-style termination
@@ -543,75 +548,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 #include "sys-node.h"
 
-
-
-//=//// TRAMPOLINE_FLAG_RECYCLE ///////////////////////////////////////////=//
-//
-// The recycle flag indicates a need to run the garbage collector, when
-// running it synchronously could be dangerous.  This is important e.g. during
-// memory allocation, which can detect crossing a memory usage boundary that
-// suggests GC'ing would be good...but might be in the middle of code that is
-// halfway through manipulating a managed Flex.  Recycling does not happen
-// until the trampoline regains control.
-//
-#define TRAMPOLINE_FLAG_RECYCLE \
-    FLAG_LEFT_BIT(0)
-
-
-//=//// TRAMPOLINE_FLAG_HALT //////////////////////////////////////////////=//
-//
-// The halt flag requests returning to the topmost level of the evaluator,
-// regardless of how deep a debug stack might be.  The trampoline will only
-// react to it when the top level doesn't have LEVEL_FLAG_UNINTERRUPTIBLE set.
-// Clients of the API can choose to react to interruption outside of the
-// evaluator by asking for rebWasHaltRequested().
-//
-#define TRAMPOLINE_FLAG_HALT \
-    FLAG_LEFT_BIT(1)
-
-
-//=//// TRAMPOLINE_FLAG_DEBUG_BREAK ///////////////////////////////////////=//
-//
-// The Debug Break request indicates a desire to enter an interactive
-// debugging state.  Because the ability to manage such a state may not be
-// registered by the host, this could generate an error.
-//
-#define TRAMPOLINE_FLAG_DEBUG_BREAK \
-    FLAG_LEFT_BIT(2)
-
-
-INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
-    g_ts.signal_flags |= f;
-
-    if (g_ts.eval_countdown == -1)  // already set to trigger on next tick...
-        return;  // ...we already reconciled the dose
-
-    assert(g_ts.eval_countdown > 0);  // transition to 0 triggers signals
-
-    // This forces the next step in the evaluator to count down to 0 and
-    // trigger an interrupt.  But we have to reconcile the count first.
-    //
-    uintptr_t delta = g_ts.eval_dose - g_ts.eval_countdown;
-    if (UINTPTR_MAX - g_ts.total_eval_cycles > delta)
-        g_ts.total_eval_cycles += delta;
-    else
-        g_ts.total_eval_cycles = UINTPTR_MAX;
-
-  #if DEBUG_COUNT_TICKS
-    assert(g_ts.total_eval_cycles == TG_tick);
-  #endif
-
-    g_ts.eval_countdown = -1;
-}
-
-#define Set_Trampoline_Flag(name) \
-    Set_Trampoline_Flag_Core(TRAMPOLINE_FLAG_##name)
-
-#define Get_Trampoline_Flag(name) \
-    (did (g_ts.signal_flags & TRAMPOLINE_FLAG_##name))
-
-#define Clear_Trampoline_Flag(name) \
-    g_ts.signal_flags &= (~ TRAMPOLINE_FLAG_##name)
+#include "sys-trampoline.h"
 
 
 //=//// DEBUG HOOKS INTO THE CAST() OPERATOR //////////////////////////////=//

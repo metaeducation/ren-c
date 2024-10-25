@@ -548,8 +548,8 @@ INLINE void Copy_Cell_Header(
   #if DEBUG_TRACK_EXTEND_CELLS
     out->file = v->file;
     out->line = v->line;
-    out->tick = TG_tick;  // initialization tick
-    out->touch = v->touch;  // arbitrary debugging use via Touch_Cell
+    out->tick = TICK;
+    out->touch = v->touch;  // see also arbitrary debug use via Touch_Cell()
   #endif
 }
 
@@ -637,7 +637,7 @@ INLINE Cell* Move_Cell_Untracked(
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;
     v->line = out->line;
-    v->tick = TG_tick;
+    v->tick = TICK;
   #endif
 
     return out;

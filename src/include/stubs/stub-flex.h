@@ -663,7 +663,7 @@ INLINE Flex* Make_Flex_Into(
 //
 #if DEBUG_MONITOR_FLEX
     INLINE void Debug_Monitor_Flex(void *p) {
-        printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_tick));
+        printf("Adding monitor to %p on TICK %" PRIu64 "\n", p, TICK);
         fflush(stdout);
         g_mem.monitor_node = cast(Flex*, p);
     }

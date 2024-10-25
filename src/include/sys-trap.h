@@ -299,10 +299,10 @@ struct JumpStruct {
 //
 
 #if DEBUG_PRINTF_FAIL_LOCATIONS
-    #define Fail_Macro_Prelude(...) \
-        printf(__VA_ARGS__)
+    #define Fail_Prelude_File_Line_Tick(...) \
+        printf("fail() FILE %s LINE %d TICK %" PRIu64 "\n", __VA_ARGS__)
 #else
-    #define Fail_Macro_Prelude(...) \
+    #define Fail_Prelude_File_Line_Tick(...) \
         NOOP
 #endif
 
@@ -336,7 +336,7 @@ struct JumpStruct {
     #define fail panic
 #else
     #define fail(error) do { \
-        Fail_Macro_Prelude("fail() @ %s %d tick =", __FILE__, __LINE__); \
+        Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         Fail_Macro_Helper(error); /* prints the actual tick */ \
     } while (0)
 #endif
