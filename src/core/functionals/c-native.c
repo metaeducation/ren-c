@@ -284,8 +284,10 @@ Array* Startup_Natives(const Element* boot_natives)
 
     Context* context = Lib_Context;
 
-    CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-    Wrap_Extend_Core(context, boot_natives, flags);  // top-level decls [1]
+    CollectFlags flags = COLLECT_ONLY_SET_WORDS;  // top-level decls [1]
+    Option(Error*) e = Trap_Wrap_Extend_Core(context, boot_natives, flags);
+    assert(not e);
+    UNUSED(e);
 
     Array* catalog = Make_Array(g_num_core_natives);
 
@@ -309,7 +311,10 @@ Array* Startup_Natives(const Element* boot_natives)
     // create NATIVE itself that way.  So the prep process should have moved
     // it to be the first native in the list, and we make it manually.
     //
-    assert(Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(at)) == SYM_NATIVE);
+    assert(
+        Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(nullptr, at))
+        == SYM_NATIVE
+    );
     ++at;
     assert(Is_Word(at) and Cell_Word_Id(at) == SYM_NATIVE);
     ++at;

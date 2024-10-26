@@ -596,7 +596,7 @@ DECLARE_NATIVE(let)
             return FAIL("QUOTED? escapes not supported at top level of LET");
 
         if (
-            Try_Get_Settable_Word_Symbol(cast(Element*, SPARE))
+            Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, SPARE))
             or Is_Set_Block(stable_SPARE)
         ){
             // Allow `(set-word):` to ignore redundant colon [2]
@@ -633,7 +633,9 @@ DECLARE_NATIVE(let)
     if (
         (Is_Word(vars) and (symbol = Cell_Word_Symbol(vars)))
         or
-        (symbol = maybe Try_Get_Settable_Word_Symbol(cast(Element*, vars)))
+        (symbol = maybe Try_Get_Settable_Word_Symbol(
+            nullptr, cast(Element*, vars)
+        ))
     ){
         bindings = Make_Let_Variable(symbol, bindings);
 
@@ -769,7 +771,7 @@ DECLARE_NATIVE(let)
     }
 
     assert(
-        Try_Get_Settable_Word_Symbol(cast(Element*, SPARE))
+        Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, SPARE))
         or Is_Set_Block(stable_SPARE)
     );
 

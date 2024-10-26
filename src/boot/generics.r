@@ -394,6 +394,15 @@ REBOL [
     :case "Perform a case-sensitive search"
 ]
 
+/extend: generic [
+    "Add more material to a context"
+    return: [word! any-context?]
+    context [any-context?]
+    def "If single word, adds an unset variable if not already added"
+        [block! word!]
+    :prebound "Tolerate pre-existing bindings on set words (do not collect)"
+]
+
 ; Making, copying, modifying
 
 /copy: generic [

@@ -339,10 +339,10 @@ export console!: make object! [
     /add-shortcut: meth [
         "Add/Change console shortcut"
         return: [~]
-        name [any-word?] "Shortcut name"
+        name [word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
     ][
-        extend shortcuts name block
+        set (extend shortcuts name) block
     ]
 ]
 

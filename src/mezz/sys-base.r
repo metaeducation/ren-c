@@ -35,11 +35,13 @@ script-pre-load-hook: ~
 ]
 
 lib.enrescue: ~<See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871>~
-append lib 'rescue
-lib.rescue: ~<See SYS.UTIL/RESCUE and https://forum.rebol.info/t/1871>~
 
-exit: lib/exit/
-lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
+set extend lib 'rescue (
+    ~<See SYS.UTIL/RESCUE and https://forum.rebol.info/t/1871>~
+)
+
+exit: lib.exit/
+lib.exit: ~<See SYS.UTIL/EXIT>~
 
 
 ; 1. The console exits to the shell, and hence really only needs the exit code
@@ -163,38 +165,34 @@ lib.exit: ~  ; forcing long name of SYS.UTIL/EXIT
             spec.type = 'Module
             not has spec 'Exports
         ] then [  ; default to having Exports block if it's a module [2]
-            append spec spread compose [Exports: (make block! 10)]
+            extend spec [Exports: make block! 10]
         ]
 
         set-adjunct mod spec
     ]
 
-    append mod 'import
-    mod.import: cascade [
-        specialize sys.util/import*/ [  ; specialize low-level [3]
+    set extend mod 'import cascade [
+        specialize sys.util.import*/ [  ; specialize low-level [3]
             where: mod
         ]
-        :decay  ; don't want body evaluative result
+        decay/  ; don't want body evaluative result
     ]
 
-    append mod 'export
-    mod.export: if spec and (spec.type = 'Module) [  ; only modules export
-        specialize sys.util/export*/ [  ; specialize low-level [3]
-            where: mod
+    set extend mod 'export (
+        if spec and (spec.type = 'Module) [  ; only modules export
+            specialize sys.util.export*/ [  ; specialize low-level [3]
+                where: mod
+            ]
+        ] else [
+            ~<Scripts must be invoked via IMPORT to get EXPORT>~
         ]
-    ] else [
-        specialize fail/ [reason: [
-            "Scripts must be invoked via IMPORT to get EXPORT, not DO:"
-            (file else ["<was run as text!/binary!>"])
-        ]]
-    ]
+    )
 
     if object? mixin [bind body mixin]
 
     trap [  ; !!! currently `then x -> [...] except e -> [...]` is broken
         catch* 'quit [  ; fill in definitional QUIT slot in module [4]
-            append mod 'quit
-            mod.quit: make-quit :quit
+            set (extend mod 'quit) make-quit quit/
 
             wrap* mod body  ; add top-level declarations to module
             body: bindable body  ; MOD inherited body's binding, we rebind

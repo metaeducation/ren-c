@@ -86,10 +86,6 @@
 // a mechanic between both...TBD.
 //
 
-INLINE Context* Derive_Binding(
-    Context* binding,
-    const Cell* list
-);
 
 INLINE Element* Derelativize_Untracked(
     Sink(Element) out,

@@ -660,8 +660,7 @@ REBOL [
         return (  ; can't append until after, if prev. definition used in expr
             (
                 if word [  ; no "attached" state, must append word to get IN
-                    append where word
-                    word: inside where unbind word  ; maybe bound e.g. WHAT-DIR
+                    extend where word  ; maybe bound e.g. WHAT-DIR
                 ]
             ): try take args
             elide if word [append exports word]

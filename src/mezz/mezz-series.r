@@ -35,18 +35,6 @@ REBOL [
 ]
 
 
-/extend: func [
-    "Extend an object, map, or block type with word and value pair."
-    return: [any-value?]
-    obj [object! map!] "object to extend (modified)"
-    word [any-word?]
-    val [any-value?]
-][
-    append obj word
-    return poke obj word :val
-]
-
-
 /array: func [
     "Makes and initializes a block of a given size"
 

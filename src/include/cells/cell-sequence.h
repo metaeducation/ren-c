@@ -848,22 +848,31 @@ INLINE bool Is_Set_Word(const Value* v)
 // to be doing so because they want a symbol.  This is a combined interface
 // that subsumes testing for both foo: and /foo: and gives the symbol.
 //
-INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(const Element* e) {
+INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
+    Option(Sink(bool)) bound,
+    const Element* e
+){
     if (QUOTE_BYTE(e) != NOQUOTE_1)
         return nullptr;
-    if (Is_Set_Word_Cell(e))
+    if (Is_Set_Word_Cell(e)) {
+        if (bound)
+            *(unwrap bound) = IS_WORD_BOUND(e);
         return Cell_Word_Symbol(e);
+    }
     if (HEART_BYTE(e) != REB_PATH)
         return nullptr;
     if (LEADING_BLANK_AND(CHAIN) != Try_Get_Sequence_Singleheart(e))
         return nullptr;  // e is not /?:?:? style path
 
     DECLARE_ELEMENT (temp);  // !!! should be able to optimize and not need this
-    Copy_Sequence_At(temp, e, 1);
+    Derelativize_Sequence_At(temp, e, Cell_Sequence_Binding(e), 1);
     assert(Is_Chain(temp));
 
     if (TRAILING_BLANK_AND(WORD) != Try_Get_Sequence_Singleheart(temp))
         return nullptr;  // e is not /foo: style path
+
+    if (bound)
+        *(unwrap bound) = IS_WORD_BOUND(temp);
     return Cell_Word_Symbol(temp);
 }
 

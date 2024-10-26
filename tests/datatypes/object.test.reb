@@ -56,27 +56,28 @@
     p: make o [a: 3]
     1 == eval p.c
 )]
-; appending to objects
+
+; extending objects
 [#1979 (
     o: make object! []
-    append o spread [b: 1 b: 2]
+    extend o [b: 1 b: 2]
     1 == length of words of o
 )]
 (
     o: make object! [b: 0]
-    append o spread [b: 1 b: 2]
+    extend o [b: 1 b: 2]
     1 == length of words of o
 )
 (
     o: make object! []
     c: "c"
-    append o spread compose [b: "b" b: (c)]
+    extend o compose [b: "b" b: (c)]
     same? c o.b
 )
 (
     o: make object! [b: "a"]
     c: "c"
-    append o spread compose [b: "b" b: (c)]
+    extend o compose [b: "b" b: (c)]
     same? c o.b
 )
 
@@ -111,11 +112,11 @@
 ; ]
 (
     o: make object! []
-    append o 'self
+    extend o 'self
     '~ = ^ get:any @o.self
 )(
     o: make object! []
-    append o spread [self: 1]
+    extend o [self: 1]
     o.self = 1
 )
 

@@ -59,9 +59,10 @@ VarList* Alloc_Varlist_Core(Heart heart, REBLEN capacity, Flags flags)
 
 
 //
-//  Expand_Keylist_Of_Varlist_Core: C
+//  Keylist_Of_Expanded_Varlist: C
 //
-// Returns whether or not the expansion invalidated existing keys.
+// Expand a varlist. Copy keylist if is not unique (returns it to help
+// emphasize that the keylist you saw the varlist have before may change.)
 //
 // 1. Tweak_Keylist_Of_Varlist_Shared was used to set the flag that indicates
 //    this keylist is shared with one or more other contexts.  Can't expand
@@ -87,10 +88,17 @@ VarList* Alloc_Varlist_Core(Heart heart, REBLEN capacity, Flags flags)
 //    varlist, and no Tweak_Keylist_Of_Varlist_Shared() was used by another
 //    varlist to mark the flag indicating it's shared.  Extend it directly.
 //
-bool Expand_Keylist_Of_Varlist_Core(VarList* varlist, REBLEN delta)
+KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 {
     KeyList* k = Keylist_Of_Varlist(varlist);
     assert(Is_Stub_Keylist(k));
+    if (delta == 0)  // should we allow 0 delta?
+        return k;
+
+    Length len = Varlist_Len(varlist);
+
+    Extend_Flex_If_Necessary(varlist, delta);  // same identity, easy part
+    Set_Flex_Len(Varlist_Array(varlist), len + delta + 1);  // include rootvar
 
     if (Get_Subclass_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
         KeyList* k_copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
@@ -109,26 +117,14 @@ bool Expand_Keylist_Of_Varlist_Core(VarList* varlist, REBLEN delta)
         Manage_Flex(k_copy);
         Tweak_Keylist_Of_Varlist_Unique(varlist, k_copy);
 
-        return true;
+        Set_Flex_Len(k_copy, len + delta);
+        return k_copy;
     }
 
-    if (delta == 0)
-        return false;
-
     Extend_Flex_If_Necessary(k, delta);  // unshared, extend in place [3]
-    return false;
-}
+    Set_Flex_Len(k, len + delta);
 
-
-//
-//  Expand_Varlist: C
-//
-// Expand a varlist. Copy keylist if is not unique.
-//
-void Expand_Varlist(VarList* varlist, REBLEN delta)
-{
-    Extend_Flex_If_Necessary(varlist, delta);
-    Expand_Keylist_Of_Varlist_Core(varlist, delta);
+    return k;
 }
 
 
@@ -216,31 +212,31 @@ Value* Append_To_Sea_Core(
 }
 
 
-// 1. !!! This doesn't seem to consider the shared flag of the keylist (?)
-//    though the callsites seem to pre-expand with consideration for that.
-//    Review why this is expanding when the callers are expanding.  Should
-//    also check that redundant keys aren't getting added here.
+// 1. If objects have identical keys, they may share the same keylist.  But
+//    when an object gets expanded, that shared keylist has to be copied to
+//    become unique to that object.  When this happens, the keylist identity
+//    can change.
 //
 static Value* Append_To_Varlist_Core(
     VarList* varlist,
     const Symbol* symbol,
     Option(Cell*) any_word
 ){
-    KeyList* keylist = Keylist_Of_Varlist(varlist);
-
   #if DEBUG  // catch duplicate insertions
   blockscope {
-    const Key* check_tail = Flex_Tail(Key, keylist);
-    const Key* check = Flex_Head(Key, keylist);
+    KeyList* before = Keylist_Of_Varlist(varlist);  // may change if shared [1]
+    const Key* check_tail = Flex_Tail(Key, before);
+    const Key* check = Flex_Head(Key, before);
     for (; check != check_tail; ++check)
         assert(Key_Symbol(check) != symbol);
   }
   #endif
 
-    Expand_Flex_Tail(keylist, 1);  // updates the used count
-    Init_Key(Flex_Last(Key, keylist), symbol);  // !!! shared flag? [1]
+    KeyList* keylist = Keylist_Of_Expanded_Varlist(varlist, 1);  // unique [1]
+    Init_Key(Flex_Last(Key, keylist), symbol);
 
-    Cell* value = Alloc_Tail_Array(Varlist_Array(varlist));
+    Cell* slot = Array_Last(Varlist_Array(varlist));
+    // leave uninitialized (if caller wants an unset variable, they do that)
 
     if (any_word) {
         Length len = Varlist_Len(varlist);  // length we just bumped
@@ -248,7 +244,7 @@ static Value* Append_To_Varlist_Core(
         BINDING(unwrap any_word) = varlist;
     }
 
-    return cast(Value*, value);  // location we just added (void cell)
+    return cast(Value*, slot);  // location we just added (void cell)
 }
 
 
@@ -400,7 +396,7 @@ void Collect_Context_Keys(
 //
 //      https://github.com/rebol/rebol-issues/issues/2276
 //
-static void Collect_Inner_Loop(
+static Option(Error*) Trap_Collect_Inner_Loop(
     Collector *cl,
     CollectFlags flags,
     const Element* head,
@@ -410,14 +406,22 @@ static void Collect_Inner_Loop(
     for (; e != tail; ++e) {
         const Symbol* symbol;
 
+        bool bound;
         if (
-            (symbol = maybe Try_Get_Settable_Word_Symbol(e))
+            (symbol = maybe Try_Get_Settable_Word_Symbol(&bound, e))
             or (
                 (flags & COLLECT_ANY_WORD)
                 and Any_Wordlike(e)
-                and (symbol = Cell_Word_Symbol(e))
+                and (bound = IS_WORD_BOUND(e), symbol = Cell_Word_Symbol(e))
             )
         ){
+            if (bound) {
+                if (flags & COLLECT_TOLERATE_PREBOUND)
+                    continue;
+
+                return Error_Collectable_Bound_Raw(e);
+            }
+
             if (cl->sea) {
                 bool strict = true;
                 if (MOD_VAR(unwrap cl->sea, symbol, strict))
@@ -431,14 +435,12 @@ static void Collect_Inner_Loop(
             )){
                 ++cl->next_index;
             }
+            else if (flags & COLLECT_NO_DUP) {
+                DECLARE_ELEMENT (duplicate);
+                Init_Word(duplicate, symbol);
+                return Error_Dup_Vars_Raw(duplicate);
+            }
             else {
-                if (flags & COLLECT_NO_DUP) {
-                    Destruct_Collector_Core(cl);  // Can't fail w/live binder
-
-                    DECLARE_ATOM (duplicate);
-                    Init_Word(duplicate, symbol);
-                    fail (Error_Dup_Vars_Raw(duplicate));  // cleans bindings
-                }
                 // tolerate duplicate
             }
 
@@ -448,12 +450,15 @@ static void Collect_Inner_Loop(
         if (Is_Set_Block(e)) {  // `[[a b] ^c :d (e)]:` collects all but E
             const Element* sub_tail;
             const Element* sub_at = Cell_List_At(&sub_tail, e);
-            Collect_Inner_Loop(
+            Option(Error*) error = Trap_Collect_Inner_Loop(
                 cl,
                 COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES,
                 sub_at,
                 sub_tail
             );
+            if (error)
+                return error;
+
             continue;
         }
 
@@ -467,18 +472,24 @@ static void Collect_Inner_Loop(
 
         const Element* sub_tail;
         const Element* sub_at = Cell_List_At(&sub_tail, e);
-        Collect_Inner_Loop(cl, flags, sub_at, sub_tail);
+        Option(Error*) error = Trap_Collect_Inner_Loop(
+            cl, flags, sub_at, sub_tail
+        );
+        if (error)
+            return error;
     }
+
+    return nullptr;
 }
 
 
 //
-//  Wrap_Extend_Core: C
+//  Trap_Wrap_Extend_Core: C
 //
 // This exposes the functionality of WRAP* so it can be used by the boot
 // process on LIB before natives can be called.
 //
-void Wrap_Extend_Core(
+Option(Error*) Trap_Wrap_Extend_Core(
     Context* context,
     const Element* list,
     CollectFlags flags
@@ -489,7 +500,11 @@ void Wrap_Extend_Core(
     const Element* tail;
     const Element* at = Cell_List_At(&tail, list);
 
-    Collect_Inner_Loop(cl, flags, at, tail);
+    Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, at, tail);
+    if (e) {
+        Destruct_Collector(cl);
+        return e;
+    }
 
     Stub* hitch = cl->binder.hitch_list;
     for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
@@ -498,6 +513,7 @@ void Wrap_Extend_Core(
     }
 
     Destruct_Collector(cl);
+    return nullptr;
 }
 
 
@@ -525,7 +541,9 @@ DECLARE_NATIVE(wrap_p)
     Context* context = Cell_Varlist(ARG(context));
     Element* list = cast(Element*, ARG(list));
 
-    Wrap_Extend_Core(context, list, flags);
+    Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
+    if (e)
+        return FAIL(unwrap e);
 
     /* Virtual_Bind_Deep_To_Existing_Context(  // !!! what should do what? [1]
         list, context, nullptr, CELL_MASK_0
@@ -669,7 +687,10 @@ DECLARE_NATIVE(collect_words)
 
     const Element* block_tail;
     const Element* block_at = Cell_List_At(&block_tail, ARG(block));
-    Collect_Inner_Loop(cl, flags, block_at, block_tail);
+
+    Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, block_at, block_tail);
+    if (e)
+        return FAIL(unwrap e);
 
     StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
 
@@ -717,7 +738,9 @@ VarList* Make_Varlist_Detect_Managed(
     DECLARE_COLLECTOR (cl);
     Construct_Collector(cl, flags, parent);  // preload binder with parent's keys
 
-    Collect_Inner_Loop(cl, flags, head, tail);  // collect keys from array
+    Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, head, tail);
+    if (e)
+        fail (unwrap e);
 
     Length len = cl->next_index - 1;  // is next index, so subtract 1
 

@@ -3,7 +3,7 @@
 [#75 (
     o: make object! [a: 1]
     p: make o []
-    append p spread [b 2]
+    extend p [b: 2]
     all [
         has p 'b
         not has o 'b

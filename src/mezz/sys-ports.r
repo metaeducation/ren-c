@@ -103,16 +103,11 @@ parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~
     ; a BLOCK!.  But DECODE-URL now returns an object, and you can't make
     ; an derived object via an object at this time.  Do it manually.
     ;
-    ; !!! COLLECT is not available here.  This is all very old stuff and was
-    ; organized terribly.  :-(
-    ;
-    let overloads: copy []
     for-each [key val] spec [
         if not any [quasi? ^val, null? :val, blank? :val] [
-            append overloads spread reduce [setify key :val]  ; override
+            set (extend port.spec key) val
         ]
     ]
-    append port.spec spread overloads
 
     port.spec.scheme: name
     port.scheme: scheme
@@ -241,11 +236,11 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
                 block? args
                 block? body
             ]
-            append actor name: to word! name  ; !!! use EXTEND-style operation?
+
             op: inside scheme.actor op
             args: inside scheme.actor args
             body: inside scheme.actor body
-            actor.(name): reeval op args body ; add action to object! w/name
+            set (extend actor to word! name) reeval op args body
         ]
         scheme.actor: actor
     ]
@@ -254,5 +249,5 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
         fail ["Scheme actor" scheme.name "can't be" type of scheme.actor]
     ]
 
-    append system.schemes spread reduce [scheme.name scheme]
+    set (extend system.schemes scheme.name) scheme
 ]

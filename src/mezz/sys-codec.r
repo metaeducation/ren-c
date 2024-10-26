@@ -49,7 +49,7 @@ REBOL [
         encode: '(encode)
     ]
 
-    append system.codecs spread reduce [(setify name) codec]
+    set (extend system.codecs name) codec
 
     ; Media-types block format: [.abc .def type ...]
     ; !!! Should be a map, with blocks of codecs on collisions

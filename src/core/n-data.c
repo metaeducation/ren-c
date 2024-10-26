@@ -516,7 +516,8 @@ DECLARE_INTRINSIC(set_run_word_q)
 
     Init_Logic(
         out,
-        Is_Path(arg) and Try_Get_Settable_Word_Symbol(cast(Element*, arg))
+        Is_Path(arg)
+        and Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, arg))
     );
 }
 

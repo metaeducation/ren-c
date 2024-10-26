@@ -63,7 +63,7 @@ REBOL [
         type <> 'rebol  ; handled by this routine, not by WRITE+ENCODE
 
         ; We have a codec.  Will check for valid type.
-        return write where encode type :value
+        return write where encode type value
     ]
 
     any [
@@ -84,10 +84,10 @@ REBOL [
         header: if object? header [
             trim header  ; clean out words set to blank
         ] else [
-            construct (inert header)  ; does not use STANDARD/HEADER
+            construct (inert header)  ; does not use STANDARD.HEADER
         ]
 
-        ; Sync the header option with the /COMPRESS setting
+        ; Sync the header option with the :COMPRESS setting
         ;
         case [
             null? compress [
@@ -100,7 +100,7 @@ REBOL [
                 remove find maybe select header 'options 'compress
             ]
             not block? select header 'options [
-                append header spread compose [Options: (copy [compress])]
+                extend header [Options: '[compress]]
             ]
             not find select header 'options 'compress [
                 append header.options 'compress
@@ -108,7 +108,7 @@ REBOL [
         ]
 
         if length [
-            append header spread compose [
+            extend header [
                 length: #  ; "uses #, but any truthy value will work"
             ]
         ]

@@ -88,6 +88,7 @@ Script: [
     not-bound:          [:arg1 "word is not bound to a context"]
     not-in-context:     [:arg1 "is not in the specified context"]
 
+    collectable-bound:  ["Collectable" :arg1 "bound, use :PREBOUND if intended"]
     assertion-failure:  ["assertion failure:" :arg1]
 
     ; NOTE: Preallocated errors for quick UTF-8 failing

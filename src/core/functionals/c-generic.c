@@ -129,7 +129,7 @@ DECLARE_NATIVE(generic)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-// 1. The Startup_Natives() used Wrap_Extend_Core() to add all the natives
+// 1. The Startup_Natives() used Trap_Wrap_Extend_Core() to add all the natives
 //    as variables in the LIB module so it could assign them.  We now do
 //    the same thing for the generics so they can be assigned.
 //
@@ -143,8 +143,10 @@ Array* Startup_Generics(const Element* boot_generics)
 
     Context* context = Lib_Context;
 
-    CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-    Wrap_Extend_Core(context, boot_generics, flags);  // top-level decls [1]
+    CollectFlags flags = COLLECT_ONLY_SET_WORDS;  // top-level decls [1]
+    Option(Error*) e = Trap_Wrap_Extend_Core(context, boot_generics, flags);
+    assert(not e);
+    UNUSED(e);
 
     DECLARE_ATOM (discarded);
     if (Eval_Any_List_At_Throws(discarded, boot_generics, context))
@@ -161,7 +163,7 @@ Array* Startup_Generics(const Element* boot_generics)
     Element* at = Cell_List_At_Known_Mutable(&tail, boot_generics);
 
     for (; at != tail; ++at)
-        if (Try_Get_Settable_Word_Symbol(at)) {  // all generics as /foo:
+        if (Try_Get_Settable_Word_Symbol(nullptr, at)) {  // generics all /foo:
             Derelativize(PUSH(), at, context);
             Unpath(TOP_ELEMENT);  // change /foo: -> foo:
             Unchain(TOP_ELEMENT);  // change foo: -> foo

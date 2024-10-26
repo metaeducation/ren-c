@@ -25,125 +25,6 @@
 #include "sys-core.h"
 
 
-static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
-{
-    VarList* c = Cell_Varlist(context);
-
-    if (CTX_TYPE(c) == REB_MODULE)
-        fail ("Appending KEY/VALUE pairs to modules not working yet");
-
-    assert(Is_Group(block));
-
-    const Element* tail;
-    const Element* item = Cell_List_At(&tail, block);
-
-    // Can't actually fail() during a collect, so make sure any errors are
-    // set and then jump to a Destruct_Collector()
-    //
-    Option(Error*) error = nullptr;
-
-    DECLARE_COLLECTOR (cl);
-    Construct_Collector(
-        cl,
-        COLLECT_ONLY_SET_WORDS,
-        c  // preload binder with words already in context
-    );
-
-    REBLEN start_len = cl->next_index - 1;
-
-    // Do a pass to collect the [set-word: <value>] keys and add them to the
-    // binder.  But don't modify the object yet, in case the block turns out
-    // to be malformed (we don't want partial expansions applied).
-    //
-    // !!! This allows plain WORD! in the key spot.  Review, this should
-    // really be EXTEND!
-    //
-  blockscope {
-    const Element* word;
-    for (word = item; word != tail; word += 2) {
-        if (not Is_Word(word) and not Is_Set_Word(word)) {
-            error = Error_Bad_Value(word);
-            goto Destruct_Collector;
-        }
-
-        const Symbol* symbol = Cell_Word_Symbol(word);
-
-        if (Try_Add_Binder_Index(
-            &cl->binder,
-            symbol,
-            cl->next_index
-        )){
-            ++cl->next_index;
-        }
-        if (word + 1 == tail)  // catch malformed case with no value (#708)
-            break;
-    }
-  }
-
-  blockscope {  // Append new words to obj
-    REBLEN len = cl->next_index - 1;
-    Expand_Varlist(c, len - start_len);  // expand by amount added
-    Set_Flex_Len(Varlist_Array(c), len + 1);  // include rootvar
-    Set_Flex_Len(Keylist_Of_Varlist(c), len);
-
-    Stub* hitch = cl->binder.hitch_list;
-    Value* var = Flex_Tail(Value, Varlist_Array(c));
-    Key* key = Flex_Tail(Key, Keylist_Of_Varlist(c));
-
-    for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
-        --var;
-        --key;
-        Init_Nothing(var);
-        *key = INODE(BindSymbol, hitch);
-    }
-  }
-
-  blockscope {  // Set new values to obj words
-    const Element* word = item;
-    for (; word != tail; word += 2) {
-        const Symbol* symbol = Cell_Word_Symbol(word);
-
-        REBLEN i = unwrap Try_Get_Binder_Index(&cl->binder, symbol);
-        assert(i != 0);
-        assert(*Varlist_Key(c, i) == symbol);
-        Value* var = Varlist_Slot(c, i);
-
-        if (Get_Cell_Flag(var, PROTECTED)) {
-            error = Error_Protected_Key(symbol);
-            goto Destruct_Collector;
-        }
-
-        // !!! There was discussion in R3-Alpha that errors which exposed the
-        // existence of hidden variables were bad in a "security" sense,
-        // because they were supposed to be effectively "not there".  Putting
-        // security aside; once a variable has been hidden from binding, is
-        // there a reason to disallow a new variable of that name from being
-        // added to the context?  Functions are being rigged up to allow the
-        // addition of public parameters that overlap the names of private
-        // fields on the black box internals...perhaps contexts should too?
-        //
-        if (Get_Cell_Flag(var, VAR_MARKED_HIDDEN)) {
-            error = Error_Hidden_Raw();
-            goto Destruct_Collector;
-        }
-
-        if (word + 1 == tail) {
-            Init_Nothing(var);
-            break;  // fix bug#708
-        }
-        else
-            Copy_Cell(var, &word[1]);
-    }
-  }
-
-  Destruct_Collector:
-    Destruct_Collector(cl);
-
-    if (error)
-        fail (unwrap error);
-}
-
-
 //=//// CONTEXT ENUMERATION ////////////////////////////////////////////////=//
 //
 // All hidden parameters in the exemplar frame of an ACTION! are not shown
@@ -1066,7 +947,7 @@ const Symbol* Symbol_From_Picker(const Value* context, const Value* picker)
 //
 REBTYPE(Context)
 {
-    Value* context = D_ARG(1);
+    Element* context = cast(Element*, D_ARG(1));
     VarList* c = Cell_Varlist(context);
 
     Option(SymId) symid = Symbol_Id(verb);
@@ -1191,34 +1072,52 @@ REBTYPE(Context)
 
         return nullptr; }  // caller's VarList* is not stale, no update needed
 
-      case SYM_APPEND: {
-        Value* arg = D_ARG(2);
-        if (Is_Void(arg))
-            return COPY(context);  // don't fail on R/O if it would be a no-op
+      case SYM_APPEND:
+        fail ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
 
-        Ensure_Mutable(context);
-        if (not Is_Object(context) and not Is_Module(context))
-            return FAIL("APPEND only works on OBJECT! and MODULE! contexts");
+      case SYM_EXTEND: {
+        INCLUDE_PARAMS_OF_EXTEND;
+        UNUSED(ARG(context));
+        Element* def = cast(Element*, ARG(def));
 
-        if (Is_Splice(arg)) {
-            QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
-        }
-        else if (Any_Word(arg)) {
-            // Add an unset word: `append context 'some-word`
-            const bool strict = true;
-            if (not Find_Symbol_In_Context(
-                context,
-                Cell_Word_Symbol(arg),
-                strict
-            )){
-                Init_Nothing(Append_Context(c, Cell_Word_Symbol(arg)));
+        if (Is_Word(def)) {
+            bool strict = true;
+            Option(Index) i = Find_Symbol_In_Context(
+                context, Cell_Word_Symbol(def), strict
+            );
+            if (i) {
+                CELL_WORD_INDEX_I32(def) = unwrap i;
+                if (Is_Module(context))
+                    BINDING(def) = MOD_PATCH(
+                        cast(SeaOfVars*, c), Cell_Word_Symbol(def), strict
+                    );
+                else
+                    BINDING(def) = c;
+                return COPY(def);
             }
-            return COPY(context);
+            Init_Nothing(Append_Context_Bind_Word(c, def));
+            return COPY(def);
         }
-        else
-            return FAIL(arg);
 
-        Append_Vars_To_Context_From_Group(context, arg);
+        assert(Is_Block(def));
+
+        CollectFlags flags = COLLECT_ONLY_SET_WORDS;
+        if (REF(prebound))
+            flags |= COLLECT_TOLERATE_PREBOUND;
+
+        Option(Error*) e = Trap_Wrap_Extend_Core(c, def, flags);
+        if (e)
+            return FAIL(unwrap e);
+
+        Use* use = Make_Use_Core(
+            context, BINDING(def), CELL_FLAG_USE_NOTE_SET_WORDS
+        );
+        BINDING(def) = use;
+
+        bool threw = Eval_Any_List_At_Throws(OUT, def, SPECIFIED);
+        if (threw)
+            return BOUNCE_THROWN;
+
         return COPY(context); }
 
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
@@ -1726,7 +1625,7 @@ DECLARE_NATIVE(construct)
             continue;
         }
 
-        if (not Try_Get_Settable_Word_Symbol(at))  // /foo: or foo:
+        if (not Try_Get_Settable_Word_Symbol(nullptr, at))  // /foo: or foo:
             return FAIL(at);
 
         do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
@@ -1741,7 +1640,7 @@ DECLARE_NATIVE(construct)
             if (Is_Comma(at))
                 return FAIL("Unexpected COMMA! after SET-WORD! in CONTEXT");
 
-        } while (Try_Get_Settable_Word_Symbol(at));
+        } while (Try_Get_Settable_Word_Symbol(nullptr, at));
 
         STATE = ST_CONSTRUCT_EVAL_STEP;
         return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -1757,6 +1656,7 @@ DECLARE_NATIVE(construct)
 
     while (TOP_INDEX != STACK_BASE) {
         const Symbol* symbol = unwrap Try_Get_Settable_Word_Symbol(
+            nullptr,
             TOP_ELEMENT
         );
 

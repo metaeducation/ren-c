@@ -51,5 +51,5 @@
 ;
 ~locked-series~ !! (
     o: binding of use [x] [$x]
-    append o 'self
+    extend o 'self
 )

@@ -357,7 +357,7 @@ REBOL [
         let libuser: copy system.contexts.lib
         for-each [key val] system.contexts.user [
             if not vacant? $val [
-               append libuser spread reduce [key ^val]
+               set (extend libuser key) get $val
             ]
         ]
         libuser
