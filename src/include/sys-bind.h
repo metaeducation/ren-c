@@ -92,7 +92,7 @@ INLINE Context* Derive_Binding(
 );
 
 INLINE Element* Derelativize_Untracked(
-    Sink(Element) out,  // relative dest overwritten w/specific value
+    Sink(Element) out,
     const Element* v,
     Context* context
 ){
@@ -101,7 +101,10 @@ INLINE Element* Derelativize_Untracked(
 
     Heart heart = Cell_Heart_Unchecked(v);
 
-    if (not Is_Bindable_Heart(heart)) {
+    if (
+        not context  // should bindings always be left as-is in this case?
+        or not Is_Bindable_Heart(heart)
+    ){
         out->extra = v->extra;
         return out;
     }
@@ -534,15 +537,16 @@ INLINE Sink(Value) Sink_Word_May_Fail(
 // words and lists that reside in it.
 //
 INLINE Context* Derive_Binding(
-    Context* binding,
+    Context* context,
     const Cell* list
 ){
     assert(Any_Listlike(list));
 
-    if (BINDING(list) != UNBOUND)
-        return BINDING(list);
+    Context* binding = BINDING(list);
+    if (binding)
+        return binding;
 
-    return binding;
+    return context;
 }
 
 
