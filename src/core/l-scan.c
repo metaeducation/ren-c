@@ -1780,13 +1780,19 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
    if (*S->end == ':') {  // word:  url:words
         cp = S->end + 1;
-        if (*cp != '/')
+        if (*cp == ':') {
+            // saw :: which we treat as URL, e.g. log::error
+        }
+        else if (*cp == '/') {
+            ++cp;  // saw `:/`
+            if (*cp != '/')
+                return LOCATED(TOKEN_WORD);
+            // saw `://`
+        }
+        else
             return LOCATED(TOKEN_WORD);
-        ++cp;  // saw `:/`
-        if (*cp != '/')
-            return LOCATED(TOKEN_WORD);
-        // saw `://`, okay treat as URL, look for its end
-        do {
+
+        do {  // saw `::` or `://`, okay treat as URL, look for its end
             ++cp;
             while (Is_Lex_Not_Delimit(*cp) or not Is_Lex_Delimit_Hard(*cp))
                 ++cp;  // not delimiter, e.g. `http://example.com]` stops it

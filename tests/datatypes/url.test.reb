@@ -100,3 +100,10 @@
         url.tag == null
     ]
 )]
+
+; While a:b:c is now a CHAIN!, foo::bar is considered a URL! still
+;
+; Whether this is the greatest idea in the world remains to be seen, but it
+; was used by the JavaScript extension for `write log::console "Whatever"`
+;
+(url? foo::bar)
