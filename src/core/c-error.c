@@ -1291,13 +1291,8 @@ VarList* Startup_Errors(const Element* boot_errors)
 
     assert(VAL_INDEX(boot_errors) == 0);
 
-    VarList* catalog;
-
-  blockscope {
-    Value* temp = rebValue(Canon(CONSTRUCT), Canon(INERT), boot_errors);
-    catalog = Cell_Varlist(temp);
-    rebRelease(temp);
-  }
+    Value* catalog_val = rebValue(Canon(CONSTRUCT), Canon(INERT), boot_errors);
+    VarList* catalog = Cell_Varlist(catalog_val);
 
     // Morph blocks into objects for all error categories.
     //
@@ -1310,6 +1305,7 @@ VarList* Startup_Errors(const Element* boot_errors)
         rebRelease(error);
     }
 
+    rebRelease(catalog_val);  // API handle kept it alive for GC
     return catalog;
 }
 
