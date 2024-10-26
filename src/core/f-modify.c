@@ -250,6 +250,9 @@ REBLEN Modify_String_Or_Binary(
     REBLEN dst_idx = VAL_INDEX(dst);
     Size dst_used = Flex_Used(dst_flex);
 
+    if (dups <= 0)
+        return op == SYM_APPEND ? 0 : dst_idx;
+
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
     Size dst_off;
     if (Is_Binary(dst)) {  // check invariants up front even if NULL / no-op
@@ -281,14 +284,14 @@ REBLEN Modify_String_Or_Binary(
 
     // For INSERT:PART and APPEND:PART
     //
-    REBLEN limit;
-    if (op != SYM_CHANGE and (flags & AM_PART))
-        limit = part;
+    Option(const Length*) limit;
+    if (op != SYM_CHANGE and (flags & AM_PART)) {
+        if (part <= 0)
+            return op == SYM_APPEND ? 0 : dst_idx;
+        limit = &part;
+    }
     else
-        limit = UINT32_MAX;
-
-    if (limit == 0 or dups <= 0)
-        return op == SYM_APPEND ? 0 : dst_idx;
+        limit = UNLIMITED;
 
     // Now that we know there's actual work to do, we need `dst_idx` to speak
     // in terms of codepoints (if applicable)
@@ -316,7 +319,7 @@ REBLEN Modify_String_Or_Binary(
         //
         // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently :PART speaks in terms of the destination series.
-        // However, if that were changed to /LIMIT then we would want to
+        // However, if that were changed to :LIMIT then we would want to
         // be cropping the :PART of the input via passing a parameter here.
         //
         src_ptr = Cell_Utf8_Len_Size_At_Limit(
@@ -383,8 +386,8 @@ REBLEN Modify_String_Or_Binary(
         src_size_raw = Binary_Len(b) - offset;
 
         if (not Is_Stub_String(dst_flex)) {
-            if (limit > 0 and limit < src_size_raw)
-                src_size_raw = limit;  // :PART is byte count for binary! dest
+            if (limit and *(unwrap limit) < src_size_raw)
+                src_size_raw = *(unwrap limit);  // byte count for binary! dest
             src_len_raw = src_size_raw;
         }
         else {
@@ -434,7 +437,7 @@ REBLEN Modify_String_Or_Binary(
                     }
                     ++src_len_raw;
 
-                    if (limit == src_len_raw)
+                    if (limit and *(unwrap limit) == src_len_raw)
                         break;  // Note: :PART is count in codepoints
                 }
             }
@@ -511,15 +514,16 @@ REBLEN Modify_String_Or_Binary(
     //
     if (Is_Stub_String(dst_flex)) {
         Utf8(const*) t = cast(Utf8(const*), src_ptr + src_size_raw);
-        while (src_len_raw > limit) {
-            t = Step_Back_Codepoint(t);
-            --src_len_raw;
-        }
+        if (limit)
+            while (src_len_raw > *(unwrap limit)) {
+                t = Step_Back_Codepoint(t);
+                --src_len_raw;
+            }
         src_size_raw = t - src_ptr;  // src_len_raw now equals limit
     }
     else {  // copying valid UTF-8 data possibly partially in bytes (!)
-        if (src_size_raw > limit)
-            src_size_raw = limit;
+        if (limit and src_size_raw > *(unwrap limit))
+            src_size_raw = *(unwrap limit);
         src_len_raw = src_size_raw;
     }
 
