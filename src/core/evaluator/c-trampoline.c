@@ -455,48 +455,48 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 {
     Level* root = TOP_LEVEL;
 
-  #if !defined(NDEBUG)
+  #if DEBUG
     Jump* check = g_ts.jump_list;
-    assert(Not_Level_Flag(root, ROOT_LEVEL));
   #endif
 
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
+    assert(Not_Level_Flag(root, ROOT_LEVEL));
     Set_Level_Flag(root, ROOT_LEVEL);  // can't unwind across [1]
 
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
-  #if !defined(NDEBUG)
-    assert(check == g_ts.jump_list);  // see CLEANUP_BEFORE_EXITING_RESCUE_SCOPE
-    assert(TOP_LEVEL == root);
-    assert(Get_Level_Flag(root, ROOT_LEVEL));
+  #if DEBUG_FANCY_PANIC
+    const char* name = "<<UNKNOWN>>";
+    if (
+        (r != BOUNCE_THROWN) and (r != root->out) and (
+            (r == BOUNCE_CONTINUE and (name = "CONTINUE"))
+            or (r == BOUNCE_DELEGATE and (name = "DELEGATE"))
+            or (r == BOUNCE_REDO_CHECKED and (name = "REDO_CHECKED"))
+            or (r == BOUNCE_REDO_UNCHECKED and (name = "REDO_UNCHECKED"))
+            or (r == BOUNCE_SUSPEND and (name = "SUSPEND"))
+            or (name = "<<UNKNOWN>>")
+        )
+    ){
+        printf("Trampoline_With_Top_As_Root_Throws() got BOUNCE_%s\n", name);
+        Dump_Stack(root);
+        fail ("Cannot interpret Trampoline result");
+    }
   #endif
 
+  #if DEBUG
+    assert(check == g_ts.jump_list);  // see CLEANUP_BEFORE_EXITING_RESCUE_SCOPE
+  #endif
+
+    assert(TOP_LEVEL == root);
+    assert(Get_Level_Flag(root, ROOT_LEVEL));
     Clear_Level_Flag(root, ROOT_LEVEL);
 
     if (r == BOUNCE_THROWN)
         return true;
-    if (r == root->out)
-        return false;
 
-  #if DEBUG_FANCY_PANIC
-    if (r == BOUNCE_CONTINUE)
-        printf("R is BOUNCE_CONTINUE\n");
-    else if (r == BOUNCE_DELEGATE)
-        printf("R is BOUNCE_DELEGATE\n");
-    else if (r == BOUNCE_REDO_CHECKED)
-        printf("R is BOUNCE_REDO_CHECKED\n");
-    else if (r == BOUNCE_REDO_UNCHECKED)
-        printf("R is BOUNCE_REDO_UNCHECKED\n");
-    else if (r == BOUNCE_SUSPEND)
-        printf("R is BOUNCE_SUSPEND\n");
-    else
-        printf("R is something unknown\n");
-
-    Dump_Stack(root);
-  #endif
-
-    fail ("Cannot interpret Trampoline result");
+    assert(r == root->out);
+    return false;
 }
 
 
