@@ -73,15 +73,6 @@ REBOL [
     ] else [null])
 ]
 
-/browse: func [
-    "stub function for browse* in extensions/process/ext-process-init.reb"
-
-    return: [~]
-    location [<maybe> url! file!]
-][
-    print "Browse needs redefining"
-]
-
 
 /print-general-help: func [
     return: [~]

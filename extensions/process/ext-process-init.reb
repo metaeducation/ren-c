@@ -158,7 +158,7 @@ REBOL [
 ; as some potentially OS-specific detection on how to launch URLs (e.g. looks
 ; at registry keys on Windows)
 
-/browse*: func [
+/browse: func [
     "Open web browser to a URL or local file."
 
     return: [~]
@@ -184,6 +184,4 @@ REBOL [
     fail "Could not open web browser"
 ]
 
-hijack browse/ browse*/
-
-export [call call*]
+export [browse call call*]
