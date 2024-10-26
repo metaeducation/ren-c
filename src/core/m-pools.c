@@ -1071,10 +1071,8 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         f->content.dynamic.used = 0;
 
   #if DEBUG_UTF8_EVERYWHERE
-    if (Is_Stub_NonSymbol(s)) {
+    if (Is_Stub_NonSymbol(f))
         f->misc.length = 0xDECAFBAD;
-        (s);
-    }
   #endif
 
     if (was_dynamic)

@@ -40,7 +40,11 @@ INLINE char Symbol_For_Sigil(Sigil sigil) {
 
 INLINE Element* Init_Sigil(Sink(Element) out, Sigil sigil) {
     if (sigil == SIGIL_QUASI)
-        Init_Issue_Utf8(out, cb_cast("~~"), 2, 2);  // codepoints 2, size 2
+        Init_Issue_Utf8(
+            out,
+            cast(Utf8(const*), "~~"),  // must be "validated UTF-8"
+            2,  // 2 codepoints
+            2);  // in 2 bytes
     else
         Init_Char_Unchecked(out, Symbol_For_Sigil(sigil));
 

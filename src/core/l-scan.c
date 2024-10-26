@@ -2460,7 +2460,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_CHAR: {  // now just "issue enclosed in quotes"
         Init_Issue_Utf8(
             PUSH(),
-            Binary_At(mo->string, mo->base.size),
+            cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
             String_Size(mo->string) - mo->base.size,
             String_Len(mo->string) - mo->base.index
         );

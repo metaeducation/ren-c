@@ -56,7 +56,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     assert(Any_Utf8_Kind(Cell_Heart(c)));
 
     if (Not_Cell_Flag(c, FIRST_IS_NODE))  // must store bytes in cell direct
-        return PAYLOAD(Bytes, c).at_least_8;
+        return cast(Utf8(const*), PAYLOAD(Bytes, c).at_least_8);
 
     const String* str = cast(String*, Cell_Node1(c));  // symbols are strings
     return String_Head(str);
@@ -82,7 +82,7 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
 
     if (Not_Cell_Flag(c, STRINGLIKE_HAS_NODE)) {  // content in cell direct
         Size size = EXTRA(Bytes, c).at_least_4[IDX_EXTRA_USED];
-        return PAYLOAD(Bytes, c).at_least_8 + size;
+        return cast(Utf8(const*), PAYLOAD(Bytes, c).at_least_8 + size);
     }
 
     const String* str = cast(String*, Cell_Node1(c));
