@@ -521,8 +521,8 @@ export console!: make object! [
                 emit [system.console/print-gap]
                 emit [system.console/print-prompt]
                 emit [reduce [
-                    system.console/input-hook  ; can return NULL
-                ]]  ; gather first line (or null), put in BLOCK!
+                    system.console/input-hook  ; can return ~escape~ quasiform
+                ]]  ; gather first line (or escape), put in BLOCK!
             ]
             <halt> [
                 emit [halt]
@@ -623,15 +623,15 @@ export console!: make object! [
             return <prompt>
         ]
         if find directives #unskin-if-halt [
-            print "** UNSAFE HALT ENCOUNTERED IN CONSOLE SKIN"
-            print "** REVERTING TO DEFAULT SKIN"
+            emit [print "** UNSAFE HALT ENCOUNTERED IN CONSOLE SKIN"]
+            emit [print "** REVERTING TO DEFAULT SKIN"]
             system.console: make console! []
-            print mold prior  ; Might help debug to see what was running
+            emit [print mold prior]  ; Might help debug to see what was running
         ]
 
         ; !!! This would add an "unskin if halt" which would stop you from
         ; halting the print response to the halt message.  But that was still
-        ; in effect during <prompt> which is part of the same "transaaction"
+        ; in effect during <prompt> which is part of the same "transaction"
         ; as PRINT-HALTED.  To the extent this is a good idea, it needs to
         ; guard -only- the PRINT-HALTED and put the prompt in a new state.
         ;
@@ -705,17 +705,17 @@ export console!: make object! [
         if block? prior [
             case [
                 find directives #host-console-error [
-                    print "** HOST-CONSOLE ACTION! ITSELF RAISED ERROR"
-                    print "** SAFE RECOVERY NOT LIKELY, BUT TRYING ANYWAY"
+                    emit [print "** HOST-CONSOLE ACTION! ITSELF RAISED ERROR"]
+                    emit [print "** RECOVERY NOT LIKELY, BUT TRYING ANYWAY"]
                 ]
                 not find directives #no-unskin-if-error [
-                    print "** UNSAFE ERROR ENCOUNTERED IN CONSOLE SKIN"
+                    emit [print "** UNSAFE ERROR ENCOUNTERED IN CONSOLE SKIN"]
                 ]
-                print mold result
+                emit [print mold (<*> result)]
             ] then [
-                print "** REVERTING TO DEFAULT SKIN"
+                emit [print "** REVERTING TO DEFAULT SKIN"]
                 system.console: make console! []
-                print mold prior  ; Might help debug to see what was running
+                emit [print mold (<*> prior)]  ; Might help to see what ran
             ]
         ]
         return <prompt>
@@ -724,7 +724,7 @@ export console!: make object! [
     === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
     if group? prior [
-        system.console/print-result unmeta result
+        emit [system.console/print-result (<*> result)]  ; result is meta
         return <prompt>
     ]
 
