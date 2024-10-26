@@ -716,7 +716,7 @@ return assign_git_commit_promiser(os_id)  // sets git_commit
     //
     config.info('Initializing extensions')
     reb.Elide(
-        "for-each collation builtin-extensions",
+        "for-each 'collation builtin-extensions",
             "[load-extension collation]"
     )
   }).then(() => load_rebol_scripts(false))
