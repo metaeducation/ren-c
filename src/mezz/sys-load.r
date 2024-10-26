@@ -631,7 +631,7 @@ REBOL [
         [any-value?]
     where "Specialized for each module via EXPORT"
         [module!]
-    @what [set-word? set-run-word? set-group? block!]
+    @what [set-word? set-run-word? set-group? group? block!]
     args "(export x: ...) for single or (export [...]) for words list"
         [any-value? <variadic>]
     <local>
@@ -639,6 +639,10 @@ REBOL [
 ][
     hdr: adjunct-of where
     exports: ensure block! select hdr 'Exports
+
+    if group? what [
+        ensure block! what: eval what
+    ]
 
     if not block? what [
         if set-group? what [
