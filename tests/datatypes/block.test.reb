@@ -53,3 +53,9 @@
         [1 2 3 4 5] = make block! :make-one-thru-five
     ]
 )
+
+; Compatibility scan: '[a b c] -> [a b c]
+; (this way quoted blocks in bootstrap can be used to denote no binding
+; under evaluation when run in the new executable)
+;
+([a b c] = first ['[a b c]])

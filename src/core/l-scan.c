@@ -2774,9 +2774,12 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
           case REB_PATH:
             KIND_BYTE(TOP) = REB_LIT_PATH;
             break;
+          case REB_BLOCK:
+            // we scan '[a b c] as just [a b c]... "compatible enough"
+            break;
           default:
             return RAISE(
-                "Old EXE, only REB_WORD/REB_PATH can be quoted...once!"
+                "Old EXE, WORD/PATH can be quoted once, BLOCK quote ignored!"
             );
         }
         S->quotes_pending = 0;
