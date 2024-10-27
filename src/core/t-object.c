@@ -301,29 +301,12 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         //
         // Simple object creation with no evaluation, so all values are
         // handled "as-is".  Should have a spec block and a body block.
-        //
-        // Note: In %r3-legacy.r, the old evaluative MAKE OBJECT! is
-        // done by redefining MAKE itself, and calling the CONSTRUCT
-        // generator if the make def is not the [[spec][body]] format.
 
-        if (
-            Cell_Series_Len_At(arg) != 2
-            or not Is_Block(Cell_List_At(arg)) // spec
-            or not Is_Block(Cell_List_At(arg) + 1) // body
-        ) {
-            fail (Error_Bad_Make(kind, arg));
-        }
-
-        // !!! Spec block is currently ignored, but required.
-
-        return Init_Object(
+        return MAKE_With_Parent(
             out,
-            Construct_Context_Managed(
-                REB_OBJECT,
-                Cell_List_At(Cell_List_At(arg) + 1),
-                VAL_SPECIFIER(arg),
-                nullptr  // no parent
-            )
+            REB_OBJECT,
+            arg,
+            nullptr  // no parent
         );
     }
 
@@ -899,12 +882,11 @@ REBTYPE(Context)
 //
 //  "Creates an ANY-CONTEXT! instance"
 //
-//      spec [datatype! block! any-context!]
-//          "Datatype to create, specification, or parent/prototype context"
-//      body [block! any-context! blank!]
+//      body [block!]
 //          "keys and values defining instance contents (bindings modified)"
-//      /only
-//          "Values are kept as-is"
+//      /only "Values are kept as-is"
+//      /with
+//      other [any-context!]
 //  ]
 //
 DECLARE_NATIVE(construct)
@@ -924,46 +906,7 @@ DECLARE_NATIVE(construct)
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
-    Value* spec = ARG(spec);
     Value* body = ARG(body);
-    VarList* parent = nullptr;
-
-    enum Reb_Kind target;
-    VarList* context;
-
-    if (Is_Event(spec)) {
-        //
-        // !!! The 2-argument form of MAKE-ing an event is just a shorthand
-        // for copy-and-apply.  Could be user code.
-        //
-        if (!Is_Block(body))
-            fail (Error_Bad_Make(REB_EVENT, body));
-
-        Copy_Cell(OUT, spec); // !!! very "shallow" clone of the event
-        Set_Event_Vars(
-            OUT,
-            Cell_List_At(body),
-            VAL_SPECIFIER(body)
-        );
-        return OUT;
-    }
-    else if (Any_Context(spec)) {
-        parent = Cell_Varlist(spec);
-        target = VAL_TYPE(spec);
-    }
-    else if (Is_Datatype(spec)) {
-        //
-        // Should this be supported, or just assume OBJECT! ?  There are
-        // problems trying to create a FRAME! without a function (for
-        // instance), and making an ERROR! from scratch is currently dangerous
-        // as well though you can derive them.
-        //
-        fail ("DATATYPE! not supported for SPEC of CONSTRUCT");
-    }
-    else {
-        assert(Is_Block(spec));
-        target = REB_OBJECT;
-    }
 
     // This parallels the code originally in CONSTRUCT.  Run it if the /ONLY
     // refinement was passed in.
@@ -975,23 +918,39 @@ DECLARE_NATIVE(construct)
                 REB_OBJECT,
                 Cell_List_At(body),
                 VAL_SPECIFIER(body),
-                parent
+                REF(with) ? Cell_Varlist(ARG(other)) : nullptr
             )
         );
         return OUT;
     }
 
-    // This code came from REBTYPE(Context) for implementing MAKE OBJECT!.
-    // Now that MAKE ANY-CONTEXT! has been pulled back, it no longer does
-    // any evaluation or creates SELF fields.  It also obeys the rule that
-    // the first argument is an exemplar of the type to create only, bringing
-    // uniformity to MAKE.
-    //
+    if (REF(with))
+        return MAKE_With_Parent(OUT, VAL_TYPE(ARG(other)), body, ARG(other));
+
+    return MAKE_With_Parent(OUT, REB_OBJECT, body, nullptr);
+}
+
+
+//
+//  MAKE_With_Parent: C
+//
+// !!! Hack to try and undo awkward interim state for object construction the
+// bootstrap executable had when it was snapshotted.
+//
+Bounce MAKE_With_Parent(
+    Value* out,
+    enum Reb_Kind target,
+    const Value* body,
+    Option(const Value*) spec  // the parent
+){
+    VarList* parent = spec ? Cell_Varlist(unwrap spec) : nullptr;
+
+    VarList* context;
+
     if (
         (target == REB_OBJECT or target == REB_MODULE)
         and (Is_Block(body) or Is_Blank(body))
     ){
-
         // First we scan the object for top-level set words in
         // order to make an appropriately sized context.  Then
         // we put it into an object in OUT to GC protect it.
@@ -1004,7 +963,7 @@ DECLARE_NATIVE(construct)
                 : Cell_List_At(body),
             parent
         );
-        Init_Object(OUT, context);
+        Init_Object(out, context);
 
         if (!Is_Blank(body)) {
             //
@@ -1015,12 +974,12 @@ DECLARE_NATIVE(construct)
 
             DECLARE_VALUE (temp);
             if (Eval_List_At_Throws(temp, body)) {
-                Copy_Cell(OUT, temp);
+                Copy_Cell(out, temp);
                 return BOUNCE_THROWN; // evaluation result ignored unless thrown
             }
         }
 
-        return OUT;
+        return out;
     }
 
     // "multiple inheritance" case when both spec and body are objects.
@@ -1034,8 +993,8 @@ DECLARE_NATIVE(construct)
         // the generator choice by the person doing the derivation.
         //
         context = Merge_Contexts_Selfish_Managed(parent, Cell_Varlist(body));
-        return Init_Object(OUT, context);
+        return Init_Object(out, context);
     }
 
-    fail ("Unsupported CONSTRUCT arguments");
+    fail ("Unsupported MAKE arguments");
 }

@@ -77,7 +77,7 @@ delta-profile: func [
         change end end/1 - num
         end: next end
     ]
-    start: construct system/standard/stats []
+    start: make system/standard/stats []
     set start head of end
     start
 ]

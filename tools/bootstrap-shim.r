@@ -282,7 +282,7 @@ do: enclose :lib/do func [f <local> old-system-script] [
         f/source: append copy system/script/path to text! f/source
         f/source: clean-path f/source
         old-system-script: system/script
-        system/script: construct system/standard/script [
+        system/script: lib/construct system/standard/script [
             title: spaced ["Bootstrap Shim DO LOAD of:" f/source]
             header: compose [File: f/source]
             parent: system/script
@@ -309,6 +309,11 @@ load: func [source /all /header] [  ; can't ENCLOSE, does not take TAG!
         true [lib/load source]
     ]
 ]
+
+; CONSTRUCT is now arity-1
+
+construct: specialize :construct [spec: []]
+
 
 ; Raise errors by default if mistmatch or not end of input.
 ; PARSE/MATCH switches in a mode to give you the input, or null on failure.

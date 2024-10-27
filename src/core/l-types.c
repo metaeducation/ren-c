@@ -84,7 +84,7 @@ Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //      return: [~null~ any-value!]
 //          {Constructed value, or NULL if BLANK! input}
-//      type [<maybe> any-value!]
+//      type [<maybe> datatype! event! any-context!]
 //          {The datatype -or- an examplar value of the type to construct}
 //      def [<maybe> any-value!]
 //          {Definition or size of the new value (binding may be modified)}
@@ -92,17 +92,32 @@ Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 DECLARE_NATIVE(make)
 //
-// !!! AT THE MOMENT THIS ROUTINE HAS A USERMODE SHIM IN %MEZZ-LEGACY.R
-// So if you make changes here and don't see them, that's why.  The idea
-// behind MAKE is being rethought, because at one time it was trying to be
-// compatible with "construction syntax" and disallow evaluations.  However,
-// that is now being rethought of as being in TO and allowing MAKE to
-// do evaluations.  Work in progress.
+// 1. !!! The bootstrap executable was created in the midst of some strange
+//    ideas about MAKE and CONSTRUCT.  MAKE was not allowed to take an
+//    instance as the "spec", and CONSTRUCT was the weird arity-2 function
+//    that could do that.  This had to be unwound, and it's not methodized
+//    in a clear way...just hacked back to support the instances.
 {
     INCLUDE_PARAMS_OF_MAKE;
 
     Value* type = ARG(type);
     Value* arg = ARG(def);
+
+    if (Is_Event(type)) {  // an event instance, not EVENT! datatype
+        if (not Is_Block(arg))
+            fail (Error_Bad_Make(REB_EVENT, arg));
+
+        Copy_Cell(OUT, type); // !!! very "shallow" clone of the event
+        Set_Event_Vars(
+            OUT,
+            Cell_List_At(arg),
+            VAL_SPECIFIER(arg)
+        );
+        return OUT;
+    }
+
+    if (Any_Context(type))  // object instance, not a datatype
+        return MAKE_With_Parent(OUT, VAL_TYPE(type), arg, type);
 
     enum Reb_Kind kind;
     if (Is_Datatype(type))

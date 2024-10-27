@@ -59,8 +59,8 @@ make-port*: function [
     ]
 
     ; Create the port with the correct scheme spec:
-    port: construct system/standard/port []
-    port/spec: construct any [scheme/spec system/standard/port-spec-head] spec
+    port: make system/standard/port []
+    port/spec: make any [scheme/spec system/standard/port-spec-head] spec
     port/spec/scheme: name
     port/scheme: scheme
 
@@ -188,7 +188,7 @@ make-scheme: function [
     with: either with [get in system/schemes base-name][system/standard/scheme]
     if not with [cause-error 'access 'no-scheme base-name]
 
-    scheme: construct with def
+    scheme: make with def
     if not scheme/name [cause-error 'access 'no-scheme-name scheme]
 
     ; If actor is block build a non-contextual actor object:

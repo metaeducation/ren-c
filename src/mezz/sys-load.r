@@ -138,7 +138,7 @@ load-header: function [
     ]
 
     sys/util/rescue [
-        hdr: construct/only system/standard/header :hdr
+        hdr: construct/with/only hdr system/standard/header
     ] then [
         return 'bad-header
     ]
@@ -167,7 +167,7 @@ load-header: function [
 ]
 
 
-no-all: construct [all] [all: _]
+no-all: construct [all: ~]
 protect 'no-all/all
 
 load: function [

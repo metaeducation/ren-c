@@ -19,10 +19,10 @@ REBOL [
 ; Next five fields are updated during build:
 version:  0.0.0
 build:    1
-platform: _
-commit: _
+platform: null
+commit: null
 
-product: _ ;-- assigned by startup of the host ('core, 'view, 'ren-garden...)
+product: null  ; assigned by startup of the host ('core, 'view, 'ren-garden...)
 
 license: {Copyright 2012 REBOL Technologies
 REBOL is a trademark of REBOL Technologies
@@ -30,11 +30,7 @@ Licensed under the Apache License, Version 2.0.
 See: http://www.apache.org/licenses/LICENSE-2.0
 }
 
-; !!! CONSTRUCT is used here, because the shim to implement historical MAKE
-; OBJECT! behavior is not loaded yet.  See `make: enclose 'lib/make` for
-; an explanation of the wackiness in this old bootstrap EXE.
-
-catalog: construct [] [
+catalog: construct [
     ;
     ; These catalogs are filled in by Init_System_Object()
     ;
@@ -44,7 +40,7 @@ catalog: construct [] [
     errors: null
 ]
 
-contexts: construct [] [
+contexts: construct [
     root:
     sys:
     lib:
@@ -52,9 +48,9 @@ contexts: construct [] [
         null
 ]
 
-state: construct [] [
+state: construct [
     ; Mutable system state variables
-    last-error: _ ; used by WHY?
+    last-error: null ; used by WHY?
 ]
 
 modules: [] ;loaded modules
@@ -66,7 +62,7 @@ schemes: make object! [[][]]
 
 util: null
 
-ports: construct [] [
+ports: construct [
     wait-list: []   ; List of ports to add to 'wait
     pump: []
     input:          ; Port for user input.
@@ -75,7 +71,7 @@ ports: construct [] [
     callback: null  ; Port for callback events
 ]
 
-locale: construct [] [
+locale: construct [
     language:   ; Human language locale
     language*: null
     library: null
@@ -91,12 +87,12 @@ locale: construct [] [
     ]
 ]
 
-set in locale 'library construct [][
+set in locale 'library construct [
     modules: https://raw.githubusercontent.com/r3n/renclib/master/usermodules.reb
     utilities: https://raw.githubusercontent.com/r3n/renclib/master/userutils.reb
 ]
 
-options: construct [] [  ; Options supplied to REBOL during startup
+options: construct [  ; Options supplied to REBOL during startup
     bin: null       ; Path to directory where Rebol executable binary lives
     boot: null      ; Path of executable, ie. system/options/bin/r3-exe
     home: null      ; Path of home directory
@@ -132,7 +128,7 @@ options: construct [] [  ; Options supplied to REBOL during startup
     unlocked-source: false
 ]
 
-script: construct [] [
+script: construct [
     title:          ; Title string of script
     header:         ; Script header as evaluated
     parent:         ; Script that loaded the current one
@@ -141,7 +137,7 @@ script: construct [] [
         null
 ]
 
-standard: construct [] [
+standard: construct [
     ; FUNC implements a native-optimized variant of an action generator.
     ; This is the body template that it provides as the code *equivalent* of
     ; what it is doing (via a more specialized/internal method).  Though
@@ -185,7 +181,7 @@ standard: construct [] [
     ; the archetypal context has to be created "by hand" for natives to use,
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
-    action-meta: construct [] [
+    action-meta: construct [
         description:
         return-type:
         return-note:
@@ -200,21 +196,21 @@ standard: construct [] [
     ; HELP just follows the link (`specializee`, `adaptee`) and gets
     ; descriptions there.
 
-    specialized-meta: construct [] [
+    specialized-meta: construct [
         description:
         specializee:
         specializee-name:
             null
     ]
 
-    adapted-meta: construct [] [
+    adapted-meta: construct [
         description:
         adaptee:
         adaptee-name:
             null
     ]
 
-    enclosed-meta: construct [] [
+    enclosed-meta: construct [
         description:
         inner:
         inner-name:
@@ -223,7 +219,7 @@ standard: construct [] [
             null
     ]
 
-    cascaded-meta: construct [] [
+    cascaded-meta: construct [
         description:
         pipeline:
         pipeline-names:
@@ -236,7 +232,7 @@ standard: construct [] [
     ; error does not require a keylist expansion...and also so that fields
     ; like FILE and LINE would not conflict with parameters.
     ;
-    error: construct [] [
+    error: construct [
         type: null
         id: null
         message: null  ; BLOCK! template with arg substitution or just a STRING!
@@ -249,7 +245,7 @@ standard: construct [] [
         ; necessary (errors with no arguments will just have a message)
     ]
 
-    script: construct [] [
+    script: construct [
         title:
         header:
         parent:
@@ -258,7 +254,7 @@ standard: construct [] [
             null
     ]
 
-    header: construct [] [
+    header: construct [
         title: {Untitled}
         name:
         type:
@@ -275,7 +271,7 @@ standard: construct [] [
             null
     ]
 
-    scheme: construct [] [
+    scheme: construct [
         name:       ; word of http, ftp, sound, etc.
         title:      ; user-friendly title for the scheme
         spec:       ; custom spec for scheme (if needed)
@@ -287,7 +283,7 @@ standard: construct [] [
             null
     ]
 
-    port: construct [] [ ; Port specification object
+    port: construct [ ; Port specification object
         spec:       ; published specification of the port
         scheme:     ; scheme object used for this port
         actor:      ; port action handler (script driven)
@@ -308,7 +304,7 @@ standard: construct [] [
             null
     ]
 
-    port-spec-head: construct [] [
+    port-spec-head: construct [
         title:      ; user-friendly title for port
         scheme:     ; reference to scheme that defines this port
         ref:        ; reference path or url (for errors)
@@ -316,7 +312,7 @@ standard: construct [] [
            null            ; (extended here)
     ]
 
-    port-spec-net: construct port-spec-head [
+    port-spec-net: make port-spec-head [
         host: null
         port-id: 80
 
@@ -327,11 +323,11 @@ standard: construct [] [
         local-id: null
     ]
 
-    port-spec-signal: construct port-spec-head [
+    port-spec-signal: make port-spec-head [
         mask: [all]
     ]
 
-    file-info: construct [] [
+    file-info: construct [
         name:
         size:
         date:
@@ -339,7 +335,7 @@ standard: construct [] [
             null
     ]
 
-    net-info: construct [] [
+    net-info: construct [
         local-ip:
         local-port:
         remote-ip:
@@ -347,7 +343,7 @@ standard: construct [] [
             null
     ]
 
-    stats: construct [] [ ; port stats
+    stats: construct [ ; port stats
         timer:      ; timer (nanos)
         evals:      ; evaluations
         eval-actions:
@@ -362,7 +358,7 @@ standard: construct [] [
             null
     ]
 
-    type-spec: construct [] [
+    type-spec: construct [
         title:
         type:
             null
@@ -375,7 +371,7 @@ standard: construct [] [
 
 ;;stats: null
 
-;user-license: context [
+;user-license: construct [
 ;   name:
 ;   email:
 ;   id:
@@ -436,7 +432,7 @@ standard: construct [] [
 ;       user-data:
 ;       awake:
 
-;   port-flags: construct [] [
+;   port-flags: construct [
 ;       direct:
 ;       pass-thru:
 ;       open-append:
@@ -444,7 +440,7 @@ standard: construct [] [
 ;           null
 ;   ]
 
-;   email: construct [] [ ; Email header object
+;   email: construct [ ; Email header object
 ;       To:
 ;       CC:
 ;       BCC:
@@ -463,15 +459,15 @@ standard: construct [] [
 ;           null
 ;   ]
 
-user: construct [] [
+user: construct [
    name:           ; User's name
    home:           ; The HOME environment variable
    words: null
-   identity: construct [][email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: _]
+   identity: construct [email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: _]
    identities: []
 ]
 
-;network: construct [] [
+;network: construct [
 ;   host: ""        ; Host name of the user's computer
 ;   host-address: 0.0.0.0 ; Host computer's TCP-IP address
 ;   trace: null
@@ -482,7 +478,7 @@ console: null  ; console (repl) object created in host-start (os/host-start.r)
 ; Below is original console construct (unused and comment-out in r3/ren-c)
 ; Left here for reference (for future development)
 ;
-;console: construct [] [
+;console: construct [
 ;   hide-types: null    ; types not to print
 ;   history: null       ; Log of user inputs
 ;   keys: null          ; Keymap for special key
@@ -500,7 +496,7 @@ console: null  ; console (repl) object created in host-start (os/host-start.r)
 ;           date-month-num: false   ; True if months are displayed as numbers; False for names
 ;           time-sep: #":"  ; The character used as the time separator
 
-cgi: construct [] [ ; CGI environment variables
+cgi: construct [ ; CGI environment variables
        server-software:
        server-name:
        gateway-interface:

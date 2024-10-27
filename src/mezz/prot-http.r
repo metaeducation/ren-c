@@ -213,9 +213,9 @@ make-http-request: func [
         {In case of text!, no escaping is performed.}
         {(eg. useful to override escaping etc.). Careful!}
     headers [block!] "Request headers (set-word! text! pairs)"
-    content [any-string! binary! blank!]
+    content [any-string! binary! ~null~]
         {Request contents (Content-Length is created automatically).}
-        {Empty string not exactly like blank.}
+        {Empty string not exactly like null.}
     <local> result
 ] [
     result: unspaced [
@@ -244,7 +244,7 @@ do-request: func [
 ] [
     spec: port/spec
     info: port/state/info
-    spec/headers: body-of construct (make object! [
+    spec/headers: body-of make (make object! [
         Accept: "*/*"
         Accept-Charset: "utf-8"
         Host: either not find [80 443] spec/port-id [
@@ -256,7 +256,7 @@ do-request: func [
     ]) spec/headers
     port/state/state: 'doing-request
     info/headers: info/response-line: info/response-parsed: port/data:
-    info/size: info/date: info/name: blank
+    info/size: info/date: info/name: null
     write port/state/connection
     req: make-http-request spec/method any [spec/path %/]
     spec/headers spec/content
@@ -274,7 +274,7 @@ parse-write-dialect: func [port block <local> spec debug] [
         [block: block! (spec/headers: block) | (spec/headers: [])]
         [
             block: [any-string! | binary!] (spec/content: block)
-            | (spec/content: blank)
+            | (spec/content: null)
         ]
     ]
 ]
@@ -315,7 +315,7 @@ check-response: function [port] [
         assert [binary? d1]
         d1: scan-net-header d1
 
-        info/headers: headers: construct/only http-response-headers d1
+        info/headers: headers: construct/with/only d1 http-response-headers
         info/name: to file! any [spec/path %/]
         if headers/content-length [
             info/size:
@@ -490,10 +490,10 @@ check-response: function [port] [
             ]
         ]
         'info [
-            info/headers: _
-            info/response-line: _
-            info/response-parsed: _
-            port/data: _
+            info/headers: null
+            info/response-line: null
+            info/response-parsed: null
+            port/data: null
             state/state: 'reading-headers
             read conn
         ]
@@ -509,9 +509,9 @@ crlfbin: #{0D0A}
 crlf2bin: #{0D0A0D0A}
 crlf2: to text! crlf2bin
 http-response-headers: context [
-    Content-Length: _
-    Transfer-Encoding: _
-    Last-Modified: _
+    Content-Length: null
+    Transfer-Encoding: null
+    Last-Modified: null
 ]
 
 do-redirect: func [
@@ -533,7 +533,7 @@ do-redirect: func [
             fail ["Unknown scheme:" new-uri/scheme]
         ]
     ]
-    new-uri: construct/only port/scheme/spec new-uri
+    new-uri: construct/with/only new-uri port/scheme/spec
     if not find [http https] new-uri/scheme [
         state/error: make-http-error {Redirect to a protocol different from HTTP or HTTPS not supported}
         return state/awake make event! [type: 'error port: port]
@@ -595,7 +595,7 @@ check-data: function [
                             |
                         trailer: across to crlf2bin to <end>
                     ] then [
-                        trailer: construct/only [] trailer
+                        trailer: construct/only trailer
                         append headers body-of trailer
                         state/state: 'ready
                         res: state/awake make event! [
@@ -661,20 +661,20 @@ sys/util/make-scheme [
     name: 'http
     title: "HyperText Transport Protocol v1.1"
 
-    spec: construct system/standard/port-spec-net [
+    spec: make system/standard/port-spec-net [
         path: %/
         method: 'get
         headers: []
-        content: _
+        content: null
         timeout: 15
-        debug: _
+        debug: null
         follow: 'redirect
     ]
 
-    info: construct system/standard/file-info [
+    info: make system/standard/file-info [
         response-line:
         response-parsed:
-        headers: _
+        headers: null
     ]
 
     actor: [
@@ -749,10 +749,10 @@ sys/util/make-scheme [
             ]
             port/state: make object! [
                 state: 'inited
-                connection: _
-                error: _
+                connection: null
+                error: null
                 close?: false
-                info: construct port/scheme/info [type: 'file]
+                info: make port/scheme/info [type: 'file]
                 awake: ensure [~null~ action!] :port/awake
             ]
             port/state/connection: conn: make port! compose [
@@ -808,7 +808,7 @@ sys/util/make-scheme [
         ][
             if state: port/state [
                 either error? error: state/error [
-                    state/error: _
+                    state/error: null
                     error
                 ][
                     state/info
@@ -821,7 +821,7 @@ sys/util/make-scheme [
 sys/util/make-scheme/with [
     name: 'https
     title: "Secure HyperText Transport Protocol v1.1"
-    spec: construct spec [
+    spec: make spec [
         port-id: 443
     ]
 ] 'http

@@ -177,35 +177,6 @@ empty?: func [
 ]
 
 
-; !!! The bootstrap snapshot was made in the middle of some weird ideas about
-; having MAKE OBJECT! be non-evaluative, and CONSTRUCT taking its place as
-; an arity-2 object creation function.  It's not a terrible idea, but a part
-; of the idea was terrible (namely rendering objects everywhere with a spec
-; block, for the purposes of naming fields that didn't have values in the
-; body block... a problem solved much better with isotopes/antiforms in
-; modern Ren-C).
-;
-; Because the value hadn't materialized, callsites weren't all converted
-; outside the mezzanine to CONSTRUCT...so this little shim for having the
-; traditional MAKE OBJECT! stuck around.  It's not worth it to redo the
-; MAKE_XXX machinery here in bootstrap to pass in parents (and possibly that's
-; actually bad anyway).  So keep the shim.
-;
-make: enclose 'lib/make func [f] [
-    all [
-        equal? :f/type object!
-        block? :f/def
-        not block? f/def/1
-    ] then [
-        return construct [] f/def
-    ]
-    if object? :f/type [
-        return construct :f/type :f/def
-    ]
-    eval f
-]
-
-
 reeval func [
     {Make fast type testing functions (variadic to quote "top-level" words)}
     return: [~]
@@ -219,7 +190,7 @@ reeval func [
         tester: typechecker (get bind (as word! type-name) binding of set-word)
         set set-word :tester
 
-        set-meta :tester construct system/standard/action-meta [
+        set-meta :tester make system/standard/action-meta [
             description: spaced [{Returns TRUE if the value is} an type-name]
             return-type: [logic!]
         ]
@@ -338,11 +309,7 @@ print: func [
 ]
 
 
-decode-url: _ ; set in sys init
-
-; used only by Ren-C++ as a test of how to patch the lib context prior to
-; boot at the higher levels.
-test-rencpp-low-level-hook: _
+decode-url: ~ ; set in sys init
 
 internal!: make typeset! [
     handle!

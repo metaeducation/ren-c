@@ -238,10 +238,10 @@ function: func [
 ;
 dig-action-meta-fields: function [value [action!]] [
     meta: meta-of :value or [
-        return construct system/standard/action-meta [
-            description: _
-            return-type: _
-            return-note: _
+        return make system/standard/action-meta [
+            description: null
+            return-type: null
+            return-note: null
             parameter-types: make frame! :value
             parameter-notes: make frame! :value
         ]
@@ -272,7 +272,7 @@ dig-action-meta-fields: function [value [action!]] [
         return child
     ]
 
-    return construct system/standard/action-meta [
+    return make system/standard/action-meta [
         description: ensure [~null~ text!] any [
             select meta 'description
             copy maybe select maybe fields 'description
@@ -789,7 +789,7 @@ module: func [
     if block? :spec [
         unbind/deep spec
         sys/util/rescue [
-            spec: construct/only system/standard/header :spec
+            spec: construct/with/only spec system/standard/header
         ] then [
             spec: null
         ]
