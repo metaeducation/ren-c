@@ -89,28 +89,14 @@ REBINT CT_List(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_List: C
+//  Makehook_List: C
 //
-// "Make Type" dispatcher for the following subtypes:
+// "Make Type" dispatcher for BLOCK!, GROUP!, FENCE!, and variants (THE-GROUP!,
+// TYPE-FENCE!, etc.)
 //
-//     MAKE_Block
-//     MAKE_Group
-//     MAKE_Path
-//     MAKE_Set_Path
-//     MAKE_Get_Path
-//     MAKE_Lit_Path
-//
-Bounce MAKE_List(
-    Level* level_,
-    Kind k,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
     Heart heart = cast(Heart, k);
     assert(Any_List_Kind(heart));
-
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
@@ -326,7 +312,7 @@ Bounce MAKE_List(
 //
 //  TO_List: C
 //
-Bounce TO_List(Level* level_, Kind k, const Value* arg) {
+Bounce TO_List(Level* level_, Kind k, Element* arg) {
     Heart heart = cast(Heart, k);
 
     if (Any_Sequence(arg)) {
@@ -777,6 +763,35 @@ REBTYPE(List)
         UNUSED(ARG(property));
 
         return Series_Common_Action_Maybe_Unhandled(level_, verb); }
+
+    //=//// MAKE (special behavior for TYPE-BLOCK!) ///////////////////////=//
+
+      case SYM_MAKE: {
+        INCLUDE_PARAMS_OF_MAKE;
+
+        Element* type = cast(Element*, ARG(type));
+        Element* def = cast(Element*, ARG(def));
+
+        if (not Is_Type_Block(type))
+            return FAIL(Error_Bad_Make(VAL_TYPE(list), def));
+
+        Kind kind = VAL_TYPE_KIND(type);
+
+        MakeHook* hook = Makehook_For_Kind(kind);
+
+        Bounce b = hook(level_, kind, def);  // might throw, fail...
+        if (b == BOUNCE_DELEGATE)
+            return b;  // !!! Doesn't check result if continuation used, review
+        if (b == BOUNCE_THROWN)
+            return b;
+        Atom* r = Atom_From_Bounce(b);
+        if (r != nullptr) {
+            if (Is_Raised(r))
+                return r;
+            if (VAL_TYPE(r) == kind)
+                return r;
+        }
+        return RAISE("MAKE dispatcher did not return correct type"); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

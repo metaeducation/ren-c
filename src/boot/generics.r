@@ -405,6 +405,16 @@ REBOL [
 
 ; Making, copying, modifying
 
+/make: generic [
+    "Constructs or allocates the specified datatype"
+
+    return: [element?]
+    type "The datatype or parent context to construct from"
+        [<maybe> type-block! any-context?]
+    def "Definition or size of the new value (binding may be modified)"
+        [<maybe> <unrun> element?]  ; <unrun> action for FRAME!
+]
+
 /copy: generic [
     "Copies a series, object, or other value"
 

@@ -332,18 +332,13 @@ static void reverse_string(String* str, REBLEN index, Length len)
 
 
 //
-//  MAKE_String: C
+//  Makehook_String: C
 //
-Bounce MAKE_String(
-    Level* level_,
-    Kind k,
-    Option(const Value*) parent,
-    const Value* def
-){
+// 1. Makehook_Issue() calls Makehook_String() in its implementation.
+//
+Bounce Makehook_String(Level* level_, Kind k, Element* def) {
     Heart heart = cast(Heart, k);
-
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
+    assert(Any_String_Kind(heart) or Any_Utf8_Kind(heart));  // issue calls [1]
 
     if (Is_Integer(def)) {  // new string with given integer capacity
         //
@@ -426,7 +421,7 @@ Bounce MAKE_String(
 //
 //  TO_String: C
 //
-Bounce TO_String(Level* level_, Kind k, const Value* arg)
+Bounce TO_String(Level* level_, Kind k, Element* arg)
 {
     Heart heart = cast(Heart, k);
 
@@ -473,7 +468,7 @@ Bounce TO_String(Level* level_, Kind k, const Value* arg)
     // moment, it is kept as-is to avoid disruption.
     //
     if (Is_Tag(arg))
-        return MAKE_String(level_, heart, nullptr, arg);
+        return Makehook_String(level_, heart, arg);
 
     return Init_Any_String(
         OUT,

@@ -42,43 +42,15 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Integer: C
+//  Makehook_Integer: C
 //
-Bounce MAKE_Integer(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Integer(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_INTEGER);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
-    if (Is_Logic(arg)) {
-        //
-        // !!! Due to Rebol's policies on conditional truth and falsehood,
-        // it refuses to say TO FALSE is 0.  MAKE has shades of meaning
-        // that are more "dialected", e.g. MAKE BLOCK! 10 creates a block
-        // with capacity 10 and not literally `[10]` (or a block with ten
-        // BLANK! values in it).  Under that liberal umbrella it decides
-        // that it will make an integer 0 out of FALSE due to it having
-        // fewer seeming "rules" than TO would.
-
-        if (Cell_Logic(arg))
-            Init_Integer(OUT, 1);
-        else
-            Init_Integer(OUT, 0);
-
-        // !!! The same principle could suggest MAKE is not bound by
-        // the "reversibility" requirement and hence could interpret
-        // binaries unsigned by default.  Before getting things any
-        // weirder should probably leave it as is.
-    }
-    else {
-        Option(Error*) error = Trap_Value_To_Int64(OUT, arg, false);
-        if (error)
-            return RAISE(unwrap error);
-    }
+    Option(Error*) error = Trap_Value_To_Int64(OUT, arg, false);
+    if (error)
+        return RAISE(unwrap error);
 
     return OUT;
 }
@@ -87,7 +59,7 @@ Bounce MAKE_Integer(
 //
 //  TO_Integer: C
 //
-Bounce TO_Integer(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Integer(Level* level_, Kind kind, Element* arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);

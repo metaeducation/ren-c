@@ -85,18 +85,10 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Word: C
+//  Makehook_Word: C
 //
-Bounce MAKE_Word(
-    Level* level_,
-    Kind k,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Word(Level* level_, Kind k, Element* arg) {
     Heart heart = cast(Heart, k);
-
-    if (parent)
-        return FAIL(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (Any_Word(arg)) {
         Copy_Cell(OUT, arg);
@@ -133,13 +125,6 @@ Bounce MAKE_Word(
         return OUT;
       }
     }
-    else if (Is_Logic(arg)) {
-        return Init_Any_Word(
-            OUT,
-            heart,
-            Cell_Logic(arg) ? Canon(TRUE) : Canon(FALSE)
-        );
-    }
 
     return RAISE(Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
 }
@@ -148,20 +133,19 @@ Bounce MAKE_Word(
 //
 //  TO_Word: C
 //
-Bounce TO_Word(Level* level_, Kind k, const Value* arg)
+Bounce TO_Word(Level* level_, Kind k, Element* arg)
 {
     Heart heart = cast(Heart, k);
 
     if (Any_Sequence(arg)) {  // (to word! '/a) or (to word! 'a:) etc.
-        Copy_Cell(OUT, arg);
         do {
-            Option(Error*) error = Trap_Unsingleheart(cast(Element*, OUT));
+            Option(Error*) error = Trap_Unsingleheart(arg);
             if (error)
                 goto sequence_didnt_decay_to_word;
-        } while (Any_Sequence(OUT));
+        } while (Any_Sequence(arg));
 
-        if (Any_Word(OUT))
-            return OUT;
+        if (Any_Word(arg))
+            return COPY(arg);
 
       sequence_didnt_decay_to_word:
 
@@ -181,7 +165,7 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
         return OUT;
     }
 
-    return MAKE_Word(level_, heart, nullptr, arg);
+    return Makehook_Word(level_, heart, arg);
 }
 
 

@@ -510,17 +510,11 @@ Value* Time_Between_Dates(
 
 
 //
-//  MAKE_Date: C
+//  Makehook_Date: C
 //
-Bounce MAKE_Date(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Date(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_DATE);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
     if (Is_Date(arg))
         return Copy_Cell(OUT, arg);
@@ -634,8 +628,8 @@ Bounce MAKE_Date(
 //
 //  TO_Date: C
 //
-Bounce TO_Date(Level* level_, Kind kind, const Value* arg) {
-    return MAKE_Date(level_, kind, nullptr, arg);
+Bounce TO_Date(Level* level_, Kind kind, Element* arg) {
+    return Makehook_Date(level_, kind, arg);
 }
 
 

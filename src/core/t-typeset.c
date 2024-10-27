@@ -370,16 +370,11 @@ DECLARE_INTRINSIC(hole_q)
 
 
 //
-//  MAKE_Parameter: C
+//  Makehook_Parameter: C
 //
-Bounce MAKE_Parameter(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Parameter(Level* level_, Kind kind, Element* arg) {
+    assert(kind == REB_PARAMETER);
     UNUSED(kind);
-    UNUSED(parent);
     return RAISE(Error_Bad_Make(REB_PARAMETER, arg));
 }
 
@@ -387,9 +382,9 @@ Bounce MAKE_Parameter(
 //
 //  TO_Parameter: C
 //
-Bounce TO_Parameter(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Parameter(Level* level_, Kind kind, Element* arg)
 {
-    return MAKE_Parameter(level_, kind, nullptr, arg);
+    return Makehook_Parameter(level_, kind, arg);
 }
 
 

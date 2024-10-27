@@ -140,11 +140,11 @@ INLINE CFunction** HOOKS_FOR_TYPE_OF(const Cell* v) {
 #define Compare_Hook_For_Type_Of(v) \
     cast(COMPARE_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_COMPARE_HOOK])
 
-#define Make_Hook_For_Kind(k) \
-    cast(MAKE_HOOK*, Builtin_Type_Hooks[k][IDX_MAKE_HOOK])
+#define Makehook_For_Kind(k) \
+    cast(MakeHook*, Builtin_Type_Hooks[k][IDX_MAKE_HOOK])
 
-#define To_Hook_For_Type(type) \
-    cast(TO_HOOK*, VAL_TYPE_HOOKS(type)[IDX_TO_HOOK])
+#define Tohook_For_Type(type) \
+    cast(ToHook*, VAL_TYPE_HOOKS(type)[IDX_TO_HOOK])
 
 #define Mold_Or_Form_Hook_For_Type_Of(v) \
     cast(MOLD_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_MOLD_HOOK])

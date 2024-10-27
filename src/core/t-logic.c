@@ -452,17 +452,11 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
 
 
 //
-//  MAKE_Antiform: C
+//  Makehook_Antiform: C
 //
-Bounce MAKE_Antiform(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Antiform(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_ANTIFORM);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
     return Quotify(Copy_Cell(OUT, arg), 1);
 }
@@ -471,8 +465,8 @@ Bounce MAKE_Antiform(
 //
 //  TO_Antiform: C
 //
-Bounce TO_Antiform(Level* level_, Kind kind, const Value* data) {
-    return RAISE(Error_Bad_Make(kind, data));
+Bounce TO_Antiform(Level* level_, Kind kind, Element* arg) {
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 

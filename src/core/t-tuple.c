@@ -26,24 +26,17 @@
 
 
 //
-//  MAKE_Sequence: C
+//  Makehook_Sequence: C
 //
 // !!! There was no original TO TUPLE! code besides calling this MAKE, so
 // PATH!'s TO ANY-PATH? was used for TO ANY-TUPLE?.  But this contains some
 // unique behavior which might be interesting for numeric MAKEs.
 //
-Bounce MAKE_Sequence(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg) {
     if (kind == REB_TEXT or Any_Path_Kind(kind))  // delegate for now
-        return MAKE_Path(level_, kind, parent, arg);
+        return Makehook_Path(level_, kind, arg);
 
     assert(kind == REB_TUPLE);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
 
     if (Is_Tuple(arg))
         return Copy_Cell(OUT, arg);

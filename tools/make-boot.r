@@ -571,7 +571,11 @@ e-hooks: make-emitter "Built-in Type Hooks" (
 
     ; The CSCAPE mechanics lowercase all strings.  Uppercase it back.
     ;
-    prefix: uppercase copy prefix
+    prefix: if prefix == "makehook_" [
+        "Makehook_"  ; migrating to propercase
+    ] else [
+        uppercase copy prefix
+    ]
 
     return unspaced [prefix propercase-of (switch ensure word! t.(column) [
         '+ [propercase-of t.name]  ; type has its own unique hook
@@ -614,7 +618,7 @@ hook-list: collect [
             {  /* $<T.NAME> = $<T.HEART> */
                 cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFunction*, ${"CT_" Hookname T 'Class}),  /* compare */
-                cast(CFunction*, ${"MAKE_" Hookname T 'Make}),  /* make */
+                cast(CFunction*, ${"Makehook_" Hookname T 'Make}),
                 cast(CFunction*, ${"TO_" Hookname T 'Make}),  /* to */
                 cast(CFunction*, ${"MF_" Hookname T 'Mold}),  /* mold */
                 nullptr

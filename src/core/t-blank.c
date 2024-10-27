@@ -230,7 +230,6 @@ REBINT CT_Handle(const Cell* a, const Cell* b, bool strict)
 //
 REBTYPE(Handle)
 {
-    UNUSED(level_);
     UNUSED(verb);
 
     return UNHANDLED;

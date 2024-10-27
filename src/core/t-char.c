@@ -203,19 +203,11 @@ REBINT CT_Issue(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Issue: C
+//  Makehook_Issue: C
 //
-Bounce MAKE_Issue(
-    Level* level_,
-    Kind k,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Issue(Level* level_, Kind k, Element* arg) {
     assert(k == REB_ISSUE);
     UNUSED(k);
-
-    if (parent)
-        return FAIL(Error_Bad_Make_Parent(REB_ISSUE, unwrap parent));
 
     switch(VAL_TYPE(arg)) {
       case REB_INTEGER:
@@ -235,7 +227,7 @@ Bounce MAKE_Issue(
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1)
-                return MAKE_String(level_, REB_ISSUE, nullptr, arg);
+                return Makehook_String(level_, REB_ISSUE, arg);
 
             c = *bp;
         }
@@ -246,7 +238,7 @@ Bounce MAKE_Issue(
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0)
-                return MAKE_String(level_, REB_ISSUE, nullptr, arg);
+                return Makehook_String(level_, REB_ISSUE, arg);
         }
         Option(Error*) error = Trap_Init_Char(OUT, c);
         if (error)
@@ -258,7 +250,7 @@ Bounce MAKE_Issue(
             return FAIL("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
         if (Cell_Series_Len_At(arg) == 1)
             return Init_Char_Unchecked(OUT, Codepoint_At(Cell_Utf8_At(arg)));
-        return MAKE_String(level_, REB_ISSUE, nullptr, arg);
+        return Makehook_String(level_, REB_ISSUE, arg);
 
       default:
         break;
@@ -335,7 +327,7 @@ DECLARE_NATIVE(utf8_to_char)
 // divided into functions like CODEPOINT-TO-CHAR and UTF8-TO-CHAR, which
 // leave things like TO ISSUE! 10 to be #10.
 //
-Bounce TO_Issue(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Issue(Level* level_, Kind kind, Element* arg)
 {
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 

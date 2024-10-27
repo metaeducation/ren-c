@@ -206,7 +206,6 @@ Script: [
 
     bad-bad:            [:arg1 "error:" :arg2]
 
-    bad-make-parent:    ["cannot MAKE" :arg1 "with parent" :arg2]
     bad-make-arg:       ["cannot MAKE/TO" :arg1 "from:" :arg2]
     wrong-denom:        [:arg1 "not same denomination as" :arg2]
 ;   bad-convert:        ["invalid conversion value:" :arg1]

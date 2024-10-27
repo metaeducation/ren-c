@@ -26,19 +26,11 @@
 
 
 //
-//  MAKE_Quasiform: C
+//  Makehook_Quasiform: C
 //
 // See also ANTI for making antiforms.
 //
-Bounce MAKE_Quasiform(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
-    assert(not parent);
-    UNUSED(parent);
-
+Bounce Makehook_Quasiform(Level* level_, Kind kind, Element* arg) {
     if (Is_Quoted(arg))  // QUOTED! competes for quote byte with quasiform
         return RAISE(Error_Bad_Make(kind, arg));
 
@@ -55,8 +47,8 @@ Bounce MAKE_Quasiform(
 //
 // TO is disallowed at the moment (use QUASI)
 //
-Bounce TO_Quasiform(Level* level_, Kind kind, const Value* data) {
-    return RAISE(Error_Bad_Make(kind, data));
+Bounce TO_Quasiform(Level* level_, Kind kind, Element* arg) {
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 

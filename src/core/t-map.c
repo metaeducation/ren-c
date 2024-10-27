@@ -362,16 +362,10 @@ static void Append_Map(
 
 
 //
-//  MAKE_Map: C
+//  Makehook_Map: C
 //
-Bounce MAKE_Map(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+Bounce Makehook_Map(Level* level_, Kind kind, Element* arg) {
+    assert(kind == REB_MAP);
 
     if (Any_Number(arg)) {
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
@@ -432,7 +426,7 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
 //
 //  TO_Map: C
 //
-Bounce TO_Map(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Map(Level* level_, Kind kind, Element* arg)
 {
     assert(kind == REB_MAP);
     UNUSED(kind);

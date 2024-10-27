@@ -44,17 +44,11 @@ REBINT CT_Pair(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Pair: C
+//  Makehook_Pair: C
 //
-Bounce MAKE_Pair(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Pair(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_PAIR);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
     if (Is_Pair(arg))
         return Copy_Cell(OUT, arg);
@@ -117,9 +111,9 @@ Bounce MAKE_Pair(
 //
 //  TO_Pair: C
 //
-Bounce TO_Pair(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Pair(Level* level_, Kind kind, Element* arg)
 {
-    return MAKE_Pair(level_, kind, nullptr, arg);
+    return Makehook_Pair(level_, kind, arg);
 }
 
 

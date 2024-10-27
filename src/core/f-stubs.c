@@ -210,14 +210,14 @@ REBI64 Int64s(const Value* val, REBINT sign)
 // Returns the specified datatype value from the system context.
 // The datatypes are all at the head of the context.
 //
-const Value* Datatype_From_Kind(Kind kind)
+const Element* Datatype_From_Kind(Kind kind)
 {
     assert(kind < REB_MAX);
     Offset n = cast(Offset, kind);
     SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
     const Value* type = Try_Lib_Var(datatype_sym);
     assert(Is_Type_Block(type));
-    return type;
+    return c_cast(Element*, type);
 }
 
 

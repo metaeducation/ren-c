@@ -133,7 +133,7 @@ Element* Init_Decimal_Bits(Sink(Element) out, const Byte* bp)
 
 
 //
-//  MAKE_Decimal: C
+//  Makehook_Decimal: C
 //
 // !!! The current thinking on the distinction between MAKE and TO is that
 // TO should not do any evaluations (including not looking at what words are
@@ -143,25 +143,13 @@ Element* Init_Decimal_Bits(Sink(Element) out, const Byte* bp)
 // codepoint.  Hence historical conversions have been split into the TO
 // or MAKE as a rough idea of how these rules might be followed.
 //
-Bounce MAKE_Decimal(
-    Level* level_,
-    Kind k,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
     assert(k == REB_DECIMAL or k == REB_PERCENT);
     Heart heart = cast(Heart, k);
 
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
-
     REBDEC d;
 
-    if (Is_Logic(arg)) {
-        d = Cell_Logic(arg) ? 1.0 : 0.0;
-        goto dont_divide_if_percent;
-    }
-    else switch (VAL_TYPE(arg)) {
+    switch (VAL_TYPE(arg)) {
       case REB_ISSUE:
         d = cast(REBDEC, Cell_Codepoint(arg));
         goto dont_divide_if_percent;
@@ -302,7 +290,7 @@ Bounce MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-Bounce TO_Decimal(Level* level_, Kind k, const Value* arg)
+Bounce TO_Decimal(Level* level_, Kind k, Element* arg)
 {
     assert(k == REB_DECIMAL or k == REB_PERCENT);
     Heart heart = cast(Heart, k);
@@ -369,7 +357,7 @@ Bounce TO_Decimal(Level* level_, Kind k, const Value* arg)
         // for now so people don't have to change it twice.
         //
       case REB_BINARY:
-        return MAKE_Decimal(level_, heart, nullptr, arg);
+        return Makehook_Decimal(level_, heart, arg);
 
       default:
         goto bad_to;

@@ -455,11 +455,10 @@ static void Init_System_Object(
     DECLARE_VALUE (sysobj_spec_virtual);
     Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
 
-    Virtual_Bind_Deep_To_Existing_Context(
-        sysobj_spec_virtual,
-        system,
-        nullptr,  // !!! no binder made at present
-        CELL_MASK_0  // all internal refs are to the object
+    BINDING(sysobj_spec_virtual) = Make_Use_Core(
+        Varlist_Archetype(system),
+        Cell_List_Binding(sysobj_spec_virtual),
+        CELL_MASK_0
     );
 
     // Evaluate the block (will eval CONTEXTs within).

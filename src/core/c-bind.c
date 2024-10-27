@@ -1291,14 +1291,15 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     //
     Set_Flex_Flag(c, FIXED_SIZE);
 
-    // Effectively `Bind_Values_Deep(Array_Head(body_out), context)`
-    // but we want to reuse the binder we had anyway for detecting the
-    // duplicates.
+    // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //
-    if (rebinding)
-        Virtual_Bind_Deep_To_Existing_Context(
-            body_in_out, c, binder, CELL_MASK_0
+    if (rebinding) {
+        BINDING(body_in_out) = Make_Use_Core(
+            Varlist_Archetype(c),
+            Cell_List_Binding(body_in_out),
+            CELL_MASK_0
         );
+    }
 
     return c;
 }
@@ -1330,28 +1331,6 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     //
     assert(Is_The_Word(pseudo_var));
     return Lookup_Mutable_Word_May_Fail(cast(Element*, pseudo_var), SPECIFIED);
-}
-
-
-//
-//  Virtual_Bind_Deep_To_Existing_Context: C
-//
-void Virtual_Bind_Deep_To_Existing_Context(
-    Value* list,
-    VarList* context,
-    Binder* binder,
-    Flags note
-){
-    // Most of the time if the context isn't trivially small then it's
-    // probably best to go ahead and cache bindings.
-    //
-    UNUSED(binder);
-
-    BINDING(list) = Make_Use_Core(
-        Varlist_Archetype(context),
-        Cell_List_Binding(list),
-        note
-    );
 }
 
 

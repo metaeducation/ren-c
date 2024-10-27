@@ -394,7 +394,7 @@ void Set_Location_Of_Error(
 
 
 //
-// MAKE_Error: C
+// Makehook_Error: C
 //
 // Hook for MAKE ERROR! (distinct from MAKE for ANY-CONTEXT?, due to %types.r)
 //
@@ -407,23 +407,15 @@ void Set_Location_Of_Error(
 // existing landscape so that if it is to be changed then it can be seen
 // exactly what is changing.
 //
-Bounce MAKE_Error(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Error(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_ERROR);
     UNUSED(kind);
-
-    if (parent)  // !!! Should probably be able to work!
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap parent));
 
     // Frame from the error object template defined in %sysobj.r
     //
     VarList* root_error = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));
 
-    VarList* e;
+    VarList* error;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
 
     if (Is_Block(arg)) {
@@ -436,7 +428,7 @@ Bounce MAKE_Error(
         const Element* tail;
         const Element* head = Cell_List_At(&tail, arg);
 
-        e = Make_Varlist_Detect_Managed(
+        error = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
             REB_ERROR, // type
             head, // values to scan for toplevel set-words
@@ -447,22 +439,19 @@ Bounce MAKE_Error(
         // Protect the error from GC by putting into out, which must be
         // passed in as a GC-protecting value slot.
         //
-        Init_Error(OUT, e);
+        Init_Error(OUT, error);
 
-        DECLARE_VALUE (virtual_arg);
-        Copy_Cell(virtual_arg, arg);
-        Virtual_Bind_Deep_To_Existing_Context(
-            virtual_arg,
-            e,
-            nullptr,  // binder
+        BINDING(arg) = Make_Use_Core(
+            Varlist_Archetype(error),
+            Cell_List_Binding(arg),
             CELL_MASK_0
         );
 
         DECLARE_ATOM (evaluated);
-        if (Eval_Any_List_At_Throws(evaluated, virtual_arg, SPECIFIED))
+        if (Eval_Any_List_At_Throws(evaluated, arg, SPECIFIED))
             return BOUNCE_THROWN;
 
-        vars = ERR_VARS(e);
+        vars = ERR_VARS(error);
     }
     else if (Is_Text(arg)) {
         //
@@ -475,10 +464,10 @@ Bounce MAKE_Error(
         //
         // Minus the message, this is the default state of root_error.
 
-        e = Copy_Varlist_Shallow_Managed(root_error);
-        Init_Error(OUT, e);
+        error = Copy_Varlist_Shallow_Managed(root_error);
+        Init_Error(OUT, error);
 
-        vars = ERR_VARS(e);
+        vars = ERR_VARS(error);
         assert(Is_Nulled(&vars->type));
         assert(Is_Nulled(&vars->id));
 
@@ -540,7 +529,9 @@ Bounce MAKE_Error(
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                return RAISE(Error_Invalid_Error_Raw(Varlist_Archetype(e)));
+                return RAISE(
+                    Error_Invalid_Error_Raw(Varlist_Archetype(error))
+                );
             }
         }
         else {
@@ -566,7 +557,7 @@ Bounce MAKE_Error(
                 or Is_Nulled(&vars->message)
             )
         )){
-            return FAIL(Error_Invalid_Error_Raw(Varlist_Archetype(e)));
+            return FAIL(Error_Invalid_Error_Raw(Varlist_Archetype(error)));
         }
     }
 
@@ -581,9 +572,9 @@ Bounce MAKE_Error(
 // !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
 // being rethought.
 //
-Bounce TO_Error(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Error(Level* level_, Kind kind, Element* arg)
 {
-    return MAKE_Error(level_, kind, nullptr, arg);
+    return Makehook_Error(level_, kind, arg);
 }
 
 
@@ -829,7 +820,7 @@ Error* Error_Bad_Word_Get(
 Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
 {
     // !!! Improve this error; it's simply a direct emulation of arity-1
-    // error that existed before refactoring code out of MAKE_Function().
+    // error that existed before refactoring code out of Make_Function().
 
     Array* a = Make_Array(2);
     Append_Value(a, spec);
@@ -1204,16 +1195,6 @@ Error* Error_Bad_Return_Type(Level* L, Atom* atom) {
 Error* Error_Bad_Make(Kind type, const Cell* spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
-}
-
-
-//
-//  Error_Bad_Make_Parent: C
-//
-Error* Error_Bad_Make_Parent(Kind type, const Cell* parent)
-{
-    assert(parent != nullptr);
-    return Error_Bad_Make_Parent_Raw(Datatype_From_Kind(type), parent);
 }
 
 

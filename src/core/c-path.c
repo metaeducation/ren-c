@@ -195,22 +195,14 @@ DECLARE_NATIVE(poke)
 
 
 //
-//  MAKE_Path: C
+//  Makehook_Path: C
 //
 // A MAKE of a PATH! is experimentally being thought of as evaluative.  This
 // is in line with the most popular historical interpretation of MAKE, for
 // MAKE OBJECT!--which evaluates the object body block.
 //
-Bounce MAKE_Path(
-    Level* level_,
-    Kind k,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Path(Level* level_, Kind k, Element* arg) {
     Heart heart = cast(Heart, k);
-
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     if (not Is_Block(arg))
         return FAIL(Error_Bad_Make(heart, arg)); // "make path! 0" meaningless
@@ -278,7 +270,7 @@ Bounce MAKE_Path(
 //
 // TO must return the exact type requested.
 //
-Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
+Bounce TO_Sequence(Level* level_, Kind k, Element* arg) {
     Heart heart = cast(Heart, k);
 
     Kind arg_kind = VAL_TYPE(arg);

@@ -58,22 +58,16 @@ REBINT CT_Quoted(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Quoted: C
+//  Makehook_Quoted: C
 //
 // !!! This can be done with QUOTE (currently EVAL) which has the ability
 // to take a refinement of how deep.  Having a MAKE variant may be good or
 // may not be good; if it were to do a level more than 1 it would need to
 // take a BLOCK! with an INTEGER! and the value.  :-/
 //
-Bounce MAKE_Quoted(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Quoted(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_QUOTED);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
     return Quotify(Copy_Cell(OUT, arg), 1);
 }
@@ -82,11 +76,13 @@ Bounce MAKE_Quoted(
 //
 //  TO_Quoted: C
 //
-// TO is disallowed at the moment, as there is no clear equivalence of things
-// "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
+// TO is disallowed at the moment.
 //
-Bounce TO_Quoted(Level* level_, Kind kind, const Value* data) {
-    return RAISE(Error_Bad_Make(kind, data));
+// (to quoted! [[a]] => '[[a]]) is just a synonym for QUOTE, and the value
+// is not apparent.
+//
+Bounce TO_Quoted(Level* level_, Kind kind, Element* arg) {
+    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 

@@ -253,10 +253,9 @@ bool Specialize_Action_Throws(
         // to whatever value was in the context the specialization is running
         // in, but this is likely the more useful behavior.
         //
-        Virtual_Bind_Deep_To_Existing_Context(
-            unwrap def,
-            exemplar,
-            binder,
+        BINDING(unwrap def) = Make_Use_Core(
+            Varlist_Archetype(exemplar),
+            Cell_List_Binding(unwrap def),
             CELL_FLAG_USE_NOTE_SET_WORDS
         );
 

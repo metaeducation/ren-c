@@ -360,17 +360,11 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
 
 //
-//  MAKE_Varargs: C
+//  Makehook_Varargs: C
 //
-Bounce MAKE_Varargs(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Varargs(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_VARARGS);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
     // With MAKE VARARGS! on an ANY-LIST?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to
@@ -407,7 +401,7 @@ Bounce MAKE_Varargs(
 //
 //  TO_Varargs: C
 //
-Bounce TO_Varargs(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Varargs(Level* level_, Kind kind, Element* arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);

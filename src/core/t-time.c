@@ -234,17 +234,11 @@ REBINT CT_Time(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Time: C
+//  Makehook_Time: C
 //
-Bounce MAKE_Time(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Time(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_TIME);
-    if (parent)
-        return FAIL(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
     switch (VAL_TYPE(arg)) {
       case REB_TIME: // just copy it (?)
@@ -364,9 +358,9 @@ Bounce MAKE_Time(
 //
 //  TO_Time: C
 //
-Bounce TO_Time(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Time(Level* level_, Kind kind, Element* arg)
 {
-    return MAKE_Time(level_, kind, nullptr, arg);
+    return Makehook_Time(level_, kind, arg);
 }
 
 

@@ -545,8 +545,10 @@ DECLARE_NATIVE(wrap_p)
     if (e)
         return FAIL(unwrap e);
 
-    /* Virtual_Bind_Deep_To_Existing_Context(  // !!! what should do what? [1]
-        list, context, nullptr, CELL_MASK_0
+    /* BINDING(list) = Make_Use_Core(  // what should do what? [1]
+        Varlist_Archetype(context),
+        Cell_List_Binding(list),
+        CELL_MASK_0
     );
     return COPY(list); */
 

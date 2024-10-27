@@ -66,16 +66,15 @@ typedef REBINT (COMPARE_HOOK)(
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //
-// These functions must return a Value* to the type they are making
+// MAKE is a Generic, dispatching to REBTYPE(Datatype) and REBTYPE(Context).
+// The Datatype dispatcher sub-dispatches to these hook functions, which help
+// put the relevant code in the appropriate file.
+//
+// These functions must return an Element* to the type they are making
 // (either in the output cell given or an API cell)...or they can return
 // BOUNCE_THROWN if they throw.  (e.g. `make object! [return ...]` can throw)
 //
-typedef Bounce (MAKE_HOOK)(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) opt_parent,
-    const Value* def
-);
+typedef Bounce (MakeHook)(Level* level_, Kind kind, Element* def);
 
 
 // PER-TYPE TO HOOKS: for `to datatype value`
@@ -90,7 +89,7 @@ typedef Bounce (MAKE_HOOK)(
 // and decided by the source type.  For now, the destination decides both,
 // which means TO-ness and MAKE-ness are a bit too similar.
 //
-typedef Bounce (TO_HOOK)(Level* level_, Kind, const Value*);
+typedef Bounce (ToHook)(Level* level_, Kind kind, Element* def);
 
 
 // PER-TYPE MOLD HOOKS: for `mold value` and `form value`

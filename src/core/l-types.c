@@ -28,16 +28,10 @@
 
 
 //
-//  MAKE_Fail: C
+//  Makehook_Fail: C
 //
-Bounce MAKE_Fail(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Fail(Level* level_, Kind kind, Element* arg) {
     UNUSED(kind);
-    UNUSED(parent);
     UNUSED(arg);
 
     return RAISE("Datatype does not have a MAKE handler registered");
@@ -45,19 +39,13 @@ Bounce MAKE_Fail(
 
 
 //
-//  MAKE_Unhooked: C
+//  Makehook_Unhooked: C
 //
 // MAKE STRUCT! is part of the FFI extension, but since user defined types
 // aren't ready yet as a general concept, this hook is overwritten in the
 // dispatch table when the extension loads.
 //
-Bounce MAKE_Unhooked(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
-    UNUSED(parent);
+Bounce Makehook_Unhooked(Level* level_, Kind kind, Element* arg) {
     UNUSED(arg);
 
     const Value* type = Datatype_From_Kind(kind);
@@ -70,93 +58,28 @@ Bounce MAKE_Unhooked(
 
 
 //
-//  /make: native [
-//
-//  "Constructs or allocates the specified datatype"
-//
-//      return: "Constructed value, or null if BLANK! input"
-//          [element?]
-//      type "The datatype or parent value to construct from"
-//          [<maybe> element?]
-//      def "Definition or size of the new value (binding may be modified)"
-//          [<maybe> <unrun> element?]  ; <unrun> action for FRAME!
-//  ]
-//
-DECLARE_NATIVE(make)
-{
-    INCLUDE_PARAMS_OF_MAKE;
-
-    Value* type = ARG(type);
-    Value* arg = ARG(def);
-
-    // See notes in DECLARE_NATIVE(do) for why this is the easiest way to pass
-    // a flag to Do_Any_List(), to help us discern the likes of:
-    //
-    //     /foo: does [make object! [x: [1 2 3]]]  ; x inherits frame const
-    //
-    //     data: [x: [1 2 3]]
-    //     /bar: does [make object! data]  ; x wasn't const, don't add it
-    //
-    // So if the MAKE is evaluative (as OBJECT! is) this stops the "wave" of
-    // evaluativeness of a frame (e.g. body of DOES) from applying.
-    //
-    if (Not_Cell_Flag(arg, CONST))
-        Set_Cell_Flag(arg, EXPLICITLY_MUTABLE);
-
-    Option(const Value*) parent;
-    Kind kind;
-    if (Is_Type_Block(type)) {
-        kind = VAL_TYPE_KIND(type);
-        parent = nullptr;
-    }
-    else {
-        kind = VAL_TYPE(type);
-        parent = type;
-    }
-
-    MAKE_HOOK *hook = Make_Hook_For_Kind(kind);
-
-    Bounce b = hook(level_, kind, parent, arg);  // might throw, fail...
-    if (b == BOUNCE_DELEGATE)
-        return b;  // !!! Doesn't check result if continuation used, review
-    if (b == BOUNCE_THROWN)
-        return b;
-    Atom* r = Atom_From_Bounce(b);
-    if (r != nullptr) {
-        if (Is_Raised(r))
-            return r;
-        if (VAL_TYPE(r) == kind)
-            return r;
-    }
-    return RAISE("MAKE dispatcher did not return correct type");
-}
-
-
-//
 //  TO_Fail: C
 //
-Bounce TO_Fail(Value* out, Kind kind, const Value* arg)
+Bounce TO_Fail(Level* level_, Kind kind, Element* arg)
 {
-    UNUSED(out);
     UNUSED(kind);
     UNUSED(arg);
 
-    fail ("Cannot convert to datatype");
+    return FAIL("Cannot convert to datatype");
 }
 
 
 //
 //  TO_Unhooked: C
 //
-Bounce TO_Unhooked(Value* out, Kind kind, const Value* arg)
+Bounce TO_Unhooked(Level* level_, Kind kind, Element* arg)
 {
-    UNUSED(out);
     UNUSED(arg);
 
     const Value* type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
-    fail ("Datatype does not have extension with a TO handler registered");
+    return FAIL("Datatype has no extension with a TO handler registered");
 }
 
 
@@ -175,8 +98,8 @@ DECLARE_NATIVE(to)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Value* v = ARG(value);
-    Value* type = ARG(type);
+    Element* type = cast(Element*, ARG(type));
+    Element* v = cast(Element*, ARG(value));
 
     Kind new_kind = VAL_TYPE_KIND(type);
     Kind old_kind = VAL_TYPE(v);
@@ -185,10 +108,12 @@ DECLARE_NATIVE(to)
         return rebValue("copy @", v);
     }
 
-    TO_HOOK* hook = To_Hook_For_Type(type);
+    ToHook* hook = Tohook_For_Type(type);
 
     Bounce b = hook(level_, new_kind, v); // may fail();
     if (b == BOUNCE_THROWN) {
+        if (Is_Throwing_Failure(level_))
+            return b;
         assert(!"Illegal throw in TO conversion handler");
         return FAIL(Error_No_Catch_For_Throw(LEVEL));
     }

@@ -68,22 +68,13 @@ REBINT CT_Money(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Money: C
+//  Makehook_Money: C
 //
-Bounce MAKE_Money(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Money(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_MONEY);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
-    if (Is_Logic(arg)) {
-        return Init_Money(OUT, int_to_deci(Cell_Logic(arg) ? 1 : 0));
-    }
-    else switch (VAL_TYPE(arg)) {
+    switch (VAL_TYPE(arg)) {
       case REB_INTEGER:
         return Init_Money(OUT, int_to_deci(VAL_INT64(arg)));
 
@@ -125,9 +116,9 @@ Bounce MAKE_Money(
 //
 //  TO_Money: C
 //
-Bounce TO_Money(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Money(Level* level_, Kind kind, Element* arg)
 {
-    return MAKE_Money(level_, kind, nullptr, arg);
+    return Makehook_Money(level_, kind, arg);
 }
 
 

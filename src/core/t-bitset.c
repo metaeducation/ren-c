@@ -88,17 +88,11 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  MAKE_Bitset: C
+//  Makehook_Bitset: C
 //
-Bounce MAKE_Bitset(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Bitset(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_BITSET);
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+    UNUSED(kind);
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
@@ -125,9 +119,9 @@ Bounce MAKE_Bitset(
 //
 //  TO_Bitset: C
 //
-Bounce TO_Bitset(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Bitset(Level* level_, Kind kind, Element* arg)
 {
-    return MAKE_Bitset(level_, kind, nullptr, arg);
+    return Makehook_Bitset(level_, kind, arg);
 }
 
 

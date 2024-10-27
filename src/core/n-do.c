@@ -633,10 +633,9 @@ DECLARE_NATIVE(applique)
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
-    Virtual_Bind_Deep_To_Existing_Context(
-        def,
-        exemplar,
-        nullptr,  // !!! Unused binder parameter
+    BINDING(def) = Make_Use_Core(
+        Varlist_Archetype(exemplar),
+        Cell_List_Binding(def),
         CELL_FLAG_USE_NOTE_SET_WORDS
     );
 

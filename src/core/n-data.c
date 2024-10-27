@@ -348,8 +348,12 @@ DECLARE_NATIVE(without)
         );
     }
 
-    assert(Any_List(v));
-    Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, CELL_MASK_0);
+    BINDING(v) = Make_Use_Core(
+        Varlist_Archetype(ctx),
+        Cell_List_Binding(v),
+        CELL_MASK_0
+    );
+
     return COPY(v);
 }
 

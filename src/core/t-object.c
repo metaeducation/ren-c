@@ -389,21 +389,15 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  MAKE_Frame: C
+//  Makehook_Frame: C
 //
 // !!! The feature of MAKE FRAME! from a VARARGS! would be interesting as a
 // way to support usermode authoring of things like MATCH.
 //
 // For now just support ACTION! (or path/word to specify an action)
 //
-Bounce MAKE_Frame(
-    Level* level_,
-    Kind kind,
-    Option(const Value*) parent,
-    const Value* arg
-){
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap parent));
+Bounce Makehook_Frame(Level* level_, Kind kind, Element* arg) {
+    assert(kind == REB_FRAME);
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -470,21 +464,17 @@ Bounce MAKE_Frame(
 // to have an equivalent representation (an OBJECT! could be an expired frame
 // perhaps, but still would have no ACTION OF property)
 //
-Bounce TO_Frame(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Frame(Level* level_, Kind kind, Element* arg)
 {
     return RAISE(Error_Bad_Make(kind, arg));
 }
 
 
 //
-//  MAKE_Context: C
+//  Makehook_Context: C
 //
-Bounce MAKE_Context(
-    Level* level_,
-    Kind k,
-    Option(const Value*) parent,
-    const Value* arg
-){
+Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
+    //
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
     assert(k == REB_OBJECT or k == REB_MODULE);
@@ -494,16 +484,10 @@ Bounce MAKE_Context(
         if (not Any_List(arg))
             return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
 
-        assert(not parent);
-
         VarList* ctx = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
         node_LINK(NextVirtual, ctx) = BINDING(arg);
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
-
-    Option(VarList*) parent_ctx = parent
-        ? Cell_Varlist(unwrap parent)
-        : nullptr;
 
     if (Is_Block(arg)) {
         const Element* tail;
@@ -514,22 +498,18 @@ Bounce MAKE_Context(
             heart,
             at,
             tail,
-            parent_ctx
+            nullptr  // no parent (MAKE SOME-OBJ [...] calls REBTYPE(Context))
         );
         Init_Context_Cell(OUT, heart, ctx); // GC guards it
 
-        DECLARE_VALUE (virtual_arg);
-        Copy_Cell(virtual_arg, arg);
-
-        Virtual_Bind_Deep_To_Existing_Context(
-            virtual_arg,
-            ctx,
-            nullptr,  // !!! no binder made at present
-            CELL_MASK_0  // all internal refs are to the object
+        BINDING(arg) = Make_Use_Core(
+            Varlist_Archetype(ctx),
+            Cell_List_Binding(arg),
+            CELL_MASK_0
         );
 
         DECLARE_ATOM (dummy);
-        if (Eval_Any_List_At_Throws(dummy, virtual_arg, SPECIFIED))
+        if (Eval_Any_List_At_Throws(dummy, arg, SPECIFIED))
             return BOUNCE_THROWN;
 
         return OUT;
@@ -543,14 +523,11 @@ Bounce MAKE_Context(
             heart,
             Array_Head(EMPTY_ARRAY),  // scan for toplevel set-words (empty)
             Array_Tail(EMPTY_ARRAY),
-            parent_ctx
+            nullptr  // no parent
         );
 
         return Init_Context_Cell(OUT, heart, context);
     }
-
-    if (parent)
-        return RAISE(Error_Bad_Make_Parent(heart, unwrap parent));
 
     // make object! map!
     if (Is_Map(arg)) {
@@ -565,7 +542,7 @@ Bounce MAKE_Context(
 //
 //  TO_Context: C
 //
-Bounce TO_Context(Level* level_, Kind kind, const Value* arg)
+Bounce TO_Context(Level* level_, Kind kind, Element* arg)
 {
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
@@ -993,6 +970,46 @@ REBTYPE(Context)
         // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
 
         return FAIL(Error_Cannot_Reflect(VAL_TYPE(context), property)); }
+
+    //=//// MAKE SOME-OBJ [...] (MAKE OBJECT! Handled By TYPE-BLOCK!) //////=//
+
+      case SYM_MAKE: {
+        INCLUDE_PARAMS_OF_MAKE;
+
+        UNUSED(ARG(type));  // already in context
+        Element* def = cast(Element*, ARG(def));
+
+        Heart heart = Cell_Heart(context);
+        if (heart == REB_MODULE)
+            return FAIL("Cannot MAKE derived MODULE! instances (yet?)");
+
+        if (Is_Block(def)) {
+            const Element* tail;
+            const Element* at = Cell_List_At(&tail, def);
+
+            VarList* derived = Make_Varlist_Detect_Managed(
+                COLLECT_ONLY_SET_WORDS,
+                heart,
+                at,
+                tail,
+                c
+            );
+            Init_Context_Cell(OUT, heart, derived);  // GC guards it
+
+            BINDING(def) = Make_Use_Core(
+                Varlist_Archetype(derived),
+                Cell_List_Binding(def),
+                CELL_MASK_0
+            );
+
+            DECLARE_ATOM (dummy);
+            if (Eval_Any_List_At_Throws(dummy, def, SPECIFIED))
+                return BOUNCE_THROWN;
+
+            return OUT;
+        }
+
+        return Error_Bad_Make(heart, def); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
