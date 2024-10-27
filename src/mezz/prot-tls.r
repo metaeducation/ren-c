@@ -238,8 +238,8 @@ parse-asn: function [
     index: does [1 + offset-of data-start data] ;-- calculates effective index
 
     mode: #type
-    class: _
-    tag: _
+    class: null
+    tag: null
 
     return collect [ iterate data [
         byte: data/1
@@ -322,7 +322,7 @@ update-state: function [
     direction [word!] "READ or WRITE"
     transitions [block!] "maps from state to a BLOCK! of legal next states"
 ][
-    old: ensure [blank! issue! tag!] ctx/mode
+    old: ensure [~null~ issue! tag!] ctx/mode
     debug [mold old unspaced ["=" direction "=>"] new]
 
     if old and [not find (legal: select transitions old) new] [
@@ -775,7 +775,7 @@ encrypt-data: function [
                 ; encrypt-stream must be reinitialized each time with the
                 ; new initialization vector.
                 ;
-                ctx/encrypt-stream: _
+                ctx/encrypt-stream: null
             ]
         ]
     ] else [
@@ -809,7 +809,7 @@ decrypt-data: function [
             ; so the decrypt stream has to get GC'd.
             ;
             if ctx/version > 1.0 [
-                ctx/decrypt-stream: _
+                ctx/decrypt-stream: null
             ]
         ]
     ] else [
@@ -1387,7 +1387,7 @@ tls-init: function [
 ][
     ctx/seq-num-r: 0
     ctx/seq-num-w: 0
-    ctx/mode: _
+    ctx/mode: null
     ctx/encrypted?: false
     assert [not ctx/suite]
 ]
@@ -1458,7 +1458,7 @@ tls-awake: function [
         not port/data
     ] then [
         ; reset the data field when interleaving port r/w states
-        tls-port/data: _
+        tls-port/data: null
     ]
 
     switch event/type [
@@ -1525,7 +1525,7 @@ tls-awake: function [
                                 ]
                                 append tls-port/data msg/content
                                 application?: true
-                                msg/type: _
+                                msg/type: null
                             ]
                         ]
                     ]
@@ -1609,11 +1609,11 @@ sys/util/make-scheme [
             port/state: context [
                 data-buffer: make binary! 32000
                 port-data: make binary! 32000
-                resp: _
+                resp: null
 
-                min-version: _
-                max-version: _
-                version: _
+                min-version: null
+                max-version: null
+                version: null
                 ver-bytes: does [
                     select version-to-bytes version else [
                         fail ["version has no byte sequence:" version]
@@ -1625,9 +1625,9 @@ sys/util/make-scheme [
                 ; Used by https://en.wikipedia.org/wiki/Server_Name_Indication
                 host-name: port/spec/host
 
-                mode: _
+                mode: null
 
-                suite: _
+                suite: null
 
                 cipher-suite: does [first find suite word!]
 
@@ -1649,12 +1649,12 @@ sys/util/make-scheme [
                     select (ensure block! second find suite email!) 'iv
                 ]
 
-                client-crypt-key: _
-                client-mac-key: _
-                client-iv: _
-                server-crypt-key: _
-                server-mac-key: _
-                server-iv: _
+                client-crypt-key: null
+                client-mac-key: null
+                client-iv: null
+                server-crypt-key: null
+                server-mac-key: null
+                server-iv: null
 
                 seq-num-r: 0
                 seq-num-w: 0
@@ -1667,24 +1667,24 @@ sys/util/make-scheme [
 
                 encrypted?: false
 
-                client-random: _
-                server-random: _
-                pre-master-secret: _
-                master-secret: _
+                client-random: null
+                server-random: null
+                pre-master-secret: null
+                master-secret: null
 
-                key-block: _
+                key-block: null
 
-                certificate: _
-                pub-key: _
-                pub-exp: _
+                certificate: null
+                pub-key: null
+                pub-exp: null
 
-                dh-key: _
-                dh-pub: _
+                dh-key: null
+                dh-pub: null
 
-                encrypt-stream: _
-                decrypt-stream: _
+                encrypt-stream: null
+                decrypt-stream: null
 
-                connection: _
+                connection: null
             ]
 
             port/state/connection: conn: make port! [
@@ -1736,10 +1736,10 @@ sys/util/make-scheme [
                 switch port/state/crypt-method [
                     aes@ [
                         if port/state/encrypt-stream [
-                            port/state/encrypt-stream: _ ;-- will be GC'd
+                            port/state/encrypt-stream: null  ; will be GC'd
                         ]
                         if port/state/decrypt-stream [
-                            port/state/decrypt-stream: _ ;-- will be GC'd
+                            port/state/decrypt-stream: null  ; will be GC'd
                         ]
                     ]
                 ] else [

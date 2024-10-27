@@ -77,7 +77,7 @@ locale: construct [
     library: null
     ;make object! [modules: utilities: https://raw.githubusercontent.com/r3n/renclib/master/usermodules.reb]
     locale:
-    locale*: _
+    locale*: null
     months: [
         "January" "February" "March" "April" "May" "June"
         "July" "August" "September" "October" "November" "December"
@@ -463,7 +463,7 @@ user: construct [
    name:           ; User's name
    home:           ; The HOME environment variable
    words: null
-   identity: construct [email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: _]
+   identity: construct [email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: null]
    identities: []
 ]
 
@@ -491,7 +491,7 @@ console: null  ; console (repl) object created in host-start (os/host-start.r)
 ;]
 
 ;           decimal: #"."   ; The character used as the decimal point in decimal and money vals
-;           sig-digits: _    ; Significant digits to use for decimals ; blank for normal printing
+;           sig-digits: null    ; Significant digits to use for decimals ; null for normal printing
 ;           date-sep: #"-"  ; The character used as the date separator
 ;           date-month-num: false   ; True if months are displayed as numbers; False for names
 ;           time-sep: #":"  ; The character used as the time separator

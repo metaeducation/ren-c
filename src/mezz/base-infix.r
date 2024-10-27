@@ -84,7 +84,7 @@ for-each [math-op function-name] [
 
 ; Make top-level words for things not added by %b-init.c
 ;
-=: !=: ==: !==: =?: _
+=: !=: ==: !==: =?: ~
 
 ; <= looks a lot like a left arrow.  In the interest of "new thought", core
 ; defines the operation in terms of =<

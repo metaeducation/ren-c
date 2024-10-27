@@ -350,7 +350,7 @@ load-module: function [
     ; Returns blank if source is word and no module of that name is loaded.
     ; Returns blank if source is file/url and read or load-extension fails.
 
-    if import [delay: _] ; /import overrides /delay
+    if import [delay: null] ; /import overrides /delay
 
     ; Process the source, based on its type
 
@@ -465,8 +465,8 @@ load-module: function [
 
     ; Get info from preloaded or delayed modules
     if module? mod [
-        delay: no-share: _ hdr: meta-of mod
-        ensure [block! blank!] hdr/options
+        delay: no-share: null hdr: meta-of mod
+        ensure [~null~ block!] hdr/options
     ]
     if block? mod [
         set [hdr: code:] mod
@@ -546,10 +546,10 @@ load-module: function [
 
             module? mod0 [
                 ; premade module
-                pos: _  ; just override, don't replace
+                pos: null  ; just override, don't replace
                 if ver0 >= modver [
                     ; it's at least as new, use it instead
-                    mod: mod0  hdr: hdr0  code: _
+                    mod: mod0  hdr: hdr0  code: null
                     modver: ver0
                     override?: false
                 ]
@@ -557,7 +557,7 @@ load-module: function [
 
             ; else is delayed module
             ver0 > modver [ ; and it's newer, use it instead
-                mod: _ set [hdr code] mod0
+                mod: null set [hdr code] mod0
                 modver: ver0
                 ext: all [(object? code) code] ; delayed extension
                 override?: not delay  ; stays delayed if /delay
@@ -566,7 +566,7 @@ load-module: function [
     ]
 
     if not module? mod [
-        mod: _ ; don't need/want the block reference now
+        mod: null  ; don't need/want the block reference now
     ]
 
     if version and [ver > modver] [

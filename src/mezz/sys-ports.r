@@ -89,7 +89,7 @@ make-port*: function [
     path-char:   insert copy alpha-num "!/=+-_.;:&$@%*',~?| []()^"" ; !!! note: space allowed
     user-char:   insert copy alpha-num "=+-_.;&$@%*,'#|"
     pass-char:   complement make bitset! "^/ ^-@"
-    s1: s2: _ ; in R3, input datatype is preserved - these are now URL strings
+    s1: s2: null  ; in R3, input datatype is preserved, now URL strings
     out: []
     emit: func ['w v] [
         append out reduce [
@@ -173,7 +173,7 @@ make-port*: function [
     ]
 ]
 
-decode-url: _ ; used by sys funcs, defined above, set below
+decode-url: ~  ; used by sys funcs, defined above, set below
 
 ;-- Native Schemes -----------------------------------------------------------
 

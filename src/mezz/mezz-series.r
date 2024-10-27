@@ -64,7 +64,7 @@ array: func [
     <local> block rest
 ][
     if block? size [
-        if tail? rest: next size [rest: _]
+        if tail? rest: next size [rest: null]
         if not integer? size: first size [
             cause-error 'script 'expect-arg reduce ['array 'size type of :size]
         ]

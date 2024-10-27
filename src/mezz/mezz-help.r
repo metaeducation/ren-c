@@ -314,8 +314,8 @@ help: function [
 
     print "USAGE:"
 
-    args: _ ;-- plain arguments
-    refinements: _ ;-- refinements and refinement arguments
+    args: null  ; plain arguments
+    refinements: null  ; refinements and refinement arguments
 
     parse words of :value [
         args: across opt some [word! | get-word! | lit-word! | issue!]

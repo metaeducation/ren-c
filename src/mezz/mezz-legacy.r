@@ -74,11 +74,11 @@ comment [
     ; don't return LOGIC!, and they seem like they need greater rethinking in
     ; general. What replaces them (for ones that are kept) might be new.
     ;
-    encoding?: _
-    file-type?: _
-    speed?: _
-    info?: _
-    exists?: _
+    encoding?: ~
+    file-type?: ~
+    speed?: ~
+    info?: ~
+    exists?: ~
 ]
 
 

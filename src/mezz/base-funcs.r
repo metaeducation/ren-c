@@ -86,9 +86,9 @@ function: func [
     ;
     new-spec: clear copy spec
 
-    new-body: _
-    statics: _
-    defaulters: _
+    new-body: null
+    statics: null
+    defaulters: null
     var: <dummy> ;-- want to enter PARSE with truthy state (gets overwritten)
 
     ;; dump [spec]
@@ -117,7 +117,7 @@ function: func [
             var: set-word! ( ;-- locals legal anywhere
                 append exclusions var
                 append new-spec var
-                var: _
+                var: null
             )
         ]
     |
@@ -136,11 +136,11 @@ function: func [
             ]
         )
     |
-        (var: _)  ; everything below this line resets var
+        (var: null)  ; everything below this line resets var
         bypass  ; rolling over to next alternate
     |
         the <local>
-        opt some [var: word! (other: _) opt other: group! (
+        opt some [var: word! (other: null) opt other: group! (
             append new-spec as set-word! var
             append exclusions var
             if other [
@@ -150,7 +150,7 @@ function: func [
                 ]
             ]
         )]
-        (var: _) ;-- don't consider further GROUP!s or variables
+        (var: null) ;-- don't consider further GROUP!s or variables
     |
         the <in> (
             new-body: default [
@@ -182,14 +182,14 @@ function: func [
             ]
         )
         opt some [
-            var: word! (other: _) opt other: group! (
+            var: word! (other: null) opt other: group! (
                 append exclusions var
                 append statics compose [
                     (as set-word! var) ((other))
                 ]
             )
         ]
-        (var: _)
+        (var: null)
     |
         <end> accept <here>
     |
@@ -308,7 +308,7 @@ redescribe: function [
         {(modified) Action whose description is to be updated.}
 ][
     meta: meta-of :value
-    notes: _
+    notes: null
 
     ; For efficiency, objects are only created on demand by hitting the
     ; required point in the PARSE.  Hence `redescribe [] :foo` will not tamper
@@ -350,7 +350,7 @@ redescribe: function [
         if find meta 'parameter-notes [
             fields: dig-action-meta-fields :value
 
-            meta: _ ;-- need to get a parameter-notes field in the OBJECT!
+            meta: null ;-- need to get a parameter-notes field in the OBJECT!
             on-demand-meta ;-- ...so this loses SPECIALIZEE, etc.
 
             description: meta/description: fields/description
@@ -418,7 +418,7 @@ redescribe: function [
     ; object will be left behind, however.
     ;
     if notes and [every [param note] notes [unset? 'note or (null? note)]] [
-        meta/parameter-notes: _
+        meta/parameter-notes: null
     ]
 
     :value ;-- should have updated the meta
@@ -867,7 +867,7 @@ module: func [
     ]
 
     ; Collect 'hidden keyword words, removing the keywords. Ignore exports.
-    hidden: _
+    hidden: null
     if find body 'hidden [
         hidden: make block! 10
         ; Note: Exports are not hidden, silently for now

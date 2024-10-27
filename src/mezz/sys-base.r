@@ -31,7 +31,7 @@ print*: :print
 ;   print out a message.  (Printing directly from this code would be
 ;   presumptuous.)
 ;
-script-pre-load-hook: _
+script-pre-load-hook: ~
 
 rescue: :lib/rescue
 lib/rescue: ~

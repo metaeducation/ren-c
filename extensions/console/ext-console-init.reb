@@ -73,11 +73,11 @@ boot-welcome:
 ; Define console! object for skinning - stub for elsewhere?
 ;
 console!: make object! [
-    name: _
+    name: null
     repl: true      ;-- used to identify this as a console! object (quack!)
     is-loaded:  false ;-- if true then this is a loaded (external) skin
     was-updated: false ;-- if true then console! object found in loaded skin
-    last-result: _  ;-- last evaluated result (sent by HOST-CONSOLE)
+    last-result: ~  ;-- last evaluated result (sent by HOST-CONSOLE)
 
     ;; APPEARANCE (can be overridden)
 
@@ -86,7 +86,7 @@ console!: make object! [
     warning: {!!}
     error: {**} ;-- not used yet
     info: to-text #{e29398} ;-- info "(i)" symbol
-    greeting: _
+    greeting: null
 
     print-prompt: func [return: [~]] [
         ;
@@ -273,7 +273,7 @@ start-console: function [
     loud-print "Starting console..."
     loud-print ""
     proto-skin: make console! []
-    skin-error: _
+    skin-error: null
 
     all [
         skin-file: %console-skin.reb
