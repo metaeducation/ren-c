@@ -704,11 +704,11 @@ Bounce JavaScript_Dispatcher(Level* const L)
     if (is_awaiter) {
         if (info == nullptr)
             return FAIL(
-                "JavaScript /AWAITER can only be called from rebPromise()"
+                "JavaScript :AWAITER can only be called from rebPromise()"
             );
         if (info->state != PROMISE_STATE_RUNNING)
             return FAIL(
-                "Cannot call JavaScript /AWAITER during another await"
+                "Cannot call JavaScript :AWAITER during another await"
             );
     }
     else
