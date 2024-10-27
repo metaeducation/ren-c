@@ -34,7 +34,7 @@ You may obtain a copy of the License at
 https://www.gnu.org/licenses/lgpl-3.0.html
 }--
 
-catalog: make object! [
+catalog: construct [
     ;
     ; These catalogs are filled in by Init_System_Object()
     ;
@@ -44,16 +44,16 @@ catalog: make object! [
     errors: null
 ]
 
-contexts: make object! [
+contexts: construct [
     lib:
     user:
         null
 ]
 
-state: make object! [
+state: construct [
     ; Mutable system state variables
     note: "contains protected hidden fields"
-    policies: make object! [  ; !!! was for removed SECURE code
+    policies: construct [  ; !!! was for removed SECURE code
         file:    ; file access
         net:     ; network access
         eval:    ; evaluation limit
@@ -69,17 +69,17 @@ state: make object! [
     last-error: null ; used by WHY?
 ]
 
-modules: []
-extensions: []
+modules: '[]
+extensions: '[]
 
-codecs: make object! []
+codecs: construct []
 
-schemes: make object! []
+schemes: construct []
 
 util: null
 
-ports: make object! [
-    wait-list: []   ; List of ports to add to 'wait
+ports: construct [
+    wait-list: '[]  ; List of ports to add to 'wait
     input:          ; Port for user input.
     output:         ; Port for user output
     system:         ; Port for system events
@@ -87,10 +87,10 @@ ports: make object! [
 ;   serial: null    ; serial device name block
 ]
 
-locale: make object! [
+locale: construct [
     language:   ; Human language locale
     language*: null
-    library: make object! [
+    library: construct [
         ;
         ; This is a list mapping tags to URLs as [<tag> http://example.com]
         ; They make it easy to do things like `import @json` or `do @chess`
@@ -99,22 +99,22 @@ locale: make object! [
     ]
     locale:
     locale*: null
-    months: [
+    months: '[
         "January" "February" "March" "April" "May" "June"
         "July" "August" "September" "October" "November" "December"
     ]
-    days: [
+    days: '[
         "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday"
     ]
 ]
 
-options: make object! [  ; Options supplied to REBOL during startup
+options: construct [  ; Options supplied to REBOL during startup
     bin: null       ; Path to directory where Rebol executable binary lives
     boot: null      ; Path of executable, ie. system.options.bin/r3-exe
     home: null      ; Path of home directory
     resources: null ; users resources directory (for %user.r, skins, modules etc)
     suppress: null  ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
-    loaded: []      ; block with full paths to loaded start-up scripts
+    loaded: '[]     ; block with full paths to loaded start-up scripts
     path: null      ; Where script was started or the startup dir
 
     current-path: null  ; Current URL! or FILE! path to use for relative lookups
@@ -132,23 +132,24 @@ options: make object! [  ; Options supplied to REBOL during startup
     cgi: 'no
     verbose: 'no
 
-    module-paths: [%./]
+    module-paths: '[%./]
     default-suffix: %.reb ; Used by IMPORT if no suffix is provided
-    file-types: copy [
+    file-types: copy '[
         %.reb %.r3 %.r rebol
     ]
 ]
 
-script: make object! [
+script: construct [
     title:          ; Title string of script
     header:         ; Script header as evaluated
     parent:         ; Script that loaded the current one
     path:           ; Location of the script being evaluated
     args:           ; args passed to script
-        _
+        null
 ]
 
-standard: make object! [
+standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
+    ;
     ; FUNC implements a native-optimized variant of an action generator.
     ; This is the body template that it provides as the code *equivalent* of
     ; what it is doing (via a more specialized/internal method).  Though
@@ -186,7 +187,7 @@ standard: make object! [
     ; the archetypal context has to be created "by hand" for natives to use,
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
-    action-adjunct: make object! [
+    action-adjunct: construct [
         description: null
     ]
 
@@ -196,7 +197,7 @@ standard: make object! [
     ; error does not require a keylist expansion...and also so that fields
     ; like FILE and LINE would not conflict with parameters.
     ;
-    error: make object! [
+    error: construct [
         type: null
         id: null
         message: null  ; BLOCK! template with arg substitution or just a STRING!
@@ -209,7 +210,7 @@ standard: make object! [
         ; necessary (errors with no arguments will just have a message)
     ]
 
-    script: make object! [
+    script: construct [
         title:
         header:
         parent:
@@ -236,13 +237,13 @@ standard: make object! [
     ; !!! Historically headers use titlecase keys.  In the current world, that
     ; leads to a difference from if you use lowercase ones.
     ;
-    ; !!! We are using MAKE OBJECT! here which allows NULL variables via
+    ; !!! We are using CONSTRUCT here which allows ~null~ antiforms via
     ; evaluation.  But ordinarily the headers can't do that because they
     ; are blocks and not evaluated.  This is developing, but the general
     ; gist here is that when round-tripping headers to blocks the NULL fields
     ; are effectively absent for the semantics of *this* object.
     ;
-    header: make object! [
+    header: construct [
         Title: "Untitled"
         File: null
         Name: null
@@ -263,7 +264,7 @@ standard: make object! [
         ; tamperable header.
     ]
 
-    scheme: make object! [
+    scheme: construct [
         name:       ; word of http, ftp, sound, etc.
         title:      ; user-friendly title for the scheme
         spec:       ; custom spec for scheme (if needed)
@@ -274,7 +275,7 @@ standard: make object! [
             null
     ]
 
-    port: make object! [ ; Port specification object
+    port: construct [ ; Port specification object
         spec: null     ; published specification of the port
         scheme: null   ; scheme object used for this port
         actor: null    ; port action handler (script driven)
@@ -289,7 +290,7 @@ standard: make object! [
         locals: null   ; user-defined storage of local data
     ]
 
-    port-spec-head: make object! [
+    port-spec-head: construct [
         title:      ; user-friendly title for port
         scheme:     ; reference to scheme that defines this port
         ref:        ; reference path or url (for errors)
@@ -314,23 +315,23 @@ standard: make object! [
     ]
 
     port-spec-signal: make port-spec-head [
-        mask: [all]
+        mask: '[all]
     ]
 
-    file-info: make object! [
+    file-info: construct [
         name:
         size:
         date:
         type:
-            _
+            null
     ]
 
-    net-info: make object! [
+    net-info: construct [
         local-ip:
         local-port:
         remote-ip:
         remote-port:
-            _
+            null
     ]
 
     ; !!! "Type specs" were an unfinished R3-Alpha concept, that when you said
@@ -342,7 +343,7 @@ standard: make object! [
     ; left is the name, but an object is synthesized on SPEC OF requests just
     ; as a placeholder to remember the idea.
     ;
-    type-spec: make object! [
+    type-spec: construct [
         title: null
     ]
 
@@ -352,38 +353,38 @@ standard: make object! [
 ]
 
 
-user: make object! [
+user: construct [
     name:           ; User's name
     home:           ; The HOME environment variable
     words: null
-    identity: make object! [
+    identity: construct [
         email: smtp: pop3: esmtp-user: esmtp-pass: fqdn: null
     ]
-    identities: []
+    identities: '[]
 ]
 
 console: null  ; console (repl) object created by the console extension
 
 
-cgi: make object! [ ; CGI environment variables
-       server-software:
-       server-name:
-       gateway-interface:
-       server-protocol:
-       server-port:
-       request-method:
-       path-info:
-       path-translated:
-       script-name:
-       query-string:
-       remote-host:
-       remote-addr:
-       auth-type:
-       remote-user:
-       remote-ident:
-       Content-Type:           ; cap'd for email header
-       content-length: null
-       other-headers: []
+cgi: construct [ ; CGI environment variables
+    server-software:
+    server-name:
+    gateway-interface:
+    server-protocol:
+    server-port:
+    request-method:
+    path-info:
+    path-translated:
+    script-name:
+    query-string:
+    remote-host:
+    remote-addr:
+    auth-type:
+    remote-user:
+    remote-ident:
+    Content-Type:           ; cap'd for email header
+    content-length: null
+    other-headers: '[]
 ]
 
 ; Boot process does sanity check that this eval ends with ~done~ QUASI-WORD!

@@ -1577,12 +1577,20 @@ DECLARE_NATIVE(construct)
 
     enum {
         ST_CONSTRUCT_INITIAL_ENTRY = STATE_0,
+        ST_CONSTRUCT_FULLY_EVALUATING,
         ST_CONSTRUCT_EVAL_STEP
     };
 
     switch (STATE) {
-      case ST_CONSTRUCT_INITIAL_ENTRY: goto initial_entry;
-      case ST_CONSTRUCT_EVAL_STEP: goto eval_step_result_in_spare;
+      case ST_CONSTRUCT_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_CONSTRUCT_FULLY_EVALUATING:
+        return OUT;
+
+      case ST_CONSTRUCT_EVAL_STEP:
+        goto eval_step_result_in_spare;
+
       default: assert(false);
     }
 
@@ -1606,12 +1614,20 @@ DECLARE_NATIVE(construct)
     );
     Init_Object(OUT, varlist);  // GC protects context
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
+    if (Is_Block(spec)) {
+        BINDING(spec) = Make_Use_Core(
+            Varlist_Archetype(varlist),
+            BINDING(spec),
+            CELL_FLAG_USE_NOTE_SET_WORDS
+        );
+        STATE = ST_CONSTRUCT_FULLY_EVALUATING;
+        return CONTINUE(SPARE, spec);
+    }
 
-    if (Is_The_Block(spec))
-        flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
-    else
-        assert(Is_Block(spec));
+    assert(Is_The_Block(spec));
+
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+        | FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
 
     Level* sub = Make_Level_At(&Stepper_Executor, spec, flags);
     Push_Level(SPARE, sub);
