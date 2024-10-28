@@ -915,7 +915,7 @@ static Error* Error_Mismatch(Byte wanted, Byte seen) {
     DECLARE_ELEMENT (w);
     Init_Char_Unchecked(w, wanted);
     DECLARE_ELEMENT (s);
-    Init_Char_Unchecked(w, seen);
+    Init_Char_Unchecked(s, seen);
     return Error_Scan_Mismatch_Raw(w, s);
 }
 
