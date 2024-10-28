@@ -167,11 +167,15 @@ DECLARE_NATIVE(identify_text_q)
 //
 //      return: [text!]
 //      data [binary!]
+//      options [block!]
 //  ]
 //
 DECLARE_NATIVE(decode_text)
 {
     INCLUDE_PARAMS_OF_DECODE_TEXT;
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL(ARG(options));
 
     // !!! The original code for R3-Alpha would simply alias the incoming
     // binary as a string.  This is essentially a Latin1 interpretation.
@@ -196,11 +200,15 @@ DECLARE_NATIVE(decode_text)
 //
 //      return: [binary!]
 //      string [text!]
+//      options [block!]
 //  ]
 //
 DECLARE_NATIVE(encode_text)
 {
     INCLUDE_PARAMS_OF_ENCODE_TEXT;
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL(ARG(options));
 
     UNUSED(PARAM(string));
 
@@ -277,11 +285,15 @@ DECLARE_NATIVE(identify_utf16le_q)
 //
 //      return: [text!]
 //      data [binary!]
+//      options [block!]
 //  ]
 //
 DECLARE_NATIVE(decode_utf16le)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL(ARG(options));
 
     Size size;
     const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
@@ -306,11 +318,15 @@ DECLARE_NATIVE(decode_utf16le)
 //
 //      return: [binary!]
 //      text [text!]
+//      options [block!]
 //  ]
 //
 DECLARE_NATIVE(encode_utf16le)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL(ARG(options));
 
     Length len;
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
@@ -356,11 +372,15 @@ DECLARE_NATIVE(identify_utf16be_q)
 //
 //      return: [text!]
 //      data [binary!]
+//      options [block!]
 //  ]
 //
 DECLARE_NATIVE(decode_utf16be)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL(ARG(options));
 
     Size size;
     const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
@@ -385,11 +405,15 @@ DECLARE_NATIVE(decode_utf16be)
 //
 //      return: [binary!]
 //      text [text!]
+//      options [block!]
 //  ]
 //
 DECLARE_NATIVE(encode_utf16be)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL(ARG(options));
 
     Length len;
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));

@@ -18,12 +18,9 @@ REBOL [
 ]
 
 
-; This function is called by the C function Register_Codec(), but can
-; also be called by user code.
+; !!! There should also be an unregister-codec
 ;
-; !!! There should also be an unregister-codec*
-;
-/register-codec*: func [
+/register-codec: func [
     return: [object!]
     name "Descriptive name of the codec"
         [word!]
@@ -43,10 +40,10 @@ REBOL [
         ; IMAGE!.  Should the argument types of the encode function be cached
         ; here, or be another parameter, or...?
 
-        suffixes: '(suffixes)
-        identify?: '(identify?)
-        decode: '(decode)
-        encode: '(encode)
+        suffixes: (^ suffixes)
+        identify?: (^ identify?)
+        decode: (^ decode)
+        encode: (^ encode)
     ]
 
     set (extend system.codecs name) codec
@@ -81,13 +78,20 @@ append system.options.file-types spread switch fourth system.version [
     "Decodes a series of bytes into the related datatype (e.g. image!)"
 
     type "Media type (jpeg, png, etc.)"
-        [word!]
+        [word! block!]
     data "The data to decode"
         [binary!]
 ][
+    let options: either block? type [
+        type: compose type
+        next type
+        elide type: first type
+    ][
+        '[]
+    ]
     all [
         let cod: select system.codecs type
-        (data: run cod.decode data)
+        (data: run cod.decode data options)
     ] else [
         cause-error 'access 'no-codec type
     ]
@@ -100,14 +104,19 @@ append system.options.file-types spread switch fourth system.version [
 
     return: [binary!]
     type "Media type (jpeg, png, etc.)"
-        [word!]
+        [word! block!]
     data [element?]
-    :options "Encoding options"
-        [block!]  ; !!! Not currently used
 ][
+    let options: either block? type [
+        type: compose type
+        next type
+        elide type: first type
+    ][
+        '[]
+    ]
     all [
         let cod: select system.codecs type
-        (data: run cod.encode data)
+        (data: run cod.encode data options)
     ] else [
         cause-error 'access 'no-codec type
     ]

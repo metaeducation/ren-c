@@ -17,21 +17,21 @@ REBOL [
     }--
 ]
 
-(sys.util/register-codec*
+(sys.util/register-codec
     'text
     %.txt
     identify-text?/
     decode-text/
     encode-text/)
 
-(sys.util/register-codec*
+(sys.util/register-codec
     'utf-16le
     %.txt
     identify-utf16le?/
     decode-utf16le/
     encode-utf16le/)
 
-(sys.util/register-codec*
+(sys.util/register-codec
     'utf-16be
     %.txt
     identify-utf16be?/
