@@ -148,7 +148,7 @@ REBTYPE(Sequence)
         // :DEEP copy of a path may copy groups that are mutable.
         //
       case SYM_COPY: {
-        if (not Any_Listlike(sequence))
+        if (not Listlike_Cell(sequence))
             return Copy_Cell(level_->out, sequence);
 
         Heart heart = Cell_Heart_Ensure_Noquote(sequence);

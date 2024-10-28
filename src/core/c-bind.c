@@ -45,7 +45,7 @@ void Bind_Values_Inner_Loop(
 ){
     Element* v = head;
     for (; v != tail; ++v) {
-        if (Any_Wordlike(v)) {
+        if (Wordlike_Cell(v)) {
           const Symbol* symbol = Cell_Word_Symbol(v);
 
           if (CTX_TYPE(context) == REB_MODULE) {
@@ -98,7 +98,7 @@ void Bind_Values_Inner_Loop(
           }
         }
         else if (flags & BIND_DEEP) {
-            if (Any_Listlike(v)) {
+            if (Listlike_Cell(v)) {
                 const Element* sub_tail;
                 Element* sub_at = Cell_List_At_Mutable_Hack(&sub_tail, v);
                 Bind_Values_Inner_Loop(
@@ -177,12 +177,12 @@ void Unbind_Values_Core(
     Element* v = head;
     for (; v != tail; ++v) {
         if (
-            Any_Wordlike(v)
+            Wordlike_Cell(v)
             and (not context or BINDING(v) == unwrap context)
         ){
             Unbind_Any_Word(v);
         }
-        else if (Any_Listlike(v) and deep) {
+        else if (Listlike_Cell(v) and deep) {
             const Element* sub_tail;
             Element* sub_at = Cell_List_At_Mutable_Hack(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
@@ -934,7 +934,7 @@ void Clonify_And_Bind_Relative(
 
     if (
         relative
-        and Any_Wordlike(v)
+        and Wordlike_Cell(v)
         and IS_WORD_UNBOUND(v)  // use unbound words as "in frame" cache [1]
     ){
         REBINT n = maybe Try_Get_Binder_Index(
@@ -950,7 +950,7 @@ void Clonify_And_Bind_Relative(
         Element* deep = nullptr;
         Element* deep_tail = nullptr;
 
-        if (Any_Pairlike(v)) {
+        if (Pairlike_Cell(v)) {
             Pairing* copy = Copy_Pairing(
                 Cell_Pairing(v),
                 NODE_FLAG_MANAGED
@@ -960,7 +960,7 @@ void Clonify_And_Bind_Relative(
             deep = Pairing_Head(copy);
             deep_tail = Pairing_Tail(copy);
         }
-        else if (Any_Listlike(v)) {  // ruled out pairlike sequences above...
+        else if (Listlike_Cell(v)) {  // ruled out pairlike sequences above...
             Array* copy = Copy_Array_At_Extra_Shallow(
                 Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
@@ -1362,26 +1362,26 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     }
 
     if (Is_Stub_Let(binding)) {
-        if (Any_Wordlike(cell))
+        if (Wordlike_Cell(cell))
             assert(CELL_WORD_INDEX_I32(cell) == INDEX_PATCHED);
         return;
     }
 
     if (Is_Stub_Patch(binding)) {
         assert(
-            Any_Wordlike(cell)
+            Wordlike_Cell(cell)
             and CELL_WORD_INDEX_I32(cell) == INDEX_PATCHED
         );
         return;
     }
 
     if (Is_Stub_Use(binding)) {
-        assert(Any_Listlike(cell));  // can't bind words to use
+        assert(Listlike_Cell(cell));  // can't bind words to use
         return;
     }
 
     if (Is_Stub_Details(binding)) {  // relative binding
-        /* assert(Any_Listlike(cell)); */  // weird word cache trick uses
+        /* assert(Listlike_Cell(cell)); */  // weird word cache trick uses
         return;
     }
 
@@ -1389,7 +1389,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 
     if (CTX_TYPE(cast(VarList*, binding)) == REB_MODULE) {
         assert(
-            Any_Listlike(cell)
+            Listlike_Cell(cell)
             or heart == REB_COMMA  // feed cells, use for binding ATM
         );
         // attachment binding no longer exists

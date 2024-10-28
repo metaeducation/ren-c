@@ -371,7 +371,7 @@ struct CollectorStruct {
 
 
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
-    assert(Any_Wordlike(v));
+    assert(Wordlike_Cell(v));
     if (CELL_WORD_INDEX_I32(v) < 0)
         assert(Is_Stub_Details(BINDING(v)));
     return CELL_WORD_INDEX_I32(v) <= 0;
@@ -382,14 +382,14 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
 
 
 INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
-    assert(Any_Wordlike(v));
+    assert(Wordlike_Cell(v));
     REBINT i = CELL_WORD_INDEX_I32(v);
     assert(i > 0);
     return i;
 }
 
 INLINE void Unbind_Any_Word(Cell* v) {
-    assert(Any_Wordlike(v));
+    assert(Wordlike_Cell(v));
     CELL_WORD_INDEX_I32(v) = 0;
     BINDING(v) = nullptr;
 }
@@ -542,7 +542,7 @@ INLINE Context* Derive_Binding(
     Context* context,
     const Cell* list
 ){
-    assert(Any_Listlike(list));
+    assert(Listlike_Cell(list));
 
     Context* binding = BINDING(list);
     if (binding)

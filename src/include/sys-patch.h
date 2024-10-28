@@ -33,7 +33,7 @@
         BINDING(v)
 #else
     INLINE Context* Cell_List_Binding(const Cell* v) {
-        assert(Any_Listlike(v));
+        assert(Listlike_Cell(v));
         Context* c = BINDING(v);
         if (not c)
             return SPECIFIED;

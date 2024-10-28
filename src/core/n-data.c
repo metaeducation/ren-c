@@ -156,7 +156,7 @@ DECLARE_NATIVE(bind)
         return FAIL("Bind to WORD! only implemented via INSIDE at this time");
     }
 
-    if (Any_Wordlike(v)) {
+    if (Wordlike_Cell(v)) {
         //
         // Bind a single word (also works on refinements, `/a` ...or `a.`, etc.
 
@@ -173,7 +173,7 @@ DECLARE_NATIVE(bind)
         return FAIL(Error_Not_In_Context_Raw(v));
     }
 
-    if (not Any_Listlike(v))  // QUOTED? could have wrapped any type
+    if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
         return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
     Element* at;
@@ -869,12 +869,12 @@ DECLARE_NATIVE(set_accessor)
 // only be called by things like Trap_Get_Any_Tuple(), because there are no
 // special adjustments for sequences like `.a`
 //
-static Option(Error*) Trap_Get_Any_Wordlike_Maybe_Vacant(
+static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
     Sink(Value) out,
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context  // context for `.xxx` tuples not adjusted
 ){
-    assert(Any_Wordlike(word));
+    assert(Wordlike_Cell(word));
 
     const Value* lookup;
     Option(Error*) error = Trap_Lookup_Word(&lookup, word, context);
@@ -921,7 +921,7 @@ Option(Error*) Trap_Get_Any_Word(
     const Element* word,  // sigils ignored (META-WORD! doesn't "meta-get")
     Context* context
 ){
-    Option(Error*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
+    Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Vacant(
         out, word, context
     );
     if (error)
@@ -946,7 +946,7 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Vacant(
     Context* context
 ){
     assert(Any_Word(word));
-    return Trap_Get_Any_Wordlike_Maybe_Vacant(out, word, context);
+    return Trap_Get_Wordlike_Cell_Maybe_Vacant(out, word, context);
 }
 
 
@@ -1107,7 +1107,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
     }
     else switch (Stub_Flavor(x_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL: {
-        Option(Error*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Vacant(
             out,
             tuple,  // optimized "wordlike" representation, like a. or .a
             context
@@ -1238,7 +1238,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Any_Word(var)) {
-        Option(Error*) error = Trap_Get_Any_Wordlike_Maybe_Vacant(
+        Option(Error*) error = Trap_Get_Wordlike_Cell_Maybe_Vacant(
             out, var, context
         );
         if (error)

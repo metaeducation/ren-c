@@ -7,7 +7,7 @@
     PG_Empty_Array // Note: initialized from Cell_Array(Root_Empty_Block)
 
 
-INLINE bool Any_Listlike(const Cell* v) {
+INLINE bool Listlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
     if (Any_List_Kind(Cell_Heart_Unchecked(v)))
         return true;
@@ -22,7 +22,7 @@ INLINE bool Any_Listlike(const Cell* v) {
 }
 
 INLINE const Array* Cell_Array(const Cell* v) {
-    assert(Any_Listlike(v));
+    assert(Listlike_Cell(v));
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());

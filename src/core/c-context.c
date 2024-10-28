@@ -411,7 +411,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
             (symbol = maybe Try_Get_Settable_Word_Symbol(&bound, e))
             or (
                 (flags & COLLECT_ANY_WORD)
-                and Any_Wordlike(e)
+                and Wordlike_Cell(e)
                 and (bound = IS_WORD_BOUND(e), symbol = Cell_Word_Symbol(e))
             )
         ){

@@ -30,7 +30,7 @@
 // For routines that manage binding, see %sys-bind.h.
 //
 
-INLINE bool Any_Wordlike(const Cell* v) {
+INLINE bool Wordlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
     if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
         return true;
@@ -48,7 +48,7 @@ INLINE void Tweak_Cell_Word_Symbol(Cell* v, const Symbol* symbol)
   { Tweak_Cell_Node1(v, symbol); }
 
 INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
-    assert(Any_Wordlike(cell));  // no _UNCHECKED variant :-(
+    assert(Wordlike_Cell(cell));
     return cast(Symbol*, Cell_Node1(cell));
 }
 
@@ -63,7 +63,7 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
 #define CELL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
 
 INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
-    assert(Any_Wordlike(v));
+    assert(Wordlike_Cell(v));
     assert(i != 0);
     CELL_WORD_INDEX_I32(v) = i;
 }
