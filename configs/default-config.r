@@ -7,7 +7,7 @@ os-id: null
 ; nmake: Generate an NMake file for CL
 target: 'execution
 
-extensions: make map! [
+extensions: to map! [
     ; NAME VALUE
     ; VALUE: one of
     ; + builtin

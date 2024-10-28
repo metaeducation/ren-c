@@ -9,34 +9,34 @@
 ; The old MAP! datatype (which was once called HASH! in Rebol2) is slated to be
 ; called DICTIONARY!.  It will be renamed at an appropriate moment.
 
-(empty? make map! [])
+(empty? to map! [])
 (empty? make map! 4)
 ; The length of a map is the number of key/value pairs it holds.
-(2 == length of make map! [a 1 b 2])  ; 4 in R2, R2/Forward
-(m: make map! [a 1 b 2] 1 == m.a)
-(m: make map! [a 1 b 2] 2 == m.b)
+(2 == length of to map! [a 1 b 2])  ; 4 in R2, R2/Forward
+(m: to map! [a 1 b 2] 1 == m.a)
+(m: to map! [a 1 b 2] 2 == m.b)
 (
-    m: make map! [a 1 b 2]
+    m: to map! [a 1 b 2]
     null? m.c
 )
-(m: make map! [a 1 b 2] m.c: 3 3 == m.c)
+(m: to map! [a 1 b 2] m.c: 3 3 == m.c)
 
 ; Maps contain key/value pairs and must be created from blocks of even length.
 ;
-~index-out-of-range~ !! (error? trap [make map! [1]])
+~???~ !! (to map! [1])
 
-(empty? clear make map! [a 1 b 2])
+(empty? clear to map! [a 1 b 2])
 [#1930 (
     m: make map! 8
     clear m
     null = select m 'a
 )]
 
-(0 = select make map! [foo 0] 'foo)
+(0 = select to map! [foo 0] 'foo)
 
 [#2293 (
     thing: copy:deep [a [b]]
-    m: make map! reduce [1 thing]
+    m: to map! reduce [1 thing]
     m2: copy:deep m
     thing2: select m2 1
     append thing.2 spread [c]
@@ -53,10 +53,10 @@
 ; one case form.  The way to get past this is SELECT:CASE and PUT:CASE, which
 ; use only the exact spelling of the key given.
 ;
-; Creation through MAKE MAP! assumes case insensitivity.
+; Creation through TO MAP! assumes case insensitivity.
 [
     (
-        m: make map! [AA 10 aa 20 <BB> 30 <bb> 40 #"C" 50 #"c" 60]
+        m: to map! [AA 10 aa 20 <BB> 30 <bb> 40 #"C" 50 #"c" 60]
         ok
     )
 
@@ -104,7 +104,7 @@
     (
         b2: copy the ''[x y]
         b4: copy the ''''[m n o p]
-        m: make map! compose [
+        m: to map! compose [
             a 0 'a 1 ''a 2 '''a 3 ''''a 4
             A 10 'A 11 ''A 12 '''A 13 ''''A 14
             (b2) II (b4) IIII
@@ -134,7 +134,7 @@
 
 ; !!! This should be extended to test instances of each datatype
 [#774 (
-    m: make map! []
+    m: to map! []
     m.(#"A"): 1020
     1020 = m.(#"A")
 )]
@@ -142,24 +142,24 @@
 ; Antiforms are not allowed in maps as either keys or values
 [
     ~bad-antiform~ !! (
-        m: make map! []
+        m: to map! []
         m.key: null
     )
 
     ~bad-antiform~ !! (
-        m: make map! []
+        m: to map! []
         m.(null): 1020
     )
 
     ~bad-antiform~ !! (
-        m: make map! []
+        m: to map! []
         m.(spread [a b c]): 1020
     )
 ]
 
 ; Void can be used to remove keys from maps
 (
-    m: make map! [key <initial>]
+    m: to map! [key <initial>]
     all [
         m.key = <initial>
         m.key: void  ; opts out of the all

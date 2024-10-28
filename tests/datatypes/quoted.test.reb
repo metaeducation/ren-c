@@ -230,7 +230,7 @@
         (make bitset! 16)
 
         ; https://github.com/rebol/rebol-issues/issues/2340
-        ; (make map! [m a p !])
+        ; (to map! [m a p !])
 
         (make varargs! [var args])
         (make object! [obj: "ect"])

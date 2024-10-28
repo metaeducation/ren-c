@@ -197,14 +197,14 @@ REBOL [
     if match [integer! word!] prefix [prefix: to-text prefix]
     if match [integer! word!] suffix [suffix: to-text suffix]
 
-    ; MAKE MAP! will create a map with no duplicates from the input if it
+    ; TO MAP! will create a map with no duplicates from the input if it
     ; is a BLOCK! (though differing cases of the same key will be preserved).
     ; This might be better with stricter checking, in case later keys
     ; overwrite earlier ones and obscure the invalidity of the earlier keys
     ; (or perhaps MAKE MAP! itself should disallow duplicates)
     ;
     if block? values [
-        values: make map! values
+        values: to map! values
     ]
 
     ; We match strings generated from the keywords, but need to know what

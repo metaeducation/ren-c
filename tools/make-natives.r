@@ -132,7 +132,7 @@ leaders: [
     get-block?
     set-block?
 ]
-leader-protos: make map! []
+leader-protos: to map! []
 
 info: all-protos
 while [not tail? info] [

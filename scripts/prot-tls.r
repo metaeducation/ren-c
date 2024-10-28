@@ -403,7 +403,7 @@ bytes-to-version: reverse copy version-to-bytes
         [block!]
     <local> transitions state-rule left right
 ][
-    transitions: make map! []  ; transformed dialect that always maps to BLOCK!
+    transitions: to map! []  ; transformed dialect that always maps to BLOCK!
     state-rule: [tag! | issue!]
     parse transdialect [
         some [

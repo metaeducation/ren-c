@@ -49,7 +49,7 @@
     if match [integer! word!] suffix [suffix: to-text suffix]
 
     if block? values [
-        values: make map! values
+        values: to map! values
     ]
 
     ; Build a block of rules like [keyword suffix result], looks like:

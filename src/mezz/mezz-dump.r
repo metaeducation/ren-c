@@ -23,7 +23,7 @@ REBOL [
     :prefix "Put a custom marker at the beginning of each output line"
         [text!]
 
-    <static> enablements (make map! [])
+    <static> enablements (to map! [])
 ][
     let /print: enclose lib.print/ lambda [f [frame!]] [
         if prefix [

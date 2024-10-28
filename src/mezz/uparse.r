@@ -270,7 +270,7 @@ block-combinator: ~  ; need in variable for recursion implementing "..."
 ; combinator named ANY).  This is part of the general issues with binding that
 ; need to have answers.
 ;
-default-combinators: make map! reduce [
+default-combinators: to map! reduce [
 
     === NOT COMBINATOR ===
 

@@ -146,7 +146,7 @@ DECLARE_NATIVE(setlocale)
     // GNU extensions are #define'd to -1 above this routine if not available
     //
     Value* map = rebValue(
-        "make map! [",
+        "to map! [",
             "all", rebI(LC_ALL),
             "address", rebI(LC_ADDRESS), // GNU extension
             "collate", rebI(LC_COLLATE),

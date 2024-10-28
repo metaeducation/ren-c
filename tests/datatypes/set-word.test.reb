@@ -24,9 +24,9 @@
     equal? :a frame!
 )
 [#1817 (
-    a: make map! []
+    a: to map! []
     a.b: make object! [
-        c: make map! []
+        c: to map! []
     ]
     integer? a.b.c.d: 1
 )]

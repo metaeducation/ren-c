@@ -12,7 +12,7 @@ if 'Windows <> first system.platform [
     ;DO NOT EDIT this table
     ;It's updated by iso3166.r
 
-  let iso-3166: make map! [
+  let iso-3166: to map! [
     "AF" "Afghanistan"
     "AX" "Åland Islands"
     "AL" "Albania"
@@ -266,7 +266,7 @@ if 'Windows <> first system.platform [
     ;DO NOT EDIT this table
     ;It's updated by iso639.r
 
-  let iso-639: make map! [
+  let iso-639: to map! [
     "aa" "Afar"
     "ab" "Abkhazian"
     "af" "Afrikaans"

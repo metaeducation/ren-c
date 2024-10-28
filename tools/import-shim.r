@@ -217,7 +217,7 @@ wrap-module: 'no
     elide system.script: old-system-script
 ]
 
-already-imported: make map! []  ; avoid importing things twice
+already-imported: to map! []  ; avoid importing things twice
 
 
 ; see header notes: `Exports` broken

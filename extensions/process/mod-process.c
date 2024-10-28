@@ -592,7 +592,7 @@ DECLARE_NATIVE(list_env)
 {
     INCLUDE_PARAMS_OF_LIST_ENV;
 
-    Value* map = rebValue("make map! []");
+    Value* map = rebValue("to map! []");
 
   #if TO_WINDOWS
     //

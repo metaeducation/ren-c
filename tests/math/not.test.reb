@@ -17,7 +17,7 @@
 (null = not first ['a])
 (null = not okay)
 (okay = not null)
-(null = not make map! [])
+(null = not to map! [])
 (null = not $0.00)
 (null = not :append)
 (null = not blank)
