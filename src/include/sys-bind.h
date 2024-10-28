@@ -133,6 +133,12 @@ INLINE Element* Derelativize_Untracked(
             assert(not Is_Stub_Details(binding));  // shouldn't be relativized
             out->extra = v->extra;
         }
+        else if (
+            Is_Stub_Use(context)
+            and Get_Cell_Flag(Stub_Cell(context), USE_NOTE_SET_WORDS)
+        ){
+            BINDING(out) = LINK(NextUse, context);
+        }
         else
             BINDING(out) = context;
     }
