@@ -583,28 +583,27 @@ REBTYPE(Decimal)
         USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
-        if (REF(to)) {
-            if (Is_Money(ARG(to)))
-                return Init_Money(OUT, Round_Deci(
-                    decimal_to_deci(d1), level_, VAL_MONEY_AMOUNT(ARG(to))
-                ));
-
-            if (Is_Time(ARG(to)))
-                return FAIL(PARAM(to));
-
-            d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
-            if (Is_Integer(ARG(to)))
-                return Init_Integer(OUT, cast(REBI64, d1));
-
-            if (Is_Percent(ARG(to)))
-                heart = REB_PERCENT;
+        if (not REF(to)) {
+            if (heart == REB_PERCENT)
+                Init_Decimal(ARG(to), 0.01L);  // round 5.5% -> 6%
+            else
+                Init_Integer(ARG(to), 1);
         }
-        else {
-            Init_True(ARG(to));  // default a rounding amount
-            d1 = Round_Dec(
-                d1, level_, heart == REB_PERCENT ? 0.01L : 1.0L
-            );
+
+        if (Is_Money(ARG(to)))
+            return Init_Money(OUT, Round_Deci(decimal_to_deci(d1), level_));
+
+        if (Is_Time(ARG(to)))
+            return FAIL(PARAM(to));
+
+        d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
+        if (Is_Percent(ARG(to))) {
+            heart = REB_PERCENT;
+            goto setDec;
         }
+
+        if (Is_Integer(ARG(to)))
+            return Init_Integer(OUT, cast(REBI64, d1));
         goto setDec; }
 
     case SYM_RANDOM: {

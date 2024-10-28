@@ -243,40 +243,26 @@ REBTYPE(Money)
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
         Value* to = ARG(to);
-
-        DECLARE_ATOM (temp);
-        if (REF(to)) {
-            if (Is_Integer(to))
-                Init_Money(temp, int_to_deci(VAL_INT64(to)));
-            else if (Is_Decimal(to) or Is_Percent(to))
-                Init_Money(temp, decimal_to_deci(VAL_DECIMAL(to)));
-            else if (Is_Money(to))
-                Copy_Cell(temp, to);
-            else
-                return FAIL(PARAM(to));
-        }
-        else
-            Init_Money(temp, int_to_deci(0));
+        if (Is_Nulled(to))
+            Init_Money(to, decimal_to_deci(1.0L));
 
         Init_Money(
             OUT,
-            Round_Deci(VAL_MONEY_AMOUNT(v), level_, VAL_MONEY_AMOUNT(temp))
+            Round_Deci(VAL_MONEY_AMOUNT(v), level_)
         );
 
-        if (REF(to)) {
-            if (Is_Decimal(to) or Is_Percent(to)) {
-                REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
-                Reset_Cell_Header_Untracked(
-                    TRACK(OUT),
-                    FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
-                );
-                VAL_DECIMAL(OUT) = dec;
-                return OUT;
-            }
-            if (Is_Integer(to)) {
-                REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(OUT));
-                return Init_Integer(OUT, i64);
-            }
+        if (Is_Decimal(to) or Is_Percent(to)) {
+            REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
+            Reset_Cell_Header_Untracked(
+                TRACK(OUT),
+                FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
+            );
+            VAL_DECIMAL(OUT) = dec;
+            return OUT;
+        }
+        if (Is_Integer(to)) {
+            REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(OUT));
+            return Init_Integer(OUT, i64);
         }
         HEART_BYTE(OUT) = REB_MONEY;
         return OUT; }

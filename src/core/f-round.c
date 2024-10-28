@@ -191,21 +191,17 @@ REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
 //  Round_Deci: C
 //
 // Identical to ROUND mezzanine function.
-// Note: scale arg only valid if REF(to) is set
 //
-deci Round_Deci(deci num, Level* level_, deci scale)
+deci Round_Deci(deci num, Level* level_)
 {
     INCLUDE_PARAMS_OF_ROUND;
     UNUSED(ARG(value));  // was extracted as `num`
 
-    deci deci_one = {1u, 0u, 0u, 0u, 0};
+    deci scale = decimal_to_deci(REF(to) ? Dec64(ARG(to)) : 1.0);
 
-    if (REF(to)) {
-        if (deci_is_zero(scale))
-            fail (Error_Zero_Divide_Raw());
-        scale = deci_abs(scale);
-    }
-    else scale = deci_one;
+    if (deci_is_zero(scale))
+        fail (Error_Zero_Divide_Raw());
+    scale = deci_abs(scale);
 
     if (REF(even)) return deci_half_even(num, scale);
     if (REF(down)) return deci_truncate(num, scale);

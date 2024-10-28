@@ -373,13 +373,13 @@ REBTYPE(Integer)
             return Init_Integer(OUT, Round_Int(num, level_, 0L));
 
         Value* to = ARG(to);
+        if (Is_Nulled(to))
+            Init_Integer(to, 1);
 
         if (Is_Money(to))
             return Init_Money(
                 OUT,
-                Round_Deci(
-                    int_to_deci(num), level_, VAL_MONEY_AMOUNT(to)
-                )
+                Round_Deci(int_to_deci(num), level_)
             );
 
         if (Is_Decimal(to) || Is_Percent(to)) {
