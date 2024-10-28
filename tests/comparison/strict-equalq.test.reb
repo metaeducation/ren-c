@@ -232,19 +232,7 @@
 (not strict-equal? 9223372036854775807 1)
 <64bit>
 (not strict-equal? 9223372036854775807 9223372036854775806)
-; #1134 "decimal tolerance"
-(not strict-equal? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334})
-; symmetry
-(
-    equal? strict-equal? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334}
-        strict-equal? to decimal! #{3FD3333333333334} to decimal! #{3FD3333333333333}
-)
-(not strict-equal? to decimal! #{3FB9999999999999} to decimal! #{3FB999999999999A})
-; symmetry
-(
-    equal? strict-equal? to decimal! #{3FB9999999999999} to decimal! #{3FB999999999999A}
-        strict-equal? to decimal! #{3FB999999999999A} to decimal! #{3FB9999999999999}
-)
+
 ; datatype differences
 (not strict-equal? 0 0.0)
 ; datatype differences

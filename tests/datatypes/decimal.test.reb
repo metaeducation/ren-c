@@ -7,26 +7,66 @@
 (decimal? 1.5)
 
 ; LOAD decimal and to binary! tests
+
 ; 64-bit IEEE 754 maximum
-(equal? #{7FEFFFFFFFFFFFFF} to binary! 1.7976931348623157e308)
-; Minimal positive normalized
-(equal? #{0010000000000000} to binary! 2.2250738585072014E-308)
-; Maximal positive denormalized
-(equal? #{000FFFFFFFFFFFFF} to binary! 2.225073858507201E-308)
-; Minimal positive denormalized
-(equal? #{0000000000000001} to binary! 4.9406564584124654E-324)
-; zero
-(equal? #{0000000000000000} to binary! 0.0)
-; negative zero
-(equal? #{8000000000000000} to binary! -0.0)
-; Maximal negative denormalized
-(equal? #{8000000000000001} to binary! -4.9406564584124654E-324)
-; Minimal negative denormalized
-(equal? #{800FFFFFFFFFFFFF} to binary! -2.225073858507201E-308)
-; Maximal negative normalized
-(equal? #{8010000000000000} to binary! -2.2250738585072014E-308)
-; 64-bit IEEE 754 minimum
-(equal? #{FFEFFFFFFFFFFFFF} to binary! -1.7976931348623157e308)
+(
+    for-each [bin num] [
+        #{7FEFFFFFFFFFFFFF} 1.7976931348623157e308  ; max
+        #{0010000000000000} 2.2250738585072014E-308  ; min (+) normalized
+        #{000FFFFFFFFFFFFF} 2.225073858507201E-308  ; max (+) denormalized
+        #{0000000000000001} 4.9406564584124654E-324  ; min (+) denormalized
+        #{3ff0000000000000} 1.0  ; one
+        #{0000000000000000} 0.0  ; zero
+        #{8000000000000000} -0.0  ; negative zero
+        #{8000000000000001} -4.9406564584124654E-324  ; max (-) denormalized
+        #{800FFFFFFFFFFFFF} -2.225073858507201E-308  ; min (-) denormalized
+        #{8010000000000000} -2.2250738585072014E-308  ; max (-) normalized
+        #{FFEFFFFFFFFFFFFF} -1.7976931348623157e308  ; min
+
+        ; accuracy tests
+        #{3FF0000000000009} 1.000000000000002  ; #747
+        #{000FFFFFFFFFFFFE} 2.2250738585072004e-308
+        #{000FFFFFFFFFFFFE} 2.2250738585072005e-308
+        #{000FFFFFFFFFFFFE} 2.2250738585072006e-308
+        #{000FFFFFFFFFFFFF} 2.2250738585072007e-308
+        #{000FFFFFFFFFFFFF} 2.2250738585072008e-308
+        #{000FFFFFFFFFFFFF} 2.2250738585072009e-308
+        #{000FFFFFFFFFFFFF} 2.225073858507201e-308
+        #{000FFFFFFFFFFFFF} 2.2250738585072011e-308
+        #{0010000000000000} 2.2250738585072012e-308
+        #{0010000000000000} 2.2250738585072013e-308
+        #{0010000000000000} 2.2250738585072014e-308
+    ][
+        if bin != encode 'IEEE-754 num [
+            fail ["IEEE-754 encoding of" num "was not" @bin]
+        ]
+        if num != decode 'IEEE-754 bin [
+            fail ["IEEE-754 decoding of" @bin "was not" num]
+        ]
+    ]
+    ok
+)
+
+; #1134 "decimal tolerance"
+(not same? // [
+    decode 'IEEE-754 #{3FD3333333333333}
+    decode 'IEEE-754 #{3FD3333333333334}
+])
+(not same? // [
+    decode 'IEEE-754 #{3FB9999999999999}
+    decode 'IEEE-754 #{3FB999999999999A}
+])
+
+; #1134 "decimal tolerance"
+(not strict-equal? // [
+    decode 'IEEE-754 #{3FD3333333333333}
+    decode 'IEEE-754 #{3FD3333333333334}
+])
+(not strict-equal? // [
+    decode 'IEEE-754 #{3FB9999999999999}
+    decode 'IEEE-754 #{3FB999999999999A}
+])
+
 
 ; 64-bit IEEE 754 maximum
 (zero? 1.7976931348623157e308 - transcode:one mold 1.7976931348623157e308)
@@ -74,19 +114,6 @@
 )]
 
 
-; LOAD decimal accuracy tests
-(equal? to binary! 2.2250738585072004e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072005e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072006e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072007e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072008e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072009e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.225073858507201e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072011e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072012e-308 #{0010000000000000})
-(equal? to binary! 2.2250738585072013e-308 #{0010000000000000})
-(equal? to binary! 2.2250738585072014e-308 #{0010000000000000})
-
 [#1753 (
     c: last mold 1e16
     (#0 <= c) and (#9 >= c)
@@ -104,23 +131,7 @@
 (1.1 = to decimal! "1.1")
 (error? trap [to decimal! "t"])
 
-; decimal! to binary! and binary! to decimal!
-(equal? #{3ff0000000000000} to binary! 1.0)
-(same? to decimal! #{3ff0000000000000} 1.0)
-
-[#747 (
-    equal? #{3FF0000000000009} to binary! to decimal! #{3FF0000000000009}
-)]
-
-; TO DECIMAL! of 2-element INTEGER! PATH! treats as fraction
-[
-    (0.5 = to decimal! 1/2)
-    ~bad-cast~ !! (to decimal! 1/2/3)
-    ~zero-divide~ !! (to decimal! 1/0)
-]
-
-; Unsupported experiment: MAKE DECIMAL! of 2-element path run DIVIDE code
-; (Don't depend on this, not very useful since you have to quote anyway)
+; Experiment: MAKE DECIMAL! of 2-element INTEGER! PATH! treats as fraction
 [
     (0.175 = make decimal! '(50% + 20%)/(1 + 3))
 ]

@@ -108,31 +108,6 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 
 
 //
-//  Init_Decimal_Bits: C
-//
-Element* Init_Decimal_Bits(Sink(Element) out, const Byte* bp)
-{
-    Reset_Cell_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
-
-    Byte* dp = cast(Byte*, &VAL_DECIMAL(out));
-
-  #ifdef ENDIAN_LITTLE
-    REBLEN n;
-    for (n = 0; n < 8; ++n)
-        dp[n] = bp[7 - n];
-  #elif defined(ENDIAN_BIG)
-    REBLEN n;
-    for (n = 0; n < 8; ++n)
-        dp[n] = bp[n];
-  #else
-    #error "Unsupported CPU endian"
-  #endif
-
-    return out;
-}
-
-
-//
 //  Makehook_Decimal: C
 //
 // !!! The current thinking on the distinction between MAKE and TO is that
@@ -157,16 +132,6 @@ Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
       case REB_TIME:
         d = VAL_NANO(arg) * NANO;
         break;
-
-      case REB_BINARY: {
-        Size size;
-        const Byte* at = Cell_Binary_Size_At(&size, arg);
-        if (size < 8)
-            return RAISE(arg);
-
-        Init_Decimal_Bits(OUT, at); // makes REB_DECIMAL
-        d = VAL_DECIMAL(OUT);
-        break; }
 
         // !!! It's not obvious that TEXT shouldn't provide conversions; and
         // possibly more kinds than TO does.  Allow it for now, even though

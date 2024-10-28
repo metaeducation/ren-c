@@ -11,6 +11,12 @@ REBOL [
     }--
 ]
 
+(sys.util/register-codec
+    'IEEE-754
+    []
+    null
+    decode-IEEE-754/
+    encode-IEEE-754/)
 
 ; !!! Although this follows the -OF naming convention, it doesn't fit the
 ; pattern of a reflector as it takes two arguments.  Moreover, it is a bit

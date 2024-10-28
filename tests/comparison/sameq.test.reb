@@ -247,19 +247,7 @@
 (not same? 9223372036854775807 1)
 <64bit>
 (not same? 9223372036854775807 9223372036854775806)
-; #1134 "decimal tolerance"
-(not same? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334})
-; symmetry
-(
-    equal? same? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334}
-        same? to decimal! #{3FD3333333333334} to decimal! #{3FD3333333333333}
-)
-(not same? to decimal! #{3FB9999999999999} to decimal! #{3FB999999999999A})
-; symmetry
-(
-    equal? same? to decimal! #{3FB9999999999999} to decimal! #{3FB999999999999A}
-        same? to decimal! #{3FB999999999999A} to decimal! #{3FB9999999999999}
-)
+
 ; datatype differences
 (not same? 0 0.0)
 ; datatype differences

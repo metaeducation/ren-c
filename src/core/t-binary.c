@@ -71,47 +71,94 @@ REBINT CT_Binary(const Cell* a, const Cell* b, bool strict)
 ***********************************************************************/
 
 
-static Binary* Make_Binary_BE64(const Value* arg)
-{
+
+//
+//  /encode-IEEE-754: native [
+//      "Encode a decimal as binary blob according to the IEEE-754 standard"
+//
+//      return: "Default return is double format (64 bits, 53-bit precision)"
+//          [binary!]
+//      arg [decimal!]  ; REVIEW: ~NaN~, ~inf~ as antiforms
+//      options "[single] -> Use single format (32 bits, 24-bit precision)"
+//          [block!]
+//  ]
+//
+DECLARE_NATIVE(encode_ieee_754) {
+    INCLUDE_PARAMS_OF_ENCODE_IEEE_754;
+
+    Value* arg = ARG(arg);
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL("IEEE-754 single precision not currently supported");
+
+    assert(sizeof(REBDEC) == 8);
+
     Binary* bin = Make_Binary(8);
     Byte* bp = Binary_Head(bin);
 
-    REBI64 i;
-    REBDEC d;
-    const Byte* cp;
-    if (Is_Integer(arg)) {
-        assert(sizeof(REBI64) == 8);
-        i = VAL_INT64(arg);
-        cp = c_cast(Byte*, &i);
-    }
-    else {
-        assert(sizeof(REBDEC) == 8);
-        d = VAL_DECIMAL(arg);
-        cp = c_cast(Byte*, &d);
-    }
+    REBDEC d = VAL_DECIMAL(arg);
+    const Byte* cp = c_cast(Byte*, &d);
 
-  #ifdef ENDIAN_LITTLE
-  blockscope {
+  #if defined(ENDIAN_LITTLE)
     REBLEN n;
     for (n = 0; n < 8; ++n)
         bp[n] = cp[7 - n];
-  }
   #elif defined(ENDIAN_BIG)
-  blockscope {
     REBLEN n;
     for (n = 0; n < 8; ++n)
         bp[n] = cp[n];
-  }
   #else
     #error "Unsupported CPU endian"
   #endif
 
     Term_Binary_Len(bin, 8);
-    return bin;
+    return Init_Blob(OUT, bin);
 }
 
 
-// Common behaviors for:
+//
+//  /decode-IEEE-754: native [
+//      "Decode binary blob as decimal according to the IEEE-754 standard"
+//
+//      return: [decimal!]  ; review ~NaN~, ~inf~ as antiforms
+//      blob [binary!]
+//      options "[single] -> Use single format (32 bits, 24-bit precision)"
+//          [block!]
+//  ]
+//
+DECLARE_NATIVE(decode_ieee_754) {
+    INCLUDE_PARAMS_OF_DECODE_IEEE_754;
+
+    Element* blob = cast(Element*, ARG(blob));
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL("IEEE-754 single precision not currently supported");
+
+    Size size;
+    const Byte* at = Cell_Binary_Size_At(&size, blob);
+    if (size < 8)
+        return RAISE(blob);
+
+    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_DECIMAL);
+
+    Byte* dp = cast(Byte*, &VAL_DECIMAL(OUT));
+
+  #if defined(ENDIAN_LITTLE)
+    REBLEN n;
+    for (n = 0; n < 8; ++n)
+        dp[n] = at[7 - n];
+  #elif defined(ENDIAN_BIG)
+    REBLEN n;
+    for (n = 0; n < 8; ++n)
+        dp[n] = at[n];
+  #else
+    #error "Unsupported CPU endian"
+  #endif
+
+    return OUT;
+}
+
+
 //
 //     MAKE BINARY! ...
 //     TO BINARY! ...
@@ -127,11 +174,6 @@ static Binary* Make_Binary_BE64(const Value* arg)
 static Bounce MAKE_TO_Binary_Common(Level* level_, const Element* arg)
 {
     switch (VAL_TYPE(arg)) {
-    case REB_BINARY: {
-        Size size;
-        const Byte* data = Cell_Binary_Size_At(&size, arg);
-        return Init_Blob(OUT, Make_Binary_From_Sized_Bytes(data, size)); }
-
       case REB_TEXT:
       case REB_FILE:
       case REB_EMAIL:
@@ -225,9 +267,6 @@ Bounce TO_Binary(Level* level_, Kind kind, Element* arg)
 {
     assert(kind == REB_BINARY);
     UNUSED(kind);
-
-    if (Is_Integer(arg) or Is_Decimal(arg))
-        return Init_Series(OUT, REB_BINARY, Make_Binary_BE64(arg));
 
     return MAKE_TO_Binary_Common(level_, arg);
 }
