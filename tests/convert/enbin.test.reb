@@ -3,12 +3,12 @@
 ; !!! The design of these dialects is under construction at time of writing
 ; writing, but they are to replace most BINARY! <=> INTEGER! conversions
 
-(#{00000020} = enbin [be + 4] 32)
-(#{20000000} = enbin [le + 4] 32)
-(32 = debin [be + 4] #{00000020})
-(32 = debin [le + 4] #{20000000})
-(32 = debin [be +] #{00000020})
-(32 = debin [le +] #{20000000})
+(#{00000020} = encode [BE + 4] 32)
+(#{20000000} = encode [LE + 4] 32)
+(32 = decode [BE + 4] #{00000020})
+(32 = decode [LE + 4] #{20000000})
+(32 = decode [BE +] #{00000020})
+(32 = decode [LE +] #{20000000})
 
 (
     random:seed "Reproducible Permutations!"
@@ -25,8 +25,8 @@
             r: r - ((power 256 num-bytes) / 2)
         ]
         value: to integer! r
-        bin: enbin settings value
-        check: debin settings bin
+        bin: encode settings value
+        check: decode settings bin
         if value != check [
             fail [value "didn't round trip ENBIN/DEBIN:" settings]
         ]

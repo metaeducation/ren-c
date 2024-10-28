@@ -39,12 +39,12 @@
 (1 == codepoint of #"^a")
 (0 == to integer! as text! #0)
 (1 == to integer! as text! #1)
-(0 == to integer! #{00})
-(1 == to integer! #{01})
+(0 == decode [BE +/-] #{00})
+(1 == decode [BE +/-] #{01})
 <32bit>
-(-1 == to integer! #{ffffffff})
+(-1 == decode [BE +/-] #{ffffffff})
 <64bit>
-(-1 == to integer! #{ffffffffffffffff})
+(-1 == decode [BE +/-] #{ffffffffffffffff})
 <64bit>
 (302961000000 == to integer! "3.02961E+11")
 (error? trap [to integer! "t"])

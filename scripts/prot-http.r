@@ -506,7 +506,7 @@ http-response-headers: context [
                 if odd? length of chunk-size [
                     insert chunk-size #0
                 ]
-                chunk-size: debin [be +] (debase:base as text! chunk-size 16)
+                chunk-size: decode [BE +] (debase:base as text! chunk-size 16)
 
                 ; A chunk size of zero signals no more chunks.  Stop cycling.
                 ;

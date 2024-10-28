@@ -117,11 +117,11 @@ elf-format: context [
 
         either mode = 'read [
             let bin: copy:part begin num-bytes
-            set name debin [(either endian = 'little ['le] ['be]) +] bin
+            set name decode [(either endian = 'little ['LE] ['BE]) +] bin
         ][
             let val: ensure integer! get name
-            change begin enbin [
-                (either endian = 'little ['le] ['be]) + (num-bytes)
+            change begin encode [
+                (either endian = 'little ['LE] ['LE]) + (num-bytes)
             ] val
         ]
     ]
@@ -543,8 +543,8 @@ pe-format: context [
     err: null
     fail-at: ~
 
-    u16-le: [buf: across repeat 2 one (u16: debin [LE + 2] buf)]
-    u32-le: [buf: across repeat 4 one (u32: debin [LE + 4] buf)]
+    u16-le: [buf: across repeat 2 one (u16: decode [LE + 2] buf)]
+    u32-le: [buf: across repeat 4 one (u32: decode [LE + 4] buf)]
 
     ; Note: `uintptr-64-le` uses a signed interpretation (+/-) even though it
     ; is supposed to be an unsigned integer the size of a platform pointer in
@@ -555,10 +555,10 @@ pe-format: context [
     ; (as this code does), the negative interpretation when the high bit is
     ; set won't cause a problem.
     ;
-    uintptr-32-le: [buf: across repeat 4 one (uintptr: debin [LE + 4] buf)]
+    uintptr-32-le: [buf: across repeat 4 one (uintptr: decode [LE + 4] buf)]
     uintptr-64-le: [
         buf: across repeat 8 one
-        (uintptr: debin [LE +/- 8] buf)  ; See note above for why +/-
+        (uintptr: decode [LE +/- 8] buf)  ; See note above for why +/-
     ]
 
     uintptr-le: uintptr-32-le  ; assume 32-bit unless discovered otherwise
@@ -1184,7 +1184,7 @@ generic-format: context [
                 print "Binary contains encap version 0 data block."
 
                 let size-location: skip sig-location -8
-                embed-size: debin [be +] copy:part size-location 8
+                embed-size: decode [be +] copy:part size-location 8
                 print ["Existing embedded data is" embed-size "bytes long."]
 
                 print ["Trimming out existing embedded data."]
@@ -1206,7 +1206,7 @@ generic-format: context [
 
         append executable embedding
 
-        append executable enbin [be + 8] length of embedding  ; size as binary
+        append executable encode [BE + 8] length of embedding  ; size as binary
 
         append executable signature
     ]
@@ -1221,7 +1221,7 @@ generic-format: context [
 
         if test-sig != signature [return null]
 
-        let embed-size: debin [be +] (
+        let embed-size: decode [be +] (
             read:seek:part file (info.size - sig-length - 8) 8
         )
 

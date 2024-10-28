@@ -56,8 +56,9 @@
 )
 
 ; No implicit to binary! from integer!
-(not equal? #{00} to integer! #{00})
-(equal? equal? #{00} to integer! #{00} equal? to integer! #{00} #{00})
+(not equal? #{00} decode [BE +] #{00})
+(equal? equal? #{00} (decode [BE +] #{00}) equal? (decode [BE +] #{00}) #{00})
+
 ; issue! vs. text!
 ; RAMBO #3518
 (not equal? a-value: #a to text! a-value)

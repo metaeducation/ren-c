@@ -235,11 +235,11 @@ bytes-to-version: reverse copy version-to-bytes
 ; !!! These shorthands cover what's needed and are chosen to clearly separate
 ; the number of bytes from the number being encoded (both integers).
 ;
-/to-1bin: specialize enbin/ [settings: [be + 1]]
-/to-2bin: specialize enbin/ [settings: [be + 2]]
-/to-3bin: specialize enbin/ [settings: [be + 3]]
-/to-4bin: specialize enbin/ [settings: [be + 4]]
-/to-8bin: specialize enbin/ [settings: [be + 8]]
+/to-1bin: specialize encode/ [type: [BE + 1]]
+/to-2bin: specialize encode/ [type: [BE + 2]]
+/to-3bin: specialize encode/ [type: [BE + 3]]
+/to-4bin: specialize encode/ [type: [BE + 4]]
+/to-8bin: specialize encode/ [type: [BE + 8]]
 
 /make-tls-error: lambda [
     message [text! block!]
@@ -343,7 +343,7 @@ bytes-to-version: reverse copy version-to-bytes
                 size: byte and+ 127
                 if not zero? (byte and+ 128) [  ; long form
                     let old-size: size
-                    size: debin [be +] copy:part next data old-size
+                    size: decode [BE +] copy:part next data old-size
                     data: skip data old-size
                 ]
                 if zero? size [
@@ -994,7 +994,7 @@ update-write-state: make-state-updater 'write [
             fail ["unknown/invalid protocol type:" data.1]
         ]
         version: select bytes-to-version copy:part at data 2 2
-        size: debin [be +] copy:part at data 4 2
+        size: decode [BE +] copy:part at data 4 2
         messages: copy:part at data 6 size
     ]
 ]
@@ -1023,7 +1023,7 @@ update-write-state: make-state-updater 'write [
 ]
 
 /grab-int: infix enclose grab/ lambda [f [frame!]] [
-    set f.left (debin [be +] eval copy f)
+    set f.left (decode [BE +] eval copy f)
 ]
 
 
@@ -1144,7 +1144,7 @@ update-write-state: make-state-updater 'write [
                     ]
                 )
 
-                let len: debin [be +] copy:part (skip data 1) 3
+                let len: decode [BE +] copy:part (skip data 1) 3
 
                 ; We don't mess with the data pointer itself as we use it, so
                 ; make a copy of the data.  Skip the 4 bytes we used.
@@ -1709,7 +1709,7 @@ update-write-state: make-state-updater 'write [
     ; to test a size?
     ;
     while [5 = length of copy:part data 5] [
-        let len: 5 + debin [be +] copy:part at data 4 2
+        let len: 5 + decode [BE +] copy:part at data 4 2
 
         debug ["reading bytes:" len]
 

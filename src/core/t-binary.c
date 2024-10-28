@@ -916,48 +916,40 @@ REBTYPE(Binary)
 
 
 //
-//  /enbin: native [
+//  /encode-integer: native [
 //
-//  "Encode value as a Little Endian or Big Endian BINARY!, signed/unsigned"
+//  "Encode integer as a Little Endian or Big Endian BINARY!, signed/unsigned"
 //
 //      return: [binary!]
-//      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"
+//      num [integer!]
+//      options "[<+ or +/-> <number of bytes>]"
 //          [block!]
-//      value "Value to encode (currently only integers are supported)"
-//          [integer!]
+//      :LE "Encode as little-endian (default is big-endian)"
 //  ]
 //
-DECLARE_NATIVE(enbin)
-//
-// !!! This routine may wind up being folded into ENCODE as a block-oriented
-// syntax for talking to the "little endian" and "big endian" codecs, but
-// giving it a unique name for now.
+DECLARE_NATIVE(encode_integer)
 {
-    INCLUDE_PARAMS_OF_ENBIN;
+    INCLUDE_PARAMS_OF_ENCODE_INTEGER;
 
-    Value* settings = rebValue("compose", ARG(settings));
-    if (Cell_Series_Len_At(settings) != 3)
-        return FAIL("ENBIN requires list of length 3 for settings for now");
-    bool little = rebUnboxBoolean(
-        "switch first", settings, "[",
-            "'BE ['false] 'LE ['true]",
-            "fail -{First element of ENBIN settings must be BE or LE}-",
-        "]"
-    );
+    bool little = REF(le);
+
+    Value* options = ARG(options);
+    if (Cell_Series_Len_At(options) != 2)
+        return FAIL("ENCODE-INTEER needs length 2 options for now");
+
     bool no_sign = rebUnboxBoolean(
-        "switch second", settings, "[",
+        "switch first", options, "[",
             "'+ ['true] '+/- ['false]",
-            "fail -{Second element of ENBIN settings must be + or +/-}-",
+            "fail -{First ENCODE-INTEGER option must be + or +/-}-",
         "]"
     );
     REBINT num_bytes = rebUnboxInteger(
-        "(match integer! third", settings, ") else [",
-            "fail -{Third element of ENBIN settings must be an integer}-",
+        "(match integer! second", options, ") else [",
+            "fail -{Second ENCODE-INTEGER option must be an integer}-",
         "]"
     );
     if (num_bytes <= 0)
-        return FAIL("Size for ENBIN encoding must be at least 1");
-    rebRelease(settings);
+        return FAIL("Size for ENCODE-INTEGER encoding must be at least 1");
 
     // !!! Implementation is somewhat inefficient, but trying to not violate
     // the C standard and write code that is general (and may help generalize
@@ -971,9 +963,9 @@ DECLARE_NATIVE(enbin)
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
-    REBI64 i = VAL_INT64(ARG(value));
+    REBI64 i = VAL_INT64(ARG(num));
     if (no_sign and i < 0)
-        return FAIL("ENBIN request for unsigned but passed-in value is signed");
+        return FAIL("Unsigned ENCODE-INTEGER received signed input value");
 
     // Negative numbers are encoded with two's complement: process we use here
     // is simple: take the absolute value, inverting each byte, add one.
@@ -1000,7 +992,7 @@ DECLARE_NATIVE(enbin)
     }
     if (i != 0)
         return rebDelegate(
-            "fail [", ARG(value), "-{exceeds}-", rebI(num_bytes), "-{bytes}-]"
+            "fail [", ARG(num), "-{exceeds}-", rebI(num_bytes), "-{bytes}-]"
         );
 
     // The process of byte production of a positive number shouldn't give us
@@ -1009,7 +1001,7 @@ DECLARE_NATIVE(enbin)
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
         return rebDelegate(
             "fail [",
-                ARG(value), "-{aliases a negative value with signed}-",
+                ARG(num), "-{aliases a negative value with signed}-",
                 "-{encoding of only}-", rebI(num_bytes), "-{bytes}-",
             "]"
         );
@@ -1020,65 +1012,60 @@ DECLARE_NATIVE(enbin)
 
 
 //
-//  /debin: native [
+//  /decode-integer: native [
 //
-//  "Decode BINARY! as Little Endian or Big Endian, signed/unsigned value"
+//  "Decode BINARY! as Little Endian or Big Endian, signed/unsigned integer"
 //
 //      return: [integer!]
-//      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"
-//          [block!]
 //      binary "Decoded (defaults length of binary for number of bytes)"
 //          [binary!]
+//      options "[<+ or +/-> <number of bytes>]"
+//          [block!]
+//      :LE "Decode as little-endian (default is big-endian)"
 //  ]
 //
-DECLARE_NATIVE(debin)
+DECLARE_NATIVE(decode_integer)
 //
 // !!! This routine may wind up being folded into DECODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but
 // giving it a unique name for now.
 {
-    INCLUDE_PARAMS_OF_DEBIN;
+    INCLUDE_PARAMS_OF_DECODE_INTEGER;
+
+    bool little = REF(le);
 
     Size bin_size;
     const Byte* bin_data = Cell_Binary_Size_At(&bin_size, ARG(binary));
 
-    Value* settings = rebValue("compose", ARG(settings));
+    Value* options = ARG(options);
 
-    REBLEN arity = Cell_Series_Len_At(settings);
-    if (arity != 2 and arity != 3)
-        fail("DEBIN requires list of length 2 or 3 for settings for now");
-    bool little = rebUnboxBoolean(
-        "switch first", settings, "[",
-            "'BE ['false] 'LE ['true]",
-            "fail -{First element of DEBIN settings must be BE or LE}-",
-        "]"
-    );
+    REBLEN arity = Cell_Series_Len_At(options);
+    if (arity != 1 and arity != 2)
+        fail("DECODE-INTEGER requires length 1 or 2 options for now");
     bool no_sign = rebUnboxBoolean(  // signed is C keyword
-        "switch second", settings, "[",
+        "switch first", options, "[",
             "'+ ['true] '+/- ['false]",
-            "fail -{Second element of DEBIN settings must be + or +/-}-",
+            "fail -{First DECODE-INTEGER option must be + or +/-}-",
         "]"
     );
     REBLEN num_bytes;
-    if (arity == 2)
+    if (arity == 1)
         num_bytes = bin_size;
     else {
         num_bytes = rebUnboxInteger(
-            "(match integer! third", settings, ") else [",
-                "fail -{Third element of DEBIN settings must be an integer}-",
+            "(match integer! second", options, ") else [",
+                "fail -{Second DECODE-INTEGER option must be an integer}-",
             "]"
         );
         if (bin_size != num_bytes)
-            return FAIL("Input binary is longer than number of bytes to DEBIN");
+            return FAIL("Input length mistmatches DECODE-INTEGER size option");
     }
     if (num_bytes <= 0) {
         //
-        // !!! Should #{} empty binary be 0 or error?  (Historically, 0, but
-        // if we are going to do this then ENBIN should accept 0 and make #{})
+        // !!! Should #{} empty binary be 0 or error?  (Historically, 0.)
         //
         fail("Size for DEBIN decoding must be at least 1");
     }
-    rebRelease(settings);
 
     // !!! Implementation is somewhat inefficient, but trying to not violate
     // the C standard and write code that is general (and may help generalize

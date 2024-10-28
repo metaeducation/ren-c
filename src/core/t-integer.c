@@ -142,35 +142,6 @@ Option(Error*) Trap_Value_To_Int64(
         Init_Integer(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
         goto check_sign;
     }
-    else if (Is_Binary(value)) { // must be before Any_String() test...
-
-        // !!! While historical Rebol TO INTEGER! of BINARY! would interpret
-        // the bytes as a big-endian form of their internal representations,
-        // wanting to futureproof for BigNum integers has changed Ren-C's
-        // point of view...delegating that highly parameterized conversion
-        // to operations currently called ENBIN and DEBIN.
-        //
-        // https://forum.rebol.info/t/1270
-        //
-        // This is a stopgap while ENBIN and DEBIN are hammered out which
-        // preserves the old behavior in the TO INTEGER! case.
-        //
-        Size n;
-        const Byte* bp = Cell_Binary_Size_At(&n, value);
-        if (n == 0) {
-            Init_Integer(out, 0);
-            return nullptr;
-        }
-        Value* sign = (*bp >= 0x80)
-            ? rebValue("'+/-")
-            : rebValue("'+");
-
-        Value* result = rebValue("debin [be", rebR(sign), "]", value);
-
-        Copy_Cell(out, result);
-        rebRelease(result);
-        return nullptr;
-    }
     else if (Is_Issue(value) or Any_String(value)) {
         Size size;
         const Length max_len = Cell_Series_Len_At(value);  // e.g. "no maximum"

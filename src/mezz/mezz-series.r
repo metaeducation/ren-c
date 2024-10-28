@@ -11,6 +11,21 @@ REBOL [
     }--
 ]
 
+
+(sys.util/register-codec
+    'BE
+    []
+    null
+    decode-integer/
+    encode-integer/)
+
+(sys.util/register-codec
+    'LE
+    []
+    null
+    decode-integer:LE/
+    encode-integer:LE/)
+
 (sys.util/register-codec
     'IEEE-754
     []

@@ -37,9 +37,9 @@
     equal? strict-equal? a-value to text! a-value strict-equal? to text! a-value a-value
 )
 
-(not strict-equal? #{00} to integer! #{00})
+(not strict-equal? #{00} decode [BE +/-] #{00})
 ; symmetry
-(equal? strict-equal? #{00} to integer! #{00} strict-equal? to integer! #{00} #{00})
+(equal? strict-equal? #{00} decode [BE +/-] #{00} strict-equal? decode [BE +/-] #{00} #{00})
 (
     a-value: #a
     not strict-equal? a-value to text! a-value

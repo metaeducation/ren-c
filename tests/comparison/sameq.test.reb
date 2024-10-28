@@ -37,9 +37,9 @@
     a-value: %""
     equal? same? a-value to text! a-value same? to text! a-value a-value
 )
-(not same? #{00} to integer! #{00})
+(not same? #{00} decode [BE +/-] #{00})
 ; symmetry
-(equal? same? #{00} to integer! #{00} same? to integer! #{00} #{00})
+(equal? same? #{00} decode [BE +/-] #{00} same? decode [BE +/-] #{00} #{00})
 (
     a-value: #a
     not same? a-value to text! a-value

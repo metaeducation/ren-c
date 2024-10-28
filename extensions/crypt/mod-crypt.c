@@ -235,7 +235,7 @@ DECLARE_NATIVE(checksum)
 //    use zlib's crc32_z(), since it is a sunk cost.  Would be:
 //
 //        uint32_t crc24 = Compute_CRC24(data, size);
-//        return rebValue("enbin [le + 3]", crc24);
+//        return rebValue("encode [LE + 3]", crc24);
 //
 // 3. The interpreter uses zlib (e.g. to unpack the embedded boot code) and
 //    so its hashes are a sunk cost, whether you build with any crypt
@@ -273,15 +273,15 @@ DECLARE_NATIVE(checksum)
     }
     if (0 == strcmp(method_utf8, "CRC32")) {  // internals need for gzip [3]
         uint32_t crc = crc32_z(0L, data, size);
-        result = rebValue("enbin [le + 4]", rebI(crc));
+        result = rebValue("encode [LE + 4]", rebI(crc));
     }
     else if (0 == strcmp(method_utf8, "ADLER32")) {  // included with zlib [4]
         uint32_t adler = z_adler32(1L, data, size);  // Note the 1L (!)
-        result = rebValue("enbin [le + 4]", rebI(adler));
+        result = rebValue("encode [LE + 4]", rebI(adler));
     }
     else if (0 == strcmp(method_utf8, "TCP")) {  // !!! not used? [5]
         int ipc = Compute_IPC(data, size);
-        result = rebValue("enbin [le + 2]", rebI(ipc));
+        result = rebValue("encode [LE + 2]", rebI(ipc));
     }
     else
         error = rebValue("make error! [-{Unknown CHECKSUM method:}- method]");

@@ -62,11 +62,11 @@ central-file-sig: #{504B0102}
 end-of-central-sig: #{504B0506}
 data-descriptor-sig: #{504B0708}
 
-/to-ilong: specialize enbin/ [settings: [LE + 4]]  ; Little endian 4-byte + int
+/to-ilong: specialize encode/ [type: [LE + 4]]  ; Little endian 4-byte + int
 
-/to-ishort: specialize enbin/ [settings: [LE + 2]]  ; Little endian 2-byte + int
+/to-ishort: specialize encode/ [type: [LE + 2]]  ; Little endian 2-byte + int
 
-/to-long: specialize enbin/ [settings: [BE + 4]]  ; Big endian 4-byte + int
+/to-long: specialize encode/ [type: [BE + 4]]  ; Big endian 4-byte + int
 
 /to-msdos-time: func [
     "Converts to a MS-DOS time"
@@ -92,7 +92,7 @@ data-descriptor-sig: #{504B0708}
     return: [time!]
     binary [binary!]
 ][
-    let i: debin [LE + 2] binary
+    let i: decode [LE + 2] binary
     return to time! reduce [
         63488 and+ i / 2048
         2016 and+ i / 32
@@ -105,7 +105,7 @@ data-descriptor-sig: #{504B0708}
     return: [date!]
     binary [binary!]
 ][
-    let i: debin [LE + 2] binary
+    let i: decode [LE + 2] binary
     return to date! reduce [
         65024 and+ i / 512 + 1980
         480 and+ i / 32
@@ -331,8 +331,8 @@ data-descriptor-sig: #{504B0708}
     ; enclosing routine.  To be addressed soon.
     ;
     let tmpbin
-    let uint16-rule: [tmpbin: across skip 2, (debin [LE + 2] tmpbin)]
-    let uint32-rule: [tmpbin: across skip 4, (debin [LE + 4] tmpbin)]
+    let uint16-rule: [tmpbin: across skip 2, (decode [LE + 2] tmpbin)]
+    let uint32-rule: [tmpbin: across skip 4, (decode [LE + 4] tmpbin)]
     let msdos-date-rule: [tmpbin: across skip 2, (get-msdos-date tmpbin)]
     let msdos-time-rule: [tmpbin: across skip 2, (get-msdos-time tmpbin)]
 

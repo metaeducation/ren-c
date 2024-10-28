@@ -37,8 +37,8 @@
             ]
         ]
 
-        modulus: enbin [be + 1] p
-        base: enbin [be + 1] g
+        modulus: encode [BE + 1] p
+        base: encode [BE + 1] g
 
         repeat 1 (wrap [
             mine: dh-generate-keypair:insecure modulus base
