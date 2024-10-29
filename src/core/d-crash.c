@@ -297,14 +297,15 @@ DECLARE_NATIVE(fail)
     panic (reason);
 }
 
-#if DEBUG
+
+#if DEBUG_CELL_READ_WRITE
 
 //
-//  Panic_Cell_Read: C
+//  Panic_Cell_Unreadable: C
 //
 // Only called when Assert_Cell_Readable() fails, no reason to inline it.
 //
-void Panic_Cell_Read(const Cell* c) {
+void Panic_Cell_Unreadable(const Cell* c) {
     if (not Is_Node(c))
         printf("Non-node passed to cell read routine\n");
     else if (not Is_Node_A_Cell(c))
@@ -318,11 +319,11 @@ void Panic_Cell_Read(const Cell* c) {
 
 
 //
-//  Panic_Cell_Write: C
+//  Panic_Cell_Unwritable: C
 //
 // Only called when Assert_Cell_Writable() fails, no reason to inline it.
 //
-void Panic_Cell_Write(Cell* c) {
+void Panic_Cell_Unwritable(Cell* c) {
     if (not Is_Node(c))
         printf("Non-node passed to cell write routine\n");
     else if (not Is_Node_A_Cell(c))
@@ -331,6 +332,25 @@ void Panic_Cell_Write(Cell* c) {
         assert(Get_Cell_Flag(c, PROTECTED));
         printf("Protected cell passed to writing routine\n");
     }
+    panic (c);
+}
+
+#endif
+
+
+#if DEBUG_MEMORY_ALIGNMENT
+
+//
+//  Panic_Cell_Unaligned: C
+//
+// Only called when Assert_Cell_Aligned() fails, no reason to inline it.
+//
+void Panic_Cell_Unaligned(Cell* c) {
+    printf(
+        "Cell address %p not aligned to %d bytes\n",
+        c_cast(void*, (c)),
+        cast(int, ALIGN_SIZE)
+    );
     panic (c);
 }
 

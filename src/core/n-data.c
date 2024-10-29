@@ -1013,7 +1013,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
         if (Is_Raised(cast(Atom*, out))) {
             Error* error = Cell_Error(out);  // extract error
             bool last_step = (stackindex == TOP_INDEX);
-            Erase_Atom_To_Suppress_Raised_Error(out);
+            Freshen_Cell_Suppress_Raised(out);
 
             Drop_Data_Stack_To(base);  // Note: changes TOP_INDEX
             Drop_GC_Guard(temp);

@@ -42,12 +42,176 @@
 //
 
 
-//=//// CELL VALIDATION (DEBUG BUILD ONLY) ////////////////////////////////=//
+//=//// CELL ALIGMENT CHECKING ////////////////////////////////////////////=//
 //
-// There are three categories of checks, which are used pervasively in the
-// system and help catch a lot of mistakes:
+// See notes on ALIGN_SIZE regarding why we check this, and when it does and
+// does not apply (some platforms need this invariant for `double` to work).
 //
-// ["FRESHNESS"]
+// 1. This is another case where the debug build doesn't inline functions.
+//    Run the risk of repeating macro args to speed up this critical check.
+//
+#if (! DEBUG_MEMORY_ALIGNMENT)
+    #define Assert_Cell_Aligned(c)    NOOP
+#else
+    #define Assert_Cell_Aligned(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* "evil macro", repeats arguments [1] */ \
+        if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) \
+            Panic_Cell_Unaligned(c); \
+    } while (0)
+#endif
+
+
+//=//// CELL "ERASING" ////////////////////////////////////////////////////=//
+//
+// To help be robust, the code ensures that NODE_FLAG_NODE and NODE_FLAG_CELL
+// are set in the header of a memory slot before reading or writing info for
+// a cell.  But an exception is made for efficiency that allows initialization
+// in the case of a header that is all zeros.  This pattern is efficiently
+// produced by memset(), and global memory for a C program is initialized to
+// all zeros to protect leakage from other processes...so it's good to be
+// able to take advantage of it *where possible*  (see [1]).
+//
+// 1. !!! WARNING: If you do not fully control the location you are writing,
+//    Erase_Cell() is NOT what you want to use to make a cell writable.  You
+//    could be overwriting persistent cell bits such as NODE_FLAG_ROOT that
+//    indicates an API handle, or NODE_FLAG_MANAGED that indicates a Pairing.
+//    This is strictly for things like quickly formatting array cells or
+//    restoring 0-initialized global variables back to the 0-init state.
+//
+// 2.  Note that an erased cell Is_Fresh(), but Ensure_Readable() will fail,
+//     and so will Ensure_Writable().
+
+INLINE Cell* Erase_Cell_Untracked(Cell* c) {
+    Assert_Cell_Aligned(c);
+    c->header.bits = CELL_MASK_0;
+    return c;
+}
+
+#define Erase_Cell(c) \
+    TRACK(Erase_Cell_Untracked(c))  // !!! most cases need Freshen_Cell() [1]
+
+#define Is_Cell_Erased(c) \
+    ((c)->header.bits == CELL_MASK_0)  // Is_Fresh(), but not read/write [2]
+
+
+//=//// CELL "POISONING" //////////////////////////////////////////////////=//
+//
+// Poisoning is used in the spirit of things like Address Sanitizer to block
+// reading or writing locations such as beyond the allocated memory of an
+// Array Flex.  It leverages the checks done by Ensure_Readable(),
+// Ensure_Writable() and Is_Fresh()
+//
+// Another use for the poisoned state is in an optimized array representation
+// that fits 0 or 1 cells into the Array Stub itself.  Since the Cell lives
+// where the content tracking information would usually be, there's no length.
+// Hence the presence of a poison cell in the slot indicates length 0.
+//
+// * To stop reading but not stop writing, use "Unreadable" cells instead.
+//
+// * This will defeat Detect_Rebol_Pointer(), so it will not realize the value
+//   is a cell any longer.  Hence poisoned Cells should (perhaps obviously) not
+//   be passed to API functions--as they'd appear to be UTF-8 strings.
+
+#define Poison_Cell(c) \
+    (TRACK(Erase_Cell(c))->header.bits = CELL_MASK_POISON)
+
+INLINE bool Is_Cell_Poisoned(const Cell* c) {
+    assert(Is_Cell_Erased(c) or (c->header.bits & NODE_FLAG_CELL));
+    return c->header.bits == CELL_MASK_POISON;
+}
+
+
+//=//// CELL READABLE/WRITABLE CHECKS (DEBUG BUILD ONLY) //////////////////=//
+//
+// [READABILITY]
+//
+// Readable cells have NODE_FLAG_NODE and NODE_FLAG_CELL set.  It's important
+// that they do, because if they don't then the first byte of the header
+// could be mistaken for valid UTF-8 (see Detect_Rebol_Pointer() for the
+// machinery that relies upon this for mixing UTF-8, Cells, and Stubs in
+// variadic API calls).
+//
+// Also, readable cells don't have NODE_FLAG_FREE set.  At one time the
+// evaluator would start off by marking all cells with this bit in order to
+// track that the output had not been assigned.  This helped avoid spurious
+// reads and differentiated `(void) else [...]` from `(else [...])`.  But
+// it required a bit being added and removed, so it was replaced with the
+// concept of Is_Fresh(), removing NODE_FLAG_NODE and NODE_FLAG_CELL to get
+// the effect with less overhead.  So NODE_FLAG_FREE is now used in a more
+// limited sense to get "unreadables"--a cell you can write, but not read.
+//
+// [WRITABILITY]
+//
+// A writable cell is one that has NODE_FLAG_NODE and NODE_FLAG_CELL set, but
+// that also does not have NODE_FLAG_PROTECTED.  While the Init_XXX() routines
+// generally want to test for freshness, things like Set_Cell_Flag() are
+// based on writability...e.g. a cell that's already been initialized and can
+// have its properties manipulated.
+//
+// Note that while the debug build checks NODE_FLAG_PROTECTED just to be safe,
+// the general idea is that a cell which is protected should never be writable
+// at runtime, enforced by the `const Cell*` convention.  You can't get a
+// non-const Cell reference without going through a runtime check that
+// makes sure the cell is not protected.
+//
+// 1. These macros are "evil", because in the debug build, functions aren't
+//    inlined, and the overhead actually adds up very quickly.  We repeat
+//    arguments to speed up these critical tests, then wrap them in
+//    Ensure_Readable() and Ensure_Writable() functions for callers that
+//    don't mind the cost.  The STATIC_ASSERT_LVALUE() macro catches any
+//    potential violators.
+
+#if DEBUG_CELL_READ_WRITE
+    #define Assert_Cell_Readable(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
+        if ( \
+            (FIRST_BYTE(&(c)->header.bits) & ( \
+                NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
+                    | NODE_BYTEMASK_0x40_FREE \
+            )) != 0x81 \
+        ){ \
+            Panic_Cell_Unreadable(c); \
+        } \
+    } while (0)
+
+    #define Assert_Cell_Writable(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
+        if ( \
+            (FIRST_BYTE(&(c)->header.bits) & ( \
+                NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
+                    | CELL_FLAG_PROTECTED \
+            )) != 0x81 \
+        ){ \
+            Panic_Cell_Unwritable(c); \
+        } \
+    } while (0)
+
+  #if (! CPLUSPLUS_11)
+    #define Ensure_Readable(c) (c)
+    #define Ensure_Writable(c) (c)
+  #else
+    template<typename T>
+    T Ensure_Readable(T cell) {
+        Assert_Cell_Readable(cell);
+        return cell;
+    }
+
+    template<typename T>
+    T Ensure_Writable(T cell) {
+        Assert_Cell_Writable(cell);
+        return cell;
+    }
+  #endif
+#else
+    #define Assert_Cell_Readable(c)    NOOP
+    #define Assert_Cell_Writable(c)    NOOP
+
+    #define Ensure_Readable(c) (c)
+    #define Ensure_Writable(c) (c)
+#endif
+
+
+//=//// CELL "FRESHNESS" //////////////////////////////////////////////////=//
 //
 // Most read and write operations of cells assert that the header has both
 // NODE_FLAG_NODE and NODE_FLAG_CELL set.  But there is an exception made when
@@ -70,104 +234,60 @@
 // fresh for initialization.  So the flag must be cleared or the cell erased
 // in order to overwrite it.
 //
-// [READABILITY]
+// 1. "evil macros" for debug build performance, see STATIC_ASSERT_LVALUE()
 //
-// Readable cells have NODE_FLAG_NODE and NODE_FLAG_CELL set.  It's important
-// that they do, because if they don't then the first byte of the header
-// could be mistaken for valid UTF-8 (see Detect_Rebol_Pointer() for the
-// machinery that relies upon this for mixing UTF-8, Cells, and Stubs in
-// variadic API calls).
+// 2. In order to avoid accidentally overlooking raised errors, they must
+//    be deliberately suppressed vs. overwritten.  e.g. the requirement for
+//    suppression does not apply to a cell that is being erased after having
+//    been moved, as the new cell takes over the "hot potato" of the error.
 //
-// Also, readable cells don't have NODE_FLAG_FREE set.  At one time the
-// evaluator would start off by marking all cells with this bit in order to
-// track that the output had not been assigned.  This helped avoid spurious
-// reads and differentiated `(void) else [...]` from `(else [...])`.  But
-// it required a bit being added and removed, so it was replaced with the
-// concept of "freshness" removing NODE_FLAG_NODE and NODE_FLAG_CELL to get
-// the effect with less overhead.  So NODE_FLAG_FREE is now used in a more
-// limited sense to get "unreadables"--a cell you can write, but not read.
-//
-// [WRITABILITY]
-//
-// A writable cell is one that has NODE_FLAG_NODE and NODE_FLAG_CELL set, but
-// that also does not have NODE_FLAG_PROTECTED.  While the Init_XXX() routines
-// generally want to test for freshness, things like Set_Cell_Flag() are
-// based on writability...e.g. a cell that's already been initialized and can
-// have its properties manipulated.
+
+#if DEBUG_CELL_READ_WRITE
+    #define Assert_Cell_Initable(out) do { \
+        STATIC_ASSERT_LVALUE(out);  /* evil macro [1] */ \
+        if (not Is_Cell_Erased(out))  /* CELL_MASK_0 considered initable */ \
+            Assert_Cell_Writable(out);  /* else need NODE and CELL flags */ \
+    } while (0)
+#else
+    #define Assert_Cell_Initable(c)    NOOP
+#endif
 
 #define Is_Fresh(c) \
     (((c)->header.bits & (~ CELL_MASK_PERSIST) & \
         (~ NODE_FLAG_NODE) & (~ NODE_FLAG_CELL)) == 0)
 
-#if DEBUG_CELL_WRITABILITY
+#define Freshen_Cell_Suppress_Raised_Untracked(c) do {  /* [2] */ \
+    STATIC_ASSERT_LVALUE(c);  /* evil macro [1] */ \
+    Assert_Cell_Initable(c);  /* if CELL_MASK_0, node + cell flags not set */ \
+    (c)->header.bits &= CELL_MASK_PERSIST;  /* won't add cell + node flags */ \
+} while (0)
 
-  // 1. These macros are "evil", because in the debug build, functions aren't
-  //    inlined, and the overhead actually adds up very quickly.  We repeat
-  //    arguments to speed up these critical tests, then wrap them in
-  //    Ensure_Readable() and Ensure_Writable() functions for callers that
-  //    don't mind the cost.  The STATIC_ASSERT_LVALUE() macro catches any
-  //    potential violators.
+#define Freshen_Cell_Untracked(c) do { \
+    STATIC_ASSERT_LVALUE(c);  /* evil macro [1] */ \
+    if (HEART_BYTE(c) == REB_ERROR)  /* warn on overwrite if raised [2] */ \
+        assert(QUOTE_BYTE(c) != ANTIFORM_0);\
+    Freshen_Cell_Suppress_Raised_Untracked(c);  /* already warned */ \
+} while (0)
 
-    #define Assert_Cell_Readable(c) do { \
-        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
-        if ( \
-            (FIRST_BYTE(&(c)->header.bits) & ( \
-                NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
-                    | NODE_BYTEMASK_0x40_FREE \
-            )) != 0x81 \
-        ){ \
-            Panic_Cell_Read(c); \
-        } \
-    } while (0)
+INLINE void Inline_Freshen_Cell_Untracked(Cell* c)
+  { Freshen_Cell_Untracked(c); }
 
-    #define Assert_Cell_Writable(c) do { \
-        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
-        if ( \
-            (FIRST_BYTE(&(c)->header.bits) & ( \
-                NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
-                    | CELL_FLAG_PROTECTED \
-            )) != 0x81 \
-        ){ \
-            Panic_Cell_Write(c); \
-        } \
-    } while (0)
+#define Freshen_Cell(v) \
+    Inline_Freshen_Cell_Untracked(TRACK(v))
 
-    #define Assert_Cell_Initable(out) do { \
-        if (not Is_Cell_Erased(out)) \
-            Assert_Cell_Writable(out);  /* macro does STATIC_ASSERT_LVALUE */ \
-    } while (0);
+INLINE void Inline_Freshen_Cell_Suppress_Raised_Untracked(Cell* c)
+  { Freshen_Cell_Suppress_Raised_Untracked(c); }
 
-  #if (! CPLUSPLUS_11)
-    #define Ensure_Readable(c) (c)
-    #define Ensure_Writable(c) (c)
-  #else
-    template <typename T>
-    T Ensure_Readable(T cell) {
-        Assert_Cell_Readable(cell);
-        return cell;
-    }
-
-    template <typename T>
-    T Ensure_Writable(T cell) {
-        Assert_Cell_Writable(cell);
-        return cell;
-    }
-  #endif
-#else
-    #define Assert_Cell_Readable(c)    NOOP
-    #define Assert_Cell_Writable(c)    NOOP
-    #define Assert_Cell_Initable(c)    NOOP
-
-    #define Ensure_Readable(c) (c)
-    #define Ensure_Writable(c) (c)
-#endif
+#define Freshen_Cell_Suppress_Raised(v) \
+    Inline_Freshen_Cell_Suppress_Raised_Untracked(TRACK(v))
 
 
-#define PAYLOAD(Type, v) \
-    (v)->payload.Type
 
-#define EXTRA(Type, v) \
-    (v)->extra.Type
+#define PAYLOAD(Type,cell) \
+    (cell)->payload.Type
+
+#define EXTRA(Type,cell) \
+    (cell)->extra.Type
 
 // Note: If incoming p is mutable, we currently assume that's allowed by the
 // flag bits of the node.  This could have a runtime check in debug build
@@ -178,27 +298,27 @@ INLINE void Tweak_Cell_Node1(Cell* v, Option(const Node*) node) {
     PAYLOAD(Any, v).first.node = maybe node;
 }
 
-INLINE void Tweak_Cell_Node2(Cell* v, Option(const Node*) node) {
-    assert(v->header.bits & CELL_FLAG_SECOND_IS_NODE);
-    PAYLOAD(Any, v).second.node = maybe node;
+INLINE void Tweak_Cell_Node2(Cell* c, Option(const Node*) node) {
+    assert(c->header.bits & CELL_FLAG_SECOND_IS_NODE);
+    PAYLOAD(Any, c).second.node = maybe node;
 }
 
-#define Cell_Node1(v) \
-    m_cast(Node*, PAYLOAD(Any, (v)).first.node)
+#define Cell_Node1(c) \
+    m_cast(Node*, PAYLOAD(Any, (c)).first.node)
 
-#define Cell_Node2(v) \
-    m_cast(Node*, PAYLOAD(Any, (v)).second.node)
+#define Cell_Node2(c) \
+    m_cast(Node*, PAYLOAD(Any, (c)).second.node)
 
 
-#define Cell_Heart_Unchecked(cell) \
-    u_cast(Heart, HEART_BYTE(cell))
+#define Cell_Heart_Unchecked(c) \
+    u_cast(Heart, HEART_BYTE(c))
 
-#define Cell_Heart(cell) \
-    Cell_Heart_Unchecked(Ensure_Readable(cell))
+#define Cell_Heart(c) \
+    Cell_Heart_Unchecked(Ensure_Readable(c))
 
-INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* cell) {
-    assert(QUOTE_BYTE(cell) == NOQUOTE_1);
-    return Cell_Heart_Unchecked(cell);
+INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* c) {
+    assert(QUOTE_BYTE(c) == NOQUOTE_1);
+    return Cell_Heart_Unchecked(c);
 }
 
 
@@ -277,132 +397,20 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
         &= ~CELL_FLAG_##name
 
 
-// See notes on ALIGN_SIZE regarding why we check this, and when it does and
-// does not apply (some platforms need this invariant for `double` to work).
-//
-// This is another case where the debug build doesn't inline functions.
-// Run the risk of repeating macro args to speed up this critical check.
-//
-#if (! DEBUG_MEMORY_ALIGN)
-    #define Assert_Cell_Aligned(c)    NOOP
-#else
-    #define Assert_Cell_Aligned(c) \
-        STATIC_ASSERT_LVALUE(c);  /* "evil macro", repeats arguments */ \
-        if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
-            printf( \
-                "Cell address %p not aligned to %d bytes\n", \
-                c_cast(void*, (c)), \
-                cast(int, ALIGN_SIZE) \
-            ); \
-            panic (c); \
-        }
-#endif
-
-
-//=//// CELL "ERASING" ////////////////////////////////////////////////////=//
-//
-// To help be robust, the code ensures that NODE_FLAG_NODE and NODE_FLAG_CELL
-// are set in the header of a memory slot before reading or writing info for
-// a cell.  But an exception is made for efficiency that allows initialization
-// in the case of a header that is all zeros.  This pattern is efficiently
-// produced by memset(), and global memory for a C program is initialized to
-// all zeros to protect leakage from other processes...so it's good to be
-// able to take advantage of it where possible.
-//
-// Note that an erased cell Is_Fresh(), but Ensure_Readable() will fail, and
-// so will Ensure_Writable().
-//
-// 1. If a cell contains a raised error, then any attempts to Init_Xxx() or
-//    other usages of Freshen_Cell() will assert.  Right now, erasing the
-//    cell is the way to bypass this.  We give a special alias to help
-//    find where this is happening.
-
-INLINE Cell* Erase_Cell_Untracked(Cell* c) {
-    Assert_Cell_Aligned(c);
-    c->header.bits = CELL_MASK_0;
-    return c;
-}
-
-#define Erase_Cell(c) \
-    TRACK(Erase_Cell_Untracked(c))
-
-#define Is_Cell_Erased(c) \
-    ((c)->header.bits == CELL_MASK_0)
-
-#define Erase_Atom_To_Suppress_Raised_Error(a) \
-    Erase_Cell(ensure(Atom*, a))  // [1]
-
-
-//=//// CELL "POISONING" //////////////////////////////////////////////////=//
-//
-// Poisoning is used in the spirit of things like Address Sanitizer to block
-// reading or writing locations such as beyond the allocated memory of an
-// Array Flex.  It leverages the checks done by Ensure_Readable(),
-// Ensure_Writable() and Is_Fresh()
-//
-// Another use for the poisoned state is in an optimized array representation
-// that fits 0 or 1 cells into the Array Stub itself.  Since the Cell lives
-// where the content tracking information would usually be, there's no length.
-// Hence the presence of a poison cell in the slot indicates length 0.
-//
-// * To stop reading but not stop writing, use "Unreadable" cells instead.
-//
-// * This will defeat Detect_Rebol_Pointer(), so it will not realize the value
-//   is a cell any longer.  Hence poisoned Cells should (perhaps obviously) not
-//   be passed to API functions--as they'd appear to be UTF-8 strings.
-
-#define Poison_Cell(v) \
-    (TRACK(Erase_Cell(v))->header.bits = CELL_MASK_POISON)
-
-INLINE bool Is_Cell_Poisoned(const Cell* cell) {
-    assert(Is_Cell_Erased(cell) or (cell->header.bits & NODE_FLAG_CELL));
-    return cell->header.bits == CELL_MASK_POISON;
-}
-
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//
-
-// 1. "evil macros" for debug build performance, see STATIC_ASSERT_LVALUE()
 //
-// 2. In order to avoid the accidental ignoring of raised errors, they must
-//    be deliberately suppressed vs. overwritten.
-//
-// 3. The requirement for suppression does not apply to a cell that is being
-//    erased after having been moved, because it's the new cell that takes
-//    over the "hot potato" of the error.
-
-#define Freshen_Cell_Untracked(v) do { \
-    STATIC_ASSERT_LVALUE(v);  /* evil macro [1] */ \
-    if (HEART_BYTE(v) == REB_ERROR)  /* must suppress [2] */ \
-        assert(QUOTE_BYTE(v) != ANTIFORM_0);\
-    assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
-    (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
-} while (0)
-
-#define Freshen_Moved_Cell_Untracked(v) do {  /* no suppress [3] */ \
-    STATIC_ASSERT_LVALUE(v);  /* evil macro [1] */ \
-    assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
-    (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
-} while (0)
+// See Is_Fresh() and Assert_Cell_Initable() for the explanation of what
+// "freshening" is, and why it tolerates CELL_MASK_0 in a cell header.
 
 INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
-    Assert_Cell_Initable(c);
-    Freshen_Cell_Untracked(c);
-    c->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
-        | flags | FLAG_QUOTE_BYTE(NOQUOTE_1));
+    Freshen_Cell_Untracked(c);  // if CELL_MASK_0, node + cell flags not set
+    c->header.bits |= (  // need to ensure node and cell flag get set
+        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(NOQUOTE_1)
+    );
 }
-
-INLINE Cell* Freshen_Cell_Untracked_Inline(Cell* c) {
-    Freshen_Cell_Untracked(c);
-    return c;
-}
-
-#define Freshen_Cell(v) \
-    TRACK(Freshen_Cell_Untracked_Inline(v))
-        // ^-- track AFTER reset, can diagnose cell origin in Ensure_Writable()
-
 
 
 //=///// BINDING //////////////////////////////////////////////////////////=//
@@ -617,7 +625,8 @@ INLINE Cell* Copy_Cell_Untracked(
 // on the cells that refer to them tracking when they are overwritten.  One
 // advantage would be being able to leave the reference counting as-is.
 //
-// In the meantime, this just does a Copy + RESET.
+// In the meantime, this just does a Copy + Freshen, where the freshening
+// doesn't have to worry about overwriting raised errors.
 
 INLINE Cell* Move_Cell_Untracked(
     Cell* out,
@@ -625,7 +634,7 @@ INLINE Cell* Move_Cell_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
-    Freshen_Moved_Cell_Untracked(v);  // track to here not useful
+    Freshen_Cell_Suppress_Raised_Untracked(v);  // moved error, didn't erase it
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;
@@ -670,8 +679,7 @@ INLINE Cell* Move_Cell_Untracked(
     TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))
 
 #define Move_Meta_Cell(out,v) \
-    cast(Element*, \
-        Meta_Quotify(Move_Cell_Untracked((out), (v), CELL_MASK_COPY)))
+    cast(Element*, Meta_Quotify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
 
 
 // !!! Super primordial experimental `const` feature.  Concept is that various

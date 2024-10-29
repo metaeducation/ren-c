@@ -337,6 +337,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
       handle_thrown:
         UNUSED(bounce);  // ignore, as whatever jumped here wants to throw
 
+      #if DEBUG_CELL_READ_WRITE
+        Freshen_Cell_Suppress_Raised(OUT);
+      #endif
+
         assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
 
         // Corrupting the pointer here was well-intentioned, but Drop_Level()
@@ -417,7 +421,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Set_Level_Flag(LEVEL, ABRUPT_FAILURE);
 
-    Freshen_Moved_Cell_Untracked(OUT);  // avoid sweep error under rug assert
+    #if DEBUG_CELL_READ_WRITE
+      Freshen_Cell_Suppress_Raised(OUT);
+    #endif
+
     Init_Thrown_Failure(LEVEL, Varlist_Archetype(e));  // non-definitional [1]
 
     while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail [2]

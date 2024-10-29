@@ -122,7 +122,7 @@ void *Try_Alloc_Core(size_t size)
     // Cache size at the head of the allocation in debug builds for checking.
     // Also catches Free() use with Try_Alloc_Core() instead of Free_Core().
     //
-    // Use a 64-bit quantity to preserve DEBUG_MEMORY_ALIGN invariant.
+    // Use a 64-bit quantity to preserve DEBUG_MEMORY_ALIGNMENT invariant.
 
     void *p_extra = malloc(size + ALIGN_SIZE);
     if (not p_extra) {
@@ -133,7 +133,7 @@ void *Try_Alloc_Core(size_t size)
     void *p = cast(char*, p_extra) + ALIGN_SIZE;
   #endif
 
-  #if DEBUG_MEMORY_ALIGN
+  #if DEBUG_MEMORY_ALIGNMENT
     assert(i_cast(uintptr_t, p) % ALIGN_SIZE == 0);
   #endif
 
@@ -281,7 +281,7 @@ void  Startup_Pools(REBINT scale)
         // A panic is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
         //
-      #if DEBUG_MEMORY_ALIGN
+      #if DEBUG_MEMORY_ALIGNMENT
         if (Mem_Pool_Spec[n].wide % sizeof(REBI64) != 0)
             panic ("memory pool width is not 64-bit aligned");
       #endif

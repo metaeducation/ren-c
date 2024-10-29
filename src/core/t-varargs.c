@@ -136,13 +136,11 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // If an evaluation is involved, then a thrown value is possibly returned.
 //
 bool Do_Vararg_Op_Maybe_End_Throws_Core(
-    Atom* out,
+    Sink(Atom) out,
     enum Reb_Vararg_Op op,
     const Cell* vararg,
     ParamClass pclass  // PARAMCLASS_0 to use vararg's class
 ){
-    Freshen_Cell(out);
-
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, vararg);
     if (pclass == PARAMCLASS_0)
@@ -348,7 +346,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 fail (out);
 
             fail (Error_Phase_Arg_Type(
-                unwrap vararg_level, key, param, Stable_Unchecked(out))
+                unwrap vararg_level, key, param, cast(const Value*, out))
             );
         }
     }

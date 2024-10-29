@@ -79,11 +79,11 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
     Is_Error(VAL_THROWN_LABEL(level_))  // non-definitional errors [1]
 
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
-    Level* level_,
+    Level* L,
     const Atom* arg,
-    const Value* label  // Note: is allowed to be same as `out`
+    const Value* label  // Note: is allowed to be same as OUT
 ){
-    assert(not THROWING);
+    assert(not Is_Throwing(L));
 
     assert(Is_Cell_Erased(&g_ts.thrown_arg));
     Copy_Cell(&g_ts.thrown_arg, arg);
@@ -92,15 +92,18 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Copy_Cell(&g_ts.thrown_label, label);
     Deactivate_If_Action(&g_ts.thrown_label);
 
-    assert(THROWING);
+    assert(Is_Throwing(L));
+    UNUSED(L);
 
-    Freshen_Cell(level_->out);
     return BOUNCE_THROWN;
 }
 
 // When failures are put in the throw state, they are the label--not the value.
 //
-INLINE Bounce Init_Thrown_Failure(Level* L, const Value* error) {
+INLINE Bounce Init_Thrown_Failure(
+    Level* L,
+    const Value* error  // error may be same as L->out
+){
     assert(Is_Error(error));
     return Init_Thrown_With_Label(L, Lib(NULL), error);
 }

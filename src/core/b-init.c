@@ -244,7 +244,7 @@ static void Shutdown_Lib(void)
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
-        Erase_Cell(Stub_Cell(patch));  // may be PROTECTED, can't Freshen_Cell()
+        Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrites PROTECT...
         Decay_Flex(patch);
 
         // !!! Typically nodes aren't zeroed out when they are freed.  Since
@@ -492,7 +492,7 @@ static void Init_System_Object(
     // Create SYSTEM.CODECS object
     //
     Init_Object(
-        Freshen_Cell(Get_System(SYS_CODECS, 0)),
+        Get_System(SYS_CODECS, 0),
         Alloc_Varlist_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
     );
 

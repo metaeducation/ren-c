@@ -642,11 +642,6 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
 // or C++ throw machinery.  This means it works even on systems that use
 // REBOL_FAIL_JUST_ABORTS.  It should be preferred wherever possible.
 //
-// 1. There might be a raised error in OUT (in fact, we may be FAIL()-ing
-//    the Cell_Error(OUT).  We want this to act like a cooperative version
-//    of the abrupt fail(), which wouldn't be concerned over the loss of a
-//    raised error, so suppress the assertion if it is a raised error.
-//
 INLINE Bounce Native_Fail_Result(Level* level_, const void *p) {
     assert(not THROWING);
 
@@ -656,7 +651,6 @@ INLINE Bounce Native_Fail_Result(Level* level_, const void *p) {
     while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
         Drop_Level_Unbalanced(TOP_LEVEL);  // Note: won't seem like THROW/Fail
 
-    Erase_Atom_To_Suppress_Raised_Error(level_->out);  // [1]
     return Init_Thrown_Failure(level_, Varlist_Archetype(error));
 }
 

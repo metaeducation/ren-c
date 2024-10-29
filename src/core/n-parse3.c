@@ -1990,7 +1990,7 @@ DECLARE_NATIVE(subparse)
             bool interrupted;
             if (Subparse_Throws(
                 &interrupted,
-                Freshen_Cell(SPARE),
+                SPARE,
                 ARG(position),
                 SPECIFIED,
                 sub,

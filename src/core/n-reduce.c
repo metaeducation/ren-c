@@ -167,7 +167,7 @@ DECLARE_NATIVE(reduce)
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    Erase_Atom_To_Suppress_Raised_Error(SPARE);  // aggressive assert [3]
+    Freshen_Cell_Suppress_Raised(SPARE);  // aggressive assert [3]
 
     if (Is_Elision(OUT))
         goto next_reduce_step;  // void results are skipped by reduce

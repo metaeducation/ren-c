@@ -434,15 +434,10 @@ Special internal defines used by RT, not Host-Kit developers:
     #define INCLUDE_TEST_LIBREBOL_NATIVE DEBUG
 #endif
 
-#if !defined(DEBUG_CELL_WRITABILITY)
-    #define DEBUG_CELL_WRITABILITY DEBUG
+#if !defined(DEBUG_CELL_READ_WRITE)
+    #define DEBUG_CELL_READ_WRITE DEBUG
 #endif
 
-// !!! Checking the memory alignment is an important invariant but may be
-// overkill to run on all platforms at all times.  It requires the
-// DEBUG_CELL_WRITABILITY flag to be enabled, since it's the moment of
-// writing that is when the check has an opportunity to run.
-//
 // !!! People using MLton to compile found that GCC 4.4.3 does not always
 // align doubles to 64-bit boundaries on Windows, even when -malign-double
 // is used.  It's a very old compiler, and may be a bug.  Disable align
@@ -450,15 +445,15 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 // https://stackoverflow.com/a/11110283/211160
 //
-#if !defined(DEBUG_MEMORY_ALIGN)
+#if !defined(DEBUG_MEMORY_ALIGNMENT)
   #ifdef __GNUC__
-    #if !defined(TO_WINDOWS) || (__GNUC__ >= 5) // only  least version 5
-        #define DEBUG_MEMORY_ALIGN DEBUG
+    #if !defined(TO_WINDOWS) || (__GNUC__ >= 5)  // only if at least version 5
+        #define DEBUG_MEMORY_ALIGNMENT DEBUG
     #else
-        #define DEBUG_MEMORY_ALIGN 0
+        #define DEBUG_MEMORY_ALIGNMENT 0
     #endif
   #else
-    #define DEBUG_MEMORY_ALIGN DEBUG
+    #define DEBUG_MEMORY_ALIGNMENT DEBUG
   #endif
 #endif
 
@@ -478,10 +473,6 @@ Special internal defines used by RT, not Host-Kit developers:
   #else
     #define DEBUG_DONT_CHECK_ALIGN 0
   #endif
-#endif
-
-#if DEBUG_MEMORY_ALIGN
-    STATIC_ASSERT(DEBUG_CELL_WRITABILITY == 1);  // required for align check
 #endif
 
 

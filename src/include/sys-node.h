@@ -217,7 +217,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
 
     pool->free--;
 
-  #if DEBUG_MEMORY_ALIGN
+  #if DEBUG_MEMORY_ALIGNMENT
     if (i_cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Pool Unit address %p not aligned to %d bytes\n",
