@@ -312,7 +312,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             return COPY(ARG(value));
         }
         if (REF(values)) {
-            Value* var;
+            const Value* var;
             const Element* tail;
             const Element* item = Cell_List_At(&tail, value);
 
@@ -325,7 +325,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     // references to even protected values to protect them.
                     //
                     Option(Error*) error = Trap_Lookup_Word(
-                        u_cast(const Value**, &var), item, Cell_List_Binding(value)
+                        &var, item, Cell_List_Binding(value)
                     );
                     if (error)
                         fail (unwrap error);
@@ -338,9 +338,9 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     var = safe;
                 }
 
-                Protect_Value(var, flags);
+                Protect_Value(m_cast(Value*, var), flags);
                 if (flags & PROT_DEEP)
-                    Uncolor(var);
+                    Uncolor(m_cast(Value*, var));
             }
             return COPY(ARG(value));
         }
