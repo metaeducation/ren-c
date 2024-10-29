@@ -141,7 +141,7 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
 // 1. `limit2` is typically Cell_Series_Len_At(binstr2))
 //
 REBINT Find_Binstr_In_Binstr(
-    REBLEN *len_out,  // length in output units of match
+    Sink(REBLEN) len_out,  // length in output units of match
     const Cell* binstr1,
     REBLEN end1,  // end binstr1 *index* (not a limiting *length*)
     const Cell* binstr2,  // pattern to be found
@@ -149,8 +149,6 @@ REBINT Find_Binstr_In_Binstr(
     Flags flags,  // AM_FIND_CASE, AM_FIND_MATCH
     REBINT skip1  // in length units of binstr1 (bytes or codepoints)
 ){
-    Corrupt_If_Debug(*len_out);  // corrupt output length in case of no match
-
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
 
     bool is_2_str = (Cell_Heart(binstr2) != REB_BINARY);

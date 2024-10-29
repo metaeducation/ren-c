@@ -98,7 +98,7 @@ INLINE Element* Init_Frame_Details_Core(
         ensure(Sink(Value), TRACK(out)), (a), (label), (binding)) \
     ))
 
-INLINE Value* Actionify(Sink(Value) v) {
+INLINE Value* Actionify(Need(Value*) v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     return Coerce_To_Stable_Antiform(v);
 }

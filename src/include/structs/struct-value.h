@@ -88,6 +88,12 @@
               { return reinterpret_cast<copy_const_t<Byte,T>*>(p); }
         ... };
     */
+
+   #if (! DEBUG_STATIC_ANALYZING)
+      template<typename V>
+      void Corrupt_If_Debug(SinkWrapper<V, true> sink)
+         { Corrupt_If_Debug(*sink.p); }
+   #endif
 #endif
 
 

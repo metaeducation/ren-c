@@ -161,13 +161,13 @@ void Push_Frame_Continuation(
 //    kinds of types branching permits.
 //
 bool Pushed_Continuation(
-    Atom* out,
+    Need(Atom*) out,  // not Sink (would corrupt, but with can be same as out)
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
     Context* binding,  // before branch forces non-empty variadic call
-    const Value* branch,
+    const Value* branch,  // *cannot* be the same as out
     Option(const Atom*) with  // can be same as out or not GC-safe, may copy
 ){
-    assert(branch != out);  // it's legal for `with` to be the same as out
+    assert(u_cast(const Atom*, branch) != out);
     assert(not with or (unwrap with) == out or not Is_Api_Value(unwrap with));
 
     if (Is_Action(branch))  // antiform frames are legal

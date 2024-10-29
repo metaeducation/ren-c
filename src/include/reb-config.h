@@ -376,7 +376,7 @@ Special internal defines used by RT, not Host-Kit developers:
     #if defined(__clang_analyzer__)
         #define DEBUG_STATIC_ANALYZING 1
     #else
-        #define DEBUG_STATIC_ANALYZING DEBUG  // will be 0, but testing now
+        #define DEBUG_STATIC_ANALYZING 0
     #endif
 #endif
 

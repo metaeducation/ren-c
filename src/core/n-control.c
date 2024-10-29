@@ -823,7 +823,7 @@ DECLARE_NATIVE(all)
     Value* block = ARG(block);
     Value* predicate = ARG(predicate);
 
-    Value* scratch = ARG(scratch);
+    Atom* scratch = LOCAL(scratch);
 
     Value* condition;  // will be found in OUT or scratch
 
@@ -897,7 +897,7 @@ DECLARE_NATIVE(all)
     SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
 
-    condition = scratch;
+    condition = Decay_If_Unstable(scratch);
     goto process_condition;  // with predicate, `condition` is predicate result
 
 } process_condition: {  //////////////////////////////////////////////////////
@@ -1501,7 +1501,7 @@ DECLARE_NATIVE(default)
     Value* branch = ARG(branch);
     Value* predicate = ARG(predicate);
 
-    Sink(Element) steps = ARG(return);  // reuse to save resolved steps [1]
+    Element* steps = cast(Element*, ARG(return));  // hold resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,

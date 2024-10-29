@@ -383,16 +383,20 @@ INLINE void Free_Level_Internal(Level* L) {
     Free_Pooled(LEVEL_POOL, L);
 }
 
-// 1. Push_Level() takes an Atom() for the output.  This is important, as
-//    we don't want to evaluate into variables or array slots.  Not only can
-//    they have their memory moved during an evaluation, but we don't want
-//    unstable antiforms being put into variables (or any antiforms being
-//    put in array cells).  Plus, states like erased cells exist as unstable
-//    intermediate states which we don't want to leak to debuggers.  So
-//    typically evaluations are done into the OUT or SPARE cells.
+// 1. Push_Level() takes an Atom* for the output.  It is a Need() and not a
+//    Sink() because we may not want to corrupt the cell we are given (e.g.
+//    if we're pushing a level to do infix processing on an already calculated
+//    result).  The cell will be erased by the trampoline mechanics on the
+//    initial entry state automatically.
+//
+//    Taking an Atom* is important, as we don't want to evaluate into variables
+//    or array slots.  Not only can they have their memory moved during an
+//    evaluation, but we don't want unstable antiforms being put into variables
+//    (or any antiforms being put in array cells).
 //
 //    Note that a special exception is made by LOCAL() in frames, based on the
-//    belief that local state for a native will never be exposed by a debugger.
+//    belief that local state for a native will never be exposed by a debugger
+//    and hence these locations can be used as evaluation targets.
 //
 // 2. Levels are pushed to reuse for several sequential operations like ANY,
 //    ALL, CASE, REDUCE.  It is allowed to change the output cell for each
@@ -403,7 +407,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
-    Atom* out,  // typecheck prohibits passing `unstable` Cell* for output [1]
+    Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
     L->out = out;  // must be a valid cell for GC [2]
@@ -428,7 +432,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
 }
 
 INLINE void Push_Level(  // inherits uninterruptibility [3]
-    Atom* out,  // typecheck prohibits passing `unstable` Cell* for output [1]
+    Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
     Push_Level_Dont_Inherit_Interruptibility(out, L);

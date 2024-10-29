@@ -578,11 +578,9 @@ Pairing* Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == NODE_FLAG_MANAGED);
     Pairing* p = cast(Pairing*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
 
-    Erase_Cell(Pairing_First(p));
-    Erase_Cell(Pairing_Second(p));
+    Pairing_First(p)->header.bits = CELL_MASK_UNREADABLE | flags;
+    Pairing_Second(p)->header.bits = CELL_MASK_UNREADABLE;
 
-    if (flags)
-        Manage_Pairing(p);
     return p;
 }
 

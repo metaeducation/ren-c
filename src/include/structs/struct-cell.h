@@ -78,10 +78,26 @@
 typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 
+//=//// COMMON INITIALIZATION CELL MASKS //////////////////////////////////=//
+//
+// See Is_Fresh() for a description of the rationale behind why it's allowed
+// to initialize cells with a header of 0, even though they do not carry
+// the NODE_FLAG_NODE and NODE_FLAG_CELL bits.  But that's the only exception,
+// so if you are initializing cells and want NODE_FLAG_ROOT or perhaps
+// NODE_FLAG_MANAGED as part of the initialization, you need to go ahead and
+// set the NODE_FLAG_NODE and NODE_FLAG_CELL bits.  But in order to prevent
+// readability in this case, you add NODE_FLAG_FREE so it is write-only
+//
+
 #define CELL_MASK_NO_NODES 0  // no CELL_FLAG_FIRST_IS_NODE or SECOND_IS_NODE
 
 #define CELL_MASK_0 0  // "Fresh" so initable, but not readable or writable
-#define CELL_MASK_0_ROOT NODE_FLAG_ROOT  // same (but for API cells)
+
+#define CELL_MASK_UNREADABLE \
+    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE)  // why FREE? see above
+
+#define CELL_MASK_API_INITABLE \
+    (CELL_MASK_UNREADABLE | NODE_FLAG_ROOT)
 
 
 //=//// BITS 0-7: NODE FLAGS //////////////////////////////////////////////=//

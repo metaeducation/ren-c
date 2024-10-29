@@ -1729,7 +1729,7 @@ DECLARE_NATIVE(get)
 // in the course of the assignment.
 //
 bool Set_Var_Core_Updater_Throws(
-    Sink(Value) out,  // GC-safe cell to write steps to, or put thrown value
+    Sink(Value) out,  // temp GC-safe location, not used for output
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,
@@ -1970,7 +1970,7 @@ bool Set_Var_Core_Updater_Throws(
 //  Set_Var_Core_Throws: C
 //
 bool Set_Var_Core_Throws(
-    Sink(Value) out,  // GC-safe cell to write steps to
+    Sink(Value) out,  // temp GC-safe location, not used for output
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Element* var,
     Context* context,

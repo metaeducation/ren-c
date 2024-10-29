@@ -47,9 +47,18 @@
 //   such cases.  So the only difference is that the release build does not
 //   raise alerts about the bit being set--not that the bit isn't there.
 
-INLINE Element* Init_Unreadable_Untracked(Sink(Element) out) {
-    Init_Quasi_Word(out, Canon(UNREADABLE));
-    Set_Node_Free_Bit(out);  // won't be readable, but still writable
+#define Init_Unreadable_Untracked(out) do { \
+    Assert_Cell_Initable(out);  /* evil macro does STATIC_ASSERT_LVALUE */ \
+    HEART_BYTE(out) = REB_0; \
+    /* Faster if we don't care what the QUOTE_BYTE(), etc. are... */ \
+    NODE_BYTE(out) |= NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL \
+        | NODE_BYTEMASK_0x40_FREE;  /* not readable, but still writable */ \
+} while (0)
+
+INLINE Element* Init_Unreadable_Untracked_Inline(
+    Need(Element*) out  // Sink() would duplicate unreadable init *sometimes*
+){
+    Init_Unreadable_Untracked(out);
     return out;
 }
 
@@ -57,11 +66,37 @@ INLINE bool Is_Unreadable(const Cell* c) {
     if (not Is_Node_Free(c))
         return false;
     assert(Is_Node(c) and Is_Node_A_Cell(c));
-    assert(HEART_BYTE(c) == REB_WORD);
-    assert(QUOTE_BYTE(c) == QUASIFORM_2);
-    assert(Cell_Word_Id(c) == SYM_UNREADABLE);
+    assert(HEART_BYTE(c) == REB_0);
     return true;
 }
 
 #define Init_Unreadable(out) \
-    TRACK(Init_Unreadable_Untracked((out)))
+    TRACK(Init_Unreadable_Untracked_Inline((out)))
+
+
+#if DEBUG && CPLUSPLUS_11 && (! DEBUG_STATIC_ANALYZING)
+    //
+    // We don't actually want things like Sink(Value) to set a cell's bits to
+    // a corrupt pattern, as we need to be able to call Init_Xxx() routines
+    // and can't do that on garbage.  But we don't want to Erase_Cell() either
+    // because that would lose header bits like whether the cell is an API
+    // value.  We use the Init_Unreadable_Untracked().
+    //
+    // Note that Init_Unreadable_Untracked() is an "evil macro" that checks
+    // to be sure that its argument is an LVALUE, so we have to take an
+    // address locally...but there's no function call.
+
+    INLINE void Corrupt_If_Debug(Cell& ref)
+      { Cell* c = &ref; Init_Unreadable_Untracked(c); }
+
+  #if DEBUG_USE_CELL_SUBCLASSES
+    INLINE void Corrupt_If_Debug(Atom& ref)
+      { Atom* a = &ref; Init_Unreadable_Untracked(a); }
+
+    INLINE void Corrupt_If_Debug(Value& ref)
+      { Value* v = &ref; Init_Unreadable_Untracked(v); }
+
+    INLINE void Corrupt_If_Debug(Element& ref)
+      { Element* e = &ref; Init_Unreadable_Untracked(e); }
+  #endif
+#endif

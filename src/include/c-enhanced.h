@@ -48,6 +48,18 @@
 
 //=//// CONFIGURATION /////////////////////////////////////////////////////=//
 
+#if !defined(DEBUG)  // prefer DEBUG, and prefer integer vs just "defined"
+    #if defined(NDEBUG)
+       #define DEBUG 0
+    #else
+       #define DEBUG 1
+    #endif
+#endif
+
+#if !defined(DEBUG_STATIC_ANALYZING)
+    #define DEBUG_STATIC_ANALYZING 0
+#endif
+
 #if !defined(DEBUG_CHECK_OPTIONALS)
     #define DEBUG_CHECK_OPTIONALS 0
 #endif
@@ -790,7 +802,7 @@
 #endif
 
 
-#ifdef NDEBUG
+#if (! DEBUG)
     #define Corrupt_Pointer_If_Debug(p)                 NOOP
     #define Corrupt_Function_Pointer_If_Debug(p)        NOOP
 #elif (! CPLUSPLUS_11)
@@ -894,11 +906,22 @@
 // Though the version here is more verbose, it uses the specializations to
 // avoid excessive calls to memset() in the debug build.
 //
+// 1. We do not do Corrupt_If_Debug() with static analysis, because that would
+//    make variables look like they had been assigned to the static analyzer.
+//    It should use its own notion of when things are "garbage" (e.g. this
+//    allows reporting of use of unassigned values from inline functions.)
 
 #define USED(x) \
     ((void)(x))
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if (! DEBUG) || DEBUG_STATIC_ANALYZING // [1]
+
+    #define Corrupt_If_Debug(x)  NOOP
+
+    #define UNUSED(x) \
+        ((void)(x))
+
+#elif (! CPLUSPLUS_11)
     #include <string.h>
 
     // See definition of Cell for why casting to void* is needed.
@@ -910,105 +933,113 @@
     #define UNUSED(x) \
         ((void)(x))
 #else
-    #define UNUSED Corrupt_If_Debug
-
     #include <cstring>  // for memset
 
-    // Can't corrupt the variable if it's not an lvalue.  So for the basic
-    // SFINAE overload, just cast void.  Do this also for cases that are
-    // lvalues, but we don't really know how to "corrupt" them.
+    // Introduce some variation in the runtimes based on something that is
+    // deterministic about the build.  Whether you're using clang works.
+    //
+  #if defined(__clang__)
+    #define CORRUPT_IF_DEBUG_SEED 5  // e.g. fifth corrupt pointer is zero
+    #define CORRUPT_IF_DEBUG_DOSE 11
+  #else
+    #define CORRUPT_IF_DEBUG_SEED 0  // e.g. first corrupt pointer is zero
+    #define CORRUPT_IF_DEBUG_DOSE 7
+  #endif
+
+    // Pointer, set to spam or 0 (faster than memset() template)
     //
     template<
         typename T,
-        typename TRR = typename std::remove_reference<T>::type,
         typename std::enable_if<
-            !std::is_lvalue_reference<T &&>::value
-            || std::is_const<TRR>::value
-            || (
-                !std::is_pointer<TRR>::value
-                && !std::is_arithmetic<TRR>::value
-                && !std::is_pod<TRR>::value
-            )
+            std::is_pointer<T>::value
         >::type* = nullptr
     >
-    void Corrupt_If_Debug(T && v) {
-        USED(v);
+    void Corrupt_If_Debug(T& ref) {
+        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
+        if (countdown == 0) {
+            ref = nullptr;  // nullptr occasionally, deterministic
+            countdown = CORRUPT_IF_DEBUG_DOSE;
+        }
+        else {
+            Corrupt_Pointer_If_Debug(ref); // corrupt other half of the time
+            --countdown;
+        }
     }
 
-    // For example: if you have an lvalue reference to a pointer, you can
-    // set it to DECAFBAD...which will likely be caught if it's a lie and it
-    // is getting used in the debug build.
+    // Integer/bool/float, set to spam or 0 (faster than memset() template)
     //
     template<
         typename T,
-        typename TRR = typename std::remove_reference<T>::type,
         typename std::enable_if<
-            std::is_lvalue_reference<T &&>::value
-            && !std::is_const<TRR>::value
-            && std::is_pointer<TRR>::value
+            not std::is_pointer<T>::value
+            and std::is_arithmetic<T>::value
         >::type* = nullptr
     >
-    void Corrupt_If_Debug(T && v) {
-        static bool zero = false;
-        if (zero)
-            v = nullptr; // do null half the time, deterministic
-        else
-            Corrupt_Pointer_If_Debug(v); // corrupt the other half of the time
-        zero = not zero;
+    void Corrupt_If_Debug(T& ref) {
+        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
+        if (countdown == 0) {
+            ref = static_cast<T>(0);  // false/0 occasionally, deterministic
+            countdown = CORRUPT_IF_DEBUG_DOSE;
+        }
+        else {
+            ref = static_cast<T>(12345678); // garbage the rest of the time
+            --countdown;
+        }
     }
 
-    // Any integral or floating type, set to a spam number.
+    // Generalized memset() template for Corrupt_If_Debug()
+    //
+    // 1. This memset technique could be applied to all types, but we can
+    //    dodge the cost of calling memset() with specializations above,
+    //    and give easier-to-recognize "that's corrupt!" values as well.
+    //
+    // 2. It's unsafe to memory fill an arbitrary C++ class by value with
+    //    garbage bytes, because they can have extra vtables and such--you
+    //    can overwrite private compiler data.  But this is a C codebase
+    //    which uses just a few C++ features.  If you don't have virtual
+    //    methods then is_standard_layout<> should be true, and the memset()
+    //    shouldn't be a problem...
+    //
+    // 3. See definition of Cell and Mem_Set() for why casting to void* is
+    //    needed.  (Mem_Set() macro that is not defined for %c-enhanced.h)
     //
     template<
         typename T,
-        typename TRR = typename std::remove_reference<T>::type,
         typename std::enable_if<
-            std::is_lvalue_reference<T &&>::value
-            && !std::is_const<TRR>::value
-            && std::is_arithmetic<TRR>::value
-            && !std::is_pointer<TRR>::value
+            not std::is_pointer<T>::value  // could work, but see [1]
+            and not std::is_arithmetic<T>::value  // could work, but see [1]
         >::type* = nullptr
     >
-    void Corrupt_If_Debug(T && v) {
-        static bool zero = false;
-        if (zero)
-            v = false; // false/0 half the time, deterministic
-        else
-            v = true; // true/1 other half the time
-        zero = not zero;
+    void Corrupt_If_Debug(T& ref) {
+        static_assert(
+            std::is_standard_layout<T>::value,  // would break C++ [1]
+            "Cannot memset() a C++ struct or class that's not standard layout"
+        );
+        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
+        if (countdown == 0) {
+            memset(cast(void*, &ref), 0, sizeof(T));  // void cast needed [1]
+            countdown = CORRUPT_IF_DEBUG_DOSE;
+        }
+        else {
+            memset(cast(void*, &ref), 189, sizeof(T));  // void cast needed [1]
+            --countdown;
+        }
     }
 
-    // It's unsafe to memory fill an arbitrary C++ class by value with
-    // garbage bytes, because of all the "extra" stuff in them.  You can
-    // crash the destructor.  But this is a C codebase which only occasionally
-    // uses C++ features in the C++ build.  Most will be "Plain Old Data",
-    // so fill those with garbage as well.
+    // We want to be able to write UNUSED() for things that aren't used
+    // even if they are RValues and can't be corrupted, like UNUSED(REF(foo)).
     //
-    // (Note: this one methodology could be applied to all pod types,
-    // including arithmetic and pointers, but this shows how to do it
-    // with custom ways and avoids function calls to memset in non-optimized
-    // debug builds for most cases.)
+    template<typename T>
+    void Unused_Helper(const T& ref)
+      { USED(ref); }
+
+    // For UNUSED() on a mutable ref, we fall through to Corrupt_If_Debug().
     //
-    template<
-        typename T,
-        typename TRR = typename std::remove_reference<T>::type,
-        typename std::enable_if<
-            std::is_lvalue_reference<T &&>::value
-            && !std::is_const<TRR>::value
-            && std::is_pod<TRR>::value
-            && (
-                !std::is_pointer<TRR>::value
-                && !std::is_arithmetic<TRR>::value
-            )
-        >::type* = nullptr
-    >
-    void Corrupt_If_Debug(T && v) {
-        //
-        // See definition of Cell for why casting to void* is needed.
-        // (Mem_Set() macro that does this is not defined for %c-enhanced.h)
-        //
-        memset(cast(void*, &v), 123, sizeof(TRR));
-    }
+    template<typename T>
+    void Unused_Helper(T& ref)
+      { Corrupt_If_Debug(ref); }
+
+    #define UNUSED Unused_Helper
 #endif
 
 
@@ -1062,7 +1093,7 @@
         strlen((const char*)bp)
 #endif
 
-#if defined(NDEBUG)
+#if (! DEBUG)
     /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
      * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
      * Being single-arity with no type passed in, they are succinct to use:
@@ -1160,6 +1191,12 @@
     template<class P>
     INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
         { return Is_Pointer_Corrupt_Debug(nn.p); }
+
+  #if (! DEBUG_STATIC_ANALYZING)
+    template<class P>
+    INLINE void Corrupt_If_Debug(NeverNull(P) &nn)
+        { Corrupt_Pointer_If_Debug(nn.p); }
+  #endif
 #endif
 
 
@@ -1293,6 +1330,12 @@
     template<class P>
     INLINE bool Is_Pointer_Corrupt_Debug(Option(P) &option)
       { return Is_Pointer_Corrupt_Debug(option.wrapped); }
+
+  #if (! DEBUG_STATIC_ANALYZING)
+    template<class P>
+    INLINE void Corrupt_If_Debug(Option(P) &option)
+      { Corrupt_If_Debug(option.wrapped); }
+  #endif
 #endif
 
 
@@ -1313,7 +1356,7 @@
 // suitable for -holding- an Element.)
 //
 #if DEBUG_USE_SINKS
-    template<typename T, bool need>
+    template<typename T, bool sink>
     struct SinkWrapper {
         T* p;
 
@@ -1323,45 +1366,66 @@
         template<
             typename U,
             typename std::enable_if<
-                !std::is_same<U,T>::value &&
+                sink  // corrupt if it's a "sink" and not a "need"
+                and not std::is_same<U,T>::value and
                 std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
             >::type* = nullptr
         >
         SinkWrapper(U* u) : p (u_cast(T*, u)) {
-          /*  if (not need)
-                Corrupt_If_Debug(*p); */
+            Corrupt_If_Debug(*p);
         }
 
         template<
             typename U,
-            bool Uneed,
             typename std::enable_if<
-                !std::is_same<U,T>::value &&
+                not sink  // don't corrupt if it's a "need" and not a "sink"
+                and not std::is_same<U,T>::value and
                 std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
             >::type* = nullptr
         >
-        SinkWrapper(SinkWrapper<U, Uneed> u) : p (u_cast(T*, u.p)) {
+        SinkWrapper(U* u) : p (u_cast(T*, u)) {
+        }
+
+        template<
+            typename U,
+            bool Usink,
+            typename std::enable_if<
+                not std::is_same<U,T>::value and
+                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
+            >::type* = nullptr
+        >
+        SinkWrapper(SinkWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
         }
 
         template<
             typename U,
             typename std::enable_if<
+                sink and
                 std::is_same<U,T>::value
             >::type* = nullptr
         >
         SinkWrapper(U* u) : p (u) {
-           /* if (not need)
-                Corrupt_If_Debug(*p); */
+            Corrupt_If_Debug(*p);
         }
 
         template<
             typename U,
-            bool Uneed,
+            typename std::enable_if<
+                not sink
+                and std::is_same<U,T>::value
+            >::type* = nullptr
+        >
+        SinkWrapper(U* u) : p (u) {
+        }
+
+        template<
+            typename U,
+            bool Usink,
             typename std::enable_if<
                 std::is_same<U,T>::value
             >::type* = nullptr
         >
-        SinkWrapper(SinkWrapper<U, Uneed> u) : p (u_cast(T*, u.p)) {
+        SinkWrapper(SinkWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
         }
 
         operator bool () const { return p != nullptr; }
@@ -1371,8 +1435,8 @@
         T* operator->() const { return p; }
     };
 
-    #define Sink(T) SinkWrapper<T, false>
-    #define Need(TP) SinkWrapper<typename std::remove_pointer<TP>::type, true>
+    #define Sink(T) SinkWrapper<T, true>
+    #define Need(TP) SinkWrapper<typename std::remove_pointer<TP>::type, false>
 #else
     #define Sink(T) T *
     #define Need(TP) TP

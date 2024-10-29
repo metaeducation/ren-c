@@ -321,12 +321,10 @@ Let* Make_Let_Variable(
 //    count it as a hit.
 //
 Option(Stub*) Get_Word_Container(
-    REBLEN *index_out,
+    Sink(REBLEN) index_out,
     const Element* any_word,
     Context* context
 ){
-    Corrupt_If_Debug(*index_out);  // corrupt index to make sure it gets set
-
     Context* binding = BINDING(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 

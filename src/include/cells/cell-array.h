@@ -124,7 +124,7 @@ INLINE const Element* Cell_List_Item_At(const Cell* v) {
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 INLINE Element* Init_Any_List_At_Core_Untracked(
-    Cell* out,
+    Sink(Element) out,
     Heart heart,
     const_if_c Array* array,
     REBLEN index,
@@ -141,7 +141,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 
 #if CPLUSPLUS_11
     INLINE Element* Init_Any_List_At_Core_Untracked(
-        Cell* out,
+        Sink(Element) out,
         Heart heart,
         const Array* array,  // all const arrays should be already managed
         REBLEN index,
@@ -164,8 +164,8 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 #define Init_Group(v,a)     Init_Any_List((v), REB_GROUP, (a))
 
 
-INLINE Cell* Init_Relative_Block_At(
-    Cell* out,
+INLINE Element* Init_Relative_Block_At(
+    Sink(Element) out,
     Action* action,  // action to which array has relative bindings
     Array* array,
     REBLEN index

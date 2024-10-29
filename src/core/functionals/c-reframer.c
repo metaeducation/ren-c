@@ -88,7 +88,7 @@ enum {
 //    and handed out for other purposes.  Caller's choice.
 //
 Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
-    Value* out,
+    Sink(Value) out,
     Value* action,
     Feed* feed,
     StackIndex base,
@@ -100,8 +100,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
     );
     L->baseline.stack_base = base;  // incorporate refinements
-    Freshen_Cell(out);
-    Push_Level(out, L);
+    Push_Level(cast(Atom*, out), L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;

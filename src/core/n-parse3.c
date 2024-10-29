@@ -231,7 +231,7 @@ INLINE Option(SymId) VAL_CMD(const Cell* v) {
 //
 static bool Subparse_Throws(
     bool *interrupted_out,
-    Sink(Value) out,
+    Sink(Atom) out,
     const Cell* input,
     Context* input_binding,
     Level* const L,
@@ -240,7 +240,6 @@ static bool Subparse_Throws(
     assert(Any_Series_Kind(Cell_Heart(input)));
 
     Push_Level(out, L);  // checks for C stack overflow
-    assert(Is_Fresh(out));
 
     Push_Action(L, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 
@@ -525,8 +524,6 @@ static REBIXO Parse_One_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    assert(Is_Fresh(OUT));
-
     if (Is_Group(rule) or Is_Get_Group(rule)) {
         bool inject = Is_Get_Group(rule);  // rule may be SPARE
         if (Process_Group_For_Parse_Throws(SPARE, level_, rule))
@@ -607,7 +604,7 @@ static REBIXO Parse_One_Rule(
         bool interrupted;
         if (Subparse_Throws(
             &interrupted,
-            Freshen_Cell(subresult),
+            subresult,
             ARG(position),  // affected by P_POS assignment above
             SPECIFIED,
             sub,
@@ -1279,8 +1276,6 @@ DECLARE_NATIVE(subparse)
     assert(Is_Nothing(ARG(position)));
     Copy_Cell(ARG(position), ARG(input));
 
-    assert(Is_Fresh(OUT));  // invariant provided by parse3
-
   #if !defined(NDEBUG)
     //
     // These parse state variables live in frame varlists, which can be
@@ -1476,7 +1471,6 @@ DECLARE_NATIVE(subparse)
                     );
 
                 FETCH_NEXT_RULE(L);
-                assert(Is_Fresh(OUT));
                 if (Is_Group(P_RULE)) {
                     if (Eval_Value_Throws(OUT, P_RULE, P_RULE_BINDING))
                         goto return_thrown;
@@ -2387,7 +2381,7 @@ DECLARE_NATIVE(parse3)
     bool interrupted;
     if (Subparse_Throws(
         &interrupted,
-        Freshen_Cell(OUT),
+        OUT,
         input, SPECIFIED,
         sub,
         (REF(case) ? AM_FIND_CASE : 0)

@@ -146,6 +146,11 @@
         } \
     } while (0)
 
+    #define Assert_Cell_Initable(out) do { \
+        if (not Is_Cell_Erased(out)) \
+            Assert_Cell_Writable(out);  /* macro does STATIC_ASSERT_LVALUE */ \
+    } while (0);
+
   #if (! CPLUSPLUS_11)
     #define Ensure_Readable(c) (c)
     #define Ensure_Writable(c) (c)
@@ -165,6 +170,7 @@
 #else
     #define Assert_Cell_Readable(c)    NOOP
     #define Assert_Cell_Writable(c)    NOOP
+    #define Assert_Cell_Initable(c)    NOOP
 
     #define Ensure_Readable(c) (c)
     #define Ensure_Writable(c) (c)
@@ -334,8 +340,8 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 #define Erase_Cell(c) \
     TRACK(Erase_Cell_Untracked(c))
 
-#define Is_Cell_Erased(v) \
-    ((v)->header.bits == CELL_MASK_0)
+#define Is_Cell_Erased(c) \
+    ((c)->header.bits == CELL_MASK_0)
 
 #define Erase_Atom_To_Suppress_Raised_Error(a) \
     Erase_Cell(ensure(Atom*, a))  // [1]
@@ -396,6 +402,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* cell) {
 INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
+    Assert_Cell_Initable(c);
     Freshen_Cell_Untracked(c);
     c->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | flags | FLAG_QUOTE_BYTE(NOQUOTE_1));
