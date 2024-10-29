@@ -116,15 +116,7 @@
                     | NODE_BYTEMASK_0x40_FREE \
             )) != 0x81 \
         ){ \
-            if (not ((c)->header.bits & NODE_FLAG_CELL)) \
-                printf("Non-cell passed to cell read routine\n"); \
-            else if (not ((c)->header.bits & NODE_FLAG_NODE)) \
-                printf("Non-node passed to cell read routine\n"); \
-            else \
-                printf( \
-                    "Assert_Cell_Readable() on NODE_FLAG_FREE cell\n" \
-                ); \
-            panic (c); \
+            Panic_Cell_Read(c); \
         } \
     } while (0)
 
@@ -136,13 +128,7 @@
                     | CELL_FLAG_PROTECTED \
             )) != 0x81 \
         ){ \
-            if (not ((c)->header.bits & NODE_FLAG_CELL)) \
-                printf("Non-cell passed to cell write routine\n"); \
-            else if (not ((c)->header.bits & NODE_FLAG_NODE)) \
-                printf("Non-node passed to cell write routine\n"); \
-            else \
-                printf("Protected cell passed to writing routine\n"); \
-            panic (c); \
+            Panic_Cell_Write(c); \
         } \
     } while (0)
 

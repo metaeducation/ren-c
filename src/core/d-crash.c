@@ -296,3 +296,42 @@ DECLARE_NATIVE(fail)
 
     panic (reason);
 }
+
+#if DEBUG
+
+//
+//  Panic_Cell_Read: C
+//
+// Only called when Assert_Cell_Readable() fails, no reason to inline it.
+//
+void Panic_Cell_Read(const Cell* c) {
+    if (not Is_Node(c))
+        printf("Non-node passed to cell read routine\n");
+    else if (not Is_Node_A_Cell(c))
+        printf("Non-cell passed to cell read routine\n");
+    else {
+        assert(Is_Node_Free(c));
+        printf("Assert_Cell_Readable() on NODE_FLAG_FREE cell\n");
+    }
+    panic (c);
+}
+
+
+//
+//  Panic_Cell_Write: C
+//
+// Only called when Assert_Cell_Writable() fails, no reason to inline it.
+//
+void Panic_Cell_Write(Cell* c) {
+    if (not Is_Node(c))
+        printf("Non-node passed to cell write routine\n");
+    else if (not Is_Node_A_Cell(c))
+        printf("Non-cell passed to cell write routine\n");
+    else {
+        assert(Get_Cell_Flag(c, PROTECTED));
+        printf("Protected cell passed to writing routine\n");
+    }
+    panic (c);
+}
+
+#endif
