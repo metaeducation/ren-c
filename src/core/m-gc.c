@@ -1552,6 +1552,8 @@ void Startup_GC(void)
 //
 void Shutdown_GC(void)
 {
+    assert(not g_gc.recycling);
+
     GC_Kill_Stub(&PG_Inaccessible_Stub);
 
     assert(Flex_Used(g_gc.guarded) == 0);
@@ -1575,4 +1577,6 @@ void Shutdown_GC(void)
     g_gc.recycled_stubs_total = 0;
     g_gc.recycled_stubs = 0;
   #endif
+
+    g_gc.disabled = false;
 }
