@@ -377,7 +377,7 @@ EXTERN_C intptr_t API_rebPromise(
     // the long run, there's no ordering guarantee of promises (e.g. if they
     // were running on individual threads).
 
-    struct Reb_Promise_Info *info = Try_Alloc(struct Reb_Promise_Info);
+    struct Reb_Promise_Info *info = Try_Alloc_Memory(struct Reb_Promise_Info);
     info->state = PROMISE_STATE_QUEUEING;
     info->promise_id = Heapaddr_From_Pointer(code);
     info->binding = Get_Context_From_Stack();
@@ -514,7 +514,7 @@ void RunPromise(void)
 
     assert(PG_Promises == info);
     PG_Promises = info->next;
-    Free(struct Reb_Promise_Info, info);
+    Free_Memory(struct Reb_Promise_Info, info);
 }}
 
 

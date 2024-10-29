@@ -1385,7 +1385,7 @@ REBTYPE(String)
 //
 void Startup_String(void)
 {
-    Char_Escapes = Try_Alloc_N_Zerofill(Byte, MAX_ESC_CHAR + 1);
+    Char_Escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_ESC_CHAR + 1);
 
     Byte* cp = Char_Escapes;
     Byte c;
@@ -1397,7 +1397,7 @@ void Startup_String(void)
     Char_Escapes[cast(Byte, '"')] = '"';
     Char_Escapes[cast(Byte, '^')] = '^';
 
-    URL_Escapes = Try_Alloc_N_Zerofill(Byte, MAX_URL_CHAR + 1);
+    URL_Escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_URL_CHAR + 1);
 
     for (c = 0; c <= ' '; c++)
         URL_Escapes[c] = ESC_URL | ESC_FILE;
@@ -1414,6 +1414,6 @@ void Startup_String(void)
 //
 void Shutdown_String(void)
 {
-    Free_N(Byte, MAX_ESC_CHAR + 1, Char_Escapes);
-    Free_N(Byte, MAX_URL_CHAR + 1, URL_Escapes);
+    Free_Memory_N(Byte, MAX_ESC_CHAR + 1, Char_Escapes);
+    Free_Memory_N(Byte, MAX_URL_CHAR + 1, URL_Escapes);
 }

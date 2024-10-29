@@ -907,15 +907,15 @@ static const Codepoint Char_Cases[] = {
 void Init_Char_Cases(void)
 {
     // Init whitespace table:
-    White_Chars = Try_Alloc_N(Byte, 34);
+    White_Chars = Try_Alloc_Memory_N(Byte, 34);
     memset(White_Chars, 1, 33); // All white chars: NL, CR, BS, etc...
     White_Chars[cast(Byte, ' ')] = 3; // space
     White_Chars[cast(Byte, '\t')] = 3; // tab
     White_Chars[0] = 0; // special
 
     // Casing tables:
-    Upper_Cases = Try_Alloc_N(Codepoint, UNICODE_CASES);
-    Lower_Cases = Try_Alloc_N(Codepoint, UNICODE_CASES);
+    Upper_Cases = Try_Alloc_Memory_N(Codepoint, UNICODE_CASES);
+    Lower_Cases = Try_Alloc_Memory_N(Codepoint, UNICODE_CASES);
 
     int n;
     for (n = 0; n < UNICODE_CASES; n++) {
@@ -941,7 +941,7 @@ void Init_Char_Cases(void)
 //
 void Shutdown_Char_Cases(void)
 {
-    Free_N(Codepoint, UNICODE_CASES, Upper_Cases);
-    Free_N(Codepoint, UNICODE_CASES, Lower_Cases);
-    Free_N(Byte, 34, White_Chars);
+    Free_Memory_N(Codepoint, UNICODE_CASES, Upper_Cases);
+    Free_Memory_N(Codepoint, UNICODE_CASES, Lower_Cases);
+    Free_Memory_N(Byte, 34, White_Chars);
 }

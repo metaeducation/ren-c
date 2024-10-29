@@ -787,7 +787,7 @@ struct Loop_Each_State {
 //
 void Init_Loop_Each(Value* iterator, Value* data)
 {
-    struct Loop_Each_State *les = Try_Alloc(struct Loop_Each_State);
+    struct Loop_Each_State *les = Try_Alloc_Memory(struct Loop_Each_State);
 
     // !!! Temporarily turn any sequences into a BLOCK!, rather than worry over
     // figuring out how to iterate optimized ANY-SEQUENCE.  Review as part of
@@ -1047,7 +1047,7 @@ void Shutdown_Loop_Each(Value* iterator)
     if (Is_Api_Value(les->data))  // free data last (used above)
         rebRelease(les->data);
 
-    Free(struct Loop_Each_State, les);
+    Free_Memory(struct Loop_Each_State, les);
     Init_Unreadable(iterator);
 }
 

@@ -92,7 +92,7 @@ bool Try_Flex_Data_Alloc(Flex* s, REBLEN capacity) {
                 Clear_Flex_Flag(s, POWER_OF_2);  // flag isn't necessary
         }
 
-        s->content.dynamic.data = Try_Alloc_N(char, size);
+        s->content.dynamic.data = Try_Alloc_Memory_N(char, size);
         if (not s->content.dynamic.data)
             return false;
 

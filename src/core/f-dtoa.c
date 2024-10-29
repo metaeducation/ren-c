@@ -138,14 +138,14 @@
  *  define some or all of DBL_DIG, DBL_MAX_10_EXP, DBL_MAX_EXP,
  *  FLT_RADIX, FLT_ROUNDS, and DBL_MAX.
  * #define MALLOC your_malloc, where your_malloc(n) acts like malloc(n)
- *  if memory is available and otherwise does something you deem
- *  appropriate.  If MALLOC is undefined, malloc will be invoked
- *  directly -- and assumed always to succeed.  Similarly, if you
- *  want something other than the system's Free() to be called to
- *  recycle memory acquired from MALLOC, #define FREE to be the
- *  name of the alternate routine.  (FREE or free is only called in
- *  pathological cases, e.g., in a dtoa call after a dtoa return in
- *  mode 3 with thousands of digits requested.)
+ *	if memory is available and otherwise does something you deem
+ *	appropriate.  If MALLOC is undefined, malloc will be invoked
+ *	directly -- and assumed always to succeed.  Similarly, if you
+ *	want something other than the system's free() to be called to
+ *	recycle memory acquired from MALLOC, #define FREE to be the
+ *	name of the alternate routine.  (FREE or free is only called in
+ *	pathological cases, e.g., in a dtoa call after a dtoa return in
+ *	mode 3 with thousands of digits requested.)
  * #define Omit_Private_Memory to omit logic (added Jan. 1998) for making
  *  memory allocations from a private pool of memory when possible.
  *  When used, the private pool is PRIVATE_MEM bytes long:  2304 bytes,

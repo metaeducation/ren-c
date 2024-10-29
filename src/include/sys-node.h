@@ -333,58 +333,58 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
 //=//// MEMORY ALLOCATION AND FREEING MACROS //////////////////////////////=//
 //
 // Rebol's internal memory management is done based on a pooled model, which
-// use Try_Alloc_Core() and Free_Core() instead of calling malloc directly.
+// use Try_Alloc_Memory_Core() and Free_Memory_Core() instead of malloc/free.
 // (Comments on those routines explain why this was done--even in an age of
 // modern thread-safe allocators--due to Rebol's ability to exploit extra
 // data in its pool unit when a Flex grows.)
 //
-// Since Free_Core() requires callers to pass in the size of the memory being
-// freed, it can be tricky.  These macros are modeled after C++'s new/delete
+// Free_MemorY_Core() requires callers to pass in the size of the memory being
+// freed, and can be tricky.  These macros are modeled after C++'s new/delete
 // and new[]/delete[], and allocations take either a type or a type and a
 // length.  The size calculation is done automatically, and the result is cast
 // to the appropriate type.  The deallocations also take a type and do the
 // calculations.
 //
 // In a C++11 build, an extra check is done to ensure the type you pass in a
-// FREE or FREE_N lines up with the type of pointer being freed.
+// Free_Memory() call lines up with the type of pointer being freed.
 //
 
-#define Try_Alloc(T) \
-    cast(T*, Try_Alloc_Core(sizeof(T)))
+#define Try_Alloc_Memory(T) \
+    cast(T*, Try_Alloc_Memory_Core(sizeof(T)))
 
-#define Try_Alloc_Zerofill(t) \
-    cast(T*, memset(Try_Alloc_Core(T), '\0', sizeof(T)))
+#define Try_Alloc_Memory_Zerofill(t) \
+    cast(T*, memset(Try_Alloc_Memory_Core(T), '\0', sizeof(T)))
 
-#define Try_Alloc_N(T,n) \
-    cast(T*, Try_Alloc_Core(sizeof(T) * (n)))
+#define Try_Alloc_Memory_N(T,n) \
+    cast(T*, Try_Alloc_Memory_Core(sizeof(T) * (n)))
 
-#define Try_Alloc_N_Zerofill(T,n) \
-    cast(T*, memset(Try_Alloc_N(T, (n)), '\0', sizeof(T) * (n)))
+#define Try_Alloc_Memory_N_Zerofill(T,n) \
+    cast(T*, memset(Try_Alloc_Memory_N(T, (n)), '\0', sizeof(T) * (n)))
 
 #if CPLUSPLUS_11
-    #define Free(T,p) \
+    #define Free_Memory(T,p) \
         do { \
             static_assert( \
                 std::is_same<decltype(p), std::add_pointer<T>::type>::value, \
-                "mismatched Free() type" \
+                "mismatched Free_Memory() type" \
             ); \
-            Free_Core(p, sizeof(T)); \
+            Free_Memory_Core(p, sizeof(T)); \
         } while (0)
 
-    #define Free_N(T,n,p) \
+    #define Free_Memory_N(T,n,p) \
         do { \
             static_assert( \
                 std::is_same<decltype(p), std::add_pointer<T>::type>::value, \
-                "mismatched Free_N() type" \
+                "mismatched Free_Memory_N() type" \
             ); \
-            Free_Core(p, sizeof(T) * (n)); \
+            Free_Memory_Core(p, sizeof(T) * (n)); \
         } while (0)
 #else
-    #define Free(T,p) \
-        Free_Core((p), sizeof(T))
+    #define Free_Memory(T,p) \
+        Free_Memory_Core((p), sizeof(T))
 
-    #define Free_N(T,n,p) \
-        Free_Core((p), sizeof(T) * (n))
+    #define Free_Memory_N(T,n,p) \
+        Free_Memory_Core((p), sizeof(T) * (n))
 #endif
 
 

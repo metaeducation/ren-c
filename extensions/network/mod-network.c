@@ -143,7 +143,7 @@ static void Close_Sock_If_Needed(SOCKREQ* sock) {
 static void cleanup_sockreq(const Value* v) {
     SOCKREQ* sock = Cell_Handle_Pointer(SOCKREQ, v);
     Close_Sock_If_Needed(sock);
-    Free(SOCKREQ, sock);
+    Free_Memory(SOCKREQ, sock);
 }
 
 
@@ -345,7 +345,7 @@ void on_new_connection(uv_stream_t *server, int status) {
     Init_Nulled(Varlist_Slot(client, STD_PORT_DATA));  // just to be sure
 
     Value* c_state = Varlist_Slot(client, STD_PORT_STATE);
-    SOCKREQ* sock = Try_Alloc(SOCKREQ);
+    SOCKREQ* sock = Try_Alloc_Memory(SOCKREQ);
     memset(sock, 0, sizeof(SOCKREQ));
 
     Init_Handle_Cdata_Managed(c_state, sock, sizeof(SOCKREQ), &cleanup_sockreq);
@@ -671,7 +671,7 @@ static Bounce Transport_Actor(
         // things compatible while ripping out the devreq code this must too.
         //
         assert(Is_Nulled(state));
-        sock = Try_Alloc(SOCKREQ);
+        sock = Try_Alloc_Memory(SOCKREQ);
         memset(sock, 0, sizeof(SOCKREQ));
         Init_Handle_Cdata_Managed(
             state,

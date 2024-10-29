@@ -739,7 +739,7 @@ DECLARE_NATIVE(apply)
     );
     Push_Level(SPARE, L);
 
-    EVARS *e = Try_Alloc(EVARS);
+    EVARS *e = Try_Alloc_Memory(EVARS);
     Init_Evars(e, frame);  // Varlist_Archetype(exemplar) is phased, sees locals
     Init_Handle_Cdata(iterator, e, sizeof(EVARS));
 
@@ -811,7 +811,7 @@ DECLARE_NATIVE(apply)
                     return FAIL(Error_Apply_Too_Many_Raw());
 
                 Shutdown_Evars(e);
-                Free(EVARS, e);
+                Free_Memory(EVARS, e);
                 Init_Unreadable(iterator);
                 param = nullptr;  // we're throwing away the evaluated product
                 break;
@@ -884,7 +884,7 @@ DECLARE_NATIVE(apply)
     else {
         EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
         Shutdown_Evars(e);
-        Free(EVARS, e);
+        Free_Memory(EVARS, e);
         Init_Unreadable(iterator);
     }
 
