@@ -489,27 +489,23 @@ void API_rebStartup(void)
 // to exit the process, and hence the OS will automatically reclaim all
 // memory/handles/etc.)
 //
-// For rigor, the debug build *always* runs a "clean" shutdown.
+// 1. The debug build does a clean Shutdown, Startup, and then shutdown again
+//    to make sure we can do so in case a system wanted to uninitialize then
+//    reinitialize.  It suffers the performance penalty of being clean in
+//    order to ensure that valgrind/etc. report no leaks possible.
 //
 void API_rebShutdown(bool clean)
 {
     ENTER_API;
 
-  #if !defined(NDEBUG)
-    //
-    // The debug build does a clean Shutdown, Startup, and then shutdown again
-    // to make sure we can do so in case a system wanted to uninitialize then
-    // reinitialize.
-    //
+  #if DEBUG  // shutdown, startup, shutdown...always clean [1]
+    UNUSED(clean);
     Shutdown_Core(true);
     Startup_Core();
-  #endif
-
-    // Everything Shutdown_Core() does pertains to getting a no-leak state
-    // for Valgrind/etc, but it shouldn't have any user-facing side-effects
-    // besides that if you don't run it.
-    //
+    Shutdown_Core(true);
+  #else
     Shutdown_Core(clean);
+  #endif
 }
 
 

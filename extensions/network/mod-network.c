@@ -1129,6 +1129,13 @@ DECLARE_NATIVE(startup_p)
 //  ]
 //
 DECLARE_NATIVE(shutdown_p)
+//
+// 1. uv_default_loop() allocates the default loop on its first usage.  It
+//    must be freed like anything else.  Here we might be allocating it and
+//    then immediately freeing it (if uv_default_loop() never got called),
+//    but freeing it if it ever was.
+//
+//      https://github.com/libuv/libuv/issues/140
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
@@ -1138,6 +1145,8 @@ DECLARE_NATIVE(shutdown_p)
 
     uv_close(cast(uv_handle_t*, &wait_timer), nullptr);  // no close callback
     uv_close(cast(uv_handle_t*, &halt_poll_timer), nullptr);
+
+    uv_loop_close(uv_default_loop());  // else valgrind leak on shutdown [1]
 
     return rebNothing();
 }
