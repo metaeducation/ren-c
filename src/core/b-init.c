@@ -572,10 +572,11 @@ void Startup_Core(void)
     Set_Random(0);
     Startup_Interning();
 
+    Startup_Mold(MIN_COMMON / 4);
+
     Startup_Feeds();
 
     Startup_Collector();
-    Startup_Mold(MIN_COMMON / 4);
 
     Startup_Data_Stack(STACK_MIN / 4);
     Startup_Trampoline();  // uses Canon() in File_Of_Level() currently
