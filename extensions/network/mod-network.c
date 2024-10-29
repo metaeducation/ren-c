@@ -1113,7 +1113,6 @@ DECLARE_NATIVE(startup_p)
   #endif
 
     uv_timer_init(uv_default_loop(), &wait_timer);
-
     uv_timer_init(uv_default_loop(), &halt_poll_timer);
 
     return rebNothing();
@@ -1130,10 +1129,13 @@ DECLARE_NATIVE(startup_p)
 //
 DECLARE_NATIVE(shutdown_p)
 //
-// 1. uv_default_loop() allocates the default loop on its first usage.  It
-//    must be freed like anything else.  Here we might be allocating it and
-//    then immediately freeing it (if uv_default_loop() never got called),
-//    but freeing it if it ever was.
+// 1. uv_close() on a timer is just a request, you have to actually run the
+//    event loop to have it get freed and finalized.  If you don't run the
+//    loop and try to do uv_loop_close() you'll get a UV_EBUSY and the loop
+//    will not be freed.
+//
+// 2. uv_default_loop() allocates the default loop on its first usage.  It
+//    must be freed like anything else, or you get a memory leak.
 //
 //      https://github.com/libuv/libuv/issues/140
 {
@@ -1143,10 +1145,14 @@ DECLARE_NATIVE(shutdown_p)
     WSACleanup();  // have to call as libuv does not
   #endif
 
-    uv_close(cast(uv_handle_t*, &wait_timer), nullptr);  // no close callback
+    uv_close(cast(uv_handle_t*, &wait_timer), nullptr);  // no callback
     uv_close(cast(uv_handle_t*, &halt_poll_timer), nullptr);
 
-    uv_loop_close(uv_default_loop());  // else valgrind leak on shutdown [1]
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);  // wait for timers to close [1]
+
+    int result = uv_loop_close(uv_default_loop());  // else valgrind leak [2]
+    if (result != 0)
+        fail (rebError_UV(result));
 
     return rebNothing();
 }
