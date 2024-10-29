@@ -70,12 +70,12 @@
 #include <sql.h>  // depends on defines like VOID on Windows
 #include <sqlext.h>
 
-#include "assert-fix.h"
-#include "c-enhanced.h"
-
 #if !defined(NDEBUG)
     #include <stdio.h>
 #endif
+
+#include "assert-fix.h"
+#include "c-enhanced.h"
 
 #include "tmp-mod-odbc.h"
 typedef RebolValue Value;

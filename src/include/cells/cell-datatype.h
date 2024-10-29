@@ -86,7 +86,7 @@ INLINE Kind VAL_TYPE_KIND(const Cell* v) {
 // Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
 //
 INLINE Value* Init_Builtin_Datatype_Untracked(
-    Sink(Value) out,
+    Init(Element) out,
     Kind kind
 ){
     assert(kind < REB_MAX);

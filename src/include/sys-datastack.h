@@ -304,10 +304,10 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
         DROP();
 }
 
-INLINE Value* Move_Drop_Top_Stack_Value(Sink(Value) out)
+INLINE Value* Move_Drop_Top_Stack_Value(Init(Value) out)
   { Move_Cell(out, TOP); DROP(); return out; }
 
-INLINE Element* Move_Drop_Top_Stack_Element(Sink(Element) out) {
+INLINE Element* Move_Drop_Top_Stack_Element(Init(Element) out) {
     assert(not Is_Antiform(TOP));
     Move_Cell(out, TOP_ELEMENT);
     DROP();

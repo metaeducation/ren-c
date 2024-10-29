@@ -115,8 +115,6 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
 
-#include "c-enhanced.h"
-
 #if CPLUSPLUS_11 && DEBUG_HAS_PROBE
     //
     // We allow you to do PROBE(some_integer) as well as PROBE(some_rebval)
@@ -188,6 +186,16 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
     #include "inttypes.h"
   #endif
 #endif
+
+
+// Don't include C-enhanced until *after* standard includes, in case there
+// is any contention on naming in the compiler header files (for instance,
+// Init() is used in MSVC's xiosbase, and so if you define a macro with
+// that name it will break the compilation).  Generally speaking you should
+// define your macros after including system headers, not before...
+//
+#include "c-enhanced.h"
+
 
 
 // Internal configuration:

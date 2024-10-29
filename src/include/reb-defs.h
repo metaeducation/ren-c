@@ -258,6 +258,19 @@ typedef struct JumpStruct Jump;
 typedef intptr_t StackIndex;  // 0 for empty stack ([0] entry poison)
 
 
+//=//// Need(), Sink(), Init() Aliases ////////////////////////////////////=//
+//
+// If you globally declare a macro with a name like "Init" before you include
+// all the include files you want, then that could cause problems if there's
+// something in the system header files called Init (for instance).  We wait
+// to define the core shorthands for these type macros until after all the
+// including is done.
+
+#define Need NeedTypemacro
+#define Sink SinkTypemacro
+#define Init InitTypemacro
+
+
 //=//// SYMBOL IDs ////////////////////////////////////////////////////////=//
 //
 // Built-in symbols get a hardcoded integer number that can be used in the

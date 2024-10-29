@@ -94,7 +94,7 @@ INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
 }
 
 INLINE Element* Init_Issue_Utf8(
-    Sink(Element) out,
+    Init(Element) out,
     Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
     Size size,
     Length len  // while validating, you should have counted the codepoints
@@ -123,7 +123,7 @@ INLINE Element* Init_Issue_Utf8(
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING?)
 // this routine can be used.
 //
-INLINE Element* Init_Char_Unchecked_Untracked(Sink(Element) out, Codepoint c) {
+INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES

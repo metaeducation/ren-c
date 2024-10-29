@@ -72,6 +72,10 @@
     #define DEBUG_USE_SINKS 0
 #endif
 
+#if !defined(DEBUG_HEAVY_CHECK_INIT_SINKS)
+    #define DEBUG_HEAVY_CHECK_INIT_SINKS 0
+#endif
+
 
 //=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
 //
@@ -1357,11 +1361,11 @@
 //
 #if DEBUG_USE_SINKS
     template<typename T, bool sink>
-    struct SinkWrapper {
+    struct NeedWrapper {
         T* p;
 
-        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value))
-        SinkWrapper(nullptr_t) : p (nullptr) {}
+        NeedWrapper() = default;  // or MSVC warns making Option(Sink(Value))
+        NeedWrapper(nullptr_t) : p (nullptr) {}
 
         template<
             typename U,
@@ -1371,7 +1375,7 @@
                 std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
             >::type* = nullptr
         >
-        SinkWrapper(U* u) : p (u_cast(T*, u)) {
+        NeedWrapper(U* u) : p (u_cast(T*, u)) {
             Corrupt_If_Debug(*p);
         }
 
@@ -1383,7 +1387,7 @@
                 std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
             >::type* = nullptr
         >
-        SinkWrapper(U* u) : p (u_cast(T*, u)) {
+        NeedWrapper(U* u) : p (u_cast(T*, u)) {
         }
 
         template<
@@ -1394,7 +1398,7 @@
                 std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
             >::type* = nullptr
         >
-        SinkWrapper(SinkWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
+        NeedWrapper(NeedWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
         }
 
         template<
@@ -1404,7 +1408,7 @@
                 std::is_same<U,T>::value
             >::type* = nullptr
         >
-        SinkWrapper(U* u) : p (u) {
+        NeedWrapper(U* u) : p (u) {
             Corrupt_If_Debug(*p);
         }
 
@@ -1415,7 +1419,7 @@
                 and std::is_same<U,T>::value
             >::type* = nullptr
         >
-        SinkWrapper(U* u) : p (u) {
+        NeedWrapper(U* u) : p (u) {
         }
 
         template<
@@ -1425,7 +1429,7 @@
                 std::is_same<U,T>::value
             >::type* = nullptr
         >
-        SinkWrapper(SinkWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
+        NeedWrapper(NeedWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
         }
 
         operator bool () const { return p != nullptr; }
@@ -1435,9 +1439,39 @@
         T* operator->() const { return p; }
     };
 
-    #define Sink(T) SinkWrapper<T, true>
-    #define Need(TP) SinkWrapper<typename std::remove_pointer<TP>::type, false>
+    #define SinkTypemacro(T) \
+        NeedWrapper<T, true>
+
+    #define NeedTypemacro(TP) \
+        NeedWrapper<typename std::remove_pointer<TP>::type, false>
 #else
-    #define Sink(T) T *
-    #define Need(TP) TP
+    #define SinkTypemacro(T) T *
+    #define NeedTypemacro(TP) TP
+#endif
+
+
+//=//// Init() Variant Of Sink() //////////////////////////////////////////=//
+//
+// When we write initialization routines, the output is technically a Sink(),
+// in the sense that it's intended to be overwritten.  But Sink() has a cost
+// since it corrupts the cell.  It's unlikely to help catch bugs with
+// initialization, because Init_Xxx() routines are typically not code with
+// any branches in it that might fail to overwrite the cell.
+//
+// This defines Init() as typically just being Need(), to check to make sure
+// that the caller's pointer can store the cell subclass, without doing any
+// corrupting of the cell.
+//
+// BUT if you want to double check the initializations, it should still work
+// to make Init() equivalent to Sink() and corrupt the cell.  It's not likely
+// to catch any bugs...but maybe.
+
+#if DEBUG_USE_SINKS
+    #if DEBUG_HEAVY_CHECK_INIT_SINKS
+        #define InitTypemacro(T) NeedWrapper<T, true>  // sink=true
+    #else
+        #define InitTypemacro(T) NeedWrapper<T, false>  // sink=false
+    #endif
+#else
+    #define InitTypemacro(T) T *
 #endif

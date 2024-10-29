@@ -49,7 +49,7 @@
 //   evaluated to a COMMA! antiform (for instance).
 //
 
-INLINE Element* Init_Comma(Sink(Element) out) {
+INLINE Element* Init_Comma(Init(Element) out) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_COMMA);
 
     // Although COMMA! carries no data, it is not inert.  To make Any_Inert()
@@ -67,7 +67,7 @@ INLINE Element* Init_Comma(Sink(Element) out) {
     return out;
 }
 
-INLINE Atom* Init_Barrier(Sink(Atom) out) {
+INLINE Atom* Init_Barrier(Init(Atom) out) {
     Init_Comma(out);
     return Coerce_To_Unstable_Antiform(out);
 }

@@ -49,7 +49,7 @@ INLINE void INIT_VAL_ACTION_LABEL(
 // no label.
 //
 INLINE Element* Init_Frame_Details_Core(
-    Sink(Element) out,
+    Init(Element) out,
     Phase* a,
     Option(const Symbol*) label,
     Option(VarList*) coupling

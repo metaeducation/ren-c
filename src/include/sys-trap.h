@@ -319,7 +319,7 @@ struct JumpStruct {
         Fail_Core(p);
     }
 
-  #if DEBUG_USE_CELL_SUBCLASSES
+  #if DEBUG_USE_SINKS
     template <class T>
     INLINE ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(Sink(T) sink)
       { Fail_Core(sink.p); }

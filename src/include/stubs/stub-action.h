@@ -137,7 +137,7 @@ INLINE void Tweak_Bonus_Keysource(Flex* varlist, Node* keysource) {
 // evaluator.
 //
 
-INLINE Value* Init_Return_Signal_Untracked(Sink(Value) out, char ch) {
+INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
     Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES

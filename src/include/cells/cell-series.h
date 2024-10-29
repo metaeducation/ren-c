@@ -78,7 +78,7 @@ INLINE REBLEN VAL_INDEX(const Cell* v) {
 //    should never see antiforms in what they see as "ANY-ARRAY!".
 //
 INLINE Element* Init_Series_At_Core_Untracked(
-    Sink(Element) out,
+    Init(Element) out,
     Heart heart,
     const Flex* f,  // ensured managed by calling macro
     REBLEN index,

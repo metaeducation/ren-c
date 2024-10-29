@@ -323,7 +323,7 @@ void Normalize_Time(REBI64 *sp, REBLEN *dp)
 // date value.
 //
 static Element* Init_Normalized_Date(
-    Sink(Element) out,
+    Init(Element) out,
     REBINT day,
     REBINT month,
     REBINT year,

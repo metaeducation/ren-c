@@ -124,7 +124,7 @@ INLINE const Element* Cell_List_Item_At(const Cell* v) {
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 INLINE Element* Init_Any_List_At_Core_Untracked(
-    Sink(Element) out,
+    Init(Element) out,
     Heart heart,
     const_if_c Array* array,
     REBLEN index,
@@ -141,7 +141,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 
 #if CPLUSPLUS_11
     INLINE Element* Init_Any_List_At_Core_Untracked(
-        Sink(Element) out,
+        Init(Element) out,
         Heart heart,
         const Array* array,  // all const arrays should be already managed
         REBLEN index,
@@ -165,7 +165,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 
 
 INLINE Element* Init_Relative_Block_At(
-    Sink(Element) out,
+    Init(Element) out,
     Action* action,  // action to which array has relative bindings
     Array* array,
     REBLEN index
@@ -204,7 +204,7 @@ INLINE Element* Init_Relative_Block_At(
 //      == <b>
 //
 
-INLINE Atom* Init_Pack_Untracked(Sink(Atom) out, Array* a) {
+INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Array* a) {
     Init_Any_List_At_Core_Untracked(out, REB_BLOCK, a, 0, SPECIFIED);
     return Coerce_To_Unstable_Antiform(out);
 }
@@ -271,7 +271,7 @@ INLINE Value* Splicify(Need(Value*) v) {
     return Coerce_To_Stable_Antiform(v);
 }
 
-INLINE Value* Init_Splice_Untracked(Sink(Value) out, Array* a) {
+INLINE Value* Init_Splice_Untracked(Init(Value) out, Array* a) {
     Init_Group(out, a);
     return Coerce_To_Stable_Antiform(out);
 }

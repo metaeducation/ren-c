@@ -74,7 +74,7 @@ INLINE void Tweak_Cell_Varargs_Source(
 }
 
 
-INLINE Element* Init_Varargs_Untyped_Normal(Sink(Element) out, Level* L) {
+INLINE Element* Init_Varargs_Untyped_Normal(Init(Element) out, Level* L) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_VARARGS);
     Tweak_Cell_Varargs_Source(out, L->varlist);  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
@@ -83,7 +83,7 @@ INLINE Element* Init_Varargs_Untyped_Normal(Sink(Element) out, Level* L) {
 }
 
 INLINE Element* Init_Varargs_Untyped_Infix(
-    Sink(Element) out,
+    Init(Element) out,
     Option(const Value*) left
 ){
     Array* feed;

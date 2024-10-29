@@ -83,7 +83,7 @@
 //   so at time of writing, it's not certain if this will be kept.
 //
 
-INLINE Element* Init_Blank_Untracked(Sink(Element) out) {
+INLINE Element* Init_Blank_Untracked(Init(Element) out) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_BLANK);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
@@ -120,7 +120,7 @@ INLINE Element* Init_Blank_Untracked(Sink(Element) out) {
 
 #define Init_Nothing(out) \
     TRACK(Coerce_To_Stable_Antiform(cast(Value*, \
-        Init_Blank_Untracked(ensure(Sink(Value), (out))))))
+        Init_Blank_Untracked(ensure(Init(Value), (out))))))
 
 #define Init_Meta_Of_Nothing(out)     Init_Quasi_Blank(out)
 

@@ -55,9 +55,7 @@
         | NODE_BYTEMASK_0x40_FREE;  /* not readable, but still writable */ \
 } while (0)
 
-INLINE Element* Init_Unreadable_Untracked_Inline(
-    Need(Element*) out  // Sink() would duplicate unreadable init *sometimes*
-){
+INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
     Init_Unreadable_Untracked(out);
     return out;
 }

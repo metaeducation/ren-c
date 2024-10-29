@@ -388,7 +388,7 @@ HashList* Make_Hashlist(REBLEN len)
 // A map has an additional hash element hidden in the ->extra field of the
 // Stub which needs to be given to memory management as well.
 //
-Element* Init_Map(Sink(Element) out, Map* map)
+Element* Init_Map(Init(Element) out, Map* map)
 {
     if (MAP_HASHLIST(map))
         Force_Flex_Managed(MAP_HASHLIST(map));

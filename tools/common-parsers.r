@@ -218,6 +218,8 @@ export proto-parser: context [
             | "Option(Sink(" opt [identifier "(" thru ")"] thru "))"
             | "Need(" opt [identifier "(" thru ")"] thru ")"
             | "Option(Need(" opt [identifier "(" thru ")"] thru "))"
+            | "Init(" opt [identifier "(" thru ")"] thru ")"
+            | "Option(Init(" opt [identifier "(" thru ")"] thru "))"
             | "(*)" | "(const*)"
             | "(const *)" (fail "use (const*) not (const *)")
             | "(const Cell*)"

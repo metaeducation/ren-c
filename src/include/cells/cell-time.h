@@ -184,7 +184,7 @@ INLINE REBI64 VAL_NANO(const Cell* v) {
     SEC_TIME(cast(REBI64, SECS_IN_DAY))
 
 INLINE Value* Init_Time_Nanoseconds(
-    Cell* v,
+    Init(Element) v,
     REBI64 nanoseconds
 ){
     Reset_Cell_Header_Untracked(v, CELL_MASK_TIME);

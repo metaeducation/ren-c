@@ -77,7 +77,7 @@ INLINE REBI64 Cell_Pair_X(const Cell* v)
 INLINE REBI64 Cell_Pair_Y(const Cell* v)
   { return VAL_INT64(Cell_Pair_Second(v)); }
 
-INLINE Value* Init_Pair_Untracked(Sink(Element) out, REBI64 x, REBI64 y) {
+INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
     Pairing* p = Alloc_Pairing(NODE_FLAG_MANAGED);
     Init_Integer(Pairing_First(p), x);
     Init_Integer(Pairing_Second(p), y);
