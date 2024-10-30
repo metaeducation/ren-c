@@ -47,14 +47,14 @@
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and
 // does not apply (some platforms need this invariant for `double` to work).
 //
-// 1. This is another case where the debug build doesn't inline functions.
-//    Run the risk of repeating macro args to speed up this critical check.
+// 1. This is another case where the debug build not inlining functions
+//    leads to extra overhead.  Use a macro that repeats its arguments.
 //
 #if (! DEBUG_MEMORY_ALIGNMENT)
     #define Assert_Cell_Aligned(c)    NOOP
 #else
     #define Assert_Cell_Aligned(c) do { \
-        STATIC_ASSERT_LVALUE(c);  /* "evil macro", repeats arguments [1] */ \
+        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) \
             Panic_Cell_Unaligned(c); \
     } while (0)
@@ -101,19 +101,27 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 // Array Flex.  It leverages the checks done by Ensure_Readable(),
 // Ensure_Writable() and Is_Fresh()
 //
-// Another use for the poisoned state is in an optimized array representation
-// that fits 0 or 1 cells into the Array Stub itself.  Since the Cell lives
-// where the content tracking information would usually be, there's no length.
-// Hence the presence of a poison cell in the slot indicates length 0.
-//
-// * To stop reading but not stop writing, use "Unreadable" cells instead.
+// * To stop reading but not writing, use Init_Unreadable() cells instead.
 //
 // * This will defeat Detect_Rebol_Pointer(), so it will not realize the value
 //   is a cell any longer.  Hence poisoned Cells should (perhaps obviously) not
 //   be passed to API functions--as they'd appear to be UTF-8 strings.
+//
+// 1. The mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so Ensure_Readable()
+//    will fail, and it is CELL_FLAG_PROTECTED so Ensure_Writable() will fail.
+//    It can't be freshened with Freshen_Cell().  You have to Erase_Cell().
+//
+// 2. Poison cells are designed to be used in places where Erase_Cell() would
+//    not lose information.  For instance: it's used in the optimized array
+//    representation that fits 0 or 1 cells into the Array Stub itself.  But
+//    if you were to poison an API handle it would overwrite NODE_FLAG_ROOT,
+//    and a managed pairing would overwrite NODE_FLAG_MANAGED.
+
+#define CELL_MASK_POISON \
+    (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)  // not readable or writable [1]
 
 #define Poison_Cell(c) \
-    (TRACK(Erase_Cell(c))->header.bits = CELL_MASK_POISON)
+    (TRACK(c)->header.bits = CELL_MASK_POISON)
 
 INLINE bool Is_Cell_Poisoned(const Cell* c) {
     assert(Is_Cell_Erased(c) or (c->header.bits & NODE_FLAG_CELL));
@@ -165,10 +173,9 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
     #define Assert_Cell_Readable(c) do { \
         STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if ( \
-            (FIRST_BYTE(&(c)->header.bits) & ( \
-                NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
-                    | NODE_BYTEMASK_0x40_FREE \
-            )) != 0x81 \
+            (((c)->header.bits) & ( \
+                NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE \
+            )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
         ){ \
             Panic_Cell_Unreadable(c); \
         } \
@@ -177,10 +184,9 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
     #define Assert_Cell_Writable(c) do { \
         STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if ( \
-            (FIRST_BYTE(&(c)->header.bits) & ( \
-                NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
-                    | CELL_FLAG_PROTECTED \
-            )) != 0x81 \
+            (((c)->header.bits) & ( \
+                NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_PROTECTED \
+            )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
         ){ \
             Panic_Cell_Unwritable(c); \
         } \

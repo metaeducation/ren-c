@@ -132,3 +132,31 @@ INLINE void Drop_GC_Guard(const void* p) {  // p may be erased cell (not Node)
 
     g_gc.guarded->content.dynamic.used -= 1;
 }
+
+
+//=//// NOTE WHEN CELL KEEPS A GC LIVE REFERENCE //////////////////////////=//
+//
+// If a cell is under the natural control of the GC (e.g. a Level's OUT or
+// SPARE, or a frame variable) then that cell can often be used instead of
+// Push_GC_Guard() to keep something alive.  It's helpful to have some
+// enforcement that you don't accidentally overwrite these lifetime-holding
+// references, so the PROTECT bit can come in handy...if you're using a
+// build that enforces it on arbitrary mutable cells.
+//
+
+#if DEBUG_CELL_READ_WRITE
+    #define Remember_Cell_Is_Lifetime_Guard(c) do { \
+        STATIC_ASSERT_LVALUE(c); \
+        assert(Not_Cell_Flag((c), PROTECTED)); \
+        Set_Cell_Flag((c), PROTECTED); \
+    } while (0)
+
+    #define Forget_Cell_Is_Lifetime_Guard(c) do { \
+        STATIC_ASSERT_LVALUE(c); \
+        assert(Get_Cell_Flag((c), PROTECTED)); \
+        Clear_Cell_Flag((c), PROTECTED); \
+    } while (0)
+#else
+    #define Remember_Cell_Is_Lifetime_Guard(c)  NOOP
+    #define Forget_Cell_Is_Lifetime_Guard(c)  NOOP
+#endif

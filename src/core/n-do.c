@@ -266,7 +266,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 //
 // 2. This may be the only GC reference holding the array, don't lose it!
 //
-// 3. It might seem that since EVAL [] is VOID, that EVAL/NEXT [] should
+// 3. It might seem that since EVAL [] is VOID, that EVAL:STEP [] should
 //    produce a VOID.  But in practice, there's a dummy step at the end
 //    of every enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three
 //    steps, where the third step is []... and if we were to say that "step"
@@ -300,7 +300,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    Element* source = cast(Element*, ARG(source));  // hold for GC [2]
+    Element* source = cast(Element*, ARG(source));
     if (Is_Chain(source))  // e.g. :(...) or [...]/
         Unchain(source);
 
@@ -327,9 +327,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     Tweak_Non_Const_To_Explicitly_Mutable(source);
 
-  #if !defined(NDEBUG)
-    Set_Cell_Flag(ARG(source), PROTECTED);
-  #endif
+    Remember_Cell_Is_Lifetime_Guard(source);  // may be only reference! [2]
 
     if (Any_List(source)) {
         if (Cell_Series_Len_At(source) == 0) {
@@ -462,11 +460,14 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     assert(REF(step));
 
+    Forget_Cell_Is_Lifetime_Guard(source);  // was keeping alive for GC
+
     Context* binding = Level_Binding(SUBLEVEL);
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
     BINDING(source) = binding;  // integrate LETs [6]
+    goto result_in_out;
 
 } result_in_out: {  //////////////////////////////////////////////////////////
 

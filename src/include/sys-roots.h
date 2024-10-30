@@ -133,7 +133,10 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 //
 //    Having NODE_FLAG_ROOT is still tolerated as a "fresh" state for
 //    purposes of init.  The flag is not copied by Copy_Cell().
-//
+
+#define CELL_MASK_API_INITABLE \
+    (CELL_MASK_UNREADABLE | NODE_FLAG_ROOT)
+
 INLINE Value* Alloc_Value_Core(Flags flags)
 {
     Stub* stub = Alloc_Singular(

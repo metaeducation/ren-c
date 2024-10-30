@@ -46,14 +46,36 @@
 //   it's fairly desirable to allow the unreadable bit to be meaningful for
 //   such cases.  So the only difference is that the release build does not
 //   raise alerts about the bit being set--not that the bit isn't there.
+//
+// 1. We want to leave the cell format bits like NODE_FLAG_ROOT and
+//    NODE_FLAG_MANAGED alone, so unreadable cells don't have a fully canon
+//    header.  However, we can canonize the heart byte and quote byte in
+//    order to make random bit patterns less likely to pass Is_Unreadable()
+//
+//    !!! A more clever strategy that fiddles the flags around can avoid
+//    this overlapping with legal UTF-8.  Coming soon.
 
-#define Init_Unreadable_Untracked(out) do { \
-    Assert_Cell_Initable(out);  /* evil macro does STATIC_ASSERT_LVALUE */ \
-    HEART_BYTE(out) = REB_0; \
-    /* Faster if we don't care what the QUOTE_BYTE(), etc. are... */ \
-    NODE_BYTE(out) |= NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL \
-        | NODE_BYTEMASK_0x40_FREE;  /* not readable, but still writable */ \
-} while (0)
+#define CELL_MASK_UNREADABLE \
+    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE \
+        | FLAG_HEART_BYTE(REB_0) | FLAG_QUOTE_BYTE(255))  // not canonized
+
+#define DEBUG_CANONIZE_UNREADABLES DEBUG  // faster not to canonize [1]
+
+#if DEBUG_CANONIZE_UNREADABLES
+    #define Init_Unreadable_Untracked(out) do { \
+        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+        Freshen_Cell_Untracked(out); \
+        (out)->header.bits |= CELL_MASK_UNREADABLE; \
+    } while (0)
+#else
+    #define Init_Unreadable_Untracked(out) do { \
+        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+        /* faster if we don't canonize the HEART_BYTE() and QUOTE_BYTE() */ \
+        NODE_BYTE(out) |= NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL \
+            | NODE_BYTEMASK_0x40_FREE;  /* not readable, still writable */ \
+    } while (0)
+#endif
+
 
 INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
     Init_Unreadable_Untracked(out);
@@ -64,7 +86,10 @@ INLINE bool Is_Unreadable(const Cell* c) {
     if (not Is_Node_Free(c))
         return false;
     assert(Is_Node(c) and Is_Node_A_Cell(c));
+  #if DEBUG_CANONIZE_UNREADABLES
     assert(HEART_BYTE(c) == REB_0);
+    assert(QUOTE_BYTE(c) == 255);
+  #endif
     return true;
 }
 
