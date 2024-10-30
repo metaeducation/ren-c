@@ -170,8 +170,6 @@ static void Startup_Lib(void)
     Init_Context_Cell(Lib_Module, REB_MODULE, lib);
     ensure(nullptr, Lib_Context) = cast(SeaOfVars*, lib);
 
-  //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
-
     assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // leave invalid
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
@@ -198,30 +196,6 @@ static void Startup_Lib(void)
 
         Init_Nothing(Stub_Cell(patch));  // start as unset variable
     }
-
-  //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
-
-    // These have various applications, such as BLANK! is used during scanning
-    // to build a path like `/a/b` out of an array with [_ a b] in it.  Since
-    // the scanner is also what would load code like (blank: '_), we need to
-    // seed the values to get the ball rolling.
-
-    Protect_Cell(Init_Nulled(Sink_Lib_Var(NULL)));
-    assert(Is_Inhibitor(Lib(NULL)) and Is_Nulled(Lib(NULL)));
-
-    Protect_Cell(Init_Okay(Sink_Lib_Var(OKAY)));
-    assert(Is_Trigger(Lib(OKAY)) and Is_Okay(Lib(OKAY)));
-
-    Protect_Cell(Init_Quasi_Void(Sink_Lib_Var(QUASI_VOID)));
-    assert(Is_Trigger(Lib(QUASI_VOID)) and Is_Quasi_Void(Lib(QUASI_VOID)));
-
-    Protect_Cell(Init_Blank(Sink_Lib_Var(BLANK)));
-    assert(Is_Trigger(Lib(BLANK)) and Is_Blank(Lib(BLANK)));
-
-    Protect_Cell(Init_Quasi_Null(Sink_Lib_Var(QUASI_NULL)));
-    assert(Is_Trigger(Lib(QUASI_NULL)) and Is_Quasi_Null(Lib(QUASI_NULL)));
-
-    // !!! Other constants are just initialized as part of Startup_Base().
 }
 
 
@@ -415,6 +389,9 @@ static void Init_Root_Vars(void)
     Binary* bzero = Make_Binary(0);
     ensure(nullptr, Root_Empty_Binary) = Init_Blob(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(Root_Empty_Binary);
+
+    ensure(nullptr, Root_Quasi_Null) = Init_Quasi_Null(Alloc_Value());
+    Protect_Cell(Root_Quasi_Null);
 }
 
 static void Shutdown_Root_Vars(void)
@@ -436,6 +413,7 @@ static void Shutdown_Root_Vars(void)
     PG_1_Quasi_Void_Array = nullptr;
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
     rebReleaseAndNull(&Root_Empty_Binary);
+    rebReleaseAndNull(&Root_Quasi_Null);
 }
 
 
@@ -561,7 +539,9 @@ static void Init_System_Object(
 void Startup_Core(void)
 {
 
-//=//// INITIALIZE BASIC DIAGNOSTICS //////////////////////////////////////=//
+  //=//// INITIALIZE BASIC DIAGNOSTICS ////////////////////////////////////=//
+
+    assert(PG_Boot_Phase == BOOT_START_0);
 
   #if defined(TEST_EARLY_BOOT_PANIC)
     panic ("early panic test"); // should crash
@@ -573,12 +553,9 @@ void Startup_Core(void)
     PG_Probe_Failures = false;
   #endif
 
-    // Globals
-    PG_Boot_Phase = BOOT_START;
-
     Check_Basics();
 
-//=//// INITIALIZE MEMORY AND ALLOCATORS //////////////////////////////////=//
+  //=//// INITIALIZE MEMORY AND ALLOCATORS ////////////////////////////////=//
 
     Startup_Signals();  // allocation can set signal flags for recycle etc.
 
@@ -699,7 +676,7 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_LOADED;
 
-//=//// CREATE BASIC VALUES ///////////////////////////////////////////////=//
+  //=//// CREATE BASIC VALUES /////////////////////////////////////////////=//
 
     // Before any code can start running (even simple bootstrap code), some
     // basic words need to be defined.  For instance: You can't run %sysobj.r
@@ -719,7 +696,7 @@ void Startup_Core(void)
     //
     Startup_Type_Predicates();
 
-//=//// RUN CODE BEFORE ERROR HANDLING INITIALIZED ////////////////////////=//
+  //=//// RUN CODE BEFORE ERROR HANDLING INITIALIZED //////////////////////=//
 
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
@@ -733,6 +710,27 @@ void Startup_Core(void)
     Array* generics_catalog = Startup_Generics(&boot->generics);
     Manage_Flex(generics_catalog);
     Push_GC_Guard(generics_catalog);
+
+  //=//// STARTUP CONSTANTS (like NULL, BLANK, etc.) //////////////////////=//
+
+    // These may be used in the system object definition.  At one time code
+    // manually added definitions like NULL to LIB, but having it expressed
+    // as simply (null: ~null~) in usermode code is clearer.
+    //
+    // Note that errors are not initialized yet (they are accessed through
+    // the system object).  So this code should stay pretty simple.
+
+    rebElide(
+        "wrap*", Lib_Module, rebQ(&boot->constants),
+        "evaluate inside", Lib_Module, rebQ(&boot->constants)
+    );
+
+    Protect_Cell(Mutable_Lib_Var(NULL));  // !!! need generalized immutability
+    Protect_Cell(Mutable_Lib_Var(VOID));
+    Protect_Cell(Mutable_Lib_Var(BLANK));
+    Protect_Cell(Mutable_Lib_Var(TRASH));
+
+  //=//// STARTUP ERRORS AND SYSTEM OBJECT ////////////////////////////////=//
 
     // boot->errors is the error definition list from %errors.r
     //
@@ -796,10 +794,10 @@ void Startup_Core(void)
     UNUSED(threw);
   }
 
-//=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED /////////=//
+  //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED ///////=//
 
     // By this point, the Lib_Context contains basic definitions for things
-    // like true, false, the natives, and the generics.
+    // like null, blank, the natives, and the generics.  `system` is set up.
     //
     // There is theoretically some level of error recovery that could be done
     // here.  e.g. the evaluator works, it just doesn't have many functions you
@@ -983,7 +981,7 @@ void Shutdown_Core(bool clean)
     if (not clean)
         return;
 
-    PG_Boot_Phase = BOOT_START;
+    PG_Boot_Phase = BOOT_START_0;
 
     Shutdown_Data_Stack();
 

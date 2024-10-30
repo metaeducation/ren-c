@@ -1280,8 +1280,8 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);
 
-    assert(Detect_Rebol_Pointer(EMPTY_ARRAY) == DETECTED_AS_STUB);
-    assert(Detect_Rebol_Pointer(Lib(BLANK)) == DETECTED_AS_CELL);
+    assert(Detect_Rebol_Pointer(PG_Empty_Array) == DETECTED_AS_STUB);
+    assert(Detect_Rebol_Pointer(Root_Quasi_Null) == DETECTED_AS_CELL);
 
     // A cell with NODE_FLAG_FREE will appear to be UTF-8.  Be sure not to
     // pass such cells to the API, as Detect_Rebol_Pointer() will be wrong!
@@ -1295,9 +1295,8 @@ void Assert_Pointer_Detection_Working(void)
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
-    Binary* b = Make_Flex(Binary, 1, FLAG_FLAVOR(BINARY));
+    const Binary* b = Cell_Binary(Root_Empty_Binary);
     assert(Detect_Rebol_Pointer(b) == DETECTED_AS_STUB);
-    Free_Unmanaged_Flex(b);
 }
 
 

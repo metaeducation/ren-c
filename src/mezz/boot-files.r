@@ -12,9 +12,13 @@ REBOL [
     Note: "Used by %make/make-boot.r"
 ]
 
-; base: low-level boot in lib context:
+; const: basic constants (before %sysobj.r is initialized)
 [
     %base-constants.r
+]
+
+; base: low-level boot in lib context:
+[
     %base-defs.r
     %base-funcs.r
     %base-series.r
@@ -29,7 +33,7 @@ REBOL [
     %sys-load.r
 ]
 
-; lib: mid-level lib context:
+; mezz: mid-level lib context:
 [
     %mezz-types.r
     %mezz-debug.r

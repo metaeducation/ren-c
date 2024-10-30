@@ -28,11 +28,10 @@ REBOL [
 ]
 
 void
+trash
 null
 okay
 
-quasi-void
-quasi-null
 blackhole
 
 newline

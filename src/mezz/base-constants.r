@@ -23,10 +23,6 @@ REBOL [
 
 zero: 0
 
-; Special values
-
-lib: system.contexts.lib
-
 ; Char constants
 
 nul: NUL:  #""  ; ^(NULL) no longer legal internal to strings
@@ -56,14 +52,15 @@ splice?!: &splice?
 logic?!: &logic?
 action?!: &action?
 
+blank: _
+
+null: ~null~
+ok: okay: ~okay~
+ok?: okay?/
 
 void: ~void~
 nothing: ~
 trash: '~
-
-ok: okay
-ok?: okay?/
-
 
 ; These should be aliases for things like system.ports.input and such, but
 ; for now just to make the syntax of things look better we define them.

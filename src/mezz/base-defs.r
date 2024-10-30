@@ -23,6 +23,8 @@ REBOL [
     }--
 ]
 
+lib: system.contexts.lib  ; alias for faster access
+
 ; Start with basic debugging
 
 /c-break-debug: c-debug-break/  ; easy to mix up

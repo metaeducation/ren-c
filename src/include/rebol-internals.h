@@ -495,7 +495,7 @@ typedef struct {
 ***********************************************************************/
 
 enum Boot_Phases {
-    BOOT_START = 0,
+    BOOT_START_0 = 0,
     BOOT_LOADED,
     BOOT_ERRORS,
     BOOT_MEZZ,

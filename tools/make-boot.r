@@ -1015,11 +1015,10 @@ sys-toplevel: copy []
 ;    like ~<done>~ because the bootstrap executable doesn't know how to load
 ;    tripwires.  The quasi-word is sufficient.
 ;
-for-each 'section [boot-base boot-system-util boot-mezz] [
+for-each 'section [boot-constants boot-base boot-system-util boot-mezz] [
     set (inside [] section) s: make text! 20000
     append:line s "["
     for-each 'file first mezz-files [  ; doesn't use LOAD to strip
-        gather:  [null]
         text: stripload:gather (
             join %../mezz/ file
         ) if section = 'boot-system-util [$sys-toplevel]
@@ -1063,6 +1062,7 @@ sections: [
     :boot-generics
     :boot-natives
     boot-typespecs
+    :boot-constants
     boot-errors
     boot-sysobj
     :boot-base

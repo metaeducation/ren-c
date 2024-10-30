@@ -257,12 +257,13 @@ INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
 INLINE Value* Mutable_Lib_Var_For_Id(SymId id) {
     assert(id < LIB_SYMS_MAX);
     Value* slot = cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
+    assert(Not_Cell_Flag(slot, PROTECTED));
     return slot;
 }
 
 INLINE const Value* Lib_Var_For_Id(SymId id) {
     assert(id < LIB_SYMS_MAX);
-    Value* slot = Mutable_Lib_Var_For_Id(id);
+    Value* slot = cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
     assert(not Is_Nothing(slot));
     return slot;
 }
