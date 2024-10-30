@@ -27,7 +27,7 @@
 // `CODEPOINT OF` reflector, or by using FIRST on the token.
 //
 // REB_ISSUE has two forms: one with a separate node allocation and one that
-// stores data where a node and index would be.  CELL_FLAG_STRINGLIKE_HAS_NODE
+// stores data where a node and index would be.  Stringlike_Has_Node()
 // is what discerns the two categories, and can only be treated as a string
 // when it has that flag.  Hence generically speaking, ISSUE! is not considered
 // an ANY-SERIES? or ANY-STRING? type.
@@ -53,7 +53,7 @@ INLINE bool IS_CHAR_CELL(const Cell* v) {
     if (Cell_Heart(v) != REB_ISSUE)
         return false;
 
-    if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE))
+    if (Stringlike_Has_Node(v))
         return false;  // allocated form, too long to be a character
 
     return EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] <= 1;  // codepoint
@@ -66,7 +66,7 @@ INLINE bool IS_CHAR(const Atom* v) {
 }
 
 INLINE Codepoint Cell_Codepoint(const Cell* v) {
-    assert(Not_Cell_Flag(v, STRINGLIKE_HAS_NODE));
+    assert(not Stringlike_Has_Node(v));
 
     if (EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 0)
         return 0;  // no '\0` bytes internal to ANY-UTF8! series
@@ -88,7 +88,7 @@ INLINE Byte Cell_Char_Encoded_Size(const Cell* v)
 
 INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
     assert(Cell_Heart(v) == REB_ISSUE);
-    assert(Not_Cell_Flag(v, STRINGLIKE_HAS_NODE));
+    assert(not Stringlike_Has_Node(v));
     assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
@@ -210,7 +210,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
 
     Heart heart = Cell_Heart(v);
 
-    if (Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {  // SIGIL!, some ISSUE!...
+    if (not Stringlike_Has_Node(v)) {  // SIGIL!, some ISSUE!...
         REBLEN len;
         Size size;
         if (

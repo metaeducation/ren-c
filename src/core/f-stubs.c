@@ -515,7 +515,7 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 //
 Option(Error*) Trap_Unsingleheart(Element* out) {
     assert(Any_Sequence_Kind(Cell_Heart(out)));
-    if (Not_Cell_Flag(out, SEQUENCE_HAS_NODE)) {
+    if (not Sequence_Has_Node(out)) {
         goto unchain_error;  // compressed bytes don't encode blanks
     }
 

@@ -109,11 +109,11 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break;
 
       case REB_SIGIL:
-        assert(Not_Cell_Flag_Unchecked(v, STRINGLIKE_HAS_NODE));
+        assert(not Stringlike_Has_Node(v));
         break;
 
       case REB_ISSUE: {
-        if (Get_Cell_Flag_Unchecked(v, STRINGLIKE_HAS_NODE)) {
+        if (Stringlike_Has_Node(v)) {
             const Flex* f = Cell_Issue_String(v);
             assert(Is_Flex_Frozen(f));
 
@@ -147,7 +147,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_BITSET: {
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
         Flex* f = cast(Flex*, Cell_Node1(v));
@@ -156,24 +156,22 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_MAP: {
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        assert(Cell_Has_Node1(v));
         const Map* map = VAL_MAP(v);
         assert(Is_Node_Marked(map));
         assert(Stub_Holds_Cells(MAP_PAIRLIST(map)));
         break; }
 
       case REB_HANDLE: { // See %sys-handle.h
-        if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE)) {
+        if (not Cell_Has_Node1(v)) {
             // simple handle, no GC interaction
         }
         else {
-            Stub* stub = Extract_Cell_Handle_Stub(v);
-
             // Handle was created with Init_Handle_XXX_Managed.  It holds a
             // singular array containing exactly one handle, and the actual
             // data for the handle lives in that shared location.
-            //
-            assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
+
+            Stub* stub = Extract_Cell_Handle_Stub(v);
             assert(Is_Node_Marked(stub));
 
             Value* single = Stub_Cell(stub);
@@ -195,7 +193,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_BINARY: {
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
@@ -210,7 +208,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG: {
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
@@ -344,7 +342,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_META_GROUP:
       case REB_TYPE_GROUP:
       case REB_VAR_GROUP: {
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
@@ -375,7 +373,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         goto any_sequence;
 
       any_sequence: {
-        if (Not_Cell_Flag_Unchecked(v, SEQUENCE_HAS_NODE))
+        if (not Sequence_Has_Node(v))
             break;  // should be just bytes
 
         const Node* node1 = Cell_Node1(v);
@@ -387,7 +385,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_META_WORD:
       case REB_TYPE_WORD:
       case REB_VAR_WORD: {
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        assert(Cell_Has_Node1(v));
 
         const String *spelling = Cell_Word_Symbol(v);
         assert(Is_Flex_Frozen(spelling));

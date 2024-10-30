@@ -12,10 +12,10 @@ INLINE const String* Cell_String(const Cell* v) {
 #define Cell_String_Ensure_Mutable(v) \
     m_cast(String*, Cell_String(Ensure_Mutable(v)))
 
-INLINE const String* Cell_Issue_String(const Cell* v) {
-    assert(Cell_Heart(v) == REB_ISSUE);
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    return c_cast(String*, Cell_Node1(v));
+INLINE const String* Cell_Issue_String(const Cell* c) {
+    assert(Cell_Heart(c) == REB_ISSUE);
+    assert(Cell_Has_Node1(c));
+    return c_cast(String*, Cell_Node1(c));
 }
 
 // This routine works with the notion of "length" that corresponds to the
@@ -55,7 +55,7 @@ INLINE Length Cell_Series_Len_At(const Cell* v) {
 INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     assert(Any_Utf8_Kind(Cell_Heart(c)));
 
-    if (Not_Cell_Flag(c, FIRST_IS_NODE))  // must store bytes in cell direct
+    if (not Cell_Has_Node1(c))  // must store bytes in cell direct
         return cast(Utf8(const*), PAYLOAD(Bytes, c).at_least_8);
 
     const String* str = cast(String*, Cell_Node1(c));  // symbols are strings
@@ -80,7 +80,7 @@ INLINE Utf8(const*) Cell_String_At(const Cell* v) {
 INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
     assert(Any_Utf8_Kind(Cell_Heart(c)));
 
-    if (Not_Cell_Flag(c, STRINGLIKE_HAS_NODE)) {  // content in cell direct
+    if (not Stringlike_Has_Node(c)) {  // content in cell direct
         Size size = EXTRA(Bytes, c).at_least_4[IDX_EXTRA_USED];
         return cast(Utf8(const*), PAYLOAD(Bytes, c).at_least_8 + size);
     }
@@ -102,7 +102,7 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
     if (Any_String_Kind(heart))  // can have an index position
         return Cell_Series_Len_At(c);
 
-    if (Not_Cell_Flag(c, STRINGLIKE_HAS_NODE))  // content directly in cell
+    if (not Stringlike_Has_Node(c))  // content directly in cell
         return EXTRA(Bytes, c).at_least_4[IDX_EXTRA_LEN];
 
     const String* str = cast(String*, Cell_Node1(c));

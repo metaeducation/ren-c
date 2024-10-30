@@ -361,10 +361,10 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     if (Is_Extra_Mark_Kind(heart) and c->extra.Any.node)
         Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Any.node);
 
-    if (Get_Cell_Flag_Unchecked(c, FIRST_IS_NODE) and Cell_Node1(c))
+    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE1) and Cell_Node1(c))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).first.node);
 
-    if (Get_Cell_Flag_Unchecked(c, SECOND_IS_NODE) and Cell_Node2(c))
+    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE2) and Cell_Node2(c))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).second.node);
 
   #if !defined(NDEBUG)
@@ -566,7 +566,7 @@ void Run_All_Handle_Cleaners(void) {
               #endif
                 if (Cell_Heart(item) != REB_HANDLE)
                     continue;
-                if (Not_Cell_Flag(item, FIRST_IS_NODE))
+                if (not Cell_Has_Node1(item))
                     continue;
                 if (Not_Node_Accessible(Cell_Node1(item)))
                     continue;

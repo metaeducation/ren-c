@@ -289,32 +289,6 @@ INLINE void Inline_Freshen_Cell_Suppress_Raised_Untracked(Cell* c)
 
 
 
-#define PAYLOAD(Type,cell) \
-    (cell)->payload.Type
-
-#define EXTRA(Type,cell) \
-    (cell)->extra.Type
-
-// Note: If incoming p is mutable, we currently assume that's allowed by the
-// flag bits of the node.  This could have a runtime check in debug build
-// with a C++ variation that only takes mutable pointers.
-//
-INLINE void Tweak_Cell_Node1(Cell* v, Option(const Node*) node) {
-    assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
-    PAYLOAD(Any, v).first.node = maybe node;
-}
-
-INLINE void Tweak_Cell_Node2(Cell* c, Option(const Node*) node) {
-    assert(c->header.bits & CELL_FLAG_SECOND_IS_NODE);
-    PAYLOAD(Any, c).second.node = maybe node;
-}
-
-#define Cell_Node1(c) \
-    m_cast(Node*, PAYLOAD(Any, (c)).first.node)
-
-#define Cell_Node2(c) \
-    m_cast(Node*, PAYLOAD(Any, (c)).second.node)
-
 
 #define Cell_Heart_Unchecked(c) \
     u_cast(Heart, HEART_BYTE(c))
@@ -419,6 +393,44 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 }
 
 
+//=//// CELL PAYLOAD ACCESS ///////////////////////////////////////////////=//
+
+#define PAYLOAD(Type,cell) \
+    (cell)->payload.Type
+
+#define Cell_Has_Node1(c) \
+    Not_Cell_Flag_Unchecked((c), DONT_MARK_NODE1)
+
+#define Cell_Has_Node2(c) \
+    Not_Cell_Flag_Unchecked((c), DONT_MARK_NODE2)
+
+#define Stringlike_Has_Node(c) /* make findable */ \
+    Cell_Has_Node1(c)
+
+#define Sequence_Has_Node(c) /* make findable */ \
+    Cell_Has_Node1(c)
+
+// Note: If incoming p is mutable, we currently assume that's allowed by the
+// flag bits of the node.  This could have a runtime check in debug build
+// with a C++ variation that only takes mutable pointers.
+//
+INLINE void Tweak_Cell_Node1(Cell* c, Option(const Node*) node) {
+    assert(Cell_Has_Node1(c));
+    PAYLOAD(Any, c).first.node = maybe node;
+}
+
+INLINE void Tweak_Cell_Node2(Cell* c, Option(const Node*) node) {
+    assert(Cell_Has_Node2(c));
+    PAYLOAD(Any, c).second.node = maybe node;
+}
+
+#define Cell_Node1(c) \
+    m_cast(Node*, PAYLOAD(Any, (c)).first.node)
+
+#define Cell_Node2(c) \
+    m_cast(Node*, PAYLOAD(Any, (c)).second.node)
+
+
 //=///// BINDING //////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
@@ -446,6 +458,9 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 //     and seemed to outweigh the need to dereference all the time.  The
 //     increased clarity of having unbound be nullptr is also in its benefit.
 //
+
+#define EXTRA(Type,cell) \
+    (cell)->extra.Type
 
 #if DEBUG
     #define Assert_Cell_Binding_Valid(v) \

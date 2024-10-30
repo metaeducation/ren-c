@@ -195,7 +195,7 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_URL:
       case REB_TAG:
       case REB_SIGIL:  // same payload as issue, but always short
-      case REB_ISSUE: {  // may or may not have CELL_FLAG_STRINGLIKE_HAS_NODE
+      case REB_ISSUE: {
         REBLEN len;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, cell);
         hash = Hash_UTF8_Len_Caseless(utf8, len);
@@ -217,7 +217,7 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_META_PATH:
       case REB_TYPE_PATH:
       case REB_VAR_PATH: {
-        if (Not_Cell_Flag(cell, SEQUENCE_HAS_NODE)) {
+        if (not Sequence_Has_Node(cell)) {
             hash = Hash_Bytes(
                 PAYLOAD(Bytes, cell).at_least_8 + 1,
                 PAYLOAD(Bytes, cell).at_least_8[IDX_SEQUENCE_USED]

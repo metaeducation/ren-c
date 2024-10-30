@@ -80,7 +80,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 #define CELL_MASK_0 0  // Erased mask--initable, but not readable or writable
 
-#define CELL_MASK_NO_NODES 0  // no CELL_FLAG_FIRST_IS_NODE or SECOND_IS_NODE
+#define CELL_MASK_NO_NODES \
+    (CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2)
 
 
 //=//// BITS 0-7: NODE FLAGS //////////////////////////////////////////////=//
@@ -119,25 +120,35 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_FLAG_PARAMSPEC_SPOKEN_FOR      NODE_FLAG_MARKED
 
 
-//=//// CELL_FLAG_FIRST_IS_NODE ///////////////////////////////////////////=//
+//=//// CELL_FLAG_DONT_MARK_NODE1 /////////////////////////////////////////=//
 //
-// This flag is used on cells to indicate that they use the "Any" Payload,
-// and `PAYLOAD(Any, v).first.node` should be marked as a node by the GC.
+// If this flag is *NOT* set, that indicates the cell uses the "Any" payload
+// and `PAYLOAD(Any, v).first.node` should be marked as a node by the GC
+// (if it is not nullptr)
 //
-#define CELL_FLAG_FIRST_IS_NODE \
+// IT'S IN THE REVERSE SENSE ON PURPOSE.  This means a "free" cell can have
+// the following bit pattern WHICH IS NOT A LEGAL LEADING BYTE FOR UTF-8:
+//
+//    11111xxx: Flags: NODE | FREE | GC_ONE | GC_TWO | CELL | ...
+//
+// The free bit denotes an Init_Unreadable() cell, and so long as we set the
+// GC_ONE and GC_TWO flags we can still have free choices of `xxx` (e.g.
+// arbitrary ROOT, MANAGED, and MARKED flags), while Detect_Rebol_Pointer()
+// can be certain it's a cell and not UTF-8.
+//
+#define CELL_FLAG_DONT_MARK_NODE1 \
     NODE_FLAG_GC_ONE
 
-#define CELL_FLAG_STRINGLIKE_HAS_NODE CELL_FLAG_FIRST_IS_NODE  // make findable
-#define CELL_FLAG_SEQUENCE_HAS_NODE CELL_FLAG_FIRST_IS_NODE  // make findable
 
-
-
-//=//// CELL_FLAG_SECOND_IS_NODE //////////////////////////////////////////=//
+//=//// CELL_FLAG_DONT_MARK_NODE2 ////////////////////////////////////////=//
 //
-// This flag is used on cells to indicate that they use the "Any" Payload,
-// and `PAYLOAD(Any, v).second.node` should be marked as a node by the GC.
+// If this flag is *NOT* set, that indicates the cell uses the "Any" payload
+// and `PAYLOAD(Any, v).second.node` should be marked as a node by the GC
+// (if it is not nullptr)
 //
-#define CELL_FLAG_SECOND_IS_NODE \
+// IT'S IN THE REVERSE SENSE ON PURPOSE.  See CELL_FLAG_DONT_MARK_NODE1.
+//
+#define CELL_FLAG_DONT_MARK_NODE2 \
     NODE_FLAG_GC_TWO
 
 
@@ -579,16 +590,14 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // node (e.g. to exploit common checks for mutability) it has to do a
     // read through the same field that was assigned.  Hence, many types
     // whose payloads are nodes use the generic "Any" payload, which is
-    // two separate variant fields.  If CELL_FLAG_FIRST_IS_NODE is set, then
-    // if that is a Flex Node it will be used to answer questions about
-    // mutability (beyond CONST, which the cell encodes itself)
+    // two separate variant fields.
     //
     // ANY-WORD?  // see %sys-word.h
-    //     String* spelling;  // word's non-canonized spelling, UTF-8 string
+    //     Symbol* symbol;  // word's non-canonized spelling, UTF-8 string
     //     REBINT index;  // index of word in context (if binding is not null)
     //
     // ANY-CONTEXT?  // see %sys-context.h
-    //     Array* varlist;  // has MISC.meta, LINK.keysource
+    //     VarList* varlist;  // has MISC.meta, LINK.keysource
     //     Action* phase;  // used by FRAME! contexts, see %sys-frame.h
     //
     // ANY-SERIES?  // see %sys-series.h

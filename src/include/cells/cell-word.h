@@ -36,7 +36,7 @@ INLINE bool Wordlike_Cell(const Cell* v) {
         return true;
     if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
         return false;
-    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
+    if (not Cell_Has_Node1(v))
         return false;
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
@@ -78,7 +78,8 @@ INLINE Element* Init_Any_Word_Untracked(
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(NOQUOTE_1)
-            | CELL_FLAG_FIRST_IS_NODE
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
+            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
     CELL_WORD_INDEX_I32(out) = 0;
     BINDING(out) = nullptr;
@@ -106,7 +107,9 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     assert(index != 0);
     Reset_Cell_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
+        FLAG_HEART_BYTE(heart)
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
+            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
     Tweak_Cell_Word_Symbol(out, symbol);
     CELL_WORD_INDEX_I32(out) = index;

@@ -2835,7 +2835,7 @@ Bounce Scanner_Executor(Level* const L) {
     // Can only store file and line information if it has an array
     //
     if (
-        Get_Cell_Flag(TOP, FIRST_IS_NODE)
+        Cell_Has_Node1(TOP)
         and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
         and not Is_Node_A_Cell(Cell_Node1(TOP))
         and Stub_Holds_Cells(cast(Flex*, Cell_Node1(TOP)))

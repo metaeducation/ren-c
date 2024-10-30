@@ -1085,7 +1085,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
 ){
     assert(Any_Tuple(tuple));
 
-    if (Not_Cell_Flag(tuple, SEQUENCE_HAS_NODE))  // byte compressed
+    if (not Sequence_Has_Node(tuple))  // byte compressed
         return Error_User("Cannot GET a numeric tuple");
 
     bool dot_at_head;  // dot at head means look in coupled context
@@ -1479,7 +1479,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 ){
     UNUSED(safe);
 
-    if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed
+    if (not Sequence_Has_Node(path)) {  // byte compressed
         Copy_Cell(out, path);
         goto ensure_out_is_action;  // will fail, it's not an action
 
@@ -1796,7 +1796,7 @@ bool Set_Var_Core_Updater_Throws(
     // caller has asked us to return steps.
 
     if (Any_Sequence_Kind(var_heart)) {
-        if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // compressed byte form
+        if (not Sequence_Has_Node(var))  // compressed byte form
             fail (var);
 
         const Node* node1 = Cell_Node1(var);
@@ -2318,7 +2318,7 @@ DECLARE_NATIVE(free_q)
 
     // All freeable values put their freeable Flex in the payload's "first".
     //
-    if (Not_Cell_Flag(v, FIRST_IS_NODE))
+    if (not Cell_Has_Node1(v))
         return Init_Logic(OUT, false);
 
     Node* n = Cell_Node1(v);
@@ -2449,7 +2449,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (Is_Issue(v)) {
-        if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
+        if (Stringlike_Has_Node(v)) {
             assert(Is_Flex_Frozen(Cell_Issue_String(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
@@ -2532,7 +2532,7 @@ DECLARE_NATIVE(as)
   //=//// CONVERSION TO ANY-ARRAY! ////////////////////////////////////////=//
 
         if (Any_Sequence(v)) {  // internals vary based on optimization
-            if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
+            if (not Sequence_Has_Node(v))
                 return FAIL("Array Conversions of byte-oriented sequences TBD");
 
             const Node* node1 = Cell_Node1(v);
@@ -2638,7 +2638,7 @@ DECLARE_NATIVE(as)
   //=//// CONVERSION TO ANY-WORD! /////////////////////////////////////////=//
 
         if (Is_Issue(v)) {
-            if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
+            if (Stringlike_Has_Node(v)) {
                 //
                 // Handle the same way we'd handle any other read-only TEXT!
                 // with a String allocation...e.g. reuse it if it's already
@@ -2821,7 +2821,7 @@ DECLARE_NATIVE(as)
 
       case REB_BINARY: {
         if (Is_Issue(v)) {
-            if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE))
+            if (Stringlike_Has_Node(v))
                 goto any_string_as_binary;  // had a String allocation
 
             // Data lives in Cell--make new frozen String for BINARY!

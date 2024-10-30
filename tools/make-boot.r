@@ -151,7 +151,7 @@ type-table: load %types.r
         [block!]
     <local>
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
-    completed* running* is-unstable* decorated
+    completed* running* is-unstable* decorated pos
 ][
     obj: make object! compose [(to-set-word var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
@@ -163,8 +163,26 @@ type-table: load %types.r
 
         name*: word!
         description*: text!
-        [antiname*: quasiform! | (antiname*: null)]
-        [cellmask*: group!]
+        [antiname*: quasiform! | (antiname*: null)]  ; quasiform is word in boot
+        [
+            ahead group! into [
+                ['CELL_MASK_NO_NODES <end>]
+                    (cellmask*: the (CELL_MASK_NO_NODES))
+                | ['node1 <end>]
+                    (cellmask*: the (CELL_FLAG_DONT_MARK_NODE2))
+                | [the :node1 <end>]
+                    (cellmask*: null)  ; don't define a CELL_MASK_XXX
+                | [the :node1 the :node2]
+                    (cellmask*: null)  ; don't define a CELL_MASK_XXX
+                | ['node1 'node2]
+                    (cellmask*: the (0))
+                | ['node2 <end>]
+                    (cellmask*: the (CELL_FLAG_DONT_MARK_NODE1))
+            ]
+            | pos: <here> (
+                fail ["Bad node1/node2 spec for" name* "in %types.r"]
+            )
+        ]
         [is-unstable*: issue! | (is-unstable*: null)]
         [typesets*: block!]
         [ahead block! into [
@@ -435,7 +453,7 @@ for-each-datatype 't [
         continue
     ]
 
-    if not empty? t.cellmask [
+    if t.cellmask [
         e-types/emit [t --{
             #define CELL_MASK_${T.NAME} \
                 (FLAG_HEART_BYTE(REB_${T.NAME}) | $<MOLD T.CELLMASK>)

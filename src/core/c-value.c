@@ -63,10 +63,10 @@ Node* Dump_Value_Debug(const Cell* v)
     printf("quote_byte=%d\n", QUOTE_BYTE(v));
     fflush(stdout);
 
-    if (Get_Cell_Flag(v, FIRST_IS_NODE))
-        printf("has first node: %p\n", cast(void*, Cell_Node1(v)));
-    if (Get_Cell_Flag(v, SECOND_IS_NODE))
-        printf("has second node: %p\n", cast(void*, Cell_Node2(v)));
+    if (Cell_Has_Node1(v))
+        printf("has node1: %p\n", cast(void*, Cell_Node1(v)));
+    if (Cell_Has_Node2(v))
+        printf("has node2: %p\n", cast(void*, Cell_Node2(v)));
 
     if (not containing)
         return nullptr;

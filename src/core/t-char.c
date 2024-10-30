@@ -431,7 +431,7 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
         }
     }
 
-    if (no_quotes or Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {  // !!! hack
+    if (no_quotes or not Stringlike_Has_Node(v)) {  // !!! hack
         if (len == 1 and not no_quotes) {  // use historical CHAR! molding
             bool parened = true;  // !!! used to depend on MOLD's :ALL flag
 

@@ -875,7 +875,7 @@ void API_rebModifyHandleCData(
     if (not Is_Handle(v))
         fail ("rebModifyHandleCData() called on non-HANDLE!");
 
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
+    assert(Cell_Has_Node1(v));  // api only sees managed handles
 
     Tweak_Cell_Handle_Cdata(v, data);
 }
@@ -890,7 +890,7 @@ void API_rebModifyHandleLength(RebolValue* v, size_t length) {
     if (not Is_Handle(v))
         fail ("rebModifyHandleLength() called on non-HANDLE!");
 
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
+    assert(Cell_Has_Node1(v));  // api only sees managed handles
 
     Tweak_Cell_Handle_Len(v, length);
 }
@@ -905,7 +905,7 @@ void API_rebModifyHandleCleaner(RebolValue* v, CLEANUP_CFUNC *cleaner) {
     if (not Is_Handle(v))
         fail ("rebModifyHandleCleaner() called on non-HANDLE!");
 
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
+    assert(Cell_Has_Node1(v));  // api only sees managed handles
 
     Extract_Cell_Handle_Stub(v)->misc.cleaner = cleaner;
 }

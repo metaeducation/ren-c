@@ -88,7 +88,8 @@
 //
 // * Compressed forms detect their compression as follows:
 //
-//   - Byte compressed forms do not have CELL_FLAG_SEQUENCE_HAS_NODE
+//   - Byte compressed forms have CELL_FLAG_DONT_MARK_NODE1, which you can
+//     test for more clearly with (not Sequence_Has_Node(cell))
 //
 //   - Pair compression has the first node with NODE_FLAG_CELL
 //
@@ -244,7 +245,9 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
 
     Reset_Cell_Header_Untracked(
         e,
-        CELL_FLAG_FIRST_IS_NODE | FLAG_HEART_BYTE(heart)
+        FLAG_HEART_BYTE(heart)
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // mark the pairing
+            | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
     Tweak_Cell_Pairing(e, p);
   #ifdef ZERO_UNUSED_CELL_FIELDS
@@ -409,7 +412,9 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
 
     Reset_Cell_Header_Untracked(
         out,
-        CELL_FLAG_FIRST_IS_NODE | FLAG_HEART_BYTE(heart)
+        FLAG_HEART_BYTE(heart)
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // first is pairing
+            | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
     Tweak_Cell_Pairing(out, pairing);
   #ifdef ZERO_UNUSED_CELL_FIELDS
@@ -564,8 +569,8 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
 INLINE Length Cell_Sequence_Len(const Cell* c) {
     assert(Any_Sequence_Kind(Cell_Heart(c)));
 
-    if (Not_Cell_Flag(c, SEQUENCE_HAS_NODE)) {  // compressed bytes
-        assert(Not_Cell_Flag(c, SECOND_IS_NODE));
+    if (not Sequence_Has_Node(c)) {  // compressed bytes
+        assert(not Cell_Has_Node2(c));
         return PAYLOAD(Bytes, c).at_least_8[IDX_SEQUENCE_USED];
     }
 
@@ -618,7 +623,7 @@ INLINE Element* Derelativize_Sequence_At(
     assert(out != sequence);
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));  // !!! should not be cell
 
-    if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
+    if (not Sequence_Has_Node(sequence)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
         return Init_Integer(out, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
     }
@@ -689,7 +694,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
     // does not provide a layer of communication connecting the interior
     // to a frame instance (because there is no actual layer).
 
-    if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE))  // compressed bytes
+    if (not Sequence_Has_Node(sequence))  // compressed bytes
         return SPECIFIED;
 
     const Node* node1 = Cell_Node1(sequence);
@@ -786,7 +791,7 @@ INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
 INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
     assert(Any_Sequence_Kind(Cell_Heart(c)));
 
-    if (Not_Cell_Flag(c, SEQUENCE_HAS_NODE))  // compressed bytes
+    if (not Sequence_Has_Node(c))  // compressed bytes
         return NOT_SINGLEHEART_0;
 
     if (Is_Node_A_Cell(Cell_Node1(c))) {

@@ -89,7 +89,7 @@ money       "high precision decimals with denomination (opt)"
             [any-scalar? any-inert?]
             [money       +       +]
 
-time       "time of day or duration"
+time        "time of day or duration"
             (CELL_MASK_NO_NODES)
             [any-scalar? any-inert?]
             [time        +       +]
@@ -105,34 +105,34 @@ integer     "64 bit integer"
             [integer     +       +]
 
 parameter   "function parameter description"
-~hole~      (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+~hole~      (node1 node2)
             [any-inert?]
             [parameter   +       +]
 
 bitset      "set of bit flags"
-            (CELL_FLAG_FIRST_IS_NODE)
+            (node1)
             [any-inert?]
             [bitset      +       +]
 
 map         "name-value pairs (hash associative)"
-            (CELL_FLAG_FIRST_IS_NODE)
+            (node1)
             [any-inert?]
             [map         +       +]
 
 handle      "arbitrary internal object or value"
-            ()  ; node flags vary based on instance
+            (:node1)  ; managed handles use a node to get a shared instance
             [any-inert?]
             [handle      -       +]
 
 
 url         "uniform resource locator or identifier"
-            (CELL_FLAG_FIRST_IS_NODE)
+            (node1)
             [any-utf8? any-inert?]
             [url         string  string]
 
 
 binary      "series of bytes"
-            (CELL_FLAG_FIRST_IS_NODE)
+            (node1)
             [any-series? any-inert?]  ; note: not an ANY-STRING?
             [binary      *       +]
 
@@ -140,22 +140,22 @@ binary      "series of bytes"
 <ANY-STRING?>  ; (order does not currently matter)
 
     text        "text string series of characters"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
                 [string      *       *]
 
     file        "file name or path"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-utf8? any-inert?]
                 [string      *       *]
 
     email       "email address"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-utf8? any-inert?]
                 [string      *       *]
 
     tag         "markup string (HTML or XML)"
-    ~tripwire~  (CELL_FLAG_FIRST_IS_NODE)
+    ~tripwire~  (node1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
                 [string      *       *]
 
@@ -163,12 +163,12 @@ binary      "series of bytes"
 
 
 issue       "immutable codepoint or codepoint sequence"
-            ()  ; may or may not embed data in issue, affects FIRST_IS_NODE
+            (:node1)  ; may or may not embed data in issue vs. use node
             [any-utf8? any-inert? any-sequencable?]
             [issue       *       *]
 
 sigil       "Decorators like $ : ^ & @ (:: means decoration of ANY-SET-TYPE?)"
-            ()
+            (CELL_MASK_NO_NODES)
             [any-utf8? any-sequencable?]  ; NOT inert
             [issue        *       +]  ; UTF-8 content in cell, like ISSUE?
 
@@ -177,7 +177,7 @@ sigil       "Decorators like $ : ^ & @ (:: means decoration of ANY-SET-TYPE?)"
 ; ABOVE THIS LINE, CELL's "Extra" IS RAW BITS: Cell_Extra_Needs_Mark() = false
 ; ============================================================================
 
-; There's CELL_FLAG_FIRST_IS_NODE and CELL_FLAG_SECOND_IS_NODE so each cell
+; With CELL_FLAG_DONT_MARK_NODE1 and CELL_FLAG_DONT_MARK_NODE2, each cell
 ; can say whether the GC needs to consider marking the first or second slots
 ; in the payload.  But rather than sacrifice another bit for whether the
 ; EXTRA slot is a node, the types are in order so that all the ones that need
@@ -189,39 +189,39 @@ sigil       "Decorators like $ : ^ & @ (:: means decoration of ANY-SET-TYPE?)"
 
 
 varargs     "evaluator position for variable numbers of arguments"
-            (CELL_FLAG_SECOND_IS_NODE)
+            (node2)
             [any-inert?]
             [varargs     +       +]
 
 pair        "two dimensional point or size"
-            (CELL_FLAG_FIRST_IS_NODE)
+            (node1)
             [any-scalar? any-inert?]
             [pair        +       +]
 
 <ANY-CONTEXT?>
 
     object      "context of names with values"
-    ~lazy~      (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+    ~lazy~      (node1 node2)
     #unstable   [any-inert?]
                 [context     *       *]
 
     module      "loadable context of code and data"
-                (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+                (node1 node2)
                 [any-inert?]
                 [context     *       *]
 
     error       "error context with id, arguments, and stack origin"
-    ~raised~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+    ~raised~    (node1 node2)
     #unstable   [any-inert?]
                 [context     +       +]
 
     port        "external series, an I/O channel"
-                (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+                (node1 node2)
                 [any-inert?]
                 [port        +       context]
 
     frame       "arguments and locals of a function state"
-    ~action~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+    ~action~    (node1 node2)
                 [any-branch?]
                 [frame       +       *]
 
@@ -237,27 +237,27 @@ pair        "two dimensional point or size"
 <ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     word        "evaluates a variable or action"
-    ~keyword~   (CELL_FLAG_FIRST_IS_NODE)
+    ~keyword~   (node1)
                 [any-utf8? any-plain-value? any-sequencable?]
                 [word        *       *]
 
     meta-word   "word that quotes product or turns quasiforms to antiforms"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-utf8? any-meta-value? any-sequencable?]
                 [word        *       *]
 
     type-word   "inert form of word"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-utf8? any-type-value? any-sequencable?]
                 [word        *       *]
 
     the-word    "inert form of word"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-utf8? any-the-value? any-sequencable?]
                 [word        *       *]
 
     var-word    "word that evaluates to the bound version of the word"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-utf8? any-var-value? any-sequencable?]
                 [word        *       *]
 
@@ -269,27 +269,27 @@ pair        "two dimensional point or size"
   <ANY-TUPLE?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     tuple       "member selection with inert bias"
-                ()
+                (:node1)
                 [any-scalar? any-plain-value?]
                 [sequence    *       *]
 
     meta-tuple  "tuple that quotes product or turns quasiforms to antiforms"
-                ()
+                (:node1)
                 [any-meta-value?]
                 [sequence    *       *]
 
     type-tuple  "inert form of tuple"
-                ()
+                (:node1)
                 [any-scalar? any-type-value?]
                 [sequence    *       *]
 
     the-tuple   "inert form of tuple"
-                ()
+                (:node1)
                 [any-scalar? any-the-value?]
                 [sequence    *       *]
 
     var-tuple   "tuple that evaluates to the bound form of the tuple"
-                ()
+                (:node1)
                 [any-scalar? any-var-value?]
                 [sequence    *       *]
 
@@ -298,27 +298,27 @@ pair        "two dimensional point or size"
   <ANY-CHAIN?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     chain       "refinement and function call dialect"
-                ()
+                (:node1)
                 [any-scalar? any-plain-value?]
                 [sequence    *       *]
 
     meta-chain  "chain that quotes product or turns quasiforms to antiforms"
-                ()
+                (:node1)
                 [any-meta-value?]
                 [sequence    *       *]
 
     type-chain  "inert form of chain"
-                ()
+                (:node1)
                 [any-type-value?]
                 [sequence    *       *]
 
     the-chain   "inert form of chain"
-                ()
+                (:node1)
                 [any-the-value?]
                 [sequence    *       *]
 
     var-chain   "chain that evaluates to the bound form of the chain"
-                ()
+                (:node1)
                 [any-var-value?]
                 [sequence    *       *]
 
@@ -327,27 +327,27 @@ pair        "two dimensional point or size"
   <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     path        "member or refinement selection with execution bias"
-                ()
+                (:node1)
                 [any-plain-value?]
                 [sequence    *       *]
 
     meta-path   "path that quotes product or turns quasiforms to antiforms"
-                ()
+                (:node1)
                 [any-meta-value?]
                 [sequence    *       *]
 
     type-path   "inert form of path"
-                ()
+                (:node1)
                 [any-type-value?]
                 [sequence    *       *]
 
     the-path    "inert form of path"
-                ()
+                (:node1)
                 [any-the-value?]
                 [sequence    *       *]
 
     var-path    "path that evaluates to the bound version of the path"
-                ()
+                (:node1)
                 [any-var-value?]
                 [sequence    *       *]
 
@@ -361,27 +361,27 @@ pair        "two dimensional point or size"
   <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     block       "list of elements that blocks evaluation unless EVAL is used"
-    ~pack~      (CELL_FLAG_FIRST_IS_NODE)
+    ~pack~      (node1)
     #unstable   [any-series? any-branch? any-plain-value? any-sequencable?]
                 [list        *       *]
 
     meta-block  "block that evaluates to produce a quoted block"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-meta-value? any-sequencable?]
                 [list        *       *]
 
     type-block  "alternative inert form of block"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-type-value? any-sequencable?]
                 [list        *       *]
 
     the-block   "alternative inert form of block"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-the-value? any-sequencable?]
                 [list        *       *]
 
     var-block   "block that evaluates to the bound version of the block"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-var-value? any-sequencable?]
                 [list        *       *]
 
@@ -391,27 +391,27 @@ pair        "two dimensional point or size"
   <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     fence       "list of elements that are used in construction via MAKE"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-plain-value? any-sequencable?]
                 [list        *       *]
 
     meta-fence  "fence that we don't know what it does yet"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-meta-value? any-sequencable?]
                 [list        *       *]
 
     type-fence  "alternative inert form of fence"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-type-value? any-sequencable?]
                 [list        *       *]
 
     the-fence   "alternative inert form of fence"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-the-value? any-sequencable?]
                 [list        *       *]
 
     var-fence   "fence that evaluates to the bound version of the fence"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-branch? any-var-value? any-sequencable?]
                 [list        *       *]
 
@@ -421,27 +421,27 @@ pair        "two dimensional point or size"
   <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     group       "list that evaluates expressions as an isolated group"
-    ~splice~    (CELL_FLAG_FIRST_IS_NODE)
+    ~splice~    (node1)
                 [any-series? any-plain-value? any-sequencable?]
                 [list        *       *]
 
     meta-group  "group that quotes product or turns antiforms to quasiforms"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-meta-value? any-sequencable?]
                 [list        *       *]
 
     type-group  "inert form of group"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-type-value? any-sequencable?]
                 [list        *       *]
 
     the-group   "inert form of group"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-the-value? any-branch? any-sequencable?]
                 [list        *       *]
 
     var-group   "group that evaluates to the bound version of the group"
-                (CELL_FLAG_FIRST_IS_NODE)
+                (node1)
                 [any-series? any-var-value? any-sequencable?]
                 [list        *       *]
 
@@ -471,17 +471,17 @@ pair        "two dimensional point or size"
 ; written by hand.
 
 quasiform   "value which evaluates to an antiform"
-            ()
+            (:node1 :node2)
             []
             [quasiform    +       - ]
 
 quoted      "container for arbitrary levels of quoting"
-            ()
+            (:node1 :node2)
             [any-branch?]
             [quoted       +       -]
 
 antiform    "special states that cannot be stored in blocks"
-            ()
+            (:node1 :node2)
             []
             [quoted       +       -]
 

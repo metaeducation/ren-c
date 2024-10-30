@@ -142,7 +142,7 @@ INLINE Element* Derelativize_Untracked(
         else
             BINDING(out) = context;
     }
-    else if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE)) {
+    else if (not Sequence_Has_Node(v)) {
         out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
     }
     else {  // any-path? or any-tuple?, may be wordlike or listlike

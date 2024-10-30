@@ -150,17 +150,17 @@ INLINE const Array* Freeze_Array_Shallow(const Array* a) {
 #if defined(NDEBUG)
     #define Known_Mutable(v) v
 #else
-    INLINE const Cell* Known_Mutable(const Cell* v) {
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        const Flex* f = c_cast(Flex*, Cell_Node1(v));  // varlist, etc.
+    INLINE const Cell* Known_Mutable(const Cell* c) {
+        assert(Cell_Has_Node1(c));
+        const Flex* f = c_cast(Flex*, Cell_Node1(c));  // varlist, etc.
         assert(not Is_Flex_Read_Only(f));
-        assert(Not_Cell_Flag(v, CONST));
-        return v;
+        assert(Not_Cell_Flag(c, CONST));
+        return c;
     }
 #endif
 
 INLINE const Cell* Ensure_Mutable(const Cell* v) {
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+    assert(Cell_Has_Node1(v));
     const Flex* f = c_cast(Flex*, Cell_Node1(v));  // varlist, etc.
 
     Fail_If_Read_Only_Flex(f);

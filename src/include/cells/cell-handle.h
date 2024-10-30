@@ -54,19 +54,19 @@ INLINE bool Is_Handle_Cfunc(const Cell* v) {
     return CELL_HANDLE_LENGTH_U(v) == 0;
 }
 
-INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* v) {
-    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
-    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
-        return m_cast(Cell*, v);  // changing instance won't be seen by copies
-    return Stub_Cell(Extract_Cell_Handle_Stub(v));  // has shared node
+INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
+    assert(Cell_Heart_Unchecked(c) == REB_HANDLE);
+    if (not Cell_Has_Node1(c))
+        return m_cast(Cell*, c);  // changing instance won't be seen by copies
+    return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
 }
 
 #if CPLUSPLUS_11
-    INLINE const Cell* Extract_Cell_Handle_Canon(const Cell* v) {
-        assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
-        if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
-            return v;  // changing handle instance won't be seen by copies
-        return Stub_Cell(Extract_Cell_Handle_Stub(v));  // has shared node
+    INLINE const Cell* Extract_Cell_Handle_Canon(const Cell* c) {
+        assert(Cell_Heart_Unchecked(c) == REB_HANDLE);
+        if (not Cell_Has_Node1(c))
+            return c;  // changing handle instance won't be seen by copies
+        return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
     }
 #endif
 
@@ -90,7 +90,7 @@ INLINE CFunction* Cell_Handle_Cfunc(const Cell* v) {
 
 INLINE CLEANUP_CFUNC* Cell_Handle_Cleaner(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
-    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
+    if (not Cell_Has_Node1(v))
         return nullptr;
     return Extract_Cell_Handle_Stub(v)->misc.cleaner;
 }
@@ -156,7 +156,9 @@ INLINE void Init_Handle_Managed_Common(
     Cell* single = Stub_Cell(singular);
     Reset_Cell_Header_Untracked(
         single,
-        FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
+        FLAG_HEART_BYTE(REB_HANDLE)
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
+            | CELL_FLAG_DONT_MARK_NODE2
     );
     Tweak_Cell_Handle_Stub(single, singular);
     CELL_HANDLE_LENGTH_U(single) = length;
@@ -169,7 +171,9 @@ INLINE void Init_Handle_Managed_Common(
     //
     Reset_Cell_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
+        FLAG_HEART_BYTE(REB_HANDLE)
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
+            | CELL_FLAG_DONT_MARK_NODE2
     );
     Tweak_Cell_Handle_Stub(out, singular);
 

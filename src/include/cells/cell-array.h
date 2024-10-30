@@ -13,7 +13,7 @@ INLINE bool Listlike_Cell(const Cell* v) {
         return true;
     if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
         return false;
-    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
+    if (not Cell_Has_Node1(v))
         return false;
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))

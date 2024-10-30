@@ -39,16 +39,16 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     // Avoids Ensure_Readable(), because it's assumed that it was done in the
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
-    INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* v) {
-        assert(Any_Series_Kind(Cell_Heart_Unchecked(v)));
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        return VAL_INDEX_RAW(v);
+    INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* c) {
+        assert(Any_Series_Kind(Cell_Heart_Unchecked(c)));
+        assert(Cell_Has_Node1(c));
+        return VAL_INDEX_RAW(c);
     }
-    INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* v) {
-        Assert_Cell_Writable(v);
-        assert(Any_Series_Kind(Cell_Heart_Unchecked(v)));
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        return VAL_INDEX_RAW(v);  // returns a C++ reference
+    INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* c) {
+        Assert_Cell_Writable(c);
+        assert(Any_Series_Kind(Cell_Heart_Unchecked(c)));
+        assert(Cell_Has_Node1(c));
+        return VAL_INDEX_RAW(c);  // returns a C++ reference
     }
 #endif
 
@@ -59,11 +59,11 @@ INLINE REBLEN Cell_Series_Len_Head(const Cell* v);  // forward decl
 // end of series, VAL_INDEX() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-INLINE REBLEN VAL_INDEX(const Cell* v) {
-    assert(Any_Series_Kind(Cell_Heart(v)));
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    REBIDX i = VAL_INDEX_RAW(v);
-    if (i < 0 or i > Cell_Series_Len_Head(v))
+INLINE REBLEN VAL_INDEX(const Cell* c) {
+    assert(Any_Series_Kind(Cell_Heart(c)));
+    assert(Cell_Has_Node1(c));
+    REBIDX i = VAL_INDEX_RAW(c);
+    if (i < 0 or i > Cell_Series_Len_Head(c))
         fail (Error_Index_Out_Of_Range_Raw());
     return i;
 }
@@ -102,7 +102,9 @@ INLINE Element* Init_Series_At_Core_Untracked(
 
     Reset_Cell_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
+        FLAG_HEART_BYTE(heart)
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // series stub needs mark
+            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
     Tweak_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;

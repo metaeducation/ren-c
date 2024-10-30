@@ -233,8 +233,8 @@ typedef Context Use;
 
 
 #define CELL_MASK_ANY_CONTEXT \
-    (CELL_FLAG_FIRST_IS_NODE  /* varlist */ \
-        | CELL_FLAG_SECOND_IS_NODE  /* phase (for FRAME!) */)
+    ((not CELL_FLAG_DONT_MARK_NODE1)  /* varlist */ \
+        | (not CELL_FLAG_DONT_MARK_NODE2)  /* phase (for FRAME!) */)
 
 
 

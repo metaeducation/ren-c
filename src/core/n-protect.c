@@ -471,7 +471,7 @@ DECLARE_NATIVE(unprotect)
 // in order to do things like use blocks as map keys, etc.
 //
 bool Is_Value_Frozen_Deep(const Cell* v) {
-    if (Not_Cell_Flag(v, FIRST_IS_NODE))
+    if (not Cell_Has_Node1(v))
         return true;  // payloads that live in cell are already immutable
 
     Node* node = Cell_Node1(v);
