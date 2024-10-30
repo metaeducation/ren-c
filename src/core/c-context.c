@@ -164,6 +164,8 @@ Value* Append_To_Sea_Core(
         patch = &PG_Lib_Patches[id];  // patch memory pre-allocated at boot [1]
         assert(INODE(PatchContext, patch) == nullptr);  // don't double add
         // patch->header.bits should be already set
+
+        TRACK(Erase_Cell(Stub_Cell(patch)));  // prepare for addition
     }
     else {
         patch = Alloc_Singular(

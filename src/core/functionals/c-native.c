@@ -272,22 +272,15 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 // Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
 //
-// 1. The LIB module starts out empty, and we're not able to assign any words
-//    into it via SET-WORD! or otherwise until there are variables.  So we
-//    use the same mechanics that power WRAP* to look for things like FOO:
-//    and /FOO: and [FOO BAR]: that are at the top level of the natives list.
-//    (at this time that's only going to find /FOO:)
+// 1. See Startup_Lib() for how all the declarations in LIB for the natives
+//    are made in a pre-pass (no need to walk and look for set-words etc.)
 //
 Array* Startup_Natives(const Element* boot_natives)
 {
+    Context* lib = Lib_Context;  // native variables already exist [1]
+
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
-
-    Context* context = Lib_Context;
-
-    CollectFlags flags = COLLECT_ONLY_SET_WORDS;  // top-level decls [1]
-    Option(Error*) e = Trap_Wrap_Extend_Core(context, boot_natives, flags);
-    assert(not e);
-    UNUSED(e);
+    assert(BINDING(boot_natives) == UNBOUND);
 
     Array* catalog = Make_Array(g_num_core_natives);
 
@@ -320,7 +313,7 @@ Array* Startup_Natives(const Element* boot_natives)
     ++at;
     assert(Is_Block(at));
     DECLARE_ELEMENT (spec);
-    Derelativize(spec, at, context);
+    Derelativize(spec, at, lib);
     ++at;
 
     Phase* the_native_action = Make_Native(
@@ -331,12 +324,11 @@ Array* Startup_Natives(const Element* boot_natives)
     );
     ++g_native_cfunc_pos;
 
-    bool strict = true;
     Init_Action(
-        MOD_VAR(Lib_Context, Canon(NATIVE), strict),
+        Sink_Lib_Var(NATIVE),
         the_native_action,
         Canon(NATIVE),  // label
-        UNBOUND
+        UNBOUND  // coupling
     );
 
     assert(VAL_ACTION(Lib(NATIVE)) == the_native_action);
@@ -345,30 +337,23 @@ Array* Startup_Natives(const Element* boot_natives)
     Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_ATOM (discarded);
-    if (Eval_Any_List_At_Throws(discarded, skipped, context))
+    if (Eval_Any_List_At_Throws(discarded, skipped, lib))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);
 
-  #if !defined(NDEBUG)
-    //
-    // Ensure the evaluator called NATIVE as many times as we had natives,
-    // and check that a couple of functions can be successfully looked up
-    // by their symbol ID numbers.
-
     assert(g_native_cfunc_pos == g_core_native_cfuncs + g_num_core_natives);
 
+    g_native_cfunc_pos = nullptr;
+    PG_Currently_Loading_Module = nullptr;
+
+  #if DEBUG  // check that a couple of functions can be looked up by ID
     if (not Is_Action(Lib(GENERIC)))
         panic (Lib(GENERIC));
 
     if (not Is_Action(Lib(PARSE_REJECT)))
         panic (Lib(PARSE_REJECT));
   #endif
-
-    assert(g_native_cfunc_pos == g_core_native_cfuncs + g_num_core_natives);
-
-    g_native_cfunc_pos = nullptr;
-    PG_Currently_Loading_Module = nullptr;
 
     return catalog;
 }

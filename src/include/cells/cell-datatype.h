@@ -54,8 +54,10 @@
 //   start of the enumeration.
 //
 
-INLINE bool IS_KIND_SYM(Option(SymId) id)
-  { return id != 0 and id < cast(uint16_t, REB_MAX); }
+INLINE bool IS_KIND_SYM(SymId id) {
+    assert(id != SYM_0);
+    return u_cast(SymIdNum, id) < u_cast(SymIdNum, REB_MAX);
+}
 
 INLINE Kind KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));
@@ -63,7 +65,7 @@ INLINE Kind KIND_FROM_SYM(SymId s) {
 }
 
 #define SYM_FROM_KIND(k) \
-    cast(SymId, cast(uint16_t, (k)))
+    cast(SymId, u_cast(SymIdNum, (k)))
 
 
 #define VAL_TYPE_SYMBOL(v) \

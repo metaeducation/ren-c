@@ -51,9 +51,8 @@ Array* Startup_Datatypes(Array* boot_typespecs)
         // Things like INTEGER! are defined to be &INTEGER
         //
         SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
-        Value* datatype = Force_Lib_Var(datatype_sym);
-        Init_Builtin_Datatype(datatype, kind);
-        Set_Cell_Flag(datatype, PROTECTED);
+        Element* datatype = cast(Element*, Sink_Lib_Var_For_Id(datatype_sym));
+        Protect_Cell(Init_Builtin_Datatype(datatype, kind));
         assert(datatype == Datatype_From_Kind(kind));
 
         // Things like INTEGER? are fast typechecking "intrinsics".  At one
@@ -63,7 +62,7 @@ Array* Startup_Datatypes(Array* boot_typespecs)
         SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
         Phase* typechecker = Make_Typechecker(kind);
         Init_Action(
-            Force_Lib_Var(constraint_sym),
+            Sink_Lib_Var_For_Id(constraint_sym),
             typechecker,
             Canon_Symbol(constraint_sym),  // cached symbol for function
             UNBOUND

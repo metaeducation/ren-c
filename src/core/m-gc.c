@@ -1177,11 +1177,12 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // wouldn't free them.  But we mark them anyway--for clarity, and it
     // speeds up references that would mark them to see they're spoken for
     // (so they don't have to detect it's an array, queue the cell...)
-    //
-    assert(Is_Node_Free(&PG_Lib_Patches[0]));  // skip SYM_0
-    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        Array* patch = &PG_Lib_Patches[i];
-        if (Not_Node_Marked(patch)) {  // the prior loop iterations can mark
+
+    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // skip SYM_0
+
+    for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
+        Stub* patch = &PG_Lib_Patches[id];
+        if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
             Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(patch));
         }
@@ -1277,18 +1278,20 @@ REBLEN Recycle_Core(Flex* sweeplist)
         sweep_count = Sweep_Stubs();
 
     // Unmark the Lib() fixed patches (not in stub pool, never get swept)
-    //
-    assert(Is_Node_Free(&PG_Lib_Patches[0]));  // skip SYM_0
-    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        Array* patch = &PG_Lib_Patches[i];
+
+    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // skip SYM_0
+
+    for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
+        Stub* patch = &PG_Lib_Patches[id];
         Remove_GC_Mark(patch);
     }
 
     // Unmark the Canon() fixed symbols (not in stub pool, never get swept)
-    //
-    assert(Is_Node_Free(&g_symbols.builtin_canons[0]));  // skip SYM_0
-    for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
-        Symbol* canon = &g_symbols.builtin_canons[i];
+
+    assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));  // skip SYM_0
+
+    for (SymIdNum id = 1; id < ALL_SYMS_MAX; ++id) {
+        Symbol* canon = &g_symbols.builtin_canons[id];
         Remove_GC_Mark_If_Marked(canon);
     }
 

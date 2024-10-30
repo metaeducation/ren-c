@@ -69,8 +69,7 @@
 //
 
 
-#define STUB_FLAGS_NONE \
-    0  // helps locate places that want to say "no flags"
+#define STUB_MASK_0  0  // help locate places that treat zero leader specially
 
 
 //=////////////////////////////////////////////////////////////////////////=//

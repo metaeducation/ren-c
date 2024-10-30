@@ -24,6 +24,62 @@
 //
 
 
+//=//// STUB "TOUCH" FOR DEBUGGING ////////////////////////////////////////=//
+//
+// **IMPORTANT** - This is defined early before code that does manipulation
+// on Stub, because it can be very useful in debugging the low-level code.
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// It's nice to be able to trigger a debug_break() after-the-fact on some kind
+// of guard which can show the stack where it was set.  Generally, Stubs get
+// this guard put on at allocation time.  But if you want to mark a moment
+// later as notable to trace back to, you can.
+//
+// This works with Address Sanitizer or with Valgrind, but the config flag to
+// enable it only comes automatically with address sanitizer.
+//
+// 1. In the general case, you can't assume the incoming stub has valid data,
+//    as the default is to call it after only the header bits are set.  But
+//    in case it helps, the s->guard is set to nullptr by Alloc_Stub(), so
+//    conditional instrumentation here can distinguish fresh from valid.
+
+#if DEBUG_FLEX_ORIGINS || DEBUG_COUNT_TICKS
+    INLINE void Touch_Stub(Stub *s)  // if alloc, only header valid [1]
+    {
+      #if DEBUG_FLEX_ORIGINS
+        s->guard = cast(Byte*, malloc(sizeof(Byte)));  // smallest allocation
+        *s->guard = FREE_POOLUNIT_BYTE;  // irrelevant, but disruptive choice
+        free(s->guard);
+      #endif
+
+        s->tick = TICK;  // 0 if not DEBUG_COUNT_TICKS
+    }
+
+    #define Touch_Stub_If_Debug(s) Touch_Stub(s)
+#else
+    #define Touch_Stub_If_Debug(s) NOOP
+#endif
+
+
+//=//// ERASED STUBS //////////////////////////////////////////////////////=//
+//
+// Like Cells, Stubs consider the state where their header bits are all 0
+// to be "erased".  This is used for restoring stubs to the global init
+// state...
+//
+// 1. !!! Typically nodes aren't zeroed out when they are freed.  Should we
+//    do that for this?
+
+INLINE bool Is_Stub_Erased(const Stub* s)
+  { return s->leader.bits == STUB_MASK_0; }
+
+INLINE void Erase_Stub(Stub* s) {
+    s->leader.bits = STUB_MASK_0;  // just the header, is that all? [1]
+    Touch_Stub_If_Debug(s);
+}
+
+
 //=//// STUB "FLAG" BITS //////////////////////////////////////////////////=//
 //
 // See definitions of STUB_FLAG_XXX.
@@ -90,45 +146,6 @@
     m_cast(union HeaderUnion*, /* [1] */ \
         &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
         &= ~subclass##_FLAG_##name
-
-
-//=//// STUB "TOUCH" FOR DEBUGGING ////////////////////////////////////////=//
-//
-// **IMPORTANT** - This is defined early before code that does manipulation
-// on Stub, because it can be very useful in debugging the low-level code.
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// It's nice to be able to trigger a debug_break() after-the-fact on some kind
-// of guard which can show the stack where it was set.  Generally, Stubs get
-// this guard put on at allocation time.  But if you want to mark a moment
-// later as notable to trace back to, you can.
-//
-// This works with Address Sanitizer or with Valgrind, but the config flag to
-// enable it only comes automatically with address sanitizer.
-//
-// 1. In the general case, you can't assume the incoming stub has valid data,
-//    as the default is to call it after only the header bits are set.  But
-//    in case it helps, the s->guard is set to nullptr by Alloc_Stub(), so
-//    conditional instrumentation here can distinguish fresh from valid.
-//
-
-#if DEBUG_FLEX_ORIGINS || DEBUG_COUNT_TICKS
-    INLINE void Touch_Stub(Stub *s)  // if alloc, only header valid [1]
-    {
-      #if DEBUG_FLEX_ORIGINS
-        s->guard = cast(Byte*, malloc(sizeof(Byte)));  // smallest allocation
-        *s->guard = FREE_POOLUNIT_BYTE;  // irrelevant, but disruptive choice
-        free(s->guard);
-      #endif
-
-        s->tick = TICK;  // 0 if not DEBUG_COUNT_TICKS
-    }
-
-    #define Touch_Stub_If_Debug(s) Touch_Stub(s)
-#else
-    #define Touch_Stub_If_Debug(s) NOOP
-#endif
 
 
 //=//// LINK, MISC, and INODE HELPERS /////////////////////////////////////=//

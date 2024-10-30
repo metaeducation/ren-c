@@ -158,6 +158,11 @@ static void Check_Basics(void)
 // Since no good literal form exists, the %sysobj.r file uses the words.  They
 // have to be defined before the point that it runs (along with the natives).
 //
+// 1. While it may seem that context keeps the lib alive and not vice-versa
+//    (which marking the context in link might suggest) the reason for this is
+//    when patches are cached in variables; then the variable no longer refers
+//    directly to the module.
+//
 static void Startup_Lib(void)
 {
     VarList* lib = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
@@ -167,30 +172,31 @@ static void Startup_Lib(void)
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
-    assert(FIRST_BYTE(&PG_Lib_Patches[0]) == 0);  // pre-boot state
-    FIRST_BYTE(&PG_Lib_Patches[0]) = FREE_POOLUNIT_BYTE;
+    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // leave invalid
 
-    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {  // skip SYM_0
-        Array* patch = Make_Array_Core_Into(
-            &PG_Lib_Patches[i],
-            1,
-            FLAG_FLAVOR(PATCH)  // checked when setting INODE(PatchContext)
+    for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
+        Stub* patch = &PG_Lib_Patches[id];
+        assert(Is_Stub_Erased(patch));  // pre-boot state
+
+        patch->leader.bits = (
+            FLAG_FLAVOR(PATCH)
+            | NODE_FLAG_NODE
             | NODE_FLAG_MANAGED
-            //
-            // Note: While it may seem that context keeps the lib alive and
-            // not vice-versa (which marking the context in link might suggest)
-            // the reason for this is when patches are cached in variables;
-            // then the variable no longer refers directly to the module.
-            //
-            | STUB_FLAG_LINK_NODE_NEEDS_MARK
-            | STUB_FLAG_INFO_NODE_NEEDS_MARK
+            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // context, weird keepalive [1]
+            /* | STUB_FLAG_LINK_NODE_NEEDS_MARK */  // reserved
         );
 
-        INODE(PatchContext, patch) = nullptr;  // signals unused
-        LINK(PatchReserved, patch) = nullptr;
-        MISC(PatchHitch, patch) = nullptr;
-        assert(Is_Cell_Poisoned(Stub_Cell(patch)));
-        TRACK(Erase_Cell(Stub_Cell(patch)));  // Lib(XXX) starts unreadable
+        assert(INODE(PatchContext, patch) == nullptr);
+        INODE(PatchContext, patch) = lib;
+
+        assert(LINK(PatchReserved, patch) == nullptr);
+
+        Symbol* symbol =  &g_symbols.builtin_canons[id];
+        assert(node_MISC(Hitch, symbol) == symbol);  // no module patches yet
+        node_MISC(Hitch, symbol) = patch;  // ...but now it has one!
+        MISC(PatchHitch, patch) = symbol;  // link back for singly-linked-list
+
+        Init_Nothing(Stub_Cell(patch));  // start as unset variable
     }
 
   //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
@@ -200,26 +206,20 @@ static void Startup_Lib(void)
     // the scanner is also what would load code like (blank: '_), we need to
     // seed the values to get the ball rolling.
 
-    Set_Cell_Flag(Init_Nulled(force_Lib(NULL)), PROTECTED);
+    Protect_Cell(Init_Nulled(Sink_Lib_Var(NULL)));
     assert(Is_Inhibitor(Lib(NULL)) and Is_Nulled(Lib(NULL)));
 
-    Set_Cell_Flag(Init_Okay(force_Lib(OKAY)), PROTECTED);
+    Protect_Cell(Init_Okay(Sink_Lib_Var(OKAY)));
     assert(Is_Trigger(Lib(OKAY)) and Is_Okay(Lib(OKAY)));
 
-    Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
-    assert(Is_Trigger(Lib(QUASI_VOID)));
+    Protect_Cell(Init_Quasi_Void(Sink_Lib_Var(QUASI_VOID)));
+    assert(Is_Trigger(Lib(QUASI_VOID)) and Is_Quasi_Void(Lib(QUASI_VOID)));
 
-    Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
+    Protect_Cell(Init_Blank(Sink_Lib_Var(BLANK)));
     assert(Is_Trigger(Lib(BLANK)) and Is_Blank(Lib(BLANK)));
 
-    Set_Cell_Flag(
-        Init_Quasi_Null(force_Lib(QUASI_NULL)),
-        PROTECTED
-    );
-    assert(
-        Is_Trigger(Lib(QUASI_NULL))
-        and Is_Quasi_Null(Lib(QUASI_NULL))
-    );
+    Protect_Cell(Init_Quasi_Null(Sink_Lib_Var(QUASI_NULL)));
+    assert(Is_Trigger(Lib(QUASI_NULL)) and Is_Quasi_Null(Lib(QUASI_NULL)));
 
     // !!! Other constants are just initialized as part of Startup_Base().
 }
@@ -228,36 +228,65 @@ static void Startup_Lib(void)
 //
 //  Shutdown_Lib: C
 //
+// Since PG_Lib_Patches are array stubs that live outside the pools,
+// Shutdown_GC() will not kill them off.  We want to make sure the variables
+// are Erase_Cell() and that the patches are Erase_Stub() in case the
+// Startup_Core() gets called again.
+//
+// 1. We have a bit of a catch-22, in that the GC does not free the builtin
+//    Lib patches, but it does free the Lib context itself.  So when we are
+//    freeing the patches, if we tried to assert the context was lib then
+//    we'd be comparing to a freed pointer (which trips up some asserts).
+//    Check the pointer integrity in a pre-pass in a debug build.
+//
+// 2. It might be handy to have the stale value of the Lib_Context on hand
+//    when debugging this function.
+//
+// 3. Since the GC never frees the builtin Lib patches, they don't get
+//    "decayed" and unlinked from the Symbol's hitch list.  Rather than do
+//    a Decay_Flex() here, we can take the opportunity to make sure that
+//    the lib patch really is the last hitch stuck on the symbol (otherwise
+//    there was some kind of leak).
+//
 static void Shutdown_Lib(void)
 {
-    // !!! Since PG_Lib_Patches are array stubs that live outside the pools,
-    // the Shutdown_GC() will not kill them off.  We want to make sure the
-    // variables are Freshen_Cell() and that the patches look empty in case the
-    // Startup() gets called again.
-    //
-    assert(Is_Node_Free(&PG_Lib_Patches[0]));
-    FIRST_BYTE(&PG_Lib_Patches[0]) = 0;  // pre-boot state
-
-    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        Array* patch = &PG_Lib_Patches[i];
-
-        if (INODE(PatchContext, patch) == nullptr)
-            continue;  // was never initialized !!! should it not be in lib?
-
-        Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrites PROTECT...
-        Decay_Flex(patch);
-
-        // !!! Typically nodes aren't zeroed out when they are freed.  Since
-        // this one is a global, it is set to nullptr just to indicate that
-        // the freeing process happened.  Should all nodes be zeroed?
-        //
-        INODE(PatchContext, patch) = nullptr;
-        LINK(PatchReserved, patch) = nullptr;
-        MISC(PatchHitch, patch) = nullptr;
+  #if DEBUG  // verify patches point to Lib_Context before freeing it [1]
+    for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
+        Stub* patch = &PG_Lib_Patches[id];
+        assert(INODE(PatchContext, patch) == Lib_Context);
     }
+  #endif
 
     rebReleaseAndNull(&Lib_Module);
-    Lib_Context = nullptr;
+    /* Lib_Context = nullptr; */  // do this at end of function [2]
+
+    Sweep_Stubs();  // free all managed Stubs so Lib is all that's left [3]
+
+    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));
+
+    for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
+        Stub* patch = &PG_Lib_Patches[id];
+
+        Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrites PROTECT...
+
+        /* assert(INODE(PatchContext, patch) == Lib_Context); */  // !!! freed
+        INODE(PatchContext, patch) = nullptr;  // we already checked it [1]
+
+        assert(LINK(PatchReserved, patch) == nullptr);
+
+        const Symbol* symbol = &g_symbols.builtin_canons[id];
+
+        assert(node_MISC(PatchHitch, patch) == symbol);
+        Stub* symbol_hitch = cast(Stub*, node_MISC(Hitch, symbol));
+        assert(symbol_hitch == patch);
+        UNUSED(symbol_hitch);
+        assert(node_MISC(Hitch, symbol) == patch);
+        node_MISC(Hitch, symbol) = m_cast(Symbol*, symbol);
+
+        Erase_Stub(patch);
+    }
+
+    Lib_Context = nullptr;  // do this last to have freed value on hand [2]
 }
 
 
@@ -367,7 +396,7 @@ static void Init_Root_Vars(void)
 
     ensure(nullptr, Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
     Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
-    Force_Value_Frozen_Deep(Root_Feed_Null_Substitute);
+    Protect_Cell(Root_Feed_Null_Substitute);
 
     // Note: rebText() can't run yet, review.
     //
@@ -449,8 +478,8 @@ static void Init_System_Object(
     // UTIL in SYSTEM, and then abbreviate SYS as a synonym for SYSTEM.
     // Hence the utilities are available as SYS.UTIL
     //
-    Init_Object(force_Lib(SYSTEM), system);
-    Init_Object(force_Lib(SYS), system);
+    Init_Object(Sink_Lib_Var(SYSTEM), system);
+    Init_Object(Sink_Lib_Var(SYS), system);
 
     DECLARE_VALUE (sysobj_spec_virtual);
     Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
@@ -560,17 +589,9 @@ void Startup_Core(void)
     Startup_Scanner();
     Startup_String();
 
-//=//// INITIALIZE API ////////////////////////////////////////////////////=//
-
-    // The API is one means by which variables can be made whose lifetime is
-    // indefinite until program shutdown.  In R3-Alpha this was done with
-    // boot code that laid out some fixed structure arrays, but it's more
-    // general to do it this way.
-
     Init_Char_Cases();
     Startup_CRC();             // For word hashing
     Set_Random(0);
-    Startup_Interning();
 
     Startup_Mold(MIN_COMMON / 4);
 
@@ -581,26 +602,59 @@ void Startup_Core(void)
     Startup_Data_Stack(STACK_MIN / 4);
     Startup_Trampoline();  // uses Canon() in File_Of_Level() currently
 
+  //=//// INITIALIZE API //////////////////////////////////////////////////=//
+
     Startup_Api();
 
-    Startup_Symbols();
+  //=//// STARTUP INTERNING AND BUILT-IN SYMBOLS //////////////////////////=//
 
-//=//// CREATE GLOBAL OBJECTS /////////////////////////////////////////////=//
+    // The build process makes a list of Symbol ID numbers (SymId) which
+    // are given fixed values.  e.g. SYM_LENGTH for the word `length` has an
+    // integer enum value you can use in a C switch() statement.  Stubs for
+    // these built-in symbols are constructed in a global array and stay
+    // valid for the duration of the program.
 
-    Init_Root_Vars();    // Special REBOL values per program
+    Startup_Interning();
 
+    Startup_Builtin_Symbols(  // requires API for allocations in decompress
+        Symbol_Strings_Compressed,
+        Symbol_Strings_Compressed_Size
+    );
+
+  //=//// MAKE LIB MODULE AND VARIABLES FOR BUILT-IN SYMBOLS //////////////=//
+
+    // For many of the built-in symbols, we know there will be variables in
+    // the Lib module for them.  e.g. since APPEND is in the list of generic
+    // functions, we know Startup_Generics() will run (/append: generic [...])
+    // during the boot.
+    //
+    // Since we know that, variables for the built-in symbols are constructed
+    // in a global array.  This array is quickly indexable by the symbol ID,
+    // so that core code can do lookups like Lib_Var(APPEND) to beeline to
+    // the address of that library variable as a compile-time constant.
+    //
+    // After Startup_Lib(), all the builtin library variables will exist, but
+    // they will be unset.  Startup_Natives() and Startup_Generics() can
+    // take their existence for granted, without having to walk their init
+    // code to collect the variables before running it.
+
+    Startup_Lib();
+
+  //=//// CREATE GLOBAL OBJECTS ///////////////////////////////////////////=//
+
+    // The API is one means by which variables can be made whose lifetime is
+    // indefinite until program shutdown.  In R3-Alpha this was done with
+    // boot code that laid out some fixed structure arrays, but it's more
+    // general to do it this way.
+
+    Init_Root_Vars();  // States that can't (or aren't) held in Lib variables
     Init_Action_Spec_Tags();  // Note: requires mold buffer be initialized
-
-//=//// CREATE SYSTEM MODULES //////////////////////////////////////////////=//
-
-    Startup_Lib();  // establishes Lib_Context and Lib_Module
 
   #if !defined(NDEBUG)
     Assert_Pointer_Detection_Working();  // uses root Flex/Values to test
   #endif
 
-
-//=//// LOAD BOOT BLOCK ///////////////////////////////////////////////////=//
+  //=//// LOAD BOOT BLOCK /////////////////////////////////////////////////=//
 
     // The %make-boot.r process takes all the various definitions and
     // mezzanine code and packs it into one compressed string in
@@ -929,12 +983,6 @@ void Shutdown_Core(bool clean)
     if (not clean)
         return;
 
-    // !!! Currently the molding logic uses a test of the Boot_Phase to know
-    // if it's safe to check the system object for how many digits to mold.
-    // This isn't ideal, but if we are to be able to use PROBE() or other
-    // molding-based routines during shutdown, we have to signal not to look
-    // for that setting in the system object.
-    //
     PG_Boot_Phase = BOOT_START;
 
     Shutdown_Data_Stack();
@@ -944,12 +992,8 @@ void Shutdown_Core(bool clean)
     Shutdown_Typesets();
 
     Shutdown_Natives();
-    Shutdown_Action_Spec_Tags();
-    Shutdown_Root_Vars();
 
     Shutdown_Datatypes();
-
-    Shutdown_Lib();
 
     rebReleaseAndNull(&Sys_Util_Module);
     Sys_Context = nullptr;
@@ -957,14 +1001,21 @@ void Shutdown_Core(bool clean)
     rebReleaseAndNull(&User_Context_Value);
     User_Context = nullptr;
 
+    Shutdown_Action_Spec_Tags();
+    Shutdown_Root_Vars();
+
+    Shutdown_Lib();
+
+    Shutdown_Builtin_Symbols();
+    Shutdown_Interning();
+
+    Shutdown_Api();
+
     Shutdown_Feeds();
 
     Shutdown_Trampoline();  // all API calls (e.g. rebRelease()) before this
-    Shutdown_Api();
 
 //=//// ALL MANAGED STUBS MUST HAVE THE KEEPALIVE REFERENCES GONE NOW /////=//
-
-    Sweep_Stubs();  // go ahead and free all managed Stubs
 
     assert(Is_Cell_Erased(&g_ts.thrown_arg));
     assert(Is_Cell_Erased(&g_ts.thrown_label));
@@ -976,9 +1027,6 @@ void Shutdown_Core(bool clean)
     Shutdown_CRC();
     Shutdown_String();
     Shutdown_Scanner();
-
-    Shutdown_Symbols();
-    Shutdown_Interning();
 
     Shutdown_Char_Cases();  // case needed for hashes in Shutdown_Symbols()
 

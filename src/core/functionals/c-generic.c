@@ -129,27 +129,18 @@ DECLARE_NATIVE(generic)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-// 1. The Startup_Natives() used Trap_Wrap_Extend_Core() to add all the natives
-//    as variables in the LIB module so it could assign them.  We now do
-//    the same thing for the generics so they can be assigned.
-//
-//    !!! Review if combining all the definitions into one pass could be
-//    better...or if the boot process could be special-cased to create the
-//    top level variables as it transcodes.
+// 1. See Startup_Lib() for how all the declarations in LIB for the generics
+//    are made in a pre-pass (no need to walk and look for set-words etc.)
 //
 Array* Startup_Generics(const Element* boot_generics)
 {
+    Context* lib = Lib_Context;  // generic variables already exist [1]
+
     assert(VAL_INDEX(boot_generics) == 0);  // should be at head, sanity check
-
-    Context* context = Lib_Context;
-
-    CollectFlags flags = COLLECT_ONLY_SET_WORDS;  // top-level decls [1]
-    Option(Error*) e = Trap_Wrap_Extend_Core(context, boot_generics, flags);
-    assert(not e);
-    UNUSED(e);
+    assert(BINDING(boot_generics) == UNBOUND);
 
     DECLARE_ATOM (discarded);
-    if (Eval_Any_List_At_Throws(discarded, boot_generics, context))
+    if (Eval_Any_List_At_Throws(discarded, boot_generics, lib))
         panic (discarded);
     if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);
@@ -164,7 +155,7 @@ Array* Startup_Generics(const Element* boot_generics)
 
     for (; at != tail; ++at)
         if (Try_Get_Settable_Word_Symbol(nullptr, at)) {  // generics all /foo:
-            Derelativize(PUSH(), at, context);
+            Derelativize(PUSH(), at, lib);
             Unpath(TOP_ELEMENT);  // change /foo: -> foo:
             Unchain(TOP_ELEMENT);  // change foo: -> foo
         }

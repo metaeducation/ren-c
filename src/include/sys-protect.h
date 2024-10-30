@@ -37,6 +37,17 @@
 //
 
 
+INLINE void Protect_Cell(Cell* c) {
+    assert(Not_Cell_Flag(c, PROTECTED));
+    Set_Cell_Flag(c, PROTECTED);
+}
+
+INLINE void Unprotect_Cell(Cell* c) {
+    assert(Get_Cell_Flag(c, PROTECTED));
+    Clear_Cell_Flag(c, PROTECTED);
+}
+
+
 //
 // Freezing and Locking
 //

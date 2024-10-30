@@ -83,7 +83,7 @@ void Startup_Type_Predicates(void)
         Phase* typechecker = Make_Typechecker(n);  // n is decider_index
 
         Init_Action(
-            Force_Lib_Var(cast(SymId, id)),
+            Sink_Lib_Var_For_Id(cast(SymId, id)),
             typechecker,
             Canon_Symbol(cast(SymId, id)),  // cached symbol for function
             UNBOUND

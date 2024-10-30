@@ -223,7 +223,7 @@ void* Probe_Core_Debug(
             Probe_Print_Helper(
                 p,
                 expr,
-                "Erased Cell (or Empty C String)",
+                "Erased Node (or Empty C String)",
                 file, line
               );
         else if (

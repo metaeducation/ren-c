@@ -1748,7 +1748,7 @@ bool Set_Var_Core_Updater_Throws(
 
       set_target:
 
-        if (not updater or VAL_ACTION(updater) == VAL_ACTION(Lib(POKE_P))) {
+        if (updater == Mutable_Lib_Var(POKE_P)) {  // unset poke ok for boot
             //
             // Shortcut past POKE for WORD! (though this subverts hijacking,
             // review that case.)
@@ -1982,7 +1982,7 @@ bool Set_Var_Core_Throws(
         var,
         context,
         setval,
-        Lib(POKE_P)
+        Mutable_Lib_Var(POKE_P)  // mutable means unset is okay
     );
 }
 

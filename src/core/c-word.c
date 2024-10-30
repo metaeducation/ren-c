@@ -492,41 +492,38 @@ void Startup_Interning(void)
 
 
 //
-//  Startup_Symbols: C
+//  Startup_Builtin_Symbols: C
 //
 // Initializes a table for mapping from SYM_XXX => Symbol Flex.  This is used
 // by Canon_Symbol(id) and Canon(XXX) to get the Symbol from SymId.
 //
 // 1. All words that do not have a SYM_XXX get back Cell_Word_Id(w) == SYM_0.
 //    Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being true
-//    when X and Y are different symbols with no SYM_XXX id.  We turn it into
-//    a freed Stub, so Detect_Rebol_Pointer() doesn't confuse the zeroed
-//    memory with an empty UTF-8 string.
+//    when X and Y are different symbols with no SYM_XXX id.
 //
 // 2. A Symbol Flex stores its SymId in the header's 2nd uint16_t.  Could
 //    probably use less than 16 bits, but 8 is insufficient (there are more
 //    than 256 SYM_XXX values)
 //
-void Startup_Symbols(void)
-{
+void Startup_Builtin_Symbols(
+    const Byte* compressed_strings,
+    Size compressed_size
+){
     Size uncompressed_size;
     const int max = -1;  // trust size in gzip data
     Byte* bytes = Decompress_Alloc_Core(
         &uncompressed_size,
-        Symbol_Strings_Compressed,
-        Symbol_Strings_Compressed_Size,
+        compressed_strings,
+        compressed_size,
         max,
         SYM_GZIP
     );
 
-    assert(FIRST_BYTE(&g_symbols.builtin_canons[0]) == 0);  // no Canon(0) [1]
-    FIRST_BYTE(&g_symbols.builtin_canons[0]) = FREE_POOLUNIT_BYTE;
-
-    SymId id = cast(SymId, 1);  // SymId for debug watch
+    assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));  // invalid [1]
 
     Byte* tail = bytes + uncompressed_size;
     Byte* at = bytes;
-    while (at != tail) {
+    for (SymIdNum id = 1; id < ALL_SYMS_MAX; ++id) {
         assert(at < tail);
 
         Size size = *at;  // length prefix byte
@@ -534,18 +531,18 @@ void Startup_Symbols(void)
 
         Symbol* canon = &g_symbols.builtin_canons[id];  // not a Symbol*...yet
         Intern_UTF8_Managed_Core(canon, at, size);  // now it is!
+
         at += size;
 
         assert(SECOND_UINT16(&canon->info) == 0);
         SET_SECOND_UINT16(&canon->info, id);  // store ID in canon [2]
-        assert(id == unwrap Symbol_Id(canon));
-
-        id = cast(SymId, cast(uint16_t, id) + 1);
+        assert(u_cast(SymId, id) == unwrap Symbol_Id(canon));
     }
 
-    rebFree(bytes);
+    assert(at == tail);
+    UNUSED(tail);
 
-    assert(id == ALL_SYMS_MAX);  // includes the + 1 for REB_0 slot
+    rebFree(bytes);
 
     if (0 != strcmp("blank!", String_UTF8(Canon(BLANK_X))))
         panic (Canon(BLANK_X));
@@ -562,19 +559,18 @@ void Startup_Symbols(void)
 
 
 //
-//  Shutdown_Symbols: C
+//  Shutdown_Builtin_Symbols: C
 //
 // The Shutdown_Interning() code checks for g_symbols.by_hash to be empty...
 // the necessary removal happens in Decay_Flex().  (Note that a "dirty"
 // shutdown--used in release builds--avoids all these balancing checks!)
 //
-void Shutdown_Symbols(void)
+void Shutdown_Builtin_Symbols(void)
 {
-    assert(Is_Node_Free(&g_symbols.builtin_canons[SYM_0]));
-    FIRST_BYTE(&g_symbols.builtin_canons[0]) = 0;  // pre-boot state
+    assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));
 
-    for (uint16_t i = 1; i < ALL_SYMS_MAX; ++i) {
-        Symbol* canon = &g_symbols.builtin_canons[i];
+    for (SymIdNum id = 1; id < ALL_SYMS_MAX; ++id) {
+        Symbol* canon = &g_symbols.builtin_canons[id];
         Decay_Flex(canon);
     }
 }

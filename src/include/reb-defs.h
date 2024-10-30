@@ -292,6 +292,8 @@ typedef intptr_t StackIndex;  // 0 for empty stack ([0] entry poison)
 
 typedef enum SymIdEnum SymId;
 
+typedef uint_fast16_t SymIdNum;  // 16 bits for SymId in symbol header
+
 #define SYM_0 \
     cast(Option(SymId),  cast(SymId, 0))  // 0 cast needed if not -fpermissive
 

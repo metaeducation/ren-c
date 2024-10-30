@@ -254,30 +254,33 @@ INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
     return cast(Value*, x_cast(Array*, c)->content.dynamic.data) + n;
 }
 
-INLINE const Value* Try_Lib_Var(SymId id) {
+INLINE Value* Mutable_Lib_Var_For_Id(SymId id) {
     assert(id < LIB_SYMS_MAX);
+    Value* slot = cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
+    return slot;
+}
 
-    // !!! We allow a "removed state", in case modules implement a
-    // feature for dropping variables.
-    //
-    if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
-        return nullptr;
+INLINE const Value* Lib_Var_For_Id(SymId id) {
+    assert(id < LIB_SYMS_MAX);
+    Value* slot = Mutable_Lib_Var_For_Id(id);
+    assert(not Is_Nothing(slot));
+    return slot;
+}
 
+INLINE Sink(Value) Sink_Lib_Var_For_Id(SymId id) {
+    assert(id < LIB_SYMS_MAX);
     return cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
 }
 
 #define Lib(name) \
-    Try_Lib_Var(SYM_##name)
+    Lib_Var_For_Id(SYM_##name)
 
-INLINE Value* Force_Lib_Var(SymId id) {
-    Value* var = m_cast(Value*, Try_Lib_Var(id));
-    if (var)
-        return var;
-    return Append_Context(Lib_Context, Canon_Symbol(id));
-}
+#define Sink_Lib_Var(name) \
+    Sink_Lib_Var_For_Id(SYM_##name)
 
-#define force_Lib(name) \
-    Force_Lib_Var(SYM_##name)
+#define Mutable_Lib_Var(name) \
+    Mutable_Lib_Var_For_Id(SYM_##name)
+
 
 #define SysUtil(name) \
     cast(const Value*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
