@@ -422,7 +422,27 @@ union HeaderUnion {
 #define NODE_BYTEMASK_0x40_FREE 0x40
 
 
-//=//// NODE_FLAG_MANAGED (third-leftmost bit) ////////////////////////////=//
+//=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (third/fourth-leftmost bit) ////=//
+//
+// Both Cell* and Flex* have two bits in their NODE_BYTE which can be called
+// out for attention from the GC.  Though these bits are scarce, sacrificing
+// them means not needing to do a switch() on the REB_TYPE of the cell to
+// know how to mark them.
+//
+// The third potentially-node-holding slot in a cell ("Extra") is deemed
+// whether to be marked or not by the ordering in the %types.r file.  So no
+// bit is needed for that.
+//
+#define NODE_FLAG_GC_ONE \
+    FLAG_LEFT_BIT(2)
+#define NODE_BYTEMASK_0x20_GC_ONE 0x20
+
+#define NODE_FLAG_GC_TWO \
+    FLAG_LEFT_BIT(3)
+#define NODE_BYTEMASK_0x10_GC_TWO 0x10
+
+
+//=//// NODE_FLAG_MANAGED (fifth-leftmost bit) ////////////////////////////=//
 //
 // The GC-managed bit is used on a Stub to indicate that its lifetime is
 // controlled by the garbage collector.  If this bit is not set, then it is
@@ -439,11 +459,11 @@ union HeaderUnion {
 // would you know after running it that pointers in it weren't stored?)
 //
 #define NODE_FLAG_MANAGED \
-    FLAG_LEFT_BIT(2)
-#define NODE_BYTEMASK_0x20_MANAGED 0x20
+    FLAG_LEFT_BIT(4)
+#define NODE_BYTEMASK_0x08_MANAGED 0x08
 
 
-//=//// NODE_FLAG_MARKED (fourth-leftmost bit) ////////////////////////////=//
+//=//// NODE_FLAG_MARKED (sixth-leftmost bit) ////////////////////////////=//
 //
 // On Stub Nodes, this flag is used by the mark-and-sweep of the garbage
 // collector, and should not be referenced outside of %m-gc.c.
@@ -458,28 +478,8 @@ union HeaderUnion {
 // a function arglist, or array slot), it may be used for other things.
 //
 #define NODE_FLAG_MARKED \
-    FLAG_LEFT_BIT(3)
-#define NODE_BYTEMASK_0x10_MARKED 0x10
-
-
-//=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (fifth/sixth-leftmost bit) ////=//
-//
-// Both Value* and Flex* have two bits in their NODE_BYTE which can be called
-// out for attention from the GC.  Though these bits are scarce, sacrificing
-// them means not needing to do a switch() on the REB_TYPE of the cell to
-// know how to mark them.
-//
-// The third potentially-node-holding slot in a cell ("Extra") is deemed
-// whether to be marked or not by the ordering in the %types.r file.  So no
-// bit is needed for that.
-//
-#define NODE_FLAG_GC_ONE \
-    FLAG_LEFT_BIT(4)
-#define NODE_BYTEMASK_0x08_GC_ONE 0x08
-
-#define NODE_FLAG_GC_TWO \
     FLAG_LEFT_BIT(5)
-#define NODE_BYTEMASK_0x04_GC_TWO 0x04
+#define NODE_BYTEMASK_0x04_MARKED 0x04
 
 
 //=//// NODE_FLAG_ROOT (seventh-leftmost bit) /////////////////////////////=//

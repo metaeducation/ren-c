@@ -46,7 +46,7 @@
 
 #else
     INLINE Byte& NODE_BYTE(const Node* node) {
-        assert(cast(Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
+        assert(cast(const Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
         return x_cast(Byte*, node)[0];   // cast away constness [2]
     }
 #endif
@@ -69,10 +69,10 @@
 //
 #define Is_Non_Cell_Node_A_Level Is_Node_A_Cell
 
-#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x10_MARKED))
+#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x04_MARKED))
 #define Not_Node_Marked(n)  (not Is_Node_Marked(n))
 
-#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x20_MANAGED))
+#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x08_MANAGED))
 #define Not_Node_Managed(n) (not Is_Node_Managed(n))
 
 #define Is_Node_Free(n)     (did (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
@@ -98,16 +98,16 @@
     NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x02_ROOT)
 
 #define Set_Node_Marked_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x10_MARKED
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x04_MARKED
 
 #define Clear_Node_Marked_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x10_MARKED)
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x04_MARKED)
 
 #define Set_Node_Managed_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x20_MANAGED
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x08_MANAGED
 
 #define Clear_Node_Managed_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x20_MANAGED)
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x08_MANAGED)
 
 #define Set_Node_Free_Bit(n) \
     NODE_BYTE(n) |= NODE_BYTEMASK_0x40_FREE
@@ -161,7 +161,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         // Clients of this function should not be passing in Stubs in mid-GC.
         // (PROBE uses it, so that throws a wrench into this check.  Review.)
         //
-        /*assert(not (*bp & NODE_BYTEMASK_0x10_MARKED));*/
+        /*assert(not (*bp & NODE_BYTEMASK_0x04_MARKED));*/
 
         return DETECTED_AS_STUB;
     }

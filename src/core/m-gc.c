@@ -177,7 +177,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f);
 //
 static void Queue_Mark_Node_Deep(const Node** npp) {
     Byte nodebyte = NODE_BYTE(*npp);
-    if (nodebyte & NODE_BYTEMASK_0x10_MARKED)
+    if (nodebyte & NODE_BYTEMASK_0x04_MARKED)
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
@@ -613,7 +613,7 @@ static void Mark_Root_Stubs(void)
             assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
 
             if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "Pairing"
-                if (unit[0] & NODE_BYTEMASK_0x20_MANAGED)
+                if (unit[0] & NODE_BYTEMASK_0x08_MANAGED)
                     continue; // PAIR! or other value will mark it
 
                 assert(!"unmanaged Pairing not believed to exist yet");
@@ -991,96 +991,43 @@ Count Sweep_Stubs(void)
         Byte* unit = cast(Byte*, seg + 1);  // byte beats strict alias [1]
 
         for (; n > 0; --n, unit += sizeof(Stub)) {
-            switch (unit[0] >> 4) {
-              case 0:
-              case 1:  // 0x1
-              case 2:  // 0x2
-              case 3:  // 0x2 + 0x1
-              case 4:  // 0x4
-              case 5:  // 0x4 + 0x1
-              case 6:  // 0x4 + 0x2
-              case 7:  // 0x4 + 0x2 + 0x1
-                //
-                // NODE_FLAG_NODE (0x80 => 0x8) is clear.  This signature is
-                // reserved for UTF-8 strings (corresponding to valid ASCII
-                // values in the first byte), and the only exception is the
-                // free-not-a-node FREE_POOLUNIT_BYTE (0x7F).
-                //
-                assert(unit[0] == FREE_POOLUNIT_BYTE);
-                continue;
+            if (unit[0] == FREE_POOLUNIT_BYTE)
+                continue;  // only unit without NODE_FLAG_NODE (in ASCII range)
 
-            // v-- Everything below here has NODE_FLAG_NODE set (0x8)
+            assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
 
-              case 8:
-                // 0x8: unmanaged and unmarked Stub.  It doesn't participate
-                // in the GC.  Leave it as is.
-                //
-                // (Alloc_Value() and rebAlloc() produce these by default)
-                //
-                break;
-
-              case 9:
-                // 0x8 + 0x1: marked but not managed, this can't happen,
-                // because the marking itself asserts nodes are managed.
-                //
-                panic (unit);
-
-              case 10:
-                // 0x8 + 0x2: managed but didn't get marked, should be GC'd
-                //
-                // (It would be nice if we could have NODE_FLAG_CELL here
-                // as part of the switch, but see its definition for why it
-                // is at position 8 from left and not an earlier bit.)
-                //
-                if (unit[0] & NODE_BYTEMASK_0x01_CELL) {
-                    assert(not (unit[0] & NODE_BYTEMASK_0x02_ROOT));
-                    Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing
-                }
-                else {
-                    Decay_Flex(u_cast(Flex*, unit));
-                    GC_Kill_Stub(u_cast(Stub*, unit));
-                }
-                ++sweep_count;
-                break;
-
-              case 11:
-                // 0x8 + 0x2 + 0x1: managed and marked, so it's still live.
-                // Don't GC it, just clear the mark.
-                //
-                Remove_GC_Mark(cast(Node*, unit));
-                break;
-
-            // v-- Everything below this line has the two leftmost bits set
-            // in the header.  In the *general* case this could be a valid
-            // first byte of a multi-byte sequence in UTF-8.  But since we
-            // are looking at a stub pool, these are free (inaccessible) stubs
-
-              case 12:
-                // 0x8 + 0x4: unmanaged free node, these should not exist
-                // Should have just been killed vs. marked free and wait!
-                //
-                panic (unit);
-
-              case 13:
-                // 0x8 + 0x4 + 0x1: unmanaged but marked free node (?)
-                //
-                panic (unit);
-
-              case 14:
-                // 0x8 + 0x4 + 0x2: free stub, managed but not marked
-                // GC pass canonized refs to these to PG_Inaccessible_Stub
-                // With no more refs outstanding, time to clean them up.
-                //
-                assert(not (unit[0] & NODE_BYTEMASK_0x01_CELL));
-                GC_Kill_Stub(u_cast(Stub*, unit));
-                break;
-
-              case 15:
-                // 0x8 + 0x4 + 0x2 + 0x1: managed, marked, free stub
-                // Should have canonized to PG_Inaccessible_Stub vs. marked!
-                //
-                panic (unit);  // 0x8 + 0x4 + ... reserved for UTF-8
+            if (not (unit[0] & NODE_BYTEMASK_0x08_MANAGED)) {
+                assert(not (unit[0] & NODE_BYTEMASK_0x04_MARKED));
+                assert(not (unit[0] & NODE_BYTEMASK_0x40_FREE));
+                continue;  // ignore all unmanaged Stubs/Pairings
             }
+
+            if (unit[0] & NODE_BYTEMASK_0x04_MARKED) {  // managed and marked
+                Remove_GC_Mark(u_cast(Node*, unit));  // just remove mark
+                continue;
+            }
+
+            assert(not (unit[0] & NODE_BYTEMASK_0x02_ROOT));  // roots marked
+
+            ++sweep_count;  // managed but not marked => free it!
+
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // managed pairing
+                Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing()
+                continue;
+            }
+
+            if (unit[0] & NODE_BYTEMASK_0x40_FREE) {
+                //
+                // Stubs that have been marked freed may have outstanding
+                // references at the moment of being marked free...but the GC
+                // canonizes the reference pointers to PG_Inaccessible_Stub.
+                // So they should not have been marked, and once the GC pass
+                // is over we can just free them.
+            }
+            else
+                Decay_Flex(u_cast(Flex*, unit));
+
+            GC_Kill_Stub(u_cast(Stub*, unit));
         }
     }
   }

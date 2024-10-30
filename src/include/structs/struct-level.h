@@ -49,8 +49,6 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 #define LEVEL_FLAG_2 \
     FLAG_LEFT_BIT(2)
 
-STATIC_ASSERT(LEVEL_FLAG_2 == NODE_FLAG_MANAGED);  // if useful
-
 
 //=//// LEVEL_FLAG_BRANCH /////////////////////////////////////////////////=//
 //
