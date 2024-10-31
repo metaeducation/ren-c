@@ -68,18 +68,19 @@
 // so the caller assumes the Windows error state is meaningful upon return.
 //
 static bool Try_Init_Startupinfo_Sink(
-    HANDLE *hsink,  // will be set, is either &si.hStdOutput, &si.hStdError
-    HANDLE *hwrite,  // set to match `hsink` unless hsink doesn't need closing
-    HANDLE *hread,  // write may have "read" side if pipe captures variables
+    Sink(HANDLE) hsink,  // will be set (is &si.hStdOutput or &si.hStdError)
+    Sink(HANDLE) hwrite,  // set to match hsink unless it doesn't need closing
+    Sink(HANDLE) hread,  // write may have read side if pipe captures variables
     DWORD std_handle_id,  // e.g. STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
-    const Value* arg  // argument e.g. /OUTPUT or /ERROR for behavior
+    const Value* arg  // argument e.g. :OUTPUT or :ERROR for behavior
 ){
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
     sa.lpSecurityDescriptor = nullptr;
     sa.bInheritHandle = TRUE;
 
-    assert(*hread == 0 and *hwrite == 0);
+    *hread = 0;
+    *hwrite = 0;
     *hsink = INVALID_HANDLE_VALUE;  // this function must set unless error
 
     if (Is_Nulled(arg)) {  // write normally (usually to console)
@@ -96,12 +97,14 @@ static bool Try_Init_Startupinfo_Sink(
             // then the default is *not* to also redirect the child?  There
             // was no comment on this.
             //
-            if (not SetHandleInformation(
+            /*if (not SetHandleInformation(
                 *hwrite, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT
             )){
                 return false;
             }
-            *hsink = *hwrite;
+            *hsink = *hwrite;*/
+
+           fail ("Unimplemented branch for INHERIT in Startupinfo_Sink()");
         }
         else {
             // Not documented, but this is how to make a /dev/null on Windows
