@@ -517,105 +517,80 @@ DECLARE_NATIVE(dehex)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    // RFC 3986 says the encoding/decoding must use UTF-8.  This temporary
-    // buffer is used to hold up to 4 bytes (and a terminator) that need
-    // UTF-8 decoding--the maximum one UTF-8 encoded codepoint may have.
-    //
-    Byte scan[5];
-    Size scan_size = 0;
-
-    REBLEN len;
-    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(string));
+    Utf8(const*) cp = Cell_Utf8_Head(ARG(string));
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
 
-    REBLEN i;
-    for (i = 0; i < len;) {
-        if (c != '%')
+    while (c != '\0') {
+        if (c != '%') {
             Append_Codepoint(mo->string, c);
-        else {
-            if (i + 2 >= len)
-               return FAIL("Percent decode has less than 2 codepoints after %");
+            cp = Utf8_Next(&c, cp); // c may be '\0', guaranteed if `i == len`
+            continue;
+        }
 
-            Codepoint c1;
-            Codepoint c2;
-            cp = Utf8_Next(&c1, cp);
-            ++i;
-            cp = Utf8_Next(&c2, cp);
-            ++i;
+        Byte scan[5];  // 4 bytes plus terminator is max, see RFC 3986
+        Size scan_size = 0;
+
+        do {
+            if (scan_size > 4)
+                return FAIL("Percent sequence over 4 bytes long (bad UTF-8)");
+
+            Codepoint hex1;
+            Codepoint hex2;
+            cp = Utf8_Next(&hex1, cp);
+            if (hex1 == '\0')
+                hex2 = '\0';
+            else
+                cp = Utf8_Next(&hex2, cp);
 
             Byte nibble1;
             Byte nibble2;
             if (
-                c1 > UINT8_MAX
-                or not Try_Get_Lex_Hexdigit(&nibble1, cast(Byte, c1))
-                or
-                c2 > UINT8_MAX
-                or not Try_Get_Lex_Hexdigit(&nibble2, cast(Byte, c2))
+                hex1 > UINT8_MAX
+                or not Try_Get_Lex_Hexdigit(&nibble1, cast(Byte, hex1))
+                or hex2 > UINT8_MAX
+                or not Try_Get_Lex_Hexdigit(&nibble2, cast(Byte, hex2))
             ){
                 return FAIL("2 hex digits must follow percent, e.g. %XX");
             }
 
             Byte b = (nibble1 << 4) + nibble2;
-            scan[scan_size++] = b;
+
+            if (scan_size == 0 and Is_Continuation_Byte(b))
+                return FAIL("UTF-8 can't start with continuation byte");
+
+            if (scan_size > 0 and not Is_Continuation_Byte(b)) {  // next char
+                cp = Step_Back_Codepoint(cp);
+                cp = Step_Back_Codepoint(cp);
+                cp = Step_Back_Codepoint(cp);
+                assert(*c_cast(Byte*, cp) == '%');
+                break;
+            }
+
+            scan[scan_size] = b;
+            ++scan_size;
+
+            cp = Utf8_Next(&c, cp);
+        } while (c == '%');
+
+        scan[scan_size] = '\0';
+
+        const Byte* next = scan;
+        Codepoint decoded;
+        Option(Error*) e = Trap_Back_Scan_Utf8_Char(
+            &decoded, &next, &scan_size
+        );
+        if (e) {
+            UNUSED(e);  // should this chain the error reports?
+            return FAIL("Bad UTF-8 sequence in %XX of dehex");
         }
 
-        cp = Utf8_Next(&c, cp); // c may be '\0', guaranteed if `i == len`
-        ++i;
+        --scan_size;  // see definition of Back_Scan for why it's off by one
+        if (scan_size != 0)
+            return FAIL("Extra continuation characters in %XX of dehex");
 
-        // If our scanning buffer is full (and hence should contain at *least*
-        // one full codepoint) or there are no more UTF-8 bytes coming (due
-        // to end of string or the next input not a %XX pattern), then try
-        // to decode what we've got.
-        //
-        if (scan_size > 0 and (c != '%' or scan_size == 4)) {
-            assert(i != len or c == '\0');
-
-          decode_codepoint:
-            scan[scan_size] = '\0';
-            const Byte* next; // goto would cross initialization
-            Codepoint decoded;
-            if (scan[0] < 0x80) {
-                decoded = scan[0];
-                next = &scan[0]; // last byte is only byte (see Back_Scan)
-            }
-            else {
-                next = scan;
-                Option(Error*) e = Trap_Back_Scan_Utf8_Char(
-                    &decoded, &next, &scan_size
-                );
-                if (e) {
-                    UNUSED(e);  // should this chain the error reports?
-                    return FAIL("Bad UTF-8 sequence in %XX of dehex");
-                }
-            }
-
-            // !!! Should you be able to give a BINARY! to be dehexed and then
-            // get a BINARY! back that permits internal zero chars?  This
-            // would not be guaranteeing UTF-8 compatibility.  Seems dodgy.
-            //
-            if (decoded == '\0')
-                return FAIL(Error_Illegal_Zero_Byte_Raw());
-
-            Append_Codepoint(mo->string, decoded);
-            --scan_size; // one less (see why it's called "Back_Scan")
-
-            // Slide any residual UTF-8 data to the head of the buffer
-            //
-            REBLEN n;
-            for (n = 0; n < scan_size; ++n) {
-                ++next; // pre-increment (see why it's called "Back_Scan")
-                scan[n] = *next;
-            }
-
-            // If we still have bytes left in the buffer and no more bytes
-            // are coming, this is the last chance to decode those bytes,
-            // keep going.
-            //
-            if (scan_size != 0 and c != '%')
-                goto decode_codepoint;
-        }
+        Append_Codepoint(mo->string, decoded);
     }
 
     return Init_Any_String(
