@@ -404,22 +404,24 @@ union HeaderUnion {
 #define NODE_BYTEMASK_0x80_NODE 0x80
 
 
-//=//// NODE_FLAG_FREE (second-leftmost bit) //////////////////////////////=//
+//=//// NODE_FLAG_UNREADABLE (second-leftmost bit) ////////////////////////=//
 //
-// The second-leftmost bit will be 0 for all HeaderUnion in the system that
-// are "valid".  This completes the plan of making sure all Cell and Stub
-// that are usable will start with the bit pattern 10xxxxxx, which always
-// indicates an invalid leading byte in UTF-8.
+// The second-leftmost bit will be 0 for most Cells and Stubs in the system.
+// This gives the most freedom to set the other node bits independently, since
+// the bit pattern 10xxxxxx, is always an invalid leading byte in UTF-8.
 //
-// The exception are freed nodes, but they use 11000000 and 110000001 for
-// freed Stubs and end signal value cells.  These are the bytes
-// 192 and 193, which are specifically illegal in any UTF-8 sequence.  So
-// even these cases may be safely distinguished from UTF-8.  See the
-// NODE_FLAG_CELL for why it is chosen to be that 8th bit.
+// But when the bit is set and the pattern is 11xxxxxx, it's still possible
+// to cleverly use subsets of the remaining bit patterns for Cells and Stubs
+// and avoid conflating with legal UTF-8 states.  See NODE_FLAG_CELL for
+// how this is done.
 //
-#define NODE_FLAG_FREE \
+// Additional non-UTF-8 states that have NODE_FLAG_UNREADABLE set are
+// END_SIGNAL_BYTE, which uses 11000000, and FREE_POOLUNIT_BYTE, which uses
+// 110000001... which are the illegal UTF-8 bytes 192 and 193.
+//
+#define NODE_FLAG_UNREADABLE \
     FLAG_LEFT_BIT(1)
-#define NODE_BYTEMASK_0x40_FREE 0x40
+#define NODE_BYTEMASK_0x40_UNREADABLE 0x40
 
 
 //=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (third/fourth-leftmost bit) ////=//
@@ -442,7 +444,32 @@ union HeaderUnion {
 #define NODE_BYTEMASK_0x10_GC_TWO 0x10
 
 
-//=//// NODE_FLAG_MANAGED (fifth-leftmost bit) ////////////////////////////=//
+//=//// NODE_FLAG_CELL (fifth-leftmost bit) //////////////////////////////=//
+//
+// If this bit is set in the header, it indicates the slot the header is for
+// is `sizeof(Cell)`.
+//
+// In the debug build, it provides some safety for all value writing routines.
+// In the release build, it distinguishes "Pairing" Nodes (holders for two
+// cells in the same Pool as ordinary Stubs) from an ordinary Flex Stub.
+// Stubs have the cell bit clear, while Pairings in the STUB_POOL have it set.
+//
+// The position chosen is not random.  It is picked as the 5th bit from the
+// left so that unreadable nodes can have the pattern:
+//
+//    11111xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO | CELL | ...
+//
+// This pattern is for an Is_Cell_Unreadable() cell, and so long as we set the
+// GC_ONE and GC_TWO flags we can still have free choices of `xxx` (e.g.
+// arbitrary ROOT, MANAGED, and MARKED flags), while Detect_Rebol_Pointer()
+// can be certain it's a cell and not UTF-8.
+//
+#define NODE_FLAG_CELL \
+    FLAG_LEFT_BIT(4)
+#define NODE_BYTEMASK_0x08_CELL 0x08
+
+
+//=//// NODE_FLAG_MANAGED (sixth-leftmost bit) ////////////////////////////=//
 //
 // The GC-managed bit is used on a Stub to indicate that its lifetime is
 // controlled by the garbage collector.  If this bit is not set, then it is
@@ -459,27 +486,8 @@ union HeaderUnion {
 // would you know after running it that pointers in it weren't stored?)
 //
 #define NODE_FLAG_MANAGED \
-    FLAG_LEFT_BIT(4)
-#define NODE_BYTEMASK_0x08_MANAGED 0x08
-
-
-//=//// NODE_FLAG_MARKED (sixth-leftmost bit) ////////////////////////////=//
-//
-// On Stub Nodes, this flag is used by the mark-and-sweep of the garbage
-// collector, and should not be referenced outside of %m-gc.c.
-//
-// See `FLEX_INFO_BLACK` for a generic bit available to other routines
-// that wish to have an arbitrary marker on a Flex (for things like
-// recursion avoidance in algorithms).
-//
-// Because "Pairings" can wind up marking what looks like a Cell but is in
-// the STUB_POOL, it's a bit dangerous to try exploiting this bit on a generic
-// Cell.  If one is *certain* that a value is not "paired" (e.g. it's in
-// a function arglist, or array slot), it may be used for other things.
-//
-#define NODE_FLAG_MARKED \
     FLAG_LEFT_BIT(5)
-#define NODE_BYTEMASK_0x04_MARKED 0x04
+#define NODE_BYTEMASK_0x04_MANAGED 0x04
 
 
 //=//// NODE_FLAG_ROOT (seventh-leftmost bit) /////////////////////////////=//
@@ -496,43 +504,53 @@ union HeaderUnion {
 #define NODE_BYTEMASK_0x02_ROOT 0x02
 
 
-//=//// NODE_FLAG_CELL (eighth-leftmost bit) //////////////////////////////=//
+//=//// NODE_FLAG_MARKED (eighth-leftmost bit) ////////////////////////////=//
 //
-// If this bit is set in the header, it indicates the slot the header is for
-// is `sizeof(Cell)`.
+// On Stub Nodes, this flag is used by the mark-and-sweep of the garbage
+// collector, and should not be referenced outside of %m-gc.c.
 //
-// In the debug build, it provides some safety for all value writing routines.
-// In the release build, it distinguishes "Pairing" Nodes (holders for two
-// cells in the same Pool as ordinary Stubs) from an ordinary Flex Stub.
-// Stubs have the cell bit clear, while Pairings in the STUB_POOL have it set.
+// 1. THE CHOICE OF BEING THE LAST BIT IS NOT RANDOM.  This means that decayed
+//    Stub states can be represented as 11000000 and 11000001, where you have
+//    just NODE_FLAG_NODE and NODE_FLAG_STUB plus whether the stub has been
+//    marked or not, and these are illegal UTF-8.
 //
-// The position chosen is not random.  It is picked as the 8th bit from the
-// left so that freed nodes can still express a distinction between
-// being a cell and not, due to 11000000 (192) and 11000001 (193) are both
-// invalid UTF-8 bytes, hence these two free states are distinguishable from
-// a leading byte of a string.
+// 2. See `FLEX_INFO_BLACK` for a generic bit available to other routines
+//    that wish to have an arbitrary marker on a Flex (for things like
+//    recursion avoidance in algorithms).
 //
-// No obvious advantage one way or another has arisen yet for NODE_FLAG_CELL
-// being 1 or NODE_FLAG_STUB being 1.  malloc()'d arrays of data have to have
-// NODE_FLAG_NODE set before they become useful and don't trigger asserts on
-// reading, and as long as you're setting that you can set bit 7 too.  If
-// some clever reason to switch the polarity of this bit came up, it could
-// be done pretty easily.
+// 3. Because "Pairings" can wind up marking what looks like a Cell but is
+//    in the STUB_POOL, it's a bit dangerous to try exploiting this bit on a
+//    generic Cell.  If one is *certain* that a value is not "paired" (e.g. in
+//    a function arglist, or array slot), it may be used for other things).
 //
-#define NODE_FLAG_CELL \
+#define NODE_FLAG_MARKED \
     FLAG_LEFT_BIT(7)
-#define NODE_BYTEMASK_0x01_CELL 0x01
+#define NODE_BYTEMASK_0x01_MARKED 0x01
+
+#define DECAYED_NON_CANON_BYTE      0xC0  // 11000000: illegal UTF-8 [1]
+#define DECAYED_CANON_BYTE          0xC1  // 11000001: illegal UTF-8 [1]
 
 
-// There are two special invalid bytes in UTF8 which have a leading "110"
-// bit pattern, which are freed nodes.  These two patterns are "freed stubs"
-// and "end signal bytes"
+// All the illegal UTF-8 bit patterns are in use for some purpose in the
+// Cell and Stub space except for these 3 bytes:
 //
-// At time of writing, the END_SIGNAL_BYTE must always be followed by a zero
-// byte.  This is easy to do with C strings (*see rebEND definition*).  It's
-// not strictly necessary--one byte suffices--but it's a good sanity check.
+//        0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
 //
-#define END_SIGNAL_BYTE 192
-STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x01_CELL));
+// If these were interpreted as flags, it's a stub (no NODE_FLAG_CELL) with:
+//
+//    11110xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO
+//
+// 0xF7 is used for END_SIGNAL_BYTE
+// 0xF6 is used for FREE_POOLUNIT_BYTE
+// 0xF5 is NODE_BYTE_RESERVED for when some new idea comes up.
+//
+// 1. At time of writing, the END_SIGNAL_BYTE must always be followed by a
+//    zero byte.  It's easy to do with C strings(*see rebEND definition*).
+//    Not strictly necessary--one byte suffices--but it's a good sanity check.
 
-#define FREE_POOLUNIT_BYTE 0x7F  // not NODE_FLAG_NODE, but NODE_FLAG_FREE
+#define END_SIGNAL_BYTE 0xF7  // followed by a zero byte [1]
+STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
+
+#define FREE_POOLUNIT_BYTE 0xF6
+
+#define NODE_BYTE_RESERVED 0xF5

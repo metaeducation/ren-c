@@ -63,7 +63,7 @@
 
 INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
     assert(HEART_BYTE(v) == REB_PARAMETER);
-    if (Cell_Node1(v) != nullptr and Not_Node_Accessible(Cell_Node1(v)))
+    if (Cell_Node1(v) != nullptr and Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
     return cast(Array*, Cell_Node1(v));

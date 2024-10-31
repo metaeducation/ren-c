@@ -255,6 +255,7 @@ INLINE void Erase_Stub(Stub* s) {
 INLINE Value* Stub_Cell(const_if_c Stub* s) {
     assert(Not_Stub_Flag(s, DYNAMIC));
     assert(Stub_Holds_Cells(s));
+    assert(Is_Node_Readable(s));
     return x_cast(Value*, &s->content.fixed.cell);
 }
 
@@ -262,6 +263,7 @@ INLINE Value* Stub_Cell(const_if_c Stub* s) {
     INLINE const Value* Stub_Cell(const Stub* s) {
         assert(Not_Stub_Flag(s, DYNAMIC));
         assert(Stub_Holds_Cells(s));
+        assert(Is_Node_Readable(s));
         return u_cast(const Value*, &s->content.fixed.cell);
     }
 #endif

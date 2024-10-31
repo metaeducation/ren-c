@@ -666,7 +666,7 @@ Phase* Make_Action(
 
     assert(Is_Node_Managed(paramlist));
     assert(
-        Is_Unreadable(Flex_Head(Value, paramlist))
+        Is_Cell_Unreadable(Flex_Head(Value, paramlist))
         or CTX_TYPE(cast(VarList*, paramlist)) == REB_FRAME
     );
 
@@ -722,7 +722,7 @@ Phase* Make_Action(
     // !!! We may have to initialize the exemplar rootvar.
     //
     Value* rootvar = Flex_Head(Value, paramlist);
-    if (Is_Unreadable(rootvar))
+    if (Is_Cell_Unreadable(rootvar))
         Tweak_Frame_Varlist_Rootvar(paramlist, ACT_IDENTITY(act), UNBOUND);
 
     // Precalculate cached function flags.  This involves finding the first

@@ -2,7 +2,7 @@
 
 INLINE Action* VAL_ACTION(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    if (Not_Node_Accessible(Cell_Node1(v)))
+    if (Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
     Flex* f = cast(Flex*, Cell_Node1(v));  // maybe exemplar, maybe details

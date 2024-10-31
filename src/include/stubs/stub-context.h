@@ -468,7 +468,7 @@ INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
     Value* rootvar = cast(Value*, copy->content.dynamic.data);
     Tweak_Cell_Context_Varlist(rootvar, x_cast(Array*, copy));
 
-    Set_Flex_Inaccessible(stub);  // Make unusable [2]
+    Set_Flex_Inaccessible(c);  // Make unusable [2]
   #if DEBUG
     FLAVOR_BYTE(stub) = FLAVOR_CORRUPT;
     Corrupt_Pointer_If_Debug(stub->link.any.corrupt);

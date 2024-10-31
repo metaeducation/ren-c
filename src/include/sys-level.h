@@ -494,7 +494,7 @@ INLINE Level* Prep_Level_Core(
    if (L == nullptr)  // e.g. a failed allocation
        fail (Error_No_Memory(sizeof(Level)));
 
-    L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_7_IS_TRUE;
+    L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 
     L->feed = feed;
     Erase_Cell(&L->spare);

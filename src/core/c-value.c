@@ -172,7 +172,7 @@ void Probe_Cell_Print_Helper(
     const Atom* atom = c_cast(Value*, p);
 
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable(atom)) {  // Is_Nulled() asserts on unreadables
+    if (Is_Cell_Unreadable(atom)) {  // Is_Nulled() asserts on unreadables
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }
@@ -223,22 +223,11 @@ void* Probe_Core_Debug(
             Probe_Print_Helper(
                 p,
                 expr,
-                "Erased Node (or Empty C String)",
+                "Empty UTF-8 String or Is_Cell_Erased() / Is_Stub_Erased()",
                 file, line
               );
-        else if (
-            (*c_cast(Byte*, p) & NODE_BYTEMASK_0x80_NODE)
-            and (*c_cast(Byte*, p) & NODE_BYTEMASK_0x01_CELL)
-        ){
-            if (not (*c_cast(Byte*, p) & NODE_BYTEMASK_0x40_FREE)) {
-                printf("!!! Non-FREE'd alias of cell with UTF-8 !!!");
-                panic (p);  // hopefully you merely debug-probed garbage memory
-            }
-            Probe_Print_Helper(p, expr, "C String (or free cell)", file, line);
-            printf("\"%s\"\n", c_cast(char*, p));
-        }
         else {
-            Probe_Print_Helper(p, expr, "C String", file, line);
+            Probe_Print_Helper(p, expr, "UTF-8 String", file, line);
             printf("\"%s\"\n", c_cast(char*, p));
         }
         goto cleanup;
@@ -248,18 +237,22 @@ void* Probe_Core_Debug(
         goto cleanup;
 
       case DETECTED_AS_END:
-        Probe_Print_Helper(p, expr, "END", file, line);
+        Probe_Print_Helper(p, expr, "rebEND Signal (192)", file, line);
         goto cleanup;
 
       case DETECTED_AS_STUB:
         break;  // lots of possibilities, break to handle
+
+      case DETECTED_AS_FREE:
+        Probe_Print_Helper(p, expr, "Freed PoolUnit (193)", file, line);
+        goto cleanup;
     }
 
     // If we didn't jump to cleanup above, it's a Flex.  New switch().
 
   blockscope {
     const Flex* f = c_cast(Flex* , p);
-    assert(not Is_Node_Free(f));  // Detect should have caught, above
+    assert(Is_Node_Readable(f));
     Flavor flavor = Stub_Flavor(f);
     Assert_Flex(f);  // if corrupt, gives better info than a print crash
 

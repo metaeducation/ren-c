@@ -262,7 +262,7 @@ void Evaluator_Exit_Checks_Debug(Level* L) {
         Flags filtered = (L->flags.bits & ~FLAG_STATE_BYTE(255));
         filtered &= ~ (
             LEVEL_FLAG_0_IS_TRUE  // always true
-            | LEVEL_FLAG_7_IS_TRUE  // always true
+            | LEVEL_FLAG_4_IS_TRUE  // always true
             | LEVEL_FLAG_ROOT_LEVEL
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );

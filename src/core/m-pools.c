@@ -501,7 +501,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL) {  // a "pairing"
                 Pairing* pairing = x_cast(Pairing*, unit);
                 if (p >= Pairing_Head(pairing) and p < Pairing_Tail(pairing))
                     return pairing;  // in stub pool, but actually Cell[2]
@@ -1081,9 +1081,9 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 //
 //  Decay_Flex: C
 //
-Stub *Decay_Flex(Flex* f)
+Stub* Decay_Flex(Flex* f)
 {
-    Assert_Node_Accessible(f);
+    assert(Is_Node_Readable(f));
 
     switch (Stub_Flavor(f)) {
       case FLAVOR_NONSYMBOL:
@@ -1199,7 +1199,7 @@ void GC_Kill_Stub(Stub* s)
     }
   #endif
 
-    assert(Not_Node_Accessible(s));  // must Decay_Flex() first
+    assert(Not_Node_Readable(s));  // must Decay_Flex() first
 
     // By default the Stub is touched so its tick reflects the tick that
     // freed it.  If you need to know the tick where it was allocated, then
@@ -1225,29 +1225,15 @@ void GC_Kill_Stub(Stub* s)
 
 
 //
-//  GC_Kill_Flex: C
-//
-// In general, only the garbage collector should be calling this routine.
-//
-// It frees a Flex even though it is under GC management, because the GC has
-// figured out no references exist.
-//
-void GC_Kill_Flex(Flex* f) {
-    Assert_Node_Accessible(f);
-    GC_Kill_Stub(Decay_Flex(f));
-}
-
-
-//
 //  Free_Unmanaged_Flex: C
 //
 // Release a Flex's Stub and data allocation to memory pools for reuse.
 //
 void Free_Unmanaged_Flex(Flex* f)
 {
-  #if !defined(NDEBUG)
-    if (Is_Node_Free(f)) {
-        printf("Trying to Free_Unmanaged_Flex() on already freed Flex\n");
+  #if DEBUG
+    if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE or Not_Node_Readable(f)) {
+        printf("Called Free_Unmanaged_Flex() on decayed or freed Flex\n");
         panic (f);  // erroring here helps not conflate with tracking problems
     }
 
@@ -1273,7 +1259,7 @@ void Free_Unmanaged_Flex(Flex* f)
 void Assert_Pointer_Detection_Working(void)
 {
     uintptr_t cell_flag = NODE_FLAG_CELL;
-    assert(FIRST_BYTE(&cell_flag) == 0x01);
+    assert(FIRST_BYTE(&cell_flag) == NODE_BYTEMASK_0x08_CELL);
     uintptr_t protected_flag = CELL_FLAG_TYPE_SPECIFIC_A;
     assert(FOURTH_BYTE(&protected_flag) == 0x80);
 
@@ -1283,15 +1269,10 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(PG_Empty_Array) == DETECTED_AS_STUB);
     assert(Detect_Rebol_Pointer(Root_Quasi_Null) == DETECTED_AS_CELL);
 
-    // A cell with NODE_FLAG_FREE will appear to be UTF-8.  Be sure not to
-    // pass such cells to the API, as Detect_Rebol_Pointer() will be wrong!
-    //
-    DECLARE_ATOM (stale_cell);
-    stale_cell->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
-        | FLAG_HEART_BYTE(REB_BLANK);
-    Assert_Cell_Writable(stale_cell);
-    assert(Detect_Rebol_Pointer(stale_cell) == DETECTED_AS_UTF8);
+    DECLARE_ELEMENT (unreadable);
+    Init_Unreadable(unreadable);
+    Assert_Cell_Writable(unreadable);
+    assert(Detect_Rebol_Pointer(unreadable) == DETECTED_AS_CELL);
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
@@ -1324,7 +1305,7 @@ REBLEN Check_Memory_Debug(void)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
                 continue; // a pairing
 
             Flex* f = x_cast(Flex*, unit);
@@ -1403,7 +1384,7 @@ void Dump_All_Series_Of_Width(Size wide)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL)  // a pairing
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL)  // a pairing
                 continue;
 
             Flex* f = x_cast(Flex*, unit);
@@ -1439,7 +1420,7 @@ void Dump_All_Flex_In_Pool(PoolId pool_id)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
                 continue;  // pairing
 
             Flex* f = x_cast(Flex*, unit);
@@ -1543,7 +1524,7 @@ REBU64 Inspect_Flex(bool show)
 
             ++tot;
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
                 continue;
 
             Flex* f = x_cast(Flex*, unit);

@@ -41,7 +41,7 @@ typedef struct RebolLevelStruct Level;
 STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
 
 #define LEVEL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1)  // is NOT free
-STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
+STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 
 
 //=//// LEVEL_FLAG_2 //////////////////////////////////////////////////////=//
@@ -63,15 +63,17 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
     FLAG_LEFT_BIT(3)
 
 
-//=//// LEVEL_FLAG_META_RESULT ////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_4_IS_TRUE //////////////////////////////////////////////=//
 //
-// When this is applied, the Trampoline is asked to return an evaluator result
-// in its ^META form.  Doing so saves on needing separate callback entry
-// points for things like meta-vs-non-meta arguments, and is a useful
-// general facility.
+// !!! Historically levels have identified as being "cells" even though they
+// are not, in order to use that flag as a distinction when in bindings
+// from the non-cell choices like contexts and paramlists.  This may not be
+// the best way to flag levels; alternatives are in consideration.
 //
-#define LEVEL_FLAG_META_RESULT \
+#define LEVEL_FLAG_4_IS_TRUE \
     FLAG_LEFT_BIT(4)
+
+STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == NODE_FLAG_CELL);
 
 
 //=//// LEVEL_FLAG_5 ///////////////////////////////////////////////////////=//
@@ -100,13 +102,15 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
     FLAG_LEFT_BIT(6)
 
 
-// !!! Historically levels have identified as being "cells" even though they
-// are not, in order to use that flag as a distinction when in bindings
-// from the non-cell choices like contexts and paramlists.  This may not be
-// the best way to flag levels; alternatives are in consideration.
+//=//// LEVEL_FLAG_META_RESULT ////////////////////////////////////////////=//
 //
-#define LEVEL_FLAG_7_IS_TRUE FLAG_LEFT_BIT(7)
-STATIC_ASSERT(LEVEL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
+// When this is applied, the Trampoline is asked to return an evaluator result
+// in its ^META form.  Doing so saves on needing separate callback entry
+// points for things like meta-vs-non-meta arguments, and is a useful
+// general facility.
+//
+#define LEVEL_FLAG_META_RESULT \
+    FLAG_LEFT_BIT(7)
 
 
 //=//// FLAGS 8-15 ARE USED FOR THE "STATE" byte ///////////////////////////=//
@@ -312,7 +316,7 @@ typedef bool (Decider)(const Value* arg);
     // These are LEVEL_FLAG_XXX or'd together--see their documentation above.
     //
     // Note: In order to use the memory pools, this must be in first position,
-    // and it must not have the NODE_FLAG_FREE bit set when in use.
+    // and it must not have the NODE_FLAG_UNREADABLE bit set when in use.
     //
     union HeaderUnion flags;
 

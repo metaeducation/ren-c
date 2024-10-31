@@ -81,7 +81,7 @@
 // At one time all the flags were aliased, like:
 //
 //     #define STUB_FLAG_MANAGED NODE_FLAG_MANAGED
-//     #define STUB_FLAG_FREE NODE_FLAG_FREE
+//     #define STUB_FLAG_FREE NODE_FLAG_UNREADABLE
 //     ...
 //
 // This created weird inconsistencies where it would make an equal amount of

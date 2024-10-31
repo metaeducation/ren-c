@@ -160,3 +160,9 @@ INLINE void Drop_GC_Guard(const void* p) {  // p may be erased cell (not Node)
     #define Remember_Cell_Is_Lifetime_Guard(c)  NOOP
     #define Forget_Cell_Is_Lifetime_Guard(c)  NOOP
 #endif
+
+
+//=//// FLEX DECAY ////////////////////////////////////////////////////////=//
+
+#define GC_Kill_Flex(f) \
+    GC_Kill_Stub(Decay_Flex(f))

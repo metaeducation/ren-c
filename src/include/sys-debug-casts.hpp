@@ -212,7 +212,7 @@ struct cast_helper<V*,const Stub*> {  // [2]
             return nullptr;
 
         if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | NODE_FLAG_CELL  // NODE_FLAG_UNREADABLE ok
         )) != (
             NODE_FLAG_NODE
         )){
@@ -271,7 +271,7 @@ struct cast_helper<V*,const Flex*> {  // [2]
             return nullptr;
 
         if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
         )){
@@ -330,9 +330,9 @@ struct cast_helper<V*,const Binary*> {  // [2]
             return nullptr;
 
         if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
         )) != (
-            NODE_FLAG_NODE
+            NODE_FLAG_NODE  // NODE_FLAG_UNREADABLE is decayed Stub (not Flex)
         )){
             panic (p);
         }
@@ -375,7 +375,7 @@ struct cast_helper<V*,const String*> {  // [2]
 
         const Stub* stub = reinterpret_cast<const Stub*>(p);
         if (((stub->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
         ))
         ) !=
             NODE_FLAG_NODE
@@ -424,7 +424,7 @@ struct cast_helper<V*,const Symbol*> {  // [2]
 
         if (((reinterpret_cast<const Stub*>(p)->leader.bits & (
             FLEX_MASK_SYMBOL
-                | NODE_FLAG_FREE
+                | NODE_FLAG_UNREADABLE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         ))
@@ -492,7 +492,7 @@ struct cast_helper<V*,const Array*> {  // [2]
             return nullptr;
 
         if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
         )){
@@ -538,7 +538,7 @@ struct cast_helper<V*,VarList*> {  // [2]
 
         if ((reinterpret_cast<Stub*>(p)->leader.bits & (
             FLEX_MASK_VARLIST
-                | NODE_FLAG_FREE
+                | NODE_FLAG_UNREADABLE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         )) !=
@@ -596,7 +596,7 @@ struct cast_helper<V*,Action*> {  // [2]
         if (FLAVOR_BYTE(stub) == FLAVOR_DETAILS) {
             if ((stub->leader.bits & (
                 FLEX_MASK_DETAILS
-                    | NODE_FLAG_FREE
+                    | NODE_FLAG_UNREADABLE
                     | NODE_FLAG_CELL
                     | FLAG_FLAVOR_BYTE(255)
             )) !=
@@ -608,7 +608,7 @@ struct cast_helper<V*,Action*> {  // [2]
         else {
             if ((stub->leader.bits & ((
                 FLEX_MASK_VARLIST
-                    | NODE_FLAG_FREE
+                    | NODE_FLAG_UNREADABLE
                     | NODE_FLAG_CELL
                     | FLAG_FLAVOR_BYTE(255)
                 )
@@ -661,10 +661,10 @@ struct cast_helper<V*,Level*> {  // [2]
             return nullptr;
 
         if ((*reinterpret_cast<const Byte*>(p) & (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
-                | NODE_BYTEMASK_0x01_CELL
+            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_UNREADABLE
+                | NODE_BYTEMASK_0x08_CELL
         )) != (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL
+            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
         )){
             panic (p);
         }

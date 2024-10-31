@@ -139,13 +139,13 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
 // machinery that relies upon this for mixing UTF-8, Cells, and Stubs in
 // variadic API calls).
 //
-// Also, readable cells don't have NODE_FLAG_FREE set.  At one time the
+// Also, readable cells don't have NODE_FLAG_UNREADABLE set.  At one time the
 // evaluator would start off by marking all cells with this bit in order to
 // track that the output had not been assigned.  This helped avoid spurious
 // reads and differentiated `(void) else [...]` from `(else [...])`.  But
 // it required a bit being added and removed, so it was replaced with the
 // concept of Is_Fresh(), removing NODE_FLAG_NODE and NODE_FLAG_CELL to get
-// the effect with less overhead.  So NODE_FLAG_FREE is now used in a more
+// the effect with less overhead.  So NODE_FLAG_UNREADABLE is now used in a more
 // limited sense to get "unreadables"--a cell you can write, but not read.
 //
 // [WRITABILITY]
@@ -174,7 +174,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
         STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if ( \
             (((c)->header.bits) & ( \
-                NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE \
+                NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
             )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
         ){ \
             Panic_Cell_Unreadable(c); \

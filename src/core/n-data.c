@@ -858,7 +858,7 @@ DECLARE_NATIVE(set_accessor)
     Set_Cell_Flag(var, VAR_NOTE_ACCESSOR);
 
     Set_Cell_Flag(var, PROTECTED);  // help trap unintentional writes [1]
-    Set_Node_Free_Bit(var);  // help trap unintentional reads [1]
+    Set_Node_Unreadable_Bit(var);  // help trap unintentional reads [1]
 
     return NOTHING;
 }
@@ -893,7 +893,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
     Push_GC_Guard(accessor);
     accessor->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
-        | (lookup->header.bits & CELL_MASK_COPY & (~ NODE_FLAG_FREE))
+        | (lookup->header.bits & CELL_MASK_COPY & (~ NODE_FLAG_UNREADABLE))
     );
     accessor->extra = lookup->extra;
     accessor->payload = lookup->payload;
@@ -2288,7 +2288,7 @@ DECLARE_NATIVE(free)
     if (Any_Context(v) or Is_Handle(v))
         return FAIL("FREE only implemented for ANY-SERIES? at the moment");
 
-    if (Not_Node_Accessible(Cell_Node1(v)))
+    if (Not_Node_Readable(Cell_Node1(v)))
         return FAIL("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
@@ -2308,31 +2308,33 @@ DECLARE_NATIVE(free)
 //  ]
 //
 DECLARE_NATIVE(free_q)
+//
+// 1. Currently we don't have a "decayed" form of pairing...because Cells use
+//    the NODE_FLAG_UNREADABLE for meaningfully unreadable cells, that have a
+//    different purpose than canonizing references to a decayed form.
+//
+//    (We could use something like the CELL_FLAG_NOTE or other signal on
+//    pairings to cue that references should be canonized to a single freed
+//    pair instance, but this isn't a priority at the moment.)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
     Value* v = ARG(value);
 
     if (Is_Void(v) or Is_Nulled(v))
-        return Init_Logic(OUT, false);
+        return nullptr;
 
-    // All freeable values put their freeable Flex in the payload's "first".
-    //
-    if (not Cell_Has_Node1(v))
-        return Init_Logic(OUT, false);
+    if (not Cell_Has_Node1(v))  // freeable values have Flex in payload node1
+        return nullptr;
 
     Node* n = Cell_Node1(v);
-
-    // If the node is not a Flex (e.g. a Pairing), it cannot be freed (as
-    // a freed version of a Pairing is the same size as the Pairing).
-    //
-    // !!! Technically speaking a PAIR! could be freed as ANY-LIST? could, it
-    // would mean converting the Node.  Review.
-    //
     if (n == nullptr or Is_Node_A_Cell(n))
-        return Init_Logic(OUT, false);
+        return nullptr;  // no decayed pairing form at this time [1]
 
-    return Init_Logic(OUT, Not_Node_Accessible(n));
+    if (Is_Stub_Decayed(cast(Stub*, n)))
+        return Init_Okay(OUT);  // decayed is as "free" as outstanding refs get
+
+    return nullptr;
 }
 
 

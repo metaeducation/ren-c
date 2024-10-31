@@ -166,63 +166,56 @@ static void Queue_Mark_Pairing_Deep(const Pairing* p)
   #endif
 }
 
-static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f);
+static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 
 
-// This routine is given the *address* of the Node to mark, so that if the
-// Node has become inaccessible it can be canonized into the global Node for
-// a Flex that is no longer available.  This allows Nodes that had been
-// turned into a decayed form and only kept alive to prevent referencing
-// pointers to be swept.  See Decay_Flex()
 //
-static void Queue_Mark_Node_Deep(const Node** npp) {
+//   Queue_Mark_Node_Deep: C
+//
+// This routine is given the *address* of the Node to mark, so that the node
+// pointer can be updated.  This allows us to fix up lingering references to
+// Nodes that are conceptually freed, but only being kept around until
+// referencing sites can be fixed up to not refer to them.  As the GC marks
+// the nodes, it canonizes such "decayed" pointers to a single global
+// "decayed thing".  See Decay_Flex()
+//
+// Note: This strategy created some friction when bound words depended on
+// contexts to supply their spellings.  This would have required actually
+// moving the spellings back into them, but noting that the word itself was
+// no longer bound through some flag in the cell.  For now it's not an issue
+// since that optimization was removed, but a similar issue could arise again.
+//
+static void Queue_Mark_Node_Deep(const Node** npp) {  // ** for canonizing
     Byte nodebyte = NODE_BYTE(*npp);
-    if (nodebyte & NODE_BYTEMASK_0x04_MARKED)
+    if (nodebyte & NODE_BYTEMASK_0x01_MARKED)  // includes canon decayed stub
         return;  // may not be finished marking yet, but has been queued
 
-    if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        const Pairing* p = x_cast(const Pairing*, *npp);
+    if (nodebyte & NODE_BYTEMASK_0x08_CELL) {  // e.g. a pairing
+        const Pairing* p = u_cast(const Pairing*, *npp);
         if (Is_Node_Managed(p))
             Queue_Mark_Pairing_Deep(p);
         else {
             // !!! It's a frame?  API handle?  Skip frame case (keysource)
             // for now, but revisit as technique matures.
         }
-        return;  // it's 2 cells, sizeof(Stub), but no room for a Stub's data
+        return;
     }
 
-    if (Not_Node_Accessible(*npp)) {
-        //
-        // All inaccessible nodes are collapsed and canonized into a universal
-        // inaccessible node so the stub can be freed.
-        //
-        // Note: This strategy created some friction when bound words depended
-        // on contexts to supply their spellings.  This would have required
-        // actually moving the spellings back into them, but noting that the
-        // word itself was no longer bound through some flag in the cell.  For
-        // now it's not an issue since that optimization was removed, but a
-        // similar issue could arise again.
-        //
-        // !!! Here we are setting things that may already be the canon
-        // inaccessible stub which may not be efficient.  Review.
-        //
+    const Stub* s = u_cast(const Stub*, *npp);
+
+    if (nodebyte == DECAYED_NON_CANON_BYTE) {  // fixup to global decayed stub
         *npp = &PG_Inaccessible_Stub;
         return;
     }
 
-    const Flex* f = x_cast(const Flex*, *npp);
-
-  #if !defined(NDEBUG)
-    if (Is_Node_Free(f))
-        panic (f);
-
-    if (Not_Node_Managed(f)) {
+  #if DEBUG
+    if (Not_Node_Managed(*npp)) {
         printf("Link to non-MANAGED item reached by GC\n");
-        panic (f);
+        panic (*npp);
     }
   #endif
 
-    Queue_Unmarked_Accessible_Flex_Deep(f);
+    Queue_Unmarked_Accessible_Stub_Deep(s);
 }
 
 // This is a generic mark routine, which can sense what type a Stub is and
@@ -238,24 +231,24 @@ static void Queue_Mark_Node_Deep(const Node** npp) {
 // that to generate some deep stacks...even without any cells being marked.
 // It hasn't caused any crashes yet, but is something that bears scrutiny.
 //
-static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
+static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 {
-    Assert_Node_Accessible(f);
+    assert(Is_Node_Readable(s));
 
-    Add_GC_Mark(f);
+    Add_GC_Mark(s);
 
   //=//// MARK LINK AND MISC IF DESIRED ////////////////////////////////////=//
 
-    // All nodes have both link and misc fields available, but they don't
+    // All stubs have both link and misc fields available, but they don't
     // necessarily hold node pointers (and even if they do, they may not be
     // references that are intended to keep them live).  So the Flex header
     // flags control whether the marking is done or not.
 
-    if (Get_Stub_Flag(f, LINK_NODE_NEEDS_MARK) and f->link.any.node)
-        Queue_Mark_Node_Deep(&m_cast(Flex*, f)->link.any.node);
+    if (Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK) and s->link.any.node)
+        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->link.any.node);
 
-    if (Get_Stub_Flag(f, MISC_NODE_NEEDS_MARK) and f->misc.any.node)
-        Queue_Mark_Node_Deep(&m_cast(Flex*, f)->misc.any.node);
+    if (Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK) and s->misc.any.node)
+        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->misc.any.node);
 
   //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
 
@@ -263,49 +256,50 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
     // flag is what determines whether the slot is used for info or not.  So
     // if it's available for non-info uses, it is always a live marked node.
 
-    if (Get_Stub_Flag(f, INFO_NODE_NEEDS_MARK) and node_INODE(Node, f))
-        Queue_Mark_Node_Deep(&m_cast(Flex*, f)->info.any.node);
+    if (Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
+        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->info.any.node);
 
-    if (Is_Stub_Keylist(f)) {
+    if (Is_Stub_Keylist(s)) {
         //
         // !!! KeyLists may not be the only category that are just a straight
         // list of node pointers.
         //
-        const Key* tail = Flex_Tail(Key, f);
-        const Key* key = Flex_Head(Key, f);
+        const KeyList* keylist = u_cast(const KeyList*, s);
+        const Key* tail = Flex_Tail(Key, keylist);
+        const Key* key = Flex_Head(Key, keylist);
         for (; key != tail; ++key) {
             //
             // Symbol* are not available to the user to free out from under
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
-            Assert_Node_Accessible(*key);
+            assert(Is_Node_Readable(*key));
             if (Is_Node_Marked(*key))
                 continue;
-            Queue_Unmarked_Accessible_Flex_Deep(*key);
+            Queue_Unmarked_Accessible_Stub_Deep(*key);
         }
     }
-    else if (Stub_Holds_Cells(f)) {
-        Array* a = x_cast(Array*, f);
+    else if (Stub_Holds_Cells(s)) {
+        Array* a = u_cast(Array*, s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
         // Whether the bonus slot needs to be marked is dictated by internal
         // Flex Flavor, not an extension-usable flag (due to flag scarcity).
         //
-        if (Is_Stub_Varlist(a) and node_BONUS(Node, f)) {
+        if (Is_Stub_Varlist(a) and node_BONUS(Node, a)) {
             //
             // !!! The keysource for varlists can be set to a Level*, which
             // at the moment pretends to be a cell to distinguish itself.
             // This makes less sense than pretending to be a Flex that is
             // already marked, and has a detectable FLAVOR_XXX.  Review.
             //
-            if (Is_Non_Cell_Node_A_Level(node_BONUS(Node, f)))
+            if (Is_Non_Cell_Node_A_Level(node_BONUS(Node, a)))
                 goto skip_mark_frame_bonus;
 
-            assert(Is_Stub_Keylist(cast(Flex*, node_BONUS(Node, a))));
+            assert(Is_Stub_Keylist(cast(Stub*, node_BONUS(Node, a))));
 
             Queue_Mark_Node_Deep(
-                &m_cast(Flex*, f)->content.dynamic.bonus.node
+                &m_cast(Array*, a)->content.dynamic.bonus.node
             );
         }
 
@@ -341,7 +335,7 @@ static void Queue_Unmarked_Accessible_Flex_Deep(const Flex* f)
 static void Queue_Mark_Cell_Deep(const Cell* c)
 {
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable(c))  // !!! fall through in release?
+    if (Is_Cell_Unreadable(c))  // !!! fall through in release?
         return;
   #endif
 
@@ -545,13 +539,14 @@ void Run_All_Handle_Cleaners(void) {
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL)
                 continue;  // assume no handles in pairings, for now?
 
-            if (Not_Node_Accessible(u_cast(Node*, unit)))
+            Stub* stub = cast(Stub*, unit);
+
+            if (Is_Stub_Decayed(stub))
                 continue;
 
-            Stub* stub = cast(Stub*, unit);
             if (stub == g_ds.array)
                 continue;
             if (not Stub_Holds_Cells(stub))
@@ -561,17 +556,17 @@ void Run_All_Handle_Cleaners(void) {
             Cell* item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
               #if DEBUG_UNREADABLE_CELLS
-                if (Is_Unreadable(item))  // !!! fall through in release?
+                if (Is_Cell_Unreadable(item))  // !!! fall through in release?
                     continue;
               #endif
                 if (Cell_Heart(item) != REB_HANDLE)
                     continue;
                 if (not Cell_Has_Node1(item))
                     continue;
-                if (Not_Node_Accessible(Cell_Node1(item)))
+                Stub* handle_stub = Extract_Cell_Handle_Stub(item);
+                if (Is_Stub_Decayed(handle_stub))
                     continue;
-                Flex* handle_stub = cast(Flex*, Extract_Cell_Handle_Stub(item));
-                Decay_Flex(handle_stub);
+                Decay_Flex(cast(Flex*, handle_stub));
             }
         }
     }
@@ -612,108 +607,36 @@ static void Mark_Root_Stubs(void)
 
             assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "Pairing"
-                if (unit[0] & NODE_BYTEMASK_0x08_MANAGED)
-                    continue; // PAIR! or other value will mark it
-
-                assert(!"unmanaged Pairing not believed to exist yet");
-
-                Pairing* p = x_cast(Pairing*, cast(void*, unit));
-                Queue_Mark_Cell_Deep(Pairing_First(p));
-                Queue_Mark_Cell_Deep(Pairing_Second(p));
-                continue;
-            }
-
-            if (Is_Node_Free(cast(Node*, unit)))
+            if (not (unit[0] & NODE_BYTEMASK_0x02_ROOT))
                 continue;
 
-            Flex* f = cast(Flex*, unit);
+            assert(not (unit[0] & NODE_BYTEMASK_0x08_CELL));  // no root pairs
 
-            if (Is_Node_Root_Bit_Set(f)) {
+            Stub* s = cast(Stub*, unit);
+            assert(Is_Node_Readable(s));
 
-                // This stub came from Alloc_Value() or rebAlloc(); the only
-                // references should be from the C stack.  So this pass is the
-                // only place where these stubs could be marked.
+            // This stub came from Alloc_Value() or rebAlloc(); the only
+            // references should be from the C stack.  So this pass is the
+            // only place where these stubs could be marked.
 
-                if (Not_Node_Managed(f)) {
-                    //
-                    // If it's not managed, don't mark it (don't have to)
-                    //
-                    assert(not Is_Node_Marked(f));
-                }
-                else {
-                    Add_GC_Mark(f);
-                }
+            if (Not_Node_Managed(s))
+                assert(not Is_Node_Marked(s));
+            else
+                Add_GC_Mark(s);
 
-                if (Stub_Holds_Cells(f)) {  // It's an Alloc_Value()
-                    //
-                    // 1. Mark_Level_Stack_Deep() marks the owner.
-                    //
-                    // 2. Evaluation may target API cells, may be Is_Fresh().
-                    // (They should only be fresh if they are targeted by some
-                    // Level's L->out...could we verify that?)
-                    //
-                    Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(f));  // [2]
-                }
-                else {  // It's a rebAlloc()
-                    assert(Stub_Flavor(f) == FLAVOR_BINARY);
-                }
-
-                continue;
-            }
-
-            // !!! The g_ds.array does not currently keep its `used` field up
-            // to date, because this is one more than the g_ds.index and would
-            // require math to be useful.  (While the array tends to want to
-            // know the length and the tail pointer to stop at, clients of
-            // the stack want to know the "last".)  Hence it is exempt from
-            // this marking rather than keeping the length up to date.  Review.
-            //
-            if (
-                Stub_Holds_Cells(f)
-                and f != g_ds.array  // !!! Review g_ds.array exemption!
-            ){
-                if (Is_Node_Managed(f))
-                    continue;  // BLOCK! or OBJECT! etc. holding it should mark
-
-                Array* a = cast(Array*, f);
-
-                if (Is_Stub_Varlist(a))
-                    if (CTX_TYPE(cast(VarList*, a)) == REB_FRAME)
-                        continue;  // Mark_Level_Stack_Deep() etc. mark it
-
-                // This means someone did something like Make_Array() and then
-                // ran an evaluation before referencing it somewhere from the
-                // root set.  (Review: Should this be supported?  If so,
-                // couldn't we just walk GC_manuals?)
-
-                // Only plain arrays are supported as unmanaged across
-                // evaluations, because Context and REBACT and REBMAP are too
-                // complex...they must be managed before evaluations happen.
-                // Manage and use Push_GC_Guard and Drop_GC_Guard on them.
+            if (Stub_Holds_Cells(s)) {  // It's an Alloc_Value()
                 //
-                assert(
-                    not Is_Stub_Varlist(a)
-                    and not Is_Stub_Details(a)
-                    and not Is_Stub_Pairlist(a)
-                );
-
-                if (Get_Stub_Flag(a, LINK_NODE_NEEDS_MARK))
-                    if (node_LINK(Node, a))
-                        Queue_Mark_Node_Deep(&a->link.any.node);
-                if (Get_Stub_Flag(a, MISC_NODE_NEEDS_MARK))
-                    if (node_MISC(Node, a))
-                        Queue_Mark_Node_Deep(&a->misc.any.node);
-
-                const Cell* item_tail = Array_Tail(a);
-                Cell* item = Array_Head(a);
-                for (; item != item_tail; ++item)
-                    Queue_Mark_Cell_Deep(item);
+                // 1. Mark_Level_Stack_Deep() marks the owner.
+                //
+                // 2. Evaluation may target API cells, may be Is_Fresh().
+                // (They should only be fresh if they are targeted by some
+                // Level's L->out...could we verify that?)
+                //
+                Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(s));  // [2]
             }
-
-            // At present, no handling for unmanaged STRING!, BINARY!, etc.
-            // This would have to change, e.g. if any of other types stored
-            // something on the heap in their LINK() or MISC()
+            else {  // It's a rebAlloc()
+                assert(Stub_Flavor(s) == FLAVOR_BINARY);
+            }
         }
 
         Propagate_All_GC_Marks(); // !!! is propagating on each segment good?
@@ -877,7 +800,7 @@ static void Mark_Level_Stack_Deep(void)
         if (L->label) { // nullptr if anonymous
             const Symbol* sym = unwrap L->label;
             if (not Is_Node_Marked(sym))
-                Queue_Unmarked_Accessible_Flex_Deep(sym);
+                Queue_Unmarked_Accessible_Stub_Deep(sym);
         }
 
         if (L->varlist and Is_Node_Managed(L->varlist)) {
@@ -996,13 +919,18 @@ Count Sweep_Stubs(void)
 
             assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
 
-            if (not (unit[0] & NODE_BYTEMASK_0x08_MANAGED)) {
-                assert(not (unit[0] & NODE_BYTEMASK_0x04_MARKED));
-                assert(not (unit[0] & NODE_BYTEMASK_0x40_FREE));
+            if (not (unit[0] & NODE_BYTEMASK_0x04_MANAGED)) {
+                assert(not (unit[0] & NODE_BYTEMASK_0x01_MARKED));
+
+                if (unit[0] == DECAYED_NON_CANON_BYTE) {
+                    Free_Pooled(STUB_POOL, unit);
+                    continue;
+                }
+                assert(not (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE));
                 continue;  // ignore all unmanaged Stubs/Pairings
             }
 
-            if (unit[0] & NODE_BYTEMASK_0x04_MARKED) {  // managed and marked
+            if (unit[0] & NODE_BYTEMASK_0x01_MARKED) {  // managed and marked
                 Remove_GC_Mark(u_cast(Node*, unit));  // just remove mark
                 continue;
             }
@@ -1011,12 +939,12 @@ Count Sweep_Stubs(void)
 
             ++sweep_count;  // managed but not marked => free it!
 
-            if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // managed pairing
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL) {  // managed pairing
                 Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing()
                 continue;
             }
 
-            if (unit[0] & NODE_BYTEMASK_0x40_FREE) {
+            if (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE) {
                 //
                 // Stubs that have been marked freed may have outstanding
                 // references at the moment of being marked free...but the GC
@@ -1044,7 +972,7 @@ Count Sweep_Stubs(void)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            assert(unit[0] & NODE_BYTEMASK_0x01_CELL);
+            assert(unit[0] & NODE_BYTEMASK_0x08_CELL);
 
             Value* v = cast(Value*, unit);
             if (v->header.bits & NODE_FLAG_MANAGED) {
@@ -1260,10 +1188,10 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     Assert_No_GC_Marks_Pending();
 
-    // Note: We do not need to mark the PG_Inaccessible_Stub, because it is
-    // not subject to GC and no one should mark it.  Make sure that's true.
+    // The PG_Inaccessible_Stub always looks marked, so we can skip it
+    // quickly in GC (and not confuse it with non-canon decayed stubs).
     //
-    assert(not Is_Node_Marked(&PG_Inaccessible_Stub));
+    assert(Is_Node_Marked(&PG_Inaccessible_Stub));
 
     REBLEN sweep_count;
 
@@ -1479,21 +1407,20 @@ void Startup_GC(void)
     // When a Flex needs to expire its content for some reason (including
     // the user explicitly saying FREE), then there can still be references to
     // that Flex around.  Since we don't want to trigger a GC synchronously
-    // each time this happens, the NODE_FLAG_FREE flag is added to Flex...and
+    // each time this happens, the NODE_FLAG_UNREADABLE flag is added to Flex,
     // it is checked for by value extractors (like Cell_Varlist()).  But once
     // the GC gets a chance to run, those stubs can be swept with all the
     // inaccessible references canonized to this one global Stub.
     //
-    Make_Flex_Into(
+    Stub* s = Prep_Stub(
         &PG_Inaccessible_Stub,
-        1,
         FLAG_FLAVOR(THE_GLOBAL_INACCESSIBLE)
-            | NODE_FLAG_MANAGED
-            // Don't confuse the Stub creation machinery by trying to pass
-            // in NODE_FLAG_FREE to the creation.  Do it after.
+            | NODE_FLAG_UNREADABLE
+            | NODE_FLAG_MARKED
     );
-    Set_Flex_Inaccessible(&PG_Inaccessible_Stub);
-    assert(Not_Node_Accessible(&PG_Inaccessible_Stub));
+    assert(Is_Stub_Decayed(&PG_Inaccessible_Stub));
+    assert(NODE_BYTE(s) == DECAYED_CANON_BYTE);
+    UNUSED(s);
 }
 
 
@@ -1504,6 +1431,7 @@ void Shutdown_GC(void)
 {
     assert(not g_gc.recycling);
 
+    Clear_Node_Marked_Bit(&PG_Inaccessible_Stub);
     GC_Kill_Stub(&PG_Inaccessible_Stub);
 
     assert(Flex_Used(g_gc.guarded) == 0);

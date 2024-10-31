@@ -1352,7 +1352,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     assert(Is_Node(binding));
     assert(Is_Node_Managed(binding));
     assert(Is_Node_A_Stub(binding));
-    assert(Not_Node_Free(binding));
+    assert(Is_Node_Readable(binding));
 
     if (heart == REB_FRAME) {
         assert(Is_Stub_Varlist(binding));  // actions/frames bind contexts only

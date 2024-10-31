@@ -29,52 +29,27 @@
 // it's accidentally read from.
 //
 // It will panic if you try to test it and will also refuse VAL_TYPE() checks.
-// The only way to check if something is unreadable is with Is_Unreadable().
+// The only way to check if something is unreadable is with Is_Cell_Unreadable().
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * The low-level type used to store these cells is a quasiform ~unreadable~
-//   word with NODE_FLAG_FREE set.  While an antiform might seem more desirable
-//   to draw attention if these leak to userspace in the release build,
-//   quasiform cells can be used in blocks.  It would break more invariants and
-//   possibly cause more damage for antiforms to appear in those places.
-//
 // * This was originally a debug-build-only feature...so release builds would
-//   not set the NODE_FLAG_FREE bit on unreadable cells.  That means the
+//   not set the NODE_FLAG_UNREADABLE bit on unreadable cells.  That means the
 //   unreadability couldn't be used for things like unused map elements,
 //   because the release build wouldn't see the bit.  Yet it turns out that
 //   it's fairly desirable to allow the unreadable bit to be meaningful for
 //   such cases.  So the only difference is that the release build does not
 //   raise alerts about the bit being set--not that the bit isn't there.
-//
-// 1. We want to leave the cell format bits like NODE_FLAG_ROOT and
-//    NODE_FLAG_MANAGED alone, so unreadable cells don't have a fully canon
-//    header.  However, we can canonize the heart byte and quote byte in
-//    order to make random bit patterns less likely to pass Is_Unreadable()
-//
-//    !!! A more clever strategy that fiddles the flags around can avoid
-//    this overlapping with legal UTF-8.  Coming soon.
 
 #define CELL_MASK_UNREADABLE \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE \
-        | FLAG_HEART_BYTE(REB_0) | FLAG_QUOTE_BYTE(255))  // not canonized
+    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
+        | CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2 \
+        | FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
 
-#define DEBUG_CANONIZE_UNREADABLES DEBUG  // faster not to canonize [1]
-
-#if DEBUG_CANONIZE_UNREADABLES
-    #define Init_Unreadable_Untracked(out) do { \
-        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
-        Freshen_Cell_Untracked(out); \
-        (out)->header.bits |= CELL_MASK_UNREADABLE; \
-    } while (0)
-#else
-    #define Init_Unreadable_Untracked(out) do { \
-        STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
-        /* faster if we don't canonize the HEART_BYTE() and QUOTE_BYTE() */ \
-        NODE_BYTE(out) |= NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL \
-            | NODE_BYTEMASK_0x40_FREE;  /* not readable, still writable */ \
-    } while (0)
-#endif
+#define Init_Unreadable_Untracked(out) do { \
+    STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+    (out)->header.bits |= CELL_MASK_UNREADABLE; \
+} while (0)
 
 
 INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
@@ -82,14 +57,10 @@ INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
     return out;
 }
 
-INLINE bool Is_Unreadable(const Cell* c) {
-    if (not Is_Node_Free(c))
+INLINE bool Is_Cell_Unreadable(const Cell* c) {
+    if (not Not_Node_Readable(c))
         return false;
-    assert(Is_Node(c) and Is_Node_A_Cell(c));
-  #if DEBUG_CANONIZE_UNREADABLES
-    assert(HEART_BYTE(c) == REB_0);
-    assert(QUOTE_BYTE(c) == 255);
-  #endif
+    assert((c->header.bits & CELL_MASK_UNREADABLE) == CELL_MASK_UNREADABLE);
     return true;
 }
 

@@ -59,7 +59,7 @@
         );
         const Byte* bp = c_cast(Byte*, p);
         if (*bp != END_SIGNAL_BYTE) {
-            assert(*bp & NODE_BYTEMASK_0x01_CELL);
+            assert(*bp & NODE_BYTEMASK_0x08_CELL);
             return false;
         }
         assert(bp[1] == 0);  // not strictly necessary, but rebEND is 2 bytes
@@ -479,7 +479,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
                     FEED_SPLICE(feed),
                     sizeof(Stub)
                 );
-                Set_Node_Free_Bit(splice);
+                Set_Node_Unreadable_Bit(splice);
                 GC_Kill_Stub(splice);  // Array* would hold reference
                 goto retry_splice;
             }

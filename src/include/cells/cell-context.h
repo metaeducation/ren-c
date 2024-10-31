@@ -12,7 +12,7 @@
 INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
     VarList* c;
-    if (Not_Node_Accessible(Cell_Node1(v))) {
+    if (Not_Node_Readable(Cell_Node1(v))) {
         if (HEART_BYTE(v) == REB_FRAME)
             fail (Error_Expired_Frame_Raw());  // !!! different error?
         fail (Error_Series_Data_Freed_Raw());

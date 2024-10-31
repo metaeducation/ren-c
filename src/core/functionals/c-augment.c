@@ -137,7 +137,7 @@ DECLARE_NATIVE(augment)
     // with patching the augmentee's action information (phase and binding)
     // into the paramlist...and reusing the Specializer_Dispatcher.
 
-    assert(Is_Unreadable(Flex_Head(Value, paramlist)));
+    assert(Is_Cell_Unreadable(Flex_Head(Value, paramlist)));
     Tweak_Frame_Varlist_Rootvar(
         paramlist,
         ACT_IDENTITY(VAL_ACTION(ARG(original))),

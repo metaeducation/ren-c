@@ -238,8 +238,8 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
         Clear_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
         node_MISC(Hitch, s) = node_MISC(Hitch, hitch);
 
-        assert(not Is_Node_Free(hitch));
-        Set_Node_Free_Bit(hitch);
+        assert(Is_Node_Readable(hitch));
+        Set_Node_Unreadable_Bit(hitch);
         GC_Kill_Stub(hitch);  // expects node to be decayed/inaccessible (free)
     }
 
@@ -440,7 +440,7 @@ INLINE Option(Error*) Trap_Lookup_Word(
         *out = Stub_Cell(s);
         return nullptr;
     }
-    Assert_Node_Accessible(s);
+    assert(Is_Node_Readable(s));
     VarList* c = cast(VarList*, s);
     *out = Varlist_Slot(c, index);
     return nullptr;
@@ -458,7 +458,7 @@ INLINE Option(const Value*) Lookup_Word(
     if (Is_Stub_Let(s) or Is_Stub_Patch(s))
         return Stub_Cell(s);
 
-    Assert_Node_Accessible(s);
+    assert(Is_Node_Readable(s));
     VarList* c = cast(VarList*, s);
     return Varlist_Slot(c, index);
 }

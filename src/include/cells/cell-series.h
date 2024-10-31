@@ -7,7 +7,7 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     Heart heart = Cell_Heart(v);
     assert(Any_Series_Kind(heart) or heart == REB_URL);
     UNUSED(heart);
-    if (Not_Node_Accessible(Cell_Node1(v)))
+    if (Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
     return c_cast(Flex*, Cell_Node1(v));

@@ -129,7 +129,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // IT'S IN THE REVERSE SENSE ON PURPOSE.  This means a "free" cell can have
 // the following bit pattern WHICH IS NOT A LEGAL LEADING BYTE FOR UTF-8:
 //
-//    11111xxx: Flags: NODE | FREE | GC_ONE | GC_TWO | CELL | ...
+//    11111xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO | CELL | ...
 //
 // The free bit denotes an Init_Unreadable() cell, and so long as we set the
 // GC_ONE and GC_TWO flags we can still have free choices of `xxx` (e.g.
@@ -383,7 +383,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // are owned by the cell, plus additional bits that would be reset in the
 // cell if overwritten but not copied.
 //
-// Note that this will clear NODE_FLAG_FREE, so it should be checked by the
+// Note that this will clear NODE_FLAG_UNREADABLE, so it should be checked by the
 // debug build before resetting.
 //
 // Notice that NODE_FLAG_MARKED is "sticky"; the mark persists with the cell.

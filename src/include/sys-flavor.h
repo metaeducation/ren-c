@@ -161,7 +161,7 @@ enum StubFlavorEnum {
     FLAVOR_SYMBOL,
 
     // Right now there is only one instance of FLAVOR_THE_GLOBAL_INACCESSIBLE
-    // Flex.  All Stubs that have NODE_FLAG_FREE will be canonized
+    // Flex.  All Stubs that have NODE_FLAG_UNREADABLE will be canonized
     // to this Node.  This allows a decayed Flex to still convey what flavor
     // it was before being decayed.  That's useful at least for debugging, but
     // maybe for other mechanisms that sometimes might want to propagate some

@@ -56,7 +56,7 @@
 #define Is_Node(p) \
     (c_cast(Byte*, (p))[0] & NODE_BYTEMASK_0x80_NODE)
 
-#define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
+#define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x08_CELL))
 #define Is_Node_A_Stub(n)   (not Is_Node_A_Cell(n))
 
 // !!! There's currently no generic way to tell if a node is a Level.  It has
@@ -69,14 +69,16 @@
 //
 #define Is_Non_Cell_Node_A_Level Is_Node_A_Cell
 
-#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x04_MARKED))
+#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_MARKED))
 #define Not_Node_Marked(n)  (not Is_Node_Marked(n))
 
-#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x08_MANAGED))
+#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x04_MANAGED))
 #define Not_Node_Managed(n) (not Is_Node_Managed(n))
 
-#define Is_Node_Free(n)     (did (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
-#define Not_Node_Free(n)    (not Is_Node_Free(n))
+#define Is_Node_Readable(n) \
+    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x40_UNREADABLE))
+
+#define Not_Node_Readable(n) (not Is_Node_Readable(n))
 
 // Is_Node_Root() sounds like it might be the only node.
 // Is_Node_A_Root() sounds like a third category vs Is_Node_A_Cell()/Stub()
@@ -98,22 +100,22 @@
     NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x02_ROOT)
 
 #define Set_Node_Marked_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x04_MARKED
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x01_MARKED
 
 #define Clear_Node_Marked_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x04_MARKED)
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x01_MARKED)
 
 #define Set_Node_Managed_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x08_MANAGED
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x04_MANAGED
 
 #define Clear_Node_Managed_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x08_MANAGED)
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x04_MANAGED)
 
-#define Set_Node_Free_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x40_FREE
+#define Set_Node_Unreadable_Bit(n) \
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x40_UNREADABLE
 
-#define Clear_Node_Free_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x40_FREE)
+#define Clear_Node_Unreadable_Bit(n) \
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x40_UNREADABLE)
 
 
 //=//// POINTER DETECTION (UTF-8, STUB, CELL, END) ////////////////////////=//
@@ -132,9 +134,10 @@
 
 enum PointerDetectEnum {
     DETECTED_AS_UTF8 = 1,
-    DETECTED_AS_STUB = 2,
-    DETECTED_AS_CELL = 3,
-    DETECTED_AS_END = 4  // a rebEND signal (char* align)
+    DETECTED_AS_CELL,
+    DETECTED_AS_STUB,
+    DETECTED_AS_END,  // a rebEND signal (Note: has char* alignment!)
+    DETECTED_AS_FREE
 };
 
 typedef enum PointerDetectEnum PointerDetect;
@@ -143,40 +146,54 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 {
     Byte b = FIRST_BYTE(p);
 
-    if (b == END_SIGNAL_BYTE) {  // reserved illegal UTF-8 byte 192
-        assert(SECOND_BYTE(p) == '\0');  // rebEND C string "\xC0", '\0' term
-        return DETECTED_AS_END;
+    if (not (b & NODE_BYTEMASK_0x80_NODE))  // test for 1xxxxxxx
+        return DETECTED_AS_UTF8;  // < 0x80 is string w/1st char in ASCII range
+
+    if (not (b & NODE_BYTEMASK_0x40_UNREADABLE)) {  // test for 10xxxxxx
+        if (b & NODE_BYTEMASK_0x08_CELL)  // 10xxxxxx never starts UTF-8
+            return DETECTED_AS_CELL;
+        return DETECTED_AS_STUB;
     }
 
-    if (
-        (b & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE))
-        == NODE_BYTEMASK_0x80_NODE  // e.g. leading bit pattern is 10xxxxxx
+    if (  // we know it's 11xxxxxx... now test for 1111xxxx
+        (b & (NODE_BYTEMASK_0x20_GC_ONE | NODE_BYTEMASK_0x10_GC_TWO))
+            == (NODE_BYTEMASK_0x20_GC_ONE | NODE_BYTEMASK_0x10_GC_TWO)
     ){
-        // In UTF-8 these are all continuation bytes, so not a legal way to
-        // start a string.  We leverage that to distinguish Cell and Stub.
-        //
-        if (b & NODE_BYTEMASK_0x01_CELL)
-            return DETECTED_AS_CELL;
+        if (b & NODE_BYTEMASK_0x08_CELL)  // ...now test for 11111xxx
+            return DETECTED_AS_CELL;  // 11111xxx never starts UTF-8!
 
-        // Clients of this function should not be passing in Stubs in mid-GC.
-        // (PROBE uses it, so that throws a wrench into this check.  Review.)
+        // There are 3 patterns of 0b11110xxx that are illegal in UTF-8:
         //
-        /*assert(not (*bp & NODE_BYTEMASK_0x04_MARKED));*/
+        //     0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
+        //
+        // Hence if the sixth bit is clear (0b111100xx) detect it as UTF-8.
+        //
+        if (not (b & NODE_BYTEMASK_0x04_MANAGED))
+            return DETECTED_AS_UTF8;
+
+        if (b == END_SIGNAL_BYTE) {  // 0xF7
+            assert(SECOND_BYTE(p) == '\0');
+            return DETECTED_AS_END;
+        }
+
+        if (b == FREE_POOLUNIT_BYTE)  // 0xF6
+            return DETECTED_AS_FREE;
+
+        if (b == NODE_BYTE_RESERVED)  // 0xF5
+            fail ("NODE_BYTE_RESERVED Encountered in Detect_Rebol_Pointer()");
 
         return DETECTED_AS_STUB;
     }
 
-    // Note: technically there are some internal states that overlap with UTF-8
-    // range, e.g. when a Cell is marked "stale" in the output location of
-    // a level.  Such states are not supposed to be leaked to where clients of
-    // this routine would be concerned about them.
-    //
+    if (b == DECAYED_CANON_BYTE or b == DECAYED_NON_CANON_BYTE)
+        return DETECTED_AS_FREE;  // 11000000 and 11000001 illegal UTF-8
+
     return DETECTED_AS_UTF8;
 }
 
 
 // Allocate a node from a pool.  Returned node will not be zero-filled, but
-// the header will have NODE_FLAG_FREE set when it is returned (client is
+// the header will have NODE_FLAG_UNREADABLE set when it is returned (client is
 // responsible for changing that if they plan to enumerate the pool and
 // distinguish free nodes from non-free ones.)
 //
@@ -235,7 +252,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
     // It's up to the client to update the bytes of the returned unit so that
     // it doesn't appear free (which it may not care about, if it's storing
     // arbitrary bytes...but if storing `Node`s then they should initialize
-    // to not have NODE_FLAG_FREE set.)
+    // to not have NODE_FLAG_UNREADABLE set.)
     //
     assert(FIRST_BYTE(unit) == FREE_POOLUNIT_BYTE);
     return cast(void*, unit);
@@ -259,7 +276,7 @@ INLINE void *Alloc_Pooled(PoolId pool_id) {
 
 
 // Free a node, returning it to its pool.  Once it is freed, its header will
-// have NODE_FLAG_FREE...which will identify the node as not in use to anyone
+// have NODE_FLAG_UNREADABLE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
 INLINE void Free_Pooled(PoolId pool_id, void* p)

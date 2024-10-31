@@ -176,6 +176,14 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         strncat(buf, "value", PANIC_BUF_SIZE - strsize(buf));
       #endif
         break; }
+
+      case DETECTED_AS_FREE:
+        strncat(
+            buf,
+            "Panic was passed a likely freed PoolUnit",
+            PANIC_BUF_SIZE - strsize(buf)
+        );
+        break;
     }
 
   #if DEBUG_FANCY_PANIC
@@ -311,8 +319,8 @@ void Panic_Cell_Unreadable(const Cell* c) {
     else if (not Is_Node_A_Cell(c))
         printf("Non-cell passed to cell read routine\n");
     else {
-        assert(Is_Node_Free(c));
-        printf("Assert_Cell_Readable() on NODE_FLAG_FREE cell\n");
+        assert(Not_Node_Readable(c));
+        printf("Assert_Cell_Readable() on NODE_FLAG_UNREADABLE cell\n");
     }
     panic (c);
 }

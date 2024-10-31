@@ -26,7 +26,7 @@
 
 INLINE const Map* VAL_MAP(const Cell* v) {
     assert(Cell_Heart(v) == REB_MAP);
-    if (Not_Node_Accessible(Cell_Node1(v)))
+    if (Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
     return cast(Map*, Cell_Node1(v));  // identity is the PairList

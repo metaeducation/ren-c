@@ -60,15 +60,38 @@
 // When the GC runs, it canonizes all inaccessible Flexes to a single canon
 // inaccessible stub.  This compacts memory of references that have expired.
 //
+// 1. We can't just set NODE_FLAG_UNREADABLE, because if the only flag that
+//    was set in the Stub header was NODE_FLAG_NODE then this would give
+//    us a bit pattern of 11000000, which is FREE_POOLUNIT_BYTE.  We want
+//    the decayed state to be distinct and potentially encode more info,
+//    so we push it out of the valid leading UTF-8 byte range...the patterns
+//    that we actually have are:
+//
+//        0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
+//
 
-#define Not_Node_Accessible(n)          Is_Node_Free(n)
-#define Is_Node_Accessible(n)           Not_Node_Free(n)
+INLINE bool Is_Stub_Decayed(const Stub* s) {
+    if (Is_Node_Readable(s))
+        return false;
+    Byte n = NODE_BYTE(s);
+    assert(n == DECAYED_CANON_BYTE or n == DECAYED_NON_CANON_BYTE);
+    UNUSED(n);
+    return true;
+}
 
-#define Assert_Node_Accessible(n) \
-    assert(Is_Node_Accessible(n))
+#if CPLUSPLUS_11  // cast(Flex*, stub) of decayed Stub would assert
+    bool Is_Stub_Decayed(const Flex*) = delete;
+#endif
 
-#define Set_Flex_Inaccessible(f) \
-    Set_Node_Free_Bit(f)
+#define Not_Stub_Decayed(s) \
+    (not Is_Stub_Decayed(s))
+
+INLINE Stub* Set_Flex_Inaccessible(Flex* f) {
+    assert(Is_Node_Readable(f));
+    f->leader.bits = NODE_FLAG_NODE | NODE_FLAG_UNREADABLE;
+    assert(NODE_BYTE(f) == DECAYED_NON_CANON_BYTE);
+    return f;
+}
 
 
 //=//// FLEX "FLAG" BITS //////////////////////////////////////////////////=//
@@ -331,7 +354,7 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 //=//// FLEX DATA ACCESSORS ///////////////////////////////////////////////=//
 //
 // 1. Callers like Cell_String() or Cell_Array() are expected to test for
-//    NODE_FLAG_FREE and fail before getting as far as calling these routines.
+//    NODE_FLAG_UNREADABLE and fail before ever calling these routines.
 //
 // 2. Because these inline functions are called so often, Flex_Data_At()
 //    duplicates the code in Flex_Data() rather than call it.  Be sure
@@ -359,10 +382,12 @@ INLINE Byte* Flex_Data(const_if_c Flex* f) {  // assume valid [1]
 }
 
 INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
-  #if !defined(NDEBUG)
-    if (w != Flex_Wide(f)) {  // will be "unusual" value if free
-        if (Is_Node_Free(f))
-            printf("Flex_Data_At() asked on freed Flex\n");
+  #if DEBUG
+    if (w != Flex_Wide(f)) {
+        if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE)
+            printf("Flex_Data_At() asked on free PoolUnit\n");
+        else if (Not_Node_Readable(f))
+            printf("Flex_Data_At() asked on decayed Flex\n");
         else
             printf(
                 "Flex_Data_At() asked %d on width=%d\n",

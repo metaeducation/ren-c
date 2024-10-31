@@ -477,7 +477,7 @@ void Assert_Flex_Term_Core(const Flex* f)
 //
 void Assert_Flex_Basics_Core(const Flex* f)
 {
-    if (Is_Node_Free(f))
+    if (Not_Node_Readable(f))
         panic (f);
 
     assert(Stub_Flavor(f) != FLAVOR_CORRUPT);
@@ -514,7 +514,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(const Flex* f)
 
   #if DEBUG_COUNT_TICKS
     fprintf(stderr, " was likely ");
-    if (Is_Node_Free(f))
+    if (Not_Node_Readable(f))
         fprintf(stderr, "freed");
     else
         fprintf(stderr, "created");

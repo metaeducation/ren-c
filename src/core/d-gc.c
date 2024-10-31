@@ -35,7 +35,7 @@
 #if !defined(NDEBUG)
 
 static bool Not_Node_Accessible_Canon(const Node* n) {
-    if (Not_Node_Free(n))
+    if (Is_Node_Readable(n))
         return false;
     assert(n == &PG_Inaccessible_Stub);
     return true;
@@ -439,9 +439,9 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     #else
         //
         // For a lighter check, make sure it's marked as a value-bearing array
-        // and that it hasn't been freed.
+        // and that it hasn't been decayed.
         //
-        assert(not Is_Node_Free(a));
+        assert(Is_Node_Readable(a));
         assert(Stub_Holds_Cells(a));
     #endif
 

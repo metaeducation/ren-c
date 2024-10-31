@@ -420,7 +420,7 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     // quotes applied to have already been done.
 
   #if DEBUG_UNREADABLE_CELLS
-    if (Is_Unreadable(e)) {  // !!! fall through in release?
+    if (Is_Cell_Unreadable(e)) {  // !!! fall through in release?
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }
