@@ -191,6 +191,55 @@ Value* Try_Read_Directory_Entry(FILEREQ *dir)
 }
 
 
+// The documentation for open() says:
+//
+//    "The argument flags must include one of the following access modes:
+//      O_RDONLY, O_WRONLY, or O_RDWR."
+//
+// But these are not *flags*, and you can only figure out which it is if you
+// logically && the flags with O_ACCMODE:
+//
+//       https://stackoverflow.com/questions/61923703/
+//
+// libuv does not define UV_FS_O_ACCMODE.  For all we know these could be
+// anything, but since we know they can be OR'd together then we can make
+// rig up a brute force runtime answer.
+//
+// 1. If you test (UV_FS_RDONLY == 0) then MSVC's static analyzer will tell
+//    you that you're testing a constant expression.  Yes, we know.  Rather
+//    than disable the warning, this puts it into a variable and it has
+//    the side effect of making this code much more readable.
+//
+int Extract_Access_Mode_From_Flags(int flags) {
+    int result;
+    int R = UV_FS_O_RDONLY;  // defeat conditional expression constant [1]
+    int W = UV_FS_O_WRONLY;
+    int RW = UV_FS_O_RDWR;
+    if (R == 0) {
+        assert(W != 0 and RW != 0);
+        if (flags & W) result = W;
+        else if (flags & RW) result = RW;
+        else result = R;
+    }
+    else if (W == 0) {
+        assert(R != 0 and RW != 0);
+        if (flags & R) result = R;
+        else if (flags & RW) result = RW;
+        else result = W;
+    }
+    else {  // O_RDWR may or may not be 0 for this case, works either way
+        assert(R != 0 and W != 0);
+        if (flags & R) result = R;
+        if (flags & W) result = W;
+        else result = RW;
+    }
+  #if defined(O_ACCMODE)  // may or may not be a #define (?)
+    assert(result == (flags & O_ACCMODE));
+  #endif
+    return result;
+}
+
+
 //
 //  Open_File: C
 //
@@ -216,16 +265,9 @@ Value* Open_File(const Value* port, int flags)
     assert(file->size_cache == FILESIZE_UNKNOWN);
     assert(file->offset == FILEOFFSET_UNKNOWN);
 
-    // "mode must be specified when O_CREAT is in the flags, and is ignored
-    // otherwise."  Although the parameter is named singularly, it is the
-    // result of a bitmask of flags.
-    //
-    // !!! libuv does not seem to provide these despite providing UV_FS_O_XXX
-    // constants.  Would anything bad happen if we left it at 0?
-    //
-    int mode = 0;
+    int mode = 0;  // will be ignored if flags not O_CREAT or O_TMPFILE
     if (flags & UV_FS_O_CREAT) {
-        if (flags & UV_FS_O_RDONLY)
+        if (UV_FS_O_RDONLY == Extract_Access_Mode_From_Flags(flags))
             mode = S_IREAD;
         else {
           #if TO_WINDOWS
