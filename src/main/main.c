@@ -105,7 +105,7 @@
     // those extensions which need it have access to it, while not creating
     // problems for those that do not.
     //
-    HINSTANCE App_Instance = 0;
+    HINSTANCE g_app_instance = 0;
 
     // For why this is done this way with a potential respawning, see the
     // StackOverflow question:
@@ -115,12 +115,12 @@
     //     http://stackoverflow.com/q/493536/
     //
     void Determine_Hinstance_May_Respawn(WCHAR* this_exe_path) {
-        if (GetStdHandle(STD_OUTPUT_HANDLE) == 0) {
+        if (GetStdHandle(STD_OUTPUT_HANDLE) == INVALID_HANDLE_VALUE) {
             //
             // No console to attach to, we must be the DETACHED_PROCESS which
             // was spawned in the below branch.
             //
-            App_Instance = GetModuleHandle(nullptr);
+            g_app_instance = GetModuleHandle(nullptr);
         }
         else {
           #ifdef REB_CORE
@@ -128,7 +128,7 @@
             // In "Core" mode, use a console but do not initialize graphics.
             // (stdio redirection works, blinking console window during start)
             //
-            App_Instance = p_cast(HINSTANCE,
+            g_app_instance = p_cast(HINSTANCE,
                 GetWindowLongPtr(GetConsoleWindow(), GWLP_HINSTANCE)
             );
             UNUSED(this_exe_path);
@@ -138,7 +138,7 @@
             // but no blinking console window during start.
             //
             if (not this_exe_path) {  // argc was > 1
-                App_Instance = p_cast(HINSTANCE,
+                g_app_instance = p_cast(HINSTANCE,
                     GetWindowLongPtr(GetConsoleWindow(), GWLP_HINSTANCE)
                 );
             }
