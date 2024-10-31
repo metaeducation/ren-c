@@ -60,7 +60,7 @@ void Dump_Flex(Flex* f, const char *memo)
 
     printf(" wide: %d\n", cast(int, Flex_Wide(f)));
     if (Get_Stub_Flag(f, DYNAMIC)) {
-        printf(" size: %ld\n", cast(unsigned long, Flex_Total(f)));
+        printf(" size: %ld\n", cast(long, Flex_Total(f)));
         printf(" bias: %d\n", cast(int, Flex_Bias(f)));
     }
     else
@@ -86,12 +86,12 @@ void Dump_Info(void)
     printf("^/--REBOL Kernel Dump--\n");
 
     printf("Evaluator:\n");
-    printf("    Cycles:  %ld\n", cast(unsigned long, g_ts.total_eval_cycles));
+    printf("    Cycles:  %ld\n", cast(long, g_ts.total_eval_cycles));
     printf("    Counter: %d\n", cast(int, g_ts.eval_countdown));
     printf("    Dose:    %d\n", cast(int, g_ts.eval_dose));
     printf("    Signals: %lx\n", cast(unsigned long, g_ts.signal_flags));
     printf("    Sigmask: %lx\n", cast(unsigned long, g_ts.signal_mask));
-    printf("    TOP_INDEX: %ld\n", cast(unsigned long, TOP_INDEX));
+    printf("    TOP_INDEX: %ld\n", cast(long, TOP_INDEX));
 
     printf("Memory/GC:\n");
 
