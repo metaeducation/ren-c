@@ -60,16 +60,16 @@
 // 1. See mutability notes on Set_Flex_Flag() / Clear_Flex_Flag()
 
 #define Get_Source_Flag(a,flag) \
-    Get_Subclass_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Get_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
 
 #define Not_Source_Flag(a,flag) \
-    Not_Subclass_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Not_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
 
 #define Set_Source_Flag(a,flag) \
-    Set_Subclass_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Set_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
 
 #define Clear_Source_Flag(a,flag) \
-    Clear_Subclass_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Clear_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
 
 
 #define FLEX_MASK_UNMANAGED_SOURCE \

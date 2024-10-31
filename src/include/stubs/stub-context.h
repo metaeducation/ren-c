@@ -215,13 +215,13 @@ INLINE KeyList* Keylist_Of_Varlist(VarList* c) {
 
 INLINE void Tweak_Keylist_Of_Varlist_Shared(Flex* f, KeyList* keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
-    Set_Subclass_Flag(KEYLIST, keylist, SHARED);
+    Set_Flavor_Flag(KEYLIST, keylist, SHARED);
     Tweak_Bonus_Keysource(f, keylist);
 }
 
 INLINE void Tweak_Keylist_Of_Varlist_Unique(Flex* f, KeyList *keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
-    assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
+    assert(Not_Flavor_Flag(KEYLIST, keylist, SHARED));
     Tweak_Bonus_Keysource(f, keylist);
 }
 
@@ -312,7 +312,7 @@ INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
     const Symbol* synonym = sym;
     do {
         Stub* patch = MISC(Hitch, sym);
-        if (Get_Subclass_Flag(SYMBOL, sym, MISC_IS_BINDINFO))
+        if (Get_Flavor_Flag(SYMBOL, sym, MISC_IS_BINDINFO))
             patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
         for (; patch != sym; patch = cast(Stub*, node_MISC(Hitch, patch))) {

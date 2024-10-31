@@ -298,14 +298,14 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
     Array* array = Cell_Array_Known_Mutable(plug);
     Value* item = Flex_Tail(Value, array);
 
-    if (Get_Subclass_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
+    if (Get_Flavor_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
         --item;
         assert(Is_Text(item));
         assert(VAL_INDEX(item) == 0);
         Append_Any_Utf8(g_mold.buffer, item);
     }
 
-    if (Get_Subclass_Flag(PLUG, array, HAS_DATA_STACK)) {
+    if (Get_Flavor_Flag(PLUG, array, HAS_DATA_STACK)) {
         Value* stacked = Flex_Head(Value, array);
         for (; stacked != item; ++stacked)
             Move_Cell(PUSH(), stacked);

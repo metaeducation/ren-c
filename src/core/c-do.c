@@ -108,7 +108,7 @@ void Push_Frame_Continuation(
     if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
         fail ("Use REDO to restart a running FRAME! (not DO)");
 
-    if (Get_Subclass_Flag(
+    if (Get_Flavor_Flag(
         VARLIST,
         Cell_Varlist(frame),
         FRAME_HAS_BEEN_INVOKED

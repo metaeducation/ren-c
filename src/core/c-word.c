@@ -324,17 +324,17 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             or utf8[i] == '<'
             or utf8[i] == '>'
         ){
-            Set_Subclass_Flag(SYMBOL, b, ILLEGAL_IN_ANY_SEQUENCE);
+            Set_Flavor_Flag(SYMBOL, b, ILLEGAL_IN_ANY_SEQUENCE);
             continue;
         }
 
         if (utf8[i] == ':') {
-            Set_Subclass_Flag(SYMBOL, b, ILLEGAL_IN_ANY_CHAIN);
+            Set_Flavor_Flag(SYMBOL, b, ILLEGAL_IN_ANY_CHAIN);
             continue;
         }
 
         if (utf8[i] == '.') {
-            Set_Subclass_Flag(SYMBOL, b, ILLEGAL_IN_ANY_TUPLE);
+            Set_Flavor_Flag(SYMBOL, b, ILLEGAL_IN_ANY_TUPLE);
             continue;
         }
     }
@@ -409,7 +409,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
 //
 void GC_Kill_Interning(const Symbol* symbol)
 {
-    assert(Not_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO));  // [1]
+    assert(Not_Flavor_Flag(SYMBOL, symbol, MISC_IS_BINDINFO));  // [1]
 
     const Symbol* synonym = LINK(Synonym, symbol);  // may be same as symbol
     const Symbol* temp = synonym;
@@ -631,7 +631,7 @@ void Assert_No_Symbols_Have_Bindinfo(void) {
     for (i = 0; i < num_slots; ++i) {
         if (not symbols_by_hash[i] or symbols_by_hash[i] == DELETED_SYMBOL)
             continue;
-        assert(Not_Subclass_Flag(SYMBOL, symbols_by_hash[i], MISC_IS_BINDINFO));
+        assert(Not_Flavor_Flag(SYMBOL, symbols_by_hash[i], MISC_IS_BINDINFO));
     }
 }
 

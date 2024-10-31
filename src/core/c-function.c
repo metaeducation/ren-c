@@ -684,7 +684,7 @@ Phase* Make_Action(
 
     Assert_Flex_Managed(keylist);  // paramlists/keylists, can be shared
     assert(Flex_Used(keylist) + 1 == Array_Len(paramlist));
-    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
+    if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
         const Key* key = Flex_At(const Key, keylist, 0);
         assert(KEY_SYM(key) == SYM_RETURN);
         UNUSED(key);
@@ -744,7 +744,7 @@ Phase* Make_Action(
           case PARAMCLASS_SOFT:
           case PARAMCLASS_JUST:
           case PARAMCLASS_THE:
-            Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST);
+            Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST);
             break;
 
           default:
@@ -758,7 +758,7 @@ Phase* Make_Action(
     // can be exposed by AS FRAME! of this action...
     //
     Set_Flex_Flag(paramlist, FIXED_SIZE);
-    Set_Subclass_Flag(VARLIST, paramlist, IMMUTABLE);
+    Set_Flavor_Flag(VARLIST, paramlist, IMMUTABLE);
 
     return ACT_IDENTITY(act);
 }

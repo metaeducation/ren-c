@@ -656,7 +656,7 @@ const Param* First_Unspecialized_Param(const Key* * key, Action* act)
 //
 Option(ParamClass) Get_First_Param_Literal_Class(Action* action) {
     Array* paramlist = ACT_PARAMLIST(action);
-    if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
+    if (Not_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
         return PARAMCLASS_0;
 
     ParamClass pclass = Cell_ParamClass(

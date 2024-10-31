@@ -2888,7 +2888,7 @@ DECLARE_NATIVE(as)
         // because all frame references to this frame are the same action.
         //
         assert(ACT_EXEMPLAR(VAL_FRAME_PHASE(v)) == Cell_Varlist(v));
-        Set_Subclass_Flag(VARLIST, Cell_Varlist(v), IMMUTABLE);
+        Set_Flavor_Flag(VARLIST, Cell_Varlist(v), IMMUTABLE);
         return Init_Frame_Details(
             OUT,
             VAL_FRAME_PHASE(v),

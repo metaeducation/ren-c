@@ -103,7 +103,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
     Extend_Flex_If_Necessary(varlist, delta);  // same identity, easy part
     Set_Flex_Len(Varlist_Array(varlist), len + delta + 1);  // include rootvar
 
-    if (Get_Subclass_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
+    if (Get_Flavor_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
         KeyList* k_copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
             FLEX_MASK_KEYLIST,
             k,
@@ -191,7 +191,7 @@ Value* Append_To_Sea_Core(
     //    for that symbol.  We skip over those.
 
     Stub* updating = m_cast(Symbol*, symbol);  // skip binding hitches [1]
-    if (Get_Subclass_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
+    if (Get_Flavor_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
         updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
 
     node_MISC(PatchHitch, patch) = node_MISC(Hitch, updating);

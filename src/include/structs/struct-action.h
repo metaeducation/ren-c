@@ -110,16 +110,16 @@ typedef enum {
 
 
 #define Set_Action_Flag(act,name) \
-    Set_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
+    Set_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 #define Get_Action_Flag(act,name) \
-    Get_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
+    Get_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 #define Clear_Action_Flag(act,name) \
-    Clear_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
+    Clear_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 #define Not_Action_Flag(act,name) \
-    Not_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
+    Not_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always

@@ -258,7 +258,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // flip the "release" flag and then return the existing API handle
         // back, now behaving as an instruction.
         //
-        assert(Get_Subclass_Flag(API, inst1, RELEASE));
+        assert(Get_Flavor_Flag(API, inst1, RELEASE));
 
         // !!! Originally this asserted it was a managed handle, but the
         // needs of API-TRANSIENT are such that a handle which outlives

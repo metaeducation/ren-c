@@ -115,7 +115,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                 continue;
 
             Stub* patch = MISC(Hitch, *psym);
-            if (Get_Subclass_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
+            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
                 patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
             Stub* found = nullptr;
@@ -170,7 +170,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                 phase = CTX_FRAME_PHASE(e->ctx);
 
                 Array* varlist = Varlist_Array(e->ctx);
-                if (Get_Subclass_Flag(
+                if (Get_Flavor_Flag(
                     VARLIST,
                     varlist,
                     FRAME_HAS_BEEN_INVOKED  // optimization, see definition
@@ -670,7 +670,7 @@ VarList* Copy_Varlist_Extra_Managed(
                 continue;
 
             Stub* patch = MISC(Hitch, *psym);
-            if (Get_Subclass_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
+            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
                 patch = MISC(Hitch, patch);  // skip bindinfo
 
             for (
@@ -781,7 +781,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
 
     if (Cell_Heart(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
         Array* varlist = Varlist_Array(Cell_Varlist(v));
-        if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
+        if (Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
             Drop_Pointer_From_Flex(g_mold.stack, c);
             return;

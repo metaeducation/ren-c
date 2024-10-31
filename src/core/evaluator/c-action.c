@@ -589,7 +589,7 @@ Bounce Action_Executor(Level* L)
             //
             if (
                 Lookahead_To_Sync_Infix_Defer_Flag(L->feed) and  // ensure got
-                (Get_Subclass_Flag(
+                (Get_Flavor_Flag(
                     VARLIST,
                     ACT_PARAMLIST(VAL_ACTION(unwrap L->feed->gotten)),
                     PARAMLIST_LITERAL_FIRST
@@ -1144,8 +1144,8 @@ void Begin_Action(
     /*assert(not Is_Level_Infix(L));
     assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX));*/
 
-    assert(Not_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
-    Set_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
+    assert(Not_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
+    Set_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
     KEY = ACT_KEYS(&KEY_TAIL, ACT_IDENTITY(ORIGINAL));
     PARAM = cast(Param*, Varlist_Slots_Head(ACT_EXEMPLAR(ORIGINAL)));
@@ -1226,7 +1226,7 @@ void Drop_Action(Level* L) {
     }
     else {  // no outstanding references [3]
         Clear_Flex_Info(L->varlist, HOLD);
-        Clear_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
+        Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
         assert(
             0 == (FLEX_INFO(L->varlist) & ~(  // <- note bitwise not

@@ -495,13 +495,13 @@ void MF_Sequence(Molder* mo, const Cell* c, bool form)
         else {
             if (Is_Word(element)) {  // double-check word legality in debug
                 const Symbol* s = Cell_Word_Symbol(element);
-                if (Get_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
+                if (Get_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
                     assert(
                         Any_Chain_Kind(heart)
                         and Cell_Sequence_Len(c) == 2
                     );
                 if (Any_Tuple_Kind(heart))
-                    assert(Not_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE));
+                    assert(Not_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE));
                 UNUSED(s);
             }
 

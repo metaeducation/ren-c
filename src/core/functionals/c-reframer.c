@@ -118,7 +118,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     assert(Is_Nothing(L->out));  // should only have gathered arguments
 
     assert(  // !!! new flag [2]
-        Not_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED)
+        Not_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED)
     );
 
     assert(not (L->flags.bits & ACTION_EXECUTOR_FLAG_FULFILL_ONLY));

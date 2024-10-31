@@ -2463,7 +2463,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = c_cast(Stub*, p);
-        if (Not_Subclass_Flag(API, stub, RELEASE))
+        if (Not_Flavor_Flag(API, stub, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
 
@@ -2476,7 +2476,7 @@ const RebolNodeInternal* API_rebQUOTING(const void* p)
 
         Value* v = Copy_Cell(Alloc_Value(), at);
         stub = Compact_Stub_From_Cell(v);
-        Set_Subclass_Flag(API, stub, RELEASE);
+        Set_Flavor_Flag(API, stub, RELEASE);
         break; }
 
       default:
@@ -2509,14 +2509,14 @@ RebolNodeInternal* API_rebUNQUOTING(const void* p)
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, c_cast(Stub*, p));
-        if (Not_Subclass_Flag(API, stub, RELEASE))
+        if (Not_Flavor_Flag(API, stub, RELEASE))
             fail ("Can't unquote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
         Value* v = Copy_Cell(Alloc_Value(), c_cast(Value*, p));
         stub = Compact_Stub_From_Cell(v);
-        Set_Subclass_Flag(API, stub, RELEASE);
+        Set_Flavor_Flag(API, stub, RELEASE);
         break; }
 
       default:
@@ -2556,10 +2556,10 @@ RebolNodeInternal* API_rebRELEASING(RebolValue* v)
         fail ("Cannot apply rebR() to non-API value");
 
     Stub* stub = Compact_Stub_From_Cell(v);
-    if (Get_Subclass_Flag(API, stub, RELEASE))
+    if (Get_Flavor_Flag(API, stub, RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
-    Set_Subclass_Flag(API, stub, RELEASE);
+    Set_Flavor_Flag(API, stub, RELEASE);
     return cast(RebolNodeInternal*, stub);  // cast needed in C
 }
 
@@ -2604,7 +2604,7 @@ RebolNodeInternal* API_rebRUN(const void* p)
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, c_cast(Stub*, p));
-        if (Not_Subclass_Flag(API, stub, RELEASE))
+        if (Not_Flavor_Flag(API, stub, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
 
@@ -2615,7 +2615,7 @@ RebolNodeInternal* API_rebRUN(const void* p)
 
         Value* v = Copy_Cell(Alloc_Value(), at);
         stub = Compact_Stub_From_Cell(v);
-        Set_Subclass_Flag(API, stub, RELEASE);
+        Set_Flavor_Flag(API, stub, RELEASE);
         break; }
 
       default:
@@ -2974,7 +2974,7 @@ DECLARE_NATIVE(api_transient)
     Value* v = Copy_Cell(Alloc_Value(), ARG(value));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
     Stub* stub = Compact_Stub_From_Cell(v);
-    Set_Subclass_Flag(API, stub, RELEASE);
+    Set_Flavor_Flag(API, stub, RELEASE);
 
     // Regarding adddresses in WASM:
     //

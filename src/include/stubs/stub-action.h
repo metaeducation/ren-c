@@ -443,7 +443,7 @@ INLINE bool Action_Is_Base_Of(Action* base, Action* derived) {
 //
 
 #define ACT_HAS_RETURN(a) \
-    Get_Subclass_Flag(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
+    Get_Flavor_Flag(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
 
 
 // The exemplar alone is sufficient information for the specialization frame.

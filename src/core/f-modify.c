@@ -88,7 +88,7 @@ REBLEN Modify_Array(
 
         if (not tail_newline) {
             if (ilen == len_at) {
-                tail_newline = Get_Subclass_Flag(
+                tail_newline = Get_Flavor_Flag(
                     SOURCE,
                     Cell_Array(src_val),
                     NEWLINE_AT_TAIL

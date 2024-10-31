@@ -1864,7 +1864,7 @@ Bounce Stepper_Executor(Level* L)
     Action* infixed = VAL_ACTION(unwrap L_next_gotten);
     Array* paramlist = ACT_PARAMLIST(infixed);
 
-    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {
+    if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {
         //
         // Left-quoting by infix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:

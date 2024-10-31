@@ -156,13 +156,13 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
         const Symbol* symbol = Cell_Word_Symbol(e);
         if (
             sequence_heart != REB_CHAIN  // !!! temporary for //: -- review
-            and Get_Subclass_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
+            and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
         ){
             return Error_Bad_Sequence_Item_Raw(e);  //  [<| |>] => <|/|>  ; tag
         }
         if (Any_Path_Kind(sequence_heart))
             return nullptr;
-        if (Get_Subclass_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
+        if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
             return Error_Bad_Sequence_Item_Raw(e);  // e.g. contains a slash
     }
 

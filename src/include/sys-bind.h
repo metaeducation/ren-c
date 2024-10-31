@@ -234,8 +234,8 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
         binder->hitch_list = LINK(NextBind, hitch);
 
         const Symbol* s = INODE(BindSymbol, hitch);
-        assert(Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO));
-        Clear_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
+        assert(Get_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO));
+        Clear_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO);
         node_MISC(Hitch, s) = node_MISC(Hitch, hitch);
 
         assert(Is_Node_Readable(hitch));
@@ -270,7 +270,7 @@ INLINE bool Try_Add_Binder_Index(
   #endif
 
     assert(index != 0);
-    if (Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
+    if (Get_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return false;  // already has a mapping
 
     Stub* hitch = Make_Untracked_Stub(  // don't pay for manuals tracking
@@ -285,7 +285,7 @@ INLINE bool Try_Add_Binder_Index(
     binder->hitch_list = hitch;
 
     MISC(Hitch, s) = hitch;
-    Set_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
+    Set_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO);
 
     return true;
 }
@@ -311,7 +311,7 @@ INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
   #endif
 
     UNUSED(binder);
-    if (Not_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
+    if (Not_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return 0;
 
     Stub* hitch = MISC(Hitch, s);  // unmanaged stub used for binding
@@ -334,7 +334,7 @@ INLINE void Update_Binder_Index(
   #endif
 
     UNUSED(binder);
-    assert(Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO));
+    assert(Get_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO));
 
     Stub* hitch = MISC(Hitch, s);  // unmanaged stub used for binding
     assert(INODE(BindSymbol, hitch) == s);

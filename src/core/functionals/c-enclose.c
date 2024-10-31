@@ -137,8 +137,8 @@ Bounce Encloser_Dispatcher(Level* const L)
     Tweak_Cell_Frame_Phase(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
     Tweak_Cell_Frame_Coupling(rootvar, Cell_Frame_Coupling(inner));
 
-    assert(Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
-    Clear_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
+    assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
+    Clear_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
 
     Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 

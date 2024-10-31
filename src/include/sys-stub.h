@@ -167,7 +167,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 #define Is_Stub_Partials(f)         (Stub_Flavor(f) == FLAVOR_PARTIALS)
 
 
-//=//// STUB SUBCLASS FLAGS ///////////////////////////////////////////////=//
+//=//// STUB FLAVOR-SPECIFIC FLAGS ////////////////////////////////////////=//
 //
 // In the debug build, ensure_flavor() checks if a Stub matches the expected
 // FLAVOR_XXX, and panics if it does not.  This is used by the subclass
@@ -191,20 +191,20 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
     }
 #endif
 
-#define Get_Subclass_Flag(subclass,stub,name) \
+#define Get_Flavor_Flag(subclass,stub,name) \
     ((ensure_flavor(FLAVOR_##subclass, (stub))->leader.bits \
         & subclass##_FLAG_##name) != 0)
 
-#define Not_Subclass_Flag(subclass,stub,name) \
+#define Not_Flavor_Flag(subclass,stub,name) \
     ((ensure_flavor(FLAVOR_##subclass, (stub))->leader.bits \
         & subclass##_FLAG_##name) == 0)
 
-#define Set_Subclass_Flag(subclass,stub,name) \
+#define Set_Flavor_Flag(subclass,stub,name) \
     m_cast(union HeaderUnion*, /* [1] */ \
         &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
         |= subclass##_FLAG_##name
 
-#define Clear_Subclass_Flag(subclass,stub,name)\
+#define Clear_Flavor_Flag(subclass,stub,name)\
     m_cast(union HeaderUnion*, /* [1] */ \
         &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
         &= ~subclass##_FLAG_##name
