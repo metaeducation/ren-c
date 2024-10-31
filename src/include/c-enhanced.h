@@ -670,8 +670,7 @@
 //     }
 //
 #ifndef NOOP
-    #define NOOP \
-        ((void)(0))
+    #define NOOP ((void)0)
 #endif
 #define blockscope NOOP;
 
@@ -890,6 +889,32 @@
         return v;  // doesn't coerce to type T [1]
     }
     #define ensure(T,v) (ensure_impl<decltype(v),T>(v))
+#endif
+
+
+//=//// "POSSIBLY" NON-ASSERT /////////////////////////////////////////////=//
+//
+// Comments often carry information about when something may be true:
+//
+//     int i = Get_Integer(...);  // i may be < 0
+//
+// `possibly` is a no-op construct which makes sure the expression you pass
+// it compiles, but doesn't do anything with it.
+//
+//     int i = Get_Integer(...);
+//     possibly(i < 0);
+//
+// Separating it out like that may provide a better visual flow (e.g. the
+// comment might have made a line overlong), but also it's less likely to
+// get out of date because it is validating the expression.
+//
+#if (! CPLUSPLUS_11)
+    #define possibly(expr)  NOOP
+#else
+    template <typename T>
+    constexpr void Possibly_Helper() {}
+
+    #define possibly(expr)  (void)(Possibly_Helper<decltype(expr)>())
 #endif
 
 
