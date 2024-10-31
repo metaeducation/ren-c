@@ -25,28 +25,6 @@
 #define EXECUTOR_ACTION &Action_Executor   // shorthand in Xxx_Executor_Flag()
 
 
-//=//// ACTION_EXECUTOR_FLAG_INFIX_A //////////////////////////////////////=//
-//
-// Due to the unusual influences of partial refinement specialization, a frame
-// may wind up with its infix parameter as being something like the last cell
-// in the argument list...when it has to then go back and fill earlier args
-// as normal.  There's no good place to hold the memory that one is doing an
-// infix fulfillment besides a bit on the frame itself.
-//
-// It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
-// to run an ACTION! cell as infix or not.  The reason this may be overridden
-// on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
-//
-#define ACTION_EXECUTOR_FLAG_INFIX_A \
-    LEVEL_FLAG_24
-
-
-//=//// ACTION_EXECUTOR_FLAG_INFIX_B //////////////////////////////////////=//
-//
-#define ACTION_EXECUTOR_FLAG_INFIX_B \
-    LEVEL_FLAG_25
-
-
 //=//// ACTION_EXECUTOR_FLAG_DOING_PICKUPS ////////////////////////////////=//
 //
 // If actions are invoked via path and use refinements in a different order
@@ -98,6 +76,30 @@
 //
 #define ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX \
     0  // !!! DISABLED FOR NOW, BUT CALLSITES CAN STILL REFERENCE
+
+
+//=//// ACTION_EXECUTOR_FLAG_FULFILL_ONLY /////////////////////////////////=//
+//
+// In some scenarios, the desire is to fill up the frame but not actually run
+// an action.  At one point this was done with a special "dummy" action to
+// dodge having to check the flag on every dispatch.  But in the scheme of
+// things, checking the flag is negligible...and it's better to do it with
+// a flag so that one does not lose the paramlist information one was working
+// with (overwriting with a dummy action on Level_Phase() led to an inconsistent
+// case that had to be accounted for, since the dummy's arguments did not
+// line up with the frame being filled).
+//
+#define ACTION_EXECUTOR_FLAG_FULFILL_ONLY \
+    LEVEL_FLAG_24
+
+
+//=//// ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY ///////////////////////////////=//
+//
+// This is used by <maybe> to indicate that once the frame is fulfilled, the
+// only thing that should be done is typechecking...don't run the action.
+//
+#define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY \
+    LEVEL_FLAG_25
 
 
 //=//// ACTION_EXECUTOR_FLAG_IN_DISPATCH //////////////////////////////////=//
@@ -163,27 +165,25 @@ STATIC_ASSERT(
     LEVEL_FLAG_29
 
 
-//=//// ACTION_EXECUTOR_FLAG_FULFILL_ONLY /////////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_INFIX_A //////////////////////////////////////=//
 //
-// In some scenarios, the desire is to fill up the frame but not actually run
-// an action.  At one point this was done with a special "dummy" action to
-// dodge having to check the flag on every dispatch.  But in the scheme of
-// things, checking the flag is negligible...and it's better to do it with
-// a flag so that one does not lose the paramlist information one was working
-// with (overwriting with a dummy action on Level_Phase() led to an inconsistent
-// case that had to be accounted for, since the dummy's arguments did not
-// line up with the frame being filled).
+// Due to the unusual influences of partial refinement specialization, a frame
+// may wind up with its infix parameter as being something like the last cell
+// in the argument list...when it has to then go back and fill earlier args
+// as normal.  There's no good place to hold the memory that one is doing an
+// infix fulfillment besides a bit on the frame itself.
 //
-#define ACTION_EXECUTOR_FLAG_FULFILL_ONLY \
+// It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
+// to run an ACTION! cell as infix or not.  The reason this may be overridden
+// on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
+//
+#define ACTION_EXECUTOR_FLAG_INFIX_A \
     LEVEL_FLAG_30
 
 
-//=//// ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY ///////////////////////////////=//
+//=//// ACTION_EXECUTOR_FLAG_INFIX_B //////////////////////////////////////=//
 //
-// This is used by <maybe> to indicate that once the frame is fulfilled, the
-// only thing that should be done is typechecking...don't run the action.
-//
-#define ACTION_EXECUTOR_FLAG_TYPECHECK_ONLY \
+#define ACTION_EXECUTOR_FLAG_INFIX_B \
     LEVEL_FLAG_31
 
 

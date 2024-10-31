@@ -55,10 +55,19 @@
 #endif
 
 
-//=//// ARRAY_FLAG_24 /////////////////////////////////////////////////////=//
+//=//// ARRAY_FLAG_CONST_SHALLOW //////////////////////////////////////////=//
 //
-#define ARRAY_FLAG_24 \
+// When a COPY is made of an ANY-LIST? that has CELL_FLAG_CONST, the new
+// value shouldn't be const, as the goal of copying it is generally to modify.
+// However, if you don't copy it deeply, then mere copying should not be
+// giving write access to levels underneath it that would have been seen as
+// const if they were PICK'd out before.  This flag tells the copy operation
+// to mark any cells that are shallow references as const.  For convenience
+// it is the same bit as the const flag one would find in the value.
+//
+#define ARRAY_FLAG_CONST_SHALLOW \
     STUB_SUBCLASS_FLAG_24
+STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 
 
 //=//// ARRAY_FLAG_25 /////////////////////////////////////////////////////=//
@@ -85,19 +94,16 @@
     STUB_SUBCLASS_FLAG_28
 
 
-//=//// ARRAY_FLAG_CONST_SHALLOW //////////////////////////////////////////=//
+//=//// ARRAY_FLAG_29 /////////////////////////////////////////////////////=//
 //
-// When a COPY is made of an ANY-LIST? that has CELL_FLAG_CONST, the new
-// value shouldn't be const, as the goal of copying it is generally to modify.
-// However, if you don't copy it deeply, then mere copying should not be
-// giving write access to levels underneath it that would have been seen as
-// const if they were PICK'd out before.  This flag tells the copy operation
-// to mark any cells that are shallow references as const.  For convenience
-// it is the same bit as the const flag one would find in the value.
+#define ARRAY_FLAG_29 \
+    STUB_SUBCLASS_FLAG_29
+
+
+//=//// ARRAY_FLAG_30 /////////////////////////////////////////////////////=//
 //
-#define ARRAY_FLAG_CONST_SHALLOW \
+#define ARRAY_FLAG_30 \
     STUB_SUBCLASS_FLAG_30
-STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 
 
 //=//// SOURCE_FLAG_NEWLINE_AT_TAIL ////////////////////////////////////////=//

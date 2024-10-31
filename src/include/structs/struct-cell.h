@@ -236,32 +236,40 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //
 
 
-//=//// CELL_FLAG_TYPE_SPECIFIC_A /////////////////////////////////////////=//
+//=//// CELL_FLAG_CONST ///////////////////////////////////////////////////=//
 //
-// This flag may be used independently, or as part of CELL_MASK_CRUMB.
+// A value that is CONST has read-only access to any Flex data it points
+// to, regardless of whether that data is in a locked Flex or not.  It is
+// possible to get a mutable view on a const value by using MUTABLE, and a
+// const view on a mutable value with CONST.
 //
-#define CELL_FLAG_TYPE_SPECIFIC_A \
-    FLAG_LEFT_BIT(24)
+// !!! Note: values that don't have meaning for const might use this for
+// other things, e.g. actions might use it for "PURE".  But beware that
+// types like INTEGER! might have mutable forms like BIGINT, so think twice
+// before reusing this bit.
+//
+#define CELL_FLAG_CONST \
+    FLAG_LEFT_BIT(24)  // NOTE: Must be SAME BIT as FEED_FLAG_CONST
 
 
-//=//// CELL_FLAG_TYPE_SPECIFIC_B /////////////////////////////////////////=//
+//=//// CELL_FLAG_EXPLICITLY_MUTABLE //////////////////////////////////////=//
 //
-// This flag may be used independently, or as part of CELL_MASK_CRUMB.
+// While it may seem that a mutable value would be merely one that did not
+// carry CELL_FLAG_CONST, there's a need for a separate bit to indicate when
+// MUTABLE has been specified explicitly.  That way, evaluative situations
+// like `eval mutable compose [...]` or `make object! mutable load ...` can
+// realize that they should switch into a mode which doesn't enforce const
+// by default--which it would ordinarily do.
 //
-// If independent, it's one bit that is custom to the datatype, and is
-// persisted when the cell is copied.
+// If this flag did not exist, then to get the feature of disabled mutability
+// would require every such operation taking something like a /MUTABLE
+// refinement.  This moves the flexibility onto the values themselves.
 //
-// CELL_FLAG_LEADING_BLANK (for ANY-SEQUENCE?)
+// While CONST can be added by the system implicitly during an evaluation,
+// the MUTABLE flag should only be added by running MUTABLE.
 //
-// 2-element sequences can be stored in an optimized form if one of the two
-// elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
-// a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
-// the nonblank thing is a WORD!.
-//
-#define CELL_FLAG_TYPE_SPECIFIC_B \
+#define CELL_FLAG_EXPLICITLY_MUTABLE \
     FLAG_LEFT_BIT(25)
-
-#define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC_B  // ANY-SEQUENCE?
 
 
 //=//// CELL_FLAG_26 ///////////////////////////////////////////////////////=//
@@ -332,40 +340,32 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     FLAG_LEFT_BIT(29)
 
 
-//=//// CELL_FLAG_CONST ///////////////////////////////////////////////////=//
+//=//// CELL_FLAG_TYPE_SPECIFIC_A /////////////////////////////////////////=//
 //
-// A value that is CONST has read-only access to any Flex data it points
-// to, regardless of whether that data is in a locked Flex or not.  It is
-// possible to get a mutable view on a const value by using MUTABLE, and a
-// const view on a mutable value with CONST.
+// This flag may be used independently, or as part of CELL_MASK_CRUMB.
 //
-// !!! Note: values that don't have meaning for const might use this for
-// other things, e.g. actions might use it for "PURE".  But beware that
-// types like INTEGER! might have mutable forms like BIGINT, so think twice
-// before reusing this bit.
-//
-#define CELL_FLAG_CONST \
-    FLAG_LEFT_BIT(30)  // NOTE: Must be SAME BIT as FEED_FLAG_CONST
+#define CELL_FLAG_TYPE_SPECIFIC_A \
+    FLAG_LEFT_BIT(30)
 
 
-//=//// CELL_FLAG_EXPLICITLY_MUTABLE //////////////////////////////////////=//
+//=//// CELL_FLAG_TYPE_SPECIFIC_B /////////////////////////////////////////=//
 //
-// While it may seem that a mutable value would be merely one that did not
-// carry CELL_FLAG_CONST, there's a need for a separate bit to indicate when
-// MUTABLE has been specified explicitly.  That way, evaluative situations
-// like `eval mutable compose [...]` or `make object! mutable load ...` can
-// realize that they should switch into a mode which doesn't enforce const
-// by default--which it would ordinarily do.
+// This flag may be used independently, or as part of CELL_MASK_CRUMB.
 //
-// If this flag did not exist, then to get the feature of disabled mutability
-// would require every such operation taking something like a /MUTABLE
-// refinement.  This moves the flexibility onto the values themselves.
+// If independent, it's one bit that is custom to the datatype, and is
+// persisted when the cell is copied.
 //
-// While CONST can be added by the system implicitly during an evaluation,
-// the MUTABLE flag should only be added by running MUTABLE.
+// CELL_FLAG_LEADING_BLANK (for ANY-SEQUENCE?)
 //
-#define CELL_FLAG_EXPLICITLY_MUTABLE \
+// 2-element sequences can be stored in an optimized form if one of the two
+// elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
+// a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
+// the nonblank thing is a WORD!.
+//
+#define CELL_FLAG_TYPE_SPECIFIC_B \
     FLAG_LEFT_BIT(31)
+
+#define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC_B  // ANY-SEQUENCE?
 
 
 //=//// CELL RESET AND COPY MASKS /////////////////////////////////////////=//
@@ -852,24 +852,30 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
 //
 // The cell flags are structured so that the top two bits of the byte are
-// "type specific", so that you can bit shift the byte right by 6 and get four
-// possible states for the type.  This 2-bit state (called a "crumb") holds
-// the one of four possible infix states for actions--for example.
+// "type specific", so that you can just take the last 2 bits.  This 2-bit
+// state (called a "crumb") holds the one of four possible infix states for
+// actions--for example.
+//
+// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
+// fact that there's no unit smaller than a byte means static analyzers
+// will warn you about overflow if any shifting is involved, e.g.:
+//
+//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
 //
 
 STATIC_ASSERT(
-    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(24)
-    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(25)
+    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(30)
+    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(31)
 );
 
 #define CELL_MASK_CRUMB \
     (CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B)
 
 #define Get_Cell_Crumb(c) \
-    (FOURTH_BYTE(&(c)->header.bits) >> 6)
+    (FOURTH_BYTE(&(c)->header.bits) & 0x3)
 
 #define FLAG_CELL_CRUMB(crumb) \
-    FLAG_FOURTH_BYTE((crumb) << 6)
+    FLAG_FOURTH_BYTE(crumb)
 
 INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
     c->header.bits &= ~(CELL_MASK_CRUMB);

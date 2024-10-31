@@ -1260,8 +1260,8 @@ void Assert_Pointer_Detection_Working(void)
 {
     uintptr_t cell_flag = NODE_FLAG_CELL;
     assert(FIRST_BYTE(&cell_flag) == NODE_BYTEMASK_0x08_CELL);
-    uintptr_t protected_flag = CELL_FLAG_TYPE_SPECIFIC_A;
-    assert(FOURTH_BYTE(&protected_flag) == 0x80);
+    uintptr_t type_specific_b = CELL_FLAG_TYPE_SPECIFIC_B;
+    assert(FOURTH_BYTE(&type_specific_b) == 0x01);
 
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);

@@ -137,7 +137,7 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 // CONST marking on a value before getting flipped back.
 //
 #define FEED_FLAG_CONST \
-    FLAG_LEFT_BIT(30)
+    FLAG_LEFT_BIT(24)
 STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 
 

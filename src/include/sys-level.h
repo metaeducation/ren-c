@@ -130,10 +130,10 @@ INLINE void Restart_Action_Level(Level* L) {
 STATIC_ASSERT(LEVEL_MASK_CRUMB == CELL_MASK_CRUMB);
 
 #define Get_Level_Crumb(L) \
-    (FOURTH_BYTE(&(L)->flags.bits) >> 6)
+    (FOURTH_BYTE(&(L)->flags.bits))
 
 #define FLAG_LEVEL_CRUMB(crumb) \
-    FLAG_FOURTH_BYTE((crumb) << 6)
+    FLAG_FOURTH_BYTE(crumb)
 
 INLINE void Set_Level_Crumb(Level* L, Crumb crumb) {
     L->flags.bits &= ~(LEVEL_MASK_CRUMB);
