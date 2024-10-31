@@ -18,23 +18,23 @@ INLINE bool Listlike_Cell(const Cell* v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return true;  // Cell_List_At() works, but Cell_Array() won't work!
-    return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_ARRAY;
+    return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SOURCE;
 }
 
-INLINE const Array* Cell_Array(const Cell* v) {
+INLINE const Source* Cell_Array(const Cell* v) {
     assert(Listlike_Cell(v));
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
     if (Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
-    return cast(Array*, Cell_Node1(v));
+    return cast(Source*, Cell_Node1(v));
 }
 
 #define Cell_Array_Ensure_Mutable(v) \
-    m_cast(Array*, Cell_Array(Ensure_Mutable(v)))
+    m_cast(Source*, Cell_Array(Ensure_Mutable(v)))
 
 #define Cell_Array_Known_Mutable(v) \
-    m_cast(Array*, Cell_Array(Known_Mutable(v)))
+    m_cast(Source*, Cell_Array(Known_Mutable(v)))
 
 
 // These array operations take the index position into account.  The use
@@ -126,7 +126,7 @@ INLINE const Element* Cell_List_Item_At(const Cell* v) {
 INLINE Element* Init_Any_List_At_Core_Untracked(
     Init(Element) out,
     Heart heart,
-    const_if_c Array* array,
+    const_if_c Source* array,
     REBLEN index,
     Context* binding
 ){
@@ -143,7 +143,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
     INLINE Element* Init_Any_List_At_Core_Untracked(
         Init(Element) out,
         Heart heart,
-        const Array* array,  // all const arrays should be already managed
+        const Source* array,  // all const arrays should be already managed
         REBLEN index,
         Context* binding
     ){
@@ -204,7 +204,7 @@ INLINE Element* Init_Relative_Block_At(
 //      == <b>
 //
 
-INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Array* a) {
+INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
     Init_Any_List_At_Core_Untracked(out, REB_BLOCK, a, 0, SPECIFIED);
     return Coerce_To_Unstable_Antiform(out);
 }
@@ -271,7 +271,7 @@ INLINE Value* Splicify(Need(Value*) v) {
     return Coerce_To_Stable_Antiform(v);
 }
 
-INLINE Value* Init_Splice_Untracked(Init(Value) out, Array* a) {
+INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
     Init_Group(out, a);
     return Coerce_To_Stable_Antiform(out);
 }

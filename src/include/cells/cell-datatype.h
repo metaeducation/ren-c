@@ -92,7 +92,7 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
     Kind kind
 ){
     assert(kind < REB_MAX);
-    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
 
     Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, kind)));
     return Init_Any_List(out, REB_TYPE_BLOCK, a);

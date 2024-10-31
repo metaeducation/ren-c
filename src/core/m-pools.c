@@ -937,9 +937,9 @@ void Swap_Flex_Content(Flex* a, Flex* b)
     // encode a list type, and the sequence needs that to persist.  Review
     // what to do if such arrays ever are seen to be used with this routine.
     //
-    if (Stub_Flavor(a) == FLAVOR_ARRAY)
+    if (Stub_Flavor(a) == FLAVOR_SOURCE)
         assert(MIRROR_BYTE(a) == REB_0);
-    if (Stub_Flavor(b) == FLAVOR_ARRAY)
+    if (Stub_Flavor(b) == FLAVOR_SOURCE)
         assert(MIRROR_BYTE(b) == REB_0);
 
     Byte a_second = SECOND_BYTE(&FLEX_INFO(a));  // may be USED_BYTE()

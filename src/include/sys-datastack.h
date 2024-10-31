@@ -321,14 +321,17 @@ INLINE Element* Move_Drop_Top_Stack_Element(Init(Element) out) {
 // ARRAY_FLAG_IS_DETAILS or ARRAY_FLAG_IS_VARLIST--you don't want to do
 // this, because the ->link and ->misc fields have other uses.
 //
-#define Pop_Stack_Values(base) \
-    Pop_Stack_Values_Core((base), ARRAY_MASK_HAS_FILE_LINE)
+#define Pop_Source_From_Stack(base) \
+    cast(Source*, Pop_Stack_Values_Core(FLEX_MASK_UNMANAGED_SOURCE, (base)))
 
-#define Pop_Stack_Values_Core(base,flags) \
-    Pop_Stack_Values_Core_Masked((base), (flags), CELL_MASK_COPY)
+#define Pop_Managed_Source_From_Stack(base) \
+    cast(Source*, Pop_Stack_Values_Core(FLEX_MASK_MANAGED_SOURCE, (base)))
 
-#define Pop_Stack_Values_Core_Keep_Notes(base,flags) \
-    Pop_Stack_Values_Core_Masked((base), (flags), \
+#define Pop_Stack_Values_Core(flags,base) \
+    Pop_Stack_Values_Core_Masked((flags), (base), CELL_MASK_COPY)
+
+#define Pop_Stack_Values_Core_Keep_Notes(flags,base) \
+    Pop_Stack_Values_Core_Masked((flags), (base), \
         CELL_MASK_COPY_KEEP_NOTES)
 
 

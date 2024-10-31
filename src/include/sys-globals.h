@@ -106,9 +106,9 @@ PVAR Element* Root_Empty_Text; // read-only ""
 PVAR Element* Root_Empty_Binary; // read-only #{}
 PVAR Element* Root_Empty_Block; // read-only []
 PVAR Element* Root_Quasi_Null;  // ~null~ quasiform
-PVAR Array* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
-PVAR Array* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
-PVAR Array* PG_1_Quasi_Void_Array;  // used by heavy voids ~[~void~]~
+PVAR Source* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
+PVAR Source* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
+PVAR Source* PG_1_Quasi_Void_Array;  // used by heavy voids ~[~void~]~
 
 PVAR Value* Root_Meta_Heavy_Null;  // keeps PG_1_Quasi_Null_Array alive
 PVAR Value* Root_Meta_Heavy_Void;  // keeps PG_1_Quasi_Void_Array alive

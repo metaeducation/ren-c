@@ -86,7 +86,7 @@ DECLARE_NATIVE(builtin_extensions)
 {
     INCLUDE_PARAMS_OF_BUILTIN_EXTENSIONS;
 
-    Array* list = Make_Array(g_num_builtin_extensions);
+    Source* list = Make_Source_Managed(g_num_builtin_extensions);
     REBLEN i;
     for (i = 0; i != g_num_builtin_extensions; ++i) {
         ExtensionCollator* collator = g_builtin_collators[i];
@@ -179,7 +179,7 @@ DECLARE_NATIVE(load_extension)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    VarList* module_ctx = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    VarList* module_ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
     node_LINK(NextVirtual, module_ctx) = Lib_Context;
 
     g_native_cfunc_pos = cfuncs;

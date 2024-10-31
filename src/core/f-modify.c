@@ -31,7 +31,7 @@
 // Returns new dst_idx
 //
 REBLEN Modify_Array(
-    Array* dst_arr,  // target
+    Source* dst_arr,  // target
     REBLEN dst_idx,  // position
     SymId op,  // INSERT, APPEND, CHANGE
     const Value* src_val,  // source
@@ -89,7 +89,7 @@ REBLEN Modify_Array(
         if (not tail_newline) {
             if (ilen == len_at) {
                 tail_newline = Get_Subclass_Flag(
-                    ARRAY,
+                    SOURCE,
                     Cell_Array(src_val),
                     NEWLINE_AT_TAIL
                 );
@@ -106,10 +106,10 @@ REBLEN Modify_Array(
         // Are we modifying ourselves? If so, copy src_val block first:
         if (dst_arr == Cell_Array(src_val)) {
             Array* copy = Copy_Array_At_Extra_Shallow(
+                FLEX_MASK_MANAGED_SOURCE,  // !!! or, don't manage and free?
                 Cell_Array(src_val),
                 VAL_INDEX(src_val),
-                0, // extra
-                NODE_FLAG_MANAGED // !!! Worth it to not manage and free?
+                0 // extra
             );
             src_rel = Array_Head(copy);
         }
@@ -132,7 +132,7 @@ REBLEN Modify_Array(
     //
     bool head_newline =
         (dst_idx == Array_Len(dst_arr))
-        and Get_Array_Flag(dst_arr, NEWLINE_AT_TAIL);
+        and Get_Source_Flag(dst_arr, NEWLINE_AT_TAIL);
 
     if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
@@ -165,7 +165,7 @@ REBLEN Modify_Array(
                 // The array flag is not cleared until the loop actually
                 // makes a value that will carry on the bit.
                 //
-                Clear_Array_Flag(dst_arr, NEWLINE_AT_TAIL);
+                Clear_Source_Flag(dst_arr, NEWLINE_AT_TAIL);
                 continue;
             }
 
@@ -180,7 +180,7 @@ REBLEN Modify_Array(
     //
     if (tail_newline) {
         if (dst_idx == Array_Len(dst_arr))
-            Set_Array_Flag(dst_arr, NEWLINE_AT_TAIL);
+            Set_Source_Flag(dst_arr, NEWLINE_AT_TAIL);
         else
             Set_Cell_Flag(Array_At(dst_arr, dst_idx), NEWLINE_BEFORE);
     }

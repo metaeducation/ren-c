@@ -180,14 +180,14 @@ DECLARE_NATIVE(bind)
     const Element* tail;
     if (REF(copy)) {
         bool deeply = true;
-        Array* copy = Copy_Array_Core_Managed(
+        Source* copy = cast(Source*, Copy_Array_Core_Managed(
+            FLEX_MASK_MANAGED_SOURCE,
             Cell_Array(v),
             VAL_INDEX(v), // at
             Array_Len(Cell_Array(v)), // tail
             0, // extra
-            ARRAY_MASK_HAS_FILE_LINE, // flags
             deeply  // !!! types to copy deeply (was once just TS_ARRAY)
-        );
+        ));
         at = Array_Head(copy);
         tail = Array_Tail(copy);
         Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(v), copy);
@@ -1120,7 +1120,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
         }
         return nullptr; }
 
-      case FLAVOR_ARRAY:
+      case FLAVOR_SOURCE:
         break;
 
       default:
@@ -1182,7 +1182,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
     }
 
     if (steps_out and steps_out != GROUPS_OK) {
-        Array* a = Pop_Stack_Values(base);
+        Source* a = Pop_Source_From_Stack(base);
         Init_Any_List(unwrap steps_out, REB_THE_BLOCK, a);
     }
     else
@@ -1506,7 +1506,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 
         goto ensure_out_is_action; }
 
-      case FLAVOR_ARRAY : {}
+      case FLAVOR_SOURCE : {}
         break;
 
       default :
@@ -1632,7 +1632,7 @@ DECLARE_NATIVE(resolve)
     if (error)
         return FAIL(unwrap error);
 
-    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
     Copy_Meta_Cell(Array_At(pack, 0), stable_SPARE);  // the steps
@@ -1815,7 +1815,7 @@ bool Set_Var_Core_Updater_Throws(
             //
             goto set_target; }
 
-          case FLAVOR_ARRAY:
+          case FLAVOR_SOURCE:
             break;  // fall through
 
           default:
@@ -1958,7 +1958,7 @@ bool Set_Var_Core_Updater_Throws(
     Drop_GC_Guard(writeback);
 
     if (steps_out and steps_out != GROUPS_OK)
-        Init_Block(unwrap steps_out, Pop_Stack_Values(base));
+        Init_Block(unwrap steps_out, Pop_Source_From_Stack(base));
     else
         Drop_Data_Stack_To(base);
 
@@ -2466,7 +2466,7 @@ bool Try_As_String(
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         assert(size + 1 <= Size_Of(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
-        String* str = Make_String_Core(size, FLEX_FLAGS_NONE);
+        String* str = Make_String_Core(FLEX_MASK_MANAGED_STRING, size);
         memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
         Term_String_Len_Size(str, len, size);
         Freeze_Flex(str);
@@ -2541,16 +2541,16 @@ DECLARE_NATIVE(as)
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [1]
                 const Pairing* p = c_cast(Pairing*, node1);
                 Context *binding = Cell_List_Binding(v);
-                Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                Source* a = Make_Source_Managed(2);
                 Set_Flex_Len(a, 2);
                 Derelativize(Array_At(a, 0), Pairing_First(p), binding);
                 Derelativize(Array_At(a, 1), Pairing_Second(p), binding);
-                Freeze_Array_Shallow(a);
+                Freeze_Source_Shallow(a);
                 Init_Block(v, a);
             }
             else switch (Stub_Flavor(c_cast(Flex*, node1))) {
               case FLAVOR_SYMBOL: {
-                Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                Source* a = Make_Source_Managed(2);
                 Set_Flex_Len(a, 2);
                 if (Get_Cell_Flag(v, LEADING_BLANK)) {
                     Init_Blank(Array_At(a, 0));
@@ -2562,14 +2562,14 @@ DECLARE_NATIVE(as)
                     HEART_BYTE(Array_At(a, 0)) = REB_WORD;
                     Init_Blank(Array_At(a, 1));
                 }
-                Freeze_Array_Shallow(a);
+                Freeze_Source_Shallow(a);
                 Init_Block(v, a);
                 break; }
 
-              case FLAVOR_ARRAY: {
-                const Array* a = Cell_Array(v);
+              case FLAVOR_SOURCE: {
+                const Source* a = Cell_Array(v);
                 if (MIRROR_BYTE(a)) {  // .[a] or (xxx): compression
-                    Array* two = Make_Array(2);
+                    Source* two = Make_Source_Managed(2);
                     Set_Flex_Len(two, 2);
                     Cell* tweak;
                     if (Get_Cell_Flag(v, LEADING_BLANK)) {
@@ -2585,7 +2585,7 @@ DECLARE_NATIVE(as)
                     Init_Block(v, two);
                 }
                 else {
-                    assert(Is_Array_Frozen_Shallow(a));
+                    assert(Is_Source_Frozen_Shallow(a));
                     HEART_BYTE(v) = REB_BLOCK;
                 }
                 break; }
@@ -2608,8 +2608,8 @@ DECLARE_NATIVE(as)
             // Even if we optimize the array, we don't want to give the
             // impression that we would not have frozen it.
             //
-            if (not Is_Array_Frozen_Shallow(Cell_Array(v)))
-                Freeze_Array_Shallow(Cell_Array_Ensure_Mutable(v));
+            if (not Is_Source_Frozen_Shallow(Cell_Array(v)))
+                Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(v));
 
             DECLARE_ELEMENT (temp);  // need to rebind
             Option(Error*) error = Trap_Init_Any_Sequence_At_Listlike(
@@ -2830,7 +2830,7 @@ DECLARE_NATIVE(as)
 
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
-            Binary* b = Make_Binary_Core(size, NODE_FLAG_MANAGED);
+            Binary* b = Make_Binary_Core(NODE_FLAG_MANAGED, size);
             memcpy(Binary_Head(b), utf8, size + 1);
             Set_Flex_Used(b, size);
             Freeze_Flex(b);
@@ -2860,7 +2860,7 @@ DECLARE_NATIVE(as)
         // because all frame references to this frame are the same action.
         //
         assert(ACT_EXEMPLAR(VAL_FRAME_PHASE(v)) == Cell_Varlist(v));
-        Freeze_Array_Shallow(Varlist_Array(Cell_Varlist(v)));
+        Set_Subclass_Flag(VARLIST, Cell_Varlist(v), IMMUTABLE);
         return Init_Frame_Details(
             OUT,
             VAL_FRAME_PHASE(v),

@@ -86,7 +86,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
     Action* act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for Varlist_Archetype()
-    Array* a = Make_Array_Core(num_slots, FLEX_MASK_VARLIST);
+    Array* a = Make_Array_Core(FLEX_MASK_VARLIST, num_slots);
     Set_Flex_Len(a, num_slots);
 
     Tweak_Keylist_Of_Varlist_Shared(a, ACT_KEYLIST(act));
@@ -353,8 +353,8 @@ bool Specialize_Action_Throws(
         // but since we error and throw those arrays away it doesn't matter.
         //
         partials = Make_Array_Core(
-            TOP_INDEX - ordered_stackindex,  // maximum partial count possible
-            FLEX_MASK_PARTIALS  // don't manage, yet... may free
+            FLEX_MASK_PARTIALS,  // don't manage, yet... may free
+            TOP_INDEX - ordered_stackindex  // maximum partial count possible
         );
 
         while (ordered_stackindex != TOP_INDEX) {

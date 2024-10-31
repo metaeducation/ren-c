@@ -192,7 +192,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const Element* arg)
         Join_Binary_In_Byte_Buf(arg, -1);
         Binary* b = cast(
             Binary*,
-            Copy_Flex_Core(BYTE_BUF, FLEX_FLAGS_NONE)
+            Copy_Flex_Core(FLEX_FLAGS_NONE, BYTE_BUF)
         );
         return Init_Blob(OUT, b); }
 
@@ -519,7 +519,7 @@ REBTYPE(Binary)
             return nullptr;
 
         if (id == SYM_FIND) {
-            Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+            Source* pack = Make_Source_Managed(2);
             Set_Flex_Len(pack, 2);
 
             Copy_Meta_Cell(Array_At(pack, 0), v);

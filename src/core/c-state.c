@@ -232,7 +232,7 @@ void Unplug_Stack(
     else
         Init_Block(
             plug,
-            Pop_Stack_Values_Core(base->baseline.stack_base, flags)
+            Pop_Managed_Source_From_Stack(base->baseline.stack_base)
         );
 
     g_ts.top_level = base;

@@ -40,7 +40,7 @@
 // * Another difference between the default array type (e.g. the one used by
 //   BLOCK! and GROUP! and FENCE!) is that it has meaning for certain flex
 //   flags, such as tracking whether a newline is at the end of the array.
-//   Hence ARRAY_FLAG_XXX only applies to the FLAVOR_ARRAY default type,
+//   Hence ARRAY_FLAG_XXX only applies to the FLAVOR_SOURCE default type,
 //   not to things like the VarList of an OBJECT!.
 
 
@@ -55,25 +55,10 @@
 #endif
 
 
-//=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//
+//=//// ARRAY_FLAG_24 /////////////////////////////////////////////////////=//
 //
-// The Flex Stub has two pointers in it, ->link and ->misc, which are
-// used for a variety of purposes (pointing to the KeyList for an object,
-// the C code that runs as the dispatcher for an Action, etc.)  But for
-// regular source Arrays, they can be used to store the filename and line
-// number, if applicable.
-//
-// Only Array preserves file and line info, as UTF-8 Strings need to use the
-// ->misc and ->link fields for caching purposes in String.
-//
-#define ARRAY_FLAG_HAS_FILE_LINE_UNMASKED \
+#define ARRAY_FLAG_24 \
     STUB_SUBCLASS_FLAG_24
-
-#define ARRAY_MASK_HAS_FILE_LINE \
-    (ARRAY_FLAG_HAS_FILE_LINE_UNMASKED | STUB_FLAG_LINK_NODE_NEEDS_MARK)
-
-#define LINK_Filename_TYPE          const String*
-#define HAS_LINK_Filename           FLAVOR_ARRAY
 
 
 //=//// ARRAY_FLAG_25 /////////////////////////////////////////////////////=//
@@ -115,7 +100,7 @@
 STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 
 
-//=//// ARRAY_FLAG_NEWLINE_AT_TAIL ////////////////////////////////////////=//
+//=//// SOURCE_FLAG_NEWLINE_AT_TAIL ////////////////////////////////////////=//
 //
 // The mechanics of how Rebol tracks newlines is that there is only one bit
 // per value to track the property.  Yet since newlines are conceptually
@@ -124,5 +109,5 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 // Ren-C carries a bit for indicating when there's a newline intended at the
 // tail of an array.
 //
-#define ARRAY_FLAG_NEWLINE_AT_TAIL \
+#define SOURCE_FLAG_NEWLINE_AT_TAIL \
     STUB_SUBCLASS_FLAG_31

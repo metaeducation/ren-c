@@ -67,7 +67,7 @@ INLINE Array* Cell_Varargs_Source(const Cell* v) {
 
 INLINE void Tweak_Cell_Varargs_Source(
     Cell* v,
-    Flex* source  // either an array, or a frame varlist
+    Stub* source  // either a feed, or a frame varlist
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
     EXTRA(Any, v).node = source;
@@ -86,14 +86,14 @@ INLINE Element* Init_Varargs_Untyped_Infix(
     Init(Element) out,
     Option(const Value*) left
 ){
-    Array* feed;
+    Stub* feed;
     if (not left or Is_Void(unwrap left))
         feed = EMPTY_ARRAY;
     else {
-        Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
+        Source* singular = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
         Copy_Cell(Stub_Cell(singular), unwrap left);
 
-        feed = Alloc_Singular(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
+        feed = Make_Untracked_Stub(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
         Init_Block(Stub_Cell(feed), singular);  // index 0
     }
 

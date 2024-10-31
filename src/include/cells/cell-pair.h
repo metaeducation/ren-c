@@ -57,9 +57,6 @@ INLINE bool Pairlike_Cell(const Cell* v) {
     return Is_Node_A_Cell(Cell_Node1(v));
 }
 
-#define Tweak_Cell_Pairing(v,pairing) \
-    Tweak_Cell_Node1((v), (pairing))
-
 INLINE Pairing* Cell_Pairing(const Cell* v) {
     assert(Pairlike_Cell(v));
     return x_cast(Pairing*, Cell_Node1(v));
@@ -86,7 +83,7 @@ INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
         out,
         CELL_MASK_PAIR | FLAG_HEART_BYTE(REB_PAIR)
     );
-    Tweak_Cell_Pairing(out, p);
+    Tweak_Cell_Node1(out, p);
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;  // payload second not used
   #endif

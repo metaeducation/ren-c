@@ -97,7 +97,7 @@
 //        If CELL_FLAG_LEADING_BLANK it is either a `/foo` or `.foo` case
 //        Without the flag, it is either a `foo/` or `foo.` case
 //
-//   - Uncompressed forms have the first node as FLAVOR_ARRAY
+//   - Uncompressed forms have the first node as FLAVOR_SOURCE
 //
 
 
@@ -249,7 +249,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // mark the pairing
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
-    Tweak_Cell_Pairing(e, p);
+    Tweak_Cell_Node1(e, p);
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, e).second.corrupt = CORRUPTZERO;  // payload second not used
   #endif
@@ -288,11 +288,11 @@ INLINE Element* Init_Any_Sequence_Bytes(
     BINDING(out) = nullptr;  // paths are bindable, can't have garbage
 
     if (size > Size_Of(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
-        Array* a = Make_Array_Core(size, NODE_FLAG_MANAGED);
+        Source* a = Make_Source_Managed(size);
         for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
 
-        Init_Block(out, Freeze_Array_Shallow(a));  // !!! TBD: compact BINARY!
+        Init_Block(out, Freeze_Source_Shallow(a));  // !!! TBD: compact BINARY!
     }
     else {
         PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = size;
@@ -416,7 +416,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // first is pairing
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
-    Tweak_Cell_Pairing(out, pairing);
+    Tweak_Cell_Node1(out, pairing);
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;  // payload second not used
   #endif
@@ -475,8 +475,8 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
     }
 
     assert(TOP_INDEX - base > 2);  // guaranteed from above
-    Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
-    Freeze_Array_Shallow(a);
+    Source* a = Pop_Managed_Source_From_Stack(base);
+    Freeze_Source_Shallow(a);
     return Trap_Init_Any_Sequence_Listlike(out, heart, a);
 }
 
@@ -582,12 +582,12 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return 2;
 
-      case FLAVOR_ARRAY : {  // uncompressed sequence
-        const Array* a = c_cast(Array*, node1);
+      case FLAVOR_SOURCE : {  // uncompressed sequence
+        const Source* a = c_cast(Source*, node1);
         if (MIRROR_BYTE(a) != REB_0)
             return 2;  // e.g. `(a):` stores REB_GROUP in the mirror byte
         assert(Array_Len(a) >= 2);
-        assert(Is_Array_Frozen_Shallow(a));
+        assert(Is_Source_Frozen_Shallow(a));
         return Array_Len(a); }
 
       default :
@@ -648,8 +648,8 @@ INLINE Element* Derelativize_Sequence_At(
         QUOTE_BYTE(out) = NOQUOTE_1;  // [3]
         return out; }
 
-      case FLAVOR_ARRAY : {  // uncompressed sequence, or compressed "mirror"
-        const Array* a = c_cast(Array*, Cell_Node1(sequence));
+      case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
+        const Source* a = c_cast(Source*, Cell_Node1(sequence));
         if (MIRROR_BYTE(a) != REB_0) {  // [4]
             assert(n < 2);
             if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
@@ -661,7 +661,7 @@ INLINE Element* Derelativize_Sequence_At(
             return out;
         }
         assert(Array_Len(a) >= 2);
-        assert(Is_Array_Frozen_Shallow(a));
+        assert(Is_Source_Frozen_Shallow(a));
         return Derelativize(out, Array_At(a, n), context); }
 
       default :
@@ -705,7 +705,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
       case FLAVOR_SYMBOL:  // compressed single WORD! sequence
         return SPECIFIED;
 
-      case FLAVOR_ARRAY: {  // uncompressed sequence
+      case FLAVOR_SOURCE: {  // uncompressed sequence
         const Array* a = Cell_Array(sequence);
         if (MIRROR_BYTE(a) != REB_0)
             return SPECIFIED;

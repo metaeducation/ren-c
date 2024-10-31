@@ -139,9 +139,8 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 
 INLINE Value* Alloc_Value_Core(Flags flags)
 {
-    Stub* stub = Alloc_Singular(
-        FLAG_FLAVOR(API)
-            |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED | FLEX_FLAG_FIXED_SIZE
+    Stub* stub = Make_Untracked_Stub(
+        FLAG_FLAVOR(API) | NODE_FLAG_ROOT | NODE_FLAG_MANAGED
     );
 
     Cell* cell = Stub_Cell(stub);

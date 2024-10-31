@@ -1063,10 +1063,10 @@ void Push_Action(
     assert(L->varlist == nullptr);
 
     Flex* s = cast(Flex*, Prep_Stub(
-        Alloc_Stub(),  // not preallocated
         FLEX_MASK_VARLIST
-            | FLEX_FLAG_FIXED_SIZE  // FRAME!s don't expand ATM
+            | FLEX_FLAG_FIXED_SIZE,  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
+        Alloc_Stub()
     ));
     Tweak_Bonus_Keysource(x_cast(Array*, s), L);  // maps varlist back to L
     MISC(VarlistAdjunct, s) = nullptr;

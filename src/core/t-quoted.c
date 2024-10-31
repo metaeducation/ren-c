@@ -565,7 +565,7 @@ INLINE bool Pack_Native_Core_Throws(
         for (; at != tail; ++at)
             Copy_Meta_Cell(PUSH(), at);
 
-        Init_Pack(out, Pop_Stack_Values(base));
+        Init_Pack(out, Pop_Source_From_Stack(base));
         return false;
     }
 

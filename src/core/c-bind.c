@@ -244,7 +244,7 @@ Let* Make_Let_Variable(
     const Symbol* symbol,
     Context* parent
 ){
-    Stub* let = Alloc_Singular(  // payload is one variable
+    Stub* let = Make_Untracked_Stub(  // payload is one variable
         FLAG_FLAVOR(LET)
             | NODE_FLAG_MANAGED
             | STUB_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
@@ -736,7 +736,7 @@ DECLARE_NATIVE(let)
             Setify(Init_Any_List(
                 where,  // may be SPARE, and vars may point to it
                 REB_BLOCK,
-                Pop_Stack_Values_Core(STACK_BASE, NODE_FLAG_MANAGED)
+                Pop_Managed_Source_From_Stack(STACK_BASE)
             ));
         }
         else {
@@ -953,18 +953,18 @@ void Clonify_And_Bind_Relative(
                 Cell_Pairing(v),
                 NODE_FLAG_MANAGED
             );
-            Tweak_Cell_Pairing(v, copy);
+            Tweak_Cell_Node1(v, copy);
 
             deep = Pairing_Head(copy);
             deep_tail = Pairing_Tail(copy);
         }
         else if (Listlike_Cell(v)) {  // ruled out pairlike sequences above...
-            Array* copy = Copy_Array_At_Extra_Shallow(
+            Source* copy = cast(Source*, Copy_Array_At_Extra_Shallow(
+                FLEX_MASK_MANAGED_SOURCE,
                 Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
-                0,
-                NODE_FLAG_MANAGED
-            );
+                0
+            ));
             /* if (Any_Sequence(v)) */  // copy regardless? [3]
                 Copy_Mirror_Byte(copy, Cell_Array(v));
 
@@ -974,7 +974,7 @@ void Clonify_And_Bind_Relative(
             // binding pointers can be changed in the "immutable" copy.
             //
             if (Any_Sequence_Kind(heart))
-                Freeze_Array_Shallow(copy);
+                Freeze_Source_Shallow(copy);
 
             // !!! At one point, arrays were marked relative as well as the
             // words in function bodies.  Now it's needed to consider them
@@ -984,7 +984,7 @@ void Clonify_And_Bind_Relative(
             deep_tail = Array_Tail(copy);
         }
         else if (Any_Series_Kind(heart)) {
-            Flex* copy = Copy_Flex_Core(Cell_Flex(v), NODE_FLAG_MANAGED);
+            Flex* copy = Copy_Flex_Core(NODE_FLAG_MANAGED, Cell_Flex(v));
             Tweak_Cell_Node1(v, copy);
         }
 
@@ -1019,7 +1019,7 @@ void Clonify_And_Bind_Relative(
 // it is doing that it puts a cache in any unbound words of whether or not
 // that words can be found in the function's frame.
 //
-Array* Copy_And_Bind_Relative_Deep_Managed(
+Source* Copy_And_Bind_Relative_Deep_Managed(
     const Value* body,
     Action* relative,
     enum Reb_Var_Visibility visibility
@@ -1042,10 +1042,10 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     Shutdown_Evars(&e);
   }
 
-    Array* copy;
+    Source* copy;
 
   blockscope {
-    const Array* original = Cell_Array(body);
+    const Source* original = Cell_Array(body);
     REBLEN index = VAL_INDEX(body);
    /* Context* binding = Cell_List_Binding(body); */
     REBLEN tail = Cell_Series_Len_At(body);
@@ -1054,14 +1054,14 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     if (index > tail)  // !!! should this be asserted?
         index = tail;
 
-    Flags flags = ARRAY_MASK_HAS_FILE_LINE | NODE_FLAG_MANAGED;
+    Flags flags = FLEX_MASK_MANAGED_SOURCE;
     bool deeply = true;
 
     REBLEN len = tail - index;
 
     // Currently we start by making a shallow copy and then adjust it
 
-    copy = Make_Array_For_Copy(len, flags, original);
+    copy = cast(Source*, Make_Array_For_Copy(flags, original, len));
     Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);

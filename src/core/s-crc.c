@@ -234,7 +234,7 @@ uint32_t Hash_Value(const Cell* cell)
           case FLAVOR_SYMBOL:
             goto hash_any_word;
 
-          case FLAVOR_ARRAY:
+          case FLAVOR_SOURCE:
             goto hash_any_list;
 
           default:
@@ -374,7 +374,7 @@ uint32_t Hash_Value(const Cell* cell)
 HashList* Make_Hashlist(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
-    Flex* f = Make_Flex_Core(n + 1, FLAG_FLAVOR(HASHLIST));
+    Flex* f = Make_Flex(FLAG_FLAVOR(HASHLIST), Flex, n + 1);
     Clear_Flex(f);
     Set_Flex_Len(f, n);
 

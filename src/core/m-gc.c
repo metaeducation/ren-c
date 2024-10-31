@@ -478,7 +478,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
         Offset index = truncated ? 2 : 1;  // skip --optimized-out--
 
-        Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+        Source* a = Pop_Managed_Source_From_Stack(base);
         Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
 
         // need to be sure feed->p isn't invalid... and not end
@@ -503,7 +503,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         if (truncated) {
             Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
-            Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+            Source* a = Pop_Managed_Source_From_Stack(base);
             Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, a, 1);
         }
         else
@@ -1363,22 +1363,28 @@ void Startup_GC(void)
     // As a trick to keep this Flex from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    ensure(nullptr, g_gc.manuals) = Make_Flex_Core(
-        15,
-        FLAG_FLAVOR(FLEXLIST) | NODE_FLAG_MANAGED  // lie!
+    ensure(nullptr, g_gc.manuals) = Make_Flex(
+        FLAG_FLAVOR(FLEXLIST) | NODE_FLAG_MANAGED,  // lie!
+        Flex,
+        15
     );
     Clear_Node_Managed_Bit(g_gc.manuals);  // untracked and indefinite lifetime
 
     // Flexes and Cells protected from GC.  Holds node pointers.
     //
-    ensure(nullptr, g_gc.guarded) = Make_Flex_Core(15, FLAG_FLAVOR(NODELIST));
+    ensure(nullptr, g_gc.guarded) = Make_Flex(
+        FLAG_FLAVOR(NODELIST),
+        Flex,
+        15
+    );
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    ensure(nullptr, g_gc.mark_stack) = Make_Flex_Core(
-        100,
-        FLAG_FLAVOR(NODELIST)
+    ensure(nullptr, g_gc.mark_stack) = Make_Flex(
+        FLAG_FLAVOR(NODELIST),
+        Flex,
+        100
     );
 
     g_gc.ballast = MEM_BALLAST; // or overwritten by debug build below...
@@ -1413,10 +1419,10 @@ void Startup_GC(void)
     // inaccessible references canonized to this one global Stub.
     //
     Stub* s = Prep_Stub(
-        &PG_Inaccessible_Stub,
         FLAG_FLAVOR(THE_GLOBAL_INACCESSIBLE)
             | NODE_FLAG_UNREADABLE
-            | NODE_FLAG_MARKED
+            | NODE_FLAG_MARKED,
+        &PG_Inaccessible_Stub
     );
     assert(Is_Stub_Decayed(&PG_Inaccessible_Stub));
     assert(NODE_BYTE(s) == DECAYED_CANON_BYTE);

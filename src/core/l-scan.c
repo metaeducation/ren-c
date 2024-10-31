@@ -2664,10 +2664,6 @@ Bounce Scanner_Executor(Level* const L) {
         return OUT;
     }
 
-    Flags flags = NODE_FLAG_MANAGED;
-    if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
-
     Heart heart;
     switch (Level_State_Byte(SUBLEVEL)) {
       case ST_SCANNER_BLOCK_MODE:
@@ -2683,18 +2679,17 @@ Bounce Scanner_Executor(Level* const L) {
         panic (L);
     }
 
-    Array* a = Pop_Stack_Values_Core(
-        SUBLEVEL->baseline.stack_base,
-        flags
-    );
+    Source* a = Pop_Managed_Source_From_Stack(SUBLEVEL->baseline.stack_base);
+    if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
+        Set_Source_Flag(a, NEWLINE_AT_TAIL);
+
     Drop_Level(SUBLEVEL);
 
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     a->misc.line = transcode->line;
     LINK(Filename, a) = maybe transcode->file;
-    Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-    Set_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
+    Set_Source_Flag(a, HAS_FILE_LINE);
 
     Init_Any_List(PUSH(), heart, a);
 
@@ -2801,7 +2796,7 @@ Bounce Scanner_Executor(Level* const L) {
             Init_Any_List(
                 items,
                 REB_THE_BLOCK,  // don't want to evaluate
-                Pop_Stack_Values(stackindex_path_head - 1)
+                Pop_Source_From_Stack(stackindex_path_head - 1)
             );
             Push_GC_Guard(items);
             Value* email = rebValue("as email! delimit -{.}-", items);
@@ -2838,20 +2833,19 @@ Bounce Scanner_Executor(Level* const L) {
         Cell_Has_Node1(TOP)
         and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
         and not Is_Node_A_Cell(Cell_Node1(TOP))
-        and Stub_Holds_Cells(cast(Flex*, Cell_Node1(TOP)))
+        and Is_Stub_Source(cast(Stub*, Cell_Node1(TOP)))
     ){
-        Array* a = cast(Array*, Cell_Node1(TOP));
+        Source* a = cast(Source*, Cell_Node1(TOP));
         a->misc.line = transcode->line;
         LINK(Filename, a) = maybe transcode->file;
-        Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-        Set_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
+        Set_Source_Flag(a, HAS_FILE_LINE);
 
         // !!! Does this mean anything for paths?  The initial code
         // had it, but it was exploratory and predates the ideas that
         // are currently being used to solidify paths.
         //
         if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
-            Set_Array_Flag(a, NEWLINE_AT_TAIL);
+            Set_Source_Flag(a, NEWLINE_AT_TAIL);
     }
 
     if (transcode->at == nullptr)  // reached e.g. with a/'
@@ -2861,14 +2855,9 @@ Bounce Scanner_Executor(Level* const L) {
 
 } construct_scan_to_stack_finished: {  ///////////////////////////////////////
 
-    Flags flags = NODE_FLAG_MANAGED;
+    Source* array = Pop_Managed_Source_From_Stack(SUBLEVEL->baseline.stack_base);
     if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
-
-    Array* array = Pop_Stack_Values_Core(
-        SUBLEVEL->baseline.stack_base,
-        flags
-    );
+        Set_Source_Flag(array, NEWLINE_AT_TAIL);
 
     Drop_Level(SUBLEVEL);
 
@@ -2876,8 +2865,7 @@ Bounce Scanner_Executor(Level* const L) {
     //
     array->misc.line = transcode->line;
     LINK(Filename, array) = maybe transcode->file;
-    Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
-    Set_Stub_Flag(array, LINK_NODE_NEEDS_MARK);
+    Set_Source_Flag(array, HAS_FILE_LINE);
 
     if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
         DECLARE_ATOM (temp);
@@ -2953,7 +2941,7 @@ Bounce Scanner_Executor(Level* const L) {
 //    an array, vs. using the va_arg() stack.  So vaptr is nullptr to signal
 //    the `p` pointer is this packed array, vs. the first item of a va_list.)
 //
-Array* Scan_UTF8_Managed(
+Source* Scan_UTF8_Managed(
     Option(const String*) file,
     const Byte* utf8,
     Size size
@@ -2976,18 +2964,14 @@ Array* Scan_UTF8_Managed(
     }
     // Note: exhausting feed should take care of the va_end()
 
-    Flags flags = NODE_FLAG_MANAGED;
-/*    if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))  // !!! feed flag
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL; */
-
     Release_Feed(feed);  // feeds are dynamically allocated and must be freed
 
-    Array* a = Pop_Stack_Values_Core(base, flags);
+    Source* a = Pop_Managed_Source_From_Stack(base);
+    /* Set_Source_Flag(a, NEWLINE_AT_TAIL); */  // what heuristics for this?
 
     a->misc.line = 1;
     LINK(Filename, a) = maybe file;
-    Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-    Set_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
+    Set_Source_Flag(a, HAS_FILE_LINE);
 
     return a;
 }
@@ -3198,15 +3182,13 @@ DECLARE_NATIVE(transcode)
         }
     }
     else {
-        Flags flags = NODE_FLAG_MANAGED;
+        Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
         if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
-            flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
-
-        Array* a = Pop_Stack_Values_Core(STACK_BASE, flags);
+            Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
         a->misc.line = ss->line;
         LINK(Filename, a) = maybe ss->file;
-        a->leader.bits |= ARRAY_MASK_HAS_FILE_LINE;
+        Set_Source_Flag(a, HAS_FILE_LINE);
 
         Init_Block(OUT, a);
     }
@@ -3261,7 +3243,7 @@ DECLARE_NATIVE(transcode)
             VAL_INDEX_RAW(rest) += Binary_Tail(Cell_String(source)) - bp;
     }
 
-    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);  // /NEXT multi-return
+    Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
     Copy_Meta_Cell(Array_At(pack, 0), rest);
@@ -3380,7 +3362,7 @@ Option(const Byte*) Try_Scan_Issue_To_Stack(const Byte* cp, Size size)
 //
 //  Try_Scan_Variadic_Feed_Utf8_Managed: C
 //
-Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
+Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 //
 // 1. We want to preserve CELL_FLAG_FEED_NOTE_META.  This tells us when what
 //    the feed sees as an quasiform was really originally intended as an
@@ -3413,10 +3395,10 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
         return nullptr;
     }
 
-    Array* reified = Pop_Stack_Values_Core_Keep_Notes(
-        L->baseline.stack_base,
-        NODE_FLAG_MANAGED
-    );
+    Source* reified = cast(Source*, Pop_Stack_Values_Core_Keep_Notes(
+        FLEX_MASK_MANAGED_SOURCE,
+        L->baseline.stack_base
+    ));
     Drop_Level(L);
     return reified;
 }

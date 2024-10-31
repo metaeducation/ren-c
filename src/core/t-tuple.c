@@ -160,7 +160,7 @@ REBTYPE(Sequence)
         if (r != OUT)
             Copy_Cell(OUT, r);
 
-        Freeze_Array_Shallow(Cell_Array_Known_Mutable(OUT));
+        Freeze_Source_Shallow(Cell_Array_Known_Mutable(OUT));
         HEART_BYTE(OUT) = heart;
         return OUT; }
 

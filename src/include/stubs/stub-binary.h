@@ -66,13 +66,14 @@ INLINE void Term_Binary_Len(Binary* b, Length len) {
 // terminator in case they are aliased as UTF-8 later, e.g. `as word! binary`,
 // since it could be costly to give them that capacity after-the-fact.
 //
-INLINE Binary* Make_Binary_Core(Length capacity, Flags flags)
+INLINE Binary* Make_Binary_Core(Flags flags, Size capacity)
 {
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
-    Binary* b = Make_Flex(Binary,
-        capacity + 1,
-        FLAG_FLAVOR(BINARY) | flags
+    Binary* b = Make_Flex(
+        FLAG_FLAVOR(BINARY) | flags,
+        Binary,
+        capacity + 1
     );
   #if DEBUG_POISON_FLEX_TAILS
     *Flex_Head(Byte, b) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
@@ -81,4 +82,4 @@ INLINE Binary* Make_Binary_Core(Length capacity, Flags flags)
 }
 
 #define Make_Binary(capacity) \
-    Make_Binary_Core(capacity, FLEX_FLAGS_NONE)
+    Make_Binary_Core(FLEX_FLAGS_NONE, (capacity))

@@ -94,7 +94,7 @@
 //
 void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 {
-    Array* normals = Make_Array(Level_Num_Args(L1));  // max, e.g. no refines
+    Source* normals = Make_Source(Level_Num_Args(L1));  // max, e.g. no refines
 
     StackIndex base = TOP_INDEX;  // we push refinements as we find them
 

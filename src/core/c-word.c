@@ -150,8 +150,10 @@ static void Expand_Word_Table(void)
     Length num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
     assert(Flex_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
-    Flex* table = Make_Flex_Core(
-        num_slots, FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2
+    Flex* table = Make_Flex(
+        FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2,
+        Flex,
+        num_slots
     );
     Clear_Flex(table);
     Set_Flex_Len(table, num_slots);
@@ -291,9 +293,9 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
   new_interning: {
 
     Binary* b = cast(Binary*, Make_Flex_Into(
+        FLEX_MASK_SYMBOL,
         preallocated ? unwrap preallocated : Alloc_Stub(),
-        utf8_size + 1,  // small sizes fit in a Stub (no dynamic allocation)
-        FLEX_MASK_SYMBOL
+        utf8_size + 1  // small sizes fit in a Stub (no dynamic allocation)
     ));
 
     // Cache whether this is an arrow word.
@@ -483,8 +485,10 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
   #endif
 
-    ensure(nullptr, g_symbols.by_hash) = Make_Flex_Core(
-        n, FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2
+    ensure(nullptr, g_symbols.by_hash) = Make_Flex(
+        FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2,
+        Flex,
+        n
     );
     Clear_Flex(g_symbols.by_hash);  // all slots start as nullptr
     Set_Flex_Len(g_symbols.by_hash, n);

@@ -209,15 +209,11 @@ DECLARE_NATIVE(reduce)
 
     Drop_Level_Unbalanced(SUBLEVEL);  // Drop_Level() asserts on accumulation
 
-    Flags pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (Get_Array_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
-        pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+    Source* a = Pop_Source_From_Stack(STACK_BASE);
+    if (Get_Source_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
+        Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
-    Init_Any_List(
-        OUT,
-        Cell_Heart_Ensure_Noquote(v),
-        Pop_Stack_Values_Core(STACK_BASE, pop_flags)
-    );
+    Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(v), a);
     BINDING(OUT) = BINDING(v);
     return OUT;
 }}
@@ -480,15 +476,11 @@ static Option(Error*) Trap_Finalize_Composer_Level(
         return nullptr;
     }
 
-    Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (Get_Array_Flag(Cell_Array(composee), NEWLINE_AT_TAIL))
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag [3]
+    Source* a = Pop_Source_From_Stack(L->baseline.stack_base);
+    if (Get_Source_Flag(Cell_Array(composee), NEWLINE_AT_TAIL))
+        Set_Source_Flag(a, NEWLINE_AT_TAIL);  // proxy newline flag [3]
 
-    Init_Any_List(
-        out,
-        heart,
-        Pop_Stack_Values_Core(L->baseline.stack_base, flags)
-    );
+    Init_Any_List(out, heart, a);
 
     BINDING(out) = BINDING(composee);  // preserve binding
     QUOTE_BYTE(out) = QUOTE_BYTE(composee);  // apply quote byte [4]
@@ -981,5 +973,5 @@ DECLARE_NATIVE(flatten)
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
-    return Init_Block(OUT, Pop_Stack_Values(STACK_BASE));
+    return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
 }

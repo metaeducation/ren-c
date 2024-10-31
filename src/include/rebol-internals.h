@@ -233,6 +233,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include "structs/struct-pairing.h"  // Stub-sized (2 cells), but not a Stub
 
 #include "structs/struct-array.h"  // Flex subclass
+#include "structs/struct-source.h"  // array subclass used by BLOCK!, etc.
 #include "structs/struct-action.h"  // Array subclass (Exemplar...)
 #include "structs/struct-context.h"  // Array subclass (VarList, SeaOfVars)
 #include "structs/struct-map.h"  // Array subclass (PairList)

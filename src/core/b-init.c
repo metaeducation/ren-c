@@ -165,7 +165,7 @@ static void Check_Basics(void)
 //
 static void Startup_Lib(void)
 {
-    VarList* lib = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    VarList* lib = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
     ensure(nullptr, Lib_Module) = Alloc_Element();
     Init_Context_Cell(Lib_Module, REB_MODULE, lib);
     ensure(nullptr, Lib_Context) = cast(SeaOfVars*, lib);
@@ -342,27 +342,28 @@ static void Init_Root_Vars(void)
     Init_Return_Signal(&PG_Bounce_Delegation, C_DELEGATION);
     Init_Return_Signal(&PG_Bounce_Suspend, C_SUSPEND);
 
+    PG_Empty_Array = Make_Source_Managed(0);
+    Freeze_Source_Deep(PG_Empty_Array);
+
     ensure(nullptr, Root_Empty_Block) = Init_Block(
         Alloc_Value(),
-        PG_Empty_Array
+        PG_Empty_Array  // holds empty array alive
     );
     Force_Value_Frozen_Deep(Root_Empty_Block);
 
   blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
-    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Flex_Len(a, 1);
-    Init_Quasi_Null(Array_At(a, 0));
-    Freeze_Array_Deep(a);
+    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+    Init_Quasi_Null(Stub_Cell(a));
+    Freeze_Source_Deep(a);
     ensure(nullptr, PG_1_Quasi_Null_Array) = a;
     ensure(nullptr, Root_Meta_Heavy_Null) = Init_Meta_Pack(Alloc_Value(), a);
     Force_Value_Frozen_Deep(Root_Meta_Heavy_Null);
   }
 
   blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
-    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    Set_Flex_Len(a, 1);
-    Init_Quasi_Void(Array_At(a, 0));
-    Freeze_Array_Deep(a);
+    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+    Init_Quasi_Void(Stub_Cell(a));
+    Freeze_Source_Deep(a);
     ensure(nullptr, PG_1_Quasi_Void_Array) = a;
     ensure(nullptr, Root_Meta_Heavy_Void) = Init_Meta_Pack(Alloc_Value(), a);
     Force_Value_Frozen_Deep(Root_Meta_Heavy_Void);
@@ -407,6 +408,7 @@ static void Shutdown_Root_Vars(void)
 
     rebReleaseAndNull(&Root_Empty_Text);
     rebReleaseAndNull(&Root_Empty_Block);
+    PG_Empty_Array = nullptr;
     rebReleaseAndNull(&Root_Meta_Heavy_Null);
     PG_1_Quasi_Null_Array = nullptr;
     rebReleaseAndNull(&Root_Meta_Heavy_Void);
@@ -426,9 +428,9 @@ static void Shutdown_Root_Vars(void)
 //
 static void Init_System_Object(
     const Element* boot_sysobj_spec,
-    Array* datatypes_catalog,
-    Array* natives_catalog,
-    Array* generics_catalog,
+    Source* datatypes_catalog,
+    Source* natives_catalog,
+    Source* generics_catalog,
     VarList* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
@@ -500,7 +502,7 @@ static void Init_System_Object(
     //
     Init_Object(
         Get_System(SYS_CODECS, 0),
-        Alloc_Varlist_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
+        Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_OBJECT, 10)
     );
 
     // The "standard error" template was created as an OBJECT!, because the
@@ -685,7 +687,7 @@ void Startup_Core(void)
     // definition of natives, things like the <maybe> tag are needed as a
     // basis for comparison to see if a usage matches that.
 
-    Array* datatypes_catalog = Startup_Datatypes(
+    Source* datatypes_catalog = Startup_Datatypes(
         Cell_Array_Known_Mutable(&boot->typespecs)
     );
     Manage_Flex(datatypes_catalog);
@@ -701,13 +703,13 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
-    Array* natives_catalog = Startup_Natives(&boot->natives);
+    Source* natives_catalog = Startup_Natives(&boot->natives);
     Manage_Flex(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
-    Array* generics_catalog = Startup_Generics(&boot->generics);
+    Source* generics_catalog = Startup_Generics(&boot->generics);
     Manage_Flex(generics_catalog);
     Push_GC_Guard(generics_catalog);
 
@@ -844,7 +846,7 @@ void Startup_Core(void)
     //  being confused with "the system object", which is a different thing.
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
-    VarList* util = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    VarList* util = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
     node_LINK(NextVirtual, util) = Lib_Context;
     ensure(nullptr, Sys_Util_Module) = Alloc_Element();
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);

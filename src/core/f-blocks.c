@@ -33,19 +33,19 @@
 // by giving an `extra` count of how many value cells one needs.
 //
 Array* Copy_Array_At_Extra_Shallow(
+    Flags flags,
     const Array* original,
     REBLEN index,
-    REBLEN extra,
-    Flags flags
+    REBLEN extra
 ){
     REBLEN len = Array_Len(original);
 
     if (index > len)
-        return Make_Array_For_Copy(extra, flags, original);
+        return Make_Array_For_Copy(flags, original, extra);
 
     len -= index;
 
-    Array* copy = Make_Array_For_Copy(len + extra, flags, original);
+    Array* copy = Make_Array_For_Copy(flags, original, len + extra);
     Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);
@@ -59,25 +59,25 @@ Array* Copy_Array_At_Extra_Shallow(
 
 
 //
-//  Copy_Array_At_Max_Shallow: C
+//  Copy_Source_At_Max_Shallow: C
 //
 // Shallow copy an array from the given index for given maximum
 // length (clipping if it exceeds the array length)
 //
-Array* Copy_Array_At_Max_Shallow(
-    const Array* original,
+Source* Copy_Source_At_Max_Shallow(
+    const Source* original,
     REBLEN index,
     REBLEN max
 ){
-    const Flags flags = 0;
+    const Flags flags = FLEX_MASK_UNMANAGED_SOURCE;
 
     if (index > Array_Len(original))
-        return Make_Array_For_Copy(0, flags, original);
+        return cast(Source*, Make_Array_For_Copy(flags, original, 0));
 
     if (index + max > Array_Len(original))
         max = Array_Len(original) - index;
 
-    Array* copy = Make_Array_For_Copy(max, flags, original);
+    Source* copy = cast(Source*, Make_Array_For_Copy(flags, original, max));
     Set_Flex_Len(copy, max);
 
     Count count = 0;
@@ -97,12 +97,12 @@ Array* Copy_Array_At_Max_Shallow(
 // hold that many entries, with an optional bit of extra space at the end.
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
+    Flags flags,
     const Value* head,
     REBLEN len,
-    REBLEN extra,
-    Flags flags
+    REBLEN extra
 ){
-    Array* a = Make_Array_Core(len + extra, flags);
+    Array* a = Make_Array_Core(flags, len + extra);
     Set_Flex_Len(a, len);
 
     REBLEN count = 0;
@@ -140,19 +140,21 @@ void Clonify(
 // the resulting Array will already be deeply under GC management, and hence
 // cannot be freed with Free_Unmanaged_Flex().
 //
-Array* Copy_Array_Core_Managed(
+Array* Copy_Array_Core_Managed(  // always managed, [1]
+    Flags flags,
     const Array* original,
     REBLEN index,
     REBLEN tail,
     REBLEN extra,
-    Flags flags,
     bool deeply
 ){
+    assert(flags & NODE_FLAG_MANAGED);  // [1]
+
     if (index > tail) // !!! should this be asserted?
         index = tail;
 
     if (index > Array_Len(original)) // !!! should this be asserted?
-        return Make_Array_Core(extra, flags | NODE_FLAG_MANAGED);
+        return Make_Array_Core(flags, extra);
 
     assert(index <= tail and tail <= Array_Len(original));
 
@@ -160,11 +162,7 @@ Array* Copy_Array_Core_Managed(
 
     // Currently we start by making a shallow copy and then adjust it
 
-    Array* copy = Make_Array_For_Copy(
-        len + extra,
-        flags | NODE_FLAG_MANAGED,
-        original
-    );
+    Array* copy = Make_Array_For_Copy(flags, original, len + extra);
     Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);

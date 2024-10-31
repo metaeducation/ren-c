@@ -230,8 +230,8 @@ DECLARE_NATIVE(reorder)
         return FAIL(unwrap error);
 
     Array* partials = Pop_Stack_Values_Core(
-        base,
-        NODE_FLAG_MANAGED | FLEX_MASK_PARTIALS
+        NODE_FLAG_MANAGED | FLEX_MASK_PARTIALS,
+        base
     );
 
     Phase* reordered = Make_Action(

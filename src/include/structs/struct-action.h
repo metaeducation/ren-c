@@ -42,17 +42,6 @@
 // Note: LINK on details is the DISPATCHER, on varlists it's KEYSOURCE
 
 
-//=//// ARRAY_FLAG_IS_KEYLIST /////////////////////////////////////////////=//
-//
-// Context keylist arrays and Action paramlist arrays are converging, and
-// this flag is used to mark them.  It's the same bit as used to mark a
-// string as being a symbol, which is a forward-thinking move to aim for a
-// time when single-length keylists can be represented by just a pointer to
-// a symbol.
-//
-#define ARRAY_FLAG_IS_KEYLIST FLEX_FLAG_IS_KEYLIKE
-
-
 //=//// DETAILS_FLAG_24 ///////////////////////////////////////////////////=//
 //
 #define DETAILS_FLAG_24 \

@@ -179,7 +179,7 @@ DECLARE_NATIVE(test_librebol)
     Init_Meta_Of_Void(PUSH());
   }
 
-    return Init_Block(OUT, Pop_Stack_Values(STACK_BASE));
+    return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
   #endif
 }
 

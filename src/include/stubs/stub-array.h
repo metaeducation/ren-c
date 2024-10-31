@@ -48,44 +48,6 @@
 //    access.  But the release build does not do this)
 
 
-// These flags are only for checking "plain" array flags...so not varlists
-// or paramlists or anything that isn't just an ordinary source-level array
-// (like you'd find in a BLOCK!)
-//
-// 1. See mutability notes on Set_Flex_Flag() / Clear_Flex_Flag()
-
-#define Get_Array_Flag(a,flag) \
-    Get_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
-
-#define Not_Array_Flag(a,flag) \
-    Not_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
-
-#define Set_Array_Flag(a,flag) \
-    Set_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
-
-#define Clear_Array_Flag(a,flag) \
-    Clear_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
-
-
-INLINE bool Has_Newline_At_Tail(const Array* a) {
-    if (Stub_Flavor(a) != FLAVOR_ARRAY)
-        return false;  // only plain arrays can have newlines
-
-    // Using Get_Subclass_Flag() would redundantly check it's a plain array.
-    //
-    return did (a->leader.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
-}
-
-INLINE bool Has_File_Line(const Array* a) {
-    if (Stub_Flavor(a) != FLAVOR_ARRAY)
-        return false;  // only plain arrays can have newlines
-
-    // Using Get_Subclass_Flag() would redundantly check it's a plain array.
-    //
-    return did (a->leader.bits & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED);
-}
-
-
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value Array_Last() should not be called on it.
 
@@ -144,16 +106,16 @@ INLINE void Prep_Array(
 // garbage collector to look into recursively).  Array_Len() will be 0.
 //
 INLINE Array* Make_Array_Core_Into(
+    Flags flags,  // Make_Flex_Into() ensures not FLAVOR_0
     void* preallocated,
-    REBLEN capacity,
-    Flags flags
+    REBLEN capacity
 ){
   #if DEBUG_POISON_FLEX_TAILS  // non-dynamic arrays poisoned by bit pattern
     if (capacity > 1 or (flags & STUB_FLAG_DYNAMIC))
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    Array* a = x_cast(Array*, Make_Flex_Into(preallocated, capacity, flags));
+    Array* a = x_cast(Array*, Make_Flex_Into(flags, preallocated, capacity));
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
 
     if (Get_Stub_Flag(a, DYNAMIC)) {
@@ -168,23 +130,17 @@ INLINE Array* Make_Array_Core_Into(
     }
 
     // Arrays created at runtime default to inheriting the file and line
-    // number from the array executing in the current frame.
+    // number from the array executing in the current frame.  (When code is
+    // being scanned from UTF-8 source, the scanner will put the file and
+    // line information on manually.)
     //
-    if (
-        Flavor_From_Flags(flags) == FLAVOR_ARRAY
-        and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)  // hope callsites fold
-    ){
-        assert(flags & STUB_FLAG_LINK_NODE_NEEDS_MARK);
+    if (Flavor_From_Flags(flags) == FLAVOR_SOURCE) {
         if (
             not Level_Is_Variadic(TOP_LEVEL) and
-            Get_Array_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
+            Get_Source_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE)
         ){
             LINK(Filename, a) = LINK(Filename, Level_Array(TOP_LEVEL));
             a->misc.line = Level_Array(TOP_LEVEL)->misc.line;
-        }
-        else {
-            Clear_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
-            Clear_Stub_Flag(a, LINK_NODE_NEEDS_MARK);
         }
     }
 
@@ -196,48 +152,54 @@ INLINE Array* Make_Array_Core_Into(
     return a;
 }
 
-#define Make_Array_Core(capacity,flags) \
-    Make_Array_Core_Into(Alloc_Stub(), (capacity), (flags))
+#define Make_Array_Core(flags, capacity) \
+    Make_Array_Core_Into((flags), Alloc_Stub(), (capacity))
 
-#define Make_Array(capacity) \
-    Make_Array_Core((capacity), ARRAY_MASK_HAS_FILE_LINE)
+#define Make_Source(capacity) \
+    cast(Source*, Make_Array_Core(FLEX_MASK_UNMANAGED_SOURCE, (capacity)))
+
+#define Make_Source_Managed(capacity) \
+    cast(Source*, Make_Array_Core(FLEX_MASK_UNMANAGED_SOURCE, (capacity)))
+
 
 // !!! Currently, many bits of code that make copies don't specify if they are
 // copying an array to turn it into a paramlist or varlist, or to use as the
-// kind of array the use might see.  If we used plain Make_Array() then it
+// kind of array the use might see.  If we used plain Make_Source() then it
 // would add a flag saying there were line numbers available, which may
 // compete with the usage of the ->misc and ->link fields of the Stub Node
 // for internal arrays.
 //
 INLINE Array* Make_Array_For_Copy(
-    REBLEN capacity,
     Flags flags,
-    const Array* original
+    const Array* original,
+    REBLEN capacity
 ){
-    if (original and Has_Newline_At_Tail(original)) {
+    if (
+        original
+        and Stub_Flavor(original) == FLAVOR_SOURCE
+        and Get_Source_Flag(c_cast(Source*, original), NEWLINE_AT_TAIL)
+    ){
         //
         // All of the newline bits for cells get copied, so it only makes
         // sense that the bit for newline on the tail would be copied too.
         //
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+        flags |= SOURCE_FLAG_NEWLINE_AT_TAIL;
     }
 
     if (
-        Flavor_From_Flags(flags) == FLAVOR_ARRAY
-        and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)
-        and (original and Has_File_Line(original))
+        Flavor_From_Flags(flags) == FLAVOR_SOURCE
+        and original
+        and Stub_Flavor(original) == FLAVOR_SOURCE
+        and Get_Source_Flag(c_cast(Source*, original), HAS_FILE_LINE)
     ){
-        Array* a = Make_Array_Core(
-            capacity,
-            flags & ~ARRAY_FLAG_HAS_FILE_LINE_UNMASKED
-        );
+        Source* a = cast(Source*, Make_Array_Core(flags, capacity));
         LINK(Filename, a) = LINK(Filename, original);
         a->misc.line = original->misc.line;
-        Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
+        Set_Source_Flag(a, HAS_FILE_LINE);
         return a;
     }
 
-    return Make_Array_Core(capacity, flags);
+    return Make_Array_Core(flags, capacity);
 }
 
 
@@ -247,14 +209,15 @@ INLINE Array* Make_Array_For_Copy(
 // Note Stub_Cell() must be overwritten by the caller...it contains an erased
 // cell but the array length is 1, so that will assert if you don't.
 //
-// For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
+// For `flags`, be sure to consider if you need SOURCE_FLAG_HAS_FILE_LINE.
 //
-INLINE Array* Alloc_Singular(Flags flags) {
+INLINE Source* Alloc_Singular(Flags flags) {
+    assert(Flavor_From_Flags(flags) == FLAVOR_SOURCE);
     assert(not (flags & STUB_FLAG_DYNAMIC));
-    Array* a = x_cast(Array*, Make_Flex_Into(
+    Source* a = u_cast(Source*, Make_Flex_Into(
+        flags | FLEX_FLAG_FIXED_SIZE,
         Alloc_Stub(),
-        1,
-        flags | FLEX_FLAG_FIXED_SIZE
+        1
     ));
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
     Erase_Cell(Stub_Cell(a));  // poison means length 0, erased length 1
@@ -277,24 +240,27 @@ enum {
     (COPY_DEEP | COPY_STRINGS)
 
 
-#define Copy_Values_Len_Shallow(v,l) \
-    Copy_Values_Len_Extra_Shallow_Core((v), (l), 0, 0)
+#define Copy_Values_Len_Shallow(head,len) \
+    cast(Source*, Copy_Values_Len_Extra_Shallow_Core( \
+        FLEX_MASK_UNMANAGED_SOURCE, (head), (len), 0))
 
-#define Copy_Values_Len_Shallow_Core(v,l,f) \
-    Copy_Values_Len_Extra_Shallow_Core((v), (l), 0, (f))
+#define Copy_Values_Len_Shallow_Core(flags,head,len) \
+    Copy_Values_Len_Extra_Shallow_Core((flags), (head), (len), 0)
 
 
 #define Copy_Array_Shallow(a) \
     Copy_Array_At_Shallow((a), 0)
 
-#define Copy_Array_Shallow_Flags(a,f) \
-    Copy_Array_At_Extra_Shallow((a), 0, 0, (f))
+#define Copy_Array_Shallow_Flags(f,a) \
+    Copy_Array_At_Extra_Shallow((f),(a), 0, 0)
 
 #define Copy_Array_At_Shallow(a,i) \
-    Copy_Array_At_Extra_Shallow((a), (i), 0, FLEX_FLAGS_NONE)
+    cast(Source*, Copy_Array_At_Extra_Shallow( \
+        FLEX_MASK_UNMANAGED_SOURCE, (a), (i), 0))
 
 #define Copy_Array_Extra_Shallow(a,e) \
-    Copy_Array_At_Extra_Shallow((a), 0, (e), FLEX_FLAGS_NONE)
+    cast(Source*, Copy_Array_At_Extra_Shallow( \
+        FLEX_MASK_UNMANAGED_SOURCE, (a), 0, (e)))
 
 
 #ifdef NDEBUG

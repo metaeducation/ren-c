@@ -33,13 +33,14 @@
 // of encoded data.  Note that this is not a guarantee of being able to hold
 // more than `encoded_capacity / UNI_ENCODED_MAX` unencoded codepoints...
 //
-String* Make_String_Core(Size encoded_capacity, Flags flags)
+String* Make_String_Core(Flags flags, Size encoded_capacity)
 {
-    assert(Flavor_From_Flags(flags) == 0);  // shouldn't have a flavor
+    assert(Flavor_From_Flags(flags) == FLAVOR_NONSYMBOL);
 
-    String* str = Make_Flex(String,
-        encoded_capacity + 1,  // + 1 makes room for '\0' terminator
-        FLAG_FLAVOR(NONSYMBOL) | flags
+    String* str = Make_Flex(
+        FLAG_FLAVOR(NONSYMBOL) | flags,
+        String,
+        encoded_capacity + 1  // + 1 makes room for '\0' terminator
     );
     str->misc.length = 0;
     LINK(Bookmarks, str) = nullptr;  // generated on demand

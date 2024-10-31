@@ -39,14 +39,18 @@
 
 enum StubFlavorEnum {
     //
-    // The 0 value is used for just plain old arrays, so that you can call
-    // Make_Array_Core() with some additional flags but leave out a flavor...
-    // and it will assume you just want a usermode array.
+    // FLAVOR_0 is reserved as an illegal flavor byte, which can be used to
+    // make an Optional(Flavor).
     //
-    // !!! Should this flavor automatically imply file and line numbering
-    // should be captured?
+    FLAVOR_0,
+
+    // Arrays that can be used with BLOCK! or other such types.  This
+    // is what you get when you use plain Make_Source().
     //
-    FLAVOR_ARRAY,
+    // NOTE: This flavor implicitly implies that file and line numbering should
+    // be captured by Make_Flex()
+    //
+    FLAVOR_SOURCE,
 
     // A "use" is a request in a virtual binding chain to make an object's
     // fields visible virtually in the code.  LETs can also be in the chain,
@@ -173,59 +177,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 
-  #if DEBUG
-    FLAVOR_CORRUPT,
-  #endif
-
     FLAVOR_MAX
 };
 
 typedef enum StubFlavorEnum Flavor;
-
-
-INLINE Flavor Flavor_From_Flags(Flags flags)
-  { return u_cast(Flavor, SECOND_BYTE(&flags)); }
-
-#define Stub_Flavor(f) \
-    u_cast(Flavor, FLAVOR_BYTE(f))
-
-
-// Most accesses of series via Flex_At(...) and Array_At(...) macros already
-// know at the callsite the size of the access.  The width is only a double
-// check in the debug build, and used at allocation time and other moments
-// when the system has to know the size but doesn't yet know the type.  Hence
-// This doesn't need to be particularly fast...so a lookup table is probably
-// not needed.  Still, the common cases (array and strings) are put first.
-//
-INLINE Size Wide_For_Flavor(Flavor flavor) {
-    assert(flavor != FLAVOR_CORRUPT);
-    if (flavor <= FLAVOR_MAX_HOLDS_CELLS)
-        return sizeof(Cell);
-    if (flavor >= FLAVOR_MIN_BYTESIZE)
-        return 1;
-    if (flavor == FLAVOR_BOOKMARKLIST)
-        return sizeof(Bookmark);
-    if (flavor == FLAVOR_HASHLIST)
-        return sizeof(REBLEN);
-    return sizeof(void*);
-}
-
-#define Flex_Wide(f) \
-    Wide_For_Flavor(Stub_Flavor(f))
-
-
-#define Stub_Holds_Cells(f)         (Stub_Flavor(f) <= FLAVOR_MAX_HOLDS_CELLS)
-
-#define Is_Stub_String(f)           (Stub_Flavor(f) >= FLAVOR_MIN_STRING)
-#define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)
-#define Is_Stub_NonSymbol(f)        (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
-
-#define Is_Stub_Keylist(f)          (Stub_Flavor(f) == FLAVOR_KEYLIST)
-
-#define Is_Stub_Let(f)              (Stub_Flavor(f) == FLAVOR_LET)
-#define Is_Stub_Use(f)              (Stub_Flavor(f) == FLAVOR_USE)
-#define Is_Stub_Patch(f)            (Stub_Flavor(f) == FLAVOR_PATCH)
-#define Is_Stub_Varlist(f)          (Stub_Flavor(f) == FLAVOR_VARLIST)
-#define Is_Stub_Pairlist(f)         (Stub_Flavor(f) == FLAVOR_PAIRLIST)
-#define Is_Stub_Details(f)          (Stub_Flavor(f) == FLAVOR_DETAILS)
-#define Is_Stub_Partials(f)         (Stub_Flavor(f) == FLAVOR_PARTIALS)

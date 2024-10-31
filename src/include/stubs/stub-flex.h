@@ -88,9 +88,16 @@ INLINE bool Is_Stub_Decayed(const Stub* s) {
 
 INLINE Stub* Set_Flex_Inaccessible(Flex* f) {
     assert(Is_Node_Readable(f));
-    f->leader.bits = NODE_FLAG_NODE | NODE_FLAG_UNREADABLE;
+    f->leader.bits = \
+        NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | FLAG_FLAVOR_BYTE(255);
     assert(NODE_BYTE(f) == DECAYED_NON_CANON_BYTE);
-    return f;
+
+    Corrupt_Pointer_If_Debug(f->link.any.corrupt);
+    Corrupt_Pointer_If_Debug(f->misc.any.corrupt);
+    Corrupt_If_Debug(f->content);
+    Corrupt_Pointer_If_Debug(f->info.any.corrupt);
+
+    return f;  // not a flex anymore... but still considered a Stub
 }
 
 
@@ -198,9 +205,9 @@ INLINE Stub* Set_Flex_Inaccessible(Flex* f) {
 
         void operator=(Byte right) {
             if (mirror)
-                assert(FLAVOR_BYTE(ref) == FLAVOR_ARRAY);
+                assert(FLAVOR_BYTE(ref) == FLAVOR_SOURCE);
             else
-                assert(FLAVOR_BYTE(ref) != FLAVOR_ARRAY);
+                assert(FLAVOR_BYTE(ref) != FLAVOR_SOURCE);
             SECOND_BYTE(&FLEX_INFO(ref)) = right;
         }
 
@@ -631,15 +638,18 @@ INLINE void Expand_Flex_Tail(Flex* f, REBLEN delta) {
 //   before it's made reachable by the GC, or use Push_GC_Guard().
 //
 INLINE Flex* Make_Flex_Into(
+    Flags flags,
     void* preallocated,
-    REBLEN capacity,
-    Flags flags
+    REBLEN capacity
 ){
-    size_t wide = Wide_For_Flavor(Flavor_From_Flags(flags));
+    Flavor flavor = Flavor_From_Flags(flags);
+    assert(flavor != FLAVOR_0 and flavor < FLAVOR_MAX);
+
+    size_t wide = Wide_For_Flavor(flavor);
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
-    Flex* s = cast(Flex*, Prep_Stub(preallocated, flags));
+    Flex* s = cast(Flex*, Prep_Stub(flags, preallocated));
 
     if (
         (flags & STUB_FLAG_DYNAMIC)  // inlining will constant fold
@@ -672,11 +682,11 @@ INLINE Flex* Make_Flex_Into(
     return s;
 }
 
-#define Make_Flex_Core(capacity,flags) \
-    Make_Flex_Into(Alloc_Pooled(STUB_POOL), (capacity), (flags))
+#define Make_Flex_Core(flags, capacity) \
+    Make_Flex_Into((flags), Alloc_Pooled(STUB_POOL), (capacity))
 
-#define Make_Flex(T,capacity,flags) \
-    cast(T*, Make_Flex_Core((capacity), (flags)))
+#define Make_Flex(flags,T,capacity) \
+    cast(T*, Make_Flex_Core((flags), (capacity)))
 
 
 //=//// DEBUG FLEX MONITORING /////////////////////////////////////////////=//

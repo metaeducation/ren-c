@@ -315,7 +315,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // When the array containing a value with this flag set is molding, that will
 // output a new line *before* molding the value.  This flag works in tandem
 // with a flag on the array itself which manages whether there should be a
-// newline before the closing array delimiter: ARRAY_FLAG_NEWLINE_AT_TAIL.
+// newline before the closing array delimiter: SOURCE_FLAG_NEWLINE_AT_TAIL.
 //
 // The bit is set initially by what the scanner detects, and then left to the
 // user's control after that.

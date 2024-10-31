@@ -105,6 +105,68 @@ INLINE void Erase_Stub(Stub* s) {
     m_cast(union HeaderUnion*, &(f)->leader)->bits &= ~STUB_FLAG_##name
 
 
+//=//// STUB FLAVOR ACCESSORS /////////////////////////////////////////////=//
+//
+// Most accesses of series via Flex_At(...) and Array_At(...) macros already
+// know at the callsite the size of the access.  The width is only a double
+// check in the debug build, and used at allocation time and other moments
+// when the system has to know the size but doesn't yet know the type.  Hence
+// This doesn't need to be particularly fast...so a lookup table is probably
+// not needed.  Still, the common cases (array and strings) are put first.
+
+
+INLINE Flavor Flavor_From_Flags(Flags flags)
+  { return u_cast(Flavor, SECOND_BYTE(&flags)); }
+
+#define Stub_Flavor_Unchecked(s) \
+    u_cast(Flavor, FLAVOR_BYTE(s))
+
+#if DEBUG
+    INLINE Flavor Stub_Flavor(const Stub *s) {
+        assert(Is_Node_Readable(s));
+        assert(FLAVOR_BYTE(s) != FLAVOR_0);
+        return Stub_Flavor_Unchecked(s);
+    }
+#else
+    #define Stub_Flavor  Stub_Flavor_Unchecked
+#endif
+
+INLINE Size Wide_For_Flavor(Flavor flavor) {
+    assert(flavor != FLAVOR_0);
+    if (flavor <= FLAVOR_MAX_HOLDS_CELLS)
+        return sizeof(Cell);
+    if (flavor >= FLAVOR_MIN_BYTESIZE)
+        return 1;
+    if (flavor == FLAVOR_BOOKMARKLIST)
+        return sizeof(Bookmark);
+    if (flavor == FLAVOR_HASHLIST)
+        return sizeof(REBLEN);
+    return sizeof(void*);
+}
+
+#define Flex_Wide(f) \
+    Wide_For_Flavor(Stub_Flavor(f))
+
+
+#define Stub_Holds_Cells(f)         (Stub_Flavor(f) <= FLAVOR_MAX_HOLDS_CELLS)
+
+#define Is_Stub_Source(f)           (Stub_Flavor(f) == FLAVOR_SOURCE)
+
+#define Is_Stub_String(f)           (Stub_Flavor(f) >= FLAVOR_MIN_STRING)
+#define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)
+#define Is_Stub_NonSymbol(f)        (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
+
+#define Is_Stub_Keylist(f)          (Stub_Flavor(f) == FLAVOR_KEYLIST)
+
+#define Is_Stub_Let(f)              (Stub_Flavor(f) == FLAVOR_LET)
+#define Is_Stub_Use(f)              (Stub_Flavor(f) == FLAVOR_USE)
+#define Is_Stub_Patch(f)            (Stub_Flavor(f) == FLAVOR_PATCH)
+#define Is_Stub_Varlist(f)          (Stub_Flavor(f) == FLAVOR_VARLIST)
+#define Is_Stub_Pairlist(f)         (Stub_Flavor(f) == FLAVOR_PAIRLIST)
+#define Is_Stub_Details(f)          (Stub_Flavor(f) == FLAVOR_DETAILS)
+#define Is_Stub_Partials(f)         (Stub_Flavor(f) == FLAVOR_PARTIALS)
+
+
 //=//// STUB SUBCLASS FLAGS ///////////////////////////////////////////////=//
 //
 // In the debug build, ensure_flavor() checks if a Stub matches the expected
@@ -284,7 +346,7 @@ INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
 // need to be initialized to get a functional non-dynamic Flex or Array of
 // length 0!  Only two are set here.
 //
-INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
+INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
     assert(not (flags & NODE_FLAG_CELL));
 
     Stub *s = u_cast(Stub*, preallocated);
@@ -325,8 +387,11 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
 // that really knows what it's doing, and needs the performance.)
 //
 INLINE Stub* Make_Untracked_Stub(Flags flags) {
-    assert(not (flags & NODE_FLAG_MANAGED));
-    Stub* s = Prep_Stub(Alloc_Stub(), flags | FLEX_FLAG_FIXED_SIZE);
+    Flavor flavor = Flavor_From_Flags(flags);
+    assert(flavor != FLAVOR_0 and flavor < FLAVOR_MAX);
+    UNUSED(flavor);
+    assert(not (flags & (STUB_FLAG_DYNAMIC | FLEX_FLAG_FIXED_SIZE)));
+    Stub* s = Prep_Stub(flags | FLEX_FLAG_FIXED_SIZE, Alloc_Stub());
     Erase_Cell(&s->content.fixed.cell);  // !!! should callers have to do this?
     return s;
 }

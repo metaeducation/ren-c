@@ -1212,7 +1212,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
             break;
 
           case REB_PORT: {
-            Array* single = Make_Array(1);
+            Source* single = Make_Source(1);
             Append_Value(single, val);
             Init_Block(ARG(value), single);
             ports = ARG(value);

@@ -156,11 +156,11 @@ void Set_Parameter_Spec(
 
     Length len = tail - item;
 
-    Array* copy = Make_Array_For_Copy(
-        len,
-        NODE_FLAG_MANAGED,
-        Cell_Array(spec)
-    );
+    Source* copy = cast(Source*, Make_Array_For_Copy(
+        FLEX_MASK_MANAGED_SOURCE,
+        Cell_Array(spec),
+        len
+    ));
     Set_Flex_Len(copy, len);
     Cell* dest = Array_Head(copy);
 
@@ -340,7 +340,7 @@ void Set_Parameter_Spec(
     if (optimized != optimized_tail)
         *optimized = 0;  // signal termination (else tail is termination)
 
-    Freeze_Array_Shallow(copy);  // !!! copy and freeze should likely be deep
+    Freeze_Source_Shallow(copy);  // !!! copy and freeze should likely be deep
     Tweak_Cell_Parameter_Spec(param, copy);
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
@@ -398,7 +398,7 @@ void MF_Parameter(Molder* mo, const Cell* v, bool form)
     }
 
     DECLARE_ELEMENT(temp);
-    Option(const Array*) param_array = Cell_Parameter_Spec(v);
+    Option(const Source*) param_array = Cell_Parameter_Spec(v);
     if (param_array)
         Init_Block(temp, unwrap param_array);
     else
@@ -442,7 +442,7 @@ REBTYPE(Parameter)
             return Init_Text(OUT, unwrap string); }
 
           case SYM_SPEC: {
-            Option(const Array*) spec = Cell_Parameter_Spec(param);
+            Option(const Source*) spec = Cell_Parameter_Spec(param);
             if (not spec)
                 return nullptr;
             return Init_Block(OUT, unwrap spec); }

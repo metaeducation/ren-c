@@ -207,7 +207,7 @@ DECLARE_NATIVE(inline)
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
         //
-        Array* a = Alloc_Singular(FLEX_FLAGS_NONE);
+        Source* a = Alloc_Singular(FLEX_MASK_UNMANAGED_SOURCE);
         Unquotify(Move_Cell(Stub_Cell(a), splice), 1);
         Init_Block(splice, a);
         Splice_Block_Into_Feed(level_->feed, ARG(splice));

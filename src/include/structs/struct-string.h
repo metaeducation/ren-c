@@ -89,6 +89,11 @@
         | FLEX_FLAG_FIXED_SIZE \
         | NODE_FLAG_MANAGED)
 
+#define FLEX_MASK_UNMANAGED_STRING  FLAG_FLAVOR(NONSYMBOL)
+
+#define FLEX_MASK_MANAGED_STRING \
+    (FLAG_FLAVOR(NONSYMBOL) | NODE_FLAG_MANAGED)
+
 
 // For a *read-only* Symbol, circularly linked list of othEr-CaSed string
 // forms.  It should be relatively quick to find the canon form on

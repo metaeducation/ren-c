@@ -74,7 +74,7 @@ void Typechecker_Intrinsic(Atom* out, Phase* phase, Value* arg)
 //
 Phase* Make_Typechecker(Offset decider_index) {
     DECLARE_ELEMENT (spec);  // simple spec [1]
-    Array* spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
+    Source* spec_array = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
     Init_Word(Stub_Cell(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
 

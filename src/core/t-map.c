@@ -84,7 +84,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
 //
 Map* Make_Map(REBLEN capacity)
 {
-    Array* pairlist = Make_Array_Core(capacity * 2, FLEX_MASK_PAIRLIST);
+    Array* pairlist = Make_Array_Core(FLEX_MASK_PAIRLIST, capacity * 2);
     LINK(Hashlist, pairlist) = Make_Hashlist(capacity);
 
     return cast(Map*, pairlist);
@@ -381,8 +381,8 @@ Bounce Makehook_Map(Level* level_, Kind kind, Element* arg) {
 
 INLINE Map* Copy_Map(const Map* map, bool deeply) {
     Array* copy = Copy_Array_Shallow_Flags(
-        MAP_PAIRLIST(map),
-        FLEX_MASK_PAIRLIST
+        FLEX_MASK_PAIRLIST,
+        MAP_PAIRLIST(map)
     );
 
     // So long as the copied pairlist is the same array size as the original,
@@ -390,9 +390,8 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
     // its own copy so new map's hashes will reflect its own mutations)
     //
     HashList* hashlist = cast(HashList*, Copy_Flex_Core(
-        MAP_HASHLIST(map),
-        FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST)
-            // ^-- !!! No NODE_FLAG_MANAGED?
+        FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST),  // !!! No NODE_FLAG_MANAGED?
+        MAP_HASHLIST(map)
     ));
     LINK(Hashlist, copy) = hashlist;
 
@@ -465,10 +464,10 @@ Bounce TO_Map(Level* level_, Kind kind, Element* arg)
 //
 // what: -1 - words, +1 - values, 0 -both
 //
-Array* Map_To_Array(const Map* map, REBINT what)
+Source* Map_To_Array(const Map* map, REBINT what)
 {
     Count count = Num_Map_Entries_Used(map);
-    Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
+    Source* a = Make_Source(count * ((what == 0) ? 2 : 1));
 
     Element* dest = Array_Head(a);
     const Value* val_tail = Flex_Tail(Value, MAP_PAIRLIST(map));

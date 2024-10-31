@@ -352,7 +352,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         // common) can go into feed->fetched and not make an array at all.
         //
         Context* binding = FEED_BINDING(feed);
-        Array* reified = maybe Try_Scan_Variadic_Feed_Utf8_Managed(feed);
+        Source* reified = maybe Try_Scan_Variadic_Feed_Utf8_Managed(feed);
 
         if (not reified) {  // rebValue("", ...) [1]
             if (Is_Feed_At_End(feed))
@@ -600,8 +600,8 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     Erase_Cell(&feed->fetched);
 
     Stub* s = Prep_Stub(
-        &feed->singular,  // preallocated
-        NODE_FLAG_NODE | FLAG_FLAVOR(FEED)
+        NODE_FLAG_NODE | FLAG_FLAVOR(FEED),
+        &feed->singular  // preallocated
     );
     Erase_Cell(FEED_SINGLE(feed));
     LINK(Splice, s) = nullptr;
@@ -619,7 +619,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
 INLINE Feed* Prep_Array_Feed(
     void* preallocated,
     Option(const Cell*) first,
-    const Array* array,
+    const Source* array,
     REBLEN index,
     Context* binding,
     Flags flags

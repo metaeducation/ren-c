@@ -477,7 +477,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     }
 
     if (REF(step)) {
-        Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+        Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
         Move_Meta_Cell(Array_At(pack, 1), OUT);  // may be raised

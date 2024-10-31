@@ -153,7 +153,7 @@ Bounce Combinator_Dispatcher(Level* L)
 // and the rebValue("...") function won't work, so it had to be hacked up as
 // a handcoded routine.  Review.
 //
-Array* Expanded_Combinator_Spec(const Value* original)
+Source* Expanded_Combinator_Spec(const Value* original)
 {
     StackIndex base = TOP_INDEX;
 
@@ -200,18 +200,7 @@ Array* Expanded_Combinator_Spec(const Value* original)
     for (; item != tail; ++item)
         Derelativize(PUSH(), item, binding);  // everything else
 
-    // The scanned material is not bound.  The natives were bound into the
-    // Lib_Context initially.  Hack around the issue by repeating that binding
-    // on the product.
-    //
-    Array* expanded = Pop_Stack_Values(base);
-    Bind_Values_Deep(
-        Array_Head(expanded),
-        Array_Tail(expanded),
-        Lib_Module
-    );
-
-    return expanded;
+    return Pop_Source_From_Stack(base);
 }
 
 
@@ -806,7 +795,7 @@ DECLARE_NATIVE(combinatorize)
     //
     Copy_Cell(s.rule_end, ARG(rules));
 
-    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
     Quasify(Init_Frame(Array_At(pack, 0), s.ctx, label));  // meta-action

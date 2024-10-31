@@ -61,12 +61,12 @@
 //   object, but Ren-C only uses a single pointer-to-symbol.)
 //
 
-INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
+INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* v) {
     assert(HEART_BYTE(v) == REB_PARAMETER);
     if (Cell_Node1(v) != nullptr and Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
-    return cast(Array*, Cell_Node1(v));
+    return cast(Source*, Cell_Node1(v));
 }
 
 #define Tweak_Cell_Parameter_Spec(v,a) \

@@ -44,8 +44,8 @@ INLINE bool Wordlike_Cell(const Cell* v) {
     return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SYMBOL;
 }
 
-INLINE void Tweak_Cell_Word_Symbol(Cell* v, const Symbol* symbol)
-  { Tweak_Cell_Node1(v, symbol); }
+#define Tweak_Cell_Word_Symbol(c,symbol) \
+    Tweak_Cell_Node1((c), ensure(const Symbol*, (symbol)))
 
 INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
     assert(Wordlike_Cell(cell));

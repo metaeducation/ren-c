@@ -347,7 +347,7 @@ void Set_Location_Of_Error(
         if (Is_Nulled(TOP))
             Init_Blank(TOP);
     }
-    Init_Block(&vars->where, Pop_Stack_Values(base));
+    Init_Block(&vars->where, Pop_Source_From_Stack(base));
 
     // Nearby location of the error.  Reify any valist that is running,
     // so that the error has an array to present.
@@ -363,7 +363,7 @@ void Set_Location_Of_Error(
         Init_Near_For_Level(&vars->nearest, where);
 
     // Try to fill in the file and line information of the error from the
-    // stack, looking for arrays with ARRAY_HAS_FILE_LINE.
+    // stack, looking for arrays with SOURCE_FLAG_HAS_FILE_LINE.
     //
     L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
@@ -376,7 +376,7 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
+        if (Not_Source_Flag(Level_Array(L), HAS_FILE_LINE))
             continue;
         break;
     }
@@ -822,7 +822,7 @@ Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of Make_Function().
 
-    Array* a = Make_Array(2);
+    Source* a = Make_Source_Managed(2);
     Append_Value(a, spec);
     Append_Value(a, body);
 
@@ -1083,7 +1083,7 @@ Error* Error_Arg_Type(
         Init_Nulled(label);
 
     DECLARE_ATOM (spec);
-    Option(const Array*) param_array = Cell_Parameter_Spec(param);
+    Option(const Source*) param_array = Cell_Parameter_Spec(param);
     if (param_array)
         Init_Block(spec, unwrap param_array);
     else

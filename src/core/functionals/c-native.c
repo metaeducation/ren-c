@@ -106,6 +106,7 @@ Phase* Make_Native(
     DECLARE_ELEMENT (expanded_spec);
     if (native_type == NATIVE_COMBINATOR) {
         Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
+        BINDING(expanded_spec) = Lib_Context;
         spec = expanded_spec;
     }
 
@@ -253,7 +254,7 @@ static void Init_Action_Adjunct_Shim(void) {
     SymId field_syms[1] = {
         SYM_DESCRIPTION
     };
-    VarList* adjunct = Alloc_Varlist_Core(REB_OBJECT, 2, NODE_FLAG_MANAGED);
+    VarList* adjunct = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_OBJECT, 2);
     REBLEN i = 1;
     for (; i != 2; ++i)
         Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));
@@ -275,14 +276,14 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 // 1. See Startup_Lib() for how all the declarations in LIB for the natives
 //    are made in a pre-pass (no need to walk and look for set-words etc.)
 //
-Array* Startup_Natives(const Element* boot_natives)
+Source* Startup_Natives(const Element* boot_natives)
 {
     Context* lib = Lib_Context;  // native variables already exist [1]
 
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
     assert(BINDING(boot_natives) == UNBOUND);
 
-    Array* catalog = Make_Array(g_num_core_natives);
+    Source* catalog = Make_Source(g_num_core_natives);
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //

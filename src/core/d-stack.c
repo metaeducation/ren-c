@@ -45,7 +45,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
     Element* item = Array_Head(array);
     for (; item != tail; ++item) {
         if (Any_List(item) and Cell_Series_Len_At(item) > limit) {
-            Array* copy = Copy_Array_At_Max_Shallow(
+            Source* copy = Copy_Source_At_Max_Shallow(
                 Cell_Array(item),
                 VAL_INDEX(item),
                 limit + 1
@@ -145,7 +145,7 @@ Element* Init_Near_For_Level(Sink(Element) out, Level* L)
     }
     */
 
-    Array* near = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+    Source* near = Pop_Managed_Source_From_Stack(base);
 
     // Simplify overly-deep blocks embedded in the where so they show (...)
     // instead of printing out fully.

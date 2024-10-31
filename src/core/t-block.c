@@ -35,8 +35,8 @@
 //
 REBINT CT_List(const Cell* a, const Cell* b, bool strict)
 {
-    const Array* a_array = Cell_Array(a);
-    const Array* b_array = Cell_Array(b);
+    const Source* a_array = Cell_Array(a);
+    const Source* b_array = Cell_Array(b);
     REBLEN a_index = VAL_INDEX(a);
     REBLEN b_index = VAL_INDEX(b);
 
@@ -102,7 +102,7 @@ Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Any_List(OUT, heart, Make_Array(Int32s(arg, 0)));
+        return Init_Any_List(OUT, heart, Make_Source_Managed(Int32s(arg, 0)));
     }
     else if (Is_Text(arg)) {
         //
@@ -237,7 +237,7 @@ Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Any_List(OUT, heart, Pop_Stack_Values(base));
+        return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
     }
     else if (Any_Context(arg)) {
         return Init_Any_List(OUT, heart, Context_To_Array(arg, 3));
@@ -300,7 +300,7 @@ Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
             Move_Cell(PUSH(), Decay_If_Unstable(OUT));
         } while (true);
 
-        return Init_Any_List(OUT, heart, Pop_Stack_Values(base));
+        return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
     }
 
   bad_make:
@@ -327,7 +327,7 @@ Bounce TO_List(Level* level_, Kind k, Element* arg) {
                 i
             );
         }
-        return Init_Any_List(OUT, heart, Pop_Stack_Values(base));
+        return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
     }
     else if (Any_List(arg)) {
         Length len;
@@ -341,7 +341,7 @@ Bounce TO_List(Level* level_, Kind k, Element* arg) {
     else {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
-        Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
+        Source* single = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
         Copy_Cell(Stub_Cell(single), arg);
         return Init_Any_List(OUT, heart, single);
     }
@@ -858,13 +858,15 @@ REBTYPE(List)
         if (REF(deep))
             return FAIL(Error_Bad_Refines_Raw());
 
-        Array* arr = Cell_Array_Ensure_Mutable(list);
+        Source* arr = Cell_Array_Ensure_Mutable(list);
 
         REBLEN len;
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(list, ARG(part));
             if (len == 0)
-                return Init_Any_List(OUT, Cell_Heart(list), Make_Array(0));
+                return Init_Any_List(
+                    OUT, Cell_Heart(list), Make_Source_Managed(0)
+                );
         }
         else
             len = 1;
@@ -878,14 +880,16 @@ REBTYPE(List)
             if (not REF(part))
                 return RAISE(Error_Nothing_To_Take_Raw());
 
-            return Init_Any_List(OUT, Cell_Heart(list), Make_Array(0));
+            return Init_Any_List(
+                OUT, Cell_Heart(list), Make_Source_Managed(0)
+            );
         }
 
         if (REF(part))
             Init_Any_List(
                 OUT,
                 Cell_Heart(list),
-                Copy_Array_At_Max_Shallow(arr, index, len)
+                Copy_Source_At_Max_Shallow(arr, index, len)
             );
         else
             Derelativize(OUT, &Array_Head(arr)[index], binding);
@@ -943,7 +947,7 @@ REBTYPE(List)
         UNUSED(find);
 
         if (id == SYM_FIND) {
-            Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+            Source* pack = Make_Source_Managed(2);
             Set_Flex_Len(pack, 2);
 
             Copy_Meta_Cell(Array_At(pack, 0), list);
@@ -989,7 +993,7 @@ REBTYPE(List)
             return COPY(list);  // don't fail on read only if would be a no-op
         }
 
-        Array* arr = Cell_Array_Ensure_Mutable(list);
+        Source* arr = Cell_Array_Ensure_Mutable(list);
         REBLEN index = VAL_INDEX(list);
 
         Flags flags = 0;
@@ -1046,7 +1050,7 @@ REBTYPE(List)
         const Array* arr = Cell_Array(list);
         REBLEN index = VAL_INDEX(list);
 
-        Flags flags = ARRAY_MASK_HAS_FILE_LINE;
+        Flags flags = FLEX_MASK_MANAGED_SOURCE;
 
         // We shouldn't be returning a const value from the copy, but if the
         // input value was const and we don't copy some types deeply, those
@@ -1054,14 +1058,14 @@ REBTYPE(List)
         //
         flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);
 
-        Array* copy = Copy_Array_Core_Managed(
+        Source* copy = cast(Source*, Copy_Array_Core_Managed(
+            flags, // flags
             arr,
             index, // at
             tail, // tail
             0, // extra
-            flags, // flags
             did REF(deep)
-        );
+        ));
 
         Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
         BINDING(OUT) = Cell_List_Binding(list);
@@ -1100,7 +1104,7 @@ REBTYPE(List)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));  // covered by `v`
 
-        Array* arr = Cell_Array_Ensure_Mutable(list);
+        Source* arr = Cell_Array_Ensure_Mutable(list);
         REBLEN index = VAL_INDEX(list);
 
         REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
@@ -1117,7 +1121,7 @@ REBTYPE(List)
 
         bool line_back;
         if (back == Array_Last(arr)) // !!! review tail newline handling
-            line_back = Get_Array_Flag(arr, NEWLINE_AT_TAIL);
+            line_back = Get_Source_Flag(arr, NEWLINE_AT_TAIL);
         else
             line_back = Get_Cell_Flag(back + 1, NEWLINE_BEFORE);
 
@@ -1308,10 +1312,7 @@ DECLARE_NATIVE(blockify)
     if (Is_Block(v))
         return COPY(v);
 
-    Array* a = Make_Array_Core(
-        1,
-        NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
-    );
+    Source* a = Make_Source_Managed(1);
 
     if (Is_Void(v)) {
         // leave empty
@@ -1319,7 +1320,7 @@ DECLARE_NATIVE(blockify)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
-    return Init_Block(OUT, Freeze_Array_Shallow(a));
+    return Init_Block(OUT, Freeze_Source_Shallow(a));
 }
 
 
@@ -1341,10 +1342,7 @@ DECLARE_NATIVE(groupify)
     if (Is_Group(v))
         return COPY(v);
 
-    Array* a = Make_Array_Core(
-        1,
-        NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
-    );
+    Source* a = Make_Source_Managed(1);
 
     if (Is_Void(v)) {
         // leave empty
@@ -1352,7 +1350,7 @@ DECLARE_NATIVE(groupify)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
-    return Init_Group(OUT, Freeze_Array_Shallow(a));
+    return Init_Group(OUT, Freeze_Source_Shallow(a));
 }
 
 
@@ -1372,10 +1370,7 @@ DECLARE_NATIVE(enblock)
 
     Value* v = ARG(value);
 
-    Array* a = Make_Array_Core(
-        1,
-        NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
-    );
+    Source* a = Make_Source_Managed(1);
 
     if (Is_Void(v)) {
         // leave empty
@@ -1383,7 +1378,7 @@ DECLARE_NATIVE(enblock)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
-    return Init_Block(OUT, Freeze_Array_Shallow(a));
+    return Init_Block(OUT, Freeze_Source_Shallow(a));
 }
 
 
@@ -1403,10 +1398,7 @@ DECLARE_NATIVE(engroup)
 
     Value* v = ARG(value);
 
-    Array* a = Make_Array_Core(
-        1,
-        NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
-    );
+    Source* a = Make_Source_Managed(1);
 
     if (Is_Void(v)) {
         // leave empty
@@ -1414,7 +1406,7 @@ DECLARE_NATIVE(engroup)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, v));
     }
-    return Init_Group(OUT, Freeze_Array_Shallow(a));
+    return Init_Group(OUT, Freeze_Source_Shallow(a));
 }
 
 
@@ -1465,14 +1457,14 @@ DECLARE_NATIVE(glom)
         if (splice)  // it was a non-quoted block initially
             return COPY(result);  // see note: index may be nonzero
 
-        Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+        Source* a = Make_Source_Managed(1);
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), cast(Element*, result));  // not void / splice
         return Init_Block(OUT, a);
     }
 
     assert(Is_Block(accumulator));
-    Array* a = Cell_Array_Ensure_Mutable(accumulator);
+    Source* a = Cell_Array_Ensure_Mutable(accumulator);
 
     if (not splice) {
         //

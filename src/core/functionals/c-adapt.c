@@ -154,7 +154,7 @@ DECLARE_NATIVE(adapt)
     // we might as well mutably bind it--there's no incentive to virtual
     // bind things that are copied.
     //
-    Array* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(
+    Source* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(
         prelude,
         adaptation,
         VAR_VISIBILITY_INPUTS

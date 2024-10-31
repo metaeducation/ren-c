@@ -376,7 +376,7 @@ Bounce Makehook_Varargs(Level* level_, Kind kind, Element* arg) {
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)
         //
-        Array* array1 = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* array1 = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
         if (Cell_Series_Len_At(arg) == 0)
             Poison_Cell(Stub_Cell(array1));
         else
@@ -515,7 +515,7 @@ REBTYPE(Varargs)
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
         //
-        return Init_Block(OUT, Pop_Stack_Values(STACK_BASE)); }
+        return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE)); }
 
     default:
         break;

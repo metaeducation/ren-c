@@ -2119,7 +2119,7 @@ DECLARE_NATIVE(subparse)
                     Init_Any_List(
                         sink,
                         Any_Group_Kind(P_HEART) ? REB_GROUP : REB_BLOCK,
-                        Copy_Array_At_Max_Shallow(
+                        Copy_Source_At_Max_Shallow(
                             P_INPUT_ARRAY,
                             begin,
                             count
@@ -2248,7 +2248,7 @@ DECLARE_NATIVE(subparse)
                     // last minute that allows protects or unprotects
                     // to happen in rule processing if GROUP!s execute.
                     //
-                    Array* a = Cell_Array_Ensure_Mutable(ARG(position));
+                    Source* a = Cell_Array_Ensure_Mutable(ARG(position));
                     P_POS = Modify_Array(
                         a,
                         begin,

@@ -225,14 +225,14 @@ void Change_Case(
 // !!! CR support is likely to be removed...and CR will be handled as a normal
 // character, with special code needed to process it.
 //
-Array* Split_Lines(const Element* str)
+Source* Split_Lines(const Element* str)
 {
     StackIndex base = TOP_INDEX;
 
     Length len = Cell_Series_Len_At(str);
     REBLEN i = VAL_INDEX(str);
     if (i == len)
-        return Make_Array(0);
+        return Make_Source(0);
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -272,5 +272,7 @@ Array* Split_Lines(const Element* str)
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 
-    return Pop_Stack_Values_Core(base, ARRAY_FLAG_NEWLINE_AT_TAIL);
+    Source* a = Pop_Source_From_Stack(base);
+    Set_Source_Flag(a, NEWLINE_AT_TAIL);
+    return a;
 }

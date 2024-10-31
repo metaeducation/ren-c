@@ -114,7 +114,7 @@ Flex* Make_Set_Operation_Flex(
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
-        Array* buffer = Make_Array(i);
+        Array* buffer = Make_Source(i);
         hret = Make_Hashlist(i);   // allocated
 
         // Optimization note: !!
@@ -138,7 +138,7 @@ Flex* Make_Set_Operation_Flex(
                 const Element* item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
-                        m_cast(Array*, Cell_Array(val2)),  // mode 1 unchanged
+                        m_cast(Source*, Cell_Array(val2)),  // mode 1 unchanged
                         hflex,
                         item,
                         skip,

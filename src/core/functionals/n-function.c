@@ -235,7 +235,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     assert(ACT_ADJUNCT(a) == nullptr);
     mutable_ACT_ADJUNCT(a) = meta;
 
-    Array* copy = Copy_And_Bind_Relative_Deep_Managed(
+    Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
         a,
         VAR_VISIBILITY_ALL // we created exemplar, see all!
@@ -243,17 +243,15 @@ Phase* Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (Get_Array_Flag(Cell_Array(spec), HAS_FILE_LINE_UNMASKED)) {
+    if (Get_Source_Flag(Cell_Array(spec), HAS_FILE_LINE)) {
         LINK(Filename, copy) = LINK(Filename, Cell_Array(spec));
         copy->misc.line = Cell_Array(spec)->misc.line;
-        Set_Array_Flag(copy, HAS_FILE_LINE_UNMASKED);
+        Set_Source_Flag(copy, HAS_FILE_LINE);
     }
-    else if (
-        Get_Array_Flag(Cell_Array(body), HAS_FILE_LINE_UNMASKED)
-    ){
+    else if (Get_Source_Flag(Cell_Array(body), HAS_FILE_LINE)) {
         LINK(Filename, copy) = LINK(Filename, Cell_Array(body));
         copy->misc.line = Cell_Array(body)->misc.line;
-        Set_Array_Flag(copy, HAS_FILE_LINE_UNMASKED);
+        Set_Source_Flag(copy, HAS_FILE_LINE);
     }
     else {
         // Ideally all source series should have a file and line numbering

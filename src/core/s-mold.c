@@ -283,8 +283,13 @@ void Mold_Array_At(
         --mo->indent;
 
     if (sep[1] != '\0') {
-        if (Has_Newline_At_Tail(a))  // accommodates varlists, etc. for PROBE
-            New_Indented_Line(mo); // but not any indentation from *this* mold
+        if (Stub_Flavor(a) != FLAVOR_SOURCE) {
+            // Note: We accommodate varlist/etc. for internal PROBE()
+        }
+        else {
+            if (Get_Source_Flag(cast(const Source*, a), NEWLINE_AT_TAIL))
+                New_Indented_Line(mo);
+        }
         Append_Codepoint(mo->string, sep[1]);
     }
 
@@ -695,11 +700,14 @@ void Drop_Mold_Core(
 //
 //  Startup_Mold: C
 //
-void Startup_Mold(REBLEN size)
+void Startup_Mold(Size encoded_capacity)
 {
-    g_mold.stack = Make_Flex_Core(10, FLAG_FLAVOR(MOLDSTACK));
+    g_mold.stack = Make_Flex(FLAG_FLAVOR(MOLDSTACK), Flex, 10);
 
-    ensure(nullptr, g_mold.buffer) = Make_String_Core(size, STUB_FLAG_DYNAMIC);
+    ensure(nullptr, g_mold.buffer) = Make_String_Core(
+        FLEX_MASK_UNMANAGED_STRING | STUB_FLAG_DYNAMIC,
+        encoded_capacity
+    );
 }
 
 

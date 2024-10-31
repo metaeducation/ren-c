@@ -90,20 +90,20 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             );
 
           case SYM_FILE: {
-            const Flex* f = Cell_Flex(v);
-            if (not Stub_Holds_Cells(f))
+            if (not Any_List(v))
                 return nullptr;
-            if (Not_Array_Flag(c_cast(Array*, f), HAS_FILE_LINE_UNMASKED))
+            const Source* s = Cell_Array(v);
+            if (Not_Source_Flag(s, HAS_FILE_LINE))
                 return nullptr;
-            return Init_File(OUT, LINK(Filename, f)); }
+            return Init_File(OUT, LINK(Filename, s)); }
 
           case SYM_LINE: {
-            const Flex* f = Cell_Flex(v);
-            if (not Stub_Holds_Cells(f))
+            if (not Any_List(v))
                 return nullptr;
-            if (Not_Array_Flag(c_cast(Array*, f), HAS_FILE_LINE_UNMASKED))
+            const Source* s = Cell_Array(v);
+            if (Not_Source_Flag(s, HAS_FILE_LINE))
                 return nullptr;
-            return Init_Integer(OUT, f->misc.line); }
+            return Init_Integer(OUT, s->misc.line); }
 
           default:
             break;

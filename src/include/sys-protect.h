@@ -53,7 +53,7 @@ INLINE void Unprotect_Cell(Cell* c) {
 //
 
 INLINE void Freeze_Flex(const Flex* f) {  // there is no unfreeze
-    assert(not Stub_Holds_Cells(f)); // use Deep_Freeze_Array
+    assert(not Stub_Holds_Cells(f)); // use Deep_Freeze_Source
 
     // We set the FROZEN_DEEP flag even though there is no structural depth
     // here, so that the generic test for deep-frozenness can be faster.
@@ -108,10 +108,10 @@ INLINE void Fail_If_Read_Only_Flex(const Flex* f) {
 
 
 
-INLINE bool Is_Array_Frozen_Shallow(const Array* a)
+INLINE bool Is_Source_Frozen_Shallow(const Source* a)
   { return Get_Flex_Info(a, FROZEN_SHALLOW); }
 
-INLINE bool Is_Array_Frozen_Deep(const Array* a) {
+INLINE bool Is_Source_Frozen_Deep(const Source* a) {
     if (Not_Flex_Info(a, FROZEN_DEEP))
         return false;
 
@@ -119,7 +119,7 @@ INLINE bool Is_Array_Frozen_Deep(const Array* a) {
     return true;
 }
 
-INLINE const Array* Freeze_Array_Deep(const Array* a) {
+INLINE const Source* Freeze_Source_Deep(const Source* a) {
     Protect_Flex(
         a,
         0, // start protection at index 0
@@ -129,7 +129,7 @@ INLINE const Array* Freeze_Array_Deep(const Array* a) {
     return a;
 }
 
-INLINE const Array* Freeze_Array_Shallow(const Array* a) {
+INLINE const Source* Freeze_Source_Shallow(const Source* a) {
     Set_Flex_Info(a, FROZEN_SHALLOW);
     return a;
 }

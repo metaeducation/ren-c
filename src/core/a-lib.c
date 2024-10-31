@@ -169,14 +169,15 @@ unsigned char* API_rebAllocBytes(size_t size)
 {
     ENTER_API;
 
-    Binary* b = Make_Flex(Binary,
-        ALIGN_SIZE  // stores Binary* (must be at least big enough for void*)
-            + size  // for the actual data capacity (may be 0, see notes)
-            + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
+    Binary* b = Make_Flex(
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates BINARY! ATM
             | NODE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
-            | FLEX_FLAG_DONT_RELOCATE  // direct data pointer handed back
+            | FLEX_FLAG_DONT_RELOCATE,  // direct data pointer handed back
+        Binary,
+        ALIGN_SIZE  // stores Binary* (must be at least big enough for void*)
+            + size  // for the actual data capacity (may be 0, see notes)
+            + 1  // for termination (AS TEXT! of rebRepossess(), see notes)
     );
 
     Byte* ptr = Binary_Head(b) + ALIGN_SIZE;
@@ -1258,11 +1259,7 @@ RebolValue* API_rebTranscodeInto(
 
     Release_Feed(feed);  // Note: exhausting feed takes care of the va_end()
 
-    Init_Block(
-        out,
-        Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
-    );
-
+    Init_Block(out, Pop_Managed_Source_From_Stack(base));
     return out;
 }
 
@@ -3289,7 +3286,7 @@ RebolValue* API_rebCollateExtension_internal(
     void *cfuncs,  // Dispatcher* or Intrinsic* (not in API either way)
     int cfuncs_len
 ){
-    Array* a = Make_Array(IDX_COLLATOR_MAX);  // details
+    Source* a = Make_Source(IDX_COLLATOR_MAX);  // details
     Set_Flex_Len(a, IDX_COLLATOR_MAX);
 
     Init_Handle_Cdata(

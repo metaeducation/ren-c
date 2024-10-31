@@ -62,7 +62,7 @@ static bool Params_Of_Hook(
             break;
 
           case PARAMCLASS_SOFT: {
-            Array *a = Alloc_Singular(NODE_FLAG_MANAGED);
+            Source *a = Alloc_Singular(NODE_FLAG_MANAGED);
             Move_Cell(Stub_Cell(a), TOP);
             Init_Any_List(TOP, REB_THE_GROUP, a);
             break; }
@@ -89,14 +89,14 @@ static bool Params_Of_Hook(
 //
 // Returns array of function words, unbound.
 //
-Array* Make_Action_Parameters_Arr(Action* act, bool just_words)
+Source* Make_Action_Parameters_Arr(Action* act, bool just_words)
 {
     struct Params_Of_State s;
     s.just_words = just_words;
 
     StackIndex base = TOP_INDEX;
     For_Each_Unspecialized_Param(act, &Params_Of_Hook, &s);
-    return Pop_Stack_Values(base);
+    return Pop_Source_From_Stack(base);
 }
 
 
@@ -439,16 +439,17 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     Count num_params = (TOP_INDEX - base) / 2;
 
-    KeyList* keylist = Make_Flex(KeyList,
-        num_params,
-        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
+    KeyList* keylist = Make_Flex(
+        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
+        KeyList,
+        num_params
     );
     Set_Flex_Used(keylist, num_params);  // no terminator
     LINK(Ancestor, keylist) = keylist;  // chain
 
     Array* paramlist = Make_Array_Core(
-        num_params + 1,
-        FLEX_MASK_PARAMLIST
+        FLEX_MASK_PARAMLIST,
+        num_params + 1
     );
     Set_Flex_Len(paramlist, num_params + 1);
 
@@ -695,8 +696,8 @@ Phase* Make_Action(
     // at the given length implicitly.
     //
     Array* details = Make_Array_Core(
-        details_capacity,  // Note: may be just 1 (so non-dynamic!)
-        FLEX_MASK_DETAILS | NODE_FLAG_MANAGED
+        FLEX_MASK_DETAILS | NODE_FLAG_MANAGED,
+        details_capacity  // Note: may be just 1 (so non-dynamic!)
     );
     Set_Flex_Len(details, details_capacity);
 
@@ -756,7 +757,8 @@ Phase* Make_Action(
     // action...you have to make a new variation.  Note that the exemplar
     // can be exposed by AS FRAME! of this action...
     //
-    Freeze_Array_Shallow(paramlist);
+    Set_Flex_Flag(paramlist, FIXED_SIZE);
+    Set_Subclass_Flag(VARLIST, paramlist, IMMUTABLE);
 
     return ACT_IDENTITY(act);
 }
@@ -832,8 +834,8 @@ void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
             // See %sysobj.r for STANDARD/FUNC-BODY
             //
             Array* fake = Copy_Array_Shallow_Flags(
-                Cell_Array(example),
-                NODE_FLAG_MANAGED
+                FLEX_MASK_MANAGED_SOURCE,
+                Cell_Array(example)
             );
 
             // Index 5 (or 4 in zero-based C) should be #BODY, a "real" body.

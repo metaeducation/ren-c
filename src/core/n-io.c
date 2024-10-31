@@ -83,7 +83,7 @@ DECLARE_NATIVE(mold)
     else
         Mold_Element(mo, cast(Element*, v));
 
-    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
     String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
@@ -165,7 +165,7 @@ DECLARE_NATIVE(new_line)
     Value* pos = ARG(position);
     const Element* tail;
     Element* item = Cell_List_At_Ensure_Mutable(&tail, pos);
-    Array* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
+    Source* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
     if (REF(all))
@@ -182,9 +182,9 @@ DECLARE_NATIVE(new_line)
     for (n = 0; true; ++n, ++item) {
         if (item == tail) {  // no cell at tail; use flag on array
             if (mark)
-                Set_Array_Flag(a, NEWLINE_AT_TAIL);
+                Set_Source_Flag(a, NEWLINE_AT_TAIL);
             else
-                Clear_Array_Flag(a, NEWLINE_AT_TAIL);
+                Clear_Source_Flag(a, NEWLINE_AT_TAIL);
             break;
         }
 
@@ -220,7 +220,7 @@ DECLARE_NATIVE(new_line_q)
 
     Value* pos = ARG(position);
 
-    const Array* arr;
+    const Source* arr;
     const Element* item;
     const Element* tail;
 
@@ -267,7 +267,7 @@ DECLARE_NATIVE(new_line_q)
     if (item != tail)
         return Init_Logic(OUT, Get_Cell_Flag(item, NEWLINE_BEFORE));
 
-    return Init_Logic(OUT, Get_Array_Flag(arr, NEWLINE_AT_TAIL));
+    return Init_Logic(OUT, Get_Source_Flag(arr, NEWLINE_AT_TAIL));
 }
 
 

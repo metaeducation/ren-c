@@ -415,7 +415,7 @@ void RunPromise(void)
 
     info->state = PROMISE_STATE_RUNNING;
 
-    Array* a = cast(Array*, Pointer_From_Heapaddr(info->promise_id));
+    Source* a = cast(Source*, Pointer_From_Heapaddr(info->promise_id));
     assert(Not_Node_Managed(a));  // took off so it didn't GC
     Set_Node_Managed_Bit(a);  // but need it back on to execute it
 

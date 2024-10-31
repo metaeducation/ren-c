@@ -1606,7 +1606,7 @@ DECLARE_NATIVE(remove_each)
 
 }} return_pack: { //////////////////////////////////////////////////////////=//
 
-    Array* pack = Make_Array(2);
+    Source* pack = Make_Source(2);
     Set_Flex_Len(pack, 2);
 
     Copy_Meta_Cell(Array_At(pack, 0), OUT);
@@ -1643,7 +1643,7 @@ DECLARE_NATIVE(map_each)
     UNUSED(PARAM(body));
 
     if (Is_Blank(ARG(data)))  // should have same result as empty list
-        return Init_Block(OUT, Make_Array(0));
+        return Init_Block(OUT, Make_Source_Managed(0));
 
     // The theory is that MAP would use a dialect on BLOCK! arguments for data
     // by default, like [1 thru 10].  But you could give it an arbitrary
@@ -1716,7 +1716,7 @@ DECLARE_NATIVE(map)
     assert(Is_Fresh(OUT));  // output only written during MAP if BREAK hit
 
     if (Is_Blank(data))  // same response as to empty series
-        return Init_Block(OUT, Make_Array(0));
+        return Init_Block(OUT, Make_Source(0));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1810,7 +1810,7 @@ DECLARE_NATIVE(map)
 
     return Init_Block(  // always returns block unless break [3]
         OUT,
-        Pop_Stack_Values(STACK_BASE)
+        Pop_Source_From_Stack(STACK_BASE)
     );
 }}
 

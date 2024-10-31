@@ -530,11 +530,11 @@ void Force_Value_Frozen_Core(
         return;  // special form, immutable
 
     if (Any_List_Kind(heart)) {
-        const Array* a = Cell_Array(v);
+        const Source* a = Cell_Array(v);
         if (deep)
-            Freeze_Array_Deep(a);
+            Freeze_Source_Deep(a);
         else
-            Freeze_Array_Shallow(a);
+            Freeze_Source_Shallow(a);
         if (locker)
             Set_Flex_Info(a, AUTO_LOCKED);
     }

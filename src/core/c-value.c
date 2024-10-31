@@ -257,10 +257,13 @@ void* Probe_Core_Debug(
     Assert_Flex(f);  // if corrupt, gives better info than a print crash
 
     switch (flavor) {
+      case REB_0:
+        Probe_Print_Helper(p, expr, "!!! CORRUPT Flex !!!", file, line);
+        break;
 
     //=//// ARRAY FLEXES //////////////////////////////////////////////////=//
 
-      case FLAVOR_ARRAY:
+      case FLAVOR_SOURCE:
         Probe_Print_Helper(p, expr, "Generic Array", file, line);
         Mold_Array_At(mo, cast(const Array*, f), 0, "[]");
         break;
@@ -402,12 +405,6 @@ void* Probe_Core_Debug(
       case FLAVOR_THE_GLOBAL_INACCESSIBLE: {
         Probe_Print_Helper(p, expr, "Global Inaccessible Stub", file, line);
         break; }
-
-    #if !defined(NDEBUG)  // PROBE() is sometimes in non-debug executables
-      case FLAVOR_CORRUPT:
-        Probe_Print_Helper(p, expr, "!!! CORRUPT Flex !!!", file, line);
-        break;
-    #endif
 
       default:
         Probe_Print_Helper(p, expr, "!!! Unknown Stub_Flavor() !!!", file, line);

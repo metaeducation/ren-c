@@ -35,13 +35,13 @@
 Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     Sink(Element) out,
     Heart heart,
-    const Array* a,
+    const Source* a,
     Offset offset
 ){
     assert(Any_Sequence_Kind(heart));
     assert(Is_Node_Managed(a));
     Assert_Flex_Term_If_Needed(a);
-    assert(Is_Array_Frozen_Shallow(a));  // must be immutable (may be aliased)
+    assert(Is_Source_Frozen_Shallow(a));  // must be immutable (may be aliased)
 
     assert(offset < Array_Len(a));
     Length len_at = Array_Len(a) - offset;
@@ -95,8 +95,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    Init_Series_At_Core(out, REB_BLOCK, a, offset, SPECIFIED);
-    HEART_BYTE(out) = heart;
+    Init_Series_At_Core(out, heart, a, offset, SPECIFIED);
     return nullptr;
 }
 

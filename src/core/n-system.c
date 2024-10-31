@@ -112,7 +112,7 @@ DECLARE_NATIVE(recycle)
 
     if (REF(verbose)) {
       #if DEBUG
-        Flex* sweeplist = Make_Flex_Core(100, FLAG_FLAVOR(NODELIST));
+        Flex* sweeplist = Make_Flex(FLAG_FLAVOR(NODELIST), Flex, 100);
         count = Recycle_Core(sweeplist);
         assert(count == Flex_Used(sweeplist));
 

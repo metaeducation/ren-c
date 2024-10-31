@@ -966,7 +966,7 @@ DECLARE_NATIVE(scan_net_header)
 {
     INCLUDE_PARAMS_OF_SCAN_NET_HEADER;
 
-    Array* result = Make_Array(10); // Just a guess at size (use STD_BUF?)
+    Source* result = Make_Source_Managed(10);  // Guess at size (data stack?)
 
     Value* header = ARG(header);
     Size size;
@@ -1016,7 +1016,7 @@ DECLARE_NATIVE(scan_net_header)
                 }
                 else {
                     // Create new block for values:
-                    Array* a = Make_Array(2);
+                    Source* a = Make_Source_Managed(2);
                     Derelativize(
                         Alloc_Tail_Array(a),
                         item + 1, // prior value

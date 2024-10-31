@@ -220,9 +220,9 @@ typedef Context Use;
     STUB_SUBCLASS_FLAG_25
 
 
-//=//// VARLIST_FLAG_26 ///////////////////////////////////////////////////=//
+//=//// VARLIST_FLAG_IMMUTABLE ////////////////////////////////////////////=//
 //
-#define VARLIST_FLAG_26 \
+#define VARLIST_FLAG_IMMUTABLE \
     STUB_SUBCLASS_FLAG_26
 
 

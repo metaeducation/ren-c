@@ -132,7 +132,7 @@ DECLARE_NATIVE(generic)
 // 1. See Startup_Lib() for how all the declarations in LIB for the generics
 //    are made in a pre-pass (no need to walk and look for set-words etc.)
 //
-Array* Startup_Generics(const Element* boot_generics)
+Source* Startup_Generics(const Element* boot_generics)
 {
     Context* lib = Lib_Context;  // generic variables already exist [1]
 
@@ -160,5 +160,5 @@ Array* Startup_Generics(const Element* boot_generics)
             Unchain(TOP_ELEMENT);  // change foo: -> foo
         }
 
-    return Pop_Stack_Values(base);  // catalog of generics
+    return Pop_Source_From_Stack(base);  // catalog of generics
 }

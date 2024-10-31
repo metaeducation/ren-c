@@ -91,7 +91,7 @@ INLINE Use* Make_Use_Core(
 ){
     assert(note == CELL_MASK_0 or note == CELL_FLAG_USE_NOTE_SET_WORDS);
 
-    Stub* use = Alloc_Singular(
+    Stub* use = Make_Untracked_Stub(
         FLAG_FLAVOR(USE)
             | NODE_FLAG_MANAGED
             | STUB_FLAG_LINK_NODE_NEEDS_MARK

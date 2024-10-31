@@ -41,10 +41,7 @@ void Startup_Data_Stack(Length capacity)
     // a singular array and then expanding it here it's a chance to test out
     // that logic early in the boot.
     //
-    ensure(nullptr, g_ds.array) = Make_Array_Core(
-        1,
-        FLAG_FLAVOR(DATASTACK) | FLEX_FLAGS_NONE
-    );
+    ensure(nullptr, g_ds.array) = Make_Array_Core(FLAG_FLAVOR(DATASTACK), 1);
     Set_Flex_Len(g_ds.array, 1);
     assert(Not_Stub_Flag(g_ds.array, DYNAMIC));
 
@@ -89,12 +86,11 @@ void Shutdown_Data_Stack(void)
 //
 void Startup_Feeds(void)
 {
-    PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
-    Freeze_Array_Deep(PG_Empty_Array);
-
     PG_Feed_At_End.header.bits = FLAG_FIRST_BYTE(END_SIGNAL_BYTE);
 
-    TG_End_Feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+    static const void* packed = &PG_Feed_At_End;  // "packed feed items"
+    TG_End_Feed = Make_Variadic_Feed(&packed, nullptr, FEED_MASK_DEFAULT);
+    Clear_Feed_Flag(TG_End_Feed, NEEDS_SYNC);  // !!! or asserts on shutdown
     Add_Feed_Reference(TG_End_Feed);
     assert(Is_Feed_At_End(TG_End_Feed));
 }
@@ -107,8 +103,6 @@ void Shutdown_Feeds(void) {
 
     Release_Feed(TG_End_Feed);
     TG_End_Feed = nullptr;
-
-    PG_Empty_Array = nullptr;
 }
 
 
@@ -231,14 +225,14 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 // !!! How can we pass in callsite file and line for tracking info?
 //
 Array* Pop_Stack_Values_Core_Masked(
-    StackIndex base,
     Flags flags,
+    StackIndex base,
     Flags copy_mask
 ){
     Assert_No_DataStack_Pointers_Extant();  // in the future, pop may disrupt
 
     Length len = TOP_INDEX - base;
-    Array* a = Make_Array_Core(len, flags);
+    Array* a = Make_Array_Core(flags, len);
     Set_Flex_Len(a, len);
 
     Flavor flavor = Stub_Flavor(a);  // flavor comes from flags

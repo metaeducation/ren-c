@@ -75,7 +75,10 @@ INLINE REBLEN VAL_INDEX(const Cell* c) {
 //
 // 2. Many Array Flexes (such as varlists) allow antiforms.  We don't want
 //    these making it into things like BLOCK! or GROUP! values, as the user
-//    should never see antiforms in what they see as "ANY-ARRAY!".
+//    should never see antiforms in what they see as "ANY-ARRAY!".  Plus
+//    we want to interpret the LINK node as a filename and the MISC as a
+//    line number, and that's contentious with other array forms' purposes
+//    for LINK and MISC.
 //
 INLINE Element* Init_Series_At_Core_Untracked(
     Init(Element) out,
@@ -84,19 +87,21 @@ INLINE Element* Init_Series_At_Core_Untracked(
     REBLEN index,
     Context* binding
 ){
-  #if !defined(NDEBUG)
-    assert(Any_Series_Kind(heart) or heart == REB_URL);
+  #if DEBUG
     assert(Is_Node_Managed(f));
-
     Assert_Flex_Term_If_Needed(f);  // even binaries [1]
 
     if (Any_List_Kind(heart)) {
-        assert(Stub_Flavor(f) == FLAVOR_ARRAY);  // no antiforms [2]
+        assert(Stub_Flavor(f) == FLAVOR_SOURCE);  // no antiforms [2]
     }
-    else if (Any_String_Kind(heart))
+    else if (Any_String_Kind(heart) or heart == REB_URL)
         assert(Is_Stub_String(f));
-    else {
-        // Note: Binary is allowed to alias String
+    else if (heart == REB_BINARY) {
+        assert(Flex_Wide(f) == 1);  // Note: Binary is allowed to alias String
+    }
+    else if (Any_Sequence_Kind(heart)) {
+        assert(Stub_Flavor(f) == FLAVOR_SOURCE);
+        assert(Is_Source_Frozen_Shallow(c_cast(Source*, f)));
     }
   #endif
 

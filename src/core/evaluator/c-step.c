@@ -1444,7 +1444,7 @@ Bounce Stepper_Executor(Level* L)
                 return FAIL("Lazy Object Reified to Lazy Object: Not Allowed");
         }
 
-        const Array* pack_array;  // needs GC guarding when OUT overwritten
+        const Source* pack_array;  // needs GC guarding when OUT overwritten
         const Element* pack_meta_at;  // pack block items are ^META'd
         const Element* pack_meta_tail;
 

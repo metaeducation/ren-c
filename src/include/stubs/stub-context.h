@@ -69,7 +69,9 @@
 
 #define Tweak_Cell_Context_Varlist            Tweak_Cell_Node1
 
-#define Tweak_Cell_Frame_Phase_Or_Label       Tweak_Cell_Node2
+INLINE void Tweak_Cell_Frame_Phase_Or_Label(Cell* c, Option(const Flex*) f)
+  { Tweak_Cell_Node2(c, maybe f); }
+
 #define Extract_Cell_Frame_Phase_Or_Label(v)  cast(Flex*, Cell_Node2(v))
 
 
@@ -407,7 +409,7 @@ INLINE Level* Level_Of_Varlist_May_Fail(VarList* c) {
 // careful not to do any evaluations or trigger GC until it's well formed)
 //
 #define Alloc_Varlist(kind,capacity) \
-    Alloc_Varlist_Core((kind), (capacity), FLEX_FLAGS_NONE)
+    Alloc_Varlist_Core(FLEX_FLAGS_NONE, (kind), (capacity))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -425,7 +427,7 @@ INLINE void Deep_Freeze_Context(VarList* c) {
 }
 
 #define Is_Context_Frozen_Deep(c) \
-    Is_Array_Frozen_Deep(Varlist_Array(c))
+    Is_Source_Frozen_Deep(Varlist_Array(c))
 
 
 //
@@ -456,9 +458,9 @@ INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
     Stub* stub = c;
 
     Stub* copy = Prep_Stub(  // don't Mem_Copy() the incoming stub [1]
-        Alloc_Stub(),  // not preallocated
         FLEX_MASK_VARLIST
-            | FLEX_FLAG_FIXED_SIZE
+            | FLEX_FLAG_FIXED_SIZE,
+        Alloc_Stub()
     );
     Corrupt_Pointer_If_Debug(BONUS(KeySource, copy)); // needs update
     Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
@@ -469,13 +471,6 @@ INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
     Tweak_Cell_Context_Varlist(rootvar, x_cast(Array*, copy));
 
     Set_Flex_Inaccessible(c);  // Make unusable [2]
-  #if DEBUG
-    FLAVOR_BYTE(stub) = FLAVOR_CORRUPT;
-    Corrupt_Pointer_If_Debug(stub->link.any.corrupt);
-    Corrupt_Pointer_If_Debug(stub->misc.any.corrupt);
-    Corrupt_If_Debug(stub->content);
-    Corrupt_Pointer_If_Debug(stub->info.any.corrupt);
-  #endif
 
     return cast(VarList*, copy);
 }

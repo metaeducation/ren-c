@@ -493,7 +493,7 @@ typedef bool (Decider)(const Value* arg);
 // and line numbers into arrays based on the frame in effect at their time
 // of allocation.
 
-INLINE const Array* Level_Array(Level* L);
+INLINE const Source* Level_Array(Level* L);
 INLINE bool Level_Is_Variadic(Level* L);
 
 #define TOP_LEVEL (g_ts.top_level + 0)  // avoid assign to TOP_LEVEL via + 0

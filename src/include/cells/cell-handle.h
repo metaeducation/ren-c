@@ -150,17 +150,17 @@ INLINE void Init_Handle_Managed_Common(
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){
-    Array* singular = Alloc_Singular(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
-    singular->misc.cleaner = cleaner;
+    Stub* stub = Make_Untracked_Stub(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
+    stub->misc.cleaner = cleaner;
 
-    Cell* single = Stub_Cell(singular);
+    Cell* single = Stub_Cell(stub);
     Reset_Cell_Header_Untracked(
         single,
         FLAG_HEART_BYTE(REB_HANDLE)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
             | CELL_FLAG_DONT_MARK_NODE2
     );
-    Tweak_Cell_Handle_Stub(single, singular);
+    Tweak_Cell_Handle_Stub(single, stub);
     CELL_HANDLE_LENGTH_U(single) = length;
     // caller fills in CELL_HANDLE_CDATA_P or CELL_HANDLE_CFUNC_P
 
@@ -172,10 +172,10 @@ INLINE void Init_Handle_Managed_Common(
     Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_HANDLE)
-            | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // points to stub
             | CELL_FLAG_DONT_MARK_NODE2
     );
-    Tweak_Cell_Handle_Stub(out, singular);
+    Tweak_Cell_Handle_Stub(out, stub);
 
     CELL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // corrupt avoids compiler warning
     CELL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing

@@ -175,7 +175,9 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 
 #define Tweak_Cell_Action_Details                 Tweak_Cell_Node1
 #define Extract_Cell_Action_Partials_Or_Label(c)  cast(Flex*, Cell_Node2(c))
-#define Tweak_Cell_Action_Partials_Or_Label       Tweak_Cell_Node2
+
+INLINE void Tweak_Cell_Action_Partials_Or_Label(Cell* c, Option(const Flex*) f)
+  { Tweak_Cell_Node2(c, maybe f); }
 
 
 INLINE Phase* CTX_FRAME_PHASE(VarList* c);

@@ -617,7 +617,7 @@ REBTYPE(Bitset)
       case SYM_COMPLEMENT: {
         Binary* copy = cast(
             Binary*,
-            Copy_Flex_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
+            Copy_Flex_Core(NODE_FLAG_MANAGED, VAL_BITSET(v))
         );
         INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }
@@ -666,7 +666,7 @@ REBTYPE(Bitset)
 
         Binary* copy = cast(
             Binary*,
-            Copy_Flex_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
+            Copy_Flex_Core(NODE_FLAG_MANAGED, VAL_BITSET(v))
         );
         INIT_BITS_NOT(copy, BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }

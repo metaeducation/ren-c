@@ -182,7 +182,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
             rebRelease(result);
         }
 
-        Init_Block(OUT, Pop_Stack_Values(STACK_BASE));
+        Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
         return OUT; }
 
     //=//// CREATE /////////////////////////////////////////////////////////=//

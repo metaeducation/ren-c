@@ -33,19 +33,22 @@
 // Create context with capacity, allocating space for both words and values.
 // Context will report actual Varlist_Len() of 0 after this call.
 //
-VarList* Alloc_Varlist_Core(Heart heart, REBLEN capacity, Flags flags)
+VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 {
-    KeyList* keylist = Make_Flex(KeyList,
-        capacity,  // no terminator
-        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
+    assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make varlist
+
+    KeyList* keylist = Make_Flex(
+        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,  // always shareable
+        KeyList,
+        capacity  // no terminator
     );
     LINK(Ancestor, keylist) = keylist;  // default to keylist itself
     assert(Flex_Used(keylist) == 0);
 
     Array* a = Make_Array_Core(
-        capacity + 1,  // size + room for rootvar (array terminator implicit)
         FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
-            | flags  // e.g. NODE_FLAG_MANAGED
+            | flags,  // e.g. NODE_FLAG_MANAGED
+        capacity + 1  // size + room for rootvar (array terminator implicit)
     );
     MISC(VarlistAdjunct, a) = nullptr;
     node_LINK(NextVirtual, a) = nullptr;
@@ -102,11 +105,11 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 
     if (Get_Subclass_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
         KeyList* k_copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
+            FLEX_MASK_KEYLIST,
             k,
             0,
             Flex_Used(k),
-            delta,
-            FLEX_MASK_KEYLIST
+            delta
         ));
 
         if (LINK(Ancestor, k) == k)  // preserve ancestor link [2]
@@ -168,7 +171,7 @@ Value* Append_To_Sea_Core(
         TRACK(Erase_Cell(Stub_Cell(patch)));  // prepare for addition
     }
     else {
-        patch = Alloc_Singular(
+        patch = Make_Untracked_Stub(
             NODE_FLAG_MANAGED
             | FLAG_FLAVOR(PATCH)
             | STUB_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache [2]
@@ -595,7 +598,7 @@ DECLARE_NATIVE(wrap)
     node_LINK(NextVirtual, varlist) = Cell_Binding(list);
     BINDING(list) = varlist;
 
-    Array* pack = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
     Copy_Meta_Cell(Array_At(pack, 0), list);
     Meta_Quotify(Init_Object(Array_At(pack, 1), varlist));
@@ -706,7 +709,7 @@ DECLARE_NATIVE(collect_words)
         Init_Word(PUSH(), INODE(BindSymbol, hitch));
     }
 
-    Array* array = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+    Source* array = Pop_Managed_Source_From_Stack(base);
 
   //=//// REMOVE DUMMY BINDINGS FOR THE IGNORED SYMBOLS ///////////////////=//
 
@@ -750,9 +753,9 @@ VarList* Make_Varlist_Detect_Managed(
   //=//// CREATE NEW VARLIST AND CREATE (OR REUSE) KEYLIST ////////////////=//
 
     Array* a = Make_Array_Core(
-        1 + len,  // needs room for rootvar
         FLEX_MASK_VARLIST
-            | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
+            | NODE_FLAG_MANAGED, // Note: Rebind below requires managed context
+        1 + len  // needs room for rootvar
     );
     Set_Flex_Len(a, 1 + len);
     MISC(VarlistAdjunct, a) = nullptr;
@@ -769,9 +772,9 @@ VarList* Make_Varlist_Detect_Managed(
     }
     else {  // new keys, need new keylist
         KeyList* keylist = Make_Flex(
+            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
             KeyList,
-            len,  // no terminator, 0-based
-            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
+            len  // no terminator, 0-based
         );
 
         Set_Flex_Used(keylist, len);
@@ -845,7 +848,7 @@ VarList* Make_Varlist_Detect_Managed(
 //     2 for value
 //     3 for words and values
 //
-Array* Context_To_Array(const Value* context, REBINT mode)
+Source* Context_To_Array(const Value* context, REBINT mode)
 {
     assert(!(mode & 4));
 
@@ -890,10 +893,11 @@ Array* Context_To_Array(const Value* context, REBINT mode)
 
     Shutdown_Evars(&e);
 
-    return Pop_Stack_Values_Core(
-        base,
-        did (mode & 2) ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0
-    );
+    Source* a = Pop_Managed_Source_From_Stack(base);
+    if (mode & 2)
+        Set_Source_Flag(a, NEWLINE_AT_TAIL);
+
+    return a;
 }
 
 

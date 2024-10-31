@@ -139,7 +139,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             }
         }
 
-        e->wordlist = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+        e->wordlist = Pop_Stack_Values_Core(FLEX_MASK_MANAGED_SOURCE, base);
         Clear_Node_Managed_Bit(e->wordlist);  // [1]
 
         e->word = cast(Value*, Array_Head(e->wordlist)) - 1;
@@ -484,7 +484,7 @@ Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
         if (not Any_List(arg))
             return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
 
-        VarList* ctx = Alloc_Varlist_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+        VarList* ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
         node_LINK(NextVirtual, ctx) = BINDING(arg);
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
@@ -655,9 +655,9 @@ VarList* Copy_Varlist_Extra_Managed(
     REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : Varlist_Len(original);
 
     Array* varlist = Make_Array_For_Copy(
-        len + extra + 1,
         FLEX_MASK_VARLIST | NODE_FLAG_MANAGED,
-        nullptr // original_array, N/A because LINK()/MISC() used otherwise
+        nullptr,  // original_array, N/A because LINK()/MISC() used otherwise
+        len + extra + 1
     );
     if (CTX_TYPE(original) == REB_MODULE)
         Set_Flex_Used(varlist, 1);  // all variables linked from word table
@@ -756,11 +756,11 @@ VarList* Copy_Varlist_Extra_Managed(
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
         KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
+            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
             Keylist_Of_Varlist(original),
             0,
             Varlist_Len(original),
-            extra,
-            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED
+            extra
         ));
 
         LINK(Ancestor, keylist) = Keylist_Of_Varlist(original);
@@ -1370,8 +1370,8 @@ REBTYPE(Frame)
             if (Array_Len(details) < 1 or not Any_List(Array_Head(details)))
                 return nullptr;
 
-            const Array* a = Cell_Array(Array_Head(details));
-            if (Not_Array_Flag(a, HAS_FILE_LINE_UNMASKED))
+            const Source* a = Cell_Array(Array_Head(details));
+            if (Not_Source_Flag(a, HAS_FILE_LINE))
                 return nullptr;
 
             // !!! How to tell URL! vs FILE! ?

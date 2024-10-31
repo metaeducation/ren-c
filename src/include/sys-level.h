@@ -160,7 +160,7 @@ INLINE bool Level_Is_Variadic(Level* L) {
     return FEED_IS_VARIADIC(L->feed);
 }
 
-INLINE const Array* Level_Array(Level* L) {
+INLINE const Source* Level_Array(Level* L) {
     assert(not Level_Is_Variadic(L));
     return FEED_ARRAY(L->feed);
 }
@@ -189,10 +189,10 @@ INLINE REBLEN Level_Expression_Index(Level* L) {
     return L->expr_index - 1;
 }
 
-INLINE const String* File_Of_Level(Level* L) {
+INLINE Option(const String*) File_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
         return nullptr;
-    if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
+    if (Not_Source_Flag(Level_Array(L), HAS_FILE_LINE))
         return nullptr;
     return LINK(Filename, Level_Array(L));
 }
@@ -208,7 +208,7 @@ INLINE const char* File_UTF8_Of_Level(Level* L) {
 INLINE LineNumber LineNumber_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
         return 0;
-    if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
+    if (Not_Source_Flag(Level_Array(L), HAS_FILE_LINE))
         return 0;
     return Level_Array(L)->misc.line;
 }

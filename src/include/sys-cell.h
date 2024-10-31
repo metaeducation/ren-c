@@ -414,15 +414,17 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 // flag bits of the node.  This could have a runtime check in debug build
 // with a C++ variation that only takes mutable pointers.
 //
-INLINE void Tweak_Cell_Node1(Cell* c, Option(const Node*) node) {
-    assert(Cell_Has_Node1(c));
-    PAYLOAD(Any, c).first.node = maybe node;
-}
+#define Tweak_Cell_Node1(c,n) do { \
+    STATIC_ASSERT_LVALUE(c);  /* macro repeats c, make sure calls are safe */ \
+    assert(Cell_Has_Node1(c)); \
+    PAYLOAD(Any, (c)).first.node = (n); \
+} while (0)
 
-INLINE void Tweak_Cell_Node2(Cell* c, Option(const Node*) node) {
-    assert(Cell_Has_Node2(c));
-    PAYLOAD(Any, c).second.node = maybe node;
-}
+#define Tweak_Cell_Node2(c,n) do { \
+    STATIC_ASSERT_LVALUE(c);  /* macro repeats c, make sure calls are safe */ \
+    assert(Cell_Has_Node2(c)); \
+    PAYLOAD(Any, (c)).second.node = (n); \
+} while (0)
 
 #define Cell_Node1(c) \
     m_cast(Node*, PAYLOAD(Any, (c)).first.node)

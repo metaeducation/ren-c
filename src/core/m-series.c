@@ -146,8 +146,13 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 // middle of a UTF-8 codepoint, hence a String Flex aliased as a Binary
 // could only have its copy used in a BINARY!.
 //
-Flex* Copy_Flex_Core(const Flex* f, Flags flags)
+Flex* Copy_Flex_Core(Flags flags, const Flex* f)
 {
+    if (Flavor_From_Flags(flags) == FLAVOR_0)
+        flags |= FLAG_FLAVOR_BYTE(Stub_Flavor(f));  // use source's type
+    else
+        assert(Flavor_From_Flags(flags) == Stub_Flavor(f));
+
     assert(not Stub_Holds_Cells(f));
 
     REBLEN used = Flex_Used(f);
@@ -162,24 +167,18 @@ Flex* Copy_Flex_Core(const Flex* f, Flags flags)
         // Note: If the string was a symbol (aliased via AS) it will lose
         // that information.
         //
-        copy = Make_String_Core(used, flags);
+        copy = Make_String_Core(flags, used);
         Set_Flex_Used(copy, used);
         *Flex_Tail(Byte, copy) = '\0';
         LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
         copy->misc.length = f->misc.length;
     }
     else if (Flex_Wide(f) == 1) {  // non-string BINARY!
-        copy = Make_Flex_Core(
-            used + 1,  // term space
-            FLAG_FLAVOR_BYTE(Stub_Flavor(f)) | flags
-        );
+        copy = Make_Flex_Core(flags, used + 1);  // term space
         Set_Flex_Used(copy, used);
     }
     else {
-        copy = Make_Flex_Core(
-            used,
-            FLAG_FLAVOR_BYTE(Stub_Flavor(f)) | flags
-        );
+        copy = Make_Flex_Core(flags, used);
         Set_Flex_Used(copy, used);
     }
 
@@ -205,18 +204,18 @@ Flex* Copy_Flex_Core(const Flex* f, Flags flags)
 // length information, or Init_Any_String() will complain.
 //
 Flex* Copy_Flex_At_Len_Extra(
+    Flags flags,
     const Flex* f,
     REBLEN index,
     REBLEN len,
-    REBLEN extra,
-    Flags flags
+    REBLEN extra
 ){
     assert(not Stub_Holds_Cells(f));
 
     REBLEN capacity = len + extra;
     if (Flex_Wide(f) == 1)
         ++capacity;
-    Flex* copy = Make_Flex_Core(capacity, flags);
+    Flex* copy = Make_Flex_Core(flags, capacity);
     assert(Flex_Wide(f) == Flex_Wide(copy));
     memcpy(
         Flex_Data(copy),
@@ -480,7 +479,9 @@ void Assert_Flex_Basics_Core(const Flex* f)
     if (Not_Node_Readable(f))
         panic (f);
 
-    assert(Stub_Flavor(f) != FLAVOR_CORRUPT);
+    assert(FLAVOR_BYTE(f) != FLAVOR_0);
+    assert(FLAVOR_BYTE(f) < FLAVOR_MAX);
+
     assert(Flex_Used(f) <= Flex_Rest(f));
 
     Assert_Flex_Term_Core(f);
