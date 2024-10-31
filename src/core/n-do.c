@@ -327,7 +327,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     Tweak_Non_Const_To_Explicitly_Mutable(source);
 
-    Remember_Cell_Is_Lifetime_Guard(source);  // may be only reference! [2]
+    Remember_Cell_Is_Lifeguard(source);  // may be only reference! [2]
 
     if (Any_List(source)) {
         if (Cell_Series_Len_At(source) == 0) {
@@ -460,7 +460,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     assert(REF(step));
 
-    Forget_Cell_Is_Lifetime_Guard(source);  // was keeping alive for GC
+    Forget_Cell_Is_Lifeguard(source);  // unprotect so we can edit for return
 
     Context* binding = Level_Binding(SUBLEVEL);
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index

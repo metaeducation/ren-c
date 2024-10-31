@@ -423,7 +423,7 @@ DECLARE_NATIVE(compile_p)
         1,  // unused length (can't be 0, reserved for CFunction)
         cleanup // called upon GC
     );
-    Push_GC_Guard(handle);
+    Push_Lifeguard(handle);
 
     void* opaque = cast(void*, EMPTY_BLOCK); // can parameterize the error...
     tcc_set_error_func(state, opaque, &Error_Reporting_Hook);
@@ -496,7 +496,7 @@ DECLARE_NATIVE(compile_p)
         }
 
         if (REF(inspect)) {  // nothing to show, besides the file list
-            Drop_GC_Guard(handle);
+            Drop_Lifeguard(handle);
             return rebText(":INSPECT => <file list>");
         }
     }
@@ -574,7 +574,7 @@ DECLARE_NATIVE(compile_p)
         // this is similar in spirit to the -E option for preprocessing only)
         //
         if (REF(inspect)) {
-            Drop_GC_Guard(handle);
+            Drop_Lifeguard(handle);
             Drop_Data_Stack_To(STACK_BASE);  // don't modify collected natives
             return Init_Text(OUT, Pop_Molded_String(mo));
         }
@@ -697,7 +697,7 @@ DECLARE_NATIVE(compile_p)
         DROP();
     }
 
-    Drop_GC_Guard(handle);
+    Drop_Lifeguard(handle);
 
     return nullptr;
 }

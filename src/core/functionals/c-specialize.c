@@ -266,9 +266,9 @@ bool Specialize_Action_Throws(
 
         // Run block and ignore result (unless it is thrown)
         //
-        Push_GC_Guard(exemplar);
+        Push_Lifeguard(exemplar);
         bool threw = Eval_Any_List_At_Throws(out, unwrap def, SPECIFIED);
-        Drop_GC_Guard(exemplar);
+        Drop_Lifeguard(exemplar);
 
         if (threw) {
             Drop_Data_Stack_To(lowest_stackindex);

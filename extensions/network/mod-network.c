@@ -348,7 +348,7 @@ void on_new_connection(uv_stream_t *server, int status) {
         fail (rebError_UV(status));
 
     VarList* client = Copy_Varlist_Shallow_Managed(listener_port_ctx);
-    Push_GC_Guard(client);
+    Push_Lifeguard(client);
 
     Init_Nulled(Varlist_Slot(client, STD_PORT_DATA));  // just to be sure
 
@@ -380,7 +380,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     Get_Local_IP(sock_new);
 
-    Drop_GC_Guard(client);
+    Drop_Lifeguard(client);
 
     rebElide("(", listening_port, ").spec.accept", Varlist_Archetype(client));
 }

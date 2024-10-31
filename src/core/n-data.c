@@ -890,7 +890,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
     assert(QUOTE_BYTE(lookup) == ANTIFORM_0);
 
     DECLARE_ELEMENT (accessor);
-    Push_GC_Guard(accessor);
+    Push_Lifeguard(accessor);
     accessor->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (lookup->header.bits & CELL_MASK_COPY & (~ NODE_FLAG_UNREADABLE))
@@ -900,7 +900,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
     QUOTE_BYTE(accessor) = NOQUOTE_1;
 
     bool threw = rebRunThrows(out, accessor);  // run accessor as GET
-    Drop_GC_Guard(accessor);
+    Drop_Lifeguard(accessor);
     if (threw)
         return Error_No_Catch_For_Throw(TOP_LEVEL);
     return nullptr;
@@ -992,7 +992,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     ++stackindex;
 
     DECLARE_ATOM (temp);
-    Push_GC_Guard(temp);
+    Push_Lifeguard(temp);
 
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
@@ -1006,7 +1006,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             Canon(PICK_P), temp, ins
         )){
             Drop_Data_Stack_To(base);
-            Drop_GC_Guard(temp);
+            Drop_Lifeguard(temp);
             return Error_No_Catch_For_Throw(TOP_LEVEL);
         }
 
@@ -1016,7 +1016,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             Freshen_Cell_Suppress_Raised(out);
 
             Drop_Data_Stack_To(base);  // Note: changes TOP_INDEX
-            Drop_GC_Guard(temp);
+            Drop_Lifeguard(temp);
             if (last_step)
                 return error;  // last step, interceptible error
             fail (error);  // intermediate step, must abrupt fail
@@ -1028,7 +1028,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
         ++stackindex;
     }
 
-    Drop_GC_Guard(temp);
+    Drop_Lifeguard(temp);
     return nullptr;
 }
 
@@ -1258,7 +1258,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
         StackIndex base = TOP_INDEX;
 
         DECLARE_ATOM (safe);
-        Push_GC_Guard(safe);
+        Push_Lifeguard(safe);
 
         Option(Error*) error;
         if (Is_Chain(var))
@@ -1269,7 +1269,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
             error = Trap_Get_Path_Push_Refinements(
                 out, safe, var, context
             );
-        Drop_GC_Guard(safe);
+        Drop_Lifeguard(safe);
 
         if (error)
             return error;
@@ -1800,15 +1800,15 @@ bool Set_Var_Core_Updater_Throws(
             //
             Derelativize(temp, var, context);
             QUOTE_BYTE(temp) = ONEQUOTE_3;
-            Push_GC_Guard(temp);
+            Push_Lifeguard(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
                 rebRUN(updater), "binding of", temp, temp, rebQ(setval)
             )){
-                Drop_GC_Guard(temp);
+                Drop_Lifeguard(temp);
                 fail (Error_No_Catch_For_Throw(TOP_LEVEL));
             }
-            Drop_GC_Guard(temp);
+            Drop_Lifeguard(temp);
         }
 
         if (steps_out and steps_out != GROUPS_OK) {
@@ -1896,10 +1896,10 @@ bool Set_Var_Core_Updater_Throws(
     assert(Is_Action(updater));  // we will use rebM() on it
 
     DECLARE_VALUE (writeback);
-    Push_GC_Guard(writeback);
+    Push_Lifeguard(writeback);
 
     Erase_Cell(temp);
-    Push_GC_Guard(temp);
+    Push_Lifeguard(temp);
 
     StackIndex stackindex_top = TOP_INDEX;
 
@@ -1938,8 +1938,8 @@ bool Set_Var_Core_Updater_Throws(
             out,  // <-- output cell
             Canon(PICK_P), temp, ins
         )){
-            Drop_GC_Guard(temp);
-            Drop_GC_Guard(writeback);
+            Drop_Lifeguard(temp);
+            Drop_Lifeguard(writeback);
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let PICKs throw
         }
         ++stackindex;
@@ -1956,8 +1956,8 @@ bool Set_Var_Core_Updater_Throws(
         out,  // <-- output cell
         rebRUN(updater), temp, ins, rebQ(setval)
     )){
-        Drop_GC_Guard(temp);
-        Drop_GC_Guard(writeback);
+        Drop_Lifeguard(temp);
+        Drop_Lifeguard(writeback);
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let POKEs throw
     }
 
@@ -1989,8 +1989,8 @@ bool Set_Var_Core_Updater_Throws(
     }
   }
 
-    Drop_GC_Guard(temp);
-    Drop_GC_Guard(writeback);
+    Drop_Lifeguard(temp);
+    Drop_Lifeguard(writeback);
 
     if (steps_out and steps_out != GROUPS_OK)
         Init_Block(unwrap steps_out, Pop_Source_From_Stack(base));

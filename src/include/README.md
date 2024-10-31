@@ -6,7 +6,7 @@ This directory contains include files for code that is written to the
 Code written to the internal API has to deal with many complex details related
 to memory and garbage collection.  It has access to the data stack and can do
 anything that a native function could do.  This means functions like Array_At(),
-Push_GC_Guard(), Pop_Source_From_Stack(). etc are available.  The result is
+Push_Lifeguard(), Pop_Source_From_Stack(). etc are available.  The result is
 efficiency at the cost of needing to worry about details, as well as being
 more likely to need to change the code if the internals change.
 

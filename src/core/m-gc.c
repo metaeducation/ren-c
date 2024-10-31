@@ -674,7 +674,7 @@ static void Mark_Data_Stack(void)
 //  Mark_Guarded_Nodes: C
 //
 // Mark Flexes and Cells that have been temporarily protected from garbage
-// collection with Push_GC_Guard.  Subclasses e.g. ARRAY_IS_CONTEXT will
+// collection with Push_Lifeguard.  Subclasses e.g. ARRAY_IS_CONTEXT will
 // have their LINK() and MISC() fields guarded appropriately for the class.
 //
 // 1. For efficiency, the system allows ranges of places that cells will be

@@ -342,7 +342,7 @@ void Assert_State_Balanced_Debug(
 
     if (s->guarded_len != Flex_Used(g_gc.guarded)) {
         printf(
-            "Push_GC_Guard()x%d without Drop_GC_Guard()\n",
+            "Push_Lifeguard()x%d without Drop_Lifeguard()\n",
             cast(int, Flex_Used(g_gc.guarded) - s->guarded_len)
         );
         Node* guarded = *Flex_At(

@@ -585,7 +585,7 @@ INLINE void Expand_Flex_Tail(Flex* f, REBLEN delta) {
 //
 // 1. It is more efficient if you know a Flex is going to become managed to
 //   create it in the managed state.  But be sure no evaluations are called
-//   before it's made reachable by the GC, or use Push_GC_Guard().
+//   before it's made reachable by the GC, or use Push_Lifeguard().
 //
 INLINE Flex* Make_Flex_Into(
     Flags flags,

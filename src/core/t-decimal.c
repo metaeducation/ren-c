@@ -162,13 +162,13 @@ Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
             Cell_Sequence_Binding(arg),
             1
         );
-        Push_GC_Guard(numerator);  // might be GROUP!, so (1.2)/4
-        Push_GC_Guard(denominator);
+        Push_Lifeguard(numerator);  // might be GROUP!, so (1.2)/4
+        Push_Lifeguard(denominator);
 
         Value* quotient = rebValue("divide", numerator, denominator);
 
-        Drop_GC_Guard(denominator);
-        Drop_GC_Guard(numerator);
+        Drop_Lifeguard(denominator);
+        Drop_Lifeguard(numerator);
 
         REBDEC d;
         if (Is_Integer(quotient))

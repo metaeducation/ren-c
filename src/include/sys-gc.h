@@ -117,15 +117,15 @@ INLINE Flex* Force_Flex_Managed(const_if_c Flex* f) {
 // before a level returns to the trampoline.
 //
 
-#define Push_GC_Guard(node) \
+#define Push_Lifeguard(node) \
     Push_Guard_Node(node)
 
-INLINE void Drop_GC_Guard(const void* p) {  // p may be erased cell (not Node)
+INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
   #if defined(NDEBUG)
     UNUSED(p);
   #else
     if (p != *Flex_Last(const void*, g_gc.guarded)) {
-        printf("Drop_GC_Guard() pointer that wasn't last Push_GC_Guard()\n");
+        printf("Drop_Lifeguard() pointer that wasn't last Push_Lifeguard()\n");
         panic (p);
     }
   #endif
@@ -138,27 +138,27 @@ INLINE void Drop_GC_Guard(const void* p) {  // p may be erased cell (not Node)
 //
 // If a cell is under the natural control of the GC (e.g. a Level's OUT or
 // SPARE, or a frame variable) then that cell can often be used instead of
-// Push_GC_Guard() to keep something alive.  It's helpful to have some
+// Push_Lifeguard() to keep something alive.  It's helpful to have some
 // enforcement that you don't accidentally overwrite these lifetime-holding
 // references, so the PROTECT bit can come in handy...if you're using a
 // build that enforces it on arbitrary mutable cells.
 //
 
 #if DEBUG_CELL_READ_WRITE
-    #define Remember_Cell_Is_Lifetime_Guard(c) do { \
+    #define Remember_Cell_Is_Lifeguard(c) do { \
         STATIC_ASSERT_LVALUE(c); \
         assert(Not_Cell_Flag((c), PROTECTED)); \
         Set_Cell_Flag((c), PROTECTED); \
     } while (0)
 
-    #define Forget_Cell_Is_Lifetime_Guard(c) do { \
+    #define Forget_Cell_Is_Lifeguard(c) do { \
         STATIC_ASSERT_LVALUE(c); \
         assert(Get_Cell_Flag((c), PROTECTED)); \
         Clear_Cell_Flag((c), PROTECTED); \
     } while (0)
 #else
-    #define Remember_Cell_Is_Lifetime_Guard(c)  NOOP
-    #define Forget_Cell_Is_Lifetime_Guard(c)  NOOP
+    #define Remember_Cell_Is_Lifeguard(c)  NOOP
+    #define Forget_Cell_Is_Lifeguard(c)  NOOP
 #endif
 
 

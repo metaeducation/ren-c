@@ -33,8 +33,8 @@
 // A Cell in a C stack variable does not have to worry about its memory
 // address becoming invalid--but by default the garbage collector does not
 // know that value exists.  So while the address may be stable, any Flexes
-// it has in the Payload might go bad.  Use Push_GC_Guard() to protect a
-// stack variable's Payload, and then Drop_GC_Guard() when the protection
+// it has in the Payload might go bad.  Use Push_Lifeguard() to protect a
+// stack variable's Payload, and then Drop_Lifeguard() when the protection
 // is not needed.  (You must always drop the most recently pushed guard.)
 //
 // Function invocations keep their arguments in FRAME!s, which can be accessed
@@ -746,7 +746,7 @@ INLINE Value* Constify(Value* v) {
 //     Init_Integer(element, 1020);
 //
 // * These cells are not protected from having their insides GC'd unless
-//   you guard them with Push_GC_Guard(), or if a routine you call protects
+//   you guard them with Push_Lifeguard(), or if a routine you call protects
 //   the cell implicitly (as stackful evaluations will do on cells used
 //   as an output).
 //

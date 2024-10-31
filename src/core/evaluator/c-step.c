@@ -1455,7 +1455,7 @@ Bounce Stepper_Executor(Level* L)
             pack_meta_at = Cell_List_At(&pack_meta_tail, OUT);
 
             pack_array = Cell_Array(OUT);
-            Push_GC_Guard(pack_array);
+            Push_Lifeguard(pack_array);
         }
         else {
             Meta_Quotify(OUT);  // standardize to align with pack items
@@ -1567,7 +1567,7 @@ Bounce Stepper_Executor(Level* L)
         L_next_gotten = nullptr;
 
         if (pack_array)
-            Drop_GC_Guard(pack_array);
+            Drop_Lifeguard(pack_array);
 
         if (not circled and not Is_Pack(OUT))  // reverse quotification
             Meta_Unquotify_Undecayed(OUT);

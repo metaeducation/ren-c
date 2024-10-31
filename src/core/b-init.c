@@ -659,14 +659,14 @@ void Startup_Core(void)
     // separately to avoid the extra work.  Not a high priority.)
     //
     const String* tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
-    Push_GC_Guard(tmp_boot);  // recycle torture frees on scanner first push!
+    Push_Lifeguard(tmp_boot);  // recycle torture frees on scanner first push!
     Array* boot_array = Scan_UTF8_Managed(
         tmp_boot,
         utf8,
         utf8_size
     );
-    Drop_GC_Guard(tmp_boot);
-    Push_GC_Guard(boot_array); // managed, so must be guarded
+    Drop_Lifeguard(tmp_boot);
+    Push_Lifeguard(boot_array); // managed, so must be guarded
 
     rebFree(utf8); // don't need decompressed text after it's scanned
 
@@ -691,7 +691,7 @@ void Startup_Core(void)
         Cell_Array_Known_Mutable(&boot->typespecs)
     );
     Manage_Flex(datatypes_catalog);
-    Push_GC_Guard(datatypes_catalog);
+    Push_Lifeguard(datatypes_catalog);
 
     // Startup_Type_Predicates() uses symbols, data stack, and adds words
     // to lib--not available until this point in time.
@@ -705,13 +705,13 @@ void Startup_Core(void)
     //
     Source* natives_catalog = Startup_Natives(&boot->natives);
     Manage_Flex(natives_catalog);
-    Push_GC_Guard(natives_catalog);
+    Push_Lifeguard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
     Source* generics_catalog = Startup_Generics(&boot->generics);
     Manage_Flex(generics_catalog);
-    Push_GC_Guard(generics_catalog);
+    Push_Lifeguard(generics_catalog);
 
   //=//// STARTUP CONSTANTS (like NULL, BLANK, etc.) //////////////////////=//
 
@@ -737,7 +737,7 @@ void Startup_Core(void)
     // boot->errors is the error definition list from %errors.r
     //
     VarList* errors_catalog = Startup_Errors(&boot->errors);
-    Push_GC_Guard(errors_catalog);
+    Push_Lifeguard(errors_catalog);
 
     BINDING(&boot->sysobj) = Lib_Context;
     Init_System_Object(
@@ -748,10 +748,10 @@ void Startup_Core(void)
         errors_catalog
     );
 
-    Drop_GC_Guard(errors_catalog);
-    Drop_GC_Guard(generics_catalog);
-    Drop_GC_Guard(natives_catalog);
-    Drop_GC_Guard(datatypes_catalog);
+    Drop_Lifeguard(errors_catalog);
+    Drop_Lifeguard(generics_catalog);
+    Drop_Lifeguard(natives_catalog);
+    Drop_Lifeguard(datatypes_catalog);
 
     PG_Boot_Phase = BOOT_ERRORS;
 
@@ -927,7 +927,7 @@ void Startup_Core(void)
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
-    Drop_GC_Guard(boot_array);
+    Drop_Lifeguard(boot_array);
 
     PG_Boot_Phase = BOOT_DONE;
 

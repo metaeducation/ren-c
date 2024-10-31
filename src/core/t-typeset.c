@@ -395,9 +395,9 @@ void MF_Parameter(Molder* mo, const Cell* v, bool form)
     else
         Init_Block(temp, EMPTY_ARRAY);
 
-    Push_GC_Guard(temp);
+    Push_Lifeguard(temp);
     Mold_Or_Form_Element(mo, temp, form);
-    Drop_GC_Guard(temp);
+    Drop_Lifeguard(temp);
 
     if (not form) {
         End_Non_Lexical_Mold(mo);

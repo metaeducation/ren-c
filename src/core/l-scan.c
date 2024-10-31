@@ -2803,9 +2803,9 @@ Bounce Scanner_Executor(Level* const L) {
                 REB_THE_BLOCK,  // don't want to evaluate
                 Pop_Source_From_Stack(stackindex_path_head - 1)
             );
-            Push_GC_Guard(items);
+            Push_Lifeguard(items);
             Value* email = rebValue("as email! delimit -{.}-", items);
-            Drop_GC_Guard(items);
+            Drop_Lifeguard(items);
             Copy_Cell(temp, email);
             rebRelease(email);
             goto push_temp;

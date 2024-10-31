@@ -783,13 +783,13 @@ DECLARE_NATIVE(combinatorize)
     s.level_ = level_;
     s.rule_end = nullptr;  // argument found by param hook
 
-    Push_GC_Guard(s.ctx);  // Combinator_Param_Hook may call evaluator
+    Push_Lifeguard(s.ctx);  // Combinator_Param_Hook may call evaluator
 
     USED(REF(state));
     USED(REF(value));
     For_Each_Unspecialized_Param(act, &Combinator_Param_Hook, &s);
 
-    Drop_GC_Guard(s.ctx);
+    Drop_Lifeguard(s.ctx);
 
     // For debug and tracing, combinators are told where their rule end is
     //

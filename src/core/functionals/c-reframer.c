@@ -194,7 +194,7 @@ bool Init_Invokable_From_Feed_Throws(
     //
     DECLARE_VALUE (action);
     Move_Cell(action, out);
-    Push_GC_Guard(action);
+    Push_Lifeguard(action);
 
     Option(const String*) label = VAL_FRAME_LABEL(action);
 
@@ -208,7 +208,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     if (Is_Throwing(L)) {  // signals threw
         Drop_Level(L);
-        Drop_GC_Guard(action);
+        Drop_Lifeguard(action);
         return true;
     }
 
@@ -225,7 +225,7 @@ bool Init_Invokable_From_Feed_Throws(
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
     Tweak_Bonus_Keysource(varlist, ACT_KEYLIST(act));  // disconnect from f
     Drop_Level(L);
-    Drop_GC_Guard(action);
+    Drop_Lifeguard(action);
 
     Set_Node_Managed_Bit(varlist);  // can't use Manage_Flex
 
