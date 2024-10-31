@@ -61,8 +61,12 @@ depends: [
     [%crypt/mbedtls/library/sha1.c  #no-c++]  ; !!! weak
 
     ; BLOCK CIPHERS
-    ;
-    [%crypt/mbedtls/library/aes.c  #no-c++]
+    [
+        %crypt/mbedtls/library/aes.c
+        #no-c++
+
+        <msc:/analyze->  ; trips up static analyzer
+    ]
 
     ; !!! Plain Diffie-Hellman(-Merkel) is considered weaker than the
     ; Elliptic Curve Diffie-Hellman (ECDH).  It was an easier first test case
@@ -84,6 +88,7 @@ depends: [
         #no-c++
 
         <msc:/wd4127>  ; conditional expression is constant
+        <msc:/analyze->  ; trips up static analyzer
      ]  ; also needed for ECDHE
 
      ; !!! This is required unless you enable MBEDTLS_ECP_NO_INTERNAL_RNG,

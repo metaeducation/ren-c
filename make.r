@@ -402,6 +402,13 @@ rebmake/set-target-platform platform-config.os-base
                 <gnu:-Wall>
                 <msc:/Wall>  ; see note above why we use instead of /W4
 
+                ; MSVC has a static analyzer, but it doesn't seem to catch much
+                ; and it trips up on the Windows header files a bit.  Disable
+                ; it usually because it just makes the build slower.  But
+                ; consider running it now and again (or on the CI builds).
+                ;
+                (comment <msc:/analyze>)
+
                 <gnu:-Wchar-subscripts>
                 <gnu:-Wwrite-strings>
                 <gnu:-Wundef>

@@ -28,6 +28,16 @@
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
 
+    // As is typical, Microsoft's own header files don't work through with
+    // the static analyzer, disable checking of their _In_out_ annotations
+    // (which we don't use, anyway):
+    //
+    //   https://developercommunity.visualstudio.com/t/warning-C6553:-The-annotation-for-functi/1676659
+
+  #if defined(_MSC_VER) && defined(_PREFAST_)  // _PREFAST_ if MSVC /analyze
+    #pragma warning(disable : 6282)  // suppress "incorrect operator" [1]
+  #endif
+
     #include <process.h>
     #include <shlobj.h>
 

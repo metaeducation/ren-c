@@ -372,12 +372,37 @@ Special internal defines used by RT, not Host-Kit developers:
 //   https://stackoverflow.com/a/71249340
 //   https://github.com/llvm-mirror/clang/blob/master/lib/StaticAnalyzer/Checkers/MallocChecker.cpp
 //
+// 1. The implementation of Rebol uses idiomatic tricks that are like in
+//    Rebol itself, such as assignments in expressions:
+//
+//        while (
+//            (*temp == '<' and (seen_angles = true))
+//            or (*temp == '>' and (seen_angles = true))
+//            or *temp == '+' or ...
+//        ){...}
+//
+//    MSVC's /analyze switch doesn't like it, so use a #pragma to allow it.
+//    (Analyzer errors can't be disabled on the command line e.g. /Wd6282,
+//    so we have to use a #pragma for it.)
+//
+// 2. Ren-C uses variable shadowing, and it's integral to the API:
+//
+//      https://forum.rebol.info/t/2224
+//
+//    So we have to disable warnings pertaining to that.
+//
+
 #if !defined(DEBUG_STATIC_ANALYZING)
     #if defined(__clang_analyzer__)
         #define DEBUG_STATIC_ANALYZING 1
     #else
         #define DEBUG_STATIC_ANALYZING 0
     #endif
+#endif
+
+#if defined(_MSC_VER) && defined(_PREFAST_)  // _PREFAST_ if MSVC /analyze
+    #pragma warning(disable : 6282)  // suppress "incorrect operator" [1]
+    #pragma warning(disable : 6244)  // suppress hiding previous decl [2]
 #endif
 
 

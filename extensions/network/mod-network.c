@@ -40,7 +40,15 @@
 //   notice they have completed.
 //
 
+// libuv's %include/uv/win.h has an "inconsistent annotation" that MSVC's
+// static analyzer complains about.
+//
+#if defined(_MSC_VER) && defined(_PREFAST_)  // _PREFAST_ if MSVC /analyze
+    #pragma warning(disable : 28251)  // suppress "inconsistent annotation"
+#endif
+
 #include "uv.h"  // includes windows.h
+
 #ifdef TO_WINDOWS
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
