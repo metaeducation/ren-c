@@ -71,7 +71,17 @@ DECLARE_NATIVE(generate)
     unsigned char* bp = rebBinaryHead_internal(binary);
 
     UUID uuid;  // uuid.data* is little endian, string form is big endian
-    UuidCreate(&uuid);
+    switch (UuidCreate(&uuid)) {
+      case RPC_S_OK:
+        break;
+
+      /* case RPC_S_LOCAL_ONLY: */  // in UuidCreate() docs, but not defined?
+      case RPC_S_UUID_NO_ADDRESS:
+      default:
+        return rebDelegate(
+          "fail -{UuidCreate() could not make a unique address}-"
+        );
+    }
 
     bp[0] = cast(char*, &uuid.Data1)[3];
     bp[1] = cast(char*, &uuid.Data1)[2];
