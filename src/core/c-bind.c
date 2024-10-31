@@ -966,7 +966,7 @@ void Clonify_And_Bind_Relative(
                 0
             ));
             /* if (Any_Sequence(v)) */  // copy regardless? [3]
-                Copy_Mirror_Byte(copy, Cell_Array(v));
+                MIRROR_BYTE(copy) = MIRROR_BYTE(Cell_Array(v));
 
             Tweak_Cell_Node1(v, copy);
 

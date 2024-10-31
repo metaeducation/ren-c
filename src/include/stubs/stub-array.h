@@ -105,6 +105,11 @@ INLINE void Prep_Array(
 // Make an Array that is the right size to store Cells (and marked for the
 // garbage collector to look into recursively).  Array_Len() will be 0.
 //
+// 1. Source arrays created at runtime default to inheriting the file and line
+//    number from the array executing in the current frame.  (When code is
+//    being scanned from UTF-8 source, the scanner will put the file and
+//    line information on manually.)
+//
 INLINE Array* Make_Array_Core_Into(
     Flags flags,  // Make_Flex_Into() ensures not FLAVOR_0
     void* preallocated,
@@ -129,15 +134,10 @@ INLINE Array* Make_Array_Core_Into(
         Poison_Cell(Stub_Cell(a));  // optimized prep for 0 length
     }
 
-    // Arrays created at runtime default to inheriting the file and line
-    // number from the array executing in the current frame.  (When code is
-    // being scanned from UTF-8 source, the scanner will put the file and
-    // line information on manually.)
-    //
-    if (Flavor_From_Flags(flags) == FLAVOR_SOURCE) {
+    if (Flavor_From_Flags(flags) == FLAVOR_SOURCE) {  // add file/line [1]
         if (
             not Level_Is_Variadic(TOP_LEVEL) and
-            Get_Source_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE)
+            (Level_Array(TOP_LEVEL)->leader.bits & SOURCE_FLAG_HAS_FILE_LINE)
         ){
             LINK(Filename, a) = LINK(Filename, Level_Array(TOP_LEVEL));
             a->misc.line = Level_Array(TOP_LEVEL)->misc.line;
@@ -154,53 +154,6 @@ INLINE Array* Make_Array_Core_Into(
 
 #define Make_Array_Core(flags, capacity) \
     Make_Array_Core_Into((flags), Alloc_Stub(), (capacity))
-
-#define Make_Source(capacity) \
-    cast(Source*, Make_Array_Core(FLEX_MASK_UNMANAGED_SOURCE, (capacity)))
-
-#define Make_Source_Managed(capacity) \
-    cast(Source*, Make_Array_Core(FLEX_MASK_UNMANAGED_SOURCE, (capacity)))
-
-
-// !!! Currently, many bits of code that make copies don't specify if they are
-// copying an array to turn it into a paramlist or varlist, or to use as the
-// kind of array the use might see.  If we used plain Make_Source() then it
-// would add a flag saying there were line numbers available, which may
-// compete with the usage of the ->misc and ->link fields of the Stub Node
-// for internal arrays.
-//
-INLINE Array* Make_Array_For_Copy(
-    Flags flags,
-    const Array* original,
-    REBLEN capacity
-){
-    if (
-        original
-        and Stub_Flavor(original) == FLAVOR_SOURCE
-        and Get_Source_Flag(c_cast(Source*, original), NEWLINE_AT_TAIL)
-    ){
-        //
-        // All of the newline bits for cells get copied, so it only makes
-        // sense that the bit for newline on the tail would be copied too.
-        //
-        flags |= SOURCE_FLAG_NEWLINE_AT_TAIL;
-    }
-
-    if (
-        Flavor_From_Flags(flags) == FLAVOR_SOURCE
-        and original
-        and Stub_Flavor(original) == FLAVOR_SOURCE
-        and Get_Source_Flag(c_cast(Source*, original), HAS_FILE_LINE)
-    ){
-        Source* a = cast(Source*, Make_Array_Core(flags, capacity));
-        LINK(Filename, a) = LINK(Filename, original);
-        a->misc.line = original->misc.line;
-        Set_Source_Flag(a, HAS_FILE_LINE);
-        return a;
-    }
-
-    return Make_Array_Core(flags, capacity);
-}
 
 
 // A singular array is specifically optimized to hold *one* value in the

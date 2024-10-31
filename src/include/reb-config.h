@@ -819,9 +819,6 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_HOOK_HEART_BYTE 0
 #endif
 
-#if !defined(DEBUG_HOOK_INFO_SECOND_BYTE)
-    #define DEBUG_HOOK_INFO_SECOND_BYTE 0
-#endif
 
 // It can be very difficult in release builds to know where a fail came
 // from.  This arises in pathological cases where an error only occurs in

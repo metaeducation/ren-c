@@ -51,29 +51,3 @@
 
 #define LINK_Filename_TYPE          const String*
 #define HAS_LINK_Filename           FLAVOR_SOURCE
-
-
-// These flags are only for checking "plain" array flags...so not varlists
-// or paramlists or anything that isn't just an ordinary source-level array
-// (like you'd find in a BLOCK!)
-//
-// 1. See mutability notes on Set_Flex_Flag() / Clear_Flex_Flag()
-
-#define Get_Source_Flag(a,flag) \
-    Get_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
-
-#define Not_Source_Flag(a,flag) \
-    Not_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
-
-#define Set_Source_Flag(a,flag) \
-    Set_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
-
-#define Clear_Source_Flag(a,flag) \
-    Clear_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
-
-
-#define FLEX_MASK_UNMANAGED_SOURCE \
-    FLAG_FLAVOR(SOURCE)
-
-#define FLEX_MASK_MANAGED_SOURCE \
-    (FLAG_FLAVOR(SOURCE) | NODE_FLAG_MANAGED)

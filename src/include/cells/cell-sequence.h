@@ -215,7 +215,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
 
     if (Any_List(e)) {  // try mirror optimization
         assert(Is_Group(e) or Is_Block(e));  // only valid kinds
-        const Array* a = Cell_Array(e);
+        const Source* a = Cell_Array(e);
         if (MIRROR_BYTE(a) == REB_0 or MIRROR_BYTE(a) == Cell_Heart(e)) {
             MIRROR_BYTE(a) = Cell_Heart(e);  // remember what kind it is
             HEART_BYTE(e) = heart;  // e.g. REB_BLOCK => REB_PATH
@@ -706,7 +706,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
         return SPECIFIED;
 
       case FLAVOR_SOURCE: {  // uncompressed sequence
-        const Array* a = Cell_Array(sequence);
+        const Source* a = Cell_Array(sequence);
         if (MIRROR_BYTE(a) != REB_0)
             return SPECIFIED;
         return BINDING(sequence); }
@@ -814,7 +814,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return Trailing_Blank_And(REB_WORD);
     }
 
-    Heart mirror = u_cast(Heart, MIRROR_BYTE(f));
+    Heart mirror = u_cast(Heart, MIRROR_BYTE(u_cast(const Source*, f)));
     if (mirror == REB_0)  // s actually is sequence elements, not one element
         return NOT_SINGLEHEART_0;
 

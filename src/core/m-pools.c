@@ -938,9 +938,9 @@ void Swap_Flex_Content(Flex* a, Flex* b)
     // what to do if such arrays ever are seen to be used with this routine.
     //
     if (Stub_Flavor(a) == FLAVOR_SOURCE)
-        assert(MIRROR_BYTE(a) == REB_0);
+        assert(MIRROR_BYTE(cast(Source*, a)) == REB_0);
     if (Stub_Flavor(b) == FLAVOR_SOURCE)
-        assert(MIRROR_BYTE(b) == REB_0);
+        assert(MIRROR_BYTE(cast(Source*, b)) == REB_0);
 
     Byte a_second = SECOND_BYTE(&FLEX_INFO(a));  // may be USED_BYTE()
     SECOND_BYTE(&FLEX_INFO(a)) = SECOND_BYTE(&FLEX_INFO(b));

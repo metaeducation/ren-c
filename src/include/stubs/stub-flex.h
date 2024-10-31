@@ -168,67 +168,17 @@ INLINE Stub* Set_Flex_Inaccessible(Flex* f) {
     FLEX_INFO(f) &= ~FLEX_INFO_##name
 
 
-//=//// HOOKABLE INFO SECOND_BYTE() [USED or MIRROR] //////////////////////=//
+//=//// USED_BYTE (same location as MIRROR_BYTE) //////////////////////////=//
 //
-// There's a very narrow optimization made, where arrays have SECOND_BYTE()
-// in the info available regardless of whether they are dynamic or not.  This
-// is due to the fact that when they're using the small series optimization,
-// they don't need the USED_BYTE() because they can use a poisoned cell to
-// tell the difference between the only two possible used lengths: 1 and 0.
+// This byte is used by non-dynamic Flex to store the small lengths.  Arrays
+// do not use it (they indicate the length 0 or 1 by whether the cell is
+// poison when non-dynamic).
 //
-// This is taken advantage of by when sequences hold only a list (and a blank),
-// to put the list type into the array, so the array itself can be the payload
-// of the sequence.  The heart of the cell is the sequence heart (REB_CHAIN,
-// REB_PATH, REB_TUPLE...) but then the implied heart of the contained list
-// comes out of the array.  This works most of the time (unless the array is
-// aliased via AS as another type that's also put in a sequence, which forces
-// an allocation of a stub to hold the aliased array).
+// See MIRROR_BYTE() for the application of this to source arrays.
 //
-// Anyway...because it's a delicate thing, it can be helpful to catch cases
-// that misunderstand the rule.  But it's an expensive check, so it's not
-// enabled unless specifically debugging the mirror byte machinery.
-//
-#if (! DEBUG_HOOK_INFO_SECOND_BYTE)
-    #define USED_BYTE(f) \
-        SECOND_BYTE(&FLEX_INFO(f))
 
-    #define MIRROR_BYTE(f) \
-        SECOND_BYTE(&FLEX_INFO(f))
-#else
-    template<bool mirror>
-    struct InfoSecondHolder {
-        Flex* & ref;
-
-        InfoSecondHolder(const Flex* const& ref)
-            : ref (const_cast<Flex* &>(ref))
-          {}
-
-        void operator=(Byte right) {
-            if (mirror)
-                assert(FLAVOR_BYTE(ref) == FLAVOR_SOURCE);
-            else
-                assert(FLAVOR_BYTE(ref) != FLAVOR_SOURCE);
-            SECOND_BYTE(&FLEX_INFO(ref)) = right;
-        }
-
-        operator Byte () const
-          { return SECOND_BYTE(&FLEX_INFO(ref)); }
-
-        explicit operator Heart () const {
-            assert(mirror);
-            return u_cast(Heart, SECOND_BYTE(&FLEX_INFO(ref)));
-        }
-    };
-
-    #define USED_BYTE(flex) \
-        InfoSecondHolder<false> {flex}
-
-    #define MIRROR_BYTE(flex) \
-        InfoSecondHolder<true> {flex}
-#endif
-
-#define Copy_Mirror_Byte(dest,src) \
-    SECOND_BYTE(&FLEX_INFO(dest)) = SECOND_BYTE(&FLEX_INFO(src));
+#define USED_BYTE(f) \
+    SECOND_BYTE(&FLEX_INFO(f))
 
 
 //=//// FLEX CAPACITY AND TOTAL SIZE //////////////////////////////////////=//

@@ -586,6 +586,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "sys-gc.h"
 
 #include "stubs/stub-array.h"  // Array* used by UTF-8 string bookmarks
+#include "stubs/stub-source.h"  // subclass of Array*
 #include "stubs/stub-symbol.h"
 #include "stubs/stub-binary.h"  // Binary_At(), etc. used by strings
 #include "sys-utf8.h"
