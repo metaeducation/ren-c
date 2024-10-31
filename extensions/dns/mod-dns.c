@@ -180,12 +180,14 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         if (Is_Nulled(host)) {
             //
             // Semantics of `read dns://` are open-ended.  Rebol2 gives back
-            // the machine name.  Passing empty string or null to Windows's
+            // the machine name.  Passing empty string to Windows's
             // gethostbyname() appears to give back the local machine's
-            // hostent, but Linux gives back null.
+            // hostent, but Linux gives back null.  (The Windows documentation
+            // says gethostbyname(nullptr) is the same as an empty string,
+            // but MSVC's /analyze checker says that's not legal.)
             //
           #if TO_WINDOWS
-            HOSTENT *he = gethostbyname(nullptr);  // 1 HOSTENT per thread
+            HOSTENT *he = gethostbyname("");  // 1 HOSTENT per thread
             if (he != nullptr)
                 return Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4);
           #else
