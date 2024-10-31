@@ -397,18 +397,6 @@ Bounce Makehook_Varargs(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Varargs: C
-//
-Bounce TO_Varargs(Level* level_, Kind kind, Element* arg)
-{
-    assert(kind == REB_VARARGS);
-    UNUSED(kind);
-
-    return RAISE(arg);
-}
-
-
-//
 //  REBTYPE: C
 //
 // Handles the very limited set of operations possible on a VARARGS!

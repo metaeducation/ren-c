@@ -458,19 +458,6 @@ Bounce Makehook_Frame(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Frame: C
-//
-// Currently can't convert anything TO a frame; nothing has enough information
-// to have an equivalent representation (an OBJECT! could be an expired frame
-// perhaps, but still would have no ACTION OF property)
-//
-Bounce TO_Frame(Level* level_, Kind kind, Element* arg)
-{
-    return RAISE(Error_Bad_Make(kind, arg));
-}
-
-
-//
 //  Makehook_Context: C
 //
 Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
@@ -536,27 +523,6 @@ Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
     }
 
     return RAISE(Error_Bad_Make(heart, arg));
-}
-
-
-//
-//  TO_Context: C
-//
-Bounce TO_Context(Level* level_, Kind kind, Element* arg)
-{
-    // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
-    //
-    assert(kind == REB_OBJECT or kind == REB_MODULE);
-
-    if (kind == REB_OBJECT) {
-        //
-        // !!! Contexts hold canon values now that are typed, this init
-        // will assert--a TO conversion would thus need to copy the varlist
-        //
-        return Init_Object(OUT, Cell_Varlist(arg));
-    }
-
-    return RAISE(Error_Bad_Make(kind, arg));
 }
 
 
@@ -925,6 +891,8 @@ const Symbol* Symbol_From_Picker(const Value* context, const Value* picker)
 REBTYPE(Context)
 {
     Element* context = cast(Element*, D_ARG(1));
+    Heart heart = Cell_Heart(context);
+
     VarList* c = Cell_Varlist(context);
 
     Option(SymId) symid = Symbol_Id(verb);
@@ -979,7 +947,6 @@ REBTYPE(Context)
         UNUSED(ARG(type));  // already in context
         Element* def = cast(Element*, ARG(def));
 
-        Heart heart = Cell_Heart(context);
         if (heart == REB_MODULE)
             return FAIL("Cannot MAKE derived MODULE! instances (yet?)");
 
@@ -1010,6 +977,33 @@ REBTYPE(Context)
         }
 
         return Error_Bad_Make(heart, def); }
+
+    //=//// TO CONVERSION /////////////////////////////////////////////////=//
+
+    // 1. !!! Cannot convert TO a PORT! without copying the whole context...
+    //    which raises the question of why convert an object to a port,
+    //    vs. making it as a port to begin with (?)  Look into why
+    //    system.standard.port is made with CONTEXT and not with MAKE PORT!
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // context
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(heart != to);  // TO should have called COPY in this case
+
+        if (to == REB_PORT) {
+            if (heart != REB_OBJECT)
+                return FAIL(
+                    "Only TO convert OBJECT! -> PORT! (weird internal code)"
+                );
+
+            VarList* copy = Copy_Varlist_Shallow_Managed(c);  // !!! copy [1]
+            Value* rootvar = Rootvar_Of_Varlist(copy);
+            HEART_BYTE(rootvar) = REB_PORT;
+            return Init_Port(OUT, copy);
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(context, ARG(type))); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

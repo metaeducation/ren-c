@@ -47,20 +47,45 @@
     }
 #endif
 
-INLINE Element* Init_Decimal_Untracked(Init(Element) out, REBDEC dec) {
-    Reset_Cell_Header_Untracked(out, CELL_MASK_DECIMAL);
+
+INLINE Element* Init_Decimal_Or_Percent_Untracked(
+    Init(Element) out,
+    Heart heart,
+    REBDEC dec
+){
+    assert(heart == REB_DECIMAL or heart == REB_PERCENT);
+
+    if (not FINITE(dec))
+        fail (Error_Overflow_Raw());
+
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
+    );
     PAYLOAD(Decimal, out).dec = dec;
     return out;
 }
+
+#define Init_Decimal_Or_Percent(out,heart,dec) \
+    TRACK(Init_Decimal_Or_Percent_Untracked((out),(heart),(dec)))
 
 #define Init_Decimal(out,dec) \
-    TRACK(Init_Decimal_Untracked((out), (dec)))
-
-INLINE Element* Init_Percent(Init(Element) out, REBDEC dec) {
-    Reset_Cell_Header_Untracked(out, CELL_MASK_PERCENT);
-    PAYLOAD(Decimal, out).dec = dec;
-    return out;
-}
+    TRACK(Init_Decimal_Or_Percent_Untracked((out), REB_DECIMAL, (dec)))
 
 #define Init_Percent(out,dec) \
-    TRACK(Init_Percent_Untracked((out), (dec)))
+    TRACK(Init_Decimal_Or_Percent_Untracked((out), REB_PERCENT, (dec)))
+
+
+INLINE Element* Init_Decimal_Or_Divide_Percent_Untracked(
+    Init(Element) out,
+    Heart heart,
+    REBDEC dec
+){
+    if (heart == REB_PERCENT)
+        dec /= 100.0;
+
+    return Init_Decimal_Or_Percent_Untracked(out, heart, dec);
+}
+
+#define Init_Decimal_Or_Divide_Percent(out,heart,dec) \
+    TRACK(Init_Decimal_Or_Divide_Percent_Untracked((out),(heart),(dec)))

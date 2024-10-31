@@ -84,6 +84,12 @@ INLINE Kind VAL_TYPE_KIND(const Cell* v) {
     return cast(Kind, unwrap id);
 }
 
+INLINE Heart VAL_TYPE_HEART(const Cell* v) {
+    Kind k = VAL_TYPE_KIND(v);
+    if (k >= REB_QUASIFORM)
+        fail ("Didn't expect QUOTED or QUASIFORM or ANTIFORM for type");
+    return cast(Heart, k);
+}
 
 // Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
 //
@@ -144,9 +150,6 @@ INLINE CFunction** HOOKS_FOR_TYPE_OF(const Cell* v) {
 
 #define Makehook_For_Kind(k) \
     cast(MakeHook*, Builtin_Type_Hooks[k][IDX_MAKE_HOOK])
-
-#define Tohook_For_Type(type) \
-    cast(ToHook*, VAL_TYPE_HOOKS(type)[IDX_TO_HOOK])
 
 #define Mold_Or_Form_Hook_For_Type_Of(v) \
     cast(MOLD_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_MOLD_HOOK])

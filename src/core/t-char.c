@@ -177,13 +177,13 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 
 
 //
-//  CT_Issue: C
+//  CT_Utf8: C
 //
 // As the replacement for CHAR!, ISSUE! inherits the behavior that there are
 // no non-strict comparisons.  To compare non-strictly, they must be aliased
 // as TEXT!.
 //
-REBINT CT_Issue(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);  // always strict
 
@@ -203,15 +203,16 @@ REBINT CT_Issue(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  Makehook_Issue: C
+//  Makehook_Utf8: C
 //
-Bounce Makehook_Issue(Level* level_, Kind k, Element* arg) {
-    assert(k == REB_ISSUE);
-    UNUSED(k);
+Bounce Makehook_Utf8(Level* level_, Kind k, Element* arg) {
+    assert(Any_Utf8_Kind(k));
 
     switch(VAL_TYPE(arg)) {
-      case REB_INTEGER:
-      case REB_DECIMAL: {
+      case REB_INTEGER: {
+        if (k != REB_ISSUE)
+            fail ("Only ISSUE! can MAKE a UTF-8 immutable type with INTEGER!");
+
         REBINT n = Int32(arg);
         Option(Error*) error = Trap_Init_Char(OUT, n);
         if (error)
@@ -219,6 +220,9 @@ Bounce Makehook_Issue(Level* level_, Kind k, Element* arg) {
         return OUT; }
 
       case REB_BINARY: {
+        if (k != REB_ISSUE)
+            fail ("Only ISSUE! can MAKE a UTF-8 immutable type with BINARY!");
+
         Size size;
         const Byte* bp = Cell_Binary_Size_At(&size, arg);
         if (size == 0)
@@ -245,20 +249,13 @@ Bounce Makehook_Issue(Level* level_, Kind k, Element* arg) {
             return RAISE(unwrap error);
         return OUT; }
 
-      case REB_TEXT:
-        if (Cell_Series_Len_At(arg) == 0)
-            return FAIL("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
-        if (Cell_Series_Len_At(arg) == 1)
-            return Init_Char_Unchecked(OUT, Codepoint_At(Cell_Utf8_At(arg)));
-        return Makehook_String(level_, REB_ISSUE, arg);
-
       default:
         break;
     }
 
   bad_make:
 
-    return RAISE(Error_Bad_Make(REB_ISSUE, arg));
+    return RAISE(Error_Bad_Make(k, arg));
 }
 
 
@@ -318,34 +315,6 @@ DECLARE_NATIVE(utf8_to_char)
 }
 
 
-//
-//  TO_Issue: C
-//
-// General semantics of TO and MAKE have been historically confusing, and
-// are further complicated by CHAR! no longer being a unique fundamental
-// type (but rather a single-codepoint form of ISSUE!).  Functionality is
-// divided into functions like CODEPOINT-TO-CHAR and UTF8-TO-CHAR, which
-// leave things like TO ISSUE! 10 to be #10.
-//
-Bounce TO_Issue(Level* level_, Kind kind, Element* arg)
-{
-    assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
-
-    if (Any_String(arg) or Any_Word(arg)) {
-        Length len;
-        Size size;
-        Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, arg);
-
-        if (len == 0)  // don't "accidentally" create zero-codepoint `#`
-            return RAISE(Error_Illegal_Zero_Byte_Raw());
-
-        return Init_Issue_Utf8(OUT, utf8, size, len);
-    }
-
-    return RAISE(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
-}
-
-
 static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 {
     switch (VAL_TYPE(arg)) {
@@ -370,10 +339,7 @@ static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 void MF_Sigil(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
-
-    const char* utf8 = cs_cast(PAYLOAD(Bytes, v).at_least_8);
-    Size size = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_USED];
-    Append_Utf8(mo->string, utf8, size);
+    Append_Any_Utf8(mo->string, v);
 }
 
 
@@ -386,7 +352,7 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
             fail (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
 
-        Append_String_Limit(mo->string, v, UNLIMITED);
+        Append_Any_Utf8_Limit(mo->string, v, UNLIMITED);
         return;
     }
 
@@ -440,10 +406,10 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
             Append_Codepoint(mo->string, '"');
         }
         else
-            Append_String_Limit(mo->string, v, &len);
+            Append_Any_Utf8_Limit(mo->string, v, &len);
     }
     else {
-        const String* s = Cell_Issue_String(v);  // !!! needs node
+        const String* s = Cell_String(v);  // !!! needs node
         Mold_Text_Flex_At(mo, s, 0);
     }
 }
@@ -452,13 +418,13 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
 //
 //  REBTYPE: C
 //
-REBTYPE(Issue)
+REBTYPE(Utf8)
 {
+    Option(SymId) id = Symbol_Id(verb);
+
     Value* issue = D_ARG(1);
 
-    Option(SymId) sym = Symbol_Id(verb);
-
-    switch (sym) {
+    switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // same as `v`
@@ -484,26 +450,24 @@ REBTYPE(Issue)
         }
         return FAIL(PARAM(property)); }
 
-      case SYM_COPY:  // since copy result is also immutable, Move() suffices
+      case SYM_COPY:  // since result is also immutable, Copy_Cell() suffices
         return Copy_Cell(OUT, issue);
+
+  //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
+
+      case SYM_TO_P:
+        return T_String(level_, verb);  // written to handle non-node cases
 
       default:
         break;
     }
 
-    // !!! All the math operations below are inherited from the CHAR!
-    // implementation, and will not work if the ISSUE! length is > 1.
-    //
-    if (not IS_CHAR(issue))
-        return FAIL("Math operations only usable on single-character ISSUE!");
+    if (Stringlike_Has_Node(issue)) {
+        assert(not IS_CHAR(issue));  // no string math
+        return T_String(level_, verb);
+    }
 
-    // Don't use a Codepoint for chr, because it does signed math and then will
-    // detect overflow.
-    //
-    REBI64 chr = cast(REBI64, Cell_Codepoint(issue));
-    REBI64 arg;
-
-    switch (sym) {
+    switch (id) {
       case SYM_PICK_P: {
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
@@ -528,6 +492,23 @@ REBTYPE(Issue)
 
         return Init_Integer(OUT, c); }
 
+      default:
+        break;
+    }
+
+    // !!! All the math operations below are inherited from the CHAR!
+    // implementation, and will not work if the ISSUE! length is > 1.
+    //
+    if (not IS_CHAR(issue))
+        return FAIL("Math operations only usable on single-character ISSUE!");
+
+    // Don't use a Codepoint for chr, because it does signed math and then will
+    // detect overflow.
+    //
+    REBI64 chr = cast(REBI64, Cell_Codepoint(issue));
+    REBI64 arg;
+
+    switch (id) {
       case SYM_ADD: {
         arg = Math_Arg_For_Char(D_ARG(2), verb);
         chr += arg;

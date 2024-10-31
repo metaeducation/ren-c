@@ -415,6 +415,15 @@ REBOL [
         [<maybe> <unrun> element?]  ; <unrun> action for FRAME!
 ]
 
+/to*: generic [
+    "Underlying implementation of TO, parameters reversed for generic dispatch"
+
+    return: [element?]
+    element [element?]
+    type "Guaranteed to not be same type as element (TO copies that case)"
+        [type-block!]
+]
+
 /copy: generic [
     "Copies a series, object, or other value"
 

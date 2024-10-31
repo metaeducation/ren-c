@@ -16,22 +16,23 @@ REBOL [
     }--
 ]
 
-run lambda [@terms [tag! set-word? <variadic>]] [
+run lambda [@terms [tag! set-run-word? <variadic>]] [
     let n: 1
     let w
     while [<end> != w: take terms] [
+        w: resolve w
         set w redescribe reduce [
-            spaced ["Returns the" to word! w "value of a series"]
+            spaced ["Returns the" w "value of a series"]
         ](
             specialize pick/ [picker: n]
         )
         n: n + 1
     ]
 ]
-    ; Variadic function so these words can be at top-level, module collects
+    ; Variadic function so these can be at top-level, module collects
     ;
-    first: second: third: fourth: fifth:
-    sixth: seventh: eighth: ninth: tenth:
+    /first: /second: /third: /fourth: /fifth:
+    /sixth: /seventh: /eighth: /ninth: /tenth:
     <end>
 
 last: redescribe [

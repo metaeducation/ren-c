@@ -394,11 +394,11 @@ static void Update_Error_Near_For_Line(
     while (Is_Lex_Space(*cp))
         ++cp;
 
-    REBLEN len = 0;
+    Size size = 0;
     const Byte* bp = cp;
     while (not ANY_CR_LF_END(*cp)) {  // find end of line to capture in message
-        cp++;
-        len++;
+        ++cp;
+        ++size;
     }
 
     DECLARE_MOLDER (mo);  // put line count and line's text into string [3]
@@ -406,7 +406,7 @@ static void Update_Error_Near_For_Line(
     Append_Ascii(mo->string, "(line ");
     Append_Int(mo->string, line);  // (maybe) different from line below
     Append_Ascii(mo->string, ") ");
-    Append_Utf8(mo->string, cs_cast(bp), len);
+    Append_UTF8_May_Fail(mo->string, cs_cast(bp), size, STRMODE_NO_CR);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
@@ -2458,7 +2458,7 @@ Bounce Scanner_Executor(Level* const L) {
         break; }
 
       case TOKEN_CHAR: {  // now just "issue enclosed in quotes"
-        Init_Issue_Utf8(
+        Init_Issue(
             PUSH(),
             cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
             String_Size(mo->string) - mo->base.size,
@@ -2497,20 +2497,25 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(S, token));
         break;
 
-      case TOKEN_TAG:
+      case TOKEN_TAG: {
         assert(
             len >= 2 and *S->begin == '<'
             /* and *S->end == '>' */  // !!! doesn't know, scan ignores length
         );
-        if (S->end - 1 != Try_Scan_Unencoded_String_To_Stack(
-            S->begin + 1,
-            len - 2,  // !!! doesn't know where tag actually ends (?)
-            REB_TAG,
+
+        Size size = len - 2;  // !!! doesn't know where tag actually ends (?)
+        String* s = Append_UTF8_May_Fail(
+            nullptr,
+            cs_cast(S->begin + 1),
+            size,
             STRMODE_NO_CR
-        )){
+        );
+
+        if (S->end - 1 != S->begin + 1 + size)
             return RAISE(Error_Syntax(S, token));
-        }
-        break;
+
+        Init_Any_String(PUSH(), REB_TAG, s);
+        break; }
 
       case TOKEN_CONSTRUCT: {
         Level* sub = Make_Scan_Level(
@@ -2998,6 +3003,37 @@ void Shutdown_Scanner(void)
 
 
 //
+//  Trap_Transcode_One: C
+//
+// This is a generic helper that powers things like (to integer! "1020").
+//
+// For now we implement it inefficiently, but it should be done without
+// needing to call a native.
+//
+Option(Error*) Trap_Transcode_One(
+    Sink(Element) out,
+    Option(Heart) heart,
+    const Element* any_utf8
+){
+    assert(Any_Utf8(any_utf8));
+    Value* trapped = rebEntrap("transcode:one as text!", any_utf8);
+    if (Is_Error(trapped)) {
+        Error* error = Cell_Error(trapped);
+        rebRelease(trapped);
+        return error;
+    }
+    Meta_Unquotify_Known_Stable(trapped);
+    if (heart and Cell_Heart(trapped) != heart) {
+        rebRelease(trapped);
+        return Error_User("Trap_Transcode_One() gave unwanted type");
+    }
+    Copy_Cell(out, cast(Element*, trapped));
+    rebRelease(trapped);
+    return nullptr;
+}
+
+
+//
 //  /transcode: native [
 //
 //  "Translates UTF-8 source (from a text or binary) to Rebol elements"
@@ -3254,50 +3290,6 @@ DECLARE_NATIVE(transcode)
 
 
 //
-//  Scan_Any_Word: C
-//
-// Scan word chars and make word symbol for it.
-// This method gets exactly the same results as scanner.
-// Returns symbol number, or zero for errors.
-//
-const Byte* Scan_Any_Word(
-    Sink(Value) out,
-    Heart heart,
-    const Byte* utf8,
-    Size size
-){
-    TranscodeState ss;
-    Option(const String*) file = ANONYMOUS;
-    const LineNumber start_line = 1;
-    Init_Transcode(&ss, file, start_line, utf8);
-
-    Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
-    Level* L = Make_Scan_Level(&ss, TG_End_Feed, flags);
-
-    DECLARE_MOLDER (mo);
-
-    Token token;
-    Option(Error*) error = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
-    if (error)
-        fail (unwrap error);
-
-    if (token != TOKEN_WORD) {
-        Drop_Mold_If_Pushed(mo);
-        return nullptr;
-    }
-
-    ScanState* S = &L->u.scan;
-    assert(S->end >= S->begin);
-    if (size > S->end - S->begin)
-        return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
-
-    Init_Any_Word(out, heart, Intern_UTF8_Managed(utf8, size));
-    Free_Level_Internal(L);
-    return S->begin;
-}
-
-
-//
 //  Try_Scan_Issue_To_Stack: C
 //
 // Scan an issue word, allowing special characters.
@@ -3353,7 +3345,7 @@ Option(const Byte*) Try_Scan_Issue_To_Stack(const Byte* cp, Size size)
         Init_Space(PUSH());
     }
     else
-        Init_Issue_Utf8(PUSH(), cast(Utf8(const*), cp), size, len);
+        Init_Issue(PUSH(), cast(Utf8(const*), cp), size, len);
 
     return bp;
 }

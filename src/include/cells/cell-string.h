@@ -1,22 +1,22 @@
 // %cell-string.h
 
+
+INLINE bool Stringlike_Cell(const Cell* v) {
+    return Any_Utf8_Kind(Cell_Heart(v)) and Stringlike_Has_Node(v);
+}
+
 INLINE const String* Cell_String(const Cell* v) {
     Heart heart = Cell_Heart(v);
     if (Any_Word_Kind(heart))
         return Cell_Word_Symbol(v);
 
-    assert(Any_String_Kind(heart) or heart == REB_URL);
+    assert(Stringlike_Cell(v));
     return c_cast(String*, Cell_Flex(v));
 }
 
 #define Cell_String_Ensure_Mutable(v) \
     m_cast(String*, Cell_String(Ensure_Mutable(v)))
 
-INLINE const String* Cell_Issue_String(const Cell* c) {
-    assert(Cell_Heart(c) == REB_ISSUE);
-    assert(Cell_Has_Node1(c));
-    return c_cast(String*, Cell_Node1(c));
-}
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
@@ -206,9 +206,7 @@ INLINE Element* Init_Any_String_At(
 
 #define Init_Text(v,s)      Init_Any_String((v), REB_TEXT, (s))
 #define Init_File(v,s)      Init_Any_String((v), REB_FILE, (s))
-#define Init_Email(v,s)     Init_Any_String((v), REB_EMAIL, (s))
 #define Init_Tag(v,s)       Init_Any_String((v), REB_TAG, (s))
-#define Init_Url(v,s)       Init_Any_String((v), REB_URL, (s))
 
 
 //=//// GLOBAL STRING CONSTANTS //////////////////////////////////////////=//

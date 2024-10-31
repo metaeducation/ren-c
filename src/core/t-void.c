@@ -43,16 +43,6 @@ Bounce Makehook_Quasiform(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Quasiform: C
-//
-// TO is disallowed at the moment (use QUASI)
-//
-Bounce TO_Quasiform(Level* level_, Kind kind, Element* arg) {
-    return RAISE(Error_Bad_Make(kind, arg));
-}
-
-
-//
 //  CT_Quasiform: C
 //
 REBINT CT_Quasiform(const Cell* a, const Cell* b, bool strict)

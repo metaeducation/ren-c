@@ -160,33 +160,17 @@ DECLARE_NATIVE(decode_ieee_754) {
 
 
 //
-//     MAKE BINARY! ...
-//     TO BINARY! ...
+//  Makehook_Binary: C
 //
-// !!! MAKE and TO were not historically very clearly differentiated in
-// Rebol, and so often they would "just do the same thing".  Ren-C ultimately
-// will seek to limit the synonyms/polymorphism, e.g. MAKE or TO BINARY! of a
-// BINARY! acting as COPY, in favor of having the user call COPY explicilty.
+// See also: Makehook_String(), which is similar.
 //
-// Note also the existence of AS and storing strings as UTF-8 should reduce
-// copying, e.g. `as binary! some-string` will be cheaper than TO or MAKE.
-//
-static Bounce MAKE_TO_Binary_Common(Level* level_, const Element* arg)
-{
-    switch (VAL_TYPE(arg)) {
-      case REB_TEXT:
-      case REB_FILE:
-      case REB_EMAIL:
-      case REB_URL:
-      case REB_TAG:
-      case REB_ISSUE: {
-        Size utf8_size;
-        Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
+Bounce Makehook_Binary(Level* level_, Kind kind, Element* arg) {
+    assert(kind == REB_BINARY);
+    UNUSED(kind);
 
-        Binary* b = Make_Binary(utf8_size);
-        memcpy(Binary_Head(b), utf8, utf8_size);
-        Term_Binary_Len(b, utf8_size);
-        return Init_Blob(OUT, b); }
+    switch (VAL_TYPE(arg)) {
+      case REB_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
+        return Init_Blob(OUT, Make_Binary(Int32s(arg, 0)));
 
       case REB_BLOCK: {
         Join_Binary_In_Byte_Buf(arg, -1);
@@ -224,51 +208,10 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const Element* arg)
         return Init_Blob(OUT, b); }
 
       default:
-        return RAISE(Error_Bad_Make(REB_BINARY, arg));
-    }
-}
-
-
-//
-//  Makehook_Binary: C
-//
-// See also: Makehook_String(), which is similar.
-//
-Bounce Makehook_Binary(Level* level_, Kind kind, Element* def) {
-    assert(kind == REB_BINARY);
-    UNUSED(kind);
-
-    if (Is_Integer(def)) {
-        //
-        // !!! R3-Alpha tolerated decimal, e.g. `make string! 3.14`, which
-        // is semantically nebulous (round up, down?) and generally bad.
-        //
-        return Init_Blob(OUT, Make_Binary(Int32s(def, 0)));
+        break;
     }
 
-    if (Is_Block(def)) {  // was construction syntax, #[binary [#{0001} 2]]
-        rebPushContinuation_internal(
-            cast(Value*, OUT),
-            LEVEL_MASK_NONE,
-            Canon(TO), Canon(BINARY_X),
-                Canon(REDUCE), rebQ(def)  // rebQ() copies cell, survives frame
-        );
-        return BOUNCE_DELEGATE;
-    }
-
-    return MAKE_TO_Binary_Common(level_, def);
-}
-
-
-//
-//  TO_Binary: C
-//
-Bounce TO_Binary(Level* level_, Kind kind, Element* arg)
-{
-    assert(kind == REB_BINARY);
-    UNUSED(kind);
-
-    return MAKE_TO_Binary_Common(level_, arg);
+    return RAISE(Error_Bad_Make(REB_BINARY, arg));
 }
 
 
@@ -358,6 +301,32 @@ REBTYPE(Binary)
     Option(SymId) id = Symbol_Id(verb);
 
     switch (id) {
+
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+    // 1. !!! Historically TO would convert binaries to strings.  But as the
+    //    definition of TO has been questioned and evolving, that no longer
+    //    seems to make sense (e.g. if `TO TEXT! 1` is "1", the concept of
+    //    implementation transformations doesn't fit).  Keep compatible for
+    //    right now, but ultimately MAKE or AS should be used for this.
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // v
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(REB_BINARY != to);  // TO should have called COPY in this case
+
+        if (Any_String_Kind(to)) {  // (to text! binary) questionable [1]
+            Size size;
+            const Byte* at = Cell_Binary_Size_At(&size, v);
+            return Init_Any_String(
+                OUT,
+                to,
+                Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
+            );
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

@@ -3,10 +3,10 @@
 (email? graham.chiu@mdh.health.nz)
 (not email? 1)
 (email! = type of me@here.com)
-; "minimum"
-(email? make email! "")
-(strict-equal? make email! "" make email! 0)
-(strict-equal? make email! "" to email! "")
+
+~illegal-zero-byte~ !! (to email! "")
+~???~ !! (make email! 0)
+~???~ !! (make email! 100)
 
 ; There are some complex rules determining what an email address can and can't
 ; be like.  e.g. dots are legal in the part to the left of the @, but not two

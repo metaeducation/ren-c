@@ -44,36 +44,61 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 //
 //  Makehook_Integer: C
 //
+// 1. This is a kind of crazy historical idea where this works:
+//
+//        rebol2>> make integer! <11.2e-1>
+//        == 1
+//
+//    That seems like something you generally aren't interested in doing.
+//    Here we constrain it at least to MAKE INTEGER! and not TO INTEGER! so
+//    the field is a bit wider open, but I feel like if you want this you
+//    should have to ask for a decimal! on purpose and then ROUND it.
+//
+// 2. While historical Rebol TO INTEGER! of BINARY! would interpret the
+//    bytes as a big-endian form of their internal representations, wanting to
+//    futureproof for BigNum integers has changed Ren-C's point of view...
+//    delegating that highly parameterized conversion to operations currently
+//    called ENBIN and DEBIN.
+//
+//      https://forum.rebol.info/t/1270
+//
+//    This is a stopgap while ENBIN and DEBIN are hammered out which preserves
+//    the old behavior in the MAKE INTEGER! case.
+//
+// 3. Historical Rebol (to integer! 1:00) would give you 3600 despite it
+//    being scarcely clear why that's a logical TO moreso than 1, or 100, or
+//    anything else.  We move this oddity to MAKE.
+//
 Bounce Makehook_Integer(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_INTEGER);
-    UNUSED(kind);
 
-    Option(Error*) error = Trap_Value_To_Int64(OUT, arg, false);
-    if (error)
-        return RAISE(unwrap error);
+    if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
+        Option(Error*) error = Trap_Transcode_One(OUT, REB_0, arg);
+        if (not error) {
+            if (Is_Integer(OUT))
+                return OUT;
+            if (Is_Decimal(OUT))
+                return rebValue(Canon(ROUND), stable_OUT);
+            return RAISE(Error_User("Trap_Transcode_One() gave unwanted type"));
+        }
 
-    return OUT;
-}
+        return FAIL(Error_Bad_Make(REB_INTEGER, arg));
+    }
 
+    if (Is_Time(arg))  // !!! (make integer! 1:00) -> 3600 :-( [3]
+        return Init_Integer(OUT, SECS_FROM_NANO(VAL_NANO(arg)));
 
-//
-//  TO_Integer: C
-//
-Bounce TO_Integer(Level* level_, Kind kind, Element* arg)
-{
-    assert(kind == REB_INTEGER);
-    UNUSED(kind);
+    if (Is_Decimal(arg) or Is_Percent(arg)) {  // !!! prefer ROUND
+        if (VAL_DECIMAL(arg) < MIN_D64 or VAL_DECIMAL(arg) >= MAX_D64)
+            return FAIL(Error_Overflow_Raw());
 
-    if (Is_Issue(arg))
-        return RAISE(
-            "Use CODEPOINT OF for INTEGER! from single-character ISSUE!"
-        );
+        return Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));;
+    }
 
-    Option(Error*) error = Trap_Value_To_Int64(OUT, arg, false);
-    if (error)
-        return RAISE(unwrap error);
+    if (Is_Money(arg))  // !!! Better idea than MAKE for this?
+        return Init_Integer(OUT, deci_to_int(VAL_MONEY_AMOUNT(arg)));
 
-    return OUT;
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
@@ -100,99 +125,6 @@ void Hex_String_To_Integer(Value* out, const Value* value)  // !!! UNUSED
     //
     if (VAL_INT64(out) < 0)
         fail (Error_Out_Of_Range_Raw(value));
-}
-
-
-//
-//  Value_To_Int64: C
-//
-// Interpret `value` as a 64-bit integer and return it in `out`.
-//
-// If `no_sign` is true then use that to inform an ambiguous conversion
-// (e.g. #{FF} is 255 instead of -1).  However, it won't contradict the sign
-// of unambiguous source.  So the string "-1" will raise an error if you try
-// to convert it unsigned.  (For this, use `abs to-integer "-1"`.)
-//
-// Because Rebol's INTEGER! uses a signed REBI64 and not an unsigned
-// REBU64, a request for unsigned interpretation is limited to using
-// 63 of those bits.  A range error will be thrown otherwise.
-//
-// If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
-//
-Option(Error*) Trap_Value_To_Int64(
-    Sink(Value) out,
-    const Value* value,
-    bool no_sign
-){
-    // !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases
-    // Use SWITCH instead of IF chain? (was written w/ANY_STR test)
-
-    if (Is_Integer(value)) {
-        Copy_Cell(out, value);
-        goto check_sign;
-    }
-    if (Is_Decimal(value) || Is_Percent(value)) {
-        if (VAL_DECIMAL(value) < MIN_D64 || VAL_DECIMAL(value) >= MAX_D64)
-            return Error_Overflow_Raw();
-
-        Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
-        goto check_sign;
-    }
-    else if (Is_Money(value)) {
-        Init_Integer(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
-        goto check_sign;
-    }
-    else if (Is_Issue(value) or Any_String(value)) {
-        Size size;
-        const Length max_len = Cell_Series_Len_At(value);  // e.g. "no maximum"
-        const Byte* bp = Analyze_String_For_Scan(&size, value, max_len);
-        if (
-            memchr(bp, '.', size)
-            || memchr(bp, 'e', size)
-            || memchr(bp, 'E', size)
-        ){
-            if (Try_Scan_Decimal_To_Stack(bp, size, true)) {
-                if (
-                    VAL_DECIMAL(TOP) < INT64_MAX
-                    && VAL_DECIMAL(TOP) >= INT64_MIN
-                ){
-                    Init_Integer(out, cast(REBI64, VAL_DECIMAL(TOP)));
-                    DROP();
-                    goto check_sign;
-                }
-
-                DROP();
-                return Error_Overflow_Raw();
-            }
-        }
-        if (Try_Scan_Integer_To_Stack(bp, size)) {
-            Move_Drop_Top_Stack_Element(out);
-            goto check_sign;
-        }
-
-        return Error_Bad_Make(REB_INTEGER, value);
-    }
-    else if (Is_Logic(value)) {
-        //
-        // Rebol's choice is that no integer is uniquely representative of
-        // "falsehood" condition, e.g. `if 0 [print "this prints"]`.  So to
-        // say TO LOGIC! 0 is FALSE would be disingenuous.
-        //
-        return Error_Bad_Make(REB_INTEGER, value);
-    }
-    else if (Is_Time(value)) {
-        Init_Integer(out, SECS_FROM_NANO(VAL_NANO(value))); // always unsigned
-        return nullptr;
-    }
-    else
-        return Error_Bad_Make(REB_INTEGER, value);
-
-check_sign:
-
-    if (no_sign && VAL_INT64(out) < 0)
-        return Error_Positive_Raw();
-
-    return nullptr;
 }
 
 
@@ -289,30 +221,54 @@ REBTYPE(Integer)
         arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
     switch (id) {
-
-    case SYM_COPY:
+      case SYM_COPY:
         Copy_Cell(OUT, val);
         return OUT;
 
-    case SYM_ADD: {
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // val
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(REB_INTEGER != to);  // TO calls COPY in this case
+
+        if (Any_Utf8_Kind(to))
+            return rebValue(Canon(AS), ARG(type), Canon(FORM), val);
+
+        if (to == REB_DECIMAL or to == REB_PERCENT) {
+            REBDEC d = cast(REBDEC, VAL_INT64(val));
+            if (to == REB_PERCENT)
+                d = d / 100;
+            return Init_Decimal_Or_Percent(OUT, to, d);
+        }
+
+        if (to == REB_MONEY) {
+            deci d = int_to_deci(cast(REBDEC, VAL_INT64(val)));
+            return Init_Money(OUT, d);
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(val, ARG(type))); }
+
+      case SYM_ADD: {
         REBI64 anum;
         if (REB_I64_ADD_OF(num, arg, &anum))
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
-    case SYM_SUBTRACT: {
+      case SYM_SUBTRACT: {
         REBI64 anum;
         if (REB_I64_SUB_OF(num, arg, &anum))
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
-    case SYM_MULTIPLY: {
+      case SYM_MULTIPLY: {
         REBI64 p;
         if (REB_I64_MUL_OF(num, arg, &p))
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, p); }
 
-    case SYM_DIVIDE:
+      case SYM_DIVIDE:
         if (arg == 0)
             return RAISE(Error_Zero_Divide_Raw());
         if (num == INT64_MIN && arg == -1)
@@ -320,50 +276,50 @@ REBTYPE(Integer)
         if (num % arg == 0)
             return Init_Integer(OUT, num / arg);
         // Fall thru
-    case SYM_POWER:
+      case SYM_POWER:
         Init_Decimal(D_ARG(1), cast(REBDEC, num));
         Init_Decimal(D_ARG(2), cast(REBDEC, arg));
         return T_Decimal(level_, verb);
 
-    case SYM_REMAINDER:
+      case SYM_REMAINDER:
         if (arg == 0)
             return RAISE(Error_Zero_Divide_Raw());
         return Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
 
-    case SYM_BITWISE_AND:
+      case SYM_BITWISE_AND:
         return Init_Integer(OUT, num & arg);
 
-    case SYM_BITWISE_OR:
+      case SYM_BITWISE_OR:
         return Init_Integer(OUT, num | arg);
 
-    case SYM_BITWISE_XOR:
+      case SYM_BITWISE_XOR:
         return Init_Integer(OUT, num ^ arg);
 
-    case SYM_BITWISE_AND_NOT:
+      case SYM_BITWISE_AND_NOT:
         return Init_Integer(OUT, num & ~arg);
 
-    case SYM_NEGATE:
+      case SYM_NEGATE:
         if (num == INT64_MIN)
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, -num);
 
-    case SYM_BITWISE_NOT:
+      case SYM_BITWISE_NOT:
         return Init_Integer(OUT, ~num);
 
-    case SYM_ABSOLUTE:
+      case SYM_ABSOLUTE:
         if (num == INT64_MIN)
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, num < 0 ? -num : num);
 
-    case SYM_EVEN_Q:
+      case SYM_EVEN_Q:
         num = ~num;
         // falls through
-    case SYM_ODD_Q:
+      case SYM_ODD_Q:
         if (num & 1)
             return Init_Logic(OUT, true);
         return Init_Logic(OUT, false);
 
-    case SYM_ROUND: {
+      case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
         USED(ARG(value));  // extracted as d1, others are passed via level_
         USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
@@ -399,7 +355,7 @@ REBTYPE(Integer)
 
         return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to))); }
 
-    case SYM_RANDOM: {
+      case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
         UNUSED(PARAM(value));
@@ -415,7 +371,7 @@ REBTYPE(Integer)
             return FAIL(ARG(value));
         return Init_Integer(OUT, Random_Range(num, REF(secure))); }
 
-    default:
+      default:
         break;
     }
 

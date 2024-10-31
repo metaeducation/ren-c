@@ -124,18 +124,10 @@ handle      "arbitrary internal object or value"
             [any-inert?]
             [handle      -       +]
 
-
-url         "uniform resource locator or identifier"
-            (node1)
-            [any-utf8? any-inert?]
-            [url         string  string]
-
-
 binary      "series of bytes"
             (node1)
             [any-series? any-inert?]  ; note: not an ANY-STRING?
             [binary      *       +]
-
 
 <ANY-STRING?>  ; (order does not currently matter)
 
@@ -149,11 +141,6 @@ binary      "series of bytes"
                 [any-series? any-utf8? any-inert?]
                 [string      *       *]
 
-    email       "email address"
-                (node1)
-                [any-series? any-utf8? any-inert?]
-                [string      *       *]
-
     tag         "markup string (HTML or XML)"
     ~tripwire~  (node1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
@@ -161,16 +148,26 @@ binary      "series of bytes"
 
 </ANY-STRING?>
 
+url         "uniform resource locator or identifier"
+            (:node1)  ; may or may not embed data in issue vs. use node
+            [any-utf8? any-inert?]
+            [utf8        *       +]
+
+email       "email address"
+            (:node1)  ; may or may not embed data in issue vs. use node
+            [any-utf8? any-inert?]
+            [utf8        *       +]
 
 issue       "immutable codepoint or codepoint sequence"
             (:node1)  ; may or may not embed data in issue vs. use node
             [any-utf8? any-inert? any-sequencable?]
-            [issue       *       *]
+            [utf8       *        +]
 
-sigil       "Decorators like $ : ^ & @ (:: means decoration of ANY-SET-TYPE?)"
+sigil       "Decorators like $ ^ & @ ' ~~"
             (CELL_MASK_NO_NODES)
             [any-utf8? any-sequencable?]  ; NOT inert
-            [issue        *       +]  ; UTF-8 content in cell, like ISSUE?
+            [utf8        *       +]  ; UTF-8 content in cell, like ISSUE?
+
 
 
 ; ============================================================================

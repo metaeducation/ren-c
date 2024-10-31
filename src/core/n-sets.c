@@ -254,7 +254,7 @@ Flex* Make_Set_Operation_Flex(
                         skip  // skip
                     )
                 ){
-                    Append_String_Limit(mo->string, iter, &skip);
+                    Append_Any_Utf8_Limit(mo->string, iter, &skip);
                 }
             }
 

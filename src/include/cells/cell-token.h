@@ -93,8 +93,9 @@ INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
 
-INLINE Element* Init_Issue_Utf8(
+INLINE Element* Init_Utf8_Non_String(
     Init(Element) out,
+    Heart heart,
     Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
     Size size,
     Length len  // while validating, you should have counted the codepoints
@@ -102,7 +103,7 @@ INLINE Element* Init_Issue_Utf8(
     if (size + 1 <= Size_Of(PAYLOAD(Bytes, out).at_least_8)) {
         Reset_Cell_Header_Untracked(
             out,
-            FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
+            FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
         );
         memcpy(PAYLOAD(Bytes, out).at_least_8, utf8, size);
         PAYLOAD(Bytes, out).at_least_8[size] = '\0';
@@ -113,11 +114,19 @@ INLINE Element* Init_Issue_Utf8(
         String* str = Make_Sized_String_UTF8(cs_cast(utf8), size);
         assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
         Freeze_Flex(str);
-        Init_Text(out, str);
-        HEART_BYTE(out) = REB_ISSUE;
+        Init_Any_String(out, heart, str);
     }
     return out;
 }
+
+#define Init_Email(out,utf8,size,len) \
+    Init_Utf8_Non_String((out), REB_EMAIL, (utf8), (size), (len))
+
+#define Init_Url(out,utf8,size,len) \
+    Init_Utf8_Non_String((out), REB_URL, (utf8), (size), (len))
+
+#define Init_Issue(out,utf8,size,len) \
+    Init_Utf8_Non_String((out), REB_ISSUE, (utf8), (size), (len))
 
 
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING?)
@@ -208,9 +217,9 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    Heart heart = Cell_Heart(v);
-
     if (not Stringlike_Has_Node(v)) {  // SIGIL!, some ISSUE!...
+        assert(not Any_String_Kind(Cell_Heart(v)));
+
         REBLEN len;
         Size size;
         if (
@@ -235,28 +244,12 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         return cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
     }
 
-    const String* s = c_cast(String*, Cell_Node1(v));  // +Cell_Issue_String()
-    Utf8(const*) utf8;
+    Utf8(const*) utf8 = Cell_String_At(v);
 
-    if (heart == REB_ISSUE or heart == REB_URL) {  // no index
-        utf8 = String_Head(s);
+    if (size_out or length_out) {
+        Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
         if (size_out)
-            *(unwrap size_out) = Flex_Used(s);
-        if (length_out) {
-            if (not limit)
-                *(unwrap length_out) = s->misc.length;
-            else
-                *(unwrap length_out) = MIN(s->misc.length, *(unwrap limit));
-        }
-    }
-    else {
-        utf8 = Cell_String_At(v);
-
-        if (size_out or length_out) {
-            Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
-            if (size_out)
-                *(unwrap size_out) = utf8_size;
-        }
+            *(unwrap size_out) = utf8_size;
     }
 
     return utf8;

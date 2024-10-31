@@ -47,6 +47,19 @@ Bounce Makehook_Port(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_PORT);
     UNUSED(kind);
 
+    if (Is_Object(arg)) {
+        //
+        // !!! cannot convert to a PORT! without copying the whole context...
+        // which raises the question of why convert an object to a port,
+        // vs. making it as a port to begin with (?)  Look into why
+        // system.standard.port is made with CONTEXT and not with MAKE PORT!
+        //
+        VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
+        Value* rootvar = Rootvar_Of_Varlist(context);
+        HEART_BYTE(rootvar) = REB_PORT;
+        return Init_Port(OUT, context);
+    }
+
     if (rebRunThrows(
         cast(Value*, OUT),  // <-- output cell
         rebRUN(SysUtil(MAKE_PORT_P)), rebQ(arg)
@@ -58,30 +71,6 @@ Bounce Makehook_Port(Level* level_, Kind kind, Element* arg) {
         return RAISE(OUT);
 
     return OUT;
-}
-
-
-//
-//  TO_Port: C
-//
-Bounce TO_Port(Level* level_, Kind kind, Element* arg)
-{
-    assert(kind == REB_PORT);
-    UNUSED(kind);
-
-    if (not Is_Object(arg))
-        return RAISE(Error_Bad_Make(REB_PORT, arg));
-
-    // !!! cannot convert TO a PORT! without copying the whole context...
-    // which raises the question of why convert an object to a port,
-    // vs. making it as a port to begin with (?)  Look into why
-    // system.standard.port is made with CONTEXT and not with MAKE PORT!
-    //
-    VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
-    Value* rootvar = Rootvar_Of_Varlist(context);
-    HEART_BYTE(rootvar) = REB_PORT;
-
-    return Init_Port(OUT, context);
 }
 
 
@@ -245,6 +234,9 @@ REBTYPE(Url)
         return COPY(url);
     }
     else switch (id) {
+      case SYM_TO_P:  // defer to String (handles non-node-having case too)
+        return T_String(level_, verb);
+
       case SYM_REFLECT:
       case SYM_READ:
       case SYM_WRITE:

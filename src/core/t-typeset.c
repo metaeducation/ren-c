@@ -380,15 +380,6 @@ Bounce Makehook_Parameter(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Parameter: C
-//
-Bounce TO_Parameter(Level* level_, Kind kind, Element* arg)
-{
-    return Makehook_Parameter(level_, kind, arg);
-}
-
-
-//
 //  MF_Parameter: C
 //
 void MF_Parameter(Molder* mo, const Cell* v, bool form)

@@ -241,36 +241,22 @@ Bounce Makehook_Time(Level* level_, Kind kind, Element* arg) {
     UNUSED(kind);
 
     switch (VAL_TYPE(arg)) {
-      case REB_TIME: // just copy it (?)
-        return Copy_Cell(OUT, arg);
-
-    case REB_TEXT: { // scan using same decoding as LOAD would
-        Size size;
-        const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
-        const Byte* ep;
-
-        if (not (ep = maybe Try_Scan_Time_To_Stack(bp, size)))
-            goto bad_make;
-
-        UNUSED(ep);  // !!! check this?
-        return OUT; }
-
-    case REB_INTEGER: // interpret as seconds
-        if (VAL_INT64(arg) < -MAX_SECONDS || VAL_INT64(arg) > MAX_SECONDS)
+      case REB_INTEGER:  // interpret as seconds
+        if (VAL_INT64(arg) < -MAX_SECONDS or VAL_INT64(arg) > MAX_SECONDS)
             return FAIL(Error_Out_Of_Range(arg));
 
         return Init_Time_Nanoseconds(OUT, VAL_INT64(arg) * SEC_SEC);
 
-    case REB_DECIMAL:
+      case REB_DECIMAL:
         if (
             VAL_DECIMAL(arg) < cast(REBDEC, -MAX_SECONDS)
-            || VAL_DECIMAL(arg) > cast(REBDEC, MAX_SECONDS)
+            or VAL_DECIMAL(arg) > cast(REBDEC, MAX_SECONDS)
         ){
             return FAIL(Error_Out_Of_Range(arg));
         }
         return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
-    case REB_BLOCK: { // [hh mm ss]
+      case REB_BLOCK: { // [hh mm ss]
         const Element* tail;
         const Element* item = Cell_List_At(&tail, arg);
 
@@ -352,15 +338,6 @@ Bounce Makehook_Time(Level* level_, Kind kind, Element* arg) {
   bad_make:
 
     return RAISE(Error_Bad_Make(REB_TIME, arg));
-}
-
-
-//
-//  TO_Time: C
-//
-Bounce TO_Time(Level* level_, Kind kind, Element* arg)
-{
-    return Makehook_Time(level_, kind, arg);
 }
 
 

@@ -463,14 +463,6 @@ Bounce Makehook_Antiform(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Antiform: C
-//
-Bounce TO_Antiform(Level* level_, Kind kind, Element* arg) {
-    return RAISE(Error_Bad_Make(kind, arg));
-}
-
-
-//
 //  REBTYPE: C
 //
 REBTYPE(Antiform)

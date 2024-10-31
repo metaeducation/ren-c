@@ -221,9 +221,6 @@ Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
             Scan_UTF8_Managed(file, at, size)
         );
     }
-    else if (Is_Map(arg)) {
-        return Init_Any_List(OUT, heart, Map_To_Array(VAL_MAP(arg), 0));
-    }
     else if (Is_Frame(arg)) {
         //
         // !!! Experimental behavior; if action can run as arity-0, then
@@ -306,45 +303,6 @@ Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
   bad_make:
 
     return RAISE(Error_Bad_Make(heart, arg));
-}
-
-
-//
-//  TO_List: C
-//
-Bounce TO_List(Level* level_, Kind k, Element* arg) {
-    Heart heart = cast(Heart, k);
-
-    if (Any_Sequence(arg)) {
-        StackIndex base = TOP_INDEX;
-        Length len = Cell_Sequence_Len(arg);
-        REBLEN i;
-        for (i = 0; i < len; ++i) {
-            Derelativize_Sequence_At(
-                PUSH(),
-                c_cast(Element*, arg),
-                Cell_Sequence_Binding(arg),
-                i
-            );
-        }
-        return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
-    }
-    else if (Any_List(arg)) {
-        Length len;
-        const Element* at = Cell_List_Len_At(&len, arg);
-        return Init_Any_List(
-            OUT,
-            heart,
-            Copy_Values_Len_Shallow(at, len)
-        );
-    }
-    else {
-        // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
-        //
-        Source* single = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
-        Copy_Cell(Stub_Cell(single), arg);
-        return Init_Any_List(OUT, heart, single);
-    }
 }
 
 
@@ -792,6 +750,82 @@ REBTYPE(List)
                 return r;
         }
         return RAISE("MAKE dispatcher did not return correct type"); }
+
+  //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
+
+  // 1. Historically, TO conversions have been binding agnostic.  Using AS
+  //    will give you the same binding as the original but no copy, while
+  //    COPY will give you the same binding as the original.  Should this
+  //    code delegate to changing the heart byte of "whatever COPY does?"
+  //
+  // 2. The scanner uses the data stack, but it could just take sequential
+  //    cells in any array...and the data stack just being an example of that.
+  //    Then we wouldn't have to push the cells here.
+  //
+  // 3. What (to word! [...]) should do hasn't exactly been hammered out.
+  //    TO isn't supposed to evaluate, so it could be a synonym for
+  //    (as word! unspaced @[...]) just as a nice quick way to say that.
+  //    But another school of thought aims for reversibility where a block
+  //    with a single word in it can be converted back and forth, e.g.
+  //    ((to block! 'a) -> [a]) and ((to word! [a]) -> a) with all other
+  //    cases being errors by virtue of not preserving the transformation.
+  //    Between those two possibilities, acting on a single element block
+  //    with a word in it is common behavior.  Do that as a placeholder.
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // list
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(Cell_Heart(list) != to);  // TO calls COPY in this case
+
+        if (Any_List_Kind(to)) {
+            Length len;
+            const Element* at = Cell_List_Len_At(&len, list);
+            return Init_Any_List(
+                OUT, to, Copy_Values_Len_Shallow(at, len)  // !!! binding? [1]
+            );
+        }
+
+        if (Any_Sequence_Kind(to)) {  // (to path! [a b c]) -> a/b/c
+            const Element* tail;
+            const Element* at = Cell_List_At(&tail, list);
+            for (; at != tail; ++at)
+                Copy_Cell(PUSH(), at);  // !!! bypass stack? [2]
+
+            Option(Error*) trap = Trap_Pop_Sequence(OUT, to, STACK_BASE);
+            if (trap)
+                return RAISE(unwrap trap);
+
+            return OUT;
+        }
+
+        if (Any_Word_Kind(to)) {  // !!! very conservative for now [3]
+            Length len;
+            const Element* item = Cell_List_Len_At(&len, list);
+            if (Cell_Series_Len_At(list) != 1)
+                return RAISE("Can't TO ANY-WORD? on list with length > 1");
+            if (not Is_Word(item))
+                return RAISE("TO ANY-WORD? requires list with one word in it");
+            Copy_Cell(OUT, item);
+            HEART_BYTE(OUT) = to;
+            return OUT;
+        }
+
+        if (to == REB_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
+            Length len = Cell_Series_Len_At(list);
+            if (len % 2 != 0)
+                return RAISE("TO MAP! of list must have even number of items");
+
+            const Element* tail;
+            const Element* at = Cell_List_At(&tail, list);
+
+            Map* map = Make_Map(len / 2);  // map size is half block length
+            Append_Map(map, at, tail, len);
+            Rehash_Map(map);
+            return Init_Map(OUT, map);
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(list, ARG(type))); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

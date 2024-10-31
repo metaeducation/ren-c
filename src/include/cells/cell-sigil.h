@@ -40,15 +40,17 @@ INLINE char Symbol_For_Sigil(Sigil sigil) {
 
 INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
     if (sigil == SIGIL_QUASI)
-        Init_Issue_Utf8(
+        Init_Utf8_Non_String(
             out,
+            REB_SIGIL,
             cast(Utf8(const*), "~~"),  // must be "validated UTF-8"
             2,  // 2 codepoints
             2);  // in 2 bytes
-    else
+    else {
         Init_Char_Unchecked(out, Symbol_For_Sigil(sigil));
+        HEART_BYTE(out) = REB_SIGIL;
+    }
 
-    HEART_BYTE(out) = REB_SIGIL;
     EXTRA(Bytes, out).at_least_4[IDX_EXTRA_SIGIL] = sigil;
     return out;
 }

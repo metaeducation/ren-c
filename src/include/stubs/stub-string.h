@@ -569,5 +569,5 @@ INLINE bool Should_Skip_Ascii_Byte_May_Fail(
 #define Validate_Ascii_Byte(bp,strmode,start) \
     (Should_Skip_Ascii_Byte_May_Fail((bp), (strmode), (start)), NOOP)
 
-#define Append_String(dest,string) \
-    Append_String_Limit((dest), (string), UNLIMITED)
+#define Append_Any_Utf8(dest,string) \
+    Append_Any_Utf8_Limit((dest), (string), UNLIMITED)

@@ -8,9 +8,14 @@
 
 ; alternative formats
 (25-Sep-2006 = 25-9-2006)
-(25-Sep-2006 = make date! "25/Sep/2006")
 (25-Sep-2006 = to date! "25-Sep-2006")
 ("25-Sep-2006" = mold 25-Sep-2006)
+
+; Support for the slashed format was dropped.  Maybe TO DATE! from a PATH!
+; of this style should be made to work?
+;
+~bad-make-arg~ !! (make date! "25/Sep/2006")
+~???~ !! (to date! "25/Sep/2006")
 
 ; minimum
 (date? 1-Jan-0000)

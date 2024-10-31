@@ -567,18 +567,6 @@ Bounce Makehook_Error(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Error: C
-//
-// !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
-// being rethought.
-//
-Bounce TO_Error(Level* level_, Kind kind, Element* arg)
-{
-    return Makehook_Error(level_, kind, arg);
-}
-
-
-//
 //  Make_Error_Managed_Vaptr: C
 //
 // (WARNING va_list by pointer: http://stackoverflow.com/a/3369762/211160)
@@ -1478,7 +1466,7 @@ void MF_Error(Molder* mo, const Cell* v, bool form)
             // error, because otherwise it obscures the LOAD call where the
             // scanner was invoked.  Review.
             //
-            Append_String(mo->string, nearest);
+            Append_Any_Utf8(mo->string, nearest);
         }
         else if (Any_List(nearest) or Any_Path(nearest))
             Mold_Element_Limit(mo, cast(Element*, nearest), 60);

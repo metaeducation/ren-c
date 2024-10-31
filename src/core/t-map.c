@@ -202,7 +202,7 @@ REBINT Find_Key_Hashed(
 //
 // Recompute the entire hash table for a map. Table must be large enough.
 //
-static void Rehash_Map(Map* map)
+void Rehash_Map(Map* map)
 {
     HashList* hashlist = MAP_HASHLIST(map);
 
@@ -330,7 +330,7 @@ REBLEN Find_Map_Entry(
 //
 //  Append_Map: C
 //
-static void Append_Map(
+void Append_Map(
     Map* map,
     const Element* head,
     const Element* tail,
@@ -342,7 +342,7 @@ static void Append_Map(
     while (n < len and item != tail) {
         if (item + 1 == tail) {
             //
-            // Keys with no value not allowed, e.g. `make map! [1 "foo" 2]`
+            // Keys with no value not allowed, e.g. `to map! [1 "foo" 2]`
             //
             fail (Error_Index_Out_Of_Range_Raw());
         }
@@ -364,18 +364,17 @@ static void Append_Map(
 //
 //  Makehook_Map: C
 //
+// !!! R3-Alpha TO of MAP! was like MAKE but wouldn't accept just a size.
+// Since TO MAP! doesn't do any evaluation, drop MAKE MAP! for now...it may
+// return as an evaluating or otherwise interesting form.
+//
 Bounce Makehook_Map(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_MAP);
 
-    if (Any_Number(arg)) {
+    if (Any_Number(arg))
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
-    }
-    else {
-        // !!! R3-Alpha TO of MAP! was like MAKE but wouldn't accept just
-        // being given a size.
-        //
-        return TO_Map(level_, kind, arg);
-    }
+
+    return FAIL(Error_Bad_Make(kind, arg));
 }
 
 
@@ -423,43 +422,6 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
 
 
 //
-//  TO_Map: C
-//
-Bounce TO_Map(Level* level_, Kind kind, Element* arg)
-{
-    assert(kind == REB_MAP);
-    UNUSED(kind);
-
-    if (Is_Block(arg) || Is_Group(arg)) {
-        //
-        // make map! [word val word val]
-        //
-        REBLEN len = Cell_Series_Len_At(arg);
-        const Element* tail;
-        const Element* at = Cell_List_At(&tail, arg);
-
-        Map* map = Make_Map(len / 2); // [key value key value...] + END
-        Append_Map(map, at, tail, len);
-        Rehash_Map(map);
-        return Init_Map(OUT, map);
-    }
-    else if (Is_Map(arg)) {
-        //
-        // Values are not copied deeply by default.
-        //
-        // !!! Is there really a use in allowing MAP! to be converted TO a
-        // MAP! as opposed to having people COPY it?
-        //
-        bool deeply = false;
-
-        return Init_Map(OUT, Copy_Map(VAL_MAP(arg), deeply));
-    }
-
-    return RAISE(arg);
-}
-
-
-//
 //  Map_To_Array: C
 //
 // what: -1 - words, +1 - values, 0 -both
@@ -467,26 +429,28 @@ Bounce TO_Map(Level* level_, Kind kind, Element* arg)
 Source* Map_To_Array(const Map* map, REBINT what)
 {
     Count count = Num_Map_Entries_Used(map);
-    Source* a = Make_Source(count * ((what == 0) ? 2 : 1));
+    Length len = count * ((what == 0) ? 2 : 1);
+    Source* a = Make_Source(len);
+    Set_Flex_Len(a, len);
 
     Element* dest = Array_Head(a);
-    const Value* val_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
-    const Value* val = Flex_Head(Value, MAP_PAIRLIST(map));
-    for (; val != val_tail; val += 2) {
-        if (Is_Zombie(val + 1))  // val + 1 can't be past tail
+    const Element* tail = Array_Tail(MAP_PAIRLIST(map));
+    const Element* at = Array_Head(MAP_PAIRLIST(map));
+
+    for (; at != tail; at += 2) {
+        assert(at + 1 < tail);
+        if (Is_Zombie(at + 1))
             continue;
 
         if (what <= 0) {
-            Copy_Cell(dest, c_cast(Element*, &val[0]));  // no keys void
+            Copy_Cell(dest, at);  // no keys are zombies or antiforms
             ++dest;
         }
         if (what >= 0) {
-            Copy_Cell(dest, c_cast(Element*, &val[1]));  // val tested non void
+            Copy_Cell(dest, at + 1);  // value was tested and isn't a zombie
             ++dest;
         }
     }
-
-    Set_Flex_Len(a, dest - Array_Head(a));
     return a;
 }
 
@@ -499,7 +463,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
     // Doesn't use Num_Map_Entries_Used() because it only considers words.
     //
     // !!! Should this fail() if any of the keys aren't words?  It seems
-    // a bit haphazard to have `make object! make map! [x 10 <y> 20]` and
+    // a bit haphazard to have `make object! to map! [x 10 <y> 20]` and
     // just throw out the <y> 20 case...
 
     REBLEN count = 0;
@@ -710,6 +674,23 @@ REBTYPE(Map)
             return FAIL(Error_Bad_Refines_Raw());
 
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), did REF(deep))); }
+
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+    // 1. MAP! does not retain order at this time.  It also allows you to
+    //    add duplicates in TO MAP!.  These undermine the reversibility
+    //    requirement, so that's currently disabled in To_Checker_Dispatcher()
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // v
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(REB_MAP != to);  // TO should have called COPY in this case
+
+        if (Any_List_Kind(to))  // !!! not ordered! [1]
+            return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
+
+        return FAIL(Error_Bad_Cast_Raw(map, ARG(type))); }
 
       case SYM_CLEAR: {
         Map* m = VAL_MAP_Ensure_Mutable(map);

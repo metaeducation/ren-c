@@ -5,7 +5,10 @@
 //
 INLINE const Flex* Cell_Flex(const Cell* v) {
     Heart heart = Cell_Heart(v);
-    assert(Any_Series_Kind(heart) or heart == REB_URL);
+    assert(
+        Any_Series_Kind(heart)
+        or (Any_Utf8_Kind(heart) and Stringlike_Has_Node(v))
+    );
     UNUSED(heart);
     if (Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
@@ -54,18 +57,30 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
 
 
 INLINE REBLEN Cell_Series_Len_Head(const Cell* v);  // forward decl
+INLINE bool Stringlike_Cell(const Cell* v);  // forward decl
 
 // Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
 // end of series, VAL_INDEX() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-INLINE REBLEN VAL_INDEX(const Cell* c) {
-    assert(Any_Series_Kind(Cell_Heart(c)));
-    assert(Cell_Has_Node1(c));
-    REBIDX i = VAL_INDEX_RAW(c);
-    if (i < 0 or i > Cell_Series_Len_Head(c))
+INLINE REBLEN VAL_INDEX_STRINGLIKE_OK(const Cell* v) {
+    Heart heart = Cell_Heart(v);
+    assert(Any_Series_Kind(heart) or Stringlike_Cell(v));
+    UNUSED(heart);
+    assert(Cell_Has_Node1(v));
+    REBIDX i = VAL_INDEX_RAW(v);
+    if (i < 0 or i > Cell_Series_Len_Head(v))
         fail (Error_Index_Out_Of_Range_Raw());
     return i;
+}
+
+// Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
+// end of series, VAL_INDEX() does bounds checking and always returns an
+// unsigned REBLEN.
+//
+INLINE REBLEN VAL_INDEX(const Cell* v) {
+    assert(Any_Series_Kind(Cell_Heart(v)));
+    return VAL_INDEX_STRINGLIKE_OK(v);
 }
 
 
@@ -94,13 +109,19 @@ INLINE Element* Init_Series_At_Core_Untracked(
     if (Any_List_Kind(heart)) {
         assert(Stub_Flavor(f) == FLAVOR_SOURCE);  // no antiforms [2]
     }
-    else if (Any_String_Kind(heart) or heart == REB_URL)
+    else if (Any_String_Kind(heart)) {
         assert(Is_Stub_String(f));
+    }
+    else if (Any_Utf8_Kind(heart)) {  // see also Init_Utf8_Non_String()
+        assert(Is_Stub_String(f));
+        if (not Any_String_Kind(heart))  // ISSUE!, URL!, etc.
+            assert(Is_Flex_Frozen(f));
+    }
     else if (heart == REB_BINARY) {
         assert(Flex_Wide(f) == 1);  // Note: Binary is allowed to alias String
     }
     else if (Any_Sequence_Kind(heart)) {
-        assert(Stub_Flavor(f) == FLAVOR_SOURCE);
+        assert(Is_Stub_Source(f));
         assert(Is_Source_Frozen_Shallow(c_cast(Source*, f)));
     }
   #endif

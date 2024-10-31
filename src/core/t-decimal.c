@@ -118,38 +118,35 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 // codepoint.  Hence historical conversions have been split into the TO
 // or MAKE as a rough idea of how these rules might be followed.
 //
+// 1. MAKE DECIMAL! from a PATH! is a strange idea that allows evaluation of
+//    arbitrary code.  (TO DECIMAL! of PATH! previously existed as a version
+//    that didn't evaluate groups, but still ran DIVIDE and could get things
+//    like division by zero, so got rid of that).  Weird but trying this.
+//
+// 2. Rebol2 and Red do this for some reason (your guess as good as mine):
+//
+//        rebol2>> make decimal! [10 0]
+//        == 10.0
+//
+//        rebol2>> make decimal! [10 2]
+//        == 1000.0
+//
 Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
     assert(k == REB_DECIMAL or k == REB_PERCENT);
     Heart heart = cast(Heart, k);
 
-    REBDEC d;
-
     switch (VAL_TYPE(arg)) {
-      case REB_ISSUE:
-        d = cast(REBDEC, Cell_Codepoint(arg));
-        goto dont_divide_if_percent;
+      case REB_ISSUE: {
+        REBDEC d = cast(REBDEC, Cell_Codepoint(arg));
+        return Init_Decimal_Or_Percent_Untracked(OUT, heart, d); }
 
-      case REB_TIME:
-        d = VAL_NANO(arg) * NANO;
-        break;
+      case REB_TIME: {
+        REBDEC d = VAL_NANO(arg) * NANO;
+        return Init_Decimal_Or_Divide_Percent(OUT, heart, d); }
 
-        // !!! It's not obvious that TEXT shouldn't provide conversions; and
-        // possibly more kinds than TO does.  Allow it for now, even though
-        // TO does it as well.
-        //
-      case REB_TEXT:
-        return TO_Decimal(level_, heart, arg);
-
-        // !!! MAKE DECIMAL! from a PATH! ... as opposed to TO DECIMAL ...
-        // will allow evaluation of arbitrary code.  This is an experiment on
-        // the kinds of distinctions which TO and MAKE may have; it may not
-        // be kept as a feature.  Especially since it is of limited use
-        // when GROUP!s are evaluative, so `make decimal! '(50%)/2` would
-        // require the quote to work if the path was in an evaluative slot.
-        //
-      case REB_PATH: {  // fractions as 1/2 are an intuitive use for PATH!
+      case REB_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
         if (Cell_Sequence_Len(arg) != 2)
-            goto bad_make;
+            return FAIL("Fraction experiment requires PATH! of length 2");
 
         DECLARE_ELEMENT (numerator);
         DECLARE_ELEMENT (denominator);
@@ -173,24 +170,26 @@ Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
         Drop_GC_Guard(denominator);
         Drop_GC_Guard(numerator);
 
+        REBDEC d;
         if (Is_Integer(quotient))
             d = cast(REBDEC, VAL_INT64(quotient));
         else if (Is_Decimal(quotient) or Is_Percent(quotient))
             d = VAL_DECIMAL(quotient);
         else {
             rebRelease(quotient);
-            goto bad_make;  // made *something*, but not DECIMAL! or PERCENT!
+            return FAIL("Fraction PATH! didn't maket DECIMAL! or PERCENT!");
         }
         rebRelease(quotient);
-        break; }
+        return Init_Decimal_Or_Divide_Percent(OUT, heart, d); }
 
-      case REB_BLOCK: {
+      case REB_BLOCK: {  // !!! what the heck is this for? [2]
         REBLEN len;
         const Element* item = Cell_List_Len_At(&len, arg);
 
         if (len != 2)
             return RAISE(Error_Bad_Make(heart, arg));
 
+        REBDEC d;
         if (Is_Integer(item))
             d = cast(REBDEC, VAL_INT64(item));
         else if (Is_Decimal(item) || Is_Percent(item))
@@ -209,9 +208,6 @@ Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
             return RAISE(Error_Bad_Value(item));
 
         while (exp >= 1) {
-            //
-            // !!! Comment here said "funky. There must be a better way"
-            //
             --exp;
             d *= 10.0;
             if (!FINITE(d))
@@ -222,130 +218,13 @@ Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
             ++exp;
             d /= 10.0;
         }
-        break; }
+        return Init_Decimal_Or_Divide_Percent(OUT, heart, d); }
 
       default:
-        goto bad_make;
+        break;
     }
-
-    if (heart == REB_PERCENT)
-        d /= 100.0;
-
-  dont_divide_if_percent:
-    if (!FINITE(d))
-        return RAISE(Error_Overflow_Raw());
-
-    Reset_Cell_Header_Untracked(
-        TRACK(OUT),
-        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
-    );
-    VAL_DECIMAL(OUT) = d;
-    return OUT;
-
-  bad_make:
 
     return RAISE(Error_Bad_Make(heart, arg));
-}
-
-
-//
-//  TO_Decimal: C
-//
-// !!! The TO conversions for DECIMAL! are trying to honor the "only obvious"
-// conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
-// giving you 100000).
-//
-Bounce TO_Decimal(Level* level_, Kind k, Element* arg)
-{
-    assert(k == REB_DECIMAL or k == REB_PERCENT);
-    Heart heart = cast(Heart, k);
-
-    REBDEC d;
-
-    switch (VAL_TYPE(arg)) {
-      case REB_DECIMAL:
-        assert(VAL_TYPE(arg) != heart);  // would have called COPY if same
-        d = VAL_DECIMAL(arg);
-        goto dont_divide_if_percent;
-
-      case REB_PERCENT:
-        d = VAL_DECIMAL(arg);
-        goto dont_divide_if_percent;
-
-      case REB_INTEGER:
-        d = cast(REBDEC, VAL_INT64(arg));
-        goto dont_divide_if_percent;
-
-      case REB_MONEY:
-        d = deci_to_decimal(VAL_MONEY_AMOUNT(arg));
-        goto dont_divide_if_percent;
-
-      case REB_TEXT: {
-        Size size;
-        const Byte* bp
-            = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
-
-        if (not Try_Scan_Decimal_To_Stack(bp, size, heart != REB_PERCENT))
-            goto bad_to;
-
-        Move_Drop_Top_Stack_Element(OUT);
-        d = VAL_DECIMAL(OUT); // may need to divide if percent, fall through
-        break; }
-
-      case REB_PATH: {  // fractions as 1/2 are an intuitive use for PATH!
-        if (Cell_Sequence_Len(arg) != 2)
-            goto bad_to;
-
-        DECLARE_ATOM (numerator);  // decompress path from cell into values
-        DECLARE_ATOM (denominator);
-        Copy_Sequence_At(numerator, arg, 0);
-        Copy_Sequence_At(denominator, arg, 1);
-
-        if (not Is_Integer(numerator))
-            goto bad_to;
-        if (not Is_Integer(denominator))
-            goto bad_to;
-
-        if (VAL_INT64(denominator) == 0)
-            return RAISE(Error_Zero_Divide_Raw());
-
-        d = cast(REBDEC, VAL_INT64(numerator))
-            / cast(REBDEC, VAL_INT64(denominator));
-        break; }
-
-      case REB_TUPLE:  // Resist the urge for `make decimal 1x2` to be 1.2
-        goto bad_to;  // it's bad (and 1x02 is the same as 1.2 anyway)
-
-        // !!! This should likely not be a TO conversion, but probably should
-        // not be a MAKE conversion either.  So it should be something like
-        // AS...or perhaps a special codec like ENBIN?  Leaving compatible
-        // for now so people don't have to change it twice.
-        //
-      case REB_BINARY:
-        return Makehook_Decimal(level_, heart, arg);
-
-      default:
-        goto bad_to;
-    }
-
-    if (heart == REB_PERCENT)
-        d /= 100.0;
-
-  dont_divide_if_percent:
-
-    if (not FINITE(d))
-        return RAISE(Error_Overflow_Raw());
-
-    Reset_Cell_Header_Untracked(
-        TRACK(OUT),
-        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
-    );
-    VAL_DECIMAL(OUT) = d;
-    return OUT;
-
-  bad_to:
-
-    return RAISE(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(heart)));
 }
 
 
@@ -553,31 +432,75 @@ REBTYPE(Decimal)
 
     // unary actions
     switch (id) {
-
-    case SYM_COPY:
+      case SYM_COPY:
         return Copy_Cell(OUT, val);
 
-    case SYM_NEGATE:
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+    // 1. Right now the intelligence that gets 1% to render that way instead
+    //    of 1.0% is in FORM.  We don't repeat that here, but just call the
+    //    form process and drop the trailing %.  Should be factored better.
+    //
+    //    !!! Note this is buggy right now (doesn't happen in Red):
+    //
+    //        >> form 1.1%
+    //        == "1.1000000000000001%"
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // val
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(Cell_Heart(val) != to);  // TO calls COPY in this case
+
+        REBDEC d = VAL_DECIMAL(val);
+        if (Is_Percent(val))
+            d = d * 100;  // "true" visual value, TO considers 10% -> 10
+
+        if (Any_Utf8_Kind(to)) {
+            Value* formed = rebValue(Canon(AS), ARG(type), Canon(FORM), val);
+            if (Is_Percent(val))  // leverage (buggy) rendering 1% vs 1.0% [1]
+                rebElide("take:last", formed);
+            return formed;
+        }
+
+        if (to == REB_DECIMAL or to == REB_PERCENT)
+            return Init_Decimal_Or_Percent(OUT, to, d);
+
+        if (to == REB_MONEY)
+            return Init_Money(OUT, decimal_to_deci(d));
+
+        if (to == REB_INTEGER) {
+            REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));
+            if (leftover != 0.0)
+                return FAIL(
+                    "Can't TO INTEGER! a DECIMAL! w/digits after decimal point"
+                );
+            return Init_Integer(OUT, cast(REBI64, d));
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(val, ARG(type))); }
+
+      case SYM_NEGATE:
         d1 = -d1;
         goto setDec;
 
-    case SYM_ABSOLUTE:
+      case SYM_ABSOLUTE:
         if (d1 < 0) d1 = -d1;
         goto setDec;
 
-    case SYM_EVEN_Q:
+      case SYM_EVEN_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
             return Init_Logic(OUT, true);
         return Init_Logic(OUT, false);
 
-    case SYM_ODD_Q:
+      case SYM_ODD_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
             return Init_Logic(OUT, false);
         return Init_Logic(OUT, true);
 
-    case SYM_ROUND: {
+      case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
         USED(ARG(value));  // extracted as d1, others are passed via level_
         USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
@@ -606,7 +529,7 @@ REBTYPE(Decimal)
             return Init_Integer(OUT, cast(REBI64, d1));
         goto setDec; }
 
-    case SYM_RANDOM: {
+      case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
         UNUSED(PARAM(value));
@@ -624,10 +547,10 @@ REBTYPE(Decimal)
         d1 = Random_Dec(d1, REF(secure));
         goto setDec; }
 
-    case SYM_COMPLEMENT:
+      case SYM_COMPLEMENT:
         return Init_Integer(OUT, ~cast(REBINT, d1));
 
-    default:
+      default:
         break;
     }
 

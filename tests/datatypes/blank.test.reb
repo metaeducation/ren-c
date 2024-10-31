@@ -13,7 +13,7 @@
 (null? to blank! maybe null)  ; TO's universal protocol for void 2nd argument
 (null? to maybe null 1)  ; TO's universal protocol for blank 1st argument
 
-~???~ !! (to blank! 1)  ; no other types allow "conversion" to blank
+~bad-cast~ !! (to blank! 1)  ; no other types allow "conversion" to blank
 
 ("_" = mold blank)
 

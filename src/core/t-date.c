@@ -516,19 +516,6 @@ Bounce Makehook_Date(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_DATE);
     UNUSED(kind);
 
-    if (Is_Date(arg))
-        return Copy_Cell(OUT, arg);
-
-    if (Is_Text(arg)) {
-        Size size;
-        const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
-        const Byte* ep;
-        if (not (ep = maybe Try_Scan_Date_To_Stack(bp, size)))
-            goto bad_make;
-        UNUSED(ep); // !!! not checked, okay?
-        return Move_Drop_Top_Stack_Element(OUT);
-    }
-
     if (Any_List(arg))
         goto make_from_array;
 
@@ -623,14 +610,6 @@ Bounce Makehook_Date(Level* level_, Kind kind, Element* arg) {
 
     return RAISE(Error_Bad_Make(REB_DATE, arg));
 }}
-
-
-//
-//  TO_Date: C
-//
-Bounce TO_Date(Level* level_, Kind kind, Element* arg) {
-    return Makehook_Date(level_, kind, arg);
-}
 
 
 static REBINT Int_From_Date_Arg(const Value* poke) {

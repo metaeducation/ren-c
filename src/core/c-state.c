@@ -302,7 +302,7 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
         --item;
         assert(Is_Text(item));
         assert(VAL_INDEX(item) == 0);
-        Append_String(g_mold.buffer, item);
+        Append_Any_Utf8(g_mold.buffer, item);
     }
 
     if (Get_Subclass_Flag(PLUG, array, HAS_DATA_STACK)) {

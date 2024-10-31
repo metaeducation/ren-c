@@ -776,14 +776,14 @@ pe-format: context [
         return: [binary!]
         i [integer!]
     ][
-        return reverse skip (to binary! i) 4
+        return encode [LE + 4] i
     ]
 
     /to-u16-le: func [
         return: [binary!]
         i [integer!]
     ][
-        return reverse skip (to binary! i) 6
+        return encode [LE + 2] i 6
     ]
 
     /align-to: func [
@@ -834,7 +834,7 @@ pe-format: context [
     ][
         change pos let new-section: make binary! [
             copy:part (head of insert:dup
-                tail of to binary! copy section.name
+                tail of as binary! copy section.name
                 #{00}
                 8
             ) 8  ; name, must be 8 bytes long
@@ -845,7 +845,7 @@ pe-format: context [
             to-u32-le section.physical-offset
 
             copy:part (head of insert:dup
-                tail of to binary! copy section.reserved
+                tail of as binary! copy section.reserved
                 #{00}
                 12
             ) 12  ; reserved, must be 12 bytes long
@@ -966,7 +966,7 @@ pe-format: context [
             insert:dup let garbage: copy #{} #{00} (
                 new-section-size - length of section-data
             )
-            section-data: join to binary! section-data garbage
+            section-data: join section-data garbage
         ]
 
         assert [
@@ -1077,7 +1077,7 @@ pe-format: context [
             insert:dup garbage: copy #{} #{00} (
                 new-section-size - length of section-data
             )
-            section-data: join to binary! section-data garbage
+            section-data: join section-data garbage
         ]
         insert pos section-data
 

@@ -93,7 +93,7 @@ data-descriptor-sig: #{504B0708}
     binary [binary!]
 ][
     let i: decode [LE + 2] binary
-    return to time! reduce [
+    return make time! reduce [
         63488 and+ i / 2048
         2016 and+ i / 32
         31 and+ i * 2
@@ -275,7 +275,7 @@ data-descriptor-sig: #{504B0708}
             ]
         ]
 
-        if not binary? data [data: to binary! data]
+        if not binary? data [data: as binary! data]
 
         name: to-path-file name
         info [name]

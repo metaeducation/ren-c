@@ -1,20 +1,18 @@
 ; functions/context/resolve.r
 ;
-; RESOLVE is repurposed in Ren-C from R3-Alpha's function (now PROXY-EXPORTS)
-;
-; Its job is to create a reproducible block of steps that can be used with
-; SET and GET multiple times.
+; GET:STEPS has the job of creating a reproducible block of steps that can be
+; used with SET and GET multiple times, when a TUPLE! or otherwise is used.
 
 (
     obj: make object! [x: 1020]
     steps: ~
     all [
-        @[obj x] = steps: resolve $obj.(first [x y])
+        @[obj x] = get:steps $obj.(first [x y])
         1020 = get steps
     ]
 )
 
-; Usermode default is one of the classic use cases for RESOLVE.
+; Usermode default is one of the classic use cases for GET:STEPS.
 [
     (/udefault: infix lambda [
         @target "Word or path which might be set appropriately (or not)"
@@ -26,7 +24,7 @@
         <local> steps
     ][
         unmeta (
-            (non:meta [defaultable?] [steps {#}]: resolve target) else [
+            (non:meta [defaultable?] [steps {#}]: get:steps target) else [
                 meta set steps eval branch
             ]
         )

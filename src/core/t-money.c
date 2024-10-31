@@ -86,19 +86,15 @@ Bounce Makehook_Money(Level* level_, Kind kind, Element* arg) {
         return Copy_Cell(OUT, arg);
 
       case REB_TEXT: {
-        const Byte* bp = Analyze_String_For_Scan(
-            nullptr,
-            arg,
-            MAX_SCAN_MONEY
-        );
+        Option(Error*) error = Trap_Transcode_One(OUT, REB_0, arg);
+        if (error)
+            return RAISE(unwrap error);
+        if (Is_Money(OUT))
+            return OUT;
+        if (Is_Decimal(OUT) or Is_Integer(OUT))
+            return Init_Money(OUT, decimal_to_deci(Dec64(stable_OUT)));
+        break; }
 
-        const Byte* end;
-        Init_Money(OUT, string_to_deci(bp, &end));
-        if (end == bp or *end != '\0')
-            goto bad_make;
-        return OUT; }
-
-//      case REB_ISSUE:
       case REB_BINARY:
         Bin_To_Money_May_Fail(OUT, arg);
         return OUT;
@@ -107,18 +103,7 @@ Bounce Makehook_Money(Level* level_, Kind kind, Element* arg) {
         break;
     }
 
-  bad_make:
-
     return RAISE(Error_Bad_Make(REB_MONEY, arg));
-}
-
-
-//
-//  TO_Money: C
-//
-Bounce TO_Money(Level* level_, Kind kind, Element* arg)
-{
-    return Makehook_Money(level_, kind, arg);
 }
 
 
@@ -190,9 +175,43 @@ static Value* Math_Arg_For_Money(
 //
 REBTYPE(Money)
 {
+    Option(SymId) id = Symbol_Id(verb);
+
     Value* v = D_ARG(1);
 
-    switch (Symbol_Id(verb)) {
+    switch (id) {
+
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // v
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(REB_MONEY != to);  // TO calls COPY in this case
+
+        deci d = VAL_MONEY_AMOUNT(v);
+
+        if (to == REB_DECIMAL or to == REB_PERCENT)
+            return Init_Decimal_Or_Percent(OUT, to, deci_to_decimal(d));
+
+        if (to == REB_INTEGER) {
+            if (d.e != 0 or d.m1 != 0 or d.m2 != 0)
+                return RAISE(
+                    "Can't TO INTEGER! a MONEY! w/digits after decimal point"
+                );
+            return Init_Integer(OUT, deci_to_int(d));
+        }
+
+        if (Any_Utf8_Kind(to)) {
+            if (d.e != 0 or d.m1 != 0 or d.m2 != 0)
+                Init_Decimal(v, deci_to_decimal(d));
+            else
+                Init_Integer(v, deci_to_int(d));
+            return rebValue(Canon(AS), ARG(type), Canon(FORM), v);
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+
       case SYM_ADD: {
         Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(

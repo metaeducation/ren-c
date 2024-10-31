@@ -33,10 +33,13 @@
         not error? trap [mold x]
     ]
 )
-($11 = make money! 11)
+($111 = make money! 111)
 ($1.1 = make money! "1.1")
+($1 = make money! "1")
+($1.1 = make money! "$1.1")
+
 [#4
-    ($11 = to money! 11)
+    ($111 = to money! 111)
 ]
 ($1.1 = to money! "1.1")
 ("$1.10" = mold $1.10)

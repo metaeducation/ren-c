@@ -121,7 +121,7 @@
 
 ; alternative form
 (1.1 == 1,1)
-(1.1 = make decimal! "1.1")
+(1.1 = to decimal! "1.1")
 
 ~bad-make-arg~ !! (
     make decimal! 1.1
@@ -133,5 +133,8 @@
 
 ; Experiment: MAKE DECIMAL! of 2-element INTEGER! PATH! treats as fraction
 [
+    (0.5 = make decimal! 1/2)
+    ~???~ !! (make decimal! 1/2/3)
+    ~zero-divide~ !! (make decimal! 1/0)
     (0.175 = make decimal! '(50% + 20%)/(1 + 3))
 ]

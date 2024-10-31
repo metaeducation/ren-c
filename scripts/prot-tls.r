@@ -583,7 +583,7 @@ update-write-state: make-state-updater 'write [
     ; that don't include this extension.
     ;
     if text? ctx.host-name [
-        let server-name-bin: to binary! ctx.host-name
+        let server-name-bin: as binary! ctx.host-name
         emit ctx [
             #{00 00}                    ; extension type (server_name=0)
           extension_length:
@@ -811,7 +811,7 @@ update-write-state: make-state-updater 'write [
     ctx [object!]
     unencrypted [binary! text!]
 ][
-    let encrypted: encrypt-data ctx to binary! unencrypted
+    let encrypted: encrypt-data ctx as binary! unencrypted
     emit ctx [
         #{17}                         ; protocol type (23=Application)
         ctx.ver-bytes                 ; protocol version

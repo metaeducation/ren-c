@@ -611,7 +611,6 @@ hook-list: collect [
             cast(CFunction*, nullptr),  /* generic */
             cast(CFunction*, nullptr),  /* compare */
             cast(CFunction*, nullptr),  /* make */
-            cast(CFunction*, nullptr),  /* to */
             cast(CFunction*, nullptr),  /* mold */
             nullptr
         }
@@ -624,7 +623,6 @@ hook-list: collect [
                     cast(CFunction*, nullptr),  /* generic */
                     cast(CFunction*, nullptr),  /* compare */
                     cast(CFunction*, nullptr),  /* make */
-                    cast(CFunction*, nullptr),  /* to */
                     cast(CFunction*, MF_Void),  /* mold */
                     nullptr
                 }
@@ -637,7 +635,6 @@ hook-list: collect [
                 cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFunction*, ${"CT_" Hookname T 'Class}),  /* compare */
                 cast(CFunction*, ${"Makehook_" Hookname T 'Make}),
-                cast(CFunction*, ${"TO_" Hookname T 'Make}),  /* to */
                 cast(CFunction*, ${"MF_" Hookname T 'Mold}),  /* mold */
                 nullptr
             }

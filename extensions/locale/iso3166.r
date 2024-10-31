@@ -2,7 +2,7 @@ REBOL []
 
 inp: %iso3166.txt
 count: read inp
-if #{EFBBBF} = to binary! copy:part count 3 [  ; UTF-8 BOM
+if #{EFBBBF} = as binary! copy:part count 3 [  ; UTF-8 BOM
     count: skip count 3
 ]
 

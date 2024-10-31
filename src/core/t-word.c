@@ -87,85 +87,49 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 //
 //  Makehook_Word: C
 //
+// Historically, WORD! creation was done with AS and TO.
+//
+// But MAKE has the ability to heed bindings and do evaluations.  So it seems
+// that this shorthand is useful:
+//
+//     as word! unspaced [...]
+//     ->
+//     make word! [...]  ; saves 8 characters
+//
+// It doesn't seem to do a lot of good to have (make word! "some-string") as
+// an alternative to (to word! "some-string") or (as word! "some-string").
+// Those two choices have nuance in them, e.g. freezing and reusing the
+// string vs. copying it, and adding make into the mix doesn't really help.
+//
+// There might be applications of things like (make word! 241) being a way
+// of creating a word based on its symbol ID.  But generally speaking, it's
+// hard to think of anything besides [...] and @[...] being useful.
+//
 Bounce Makehook_Word(Level* level_, Kind k, Element* arg) {
-    Heart heart = cast(Heart, k);
+    assert(Any_Word_Kind(k));
 
-    if (Any_Word(arg)) {
-        Copy_Cell(OUT, arg);
-        HEART_BYTE(OUT) = heart;
-        return OUT;
-    }
+    if (Is_Block(arg) or Is_The_Block(arg))
+        return rebValue(Canon(AS), Datatype_From_Kind(k), "unspaced", rebQ(arg));
 
-    if (Any_String(arg)) {
-        if (Is_Flex_Frozen(Cell_String(arg)))
-            goto as_word;  // just reuse AS mechanics on frozen strings
-
-        // Otherwise, we'll have to copy the data for a TO conversion
-        //
-        // !!! Note this permits `TO WORD! "    spaced-out"` ... it's not
-        // clear that it should do so.  Review `Analyze_String_For_Scan()`
-
-        Size size;
-        const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
-
-        if (NULL == Scan_Any_Word(OUT, heart, bp, size))
-            return RAISE(Error_Bad_Char_Raw(arg));
-
-        return OUT;
-    }
-    else if (Is_Issue(arg)) {
-        //
-        // Run the same mechanics that AS WORD! would, since it's immutable.
-        //
-      as_word: {
-        Value* as = rebValue("as", Datatype_From_Kind(heart), arg);
-        Copy_Cell(OUT, as);
-        rebRelease(as);
-
-        return OUT;
-      }
-    }
-
-    return RAISE(Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
-}
-
-
-//
-//  TO_Word: C
-//
-Bounce TO_Word(Level* level_, Kind k, Element* arg)
-{
-    Heart heart = cast(Heart, k);
-
-    if (Any_Sequence(arg)) {  // (to word! '/a) or (to word! 'a:) etc.
+    if (Any_Sequence(arg)) {  // (make word! '/a) or (make word! 'a:) etc.
         do {
             Option(Error*) error = Trap_Unsingleheart(arg);
             if (error)
                 goto sequence_didnt_decay_to_word;
         } while (Any_Sequence(arg));
 
-        if (Any_Word(arg))
+        if (Any_Word(arg)) {
+            HEART_BYTE(arg) = k;
             return COPY(arg);
+        }
 
       sequence_didnt_decay_to_word:
-
         return RAISE(
-            "Can't make ANY-WORD? from sequence unless it's one WORD!"
+            "Can't MAKE ANY-WORD? from sequence unless it wraps one WORD!"
         );
     }
 
-    if (Any_List(arg)) {
-        if (Cell_Series_Len_At(arg) != 1)
-            return RAISE("Can't TO ANY-WORD? on list with length > 1");
-        const Element* item = Cell_List_Len_At(nullptr, arg);
-        if (not Is_Word(item))
-            return RAISE("TO ANY-WORD? requires list with one word in it");
-        Copy_Cell(OUT, item);
-        HEART_BYTE(OUT) = heart;
-        return OUT;
-    }
-
-    return Makehook_Word(level_, heart, arg);
+    return RAISE(Error_Bad_Make(k, arg));
 }
 
 
@@ -179,8 +143,7 @@ void MF_Word(Molder* mo, const Cell* v, bool form) {
     if (sigil)
         Append_Codepoint(mo->string, Symbol_For_Sigil(unwrap sigil));
 
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    Append_Utf8(mo->string, String_UTF8(symbol), String_Size(symbol));
+    Append_Spelling(mo->string, Cell_Word_Symbol(v));
 }
 
 
@@ -194,8 +157,8 @@ void MF_Word(Molder* mo, const Cell* v, bool form) {
 //
 REBTYPE(Word)
 {
-    Value* v = D_ARG(1);
-    assert(Any_Word(v));
+    Value* word = D_ARG(1);
+    assert(Any_Word(word));
 
     switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
@@ -206,18 +169,17 @@ REBTYPE(Word)
 
         switch (property) {
           case SYM_LENGTH: {  // byte size stored, but not # of codepoints
-            const String* spelling = Cell_Word_Symbol(v);
+            const String* spelling = Cell_Word_Symbol(word);
             Utf8(const*) cp = String_Head(spelling);
-            Size size = String_Size(spelling);
+            Utf8(const*) tail = String_Tail(spelling);
             Length len = 0;
-            for (; size > 0; cp = Skip_Codepoint(cp)) {  // manually walk codepoints
-                size = size - 1;
+            for (; cp != tail; cp = Skip_Codepoint(cp))  // manually walk
                 len = len + 1;
-            }
+            assert(*cp == '\0');
             return Init_Integer(OUT, len); }
 
           case SYM_BINDING: {
-            if (not Try_Get_Binding_Of(OUT, v))
+            if (not Try_Get_Binding_Of(OUT, word))
                 return nullptr;
 
             return OUT; }
@@ -228,7 +190,17 @@ REBTYPE(Word)
         break; }
 
       case SYM_COPY:
-        return COPY(v);
+        return COPY(word);
+
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+    // WORD!s as a subset of string don't have any particular separate rules
+    // for TO conversions that immutable strings don't have (and strings may
+    // be aliases of words, so TO conversions of strings to word may be able
+    // to reuse the symbol underlying the string).  Delegate to common code.
+
+      case SYM_TO_P:
+        return T_String(level_, verb);
 
       default:
         break;

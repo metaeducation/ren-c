@@ -619,7 +619,7 @@ void Move_Cursor(STD_TERM *t, int count)
         if (t->pos < end) {
             size_t encoded_size;
             unsigned char *encoded_char = rebBytes(&encoded_size,
-                "to binary! pick", t->buffer, rebI(t->pos + 1)
+                "as binary! pick", t->buffer, rebI(t->pos + 1)
             );
             WRITE_UTF8(encoded_char, encoded_size);
             rebFree(encoded_char);

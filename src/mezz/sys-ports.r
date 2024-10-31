@@ -116,7 +116,7 @@ parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~
     port.actor: get maybe has scheme 'actor  ; avoid evaluation
     port.spec.ref: default [spec]
     port.spec.title: default [scheme.title]
-    port: to port! port
+    port: make port! ensure object! port  ; !!! kludge for the moment
 
     ; Call the scheme-specific port init. Note that if the
     ; scheme has not yet been initialized, it can be done
@@ -240,7 +240,7 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
             op: inside scheme.actor op
             args: inside scheme.actor args
             body: inside scheme.actor body
-            set (extend actor to word! name) reeval op args body
+            set (extend actor resolve name) reeval op args body
         ]
         scheme.actor: actor
     ]

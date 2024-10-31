@@ -121,8 +121,9 @@ Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg) {
 //
 REBTYPE(Sequence)
 {
-    Value* sequence = D_ARG(1);
+    Element* sequence = cast(Element*, D_ARG(1));
     Length len = Cell_Sequence_Len(sequence);
+    Heart heart = Cell_Heart_Ensure_Noquote(sequence);
 
     Option(SymId) id = Symbol_Id(verb);
 
@@ -133,7 +134,7 @@ REBTYPE(Sequence)
 
         switch (Cell_Word_Id(ARG(property))) {
           case SYM_LENGTH:
-            return Init_Integer(OUT, Cell_Sequence_Len(sequence));
+            return Init_Integer(OUT, len);
 
           case SYM_INDEX:
             return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(sequence)));
@@ -151,7 +152,6 @@ REBTYPE(Sequence)
         if (not Listlike_Cell(sequence))
             return Copy_Cell(level_->out, sequence);
 
-        Heart heart = Cell_Heart_Ensure_Noquote(sequence);
         HEART_BYTE(sequence) = REB_BLOCK;
 
         Atom* r = Atom_From_Bounce(T_List(level_, verb));
@@ -163,6 +163,56 @@ REBTYPE(Sequence)
         Freeze_Source_Shallow(Cell_Array_Known_Mutable(OUT));
         HEART_BYTE(OUT) = heart;
         return OUT; }
+
+  //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
+
+  // 1. We can only convert up the hierarchy.  e.g. a path like a:b/c:d can't
+  //    be converted "TO" a chain as a:b:c:d ... while such a chain could be
+  //    constructed, it can't reuse the allocation.
+  //
+  //    !!! Should this restriction be what AS does, while TO will actually
+  //    "flatten"?  How useful is the flattening operation, really?
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // sequence
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(heart != to);  // TO should have called COPY in this case
+
+        if (Any_Sequence_Kind(to)) {  // e.g. `to set-chain! 'a.b.c` [1]
+            if (Any_Path_Kind(to)) {
+                // all sequences can convert to ANY-PATH!
+            }
+            else if (Any_Chain_Kind(to)) {
+                if (Any_Path_Kind(heart))
+                    fail ("Cannot TO convert PATH -> CHAIN");
+            }
+            else {
+                assert(Any_Tuple_Kind(to));
+                if (not Any_Tuple_Kind(heart))
+                    fail ("Cannot TO convert PATH or CHAIN -> TUPLE");
+            }
+            Copy_Cell(OUT, sequence);  // !!! embedded arrays keep binding
+            HEART_BYTE(OUT) = to;
+            return OUT;
+        }
+
+        if (Any_List_Kind(to)) {  // !!! Should list have isomorphic binding?
+            Source* a = Make_Source_Managed(len);
+            Set_Flex_Len(a, len);
+            Offset i;
+            for (i = 0; i < len; ++i) {
+                Derelativize_Sequence_At(
+                    Array_At(a, i),
+                    sequence,
+                    Cell_Sequence_Binding(sequence),
+                    i
+                );
+            }
+            return Init_Any_List(OUT, to, a);
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(sequence, ARG(type))); }
 
       case SYM_PICK_P: {
         INCLUDE_PARAMS_OF_PICK_P;

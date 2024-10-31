@@ -3,8 +3,8 @@
 (not time? 1)
 (time! = type of 0:00)
 (0:0:10 = make time! 10)
-(0:0:10 = to time! 10)
-(error? trap [to time! "a"])
+~bad-cast~ !! (0:0:10 = to time! 10)
+~bad-cast~ !! (to time! "a")
 ("0:00" = mold 0:00)
 
 ; small value

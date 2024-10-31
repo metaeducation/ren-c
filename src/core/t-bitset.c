@@ -117,15 +117,6 @@ Bounce Makehook_Bitset(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Bitset: C
-//
-Bounce TO_Bitset(Level* level_, Kind kind, Element* arg)
-{
-    return Makehook_Bitset(level_, kind, arg);
-}
-
-
-//
 //  Find_Max_Bit: C
 //
 // Return integer number for the maximum bit number defined by

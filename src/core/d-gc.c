@@ -112,20 +112,19 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(not Stringlike_Has_Node(v));
         break;
 
+      case REB_EMAIL:
+      case REB_URL:
       case REB_ISSUE: {
         if (Stringlike_Has_Node(v)) {
-            const Flex* f = Cell_Issue_String(v);
+            const Flex* f = Cell_String(v);
             assert(Is_Flex_Frozen(f));
 
-            // We do not want ISSUE!s to use a Flex if the payload fits in
-            // a cell.  It would offer some theoretical benefits for reuse,
-            // e.g. an `as text! as issue! "foo"` would share the same
-            // small Flex...the way it would share a larger one.  But this
-            // fringe-ish benefit comes at the cost of keeping a GC reference
-            // live on something that doesn't need to be live, and also makes
-            // the invariants more complex.
+            // Review: should this rule be enforced?  Right now there are
+            // aliasing cases that don't enforce it.
             //
+          #if 0
             assert(Flex_Used(f) + 1 > Size_Of(PAYLOAD(Bytes, v).at_least_8));
+          #endif
         }
         else {
             // it's bytes
@@ -205,8 +204,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_TEXT:
       case REB_FILE:
-      case REB_EMAIL:
-      case REB_URL:
       case REB_TAG: {
         assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))

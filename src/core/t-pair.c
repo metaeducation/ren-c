@@ -53,19 +53,11 @@ Bounce Makehook_Pair(Level* level_, Kind kind, Element* arg) {
     if (Is_Pair(arg))
         return Copy_Cell(OUT, arg);
 
-    if (Is_Text(arg)) {
-        //
-        // -1234567890x-1234567890
-        //
-        Size size;
-        const Byte* bp
-            = Analyze_String_For_Scan(&size, arg, Cell_Series_Len_At(arg));
-        const Byte* ep;
-
-        if (not (ep = maybe Try_Scan_Pair_To_Stack(bp, size)))
-            goto bad_make;
-        UNUSED(ep);  // !!! don't check?
-        return Move_Drop_Top_Stack_Element(OUT);
+    if (Is_Text(arg)) {  // "-1234567890x-1234567890"
+        Option(Error*) error = Trap_Transcode_One(OUT, REB_PAIR, arg);
+        if (error)
+            return RAISE(unwrap error);
+        return OUT;
     }
 
     const Cell* x;
@@ -105,15 +97,6 @@ Bounce Makehook_Pair(Level* level_, Kind kind, Element* arg) {
   bad_make:
 
     return RAISE(Error_Bad_Make(REB_PAIR, arg));
-}
-
-
-//
-//  TO_Pair: C
-//
-Bounce TO_Pair(Level* level_, Kind kind, Element* arg)
-{
-    return Makehook_Pair(level_, kind, arg);
 }
 
 

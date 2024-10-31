@@ -1603,42 +1603,66 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
 //
 //  /resolve: native [
 //
-//  "Produce an invariant list structure for doing multiple GET or SET from"
+//  "Extract the inner variable target, e.g. (/a: -> a)"
 //
-//      return: [~[[the-word! the-tuple! the-block!] any-value?]~]
-//      source [any-word? any-sequence? any-group?
-//          set-word? set-tuple? set-group?
-//          get-word? get-tuple? get-group?]
+//      return: [word! tuple!]
+//      source [any-word? any-tuple? any-chain? path!]
 //  ]
 //
 DECLARE_NATIVE(resolve)
-//
-// Note: Originally, GET and SET were multi-returns, giving back a second
-// parameter of "steps".  Variables couldn't themselves hold packs, so it
-// seemed all right to use a multi-return.  But it complicated situations
-// where people wanted to write META GET.  RESOLVE is a pretty rarely-used
-// facility...and making GET and SET harder to work with brings pain points
-// to everyday code.
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
     Element* source = cast(Element*, ARG(source));
-    if (Is_Chain(source))  // a: or a.b/ or .(a b) etc.
-        Unchain(source);
 
-    Option(Error*) error = Trap_Get_Var(
-        OUT, stable_SPARE, source, SPECIFIED
-    );
-    if (error)
-        return FAIL(unwrap error);
+    if (Any_Word(source)) {
+        HEART_BYTE(source) = REB_WORD;
+        return COPY(source);
+    }
 
-    Source* pack = Make_Source_Managed(2);
-    Set_Flex_Len(pack, 2);
+    if (Any_Tuple(source)) {
+        HEART_BYTE(source) = REB_TUPLE;
+        return COPY(source);
+    }
 
-    Copy_Meta_Cell(Array_At(pack, 0), stable_SPARE);  // the steps
-    Copy_Meta_Cell(Array_At(pack, 1), stable_OUT);  // the value
+    if (Is_Path(source)) {  // !!! For now: (resolve '/a:) -> a
+        SingleHeart single;
+        if (not (single = maybe Try_Get_Sequence_Singleheart(source)))
+            return FAIL(source);
 
-    return Init_Pack(OUT, pack);
+        if (
+            single == LEADING_BLANK_AND(WORD)  // /a
+            or single == LEADING_BLANK_AND(TUPLE)  // /a.b.c or /.a
+            or single == TRAILING_BLANK_AND(WORD)  // a/
+            or single == TRAILING_BLANK_AND(TUPLE)  // a.b.c/ or .a/
+        ){
+            return COPY(Unpath(source));
+        }
+        if (
+            single == LEADING_BLANK_AND(CHAIN)  // /a: or /a:b:c or /:a
+            or single == TRAILING_BLANK_AND(CHAIN)  // a:/ or a:b:c/ or :a/
+        ){
+            Unpath(source);
+            // fall through to chain decoding.
+        }
+        else
+            return FAIL(source);
+    }
+
+    SingleHeart single = maybe Try_Get_Sequence_Singleheart(source);
+    if (single == NOT_SINGLEHEART_0) {
+        // fall through
+    }
+    else if (
+        single == LEADING_BLANK_AND(WORD)  // a:
+        or single == LEADING_BLANK_AND(TUPLE)  // a.b.c:
+        or single == TRAILING_BLANK_AND(WORD)  // :a
+        or single == TRAILING_BLANK_AND(TUPLE)  // :a.b.c
+    ){
+        return COPY(Unchain(source));
+    }
+
+    return FAIL(source);
 }
 
 
@@ -1647,11 +1671,12 @@ DECLARE_NATIVE(resolve)
 //
 //  "Gets the value of a word or path, or block of words/paths"
 //
-//      return: [any-value?]
+//      return: [any-value? ~[[word! tuple! the-block!] any-value?]~]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
 //          [<maybe> any-word? any-sequence? any-group? any-chain? the-block!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
+//      :steps "Provide invariant way to get this variable again"
 //  ]
 //
 DECLARE_NATIVE(get)
@@ -1666,7 +1691,9 @@ DECLARE_NATIVE(get)
     }
 
     Value* steps;
-    if (REF(groups))
+    if (REF(steps))
+        steps = ARG(steps);
+    else if (REF(groups))
         steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
@@ -1704,6 +1731,14 @@ DECLARE_NATIVE(get)
     if (not REF(any))
         if (Any_Vacancy(stable_OUT))
             return RAISE(Error_Bad_Word_Get(source, stable_OUT));
+
+    if (steps and steps != GROUPS_OK) {
+        Source* pack = Make_Source_Managed(2);
+        Set_Flex_Len(pack, 2);
+        Copy_Meta_Cell(Array_At(pack, 0), steps);
+        Copy_Meta_Cell(Array_At(pack, 1), stable_OUT);
+        return Init_Pack(OUT, pack);
+    }
 
     return OUT;
 }
@@ -2014,7 +2049,7 @@ void Set_Var_May_Fail(
 //      return: "Same value as input (pass through if target is void)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [~void~ any-word? any-sequence? any-group?
+//          [~void~ any-word? any-tuple? any-group?
 //          any-get-value? any-set-value? the-block!]
 //      ^value [raised? any-value?]  ; tunnels failure
 //      :any "Do not error on unset words"
@@ -2452,7 +2487,7 @@ bool Try_As_String(
     }
     else if (Is_Issue(v)) {
         if (Stringlike_Has_Node(v)) {
-            assert(Is_Flex_Frozen(Cell_Issue_String(v)));
+            assert(Is_Flex_Frozen(Cell_String(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
 
@@ -2492,16 +2527,15 @@ bool Try_As_String(
 //
 //      return: [
 //          ~null~ integer!
-//          issue! url!
-//          any-sequence? any-series? any-word?
+//          any-sequence? any-series? any-word? any-utf8?
 //          frame!
 //      ]
 //      type [type-block!]
 //      value [
 //          <maybe>
 //          integer!
-//          issue! url!
-//          any-sequence? any-series? any-word? frame!
+//          any-sequence? any-series? any-word? any-utf8?
+//          frame!
 //      ]
 //  ]
 //
@@ -2657,16 +2691,10 @@ DECLARE_NATIVE(as)
             // and validated as a WORD!.
 
           intern_utf8: {
-            //
-            // !!! This uses the same path as Scan_Word() to try and run
-            // through the same validation.  Review efficiency.
-            //
-            Size size;
-            Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
-            if (nullptr == Scan_Any_Word(OUT, new_heart, utf8, size))
-                return FAIL(Error_Bad_Char_Raw(v));
-
-            return Inherit_Const(stable_OUT, v);
+            Option(Error*) error = Trap_Transcode_One(OUT, new_heart, v);
+            if (error)
+                return (RAISE(unwrap error));
+            return OUT;
           }
         }
 
@@ -2759,6 +2787,8 @@ DECLARE_NATIVE(as)
             return FAIL("AS INTEGER! only supports what-were-CHAR! issues ATM");
         return Init_Integer(OUT, Cell_Codepoint(v)); }
 
+      case REB_URL:
+      case REB_EMAIL:
       case REB_ISSUE: {
         if (Is_Integer(v)) {
             Option(Error*) error = Trap_Init_Char(OUT, VAL_UINT32(v));
@@ -2777,7 +2807,7 @@ DECLARE_NATIVE(as)
                 //
                 Reset_Cell_Header_Untracked(
                     TRACK(OUT),
-                    FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
+                    FLAG_HEART_BYTE(new_heart) | CELL_MASK_NO_NODES
                 );
                 memcpy(
                     PAYLOAD(Bytes, OUT).at_least_8,
@@ -2799,7 +2829,7 @@ DECLARE_NATIVE(as)
                 }
                 Freeze_Flex(Cell_Flex(OUT));  // must be frozen
             }
-            HEART_BYTE(OUT) = REB_ISSUE;
+            HEART_BYTE(OUT) = new_heart;
             return OUT;
         }
 
@@ -2808,8 +2838,6 @@ DECLARE_NATIVE(as)
       case REB_TEXT:
       case REB_TAG:
       case REB_FILE:
-      case REB_URL:
-      case REB_EMAIL:
         if (not Try_As_String(
             OUT,
             new_heart,

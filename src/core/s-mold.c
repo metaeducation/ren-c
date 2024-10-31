@@ -32,7 +32,7 @@
 //
 // There are several technical problems in molding regarding the handling of
 // cells that do not have natural expressions in Rebol source.  For instance,
-// it was legal (in Rebol2) to `make word! "123"` but that can't be molded as
+// it was legal (in Rebol2) to say (to word! "123") but that can't mold as
 // 123 because that would LOAD as an integer.  There are additional problems
 // with `mold next [a b c]`, because there is no natural representation for a
 // series that is not at its head.  These problems were addressed with
@@ -117,7 +117,7 @@ void Begin_Non_Lexical_Mold(Molder* mo, const Cell* v)
 {
     Append_Ascii(mo->string, "#[");
 
-    const String* type_name = Canon_Symbol(SYM_FROM_KIND(Cell_Heart(v)));
+    const Symbol* type_name = Canon_Symbol(SYM_FROM_KIND(Cell_Heart(v)));
     Append_Spelling(mo->string, type_name);
     Append_Codepoint(mo->string, '!');  // `#[object!` not `#[object`
 

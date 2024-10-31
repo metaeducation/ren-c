@@ -890,7 +890,7 @@ DECLARE_NATIVE(js_native)
         Append_Ascii(mo->string, "async ");  // run inside rebPromise() [1]
 
     Append_Ascii(mo->string, "function (reb) {");  // just one arg [2]
-    Append_String(mo->string, source);
+    Append_Any_Utf8(mo->string, source);
     Append_Ascii(mo->string, "};\n");  // end `function() {`
 
     if (REF(awaiter))

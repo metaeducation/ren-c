@@ -57,30 +57,97 @@ Bounce Makehook_Unhooked(Level* level_, Kind kind, Element* arg) {
 }
 
 
-//
-//  TO_Fail: C
-//
-Bounce TO_Fail(Level* level_, Kind kind, Element* arg)
+#if DEBUG
+
+#define CELL_FLAG_SPARE_NOTE_REVERSE_CHECKING CELL_FLAG_NOTE
+
+static Bounce To_Checker_Dispatcher(Level* const L)
 {
-    UNUSED(kind);
-    UNUSED(arg);
+    Heart to = cast(Heart, Level_State_Byte(L));
+    assert(to != REB_0);
 
-    return FAIL("Cannot convert to datatype");
-}
+    Atom* reverse = cast(Atom*, &L->u.eval.current);
+    Element* input = cast(Element*, Level_Spare(L));
 
+    if (Get_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING))
+        goto ensure_results_equal;
 
-//
-//  TO_Unhooked: C
-//
-Bounce TO_Unhooked(Level* level_, Kind kind, Element* arg)
-{
-    UNUSED(arg);
+    Erase_Cell(reverse);
+    goto check_type_and_run_reverse_to;
 
-    const Value* type = Datatype_From_Kind(kind);
-    UNUSED(type); // !!! put in error message?
+  check_type_and_run_reverse_to: {  //////////////////////////////////////////
 
-    return FAIL("Datatype has no extension with a TO handler registered");
-}
+    if (Is_Throwing(L)) {
+        assert(L == TOP_LEVEL);  // sublevel automatically dropped
+        return BOUNCE_THROWN;
+    }
+
+    Level* level_ = TOP_LEVEL;  // sublevel stole the varlist
+    assert(level_->prior == L);
+
+    INCLUDE_PARAMS_OF_TO_P;  // variables in subframe (level_), not checker (L)
+
+    Sink(Element) type = cast(Element*, ARG(type));  // call may have mutated
+    Sink(Element) e = cast(Element*, ARG(element));  // call may haven mutated
+
+    if (Is_Raised(OUT)) {
+        Drop_Level(level_);
+        return OUT;
+    }
+
+    Decay_If_Unstable(OUT);  // should packs from TO be legal?
+
+    assert(VAL_TYPE(OUT) == to);
+
+    // Reset TO_P sublevel to do reverse transformation
+    Heart from = Cell_Heart_Ensure_Noquote(input);
+    Copy_Cell(type, Datatype_From_Kind(from));
+    Copy_Cell(e, cast(Element*, stable_OUT));
+    STATE = STATE_0;
+    level_->executor = &Action_Executor;
+    Phase* phase = cast(Phase*, VAL_ACTION(Lib(TO_P)));
+    Tweak_Level_Phase(level_, phase);
+    Tweak_Level_Coupling(level_, nullptr);
+
+    Option(const Symbol*) label = Canon(TO_P);
+    level_->u.action.original = VAL_ACTION(Lib(TO_P));
+    level_->label = label;
+    level_->label_utf8 = label
+        ? String_UTF8(unwrap label)
+        : "(anonymous)";
+
+    assert(Get_Level_Flag(level_, TRAMPOLINE_KEEPALIVE));
+    Clear_Level_Flag(level_, TRAMPOLINE_KEEPALIVE);
+
+    Set_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING);
+    level_->out = reverse;  // don't overwrite OUT
+    return CATCH_CONTINUE_SUBLEVEL(level_);
+
+} ensure_results_equal: {  ///////////////////////////////////////////////////
+
+    USE_LEVEL_SHORTHANDS (L);  // didn't need to keepalive reverse sublevel
+
+    if (THROWING)
+        return BOUNCE_THROWN;
+
+    assert(not Is_Raised(reverse));
+
+    Decay_If_Unstable(reverse);  // should packs from TO be legal?
+
+    if (to == REB_MAP) {  // doesn't preserve order requirement :-/
+        assert(VAL_TYPE(cast(Value*, reverse)) == VAL_TYPE(input));
+        return OUT;
+    }
+
+    bool equal = rebUnboxLogic(
+        Canon(EQUAL_Q), rebQ(cast(Value*, reverse)), rebQ(input)
+    );
+    assert(equal);
+
+    return OUT;
+}}
+
+#endif
 
 
 //
@@ -88,10 +155,10 @@ Bounce TO_Unhooked(Level* level_, Kind kind, Element* arg)
 //
 //  "Converts to a specified datatype, copying any underying data"
 //
-//      return: "VALUE converted to TYPE (copied if same type as value)"
+//      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
 //          [element?]
-//      type [<maybe> element?]
-//      value [<maybe> element?]
+//      type [<maybe> type-block!]
+//      element [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(to)
@@ -99,33 +166,48 @@ DECLARE_NATIVE(to)
     INCLUDE_PARAMS_OF_TO;
 
     Element* type = cast(Element*, ARG(type));
-    Element* v = cast(Element*, ARG(value));
+    Element* e = cast(Element*, ARG(element));
 
-    Kind new_kind = VAL_TYPE_KIND(type);
-    Kind old_kind = VAL_TYPE(v);
+    Heart to = VAL_TYPE_HEART(type);
+    Heart from = Cell_Heart_Ensure_Noquote(e);
 
-    if (new_kind == old_kind) {
-        return rebValue("copy @", v);
-    }
+    if (to == from)
+        return rebValue(Canon(COPY), rebQ(e));
 
-    ToHook* hook = Tohook_For_Type(type);
+    Copy_Cell(SPARE, type);  // swap for generic dispatch to TO_P on element
+    Copy_Cell(type, e);
+    Copy_Cell(e, cast(Element*, SPARE));
 
-    Bounce b = hook(level_, new_kind, v); // may fail();
-    if (b == BOUNCE_THROWN) {
-        if (Is_Throwing_Failure(level_))
-            return b;
-        assert(!"Illegal throw in TO conversion handler");
-        return FAIL(Error_No_Catch_For_Throw(LEVEL));
-    }
-    Atom* r = Atom_From_Bounce(b);
-    if (Is_Raised(r))
-        return r;
+  #if DEBUG  // add monitor to make sure result is right
+    Option(const Symbol*) label = level_->label;
+    Option(VarList*) coupling = Level_Coupling(level_);
 
-    if (r == nullptr or VAL_TYPE(r) != new_kind) {
-        assert(!"TO conversion did not return intended type");
-        return FAIL(Error_Invalid_Type(VAL_TYPE(r)));
-    }
-    return r;  // must be either OUT or an API handle
+    DECLARE_ELEMENT (e_saved);  // want to save element
+    Copy_Cell(e_saved, type);  // remember: we swapped...
+    Level* sub = Push_Downshifted_Level(OUT, level_);
+    Copy_Cell(Level_Spare(level_), e_saved);
+
+    assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
+    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
+
+    level_->executor = &To_Checker_Dispatcher;
+
+    Phase* phase = cast(Phase*, VAL_ACTION(Lib(TO_P)));
+    Tweak_Level_Phase(sub, phase);
+    Tweak_Level_Coupling(sub, coupling);
+
+    sub->u.action.original = VAL_ACTION(Lib(TO));
+    sub->label = label;
+    sub->label_utf8 = label
+        ? String_UTF8(unwrap label)
+        : "(anonymous)";
+    STATE = to;
+    return CATCH_CONTINUE_SUBLEVEL(sub);
+  #else
+    const Element* first_arg = type;  // actually element, after swap
+    Bounce b = Run_Generic_Dispatch_Core(first_arg, level_, Canon(TO_P));
+    return b;
+  #endif
 }
 
 
@@ -798,8 +880,8 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
         return nullptr;
 
     Term_String_Len_Size(s, num_chars, up - String_Head(s));
-
-    Init_Email(PUSH(), s);
+    Freeze_Flex(s);
+    Init_Any_String(PUSH(), REB_EMAIL, s);
     return cp;
 }
 
@@ -829,7 +911,16 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 //
 Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
 {
-    return Try_Scan_Unencoded_String_To_Stack(cp, len, REB_URL, STRMODE_NO_CR);
+    String* s = Append_UTF8_May_Fail(
+        nullptr,
+        cs_cast(cp),
+        len,
+        STRMODE_NO_CR
+    );
+    Freeze_Flex(s);
+    Init_Any_String(PUSH(), REB_URL, s);
+
+    return cp + len;
 }
 
 
@@ -902,44 +993,6 @@ Option(const Byte*) Try_Scan_Binary_To_Stack(
     Init_Blob(PUSH(), decoded);
 
     return cp + 1;  // include the "}" in the scan total
-}
-
-
-//
-//  Try_Scan_Unencoded_String_To_Stack: C
-//
-// Scan any string that does not require special decoding.
-//
-// 1. Curly braced strings may span multiple lines, and some files may have CR
-//    and LF in the data:
-//
-//     {line one  ; imagine this line has CR LF...not just LF
-//     line two}
-//
-//    Despite the presence of the CR in the source file, the scanned literal
-//    should only support LF (if it supports files with it at all)
-//
-//      http://blog.hostilefork.com/death-to-carriage-return/
-//
-//    So at time of writing it is always STRMODE_NO_CR, but the option is
-//    being left open to make the scanner flexible in this respect...to
-//    either convert CR LF sequences to just LF, or to preserve the CR.
-//
-Option(const Byte*) Try_Scan_Unencoded_String_To_Stack(
-    const Byte* cp,
-    Size size,
-    Heart heart,
-    enum Reb_Strmode strmode  // currently always STRMODE_NO_CR
-){
-    String* s = Append_UTF8_May_Fail(
-        nullptr,
-        cs_cast(cp),
-        size,
-        strmode
-    );
-    Init_Any_String(PUSH(), heart, s);
-
-    return cp + size;
 }
 
 

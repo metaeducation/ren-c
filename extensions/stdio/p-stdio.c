@@ -338,7 +338,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
             if (rebUnboxLogic("blank?", result)) {  // ESCAPE received
                 rebRelease(result);
                 return rebValue(
-                    "const to binary!", rebR(rebChar(ESC))
+                    "as binary!", rebR(rebChar(ESC))
                 );
             }
             assert(rebUnboxLogic("text?", result));

@@ -74,19 +74,6 @@ Bounce Makehook_Quoted(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  TO_Quoted: C
-//
-// TO is disallowed at the moment.
-//
-// (to quoted! [[a]] => '[[a]]) is just a synonym for QUOTE, and the value
-// is not apparent.
-//
-Bounce TO_Quoted(Level* level_, Kind kind, Element* arg) {
-    return RAISE(Error_Bad_Make(kind, arg));
-}
-
-
-//
 //  REBTYPE: C
 //
 // It was for a time considered whether generics should be willing to operate

@@ -655,7 +655,7 @@ REBOL [
                 fail "EXPORT of SET-GROUP! must be VOID, WORD! or SET-WORD?"
             ]
         ] else [
-            word: to word! what
+            word: resolve what
         ]
         return (  ; can't append until after, if prev. definition used in expr
             (

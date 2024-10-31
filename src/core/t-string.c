@@ -336,40 +336,17 @@ static void reverse_string(String* str, REBLEN index, Length len)
 //
 // 1. Makehook_Issue() calls Makehook_String() in its implementation.
 //
+// 2. !!! We can't really know how many bytes to allocate for a certain
+//    number of codepoints.  UTF-8 may take up to UNI_ENCODED_MAX bytes
+//    (typically 4) per CHAR!.  For now we just assume the integer is the
+//    expected *byte* capacity, not length, as we can do that.
+//
 Bounce Makehook_String(Level* level_, Kind k, Element* def) {
     Heart heart = cast(Heart, k);
     assert(Any_String_Kind(heart) or Any_Utf8_Kind(heart));  // issue calls [1]
 
-    if (Is_Integer(def)) {  // new string with given integer capacity
-        //
-        // !!! We can't really know how many bytes to allocate for a certain
-        // number of codepoints.  UTF-8 may take up to UNI_ENCODED_MAX bytes
-        // (typically 4) per CHAR!.  For now we just assume the integer is
-        // the expected *byte* capacity, not length, as we can do that.
-        //
-        // !!! R3-Alpha tolerated decimal, e.g. `make text! 3.14`, which
-        // is semantically nebulous (round up, down?) and generally bad.
-        // Red continues this behavior.
-        //
+    if (Is_Integer(def))  // new string with given integer capacity [2]
         return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));
-    }
-
-    if (Any_Utf8(def)) {  // new type for the UTF-8 data with new allocation
-        Length len;
-        Size size;
-        const Byte* utf8 = Cell_Utf8_Len_Size_At(&len, &size, def);
-        UNUSED(len);  // !!! Data already valid and checked, should leverage
-        return Init_Any_String(
-            OUT,
-            heart,
-            Append_UTF8_May_Fail(  // !!! Should never fail
-                nullptr,
-                cs_cast(utf8),
-                size,
-                STRMODE_ALL_CODEPOINTS
-            )
-        );
-    }
 
     if (Is_Binary(def)) {  // not necessarily valid UTF-8, so must check
         Size size;
@@ -381,100 +358,7 @@ Bounce Makehook_String(Level* level_, Kind k, Element* def) {
         );
     }
 
-    if (Is_Block(def)) {
-        //
-        // The construction syntax for making strings that are preloaded with
-        // an offset into the data is #[string ["abcd" 2]].
-        //
-        // !!! In R3-Alpha make definitions didn't have to be a single value
-        // (they are for compatibility between construction syntax and MAKE
-        // in Ren-C).  So the positional syntax was #[string! "abcd" 2]...
-        // while #[string ["abcd" 2]] would join the pieces together in order
-        // to produce #{abcd2}.  That behavior is not available in Ren-C.
-
-        REBLEN len;
-        const Element* first = Cell_List_Len_At(&len, def);
-
-        if (len != 2)
-            goto bad_make;
-
-        if (not Any_String(first))
-            goto bad_make;
-
-        const Element* index = first + 1;
-        if (!Is_Integer(index))
-            goto bad_make;
-
-        REBINT i = Int32(index) - 1 + VAL_INDEX(first);
-        if (i < 0 or i > Cell_Series_Len_At(first))
-            goto bad_make;
-
-        return Init_Series_At(OUT, heart, Cell_Flex(first), i);
-    }
-
-  bad_make:
-
     return RAISE(Error_Bad_Make(heart, def));
-}
-
-
-//
-//  TO_String: C
-//
-Bounce TO_String(Level* level_, Kind k, Element* arg)
-{
-    Heart heart = cast(Heart, k);
-
-    if (heart == REB_ISSUE) {  // encompasses what would have been TO CHAR!
-        if (Is_Integer(arg)) {
-            //
-            // `to issue! 1` is slated to keep the visual consistency intact,
-            // so that you'd get #1 back.  With issue! and char? unified,
-            // that means a way to get a codepoint is needed.
-            //
-            return RAISE("Use CODEPOINT-TO-CHAR for codepoint to ISSUE!");
-        }
-        if (IS_CHAR(arg) and Cell_Codepoint(arg) == 0)
-            return RAISE(Error_Illegal_Zero_Byte_Raw());  // `#` as codepoint 0
-
-        // Fall through
-    }
-
-    if (Is_Binary(arg)) {
-        //
-        // !!! Historically TO would convert binaries to strings.  But as
-        // the definition of TO has been questioned and evolving, that no
-        // longer seems to make sense (e.g. if `TO TEXT! 1` is "1", the
-        // concept of implementation transformations doesn't fit).  Keep
-        // compatible for right now, but ultimately MAKE or AS should be
-        // used for this.
-        //
-        Size size;
-        const Byte* at = Cell_Binary_Size_At(&size, arg);
-        return Init_Any_String(
-            OUT,
-            heart,
-            Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
-        );
-    }
-
-    // !!! Historical behavior for TO TEXT! of TAG! did not FORM:
-    //
-    //     >> to text! <abc>
-    //     == "abc"
-    //
-    // However, that behavior is likely to change, as this behavior should
-    // be covered by `make text!` or `copy as text!`.  For the present
-    // moment, it is kept as-is to avoid disruption.
-    //
-    if (Is_Tag(arg))
-        return Makehook_String(level_, heart, arg);
-
-    return Init_Any_String(
-        OUT,
-        heart,
-        Copy_Form_Element(cast(const Element*, arg), MOLD_FLAG_TIGHT)
-    );
 }
 
 
@@ -772,6 +656,9 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
 }
 
 
+//
+//  MF_Url: C
+//
 // R3-Alpha's philosophy on URL! was:
 //
 // "Only alphanumerics [0-9a-zA-Z], the special characters $-_.+!*'(),
@@ -785,9 +672,20 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-static void Mold_Url(Molder* mo, const Cell* v)
+void MF_Url(Molder* mo, const Cell* v, bool form)
 {
-    Append_String(mo->string, v);
+    UNUSED(form);
+    Append_Any_Utf8(mo->string, v);
+}
+
+
+//
+//  MF_Email: C
+//
+void MF_Email(Molder* mo, const Cell* v, bool form)
+{
+    UNUSED(form);
+    Append_Any_Utf8(mo->string, v);
 }
 
 
@@ -815,7 +713,7 @@ static void Mold_File(Molder* mo, const Cell* v)
 static void Mold_Tag(Molder* mo, const Cell* v)
 {
     Append_Codepoint(mo->string, '<');
-    Append_String(mo->string, v);
+    Append_Any_Utf8(mo->string, v);
     Append_Codepoint(mo->string, '>');
 }
 
@@ -834,7 +732,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
     // would form with no delimiters, e.g. `form #foo` is just foo
     //
     if (form and heart != REB_TAG) {
-        Append_String(buf, v);
+        Append_Any_Utf8(buf, v);
         return;
     }
 
@@ -849,11 +747,6 @@ void MF_String(Molder* mo, const Cell* v, bool form)
             break;
         }
         Mold_File(mo, v);
-        break;
-
-      case REB_EMAIL:
-      case REB_URL:
-        Mold_Url(mo, v);
         break;
 
       case REB_TAG:
@@ -887,7 +780,7 @@ bool Try_Get_Series_Index_From_Picker(
     if (n < 0)
         ++n;
 
-    n += VAL_INDEX(v) - 1;
+    n += VAL_INDEX_STRINGLIKE_OK(v) - 1;
 
     if (n < 0 or n >= Cell_Series_Len_Head(v))
         return false;  // out of range, null unless POKE or more PICK-ing
@@ -902,14 +795,107 @@ bool Try_Get_Series_Index_From_Picker(
 //
 // Action handler for ANY-STRING?
 //
+// 1. When things like ISSUE! or URL! have a node, their considerations are
+//    not different from strings.  Their cell format has room for an index,
+//    and that index is valid.  The special case of TO conversions is written
+//    here so that non-node-having entities work.
+//
 REBTYPE(String)
 {
-    Value* v = D_ARG(1);
-    assert(Any_String(v));
-
     Option(SymId) id = Symbol_Id(verb);
 
+    Element* v = cast(Element*, D_ARG(1));
+    assert(
+        Any_Utf8(v) and (
+            Stringlike_Has_Node(v) or id == SYM_TO_P  // [1]
+        )
+    );
+
     switch (id) {
+
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+      case SYM_TO_P: {
+        INCLUDE_PARAMS_OF_TO_P;
+        UNUSED(ARG(element));  // v
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(Cell_Heart(v) != to);  // TO calls COPY in this case
+
+        if (Any_Word_Kind(to)) {  // will have to copy the UTF-8 if mutable...
+            if (
+                not Stringlike_Has_Node(v)
+                or Is_Flex_Frozen(Cell_String(v))  // might be symbol
+            ){
+                return rebValue(Canon(AS), ARG(type), v);  // no copy!
+            }
+
+            Option(Error*) error = Trap_Transcode_One(OUT, to, v);
+            if (error)
+                return RAISE(unwrap error);
+            return OUT;
+        }
+
+        if (Any_String_Kind(to)) {  // new type for UTF-8 with new allocation
+            Length len;
+            Size size;
+            const Byte* utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
+            UNUSED(len);  // !!! Data valid and checked, should leverage
+            return Init_Any_String(
+                OUT,
+                to,
+                Append_UTF8_May_Fail(  // !!! Should never fail
+                    nullptr,
+                    cs_cast(utf8),
+                    size,
+                    STRMODE_ALL_CODEPOINTS
+                )
+            );
+        }
+
+        if (Any_Utf8_Kind(to)) {  // not strings, but UTF-8 (immutable)
+            if (
+                not Stringlike_Has_Node(v)
+                or Is_Flex_Frozen(Cell_String(v))  // might be symbol
+            ){
+                return rebValue(Canon(AS), ARG(type), v);  // no copy!
+            }
+
+            // !!! Must validate as URL or EMAIL, etc.
+
+            Length len;
+            Size size;
+            Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
+
+            if (len == 0)  // don't "accidentally" create zero-codepoint `#`
+                return RAISE(Error_Illegal_Zero_Byte_Raw());
+
+            return Init_Utf8_Non_String(OUT, to, utf8, size, len);
+        }
+
+        if (to == REB_BINARY) {
+            Size utf8_size;
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
+
+            Binary* b = Make_Binary(utf8_size);
+            memcpy(Binary_Head(b), utf8, utf8_size);
+            Term_Binary_Len(b, utf8_size);
+            return Init_Blob(OUT, b);
+        }
+
+        if (
+            to == REB_INTEGER
+            or to == REB_DECIMAL
+            or to == REB_PERCENT
+            or to == REB_DATE
+            or to == REB_TIME
+        ){
+            Option(Error*) error = Trap_Transcode_One(OUT, to, v);
+            if (error)
+                return RAISE(unwrap error);
+            return OUT;
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

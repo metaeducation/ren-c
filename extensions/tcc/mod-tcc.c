@@ -540,10 +540,10 @@ DECLARE_NATIVE(compile_p)
                 // https://forum.rebol.info/t/817
                 //
                 Append_Ascii(mo->string, "const Value* ");
-                Append_String(mo->string, linkname);
+                Append_Any_Utf8(mo->string, linkname);
                 Append_Ascii(mo->string, "(void *level_)\n{");
 
-                Append_String(mo->string, source);
+                Append_Any_Utf8(mo->string, source);
 
                 Append_Ascii(mo->string, "}\n\n");
             }
@@ -556,7 +556,7 @@ DECLARE_NATIVE(compile_p)
                 // macros or constants.  The string will appear at the point
                 // in the compile where it is given in the list.
                 //
-                Append_String(mo->string, item);
+                Append_Any_Utf8(mo->string, item);
                 Append_Ascii(mo->string, "\n");
             }
             else {

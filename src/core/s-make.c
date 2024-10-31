@@ -193,42 +193,10 @@ String* Append_Ascii(String* dst, const char *src)
 //
 //  Append_Utf8: C
 //
-// Append and validate UTF-8 bytes to a String Flex.  Terminates.
+// Append validated UTF-8 bytes to a String Flex.  Terminates.
 //
-String* Append_Utf8(String* dst, const char *utf8, size_t size)
+void Append_Utf8(String* dst, Utf8(const*) utf8, Length len, Size size)
 {
-    return Append_UTF8_May_Fail(dst, utf8, size, STRMODE_NO_CR);
-}
-
-
-//
-//  Append_Spelling: C
-//
-// Append the spelling of a REBSTR to a UTF8 binary.  Terminates.
-//
-void Append_Spelling(String* dst, const String* spelling)
-{
-    Append_Utf8(dst, String_UTF8(spelling), String_Size(spelling));
-}
-
-
-//
-//  Append_String_Limit: C
-//
-// Append a partial string to a String*.
-//
-void Append_String_Limit(
-    String* dst,
-    const Cell* src,
-    Option(const Length*) limit
-){
-    assert(not Is_String_Symbol(dst));
-    assert(Any_Utf8_Kind(Cell_Heart(src)));
-
-    Length len;
-    Size size;
-    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, src, limit);
-
     Length old_len = String_Len(dst);
     Size old_used = String_Size(dst);
 
@@ -237,6 +205,40 @@ void Append_String_Limit(
 
     memcpy(Binary_At(dst, tail), utf8, size);
     Term_String_Len_Size(dst, old_len + len, old_used + size);
+}
+
+
+//
+//  Append_Spelling: C
+//
+// Append the spelling of a REBSTR to a UTF8 binary.  Terminates.
+//
+void Append_Spelling(String* dst, const Symbol* s)
+{
+    Utf8(const*) utf8 = String_Head(s);
+    Length len = String_Len(s);
+    Size size = String_Size(s);
+    Append_Utf8(dst, utf8, len, size);
+}
+
+
+//
+//  Append_Any_Utf8_Limit: C
+//
+// Append a partial string to a String*.
+//
+void Append_Any_Utf8_Limit(
+    String* dst,
+    const Cell* src,
+    Option(const Length*) limit
+){
+    assert(not Is_Flex_Frozen(dst));
+    assert(Any_Utf8_Kind(Cell_Heart(src)));
+
+    Length len;
+    Size size;
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, src, limit);
+    Append_Utf8(dst, utf8, len, size);
 }
 
 
