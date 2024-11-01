@@ -334,10 +334,8 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 //
 static void Queue_Mark_Cell_Deep(const Cell* c)
 {
-  #if DEBUG_UNREADABLE_CELLS
-    if (Is_Cell_Unreadable(c))  // !!! fall through in release?
+    if (Is_Cell_Unreadable(c))
         return;
-  #endif
 
     assert(not Is_Fresh(c));
 
@@ -555,10 +553,9 @@ void Run_All_Handle_Cleaners(void) {
             const Cell* item_tail = Array_Tail(cast(Array*, stub));
             Cell* item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
-              #if DEBUG_UNREADABLE_CELLS
-                if (Is_Cell_Unreadable(item))  // !!! fall through in release?
+                if (Is_Cell_Unreadable(item))
                     continue;
-              #endif
+
                 if (Cell_Heart(item) != REB_HANDLE)
                     continue;
                 if (not Cell_Has_Node1(item))

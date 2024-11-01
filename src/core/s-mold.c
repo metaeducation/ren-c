@@ -424,12 +424,12 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
 
-  #if DEBUG_UNREADABLE_CELLS
-    if (Is_Cell_Unreadable(e)) {  // !!! fall through in release?
+    if (Is_Cell_Unreadable(e)) {
+      #if DEBUG
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
-        return;
+      #endif
+        return;  // !!! should never happen in release builds
     }
-  #endif
 
     REBLEN i;
     for (i = 0; i < Cell_Num_Quotes(e); ++i)
