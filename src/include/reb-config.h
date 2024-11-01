@@ -781,19 +781,19 @@ Special internal defines used by RT, not Host-Kit developers:
 // runtime costs because it will assert if you `unwrap` the pointer and it is
 // null when it shouldn't be.  Add it to the sanitized build.
 //
-#if !defined(DEBUG_CHECK_OPTIONALS)
+#if !defined(CHECK_OPTIONAL_TYPEMACRO)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_OPTIONALS  (RUNTIME_CHECKS && CPLUSPLUS_11)
+    #define CHECK_OPTIONAL_TYPEMACRO  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
-    #define DEBUG_CHECK_OPTIONALS 0
+    #define CHECK_OPTIONAL_TYPEMACRO 0
   #endif
 #endif
 
-#if !defined(DEBUG_CHECK_NEVERNULL)
+#if !defined(CHECK_NEVERNULL_TYPEMACRO)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_NEVERNULL  (RUNTIME_CHECKS && CPLUSPLUS_11)
+    #define CHECK_NEVERNULL_TYPEMACRO  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
-    #define DEBUG_CHECK_NEVERNULL 0
+    #define CHECK_NEVERNULL_TYPEMACRO 0
   #endif
 #endif
 

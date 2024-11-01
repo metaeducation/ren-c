@@ -61,12 +61,12 @@
     #define DEBUG_STATIC_ANALYZING 0
 #endif
 
-#if !defined(DEBUG_CHECK_OPTIONALS)
-    #define DEBUG_CHECK_OPTIONALS 0
+#if !defined(CHECK_OPTIONAL_TYPEMACRO)
+    #define CHECK_OPTIONAL_TYPEMACRO 0
 #endif
 
-#if !defined(DEBUG_CHECK_NEVERNULL)
-    #define DEBUG_CHECK_NEVERNULL 0
+#if !defined(CHECK_NEVERNULL_TYPEMACRO)
+    #define CHECK_NEVERNULL_TYPEMACRO 0
 #endif
 
 #if !defined(DEBUG_USE_SINKS)
@@ -1186,7 +1186,7 @@
 // with more important applications of that voodoo.  So it shouldn't be used
 // on types that depend on that (like Cell pointers).
 //
-#if (! DEBUG_CHECK_NEVERNULL)
+#if (! CHECK_NEVERNULL_TYPEMACRO)
     #define NeverNull(type) \
         type
 #else
@@ -1276,7 +1276,7 @@
 //    variable on the left of an output stream operator.  The variable holds
 //    a dummy class which only implements the extraction.
 //
-#if (! DEBUG_CHECK_OPTIONALS)
+#if (! CHECK_OPTIONAL_TYPEMACRO)
     #define Option(T) T
     #define unwrap
     #define maybe

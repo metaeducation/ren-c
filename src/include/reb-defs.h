@@ -148,10 +148,10 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 // The Index type is not allowed to be 0 unless it is an Optional(Index).
 //
 // 1. Due to the fact that Optional(Index) is just `Index` when not using the
-//    DEBUG_CHECK_OPTIONALS switch, we cannot enforce Index's "never 0"
+//    CHECK_OPTIONAL_TYPEMACRO switch, we cannot enforce Index's "never 0"
 //    property without that switch.
 
-#if (! CPLUSPLUS_11) || (! DEBUG_CHECK_OPTIONALS)
+#if (! CPLUSPLUS_11) || (! CHECK_OPTIONAL_TYPEMACRO)
     typedef intptr_t Index;
     #define Index_To_Offset(i) ((i) - 1)
     #define Offset_To_Index(i) ((i) + 1)
@@ -159,7 +159,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
     struct Index {
         intptr_t value;
         Index(intptr_t i) : value {i}  // explicit would be too painful
-          { assert(i != 0); }  // can't do unless DEBUG_CHECK_OPTIONALS [1]
+          { assert(i != 0); }  // can't do unless CHECK_OPTIONAL_TYPEMACRO [1]
 
         operator intptr_t() const
           { return value; }
@@ -180,7 +180,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
     INLINE Index Offset_To_Index(Offset o)
      { return Index {o + 1}; }
 
-  #if DEBUG_CHECK_OPTIONALS
+  #if CHECK_OPTIONAL_TYPEMACRO
     template<>
     struct OptionWrapper<Index> {  // bypass the 0 assert
         intptr_t wrapped;
@@ -297,7 +297,7 @@ typedef uint_fast16_t SymIdNum;  // 16 bits for SymId in symbol header
 #define SYM_0 \
     cast(Option(SymId),  cast(SymId, 0))  // 0 cast needed if not -fpermissive
 
-#if DEBUG_CHECK_OPTIONALS && CPLUSPLUS_11
+#if CHECK_OPTIONAL_TYPEMACRO && CPLUSPLUS_11
     bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;
     void operator!=(Option(SymId)& a, Option(SymId)& b) = delete;
 #endif

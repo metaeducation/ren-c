@@ -43,7 +43,7 @@
 // invocations, which may not have an associated name).  To make the callsite
 // intent clearer for passing in a null Symbol*, use ANONYMOUS instead.
 //
-#if DEBUG_CHECK_OPTIONALS
+#if CHECK_OPTIONAL_TYPEMACRO
     #define ANONYMOUS   Option(const Symbol*){nullptr}
 #else
     #define ANONYMOUS   nullptr
