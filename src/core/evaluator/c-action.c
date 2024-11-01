@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -697,7 +697,7 @@ Bounce Action_Executor(Level* L)
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
         assert(Is_Fresh(OUT));  // didn't touch out, should be fresh
-        Init_Nothing(OUT);
+        Init_Nothing(OUT);  // trampoline requires some valid OUT result
         goto skip_output_check;
     }
 
@@ -1202,22 +1202,11 @@ void Begin_Action(
 //
 void Drop_Action(Level* L) {
     Set_Level_Infix_Mode(L, PREFIX_0);  // clear out for reuse...?
-    Clear_Action_Executor_Flag(L, FULFILL_ONLY);
 
     assert(BONUS(KeySource, L->varlist) == L);
 
     if (Is_Node_Managed(L->varlist)) {  // outstanding references may exist [1]
-      #if 0  // old behavior: keep stub alive, reuse memory [2]
-        L->varlist = Steal_Varlist_Vars(
-            cast(VarList*, L->varlist),
-            ORIGINAL  // degrade keysource from f
-        );
-        assert(Not_Node_Managed(L->varlist));
-        Tweak_Bonus_Keysource(L->varlist, L);
-      #endif
-
         Tweak_Bonus_Keysource(L->varlist, ACT_KEYLIST(ORIGINAL));
-        L->varlist = nullptr;
     }
     else {  // no outstanding references [3]
         Clear_Flex_Info(L->varlist, HOLD);
@@ -1228,18 +1217,19 @@ void Drop_Action(Level* L) {
                 FLEX_INFO_0_IS_FALSE
                     | FLAG_USED_BYTE(255)  // mask out non-dynamic-len
         )));
-    }
 
-  #if RUNTIME_CHECKS
-    if (L->varlist) {
-        assert(Not_Node_Managed(L->varlist));
-
+      #if RUNTIME_CHECKS
         Cell* rootvar = Array_Head(L->varlist);
         assert(Varlist_Array(Cell_Varlist(rootvar)) == L->varlist);
         Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // can't corrupt ptr
         Corrupt_Pointer_If_Debug(BINDING(rootvar));
+      #endif
     }
-  #endif
+
+    if (Get_Action_Executor_Flag(L, FULFILL_ONLY))
+        Clear_Action_Executor_Flag(L, FULFILL_ONLY);
+    else
+        L->varlist = nullptr;
 
     Corrupt_Pointer_If_Debug(ORIGINAL); // action is no longer running
     L->executor = nullptr;  // so GC won't think level needs Action marking

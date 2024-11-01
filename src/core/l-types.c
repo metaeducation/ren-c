@@ -66,8 +66,10 @@ static Bounce To_Checker_Dispatcher(Level* const L)
     Heart to = cast(Heart, Level_State_Byte(L));
     assert(to != REB_0);
 
-    Atom* reverse = cast(Atom*, &L->u.eval.current);
     Element* input = cast(Element*, Level_Spare(L));
+    Heart from = Cell_Heart_Ensure_Noquote(input);
+
+    Atom* reverse = cast(Atom*, &L->u.eval.current);
 
     if (Get_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING))
         goto ensure_results_equal;
@@ -85,24 +87,29 @@ static Bounce To_Checker_Dispatcher(Level* const L)
     Level* level_ = TOP_LEVEL;  // sublevel stole the varlist
     assert(level_->prior == L);
 
-    INCLUDE_PARAMS_OF_TO_P;  // variables in subframe (level_), not checker (L)
-
-    Sink(Element) type = cast(Element*, ARG(type));  // call may have mutated
-    Sink(Element) e = cast(Element*, ARG(element));  // call may haven mutated
-
     if (Is_Raised(OUT)) {
         Drop_Level(level_);
         return OUT;
     }
 
     Decay_If_Unstable(OUT);  // should packs from TO be legal?
-
     assert(VAL_TYPE(OUT) == to);
 
     // Reset TO_P sublevel to do reverse transformation
-    Heart from = Cell_Heart_Ensure_Noquote(input);
-    Copy_Cell(type, Datatype_From_Kind(from));
-    Copy_Cell(e, cast(Element*, stable_OUT));
+
+    level_->executor = &Action_Executor;  // Drop_Action() nulled it
+    Push_Action(level_, VAL_ACTION(Lib(TO_P)), nullptr);
+    Begin_Action(level_, Canon(TO_P), PREFIX_0);
+    Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
+
+    INCLUDE_PARAMS_OF_TO_P;
+    Erase_Cell(ARG(return));
+    Erase_Cell(ARG(type));
+    Erase_Cell(ARG(element));
+
+    Init_Nulled(ARG(return));
+    Copy_Cell(ARG(type), Datatype_From_Kind(from));
+    Copy_Cell(ARG(element), cast(Element*, stable_OUT));
     STATE = STATE_0;
     level_->executor = &Action_Executor;
     Phase* phase = cast(Phase*, VAL_ACTION(Lib(TO_P)));
@@ -130,22 +137,25 @@ static Bounce To_Checker_Dispatcher(Level* const L)
     if (THROWING)
         return BOUNCE_THROWN;
 
-    assert(not Is_Raised(reverse));
+    if (Is_Raised(reverse))
+        return FAIL(Cell_Error(reverse));
 
     Decay_If_Unstable(reverse);  // should packs from TO be legal?
 
     if (to == REB_MAP) {  // doesn't preserve order requirement :-/
-        assert(VAL_TYPE(cast(Value*, reverse)) == VAL_TYPE(input));
+        if (VAL_TYPE(cast(Value*, reverse)) != VAL_TYPE(input))
+            return FAIL("Reverse TO of MAP! didn't produce original type");
         return OUT;
     }
 
-    Push_Lifeguard(reverse);  // was guarded as OUT, but not now
-
+    Push_Lifeguard(reverse);  // was guarded as level_->OUT, but no longer
     bool equal = rebUnboxLogic(
         Canon(EQUAL_Q), rebQ(cast(Value*, reverse)), rebQ(input)
     );
     Drop_Lifeguard(reverse);
-    assert(equal);
+
+    if (not equal)
+        return FAIL("Reverse TO transform didn't produce original result");
 
     return OUT;
 }}
