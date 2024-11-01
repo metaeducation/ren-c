@@ -218,46 +218,49 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 
 
 //
-//  Pop_Stack_Values_Core_Masked: C
+//  Pop_Stack_Values_Core: C
 //
 // Pops computed values from the stack to make a new ARRAY.
 //
+// 1. The Pop has CELL_MASK_ALL semantics, so anything like CELL_FLAG_NOTE
+//    will be copied.  There is no other option, because the release build
+//    uses memcpy() to implement this.  Hence we make sure none of the
+//    persistent flags
+//
 // !!! How can we pass in callsite file and line for tracking info?
 //
-Array* Pop_Stack_Values_Core_Masked(
-    Flags flags,
-    StackIndex base,
-    Flags copy_mask
-){
+Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
     Assert_No_DataStack_Pointers_Extant();  // in the future, pop may disrupt
 
     Length len = TOP_INDEX - base;
     Array* a = Make_Array_Core(flags, len);
     Set_Flex_Len(a, len);
 
+    Value* src = Data_Stack_At(Value, base + 1);  // moving, not const!
+    Value* dest = Flex_Head(Value, a);
+
+  #if (! DEBUG)  // Stack cells don't have CELL_MASK_PERSIST, can memcpy()
+    STATIC_ASSERT(! DEBUG_POISON_DROPPED_STACK_CELLS);
+    Mem_Copy(dest, src, len * sizeof(Cell));  // CELL_MASK_ALL semantics [1]
+  #else
     Flavor flavor = Stub_Flavor(a);  // flavor comes from flags
 
     Count count = 0;
-    Value* src = Data_Stack_At(Value, base + 1);  // moving, not const!
-    Value* dest = Flex_Head(Value, a);
     for (; count < len; ++count, ++src, ++dest) {
+        assert(not (src->header.bits & CELL_MASK_PERSIST));  // would copy [1]
         if (Is_Antiform(src)) {  // only ok in some arrays
             Assert_Cell_Stable(src);
-            if (flavor < FLAVOR_MIN_ANTIFORMS_OK) {
-              #if DEBUG
-                assert(!"Unexpected antiform found on data stack");
-              #else
-                Quasify_Antiform(src);  // "safe" release behavior
-              #endif
-            }
+            if (flavor < FLAVOR_MIN_ANTIFORMS_OK)
+                panic ("Unexpected antiform found on data stack");
         }
 
-        Move_Cell_Untracked(dest, src, copy_mask);
+        Move_Cell_Untracked(dest, src, CELL_MASK_ALL);
 
         #if DEBUG_POISON_DROPPED_STACK_CELLS
           Poison_Cell(src);
         #endif
     }
+  #endif
 
     g_ds.index -= len;
     g_ds.movable_top -= len;

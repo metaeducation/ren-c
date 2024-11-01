@@ -3387,10 +3387,7 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
         return nullptr;
     }
 
-    Source* reified = cast(Source*, Pop_Stack_Values_Core_Keep_Notes(
-        FLEX_MASK_MANAGED_SOURCE,
-        L->baseline.stack_base
-    ));
+    Source* reified = Pop_Managed_Source_From_Stack(L->baseline.stack_base);
     Drop_Level(L);
     return reified;
 }

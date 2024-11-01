@@ -63,42 +63,44 @@
 // See Ensure_Readable(), Ensure_Writable() and related functions for an
 // explanation of bits that are formatted in cell headers to be legal to use.
 //
+// 1. Expandable arrays prep all cells, including in the not-yet-used
+//    capacity.  Otherwise you'd waste time un-poisoning cells on every
+//    expansion and poisoning them again on every shrink.  Trust that the
+//    DEBUG_POISON_FLEX_TAILS is good enough.
+//
 INLINE void Prep_Array(
     Array* a,
     REBLEN capacity  // Expand_Flex passes 0 on dynamic reallocation
 ){
     assert(Get_Stub_Flag(a, DYNAMIC));
 
+  #if (! DEBUG)  // deliberate design for 0x00: see Assert_Cell_Initable()
+    UNUSED(capacity);  // branching for FIXED_SIZE test not worth cost
+    memset(
+        a->content.dynamic.data,
+        0x00,
+        a->content.dynamic.rest * sizeof(Cell)
+    );
+  #else
     Cell* prep = Array_Head(a);
 
-    if (Not_Flex_Flag(a, FIXED_SIZE)) {
-        //
-        // Expandable arrays prep all cells, including in the not-yet-used
-        // capacity.  Otherwise you'd waste time prepping cells on every
-        // expansion and un-prepping them on every shrink.
-        //
-        REBLEN n;
-        for (n = 0; n < a->content.dynamic.rest; ++n, ++prep)
-            Erase_Cell(prep);
+    REBLEN n;
+    for (n = 0; n < capacity; ++n, ++prep)
+        Erase_Cell(prep);  // 0 header, but corrupts rest, adds TRACK() info
 
-      #if DEBUG_POISON_FLEX_TAILS  // allocation deliberately oversized by 1
-        Poison_Cell(prep - 1);
-      #endif
-    }
-    else {
-        REBLEN n;
-        for (n = 0; n < capacity; ++n, ++prep)
-            Erase_Cell(prep);  // have to prep cells in useful capacity
-
-        // If an array isn't expandable, let the release build not worry
-        // about the bits in the excess capacity.  But poison them in
-        // the debug build.
-        //
-      #if DEBUG_POISON_EXCESS_CAPACITY
+    if (Get_Flex_Flag(a, FIXED_SIZE)) {  // can't expand, poison any excess
         for (; n < a->content.dynamic.rest; ++n, ++prep)
             Poison_Cell(prep);  // unreadable + unwritable
-      #endif
     }
+    else {  // array is expandable, so prep all cells [1]
+        for (; n < a->content.dynamic.rest; ++n, ++prep)
+            Erase_Cell(prep);
+    }
+
+    #if DEBUG_POISON_FLEX_TAILS  // allocation deliberately oversized by 1
+        Poison_Cell(prep - 1);
+    #endif
+  #endif
 }
 
 

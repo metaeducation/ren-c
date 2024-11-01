@@ -139,7 +139,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             }
         }
 
-        e->wordlist = Pop_Stack_Values_Core(FLEX_MASK_MANAGED_SOURCE, base);
+        e->wordlist = Pop_Managed_Source_From_Stack(base);
         Clear_Node_Managed_Bit(e->wordlist);  // [1]
 
         e->word = cast(Value*, Array_Head(e->wordlist)) - 1;

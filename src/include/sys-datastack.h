@@ -327,13 +327,6 @@ INLINE Element* Move_Drop_Top_Stack_Element(Init(Element) out) {
 #define Pop_Managed_Source_From_Stack(base) \
     cast(Source*, Pop_Stack_Values_Core(FLEX_MASK_MANAGED_SOURCE, (base)))
 
-#define Pop_Stack_Values_Core(flags,base) \
-    Pop_Stack_Values_Core_Masked((flags), (base), CELL_MASK_COPY)
-
-#define Pop_Stack_Values_Core_Keep_Notes(flags,base) \
-    Pop_Stack_Values_Core_Masked((flags), (base), \
-        CELL_MASK_COPY_KEEP_NOTES)
-
 
 // Since stack overflows are memory-related errors, don't try to do any
 // error allocations...just use an already made error.

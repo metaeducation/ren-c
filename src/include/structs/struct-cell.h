@@ -398,13 +398,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED)
 
 #define CELL_MASK_COPY \
-    ~(CELL_MASK_PERSIST \
-        | CELL_FLAG_NOTE \
-        | CELL_FLAG_PROTECTED)
-
-#define CELL_MASK_COPY_KEEP_NOTES \
-    ~(CELL_MASK_PERSIST \
-        | CELL_FLAG_PROTECTED)
+    ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_PROTECTED)
 
 #define CELL_MASK_ALL \
     ~cast(Flags, 0)
@@ -698,8 +692,8 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #define Mem_Copy(dst,src,size) \
     memcpy(cast(void*, (dst)), (src), (size))  // [4]
 
-#define Mem_Fill(dst,val,size) \
-    memset(cast(void*, (dst)), (val), (size))  // [4]
+#define Mem_Fill(dst,byte,size) \
+    memset(cast(void*, (dst)), (byte), (size))  // [4]
 
 
 //=//// CELL SUBCLASSES FOR QUARANTINING STABLE AND UNSTABLE ANTIFORMS /////=//
