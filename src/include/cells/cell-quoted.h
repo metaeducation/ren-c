@@ -83,7 +83,7 @@ INLINE Cell* Quotify_Core(Cell* v, Count depth) {
     return v;
 }
 
-#if (! DEBUG_USE_CELL_SUBCLASSES)
+#if DONT_CHECK_CELL_SUBCLASSES
     #define Quotify Quotify_Core
 #else
     INLINE Value* Quotify(Value* v, Count depth)
@@ -109,7 +109,7 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
     return v;
 }
 
-#if (! DEBUG_USE_CELL_SUBCLASSES)
+#if DONT_CHECK_CELL_SUBCLASSES
     #define Unquotify Unquotify_Core
 #else
     INLINE Element* Unquotify(Value* v, Count depth)
@@ -225,7 +225,7 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
     INLINE const Element* Ensure_Element(const Atom* cell)
       { return Ensure_Element(m_cast(Atom*, cell)); }
 
-  #if DEBUG_USE_CELL_SUBCLASSES
+  #if CHECK_CELL_SUBCLASSES
     void Ensure_Element(const Element*) = delete;
   #endif
 #endif

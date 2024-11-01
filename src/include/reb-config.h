@@ -618,24 +618,25 @@ Special internal defines used by RT, not Host-Kit developers:
 // runtime cost via wrapper classes...so they are only used in checked builds
 // (and won't work in the C build at all).
 //
-#if !defined(DEBUG_USE_CELL_SUBCLASSES)
+#if !defined(CHECK_CELL_SUBCLASSES)
    #if RUNTIME_CHECKS && CPLUSPLUS_11
-    #define DEBUG_USE_CELL_SUBCLASSES 1
+    #define CHECK_CELL_SUBCLASSES 1
   #else
-    #define DEBUG_USE_CELL_SUBCLASSES 0
+    #define CHECK_CELL_SUBCLASSES 0
   #endif
+    #define DONT_CHECK_CELL_SUBCLASSES (! CHECK_CELL_SUBCLASSES)
 #endif
 
 
 // Sinks are a feature which lets you mark a parameter as being output on an
 // interface--which is good to know.  But the Sink()/Need() functions are
-// actually crucial to DEBUG_USE_CELL_SUBCLASSES working.
+// actually crucial to CHECK_CELL_SUBCLASSES working.
 //
 #if !defined(DEBUG_USE_SINKS)
-    #define DEBUG_USE_SINKS DEBUG_USE_CELL_SUBCLASSES
+    #define DEBUG_USE_SINKS CHECK_CELL_SUBCLASSES
 #else
-    #if (! DEBUG_USE_SINKS) && DEBUG_USE_CELL_SUBCLASSES
-        #error "DEBUG_USE_SINKS muts be enabled for DEBUG_USE_CELL_SUBCLASSES"
+    #if (! DEBUG_USE_SINKS) && CHECK_CELL_SUBCLASSES
+        #error "DEBUG_USE_SINKS muts be enabled for CHECK_CELL_SUBCLASSES"
     #endif
 #endif
 

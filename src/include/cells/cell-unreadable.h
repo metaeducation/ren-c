@@ -80,7 +80,7 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
     INLINE void Corrupt_If_Debug(Cell& ref)
       { Cell* c = &ref; Init_Unreadable_Untracked(c); }
 
-  #if DEBUG_USE_CELL_SUBCLASSES
+  #if CHECK_CELL_SUBCLASSES
     INLINE void Corrupt_If_Debug(Atom& ref)
       { Atom* a = &ref; Init_Unreadable_Untracked(a); }
 

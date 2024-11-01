@@ -628,7 +628,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // 1. Regardless of what build is made, the %rebol.h file expects to find the
 //    name `struct RebolValueStruct` exported as what the API uses.  In the
 //    C build that's the only cell struct, but in the C++ build it can be a
-//    derived structure if DEBUG_USE_CELL_SUBCLASSES is enabled.
+//    derived structure if CHECK_CELL_SUBCLASSES is enabled.
 //
 // 2. The DEBUG_TRACK_EXTEND_CELLS option doubles the cell size, but is a
 //    *very* helpful debug option.  See %sys-track.h for explanation.
@@ -653,7 +653,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 //    https://stackoverflow.com/a/76426676
 //
-#if DEBUG_USE_CELL_SUBCLASSES
+#if CHECK_CELL_SUBCLASSES
     struct alignas(ALIGN_SIZE) Cell : public Node  // VAL_TYPE() illegal
 #elif CPLUSPLUS_11
     struct alignas(ALIGN_SIZE) RebolValueStruct : public Node
@@ -674,7 +674,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
         uintptr_t touch;  // see Touch_Cell(), pads out to 4 * sizeof(void*)
       #endif
 
-    #if DEBUG_USE_CELL_SUBCLASSES
+    #if CHECK_CELL_SUBCLASSES
       public:
         Cell () = default;
 
@@ -732,7 +732,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // molding process, and mold callbacks are only supposed to account for the
 // cell payloads.
 //
-#if (! DEBUG_USE_CELL_SUBCLASSES)
+#if DONT_CHECK_CELL_SUBCLASSES
     typedef struct RebolValueStruct Cell;
     typedef struct RebolValueStruct Atom;
     typedef struct RebolValueStruct Element;
@@ -793,7 +793,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #endif
 
 
-#if DEBUG_USE_CELL_SUBCLASSES
+#if CHECK_CELL_SUBCLASSES
     //
     // rebReleaseAndNull is in the API, but because the API doesn't make
     // distinctions between Element and Value the double pointer trips it up

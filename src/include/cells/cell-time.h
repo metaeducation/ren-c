@@ -32,9 +32,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#if (! DEBUG_USE_CELL_SUBCLASSES)
-    #define Ensure_Date(v) \
-        (v)
+#if DONT_CHECK_CELL_SUBCLASSES
+    #define Ensure_Date(v)  (v)
 #else
     INLINE const Cell* Ensure_Date(const Cell* v) {
         assert(Cell_Heart(v) == REB_DATE);

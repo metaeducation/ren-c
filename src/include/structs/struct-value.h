@@ -29,7 +29,7 @@
 // cell or variable cell.
 //
 
-#if DEBUG_USE_CELL_SUBCLASSES
+#if CHECK_CELL_SUBCLASSES
     struct Param : public Value {};
 
     INLINE const Param* cast_PAR(const Value* v)
@@ -55,13 +55,13 @@
 // atom is being written into and its contents not heeded.
 //
 // We do this with the Sink() wrapper class (which must be enabled in order
-// for the DEBUG_USE_CELL_SUBCLASSES to work).  We have to extend it with
+// for the CHECK_CELL_SUBCLASSES to work).  We have to extend it with
 // some helpers.
 //
 // In the checked build we can give this extra teeth by wiping the contents
 // of the atom, to ensure they are not examined.
 //
-#if DEBUG_USE_CELL_SUBCLASSES  // Note: Sink(Value) wrapper has runtime cost
+#if CHECK_CELL_SUBCLASSES  // Note: Sink(Value) wrapper has runtime cost
     template<>
     struct c_cast_helper<Byte*, Sink(Value) const&>
       { typedef Byte* type; };

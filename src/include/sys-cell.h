@@ -600,7 +600,7 @@ INLINE Cell* Copy_Cell_Untracked(
     return out;
 }
 
-#if (! DEBUG_USE_CELL_SUBCLASSES)
+#if DONT_CHECK_CELL_SUBCLASSES
     #define Copy_Cell(out,v) \
         TRACK(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY))
 #else
@@ -665,7 +665,7 @@ INLINE Cell* Move_Cell_Untracked(
     return out;
 }
 
-#if (! DEBUG_USE_CELL_SUBCLASSES)
+#if DONT_CHECK_CELL_SUBCLASSES
     #define Move_Cell(out,v) \
         TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
 #else
