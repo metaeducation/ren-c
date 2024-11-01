@@ -149,36 +149,12 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    for the executor just to make it more obvously intentional that a
   //    passthru is intended.  (Review in light of use of nonzero for GC
   //    and bookkeeping purposes; e.g. could STATE of 255 mean Just_Use_Out?)
-  //
-  // 2. In R3-Alpha, micro-optimizations were stylized so that it would set
-  //    a counter for how many cycles would pass before it automatically
-  //    triggered garbage collection.  It would decrement that counter
-  //    looking for zero, and when zero was reached it would add the number of
-  //    cycles it had been counting down from to the total.  This avoided
-  //    needing to do math on multiple counters on every eval step...limiting
-  //    it to a periodic reconciliation when GCs occurred.  Ren-C keeps this,
-  //    but the debug build double checks that whatever magic is done reflects
-  //    the real count.
 
     Assert_No_DataStack_Pointers_Extant();
 
     assert(LEVEL->executor != &Just_Use_Out_Executor);  // drops skip [1]
 
     Bounce bounce;
-
-    Update_Tick_If_Enabled();  // Do_Signals_Throws() expects tick in sync
-
-    if (--g_ts.eval_countdown <= 0) {  // defer total_eval_cycles update, [2]
-        //
-        // Doing signals covers several things that may cause interruptions:
-        //
-        //  * Running the garbage collector
-        //  * Noticing when a HALT was requested
-        //  * (future?) Allowing a break into an interactive debugger
-        //
-        if (Do_Signals_Throws(LEVEL))
-            goto handle_thrown;
-    }
 
     if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
         assert(Get_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
@@ -192,6 +168,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     // The executor may push more levels or change the executor of the level
     // it receives.  The LEVEL may not match TOP_LEVEL at this moment.
+    //
+    // DON'T CALL THE GARBAGE COLLECTOR BEFORE THE EXECUTOR, IT MUST BE AFTER.
+    // It's not generically safe to call it before, because if the level had
+    // been trusting a sublevel's OUT to GC guard a slot, then that guard is
+    // no longer in effect once the sublevel had been dropped.
 
   #if DEBUG
     Level* check = LEVEL;  // make sure LEVEL doesn't change during executor
@@ -206,6 +187,31 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   #if DEBUG
     assert(LEVEL == check);  // R is relative to the OUT of LEVEL we executed
   #endif
+
+  //=//// PROCESS SIGNALS (RECYCLE, HALT, ETC.) ///////////////////////////=//
+
+  // Doing signals covers several things that may cause interruptions:
+  //
+  //  * Running the garbage collector
+  //  * Noticing when a HALT was requested
+  //  * (future?) Allowing a break into an interactive debugger
+  //
+  // We process signals *after* calling the Level's executor and not before.
+  // This is for several reasons, but one is that since the level is still
+  // on the stack it is able to guard its OUT slot.
+  //
+  // 1. We could increment `total_eval_cycles` here so it's always up-to-date.
+  //    But we keep a micro-optimization from R3-Alpha where we only adjust
+  //    one counter (the `eval_countdown`) each time through the loop.  Then
+  //    we reconcile `total_eval_cycles` in Do_Signals_Throws() only when the
+  //    coundown reaches zero.
+
+    Update_Tick_If_Enabled();  // Do_Signals_Throws() expects tick in sync
+
+    if (--g_ts.eval_countdown <= 0) {  // defer total_eval_cycles update, [1]
+        if (Do_Signals_Throws(LEVEL))
+            goto handle_thrown;
+    }
 
 } //=//// HANDLE FINISHED RESULTS /////////////////////////////////////////=//
 
