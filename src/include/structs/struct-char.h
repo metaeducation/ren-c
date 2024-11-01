@@ -67,7 +67,7 @@
     // without it will be binary-incompatible.
     //
     // NOTE: THE NON-INLINED OVERHEAD IS RATHER HIGH IN UNOPTIMIZED BUILDS!
-    // debug build does not inline these classes and functions.  So traversing
+    // Checked builds don't inline these classes and functions.  So traversing
     // strings involves a lot of constructing objects and calling methods that
     // call methods.  Hence these classes are used only in non-debug (and
     // hopefully) optimized builds, where the inlining makes it equivalent to

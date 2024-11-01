@@ -448,14 +448,14 @@
 // enforce their narrower policies.
 //
 // Also, the casts are designed to be "hookable" so that checks can be done
-// in instrumented C++ debug builds to ensure that the cast is good.  This
+// in instrumented C++ checked builds to ensure that the cast is good.  This
 // lets the callsites remain simple and clean while still getting the
 // advantage of debug checks when desired.
 //
 // These casts should not cost anything at runtime--unless non-constexpr
 // helpers are invoked.  Those are only used in the codebase for debug
 // features in the C++ builds, and release builds do not use them.  But since
-// they can slow the debug build down a bit, judicious use of the unchecked
+// they can slow the checked build down a bit, judicious use of the unchecked
 // u_cast() operation is worth it for speeding it up in certain functions.
 //
 // 1. The C preprocessor doesn't know about templates, so it parses things
@@ -737,9 +737,9 @@
 // more than once...because if that argument has a side-effect, they will
 // have that side effect more than once.
 //
-// However, debug builds will not inline functions.  Some code is run so
+// However, checked builds will not inline functions.  Some code is run so
 // often that not defining it in a macro leads to excessive cost in these
-// debug builds, and "evil macros" which repeat arguments are a pragmatic
+// checked builds, and "evil macros" which repeat arguments are a pragmatic
 // solution to factoring code in these cases.  You just have to be careful
 // to call them with simple references.
 //
@@ -768,7 +768,7 @@
 // These "poisoned" areas are generally sub-regions of valid malloc()'d memory
 // that contain bad data.  Yet they cannot be free()d because they also
 // contain some good data.  (Or it is merely desirable to avoid freeing and
-// then re-allocating them for performance reasons, yet a debug build still
+// then re-allocating them for performance reasons, yet a checked build still
 // would prefer to intercept accesses as if they were freed.)
 //
 // Also, in order to overwrite a pointer with garbage, the historical method
@@ -933,7 +933,7 @@
 // http://codereview.stackexchange.com/q/159439
 //
 // Though the version here is more verbose, it uses the specializations to
-// avoid excessive calls to memset() in the debug build.
+// avoid excessive calls to memset() in the checked build.
 //
 // 1. We do not do Corrupt_If_Debug() with static analysis, because that would
 //    make variables look like they had been assigned to the static analyzer.

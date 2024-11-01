@@ -305,7 +305,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
     // This code was added to insert an empty segment, such that this node
     // won't be picked by the next Alloc_Pooled.  That enlongates the poisonous
     // time of this area to catch stale pointers.  But doing this in the
-    // debug build only creates a source of variant behavior.
+    // checked build only creates a source of variant behavior.
 
     bool out_of_memory = false;
 

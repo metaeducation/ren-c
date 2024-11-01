@@ -25,7 +25,7 @@
 // suite against libr3.a, and drive those tests accordingly.  But this would
 // involve setting up separate compilation and running those programs with
 // CALL.  So this is an expedient way to do it just within a native that is
-// built only in certain debug builds.
+// built only in certain checked builds.
 //
 
 #define LIBREBOL_BINDING (&librebol_binding)
@@ -219,7 +219,7 @@ DECLARE_NATIVE(diagnose)
     return NOTHING;
   #else
     UNUSED(ARG(value));
-    return FAIL("DIAGNOSE is only available in debug builds");
+    return FAIL(Error_Checked_Build_Only_Raw());
   #endif
 }
 

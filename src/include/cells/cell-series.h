@@ -1,8 +1,5 @@
 // %cell-series.h
 
-// Uses "evil macro" variations because it is called so frequently, that in
-// the debug build (which doesn't inline functions) there's a notable cost.
-//
 INLINE const Flex* Cell_Flex(const Cell* v) {
     Heart heart = Cell_Heart(v);
     assert(

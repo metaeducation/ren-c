@@ -47,9 +47,6 @@
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and
 // does not apply (some platforms need this invariant for `double` to work).
 //
-// 1. This is another case where the debug build not inlining functions
-//    leads to extra overhead.  Use a macro that repeats its arguments.
-//
 #if (! DEBUG_MEMORY_ALIGNMENT)
     #define Assert_Cell_Aligned(c)    NOOP
 #else
@@ -156,13 +153,13 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
 // based on writability...e.g. a cell that's already been initialized and can
 // have its properties manipulated.
 //
-// Note that while the debug build checks NODE_FLAG_PROTECTED just to be safe,
-// the general idea is that a cell which is protected should never be writable
+// Note that this code asserts about NODE_FLAG_PROTECTED just to be safe,
+// but general idea is that a cell which is protected should never be writable
 // at runtime, enforced by the `const Cell*` convention.  You can't get a
 // non-const Cell reference without going through a runtime check that
 // makes sure the cell is not protected.
 //
-// 1. These macros are "evil", because in the debug build, functions aren't
+// 1. These macros are "evil", because in the checked build, functions aren't
 //    inlined, and the overhead actually adds up very quickly.  We repeat
 //    arguments to speed up these critical tests, then wrap them in
 //    Ensure_Readable() and Ensure_Writable() functions for callers that
@@ -240,7 +237,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
 // fresh for initialization.  So the flag must be cleared or the cell erased
 // in order to overwrite it.
 //
-// 1. "evil macros" for debug build performance, see STATIC_ASSERT_LVALUE()
+// 1. "evil macros" for checked build performance, see STATIC_ASSERT_LVALUE()
 //
 // 2. In order to avoid accidentally overlooking raised errors, they must
 //    be deliberately suppressed vs. overwritten.  e.g. the requirement for
@@ -349,7 +346,7 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
 // as well as some flags that are reserved for system purposes.  These are
 // the NODE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
 //
-// 1. Avoid cost that inline functions (even constexpr) add to debug builds
+// 1. Avoid cost that inline functions (even constexpr) add to checked builds
 //    by "typechecking" via finding the name ->header.bits in (c).
 //
 // 2. Cell flags are managed distinctly from conceptual immutability of their
@@ -411,8 +408,8 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
     Cell_Has_Node1(c)
 
 // Note: If incoming p is mutable, we currently assume that's allowed by the
-// flag bits of the node.  This could have a runtime check in debug build
-// with a C++ variation that only takes mutable pointers.
+// flag bits of the node.  This could have RUNTIME_CHECKS with a C++ variation
+// that only takes mutable pointers.
 //
 #define Tweak_Cell_Node1(c,n) do { \
     STATIC_ASSERT_LVALUE(c);  /* macro repeats c, make sure calls are safe */ \
@@ -758,7 +755,7 @@ INLINE Value* Constify(Value* v) {
 //   LOCAL() macro.  These are GC safe, and are initialized to nothing.
 //
 // * Although Erase_Cell() is very cheap in release builds (just writing a
-//   zero in the header), it still costs *something*.  And in debug builds it
+//   zero in the header), it still costs *something*.  In checked builds it
 //   can cost more, because DEBUG_TRACK_EXTEND_CELLS makes Erase_Cell() write
 //   the file, line, and tick where the cell was initialized in the extended
 //   space.  So it should generally be favored to put these declarations at

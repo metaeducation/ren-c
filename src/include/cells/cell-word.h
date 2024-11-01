@@ -151,10 +151,10 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 
 
 // It's fundamental to PARSE to recognize `|` and skip ahead to it to the end.
-// The debug build has enough checks on things like Cell_Word_Symbol() that
+// The checked build has enough checks on things like Cell_Word_Symbol() that
 // it adds up when you already tested someting Is_Word().  This reaches a
 // bit lower level to try and still have protections but speed up some--and
-// since there's no inlining in the debug build, FETCH_TO_BAR_OR_END=>macro
+// since there's no inlining in the checked build, FETCH_TO_BAR_OR_END=>macro
 //
 // !!! The quick check that was here was undermined by words no longer always
 // storing their symbols in the word; this will likely have to hit a keylist.

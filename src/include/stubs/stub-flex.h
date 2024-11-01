@@ -108,7 +108,7 @@ INLINE Stub* Set_Flex_Inaccessible(Flex* f) {
 // Using token pasting macros achieves some brevity, but also helps to avoid
 // mixups with FLEX_INFO_XXX!
 //
-// 1. Avoid cost that inline functions (even constexpr) add to debug builds
+// 1. Avoid cost that inline functions (even constexpr) add to checked builds
 //    by "typechecking" via finding the name ->leader.bits in (f).  (The name
 //    "leader" is chosen to prevent calls with cells, which use "header".)
 //
@@ -416,7 +416,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 // full-sized unit at their tail which was set to zero bytes.  Ren-C moves
 // away from this concept...it only has terminating '\0' on UTF-8 Strings,
 // a reserved terminating *position* on Blobs (in case they become
-// aliased as UTF-8 Strings), and the debug build terminates Arrays in order
+// aliased as UTF-8 Strings), and the checked build terminates Arrays in order
 // to catch out-of-bounds accesses more easily:
 //
 // https://forum.rebol.info/t/1445
@@ -641,7 +641,7 @@ INLINE Flex* Make_Flex_Into(
 
 //=//// FLEX MONITORING ///////////////////////////////////////////////////=//
 //
-// This once used a Flex flag in debug builds to tell whether a Flex was
+// This once used a Flex flag in checked builds to tell whether a Flex was
 // monitored or not.  But Flex flags are scarce, so the feature was scaled
 // back to just monitoring a single node.  It could also track a list--but the
 // point is just that stealing a flag is wasteful.

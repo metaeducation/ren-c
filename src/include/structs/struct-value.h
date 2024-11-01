@@ -58,7 +58,7 @@
 // for the DEBUG_USE_CELL_SUBCLASSES to work).  We have to extend it with
 // some helpers.
 //
-// In the debug build we can give this extra teeth by wiping the contents
+// In the checked build we can give this extra teeth by wiping the contents
 // of the atom, to ensure they are not examined.
 //
 #if DEBUG_USE_CELL_SUBCLASSES  // Note: Sink(Value) wrapper has runtime cost

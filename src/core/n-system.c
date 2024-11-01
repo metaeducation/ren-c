@@ -260,7 +260,7 @@ int ceil_log2(unsigned long long x) {
 //
 //  /c-debug-tick: native [
 //
-//  "Get the evaluator tick count (currently only available in debug builds)"
+//  "Get the evaluator tick count (currently only available in checked builds)"
 //
 //      return: [~null~ integer!]
 //  ]

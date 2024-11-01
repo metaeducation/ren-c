@@ -180,7 +180,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
     // `PRIuPTR`.  You get compiler warnings otherwise.
     //
     // *or you can just cast it to int and lose precision*.  But since printf()
-    // is only included in debug builds, that loss of precision could wind up
+    // is only included in checked builds, that loss of precision could wind up
     // being a problem in what's being diagnosed.  :-/  So we use it.
     //
   #if CPLUSPLUS_11

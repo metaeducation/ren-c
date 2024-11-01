@@ -29,7 +29,7 @@
 // (including Array*, VarList*, Action*...) is a useful "smoking gun":
 //
 //     if (VAL_TYPE(value) == REB_QUASIFORM)
-//         panic (value);  // debug build points out this file and line
+//         panic (value);  // checked build points out this file and line
 //
 //     if (Array_Len(array) < 2)
 //         panic (array);  // panic is polymorphic, see Detect_Rebol_Pointer()
@@ -48,7 +48,7 @@
 // * The diagnostics are written in such a way that they give the "more likely
 //   to succeed" output first, and then get more aggressive to the point of
 //   possibly crashing by dereferencing corrupt memory which triggered the
-//   panic.  The debug build diagnostics will be more exhaustive, but the
+//   panic.  The checked build diagnostics will be more exhaustive, but the
 //   release build gives some info.
 //
 
@@ -84,7 +84,7 @@
 //
 // Each trampoline step bumps a global count, that in deterministic repro
 // cases can be very helpful in identifying the "Tick" where certain problems
-// are occurring.  The debug build pokes these Ticks lots of places--into
+// are occurring.  The checked build pokes these Ticks lots of places--into
 // Cells when they are formatted, into Flexes when they are allocated
 // or freed, or into stack Levels each time they perform a new operation.
 //
@@ -94,9 +94,8 @@
 // build hides Tick counts which may be useful for sleuthing bug origins.
 //
 // The SPORADICALLY() macro uses the count to allow flipping between different
-// behaviors in debug builds--usually to run the release behavior some of the
-// time, and the debug behavior some of the time.  This exercises the release
-// code path even when doing a debug build.
+// behaviors in checked builds--usually runs the release behavior some of the
+// time, and the checked behavior some of the time.
 //
 
 #define BREAK_NOW() /* macro means no C stack frame, breaks at callsite */ \

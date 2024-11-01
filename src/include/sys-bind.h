@@ -20,44 +20,6 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// R3-Alpha had a per-thread "bind table"; a large and sparsely populated hash
-// into which index numbers would be placed, for what index those words would
-// have as keys or parameters.  Ren-C's strategy is that binding information
-// is linked onto Symbol stubs that represent the canon words themselves.
-//
-// Currently it is assumed a symbol has zero or one of these linked bindings.
-// This would create problems if multiple threads were trying to bind at the
-// same time.  While threading was never realized in R3-Alpha, Ren-C doesn't
-// want to have any "less of a plan".  So the BinderStruct is used by binding
-// clients as a placeholder for any state needed to interpret more than one
-// binding at a time.
-//
-// The debug build also adds another feature, that makes sure the clear count
-// matches the set count.
-//
-// The binding will be either a REBACT (relative to a function) or a
-// VarList* (specific to a context), or simply a plain Array* such as
-// EMPTY_ARRAY which indicates UNBOUND.  The FLAVOR_BYTE() says what it is
-//
-//     ANY-WORD?: binding is the word's binding
-//
-//     ANY-LIST?: binding is the relativization or for the REBVALs
-//     which can be found in the frame (for recursive resolution of ANY-WORD?s)
-//
-//     ACTION!: slot where binding would be is the instance data for archetypal
-//     invocation, so although all the RETURN instances have the same
-//     paramlist, it is the coupling which is unique to the cell specifying
-//     which to exit
-//
-//     ANY-CONTEXT?: if a FRAME!, the binding carries the instance data from
-//     the function it is for.  So if the frame was produced for an instance
-//     of RETURN, the keylist only indicates the archetype RETURN.  Putting
-//     the binding back together can indicate the instance.
-//
-//     VARARGS!: the binding identifies the feed from which the values are
-//     coming.  It can be an ordinary singular array which was created with
-//     MAKE VARARGS! and has its index updated for all shared instances.
-//
 // Due to the performance-critical nature of these routines, they are inline
 // so that locations using them may avoid overhead in invocation.
 
@@ -72,7 +34,7 @@
 // the target, then the binding is used to do that.
 //
 // It is nearly as fast as just assigning the value directly in the release
-// build, though debug builds assert that the function in the binding
+// build, though checked builds assert that the function in the binding
 // indeed matches the target in the relative value (because relative values
 // in an array may only be relative to the function that deep copied them, and
 // that is the only kind of binding you can use with them).
@@ -190,7 +152,7 @@ struct BinderStruct {
 
   #if RUNTIME_CHECKS && CPLUSPLUS_11
     //
-    // C++ debug build can help us make sure that no binder ever fails to
+    // C++ checked build can help us make sure that no binder ever fails to
     // get an Construct_Binder() and Destruct_Binder() pair called on it, which
     // would leave lingering binding hitches on symbol stubs.
     //

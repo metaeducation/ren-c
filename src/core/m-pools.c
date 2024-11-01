@@ -88,13 +88,24 @@
 //
 // Finer-grained allocations are done with memory pooling.
 //
+// 1. malloc() internally remembers the size of the allocation, and is hence
+//    "overkill" for this operation.  Yet the current implementations on all
+//    C platforms use malloc() and free() anyway.
+//
+// 2. We cache the size at the head of the allocation in checked builds to
+//    make sure the right size is passed in.  This has the side benefit of
+//    catching free() use with Alloc_Memory() instead of Free_Memory().
+//
 void* Try_Alloc_Memory_Core(Size size)
 {
-    // notice memory usage limit exceeded *before* the allocation is performed
-
     g_mem.usage += size;
-    if (g_mem.usage_limit and g_mem.usage > unwrap g_mem.usage_limit) {
+
+    if (  // check if memory usage limit exceeds *before* the allocation
+        g_mem.usage_limit
+        and g_mem.usage > unwrap g_mem.usage_limit
+    ){
         g_mem.usage -= size;
+        return nullptr;
     }
 
   #if TRAMPOLINE_COUNTS_TICKS
@@ -111,24 +122,15 @@ void* Try_Alloc_Memory_Core(Size size)
     }
   #endif
 
-    // malloc() internally remembers the size of the allocation, and is hence
-    // "overkill" for this operation.  Yet the current implementations on all
-    // C platforms use malloc() and free() anyway.
-
   #if NO_RUNTIME_CHECKS
-    void *p = malloc(size);
+    void *p = malloc(size);  // malloc remembers the size [1]
   #else
-    // Cache size at the head of the allocation in debug builds for checking.
-    // Also catches free() use with Alloc_Memory() instead of Free_Memory().
-    //
-    // Use a 64-bit quantity to preserve DEBUG_MEMORY_ALIGNMENT invariant.
-
-    void *p_extra = malloc(size + ALIGN_SIZE);
+    void *p_extra = malloc(size + ALIGN_SIZE);  // cache size in alloc [2]
     if (not p_extra) {
         g_mem.usage -= size;
         return nullptr;
     }
-    *cast(REBI64*, p_extra) = size;
+    *cast(REBI64*, p_extra) = size;  // 64-bit preserves DEBUG_MEMORY_ALIGNMENT
     void *p = cast(char*, p_extra) + ALIGN_SIZE;
   #endif
 
@@ -739,7 +741,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         if (Stub_Holds_Cells(f)) {
             //
             // When the bias region was marked, it was made "unsettable" if
-            // this was a debug build.  Now that the memory is included in
+            // this was a checked build.  Now that the memory is included in
             // the array again, we want it to be "settable".
             //
             // !!! The unsettable feature is currently not implemented,
@@ -783,7 +785,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         if (Stub_Holds_Cells(f)) {
             //
             // The opened up area needs to be set to "settable" in the
-            // debug build.  This takes care of making "unsettable" values
+            // checked build.  This takes care of making "unsettable" values
             // settable (if part of the expansion is in what was formerly the
             // ->rest), as well as just making sure old data which was in
             // the expanded region doesn't get left over on accident.
@@ -1290,8 +1292,8 @@ void Assert_Pointer_Detection_Working(void)
 // writes, because a write past the end of a node destroys the pointer for the
 // next free area.  The Always_Malloc option for Ren-C leverages the faster
 // checking built into Valgrind or Address Sanitizer for the same problem.
-// However, a call to this is kept in the debug build on init and shutdown
-// just to keep it working as a sanity check.
+// However, a call to this is kept in the checked build on init and shutdown
+// just to keep it working.
 //
 REBLEN Check_Memory_Debug(void)
 {

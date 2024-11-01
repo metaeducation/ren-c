@@ -22,7 +22,7 @@
 //
 //              !!! THIS IS IMPORTANT, LEARN TO USE IT !!!
 //
-// The PROBE() macro can be used in debug builds to mold a cell much like the
+// The PROBE() macro can be used in Checked builds to mold cells much like the
 // Rebol2 `probe` operation.  But it's actually polymorphic, and if you have
 // a Flex*, VarList*, or Array* it can be used with those as well.
 //
@@ -41,7 +41,7 @@
 //   coming from, the file and line number will be output as well.
 //
 // * As a convenience, PROBE also flushes the `stdout` and `stderr` in case
-//   the debug build was using printf() to output contextual information.
+//   the checked build was using printf() to output contextual information.
 //
 
 #if CPLUSPLUS_11

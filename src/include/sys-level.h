@@ -249,7 +249,7 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
 // If a frame value is non-archetypal, this slot may be occupied by a String*
 // which represents the cached name of the action from which the frame
 // was created.  This FRAME! value is archetypal, however...which never holds
-// such a cache.  For performance (even in the debug build, where this is
+// such a cache.  For performance (even in the checked build, where this is
 // called *a lot*) this is a macro and is unchecked.
 //
 #define Level_Phase(L) \
@@ -458,7 +458,7 @@ INLINE void Drop_Level(Level* L)
     ){
       #if DEBUG_BALANCE_STATE
         //
-        // To avoid slowing down debug builds, Eval_Core() doesn't check this
+        // To avoid slowing down checked builds, Eval_Core() doesn't check on
         // every cycle, just on drop.  But if it's hard to find the cycle
         // causing problems, see BALANCE_CHECK_EVERY_EVALUATION_STEP.
         //
@@ -505,7 +505,7 @@ INLINE Level* Prep_Level_Core(
 
     Corrupt_Pointer_If_Debug(L->alloc_value_list);
 
-    Corrupt_If_Debug(L->u);  // fills with garbage bytes in debug build
+    Corrupt_If_Debug(L->u);
 
     Erase_Cell(&L->u.eval.current);
 

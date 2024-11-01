@@ -1283,7 +1283,7 @@ DECLARE_NATIVE(subparse)
     // the value payloads so they can be seen more easily.
     //
     const REBIDX *pos_debug = &P_POS;
-    (void)pos_debug;  // UNUSED() forces corruption in C++11 debug builds
+    USED(pos_debug);
   #endif
 
     REBIDX begin = P_POS;  // point at beginning of match

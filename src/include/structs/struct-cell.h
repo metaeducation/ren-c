@@ -385,8 +385,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // are owned by the cell, plus additional bits that would be reset in the
 // cell if overwritten but not copied.
 //
-// Note that this will clear NODE_FLAG_UNREADABLE, so it should be checked by the
-// debug build before resetting.
+// Note that this will clear NODE_FLAG_UNREADABLE, so it should be checked
+// before resetting.
 //
 // Notice that NODE_FLAG_MARKED is "sticky"; the mark persists with the cell.
 // That makes it good for annotating when a frame field is hidden, such as
@@ -491,7 +491,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     Byte at_least_4[sizeof(uintptr_t)];
 
     // This should be initialized with ZERO_UNUSED, which permits optimization
-    // in release builds and more likely to cause an error in debug builds.
+    // in release builds and more likely to cause an error in checked builds.
     // See remarks in ZERO_UNUSED_CELL_FIELDS regarding the rationale.
     //
     void *corrupt;
@@ -812,14 +812,14 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 // 1. In lieu of typechecking cell is-a cell, we assume the macro finding
 //    a field called ->header with .bits in it is good enough.  All methods of
-//    checking seem to add overhead in the debug build that isn't worth it.
-//    To help avoid accidentally passing stubs, the HeaderUnion in a Stub
-//    is named "leader" instead of "header".
+//    checking seem to add overhead in the RUNTIME_CHECKS build that isn't
+//    worth it.  To help avoid accidentally passing stubs, the HeaderUnion in
+//    a Stub is named "leader" instead of "header".
 //
 // 2. It can often be helpful to inject code to when the HEART_BYTE() is being
 //    assigned.  This mechanism also intercepts reads of the HEART_BYTE() too,
-//    which is done pervasively.  It slows down the code in debug builds by
-//    a noticeable amount, so we don't put it in all debug builds...only
+//    which is done pervasively.  It slows down the code in checked builds by
+//    a noticeable amount, so we don't put it in all checked builds...only
 //    special situations.
 //
 #if (! DEBUG_HOOK_HEART_BYTE)

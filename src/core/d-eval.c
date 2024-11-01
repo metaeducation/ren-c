@@ -210,7 +210,7 @@ void Evaluator_Expression_Checks_Debug(Level* L)
     Corrupt_Pointer_If_Debug(L->u.action.param);
 
     // Mutate va_list sources into arrays at fairly random moments in the
-    // debug build.  It should be able to handle it at any time.
+    // checked build.  It should be able to handle it at any time.
     //
     if (Level_Is_Variadic(L) and SPORADICALLY(50)) {
         const bool truncated = true;
@@ -227,10 +227,10 @@ void Do_After_Action_Checks_Debug(Level* L) {
 
     // Usermode functions check the return type via Func_Dispatcher(),
     // with everything else assumed to return the correct type.  But this
-    // double checks any function marked with RETURN in the debug build,
+    // double checks any function marked with RETURN in the checked build,
     // so native return types are checked instead of just trusting the C.
     //
-  #if DEBUG_NATIVE_RETURNS
+  #if CHECK_NATIVE_RETURNS
     Action* phase = Level_Phase(L);
 
     if (ACT_HAS_RETURN(phase) and Is_Stable(L->out)) {

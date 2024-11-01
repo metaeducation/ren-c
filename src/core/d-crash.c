@@ -43,7 +43,7 @@ static bool panicking = false;
 //
 //  Panic_Core: C
 //
-// Abnormal termination of Rebol.  The debug build is designed to present
+// Abnormal termination of Rebol.  The checked build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
 // includes where a Flex* was allocated or freed.  Or if a Value* is
 // passed in it tries to say what tick it was initialized on and what Array
@@ -195,8 +195,8 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
   #if RUNTIME_CHECKS
     //
     // Note: Emscripten actually gives a more informative stack trace in
-    // its debug build through plain exit().  It has DEBUG_FANCY_PANIC but
-    // also defines NDEBUG to turn off asserts.
+    // its checked build through plain exit().  It has DEBUG_FANCY_PANIC but
+    // also defines NDEBUG to turn off RUNTIME_CHECKS.
     //
     debug_break();  // try to hook up to a C debugger - see %debug_break.h
   #endif

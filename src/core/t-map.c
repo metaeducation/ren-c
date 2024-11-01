@@ -31,7 +31,7 @@
 // We use unreadable (vs. void or null) because it's not an antiform, and we'd
 // like to keep the arrays backing a MAP! free of antiforms (vs. making one
 // exception for the zombie).  Also, unreadable has nice properties of erroring
-// if you try to read it in the debug build.
+// if you try to read it in the checked build.
 //
 #define Is_Zombie Is_Cell_Unreadable
 #define Init_Zombie Init_Unreadable

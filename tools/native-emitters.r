@@ -190,8 +190,8 @@ export /emit-include-params-macro: func [
         ;
         ; All natives *should* specify a `return:`, because it's important
         ; to document what the return types are (and HELP should show it).
-        ; However, only the debug build actually *type checks* the result;
-        ; the C code is trusted otherwise to do the correct thing.
+        ; However, only CHECK_NATIVE_RETURNS builds actually *type check* the
+        ; result; the C code is trusted otherwise to do the correct thing.
         ;
         ; By convention, definitional returns are the first argument.  (It is
         ; not currently enforced they actually be first in the parameter list

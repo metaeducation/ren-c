@@ -136,7 +136,7 @@ INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
 // SPARE, or a frame variable) then that cell can often give GC protection
 // for "free", instead of using Push_Lifeguard() to keep something alive.
 //
-// It's helpful for the debug build to give some enforcement that you don't
+// It's helpful for the checked build to give some enforcement that you don't
 // accidentally overwrite these lifetime-holding references, so the PROTECT
 // bit can come in handy (if you're using a DEBUG_CELL_READ_WRITE build,
 // because it checks for all writes to cells carrying the bit.)

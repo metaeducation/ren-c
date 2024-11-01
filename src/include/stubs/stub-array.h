@@ -43,7 +43,7 @@
 //    space.  This also avoids the cost of keeping the terminator up to date
 //    as the Array grows or resizes.
 //
-//   (Note: The debug build may put "poison" at the tail position whenever
+//   (Note: The checked build may put "poison" at the tail position whenever
 //    the Array size is updated, to make it easier to catch out-of-bounds
 //    access.  But the release build does not do this)
 

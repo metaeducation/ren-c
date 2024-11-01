@@ -422,7 +422,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
     // especially if it's going to be overwritten with the real fetch...but
     // at a source level, having every call to Fetch_Next_In_Feed have to
     // explicitly set ->gotten to null is overkill.  Could be split into
-    // a version that just corrupts ->gotten in the debug build vs. null.
+    // a version that just corrupts ->gotten in the checked build vs. null.
     //
     feed->gotten = nullptr;
 

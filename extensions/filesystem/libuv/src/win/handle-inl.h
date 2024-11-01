@@ -165,7 +165,7 @@ inline static void uv__process_endgames(uv_loop_t* loop) {
 
 inline static HANDLE uv__get_osfhandle(int fd)
 {
-  /* _get_osfhandle() raises an assert in debug builds if the FD is invalid.
+  /* _get_osfhandle() raises an assert in checked builds if the FD is invalid.
    * But it also correctly checks the FD and returns INVALID_HANDLE_VALUE for
    * invalid FDs in release builds (or if you let the assert continue). So this
    * wrapper function disables asserts when calling _get_osfhandle. */

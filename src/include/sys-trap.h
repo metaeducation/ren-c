@@ -60,7 +60,7 @@
 //   up the stack, it will leak the malloc.
 //
 // * Mixing C++ and C code using longjmp is a recipe for disaster.  Currently
-//   the uses of C++ features are limited, and only in debug builds.  So it
+//   the uses of C++ features are limited, and only in checked builds.  So it
 //   shouldn't be too much of a problem to build with the C++/debug/longjmp
 //   combination...but there may be some issues.
 //

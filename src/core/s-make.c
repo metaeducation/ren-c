@@ -150,7 +150,7 @@ String* Make_Codepoint_String(Codepoint c)
 // Append unencoded data to a String, using plain memcpy().  If dst is
 // nullptr, a new String will be created and returned.
 //
-// !!! Should debug build assert it's ASCII?  Most of these are coming from
+// !!! Should checked build assert it's ASCII?  Most of these are coming from
 // C literals in the source.
 //
 String* Append_Ascii_Len(String* dst, const char *ascii, REBLEN len)

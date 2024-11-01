@@ -84,7 +84,7 @@ INLINE void Erase_Stub(Stub* s) {
 //
 // See definitions of STUB_FLAG_XXX.
 //
-// 1. Avoid cost that inline functions (even constexpr) add to debug builds
+// 1. Avoid cost that inline functions (even constexpr) add to checked builds
 //    by "typechecking" via finding the name ->leader.bits in (f).  (The name
 //    "leader" is chosen to prevent calls with cells, which use "header".)
 //
@@ -109,9 +109,9 @@ INLINE void Erase_Stub(Stub* s) {
 //
 // Most accesses of series via Flex_At(...) and Array_At(...) macros already
 // know at the callsite the size of the access.  The width is only a double
-// check in the debug build, and used at allocation time and other moments
+// check in RUNTIME_CHECKS builds, used at allocation time and other moments
 // when the system has to know the size but doesn't yet know the type.  Hence
-// This doesn't need to be particularly fast...so a lookup table is probably
+// this doesn't need to be particularly fast...so a lookup table is probably
 // not needed.  Still, the common cases (array and strings) are put first.
 
 
@@ -169,7 +169,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 
 //=//// STUB FLAVOR-SPECIFIC FLAGS ////////////////////////////////////////=//
 //
-// In the debug build, ensure_flavor() checks if a Stub matches the expected
+// In the checked build, ensure_flavor() checks if a Stub matches the expected
 // FLAVOR_XXX, and panics if it does not.  This is used by the subclass
 // testing macros as a check that you are testing the flag for the
 // Flavor that you expect.
@@ -248,7 +248,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 //
 //  https://en.cppreference.com/w/cpp/language/union
 //
-// We use a workaround that brings in some heavy debug build benefits.  The
+// We use a workaround that brings in some heavy checked build benefits.  The
 // LINK() and MISC() macros force all assignments and reads through a common
 // field.  e.g. the following assigns and reads the same field ("node"), but
 // the instances document it is for "bookmarks" or "synonym":
@@ -419,7 +419,7 @@ INLINE Stub* Make_Untracked_Stub(Flags flags) {
 // Ren-C keeps the term "mark" for the GC, since that's standard nomenclature.
 // A lot of basic words are taken other places for other things (tags, flags)
 // so this just goes with a Stub "color" of black or white, with white as
-// the default.  The debug build keeps a count of how many black Flexes there
+// the default.  Checked builds keep a count of how many black Flexes there
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 

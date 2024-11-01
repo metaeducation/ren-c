@@ -131,7 +131,7 @@
 //
 // 1. In lieu of typechecking Stub is-a Stub, we assume the macro finding
 //    a field called ->leader with .bits in it is good enough.  All methods of
-//    checking seem to add overhead in the debug build that isn't worth it.
+//    checking seem to add overhead in the checked build that isn't worth it.
 //    To help avoid accidentally passing cell, the HeaderUnion in a Stub
 //    is named "leader" instead of "header".
 
@@ -441,10 +441,6 @@ union StubMiscUnion {
 // they are used to implement internal structures.
 //
 union StubInfoUnion {
-    //
-    // Using a union lets us see the underlying `uintptr_t` type-punned in
-    // debug builds as bytes/bits.
-    //
     union AnyUnion any;
 };
 
@@ -459,7 +455,7 @@ union StubInfoUnion {
     // It is in the same position as a Cell header, and the first byte
     // can be read via NODE_BYTE() to determine which it is.  It's named
     // "leader" to be distinct from a Cell's "header" to achieve a kind of
-    // poor-man's macro typechecking which doesn't incur debug build costs.
+    // poor-man's macro typechecking which doesn't incur checked build costs.
     //
     union HeaderUnion leader;
 

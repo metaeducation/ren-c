@@ -34,7 +34,7 @@ void Startup_Data_Stack(Length capacity)
 {
     // Start the data stack out with just one element in it, and poison it
     // (unreadable/unwritable).  This helps avoid accidental accesses in the
-    // debug build.  It also means that indices into the data stack can be
+    // checked build.  It also means that indices into the data stack can be
     // unsigned (no need for -1 to mean empty, because 0 can)
     //
     // We could start it off as a dynamic allocation, but by letting it be

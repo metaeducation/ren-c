@@ -61,7 +61,7 @@
 INLINE bool Is_Throwing(Level* level_) {
     if (not Is_Cell_Erased(&g_ts.thrown_arg)) {
         /*assert(level_ == TOP_LEVEL);*/  // forget even that check [1]
-        UNUSED(level_);  // currently only used for debug build check
+        UNUSED(level_);
         return true;
     }
     return false;

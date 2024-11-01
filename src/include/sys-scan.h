@@ -294,7 +294,7 @@ typedef enum LexSpecialEnum LexSpecial;
 // it's not necessary to use a bit for a special designation, since they
 // should not occur.
 //
-// !!! If a bit is free, should it be used for errors in the debug build?
+// !!! If a bit is free, should it be used for errors in the checked build?
 //
 #define LEX_UTFE LEX_DEFAULT
 

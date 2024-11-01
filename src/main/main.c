@@ -290,7 +290,7 @@ int main(int argc, char *argv_ansi[])
     int exit_status = rebUnboxInteger(rebR(result));
 
     const bool clean = false;  // process exiting, not necessary
-    rebShutdown(clean);  // Note: debug build runs a clean shutdown anyway
+    rebShutdown(clean);  // Note: checked build runs a clean shutdown anyway
 
     return exit_status;  // http://stackoverflow.com/q/1101957/
 }

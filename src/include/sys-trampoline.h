@@ -35,7 +35,7 @@
 // If the tick is AFTER command line processing is done, you can request a tick
 // breakpoint that way with `--breakpoint NNN`
 //
-// The debug build carries ticks many other places.  Stubs contain `Stub.tick`
+// Checked builds carry ticks many other places.  Stubs contain `Stub.tick`
 // when created, levels have a `Level.tick`, and the DEBUG_TRACK_EXTEND_CELLS
 // switch will double the size of cells so they can carry the tick, file, and
 // line where they were initialized.

@@ -501,7 +501,7 @@ rebmake/set-target-platform platform-config.os-base
 
                 ; Warning about std::is_pod<OptionWrapper<const Value*>>
                 ; having a different answer in different versions, affects the
-                ; UNUSED() variable corrupting in debug build, not a big issue.
+                ; UNUSED() variable corrupting in checked builds.
                 ;
                 <msc:/wd4647>
 
@@ -1226,7 +1226,7 @@ if linker-exec [
 === "GENERATE OVERALL APPLICATION CONFIGURATION" ===
 
 ; This appears to put together a baseline of settings that are passed by
-; default when building all object files.  So if you requested a debug build
+; default when building all object files.  So if you requested a checked build
 ; it would add the compile switch for `-g`, and this would wind up trickling
 ; down to all the extensions.
 

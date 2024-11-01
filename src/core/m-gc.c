@@ -88,7 +88,7 @@
     assert(Flex_Used(g_gc.mark_stack) == 0)
 
 // The mark_count double checks that every marker set by the GC is cleared.
-// To avoid the cost of incrementing and decrementing, only in debug builds.
+// To avoid the cost of incrementing and decrementing, only in checked builds.
 //
 #if RUNTIME_CHECKS
     INLINE void Remove_GC_Mark(const Node* node) {  // stub or pairing
@@ -583,7 +583,7 @@ void Run_All_Handle_Cleaners(void) {
 //
 // !!! This implementation walks over *all* the Stubs.  It wouldn't have to
 // if API Stubs were in their own pool, or if the outstanding manuals list
-// were maintained even in non-debug builds--it could just walk those.  This
+// were maintained even in release builds--it could just walk those.  This
 // should be weighed against background GC and other more sophisticated
 // methods which might come down the road for the GC than this simple one.
 //
@@ -856,7 +856,7 @@ static void Mark_Level_Stack_Deep(void)
 
             // Natives are allowed to use their locals as evaluation targets,
             // which can be fresh at various times when the GC sees them.
-            // But we want the debug build to catch cases where erased cells
+            // But we want the checked build to catch cases where erased cells
             // appear anywhere that the user might encounter them.
             //
             Action* action = cast(Action*, cast(Flex*, phase));
@@ -1380,7 +1380,7 @@ void Startup_GC(void)
         100
     );
 
-    g_gc.ballast = MEM_BALLAST; // or overwritten by debug build below...
+    g_gc.ballast = MEM_BALLAST;  // or overwritten by R3_RECYCLE_TORTURE below
 
     const char *env_recycle_torture = getenv("R3_RECYCLE_TORTURE");
     if (env_recycle_torture and atoi(env_recycle_torture) != 0)
@@ -1394,7 +1394,7 @@ void Startup_GC(void)
             "** (or g_gc.ballast is set to 0 manually in the init code)\n" \
             "** Recycling on EVERY evaluator step, *EXTREMELY* SLOW!...\n" \
             "** Useful in finding bugs before you can run RECYCLE:TORTURE\n" \
-            "** But you might only want to do this with -O2 debug builds.\n"
+            "** But you might only want to do this with -O2 checked builds.\n"
             "**\n"
         );
         fflush(stdout);

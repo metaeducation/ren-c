@@ -615,7 +615,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // The cell subclasses [Element Value Atom] help to quarantine antiforms and
 // unstable antiforms into slots that should have them.  I couldn't figure
 // out a clean way to get the compile-time errors I wanted without adding
-// runtime cost via wrapper classes...so they are only used in debug builds
+// runtime cost via wrapper classes...so they are only used in checked builds
 // (and won't work in the C build at all).
 //
 #if !defined(DEBUG_USE_CELL_SUBCLASSES)
@@ -644,8 +644,8 @@ Special internal defines used by RT, not Host-Kit developers:
 // checked in the release build.  It's assumed they will only return the
 // correct types.  This switch is used to panic() if they're wrong.
 //
-#if !defined(DEBUG_NATIVE_RETURNS)
-    #define DEBUG_NATIVE_RETURNS  RUNTIME_CHECKS
+#if !defined(CHECK_NATIVE_RETURNS)
+    #define CHECK_NATIVE_RETURNS  RUNTIME_CHECKS
 #endif
 
 // It can be nice to see aliases of platform pointers as if they were
@@ -695,11 +695,11 @@ Special internal defines used by RT, not Host-Kit developers:
   #endif
 #endif
 
-// The PG_Reb_Stats structure is only tracked in the debug build, as this
+// The PG_Reb_Stats structure is only tracked in checked builds, as this
 // data gathering is a sort of constant "tax" on the system.  While it
-// might arguably be interesting to non-debug build users who are trying
+// might arguably be interesting to release build users who are trying
 // to optimize their code, the compromise of having to maintain the
-// numbers suggests those users should be empowered with a debug build if
+// numbers suggests those users should be empowered with a checked build if
 // they are doing such work (they should probably have one for other
 // reasons; note this has been true of things like Windows NT where there
 // were indeed "checked" builds given to those who had such interest.)
@@ -810,8 +810,8 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 // In order to make sure that a good mix of debug settings get tested, this
-// does array termination checks on non-sanitizer debug builds.  Arrays are not
-// usually marked at their tails (unlike R3-Alpha which used END! cells to
+// does array termination checks on non-sanitizer checked builds.  Arrays are
+// not usually marked at their tails (unlike R3-Alpha which used END! cells to
 // terminate)...but the residual functionality helps catch overruns.
 //
 #if !defined(DEBUG_POISON_FLEX_TAILS)
@@ -854,7 +854,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // It can be very difficult in release builds to know where a fail came
 // from.  This arises in pathological cases where an error only occurs in
-// release builds, or if making a full debug build bloats the code too much.
+// release builds, or if making a full checked build bloats the code too much.
 // (e.g. the JavaScript asyncify version).  A small but helpful debug
 // switch does a printf of the __FILE__ and __LINE__ of fail() callsites.
 //
@@ -900,7 +900,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // release build.  It would save on a few null assignments.
 //
 // (In release builds, the fields are assigned 0 because it's presumably a
-// fast value to assign as an immediate.  In debug builds, they're assigned
+// fast value to assign as an immediate.  In checked builds, they're assigned
 // a corrupt value because it's more likely to cause trouble if accessed.)
 //
 #if RUNTIME_CHECKS

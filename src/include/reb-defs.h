@@ -287,7 +287,7 @@ typedef intptr_t StackIndex;  // 0 for empty stack ([0] entry poison)
 //
 // So we wrap the enum into an Option(), which the C++ build is able to do
 // added type checking on.  It also prohibits comparisons unless you unwrap
-// the values, which in debug builds has a runtime check of non-zeroness.
+// the values, which in checked builds has a runtime check of non-zeroness.
 //
 
 typedef enum SymIdEnum SymId;

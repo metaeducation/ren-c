@@ -24,9 +24,9 @@
 // Most of these low-level debug routines were leftovers from R3-Alpha, which
 // had no RUNTIME_CHECKS build (and was perhaps frequently debugged without an
 // IDE debugger).  After the open source release, Ren-C's reliance is on a
-// more heavily checked debug build...so these routines were not used.
+// more heavily checked build...so these routines were not used.
 //
-// They're being brought up to date to be included in the debug build only
+// They're being brought up to date to be included in the checked build only
 // version of panic().  That should keep them in working shape.
 //
 // Note: These routines use `printf()`, that's only linked #if RUNTIME_CHECKS.

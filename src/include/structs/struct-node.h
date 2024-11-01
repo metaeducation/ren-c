@@ -169,7 +169,7 @@
 // To make it possible to use these as the left hand side of assignments,
 // the C build throws away the const information in the macro.  But the
 // C++11 build can use references to accomplish it.  This requires inline
-// functions that cost a little in the debug build for these very commonly
+// functions that cost a little in the checked build for these very commonly
 // used functions... so it's only in the DEBUG_CHECK_CASTS builds.
 //
 // c_cast() is used so that if the input pointer is const, the output will
@@ -449,7 +449,7 @@ union HeaderUnion {
 // If this bit is set in the header, it indicates the slot the header is for
 // is `sizeof(Cell)`.
 //
-// In the debug build, it provides some safety for all value writing routines.
+// In checked builds, it provides some safety for all value writing routines.
 // In the release build, it distinguishes "Pairing" Nodes (holders for two
 // cells in the same Pool as ordinary Stubs) from an ordinary Flex Stub.
 // Stubs have the cell bit clear, while Pairings in the STUB_POOL have it set.

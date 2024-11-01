@@ -19,17 +19,13 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Unreadable cells are write-only cells that in the debug build, will fail
-// on most forms of read access in the system.  However, it will behave
-// neutrally as far as the garbage collector is concerned.
-//
-// This is useful anytime a placeholder is needed in a non-user-exposed slot,
-// where the code knows it's supposed to come back and fill something in at
-// a later time--spanning an evaluation.  Debug asserts help catch cases where
-// it's accidentally read from.
+// Unreadable cells are write-only cells.  They're used when placeholder is
+// needed in a non-user-exposed slot, where the code knows it's supposed to
+// come back and fill something in at a later time--spanning an evaluation.
+// Debug asserts help catch cases where it's accidentally read from.
 //
 // It will panic if you try to test it and will also refuse VAL_TYPE() checks.
-// The only way to check if something is unreadable is with Is_Cell_Unreadable().
+// To check if something is unreadable, use Is_Cell_Unreadable().
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
