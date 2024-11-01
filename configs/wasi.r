@@ -141,7 +141,7 @@ cflags: compose [
     (if yes? debug-wasi-extension [spread [
         "-DDEBUG_HAS_PROBE=1"
         "-DDEBUG_FANCY_PANIC=1"
-        "-DDEBUG_COUNT_TICKS=1"
+        "-DTRAMPOLINE_COUNTS_TICKS=1"
         "-DDEBUG_PRINTF_FAIL_LOCATIONS=1"
 
         "-DDEBUG_COLLECT_STATS=1"  ; !!! maybe temporary, has cost but good info

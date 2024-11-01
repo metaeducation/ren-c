@@ -128,7 +128,7 @@ INLINE void Probe_Print_Helper(
         expr,
         p,
         label,
-        TICK,  // 0 if not DEBUG_COUNT_TICKS
+        TICK,  // 0 if not TRAMPOLINE_COUNTS_TICKS
         file,
         line
     );

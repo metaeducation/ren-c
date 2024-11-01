@@ -458,7 +458,7 @@ typedef bool (Decider)(const Value* arg);
     //
     Node* alloc_value_list;
 
-   #if DEBUG_COUNT_TICKS
+   #if TRAMPOLINE_COUNTS_TICKS
     //
     // The expression evaluation "tick" where the Level is starting its
     // processing.  This is helpful for setting breakpoints on certain ticks

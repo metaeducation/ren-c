@@ -249,7 +249,7 @@ struct FeedStruct {
     //
     uintptr_t refcount;
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     Tick tick;
   #endif
 };

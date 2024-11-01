@@ -269,7 +269,7 @@ DECLARE_NATIVE(c_debug_tick)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_TICK;
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     return Init_Integer(OUT, g_ts.tick);
   #else
     return nullptr;
@@ -294,7 +294,7 @@ DECLARE_NATIVE(c_debug_break)
 //
 //    Queue it so the break happens right before the MOLD.
 //
-// 2. In performant builds without DEBUG_COUNT_TICKS but that still have
+// 2. In performant builds without TRAMPOLINE_COUNTS_TICKS but that still have
 //    debugging information (e.g. callgrind builds) then C-DEBUG-BREAK can
 //    still be useful.  Break right here in this native call...you'll have to
 //    step up out into the evaluator stack manually to get to the next step.
@@ -302,7 +302,7 @@ DECLARE_NATIVE(c_debug_break)
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
   #if (INCLUDE_C_DEBUG_BREAK_NATIVE)
-    #if DEBUG_COUNT_TICKS
+    #if TRAMPOLINE_COUNTS_TICKS
         g_break_at_tick = level_->tick + 1;  // queue break for next step [1]
         return Init_Nihil(OUT);
      #else

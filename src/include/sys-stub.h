@@ -44,7 +44,7 @@
 //    in case it helps, the s->guard is set to nullptr by Alloc_Stub(), so
 //    conditional instrumentation here can distinguish fresh from valid.
 
-#if DEBUG_FLEX_ORIGINS || DEBUG_COUNT_TICKS
+#if DEBUG_FLEX_ORIGINS || TRAMPOLINE_COUNTS_TICKS
     INLINE void Touch_Stub(Stub *s)  // if alloc, only header valid [1]
     {
       #if DEBUG_FLEX_ORIGINS
@@ -53,7 +53,7 @@
         free(s->guard);
       #endif
 
-        s->tick = TICK;  // 0 if not DEBUG_COUNT_TICKS
+        s->tick = TICK;  // 0 if not TRAMPOLINE_COUNTS_TICKS
     }
 
     #define Touch_Stub_If_Debug(s) Touch_Stub(s)

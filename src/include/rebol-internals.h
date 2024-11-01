@@ -341,7 +341,7 @@ typedef struct {
     uintptr_t usage;  // Overall memory used
     Option(uintptr_t) usage_limit;  // Memory limit set by SECURE
 
-  #if DEBUG_COUNT_TICKS  // Used by the FUZZ native to inject alloc failures
+  #if TRAMPOLINE_COUNTS_TICKS  // Used by the FUZZ native to inject alloc failures
     intptr_t fuzz_factor;  // (-) => a countdown, (+) percent of 10000
   #endif
 
@@ -415,8 +415,8 @@ typedef struct {
 } DataStackState;
 
 typedef struct {
-  #if DEBUG_COUNT_TICKS
-    Tick tick;  // Note: starts out at 1 so that 0 means (! DEBUG_COUNT_TICKS)
+  #if TRAMPOLINE_COUNTS_TICKS
+    Tick tick;  // Note: starts out at 1 so that 0 means (! TRAMPOLINE_COUNTS_TICKS)
   #endif
 
     Level* top_level;

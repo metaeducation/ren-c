@@ -524,7 +524,7 @@ uintptr_t API_rebTick(void)
 {
     ENTER_API;
 
-    return cast(uintptr_t, TICK);  // TICK is 0 if not DEBUG_COUNT_TICKS
+    return cast(uintptr_t, TICK);  // TICK is 0 if not TRAMPOLINE_COUNTS_TICKS
 }
 
 

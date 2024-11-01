@@ -58,7 +58,7 @@
 #include "sys-core.h"
 
 
-#if DEBUG_COUNT_TICKS  // <-- EXTREMELY USEFUL!  SEE Maybe_DebugBreak_On_Tick()
+#if TRAMPOLINE_COUNTS_TICKS  // <-- USEFUL!  SEE Maybe_DebugBreak_On_Tick()
 
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
     Tick g_break_at_tick =         0;
@@ -534,16 +534,16 @@ bool Trampoline_Throws(Atom* out, Level* root)
 //
 void Startup_Signals(void)
 {
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     assert(g_ts.tick == 0);
-    g_ts.tick = 1;  // this way 0 for TICK helps signify no DEBUG_COUNT_TICKS
+    g_ts.tick = 1;  // this way tick 0 helps signify no TRAMPOLINE_COUNTS_TICKS
   #endif
 
     g_ts.signal_flags = 0;
     g_ts.signal_mask = (~ cast(Flags, 0));  // heed all flags by default
     g_ts.eval_dose = EVAL_DOSE;
     g_ts.eval_countdown = g_ts.eval_dose;
-    g_ts.total_eval_cycles = 1;  // to match TICK when DEBUG_COUNT_TICKS
+    g_ts.total_eval_cycles = 1;  // to match TICK when TRAMPOLINE_COUNTS_TICKS
     g_ts.eval_cycles_limit = 0;
 }
 
@@ -632,13 +632,13 @@ void Shutdown_Trampoline(void)
                 continue;
 
             Level* L = cast(Level*, unit);  // ^-- pool size may round up
-          #if DEBUG_COUNT_TICKS
+          #if TRAMPOLINE_COUNTS_TICKS
             printf(
                 "** FRAME LEAKED at tick %lu\n",
                 cast(unsigned long, L->tick)
             );
           #else
-            assert(!"** FRAME LEAKED but DEBUG_COUNT_TICKS not enabled");
+            assert(!"** FRAME LEAKED but TRAMPOLINE_COUNTS_TICKS not enabled");
           #endif
         }
     }
@@ -658,20 +658,20 @@ void Shutdown_Trampoline(void)
                 continue;
 
             Feed* feed = cast(Feed*, unit);
-          #if DEBUG_COUNT_TICKS
+          #if TRAMPOLINE_COUNTS_TICKS
             printf(
                 "** FEED LEAKED at tick %lu\n",
                 cast(unsigned long, feed->tick)
             );
           #else
-            assert(!"** FEED LEAKED but no DEBUG_COUNT_TICKS enabled\n");
+            assert(!"** FEED LEAKED but no TRAMPOLINE_COUNTS_TICKS enabled\n");
           #endif
         }
     }
   }
   #endif
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     g_ts.tick = 0;
   #endif
 }

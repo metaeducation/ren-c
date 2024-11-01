@@ -95,7 +95,7 @@ bool Do_Signals_Throws(Level* L)
         assert(g_ts.eval_countdown == -1);
     }
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     assert(g_ts.total_eval_cycles == g_ts.tick);
   #endif
 

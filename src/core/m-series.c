@@ -513,7 +513,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(const Flex* f)
 
     fprintf(stderr, " Flex");
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     fprintf(stderr, " was likely ");
     if (Not_Node_Readable(f))
         fprintf(stderr, "freed");
@@ -524,7 +524,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(const Flex* f)
         stderr, " during evaluator tick: %lu\n", cast(unsigned long, f->tick)
     );
   #else
-    fprintf(stderr, " has no tick tracking (see DEBUG_COUNT_TICKS)\n");
+    fprintf(stderr, " has no tick tracking (see TRAMPOLINE_COUNTS_TICKS)\n");
   #endif
 
     fflush(stderr);

@@ -425,6 +425,24 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+//=//// CONTROL TICK COUNTING IN THE TRAMPOLINE ///////////////////////////=//
+//
+// Originally, the counting of evaluator "ticks" was a debug-only feature,
+// as it exposed something kind of arbitrary about the internals...seemingly
+// only useful when debugging the interpreter itself.  However, it came to
+// be so useful in reproducible diagnostics that it's included even in
+// otherwise optimized builds.
+//
+// It does mean you have to increment an additional integer every evaluator
+// step, so it's not free.  But still rather low cost.  However, until it is
+// deemed a core feature, thre's still the possibility to build without it
+// (though many instrumentation scenarios require it).
+//
+#if !defined(TRAMPOLINE_COUNTS_TICKS)
+    #define TRAMPOLINE_COUNTS_TICKS  RUNTIME_CHECKS
+#endif
+
+
 // Initially checked build switches were all (default) or nothing (-DNDEBUG)
 // but needed to be broken down into a finer-grained list.  This way, more
 // constrained systems (like emscripten) can build in just the features it
@@ -443,10 +461,6 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #if !defined(DEBUG_MONITOR_FLEX)
     #define DEBUG_MONITOR_FLEX  RUNTIME_CHECKS
-#endif
-
-#if !defined(DEBUG_COUNT_TICKS)
-    #define DEBUG_COUNT_TICKS  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_LEVEL_LABELS)

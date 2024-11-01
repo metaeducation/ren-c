@@ -516,7 +516,7 @@ INLINE Level* Prep_Level_Core(
 
     Snap_State(&L->baseline);  // [2] (also see notes on `baseline` in Level)
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     L->tick = g_ts.tick;
   #endif
 

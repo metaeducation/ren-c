@@ -97,7 +97,7 @@ void* Try_Alloc_Memory_Core(Size size)
         g_mem.usage -= size;
     }
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     if (g_mem.fuzz_factor != 0) {
         if (g_mem.fuzz_factor < 0) {
             ++g_mem.fuzz_factor;
@@ -633,7 +633,7 @@ void Free_Pairing(Cell* paired) {
     assert(Not_Node_Managed(paired));
     Free_Pooled(STUB_POOL, paired);
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     //
     // This wasn't actually a Series, but poke the tick where the node was
     // freed into the memory spot so panic finds it.

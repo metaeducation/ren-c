@@ -210,7 +210,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
             return nullptr;
     }
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     if (g_mem.fuzz_factor != 0) {
         if (g_mem.fuzz_factor < 0) {
             ++g_mem.fuzz_factor;

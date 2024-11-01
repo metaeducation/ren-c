@@ -44,7 +44,7 @@
 // Touch_Stub() and Touch_Cell().  Note also that BREAK_NOW() can be called to
 // pause and dump state at any moment.
 
-#if RUNTIME_CHECKS && DEBUG_COUNT_TICKS
+#if RUNTIME_CHECKS && TRAMPOLINE_COUNTS_TICKS
     extern Tick g_break_at_tick;  // in %c-trampoline.c for easy setting
 
     #define Update_Tick_If_Enabled() \
@@ -122,7 +122,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
     else
         g_ts.total_eval_cycles = UINTPTR_MAX;
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     assert(g_ts.total_eval_cycles == g_ts.tick);
   #endif
 

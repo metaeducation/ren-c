@@ -49,7 +49,7 @@
 #define L_next_gotten   L->feed->gotten
 #define L_binding     Level_Binding(L)
 
-#if DEBUG_COUNT_TICKS && DEBUG_HAS_PROBE
+#if TRAMPOLINE_COUNTS_TICKS && DEBUG_HAS_PROBE
 
 //
 //  Dump_Level_Location: C

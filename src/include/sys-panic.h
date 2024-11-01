@@ -52,10 +52,10 @@
 //   release build gives some info.
 //
 
-#if DEBUG_COUNT_TICKS
+#if TRAMPOLINE_COUNTS_TICKS
     #define TICK g_ts.tick
 #else
-    #define TICK 0  // make it easier to write DEBUG_COUNT_TICKS agnostic code
+    #define TICK 0  // easier to write TRAMPOLINE_COUNTS_TICKS agnostic code
 #endif
 
 
@@ -107,12 +107,12 @@
         debug_break(); /* see %debug_break.h */ \
     } while (false)
 
-#if DEBUG_COUNT_TICKS
+#if TRAMPOLINE_COUNTS_TICKS
     #define BREAK_ON_TICK(tick) \
         if (tick == g_ts.tick) BREAK_NOW()
 #endif
 
-#if NO_RUNTIME_CHECKS || (! DEBUG_COUNT_TICKS)
+#if NO_RUNTIME_CHECKS || (! TRAMPOLINE_COUNTS_TICKS)
     #define SPORADICALLY(modulus)  false
 #else
     #define SPORADICALLY(modulus) \

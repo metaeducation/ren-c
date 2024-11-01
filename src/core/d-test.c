@@ -201,7 +201,7 @@ DECLARE_NATIVE(diagnose)
   #if RUNTIME_CHECKS
     Value* v = ARG(value);
 
-  #if DEBUG_COUNT_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS
     Tick tick = level_->tick;
   #else
     Tick tick = 0

@@ -508,7 +508,7 @@ union StubInfoUnion {
     //
     union StubMiscUnion misc;
 
-  #if DEBUG_FLEX_ORIGINS || DEBUG_COUNT_TICKS
+  #if DEBUG_FLEX_ORIGINS || TRAMPOLINE_COUNTS_TICKS
     Byte* guard;  // intentionally alloc'd and freed for use by panic()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
   #endif
