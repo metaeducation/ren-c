@@ -80,7 +80,7 @@
 #define MISC_Node_CAST
 
 
-#ifndef NDEBUG
+#if RUNTIME_CHECKS
     static bool in_mark = false; // needs to be per-GC thread
 #endif
 
@@ -90,7 +90,7 @@
 // The mark_count double checks that every marker set by the GC is cleared.
 // To avoid the cost of incrementing and decrementing, only in debug builds.
 //
-#if DEBUG
+#if RUNTIME_CHECKS
     INLINE void Remove_GC_Mark(const Node* node) {  // stub or pairing
         assert(Is_Node_Marked(node));
         Clear_Node_Marked_Bit(node);
@@ -151,7 +151,7 @@ static void Queue_Mark_Pairing_Deep(const Pairing* p)
 {
     // !!! Hack doesn't work generically, review
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     bool was_in_mark = in_mark;
     in_mark = false;  // would assert about the recursion otherwise
   #endif
@@ -161,7 +161,7 @@ static void Queue_Mark_Pairing_Deep(const Pairing* p)
 
     Add_GC_Mark(p);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     in_mark = was_in_mark;
   #endif
 }
@@ -208,7 +208,7 @@ static void Queue_Mark_Node_Deep(const Node** npp) {  // ** for canonizing
         return;
     }
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (Not_Node_Managed(*npp)) {
         printf("Link to non-MANAGED item reached by GC\n");
         panic (*npp);
@@ -345,7 +345,7 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     //
     Heart heart = Cell_Heart(c);
 
-  #if !defined(NDEBUG)  // see Queue_Mark_Node_Deep() for notes on recursion
+  #if RUNTIME_CHECKS  // see Queue_Mark_Node_Deep() for notes on recursion
     assert(not in_mark);
     in_mark = true;
   #endif
@@ -359,7 +359,7 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE2) and Cell_Node2(c))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).second.node);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     in_mark = false;
     Assert_Cell_Marked_Correctly(c);
   #endif
@@ -411,7 +411,7 @@ static void Propagate_All_GC_Marks(void)
         Cell* v = Array_Head(a);
         const Cell* tail = Array_Tail(a);
         for (; v != tail; ++v) {
-          #if DEBUG
+          #if RUNTIME_CHECKS
             Flavor flavor = Stub_Flavor(a);
             assert(flavor <= FLAVOR_MAX_HOLDS_CELLS);
 
@@ -427,7 +427,7 @@ static void Propagate_All_GC_Marks(void)
             Queue_Mark_Cell_Deep(v);
         }
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         Assert_Array_Marked_Correctly(a);
       #endif
     }
@@ -991,7 +991,7 @@ Count Sweep_Stubs(void)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Fill_Sweeplist: C
@@ -1066,7 +1066,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // could cause a recursion.  Be tolerant of such recursions to make that
     // debugging easier...but make a note that it's not ordinarily legal.
     //
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (g_gc.recycling) {
         printf("Recycle re-entry; should only happen in debug scenarios.\n");
         Set_Trampoline_Flag(RECYCLE);
@@ -1082,9 +1082,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
         return 0;
     }
 
-  #if DEBUG
     g_gc.recycling = true;
-  #endif
 
     Assert_No_GC_Marks_Pending();
 
@@ -1193,7 +1191,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     REBLEN sweep_count;
 
     if (sweeplist != NULL) {
-    #if defined(NDEBUG)
+    #if NO_RUNTIME_CHECKS
         panic (sweeplist);
     #else
         sweep_count = Fill_Sweeplist(sweeplist);
@@ -1220,7 +1218,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
         Remove_GC_Mark_If_Marked(canon);
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     assert(g_gc.mark_count == 0);  // should have balanced out
   #endif
 
@@ -1246,11 +1244,9 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     Assert_No_GC_Marks_Pending();
 
-  #if !defined(NDEBUG)
     g_gc.recycling = false;
-  #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // This might be an interesting feature for release builds, but using
     // normal I/O here that runs evaluations could be problematic.  Even
@@ -1390,7 +1386,7 @@ void Startup_GC(void)
     if (env_recycle_torture and atoi(env_recycle_torture) != 0)
         g_gc.ballast = 0;
 
-  #if DEBUG  // !!! How to deliver message in release build (no printf?)
+  #if RUNTIME_CHECKS  // !!! How to give message in release build (no printf?)
     if (g_gc.ballast == 0) {
         printf(
             "**\n" \

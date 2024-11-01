@@ -2053,7 +2053,7 @@ Bounce Scanner_Executor(Level* const L) {
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     char scan_mode = Level_State_Byte(L);  // to see in C debug watchlist
     if (scan_mode == '/' or scan_mode == ':' or scan_mode == '.')
         assert(Get_Scan_Executor_Flag(L, INTERSTITIAL_SCAN));

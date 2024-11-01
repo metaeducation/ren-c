@@ -242,7 +242,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
         cast(OnStack(Value*), Data_Stack_Cell_At(i))
 #endif
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     #define IN_DATA_STACK_DEBUG(v) \
         IS_VALUE_IN_ARRAY_DEBUG(g_ds.array, (v))
 #endif

@@ -92,7 +92,7 @@ assert [c = r]
 if not find system.options.args "nobench" [
     n: 10000
     print ["=== Running benchmark," n "iterations ==="]
-    print "(If you're using a debug build, this metric is affected)"
+    print "(If interpreter built used RUNTIME_CHECKS, this metric is affected)"
 
     c: delta-time [
         repeat n [c-fib 30]

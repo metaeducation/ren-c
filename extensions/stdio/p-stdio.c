@@ -192,7 +192,7 @@ Value* Read_Line(STD_TERM *t)
 
                     Term_Insert(t, recall);
 
-                  #if !defined(NDEBUG)
+                  #if RUNTIME_CHECKS
                     int len = rebUnboxInteger("length of", recall);
                     assert(Term_Pos(t) == len + original_column);
                   #endif

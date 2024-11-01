@@ -19,8 +19,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// These are mostly DEBUG-build routines to support the macros and definitions
-// in %sys-cell.h.
+// These are mostly RUNTIME_CHECKS routines to support the macros and
+// definitions in %sys-cell.h.
 //
 // These are not specific to any given type.  For the type-specific cell
 // code, see files with names like %t-word.c, %t-logic.c, %t-integer.c...
@@ -111,7 +111,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     Panic_Flex_Debug(EMPTY_ARRAY);
 }
 
-#endif // !defined(NDEBUG)
+#endif  // (! DEBUG_FANCY_PANIC)
 
 
 #if DEBUG_HAS_PROBE

@@ -1548,7 +1548,7 @@ DECLARE_NATIVE(glom)
 }
 
 
-#if DEBUG
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Array_Core: C

@@ -115,7 +115,7 @@ void* Try_Alloc_Memory_Core(Size size)
     // "overkill" for this operation.  Yet the current implementations on all
     // C platforms use malloc() and free() anyway.
 
-  #ifdef NDEBUG
+  #if NO_RUNTIME_CHECKS
     void *p = malloc(size);
   #else
     // Cache size at the head of the allocation in debug builds for checking.
@@ -158,7 +158,7 @@ void* Try_Alloc_Memory_Core(Size size)
 //
 void Free_Memory_Core(void *mem, Size size)
 {
-  #ifdef NDEBUG
+  #if NO_RUNTIME_CHECKS
     free(mem);
   #else
     assert(mem);
@@ -333,7 +333,7 @@ void  Startup_Pools(REBINT scale)
 //
 void Shutdown_Pools(void)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
   blockscope {
     Count num_leaks = 0;
     Flex* leaked = nullptr;
@@ -403,7 +403,7 @@ void Shutdown_Pools(void)
     g_mem.objects_made = 0;
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (g_mem.usage != 0) {
         //
         // If using valgrind or address sanitizer, they can present more
@@ -735,7 +735,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         f->content.dynamic.rest += delta;
         Subtract_Flex_Bias(f, delta);
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (Stub_Holds_Cells(f)) {
             //
             // When the bias region was marked, it was made "unsettable" if
@@ -779,7 +779,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
             )
         );
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (Stub_Holds_Cells(f)) {
             //
             // The opened up area needs to be set to "settable" in the
@@ -802,7 +802,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
     if (Get_Flex_Flag(f, FIXED_SIZE))
         fail (Error_Locked_Series_Raw());
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (g_mem.watch_expand) {
         printf(
             "Expand %p wide: %d tail: %d delta: %d\n",
@@ -829,7 +829,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
             n_available = n_found;
     }
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (g_mem.watch_expand)
         printf("Expand: %d\n", cast(int, Flex_Used(f) + delta + 1));
   #endif
@@ -1192,7 +1192,7 @@ Stub* Decay_Flex(Flex* f)
 //
 void GC_Kill_Stub(Stub* s)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (NODE_BYTE(s) == FREE_POOLUNIT_BYTE) {
         printf("Killing already deallocated stub.\n");
         panic (s);
@@ -1207,7 +1207,7 @@ void GC_Kill_Stub(Stub* s)
     //
     Touch_Stub_If_Debug(s);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     FreeCorrupt_Pointer_Debug(s->info.any.node);
     // The spot LINK occupies will be used by Free_Pooled() to link the freelist
     FreeCorrupt_Pointer_Debug(s->misc.any.corrupt);
@@ -1231,7 +1231,7 @@ void GC_Kill_Stub(Stub* s)
 //
 void Free_Unmanaged_Flex(Flex* f)
 {
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE or Not_Node_Readable(f)) {
         printf("Called Free_Unmanaged_Flex() on decayed or freed Flex\n");
         panic (f);  // erroring here helps not conflate with tracking problems
@@ -1248,7 +1248,7 @@ void Free_Unmanaged_Flex(Flex* f)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Pointer_Detection_Working: C

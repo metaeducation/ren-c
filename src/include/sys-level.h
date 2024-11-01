@@ -300,7 +300,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 #define Level_Args_Head(L) \
     ((L)->rootvar + 1)
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Level_Arg(L,n) \
         ((L)->rootvar + (n))
 #else
@@ -411,12 +411,12 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     Level* L
 ){
     L->out = out;  // must be a valid cell for GC [2]
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (L->out)
         assert(not Is_Api_Value(L->out));
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // !!! TBD: the relevant file and line update when L->feed->array changes
     //

@@ -111,7 +111,7 @@ void Dump_Level_Location(Level* L)
 #endif
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)

@@ -97,13 +97,13 @@ DECLARE_NATIVE(generic)
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
-        &flags  // return type checked only in debug build
+        &flags  // native return types only checked if RUNTIME_CHECKS
     );
 
     Phase* generic = Make_Action(
         paramlist,
         nullptr,  // no partials
-        &Generic_Dispatcher,  // return type is only checked in debug build
+        &Generic_Dispatcher,
         IDX_NATIVE_MAX  // details array capacity
     );
 

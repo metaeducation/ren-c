@@ -29,7 +29,7 @@
 
 // Note: We are only using the limited facilities of stdin and fgetc().
 // Generally speaking, we avoid usage of other stdio functions in the system.
-// (Outside of printf() in debug builds).
+// (Outside of printf() in RUNTIME_CHECKS builds).
 //
 #include <stdio.h>
 
@@ -73,7 +73,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
         //
         clearerr(stdin);
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         *out = 0xFF;  // bad UTF8 byte
         *eof = false;  // bad eof status
       #endif
@@ -83,7 +83,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
     // -1 can happen on Ctrl-C or on end of file.
     //
     if (feof(stdin)) {
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         *out = 0xFF;  // bad UTF8 byte
       #endif
         *eof = true;  // was end of file

@@ -262,7 +262,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Extra_Init_Context_Cell_Checks_Debug: C

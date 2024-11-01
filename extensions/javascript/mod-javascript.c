@@ -69,15 +69,16 @@
 
 //=//// DEBUG_JAVASCRIPT_EXTENSION TOOLS //////////////////////////////////=//
 //
-// Ren-C has a very aggressive debug build.  Turning on all the debugging
-// means a prohibitive experience in emscripten--not just in size and speed of
+// Ren-C has very aggressive RUNTIME_CHECKS, and turning them all on can
+// result in a prohibitive emscripten build: not just in size and speed of
 // the build products, but the compilation can wind up taking a long time--or
-// not succeeding at all).
+// not succeeding at all.  This has been getting better, and it's possible
+// to do source-level debugging of the whole system in Chrome, albeit slowly.
 //
-// So most of the system is built with NDEBUG, and no debugging is built
-// in for the emscripten build.  The hope is that the core is tested elsewhere
-// (or if a bug is encountered in the interpreter under emscripten, it will
-// be reproduced and can be debugged in a non-JavaScript build).
+// So usually the system is built with NO_RUNTIME_CHECKS.  The hope is that
+// the core is tested elsewhere (or if a bug is encountered in the interpreter
+// under emscripten, it will be reproduced and can be debugged in a
+// non-JavaScript build).
 //
 // However, getting some amount of feedback in the console is essential to
 // debugging the JavaScript extension itself.  These are some interim hacks

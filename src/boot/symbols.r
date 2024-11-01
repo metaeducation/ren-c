@@ -168,7 +168,7 @@ id
 exit-code
 
 ; used to signal situations where information that would be available in
-; a debug build has been elided
+; a RUNTIME_CHECKS build has been elided
 ;
 --optimized-out--
 

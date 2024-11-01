@@ -70,7 +70,7 @@
 #include <sql.h>  // depends on defines like VOID on Windows
 #include <sqlext.h>
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     #include <stdio.h>
 #endif
 
@@ -236,7 +236,7 @@ Value* Error_ODBC_Core(
     // build to have a bit more information about exactly which ODBC API
     // call is having the problem.
     //
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     printf("!! Couldn't get ODBC Error Message: %s @ %d\n", file, line);
   #else
     UNUSED(file);
@@ -267,7 +267,7 @@ Value* Error_ODBC_Core(
     return rebValue("make error! -{Undocumented SQLRESULT SQLGetDiagRecW()}-");
 }
 
-#if !defined(NDEBUG)  // report file and line info with mystery errors
+#if RUNTIME_CHECKS  // report file and line info with mystery errors
     #define Error_ODBC(handleType,handle) \
         Error_ODBC_Core((handleType), (handle), __FILE__, __LINE__)
 #else

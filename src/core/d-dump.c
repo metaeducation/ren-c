@@ -22,14 +22,14 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Most of these low-level debug routines were leftovers from R3-Alpha, which
-// had no DEBUG build (and was perhaps frequently debugged without an IDE
-// debugger).  After the open source release, Ren-C's reliance is on a
+// had no RUNTIME_CHECKS build (and was perhaps frequently debugged without an
+// IDE debugger).  After the open source release, Ren-C's reliance is on a
 // more heavily checked debug build...so these routines were not used.
 //
 // They're being brought up to date to be included in the debug build only
 // version of panic().  That should keep them in working shape.
 //
-// Note: These routines use `printf()`, which is only linked in DEBUG builds.
+// Note: These routines use `printf()`, that's only linked #if RUNTIME_CHECKS.
 // Higher-level Rebol formatting should ultimately be using BLOCK! dialects,
 // as opposed to strings with %s and %d.  Bear in mind the "z" modifier in
 // printf is unavailable in C89, so if something might be 32-bit or 64-bit
@@ -154,7 +154,7 @@ DECLARE_NATIVE(dump)
 {
     INCLUDE_PARAMS_OF_DUMP;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     Element* v = cast(Element*, ARG(value));
 
     PROBE(v);
@@ -174,6 +174,6 @@ DECLARE_NATIVE(dump)
     return NOTHING;
   #else
     UNUSED(ARG(value));
-    return FAIL(Error_Debug_Only_Raw());
+    return FAIL(Error_Checked_Build_Only_Raw());
   #endif
 }

@@ -58,10 +58,9 @@ host: #web  ; #web, or #node (not recently tested)
 use-asyncify: 'no
 use-pthreads: 'no
 
-; Making an actual debug build of the interpreter core is prohibitive for
-; emscripten in general usage--even on a developer machine.  This enables a
-; smaller set of options for getting better feedback about errors in an
-; emscripten build.
+; Making an actual checked build of the interpreter core is prohibitive for
+; emscripten in general usage.  This enables a smaller set of options for
+; getting better feedback about errors in a emscripten build.
 ;
 debug-javascript-extension: 'yes
 

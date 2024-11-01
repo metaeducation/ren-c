@@ -355,7 +355,7 @@ void MF_Fail(Molder* mo, const Cell* v, bool form)
     UNUSED(form);
     UNUSED(mo);
 
-  #if defined(NDEBUG)
+  #if RUNTIME_CHECKS
     UNUSED(v);
     fail ("Cannot MOLD or FORM datatype.");
   #else
@@ -384,6 +384,12 @@ void MF_Unhooked(Molder* mo, const Cell* v, bool form)
 //
 // Variation which molds a cell, e.g. no quoting is considered.
 //
+// 1. It's hard to detect the exact moment of tripping over the length limit
+//    unless all code paths that add to the mold buffer (e.g. tacking on
+//    delimiters etc.) check the limit.  The easier thing to do is check at
+//    the end and truncate.  We short circuit here, but it may already be
+//    over the limit.
+//
 void Mold_Or_Form_Cell_Ignore_Quotes(
     Molder* mo,
     const Cell* cell,
@@ -393,18 +399,8 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     Assert_Flex_Term_If_Needed(s);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {
-        //
-        // It's hard to detect the exact moment of tripping over the length
-        // limit unless all code paths that add to the mold buffer (e.g.
-        // tacking on delimiters etc.) check the limit.  The easier thing
-        // to do is check at the end and truncate.  This adds a lot of data
-        // wastefully, so short circuit here in the release build.  (Have
-        // the debug build keep going to exercise mold on the data.)
-        //
-      #ifdef NDEBUG
-        if (String_Len(s) >= mo->limit)
+        if (String_Len(s) >= mo->limit)  // >= : it may already be over [1]
             return;
-      #endif
     }
 
     MOLD_HOOK *hook = Mold_Or_Form_Hook_For_Type_Of(cell);
@@ -425,7 +421,7 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     // quotes applied to have already been done.
 
     if (Is_Cell_Unreadable(e)) {
-      #if DEBUG
+      #if RUNTIME_CHECKS
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
       #endif
         return;  // !!! should never happen in release builds
@@ -488,7 +484,7 @@ String* Copy_Mold_Or_Form_Cell_Ignore_Quotes(
 //
 void Push_Mold(Molder* mo)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     assert(not g_mold.currently_pushing);  // Can't mold during Push_Mold()
     g_mold.currently_pushing = true;
   #endif
@@ -539,7 +535,7 @@ void Push_Mold(Molder* mo)
 
     mo->digits = MAX_DIGITS;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     g_mold.currently_pushing = false;
   #endif
 }

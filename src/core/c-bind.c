@@ -335,7 +335,7 @@ Option(Stub*) Get_Word_Container(
 
     Context* c = context;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     Corrupt_Pointer_If_Debug(context);  // make sure we use `c` below
     Context* context_in = c;  // save in local for easier debugging
     USED(context_in);
@@ -1332,7 +1332,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 }
 
 
-#if DEBUG
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Cell_Binding_Valid_Core: C

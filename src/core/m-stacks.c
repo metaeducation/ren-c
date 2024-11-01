@@ -239,7 +239,7 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
     Value* src = Data_Stack_At(Value, base + 1);  // moving, not const!
     Value* dest = Flex_Head(Value, a);
 
-  #if (! DEBUG)  // Stack cells don't have CELL_MASK_PERSIST, can memcpy()
+  #if NO_RUNTIME_CHECKS  // Stack cells lack CELL_MASK_PERSIST, can memcpy()
     STATIC_ASSERT(! DEBUG_POISON_DROPPED_STACK_CELLS);
     Mem_Copy(dest, src, len * sizeof(Cell));  // CELL_MASK_ALL semantics [1]
   #else

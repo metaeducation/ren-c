@@ -83,7 +83,7 @@ Phase* Make_Typechecker(Offset decider_index) {
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
-        &flags  // return type checked only in debug build
+        &flags  // native return types checked only if RUNTIME_CHECKS
     );
     Assert_Flex_Term_If_Needed(paramlist);
 

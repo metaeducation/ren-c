@@ -200,7 +200,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
         UNUSED(e->word_tail);
     }
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     ++g_num_evars_outstanding;
   #endif
 }
@@ -310,12 +310,12 @@ void Shutdown_Evars(EVARS *e)
     if (e->word)
         GC_Kill_Flex(e->wordlist);
     else {
-      #if DEBUG
+      #if RUNTIME_CHECKS
         assert(Is_Pointer_Corrupt_Debug(e->wordlist));
       #endif
     }
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     --g_num_evars_outstanding;
   #endif
 }
@@ -487,7 +487,7 @@ Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
             tail,
             nullptr  // no parent (MAKE SOME-OBJ [...] calls REBTYPE(Context))
         );
-        Init_Context_Cell(OUT, heart, ctx); // GC guards it
+        Remember_Cell_Is_Lifeguard(Init_Context_Cell(OUT, heart, ctx));
 
         BINDING(arg) = Make_Use_Core(
             Varlist_Archetype(ctx),
@@ -497,6 +497,8 @@ Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
 
         bool threw = Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED);
         UNUSED(SPARE);  // result disregarded
+
+        Forget_Cell_Was_Lifeguard(OUT);
 
         if (threw)
             return BOUNCE_THROWN;
@@ -963,7 +965,7 @@ REBTYPE(Context)
                 tail,
                 c
             );
-            Init_Context_Cell(OUT, heart, derived);  // GC guards it
+            Remember_Cell_Is_Lifeguard(Init_Context_Cell(OUT, heart, derived));
 
             BINDING(def) = Make_Use_Core(
                 Varlist_Archetype(derived),
@@ -975,6 +977,7 @@ REBTYPE(Context)
             if (Eval_Any_List_At_Throws(dummy, def, SPECIFIED))
                 return BOUNCE_THROWN;
 
+            Forget_Cell_Was_Lifeguard(OUT);
             return OUT;
         }
 

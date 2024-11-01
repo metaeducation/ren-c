@@ -147,7 +147,7 @@ INLINE const Source* Freeze_Source_Shallow(const Source* a) {
     Force_Value_Frozen_Core((v), false, EMPTY_ARRAY)  // auto-locked
 
 
-#if defined(NDEBUG)
+#if NO_RUNTIME_CHECKS
     #define Known_Mutable(v) v
 #else
     INLINE const Cell* Known_Mutable(const Cell* c) {

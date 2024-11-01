@@ -119,7 +119,7 @@ Phase* Make_Native(
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
-        &flags  // return type checked only in debug build
+        &flags  // native return types checked only if RUNTIME_CHECKS
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
@@ -348,7 +348,7 @@ Source* Startup_Natives(const Element* boot_natives)
     g_native_cfunc_pos = nullptr;
     PG_Currently_Loading_Module = nullptr;
 
-  #if DEBUG  // check that a couple of functions can be looked up by ID
+  #if RUNTIME_CHECKS  // ensure a couple of functions can be looked up by ID
     if (not Is_Action(Lib(GENERIC)))
         panic (Lib(GENERIC));
 

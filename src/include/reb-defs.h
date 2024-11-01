@@ -101,7 +101,7 @@ typedef intptr_t Size;  // Size (in bytes)
 // For now, having it be "weird" calls out that you really should be working
 // in signed integers where possible.
 //
-#if CPLUSPLUS_11 && DEBUG
+#if CPLUSPLUS_11 && RUNTIME_CHECKS
     INLINE intptr_t Cast_Signed(uintptr_t u) {
         assert(u <= INTPTR_MAX);
         return u;

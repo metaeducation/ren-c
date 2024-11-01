@@ -266,7 +266,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // :PART has traditionally meant a maximum limit, and it has not
         // errored if it gave back less).  The size might be cached in which
         // case there's no need to do a fstat (cache integrity is checked in
-        // the debug build at the top of the File_Actor).
+        // the RUNTIME_CHECKS build at the top of the File_Actor).
         //
         uint64_t file_size = File_Size_Cacheable_May_Fail(port);
         if (file->offset > file_size) {

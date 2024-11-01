@@ -96,7 +96,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* v)
     return true;
 }
 
-#if (! CPLUSPLUS_11) || (! DEBUG)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_ZONE(v) \
         EXTRA(Date, Ensure_Date(v)).zone
 #else

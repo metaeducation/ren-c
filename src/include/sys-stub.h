@@ -121,14 +121,14 @@ INLINE Flavor Flavor_From_Flags(Flags flags)
 #define Stub_Flavor_Unchecked(s) \
     u_cast(Flavor, FLAVOR_BYTE(s))
 
-#if DEBUG
+#if NO_RUNTIME_CHECKS
+    #define Stub_Flavor  Stub_Flavor_Unchecked
+#else
     INLINE Flavor Stub_Flavor(const Stub *s) {
         assert(Is_Node_Readable(s));
         assert(FLAVOR_BYTE(s) != FLAVOR_0);
         return Stub_Flavor_Unchecked(s);
     }
-#else
-    #define Stub_Flavor  Stub_Flavor_Unchecked
 #endif
 
 INLINE Size Wide_For_Flavor(Flavor flavor) {
@@ -176,7 +176,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 //
 // 1. See Set_Stub_Flag()/Clear_Stub_Flag() for why implicit mutability.
 
-#if (! CPLUSPLUS_11) || (! DEBUG)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define ensure_flavor(flavor,stub) \
         (stub)  // no-op in release build
 #else
@@ -275,7 +275,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 // extraction.
 //
 
-#if (! CPLUSPLUS_11) || (! DEBUG)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define LINK(Field, flex) \
         *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(flex)->link.any.node))
 
@@ -352,7 +352,7 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
     Stub *s = u_cast(Stub*, preallocated);
     s->leader.bits = flags | NODE_FLAG_NODE;  // #1
 
-  #if (! DEBUG)
+  #if (NO_RUNTIME_CHECKS)
     s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
   #else
     SafeCorrupt_Pointer_Debug(s->link.any.corrupt);  // #2
@@ -432,7 +432,7 @@ INLINE bool Is_Stub_White(const Stub* f)
 INLINE void Flip_Stub_To_Black(const Stub* f) {
     assert(Not_Stub_Flag(f, BLACK));
     Set_Stub_Flag(f, BLACK);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     g_mem.num_black_stubs += 1;
   #endif
 }
@@ -440,7 +440,7 @@ INLINE void Flip_Stub_To_Black(const Stub* f) {
 INLINE void Flip_Stub_To_White(const Stub* f) {
     assert(Get_Stub_Flag(f, BLACK));
     Clear_Stub_Flag(f, BLACK);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     g_mem.num_black_stubs -= 1;
   #endif
 }

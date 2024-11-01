@@ -66,10 +66,10 @@
 typedef RebolValue Value;
 
 
-// !!! We probably do not need to have non-debug builds use up memory by
+// !!! We probably do not need to have NO_RUNTIME_CHECKS builds use memory by
 // integrating the string table translating all those negative numbers into
-// specific errors.  But a debug build might want to.  For now, one error
-// (good place to set a breakpoint).
+// specific errors.  But a RUNTIME_CHECKS build might want to.  For now, just
+// define one error (it's a good place to set a breakpoint).
 //
 INLINE Value* rebMbedtlsError(int mbedtls_ret) {
     Value* result = rebValue("make error! -{mbedTLS error}-");  // break here

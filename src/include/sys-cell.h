@@ -129,7 +129,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
 }
 
 
-//=//// CELL READABLE/WRITABLE CHECKS (DEBUG BUILD ONLY) //////////////////=//
+//=//// CELL READABLE/WRITABLE CHECKS (don't apply in release builds) /////=//
 //
 // [READABILITY]
 //
@@ -335,7 +335,7 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
     }
 }
 
-#if defined(NDEBUG)
+#if NO_RUNTIME_CHECKS
     #define VAL_TYPE VAL_TYPE_UNCHECKED
 #else
     #define VAL_TYPE(v) \
@@ -464,17 +464,17 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 #define EXTRA(Type,cell) \
     (cell)->extra.Type
 
-#if DEBUG
+#if NO_RUNTIME_CHECKS
+    #define Assert_Cell_Binding_Valid(v) NOOP
+#else
     #define Assert_Cell_Binding_Valid(v) \
         Assert_Cell_Binding_Valid_Core(v)
-#else
-    #define Assert_Cell_Binding_Valid(v) NOOP
 #endif
 
 #define Cell_Binding(v) \
     x_cast(Context*, (v)->extra.Any.node)
 
-#if (! DEBUG || ! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define BINDING(v) \
         *x_cast(Context**, m_cast(Node**, &(v)->extra.Any.node))
 #else

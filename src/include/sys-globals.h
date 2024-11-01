@@ -152,6 +152,6 @@ TVAR TrampolineState g_ts;
 
 TVAR MoldState g_mold;
 
-#if DEBUG
+#if RUNTIME_CHECKS
     TVAR Count g_num_evars_outstanding;  // See Init_Evars()
 #endif

@@ -74,7 +74,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* v) {
 
 
 
-#if (! CPLUSPLUS_11) || (! DEBUG)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define PARAMETER_FLAGS(p) \
         *x_cast(uintptr_t*, &EXTRA(Parameter, (p)).parameter_flags)
 #else

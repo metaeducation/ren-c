@@ -94,7 +94,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     char buf[PANIC_BUF_SIZE + 1];
     buf[0] = '\0';
 
-  #if !defined(NDEBUG) && 0
+  #if RUNTIME_CHECKS && 0
     //
     // These are currently disabled, because they generate too much junk.
     // Address Sanitizer gives a reasonable idea of the stack.
@@ -103,7 +103,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     Dump_Stack(TOP_LEVEL, 0);
   #endif
 
-  #if !defined(NDEBUG) && defined(HAVE_EXECINFO_AVAILABLE)
+  #if RUNTIME_CHECKS && defined(HAVE_EXECINFO_AVAILABLE)
     void *backtrace_buf[1024];
     int n_backtrace = backtrace(  // GNU extension (but valgrind is better)
         backtrace_buf,
@@ -192,7 +192,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     fflush(stdout);
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // Note: Emscripten actually gives a more informative stack trace in
     // its debug build through plain exit().  It has DEBUG_FANCY_PANIC but
@@ -293,7 +293,7 @@ DECLARE_NATIVE(fail)
     Value* reason = ARG(reason);
     Value* blame = ARG(blame);
 
-  #if defined(NDEBUG)
+  #if NO_RUNTIME_CHECKS
     UNUSED(blame);
   #else
     printf("!!! Early-Boot FAIL, e.g. /fail: native [], not /fail: func []\n");

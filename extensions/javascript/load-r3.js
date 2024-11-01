@@ -493,7 +493,7 @@ function libRebolComponentURL(suffix) {  // suffix includes the dot
         if (suffix == ".wast" || suffix == ".temp.asm.js")
             throw Error(
                 "Asking for " + suffix + " file "
-                + " in a non-debug build (only for debug builds)")
+                + " in a NO_RUNTIME_CHECKS build")
     }
 
     let opt_dash = git_commit ? "-" : "";

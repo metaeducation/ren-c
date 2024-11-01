@@ -109,8 +109,8 @@ Bounce Delegated_Executor(Level* L)
 //
 Bounce Trampoline_From_Top_Maybe_Root(void)
 {
-  #if DEBUG && CPLUSPLUS_11  // reference capture for easy view in watchlist
-    Tick & tick = TICK;
+  #if RUNTIME_CHECKS && CPLUSPLUS_11  // capture to easily view in watchlist
+    Tick& tick = g_ts.tick;  // C++ reference always reflects current value
     USED(tick);
   #endif
 
@@ -174,7 +174,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // been trusting a sublevel's OUT to GC guard a slot, then that guard is
     // no longer in effect once the sublevel had been dropped.
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     Level* check = LEVEL;  // make sure LEVEL doesn't change during executor
   #endif
 
@@ -184,7 +184,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                     bounce = (LEVEL->executor)(LEVEL);
     // ^-- **STEP IN** to this call using the debugger to debug it!!! --^
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     assert(LEVEL == check);  // R is relative to the OUT of LEVEL we executed
   #endif
 
@@ -468,7 +468,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 {
     Level* root = TOP_LEVEL;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     Jump* check = g_ts.jump_list;
   #endif
 
@@ -497,7 +497,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     }
   #endif
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     assert(check == g_ts.jump_list);  // see CLEANUP_BEFORE_EXITING_RESCUE_SCOPE
   #endif
 
@@ -596,7 +596,7 @@ void Startup_Trampoline(void)
 //
 // 1. To stop enumerations from using nullptr to stop the walk, and not count
 //    the bottom level as a "real stack level", it had a corrupt pointer put
-//    in the debug build.  Restore it to a typical null before the drop.
+//    in the checked build.  Restore it to a typical null before the drop.
 //
 // 2. There's a Catch-22 on checking the balanced state for outstanding
 //    manual Flex allocations, e.g. it can't check *before* the mold buffer
@@ -619,7 +619,7 @@ void Shutdown_Trampoline(void)
     g_ts.top_level = nullptr;
     g_ts.bottom_level = nullptr;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
   blockscope {
     Segment* seg = g_mem.pools[LEVEL_POOL].segments;
 
@@ -645,7 +645,7 @@ void Shutdown_Trampoline(void)
   }
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
   blockscope {
     Segment* seg = g_mem.pools[FEED_POOL].segments;
 
@@ -707,7 +707,7 @@ void Drop_Level_Core(Level* L) {
         Rollback_Globals_To_State(&L->baseline);
     }
     else {
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         Node* n = L->alloc_value_list;
         while (n != L) {
             Stub* stub = cast(Stub*, n);

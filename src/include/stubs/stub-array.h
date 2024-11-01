@@ -74,7 +74,7 @@ INLINE void Prep_Array(
 ){
     assert(Get_Stub_Flag(a, DYNAMIC));
 
-  #if (! DEBUG)  // deliberate design for 0x00: see Assert_Cell_Initable()
+  #if NO_RUNTIME_CHECKS  // see Assert_Cell_Initable() for why 0 headers ok
     UNUSED(capacity);  // branching for FIXED_SIZE test not worth cost
     memset(
         a->content.dynamic.data,
@@ -218,7 +218,7 @@ enum {
         FLEX_MASK_UNMANAGED_SOURCE, (a), 0, (e)))
 
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Assert_Array(a)     NOOP
     #define Assert_Flex(f)    NOOP
 #else

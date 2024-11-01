@@ -68,7 +68,7 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
     TRACK(Init_Unreadable_Untracked_Inline((out)))
 
 
-#if DEBUG && CPLUSPLUS_11 && (! DEBUG_STATIC_ANALYZING)
+#if RUNTIME_CHECKS && CPLUSPLUS_11 && (! DEBUG_STATIC_ANALYZING)
     //
     // We don't actually want things like Sink(Value) to set a cell's bits to
     // a corrupt pattern, as we need to be able to call Init_Xxx() routines

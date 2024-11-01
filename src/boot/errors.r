@@ -56,7 +56,7 @@ Internal: [
     invalid-error:      ["error object or fields were not valid:" :arg1]
     hash-overflow:      "Hash ran out of space"
 
-    debug-only:         "Feature available only in DEBUG builds"
+    checked-build-only: "Feature available only in RUNTIME_CHECKS builds"
 
     invalid-exit:       "Frame does not exist on the stack to EXIT from"
 ]

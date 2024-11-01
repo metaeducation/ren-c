@@ -34,7 +34,7 @@
 // for these cases.
 //
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_INT64(v) \
         cast(REBI64, PAYLOAD(Integer, (v)).i64)
 

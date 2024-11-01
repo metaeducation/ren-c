@@ -63,7 +63,7 @@ toolset: compose [
 ]
 
 
-; Historically, debug builds of Emscripten did not include asserts of the
+; Historically, checked builds of Emscripten did not include asserts of the
 ; whole codebase...trusting the desktop builds to test that.  The only part
 ; that had asserts on was the JavaScript extension, which the desktop builds
 ; could not test.  Wasi executables aren't being run in the browser and the

@@ -118,7 +118,7 @@ STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_VAR));
 //
 // 3. The g_lex_map[] only has byte range, so it's important that it's only
 //    called on bytes.  But that's not really enforceable in C, you need a
-//    C++ template function.  We don't burden the debug build with this as
+//    C++ template function.  We don't burden the checked build with this as
 //    yet-another-runtime cost when inlines aren't optimized out...instead
 //    just do it in release/optimized builds.
 
@@ -149,7 +149,7 @@ enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
     LEX_NUMBER =    (LEX_CLASS_NUMBER << LEX_SHIFT)
 };
 
-#if DEBUG || (! CPLUSPLUS_11)
+#if RUNTIME_CHECKS || NO_CPLUSPLUS_11  // ensure Byte when NO_RUNTIME_CHECKS!
     #define Lex_Of(b) \
         g_lex_map[b]
 
@@ -159,7 +159,6 @@ enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
         return g_lex_map[b] & LEX_VALUE;
     }
 #else  // ensure Byte when optimizing, it's "free" [3]
-
     template<typename B>
     INLINE Lex Lex_Of(B b) {
         static_assert(std::is_same<B,Byte>::value, "Lex_Of() not Byte");
@@ -169,7 +168,7 @@ enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
     template<typename B>
     INLINE Byte Get_Lex_Value(LexClass lexclass, B b) {
         static_assert(std::is_same<B,Byte>::value, "Get_Lex_Value() not Byte");
-        UNUSED(lexclass);  // not DEBUG, we assert it's right in debug build
+        UNUSED(lexclass);  // we assert it's right in RUNTIME_CHECKS builds
         return g_lex_map[b] & LEX_VALUE;
     }
 #endif

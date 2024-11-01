@@ -36,23 +36,23 @@ Rebol [
         ;
         ;   https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r
         ;
-        ; All stakeholders should run debug builds by default, unless you have
-        ; a good reason not to!  Bug reports will not be processed unless the
-        ; test has been reproduced under an instrumented build.
+        ; Stakeholders should use RUNTIME_CHECKS builds by default, unless you
+        ; have a good reason not to!  Bug reports will not be processed unless
+        ; the test has been reproduced under an instrumented build.
 
         >> latest-of 0.4.40  ; e.g. 64-bit-linux
         == http://...-debug....
 
-        ; If you use /VARIANT you can ask for another variation, e.g. release
+        ; If you use :VARIANT you can ask for another variation, e.g. release
         ; should you have a *really* good reason.  (Please don't!  Help test!)
 
-        >> latest-of/variant 0.3.1 'release  ; e.g. 32-bit Windows
+        >> latest-of:variant 0.3.1 'release  ; e.g. 32-bit Windows
         == http://...
 
         ; If you don't want the "latest" but just the build for a known commit,
         ; you can do this by using its short hash.
 
-        >> latest-of/commit 0.4.40 "9d15d31"
+        >> latest-of:commit 0.4.40 "9d15d31"
         == http://...r3-9d15d31-...
     }--
     Notes: --{
@@ -122,10 +122,6 @@ s3root: https://metaeducation.s3.amazonaws.com/travis-builds/  ; sees updates
 cloudroot: https://dd498l1ilnrxu.cloudfront.net/travis-builds/  ; perma-cached
 
 
-build-variants: [debug release]
-
-
-
 /latest-of: func [
     "INTERNAL USE ONLY!  Link to unstable S3 CI build of the interpreter"
 
@@ -133,11 +129,14 @@ build-variants: [debug release]
 
     os "https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r"
         [<end> blank! tuple!]
-    :variant ['debug 'release]
+    :variant "Note: Stakeholders are asked to use checked builds, for now"
+        ['checked 'release]
     :commit "Link for specific commit number (defaults to latest commit)"
         [text!]
     :verbose "Print file size, commit, hash information"
 ][
+    variant: default ['checked]
+
     if not os [
         print warning
     ]
@@ -206,8 +205,8 @@ build-variants: [debug release]
     ;
     os: default [
         ; If we are defaulting the OS from the current interpreter, default
-        ; the debug or release status also.  TEST-LIBREBOL is only available
-        ; in debug builds, and should not print anything (there should be a
+        ; the checked or release status also.  TEST-LIBREBOL is only available
+        ; in checked builds, and should not print anything (there should be a
         ; better detection...)
         ;
         variant: default [
@@ -223,25 +222,11 @@ build-variants: [debug release]
     ]
 
     let extension: if (find [0.3.1 0.3.40] os) [".exe"] else [null]
-
-
-    === 'DEFAULT VARIANT TO DEBUG ===
-
-    ; All stakeholders are requested to use debug builds unless they have a
-    ; really good reason not to.  The term "checked" may wind up preferred to
-    ; "debug", so begin thinking about supporting that:
-    ;
-    ; https://forum.rebol.info/t/debug-builds-vs-checked-builds/1708
-
-    variant: default ['debug]
-    if variant = 'checked [
-        variant: 'debug
+    let suffix: switch variant [
+        'release [null]
+        'checked ["debug"]  ; !!! GitHub action needs updating to change
+        fail @variant
     ]
-    if not find:case build-variants variant [
-        fail ["Build variant must be one of:" mold build-variants]
-    ]
-    let suffix: if variant = 'release [null] else [join "-" variant]
-
 
     === 'DEFAULT COMMIT TO THE LAST GREEN-LIT HASH ===
 

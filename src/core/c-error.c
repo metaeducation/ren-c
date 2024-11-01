@@ -311,8 +311,12 @@ const Value* Find_Error_For_Sym(SymId id)
 // information may be captured as well.
 //
 // The information is derived from the current execution position and stack
-// depth of a running level.  Also, if running from a C fail() call, the
-// file and line information can be captured in the debug build.
+// depth of a running level.
+//
+// (We could have RUNTIME_CHECKS builds capture the C __FILE__ and __LINE__
+// of origin as fields in the variable.  But rather than implement that idea,
+// the cheaper DEBUG_PRINTF_FAIL_LOCATIONS was added, which works well enough
+// if you're not running under a C debugger.)
 //
 void Set_Location_Of_Error(
     Error* error,
@@ -586,7 +590,7 @@ Error* Make_Error_Managed_Vaptr(
     va_list* vaptr
 ){
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         printf(
             "fail() before errors initialized, cat_id = %d, id = %d\n",
             cast(int, cat_id),

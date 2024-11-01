@@ -49,7 +49,7 @@ void Snap_State(struct Reb_State *s)
     s->mold_buf_size = String_Dynamic_Size(g_mold.buffer);
     s->mold_loop_tail = Flex_Dynamic_Used(g_mold.stack);
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     s->num_evars_outstanding = g_num_evars_outstanding;
   #endif
 }
@@ -86,7 +86,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 
     Term_String_Len_Size(g_mold.buffer, s->mold_buf_len, s->mold_buf_size);
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     //
     // Because reporting errors in the actual Push_Mold process leads to
     // recursion, this debug flag helps make it clearer what happens if
@@ -98,7 +98,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 
     Set_Flex_Len(g_mold.stack, s->mold_loop_tail);
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     g_num_evars_outstanding = s->num_evars_outstanding;
   #endif
 }
@@ -319,7 +319,7 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
 }}
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Assert_State_Balanced_Debug: C
@@ -386,7 +386,7 @@ void Assert_State_Balanced_Debug(
     assert(s->mold_buf_size == String_Size(g_mold.buffer));
     assert(s->mold_loop_tail == Flex_Used(g_mold.stack));
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     assert(s->num_evars_outstanding == g_num_evars_outstanding);
   #endif
 }

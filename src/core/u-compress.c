@@ -195,7 +195,7 @@ Byte* Compress_Alloc_Core(
     if (size_out)
         *(unwrap size_out) = strm.total_out;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (envelope and envelope == SYM_GZIP) {
         uint32_t gzip_len = Bytes_To_U32_BE(  // verify compressed size [2]
             output + strm.total_out - sizeof(uint32_t)

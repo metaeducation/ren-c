@@ -749,7 +749,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
         ++t->cp;
         switch (first) {
           case 'H':   // !!! "home" (in what standard??)
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             rebJumps("fail -{ESC H: please report your system info}-");
           #else
             e = xrebWord("home");
@@ -757,7 +757,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
             break;
 
           case 'F':  // !!! "end" (in what standard??)
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             rebJumps("fail -{ESC F: please report your system info}-");
           #else
             e = xrebWord("end");

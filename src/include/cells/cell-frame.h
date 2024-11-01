@@ -54,7 +54,7 @@ INLINE Element* Init_Frame_Details_Core(
     Option(const Symbol*) label,
     Option(VarList*) coupling
 ){
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Extra_Init_Frame_Details_Checks_Debug(a);
   #endif
     Force_Flex_Managed(a);

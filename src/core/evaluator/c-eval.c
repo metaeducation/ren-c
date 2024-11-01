@@ -67,7 +67,7 @@
 //    generalized debugger doesn't exist yet.  So to make sure that both the
 //    "fast" no-Level mode and the "slow" added Level mode would be able to
 //    toggle based on whether such a hypothetical debugger were turned on,
-//    it sporadically spawns levels in the debug build.
+//    it sporadically spawns levels in the RUNTIME_CHECKS builds.
 //
 // 3. An idea was tried once where the error was not raised until a step was
 //    shown to be non-invisible.  This would allow invisible evaluations to
@@ -110,7 +110,7 @@ Bounce Evaluator_Executor(Level* const L)
         goto initial_entry;
 
       default:
-      #if DEBUG
+      #if RUNTIME_CHECKS
         if (L != TOP_LEVEL) {
             assert(STATE == ST_EVALUATOR_STEPPING);
             goto step_result_in_out;
@@ -142,7 +142,7 @@ Bounce Evaluator_Executor(Level* const L)
 
 } new_step: {  ///////////////////////////////////////////////////////////////
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (L != TOP_LEVEL) {  // detect if a sublevel was used [2]
         Assert_Stepper_Level_Ready(SUBLEVEL);
         return BOUNCE_CONTINUE;
@@ -185,7 +185,7 @@ Bounce Evaluator_Executor(Level* const L)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (L != TOP_LEVEL)  // detect if a sublevel was used [2]
         Drop_Level(SUBLEVEL);
   #endif

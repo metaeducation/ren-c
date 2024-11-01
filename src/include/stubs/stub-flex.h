@@ -251,7 +251,7 @@ INLINE Size Flex_Total(const Flex* f)
     }
 #endif
 
-#if (! DEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define BONUS(Field, s) \
         *x_cast(BONUS_##Field##_TYPE*, m_cast(Node**, &FLEX_BONUS(s)))
 #else
@@ -339,7 +339,7 @@ INLINE Byte* Flex_Data(const_if_c Flex* f) {  // assume valid [1]
 }
 
 INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (w != Flex_Wide(f)) {
         if (NODE_BYTE(f) == FREE_POOLUNIT_BYTE)
             printf("Flex_Data_At() asked on free PoolUnit\n");
@@ -380,7 +380,7 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
 #define Flex_At(T,f,i) \
     c_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [4]
 
-#if DEBUG
+#if RUNTIME_CHECKS
     #define Flex_Head(T,f) \
         Flex_At(T, (f), 0)  // Flex_Data() doesn't check width, _At() does
 #else
@@ -498,15 +498,15 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
     }
 }
 
-#ifdef NDEBUG
-    #define Assert_Flex_Term_If_Needed(f) \
-        NOOP
+#if NO_RUNTIME_CHECKS
+    #define Assert_Flex_Term_If_Needed(f)  NOOP
 #else
     #define Assert_Flex_Term_If_Needed(f) \
-        Assert_Flex_Term_Core(f);
+        Assert_Flex_Term_Core(f)
 #endif
 
-#define Note_Flex_Maybe_Term(f) NOOP  // use to annotate if may-or-may-not be
+#define Note_Flex_Maybe_Term(f) \
+    possibly(Assert_Flex_Term_If_Needed(f))  // no-op, validates expr
 
 
 //=//// SETTING FLEX LENGTH/SIZE //////////////////////////////////////////=//
@@ -639,7 +639,7 @@ INLINE Flex* Make_Flex_Into(
     cast(T*, Make_Flex_Core((flags), (capacity)))
 
 
-//=//// DEBUG FLEX MONITORING /////////////////////////////////////////////=//
+//=//// FLEX MONITORING ///////////////////////////////////////////////////=//
 //
 // This once used a Flex flag in debug builds to tell whether a Flex was
 // monitored or not.  But Flex flags are scarce, so the feature was scaled

@@ -56,28 +56,39 @@
 //
 //  Check_Basics: C
 //
-// Initially these checks were in the debug build only.  However, they are so
-// foundational that it's probably worth getting a coherent crash in any build
-// where these tests don't work.
+// 1. Initially these checks were #if RUNTIME_CHECKS only.  However, they are
+//    so foundational that it's probably worth getting a coherent crash in any
+//    build where these tests don't work.
 //
-static void Check_Basics(void)
+// 2. The system is designed with the intent that a cell is 4x(32-bit) on
+//    32-bit platforms and 4x(64-bit) on 64-bit platforms.  It's a critical
+//    performance point.  For the moment we consider it to be essential
+//    enough that the system that it refuses to run if not true.
+//
+//    But if someone is in an odd situation with a larger sized cell--and
+//    it's an even multiple of ALIGN_SIZE--it may still work.  For instance:
+//    the DEBUG_TRACK_EXTEND_CELLS mode doubles the cell size to carry the
+//    file, line, and tick of their initialization (or last Touch_Cell()).
+//    Define UNUSUAL_CELL_SIZE to bypass this check.
+//
+// 3. Stub historically placed the `info` bits exactly after `content` so
+//    they could do double-duty as an array terminator when the content was a
+//    singular Cell and enumerated as an Array.  But arrays are now
+//    enumerated according to their stored length, and only have termination
+//    if DEBUG_POISON_FLEX_TAILS.  But the phenomenon still has some leverage
+//    by ensuring the NODE_FLAG_CELL bit is clear in the info field--which
+//    helps catch a few stray reads or writes.
+//
+// 4. See the %sys-node.h file for an explanation of what these are, and
+//    why having them work is fundamental to the API.
+//
+static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 {
-    //=//// CHECK CELL SIZE ///////////////////////////////////////////////=//
-
-    // The system is designed with the intent that a cell is 4x(32-bit) on
-    // 32-bit platforms and 4x(64-bit) on 64-bit platforms.  It's a critical
-    // performance point.  For the moment we consider it to be essential
-    // enough that the system that it refuses to run if not true.
-    //
-    // But if someone is in an odd situation with a larger sized cell--and
-    // it's an even multiple of ALIGN_SIZE--it may still work.  For instance:
-    // the DEBUG_TRACK_EXTEND_CELLS mode doubles the cell size to carry the
-    // file, line, and tick of their initialization (or last Touch_Cell()).
-    // Define UNUSUAL_CELL_SIZE to bypass this check.
-
     Size cell_size = sizeof(Cell);  // in variable avoids warning
 
-  #if UNUSUAL_CELL_SIZE
+   //=//// CHECK CELL SIZE [2] ////////////////////////////////////////////=//
+
+  #if UNUSUAL_CELL_SIZE  // e.g. if DEBUG_TRACK_EXTEND_CELLS
     if (cell_size % ALIGN_SIZE != 0)
         panic ("size of cell does not evenly divide by ALIGN_SIZE");
   #else
@@ -94,25 +105,13 @@ static void Check_Basics(void)
     UNUSED(stub_size);
   #endif
 
-    //=//// CHECK STUB INFO PLACEMENT ///////////////////////////////////=//
+   //=//// CHECK STUB INFO PLACEMENT (non-essential) [3] //////////////////=//
 
-    // Stub historically placed the `info` bits exactly after `content` so
-    // they could do double-duty as an array terminator when the content
-    // was a singular Cell and enumerated as an Array.  But arrays are now
-    // enumerated according to their stored length, and only have termination
-    // in some debug builds.  However the phenomenon still has some leverage
-    // by ensuring the bit corresponding to "not a cell" is set in the
-    // info field is set--which helps catch a few stray reads or writes.
-
-  blockscope {
     Size offset = offsetof(Stub, info);  // variable avoids warning
     if (offset - offsetof(Stub, content) != sizeof(Cell))
-        panic ("bad structure alignment for internal array termination"); }
+        panic ("bad structure alignment for internal array termination");
 
-    //=//// CHECK BYTE-ORDERING SENSITIVE FLAGS //////////////////////////=//
-
-    // See the %sys-node.h file for an explanation of what these are, and
-    // why having them work is fundamental to the API.
+   //=//// CHECK BYTE-ORDERING SENSITIVE FLAGS [4] ////////////////////////=//
 
     Flags flags
         = FLAG_LEFT_BIT(5) | FLAG_SECOND_BYTE(21) | FLAG_SECOND_UINT16(1975);
@@ -121,7 +120,7 @@ static void Check_Basics(void)
     Byte d = SECOND_BYTE(&flags);
     uint16_t y = SECOND_UINT16(&flags);
     if (m != 4 or d != 21 or y != 1975) {
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         printf("m = %u, d = %u, y = %u\n", m, d, y);
       #endif
         panic ("Bad composed integer assignment for byte-ordering macro.");
@@ -211,7 +210,7 @@ static void Startup_Lib(void)
 //    Lib patches, but it does free the Lib context itself.  So when we are
 //    freeing the patches, if we tried to assert the context was lib then
 //    we'd be comparing to a freed pointer (which trips up some asserts).
-//    Check the pointer integrity in a pre-pass in a debug build.
+//    Check the pointer integrity in a pre-pass.
 //
 // 2. It might be handy to have the stale value of the Lib_Context on hand
 //    when debugging this function.
@@ -224,7 +223,7 @@ static void Startup_Lib(void)
 //
 static void Shutdown_Lib(void)
 {
-  #if DEBUG  // verify patches point to Lib_Context before freeing it [1]
+  #if RUNTIME_CHECKS  // verify patches point to Lib_Context before freeing [1]
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
         Stub* patch = &PG_Lib_Patches[id];
         assert(INODE(PatchContext, patch) == Lib_Context);
@@ -377,7 +376,7 @@ static void Init_Root_Vars(void)
     //
     String* nulled_uni = Make_String(1);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Codepoint test_nul;
     Utf8_Next(&test_nul, String_At(nulled_uni, 0));
     assert(test_nul == '\0');
@@ -540,6 +539,9 @@ static void Init_System_Object(
 //
 void Startup_Core(void)
 {
+  #if ALLOW_SPORADICALLY_NON_DETERMINISTIC
+    srand(time(nullptr));  // seed random number generator
+  #endif
 
   //=//// INITIALIZE BASIC DIAGNOSTICS ////////////////////////////////////=//
 
@@ -629,7 +631,7 @@ void Startup_Core(void)
     Init_Root_Vars();  // States that can't (or aren't) held in Lib variables
     Init_Action_Spec_Tags();  // Note: requires mold buffer be initialized
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Assert_Pointer_Detection_Working();  // uses root Flex/Values to test
   #endif
 
@@ -758,7 +760,7 @@ void Startup_Core(void)
   #if defined(TEST_MID_BOOT_PANIC)
     panic (EMPTY_ARRAY); // panics should be able to give some details by now
   #elif defined(TEST_MID_BOOT_FAIL)
-    fail ("mid boot fail"); // DEBUG->assert, RELEASE->panic
+    fail ("mid boot fail"); // CHECKED->assert, RELEASE->panic
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made
@@ -931,8 +933,8 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_DONE;
 
-  #if !defined(NDEBUG)
-    Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
+  #if RUNTIME_CHECKS
+    Check_Memory_Debug();  // old R3-Alpha check, call here to keep it working
   #endif
 
     // We don't actually load any extensions during the core startup.  The
@@ -960,7 +962,7 @@ void Startup_Core(void)
 // a clean shut down.  (Note: There still might be some system resources
 // that need to be waited on, such as asynchronous writes.)
 //
-// While some leaks are detected by the debug build during shutdown, even more
+// While some leaks are detected by RUNTIME_CHECKS during shutdown, even more
 // can be found with a tool like Valgrind or Address Sanitizer.
 //
 void Shutdown_Core(bool clean)
@@ -976,8 +978,8 @@ void Shutdown_Core(bool clean)
 
     Run_All_Handle_Cleaners();  // there may be rebFree() and other API code
 
-  #if !defined(NDEBUG)
-    Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
+  #if RUNTIME_CHECKS
+    Check_Memory_Debug();  // old R3-Alpha check, call here to keep it working
   #endif
 
     if (not clean)

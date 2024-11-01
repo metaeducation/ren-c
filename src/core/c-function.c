@@ -522,7 +522,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         if (hidden)
             Set_Cell_Flag(param, VAR_MARKED_HIDDEN);
 
-      #if !defined(NDEBUG)
+      #if DEBUG_CELL_READ_WRITE
         Set_Cell_Flag(param, PROTECTED);
       #endif
 
@@ -702,14 +702,14 @@ Phase* Make_Action(
     Set_Flex_Len(details, details_capacity);
 
     Cell* archetype = Array_Head(details);
-    Reset_Cell_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
+    Reset_Cell_Header_Untracked(
+        TRACK(archetype),
+        CELL_MASK_FRAME
+            | CELL_FLAG_PROTECTED  // archetype cells should not be mutated
+    );
     Tweak_Cell_Action_Details(archetype, details);
     BINDING(archetype) = UNBOUND;
     Tweak_Cell_Action_Partials_Or_Label(archetype, partials);
-
-  #if !defined(NDEBUG)  // notice attempted mutation of the archetype cell
-    Set_Cell_Flag(archetype, PROTECTED);
-  #endif
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 

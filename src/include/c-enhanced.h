@@ -48,12 +48,13 @@
 
 //=//// CONFIGURATION /////////////////////////////////////////////////////=//
 
-#if !defined(DEBUG)  // prefer DEBUG, and prefer integer vs just "defined"
+#if !defined(RUNTIME_CHECKS)  // prefer "RUNTIME_CHECKS" as integer #define
     #if defined(NDEBUG)
-       #define DEBUG 0
+       #define RUNTIME_CHECKS 0
     #else
-       #define DEBUG 1
+       #define RUNTIME_CHECKS 1
     #endif
+    #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
 #endif
 
 #if !defined(DEBUG_STATIC_ANALYZING)
@@ -185,8 +186,10 @@
 #if !defined(CPLUSPLUS_11)
   #if defined(__cplusplus) && __cplusplus >= 201103L
     #define CPLUSPLUS_11 1
+    #define NO_CPLUSPLUS_11 0
   #else
     #define CPLUSPLUS_11 0
+    #define NO_CPLUSPLUS_11 1
   #endif
 #endif
 
@@ -773,42 +776,39 @@
 // This makes the instances easier to find and standardizes how it is done.
 // Special choices are made for 0xF4EEF4EE to indicate a freed thing, and
 // 0x5AFE5AFE to indicate an allocated thing.
-
+//
+// 1. <IMPORTANT>: Address sanitizer's memory poisoning must not have two
+//    threads both poisoning/unpoisoning the same addresses at the same time.
+//
+// 2. @HostileFork wrote a tiny C++ "poor man's memory poisoner" that uses
+//    XOR to poison bits and then unpoison them back.  This might be useful
+//    to instrument C++-based builds on platforms that did not have address
+//    sanitizer (if that ever becomes interesting).
+//
+//        http://blog.hostilefork.com/poison-memory-without-asan/
+//
 #if __has_feature(address_sanitizer)
     #include <sanitizer/asan_interface.h>
 
     #define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__ ((no_sanitize_address))
 
-    // <IMPORTANT> Address sanitizer's memory poisoning must not have two
-    // threads both poisoning/unpoisoning the same addresses at the same time.
-
     #define Poison_Memory_If_Sanitize(reg, mem_size) \
-        ASAN_POISON_MEMORY_REGION(reg, mem_size)
+        ASAN_POISON_MEMORY_REGION(reg, mem_size)  // one thread at a time [1]
 
     #define Unpoison_Memory_If_Sanitize(reg, mem_size) \
-        ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)
+        ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)  // one thread at a time [1]
 #else
-    // !!! @HostileFork wrote a tiny C++ "poor man's memory poisoner" that
-    // uses XOR to poison bits and then unpoison them back.  This might be
-    // useful to instrument C++-based DEBUG builds on platforms that did not
-    // have address sanitizer (if that ever becomes interesting).
-    //
-    // http://blog.hostilefork.com/poison-memory-without-asan/
+    #define ATTRIBUTE_NO_SANITIZE_ADDRESS  // cheap approaches possible [2]
 
-    #define ATTRIBUTE_NO_SANITIZE_ADDRESS
-
-    #define Poison_Memory_If_Sanitize(reg, mem_size) \
-        NOOP
-
-    #define Unpoison_Memory_If_Sanitize(reg, mem_size) \
-        NOOP
+    #define Poison_Memory_If_Sanitize(reg, mem_size)    NOOP
+    #define Unpoison_Memory_If_Sanitize(reg, mem_size)  NOOP
 #endif
 
 
-#if (! DEBUG)
+#if NO_RUNTIME_CHECKS
     #define Corrupt_Pointer_If_Debug(p)                 NOOP
     #define Corrupt_Function_Pointer_If_Debug(p)        NOOP
-#elif (! CPLUSPLUS_11)
+#elif NO_CPLUSPLUS_11
     #define Corrupt_Pointer_If_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
@@ -943,7 +943,7 @@
 #define USED(x) \
     ((void)(x))
 
-#if (! DEBUG) || DEBUG_STATIC_ANALYZING // [1]
+#if NO_RUNTIME_CHECKS || DEBUG_STATIC_ANALYZING // [1]
 
     #define Corrupt_If_Debug(x)  NOOP
 
@@ -1122,7 +1122,7 @@
         strlen((const char*)bp)
 #endif
 
-#if (! DEBUG)
+#if NO_RUNTIME_CHECKS
     /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
      * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
      * Being single-arity with no type passed in, they are succinct to use:

@@ -198,7 +198,7 @@ DECLARE_NATIVE(diagnose)
 {
   INCLUDE_PARAMS_OF_DIAGNOSE;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     Value* v = ARG(value);
 
   #if DEBUG_COUNT_TICKS
@@ -245,7 +245,7 @@ DECLARE_NATIVE(fuzz)
 {
     INCLUDE_PARAMS_OF_FUZZ;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (Is_Integer(ARG(factor))) {
         g_mem.fuzz_factor = - VAL_INT32(ARG(factor));  // negative [1]
     }
@@ -256,6 +256,6 @@ DECLARE_NATIVE(fuzz)
     return NOTHING;
   #else
     UNUSED(ARG(factor));
-    return FAIL("FUZZ is only availble in DEBUG builds");
+    return FAIL("FUZZ is only availble in RUNTIME_CHECKS builds");
   #endif
 }

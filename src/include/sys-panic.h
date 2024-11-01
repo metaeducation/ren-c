@@ -112,10 +112,23 @@
         if (tick == g_ts.tick) BREAK_NOW()
 #endif
 
-#if (! DEBUG) || (! DEBUG_COUNT_TICKS)
-    #define SPORADICALLY(modulus) \
-        false
+#if NO_RUNTIME_CHECKS || (! DEBUG_COUNT_TICKS)
+    #define SPORADICALLY(modulus)  false
 #else
     #define SPORADICALLY(modulus) \
         (g_ts.tick % modulus == 0)
+#endif
+
+// Generally, you should prefer SPORADICALLY.  But some cases, like wanting
+// to do a periodic startup behavior, doesn't work with that.
+//
+// !!! Use this very sparingly, and with a small modulus!  If you do something
+// half the time (modulus = 2) then it will only reproduce half the time, but
+// that's probably enough to still catch whatever you're testing.
+//
+#if ALLOW_SPORADICALLY_NON_DETERMINISTIC
+    #define SPORADICALLY_NON_DETERMINISTIC(modulus) \
+        (rand() % modulus == 0)
+#else
+    #define SPORADICALLY_NON_DETERMINISTIC  SPORADICALLY
 #endif

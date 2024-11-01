@@ -172,7 +172,7 @@ Bounce Cascader_Dispatcher(Level* const L)
 
     sub->u.action.original = VAL_ACTION(first);
     sub->label = VAL_FRAME_LABEL(first);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     sub->label_utf8 = sub->label
         ? String_UTF8(unwrap sub->label)
         : "(anonymous)";

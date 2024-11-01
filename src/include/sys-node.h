@@ -294,7 +294,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
 
     Pool* pool = &g_mem.pools[pool_id];
 
-  #ifdef NDEBUG
+  #if RUNTIME_CHECKS
     unit->next_if_free = pool->first;
     pool->first = unit;
   #else
@@ -445,7 +445,7 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
           { return cast(T, m_cast(Node*, ref)); }
     };
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     template<class T>
     INLINE void Corrupt_Pointer_If_Debug(NodeHolder<T> const& nh)
       { nh.ref = p_cast(Node*, cast(uintptr_t, 0xDECAFBAD)); }

@@ -391,11 +391,11 @@ jobs:
 
     # Name the executable based on the abbreviated commit, whether it is a
     # debug or release build, and if it was built using C++ or not.  Note that
-    # the C++ debug builds have additional runtime checks in the debug
-    # build...though there should not be any impact on the release build.
-    # (Though there may be additional DLL dependencies regardless.)
+    # the C++ RUNTIME_CHECKS builds have checks the C version don't...though
+    # there should not be any impact on the release build.  (Though there may
+    # be additional DLL dependencies regardless.)
     #
-    # !!! All Ren-C stakeholders should be using debug builds at this time.
+    # !!! All Ren-C stakeholders should be using checked builds at this time.
     #
     - name: Deploy Executable
       if: github.ref == 'refs/heads/master'  # see notes on DEPLOY STEPS

@@ -65,7 +65,7 @@
 //    calls all use the `cast()` macro anyway.
 //
 
-#if (! CPLUSPLUS_11 || ! DEBUG || defined(__clang__))
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11 || defined(__clang__)
     typedef enum HeartKindEnum Heart;  // avoid enum compare warnings [1]
     typedef enum HeartKindEnum Kind;
 #else

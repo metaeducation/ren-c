@@ -75,7 +75,7 @@ struct Reb_State {
     Size mold_buf_size;
     REBLEN mold_loop_tail;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     Count num_evars_outstanding;
   #endif
 };
@@ -83,7 +83,7 @@ struct Reb_State {
 
 // Check that the current global state lines up with the passed-in state.
 //
-#ifdef NDEBUG
+#ifdef NO_RUNTIME_CHECKS
     #define ASSERT_STATE_BALANCED(s) NOOP
 #else
     #define ASSERT_STATE_BALANCED(s) \

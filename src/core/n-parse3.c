@@ -1276,7 +1276,7 @@ DECLARE_NATIVE(subparse)
     assert(Is_Nothing(ARG(position)));
     Copy_Cell(ARG(position), ARG(input));
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // These parse state variables live in frame varlists, which can be
     // annoying to find to inspect in the debugger.  This makes pointers into

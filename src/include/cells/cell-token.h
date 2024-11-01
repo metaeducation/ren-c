@@ -211,7 +211,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     if (limit)
         assert(*(unwrap limit) >= 0);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Size dummy_size;
     if (not size_out)
         size_out = &dummy_size;  // force size calculation for debug check

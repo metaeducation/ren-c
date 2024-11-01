@@ -353,7 +353,7 @@ e-hearts/emit [rebs --{
      * type" because that prohibits certain optimizations, which the compiler
      * can make based on knowing a value is only in the range of the enum.
      */
-    #if (! CPLUSPLUS_11 || ! DEBUG  || defined(__clang__))
+    #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11  || defined(__clang__)
         enum HeartKindEnum {
             REB_0 = 0,  /* reserved */
             $[Rebs],

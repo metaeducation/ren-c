@@ -188,7 +188,7 @@ enum {
 struct BinderStruct {
     Stub* hitch_list;
 
-  #if DEBUG && CPLUSPLUS_11
+  #if RUNTIME_CHECKS && CPLUSPLUS_11
     //
     // C++ debug build can help us make sure that no binder ever fails to
     // get an Construct_Binder() and Destruct_Binder() pair called on it, which
@@ -223,7 +223,7 @@ struct BinderStruct {
 INLINE void Construct_Binder_Core(Binder* binder) {
     binder->hitch_list = nullptr;
 
-  #if DEBUG && CPLUSPLUS_11
+  #if RUNTIME_CHECKS && CPLUSPLUS_11
     binder->initialized = true;
   #endif
 }
@@ -243,7 +243,7 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
         GC_Kill_Stub(hitch);  // expects node to be decayed/inaccessible (free)
     }
 
-  #if DEBUG && CPLUSPLUS_11
+  #if RUNTIME_CHECKS && CPLUSPLUS_11
     binder->initialized = false;
   #endif
 }
@@ -265,7 +265,7 @@ INLINE bool Try_Add_Binder_Index(
     const Symbol* s,
     REBINT index
 ){
-  #if CPLUSPLUS_11 && DEBUG
+  #if CPLUSPLUS_11 && RUNTIME_CHECKS
     assert(binder->initialized);
   #endif
 
@@ -306,7 +306,7 @@ INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
     Binder* binder,
     const Symbol* s
 ){
-  #if CPLUSPLUS_11 && DEBUG
+  #if CPLUSPLUS_11 && RUNTIME_CHECKS
     assert(binder->initialized);
   #endif
 
@@ -329,7 +329,7 @@ INLINE void Update_Binder_Index(
 ){
     assert(index != 0);  // singly linked list, removal would be inefficient
 
-  #if CPLUSPLUS_11 && DEBUG
+  #if CPLUSPLUS_11 && RUNTIME_CHECKS
     assert(binder->initialized);
   #endif
 

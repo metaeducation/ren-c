@@ -205,11 +205,7 @@ INLINE unsigned int Term_Remain(STD_TERM *t)
 #endif
 
 
-#if !defined(NDEBUG)
-    //
-    // We use a special menu event in the debug build to "poison" the tail and
-    // notice overruns of t->in_tail.
-    //
+#if RUNTIME_CHECKS  // special menu event helps notice overruns of t->in_tail
     #define MENU_ID_POISON_DEBUG 10203
 #endif
 
@@ -341,7 +337,7 @@ void Quit_Terminal(STD_TERM *t)
 }
 
 
-#if defined(NDEBUG)
+#if NO_RUNTIME_CHECKS
     #define CHECK_INPUT_RECORDS(t) NOOP
 #else
     static void Check_Input_Records_Debug(STD_TERM *t) {
@@ -431,7 +427,7 @@ static bool Read_Input_Records_Interrupted(STD_TERM *t)
     t->in_tail = t->buf + num_events;
     t->in = t->buf;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     t->in_tail->EventType = MENU_EVENT;
     t->in_tail->Event.MenuEvent.dwCommandId = MENU_ID_POISON_DEBUG;
   #endif
@@ -665,7 +661,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
     }
 
     KEY_EVENT_RECORD *key_event = &t->in->Event.KeyEvent;  // shorthand
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (t->in->EventType != KEY_EVENT)
         Corrupt_Pointer_If_Debug(key_event);
   #endif
@@ -683,7 +679,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
         ++t->in;
     }
     else if (t->in->EventType == MENU_EVENT) {
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         assert(t->in->Event.MenuEvent.dwCommandId != MENU_ID_POISON_DEBUG);
       #endif
 
@@ -959,7 +955,7 @@ void Term_Abandon_Pending_Events(STD_TERM *t)
 
     t->in = t->in_tail = t->buf;  // Clear out whatever events we got
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     t->buf[0].EventType = MENU_EVENT;  // v-- poison the empty buffer
     t->buf[0].Event.MenuEvent.dwCommandId = MENU_ID_POISON_DEBUG;
   #endif

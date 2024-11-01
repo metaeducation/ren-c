@@ -766,7 +766,7 @@ DECLARE_NATIVE(apply)
         goto handle_next_item;
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Corrupt_Pointer_If_Debug(param);
   #endif
 

@@ -65,11 +65,11 @@ DECLARE_NATIVE(stats)
             "recycles:", rebI(g_gc.recycle_counter),
         "]");
       #else
-        return FAIL(Error_Debug_Only_Raw());
+        return FAIL(Error_Checked_Build_Only_Raw());
       #endif
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (REF(pool)) {
         Value* pool_id = ARG(pool);
         Dump_All_Flex_In_Pool(VAL_INT32(pool_id));
@@ -84,7 +84,7 @@ DECLARE_NATIVE(stats)
     UNUSED(REF(show));
     UNUSED(ARG(pool));
 
-    return FAIL(Error_Debug_Only_Raw());
+    return FAIL(Error_Checked_Build_Only_Raw());
   #endif
 }
 

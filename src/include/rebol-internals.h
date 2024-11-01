@@ -107,6 +107,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#if ALLOW_SPORADICALLY_NON_DETERMINISTIC
+  #include <time.h>  // needed for srand()
+#endif
+
 /*#define LIBREBOL_BINDING Get_Context_From_Stack() */  // not needed [1]
 #include "rebol.h"
 typedef RebolValue Value;
@@ -151,7 +155,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 // Current focus on avoiding dependencies on printf() are at the object and
 // linker level, where in general it's more direct to examine bloat.
 //
-#if !defined(NDEBUG) || DEBUG_PRINTF_FAIL_LOCATIONS || DEBUG_HAS_PROBE
+#if RUNTIME_CHECKS || DEBUG_PRINTF_FAIL_LOCATIONS || DEBUG_HAS_PROBE
     //
     // Debug builds may use printf() and such liberally (helps to debug the
     // Ren-C I/O system itself!)
@@ -345,11 +349,11 @@ typedef struct {
     const Node* monitor_node;
   #endif
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     bool watch_expand;
   #endif
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     intptr_t num_black_stubs;
   #endif
 
@@ -368,7 +372,7 @@ typedef struct {
 
     Flex* by_hash;  // Symbol* pointers indexed by hash
     REBLEN num_slots_in_use;  // Total symbol hash slots (+deleteds)
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     REBLEN num_deleteds;  // Deleted symbol hash slots "in use"
   #endif
     Symbol deleted_symbol;  // pointer used to indicate a deletion
@@ -383,11 +387,11 @@ typedef struct {
     Flex* mark_stack;  // Flexes pending to mark their reachables as live
     Flex* manuals;  // Manually memory managed (not by GC)
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     intptr_t mark_count;  // Count of stubs with NODE_FLAG_MARKED, must balance
   #endif
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     bool watch_recycle;
   #endif
 
@@ -437,7 +441,7 @@ typedef struct {
 
     String* buffer;  // temporary UTF8 buffer
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     bool currently_pushing;  // Push_Mold() should not directly recurse
   #endif
 } MoldState;
@@ -560,7 +564,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "sys-trampoline.h"
 
 
-//=//// DEBUG HOOKS INTO THE CAST() OPERATOR //////////////////////////////=//
+//=//// INSTRUMENTATION HOOKS INTO THE CAST() OPERATOR ////////////////////=//
 //
 // In the C++ build, there is the opportunity to hook any cast() operation
 // with code that can do checking or validation.  See comments in file.

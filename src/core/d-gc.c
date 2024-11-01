@@ -32,7 +32,7 @@
 
 #include "sys-core.h"
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 static bool Not_Node_Accessible_Canon(const Node* n) {
     if (Is_Node_Readable(n))

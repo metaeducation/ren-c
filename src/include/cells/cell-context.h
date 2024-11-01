@@ -102,7 +102,7 @@ INLINE Element* Init_Context_Cell(
     Heart heart,
     VarList* c
 ){
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Extra_Init_Context_Cell_Checks_Debug(heart, c);
   #endif
     UNUSED(heart);

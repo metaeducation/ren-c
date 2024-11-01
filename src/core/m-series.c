@@ -439,7 +439,7 @@ Byte* Reset_Buffer(Flex* buf, REBLEN len)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Flex_Term_Core: C
@@ -542,4 +542,4 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(const Flex* f)
   #endif
 }
 
-#endif  // !defined(NDEBUG)
+#endif  // DEBUG_FANCY_PANIC

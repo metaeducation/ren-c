@@ -176,6 +176,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // to check at compile-time so that different views of the same cell don't
 // get conflated, e.g. Cell* can't have VAL_TYPE() taken on it.
 //
+// 1. See the documentation point [1] on HEART_BYTE for why no ensure().
+//
 // 2. We want to control all the places where a cell becomes an antiform, to
 //    avoid letting them be created with bindings, and to avoid illegal
 //    types (e.g. paths aren't antiforms, because ~/foo/~ is a 3-element
@@ -184,7 +186,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //    to write it through the ANTIFORM_0 definition.
 
 #define QUOTE_BYTE(cell) \
-    THIRD_BYTE(&(cell)->header.bits)  // don't use ensure(), see HEART_BYTE [1]
+    THIRD_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
 
 #define ANTIFORM_0_COERCE_ONLY      0  // also "QUASI" (NONQUASI_BIT is clear)
 #define NOQUOTE_1                   1
@@ -192,7 +194,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define QUASIFORM_2_COERCE_ONLY     2
 #define ONEQUOTE_3                  3  // non-QUASI state of one quote level
 
-#if DEBUG && CPLUSPLUS_11  // Discourage `QUOTE_BYTE(cell) = ANTIFORM_0` [2]
+#if RUNTIME_CHECKS && CPLUSPLUS_11  // Stop `QUOTE_BYTE(cell) = ANTIFORM_0` [2]
     struct Antiform_0_Struct {};
     INLINE bool operator==(Byte byte, const Antiform_0_Struct& a0)
       { UNUSED(a0); return byte == ANTIFORM_0_COERCE_ONLY; }
@@ -615,7 +617,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
     struct AnyPayloadStruct Any;
 
-  #if !defined(NDEBUG) // unsafe "puns" for easy debug viewing in C watchlist
+  #if DEBUG_USE_UNION_PUNS
     int64_t int64_pun;
   #endif
 };
@@ -737,7 +739,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #else
     struct Atom : public Cell  // can hold unstable antiforms
     {
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         Atom() = default;
         ~Atom() {
             assert(
@@ -749,7 +751,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     };
 
     struct RebolValueStruct : public Atom {  // can't hold unstable antiforms
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         RebolValueStruct () = default;
         ~RebolValueStruct () {
             assert(
@@ -761,7 +763,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     };
 
     struct Element : public RebolValueStruct {  // can't hold antiforms at all
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         Element () = default;
         ~Element () {
             assert(

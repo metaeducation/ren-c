@@ -39,10 +39,11 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * Stepper_Executor() is LONG.  That's largely on purpose.  Breaking it
-//   into functions would add overhead (in the debug build if not also release
-//   builds) and prevent interesting tricks and optimizations.  It is
-//   separated into sections, and the invariants in each section are made
-//   clear with comments and asserts.
+//   into functions would add overhead (in the RUNTIME_CHECKS build, if not
+//   also NO_RUNTIME_CHECKS builds) and prevent interesting optimizations.
+//
+//   It is separated into sections, and the invariants in each section are
+//   made clear with comments and asserts.
 //
 // * See %d-eval.c for more detailed assertions of the preconditions,
 //   postconditions, and state...which are broken out to help keep this file
@@ -264,7 +265,7 @@ Bounce Stepper_Executor(Level* L)
         assert(false);
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Evaluator_Expression_Checks_Debug(L);
   #endif
 
@@ -687,7 +688,7 @@ Bounce Stepper_Executor(Level* L)
                 and ACT_DISPATCHER(action) == &Intrinsic_Dispatcher
                 and Is_Stub_Details(action)  // don't do specializations
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
-                and not SPORADICALLY(10)  // debug build bypass every 10th call
+                and not SPORADICALLY(10)  // checked builds sometimes bypass
             ){
                 Init_Frame_Details_Core(
                     CURRENT,
@@ -2011,7 +2012,7 @@ Bounce Stepper_Executor(Level* L)
     //
     Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Evaluator_Exit_Checks_Debug(L);
   #endif
 
@@ -2021,7 +2022,7 @@ Bounce Stepper_Executor(Level* L)
 
   return_thrown:
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Evaluator_Exit_Checks_Debug(L);
   #endif
 

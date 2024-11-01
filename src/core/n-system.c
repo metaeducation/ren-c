@@ -111,7 +111,7 @@ DECLARE_NATIVE(recycle)
     REBLEN count;
 
     if (REF(verbose)) {
-      #if DEBUG
+      #if RUNTIME_CHECKS
         Flex* sweeplist = Make_Flex(FLAG_FLAVOR(NODELIST), Flex, 100);
         count = Recycle_Core(sweeplist);
         assert(count == Flex_Used(sweeplist));
@@ -128,7 +128,7 @@ DECLARE_NATIVE(recycle)
         REBLEN recount = Recycle_Core(nullptr);
         assert(recount == count);
       #else
-        return FAIL(Error_Debug_Only_Raw());
+        return FAIL(Error_Checked_Build_Only_Raw());
       #endif
     }
     else {
@@ -136,14 +136,14 @@ DECLARE_NATIVE(recycle)
     }
 
     if (REF(watch)) {
-      #if DEBUG
+      #if RUNTIME_CHECKS
         // There might should be some kind of generic way to set these kinds
         // of flags individually, perhaps having them live in SYSTEM/...
         //
         g_gc.watch_recycle = not g_gc.watch_recycle;
         g_mem.watch_expand = not g_mem.watch_expand;
       #else
-        return FAIL(Error_Debug_Only_Raw());
+        return FAIL(Error_Checked_Build_Only_Raw());
       #endif
     }
 
@@ -187,33 +187,28 @@ DECLARE_NATIVE(limit_usage)
 //
 //  /check: native [
 //
-//  "Run an integrity check on a value in debug builds of the interpreter"
+//  "Run integrity check on value in RUNTIME_CHECKS builds of the interpreter"
 //
 //      return: [any-value?]
 //      value "System will terminate abnormally if this value is corrupt"
 //          [any-value?]
 //  ]
 //
-DECLARE_NATIVE(check)
+DECLARE_NATIVE(check)  // !!! Review the necessity of this (hasn't been used)
 //
 // This forces an integrity check to run on a series.  In R3-Alpha there was
-// no debug build, so this was a simple validity check and it returned an
-// error on not passing.  But Ren-C is designed to have a debug build with
+// no checked build, so this was a simple validity check and it returned an
+// error on not passing.  But Ren-C is designed to have a build with
 // checks that aren't designed to fail gracefully.  So this just runs that
 // assert rather than replicating code here that can "tolerate" a bad series.
-// Review the necessity of this native.
 {
     INCLUDE_PARAMS_OF_CHECK;
 
-#if DEBUG
+  #if RUNTIME_CHECKS
     Value* value = ARG(value);
 
-    // For starters, check the memory (if it's bad, all other bets are off)
-    //
-    Check_Memory_Debug();
+    Check_Memory_Debug();  // if memory is bad, all other bets are off
 
-    // !!! Should call generic Assert_Value() macro with more cases
-    //
     if (Any_Series(value)) {
         Assert_Flex(Cell_Flex(value));
     }
@@ -228,7 +223,7 @@ DECLARE_NATIVE(check)
     return COPY(value);
   #else
     UNUSED(ARG(value));
-    return FAIL(Error_Debug_Only_Raw());
+    return FAIL(Error_Checked_Build_Only_Raw());
   #endif
 }
 
@@ -306,17 +301,17 @@ DECLARE_NATIVE(c_debug_break)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
-  #if (! INCLUDE_C_DEBUG_BREAK_NATIVE)
-    return FAIL(Error_Debug_Only_Raw());
-  #else
+  #if (INCLUDE_C_DEBUG_BREAK_NATIVE)
     #if DEBUG_COUNT_TICKS
         g_break_at_tick = level_->tick + 1;  // queue break for next step [1]
         return Init_Nihil(OUT);
      #else
-      #if DEBUG
+      #if RUNTIME_CHECKS
         debug_break();  // break right here, now [2]
       #endif
         return Init_Nihil(OUT);
       #endif
+  #else
+      return FAIL(Error_Checked_Build_Only_Raw());
   #endif
 }

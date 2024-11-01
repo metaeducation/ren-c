@@ -36,8 +36,8 @@
 //
 
 
-#ifdef NDEBUG
-    #define Assert_Varlist(c) cast(void, 0)
+#if NO_RUNTIME_CHECKS
+    #define Assert_Varlist(c) NOOP
 #else
     #define Assert_Varlist(c) Assert_Varlist_Core(c)
 #endif
@@ -154,14 +154,13 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Cell* rootvar = Array_Head(varlist);
     Reset_Cell_Header_Untracked(
         rootvar,
-        FLAG_HEART_BYTE(heart) | CELL_MASK_ANY_CONTEXT
+        FLAG_HEART_BYTE(heart)
+            | CELL_MASK_ANY_CONTEXT
+            | CELL_FLAG_PROTECTED  // should not be modified
     );
     Tweak_Cell_Context_Varlist(rootvar, varlist);
     BINDING(rootvar) = UNBOUND;  // not a frame
     Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // not a frame
-  #if !defined(NDEBUG)
-    rootvar->header.bits |= CELL_FLAG_PROTECTED;
-  #endif
 }
 
 #define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \
@@ -178,7 +177,7 @@ INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
     Tweak_Cell_Context_Varlist(rootvar, varlist);
     Tweak_Cell_Frame_Coupling(rootvar, coupling);
     Tweak_Cell_Frame_Phase_Or_Label(rootvar, phase);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     rootvar->header.bits |= CELL_FLAG_PROTECTED;
   #endif
 }

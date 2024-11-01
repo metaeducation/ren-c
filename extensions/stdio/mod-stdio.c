@@ -260,7 +260,7 @@ DECLARE_NATIVE(read_line)
 {
     INCLUDE_PARAMS_OF_READ_LINE;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     rebElide("assert [@stdin =", ARG(source), "]");
   #else
     UNUSED(ARG(source));
@@ -363,7 +363,7 @@ DECLARE_NATIVE(read_line)
 
 } got_line: { /////////////////////////////////////////////////////////////=//
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     rebElide(
         "ensure text!", line,
         "assert [not find", line, "CR]"  // Ren-C text rule [5]
@@ -407,7 +407,7 @@ DECLARE_NATIVE(read_char)
 {
     INCLUDE_PARAMS_OF_READ_CHAR;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     rebElide("assert [@stdin =", ARG(source), "]");
   #else
     UNUSED(ARG(source));

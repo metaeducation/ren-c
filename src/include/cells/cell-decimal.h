@@ -31,7 +31,7 @@
 // FLOAT! which may be a good idea.
 //
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_DECIMAL(v) \
         PAYLOAD(Decimal, (v)).dec
 #else

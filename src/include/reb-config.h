@@ -66,8 +66,10 @@
 #if !defined(CPLUSPLUS_11)
   #if defined(__cplusplus) && __cplusplus >= 201103L
     #define CPLUSPLUS_11 1
+    #define NO_CPLUSPLUS_11 0
   #else
     #define CPLUSPLUS_11 0
+    #define NO_CPLUSPLUS_11 1
   #endif
 #endif
 
@@ -341,14 +343,31 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+//=//// (#if RUNTIME_CHECKS) BETTER THAN (#ifndef NDEBUG) /////////////////=//
+//
 // NDEBUG is the variable that is either #defined or not by the C assert.h
 // convention.  The reason NDEBUG was used was because it was a weird name and
 // unlikely to compete with codebases that had their own DEBUG definition.
 //
-#if defined(NDEBUG)
-    #define DEBUG 0
-#else
-    #define DEBUG 1
+// In order to help with not confusing terminology with things related to
+// breakpoints of otherwise in the interpreter (debugger features), we call
+// it a "checked build" and not a "debug build".  The flags are CHECK_XXX
+// and not DEBUG_XXX for this reason, and RUNTIME_CHECKS is the general
+// flag to test with #if.
+//
+// NO_RUNTIME_CHECKS is defined as well, because:
+//
+//     #if !RUNTIME_CHECKS          // easy to miss the !
+//     #if (! RUNTIME_CHECKS)       // easier to see, but still obtuse
+//     #if not RUNTIME_CHECKS       // MSVC preprocessor doesn't allow
+//
+#if !defined(RUNTIME_CHECKS)
+    #if defined(NDEBUG)
+        #define RUNTIME_CHECKS 0
+    #else
+        #define RUNTIME_CHECKS 1
+    #endif
+    #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
 #endif
 
 
@@ -406,7 +425,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-// Initially the debug build switches were all (default) or nothing (-DNDEBUG)
+// Initially checked build switches were all (default) or nothing (-DNDEBUG)
 // but needed to be broken down into a finer-grained list.  This way, more
 // constrained systems (like emscripten) can build in just the features it
 // needs for a specific debug scenario.
@@ -415,48 +434,51 @@ Special internal defines used by RT, not Host-Kit developers:
 // on and off as time permits.
 //
 #if !defined(DEBUG_HAS_PROBE)
-    #define DEBUG_HAS_PROBE DEBUG
+    #define DEBUG_HAS_PROBE  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_FANCY_PANIC)
-    #define DEBUG_FANCY_PANIC DEBUG
+    #define DEBUG_FANCY_PANIC  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_MONITOR_FLEX)
-    #define DEBUG_MONITOR_FLEX DEBUG
+    #define DEBUG_MONITOR_FLEX  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_COUNT_TICKS)
-    #define DEBUG_COUNT_TICKS DEBUG
+    #define DEBUG_COUNT_TICKS  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_LEVEL_LABELS)
-    #define DEBUG_LEVEL_LABELS DEBUG
+    #define DEBUG_LEVEL_LABELS  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_POISON_EXCESS_CAPACITY)
-    #define DEBUG_POISON_EXCESS_CAPACITY DEBUG
+    #define DEBUG_POISON_EXCESS_CAPACITY  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_BALANCE_STATE)
-    #define DEBUG_BALANCE_STATE DEBUG
+    #define DEBUG_BALANCE_STATE  RUNTIME_CHECKS
 #endif
 
+#if !defined(ALLOW_SPORADICALLY_NON_DETERMINISTIC)
+    #define ALLOW_SPORADICALLY_NON_DETERMINISTIC RUNTIME_CHECKS
+#endif
 
 // See debugbreak.h and DECLARE_NATIVE(c_debug_break)...useful!
 //
 #if !defined(INCLUDE_C_DEBUG_BREAK_NATIVE)
-    #define INCLUDE_C_DEBUG_BREAK_NATIVE DEBUG
+    #define INCLUDE_C_DEBUG_BREAK_NATIVE  RUNTIME_CHECKS
 #endif
 
 // See DECLARE_NATIVE(test_librebol)
 //
 #if !defined(INCLUDE_TEST_LIBREBOL_NATIVE)
-    #define INCLUDE_TEST_LIBREBOL_NATIVE DEBUG
+    #define INCLUDE_TEST_LIBREBOL_NATIVE  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_CELL_READ_WRITE)
-    #define DEBUG_CELL_READ_WRITE DEBUG
+    #define DEBUG_CELL_READ_WRITE  RUNTIME_CHECKS
 #endif
 
 // !!! People using MLton to compile found that GCC 4.4.3 does not always
@@ -469,12 +491,12 @@ Special internal defines used by RT, not Host-Kit developers:
 #if !defined(DEBUG_MEMORY_ALIGNMENT)
   #ifdef __GNUC__
     #if !defined(TO_WINDOWS) || (__GNUC__ >= 5)  // only if at least version 5
-        #define DEBUG_MEMORY_ALIGNMENT DEBUG
+        #define DEBUG_MEMORY_ALIGNMENT  RUNTIME_CHECKS
     #else
-        #define DEBUG_MEMORY_ALIGNMENT 0
+        #define DEBUG_MEMORY_ALIGNMENT  0
     #endif
   #else
-    #define DEBUG_MEMORY_ALIGNMENT DEBUG
+    #define DEBUG_MEMORY_ALIGNMENT  RUNTIME_CHECKS
   #endif
 #endif
 
@@ -583,7 +605,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // (and won't work in the C build at all).
 //
 #if !defined(DEBUG_USE_CELL_SUBCLASSES)
-  #if DEBUG && CPLUSPLUS_11
+   #if RUNTIME_CHECKS && CPLUSPLUS_11
     #define DEBUG_USE_CELL_SUBCLASSES 1
   #else
     #define DEBUG_USE_CELL_SUBCLASSES 0
@@ -609,7 +631,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // correct types.  This switch is used to panic() if they're wrong.
 //
 #if !defined(DEBUG_NATIVE_RETURNS)
-    #define DEBUG_NATIVE_RETURNS DEBUG
+    #define DEBUG_NATIVE_RETURNS  RUNTIME_CHECKS
 #endif
 
 // It can be nice to see aliases of platform pointers as if they were
@@ -619,7 +641,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // https://en.wikipedia.org/wiki/Type_punning
 //
 #if !defined(DEBUG_USE_UNION_PUNS)
-    #define DEBUG_USE_UNION_PUNS DEBUG
+    #define DEBUG_USE_UNION_PUNS  RUNTIME_CHECKS
 #endif
 
 // Bitfields are poorly specified, and so even if it looks like your bits
@@ -639,9 +661,9 @@ Special internal defines used by RT, not Host-Kit developers:
     // it checks the R3_ALWAYS_MALLOC environment variable
     //
     #if defined(INCLUDE_CALLGRIND_NATIVE)
-        #define DEBUG_ENABLE_ALWAYS_MALLOC 1
+        #define DEBUG_ENABLE_ALWAYS_MALLOC  1
     #else
-        #define DEBUG_ENABLE_ALWAYS_MALLOC DEBUG
+        #define DEBUG_ENABLE_ALWAYS_MALLOC  RUNTIME_CHECKS
     #endif
 #endif
 
@@ -652,7 +674,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // zero then it asserts when a push or pop is requested, or upon evaluation.
 //
 #if !defined(DEBUG_EXTANT_STACK_POINTERS)
-  #if CPLUSPLUS_11 && DEBUG
+  #if CPLUSPLUS_11 && RUNTIME_CHECKS
     #define DEBUG_EXTANT_STACK_POINTERS 1
   #else
     #define DEBUG_EXTANT_STACK_POINTERS 0
@@ -669,14 +691,14 @@ Special internal defines used by RT, not Host-Kit developers:
 // were indeed "checked" builds given to those who had such interest.)
 //
 #if !defined(DEBUG_COLLECT_STATS)
-    #define DEBUG_COLLECT_STATS DEBUG
+    #define DEBUG_COLLECT_STATS  RUNTIME_CHECKS
 #endif
 
 // See notes on ensure_executor() for why executor files define their own
 // set of macros for use within their files.
 //
 #if !defined(DEBUG_ENSURE_EXECUTOR_FLAGS)
-    #define DEBUG_ENSURE_EXECUTOR_FLAGS DEBUG
+    #define DEBUG_ENSURE_EXECUTOR_FLAGS  RUNTIME_CHECKS
 #endif
 
 // UTF-8 Everywhere is a particularly large system change, which requires
@@ -716,9 +738,9 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(DEBUG_CHECK_CASTS)
   #if defined(__SANITIZE_ADDRESS__) && CPLUSPLUS_11
-    #define DEBUG_CHECK_CASTS DEBUG
+    #define DEBUG_CHECK_CASTS  RUNTIME_CHECKS
   #else
-    #define DEBUG_CHECK_CASTS 0  // requires C++
+    #define DEBUG_CHECK_CASTS  0  // requires C++
   #endif
 #endif
 
@@ -740,9 +762,9 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(DEBUG_FLEX_ORIGINS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_FLEX_ORIGINS DEBUG
+    #define DEBUG_FLEX_ORIGINS  RUNTIME_CHECKS
   #else
-    #define DEBUG_FLEX_ORIGINS 0
+    #define DEBUG_FLEX_ORIGINS  0
   #endif
 #endif
 
@@ -754,7 +776,7 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(DEBUG_CHECK_OPTIONALS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_OPTIONALS (DEBUG && CPLUSPLUS_11)
+    #define DEBUG_CHECK_OPTIONALS  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
     #define DEBUG_CHECK_OPTIONALS 0
   #endif
@@ -762,14 +784,14 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #if !defined(DEBUG_CHECK_NEVERNULL)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_NEVERNULL (DEBUG && CPLUSPLUS_11)
+    #define DEBUG_CHECK_NEVERNULL  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
     #define DEBUG_CHECK_NEVERNULL 0
   #endif
 #endif
 
 #if !defined(DEBUG_PROTECT_FEED_CELLS)
-    #define DEBUG_PROTECT_FEED_CELLS DEBUG
+    #define DEBUG_PROTECT_FEED_CELLS  RUNTIME_CHECKS
 #endif
 
 
@@ -780,9 +802,9 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(DEBUG_POISON_FLEX_TAILS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_POISON_FLEX_TAILS 0  // *not* when sanitized
+    #define DEBUG_POISON_FLEX_TAILS  0  // *not* when sanitized
   #else
-    #define DEBUG_POISON_FLEX_TAILS DEBUG
+    #define DEBUG_POISON_FLEX_TAILS  RUNTIME_CHECKS
   #endif
 #endif
 
@@ -790,7 +812,7 @@ Special internal defines used by RT, not Host-Kit developers:
   #if defined(__SANITIZE_ADDRESS__)
     #define DEBUG_CHECK_ENDS 0  // *not* when sanitized
   #else
-    #define DEBUG_CHECK_ENDS (CPLUSPLUS_11 && DEBUG) ? 1 : 0
+    #define DEBUG_CHECK_ENDS (CPLUSPLUS_11 && RUNTIME_CHECKS) ? 1 : 0
   #endif
 #endif
 
@@ -803,11 +825,11 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 #if !defined(DEBUG_POISON_DROPPED_STACK_CELLS)
-    #define DEBUG_POISON_DROPPED_STACK_CELLS DEBUG
+    #define DEBUG_POISON_DROPPED_STACK_CELLS  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_ERASE_ALLOC_TAIL_CELLS)
-    #define DEBUG_ERASE_ALLOC_TAIL_CELLS DEBUG
+    #define DEBUG_ERASE_ALLOC_TAIL_CELLS  RUNTIME_CHECKS
 #endif
 
 
@@ -834,6 +856,9 @@ Special internal defines used by RT, not Host-Kit developers:
 // In the world where #if is used instead of #ifdef, that means it includes the
 // debug code whether DEBUG is 1 or 0.  The file was tweaked to include a more
 // specific flag for debugging dtoa.c, which we will hopefully never need.
+//
+// !!! Now that DEBUG has been changed to RUNTIME_CHECKS, the file could be
+// reverted, if that were important.
 //
 #if !defined(DEBUG_DTOA)
     #define DEBUG_DTOA 0
@@ -864,7 +889,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // fast value to assign as an immediate.  In debug builds, they're assigned
 // a corrupt value because it's more likely to cause trouble if accessed.)
 //
-#if DEBUG
+#if RUNTIME_CHECKS
     #define CORRUPTZERO p_cast(void*, cast(intptr_t, 0xDECAFBAD))
 #else
     #define CORRUPTZERO nullptr

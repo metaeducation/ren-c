@@ -31,7 +31,7 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
 #define VAL_INDEX_RAW(v) \
     PAYLOAD(Any, (v)).second.i
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_INDEX_UNBOUNDED(v) \
         VAL_INDEX_RAW(v)
 #else
@@ -102,7 +102,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     REBLEN index,
     Context* binding
 ){
-  #if DEBUG
+  #if RUNTIME_CHECKS
     assert(Is_Node_Managed(f));
     Assert_Flex_Term_If_Needed(f);  // even binaries [1]
 

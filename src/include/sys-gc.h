@@ -34,7 +34,7 @@ INLINE void Untrack_Manual_Flex(Flex* f)
         //
         Flex* *current_ptr = last_ptr - 1;
         for (; *current_ptr != f; --current_ptr) {
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             if (
                 current_ptr
                 <= cast(Flex**, g_gc.manuals->content.dynamic.data)
@@ -54,17 +54,13 @@ INLINE void Untrack_Manual_Flex(Flex* f)
 
 INLINE Flex* Manage_Flex(Flex* f)  // give manual Flex to GC
 {
-  #if !defined(NDEBUG)
-    if (Is_Node_Managed(f))
-        panic (f);  // shouldn't manage an already managed Flex
-  #endif
-
+    assert(not Is_Node_Managed(f));
     Untrack_Manual_Flex(f);
     Set_Node_Managed_Bit(f);
     return f;
 }
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Assert_Flex_Managed(f) NOOP
 #else
     INLINE void Assert_Flex_Managed(const Flex* f) {
@@ -121,7 +117,7 @@ INLINE Flex* Force_Flex_Managed(const_if_c Flex* f) {
     Push_Guard_Node(node)
 
 INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
-  #if defined(NDEBUG)
+  #if NO_RUNTIME_CHECKS
     UNUSED(p);
   #else
     if (p != *Flex_Last(const void*, g_gc.guarded)) {

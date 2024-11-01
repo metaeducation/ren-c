@@ -203,7 +203,7 @@ Value* Append_To_Sea_Core(
         BINDING(unwrap any_word) = patch;
     }
 
-  #if DEBUG  // ensure we didn't just add a duplicate patch for this sea
+  #if RUNTIME_CHECKS  // ensure we didn't add a duplicate patch for this sea
   blockscope {
     Stub *check = MISC(PatchHitch, patch);
     while (check != symbol) {  // walk chain to look for duplicates
@@ -227,7 +227,7 @@ static Value* Append_To_Varlist_Core(
     const Symbol* symbol,
     Option(Cell*) any_word
 ){
-  #if DEBUG  // catch duplicate insertions
+  #if RUNTIME_CHECKS  // catch duplicate insertions
   blockscope {
     KeyList* before = Keylist_Of_Varlist(varlist);  // may change if shared [1]
     const Key* check_tail = Flex_Tail(Key, before);
@@ -672,7 +672,7 @@ DECLARE_NATIVE(collect_words)
             const Symbol* symbol = Cell_Word_Symbol(ignore_at);
 
             if (not Try_Add_Binder_Index(&cl->binder, symbol, -1)) {
-              #if !defined(NDEBUG)  // count dups, overkill [3]
+              #if RUNTIME_CHECKS  // count dups, overkill [3]
                 REBINT i = unwrap Try_Get_Binder_Index(&cl->binder, symbol);
                 assert(i < 0);
                 Update_Binder_Index(&cl->binder, symbol, i - 1);
@@ -993,7 +993,7 @@ Value* Obj_Value(Value* value, Index index)
 //
 void Startup_Collector(void)
 {
-  #if DEBUG
+  #if RUNTIME_CHECKS
     assert(g_num_evars_outstanding == 0);
   #endif
 }
@@ -1004,13 +1004,13 @@ void Startup_Collector(void)
 //
 void Shutdown_Collector(void)
 {
-  #if DEBUG
+  #if RUNTIME_CHECKS
     assert(g_num_evars_outstanding == 0);
   #endif
 }
 
 
-#ifndef NDEBUG
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Varlist_Core: C

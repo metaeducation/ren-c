@@ -25,9 +25,11 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Action_Executor() is LONG.  That is for the most part a purposeful choice.
-//   Breaking it into functions would add overhead (in the debug build if not
-//   also release builds) and prevent interesting tricks and optimizations.
+// * Action_Executor() is LONG.  It's actually a somewhat purposeful choice.
+//   Breaking it into functions would add overhead (in the RUNTIME_CHECKS
+//   build, if not also in the NO_RUNTIME_CHECKS build), and also prevent
+//   interesting tricks and optimizations.
+//
 //   It is separated into sections, and the invariants in each section are
 //   made clear with comments and asserts.
 //
@@ -73,13 +75,6 @@
 #define ORIGINAL L->u.action.original
 
 #define level_ L  // for OUT, SPARE, STATE macros
-
-
-// In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
-// things down a little.  So we only use the checked version in the main
-// switch statement.  This abbreviation is also shorter and more legible.
-//
-#define kind_current KIND_BYTE_UNCHECKED(v)
 
 
 // When arguments are hard quoted or soft-quoted, they don't call into the
@@ -218,7 +213,7 @@ Bounce Action_Executor(Level* L)
 
       fulfill_loop_body:
 
-      #if DEBUG
+      #if RUNTIME_CHECKS
         assert(Is_Cell_Poisoned(ARG));
       #endif
 
@@ -928,7 +923,7 @@ Bounce Action_Executor(Level* L)
   // Here we know the function finished and nothing threw past it or had an
   // abrupt fail().  (It may have done a `return RAISE(...)`, however.)
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Do_After_Action_Checks_Debug(L);
   #endif
 
@@ -1100,7 +1095,7 @@ void Push_Action(
 
     s->content.dynamic.used = num_args + 1;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     Cell* tail = Array_Tail(L->varlist);
     Cell* prep = L->rootvar + 1;
     for (; prep < tail; ++prep)
@@ -1235,7 +1230,7 @@ void Drop_Action(Level* L) {
         )));
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (L->varlist) {
         assert(Not_Node_Managed(L->varlist));
 

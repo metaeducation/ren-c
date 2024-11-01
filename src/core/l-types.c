@@ -57,7 +57,7 @@ Bounce Makehook_Unhooked(Level* level_, Kind kind, Element* arg) {
 }
 
 
-#if DEBUG
+#if RUNTIME_CHECKS
 
 #define CELL_FLAG_SPARE_NOTE_REVERSE_CHECKING CELL_FLAG_NOTE
 
@@ -181,7 +181,7 @@ DECLARE_NATIVE(to)
     Copy_Cell(type, e);
     Copy_Cell(e, cast(Element*, SPARE));
 
-  #if DEBUG  // add monitor to make sure result is right
+  #if RUNTIME_CHECKS  // add monitor to make sure result is right
     Option(const Symbol*) label = level_->label;
     Option(VarList*) coupling = Level_Coupling(level_);
 

@@ -307,7 +307,7 @@ void API_rebFreeMaybe(void *ptr)
     if (g_gc.recycling and Is_Node_Marked(b)) {
         assert(Is_Node_Managed(b));
         Clear_Node_Marked_Bit(b);
-      #if DEBUG
+      #if RUNTIME_CHECKS
         g_gc.mark_count -= 1;
       #endif
     }
@@ -490,7 +490,7 @@ void API_rebStartup(void)
 // to exit the process, and hence the OS will automatically reclaim all
 // memory/handles/etc.)
 //
-// 1. The debug build does a clean Shutdown, Startup, and then shutdown again
+// 1. Checked builds do a clean Shutdown, Startup, and then shutdown again
 //    to make sure we can do so in case a system wanted to uninitialize then
 //    reinitialize.  It suffers the performance penalty of being clean in
 //    order to ensure that valgrind/etc. report no leaks possible.
@@ -499,7 +499,7 @@ void API_rebShutdown(bool clean)
 {
     ENTER_API;
 
-  #if DEBUG  // shutdown, startup, shutdown...always clean [1]
+  #if RUNTIME_CHECKS  // shutdown, startup, shutdown...always clean [1]
     UNUSED(clean);
     Shutdown_Core(true);
     Startup_Core();
@@ -1236,7 +1236,7 @@ RebolValue* API_rebValue(
 // Just scans the source given into a BLOCK! without executing it.
 //
 RebolValue* API_rebTranscodeInto(
-    RebolContext** binding_ref,  // Note: corrupt on purpose in debug build
+    RebolContext** binding_ref,  // Note: corrupt on purpose if RUNTIME_CHECKS
     RebolValue* out,
     const void* p, void* vaptr
 ){

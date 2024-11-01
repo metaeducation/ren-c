@@ -260,7 +260,7 @@ INLINE bool Is_Trigger(const Value* v) {
         fail (Error_Bad_Antiform(v));  // !!! special error?
     }
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     if (Is_Word(v)) {  // temporary for logic-WORD! transition
         Option(SymId) id = Cell_Word_Id(v);
         if (id == SYM_TRUE)

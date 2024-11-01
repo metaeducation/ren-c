@@ -314,7 +314,7 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
     }
 }
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     INLINE void Check_Bookmarks_Debug(String* s) {
         BookmarkList* book = LINK(Bookmarks, s);
         if (not book)

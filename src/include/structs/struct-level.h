@@ -476,15 +476,8 @@ typedef bool (Decider)(const Value* arg);
     const char *label_utf8;
   #endif
 
-  #if !defined(NDEBUG)
-    //
-    // An emerging feature in the system is the ability to connect user-seen
-    // series to a file and line number associated with their creation,
-    // either their source code or some trace back to the code that generated
-    // them.  As the feature gets better, it will certainly be useful to be
-    // able to quickly see the information in the debugger for L->feed.
-    //
-    const char *file; // is Byte (UTF-8), but char* for debug watch
+  #if RUNTIME_CHECKS  // mirror Level's file and line number for C debugging
+    const char *file; // char* more reliable than Byte* for UTF-8 in gdb/etc.
     int line;
   #endif
 };

@@ -170,7 +170,7 @@ static void Expand_Word_Table(void)
 
         if (symbol == DELETED_SYMBOL) {  // clean out deleted symbol entries
             g_symbols.num_slots_in_use -= 1;
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             g_symbols.num_deleteds -= 1;  // keep track for shutdown assert
           #endif
             continue;
@@ -373,7 +373,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
 
     if (deleted_slot) {
         *deleted_slot = cast(Symbol*, b);  // reuse the deleted slot
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         g_symbols.num_deleteds -= 1;  // note slot usage count stays constant
       #endif
     }
@@ -450,7 +450,7 @@ void GC_Kill_Interning(const Symbol* symbol)
 
     symbols_by_hash[previous_slot] = DELETED_SYMBOL;  // see DELETED_SYMBOL
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     g_symbols.num_deleteds += 1;  // total use same (num_symbols_or_deleteds)
   #endif
 }
@@ -474,15 +474,17 @@ void GC_Kill_Interning(const Symbol* symbol)
 void Startup_Interning(void)
 {
     g_symbols.num_slots_in_use = 0;
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     g_symbols.num_deleteds = 0;
   #endif
 
-    Length n;
-  #if defined(NDEBUG)
-    n = Get_Hash_Prime_May_Fail(WORD_TABLE_SIZE * 4);  // *4 reduces rehashing
-  #else
-    n = 1; // forces exercise of rehashing logic in debug build
+    Length n = Get_Hash_Prime_May_Fail(
+        WORD_TABLE_SIZE * 4  // * 4 reduces rehashing
+    );
+
+  #if RUNTIME_CHECKS
+    if (SPORADICALLY_NON_DETERMINISTIC(2))  // see definition, use rarely!
+        n = 1; // force exercise of rehashing logic half the time on startup
   #endif
 
     ensure(nullptr, g_symbols.by_hash) = Make_Flex(
@@ -585,7 +587,7 @@ void Shutdown_Builtin_Symbols(void)
 //
 void Shutdown_Interning(void)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (g_symbols.num_slots_in_use - g_symbols.num_deleteds != 0) {
         //
         // !!! There needs to be a more user-friendly output for this,
@@ -615,7 +617,7 @@ void Shutdown_Interning(void)
 }
 
 
-#if DEBUG
+#if RUNTIME_CHECKS
 
 //
 //  Assert_No_Symbols_Have_Bindinfo: C

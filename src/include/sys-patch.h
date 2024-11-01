@@ -28,7 +28,7 @@
 
 
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Cell_List_Binding(v) \
         BINDING(v)
 #else

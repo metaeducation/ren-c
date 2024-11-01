@@ -441,17 +441,13 @@ REBINT Find_Binstr_In_Binstr(
 // Flags are set according to ALL_FIND_REFS
 //
 REBINT Find_Bitset_In_Binstr(
-    REBLEN *len_out,
+    Sink(Length) len_out,
     const Cell* binstr,
     REBLEN end_unsigned,
     REBINT skip,
     const Binary* bset,
     Flags flags
 ){
-  #if !defined(NDEBUG)
-    *len_out = 0xDECAFBAD;
-  #endif
-
     REBINT index = VAL_INDEX(binstr);
     REBINT end = end_unsigned;
 
