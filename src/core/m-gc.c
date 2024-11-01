@@ -1386,11 +1386,11 @@ void Startup_GC(void)
 
     g_gc.ballast = MEM_BALLAST; // or overwritten by debug build below...
 
-  #ifndef NDEBUG
     const char *env_recycle_torture = getenv("R3_RECYCLE_TORTURE");
     if (env_recycle_torture and atoi(env_recycle_torture) != 0)
         g_gc.ballast = 0;
 
+  #if DEBUG  // !!! How to deliver message in release build (no printf?)
     if (g_gc.ballast == 0) {
         printf(
             "**\n" \
@@ -1402,7 +1402,7 @@ void Startup_GC(void)
             "**\n"
         );
         fflush(stdout);
-     }
+    }
   #endif
 
     g_gc.depletion = g_gc.ballast;
