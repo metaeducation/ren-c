@@ -47,7 +47,7 @@
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and
 // does not apply (some platforms need this invariant for `double` to work).
 //
-#if (! DEBUG_MEMORY_ALIGNMENT)
+#if (! CHECK_MEMORY_ALIGNMENT)
     #define Assert_Cell_Aligned(c)    NOOP
 #else
     #define Assert_Cell_Aligned(c) do { \

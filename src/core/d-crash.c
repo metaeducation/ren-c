@@ -346,7 +346,7 @@ void Panic_Cell_Unwritable(Cell* c) {
 #endif
 
 
-#if DEBUG_MEMORY_ALIGNMENT
+#if CHECK_MEMORY_ALIGNMENT
 
 //
 //  Panic_Cell_Unaligned: C

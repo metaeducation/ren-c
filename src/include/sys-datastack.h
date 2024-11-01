@@ -234,13 +234,8 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
     return at;
 }
 
-#if DEBUG_USE_CELL_SUBCLASSES
-    #define Data_Stack_At(T,i) \
-        cast(OnStack(T*), cast(T*, Data_Stack_Cell_At(i)))
-#else
-    #define Data_Stack_At(T,i) \
-        cast(OnStack(Value*), Data_Stack_Cell_At(i))
-#endif
+#define Data_Stack_At(T,i) \
+    cast(OnStack(T*), cast(T*, Data_Stack_Cell_At(i)))
 
 #if RUNTIME_CHECKS
     #define IN_DATA_STACK_DEBUG(v) \

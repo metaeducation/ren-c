@@ -57,26 +57,33 @@
 // Windows 32-bit compilers seem to also permit 4 bytes.  WebAssembly does
 // not seem to work when doubles are on 4 byte boundaries, however.)
 //
-// The C standard does not provide a way to know what the largest fundamental
-// type is, even though malloc() must be compatible with it.  So if one is
-// writing one's own allocator to give back memory blocks, it's necessary to
-// guess.  We guess the larger of size of a double and size of a void*, though
-// note this may not be enough for absolutely any type in the compiler:
+// 1. The C standard has no way to know what the largest fundamental type is,
+//    even though malloc() must be compatible with it.  :-(  So if one is
+//    writing one's own allocator to give back memory blocks, it's necessary
+//    to guess.  Guess the larger of sizeof(double) and sizeof(void*), though
+//    this may not be enough for absolutely any type in the compiler:
 //
-//    "In Visual C++, the fundamental alignment is the alignment that's
-//    required for a double, or 8 bytes. In code that targets 64-bit
-//    platforms, it's 16 bytes.)
+//      "In Visual C++, the fundamental alignment is the alignment that's
+//       required for a double, or 8 bytes. In code that targets 64-bit
+//       platforms, it's 16 bytes.)
+//
+// 2. This macro is often called ALIGN() in various codebases, but if we
+//    define it under that name we risk colliding with definitions on the
+//    platform that may or may not be what we want.
+//
+// 3. Since it does compile-time calculations, aligning has to be a macro
+//    in C.  Unlike some cases where "evil" parameter-repeating macros can
+//    catch bad uses in C++ builds (see STATIC_ASSERT_LVALUE()), there's not
+//    really anything that can be done with this: it has to work with compile
+//    time constants, so there's no way to stop a function with side effects
+//    working, if it produces an integer.  Naming just suggests: be careful.
 //
 
-#define ALIGN_SIZE \
+#define ALIGN_SIZE /* not in the C or C++ standard [1] */ \
     (sizeof(double) > sizeof(void*) ? sizeof(double) : sizeof(void*))
 
-#if defined(__HAIKU__)
-    #undef ALIGN
-#endif
-
-#define ALIGN(s,a) \
-    (((s) + (a) - 1) & ~((a) - 1))
+#define Adjust_Size_For_Align_Evil_Macro(size,align)  /* aka ALIGN() [2] */ \
+    (((size) + (align) - 1) & ~((align) - 1))  // repeats align, use care [3]
 
 
 // Linked list of used memory segments

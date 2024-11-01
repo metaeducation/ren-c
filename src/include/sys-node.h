@@ -192,15 +192,21 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 }
 
 
-// Allocate a node from a pool.  Returned node will not be zero-filled, but
-// the header will have NODE_FLAG_UNREADABLE set when it is returned (client is
-// responsible for changing that if they plan to enumerate the pool and
-// distinguish free nodes from non-free ones.)
+// Allocate a node from a pool.
 //
-// All nodes are 64-bit aligned.  This way, data allocated in nodes can be
-// structured to know where legal 64-bit alignment points would be.  This
-// is required for correct functioning of some types.  (See notes on
-// alignment in %struct-cell.h.)
+// 1. The first byte of the returned allocation will be FREE_POOLUNIT_BYTE
+//    in release builds.  It's up to the client to update the bytes of the
+//    returned unit.
+//
+// 2. Checked builds scramble the first byte occasionally, just to keep code
+//    from depending on the allocation returning FREE_POOLUNIT_BYTE.  There's
+//    not a good reason to depend on it at this time, and it may be desirable
+//    to change the implementation so guaranteeing it is avoided.
+//
+// 3. All nodes are 64-bit aligned.  This way, data allocated in nodes can be
+//    structured to know where legal 64-bit alignment points would be.  This
+//    is required for correct functioning of some types.  (See notes on
+//    alignment in %struct-cell.h.)
 //
 INLINE void *Try_Alloc_Pooled(PoolId pool_id)
 {
@@ -234,7 +240,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
 
     pool->free--;
 
-  #if DEBUG_MEMORY_ALIGNMENT
+  #if CHECK_MEMORY_ALIGNMENT  // always 64-bit aligned returns [3]
     if (i_cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Pool Unit address %p not aligned to %d bytes\n",
@@ -249,12 +255,13 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
     }
   #endif
 
-    // It's up to the client to update the bytes of the returned unit so that
-    // it doesn't appear free (which it may not care about, if it's storing
-    // arbitrary bytes...but if storing `Node`s then they should initialize
-    // to not have NODE_FLAG_UNREADABLE set.)
-    //
-    assert(FIRST_BYTE(unit) == FREE_POOLUNIT_BYTE);
+    assert(FIRST_BYTE(unit) == FREE_POOLUNIT_BYTE);  // client must adjust [1]
+
+  #if RUNTIME_CHECKS && TRAMPOLINE_COUNTS_TICKS  // scramble occasionally [2]
+    if (SPORADICALLY(8))
+        FIRST_BYTE(unit) = u_cast(Byte, g_ts.tick % 256);
+  #endif
+
     return cast(void*, unit);
 }
 

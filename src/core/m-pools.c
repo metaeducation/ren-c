@@ -130,11 +130,11 @@ void* Try_Alloc_Memory_Core(Size size)
         g_mem.usage -= size;
         return nullptr;
     }
-    *cast(REBI64*, p_extra) = size;  // 64-bit preserves DEBUG_MEMORY_ALIGNMENT
+    *cast(REBI64*, p_extra) = size;  // 64-bit preserves CHECK_MEMORY_ALIGNMENT
     void *p = cast(char*, p_extra) + ALIGN_SIZE;
   #endif
 
-  #if DEBUG_MEMORY_ALIGNMENT
+  #if CHECK_MEMORY_ALIGNMENT
     assert(i_cast(uintptr_t, p) % ALIGN_SIZE == 0);
   #endif
 
@@ -227,8 +227,14 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
     DEF_POOL(sizeof(Cell) * 2, 16),  // Pairings, PAIR_POOL
   #endif
 
-    DEF_POOL(ALIGN(sizeof(Level), sizeof(REBI64)), 128),  // Levels
-    DEF_POOL(ALIGN(sizeof(Feed), sizeof(REBI64)), 128),  // Feeds
+    DEF_POOL(
+        Adjust_Size_For_Align_Evil_Macro(sizeof(Level), sizeof(REBI64)),
+        128
+    ),
+    DEF_POOL(
+        Adjust_Size_For_Align_Evil_Macro(sizeof(Feed), sizeof(REBI64)),
+        128
+    ),
 
     DEF_POOL(sizeof(REBI64), 1), // Just used for tracking main memory
 };
@@ -283,7 +289,7 @@ void  Startup_Pools(REBINT scale)
         // A panic is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
         //
-      #if DEBUG_MEMORY_ALIGNMENT
+      #if CHECK_MEMORY_ALIGNMENT
         if (Mem_Pool_Spec[n].wide % sizeof(REBI64) != 0)
             panic ("memory pool width is not 64-bit aligned");
       #endif

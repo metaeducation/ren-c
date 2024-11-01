@@ -495,40 +495,32 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_CELL_READ_WRITE  RUNTIME_CHECKS
 #endif
 
+
+// See notes on ALIGN_SIZE regarding why we check this, and when it does and
+// does not apply (some platforms need this invariant for `double` to work).
+//
 // !!! People using MLton to compile found that GCC 4.4.3 does not always
 // align doubles to 64-bit boundaries on Windows, even when -malign-double
 // is used.  It's a very old compiler, and may be a bug.  Disable align
 // checking for GCC 4 on Windows, hope it just means slower loads/stores.
 //
-// https://stackoverflow.com/a/11110283/211160
+//   https://stackoverflow.com/a/11110283/211160
 //
-#if !defined(DEBUG_MEMORY_ALIGNMENT)
+// "System V ABI for X86 says alignment can be 4 bytes for double.  But you
+//  can change this in the compiler settings.  We should either sync with that
+//  setting or just skip it, and assume that we do enough checking on 64-bit".
+//
+//   https://stackoverflow.com/q/14893802/
+//
+#if !defined(CHECK_MEMORY_ALIGNMENT)
   #ifdef __GNUC__
     #if !defined(TO_WINDOWS) || (__GNUC__ >= 5)  // only if at least version 5
-        #define DEBUG_MEMORY_ALIGNMENT  RUNTIME_CHECKS
+        #define CHECK_MEMORY_ALIGNMENT  RUNTIME_CHECKS
     #else
-        #define DEBUG_MEMORY_ALIGNMENT  0
+        #define CHECK_MEMORY_ALIGNMENT  0
     #endif
   #else
-    #define DEBUG_MEMORY_ALIGNMENT  RUNTIME_CHECKS
-  #endif
-#endif
-
-// System V ABI for X86 says alignment can be 4 bytes for double.  But
-// you can change this in the compiler settings.  We should either sync
-// with that setting or just skip it, and assume that we do enough
-// checking on the 64-bit builds.
-//
-// https://stackoverflow.com/q/14893802/
-//
-// !!! We are overpaying for the ALIGN_SIZE if it's not needed for double,
-// so perhaps ALIGN_SIZE should be configured in build settings...
-//
-#if !defined(DEBUG_DONT_CHECK_ALIGN)  // !!! Appears unused?
-  #if (! TO_WINDOWS_X86) && (! TO_LINUX_X86)
-    #define DEBUG_DONT_CHECK_ALIGN 1
-  #else
-    #define DEBUG_DONT_CHECK_ALIGN 0
+    #define CHECK_MEMORY_ALIGNMENT  RUNTIME_CHECKS
   #endif
 #endif
 
