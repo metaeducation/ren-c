@@ -1898,7 +1898,7 @@ bool Set_Var_Core_Updater_Throws(
     DECLARE_VALUE (writeback);
     Push_Lifeguard(writeback);
 
-    Erase_Cell(temp);
+    Init_Unreadable(temp);
     Push_Lifeguard(temp);
 
     StackIndex stackindex_top = TOP_INDEX;

@@ -44,6 +44,7 @@
 
 #define Init_Unreadable_Untracked(out) do { \
     STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+    Assert_Cell_Initable(out); \
     (out)->header.bits |= CELL_MASK_UNREADABLE; \
 } while (0)
 

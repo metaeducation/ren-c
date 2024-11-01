@@ -1303,14 +1303,11 @@ REBLEN Recycle(void)
 //
 void Push_Guard_Node(const void* p)
 {
-    if (*c_cast(Byte*, p) == 0) {
-        assert(Is_Cell_Erased(c_cast(Cell*, p)));
-        goto check_cell_address;
-    }
-    else if (Is_Node_A_Cell(c_cast(Node*, p))) {
-        assert(Not_Node_Marked(c_cast(Node*, p)));  // shouldn't guard during GC
+    assert(Is_Node(p));
 
-      check_cell_address: ;  // need semicolon, next statement is declaration
+    if (Is_Node_A_Cell(c_cast(Node*, p))) {
+        assert(Not_Node_Marked(c_cast(Node*, p)));  // don't guard during GC
+
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
         const Cell* cell = c_cast(Cell*, p);
 
@@ -1320,7 +1317,8 @@ void Push_Guard_Node(const void* p)
       #endif
     }
     else {  // It's a Stub
-        assert(Not_Node_Marked(c_cast(Node*, p)));  // shouldn't guard during GC
+        assert(Is_Node_Readable(c_cast(Node*, p)));  // not decayed
+        assert(Not_Node_Marked(c_cast(Node*, p)));  // don't guard during GC
         assert(Is_Node_Managed(c_cast(Node*, p)));  // [2]
     }
 

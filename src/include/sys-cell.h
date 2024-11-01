@@ -281,7 +281,7 @@ INLINE void Inline_Freshen_Cell_Untracked(Cell* c)
 INLINE void Inline_Freshen_Cell_Suppress_Raised_Untracked(Cell* c)
   { Freshen_Cell_Suppress_Raised_Untracked(c); }
 
-#define Freshen_Cell_Suppress_Raised(v) \
+#define Freshen_Cell_Suppress_Raised(v)  /* [2] */ \
     Inline_Freshen_Cell_Suppress_Raised_Untracked(TRACK(v))
 
 
@@ -723,24 +723,34 @@ INLINE Value* Constify(Value* v) {
 
 //=//// DECLARATION HELPERS FOR ERASED CELLS ON THE C STACK ///////////////=//
 //
-// Cells have to be erased before they can be initialized.
+// Cells can't hold random bits when you initialize them:.
 //
 //     Element element;               // cell contains random bits
 //     Init_Integer(&element, 1020);  // invalid, as init checks protect bits
 //
 // The process of initialization checks to see if the cell is protected, and
 // also masks in some bits to preserve with CELL_MASK_PERSIST.  You have to
-// erase the cell:
+// do something, for instance Erase_Cell():
 //
 //     Element element;
-//     Erase_Cell(&element);
+//     Erase_Cell(&element);  // one possibility for making inits valid
 //     Init_Integer(&element, 1020);
 //
-// These macros take care of that, and also remove the need to refer to the
-// variable with &, by making the name an alias for the address of the cell.
+// We can abstract this with a macro, that can also remove the need to use &,
+// by making the passed-in name an alias for the address of the cell:
 //
 //     DECLARE_ELEMENT (element)
 //     Init_Integer(element, 1020);
+//
+// However, Erase_Cell() has a header that's all 0 bits, which means it does
+// not carry NODE_FLAG_NODE or NODE_FLAG_CELL.  We would like to be able to
+// protect the lifetimes of these cells without giving them content:
+//
+//     DECLARE_ELEMENT (element);
+//     Push_Lifeguard(element);
+//
+// But Push_Lifeguard() shouldn't be tolerant of erased cells.  So we assign
+// the header with CELL_MASK_UNREADABLE instead of CELL_MASK_0.
 //
 // * These cells are not protected from having their insides GC'd unless
 //   you guard them with Push_Lifeguard(), or if a routine you call protects
@@ -754,9 +764,9 @@ INLINE Value* Constify(Value* v) {
 //   it should declare `<local>`s in its spec, and access them with the
 //   LOCAL() macro.  These are GC safe, and are initialized to nothing.
 //
-// * Although Erase_Cell() is very cheap in release builds (just writing a
-//   zero in the header), it still costs *something*.  In checked builds it
-//   can cost more, because DEBUG_TRACK_EXTEND_CELLS makes Erase_Cell() write
+// * Although writing CELL_MASK_UNREADABLE to the header is very cheap, it
+//   still costs *something*.  In checked builds it can cost more to declare
+//   the cell, because DEBUG_TRACK_EXTEND_CELLS makes TRACK() write
 //   the file, line, and tick where the cell was initialized in the extended
 //   space.  So it should generally be favored to put these declarations at
 //   the outermost scope of a function, vs. inside a loop.
@@ -764,15 +774,15 @@ INLINE Value* Constify(Value* v) {
 
 #define DECLARE_ATOM(name) \
     Atom name##_atom; \
-    Erase_Cell(&name##_atom); \
-    Atom* name = &name##_atom
+    Atom* name = TRACK(&name##_atom); \
+    name->header.bits = CELL_MASK_UNREADABLE
 
 #define DECLARE_VALUE(name) \
     Value name##_value; \
-    Erase_Cell(&name##_value); \
-    Value* name = &name##_value
+    Value* name = TRACK(&name##_value); \
+    name->header.bits = CELL_MASK_UNREADABLE
 
 #define DECLARE_ELEMENT(name) \
     Element name##_element; \
-    Erase_Cell(&name##_element); \
-    Element* name = &name##_element
+    Element* name = TRACK(&name##_element); \
+    name->header.bits = CELL_MASK_UNREADABLE
