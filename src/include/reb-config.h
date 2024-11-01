@@ -879,8 +879,8 @@ Special internal defines used by RT, not Host-Kit developers:
 // "trap representation".  Reading such representations to copy them...
 // even if not interpreted... is undefined behavior:
 //
-// https://stackoverflow.com/q/60112841
-// https://stackoverflow.com/q/33393569/
+//   https://stackoverflow.com/q/60112841
+//   https://stackoverflow.com/q/33393569/
 //
 // Odds are it would still work fine if you didn't zero them.  However,
 // compilers will warn you--especially at higher optimization levels--if

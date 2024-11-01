@@ -145,7 +145,7 @@ INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
     BINDING(out) = nullptr;
 
     PAYLOAD(Any, out).first.u = ch;
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
     return out;

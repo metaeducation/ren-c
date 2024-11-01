@@ -56,7 +56,7 @@
 INLINE Element* Init_Integer_Untracked(Init(Element) out, REBI64 i64) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_INTEGER);
     PAYLOAD(Integer, out).i64 = i64;
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).corrupt = CORRUPTZERO;
   #endif
     return cast(Element*, out);

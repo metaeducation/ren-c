@@ -86,7 +86,7 @@
 INLINE Element* Init_Blank_Untracked(Init(Element) out) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_BLANK);
 
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).corrupt = CORRUPTZERO;  // not Cell_Extra_Needs_Mark()
     PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;

@@ -121,7 +121,7 @@ INLINE Element* Init_Handle_Cdata(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
   #endif
     CELL_HANDLE_CDATA_P(out) = cdata;
@@ -137,7 +137,7 @@ INLINE Element* Init_Handle_Cfunc(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
   #endif
     CELL_HANDLE_CFUNC_P(out) = cfunc;

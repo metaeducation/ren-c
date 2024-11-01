@@ -250,7 +250,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
     Tweak_Cell_Node1(e, p);
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, e).second.corrupt = CORRUPTZERO;  // payload second not used
   #endif
     BINDING(e) = UNBOUND;  // "arraylike", needs binding
@@ -417,7 +417,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
     Tweak_Cell_Node1(out, pairing);
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;  // payload second not used
   #endif
     BINDING(out) = UNBOUND;  // "arraylike", needs binding

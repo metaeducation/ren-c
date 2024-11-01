@@ -40,6 +40,11 @@
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
+// * Something like COMMA! was actually seriously considered for R3-Alpha,
+//   as an "explicit evaluation terminator":
+//
+//     http://www.rebol.net/r3blogs/0086.html
+//
 // * An original implementation of expression barriers used the heavier `|`
 //   character.  However that was considered non-negotiable as "alternate" in
 //   PARSE, where expression barriers would also be needed.  Also, it was a
@@ -59,7 +64,7 @@ INLINE Element* Init_Comma(Init(Element) out) {
     //
     BINDING(out) = nullptr;
 
-  #ifdef ZERO_UNUSED_CELL_FIELDS
+  #if ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
