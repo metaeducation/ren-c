@@ -495,8 +495,10 @@ Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
             CELL_MASK_0
         );
 
-        DECLARE_ATOM (dummy);
-        if (Eval_Any_List_At_Throws(dummy, arg, SPECIFIED))
+        bool threw = Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED);
+        UNUSED(SPARE);  // result disregarded
+
+        if (threw)
             return BOUNCE_THROWN;
 
         return OUT;

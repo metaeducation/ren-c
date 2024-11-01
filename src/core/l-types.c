@@ -139,9 +139,12 @@ static Bounce To_Checker_Dispatcher(Level* const L)
         return OUT;
     }
 
+    Push_Lifeguard(reverse);  // was guarded as OUT, but not now
+
     bool equal = rebUnboxLogic(
         Canon(EQUAL_Q), rebQ(cast(Value*, reverse)), rebQ(input)
     );
+    Drop_Lifeguard(reverse);
     assert(equal);
 
     return OUT;

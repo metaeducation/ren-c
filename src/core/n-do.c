@@ -460,7 +460,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
     assert(REF(step));
 
-    Forget_Cell_Is_Lifeguard(source);  // unprotect so we can edit for return
+    Forget_Cell_Was_Lifeguard(source);  // unprotect so we can edit for return
 
     Context* binding = Level_Binding(SUBLEVEL);
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
@@ -729,7 +729,8 @@ DECLARE_NATIVE(apply)
         nullptr  // doesn't use a Binder [2]
     );
     Manage_Flex(exemplar); // Putting into a frame
-    Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
+    Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
+    Remember_Cell_Is_Lifeguard(frame);
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 

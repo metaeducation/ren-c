@@ -137,28 +137,33 @@ INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Node)
 //=//// NOTE WHEN CELL KEEPS A GC LIVE REFERENCE //////////////////////////=//
 //
 // If a cell is under the natural control of the GC (e.g. a Level's OUT or
-// SPARE, or a frame variable) then that cell can often be used instead of
-// Push_Lifeguard() to keep something alive.  It's helpful to have some
-// enforcement that you don't accidentally overwrite these lifetime-holding
-// references, so the PROTECT bit can come in handy...if you're using a
-// build that enforces it on arbitrary mutable cells.
+// SPARE, or a frame variable) then that cell can often give GC protection
+// for "free", instead of using Push_Lifeguard() to keep something alive.
 //
-
+// It's helpful for the debug build to give some enforcement that you don't
+// accidentally overwrite these lifetime-holding references, so the PROTECT
+// bit can come in handy (if you're using a DEBUG_CELL_READ_WRITE build,
+// because it checks for all writes to cells carrying the bit.)
+//
+// 1. You don't always have to call Forget_Cell_Was_Lifeguard(), e.g. if
+//    it's a frame cell for a native then there's no harm to letting the
+//    cell stay protected as long as the frame is alive.  Anywhere that you
+//    can't leave a protection bit on--such as a frame's OUT cell--will need
+//    to have the protection removed.
+//
 #if DEBUG_CELL_READ_WRITE
-    #define Remember_Cell_Is_Lifeguard(c) do { \
-        STATIC_ASSERT_LVALUE(c); \
-        assert(Not_Cell_Flag((c), PROTECTED)); \
-        Set_Cell_Flag((c), PROTECTED); \
-    } while (0)
+    INLINE void Remember_Cell_Is_Lifeguard(Cell* c) {
+        assert(Not_Cell_Flag((c), PROTECTED));
+        Set_Cell_Flag((c), PROTECTED);
+    }
 
-    #define Forget_Cell_Is_Lifeguard(c) do { \
-        STATIC_ASSERT_LVALUE(c); \
-        assert(Get_Cell_Flag((c), PROTECTED)); \
-        Clear_Cell_Flag((c), PROTECTED); \
-    } while (0)
+    INLINE void Forget_Cell_Was_Lifeguard(Cell* c) {  // unpaired calls ok [1]
+        assert(Get_Cell_Flag((c), PROTECTED));
+        Clear_Cell_Flag((c), PROTECTED);
+    }
 #else
-    #define Remember_Cell_Is_Lifeguard(c)  NOOP
-    #define Forget_Cell_Is_Lifeguard(c)  NOOP
+    #define Remember_Cell_Is_Lifeguard(c)  USED(c)
+    #define Forget_Cell_Was_Lifeguard(c)   USED(c)
 #endif
 
 

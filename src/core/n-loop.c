@@ -452,7 +452,7 @@ DECLARE_NATIVE(cfor)
         body,  // may be updated, will still be GC safe
         ARG(word)
     );
-    Init_Object(ARG(word), context);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(word), context));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -544,7 +544,7 @@ DECLARE_NATIVE(for_skip)
         body,  // may be updated, will still be GC safe
         ARG(word)
     );
-    Init_Object(ARG(word), context);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(word), context));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1105,7 +1105,7 @@ DECLARE_NATIVE(for_each)
         body,  // may be updated, will still be GC safe
         vars
     );
-    Init_Object(vars, pseudo_vars_ctx);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(vars, pseudo_vars_ctx));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1210,7 +1210,7 @@ DECLARE_NATIVE(every)
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
-    Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), pseudo_vars_ctx));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1347,7 +1347,7 @@ DECLARE_NATIVE(remove_each)
         body,  // may be updated, will still be GC safe
         ARG(vars)
     );
-    Init_Object(ARG(vars), context);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
 
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1742,7 +1742,7 @@ DECLARE_NATIVE(map)
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
-    Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), pseudo_vars_ctx));
 
     Init_Loop_Each(iterator, data);
     Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
@@ -1966,7 +1966,7 @@ DECLARE_NATIVE(for)
         return VOID;
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(body, vars);
-    Init_Object(ARG(vars), context);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
 
     assert(Varlist_Len(context) == 1);
 

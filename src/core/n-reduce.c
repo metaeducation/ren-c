@@ -279,7 +279,7 @@ DECLARE_NATIVE(reduce_each)
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
-    Init_Object(ARG(vars), context);  // keep GC safe
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
