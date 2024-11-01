@@ -527,9 +527,9 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // When it comes to exception-handling mechanisms, we have 3 choices:
 //
-//    * REBOL_FAIL_USES_LONGJMP to use C's setjmp()/longjmp()
-//    * REBOL_FAIL_USES_TRY_CATCH to use C++'s try {...} catch {...}
-//    * REBOL_FAIL_JUST_ABORTS will panic() and terminate the program
+//    * FAIL_USES_LONGJMP to use C's setjmp()/longjmp()
+//    * FAIL_USES_TRY_CATCH to use C++'s try {...} catch {...}
+//    * FAIL_JUST_ABORTS will panic() and terminate the program
 //
 // It's considered desirable to support both a C and C++ approach.  Plain C
 // compilation (e.g. with TCC) runs on many legacy/embedded platforms.  But
@@ -546,59 +546,59 @@ Special internal defines used by RT, not Host-Kit developers:
 //    traditional platforms, a runtime that enforces a de-facto structured
 //    model may find it difficult-if-not-impossible to emulate them.
 //
-#if !defined(REBOL_FAIL_USES_LONGJMP) \
-        && !defined(REBOL_FAIL_USES_TRY_CATCH) \
-        && !defined(REBOL_FAIL_JUST_ABORTS)
+#if !defined(FAIL_USES_LONGJMP) \
+        && !defined(FAIL_USES_TRY_CATCH) \
+        && !defined(FAIL_JUST_ABORTS)
 
-    #define REBOL_FAIL_USES_LONGJMP 1  // often simplest, not always: [1]
-    #define REBOL_FAIL_USES_TRY_CATCH 0
-    #define REBOL_FAIL_JUST_ABORTS 0
+    #define FAIL_USES_LONGJMP 1  // often simplest, not always: [1]
+    #define FAIL_USES_TRY_CATCH 0
+    #define FAIL_JUST_ABORTS 0
 
-#elif defined(REBOL_FAIL_USES_LONGJMP)
+#elif defined(FAIL_USES_LONGJMP)
 
-    STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP == 1);
-    #if defined(REBOL_FAIL_USES_TRY_CATCH)
-        STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
+    STATIC_ASSERT(FAIL_USES_LONGJMP == 1);
+    #if defined(FAIL_USES_TRY_CATCH)
+        STATIC_ASSERT(FAIL_USES_TRY_CATCH == 0);
     #else
-        #define REBOL_FAIL_USES_TRY_CATCH 0
+        #define FAIL_USES_TRY_CATCH 0
     #endif
-    #if defined(REBOL_FAIL_JUST_ABORTS)
-        STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+    #if defined(FAIL_JUST_ABORTS)
+        STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
     #else
-        #define REBOL_FAIL_JUST_ABORTS 0
+        #define FAIL_JUST_ABORTS 0
     #endif
 
-#elif defined(REBOL_FAIL_USES_TRY_CATCH)
+#elif defined(FAIL_USES_TRY_CATCH)
 
   #if !defined(__cplusplus)
-    #error "REBOL_FAIL_USES_TRY_CATCH requires compiling Ren-C with C++"
+    #error "FAIL_USES_TRY_CATCH requires compiling Ren-C with C++"
     #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif
 
-    STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 1);
-    #if defined(REBOL_FAIL_USES_LONGJMP)
-        STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP == 0)
+    STATIC_ASSERT(FAIL_USES_TRY_CATCH == 1);
+    #if defined(FAIL_USES_LONGJMP)
+        STATIC_ASSERT(FAIL_USES_LONGJMP == 0)
     #else
-        #define REBOL_FAIL_USES_LONGJMP 0
+        #define FAIL_USES_LONGJMP 0
     #endif
-    #if defined(REBOL_FAIL_JUST_ABORTS)
-        STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+    #if defined(FAIL_JUST_ABORTS)
+        STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
     #else
-        #define REBOL_FAIL_JUST_ABORTS 0
+        #define FAIL_JUST_ABORTS 0
     #endif
 
 #else
 
-    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 1);
-    #if defined(REBOL_FAIL_USES_LONGJMP)
-        STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP == 0)
+    STATIC_ASSERT(FAIL_JUST_ABORTS == 1);
+    #if defined(FAIL_USES_LONGJMP)
+        STATIC_ASSERT(FAIL_USES_LONGJMP == 0)
     #else
-        #define REBOL_FAIL_USES_LONGJMP 0
+        #define FAIL_USES_LONGJMP 0
     #endif
-    #if defined(REBOL_FAIL_USES_TRY_CATCH)
-        STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
+    #if defined(FAIL_USES_TRY_CATCH)
+        STATIC_ASSERT(FAIL_USES_TRY_CATCH == 0);
     #else
-        #define REBOL_FAIL_USES_TRY_CATCH 0
+        #define FAIL_USES_TRY_CATCH 0
     #endif
 
 #endif

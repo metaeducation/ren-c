@@ -65,7 +65,7 @@
 //   combination...but there may be some issues.
 //
 
-#if REBOL_FAIL_USES_LONGJMP
+#if FAIL_USES_LONGJMP
     #include <setjmp.h>
 #endif
 
@@ -95,7 +95,7 @@
 //    so it is available to Fail_Core() for automated or manual inspection.
 //
 struct JumpStruct {
-  #if REBOL_FAIL_USES_LONGJMP
+  #if FAIL_USES_LONGJMP
     #ifdef HAS_POSIX_SIGNAL
         sigjmp_buf cpu_state;  // jmp_buf as first field of struct [1]
     #else
@@ -189,10 +189,10 @@ struct JumpStruct {
 //    information up to date, like letting the system globally know what
 //    level the trampoline currently is running (which may not be TOP_LEVEL).
 //
-#if REBOL_FAIL_USES_LONGJMP
+#if FAIL_USES_LONGJMP
 
-    STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
-    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+    STATIC_ASSERT(FAIL_USES_TRY_CATCH == 0);
+    STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
 
     #if defined(__MINGW64__) && (__GNUC__ < 5)  // [1]
         #define SET_JUMP(s)     __builtin_setjmp(s)
@@ -227,9 +227,9 @@ struct JumpStruct {
         jump.error = nullptr; \
         /* fall through to subsequent block */
 
-#elif REBOL_FAIL_USES_TRY_CATCH
+#elif FAIL_USES_TRY_CATCH
 
-    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
+    STATIC_ASSERT(FAIL_JUST_ABORTS == 0);
 
     #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
         ; /* in case previous tatement was label */ \
@@ -247,7 +247,7 @@ struct JumpStruct {
 
 #else
 
-    STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS);
+    STATIC_ASSERT(FAIL_JUST_ABORTS);
 
     #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
         ; /* in case previous tatement was label */ \
@@ -263,8 +263,8 @@ struct JumpStruct {
 
     #define ON_ABRUPT_FAILURE(decl) \
       abrupt_failure: /* impossible jump here to avoid unreachable warning */ \
-        assert(!"ON_ABRUPT_FAILURE() reached w/REBOL_FAIL_JUST_ABORTS=1"); \
-        decl = Error_User("REBOL_FAIL_JUST_ABORTS=1, should not reach!");
+        assert(!"ON_ABRUPT_FAILURE() reached w/FAIL_JUST_ABORTS=1"); \
+        decl = Error_User("FAIL_JUST_ABORTS=1, should not reach!");
 
 #endif
 
@@ -332,7 +332,7 @@ struct JumpStruct {
     #define Fail_Macro_Helper Fail_Core
 #endif
 
-#if REBOL_FAIL_JUST_ABORTS
+#if FAIL_JUST_ABORTS
     #define fail panic
 #else
     #define fail(error) do { \

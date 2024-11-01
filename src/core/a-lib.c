@@ -2291,7 +2291,7 @@ unsigned char* API_rebBytes(
 // knows it needs to can just use SYS.UTIL/RESCUE in the API call itself.
 //
 RebolValue* API_rebRescue(
-    REBDNG *dangerous,  // !!! pure C function if REBOL_FAIL_USES_LONGJMP
+    REBDNG *dangerous,  // !!! pure C function if FAIL_USES_LONGJMP
     void *opaque
 ){
     return API_rebRescueWith(dangerous, nullptr, opaque);

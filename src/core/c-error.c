@@ -133,8 +133,8 @@ Error* Derive_Error_From_Pointer(const void* p) {
 //
 ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 {
-  #if REBOL_FAIL_JUST_ABORTS
-    assert(!"Fail_Core() called and REBOL_FAIL_JUST_ABORTS, shouldn't happen");
+  #if FAIL_JUST_ABORTS
+    assert(!"Fail_Core() called and FAIL_JUST_ABORTS, shouldn't happen");
   #endif
 
     // You can't abruptly fail during the handling of abrupt failure.  At the
@@ -220,12 +220,12 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     Erase_Cell(&g_ts.thrown_arg);
     Erase_Cell(&g_ts.thrown_label);
 
-  #if REBOL_FAIL_JUST_ABORTS
+  #if FAIL_JUST_ABORTS
     panic (nullptr);  // all branches need to do something, this never happens
-  #elif REBOL_FAIL_USES_TRY_CATCH
+  #elif FAIL_USES_TRY_CATCH
     throw error;
   #else
-    STATIC_ASSERT(REBOL_FAIL_USES_LONGJMP);
+    STATIC_ASSERT(FAIL_USES_LONGJMP);
 
     // "If the function that called setjmp has exited (whether by return or
     //  by a different longjmp higher up the stack), the behavior is undefined.

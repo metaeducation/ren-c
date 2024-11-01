@@ -640,7 +640,7 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
 // Doing `return FAIL()` from a native does all the same automatic cleanup
 // as if you triggered an abrupt failure, but doesn't go through the longjmp()
 // or C++ throw machinery.  This means it works even on systems that use
-// REBOL_FAIL_JUST_ABORTS.  It should be preferred wherever possible.
+// FAIL_JUST_ABORTS.  It should be preferred wherever possible.
 //
 INLINE Bounce Native_Fail_Result(Level* level_, const void *p) {
     assert(not THROWING);

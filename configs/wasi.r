@@ -136,7 +136,7 @@ cflags: compose [
     ;
     "-D_WASI_EMULATED_SIGNAL"
 
-    "-DREBOL_FAIL_JUST_ABORTS=1"  ; no exceptions or setjmp()/longjmp()
+    "-DFAIL_JUST_ABORTS=1"  ; no exceptions or setjmp()/longjmp()
 
     (if yes? debug-wasi-extension [spread [
         "-DDEBUG_HAS_PROBE=1"

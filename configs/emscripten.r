@@ -134,18 +134,18 @@ extensions: to map! compose [
 cflags: compose [
     (spread switch abrupt-failure-model [
         #uses-try-catch [[
-            "-DREBOL_FAIL_USES_TRY_CATCH=1"
+            "-DFAIL_USES_TRY_CATCH=1"
             "-fwasm-exceptions"  ; needed in cflags *and* ldflags
 
             ; Note: -fwasm-exceptions is faster than -fexceptions, but newer
             ; https://emscripten.org/docs/porting/exceptions.html#webassembly-exception-handling-proposal
         ]]
         #uses-longjmp [[
-            "-DREBOL_FAIL_USES_LONGJMP=1"
+            "-DFAIL_USES_LONGJMP=1"
             "-s DISABLE_EXCEPTION_CATCHING=1"
         ]]
         #just-aborts [[
-            "-DREBOL_FAIL_JUST_ABORTS=1"
+            "-DFAIL_JUST_ABORTS=1"
             "-s DISABLE_EXCEPTION_CATCHING=1"
         ]]
         fail
