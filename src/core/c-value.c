@@ -255,7 +255,7 @@ void* Probe_Core_Debug(
     Assert_Flex(f);  // if corrupt, gives better info than a print crash
 
     switch (flavor) {
-      case REB_0:
+      case FLAVOR_0:
         Probe_Print_Helper(p, expr, "!!! CORRUPT Flex !!!", file, line);
         break;
 
