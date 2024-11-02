@@ -100,7 +100,6 @@ INLINE Element* Init_Series_At_Core_Untracked(
     Context* binding
 ){
   #if RUNTIME_CHECKS
-    assert(Is_Node_Managed(f));
     Assert_Flex_Term_If_Needed(f);  // even binaries [1]
 
     if (Any_List_Kind(heart)) {
@@ -123,6 +122,8 @@ INLINE Element* Init_Series_At_Core_Untracked(
     }
   #endif
 
+    Force_Flex_Managed(f);
+
     Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(heart)
@@ -139,8 +140,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     TRACK(Init_Series_At_Core_Untracked((v), (t), (f), (i), (s)))
 
 #define Init_Series_At(v,t,f,i) \
-    Init_Series_At_Core((v), (t), \
-        Force_Flex_Managed_Core(f), (i), UNBOUND)
+    Init_Series_At_Core((v), (t), (f), (i), UNBOUND)
 
 #define Init_Series(v,t,f) \
     Init_Series_At((v), (t), (f), 0)

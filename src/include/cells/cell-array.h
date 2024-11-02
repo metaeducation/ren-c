@@ -120,36 +120,20 @@ INLINE const Element* Cell_List_Item_At(const Cell* v) {
 
 //=//// ANY-LIST? INITIALIZER HELPERS ////////////////////////////////////=//
 //
-// Declaring as inline with type signature ensures you use a Array* to
-// initialize, and the C++ build can also validate managed consistent w/const.
+// Declaring as inline with type signature ensures you use a Source* to
+// initialize.
 
 INLINE Element* Init_Any_List_At_Core_Untracked(
     Init(Element) out,
     Heart heart,
-    const_if_c Source* array,
+    const Source* array,
     REBLEN index,
     Context* binding
 ){
     return Init_Series_At_Core_Untracked(
-        out,
-        heart,
-        Force_Flex_Managed_Core(array),
-        index,
-        binding
+        out, heart, array, index, binding
     );
 }
-
-#if CPLUSPLUS_11
-    INLINE Element* Init_Any_List_At_Core_Untracked(
-        Init(Element) out,
-        Heart heart,
-        const Source* array,  // all const arrays should be already managed
-        REBLEN index,
-        Context* binding
-    ){
-        return Init_Series_At_Core_Untracked(out, heart, array, index, binding);
-    }
-#endif
 
 #define Init_Any_List_At_Core(v,t,a,i,b) \
     TRACK(Init_Any_List_At_Core_Untracked((v), (t), (a), (i), (b)))

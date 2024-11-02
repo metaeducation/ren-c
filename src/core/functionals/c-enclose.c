@@ -140,6 +140,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
 
+    possibly(Is_Node_Managed(varlist));
     Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
     Element* rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]

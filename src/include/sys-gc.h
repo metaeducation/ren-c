@@ -17,7 +17,7 @@
 // build hierarchical structures (like the scanner) only return managed
 // results, since they can manage it as they build them.
 
-INLINE void Untrack_Manual_Flex(Flex* f)
+INLINE void Untrack_Manual_Flex(const Flex* f)
 {
     Flex* * const last_ptr
         = &cast(Flex**, g_gc.manuals->content.dynamic.data)[
@@ -52,12 +52,18 @@ INLINE void Untrack_Manual_Flex(Flex* f)
     --g_gc.manuals->content.dynamic.used;
 }
 
-INLINE Flex* Manage_Flex(Flex* f)  // give manual Flex to GC
+INLINE void Manage_Flex(const Flex* f)  // give manual Flex to GC
 {
     assert(not Is_Node_Managed(f));
     Untrack_Manual_Flex(f);
     Set_Node_Managed_Bit(f);
-    return f;
+}
+
+INLINE void Force_Flex_Managed(const Flex* f) {
+    if (Not_Node_Managed(f)) {
+        Untrack_Manual_Flex(f);
+        Set_Node_Managed_Bit(f);
+    }
 }
 
 #if NO_RUNTIME_CHECKS
@@ -69,23 +75,7 @@ INLINE Flex* Manage_Flex(Flex* f)  // give manual Flex to GC
     }
 #endif
 
-INLINE Flex* Force_Flex_Managed(const_if_c Flex* f) {
-    if (Not_Node_Managed(f))
-        Manage_Flex(m_cast(Flex*, f));
-    return m_cast(Flex*, f);
-}
 
-#if (! CPLUSPLUS_11)
-    #define Force_Flex_Managed_Core Force_Flex_Managed
-#else
-    INLINE Flex* Force_Flex_Managed_Core(Flex* f)
-      { return Force_Flex_Managed(f); }  // mutable Flex may be unmanaged
-
-    INLINE Flex* Force_Flex_Managed_Core(const Flex* f) {
-        Assert_Flex_Managed(f);  // const Flex should already be managed
-        return m_cast(Flex*, f);
-    }
-#endif
 
 
 //=////////////////////////////////////////////////////////////////////////=//

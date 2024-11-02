@@ -171,35 +171,16 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
 //=//// ANY-STRING? CONVENIENCE MACROS ////////////////////////////////////=//
 //
 // Declaring as inline with type signature ensures you use a String* to
-// initialize, and the C++ build can also validate managed consistent w/const.
+// initialize.
 
 INLINE Element* Init_Any_String_At(
     Init(Element) out,
     Heart heart,
-    const_if_c String* s,
+    const String* s,
     REBLEN index
 ){
-    Init_Series_At_Core(
-        out,
-        heart,
-        Force_Flex_Managed_Core(s),
-        index,
-        UNBOUND
-    );
-    return out;
+    return Init_Series_At_Core(out, heart, s, index, UNBOUND);
 }
-
-#if CPLUSPLUS_11
-    INLINE Element* Init_Any_String_At(
-        Init(Element) out,
-        Heart heart,
-        const String* s,
-        REBLEN index
-    ){
-        // Init will assert if str is not managed...
-        return Init_Series_At_Core(out, heart, s, index, UNBOUND);
-    }
-#endif
 
 #define Init_Any_String(out,heart,s) \
     Init_Any_String_At((out), (heart), (s), 0)
