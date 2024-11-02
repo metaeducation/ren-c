@@ -244,6 +244,14 @@ DECLARE_NATIVE(delimit)
             Copy_Cell(OUT, molded);
             rebRelease(molded);
         }
+        else if (Is_Quoted(item)) {  // just mold it
+            Value* molded = rebValue(Canon(MOLD), item);
+            assert(molded != nullptr);
+            Copy_Cell(OUT, molded);
+            rebRelease(molded);
+
+            Fetch_Next_In_Feed(L->feed);
+        }
         else {
             if (Eval_Step_Throws(OUT, L))
                 goto threw;
@@ -267,6 +275,9 @@ DECLARE_NATIVE(delimit)
 
         if (Any_List(OUT))  // guessing a behavior is bad [4]
             return FAIL("Desired list rendering in DELIMIT not known");
+
+        if (Any_Sequence(OUT))  // can have lists in them, dicey [4]
+            return FAIL("Desired sequence rendering in DELIMIT not known");
 
         if (Sigil_Of(cast(Element*, OUT)))
             return FAIL("DELIMIT requires @var to render elements with sigils");

@@ -721,6 +721,18 @@ static void Mold_Tag(Molder* mo, const Cell* v)
 //
 //  MF_String: C
 //
+// 1. The R3-Alpha forming logic was that every string type besides TAG!
+//    would form with no delimiters, e.g. `form #foo` is just foo.  Ren-C
+//    removes the exception for tags, and more of the system treats tag
+//    as a normal string.  You have to quote it in FIND to get it to
+//    use the molded semantics, for instance:
+//
+//        >> find "ab<c>d" <c>
+//        == "c>d"
+//
+//        >> find "ab<c>d" quote <c>
+//        == "<c>d"
+//
 void MF_String(Molder* mo, const Cell* v, bool form)
 {
     String* buf = mo->string;
@@ -728,10 +740,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
     Heart heart = Cell_Heart(v);
     assert(Any_Utf8_Kind(heart));
 
-    // The R3-Alpha forming logic was that every string type besides TAG!
-    // would form with no delimiters, e.g. `form #foo` is just foo
-    //
-    if (form and heart != REB_TAG) {
+    if (form) {  // TAG! is not an exception--forms without delimiters [1]
         Append_Any_Utf8(buf, v);
         return;
     }

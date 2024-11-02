@@ -1643,16 +1643,15 @@ default-combinators: to map! reduce [
     === QUOTED! COMBINATOR ===
 
     ; When used with ANY-LIST? input, recognizes values literally.  When used
-    ; with ANY-STRING? it will convert the value to a string before matching.
+    ; with ANY-STRING? it leverages FIND's ability to match the molded form,
+    ; e.g. counting the delimiters in tags.
     ;
-    ; 1. Not exactly sure what this operation is, but it's becoming more
-    ;    relevant...it's like FORM by putting < > on tags (TO TEXT! won't) and
-    ;    it will merge strings in blocks without spacing.
+    ;     >> parse "<a> 100 (b c)" ['<a> space '100 space '(b c)]
+    ;     == (b c)
 
     quoted! combinator [
         return: "The matched value"
             [element?]
-        :pending [blank! block!]
         value [quoted?]
         :negated
         <local> comb neq?
@@ -1664,7 +1663,6 @@ default-combinators: to map! reduce [
         if any-list? input [
             neq?: either state.case [:strict-not-equal?] [:not-equal?]
             remainder: next input
-            pending: _
             if neq? input.1 unquote value [
                 if negated [
                     return input.1
@@ -1683,21 +1681,12 @@ default-combinators: to map! reduce [
             fail "QUOTED! combinator can only be negated for List input"
         ]
 
-        if any-string? input [
-            let text: append copy "" unquote value  ; !!! name for this? [2]
+        ensure [any-string? binary!] input
 
-            comb: (state.combinators).(text!)
-            [~ remainder pending]: run comb state input text except e -> [
-                return raise e
-            ]
-            return unquote value
+        [# remainder]: find:match input value else [
+            return raise "Molded form of QUOTED! item didn't match"
         ]
-
-        assert [binary? input]
-
-        value: to binary! unquote value
-        comb: (state.combinators).(binary!)
-        return [{~} remainder pending]: run comb state input value
+        return unquote value
     ]
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?

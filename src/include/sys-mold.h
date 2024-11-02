@@ -57,6 +57,9 @@ struct MolderStruct {
 #define Copy_Form_Cell_Ignore_Quotes(v,opts) \
     Copy_Mold_Or_Form_Cell_Ignore_Quotes((v), (opts), true)
 
+#define Copy_Mold_Cell_Ignore_Quotes(v,opts) \
+    Copy_Mold_Or_Form_Cell_Ignore_Quotes((v), (opts), false)
+
 
 // Modes allowed by FORM
 enum {

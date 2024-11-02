@@ -1,6 +1,9 @@
 ; %parse-quoted.test.reb
 ;
-; Quoted values are matched as is, but for strings they are formed.
+; Quoted values are matched as is, but for strings they are molded.
+
+
+('(b c) = parse "<a> 100 (b c)" ['<a> space '100 space '(b c)])
 
 (
     all [

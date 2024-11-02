@@ -519,8 +519,11 @@ REBLEN Find_Value_In_Binstr(
     }
 
     if (
-        Any_Utf8_Kind(pattern_heart)
-        or REB_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
+        QUOTE_BYTE(pattern) == ONEQUOTE_3
+        or (QUOTE_BYTE(pattern) == NOQUOTE_1 and (
+            Any_Utf8_Kind(pattern_heart)
+            or REB_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
+        ))
     ){
         if (binstr_heart != REB_BINARY and (
             IS_CHAR_CELL(pattern) and Cell_Codepoint(pattern) == 0
@@ -530,27 +533,28 @@ REBLEN Find_Value_In_Binstr(
 
       find_binstr_in_binstr: ;
 
-        // !!! A TAG! does not have its delimiters in it.  The logic of the
-        // find would have to be rewritten to accomodate this, and it's a
-        // bit tricky as it is.  Let it settle down before trying that--and
-        // for now just form the tag into a temporary alternate String.
+        // FIND provides the basis for matching things literally in strings
+        // via quoted items, while the baseline behavior for finding things
+        // like tags does not consider the delimiters:
+        //
+        //   >> find "ab<c>d" <c>
+        //   == "c>d"
+        //
+        //   >> find "ab<c>d" quote <c>
+        //   == "<c>d"
 
-        String* formed = nullptr;
+        String* molded = nullptr;
         if (
-            Cell_Heart(pattern) != REB_ISSUE
-            and Cell_Heart(pattern) != REB_TEXT
-            and Cell_Heart(pattern) != REB_SIGIL
-            and Cell_Heart(pattern) != REB_BINARY
+            QUOTE_BYTE(pattern) == ONEQUOTE_3
+            or Cell_Heart(pattern) == REB_INTEGER
          ){
-            // !!! `<tag>`, `set-word:` but FILE!, etc?
-            //
-            formed = Copy_Form_Cell_Ignore_Quotes(pattern, 0);
+            molded = Copy_Mold_Cell_Ignore_Quotes(pattern, 0);
         }
 
-        DECLARE_ATOM (temp);  // !!! Note: unmanaged
-        if (formed) {
+        DECLARE_ELEMENT (temp);  // !!! Note: unmanaged
+        if (molded) {
             Reset_Cell_Header_Untracked(temp, CELL_MASK_TEXT);
-            Tweak_Cell_Node1(temp, formed);
+            Tweak_Cell_Node1(temp, molded);
             PAYLOAD(Any, temp).second.u = 0;  // index
         }
 
@@ -558,18 +562,21 @@ REBLEN Find_Value_In_Binstr(
             len,
             binstr,  // not all_ascii, has multibyte utf-8 sequences
             end,
-            formed ? temp : pattern,
+            molded ? temp : pattern,
             UNLIMITED,
             flags & (AM_FIND_MATCH | AM_FIND_CASE),
             skip
         );
 
-        if (formed)
-            Free_Unmanaged_Flex(formed);
+        if (molded)
+            Free_Unmanaged_Flex(molded);
 
         return result;
     }
-    else if (pattern_heart == REB_BITSET) {
+    else if (
+        QUOTE_BYTE(pattern) == NOQUOTE_1
+        and pattern_heart == REB_BITSET
+    ){
         return Find_Bitset_In_Binstr(
             len,
             binstr,

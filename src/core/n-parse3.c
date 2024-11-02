@@ -677,28 +677,26 @@ static REBIXO Parse_One_Rule(
             rule = cast(Element*, SPARE);
         }
 
-        // We try to allow some conveniences when parsing strings based on
-        // how items render, e.g.:
+        // Build upon FIND's behavior to mold quoted items, e.g.:
         //
-        //     >> parse? "ab<c>10" ['ab <c> '10]
-        //     == ~true~  ; anti
+        //     >> parse "ab<c>10" ['ab '<c> '10]
+        //     == 10
         //
         // It can be less visually noisy than:
         //
-        //     >> parse? "ab<c>10" ["ab" {<c>} "10"]
-        //     == ~true~  ; anti
+        //     >> parse "ab<c>10" ["ab" "<c>" "10"]
+        //     == "10"
         //
-        // !!! The concept is based somewhat on what was legal in FIND for
-        // Rebol2, and leverages quoting.  It's being experimented with.
+        // The return value may also be more useful.
         //
         Heart rule_heart = Cell_Heart(rule);
         if (
-            (rule_heart == REB_SIGIL and Cell_Num_Quotes(rule) == 1)
-            or (Any_Word_Kind(rule_heart) and Cell_Num_Quotes(rule) == 1)
-            or (Any_String_Kind(rule_heart) and Cell_Num_Quotes(rule) <= 1)
-            or (rule_heart == REB_ISSUE and Cell_Num_Quotes(rule) <= 1)
-            or (rule_heart == REB_BINARY and Cell_Num_Quotes(rule) == 0)
-            or (rule_heart == REB_INTEGER and Cell_Num_Quotes(rule) == 1)
+            Cell_Num_Quotes(rule) == 1  // '<a> will mold to "<a>"
+            or (Cell_Num_Quotes(rule) == 0 and (
+                rule_heart == REB_TEXT
+                or rule_heart == REB_ISSUE
+                or rule_heart == REB_BINARY
+            ))
         ){
             REBLEN len;
             REBINT index = Find_Value_In_Binstr(
