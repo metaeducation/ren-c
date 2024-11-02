@@ -227,6 +227,7 @@ export analyse: context [
                     [
                         'native
                         | 'native:combinator
+                        | 'native:generic
                         | 'native:intrinsic
                     ]
                     accept ('true)

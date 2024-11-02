@@ -110,7 +110,7 @@
 // 2. CASCADE has a strange implementation detail where it steals the frame
 //    data built for the cascade and gives it to the function at the head of
 //    the pipeline.  Then it replaces the executor for the original frame to
-//    the &Cascader_Dispatcher.  Hence Drop_Action() is never called on such
+//    the &Cascader_Executor.  Hence Drop_Action() is never called on such
 //    functions to null out the executor.  These mechanisms are the ones
 //    most likely to break when code is rearranged, so it's good to call
 //    out the weirdness.
@@ -118,7 +118,7 @@
 INLINE void Restart_Action_Level(Level* L) {
     assert(
         L->executor == nullptr  // Drop_Action() sets to nullptr [1]
-        or L->executor == &Cascader_Dispatcher   // Weird exception [2]
+        or L->executor == &Cascader_Executor   // Weird exception [2]
     );
     L->executor = &Action_Executor;
 }
@@ -592,6 +592,13 @@ INLINE Level* Prep_Level_Core(
 #define REF(name) \
     (not Is_Nulled(ARG(name)))
 
+// This lets you access arguments by number, not counting return
+//
+#define ARG_N(n) ( \
+    assert(Cell_ParamClass(ACT_PARAMS_HEAD(Level_Phase(level_))) \
+        == PARAMCLASS_RETURN), \
+    Level_Arg(level_, (n) + 1) \
+)
 
 INLINE Bounce Native_Thrown_Result(Level* level_) {
     assert(THROWING);
@@ -727,34 +734,14 @@ INLINE Atom* Native_Copy_Result_Untracked(
             Native_Fail_Result(level_, (p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
-    // enough in REBTYPE() handlers that it seems worthwhile.
+    // enough in DECLARE_GENERICS() handlers that it seems worthwhile.
     //
-    #define UNHANDLED   FAIL(Error_Cannot_Use(verb, D_ARG(1)))
+    #define UNHANDLED   FAIL(Error_Cannot_Use(verb, ARG_N(1)))
 
     #define BASELINE   (&level_->baseline)
     #define STACK_BASE (level_->baseline.stack_base)
 #endif
 
-
-// !!! Numbered arguments got more complicated with the idea of moving the
-// definitional returns into the first slot (if applicable).  This makes it
-// more important to use the named ARG() and REF() macros.  As a stopgap
-// measure, we just sense whether the phase has a return or not.
-//
-INLINE Value* D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
-    Param* param = ACT_PARAMS_HEAD(Level_Phase(L));
-    Value* arg = Level_Arg(L, 1);
-    while (
-        Is_Specialized(param)  // e.g. slots for saving multi-return variables
-        or Cell_ParamClass(param) == PARAMCLASS_RETURN
-    ){
-        ++param;
-        ++arg;
-    }
-    return arg + n - 1;
-}
-#define D_ARG(n) \
-    D_ARG_Core(level_, (n))
 
 
 enum {

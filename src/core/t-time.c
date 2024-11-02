@@ -448,21 +448,20 @@ void Poke_Time_Immediate(
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Time)
+DECLARE_GENERICS(Time)
 {
-    Value* time = D_ARG(1);
-
-    REBI64 secs = VAL_NANO(time);
-
     Option(SymId) id = Symbol_Id(verb);
 
-    if (id == SYM_PICK_P) {
+    Element* time = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    REBI64 secs = VAL_NANO(time);
+
+    if (id == SYM_PICK) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-        INCLUDE_PARAMS_OF_PICK_P;
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -470,11 +469,11 @@ REBTYPE(Time)
         Pick_Time(OUT, time, picker);
         return OUT;
     }
-    else if (id == SYM_POKE_P) {
+    else if (id == SYM_POKE) {
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-        INCLUDE_PARAMS_OF_POKE_P;
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -492,7 +491,7 @@ REBTYPE(Time)
         or id == SYM_DIVIDE
         or id == SYM_REMAINDER
     ){
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
         REBINT type = VAL_TYPE(arg);
 
         if (type == REB_TIME) {     // handle TIME - TIME cases
@@ -609,9 +608,9 @@ REBTYPE(Time)
             // date dispatcher already.  Instead of repeating the code here in
             // the time dispatcher, swap the arguments and call DATE's version.
             //
-            Move_Cell(stable_SPARE, D_ARG(1));
-            Move_Cell(D_ARG(1), arg);
-            Move_Cell(D_ARG(2), stable_SPARE);
+            Move_Cell(stable_SPARE, ARG_N(1));
+            Move_Cell(ARG_N(1), arg);
+            Move_Cell(ARG_N(2), stable_SPARE);
             return T_Date(level_, verb);
         }
         return FAIL(Error_Math_Args(REB_TIME, verb));

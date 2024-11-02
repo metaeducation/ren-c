@@ -148,19 +148,21 @@ void MF_Word(Molder* mo, const Cell* v, bool form) {
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // The future plan for WORD! types is that they will be unified somewhat with
 // strings...but that bound words will have read-only data.  Under such a
 // plan, string-converting words would not be necessary for basic textual
 // operations.
 //
-REBTYPE(Word)
+DECLARE_GENERICS(Word)
 {
-    Value* word = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
+
+    Element* word = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     assert(Any_Word(word));
 
-    switch (Symbol_Id(verb)) {
+    switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -199,7 +201,7 @@ REBTYPE(Word)
     // be aliases of words, so TO conversions of strings to word may be able
     // to reuse the symbol underlying the string).  Delegate to common code.
 
-      case SYM_TO_P:
+      case SYM_TO:
         return T_String(level_, verb);
 
       default:

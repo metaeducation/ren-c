@@ -43,7 +43,6 @@ core: [
     functionals/c-does.c
     functionals/c-enclose.c
     functionals/n-function.c
-    functionals/c-generic.c
     functionals/c-hijack.c
     functionals/c-lambda.c
     functionals/c-macro.c
@@ -162,16 +161,21 @@ core: [
     %m-stacks.c
 
     ; (N)atives
+    %n-bitwise.c
     %n-control.c
     %n-data.c
     %n-do.c
     %n-error.c
+    %n-get-set.c
     %n-io.c
     %n-loop.c
+    %n-make.c
     %n-math.c
     %n-parse3.c
+    %n-port.c
     %n-protect.c
     %n-reduce.c
+    %n-series.c
     %n-sets.c
     %n-strings.c
     %n-system.c
@@ -208,7 +212,6 @@ core: [
     %t-typeset.c
     %t-word.c
     %t-varargs.c
-    %t-void.c
 
     ; (U)??? (3rd-party code extractions)
     %u-compress.c

@@ -28,215 +28,18 @@
 
 
 //
-//  Makehook_Fail: C
-//
-Bounce Makehook_Fail(Level* level_, Kind kind, Element* arg) {
-    UNUSED(kind);
-    UNUSED(arg);
-
-    return RAISE("Datatype does not have a MAKE handler registered");
-}
-
-
-//
-//  Makehook_Unhooked: C
-//
-// MAKE STRUCT! is part of the FFI extension, but since user defined types
-// aren't ready yet as a general concept, this hook is overwritten in the
-// dispatch table when the extension loads.
-//
-Bounce Makehook_Unhooked(Level* level_, Kind kind, Element* arg) {
-    UNUSED(arg);
-
-    const Value* type = Datatype_From_Kind(kind);
-    UNUSED(type); // !!! put in error message?
-
-    return RAISE(
-        "Datatype is provided by an extension that's not currently loaded"
-    );
-}
-
-
-#if RUNTIME_CHECKS
-
-#define CELL_FLAG_SPARE_NOTE_REVERSE_CHECKING CELL_FLAG_NOTE
-
-static Bounce To_Checker_Dispatcher(Level* const L)
-{
-    Heart to = cast(Heart, Level_State_Byte(L));
-    assert(to != REB_0);
-
-    Element* input = cast(Element*, Level_Spare(L));
-    Heart from = Cell_Heart_Ensure_Noquote(input);
-
-    Atom* reverse = cast(Atom*, &L->u.eval.current);
-
-    if (Get_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING))
-        goto ensure_results_equal;
-
-    Erase_Cell(reverse);
-    goto check_type_and_run_reverse_to;
-
-  check_type_and_run_reverse_to: {  //////////////////////////////////////////
-
-    if (Is_Throwing(L)) {
-        assert(L == TOP_LEVEL);  // sublevel automatically dropped
-        return BOUNCE_THROWN;
-    }
-
-    Level* level_ = TOP_LEVEL;  // sublevel stole the varlist
-    assert(level_->prior == L);
-
-    if (Is_Raised(OUT)) {
-        Drop_Level(level_);
-        return OUT;
-    }
-
-    Decay_If_Unstable(OUT);  // should packs from TO be legal?
-    assert(VAL_TYPE(OUT) == to);
-
-    // Reset TO_P sublevel to do reverse transformation
-
-    level_->executor = &Action_Executor;  // Drop_Action() nulled it
-    Push_Action(level_, VAL_ACTION(Lib(TO_P)), nullptr);
-    Begin_Action(level_, Canon(TO_P), PREFIX_0);
-    Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
-
-    INCLUDE_PARAMS_OF_TO_P;
-    Erase_Cell(ARG(return));
-    Erase_Cell(ARG(type));
-    Erase_Cell(ARG(element));
-
-    Init_Nulled(ARG(return));
-    Copy_Cell(ARG(type), Datatype_From_Kind(from));
-    Copy_Cell(ARG(element), cast(Element*, stable_OUT));
-    STATE = STATE_0;
-    level_->executor = &Action_Executor;
-    Phase* phase = cast(Phase*, VAL_ACTION(Lib(TO_P)));
-    Tweak_Level_Phase(level_, phase);
-    Tweak_Level_Coupling(level_, nullptr);
-
-    Option(const Symbol*) label = Canon(TO_P);
-    level_->u.action.original = VAL_ACTION(Lib(TO_P));
-    level_->label = label;
-    level_->label_utf8 = label
-        ? String_UTF8(unwrap label)
-        : "(anonymous)";
-
-    assert(Get_Level_Flag(level_, TRAMPOLINE_KEEPALIVE));
-    Clear_Level_Flag(level_, TRAMPOLINE_KEEPALIVE);
-
-    Set_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING);
-    level_->out = reverse;  // don't overwrite OUT
-    return CATCH_CONTINUE_SUBLEVEL(level_);
-
-} ensure_results_equal: {  ///////////////////////////////////////////////////
-
-    USE_LEVEL_SHORTHANDS (L);  // didn't need to keepalive reverse sublevel
-
-    if (THROWING)
-        return BOUNCE_THROWN;
-
-    if (Is_Raised(reverse))
-        return FAIL(Cell_Error(reverse));
-
-    Decay_If_Unstable(reverse);  // should packs from TO be legal?
-
-    if (to == REB_MAP) {  // doesn't preserve order requirement :-/
-        if (VAL_TYPE(cast(Value*, reverse)) != VAL_TYPE(input))
-            return FAIL("Reverse TO of MAP! didn't produce original type");
-        return OUT;
-    }
-
-    Push_Lifeguard(reverse);  // was guarded as level_->OUT, but no longer
-    bool equal = rebUnboxLogic(
-        Canon(EQUAL_Q), rebQ(cast(Value*, reverse)), rebQ(input)
-    );
-    Drop_Lifeguard(reverse);
-
-    if (not equal)
-        return FAIL("Reverse TO transform didn't produce original result");
-
-    return OUT;
-}}
-
-#endif
-
-
-//
-//  /to: native [
-//
-//  "Converts to a specified datatype, copying any underying data"
-//
-//      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
-//          [element?]
-//      type [<maybe> type-block!]
-//      element [<maybe> element?]
-//  ]
-//
-DECLARE_NATIVE(to)
-{
-    INCLUDE_PARAMS_OF_TO;
-
-    Element* type = cast(Element*, ARG(type));
-    Element* e = cast(Element*, ARG(element));
-
-    Heart to = VAL_TYPE_HEART(type);
-    Heart from = Cell_Heart_Ensure_Noquote(e);
-
-    if (to == from)
-        return rebValue(Canon(COPY), rebQ(e));
-
-    Copy_Cell(SPARE, type);  // swap for generic dispatch to TO_P on element
-    Copy_Cell(type, e);
-    Copy_Cell(e, cast(Element*, SPARE));
-
-  #if RUNTIME_CHECKS  // add monitor to make sure result is right
-    Option(const Symbol*) label = level_->label;
-    Option(VarList*) coupling = Level_Coupling(level_);
-
-    DECLARE_ELEMENT (e_saved);  // want to save element
-    Copy_Cell(e_saved, type);  // remember: we swapped...
-    Level* sub = Push_Downshifted_Level(OUT, level_);
-    Copy_Cell(Level_Spare(level_), e_saved);
-
-    assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
-    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
-
-    level_->executor = &To_Checker_Dispatcher;
-
-    Phase* phase = cast(Phase*, VAL_ACTION(Lib(TO_P)));
-    Tweak_Level_Phase(sub, phase);
-    Tweak_Level_Coupling(sub, coupling);
-
-    sub->u.action.original = VAL_ACTION(Lib(TO));
-    sub->label = label;
-    sub->label_utf8 = label
-        ? String_UTF8(unwrap label)
-        : "(anonymous)";
-    STATE = to;
-    return CATCH_CONTINUE_SUBLEVEL(sub);
-  #else
-    const Element* first_arg = type;  // actually element, after swap
-    Bounce b = Run_Generic_Dispatch_Core(first_arg, level_, Canon(TO_P));
-    return b;
-  #endif
-}
-
-
-//
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // There's no actual "Unhooked" data type, it is used as a placeholder for
 // if a datatype (such as STRUCT!) is going to have its behavior loaded by
 // an extension.
 //
-REBTYPE(Unhooked)
+DECLARE_GENERICS(Unhooked)
 {
     UNUSED(verb);
 
     return RAISE(
-        "Datatype does not have its REBTYPE() handler loaded by extension"
+        "Datatype does not have its DECLARE_GENERICS() handler loaded by extension"
     );
 }
 
@@ -297,13 +100,26 @@ Bounce Reflect_Core(Level* level_)
     if (Is_Void(v))
         return nullptr;
 
-    QUOTE_BYTE(ARG(value)) = NOQUOTE_1;  // ignore quasi or quoted
+    QUOTE_BYTE(v) = NOQUOTE_1;  // ignore quasi or quoted
 
-    Tweak_Level_Phase(
-        level_,
-        ACT_IDENTITY(VAL_ACTION(Lib(REFLECT)))  // switch to generic
-    );
-    return BOUNCE_CONTINUE;
+    return Run_Generic_Dispatch(cast(Element*, v), LEVEL, Canon(REFLECT));
+}
+
+
+//
+//  /reflect: native:generic [
+//
+//  "Returns specific details about a value (used by OF, e.g. LENGTH OF)"
+//
+//      return: [any-value?]
+//      value [any-value?]
+//      property "Such as: type, length, spec, body, words, values, title"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(reflect)
+{
+    return Reflect_Core(level_);
 }
 
 

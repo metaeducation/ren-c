@@ -27,6 +27,65 @@
 #include "cells/cell-money.h"
 
 
+static bool Check_Char_Range(const Value* val, Codepoint limit)
+{
+    if (IS_CHAR(val))
+        return Cell_Codepoint(val) <= limit;
+
+    if (Is_Integer(val))
+        return VAL_INT64(val) <= cast(REBI64, limit);
+
+    assert(Any_String(val));
+
+    REBLEN len;
+    Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
+
+    for (; len > 0; len--) {
+        Codepoint c;
+        up = Utf8_Next(&c, up);
+
+        if (c > limit)
+            return false;
+    }
+
+    return true;
+}
+
+
+//
+//  /ascii?: native [
+//
+//  "Returns TRUE if value or string is in ASCII character range (below 128)"
+//
+//      return: [logic?]
+//      value [any-string? char? integer!]
+//  ]
+//
+DECLARE_NATIVE(ascii_q)
+{
+    INCLUDE_PARAMS_OF_ASCII_Q;
+
+    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0x7f));
+}
+
+
+//
+//  /latin1?: native [
+//
+//  "Returns TRUE if value or string is in Latin-1 character range (below 256)"
+//
+//      return: [logic?]
+//      value [any-string? char? integer!]
+//  ]
+//
+DECLARE_NATIVE(latin1_q)
+{
+    INCLUDE_PARAMS_OF_LATIN1_Q;
+
+    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0xff));
+}
+
+
 //
 //  /delimit: native [
 //

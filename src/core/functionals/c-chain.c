@@ -87,7 +87,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
 
 
 //
-//  Cascader_Dispatcher: C
+//  Cascader_Executor: C
 //
 // The frame built for the CASCADE matches the arguments needed by the first
 // function in the pipeline.  Having the same interface as that function
@@ -99,7 +99,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
 // afterward".  This baked awareness of cascading into %c-action.c, when it is
 // better if the process was localized in the dispatcher.
 //
-// Handling it in the dispatcher means the Cascader_Dispatcher() stays on
+// Handling it in the dispatcher means the Cascader_Executor() stays on
 // the stack and in control.  This means either unhooking the current `L` and
 // putting a new Level* above it, or stealing the content of the `L` into a
 // new level to put beneath it.  The latter is chosen to avoid disrupting
@@ -110,7 +110,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
 // user invoked in the stack trace...instead of just the cascaded item that
 // causes an error.)
 //
-Bounce Cascader_Dispatcher(Level* const L)
+Bounce Cascader_Executor(Level* const L)
 //
 // 1. Stealing the varlist leaves the actual cascader frame with no varlist
 //    content.  That means debuggers introspecting the stack may see a
@@ -119,7 +119,7 @@ Bounce Cascader_Dispatcher(Level* const L)
 // 2. You can't have an Action_Executor()-based frame on the stack unless it
 //    has a lot of things (like a varlist, which provides the phase, etc.)
 //    So we switch it around to where the level that had its varlist stolen
-//    just uses Cascader_Dispatcher() as its executor, so we get called back.
+//    just uses Cascader_Executor() as its executor, so we get called back.
 //
 // 3. At the head of the pipeline we start at the dispatching phase since the
 //    frame is already filled, but each step after that uses infix and runs
@@ -159,7 +159,7 @@ Bounce Cascader_Dispatcher(Level* const L)
     );
 
     Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
-    L->executor = &Cascader_Dispatcher;  // so trampoline calls us [2]
+    L->executor = &Cascader_Executor;  // so trampoline calls us [2]
 
     const Cell* first = Cell_List_Item_At(pipeline);
     ++VAL_INDEX_RAW(pipeline);  // point series index to next FRAME! to call
@@ -180,7 +180,7 @@ Bounce Cascader_Dispatcher(Level* const L)
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
-    return CATCH_CONTINUE_SUBLEVEL(sub);
+    return BOUNCE_DOWNSHIFTED;
 
 } run_next_in_pipeline: {  ///////////////////////////////////////////////////
 
@@ -272,7 +272,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
     Phase* cascade = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
         ACT_PARTIALS(VAL_ACTION(first)),
-        &Cascader_Dispatcher,
+        &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity
     );
     Force_Value_Frozen_Shallow(pipeline);

@@ -75,17 +75,17 @@ Bounce Makehook_Port(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // !!! The concept of port dispatch from R3-Alpha is that it delegates to a
 // handler which may be native code or user code.
 //
-REBTYPE(Port)
+DECLARE_GENERICS(Port)
 {
-    Value* port = D_ARG(1);
-    assert(Is_Port(port));
-
     Option(SymId) id = Symbol_Id(verb);
+
+    Element* port = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Is_Port(port));
 
     enum {
         ST_TYPE_PORT_INITIAL_ENTRY = STATE_0,
@@ -107,7 +107,7 @@ REBTYPE(Port)
     // See Context_Common_Action_Maybe_Unhandled() for why general delegation
     // to T_Context() is not performed.
     //
-    if (id == SYM_PICK_P or id == SYM_POKE_P)
+    if (id == SYM_PICK or id == SYM_POKE)
         return T_Context(level_, verb);
 
     VarList* ctx = Cell_Varlist(port);
@@ -216,17 +216,19 @@ REBINT CT_Url(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // The idea for dispatching a URL! is that it will dispatch to port schemes.
 // So it translates the request to open the port, then retriggers the action
 // on that port, then closes the port.
 //
-REBTYPE(Url)
+DECLARE_GENERICS(Url)
 {
-    Value* url = D_ARG(1);
-
     Option(SymId) id = Symbol_Id(verb);
+
+    Element* url = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Is_Url(url));
+
     if (id == SYM_COPY) {
         //
         // https://forum.rebol.info/t/copy-and-port/1699
@@ -234,7 +236,7 @@ REBTYPE(Url)
         return COPY(url);
     }
     else switch (id) {
-      case SYM_TO_P:  // defer to String (handles non-node-having case too)
+      case SYM_TO:  // defer to String (handles non-node-having case too)
         return T_String(level_, verb);
 
       case SYM_REFLECT:
@@ -263,7 +265,7 @@ REBTYPE(Url)
     // The frame was built for the verb we want to apply, so tweak it so that
     // it has the PORT! in the argument slot, and run the action.
     //
-    Move_Cell(D_ARG(1), port);
+    Move_Cell(ARG_N(1), port);
     rebRelease(port);
 
     assert(STATE == STATE_0);  // retriggered frame must act like initial entry

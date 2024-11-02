@@ -291,14 +291,14 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Binary)
+DECLARE_GENERICS(Binary)
 {
-    Value* v = D_ARG(1);
-    assert(Is_Binary(v));
-
     Option(SymId) id = Symbol_Id(verb);
+
+    Value* v = (id == SYM_TO) ? ARG_N(2) : ARG_N(1);
+    assert(Is_Binary(v));
 
     switch (id) {
 
@@ -310,8 +310,8 @@ REBTYPE(Binary)
     //    implementation transformations doesn't fit).  Keep compatible for
     //    right now, but ultimately MAKE or AS should be used for this.
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(REB_BINARY != to);  // TO should have called COPY in this case
@@ -330,8 +330,8 @@ REBTYPE(Binary)
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -346,8 +346,8 @@ REBTYPE(Binary)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -365,7 +365,7 @@ REBTYPE(Binary)
             i = Int32(setval);
         }
         else {
-            // !!! See notes in the REBTYPE(String) about alternate cases
+            // !!! See notes in the DECLARE_GENERICS(String) about alternate cases
             // for the POKE'd value.
             //
             return FAIL(PARAM(value));
@@ -604,7 +604,7 @@ REBTYPE(Binary)
       case SYM_BITWISE_OR:
       case SYM_BITWISE_XOR:
       case SYM_BITWISE_AND_NOT: {
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
         if (not Is_Binary(arg))
             return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
 
@@ -695,7 +695,7 @@ REBTYPE(Binary)
 
       case SYM_SUBTRACT:
       case SYM_ADD: {
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
         Binary* bin = Cell_Binary_Ensure_Mutable(v);
 
         REBINT amount;
@@ -752,7 +752,7 @@ REBTYPE(Binary)
     //-- Special actions:
 
       case SYM_SWAP: {
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             return FAIL(Error_Not_Same_Type_Raw());

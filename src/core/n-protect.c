@@ -359,6 +359,27 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
 
 //
+//  /protect*: native:generic [
+//
+//  "Low-level hook for PROTECT, used as :UPDATER with SET"
+//
+//      return: "Bits referencing cell must update (nullptr if no update needed)"
+//          [~null~ element?]
+//      location "Target value (on some steps, bits are modified)"
+//          [element?]
+//      picker "The property to update (e.g. object field)"
+//          [element?]
+//      value ['protect 'unprotect 'hide]
+//  ]
+//
+DECLARE_NATIVE(protect_p)
+{
+    Element* location = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(location, LEVEL, Canon(PROTECT_P));
+}
+
+
+//
 //  /protect: native [
 //
 //  "Protect a series or a variable from being modified"

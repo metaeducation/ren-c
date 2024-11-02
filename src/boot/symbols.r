@@ -17,7 +17,7 @@ REBOL [
         be quickly used in switch() statements, and a lookup table is on
         hand to turn SYM_XXX integers into the corresponding symbol pointer.
 
-        If new natives or generics are introduced which overlap with the
+        If new natives or otherwise are introduced which overlap with the
         names in this list, then the entry in this list must be removed.
         That means there is no lordering contract about the relative values
         of symbols in this file.  See %lib-words.r for that application.

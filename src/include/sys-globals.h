@@ -80,6 +80,7 @@ PVAR Value PG_Nothing_Value;
 
 PVAR Value PG_Bounce_Redo_Unchecked;
 PVAR Value PG_Bounce_Redo_Checked;
+PVAR Value PG_Bounce_Downshifted;
 PVAR Value PG_Bounce_Thrown;
 PVAR Value PG_Bounce_Continuation;
 PVAR Value PG_Bounce_Delegation;

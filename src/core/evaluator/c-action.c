@@ -912,6 +912,19 @@ Bounce Action_Executor(Level* L)
         STATE = ST_ACTION_TYPECHECKING;
         goto typecheck_then_dispatch;
 
+      case C_DOWNSHIFTED:
+      #if RUNTIME_CHECKS
+        assert(
+            L->executor == &To_Checker_Executor
+            or L->executor == &Cascader_Executor
+            or L->executor == &Copy_Quoter_Executor
+        );
+      #endif
+        assert(TOP_LEVEL->prior == L);
+        L = TOP_LEVEL;
+        assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
+        goto dispatch_phase;
+
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");
     }
@@ -1010,7 +1023,7 @@ Bounce Action_Executor(Level* L)
 //  Push_Action: C
 //
 // Allocate the Array of Values inspected by a function when executed (the
-// Cells behind ARG(name), REF(name), D_ARG(3),  etc.)
+// Cells behind ARG(name), REF(name), ARG_N(3),  etc.)
 //
 // 1. We perform a traversal of the argument slots.  This fills any cells that
 //    have been specialized with the specialized value, and erases cells

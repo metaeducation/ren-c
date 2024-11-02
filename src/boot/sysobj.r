@@ -39,7 +39,6 @@ catalog: construct [
     ; These catalogs are filled in by Init_System_Object()
     ;
     datatypes: null
-    actions: null
     natives: null
     errors: null
 ]

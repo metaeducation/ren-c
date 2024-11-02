@@ -406,19 +406,21 @@ void MF_Parameter(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Parameter)
+DECLARE_GENERICS(Parameter)
 {
-    Value* param = D_ARG(1);
-    Option(SymId) symid = Symbol_Id(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
-    switch (symid) {
+    Element* param = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Is_Parameter(param));
+
+    switch (id) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -450,8 +452,8 @@ REBTYPE(Parameter)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);

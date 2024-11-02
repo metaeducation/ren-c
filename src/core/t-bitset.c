@@ -529,19 +529,21 @@ void Trim_Tail_Zeros(Binary* bin)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Bitset)
+DECLARE_GENERICS(Bitset)
 {
-    Value* v = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
 
-    Option(SymId) sym = Symbol_Id(verb);
-    switch (sym) {
+    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Is_Bitset(v));
+
+    switch (id) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -551,8 +553,8 @@ REBTYPE(Bitset)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -615,7 +617,7 @@ REBTYPE(Bitset)
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
         if (Is_Void(arg))
             return COPY(v);  // don't fail on read only if it would be a no-op
 
@@ -672,7 +674,7 @@ REBTYPE(Bitset)
       case SYM_UNION:
       case SYM_DIFFERENCE:
       case SYM_EXCLUDE: {
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
         if (Is_Bitset(arg)) {
             if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
                 return FAIL("Bitset negation not handled by set operations");
@@ -691,9 +693,9 @@ REBTYPE(Bitset)
             // as simply unioning, because %pdf-maker.r uses this.  General
             // answer is on the Roaring Bitsets branch--this R3 stuff is junk.
             //
-            if (sym == SYM_EXCLUDE) {
+            if (id == SYM_EXCLUDE) {
                 negated_result = true;
-                sym = SYM_UNION;
+                id = SYM_UNION;
             }
             else
                 return FAIL(
@@ -709,7 +711,7 @@ REBTYPE(Bitset)
         // proxy values.
         //
         Value* action;
-        switch (sym) {
+        switch (id) {
           case SYM_INTERSECT:
             action = rebValue("unrun :bitwise-and");
             break;

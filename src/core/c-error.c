@@ -427,7 +427,7 @@ Bounce Makehook_Error(Level* level_, Kind kind, Element* arg) {
         // apply the same logic as if an OBJECT! had been passed in above.
 
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
-        // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
+        // code in DECLARE_GENERICS(Context) and code in DECLARE_NATIVE(construct))
 
         const Element* tail;
         const Element* head = Cell_List_At(&tail, arg);

@@ -950,25 +950,25 @@ void Pick_Or_Poke_Date(
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Date)
+DECLARE_GENERICS(Date)
 {
-    Value* v = D_ARG(1);
-    assert(Is_Date(v));
-
     Option(SymId) id = Symbol_Id(verb);
+
+    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Is_Date(v));
 
     REBLEN day = VAL_DAY(v) - 1;
     REBLEN month = VAL_MONTH(v) - 1;
     REBLEN year = VAL_YEAR(v);
     REBI64 secs = Does_Date_Have_Time(v) ? VAL_NANO(v) : NO_DATE_TIME;
 
-    if (id == SYM_PICK_P) {
+    if (id == SYM_PICK) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-        INCLUDE_PARAMS_OF_PICK_P;
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -976,11 +976,11 @@ REBTYPE(Date)
         Pick_Or_Poke_Date(OUT, v, picker, nullptr);
         return OUT;
     }
-    else if (id == SYM_POKE_P) {
+    else if (id == SYM_POKE) {
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-        INCLUDE_PARAMS_OF_POKE_P;
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -996,7 +996,7 @@ REBTYPE(Date)
     }
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
         REBINT type = VAL_TYPE(arg);
 
         if (type == REB_DATE) {

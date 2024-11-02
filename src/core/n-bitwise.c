@@ -1,0 +1,248 @@
+//
+//  File: %n-bitwise.c
+//  Summary: "Native functions for bitwise math"
+//  Section: natives
+//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  Homepage: https://github.com/metaeducation/ren-c/
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Copyright 2012 REBOL Technologies
+// Copyright 2012-2017 Ren-C Open Source Contributors
+// REBOL is a trademark of REBOL Technologies
+//
+// See README.md and CREDITS.md for more information.
+//
+// Licensed under the Lesser GPL, Version 3.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// https://www.gnu.org/licenses/lgpl-3.0.html
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Note: Instead of individual functions, it was thought that there might
+// be a dialect called BITWISE more generically suited to bitwise manipuation,
+// where words like AND, OR, etc. would not be logic based but bitwise based.
+//
+//     foo: bitwise [(a and b) or c]
+//
+// This idea was held up by questions about binding, e.g. whether the AND,
+// OR, etc. would be keywords or if binding would just override in the
+// block.  With pure virtual binding, it may be feasible to do this using
+// binding instead of recognizing 'and 'or etc. literally.
+//
+
+#include "sys-core.h"
+
+
+//
+//  /bitwise-not: native:generic [
+//
+//  "Returns the one's complement value"
+//
+//      return: [logic? integer! tuple! binary!]
+//      value [logic? integer! tuple! binary!]
+//  ]
+//
+DECLARE_NATIVE(bitwise_not)
+{
+    if (Is_Logic(ARG_N(1))) {
+        bool b1 = Cell_Logic(ARG_N(1));
+        return Init_Logic(OUT, not b1);
+    }
+
+    Element* e = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e, LEVEL, Canon(BITWISE_NOT));
+}
+
+
+INLINE bool Math_Arg_For_Logic(Value* arg)
+{
+    if (Is_Logic(arg))
+        return Cell_Logic(arg);
+
+    if (Is_Blank(arg))
+        return false;
+
+    fail (Error_Unexpected_Type(REB_ANTIFORM, VAL_TYPE(arg)));
+}
+
+
+//
+//  /bitwise-and: native:generic [
+//
+//  "Bitwise AND of two values"
+//
+//      return: [logic? integer! char? tuple! binary!]
+//      value1 [logic? integer! char? tuple! binary!]
+//      value2 [logic? integer! char? tuple! binary!]
+//  ]
+//
+DECLARE_NATIVE(bitwise_and)
+{
+    if (Is_Logic(ARG_N(1))) {
+        bool b1 = Cell_Logic(ARG_N(1));
+        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+        return Init_Logic(OUT, b1 and b2);
+    }
+
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_AND));
+}
+
+
+//
+//  /bitwise-or: native:generic [
+//
+//  "Bitwise OR of two values"
+//
+//      return: [logic? integer! char? tuple! binary!]
+//      value1 [logic? integer! char? tuple! binary!]
+//      value2 [logic? integer! char? tuple! binary!]
+//  ]
+//
+DECLARE_NATIVE(bitwise_or)
+{
+    if (Is_Logic(ARG_N(1))) {
+        bool b1 = Cell_Logic(ARG_N(1));
+        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+        return Init_Logic(OUT, b1 or b2);
+    }
+
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_OR));
+}
+
+
+//
+//  /bitwise-xor: native:generic [
+//
+//  "Bitwise XOR of two values"
+//
+//      return: [logic? integer! char? tuple! binary!]
+//      value1 [logic? integer! char? tuple! binary!]
+//      value2 [logic? integer! char? tuple! binary!]
+//  ]
+//
+DECLARE_NATIVE(bitwise_xor)
+{
+   if (Is_Logic(ARG_N(1))) {
+        bool b1 = Cell_Logic(ARG_N(1));
+        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+        return Init_Logic(OUT, b1 != b2);
+    }
+
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_XOR));
+}
+
+
+//
+//  /bitwise-and-not: native:generic [
+//
+//  "Bitwise AND NOT of two values"
+//
+//      return: [logic? integer! char? tuple! binary!]
+//      value1 [logic? integer! char? tuple! binary!]
+//      value2 [logic? integer! char? tuple! binary!]
+//  ]
+//
+DECLARE_NATIVE(bitwise_and_not)
+{
+   if (Is_Logic(ARG_N(1))) {
+        bool b1 = Cell_Logic(ARG_N(1));
+        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+        return Init_Logic(OUT, b1 and not b2);
+    }
+
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_AND_NOT));
+}
+
+
+//
+// The SHIFT native uses negation of an unsigned number.  Although the
+// operation is well-defined in the C language, it is usually a mistake.
+// MSVC warns about it, so temporarily disable that.
+//
+// !!! The usage of negation of unsigned in SHIFT is from R3-Alpha.  Should it
+// be rewritten another way?
+//
+// http://stackoverflow.com/a/36349666/211160
+//
+#if defined(_MSC_VER) && _MSC_VER > 1800
+    #pragma warning (disable : 4146)
+#endif
+
+
+//
+//  /shift: native [
+//
+//  "Shifts an integer left or right by a number of bits"
+//
+//      return: [integer!]
+//      value [integer!]
+//      bits "Positive for left shift, negative for right shift"
+//          [integer!]
+//      :logical "Logical shift (sign bit ignored)"
+//  ]
+//
+DECLARE_NATIVE(shift)
+{
+    INCLUDE_PARAMS_OF_SHIFT;
+
+    REBI64 b = VAL_INT64(ARG(bits));
+    Value* a = ARG(value);
+
+    if (b < 0) {
+        REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
+        if (c >= 64) {
+            if (REF(logical))
+                mutable_VAL_INT64(a) = 0;
+            else
+                mutable_VAL_INT64(a) >>= 63;
+        }
+        else {
+            if (REF(logical))
+                mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
+            else
+                mutable_VAL_INT64(a) >>= cast(REBI64, c);
+        }
+    }
+    else {
+        if (b >= 64) {
+            if (REF(logical))
+                mutable_VAL_INT64(a) = 0;
+            else if (VAL_INT64(a) != 0)
+                fail (Error_Overflow_Raw());
+        }
+        else {
+            if (REF(logical))
+                mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
+            else {
+                REBU64 c = cast(REBU64, INT64_MIN) >> b;
+                REBU64 d = VAL_INT64(a) < 0
+                    ? - cast(REBU64, VAL_INT64(a)) // again, see #pragma
+                    : cast(REBU64, VAL_INT64(a));
+                if (c <= d) {
+                    if ((c < d) || (VAL_INT64(a) >= 0))
+                        fail (Error_Overflow_Raw());
+
+                    mutable_VAL_INT64(a) = INT64_MIN;
+                }
+                else
+                    mutable_VAL_INT64(a) <<= b;
+            }
+        }
+    }
+
+    return COPY(ARG(value));
+}
+
+
+// See above for the temporary disablement and reasoning.
+//
+#if defined(_MSC_VER) && _MSC_VER > 1800
+    #pragma warning (default : 4146)
+#endif

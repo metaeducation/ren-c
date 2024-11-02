@@ -39,7 +39,7 @@ REBOL [
         used to generate an exception (for now).
 
         Note that if there is `somename` in the class column, that means you
-        will find the ACTION? dispatch for that type in `REBTYPE(Somename)`.
+        will find the ACTION? dispatch for that type in `DECLARE_GENERICS(Somename)`.
     }--
     Notes: --{
       * Code should avoid dependence on exact values of the heart bytes.
@@ -470,17 +470,17 @@ pair        "two dimensional point or size"
 quasiform   "value which evaluates to an antiform"
             (:node1 :node2)
             []
-            [quasiform    +       - ]
+            [-          -       - ]
 
 quoted      "container for arbitrary levels of quoting"
             (:node1 :node2)
             [any-branch?]
-            [quoted       +       -]
+            [-           -       -]
 
 antiform    "special states that cannot be stored in blocks"
             (:node1 :node2)
             []
-            [quoted       +       -]
+            [-           -       -]
 
 
 ; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)

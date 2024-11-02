@@ -44,7 +44,7 @@
 //
 //  CT_Quoted: C
 //
-// !!! Currently, in order to have a GENERIC dispatcher (e.g. REBTYPE())
+// !!! Currently, in order to have a GENERIC dispatcher (e.g. DECLARE_GENERICS())
 // then one also must implement a comparison function.  However, compare
 // functions specifically take noquote cells, so you can't pass REB_QUOTED to
 // them.  The handling for QUOTED? is in the comparison dispatch itself.
@@ -54,68 +54,6 @@ REBINT CT_Quoted(const Cell* a, const Cell* b, bool strict)
     UNUSED(a); UNUSED(b); UNUSED(strict);
     assert(!"CT_Quoted should never be called");
     return 0;
-}
-
-
-//
-//  Makehook_Quoted: C
-//
-// !!! This can be done with QUOTE (currently EVAL) which has the ability
-// to take a refinement of how deep.  Having a MAKE variant may be good or
-// may not be good; if it were to do a level more than 1 it would need to
-// take a BLOCK! with an INTEGER! and the value.  :-/
-//
-Bounce Makehook_Quoted(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_QUOTED);
-    UNUSED(kind);
-
-    return Quotify(Copy_Cell(OUT, arg), 1);
-}
-
-
-//
-//  REBTYPE: C
-//
-// It was for a time considered whether generics should be willing to operate
-// on QUOTED!.  e.g. "do whatever the non-quoted version would do, then add
-// the quotedness onto the result".
-//
-//     >> add (the '''1) 2
-//     == '''3
-//
-//     >> first the '[a b c]
-//     == a
-//
-// While a bit outlandish for ADD, it might seem to make more sense for FIND
-// and SELECT when you have a QUOTED! block or GROUP!.  However, the solution
-// that emerged after trying other options was to make REQUOTE:
-//
-// https://forum.rebol.info/t/1035
-//
-// So the number of things supported by QUOTED is limited to COPY at this time.
-//
-REBTYPE(Quoted)
-{
-    // Note: SYM_REFLECT is handled directly in the REFLECT native
-    //
-    switch (Symbol_Id(verb)) {
-      case SYM_COPY: {  // D_ARG(1) skips RETURN in first arg slot
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(REF(part));
-        UNUSED(REF(deep));
-
-        REBLEN num_quotes = Dequotify(ARG(value));
-        bool threw = Run_Generic_Dispatch_Throws(ARG(value), level_, verb);
-        assert(not threw);  // can't throw
-        UNUSED(threw);
-
-        return Quotify(stable_OUT, num_quotes); }
-
-      default:
-        break;
-    }
-
-    return FAIL("QUOTED? has no GENERIC operations (use NOQUOTE or REQUOTE)");
 }
 
 

@@ -202,29 +202,10 @@ print newline
 clear output-buffer
 
 
-=== "GENERATE PROCESSED FILES FOR GENERICS" ===
-
-generic-names: copy []
-stripped-generics: stripload:gather (join src-dir %boot/generics.r) $generic-names
-
-write-if-changed (join output-dir %boot/tmp-generics-stripped.r) unspaced [
-    "[" newline
-    stripped-generics
-    "'~done~  ; C code checks for this eval product" newline
-    "]" newline
-]
-
-write-if-changed (join output-dir %boot/tmp-generic-names.r) unspaced [
-    mold generic-names
-    newline
-]
-
-
 === "EMIT INCLUDE_PARAMS_OF_XXX AUTOMATIC MACROS" ===
 
 ; This used to be done in %make-headers.r, but we handle this here because we
-; still have the individual specs for the natives on hand.  The generics need
-; to be parsed.
+; still have the individual specs for the natives on hand.
 
 mkdir:deep (join output-dir %include/)
 
@@ -234,21 +215,6 @@ e-params: make-emitter "PARAM() and REFINE() Automatic Macros" (
 
 for-each 'info all-protos [
     emit-include-params-macro e-params info.proto
-]
-
-blockrule: ["[" opt some [blockrule | not ahead "]" one] "]"]
-
-proto: ~
-parse3 stripped-generics [
-    some newline  ; skip newlines
-    opt some [
-        proto: across [
-            thru ":" space "generic" space blockrule
-        ]
-        (emit-include-params-macro e-params proto)
-            |
-        one
-    ]
 ]
 
 e-params/write-emitted

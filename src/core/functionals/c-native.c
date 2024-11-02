@@ -204,11 +204,14 @@ Phase* Make_Native(
 //      spec [block!]
 //      :combinator "This native is an implementation of a PARSE keyword"
 //      :intrinsic "This native can be called without building a frame"
+//      :generic "This native delegates to type-specific code"
 //  ]
 //
 DECLARE_NATIVE(native)
 {
     INCLUDE_PARAMS_OF_NATIVE;
+
+    UNUSED(ARG(generic));  // commentary only, at this time
 
     if (not g_native_cfunc_pos)
         return FAIL(
@@ -349,11 +352,18 @@ Source* Startup_Natives(const Element* boot_natives)
     PG_Currently_Loading_Module = nullptr;
 
   #if RUNTIME_CHECKS  // ensure a couple of functions can be looked up by ID
-    if (not Is_Action(Lib(GENERIC)))
-        panic (Lib(GENERIC));
+    if (not Is_Action(Lib(FOR_EACH)))
+        panic (Lib(FOR_EACH));
 
     if (not Is_Action(Lib(PARSE_REJECT)))
         panic (Lib(PARSE_REJECT));
+
+    Count num_append_args = ACT_NUM_PARAMS(VAL_ACTION(Lib(APPEND)));
+    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(Lib(INSERT))));
+    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(Lib(CHANGE))));
+
+    Count num_find_args = ACT_NUM_PARAMS(VAL_ACTION(Lib(FIND)));
+    assert(num_find_args == ACT_NUM_PARAMS(VAL_ACTION(Lib(SELECT))));
   #endif
 
     return catalog;

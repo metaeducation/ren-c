@@ -64,9 +64,9 @@ REBINT CT_Comma(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Comma)
+DECLARE_GENERICS(Comma)
 {
     switch (Symbol_Id(verb)) {
       case SYM_COPY: { // since (copy:deep [1, 2]) is legal, allow (copy ',)

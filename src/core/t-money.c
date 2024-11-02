@@ -171,20 +171,20 @@ static Value* Math_Arg_For_Money(
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Money)
+DECLARE_GENERICS(Money)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Value* v = D_ARG(1);
+    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
 
     switch (id) {
 
     //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(REB_MONEY != to);  // TO calls COPY in this case
@@ -213,35 +213,35 @@ REBTYPE(Money)
         return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
 
       case SYM_ADD: {
-        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Money(
             OUT,
             deci_add(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_SUBTRACT: {
-        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Money(
             OUT,
             deci_subtract(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_MULTIPLY: {
-        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Money(
             OUT,
             deci_multiply(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_DIVIDE: {
-        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Money(
             OUT,
             deci_divide(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_REMAINDER: {
-        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Money(
             OUT,
             deci_mod(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))

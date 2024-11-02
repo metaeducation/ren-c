@@ -416,13 +416,14 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Utf8)
+DECLARE_GENERICS(Utf8)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Value* issue = D_ARG(1);
+    Element* issue = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Any_Utf8(issue) and not Any_String(issue));
 
     switch (id) {
       case SYM_REFLECT: {
@@ -455,7 +456,7 @@ REBTYPE(Utf8)
 
   //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
 
-      case SYM_TO_P:
+      case SYM_TO:
         return T_String(level_, verb);  // written to handle non-node cases
 
       default:
@@ -468,8 +469,8 @@ REBTYPE(Utf8)
     }
 
     switch (id) {
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -510,12 +511,12 @@ REBTYPE(Utf8)
 
     switch (id) {
       case SYM_ADD: {
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         chr += arg;
         break; }
 
       case SYM_SUBTRACT: {
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
 
         // Rebol2 and Red return CHAR! values for subtraction from another
         // CHAR! (though Red checks for overflow and errors on something like
@@ -524,7 +525,7 @@ REBTYPE(Utf8)
         // R3-Alpha chose to return INTEGER! and gave a signed difference, so
         // the above would give -1.
         //
-        if (IS_CHAR(D_ARG(2))) {
+        if (IS_CHAR(ARG_N(2))) {
             Init_Integer(OUT, chr - arg);
             return OUT;
         }
@@ -533,19 +534,19 @@ REBTYPE(Utf8)
         break; }
 
       case SYM_MULTIPLY:
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         chr *= arg;
         break;
 
       case SYM_DIVIDE:
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         if (arg == 0)
             return FAIL(Error_Zero_Divide_Raw());
         chr /= arg;
         break;
 
       case SYM_REMAINDER:
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         if (arg == 0)
             return FAIL(Error_Zero_Divide_Raw());
         chr %= arg;
@@ -556,22 +557,22 @@ REBTYPE(Utf8)
         break;
 
       case SYM_BITWISE_AND:
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         chr &= cast(Codepoint, arg);
         break;
 
       case SYM_BITWISE_OR:
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         chr |= cast(Codepoint, arg);
         break;
 
       case SYM_BITWISE_XOR:
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         chr ^= cast(Codepoint, arg);
         break;
 
       case SYM_BITWISE_AND_NOT:
-        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        arg = Math_Arg_For_Char(ARG_N(2), verb);
         chr &= cast(Codepoint, ~arg);
         break;
 

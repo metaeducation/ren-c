@@ -46,10 +46,10 @@ INLINE Bounce Run_Pickpoke_Dispatch(
     const Symbol* verb,
     const Value* new_location
 ){
-    Copy_Cell(PUSH(), D_ARG(1));
-    Copy_Cell(D_ARG(1), new_location);
-    Bounce r = Run_Generic_Dispatch_Core(D_ARG(1), level_, verb);
-    Move_Drop_Top_Stack_Value(D_ARG(1));
+    Copy_Cell(PUSH(), ARG_N(1));
+    Copy_Cell(ARG_N(1), new_location);
+    Bounce r = Run_Generic_Dispatch(cast(Element*, ARG_N(1)), level_, verb);
+    Move_Drop_Top_Stack_Value(ARG_N(1));
     return r;
 }
 

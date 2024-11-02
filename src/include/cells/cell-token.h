@@ -41,11 +41,13 @@
 //   will also cache that codepoint.  Hence a CHAR? cell has both the UTF-8
 //   representation and the codepoint on hand locally in the cell.
 //
-// * The 0 codepoint ("NUL") is a valid ISSUE! -but- it can not appear in an
-//   ANY-STRING?.  Only BINARY! can have embedded zero bytes.  For strings it
-//   is kept for termination, so that only one return result is needed from
-//   APIs like rebSpell().  All efforts are being made to make it as easy to
-//   work with a BINARY! on string-like tasks where internal 0 bytes are ok.
+// * Historical Redbol supported a ^(NULL) codepoint, e.g. '\0', but Ren-C
+//   deemed it to be not worth the trouble.  Only BINARY! can have embedded
+//   zero bytes.  For strings it is termination only...so that only one return
+//   result is needed from APIs like rebSpell().
+//
+//   All efforts are being made to make it as easy to work with a BINARY! on
+//   string-like tasks where internal 0 bytes are ok.
 //
 
 
@@ -56,7 +58,7 @@ INLINE bool IS_CHAR_CELL(const Cell* v) {
     if (Stringlike_Has_Node(v))
         return false;  // allocated form, too long to be a character
 
-    return EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] <= 1;  // codepoint
+    return EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
 }
 
 INLINE bool IS_CHAR(const Atom* v) {
@@ -69,7 +71,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* v) {
     assert(not Stringlike_Has_Node(v));
 
     if (EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 0)
-        return 0;  // no '\0` bytes internal to ANY-UTF8! series
+        fail (g_error_illegal_zero_byte);  // no '\0' codepoint exposed
 
     assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
 

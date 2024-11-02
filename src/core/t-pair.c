@@ -29,6 +29,24 @@
 
 
 //
+//  /as-pair: native [
+//
+//  "Combine X and Y values into a pair"
+//
+//      return: [pair!]
+//      x [integer!]
+//      y [integer!]
+//  ]
+//
+DECLARE_NATIVE(as_pair)
+{
+    INCLUDE_PARAMS_OF_AS_PAIR;
+
+    return Init_Pair(OUT, VAL_INT64(ARG(x)), VAL_INT64(ARG(y)));
+}
+
+
+//
 //  CT_Pair: C
 //
 REBINT CT_Pair(const Cell* a, const Cell* b, bool strict)
@@ -166,7 +184,7 @@ REBINT Index_From_Picker_For_Pair(
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // !!! R3-Alpha turned all the PAIR! operations from integer to decimal, but
 // they had floating point precision (otherwise you couldn't fit a full cell
@@ -179,22 +197,23 @@ REBINT Index_From_Picker_For_Pair(
 // REVERSE swapping X and Y), this chains to retrigger the action onto the
 // pair elements and then return a pair made of that.
 //
-REBTYPE(Pair)
+DECLARE_GENERICS(Pair)
 {
-    Value* v = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
 
+    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     Value* x1 = Cell_Pair_First(v);
     Value* y1 = Cell_Pair_Second(v);
 
     Value* x2 = nullptr;
     Value* y2 = nullptr;
 
-    switch (Symbol_Id(verb)) {
+    switch (id) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -206,8 +225,8 @@ REBTYPE(Pair)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -231,9 +250,9 @@ REBTYPE(Pair)
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
       case SYM_MULTIPLY:
-        if (Is_Pair(D_ARG(2))) {
-            x2 = Cell_Pair_First(D_ARG(2));
-            y2 = Cell_Pair_Second(D_ARG(2));
+        if (Is_Pair(ARG_N(2))) {
+            x2 = Cell_Pair_First(ARG_N(2));
+            y2 = Cell_Pair_Second(ARG_N(2));
         }
         break;  // delegate to pairwise operation
 
@@ -254,14 +273,14 @@ REBTYPE(Pair)
         Level_Label(level_)
     );
 
-    Copy_Cell(D_ARG(1), x1);
+    Copy_Cell(ARG_N(1), x1);
     if (x2)
-        Copy_Cell(D_ARG(2), x2);  // use extracted arg x instead of pair arg
+        Copy_Cell(ARG_N(2), x2);  // use extracted arg x instead of pair arg
     Value* x_frame = rebValue(Canon(COPY), rebQ(frame));
 
-    Copy_Cell(D_ARG(1), y1);
+    Copy_Cell(ARG_N(1), y1);
     if (y2)
-        Copy_Cell(D_ARG(2), y2);  // use extracted arg y instead of pair arg
+        Copy_Cell(ARG_N(2), y2);  // use extracted arg y instead of pair arg
     Value* y_frame = rebValue(Canon(COPY), rebQ(frame));
 
     return rebValue(

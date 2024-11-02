@@ -27,6 +27,31 @@
 
 
 //
+//  /try: native [
+//
+//  "Suppress failure from raised errors or VOID, by returning NULL"
+//
+//      return: [any-value?]
+//      ^atom [any-atom?]  ; e.g. TRY on a pack returns the pack
+//  ]
+//
+DECLARE_NATIVE(try)
+{
+    INCLUDE_PARAMS_OF_TRY;
+
+    Element* meta = cast(Element*, ARG(atom));
+
+    if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
+        return Init_Nulled(OUT);
+
+    if (Is_Meta_Of_Raised(meta))
+        return nullptr;
+
+    return UNMETA(meta);  // !!! also tolerates other antiforms, should it?
+}
+
+
+//
 //  /enrescue: native [
 //
 //  "Sandbox code to intercept failures at ANY depth (including typos)"

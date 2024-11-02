@@ -56,6 +56,6 @@
 // that map their argument names to indices in the frame.  This defines the
 // macros like INCLUDE_ARGS_FOR_INSERT which then allow you to naturally
 // write things like REF(part) and ARG(limit), instead of the brittle integer
-// based system used in R3-Alpha such as D_REF(7) and D_ARG(3).
+// based system used in R3-Alpha such as D_REF(7) and ARG_N(3).
 //
 #include "tmp-paramlists.h"

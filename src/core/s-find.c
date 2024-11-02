@@ -155,21 +155,7 @@ REBINT Find_Binstr_In_Binstr(
     Size size2;
     Length len2;
     const Byte* head2;
-    if (IS_CHAR_CELL(binstr2) and Cell_Codepoint(binstr2) == 0) {
-        //
-        // !!! Inelegant handling of `find #{00} #`, which should work, while
-        // `find "" #` should not happen as NUL cannot exist in TEXT!, only
-        // in BINARY!.
-        //
-        assert(Cell_Heart(binstr1) == REB_BINARY);
-        head2 = c_cast(Byte*, "\0");
-        size2 = 1;
-        if (limit2 and *(unwrap limit2) < size2)
-            size2 = *(unwrap limit2);
-        len2 = 1;
-        is_2_str = false;
-    }
-    else if (is_2_str) {
+    if (is_2_str) {
         head2 = Cell_Utf8_Len_Size_At_Limit(
             &len2,
             &size2,

@@ -702,17 +702,16 @@ void MF_List(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // Implementation of type dispatch for ANY-LIST? (ANY-BLOCK? and ANY-GROUP?)
 //
-REBTYPE(List)
+DECLARE_GENERICS(List)
 {
-    Value* list = D_ARG(1);
-
-    Context* binding = Cell_List_Binding(list);
-
     Option(SymId) id = Symbol_Id(verb);
+
+    Element* list = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Context* binding = Cell_List_Binding(list);
 
     switch (id) {
       case SYM_REFLECT: {
@@ -733,11 +732,11 @@ REBTYPE(List)
         if (not Is_Type_Block(type))
             return FAIL(Error_Bad_Make(VAL_TYPE(list), def));
 
-        Kind kind = VAL_TYPE_KIND(type);
+        Heart heart = VAL_TYPE_HEART(type);
 
-        MakeHook* hook = Makehook_For_Kind(kind);
+        MakeHook* hook = Makehook_For_Heart(heart);
 
-        Bounce b = hook(level_, kind, def);  // might throw, fail...
+        Bounce b = hook(level_, heart, def);  // might throw, fail...
         if (b == BOUNCE_DELEGATE)
             return b;  // !!! Doesn't check result if continuation used, review
         if (b == BOUNCE_THROWN)
@@ -746,7 +745,7 @@ REBTYPE(List)
         if (r != nullptr) {
             if (Is_Raised(r))
                 return r;
-            if (VAL_TYPE(r) == kind)
+            if (VAL_TYPE(r) == heart)
                 return r;
         }
         return RAISE("MAKE dispatcher did not return correct type"); }
@@ -772,8 +771,8 @@ REBTYPE(List)
   //    Between those two possibilities, acting on a single element block
   //    with a word in it is common behavior.  Do that as a placeholder.
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // list
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(Cell_Heart(list) != to);  // TO calls COPY in this case
@@ -829,8 +828,8 @@ REBTYPE(List)
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -847,8 +846,8 @@ REBTYPE(List)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -1311,12 +1310,12 @@ REBTYPE(List)
       case SYM_RENAME: {
         //
         // !!! We are going to "re-apply" the call frame with routines we
-        // are going to read the D_ARG(1) slot *implicitly* regardless of
+        // are going to read the ARG_N(1) slot *implicitly* regardless of
         // what value points to.
         //
-        const Value* made = rebValue("make port! @", D_ARG(1));
+        const Value* made = rebValue("make port! @", ARG_N(1));
         assert(Is_Port(made));
-        Copy_Cell(D_ARG(1), made);
+        Copy_Cell(ARG_N(1), made);
         rebRelease(made);
         return BOUNCE_CONTINUE; }  // should dispatch to the PORT!
 

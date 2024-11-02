@@ -366,3 +366,160 @@ Flex* Make_Set_Operation_Flex(
 
     return out_flex;
 }
+
+
+//
+//  /complement: native:generic [
+//
+//  "Returns the inversion of a set"
+//
+//      return: [bitset!]
+//      value [bitset!]
+//  ]
+//
+DECLARE_NATIVE(complement)
+{
+    Element* e = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e, LEVEL, Canon(COMPLEMENT));
+}
+
+
+//
+//  /intersect: native:generic [
+//
+//  "Returns the intersection (AND) of two sets"
+//
+//      return: [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//      ]
+//      value1 [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//      ]
+//      value2 [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//      ]
+//      :case "Uses case-sensitive comparison"
+//      :skip "Treat the series as records of fixed size"
+//          [integer!]
+//  ]
+//
+DECLARE_NATIVE(intersect)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(INTERSECT));
+}
+
+
+//
+//  /union: native:generic [
+//
+//  "Returns the union (OR) of two sets"
+//
+//      return: [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//      ]
+//      value1 [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//      ]
+//      value2 [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//      ]
+//      :case "Use case-sensitive comparison"
+//      :skip "Treat the series as records of fixed size"
+//          [integer!]
+//  ]
+//
+DECLARE_NATIVE(union)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(UNION));
+}
+
+
+//
+//  /difference: native:generic [
+//
+//  "Returns the special difference (XOR) of two sets"
+//
+//      return: [
+//          integer! char? tuple!
+//          any-list? any-string? bitset!
+//          binary!
+//          time!  ; !!! Under review, this really doesn't fit
+//      ]
+//      value1 [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//          date!  ; !!! Under review, this really doesn't fit
+//      ]
+//      value2 [
+//          integer! char? tuple!  ; math
+//          any-list? any-string? bitset!  ; sets
+//          binary!  ; ???
+//          date!  ; !!! Under review, this really doesn't fit
+//      ]
+//      :case "Uses case-sensitive comparison"
+//      :skip "Treat the series as records of fixed size"
+//          [integer!]
+//  ]
+//
+DECLARE_NATIVE(difference)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(DIFFERENCE));
+}
+
+
+//
+//  /exclude: native:generic [
+//
+//  "Returns the first data set less the second data set"
+//
+//      return: [any-list? any-string? binary! bitset!]
+//      data "original data"
+//          [any-list? any-string? binary! bitset!]
+//      exclusions "data to exclude from series"
+//          [any-list? any-string? binary! bitset!]
+//      :case "Uses case-sensitive comparison"
+//      :skip "Treat the series as records of fixed size"
+//          [integer!]
+//  ]
+//
+DECLARE_NATIVE(exclude)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(EXCLUDE));
+}
+
+
+//
+//  /unique: native:generic [
+//
+//  "Returns the data set with duplicates removed"
+//
+//      return: [any-list? any-string? binary! bitset!]
+//      series [any-list? any-string? binary! bitset!]
+//      <local> dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
+//      :case "Use case-sensitive comparison (except bitsets)"
+//      :skip "Treat the series as records of fixed size"
+//          [integer!]
+//  ]
+//
+DECLARE_NATIVE(unique)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(UNIQUE));
+}

@@ -124,14 +124,17 @@ DECLARE_NATIVE(pick)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    UNUSED(ARG(picker));
+    Value* picker = ARG(picker);
 
-    // !!! Here we are assuming frame compatibility of PICK with PICK*.
-    // This would be more formalized if we were writing this in usermode and
-    // made PICK an ENCLOSE of PICK*.  But to get a fast native, we don't have
-    // enclose...so this is an approximation.  Review ensuring this is "safe".
-    //
-    return Run_Generic_Dispatch_Core(ARG(location), level_, Canon(PICK_P));
+    if (Is_Okay(picker)) {
+        Init_Integer(picker, 1);
+    }
+    else if (Is_Nulled(picker)) {
+        Init_Integer(picker, 2);
+    }
+
+    Element* location = cast(Element*, ARG(location));
+    return Run_Generic_Dispatch(location, LEVEL, Canon(PICK));
 }
 
 
@@ -140,56 +143,35 @@ DECLARE_NATIVE(pick)
 //
 //  "Perform a path poking operation, same as `(location).(picker): :value`"
 //
-//      return: "Same as poked value"
-//          [any-value?]
+//      return: "Updated location state"  ; not the input value, see [1]
+//          [~null~ element?]
 //      location "(modified)"
 //          [<maybe> element?]
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element?]
 //      value [any-value?]
-//      :immediate "Allow modification even if it will not mutate location"
 //  ]
 //
 DECLARE_NATIVE(poke)
 //
-// As with PICK, POKE is changed in Ren-C from its own action to "whatever
-// tuple-setting (now tuple-poking) would do".
+// Note: In Ren-C, POKE underlies the implementation of SET on TUPLE!.
+// For it to work, the return value is the cell contents that should be
+// written back for immediate types.  This makes its return value somewhat
+// useless for users, as it's an implementation detail, that if anything
+// signals an error.
 //
-// !!! Frame compatibility is assumed here with PICK-POKE*, for efficiency.
+// For instance, if the overall result isn't null here, that means there was
+// a modification which nothing is writing back.  It would be like saying:
+//
+//     >> poke 12-Dec-2012 'year 1999
+//     == 12-Dec-1999
+//
+// Because the return value is not null, it's telling you that if a tuple
+// was being poked with the value (e.g. obj.date.year: 1999) then the bits
+// in obj.date would have to be changed.
 {
-    INCLUDE_PARAMS_OF_POKE;
-
-    UNUSED(ARG(picker));
-    Value* location = ARG(location);
-    Value* v = ARG(value);
-
-    Set_Cell_Flag(v, PROTECTED);  // want to return as final result
-
-    // !!! Here we are assuming frame compatibility of POKE with POKE*.
-    // This would be more formalized if we were writing this in usermode and
-    // made POKE an ENCLOSE of POKE*.  But to get a fast native, we don't have
-    // enclose...so this is an approximation.  Review ensuring this is "safe".
-    //
-    Bounce r = Run_Generic_Dispatch_Core(location, level_, Canon(POKE_P));
-    if (r == BOUNCE_THROWN)
-        return THROWN;
-    assert(r == nullptr or Is_Bounce_An_Atom(r));  // other signals invalid
-
-    // Note: if r is not nullptr here, that means there was a modification
-    // which nothing is writing back.  It would be like saying:
-    //
-    //    >> (12-Dec-2012).year: 1999
-    //    == 1999
-    //
-    // The date was changed, but there was no side effect.  These types of
-    // operations are likely accidents and should raise errors.
-    //
-    if (r != nullptr and not REF(immediate))
-        return FAIL(
-            "POKE of immediate won't change value, use :IMMEDIATE if okay"
-        );
-
-    return COPY(v);  // return the value we got in
+    Element* location = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(location, LEVEL, Canon(POKE));
 }
 
 

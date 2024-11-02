@@ -46,6 +46,216 @@
 
 
 //
+//  /negate: native:generic [
+//
+//  "Changes the sign of a number (see COMPLEMENT for inversion of sets)"
+//
+//      return: [any-number? pair! money! time!]
+//      number [any-number? pair! money! time!]
+//  ]
+//
+DECLARE_NATIVE(negate)
+{
+    Element* number = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(number, LEVEL, Canon(NEGATE));
+}
+
+
+//
+//  /add: native:generic [
+//
+//  "Returns the addition of two values"
+//
+//      return: [char? any-scalar? date! binary!]
+//      value1 [char? any-scalar? date! binary!]
+//      value2 [char? any-scalar? date!]
+//  ]
+//
+DECLARE_NATIVE(add)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(ADD));
+}
+
+
+//
+//  /subtract: native:generic [
+//
+//  "Returns the second value subtracted from the first"
+//
+//      return: [char? any-scalar? date! binary!]
+//      value1 [char? any-scalar? date! binary!]
+//      value2 [char? any-scalar? date!]
+//  ]
+//
+DECLARE_NATIVE(subtract)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(SUBTRACT));
+}
+
+
+//
+//  /multiply: native:generic [
+//
+//  "Returns the second value subtracted from the first"
+//
+//      return: [char? any-scalar?]
+//      value1 [char? any-scalar?]
+//      value2 [char? any-scalar?]
+//  ]
+//
+DECLARE_NATIVE(multiply)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(MULTIPLY));
+}
+
+
+//
+//  /divide: native:generic [
+//
+//  "Returns the first value divided by the second"
+//
+//      return: [char? any-scalar?]
+//      value1 [char? any-scalar?]
+//      value2 [char? any-scalar?]
+//  ]
+//
+DECLARE_NATIVE(divide)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(DIVIDE));
+}
+
+
+
+//
+//  /remainder: native:generic [
+//
+//  "Returns the remainder of first value divided by second"
+//
+//      return: [char? any-scalar?]
+//      value1 [char? any-scalar?]
+//      value2 [char? any-scalar?]
+//  ]
+//
+DECLARE_NATIVE(remainder)
+{
+    Element* e1 = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e1, LEVEL, Canon(REMAINDER));
+}
+
+
+//
+//  /power: native:generic [
+//
+//  "Returns the first number raised to the second number"
+//
+//      return: [any-number?]
+//      number [any-number?]
+//      exponent [any-number?]
+//  ]
+//
+DECLARE_NATIVE(power)
+{
+    Element* number = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(number, LEVEL, Canon(POWER));
+}
+
+
+//
+//  /absolute: native:generic [
+//
+//  "Returns the absolute value"
+//
+//      return: [any-number? pair! money! time!]
+//      value [any-number? pair! money! time!]
+//  ]
+//
+DECLARE_NATIVE(absolute)
+{
+    Element* e = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e, LEVEL, Canon(ABSOLUTE));
+}
+
+
+//
+//  /round: native:generic [
+//
+//  "Returns the first number raised to the second number"
+//
+//      return: [any-number? pair! money! time!]
+//      value [any-number? pair! money! time!]
+//      :to "Return the nearest multiple of the parameter (must be non-zero)"
+//          [any-number? money! time!]
+//      :even "Halves round toward even results"
+//      :down "Round toward zero, ignoring discarded digits. (truncate)"
+//      :half-down "Halves round toward zero"
+//      :floor "Round in negative direction"
+//      :ceiling "Round in positive direction"
+//      :half-ceiling "Halves round in positive direction"
+//  ]
+//
+DECLARE_NATIVE(round)
+{
+    Element* e = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(e, LEVEL, Canon(ROUND));
+}
+
+
+//
+//  /odd?: native:generic [
+//
+//  "Returns OKAY if the number is odd"
+//
+//      return: [logic?]
+//      number [any-number? char? date! money! time! pair!]
+//  ]
+//
+DECLARE_NATIVE(odd_q)
+{
+    Element* number = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(number, LEVEL, Canon(ODD_Q));
+}
+
+
+//
+//  /even?: native:generic [
+//
+//  "Returns OKAY if the number is even"
+//
+//      return: [logic?]
+//      number [any-number? char? date! money! time! pair!]
+//  ]
+//
+DECLARE_NATIVE(even_q)
+{
+    Element* number = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(number, LEVEL, Canon(EVEN_Q));
+}
+
+
+//
+//  /random: native:generic [
+//
+//  "Rounds a numeric value; halves round up (away from zero) by default"
+//
+//      return: [~ element?]  ; !!! nothing if :SEED, should be RANDOMIZE?
+//      value "Maximum value of result (modified when series)"
+//      :seed "Restart or randomize"
+//      :secure "Returns a cryptographically secure random number"
+//      :only "Pick a random value from a series"  ; !!! consider SHUFFLE
+//  ]
+//
+DECLARE_NATIVE(random)
+{
+    Element* number = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(number, LEVEL, Canon(RANDOM));
+}
+
+
+//
 //  Trig_Value: C
 //
 // Convert integer arg, if present, to decimal and convert to radians
@@ -350,94 +560,6 @@ DECLARE_NATIVE(square_root)
 }
 
 
-
-//
-// The SHIFT native uses negation of an unsigned number.  Although the
-// operation is well-defined in the C language, it is usually a mistake.
-// MSVC warns about it, so temporarily disable that.
-//
-// !!! The usage of negation of unsigned in SHIFT is from R3-Alpha.  Should it
-// be rewritten another way?
-//
-// http://stackoverflow.com/a/36349666/211160
-//
-#if defined(_MSC_VER) && _MSC_VER > 1800
-    #pragma warning (disable : 4146)
-#endif
-
-
-//
-//  /shift: native [
-//
-//  "Shifts an integer left or right by a number of bits"
-//
-//      return: [integer!]
-//      value [integer!]
-//      bits "Positive for left shift, negative for right shift"
-//          [integer!]
-//      :logical "Logical shift (sign bit ignored)"
-//  ]
-//
-DECLARE_NATIVE(shift)
-{
-    INCLUDE_PARAMS_OF_SHIFT;
-
-    REBI64 b = VAL_INT64(ARG(bits));
-    Value* a = ARG(value);
-
-    if (b < 0) {
-        REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
-        if (c >= 64) {
-            if (REF(logical))
-                mutable_VAL_INT64(a) = 0;
-            else
-                mutable_VAL_INT64(a) >>= 63;
-        }
-        else {
-            if (REF(logical))
-                mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
-            else
-                mutable_VAL_INT64(a) >>= cast(REBI64, c);
-        }
-    }
-    else {
-        if (b >= 64) {
-            if (REF(logical))
-                mutable_VAL_INT64(a) = 0;
-            else if (VAL_INT64(a) != 0)
-                fail (Error_Overflow_Raw());
-        }
-        else {
-            if (REF(logical))
-                mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
-            else {
-                REBU64 c = cast(REBU64, INT64_MIN) >> b;
-                REBU64 d = VAL_INT64(a) < 0
-                    ? - cast(REBU64, VAL_INT64(a)) // again, see #pragma
-                    : cast(REBU64, VAL_INT64(a));
-                if (c <= d) {
-                    if ((c < d) || (VAL_INT64(a) >= 0))
-                        fail (Error_Overflow_Raw());
-
-                    mutable_VAL_INT64(a) = INT64_MIN;
-                }
-                else
-                    mutable_VAL_INT64(a) <<= b;
-            }
-        }
-    }
-
-    return COPY(ARG(value));
-}
-
-
-// See above for the temporary disablement and reasoning.
-//
-#if defined(_MSC_VER) && _MSC_VER > 1800
-    #pragma warning (default : 4146)
-#endif
-
-
 //  CT_Fail: C
 //
 REBINT CT_Fail(const Cell* a, const Cell* b, bool strict)
@@ -565,8 +687,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
     // At this point, the types should match...e.g. be able to be passed to
     // the same comparison dispatcher.  They might not be *exactly* equal.
     //
-    COMPARE_HOOK *hook = Compare_Hook_For_Type_Of(a);
-    assert(Compare_Hook_For_Type_Of(b) == hook);
+    CompareHook* hook = Compare_Hook_For_Heart(Cell_Heart(a));
+    assert(Compare_Hook_For_Heart(Cell_Heart(b)) == hook);
 
     REBINT diff = hook(a, b, strict);
     assert(diff == 0 or diff == 1 or diff == -1);

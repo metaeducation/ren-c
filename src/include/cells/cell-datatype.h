@@ -122,34 +122,17 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
 // from being "unhooked" to "hooked" meant they needed to be non-const.  The
 // importance of that design goal should be reviewed.
 //
-extern CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
+extern CFunction* Builtin_Type_Hooks[REB_MAX_HEART][IDX_HOOKS_MAX];
 
 
-// The datatype only knows a symbol.  Have to look that symbol up to get the
-// list of hooks registered by the extension providing the custom type.
-//
-INLINE CFunction** VAL_TYPE_HOOKS(const Cell* type) {
-    Kind k = VAL_TYPE_KIND(type);
-    assert(k < REB_MAX);
-    return Builtin_Type_Hooks[k];
-}
+INLINE GenericHook* Generic_Hook_For_Heart(Heart h)
+  { return cast(GenericHook*, Builtin_Type_Hooks[h][IDX_GENERIC_HOOK]); }
 
-INLINE CFunction** HOOKS_FOR_TYPE_OF(const Cell* v) {
-    Heart heart = Cell_Heart(v);
-    return Builtin_Type_Hooks[heart];
-}
+INLINE CompareHook* Compare_Hook_For_Heart(Heart h)
+  { return cast(CompareHook*, Builtin_Type_Hooks[h][IDX_COMPARE_HOOK]); }
 
-#define Symbol_Hook_For_Type_Of(v) \
-    cast(SYMBOL_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_SYMBOL_HOOK])
+INLINE MakeHook* Makehook_For_Heart(Heart h)
+  { return cast(MakeHook*, Builtin_Type_Hooks[h][IDX_MAKE_HOOK]); }
 
-#define Generic_Hook_For_Type_Of(v) \
-    cast(GENERIC_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_GENERIC_HOOK])
-
-#define Compare_Hook_For_Type_Of(v) \
-    cast(COMPARE_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_COMPARE_HOOK])
-
-#define Makehook_For_Kind(k) \
-    cast(MakeHook*, Builtin_Type_Hooks[k][IDX_MAKE_HOOK])
-
-#define Mold_Or_Form_Hook_For_Type_Of(v) \
-    cast(MOLD_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_MOLD_HOOK])
+INLINE MoldHook* Mold_Hook_For_Heart(Heart h)
+  { return cast(MoldHook*, Builtin_Type_Hooks[h][IDX_MOLD_HOOK]); }

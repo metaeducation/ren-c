@@ -307,18 +307,18 @@ void MF_Percent(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Decimal)
+DECLARE_GENERICS(Decimal)
 {
-    Value* val = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
+
+    Element* val = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    REBDEC d1 = VAL_DECIMAL(val);
+
     Value* arg;
     REBDEC  d2;
     Heart heart;
-
-    REBDEC d1 = VAL_DECIMAL(val);
-
-    Option(SymId) id = Symbol_Id(verb);
 
     // !!! This used to use IS_BINARY_ACT() which is no longer available with
     // symbol-based dispatch.  Consider doing this another way.
@@ -331,7 +331,7 @@ REBTYPE(Decimal)
         || id == SYM_REMAINDER
         || id == SYM_POWER
     ){
-        arg = D_ARG(2);
+        arg = ARG_N(2);
         if (QUOTE_BYTE(arg) != NOQUOTE_1)
             return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
 
@@ -345,10 +345,10 @@ REBTYPE(Decimal)
             id == SYM_ADD ||
             id == SYM_MULTIPLY
         )){
-            Move_Cell(stable_OUT, D_ARG(2));
-            Move_Cell(D_ARG(2), D_ARG(1));
-            Move_Cell(D_ARG(1), stable_OUT);
-            return Run_Generic_Dispatch_Core(D_ARG(1), level_, verb);
+            Move_Cell(stable_OUT, ARG_N(2));
+            Move_Cell(ARG_N(2), ARG_N(1));
+            Move_Cell(ARG_N(1), stable_OUT);
+            return Run_Generic_Dispatch(cast(Element*, ARG_N(1)), level_, verb);
         }
 
         // If the type of the second arg is something we can handle:
@@ -446,8 +446,8 @@ REBTYPE(Decimal)
     //        >> form 1.1%
     //        == "1.1000000000000001%"
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // val
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(Cell_Heart(val) != to);  // TO calls COPY in this case

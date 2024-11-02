@@ -42,7 +42,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     Level* level_,
     const Symbol* verb
 ){
-    Value* v = D_ARG(1);
+    Value* v = ARG_N(1);
 
     Flags sop_flags;  // "SOP_XXX" Set Operation Flags
 

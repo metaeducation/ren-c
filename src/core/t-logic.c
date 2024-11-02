@@ -24,7 +24,124 @@
 
 #include "sys-core.h"
 
-#include "cells/cell-money.h" // !!! For conversions (good dependency?)
+
+//
+//  /null?: native:intrinsic [
+//
+//  "Tells you if the argument is a ~null~ antiform (branch inhibitor)"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(null_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Nulled(arg));
+}
+
+
+//
+//  /okay?: native:intrinsic [
+//
+//  "Tells you if the argument is an ~okay~ antiform (canon branch trigger)"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(okay_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Okay(arg));
+}
+
+
+//
+//  /logic?: native:intrinsic [
+//
+//  "Tells you if the argument is NULL or #"
+//
+//      return: "null or okay"  ; can't use LOGIC? to typecheck
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(logic_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Logic(arg));
+}
+
+
+//
+//  /logical: native:intrinsic [
+//
+//  "Produces NULL for 0, or # for all other integers"
+//
+//      return: [logic?]
+//      value [integer!]
+//  ]
+//
+DECLARE_INTRINSIC(logical)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, VAL_INT64(arg) != 0);
+}
+
+
+//
+//  /boolean?: native:intrinsic [
+//
+//  "Tells you if the argument is the TRUE or FALSE word"
+//
+//      return: [logic?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(boolean_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Boolean(arg));
+}
+
+
+//
+//  /onoff?: native:intrinsic [
+//
+//  "Tells you if the argument is the ON or OFF word"
+//
+//      return: [logic?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(onoff_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_OnOff(arg));
+}
+
+
+//
+//  /yesno?: native:intrinsic [
+//
+//  "Tells you if the argument is the YES or NO word"
+//
+//      return: [logic?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(yesno_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_YesNo(arg));
+}
 
 
 //
@@ -436,104 +553,4 @@ DECLARE_NATIVE(unless)
         return COPY(left);
 
     return UNMETA(meta_right);  // preserve packs
-}
-
-
-INLINE bool Math_Arg_For_Logic(Value* arg)
-{
-    if (Is_Logic(arg))
-        return Cell_Logic(arg);
-
-    if (Is_Blank(arg))
-        return false;
-
-    fail (Error_Unexpected_Type(REB_ANTIFORM, VAL_TYPE(arg)));
-}
-
-
-//
-//  Makehook_Antiform: C
-//
-Bounce Makehook_Antiform(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_ANTIFORM);
-    UNUSED(kind);
-
-    return Quotify(Copy_Cell(OUT, arg), 1);
-}
-
-
-//
-//  REBTYPE: C
-//
-REBTYPE(Antiform)
-{
-    if (not Is_Logic(D_ARG(1))) {
-        //
-        // Need a special exemption for COPY on ACTION! antiforms.
-        //
-        if (Is_Action(D_ARG(1)) and Symbol_Id(verb) == SYM_COPY) {
-            Deactivate_If_Action(D_ARG(1));
-            return rebValue(Canon(RUNS), Canon(COPY), rebQ(D_ARG(1)));
-        }
-
-        return FAIL("Antiform handler only supports LOGIC! (legacy)");
-    }
-
-    bool b1 = Cell_Logic(D_ARG(1));
-    bool b2;
-
-    switch (Symbol_Id(verb)) {
-
-    case SYM_BITWISE_AND:
-        b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(OUT, b1 and b2);
-
-    case SYM_BITWISE_OR:
-        b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(OUT, b1 or b2);
-
-    case SYM_BITWISE_XOR:
-        b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(OUT, b1 != b2);
-
-    case SYM_BITWISE_AND_NOT:
-        b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(OUT, b1 and not b2);
-
-    case SYM_BITWISE_NOT:
-        return Init_Logic(OUT, not b1);
-
-    case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-
-        UNUSED(PARAM(value));
-
-        if (REF(only))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(seed)) {
-            //
-            // !!! For some reason, a random LOGIC! used OS_DELTA_TIME, while
-            // it wasn't used elsewhere:
-            //
-            //     /* RANDOM:SEED - false restarts; true randomizes */
-            //     Set_Random(b1 ? OS_DELTA_TIME(0) : 1);
-            //
-            // This created a dependency on the host's model for time, which
-            // the core is trying to be agnostic about.  This one appearance
-            // for getting a random LOGIC! was a non-sequitur which was in
-            // the way of moving time to an extension, so it was removed.
-            //
-            return FAIL("LOGIC! random seed currently not implemented");
-        }
-
-        if (Random_Int(REF(secure)) & 1)
-            return Init_Logic(OUT, true);
-        return Init_Logic(OUT, false); }
-
-    default:
-        break;
-    }
-
-    return UNHANDLED;
 }

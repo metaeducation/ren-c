@@ -44,7 +44,6 @@
     a-value: first [:a]
     :a == reeval :a-value
 )
-(NUL == reeval NUL)
 
 (0 == reeval 0)
 (1 == reeval 1)

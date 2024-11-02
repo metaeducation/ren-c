@@ -112,20 +112,20 @@ Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // !!! This is shared code between TUPLE! and PATH!.  The math operations
 // predate the unification, and are here to document what expected operations
 // were...though they should use the method of PAIR! to generate frames for
 // each operation and run them against each other.
 //
-REBTYPE(Sequence)
+DECLARE_GENERICS(Sequence)
 {
-    Element* sequence = cast(Element*, D_ARG(1));
+    Option(SymId) id = Symbol_Id(verb);
+
+    Element* sequence = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     Length len = Cell_Sequence_Len(sequence);
     Heart heart = Cell_Heart_Ensure_Noquote(sequence);
-
-    Option(SymId) id = Symbol_Id(verb);
 
     switch (id) {
       case SYM_REFLECT: {
@@ -173,8 +173,8 @@ REBTYPE(Sequence)
   //    !!! Should this restriction be what AS does, while TO will actually
   //    "flatten"?  How useful is the flattening operation, really?
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // sequence
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(heart != to);  // TO should have called COPY in this case
@@ -214,8 +214,8 @@ REBTYPE(Sequence)
 
         return FAIL(Error_Bad_Cast_Raw(sequence, ARG(type))); }
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -321,7 +321,7 @@ REBTYPE(Sequence)
     REBINT a;
     REBDEC dec;
 
-    Value* arg = D_ARG(2);
+    Value* arg = ARG_N(2);
 
     if (Is_Integer(arg)) {
         dec = -207.6382;  // unused but avoid maybe uninitialized warning

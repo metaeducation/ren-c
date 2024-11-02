@@ -3340,7 +3340,7 @@ Option(const Byte*) Try_Scan_Issue_To_Stack(const Byte* cp, Size size)
     // !!! Review UTF-8 Safety, needs to use mold buffer the way TEXT! does
     // to scan the data.
     //
-    if (size == 0) {  // plain # is space character, #"" is NUL character
+    if (size == 0) {  // plain # is space character, #"" is empty issue
         assert(len == 0);
         Init_Space(PUSH());
     }

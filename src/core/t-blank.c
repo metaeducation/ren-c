@@ -92,9 +92,9 @@ REBINT CT_Blank(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Blank)
+DECLARE_GENERICS(Blank)
 {
     switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
@@ -118,8 +118,8 @@ REBTYPE(Blank)
       case SYM_TAKE:
         return RAISE(Error_Nothing_To_Take_Raw());
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
         return RAISE(Error_Bad_Pick_Raw(ARG(picker))); }
 
@@ -222,13 +222,13 @@ REBINT CT_Handle(const Cell* a, const Cell* b, bool strict)
 
 
 //
-// REBTYPE: C
+// DECLARE_GENERICS: C
 //
 // !!! Currently, in order to have a comparison function a datatype must also
 // have a dispatcher for generics, and the comparison is essential.  Hence
 // this cannot use a `-` in the %reb-types.r in lieu of this dummy function.
 //
-REBTYPE(Handle)
+DECLARE_GENERICS(Handle)
 {
     UNUSED(verb);
 

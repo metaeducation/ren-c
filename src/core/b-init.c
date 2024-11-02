@@ -337,6 +337,7 @@ static void Init_Root_Vars(void)
     Init_Return_Signal(&PG_Bounce_Thrown, C_THROWN);
     Init_Return_Signal(&PG_Bounce_Redo_Unchecked, C_REDO_UNCHECKED);
     Init_Return_Signal(&PG_Bounce_Redo_Checked, C_REDO_CHECKED);
+    Init_Return_Signal(&PG_Bounce_Downshifted, C_DOWNSHIFTED);
     Init_Return_Signal(&PG_Bounce_Continuation, C_CONTINUATION);
     Init_Return_Signal(&PG_Bounce_Delegation, C_DELEGATION);
     Init_Return_Signal(&PG_Bounce_Suspend, C_SUSPEND);
@@ -401,6 +402,7 @@ static void Shutdown_Root_Vars(void)
     Erase_Cell(&PG_Bounce_Thrown);
     Erase_Cell(&PG_Bounce_Redo_Unchecked);
     Erase_Cell(&PG_Bounce_Redo_Checked);
+    Erase_Cell(&PG_Bounce_Downshifted);
     Erase_Cell(&PG_Bounce_Continuation);
     Erase_Cell(&PG_Bounce_Delegation);
     Erase_Cell(&PG_Bounce_Suspend);
@@ -429,7 +431,6 @@ static void Init_System_Object(
     const Element* boot_sysobj_spec,
     Source* datatypes_catalog,
     Source* natives_catalog,
-    Source* generics_catalog,
     VarList* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
@@ -494,7 +495,6 @@ static void Init_System_Object(
     //
     Init_Block(Get_System(SYS_CATALOG, CAT_DATATYPES), datatypes_catalog);
     Init_Block(Get_System(SYS_CATALOG, CAT_NATIVES), natives_catalog);
-    Init_Block(Get_System(SYS_CATALOG, CAT_ACTIONS), generics_catalog);
     Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errors_catalog);
 
     // Create SYSTEM.CODECS object
@@ -605,8 +605,8 @@ void Startup_Core(void)
   //=//// MAKE LIB MODULE AND VARIABLES FOR BUILT-IN SYMBOLS //////////////=//
 
     // For many of the built-in symbols, we know there will be variables in
-    // the Lib module for them.  e.g. since APPEND is in the list of generic
-    // functions, we know Startup_Generics() will run (/append: generic [...])
+    // the Lib module for them.  e.g. since FOR-EACH is in the list of native
+    // functions, we know Startup_Natives() will run (/for-each: native [...])
     // during the boot.
     //
     // Since we know that, variables for the built-in symbols are constructed
@@ -704,16 +704,10 @@ void Startup_Core(void)
 
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
-    //
+
     Source* natives_catalog = Startup_Natives(&boot->natives);
     Manage_Flex(natives_catalog);
     Push_Lifeguard(natives_catalog);
-
-    // boot->generics is the list in %generics.r
-    //
-    Source* generics_catalog = Startup_Generics(&boot->generics);
-    Manage_Flex(generics_catalog);
-    Push_Lifeguard(generics_catalog);
 
   //=//// STARTUP CONSTANTS (like NULL, BLANK, etc.) //////////////////////=//
 
@@ -746,12 +740,10 @@ void Startup_Core(void)
         &boot->sysobj,
         datatypes_catalog,
         natives_catalog,
-        generics_catalog,
         errors_catalog
     );
 
     Drop_Lifeguard(errors_catalog);
-    Drop_Lifeguard(generics_catalog);
     Drop_Lifeguard(natives_catalog);
     Drop_Lifeguard(datatypes_catalog);
 

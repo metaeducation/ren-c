@@ -80,6 +80,7 @@ export /extract-native-protos: func [
                 ["native" (native-type: 'normal)
                     opt [":combinator" (native-type: 'combinator)]
                     opt [":intrinsic" (native-type: 'intrinsic)]
+                    opt [":generic" (native-type: 'normal)]  ; !!! for now...
                 ] space
                 "[" thru "//  ]"
             ]

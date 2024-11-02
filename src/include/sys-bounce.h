@@ -21,54 +21,15 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-INLINE Bounce Run_Generic_Dispatch_Core(
-    const Value* first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
+INLINE Bounce Run_Generic_Dispatch(
+    const Element* cue,
     Level* L,
     const Symbol* verb
 ){
-    GENERIC_HOOK *hook;
-    if (Is_Antiform(first_arg))
-        hook = &T_Antiform;  // has to support null/okay for LOGIC generics
-    else if (Is_Quasiform(first_arg))
-        hook = &T_Quasiform;  // supports COPY
-    else if (Is_Quoted(first_arg))
-        hook = &T_Quoted;  // supports COPY
-    else
-        hook = Generic_Hook_For_Type_Of(first_arg);
+    Heart heart = Cell_Heart_Ensure_Noquote(cue);
 
-    return hook(L, verb);  // Note QUOTED! has its own hook & handling;
-}
-
-
-// Some routines invoke Run_Generic_Dispatch(), go ahead and reduce the
-// cases they have to look at by moving any ordinary outputs into L->out, and
-// make throwing the only exceptional case they have to handle.
-//
-INLINE bool Run_Generic_Dispatch_Throws(
-    const Value* first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
-    Level* L,
-    const Symbol* verb
-){
-    Bounce b = Run_Generic_Dispatch_Core(first_arg, L, verb);
-
-    if (b == L->out) {
-         // common case
-    }
-    else if (b == nullptr) {
-        Init_Nulled(L->out);
-    }
-    else if (Is_Bounce_An_Atom(b)) {
-        Atom* r = Atom_From_Bounce(b);
-        assert(Is_Api_Value(r));
-        Copy_Cell(L->out, r);
-        Release_Api_Value_If_Unmanaged(r);
-    }
-    else {
-        if (b == BOUNCE_THROWN)
-            return true;
-        assert(!"Unhandled return signal from Run_Generic_Dispatch_Core");
-    }
-    return false;
+    GenericHook* hook = Generic_Hook_For_Heart(heart);
+    return hook(L, verb);
 }
 
 
@@ -88,6 +49,10 @@ INLINE bool Run_Generic_Dispatch_Throws(
 #define C_REDO_CHECKED 'R'
 #define BOUNCE_REDO_CHECKED \
     cast(Bounce, &PG_Bounce_Redo_Checked)
+
+#define C_DOWNSHIFTED 'd'
+#define BOUNCE_DOWNSHIFTED \
+    cast(Bounce, &PG_Bounce_Downshifted)
 
 
 // Continuations are used to mitigate the problems that occur when the C stack

@@ -62,7 +62,7 @@ static bool Params_Of_Hook(
             break;
 
           case PARAMCLASS_SOFT: {
-            Source *a = Alloc_Singular(NODE_FLAG_MANAGED);
+            Source *a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
             Move_Cell(Stub_Cell(a), TOP);
             Init_Any_List(TOP, REB_THE_GROUP, a);
             break; }
@@ -876,31 +876,23 @@ void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
         return;
     }
 
-    if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
-        Details* details = Phase_Details(ACT_IDENTITY(a));
-        Value* verb = Details_At(details, 1);
-        assert(Is_Word(verb));
-        Copy_Cell(out, verb);
-        return;
-    }
-
     Init_Blank(out); // natives, ffi routines, etc.
     return;
 }
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // This handler is used to fail for a type which cannot handle actions.
 //
-// !!! Currently all types have a REBTYPE() handler for either themselves or
+// !!! Currently all types have a DECLARE_GENERICS() handler for either themselves or
 // their class.  But having a handler that could be "swapped in" from a
 // default failing case is an idea that could be used as an interim step
 // to allow something like REB_GOB to fail by default, but have the failing
 // type handler swapped out by an extension.
 //
-REBTYPE(Fail)
+DECLARE_GENERICS(Fail)
 {
     UNUSED(verb);
 

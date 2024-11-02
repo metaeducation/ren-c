@@ -33,11 +33,7 @@
 // no overrides for individual types (only if they are the only type in
 // their class).
 //
-typedef REBINT (COMPARE_HOOK)(
-    const Cell* a,
-    const Cell* b,
-    bool strict
-);
+typedef REBINT (CompareHook)(const Cell*, const Cell*, bool strict);
 
 
 //
@@ -66,7 +62,7 @@ typedef REBINT (COMPARE_HOOK)(
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //
-// MAKE is a Generic, dispatching to REBTYPE(Datatype) and REBTYPE(Context).
+// MAKE is a Generic, dispatching to DECLARE_GENERICS(Datatype) and DECLARE_GENERICS(Context).
 // The Datatype dispatcher sub-dispatches to these hook functions, which help
 // put the relevant code in the appropriate file.
 //
@@ -99,7 +95,7 @@ typedef Bounce (ToHook)(Level* level_, Kind kind, Element* def);
 // has a different handler than strings.  So not all molds are driven by
 // their class entirely.
 //
-typedef void (MOLD_HOOK)(Molder* mo, const Cell* v, bool form);
+typedef void (MoldHook)(Molder* mo, const Cell* v, bool form);
 
 
 // Just requests what symbol a custom datatype wants to use for its type
@@ -119,8 +115,8 @@ typedef const Symbol* (SYMBOL_HOOK)(void);
 // any behavior for a specific type can still be accomplished by testing
 // the type passed into that common hook!
 //
-typedef Bounce (GENERIC_HOOK)(Level* level_, const Symbol* verb);
-#define REBTYPE(n) \
+typedef Bounce (GenericHook)(Level* level_, const Symbol* verb);
+#define DECLARE_GENERICS(n) \
     Bounce T_##n(Level* level_, const Symbol* verb)
 
 

@@ -860,7 +860,7 @@ static REBIXO To_Thru_Block_Rule(
                     //
                     // If we weren't matching END, then the only other thing
                     // we'll match at the BINARY! end is an empty BINARY!.
-                    // Not a NUL codepoint, because the internal BINARY!
+                    // Not a "NUL codepoint", because the internal BINARY!
                     // terminator is implementation detail.
                     //
                     assert(ch1 == '\0');  // internal BINARY! terminator

@@ -485,7 +485,7 @@ Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
             heart,
             at,
             tail,
-            nullptr  // no parent (MAKE SOME-OBJ [...] calls REBTYPE(Context))
+            nullptr  // no parent (MAKE SOME-OBJ [...] calls DECLARE_GENERICS(Context))
         );
         Remember_Cell_Is_Lifeguard(Init_Context_Cell(OUT, heart, ctx));
 
@@ -888,18 +888,17 @@ const Symbol* Symbol_From_Picker(const Value* context, const Value* picker)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // Handles object!, module!, and error! datatypes.
 //
-REBTYPE(Context)
+DECLARE_GENERICS(Context)
 {
-    Element* context = cast(Element*, D_ARG(1));
-    Heart heart = Cell_Heart(context);
+    Option(SymId) id = Symbol_Id(verb);
 
+    Element* context = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     VarList* c = Cell_Varlist(context);
-
-    Option(SymId) symid = Symbol_Id(verb);
+    Heart heart = Cell_Heart(context);
 
     // !!! The PORT! datatype wants things like LENGTH OF to give answers
     // based on the content of the port, not the number of fields in the
@@ -907,12 +906,12 @@ REBTYPE(Context)
     //
     // https://forum.rebol.info/t/1689
     //
-    // At the moment only PICK* and POKE* are routed here.
+    // At the moment only PICK and POKE are routed here.
     //
     if (Is_Port(context))
-        assert(symid == SYM_PICK_P or symid == SYM_POKE_P);
+        assert(id == SYM_PICK or id == SYM_POKE);
 
-    switch (symid) {
+    switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
@@ -990,8 +989,8 @@ REBTYPE(Context)
     //    vs. making it as a port to begin with (?)  Look into why
     //    system.standard.port is made with CONTEXT and not with MAKE PORT!
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // context
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(heart != to);  // TO should have called COPY in this case
@@ -1012,8 +1011,8 @@ REBTYPE(Context)
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -1033,8 +1032,8 @@ REBTYPE(Context)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -1196,19 +1195,19 @@ REBTYPE(Context)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // FRAME! adds some additional reflectors to the usual things you can do with
-// an object, but falls through to REBTYPE(Context) for most things.
+// an object, but falls through to DECLARE_GENERICS(Context) for most things.
 //
-REBTYPE(Frame)
+DECLARE_GENERICS(Frame)
 {
-    Value* frame = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
+
+    Element* frame = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     VarList* c = Cell_Varlist(frame);
 
-    Option(SymId) symid = Symbol_Id(verb);
-
-    switch (symid) {
+    switch (id) {
 
       case SYM_REFLECT :
         if (Is_Frame_Details(frame))
@@ -1709,3 +1708,22 @@ DECLARE_NATIVE(construct)
 
     goto continue_processing_spec;
 }}
+
+
+//
+//  /extend: native:generic [
+//
+//  "Add more material to a context"
+//
+//      return: [word! any-context?]
+//      context [any-context?]
+//      def "If single word, adds an unset variable if not already added"
+//          [block! word!]
+//      :prebound "Tolerate pre-existing bindings on set words (do not collect)"
+//  ]
+//
+DECLARE_NATIVE(extend)
+{
+    Element* number = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(number, LEVEL, Canon(EXTEND));
+}

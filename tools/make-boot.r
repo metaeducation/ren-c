@@ -617,17 +617,8 @@ hook-list: collect [
     }--]
 
     for-each-datatype 't [
-        if t.name = "void" [
-            keep cscape [--{
-                {  /* VOID = $<T.HEART> */
-                    cast(CFunction*, nullptr),  /* generic */
-                    cast(CFunction*, nullptr),  /* compare */
-                    cast(CFunction*, nullptr),  /* make */
-                    cast(CFunction*, MF_Void),  /* mold */
-                    nullptr
-                }
-            }--]
-            continue
+        if find ["quoted" "quasiform" "antiform"] t.name [
+            continue  ; hooks only for basic types
         ]
 
         keep cscape [t --{
@@ -646,7 +637,7 @@ e-hooks/emit [hook-list --{
     #include "sys-core.h"
 
     /* See comments in %sys-ordered.h */
-    CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX] = {
+    CFunction* Builtin_Type_Hooks[REB_MAX_HEART][IDX_HOOKS_MAX] = {
         $(Hook-List),
     };
 }--]
@@ -732,13 +723,13 @@ e-typesets/write-emitted
 ; going through a hash table.
 ;
 ; Since the relative order of these words is honored, that means they must
-; establish their slots first.  Any natives or generics which have the same
+; establish their slots first.  Any natives or types which have the same
 ; name will have to use the slot position established for these words.
 
 for-each 'term load %lib-words.r [
     if issue? term [
         if not find syms-words as text! term [
-            fail ["Expected symbol for" term "from [native generic type]"]
+            fail ["Expected symbol for" term "from [native type]"]
         ]
     ] else [
         add-sym term
@@ -770,23 +761,6 @@ for-each 'name native-names [
 ]
 
 
-=== "'VERB' SYMBOLS FOR GENERICS" ===
-
-; This adds SYM_XXX constants for generics (e.g. SYM_APPEND, etc.), which
-; allows C switch() statements to process them efficiently
-
-first-generic-sym: sym-n
-
-generic-names: transcode:one read join prep-dir %boot/tmp-generic-names.r
-boot-generics: as text! read join prep-dir %boot/tmp-generics-stripped.r
-
-for-each 'name generic-names [
-    assert [word? name]
-    if first-generic-sym < ((add-sym:exists name) else [0]) [
-        fail ["Generic name collision with Native or Generic found:" name]
-    ]
-]
-
 lib-syms-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
 
 
@@ -795,7 +769,7 @@ lib-syms-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
 ; The %symbols.r file are terms that get SYM_XXX constants and an entry in
 ; the table for turning those constants into a symbol pointer.  But they do
 ; not have priority on establishing declarations in lib.  Hence a native or
-; generic might come along and use one of these terms...meaning they have to
+; type might come along and use one of these terms...meaning they have to
 ; yield to that position.  That's why there's no guarantee of order.
 
 for-each 'term load %symbols.r [
@@ -804,7 +778,7 @@ for-each 'term load %symbols.r [
     ] else [
         assert [issue? term]
         if not find syms-words as text! term [
-            fail ["Expected symbol for" term "from [native generic type]"]
+            fail ["Expected symbol for" term "from [native type]"]
         ]
     ]
 ]
@@ -1074,7 +1048,6 @@ e-bootblock/emit --{
 }--
 
 sections: [
-    :boot-generics
     :boot-natives
     boot-typespecs
     :boot-constants
@@ -1271,6 +1244,6 @@ e-symbols/emit [syms-cscape --{
     #define ALL_SYMS_MAX $<sym-n>
 }--]
 
-print [sym-n "words + generics + errors"]
+print [sym-n "words + natives + errors"]
 
 e-symbols/write-emitted

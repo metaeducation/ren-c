@@ -397,16 +397,19 @@ Bounce Makehook_Varargs(Level* level_, Kind kind, Element* arg) {
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // Handles the very limited set of operations possible on a VARARGS!
 // (evaluation state inspector/modifier during a DO).
 //
-REBTYPE(Varargs)
+DECLARE_GENERICS(Varargs)
 {
-    Value* value = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
 
-    switch (Symbol_Id(verb)) {
+    Element* value = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Is_Varargs(value));
+
+    switch (id) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -432,8 +435,8 @@ REBTYPE(Varargs)
 
         break; }
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);

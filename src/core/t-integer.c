@@ -142,16 +142,16 @@ void MF_Integer(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Integer)
+DECLARE_GENERICS(Integer)
 {
-    Value* val = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
+
+    Element* val = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     REBI64 num = VAL_INT64(val);
 
     REBI64 arg;
-
-    Option(SymId) id = Symbol_Id(verb);
 
     // !!! This used to rely on IS_BINARY_ACT, which is no longer available
     // in the symbol based dispatch.  Consider doing another way.
@@ -168,7 +168,7 @@ REBTYPE(Integer)
         or id == SYM_BITWISE_AND_NOT
         or id == SYM_REMAINDER
     ){
-        Value* val2 = D_ARG(2);
+        Value* val2 = ARG_N(2);
 
         if (Is_Integer(val2))
             arg = VAL_INT64(val2);
@@ -184,8 +184,8 @@ REBTYPE(Integer)
                 // Swap parameter order:
                 Move_Cell(stable_OUT, val2);  // Use as temp workspace
                 Move_Cell(val2, val);
-                Move_Cell(val, stable_OUT);
-                return Run_Generic_Dispatch_Core(val, level_, verb); }
+                Move_Cell(val, cast(Element*, OUT));
+                return Run_Generic_Dispatch(cast(Element*, val), level_, verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
             case SYM_SUBTRACT:
@@ -227,8 +227,8 @@ REBTYPE(Integer)
 
     //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // val
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(REB_INTEGER != to);  // TO calls COPY in this case
@@ -277,8 +277,8 @@ REBTYPE(Integer)
             return Init_Integer(OUT, num / arg);
         // Fall thru
       case SYM_POWER:
-        Init_Decimal(D_ARG(1), cast(REBDEC, num));
-        Init_Decimal(D_ARG(2), cast(REBDEC, arg));
+        Init_Decimal(ARG_N(1), cast(REBDEC, num));
+        Init_Decimal(ARG_N(2), cast(REBDEC, arg));
         return T_Decimal(level_, verb);
 
       case SYM_REMAINDER:

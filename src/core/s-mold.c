@@ -403,7 +403,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
             return;
     }
 
-    MOLD_HOOK *hook = Mold_Or_Form_Hook_For_Type_Of(cell);
+    MoldHook* hook = Mold_Hook_For_Heart(Cell_Heart(cell));
     hook(mo, cell, form);
 
     Assert_Flex_Term_If_Needed(s);

@@ -253,15 +253,20 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         // means that when those executors run, their level parameter is
         // not the technical top of the stack.
         //
-        if (Get_Level_Flag(LEVEL, TRAMPOLINE_KEEPALIVE)) {
-            LEVEL = LEVEL->prior;
-            assert(LEVEL != TOP_LEVEL);  // should *not* be top of stack
-        }
-        else {
-            assert(LEVEL == TOP_LEVEL);  // should be top of the stack
-            Drop_Level(LEVEL);
-            LEVEL = TOP_LEVEL;
-        }
+      #if RUNTIME_CHECKS  // To_Checker_Executor not defined in release
+        assert(
+            LEVEL == TOP_LEVEL
+            or Get_Level_Flag(LEVEL, TRAMPOLINE_KEEPALIVE)
+            or LEVEL->executor == &To_Checker_Executor  // BOUNCE_DOWNLEVEL
+            or LEVEL->executor == &Copy_Quoter_Executor
+            or LEVEL->executor == &Cascader_Executor
+        );
+      #endif
+
+        LEVEL = TOP_LEVEL->prior;
+
+        if (Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE))
+            Drop_Level(TOP_LEVEL);
 
         // some pending level now has a result
 
@@ -347,7 +352,14 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         Freshen_Cell_Suppress_Raised(OUT);
       #endif
 
-        assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
+        assert(
+            LEVEL == TOP_LEVEL  // Action_Executor() helps, drops inerts
+            or LEVEL->executor == &To_Checker_Executor  // BOUNCE_DOWNLEVEL
+            or LEVEL->executor == &Copy_Quoter_Executor
+            or LEVEL->executor == &Cascader_Executor
+        );
+
+        LEVEL = TOP_LEVEL;
 
         // Corrupting the pointer here was well-intentioned, but Drop_Level()
         // needs to know if it is an Action_Executor to drop a stack cell.

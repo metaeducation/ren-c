@@ -549,13 +549,16 @@ void MF_Map(Molder* mo, const Cell* v, bool form)
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
-REBTYPE(Map)
+DECLARE_GENERICS(Map)
 {
-    Value* map = D_ARG(1);
+    Option(SymId) id = Symbol_Id(verb);
 
-    switch (Symbol_Id(verb)) {
+    Element* map = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    assert(Is_Map(map));
+
+    switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
@@ -681,8 +684,8 @@ REBTYPE(Map)
     //    add duplicates in TO MAP!.  These undermine the reversibility
     //    requirement, so that's currently disabled in To_Checker_Dispatcher()
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(REB_MAP != to);  // TO should have called COPY in this case
@@ -706,8 +709,8 @@ REBTYPE(Map)
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -737,8 +740,8 @@ REBTYPE(Map)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -779,4 +782,29 @@ REBTYPE(Map)
     }
 
     return UNHANDLED;
+}
+
+
+//
+//  /put: native:generic [
+//
+//  "Replaces the value following a key, and returns the new value"
+//
+//      return: [element?]
+//      series [map!]
+//      key [element?]
+//      value [<maybe> element?]
+//      :case "Perform a case-sensitive search"
+//  ]
+//
+DECLARE_NATIVE(put)
+//
+// !!! PUT was added by Red as the complement to SELECT, which offers a /CASE
+// refinement for adding keys to MAP!s case-sensitively.  The name may not
+// be ideal, but it's something you can't do with path access, so adopting it
+// for the time-being.  Only implemented for MAP!s at the moment
+//
+{
+    Element* number = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(number, LEVEL, Canon(PUT));
 }

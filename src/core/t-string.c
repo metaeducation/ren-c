@@ -791,7 +791,7 @@ bool Try_Get_Series_Index_From_Picker(
 
 
 //
-//  REBTYPE: C
+//  DECLARE_GENERICS: C
 //
 // Action handler for ANY-STRING?
 //
@@ -800,14 +800,14 @@ bool Try_Get_Series_Index_From_Picker(
 //    and that index is valid.  The special case of TO conversions is written
 //    here so that non-node-having entities work.
 //
-REBTYPE(String)
+DECLARE_GENERICS(String)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* v = cast(Element*, D_ARG(1));
+    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     assert(
         Any_Utf8(v) and (
-            Stringlike_Has_Node(v) or id == SYM_TO_P  // [1]
+            Stringlike_Has_Node(v) or id == SYM_TO  // [1]
         )
     );
 
@@ -815,8 +815,8 @@ REBTYPE(String)
 
     //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
 
-      case SYM_TO_P: {
-        INCLUDE_PARAMS_OF_TO_P;
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(Cell_Heart(v) != to);  // TO calls COPY in this case
@@ -899,8 +899,8 @@ REBTYPE(String)
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_P: {
-        INCLUDE_PARAMS_OF_PICK_P;
+      case SYM_PICK: {
+        INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -915,8 +915,8 @@ REBTYPE(String)
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_POKE_P: {
-        INCLUDE_PARAMS_OF_POKE_P;
+      case SYM_POKE: {
+        INCLUDE_PARAMS_OF_POKE;
         UNUSED(ARG(location));
 
         const Value* picker = ARG(picker);
@@ -1213,7 +1213,7 @@ REBTYPE(String)
     //-- Special actions:
 
       case SYM_SWAP: {
-        Value* arg = D_ARG(2);
+        Value* arg = ARG_N(2);
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             return FAIL(Error_Not_Same_Type_Raw());
@@ -1354,9 +1354,9 @@ REBTYPE(String)
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
         if ((Is_File(v) or Is_Url(v))) {
-            const Value* made = rebValue("make port! @", D_ARG(1));
+            const Value* made = rebValue("make port! @", ARG_N(1));
             assert(Is_Port(made));
-            Copy_Cell(D_ARG(1), made);
+            Copy_Cell(ARG_N(1), made);
             rebRelease(made);
             return BOUNCE_CONTINUE;
         }
