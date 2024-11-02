@@ -110,21 +110,6 @@
     ([a b c ^[d e]] = append [a b c] spread blockify '^[d e])
     ([a b c ^(d e)] = append [a b c] spread blockify '^(d e))
     ([a b c ^d/e] = append [a b c] spread blockify '^d/e)
-
-    ; Enblock test...
-    ;
-    ([a b c [d e]] = append [a b c] spread enblock [d e])
-    ([a b c (d e)] = append [a b c] spread enblock '(d e))
-    ([a b c d/e] = append [a b c] spread enblock 'd/e)
-    ([a b c [d e]:] = append [a b c] spread enblock '[d e]:)
-    ([a b c (d e):] = append [a b c] spread enblock '(d e):)
-    ([a b c d.e:] = append [a b c] spread enblock 'd.e:)
-    ([a b c :[d e]] = append [a b c] spread enblock ':[d e])
-    ([a b c :(d e)] = append [a b c] spread enblock ':(d e))
-    ([a b c :d.e] = append [a b c] spread enblock ':d.e)
-    ([a b c ^[d e]] = append [a b c] spread enblock '^[d e])
-    ([a b c ^(d e)] = append [a b c] spread enblock '^(d e))
-    ([a b c ^d/e] = append [a b c] spread enblock '^d/e)
 ]
 
 ; New rule: quoteds append as-is, like everything else

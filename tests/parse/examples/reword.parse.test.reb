@@ -78,7 +78,7 @@
 
                 (suffix)  ; vaporize if suffix is void
 
-                (engroup quote keyword)  ; make rule evaluate to actual keyword
+                (envelop '() quote keyword)  ; make rule evaluate to keyword
             ]
         ]
     ]

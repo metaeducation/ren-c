@@ -1388,58 +1388,52 @@ DECLARE_NATIVE(groupify)
 
 
 //
-//  /enblock: native [
+//  /envelop: native [
 //
-//  "Enclose a value in a BLOCK!, even if it's already a block"
+//  "Enclose element(s) in arbitrarily deep list structures"
 //
-//      return: [block!]
-//      value "VOID input will produce an empty block"
-//          [~void~ element?]
+//      return: [any-list?]
+//      example "Example's binding (or lack of) will be used"
+//          [any-list?]
+//      content "Void input is treated the same as an empty splice"
+//          [~void~ element? splice?]
 //  ]
 //
-DECLARE_NATIVE(enblock)
+DECLARE_NATIVE(envelop)
+//
+// Prototyped using API calls.  Improve performance once it's hammered out.
 {
-    INCLUDE_PARAMS_OF_ENBLOCK;
+    INCLUDE_PARAMS_OF_ENVELOP;
 
-    Value* v = ARG(value);
+    Element* copy = cast(Element*, rebValue("copy:deep", rebQ(ARG(example))));
 
-    Source* a = Make_Source_Managed(1);
+    Value* content = ARG(content);
 
-    if (Is_Void(v)) {
-        // leave empty
-    } else {
-        Set_Flex_Len(a, 1);
-        Copy_Cell(Array_Head(a), cast(Element*, v));
+    Length len;
+    if (
+        Is_Void(content)
+        or Is_Splice(content) and (Cell_List_Len_At(&len, content), len == 0)
+    ){
+        return copy;
     }
-    return Init_Block(OUT, Freeze_Source_Shallow(a));
-}
 
-
-//
-//  /engroup: native [
-//
-//  "Enclose a value in a GROUP!, even if it's already a group"
-//
-//      return: [group!]
-//      value "VOID input will produce an empty group"
-//          [~void~ element?]
-//  ]
-//
-DECLARE_NATIVE(engroup)
-{
-    INCLUDE_PARAMS_OF_ENGROUP;
-
-    Value* v = ARG(value);
-
-    Source* a = Make_Source_Managed(1);
-
-    if (Is_Void(v)) {
-        // leave empty
-    } else {
-        Set_Flex_Len(a, 1);
-        Copy_Cell(Array_Head(a), cast(Element*, v));
+    Element* temp = copy;
+    while (true) {
+        const Element* tail;
+        Element* at = Cell_List_At_Known_Mutable(&tail, temp);
+        if (at == tail) {  // empty list, just append
+            rebElide(Canon(APPEND), rebQ(temp), rebQ(content));
+            return copy;
+        }
+        if (Any_List(at)) {  // content should be inserted deeper
+            temp = at;
+            continue;
+        }
+        VAL_INDEX_UNBOUNDED(temp) += 1;  // just skip first item
+        rebElide(Canon(INSERT), rebQ(temp), rebQ(content));
+        VAL_INDEX_UNBOUNDED(temp) -= 1;  // put back if copy = temp for head
+        return copy;
     }
-    return Init_Group(OUT, Freeze_Source_Shallow(a));
 }
 
 
