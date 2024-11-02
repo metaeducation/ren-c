@@ -465,7 +465,8 @@ static Option(Error*) Trap_Finalize_Composer_Level(
             not Any_Sequence(out)  // so instead, things like [~/~ . ///]
             and not conflate  // do not allow decay to "sequence-looking" words
         ){
-            return Error_Conflated_Sequence_Raw(out);
+            const Element* type = Datatype_From_Kind(VAL_TYPE(out));
+            return Error_Conflated_Sequence_Raw(type, out);
         }
 
         assert(QUOTE_BYTE(composee) & NONQUASI_BIT);  // no antiform/quasiform

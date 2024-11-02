@@ -176,58 +176,6 @@ DECLARE_NATIVE(poke)
 
 
 //
-//  Makehook_Path: C
-//
-// A MAKE of a PATH! is experimentally being thought of as evaluative.  This
-// is in line with the most popular historical interpretation of MAKE, for
-// MAKE OBJECT!--which evaluates the object body block.
-//
-Bounce Makehook_Path(Level* level_, Kind k, Element* arg) {
-    Heart heart = cast(Heart, k);
-
-    if (not Is_Block(arg))
-        return FAIL(Error_Bad_Make(heart, arg)); // "make path! 0" meaningless
-
-    Level* L = Make_Level_At(&Stepper_Executor, arg, LEVEL_MASK_NONE);
-
-    Push_Level(OUT, L);
-
-    StackIndex base = TOP_INDEX;
-
-    for (; Not_Level_At_End(L); Assert_Stepper_Level_Ready(L)) {
-        if (Eval_Step_Throws(OUT, L)) {
-            Drop_Level(L);
-            return BOUNCE_THROWN;
-        }
-
-        Decay_If_Unstable(OUT);
-
-        if (Is_Void(OUT))
-            continue;
-
-        if (Is_Nulled(OUT))
-            return RAISE(Error_Need_Non_Null_Raw());
-
-        if (Is_Antiform(OUT))
-            return FAIL(Error_Bad_Antiform(OUT));
-
-        Move_Cell(PUSH(), cast(Element*, OUT));
-        L->baseline.stack_base += 1;  // compensate for push
-    }
-
-    Option(Error*) error = Trap_Pop_Sequence(OUT, heart, base);
-
-    Drop_Level_Unbalanced(L); // !!! L's stack_base got captured each loop
-
-    if (error)
-        return FAIL(unwrap error);
-
-    return OUT;
-}
-
-
-
-//
 //  CT_Sequence: C
 //
 // "Compare Type" dispatcher for ANY-PATH? and ANY-TUPLE?.

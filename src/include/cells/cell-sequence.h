@@ -122,23 +122,23 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
             Is_Quoted(e)  // note quasiforms legal, even at head [1]
             or Sigil_Of_Kind(h)
         ){
-            return Error_Bad_Sequence_Item_Raw(e);
+            goto bad_sequence_item;
         }
     }
 
     if (Any_Path_Kind(h))  // path can't put be put in path, tuple, or chain
-        return Error_Bad_Sequence_Item_Raw(e);
+        goto bad_sequence_item;
 
     if (Any_Chain_Kind(h)) {  // inserting a chain
         if (Any_Path_Kind(sequence_heart))
             return nullptr;  // chains can only be put in paths
-        return Error_Bad_Sequence_Item_Raw(e);
+        goto bad_sequence_item;
     }
 
     if (Any_Tuple_Kind(h)) {  // inserting a tuple
         if (not Any_Tuple_Kind(sequence_heart))
             return nullptr;  // legal in non-tuple sequences (path, chain)
-        return Error_Bad_Sequence_Item_Raw(e);
+        goto bad_sequence_item;
     }
 
     if (h == REB_BLANK) {
@@ -150,7 +150,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     }
 
     if (not Any_Sequencable_Kind(h))
-        return Error_Bad_Sequence_Item_Raw(e);
+        goto bad_sequence_item;
 
     if (h == REB_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(e);
@@ -158,15 +158,19 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
             sequence_heart != REB_CHAIN  // !!! temporary for //: -- review
             and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
         ){
-            return Error_Bad_Sequence_Item_Raw(e);  //  [<| |>] => <|/|>  ; tag
+            goto bad_sequence_item;  //  [<| |>] => <|/|>  ; tag
         }
         if (Any_Path_Kind(sequence_heart))
             return nullptr;
         if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
-            return Error_Bad_Sequence_Item_Raw(e);  // e.g. contains a slash
+            goto bad_sequence_item;  // e.g. contains a slash
     }
 
     return nullptr;  // all other words should be okay
+
+  bad_sequence_item:
+
+    return Error_Bad_Sequence_Item_Raw(Datatype_From_Kind(sequence_heart), e);
 }
 
 
@@ -385,9 +389,29 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     }
 
     if (Is_Integer(first) and Is_Integer(second)) {
-        Byte buf[2];
         REBI64 i1 = VAL_INT64(first);
         REBI64 i2 = VAL_INT64(second);
+
+        if (Any_Tuple_Kind(heart)) {  // conflates with decimal, e.g. 10.20
+            REBI64 magnitude = 1;
+            REBI64 r = i2;
+            do {
+                magnitude *= 10;
+                r = r / 10;
+            } while (r != 0);
+
+            REBDEC d = cast(REBDEC, i1) + cast(REBDEC, i2) / magnitude;
+            Init_Decimal(out, d);
+            return nullptr;
+        }
+
+        if (Any_Chain_Kind(heart)) {  // conflates with time, e.g. 10:20
+            REBI64 nano = ((i1 * 60 * 60) + (i2 * 60)) * SEC_SEC;
+            Init_Time_Nanoseconds(out, nano);
+            return nullptr;
+        }
+
+        Byte buf[2];
         if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
             buf[0] = cast(Byte, i1);
             buf[1] = cast(Byte, i2);
@@ -437,8 +461,10 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
     if (error)
         return error;
 
-    if (not Any_Sequence(out))
-        return Error_Conflated_Sequence_Raw(out);
+    if (not Any_Sequence(out)) {
+        const Element* type = Datatype_From_Kind(VAL_TYPE(out));
+        return Error_Conflated_Sequence_Raw(type, out);
+    }
 
     return nullptr;
 }
@@ -489,8 +515,10 @@ INLINE Option(Error*) Trap_Pop_Sequence(
     if (error)
         return error;
 
-    if (not Any_Sequence(out))
-        return Error_Conflated_Sequence_Raw(out);
+    if (not Any_Sequence(out)) {
+        const Element* type = Datatype_From_Kind(VAL_TYPE(out));
+        return Error_Conflated_Sequence_Raw(type, out);
+    }
 
     return nullptr;
 }

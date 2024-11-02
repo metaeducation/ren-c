@@ -28,48 +28,16 @@
 //
 //  Makehook_Sequence: C
 //
-// !!! There was no original TO TUPLE! code besides calling this MAKE, so
-// PATH!'s TO ANY-PATH? was used for TO ANY-TUPLE?.  But this contains some
-// unique behavior which might be interesting for numeric MAKEs.
+// !!! This contains some old ideas from R3-Alpha for what you might be able
+// to MAKE a TUPLE! from.  But primarily, this is an evaluative form of
+// TO TUPLE! on BLOCK!, with the checking that performs included.
 //
-Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg) {
-    if (kind == REB_TEXT or Any_Path_Kind(kind))  // delegate for now
-        return Makehook_Path(level_, kind, arg);
-
-    assert(kind == REB_TUPLE);
-
-    if (Is_Tuple(arg))
-        return Copy_Cell(OUT, arg);
-
-    if (Any_List(arg)) {
-        REBLEN len = 0;
-        REBINT n;
-
-        const Element* tail;
-        const Element* item = Cell_List_At(&tail, arg);
-
-        Byte buf[MAX_TUPLE];
-        Byte* vp = buf;
-
-        for (; item != tail; ++item, ++vp, ++len) {
-            if (len >= MAX_TUPLE)
-                goto bad_make;
-            if (Is_Integer(item)) {
-                n = Int32(item);
-            }
-            else if (IS_CHAR(item)) {
-                n = Cell_Codepoint(item);
-            }
-            else
-                goto bad_make;
-
-            if (n > 255 || n < 0)
-                goto bad_make;
-            *vp = n;
-        }
-
-        return Init_Tuple_Bytes(OUT, buf, len);
-    }
+Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg)
+{
+    if (Is_Block(arg))
+        return rebValue(
+            Canon(TO), Datatype_From_Kind(kind), Canon(REDUCE), arg
+        );
 
     REBLEN alen;
 
@@ -92,20 +60,17 @@ Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg) {
             *vp++ = decoded;
         }
         Init_Tuple_Bytes(OUT, buf, size);
+        return OUT;
     }
-    else if (Is_Binary(arg)) {
+
+    if (Is_Binary(arg)) {
         Size size;
         const Byte* at = Cell_Binary_Size_At(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
         Init_Tuple_Bytes(OUT, at, size);
+        return OUT;
     }
-    else
-        return RAISE(arg);
-
-    return OUT;
-
-  bad_make:
 
     return RAISE(Error_Bad_Make(REB_TUPLE, arg));
 }
@@ -179,21 +144,17 @@ DECLARE_GENERICS(Sequence)
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(heart != to);  // TO should have called COPY in this case
 
-        if (Any_Sequence_Kind(to)) {  // e.g. `to set-chain! 'a.b.c` [1]
-            if (Any_Path_Kind(to)) {
-                // all sequences can convert to ANY-PATH!
+        if (Any_Sequence_Kind(to)) {  // e.g. `to the-chain! 'a.b.c` [1]
+            Offset i;
+            for (i = 0; i < len; ++i) {
+                Copy_Sequence_At(
+                    PUSH(), sequence, i
+                );
             }
-            else if (Any_Chain_Kind(to)) {
-                if (Any_Path_Kind(heart))
-                    fail ("Cannot TO convert PATH -> CHAIN");
-            }
-            else {
-                assert(Any_Tuple_Kind(to));
-                if (not Any_Tuple_Kind(heart))
-                    fail ("Cannot TO convert PATH or CHAIN -> TUPLE");
-            }
-            Copy_Cell(OUT, sequence);  // !!! embedded arrays keep binding
-            HEART_BYTE(OUT) = to;
+            Option(Error*) error = Trap_Pop_Sequence(OUT, to, STACK_BASE);
+            if (error)
+                return RAISE(unwrap error);
+
             return OUT;
         }
 

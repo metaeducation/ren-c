@@ -97,17 +97,19 @@
     e: trap [to tuple! [_ _]]
     all [
         e.id = 'conflated-sequence
-        e.arg1 = '.
-        word? e.arg1
+        e.arg1 = word!
+        e.arg2 = '.
+        word? e.arg2
     ]
 )
 (
     e: trap [to tuple! [~ ~]]
     all [
         e.id = 'conflated-sequence
-        e.arg1 = '~.~
-        quasiform? e.arg1
-        '. = unquasi e.arg1
+        e.arg1 = quasiform!
+        e.arg2 = '~.~
+        quasiform? e.arg2
+        '. = unquasi e.arg2
     ]
 )
 (
