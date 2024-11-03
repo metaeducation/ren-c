@@ -775,7 +775,6 @@ DECLARE_GENERICS(List)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // list
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(Cell_Heart(list) != to);  // TO calls COPY in this case
 
         if (Any_List_Kind(to)) {
             Length len;
@@ -1437,7 +1436,7 @@ DECLARE_NATIVE(envelop)
     Length len;
     if (
         Is_Void(content)
-        or Is_Splice(content) and (Cell_List_Len_At(&len, content), len == 0)
+        or (Is_Splice(content) and (Cell_List_Len_At(&len, content), len == 0))
     ){
         return copy;
     }

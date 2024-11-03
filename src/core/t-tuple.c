@@ -142,9 +142,17 @@ DECLARE_GENERICS(Sequence)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // sequence
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(heart != to);  // TO should have called COPY in this case
 
         if (Any_Sequence_Kind(to)) {  // e.g. `to the-chain! 'a.b.c` [1]
+            if (
+                (Any_Path_Kind(to) and Any_Path_Kind(heart))
+                or (Any_Chain_Kind(to) and Any_Chain_Kind(heart))
+                or (Any_Tuple_Kind(to) and Any_Tuple_Kind(heart))
+            ){
+                HEART_BYTE(sequence) = to;
+                return COPY(sequence);
+            }
+
             Offset i;
             for (i = 0; i < len; ++i) {
                 Copy_Sequence_At(

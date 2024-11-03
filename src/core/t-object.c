@@ -887,6 +887,33 @@ const Symbol* Symbol_From_Picker(const Value* context, const Value* picker)
 }
 
 
+// 1. !!! Special attention on copying frames is going to be needed, because
+//    copying a frame will be expected to create a new identity for an ACTION!
+//    if that frame is aliased AS ACTION!.  The design is still evolving, but
+//    we don't want archetypal values otherwise we could not `do copy f`, so
+//    initialize with label.
+//
+static Element* Copy_Any_Context(
+    Sink(Element) out,
+    Element* context,
+    bool deep
+){
+    if (Is_Frame(context)) {  // handled specially [1]
+        return Init_Frame(
+            out,
+            Copy_Varlist_Extra_Managed(Cell_Varlist(context), 0, deep),
+            VAL_FRAME_LABEL(context)
+        );
+    }
+
+    return Init_Context_Cell(
+        out,
+        Cell_Heart_Ensure_Noquote(context),
+        Copy_Varlist_Extra_Managed(Cell_Varlist(context), 0, deep)
+    );
+}
+
+
 //
 //  DECLARE_GENERICS: C
 //
@@ -1007,7 +1034,22 @@ DECLARE_GENERICS(Context)
             return Init_Port(OUT, copy);
         }
 
+        if (to == VAL_TYPE(context)) {  // can't TO FRAME! an ERROR!, etc.
+            bool deep = false;
+            return Copy_Any_Context(OUT, context, deep);
+        }
+
         return FAIL(Error_Bad_Cast_Raw(context, ARG(type))); }
+
+      case SYM_COPY: {  // Note: words are not copied and bindings not changed!
+        INCLUDE_PARAMS_OF_COPY;
+        UNUSED(PARAM(value));  // covered by `context`
+
+        if (REF(part))
+            return FAIL(Error_Bad_Refines_Raw());
+
+        bool deep = REF(deep);
+        return Copy_Any_Context(OUT, context, deep); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -1134,33 +1176,6 @@ DECLARE_GENERICS(Context)
             return BOUNCE_THROWN;
 
         return COPY(context); }
-
-      case SYM_COPY: {  // Note: words are not copied and bindings not changed!
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PARAM(value));  // covered by `context`
-
-        if (REF(part))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        // !!! Special attention on copying frames is going to be needed,
-        // because copying a frame will be expected to create a new identity
-        // for an ACTION! if that frame is aliased AS ACTION!.  The design
-        // of this is still evolving, but we don't want archetypal values
-        // otherwise we could not `do copy f`, so initialize with label.
-        //
-        if (Is_Frame(context)) {
-            return Init_Frame(
-                OUT,
-                Copy_Varlist_Extra_Managed(c, 0, did REF(deep)),
-                VAL_FRAME_LABEL(context)
-            );
-        }
-
-        return Init_Context_Cell(
-            OUT,
-            Cell_Heart_Ensure_Noquote(context),
-            Copy_Varlist_Extra_Managed(c, 0, did REF(deep))
-        ); }
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;

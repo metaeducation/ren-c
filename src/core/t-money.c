@@ -187,7 +187,6 @@ DECLARE_GENERICS(Money)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(REB_MONEY != to);  // TO calls COPY in this case
 
         deci d = VAL_MONEY_AMOUNT(v);
 
@@ -217,6 +216,9 @@ DECLARE_GENERICS(Money)
                 Freeze_Flex(s);
             return Init_Any_String(OUT, to, s);;
         }
+
+        if (to == REB_MONEY)
+            return COPY(v);
 
         return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
 

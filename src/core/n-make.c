@@ -240,13 +240,21 @@ Bounce To_Checker_Executor(Level* const L)
     }
 
     Push_Lifeguard(reverse);  // was guarded as level_->OUT, but no longer
-    bool equal = rebUnboxLogic(
-        Canon(EQUAL_Q), rebQ(cast(Value*, reverse)), rebQ(input)
+    bool equal_reversal = rebUnboxLogic(
+        Canon(EQUAL_Q), rebQ(input), rebQ(cast(Value*, reverse))
     );
     Drop_Lifeguard(reverse);
 
-    if (not equal)
+    if (not equal_reversal)
         return FAIL("Reverse TO transform didn't produce original result");
+
+    if (to == from) {
+        bool equal_copy = rebUnboxLogic(
+            Canon(EQUAL_Q), rebQ(input), Canon(COPY), rebQ(input)
+        );
+        if (not equal_copy)
+            return FAIL("Reverse TO transform to equal type not same as COPY");
+    }
 
     return OUT;
 }}
@@ -269,17 +277,11 @@ DECLARE_NATIVE(to)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* type = cast(Element*, ARG(type));
     Element* e = cast(Element*, ARG(element));
-
-    Heart to = VAL_TYPE_HEART(type);
-    Heart from = Cell_Heart_Ensure_Noquote(e);
-
-    if (to == from)
-        return rebValue(Canon(COPY), rebQ(e));
 
   #if NO_RUNTIME_CHECKS
 
+    UNUSED(ARG(type));
     return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(TO));
 
   #else  // add monitor to ensure result is right
@@ -290,10 +292,12 @@ DECLARE_NATIVE(to)
     Option(const Symbol*) label = level_->label;
     Option(VarList*) coupling = Level_Coupling(level_);
 
-    DECLARE_ELEMENT (e_saved);  // want to save element
-    Copy_Cell(e_saved, e);  // remember: we swapped...
+    Element* type = cast(Element*, ARG(type));
+    Heart to = VAL_TYPE_HEART(type);
+    STATE = to;  // generic code may trash TYPE when it runs, save the Heart
+    Copy_Cell(Level_Spare(level_), e);  // may trash ELEMENT, save in SPARE
+
     Level* sub = Push_Downshifted_Level(OUT, level_);
-    Copy_Cell(Level_Spare(level_), e_saved);
 
     assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
@@ -309,7 +313,6 @@ DECLARE_NATIVE(to)
     sub->label_utf8 = label
         ? String_UTF8(unwrap label)
         : "(anonymous)";
-    STATE = to;
 
     return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L
   #endif

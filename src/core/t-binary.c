@@ -290,6 +290,21 @@ void MF_Blob(Molder* mo, const Cell* v, bool form)
 }
 
 
+static Element* Copy_Blob_Part_At_May_Modify_Index(
+    Sink(Element) out,
+    Element* blob,  // may modify index
+    const Value* part
+){
+    Length len = Part_Len_May_Modify_Index(blob, part);
+
+    return Init_Series(
+        out,
+        REB_BLOB,
+        Copy_Binary_At_Len(Cell_Binary(blob), VAL_INDEX(blob), len)
+    );
+}
+
+
 //
 //  DECLARE_GENERICS: C
 //
@@ -297,7 +312,7 @@ DECLARE_GENERICS(Blob)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Value* v = (id == SYM_TO) ? ARG_N(2) : ARG_N(1);
+    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
     assert(Is_Blob(v));
 
     switch (id) {
@@ -314,7 +329,6 @@ DECLARE_GENERICS(Blob)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(REB_BLOB != to);  // TO should have called COPY in this case
 
         if (Any_String_Kind(to)) {  // (to text! binary) questionable [1]
             Size size;
@@ -326,7 +340,22 @@ DECLARE_GENERICS(Blob)
             );
         }
 
+        if (to == REB_BLOB) {
+            const Value* part = Lib(NULL);  // no :PART, copy to end
+            return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
+        }
+
         return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+
+    //=//// COPY //////////////////////////////////////////////////////////=//
+
+      case SYM_COPY: {
+        INCLUDE_PARAMS_OF_COPY;
+
+        UNUSED(PARAM(value));
+        UNUSED(REF(deep));  // :DEEP is historically ignored on BLOB!
+
+        return Copy_Blob_Part_At_May_Modify_Index(OUT, v, ARG(part)); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -581,22 +610,6 @@ DECLARE_GENERICS(Blob)
 
         Term_Binary_Len(b, index);  // may have string alias
         return COPY(v); }
-
-    //-- Creation:
-
-      case SYM_COPY: {
-        INCLUDE_PARAMS_OF_COPY;
-
-        UNUSED(PARAM(value));
-        UNUSED(REF(deep));  // :DEEP is historically ignored on BLOB!
-
-        REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
-
-        return Init_Series(
-            OUT,
-            REB_BLOB,
-            Copy_Binary_At_Len(Cell_Binary(v), VAL_INDEX(v), len)
-        ); }
 
     //-- Bitwise:
 

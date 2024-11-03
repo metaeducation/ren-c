@@ -688,10 +688,14 @@ DECLARE_GENERICS(Map)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(REB_MAP != to);  // TO should have called COPY in this case
 
         if (Any_List_Kind(to))  // !!! not ordered! [1]
             return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
+
+        if (to == REB_MAP) {
+            bool deep = false;
+            return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
+        }
 
         return FAIL(Error_Bad_Cast_Raw(map, ARG(type))); }
 

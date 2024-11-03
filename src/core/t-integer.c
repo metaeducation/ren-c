@@ -231,7 +231,6 @@ DECLARE_GENERICS(Integer)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // val
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(REB_INTEGER != to);  // TO calls COPY in this case
 
         if (Any_Utf8_Kind(to)) {
             DECLARE_MOLDER (mo);
@@ -258,6 +257,9 @@ DECLARE_GENERICS(Integer)
             deci d = int_to_deci(cast(REBDEC, VAL_INT64(val)));
             return Init_Money(OUT, d);
         }
+
+        if (to == REB_INTEGER)
+            return COPY(val);
 
         return FAIL(Error_Bad_Cast_Raw(val, ARG(type))); }
 

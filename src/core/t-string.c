@@ -818,7 +818,6 @@ DECLARE_GENERICS(String)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(Cell_Heart(v) != to);  // TO calls COPY in this case
 
         if (Any_Word_Kind(to)) {  // will have to copy the UTF-8 if mutable...
             if (

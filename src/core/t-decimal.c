@@ -450,7 +450,6 @@ DECLARE_GENERICS(Decimal)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // val
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(Cell_Heart(val) != to);  // TO calls COPY in this case
 
         REBDEC d = VAL_DECIMAL(val);
         if (Is_Percent(val))

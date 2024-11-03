@@ -205,10 +205,11 @@ DECLARE_GENERICS(Word)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // word
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(VAL_TYPE(word) != to);  // TO calls COPY in this case
 
-        if (Any_Word_Kind(to))
-            return rebValue(Canon(AS), ARG(type), rebQ(word));
+        if (Any_Word_Kind(to)) {
+            HEART_BYTE(word) = to;
+            return COPY(word);
+        }
 
         if (Any_List_Kind(to))
             return rebValue(Canon(ENVELOP), ARG(type), rebQ(word));
