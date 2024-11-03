@@ -97,7 +97,7 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 
     Size stub_size = sizeof(Cell) * 2;
 
-    #if DEBUG_STUB_ORIGINS || TRAMPOLINE_COUNTS_TICKS
+    #if DEBUG_STUB_ORIGINS
       stub_size += sizeof(void*) * 2;
     #endif
 

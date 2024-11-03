@@ -365,11 +365,11 @@ void Shutdown_Pools(void)
             else if (not leaked) {
                 leaked = f;  // first one found
             }
-            else if (
-                Not_Node_Managed(leaked)
-                and leaked->tick < f->tick
-            ){
-                leaked = f;  // update if earlier tick reference
+            else if (Not_Node_Managed(leaked)) {
+              #if TRAMPOLINE_COUNTS_TICKS && DEBUG_STUB_ORIGINS
+                if (leaked->tick < f->tick)
+                    leaked = f;  // update if earlier tick reference
+              #endif
             }
         }
     }
@@ -641,7 +641,7 @@ void Free_Pairing(Cell* paired) {
     assert(Not_Node_Managed(paired));
     Free_Pooled(STUB_POOL, paired);
 
-  #if TRAMPOLINE_COUNTS_TICKS
+  #if DEBUG_STUB_ORIGINS && TRAMPOLINE_COUNTS_TICKS
     //
     // This wasn't actually a Series, but poke the tick where the node was
     // freed into the memory spot so panic finds it.

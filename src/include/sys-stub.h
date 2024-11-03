@@ -44,14 +44,12 @@
 //    in case it helps, the s->guard is set to nullptr by Alloc_Stub(), so
 //    conditional instrumentation here can distinguish fresh from valid.
 
-#if DEBUG_STUB_ORIGINS || TRAMPOLINE_COUNTS_TICKS
+#if DEBUG_STUB_ORIGINS
     INLINE void Touch_Stub(Stub *s)  // if alloc, only header valid [1]
     {
-      #if DEBUG_STUB_ORIGINS
         s->guard = cast(Byte*, malloc(sizeof(Byte)));  // smallest allocation
         *s->guard = FREE_POOLUNIT_BYTE;  // irrelevant, but disruptive choice
         free(s->guard);
-      #endif
 
         s->tick = TICK;  // 0 if not TRAMPOLINE_COUNTS_TICKS
     }

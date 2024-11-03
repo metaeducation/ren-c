@@ -71,20 +71,20 @@ ATTRIBUTE_NO_RETURN void Panic_Stub_Debug(const Stub* s)
         Printf_Stderr("unmanaged");
     Printf_Stderr(" Stub");
 
-  #if TRAMPOLINE_COUNTS_TICKS
-    Printf_Stderr(" was likely ");
-    if (Not_Node_Readable(s))
-        Printf_Stderr("freed");
-    else
-        Printf_Stderr("created");
-    Printf_Stderr(
-        " during evaluator tick: %lu\n", cast(unsigned long, s->tick)
-    );
-  #else
-    Printf_Stderr(" has no tick tracking (see TRAMPOLINE_COUNTS_TICKS)\n");
-  #endif
-
   #if DEBUG_STUB_ORIGINS
+    #if TRAMPOLINE_COUNTS_TICKS
+        Printf_Stderr(" was likely ");
+        if (Not_Node_Readable(s))
+            Printf_Stderr("freed");
+        else
+            Printf_Stderr("created");
+        Printf_Stderr(
+            " during evaluator tick: %lu\n", cast(unsigned long, s->tick)
+        );
+    #else
+      Printf_Stderr(" has no tick tracking (see TRAMPOLINE_COUNTS_TICKS)\n");
+    #endif
+
     if (*s->guard == FREE_POOLUNIT_BYTE)  // should make valgrind or asan alert
         NOOP;
 
