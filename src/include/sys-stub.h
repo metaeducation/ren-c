@@ -44,10 +44,10 @@
 //    in case it helps, the s->guard is set to nullptr by Alloc_Stub(), so
 //    conditional instrumentation here can distinguish fresh from valid.
 
-#if DEBUG_FLEX_ORIGINS || TRAMPOLINE_COUNTS_TICKS
+#if DEBUG_STUB_ORIGINS || TRAMPOLINE_COUNTS_TICKS
     INLINE void Touch_Stub(Stub *s)  // if alloc, only header valid [1]
     {
-      #if DEBUG_FLEX_ORIGINS
+      #if DEBUG_STUB_ORIGINS
         s->guard = cast(Byte*, malloc(sizeof(Byte)));  // smallest allocation
         *s->guard = FREE_POOLUNIT_BYTE;  // irrelevant, but disruptive choice
         free(s->guard);
@@ -363,7 +363,7 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
         s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
     SafeCorrupt_Pointer_Debug(s->misc.any.corrupt);  // #8
 
-  #if DEBUG_FLEX_ORIGINS
+  #if DEBUG_STUB_ORIGINS
     s->guard = nullptr;  // so Touch_Stub() can tell data is invalid
   #endif
 

@@ -767,11 +767,11 @@ Special internal defines used by RT, not Host-Kit developers:
 // If you plan to use Valgrind with this, you'll have to set it explicitly...
 // only Address Sanitizer can be detected here.
 //
-#if !defined(DEBUG_FLEX_ORIGINS)
+#if !defined(DEBUG_STUB_ORIGINS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_FLEX_ORIGINS  RUNTIME_CHECKS
+    #define DEBUG_STUB_ORIGINS  RUNTIME_CHECKS
   #else
-    #define DEBUG_FLEX_ORIGINS  0
+    #define DEBUG_STUB_ORIGINS  0
   #endif
 #endif
 

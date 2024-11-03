@@ -185,46 +185,6 @@ DECLARE_NATIVE(test_librebol)
 
 
 //
-//  /diagnose: native [
-//
-//  "Prints some basic internal information about the value (debug only)"
-//
-//      return: "Same as input value (for passthru similar to PROBE)"
-//          [any-value?]
-//      value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(diagnose)
-{
-  INCLUDE_PARAMS_OF_DIAGNOSE;
-
-  #if RUNTIME_CHECKS
-    Value* v = ARG(value);
-
-  #if TRAMPOLINE_COUNTS_TICKS
-    Tick tick = level_->tick;
-  #else
-    Tick tick = 0
-  #endif
-
-    printf(
-        ">>> DIAGNOSE @ tick %ld in file %s at line %d\n",
-        cast(long, tick),
-        level_->file,
-        level_->line
-    );
-
-    Dump_Value_Debug(v);
-
-    return NOTHING;
-  #else
-    UNUSED(ARG(value));
-    return FAIL(Error_Checked_Build_Only_Raw());
-  #endif
-}
-
-
-//
 //  /fuzz: native [
 //
 //  "Introduce periodic or deterministic fuzzing of out of memory errors"
