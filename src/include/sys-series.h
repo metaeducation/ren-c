@@ -98,12 +98,10 @@
 // This works with Address Sanitizer or with Valgrind, but the config flag to
 // enable it only comes automatically with address sanitizer.
 //
-#if defined(DEBUG_FLEX_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+#if defined(DEBUG_FLEX_ORIGINS)
     INLINE void Touch_Flex(Flex* s) {
-      #if defined(DEBUG_FLEX_ORIGINS)
         s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
         free(s->guard);
-      #endif
 
       #if defined(DEBUG_COUNT_TICKS)
         s->tick = TG_Tick;

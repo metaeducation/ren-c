@@ -126,7 +126,7 @@ static void Assert_Basics(void)
     if (sizeof_cell != sizeof(void*) * 4)
         panic ("size of Cell is not sizeof(void*) * 4");
 
-    #if defined(DEBUG_FLEX_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+    #if defined(DEBUG_FLEX_ORIGINS)
         assert(sizeof(Stub) == sizeof(Cell) * 2 + sizeof(void*) * 2);
     #else
         assert(sizeof(Stub) == sizeof(Cell) * 2);

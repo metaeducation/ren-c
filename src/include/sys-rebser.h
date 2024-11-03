@@ -890,7 +890,7 @@ struct StubStruct {
     //
     union StubMiscUnion misc_private;
 
-#if defined(DEBUG_FLEX_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+#if defined(DEBUG_FLEX_ORIGINS)
     intptr_t *guard;  // alloc => immediate free, for use by Panic_Flex()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
 #endif
