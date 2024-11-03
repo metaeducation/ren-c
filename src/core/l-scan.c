@@ -1230,7 +1230,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
             break; } // push values to emit stack until UTF-8 or END
 
-        case DETECTED_AS_SERIES: {
+        case DETECTED_AS_STUB: {
             //
             // An "instruction", currently just rebEval() and rebUneval().
 

@@ -150,7 +150,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         );
         break;
 
-    case DETECTED_AS_SERIES: {
+    case DETECTED_AS_STUB: {
         Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
       #if !defined(NDEBUG)
         #if 0
@@ -177,7 +177,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       #endif
         break; }
 
-    case DETECTED_AS_FREED_FLEX:
+    case DETECTED_AS_FREE:
       #if defined(NDEBUG)
         strncat(buf, "freed series", PANIC_BUF_SIZE - strlen(buf));
       #else
@@ -199,14 +199,6 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         Panic_Value_Debug(v);
       #endif
         break; }
-
-    case DETECTED_AS_FREED_CELL:
-      #if defined(NDEBUG)
-        strncat(buf, "freed cell", PANIC_BUF_SIZE - strlen(buf));
-      #else
-        Panic_Value_Debug(cast(const Cell*, p));
-      #endif
-        break;
     }
 
   #if !defined(NDEBUG)

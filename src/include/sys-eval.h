@@ -442,7 +442,7 @@ INLINE void Set_Level_Detected_Fetch(
         assert(Get_Array_Flag(L->source->array, NULLEDS_LEGAL));
         break; }
 
-      case DETECTED_AS_SERIES: { // "instructions" like rebEval(), rebUneval()
+      case DETECTED_AS_STUB: { // "instructions" like rebEval(), rebUneval()
         Array* instruction = cast_Array(m_cast(void*, p));
 
         // The instruction should be unmanaged, and will be freed on the next
@@ -454,7 +454,7 @@ INLINE void Set_Level_Detected_Fetch(
         L->value = ARR_SINGLE(instruction);
         break; }
 
-      case DETECTED_AS_FREED_FLEX:
+      case DETECTED_AS_FREE:
         panic (p);
 
       case DETECTED_AS_CELL: {
@@ -497,9 +497,6 @@ INLINE void Set_Level_Detected_Fetch(
         L->source->array = EMPTY_ARRAY;
         L->source->index = 0;
         break; }
-
-      case DETECTED_AS_FREED_CELL:
-        panic (p);
 
       default:
         assert(false);

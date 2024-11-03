@@ -67,7 +67,7 @@
             assert(
                 SERIES_MASK_ACTION == (cast(Flex*, p)->leader.bits & (
                     SERIES_MASK_ACTION
-                        | NODE_FLAG_FREE
+                        | NODE_FLAG_UNREADABLE
                         | NODE_FLAG_CELL
                         | ARRAY_FLAG_IS_VARLIST
                         | ARRAY_FLAG_IS_PAIRLIST

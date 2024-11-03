@@ -34,35 +34,34 @@
 //
 
 
-#define Is_Node_A_Cell(n) \
-    (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
+#define FLAG_NODE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
 
-#define Is_Node_A_Stub(n) \
-    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
+#define Is_Node(p) \
+    (c_cast(Byte*, (p))[0] & NODE_BYTEMASK_0x80_NODE)
 
+#define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x08_CELL))
+#define Is_Node_A_Stub(n)   (not Is_Node_A_Cell(n))
 
-#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x10_MARKED))
+// !!! There's currently no generic way to tell if a node is a Level.  It has
+// the cell flag set in its header, and uses all the other flags.  It's a lie
+// to say it's a stub or a cell in any case--even if the layout were changed
+// so the leading area was an actual stub or a cell with a special flavor or
+// heart byte.  It hasn't been a problem because places Level can be seen
+// can't generally hold cells, so the single flag is enough.  Calling out
+// this test helps find places that rely on that behavior.
+//
+#define Is_Non_Cell_Node_A_Level Is_Node_A_Cell
+
+#define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_MARKED))
 #define Not_Node_Marked(n)  (not Is_Node_Marked(n))
 
-#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x20_MANAGED))
+#define Is_Node_Managed(n)  (did (NODE_BYTE(n) & NODE_BYTEMASK_0x04_MANAGED))
 #define Not_Node_Managed(n) (not Is_Node_Managed(n))
 
-#ifdef NDEBUG
-    #define Is_Node_Free(n) \
-        (did (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
-#else
-    INLINE bool Is_Node_Free(Node* n) {
-        if (not (NODE_BYTE(n) & NODE_BYTEMASK_0x40_FREE))
-            return false;
+#define Is_Node_Readable(n) \
+    (not (NODE_BYTE(n) & NODE_BYTEMASK_0x40_UNREADABLE))
 
-        assert(
-            FIRST_BYTE(n) == FREED_FLEX_BYTE
-            or FIRST_BYTE(n) == FREED_CELL_BYTE
-        );
-        return true;
-    }
-#endif
-#define Not_Node_Free(n)    (not Is_Node_Free(n))
+#define Not_Node_Readable(n) (not Is_Node_Readable(n))
 
 // Is_Node_Root() sounds like it might be the only node.
 // Is_Node_A_Root() sounds like a third category vs Is_Node_A_Cell()/Stub()
@@ -84,22 +83,23 @@
     NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x02_ROOT)
 
 #define Set_Node_Marked_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x10_MARKED
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x01_MARKED
 
 #define Clear_Node_Marked_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x10_MARKED)
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x01_MARKED)
 
 #define Set_Node_Managed_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x20_MANAGED
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x04_MANAGED
 
 #define Clear_Node_Managed_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x20_MANAGED)
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x04_MANAGED)
 
-#define Set_Node_Free_Bit(n) \
-    NODE_BYTE(n) |= NODE_BYTEMASK_0x40_FREE
+#define Set_Node_Unreadable_Bit(n) \
+    NODE_BYTE(n) |= NODE_BYTEMASK_0x40_UNREADABLE
 
-#define Clear_Node_Free_Bit(n) \
-    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x40_FREE)
+#define Clear_Node_Unreadable_Bit(n) \
+    NODE_BYTE(n) &= (~ NODE_BYTEMASK_0x40_UNREADABLE)
+
 
 
 #if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
@@ -136,7 +136,7 @@
         else if (base)
             assert(
                 (NODE_BYTE(p) & (
-                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
+                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_UNREADABLE
                 )) == (
                     NODE_BYTEMASK_0x80_NODE
                 )
@@ -147,10 +147,8 @@
 #endif
 
 
-// Allocate a unit from a pool.  Returned unit will not be zero-filled, but
-// the header will have NODE_FLAG_FREE set when it is returned (client is
-// responsible for changing that if they plan to enumerate the pool and
-// distinguish free nodes from non-free ones.)
+// Allocate a unit from a pool.  Client is responsible for initializing it,
+// and can assume it has random bytes.
 //
 // All nodes are 64-bit aligned.  This way, data allocated in nodes can be
 // structured to know where legal 64-bit alignment points would be.  This
@@ -188,13 +186,13 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
     }
   #endif
 
-    assert(Is_Node_Free(unit));  // client needs to change to non-free
+    assert(Not_Node_Readable(unit));  // client needs to change to non-free
     return cast(void*, unit);
 }
 
 
 // Free a node, returning it to its pool.  Once it is freed, its header will
-// have NODE_FLAG_FREE...which will identify the node as not in use to anyone
+// have FREE_POOLUNIT_BYTE...which identifies the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
 INLINE void Free_Pooled(REBLEN pool_id, void *p)
@@ -212,7 +210,7 @@ INLINE void Free_Pooled(REBLEN pool_id, void *p)
 
     PoolUnit* unit = cast(PoolUnit*, p);
 
-    FIRST_BYTE(unit) = FREED_FLEX_BYTE;
+    FIRST_BYTE(unit) = FREE_POOLUNIT_BYTE;
 
     REBPOL *pool = &Mem_Pools[pool_id];
 
@@ -261,74 +259,61 @@ INLINE void Free_Pooled(REBLEN pool_id, void *p)
 // make this routine able to work.
 //
 
-enum Reb_Pointer_Detect {
-    DETECTED_AS_UTF8 = 0,
-
-    DETECTED_AS_SERIES = 1,
-    DETECTED_AS_FREED_FLEX = 2,
-
-    DETECTED_AS_CELL = 3,
-    DETECTED_AS_FREED_CELL = 4,
-
-    DETECTED_AS_END = 5 // may be a cell, or made with Endlike_Header()
+enum PointerDetectEnum {
+    DETECTED_AS_UTF8 = 1,
+    DETECTED_AS_CELL,
+    DETECTED_AS_STUB,
+    DETECTED_AS_END,  // a rebEND signal (Note: has char* alignment!)
+    DETECTED_AS_FREE
 };
 
-INLINE enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p) {
-    const Byte* bp = cast(const Byte*, p);
+typedef enum PointerDetectEnum PointerDetect;
 
-    switch (bp[0] >> 4) { // switch on the left 4 bits of the byte
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-        return DETECTED_AS_UTF8; // ASCII codepoints 0 - 127
+INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
+{
+    Byte b = FIRST_BYTE(p);
 
-    // v-- bit sequences starting with `10` (continuation bytes, so not
-    // valid starting points for a UTF-8 string)
+    if (not (b & NODE_BYTEMASK_0x80_NODE))  // test for 1xxxxxxx
+        return DETECTED_AS_UTF8;  // < 0x80 is string w/1st char in ASCII range
 
-    case 8: // 0xb1000
-        if (bp[1] == REB_0)
-            return DETECTED_AS_END; // may be end cell or "endlike" header
-        if (bp[0] & 0x1)
-            return DETECTED_AS_CELL; // unmanaged
-        return DETECTED_AS_SERIES; // unmanaged
+    if (not (b & NODE_BYTEMASK_0x40_UNREADABLE)) {  // test for 10xxxxxx
+        if (SECOND_BYTE(p) == REB_0)  // !!! Wasteful legacy bootstrap idea
+            return DETECTED_AS_END;  // !!! Modern EXE has no REB_END
 
-    case 9: // 0xb1001
-        if (bp[1] == REB_0)
-            return DETECTED_AS_END; // has to be an "endlike" header
-        assert(bp[0] & 0x1); // marked and unmanaged, must be a cell
-        return DETECTED_AS_CELL;
-
-    case 10: // 0b1010
-    case 11: // 0b1011
-        if (bp[1] == REB_0)
-            return DETECTED_AS_END;
-        if (bp[0] & 0x1)
-            return DETECTED_AS_CELL; // managed, marked if `case 11`
-        return DETECTED_AS_SERIES; // managed, marked if `case 11`
-
-    // v-- bit sequences starting with `11` are *usually* legal multi-byte
-    // valid starting points for UTF-8, with only the exceptions made for
-    // the illegal 192 and 193 bytes which represent freed series and cells.
-
-    case 12: // 0b1100
-        if (bp[0] == FREED_FLEX_BYTE)
-            return DETECTED_AS_FREED_FLEX;
-
-        if (bp[0] == FREED_CELL_BYTE)
-            return DETECTED_AS_FREED_CELL;
-
-        return DETECTED_AS_UTF8;
-
-    case 13: // 0b1101
-    case 14: // 0b1110
-    case 15: // 0b1111
-        return DETECTED_AS_UTF8;
+        if (b & NODE_BYTEMASK_0x08_CELL)  // 10xxxxxx never starts UTF-8
+            return DETECTED_AS_CELL;
+        return DETECTED_AS_STUB;
     }
 
-    DEAD_END;
+    if (  // we know it's 11xxxxxx... now test for 1111xxxx
+        (b & (NODE_BYTEMASK_0x20_GC_ONE | NODE_BYTEMASK_0x10_GC_TWO))
+            == (NODE_BYTEMASK_0x20_GC_ONE | NODE_BYTEMASK_0x10_GC_TWO)
+    ){
+        if (b & NODE_BYTEMASK_0x08_CELL)  // ...now test for 11111xxx
+            return DETECTED_AS_CELL;  // 11111xxx never starts UTF-8!
+
+        // There are 3 patterns of 0b11110xxx that are illegal in UTF-8:
+        //
+        //     0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
+        //
+        // Hence if the sixth bit is clear (0b111100xx) detect it as UTF-8.
+        //
+        if (not (b & NODE_BYTEMASK_0x04_MANAGED))
+            return DETECTED_AS_UTF8;
+
+        if (b == END_SIGNAL_BYTE) {  // 0xF7
+            assert(SECOND_BYTE(p) == '\0');
+            return DETECTED_AS_END;
+        }
+
+        if (b == FREE_POOLUNIT_BYTE)  // 0xF6
+            return DETECTED_AS_FREE;
+
+        if (b == NODE_BYTE_RESERVED)  // 0xF5
+            fail ("NODE_BYTE_RESERVED Encountered in Detect_Rebol_Pointer()");
+
+        return DETECTED_AS_STUB;
+    }
+
+    return DETECTED_AS_UTF8;
 }

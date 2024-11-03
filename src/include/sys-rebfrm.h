@@ -77,7 +77,10 @@
 // a UTF8 string.
 //
 #define DO_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
-#define DO_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_FREE)
+#define DO_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_UNREADABLE)
+
+STATIC_ASSERT(DO_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
+STATIC_ASSERT(DO_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 
 
 //=//// DO_FLAG_TO_END ////////////////////////////////////////////////////=//
@@ -123,21 +126,17 @@
     FLAG_LEFT_BIT(3) // same as OUT_FLAG_STALE (e.g. NODE_FLAG_MARKED)
 
 
-//=//// DO_FLAG_REEVALUATE_CELL ///////////////////////////////////////////=//
+//=//// DO_FLAG_4_IS_FALSE ////////////////////////////////////////////////=//
 //
-// Function dispatchers have a special return value used by EVAL, which tells
-// it to use the frame's cell as the head of the next evaluation (before
-// what L->value would have ordinarily run.)  It used to have another mode
-// which was able to request the frame to change its DO_FLAG_EXPLICIT_EVALUATE
-// state for the duration of the next evaluation...a feature that was used
-// by EVAL/ONLY.  The somewhat obscure feature was used to avoid needing to
-// make a new frame to do that, but raised several questions about semantics.
+// The second do byte is REB_0 to indicate an END.  That helps reads know
+// there is an END for in-situ enumeration.  But as an added bit of safety,
+// we make sure the bit pattern in the level header also doesn't look like
+// a cell at all by having a 0 bit in the NODE_FLAG_CELL spot.
 //
-// This allows EVAL/ONLY to be implemented by entering a new subframe with
-// new flags, and may have other purposes as well.
-//
-#define DO_FLAG_REEVALUATE_CELL \
+#define DO_FLAG_4_IS_FALSE \
     FLAG_LEFT_BIT(4)
+
+STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
 
 
 //=//// DO_FLAG_POST_SWITCH ///////////////////////////////////////////////=//
@@ -162,7 +161,21 @@
     FLAG_LEFT_BIT(6)
 
 
-#define DO_FLAG_7_IS_FALSE FLAG_LEFT_BIT(7) // NOT(NODE_FLAG_CELL)
+//=//// DO_FLAG_REEVALUATE_CELL ///////////////////////////////////////////=//
+//
+// Function dispatchers have a special return value used by EVAL, which tells
+// it to use the frame's cell as the head of the next evaluation (before
+// what L->value would have ordinarily run.)  It used to have another mode
+// which was able to request the frame to change its DO_FLAG_EXPLICIT_EVALUATE
+// state for the duration of the next evaluation...a feature that was used
+// by EVAL/ONLY.  The somewhat obscure feature was used to avoid needing to
+// make a new frame to do that, but raised several questions about semantics.
+//
+// This allows EVAL/ONLY to be implemented by entering a new subframe with
+// new flags, and may have other purposes as well.
+//
+#define DO_FLAG_REEVALUATE_CELL \
+     FLAG_LEFT_BIT(7)
 
 
 //=//// BITS 8-15 ARE 0 FOR END SIGNAL ////////////////////////////////////=//
@@ -940,10 +953,10 @@ struct LevelStruct {
             assert(
                 (NODE_BYTE(p) & (
                     NODE_BYTEMASK_0x80_NODE
-                    | NODE_BYTEMASK_0x40_FREE
-                    | NODE_BYTEMASK_0x01_CELL
+                    | NODE_BYTEMASK_0x40_UNREADABLE
+                    | NODE_BYTEMASK_0x08_CELL
                 )) == (
-                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL
+                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
                 )
             );
 

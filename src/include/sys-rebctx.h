@@ -64,7 +64,7 @@
             assert(
                 (reinterpret_cast<Flex*>(p)->leader.bits & (
                     NODE_FLAG_NODE | ARRAY_FLAG_IS_VARLIST
-                        | NODE_FLAG_FREE
+                        | NODE_FLAG_UNREADABLE
                         | NODE_FLAG_CELL
                         | ARRAY_FLAG_IS_PARAMLIST
                         | ARRAY_FLAG_IS_PAIRLIST

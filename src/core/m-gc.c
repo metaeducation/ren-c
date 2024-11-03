@@ -112,7 +112,7 @@ static void Mark_Devices_Deep(void);
 INLINE void Mark_Stub_Only(Stub* s)
 {
   #if !defined(NDEBUG)
-    if (Is_Node_Free(s))
+    if (Not_Node_Readable(s))
         panic (s);
     if (Not_Node_Managed(s)) {
         printf("Link to non-MANAGED item reached by GC\n");
@@ -640,7 +640,7 @@ static void Propagate_All_GC_Marks(void)
         // and that it hasn't been freed.
         //
         assert(Is_Flex_Array(a));
-        assert(not Is_Node_Free(a));
+        assert(not Not_Node_Readable(a));
     #endif
 
         Cell* v;
@@ -852,7 +852,7 @@ static void Mark_Root_Stubs(void)
             // !!! A smarter switch statement here could do this more
             // optimally...see the sweep code for an example.
             //
-            if (Is_Node_Free(s))
+            if (Not_Node_Readable(s))
                 continue;
 
             if (s->leader.bits & NODE_FLAG_ROOT) {
@@ -899,9 +899,6 @@ static void Mark_Root_Stubs(void)
             }
 
             if (s->leader.bits & NODE_FLAG_CELL) { // a pairing
-                if (s->leader.bits & NODE_FLAG_STACK)
-                    assert(!"stack pairings not believed to exist");
-
                 if (s->leader.bits & NODE_FLAG_MANAGED)
                     continue; // PAIR! or other value will mark it
 
@@ -1250,96 +1247,55 @@ static REBLEN Sweep_Stubs(void)
 {
     REBLEN count = 0;
 
-    // Optimization here depends on SWITCH of a bank of 4 bits.
-    //
-    STATIC_ASSERT(
-        NODE_FLAG_MARKED == FLAG_LEFT_BIT(3) // 0x1 after right shift
-        and (NODE_FLAG_MANAGED == FLAG_LEFT_BIT(2)) // 0x2 after right shift
-        and (NODE_FLAG_FREE == FLAG_LEFT_BIT(1)) // 0x4 after right shift
-        and (NODE_FLAG_NODE == FLAG_LEFT_BIT(0)) // 0x8 after right shift
-    );
+    REBSEG* seg = Mem_Pools[STUB_POOL].segs;
 
-    REBSEG *seg;
-    for (seg = Mem_Pools[STUB_POOL].segs; seg != nullptr; seg = seg->next) {
-        Flex* s = cast(Flex*, seg + 1);
-        REBLEN n;
-        for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            switch (FIRST_BYTE(&s->leader) >> 4) {
-            case 0:
-            case 1: // 0x1
-            case 2: // 0x2
-            case 3: // 0x2 + 0x1
-            case 4: // 0x4
-            case 5: // 0x4 + 0x1
-            case 6: // 0x4 + 0x2
-            case 7: // 0x4 + 0x2 + 0x1
-                //
-                // NODE_FLAG_NODE (0x8) is clear.  This signature is
-                // reserved for UTF-8 strings (corresponding to valid ASCII
-                // values in the first byte).
-                //
-                panic (s);
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = Mem_Pools[STUB_POOL].units;
+        Byte* unit = cast(Byte*, seg + 1);  // byte beats strict alias [1]
 
-            // v-- Everything below here has NODE_FLAG_NODE set (0x8)
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
+                continue;  // only unit without NODE_FLAG_NODE (in ASCII range)
 
-            case 8:
-                // 0x8: unmanaged and unmarked, e.g. a series that was made
-                // with Make_Flex() and hasn't been managed.  It doesn't
-                // participate in the GC.  Leave it as is.
-                //
-                // !!! Are there actually legitimate reasons to do this with
-                // arrays, where the creator knows the cells do not need
-                // GC protection?  Should finding an array in this state be
-                // considered a problem (e.g. the GC ran when you thought it
-                // couldn't run yet, hence would be able to free the array?)
-                //
-                break;
+            assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
 
-            case 9:
-                // 0x8 + 0x1: marked but not managed, this can't happen,
-                // because the marking itself asserts nodes are managed.
-                //
-                panic (s);
+            if (not (unit[0] & NODE_BYTEMASK_0x04_MANAGED)) {
+                assert(not (unit[0] & NODE_BYTEMASK_0x01_MARKED));
 
-            case 10:
-                // 0x8 + 0x2: managed but didn't get marked, should be GC'd
-                //
-                // !!! It would be nice if we could have NODE_FLAG_CELL here
-                // as part of the switch, but see its definition for why it
-                // is at position 8 from left and not an earlier bit.
-                //
-                if (s->leader.bits & NODE_FLAG_CELL) {
-                    assert(not (s->leader.bits & NODE_FLAG_ROOT));
-                    Free_Pooled(STUB_POOL, s); // Free_Pairing is for manuals
-                }
-                else
-                    GC_Kill_Flex(s);
-                ++count;
-                break;
-
-            case 11:
-                // 0x8 + 0x2 + 0x1: managed and marked, so it's still live.
-                // Don't GC it, just clear the mark.
-                //
-                s->leader.bits &= ~NODE_FLAG_MARKED;
-                break;
-
-            // v-- Everything below this line has the two leftmost bits set
-            // in the header.  In the *general* case this could be a valid
-            // first byte of a multi-byte sequence in UTF-8...so only the
-            // special bit pattern of the free case uses this.
-
-            case 12:
-                // 0x8 + 0x4: free node, uses special illegal UTF-8 byte
-                //
-                assert(FIRST_BYTE(&s->leader) == FREED_FLEX_BYTE);
-                break;
-
-            case 13:
-            case 14:
-            case 15:
-                panic (s); // 0x8 + 0x4 + ... reserved for UTF-8
+                /*if (unit[0] == DECAYED_NON_CANON_BYTE) {
+                    Free_Pooled(STUB_POOL, unit);
+                    continue;
+                }*/
+                assert(not (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE));
+                continue;  // ignore all unmanaged Stubs/Pairings
             }
+
+            if (unit[0] & NODE_BYTEMASK_0x01_MARKED) {  // managed and marked
+                unit[0] &= (~ NODE_BYTEMASK_0x01_MARKED);  // just remove mark
+                continue;
+            }
+
+            assert(not (unit[0] & NODE_BYTEMASK_0x02_ROOT));  // roots marked
+
+            ++count;  // managed but not marked => free it!
+
+            if (unit[0] & NODE_BYTEMASK_0x08_CELL) {  // managed pairing
+                Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing()
+                continue;
+            }
+
+            /*if (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE) {
+                //
+                // Stubs that have been marked freed may have outstanding
+                // references at the moment of being marked free...but the GC
+                // canonizes the reference pointers to PG_Inaccessible_Stub.
+                // So they should not have been marked, and once the GC pass
+                // is over we can just free them.
+            }
+            else
+                Decay_Flex(u_cast(Flex*, unit)); */
+
+            GC_Kill_Flex(u_cast(Flex*, unit));
         }
     }
 
@@ -1350,20 +1306,18 @@ static REBLEN Sweep_Stubs(void)
     //
   #ifdef UNUSUAL_CELL_SIZE
     for (seg = Mem_Pools[PAR_POOL].segs; seg != nullptr; seg = seg->next) {
-        Value* v = cast(Value*, seg + 1);
-        if (v->header.bits & NODE_FLAG_FREE) {
-            assert(FIRST_BYTE(&v->header) == FREED_FLEX_BYTE);
+        if (NODE_BYTE(seg) == FREE_POOLUNIT_BYTE)
             continue;
-        }
 
-        assert(v->header.bits & NODE_FLAG_CELL);
+        Cell* c = cast(Value*, seg + 1);
+        assert(c->header.bits & NODE_FLAG_CELL);
 
-        if (v->header.bits & NODE_FLAG_MANAGED) {
-            assert(not (v->header.bits & NODE_FLAG_ROOT));
-            if (v->header.bits & NODE_FLAG_MARKED)
-                v->header.bits &= ~NODE_FLAG_MARKED;
+        if (c->header.bits & NODE_FLAG_MANAGED) {
+            assert(not (c->header.bits & NODE_FLAG_ROOT));
+            if (c->header.bits & NODE_FLAG_MARKED)
+                c->header.bits &= ~NODE_FLAG_MARKED;
             else {
-                Free_Pooled(PAR_POOL, v); // Free_Pairing is for manuals
+                Free_Pooled(PAR_POOL, c); // Free_Pairing is for manuals
                 ++count;
             }
         }

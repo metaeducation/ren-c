@@ -167,7 +167,7 @@ void* Probe_Core_Debug(
         printf("\"%s\"\n", cast(const char*, p));
         break;
 
-    case DETECTED_AS_SERIES: {
+    case DETECTED_AS_STUB: {
         Flex* s = m_cast(Flex*, cast(const Flex*, p));
 
         Assert_Flex(s); // if corrupt, gives better info than a print crash
@@ -233,7 +233,7 @@ void* Probe_Core_Debug(
             panic (s);
         break; }
 
-    case DETECTED_AS_FREED_FLEX:
+    case DETECTED_AS_FREE:
         Probe_Print_Helper(p, "Freed Flex", file, line);
         panic (p);
 
@@ -245,10 +245,6 @@ void* Probe_Core_Debug(
     case DETECTED_AS_END:
         Probe_Print_Helper(p, "END", file, line);
         break;
-
-    case DETECTED_AS_FREED_CELL:
-        Probe_Print_Helper(p, "Freed Cell", file, line);
-        panic (p);
     }
 
     if (mo->start != Flex_Len(mo->utf8flex))

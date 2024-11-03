@@ -255,7 +255,7 @@
 INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
     assert(
         0 == (bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
             | FLAG_SECOND_BYTE(255)
         ))
     );
@@ -286,8 +286,8 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 // cell if overwritten but not copied.  For now, this is why `foo: :+` does
 // not make foo an infixed operation.
 //
-// Note that this will clear NODE_FLAG_FREE, so it should be checked by the
-// debug build before resetting.
+// Note that this will clear NODE_FLAG_UNREADABLE, so it should be checked by
+// the debug build before resetting.
 //
 // Note also that NODE_FLAG_MARKED usage is a relatively new concept, e.g.
 // to allow REMOVE-EACH to mark values in a locked series as to which should

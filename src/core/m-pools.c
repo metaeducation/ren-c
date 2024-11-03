@@ -325,7 +325,7 @@ void Shutdown_Pools(void)
         Flex* series = cast(Flex*, debug_seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; n--, series++) {
-            if (Is_Node_Free(series))
+            if (Not_Node_Readable(series))
                 continue;
 
             assert(Not_Node_Managed(series));
@@ -418,7 +418,7 @@ void Fill_Pool(REBPOL *pool)
 
     // Add new nodes to the end of free list:
 
-    // Can't use NOD() here because it tests for NOT(NODE_FLAG_FREE)
+    // Can't use NOD() here because it tests for NOT(NODE_FLAG_UNREADABLE)
     //
     PoolUnit* unit = cast(PoolUnit*, seg + 1);
 
@@ -432,14 +432,14 @@ void Fill_Pool(REBPOL *pool)
     }
 
     while (true) {
-        FIRST_BYTE(unit) = FREED_FLEX_BYTE;
+        FIRST_BYTE(unit) = FREE_POOLUNIT_BYTE;
 
         if (--units == 0) {
             unit->next_if_free = nullptr;
             break;
         }
 
-        // Can't use NOD() here because it tests for NODE_FLAG_FREE
+        // Can't use NOD() here because it tests for NODE_FLAG_UNREADABLE
         //
         unit->next_if_free = cast(PoolUnit*, cast(Byte*, unit) + pool->wide);
         unit = unit->next_if_free;
@@ -466,7 +466,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Is_Node_Free(s))
+            if (Not_Node_Readable(s))
                 continue;
 
             if (s->leader.bits & NODE_FLAG_CELL) {  // a "pairing"
@@ -634,7 +634,7 @@ void Free_Unbiased_Flex_Data(char *unbiased, REBLEN total)
         // The series data does not honor "node protocol" when it is in use
         // The pools are not swept the way the Stub pool is, so only the
         // free nodes have significance to their headers.  Use a cast and not
-        // NOD() because that assumes not (NODE_FLAG_FREE)
+        // NOD() because that assumes not (NODE_FLAG_UNREADABLE)
         //
         PoolUnit* unit = cast(PoolUnit*, unbiased);
 
@@ -645,7 +645,7 @@ void Free_Unbiased_Flex_Data(char *unbiased, REBLEN total)
         pool->first = unit;
         pool->free++;
 
-        FIRST_BYTE(unit) = FREED_FLEX_BYTE;
+        FIRST_BYTE(unit) = FREE_POOLUNIT_BYTE;
     }
     else {
         FREE_N(char, total, unbiased);
@@ -1143,7 +1143,7 @@ void Decay_Flex(Flex* s)
 void GC_Kill_Flex(Flex* s)
 {
   #if !defined(NDEBUG)
-    if (Is_Node_Free(s)) {
+    if (Not_Node_Readable(s)) {
         printf("Freeing already freed node.\n");
         panic (s);
     }
@@ -1219,7 +1219,7 @@ INLINE void Untrack_Manual_Flex(Flex* s)
 void Free_Unmanaged_Flex(Flex* s)
 {
   #if !defined(NDEBUG)
-    if (Is_Node_Free(s)) {
+    if (Not_Node_Readable(s)) {
         printf("Trying to Free_Unmanaged_Flex() on already freed Flex\n");
         panic (s); // erroring here helps not conflate with tracking problems
     }
@@ -1279,14 +1279,14 @@ void Manage_Flex(Flex* s)
 void Assert_Pointer_Detection_Working(void)
 {
     uintptr_t cell_flag = NODE_FLAG_CELL;
-    assert(FIRST_BYTE(&cell_flag) == 0x1);
-    uintptr_t protected_flag = CELL_FLAG_PROTECTED;
-    assert(THIRD_BYTE(&protected_flag) == 0x80);
+    assert(FIRST_BYTE(&cell_flag) == NODE_BYTEMASK_0x08_CELL);
+    uintptr_t flag_left_bit_31 = FLAG_LEFT_BIT(31);
+    assert(FOURTH_BYTE(&flag_left_bit_31) == 0x01);
 
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);
 
-    assert(Detect_Rebol_Pointer(EMPTY_ARRAY) == DETECTED_AS_SERIES);
+    assert(Detect_Rebol_Pointer(EMPTY_ARRAY) == DETECTED_AS_STUB);
     assert(Detect_Rebol_Pointer(BLANK_VALUE) == DETECTED_AS_CELL);
 
     DECLARE_VALUE (end_cell);
@@ -1302,9 +1302,9 @@ void Assert_Pointer_Detection_Working(void)
     assert(not (END_NODE->header.bits & NODE_FLAG_MANAGED));
 
     Flex* flex = Make_Flex(1, sizeof(char));
-    assert(Detect_Rebol_Pointer(flex) == DETECTED_AS_SERIES);
+    assert(Detect_Rebol_Pointer(flex) == DETECTED_AS_STUB);
     Free_Unmanaged_Flex(flex);
-    assert(Detect_Rebol_Pointer(flex) == DETECTED_AS_FREED_FLEX);
+    assert(Detect_Rebol_Pointer(flex) == DETECTED_AS_FREE);
 }
 
 
@@ -1328,7 +1328,7 @@ REBLEN Check_Memory_Debug(void)
 
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Is_Node_Free(s))
+            if (Not_Node_Readable(s))
                 continue;
 
             if (Is_Node_A_Cell(s))
@@ -1357,7 +1357,7 @@ REBLEN Check_Memory_Debug(void)
 
         PoolUnit* unit = Mem_Pools[pool_num].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
-            assert(Is_Node_Free(unit));
+            assert(Not_Node_Readable(unit));
 
             ++pool_free_nodes;
 
@@ -1408,7 +1408,7 @@ void Dump_All_Flex_Of_Size(REBLEN size)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Is_Node_Free(s))
+            if (Not_Node_Readable(s))
                 continue;
 
             if (Flex_Wide(s) == size) {
@@ -1438,7 +1438,7 @@ void Dump_Flex_In_Pool(REBLEN pool_id)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n = 0;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Is_Node_Free(s))
+            if (Not_Node_Readable(s))
                 continue;
 
             if (Is_Node_A_Cell(s))
@@ -1546,7 +1546,7 @@ REBU64 Inspect_Flex(bool show)
 
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; n--) {
-            if (Is_Node_Free(s)) {
+            if (Not_Node_Readable(s)) {
                 ++fre;
                 continue;
             }

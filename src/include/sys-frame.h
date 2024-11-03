@@ -488,7 +488,7 @@ INLINE void Push_Action(
 
     L->rootvar = cast(Value*, s->content.dynamic.data);
     L->rootvar->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_STACK
+        NODE_FLAG_NODE | NODE_FLAG_CELL
         | CELL_FLAG_PROTECTED // cell payload/binding tweaked, not by user
         | FLAG_KIND_BYTE(REB_FRAME);
     TRACK_CELL_IF_DEBUG(L->rootvar, __FILE__, __LINE__);
@@ -501,7 +501,7 @@ INLINE void Push_Action(
 
     s->content.dynamic.len = num_args + 1;
     Cell* tail = Array_Tail(L->varlist);
-    tail->header.bits = NODE_FLAG_STACK | FLAG_KIND_BYTE(REB_0);
+    tail->header.bits = FLAG_KIND_BYTE(REB_0);
     TRACK_CELL_IF_DEBUG(tail, __FILE__, __LINE__);
 
     // Current invariant for all arrays (including fixed size), last cell in

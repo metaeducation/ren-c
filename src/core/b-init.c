@@ -158,19 +158,6 @@ static void Assert_Basics(void)
     // Some rethinking would be necessary if this number exceeds 64.
     //
     assert(REB_MAX_PLUS_MAX < 64);
-
-    // Make sure tricks for "internal END markers" are lined up as expected.
-    //
-    assert(
-        FLEX_INFO_0_IS_TRUE == NODE_FLAG_NODE
-        and FLEX_INFO_1_IS_FALSE == NODE_FLAG_FREE
-        and FLEX_INFO_7_IS_FALSE == NODE_FLAG_CELL
-    );
-    assert(
-        DO_FLAG_0_IS_TRUE == NODE_FLAG_NODE
-        and DO_FLAG_1_IS_FALSE == NODE_FLAG_FREE
-        and DO_FLAG_7_IS_FALSE == NODE_FLAG_CELL
-    );
 }
 
 

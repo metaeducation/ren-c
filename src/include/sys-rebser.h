@@ -323,7 +323,10 @@
 //
 
 #define FLEX_INFO_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
-#define FLEX_INFO_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_FREE)
+#define FLEX_INFO_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_UNREADABLE)
+
+STATIC_ASSERT(FLEX_INFO_0_IS_TRUE == NODE_FLAG_NODE);
+STATIC_ASSERT(FLEX_INFO_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 
 
 //=//// FLEX_INFO_2 /////////////////////////////////////////////////////=//
@@ -350,19 +353,17 @@
     FLAG_LEFT_BIT(3)
 
 
-//=//// FLEX_INFO_PROTECTED /////////////////////////////////////////////=//
+//=//// FLEX_INFO_4_IS_FALSE //////////////////////////////////////////////=//
 //
-// This indicates that the user had a tempoary desire to protect a Flex
-// size or values from modification.  It is the usermode analogue of
-// FLEX_INFO_FROZEN, but can be reversed.
+// The second info byte is REB_0 to indicate an END.  That helps reads know
+// there is an END for in-situ enumeration.  But as an added bit of safety,
+// we make sure the bit pattern in the info header also doesn't look like
+// a cell at all by having a 0 bit in the NODE_FLAG_CELL spot.
 //
-// Note: There is a feature in PROTECT (CELL_FLAG_PROTECTED) which protects
-// a certain variable in a context from being changed.  It is similar, but
-// distinct.  FLEX_INFO_PROTECTED is a protection on a Flex itself--which
-// ends up affecting all Cells with that Flex in the payload.
-//
-#define FLEX_INFO_PROTECTED \
+#define FLEX_INFO_4_IS_FALSE \
     FLAG_LEFT_BIT(4)
+
+STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
 
 
 //=//// FLEX_INFO_HOLD //////////////////////////////////////////////////=//
@@ -398,7 +399,20 @@
     FLAG_LEFT_BIT(6)
 
 
-#define FLEX_INFO_7_IS_FALSE FLAG_LEFT_BIT(7) // NOT(NODE_FLAG_CELL)
+
+//=//// FLEX_INFO_PROTECTED /////////////////////////////////////////////=//
+//
+// This indicates that the user had a tempoary desire to protect a Flex
+// size or values from modification.  It is the usermode analogue of
+// FLEX_INFO_FROZEN, but can be reversed.
+//
+// Note: There is a feature in PROTECT (CELL_FLAG_PROTECTED) which protects
+// a certain variable in a context from being changed.  It is similar, but
+// distinct.  FLEX_INFO_PROTECTED is a protection on a Flex itself--which
+// ends up affecting all Cells with that Flex in the payload.
+//
+#define FLEX_INFO_PROTECTED \
+    FLAG_LEFT_BIT(7)
 
 
 //=//// BITS 8-15 ARE FOR Flex_Wide() //////////////////////////////////////=//
@@ -955,7 +969,7 @@ typedef struct StubStruct Flex;
         if (base)
             assert(
                 (reinterpret_cast<Flex*>(p)->leader.bits & (
-                    NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+                    NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
                 )) == (
                     NODE_FLAG_NODE
                 )
@@ -982,7 +996,7 @@ typedef struct StubStruct Flex;
             assert(
                 (reinterpret_cast<Flex*>(p)->leader.bits & (
                     NODE_FLAG_NODE
-                        | NODE_FLAG_FREE
+                        | NODE_FLAG_UNREADABLE
                         | NODE_FLAG_CELL
                 )) == (
                     NODE_FLAG_NODE

@@ -263,7 +263,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         error = Error_User(cast(const char*, p));
         break; }
 
-    case DETECTED_AS_SERIES: {
+    case DETECTED_AS_STUB: {
         Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
         if (Not_Array_Flag(s, IS_VARLIST))
             panic (s);

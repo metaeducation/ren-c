@@ -407,20 +407,51 @@ e-lib/emit {
         ((RebolValue*)0)
 
     /*
-     * Since a C nullptr (pointer cast of 0) is used to represent the Rebol
-     * `null` in the API, something different must be used to indicate the
-     * end of variadic input.  So a pointer to data is used where the first
-     * byte is illegal for starting UTF-8 (a continuation byte, first bit 1,
-     * second bit 0) and the second byte is 0.
+     * VARIADIC API END SIGNAL
      *
-     * To Rebol, the first bit being 1 means it's a Rebol node, the second
-     * that it is not in the "free" state.  The lowest bit in the first byte
-     * clear indicates it doesn't point to a "cell".  The SECOND_BYTE() is
-     * where the VAL_TYPE() of a cell is usually stored, and this being 0
-     * indicates an END marker.
+     * In C, `va_list` is the only way to take a variadic number of arguments.
+     *
+     *   https://en.cppreference.com/w/c/variadic/va_list
+     *
+     * It is very low-level, has no typechecking, and does not offer a count
+     * of the number of arguments passed.  So something needs to be passed
+     * that signals the end.
+     *
+     * Since a C nullptr (pointer cast of 0) is used to represent the ~null~
+     * antiform in the API, something different must be used to indicate the
+     * end of variadic input.  So a *pointer to data* is used where the first
+     * byte of that data is 0xF7 (END_SIGNAL_BYTE)--illegal in UTF-8 sequences.
+     *
+     * There were three seemingly-arbitrary choices that were out of band for
+     * UTF-8 and not applied to other purposes internally to the system
+     * which could be used for this signal:
+     *
+     *     0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
+     *
+     * The first bit being 1 means it's a "Node", the second that it is
+     * "Unreadable", the third and fourth bits would pertain to GC behavior
+     * if applicable, the fifth bit being clear means it's *not* a Cell.
+     * The seventh bit is for GC marking by design (to leverage the special
+     * 0xC0 and 0xC1 as marked and unmarked states of "decayed Stubs")
+     *
+     * It seems there's not any obvious reason to pick one of these over the
+     * other to signify END_SIGNAL_BYTE, so 0xF7 was chosen--and the other
+     * two are used for internal purposes.
+     *
+     * rebEND's second byte is 0, coming from the '\0' terminator of the C
+     * string.  This isn't strictly necessary, as the 0xF7 is enough to know
+     * it's not a Cell, Series Stub, or UTF-8.  But it can guard against
+     * interpreting garbage input as rebEND, as the sequence {0xF7, 0} is less
+     * likely to occur at random than {0xF7, ...}.  And leveraging a literal
+     * form means we don't need to define a single byte somewhere to then
+     * point at it.
+     *
+     * Note: This is for internal use only unless LIBREBOL_USE_C89.  But even
+     * without that, calling it `rebEND_internal` would affect readability
+     * of the implementation code enough to not be worth it.
      */
-    #define rebEND \
-        ((const void*)"\x80")
+
+    #define rebEND "\xF7"
 
     /*
      * Extern prototypes for API_XXX, don't call these functions directly.

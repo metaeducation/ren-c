@@ -822,14 +822,8 @@ bool Eval_Core_Throws(Level* const L)
             // array which backs the frame may not have any initialization of
             // its bits.  The goal is to make it so that the GC uses the
             // L->param position to know how far the frame fulfillment is
-            // gotten, and only mark those values.  Hoewver, there is also
-            // a desire to differentiate cell formatting between "stack"
-            // and "heap" to do certain optimizations.  After a recent change,
-            // it's becoming more integrated by using pooled memory for the
-            // args...however issues of stamping the bits remain.  This just
-            // blindly formats them with NODE_FLAG_STACK to make the arg
-            // initialization work, but it's in progress to do this more
-            // subtly so that the frame can be left formatted as non-stack.
+            // gotten, and only mark those values.
+            //
             if (
                 not (L->flags.bits & DO_FLAG_DOING_PICKUPS)
                 and L->special != L->arg

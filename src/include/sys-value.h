@@ -99,7 +99,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In the debug build, Poison cells (NODE_FLAG_FREE) can use their payload to
+// In the debug build, empty cells can use their payload to
 // store where and when they were initialized.  This also applies to some
 // datatypes like BLANK!, VOID!, LOGIC!, or NOTHING--since they only use their
 // header bits, they can also use the payload for this in the debug build.
@@ -198,7 +198,7 @@
         if (
             (v->header.bits & (
                 NODE_FLAG_CELL
-                | NODE_FLAG_FREE
+                | NODE_FLAG_UNREADABLE
                 | CELL_FLAG_FALSEY // all the "bad" types are also falsey
             )) == NODE_FLAG_CELL
         ){
@@ -212,8 +212,8 @@
             printf("VAL_TYPE() called on non-cell\n");
             panic (v);
         }
-        if (v->header.bits & NODE_FLAG_FREE) {
-            printf("VAL_TYPE() called on invalid poison cell--marked FREE\n");
+        if (v->header.bits & NODE_FLAG_UNREADABLE) {
+            printf("VAL_TYPE() called on cell marked UNREADABLE\n");
             panic (v);
         }
 
@@ -303,7 +303,7 @@
                 printf("Non-node passed to cell writing routine\n"); \
                 panic_at ((c), (file), (line)); \
             } else if (\
-                (c)->header.bits & (CELL_FLAG_PROTECTED | NODE_FLAG_FREE) \
+                (c)->header.bits & (CELL_FLAG_PROTECTED | NODE_FLAG_UNREADABLE) \
             ){ \
                 printf("Protected/free cell passed to writing routine\n"); \
                 panic_at ((c), (file), (line)); \
@@ -551,34 +551,8 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
     }
 #endif
 
-#ifdef NDEBUG
-    #define IS_END(p) \
-        (cast(const Byte*, p)[1] == REB_0_END)
-#else
-    INLINE bool IS_END_Debug(
-        const void *p, // may not have NODE_FLAG_CELL, may be short as 2 bytes
-        const char *file,
-        int line
-    ){
-        if (cast(const Byte*, p)[0] & 0x40) { // e.g. NODE_FLAG_FREE
-            printf("NOT_END() called on garbage\n");
-            panic_at(p, file, line);
-        }
-
-        if (cast(const Byte*, p)[1] == REB_0_END)
-            return true;
-
-        if (not (cast(const Byte*, p)[0] & 0x01)) { // e.g. NODE_FLAG_CELL
-            printf("IS_END() found non-END pointer that's not a cell\n");
-            panic_at(p, file, line);
-        }
-
-        return false;
-    }
-
-    #define IS_END(v) \
-        IS_END_Debug((v), __FILE__, __LINE__)
-#endif
+#define IS_END(p) \
+    (cast(const Byte*, p)[1] == REB_0_END)
 
 #define NOT_END(v) \
     (not IS_END(v))
@@ -1444,7 +1418,7 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
 // DECLARE_VALUE inside of a loop.  It should be at the outermost scope of
 // the function.
 //
-// Note: It sets NODE_FLAG_FREE, so this is a "trash" cell by default.
+// Note: It sets NODE_FLAG_UNREADABLE, so this is a "trash" cell by default.
 //
 #define DECLARE_VALUE(name) \
     Value name##_pair[2]; \

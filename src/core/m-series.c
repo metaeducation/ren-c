@@ -374,13 +374,13 @@ void Assert_Flex_Term_Core(Flex* s)
 //
 void Assert_Flex_Core(Flex* s)
 {
-    if (Is_Node_Free(s))
+    if (Not_Node_Readable(s))
         panic (s);
 
     assert(
         Get_Flex_Info(s, 0_IS_TRUE) // @ NODE_FLAG_NODE
-        and Not_Flex_Info(s, 1_IS_FALSE) // @ NOT(NODE_FLAG_FREE)
-        and Not_Flex_Info(s, 7_IS_FALSE) // @ NODE_FLAG_CELL
+        and Not_Flex_Info(s, 1_IS_FALSE) // @ NOT(NODE_FLAG_UNREADABLE)
+        and Not_Flex_Info(s, 4_IS_FALSE) // @ NODE_FLAG_CELL
     );
 
     assert(Flex_Len(s) < Flex_Rest(s));
@@ -412,7 +412,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
 
   #if defined(DEBUG_COUNT_TICKS)
     fprintf(stderr, " was likely ");
-    if (s->leader.bits & NODE_FLAG_FREE)
+    if (s->leader.bits & NODE_FLAG_UNREADABLE)
         fprintf(stderr, "freed");
     else
         fprintf(stderr, "created");
