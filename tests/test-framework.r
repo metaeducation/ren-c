@@ -261,7 +261,7 @@ export /do-recover: func [
         [~[file! text!]~]
     file [file!] "test file"
     flags [block!] "which flags to accept"
-    code-checksum [binary! blank!]
+    code-checksum [blob! blank!]
     log-file-prefix [file!]
     <local>
         interpreter last-vector value position next-position

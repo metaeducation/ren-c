@@ -11,16 +11,16 @@
 /utrim: func [
     "Removes spaces from strings or blanks from blocks or objects"
 
-    return: [any-string? any-list? binary! any-context?]
+    return: [any-string? any-list? blob! any-context?]
     series "Series (modified) or object (made)"
-        [any-string? any-list? binary! any-context?]
+        [any-string? any-list? blob! any-context?]
     :head "Removes only from the head"
     :tail "Removes only from the tail"
     :auto "Auto indents lines relative to first line"
     :lines "Removes all line breaks and extra spaces"
     :all "Removes all whitespace"
     :with "Same as :ALL but removes specific characters"
-        [char? text! binary! integer! block! bitset!]
+        [char? text! blob! integer! block! bitset!]
 ][
     let tail_TRIM: :tail
     tail: get $lib/tail
@@ -94,9 +94,9 @@
             if any [all_TRIM lines head_TRIM tail_TRIM] [append rule newline]
         ]
 
-        binary? series [
+        blob? series [
             if any [auto lines] [
-                fail "Invalid refinements for utrim of BINARY!"
+                fail "Invalid refinements for utrim of BLOB!"
             ]
 
             rule: case [

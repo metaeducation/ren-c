@@ -1,9 +1,9 @@
 ; %parse-binary.test.reb
 ;
-; This is generally intended for when the parse rule is a BINARY!, but other
+; This is generally intended for when the parse rule is a BLOB!, but other
 ; misc tests related to binary input can go here too.
 
-; General BINARY! matching
+; General BLOB! matching
 [
     (void? parse #{} [])
 
@@ -154,7 +154,7 @@
     #{22} == parse #{001122} [#{00} #{11} #{22}]
 )]
 
-; "BINARY! extraction"
+; "BLOB! extraction"
 [
     (
         res: ~

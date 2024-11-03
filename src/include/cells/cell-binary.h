@@ -1,7 +1,7 @@
 // %cell-binary.h
 
 INLINE const Binary* Cell_Binary(const Cell* v) {
-    assert(Cell_Heart(v) == REB_BINARY);
+    assert(Cell_Heart(v) == REB_BLOB);
     return c_cast(Binary*, Cell_Flex(v));
 }
 
@@ -12,7 +12,7 @@ INLINE const Binary* Cell_Binary(const Cell* v) {
     m_cast(Binary*, Cell_Binary(Known_Mutable(v)))
 
 
-INLINE const Byte* Cell_Binary_Size_At(
+INLINE const Byte* Cell_Blob_Size_At(
     Option(Sink(Size)) size_at_out,
     const Cell* v
 ){
@@ -26,11 +26,11 @@ INLINE const Byte* Cell_Binary_Size_At(
     return Binary_At(b, i);
 }
 
-#define Cell_Binary_Size_At_Ensure_Mutable(size_out,v) \
-    m_cast(Byte*, Cell_Binary_Size_At((size_out), Ensure_Mutable(v)))
+#define Cell_Blob_Size_At_Ensure_Mutable(size_out,v) \
+    m_cast(Byte*, Cell_Blob_Size_At((size_out), Ensure_Mutable(v)))
 
 #define Cell_Blob_At(v) \
-    Cell_Binary_Size_At(nullptr, (v))
+    Cell_Blob_Size_At(nullptr, (v))
 
 #define Cell_Blob_At_Ensure_Mutable(v) \
     m_cast(Byte*, Cell_Blob_At(Ensure_Mutable(v)))
@@ -39,10 +39,10 @@ INLINE const Byte* Cell_Binary_Size_At(
     m_cast(Byte*, Cell_Blob_At(Known_Mutable(v)))
 
 #define Init_Blob(out,blob) \
-    Init_Series((out), REB_BINARY, (blob))
+    Init_Series((out), REB_BLOB, (blob))
 
 #define Init_Blob_At(out,blob,offset) \
-    Init_Series_At((out), REB_BINARY, (blob), (offset))
+    Init_Series_At((out), REB_BLOB, (blob), (offset))
 
 
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//
@@ -53,7 +53,7 @@ INLINE const Byte* Cell_Binary_Size_At(
 #define BYTE_BUF TG_Byte_Buf
 
 
-// Historically, it was popular for routines that wanted BINARY! data to also
+// Historically, it was popular for routines that wanted BLOB! data to also
 // accept a TEXT!, which would be interpreted as UTF-8.
 //
 // This makes those more convenient to write.
@@ -74,7 +74,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 
     Corrupt_Pointer_If_Debug(limit_in);
 
-    if (Cell_Heart(v) == REB_BINARY) {
+    if (Cell_Heart(v) == REB_BLOB) {
         *size_out = limit;
         return Cell_Blob_At(v);
     }

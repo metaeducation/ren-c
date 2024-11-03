@@ -98,23 +98,23 @@
     (
         bin: #{68747470733A2F2F6578616D706C652E6F726722}
         let x
-        bin = parse to binary! -{https://example.org"}- [
+        bin = parse to blob! -{https://example.org"}- [
             x: across url!
             (assert [-{https://example.org"}- == as text! to url! x])
         ]
     )
-    (-{"}- == parse to binary! -{a@b.com"}- [
+    (-{"}- == parse to blob! -{a@b.com"}- [
         let x: across email! (assert [a@b.com == to email! to text! x])
         -{"}-
     ])
 ]
 
 [https://github.com/red/red/issues/4678
-    ('_ = parse to binary! "_" [blank!])
+    ('_ = parse to blob! "_" [blank!])
 
-    ~parse-mismatch~ !! (parse to binary! "#(" [blank!])
-    ~parse-mismatch~ !! (parse to binary! "(" [blank!])
-    ~parse-mismatch~ !! (parse to binary! "[" [blank!])
+    ~parse-mismatch~ !! (parse to blob! "#(" [blank!])
+    ~parse-mismatch~ !! (parse to blob! "(" [blank!])
+    ~parse-mismatch~ !! (parse to blob! "[" [blank!])
 ]
 
 ; QUOTED! needs to be recognized
@@ -124,17 +124,17 @@
 ]
 
 [https://github.com/red/red/issues/4863
-    ('word == parse to-binary "word" [word!])
-    ('word == parse to-binary "   word" [word!])
+    ('word == parse to-blob "word" [word!])
+    ('word == parse to-blob "   word" [word!])
 
-    (123 == parse to-binary "123" [integer!])
-    ~parse-mismatch~ !! (parse to-binary "123.456" [integer!])
-    (123 == parse to-binary "    123" [integer!])
+    (123 == parse to-blob "123" [integer!])
+    ~parse-mismatch~ !! (parse to-blob "123.456" [integer!])
+    (123 == parse to-blob "    123" [integer!])
 
-    ([hello 123 world] == parse to-binary "hello 123 world" [
+    ([hello 123 world] == parse to-blob "hello 123 world" [
         collect [keep word!, keep integer!, keep word!]
     ])
-    ([hello 123 world] == parse to-binary "hello 123 world" [
+    ([hello 123 world] == parse to-blob "hello 123 world" [
         collect [keep word!, space, keep integer!, space, keep word!]
     ])
 ]

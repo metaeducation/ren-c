@@ -296,7 +296,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
         for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
 
-        Init_Block(out, Freeze_Source_Shallow(a));  // !!! TBD: compact BINARY!
+        Init_Block(out, Freeze_Source_Shallow(a));  // !!! TBD: compact BLOB!
     }
     else {
         PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = size;

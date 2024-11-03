@@ -18,8 +18,8 @@
 [
     (
         str: "a^M^/b"
-        a-bin: as binary! str  comment "remembers it was utf-8, optimizes!"
-        t-bin: to binary! str  comment "makes dissociated/unconstrained copy"
+        a-bin: as blob! str  comment "remembers it was utf-8, optimizes!"
+        t-bin: to blob! str  comment "makes dissociated/unconstrained copy"
         ok
     )
 
@@ -88,9 +88,9 @@
         'illegal-cr = pick trap [write %enlined.tmp enline "a^/b"] 'id
     )
     (
-        comment "Bypass by writing BINARY!, *but* ENLINE modifies"
+        comment "Bypass by writing BLOB!, *but* ENLINE modifies"
         str: "a^/b"
-        write %enlined.tmp as binary! enline str
+        write %enlined.tmp as blob! enline str
         all [
             #{610D0A62} = read %enlined.tmp
             str = "a^M^/b"

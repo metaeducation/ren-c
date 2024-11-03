@@ -70,7 +70,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
 ]
 
 /make-http-request: func [
-    return: [binary!]
+    return: [blob!]
     method "E.g. GET, HEAD, POST etc."
         [word! text!]
     target "In case of TEXT! no escaping is performed...careful!"
@@ -78,7 +78,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
     headers "Request headers (set-word? text! pairs)"
         [block!]
     content "Content-Length is created automatically"
-        [~null~ text! binary!]
+        [~null~ text! blob!]
     <local> result
 ][
     ; The HTTP 1.1 protocol requires a `Host:` header.  Simple logic used
@@ -94,13 +94,13 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
         append result unspaced [mold word _ string CR LF]
     ]
     if content [
-        content: as binary! content
+        content: as blob! content
         append result unspaced [
             "Content-Length:" _ length of content CR LF
         ]
     ]
     append result unspaced [CR LF]
-    result: to binary! result  ; AS BINARY! would be UTF-8 constrained
+    result: to blob! result  ; AS BLOB! would be UTF-8 constrained
     if content [append result content]  ; ...but content can be arbitrary
     return result
 ]
@@ -108,8 +108,8 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
 /do-request: func [
     "Synchronously process an HTTP request on a port"
 
-    return: "Result of the request (BLOCK! for HEAD requests, BINARY! read...)"
-        [binary! block!]
+    return: "Result of the request (BLOCK! for HEAD requests, BLOB! read...)"
+        [blob! block!]
     port [port!]
 ][
     let spec: port.spec
@@ -176,7 +176,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
         spec.method: [word! | ('post)]
         opt [spec.path: [file! | url!]]
         spec.headers: [block! | ([])]
-        spec.content: opt [&any-string? | binary!]
+        spec.content: opt [&any-string? | blob!]
         <end>
     ]
 ]
@@ -214,12 +214,12 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
         info.response-line: line: to text! copy:part conn.data d1
 
         ; !!! In R3-Alpha, CONSTRUCT:WITH allowed passing in data that could
-        ; be a STRING! or a BINARY! which would be interpreted as an HTTP/SMTP
+        ; be a STRING! or a BLOB! which would be interpreted as an HTTP/SMTP
         ; header.  The code that did it was in a function Scan_Net_Header(),
         ; that has been extracted into a completely separate native.  It
         ; should really be rewritten as user code with PARSE here.
         ;
-        assert [binary? d1]
+        assert [blob? d1]
         d1: scan-net-header d1
 
         info.headers: headers: construct:with (inert d1) http-response-headers
@@ -476,11 +476,11 @@ http-response-headers: context [
         headers.transfer-encoding = "chunked" [
             ;
             ; The conn.data from our connection (e.g. TLS or TCP) is the input.
-            ; The output from this port is the "de-chunked" BINARY!.  This
+            ; The output from this port is the "de-chunked" BLOB!.  This
             ; made its starting capacity the size of the first chunk for some
             ; reason (?)
             ;
-            port.data: make binary! length of conn.data
+            port.data: make blob! length of conn.data
 
             cycle [  ; keep cycling while chunks are being read
                 ;
@@ -498,7 +498,7 @@ http-response-headers: context [
                     read conn
                 ]
 
-                ; We DEBASE to get a BINARY! and then DEBIN to get an integer.
+                ; We DEBASE to get a BLOB! and then DEBIN to get an integer.
                 ; It's not guaranteed that the chunk size is an even number
                 ; of hex digits!  If it's not, insert a 0, since DEBASE 16
                 ; would reject it otherwise.
@@ -543,7 +543,7 @@ http-response-headers: context [
                     |
                 copy trailer to crlf2bin to <end>
             ][
-                trailer: scan-net-header as binary! trailer
+                trailer: scan-net-header as blob! trailer
                 append headers spread trailer
                 clear conn.data
             ]
@@ -561,7 +561,7 @@ http-response-headers: context [
             ; Note that TAKE:PART removes *at most* that amount.
             ;
             assert [not port.data]
-            port.data: make binary! headers.content-length
+            port.data: make blob! headers.content-length
             append port.data take:part conn.data headers.content-length
 
             while [headers.content-length > length of port.data] [
@@ -607,7 +607,7 @@ sys.util/make-scheme [
 
     actor: [
         /read: func [
-            return: [binary!]
+            return: [blob!]
             port [port!]
             :lines
             :string
@@ -650,7 +650,7 @@ sys.util/make-scheme [
             value
             <local> data
         ][
-            if not match [block! binary! text!] :value [
+            if not match [block! blob! text!] :value [
                 value: form :value
             ]
             if not block? value [

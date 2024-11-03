@@ -1071,7 +1071,7 @@ nats: collect [
     ]
 ]
 
-symbol-strings: to binary! reduce collect [  ; no bootstrap MAKE BINARY!
+symbol-strings: to blob! reduce collect [  ; no bootstrap MAKE BLOB!
     for-each 'word syms-words [
         spelling: to text! word
         keep head change copy #{00} length of spelling
@@ -1137,7 +1137,7 @@ for-each 'sec sections [
 append:line boot-molded "]"
 
 write-if-changed (join prep-dir %boot/tmp-boot-block.r) boot-molded
-data: as binary! boot-molded
+data: as blob! boot-molded
 
 compressed: gzip data
 

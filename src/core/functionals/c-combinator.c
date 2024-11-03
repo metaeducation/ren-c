@@ -410,7 +410,7 @@ DECLARE_NATIVE(text_x_combinator)
         return OUT;  // Note: returns item in array, not rule, when an array!
     }
 
-    assert(Any_String(input) or Is_Binary(input));
+    assert(Any_String(input) or Is_Blob(input));
 
     REBLEN len;
     REBINT index = Find_Value_In_Binstr(

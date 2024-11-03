@@ -4,7 +4,7 @@
 ;
 ; But the idea of folding together the set operations with bitwise operations
 ; runs into trouble when you have something that can be treated with both
-; methods: e.g. a BINARY!.  If the "intersection" of #{0102} and #{0203} is
+; methods: e.g. a BLOB!.  If the "intersection" of #{0102} and #{0203} is
 ; to be #{02}, then that must be distinct from bitwise AND.  This leads all
 ; the set-based operations to separate from the bitswise ones.
 

@@ -1475,7 +1475,7 @@ makefile: make generator-class [
 
     /emit: meth [
         return: [~]
-        buf [binary!]
+        buf [blob!]
         project [object!]
         :parent [object!]  ; !!! Not heeded?
     ][
@@ -1547,7 +1547,7 @@ makefile: make generator-class [
         output [file!]
         solution [object!]
     ][
-        let buf: make binary! 2048
+        let buf: make blob! 2048
         assert [solution.class = #solution]
 
         .prepare solution

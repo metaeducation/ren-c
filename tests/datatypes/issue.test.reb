@@ -47,7 +47,7 @@
         -{#~}- #`
         #1 #2 #3 #4 #5 #6 #7 #8 #9 #1 #0 #- #=
         #! #@ ## #$ #% -{#^^}- #& #* -{#(}- -{#)}- #_ #+  ; caret for escaping
-        "#{" "#}" #|  ; #{xx} will become "ISSUE!" when BINARY! is &{xx}
+        "#{" "#}" #|  ; #{xx} will become "ISSUE!" when BLOB! is &{xx}
         -{#[}- -{#]}- #\
         #; #'  ; as with URL!, semicolons are allowed in the token
         #":" -{#"}-  ; quotes for ISSUE! with internal spaces (braces in future)

@@ -992,7 +992,7 @@ DECLARE_NATIVE(swap_contents)
     // Let the user do their own aliasing for now, since the checks are
     // annoying to write.
     //
-    if (Is_Binary(ARG(series1)) != Is_Binary(ARG(series2)))
+    if (Is_Blob(ARG(series1)) != Is_Blob(ARG(series2)))
         return FAIL("Can only SWAP-CONTENTS of binaries with other binaries");
 
     Flex* f1 = Cell_Flex_Ensure_Mutable(ARG(series1));

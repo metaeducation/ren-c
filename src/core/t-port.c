@@ -182,13 +182,13 @@ DECLARE_GENERICS(Port)
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
         if ((REF(string) or REF(lines)) and not Is_Text(OUT)) {
-            if (not Is_Binary(OUT))
+            if (not Is_Blob(OUT))
                 return FAIL(
-                    "READ :STRING or :LINES used on a non-BINARY!/STRING! read"
+                    "READ :STRING or :LINES used on a non-BLOB!/STRING! read"
                 );
 
             Size size;
-            const Byte* data = Cell_Binary_Size_At(&size, OUT);
+            const Byte* data = Cell_Blob_Size_At(&size, OUT);
             String* decoded = Make_Sized_String_UTF8(cs_cast(data), size);
             Init_Text(OUT, decoded);
         }

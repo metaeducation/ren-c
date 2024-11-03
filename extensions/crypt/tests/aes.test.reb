@@ -2,11 +2,11 @@
 
 [
     (/test: func [data check] [
-        let bin: as binary! data
+        let bin: as blob! data
         let bin-len: length of bin
         let key-128: #{01020304050607080910111213141516}
         let e: aes-key key-128 _
-        let encrypted: aes-stream e as binary! data
+        let encrypted: aes-stream e as blob! data
         let d: aes-key:decrypt key-128 _
         let decrypted: aes-stream d encrypted
         return all [

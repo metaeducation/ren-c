@@ -37,9 +37,6 @@
 //   optimization in the future...see notes on the tokens regarding this.
 
 
-#undef Is_Set_Word
-#undef Is_Get_Word
-
 
 //=//// EXTRA NEEDING GC MARK /////////////////////////////////////////////=//
 //
@@ -123,3 +120,6 @@ INLINE Heart Plainify_Any_Var_Kind(Byte k) {
 
 INLINE bool Any_Sequence_Or_List_Kind(Byte k)  // !!! optimize?
   { return Any_Sequence_Kind(k) or Any_List_Kind(k); }
+
+INLINE bool Any_Bytes_Kind(Byte k)
+  { return Any_Utf8_Kind(k) or k == REB_BLOB; }

@@ -30,19 +30,19 @@ REBOL [
 
 ; !!! R3-Alpha Module loading had the ability to be delayed.  This was so
 ; that special modules like CGI protocols or HTML formatters could be available
-; in the SYSTEM.MODULES list...held as just headers and the BINARY! or BLOCK!
+; in the SYSTEM.MODULES list...held as just headers and the BLOB! or BLOCK!
 ; that would be used to initialize them.  The feature obfuscated more
 ; foundational design points, so was temporarily removed...but should be
 ; brought back once the code solidifies.
 
 
 /transcode-header: func [
-    "Try to match a data binary! as being a script, definitional fail if not"
+    "Try to match a data blob! as being a script, definitional fail if not"
 
     return: "Null, or the ~[header rest line]~"
-        [~[[~null~ block!] [~null~ binary!] [~null~ integer!]]~ raised?]
+        [~[[~null~ block!] [~null~ blob!] [~null~ integer!]]~ raised?]
 
-    data [binary!]
+    data [blob!]
     :file [file! url!]
 
     <local> key hdr rest line
@@ -103,9 +103,9 @@ REBOL [
     "Loads script header object and body binary (not loaded)"
 
     return: "header OBJECT! if present, ~[hdr body line final]~"
-        [~[[~null~ object!] [binary! text!] [~null~ integer!] binary!]~]
+        [~[[~null~ object!] [blob! text!] [~null~ integer!] blob!]~]
     source "Source code (text! will be UTF-8 encoded)"
-        [binary! text!]
+        [blob! text!]
     :file "Where source is being loaded from"
         [file! url!]
     :only "Only process header, don't decompress body"
@@ -118,7 +118,7 @@ REBOL [
 ][
     line: 1
 
-    let data: as binary! source  ; if it's not UTF-8, decoding provides error
+    let data: as blob! source  ; if it's not UTF-8, decoding provides error
 
     ; The TRANSCODE function convention is that the LINE OF is the line number
     ; of the *end* of the transcoding so far, (to sync line numbering across
@@ -192,7 +192,7 @@ REBOL [
                     rest: gunzip:part rest end
                 ]
                 not error? sys.util/rescue [  ; e.g. not error
-                    ; BINARY! literal ("'SCRIPT encoded").  Since it
+                    ; BLOB! literal ("'SCRIPT encoded").  Since it
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.
                     ;
@@ -218,9 +218,9 @@ REBOL [
     ]
 
     ; !!! pack typecheck should handle this
-    body: ensure [binary! text!] rest
+    body: ensure [blob! text!] rest
     ensure integer! line
-    final: ensure [binary! text!] end
+    final: ensure [blob! text!] end
 
     ensure object! hdr
     ensure [~null~ block! blank!] hdr.options
@@ -235,7 +235,7 @@ REBOL [
     return: "BLOCK! if Rebol code (or codec value) plus optional header"
         [~null~ ~[element? [~null~ object!]]~]
     source "Source of the information being loaded"
-        [<maybe> file! url! tag! the-word! text! binary!]
+        [<maybe> file! url! tag! the-word! text! blob!]
     :type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
@@ -254,7 +254,7 @@ REBOL [
             ; !!! R3-Alpha's READ is nebulous, comment said "can be string,
             ; binary, block".  Current leaning is that READ always be a
             ; binary protocol, and that LOAD would be higher level--and be
-            ; based on decoding BINARY! or some higher level method that
+            ; based on decoding BLOB! or some higher level method that
             ; never goes through a binary.  In any case, `read %./` would
             ; return a BLOCK! of directory contents, and LOAD was expected
             ; to return that block...do that for now, for compatibility with
@@ -283,19 +283,19 @@ REBOL [
         fail ["No" type "LOADer found for" type of source]
     ]
 
-    ensure [text! binary!] data
+    ensure [text! blob!] data
 
     [header data line]: load-header:file data file except e -> [return raise e]
 
     if word? header [cause-error 'syntax header source]
 
     ensure [~null~ object!] header
-    ensure [binary! block! text!] data
+    ensure [blob! block! text!] data
 
     ; Convert code to block
 
     if not block? data [
-        assert [match [binary! text!] data]  ; UTF-8
+        assert [match [blob! text!] data]  ; UTF-8
         data: (transcode:file:line data file $line) except e -> [
             return raise e
         ]
@@ -403,7 +403,7 @@ REBOL [
         file! url!  ; get from location, run with location as working dir
         tag!  ; load relative to system.script.path
         the-word!  ; look up as a shorthand in registry
-        binary!  ; UTF-8 source, needs to be checked for invalid byte patterns
+        blob!  ; UTF-8 source, needs to be checked for invalid byte patterns
         text!  ; source internally stored as validated UTF-8, *may* scan faster
         word!  ; not entirely clear on what WORD! does.  :-/
         module!  ; register the module and import its exports--do not create
@@ -520,7 +520,7 @@ REBOL [
 
     let file: match [file! url!] source  ; for file and line info during scan
 
-    let data: match [binary! text!] source else [read source]
+    let data: match [blob! text!] source else [read source]
 
     let [hdr code line]: load-header:file data file
     if not hdr [

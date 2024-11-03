@@ -49,7 +49,7 @@
     )
 ]
 
-; BINARY! end tests from %parse-test.red
+; BLOB! end tests from %parse-test.red
 [
     (
         binary: #{0A}

@@ -89,7 +89,7 @@
 ]
 
 
-; BINARY! remove tests from %parse-test.red
+; BLOB! remove tests from %parse-test.red
 [
     (
         ws: charset " ^- ^/^M"

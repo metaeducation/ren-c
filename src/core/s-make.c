@@ -398,9 +398,9 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can fail()
             break;
 
-          case REB_BINARY: {
+          case REB_BLOB: {
             Size size;
-            const Byte* data = Cell_Binary_Size_At(&size, val);
+            const Byte* data = Cell_Blob_Size_At(&size, val);
             Expand_Flex_Tail(buf, size);
             memcpy(Binary_At(buf, tail), data, size);
             break; }

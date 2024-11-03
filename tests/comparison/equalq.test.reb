@@ -12,7 +12,7 @@
 ; No structural equivalence for action
 (not equal? func [] [] func [] [])
 (equal? a-value: #{00} a-value)
-; binary!
+; blob!
 ; Same contents
 (equal? #{00} #{00})
 ; Different contents
@@ -22,10 +22,10 @@
 ; Offset + similar contents at reference
 (equal? #{00} next #{0100})
 (equal? equal? #{00} next #{0100} equal? next #{0100} #{00})
-; No binary! padding
+; No blob! padding
 (not equal? #{00} #{0000})
 (equal? equal? #{00} #{0000} equal? #{0000} #{00})
-; Empty binary! not blank
+; Empty blob! not blank
 (not equal? #{} blank)
 (equal? equal? #{} blank equal? blank #{})
 ; case sensitivity
@@ -55,7 +55,7 @@
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
 
-; No implicit to binary! from integer!
+; No implicit to blob! from integer!
 (not equal? #{00} decode [BE +] #{00})
 (equal? equal? #{00} (decode [BE +] #{00}) equal? (decode [BE +] #{00}) #{00})
 
@@ -66,11 +66,11 @@
     a-value: #a
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
-; No implicit to binary! from text!
-(not equal? a-value: "" to binary! a-value)
+; No implicit to blob! from text!
+(not equal? a-value: "" to blob! a-value)
 (
     a-value: ""
-    equal? equal? a-value to binary! a-value equal? to binary! a-value a-value
+    equal? equal? a-value to blob! a-value equal? to blob! a-value a-value
 )
 ; tag! vs. text!
 ; RAMBO #3518
@@ -85,7 +85,7 @@
 ; This is because of the COMPLEMENT problem: bug#1085.
 (not equal? make bitset! #{} make bitset! #{00})
 
-; No implicit to binary! from bitset!
+; No implicit to blob! from bitset!
 (not equal? #{00} make bitset! #{00})
 
 (equal? equal? make bitset! #{00} #{00} equal? #{00} make bitset! #{00})

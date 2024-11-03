@@ -160,14 +160,14 @@ REBOL [
 /reword: func [
     "Make a string or binary based on a template and substitution values"
 
-    return: [any-string? binary!]
+    return: [any-string? blob!]
     source "Template series with escape sequences"
-        [any-string? binary!]
+        [any-string? blob!]
     values "Keyword literals and value expressions"
         [map! object! block!]
     :case "Characters are case-sensitive"
     :escape "Escape char(s) or [prefix suffix] delimiters (default is $)"
-        [char? any-string? word! binary! block!]
+        [char? any-string? word! blob! block!]
 
     <static>
 
@@ -175,10 +175,10 @@ REBOL [
     ; BLOCK! excluded.
     ;
     delimiter-types (
-        [char?! | &any-string? | word! | binary!]
+        [char?! | &any-string? | word! | blob!]
     )
     keyword-types (
-        [char?! | &any-string? | integer! | word! | binary!]
+        [char?! | &any-string? | integer! | word! | blob!]
     )
 ][
     let case_REWORD: case

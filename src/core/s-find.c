@@ -151,7 +151,7 @@ REBINT Find_Binstr_In_Binstr(
 ){
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
 
-    bool is_2_str = (Cell_Heart(binstr2) != REB_BINARY);
+    bool is_2_str = (Cell_Heart(binstr2) != REB_BLOB);
     Size size2;
     Length len2;
     const Byte* head2;
@@ -164,7 +164,7 @@ REBINT Find_Binstr_In_Binstr(
         );
     }
     else {
-        head2 = Cell_Binary_Size_At(&size2, binstr2);
+        head2 = Cell_Blob_Size_At(&size2, binstr2);
         if (limit2 and *(unwrap limit2) < size2)
             size2 = *(unwrap limit2);
         len2 = size2;
@@ -181,7 +181,7 @@ REBINT Find_Binstr_In_Binstr(
         return VAL_INDEX(binstr1);
     }
 
-    bool is_1_str = (Cell_Heart(binstr1) != REB_BINARY);
+    bool is_1_str = (Cell_Heart(binstr1) != REB_BLOB);
     assert(not (is_1_str and not is_2_str));  // see `IMPORTANT` comment above
 
     // The search window size in units of binstr1.  It's the length or size of
@@ -215,8 +215,8 @@ REBINT Find_Binstr_In_Binstr(
     const Byte* cp1;  // binstr1 position that is current test head of match
     Length len_head1;
     Size size_at1;
-    if (Cell_Heart(binstr1) == REB_BINARY) {
-        cp1 = Cell_Binary_Size_At(&size_at1, binstr1);
+    if (Cell_Heart(binstr1) == REB_BLOB) {
+        cp1 = Cell_Blob_Size_At(&size_at1, binstr1);
         len_head1 = Cell_Series_Len_Head(binstr1);
     }
     else {
@@ -445,7 +445,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
-    bool is_str = (Cell_Heart(binstr) != REB_BINARY);
+    bool is_str = (Cell_Heart(binstr) != REB_BLOB);
 
     const Byte* cp1 = is_str ? Cell_String_At(binstr) : Cell_Blob_At(binstr);
     Codepoint c1;
@@ -468,7 +468,7 @@ REBINT Find_Bitset_In_Binstr(
         if (Check_Bit(bset, c1, uncase)) {
             //
             // !!! Now the output will always match 1 character or 1 byte.
-            // If you were matching BINARY! in a mode that would match a
+            // If you were matching BLOB! in a mode that would match a
             // character codepoint, this length might be longer.  Review.
             //
             *len_out = 1;
@@ -495,7 +495,7 @@ REBINT Find_Bitset_In_Binstr(
 //  Find_Value_In_Binstr: C
 //
 // Service routine for both FIND and PARSE for searching in an ANY-STRING?,
-// ISSUE!, or BINARY!
+// ISSUE!, or BLOB!
 //
 REBLEN Find_Value_In_Binstr(
     REBLEN *len,
@@ -508,12 +508,12 @@ REBLEN Find_Value_In_Binstr(
     Heart binstr_heart = Cell_Heart(binstr);
     Heart pattern_heart = Cell_Heart(pattern);
 
-    if (REB_BINARY == pattern_heart) {
+    if (REB_BLOB == pattern_heart) {
         //
-        // Can't search for BINARY! in an ANY-STRING? (might match on a "half
+        // Can't search for BLOB! in an ANY-STRING? (might match on a "half
         // codepoint").  Solution is to alias input as UTF-8 binary.
         //
-        if (binstr_heart != REB_BINARY)
+        if (binstr_heart != REB_BLOB)
             fail (Error_Find_String_Binary_Raw());
         goto find_binstr_in_binstr;
     }
@@ -525,10 +525,10 @@ REBLEN Find_Value_In_Binstr(
             or REB_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
         ))
     ){
-        if (binstr_heart != REB_BINARY and (
+        if (binstr_heart != REB_BLOB and (
             IS_CHAR_CELL(pattern) and Cell_Codepoint(pattern) == 0
         )){
-            return NOT_FOUND;  // can't find NUL # in strings, only BINARY!
+            return NOT_FOUND;  // can't find NUL # in strings, only BLOB!
         }
 
       find_binstr_in_binstr: ;

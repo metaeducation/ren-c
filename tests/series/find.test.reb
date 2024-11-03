@@ -103,15 +103,15 @@
 ("abcd" = find-reverse skip "abcd" 2 "abcd")
 
 [
-    (did ab: to binary! "ab")
+    (did ab: to blob! "ab")
 
     (ab = find ab "a")
-    ((to binary! "b") = find ab "b")
+    ((to blob! "b") = find ab "b")
     (null = find ab "c")
 
     ; !!! String search in binary only supports :skip of 1 for now (e.g no -1)
     ;(ab = find-reverse tail ab "a")
-    ;((to binary! "b") = find-reverse tail ab "b")
+    ;((to blob! "b") = find-reverse tail ab "b")
     ;(null = find-reverse tail ab "c")
 ]
 
@@ -122,7 +122,7 @@
 ; Strings can be searched for in binaries, #{00} bytes aren't legal in string
 ; and should be skipped as match candidates (like illegal UTF-8, e.g. #{FF}).
 [
-    (#{616263} = to binary! "abc")
+    (#{616263} = to blob! "abc")
 
     (#{61626300FF} = find #{FF0061626300FF} "ABC")
     (null = find:case #{FF0061626300FF} "ABC")
@@ -132,14 +132,14 @@
     (#{61626300FF} = find #{FF0061626300FF} #{616263})
     (#{61626300FF} = find:case #{FF0061626300FF} #{616263})  ; :case ignored
 
-    (#{414243} = to binary! "ABC")
+    (#{414243} = to blob! "ABC")
     (null = find #{FF0061626300FF} #{414243})
     (null = find:case #{FF0061626300FF} #{414243})  ; :case ignored
 ]
 
 [
-    (#{C386} = find:skip to binary! "Æ" "Æ" 1)
-    (#{C386} = find:skip tail to binary! "Æ" "Æ" -1)
+    (#{C386} = find:skip to blob! "Æ" "Æ" 1)
+    (#{C386} = find:skip tail to blob! "Æ" "Æ" -1)
 ]
 
 [

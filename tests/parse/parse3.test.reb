@@ -75,7 +75,7 @@
     ok
 )
 
-; Don't leak internal detail that BINARY! or ANY-STRING? are 0-terminated
+; Don't leak internal detail that BLOB! or ANY-STRING? are 0-terminated
 [
     (NUL = as issue! 0)
 
@@ -570,7 +570,7 @@
 
 ; Multi-byte characters and strings present a lot of challenges.  There should
 ; be many more tests and philosophies written up of what the semantics are,
-; especially when it comes to BINARY! and ANY-STRING? mixtures.  These tests
+; especially when it comes to BLOB! and ANY-STRING? mixtures.  These tests
 ; are better than nothing...
 [
     (
@@ -596,7 +596,7 @@
 
 [
     (
-        bincat: to-binary -{C😺T}-
+        bincat: to-blob -{C😺T}-
         bincat = #{43F09F98BA54}
     )
 
@@ -616,7 +616,7 @@
 ]
 
 (
-    test: to-binary -{The C😺T Test}-
+    test: to-blob -{The C😺T Test}-
     x: ~
     parse3 test [to -{c😺t}- x: across to space to <end>]
     all [

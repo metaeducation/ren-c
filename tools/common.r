@@ -197,7 +197,7 @@ export /binary-to-c: func [
     "Converts a binary to a string of C source to initialize a char array"
 
     return: [text!]
-    data [binary!]
+    data [blob!]
 ][
     let data-len: length of data
 
@@ -308,7 +308,7 @@ export /write-if-changed: func [
     content [text! block!]
 ][
     if block? content [content: spaced content]
-    content: to binary! content
+    content: to blob! content
 
     any [
         not exists? dest

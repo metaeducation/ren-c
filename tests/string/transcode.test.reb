@@ -71,7 +71,7 @@
 
 ; Do the same thing, but with UTF-8 binary...
 (
-    bin: as binary! "Cat😺: [😺 😺] (😺)"
+    bin: as blob! "Cat😺: [😺 😺] (😺)"
     bin =  #{436174F09F98BA3A205BF09F98BA20F09F98BA5D2028F09F98BA29}
 
     all wrap [
@@ -95,7 +95,7 @@
 ]
 
 (
-    [p v]: transcode:next to binary! "7-Feb-2021/23:00"
+    [p v]: transcode:next to blob! "7-Feb-2021/23:00"
     [7-Feb-2021/23:00 #{}] = reduce [v p]
 )
 

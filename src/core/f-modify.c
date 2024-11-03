@@ -222,18 +222,18 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 // so is because the caller would have a hard time calculating that if the
 // input Flex were FORM'd.
 //
-// It is possible to alias ANY-STRING? as BINARY! (or alias a binary as string,
+// It is possible to alias ANY-STRING? as BLOB! (or alias a binary as string,
 // but doing so marks the Flex with FLEX_FLAG_IS_STRING).  If a Blob's Binary
 // is aliased anywhere as a String Flex, it must carry this flag--and once it
 // does so, then all mutations must preserve the Flex content as valid UTF-8.
 // That aliasing ability is why this routine is for both string and binary.
 //
-// While a BINARY! and an ANY-STRING? can alias the same Flex, the meaning
+// While a BLOB! and an ANY-STRING? can alias the same Flex, the meaning
 // of VAL_INDEX() is different.  So in addition to the detection of the
-// FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BINARY!.
+// FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
 REBLEN Modify_String_Or_Binary(
-    Value* dst,  // ANY-STRING? or BINARY! value to modify
+    Value* dst,  // ANY-STRING? or BLOB! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT or SYM_CHANGE @ index
     const Value* src,  // argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
@@ -255,7 +255,7 @@ REBLEN Modify_String_Or_Binary(
 
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
     Size dst_off;
-    if (Is_Binary(dst)) {  // check invariants up front even if NULL / no-op
+    if (Is_Blob(dst)) {  // check invariants up front even if NULL / no-op
         if (Is_Stub_String(dst_flex)) {
             Byte at = *Binary_At(dst_flex, dst_idx);
             if (Is_Continuation_Byte(at))
@@ -300,7 +300,7 @@ REBLEN Modify_String_Or_Binary(
         dst_off = Flex_Used(dst_flex);
         dst_idx = dst_len_old;
     }
-    else if (Is_Binary(dst) and Is_Stub_String(dst_flex)) {
+    else if (Is_Blob(dst) and Is_Stub_String(dst_flex)) {
         dst_idx = String_Index_At(cast(String*, dst_flex), dst_off);
     }
 
@@ -313,7 +313,7 @@ REBLEN Modify_String_Or_Binary(
     REBLEN src_len_raw;  // length in codepoints (if dest is string)
     Size src_size_raw;  // size in bytes
 
-    Byte src_byte;  // only used by BINARY! (mold buffer is UTF-8 legal)
+    Byte src_byte;  // only used by BLOB! (mold buffer is UTF-8 legal)
 
     if (Is_Issue(src)) {  // characters store their encoding in their payload
         //
@@ -366,7 +366,7 @@ REBLEN Modify_String_Or_Binary(
             src_len_raw = src_size_raw;
     }
     else if (Is_Integer(src)) {
-        if (not Is_Binary(dst))
+        if (not Is_Blob(dst))
             goto form;  // e.g. `append "abc" 10` is "abc10"
 
         // otherwise `append #{123456} 10` is #{1234560A}, just the byte
@@ -378,7 +378,7 @@ REBLEN Modify_String_Or_Binary(
         src_ptr = &src_byte;
         src_len_raw = src_size_raw = 1;
     }
-    else if (Is_Binary(src)) {
+    else if (Is_Blob(src)) {
         const Binary* b = Cell_Binary(src);
         REBLEN offset = VAL_INDEX(src);
 
@@ -387,7 +387,7 @@ REBLEN Modify_String_Or_Binary(
 
         if (not Is_Stub_String(dst_flex)) {
             if (limit and *(unwrap limit) < src_size_raw)
-                src_size_raw = *(unwrap limit);  // byte count for binary! dest
+                src_size_raw = *(unwrap limit);  // byte count for blob! dest
             src_len_raw = src_size_raw;
         }
         else {
@@ -462,7 +462,7 @@ REBLEN Modify_String_Or_Binary(
         // !!! For APPEND and INSERT, the :PART should apply to *block* units,
         // and not character units from the generated string.
 
-        if (Is_Binary(dst)) {
+        if (Is_Blob(dst)) {
             //
             // !!! R3-Alpha had the notion of joining a binary into a global
             // buffer that was cleared out and reused.  This was not geared
@@ -507,7 +507,7 @@ REBLEN Modify_String_Or_Binary(
     }
 
     // Here we are accounting for a :PART where we know the source series
-    // data is valid UTF-8.  (If the source were a BINARY!, where the :PART
+    // data is valid UTF-8.  (If the source were a BLOB!, where the :PART
     // counts in bytes, it would have jumped below here with limit set up.)
     //
     // !!! Bad first implementation; improve.
@@ -579,7 +579,7 @@ REBLEN Modify_String_Or_Binary(
         REBLEN dst_len_at;
         Size dst_size_at;
         if (Is_Stub_String(dst_flex)) {
-            if (Is_Binary(dst)) {
+            if (Is_Blob(dst)) {
                 dst_size_at = Cell_Series_Len_At(dst);  // byte count
                 dst_len_at = String_Index_At(
                     cast(String*, dst_flex),
@@ -618,7 +618,7 @@ REBLEN Modify_String_Or_Binary(
 
         Size part_size;
         if (Is_Stub_String(dst_flex)) {
-            if (Is_Binary(dst)) {
+            if (Is_Blob(dst)) {
                 //
                 // The calculations on the new length depend on `part` being
                 // in terms of codepoint count.  Transform it from byte count,
@@ -754,7 +754,7 @@ REBLEN Modify_String_Or_Binary(
     if (op == SYM_APPEND)
         return 0;
 
-    if (Is_Binary(dst))
+    if (Is_Blob(dst))
         return dst_off + src_size_total;
 
     return dst_idx + src_len_total;

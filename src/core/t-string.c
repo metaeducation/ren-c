@@ -348,9 +348,9 @@ Bounce Makehook_String(Level* level_, Kind k, Element* def) {
     if (Is_Integer(def))  // new string with given integer capacity [2]
         return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));
 
-    if (Is_Binary(def)) {  // not necessarily valid UTF-8, so must check
+    if (Is_Blob(def)) {  // not necessarily valid UTF-8, so must check
         Size size;
-        const Byte* at = Cell_Binary_Size_At(&size, def);
+        const Byte* at = Cell_Blob_Size_At(&size, def);
         return Init_Any_String(
             OUT,
             heart,
@@ -369,16 +369,16 @@ Bounce Makehook_String(Level* level_, Kind k, Element* def) {
 //
 //      return: [~null~ text!]
 //      value [<maybe> element?]
-//      :relax "Allow invisible codepoints like CR when converting BINARY!"
+//      :relax "Allow invisible codepoints like CR when converting BLOB!"
 //  ]
 //
 DECLARE_NATIVE(to_text)
 {
     INCLUDE_PARAMS_OF_TO_TEXT;
 
-    if (Is_Binary(ARG(value)) and REF(relax)) {
+    if (Is_Blob(ARG(value)) and REF(relax)) {
         Size size;
-        const Byte* at = Cell_Binary_Size_At(&size, ARG(value));
+        const Byte* at = Cell_Blob_Size_At(&size, ARG(value));
         return Init_Any_String(
             OUT,
             REB_TEXT,
@@ -881,7 +881,7 @@ DECLARE_GENERICS(String)
             return Init_Utf8_Non_String(OUT, to, utf8, size, len);
         }
 
-        if (to == REB_BINARY) {
+        if (to == REB_BLOB) {
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
 

@@ -66,8 +66,8 @@ DECLARE_NATIVE(negate)
 //
 //  "Returns the addition of two values"
 //
-//      return: [char? any-scalar? date! binary!]
-//      value1 [char? any-scalar? date! binary!]
+//      return: [char? any-scalar? date! blob!]
+//      value1 [char? any-scalar? date! blob!]
 //      value2 [char? any-scalar? date!]
 //  ]
 //
@@ -83,8 +83,8 @@ DECLARE_NATIVE(add)
 //
 //  "Returns the second value subtracted from the first"
 //
-//      return: [char? any-scalar? date! binary!]
-//      value1 [char? any-scalar? date! binary!]
+//      return: [char? any-scalar? date! blob!]
+//      value1 [char? any-scalar? date! blob!]
 //      value2 [char? any-scalar? date!]
 //  ]
 //

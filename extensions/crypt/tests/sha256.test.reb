@@ -27,7 +27,7 @@
     ; non-series head test
     (
         for-each [data hash] pairs [
-            let longer: join either binary? data [#{57911240}] ["MetÆ"] data
+            let longer: join either blob? data [#{57911240}] ["MetÆ"] data
             if hash != checksum 'sha256 skip longer 4 [
                 fail ["bad sha256 for skip 4 of" mold longer]
             ]
@@ -48,11 +48,11 @@
     /hmac-sha256: func [
         "Computes the hmac-sha256 for message m using key k"
 
-        m [binary! text!]
-        k [binary! text!]
+        m [blob! text!]
+        k [blob! text!]
     ][
-        let key: as binary! copy k
-        let message: as binary! copy m
+        let key: as blob! copy k
+        let message: as blob! copy m
         let blocksize: 64
         if blocksize < length of key [
             key: checksum 'sha256 key
@@ -72,11 +72,11 @@
     random:seed "Deterministic Behavior Desired"
     repeat 100 (wrap [
         data-len: random 1024
-        data: make binary! data-len
+        data: make blob! data-len
         repeat data-len [append data (random 256) - 1]
 
         key-len: random 512
-        key: make binary! key-len
+        key: make blob! key-len
         repeat key-len [append data (random 256) - 1]
 
         a: hmac-sha256 data key

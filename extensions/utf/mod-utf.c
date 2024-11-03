@@ -144,10 +144,10 @@ static String* Decode_UCS2(  // [1]
 //
 //  export /identify-text?: native [
 //
-//  "Codec for identifying BINARY! data for a .TXT file"
+//  "Codec for identifying BLOB! data for a .TXT file"
 //
 //      return: [logic?]
-//      data [binary!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(identify_text_q)
@@ -163,10 +163,10 @@ DECLARE_NATIVE(identify_text_q)
 //
 //  export /decode-text: native [
 //
-//  "Codec for decoding BINARY! data for a .TXT file"
+//  "Codec for decoding BLOB! data for a .TXT file"
 //
 //      return: [text!]
-//      data [binary!]
+//      data [blob!]
 //      options [block!]
 //  ]
 //
@@ -180,7 +180,7 @@ DECLARE_NATIVE(decode_text)
     // !!! The original code for R3-Alpha would simply alias the incoming
     // binary as a string.  This is essentially a Latin1 interpretation.
     // For the moment that behavior is preserved, but what is *not* preserved
-    // is the idea of reusing the BINARY!--a copy is made.
+    // is the idea of reusing the BLOB!--a copy is made.
     //
     // A more "intelligent" codec would do some kind of detection here, to
     // figure out what format the text file was in.  While Ren-C's commitment
@@ -188,7 +188,7 @@ DECLARE_NATIVE(decode_text)
     // having wider format support might be a good thing.
 
     Size size;
-    const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
+    const Byte* data = Cell_Blob_Size_At(&size, ARG(data));
     return rebSizedText(cs_cast(data), size);
 }
 
@@ -198,7 +198,7 @@ DECLARE_NATIVE(decode_text)
 //
 //  "Codec for encoding a .TXT file"
 //
-//      return: [binary!]
+//      return: [blob!]
 //      string [text!]
 //      options [block!]
 //  ]
@@ -257,10 +257,10 @@ static Binary* Encode_UCS2(  // [1]
 //
 //  export /identify-utf16le?: native [
 //
-//  "Codec for identifying BINARY! data for a little-endian UTF16 file"
+//  "Codec for identifying BLOB! data for a little-endian UTF16 file"
 //
 //      return: [logic?]
-//      data [binary!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(identify_utf16le_q)
@@ -281,10 +281,10 @@ DECLARE_NATIVE(identify_utf16le_q)
 //
 //  export /decode-utf16le: native [
 //
-//  "Codec for decoding BINARY! data for a little-endian UTF16 file"
+//  "Codec for decoding BLOB! data for a little-endian UTF16 file"
 //
 //      return: [text!]
-//      data [binary!]
+//      data [blob!]
 //      options [block!]
 //  ]
 //
@@ -296,7 +296,7 @@ DECLARE_NATIVE(decode_utf16le)
         return FAIL(ARG(options));
 
     Size size;
-    const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
+    const Byte* data = Cell_Blob_Size_At(&size, ARG(data));
 
     const bool little_endian = true;
     Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
@@ -316,7 +316,7 @@ DECLARE_NATIVE(decode_utf16le)
 //
 //  "Codec for encoding a little-endian UTF16 file"
 //
-//      return: [binary!]
+//      return: [blob!]
 //      text [text!]
 //      options [block!]
 //  ]
@@ -344,10 +344,10 @@ DECLARE_NATIVE(encode_utf16le)
 //
 //  export /identify-utf16be?: native [
 //
-//  "Codec for identifying BINARY! data for a big-endian UTF16 file"
+//  "Codec for identifying BLOB! data for a big-endian UTF16 file"
 //
 //      return: [logic?]
-//      data [binary!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(identify_utf16be_q)
@@ -368,10 +368,10 @@ DECLARE_NATIVE(identify_utf16be_q)
 //
 //  export /decode-utf16be: native [
 //
-//  "Codec for decoding BINARY! data for a big-endian UTF16 file"
+//  "Codec for decoding BLOB! data for a big-endian UTF16 file"
 //
 //      return: [text!]
-//      data [binary!]
+//      data [blob!]
 //      options [block!]
 //  ]
 //
@@ -383,7 +383,7 @@ DECLARE_NATIVE(decode_utf16be)
         return FAIL(ARG(options));
 
     Size size;
-    const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
+    const Byte* data = Cell_Blob_Size_At(&size, ARG(data));
 
     const bool little_endian = false;
     Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
@@ -403,7 +403,7 @@ DECLARE_NATIVE(decode_utf16be)
 //
 //  "Codec for encoding a big-endian UTF16 file"
 //
-//      return: [binary!]
+//      return: [blob!]
 //      text [text!]
 //      options [block!]
 //  ]

@@ -22,7 +22,7 @@ REBOL [
         if not text? data [
             fail ["WRITE-ENLINED only works on TEXT! data"]
         ]
-        data: as binary! enline copy data
+        data: as blob! enline copy data
     ]
 )
 
@@ -46,7 +46,7 @@ REBOL [
 
     ; !!! what RETURN values make sense?
     where "Where to save (suffix determines encoding)"
-        [file! url! binary! text! blank!]
+        [file! url! blob! text! blank!]
     value "Value(s) to save"
         [<const> element?]
     :header "Provide REBOL header block/object, or INCLUDED if in value"
@@ -140,8 +140,8 @@ REBOL [
             data: mold64 data
         ]
 
-        not binary? data [
-            data: to-binary data
+        not blob? data [
+            data: to-blob data
         ]
 
         length [
@@ -169,5 +169,5 @@ REBOL [
         ]
     ]
 
-    return insert tail of where data  ; text! or binary!, insert data
+    return insert tail of where data  ; text! or blob!, insert data
 ]

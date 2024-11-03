@@ -125,7 +125,7 @@ lib: system.contexts.lib  ; alias for faster access
     return: "Evaluator will skip over the result (not seen)"
         [~[]~]
     @discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
-        [any-list? any-utf8? binary! any-scalar?]
+        [any-list? any-utf8? blob! any-scalar?]
 ][
     return ~[]~
 ]

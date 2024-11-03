@@ -80,7 +80,7 @@ append system.options.file-types spread switch fourth system.version [
     type "Media type (jpeg, png, etc.)"
         [word! block!]
     data "The data to decode"
-        [binary!]
+        [blob!]
 ][
     let options: either block? type [
         type: compose type
@@ -102,7 +102,7 @@ append system.options.file-types spread switch fourth system.version [
 /encode: func [
     "Encodes a datatype (e.g. image!) into a series of bytes"
 
-    return: [binary!]
+    return: [blob!]
     type "Media type (jpeg, png, etc.)"
         [word! block!]
     data [element?]
@@ -128,7 +128,7 @@ append system.options.file-types spread switch fourth system.version [
     "Returns the media codec name for given binary data. (identify)"
 
     return: [~null~ word!]
-    data [binary!]
+    data [blob!]
 ][
     for-each [name codec] system.codecs [
         if all [

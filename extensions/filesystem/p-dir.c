@@ -72,7 +72,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 
     Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
     FILEREQ *dir;
-    if (Is_Binary(state)) {
+    if (Is_Blob(state)) {
         dir = File_Of_Port(port);
     }
     else {
@@ -114,7 +114,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         dir->offset = FILEOFFSET_UNKNOWN;
 
         // Generally speaking, you don't want to store Value* or Flex* in
-        // something like this struct-embedded-in-a-BINARY! as it will be
+        // something like this struct-embedded-in-a-BLOB! as it will be
         // invisible to the GC.  But this pointer is into the port spec, which
         // we will assume is good for the lifetime of the port.  :-/  (Not a
         // perfect assumption as there's no protection on it.)

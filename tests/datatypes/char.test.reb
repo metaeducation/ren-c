@@ -237,7 +237,7 @@
     ]
     count-up 'size 4 wrap [
         c: codepoints.(size)
-        if size != length of to binary! c [
+        if size != length of to blob! c [
             fail "test character doesn't match expected size"
         ]
         count-up 'len 64 wrap [
@@ -271,17 +271,17 @@
 
     ; 1 UTF-8 byte
     (#"b" = utf8-to-char #{62})
-    (#{62} = to binary! #"b")
+    (#{62} = to blob! #"b")
 
     ; 2 UTF-8 bytes
     (#"à" = utf8-to-char #{C3A0})
-    (#{C3A0} = to binary! #"à")
+    (#{C3A0} = to blob! #"à")
 
     ; 3 UTF-8 bytes
     (#"漢" = utf8-to-char #{E6BCA2})
-    (#{E6BCA2} = to binary! #"漢")
+    (#{E6BCA2} = to blob! #"漢")
 
     ; 4 UTF-8 bytes
     (#"😺" = utf8-to-char #{F09F98BA})
-    (#{F09F98BA} = to binary! #"😺")
+    (#{F09F98BA} = to blob! #"😺")
 ]

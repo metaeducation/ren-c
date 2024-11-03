@@ -175,13 +175,13 @@ REBOL [
 /script?: func [
     "Checks file, url, or text string for a valid script header"
 
-    return: [~null~ binary!]
-    source [file! url! binary! text!]
+    return: [~null~ blob!]
+    source [file! url! blob! text!]
 ][
     if match [file! url!] source [
         source: read source
     ]
-    transcode-header as binary! source else [
+    transcode-header as blob! source else [
         return false
     ] except [
         return false

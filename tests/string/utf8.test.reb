@@ -83,7 +83,7 @@
 
 (
     str: "caffè"
-    bin: as binary! str
+    bin: as blob! str
     append bin 65
     all [
         bin = #{63616666C3A841}
@@ -91,11 +91,11 @@
     ]
 )
 
-; AS aliasing of TEXT! as BINARY! constrains binary modifications to UTF-8
+; AS aliasing of TEXT! as BLOB! constrains binary modifications to UTF-8
 https://github.com/metaeducation/ren-c/issues/817
 [
     (t: "օʊʀֆօռǟɢɢօռ"
-    b: as binary! t
+    b: as blob! t
     ok)
 
     (insert b "ƈ"
@@ -109,12 +109,12 @@ https://github.com/metaeducation/ren-c/issues/817
     )
 
     ~const-value~ !! (
-        b: as binary! const "test"
+        b: as blob! const "test"
         append b 1
     )
 ]
 
-; AS aliasing of BINARY! as TEXT! can only be done on mutable binaries
+; AS aliasing of BLOB! as TEXT! can only be done on mutable binaries
 https://github.com/metaeducation/ren-c/issues/817
 [
     ~overlong-utf8~ !! (
@@ -136,7 +136,7 @@ https://github.com/metaeducation/ren-c/issues/817
 ]
 
 
-("σԋα ƚαʅ" = as text! as binary! skip "ɾαx σԋα ƚαʅ" 4)
+("σԋα ƚαʅ" = as text! as blob! skip "ɾαx σԋα ƚαʅ" 4)
 
 
 ; :PART for APPEND and insert speaks in terms of the limit of how much

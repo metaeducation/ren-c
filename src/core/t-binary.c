@@ -1,6 +1,6 @@
 //
 //  File: %t-binary.c
-//  Summary: "BINARY! datatype"
+//  Summary: "BLOB! datatype"
 //  Section: datatypes
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -38,17 +38,17 @@
 
 
 //
-//  CT_Binary: C
+//  CT_Blob: C
 //
-REBINT CT_Binary(const Cell* a, const Cell* b, bool strict)
+REBINT CT_Blob(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
     Size size1;
-    const Byte* data1 = Cell_Binary_Size_At(&size1, a);
+    const Byte* data1 = Cell_Blob_Size_At(&size1, a);
 
     Size size2;
-    const Byte* data2 = Cell_Binary_Size_At(&size2, b);
+    const Byte* data2 = Cell_Blob_Size_At(&size2, b);
 
     Size size = MIN(size1, size2);
 
@@ -77,7 +77,7 @@ REBINT CT_Binary(const Cell* a, const Cell* b, bool strict)
 //      "Encode a decimal as binary blob according to the IEEE-754 standard"
 //
 //      return: "Default return is double format (64 bits, 53-bit precision)"
-//          [binary!]
+//          [blob!]
 //      arg [decimal!]  ; REVIEW: ~NaN~, ~inf~ as antiforms
 //      options "[single] -> Use single format (32 bits, 24-bit precision)"
 //          [block!]
@@ -121,7 +121,7 @@ DECLARE_NATIVE(encode_ieee_754) {
 //      "Decode binary blob as decimal according to the IEEE-754 standard"
 //
 //      return: [decimal!]  ; review ~NaN~, ~inf~ as antiforms
-//      blob [binary!]
+//      blob [blob!]
 //      options "[single] -> Use single format (32 bits, 24-bit precision)"
 //          [block!]
 //  ]
@@ -135,7 +135,7 @@ DECLARE_NATIVE(decode_ieee_754) {
         return FAIL("IEEE-754 single precision not currently supported");
 
     Size size;
-    const Byte* at = Cell_Binary_Size_At(&size, blob);
+    const Byte* at = Cell_Blob_Size_At(&size, blob);
     if (size < 8)
         return RAISE(blob);
 
@@ -160,12 +160,12 @@ DECLARE_NATIVE(decode_ieee_754) {
 
 
 //
-//  Makehook_Binary: C
+//  Makehook_Blob: C
 //
 // See also: Makehook_String(), which is similar.
 //
-Bounce Makehook_Binary(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_BINARY);
+Bounce Makehook_Blob(Level* level_, Kind kind, Element* arg) {
+    assert(kind == REB_BLOB);
     UNUSED(kind);
 
     switch (VAL_TYPE(arg)) {
@@ -211,7 +211,7 @@ Bounce Makehook_Binary(Level* level_, Kind kind, Element* arg) {
         break;
     }
 
-    return RAISE(Error_Bad_Make(REB_BINARY, arg));
+    return RAISE(Error_Bad_Make(REB_BLOB, arg));
 }
 
 
@@ -244,7 +244,7 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 
 
 //
-//  MF_Binary: C
+//  MF_Blob: C
 //
 // 1. Historial Rebol let you set your binary base molding in a global way.
 //    If this is to be a console setting, that's one thing...but having a
@@ -252,12 +252,12 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //    to the general variability of how a program would run, it was using
 //    a setting in the system object...which is not avaliable in early boot.
 //
-void MF_Binary(Molder* mo, const Cell* v, bool form)
+void MF_Blob(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
     Size size;
-    const Byte* data = Cell_Binary_Size_At(&size, v);
+    const Byte* data = Cell_Blob_Size_At(&size, v);
 
     REBINT binary_base = 16;  // molding based on system preference is bad [1]
     /* binary_base = Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16); */
@@ -293,12 +293,12 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
 //
 //  DECLARE_GENERICS: C
 //
-DECLARE_GENERICS(Binary)
+DECLARE_GENERICS(Blob)
 {
     Option(SymId) id = Symbol_Id(verb);
 
     Value* v = (id == SYM_TO) ? ARG_N(2) : ARG_N(1);
-    assert(Is_Binary(v));
+    assert(Is_Blob(v));
 
     switch (id) {
 
@@ -314,11 +314,11 @@ DECLARE_GENERICS(Binary)
         INCLUDE_PARAMS_OF_TO;
         UNUSED(ARG(element));  // v
         Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(REB_BINARY != to);  // TO should have called COPY in this case
+        assert(REB_BLOB != to);  // TO should have called COPY in this case
 
         if (Any_String_Kind(to)) {  // (to text! binary) questionable [1]
             Size size;
-            const Byte* at = Cell_Binary_Size_At(&size, v);
+            const Byte* at = Cell_Blob_Size_At(&size, v);
             return Init_Any_String(
                 OUT,
                 to,
@@ -588,13 +588,13 @@ DECLARE_GENERICS(Binary)
         INCLUDE_PARAMS_OF_COPY;
 
         UNUSED(PARAM(value));
-        UNUSED(REF(deep));  // :DEEP is historically ignored on BINARY!
+        UNUSED(REF(deep));  // :DEEP is historically ignored on BLOB!
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
         return Init_Series(
             OUT,
-            REB_BINARY,
+            REB_BLOB,
             Copy_Binary_At_Len(Cell_Binary(v), VAL_INDEX(v), len)
         ); }
 
@@ -605,14 +605,14 @@ DECLARE_GENERICS(Binary)
       case SYM_BITWISE_XOR:
       case SYM_BITWISE_AND_NOT: {
         Value* arg = ARG_N(2);
-        if (not Is_Binary(arg))
+        if (not Is_Blob(arg))
             return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
 
         Size t0;
-        const Byte* p0 = Cell_Binary_Size_At(&t0, v);
+        const Byte* p0 = Cell_Blob_Size_At(&t0, v);
 
         Size t1;
-        const Byte* p1 = Cell_Binary_Size_At(&t1, arg);
+        const Byte* p1 = Cell_Blob_Size_At(&t1, arg);
 
         Size smaller = MIN(t0, t1);  // smaller array size
         Size larger = MAX(t0, t1);
@@ -660,7 +660,7 @@ DECLARE_GENERICS(Binary)
 
       case SYM_BITWISE_NOT: {
         Size size;
-        const Byte* bp = Cell_Binary_Size_At(&size, v);
+        const Byte* bp = Cell_Blob_Size_At(&size, v);
 
         Binary* bin = Make_Binary(size);
         Term_Binary_Len(bin, size);  // !!! size is decremented, must set now
@@ -669,9 +669,9 @@ DECLARE_GENERICS(Binary)
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
-        return Init_Series(OUT, REB_BINARY, bin); }
+        return Init_Series(OUT, REB_BLOB, bin); }
 
-    // Arithmetic operations are allowed on BINARY!, because it's too limiting
+    // Arithmetic operations are allowed on BLOB!, because it's too limiting
     // to not allow `#{4B} + 1` => `#{4C}`.  Allowing the operations requires
     // a default semantic of binaries as unsigned arithmetic, since one
     // does not want `#{FF} + 1` to be #{FE}.  It uses a big endian
@@ -691,7 +691,7 @@ DECLARE_GENERICS(Binary)
     // loop to do the math.  What's being done here is effectively "bigint"
     // math, and it might be that it would share code with whatever big
     // integer implementation was used; e.g. integers which exceeded the size
-    // of the platform REBI64 would use BINARY! under the hood.
+    // of the platform REBI64 would use BLOB! under the hood.
 
       case SYM_SUBTRACT:
       case SYM_ADD: {
@@ -701,7 +701,7 @@ DECLARE_GENERICS(Binary)
         REBINT amount;
         if (Is_Integer(arg))
             amount = VAL_INT32(arg);
-        else if (Is_Binary(arg))
+        else if (Is_Blob(arg))
             return FAIL(arg); // should work
         else
             return FAIL(arg); // what about other types?
@@ -796,7 +796,7 @@ DECLARE_GENERICS(Binary)
             return FAIL(Error_Bad_Refines_Raw());
 
         if (REF(case)) {
-            // Ignored...all BINARY! sorts are case-sensitive.
+            // Ignored...all BLOB! sorts are case-sensitive.
         }
 
         if (REF(compare))
@@ -846,7 +846,7 @@ DECLARE_GENERICS(Binary)
 
         if (REF(seed)) { // binary contents are the seed
             Size size;
-            const Byte* data = Cell_Binary_Size_At(&size, v);
+            const Byte* data = Cell_Blob_Size_At(&size, v);
             Set_Random(crc32_z(0L, data, size));
             return NOTHING;
         }
@@ -887,9 +887,9 @@ DECLARE_GENERICS(Binary)
 //
 //  /encode-integer: native [
 //
-//  "Encode integer as a Little Endian or Big Endian BINARY!, signed/unsigned"
+//  "Encode integer as a Little Endian or Big Endian BLOB!, signed/unsigned"
 //
-//      return: [binary!]
+//      return: [blob!]
 //      num [integer!]
 //      options "[<+ or +/-> <number of bytes>]"
 //          [block!]
@@ -983,11 +983,11 @@ DECLARE_NATIVE(encode_integer)
 //
 //  /decode-integer: native [
 //
-//  "Decode BINARY! as Little Endian or Big Endian, signed/unsigned integer"
+//  "Decode BLOB! as Little Endian or Big Endian, signed/unsigned integer"
 //
 //      return: [integer!]
 //      binary "Decoded (defaults length of binary for number of bytes)"
-//          [binary!]
+//          [blob!]
 //      options "[<+ or +/-> <number of bytes>]"
 //          [block!]
 //      :LE "Decode as little-endian (default is big-endian)"
@@ -1004,7 +1004,7 @@ DECLARE_NATIVE(decode_integer)
     bool little = REF(le);
 
     Size bin_size;
-    const Byte* bin_data = Cell_Binary_Size_At(&bin_size, ARG(binary));
+    const Byte* bin_data = Cell_Blob_Size_At(&bin_size, ARG(binary));
 
     Value* options = ARG(options);
 

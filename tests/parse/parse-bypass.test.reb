@@ -24,7 +24,7 @@
     ~parse-mismatch~ !! (parse "a" [#b | bypass])
 ]
 
-; BINARY!
+; BLOB!
 [
     ~parse-mismatch~ !! (parse #{} [bypass])
     ~parse-mismatch~ !! (parse #{0A} [#{0A} bypass])

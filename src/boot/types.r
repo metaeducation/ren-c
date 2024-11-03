@@ -124,10 +124,10 @@ handle      "arbitrary internal object or value"
             [any-inert?]
             [handle      -       +]
 
-binary      "series of bytes"
+blob        "series of bytes"
             (node1)
             [any-series? any-inert?]  ; note: not an ANY-STRING?
-            [binary      *       +]
+            [blob        *       +]
 
 <ANY-STRING?>  ; (order does not currently matter)
 

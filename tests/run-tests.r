@@ -34,7 +34,7 @@ flags: [<64bit> <r3only> <r3>]
 ; overwrite each other, and incomplete test runs from a crashing interpreter
 ; can be detected in order to recover.
 
-check: checksum 'sha1 to binary! mold system.build
+check: checksum 'sha1 to blob! mold system.build
 
 log-file-prefix: join %r spread collect [
     for 'i length of let version: system.version [

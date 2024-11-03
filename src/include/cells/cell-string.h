@@ -19,14 +19,14 @@ INLINE const String* Cell_String(const Cell* v) {
 
 
 // This routine works with the notion of "length" that corresponds to the
-// idea of the datatype which the series index is for.  Notably, a BINARY!
+// idea of the datatype which the series index is for.  Notably, a BLOB!
 // can alias an ANY-STRING? or ANY-WORD? and address the individual bytes of
-// that type.  So if the series is a STRING! and not a BINARY!, the special
+// that type.  So if the series is a STRING! and not a BLOB!, the special
 // cache of the length in the String Stub must be used.
 //
 INLINE Length Cell_Series_Len_Head(const Cell* v) {
     const Flex* f = Cell_Flex(v);
-    if (Is_Stub_String(f) and Cell_Heart(v) != REB_BINARY)
+    if (Is_Stub_String(f) and Cell_Heart(v) != REB_BLOB)
         return String_Len(c_cast(String*, f));
     return Flex_Used(f);
 }

@@ -1289,7 +1289,7 @@ default-combinators: to map! reduce [
                 ]
             ]
             <default> [
-                assert [binary? input]
+                assert [blob? input]
                 [# remainder]: find // [
                     input value
                     :match ok
@@ -1352,7 +1352,7 @@ default-combinators: to map! reduce [
                 return value
             ]
             <default> [
-                assert [binary? input]
+                assert [blob? input]
                 if negated [
                     if (not char? value) or (255 < codepoint of value) [
                         fail "NOT ISSUE! with blobs is only for single byte"
@@ -1373,17 +1373,17 @@ default-combinators: to map! reduce [
         ]
     ]
 
-    === BINARY! COMBINATOR ===
+    === BLOB! COMBINATOR ===
 
     ; Arbitrary matching of binary against text is a bit of a can of worms,
     ; because if we AS alias it then that would constrain the binary...which
     ; may not be desirable.  Also you could match partial characters and
     ; then not be able to set a string position.  So we don't do that.
 
-    binary! combinator [
+    blob! combinator [
         return: "The binary matched against (not input value)"
-            [binary!]
-        value [binary!]
+            [blob!]
+        value [blob!]
     ][
         case [
             any-list? input [
@@ -1391,13 +1391,13 @@ default-combinators: to map! reduce [
                     remainder: next input
                     return input.1
                 ]
-                return raise "Value at parse position does not match BINARY!"
+                return raise "Value at parse position does not match BLOB!"
             ]
             <default> [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
                 [# remainder]: find:match input value else [
                     return raise [
-                        "Content at parse position does not match BINARY!"
+                        "Content at parse position does not match BLOB!"
                     ]
                 ]
                 return value
@@ -1603,10 +1603,10 @@ default-combinators: to map! reduce [
 
     === BITSET! COMBINATOR ===
 
-    ; There is some question here about whether a bitset used with a BINARY!
+    ; There is some question here about whether a bitset used with a BLOB!
     ; can be used to match UTF-8 characters, or only bytes.  This may suggest
     ; a sort of "INTO" switch that could change the way the input is being
-    ; viewed, e.g. being able to do INTO BINARY! on a TEXT! (?)
+    ; viewed, e.g. being able to do INTO BLOB! on a TEXT! (?)
 
     bitset! combinator [
         return: "The matched input value"
@@ -1630,7 +1630,7 @@ default-combinators: to map! reduce [
                 ]
             ]
             <default> [
-                assert [binary? input]
+                assert [blob? input]
                 if pick value input.1 [
                     remainder: next input
                     return input.1
@@ -1681,7 +1681,7 @@ default-combinators: to map! reduce [
             fail "QUOTED! combinator can only be negated for List input"
         ]
 
-        ensure [any-string? binary!] input
+        ensure [any-string? blob!] input
 
         [# remainder]: find:match input value else [
             return raise "Molded form of QUOTED! item didn't match"
@@ -1806,7 +1806,7 @@ default-combinators: to map! reduce [
             ]
             return raise "BLANK! rule found next input in list was not space"
         ]
-        assert [binary? input]
+        assert [blob? input]
         if 32 = input.1 [  ; codepoint of space, crucially single byte for test
             return space  ; acts like if you'd written space in the rule
         ]
@@ -2428,7 +2428,7 @@ default-combinators: to map! reduce [
             ; combinators the word lookup won't work?)
             ;
             text! []
-            binary! []
+            blob! []
             issue! []
 
             ; Datatypes looked up by words (e.g. TAG!) are legal as rules

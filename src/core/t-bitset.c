@@ -44,7 +44,7 @@ REBINT CT_Bitset(const Cell* a, const Cell* b, bool strict)
     if (BITS_NOT(VAL_BITSET(a)) != BITS_NOT(VAL_BITSET(b)))
         return 1;
 
-    return CT_Binary(atemp, btemp, strict);
+    return CT_Blob(atemp, btemp, strict);
 }
 
 
@@ -78,7 +78,7 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
 
     DECLARE_ELEMENT (binary);
     Init_Blob(binary, bset);
-    MF_Binary(mo, binary, false); // false = mold, don't form
+    MF_Blob(mo, binary, false); // false = mold, don't form
 
     if (BITS_NOT(bset))
         Append_Codepoint(mo->string, ']');
@@ -105,8 +105,8 @@ Bounce Makehook_Bitset(Level* level_, Kind kind, Element* arg) {
     if (Is_Integer(arg))
         return OUT; // allocated at a size, no contents.
 
-    if (Is_Binary(arg)) {  // size accounted for by Find_Max_Bit()
-        const Byte* at = Cell_Binary_Size_At(nullptr, arg);
+    if (Is_Blob(arg)) {  // size accounted for by Find_Max_Bit()
+        const Byte* at = Cell_Blob_Size_At(nullptr, arg);
         memcpy(Binary_Head(bset), at, (len / 8) + 1);
         return OUT;
     }
@@ -149,7 +149,7 @@ REBINT Find_Max_Bit(const Value* val)
         maxi++;
         break; }
 
-    case REB_BINARY:
+    case REB_BLOB:
         if (Cell_Series_Len_At(val) != 0)
             maxi = Cell_Series_Len_At(val) * 8 - 1;
         break;
@@ -258,7 +258,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
         return true;
     }
 
-    if (Is_Binary(val)) {
+    if (Is_Blob(val)) {
         REBLEN i = VAL_INDEX(val);
 
         const Byte* bp = Binary_Head(Cell_Binary(val));
@@ -352,7 +352,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 Set_Bit(bset, n, set);
             break; }
 
-        case REB_BINARY:
+        case REB_BLOB:
         case REB_TEXT:
         case REB_FILE:
         case REB_EMAIL:
@@ -366,11 +366,11 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             if (not Is_Word(item) or Cell_Word_Id(item) != SYM_BITS)
                 return false;
             item++;
-            if (not Is_Binary(item))
+            if (not Is_Blob(item))
                 return false;
 
             Size n;
-            const Byte* at = Cell_Binary_Size_At(&n, item);
+            const Byte* at = Cell_Blob_Size_At(&n, item);
 
             Codepoint c = Binary_Len(bset);
             if (n >= Cast_Signed(c)) {
@@ -403,7 +403,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     if (Is_Integer(val))
         return Check_Bit(bset, Int32s(val, 0), uncased);
 
-    if (Is_Binary(val)) {
+    if (Is_Blob(val)) {
         REBLEN i = VAL_INDEX(val);
         const Byte* bp = Binary_Head(Cell_Binary(val));
         for (; i != Cell_Series_Len_Head(val); ++i)
@@ -489,7 +489,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                     return true;
             break; }
 
-        case REB_BINARY:
+        case REB_BLOB:
         case REB_TEXT:
         case REB_FILE:
         case REB_EMAIL:
@@ -682,7 +682,7 @@ DECLARE_GENERICS(Bitset)
             const Binary* bset = VAL_BITSET(arg);
             Init_Blob(arg, bset);
         }
-        else if (not Is_Binary(arg))
+        else if (not Is_Blob(arg))
             return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
 
         bool negated_result = false;
@@ -707,7 +707,7 @@ DECLARE_GENERICS(Bitset)
         Init_Blob(v, bset);
 
         // !!! Until the replacement implementation with Roaring Bitmaps, the
-        // bitset is based on a BINARY!.  Reuse the code on the generated
+        // bitset is based on a BLOB!.  Reuse the code on the generated
         // proxy values.
         //
         Value* action;

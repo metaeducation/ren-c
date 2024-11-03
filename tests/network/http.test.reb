@@ -14,5 +14,5 @@
     (null = exists? http://example.com/fhqwhgads.mp3)
 ]
 
-(binary? read http://example.com)
-(binary? read https://example.com)
+(blob? read http://example.com)
+(blob? read https://example.com)

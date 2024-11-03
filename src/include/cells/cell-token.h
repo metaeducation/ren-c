@@ -42,11 +42,11 @@
 //   representation and the codepoint on hand locally in the cell.
 //
 // * Historical Redbol supported a ^(NULL) codepoint, e.g. '\0', but Ren-C
-//   deemed it to be not worth the trouble.  Only BINARY! can have embedded
+//   deemed it to be not worth the trouble.  Only BLOB! can have embedded
 //   zero bytes.  For strings it is termination only...so that only one return
 //   result is needed from APIs like rebSpell().
 //
-//   All efforts are being made to make it as easy to work with a BINARY! on
+//   All efforts are being made to make it as easy to work with a BLOB! on
 //   string-like tasks where internal 0 bytes are ok.
 //
 

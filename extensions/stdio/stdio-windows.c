@@ -30,7 +30,7 @@
 #undef VOID  // %winnt.h defines this, we have a better use for it
 
 
-// !!! Read_IO writes directly into a BINARY!, whose size it needs to keep up
+// !!! Read_IO writes directly into a BLOB!, whose size it needs to keep up
 // to date (in order to have it properly terminated and please the GC).  At
 // the moment it does this with the internal API, though libRebol should
 // hopefully suffice in the future.  This is part of an ongoing effort to
@@ -216,12 +216,12 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 //
 //  Write_IO: C
 //
-// This write routine takes a Value* that is either a BINARY! or a TEXT!.
-// Length is in conceptual units (codepoints for TEXT!, bytes for BINARY!)
+// This write routine takes a Value* that is either a BLOB! or a TEXT!.
+// Length is in conceptual units (codepoints for TEXT!, bytes for BLOB!)
 //
 void Write_IO(const Value* data, REBLEN len)
 {
-    assert(Is_Binary(data) or Is_Text(data) or Is_Issue(data));
+    assert(Is_Blob(data) or Is_Text(data) or Is_Issue(data));
 
     if (Stdout_Handle == nullptr)
         return;
@@ -246,7 +246,7 @@ void Write_IO(const Value* data, REBLEN len)
             }
         }
         else {
-            // Writing a BINARY! to a redirected standard out, e.g. a CGI
+            // Writing a BLOB! to a redirected standard out, e.g. a CGI
             // script, makes sense--e.g. it might be some full bandwidth data
             // being downloaded that's neither UTF-8 nor UTF-16.  And it makes
             // some sense on UNIX, as the terminal will just have to figure
@@ -255,7 +255,7 @@ void Write_IO(const Value* data, REBLEN len)
             //
             // We *could* assume the user meant to write UTF-16 data, and only
             // fail if it's an odd number of bytes.  But that means that the
-            // write of the BINARY! would have different meanings if directed
+            // write of the BLOB! would have different meanings if directed
             // at a file as opposed to not redirected.  If there was a true
             // need to write UTF-16 data directly to the console, that should
             // be a distinct console-oriented function.
@@ -332,7 +332,7 @@ void Write_IO(const Value* data, REBLEN len)
 
         const Byte* bp;
         Size size;
-        if (Is_Binary(data)) {
+        if (Is_Blob(data)) {
             bp = Cell_Blob_At(data);
             size = len;
         }

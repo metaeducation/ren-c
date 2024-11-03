@@ -45,7 +45,7 @@ INLINE Bounce Delegate_Fail_No_Process(const Value* arg) {
 // !!! The original implementation of CALL from Atronix had to communicate
 // between the CALL native (defined in the core) and the host routine
 // Call_Core, which was not designed to operate on Rebol types.
-// Hence if the user was passing in a BINARY! to which the data for the
+// Hence if the user was passing in a BLOB! to which the data for the
 // standard out or standard error was to be saved, it was produced in full
 // in a buffer and returned, then appended.  This wastes space when compared
 // to just appending to the string or binary itself.  With CALL rethought

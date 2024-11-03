@@ -327,8 +327,8 @@ DECLARE_NATIVE(delimit)
 //
 //  "Decodes base-coded string (BASE-64 default) to binary value"
 //
-//      return: [binary!]
-//      value [binary! text!]
+//      return: [blob!]
+//      value [blob! text!]
 //      :base "The base to convert from: 64, 16, or 2 (defaults to 64)"
 //          [integer!]
 //  ]
@@ -361,7 +361,7 @@ DECLARE_NATIVE(debase)
 //
 //      return: [text!]
 //      value "If text, will be UTF-8 encoded"
-//          [binary! text!]
+//          [blob! text!]
 //      :base "Binary base to use: 64, 16, or 2 (BASE-64 default)"
 //          [integer!]
 //  ]
@@ -678,7 +678,7 @@ DECLARE_NATIVE(dehex)
 //
 //      return: [text! block!]
 //      input "Will be modified (unless :LINES used)"
-//          [text! binary!]
+//          [text! blob!]
 //      :lines "Return block of lines (works for LF, CR-LF endings)"
 //  ]
 //
@@ -686,7 +686,7 @@ DECLARE_NATIVE(deline)
 {
     INCLUDE_PARAMS_OF_DELINE;
 
-    // AS TEXT! verifies the UTF-8 validity of a BINARY!, and checks for any
+    // AS TEXT! verifies the UTF-8 validity of a BLOB!, and checks for any
     // embedded '\0' bytes, illegal in texts...without copying the input.
     //
     Value* input = rebValue("as text!", ARG(input));
@@ -1085,8 +1085,8 @@ DECLARE_NATIVE(to_hex)
 //  "Checks UTF-8 encoding"
 //
 //      return: "NULL if correct, otherwise position in binary of the error"
-//          [~null~ binary!]
-//      data [binary!]
+//          [~null~ blob!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(invalid_utf8_q)
@@ -1107,7 +1107,7 @@ DECLARE_NATIVE(invalid_utf8_q)
     Value* arg = ARG(data);
 
     Size size;
-    const Byte* utf8 = Cell_Binary_Size_At(&size, arg);
+    const Byte* utf8 = Cell_Blob_Size_At(&size, arg);
 
     const Byte* end = utf8 + size;
 

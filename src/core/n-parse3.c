@@ -549,9 +549,9 @@ static REBIXO Parse_One_Rule(
             // Only these types can *potentially* handle an END input.
         }
         else if (
-            (Is_Text(rule) or Is_Binary(rule))
+            (Is_Text(rule) or Is_Blob(rule))
             and (Cell_Series_Len_At(rule) == 0)
-            and (Any_String_Kind(P_HEART) or P_HEART == REB_BINARY)
+            and (Any_String_Kind(P_HEART) or P_HEART == REB_BLOB)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
             // archaic (compared to UPARSE).  But while that design stabilizes,
@@ -668,7 +668,7 @@ static REBIXO Parse_One_Rule(
         return END_FLAG;
     }
     else {
-        assert(Any_String_Kind(P_HEART) or P_HEART == REB_BINARY);
+        assert(Any_String_Kind(P_HEART) or P_HEART == REB_BLOB);
 
         if (Is_The_Word(rule)) {
             Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
@@ -695,7 +695,7 @@ static REBIXO Parse_One_Rule(
             or (Cell_Num_Quotes(rule) == 0 and (
                 rule_heart == REB_TEXT
                 or rule_heart == REB_ISSUE
-                or rule_heart == REB_BINARY
+                or rule_heart == REB_BLOB
             ))
         ){
             REBLEN len;
@@ -719,7 +719,7 @@ static REBIXO Parse_One_Rule(
             //
             bool uncased;
             Codepoint uni;
-            if (P_HEART == REB_BINARY) {
+            if (P_HEART == REB_BLOB) {
                 uni = *Binary_At(P_INPUT_BINARY, P_POS);
                 uncased = false;
             }
@@ -851,18 +851,18 @@ static REBIXO To_Thru_Block_Rule(
                     return VAL_INDEX(iter) - 1;  // back up
                 }
             }
-            else if (P_HEART == REB_BINARY) {
+            else if (P_HEART == REB_BLOB) {
                 Byte ch1 = *Cell_Blob_At(iter);
 
                 if (VAL_INDEX(iter) == P_INPUT_LEN) {
                     //
                     // If we weren't matching END, then the only other thing
-                    // we'll match at the BINARY! end is an empty BINARY!.
-                    // Not a "NUL codepoint", because the internal BINARY!
+                    // we'll match at the BLOB! end is an empty BLOB!.
+                    // Not a "NUL codepoint", because the internal BLOB!
                     // terminator is implementation detail.
                     //
-                    assert(ch1 == '\0');  // internal BINARY! terminator
-                    if (Is_Binary(rule) and Cell_Series_Len_At(rule) == 0)
+                    assert(ch1 == '\0');  // internal BLOB! terminator
+                    if (Is_Blob(rule) and Cell_Series_Len_At(rule) == 0)
                         return VAL_INDEX(iter);
                 }
                 else if (IS_CHAR(rule)) {
@@ -875,15 +875,15 @@ static REBIXO To_Thru_Block_Rule(
                         return VAL_INDEX(iter);
                     }
                 }
-                else if (Is_Binary(rule)) {
+                else if (Is_Blob(rule)) {
                     Size rule_size;
-                    const Byte* rule_data = Cell_Binary_Size_At(
+                    const Byte* rule_data = Cell_Blob_Size_At(
                         &rule_size,
                         rule
                     );
 
                     Size iter_size;
-                    const Byte* iter_data = Cell_Binary_Size_At(
+                    const Byte* iter_data = Cell_Blob_Size_At(
                         &iter_size,
                         iter
                     );
@@ -2124,7 +2124,7 @@ DECLARE_NATIVE(subparse)
                         )
                     );
                 }
-                else if (P_HEART == REB_BINARY) {
+                else if (P_HEART == REB_BLOB) {
                     Init_Blob(  // R3-Alpha behavior (e.g. not AS TEXT!)
                         sink,
                         Copy_Binary_At_Len(P_INPUT_BINARY, begin, count)
@@ -2190,7 +2190,7 @@ DECLARE_NATIVE(subparse)
                         set_or_copy_word, P_RULE_BINDING
                     );
 
-                    if (P_HEART == REB_BINARY)
+                    if (P_HEART == REB_BLOB)
                         Init_Integer(var, *Binary_At(P_INPUT_BINARY, begin));
                     else
                         Init_Char_Unchecked(

@@ -5,9 +5,9 @@
 (error? sys.util/rescue ["a%b" = dehex "a%b"])
 (error? sys.util/rescue ["a%~b" = dehex "a%~b"])
 
-; !!! Strings don't tolerate NUL, so should you be able to DEHEX a BINARY!
+; !!! Strings don't tolerate NUL, so should you be able to DEHEX a BLOB!
 ; and get something like "a%00b" from it?  That would not enforce the rest
-; of the BINARY! being UTF-8 and seems like it could be a bad idea.
+; of the BLOB! being UTF-8 and seems like it could be a bad idea.
 ;
 ~illegal-zero-byte~ !! (
     dehex "a%00b"
@@ -22,7 +22,7 @@
 ; #1986
 ("aβc" == dehex "a%ce%b2c")
 ((to-text #{61CEB263}) = dehex "a%CE%b2c")
-(#{61CEB263} = to-binary dehex "a%CE%B2c")
+(#{61CEB263} = to-blob dehex "a%CE%B2c")
 ("++" == dehex "%2b%2b")
 
 ; Per RFC 3896 2.1, all percent encodings should normalize to uppercase

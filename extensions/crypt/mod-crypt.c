@@ -192,24 +192,24 @@ uint32_t Compute_IPC(const unsigned char* data, size_t size)
 //
 //  "Computes a checksum, CRC, or hash"
 //
-//      return: "Warning: likely to be changed to always be BINARY!"
-//          [binary! integer!]  ; see note below
+//      return: "Warning: likely to be changed to always be BLOB!"
+//          [blob! integer!]  ; see note below
 //      method "Method name"
 //          [word!]
 //      data "Input data to digest (TEXT! is interpreted as UTF-8 bytes)"
-//          [binary! text!]
+//          [blob! text!]
 //      :key "Returns keyed HMAC value"
-//          [binary! text!]
+//          [blob! text!]
 //  ]
 //
 DECLARE_NATIVE(checksum)
 //
 // !!! The return value of this function was initially integers, and expanded
-// to be either INTEGER! or BINARY!.  Allowing integer results gives some
+// to be either INTEGER! or BLOB!.  Allowing integer results gives some
 // potential performance benefits over a binary with the same number of bits,
 // although if a binary conversion is then done then it costs more.  Also, it
 // introduces the question of signedness, which was inconsistent.  Moving to
-// where checksum is always a BINARY! is probably what should be done.
+// where checksum is always a BLOB! is probably what should be done.
 //
 // !!! There was a :SECURE option which wasn't used for anything.
 //
@@ -353,7 +353,7 @@ DECLARE_NATIVE(checksum)
 //
 
 
-// For turning a BINARY! into an mbedTLS multiple-precision-integer ("bignum")
+// For turning a BLOB! into an mbedTLS multiple-precision-integer ("bignum")
 // Returns an mbedTLS error code if there is a problem (use with IF_NOT_0)
 //
 static int Mpi_From_Binary(mbedtls_mpi* X, const Value* binary)
@@ -373,7 +373,7 @@ static int Mpi_From_Binary(mbedtls_mpi* X, const Value* binary)
     return result;
 }
 
-// Opposite direction for making a BINARY! from an MPI.  Naming convention
+// Opposite direction for making a BLOB! from an MPI.  Naming convention
 // suggests it's an API handle and you're responsible for releasing it.
 //
 static Value* rebBinaryFromMpi(const mbedtls_mpi* X)
@@ -614,9 +614,9 @@ DECLARE_NATIVE(rsa_generate_keypair)
 //  "Encrypt a *small* amount of data using the expensive RSA algorithm"
 //
 //      return: "Deterministic if padding is [raw], randomly blinded otherwise"
-//          [binary!]
+//          [blob!]
 //      data "Exactly key size if [raw], else less than key size minus overhead"
-//          [binary!]
+//          [blob!]
 //      public-key [object!]
 //  ]
 //
@@ -637,8 +637,8 @@ DECLARE_NATIVE(rsa_encrypt)
 
     // N and E are required
     //
-    Value* n = rebValue("ensure [~null~ binary!] public-key.n");
-    Value* e = rebValue("ensure [~null~ binary!] public-key.e");
+    Value* n = rebValue("ensure [~null~ blob!] public-key.n");
+    Value* e = rebValue("ensure [~null~ blob!] public-key.e");
 
     if (not n or not e)
         return rebDelegate(
@@ -658,7 +658,7 @@ DECLARE_NATIVE(rsa_encrypt)
     Value* error = nullptr;
     Value* result = nullptr;
 
-    // Translate BINARY! public components to mbedtls BigNums
+    // Translate BLOB! public components to mbedtls BigNums
     //
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&N, n));
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&E, e));
@@ -686,7 +686,7 @@ DECLARE_NATIVE(rsa_encrypt)
     size_t plaintext_size;
     unsigned char* plaintext = rebBytes(&plaintext_size, "data");
 
-    // Buffer suitable for recapturing as a BINARY!
+    // Buffer suitable for recapturing as a BLOB!
     //
     size_t key_size = mbedtls_rsa_get_len(&ctx);
     unsigned char* encrypted = rebAllocN(unsigned char, key_size);
@@ -749,9 +749,9 @@ DECLARE_NATIVE(rsa_encrypt)
 //  "Decrypt a *small* amount of data using the RSA algorithm"
 //
 //      return: "Decrypted data (will never be larger than the key size)"
-//          [binary!]
+//          [blob!]
 //      data "RSA encrypted information (must be equal to key size)"
-//          [binary!]
+//          [blob!]
 //      private-key [object!]
 //  ]
 //
@@ -772,12 +772,12 @@ DECLARE_NATIVE(rsa_decrypt)
     Get_Padding_And_Hash_From_Spec(&padding, &hash, padding_spec);  // validate
     rebRelease(padding_spec);
 
-    Value* n = rebValue("match binary! private-key.n");
-    Value* e = rebValue("match binary! private-key.e");
+    Value* n = rebValue("match blob! private-key.n");
+    Value* e = rebValue("match blob! private-key.e");
 
-    Value* d = rebValue("match binary! private-key.d");
-    Value* p = rebValue("match binary! private-key.p");
-    Value* q = rebValue("match binary! private-key.q");
+    Value* d = rebValue("match blob! private-key.d");
+    Value* p = rebValue("match blob! private-key.p");
+    Value* q = rebValue("match blob! private-key.q");
 
     // "The following incomplete parameter sets for private keys are supported"
     //
@@ -804,9 +804,9 @@ DECLARE_NATIVE(rsa_decrypt)
             "fail -{Missing field combination in private key not allowed}-"
         );
 
-    Value* dp = rebValue("match binary! private-key.dp");
-    Value* dq = rebValue("match binary! private-key.dq");
-    Value* qinv = rebValue("match binary! private-key.qinv");
+    Value* dp = rebValue("match blob! private-key.dp");
+    Value* dq = rebValue("match blob! private-key.dq");
+    Value* qinv = rebValue("match blob! private-key.qinv");
 
     bool chinese_remainder_speedup;
 
@@ -865,7 +865,7 @@ DECLARE_NATIVE(rsa_decrypt)
         MBEDTLS_MD_SHA256
     ));
 
-    // Translate BINARY! public components to mbedtls BigNums
+    // Translate BLOB! public components to mbedtls BigNums
     //
     if (n)
         IF_NOT_0(cleanup, error, Mpi_From_Binary(&N, n));
@@ -913,7 +913,7 @@ DECLARE_NATIVE(rsa_decrypt)
     unsigned char* encrypted = rebBytes(&encrypted_size, "data");
     assert(encrypted_size == key_size);
 
-    // rebAlloc()'d buffers can be rebRepossess()'d as a BINARY!
+    // rebAlloc()'d buffers can be rebRepossess()'d as a BLOB!
     //
     unsigned char* decrypted = rebAllocN(unsigned char, key_size);
 
@@ -994,9 +994,9 @@ DECLARE_NATIVE(rsa_decrypt)
 //      return: "Diffie-Hellman object with [MODULUS PRIVATE-KEY PUBLIC-KEY]"
 //          [object!]
 //      modulus "Public 'p', best if https://en.wikipedia.org/wiki/Safe_prime"
-//          [binary!]
+//          [blob!]
 //      base "Public 'g', generator, less than modulus and usually prime"
-//          [binary!]
+//          [blob!]
 //      :insecure "Don't raise errors if base/modulus choice becomes suspect"
 //  ]
 //
@@ -1066,7 +1066,7 @@ DECLARE_NATIVE(dh_generate_keypair)
     size_t gx_size = P_size;
 
     // We will put the private and public keys into memory that can be
-    // rebRepossess()'d as the memory backing a BINARY! series.  (This memory
+    // rebRepossess()'d as the memory backing a BLOB! series.  (This memory
     // will be automatically freed in case of a FAIL call.)
     //
     unsigned char* gx = rebAllocN(unsigned char, gx_size);  // gx => public key
@@ -1206,11 +1206,11 @@ DECLARE_NATIVE(dh_generate_keypair)
 //  "Compute secret from a private/public key pair and the peer's public key"
 //
 //      return: "Negotiated shared secret (same size as public/private keys)"
-//          [binary!]
+//          [blob!]
 //      obj "The Diffie-Hellman key object"
 //          [object!]
 //      peer-key "Peer's public key"
-//          [binary!]
+//          [blob!]
 //  ]
 //
 DECLARE_NATIVE(dh_compute_secret)
@@ -1226,9 +1226,9 @@ DECLARE_NATIVE(dh_compute_secret)
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
     // otherwise gave Make_Error_Managed(RE_EXT_CRYPT_INVALID_KEY_FIELD)
     //
-    Value* modulus = rebValue("ensure binary! obj.modulus");
-    Value* generator = rebValue("ensure binary! obj.generator");
-    Value* private_key = rebValue("ensure binary! obj.private-key");
+    Value* modulus = rebValue("ensure blob! obj.modulus");
+    Value* generator = rebValue("ensure blob! obj.generator");
+    Value* private_key = rebValue("ensure blob! obj.private-key");
 
     Value* result = nullptr;
     Value* error = nullptr;
@@ -1366,9 +1366,9 @@ static void cleanup_aes_ctx(const Value* v)
 //
 //      return: "Stream cipher context handle"
 //          [handle!]
-//      key [binary!]
+//      key [blob!]
 //      iv "Optional initialization vector"
-//          [binary! blank!]
+//          [blob! blank!]
 //      :decrypt "Make cipher context for decryption (default is to encrypt)"
 //  ]
 //
@@ -1418,7 +1418,7 @@ DECLARE_NATIVE(aes_key)
 
   blockscope {
     size_t blocksize = mbedtls_cipher_get_block_size(ctx);
-    if (rebUnboxLogic("binary? iv")) {
+    if (rebUnboxLogic("blob? iv")) {
         size_t iv_size;
         unsigned char* iv_bytes = rebBytes(&iv_size, "iv");
 
@@ -1456,10 +1456,10 @@ DECLARE_NATIVE(aes_key)
 //  "Encrypt/decrypt data using AES algorithm"
 //
 //      return: "Encrypted/decrypted data (null if zero length)"
-//          [~null~ binary!]
+//          [~null~ blob!]
 //      ctx "Stream cipher context"
 //          [handle!]
-//      data [binary!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(aes_stream)
@@ -1606,7 +1606,7 @@ DECLARE_NATIVE(ecc_generate_keypair)
         nullptr  // p_rng, parameter tunneled to random generator (unused atm)
     ));
 
-    // Allocate into memory that can be retaken directly as BINARY! in Rebol
+    // Allocate into memory that can be retaken directly as BLOB! in Rebol
     //
   blockscope {
     uint8_t* p_publicX = rebAllocN(uint8_t, num_bytes);
@@ -1647,13 +1647,13 @@ DECLARE_NATIVE(ecc_generate_keypair)
 //
 //  export /ecdh-shared-secret: native [
 //      return: "secret"
-//          [binary!]
+//          [blob!]
 //      group "Elliptic curve group [CURVE25519 SECP256R1 ...]"
 //          [word!]
 //      private-key "32-byte private key"
-//          [binary!]
+//          [blob!]
 //      public-key "64-byte public key of peer (or OBJECT! with 32-byte X & Y)"
-//          [binary! object!]
+//          [blob! object!]
 //  ]
 //
 DECLARE_NATIVE(ecdh_shared_secret)
@@ -1675,11 +1675,11 @@ DECLARE_NATIVE(ecdh_shared_secret)
     unsigned char* public_bytes = rebAllocN(unsigned char, num_bytes * 2);
 
     rebBytesInto(public_bytes, num_bytes * 2, "(",  // !!! LETs accrue? [1]
-        "let bin: either binary? public-key [public-key] [",
+        "let bin: either blob? public-key [public-key] [",
             "append (copy public-key.x) public-key.y"
         "]",
         "if", rebI(num_bytes * 2), "!= length of bin [",
-            "fail [-{Public BINARY! must be}-", rebI(num_bytes * 2),
+            "fail [-{Public BLOB! must be}-", rebI(num_bytes * 2),
                 "-{bytes total for}- group]",
         "]",
         "bin"

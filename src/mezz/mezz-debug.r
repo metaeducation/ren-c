@@ -125,7 +125,7 @@ hijack assert/ verify/
             ]
             calc: [100'000 / secs / 100] ; arbitrary calc
         ][
-            let tmp: make binary! 500'000
+            let tmp: make blob! 500'000
             insert:dup tmp "abcdefghij" 50000
             repeat 10 [
                 random tmp

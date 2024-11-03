@@ -113,7 +113,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
         if (not Any_String_Kind(heart))  // ISSUE!, URL!, etc.
             assert(Is_Flex_Frozen(f));
     }
-    else if (heart == REB_BINARY) {
+    else if (heart == REB_BLOB) {
         assert(Flex_Wide(f) == 1);  // Note: Binary is allowed to alias String
     }
     else if (Any_Sequence_Kind(heart)) {

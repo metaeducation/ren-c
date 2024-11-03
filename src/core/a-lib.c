@@ -137,7 +137,7 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
 // been stylized to use malloc()-ish hooks to produce data, when the eventual
 // target of that data is a Rebol Flex.  It does this without exposing
 // Flex internals to the external API, by allowing one to "rebRepossess()"
-// the underlying data as a BINARY! value.
+// the underlying data as a BLOB! value.
 //
 
 
@@ -154,7 +154,7 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
 //
 // * Because of the above points, null is *never* returned.
 //
-// * In order to make it possible to rebRepossess() the memory as a BINARY!
+// * In order to make it possible to rebRepossess() the memory as a BLOB!
 //   that is then safe to alias as TEXT!, it always has an extra 0 byte at
 //   the end of the data area.
 //
@@ -170,7 +170,7 @@ unsigned char* API_rebAllocBytes(size_t size)
     ENTER_API;
 
     Binary* b = Make_Flex(
-        FLAG_FLAVOR(BINARY)  // rebRepossess() only creates BINARY! ATM
+        FLAG_FLAVOR(BINARY)  // rebRepossess() only creates BLOB! ATM
             | NODE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
             | FLEX_FLAG_DONT_RELOCATE,  // direct data pointer handed back
@@ -186,7 +186,7 @@ unsigned char* API_rebAllocBytes(size_t size)
     *pb = b;  // save self in bytes that appear immediately before the data
     Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
 
-    // !!! The data is uninitialized, and if it is turned into a BINARY! via
+    // !!! The data is uninitialized, and if it is turned into a BLOB! via
     // rebRepossess() before all bytes are assigned initialized, it could be
     // worse than just random data...MOLDing such a binary and reading those
     // bytes could be bad (due to, for instance, "trap representations"):
@@ -340,7 +340,7 @@ void API_rebFree(void *ptr) {
 //  rebRepossess: API
 //
 // Alternative to rebFree() is to take over the underlying Flex as a
-// BINARY!.  The old void* should not be used after the transition, as this
+// BLOB!.  The old void* should not be used after the transition, as this
 // operation makes the Flex underlying the memory subject to relocation.
 //
 // If the passed in size is less than the size with which the Flex was
@@ -2121,7 +2121,7 @@ REBWCHAR* API_rebSpellWide(
 
 // Helper function for `rebBytesInto()` and `rebBytes()`
 //
-// CHAR!, ANY-STRING?, and ANY-WORD? are allowed without an AS BINARY!.
+// CHAR!, ANY-STRING?, and ANY-WORD? are allowed without an AS BLOB!.
 //
 // !!! How many types should be allowed to convert automatically?
 //
@@ -2132,9 +2132,9 @@ static size_t Bytes_Into(
 ){
     Size bsize = buf_size;  // see `Size`: we use signed sizes internally
 
-    if (Is_Binary(v)) {
+    if (Is_Blob(v)) {
         Size size;
-        const Byte* data = Cell_Binary_Size_At(&size, v);
+        const Byte* data = Cell_Blob_Size_At(&size, v);
         if (buf == nullptr) {
             assert(bsize == 0);
             return size;
@@ -2171,18 +2171,18 @@ static size_t Bytes_Into(
         return size;
     }
 
-    fail ("rebBytes() only works with ANY-STRING?/ANY-WORD?/BINARY!/CHAR!");
+    fail ("rebBytes() only works with ANY-STRING?/ANY-WORD?/BLOB!/CHAR!");
 }
 
 
 //
 //  rebBytesInto: API
 //
-// Extract data from a BINARY!
+// Extract data from a BLOB!
 //
 // !!! Caller must allocate a buffer of the returned size + 1.  It's not clear
 // if this is a good idea; but this is based on a longstanding convention of
-// zero termination of Rebol TEXT! and BINARY!.
+// zero termination of Rebol TEXT! and BLOB!.
 //
 size_t API_rebBytesInto(
     RebolContext** binding_ref,
@@ -2202,7 +2202,7 @@ size_t API_rebBytesInto(
 //
 //  rebBytesMaybe: API
 //
-// Can be used to get the bytes of a BINARY! and its size, or the UTF-8
+// Can be used to get the bytes of a BLOB! and its size, or the UTF-8
 // encoding of an ANY-STRING? or ANY-WORD? and that size in bytes.  (Hence,
 // for strings it is like rebSpell() except telling you how many bytes.)
 //

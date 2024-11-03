@@ -152,7 +152,7 @@ import <bootstrap-shim.r>
     return: "Line 0 does not exist, no counting is performed for empty text"
         [~null~ integer!]
     position "Position (newline is considered the last character of a line)"
-        [text! binary!]
+        [text! blob!]
 ] [
     let text: head of position
     let idx: index of position
@@ -181,7 +181,7 @@ import <bootstrap-shim.r>
 
 /text-location-of: func [
     "Returns line and column of position within text"
-    position [text! binary!]
+    position [text! blob!]
 ] [
     ; Here newline is considered last character of a line.
     ; No counting performed for empty text.

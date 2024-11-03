@@ -111,7 +111,7 @@ elf-format: context [
     mode: ~
     /handler: func [return: [~] @name [word!] num-bytes [integer!]] [
         assert [
-            binary? begin, num-bytes <= length of begin,
+            blob? begin, num-bytes <= length of begin,
             find [read write] mode
         ]
 
@@ -234,8 +234,8 @@ elf-format: context [
         return: "The index of the section header with encap (sh_xxx vars set)"
             [~null~ integer!]
         name [text!]
-        section-headers [binary!]
-        string-section [binary!]
+        section-headers [blob!]
+        string-section [blob!]
     ][
         let index: 0
         parse3 section-headers [
@@ -243,7 +243,7 @@ elf-format: context [
                 (mode: 'read) section-header-rule
                 (
                     let name-start: skip string-section sh_name
-                    let name-end: ensure binary! find name-start #{00}
+                    let name-end: ensure blob! find name-start #{00}
                     let section-name: to-text copy:part name-start name-end
                     if name = section-name [
                         return index  ; sh_offset, sh_size, etc. are set
@@ -260,7 +260,7 @@ elf-format: context [
         "Adjust headers to account for insertion or removal of data @ offset"
 
         return: [~]
-        executable [binary!]
+        executable [blob!]
         offset [integer!]
         delta [integer!]
     ][
@@ -295,8 +295,8 @@ elf-format: context [
     /update-embedding: meth [
         return: [~]
         executable "Executable to mutate to either add or update an embedding"
-            [binary!]
-        embedding [binary!]
+            [blob!]
+        embedding [blob!]
     ][
         ; Up front, let's check to see if the executable has data past the
         ; tail or not--which indicates some other app added data using the
@@ -462,7 +462,7 @@ elf-format: context [
             ;
             (insert
                 (skip executable string-section-offset + string-section-size)
-                (join (to-binary encap-section-name) #{00})
+                (join (to-blob encap-section-name) #{00})
             )
 
             ; We added a section (so another section header to account for),
@@ -489,7 +489,7 @@ elf-format: context [
     ]
 
     /get-embedding: meth [
-        return: [~null~ binary!]
+        return: [~null~ blob!]
         file [file!]
     ][
         let header-data: read:part file 64  ; 64-bit size, 32-bit is smaller
@@ -773,14 +773,14 @@ pe-format: context [
     size-of-section-header: 40  ; Size of one entry
 
     /to-u32-le: func [
-        return: [binary!]
+        return: [blob!]
         i [integer!]
     ][
         return encode [LE + 4] i
     ]
 
     /to-u16-le: func [
-        return: [binary!]
+        return: [blob!]
         i [integer!]
     ][
         return encode [LE + 2] i 6
@@ -814,7 +814,7 @@ pe-format: context [
 
     /parse-exe: func [
         return: [logic?]
-        exe-data [binary!]
+        exe-data [blob!]
     ][
         reset
         parse3:match exe-data exe-rule
@@ -829,12 +829,12 @@ pe-format: context [
 
     /update-section-header: func [
         return: [~]
-        pos [binary!]
+        pos [blob!]
         section [object!]
     ][
-        change pos let new-section: make binary! [
+        change pos let new-section: make blob! [
             copy:part (head of insert:dup
-                tail of as binary! copy section.name
+                tail of as blob! copy section.name
                 #{00}
                 8
             ) 8  ; name, must be 8 bytes long
@@ -845,12 +845,12 @@ pe-format: context [
             to-u32-le section.physical-offset
 
             copy:part (head of insert:dup
-                tail of as binary! copy section.reserved
+                tail of as blob! copy section.reserved
                 #{00}
                 12
             ) 12  ; reserved, must be 12 bytes long
 
-            if binary? section.flags [
+            if blob? section.flags [
                 section.flags
             ] else [
                 to-u32-le section.flags
@@ -862,9 +862,9 @@ pe-format: context [
 
     /add-section: func [
         "Add a new section to the exe, modify in place"
-        exe-data [binary!]
+        exe-data [blob!]
         section-name [text!]
-        section-data [binary!]
+        section-data [blob!]
     ][
         parse-exe exe-data
 
@@ -993,8 +993,8 @@ pe-format: context [
 
     /find-section: func [
         "Find a section to the exe"
-        return: [~null~ binary!]
-        exe-data [binary!]
+        return: [~null~ blob!]
+        exe-data [blob!]
         section-name [text!]
         :header "Return only the section header"
         :data "Return only the section data"
@@ -1033,10 +1033,10 @@ pe-format: context [
     ]
 
     /update-section: func [
-        return: [binary!]
-        exe-data [binary!]
+        return: [blob!]
+        exe-data [blob!]
         section-name [text!]
-        section-data [binary!]
+        section-data [blob!]
     ][
         ; FIND-SECTION will parse exe-data
         ;
@@ -1085,7 +1085,7 @@ pe-format: context [
     ]
 
     /remove-section: func [
-        exe-data [binary!]
+        exe-data [blob!]
         section-name [text!]
     ][
         ; FIND-SECTION will parse exe-data
@@ -1153,7 +1153,7 @@ pe-format: context [
     ]
 
     /get-embedding: func [
-        return: [~null~ binary!]
+        return: [~null~ blob!]
         file [file!]
     ][
         ;print ["Geting embedded from" mold file]
@@ -1164,14 +1164,14 @@ pe-format: context [
 ]
 
 generic-format: context [
-    signature: to-binary "ENCAP000"
+    signature: to-blob "ENCAP000"
     sig-length: length of signature
 
     /update-embedding: meth [
         return: [~]
         executable "Executable to mutate to either add or update an embedding"
-            [binary!]
-        embedding [binary!]
+            [blob!]
+        embedding [blob!]
     ][
         let embed-size: length of embedding
 
@@ -1212,7 +1212,7 @@ generic-format: context [
     ]
 
     /get-embedding: meth [
-        return: [~null~ binary!]
+        return: [~null~ blob!]
         file [file!]
     ][
         let info: query file

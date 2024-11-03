@@ -106,7 +106,7 @@ DECLARE_NATIVE(mold)
 //  "Boot-only implementation of WRITE-STDOUT (HIJACK'd by STDIO module)"
 //
 //      return: [~]
-//      value [<maybe> text! char? binary!]
+//      value [<maybe> text! char? blob!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
@@ -133,7 +133,7 @@ DECLARE_NATIVE(write_stdout)
         printf("WRITE-STDOUT: codepoint %d\n", cast(int, Cell_Codepoint(v)));
     }
     else {
-        assert(Is_Binary(v));
+        assert(Is_Blob(v));
         PROBE(v);
     }
     return NOTHING;
@@ -313,7 +313,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
 //
 //  "Very simplistic function for reading files, provided for WASI"
 //
-//       return: [binary!]
+//       return: [blob!]
 //       file [file!]
 //  ]
 //
@@ -359,7 +359,7 @@ DECLARE_NATIVE(basic_read)
 //
 //       return: [~]
 //       file [file!]
-//       data [binary! text!]
+//       data [blob! text!]
 //  ]
 //
 DECLARE_NATIVE(basic_write)

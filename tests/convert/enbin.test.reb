@@ -1,7 +1,7 @@
 ; Tests for the ENBIN and DEBIN functions
 ;
 ; !!! The design of these dialects is under construction at time of writing
-; writing, but they are to replace most BINARY! <=> INTEGER! conversions
+; writing, but they are to replace most BLOB! <=> INTEGER! conversions
 
 (0 == decode [BE +/-] #{00})
 (1 == decode [BE +/-] #{01})

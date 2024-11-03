@@ -53,15 +53,15 @@
     ok
 )
 
-; No implicit to binary! from tuple!
+; No implicit to blob! from tuple!
 (
     a-value: 0.0.0.0
-    not equal? to binary! a-value a-value
+    not equal? to blob! a-value a-value
 )
 
 (
     a-value: 0.0.0.0
-    equal? equal? to binary! a-value a-value equal? a-value to binary! a-value
+    equal? equal? to blob! a-value a-value equal? a-value to blob! a-value
 )
 
 (equal? 0.0.0 0.0.0)

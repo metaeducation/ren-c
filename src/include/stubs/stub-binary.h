@@ -25,7 +25,7 @@
 // then the data is constrained to only allow valid `\0`-terminated UTF-8 data.
 //
 // (Such binary "views" are possible due to things like the AS operator,
-// e.g `as binary! "abc"`)
+// e.g `as blob! "abc"`)
 //
 // R3-Alpha used a binary Flex to hold the data for BITSET!.  See notes in
 // %sys-bitset.h regarding this usage (which has a "negated" bit in the
@@ -37,10 +37,10 @@
 //   be a "view" on a String Flex, this means that generally speaking a
 //   Binary can't use MISC() and LINK() for its own purposes.  (AT the moment,
 //   bitsets cannot be aliased, so you can't get into a situation like
-//   `as text! as binary! make bitset! [...]`)
+//   `as text! as blob! make bitset! [...]`)
 //
 
-//=//// BLOB (BYTE FLEX USED BY BINARY! SERIES) ///////////////////////////=//
+//=//// BLOB (BYTE FLEX USED BY BLOB! SERIES) ///////////////////////////=//
 
 #define Binary_At(b,i)        Flex_At(Byte, (b), (i))
 #define Binary_Head(b)        Flex_Head(Byte, (b))

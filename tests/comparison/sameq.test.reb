@@ -12,7 +12,7 @@
 )
 ; no structural equality for action
 (not same? func [] [] func [] [])
-; binary!
+; blob!
 (not same? #{00} #{00})
 ; binary versus bitset
 (not same? #{00} make bitset! #{00})
@@ -54,12 +54,12 @@
 (equal? same? #{} blank same? blank #{})
 (
     a-value: ""
-    not same? a-value to binary! a-value
+    not same? a-value to blob! a-value
 )
 ; symmetry
 (
     a-value: ""
-    equal? same? a-value to binary! a-value same? to binary! a-value a-value
+    equal? same? a-value to blob! a-value same? to blob! a-value a-value
 )
 (
     a-value: to tag! ""
@@ -72,12 +72,12 @@
 )
 (
     a-value: 0.0.0.0
-    not same? to binary! a-value a-value
+    not same? to blob! a-value a-value
 )
 ; symmetry
 (
     a-value: 0.0.0.0
-    equal? same? to binary! a-value a-value same? a-value to binary! a-value
+    equal? same? to blob! a-value a-value same? a-value to blob! a-value
 )
 (not same? make bitset! #{00} make bitset! #{00})
 (not same? make bitset! #{} make bitset! #{00})

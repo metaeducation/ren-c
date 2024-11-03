@@ -43,7 +43,7 @@ enum Reb_Socket_Modes {
 
 
 // This is the state information that is stored in a network PORT!'s `state`
-// field.  It is a BINARY! whose bytes hold this C struct.
+// field.  It is a BLOB! whose bytes hold this C struct.
 //
 struct Reb_Sock_Port_State {
     enum Transport_Type transport;  // TCP or UDP

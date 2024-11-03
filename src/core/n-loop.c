@@ -1013,7 +1013,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        if (heart == REB_BINARY) {
+        if (heart == REB_BLOB) {
             const Binary* b = c_cast(Binary*, les->flex);
             if (var)
                 Init_Integer(var, Binary_Head(b)[les->u.eser.index]);
@@ -1318,7 +1318,7 @@ DECLARE_NATIVE(remove_each)
 //    to be more coherent, and likely would catch more errors than just
 //    allowing any Is_Trigger() value to mean "remove".
 //
-// 7. We are reusing the mold buffer for BINARY!, but *not putting UTF-8 data*
+// 7. We are reusing the mold buffer for BLOB!, but *not putting UTF-8 data*
 //    into it.  Revisit if this inhibits cool UTF-8 based tricks the mold
 //    buffer might do otherwise.
 {
@@ -1396,7 +1396,7 @@ DECLARE_NATIVE(remove_each)
                     Array_At(Cell_Array(data), index),
                     Cell_List_Binding(data)
                 );
-            else if (Is_Binary(data)) {
+            else if (Is_Blob(data)) {
                 Binary* b = cast(Binary*, flex);
                 Init_Integer(var, cast(REBI64, Binary_Head(b)[index]));
             }
@@ -1466,7 +1466,7 @@ DECLARE_NATIVE(remove_each)
 
             do {
                 assert(start <= len);
-                if (Is_Binary(data)) {
+                if (Is_Blob(data)) {
                     Binary* b = cast(Binary*, flex);
                     Append_Ascii_Len(
                         mo->string,
@@ -1538,7 +1538,7 @@ DECLARE_NATIVE(remove_each)
 
         assert(removals == 0);  // didn't goto, so no removals
     }
-    else if (Is_Binary(data)) {
+    else if (Is_Blob(data)) {
         if (not threw and breaking) {  // leave data unchanged
             Drop_Mold(mo);
             goto done_finalizing;

@@ -261,7 +261,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
         [
             <maybe>  ; opts out of the DO, returns null
             text!  ; source code with header
-            binary!  ; treated as UTF-8, same interpretation as text
+            blob!  ; treated as UTF-8, same interpretation as text
             url!  ; load code from URL via protocol
             file!  ; load from file relative to OS current directory
             tag!  ; load relative to system.script.name

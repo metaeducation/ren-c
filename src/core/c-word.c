@@ -347,7 +347,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     Term_Binary_Len(b, utf8_size);
 
     // The UTF-8 Flex can be aliased with AS to become an ANY-STRING? or a
-    // BINARY!.  If it is, then it should not be modified.
+    // BLOB!.  If it is, then it should not be modified.
     //
     Freeze_Flex(b);
 

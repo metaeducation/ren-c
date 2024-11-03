@@ -13,7 +13,7 @@
 ('money = to word! money!)
 
 [#1967
-    (not same? to binary! [1] to binary! [2])
+    (not same? to blob! [1] to blob! [2])
 ]
 
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751

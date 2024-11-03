@@ -36,7 +36,7 @@
 // Given Windows itself wishing to set the standard for pipes and redirects
 // to use plain bytes, it seems good to go with it.  Rather than give the
 // appearance of endorsement of UCS-2/UTF-16 by offering a switch for it,
-// a process returning it may be handled by requesting BINARY! output and
+// a process returning it may be handled by requesting BLOB! output and
 // then doing the conversion themselves.
 //
 
@@ -127,7 +127,7 @@ static bool Try_Init_Startupinfo_Sink(
     }
     else switch (VAL_TYPE(arg)) {
       case REB_TEXT:  // write to pre-existing TEXT!
-      case REB_BINARY:  // write to pre-existing BINARY!
+      case REB_BLOB:  // write to pre-existing BLOB!
         if (not CreatePipe(hread, hwrite, NULL, 0))
             return false;
 
@@ -197,21 +197,21 @@ Bounce Call_Core(Level* level_) {
 
     UNUSED(REF(console));  // !!! This is not paid attention to (?)
 
-    // Make sure that if the output or error series are STRING! or BINARY!,
+    // Make sure that if the output or error series are STRING! or BLOB!,
     // they are not read-only, before we try appending to them.
     //
-    if (Is_Text(ARG(output)) or Is_Binary(ARG(output)))
+    if (Is_Text(ARG(output)) or Is_Blob(ARG(output)))
         Ensure_Mutable(ARG(output));
-    if (Is_Text(ARG(error)) or Is_Binary(ARG(error)))
+    if (Is_Text(ARG(error)) or Is_Blob(ARG(error)))
         Ensure_Mutable(ARG(error));
 
     bool flag_wait;
     if (
         REF(wait)
         or (
-            Is_Text(ARG(input)) or Is_Binary(ARG(input))
-            or Is_Text(ARG(output)) or Is_Binary(ARG(output))
-            or Is_Text(ARG(error)) or Is_Binary(ARG(error))
+            Is_Text(ARG(input)) or Is_Blob(ARG(input))
+            or Is_Text(ARG(output)) or Is_Blob(ARG(output))
+            or Is_Text(ARG(error)) or Is_Blob(ARG(error))
         )  // I/O redirection implies /WAIT
     ){
         flag_wait = true;
@@ -361,7 +361,7 @@ Bounce Call_Core(Level* level_) {
         UNUSED(check);
         goto input_via_buffer; }
 
-      case REB_BINARY:  // feed standard input from BINARY! (full-band)
+      case REB_BLOB:  // feed standard input from BLOB! (full-band)
         inbuf = rebBytes(&inbuf_size, ARG(input));
 
       input_via_buffer:
@@ -694,7 +694,7 @@ Bounce Call_Core(Level* level_) {
 
     rebFree(m_cast(REBWCHAR**, argv));
 
-    // We can actually recover the rebAlloc'd buffers as BINARY!.  If the
+    // We can actually recover the rebAlloc'd buffers as BLOB!.  If the
     // target is TEXT!, we DELINE it first to eliminate any CRs.  Note the
     // remarks at the top of file about how piped data is not generally
     // assumed to be UCS-2.
@@ -704,7 +704,7 @@ Bounce Call_Core(Level* level_) {
         rebElide("insert", ARG(output), "deline", output_val);
         rebRelease(output_val);
     }
-    else if (Is_Binary(ARG(output))) {
+    else if (Is_Blob(ARG(output))) {
         Value* output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
@@ -717,7 +717,7 @@ Bounce Call_Core(Level* level_) {
         rebElide("insert", ARG(error), "deline", error_val);
         rebRelease(error_val);
     }
-    else if (Is_Binary(ARG(error))) {
+    else if (Is_Blob(ARG(error))) {
         Value* error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("append", ARG(error), error_val);
         rebRelease(error_val);

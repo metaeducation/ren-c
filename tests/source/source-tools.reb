@@ -156,7 +156,7 @@ export analyse: context [
             return: "Facts about the file (lines that are too long, etc)"
                 [block!]
             file [file!]
-            data [binary!]
+            data [blob!]
             <local> position  ; used sketchily in rules, no LET in parse :-/
         ][
             let analysis: analyse/text file data

@@ -447,7 +447,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
     #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE  // Blobs reserve tail byte [1]
 
     INLINE void Poison_Or_Unpoison_Tail_Debug(Flex* f, bool poison) {
-        if (Flex_Wide(f) == 1) {  // presume BINARY! or ANY-STRING? (?)
+        if (Flex_Wide(f) == 1) {  // presume BLOB! or ANY-STRING? (?)
             Byte* tail = Flex_Tail(Byte, f);
             if (poison)
                 *tail = BINARY_BAD_UTF8_TAIL_BYTE;

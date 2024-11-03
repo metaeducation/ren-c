@@ -6,7 +6,7 @@
 
 (
     for-each 'typename [
-        frame! binary! bitset! block! type-word! date! decimal!
+        frame! blob! bitset! block! type-word! date! decimal!
         email! error! file! handle! integer!
         issue! map! module! money! blank! object! pair! group!
         path! percent! port! text! tag!

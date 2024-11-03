@@ -493,7 +493,7 @@ void Move_Cursor(STD_TERM *t, int count)
         if (t->pos < end) {
             size_t encoded_size;
             unsigned char *encoded_char = rebBytes(&encoded_size,
-                "to binary! pick", t->buffer, rebI(t->pos + 1)
+                "to blob! pick", t->buffer, rebI(t->pos + 1)
             );
             WRITE_UTF8(encoded_char, encoded_size);
             rebFree(encoded_char);
@@ -509,7 +509,7 @@ void Move_Cursor(STD_TERM *t, int count)
 // build.
 //
 // !!! In the future, this might do something more interesting to get the
-// BINARY! information for the key sequence back up out of the terminal, so
+// BLOB! information for the key sequence back up out of the terminal, so
 // that people could see what the key registered as on their machine and
 // configure their console to respond to it.
 //

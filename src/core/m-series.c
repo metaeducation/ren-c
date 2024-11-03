@@ -135,7 +135,7 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 //
 //  Copy_Flex_Core: C
 //
-// Copy underlying Flex that *isn't* an "array" (such as STRING!, BINARY!,
+// Copy underlying Flex that *isn't* an "array" (such as STRING!, BLOB!,
 // BITSET!...).  Includes the terminator.
 //
 // Use Copy_Array routines (which specify Shallow, Deep, etc.) for greater
@@ -144,7 +144,7 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 // The reason this can be used on String or Binary is because it copies
 // from the head position.  Copying from a non-head position might be in the
 // middle of a UTF-8 codepoint, hence a String Flex aliased as a Binary
-// could only have its copy used in a BINARY!.
+// could only have its copy used in a BLOB!.
 //
 Flex* Copy_Flex_Core(Flags flags, const Flex* f)
 {
@@ -173,7 +173,7 @@ Flex* Copy_Flex_Core(Flags flags, const Flex* f)
         LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
         copy->misc.length = f->misc.length;
     }
-    else if (Flex_Wide(f) == 1) {  // non-string BINARY!
+    else if (Flex_Wide(f) == 1) {  // non-string BLOB!
         copy = Make_Flex_Core(flags, used + 1);  // term space
         Set_Flex_Used(copy, used);
     }
@@ -325,7 +325,7 @@ void Remove_Flex_Units(Flex* f, Size byteoffset, REBLEN quantity)
 //
 void Remove_Any_Series_Len(Value* v, REBLEN index, REBINT len)
 {
-    if (Any_String(v) or Is_Binary(v)) {
+    if (Any_String(v) or Is_Blob(v)) {
         //
         // The complicated logic in Modify_String_Or_Binary() handles many
         // aspects of the removal; e.g. updating "bookmarks" that help find

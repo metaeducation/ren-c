@@ -462,7 +462,7 @@ Value* Start_Listening_On_Socket(const Value* port)
 //     ]
 //
 // So for transitional compatibility with R3-Alpha ports, data is accrued in
-// the `data` field of the port as a BINARY!.  This adds up over successive
+// the `data` field of the port as a BLOB!.  This adds up over successive
 // reads until the port clears it.
 //
 void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
@@ -542,7 +542,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     if (Is_Nulled(port_data))
         assert(nread <= 0);  // can happen, e.g. "connection reset by peer" [1]
     else
-        assert(Is_Binary(port_data));
+        assert(Is_Blob(port_data));
 
     if (nread == 0) {
         //
@@ -658,7 +658,7 @@ static Bounce Transport_Actor(
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
-    // If a transfer is in progress, the port_data is a BINARY!.  Its index
+    // If a transfer is in progress, the port_data is a BLOB!.  Its index
     // represents how much of the transfer has finished.  The data starts
     // as NULL (from `make-port*`) and R3-Alpha would reset it after a
     // transfer was finished.  For writes, R3-Alpha held a copy of the value
@@ -666,7 +666,7 @@ static Bounce Transport_Actor(
     // characters, a likely oversight from the addition of unicode).
     //
     Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
-    assert(Is_Binary(port_data) or Is_Nulled(port_data));
+    assert(Is_Blob(port_data) or Is_Nulled(port_data));
 
     SOCKREQ *sock;
     Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
@@ -799,7 +799,7 @@ static Bounce Transport_Actor(
           case SYM_LENGTH: {
             return Init_Integer(
                 OUT,
-                Is_Binary(port_data) ? Cell_Series_Len_Head(port_data) : 0
+                Is_Blob(port_data) ? Cell_Series_Len_Head(port_data) : 0
             ); }
 
           case SYM_OPEN_Q:
@@ -900,7 +900,7 @@ static Bounce Transport_Actor(
         rebreq->port_ctx = Cell_Varlist(port);  // API handle for GC safety?
         rebreq->result = nullptr;
 
-        // Make a copy of the BINARY! to put in the request, so that you can
+        // Make a copy of the BLOB! to put in the request, so that you can
         // say things like:
         //
         //     data: {abc}
@@ -919,7 +919,7 @@ static Bounce Transport_Actor(
         // this as an angle on efficiency.
         //
         rebreq->binary = rebValue(
-            "as binary! copy:part", data, rebQ(ARG(part))
+            "as blob! copy:part", data, rebQ(ARG(part))
         );
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 

@@ -206,7 +206,7 @@ Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
             Scan_UTF8_Managed(file, utf8, utf8_size)
         );
     }
-    else if (Is_Binary(arg)) {
+    else if (Is_Blob(arg)) {
         //
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // uses TRANSCODE to make unbound code.
@@ -214,7 +214,7 @@ Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
         Option(const String*) file = ANONYMOUS;
 
         Size size;
-        const Byte* at = Cell_Binary_Size_At(&size, arg);
+        const Byte* at = Cell_Blob_Size_At(&size, arg);
         return Init_Any_List(
             OUT,
             heart,

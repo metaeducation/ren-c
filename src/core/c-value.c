@@ -382,7 +382,7 @@ void* Probe_Core_Debug(
         const Binary* b = cast(const Binary*, f);
         Probe_Print_Helper(p, expr, "Byte-Size Flex", file, line);
 
-        const bool brk = (Binary_Len(b) > 32);  // !!! duplicates MF_Binary code
+        const bool brk = (Binary_Len(b) > 32);  // !!! duplicates MF_Blob code
         Append_Ascii(mo->string, "#{");
         Form_Base16(mo, Binary_Head(b), Binary_Len(b), brk);
         Append_Ascii(mo->string, "}");

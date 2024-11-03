@@ -6,7 +6,7 @@
 (decimal? -1.0)
 (decimal? 1.5)
 
-; LOAD decimal and to binary! tests
+; LOAD decimal and to blob! tests
 
 ; 64-bit IEEE 754 maximum
 (

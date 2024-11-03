@@ -138,12 +138,12 @@ Bounce Call_Core(Level* level_) {
 
     UNUSED(REF(console));  // !!! actually not paid attention to, why?
 
-    // Make sure that if the output or error series are STRING! or BINARY!,
+    // Make sure that if the output or error series are STRING! or BLOB!,
     // they are not read-only, before we try appending to them.
     //
-    if (Is_Text(ARG(output)) or Is_Binary(ARG(output)))
+    if (Is_Text(ARG(output)) or Is_Blob(ARG(output)))
         Ensure_Mutable(ARG(output));
-    if (Is_Text(ARG(error)) or Is_Binary(ARG(error)))
+    if (Is_Text(ARG(error)) or Is_Blob(ARG(error)))
         Ensure_Mutable(ARG(error));
 
     char *inbuf;
@@ -178,7 +178,7 @@ Bounce Call_Core(Level* level_) {
         inbuf_size = size;
         break; }
 
-      case REB_BINARY: {
+      case REB_BLOB: {
         inbuf = s_cast(rebBytes(&inbuf_size, ARG(input)));
         break; }
 
@@ -187,9 +187,9 @@ Bounce Call_Core(Level* level_) {
     }
 
     bool flag_wait = REF(wait) or (
-        Is_Text(ARG(input)) or Is_Binary(ARG(input))
-        or Is_Text(ARG(output)) or Is_Binary(ARG(output))
-        or Is_Text(ARG(error)) or Is_Binary(ARG(error))
+        Is_Text(ARG(input)) or Is_Blob(ARG(input))
+        or Is_Text(ARG(output)) or Is_Blob(ARG(output))
+        or Is_Text(ARG(error)) or Is_Blob(ARG(error))
     );  // I/O redirection implies /WAIT
 
     // We synthesize the argc and argv from the "command", and in the process
@@ -309,7 +309,7 @@ Bounce Call_Core(Level* level_) {
 
     int exit_code = 20;  // should be overwritten if actually returned
 
-    // If a STRING! or BINARY! is used for the output or error, then that
+    // If a STRING! or BLOB! is used for the output or error, then that
     // is treated as a request to append the results of the pipe to them.
     //
     // !!! At the moment this is done by having the OS-specific routine
@@ -347,17 +347,17 @@ Bounce Call_Core(Level* level_) {
 
     pid_t forked_pid = -1;
 
-    if (Is_Text(ARG(input)) or Is_Binary(ARG(input))) {
+    if (Is_Text(ARG(input)) or Is_Blob(ARG(input))) {
         if (Open_Pipe_Fails(stdin_pipe))
             goto stdin_pipe_err;
     }
 
-    if (Is_Text(ARG(output)) or Is_Binary(ARG(output))) {
+    if (Is_Text(ARG(output)) or Is_Blob(ARG(output))) {
         if (Open_Pipe_Fails(stdout_pipe))
             goto stdout_pipe_err;
     }
 
-    if (Is_Text(ARG(error)) or Is_Binary(ARG(error))) {
+    if (Is_Text(ARG(error)) or Is_Blob(ARG(error))) {
         if (Open_Pipe_Fails(stderr_pipe))
             goto stdout_pipe_err;
     }
@@ -385,7 +385,7 @@ Bounce Call_Core(Level* level_) {
           inherit_stdin_from_parent:
             NOOP;  // it's the default
         }
-        else if (Is_Text(ARG(input)) or Is_Binary(ARG(input))) {
+        else if (Is_Text(ARG(input)) or Is_Blob(ARG(input))) {
             close(stdin_pipe[W]);
             if (dup2(stdin_pipe[R], STDIN_FILENO) < 0)
                 goto child_error;
@@ -424,7 +424,7 @@ Bounce Call_Core(Level* level_) {
           inherit_stdout_from_parent:
             NOOP;  // it's the default
         }
-        else if (Is_Text(ARG(output)) or Is_Binary(ARG(output))) {
+        else if (Is_Text(ARG(output)) or Is_Blob(ARG(output))) {
             close(stdout_pipe[R]);
             if (dup2(stdout_pipe[W], STDOUT_FILENO) < 0)
                 goto child_error;
@@ -461,7 +461,7 @@ Bounce Call_Core(Level* level_) {
           inherit_stderr_from_parent:
             NOOP;  // it's the default
         }
-        else if (Is_Text(ARG(error)) or Is_Binary(ARG(error))) {
+        else if (Is_Text(ARG(error)) or Is_Blob(ARG(error))) {
             close(stderr_pipe[R]);
             if (dup2(stderr_pipe[W], STDERR_FILENO) < 0)
                 goto child_error;
@@ -933,7 +933,7 @@ Bounce Call_Core(Level* level_) {
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
     }
-    else if (Is_Binary(ARG(output))) {  // same (but could be different...)
+    else if (Is_Blob(ARG(output))) {  // same (but could be different...)
         Value* output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
@@ -946,7 +946,7 @@ Bounce Call_Core(Level* level_) {
         rebElide("insert", ARG(error), error_val);
         rebRelease(error_val);
     }
-    else if (Is_Binary(ARG(error))) {  // same (but could be different...)
+    else if (Is_Blob(ARG(error))) {  // same (but could be different...)
         Value* error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("insert", ARG(error), error_val);
         rebRelease(error_val);

@@ -23,7 +23,7 @@
 // Rebol doesn't depend on any data structure library--like C++'s std::vector.
 // Instead, it builds on its own structure called a "Flex".
 //
-// Every TEXT!, BLOCK!, BINARY!, etc. in Rebol has a Flex.  And Flex is also
+// Every TEXT!, BLOCK!, BLOB!, etc. in Rebol has a Flex.  And Flex is also
 // used internally whenever there is a need for a dynamically growable
 // contiguous memory structure.
 //

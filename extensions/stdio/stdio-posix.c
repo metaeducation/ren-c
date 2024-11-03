@@ -97,12 +97,12 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 //
 //  Write_IO: C
 //
-// This write routine takes a Value* that is either a BINARY! or a TEXT!.
-// Length is in conceptual units (codepoints for TEXT!, bytes for BINARY!)
+// This write routine takes a Value* that is either a BLOB! or a TEXT!.
+// Length is in conceptual units (codepoints for TEXT!, bytes for BLOB!)
 //
 void Write_IO(const Value* data, REBLEN len)
 {
-    assert(Is_Text(data) or Is_Binary(data));
+    assert(Is_Text(data) or Is_Blob(data));
 
     if (STDOUT_FILENO < 0)
         return;  // !!! This used to do nothing (?)
@@ -154,7 +154,7 @@ void Write_IO(const Value* data, REBLEN len)
     {
         const Byte* bp;
         Size size;
-        if (Is_Binary(data)) {
+        if (Is_Blob(data)) {
             bp = Cell_Blob_At(data);
             size = len;
         }
@@ -179,7 +179,7 @@ void Write_IO(const Value* data, REBLEN len)
 //  Read_IO: C
 //
 // !!! While transitioning away from the R3-Alpha "abstract OS" model,
-// this hook now receives a BINARY! which it is expected to fill with UTF-8
+// this hook now receives a BLOB! which it is expected to fill with UTF-8
 // data, with a certain number of bytes.
 //
 // The request buffer must be long enough to hold result.

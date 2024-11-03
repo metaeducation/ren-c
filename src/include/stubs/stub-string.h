@@ -41,7 +41,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * UTF-8 String Flexes are "byte-sized", which is also true in BINARY!
+// * UTF-8 String Flexes are "byte-sized", which is also true in BLOB!
 //   datatypes.  However, the Flex used to store UTF-8 strings also stores
 //   information about their length in codepoints in their Stub Nodes (the
 //   main "number of bytes used" in the Flex conveys bytes, not codepoints).

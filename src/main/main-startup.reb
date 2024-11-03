@@ -173,7 +173,7 @@ boot-banner: [
     "Code registered as a hook when a module or script are loaded"
     return: [~]
     is-module [yesno?]
-    hdr "Header object (missing for DO of BINARY! with no header)"
+    hdr "Header object (missing for DO of BLOB! with no header)"
         [~null~ object!]
 ][
     ; Print out the script info
@@ -745,8 +745,8 @@ boot-banner: [
         main: select boot-embedded %main.reb
     ]
     then [
-        if not binary? main [
-            die "%main.reb not a BINARY! in encapped data"
+        if not blob? main [
+            die "%main.reb not a BLOB! in encapped data"
         ]
         let [code header]: load main
 

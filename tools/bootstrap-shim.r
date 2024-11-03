@@ -229,6 +229,9 @@ boolean?!: word!
 onoff?!: word!
 yesno?!: word!
 
+blob!: binary!
+/blob?: binary?/
+
 logic?!: make typeset! [~null~ nothing!]
 /to-logic: func3 [x] [
     either x [~] [null]
@@ -506,7 +509,7 @@ get-path!: func3 [] [
 ]
 
 /join: func3 [
-    base [binary! any-string! path!]
+    base [blob! any-string! path!]
     value [void! any-value!]
 ][
     if void? :value [

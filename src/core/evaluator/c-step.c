@@ -1687,7 +1687,7 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_BLOCK:
         //
-      case REB_BINARY:
+      case REB_BLOB:
         //
       case REB_TEXT:
       case REB_FILE:

@@ -51,7 +51,7 @@
     ; or even the same compressor with the same settings, but different
     ; versions, can produce different compressed output from the same input."
     ;
-    ; So do not test for exact matches of BINARY! products of compression.
+    ; So do not test for exact matches of BLOB! products of compression.
     ; Decompression should be consistent, however.
 
     ([] = load (save:compress blank [] 'raw))

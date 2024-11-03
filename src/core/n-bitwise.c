@@ -41,8 +41,8 @@
 //
 //  "Returns the one's complement value"
 //
-//      return: [logic? integer! tuple! binary!]
-//      value [logic? integer! tuple! binary!]
+//      return: [logic? integer! tuple! blob!]
+//      value [logic? integer! tuple! blob!]
 //  ]
 //
 DECLARE_NATIVE(bitwise_not)
@@ -74,9 +74,9 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
 //
 //  "Bitwise AND of two values"
 //
-//      return: [logic? integer! char? tuple! binary!]
-//      value1 [logic? integer! char? tuple! binary!]
-//      value2 [logic? integer! char? tuple! binary!]
+//      return: [logic? integer! char? tuple! blob!]
+//      value1 [logic? integer! char? tuple! blob!]
+//      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
 DECLARE_NATIVE(bitwise_and)
@@ -97,9 +97,9 @@ DECLARE_NATIVE(bitwise_and)
 //
 //  "Bitwise OR of two values"
 //
-//      return: [logic? integer! char? tuple! binary!]
-//      value1 [logic? integer! char? tuple! binary!]
-//      value2 [logic? integer! char? tuple! binary!]
+//      return: [logic? integer! char? tuple! blob!]
+//      value1 [logic? integer! char? tuple! blob!]
+//      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
 DECLARE_NATIVE(bitwise_or)
@@ -120,9 +120,9 @@ DECLARE_NATIVE(bitwise_or)
 //
 //  "Bitwise XOR of two values"
 //
-//      return: [logic? integer! char? tuple! binary!]
-//      value1 [logic? integer! char? tuple! binary!]
-//      value2 [logic? integer! char? tuple! binary!]
+//      return: [logic? integer! char? tuple! blob!]
+//      value1 [logic? integer! char? tuple! blob!]
+//      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
 DECLARE_NATIVE(bitwise_xor)
@@ -143,9 +143,9 @@ DECLARE_NATIVE(bitwise_xor)
 //
 //  "Bitwise AND NOT of two values"
 //
-//      return: [logic? integer! char? tuple! binary!]
-//      value1 [logic? integer! char? tuple! binary!]
-//      value2 [logic? integer! char? tuple! binary!]
+//      return: [logic? integer! char? tuple! blob!]
+//      value1 [logic? integer! char? tuple! blob!]
+//      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
 DECLARE_NATIVE(bitwise_and_not)

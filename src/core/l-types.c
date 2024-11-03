@@ -832,14 +832,14 @@ Option(const Byte*) Try_Scan_Binary_To_Stack(
 //
 //      return: [block!]
 //      header "Fields with duplicate words will be merged into a block"
-//          [binary!]
+//          [blob!]
 //  ]
 //
 DECLARE_NATIVE(scan_net_header)
 //
 // !!! This routine used to be a feature of CONSTRUCT in R3-Alpha, and was
 // used by %prot-http.r.  The idea was that instead of providing a parent
-// object, a STRING! or BINARY! could be provided which would be turned
+// object, a STRING! or BLOB! could be provided which would be turned
 // into a block by this routine.
 //
 // It doesn't make much sense to have this coded in C rather than using PARSE

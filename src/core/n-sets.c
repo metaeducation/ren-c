@@ -88,8 +88,8 @@ Flex* Make_Set_Operation_Flex(
         }
         else {
             // Binaries only operate with other binaries
-            assert(Is_Binary(val1));
-            if (not Is_Binary(val2))
+            assert(Is_Blob(val1));
+            if (not Is_Blob(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
         }
     }
@@ -273,7 +273,7 @@ Flex* Make_Set_Operation_Flex(
         out_flex = Pop_Molded_String(mo);
     }
     else {
-        assert(Is_Binary(val1) and Is_Binary(val2));
+        assert(Is_Blob(val1) and Is_Blob(val2));
 
         Binary* buf = BYTE_BUF;
         REBLEN buf_start_len = Binary_Len(buf);
@@ -318,7 +318,7 @@ Flex* Make_Set_Operation_Flex(
                 DECLARE_ATOM (buf_value);
                 Reset_Cell_Header_Untracked(
                     TRACK(buf_value),
-                    CELL_MASK_BINARY
+                    CELL_MASK_BLOB
                 );
                 Tweak_Cell_Node1(buf_value, buf);
                 VAL_INDEX_RAW(buf_value) = buf_start_len;
@@ -336,7 +336,7 @@ Flex* Make_Set_Operation_Flex(
                 ){
                     Expand_Flex_Tail(buf, skip);
                     Size size_at;
-                    const Byte* iter_at = Cell_Binary_Size_At(&size_at, iter);
+                    const Byte* iter_at = Cell_Blob_Size_At(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);
                     memcpy(Binary_At(buf, buf_at), iter_at, min);
                     buf_at += min;
@@ -392,17 +392,17 @@ DECLARE_NATIVE(complement)
 //      return: [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //      ]
 //      value1 [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //      ]
 //      value2 [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //      ]
 //      :case "Uses case-sensitive comparison"
 //      :skip "Treat the series as records of fixed size"
@@ -424,17 +424,17 @@ DECLARE_NATIVE(intersect)
 //      return: [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //      ]
 //      value1 [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //      ]
 //      value2 [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //      ]
 //      :case "Use case-sensitive comparison"
 //      :skip "Treat the series as records of fixed size"
@@ -456,19 +456,19 @@ DECLARE_NATIVE(union)
 //      return: [
 //          integer! char? tuple!
 //          any-list? any-string? bitset!
-//          binary!
+//          blob!
 //          time!  ; !!! Under review, this really doesn't fit
 //      ]
 //      value1 [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //          date!  ; !!! Under review, this really doesn't fit
 //      ]
 //      value2 [
 //          integer! char? tuple!  ; math
 //          any-list? any-string? bitset!  ; sets
-//          binary!  ; ???
+//          blob!  ; ???
 //          date!  ; !!! Under review, this really doesn't fit
 //      ]
 //      :case "Uses case-sensitive comparison"
@@ -488,11 +488,11 @@ DECLARE_NATIVE(difference)
 //
 //  "Returns the first data set less the second data set"
 //
-//      return: [any-list? any-string? binary! bitset!]
+//      return: [any-list? any-string? blob! bitset!]
 //      data "original data"
-//          [any-list? any-string? binary! bitset!]
+//          [any-list? any-string? blob! bitset!]
 //      exclusions "data to exclude from series"
-//          [any-list? any-string? binary! bitset!]
+//          [any-list? any-string? blob! bitset!]
 //      :case "Uses case-sensitive comparison"
 //      :skip "Treat the series as records of fixed size"
 //          [integer!]
@@ -510,8 +510,8 @@ DECLARE_NATIVE(exclude)
 //
 //  "Returns the data set with duplicates removed"
 //
-//      return: [any-list? any-string? binary! bitset!]
-//      series [any-list? any-string? binary! bitset!]
+//      return: [any-list? any-string? blob! bitset!]
+//      series [any-list? any-string? blob! bitset!]
 //      <local> dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
 //      :case "Use case-sensitive comparison (except bitsets)"
 //      :skip "Treat the series as records of fixed size"

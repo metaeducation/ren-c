@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// R3-Alpha bitsets were essentially an alternate interpretation of a BINARY!
+// R3-Alpha bitsets were essentially an alternate interpretation of a BLOB!
 // as a set of bits corresponding to integer or character values.  They could
 // be built using a small "dialect" that supplied ranges of numbers separated
 // by `-`, e.g. `make bitset! [3 - 10 20 - 50]`.

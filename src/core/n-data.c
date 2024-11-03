@@ -1058,7 +1058,7 @@ bool Try_As_String(
         Init_Any_String(out, new_heart, Cell_Word_Symbol(v));
         Inherit_Const(Quotify(out, quotes), v);
     }
-    else if (Is_Binary(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING?
+    else if (Is_Blob(v)) {  // If valid UTF-8, BLOB! aliases as ANY-STRING?
         const Binary* bin = Cell_Binary(v);
         Size byteoffset = VAL_INDEX(v);
 
@@ -1403,9 +1403,9 @@ DECLARE_NATIVE(as)
           }
         }
 
-        if (Is_Binary(v)) {
+        if (Is_Blob(v)) {
             if (VAL_INDEX(v) != 0)  // ANY-WORD? stores binding, not position
-                return FAIL("Can't alias BINARY! as WORD! unless at head");
+                return FAIL("Can't alias BLOB! as WORD! unless at head");
 
             // We have to permanently freeze the underlying String from any
             // mutation to use it in a WORD! (and also, may add STRING flag);
@@ -1429,7 +1429,7 @@ DECLARE_NATIVE(as)
                 // error converting we don't add any constraints to the input.
                 //
                 Size size;
-                const Byte* data = Cell_Binary_Size_At(&size, v);
+                const Byte* data = Cell_Blob_Size_At(&size, v);
                 str = Intern_UTF8_Managed(data, size);
 
                 // Constrain the input in the way it would be if we were doing
@@ -1516,12 +1516,12 @@ DECLARE_NATIVE(as)
         }
         return OUT;
 
-      case REB_BINARY: {
+      case REB_BLOB: {
         if (Is_Issue(v)) {
             if (Stringlike_Has_Node(v))
                 goto any_string_as_binary;  // had a String allocation
 
-            // Data lives in Cell--make new frozen String for BINARY!
+            // Data lives in Cell--make new frozen String for BLOB!
 
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
@@ -1587,7 +1587,7 @@ DECLARE_NATIVE(as)
 //
 //  /as-text: native [
 //
-//  "AS TEXT! variant that may disallow CR LF sequences in BINARY! alias"
+//  "AS TEXT! variant that may disallow CR LF sequences in BLOB! alias"
 //
 //      return: [~null~ text!]
 //      value [<maybe> any-value?]

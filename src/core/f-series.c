@@ -386,8 +386,8 @@ REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
       case REB_BITSET:
         return CT_Bitset(s, t, strict);
 
-      case REB_BINARY:
-        return CT_Binary(s, t, strict);
+      case REB_BLOB:
+        return CT_Blob(s, t, strict);
 
       case REB_WORD:
       case REB_META_WORD:

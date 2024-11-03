@@ -178,9 +178,9 @@ uint32_t Hash_Value(const Cell* cell)
         }
         break;
 
-      case REB_BINARY: {
+      case REB_BLOB: {
         Size size;
-        const Byte* data = Cell_Binary_Size_At(&size, cell);
+        const Byte* data = Cell_Blob_Size_At(&size, cell);
         hash = Hash_Bytes(data, size);
         break; }
 

@@ -138,8 +138,8 @@
         write p "He"
         write:part p "lloDECAFBAD" 3
         write p space
-        write p as binary! "Wo"
-        write:part p as binary! "rldBAADF00D" 3
+        write p as blob! "Wo"
+        write:part p as blob! "rldBAADF00D" 3
         close p
         'file = exists? %small.dat
     )
@@ -249,7 +249,7 @@
         ; Make a random thing of data up to 1k in size
         ;
         len: random 1024
-        data: make binary! len
+        data: make blob! len
         repeat len [append data (-1 + random 256)]
 
         applique fuzzwrite/ [

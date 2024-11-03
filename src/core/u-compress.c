@@ -78,8 +78,8 @@ static const int window_bits_zlib_raw = -(MAX_WBITS);
 // "raw gzip" would be nonsense, e.g. `-(MAX_WBITS | 16)`
 
 
-// Inflation and deflation tends to ultimately target BINARY!, so we want to
-// be using memory that can be transitioned to a BINARY! without reallocation.
+// Inflation and deflation tends to ultimately target BLOB!, so we want to
+// be using memory that can be transitioned to a BLOB! without reallocation.
 // See rebRepossess() for how rebAlloc()'d pointers can be used this way.
 //
 // We go ahead and use the rebAllocBytes() for zlib's internal state allocation
@@ -131,7 +131,7 @@ static Error* Error_Compression(const z_stream *strm, int ret)
 //
 // 1. The memory buffer pointer returned by this routine is allocated using
 //    rebAllocN(), and is backed by a managed Flex.  This means it can be
-//    converted to a BINARY! if desired, via rebRepossess().  Otherwise it
+//    converted to a BLOB! if desired, via rebRepossess().  Otherwise it
 //    should be freed using rebFree()
 //
 // 2. GZIP contains a 32-bit length of the uncompressed data (modulo 2^32),
@@ -224,7 +224,7 @@ Byte* Compress_Alloc_Core(
 //
 // 1. The memory buffer pointer returned by this routine is allocated using
 //    rebAllocN(), and is backed by a managed Flex.  This means it can be
-//    converted to a BINARY! if desired, via rebRepossess().  Otherwise it
+//    converted to a BLOB! if desired, via rebRepossess().  Otherwise it
 //    should be freed using rebFree()
 //
 // 2. Size (modulo 2^32) is in the last 4 bytes, *if* it's trusted:
@@ -380,12 +380,12 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
 //  "Built-in checksums from zlib (see CHECKSUM in Crypt extension for more)"
 //
 //      return: "Little-endian format of 4-byte CRC-32"
-//          [binary!]  ; binary return avoids signedness issues [1]
+//          [blob!]  ; binary return avoids signedness issues [1]
 //      method ['adler32 'crc32]
 //      data "Data to encode (using UTF-8 if TEXT!)"
-//          [binary! text!]
+//          [blob! text!]
 //      :part "Length of data"
-//          [integer! binary! text!]
+//          [integer! blob! text!]
 //  ]
 //
 DECLARE_NATIVE(checksum_core)
@@ -401,7 +401,7 @@ DECLARE_NATIVE(checksum_core)
 // However, some builds may not want both of these either--so bear that in
 // mind.  (ADLER32 is only really needed for PNG decoding, I believe (?))
 //
-// 1. Returning as a BINARY! avoids signedness issues (R3-Alpha CRC-32 was a
+// 1. Returning as a BLOB! avoids signedness issues (R3-Alpha CRC-32 was a
 //    signed integer, which was weird):
 //
 //       https://github.com/rebol/rebol-issues/issues/2375
@@ -453,11 +453,11 @@ DECLARE_NATIVE(checksum_core)
 //
 //  "Compress data using DEFLATE: https://en.wikipedia.org/wiki/DEFLATE"
 //
-//      return: [binary!]
+//      return: [blob!]
 //      data "If text, it will be UTF-8 encoded"
-//          [binary! text!]
+//          [blob! text!]
 //      :part "Length of data (elements)"
-//          [integer! binary! text!]
+//          [integer! blob! text!]
 //      :envelope "ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)"
 //          ['zlib 'gzip]
 //  ]
@@ -503,10 +503,10 @@ DECLARE_NATIVE(deflate)
 //
 //  "Decompresses DEFLATE-d data: https://en.wikipedia.org/wiki/DEFLATE"
 //
-//      return: [binary!]
-//      data [binary! handle!]
+//      return: [blob!]
+//      data [blob! handle!]
 //      :part "Length of compressed data (must match end marker)"
-//          [integer! binary!]
+//          [integer! blob!]
 //      :max "Error out if result is larger than this"
 //          [integer!]
 //      :envelope "ZLIB, GZIP, or DETECT (http://stackoverflow.com/a/9213826)"
@@ -538,7 +538,7 @@ DECLARE_NATIVE(inflate)
 
     const Byte* data;
     Size size;
-    if (Is_Binary(ARG(data))) {
+    if (Is_Blob(ARG(data))) {
         size = Part_Len_May_Modify_Index(ARG(data), ARG(part));
         data = Cell_Blob_At(ARG(data));  // after (in case index modified)
     }

@@ -161,7 +161,7 @@
     )
 ]
 
-; BINARY! tests from %parse-test.red
+; BLOB! tests from %parse-test.red
 [
     (
         wa: [#{0A}]

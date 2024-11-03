@@ -85,10 +85,10 @@ DECLARE_NATIVE(startup_p)
 //
 //  export /write-stdout: native [
 //
-//  "Write text or raw BINARY! to stdout (for control codes / CGI)"  ; [1]
+//  "Write text or raw BLOB! to stdout (for control codes / CGI)"  ; [1]
 //
 //      return: [~]
-//      value [<maybe> text! char? binary!]
+//      value [<maybe> text! char? blob!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
@@ -162,7 +162,7 @@ static Value* Make_Non_Halt_Error(const char* name) {
 //  "Read binary data from standard input"
 //
 //      return: "Null if no more input is available, raises error on escape"
-//          [~null~ binary! raised?]
+//          [~null~ blob! raised?]
 //      size "Maximum size of input to read"
 //          [integer!]
 //  ]
@@ -185,7 +185,7 @@ DECLARE_NATIVE(read_stdin)
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         return rebDelegate("catch [",
-            "throw as binary! maybe (",
+            "throw as blob! maybe (",
                 "read-line stdin except e -> [throw raise e]",
             ")",
         "]");
@@ -255,7 +255,7 @@ DECLARE_NATIVE(read_line)
 //
 // 5. READ-LINE is textual, and enforces the rules of Ren-C TEXT!.  So there
 //    should be no CR.  It may be that the /RAW mode permits reading CR, but
-//    it also may be that READ-STDIN should be used for BINARY! instead.  Ren-C
+//    it also may be that READ-STDIN should be used for BLOB! instead.  Ren-C
 //    wants to stamp CR out of all the files it can.
 {
     INCLUDE_PARAMS_OF_READ_LINE;

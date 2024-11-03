@@ -112,7 +112,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
     //
     Value* state = Varlist_Slot(ctx, STD_PORT_STATE);
     FILEREQ *file;
-    if (Is_Binary(state)) {
+    if (Is_Blob(state)) {
         file = File_Of_Port(port);
 
       #if !defined(NDEBUG)
@@ -148,7 +148,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             return FAIL(Error_Invalid_Spec_Raw(path));
 
         // Historically the native ports would store a C structure of data
-        // in a BINARY! in the port state.  This makes it easier and more
+        // in a BLOB! in the port state.  This makes it easier and more
         // compact to store types that would have to be a HANDLE!.  It likely
         // was seen as having another benefit in making the internal state
         // opaque to users, so they didn't depend on it or fiddle with it.
@@ -164,7 +164,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         file->offset = FILEOFFSET_UNKNOWN;
 
         // Generally speaking, you don't want to store Value* or Flex* in
-        // something like this struct-embedded-in-a-BINARY! as it will be
+        // something like this struct-embedded-in-a-BLOB! as it will be
         // invisible to the GC.  But this pointer is into the port spec, which
         // we will assume is good for the lifetime of the port.  :-/  (Not a
         // perfect assumption as there's no protection on it.)
@@ -316,7 +316,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (result and Is_Error(result))
             return RAISE(result);
 
-        assert(result == nullptr or Is_Binary(result));
+        assert(result == nullptr or Is_Blob(result));
         return result; }
 
     //=//// APPEND ////////////////////////////////////////////////////////=//

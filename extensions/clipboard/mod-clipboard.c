@@ -113,7 +113,7 @@ static Bounce Clipboard_Actor(
         GlobalUnlock(h);
         CloseClipboard();
 
-        return rebValue("as binary!", rebR(str)); }  // READ -> UTF-8
+        return rebValue("as blob!", rebR(str)); }  // READ -> UTF-8
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;

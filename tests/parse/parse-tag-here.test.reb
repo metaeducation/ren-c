@@ -212,7 +212,7 @@
     )
 ]
 
-; BINARY! tests derived from %parse-test.red
+; BLOB! tests derived from %parse-test.red
 [
     (
         p: ~

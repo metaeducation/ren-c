@@ -205,9 +205,9 @@ bytes-to-version: reverse copy version-to-bytes
 
     return: [~]
     ctx [object!]
-    code [block! binary!]
+    code [block! blob!]
 ][
-    if binary? code [
+    if blob? code [
         append ctx.msg code
         return ~
     ]
@@ -221,7 +221,7 @@ bytes-to-version: reverse copy version-to-bytes
             let result
             if [code :result]: evaluate:step code [
                 if void? :result [continue]  ; invisible
-                append ctx.msg ensure binary! :result
+                append ctx.msg ensure blob! :result
             ]
         ]
     ]
@@ -270,10 +270,10 @@ bytes-to-version: reverse copy version-to-bytes
 ; Yet it's a good, short, real-world case to look at through a Rebol lens.
 
 /parse-asn: func [
-    "Create a legible Rebol-structured BLOCK! from an ASN.1 BINARY! encoding"
+    "Create a legible Rebol-structured BLOCK! from an ASN.1 BLOB! encoding"
 
     return: [~null~ block!]
-    data [binary!]
+    data [blob!]
 
     <static>
 
@@ -511,8 +511,8 @@ update-write-state: make-state-updater 'write [
     random:seed now:time:precise
     repeat 28 [append ctx.client-random (random-secure 256) - 1]
 
-    let cs-data: make binary! map-each 'item cipher-suites [
-        maybe match binary! item
+    let cs-data: make blob! map-each 'item cipher-suites [
+        maybe match blob! item
     ]
 
     emit ctx [
@@ -583,7 +583,7 @@ update-write-state: make-state-updater 'write [
     ; that don't include this extension.
     ;
     if text? ctx.host-name [
-        let server-name-bin: as binary! ctx.host-name
+        let server-name-bin: as blob! ctx.host-name
         emit ctx [
             #{00 00}                    ; extension type (server_name=0)
           extension_length:
@@ -711,7 +711,7 @@ update-write-state: make-state-updater 'write [
             )
 
             ; we use the 65-byte uncompressed format to send our key back
-            key-data: make binary! [
+            key-data: make blob! [
                 #{04}
                 ctx.ecdh-keypair.public-key.x
                 ctx.ecdh-keypair.public-key.y
@@ -793,7 +793,7 @@ update-write-state: make-state-updater 'write [
 /encrypted-handshake-msg: func [
     return: [~]
     ctx [object!]
-    unencrypted [binary!]
+    unencrypted [blob!]
 ][
     let encrypted: encrypt-data/type ctx unencrypted #{16}
     emit ctx [
@@ -809,9 +809,9 @@ update-write-state: make-state-updater 'write [
 /application-data: func [
     return: [~]
     ctx [object!]
-    unencrypted [binary! text!]
+    unencrypted [blob! text!]
 ][
-    let encrypted: encrypt-data ctx as binary! unencrypted
+    let encrypted: encrypt-data ctx as blob! unencrypted
     emit ctx [
         #{17}                         ; protocol type (23=Application)
         ctx.ver-bytes                 ; protocol version
@@ -836,13 +836,13 @@ update-write-state: make-state-updater 'write [
 
 
 /finished: func [
-    return: [binary!]
+    return: [blob!]
     ctx [object!]
 ][
     ctx.seq-num-w: 0
 
     let seed: if ctx.version < 1.2 [
-        make binary! [
+        make blob! [
             checksum 'md5 ctx.handshake-messages
             checksum 'sha1 ctx.handshake-messages
         ]
@@ -854,7 +854,7 @@ update-write-state: make-state-updater 'write [
         checksum ctx.prf-method ctx.handshake-messages
     ]
 
-    return make binary! [
+    return make blob! [
         #{14}       ; protocol message type (20=Finished)
         #{00 00 0c} ; protocol message length (12 bytes)
 
@@ -874,11 +874,11 @@ update-write-state: make-state-updater 'write [
 
 
 /encrypt-data: func [
-    return: [binary!]
+    return: [blob!]
     ctx [object!]
-    content [binary!]
+    content [blob!]
     :type "application data is default"
-        [binary!]
+        [blob!]
 ][
     type: default [#{17}]  ; #application
 
@@ -901,7 +901,7 @@ update-write-state: make-state-updater 'write [
     ; Message Authentication Code
     ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
     ;
-    let MAC: checksum/key ctx.hash-method make binary! [
+    let MAC: checksum/key ctx.hash-method make blob! [
         to-8bin ctx.seq-num-w               ; sequence number (64-bit int)
         type                                ; msg type
         ctx.ver-bytes                       ; version
@@ -917,7 +917,7 @@ update-write-state: make-state-updater 'write [
             remainder (1 + (length of data)) ctx.block-size
         )
         let len: 1 + padding
-        append data head of insert:dup make binary! len to-1bin padding len
+        append data head of insert:dup make blob! len to-1bin padding len
     ]
 
     switch ctx.crypt-method [
@@ -950,9 +950,9 @@ update-write-state: make-state-updater 'write [
 
 
 /decrypt-data: func [
-    return: [binary!]
+    return: [blob!]
     ctx [object!]
-    data [binary!]
+    data [blob!]
 ][
     switch ctx.crypt-method [
         @aes [
@@ -978,7 +978,7 @@ update-write-state: make-state-updater 'write [
 
 /parse-protocol: func [
     return: [object!]
-    data [binary!]
+    data [blob!]
 
     <static>
 
@@ -1001,18 +1001,18 @@ update-write-state: make-state-updater 'write [
 
 
 /grab: infix func [
-    "Extracts N bytes from a BINARY!, and also updates its position"
+    "Extracts N bytes from a BLOB!, and also updates its position"
 
-    return: "BINARY! (or INTEGER! if GRAB-INT enclosure is used)"
-        [binary! integer!]
+    return: "BLOB! (or INTEGER! if GRAB-INT enclosure is used)"
+        [blob! integer!]
     @left "Needs variable name for assignment (to deliver errors)"
         [set-word?]
-    'var "Variable containing the BINARY! to be extracted and advanced"
+    'var "Variable containing the BLOB! to be extracted and advanced"
         [word!]
     n "Number of bytes to extract (errors if not enough bytes available)"
         [integer!]
 ][
-    let data: ensure binary! get var
+    let data: ensure blob! get var
     let result: copy:part data n
     let actual: length of result  ; :PART accepts truncated data
     if n != actual  [
@@ -1414,7 +1414,7 @@ update-write-state: make-state-updater 'write [
                     <finished> [
                         ctx.seq-num-r: 0
                         let seed: if ctx.version < 1.2 [
-                            make binary! [
+                            make blob! [
                                 checksum 'md5 ctx.handshake-messages
                                 checksum 'sha1 ctx.handshake-messages
                             ]
@@ -1452,7 +1452,7 @@ update-write-state: make-state-updater 'write [
                 let skip-amount: either yes? ctx.is-encrypted [
                     let mac: copy:part skip data len + 4 ctx.hash-size
 
-                    let mac-check: checksum/key ctx.hash-method make binary! [
+                    let mac-check: checksum/key ctx.hash-method make blob! [
                         to-8bin ctx.seq-num-r   ; 64-bit sequence number
                         #{16}                   ; msg type
                         ctx.ver-bytes           ; version
@@ -1487,7 +1487,7 @@ update-write-state: make-state-updater 'write [
             ]
             let len: length of msg-obj.content
             let mac: copy:part skip data len ctx.hash-size
-            let mac-check: checksum/key ctx.hash-method make binary! [
+            let mac-check: checksum/key ctx.hash-method make blob! [
                 to-8bin ctx.seq-num-r   ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
                 ctx.ver-bytes           ; version
@@ -1509,7 +1509,7 @@ update-write-state: make-state-updater 'write [
 /parse-response: func [
     return: [object!]
     ctx [object!]
-    msg [binary!]
+    msg [blob!]
 ][
     let proto: parse-protocol msg
     let messages: parse-messages ctx proto
@@ -1536,11 +1536,11 @@ update-write-state: make-state-updater 'write [
 /prf: func [
     "(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries"
 
-    return: [binary!]
+    return: [blob!]
     ctx [object!]  ; needed for ctx.version, prf changed in TLS 1.2
-    secret [binary!]
-    label [text! binary!]
-    seed [binary!]
+    secret [blob!]
+    label [text! blob!]
+    seed [blob!]
     output-length [integer!]
 ][
     ; The seed for the underlying P_<hash> is the PRF's seed appended to the
@@ -1548,7 +1548,7 @@ update-write-state: make-state-updater 'write [
     ;
     ; PRF(secret, label, seed) = P_<hash>(secret, label + seed)
     ;
-    seed: make binary! [label seed]
+    seed: make blob! [label seed]
 
     if ctx.version < 1.2 [
         ;
@@ -1595,7 +1595,7 @@ update-write-state: make-state-updater 'write [
 
 
 /make-key-block: func [
-    return: [binary!]
+    return: [blob!]
     ctx [object!]
 ][
     return ctx.key-block: applique :prf [
@@ -1612,9 +1612,9 @@ update-write-state: make-state-updater 'write [
 
 
 /make-master-secret: func [
-    return: [binary!]
+    return: [blob!]
     ctx [object!]
-    pre-master-secret [binary!]
+    pre-master-secret [blob!]
 ][
     return ctx.master-secret: applique :prf [
         ctx: ctx
@@ -1650,7 +1650,7 @@ update-write-state: make-state-updater 'write [
                 | '<finished> (
                     encrypted-handshake-msg ctx finished ctx
                 )
-                | #application let arg: [text! | binary!] (
+                | #application let arg: [text! | blob!] (
                     application-data ctx arg
                 )
                 | '<close-notify> (
@@ -1699,7 +1699,7 @@ update-write-state: make-state-updater 'write [
 /tls-read-data: func [
     return: [logic?]
     ctx [object!]
-    port-data [binary!]
+    port-data [blob!]
 ][
     debug ["tls-read-data:" length of port-data "bytes"]
     let data: append ctx.data-buffer port-data
@@ -1862,8 +1862,8 @@ sys.util/make-scheme [
             ; (the port state is passed in as a parameter with that name)
             ;
             port.state: context [
-                data-buffer: make binary! 32000
-                port-data: make binary! 32000
+                data-buffer: make blob! 32000
+                port-data: make blob! 32000
                 resp: null
 
                 min-version: null
@@ -1938,11 +1938,11 @@ sys.util/make-scheme [
                 seq-num-r: 0
                 seq-num-w: 0
 
-                msg: make binary! 4096
+                msg: make blob! 4096
 
                 ; all messages from Handshake records except "HelloRequest"
                 ;
-                handshake-messages: make binary! 4096
+                handshake-messages: make blob! 4096
 
                 is-encrypted: 'no
 
@@ -2031,7 +2031,7 @@ sys.util/make-scheme [
             ; input will assume you are done, and will free the handle.
             ;
             ; !!! Is there a good reason for not doing this with an ordinary
-            ; OBJECT! containing a BINARY! ?
+            ; OBJECT! containing a BLOB! ?
             ;
             if port.state.suite [
                 switch port.state.crypt-method [

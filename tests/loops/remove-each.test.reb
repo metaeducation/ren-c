@@ -139,7 +139,7 @@
     string = "cʊʀֆռǟɢɢռi"
 )
 
-; BINARY!
+; BLOB!
 (
     binary: copy #{01020304}
     remove-each 'i binary [

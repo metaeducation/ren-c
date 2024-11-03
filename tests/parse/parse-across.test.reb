@@ -523,7 +523,7 @@
 ]
 
 
-; BINARY! copying tests from %parse-test.red
+; BLOB! copying tests from %parse-test.red
 [
     (
         res: ~
@@ -608,7 +608,7 @@
     )
 ]
 
-; Testing ACROSS with :PART on BINARY! from %parse-test.red
+; Testing ACROSS with :PART on BLOB! from %parse-test.red
 ; !!! At time of writing, the :PART feature in UPARSE is fake
 [
     (

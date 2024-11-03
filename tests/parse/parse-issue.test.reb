@@ -5,7 +5,7 @@
 ;
 ; They are case-sensitive matched in PARSE, unlike text strings by default.
 
-; Don't leak internal detail that BINARY! or ANY-STRING? are 0-terminated
+; Don't leak internal detail that BLOB! or ANY-STRING? are 0-terminated
 [
     (NUL = as issue! 0)
 

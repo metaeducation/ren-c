@@ -288,7 +288,7 @@ already-imported: to map! []  ; avoid importing things twice
 === "LOAD WRAPPING" ===
 
 ; see header notes: `Exports` broken
-/load: adapt lib3.load/ [  ; source [file! url! text! binary! block!]
+/load: adapt lib3.load/ [  ; source [file! url! text! blob! block!]
     if all [  ; ALL THEN does not seem to work in bootstrap EXE
         file? source
         not dir? source

@@ -224,7 +224,7 @@ int main(int argc, char *argv_ansi[])
   #endif
 
     // Unzip the Gzip'd compressed startup code (embedded as bytes in a C
-    // global variable) to make a BINARY!.  GUNZIP accepts a HANDLE! as input,
+    // global variable) to make a BLOB!.  GUNZIP accepts a HANDLE! as input,
     // so pass it in here.
     //
     Value* startup_bin = rebValue(

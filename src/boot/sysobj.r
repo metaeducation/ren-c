@@ -279,7 +279,7 @@ standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
         scheme: null   ; scheme object used for this port
         actor: null    ; port action handler (script driven)
 
-        ; !!! Native ports typically used raw C structs stored in a BINARY!
+        ; !!! Native ports typically used raw C structs stored in a BLOB!
         ; as the `state`.  This makes that state opaque to the garbage
         ; collector, so it is a problem if Value*/Flex* are stored in it.
         ;

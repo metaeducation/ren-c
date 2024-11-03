@@ -1228,7 +1228,7 @@ e-lib/emit [ver --{
      *
      * rebAllocBytes() offers some advantages over hosts just using malloc():
      *
-     *  1. Memory can be retaken to act as a BINARY! series without another
+     *  1. Memory can be retaken to act as a BLOB! series without another
      *     allocation, via rebRepossess().
      *
      *  2. Memory is freed automatically in the case of a failure in the

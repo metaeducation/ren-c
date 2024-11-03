@@ -219,12 +219,12 @@ Bounce Makehook_Utf8(Level* level_, Kind k, Element* arg) {
             return RAISE(unwrap error);
         return OUT; }
 
-      case REB_BINARY: {
+      case REB_BLOB: {
         if (k != REB_ISSUE)
-            fail ("Only ISSUE! can MAKE a UTF-8 immutable type with BINARY!");
+            fail ("Only ISSUE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
-        const Byte* bp = Cell_Binary_Size_At(&size, arg);
+        const Byte* bp = Cell_Blob_Size_At(&size, arg);
         if (size == 0)
             goto bad_make;
 
@@ -287,7 +287,7 @@ DECLARE_NATIVE(codepoint_to_char)
 //  "Make a single character out of a UTF-8 binary sequence"
 //
 //      return: [char?]
-//      utf8 [binary!]
+//      utf8 [blob!]
 //  ]
 //
 DECLARE_NATIVE(utf8_to_char)
@@ -295,7 +295,7 @@ DECLARE_NATIVE(utf8_to_char)
     INCLUDE_PARAMS_OF_UTF8_TO_CHAR;
 
     Size size;
-    const Byte *encoded = Cell_Binary_Size_At(&size, ARG(utf8));
+    const Byte *encoded = Cell_Blob_Size_At(&size, ARG(utf8));
 
     if (size == 0)
         return FAIL("Empty binary passed to UTF8-TO-CHAR");

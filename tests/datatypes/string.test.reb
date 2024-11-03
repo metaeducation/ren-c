@@ -10,7 +10,7 @@
 
 ; !!! The test system uses TRANSCODE to get past strings with illegal content.
 ; That runs into trouble when trying to literally depict strings which should
-; not be able to load.  Use BINARY! to depict.
+; not be able to load.  Use BLOB! to depict.
 [
     ~illegal-zero-byte~ !! (
         transcode #{225E4022}  ; byte sequence for ^^@ in quotes

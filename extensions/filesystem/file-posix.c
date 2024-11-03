@@ -22,7 +22,7 @@
 //
 // These are helper functions used by the directory and file ports, to
 // make filesystem calls to the operating system.  They are styled to speak
-// in terms of Rebol values (e.g. a TEXT! or BINARY! to be written vs. raw
+// in terms of Rebol values (e.g. a TEXT! or BLOB! to be written vs. raw
 // C byte buffers), and do the extraction of the raw data themselves.
 //
 // Also, by convention they take the PORT! value itself.  This port may or
@@ -340,7 +340,7 @@ Value* Read_File(const Value* port, size_t length)
     assert(not file->is_dir);  // should call Read_Directory!
     assert(file->id != FILEHANDLE_NONE);
 
-    // Make buffer for read result that can be "repossessed" as a BINARY!
+    // Make buffer for read result that can be "repossessed" as a BLOB!
     //
     char *buffer = rebAllocN(char, length);
 
@@ -405,7 +405,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 
         // !!! In the quest to purify the universe, we've been checking to
         // make sure that strings containing CR are not written out if you
-        // are writing "text".  You have to send BINARY! (which can be done
+        // are writing "text".  You have to send BLOB! (which can be done
         // cheaply with an alias, AS TEXT!, uses the same memory)
         //
         const Byte* tail = c_cast(Byte*, utf8) + size;
@@ -417,8 +417,8 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
         data = utf8;
     }
     else {
-        if (not Is_Binary(value))
-            return rebValue("make error! {ISSUE!, TEXT!, BINARY! for WRITE}");
+        if (not Is_Blob(value))
+            return rebValue("make error! {ISSUE!, TEXT!, BLOB! for WRITE}");
 
         data = Cell_Blob_At(value);
         size = limit;

@@ -95,7 +95,7 @@ Bounce Makehook_Money(Level* level_, Kind kind, Element* arg) {
             return Init_Money(OUT, decimal_to_deci(Dec64(stable_OUT)));
         break; }
 
-      case REB_BINARY:
+      case REB_BLOB:
         Bin_To_Money_May_Fail(OUT, arg);
         return OUT;
 
@@ -132,11 +132,11 @@ void MF_Money(Molder* mo, const Cell* v, bool form)
 //
 void Bin_To_Money_May_Fail(Sink(Value) result, const Value* val)
 {
-    if (not Is_Binary(val))
+    if (not Is_Blob(val))
         fail (val);
 
     Size size;
-    const Byte* at = Cell_Binary_Size_At(&size, val);
+    const Byte* at = Cell_Blob_Size_At(&size, val);
     if (size > 12)
         size = 12;
 

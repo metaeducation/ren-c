@@ -1,6 +1,6 @@
 ; %parse-bitset.test.reb
 ;
-; A BITSET! can act like a charset or like a "byteset" for a BINARY!.
+; A BITSET! can act like a charset or like a "byteset" for a BLOB!.
 
 (
     byteset: make bitset! [0 16 32]
@@ -48,7 +48,7 @@
     )
 ]
 
-; With BINARY!, bitset acts as byteset
+; With BLOB!, bitset acts as byteset
 [
     (
         bs: charset [16 - 31 #"^/" - #"^O"]

@@ -63,9 +63,9 @@ Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg)
         return OUT;
     }
 
-    if (Is_Binary(arg)) {
+    if (Is_Blob(arg)) {
         Size size;
-        const Byte* at = Cell_Binary_Size_At(&size, arg);
+        const Byte* at = Cell_Blob_Size_At(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
         Init_Tuple_Bytes(OUT, at, size);

@@ -72,20 +72,20 @@
 [
     (
         str: "Tæke Pært"
-        bin: as binary! str
+        bin: as blob! str
         ok
     )
 
     ~bad-utf8-bin-edit~ !! (pick trap [take:part bin 2])
     (str = "Tæke Pært")
 
-    ((as binary! "Tæ") = take:part bin 3)
+    ((as blob! "Tæ") = take:part bin 3)
     (str = "ke Pært")
 
     ~bad-utf8-bin-edit~ !! (pick trap [take:part bin 5])
     (str = "ke Pært")
 
-    ((as binary! "ke Pæ") = take:part bin 6)
+    ((as blob! "ke Pæ") = take:part bin 6)
     (str = "rt")
 ]
 

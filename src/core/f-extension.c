@@ -199,15 +199,15 @@ DECLARE_NATIVE(load_extension)
     );
 
     // The decompress routine gives back a pointer which points directly into
-    // a Binary Flex (e.g. a rebAlloc() product).  Get the BINARY! back so
+    // a Binary Flex (e.g. a rebAlloc() product).  Get the BLOB! back so
     // we can pass it to import as a TEXT!.
     //
     Value* script = rebRepossess(script_utf8, script_size);
 
-    // The rebRepossess() function gives us back a BINARY!.  But we happen to
+    // The rebRepossess() function gives us back a BLOB!.  But we happen to
     // know that the data is actually valid UTF-8.  The scanner does not
     // currently have mechanics to run any faster on already-valid UTF-8, but
-    // it could.  Periodically shuffle the data between TEXT! and BINARY!, and
+    // it could.  Periodically shuffle the data between TEXT! and BLOB!, and
     // binary with the text flag set.
     //
     // !!! Adding at least one feature in the scanner that takes advantage of

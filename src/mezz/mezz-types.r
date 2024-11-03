@@ -25,7 +25,7 @@ REBOL [
 ; and thus should not be overwritten here.  This may not be permanent.
 
 to-integer: to-decimal: to-percent: to-money: to-pair:
-to-tuple: to-time: to-date: to-binary: to-file: to-email: to-url: to-tag:
+to-tuple: to-time: to-date: to-blob: to-file: to-email: to-url: to-tag:
 to-bitset: to-image: to-vector: to-block: to-group:
 to-path: to-map: to-datatype:
 to-word: to-issue:

@@ -54,7 +54,7 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 //    the field is a bit wider open, but I feel like if you want this you
 //    should have to ask for a decimal! on purpose and then ROUND it.
 //
-// 2. While historical Rebol TO INTEGER! of BINARY! would interpret the
+// 2. While historical Rebol TO INTEGER! of BLOB! would interpret the
 //    bytes as a big-endian form of their internal representations, wanting to
 //    futureproof for BigNum integers has changed Ren-C's point of view...
 //    delegating that highly parameterized conversion to operations currently
@@ -113,7 +113,7 @@ void Hex_String_To_Integer(Value* out, const Value* value)  // !!! UNUSED
     Utf8(const*) bp = Cell_Utf8_Size_At(&utf8_size, value);
 
     if (utf8_size > MAX_HEX_LEN) {
-        // Lacks BINARY!'s accommodation of leading 00s or FFs
+        // Lacks BLOB!'s accommodation of leading 00s or FFs
         fail (Error_Out_Of_Range_Raw(value));
     }
 

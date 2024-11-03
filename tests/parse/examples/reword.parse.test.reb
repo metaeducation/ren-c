@@ -4,19 +4,19 @@
 ; See comments on non-UPARSE REWORD implementation.
 
 [(/uparse-reword: func [
-    return: [any-string? binary!]
-    source [any-string? binary!]
+    return: [any-string? blob!]
+    source [any-string? blob!]
     values [map! object! block!]
     :case
-    :escape [char?! any-string? word! binary! block!]
+    :escape [char?! any-string? word! blob! block!]
 
     <static>
 
     delimiter-types (
-        [char?! &any-string? word! binary!]
+        [char?! &any-string? word! blob!]
     )
     keyword-types (
-        [char?! &any-string? integer! word! binary!]
+        [char?! &any-string? integer! word! blob!]
     )
 ][
     let case_REWORD: case

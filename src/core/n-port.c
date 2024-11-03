@@ -114,7 +114,7 @@ DECLARE_NATIVE(close)
 //  "Read from a file, URL, or other port"
 //
 //      return: "null on (some) failures (REVIEW port model!)" [
-//          ~null~ binary!  ; should all READ return a BINARY!?
+//          ~null~ blob!  ; should all READ return a BLOB!?
 //          text!  ; READ:STRING returned TEXT!
 //          block!  ; READ:LINES returned BLOCK!
 //          port!  ; asynchronous READ on PORT!s returned the PORT!
@@ -145,7 +145,7 @@ DECLARE_NATIVE(read)
 //      return: [port! block!]  ; !!! http write returns BLOCK!, why?
 //      destination [port! file! url! block!]
 //      data "Data to write (non-binary converts to UTF-8)"
-//          [binary! text! block! object! issue!]
+//          [blob! text! block! object! issue!]
 //      :part "Partial write a given number of units"
 //          [any-number?]
 //      :seek "Write at a specific position"

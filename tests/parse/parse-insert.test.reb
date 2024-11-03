@@ -108,7 +108,7 @@
     ])
 ]
 
-; BINARY! insertion tests from %parse-test.red
+; BLOB! insertion tests from %parse-test.red
 [
    (all wrap [
         '~<insert>~ == meta parse bin: #{} [insert (#"^A")]

@@ -472,7 +472,7 @@ static Error* Error_Missing(ScanState* S, Byte wanted) {
 //
 // Advances the cp to just past the last position.
 //
-// test: to-integer load to-binary mold to-char 1234
+// test: to-integer load to-blob mold to-char 1234
 //
 static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
     Codepoint *out,
@@ -589,8 +589,8 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //    to disallow it is that APIs like rebSpell() for getting string data
 //    return only a pointer--not a pointer and a size, so clients must assume
 //    that '\0' is the termination.  With UTF-8 everywhere, Ren-C has made it
-//    as easy as possible to work with BINARY! using string-based routines
-//    like FIND, etc., so use BINARY! if you need UTF-8 with '\0' in it.
+//    as easy as possible to work with BLOB! using string-based routines
+//    like FIND, etc., so use BLOB! if you need UTF-8 with '\0' in it.
 //
 static Option(Error*) Trap_Scan_String_Push_Mold(
     Sink(const Byte*) out,
@@ -3039,9 +3039,9 @@ Option(Error*) Trap_Transcode_One(
 //  "Translates UTF-8 source (from a text or binary) to Rebol elements"
 //
 //      return: "Transcoded elements block, or ~[remainder element]~ if /NEXT"
-//          [~null~ block! ~[[text! binary!] element?]~ element?]
-//      source "If BINARY!, must be UTF-8 encoded"
-//          [text! binary!]
+//          [~null~ block! ~[[text! blob!] element?]~ element?]
+//      source "If BLOB!, must be UTF-8 encoded"
+//          [text! blob!]
 //      :next "Translate one element and give back next position"
 //      :one "Transcode one element and return it"
 //      :file "File to be associated with BLOCK!s and GROUP!s in source"
@@ -3060,7 +3060,7 @@ DECLARE_NATIVE(transcode)
     const Byte* bp = Cell_Bytes_At(&size, source);
 
     TranscodeState* ss;
-    Value* ss_buffer = ARG(return);  // kept as a BINARY!, gets GC'd
+    Value* ss_buffer = ARG(return);  // kept as a BLOB!, gets GC'd
 
     enum {
         ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
@@ -3102,7 +3102,7 @@ DECLARE_NATIVE(transcode)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-  // 1. Though all BINARY! leave a spare byte at the end in case they are
+  // 1. Though all BLOB! leave a spare byte at the end in case they are
   //    turned into a string, they are not terminated by default.  (Read about
   //    BINARY_BAD_UTF8_TAIL_BYTE for why; it helps reinforce the fact that
   //    binaries consider 0 a legal content value, while strings do not.)
@@ -3125,7 +3125,7 @@ DECLARE_NATIVE(transcode)
   //
   //    !!! Should the base name and extension be stored, or whole path?
 
-    if (Is_Binary(source))  // scanner needs data to end in '\0' [1]
+    if (Is_Blob(source))  // scanner needs data to end in '\0' [1]
         Term_Binary(m_cast(Binary*, Cell_Binary(source)));
 
     Option(const String*) file;
@@ -3247,13 +3247,13 @@ DECLARE_NATIVE(transcode)
     if (Is_Nulled(OUT))  // no more Elements were left to transcode
         return nullptr;  // must return pure null for THEN/ELSE to work right
 
-    // Return the input BINARY! or TEXT! advanced by how much the transcode
+    // Return the input BLOB! or TEXT! advanced by how much the transcode
     // operation consumed.
     //
     Element* rest = cast(Element*, SPARE);
     Copy_Cell(rest, source);
 
-    if (Is_Binary(source)) {
+    if (Is_Blob(source)) {
         const Binary* b = Cell_Binary(source);
         if (ss->at)
             VAL_INDEX_UNBOUNDED(rest) = ss->at - Binary_Head(b);

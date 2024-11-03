@@ -626,7 +626,7 @@ SQLRETURN ODBC_BindParameter(
 
         "text! [", rebI(SQL_C_WCHAR), "]",
 
-        "binary! [", rebI(SQL_C_BINARY), "]",
+        "blob! [", rebI(SQL_C_BINARY), "]",
 
         "fail -{Non-SQL-mappable type used in parameter binding}-",
     "]");
@@ -757,7 +757,7 @@ SQLRETURN ODBC_BindParameter(
 
           case CHAR_COL_LATIN1: {
             Value* temp = rebValue(
-                "append make binary! length of", v,
+                "append make blob! length of", v,
                     "map-each 'ch", v, "["
                         "if 255 < to integer! ch ["
                             "fail -{Codepoint too high for Latin1}-"
@@ -807,7 +807,7 @@ SQLRETURN ODBC_BindParameter(
         p->length = p->column_size = cast(SQLSMALLINT, 2 * num_wchars_no_term);
         break; }
 
-      case SQL_C_BINARY: {  // BINARY!
+      case SQL_C_BINARY: {  // BLOB!
         size_t size;
         unsigned char *bytes = rebBytes(&size, v);
 

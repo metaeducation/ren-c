@@ -191,7 +191,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break; }
 
-      case REB_BINARY: {
+      case REB_BLOB: {
         assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;

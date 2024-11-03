@@ -307,7 +307,7 @@ typedef uint_fast16_t SymIdNum;  // 16 bits for SymId in symbol header
 //
 // Ren-C is prescriptive about disallowing 0 bytes in strings to more safely
 // use the rebSpell() API, which only returns a pointer and must interoperate
-// with C.  It enforces the use of BINARY! if you want to embed 0 bytes (and
+// with C.  It enforces the use of BLOB! if you want to embed 0 bytes (and
 // using the rebBytes() API, which always returns a size.)
 //
 // Additionally, it tries to build on Rebol's historical concept of unifying

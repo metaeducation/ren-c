@@ -44,7 +44,7 @@
         "Makes a generator that yields lines from a file or port"
         return: [action?]
         src [~null~ port! file!]
-        :delimiter [binary! char? text! bitset!]
+        :delimiter [blob! char? text! bitset!]
         :keep "Don't remove delimiter"
         :binary "Return BINARY instead of TEXT"
     ][
@@ -66,7 +66,7 @@
         ]
 
         return func compose [
-            <static> buffer (to group! [make binary! 4096])
+            <static> buffer (to group! [make blob! 4096])
             <static> port (groupify src)
         ] compose:deep [
             let crlf: charset "^/^M"

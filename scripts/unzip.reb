@@ -23,7 +23,7 @@ REBOL [
         a block of files:
             zip %new-zip.zip [%file-1.txt %file-2.exe]
 
-        a block of data (binary!/text!) and files:
+        a block of data (blob!/text!) and files:
             zip %new-zip.zip [%my-file "my data"]
 
         a entire directory:
@@ -70,7 +70,7 @@ data-descriptor-sig: #{504B0708}
 
 /to-msdos-time: func [
     "Converts to a MS-DOS time"
-    return: [binary!]
+    return: [blob!]
     time [time!] "AnyValue to convert"
 ][
     return to-ishort (time.hour * 2048)
@@ -80,7 +80,7 @@ data-descriptor-sig: #{504B0708}
 
 /to-msdos-date: func [
     "Converts to a MS-DOS date"
-    return: [binary!]
+    return: [blob!]
     date [date!]
 ][
     return to-ishort 512 * (max 0 date.year - 1980)
@@ -90,7 +90,7 @@ data-descriptor-sig: #{504B0708}
 /get-msdos-time: func [
     "Converts from a MS-DOS time"
     return: [time!]
-    binary [binary!]
+    binary [blob!]
 ][
     let i: decode [LE + 2] binary
     return make time! reduce [
@@ -103,7 +103,7 @@ data-descriptor-sig: #{504B0708}
 /get-msdos-date: func [
     "Converts from a MS-DOS date"
     return: [date!]
-    binary [binary!]
+    binary [blob!]
 ][
     let i: decode [LE + 2] binary
     return to date! reduce [
@@ -117,13 +117,13 @@ data-descriptor-sig: #{504B0708}
     "Compresses a file"
 
     return: "local header and central directory entry"
-        [~[binary! binary!]~]
+        [~[blob! blob!]~]
     name "Name of file"
         [file!]
     date "Modification date of file"
         [date!]
     data "Data to compress"
-        [binary!]
+        [blob!]
     offset "Offset where the compressed entry will be stored in the file"
         [integer!]
 ][
@@ -146,7 +146,7 @@ data-descriptor-sig: #{504B0708}
 
     let compressed-size: to-ilong length of compressed-data
 
-    let central-dir-entry: make binary! [
+    let central-dir-entry: make blob! [
         central-file-sig
         #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
         #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
@@ -170,7 +170,7 @@ data-descriptor-sig: #{504B0708}
         comment <filecomment>  ; not used
     ]
 
-    let local-file-entry: make binary! [
+    let local-file-entry: make blob! [
         local-file-sig
         #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
         #{0000}  ; flags
@@ -209,7 +209,7 @@ data-descriptor-sig: #{504B0708}
     return: "Number of entries in archive"
         [integer!]
     where "Where to build the archive (allows series in-memory)"
-        [file! url! binary! text!]
+        [file! url! blob! text!]
     source "Files to archive (only STORE and DEFLATE supported)"
         [file! url! block!]
     :deep "Includes files in subdirectories"
@@ -262,7 +262,7 @@ data-descriptor-sig: #{504B0708}
 
         let date: now  ; !!! Each file has slightly later date?
 
-        let data: if match [binary! text!] source.2 [  ; next is data
+        let data: if match [blob! text!] source.2 [  ; next is data
             first (source: next source)
         ] else [  ; otherwise data comes from reading the location itself
             if dir? name [
@@ -275,7 +275,7 @@ data-descriptor-sig: #{504B0708}
             ]
         ]
 
-        if not binary? data [data: as binary! data]
+        if not blob? data [data: as blob! data]
 
         name: to-path-file name
         info [name]
@@ -288,7 +288,7 @@ data-descriptor-sig: #{504B0708}
         offset: me + length of file-entry
     ]
 
-    append where make binary! [
+    append where make blob! [
         central-directory
         end-of-central-sig
         #{0000}  ; disk num
@@ -312,7 +312,7 @@ data-descriptor-sig: #{504B0708}
     where "Where to decompress it"
         [file! block!]
     source "Archive to decompress (only STORE and DEFLATE supported)"
-        [file! url! binary!]
+        [file! url! blob!]
     :verbose "Lists files while decompressing (default)"
     :quiet "Don't lists files while decompressing"
 ][

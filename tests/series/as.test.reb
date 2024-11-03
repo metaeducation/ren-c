@@ -12,33 +12,33 @@
 )
 
 ; With UTF-8 Everywhere, AS will be able to alias series data for
-; TEXT! to BINARY! to WORD!.  As a stopgap measure, series are
+; TEXT! to BLOB! to WORD!.  As a stopgap measure, series are
 ; copied but either the original is locked or freed, to help
 ; avoid a situation where the user modified one end of the AS
 ; expectating the other to change too.
 (
-    bin: as binary! copy "abc"
+    bin: as blob! copy "abc"
     all [
        #{616263} = bin
        #{61626364} = append bin #"d"
     ]
 )
 (
-    bin: as binary! copy <abc>
+    bin: as blob! copy <abc>
     all [
         #{616263} = bin
         #{61626364} = append bin #"d"
     ]
 )
 (
-    bin: copy as binary! 'abc
+    bin: copy as blob! 'abc
     all [
         #{616263} = bin
         #{61626364} = append bin #"d"
     ]
 )
 (
-    bin: copy as binary! #abc
+    bin: copy as blob! #abc
     all [
         #{616263} = bin
         #{61626364} = append bin #"d"

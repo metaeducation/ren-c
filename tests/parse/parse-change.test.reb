@@ -118,7 +118,7 @@
 ]
 
 
-; BINARY! change tests from %parse-test.red
+; BLOB! change tests from %parse-test.red
 [
     (all wrap [
         '~<change>~ == meta parse bin: #{01} [change one (#{0A})]

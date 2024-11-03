@@ -265,7 +265,7 @@ Value* Read_Line(STD_TERM *t)
             // a key message to say "we don't know what you hit".
             //
             // !!! In the future, this might do something more interesting to
-            // get the BINARY! information for the key sequence back up out of
+            // get the BLOB! information for the key sequence back up out of
             // the terminal, so that people could see what the key registered
             // as on their machine and configure the console to respond to it.
             //
@@ -338,11 +338,11 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
             if (rebUnboxLogic("blank?", result)) {  // ESCAPE received
                 rebRelease(result);
                 return rebValue(
-                    "as binary!", rebR(rebChar(ESC))
+                    "as blob!", rebR(rebChar(ESC))
                 );
             }
             assert(rebUnboxLogic("text?", result));
-            return rebValue("as binary!", rebR(result));
+            return rebValue("as blob!", rebR(result));
         }
       #endif
 
@@ -364,7 +364,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
         const Size readbuf_size = 30 * 1024;  // may back off to smaller size
 
         Value* data = Varlist_Slot(ctx, STD_PORT_DATA);
-        if (not Is_Binary(data)) {
+        if (not Is_Blob(data)) {
             Init_Blob(data, Make_Binary(readbuf_size));
         }
         else if (Flex_Rest(Cell_Binary(data)) < readbuf_size) {
@@ -404,7 +404,7 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
             Term_Binary_Len(bin, orig_len + actual);
         }
 
-        // Give back a BINARY! which is as large as the portion of the buffer
+        // Give back a BLOB! which is as large as the portion of the buffer
         // actually used, and clear the buffer for reuse.
         //
         return rebValue("copy", data, "elide clear", data); }
