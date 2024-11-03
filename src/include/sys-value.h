@@ -112,17 +112,15 @@
 //
 
 #if defined(DEBUG_TRACK_EXTEND_CELLS)
-    #if defined(DEBUG_COUNT_TICKS)
-        #define TOUCH_CELL(c) \
-            ((c)->touch = TG_Tick)
-    #endif
+    #define Touch_Cell(c) \
+        ((c)->touch = TICK)
+
+    #define Touch_Cell_If_Debug(c) Touch_Cell(c)
 
     INLINE Value* Track_Cell_Debug(Cell* c, const char *file, int line) {
         c->file = file;
         c->line = line;
-      #if DEBUG_COUNT_TICKS
-        c->tick = TG_Tick;
-      #endif
+        c->tick = TICK;
         c->touch = 0;
         return cast(Value*, c);
     }

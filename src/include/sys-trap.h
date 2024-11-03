@@ -303,6 +303,13 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 #endif
 
 
+#if defined(DEBUG_COUNT_TICKS)
+    #define TICK TG_Tick
+#else
+    #define TICK 0  // easier to write TRAMPOLINE_COUNTS_TICKS agnostic code
+#endif
+
+
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // PANIC (Force System Exit with Diagnostic Info)
@@ -346,36 +353,18 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // NOTE: It's desired that there be a space in `panic (...)` to make it look
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
-#if defined(DEBUG_COUNT_TICKS)
-    #ifdef NDEBUG
-        #define panic(v) \
-            Panic_Core((v), TG_Tick, nullptr, 0)
+#ifdef NDEBUG
+    #define panic(v) \
+        Panic_Core((v), TICK, nullptr, 0)
 
-        #define panic_at(v,file,line) \
-            UNUSED(file); \
-            UNUSED(line); \
-            panic(v)
-    #else
-        #define panic(v) \
-            Panic_Core((v), TG_Tick, __FILE__, __LINE__)
-
-        #define panic_at(v,file,line) \
-            Panic_Core((v), TG_Tick, (file), (line))
-    #endif
+    #define panic_at(v,file,line) \
+        UNUSED(file); \
+        UNUSED(line); \
+        panic(v)
 #else
-    #ifdef NDEBUG
-        #define panic(v) \
-            Panic_Core((v), 0, nullptr, 0)
+    #define panic(v) \
+        Panic_Core((v), TICK, __FILE__, __LINE__)
 
-        #define panic_at(v,file,line) \
-            UNUSED(file); \
-            UNUSED(line); \
-            panic(v)
-    #else
-        #define panic(v) \
-            Panic_Core((v), 0, __FILE__, __LINE__)
-
-        #define panic_at(v,file,line) \
-            Panic_Core((v), 0, (file), (line))
-    #endif
+    #define panic_at(v,file,line) \
+        Panic_Core((v), TICK, (file), (line))
 #endif

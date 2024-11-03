@@ -103,11 +103,7 @@
         s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
         free(s->guard);
 
-      #if defined(DEBUG_COUNT_TICKS)
-        s->tick = TG_Tick;
-      #else
-        s->tick = 0;
-      #endif
+        s->tick = TICK;
     }
 
     #define Touch_Flex_If_Debug(s) Touch_Flex(s)

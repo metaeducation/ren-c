@@ -402,11 +402,7 @@ void API_rebShutdown(bool clean)
 //
 long API_rebTick(void)
 {
-  #ifdef DEBUG_COUNT_TICKS
-    return cast(long, TG_Tick);
-  #else
-    return 0;
-  #endif
+    return cast(long, TICK);
 }
 
 

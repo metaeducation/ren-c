@@ -203,7 +203,7 @@ INLINE void Free_Pooled(REBLEN pool_id, void *p)
         and not (cast(union HeaderUnion*, p)->bits & NODE_FLAG_CELL)
         and Get_Flex_Info(cast(Flex*, p), MONITOR_DEBUG)
     ){
-        printf("Freeing series %p on tick #%d\n", p, cast(int, TG_Tick));
+        printf("Freeing series %p on tick #%d\n", p, cast(int, TICK));
         fflush(stdout);
     }
   #endif

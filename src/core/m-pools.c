@@ -603,10 +603,8 @@ void Free_Pairing(Value* paired) {
     Flex* s = cast(Flex*, paired);
     Free_Pooled(STUB_POOL, s);
 
-  #if !defined(NDEBUG)
-    #if defined(DEBUG_COUNT_TICKS)
-        s->tick = TG_Tick; // update to be tick on which node was freed
-    #endif
+  #if defined(DEBUG_TRACK_EXTEND_CELLS)
+    s->tick = TICK;  // update to be tick on which node was freed
   #endif
 }
 
