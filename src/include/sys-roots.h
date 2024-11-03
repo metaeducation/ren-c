@@ -106,9 +106,8 @@ INLINE Array* Alloc_Instruction(void) {
             | FLEX_INFO_API_INSTRUCTION
             | FLEX_INFO_API_RELEASE
     );
-    Stub_Cell(s)->header.bits =
+    TRACK(Stub_Cell(s))->header.bits =
         CELL_MASK_ERASE_END | NODE_FLAG_ROOT;
-    TRACK_CELL_IF_DEBUG(Stub_Cell(s), "<<instruction>>", 0);
     return cast_Array(s);
 }
 

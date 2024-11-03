@@ -86,7 +86,7 @@ Bounce TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
     // system/standard/port is made with CONTEXT and not with MAKE PORT!
     //
     VarList* context = Copy_Context_Shallow_Managed(Cell_Varlist(arg));
-    RESET_VAL_HEADER(Varlist_Archetype(context), REB_PORT);
+    RESET_CELL(Varlist_Archetype(context), REB_PORT);
 
     return Init_Port(out, context);
 }

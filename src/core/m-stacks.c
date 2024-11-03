@@ -76,7 +76,7 @@ void Startup_Data_Stack(REBLEN size)
 void Shutdown_Data_Stack(void)
 {
     assert(TOP_INDEX == 0);
-    Assert_Unreadable_If_Debug(Array_Head(DS_Array));
+    assert(Is_Cell_Unreadable(Array_Head(DS_Array)));
 
     Free_Unmanaged_Flex(DS_Array);
 }

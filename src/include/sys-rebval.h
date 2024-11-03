@@ -327,12 +327,6 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 // which can be useful in extreme debugging cases.
 //
 
-#if defined(DEBUG_TRACK_CELLS)
-    struct Reb_Track_Payload {
-        const char *file; // is Byte (UTF-8), but char* for debug watch
-        int line;
-    };
-#endif
 
 struct Reb_Datatype_Payload {
     enum Reb_Kind kind;
@@ -668,29 +662,9 @@ union Reb_Value_Extra {
     // If the cheaper kind that's just raw data and no callback, this is null.
     //
     Array* singular;
-
-  #if !defined(NDEBUG)
-    //
-    // Reb_Track_Payload is not big enough for a tick as well as a file and a
-    // line number, so it's put here.  It's included in all debug builds,
-    // not just those which have DEBUG_TRACK_CELLS...because it is used to
-    // implement a distinct state for unreadable blanks.  It will simply be
-    // a -1 for unreadable blanks, and a +1 for ordinary ones if there is
-    // no tick available, otherwise it will be the negative value of the
-    // tick if unreadable.  This keeps from stealing a header bit, as well
-    // as avoiding the variations which could occur if the VAL_TYPE() was
-    // changed between debug and release builds.
-    //
-    intptr_t tick;
-  #endif
 };
 
 union Reb_Value_Payload {
-
-  #if defined(DEBUG_TRACK_CELLS) && !defined(DEBUG_TRACK_EXTEND_CELLS)
-    struct Reb_Track_Payload track; // NULL, NOTHING, BLANK!, LOGIC!, BAR!
-  #endif
-
     Ucs2Unit character; // It's CHAR! (for now), but 'char' is a C keyword
     REBI64 integer;
     REBDEC decimal;
@@ -735,7 +709,8 @@ union Reb_Value_Payload {
         // Lets you preserve the tracking info even if the cell has a payload.
         // This doubles the cell size, but can be a very helpful debug option.
         //
-        struct Reb_Track_Payload track;
+        const char *file; // is Byte (UTF-8), but char* for debug watch
+        int line;
         uintptr_t tick; // stored in the Reb_Value_Extra for basic tracking
         uintptr_t touch; // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
       #endif

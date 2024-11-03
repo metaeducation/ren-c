@@ -2343,7 +2343,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             return RAISE(Error_Syntax(S, token));
 
         if (S->begin[len - 1] == '%') {
-            RESET_VAL_HEADER(TOP, REB_PERCENT);
+            RESET_CELL(TOP, REB_PERCENT);
             VAL_DECIMAL(TOP) /= 100.0;
         }
         break;
@@ -2396,7 +2396,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         const Byte* ep = S->end - 1;  // drop "
         if (ep != Try_Scan_UTF8_Char_Escapable(&VAL_CHAR(PUSH()), bp))
             return RAISE(Error_Syntax(S, token));
-        RESET_VAL_HEADER(TOP, REB_CHAR);
+        RESET_CELL(TOP, REB_CHAR);
         break; }
 
       case TOKEN_STRING: {
@@ -2707,7 +2707,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         Set_Array_Flag(a, HAS_FILE_LINE);
 
         assert(not Is_Get_Word(Array_Head(a)));
-        RESET_VAL_HEADER(PUSH(), REB_PATH);
+        RESET_CELL(PUSH(), REB_PATH);
 
         INIT_VAL_ARRAY(TOP, a);
         VAL_INDEX(TOP) = 0;

@@ -60,26 +60,18 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     case REB_MAX_NULLED:
     case REB_BLANK:
     case REB_LOGIC:
-      #if defined(DEBUG_TRACK_CELLS)
+      #if defined(DEBUG_TRACK_EXTEND_CELLS)
         printf("Cell init ");
 
-        #if defined(DEBUG_TRACK_EXTEND_CELLS)
-            #if defined(DEBUG_COUNT_TICKS)
-                printf("@ tick #%d", cast(unsigned int, v->tick));
-                if (v->touch != 0)
-                    printf("@ touch #%d", cast(unsigned int, v->touch));
-            #endif
-
-            printf("@ %s:%d\n", v->track.file, v->track.line);
-        #else
-            #if defined(DEBUG_COUNT_TICKS)
-                printf("@ tick #%d", cast(unsigned int, v->extra.tick));
-            #endif
-
-            printf("@ %s:%d\n", v->payload.track.file, v->payload.track.line);
+        #if defined(DEBUG_COUNT_TICKS)
+            printf("@ tick #%d", cast(unsigned int, v->tick));
+            if (v->touch != 0)
+                printf("@ touch #%d", cast(unsigned int, v->touch));
         #endif
+
+        printf("@ %s:%d\n", v->file, v->line);
       #else
-        printf("No track info (see DEBUG_TRACK_CELLS/DEBUG_COUNT_TICKS)\n");
+        printf("No track info (see DEBUG_TRACK_EXTEND_CELLS)\n");
       #endif
         fflush(stdout);
         break;

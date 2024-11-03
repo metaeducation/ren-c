@@ -639,7 +639,7 @@ Array* Collect_Keylist_Managed(
     // but it's set to an unreadable blank at the moment just to make sure it
     // doesn't get used on accident.
     //
-    Assert_Unreadable_If_Debug(Array_Head(keylist));
+    assert(Is_Cell_Unreadable(Array_Head(keylist)));
 
     Collect_End(cl);
     return keylist;
@@ -1423,7 +1423,7 @@ void Assert_Context_Core(VarList* c)
     }
 
     Value* rootkey = CTX_ROOTKEY(c);
-    if (IS_BLANK_RAW(rootkey)) {
+    if (Is_Cell_Unreadable(rootkey)) {
         //
         // Note that in the future the rootkey for ordinary OBJECT! or ERROR!
         // PORT! etc. may be more interesting than BLANK.  But it uses that

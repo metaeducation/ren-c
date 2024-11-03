@@ -609,7 +609,7 @@ bool Specialize_Action_Throws(
         else
             last_partial->extra.next_partial = refine;
 
-        RESET_CELL_EXTRA(refine, REB_X_PARTIAL, CELL_FLAG_PARTIAL_IN_USE);
+        Reset_Cell_Header(refine, REB_X_PARTIAL, CELL_FLAG_PARTIAL_IN_USE);
         refine->payload.partial.stackindex = 0;  // no ordered stack position
         refine->payload.partial.index = index - (arg - refine);
         Corrupt_Pointer_If_Debug(refine->extra.next_partial);

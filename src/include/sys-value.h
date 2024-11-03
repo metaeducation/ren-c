@@ -111,51 +111,29 @@
 // member of a value's payload.  It is also reported by panic().
 //
 
-#if defined(DEBUG_TRACK_CELLS)
-    #if defined(DEBUG_COUNT_TICKS) && defined(DEBUG_TRACK_EXTEND_CELLS)
+#if defined(DEBUG_TRACK_EXTEND_CELLS)
+    #if defined(DEBUG_COUNT_TICKS)
         #define TOUCH_CELL(c) \
             ((c)->touch = TG_Tick)
     #endif
 
-    INLINE void Set_Track_Payload_Extra_Debug(
-        Cell* c,
-        const char *file,
-        int line
-    ){
-      #ifdef DEBUG_TRACK_EXTEND_CELLS // cell is made bigger to hold it
-        c->track.file = file;
-        c->track.line = line;
-
-        #ifdef DEBUG_COUNT_TICKS
-            c->extra.tick = c->tick = TG_Tick;
-            c->touch = 0;
-        #else
-            c->extra.tick = 1; // unreadable blank needs for debug payload
-        #endif
-      #else // in space that is overwritten for cells that fill in payloads
-        c->payload.track.file = file;
-        c->payload.track.line = line;
-
-        #ifdef DEBUG_COUNT_TICKS
-            c->extra.tick = TG_Tick;
-        #else
-            c->extra.tick = 1; // unreadable blank needs for debug payload
-        #endif
+    INLINE Value* Track_Cell_Debug(Cell* c, const char *file, int line) {
+        c->file = file;
+        c->line = line;
+      #if DEBUG_COUNT_TICKS
+        c->tick = TG_Tick;
       #endif
+        c->touch = 0;
+        return cast(Value*, c);
     }
 
-    #define TRACK_CELL_IF_DEBUG(c,file,line) \
-        Set_Track_Payload_Extra_Debug((c), (file), (line))
-
-#elif !defined(NDEBUG)
-
-    #define TRACK_CELL_IF_DEBUG(c,file,line) \
-        ((c)->extra.tick = 1) // unreadable blank needs for debug payload
+    #define TRACK(c) \
+        Track_Cell_Debug((c), __FILE__, __LINE__)
 
 #else
 
-    #define TRACK_CELL_IF_DEBUG(c,file,line) \
-        NOOP
+    #define TRACK(c) \
+        (c)
 
 #endif
 
@@ -197,10 +175,8 @@
 
         if (
             (v->header.bits & (
-                NODE_FLAG_CELL
-                | NODE_FLAG_UNREADABLE
-                | CELL_FLAG_FALSEY // all the "bad" types are also falsey
-            )) == NODE_FLAG_CELL
+                NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE
+            )) == (NODE_FLAG_NODE | NODE_FLAG_CELL)
         ){
             assert(VAL_TYPE_RAW(v) <= REB_MAX);
             return VAL_TYPE_RAW(v); // majority of calls hopefully return here
@@ -223,19 +199,6 @@
             return REB_MAX_NULLED;
         if (VAL_TYPE_RAW(v) == REB_LOGIC)
             return REB_LOGIC;
-
-        // Unreadable blank is signified in the Extra by a negative tick
-        //
-        if (VAL_TYPE_RAW(v) == REB_BLANK) {
-            if (v->extra.tick < 0) {
-                printf("VAL_TYPE() called on unreadable BLANK!\n");
-              #ifdef DEBUG_COUNT_TICKS
-                printf("Was made on tick: %d\n", cast(int, -v->extra.tick));
-              #endif
-                panic (v);
-            }
-            return REB_BLANK;
-        }
 
         // Special messages for END and trash (as these are common)
         //
@@ -292,25 +255,23 @@
     // adds up very quickly of getting the 3 parameters passed in.  Run the
     // risk of repeating macro arguments to speed up this critical test.
     //
-    #define Assert_Cell_Writable(c,file,line) \
+    #define Assert_Cell_Writable(c) \
         do { \
             STATIC_ASSERT_LVALUE(c);  /* evil macro, ensures used correctly */ \
             if (not ((c)->header.bits & NODE_FLAG_CELL)) { \
                 printf("Non-cell passed to cell writing routine\n"); \
-                panic_at ((c), (file), (line)); \
+                panic (c); \
             } \
             else if (not ((c)->header.bits & NODE_FLAG_NODE)) { \
                 printf("Non-node passed to cell writing routine\n"); \
-                panic_at ((c), (file), (line)); \
-            } else if (\
-                (c)->header.bits & (CELL_FLAG_PROTECTED | NODE_FLAG_UNREADABLE) \
-            ){ \
-                printf("Protected/free cell passed to writing routine\n"); \
-                panic_at ((c), (file), (line)); \
+                panic (c); \
+            } else if ((c)->header.bits & CELL_FLAG_PROTECTED) { \
+                printf("Protected cell passed to writing routine\n"); \
+                panic (c); \
             } \
         } while (0)
 #else
-    #define Assert_Cell_Writable(c,file,line) \
+    #define Assert_Cell_Writable(c) \
         NOOP
 #endif
 
@@ -331,70 +292,33 @@
 // bit, so that is left as-is.
 //
 
-INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
-    Cell* v,
+//
+// Reset_Cell_Header is a variant of RESET_VAL_HEADER_EXTRA that actually
+// overwrites the payload with tracking information.  It should not be
+// used if the intent is to preserve the payload and extra.
+//
+// (Because of DEBUG_TRACK_EXTEND_CELLS, it's not necessarily a waste
+// even if you overwrite the Payload/Extra immediately afterward; it also
+// corrupts the data to help ensure all relevant fields are overwritten.)
+//
+INLINE Value* Reset_Cell_Header_Untracked(
+    Cell* out,
     enum Reb_Kind kind,
     uintptr_t extra
-
-  #if defined(DEBUG_CELL_WRITABILITY)
-  , const char *file
-  , int line
-  #endif
 ){
-    Assert_Cell_Writable(v, file, line);
+    Assert_Cell_Writable(out);
 
-    v->header.bits &= CELL_MASK_PERSIST;
-    v->header.bits |= FLAG_KIND_BYTE(kind) | extra;
-    return cast(Value*, v);
+    out->header.bits &= CELL_MASK_PERSIST;
+    out->header.bits |= FLAG_KIND_BYTE(kind) | extra;
+
+    return cast(Value*, out);
 }
 
-#if defined(DEBUG_CELL_WRITABILITY)
-    #define RESET_VAL_HEADER_EXTRA(v,kind,extra) \
-        RESET_VAL_HEADER_EXTRA_Core((v), (kind), (extra), __FILE__, __LINE__)
-#else
-    #define RESET_VAL_HEADER_EXTRA(v,kind,extra) \
-        RESET_VAL_HEADER_EXTRA_Core((v), (kind), (extra))
-#endif
-
-#define RESET_VAL_HEADER(v,kind) \
-    RESET_VAL_HEADER_EXTRA((v), (kind), 0)
-
-#ifdef DEBUG_TRACK_CELLS
-    //
-    // RESET_CELL_EXTRA is a variant of RESET_VAL_HEADER_EXTRA that actually
-    // overwrites the payload with tracking information.  It should not be
-    // used if the intent is to preserve the payload and extra.
-    //
-    // (Because of DEBUG_TRACK_EXTEND_CELLS, it's not necessarily a waste
-    // even if you overwrite the Payload/Extra immediately afterward; it also
-    // corrupts the data to help ensure all relevant fields are overwritten.)
-    //
-    INLINE Value* RESET_CELL_EXTRA_Debug(
-        Cell* out,
-        enum Reb_Kind kind,
-        uintptr_t extra,
-        const char *file,
-        int line
-    ){
-      #ifdef DEBUG_CELL_WRITABILITY
-        RESET_VAL_HEADER_EXTRA_Core(out, kind, extra, file, line);
-      #else
-        RESET_VAL_HEADER_EXTRA(out, kind, extra);
-      #endif
-
-        TRACK_CELL_IF_DEBUG(out, file, line);
-        return cast(Value*, out);
-    }
-
-    #define RESET_CELL_EXTRA(out,kind,extra) \
-        RESET_CELL_EXTRA_Debug((out), (kind), (extra), __FILE__, __LINE__)
-#else
-    #define RESET_CELL_EXTRA(out,kind,extra) \
-       RESET_VAL_HEADER_EXTRA((out), (kind), (extra))
-#endif
+#define Reset_Cell_Header(out,kind,extra) \
+    TRACK(Reset_Cell_Header_Untracked((out), (kind), (extra)))
 
 #define RESET_CELL(out,kind) \
-    RESET_CELL_EXTRA((out), (kind), 0)
+    TRACK(Reset_Cell_Header_Untracked((out), (kind), 0))
 
 
 // This is another case where the debug build doesn't inline functions, and
@@ -411,7 +335,7 @@ INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
                 cast(const void*, (c)), \
                 cast(int, ALIGN_SIZE) \
             ); \
-            panic_at ((c), file, line); \
+            panic (c); \
         } \
       } while (0)
 #else
@@ -424,28 +348,14 @@ INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
 #define CELL_MASK_ERASE_END \
     (CELL_MASK_ERASE | FLAG_KIND_BYTE(REB_0)) // same, but more explicit
 
-INLINE Cell* Erase_Cell_Core(
-    Cell* c
-
-  #if defined(DEBUG_TRACK_CELLS)
-  , const char *file
-  , int line
-  #endif
-){
+INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     Assert_Cell_Aligned(c);
-
     c->header.bits = CELL_MASK_ERASE;
-    TRACK_CELL_IF_DEBUG(cast(Cell*, c), file, line);
     return c;
 }
 
-#if defined(DEBUG_TRACK_CELLS)
-    #define Erase_Cell(c) \
-        Erase_Cell_Core((c), __FILE__, __LINE__)
-#else
-    #define Erase_Cell(c) \
-        Erase_Cell_Core(c)
-#endif
+#define Erase_Cell(c) \
+    TRACK(Erase_Cell_Untracked(c))
 
 INLINE bool Is_Cell_Erased(const Cell *cell)
   { return cell->header.bits == CELL_MASK_ERASE; }
@@ -457,7 +367,7 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     // the type and bits (e.g. changing ANY-WORD! to another ANY-WORD!).
     // Otherwise the value-specific flags might be misinterpreted.
     //
-    Assert_Cell_Writable(v, __FILE__, __LINE__);
+    Assert_Cell_Writable(v);
     KIND_BYTE(v) = kind;
 }
 
@@ -475,26 +385,13 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
 #define CELL_MASK_POISON \
     (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)
 
-INLINE void Poison_Cell_Core(
-    Cell* v
-
-    #ifdef DEBUG_TRACK_CELLS
-    , const char *file
-    , int line
-    #endif
-){
+INLINE Cell* Poison_Cell_Untracked(Cell* v) {
     v->header.bits = CELL_MASK_POISON;
-
-    TRACK_CELL_IF_DEBUG(v, file, line);
+    return v;
 }
 
-#ifdef DEBUG_TRACK_CELLS
-    #define Poison_Cell(v) \
-        Poison_Cell_Core((v), __FILE__, __LINE__)
-#else
-    #define Poison_Cell(v) \
-        Poison_Cell_Core(v)
-#endif
+#define Poison_Cell(v) \
+    TRACK(Poison_Cell_Untracked(v))
 
 INLINE bool Is_Cell_Poisoned(const Cell* v) {
     assert(v->header.bits & NODE_FLAG_CELL);
@@ -524,32 +421,15 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
 #define END_NODE \
     cast(const Value*, &PG_End_Node) // rebEND is char*, not Value* aligned!
 
-#if defined(DEBUG_TRACK_CELLS) || defined(DEBUG_CELL_WRITABILITY)
-    INLINE Value* SET_END_Debug(
-        Cell* v
+INLINE Value* SET_END_Untracked(Cell* v){
+    Assert_Cell_Writable(v);
+    v->header.bits &= CELL_MASK_PERSIST;  // clears unreadable flag
+    assert(SECOND_BYTE(&v->header) == REB_0_END);
+    return cast(Value*, v);
+}
 
-      #if defined(DEBUG_TRACK_CELLS) || defined(DEBUG_CELL_WRITABILITY)
-      , const char *file
-      , int line
-      #endif
-    ){
-        Assert_Cell_Writable(v, file, line);
-
-        SECOND_BYTE(&v->header) = REB_0_END;  // only line in release build
-        v->header.bits |= CELL_FLAG_FALSEY;  // speeds VAL_TYPE_Debug() check
-
-        TRACK_CELL_IF_DEBUG(v, file, line);
-        return cast(Value*, v);
-    }
-
-    #define SET_END(v) \
-        SET_END_Debug((v), __FILE__, __LINE__)
-#else
-    INLINE Value* SET_END(Cell* v) {
-        SECOND_BYTE(&v->header) = REB_0_END;  // needs to be a prepared cell
-        return cast(Value*, v);
-    }
-#endif
+#define SET_END(v) \
+    SET_END_Untracked(v)
 
 #define IS_END(p) \
     (cast(const Byte*, p)[1] == REB_0_END)
@@ -661,7 +541,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     (VAL_TYPE(v) == REB_MAX_NULLED)
 
 #define Init_Nulled(out) \
-    RESET_CELL_EXTRA((out), REB_MAX_NULLED, CELL_FLAG_FALSEY)
+    Reset_Cell_Header((out), REB_MAX_NULLED, CELL_FLAG_FALSEY)
 
 #define CELL_FLAG_NULL_IS_ENDISH FLAG_TYPE_SPECIFIC_BIT(0)
 
@@ -671,7 +551,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 // here just to make a note of the concept, and tag it via the callsites.
 //
 #define Init_Endish_Nulled(out) \
-    RESET_CELL_EXTRA((out), REB_MAX_NULLED, \
+    Reset_Cell_Header((out), REB_MAX_NULLED, \
         CELL_FLAG_FALSEY | CELL_FLAG_NULL_IS_ENDISH)
 
 INLINE bool Is_Endish_Nulled(const Cell* v) {
@@ -760,64 +640,48 @@ INLINE Value* Nothingify_Branched(Value* cell) {
 // compatible for bootstrap purposes, so that this codebase can be built
 // either with itself or with r3-8994d23.
 //
-// In the debug build, it is possible to make an "unreadable" blank!.  This
-// will behave neutrally as far as the garbage collector is concerned, so
-// it can be used as a placeholder for a value that will be filled in at
-// some later time--spanning an evaluation.  But if the special IS_UNREADABLE
-// checks are not used, it will not respond to Is_Blank() and will also
-// refuse VAL_TYPE() checks.  This is useful anytime a placeholder is needed
-// in a slot temporarily where the code knows it's supposed to come back and
-// fill in the correct thing later...where the asserts serve as a reminder
-// if that fill in never happens.
-//
 
 #define BLANK_VALUE \
     c_cast(const Value*, &PG_Blank_Value[0])
 
 #define Init_Blank(v) \
-    RESET_CELL_EXTRA((v), REB_BLANK, CELL_FLAG_FALSEY)
+    Reset_Cell_Header((v), REB_BLANK, CELL_FLAG_FALSEY)
 
-#ifdef DEBUG_UNREADABLE_BLANKS
-    INLINE Value* Init_Unreadable_Debug(
-        Cell* out, const char *file, int line
-    ){
-        RESET_CELL_EXTRA_Debug(out, REB_BLANK, CELL_FLAG_FALSEY, file, line);
-        assert(out->extra.tick > 0);
-        out->extra.tick = -out->extra.tick;
-        return KNOWN(out);
-    }
 
-    #define Init_Unreadable(out) \
-        Init_Unreadable_Debug((out), __FILE__, __LINE__)
+//=//// UNREADABLE CELLS //////////////////////////////////////////////////=//
+//
+// Unreadable cells behave neutrally as far as the GC is concerned, but can
+// not be accidentally read.
+//
 
-    INLINE bool IS_BLANK_RAW(const Cell* v) {
-        return VAL_TYPE_RAW(v) == REB_BLANK;
-    }
+#define CELL_MASK_UNREADABLE \
+    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
+        | NODE_FLAG_GC_ONE | NODE_FLAG_GC_TWO \
+        | FLAG_KIND_BYTE(255))
 
-    INLINE bool Is_Unreadable_Debug(const Cell* v) {
-        if (VAL_TYPE_RAW(v) != REB_BLANK)
-            return false;
-        return v->extra.tick < 0;
-    }
+#define Init_Unreadable_Untracked(out) do { \
+    STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+    Assert_Cell_Writable(out); \
+    (out)->header.bits |= CELL_MASK_UNREADABLE; \
+    (out)->extra.binding = nullptr; /* 255 byte needs this in bootstrap EXE */ \
+} while (0)
 
-    #define Assert_Unreadable_If_Debug(v) \
-        assert(Is_Unreadable_Debug(v))
 
-    #define Assert_Readable_If_Debug(v) \
-        assert(not Is_Unreadable_Debug(v))
-#else
-    #define Init_Unreadable(v) \
-        Init_Blank(v)
+INLINE Value* Init_Unreadable_Untracked_Inline(Cell* out) {
+    Init_Unreadable_Untracked(out);
+    return cast(Value*, out);
+}
 
-    #define IS_BLANK_RAW(v) \
-        Is_Blank(v)
+INLINE bool Is_Cell_Unreadable(const Cell* c) {
+    if (not Not_Node_Readable(c))
+        return false;
+    assert((c->header.bits & CELL_MASK_UNREADABLE) == CELL_MASK_UNREADABLE);
+    return true;
+}
 
-    #define Assert_Unreadable_If_Debug(v) \
-        assert(Is_Blank(v)) // would have to be a blank even if not unreadable
+#define Init_Unreadable(out) \
+    TRACK(Init_Unreadable_Untracked_Inline((out)))
 
-    #define Assert_Readable_If_Debug(v) \
-        NOOP
-#endif
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -857,7 +721,7 @@ INLINE bool IS_TRUTHY(const Cell* v) {
 
 
 #define Init_Logic(out,b) \
-    RESET_CELL_EXTRA((out), REB_LOGIC, (b) ? 0 : CELL_FLAG_FALSEY)
+    Reset_Cell_Header((out), REB_LOGIC, (b) ? 0 : CELL_FLAG_FALSEY)
 
 #define Init_True(out) \
     Init_Logic((out), true)
@@ -956,11 +820,14 @@ INLINE Value* Init_Char(Cell* out, Ucs2Unit uni) {
     }
 #endif
 
-INLINE Value* Init_Integer(Cell* out, REBI64 i64) {
-    RESET_CELL(out, REB_INTEGER);
+INLINE Value* Init_Integer_Untracked(Cell* out, REBI64 i64) {
+    Reset_Cell_Header_Untracked(out, REB_INTEGER, 0);
     out->payload.integer = i64;
     return cast(Value*, out);
 }
+
+#define Init_Integer(out,i64) \
+    TRACK(Init_Integer_Untracked((out),(i64)))
 
 INLINE int32_t VAL_INT32(const Cell* v) {
     if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)
@@ -1312,13 +1179,14 @@ INLINE void Move_Value_Header(Cell* out, const Cell* v)
     assert(NOT_END(v)); // SET_END() is the only way to write an end
     assert(VAL_TYPE_RAW(v) <= REB_MAX_NULLED); // don't move pseudotypes
 
-    Assert_Cell_Writable(out, __FILE__, __LINE__);
+    Assert_Cell_Writable(out);
 
     out->header.bits &= CELL_MASK_PERSIST;
     out->header.bits |= v->header.bits & CELL_MASK_COPY;
 
   #ifdef DEBUG_TRACK_EXTEND_CELLS
-    out->track = v->track;
+    out->file = v->file;
+    out->line = v->line;
     out->tick = v->tick; // initialization tick
     out->touch = v->touch; // arbitrary debugging use via TOUCH_CELL
   #endif
@@ -1393,7 +1261,7 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
     assert(out != v); // usually a sign of a mistake; not worth supporting
     assert(NOT_END(v));
 
-    Assert_Cell_Writable(out, __FILE__, __LINE__);
+    Assert_Cell_Writable(out);
 
     // Examine just the cell's preparation bits.  Are they identical?  If so,
     // we are not losing any information by blindly copying the header in

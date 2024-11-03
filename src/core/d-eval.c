@@ -206,9 +206,7 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
         }
     }
 
-  #if defined(DEBUG_UNREADABLE_BLANKS)
-    assert(Is_Unreadable_Debug(&TG_Thrown_Arg)); // no evals between throws
-  #endif
+    assert(Is_Cell_Unreadable(&TG_Thrown_Arg)); // no evals between throws
 
     // Corrupt fields that GC won't be seeing unless Is_Action_Level()
     //

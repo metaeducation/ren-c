@@ -279,6 +279,9 @@ INLINE void Queue_Mark_Singular_Array(Array* a) {
 //
 static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 {
+    if (Is_Cell_Unreadable(v))
+        return;
+
     assert(not in_mark);
   #if !defined(NDEBUG)
     in_mark = true;
@@ -710,7 +713,7 @@ static void Propagate_All_GC_Marks(void)
                 }
                 else {
                     assert(Not_Array_Flag(keylist, IS_PARAMLIST));
-                    Assert_Unreadable_If_Debug(Array_Head(keylist));
+                    assert(Is_Cell_Unreadable(Array_Head(keylist)));
 
                     Array* ancestor = LINK(keylist).ancestor;
                     Queue_Mark_Array_Subclass_Deep(ancestor); // maybe keylist
@@ -772,7 +775,7 @@ static void Propagate_All_GC_Marks(void)
             // reified C va_lists as Eval_Core_Throws() sources can have them.
             //
             if (
-                not IS_BLANK_RAW(v)
+                not Is_Cell_Unreadable(v)
                 and Is_Nulled(v)
                 and Not_Array_Flag(a, IS_VARLIST)
                 and Not_Array_Flag(a, NULLEDS_LEGAL)
@@ -976,7 +979,7 @@ static void Mark_Root_Stubs(void)
 static void Mark_Data_Stack(void)
 {
     Value* head = KNOWN(Array_Head(DS_Array));
-    Assert_Unreadable_If_Debug(head);
+    assert(Is_Cell_Unreadable(head));
 
     Value* stackval = TOP;
     for (; stackval != head; --stackval)
@@ -1306,7 +1309,7 @@ static REBLEN Sweep_Stubs(void)
     //
   #ifdef UNUSUAL_CELL_SIZE
     for (seg = Mem_Pools[PAR_POOL].segs; seg != nullptr; seg = seg->next) {
-        if (NODE_BYTE(seg) == FREE_POOLUNIT_BYTE)
+        if (NODE_BYTE(seg + 1) == FREE_POOLUNIT_BYTE)
             continue;
 
         Cell* c = cast(Value*, seg + 1);
@@ -1577,7 +1580,7 @@ void Push_Guard_Node(const Node* node)
         const Value* value = cast(const Value*, node);
         assert(
             IS_END(value)
-            or IS_BLANK_RAW(value)
+            or Is_Cell_Unreadable(value)
             or VAL_TYPE(value) <= REB_MAX_NULLED
         );
 

@@ -952,9 +952,7 @@ struct LevelStruct {
         if (base)
             assert(
                 (NODE_BYTE(p) & (
-                    NODE_BYTEMASK_0x80_NODE
-                    | NODE_BYTEMASK_0x40_UNREADABLE
-                    | NODE_BYTEMASK_0x08_CELL
+                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
                 )) == (
                     NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
                 )

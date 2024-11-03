@@ -114,7 +114,7 @@ INLINE void Term_Array_Len(Array* a, REBLEN len) {
 
   #if !defined(NDEBUG)
     if (NOT_END(at))
-        Assert_Cell_Writable(at, __FILE__, __LINE__);
+        Assert_Cell_Writable(at);
   #endif
 
     KIND_BYTE(at) = REB_0_END;
@@ -204,8 +204,7 @@ INLINE void Prep_Array(
         // about the bits in the excess capacity.  But set them to trash in
         // the debug build.
         //
-        prep->header = Endlike_Header(0); // unwritable
-        TRACK_CELL_IF_DEBUG(prep, __FILE__, __LINE__);
+        TRACK(prep)->header = Endlike_Header(0); // unwritable
       #if !defined(NDEBUG)
         while (n < a->content.dynamic.rest) { // no -1 (n is 1-based)
             ++n;
@@ -228,8 +227,7 @@ INLINE void Prep_Array(
     // sure no code depends on a full cell in the last location,  make it
     // an unwritable end--to leave flexibility to use the rest of the cell.
     //
-    prep->header = Endlike_Header(0);
-    TRACK_CELL_IF_DEBUG(prep, __FILE__, __LINE__);
+    TRACK(prep)->header = Endlike_Header(0);
 }
 
 
@@ -262,8 +260,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
       #endif
     }
     else {
-        Stub_Cell(s)->header.bits = CELL_MASK_ERASE_END;
-        TRACK_CELL_IF_DEBUG(Stub_Cell(s), "<<make>>", 0);
+        TRACK(Stub_Cell(s))->header.bits = CELL_MASK_ERASE_END;
 
         s->info = Endlike_Header(
             FLAG_WIDE_BYTE_OR_0(0) // implicit termination

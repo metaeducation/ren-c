@@ -171,7 +171,7 @@ void Dump_Values(Cell* vp, REBLEN count)
         if (IS_END(val)) {
             break;
         }
-        if (IS_BLANK_RAW(val) or Is_Nulled(val)) {
+        if (not Is_Cell_Unreadable(val) and Is_Nulled(val)) {
             bp = cast(REBLEN*, val + 1);
             continue;
         }

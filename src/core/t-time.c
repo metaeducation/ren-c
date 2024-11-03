@@ -145,7 +145,7 @@ const Byte *Scan_Time(Value* out, const Byte *cp, REBLEN len)
     else
         merid = '\0';
 
-    RESET_VAL_HEADER(out, REB_TIME);
+    RESET_CELL(out, REB_TIME);
 
     if (part3 >= 0 || part4 < 0) { // HH:MM mode
         if (merid != '\0') {
@@ -675,13 +675,13 @@ REBTYPE(Time)
                         Dec64(arg) * SEC_SEC
                     );
                     VAL_DECIMAL(arg) /= SEC_SEC;
-                    RESET_VAL_HEADER(arg, REB_DECIMAL);
+                    RESET_CELL(arg, REB_DECIMAL);
                     Copy_Cell(OUT, ARG(scale));
                     return OUT;
                 }
                 else if (Is_Integer(arg)) {
                     VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
-                    RESET_VAL_HEADER(arg, REB_INTEGER);
+                    RESET_CELL(arg, REB_INTEGER);
                     Copy_Cell(OUT, ARG(scale));
                     return OUT;
                 }

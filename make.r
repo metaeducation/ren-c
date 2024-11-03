@@ -505,7 +505,7 @@ switch user-config/debug [
         app-config/debug: false
 
         ; Include debugging features which do not in-and-of-themselves affect
-        ; runtime performance (DEBUG_TRACK_CELLS would be an example of
+        ; runtime performance (DEBUG_TRACK_EXTEND_CELLS would be an example of
         ; something that significantly affects runtime)
         ;
         append app-config/definitions ["DEBUG_STDIO_OK"]

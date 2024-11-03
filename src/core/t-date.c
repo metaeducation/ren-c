@@ -520,7 +520,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
 
         Normalize_Time(&secs, &day);
 
-        RESET_VAL_HEADER_EXTRA(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
+        Reset_Cell_Header(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
         VAL_DATE(out) = Normalize_Date(day, month, year, tz);
         VAL_NANO(out) = secs;
 
@@ -610,7 +610,7 @@ void Pick_Or_Poke_Date(
             else {
                 Copy_Cell(opt_out, v); // want v's adjusted VAL_NANO()
                 Adjust_Date_Zone(opt_out, false);
-                RESET_VAL_HEADER(opt_out, REB_TIME); // clears date flags
+                RESET_CELL(opt_out, REB_TIME); // clears date flags
             }
             break;
 

@@ -189,7 +189,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             fail (Error_Invalid(arg));
 
         Init_Decimal_Bits(out, Cell_Blob_At(arg)); // makes REB_DECIMAL
-        RESET_VAL_HEADER(out, kind); // override type if REB_PERCENT
+        RESET_CELL(out, kind); // override type if REB_PERCENT
         d = VAL_DECIMAL(out);
         break;
 

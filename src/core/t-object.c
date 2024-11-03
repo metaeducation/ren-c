@@ -343,7 +343,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         /*
         REBINT n = Int32s(arg, 0);
         context = Alloc_Context(kind, n);
-        RESET_VAL_HEADER(Varlist_Archetype(context), target);
+        RESET_CELL(Varlist_Archetype(context), target);
         CTX_SPEC(context) = nullptr;
         CTX_BODY(context) = nullptr; */
 

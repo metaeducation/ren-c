@@ -1122,7 +1122,7 @@ bool Eval_Core_Throws(Level* const L)
                     // from the global empty array.
                     //
                     if (Is_Param_Variadic(L->param)) {
-                        RESET_VAL_HEADER_EXTRA(
+                        Reset_Cell_Header(
                             L->arg,
                             REB_VARARGS,
                             CELL_FLAG_VARARGS_INFIX // in case anyone cares
@@ -1199,7 +1199,7 @@ bool Eval_Core_Throws(Level* const L)
                         Init_Block(ARR_SINGLE(array1), feed); // index 0
                     }
 
-                    RESET_VAL_HEADER_EXTRA(
+                    Reset_Cell_Header(
                         L->arg,
                         REB_VARARGS,
                         CELL_FLAG_VARARGS_INFIX  // don't evaluate *again* on TAKE

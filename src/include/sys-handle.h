@@ -132,7 +132,7 @@ INLINE Value* Init_Handle_Cfunc(
     CFUNC *cfunc,
     uintptr_t length
 ){
-    RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
+    Reset_Cell_Header(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
     out->extra.singular = nullptr;
     out->payload.handle.data.cfunc = cfunc;
     out->payload.handle.length = length;
@@ -178,9 +178,9 @@ INLINE Value* Init_Handle_Managed(
 
     // Leave the non-singular cfunc as corrupt; clients should not be using
     //
-    RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, 0);
+    Reset_Cell_Header(out, REB_HANDLE, 0);
 
-    RESET_VAL_HEADER(Array_Head(out->extra.singular), REB_HANDLE);
+    RESET_CELL(Array_Head(out->extra.singular), REB_HANDLE);
     Array_Head(out->extra.singular)->payload.handle.data.pointer = pointer;
     return KNOWN(out);
 }
@@ -195,9 +195,9 @@ INLINE Value* Init_Handle_Managed_Cfunc(
 
     // Leave the non-singular cfunc as corrupt; clients should not be using
     //
-    RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
+    Reset_Cell_Header(out, REB_HANDLE, CELL_FLAG_HANDLE_CFUNC);
 
-    RESET_VAL_HEADER_EXTRA(
+    Reset_Cell_Header(
         Array_Head(out->extra.singular),
         REB_HANDLE,
         CELL_FLAG_HANDLE_CFUNC

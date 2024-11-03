@@ -330,12 +330,6 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #define DEBUG_POISON_EXCESS_CAPACITY
     #define DEBUG_BALANCE_STATE
 
-    // There is a mode where the track payload exists in all cells, making
-    // them grow by 2 * sizeof(void*): DEBUG_TRACK_EXTEND_CELLS.  This can
-    // tell you about a cell's initialization even if it carries a payload.
-    //
-    #define DEBUG_TRACK_CELLS
-
     // OUT_MARKED_STALE uses the same bit as ARG_MARKED_CHECKED.  But arg
     // fulfillment uses END as the signal of when no evaluations are done,
     // it doesn't need the stale bit.  The bit is cleared when evaluating in

@@ -372,11 +372,11 @@ DECLARE_NATIVE(now)
         Clear_Cell_Flag(OUT, DATE_HAS_ZONE);
     }
     else if (REF(time)) {
-        RESET_VAL_HEADER(OUT, REB_TIME); // reset clears date flags
+        RESET_CELL(OUT, REB_TIME); // reset clears date flags
     }
     else if (REF(zone)) {
         VAL_NANO(OUT) = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
-        RESET_VAL_HEADER(OUT, REB_TIME); // reset clears date flags
+        RESET_CELL(OUT, REB_TIME); // reset clears date flags
     }
     else if (REF(weekday))
         n = Week_Day(VAL_DATE(OUT));

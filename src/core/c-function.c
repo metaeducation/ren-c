@@ -108,7 +108,7 @@ Array* List_Func_Typesets(Value* func)
         // bits.  This may not be desirable over the long run (what if
         // a typeset wishes to encode hiddenness, protectedness, etc?)
         //
-        RESET_VAL_HEADER(value, REB_TYPESET);
+        RESET_CELL(value, REB_TYPESET);
     }
 
     return array;
@@ -296,7 +296,7 @@ Array* Make_Paramlist_Managed_May_Fail(
             else {
                 assert(Is_Text(TOP)); // !!! are blocks after notes good?
 
-                if (IS_BLANK_RAW(TOP - 2)) {
+                if (Is_Cell_Unreadable(TOP - 2)) {
                     //
                     // No parameters pushed, e.g. func [[integer!] {<-- bad}]
                     //
@@ -557,7 +557,7 @@ Array* Make_Paramlist_Managed_May_Fail(
     Array* paramlist = Make_Array_Core(num_slots, SERIES_MASK_ACTION);
 
     if (true) {
-        Value* canon = RESET_CELL_EXTRA(
+        Value* canon = Reset_Cell_Header(
             Array_Head(paramlist),
             REB_ACTION,
             header_bits
@@ -1118,7 +1118,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             Cell* slot = Array_At(maybe_fake_body, real_body_index); // #BODY
             assert(Is_Issue(slot));
 
-            RESET_VAL_HEADER_EXTRA(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
+            Reset_Cell_Header(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
             INIT_VAL_ARRAY(slot, Cell_Array(body));
             VAL_INDEX(slot) = 0;
             INIT_BINDING(slot, a); // relative binding
@@ -1127,7 +1127,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         // Cannot give user a relative value back, so make the relative
         // body specific to a fabricated expired frame.  See #2221
 
-        RESET_VAL_HEADER_EXTRA(out, REB_BLOCK, 0);
+        Reset_Cell_Header(out, REB_BLOCK, 0);
         INIT_VAL_ARRAY(out, maybe_fake_body);
         VAL_INDEX(out) = 0;
         INIT_BINDING(out, Make_Expired_Level_Ctx_Managed(a));

@@ -602,7 +602,7 @@ const Byte *Scan_Decimal(
     if (cast(REBLEN, cp - bp) != len)
         return_NULL;
 
-    RESET_VAL_HEADER(out, REB_DECIMAL);
+    RESET_CELL(out, REB_DECIMAL);
 
     char *se;
     VAL_DECIMAL(out) = strtod(s_cast(buf), &se);
@@ -699,7 +699,7 @@ const Byte *Scan_Integer(
     // Convert, check, and return:
     errno = 0;
 
-    RESET_VAL_HEADER(out, REB_INTEGER);
+    RESET_CELL(out, REB_INTEGER);
 
     VAL_INT64(out) = CHR_TO_INT(buf);
     if (errno != 0)
@@ -894,7 +894,7 @@ const Byte *Scan_Date(
     cp = ep;
 
     if (cp >= end) {
-        RESET_VAL_HEADER(out, REB_DATE);
+        RESET_CELL(out, REB_DATE);
         goto end_date; // needs header set
     }
 
@@ -902,7 +902,7 @@ const Byte *Scan_Date(
         sep = *cp++;
 
         if (cp >= end) {
-            RESET_VAL_HEADER(out, REB_DATE);
+            RESET_CELL(out, REB_DATE);
             goto end_date; // needs header set
         }
 
@@ -916,10 +916,10 @@ const Byte *Scan_Date(
             return_NULL;
         }
 
-        RESET_VAL_HEADER_EXTRA(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
+        Reset_Cell_Header(out, REB_DATE, CELL_FLAG_DATE_HAS_TIME);
     }
     else
-        RESET_VAL_HEADER(out, REB_DATE); // no CELL_FLAG_DATE_HAS_TIME
+        RESET_CELL(out, REB_DATE); // no CELL_FLAG_DATE_HAS_TIME
 
     // past this point, header is set, so `goto end_date` is legal.
 

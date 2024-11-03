@@ -427,7 +427,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 
 static Value* Make_Locked_Tag(const char *utf8) { // helper
     Value* t = rebText(utf8);
-    RESET_VAL_HEADER(t, REB_TAG);
+    RESET_CELL(t, REB_TAG);
 
     Flex* locker = nullptr;
     Force_Value_Frozen_Deep(t, locker);
@@ -775,8 +775,7 @@ static Array* Startup_Generics(const Value* boot_generics)
 //
 static void Startup_End_Node(void)
 {
-    PG_End_Node.header = Endlike_Header(0); // no NODE_FLAG_CELL, R/O
-    TRACK_CELL_IF_DEBUG(&PG_End_Node, __FILE__, __LINE__);
+    TRACK(&PG_End_Node)->header = Endlike_Header(0); // no NODE_FLAG_CELL, R/O
     assert(IS_END(END_NODE)); // sanity check that it took
 }
 
@@ -866,7 +865,7 @@ static void Init_Root_Vars(void)
 
     Erase_Cell(&PG_Bounce_Redo_Unchecked[0]);
     Erase_Cell(&PG_Bounce_Redo_Unchecked[1]);
-    RESET_CELL_EXTRA(
+    Reset_Cell_Header(
         &PG_Bounce_Redo_Unchecked[0],
         REB_R_REDO,
         CELL_FLAG_FALSEY // understood by Eval_Core_Throws() as "unchecked"
@@ -875,7 +874,7 @@ static void Init_Root_Vars(void)
 
     Erase_Cell(&PG_Bounce_Redo_Checked[0]);
     Erase_Cell(&PG_Bounce_Redo_Checked[1]);
-    RESET_CELL_EXTRA(
+    Reset_Cell_Header(
         &PG_Bounce_Redo_Checked[0],
         REB_R_REDO,
         0 // no CELL_FLAG_FALSEY is taken by Eval_Core_Throws() as "checked"

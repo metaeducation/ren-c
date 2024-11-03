@@ -282,6 +282,6 @@ REBTYPE(Money)
         fail (Error_Illegal_Action(REB_MONEY, verb));
     }
 
-    RESET_VAL_HEADER(OUT, REB_MONEY);
+    RESET_CELL(OUT, REB_MONEY);
     return OUT;
 }

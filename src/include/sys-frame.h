@@ -64,7 +64,7 @@ INLINE void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
     assert(not THROWN(name));
     Set_Cell_Flag(name, THROW_SIGNAL);
 
-    Assert_Unreadable_If_Debug(&TG_Thrown_Arg);
+    assert(Is_Cell_Unreadable(&TG_Thrown_Arg));
 
     Copy_Cell(&TG_Thrown_Arg, arg);
 }
@@ -76,7 +76,7 @@ INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
     assert(THROWN(thrown));
     Clear_Cell_Flag(thrown, THROW_SIGNAL);
 
-    Assert_Readable_If_Debug(&TG_Thrown_Arg);
+    assert(not Is_Cell_Unreadable(&TG_Thrown_Arg));
     Copy_Cell(arg_out, &TG_Thrown_Arg);
     Init_Unreadable(&TG_Thrown_Arg);
 }
@@ -487,11 +487,10 @@ INLINE void Push_Action(
         fail ("Out of memory in Push_Action()");
 
     L->rootvar = cast(Value*, s->content.dynamic.data);
-    L->rootvar->header.bits =
+    TRACK(L->rootvar)->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL
         | CELL_FLAG_PROTECTED // cell payload/binding tweaked, not by user
         | FLAG_KIND_BYTE(REB_FRAME);
-    TRACK_CELL_IF_DEBUG(L->rootvar, __FILE__, __LINE__);
     L->rootvar->payload.any_context.varlist = L->varlist;
 
   sufficient_allocation:
@@ -501,14 +500,12 @@ INLINE void Push_Action(
 
     s->content.dynamic.len = num_args + 1;
     Cell* tail = Array_Tail(L->varlist);
-    tail->header.bits = FLAG_KIND_BYTE(REB_0);
-    TRACK_CELL_IF_DEBUG(tail, __FILE__, __LINE__);
+    TRACK(tail)->header.bits = FLAG_KIND_BYTE(REB_0);
 
     // Current invariant for all arrays (including fixed size), last cell in
     // the allocation is an end.
     Cell* ultimate = Array_At(L->varlist, s->content.dynamic.rest - 1);
-    ultimate->header = Endlike_Header(0); // unreadable
-    TRACK_CELL_IF_DEBUG(ultimate, __FILE__, __LINE__);
+    TRACK(ultimate)->header = Endlike_Header(0); // unreadable
 
   #if !defined(NDEBUG)
     Cell* prep = ultimate - 1;
