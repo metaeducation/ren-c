@@ -53,20 +53,20 @@
                 g_ts.tick += 1; \
         } while (false)  // macro so that breakpoint is at right stack level!
 
-    #define Maybe_DebugBreak_On_Tick() \
+    #define Maybe_Debug_Break_On_Tick(L) \
         do { \
             if ( \
                 g_break_at_tick != 0 and g_ts.tick >= g_break_at_tick \
             ){ \
                 printf("BREAK_ON_TICK(%" PRIu64 ")\n", g_ts.tick); \
-                Dump_Level_Location(level_); \
+                Dump_Level_Location(L); \
                 debug_break(); /* see %debug_break.h */ \
                 g_break_at_tick = 0; \
             } \
         } while (false)  // macro so that breakpoint is at right stack level!
 #else
     #define Update_Tick_If_Enabled() NOOP
-    #define Maybe_DebugBreak_On_Tick() NOOP
+    #define Maybe_Debug_Break_On_Tick(L) NOOP
 #endif
 
 

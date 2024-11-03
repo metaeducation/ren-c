@@ -1400,7 +1400,7 @@ DECLARE_NATIVE(subparse)
                 return THROWN;
         }
 
-        Maybe_DebugBreak_On_Tick();
+        Maybe_Debug_Break_On_Tick(LEVEL);
     }
 
     // Some iterated rules have a parameter.  `3 into [some "a"]` will
