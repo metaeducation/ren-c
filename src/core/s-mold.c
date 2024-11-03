@@ -420,7 +420,7 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
 
-    if (Is_Cell_Unreadable(e)) {
+    if (Not_Cell_Readable(e)) {
       #if RUNTIME_CHECKS
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
       #endif

@@ -703,7 +703,7 @@ DECLARE_NATIVE(apply)
       case ST_APPLY_UNLABELED_EVAL_STEP :
         if (THROWING)
             goto finalize_apply;
-        if (Is_Cell_Unreadable(iterator)) {
+        if (Not_Cell_Readable(iterator)) {
             assert(REF(relax));
             goto handle_next_item;
         }
@@ -798,7 +798,7 @@ DECLARE_NATIVE(apply)
 
         Init_Integer(ARG(index), unwrap index);
     }
-    else if (Is_Cell_Unreadable(iterator)) {
+    else if (Not_Cell_Readable(iterator)) {
         STATE = ST_APPLY_UNLABELED_EVAL_STEP;
         param = nullptr;  // throw away result
     }
@@ -881,7 +881,7 @@ DECLARE_NATIVE(apply)
     //    that happen after we have delegated to the function.  But should
     //    DELEGATE itself rule that out automatically?
 
-    if (Is_Cell_Unreadable(iterator))
+    if (Not_Cell_Readable(iterator))
         assert(REF(relax));
     else {
         EVARS *e = Cell_Handle_Pointer(EVARS, iterator);

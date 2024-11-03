@@ -459,7 +459,7 @@ union HeaderUnion {
 //
 //    11111xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO | CELL | ...
 //
-// This pattern is for an Is_Cell_Unreadable() cell, and so long as we set the
+// This pattern is for an Not_Cell_Readable() cell, and so long as we set the
 // GC_ONE and GC_TWO flags we can still have free choices of `xxx` (e.g.
 // arbitrary ROOT, MANAGED, and MARKED flags), while Detect_Rebol_Pointer()
 // can be certain it's a cell and not UTF-8.

@@ -25,7 +25,7 @@
 // Debug asserts help catch cases where it's accidentally read from.
 //
 // It will panic if you try to test it and will also refuse VAL_TYPE() checks.
-// To check if something is unreadable, use Is_Cell_Unreadable().
+// To check if something is unreadable, use Not_Cell_Readable().
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -54,12 +54,14 @@ INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
     return out;
 }
 
-INLINE bool Is_Cell_Unreadable(const Cell* c) {
-    if (not Not_Node_Readable(c))
-        return false;
+INLINE bool Is_Cell_Readable(const Cell* c) {
+    if (Is_Node_Readable(c))
+        return true;
     assert((c->header.bits & CELL_MASK_UNREADABLE) == CELL_MASK_UNREADABLE);
-    return true;
+    return false;
 }
+
+#define Not_Cell_Readable(c)  (not Is_Cell_Readable(c))
 
 #define Init_Unreadable(out) \
     TRACK(Init_Unreadable_Untracked_Inline((out)))

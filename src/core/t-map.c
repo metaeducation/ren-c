@@ -33,7 +33,7 @@
 // exception for the zombie).  Also, unreadable has nice properties of erroring
 // if you try to read it in the checked build.
 //
-#define Is_Zombie Is_Cell_Unreadable
+#define Is_Zombie Not_Cell_Readable
 #define Init_Zombie Init_Unreadable
 
 
