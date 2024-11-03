@@ -348,16 +348,6 @@ Bounce Makehook_String(Level* level_, Kind k, Element* def) {
     if (Is_Integer(def))  // new string with given integer capacity [2]
         return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));
 
-    if (Is_Blob(def)) {  // not necessarily valid UTF-8, so must check
-        Size size;
-        const Byte* at = Cell_Blob_Size_At(&size, def);
-        return Init_Any_String(
-            OUT,
-            heart,
-            Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
-        );
-    }
-
     return RAISE(Error_Bad_Make(heart, def));
 }
 
@@ -881,16 +871,6 @@ DECLARE_GENERICS(String)
             return Init_Utf8_Non_String(OUT, to, utf8, size, len);
         }
 
-        if (to == REB_BLOB) {
-            Size utf8_size;
-            Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
-
-            Binary* b = Make_Binary(utf8_size);
-            memcpy(Binary_Head(b), utf8, utf8_size);
-            Term_Binary_Len(b, utf8_size);
-            return Init_Blob(OUT, b);
-        }
-
         if (
             to == REB_INTEGER
             or to == REB_DECIMAL
@@ -903,6 +883,14 @@ DECLARE_GENERICS(String)
                 return RAISE(unwrap error);
             return OUT;
         }
+
+        if (Any_List_Kind(to))  // limited TRANSCODE
+            return rebValue(Canon(AS), ARG(type), Canon(TRANSCODE), v);
+
+        if (Any_Sequence_Kind(to))
+            return rebValue(
+                Canon(AS), ARG(type), Canon(TO), Canon(BLOCK_X), rebQ(v)
+            );
 
         return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
 
@@ -1372,6 +1360,70 @@ DECLARE_GENERICS(String)
     }
 
     return UNHANDLED;
+}
+
+
+//
+//  /encode-UTF-8: native [
+//      "Encode a string to the UTF-8 standard (see also AS TEXT!)"
+//
+//      return: [blob!]
+//      arg [any-utf8?]
+//      options "TBD: prohibit CR and TAB by default!"
+//          [block!]
+//  ]
+//
+DECLARE_NATIVE(encode_utf_8) {
+    INCLUDE_PARAMS_OF_ENCODE_UTF_8;
+
+    Value* arg = ARG(arg);
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL("UTF-8 Encoder Options not Designed Yet");
+
+    Size utf8_size;
+    Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
+
+    Binary* b = Make_Binary(utf8_size);
+    memcpy(Binary_Head(b), utf8, utf8_size);
+    Term_Binary_Len(b, utf8_size);
+    return Init_Blob(OUT, b);
+}
+
+
+//
+//  /decode-UTF-8: native [
+//      "Decode (and validate) bytes as text according to the UTF-8 standard"
+//
+//      return: [text!]  ; review ~NaN~, ~inf~ as antiforms
+//      blob [blob!]
+//      options "TBD: allow CR (off by default), other options?"
+//          [block!]
+//  ]
+//
+DECLARE_NATIVE(decode_utf_8)
+//
+// 1. It's pretty easy to say (as tag! decode 'UTF8 some-binary).  Admittedly
+//    that's longer than (to tag! some-binary) or (make tag! some-binary),
+//    but it seems about as long as it needs to be... if you're saying that
+//    a lot then make `utf8-to-tag` or `u8-to-t` or similar.
+{
+    INCLUDE_PARAMS_OF_DECODE_UTF_8;
+
+    Element* blob = cast(Element*, ARG(blob));
+
+    if (Cell_Series_Len_At(ARG(options)))
+        return FAIL("UTF-8 Decoder Options not Designed Yet");
+
+    Heart heart = REB_TEXT;  // should options let you specify? [1]
+
+    Size size;
+    const Byte* at = Cell_Blob_Size_At(&size, blob);
+    return Init_Any_String(
+        OUT,
+        heart,
+        Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
+    );
 }
 
 

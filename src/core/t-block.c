@@ -798,7 +798,7 @@ DECLARE_GENERICS(List)
             return OUT;
         }
 
-        if (Any_Word_Kind(to)) {  // !!! very conservative for now [3]
+        if (Any_Word_Kind(to)) {
             Length len;
             const Element* item = Cell_List_Len_At(&len, list);
             if (Cell_Series_Len_At(list) != 1)
@@ -808,6 +808,26 @@ DECLARE_GENERICS(List)
             Copy_Cell(OUT, item);
             HEART_BYTE(OUT) = to;
             return OUT;
+        }
+
+        if (Any_Utf8_Kind(to)) {  // to tag! [1 a #b] => <1 a #b>
+            DECLARE_MOLDER (mo);
+            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            Push_Mold(mo);
+
+            Mold_Or_Form_Element(mo, list, false);
+            const String* s = Pop_Molded_String(mo);
+            if (not Any_String_Kind(to))
+                Freeze_Flex(s);
+            return Init_Any_String(OUT, to, s);
+        }
+
+        if (to == REB_INTEGER) {
+            Length len;
+            const Element* at = Cell_List_Len_At(&len, list);
+            if (len != 1 or not Is_Integer(at))
+                return RAISE("TO INTEGER! works on 1-element integer lists");
+            return COPY(at);
         }
 
         if (to == REB_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
@@ -1394,7 +1414,7 @@ DECLARE_NATIVE(groupify)
 //
 //      return: [any-list?]
 //      example "Example's binding (or lack of) will be used"
-//          [any-list?]
+//          [type-block! any-list?]
 //      content "Void input is treated the same as an empty splice"
 //          [~void~ element? splice?]
 //  ]
@@ -1405,9 +1425,14 @@ DECLARE_NATIVE(envelop)
 {
     INCLUDE_PARAMS_OF_ENVELOP;
 
-    Element* copy = cast(Element*, rebValue("copy:deep", rebQ(ARG(example))));
-
     Value* content = ARG(content);
+
+    Element* copy;
+
+    if (Is_Type_Block(ARG(example)))
+        copy = cast(Element*, rebValue(Canon(MAKE), ARG(example), rebI(1)));
+    else
+        copy = cast(Element*, rebValue("copy:deep", rebQ(ARG(example))));
 
     Length len;
     if (

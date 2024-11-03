@@ -53,15 +53,6 @@
 ; symmetry
 (equal? strict-equal? #{} blank strict-equal? blank #{})
 (
-    a-value: ""
-    not strict-equal? a-value to blob! a-value
-)
-; symmetry
-(
-    a-value: ""
-    equal? strict-equal? a-value to blob! a-value strict-equal? to blob! a-value a-value
-)
-(
     a-value: to tag! ""
     not strict-equal? a-value to text! a-value
 )

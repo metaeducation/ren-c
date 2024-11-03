@@ -100,7 +100,7 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 ; Stern warning not to edit the files
 ;
 
-make-warning-lines: lamda [name [file!] title [text!]] [  ; use CSCAPE?
+make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
     reduce [--{
         /*
          * Extraction of ZLIB compression and decompression routines
@@ -138,7 +138,7 @@ make-warning-lines: lamda [name [file!] title [text!]] [  ; use CSCAPE?
         unspaced [-{ * Title: }- title]
         -{ * Build: A0}-
         unspaced [-{ * Date:  }- now:date]
-        unspaced [-{ * File:  }- to text! name]
+        unspaced [-{ * File:  }- filename]
         -{ *}-
         -{ * AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)}-
         -{ */}-

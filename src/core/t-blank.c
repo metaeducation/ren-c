@@ -53,25 +53,23 @@ void MF_Void(Molder* mo, const Cell* v, bool form)
 //    == [a b c _]
 //
 // But although some contexts (such as DELIMIT) will treat source-level blanks
-// as spaces, their general meaning when fetched is to be nothing.
+// as spaces, their general meaning is underscore.
 //
 //    >> unspaced ["a" _ "b"]
 //    == "a b"
 //
-//    >> unspaced ["a" blank "b"]
-//    == "ab"
+//    >> unspaced ["a" @blank "b"]
+//    == "a_b"
 //
 //    >> append "abc" _   ; is it better to support this than not?
-//    == "abc"
+//    == "abc_"
 //
 void MF_Blank(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(v);
+    UNUSED(form);
 
-    if (form) {
-        // render as nothingness (see above)
-    } else
-        Append_Ascii(mo->string, "_");
+    Append_Ascii(mo->string, "_");
 }
 
 

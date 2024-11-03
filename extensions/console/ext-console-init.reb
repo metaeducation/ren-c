@@ -547,7 +547,7 @@ export console!: make object! [
                 state
             ]
             type-block! [  ; type assertion, how to enforce this?
-                emit spaced ["^-- Result should be" an state]
+                emit spaced ["^-- Result should be" @state]
                 instruction
             ]
             group! [  ; means "submit user code"

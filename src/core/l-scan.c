@@ -3040,8 +3040,8 @@ Option(Error*) Trap_Transcode_One(
 //
 //      return: "Transcoded elements block, or ~[remainder element]~ if /NEXT"
 //          [~null~ block! ~[[text! blob!] element?]~ element?]
-//      source "If BLOB!, must be UTF-8 encoded"
-//          [text! blob!]
+//      source "If BINARY!, must be UTF-8 encoded"
+//          [any-utf8? blob!]
 //      :next "Translate one element and give back next position"
 //      :one "Transcode one element and return it"
 //      :file "File to be associated with BLOCK!s and GROUP!s in source"

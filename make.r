@@ -151,7 +151,7 @@ for-each [name value] options [
             ]
         ]
     ] else [
-        name: to-word replace to text! name #"_" #"-"
+        name: as word! replace to text! name #"_" #"-"
         set (has user-config name) transcode:one value  ; !!! else [value] ???
     ]
 ]
@@ -1066,7 +1066,7 @@ help-spec: [
 
 help-topics: collect [parse3 help-spec [
     some ['=== topic: word! '=== spec: text! (
-        keep to text! to word! topic
+        keep as text! topic
     )]
     (keep "all")
 ]]
@@ -1773,7 +1773,7 @@ for-each 'ext extensions [
     ; array of dispatcher CFunction pointers for the natives) and RX_Collate
     ; function.  It is located in the %prep/ directory for the extension.
     ;
-    ext-name-lower: lowercase copy to text! ext.name
+    ext-name-lower: lowercase to text! ext.name
     ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
@@ -1994,7 +1994,7 @@ prep: make rebmake.entry-class [
             "$(REBOL)" join tools-dir %make-extensions-table.r
             unspaced [
                 "EXTENSIONS=" delimit ":" map-each 'ext extensions [
-                    if ext.mode = <builtin> [to text! ext.name]
+                    if ext.mode = <builtin> [as text! ext.name]
                 ]
             ]
         ]

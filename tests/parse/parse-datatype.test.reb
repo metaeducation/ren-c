@@ -98,23 +98,23 @@
     (
         bin: #{68747470733A2F2F6578616D706C652E6F726722}
         let x
-        bin = parse to blob! -{https://example.org"}- [
+        bin = parse as blob! -{https://example.org"}- [
             x: across url!
             (assert [-{https://example.org"}- == as text! to url! x])
         ]
     )
-    (-{"}- == parse to blob! -{a@b.com"}- [
+    (-{"}- == parse as blob! -{a@b.com"}- [
         let x: across email! (assert [a@b.com == to email! to text! x])
         -{"}-
     ])
 ]
 
 [https://github.com/red/red/issues/4678
-    ('_ = parse to blob! "_" [blank!])
+    ('_ = parse as blob! "_" [blank!])
 
-    ~parse-mismatch~ !! (parse to blob! "#(" [blank!])
-    ~parse-mismatch~ !! (parse to blob! "(" [blank!])
-    ~parse-mismatch~ !! (parse to blob! "[" [blank!])
+    ~parse-mismatch~ !! (parse as blob! "#(" [blank!])
+    ~parse-mismatch~ !! (parse as blob! "(" [blank!])
+    ~parse-mismatch~ !! (parse as blob! "[" [blank!])
 ]
 
 ; QUOTED! needs to be recognized

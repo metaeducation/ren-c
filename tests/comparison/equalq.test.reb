@@ -66,12 +66,6 @@
     a-value: #a
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
-; No implicit to blob! from text!
-(not equal? a-value: "" to blob! a-value)
-(
-    a-value: ""
-    equal? equal? a-value to blob! a-value equal? to blob! a-value a-value
-)
 ; tag! vs. text!
 ; RAMBO #3518
 (equal? a-value: to tag! "" to text! a-value)

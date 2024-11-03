@@ -173,6 +173,23 @@ DECLARE_GENERICS(Sequence)
             return Init_Any_List(OUT, to, a);
         }
 
+        if (Any_Utf8_Kind(to)) {
+            DECLARE_MOLDER (mo);
+            Push_Mold(mo);
+            Offset i;
+            for (i = 0; i < len; ++i) {
+                DECLARE_ELEMENT (temp);
+                Copy_Sequence_At(temp, sequence, i);
+                Mold_Element(mo, temp);
+                if (i != len - 1)
+                    Append_Codepoint(mo->string, ' ');
+            }
+            const String* s = Pop_Molded_String(mo);
+            if (not Any_String_Kind(to))
+                Freeze_Flex(s);
+            return Init_Any_String(OUT, to, s);
+        }
+
         return FAIL(Error_Bad_Cast_Raw(sequence, ARG(type))); }
 
       case SYM_PICK: {

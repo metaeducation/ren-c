@@ -233,8 +233,19 @@ DECLARE_GENERICS(Integer)
         Heart to = VAL_TYPE_HEART(ARG(type));
         assert(REB_INTEGER != to);  // TO calls COPY in this case
 
-        if (Any_Utf8_Kind(to))
-            return rebValue(Canon(AS), ARG(type), Canon(FORM), val);
+        if (Any_Utf8_Kind(to)) {
+            DECLARE_MOLDER (mo);
+            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            Push_Mold(mo);
+            Mold_Element(mo, val);
+            const String* s = Pop_Molded_String(mo);
+            if (not Any_String_Kind(to))
+                Freeze_Flex(s);
+            return Init_Any_String(OUT, to, s);
+        }
+
+        if (Any_List_Kind(to))
+            return rebValue(Canon(ENVELOP), ARG(type), val);
 
         if (to == REB_DECIMAL or to == REB_PERCENT) {
             REBDEC d = cast(REBDEC, VAL_INT64(val));

@@ -509,9 +509,16 @@ get-path!: func3 [] [
 ]
 
 /join: func3 [
-    base [blob! any-string! path!]
+    base [blob! any-string! path! datatype!]
     value [void! any-value!]
 ][
+    if datatype? base [
+        if base = blob! [
+            assert [block? value]
+            return to blob! value
+        ]
+        fail ["JOIN of DATATYPE! only supported for BLOB! in bootstrap"]
+    ]
     if void? :value [
         return copy base
     ]
@@ -909,6 +916,26 @@ get-path!: func3 [] [
     return code
 ]
 
+; Weak subsetting of ENCODE capabilities needed by bootstrap.
+;
+/encode: func3 [codec arg [text! integer!]] [
+    if codec = [BE + 1] [
+        assert [all [integer? arg, arg < 256, arg >= 0]]
+        return head change copy #{00} arg
+    ]
+    if codec = 'UTF-8 [
+        assert [text? arg]
+        return to blob! arg
+    ]
+    fail ["Very limited ENCODE abilities in bootstrap, no:" mold codec]
+]
+
+/decode: func3 [codec bin [blob!]] [
+    if codec = 'UTF-8 [
+        return to text! bin
+    ]
+    fail ["Very limited DECODE abilities in bootstrap, no:" mold codec]
+]
 
 === "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
 

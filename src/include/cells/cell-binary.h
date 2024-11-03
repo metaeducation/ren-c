@@ -63,31 +63,40 @@ INLINE const Byte* Cell_Blob_Size_At(
 //
 INLINE const Byte* Cell_Bytes_Limit_At(
     Size* size_out,
-    const Cell* v,
+    const Cell* c,
     Option(const Length*) limit_in
 ){
+    Heart heart = Cell_Heart(c);
+    assert(Any_Bytes_Kind(heart));
+
+    Length len_at;
+    if (heart == REB_BLOB)
+        Cell_Blob_Size_At(&len_at, c);
+    else
+        len_at = Cell_String_Len_At(c);
+
     Length limit;
-    if (limit_in == UNLIMITED or *(unwrap limit_in) > Cell_Series_Len_At(v))
-        limit = Cell_Series_Len_At(v);
+    if (limit_in == UNLIMITED or *(unwrap limit_in) > len_at)
+        limit = len_at;
     else
         limit = *(unwrap limit_in);
 
     Corrupt_Pointer_If_Debug(limit_in);
 
-    if (Cell_Heart(v) == REB_BLOB) {
+    if (heart == REB_BLOB) {
         *size_out = limit;
-        return Cell_Blob_At(v);
+        return Cell_Blob_At(c);
     }
 
-    if (Any_String_Kind(Cell_Heart(v))) {
-        *size_out = Cell_String_Size_Limit_At(nullptr, v, &limit);
-        return Cell_String_At(v);
+    if (Any_Utf8_Kind(heart)) {
+        *size_out = Cell_String_Size_Limit_At(nullptr, c, &limit);
+        return Cell_String_At(c);
     }
 
-    assert(Any_Word_Kind(Cell_Heart(v)));
-    assert(limit == Cell_Series_Len_At(v));
+    assert(Any_Word_Kind(Cell_Heart(c)));
+    assert(limit == Cell_Series_Len_At(c));
 
-    const String* spelling = Cell_Word_Symbol(v);
+    const String* spelling = Cell_Word_Symbol(c);
     *size_out = String_Size(spelling);
     return String_Head(spelling);
 }

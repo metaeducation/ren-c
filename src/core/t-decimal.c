@@ -457,10 +457,17 @@ DECLARE_GENERICS(Decimal)
             d = d * 100;  // "true" visual value, TO considers 10% -> 10
 
         if (Any_Utf8_Kind(to)) {
-            Value* formed = rebValue(Canon(AS), ARG(type), Canon(FORM), val);
+            DECLARE_MOLDER (mo);
+            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            Push_Mold(mo);
+            Mold_Element(mo, val);
+            const String* s = Pop_Molded_String(mo);
+            if (not Any_String_Kind(to))
+                Freeze_Flex(s);
+            Init_Any_String(OUT, to, s);
             if (Is_Percent(val))  // leverage (buggy) rendering 1% vs 1.0% [1]
-                rebElide("take:last", formed);
-            return formed;
+                rebElide("take:last", OUT);
+            return OUT;
         }
 
         if (to == REB_DECIMAL or to == REB_PERCENT)

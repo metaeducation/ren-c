@@ -109,14 +109,15 @@ INLINE Element* Init_Series_At_Core_Untracked(
         assert(Is_Stub_String(f));
     }
     else if (Any_Utf8_Kind(heart)) {  // see also Init_Utf8_Non_String()
+        assert(not Any_Word_Kind(heart));  // can't use this init!
         assert(Is_Stub_String(f));
-        if (not Any_String_Kind(heart))  // ISSUE!, URL!, etc.
-            assert(Is_Flex_Frozen(f));
+        assert(Is_Flex_Frozen(f));
     }
     else if (heart == REB_BLOB) {
         assert(Flex_Wide(f) == 1);  // Note: Binary is allowed to alias String
     }
-    else if (Any_Sequence_Kind(heart)) {
+    else {
+        assert(Any_Sequence_Kind(heart));
         assert(Is_Stub_Source(f));
         assert(Is_Source_Frozen_Shallow(c_cast(Source*, f)));
     }

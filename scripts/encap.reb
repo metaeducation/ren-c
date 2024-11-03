@@ -230,6 +230,10 @@ elf-format: context [
         (mode: null)
     ]
 
+    ; 1. Some changes to the code unearthed that SECTION-NAME may not be UTF-8
+    ;    So we alias what we're comparing to BINARY! instead of aliasing the
+    ;    section as TEXT! (avoiding the validation is more performant anyway)
+    ;
     /find-section: meth [
         return: "The index of the section header with encap (sh_xxx vars set)"
             [~null~ integer!]
@@ -244,8 +248,8 @@ elf-format: context [
                 (
                     let name-start: skip string-section sh_name
                     let name-end: ensure blob! find name-start #{00}
-                    let section-name: to-text copy:part name-start name-end
-                    if name = section-name [
+                    let section-name: copy:part name-start name-end
+                    if section-name = as blob! name [  ; may not be UTF-8 [1]
                         return index  ; sh_offset, sh_size, etc. are set
                     ]
                     index: index + 1
@@ -871,7 +875,7 @@ pe-format: context [
         ; check if there's section name conflicts
         ;
         for-each 'sec sections [
-            if section-name = to text! trim:with sec.name #{00} [
+            if (as blob! section-name) = trim:with sec.name #{00} [
                 fail [
                     "There is already a section named" section-name |
                     mold sec
@@ -1005,7 +1009,7 @@ pe-format: context [
 
         let target-sec: catch [
             for-each 'sec sections [
-                if section-name = to text! trim:with sec.name #{00} [
+                if (as blob! section-name) = trim:with sec.name #{00} [
                     throw sec
                 ]
             ]
@@ -1164,7 +1168,7 @@ pe-format: context [
 ]
 
 generic-format: context [
-    signature: to-blob "ENCAP000"
+    signature: as blob! "ENCAP000"
     sig-length: length of signature
 
     /update-embedding: meth [

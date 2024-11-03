@@ -81,7 +81,7 @@ target-platform: null
 
     let header
     let option
-    parse3:match to text! flag [
+    parse3:match flag [
         header: across to ":"
         ":" option: across to <end>
     ] else [
@@ -498,7 +498,7 @@ gcc: make compiler-class [
         return spaced collect [
             keep any [
                 file-to-local:pass maybe .exec-file
-                to text! name  ; the "gcc" may get overridden as "g++"
+                as text! .name  ; the "gcc" may get overridden as "g++"
             ]
 
             keep either E ["-E"]["-c"]

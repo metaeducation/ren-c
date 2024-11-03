@@ -201,8 +201,19 @@ DECLARE_GENERICS(Word)
     // be aliases of words, so TO conversions of strings to word may be able
     // to reuse the symbol underlying the string).  Delegate to common code.
 
-      case SYM_TO:
-        return T_String(level_, verb);
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
+        UNUSED(ARG(element));  // word
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        assert(VAL_TYPE(word) != to);  // TO calls COPY in this case
+
+        if (Any_Word_Kind(to))
+            return rebValue(Canon(AS), ARG(type), rebQ(word));
+
+        if (Any_List_Kind(to))
+            return rebValue(Canon(ENVELOP), ARG(type), rebQ(word));
+
+        return T_String(level_, verb); }
 
       default:
         break;

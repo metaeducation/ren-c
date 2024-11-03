@@ -51,7 +51,7 @@
 )
 ; transcode...
 (
-    (unspaced ["<" mold transcode to blob! "a [b c]" ">"])
+    (unspaced ["<" mold transcode as blob! "a [b c]" ">"])
         = "<[a [b c]]>"
 )
 ; ...

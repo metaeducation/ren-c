@@ -27,6 +27,13 @@ REBOL [
     encode-integer:LE/)
 
 (sys.util/register-codec
+    'UTF-8
+    []
+    null
+    decode-UTF-8/
+    encode-UTF-8/)
+
+(sys.util/register-codec
     'IEEE-754
     []
     null

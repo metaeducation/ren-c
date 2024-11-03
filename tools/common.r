@@ -305,10 +305,9 @@ export /propercase-of: func [
 export /write-if-changed: func [
     return: [~]
     dest [file!]
-    content [text! block!]
+    content [text!]
 ][
-    if block? content [content: spaced content]
-    content: to blob! content
+    content: encode 'UTF-8 content  ; AS BLOB! locks in boot, can't clear
 
     any [
         not exists? dest

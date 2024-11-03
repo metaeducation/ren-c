@@ -86,8 +86,8 @@
     true? success
 )
 ~expect-arg~ !! (
-    a-value: to blob! "Rebol [] 1 + 1"
-    eval a-value  ; strings not handled by EVAL
+    a-value: as blob! "Rebol [] 1 + 1"
+    eval a-value  ; strings/binaries not handled by EVAL
 )
 (:abs = eval [:abs])
 (

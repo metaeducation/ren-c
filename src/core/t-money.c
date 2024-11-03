@@ -207,7 +207,15 @@ DECLARE_GENERICS(Money)
                 Init_Decimal(v, deci_to_decimal(d));
             else
                 Init_Integer(v, deci_to_int(d));
-            return rebValue(Canon(AS), ARG(type), Canon(FORM), v);
+
+            DECLARE_MOLDER (mo);
+            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            Push_Mold(mo);
+            Mold_Element(mo, v);
+            const String* s = Pop_Molded_String(mo);
+            if (not Any_String_Kind(to))
+                Freeze_Flex(s);
+            return Init_Any_String(OUT, to, s);;
         }
 
         return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }

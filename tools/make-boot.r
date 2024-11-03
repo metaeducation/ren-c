@@ -1071,11 +1071,11 @@ nats: collect [
     ]
 ]
 
-symbol-strings: to blob! reduce collect [  ; no bootstrap MAKE BLOB!
+symbol-strings: join blob! collect [
     for-each 'word syms-words [
-        spelling: to text! word
-        keep head change copy #{00} length of spelling
-        keep spelling
+        let utf-8: as blob! word
+        keep encode [BE + 1] length of utf-8  ; one byte length max
+        keep utf-8
     ]
 ]
 

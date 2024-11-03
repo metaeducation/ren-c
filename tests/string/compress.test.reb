@@ -19,7 +19,7 @@
     unzip (unzipped: copy []) zipped
     all [
         unzipped.1 = %abc.txt
-        unzipped.2 = to blob! str
+        unzipped.2 = as blob! str
         (next next unzipped) = (next next list)
     ]
 )

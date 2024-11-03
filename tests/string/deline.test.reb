@@ -18,8 +18,8 @@
 [
     (
         str: "a^M^/b"
-        a-bin: as blob! str  comment "remembers it was utf-8, optimizes!"
-        t-bin: to blob! str  comment "makes dissociated/unconstrained copy"
+        a-bin: as blob! str  ; "remembers it was utf-8, optimizes!"
+        t-bin: copy a-bin  ; "makes dissociated/unconstrained copy"
         ok
     )
 
