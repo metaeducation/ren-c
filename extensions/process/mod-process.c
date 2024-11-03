@@ -1415,7 +1415,8 @@ stdin_pipe_err:
     if (non_errno_ret > 0) {
         rebJumps(
             "fail [{Child process is terminated by signal:}",
-                rebI(non_errno_ret)
+                rebI(non_errno_ret),
+            "]"
         );
     }
     else if (non_errno_ret < 0)
