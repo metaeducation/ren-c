@@ -1305,9 +1305,22 @@ void API_rebPushContinuation_internal(
 //
 //  rebDelegate: API
 //
-// !!! At the moment, this is used to work around the inability of Value* to
-// store unstable isotopes, which hinders extensions that want to do multiple
-// return values.  Review.
+// This lets a native delegate its response to some code, which is run through
+// the trampoline.  It can only be used as `return rebDelegate(...)`.
+//
+// While the C implementation function is removed from the C stack (due to
+// executing the `return`) an interpreter stack level for the native remains
+// in effect, so it will show up in stack traces if there's an error.
+//
+// rebDelegate() can be used to work around the inability of Value* to store
+// unstable isotopes.  So if a native based on the librebol API wants to
+// return something like a raised error or a pack, it must use rebDelegate().
+//
+// It's also the right way to perform an abrupt failure, by doing a call
+// to `rebDelegate("fail" ...)`.  Otherwise, exceptions or longjmp() have
+// to dangerously cross arbitrary C stack levels of user code that may not
+// be designed for it (e.g. if the interpreter was built with longjmp() and
+// the API client uses C++ code, things like destructors won't be run.)
 //
 RebolBounce API_rebDelegate(
     RebolContext** binding_ref,

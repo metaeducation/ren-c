@@ -48,7 +48,7 @@
 //    behavior with ARG()...or even for the Key*...but failing on the PARAM()
 //    feels like the best way to "blame" that argument.)
 //
-Error* Derive_Error_From_Pointer(const void* p) {
+Error* Derive_Error_From_Pointer_Core(const void* p) {
     if (p == nullptr)
         return Error_Unknown_Error_Raw();
 
@@ -104,7 +104,7 @@ Error* Derive_Error_From_Pointer(const void* p) {
 
 
 //
-//  Fail_Core: C
+//  Fail_Abruptly_By_Jumping_Stack: C
 //
 // Trigger failure of an error by longjmp'ing to enclosing RESCUE_SCOPE.  Note
 // that these failures interrupt code mid-stream, so if a Rebol function is
@@ -131,10 +131,13 @@ Error* Derive_Error_From_Pointer(const void* p) {
 // error than just using a RE_MISC error code, and can be found just as easily
 // to clean up later with a textual search for `fail ("`
 //
-ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
+ATTRIBUTE_NO_RETURN void Fail_Abruptly_By_Jumping_Stack(Error* error)
 {
+    Assert_Varlist(error);
+    assert(CTX_TYPE(error) == REB_ERROR);
+
   #if FAIL_JUST_ABORTS
-    assert(!"Fail_Core() called and FAIL_JUST_ABORTS, shouldn't happen");
+    assert(!"Fail_Abruptly_By_Jumping_Stack() called when FAIL_JUST_ABORTS");
   #endif
 
     // You can't abruptly fail during the handling of abrupt failure.  At the
@@ -149,10 +152,6 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // it issues a failure.
     //
     assert(TOP_LEVEL->executor != nullptr);
-
-    Error* error = Derive_Error_From_Pointer(p);
-    Assert_Varlist(error);
-    assert(CTX_TYPE(error) == REB_ERROR);
 
   #if DEBUG_EXTANT_STACK_POINTERS
     //
@@ -185,25 +184,25 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     if (PG_Probe_Failures) {  // see R3_PROBE_FAILURES environment variable
         static bool probing = false;
 
-        if (p == cast(void*, Cell_Varlist(g_error_stack_overflow))) {
+        if (error == cast(void*, Cell_Varlist(g_error_stack_overflow))) {
             printf("PROBE(Stack Overflow): mold in PROBE would recurse\n");
             fflush(stdout);
         }
         else if (probing) {
             printf("PROBE(Recursing): recursing for unknown reason\n");
-            panic (p);
+            panic (error);
         }
         else {
             probing = true;
-            PROBE(p);
+            PROBE(error);
             probing = false;
         }
     }
   #endif
 
     // If we raise the error we'll lose the stack, and if it's an early
-    // error we always want to see it (do not use ATTEMPT or TRY on
-    // purpose in Startup_Core()...)
+    // error we always want to see it (do not use RESCUE on purpose in
+    // Startup_Core()...)
     //
     if (PG_Boot_Phase < BOOT_DONE)
         panic (error);

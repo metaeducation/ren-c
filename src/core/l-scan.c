@@ -1995,10 +1995,8 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
 INLINE Bounce Scanner_Raise_Helper(
     TranscodeState* transcode,
     Level* level_,
-    const void* p
+    Error* error
 ){
-    Error* error = Derive_Error_From_Pointer(p);
-
     ERROR_VARS *vars = ERR_VARS(error);
     if (Is_Nulled(&vars->nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
@@ -2008,16 +2006,15 @@ INLINE Bounce Scanner_Raise_Helper(
 }
 
 #undef RAISE
-#define RAISE(p) Scanner_Raise_Helper(transcode, level_, (p))
+#define RAISE(p) \
+    Scanner_Raise_Helper(transcode, level_, Derive_Error_From_Pointer(p))
 
 
 INLINE Bounce Scanner_Fail_Helper(
     TranscodeState* transcode,
     Level* level_,
-    const void* p
+    Error* error
 ){
-    Error* error = Derive_Error_From_Pointer(p);
-
     ERROR_VARS *vars = ERR_VARS(error);
     if (Is_Nulled(&vars->nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
@@ -2027,7 +2024,8 @@ INLINE Bounce Scanner_Fail_Helper(
 }
 
 #undef FAIL
-#define FAIL(p) Scanner_Fail_Helper(transcode, level_, (p))
+#define FAIL(p) \
+    Scanner_Fail_Helper(transcode, level_, Derive_Error_From_Pointer(p))
 
 
 //
@@ -2923,10 +2921,10 @@ Bounce Scanner_Executor(Level* const L) {
 //=//// UNDEFINE THE AUGMENTED SCANNER RAISE AND FAIL /////////////////////=//
 
 #undef RAISE
-#define RAISE(p) Native_Raised_Result(level_, (p))
+#define RAISE(p) Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
 
 #undef FAIL
-#define FAIL(p) Native_Fail_Result(level_, (p))
+#define FAIL(p) Native_Fail_Result(level_, Derive_Error_From_Pointer(p))
 
 
 //

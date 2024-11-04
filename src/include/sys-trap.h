@@ -291,37 +291,39 @@ struct JumpStruct {
         NOOP
 #endif
 
+
 #if CPLUSPLUS_11  // add checking
     template <class T>
-    INLINE ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
+    INLINE Error* Derive_Error_From_Pointer(T* p) {
         static_assert(
             std::is_same<T, Error>::value
             or std::is_same<T, const char>::value
             or std::is_base_of<const Value, T>::value
             or std::is_base_of<Cell, T>::value,
-            "fail() works on: Error*, Cell*, const char*"
+            "Derive_Error_From_Pointer() works on: Error*, Cell*, const char*"
         );
-        Fail_Core(p);
+        return Derive_Error_From_Pointer_Core(p);
     }
 
   #if DEBUG_USE_SINKS
     template <class T>
-    INLINE ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(Sink(T) sink)
-      { Fail_Core(sink.p); }
+    INLINE Error* Derive_Error_From_Pointer(Sink(T) sink)
+      { return Derive_Error_From_Pointer(sink.p); }
 
     template <class T>
-    INLINE ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(Need(T) need)
-      { Fail_Core(need.p); }
+    INLINE Error* Derive_Error_From_Pointer(Need(T) need)
+      { return Derive_Error_From_Pointer(need.p); }
   #endif
 #else
-    #define Fail_Macro_Helper Fail_Core
+    #define Derive_Error_From_Pointer  Derive_Error_From_Pointer
 #endif
+
 
 #if FAIL_JUST_ABORTS
     #define fail panic
 #else
-    #define fail(error) do { \
+    #define fail(p) do { \
         Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-        Fail_Macro_Helper(error); /* prints the actual tick */ \
+        Fail_Abruptly_By_Jumping_Stack(Derive_Error_From_Pointer(p)); \
     } while (0)
 #endif
