@@ -414,7 +414,7 @@ INLINE void Begin_Action(
     assert(Is_Pointer_Corrupt_Debug(L->opt_label)); // only valid w/REB_ACTION
     assert(not opt_label or Get_Flex_Flag(opt_label, UTF8_SYMBOL));
     L->opt_label = opt_label;
-  #if defined(DEBUG_FRAME_LABELS) // helpful for looking in the debugger
+  #if DEBUG_FRAME_LABELS  // helpful for looking in the debugger
     L->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(L));
   #endif
 
@@ -619,7 +619,7 @@ INLINE void Drop_Action(Level* L) {
     L->original = nullptr; // signal an action is no longer running
 
     Corrupt_Pointer_If_Debug(L->opt_label);
-  #if defined(DEBUG_FRAME_LABELS)
+  #if DEBUG_FRAME_LABELS
     Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif
 }

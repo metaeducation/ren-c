@@ -60,10 +60,10 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     case REB_MAX_NULLED:
     case REB_BLANK:
     case REB_LOGIC:
-      #if defined(DEBUG_TRACK_EXTEND_CELLS)
+      #if DEBUG_TRACK_EXTEND_CELLS
         printf("Cell init ");
 
-        #if defined(DEBUG_COUNT_TICKS)
+        #if DEBUG_COUNT_TICKS
             printf("@ tick #%d", cast(unsigned int, v->tick));
             if (v->touch != 0)
                 printf("@ touch #%d", cast(unsigned int, v->touch));
@@ -100,7 +100,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 #endif // !defined(NDEBUG)
 
 
-#ifdef DEBUG_HAS_PROBE
+#if DEBUG_HAS_PROBE
 
 INLINE void Probe_Print_Helper(
     const void *p,
@@ -109,7 +109,7 @@ INLINE void Probe_Print_Helper(
     int line
 ){
     printf("\n**PROBE(%s, %p): ", label, p);
-  #ifdef DEBUG_COUNT_TICKS
+  #if DEBUG_COUNT_TICKS
     printf("tick %d ", cast(int, TG_Tick));
   #endif
     printf("%s:%d\n", file, line);
@@ -258,4 +258,4 @@ void Probe(const void *p)
   { Probe_Core_Debug(p, "N/A", 0); }
 
 
-#endif // defined(DEBUG_HAS_PROBE)
+#endif  // DEBUG_HAS_PROBE

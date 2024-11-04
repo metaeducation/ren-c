@@ -303,7 +303,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 #endif
 
 
-#if defined(DEBUG_COUNT_TICKS)
+#if DEBUG_COUNT_TICKS
     #define TICK TG_Tick
 #else
     #define TICK 0  // easier to write TRAMPOLINE_COUNTS_TICKS agnostic code

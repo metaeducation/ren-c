@@ -1279,7 +1279,7 @@ DECLARE_NATIVE(subparse)
     (void)pos_debug; // UNUSED() forces corruption in C++11 debug builds
   #endif
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     Tick tick = TG_Tick; // helpful to cache for visibility also
   #endif
 
@@ -1313,7 +1313,7 @@ DECLARE_NATIVE(subparse)
         /* Print_Parse_Index(L); */
         UPDATE_EXPRESSION_START(L);
 
-      #if defined(DEBUG_COUNT_TICKS)
+      #if DEBUG_COUNT_TICKS
         ++TG_Tick;
         tick = TG_Tick;
         cast(void, tick); // suppress unused warning (but UNUSED() corrupts)

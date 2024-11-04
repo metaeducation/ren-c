@@ -378,9 +378,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, VarList* c) {
         assert(archetype->payload.any_context.phase);
     }
     else {
-      #ifdef DEBUG_UNREADABLE_BLANKS
         assert(Is_Cell_Unreadable(CTX_ROOTKEY(c)));
-      #endif
         assert(not archetype->payload.any_context.phase);
     }
 

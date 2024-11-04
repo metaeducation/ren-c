@@ -1307,7 +1307,7 @@ static REBLEN Sweep_Stubs(void)
     // that might make the cells a size greater than Stub size require
     // doing pairings in a different pool.
     //
-  #ifdef UNUSUAL_CELL_SIZE
+  #if UNUSUAL_CELL_SIZE
     for (seg = Mem_Pools[PAR_POOL].segs; seg != nullptr; seg = seg->next) {
         if (NODE_BYTE(seg + 1) == FREE_POOLUNIT_BYTE)
             continue;

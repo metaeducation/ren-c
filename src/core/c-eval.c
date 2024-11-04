@@ -52,7 +52,7 @@
 #include "sys-core.h"
 
 
-#if defined(DEBUG_COUNT_TICKS)
+#if DEBUG_COUNT_TICKS
     //
     // The evaluator `tick` should be visible in the C debugger watchlist as a
     // local variable in Eval_Core_Throws() on each stack level.  So if fail()
@@ -119,7 +119,7 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
         == ((v)->header.bits & CELL_FLAG_EVAL_FLIP))
 
 
-#ifdef DEBUG_COUNT_TICKS
+#if DEBUG_COUNT_TICKS
     //
     // Macro for same stack level as Eval_Core when debugging TICK_BREAKPOINT
     // Note that it uses a *signed* maximum due to the needs of the unreadable
@@ -210,9 +210,7 @@ INLINE void Finalize_Arg(
         return;
     }
 
-  #if defined(DEBUG_STALE_ARGS) // see notes on flag definition
     assert(Not_Cell_Flag(arg, ARG_MARKED_CHECKED));
-  #endif
 
     assert(
         refine == ORDINARY_ARG // check arg type
@@ -345,7 +343,7 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
 }
 
 
-#ifdef DEBUG_EXPIRED_LOOKBACK
+#if DEBUG_EXPIRED_LOOKBACK
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
         (L->fake_lookback != nullptr)
 #else
@@ -366,7 +364,7 @@ INLINE void Expire_Out_Cell_Unless_Invisible(Level* L) {
     if (GET_ACT_FLAG(L->original, ACTION_INVISIBLE))
         return;
 
-  #ifdef DEBUG_UNREADABLE_BLANKS
+  #if DEBUG
     //
     // The L->out slot should be initialized well enough for GC safety.
     // But in the debug build, if we're not running an invisible function
@@ -437,7 +435,7 @@ bool Eval_Core_Throws(Level* const L)
 {
     bool threw = false;
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     Tick tick = L->tick = TG_Tick; // snapshot start tick
   #endif
 

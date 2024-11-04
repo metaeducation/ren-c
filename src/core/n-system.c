@@ -300,7 +300,7 @@ DECLARE_NATIVE(c_debug_break_at)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK_AT;
 
-  #if !defined(NDEBUG) && defined(DEBUG_COUNT_TICKS)
+  #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
     if (REF(compensate)) {
         //
         // Imagine two runs of Rebol console initialization.  In the first,
@@ -366,7 +366,7 @@ DECLARE_NATIVE(c_debug_break)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
-  #if !defined(NDEBUG) && defined(DEBUG_COUNT_TICKS)
+  #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
     //
     // For instance with:
     //

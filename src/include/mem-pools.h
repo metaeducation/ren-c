@@ -80,11 +80,11 @@ enum Mem_Pool_Specs {
     MEM_MID_POOLS = MEM_SMALL_POOLS + 4,
     MEM_BIG_POOLS = MEM_MID_POOLS + 4, // larger pools
     STUB_POOL = MEM_BIG_POOLS,
-    #ifdef UNUSUAL_CELL_SIZE
+  #if UNUSUAL_CELL_SIZE
     PAR_POOL,
-    #else
+  #else
     PAR_POOL = STUB_POOL,
-    #endif
+  #endif
     GOB_POOL,
     SYSTEM_POOL,
     MAX_POOLS

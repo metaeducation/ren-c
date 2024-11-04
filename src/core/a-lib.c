@@ -1494,16 +1494,12 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     L->source->vaptr = vaptr;
     L->source->pending = END_NODE; // signal next fetch comes from va_list
 
-  #if defined(DEBUG_UNREADABLE_BLANKS)
     //
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
     // but the previous L->value will be tested for NODE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
     L->value = Init_Unreadable(junk); // shows where garbage came from
-  #else
-    L->value = BLANK_VALUE; // less informative but faster to initialize
-  #endif
 
     Set_Level_Detected_Fetch(nullptr, L, p);
 

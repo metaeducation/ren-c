@@ -704,7 +704,7 @@ union Reb_Value_Payload {
         union Reb_Value_Extra extra;
         union Reb_Value_Payload payload;
 
-      #if defined(DEBUG_TRACK_EXTEND_CELLS)
+      #if DEBUG_TRACK_EXTEND_CELLS
         //
         // Lets you preserve the tracking info even if the cell has a payload.
         // This doubles the cell size, but can be a very helpful debug option.

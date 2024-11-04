@@ -76,7 +76,7 @@ PVAR Byte *PG_Pool_Map;   // Memory pool size map (created on boot)
 PVAR REBI64 PG_Boot_Time;   // Counter when boot started
 PVAR REB_OPTS *Reb_Opts;
 
-#ifdef DEBUG_HAS_PROBE
+#if DEBUG_HAS_PROBE
     PVAR bool PG_Probe_Failures; // helpful especially for boot errors & panics
 #endif
 
@@ -185,7 +185,7 @@ TVAR Flex* GC_Manuals;    // Manually memory managed (not by GC)
 #endif
 TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
 
-#ifdef DEBUG_COUNT_TICKS
+#if DEBUG_COUNT_TICKS
     //
     // This counter is incremented each time through the DO loop, and can be
     // used for many purposes...including setting breakpoints in routines

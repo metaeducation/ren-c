@@ -119,14 +119,14 @@ static void Assert_Basics(void)
     // work, so long as that size is an even multiple of ALIGN_SIZE.
     //
     size_t sizeof_cell = sizeof(Cell);
-  #if defined(UNUSUAL_CELL_SIZE)
+  #if UNUSUAL_CELL_SIZE
     if (sizeof_cell % ALIGN_SIZE != 0)
         panic ("size of Cell does not evenly divide by ALIGN_SIZE");
   #else
     if (sizeof_cell != sizeof(void*) * 4)
         panic ("size of Cell is not sizeof(void*) * 4");
 
-    #if defined(DEBUG_FLEX_ORIGINS)
+    #if DEBUG_STUB_ORIGINS
         assert(sizeof(Stub) == sizeof(Cell) * 2 + sizeof(void*) * 2);
     #else
         assert(sizeof(Stub) == sizeof(Cell) * 2);
@@ -1241,7 +1241,7 @@ void Startup_Core(void)
     // uses signed timer ticks to double as an extra bit of information in
     // REB_BLANK cells to indicate they are "unreadable".
     //
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     TG_Tick = 1;
   #endif
 
@@ -1277,7 +1277,7 @@ void Startup_Core(void)
     PG_Always_Malloc = false;
   #endif
 
-  #ifdef DEBUG_HAS_PROBE
+  #if DEBUG_HAS_PROBE
     PG_Probe_Failures = false;
   #endif
 

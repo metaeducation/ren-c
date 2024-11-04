@@ -434,7 +434,7 @@ INLINE VarList* Get_Var_Context(
         assert(binding == ACT_UNDERLYING(VAL_ACTION(CTX_ROOTKEY(c))));
     }
 
-  #ifdef DEBUG_BINDING_NAME_MATCH // this is expensive, and hasn't happened
+  #if DEBUG_BINDING_NAME_MATCH  // this is expensive, and hasn't happened
     assert(
         VAL_WORD_CANON(any_word)
         == Key_Canon(Varlist_Key(c, VAL_WORD_INDEX(any_word))));

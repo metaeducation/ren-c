@@ -98,22 +98,22 @@
 // This works with Address Sanitizer or with Valgrind, but the config flag to
 // enable it only comes automatically with address sanitizer.
 //
-#if defined(DEBUG_FLEX_ORIGINS)
-    INLINE void Touch_Flex(Flex* s) {
+#if DEBUG_STUB_ORIGINS
+    INLINE void Touch_Stub(Flex* s) {
         s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
         free(s->guard);
 
         s->tick = TICK;
     }
 
-    #define Touch_Flex_If_Debug(s) Touch_Flex(s)
+    #define Touch_Stub_If_Debug(s) Touch_Stub(s)
 #else
-    #define Touch_Flex_If_Debug(s) NOOP
+    #define Touch_Stub_If_Debug(s) NOOP
 #endif
 
 
-#if defined(DEBUG_MONITOR_FLEX)
-    INLINE void Monitor_Series(Stub* stub) {
+#if DEBUG_MONITOR_STUB
+    INLINE void Monitor_Stub(Stub* stub) {
         printf(
             "Adding monitor to %p on tick #%d\n",
             cast(void*, stub),
@@ -574,7 +574,7 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
     // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Flex_Core().
 
   #if !defined(NDEBUG)
-    Touch_Flex_If_Debug(s); // tag current C stack as series origin in ASAN
+    Touch_Stub_If_Debug(s); // tag current C stack as series origin in ASAN
     PG_Reb_Stats->Series_Made++;
   #endif
 

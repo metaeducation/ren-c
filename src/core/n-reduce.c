@@ -312,9 +312,7 @@ bool Compose_To_Stack_Throws(
                     Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
 
-          #ifdef DEBUG_UNREADABLE_BLANKS
             Init_Unreadable(out); // shouldn't leak temp eval to caller
-          #endif
         }
         else if (deep) {
             // compose/deep [does [(1 + 2)] nested] => [does [3] nested]

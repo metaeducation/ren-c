@@ -558,7 +558,7 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(30)
 
 
-#ifdef DEBUG_MONITOR_FLEX
+#if DEBUG_MONITOR_STUB
 
     //=//// FLEX_INFO_MONITOR_DEBUG /////////////////////////////////////=//
     //
@@ -904,10 +904,10 @@ struct StubStruct {
     //
     union StubMiscUnion misc_private;
 
-#if defined(DEBUG_FLEX_ORIGINS)
+  #if DEBUG_STUB_ORIGINS
     intptr_t *guard;  // alloc => immediate free, for use by Panic_Flex()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
-#endif
+  #endif
 };
 
 // These macros are superfluous here, but do more in modern builds.
@@ -947,7 +947,7 @@ typedef struct StubStruct Flex;
 #endif
 
 
-#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
 
     #define cast_Flex(p) \
         cast(Flex*, (p))

@@ -266,7 +266,7 @@ DECLARE_NATIVE(panic)
     else
       file_utf8 = "(anonymous)";
 
-  #ifdef DEBUG_COUNT_TICKS
+  #if DEBUG_COUNT_TICKS
     Panic_Core(p, level_->tick, file_utf8, LVL_LINE(level_));
   #else
     const Tick tick = 0;

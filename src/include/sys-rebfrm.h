@@ -762,7 +762,7 @@ struct LevelStruct {
     } reval;
   } u;
 
-   #if defined(DEBUG_COUNT_TICKS)
+   #if DEBUG_COUNT_TICKS
     //
     // `tick` [DEBUG]
     //
@@ -773,7 +773,7 @@ struct LevelStruct {
     uintptr_t tick; // !!! Should this be in release builds, exposed to users?
   #endif
 
-  #if defined(DEBUG_FRAME_LABELS)
+  #if DEBUG_FRAME_LABELS
     //
     // `label` [DEBUG]
     //
@@ -798,7 +798,7 @@ struct LevelStruct {
     int line;
   #endif
 
-  #if defined(DEBUG_BALANCE_STATE)
+  #if DEBUG_BALANCE_STATE
     //
     // `state` [DEBUG]
     //
@@ -809,7 +809,7 @@ struct LevelStruct {
     struct Reb_State state;
   #endif
 
-  #if defined(DEBUG_EXPIRED_LOOKBACK)
+  #if DEBUG_EXPIRED_LOOKBACK
     //
     // On each call to Fetch_Next_In_Level, it's possible to ask it to give
     // a pointer to a cell with equivalent data to what was previously in
@@ -935,7 +935,7 @@ struct LevelStruct {
     m_cast(Value*, EMPTY_TEXT)
 
 
-#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
 
     #define LVL(p) \
         cast(Level*, (p))  // LVL() just does a cast (maybe with added checks)

@@ -111,7 +111,7 @@ void *Alloc_Mem(size_t size)
     // Cache size at the head of the allocation in debug builds for checking.
     // Also catches free() use with Alloc_Mem() instead of Free_Mem().
     //
-    // Use a 64-bit quantity to preserve DEBUG_MEMORY_ALIGN invariant.
+    // Use a 64-bit quantity to preserve DEBUG_MEMORY_ALIGNMENT invariant.
 
     void *p_extra = malloc(size + sizeof(REBI64));
     if (p_extra == nullptr)
@@ -120,7 +120,7 @@ void *Alloc_Mem(size_t size)
     void *p = cast(char*, p_extra) + sizeof(REBI64);
   #endif
 
-  #ifdef DEBUG_MEMORY_ALIGN
+  #if DEBUG_MEMORY_ALIGNMENT
     assert(i_cast(uintptr_t, p) % sizeof(REBI64) == 0);
   #endif
 
@@ -208,7 +208,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
     DEF_POOL(sizeof(Stub), 4096),  // Series stubs
 
-  #ifdef UNUSUAL_CELL_SIZE  // sizeof(Cell)*2 not sizeof(Stub)
+  #if UNUSUAL_CELL_SIZE  // sizeof(Cell)*2 not sizeof(Stub)
     DEF_POOL(sizeof(Cell) * 2, 16), // Pairings, PAR_POOL
   #endif
 
@@ -260,7 +260,7 @@ void Startup_Pools(REBINT scale)
         // A panic is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
         //
-      #if defined(DEBUG_MEMORY_ALIGN) || 1
+      #if DEBUG_MEMORY_ALIGNMENT || 1
         if (Mem_Pool_Spec[n].wide % sizeof(REBI64) != 0)
             panic ("memory pool width is not 64-bit aligned");
       #endif
@@ -603,7 +603,7 @@ void Free_Pairing(Value* paired) {
     Flex* s = cast(Flex*, paired);
     Free_Pooled(STUB_POOL, s);
 
-  #if defined(DEBUG_TRACK_EXTEND_CELLS)
+  #if DEBUG_TRACK_EXTEND_CELLS
     s->tick = TICK;  // update to be tick on which node was freed
   #endif
 }
@@ -1165,7 +1165,7 @@ void GC_Kill_Flex(Flex* s)
   #if !defined(NDEBUG)
     PG_Reb_Stats->Series_Freed++;
 
-    #if defined(DEBUG_COUNT_TICKS)
+    #if DEBUG_COUNT_TICKS
         s->tick = TG_Tick; // update to be tick on which series was freed
     #endif
   #endif

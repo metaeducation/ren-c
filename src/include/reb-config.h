@@ -309,107 +309,145 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 #endif
 
 
-// Initially the debug build switches were all (default) or nothing (-DNDEBUG)
-// but needed to be broken down into a finer-grained list.  This way, more
-// constrained systems (like emscripten) can build in just the features it
-// needs for a specific debug scenario.
+#if !defined(DEBUG_STDIO_OK)  // !!! TCC currently respecifying this, review
+    #define DEBUG_STDIO_OK  DEBUG
+#endif
+
+#if !defined(DEBUG_HAS_PROBE)
+    #define DEBUG_HAS_PROBE  DEBUG
+#endif
+
+#if !defined(DEBUG_MONITOR_STUB)
+    #define DEBUG_MONITOR_STUB  DEBUG
+#endif
+
+#if !defined(DEBUG_COUNT_TICKS)
+    #define DEBUG_COUNT_TICKS  DEBUG
+#endif
+
+#if !defined(DEBUG_FRAME_LABELS)
+    #define DEBUG_FRAME_LABELS  DEBUG
+#endif
+
+#if !defined(DEBUG_BALANCE_STATE)
+    #define DEBUG_BALANCE_STATE  DEBUG
+#endif
+
+
+#if !defined(DEBUG_CELL_READ_WRITE)
+   #define DEBUG_CELL_READ_WRITE  DEBUG
+#endif
+
+
+// !!! Checking the memory alignment is an important invariant but may be
+// overkill to run on all platforms at all times.  It requires the
+// DEBUG_CELL_READ_WRITE flag to be enabled, since it's the moment of
+// writing that is when the check has an opportunity to run.
 //
-// !!! Revisit a more organized way to inventory these settings and turn them
-// on and off as time permits.
+// !!! People using MLton to compile found that GCC 4.4.3 does not always
+// align doubles to 64-bit boundaries on Windows, even when -malign-double
+// is used.  It's a very old compiler, and may be a bug.  Disable align
+// checking for GCC 4 on Windows, hope it just means slower loads/stores.
 //
-#if !defined(NDEBUG)
-    #ifndef DEBUG_STDIO_OK // !!! TCC currently respecifying this, review
-        #define DEBUG_STDIO_OK
-    #endif
-
-    #define DEBUG_HAS_PROBE
-    #define DEBUG_MONITOR_FLEX
-    #define DEBUG_COUNT_TICKS
-    #define DEBUG_FRAME_LABELS
-    #define DEBUG_UNREADABLE_BLANKS
-    #define DEBUG_POISON_EXCESS_CAPACITY
-    #define DEBUG_BALANCE_STATE
-
-    // OUT_MARKED_STALE uses the same bit as ARG_MARKED_CHECKED.  But arg
-    // fulfillment uses END as the signal of when no evaluations are done,
-    // it doesn't need the stale bit.  The bit is cleared when evaluating in
-    // an arg slot in the debug build, to make it more rigorous to know that
-    // it was actually typechecked...vs just carrying the OUT_FLAG_STALE over.
-    //
-    #define DEBUG_STALE_ARGS
-
-    // !!! Checking the memory alignment is an important invariant but may be
-    // overkill to run on all platforms at all times.  It requires the
-    // DEBUG_CELL_WRITABILITY flag to be enabled, since it's the moment of
-    // writing that is when the check has an opportunity to run.
-    //
-    // !!! People using MLton to compile found that GCC 4.4.3 does not always
-    // align doubles to 64-bit boundaries on Windows, even when -malign-double
-    // is used.  It's a very old compiler, and may be a bug.  Disable align
-    // checking for GCC 4 on Windows, hope it just means slower loads/stores.
-    //
-    // https://stackoverflow.com/a/11110283/211160
-    //
+// https://stackoverflow.com/a/11110283/211160
+//
+#if !defined(DEBUG_MEMORY_ALIGNMENT)
   #ifdef __GNUC__
     #if !defined(TO_WINDOWS) || (__GNUC__ >= 5) // only  least version 5
-       #define DEBUG_MEMORY_ALIGN
+        #define DEBUG_MEMORY_ALIGNMENT  DEBUG
+    #else
+        #define DEBUG_MEMORY_ALIGNMENT  0
     #endif
   #else
-    #define DEBUG_MEMORY_ALIGN
+      #define DEBUG_MEMORY_ALIGNMENT  DEBUG
   #endif
-    #define DEBUG_CELL_WRITABILITY
+#endif
 
-    // Natives can be decorated with a RETURN: annotation, but this is not
-    // checked in the release build.  It's assumed they will only return the
-    // correct types.  This switch is used to panic() if they're wrong.
-    //
-    #define DEBUG_NATIVE_RETURNS
 
-    // This check is for making sure that an ANY-WORD! that has a binding has
-    // a spelling that matches the key it is bound to.  It was checked in
-    // Get_Context_Core() but is a slow check that hasn't really ever had a
-    // problem.  Disabling it for now, to improve debug build performance.
-  #if 0
-    #define DEBUG_BINDING_NAME_MATCH
+// Natives can be decorated with a RETURN: annotation, but this is not
+// checked in the release build.  It's assumed they will only return the
+// correct types.  This switch is used to panic() if they're wrong.
+//
+// !!! This does not appear to be used any longer (?
+//
+#if !defined(DEBUG_NATIVE_RETURNS)
+    #define DEBUG_NATIVE_RETURNS  DEBUG
+#endif
+
+// This check is for making sure that an ANY-WORD! that has a binding has
+// a spelling that matches the key it is bound to.  It was checked in
+// Get_Context_Core() but is a slow check that hasn't really ever had a
+// problem.  Disabling it for now, to improve debug build performance.
+//
+#if !defined(DEBUG_BINDING_NAME_MATCH)
+    #define DEBUG_BINDING_NAME_MATCH  0
+#endif
+
+
+#define DEBUG_EXPIRED_LOOKBACK  0
+
+
+// Due to using the `cast(...)` operator instead of a plain cast, the fact
+// that it goes through a helper template means that it can be hooked with
+// code in diagnostic builds.  This is taken advantage of by the build
+// setting DEBUG_CHECK_CASTS.
+//
+// Currently disable this by default unless you are using address sanitizer,
+// which is the build you'd be using if there were unexpected problems (and
+// you'd expect things to be slow anyway.)
+//
+#if !defined(DEBUG_CHECK_CASTS)
+  #if defined(__SANITIZE_ADDRESS__) && CPLUSPLUS_11
+    #define DEBUG_CHECK_CASTS  DEBUG
+  #else
+    #define DEBUG_CHECK_CASTS  0  // requires C++
   #endif
+  #define NO_DEBUG_CHECK_CASTS  (! DEBUG_CHECK_CASTS)
+#endif
 
-    // Cast checks in cast_Flex(), NOD(), cast_Array() are expensive--they make sure that
-    // when you have a void pointer and cast it to a Series, that the header
-    // actually is for a Series (etc.)  Disable this by default unless you are
-    // using address sanitizer, where you expect your executable to be slow.
-    //
-    #ifdef __SANITIZE_ADDRESS__
-      #if CPLUSPLUS_11
-        #define DEBUG_CHECK_CASTS
-      #endif
+#if DEBUG_CHECK_CASTS
+  #if (! CPLUSPLUS_11)
+    #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
+  #endif
+#endif
 
-        // Both Valgrind and Address Sanitizer can provide the call stack at
-        // the moment of allocation when a freed pointer is used.  This is
-        // exploited by Touch_Flex() to use a bogus allocation to help
-        // mark series origins that can later be used by `panic()`.  However,
-        // the feature is a waste if you're not using such tools.
-        //
-        // If you plan to use Valgrind with this, you'll have to set it
-        // explicitly...only Address Sanitizer can be detected here.
-        //
-        #define DEBUG_FLEX_ORIGINS
+
+// Both Valgrind and Address Sanitizer can provide the call stack at the moment
+// of allocation when a freed pointer is used.  Touch_Stub() uses a bogus
+// allocation to help mark Stub origins that can later be used by `panic()`.
+// But the feature is a waste if you're not using such tools.
+//
+// If you plan to use Valgrind with this, you'll have to set it explicitly...
+// only Address Sanitizer can be detected here.
+//
+#if !defined(DEBUG_STUB_ORIGINS)
+  #if defined(__SANITIZE_ADDRESS__)
+    #define DEBUG_STUB_ORIGINS  DEBUG
+  #else
+    #define DEBUG_STUB_ORIGINS  0
+  #endif
+#endif
+
+
+#if !defined(DEBUG_MEMORY_ALIGNMENT)
+    #if (! DEBUG_CELL_READ_WRITE)
+        #error "DEBUG_MEMORY_ALIGNMENT requires DEBUG_CELL_READ_WRITE"
+    #endif
+    #if (! DEBUG_STDIO_OK)
+        #error "DEBUG_MEMORY_ALIGNMENT requires DEBUG_STDIO_OK"
     #endif
 #endif
 
 
-#ifdef DEBUG_MEMORY_ALIGN
-    #if !defined(DEBUG_CELL_WRITABILITY)
-        #error "DEBUG_MEMORY_ALIGN requires DEBUG_CELL_WRITABILITY"
-    #endif
-    #if !defined(DEBUG_STDIO_OK)
-        #error "DEBUG_MEMORY_ALIGN requires DEBUG_STDIO_OK"
-    #endif
+#if !defined(DEBUG_TRACK_EXTEND_CELLS)
+    #define DEBUG_TRACK_EXTEND_CELLS 0
 #endif
 
-
-#ifdef DEBUG_TRACK_EXTEND_CELLS
-    #define DEBUG_TRACK_CELLS
-    #define UNUSUAL_CELL_SIZE  // sizeof(Cell)*2 may be > sizeof(Stub)
+#if DEBUG_TRACK_EXTEND_CELLS
+    #define UNUSUAL_CELL_SIZE 1  // sizeof(Cell)*2 may be > sizeof(Stub)
+#else
+    #define UNUSUAL_CELL_SIZE 0
 #endif
 
 // Option(TYPE*) is a poor-man's implementation of optionals that lets you

@@ -145,7 +145,7 @@
 // access the bytes despite being written via a `uintptr_t`, due to the strict
 // aliasing exemption for character types.
 
-#if !defined(DEBUG_CHECK_CASTS)  // use x_cast and throw away const knowledge
+#if NO_DEBUG_CHECK_CASTS  // use x_cast and throw away const knowledge
     #define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]
     #define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]
     #define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]

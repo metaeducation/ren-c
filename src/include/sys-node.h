@@ -102,7 +102,7 @@
 
 
 
-#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
 
     #define NOD(p) \
         cast(Node*, (p)) // NOD() just does a cast (maybe with added checks)
@@ -171,7 +171,7 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
 
     pool->free--;
 
-  #ifdef DEBUG_MEMORY_ALIGN
+  #if DEBUG_MEMORY_ALIGNMENT
     if (i_cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Node address %p not aligned to %d bytes\n",
@@ -197,7 +197,7 @@ INLINE void *Alloc_Pooled(REBLEN pool_id)
 //
 INLINE void Free_Pooled(REBLEN pool_id, void *p)
 {
-  #ifdef DEBUG_MONITOR_FLEX
+  #if DEBUG_MONITOR_STUB
     if (
         pool_id == STUB_POOL
         and not (cast(union HeaderUnion*, p)->bits & NODE_FLAG_CELL)

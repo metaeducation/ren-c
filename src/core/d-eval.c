@@ -49,7 +49,7 @@
 
 #include "sys-core.h"
 
-#if defined(DEBUG_COUNT_TICKS) && defined(DEBUG_HAS_PROBE)
+#if DEBUG_COUNT_TICKS && DEBUG_HAS_PROBE
 
 //
 //  Dump_Level_Location: C

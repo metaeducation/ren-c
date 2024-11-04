@@ -410,7 +410,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
 
     fprintf(stderr, " Flex");
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     fprintf(stderr, " was likely ");
     if (s->leader.bits & NODE_FLAG_UNREADABLE)
         fprintf(stderr, "freed");
@@ -426,7 +426,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
 
     fflush(stderr);
 
-  #if defined(DEBUG_FLEX_ORIGINS)
+  #if DEBUG_STUB_ORIGINS
     if (*s->guard == 1020) // should make valgrind or asan alert
         panic ("Flex guard didn't trigger ASAN/valgrind trap");
 
@@ -435,7 +435,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
         "either not a Flex Stub, or you're not running ASAN/Valgrind\n"
     );
   #else
-    panic ("Executable not built with DEBUG_FLEX_ORIGINS, no more info");
+    panic ("Executable not built with DEBUG_STUB_ORIGINS, no more info");
   #endif
 }
 

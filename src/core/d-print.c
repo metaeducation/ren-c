@@ -169,7 +169,7 @@ void Debug_String_No_Newline(const Byte *utf8, Size size)
     bool disabled = GC_Disabled;
     GC_Disabled = true;
 
-  #ifdef DEBUG_STDIO_OK
+  #if DEBUG_STDIO_OK
     printf("%.*s", cast(int, size), utf8); // https://stackoverflow.com/a/2239571
     fflush(stdout);
   #else

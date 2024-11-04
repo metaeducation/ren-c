@@ -127,7 +127,7 @@ typedef RebolValue Value;
 // To formalize this rule, these definitions will help catch uses of <stdio.h>
 // in the release build, and give a hopefully informative error.
 //
-#if defined(NDEBUG) && !defined(DEBUG_STDIO_OK)
+#if defined(NDEBUG) && (! DEBUG_STDIO_OK)
     #define printf dont_include_stdio_h
     #define fprintf dont_include_stdio_h
 #else
@@ -215,7 +215,7 @@ typedef RebolValue Value;
 // so instead kick into an infinite loop which can be broken and stepped out
 // of in the debugger.
 //
-#if !defined(NDEBUG) || defined(DEBUG_COUNT_TICKS)
+#if !defined(NDEBUG) || DEBUG_COUNT_TICKS
     #if defined(TO_HAIKU)
         INLINE int debug_break() {
             int x = 0;
@@ -262,7 +262,7 @@ typedef RebolValue Value;
 #define BREAK_ON_TICK(tick) \
     if (tick == TG_Tick) BREAK_NOW()
 
-#if defined(NDEBUG) || !defined(DEBUG_COUNT_TICKS)
+#if defined(NDEBUG) || (! DEBUG_COUNT_TICKS)
     #define SPORADICALLY(modulus) \
         false
 #else

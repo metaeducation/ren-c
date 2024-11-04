@@ -71,7 +71,7 @@
 // case the debug build was using printf() to output contextual information.
 //
 
-#if defined(DEBUG_HAS_PROBE)
+#if DEBUG_HAS_PROBE
     #if CPLUSPLUS_11
         template <typename T>
         T Probe_Cpp_Helper(T v, const char *file, int line) {
@@ -111,7 +111,7 @@
 // member of a value's payload.  It is also reported by panic().
 //
 
-#if defined(DEBUG_TRACK_EXTEND_CELLS)
+#if DEBUG_TRACK_EXTEND_CELLS
     #define Touch_Cell(c) \
         ((c)->touch = TICK)
 
@@ -247,7 +247,7 @@
 // (A fringe benefit is catching writes to other unanticipated locations.)
 //
 
-#if defined(DEBUG_CELL_WRITABILITY)
+#if DEBUG_CELL_READ_WRITE
     //
     // In the debug build, functions aren't inlined, and the overhead actually
     // adds up very quickly of getting the 3 parameters passed in.  Run the
@@ -323,7 +323,7 @@ INLINE Value* Reset_Cell_Header_Untracked(
 // for such central routines the overhead of passing 3 args is on the radar.
 // Run the risk of repeating macro args to speed up this critical check.
 //
-#ifdef DEBUG_MEMORY_ALIGN
+#if DEBUG_MEMORY_ALIGNMENT
     #define Assert_Cell_Aligned(c) \
       do { \
         STATIC_ASSERT_LVALUE(c);  /* evil macro, make sure used safely */ \
@@ -1182,7 +1182,7 @@ INLINE void Move_Value_Header(Cell* out, const Cell* v)
     out->header.bits &= CELL_MASK_PERSIST;
     out->header.bits |= v->header.bits & CELL_MASK_COPY;
 
-  #ifdef DEBUG_TRACK_EXTEND_CELLS
+  #if DEBUG_TRACK_EXTEND_CELLS
     out->file = v->file;
     out->line = v->line;
     out->tick = v->tick; // initialization tick

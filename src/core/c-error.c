@@ -234,7 +234,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 {
     Error* error;
 
-  #ifdef DEBUG_HAS_PROBE
+  #if DEBUG_HAS_PROBE
     //
     // This is set via an environment variable (e.g. R3_PROBE_FAILURES=1)
     // Helpful for debugging boot, before command line parameters are parsed.
@@ -1275,7 +1275,7 @@ Error* Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
 //
 VarList* Startup_Errors(const Value* boot_errors)
 {
-  #ifdef DEBUG_HAS_PROBE
+  #if DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
     if (env_probe_failures != nullptr and atoi(env_probe_failures) != 0) {
         printf(

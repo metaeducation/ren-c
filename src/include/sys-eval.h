@@ -129,7 +129,7 @@ INLINE void Push_Level_Core(Level* L)
     assert(not IN_DATA_STACK_DEBUG(L->out));
   #endif
 
-  #ifdef DEBUG_EXPIRED_LOOKBACK
+  #if DEBUG_EXPIRED_LOOKBACK
     f->stress = nullptr;
   #endif
 
@@ -172,7 +172,7 @@ INLINE void Push_Level_Core(Level* L)
     Corrupt_Pointer_If_Debug(L->u.defer.refine);
 
     Corrupt_Pointer_If_Debug(L->opt_label);
-  #if defined(DEBUG_FRAME_LABELS)
+  #if DEBUG_FRAME_LABELS
     Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif
 
@@ -212,7 +212,7 @@ INLINE void Push_Level_Core(Level* L)
         }
     }
 
-  #if defined(DEBUG_BALANCE_STATE)
+  #if DEBUG_BALANCE_STATE
     SNAP_STATE(&L->state); // to make sure stack balances, etc.
     L->state.stack_base = L->stack_base;
   #endif
@@ -521,7 +521,7 @@ INLINE void Fetch_Next_In_Level(
 ){
     assert(NOT_END(L->value)); // caller should test this first
 
-  #ifdef DEBUG_EXPIRED_LOOKBACK
+  #if DEBUG_EXPIRED_LOOKBACK
     if (f->stress) {
         Erase_Cell(f->stress);
         free(f->stress);
@@ -592,7 +592,7 @@ INLINE void Fetch_Next_In_Level(
         Set_Level_Detected_Fetch(opt_lookback, L, p);
     }
 
-  #ifdef DEBUG_EXPIRED_LOOKBACK
+  #if DEBUG_EXPIRED_LOOKBACK
     if (opt_lookback) {
         f->stress = cast(Cell*, malloc(sizeof(Cell)));
         memcpy(f->stress, *opt_lookback, sizeof(Cell));
@@ -663,7 +663,7 @@ pop:;
 
 
 INLINE void Drop_Level_Core(Level* L) {
-  #if defined(DEBUG_EXPIRED_LOOKBACK)
+  #if DEBUG_EXPIRED_LOOKBACK
     free(f->stress);
   #endif
 
@@ -679,7 +679,7 @@ INLINE void Drop_Level_Core(Level* L) {
 }
 
 INLINE void Drop_Level_Unbalanced(Level* L) {
-  #if defined(DEBUG_BALANCE_STATE)
+  #if DEBUG_BALANCE_STATE
     //
     // To avoid slowing down the debug build a lot, Eval_Core_Throws() doesn't
     // check this every cycle, just on drop.  But if it's hard to find which
@@ -1023,16 +1023,11 @@ INLINE REBIXO Eval_Va_Core(
     L->source->vaptr = vaptr;
     L->source->pending = END_NODE; // signal next fetch comes from va_list
 
-  #if defined(DEBUG_UNREADABLE_BLANKS)
-    //
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
     // but the previous L->value will be tested for NODE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
     L->value = Init_Unreadable(junk); // shows where garbage came from
-  #else
-    L->value = BLANK_VALUE; // less informative but faster to initialize
-  #endif
 
     if (opt_first)
         Set_Level_Detected_Fetch(nullptr, L, opt_first);
