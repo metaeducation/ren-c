@@ -71,7 +71,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* v) {
     assert(not Stringlike_Has_Node(v));
 
     if (EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 0)
-        fail (g_error_illegal_zero_byte);  // no '\0' codepoint exposed
+        fail (Cell_Error(g_error_illegal_zero_byte));  // no '\0' codepoint
 
     assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
 
