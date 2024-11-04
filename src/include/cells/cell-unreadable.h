@@ -55,8 +55,10 @@ INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
 }
 
 INLINE bool Is_Cell_Readable(const Cell* c) {
-    if (Is_Node_Readable(c))
+    if (Is_Node_Readable(c)) {
+        Assert_Cell_Readable(c);  // also needs NODE_FLAG_NODE, NODE_FLAG_CELL
         return true;
+    }
     assert((c->header.bits & CELL_MASK_UNREADABLE) == CELL_MASK_UNREADABLE);
     return false;
 }
