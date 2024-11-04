@@ -258,14 +258,31 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 #endif
 
 
+//=//// (#if RUNTIME_CHECKS) BETTER THAN (#ifndef NDEBUG) /////////////////=//
+//
 // NDEBUG is the variable that is either #defined or not by the C assert.h
 // convention.  The reason NDEBUG was used was because it was a weird name and
 // unlikely to compete with codebases that had their own DEBUG definition.
 //
-#if defined(NDEBUG)
-    #define DEBUG 0
-#else
-    #define DEBUG 1
+// In order to help with not confusing terminology with things related to
+// breakpoints of otherwise in the interpreter (debugger features), we call
+// it a "checked build" and not a "debug build".  The flags are CHECK_XXX
+// and not DEBUG_XXX for this reason, and RUNTIME_CHECKS is the general
+// flag to test with #if.
+//
+// NO_RUNTIME_CHECKS is defined as well, because:
+//
+//     #if !RUNTIME_CHECKS          // easy to miss the !
+//     #if (! RUNTIME_CHECKS)       // easier to see, but still obtuse
+//     #if not RUNTIME_CHECKS       // MSVC preprocessor doesn't allow
+//
+#if !defined(RUNTIME_CHECKS)
+    #if defined(NDEBUG)
+        #define RUNTIME_CHECKS 0
+    #else
+        #define RUNTIME_CHECKS 1
+    #endif
+    #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
 #endif
 
 
@@ -310,32 +327,32 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 
 
 #if !defined(DEBUG_STDIO_OK)  // !!! TCC currently respecifying this, review
-    #define DEBUG_STDIO_OK  DEBUG
+    #define DEBUG_STDIO_OK  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_HAS_PROBE)
-    #define DEBUG_HAS_PROBE  DEBUG
+    #define DEBUG_HAS_PROBE  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_MONITOR_STUB)
-    #define DEBUG_MONITOR_STUB  DEBUG
+    #define DEBUG_MONITOR_STUB  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_COUNT_TICKS)
-    #define DEBUG_COUNT_TICKS  DEBUG
+    #define DEBUG_COUNT_TICKS  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_FRAME_LABELS)
-    #define DEBUG_FRAME_LABELS  DEBUG
+    #define DEBUG_FRAME_LABELS  RUNTIME_CHECKS
 #endif
 
 #if !defined(DEBUG_BALANCE_STATE)
-    #define DEBUG_BALANCE_STATE  DEBUG
+    #define DEBUG_BALANCE_STATE  RUNTIME_CHECKS
 #endif
 
 
 #if !defined(DEBUG_CELL_READ_WRITE)
-   #define DEBUG_CELL_READ_WRITE  DEBUG
+   #define DEBUG_CELL_READ_WRITE  RUNTIME_CHECKS
 #endif
 
 
@@ -354,12 +371,12 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 #if !defined(DEBUG_MEMORY_ALIGNMENT)
   #ifdef __GNUC__
     #if !defined(TO_WINDOWS) || (__GNUC__ >= 5) // only  least version 5
-        #define DEBUG_MEMORY_ALIGNMENT  DEBUG
+        #define DEBUG_MEMORY_ALIGNMENT  RUNTIME_CHECKS
     #else
         #define DEBUG_MEMORY_ALIGNMENT  0
     #endif
   #else
-      #define DEBUG_MEMORY_ALIGNMENT  DEBUG
+      #define DEBUG_MEMORY_ALIGNMENT  RUNTIME_CHECKS
   #endif
 #endif
 
@@ -371,7 +388,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 // !!! This does not appear to be used any longer (?
 //
 #if !defined(DEBUG_NATIVE_RETURNS)
-    #define DEBUG_NATIVE_RETURNS  DEBUG
+    #define DEBUG_NATIVE_RETURNS  RUNTIME_CHECKS
 #endif
 
 // This check is for making sure that an ANY-WORD! that has a binding has
@@ -398,7 +415,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 //
 #if !defined(DEBUG_CHECK_CASTS)
   #if defined(__SANITIZE_ADDRESS__) && CPLUSPLUS_11
-    #define DEBUG_CHECK_CASTS  DEBUG
+    #define DEBUG_CHECK_CASTS  RUNTIME_CHECKS
   #else
     #define DEBUG_CHECK_CASTS  0  // requires C++
   #endif
@@ -423,7 +440,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 //
 #if !defined(DEBUG_STUB_ORIGINS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_STUB_ORIGINS  DEBUG
+    #define DEBUG_STUB_ORIGINS  RUNTIME_CHECKS
   #else
     #define DEBUG_STUB_ORIGINS  0
   #endif
@@ -457,12 +474,12 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 //
 #if !defined(DEBUG_CHECK_OPTIONALS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_OPTIONALS (DEBUG && CPLUSPLUS_11)
+    #define DEBUG_CHECK_OPTIONALS  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
-    #define DEBUG_CHECK_OPTIONALS 0
+    #define DEBUG_CHECK_OPTIONALS  0
   #endif
 #endif
 
 #if !defined(DEBUG_DTOA)
-    #define DEBUG_DTOA DEBUG
+    #define DEBUG_DTOA  RUNTIME_CHECKS
 #endif

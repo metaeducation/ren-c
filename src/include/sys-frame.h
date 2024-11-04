@@ -178,7 +178,7 @@ INLINE bool Is_Level_Gotten_Shoved(Level* L) {
 #define LVL_PHASE_OR_DUMMY(L) \
     L->rootvar->payload.any_context.phase
 
-#if defined(NDEBUG) or !defined(__cplusplus)
+#if NO_RUNTIME_CHECKS or !defined(__cplusplus)
     #define Level_Phase(L) \
         LVL_PHASE_OR_DUMMY(L)
 #else
@@ -213,7 +213,7 @@ INLINE bool Is_Level_Gotten_Shoved(Level* L) {
 #define Level_Args_Head(L) \
     ((L)->rootvar + 1)
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Level_Arg(L,n) \
         ((L)->rootvar + (n))
 #else
@@ -326,7 +326,7 @@ INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
 // Whether a refinement was used or not at time of call is also cached.
 //
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define PARAM(n,name) \
         static const int p_##name = n
 
@@ -507,7 +507,7 @@ INLINE void Push_Action(
     Cell* ultimate = Array_At(L->varlist, s->content.dynamic.rest - 1);
     TRACK(ultimate)->header = Endlike_Header(0); // unreadable
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Cell* prep = ultimate - 1;
     for (; prep > tail; --prep)
         Poison_Cell(prep);
@@ -603,7 +603,7 @@ INLINE void Drop_Action(Level* L) {
         )));
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (L->varlist) {
         assert(Not_Flex_Info(L->varlist, INACCESSIBLE));
         assert(Not_Node_Managed(L->varlist));

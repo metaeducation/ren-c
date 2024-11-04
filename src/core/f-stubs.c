@@ -313,7 +313,7 @@ Value* Init_Any_Series_At_Core(
             fail ("ANY-PATH! must have at least 2 elements");
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (Any_String(out)) {
         if (Flex_Wide(series) != 2)
             panic(series);
@@ -341,7 +341,7 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Extra_Init_Any_Context_Checks_Debug: C

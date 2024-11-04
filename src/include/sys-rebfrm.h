@@ -330,7 +330,7 @@ STATIC_ASSERT(DO_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(27)
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //=//// DO_FLAG_FINAL_DEBUG ///////////////////////////////////////////////=//
 //
@@ -764,7 +764,7 @@ struct LevelStruct {
 
    #if DEBUG_COUNT_TICKS
     //
-    // `tick` [DEBUG]
+    // `tick`
     //
     // The expression evaluation "tick" where the Level is starting its
     // processing.  This is helpful for setting breakpoints on certain ticks
@@ -775,7 +775,7 @@ struct LevelStruct {
 
   #if DEBUG_FRAME_LABELS
     //
-    // `label` [DEBUG]
+    // `label`
     //
     // Knowing the label symbol is not as handy as knowing the actual string
     // of the function this call represents (if any).  It is in UTF8 format,
@@ -784,9 +784,9 @@ struct LevelStruct {
     const char *label_utf8;
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
-    // `file` [DEBUG]
+    // `file`
     //
     // An emerging feature in the system is the ability to connect user-seen
     // series to a file and line number associated with their creation,
@@ -800,7 +800,7 @@ struct LevelStruct {
 
   #if DEBUG_BALANCE_STATE
     //
-    // `state` [DEBUG]
+    // `state`
     //
     // Debug reuses PUSH_TRAP's snapshotting to check for leaks at each stack
     // level.  It can also be made to use a more aggresive leak check at every

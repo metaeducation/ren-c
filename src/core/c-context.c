@@ -692,7 +692,7 @@ Array* Collect_Unique_Words_Managed(
             // number (overkill, but helps test binders).
             //
             if (not Try_Add_Binder_Index(&cl->binder, canon, -1)) {
-            #if !defined(NDEBUG)
+            #if RUNTIME_CHECKS
                 REBINT i = Get_Binder_Index_Else_0(&cl->binder, canon);
                 assert(i < 0);
                 Remove_Binder_Index_Else_0(&cl->binder, canon);
@@ -724,7 +724,7 @@ Array* Collect_Unique_Words_Managed(
             assert(Any_Word(item));
             Symbol* canon = VAL_WORD_CANON(item);
 
-        #if !defined(NDEBUG)
+        #if RUNTIME_CHECKS
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, canon);
             assert(i < 0);
             if (i != -1) {
@@ -883,7 +883,7 @@ VarList* Make_Selfish_Context_Detect_Managed(
 
     ASSERT_CONTEXT(context);
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     PG_Reb_Stats->Objects++;
 #endif
 
@@ -1381,7 +1381,7 @@ void Shutdown_Collector(void)
 }
 
 
-#ifndef NDEBUG
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Context_Core: C

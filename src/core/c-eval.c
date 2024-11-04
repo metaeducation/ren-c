@@ -98,7 +98,7 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     #define START_NEW_EXPRESSION_MAY_THROW(L,g) \
         Eval_Core_Expression_Checks_Debug(L); \
         if (Start_New_Expression_Throws(L)) \
@@ -364,7 +364,7 @@ INLINE void Expire_Out_Cell_Unless_Invisible(Level* L) {
     if (GET_ACT_FLAG(L->original, ACTION_INVISIBLE))
         return;
 
-  #if DEBUG
+  #if RUNTIME_CHECKS
     //
     // The L->out slot should be initialized well enough for GC safety.
     // But in the debug build, if we're not running an invisible function
@@ -798,7 +798,7 @@ bool Eval_Core_Throws(Level* const L)
 
       process_action:; // Note: Also jumped to by the redo_checked code
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         assert(L->original); // set by Begin_Action()
         Do_Process_Action_Checks_Debug(L);
       #endif
@@ -1668,7 +1668,7 @@ bool Eval_Core_Throws(Level* const L)
         // function composition is a CASCADE, the cascaded functions are still
         // pending on the stack to be run.
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         Do_After_Action_Checks_Debug(L);
       #endif
 
@@ -2483,7 +2483,7 @@ bool Eval_Core_Throws(Level* const L)
     if (not (L->flags.bits & DO_FLAG_PRESERVE_STALE))
         Clear_Cell_Flag(L->out, OUT_MARKED_STALE);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Eval_Core_Exit_Checks_Debug(L); // will get called unless a fail() longjmps
   #endif
 

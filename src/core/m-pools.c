@@ -105,7 +105,7 @@ void *Alloc_Mem(size_t size)
     // "overkill" for this operation.  Yet the current implementations on all
     // C platforms use malloc() and free() anyway.
 
-  #ifdef NDEBUG
+  #if NO_RUNTIME_CHECKS
     void *p = malloc(size);
   #else
     // Cache size at the head of the allocation in debug builds for checking.
@@ -145,7 +145,7 @@ void *Alloc_Mem(size_t size)
 //
 void Free_Mem(void *mem, size_t size)
 {
-  #ifdef NDEBUG
+  #if NO_RUNTIME_CHECKS
     free(mem);
   #else
     assert(mem != nullptr);
@@ -223,7 +223,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 //
 void Startup_Pools(REBINT scale)
 {
-  #ifndef NDEBUG
+  #if RUNTIME_CHECKS
     const char *env_always_malloc = getenv("R3_ALWAYS_MALLOC");
     if (env_always_malloc and atoi(env_always_malloc) != 0)
         PG_Always_Malloc = true;
@@ -288,7 +288,7 @@ void Startup_Pools(REBINT scale)
     // !!! Revisit where series init/shutdown goes when the code is more
     // organized to have some of the logic not in the pools file
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     PG_Reb_Stats = ALLOC(REB_STATS);
   #endif
 
@@ -319,7 +319,7 @@ void Shutdown_Pools(void)
     //
     GC_Kill_Flex(GC_Manuals);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     REBSEG *debug_seg = Mem_Pools[STUB_POOL].segs;
     for(; debug_seg != nullptr; debug_seg = debug_seg->next) {
         Flex* series = cast(Flex*, debug_seg + 1);
@@ -356,11 +356,11 @@ void Shutdown_Pools(void)
     // !!! Revisit location (just has to be after all series are freed)
     FREE_N(Flex*, MAX_EXPAND_LIST, Prior_Expand);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     FREE(REB_STATS, PG_Reb_Stats);
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (PG_Mem_Usage != 0) {
         //
         // If using valgrind or address sanitizer, they can present more
@@ -449,7 +449,7 @@ void Fill_Pool(REBPOL *pool)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Try_Find_Containing_Node_Debug: C
@@ -719,7 +719,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
         s->content.dynamic.rest += delta;
         Subtract_Flex_Bias(s, delta);
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (Is_Flex_Array(s)) {
             //
             // When the bias region was marked, it was made "unsettable" if
@@ -766,7 +766,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
 
         Term_Flex(s);
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (Is_Flex_Array(s)) {
             //
             // The opened up area needs to be set to "settable" trash in the
@@ -793,7 +793,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
     if (Get_Flex_Flag(s, FIXED_SIZE))
         fail (Error_Locked_Series_Raw());
 
-  #ifndef NDEBUG
+  #if RUNTIME_CHECKS
     if (Reb_Opts->watch_expand) {
         printf(
             "Expand %p wide: %d tail: %d delta: %d\n",
@@ -820,7 +820,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
             n_available = n_found;
     }
 
-  #ifndef NDEBUG
+  #if RUNTIME_CHECKS
     if (Reb_Opts->watch_expand) {
         // Print_Num("Expand:", series->tail + delta + 1);
     }
@@ -892,7 +892,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
         Free_Unbiased_Flex_Data(data_old - (wide * bias_old), size_old);
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     PG_Reb_Stats->Series_Expanded++;
   #endif
 
@@ -966,7 +966,7 @@ void Remake_Flex(Flex* s, REBLEN units, Byte wide, Flags flags)
     REBLEN len_old = Flex_Len(s);
     Byte wide_old = Flex_Wide(s);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (preserve)
         assert(wide == wide_old); // can't change width if preserving
   #endif
@@ -1140,7 +1140,7 @@ void Decay_Flex(Flex* s)
 //
 void GC_Kill_Flex(Flex* s)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (Not_Node_Readable(s)) {
         printf("Freeing already freed node.\n");
         panic (s);
@@ -1150,7 +1150,7 @@ void GC_Kill_Flex(Flex* s)
     if (Not_Flex_Info(s, INACCESSIBLE))
         Decay_Flex(s);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     s->info.bits = FLAG_WIDE_BYTE_OR_0(77); // corrupt Flex_Wide()
   #endif
 
@@ -1162,7 +1162,7 @@ void GC_Kill_Flex(Flex* s)
     // GC may no longer be necessary:
     if (GC_Ballast > 0) CLR_SIGNAL(SIG_RECYCLE);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     PG_Reb_Stats->Series_Freed++;
 
     #if DEBUG_COUNT_TICKS
@@ -1189,7 +1189,7 @@ INLINE void Untrack_Manual_Flex(Flex* s)
         //
         Flex* *current_ptr = last_ptr - 1;
         while (*current_ptr != s) {
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             if (
                 current_ptr
                 <= cast(Flex**, GC_Manuals->content.dynamic.data)
@@ -1216,7 +1216,7 @@ INLINE void Untrack_Manual_Flex(Flex* s)
 //
 void Free_Unmanaged_Flex(Flex* s)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (Not_Node_Readable(s)) {
         printf("Trying to Free_Unmanaged_Flex() on already freed Flex\n");
         panic (s); // erroring here helps not conflate with tracking problems
@@ -1252,7 +1252,7 @@ void Free_Unmanaged_Flex(Flex* s)
 //
 void Manage_Flex(Flex* s)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (Is_Flex_Managed(s)) {
         printf("Attempt to manage already managed series\n");
         panic (s);
@@ -1265,7 +1265,7 @@ void Manage_Flex(Flex* s)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Pointer_Detection_Working: C

@@ -568,7 +568,7 @@ INLINE void Unrecognized_Key_Sequence(const unsigned char* cp)
 {
     UNUSED(cp);
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     WRITE_STR("[KEY?]");
 #endif
 }
@@ -793,7 +793,7 @@ restart:;
 
             switch (*cp) {
               case 'H':   // !!! "home" (in what standard??)
-              #if !defined(NDEBUG)
+              #if RUNTIME_CHECKS
                 rebJumps(
                     "FAIL {ESC H: please report your system info}"
                 );
@@ -802,7 +802,7 @@ restart:;
                 break;
 
               case 'F':   // !!! "end" (in what standard??)
-              #if !defined(NDEBUG)
+              #if RUNTIME_CHECKS
                 rebJumps(
                     "FAIL {ESC F: please report your system info}"
                 );

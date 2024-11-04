@@ -40,7 +40,7 @@ PVAR REBINT PG_Boot_Level;  // User specified startup level
 // reasons; note this has been true of things like Windows NT where there were
 // indeed "checked" builds given to those who had such interest.)
 //
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     PVAR REB_STATS *PG_Reb_Stats;
 #endif
 
@@ -58,7 +58,7 @@ PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 PVAR Flex* PG_Symbol_Canons;  // Canon symbol pointers for words in %words.r
 PVAR Flex* PG_Canons_By_Hash;  // Canon symbol pointers indexed by hash
 PVAR REBLEN PG_Num_Canon_Slots_In_Use;  // Total canon hash slots (+ deleteds)
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     PVAR REBLEN PG_Num_Canon_Deleteds;  // Deleted canon hash slots "in use"
 #endif
 
@@ -80,7 +80,7 @@ PVAR REB_OPTS *Reb_Opts;
     PVAR bool PG_Probe_Failures; // helpful especially for boot errors & panics
 #endif
 
-#ifndef NDEBUG
+#if RUNTIME_CHECKS
     PVAR bool PG_Always_Malloc;   // For memory-related troubleshooting
 #endif
 
@@ -195,7 +195,7 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
     TVAR Tick TG_Break_At_Tick; // runtime break tick set by C-DEBUG_BREAK
 #endif
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     TVAR intptr_t TG_Num_Black_Flex;
 #endif
 
@@ -226,7 +226,7 @@ TVAR Value* DS_Movable_Tail;
 
 TVAR struct Reb_State *Saved_State; // Saved state for Catch (CPU state, etc.)
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     TVAR bool TG_Pushing_Mold; // Push_Mold should not directly recurse
 #endif
 

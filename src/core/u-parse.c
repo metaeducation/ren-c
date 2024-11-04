@@ -256,7 +256,7 @@ static bool Subparse_Throws(
     //
     Init_Nulled(Erase_Cell(Level_Args_Head(L) + 2));
 
-  #if defined(NDEBUG)
+  #if NO_RUNTIME_CHECKS
     assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 3); // elides RETURN:
   #else
     assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 4); // checks RETURN:
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(subparse)
 
     assert(IS_END(P_OUT)); // invariant provided by evaluator
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // These parse state variables live in chunk-stack REBVARs, which can be
     // annoying to find to inspect in the debugger.  This makes pointers into

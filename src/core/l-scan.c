@@ -2507,7 +2507,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             // could load some kind of erroring function value)
             //
             switch (id) {
-            #if !defined(NDEBUG)
+            #if RUNTIME_CHECKS
               case SYM_NONE:
                 // Should be under a LEGACY flag...
                 Init_Blank(PUSH());

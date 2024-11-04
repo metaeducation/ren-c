@@ -287,7 +287,7 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     Begin_Non_Lexical_Mold(mo, v);  // #[typeset! or make typeset!
     Append_Codepoint(mo->utf8flex, '[');
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     Symbol* symbol = Key_Symbol(v);
     if (symbol == nullptr) {
         //
@@ -330,7 +330,7 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     }
     Trim_Tail(mo->utf8flex, ' ');
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 skip_types:
 #endif
 

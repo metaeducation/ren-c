@@ -162,7 +162,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     uintptr_t header_bits = 0;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // Debug builds go ahead and include a RETURN field and hang onto the
     // typeset for fake returns (e.g. natives).
@@ -1286,7 +1286,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // it...hence the series must be read only to keep modifying a view
     // that seems to have one identity but then affecting another.
     //
-  #if defined(NDEBUG)
+  #if NO_RUNTIME_CHECKS
     Deep_Freeze_Array(Cell_Array(body));
   #else
     if (not LEGACY(OPTIONS_UNLOCKED_SOURCE))

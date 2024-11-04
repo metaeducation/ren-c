@@ -306,7 +306,7 @@ INLINE Value* Init_Action_Unbound(
     Cell* out,
     REBACT *a
 ){
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Extra_Init_Action_Checks_Debug(a);
   #endif
     Force_Flex_Managed(ACT_PARAMLIST(a));
@@ -320,7 +320,7 @@ INLINE Value* Init_Action_Maybe_Bound(
     REBACT *a,
     Stub* binding // allowed to be UNBOUND
 ){
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Extra_Init_Action_Checks_Debug(a);
   #endif
     Force_Flex_Managed(ACT_PARAMLIST(a));

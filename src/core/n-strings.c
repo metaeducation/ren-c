@@ -569,7 +569,7 @@ DECLARE_NATIVE(enhex)
     //
     // Everything but: A-Z a-z 0-9 - . _ ~ : / ? # [ ] @ ! $ & ' ( ) * + , ; =
     //
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     const char *no_encode =
         "ABCDEFGHIJKLKMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" \
             "-._~:/?#[]@!$&'()*+,;=";
@@ -672,7 +672,7 @@ DECLARE_NATIVE(enhex)
             }
 
         leave_as_is:;
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             assert(strchr(no_encode, c) != nullptr);
           #endif
             *dp++ = c;
@@ -680,7 +680,7 @@ DECLARE_NATIVE(enhex)
         }
 
     needs_encoding:;
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (c < 0x80)
            assert(strchr(no_encode, c) == nullptr);
       #endif

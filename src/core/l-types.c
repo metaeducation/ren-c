@@ -125,7 +125,7 @@ DECLARE_NATIVE(make)
     else
         kind = VAL_TYPE(type);
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     if (Is_Event(type)) {
         //
         // !!! It seems that EVENTs had some kind of inheritance mechanism, by

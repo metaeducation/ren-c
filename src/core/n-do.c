@@ -266,7 +266,7 @@ DECLARE_NATIVE(do)
     INCLUDE_PARAMS_OF_DO;
 
     Value* source = ARG(source); // may be only GC reference, don't lose it!
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 
@@ -360,7 +360,7 @@ DECLARE_NATIVE(evaluate)
     INCLUDE_PARAMS_OF_EVALUATE;
 
     Value* source = ARG(source); // may be only GC reference, don't lose it!
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 

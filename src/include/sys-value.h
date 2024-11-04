@@ -84,7 +84,7 @@
         #define PROBE(v) \
             Probe_Core_Debug((v), __FILE__, __LINE__) // just returns void* :(
     #endif
-#elif !defined(NDEBUG) // don't cause compile time error on PROBE()
+#elif RUNTIME_CHECKS  // don't cause compile time error on PROBE()
     #define PROBE(v) \
         do { \
             printf("DEBUG_HAS_PROBE disabled %s %d\n", __FILE__, __LINE__); \
@@ -159,7 +159,7 @@
 #define FLAGIT_KIND(t) \
     (cast(REBU64, 1) << (t)) // makes a 64-bit bitflag
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define VAL_TYPE(v) \
         VAL_TYPE_RAW(v)
 #else
@@ -802,7 +802,7 @@ INLINE Value* Init_Char(Cell* out, Ucs2Unit uni) {
 // for these cases.
 //
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
     #define VAL_INT64(v) \
         ((v)->payload.integer)
 #else
@@ -863,7 +863,7 @@ INLINE Byte VAL_UINT8(const Cell* v) {
 // FLOAT! which may be a good idea.
 //
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
     #define VAL_DECIMAL(v) \
         ((v)->payload.decimal)
 #else
@@ -1147,7 +1147,7 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
 
     v->extra.binding = binding;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (not binding)
         return; // e.g. UNBOUND
 

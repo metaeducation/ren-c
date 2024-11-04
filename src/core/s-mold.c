@@ -438,7 +438,7 @@ void MF_Fail(Molder* mo, const Cell* v, bool form)
         // REB_0 is reserved for special purposes, and should only be molded
         // in debug scenarios.
         //
-    #if defined(NDEBUG)
+    #if NO_RUNTIME_CHECKS
         UNUSED(mo);
         panic (v);
     #else
@@ -492,7 +492,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
         // wastefully, so short circuit here in the release build.  (Have
         // the debug build keep going to exercise mold on the data.)
         //
-    #ifdef NDEBUG
+    #if NO_RUNTIME_CHECKS
         if (Flex_Len(s) >= mo->limit)
             return;
     #endif
@@ -506,7 +506,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
         // debug_break() here would be very annoying (the method used for
         // REB_0 items)
         //
-    #ifdef NDEBUG
+    #if NO_RUNTIME_CHECKS
         panic (v);
     #else
         printf("!!! Request to MOLD or FORM a NULL !!!\n");
@@ -646,7 +646,7 @@ String* Form_Tight_Block(const Value* blk)
 //
 void Push_Mold(Molder* mo)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // If some kind of Debug_Fmt() happens while this Push_Mold is happening,
     // it will lead to a recursion.  It's necessary to look at the stack in
@@ -707,7 +707,7 @@ void Push_Mold(Molder* mo)
 
     mo->digits = MAX_DIGITS;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     TG_Pushing_Mold = false;
   #endif
 }

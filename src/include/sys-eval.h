@@ -142,7 +142,7 @@ INLINE void Push_Level_Core(Level* L)
     // accessible by user code), it's not legal to write directly into an
     // argument slot.  :-/
     //
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Level* L_temp = TOP_LEVEL;
     for (; L_temp != BOTTOM_LEVEL; L_temp = L_temp->prior) {
         if (not Is_Action_Level(L_temp))
@@ -176,7 +176,7 @@ INLINE void Push_Level_Core(Level* L)
     Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // !!! TBD: the relevant file/line update when L->source->array changes
     //
@@ -818,7 +818,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     // call, and no one should be able to read it until then (e.g. the caller
     // can't be a variadic frame that is executing yet)
     //
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Corrupt_Pointer_If_Debug(higher->gotten);
     REBLEN old_index = higher->source->index;
   #endif
@@ -1097,10 +1097,12 @@ INLINE bool Eval_Value_Core_Throws(
 INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
     assert(not THROWN(r)); // only L->out can return thrown cells
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (Not_Node_Root_Bit_Set(r)) {
         printf("dispatcher returned non-API value not in OUT\n");
+      #if DEBUG_FRAME_LABELS
         printf("during ACTION!: %s\n", L->label_utf8);
+      #endif
         printf("`return OUT;` or use `RETURN (non_api_cell);`\n");
         panic(r);
     }

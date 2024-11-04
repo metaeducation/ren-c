@@ -230,7 +230,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 // easily, so sync with %rebser.h or %rebval.h if they do...and double check
 // against the FLAG_BIT_LEFT(xx) numbers if anything seems fishy.
 //
-#if !defined(NDEBUG) && GCC_VERSION_AT_LEAST(7, 0) && ENDIAN_LITTLE
+#if RUNTIME_CHECKS && GCC_VERSION_AT_LEAST(7, 0) && ENDIAN_LITTLE
     struct Reb_Series_Header_Pun {
         int _07_cell_always_false:1;
         int _06_stack:1;
@@ -345,7 +345,7 @@ union HeaderUnion {
     //
     uintptr_t bits;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     char bytes_pun[4];
 
     #if GCC_VERSION_AT_LEAST(7, 0) && ENDIAN_LITTLE

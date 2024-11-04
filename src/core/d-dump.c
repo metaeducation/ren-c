@@ -46,7 +46,7 @@
 
 #include "sys-core.h"
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -306,7 +306,7 @@ DECLARE_NATIVE(dump)
 {
     INCLUDE_PARAMS_OF_DUMP;
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     UNUSED(ARG(value));
     fail (Error_Debug_Only_Raw());
 #else

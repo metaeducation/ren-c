@@ -151,7 +151,7 @@ static void Expand_Word_Table(void)
 
         if (canon == DELETED_CANON) { // clean out any deleted canon entries
             --PG_Num_Canon_Slots_In_Use;
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             --PG_Num_Canon_Deleteds; // keep track for shutdown assert
           #endif
             continue;
@@ -291,7 +291,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
     if (not canon) { // no canon found, so this interning must become canon
         if (deleted_slot) {
             *deleted_slot = intern; // reuse the deleted slot
-          #if !defined(NDEBUG)
+          #if RUNTIME_CHECKS
             --PG_Num_Canon_Deleteds; // note slot "usage" count stays constant
           #endif
         }
@@ -330,7 +330,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         SET_SECOND_UINT16(&intern->leader, Symbol_Id(canon));
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     uint16_t sym_canon = cast(uint16_t, Symbol_Id(Canon_Symbol(intern)));
     uint16_t sym = cast(uint16_t, Symbol_Id(intern));
     assert(sym == sym_canon); // C++ build disallows compare w/o cast
@@ -420,7 +420,7 @@ void GC_Kill_Interning(Symbol* intern)
         //
         canons_by_hash[previous_slot] = DELETED_CANON;
 
-    #if !defined(NDEBUG)
+    #if RUNTIME_CHECKS
         ++PG_Num_Canon_Deleteds; // total use same (PG_Num_Canons_Or_Deleteds)
     #endif
     }
@@ -463,7 +463,7 @@ REBINT Compare_Word(const Cell* s, const Cell* t, bool strict)
 void Startup_Interning(void)
 {
     PG_Num_Canon_Slots_In_Use = 0;
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     PG_Num_Canon_Deleteds = 0;
 #endif
 
@@ -479,7 +479,7 @@ void Startup_Interning(void)
     // R3-Alpha used a heuristic of 4 times as big as the number of words.
 
     REBLEN n;
-#if defined(NDEBUG)
+#if NO_RUNTIME_CHECKS
     n = Get_Hash_Prime(WORD_TABLE_SIZE * 4); // extra reduces rehashing
 #else
     n = 1; // forces exercise of rehashing logic in debug build
@@ -580,7 +580,7 @@ void Shutdown_Symbols(void)
 //
 void Shutdown_Interning(void)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (PG_Num_Canon_Slots_In_Use - PG_Num_Canon_Deleteds != 0) {
         //
         // !!! There needs to be a more user-friendly output for this,
@@ -609,7 +609,7 @@ void Shutdown_Interning(void)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  INIT_WORD_INDEX_Extra_Checks_Debug: C

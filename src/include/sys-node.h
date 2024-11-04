@@ -214,7 +214,7 @@ INLINE void Free_Pooled(REBLEN pool_id, void *p)
 
     REBPOL *pool = &Mem_Pools[pool_id];
 
-  #ifdef NDEBUG
+  #if NO_RUNTIME_CHECKS
     unit->next_if_free = pool->first;
     pool->first = unit;
   #else

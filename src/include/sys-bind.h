@@ -51,7 +51,7 @@
 //
 
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define SPC(p) \
         cast(Specifier*, (p))  // makes UNBOUND look like SPECIFIED
 
@@ -156,7 +156,7 @@ enum {
 
 struct Reb_Binder {
     VarList* context;
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     REBLEN count;
   #endif
 
@@ -176,7 +176,7 @@ struct Reb_Binder {
 INLINE void INIT_BINDER(struct Reb_Binder *binder, VarList* context) {
     binder->context = context;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     binder->count = 0;
 
     #if CPLUSPLUS_11
@@ -187,7 +187,7 @@ INLINE void INIT_BINDER(struct Reb_Binder *binder, VarList* context) {
 
 
 INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     assert(binder->count == 0);
 
     #if CPLUSPLUS_11
@@ -218,7 +218,7 @@ INLINE bool Try_Add_Binder_Index(
         return false;
     MISC(canon).bind_index.other = index;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     ++binder->count;
   #endif
     return true;
@@ -263,7 +263,7 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
         return 0;
     MISC(canon).bind_index.other = 0;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     assert(binder->count > 0);
     --binder->count;
   #endif
@@ -416,7 +416,7 @@ INLINE VarList* Get_Var_Context(
         // find the right function call on the stack (if any) for the word to
         // refer to (the FRAME!)
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (specifier == SPECIFIED) {
             printf("Get_Context_Core on relative value without specifier\n");
             panic (any_word);
@@ -572,7 +572,7 @@ INLINE Value* Derelativize(
 
         assert(Any_Word(v) or Any_List(v));
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (not specifier) {
             printf("Relative item used with SPECIFIED\n");
             panic (v);

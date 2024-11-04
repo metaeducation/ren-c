@@ -203,7 +203,7 @@ unsigned char *Compress_Alloc_Core(
     if (out_len)
         *out_len = strm.total_out;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // GZIP contains a 32-bit length of the uncompressed data (modulo 2^32),
     // at the tail of the compressed data.  Sanity check that it's right.

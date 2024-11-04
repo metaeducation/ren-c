@@ -155,7 +155,7 @@ Binary* Temp_UTF8_At_Managed(
     const Cell* str,
     REBLEN length_limit
 ){
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     if (not Any_String(str)) {
         printf("Temp_UTF8_At_Managed() called on non-ANY-STRING!");
         panic (str);

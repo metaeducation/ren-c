@@ -341,7 +341,7 @@ REBLEN Find_Str_Str(Flex* ser1, REBLEN head, REBLEN index, REBLEN tail, REBINT s
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Find_Str_Char_Old: C
@@ -582,7 +582,7 @@ REBLEN Find_Str_Char(
 
 return_not_found:
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     assert(NOT_FOUND == Find_Str_Char_Old(
         series, lowest, index_orig, highest, skip, uni, flags
     ));
@@ -591,7 +591,7 @@ return_not_found:
 
 return_index:
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     assert(cast(REBLEN, index) == Find_Str_Char_Old(
         series, lowest, index_orig, highest, skip, uni, flags
     ));

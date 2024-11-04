@@ -164,7 +164,7 @@ DECLARE_NATIVE(recycle)
     REBLEN count;
 
     if (REF(verbose)) {
-      #if defined(NDEBUG)
+      #if NO_RUNTIME_CHECKS
         fail (Error_Debug_Only_Raw());
       #else
         Flex* sweeplist = Make_Flex(100, sizeof(Node*));
@@ -189,7 +189,7 @@ DECLARE_NATIVE(recycle)
     }
 
     if (REF(watch)) {
-      #if defined(NDEBUG)
+      #if NO_RUNTIME_CHECKS
         fail (Error_Debug_Only_Raw());
       #else
         // There might should be some kind of generic way to set these kinds
@@ -224,7 +224,7 @@ DECLARE_NATIVE(check)
 {
     INCLUDE_PARAMS_OF_CHECK;
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     UNUSED(ARG(value));
 
     fail (Error_Debug_Only_Raw());
@@ -300,7 +300,7 @@ DECLARE_NATIVE(c_debug_break_at)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK_AT;
 
-  #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
+  #if RUNTIME_CHECKS && DEBUG_COUNT_TICKS
     if (REF(compensate)) {
         //
         // Imagine two runs of Rebol console initialization.  In the first,
@@ -366,7 +366,7 @@ DECLARE_NATIVE(c_debug_break)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
-  #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
+  #if RUNTIME_CHECKS && DEBUG_COUNT_TICKS
     //
     // For instance with:
     //

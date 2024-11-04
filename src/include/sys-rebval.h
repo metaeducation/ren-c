@@ -232,7 +232,7 @@
 
 #define TYPE_SPECIFIC_BIT (24)
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define FLAG_TYPE_SPECIFIC_BIT(n) \
         FLAG_LEFT_BIT(TYPE_SPECIFIC_BIT + (n))
 #else
@@ -780,7 +780,7 @@ union Reb_Value_Payload {
 
     struct Reb_Value : public Reb_Relative_Value
     {
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         Reb_Value () = default;
         ~Reb_Value () {
             assert(this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL));

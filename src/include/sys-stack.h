@@ -77,7 +77,7 @@ INLINE Value* Data_Stack_At(StackIndex i) {
     return at;
 }
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     #define IN_DATA_STACK_DEBUG(v) \
         IS_VALUE_IN_ARRAY_DEBUG(DS_Array, (v))
 #endif
@@ -106,7 +106,7 @@ INLINE Value* PUSH() {
     if (DS_Movable_Top == DS_Movable_Tail)
         Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     assert(Is_Cell_Poisoned(DS_Movable_Top));
   #endif
 
@@ -123,7 +123,7 @@ INLINE Value* PUSH() {
 // only END marker will be the one indicating the tail of the stack.
 //
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define DROP() \
         (--DS_Index, --DS_Movable_Top)
 

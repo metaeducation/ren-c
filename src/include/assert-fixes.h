@@ -1,4 +1,4 @@
-#if !defined(NDEBUG) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 23))
+#if RUNTIME_CHECKS && defined(__GLIBC__) && defined(__GLIBC_MINOR__) && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 23))
 
 // fix bug https://sourceware.org/bugzilla/show_bug.cgi?id=18604
 #undef assert

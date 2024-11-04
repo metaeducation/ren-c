@@ -69,7 +69,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     //
     GC_Disabled = true;
 
-  #if defined(NDEBUG)
+  #if NO_RUNTIME_CHECKS
     UNUSED(tick);
     UNUSED(file);
     UNUSED(line);
@@ -101,7 +101,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     title[0] = '\0';
     buf[0] = '\0';
 
-  #if !defined(NDEBUG) && 0
+  #if RUNTIME_CHECKS && 0
     //
     // These are currently disabled, because they generate too much junk.
     // Address Sanitizer gives a reasonable idea of the stack.
@@ -110,7 +110,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     Dump_Stack(TOP_LEVEL, 0);
   #endif
 
-  #if !defined(NDEBUG) && defined(HAVE_EXECINFO_AVAILABLE)
+  #if RUNTIME_CHECKS && defined(HAVE_EXECINFO_AVAILABLE)
     //
     // Backtrace is a GNU extension.  There should be a way to turn this on
     // or off, as it will be redundant with a valgrind or address sanitizer
@@ -152,7 +152,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
     case DETECTED_AS_STUB: {
         Flex* s = m_cast(Flex*, cast(const Flex*, p)); // don't mutate
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         #if 0
             //
             // It can sometimes be useful to probe here if the series is
@@ -178,7 +178,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break; }
 
     case DETECTED_AS_FREE:
-      #if defined(NDEBUG)
+      #if NO_RUNTIME_CHECKS
         strncat(buf, "freed series", PANIC_BUF_SIZE - strlen(buf));
       #else
         Panic_Flex_Debug(m_cast(Flex*, cast(const Flex*, p)));
@@ -188,7 +188,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     case DETECTED_AS_CELL:
     case DETECTED_AS_END: {
         const Value* v = cast(const Value*, p);
-      #if defined(NDEBUG)
+      #if NO_RUNTIME_CHECKS
         UNUSED(v);
         strncat(buf, "value", PANIC_BUF_SIZE - strlen(buf));
       #else
@@ -201,7 +201,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break; }
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // In a debug build, we'd like to try and cause a break so as not to lose
     // the state of the panic, which would happen if we called out to the

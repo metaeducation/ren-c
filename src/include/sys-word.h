@@ -89,7 +89,7 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
 }
 
 INLINE void INIT_WORD_INDEX(Cell* v, REBLEN i) {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     INIT_WORD_INDEX_Extra_Checks_Debug(v, i); // not inline, needs Level_Phase()
   #endif
     v->payload.any_word.index = cast(REBINT, i);
@@ -104,7 +104,7 @@ INLINE REBLEN VAL_WORD_INDEX(const Cell* v) {
 
 INLINE void Unbind_Any_Word(Cell* v) {
     INIT_BINDING(v, UNBOUND);
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     v->payload.any_word.index = 0;
 #endif
 }
@@ -117,7 +117,7 @@ INLINE Value* Init_Any_Word(
     RESET_CELL(out, kind);
     out->payload.any_word.symbol = symbol;
     INIT_BINDING(out, UNBOUND);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     out->payload.any_word.index = 0; // index not heeded if no binding
   #endif
     return KNOWN(out);

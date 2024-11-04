@@ -55,7 +55,7 @@
 //
 static void Assert_Basics(void)
 {
-  #if !defined(NDEBUG) && defined(SHOW_SIZEOFS)
+  #if RUNTIME_CHECKS && defined(SHOW_SIZEOFS)
     //
     // For debugging ports to some systems
     //
@@ -88,7 +88,7 @@ static void Assert_Basics(void)
     fflush(stdout);
   #endif
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // Sanity check the platform byte-ordering sensitive flag macros
     //
@@ -1092,7 +1092,7 @@ void Startup_Task(void)
     // from the very beginning... before we can rebValue("recycle/torture")...
     // and before command-line processing.  Make it an environment option.
     //
-  #ifndef NDEBUG
+  #if RUNTIME_CHECKS
     const char *env_recycle_torture = getenv("R3_RECYCLE_TORTURE");
     if (env_recycle_torture and atoi(env_recycle_torture) != 0)
         TG_Ballast = 0;
@@ -1179,7 +1179,7 @@ void Set_Stack_Limit(void *base) {
 static Value* Startup_Mezzanine(BOOT_BLK *boot);
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 //
 //  Startup_Corrupt_Globals: C
 //
@@ -1227,7 +1227,7 @@ static void Startup_Corrupt_Globals(void)
 //
 void Startup_Core(void)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Startup_Corrupt_Globals();
   #endif
 
@@ -1273,7 +1273,7 @@ void Startup_Core(void)
     fail (Error_No_Value_Raw(BLANK_VALUE)); // same as panic (crash)
   #endif
 
-  #ifndef NDEBUG
+  #if RUNTIME_CHECKS
     PG_Always_Malloc = false;
   #endif
 
@@ -1338,7 +1338,7 @@ void Startup_Core(void)
 
     Init_Root_Vars();    // Special REBOL values per program
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Assert_Pointer_Detection_Working(); // uses root series/values to test
   #endif
 
@@ -1525,7 +1525,7 @@ void Startup_Core(void)
 
     PG_Boot_Phase = BOOT_DONE;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
   #endif
 
@@ -1588,7 +1588,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
 //
 void Shutdown_Core(void)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
   #endif
 

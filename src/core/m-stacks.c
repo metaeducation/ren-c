@@ -91,7 +91,7 @@ void Shutdown_Data_Stack(void)
 //
 void Startup_Level_Stack(void)
 {
-  #if !defined(NDEBUG) // see Startup_Corrupt_Globals() for explanation
+  #if RUNTIME_CHECKS // see Startup_Corrupt_Globals() for explanation
     assert(Is_Pointer_Corrupt_Debug(TG_Top_Level));
     assert(Is_Pointer_Corrupt_Debug(TG_Bottom_Level));
     TG_Top_Level = TG_Bottom_Level = nullptr;
@@ -234,7 +234,7 @@ VarList* Get_Context_From_Stack(void)
     // (So don't call it from something like Returner_Dispatcher, where you
     // know for a fact it's a user function and not a native on the stack.)
     //
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (not GET_ACT_FLAG(phase, ACTION_NATIVE)) {
         printf("!!! WARNING: calling API code from unsafe location\n");
         printf("(only do this in special debugging scenarios...)\n");

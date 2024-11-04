@@ -40,10 +40,6 @@
 
 #include <assert.h>
 
-#if !defined(NDEBUG)
-    #include <stdio.h>
-#endif
-
 #include "reb-host.h"
 
 

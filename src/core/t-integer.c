@@ -165,7 +165,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         bool negative;
         REBINT fill;
 
-    #if !defined(NDEBUG)
+    #if RUNTIME_CHECKS
         //
         // This is what R3-Alpha did.
         //

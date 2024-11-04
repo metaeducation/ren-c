@@ -112,7 +112,7 @@ INLINE void Term_Array_Len(Array* a, REBLEN len) {
 
     Cell* at = Array_At(a, len);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (NOT_END(at))
         Assert_Cell_Writable(at);
   #endif
@@ -205,7 +205,7 @@ INLINE void Prep_Array(
         // the debug build.
         //
         TRACK(prep)->header = Endlike_Header(0); // unwritable
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         while (n < a->content.dynamic.rest) { // no -1 (n is 1-based)
             ++n;
             ++prep;
@@ -255,7 +255,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
         Prep_Array(cast_Array(s), capacity);
         SET_END(Array_Head(cast_Array(s)));
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         PG_Reb_Stats->Series_Memory += capacity * wide;
       #endif
     }
@@ -298,7 +298,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
             Clear_Array_Flag(s, HAS_FILE_LINE);
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     PG_Reb_Stats->Blocks++;
   #endif
 
@@ -567,7 +567,7 @@ INLINE bool Is_Doubled_Group(const Cell* group) {
 }
 
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Assert_Array(s) \
         NOOP
 

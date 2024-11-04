@@ -62,7 +62,7 @@ void Snap_State_Core(struct Reb_State *s)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Assert_State_Balanced_Debug: C
@@ -188,7 +188,7 @@ void Trapped_Helper(struct Reb_State *s)
     TG_Top_Level = s->level;
     Term_Non_Array_Flex_Len(MOLD_BUF, s->mold_buf_len);
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     //
     // Because reporting errors in the actual Push_Mold process leads to
     // recursion, this debug flag helps make it clearer what happens if
@@ -665,7 +665,7 @@ Error* Make_Error_Managed_Vaptr(
     va_list *vaptr
 ){
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         printf(
             "fail() before errors initialized, cat_sym = %d, id_sym = %d\n",
             cast(int, cat_sym),
@@ -745,7 +745,7 @@ Error* Make_Error_Managed_Vaptr(
         Value* key = Varlist_Key(varlist, root_len) + 1;
         Value* value = Varlist_Slot(varlist, root_len) + 1;
 
-    #ifdef NDEBUG
+    #if NO_RUNTIME_CHECKS
         const Cell* temp = VAL_ARRAY_HEAD(message);
     #else
         // Will get here even for a parameterless string due to throwing in
@@ -768,7 +768,7 @@ Error* Make_Error_Managed_Vaptr(
                 assert(p != nullptr);
 
                 if (IS_END(p)) {
-                  #ifdef NDEBUG
+                  #if NO_RUNTIME_CHECKS
                     //
                     // If the C code passed too few args in a debug build,
                     // prevent a crash in the release build by filling it.
@@ -783,7 +783,7 @@ Error* Make_Error_Managed_Vaptr(
                   #endif
                 }
 
-              #if !defined(NDEBUG)
+              #if RUNTIME_CHECKS
                 if (IS_RELATIVE(cast(const Cell*, p))) {
                     //
                     // Make_Error doesn't have any way to pass in a specifier,

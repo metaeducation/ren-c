@@ -59,7 +59,7 @@
 // entire cell if it is needed.
 //
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define ASSERT_CONTEXT(c) cast(void, 0)
 #else
     #define ASSERT_CONTEXT(c) Assert_Context_Core(c)
@@ -275,7 +275,7 @@ INLINE Value* Init_Any_Context(
     enum Reb_Kind kind,
     VarList* c
 ){
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Extra_Init_Any_Context_Checks_Debug(kind, c);
   #endif
     UNUSED(kind);

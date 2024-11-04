@@ -339,7 +339,7 @@ void Resize_Flex(Flex* s, REBLEN size)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Flex_Term_Core: C

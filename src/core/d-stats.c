@@ -70,7 +70,7 @@ DECLARE_NATIVE(stats)
         return Init_Integer(OUT, n);
     }
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     UNUSED(REF(show));
     UNUSED(REF(profile));
     UNUSED(REF(dump_series));

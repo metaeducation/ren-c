@@ -91,6 +91,15 @@
 
 //=//// CONFIGURATION /////////////////////////////////////////////////////=//
 
+#if !defined(RUNTIME_CHECKS)  // prefer "RUNTIME_CHECKS" as integer #define
+    #if defined(NDEBUG)
+       #define RUNTIME_CHECKS 0
+    #else
+       #define RUNTIME_CHECKS 1
+    #endif
+    #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
+#endif
+
 #if !defined(DEBUG_CHECK_OPTIONALS)
     #define DEBUG_CHECK_OPTIONALS 0
 #endif
@@ -653,7 +662,7 @@
         NOOP
 #endif
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Corrupt_Pointer_If_Debug(p) \
         NOOP
 
@@ -721,7 +730,7 @@
 #define USED(x) \
     ((void)(x))
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
     #define UNUSED(x) \
         ((void)(x))
 #else
@@ -851,7 +860,7 @@
 //
 #include <string.h> // for strlen() etc, but also defines `size_t`
 #define strsize strlen
-#if defined(NDEBUG)
+#if NO_RUNTIME_CHECKS
     /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
      * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
      * Being single-arity with no type passed in, they are succinct to use:

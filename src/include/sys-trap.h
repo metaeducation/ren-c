@@ -232,7 +232,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // SNAP_STATE has balanced out, without a trap (e.g. it is checked each time
 // the evaluator completes a cycle in the debug build)
 //
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define ASSERT_STATE_BALANCED(s) NOOP
 #else
     #define ASSERT_STATE_BALANCED(s) \
@@ -261,7 +261,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     //
     // We don't want release builds to have to pay for the parameter
     // passing cost *or* the string table cost of having a list of all
@@ -353,7 +353,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // NOTE: It's desired that there be a space in `panic (...)` to make it look
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define panic(v) \
         Panic_Core((v), TICK, nullptr, 0)
 

@@ -198,7 +198,7 @@ struct devreq_posix_signal {
     sigset_t mask;      // signal mask
 };
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 #define DEVREQ_POSIX_SIGNAL(req) (assert(req->device == RDI_SIGNAL), cast(struct devreq_posix_signal*, req))
 #else
 #define DEVREQ_POSIX_SIGNAL(req) cast(struct devreq_posix_signal*, req)

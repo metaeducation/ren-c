@@ -380,7 +380,7 @@ void API_rebShutdown(bool clean)
     // committing unfinished data to disk.  So really there is
     // nothing to do in the case of an "unclean" shutdown...yet.
 
-  #if defined(NDEBUG)
+  #if NO_RUNTIME_CHECKS
     if (not clean)
         return; // Only do the work above this line in an unclean shutdown
   #else

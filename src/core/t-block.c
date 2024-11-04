@@ -1114,7 +1114,7 @@ REBTYPE(List)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Assert_Array_Core: C
@@ -1149,7 +1149,7 @@ void Assert_Array_Core(Array* a)
         for (; i < rest - 1; ++i, ++item) {
             const bool unwritable = not (item->header.bits & NODE_FLAG_CELL);
             if (Get_Flex_Flag(a, FIXED_SIZE)) {
-              #if !defined(NDEBUG)
+              #if RUNTIME_CHECKS
                 if (not unwritable) {
                     printf("Writable cell found in fixed-size array rest\n");
                     panic (a);

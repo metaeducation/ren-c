@@ -670,7 +670,7 @@ union StubContentUnion {
         //
         Cell cell;
 
-      #if !defined(NDEBUG) // https://en.wikipedia.org/wiki/Type_punning
+      #if RUNTIME_CHECKS // https://en.wikipedia.org/wiki/Type_punning
         char utf8_pun[sizeof(Cell)]; // debug watchlist insight into UTF-8
         Ucs2Unit ucs2_pun[sizeof(Cell)/sizeof(Ucs2Unit)]; // wchar_t insight
       #endif
@@ -688,7 +688,7 @@ union StubLinkUnion {
     // that is "corrupted" in the debug build when the series is created, and
     // hopefully it will lead to the other fields reading garbage (vs. zero)
     //
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     void *corrupt;
   #endif
 
@@ -787,7 +787,7 @@ union StubMiscUnion {
     //
     // Used to preload bad data in the debug build; see notes on link.corrupt
     //
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     void *corrupt;
   #endif
 

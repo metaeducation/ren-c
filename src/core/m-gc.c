@@ -96,7 +96,7 @@ static void Queue_Mark_Event_Deep(const Cell* value);
 static void Mark_Devices_Deep(void);
 
 
-#ifndef NDEBUG
+#if RUNTIME_CHECKS
     static bool in_mark = false; // needs to be per-GC thread
 #endif
 
@@ -111,7 +111,7 @@ static void Mark_Devices_Deep(void);
 //
 INLINE void Mark_Stub_Only(Stub* s)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (Not_Node_Readable(s))
         panic (s);
     if (Not_Node_Managed(s)) {
@@ -150,7 +150,7 @@ INLINE void Unmark_Stub(Stub* s) {
 //
 static void Queue_Mark_Array_Subclass_Deep(Array* a)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (not Is_Flex_Array(a))
         panic (a);
   #endif
@@ -229,7 +229,7 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
     if (not binding)
         return;
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST) {
         //
         // It's an action, any reasonable added check?
@@ -283,7 +283,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         return;
 
     assert(not in_mark);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     in_mark = true;
   #endif
 
@@ -308,7 +308,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         Queue_Mark_Action_Deep(a);
         Queue_Mark_Binding_Deep(v);
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         //
         // Make sure the [0] slot of the paramlist holds an archetype that is
         // consistent with the paramlist itself.
@@ -343,7 +343,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
         Queue_Mark_Binding_Deep(v);
 
-    #if !defined(NDEBUG)
+    #if RUNTIME_CHECKS
         if (IS_WORD_BOUND(v)) {
             assert(v->payload.any_word.index != 0);
         }
@@ -418,7 +418,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             //
             singular->leader.bits |= NODE_FLAG_MARKED;
 
-        #if !defined(NDEBUG)
+        #if RUNTIME_CHECKS
             assert(Array_Len(singular) == 1);
             Cell* single = ARR_SINGLE(singular);
             assert(Is_Handle(single));
@@ -517,7 +517,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         //
         Queue_Mark_Binding_Deep(v);
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         if (v->extra.binding != UNBOUND) {
             assert(CTX_TYPE(context) == REB_FRAME);
 
@@ -549,7 +549,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         if (Get_Flex_Info(context, INACCESSIBLE))
             break;
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         Value* archetype = Varlist_Archetype(context);
         assert(CTX_TYPE(context) == kind);
         assert(Cell_Varlist(archetype) == context);
@@ -577,7 +577,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         panic (v);
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     in_mark = false;
   #endif
 }
@@ -768,7 +768,7 @@ static void Propagate_All_GC_Marks(void)
         for (; NOT_END(v); ++v) {
             Queue_Mark_Opt_Value_Deep(v);
             //
-        #if !defined(NDEBUG)
+        #if RUNTIME_CHECKS
             //
             // Voids are illegal in most arrays, but the varlist of a context
             // uses void values to denote that the variable is not set.  Also
@@ -883,7 +883,7 @@ static void Mark_Root_Stubs(void)
                         // always be more efficient to not do that, so having
                         // the code be strict for now is better.
                         //
-                      #if !defined(NDEBUG)
+                      #if RUNTIME_CHECKS
                         printf("handle not rebReleased(), not legal ATM\n");
                       #endif
                         panic (s);
@@ -1331,7 +1331,7 @@ static REBLEN Sweep_Stubs(void)
 }
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Fill_Sweeplist: C
@@ -1400,7 +1400,7 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
     // could cause a recursion.  Be tolerant of such recursions to make that
     // debugging easier...but make a note that it's not ordinarily legal.
     //
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     if (GC_Recycling) {
         printf("Recycle re-entry; should only happen in debug scenarios.\n");
         SET_SIGNAL(SIG_RECYCLE);
@@ -1416,14 +1416,14 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
         return 0;
     }
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     GC_Recycling = true;
   #endif
 
     ASSERT_NO_GC_MARKS_PENDING();
     Reify_Any_C_Valist_Frames();
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     PG_Reb_Stats->Recycle_Counter++;
     PG_Reb_Stats->Num_Flex_Recycled = Mem_Pools[STUB_POOL].free;
     PG_Reb_Stats->Mark_Count = 0;
@@ -1476,7 +1476,7 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
     REBLEN count = 0;
 
     if (sweeplist != nullptr) {
-    #if defined(NDEBUG)
+    #if NO_RUNTIME_CHECKS
         panic (sweeplist);
     #else
         count += Fill_Sweeplist(sweeplist);
@@ -1485,7 +1485,7 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
     else
         count += Sweep_Stubs();
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     // Compute new stats:
     PG_Reb_Stats->Num_Flex_Recycled
         = Mem_Pools[STUB_POOL].free - PG_Reb_Stats->Num_Flex_Recycled;
@@ -1530,7 +1530,7 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
 
     ASSERT_NO_GC_MARKS_PENDING();
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     GC_Recycling = false;
   #endif
 
@@ -1569,7 +1569,7 @@ REBLEN Recycle(void)
 //
 void Push_Guard_Node(const Node* node)
 {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (Is_Node_A_Cell(node)) {
         //
         // It is a value.  Cheap check: require that it already contain valid

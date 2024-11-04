@@ -169,7 +169,7 @@ INLINE Byte *Flex_Data(Flex* s) {
 }
 
 INLINE Byte *Flex_Data_At(Byte w, Flex* s, REBLEN i) {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (w != Flex_Wide(s)) {
         //
         // This is usually a sign that the series was GC'd, as opposed to the
@@ -265,7 +265,7 @@ INLINE void Term_Non_Array_Flex_Len(Flex* s, REBLEN len) {
     Term_Non_Array_Flex(s);
 }
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Assert_Flex_Term(s) \
         NOOP
 #else
@@ -314,7 +314,7 @@ INLINE void Force_Flex_Managed(Flex* s) {
         Manage_Flex(s);
 }
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     #define Assert_Flex_Managed(s) NOOP
 #else
     INLINE void Assert_Flex_Managed(Flex* s) {
@@ -359,7 +359,7 @@ INLINE bool Is_Flex_White(Flex* s)
 INLINE void Flip_Flex_To_Black(Flex* s) {
     assert(Not_Flex_Info(s, BLACK));
     Set_Flex_Info(s, BLACK);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     ++TG_Num_Black_Flex;
   #endif
 }
@@ -367,7 +367,7 @@ INLINE void Flip_Flex_To_Black(Flex* s) {
 INLINE void Flip_Flex_To_White(Flex* s) {
     assert(Get_Flex_Info(s, BLACK));
     Clear_Flex_Info(s, BLACK);
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     --TG_Num_Black_Flex;
   #endif
 }
@@ -445,7 +445,7 @@ INLINE void Fail_If_Read_Only_Flex(Flex* s) {
 
 #define Push_GC_Guard(p) Push_Guard_Node(p)
 
-#ifdef NDEBUG
+#if NO_RUNTIME_CHECKS
     INLINE void Drop_Guard_Node(Node* n) {
         UNUSED(n);
         GC_Guarded->content.dynamic.len--;
@@ -488,7 +488,7 @@ INLINE void Set_Cell_Flex(Cell* v, Flex* s) {
     v->payload.any_series.series = s;
 }
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
     #define VAL_INDEX(v) \
         ((v)->payload.any_series.index)
 #else
@@ -564,7 +564,7 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
     //
     s->leader.bits = NODE_FLAG_NODE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
     Corrupt_Pointer_If_Debug(LINK(s).corrupt);  // #2
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content));  // #3-#6
     memset(&s->info, 0xAE, sizeof(s->info));  // #7, caller sets Flex_Wide()
   #endif
@@ -573,7 +573,7 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
     // Note: This series will not participate in management tracking!
     // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Flex_Core().
 
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     Touch_Stub_If_Debug(s); // tag current C stack as series origin in ASAN
     PG_Reb_Stats->Series_Made++;
   #endif
@@ -583,7 +583,7 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
 
 
 INLINE REBLEN FIND_POOL(size_t size) {
-  #if !defined(NDEBUG)
+  #if RUNTIME_CHECKS
     if (PG_Always_Malloc)
         return SYSTEM_POOL;
   #endif
@@ -725,7 +725,7 @@ INLINE Flex* Make_Flex_Core(
         if (not Did_Flex_Data_Alloc(s, capacity))
             fail (Error_No_Memory(capacity * wide));
 
-      #if !defined(NDEBUG)
+      #if RUNTIME_CHECKS
         PG_Reb_Stats->Series_Memory += capacity * wide;
       #endif
     }

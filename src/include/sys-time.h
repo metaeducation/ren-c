@@ -49,7 +49,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
     #define VAL_NANO(v) \
         ((v)->payload.time.nanoseconds)
 #else

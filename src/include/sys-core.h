@@ -127,7 +127,7 @@ typedef RebolValue Value;
 // To formalize this rule, these definitions will help catch uses of <stdio.h>
 // in the release build, and give a hopefully informative error.
 //
-#if defined(NDEBUG) && (! DEBUG_STDIO_OK)
+#if NO_RUNTIME_CHECKS && (! DEBUG_STDIO_OK)
     #define printf dont_include_stdio_h
     #define fprintf dont_include_stdio_h
 #else
@@ -137,7 +137,7 @@ typedef RebolValue Value;
     // unicode/UTF8 conversions that Rebol seeks to replace stdio with.
     //
     // Hence debug builds are allowed to use stdio.h conveniently.  The
-    // release build should catch if any of these aren't #if !defined(NDEBUG)
+    // release build should catch if any of these aren't #if RUNTIME_CHECKS
     //
     #include <stdio.h>
 
@@ -215,7 +215,7 @@ typedef RebolValue Value;
 // so instead kick into an infinite loop which can be broken and stepped out
 // of in the debugger.
 //
-#if !defined(NDEBUG) || DEBUG_COUNT_TICKS
+#if RUNTIME_CHECKS || DEBUG_COUNT_TICKS
     #if defined(TO_HAIKU)
         INLINE int debug_break() {
             int x = 0;
@@ -262,7 +262,7 @@ typedef RebolValue Value;
 #define BREAK_ON_TICK(tick) \
     if (tick == TG_Tick) BREAK_NOW()
 
-#if defined(NDEBUG) || (! DEBUG_COUNT_TICKS)
+#if NO_RUNTIME_CHECKS || (! DEBUG_COUNT_TICKS)
     #define SPORADICALLY(modulus) \
         false
 #else
@@ -650,7 +650,7 @@ enum {
 //
 // !!! These are not meant to be kept around long term.
 //
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
     #define LEGACY(option) ( \
         (PG_Boot_Phase >= BOOT_ERRORS) \
         and IS_TRUTHY(Get_System(SYS_OPTIONS, (option))) \

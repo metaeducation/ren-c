@@ -35,7 +35,7 @@
 #include "sys-core.h"
 
 
-#if !defined(NDEBUG)
+#if RUNTIME_CHECKS
 
 //
 //  Panic_Value_Debug: C
@@ -97,7 +97,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     Panic_Flex_Debug(EMPTY_ARRAY);
 }
 
-#endif // !defined(NDEBUG)
+#endif  // RUNTIME_CHECKS
 
 
 #if DEBUG_HAS_PROBE
