@@ -191,12 +191,11 @@ bool Pushed_Continuation(
             branch,
             binding,
             (flags & (~ LEVEL_FLAG_BRANCH))
-                | FLAG_STATE_BYTE(ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT)
         );
-        if (with == nullptr)
-            Freshen_Cell(out);
+        if (with == nullptr)  // spare will hold the value
+            Freshen_Cell(Level_Spare(grouper));
         else
-            Copy_Cell(out, unwrap with);  // need lifetime preserved
+            Copy_Cell(Level_Spare(grouper), unwrap with);
         Push_Level(out, grouper);
         goto pushed_continuation;
     }

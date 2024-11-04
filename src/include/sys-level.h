@@ -727,13 +727,6 @@ INLINE Atom* Native_Copy_Result_Untracked(
 #endif
 
 
-
-enum {
-    ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT = 1,  // STATE_0 erases OUT
-    ST_GROUP_BRANCH_RUNNING_GROUP
-};
-
-
 // There's an optimization trick which lets an executor stay on the stack
 // and run another executor for a level it replaced.  While that could just
 // return BOUNCE_CONTINUE and go back to the trampoline, it was noticed that

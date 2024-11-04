@@ -103,39 +103,39 @@
 //    even distinct from the output cell (see CONTINUE_CORE()).  So whoever
 //    dispatched to the group branch executor could have passed a fleeting
 //    value pointer...hence it needs to be stored somewhere.  So the group
-//    executor expects it to be preloaded into `out`...or that out be marked
-//    stale if it was END.  It can then take advantage of the same flexibility
-//    to pass OUT as the with as well as the target when branch is in SPARE.
+//    executor expects it to be preloaded into SPARE, or be unreadable.
 //
 // 2. The Trampoline has some sanity checking asserts that try to stop you
 //    from making mistakes.  Because this does something weird to use the
 //    OUT cell as `with` the LEVEL_FLAG_BRANCH was taken off at the callsite.
 //
-// 3. Allowing a void branch can be useful, consider:
-//
-//        /switch-d: enclose (augment switch/ [
-//            :default "Default case if no others are found"
-//            [block!]
-//        ]) lambda [f [frame!]] [
-//            let def: f.default
-//            eval f else (maybe def)
-//        ]
-//
-Bounce The_Group_Branch_Executor(Level* level_)
+Bounce The_Group_Branch_Executor(Level* const L)
 {
+    USE_LEVEL_SHORTHANDS (L);
+
     if (THROWING)
         return THROWN;
 
-    Atom* const with = OUT;  // value passed to branch if it runs [1]
+    Value* with = stable_SPARE;  // value passed to branch if it runs [1]
+    Atom* branch = cast(Atom*, &L->u.eval.current);  // GC-safe if eval target
+
+    enum {
+        ST_GROUP_BRANCH_INITIAL_ENTRY = STATE_0,
+        ST_GROUP_BRANCH_RUNNING_GROUP,
+        ST_GROUP_BRANCH_RUNNING_BRANCH  // no DELEGATE() for executors
+    };
 
     switch (STATE) {
-      case ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT :
+      case ST_GROUP_BRANCH_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_GROUP_BRANCH_RUNNING_GROUP :
-        goto group_result_in_spare;
+      case ST_GROUP_BRANCH_RUNNING_GROUP:
+        goto group_result_in_branch;
 
-      default : assert(false);
+      case ST_GROUP_BRANCH_RUNNING_BRANCH:
+        return OUT;
+
+      default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -150,25 +150,35 @@ Bounce The_Group_Branch_Executor(Level* level_)
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
             & (~ LEVEL_FLAG_BRANCH)  // take off branch flag [2]
     );
-    Push_Level(SPARE, sub);
+    Push_Level(branch, sub);  // branch GC-protected during evaluation
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CONTINUE_SUBLEVEL(sub);
 
-} group_result_in_spare: {  //////////////////////////////////////////////////
+} group_result_in_branch: {  /////////////////////////////////////////////////
 
-    Decay_If_Unstable(SPARE);
+    // 1. Allowing a void branch can be useful, consider:
+    //
+    //        /switch-d: enclose (augment switch/ [
+    //            :default "Default case if no others are found"
+    //            [block!]
+    //        ]) lambda [f [frame!]] [
+    //            let def: f.default
+    //            eval f else (maybe def)
+    //        ]
 
-    if (Is_The_Group(SPARE))
+    assert(Is_Level_At_End(L));
+
+    Decay_If_Unstable(branch);
+
+    if (Is_The_Group(branch))
         return FAIL(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
-    if (Is_Void(SPARE)) {  // void branches giving their input is useful  [3]
-        assert(with == OUT);
-        return with;
-    }
+    if (Is_Void(branch))  // void branches giving their input is useful  [1]
+        return Copy_Cell(OUT, with);
 
-    assert(Is_Level_At_End(LEVEL));
-    return DELEGATE_BRANCH(OUT, stable_SPARE, with);  // (OUT, OUT, SPARE) bad
+    STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
+    return CONTINUE(OUT, cast(Value*, branch), with);
 }}
 
 
