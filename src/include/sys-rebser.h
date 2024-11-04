@@ -947,7 +947,7 @@ typedef struct StubStruct Flex;
 #endif
 
 
-#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS
 
     #define cast_Flex(p) \
         cast(Flex*, (p))

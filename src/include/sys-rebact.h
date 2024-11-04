@@ -42,7 +42,7 @@
         | ARRAY_FLAG_IS_PARAMLIST)
 
 
-#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS
 
     #define ACT(p) \
         cast(REBACT*, (p))

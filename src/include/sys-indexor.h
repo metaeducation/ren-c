@@ -72,7 +72,7 @@
 #define TRASHED_INDEX (0x80000000 - 0xAE)
 
 
-#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     typedef uintptr_t REBIXO;
 
     #define END_FLAG END_FLAG_PRIVATE

@@ -935,7 +935,7 @@ struct LevelStruct {
     m_cast(Value*, EMPTY_TEXT)
 
 
-#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS
 
     #define LVL(p) \
         cast(Level*, (p))  // LVL() just does a cast (maybe with added checks)

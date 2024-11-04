@@ -79,6 +79,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
   #else
     #define CPLUSPLUS_11 0
   #endif
+  #define NO_CPLUSPLUS_11  (! CPLUSPLUS_11)
 #endif
 
 
@@ -423,7 +424,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 #endif
 
 #if DEBUG_CHECK_CASTS
-  #if (! CPLUSPLUS_11)
+  #if NO_CPLUSPLUS_11
     #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
     #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif

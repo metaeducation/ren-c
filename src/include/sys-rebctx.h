@@ -39,7 +39,7 @@
     (NODE_FLAG_NODE | FLEX_FLAG_ALWAYS_DYNAMIC | ARRAY_FLAG_IS_VARLIST)
 
 
-#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS
 
     #define CTX(p) \
         cast(VarList*, (p))

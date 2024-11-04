@@ -177,6 +177,7 @@
     #else
         #define CPLUSPLUS_11 0
     #endif
+    #define NO_CPLUSPLUS_11  (! CPLUSPLUS_11)
 #endif
 
 
@@ -346,7 +347,7 @@
 #define u_cast(T,v) \
     ((T)(v))  // unchecked cast, use e.g. when casting a fresh allocation
 
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define cast(T,v)       ((T)(v))  /* pointer-to-ptr, integral-to-int */
     #define m_cast(T,v)     ((T)(v))  /* add mutability to pointer type only */
     #define x_cast(T,v)     ((T)(v))  /* pointer cast that drops mutability */
@@ -507,7 +508,7 @@
 // context).  Either way, when discussing C's "0 pointer", say `nullptr`.
 //
 
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define nullptr cast(void*, 0)
 #else
     // http://en.cppreference.com/w/cpp/language/nullptr
@@ -730,7 +731,7 @@
 #define USED(x) \
     ((void)(x))
 
-#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define UNUSED(x) \
         ((void)(x))
 #else

@@ -102,7 +102,7 @@
 
 
 
-#if NO_DEBUG_CHECK_CASTS || (! CPLUSPLUS_11)
+#if NO_DEBUG_CHECK_CASTS
 
     #define NOD(p) \
         cast(Node*, (p)) // NOD() just does a cast (maybe with added checks)

@@ -802,7 +802,7 @@ INLINE Value* Init_Char(Cell* out, Ucs2Unit uni) {
 // for these cases.
 //
 
-#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_INT64(v) \
         ((v)->payload.integer)
 #else
@@ -863,7 +863,7 @@ INLINE Byte VAL_UINT8(const Cell* v) {
 // FLOAT! which may be a good idea.
 //
 
-#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_DECIMAL(v) \
         ((v)->payload.decimal)
 #else
@@ -956,7 +956,7 @@ INLINE Value* Init_Money(Cell* out, deci amount) {
 #define MAX_TUPLE \
     ((sizeof(uint32_t) * 2) - 1) // for same properties on 64-bit and 32-bit
 
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define VAL_TUPLE(v) \
         ((v)->payload.tuple.tuple + 1)
 

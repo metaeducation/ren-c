@@ -488,7 +488,7 @@ INLINE void Set_Cell_Flex(Cell* v, Flex* s) {
     v->payload.any_series.series = s;
 }
 
-#if NO_RUNTIME_CHECKS || (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_INDEX(v) \
         ((v)->payload.any_series.index)
 #else
