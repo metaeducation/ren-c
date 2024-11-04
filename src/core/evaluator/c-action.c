@@ -988,17 +988,6 @@ Bounce Action_Executor(Level* L)
         }
     }
 
-    // As a convenience, if you use CONTINUE() and not CATCH_CONTINUE() then
-    // any levels that are pushed will be dropped automatically.  If those
-    // pushed levels have some persistent data that needs to be released,
-    // that could lead to leaks.  So be sure to CATCH_CONTINUE() if there
-    // is some state in sublevels that needs to be cleaned up.
-
-    while (TOP_LEVEL != L) {
-        Drop_Level(TOP_LEVEL);
-        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
-    }
-
     Drop_Action(L);
 
     return THROWN;

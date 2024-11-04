@@ -592,6 +592,12 @@ INLINE Level* Prep_Level_Core(
 INLINE Bounce Native_Thrown_Result(Level* L) {
     Freshen_Cell_Suppress_Raised(L->out);
     assert(Is_Throwing(L));
+
+    while (TOP_LEVEL != L) {  // convenience
+        Drop_Level(TOP_LEVEL);
+        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
+    }
+
     return BOUNCE_THROWN;
 }
 
@@ -620,13 +626,18 @@ INLINE Bounce Native_Nothing_Result_Untracked(
     return Init_Nothing(level_->out);
 }
 
-INLINE Bounce Native_Raised_Result(Level* level_, Error* error) {
-    assert(not THROWING);
+INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
+    assert(not Is_Throwing(L));
 
-    Force_Location_Of_Error(error, level_);
+    while (TOP_LEVEL != L) {  // convenience
+        Drop_Level(TOP_LEVEL);
+        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
+    }
 
-    Init_Error(level_->out, error);
-    return Raisify(level_->out);
+    Force_Location_Of_Error(error, L);
+
+    Init_Error(L->out, error);
+    return Raisify(L->out);
 }
 
 // Doing `return FAIL()` from a native does all the same automatic cleanup
@@ -634,12 +645,17 @@ INLINE Bounce Native_Raised_Result(Level* level_, Error* error) {
 // or C++ throw machinery.  This means it works even on systems that use
 // FAIL_JUST_ABORTS.  It should be preferred wherever possible.
 //
-INLINE Bounce Native_Fail_Result(Level* level_, Error* error) {
-    assert(not THROWING);
+INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
+    assert(not Is_Throwing(L));
 
-    Force_Location_Of_Error(error, level_);
+    while (TOP_LEVEL != L) {  // convenience
+        Drop_Level(TOP_LEVEL);
+        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
+    }
 
-    Init_Thrown_Failure(level_, Varlist_Archetype(error));
+    Force_Location_Of_Error(error, L);
+
+    Init_Thrown_Failure(L, Varlist_Archetype(error));
     return BOUNCE_FAIL;  // means we can be renotified
 }
 
