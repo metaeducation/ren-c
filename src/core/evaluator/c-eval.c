@@ -135,7 +135,7 @@ Bounce Evaluator_Executor(Level* const L)
         );
         Push_Level(OUT, sub);
         STATE = ST_EVALUATOR_STEPPING;
-        return CATCH_CONTINUE_SUBLEVEL(sub);  // executors *must* catch
+        return CONTINUE_SUBLEVEL(sub);  // executors *must* catch
     }
 
     goto call_stepper_executor;

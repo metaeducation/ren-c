@@ -219,7 +219,7 @@ Bounce To_Checker_Executor(Level* const L)
 
     Set_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING);
     level_->out = reverse;  // don't overwrite OUT
-    return CATCH_CONTINUE_SUBLEVEL(level_);  // wasn't action, no DOWNSHIFT
+    return CONTINUE_SUBLEVEL(level_);  // wasn't action, no DOWNSHIFT
 
 } ensure_results_equal: {  ///////////////////////////////////////////////////
 

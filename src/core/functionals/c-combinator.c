@@ -362,7 +362,7 @@ DECLARE_NATIVE(opt_combinator)
     Push_Parser_Sublevel(OUT, remainder, parser, input);
 
     STATE = ST_OPT_COMBINATOR_RUNNING_PARSER;
-    return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
@@ -571,7 +571,7 @@ DECLARE_NATIVE(further_combinator)
     Push_Parser_Sublevel(OUT, remainder, parser, input);
 
     STATE = ST_FURTHER_COMBINATOR_RUNNING_PARSER;
-    return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 

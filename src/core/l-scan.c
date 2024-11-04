@@ -2288,7 +2288,7 @@ Bounce Scanner_Executor(Level* const L) {
                 | FLAG_STATE_BYTE(mode)
         );
         Push_Level(OUT, sub);
-        return CATCH_CONTINUE_SUBLEVEL(sub); }
+        return CONTINUE_SUBLEVEL(sub); }
 
       case TOKEN_TUPLE:
         assert(*S->begin == '.' and len == 1);

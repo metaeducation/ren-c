@@ -160,28 +160,15 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(17)
 
 
-//=//// LEVEL_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
+//=//// LEVEL_FLAG_18 /////////////////////////////////////////////////////=//
 //
-// !!! This is a current guess for how to handle the case of re-entering an
-// executor when it fail()s abruptly.  We don't want to steal a STATE byte
-// for this in case the status of that state byte is important for cleanup.
-//
-#define LEVEL_FLAG_ABRUPT_FAILURE \
+#define LEVEL_FLAG_18 \
     FLAG_LEFT_BIT(18)
 
 
-//=//// LEVEL_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
+//=//// LEVEL_FLAG_19 /////////////////////////////////////////////////////=//
 //
-// Most levels don't want to be told about the errors they cause themselves...
-// and if they have cleanup to do, they could do that cleanup before calling
-// the fail().  However, some code calls nested C stacks which use fail() and
-// it's hard to hook all the cases.  So this flag can be used to tell the
-// trampoline to give a callback even if the level itself caused the problem.
-//
-// To help avoid misunderstandings, trying to read the STATE byte when in the
-// abrupt failure case causes an assert() in the C++ build.
-//
-#define LEVEL_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
+#define LEVEL_FLAG_19 \
     FLAG_LEFT_BIT(19)
 
 

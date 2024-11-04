@@ -736,19 +736,7 @@ DECLARE_GENERICS(List)
 
         MakeHook* hook = Makehook_For_Heart(heart);
 
-        Bounce b = hook(level_, heart, def);  // might throw, fail...
-        if (b == BOUNCE_DELEGATE)
-            return b;  // !!! Doesn't check result if continuation used, review
-        if (b == BOUNCE_THROWN)
-            return b;
-        Atom* r = Atom_From_Bounce(b);
-        if (r != nullptr) {
-            if (Is_Raised(r))
-                return r;
-            if (VAL_TYPE(r) == heart)
-                return r;
-        }
-        return RAISE("MAKE dispatcher did not return correct type"); }
+        return hook(level_, heart, def); }
 
   //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
 

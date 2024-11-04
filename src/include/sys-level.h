@@ -275,19 +275,12 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     return L->label;
 }
 
-#define Level_State_Byte_Maybe_Abrupt_Failure(L) \
-    SECOND_BYTE(ensure(Level*, L))
-
 #if (! CPLUSPLUS_11)
     #define Level_State_Byte(L) \
         SECOND_BYTE(ensure(Level*, L))
 #else
-    // Having a special accessor in the C++ build is a good place to inject an
-    // assertion that you're not ignoring the fact that a level "self-errored"
-    // and was notified of an abrupt failure.
-    //
     INLINE Byte& Level_State_Byte(Level* L) {
-        assert(Not_Level_Flag(L, ABRUPT_FAILURE));
+        // !!! Add checks here...
         return SECOND_BYTE(L);
     }
 #endif
@@ -346,40 +339,36 @@ INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
 }
 
 
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  DO's LOWEST-LEVEL EVALUATOR HOOKING
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// This API is used internally in the implementation of Eval_Core.  It does
-// not speak in terms of arrays or indices, it works entirely by setting
-// up a stack level (L), and threading that level's state through successive
-// operations, vs. setting it up and disposing it on each EVALUATE step.
-//
-// Like higher level APIs that move through the input series, this low-level
-// API can move at full EVALUATE intervals.  Unlike the higher APIs, the
-// possibility exists to move by single elements at a time--regardless of
-// if the default evaluation rules would consume larger expressions.  Also
-// making it different is the ability to resume after an EVALUATE on value
-// sources that aren't random access (such as C's va_arg list).
-//
-// One invariant of access is that the input may only advance.  Before any
-// operations are called, any low-level client must have already seeded
-// L->value with a valid "fetched" Value*.
-//
-// This privileged level of access can be used by natives that feel they can
-// optimize performance by working with the evaluator directly.
+//=//// LEVEL ALLOCATION AND FREEING //////////////////////////////////////=//
 
+// 1. Exactly how and when the varlist is detached from the level has been
+//    evolving, but it's generally the case that Drop_Action() at the end
+//    of the Action_Executor() will do it.  There's an exception when the
+//    ACTION_EXECUTOR_FLAG_FULFILL_ONLY flag is used at the moment, where
+//    not nulling it out is how it gets returned.  Also, abrupt failures
+//    throw to the trampoline so that Drop_Action() has to be run by
+//    the trampoline when it drops the levels automatically.
+//
+// 2. If Drop_Action() isn't run, then it will leave the keysource as the
+//    Level (e.g. Is_Non_Cell_Node_A_Level()).  That would be corrupt after
+//    this free if it hasn't been set back to the keylist.
+//
 INLINE void Free_Level_Internal(Level* L) {
     Release_Feed(L->feed);  // frees if refcount goes to 0
 
-    if (L->varlist and Not_Node_Managed(L->varlist))
-        GC_Kill_Flex(L->varlist);
+    if (L->varlist) {  // !!! Can be not null if abrupt failure [1]
+        assert(  // must be keylist, not a Level* [2]
+            Is_Stub_Keylist(cast(Stub*, node_BONUS(KeySource, L->varlist)))
+        );
+        if (Not_Node_Managed(L->varlist))
+            GC_Kill_Flex(L->varlist);
+    }
+
     Corrupt_Pointer_If_Debug(L->varlist);
 
     assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
 
+    L->tick = TICK;
     Free_Pooled(LEVEL_POOL, L);
 }
 
@@ -600,9 +589,9 @@ INLINE Level* Prep_Level_Core(
     Level_Arg(level_, (n) + 1) \
 )
 
-INLINE Bounce Native_Thrown_Result(Level* level_) {
-    assert(THROWING);
-    Freshen_Cell(level_->out);
+INLINE Bounce Native_Thrown_Result(Level* L) {
+    Freshen_Cell_Suppress_Raised(L->out);
+    assert(Is_Throwing(L));
     return BOUNCE_THROWN;
 }
 
@@ -631,14 +620,10 @@ INLINE Bounce Native_Nothing_Result_Untracked(
     return Init_Nothing(level_->out);
 }
 
-INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
+INLINE Bounce Native_Raised_Result(Level* level_, Error* error) {
     assert(not THROWING);
 
-    Error* error = Derive_Error_From_Pointer(p);
     Force_Location_Of_Error(error, level_);
-
-    while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
-        Drop_Level_Unbalanced(TOP_LEVEL);  // Note: won't seem like THROW/Fail
 
     Init_Error(level_->out, error);
     return Raisify(level_->out);
@@ -649,16 +634,13 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
 // or C++ throw machinery.  This means it works even on systems that use
 // FAIL_JUST_ABORTS.  It should be preferred wherever possible.
 //
-INLINE Bounce Native_Fail_Result(Level* level_, const void *p) {
+INLINE Bounce Native_Fail_Result(Level* level_, Error* error) {
     assert(not THROWING);
 
-    Error* error = Derive_Error_From_Pointer(p);
     Force_Location_Of_Error(error, level_);
 
-    while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
-        Drop_Level_Unbalanced(TOP_LEVEL);  // Note: won't seem like THROW/Fail
-
-    return Init_Thrown_Failure(level_, Varlist_Archetype(error));
+    Init_Thrown_Failure(level_, Varlist_Archetype(error));
+    return BOUNCE_FAIL;  // means we can be renotified
 }
 
 
@@ -725,13 +707,15 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define NOTHING     Native_Nothing_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
-    #define RAISE(p)    Native_Raised_Result(level_, (p))
     #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
 
+    #define RAISE(p) \
+        Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
+
     #define FAIL(p) \
         (Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-            Native_Fail_Result(level_, (p)))
+            Native_Fail_Result(level_, Derive_Error_From_Pointer(p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
     // enough in DECLARE_GENERICS() handlers that it seems worthwhile.
@@ -748,3 +732,47 @@ enum {
     ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT = 1,  // STATE_0 erases OUT
     ST_GROUP_BRANCH_RUNNING_GROUP
 };
+
+
+// There's an optimization trick which lets an executor stay on the stack
+// and run another executor for a level it replaced.  While that could just
+// return BOUNCE_CONTINUE and go back to the trampoline, it was noticed that
+// if the trampoline cooperated and reset the top level in these cases then
+// time could be saved.
+//
+// This may not be a great optimization for the complexity it introduces, but
+// it's being tried out.  It does mean you incur one C stack level for each
+// downshift, and some pathological case (like Cascaders calling Cascaders
+// in some big regress) may be bad, but it seems rare.  May be removed.
+//
+#if NO_RUNTIME_CHECKS
+    #define Adjust_Level_For_Downshift(L)  TOP_LEVEL
+#else
+    INLINE Level* Adjust_Level_For_Downshift(Level* L) {
+        Level* temp = TOP_LEVEL;
+        while (temp != L) {  // Cascaders can downshift Cascaders, etc.
+            temp = temp->prior;
+            assert(
+                temp->executor == &To_Checker_Executor
+                or temp->executor == &Cascader_Executor
+                or temp->executor == &Copy_Quoter_Executor
+            );
+        }
+        return TOP_LEVEL;
+    }
+#endif
+
+
+INLINE void Enable_Dispatcher_Catching_Of_Throws(Level* L)
+{
+    assert(Level_State_Byte(L) != STATE_0);
+    assert(Not_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
+    Set_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
+}
+
+INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
+{
+    assert(Level_State_Byte(L) != STATE_0);
+    assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
+    Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
+}

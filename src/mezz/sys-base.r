@@ -88,9 +88,9 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
         ] else [
             raise make error! compose [  ; give definitional error back to DO
                 message: [
-                   "Process returned non-zero exit code:" exit-code
-               ]
-               exit-code: (exit-code)
+                    "Script returned non-zero exit code:" exit-code
+                ]
+                exit-code: (exit-code)
             ]
         ]
     ]

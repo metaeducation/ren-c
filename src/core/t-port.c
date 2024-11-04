@@ -120,10 +120,8 @@ DECLARE_GENERICS(Port)
     //
     if (Is_Native_Port_Actor(actor)) {
         Bounce b = cast(PORT_HOOK*, Cell_Handle_Cfunc(actor))(level_, port, verb);
-        if (b == BOUNCE_THROWN) {
-            assert(Is_Error(VAL_THROWN_LABEL(TOP_LEVEL)));
+        if (b == BOUNCE_FAIL)
             return b;
-        }
 
         if (b == nullptr)
            Init_Nulled(OUT);

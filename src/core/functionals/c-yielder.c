@@ -111,10 +111,13 @@ Bounce Yielder_Dispatcher(Level* const L)
     Init_Quasi_Blank(mode);  // indicate "running"
     STATE = ST_YIELDER_RUNNING_BODY;
 
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // can't resume after failure
+
     return CONTINUE_CORE(
         OUT,  // body evaluative result
-        ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES,  // can't resume after failure
-        cast(VarList*, L->varlist), body
+        LEVEL_MASK_NONE,
+        cast(VarList*, L->varlist),  // binding
+        body
     );
 
 } resume_body: {  ////////////////////////////////////////////////////////////
@@ -214,9 +217,10 @@ Bounce Yielder_Dispatcher(Level* const L)
     //
     assert(Not_Executor_Flag(ACTION, yielder_level, DELEGATE_CONTROL));
 
-    Level_State_Byte(yielder_level) = ST_YIELDER_RUNNING_BODY;  // set again
-    Set_Executor_Flag(ACTION, yielder_level, DISPATCHER_CATCHES);  // set again
     Init_Quasi_Blank(mode);  // indicate running
+    STATE = ST_YIELDER_RUNNING_BODY;  // set again
+
+    Enable_Dispatcher_Catching_Of_Throws(yielder_level);
     return BOUNCE_CONTINUE;  // ...resuming where we left off (was DEWIND)
 
 } body_finished_or_threw: {  /////////////////////////////////////////////////

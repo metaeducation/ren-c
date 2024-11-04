@@ -52,6 +52,13 @@
     cast(Bounce, &PG_Bounce_Thrown)
 
 
+// This signals that the evaluator is in a "thrown state".
+//
+#define C_FAIL 'F'
+#define BOUNCE_FAIL \
+    cast(Bounce, &PG_Bounce_Fail)
+
+
 // 1. An original constraint on asking if something was throwing was that only
 //    the top frame could be asked about.  But Action_Executor() is called to
 //    re-dispatch when there may be a frame above (kept there by request from
@@ -60,7 +67,8 @@
 //
 INLINE bool Is_Throwing(Level* level_) {
     if (not Is_Cell_Erased(&g_ts.thrown_arg)) {
-        /*assert(level_ == TOP_LEVEL);*/  // forget even that check [1]
+        possibly(level_ == TOP_LEVEL);  // don't enforce this for now [1]
+        possibly(Is_Fresh(level_->out));  // not fully enforced at present
         UNUSED(level_);
         return true;
     }
@@ -92,8 +100,9 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Copy_Cell(&g_ts.thrown_label, label);
     Deactivate_If_Action(&g_ts.thrown_label);
 
+    Freshen_Cell_Suppress_Raised(L->out);
+
     assert(Is_Throwing(L));
-    UNUSED(L);
 
     return BOUNCE_THROWN;
 }
@@ -104,24 +113,25 @@ INLINE Bounce Init_Thrown_Failure(
     Level* L,
     const Value* error  // error may be same as L->out
 ){
+    UNUSED(L);
     assert(Is_Error(error));
-    return Init_Thrown_With_Label(L, Lib(NULL), error);
+    return Init_Thrown_With_Label(TOP_LEVEL, Lib(NULL), error);
 }
 
 INLINE void CATCH_THROWN(
     Cell* arg_out,
-    Level* level_
+    Level* L
 ){
-    UNUSED(level_);
-
-    assert(THROWING);
+    assert(Is_Throwing(L));
 
     Copy_Cell(arg_out, &g_ts.thrown_arg);
 
     Erase_Cell(&g_ts.thrown_arg);
     Erase_Cell(&g_ts.thrown_label);
 
-    assert(not THROWING);
+    assert(not Is_Throwing(L));
+
+    UNUSED(L);
 
     g_ts.unwind_level = nullptr;
 }

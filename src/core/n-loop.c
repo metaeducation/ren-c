@@ -724,14 +724,15 @@ DECLARE_NATIVE(cycle)
     }
 
     STATE = ST_CYCLE_EVALUATING_BODY;
-    return CATCH_CONTINUE(OUT, body);
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);
+    return CONTINUE(OUT, body);
 
 } body_was_evaluated: {  /////////////////////////////////////////////////////
 
     if (THROWING)
         goto handle_thrown;
 
-    return CATCH_CONTINUE(OUT, body);  // no break or stop, so keep going
+    return CONTINUE(OUT, body);  // no break or stop, so keep going
 
 } handle_thrown: {  /////////////////////////////////////////////////////////
 
@@ -740,7 +741,7 @@ DECLARE_NATIVE(cycle)
         if (breaking)
             return nullptr;
 
-        return CATCH_CONTINUE(OUT, body);  // plain continue
+        return CONTINUE(OUT, body);  // plain continue
     }
 
     const Value* label = VAL_THROWN_LABEL(LEVEL);
@@ -1082,21 +1083,29 @@ DECLARE_NATIVE(for_each)
 
     enum {
         ST_FOR_EACH_INITIAL_ENTRY = STATE_0,
+        ST_FOR_EACH_INITIALIZED_ITERATOR,
         ST_FOR_EACH_RUNNING_BODY
     };
 
-    if (Get_Level_Flag(level_, ABRUPT_FAILURE)) {  // fail() in this dispatcher
-        Clear_Level_Flag(level_, ABRUPT_FAILURE);
-        goto finalize_for_each;
-    }
-
     switch (STATE) {
-      case ST_FOR_EACH_INITIAL_ENTRY : goto initial_entry;
-      case ST_FOR_EACH_RUNNING_BODY : goto body_result_in_spare_or_threw;
+      case ST_FOR_EACH_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_FOR_EACH_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
+        goto finalize_for_each;
+
+      case ST_FOR_EACH_RUNNING_BODY:
+        goto body_result_in_spare_or_threw;
+
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    // 1. If there is an abrupt failure, e.g. a `fail()` that could happen
+    //    even in the code of this dispatcher, we need to clean up the
+    //    iterator state.
 
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
@@ -1110,8 +1119,9 @@ DECLARE_NATIVE(for_each)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Init_Loop_Each(iterator, data);
-    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Init_Loop_Each(iterator, data);  // all paths must clean this up...
+    STATE = ST_FOR_EACH_INITIALIZED_ITERATOR;
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_for_each
 
     goto next_iteration;
 
@@ -1121,7 +1131,7 @@ DECLARE_NATIVE(for_each)
         goto finalize_for_each;
 
     STATE = ST_FOR_EACH_RUNNING_BODY;
-    return CATCH_CONTINUE_BRANCH(OUT, body);
+    return CONTINUE_BRANCH(OUT, body);
 
 } body_result_in_spare_or_threw: {  //////////////////////////////////////////
 
@@ -1189,15 +1199,21 @@ DECLARE_NATIVE(every)
 
     enum {
         ST_EVERY_INITIAL_ENTRY = STATE_0,
+        ST_EVERY_INITIALIZED_ITERATOR,
         ST_EVERY_RUNNING_BODY
     };
 
-    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    switch (STATE) {
+      case ST_EVERY_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_EVERY_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
         goto finalize_every;
 
-    switch (STATE) {
-      case ST_EVERY_INITIAL_ENTRY : goto initial_entry;
-      case ST_EVERY_RUNNING_BODY : goto body_result_in_spare;
+      case ST_EVERY_RUNNING_BODY:
+        goto body_result_in_spare;
+
       default: assert(false);
     }
 
@@ -1215,8 +1231,9 @@ DECLARE_NATIVE(every)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Init_Loop_Each(iterator, data);
-    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Init_Loop_Each(iterator, data);  // all paths must clean this up...
+    STATE = ST_EVERY_INITIALIZED_ITERATOR;
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_every
 
     goto next_iteration;
 
@@ -1226,7 +1243,7 @@ DECLARE_NATIVE(every)
         goto finalize_every;
 
     STATE = ST_EVERY_RUNNING_BODY;
-    return CATCH_CONTINUE(SPARE, body);
+    return CONTINUE(SPARE, body);
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1699,15 +1716,21 @@ DECLARE_NATIVE(map)
 
     enum {
         ST_MAP_INITIAL_ENTRY = STATE_0,
+        ST_MAP_INITIALIZED_ITERATOR,
         ST_MAP_RUNNING_BODY
     };
 
-    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    switch (STATE) {
+      case ST_MAP_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_MAP_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
         goto finalize_map;
 
-    switch (STATE) {
-      case ST_MAP_INITIAL_ENTRY : goto initial_entry;
-      case ST_MAP_RUNNING_BODY : goto body_result_in_spare;
+      case ST_MAP_RUNNING_BODY:
+        goto body_result_in_spare;
+
       default: assert(false);
     }
 
@@ -1744,8 +1767,9 @@ DECLARE_NATIVE(map)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), pseudo_vars_ctx));
 
-    Init_Loop_Each(iterator, data);
-    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Init_Loop_Each(iterator, data);  // all paths must clean this up...
+    STATE = ST_MAP_INITIALIZED_ITERATOR;
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_map
 
     goto next_iteration;
 
@@ -1755,7 +1779,7 @@ DECLARE_NATIVE(map)
         goto finalize_map;
 
     STATE = ST_MAP_RUNNING_BODY;
-    return CATCH_CONTINUE(SPARE, body);  // body may be META-BLOCK!
+    return CONTINUE(SPARE, body);  // body may be META-BLOCK!
 
 } body_result_in_spare: {  ///////////////////////////////////////////////////
 
@@ -1855,24 +1879,25 @@ DECLARE_NATIVE(repeat)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
-
     if (Is_Logic(count)) {
         if (Cell_Logic(count) == false)
             return VOID;  // treat false as "don't run"
 
-        STATE = ST_REPEAT_EVALUATING_BODY;  // true is "infinite loop"
-        return CATCH_CONTINUE_BRANCH(OUT, body);  // no index [1]
+        Init_True(index);
+    }
+    else if (VAL_INT64(count) <= 0)
+        return VOID;  // negative means "don't run" (vs. error)
+    else {
+        assert(Any_Number(count));
+        Init_Integer(index, 1);
     }
 
-    if (VAL_INT64(count) <= 0)
-        return VOID;  // negative means "don't run" (vs. error)
-
-    Init_Integer(index, 1);
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     STATE = ST_REPEAT_EVALUATING_BODY;
-    return CATCH_CONTINUE_BRANCH(OUT, body, index);
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // catch break/continue
+    return CONTINUE_BRANCH(OUT, body, index);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -1887,7 +1912,7 @@ DECLARE_NATIVE(repeat)
 
     if (Is_Logic(count)) {
         assert(Cell_Logic(count) == true);  // false already returned
-        return CATCH_CONTINUE_BRANCH(OUT, body);  // true infinite loops
+        return CONTINUE_BRANCH(OUT, body);  // true infinite loops
     }
 
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
@@ -1895,7 +1920,9 @@ DECLARE_NATIVE(repeat)
 
     mutable_VAL_INT64(index) += 1;
 
-    return CATCH_CONTINUE_BRANCH(OUT, body, index);  // keep looping
+    assert(STATE == ST_REPEAT_EVALUATING_BODY);
+    assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
+    return CONTINUE_BRANCH(OUT, body, index);  // keep looping
 }}
 
 
@@ -1938,9 +1965,6 @@ DECLARE_NATIVE(for)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
-
     if (Is_Quoted(value)) {
         Unquotify(value, 1);
 
@@ -1965,6 +1989,9 @@ DECLARE_NATIVE(for)
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
         return VOID;
 
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
+
     VarList* context = Virtual_Bind_Deep_To_New_Context(body, vars);
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
 
@@ -1974,7 +2001,8 @@ DECLARE_NATIVE(for)
     Init_Integer(var, 1);
 
     STATE = ST_FOR_RUNNING_BODY;
-    return CATCH_CONTINUE_BRANCH(OUT, body, var);
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
+    return CONTINUE_BRANCH(OUT, body, var);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -1998,8 +2026,9 @@ DECLARE_NATIVE(for)
     if (REB_I64_ADD_OF(VAL_INT64(var), 1, &mutable_VAL_INT64(var)))
         return FAIL(Error_Overflow_Raw());
 
-    STATE = ST_FOR_RUNNING_BODY;
-    return CATCH_CONTINUE_BRANCH(OUT, body, var);
+    assert(STATE == ST_FOR_RUNNING_BODY);
+    assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
+    return CONTINUE_BRANCH(OUT, body, var);
 }}
 
 
@@ -2059,7 +2088,8 @@ DECLARE_NATIVE(until)
         Add_Definitional_Break_Continue(body, level_);
 
     STATE = ST_UNTIL_EVALUATING_BODY;
-    return CATCH_CONTINUE(OUT, body);
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);
+    return CONTINUE(OUT, body);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -2080,10 +2110,12 @@ DECLARE_NATIVE(until)
     }
 
     STATE = ST_UNTIL_RUNNING_PREDICATE;
+    Disable_Dispatcher_Catching_Of_Throws(LEVEL);
     return CONTINUE(SPARE, predicate, OUT);
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);
     condition = SPARE;
     goto test_condition;
 
@@ -2097,7 +2129,8 @@ DECLARE_NATIVE(until)
     }
 
     STATE = ST_UNTIL_EVALUATING_BODY;
-    return CATCH_CONTINUE(OUT, body);  // not truthy, keep going
+    assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
+    return CONTINUE(OUT, body);  // not truthy, keep going
 }}
 
 
@@ -2157,6 +2190,8 @@ DECLARE_NATIVE(while)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    STATE = ST_WHILE_EVALUATING_CONDITION;  // have to set before catching
+
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, LEVEL);  // no condition bind [2]
     else
@@ -2179,7 +2214,8 @@ DECLARE_NATIVE(while)
     }
 
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
-    return CATCH_CONTINUE_BRANCH(OUT, body, SPARE);  // catch break/continue
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
+    return CONTINUE_BRANCH(OUT, body, SPARE);
 
 } body_eval_in_out: {  ///////////////////////////////////////////////////////
 
@@ -2192,5 +2228,6 @@ DECLARE_NATIVE(while)
             return nullptr;
     }
 
+    Disable_Dispatcher_Catching_Of_Throws(LEVEL);
     goto evaluate_condition;
 }}

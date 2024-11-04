@@ -140,11 +140,9 @@ ATTRIBUTE_NO_RETURN void Fail_Abruptly_By_Jumping_Stack(Error* error)
     assert(!"Fail_Abruptly_By_Jumping_Stack() called when FAIL_JUST_ABORTS");
   #endif
 
-    // You can't abruptly fail during the handling of abrupt failure.  At the
-    // moment we're assuming that once a level has failed it can't recover if
-    // it originated the failure...but this may be revisited.
+    // You can't abruptly fail during the handling of abrupt failure.
     //
-    assert(Not_Level_Flag(TOP_LEVEL, ABRUPT_FAILURE));
+    assert(not (Is_Throwing(TOP_LEVEL) and Is_Throwing_Failure(TOP_LEVEL)));
 
     // The topmost level must be the one issuing the error.  If a level was
     // pushed with LEVEL_FLAG_TRAMPOLINE_KEEPALIVE that finished executing

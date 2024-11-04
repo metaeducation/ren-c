@@ -83,21 +83,6 @@ Bounce Just_Use_Out_Executor(Level* L)
 
 
 //
-//  Delegated_Executor: C
-//
-// Similar to the Just_Use_Out_Executor, this is a special executor which is
-// replaced as the executor when DELEGATE() is used outside of Action_Executor.
-// (When actions run, it wants a call back to check the return type.)
-//
-Bounce Delegated_Executor(Level* L)
-{
-    if (Is_Throwing(L))
-        return BOUNCE_THROWN;
-    return L->out;
-}
-
-
-//
 //  Trampoline_From_Top_Maybe_Root: C
 //
 Bounce Trampoline_From_Top_Maybe_Root(void)
@@ -108,8 +93,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   #endif
 
     Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
-
-    assert(Not_Level_Flag(L, ABRUPT_FAILURE));  // should be starting ok
 
   bounce_on_trampoline_with_rescue:
 
@@ -151,13 +134,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     assert(L->executor != &Just_Use_Out_Executor);  // drops skip [1]
 
-    Bounce bounce;
-
-    if (Get_Level_Flag(L, ABRUPT_FAILURE)) {
-        assert(Get_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(Is_Throwing(L));
-    }
-    else if (Level_State_Byte(L) == STATE_0) {  // can't read if ABRUPT_FAILURE
+    if (Level_State_Byte(L) == STATE_0) {
         Freshen_Cell(L->out);
     }
 
@@ -173,27 +150,29 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Maybe_Debug_Break_On_Tick(L);
 
-    // v-- This is the g_break_at_tick or C-DEBUG-BREAK landing spot --v
-                    bounce = (L->executor)(L);
-    // ^-- **STEP IN** to this call using the debugger to debug it!!! --^
+    // vvv-- This is the g_break_at_tick or C-DEBUG-BREAK landing spot --vvv
+
+    Bounce bounce = ((( L->executor )))((( L )));
+
+    // ^^^-- **STEP IN** to this call using the debugger to debug it!!! --^^^
 
   //=//// PROCESS SIGNALS (RECYCLE, HALT, ETC.) ///////////////////////////=//
 
-  // Doing signals covers several things that may cause interruptions:
-  //
-  //  * Running the garbage collector
-  //  * Noticing when a HALT was requested
-  //  * (future?) Allowing a break into an interactive debugger
-  //
-  // We process signals *after* calling the Level's executor and not before.
-  // This is for several reasons, but one is that since the level is still
-  // on the stack it is able to guard its OUT slot.
-  //
-  // 1. We could increment `total_eval_cycles` here so it's always up-to-date.
-  //    But we keep a micro-optimization from R3-Alpha where we only adjust
-  //    one counter (the `eval_countdown`) each time through the loop.  Then
-  //    we reconcile `total_eval_cycles` in Do_Signals_Throws() only when the
-  //    coundown reaches zero.
+    // Doing signals covers several things that may cause interruptions:
+    //
+    //  * Running the garbage collector
+    //  * Noticing when a HALT was requested
+    //  * (future?) Allowing a break into an interactive debugger
+    //
+    // We process signals *after* calling the Level's executor and not before.
+    // This is for several reasons, but one is that since the level is still
+    // on the stack it is able to guard its OUT slot.
+    //
+    // 1. We could increment total_eval_cycles here so it's always up-to-date.
+    //    But we keep a micro-optimization from R3-Alpha where we only adjust
+    //    one counter (the `eval_countdown`) each time through the loop.  Then
+    //    we reconcile total_eval_cycles in Do_Signals_Throws() only when the
+    //    countdown reaches zero.
 
     Update_Tick_If_Enabled();  // Do_Signals_Throws() expects tick in sync
 
@@ -204,15 +183,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   //=//// HANDLE FINISHED RESULTS ////////////////////////////////////////=//
 
-    if (Get_Level_Flag(L, ABRUPT_FAILURE)) {
-        assert(Get_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(bounce == BOUNCE_THROWN);
-        assert(Is_Throwing_Failure(L));
-    }
-
     if (bounce == L->out) {
       result_in_out:
-        assert(not Is_Fresh(L->out));
+        UNUSED(bounce);
+
+        assert(Is_Cell_Readable(L->out));
 
         if (Get_Level_Flag(L, META_RESULT)) {
             Meta_Quotify(L->out);
@@ -224,8 +199,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // anywhere, so it is bubbled up as a throw.
                 //
                 QUOTE_BYTE(L->out) = NOQUOTE_1;
-                Init_Thrown_Failure(L, cast(Element*, L->out));
-                goto handle_thrown;
+                Init_Thrown_Failure(TOP_LEVEL, cast(Element*, L->out));
+                L = TOP_LEVEL;
+                goto bounce_on_trampoline;
             }
         }
         else if (Get_Level_Flag(L, BRANCH)) {
@@ -238,20 +214,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             return L->out;
         }
 
-        // Some natives and executors want to be able to leave a pushed level
-        // intact as the "top of stack" even when it has completed.  This
-        // means that when those executors run, their level parameter is
-        // not the technical top of the stack.
-        //
-      #if RUNTIME_CHECKS  // To_Checker_Executor not defined in release
-        assert(
-            L == TOP_LEVEL
-            or Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE)
-            or L->executor == &To_Checker_Executor  // BOUNCE_DOWNLEVEL
-            or L->executor == &Copy_Quoter_Executor
-            or L->executor == &Cascader_Executor
-        );
-      #endif
+        assert(TOP_LEVEL == Adjust_Level_For_Downshift(L));
 
         L = TOP_LEVEL->prior;
 
@@ -287,24 +250,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline_skip_just_use_out;
     }
 
-    if (bounce == BOUNCE_DELEGATE) {
-        //
-        // We could unhook the level from the stack here, but leaving it in
-        // provides clarity in the stack.   Hence this should not be used in
-        // tail call situations.
-        //
-        Level_State_Byte(L) = DELEGATE_255;  // maintain non-zero invariant
-        L->executor = &Delegated_Executor;
-
-        L = TOP_LEVEL;
-        goto bounce_on_trampoline;
-    }
-
     if (bounce == BOUNCE_SUSPEND) {  // to get emscripten started w/o Asyncify
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return BOUNCE_SUSPEND;
     }
-
 
   //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) FAILURES //////////////////=//
 
@@ -338,38 +287,15 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
       handle_thrown:
         UNUSED(bounce);  // ignore, as whatever jumped here wants to throw
 
-      #if DEBUG_CELL_READ_WRITE
-        Freshen_Cell_Suppress_Raised(L->out);
-      #endif
+        L = Adjust_Level_For_Downshift(L);
 
-        assert(
-            L == TOP_LEVEL  // Action_Executor() helps, drops inerts
-            or L->executor == &To_Checker_Executor  // BOUNCE_DOWNLEVEL
-            or L->executor == &Copy_Quoter_Executor
-            or L->executor == &Cascader_Executor
-        );
-
-        L = TOP_LEVEL;
+        possibly(Is_Fresh(L->out));  // not completely enforced ATM, review
 
         // Corrupting the pointer here was well-intentioned, but Drop_Level()
         // needs to know if it is an Action_Executor to drop a stack cell.
         //
         /*assert(not Is_Pointer_Corrupt_Debug(L->executor));
         Corrupt_Pointer_If_Debug(L->executor);*/
-
-        if (Get_Level_Flag(L, ABRUPT_FAILURE)) {
-            //
-            // They had their chance to clean up.
-            // Fail again as definitional error, but this time don't notify.
-            //
-            assert(Get_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE));
-            Clear_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE);
-            Clear_Level_Flag(L, ABRUPT_FAILURE);
-            assert(Is_Throwing_Failure(L));
-            Error* error = Cell_Error(VAL_THROWN_LABEL(L));
-            CATCH_THROWN(Level_Spare(L), L);
-            fail (error);
-        }
 
         const Value* label = VAL_THROWN_LABEL(L);  // unwind [1]
         if (
@@ -398,68 +324,55 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline;  // executor will see the throw
     }
 
+  //=//// HANDLE `return FAIL()` CASE /////////////////////////////////////=//
+
+    // When you do `return FAIL(...)` in an executor or dispatcher, that is
+    // a "cooperative abrupt failure".  These should be preferred to the
+    // calling `fail (...)` (which is based on longjmp() or C++ exceptions).
+    // In addition to being more efficient, the `return FAIL(...)` mechanics
+    // work on platforms without longjmp() or C++ exceptions.  Otherwise, all
+    // they can do in response to a fail() is crash.
+    //
+    // Cooperative abrupt failures offer themselves back to the executor
+    // that was running when they were raised.  This means they get a chance
+    // to do cleanup (just as they have for the longjmp() and C++ exception
+    // cases).
+
+    if (bounce == BOUNCE_FAIL) {
+        assert(Is_Throwing_Failure(TOP_LEVEL));
+        L = TOP_LEVEL;
+        goto bounce_on_trampoline;
+    }
+
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (cast(void*, bounce));
 
-} ON_ABRUPT_FAILURE(VarList* e) {  /////////////////////////////////////////
+} ON_ABRUPT_FAILURE(VarList* e) {  ///////////////////////////////////////////
 
-  // A fail() can happen at any moment--even due to something like a failed
-  // memory allocation requested by an executor itself.  These are called
-  // "abrupt failures" (see LEVEL_FLAG_ABRUPT_FAILURE).  They cannot be
-  // TRAP'd or TRY'd in the same way a raised error can be.
-  //
-  // 1. Just because we know what level was "in control" when a fail()
-  //    occurred, we don't put a raised error in the output slot...as if a
-  //    `return RAISE(xxx)` occurred.  That would promote any incidental error
-  //    like "out of memory"--that could come from any nested library call--to
-  //    being definitional.  This doesn't align with raised errors being a
-  //    limited set of contractual return values for the routine.
-  //
-  // 2. When fails occur, any levels which have pushed that the trampoline
-  //    is not running currently will be above L.  These are not offered
-  //    the chance to handle or rescue the error.
-  //
-  //    (Example: When something like ALL is "between steps", the level it
-  //     pushed to process its block will be above it on the stack.  If the ALL
-  //     decides to call fail(), the non-running stack level can be "TOP_LEVEL"
-  //     above the ALL's "L" level.)
+    // A fail() can happen at any moment--even due to something like a failed
+    // memory allocation requested by an executor itself.  These are called
+    // "abrupt failures", and they cannot be TRAP'd or TRY'd in the same way
+    // a raised error can be.
+    //
+    // 1. We don't really know *what* failed...we just know what level we were
+    //    running (L) and there may be other levels on top of that.  All
+    //    levels get a chance to clean up the state.
+    //
+    //    (Example: When something like ALL is "between steps", the level it
+    //    pushed to process its block will be above it on the stack.  If the
+    //    ALL decides to call fail(), the non-running stack level can be
+    //    "TOP_LEVEL" above the ALL's "L" level.)
 
     Assert_Varlist(e);
     assert(CTX_TYPE(e) == REB_ERROR);
 
-    Set_Level_Flag(L, ABRUPT_FAILURE);
+    possibly(L != TOP_LEVEL);  // we give pushed levels chance to clean up [1]
+    Init_Thrown_Failure(TOP_LEVEL, Varlist_Archetype(e));
 
-    #if DEBUG_CELL_READ_WRITE
-      Freshen_Cell_Suppress_Raised(L->out);
-    #endif
+    L = TOP_LEVEL;
 
-    Init_Thrown_Failure(L, Varlist_Archetype(e));  // non-definitional [1]
-
-    while (TOP_LEVEL != L) {  // drop idle levels above the fail [2]
-        assert(Not_Level_Flag(TOP_LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(Not_Level_Flag(TOP_LEVEL, ROOT_LEVEL));
-
-        if (Is_Action_Level(TOP_LEVEL)) {
-            assert(Not_Executor_Flag(ACTION, TOP_LEVEL, DISPATCHER_CATCHES));
-            assert(not Is_Level_Fulfilling(TOP_LEVEL));
-            Drop_Action(TOP_LEVEL);
-        }
-
-        Drop_Level(TOP_LEVEL);  // will call va_end() if variadic level
-    }
-
-    if (Not_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE)) {
-        if (Get_Level_Flag(L, ROOT_LEVEL)) {
-            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-            return BOUNCE_THROWN;
-        }
-
-        Drop_Level(L);
-    }
-
-    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  /* Note: changes LEVEL */
-    // (TOP_LEVEL will become LEVEL again after RESCUE_SCOPE)
-    goto bounce_on_trampoline_with_rescue;  // after exception, need new rescue
+    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  // no way around it with longjmp :-(
+    goto bounce_on_trampoline_with_rescue;  // abrupt failure "used up" rescue
 }}
 
 

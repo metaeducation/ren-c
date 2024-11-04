@@ -211,10 +211,9 @@ Bounce Cascader_Executor(Level* const L)
     Level_State_Byte(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
-    Clear_Level_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
 
     assert(STATE == ST_CASCADER_RUNNING_SUBFUNCTION);
-    return CATCH_CONTINUE_SUBLEVEL(sub);
+    return CONTINUE_SUBLEVEL(sub);
 
 } finished: {  ///////////////////////////////////////////////////////////////
 

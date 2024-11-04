@@ -281,8 +281,8 @@ DECLARE_NATIVE(reduce_each)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
 
-    if (Is_Block(body) or Is_Meta_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
+    assert(Is_Block(body));
+    Add_Definitional_Break_Continue(body, level_);
 
     if (Is_The_Block(block))
         flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
@@ -330,7 +330,8 @@ DECLARE_NATIVE(reduce_each)
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 
     STATE = ST_REDUCE_EACH_RUNNING_BODY;
-    return CATCH_CONTINUE_BRANCH(OUT, body);
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
+    return CONTINUE_BRANCH(OUT, body);
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
@@ -342,14 +343,15 @@ DECLARE_NATIVE(reduce_each)
             goto finished;
     }
 
+    Disable_Dispatcher_Catching_Of_Throws(LEVEL);
     goto reduce_next;
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    if (THROWING)  // sublevel has already been dropped if thrown
-        return THROWN;
-
     Drop_Level(SUBLEVEL);
+
+    if (THROWING)
+        return THROWN;
 
     if (Is_Fresh(OUT))  // body never ran
         return VOID;
@@ -651,7 +653,7 @@ Bounce Composer_Executor(Level* const L)
 
             Push_Composer_Level(OUT, main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
-            return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
+            return CONTINUE_SUBLEVEL(SUBLEVEL);
         }
 
         // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
@@ -690,7 +692,7 @@ Bounce Composer_Executor(Level* const L)
     Push_Level(OUT, sublevel);
 
     STATE = ST_COMPOSER_EVAL_GROUP;
-    return CATCH_CONTINUE_SUBLEVEL(sublevel);
+    return CONTINUE_SUBLEVEL(sublevel);
 
 }} process_out: {  ///////////////////////////////////////////////////////////
 

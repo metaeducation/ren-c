@@ -133,8 +133,15 @@ INLINE void Tweak_Bonus_Keysource(Flex* varlist, Node* keysource) {
 // to see if it's an unmanaged API handle and released if it is...ultimately
 // putting the cell into L->out.
 //
-// However, pseudotypes can be used to indicate special instructions to the
-// evaluator.
+// Other special instructions need to be encoded somehow:
+//
+// * We don't want to use UTF-8 signals like `return "C"` for BOUNCE_CONTINUE.
+//   That would miss out on the opportunity to make `return "Some String"` a
+//   synonym for `return rebText("Some String")` which is appealing.
+//
+// * Between "weird Cell" and "weird Stub" choices, "weird Cell" is smaller
+//   (4 platform pointers instead of 8).  So we go with a cell using an
+//   out-of-range HEART_BYTE.
 //
 
 INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {

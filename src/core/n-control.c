@@ -153,7 +153,7 @@ Bounce The_Group_Branch_Executor(Level* level_)
     Push_Level(SPARE, sub);
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
-    return CATCH_CONTINUE_SUBLEVEL(sub);
+    return CONTINUE_SUBLEVEL(sub);
 
 } group_result_in_spare: {  //////////////////////////////////////////////////
 
@@ -1612,7 +1612,8 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
     BINDING(block) = let_throw;  // extend chain
 
     STATE = ST_CATCH_RUNNING_CODE;
-    return CATCH_CONTINUE_BRANCH(OUT, ARG(block));
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // not caught by default
+    return CONTINUE_BRANCH(OUT, ARG(block));
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 

@@ -128,20 +128,15 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
 Bounce Action_Executor(Level* L)
 {
     if (THROWING) {
-        if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES))
+        if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES)) {
+            assert(Level_State_Byte(L) != STATE_0);  // need to update
             goto dispatch_phase;  // wants to see the throw
-
-        if (Get_Level_Flag(L, ABRUPT_FAILURE)) {
-            assert(Get_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE));
-            goto dispatch_phase;
         }
-
         goto handle_thrown_maybe_redo;
     }
 
     if (Not_Action_Executor_Flag(L, IN_DISPATCH)) {
         assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
-        assert(Not_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE));
 
         switch (STATE) {
           case ST_ACTION_INITIAL_ENTRY:
@@ -524,7 +519,7 @@ Bounce Action_Executor(Level* L)
             Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
             Push_Level(ARG, sub);
 
-            return CATCH_CONTINUE_SUBLEVEL(sub); }
+            return CONTINUE_SUBLEVEL(sub); }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
@@ -602,7 +597,7 @@ Bounce Action_Executor(Level* L)
 
                 Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
                 Push_Level(ARG, sub);
-                return CATCH_CONTINUE_SUBLEVEL(sub);
+                return CONTINUE_SUBLEVEL(sub);
             }
             else if (Is_Soft_Escapable_Group(cast(Element*, ARG))) {
                 //
@@ -854,20 +849,7 @@ Bounce Action_Executor(Level* L)
 
 } dispatch_phase: {  /////////////////////////////////////////////////////////
 
-  // 1. Each time a continuation happens, the dispatcher gets a new chance to
-  //    decide if it wants to catch throws.
-  //
-  //    !!! Should this be done in the continuations themselves, so that an
-  //    action that doesn't use any continuations won't pay for this clearing?
-  //
-  // 2. The stale bit is set on the output before we run the dispatcher.  We
-  //    check to make sure it's not stale at the end--because that could often
-  //    mean the function forgot to write the output cell on some code path.
-  //    (To intentionally not write anything and "vaporize", use `return VOID`
-  //    which gives back a distinct `Bounce` signal to know it's purposeful.)
-
     assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
-    Clear_Action_Executor_Flag(LEVEL, DISPATCHER_CATCHES);  // [1]
 
     Action* phase = Level_Phase(L);
 
@@ -894,13 +876,18 @@ Bounce Action_Executor(Level* L)
 
       case C_DELEGATION:
         Set_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL);
-        STATE = DELEGATE_255;  // the trampoline does this when delegating
+        STATE = 123;  // BOUNCE_CONTINUE does not allow STATE_0
         return BOUNCE_CONTINUE;
 
       case C_SUSPEND:
         return BOUNCE_SUSPEND;
 
       case C_THROWN:
+        goto handle_thrown_maybe_redo;
+
+      case C_FAIL:
+        if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES))
+            goto dispatch_phase;  // can run same cleanup code as for fail()
         goto handle_thrown_maybe_redo;
 
       case C_REDO_UNCHECKED:
@@ -913,15 +900,7 @@ Bounce Action_Executor(Level* L)
         goto typecheck_then_dispatch;
 
       case C_DOWNSHIFTED:
-      #if RUNTIME_CHECKS
-        assert(
-            L->executor == &To_Checker_Executor
-            or L->executor == &Cascader_Executor
-            or L->executor == &Copy_Quoter_Executor
-        );
-      #endif
-        assert(TOP_LEVEL->prior == L);
-        L = TOP_LEVEL;
+        L = Adjust_Level_For_Downshift(L);
         assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
         goto dispatch_phase;
 
@@ -997,8 +976,8 @@ Bounce Action_Executor(Level* L)
             assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
             Clear_Action_Executor_Flag(L, IN_DISPATCH);
 
+            possibly(Get_Action_Executor_Flag(L, DISPATCHER_CATCHES));
             Clear_Action_Executor_Flag(L, DISPATCHER_CATCHES);
-            Clear_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE);
 
             if (Is_Okay(OUT)) {
                 STATE = ST_ACTION_FULFILLING_ARGS;
@@ -1009,13 +988,20 @@ Bounce Action_Executor(Level* L)
         }
     }
 
-    while (TOP_LEVEL != L)  // convenient for natives pushing SUBLEVEL [4]
-        Drop_Level(TOP_LEVEL);  // !!! Should all inert levels be aborted?
+    // As a convenience, if you use CONTINUE() and not CATCH_CONTINUE() then
+    // any levels that are pushed will be dropped automatically.  If those
+    // pushed levels have some persistent data that needs to be released,
+    // that could lead to leaks.  So be sure to CATCH_CONTINUE() if there
+    // is some state in sublevels that needs to be cleaned up.
+
+    while (TOP_LEVEL != L) {
+        Drop_Level(TOP_LEVEL);
+        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
+    }
 
     Drop_Action(L);
-    Drop_Data_Stack_To(L->baseline.stack_base);  // unprocessed refinements
 
-    return BOUNCE_THROWN;
+    return THROWN;
 }}
 
 

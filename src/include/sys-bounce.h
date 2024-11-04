@@ -81,8 +81,6 @@ INLINE Bounce Run_Generic_Dispatch(
 #define BOUNCE_DELEGATE \
     cast(Bounce, &PG_Bounce_Delegation)
 
-#define DELEGATE_255 255
-
 
 // For starters, a simple signal for suspending stacks in order to be able to
 // try not using Asyncify (or at least not relying on it so heavily)
@@ -117,40 +115,18 @@ INLINE Bounce Run_Generic_Dispatch(
 #define CONTINUE(out,...) \
     CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
 
-#define CATCH_CONTINUE(out,...) ( \
-    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__))
-
 #define CONTINUE_BRANCH(out,...) \
     CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
 
-#define CATCH_CONTINUE_BRANCH(out,...) ( \
-    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__))
-
-INLINE Bounce Continue_Sublevel_Helper(
-    Level* L,
-    bool catches,
-    Level* sub
-){
-    if (catches) {  // all executors catch, but action may or may not delegate
-        if (Is_Action_Level(L) and not Is_Level_Fulfilling(L))
-            L->flags.bits |= ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES;
-    }
-    else {  // Only Action_Executor() can let dispatchers avoid catching
-        assert(Is_Action_Level(L) and not Is_Level_Fulfilling(L));
-    }
-
+INLINE Bounce Continue_Sublevel_Helper(Level* L, Level* sub) {
     assert(sub == TOP_LEVEL);  // currently sub must be pushed & top level
     UNUSED(sub);
+    UNUSED(L);
     return BOUNCE_CONTINUE;
 }
 
-#define CATCH_CONTINUE_SUBLEVEL(sub) \
-    Continue_Sublevel_Helper(level_, true, (sub))
-
 #define CONTINUE_SUBLEVEL(sub) \
-    Continue_Sublevel_Helper(level_, false, (sub))
+    Continue_Sublevel_Helper(level_, (sub))
 
 
 //=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//
@@ -166,6 +142,7 @@ INLINE Bounce Continue_Sublevel_Helper(
 // at least it could be collapsed into a more primordial state.  Review.
 
 #define DELEGATE_CORE_3(o,sub_flags,...) ( \
+    assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
     assert((o) == level_->out), \
     Pushed_Continuation( \
         level_->out, \
@@ -187,6 +164,7 @@ INLINE Bounce Continue_Sublevel_Helper(
 #define DELEGATE_BRANCH(out,...) \
     DELEGATE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
 
-#define DELEGATE_SUBLEVEL(sub) ( \
-    Continue_Sublevel_Helper(level_, false, (sub)), \
-    BOUNCE_DELEGATE)
+#define DELEGATE_SUBLEVEL(sub) \
+    (assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
+        Continue_Sublevel_Helper(level_, (sub)), \
+        BOUNCE_DELEGATE)

@@ -158,8 +158,16 @@ STATIC_ASSERT(
 // Every Executor() gets called with the chance to cleanup in the THROWING
 // state.  But in the specific case of the Action_Executor(), it uses this
 // flag to keep track of whether the dispatcher it is calling (a kind of
-// "sub-executor") wants to be told about the thrown state.  This would be
-// something like a WHILE loop wanting to catch a BREAK.
+// "sub-executor") wants to be told about the thrown state.
+//
+// This would be for something like a WHILE loop wanting to catch a BREAK,
+// or something like FOR-EACH wanting to get notified if a fail() happens
+// so it can clean up its iteration state.  (These failures could be emitted
+// from the dispatcher itself, so it could `return FAIL()` and then the
+// trampoline turns right around and calls the dispatcher that just returned
+// with the thrown state.  This helps make it so you only have to write one
+// bit of cleanup code that works for both longjmp()/C++-throw based failures
+// as well as `return FAIL()` cases.
 //
 #define ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES \
     LEVEL_FLAG_29

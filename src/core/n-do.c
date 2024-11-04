@@ -682,25 +682,25 @@ DECLARE_NATIVE(apply)
 
     enum {
         ST_APPLY_INITIAL_ENTRY = STATE_0,
+        ST_APPLY_INITIALIZED_ITERATOR,
         ST_APPLY_LABELED_EVAL_STEP,
         ST_APPLY_UNLABELED_EVAL_STEP
     };
 
-    if (Get_Level_Flag(level_, ABRUPT_FAILURE)) {  // fail() in this dispatcher
-        Clear_Level_Flag(level_, ABRUPT_FAILURE);
-        goto finalize_apply;
-    }
-
     switch (STATE) {
-      case ST_APPLY_INITIAL_ENTRY :
+      case ST_APPLY_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_APPLY_LABELED_EVAL_STEP :
+      case ST_APPLY_INITIALIZED_ITERATOR:
+        assert(Is_Throwing_Failure(LEVEL));  // this dispatcher fail()'d
+        goto finalize_apply;
+
+      case ST_APPLY_LABELED_EVAL_STEP:
         if (THROWING)
             goto finalize_apply;
         goto labeled_step_result_in_spare;
 
-      case ST_APPLY_UNLABELED_EVAL_STEP :
+      case ST_APPLY_UNLABELED_EVAL_STEP:
         if (THROWING)
             goto finalize_apply;
         if (Not_Cell_Readable(iterator)) {
@@ -743,9 +743,11 @@ DECLARE_NATIVE(apply)
 
     EVARS *e = Try_Alloc_Memory(EVARS);
     Init_Evars(e, frame);  // Varlist_Archetype(exemplar) is phased, sees locals
-    Init_Handle_Cdata(iterator, e, sizeof(EVARS));
 
-    Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
+    Init_Handle_Cdata(iterator, e, sizeof(EVARS));
+    STATE = ST_APPLY_INITIALIZED_ITERATOR;
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_apply
+
     goto handle_next_item;
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
@@ -840,7 +842,7 @@ DECLARE_NATIVE(apply)
         Clear_Level_Flag(SUBLEVEL, META_RESULT);
 
     Assert_Stepper_Level_Ready(SUBLEVEL);
-    return CATCH_CONTINUE_SUBLEVEL(SUBLEVEL);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
@@ -873,13 +875,9 @@ DECLARE_NATIVE(apply)
 
 } finalize_apply: {  /////////////////////////////////////////////////////////
 
-    // 1. It's not clear that the sublevel should have been dropped on an
-    //    abrupt failure, as there may be information we need in it to do
-    //    cleanup.  Review.
-    //
-    // 2. We don't want to get any further notifications of abrupt failures
+    // 1. We don't want to get any further notifications of abrupt failures
     //    that happen after we have delegated to the function.  But should
-    //    DELEGATE itself rule that out automatically?
+    //    DELEGATE itself rule that out automatically?  It asserts for now.
 
     if (Not_Cell_Readable(iterator))
         assert(REF(relax));
@@ -890,13 +888,12 @@ DECLARE_NATIVE(apply)
         Init_Unreadable(iterator);
     }
 
-    if (THROWING)  // !!! SUBLEVEL auto-dropped on abrupt failure [1]
+    Drop_Level(SUBLEVEL);
+
+    if (THROWING)
         return THROWN;
 
-    Drop_Level(SUBLEVEL);  // !!! auto dropped on abrupt failure, should it?
-
-    Clear_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // !!! necessary? [2]
-
+    Disable_Dispatcher_Catching_Of_Throws(LEVEL);  // no more finalize needed
     return DELEGATE(OUT, frame);
 }}
 
@@ -908,7 +905,7 @@ DECLARE_NATIVE(apply)
 //
 //      return: [any-atom?]
 //      @(operation) [<unrun> word! tuple! chain! path! frame! action?]
-//      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
+//      args "Arguments and Refinements, e.g. [arg1 arg2 :ref refine1]"
 //          [block!]
 //      :relax "Don't worry about too many arguments to the APPLY"
 //      <local> frame index  ; need frame compatibility with APPLY
@@ -926,7 +923,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 {
     INCLUDE_PARAMS_OF_APPLY;  // needs to be frame-compatible [1]
 
-    if (Level_State_Byte_Maybe_Abrupt_Failure(LEVEL) != STATE_0)  // [2]
+    if (STATE != STATE_0)  // [2]
         return N_apply(level_);
 
     Element* operation = cast(Element*, ARG(operation));

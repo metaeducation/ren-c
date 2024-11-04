@@ -109,7 +109,8 @@ DECLARE_NATIVE(enrescue)
     Push_Level(OUT, L);
 
     STATE = ST_ENRESCUE_EVALUATING;
-    return CATCH_CONTINUE_SUBLEVEL(L);
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // fail not caught by default
+    return CONTINUE_SUBLEVEL(L);
 
 } evaluation_finished: {  ////////////////////////////////////////////////////
 
@@ -201,7 +202,8 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     }
 
     STATE = ST_ENTRAP_EVALUATING;
-    return CONTINUE_SUBLEVEL(sub);  // not a CATCH_CONTINUE; throws passthru
+    /*Enable_Dispatcher_Catching_Of_Throws(LEVEL);*/  // don't need for raised
+    return CONTINUE_SUBLEVEL(sub);
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 

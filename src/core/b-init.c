@@ -335,6 +335,7 @@ static void Init_Root_Vars(void)
     // to the GC's root set.
 
     Init_Return_Signal(&PG_Bounce_Thrown, C_THROWN);
+    Init_Return_Signal(&PG_Bounce_Fail, C_FAIL);
     Init_Return_Signal(&PG_Bounce_Redo_Unchecked, C_REDO_UNCHECKED);
     Init_Return_Signal(&PG_Bounce_Redo_Checked, C_REDO_CHECKED);
     Init_Return_Signal(&PG_Bounce_Downshifted, C_DOWNSHIFTED);
@@ -400,6 +401,7 @@ static void Shutdown_Root_Vars(void)
     Erase_Cell(&PG_Nothing_Value);
 
     Erase_Cell(&PG_Bounce_Thrown);
+    Erase_Cell(&PG_Bounce_Fail);
     Erase_Cell(&PG_Bounce_Redo_Unchecked);
     Erase_Cell(&PG_Bounce_Redo_Checked);
     Erase_Cell(&PG_Bounce_Downshifted);

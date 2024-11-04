@@ -139,7 +139,7 @@ Bounce Func_Dispatcher(Level* const L)
     assert(Is_Fresh(OUT));
     return CONTINUE_CORE(
         OUT,  // body evaluative result discarded [1]
-        LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, RETURN is responsible
+        LEVEL_MASK_NONE,
         SPECIFIED,
         stable_SPARE
     );

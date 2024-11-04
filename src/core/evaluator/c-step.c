@@ -519,7 +519,7 @@ Bounce Stepper_Executor(Level* L)
         // eval calls that lookahead, but no lookahead after the action runs)
         //
         STATE = REB_FRAME;
-        return CATCH_CONTINUE_SUBLEVEL(TOP_LEVEL); }
+        return CONTINUE_SUBLEVEL(TOP_LEVEL); }
 
 
     //=//// SIGIL! ////////////////////////////////////////////////////////=//
@@ -604,7 +604,7 @@ Bounce Stepper_Executor(Level* L)
             if (not right)
                 goto sigil_rightside_in_out;
 
-            return CATCH_CONTINUE_SUBLEVEL(right); }
+            return CONTINUE_SUBLEVEL(right); }
 
           case SIGIL_QUASI:  // ~~
             return FAIL("No evaluator behavior defined for ~~ yet");
@@ -724,7 +724,7 @@ Bounce Stepper_Executor(Level* L)
                 Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
                 Push_Level(SPARE, sub);
                 STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
-                return CATCH_CONTINUE_SUBLEVEL(sub);
+                return CONTINUE_SUBLEVEL(sub);
             }
 
             Level* sub = Make_Action_Sublevel(L);
@@ -783,7 +783,7 @@ Bounce Stepper_Executor(Level* L)
             Push_Level(SPARE, sub);
 
             STATE = ST_STEPPER_SET_GROUP;
-            return CATCH_CONTINUE_SUBLEVEL(sub); }
+            return CONTINUE_SUBLEVEL(sub); }
 
           case LEADING_BLANK_AND(WORD):  // :FOO, refinement, error on eval?
             Unchain(CURRENT);
@@ -906,7 +906,7 @@ Bounce Stepper_Executor(Level* L)
         );
         Push_Level(OUT, sub);
 
-        return CATCH_CONTINUE_SUBLEVEL(sub); }
+        return CONTINUE_SUBLEVEL(sub); }
 
 
     //=//// TUPLE! /////////////////////////////////////////////////////////=//
@@ -1122,7 +1122,7 @@ Bounce Stepper_Executor(Level* L)
         if (not right)
             goto generic_set_rightside_in_out;
 
-        return CATCH_CONTINUE_SUBLEVEL(right);
+        return CONTINUE_SUBLEVEL(right);
 
     } generic_set_rightside_in_out: {  ///////////////////////////////////////
 
@@ -1414,7 +1414,7 @@ Bounce Stepper_Executor(Level* L)
         if (not sub)
             goto set_block_rightside_result_in_out;
 
-        return CATCH_CONTINUE_SUBLEVEL(sub);
+        return CONTINUE_SUBLEVEL(sub);
 
     } set_block_rightside_result_in_out: {  //////////////////////////////////
 
