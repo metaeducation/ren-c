@@ -1200,6 +1200,8 @@ void Begin_Action(
 //    set...and right now, only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
 //
 void Drop_Action(Level* L) {
+    Corrupt_Pointer_If_Debug(L->label);  // do first (for data breakpoints)
+
     Set_Level_Infix_Mode(L, PREFIX_0);  // clear out for reuse...?
 
     assert(BONUS(KeySource, L->varlist) == L);
@@ -1233,7 +1235,6 @@ void Drop_Action(Level* L) {
     Corrupt_Pointer_If_Debug(ORIGINAL); // action is no longer running
     L->executor = nullptr;  // so GC won't think level needs Action marking
 
-    Corrupt_Pointer_If_Debug(L->label);
   #if DEBUG_LEVEL_LABELS
     Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif

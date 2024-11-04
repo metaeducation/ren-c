@@ -202,9 +202,12 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(22)
 
 
-//=//// LEVEL_FLAG_23 //////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_MISCELLANEOUS //////////////////////////////////////////=//
 //
-#define LEVEL_FLAG_23 \
+// Because ACTION_EXECUTOR_FLAG_XXX are hard to come by, this flag is given
+// to natives and non-ACTION-executors for miscellaneous purposes.
+//
+#define LEVEL_FLAG_MISCELLANEOUS \
     FLAG_LEFT_BIT(23)
 
 
