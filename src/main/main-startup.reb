@@ -179,9 +179,9 @@ boot-banner: [
     ; Print out the script info
     boot-print [
         (if yes? is-module ["Module:"] else ["Script:"])
-            any [select maybe hdr 'title, "(anonymous)"]
-            "Version:" any [select maybe hdr 'version, "null"]
-            "Date:" any [select maybe hdr 'date, "null"]
+            @(any [try hdr.title, "(anonymous)"])
+            "Version:" @(any [try hdr.version, "null"])
+            "Date:" @(any [try hdr.date, "null"])
     ]
 ]
 

@@ -140,9 +140,8 @@ REBOL [
             data: mold64 data
         ]
 
-        not blob? data [
-            data: to-blob data
-        ]
+        assert [not blob? data]
+        elide [data: as binary! data]
 
         length [
             change next find header 'length: (length of data)

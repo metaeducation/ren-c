@@ -397,9 +397,9 @@ export /do-recover: func [
     let summary
     process-tests test-sources run-test-cluster/ then [
         summary: spaced [
-            "system.version:" system.version LF
-            "code-checksum:" code-checksum LF
-            "test-checksum:" test-checksum LF
+            "system.version:" @system.version LF
+            "code-checksum:" @code-checksum LF
+            "test-checksum:" @test-checksum LF
             "Total:" (
                 successes
                 + test-failures

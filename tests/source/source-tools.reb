@@ -220,9 +220,9 @@ export analyse: context [
                 ]
 
                 let name: ~
-                if true? (parse3 proto-parser.data [
+                if true? (parse proto-parser.data [
                     opt 'export
-                    name: &set-word? (name: to-word name)
+                    name: &set-run-word? (name: resolve name)
                     opt ['infix | 'infix:defer | 'infix:postpone]
                     [
                         'native
@@ -254,10 +254,10 @@ export analyse: context [
                     ;
                     any [
                         (proto-parser.proto-id =
-                            form to word! proto-parser.data.1)
-                        (proto-parser.proto-id
+                            form unchain proto-parser.data.1)
+                        (proto-parser.proto-id =
                             unspaced [
-                                "API_" to word! proto-parser.data.1
+                                "API_" form unchain proto-parser.data.1
                             ])
                     ] else [
                         let line: text-line-of proto-parser.parse-position
