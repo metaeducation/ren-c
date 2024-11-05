@@ -112,3 +112,7 @@
         "The block is: [a b c]" = spaced ["The block is:" @obj.block]
     )
 ]
+
+; @(spread []) should vanish
+;
+("ab" = unspaced ["a" @(spread []) "b"])

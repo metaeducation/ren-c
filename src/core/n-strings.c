@@ -200,6 +200,7 @@ DECLARE_NATIVE(delimit)
         Form_Element(mo, unwrap delimiter);  // (thrown out if `nothing` made)
 
     while (Not_Level_At_End(L)) {
+        bool mold = false;
         const Element* item = At_Level(L);
         if (Is_Block(item) and REF(delimiter)) {  // hack [1]
             Derelativize(SPARE, item, Level_Binding(L));
@@ -237,18 +238,11 @@ DECLARE_NATIVE(delimit)
 
             Fetch_Next_In_Feed(L->feed);
 
-            Decay_If_Unstable(OUT);
-            Value* molded = rebValue(Canon(MOLD), rebQ(stable_OUT));
-            if (molded == nullptr)  // vaporized (e.g. MOLD of VOID)
-                continue;
-            Copy_Cell(OUT, molded);
-            rebRelease(molded);
+            mold = true;
         }
         else if (Is_Quoted(item)) {  // just mold it
-            Value* molded = rebValue(Canon(MOLD), item);
-            assert(molded != nullptr);
-            Copy_Cell(OUT, molded);
-            rebRelease(molded);
+            Copy_Cell(OUT, item);
+            mold = true;
 
             Fetch_Next_In_Feed(L->feed);
         }
@@ -270,35 +264,53 @@ DECLARE_NATIVE(delimit)
         if (Is_Nulled(OUT))  // catches bugs in practice [3]
             return RAISE(Error_Need_Non_Null_Raw());
 
-        if (Is_Antiform(OUT))
+        if (Is_Splice(OUT) and mold) {  // only allow splice for mold, for now
+            if (Cell_Series_Len_At(OUT) == 0)
+                continue;  // vaporize;
+        }
+        else if (Is_Antiform(OUT))
             return RAISE(Error_Bad_Antiform(OUT));
 
-        if (Any_List(OUT))  // guessing a behavior is bad [4]
-            return FAIL("Desired list rendering in DELIMIT not known");
+        if (not mold) {
+            if (Any_List(OUT))  // guessing a behavior is bad [4]
+                return FAIL("DELIMIT requires @var to mold lists");
 
-        if (Any_Sequence(OUT))  // can have lists in them, dicey [4]
-            return FAIL("Desired sequence rendering in DELIMIT not known");
+            if (Any_Sequence(OUT))  // can have lists in them, dicey [4]
+                return FAIL("DELIMIT requires @var to mold sequences");
 
-        if (Sigil_Of(cast(Element*, OUT)))
-            return FAIL("DELIMIT requires @var to render elements with sigils");
+            if (Sigil_Of(cast(Element*, OUT)))
+                return FAIL("DELIMIT requires @var for elements with sigils");
 
-        if (Is_Blank(OUT))
-            return FAIL("DELIMIT only treats source-level BLANK! as space");
+            if (Is_Blank(OUT))
+                return FAIL("DELIMIT only treats source-level BLANK! as space");
+        }
 
         nothing = false;
 
         if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [5]
             Form_Element(mo, cast(Element*, OUT));
             pending = false;
+            continue;
+        }
+
+        if (pending and delimiter)
+            Form_Element(mo, unwrap delimiter);
+
+        if (mold) {
+            if (Is_Splice(OUT)) {
+                SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+                Mold_Or_Form_Cell_Ignore_Quotes(mo, OUT, false);
+                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            }
+            else
+                Mold_Element(mo, cast(Element*, OUT));
         }
         else {
-            if (pending and delimiter)
-                Form_Element(mo, unwrap delimiter);
-
             Form_Element(mo, cast(Element*, OUT));
-
-            pending = true;  // note this includes empty strings [6]
         }
+
+        pending = true;  // note this includes empty strings [6]
+
     } while (Not_Level_At_End(L));
 
     if (nothing) {
