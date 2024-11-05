@@ -160,6 +160,7 @@
 %functions/predicate.test.reb
 %functions/redo.test.reb
 %functions/reframer.test.reb
+%functions/reorder.test.reb
 %functions/return.test.reb
 %functions/shove.test.reb
 %functions/specialize.test.reb

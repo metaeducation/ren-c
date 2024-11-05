@@ -1267,13 +1267,8 @@ DECLARE_GENERICS(Frame)
         if (prop == SYM_WORDS)
             return T_Context(level_, verb);
 
-        if (prop == SYM_PARAMETERS) {
-            Init_Frame_Details(
-                ARG(value),
-                CTX_FRAME_PHASE(c),
-                VAL_FRAME_LABEL(frame),
-                Cell_Frame_Coupling(frame)
-            );
+        if (prop == SYM_EXEMPLAR) {
+            Init_Frame_Details(frame, CTX_FRAME_PHASE(c), ANONYMOUS, nullptr);
             goto handle_reflect_action;
         }
 
@@ -1341,16 +1336,23 @@ DECLARE_GENERICS(Frame)
             return Init_Word(OUT, unwrap label); }
 
           case SYM_WORDS:
-          case SYM_PARAMETERS: {
-            bool just_words = (sym == SYM_WORDS);
-            return Init_Block(
-                OUT,
-                Make_Action_Parameters_Arr(act, just_words)
-            ); }
+            return Init_Block(OUT, Make_Action_Words_Array(act));
 
           case SYM_BODY:
             Get_Maybe_Fake_Action_Body(OUT, frame);
             return OUT;
+
+          case SYM_RETURN: {
+            if (not ACT_HAS_RETURN(act))
+                return nullptr;
+
+            assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
+            VarList* exemplar = ACT_EXEMPLAR(act);
+            Value* param = Varlist_Slots_Head(exemplar);
+            assert(Is_Hole(param));
+            Copy_Cell(OUT, param);
+            QUOTE_BYTE(OUT) = NOQUOTE_1;  // no reason to give back antiform
+            return OUT; }
 
           case SYM_EXEMPLAR: {
             //
@@ -1557,13 +1559,7 @@ void MF_Frame(Molder* mo, const Cell* v, bool form) {
         Append_Ascii(mo->string, "} ");
     }
 
-    // !!! The system is no longer keeping the spec of functions, in order
-    // to focus on a generalized "meta info object" service.  MOLD of
-    // functions temporarily uses the word list as a substitute (which
-    // drops types)
-    //
-    const bool just_words = false;
-    Array* parameters = Make_Action_Parameters_Arr(VAL_ACTION(v), just_words);
+    Array* parameters = Make_Action_Words_Array(VAL_ACTION(v));
     Mold_Array_At(mo, parameters, 0, "[]");
     Free_Unmanaged_Flex(parameters);
 

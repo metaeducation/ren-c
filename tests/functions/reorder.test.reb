@@ -15,7 +15,7 @@
     itemfirst: reorder append/ [value series]
     all [
         [a b c <item>] = itemfirst <item> [a b c]
-        [value series /part /dup /line] = parameters of :itemfirst
+        [value series :part :dup :line] = decorated-words-of itemfirst/
     ]
 )
 
@@ -24,7 +24,7 @@
     seriesfirst: reorder append/ [series value]
     all [
         [a b c <item>] = seriesfirst [a b c] <item>
-        (parameters of seriesfirst/) = (parameters of append/)
+        (decorated-words-of seriesfirst/) = (decorated-words-of append/)
     ]
 )
 
@@ -99,7 +99,7 @@
 [
     (flip: macro ['name [word!] <local> frame] [
         frame: unrun ensure [action?] get name
-        reduce [reorder frame (reverse parameters of frame)]
+        reduce [reorder frame (reverse words of frame)]
     ]
     true)
 

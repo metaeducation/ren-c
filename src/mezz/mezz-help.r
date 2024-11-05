@@ -23,30 +23,38 @@ REBOL [
     ]
 
     return collect [
-        keep:line maybe ensure [~null~ text!] select adjunct 'description
+        keep:line ? ensure [~null~ text!] select adjunct 'description
 
-        let types: ensure [~null~ frame! object!] select adjunct 'parameter-types
-        let notes: ensure [~null~ frame! object!] select adjunct 'parameter-notes
+        let r-param: return of action
 
-        let return-type: ensure [~null~ block!] select maybe types 'return
-        let return-note: ensure [~null~ text!] select maybe notes 'return
-
-        if return-type or return-note [
+        if r-param and (r-param.spec or r-param.text) [
             keep spread compose [
-                return: (maybe return-type) (maybe return-note)
+                return: (? r-param.spec)
+                    (? r-param.text)
             ]
         ]
 
-        for-each 'param parameters of action [
+        for-each 'key words of action [
+            let param: meta:lite select action key
             keep spread compose [
-                (param)
-                    (maybe select maybe types param)
-                    (maybe select maybe notes param)
+                (decorate-parameter param key) (? param.spec)
+                    (? param.text)
             ]
         ]
     ]
 ]
 
+/decorated-words-of: func [
+    "Get the decorated parameters as a block (useful for testing)"
+    return: [block!]
+    frame [<unrun> frame!]
+][
+    let e: exemplar of frame
+    return map-each 'key (words of frame) [
+        let param: meta:lite select e key
+        decorate-parameter param key
+    ]
+]
 
 /description-of: func [
     "One-line summary of a value's purpose"
@@ -123,29 +131,33 @@ REBOL [
 
     print "USAGE:"
 
-    let args  ; required parameters
-    let refinements  ; optional parameters (PARAMETERS OF puts at tail)
+    let keys: words of frame
 
-    parse parameters of frame [
-        args: across opt some [
-            word! | meta-word! | the-word! | &quoted?  ; quoted too generic?
-            | the-group!
+    let args: copy []  ; foo baz bar
+    let deco-args: copy []  ; foo 'baz @(bar)
+    let refinements: copy []  ; mumble frotz
+    let deco-refinements: copy []  ; :mumble :/@(frotz)
+
+    for-each 'key keys [
+        let param: meta:lite select frame key
+        if param.optional [
+            append refinements key
+            append deco-refinements decorate-parameter param key
+        ] else [
+            append args key
+            append deco-args decorate-parameter param key
         ]
-        refinements: across opt some &refinement?  ; these are at tail
-    ] except [
-        fail ["Unknown results in PARAMETERS OF:" @(parameters of frame)]
     ]
 
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ;
-    all [infix? frame, not empty? args] then [
-        print [_ _ _ _ @args.1 name @(spread next args)]
+    all [infix? frame, not empty? deco-args] then [
+        print [_ _ _ _ @deco-args.1 name @(spread next deco-args)]
     ] else [
-        print [_ _ _ _ name @(spread args) @(spread refinements)]
+        print [_ _ _ _ name @(spread deco-args) @(spread deco-refinements)]
     ]
 
     let adjunct: adjunct-of frame
-
     print newline
 
     print "DESCRIPTION:"
@@ -153,31 +165,30 @@ REBOL [
 
     let print-args: [list :indent-words] -> [
         for-each 'key list [
-            let param: meta:lite select frame to-word noquote key
-
-            print [_ _ _ _ @key @(maybe param.spec)]
+            let param: meta:lite select frame key
+            print [_ _ _ _ @(decorate-parameter param key) @(maybe param.spec)]
             if param.text [
                 print [_ _ _ _ _ _ _ _ param.text]
             ]
         ]
     ]
 
-    ; !!! This is imperfect because it will think a parameter named RETURN
-    ; that isn't intended for use as a definitional return is a return type.
-    ; The concepts are still being fleshed out.
+    ; !!! Note that an action can have an ordinary parameter named RETURN.
+    ; If it does then it will be listed in the arguments.  This hasn't been
+    ; completely worked out, but the idea here is that if it doesn't have
+    ; an *actual* by-contract return value documentation, then there will
+    ; be no RETURNS: in the help.
     ;
-    let return-param: meta:lite select frame 'return
+    let return-param: return of frame
 
-    print newline
-    print [
-        "RETURNS:" if return-param and (return-param.spec) [
-            mold return-param.spec
-        ] else [
-            "(undocumented)"
+    if return-param [
+        print newline
+        print [
+            "RETURNS:" (any [mold ? return-param.spec, "(undocumented)"])
         ]
-    ]
-    if return-param and return-param.text [
-        print [_ _ _ _ return-param.text]
+        if return-param.text [
+            print [_ _ _ _ return-param.text]
+        ]
     ]
 
     if not empty? args [
@@ -512,7 +523,7 @@ REBOL [
         ; word val
         if (activation? :val) or (action? :val) [
             arg: either args [
-                mold parameters of :val
+                mold words of :val
             ][
                 description-of :val else ["(undocumented)"]
             ]

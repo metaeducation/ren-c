@@ -37,38 +37,46 @@
         frame [<unrun> frame!]
         block "Invocation by example (BLANK!s are unspecialized)"
             [block!]
-        <local> params var
+        <local> e
     ][
         frame: make frame! frame  ; don't mutate incoming frame [1]
+        e: exemplar of frame
 
-        for-each 'param (parameters of frame) [
+        for-each 'key (words of frame) [
             if tail? block [break]  ; no more args, leave rest unspecialized
 
-            match [word! lit-word? the-group!] param else [
+            if blank? block.1 [  ; means leave unspecialized [3]
+                block: skip block 1  ; this code avoided NEXT when mezzanine
+                continue
+            ]
+
+            let param: meta:lite select e key
+
+            if param.optional [
                 continue  ; skip unused refinements [2]
             ]
 
-            case [
-                blank? block.1 [  ; means leave unspecialized [3]
+            switch param.class [
+                'normal [
+                    [block frame.(key)]: evaluate:step block
+                ]
+
+                'meta [
+                    [block ^frame.(key)]: evaluate:step block
+                ]
+
+                'just  ; !!! review binding nuance
+                'the [
+                    if param.escapable and (group? block.1) [
+                        frame.(key): reeval block.1
+                    ]
+                    else [
+                        frame.(key): block.1
+                    ]
                     block: skip block 1  ; avoided NEXT when mezzanine
                 ]
 
-                match word! param [  ; ordinary parameter
-                    [block frame.(param)]: evaluate:step block
-                ]
-
-                all [
-                    match [lit-word?] param
-                    match [group! get-word? get-tuple?] block.1
-                ][
-                    frame.(param): reeval block.1
-                    block: skip block 1  ; avoided NEXT when mezzanine
-                ]
-
-                <default> [  ; hard literal arg or non-escaped soft literal
-                    frame.(param): block.1
-                    block: skip block 1  ; avoided NEXT when mezzanine
-                ]
+                fail ~<unexpected parameter class>~
             ]
         ]
 

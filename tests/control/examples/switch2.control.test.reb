@@ -38,9 +38,11 @@
                     log ["Testing condition:" mold condition]
 
                     let f: make frame! make varargs! condition
-                    for-each 'param (parameters of f) [
-                        all [word? param, '~end~ = ^f.(param)] then [
-                            f.(param): :value
+                    let e: exemplar of f
+                    for-each 'key (words of f) [
+                        let param: meta:lite select e key
+                        all [not param.optional, '~end~ = ^f.(key)] then [
+                            f.(key): :value
                             break
                         ]
                     ]

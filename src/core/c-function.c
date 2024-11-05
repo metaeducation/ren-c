@@ -26,7 +26,7 @@
 
 
 struct Params_Of_State {
-    bool just_words;
+    bool dummy;  // used to pass in "just words" or decorated symbols
 };
 
 // Reconstitute parameter back into a full value, e.g. REB_P_REFINEMENT
@@ -41,58 +41,22 @@ static bool Params_Of_Hook(
     void *opaque
 ){
     struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
+    UNUSED(s);
+    UNUSED(param);
+    UNUSED(flags);
 
     Init_Word(PUSH(), Key_Symbol(key));
-
-    if (not s->just_words) {
-        if (
-            not (flags & PHF_UNREFINED)
-            and Get_Parameter_Flag(param, REFINEMENT)
-        ){
-            Refinify(TOP_ELEMENT);
-        }
-
-        switch (Cell_ParamClass(param)) {
-          case PARAMCLASS_RETURN:
-          case PARAMCLASS_NORMAL:
-            break;
-
-          case PARAMCLASS_META:
-            Metafy(TOP);
-            break;
-
-          case PARAMCLASS_SOFT: {
-            Source *a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
-            Move_Cell(Stub_Cell(a), TOP);
-            Init_Any_List(TOP, REB_THE_GROUP, a);
-            break; }
-
-          case PARAMCLASS_JUST:
-            Quotify(TOP, 1);
-            break;
-
-          case PARAMCLASS_THE:
-            Theify(TOP);
-            break;
-
-          default:
-            assert(false);
-            DEAD_END;
-        }
-    }
-
     return true;
 }
 
 //
-//  Make_Action_Parameters_Arr: C
+//  Make_Action_Words_Array: C
 //
 // Returns array of function words, unbound.
 //
-Source* Make_Action_Parameters_Arr(Action* act, bool just_words)
+Source* Make_Action_Words_Array(Action* act)
 {
     struct Params_Of_State s;
-    s.just_words = just_words;
 
     StackIndex base = TOP_INDEX;
     For_Each_Unspecialized_Param(act, &Params_Of_Hook, &s);

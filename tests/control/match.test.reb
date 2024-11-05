@@ -96,7 +96,7 @@
 ; concept of how it would be done if you wanted it.
 [
     (match+: reframer func [f [frame!] <local> p] [
-        p: f.(first parameters of f)  ; get the first parameter
+        p: f.(first words of f)  ; get the first parameter
         eval f except [return null]
         return p  ; evaluate to parameter if operation succeeds
     ]

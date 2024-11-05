@@ -2366,18 +2366,18 @@ default-combinators: to map! reduce [
         pending: _
 
         let f: make frame! value
-        for-each 'param (parameters of f) [
-            if not refinement? param [
+        for-each 'key (words of value) [
+            let param: meta:lite select f key
+            if not param.optional [
                 ensure frame! parsers.1
-                if meta-word? param [
-                    param: to word! param
-                    f.(param): [{^} input subpending]: (
+                if param.class = 'meta [
+                    f.(key): [{^} input subpending]: (
                         run parsers.1 input
                     ) except e -> [
                         return raise e
                     ]
                 ] else [
-                    f.(param): [{#} input subpending]: (
+                    f.(key): [{#} input subpending]: (
                         run parsers.1 input
                     ) except e -> [
                         return raise e
@@ -2805,53 +2805,53 @@ comment [/combinatorize: func [
 
     f: make frame! combinator
 
-    for-each 'param parameters of :combinator [
+    for-each 'key words of f [
+        let param: select f key
         case [
             param = 'input [
                 ; All combinators should have an input.  But the
                 ; idea is that we leave this unspecialized.
             ]
-            param = ':remainder [
+            key = 'remainder [
                 ; The remainder is a return; responsibility of the caller, also
                 ; left unspecialized.
             ]
-            param = ':pending [
+            key = 'pending [
                 ; same for pending, this is the data being gathered that may
                 ; need to be discarded (gives impression of "rollback") and
                 ; is the feature behind COLLECT etc.
             ]
-            param = 'value [
-                f.value: value
+            key = 'value [
+                set key value
             ]
-            param = 'state [  ; the "state" is currently the UPARSE frame
-                f.state: state
+            key = 'state [  ; the "state" is currently the UPARSE frame
+                set key state
             ]
-            param = ':rule-start [
-                f.rule-start: rule-start
+            key = 'rule-start [
+                set key rule-start
             ]
-            param = ':rule-end [
+            key = 'rule-end [
                 ; skip (filled in at end)
             ]
-            quoted? param [  ; literal element captured from rules
-                param: unquote param
+            param.literal [  ; literal element captured from rules
                 r: rules.1
                 any [
                     not r
                     find [, | ||] r
                 ]
                 then [
-                    if not endable? in f param [
+                    if not param.endable [
                         fail "Too few parameters for combinator"
                     ]
-                    f.(param): null
+                    set key null
                 ]
                 else [
-                    f.(param): r
+                    set key r
                     rules: next rules
                 ]
             ]
-            refinement? param [
-                ; Leave refinements alone, e.g. /only ... a general strategy
+            param.optional [
+                ; Leave refinements alone, e.g. :only ... a general strategy
                 ; would be needed for these if the refinements add parameters
                 ; as to how they work.
             ]
@@ -2867,13 +2867,13 @@ comment [/combinatorize: func [
                     find [, | ||] r
                 ]
                 then [
-                    if not endable? in f param [
+                    if not param.endable [
                         fail "Too few parameters for combinator"
                     ]
-                    f.(param): null
+                    set key null
                 ]
                 else [
-                    f.(param): [{#} rules]: parsify state rules
+                    set key [{#} rules]: parsify state rules
                 ]
             ]
         ]
@@ -3007,8 +3007,9 @@ comment [/combinatorize: func [
 
             comb: unrun adapt (augment comb inside [] collect [
                 let n: 1
-                for-each 'param parameters of gotten [
-                    if not refinement? param [
+                for-each 'key (words of gotten) [
+                    let param: meta:lite select gotten key
+                    if not param.optional [
                         keep spread compose [
                             (to word! unspaced ["param" n]) [action?]
                         ]
@@ -3024,9 +3025,10 @@ comment [/combinatorize: func [
                 let f: binding of $param1
 
                 let n: 1
-                for-each 'param (parameters of value) [
-                    if not refinement? param [
-                        append parsers unrun :f.(as word! unspaced ["param" n])
+                for-each 'key (words of value) [
+                    let param: meta:lite select value key
+                    if not param.optional [
+                        append parsers unrun f.(make word! ["param" n])/
                         n: n + 1
                     ]
                 ]

@@ -5,7 +5,7 @@
     /foo: lambda [x] [x]
     /bar: augment foo/ [y]
     all [
-        [x y] = parameters of :bar
+        [x y] = decorated-words-of bar/
         10 = bar 10 20
     ]
 )

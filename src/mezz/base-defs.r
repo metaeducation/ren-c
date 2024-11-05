@@ -23,11 +23,13 @@ REBOL [
     }--
 ]
 
-lib: system.contexts.lib  ; alias for faster access
-
 ; Start with basic debugging
 
 /c-break-debug: c-debug-break/  ; easy to mix up
+
+lib: system.contexts.lib  ; alias for faster access
+
+?: maybe/  ; commonly used in Ren-C, more deserving of ? than HELP !!!
 
 /eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
@@ -190,7 +192,7 @@ each: quote/
     f [frame!]
     <local> p num-quotes result
 ][
-    if not p: first parameters of f [
+    if not p: first words of f [
         fail ["REQUOTE must have an argument to process"]
     ]
 

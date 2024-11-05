@@ -394,6 +394,7 @@ void MF_Parameter(Molder* mo, const Cell* v, bool form)
         Init_Block(temp, unwrap param_array);
     else
         Init_Block(temp, EMPTY_ARRAY);
+    Decorate_According_To_Parameter(temp, v);
 
     Push_Lifeguard(temp);
     Mold_Or_Form_Element(mo, temp, form);
@@ -402,6 +403,75 @@ void MF_Parameter(Molder* mo, const Cell* v, bool form)
     if (not form) {
         End_Non_Lexical_Mold(mo);
     }
+}
+
+
+//
+//  Decorate_According_To_Parameter: C
+//
+// Instead of PARAMETERS OF coming back with an array of decorated arguments,
+// you can use a parameter to decorate a word.
+//
+// So based on the parameter type, this gives you e.g. @(foo) or :foo or 'foo
+// if you pass in a WORD!.  But can decorate other things (BLOCK!, etc.)
+// so you can decorate a type block, like @([integer! block!])
+//
+Element* Decorate_According_To_Parameter(
+    Need(Element*) e,
+    const Cell* param
+){
+    if (Get_Parameter_Flag(param, REFINEMENT))
+        Refinify(e);
+
+    switch (Cell_ParamClass(param)) {
+      case PARAMCLASS_RETURN:
+      case PARAMCLASS_NORMAL:
+        break;
+
+      case PARAMCLASS_META:
+        Metafy(e);
+        break;
+
+      case PARAMCLASS_SOFT: {
+        Source *a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+        Move_Cell(Stub_Cell(a), e);
+        Init_Any_List(e, REB_THE_GROUP, a);
+        break; }
+
+      case PARAMCLASS_JUST:
+        Quotify(e, 1);
+        break;
+
+      case PARAMCLASS_THE:
+        Theify(e);
+        break;
+
+      default:
+        assert(false);
+        DEAD_END;
+    }
+
+    return e;
+}
+
+
+//
+//  /decorate-parameter: native [
+//
+//  "Based on the parameter type, this gives you e.g. @(foo) or :foo or 'foo"
+//
+//      return: [element?]
+//      parameter [parameter!]
+//      element [element?]
+//  ]
+//
+DECLARE_NATIVE(decorate_parameter)
+{
+    INCLUDE_PARAMS_OF_DECORATE_PARAMETER;
+
+    Element* element = cast(Element*, ARG(element));
+    Element* param = cast(Element*, ARG(parameter));
+    return COPY(Decorate_According_To_Parameter(element, param));
 }
 
 
@@ -440,8 +510,35 @@ DECLARE_GENERICS(Parameter)
                 return nullptr;
             return Init_Block(OUT, unwrap spec); }
 
-          case SYM_TYPE:
-            return nullptr;  // TBD
+          case SYM_OPTIONAL:
+            return Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT));
+
+          case SYM_CLASS:
+            switch (Cell_ParamClass(param)) {
+              case PARAMCLASS_NORMAL:
+                return Init_Word(OUT, Canon(NORMAL));
+
+              case PARAMCLASS_META:
+                return Init_Word(OUT, Canon(META));
+
+              case PARAMCLASS_THE:
+              case PARAMCLASS_SOFT:
+                return Init_Word(OUT, Canon(THE));
+
+              case PARAMCLASS_JUST:
+                return Init_Word(OUT, Canon(JUST));
+
+              case PARAMCLASS_RETURN:
+                return Init_Word(OUT, Canon(RETURN));
+
+              default: assert(false);
+            }
+            panic (nullptr);
+
+          case SYM_ESCAPABLE:
+            return Init_Logic(OUT, Cell_ParamClass(param) == PARAMCLASS_SOFT);
+
+          /* case SYM_DECORATED: */  // No symbol! Use DECORATE-PARAMETER...
 
           default:
             break;

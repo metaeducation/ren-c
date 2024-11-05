@@ -8,7 +8,7 @@
     ]
 
     all [
-       [arg] = parameters of foo/  ; doesn't expose locals
+       [arg] = words of foo/  ; doesn't expose locals
        [return arg local frame] = foo 20  ; exposes locals as WORD!s
     ]
 )

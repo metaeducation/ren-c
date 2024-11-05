@@ -29,7 +29,7 @@
 // parameter to a function, and adds them back for the result:
 //
 //     requote: reframer func [f [frame!]] [
-//         p: first parameters of f
+//         p: first words of f
 //         num-quotes: quotes of f.(p)
 //
 //         f.(p): noquote f.(p)
