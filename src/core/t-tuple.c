@@ -181,7 +181,7 @@ DECLARE_GENERICS(Sequence)
             return Init_Any_List(OUT, to, a);
         }
 
-        if (Any_Utf8_Kind(to)) {
+        if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
             DECLARE_MOLDER (mo);
             Push_Mold(mo);
             Offset i;
