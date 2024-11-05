@@ -1689,7 +1689,9 @@ default-combinators: to map! reduce [
         return unquote value
     ]
 
-    'lit combinator [  ; should long form be LITERALLY or LITERAL ?
+    === LITERAL! COMBINATOR ===
+
+    'literal combinator [  ; shorthanded as LIT
         return: "Literal value" [element?]
         :pending [blank! block!]
         'value [element?]
@@ -2037,17 +2039,11 @@ default-combinators: to map! reduce [
         ]
     ]
 
-    === THE COMBINATOR ===
+    === JUST COMBINATOR ===
 
-    '@ combinator [  ; see [1] in THE-XXX! combinators section
-        return: "Quoted form of literal value (not matched)" [element?]
-        'value [element?]
-    ][
-        remainder: input
-        return :value
-    ]
+    ; The JUST combinator gives you "just the value", without matching it.
 
-    'the combinator [
+    'just combinator [
         return: "Quoted form of literal value (not matched)" [element?]
         'value [element?]
     ][
@@ -2072,8 +2068,11 @@ default-combinators: to map! reduce [
     ; These follow a simple pattern, could generate at a higher level.
     ;
     ; 1. It would be wasteful to make [@ ...] a synonym for [@[...]], where
-    ;    that also means [@ (...)] is a synonym for [@(...)].  It's better to
-    ;    use it as a shorthand for generating literal unmatched material.
+    ;    that also means [@ (...)] is a synonym for [@(...)].  Since @var
+    ;    means "look up var and match it at this location", a much more
+    ;    interesting and common application for the @ sigil is as a synonym
+    ;    for the ONE combinator, to mean match anything at the current spot.
+    ;    (This is a purpose that was imagined for BLANK!.
     ;
     ; 2. Evaluatively, if we get a quasiform as the meta it means it was an
     ;    antiform.  Semantically that's matched by the quasiform combinator,
@@ -2087,9 +2086,12 @@ default-combinators: to map! reduce [
     ;
     ; 4. THE-BLOCK! acting as just matching the block would be redundant with
     ;    quoted block.  So the most "logical" choice is to make it mean
-    ;    "literally match the result of running the block as a rule".  This
-    ;    makes it redundant with [1], but choosing another purpose for @ would
-    ;    likely be able to be higher leverage.
+    ;    "literally match the result of running the block as a rule". There
+    ;    is not currently an operator that would do that inline, e.g.
+    ;    [the some "a"] -> @[some "a"] due to a desire to avoid a combinator
+    ;    named THE because of the special arity-0 application of @ as a
+    ;    synonym or ONE.  That arity-1 combinator doesn't seem particularly
+    ;    necessary, though one could of course make it.
 
     ; @ combinator is used for a different purpose [1]
 
@@ -2758,7 +2760,9 @@ default-combinators.(tuple!): default-combinators.(word!)
 === ABBREVIATIONS ===
 
 default-combinators.opt: default-combinators.optional
-default-combinators.try: default-combinators.optional  ; deprecated
+default-combinators.lit: default-combinators.literal
+default-combinators.(just @): default-combinators.one
+default-combinators.(just '): default-combinators.just
 
 
 === COMPATIBILITY FOR NON-TAG KEYWORD FORMS ===

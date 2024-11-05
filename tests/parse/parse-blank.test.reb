@@ -14,14 +14,14 @@
 ; underscore is sometimes used in this wildcarding fashion in some languages:
 ;
 ;    >> parse [x <y> "z"] [_ _ _]
-;    == "z"
+;    == "z"  ; one idea for the behavior of blank...
 ;
-; ...but the ONE combinator serves this purpose more literately.)
+; ...but the @ combinator does this better.  See %parse-the.test.reb
 ;
 
 (
-    refinement-rule: [subparse path! [_ word!]]
-   'a = parse [/a] [refinement-rule]
+    run-word-rule: [subparse path! [_ word!]]
+   'a = parse [/a] [run-word-rule]
 )
 
 ~parse-mismatch~ !! (parse [x] ['x blank])
