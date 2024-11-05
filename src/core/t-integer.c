@@ -148,7 +148,9 @@ DECLARE_GENERICS(Integer)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* val = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* val = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     REBI64 num = VAL_INT64(val);
 
     REBI64 arg;

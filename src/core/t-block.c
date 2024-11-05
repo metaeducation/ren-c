@@ -710,7 +710,9 @@ DECLARE_GENERICS(List)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* list = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* list = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     Context* binding = Cell_List_Binding(list);
 
     switch (id) {
@@ -831,6 +833,44 @@ DECLARE_GENERICS(List)
             return Init_Map(OUT, map);
         }
 
+        return FAIL(Error_Bad_Cast_Raw(list, ARG(type))); }
+
+  //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
+
+    // 1. The init of a listlike sequence may not use the array you pass in.
+    //    But regardless, the AS locks it...because whether it decides to
+    //    use the array or not is an implementation detail.  It will reuse
+    //    the array at least some of the time, so freeze it all of the time.
+
+      case SYM_AS: {
+        INCLUDE_PARAMS_OF_AS;
+        Element* v = cast(Element*, ARG(element));  // list
+        Heart as = VAL_TYPE_HEART(ARG(type));
+
+        if (Any_List_Kind(as)) {
+            HEART_BYTE(v) = as;
+            return Copy_Cell(OUT, v);
+        }
+
+        if (Any_Sequence_Kind(as)) {
+            if (not Is_Source_Frozen_Shallow(Cell_Array(v)))  // freeze it [1]
+                Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(v));
+
+            DECLARE_ELEMENT (temp);  // need to rebind
+            Option(Error*) error = Trap_Init_Any_Sequence_At_Listlike(
+                temp,
+                as,
+                Cell_Array(v),
+                VAL_INDEX(v)
+            );
+            if (error)
+                return FAIL(unwrap error);
+
+            /* BINDING(temp) = BINDING(v); */  // may be unfit after compress
+            Derelativize(OUT, temp, BINDING(v));  // try this instead (?)
+
+            return OUT;
+        }
         return FAIL(Error_Bad_Cast_Raw(list, ARG(type))); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//

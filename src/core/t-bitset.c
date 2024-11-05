@@ -535,7 +535,9 @@ DECLARE_GENERICS(Bitset)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* v = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     assert(Is_Bitset(v));
 
     switch (id) {

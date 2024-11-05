@@ -923,7 +923,9 @@ DECLARE_GENERICS(Context)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* context = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* context = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     VarList* c = Cell_Varlist(context);
     Heart heart = Cell_Heart(context);
 
@@ -1219,7 +1221,9 @@ DECLARE_GENERICS(Frame)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* frame = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* frame = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     VarList* c = Cell_Varlist(frame);
 
     switch (id) {

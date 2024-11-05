@@ -762,7 +762,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
         while (temp != L) {  // Cascaders can downshift Cascaders, etc.
             temp = temp->prior;
             assert(
-                temp->executor == &To_Checker_Executor
+                temp->executor == &To_Or_As_Checker_Executor
                 or temp->executor == &Cascader_Executor
                 or temp->executor == &Copy_Quoter_Executor
             );

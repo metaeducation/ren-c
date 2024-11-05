@@ -84,7 +84,9 @@ DECLARE_GENERICS(Port)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* port = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* port = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     assert(Is_Port(port));
 
     enum {
@@ -224,7 +226,9 @@ DECLARE_GENERICS(Url)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* url = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* url = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     assert(Is_Url(url));
 
     if (id == SYM_COPY) {

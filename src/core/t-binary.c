@@ -312,7 +312,9 @@ DECLARE_GENERICS(Blob)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* v = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     assert(Is_Blob(v));
 
     switch (id) {
@@ -343,6 +345,115 @@ DECLARE_GENERICS(Blob)
         if (to == REB_BLOB) {
             const Value* part = Lib(NULL);  // no :PART, copy to end
             return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+
+    //=//// AS CONVERSIONS ////////////////////////////////////////////////=//
+
+      // The key aliasing AS conversion for binary BLOB!s is as UTF-8 data.
+      // It's a fair bit of effort, but can potentially save significantly
+      // on memory with things like `as text! read %some-file.txt` using no
+      // additional memory when that file is large.
+      //
+      // 1. We first aliases the BLOB's Binary data as a string (if possible).
+      //    Then if further conversion is needed to an ANY-WORD? or non-string
+      //    UTF-8 type (like ISSUE! or URL!), that subdispatches to the code
+      //    that converts strings.
+      //
+      // 2. At one time there was an attempt to factor this code so that it
+      //    could be called by an AS-TEXT native with additional parameters.
+      //    This seems more like the idea that there should be an option
+      //    to the DECODE 'UTF-8 codec to specify many more options, but then
+      //    also to allow aliasing the binary in place.  Ultimately that
+      //    may supplant AS, but this is what we have for now.
+
+      case SYM_AS: {
+        INCLUDE_PARAMS_OF_AS;
+        UNUSED(ARG(element));  // v
+        Heart as = VAL_TYPE_HEART(ARG(type));
+
+        const Binary* bin = Cell_Binary(v);
+
+        if (as == REB_BLOB)  // (as blob! data) when data may be text or blob
+            return Copy_Cell(OUT, v);
+
+        if (Any_Utf8_Kind(as)) {  // convert to a string as first step [1]
+            if (Any_Word_Kind(as)) {  // early fail on this, to save time
+                if (VAL_INDEX(v) != 0)  // (vs. failing on AS WORD! of string)
+                    return FAIL("Can't alias BLOB! as WORD! unless at head");
+            }
+
+            Size byteoffset = VAL_INDEX(v);
+
+            const Byte* at_ptr = Binary_At(bin, byteoffset);
+            if (Is_Continuation_Byte(*at_ptr))  // must be on codepoint start
+                fail ("Index at codepoint to convert blob to ANY-STRING?");
+
+            enum Reb_Strmode strmode = STRMODE_ALL_CODEPOINTS;  // allow CR [2]
+
+            const String* str;
+            REBLEN index;
+            if (
+                not Is_Stub_String(bin)
+                or strmode != STRMODE_ALL_CODEPOINTS
+            ){
+                if (not Is_Flex_Frozen(bin))
+                    if (Get_Cell_Flag(v, CONST))
+                        fail (Error_Alias_Constrains_Raw());
+
+                Length num_codepoints = 0;
+
+                index = 0;
+
+                Size bytes_left = Binary_Len(bin);
+                const Byte* bp = Binary_Head(bin);
+                for (; bytes_left > 0; --bytes_left, ++bp) {
+                    if (bp < at_ptr)
+                        ++index;
+
+                    Codepoint c = *bp;
+                    if (c < 0x80)
+                        Validate_Ascii_Byte(bp, strmode, Binary_Head(bin));
+                    else {
+                        Option(Error*) e = Trap_Back_Scan_Utf8_Char(
+                            &c, &bp, &bytes_left
+                        );
+                        if (e)
+                            fail (unwrap e);
+                    }
+
+                    ++num_codepoints;
+                }
+                FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_NONSYMBOL;
+                str = c_cast(String*, bin);
+
+                Term_String_Len_Size(
+                    m_cast(String*, str),  // legal for tweaking cached data
+                    num_codepoints,
+                    Binary_Len(bin)
+                );
+                LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
+
+                // !!! TBD: cache index/offset
+            }
+            else {  // it's a string, but doesn't accelerate offset -> index
+                str = c_cast(String*, bin);
+                index = 0;  // we'll count up to find the codepoint index
+
+                Utf8(const*) cp = String_Head(str);
+                REBLEN len = String_Len(str);
+                while (index < len and cp != at_ptr) {  // slow walk...
+                    ++index;
+                    cp = Skip_Codepoint(cp);
+                }
+            }
+
+            if (Any_String_Kind(as))
+                return Init_Any_String_At(OUT, as, str, index);
+
+            Init_Any_String_At(ARG(element), as, str, index);
+            return T_String(level_, verb);  // delegate word validation/etc.
         }
 
         return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }

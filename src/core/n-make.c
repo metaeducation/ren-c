@@ -149,13 +149,15 @@ DECLARE_NATIVE(copy)
 
 #define CELL_FLAG_SPARE_NOTE_REVERSE_CHECKING CELL_FLAG_NOTE
 
+#define LEVEL_FLAG_CHECKING_AS  LEVEL_FLAG_MISCELLANEOUS
+
 //
-//  To_Checker_Executor: C
+//  To_Or_As_Checker_Executor: C
 //
-Bounce To_Checker_Executor(Level* const L)
+Bounce To_Or_As_Checker_Executor(Level* const L)
 {
-    Heart to = cast(Heart, Level_State_Byte(L));
-    assert(to != REB_0);
+    Heart to_or_as = cast(Heart, Level_State_Byte(L));
+    assert(to_or_as != REB_0);
 
     Element* input = cast(Element*, Level_Spare(L));
     Heart from = Cell_Heart_Ensure_Noquote(input);
@@ -184,13 +186,14 @@ Bounce To_Checker_Executor(Level* const L)
     }
 
     Decay_If_Unstable(OUT);  // should packs from TO be legal?
-    assert(VAL_TYPE(OUT) == to);
+    assert(VAL_TYPE(OUT) == to_or_as);
 
     // Reset TO_P sublevel to do reverse transformation
 
     level_->executor = &Action_Executor;  // Drop_Action() nulled it
-    Push_Action(level_, VAL_ACTION(Lib(TO)), nullptr);
-    Begin_Action(level_, Canon(TO), PREFIX_0);
+    SymId id = Get_Level_Flag(L, CHECKING_AS) ? SYM_AS : SYM_TO;
+    Push_Action(level_, VAL_ACTION(Lib_Var_For_Id(id)), nullptr);
+    Begin_Action(level_, Canon_Symbol(id), PREFIX_0);
     Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
 
     INCLUDE_PARAMS_OF_TO;
@@ -202,17 +205,6 @@ Bounce To_Checker_Executor(Level* const L)
     Copy_Cell(ARG(type), Datatype_From_Kind(from));
     Copy_Cell(ARG(element), cast(Element*, stable_OUT));
     STATE = STATE_0;
-    level_->executor = &Action_Executor;
-    Phase* phase = cast(Phase*, VAL_ACTION(Lib(TO)));
-    Tweak_Level_Phase(level_, phase);
-    Tweak_Level_Coupling(level_, nullptr);
-
-    Option(const Symbol*) label = Canon(TO);
-    level_->u.action.original = VAL_ACTION(Lib(TO));
-    level_->label = label;
-    level_->label_utf8 = label
-        ? String_UTF8(unwrap label)
-        : "(anonymous)";
 
     assert(Get_Level_Flag(level_, TRAMPOLINE_KEEPALIVE));
     Clear_Level_Flag(level_, TRAMPOLINE_KEEPALIVE);
@@ -233,9 +225,9 @@ Bounce To_Checker_Executor(Level* const L)
 
     Decay_If_Unstable(reverse);  // should packs from TO be legal?
 
-    if (to == REB_MAP) {  // doesn't preserve order requirement :-/
+    if (to_or_as == REB_MAP) {  // doesn't preserve order requirement :-/
         if (VAL_TYPE(cast(Value*, reverse)) != VAL_TYPE(input))
-            return FAIL("Reverse TO of MAP! didn't produce original type");
+            return FAIL("Reverse TO/AS of MAP! didn't produce original type");
         return OUT;
     }
 
@@ -246,20 +238,48 @@ Bounce To_Checker_Executor(Level* const L)
     Drop_Lifeguard(reverse);
 
     if (not equal_reversal)
-        return FAIL("Reverse TO transform didn't produce original result");
+        return FAIL("Reverse TO/AS transform didn't produce original result");
 
-    if (to == from) {
+    if (to_or_as == from and Not_Level_Flag(L, CHECKING_AS)) {
         bool equal_copy = rebUnboxLogic(
             Canon(EQUAL_Q), rebQ(input), Canon(COPY), rebQ(input)
         );
         if (not equal_copy)
-            return FAIL("Reverse TO transform to equal type not same as COPY");
+            return FAIL("Reverse TO/AS transform not same as COPY");
     }
 
     return OUT;
 }}
 
 #endif
+
+
+static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
+    INCLUDE_PARAMS_OF_TO;  // frame compatible with AS
+
+    Option(const Symbol*) label = level_->label;
+
+    Element* type = cast(Element*, ARG(type));
+    STATE = VAL_TYPE_HEART(type);  // generic code may trash TYPE when it runs
+    Copy_Cell(SPARE, ARG(element));  // may trash ELEMENT too, save in SPARE
+
+    Level* sub = Push_Downshifted_Level(OUT, level_);
+
+    assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
+    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
+
+    level_->executor = &To_Or_As_Checker_Executor;
+
+    SymId id = Get_Level_Flag(level_, CHECKING_AS) ? SYM_AS : SYM_TO;
+
+    sub->u.action.original = VAL_ACTION(Lib_Var_For_Id(id));
+    sub->label = label;
+    sub->label_utf8 = label
+        ? String_UTF8(unwrap label)
+        : "(anonymous)";
+
+    return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L
+}
 
 
 //
@@ -286,34 +306,53 @@ DECLARE_NATIVE(to)
 
   #else  // add monitor to ensure result is right
 
-    if (level_->prior->executor == &To_Checker_Executor)
+    if (level_->prior->executor == &To_Or_As_Checker_Executor)
         return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(TO));
 
-    Option(const Symbol*) label = level_->label;
-    Option(VarList*) coupling = Level_Coupling(level_);
+    return Downshift_For_To_Or_As_Checker(level_);
+  #endif
+}
 
-    Element* type = cast(Element*, ARG(type));
-    Heart to = VAL_TYPE_HEART(type);
-    STATE = to;  // generic code may trash TYPE when it runs, save the Heart
-    Copy_Cell(Level_Spare(level_), e);  // may trash ELEMENT, save in SPARE
 
-    Level* sub = Push_Downshifted_Level(OUT, level_);
+//
+//  /as: native:generic [
+//
+//  "Aliases underlying data of one value to act as another of same class"
+//
+//      return: [
+//          ~null~ integer!
+//          any-sequence? any-series? any-word? any-utf8?
+//          frame!
+//      ]
+//      type [type-block!]
+//      element [
+//          <maybe>
+//          integer!
+//          any-sequence? any-series? any-word? any-utf8?
+//          frame!
+//      ]
+//  ]
+//
+DECLARE_NATIVE(as)
+{
+    INCLUDE_PARAMS_OF_AS;
 
-    assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
-    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
+    Element* e = cast(Element*, ARG(element));
+    Kind as = VAL_TYPE_KIND(ARG(type));
+    if (as >= REB_MAX_HEART)
+        return FAIL("AS can't alias to quoted/quasiform/antiform");
 
-    level_->executor = &To_Checker_Executor;
+  #if NO_RUNTIME_CHECKS
 
-    Phase* phase = cast(Phase*, VAL_ACTION(Lib(TO)));
-    Tweak_Level_Phase(sub, phase);
-    Tweak_Level_Coupling(sub, coupling);
+    UNUSED(ARG(type));
+    return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(AS));
 
-    sub->u.action.original = VAL_ACTION(Lib(TO));
-    sub->label = label;
-    sub->label_utf8 = label
-        ? String_UTF8(unwrap label)
-        : "(anonymous)";
+  #else  // add monitor to ensure result is right
 
-    return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L
+    if (level_->prior->executor == &To_Or_As_Checker_Executor)
+        return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(AS));
+
+    Set_Level_Flag(level_, CHECKING_AS);
+    return Downshift_For_To_Or_As_Checker(level_);
   #endif
 }

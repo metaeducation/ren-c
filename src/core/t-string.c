@@ -803,7 +803,9 @@ DECLARE_GENERICS(String)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* v = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* v = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     assert(
         Any_Utf8(v) and (
             Stringlike_Has_Node(v) or id == SYM_TO  // [1]
@@ -890,6 +892,89 @@ DECLARE_GENERICS(String)
             return rebValue(
                 Canon(AS), ARG(type), Canon(TO), Canon(BLOCK_X), rebQ(v)
             );
+
+        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+
+  //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
+
+      case SYM_AS: {
+        INCLUDE_PARAMS_OF_AS;
+        UNUSED(ARG(element));  // v
+        Heart as = VAL_TYPE_HEART(ARG(type));
+
+        assert(Stringlike_Has_Node(v));  // maybe e.g. ISSUE! with node
+
+        if (as == REB_BLOB) {  // resulting binary will be UTF-8 constrained
+            Init_Blob_At(
+                OUT,
+                Cell_String(v),
+                Any_Word(v) ? 0 : VAL_BYTEOFFSET(v)
+            );
+            return Inherit_Const(stable_OUT, v);
+        }
+
+        if (Any_String_Kind(as)) {
+            Copy_Cell(OUT, v);
+            HEART_BYTE(OUT) = as;
+            return Inherit_Const(stable_OUT, v);
+        }
+
+        if (Any_Word_Kind(as)) {  // aliasing as an ANY-WORD? freezes data
+            const String* str = Cell_String(v);
+
+            if (VAL_INDEX(v) != 0)
+                return FAIL("Can't alias string as WORD! unless it's at head");
+
+            if (Is_String_Symbol(str))  // already frozen and checked!
+                return Init_Any_Word(OUT, as, cast(const Symbol*, str));
+
+            if (not Is_Flex_Frozen(str)) {  // always force frozen
+                if (Get_Cell_Flag(v, CONST))
+                    return FAIL(Error_Alias_Constrains_Raw());
+                Freeze_Flex(str);
+            }
+
+            // !!! Logic to re-use Stub if newly interned symbol not written
+
+            Size size;
+            Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
+            const Symbol* sym = Intern_UTF8_Managed(at, size);
+            Init_Any_Word(OUT, as, sym);
+            return Inherit_Const(stable_OUT, v);
+        }
+
+        if (Any_Utf8_Kind(as)) {  // try to fit in cell, or use frozen string
+            assert(not Any_Word_Kind(as) and not (Any_String_Kind(as)));
+
+            const String *s = Cell_String(v);
+            if (not Is_Flex_Frozen(s)) {  // always force frozen
+                if (Get_Cell_Flag(v, CONST))
+                    return FAIL(Error_Alias_Constrains_Raw());
+                Freeze_Flex(s);
+            }
+
+            Length len;
+            Size utf8_size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
+
+            if (utf8_size + 1 <= Size_Of(PAYLOAD(Bytes, v).at_least_8)) {
+                Reset_Cell_Header_Untracked(  // fits in single cell
+                    TRACK(OUT),
+                    FLAG_HEART_BYTE(as) | CELL_MASK_NO_NODES
+                );
+                memcpy(
+                    PAYLOAD(Bytes, OUT).at_least_8,
+                    Cell_String_At(v),
+                    utf8_size + 1  // copy the '\0' terminator
+                );
+                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_USED] = utf8_size;
+                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_LEN] = len;
+            }
+            else {
+                Copy_Cell(OUT, v);
+                HEART_BYTE(OUT) = as;
+            }
+            return OUT;
+        }
 
         return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
 

@@ -422,7 +422,9 @@ DECLARE_GENERICS(Utf8)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* issue = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* issue = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     assert(Any_Utf8(issue) and not Any_String(issue));
 
     switch (id) {
@@ -458,6 +460,56 @@ DECLARE_GENERICS(Utf8)
 
       case SYM_TO:
         return T_String(level_, verb);  // written to handle non-node cases
+
+  //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
+
+    // 1. If the payload of non-string UTF-8 value lives in the Cell itself,
+    //    a read-only Flex must be created for the data...because otherwise
+    //    there isn't room for an index (which ANY-STRING? needs).  For
+    //    behavior parity with if the payload *was* in the Cell, this alias
+    //    must be frozen.
+
+      case SYM_AS: {
+        INCLUDE_PARAMS_OF_AS;
+        Element* v = cast(Element*, ARG(element));  // issue, email, etc.
+        Heart as = VAL_TYPE_HEART(ARG(type));
+
+        if (Stringlike_Has_Node(v))
+            return T_String(level_, verb);
+
+        if (as == REB_BLOB) {  // no node, so make new frozen string for BLOB!
+            Size size;
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
+            Binary* b = Make_Binary_Core(NODE_FLAG_MANAGED, size);
+            memcpy(Binary_Head(b), utf8, size + 1);
+            Set_Flex_Used(b, size);
+            Freeze_Flex(b);
+            Init_Blob(OUT, b);
+            return Inherit_Const(stable_OUT, v);
+        }
+
+        if (Any_String_Kind(as)) {  // have to create a Flex [1]
+            REBLEN len;
+            Size size;
+            Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
+            assert(size + 1 <= Size_Of(PAYLOAD(Bytes, v).at_least_8));
+
+            String* str = Make_String_Core(FLEX_MASK_MANAGED_STRING, size);
+            memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
+            Term_String_Len_Size(str, len, size);
+            Freeze_Flex(str);
+            return Init_Any_String(OUT, as, str);
+        }
+
+        if (as == REB_INTEGER) {
+            if (not IS_CHAR(v))
+            return FAIL(
+                "AS INTEGER! only supports what-were-CHAR! issues ATM"
+            );
+            return Init_Integer(OUT, Cell_Codepoint(v));
+        }
+
+        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
 
       default:
         break;

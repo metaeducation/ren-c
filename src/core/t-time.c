@@ -454,7 +454,9 @@ DECLARE_GENERICS(Time)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* time = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* time = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     REBI64 secs = VAL_NANO(time);
 
     if (id == SYM_PICK) {

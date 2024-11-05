@@ -153,7 +153,7 @@ export console!: make object! [
         ; 0-length packs (~[]~ antiform, a.k.a. "nihil") are passed through to
         ; the regular antiform molding.
 
-        if (pack? unmeta v) and (0 <> length of v) [
+        if (pack? unmeta v) and (0 <> length of unquasi v) [
             v: unquasi v
 
             for-each 'item v [

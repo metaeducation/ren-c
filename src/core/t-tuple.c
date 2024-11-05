@@ -88,7 +88,9 @@ DECLARE_GENERICS(Sequence)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* sequence = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* sequence = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     Length len = Cell_Sequence_Len(sequence);
     Heart heart = Cell_Heart_Ensure_Noquote(sequence);
 
@@ -198,6 +200,112 @@ DECLARE_GENERICS(Sequence)
             return Init_Any_String(OUT, to, s);
         }
 
+        return FAIL(Error_Bad_Cast_Raw(sequence, ARG(type))); }
+
+  //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
+
+    // 1. If you have a PATH! like "a.b/c.d" and you change the heart byte
+    //    to a TUPLE!, you'd get "a.b.c.d" which would be an invalidly
+    //    constructed tuple of length 2, with two tuples in it.  The TO
+    //    conversion code constructs new tuples, but AS is supposed to be
+    //    for efficiency.  The code should be merged into a version that is
+    //    efficienty when it can be: TO and AS should maybe be the same.
+    //
+    // 2. Pairings are usually the same size as stubs...but not always.  If the
+    //    UNUSUAL_CELL_SIZE flag is set, pairings will be in their own pool.
+    //    Were there a strong incentive to have separate code for that case,
+    //    we could reuse the node...but the case is not that strong.  It may be
+    //    that AS should not be willing to alias sequences since compressed
+    //    cases will force new allocations (e.g. aliasing a refinement has to
+    //    make a new array, since the symbol absolutely can't be mutated into
+    //    an array node).  Review.
+
+      case SYM_AS: {
+        INCLUDE_PARAMS_OF_AS;
+        Element* v = cast(Element*, ARG(element));  // sequence
+        Heart as = VAL_TYPE_HEART(ARG(type));
+
+        if (Any_Sequence_Kind(as)) {  // not all aliasings are legal [1]
+            if (
+                (Any_Path_Kind(heart) and not Any_Path_Kind(as))
+                or (Any_Chain_Kind(heart) and not (
+                    Any_Path_Kind(as) or Any_Chain_Kind(as)
+                ))
+            ){
+                return FAIL(
+                    "Conservative AS aliasing only: PATH! > CHAIN! > TUPLE!"
+                );
+            }
+
+            Copy_Cell(OUT, v);
+            HEART_BYTE(OUT) = as;
+            return Trust_Const(OUT);
+        }
+
+        if (Any_List_Kind(as)) {  // give immutable form, try to share memory
+            if (not Sequence_Has_Node(v))
+                return FAIL("Array Conversions of byte-oriented sequences TBD");
+
+            const Node* node1 = Cell_Node1(v);
+            if (Is_Node_A_Cell(node1)) {  // reusing node complicated [2]
+                const Pairing* p = c_cast(Pairing*, node1);
+                Context *binding = Cell_List_Binding(v);
+                Source* a = Make_Source_Managed(2);
+                Set_Flex_Len(a, 2);
+                Derelativize(Array_At(a, 0), Pairing_First(p), binding);
+                Derelativize(Array_At(a, 1), Pairing_Second(p), binding);
+                Freeze_Source_Shallow(a);
+                Init_Block(v, a);
+            }
+            else switch (Stub_Flavor(c_cast(Flex*, node1))) {
+              case FLAVOR_SYMBOL: {
+                Source* a = Make_Source_Managed(2);
+                Set_Flex_Len(a, 2);
+                if (Get_Cell_Flag(v, LEADING_BLANK)) {
+                    Init_Blank(Array_At(a, 0));
+                    Copy_Cell(Array_At(a, 1), v);
+                    HEART_BYTE(Array_At(a, 1)) = REB_WORD;
+                }
+                else {
+                    Copy_Cell(Array_At(a, 0), v);
+                    HEART_BYTE(Array_At(a, 0)) = REB_WORD;
+                    Init_Blank(Array_At(a, 1));
+                }
+                Freeze_Source_Shallow(a);
+                Init_Block(v, a);
+                break; }
+
+              case FLAVOR_SOURCE: {
+                const Source* a = Cell_Array(v);
+                if (MIRROR_BYTE(a)) {  // .[a] or (xxx): compression
+                    Source* two = Make_Source_Managed(2);
+                    Set_Flex_Len(two, 2);
+                    Cell* tweak;
+                    if (Get_Cell_Flag(v, LEADING_BLANK)) {
+                        Init_Blank(Array_At(two, 0));
+                        tweak = Copy_Cell(Array_At(two, 1), v);
+                    }
+                    else {
+                        tweak = Copy_Cell(Array_At(two, 0), v);
+                        Init_Blank(Array_At(two, 1));
+                    }
+                    HEART_BYTE(tweak) = MIRROR_BYTE(a);
+                    Clear_Cell_Flag(tweak, LEADING_BLANK);
+                    Init_Block(v, two);
+                }
+                else {
+                    assert(Is_Source_Frozen_Shallow(a));
+                    HEART_BYTE(v) = REB_BLOCK;
+                }
+                break; }
+
+              default:
+                assert(false);
+            }
+            HEART_BYTE(v) = as;
+            Copy_Cell(OUT, v);
+            return Trust_Const(OUT);
+        }
         return FAIL(Error_Bad_Cast_Raw(sequence, ARG(type))); }
 
       case SYM_PICK: {

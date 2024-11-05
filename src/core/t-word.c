@@ -159,7 +159,9 @@ DECLARE_GENERICS(Word)
 {
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* word = cast(Element*, (id == SYM_TO) ? ARG_N(2) : ARG_N(1));
+    Element* word = cast(Element*,
+        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
+    );
     assert(Any_Word(word));
 
     switch (id) {
@@ -215,6 +217,41 @@ DECLARE_GENERICS(Word)
             return rebValue(Canon(ENVELOP), ARG(type), rebQ(word));
 
         return T_String(level_, verb); }
+
+    //=//// AS CONVERSIONS ////////////////////////////////////////////////=//
+
+      case SYM_AS: {
+        INCLUDE_PARAMS_OF_TO;
+        UNUSED(ARG(element));  // word
+        Heart as = VAL_TYPE_HEART(ARG(type));
+
+        if (Any_Word_Kind(as)) {
+            HEART_BYTE(word) = as;
+            return COPY(word);
+        }
+
+        const Symbol* s = Cell_Word_Symbol(word);
+
+        if (Any_String_Kind(as))
+            return Init_Any_String(OUT, as, s);
+
+        if (Any_Utf8_Kind(as)) {
+            if (Try_Init_Small_Utf8(
+                OUT,
+                as,
+                String_Head(s),
+                String_Len(s),
+                String_Size(s)
+            )){
+                return OUT;
+            }
+            return Init_Any_String(OUT, as, s);
+        }
+
+        if (as == REB_BLOB)
+            return Init_Blob(OUT, s);
+
+        return FAIL(Error_Bad_Cast_Raw(word, ARG(type))); }
 
       default:
         break;
