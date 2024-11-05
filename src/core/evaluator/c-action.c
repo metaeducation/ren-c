@@ -1172,54 +1172,32 @@ void Begin_Action(
 //      "What Happens To Function Args/Locals When The Call Ends"
 //      https://forum.rebol.info/t/234
 //
-// 2. This was the old behavior, before allowing frames to have indefinite
-//    lifetimes.  Previously this said:
-//
-//    "The pointer needed to stay working up until now, but the memory for
-//    the args won't be available.  But since we know there are outstanding
-//    references to the varlist, we need to convert it into a "stub" that's
-//    enough to avoid crashes.  But we don't free the memory for the args, we
-//    just hide it from the stub and get it ready for potential reuse by the
-//    next action call.  That's done by making an adjusted copy of the stub,
-//    which steals its dynamic memory (by setting the stub not HAS_DYNAMIC)."
-//
-// 2. If a varlist never became managed, there are no outstanding references.
-//    So we can reuse the varlist and its data allocation, which may be big
-//    enough for ensuing calls.  But no Array bits we didn't set should be
-//    set...and right now, only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
+// 2. If a varlist never became managed, there are no outstanding references,
+//    and we can free it.  (There was some code at one point that tried to
+//    reuse varlists, but it was a premature optimization with no benefit.)
 //
 void Drop_Action(Level* L) {
     Corrupt_Pointer_If_Debug(L->label);  // do first (for data breakpoints)
 
-    Set_Level_Infix_Mode(L, PREFIX_0);  // clear out for reuse...?
-
     assert(BONUS(KeySource, L->varlist) == L);
 
-    if (Is_Node_Managed(L->varlist)) {  // outstanding references may exist [1]
+    if (
+        Is_Node_Managed(L->varlist)  // outstanding references may exist [1]
+        or Get_Action_Executor_Flag(L, FULFILL_ONLY)
+    ){
         Tweak_Bonus_Keysource(L->varlist, ACT_KEYLIST(ORIGINAL));
     }
-    else {  // no outstanding references [3]
-        Clear_Flex_Info(L->varlist, HOLD);
-        Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
-
-        assert(
-            0 == (FLEX_INFO(L->varlist) & ~(  // <- note bitwise not
-                FLEX_INFO_0_IS_FALSE
-                    | FLAG_USED_BYTE(255)  // mask out non-dynamic-len
-        )));
-
-      #if RUNTIME_CHECKS
-        Cell* rootvar = Array_Head(L->varlist);
-        assert(Varlist_Array(Cell_Varlist(rootvar)) == L->varlist);
-        Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // can't corrupt ptr
-        Corrupt_Pointer_If_Debug(BINDING(rootvar));
-      #endif
+    else {  // no outstanding references [2]
+        GC_Kill_Flex(L->varlist);  // not in manuals tracking list
     }
 
-    if (Get_Action_Executor_Flag(L, FULFILL_ONLY))
-        Clear_Action_Executor_Flag(L, FULFILL_ONLY);
-    else
-        L->varlist = nullptr;
+    L->varlist = nullptr;
+    L->flags.bits &= ~ (  // reuse scenarios are speculative, but expect this
+        FLAG_STATE_BYTE(255)
+            | ACTION_EXECUTOR_FLAG_FULFILL_ONLY
+            | ACTION_EXECUTOR_FLAG_INFIX_A
+            | ACTION_EXECUTOR_FLAG_INFIX_B
+    );
 
     Corrupt_Pointer_If_Debug(ORIGINAL); // action is no longer running
     L->executor = nullptr;  // so GC won't think level needs Action marking

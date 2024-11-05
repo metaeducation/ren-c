@@ -77,10 +77,6 @@ enum {
 //    the evaluator and hence can do trickier things.
 //
 // 2. At the moment, Begin_Action() marks the frame as having been invoked...
-//    but since it didn't get managed it drops the flag in Drop_Action().
-//
-//    !!! The flag is new, as a gambit to try and avoid copying frames for
-//    DO-ing just in order to expire the old identity.  Under development.
 //
 // 3. The function did not actually execute, so L->varlist was never handed
 //    out...the varlist should never have gotten managed.  So this context
@@ -108,6 +104,8 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     Push_Action(L, VAL_ACTION(action), Cell_Frame_Coupling(action));
     Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 
+    Array* varlist = L->varlist;  // Drop_Action() will null out L->varlist
+
     Set_Executor_Flag(ACTION, L, FULFILL_ONLY);  // Push_Action() won't allow
 
     assert(Level_Coupling(L) == Cell_Frame_Coupling(action));  // no invocation
@@ -115,13 +113,13 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
 
+    assert(Not_Node_Managed(varlist));  // shouldn't be [3]
+    L->varlist = varlist;  // put varlist back
+
     assert(Is_Nothing(L->out));  // should only have gathered arguments
 
-    assert(  // !!! new flag [2]
-        Not_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED)
-    );
-
-    assert(not (L->flags.bits & ACTION_EXECUTOR_FLAG_FULFILL_ONLY));
+    assert(Get_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
+    Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);  // [2]
 
     L->u.action.original = VAL_ACTION(action);
     Tweak_Level_Phase(  // Drop_Action() cleared, restore
@@ -129,8 +127,6 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         ACT_IDENTITY(VAL_ACTION(action))
     );
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(action));
-
-    assert(Not_Node_Managed(L->varlist));  // shouldn't be [3]
 
     return L;  // may not be at end or thrown, e.g. (/x: does+ just y x = 'y)
 }
