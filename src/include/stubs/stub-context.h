@@ -469,7 +469,7 @@ INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
     Value* rootvar = cast(Value*, copy->content.dynamic.data);
     Tweak_Cell_Context_Varlist(rootvar, x_cast(Array*, copy));
 
-    Set_Flex_Inaccessible(c);  // Make unusable [2]
+    Set_Stub_Unreadable(c);  // Make unusable [2]
 
     return cast(VarList*, copy);
 }

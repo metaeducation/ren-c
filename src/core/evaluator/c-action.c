@@ -1059,7 +1059,7 @@ void Push_Action(
         s,
         num_args + 1 + ONE_IF_POISON_TAILS  // +1 is rootvar
     )){
-        Set_Flex_Inaccessible(s);
+        Set_Stub_Unreadable(s);
         GC_Kill_Stub(s);  // ^-- needs non-null data unless free
         fail (Error_No_Memory(
             sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))

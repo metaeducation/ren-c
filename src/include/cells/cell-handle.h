@@ -88,7 +88,7 @@ INLINE CFunction* Cell_Handle_Cfunc(const Cell* v) {
     return CELL_HANDLE_CFUNC_P(Extract_Cell_Handle_Canon(v));
 }
 
-INLINE CLEANUP_CFUNC* Cell_Handle_Cleaner(const Cell* v) {
+INLINE Option(CLEANUP_CFUNC*) Cell_Handle_Cleaner(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (not Cell_Has_Node1(v))
         return nullptr;

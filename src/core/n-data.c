@@ -994,7 +994,7 @@ DECLARE_NATIVE(free)
         return FAIL("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
-    Decay_Flex(f);
+    Decay_Stub(f);
     return NOTHING; // !!! Could return freed value
 }
 

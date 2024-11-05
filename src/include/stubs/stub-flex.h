@@ -86,18 +86,20 @@ INLINE bool Is_Stub_Decayed(const Stub* s) {
 #define Not_Stub_Decayed(s) \
     (not Is_Stub_Decayed(s))
 
-INLINE Stub* Set_Flex_Inaccessible(Flex* f) {
-    assert(Is_Node_Readable(f));
-    f->leader.bits = \
-        NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | FLAG_FLAVOR_BYTE(255);
-    assert(NODE_BYTE(f) == DECAYED_NON_CANON_BYTE);
+#define STUB_MASK_NON_CANON_UNREADABLE \
+    NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | FLAG_FLAVOR_BYTE(255)
 
-    Corrupt_Pointer_If_Debug(f->link.any.corrupt);
-    Corrupt_Pointer_If_Debug(f->misc.any.corrupt);
-    Corrupt_If_Debug(f->content);
-    Corrupt_Pointer_If_Debug(f->info.any.corrupt);
+INLINE Stub* Set_Stub_Unreadable(Stub* s) {
+    assert(Is_Node_Readable(s));
+    s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
+    assert(NODE_BYTE(s) == DECAYED_NON_CANON_BYTE);
 
-    return f;  // not a flex anymore... but still considered a Stub
+    Corrupt_Pointer_If_Debug(s->link.any.corrupt);
+    Corrupt_Pointer_If_Debug(s->misc.any.corrupt);
+    Corrupt_If_Debug(s->content);
+    Corrupt_Pointer_If_Debug(s->info.any.corrupt);
+
+    return s;
 }
 
 
@@ -609,7 +611,7 @@ INLINE Flex* Make_Flex_Into(
 
         if (not Try_Flex_Data_Alloc(s, capacity)) {
             Clear_Node_Managed_Bit(s);
-            Set_Flex_Inaccessible(s);
+            Set_Stub_Unreadable(s);
             GC_Kill_Stub(s);
 
             fail (Error_No_Memory(capacity * wide));

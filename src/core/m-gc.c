@@ -177,7 +177,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 // Nodes that are conceptually freed, but only being kept around until
 // referencing sites can be fixed up to not refer to them.  As the GC marks
 // the nodes, it canonizes such "decayed" pointers to a single global
-// "decayed thing".  See Decay_Flex()
+// "decayed thing".  See Decay_Stub()
 //
 // Note: This strategy created some friction when bound words depended on
 // contexts to supply their spellings.  This would have required actually
@@ -530,41 +530,22 @@ void Run_All_Handle_Cleaners(void) {
         Byte* unit = cast(Byte*, seg + 1);
         Length n = g_mem.pools[STUB_POOL].num_units_per_segment;
         for (; n > 0; --n, unit += sizeof(Stub)) {
-            //
-            // !!! A smarter switch statement here could do this more
-            // optimally...see the sweep code for an example.
-            //
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
             if (unit[0] & NODE_BYTEMASK_0x08_CELL)
-                continue;  // assume no handles in pairings, for now?
+                continue;  // not a stub
 
             Stub* stub = cast(Stub*, unit);
-
             if (Is_Stub_Decayed(stub))
-                continue;
+                continue;  // freed, but not canonized
 
-            if (stub == g_ds.array)
-                continue;
-            if (not Stub_Holds_Cells(stub))
-                continue;
+            if (Stub_Flavor(stub) != FLAVOR_HANDLE)
+                continue;  // only interested in handles
 
-            const Cell* item_tail = Array_Tail(cast(Array*, stub));
-            Cell* item = Array_Head(cast(Array*, stub));
-            for (; item != item_tail; ++item) {
-                if (Not_Cell_Readable(item))
-                    continue;
+            assert(Is_Node_Managed(stub));  // it's why handle stubs exist
 
-                if (Cell_Heart(item) != REB_HANDLE)
-                    continue;
-                if (not Cell_Has_Node1(item))
-                    continue;
-                Stub* handle_stub = Extract_Cell_Handle_Stub(item);
-                if (Is_Stub_Decayed(handle_stub))
-                    continue;
-                Decay_Flex(cast(Flex*, handle_stub));
-            }
+            Decay_Stub(stub);
         }
     }
 }
@@ -950,7 +931,7 @@ Count Sweep_Stubs(void)
                 // is over we can just free them.
             }
             else
-                Decay_Flex(u_cast(Flex*, unit));
+                Decay_Stub(u_cast(Stub*, unit));
 
             GC_Kill_Stub(u_cast(Stub*, unit));
         }

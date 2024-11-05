@@ -568,7 +568,7 @@ void Startup_Builtin_Symbols(
 //  Shutdown_Builtin_Symbols: C
 //
 // The Shutdown_Interning() code checks for g_symbols.by_hash to be empty...
-// the necessary removal happens in Decay_Flex().  (Note that a "dirty"
+// the necessary removal happens in Decay_Stub().  (Note that a "dirty"
 // shutdown--used in release builds--avoids all these balancing checks!)
 //
 void Shutdown_Builtin_Symbols(void)
@@ -577,7 +577,7 @@ void Shutdown_Builtin_Symbols(void)
 
     for (SymIdNum id = 1; id < ALL_SYMS_MAX; ++id) {
         Symbol* canon = &g_symbols.builtin_canons[id];
-        Decay_Flex(canon);
+        Decay_Stub(canon);
     }
 }
 

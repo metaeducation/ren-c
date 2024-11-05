@@ -1087,19 +1087,19 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
 
 //
-//  Decay_Flex: C
+//  Decay_Stub: C
 //
-Stub* Decay_Flex(Flex* f)
+Stub* Decay_Stub(Stub* s)
 {
-    assert(Is_Node_Readable(f));
+    assert(Is_Node_Readable(s));
 
-    switch (Stub_Flavor(f)) {
+    switch (Stub_Flavor(s)) {
       case FLAVOR_NONSYMBOL:
-        Free_Bookmarks_Maybe_Null(cast(String*, f));
+        Free_Bookmarks_Maybe_Null(cast(String*, s));
         break;
 
       case FLAVOR_SYMBOL:
-        GC_Kill_Interning(cast(Symbol*, f));  // special handling adjust canons
+        GC_Kill_Interning(cast(Symbol*, s));  // special handling adjust canons
         break;
 
       case FLAVOR_PATCH: {
@@ -1109,12 +1109,12 @@ Stub* Decay_Flex(Flex* f)
         // same name in other modules...with the name itself as a symbol
         // being in that circular list.  Remove this patch from that list.
         //
-        Stub* temp = MISC(PatchHitch, f);
-        while (node_MISC(Hitch, temp) != f) {
+        Stub* temp = MISC(PatchHitch, s);
+        while (node_MISC(Hitch, temp) != s) {
             temp = cast(Stub*, node_MISC(Hitch, temp));
             assert(Is_Stub_Patch(temp) or Is_Stub_Symbol(temp));
         }
-        node_MISC(Hitch, temp) = node_MISC(Hitch, f);
+        node_MISC(Hitch, temp) = node_MISC(Hitch, s);
         break; }
 
       case FLAVOR_LET:
@@ -1128,16 +1128,11 @@ Stub* Decay_Flex(Flex* f)
         //
         break;
 
-      case FLAVOR_HANDLE: {
-        Value* v = Stub_Cell(f);
-        assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
-
-        // Some handles use the managed form just because they want changes to
-        // the pointer in one instance to be seen by other instances...there
-        // may be no cleaner function.
-        //
-        if (f->misc.cleaner)
-            (f->misc.cleaner)(v);
+      case FLAVOR_HANDLE: {  // Stub for managed form, so all cells see changes
+        RebolValue* v = cast(RebolValue*, Stub_Cell(s));
+        assert(VAL_TYPE(v) == REB_HANDLE);
+        if (s->misc.cleaner)
+            (unwrap s->misc.cleaner)(v);
         break; }
 
       default:
@@ -1147,11 +1142,12 @@ Stub* Decay_Flex(Flex* f)
     // Remove Flex from expansion list, if found:
     REBLEN n;
     for (n = 1; n < MAX_EXPAND_LIST; n++) {
-        if (g_mem.prior_expand[n] == f)
-            g_mem.prior_expand[n] = 0;
+        if (g_mem.prior_expand[n] == s)
+            g_mem.prior_expand[n] = nullptr;
     }
 
-    if (Get_Stub_Flag(f, DYNAMIC)) {
+    if (Get_Stub_Flag(s, DYNAMIC)) {
+        Flex* f = cast(Flex*, s);
         Byte wide = Flex_Wide(f);
         REBLEN bias = Flex_Bias(f);
         REBLEN total = (bias + Flex_Rest(f)) * wide;
@@ -1185,8 +1181,8 @@ Stub* Decay_Flex(Flex* f)
             : tmp;
     }
 
-    Set_Flex_Inaccessible(f);
-    return f;
+    Set_Stub_Unreadable(s);
+    return s;
 }
 
 
@@ -1207,7 +1203,7 @@ void GC_Kill_Stub(Stub* s)
     }
   #endif
 
-    assert(Not_Node_Readable(s));  // must Decay_Flex() first
+    assert(Is_Stub_Decayed(s));  // must Decay_Stub() first
 
     // By default the Stub is touched so its tick reflects the tick that
     // freed it.  If you need to know the tick where it was allocated, then

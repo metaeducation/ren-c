@@ -1892,6 +1892,8 @@ void* API_rebUnboxHandleCData(
 //
 //  rebExtractHandleCleaner: API
 //
+// May return nullptr.
+//
 CLEANUP_CFUNC* API_rebExtractHandleCleaner(
     RebolContext** binding_ref,
     const void* p, void* vaptr
@@ -1905,7 +1907,7 @@ CLEANUP_CFUNC* API_rebExtractHandleCleaner(
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
     Stub* stub = Extract_Cell_Handle_Stub(v);
-    return stub->misc.cleaner;
+    return maybe stub->misc.cleaner;
 }
 
 

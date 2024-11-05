@@ -1546,7 +1546,7 @@ DECLARE_NATIVE(glom)
         // result array (we might sporadically do it the other way just to
         // establish that the optimizations could obliterate either).
         //
-        Decay_Flex(r);
+        Decay_Stub(r);
     }
 
     return COPY(accumulator);

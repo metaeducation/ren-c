@@ -80,7 +80,7 @@
 //
 // 6. In the past, "Variant" was a circularly linked list of variations of this
 //    USE with different Context_Parent() data.  The idea was to assist in
-//    avoiding creating unnecessary duplicate chains.  Decay_Flex() would
+//    avoiding creating unnecessary duplicate chains.  Decay_Stub() would
 //    remove patches from the list during GC.  But see the notes on the
 //    Variant definition for why it was removed.
 //
