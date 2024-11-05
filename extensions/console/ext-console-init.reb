@@ -272,8 +272,8 @@ export console!: make object! [
     /input-hook: meth [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
-        return: "~escape~ if canceled, else line of text input"
-            [text! '~escape~]
+        return: "~escape~ if canceled, null on no input, else line of text"
+            [~null~ text! '~escape~]
     ][
         return read-line stdin except ['~escape~]
     ]
@@ -521,7 +521,7 @@ export console!: make object! [
                 emit [system.console/print-gap]
                 emit [system.console/print-prompt]
                 emit [reduce [
-                    system.console/input-hook  ; can return ~escape~ quasiform
+                    reify system.console/input-hook  ; [...],  ~escape~, null
                 ]]  ; gather first line (or escape), put in BLOCK!
             ]
             <halt> [
@@ -763,6 +763,10 @@ export console!: make object! [
         return <prompt>
     ]
 
+    if '~null~ = last result [  ; disconnection from input source
+        return 0  ; !!! how did this work before?
+    ]
+
     let code: (
         transcode (delimit newline result)
     ) except error -> [
@@ -797,7 +801,7 @@ export console!: make object! [
 
                 emit [reduce [  ; reduce will runs in sandbox
                     (<*> spread result)  ; splice previous inert literal lines
-                    system.console/input-hook  ; hook to run in sandbox
+                    reify system.console/input-hook  ; hook to run in sandbox
                 ]]
 
                 return block!  ; documents expected match of REDUCE product
