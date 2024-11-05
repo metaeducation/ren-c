@@ -455,21 +455,6 @@ rebmake/set-target-platform platform-config.os-base
                 ;
                 <msc:/wd4820>
 
-                ; Without disabling this, you likely get:
-                ;
-                ;   '_WIN32_WINNT_WIN10_TH2' is not defined as a preprocessor
-                ;   macro, replacing with '0' for '#if/#elif'
-                ;
-                ; Seems to be some mistake on Microsoft's part, that some
-                ; report can be remedied by using WIN32_LEAN_AND_MEAN:
-                ;
-                ; https://stackoverflow.com/q/11040133/
-                ;
-                ; But then if you include <winioctl.h> (where the problem is)
-                ; you'd still have it.
-                ;
-                <msc:/wd4668>
-
                 ; There are a currently a lot of places where `int` is passed
                 ; to REBLEN, where the signs mismatch.  Disable C4365:
                 ;

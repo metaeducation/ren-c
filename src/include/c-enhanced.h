@@ -54,6 +54,8 @@
     #else
        #define RUNTIME_CHECKS 1
     #endif
+#endif
+#if !defined(NO_RUNTIME_CHECKS)
     #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
 #endif
 
@@ -185,12 +187,13 @@
 //
 #if !defined(CPLUSPLUS_11)
   #if defined(__cplusplus) && __cplusplus >= 201103L
-    #define CPLUSPLUS_11 1
-    #define NO_CPLUSPLUS_11 0
+    #define CPLUSPLUS_11  1
   #else
-    #define CPLUSPLUS_11 0
-    #define NO_CPLUSPLUS_11 1
+    #define CPLUSPLUS_11  0
   #endif
+#endif
+#if !defined(NO_CPLUSPLUS_11)
+    #define NO_CPLUSPLUS_11 (! CPLUSPLUS_11)
 #endif
 
 #if !defined(C_11)
@@ -467,7 +470,7 @@
 #define u_cast(T,v) \
     ((T)(v))  // unchecked cast, use e.g. when casting a fresh allocation
 
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define cast(T,v)       ((T)(v))  /* pointer-to-ptr, integral-to-int */
     #define m_cast(T,v)     ((T)(v))  /* add mutability to pointer type only */
     #define x_cast(T,v)     ((T)(v))  /* pointer cast that drops mutability */
@@ -627,8 +630,10 @@
 // context).  Either way, when discussing C's "0 pointer", say `nullptr`.
 //
 
-#if (! CPLUSPLUS_11)
-    #define nullptr cast(void*, 0)
+#if NO_CPLUSPLUS_11
+  #if !defined(nullptr)
+    #define nullptr  u_cast(void*, 0)
+  #endif
 #else
     // http://en.cppreference.com/w/cpp/language/nullptr
     // is defined as `using nullptr_t = decltype(nullptr);` in <cstddef>
@@ -873,7 +878,7 @@
 //    it's rather different as a runtime value check instead of a compile-time
 //    type check.  Avoids needing another name.
 //
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define ensure(T,v) (v)
 #else
     template<typename V, typename T>
@@ -908,7 +913,7 @@
 // comment might have made a line overlong), but also it's less likely to
 // get out of date because it is validating the expression.
 //
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define possibly(expr)  NOOP
 #else
     template <typename T>
@@ -950,7 +955,7 @@
     #define UNUSED(x) \
         ((void)(x))
 
-#elif (! CPLUSPLUS_11)
+#elif NO_CPLUSPLUS_11
     #include <string.h>
 
     // See definition of Cell for why casting to void* is needed.

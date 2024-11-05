@@ -275,7 +275,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     return L->label;
 }
 
-#if (! CPLUSPLUS_11)
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define Level_State_Byte(L) \
         SECOND_BYTE(ensure(Level*, L))
 #else

@@ -94,6 +94,19 @@ if os = 'Windows [
         ;
         %ws2_32
     ]
+
+    ; 1. Without disabling this, you likely get:
+    ;
+    ;      '_WIN32_WINNT_WIN10_TH2' is not defined as a preprocessor
+    ;      macro, replacing with '0' for '#if/#elif'
+    ;
+    ;    Seems to be some mistake on Microsoft's part, that some report can be
+    ;    remedied by using WIN32_LEAN_AND_MEAN:
+    ;
+    ;      https://stackoverflow.com/q/11040133/
+    ;
+    ;    But if you include <winioctl.h>, you still have it.
+    ;
     uv-nowarn: [
         ;
         ; These were in the CMakeLists.txt for libuv
@@ -121,6 +134,8 @@ if os = 'Windows [
         <msc:/wd4189>  ; `r` local variable initialized but not referenced
 
         <msc:/analyze->  ; do not do static analysis
+
+        <msc:/wd4668>  ; Microsoft's own header files, as usual, are bad [1]
     ]
 ]
 else [

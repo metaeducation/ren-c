@@ -65,12 +65,13 @@
 
 #if !defined(CPLUSPLUS_11)
   #if defined(__cplusplus) && __cplusplus >= 201103L
-    #define CPLUSPLUS_11 1
-    #define NO_CPLUSPLUS_11 0
+    #define CPLUSPLUS_11  1
   #else
-    #define CPLUSPLUS_11 0
-    #define NO_CPLUSPLUS_11 1
+    #define CPLUSPLUS_11  0
   #endif
+#endif
+#if !defined(NO_CPLUSPLUS_11)
+    #define NO_CPLUSPLUS_11  (! CPLUSPLUS_11)
 #endif
 
 
@@ -367,6 +368,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #else
         #define RUNTIME_CHECKS 1
     #endif
+#endif
+#if !defined(NO_RUNTIME_CHECKS)
     #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
 #endif
 
@@ -716,6 +719,13 @@ Special internal defines used by RT, not Host-Kit developers:
 #if !defined(DEBUG_UTF8_EVERYWHERE)
     #define DEBUG_UTF8_EVERYWHERE 0
 #endif
+#if DEBUG_UTF8_EVERYWHERE
+  #if NO_CPLUSPLUS_11
+    #error "DEBUG_UTF8_EVERYWHERE requires C++11 or higher"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
+  #endif
+#endif
+
 
 #if !defined(DEBUG_VERIFY_STR_AT)  // check cache correctness on every STR_AT
     #define DEBUG_VERIFY_STR_AT DEBUG_UTF8_EVERYWHERE
@@ -750,9 +760,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_CHECK_CASTS  0  // requires C++
   #endif
 #endif
-
 #if DEBUG_CHECK_CASTS
-  #if (! CPLUSPLUS_11)
+  #if NO_CPLUSPLUS_11
     #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
     #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif
@@ -785,7 +794,7 @@ Special internal defines used by RT, not Host-Kit developers:
   #if defined(__SANITIZE_ADDRESS__)
     #define CHECK_OPTIONAL_TYPEMACRO  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
-    #define CHECK_OPTIONAL_TYPEMACRO 0
+    #define CHECK_OPTIONAL_TYPEMACRO  0
   #endif
 #endif
 

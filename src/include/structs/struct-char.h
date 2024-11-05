@@ -52,11 +52,6 @@
     #define Utf8(star_or_const_star) \
         Byte star_or_const_star
 #else
-  #if (! CPLUSPLUS_11)
-    #error "DEBUG_UTF8_EVERYWHERE requires C++11 or higher"
-    #include <stophere>  // https://stackoverflow.com/a/45661130
-  #endif
-
     // Debug mode uses templates to expand Utf8(*) and Utf8(const*) into
     // pointer classes.  This technique allows the simple C compilation too:
     //

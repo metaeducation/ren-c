@@ -40,7 +40,14 @@
 #include "reb-config.h"
 
 #if TO_WINDOWS
-    #include <winsock2.h>
+  #if defined(_MSC_VER)
+    #pragma warning(disable : 4668)  // allow #if of undefined things
+  #endif
+    #include <winsock2.h>  // has bad #ifdefs in <winioctl.h>
+  #if defined(_MSC_VER)
+    #pragma warning(error : 4668)   // disallow #if of undefined things
+  #endif
+
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 

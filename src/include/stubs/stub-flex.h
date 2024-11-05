@@ -145,7 +145,7 @@ INLINE Stub* Set_Flex_Inaccessible(Flex* f) {
 // 2. We check that the info is being used for bits, not an "INODE".
 //    Assume Flavor has INFO_NODE_NEEDS_MARK right.
 //
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define FLEX_INFO(f) \
         x_cast(Flex*, ensure(const Flex*, (f)))->info.any.flags  // [1]
 #else
@@ -237,7 +237,7 @@ INLINE Size Flex_Total(const Flex* f)
 // is called the "bonus".
 //
 
-#if (! CPLUSPLUS_11)
+#if NO_CPLUSPLUS_11
     #define FLEX_BONUS(f) \
         (f)->content.dynamic.bonus.node
 #else

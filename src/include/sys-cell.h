@@ -189,7 +189,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
         } \
     } while (0)
 
-  #if (! CPLUSPLUS_11)
+  #if NO_CPLUSPLUS_11
     #define Ensure_Readable(c) (c)
     #define Ensure_Writable(c) (c)
   #else

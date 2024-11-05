@@ -31,8 +31,15 @@
 #include "reb-config.h"
 
 #if TO_WINDOWS
+
+  #if defined(_MSC_VER)
+    #pragma warning(disable : 4668)  // allow #if of undefined things
+  #endif
     // `#define WIN32_LEAN_AND_MEAN` seems to omit FNERR_BUFFERTOOSMALL :-/
-    #include <windows.h>
+    #include <windows.h>  // has bad #ifdefs in <winioctl.h>
+  #if defined(_MSC_VER)
+    #pragma warning(error : 4668)   // disallow #if of undefined things
+  #endif
 
     #include <commdlg.h>
 

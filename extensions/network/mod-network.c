@@ -47,7 +47,13 @@
     #pragma warning(disable : 28251)  // suppress "inconsistent annotation"
 #endif
 
-#include "uv.h"  // includes windows.h
+#if defined(_MSC_VER)
+    #pragma warning(disable : 4668)  // allow #if of undefined things
+#endif
+#include "uv.h"  // includes windows.h, with bad #ifs in <winioctl.h>
+#if defined(_MSC_VER)
+    #pragma warning(error : 4668)   // disallow #if of undefined things
+#endif
 
 #ifdef TO_WINDOWS
     #undef OUT  // %minwindef.h defines this, we have a better use for it

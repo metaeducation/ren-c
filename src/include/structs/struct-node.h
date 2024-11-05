@@ -53,35 +53,35 @@
 //
 
 
-#if (! CPLUSPLUS_11)
-    //
-    // In plain C builds, there's no such thing as "base classes".  So the
-    // only way to make a function that can accept either a Flex* or a
-    // Value* without knowing which is to use a `void*`.  So the Node is
-    // defined as `void`, and the C++ build is trusted to do the more strict
-    // type checking.
-    //
-    struct RebolNodeStruct {  // Node is void*, but defined for API
-        Byte first;
-    };
-    typedef void Node;
-#else
-    // If we were willing to commit to building with a C++ compiler, we'd
-    // want to make the NodeStruct contain the common `header` bits that Stub
-    // and Cell would share.  But since we're not, we instead make a less
-    // invasive empty base class, that doesn't disrupt the memory layout of
-    // derived classes due to the "Empty Base Class Optimization":
-    //
-    // https://en.cppreference.com/w/cpp/language/ebo
-    //
-    // At one time there was an attempt to make Context/Action/Map derive
-    // from Node, but not Flex.  Facilitating that through multiple
-    // inheritance foils the Empty Base Class optimization, and creates other
-    // headaches.  So it was decided that so long as they are Flex, not
-    // Array, that's still abstract enough to block most casual misuses.
-    //
+//=//// Node Base Type: Empty Base Class (or minimal C struct) ////////////=//
+//
+// If we were willing to commit to building with a C++ compiler, we'd want to
+// make the NodeStruct contain the common `header` bits that Stub and Cell
+// would share.  But since we're not, we instead make a less invasive empty
+// base class, that doesn't disrupt the memory layout of derived classes due
+// to the "Empty Base Class Optimization":
+//
+//   https://en.cppreference.com/w/cpp/language/ebo
+//
+// In plain C builds, there's no such thing as "base classes".  So the only
+// way to make a function that can accept either a Flex* or a Value* without
+// knowing which is to use a `void*`.  So the Node is defined as `void`, and
+// the C++ build is trusted to do the more strict type checking.
+//
+// Note: At one time there was an attempt to make Context/Action/Map derive
+// from Node, but not Flex.  Facilitating that through multiple inheritance
+// foils the Empty Base Class optimization, and creates other headaches.  So
+// it was decided that so long as they are Flex, not Array, that's still
+// abstract enough to block most casual misuses.
+//
+#if CPLUSPLUS_11
     struct RebolNodeStruct {};  // empty base for Stub, Flex, Cell, Level...
     typedef struct RebolNodeStruct Node;
+#else
+    struct RebolNodeStruct {  // Node is void*, but must define struct for API
+        Byte first;
+    };
+    typedef void Node;  // couldn't pass Flex* to a RebolNodeStruct* in C
 #endif
 
 

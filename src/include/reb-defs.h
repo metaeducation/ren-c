@@ -151,7 +151,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 //    CHECK_OPTIONAL_TYPEMACRO switch, we cannot enforce Index's "never 0"
 //    property without that switch.
 
-#if (! CPLUSPLUS_11) || (! CHECK_OPTIONAL_TYPEMACRO)
+#if (! CHECK_OPTIONAL_TYPEMACRO)
     typedef intptr_t Index;
     #define Index_To_Offset(i) ((i) - 1)
     #define Offset_To_Index(i) ((i) + 1)
