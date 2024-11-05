@@ -2989,6 +2989,25 @@ void Startup_Scanner(void)
     while (Token_Names[n])
         ++n;
     assert(cast(Token, n) == TOKEN_MAX);
+
+    // The details of what ASCII characters must be percent encoded
+    // are contained in RFC 3896, but a summary is here:
+    //
+    // https://stackoverflow.com/a/7109208/
+    //
+    // Everything but: A-Z a-z 0-9 - . _ ~ : / ? # [ ] @ ! $ & ' ( ) * + , ; =
+    //
+  #if RUNTIME_CHECKS  // we use g_lex_map for speed, but double check
+    const char *no_encode =
+        "ABCDEFGHIJKLKMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" \
+            "-._~:/?#[]@!$&'()*+,;=";
+
+    Byte b;
+    for (b = 0x01; b < 0x80; ++b) {  // don't call on NUL or non-ASCII
+        bool needs_encoding = (strchr(no_encode, b) == nullptr);
+        assert(needs_encoding == Ascii_Char_Needs_Percent_Encoding(b));
+    }
+  #endif
 }
 
 

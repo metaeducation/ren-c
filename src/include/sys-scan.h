@@ -330,6 +330,75 @@ INLINE bool Try_Get_Lex_Hexdigit_Helper(Sink(Byte) nibble, Lex lex) {
 #define Try_Get_Lex_Hexdigit(nibble,b) \
     Try_Get_Lex_Hexdigit_Helper((nibble), Lex_Of(b))  // make sure it's a Byte
 
+
+// The Lex table was used to speed up ENHEX with this switch() code.  But it
+// would break if the Lex values were adjusted.  This isolates it into a
+// function that the debug build tests for all characters against the spec
+// at startup, to make it more rigorous.
+//
+INLINE bool Ascii_Char_Needs_Percent_Encoding(Byte b) {
+    assert(b != '\0');  // don't call on NUL character
+    assert(b < 0x80);  // help avoid accidental calls on partial UTF-8
+    switch (Get_Lex_Class(b)) {
+      case LEX_CLASS_DELIMIT:
+        switch (Get_Lex_Delimit(b)) {
+          case LEX_DELIMIT_SPACE:  // includes control characters
+          case LEX_DELIMIT_END:  // 00 null terminator
+          case LEX_DELIMIT_LINEFEED:
+          case LEX_DELIMIT_RETURN:  // e.g. ^M
+          case LEX_DELIMIT_LEFT_BRACE:
+          case LEX_DELIMIT_RIGHT_BRACE:
+          case LEX_DELIMIT_DOUBLE_QUOTE:
+            return true;
+
+          default:
+            return false;
+        }
+
+      case LEX_CLASS_SPECIAL:
+        switch (Get_Lex_Special(b)) {
+            case LEX_SPECIAL_AT:
+            case LEX_SPECIAL_APOSTROPHE:
+            case LEX_SPECIAL_PLUS:
+            case LEX_SPECIAL_MINUS:
+            case LEX_SPECIAL_UNDERSCORE:
+            case LEX_SPECIAL_POUND:
+            case LEX_SPECIAL_DOLLAR:
+            case LEX_SPECIAL_SEMICOLON:
+              return false;
+
+            case LEX_SPECIAL_WORD:
+              assert(false);  // only occurs in use w/Prescan_Token()
+              return false;
+
+            case LEX_SPECIAL_UTF8_ERROR:  // not for c < 0x80
+              assert(false);
+              return true;
+
+            default:
+              return true;
+        }
+
+      case LEX_CLASS_WORD:
+        if (
+            (b >= 'a' and b <= 'z') or (b >= 'A' and b <= 'Z')
+            or b == '?' or b == '!' or b == '&'
+            or b == '*' or b == '='
+        ){
+            return false;
+        }
+        return true;
+
+      case LEX_CLASS_NUMBER:  // 0-9 needs no encoding.
+        return false;
+
+      default:
+        assert(false);  // gcc doesn't think the above is exhaustive (it is)
+        return true;
+    }
+}
+
+
 enum EscapeCodeEnum {  // Must match Esc_Names[]!
     ESC_LINE,
     ESC_TAB,

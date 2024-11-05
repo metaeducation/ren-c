@@ -416,21 +416,22 @@ DECLARE_NATIVE(enbase)
 //  ]
 //
 DECLARE_NATIVE(enhex)
+//
+// 1. !!! Length 4 should be legal here, but a warning in an older GCC is
+//    complaining that Encode_UTF8_Char reaches out of array bounds when it
+//    does not appear to.  Possibly related to this:
+//
+//      https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43949
+//
+// 2. Use uppercase hex digits, per RFC 3896 2.1, which is also consistent
+//    with JavaScript's encodeURIComponent()
+//
+//      https://tools.ietf.org/html/rfc3986#section-2.1
+//
+//    !!! Should this be controlled by a :RELAX refinement and default to
+//    not accepting lowercase?
 {
     INCLUDE_PARAMS_OF_ENHEX;
-
-    // The details of what ASCII characters must be percent encoded
-    // are contained in RFC 3896, but a summary is here:
-    //
-    // https://stackoverflow.com/a/7109208/
-    //
-    // Everything but: A-Z a-z 0-9 - . _ ~ : / ? # [ ] @ ! $ & ' ( ) * + , ; =
-    //
-  #if RUNTIME_CHECKS  // we use Lex_Map() for speed, but double check
-    const char *no_encode =
-        "ABCDEFGHIJKLKMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" \
-            "-._~:/?#[]@!$&'()*+,;=";
-  #endif
 
     DECLARE_MOLDER (mo);
     Push_Mold (mo);
@@ -443,13 +444,6 @@ DECLARE_NATIVE(enhex)
 
     REBLEN i;
     for (i = 0; i < len; cp = Utf8_Next(&c, cp), ++i) {
-        //
-        // !!! Length 4 should be legal here, but a warning in an older GCC
-        // is complaining that Encode_UTF8_Char reaches out of array bounds
-        // when it does not appear to.  Possibly related to this:
-        //
-        // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43949
-        //
         Byte encoded[UNI_ENCODED_MAX];
         REBLEN encoded_size;
 
@@ -458,104 +452,17 @@ DECLARE_NATIVE(enhex)
             Encode_UTF8_Char(encoded, c, encoded_size);
         }
         else {
-            // "Everything else must be url-encoded".  Rebol's g_lex_map does
-            // not have a bit for this in particular, though maybe it could
-            // be retooled to help more with this.  For now just use it to
-            // speed things up a little.
-
+            if (not Ascii_Char_Needs_Percent_Encoding(cast(Byte, c))) {
+                Append_Codepoint(mo->string, c);
+                continue;
+            }
             encoded[0] = cast(Byte, c);
             encoded_size = 1;
-
-            switch (Get_Lex_Class(encoded[0])) {
-              case LEX_CLASS_DELIMIT:
-                switch (Get_Lex_Delimit(encoded[0])) {
-                  case LEX_DELIMIT_LEFT_PAREN:
-                  case LEX_DELIMIT_RIGHT_PAREN:
-                  case LEX_DELIMIT_LEFT_BRACKET:
-                  case LEX_DELIMIT_RIGHT_BRACKET:
-                  case LEX_DELIMIT_SLASH:
-                  case LEX_DELIMIT_COLON:
-                  case LEX_DELIMIT_PERIOD:
-                  case LEX_DELIMIT_COMMA:
-                  case LEX_DELIMIT_TILDE:
-                    goto leave_as_is;
-
-                  case LEX_DELIMIT_SPACE:  // includes control characters
-                  case LEX_DELIMIT_END:  // 00 null terminator
-                  case LEX_DELIMIT_LINEFEED:
-                  case LEX_DELIMIT_RETURN:  // e.g. ^M
-                  case LEX_DELIMIT_LEFT_BRACE:
-                  case LEX_DELIMIT_RIGHT_BRACE:
-                  case LEX_DELIMIT_DOUBLE_QUOTE:
-                    goto needs_encoding;
-
-                  default:
-                    panic ("Internal LEX_DELIMIT table error");
-                }
-                goto leave_as_is;
-
-              case LEX_CLASS_SPECIAL:
-                switch (Get_Lex_Special(encoded[0])) {
-                  case LEX_SPECIAL_AT:
-                  case LEX_SPECIAL_APOSTROPHE:
-                  case LEX_SPECIAL_PLUS:
-                  case LEX_SPECIAL_MINUS:
-                  case LEX_SPECIAL_UNDERSCORE:
-                  case LEX_SPECIAL_POUND:
-                  case LEX_SPECIAL_DOLLAR:
-                  case LEX_SPECIAL_SEMICOLON:
-                    goto leave_as_is;
-
-                  case LEX_SPECIAL_WORD:
-                    assert(false);  // only occurs in use w/Prescan_Token()
-                    goto leave_as_is;
-
-                  case LEX_SPECIAL_UTF8_ERROR:  // not for c < 0x80
-                    assert(false);
-                    panic (nullptr);
-
-                  default:
-                    goto needs_encoding;
-                }
-                goto leave_as_is;
-
-              case LEX_CLASS_WORD:
-                if (
-                    (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z')
-                    or c == '?' or c == '!' or c == '&'
-                    or c == '*' or c == '='
-                ){
-                    goto leave_as_is;  // this is all that's leftover
-                }
-                goto needs_encoding;
-
-              case LEX_CLASS_NUMBER:
-                goto leave_as_is;  // 0-9 needs no encoding.
-            }
-
-        leave_as_is:;
-          #if RUNTIME_CHECKS
-            assert(strchr(no_encode, c) != NULL);
-          #endif
-            Append_Codepoint(mo->string, c);
-            continue;
         }
 
-    needs_encoding:;
-      #if RUNTIME_CHECKS
-        if (c < 0x80)
-           assert(strchr(no_encode, c) == NULL);
-      #endif
-
         REBLEN n;
-        for (n = 0; n != encoded_size; ++n) {
+        for (n = 0; n != encoded_size; ++n) {  // use uppercase hex digits [2]
             Append_Codepoint(mo->string, '%');
-
-            // Use uppercase hex digits, per RFC 3896 2.1, which is also
-            // consistent with JavaScript's encodeURIComponent()
-            //
-            // https://tools.ietf.org/html/rfc3986#section-2.1
-            //
             Append_Codepoint(mo->string, Hex_Digits[(encoded[n] & 0xf0) >> 4]);
             Append_Codepoint(mo->string, Hex_Digits[encoded[n] & 0xf]);
         }
@@ -578,11 +485,21 @@ DECLARE_NATIVE(enhex)
 //          [any-string?]
 //      string "See http://en.wikipedia.org/wiki/Percent-encoding"
 //          [any-string?]
+//      :blob "Give result as a binary BLOB!, permits %00 encodings"  ; [1]
 //  ]
 //
 DECLARE_NATIVE(dehex)
+//
+// 1. Ren-C is committed to having string types not contain the 0 codepoint,
+//    but it's explicitly legal for percent encoding to allow %00 in URLs.
+//    Sounds dangerous, but we can support that by returning a BLOB!.  The
+//    code was written to use the mold buffer, however, and would have to
+//    be rewritten to use a byte buffer for that feature.
 {
     INCLUDE_PARAMS_OF_DEHEX;
+
+    if (REF(blob))
+        return FAIL("DEHEX:BLOB not yet implemented, but will permit %00");
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -604,7 +521,7 @@ DECLARE_NATIVE(dehex)
 
         do {
             if (scan_size > 4)
-                return FAIL("Percent sequence over 4 bytes long (bad UTF-8)");
+                return RAISE("Percent sequence over 4 bytes long (bad UTF-8)");
 
             Codepoint hex1;
             Codepoint hex2;
@@ -622,13 +539,13 @@ DECLARE_NATIVE(dehex)
                 or hex2 > UINT8_MAX
                 or not Try_Get_Lex_Hexdigit(&nibble2, cast(Byte, hex2))
             ){
-                return FAIL("2 hex digits must follow percent, e.g. %XX");
+                return RAISE("2 hex digits must follow percent, e.g. %XX");
             }
 
             Byte b = (nibble1 << 4) + nibble2;
 
             if (scan_size == 0 and Is_Continuation_Byte(b))
-                return FAIL("UTF-8 can't start with continuation byte");
+                return RAISE("UTF-8 can't start with continuation byte");
 
             if (scan_size > 0 and not Is_Continuation_Byte(b)) {  // next char
                 cp = Step_Back_Codepoint(cp);
@@ -642,6 +559,9 @@ DECLARE_NATIVE(dehex)
             ++scan_size;
 
             cp = Utf8_Next(&c, cp);
+
+            if (b < 0x80)
+                break;
         } while (c == '%');
 
         scan[scan_size] = '\0';
@@ -651,14 +571,12 @@ DECLARE_NATIVE(dehex)
         Option(Error*) e = Trap_Back_Scan_Utf8_Char(
             &decoded, &next, &scan_size
         );
-        if (e) {
-            UNUSED(e);  // should this chain the error reports?
-            return FAIL("Bad UTF-8 sequence in %XX of dehex");
-        }
+        if (e)
+            return RAISE(unwrap e);
 
         --scan_size;  // see definition of Back_Scan for why it's off by one
         if (scan_size != 0)
-            return FAIL("Extra continuation characters in %XX of dehex");
+            return RAISE("Extra continuation characters in %XX of dehex");
 
         Append_Codepoint(mo->string, decoded);
     }

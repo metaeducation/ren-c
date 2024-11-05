@@ -355,7 +355,7 @@ REBOL [
 ][
     if zero? width [return make (type of series) 0]  ; avoid an infinite loop
 
-    let len: to integer! either positive? width [  ; Length to preallocate
+    let len: round either positive? width [  ; Length to preallocate
         divide (length of series) width  ; Forward loop, use length
     ][
         divide (index of series) negate width  ; Backward loop, use position
