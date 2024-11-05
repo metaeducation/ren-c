@@ -610,8 +610,8 @@ void Drop_Level_Core(Level* L) {
         while (n != L) {
             Stub* s = cast(Stub*, n);
             n = LINK(ApiNext, s);
-            Freshen_Cell(Stub_Cell(s));
-            Set_Node_Unreadable_Bit(s);
+            Poison_Cell(Stub_Cell(s));
+            s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
             GC_Kill_Stub(s);
         }
         Corrupt_Pointer_If_Debug(L->alloc_value_list);

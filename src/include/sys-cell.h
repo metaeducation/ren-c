@@ -91,41 +91,6 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     ((c)->header.bits == CELL_MASK_0)  // Is_Fresh(), but not read/write [2]
 
 
-//=//// CELL "POISONING" //////////////////////////////////////////////////=//
-//
-// Poisoning is used in the spirit of things like Address Sanitizer to block
-// reading or writing locations such as beyond the allocated memory of an
-// Array Flex.  It leverages the checks done by Ensure_Readable(),
-// Ensure_Writable() and Is_Fresh()
-//
-// * To stop reading but not writing, use Init_Unreadable() cells instead.
-//
-// * This will defeat Detect_Rebol_Pointer(), so it will not realize the value
-//   is a cell any longer.  Hence poisoned Cells should (perhaps obviously) not
-//   be passed to API functions--as they'd appear to be UTF-8 strings.
-//
-// 1. The mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so Ensure_Readable()
-//    will fail, and it is CELL_FLAG_PROTECTED so Ensure_Writable() will fail.
-//    It can't be freshened with Freshen_Cell().  You have to Erase_Cell().
-//
-// 2. Poison cells are designed to be used in places where Erase_Cell() would
-//    not lose information.  For instance: it's used in the optimized array
-//    representation that fits 0 or 1 cells into the Array Stub itself.  But
-//    if you were to poison an API handle it would overwrite NODE_FLAG_ROOT,
-//    and a managed pairing would overwrite NODE_FLAG_MANAGED.
-
-#define CELL_MASK_POISON \
-    (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)  // not readable or writable [1]
-
-#define Poison_Cell(c) \
-    (TRACK(c)->header.bits = CELL_MASK_POISON)
-
-INLINE bool Is_Cell_Poisoned(const Cell* c) {
-    assert(Is_Cell_Erased(c) or (c->header.bits & NODE_FLAG_CELL));
-    return c->header.bits == CELL_MASK_POISON;
-}
-
-
 //=//// CELL READABLE/WRITABLE CHECKS (don't apply in release builds) /////=//
 //
 // [READABILITY]
@@ -165,6 +130,12 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
 //    Ensure_Readable() and Ensure_Writable() functions for callers that
 //    don't mind the cost.  The STATIC_ASSERT_LVALUE() macro catches any
 //    potential violators.
+//
+// 2. One might think that because you're asking if a cell is writable that
+//    the function should only take non-const Cells, but the question is
+//    abstract and doesn't mean you're going to write it in the moment.
+//    You might just be asking if it could be written if someone had non
+//    const access to it.
 
 #if DEBUG_CELL_READ_WRITE
     #define Assert_Cell_Readable(c) do { \
@@ -185,7 +156,7 @@ INLINE bool Is_Cell_Poisoned(const Cell* c) {
                 NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_PROTECTED \
             )) != (NODE_FLAG_NODE | NODE_FLAG_CELL) \
         ){ \
-            Panic_Cell_Unwritable(c); \
+            Panic_Cell_Unwritable(c);  /* despite write, passed const [2] */ \
         } \
     } while (0)
 
@@ -285,6 +256,39 @@ INLINE void Inline_Freshen_Cell_Suppress_Raised_Untracked(Cell* c)
     Inline_Freshen_Cell_Suppress_Raised_Untracked(TRACK(v))
 
 
+//=//// CELL "POISONING" //////////////////////////////////////////////////=//
+//
+// Poisoning is used in the spirit of things like Address Sanitizer to block
+// reading or writing locations such as beyond the allocated memory of an
+// Array Flex.  It leverages the checks done by Ensure_Readable(),
+// Ensure_Writable() and Is_Fresh()
+//
+// * To stop reading but not writing, use Init_Unreadable() cells instead.
+//
+// 2. Poison cells are designed to be used in places where Erase_Cell() would
+//    not lose information.  For instance: it's used in the optimized array
+//    representation that fits 0 or 1 cells into the Array Stub itself.  But
+//    if you were to poison an API handle it would overwrite NODE_FLAG_ROOT,
+//    and a managed pairing would overwrite NODE_FLAG_MANAGED.
+//
+// 3. A key use of poison cells in the release build is to denote when an
+//    array flex is empty in the optimized state.  But if it's not empty,
+//    a lot of states are valid when checking the length.  It's not clear
+//    what assert (if any) should be here.
+
+#define CELL_MASK_POISON \
+    (NODE_FLAG_NODE | NODE_FLAG_CELL | \
+        NODE_FLAG_UNREADABLE | CELL_FLAG_PROTECTED)  // no read or write [1]
+
+#define Poison_Cell(c) \
+    (TRACK(c)->header.bits = CELL_MASK_POISON)  // full header overwrite [2]
+
+INLINE bool Is_Cell_Poisoned(const Cell* c) {
+    if (c->header.bits == CELL_MASK_POISON)
+        return true;
+    /* Assert_Cell_Initable(c); */  // not always initable or readable [3]
+    return false;
+}
 
 
 #define Cell_Heart_Unchecked(c) \

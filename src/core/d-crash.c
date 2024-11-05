@@ -453,7 +453,7 @@ void Panic_Cell_Unreadable(const Cell* c) {
 //
 // Only called when Assert_Cell_Writable() fails, no reason to inline it.
 //
-void Panic_Cell_Unwritable(Cell* c) {
+void Panic_Cell_Unwritable(const Cell* c) {
     if (not Is_Node(c))
         printf("Non-node passed to cell write routine\n");
     else if (not Is_Node_A_Cell(c))
