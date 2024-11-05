@@ -279,29 +279,28 @@ void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
 //
 // Append UTF-8 data to a String Flex (or create new one)
 //
+// This routine does not just append bytes blindly because:
+//
+// * If STRMODE_CRLF_TO_LF is set, some characters may need to be removed
+//
+// * We want to check for invalid byte sequences, as this can be called with
+//   arbitrary outside data from the API.
+//
+// * It's needed to know how many characters (length) are in the String, not
+//   just how many bytes.  The higher level concept of "length" gets stored
+//   in the String's MISC() field.
+//
 String* Append_UTF8_May_Fail(
     String* dst,  // if nullptr, that means make a new string
     const char *utf8,
     Size size,
     enum Reb_Strmode strmode
 ){
-    // This routine does not just append bytes blindly because:
-    //
-    // * If STRMODE_CRLF_TO_LF is set, some characters may need to be removed
-    // * We want to check for invalid byte sequences, as this can be called
-    //   with arbitrary outside data from the API.
-    // * It's needed to know how many characters (length) are in the String,
-    //   not just how many bytes.  The higher level concept of "length" gets
-    //   stored in the String's MISC() field.
-    // * In the future, some operations will be accelerated by knowing that
-    //   a string only contains ASCII codepoints.
-
     const Byte* bp = cb_cast(utf8);
 
     DECLARE_MOLDER (mo); // !!! REVIEW: don't need intermediate if no CRLF_TO_LF
     Push_Mold(mo);
 
-    bool all_ascii = true;
     Length num_codepoints = 0;
 
     Size bytes_left = size;  // see remarks on Back_Scan_Utf8_Char's 3rd arg
@@ -311,8 +310,6 @@ String* Append_UTF8_May_Fail(
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &bytes_left);
             if (e)
                 fail (unwrap e);
-
-            all_ascii = false;
         }
         else if (Should_Skip_Ascii_Byte_May_Fail(
             bp,
@@ -325,8 +322,6 @@ String* Append_UTF8_May_Fail(
         ++num_codepoints;
         Append_Codepoint(mo->string, c);
     }
-
-    UNUSED(all_ascii);
 
     // !!! The implicit nature of this is probably not the best way of
     // handling things, but... if the String we were supposed to be appending

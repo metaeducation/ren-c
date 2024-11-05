@@ -709,8 +709,22 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
         return nullptr;
 
     Term_String_Len_Size(s, num_chars, up - String_Head(s));
+
+    PUSH();
+
+    if (Try_Init_Small_Utf8(
+        TOP,
+        REB_EMAIL,
+        String_Head(s),
+        String_Len(s),
+        String_Size(s)
+    )){
+        Free_Unmanaged_Flex(s);
+        return cp;
+    }
+
     Freeze_Flex(s);
-    Init_Any_String(PUSH(), REB_EMAIL, s);
+    Init_Any_String(TOP, REB_EMAIL, s);
     return cp;
 }
 
@@ -746,8 +760,22 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
         len,
         STRMODE_NO_CR
     );
+
+    PUSH();
+
+    if (Try_Init_Small_Utf8(
+        TOP,
+        REB_URL,
+        String_Head(s),
+        String_Len(s),
+        String_Size(s)
+    )){
+        Free_Unmanaged_Flex(s);  // !!! direct mold buffer use would be better
+        return cp + len;
+    }
+
     Freeze_Flex(s);
-    Init_Any_String(PUSH(), REB_URL, s);
+    Init_Any_String(TOP, REB_URL, s);
 
     return cp + len;
 }

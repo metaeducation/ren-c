@@ -954,25 +954,13 @@ DECLARE_GENERICS(String)
             }
 
             Length len;
-            Size utf8_size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
+            Size size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
 
-            if (utf8_size + 1 <= Size_Of(PAYLOAD(Bytes, v).at_least_8)) {
-                Reset_Cell_Header_Untracked(  // fits in single cell
-                    TRACK(OUT),
-                    FLAG_HEART_BYTE(as) | CELL_MASK_NO_NODES
-                );
-                memcpy(
-                    PAYLOAD(Bytes, OUT).at_least_8,
-                    Cell_String_At(v),
-                    utf8_size + 1  // copy the '\0' terminator
-                );
-                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_USED] = utf8_size;
-                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_LEN] = len;
-            }
-            else {
-                Copy_Cell(OUT, v);
-                HEART_BYTE(OUT) = as;
-            }
+            if (Try_Init_Small_Utf8(OUT, as, Cell_String_At(v), len, size))
+                return OUT;
+
+            Copy_Cell(OUT, v);  // index heeded internally, not exposed
+            HEART_BYTE(OUT) = as;
             return OUT;
         }
 

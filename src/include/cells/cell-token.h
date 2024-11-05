@@ -95,29 +95,48 @@ INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
 
+INLINE bool Try_Init_Small_Utf8_Untracked(
+    Init(Element) out,
+    Heart heart,
+    Utf8(const*) utf8,  // previously validated UTF-8, may not be null term
+    Length len,
+    Size size
+){
+    assert(
+        Any_Utf8_Kind(heart)
+        and not Any_String_Kind(heart) and not Any_Word_Kind(heart)
+    );
+    assert(len <= size);
+    if (size + 1 > Size_Of(PAYLOAD(Bytes, out).at_least_8))
+        return false;
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
+    );
+    memcpy(&PAYLOAD(Bytes, out).at_least_8, utf8, size + 1);  // copy '\0' term
+    PAYLOAD(Bytes, out).at_least_8[size] = '\0';
+    EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = size;
+    EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = len;
+    return true;
+}
+
+#define Try_Init_Small_Utf8(out,heart,utf8,len,size) \
+    Try_Init_Small_Utf8_Untracked(TRACK(out), (heart), (utf8), (len), (size))
+
 INLINE Element* Init_Utf8_Non_String(
     Init(Element) out,
     Heart heart,
-    Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
+    Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term)
     Size size,
     Length len  // while validating, you should have counted the codepoints
 ){
-    if (size + 1 <= Size_Of(PAYLOAD(Bytes, out).at_least_8)) {
-        Reset_Cell_Header_Untracked(
-            out,
-            FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
-        );
-        memcpy(PAYLOAD(Bytes, out).at_least_8, utf8, size);
-        PAYLOAD(Bytes, out).at_least_8[size] = '\0';
-        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = size;
-        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = len;
-    }
-    else {
-        String* str = Make_Sized_String_UTF8(cs_cast(utf8), size);
-        assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
-        Freeze_Flex(str);
-        Init_Any_String(out, heart, str);
-    }
+    if (Try_Init_Small_Utf8_Untracked(out, heart, utf8, len, size))
+        return out;
+
+    String* str = Make_Sized_String_UTF8(cs_cast(utf8), size);
+    assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
+    Freeze_Flex(str);
+    Init_Any_String(out, heart, str);
     return out;
 }
 

@@ -119,12 +119,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             const Flex* f = Cell_String(v);
             assert(Is_Flex_Frozen(f));
 
-            // Review: should this rule be enforced?  Right now there are
-            // aliasing cases that don't enforce it.
-            //
-          #if 0
             assert(Flex_Used(f) + 1 > Size_Of(PAYLOAD(Bytes, v).at_least_8));
-          #endif
         }
         else {
             // it's bytes

@@ -81,6 +81,13 @@ INLINE REBLEN VAL_INDEX(const Cell* v) {
 }
 
 
+INLINE Size Cell_String_Size_Limit_At(
+    Option(Sink(Length)) length_out,  // length in chars to end or limit
+    const Cell* v,
+    Option(const Length*) limit
+);
+
+
 // 1. An advantage of making all binaries terminate in 0 is that it means
 //    that if they were valid UTF-8, they could be aliased as Rebol strings,
 //    which are zero terminated.  So it's the rule.
@@ -134,6 +141,15 @@ INLINE Element* Init_Series_At_Core_Untracked(
     Tweak_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;
     BINDING(out) = binding;  // asserts if unbindable type tries to bind
+
+  #if RUNTIME_CHECKS  // if non-string UTF-8 fits in cell, should be in cell
+    if (Any_Utf8_Kind(heart) and not Any_String_Kind(heart)) {
+        Size utf8_size = Cell_String_Size_Limit_At(nullptr, out, UNLIMITED);
+
+        assert(utf8_size + 1 > Size_Of(PAYLOAD(Bytes, out).at_least_8));
+    }
+  #endif
+
     return out;
 }
 

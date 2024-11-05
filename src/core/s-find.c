@@ -560,7 +560,7 @@ REBLEN Find_Value_In_Binstr(
 
         REBLEN result = Find_Binstr_In_Binstr(
             len,
-            binstr,  // not all_ascii, has multibyte utf-8 sequences
+            binstr,  // not all ascii, has multibyte utf-8 sequences
             end,
             molded ? temp : pattern,
             UNLIMITED,

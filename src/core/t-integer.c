@@ -234,14 +234,28 @@ DECLARE_GENERICS(Integer)
         UNUSED(ARG(element));  // val
         Heart to = VAL_TYPE_HEART(ARG(type));
 
-        if (Any_Utf8_Kind(to)) {
+        if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
             DECLARE_MOLDER (mo);
             SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
             Push_Mold(mo);
             Mold_Element(mo, val);
-            const String* s = Pop_Molded_String(mo);
-            if (not Any_String_Kind(to))
+
+            const String* s;
+            if (Any_String_Kind(to))
+                s = Pop_Molded_String(mo);
+            else {
+                if (Try_Init_Small_Utf8(
+                    OUT,
+                    to,
+                    Binary_At(mo->string, mo->base.size),
+                    String_Len(mo->string) - mo->base.index,
+                    String_Size(mo->string) - mo->base.size
+                )){
+                    return OUT;
+                }
+                s = Pop_Molded_String(mo);
                 Freeze_Flex(s);
+            }
             return Init_Any_String(OUT, to, s);
         }
 
