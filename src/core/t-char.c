@@ -282,6 +282,24 @@ DECLARE_NATIVE(codepoint_to_char)
 
 
 //
+//  /NUL?: native [
+//
+//  "Test if a value is the #{00} binary BLOB!, representing codepoint 0"
+//
+//      return: [logic?]
+//      element [element?]
+//  ]
+//
+DECLARE_NATIVE(nul_q)
+{
+    INCLUDE_PARAMS_OF_NUL_Q;
+
+    Element* e = cast(Element*, ARG(element));
+    return Init_Logic(OUT, Is_NUL(e));
+}
+
+
+//
 //  /utf8-to-char: native [
 //
 //  "Make a single character out of a UTF-8 binary sequence"
@@ -430,12 +448,16 @@ DECLARE_GENERICS(Utf8)
     switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // same as `v`
+        UNUSED(ARG(value));  // same as `issue`
 
         switch (Cell_Word_Id(ARG(property))) {
           case SYM_CODEPOINT:
-            if (not IS_CHAR(issue))
-                break;  // must be a single codepoint to use this reflector
+            if (
+                Stringlike_Has_Node(issue)
+                or EXTRA(Bytes, issue).at_least_4[IDX_EXTRA_LEN] != 1
+            ){
+                return RAISE("CODEPOINT OF only works on length 1 Strings");
+            }
             return Init_Integer(OUT, Cell_Codepoint(issue));
 
           case SYM_SIZE: {
@@ -443,7 +465,7 @@ DECLARE_GENERICS(Utf8)
             Cell_Utf8_Size_At(&size, issue);
             return Init_Integer(OUT, size); }
 
-          case SYM_LENGTH: {
+          case SYM_LENGTH: {  // not ANY-SERIES?, REFLECT native doesn't handle
             REBLEN len;
             Cell_Utf8_Len_Size_At(&len, nullptr, issue);
             return Init_Integer(OUT, len); }

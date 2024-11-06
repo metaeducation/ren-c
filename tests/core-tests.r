@@ -346,6 +346,7 @@
 %series/union.test.reb
 %series/unique.test.reb
 
+%string/codepoint.test.reb
 %string/compress.test.reb
 %string/decode.test.reb
 %string/encode.test.reb

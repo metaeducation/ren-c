@@ -2921,10 +2921,13 @@ Bounce Scanner_Executor(Level* const L) {
 //=//// UNDEFINE THE AUGMENTED SCANNER RAISE AND FAIL /////////////////////=//
 
 #undef RAISE
-#define RAISE(p) Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
+#define RAISE(p) \
+    Native_Raised_Result(level_, Derive_Error_From_Pointer(p))
 
 #undef FAIL
-#define FAIL(p) Native_Fail_Result(level_, Derive_Error_From_Pointer(p))
+#define FAIL(p) \
+    (Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+            Native_Fail_Result(level_, Derive_Error_From_Pointer(p)))
 
 
 //

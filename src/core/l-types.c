@@ -49,9 +49,6 @@ DECLARE_GENERICS(Unhooked)
 // or perhaps things like PORT! that wish to act like a series).  This
 // suggests a need for a kind of hierarchy of handling.
 //
-// The series common code is in Series_Common_Action_Maybe_Unhandled(), but
-// that is only called from series.  Handle a few extra cases here.
-//
 Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
@@ -100,7 +97,62 @@ Bounce Reflect_Core(Level* level_)
     if (Is_Void(v))
         return nullptr;
 
-    QUOTE_BYTE(v) = NOQUOTE_1;  // ignore quasi or quoted
+    if (QUOTE_BYTE(v) != NOQUOTE_1)
+        fail ("REFLECT on quoted/quasi/anti only [HEART TYPE QUOTES SIGIL]");
+
+    if (Any_Series_Kind(Cell_Heart(v))) {  // common for series
+        switch (id) {
+          case SYM_INDEX:
+            return Init_Integer(OUT, VAL_INDEX_RAW(v) + 1);
+
+          case SYM_LENGTH:
+            return Init_Integer(OUT, Cell_Series_Len_At(v));
+
+          case SYM_HEAD:
+            Copy_Cell(OUT, v);
+            VAL_INDEX_RAW(OUT) = 0;
+            return Trust_Const(OUT);
+
+          case SYM_TAIL:
+            Copy_Cell(OUT, v);
+            VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(v);
+            return Trust_Const(OUT);
+
+          case SYM_HEAD_Q:
+            return Init_Logic(OUT, VAL_INDEX_RAW(v) == 0);
+
+          case SYM_TAIL_Q:
+            return Init_Logic(
+                OUT,
+                VAL_INDEX_RAW(v) == Cell_Series_Len_Head(v)
+            );
+
+          case SYM_PAST_Q:
+            return Init_Logic(
+                OUT,
+                VAL_INDEX_RAW(v) > Cell_Series_Len_Head(v)
+            );
+
+          case SYM_FILE: {
+            if (not Any_List(v))
+                return nullptr;
+            const Source* s = Cell_Array(v);
+            if (Not_Source_Flag(s, HAS_FILE_LINE))
+                return nullptr;
+            return Init_File(OUT, LINK(Filename, s)); }
+
+          case SYM_LINE: {
+            if (not Any_List(v))
+                return nullptr;
+            const Source* s = Cell_Array(v);
+            if (Not_Source_Flag(s, HAS_FILE_LINE))
+                return nullptr;
+            return Init_Integer(OUT, s->misc.line); }
+
+          default:
+            break;
+        }
+    }
 
     return Run_Generic_Dispatch(cast(Element*, v), LEVEL, Canon(REFLECT));
 }

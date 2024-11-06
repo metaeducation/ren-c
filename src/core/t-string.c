@@ -814,6 +814,40 @@ DECLARE_GENERICS(String)
 
     switch (id) {
 
+  //=//// REFLECT /////////////////////////////////////////////////////////=//
+
+      case SYM_REFLECT: {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));  // accounted for by `v`
+
+        Option(SymId) property = Cell_Word_Id(ARG(property));
+        switch (property) {
+          case SYM_SIZE: {
+            Size size;
+            Cell_Utf8_Size_At(&size, v);
+            return Init_Integer(OUT, size); }
+
+          case SYM_CODEPOINT: {
+            Utf8(const*) bp = Cell_String_At(v);
+
+            Codepoint c;
+            if (
+                *bp != '\0'  // can't be at tail
+                and (
+                    bp = Back_Scan_Utf8_Char_Unchecked(&c, bp),
+                    ++bp  // Back_Scan() needs increment
+                )
+                and *bp == '\0'  // after one scan, must be at tail
+            ){
+                return Init_Integer(OUT, c);
+            }
+            return RAISE("CODEPOINT OF only works on length 1 Strings"); }
+
+          default:
+            break;
+        }
+        return UNHANDLED; }
+
     //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
 
       case SYM_TO: {
@@ -1012,18 +1046,6 @@ DECLARE_GENERICS(String)
         Set_Char_At(s, n, c);
 
         return nullptr; }  // Array* is still fine, caller need not update
-
-
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // accounted for by `v`
-
-        if (Cell_Word_Id(ARG(property)) == SYM_SIZE) {
-            Size size;
-            Cell_Utf8_Size_At(&size, v);
-            return Init_Integer(OUT, size);
-        }
-        return Series_Common_Action_Maybe_Unhandled(level_, verb); }
 
       case SYM_UNIQUE:
       case SYM_INTERSECT:

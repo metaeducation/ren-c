@@ -5,14 +5,18 @@
 ;
 ; They are case-sensitive matched in PARSE, unlike text strings by default.
 
-; Don't leak internal detail that BLOB! or ANY-STRING? are 0-terminated
+; We don't leak internal detail that BLOB! or ANY-STRING? are 0-terminated
+; This comes "for free" because the NUL codepoint is #{00} as a blob, and
+; we don't allow binary searches in strings already for other reasons
+; (e.g. a binary could be found on half a codepoint, and we couldn't return
+; that position in the input).
 [
-    (NUL = as issue! 0)
+    (#{00} = make-char 0)
 
-    ~parse-mismatch~ !! (parse "" [to NUL])
-    ~parse-mismatch~ !! (parse "" [thru NUL])
-    ~parse-mismatch~ !! (parse "" [to [NUL]])
-    ~parse-mismatch~ !! (parse "" [thru [NUL]])
+    ~find-string-binary~ !! (parse "" [to NUL])
+    ~find-string-binary~ !! (parse "" [thru NUL])
+    ~find-string-binary~ !! (parse "" [to [NUL]])
+    ~find-string-binary~ !! (parse "" [thru [NUL]])
 
     ~parse-mismatch~ !! (parse #{} [to NUL])
     ~parse-mismatch~ !! (parse #{} [thru NUL])

@@ -25,7 +25,6 @@ zero: 0
 
 ; Char constants
 
-nul: NUL:  #""  ; ^(NULL) no longer legal internal to strings
 space:     #  ; more useful as space than as synonym for rarely-useful NUL
 sp: SP:    space
 backspace: #"^(BACK)"
@@ -38,6 +37,10 @@ backslash: #"\"
 escape:    #"^(ESC)"
 cr: CR:    #"^M"
 lf: LF:    newline
+
+; Binary constants
+
+nul: NUL:  #{00}  ; ^(NULL) no longer legal internal to strings
 
 ; Type predicates.  These are planned to all go away in favor of plain &
 ; decorations (e.g. &any-series?) when needed.  Use e.g. plain any-series?

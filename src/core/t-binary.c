@@ -319,6 +319,47 @@ DECLARE_GENERICS(Blob)
 
     switch (id) {
 
+  //=//// REFLECT /////////////////////////////////////////////////////////=//
+
+    // 1. While it is technically the case that a binary *might* alias a
+    //    string and hence already be validated, the index might not be on
+    //    a codepoint boundary, and it's not worth optimizing for a scan
+    //    of one character.
+    //
+    // 2. Zero bytes are illegal in strings, and it was deemed that #"" was
+    //    better as an empty issue than as a conceptual "NUL codepoint".
+    //    But #{00} as NUL serves some of those purposes.
+
+      case SYM_REFLECT: {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));  // accounted for by `v`
+
+        Option(SymId) prop_id = Cell_Word_Id(ARG(property));
+        switch (prop_id) {
+          case SYM_SIZE: {
+            Size size;
+            Cell_Blob_Size_At(&size, v);
+            return Init_Integer(OUT, size); }
+
+          case SYM_CODEPOINT: {  // generally have to validate the UTF-8 [1]
+            Size size;
+            const Byte* bp = Cell_Blob_Size_At(&size, v);
+            if (size == 1 and *bp == 0)
+                return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
+            Codepoint c;
+            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
+            if (e)
+                return RAISE(e);
+            ++bp;  // Back_Scan() requires increment
+            if (bp != Binary_Tail(Cell_Binary(v)))
+                return RAISE("CODEPOINT OF only works on 1-codepoint BLOB!s");
+            return Init_Integer(OUT, c); }
+
+          default:
+            break;
+        }
+        return UNHANDLED; }
+
     //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
 
     // 1. !!! Historically TO would convert binaries to strings.  But as the
@@ -452,7 +493,7 @@ DECLARE_GENERICS(Blob)
             if (Any_String_Kind(as))
                 return Init_Any_String_At(OUT, as, str, index);
 
-            Init_Any_String_At(ARG(element), as, str, index);
+            Init_Any_String_At(ARG(element), REB_TEXT, str, index);
             return T_String(level_, verb);  // delegate word validation/etc.
         }
 
@@ -526,7 +567,6 @@ DECLARE_GENERICS(Blob)
       case SYM_DIFFERENCE:
       case SYM_EXCLUDE:
         //
-      case SYM_REFLECT:
       case SYM_SKIP:
       case SYM_AT:
       case SYM_REMOVE:

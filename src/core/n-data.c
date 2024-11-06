@@ -625,7 +625,7 @@ DECLARE_INTRINSIC(quasi_word_q)
 //
 //  /char?: native:intrinsic [
 //
-//  "Test if an argument is an issue with one character"
+//  "Test if an argument is an issue with one codepoint (or #{00} NUL blob)"
 //
 //      return: [logic?]
 //      value

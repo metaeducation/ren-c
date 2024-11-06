@@ -66,14 +66,43 @@ DECLARE_NATIVE(negate)
 //
 //  "Returns the addition of two values"
 //
-//      return: [char? any-scalar? date! blob!]
-//      value1 [char? any-scalar? date! blob!]
+//      return: [char? any-scalar? date!]
+//      value1 [char? any-scalar? date!]
 //      value2 [char? any-scalar? date!]
 //  ]
 //
 DECLARE_NATIVE(add)
+//
+// 1. See comments on Is_NUL() about #{00} as a NUL? state for the CHAR? type
+//    constraint.  We preserve (NUL + 65) -> #A and (#A - NUL) -> 0 partially
+//    because they were in the tests, but also because it may find use in
+//    generalized code.  But we don't dispatch to BLOB! or ISSUE! to handle
+//    SYM_ADD for this case, instead localizing it here so it's easier to
+//    reason about or delete.
 {
-    Element* e1 = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_ADD;
+
+    Element* e1 = cast(Element*, ARG(value1));
+    Element* e2 = cast(Element*, ARG(value2));
+
+    if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
+        if (not Is_Integer(e2))
+            return FAIL("Can only add INTEGER! to NUL #{00} state");
+        Option(Error*) error = Trap_Init_Char(OUT, VAL_INT32(e2));
+        if (error)
+            return RAISE(unwrap error);
+        return OUT;
+    }
+
+    if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
+        if (not Is_Integer(e1))
+            return FAIL("Can only add INTEGER! to NUL #{00} state");
+        Option(Error*) error = Trap_Init_Char(OUT, VAL_INT32(e2));
+        if (error)
+            return RAISE(unwrap error);
+        return OUT;
+    }
+
     return Run_Generic_Dispatch(e1, LEVEL, Canon(ADD));
 }
 
@@ -83,14 +112,35 @@ DECLARE_NATIVE(add)
 //
 //  "Returns the second value subtracted from the first"
 //
-//      return: [char? any-scalar? date! blob!]
-//      value1 [char? any-scalar? date! blob!]
+//      return: [char? any-scalar? date! ]
+//      value1 [char? any-scalar? date!]
 //      value2 [char? any-scalar? date!]
 //  ]
 //
 DECLARE_NATIVE(subtract)
+//
+// 1. Preservation of R3-Alpha's NUL math behaviors is narrow, isolated here
+//    for easy review and/or removal.
 {
-    Element* e1 = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_SUBTRACT;
+
+    Element* e1 = cast(Element*, ARG(value1));
+    Element* e2 = cast(Element*, ARG(value2));
+
+    if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
+        if (Is_NUL(e2))
+            return Init_Integer(OUT, 0);
+        if (IS_CHAR(e2))
+            return Init_Integer(OUT, cast(REBINT, 0) - Cell_Codepoint(e2));
+        return FAIL("Can only subtract NUL?/CHAR? from NUL #{00} state");
+    }
+
+    if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
+        if (IS_CHAR(e1))
+            return Init_Integer(OUT, Cell_Codepoint(e1));
+        return FAIL("Only CHAR? can have NUL? #{00} state subtracted");
+    }
+
     return Run_Generic_Dispatch(e1, LEVEL, Canon(SUBTRACT));
 }
 

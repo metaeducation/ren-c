@@ -31,6 +31,7 @@ void
 trash
 null
 okay
+NUL
 
 blackhole
 

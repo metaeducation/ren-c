@@ -51,48 +51,78 @@
 //
 
 
-INLINE bool IS_CHAR_CELL(const Cell* v) {
-    if (Cell_Heart(v) != REB_ISSUE)
+//=//// CELL REPRESENTATION OF NUL CODEPOINT (USES #{00} BLOB!) ///////////=//
+//
+// Ren-C's unification of chars and "ISSUE!" to a single immutable stringlike
+// type meant they could not physically contain a zero codepoint.
+//
+// It would be possible to declare the empty issue of #"" representing the
+// NUL codepoint state.  But that would be odd, since inserting empty strings
+// into other strings is considered to be legal and not change the string.
+// saying that (insert "abc" #"") would generate an illegal-zero-byte error
+// doesn't seem right.
+//
+// So to square this circle, the NUL state is chosen to be represented simply
+// as the #{00} binary BLOB!.  That gives it the desired properties of an
+// error if you try to insert it into a string, but still allowing you to
+// insert it into blobs.
+//
+// To help make bring some uniformity to this, the CODEPOINT OF reflector
+// will give back codepoints for binaries that represent UTF-8, including
+// giving back 0 for #{00}.  CODEPOINT OF thus works on all strings, e.g.
+// (codepoint of <A>) -> 65.  But the only way you can get 0 back is if you
+// call it on #{00}
+//
+
+INLINE bool Is_Cell_NUL(const Cell* c) {
+    if (Cell_Heart(c) != REB_BLOB)
         return false;
 
-    if (Stringlike_Has_Node(v))
+    Size size;
+    const Byte* at = Cell_Blob_Size_At(&size, c);
+    if (size != 1)
+        return false;
+
+    return *at == 0;
+}
+
+INLINE bool Is_NUL(const Atom* v) {
+    if (QUOTE_BYTE(v) != NOQUOTE_1)
+        return false;
+    return Is_Cell_NUL(v);
+}
+
+INLINE bool IS_CHAR_CELL(const Cell* c) {
+    if (Is_Cell_NUL(c))
+        return true;
+
+    if (Cell_Heart(c) != REB_ISSUE)
+        return false;
+
+    if (Stringlike_Has_Node(c))
         return false;  // allocated form, too long to be a character
 
-    return EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
+    return EXTRA(Bytes, c).at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
 }
 
 INLINE bool IS_CHAR(const Atom* v) {
-    if (not Is_Issue(v))
+    if (QUOTE_BYTE(v) != NOQUOTE_1)
         return false;
     return IS_CHAR_CELL(v);
 }
 
-INLINE Codepoint Cell_Codepoint(const Cell* v) {
-    assert(not Stringlike_Has_Node(v));
+INLINE Codepoint Cell_Codepoint(const Cell* c) {  // must pass IS_CHAR_CELL()
+    if (Is_Cell_NUL(c))
+        return 0;
 
-    if (EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 0)
-        fail (Cell_Error(g_error_illegal_zero_byte));  // no '\0' codepoint
+    assert(Cell_Heart(c) == REB_ISSUE);
+    assert(not Stringlike_Has_Node(c));
 
-    assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
+    assert(EXTRA(Bytes, c).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
 
-    Codepoint c;
-    Back_Scan_Utf8_Char_Unchecked(&c, PAYLOAD(Bytes, v).at_least_8);
-    return c;
-}
-
-// !!! There used to be a cached size for the codepoint in the binary data,
-// but with the "ISSUECHAR!" unification, wasting a byte for that on all forms
-// seems like a bad idea for something so cheap to calculate.  But keep a
-// separate entry point in case that cache comes back.
-//
-INLINE Byte Cell_Char_Encoded_Size(const Cell* v)
-  { return Encoded_Size_For_Codepoint(Cell_Codepoint(v)); }
-
-INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
-    assert(Cell_Heart(v) == REB_ISSUE);
-    assert(not Stringlike_Has_Node(v));
-    assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
-    return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
+    Codepoint codepoint;
+    Back_Scan_Utf8_Char_Unchecked(&codepoint, PAYLOAD(Bytes, c).at_least_8);
+    return codepoint;
 }
 
 INLINE bool Try_Init_Small_Utf8_Untracked(
@@ -159,16 +189,8 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
         FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
     );
 
-    if (c == 0) {
-        //
-        // The zero codepoint is handled specially, as the empty ISSUE!.
-        // This is because the system as a whole doesn't permit 0 codepoints
-        // in TEXT!.  The state is recognized specially by CODEPOINT OF, but
-        // still needs to be '\0' terminated (e.g. for AS TEXT!)
-        //
-        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = 0;
-        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = 0;
-        PAYLOAD(Bytes, out).at_least_8[0] = '\0';  // terminate
+    if (c == 0) {  // NUL is #{00}, a BLOB! not an ISSUE! (see Is_NUL())
+        Copy_Cell(out, cast(const Element*, Lib(NUL)));
     }
     else {
         Size encoded_size = Encoded_Size_For_Codepoint(c);
@@ -177,9 +199,9 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 
         EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
         EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
+        HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
     }
 
-    HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
     assert(Cell_Codepoint(out) == c);
     return out;
 }

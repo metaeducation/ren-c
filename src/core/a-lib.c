@@ -2161,14 +2161,28 @@ static size_t Bytes_Into(
     }
 
     if (IS_CHAR(v)) {  // Note: CHAR! caches its UTF-8 encoding in the cell
-        Size size = Cell_Char_Encoded_Size(v);
+        Size size = Encoded_Size_For_Codepoint(Cell_Codepoint(v));
         if (buf == nullptr) {
             assert(bsize == 0);
             return size;
         }
 
         Size limit = MIN(bsize, size);
-        memcpy(buf, VAL_CHAR_ENCODED(v), limit);
+        if (limit == 0)
+            return size;
+
+        if (Is_Blob(v)) {
+            assert(Is_NUL(v));
+            assert(limit > 0);
+            buf[0] = '\0';
+            return size;
+        }
+
+        assert(Is_Issue(v));
+        assert(not Stringlike_Has_Node(v));
+        assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);
+
+        memcpy(buf, PAYLOAD(Bytes, v).at_least_8, limit);  // !!! '\0' term?
         return size;
     }
 

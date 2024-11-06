@@ -48,69 +48,6 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
     Option(SymId) id = Symbol_Id(verb);
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(PARAM(value));  // covered by `value`
-
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-
-        switch (property) {
-          case SYM_INDEX:
-            return Init_Integer(OUT, VAL_INDEX_RAW(v) + 1);
-
-          case SYM_LENGTH: {
-            REBI64 len_head = Cell_Series_Len_Head(v);
-            if (VAL_INDEX_RAW(v) < 0 or VAL_INDEX_RAW(v) > len_head)
-                return RAISE(Error_Index_Out_Of_Range_Raw());
-            return Init_Integer(OUT, len_head - VAL_INDEX_RAW(v)); }
-
-          case SYM_HEAD:
-            Copy_Cell(OUT, v);
-            VAL_INDEX_RAW(OUT) = 0;
-            return Trust_Const(OUT);
-
-          case SYM_TAIL:
-            Copy_Cell(OUT, v);
-            VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(v);
-            return Trust_Const(OUT);
-
-          case SYM_HEAD_Q:
-            return Init_Logic(OUT, VAL_INDEX_RAW(v) == 0);
-
-          case SYM_TAIL_Q:
-            return Init_Logic(
-                OUT,
-                VAL_INDEX_RAW(v) == Cell_Series_Len_Head(v)
-            );
-
-          case SYM_PAST_Q:
-            return Init_Logic(
-                OUT,
-                VAL_INDEX_RAW(v) > Cell_Series_Len_Head(v)
-            );
-
-          case SYM_FILE: {
-            if (not Any_List(v))
-                return nullptr;
-            const Source* s = Cell_Array(v);
-            if (Not_Source_Flag(s, HAS_FILE_LINE))
-                return nullptr;
-            return Init_File(OUT, LINK(Filename, s)); }
-
-          case SYM_LINE: {
-            if (not Any_List(v))
-                return nullptr;
-            const Source* s = Cell_Array(v);
-            if (Not_Source_Flag(s, HAS_FILE_LINE))
-                return nullptr;
-            return Init_Integer(OUT, s->misc.line); }
-
-          default:
-            break;
-        }
-
-        break; }
-
       case SYM_SKIP: {
         INCLUDE_PARAMS_OF_SKIP;
         UNUSED(ARG(series));  // covered by `v`

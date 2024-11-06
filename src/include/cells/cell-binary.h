@@ -13,7 +13,7 @@ INLINE const Binary* Cell_Binary(const Cell* v) {
 
 
 INLINE const Byte* Cell_Blob_Size_At(
-    Option(Sink(Size)) size_at_out,
+    Option(Sink(Size)) size_at,
     const Cell* v
 ){
     const Binary* b = Cell_Binary(v);
@@ -21,8 +21,8 @@ INLINE const Byte* Cell_Blob_Size_At(
     Size size = Binary_Len(b);
     if (i < 0 or i > size)
         fail (Error_Index_Out_Of_Range_Raw());
-    if (size_at_out)
-        *(unwrap size_at_out) = size - i;
+    if (size_at)
+        *(unwrap size_at) = size - i;
     return Binary_At(b, i);
 }
 

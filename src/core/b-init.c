@@ -729,6 +729,7 @@ void Startup_Core(void)
     Protect_Cell(Mutable_Lib_Var(VOID));
     Protect_Cell(Mutable_Lib_Var(BLANK));
     Protect_Cell(Mutable_Lib_Var(TRASH));
+    Protect_Cell(Mutable_Lib_Var(NUL));
 
   //=//// STARTUP ERRORS AND SYSTEM OBJECT ////////////////////////////////=//
 
