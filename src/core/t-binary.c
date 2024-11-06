@@ -795,84 +795,6 @@ DECLARE_GENERICS(Blob)
 
         return Init_Series(OUT, REB_BLOB, bin); }
 
-    // Arithmetic operations are allowed on BLOB!, because it's too limiting
-    // to not allow `#{4B} + 1` => `#{4C}`.  Allowing the operations requires
-    // a default semantic of binaries as unsigned arithmetic, since one
-    // does not want `#{FF} + 1` to be #{FE}.  It uses a big endian
-    // interpretation, so `#{00FF} + 1` is #{0100}
-    //
-    // Since Rebol is a language with mutable semantics by default, `add x y`
-    // will mutate x by default (if X is not an immediate type).  `+` is an
-    // infixing of `add-of` which copies the first argument before adding.
-    //
-    // To try and maximize usefulness, the semantic chosen is that any
-    // arithmetic that would go beyond the bounds of the length is considered
-    // an overflow.  Hence the size of the result binary will equal the size
-    // of the original binary.  This means that `#{0100} - 1` is #{00FF},
-    // not #{FF}.
-    //
-    // !!! The code below is extremely slow and crude--using an odometer-style
-    // loop to do the math.  What's being done here is effectively "bigint"
-    // math, and it might be that it would share code with whatever big
-    // integer implementation was used; e.g. integers which exceeded the size
-    // of the platform REBI64 would use BLOB! under the hood.
-
-      case SYM_SUBTRACT:
-      case SYM_ADD: {
-        Value* arg = ARG_N(2);
-        Binary* bin = Cell_Binary_Ensure_Mutable(v);
-
-        REBINT amount;
-        if (Is_Integer(arg))
-            amount = VAL_INT32(arg);
-        else if (Is_Blob(arg))
-            return FAIL(arg); // should work
-        else
-            return FAIL(arg); // what about other types?
-
-        if (id == SYM_SUBTRACT)
-            amount = -amount;
-
-        if (amount == 0) // adding or subtracting 0 works, even #{} + 0
-            return COPY(v);
-
-        if (Cell_Series_Len_At(v) == 0) // add/subtract to #{} otherwise
-            return FAIL(Error_Overflow_Raw());
-
-        while (amount != 0) {
-            REBLEN wheel = Cell_Series_Len_Head(v) - 1;
-            while (true) {
-                Byte* b = Binary_At(bin, wheel);
-                if (amount > 0) {
-                    if (*b == 255) {
-                        if (wheel == VAL_INDEX(v))
-                            return FAIL(Error_Overflow_Raw());
-
-                        *b = 0;
-                        --wheel;
-                        continue;
-                    }
-                    ++(*b);
-                    --amount;
-                    break;
-                }
-                else {
-                    if (*b == 0) {
-                        if (wheel == VAL_INDEX(v))
-                            return FAIL(Error_Overflow_Raw());
-
-                        *b = 255;
-                        --wheel;
-                        continue;
-                    }
-                    --(*b);
-                    ++amount;
-                    break;
-                }
-            }
-        }
-        return COPY(v); }
-
     //-- Special actions:
 
       case SYM_SWAP: {
@@ -1235,4 +1157,88 @@ DECLARE_NATIVE(decode_integer)
         return FAIL(Error_Out_Of_Range(ARG(binary)));
 
     return Init_Integer(OUT, i);
+}
+
+
+//
+//  /add-to-binary: native [
+//
+//  "Do big-endian math on a binary blob with an integer"
+//
+//      return: "Same number of bytes as original, error on overflow"
+//          [blob! raised?]
+//      blob [blob!]
+//      delta "Can be positive or negative"
+//          [integer!]
+//  ]
+//
+DECLARE_NATIVE(add_to_binary)
+//
+//    >> add-to-binary #{4B} 1
+//    == #{4C}
+//
+//    >> add-to-binary #{FF} 1
+//    ** Math or Number overflow  ; not #{FE}
+//
+//    >> add-to-binary #{00FF} 1
+//    == #{0100}
+//
+//    >> add-to-binary #{0100} -1
+//    == #{00FF}  ; not #{FF}, size always equals original binary size
+//
+// !!! This crude code originated from a user request for + and - on BLOB!.
+// However, it makes a lot of assumptions about overflow, signedness, and
+// endianness that would be better done as some kind of "binary math dialect".
+// And certainly, one might want to add BLOB! to BLOB! etc.  Since the code
+// isn't completely useless it was preserved, but taken out of + and -.
+//
+// !!! There's a question about how a routine like this might intersect with
+// or share code with a BigInt implementation that uses similar mechanics.
+{
+    INCLUDE_PARAMS_OF_ADD_TO_BINARY;
+
+    Element* blob = cast(Element*, ARG(blob));
+    Binary* bin = Cell_Binary_Ensure_Mutable(blob);
+
+    REBINT delta = VAL_INT32(ARG(delta));
+
+    if (delta == 0)  // adding or subtracting 0 works, even #{} + 0
+        return COPY(blob);
+
+    if (Cell_Series_Len_At(blob) == 0) // add/subtract to #{} otherwise
+        return RAISE(Error_Overflow_Raw());
+
+    while (delta != 0) {
+        REBLEN wheel = Cell_Series_Len_Head(blob) - 1;
+        while (true) {
+            Byte* b = Binary_At(bin, wheel);
+            if (delta > 0) {
+                if (*b == 255) {
+                    if (wheel == VAL_INDEX(blob))
+                        return RAISE(Error_Overflow_Raw());
+
+                    *b = 0;
+                    --wheel;
+                    continue;
+                }
+                ++(*b);
+                --delta;
+                break;
+            }
+            else {
+                if (*b == 0) {
+                    if (wheel == VAL_INDEX(blob))
+                        return RAISE(Error_Overflow_Raw());
+
+                    *b = 255;
+                    --wheel;
+                    continue;
+                }
+                --(*b);
+                ++delta;
+                break;
+            }
+        }
+    }
+    return COPY(blob);
 }
