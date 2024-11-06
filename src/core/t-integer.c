@@ -277,7 +277,7 @@ DECLARE_GENERICS(Integer)
         if (to == REB_INTEGER)
             return COPY(val);
 
-        return FAIL(Error_Bad_Cast_Raw(val, ARG(type))); }
+        return UNHANDLED; }
 
       case SYM_ADD: {
         REBI64 anum;

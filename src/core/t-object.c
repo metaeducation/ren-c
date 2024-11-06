@@ -1041,7 +1041,7 @@ DECLARE_GENERICS(Context)
             return Copy_Any_Context(OUT, context, deep);
         }
 
-        return FAIL(Error_Bad_Cast_Raw(context, ARG(type))); }
+        return UNHANDLED; }
 
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
         INCLUDE_PARAMS_OF_COPY;

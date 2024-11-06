@@ -710,10 +710,20 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
                 goto compare;
             break;
 
-          case REB_TEXT:
-          case REB_FILE:
           case REB_EMAIL:
           case REB_URL:
+          case REB_ISSUE:  // !!! This needs rethinking!
+            if (
+                Any_Utf8_Kind(b_heart)
+                and not Any_Word_Kind(b_heart)
+                and not Any_String_Kind(b_heart)
+            ){
+                goto compare;
+            }
+            break;
+
+          case REB_TEXT:
+          case REB_FILE:
           case REB_TAG:
             if (Any_String_Kind(b_heart))
                 goto compare;

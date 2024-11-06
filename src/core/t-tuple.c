@@ -200,7 +200,7 @@ DECLARE_GENERICS(Sequence)
             return Init_Any_String(OUT, to, s);
         }
 
-        return FAIL(Error_Bad_Cast_Raw(sequence, ARG(type))); }
+        return UNHANDLED; }
 
   //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
 
@@ -306,7 +306,7 @@ DECLARE_GENERICS(Sequence)
             Copy_Cell(OUT, v);
             return Trust_Const(OUT);
         }
-        return FAIL(Error_Bad_Cast_Raw(sequence, ARG(type))); }
+        return UNHANDLED; }
 
       case SYM_PICK: {
         INCLUDE_PARAMS_OF_PICK;

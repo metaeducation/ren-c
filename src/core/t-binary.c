@@ -388,7 +388,7 @@ DECLARE_GENERICS(Blob)
             return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
         }
 
-        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+        return UNHANDLED; }
 
     //=//// AS CONVERSIONS ////////////////////////////////////////////////=//
 
@@ -497,7 +497,7 @@ DECLARE_GENERICS(Blob)
             return T_String(level_, verb);  // delegate word validation/etc.
         }
 
-        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+        return UNHANDLED; }
 
     //=//// COPY //////////////////////////////////////////////////////////=//
 

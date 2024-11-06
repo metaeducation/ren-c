@@ -49,6 +49,12 @@ DECLARE_GENERICS(Unhooked)
 // or perhaps things like PORT! that wish to act like a series).  This
 // suggests a need for a kind of hierarchy of handling.
 //
+// 1. See remarks on Run_Generic_Dispatch() for why we don't allow things
+//    like (3 = length of ''[a b c]).  An exception is made for action
+//    antiforms, because they cannot be put in blocks, so their impact
+//    is limited...and we want things like (label of append/) to be able
+//    to work.  So only those are turned into the plain form here.
+//
 Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
@@ -56,15 +62,6 @@ Bounce Reflect_Core(Level* level_)
     Value* v = ARG(value);
 
     Option(SymId) id = Cell_Word_Id(ARG(property));
-    if (not id) {
-        //
-        // If a word wasn't in %words.r, it has no integer SYM.  There is
-        // no way for a built-in reflector to handle it...since they just
-        // operate on SYMs in a switch().  Longer term, a more extensible
-        // idea will be necessary.
-        //
-        return FAIL(Error_Cannot_Reflect(Cell_Heart(v), ARG(property)));
-    }
 
     switch (id) {
       case SYM_HEART:
@@ -97,7 +94,9 @@ Bounce Reflect_Core(Level* level_)
     if (Is_Void(v))
         return nullptr;
 
-    if (QUOTE_BYTE(v) != NOQUOTE_1)
+    if (Is_Action(v))  // special exemption for action types [1]
+        QUOTE_BYTE(v) = NOQUOTE_1;
+    else if (QUOTE_BYTE(v) != NOQUOTE_1)
         fail ("REFLECT on quoted/quasi/anti only [HEART TYPE QUOTES SIGIL]");
 
     if (Any_Series_Kind(Cell_Heart(v))) {  // common for series
@@ -804,8 +803,37 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 // (This is similar to how local FILE!s, where e.g. slashes become backslash
 // on Windows, are expressed as TEXT!.)
 //
+// 1. The code wasn't set up to do validation of URLs, it just assumed that
+//    Prescan_Token() had done the necessary checking.  But this routine
+//    is used in TO URL! conversion as well, where validation is necessary.
+//    All this needs review after more fundamental questions shake out,
+//    but for now we add a check.
+//
 Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
 {
+    const Byte* t = cp;
+    const Byte* tail = cp + len;
+    while (true) {
+        if (t == tail)
+            return nullptr;  // didn't find "://"
+
+        if (*t != ':') {
+            ++t;
+            continue;
+        }
+        ++t;  // found :
+        if (t == tail)
+            return nullptr;
+        if (*t == ':')   // log::foo style URL legal as well
+            break;
+        if (*t != '/')
+            return nullptr;
+        ++t;  // found :/
+        if (t == tail or *t != '/')
+            return nullptr;
+        break;  // found ://
+    }
+
     String* s = Append_UTF8_May_Fail(
         nullptr,
         cs_cast(cp),

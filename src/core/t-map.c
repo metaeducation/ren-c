@@ -699,7 +699,7 @@ DECLARE_GENERICS(Map)
             return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
         }
 
-        return FAIL(Error_Bad_Cast_Raw(map, ARG(type))); }
+        return UNHANDLED; }
 
       case SYM_CLEAR: {
         Map* m = VAL_MAP_Ensure_Mutable(map);

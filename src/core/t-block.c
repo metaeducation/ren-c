@@ -800,15 +800,25 @@ DECLARE_GENERICS(List)
         }
 
         if (Any_Utf8_Kind(to)) {  // to tag! [1 a #b] => <1 a #b>
+            assert(not Any_Word_Kind(to));
+
             DECLARE_MOLDER (mo);
             SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
             Push_Mold(mo);
 
             Mold_Or_Form_Element(mo, list, false);
-            const String* s = Pop_Molded_String(mo);
-            if (not Any_String_Kind(to))
-                Freeze_Flex(s);
-            return Init_Any_String(OUT, to, s);
+            if (Any_String_Kind(to))
+                return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+
+            Init_Utf8_Non_String(
+                OUT,
+                to,
+                Binary_At(mo->string, mo->base.size),
+                String_Len(mo->string) - mo->base.index,
+                String_Size(mo->string) - mo->base.size
+            );
+            Drop_Mold(mo);
+            return OUT;
         }
 
         if (to == REB_INTEGER) {
@@ -833,7 +843,7 @@ DECLARE_GENERICS(List)
             return Init_Map(OUT, map);
         }
 
-        return FAIL(Error_Bad_Cast_Raw(list, ARG(type))); }
+        return UNHANDLED; }
 
   //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
 
@@ -871,7 +881,7 @@ DECLARE_GENERICS(List)
 
             return OUT;
         }
-        return FAIL(Error_Bad_Cast_Raw(list, ARG(type))); }
+        return UNHANDLED; }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

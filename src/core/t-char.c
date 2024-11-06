@@ -443,7 +443,8 @@ DECLARE_GENERICS(Utf8)
     Element* issue = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
     );
-    assert(Any_Utf8(issue) and not Any_String(issue));
+    assert(Any_Utf8(issue) and (id == SYM_TO or not Any_Word(issue)));
+    possibly(Any_String(issue));  // may delegate
 
     switch (id) {
       case SYM_REFLECT: {
@@ -480,8 +481,116 @@ DECLARE_GENERICS(Utf8)
 
   //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
 
-      case SYM_TO:
-        return T_String(level_, verb);  // written to handle non-node cases
+    // TO conversions for ANY-UTF8? types are a superset of the concerns for
+    // ANY-STRING? and ANY-WORD? types (which always have a Stub allocation,
+    // instead of just sometimes).  So strings and words are delegated here.
+    //
+    // 1. While the limits are still shaping up, it's believed that:
+    //
+    //       >> to block! "a 1 <b>"
+    //       == [a 1 <b>]
+    //
+    //    This would be a limited form of transcoding that would not allow
+    //    comments, and may be limited in some ways regarding spacing as
+    //    well (the requirements of matching reverse transformations would
+    //    have to be relaxed if spaces were thrown out).
+    //
+    // 2. If we know something about the string we may be able to avoid
+    //    running a transcode, e.g.:
+    //
+    //        >> str: as text! 'some-word  ; string node has symbol "flavor"
+    //
+    //        >> to fence! str
+    //        == {some-word}  ; can beeline here for symbol-flavor strings
+    //
+    //    This optimization may not be particularly important, but it points
+    //    to a potential family of such optimizations.
+
+      handle_to_conversion:
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
+        Element* v = cast(Element*, ARG(element));  // issue, email, etc.
+        Heart to = VAL_TYPE_HEART(ARG(type));
+        possibly(Any_Word(v));  // delegates some cases
+
+        if (Any_String_Kind(to)) {  // always need mutable new copy of data
+            Length len;
+            Size size;
+            Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
+            String* s = Make_String(size);
+            memcpy(String_Head(s), utf8, size);
+            Term_String_Len_Size(s, len, size);
+            return Init_Any_String(OUT, to, s);
+        }
+
+        if (Any_Word_Kind(to)) {
+            assert(not Any_Word(v));  // does not delegate this case
+            if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v)))
+                goto handle_as_conversion;  // immutable src, AS semantics ok
+
+            Size size;  // TO conversion of mutable data, can't reuse stub
+            Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
+            const Symbol* sym = Intern_UTF8_Managed(at, size);
+            return Init_Any_Word(OUT, to, sym);
+        }
+
+        if (to == REB_ISSUE) {  // may have to make node if source mutable
+            if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v))) {
+                possibly(Any_Word(v));
+                goto handle_as_conversion;  // immutable src, AS semantics ok
+            }
+
+            Length len;
+            Size size;
+            Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
+            return Init_Utf8_Non_String(  // may fit utf8 in cell if small
+                OUT, to, utf8, size, len
+            );
+        }
+
+        if (to == REB_EMAIL or to == REB_URL) {
+            Length len;
+            Size size;
+            Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
+
+            if (to == REB_EMAIL) {
+                if (utf8 + size != Try_Scan_Email_To_Stack(utf8, size))
+                    return FAIL(Error_Scan_Invalid_Raw(ARG(type), v));
+            }
+            else {
+                if (utf8 + size != Try_Scan_URL_To_Stack(utf8, size))
+                    return FAIL(Error_Scan_Invalid_Raw(ARG(type), v));
+            }
+            return Move_Drop_Top_Stack_Element(OUT);
+        }
+
+        if (
+            to == REB_INTEGER
+            or to == REB_DECIMAL
+            or to == REB_PERCENT
+            or to == REB_DATE
+            or to == REB_TIME
+        ){
+            Option(Error*) error = Trap_Transcode_One(OUT, to, v);
+            if (error)
+                return RAISE(unwrap error);
+            return OUT;
+        }
+
+        if (Any_List_Kind(to)) {  // limited TRANSCODE (how limited?...) [1]
+            if (Stringlike_Has_Node(v)) {
+                if (Stub_Flavor(Cell_String(v)) == FLAVOR_SYMBOL)  // [2]
+                    return rebValue(Canon(ENVELOP), ARG(type), rebQ(v));
+            }
+            return rebValue(Canon(AS), ARG(type), Canon(TRANSCODE), rebQ(v));
+        }
+
+        if (Any_Sequence_Kind(to))
+            return rebValue(
+                Canon(AS), ARG(type), Canon(TO), Canon(BLOCK_X), rebQ(v)
+            );
+
+        return UNHANDLED; }
 
   //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
 
@@ -490,27 +599,30 @@ DECLARE_GENERICS(Utf8)
     //    there isn't room for an index (which ANY-STRING? needs).  For
     //    behavior parity with if the payload *was* in the Cell, this alias
     //    must be frozen.
+    //
+    // 2. We don't want to expose the implementation detail of where the byte
+    //    count crossover is that an in-cell UTF-8 compression happens, so
+    //    if we create a node we have to give it the same constraints that
+    //    would apply if we had reused one.
 
+      handle_as_conversion:
       case SYM_AS: {
         INCLUDE_PARAMS_OF_AS;
         Element* v = cast(Element*, ARG(element));  // issue, email, etc.
         Heart as = VAL_TYPE_HEART(ARG(type));
+        assert(not Any_Word(v));  // not delegated
 
-        if (Stringlike_Has_Node(v))
-            return T_String(level_, verb);
+        if (Any_String_Kind(as)) {  // have to create a Flex if not node [1]
+            assert(not Any_String(v));  // not delegated by string generic
+            if (Stringlike_Has_Node(v)) {
+                possibly(Is_Flex_Frozen(Cell_String(v)));
+                possibly(Is_Stub_Symbol(Cell_String(v)));
+                Copy_Cell(OUT, v);
+                HEART_BYTE(OUT) = as;
+                return OUT;
+            }
 
-        if (as == REB_BLOB) {  // no node, so make new frozen string for BLOB!
-            Size size;
-            Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
-            Binary* b = Make_Binary_Core(NODE_FLAG_MANAGED, size);
-            memcpy(Binary_Head(b), utf8, size + 1);
-            Set_Flex_Used(b, size);
-            Freeze_Flex(b);
-            Init_Blob(OUT, b);
-            return Inherit_Const(stable_OUT, v);
-        }
-
-        if (Any_String_Kind(as)) {  // have to create a Flex [1]
+          make_small_utf8_at_index_0: { //////////////////////////////////////
             REBLEN len;
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
@@ -520,7 +632,47 @@ DECLARE_GENERICS(Utf8)
             memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
             Term_String_Len_Size(str, len, size);
             Freeze_Flex(str);
-            return Init_Any_String(OUT, as, str);
+            possibly(as == REB_BLOB);  // index 0 so byte transform not needed
+            return Init_Series(OUT, as, str);
+        }}
+
+        if (Any_Word_Kind(as)) {  // aliasing as an ANY-WORD? freezes data
+            if (Stringlike_Has_Node(v)) {
+                const String* str = Cell_String(v);
+                if (VAL_INDEX(v) != 0)
+                    return FAIL("Can't alias string as WORD! unless at head");
+
+                if (Is_String_Symbol(str))  // already frozen and checked!
+                    return Init_Any_Word(OUT, as, cast(const Symbol*, str));
+
+                if (not Is_Flex_Frozen(str)) {  // always force frozen
+                    if (Get_Cell_Flag(v, CONST))
+                        return FAIL(Error_Alias_Constrains_Raw());
+                    Freeze_Flex(str);
+                }
+            }
+
+            // !!! Logic to re-use Stub if newly interned symbol not written
+
+            Size size;
+            Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
+            const Symbol* sym = Intern_UTF8_Managed(at, size);
+            Init_Any_Word(OUT, as, sym);
+            return OUT;
+        }
+
+        if (as == REB_BLOB) {  // resulting binary is UTF-8 constrained [2]
+            if (Stringlike_Has_Node(v)) {
+                Init_Blob_At(
+                    OUT,
+                    Cell_String(v),
+                    VAL_BYTEOFFSET(v)  // index has to be in terms of bytes
+                );
+                HEART_BYTE(OUT) = REB_BLOB;
+                return OUT;
+            }
+
+            goto make_small_utf8_at_index_0;
         }
 
         if (as == REB_INTEGER) {
@@ -531,7 +683,33 @@ DECLARE_GENERICS(Utf8)
             return Init_Integer(OUT, Cell_Codepoint(v));
         }
 
-        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+        if (as == REB_ISSUE) {  // try to fit in cell, or use frozen string
+            assert(not Any_Word_Kind(as) and not (Any_String_Kind(as)));
+
+            if (Stringlike_Has_Node(v)) {
+                const String *s = Cell_String(v);
+                if (not Is_Flex_Frozen(s)) {  // always force frozen
+                    if (Get_Cell_Flag(v, CONST))
+                        return FAIL(Error_Alias_Constrains_Raw());
+                    Freeze_Flex(s);
+                }
+            }
+
+            Length len;
+            Size size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
+
+            if (Try_Init_Small_Utf8(OUT, as, Cell_String_At(v), len, size))
+                return OUT;
+
+            Copy_Cell(OUT, v);  // index heeded internally, not exposed
+            HEART_BYTE(OUT) = as;
+            return OUT;
+        }
+
+        if (as == REB_EMAIL or as == REB_URL)
+            goto handle_to_conversion;  // not optimized yet, treat as TO
+
+        return UNHANDLED; }
 
       default:
         break;

@@ -806,11 +806,7 @@ DECLARE_GENERICS(String)
     Element* v = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
     );
-    assert(
-        Any_Utf8(v) and (
-            Stringlike_Has_Node(v) or id == SYM_TO  // [1]
-        )
-    );
+    assert(Any_Utf8(v) and Stringlike_Has_Node(v));
 
     switch (id) {
 
@@ -848,86 +844,16 @@ DECLARE_GENERICS(String)
         }
         return UNHANDLED; }
 
-    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+  //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
 
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // v
-        Heart to = VAL_TYPE_HEART(ARG(type));
+    // TO conversions of strings make copies (if the destination is mutable),
+    // and hence need only use read routines like Cell_Utf8_XXX() to access
+    // the bytes.  The ANY-UTF8? handler needs to deal with cells that might
+    // use storage in their cell for the data, or an allocated node (as all
+    // strings do).  Hence its concerns are a superset of those for strings.
 
-        if (Any_Word_Kind(to)) {  // will have to copy the UTF-8 if mutable...
-            if (
-                not Stringlike_Has_Node(v)
-                or Is_Flex_Frozen(Cell_String(v))  // might be symbol
-            ){
-                return rebValue(Canon(AS), ARG(type), v);  // no copy!
-            }
-
-            Option(Error*) error = Trap_Transcode_One(OUT, to, v);
-            if (error)
-                return RAISE(unwrap error);
-            return OUT;
-        }
-
-        if (Any_String_Kind(to)) {  // new type for UTF-8 with new allocation
-            Length len;
-            Size size;
-            const Byte* utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-            UNUSED(len);  // !!! Data valid and checked, should leverage
-            return Init_Any_String(
-                OUT,
-                to,
-                Append_UTF8_May_Fail(  // !!! Should never fail
-                    nullptr,
-                    cs_cast(utf8),
-                    size,
-                    STRMODE_ALL_CODEPOINTS
-                )
-            );
-        }
-
-        if (Any_Utf8_Kind(to)) {  // not strings, but UTF-8 (immutable)
-            if (
-                not Stringlike_Has_Node(v)
-                or Is_Flex_Frozen(Cell_String(v))  // might be symbol
-            ){
-                return rebValue(Canon(AS), ARG(type), v);  // no copy!
-            }
-
-            // !!! Must validate as URL or EMAIL, etc.
-
-            Length len;
-            Size size;
-            Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-
-            if (len == 0)  // don't "accidentally" create zero-codepoint `#`
-                return RAISE(Error_Illegal_Zero_Byte_Raw());
-
-            return Init_Utf8_Non_String(OUT, to, utf8, size, len);
-        }
-
-        if (
-            to == REB_INTEGER
-            or to == REB_DECIMAL
-            or to == REB_PERCENT
-            or to == REB_DATE
-            or to == REB_TIME
-        ){
-            Option(Error*) error = Trap_Transcode_One(OUT, to, v);
-            if (error)
-                return RAISE(unwrap error);
-            return OUT;
-        }
-
-        if (Any_List_Kind(to))  // limited TRANSCODE
-            return rebValue(Canon(AS), ARG(type), Canon(TRANSCODE), v);
-
-        if (Any_Sequence_Kind(to))
-            return rebValue(
-                Canon(AS), ARG(type), Canon(TO), Canon(BLOCK_X), rebQ(v)
-            );
-
-        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+      case SYM_TO:
+        return T_Utf8(level_, verb);
 
   //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
 
@@ -936,69 +862,13 @@ DECLARE_GENERICS(String)
         UNUSED(ARG(element));  // v
         Heart as = VAL_TYPE_HEART(ARG(type));
 
-        assert(Stringlike_Has_Node(v));  // maybe e.g. ISSUE! with node
-
-        if (as == REB_BLOB) {  // resulting binary will be UTF-8 constrained
-            Init_Blob_At(
-                OUT,
-                Cell_String(v),
-                Any_Word(v) ? 0 : VAL_BYTEOFFSET(v)
-            );
-            return Inherit_Const(stable_OUT, v);
-        }
-
-        if (Any_String_Kind(as)) {
+        if (Any_String_Kind(as)) {  // special handling not in Utf8 generic
             Copy_Cell(OUT, v);
             HEART_BYTE(OUT) = as;
             return Inherit_Const(stable_OUT, v);
         }
 
-        if (Any_Word_Kind(as)) {  // aliasing as an ANY-WORD? freezes data
-            const String* str = Cell_String(v);
-
-            if (VAL_INDEX(v) != 0)
-                return FAIL("Can't alias string as WORD! unless it's at head");
-
-            if (Is_String_Symbol(str))  // already frozen and checked!
-                return Init_Any_Word(OUT, as, cast(const Symbol*, str));
-
-            if (not Is_Flex_Frozen(str)) {  // always force frozen
-                if (Get_Cell_Flag(v, CONST))
-                    return FAIL(Error_Alias_Constrains_Raw());
-                Freeze_Flex(str);
-            }
-
-            // !!! Logic to re-use Stub if newly interned symbol not written
-
-            Size size;
-            Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
-            const Symbol* sym = Intern_UTF8_Managed(at, size);
-            Init_Any_Word(OUT, as, sym);
-            return Inherit_Const(stable_OUT, v);
-        }
-
-        if (Any_Utf8_Kind(as)) {  // try to fit in cell, or use frozen string
-            assert(not Any_Word_Kind(as) and not (Any_String_Kind(as)));
-
-            const String *s = Cell_String(v);
-            if (not Is_Flex_Frozen(s)) {  // always force frozen
-                if (Get_Cell_Flag(v, CONST))
-                    return FAIL(Error_Alias_Constrains_Raw());
-                Freeze_Flex(s);
-            }
-
-            Length len;
-            Size size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
-
-            if (Try_Init_Small_Utf8(OUT, as, Cell_String_At(v), len, size))
-                return OUT;
-
-            Copy_Cell(OUT, v);  // index heeded internally, not exposed
-            HEART_BYTE(OUT) = as;
-            return OUT;
-        }
-
-        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+        return T_Utf8(level_, verb); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

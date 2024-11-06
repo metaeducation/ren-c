@@ -1239,6 +1239,23 @@ Error* Error_Bad_Void(void) {
 
 
 //
+//  Error_Unhandled: C
+//
+Error* Error_Unhandled(Level* level_, const Symbol* verb) {
+    switch (Symbol_Id(verb)) {
+      case SYM_AS:  // distinct error..?
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
+        return Error_Bad_Cast_Raw(ARG(element), ARG(type)); }
+
+      default:
+        break;
+    }
+
+    return Error_Cannot_Use(verb, ARG_N(1));
+}
+
+//
 //  Startup_Errors: C
 //
 // Create error objects and error type objects

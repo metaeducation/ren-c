@@ -734,9 +734,10 @@ INLINE Atom* Native_Copy_Result_Untracked(
             Native_Fail_Result(level_, Derive_Error_From_Pointer(p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
-    // enough in DECLARE_GENERICS() handlers that it seems worthwhile.
+    // enough in DECLARE_GENERICS() handlers that it seems worthwhile.  It
+    // will customize the error based on the "verb".
     //
-    #define UNHANDLED   FAIL(Error_Cannot_Use(verb, ARG_N(1)))
+    #define UNHANDLED   FAIL(Error_Unhandled(level_, verb))
 
     #define BASELINE   (&level_->baseline)
     #define STACK_BASE (level_->baseline.stack_base)

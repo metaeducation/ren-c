@@ -222,7 +222,7 @@ DECLARE_GENERICS(Money)
         if (to == REB_MONEY)
             return COPY(v);
 
-        return FAIL(Error_Bad_Cast_Raw(v, ARG(type))); }
+        return UNHANDLED; }
 
       case SYM_ADD: {
         Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);

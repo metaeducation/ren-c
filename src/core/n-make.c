@@ -149,7 +149,7 @@ DECLARE_NATIVE(copy)
 
 #define CELL_FLAG_SPARE_NOTE_REVERSE_CHECKING CELL_FLAG_NOTE
 
-#define LEVEL_FLAG_CHECKING_AS  LEVEL_FLAG_MISCELLANEOUS
+#define LEVEL_FLAG_CHECKING_TO  LEVEL_FLAG_MISCELLANEOUS
 
 //
 //  To_Or_As_Checker_Executor: C
@@ -186,12 +186,22 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     }
 
     Decay_If_Unstable(OUT);  // should packs from TO be legal?
-    assert(VAL_TYPE(OUT) == to_or_as);
+
+    if (VAL_TYPE(OUT) != to_or_as)
+        return FAIL("Forward TO/AS transform produced wrong type");
+
+    if (
+        Get_Level_Flag(L, CHECKING_TO)
+        and (Any_List(OUT) or Any_String(OUT) or Is_Blob(OUT))
+    ){
+        if (Is_Flex_Read_Only(Cell_Flex(OUT)))
+            fail ("TO transform of LIST/STRING/BLOB made immutable series");
+    }
 
     // Reset TO_P sublevel to do reverse transformation
 
     level_->executor = &Action_Executor;  // Drop_Action() nulled it
-    SymId id = Get_Level_Flag(L, CHECKING_AS) ? SYM_AS : SYM_TO;
+    SymId id = Get_Level_Flag(L, CHECKING_TO) ? SYM_TO : SYM_AS;
     Push_Action(level_, VAL_ACTION(Lib_Var_For_Id(id)), nullptr);
     Begin_Action(level_, Canon_Symbol(id), PREFIX_0);
     Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
@@ -240,7 +250,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     if (not equal_reversal)
         return FAIL("Reverse TO/AS transform didn't produce original result");
 
-    if (to_or_as == from and Not_Level_Flag(L, CHECKING_AS)) {
+    if (to_or_as == from and Get_Level_Flag(L, CHECKING_TO)) {
         bool equal_copy = rebUnboxLogic(
             Canon(EQUAL_Q), rebQ(input), Canon(COPY), rebQ(input)
         );
@@ -270,7 +280,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     level_->executor = &To_Or_As_Checker_Executor;
 
-    SymId id = Get_Level_Flag(level_, CHECKING_AS) ? SYM_AS : SYM_TO;
+    SymId id = Get_Level_Flag(level_, CHECKING_TO) ? SYM_TO : SYM_AS;
 
     sub->u.action.original = VAL_ACTION(Lib_Var_For_Id(id));
     sub->label = label;
@@ -298,17 +308,19 @@ DECLARE_NATIVE(to)
     INCLUDE_PARAMS_OF_TO;
 
     Element* e = cast(Element*, ARG(element));
+    UNUSED(ARG(type));
 
   #if NO_RUNTIME_CHECKS
 
-    UNUSED(ARG(type));
     return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(TO));
 
   #else  // add monitor to ensure result is right
 
-    if (level_->prior->executor == &To_Or_As_Checker_Executor)
+    if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
         return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(TO));
 
+    assert(Not_Level_Flag(LEVEL, CHECKING_TO));
+    Set_Level_Flag(LEVEL, CHECKING_TO);
     return Downshift_For_To_Or_As_Checker(level_);
   #endif
 }
@@ -349,10 +361,10 @@ DECLARE_NATIVE(as)
 
   #else  // add monitor to ensure result is right
 
-    if (level_->prior->executor == &To_Or_As_Checker_Executor)
+    if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
         return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(AS));
 
-    Set_Level_Flag(level_, CHECKING_AS);
-    return Downshift_For_To_Or_As_Checker(level_);
+    assert(Not_Level_Flag(LEVEL, CHECKING_TO));
+    return Downshift_For_To_Or_As_Checker(LEVEL);
   #endif
 }

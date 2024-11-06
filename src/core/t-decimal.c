@@ -486,7 +486,7 @@ DECLARE_GENERICS(Decimal)
             return Init_Integer(OUT, cast(REBI64, d));
         }
 
-        return FAIL(Error_Bad_Cast_Raw(val, ARG(type))); }
+        return UNHANDLED; }
 
       case SYM_NEGATE:
         d1 = -d1;

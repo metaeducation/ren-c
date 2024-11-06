@@ -21,12 +21,30 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
+
+// 1. Generally speaking, generics (and most functions in the system) do
+//    not work on antiforms, quasiforms, or quoted datatypes.
+//
+//    For one thing, this would introduce uncomfortable questions, like:
+//    should the NEXT of ''[a b c] be [b c] or ''[b c] ?  This would take the
+//    already staggering combinatorics of the system up a notch by forcing
+//    "quote propagation" policies to be injected everywhere.
+//
+//    Yet there's another danger: if quoted/quasi items wind up giving an
+//    answer instead of an error for lots of functions, this will lead to
+//    carelessness in propagation of the marks...not stripping them off when
+//    they aren't needed.  This would lead to an undisciplined hodgepodge of
+//    marks that are effectively meaningless.  In addition to being ugly, that
+//    limits the potential for using the marks intentionally in a dialect
+//    later, if you're beholden to treating leaky quotes and quasis as if
+//    they were not there.
+//
 INLINE Bounce Run_Generic_Dispatch(
     const Element* cue,
     Level* L,
     const Symbol* verb
 ){
-    Heart heart = Cell_Heart_Ensure_Noquote(cue);
+    Heart heart = Cell_Heart_Ensure_Noquote(cue);  // no quoted/quasi/anti [1]
 
     GenericHook* hook = Generic_Hook_For_Heart(heart);
     return hook(L, verb);
