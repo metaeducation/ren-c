@@ -301,7 +301,7 @@ DECLARE_NATIVE(console)
 
   recover: ;  // Note: semicolon needed as next statement is declaration
 
-    Value* metacode = rebEntrap(  // entrap catches buggy CONSOLE* [1]
+    Value* metacode = rebEnrescue(  // enrescue catches buggy CONSOLE* [1]
         "console*",  // action that takes 4 args, run it
             "code",  // group! or block! executed prior (or null)
             "metaresult",  // prior result meta, or error (or null)

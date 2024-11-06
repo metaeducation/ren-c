@@ -1451,30 +1451,67 @@ RebolValue* API_rebEntrap(
         LEVEL_FLAG_META_RESULT,
         p, vaptr
     )){
-        Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
-        Set_Node_Root_Bit(v);
-        return v;
-    }
-
-    if (Is_Meta_Of_Pack(v)) {
-        Meta_Unquotify_Decayed(v);
-        Meta_Quotify(v);
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // panic?
     }
 
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
+
+    if (Is_Meta_Of_Raised(v))
+        QUOTE_BYTE(v) = NOQUOTE_1;  // plain error
+    else
+        assert(QUOTE_BYTE(v) > NOQUOTE_1);
+
     Set_Node_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 
 
 //
-//  rebEntrapInterruptible: API
+//  rebEnrescue: API
+//
+// Builds in an ENRESCUE operation to rebValue; shorthand that's more efficient.
+//
+//     rebEnrescue(...) => rebValue("enrescue [", ..., "]")
+//
+RebolValue* API_rebEnrescue(
+    RebolContext** binding_ref,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    Value* v = Alloc_Value_Core(CELL_MASK_0);
+    bool interruptible = false;
+    if (Run_Va_Throws(
+        binding_ref,
+        v,
+        interruptible,
+        LEVEL_FLAG_META_RESULT,
+        p, vaptr
+    )){
+        Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
+        Set_Node_Root_Bit(v);
+        return v;
+    }
+    assert(not Is_Nulled(v));  // meta operations cannot produce NULL
+
+    if (Is_Meta_Of_Raised(v))
+        QUOTE_BYTE(v) = NOQUOTE_1;  // plain error, catch raiseds as well
+    else
+        assert(QUOTE_BYTE(v) > NOQUOTE_1);
+
+    Set_Node_Root_Bit(v);
+    return v;  // caller must rebRelease()
+}
+
+
+//
+//  rebEnrescueInterruptible: API
 //
 // !!! This is the core interruptible routine, used by the console code.
 // More will be needed, but this is made to quarantine the unfinished design
 // points to one routine for now.
 //
-RebolValue* API_rebEntrapInterruptible(
+RebolValue* API_rebEnrescueInterruptible(
     RebolContext** binding_ref,
     const void* p, void* vaptr
 ){
@@ -1493,13 +1530,13 @@ RebolValue* API_rebEntrapInterruptible(
         Set_Node_Root_Bit(v);
         return v;
     }
-
-    if (Is_Meta_Of_Pack(v)) {
-        Meta_Unquotify_Decayed(v);
-        Meta_Quotify(v);
-    }
-
     assert(not Is_Nulled(v));  // META operations can't return null
+
+    if (Is_Meta_Of_Raised(v))
+        QUOTE_BYTE(v) = NOQUOTE_1;  // plain error, catch raiseds as well
+    else
+        assert(QUOTE_BYTE(v) > NOQUOTE_1);
+
     Set_Node_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
