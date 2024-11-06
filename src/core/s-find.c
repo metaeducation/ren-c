@@ -302,6 +302,12 @@ REBINT Find_Binstr_In_Binstr(
     }
 
     while (true) {
+        //
+        // !!! NOTE: This is broken, because c1 is a byte in the searched
+        // binary, and c2_canon is a UTF-8 character.  This creaky old routine
+        // needs a full rewrite to fix it and make it more readable, in light
+        // of modern understandings, when time permits.
+        //
         if (c1 == c2_canon or (caseless and c1 and LO_CASE(c1) == c2_canon)) {
             //
             // The optimized first character match for str2 in str1 passed.

@@ -164,11 +164,11 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
     if (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END)
         return Cell_Error(g_error_no_utf8_surrogates);  // cached [3]
 
-    if (size)
-        *(unwrap size) -= trail;
-
     if (c == 0)  // string types disallow internal 0 bytes in Ren-C [1]
         return Cell_Error(g_error_illegal_zero_byte);  // cached [3]
+
+    if (size)
+        *(unwrap size) -= trail;
 
     *out = c;
     *bp += trail;
