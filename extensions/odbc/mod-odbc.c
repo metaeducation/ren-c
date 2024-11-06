@@ -1583,7 +1583,7 @@ Value* ODBC_Column_To_Rebol_Value(
             );
             return rebValue(
                 "append make text!", rebI(len),
-                    "map-each 'byte", rebR(binary), "[codepoint-to-char byte]"
+                    "map-each 'byte", rebR(binary), "[make-char byte]"
             ); }
         }
         break; }

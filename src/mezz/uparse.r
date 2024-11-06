@@ -1361,7 +1361,7 @@ default-combinators: to map! reduce [
                         return raise "Negated ISSUE! char matched at blob"
                     ]
                     remainder: next input
-                    return codepoint-to-char input.1
+                    return make-char input.1
                 ]
                 [# remainder]: find:match:case input value else [
                     return raise [

@@ -446,13 +446,9 @@ REBOL [
     "Format a string according to the format dialect."
     rules "A block in the format dialect. E.g. [10 -10 #- 4]"
     values
-    :pad [char? integer!] "char or char code, but 0 -> #0"
+    :pad [char?]
 ][
     pad: default [space]
-    case [
-        pad = 0 [pad: #"0"]
-        integer? pad [pad: to-char pad]
-    ]
 
     rules: blockify :rules
     values: blockify :values
@@ -478,7 +474,7 @@ REBOL [
 
         switch:type rule [
             integer! [
-                pad: rule
+                pad: rule  ; overwrite argument
                 val: form first values
                 values: my next
                 if (abs rule) < length of val [
@@ -489,7 +485,7 @@ REBOL [
                     if negative? pad [out: skip out negate pad]
                     pad: length of val
                 ]
-                change out :val
+                change out val
                 out: skip out pad ; spacing (remainder)
             ]
             text! [out: change out rule]

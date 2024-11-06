@@ -837,7 +837,7 @@ DECLARE_GENERICS(String)
             ){
                 return Init_Integer(OUT, c);
             }
-            return RAISE("CODEPOINT OF only works on length 1 Strings"); }
+            return RAISE(Error_Not_One_Codepoint_Raw()); }
 
           default:
             break;

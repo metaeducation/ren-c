@@ -60,10 +60,10 @@
         if n = 1 [continue]
 
         let c
-        parse3 (append copy "" codepoint-to-char n - 1) [
+        parse3 (append copy "" make-char n - 1) [
             c: any-char <end>
         ]
-        if c != codepoint-to-char n - 1 [fail "Char didn't match"]
+        if c != make-char n - 1 [fail "Char didn't match"]
     ]
     ok
 )]

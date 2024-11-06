@@ -131,7 +131,7 @@
     "abcdefgh" = append:part "abc" spread ["defg" "hijk"] 5
 )]
 
-~illegal-zero-byte~ !! (append "abc" codepoint-to-char 0)
+~illegal-zero-byte~ !! (append "abc" make-char 0)
 ~illegal-zero-byte~ !! (append "abc" #{410041})
 
 

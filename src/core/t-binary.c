@@ -352,7 +352,7 @@ DECLARE_GENERICS(Blob)
                 return RAISE(e);
             ++bp;  // Back_Scan() requires increment
             if (bp != Binary_Tail(Cell_Binary(v)))
-                return RAISE("CODEPOINT OF only works on 1-codepoint BLOB!s");
+                return RAISE(Error_Not_One_Codepoint_Raw());
             return Init_Integer(OUT, c); }
 
           default:

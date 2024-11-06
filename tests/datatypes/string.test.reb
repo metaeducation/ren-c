@@ -187,7 +187,7 @@
     )
     ~illegal-zero-byte~ !! (
         str: "abc"
-        str.2: codepoint-to-char 0
+        str.2: make-char 0
     )
 ]
 

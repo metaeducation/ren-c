@@ -88,7 +88,10 @@ DECLARE_NATIVE(add)
     if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
         if (not Is_Integer(e2))
             return FAIL("Can only add INTEGER! to NUL #{00} state");
-        Option(Error*) error = Trap_Init_Char(OUT, VAL_INT32(e2));
+        REBINT i = VAL_INT32(e2);
+        if (i < 0)
+            return FAIL(Error_Codepoint_Negative_Raw());
+        Option(Error*) error = Trap_Init_Char(OUT, i);
         if (error)
             return RAISE(unwrap error);
         return OUT;
@@ -97,7 +100,10 @@ DECLARE_NATIVE(add)
     if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
         if (not Is_Integer(e1))
             return FAIL("Can only add INTEGER! to NUL #{00} state");
-        Option(Error*) error = Trap_Init_Char(OUT, VAL_INT32(e2));
+        REBINT i = VAL_INT32(e1);
+        if (i < 0)
+            return FAIL(Error_Codepoint_Negative_Raw());
+        Option(Error*) error = Trap_Init_Char(OUT, i);
         if (error)
             return RAISE(unwrap error);
         return OUT;
@@ -132,7 +138,7 @@ DECLARE_NATIVE(subtract)
             return Init_Integer(OUT, 0);
         if (IS_CHAR(e2))
             return Init_Integer(OUT, cast(REBINT, 0) - Cell_Codepoint(e2));
-        return FAIL("Can only subtract NUL?/CHAR? from NUL #{00} state");
+        return RAISE(Error_Codepoint_Negative_Raw());
     }
 
     if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]

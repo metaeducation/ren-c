@@ -13,12 +13,12 @@
         if n = 1 [continue]
 
         let c
-        if raised? parse (append copy "" codepoint-to-char n - 1) [
+        if raised? parse (append copy "" make-char n - 1) [
             c: any-char <end>
         ][
             fail "Parse didn't work"
         ]
-        if c != codepoint-to-char n - 1 [fail "Char didn't match"]
+        if c != make-char n - 1 [fail "Char didn't match"]
     ]
     ok
 )]

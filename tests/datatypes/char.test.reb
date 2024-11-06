@@ -191,13 +191,7 @@
 (-{#a}- = mold #a)
 
 (
-    c: codepoint-to-char 0
-    all [
-        char? c
-        0 = codepoint of c
-    ]
-)(
-    c: as issue! 0
+    c: make-char 0
     all [
         char? c
         0 = codepoint of c
@@ -216,10 +210,10 @@
 (254 = subtract #"^(ff)" #"^(01)")
 (0 = subtract #"^(ff)" #"^(ff)")
 
-~type-limit~ !! (
+~codepoint-negative~ !! (
     NUL - 1
 )
-~type-limit~ !! (
+~codepoint-negative~ !! (
     NUL + -1
 )
 
@@ -267,21 +261,21 @@
 
 
 [#1031
-    ~???~ !! (utf8-to-char #{})
+    ~not-one-codepoint~ !! (to-char #{})
 
     ; 1 UTF-8 byte
-    (#"b" = utf8-to-char #{62})
+    (#"b" = to-char #{62})
     (#{62} = as blob! #"b")
 
     ; 2 UTF-8 bytes
-    (#"à" = utf8-to-char #{C3A0})
+    (#"à" = to-char #{C3A0})
     (#{C3A0} = as blob! #"à")
 
     ; 3 UTF-8 bytes
-    (#"漢" = utf8-to-char #{E6BCA2})
+    (#"漢" = to-char #{E6BCA2})
     (#{E6BCA2} = as blob! #"漢")
 
     ; 4 UTF-8 bytes
-    (#"😺" = utf8-to-char #{F09F98BA})
+    (#"😺" = to-char #{F09F98BA})
     (#{F09F98BA} = as blob! #"😺")
 ]

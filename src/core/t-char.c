@@ -260,24 +260,95 @@ Bounce Makehook_Utf8(Level* level_, Kind k, Element* arg) {
 
 
 //
-//  /codepoint-to-char: native [
+//  /make-char: native [
 //
-//  "Make a character out of an integer codepoint"
+//  "Codepoint from integer, e.g. make-char 65 -> #A (see also TO-CHAR)"
 //
-//      return: [char?]
+//      return: "Can also be NUL as binary BLOB!, make char! 0 -> #{00}"
+//          [char?]
 //      codepoint [integer!]
 //  ]
 //
-DECLARE_NATIVE(codepoint_to_char)
+DECLARE_NATIVE(make_char)  // Note: currently synonym for (NUL + codepoint)
+//
+// Note: Consideration was given to (make-char [1 + 2] -> #3) as a way to
+// get an assured single-character result from a mold.  (to-char mold 1 + 2)
+// does the same thing, so it's probably not necessary.
+//
+// This was once called CODEPOINT-TO-CHAR, which is more explicit, but not
+// in the spirit of brevity of the original Rebol (make char! 65 -> #"A").
+// It's nice to have Ren-C be strictly better, as (make-char 65 -> #A)
 {
-    INCLUDE_PARAMS_OF_CODEPOINT_TO_CHAR;
+    INCLUDE_PARAMS_OF_MAKE_CHAR;
 
     uint32_t c = VAL_UINT32(ARG(codepoint));
-
     Option(Error*) error = Trap_Init_Char(OUT, c);
     if (error)
-        return FAIL(unwrap error);
+        return RAISE(unwrap error);
     return OUT;
+}
+
+
+//
+//  /to-char: native [
+//
+//  "Character representation, e.g. to-char 1 -> #1 (see also MAKE-CHAR)"
+//
+//      return: "Will be #{00} NUL BLOB! representation if input is #{00}"
+//          [char?]
+//      element [char? any-utf8? blob!]
+//  ]
+//
+DECLARE_NATIVE(to_char)
+//
+// !!! For efficiency, this avoids things like (to-char [A] -> #A).
+// It could be that this was implemented in terms of TO ISSUE! and then got
+// the result and ensured it was a single character, or that the code was
+// factored in such a way to permit it.  Review if real-world needs come up.
+//
+// !!! Because it's written this way it has redundancy with CODEPOINT OF which
+// splits its implementation across generics.  Review that as well.)
+//
+// Note: Because CHAR? always fits in a cell (unless it's the #{00} blob which
+// is locked and global), there's no point to AS-CHAR, since no series nodes
+// will ever be synthesized for the result.
+{
+    INCLUDE_PARAMS_OF_TO_CHAR;
+
+    Element* e = cast(Element*, ARG(element));
+    if (Is_Integer(e)) {
+        uint32_t c = VAL_UINT32(e);
+        Option(Error*) error = Trap_Init_Char(OUT, c);
+        if (error)
+            return RAISE(unwrap error);
+        return OUT;
+    }
+    if (IS_CHAR(e))
+        return COPY(e);
+
+    Size size;
+    const Byte* at = Cell_Bytes_At(&size, e);
+    if (size == 1) {
+        if (*at == 0) {
+            assert(Is_Blob(e));
+            return COPY(Lib(NUL));
+        }
+    }
+    Codepoint c;
+    const Byte* bp = at;
+    if (size == 0)
+        return RAISE(Error_Not_One_Codepoint_Raw());
+    if (Is_Blob(e)) {
+        Option(Error*) error = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
+        if (error)
+            return RAISE(unwrap error);
+    } else {
+        bp = Back_Scan_Utf8_Char_Unchecked(&c, bp);
+    }
+    ++bp;
+    if (bp != at + size)
+        return RAISE(Error_Not_One_Codepoint_Raw());
+    return Init_Char_Unchecked(OUT, c);  // scan checked it
 }
 
 
@@ -296,40 +367,6 @@ DECLARE_NATIVE(nul_q)
 
     Element* e = cast(Element*, ARG(element));
     return Init_Logic(OUT, Is_NUL(e));
-}
-
-
-//
-//  /utf8-to-char: native [
-//
-//  "Make a single character out of a UTF-8 binary sequence"
-//
-//      return: [char?]
-//      utf8 [blob!]
-//  ]
-//
-DECLARE_NATIVE(utf8_to_char)
-{
-    INCLUDE_PARAMS_OF_UTF8_TO_CHAR;
-
-    Size size;
-    const Byte *encoded = Cell_Blob_Size_At(&size, ARG(utf8));
-
-    if (size == 0)
-        return FAIL("Empty binary passed to UTF8-TO-CHAR");
-
-    Codepoint c;
-    Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &encoded, &size);
-    if (e)
-        return FAIL(unwrap e);
-
-    assert(size != 0);  // Back_Scan() assumes one byte decrement
-
-    if (size != 1)
-        return FAIL("More than one codepoint found in UTF8-TO-CHAR conversion");
-
-    Init_Char_Unchecked(OUT, c);  // !!! Guaranteed good character?
-    return OUT;
 }
 
 
@@ -457,7 +494,7 @@ DECLARE_GENERICS(Utf8)
                 Stringlike_Has_Node(issue)
                 or EXTRA(Bytes, issue).at_least_4[IDX_EXTRA_LEN] != 1
             ){
-                return RAISE("CODEPOINT OF only works on length 1 Strings");
+                return RAISE(Error_Not_One_Codepoint_Raw());
             }
             return Init_Integer(OUT, Cell_Codepoint(issue));
 
@@ -855,7 +892,7 @@ DECLARE_GENERICS(Utf8)
     }
 
     if (chr < 0)
-        return RAISE(Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
+        return RAISE(Error_Codepoint_Negative_Raw());
 
     Option(Error*) error = Trap_Init_Char(OUT, cast(Codepoint, chr));
     if (error)

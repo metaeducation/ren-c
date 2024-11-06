@@ -24,7 +24,7 @@
 
 (
     a: make blob! 0
-    insert a codepoint-to-char 0
+    insert a make-char 0
     a == #{00}
 )
 
