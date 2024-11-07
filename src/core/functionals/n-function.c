@@ -76,6 +76,11 @@
 
 #include "sys-core.h"
 
+enum {
+    IDX_FUNC_BODY = IDX_INTERPRETED_BODY,
+    IDX_FUNC_MAX
+};
+
 
 //
 //  Func_Dispatcher: C
@@ -266,7 +271,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     //
     Details* details = Phase_Details(a);
     Cell* rebound = Init_Block(
-        Array_At(details, IDX_NATIVE_BODY),
+        Array_At(details, IDX_INTERPRETED_BODY),
         copy
     );
     BINDING(rebound) = Cell_List_Binding(body);
@@ -324,7 +329,7 @@ DECLARE_NATIVE(func_p)
         body,
         MKF_RETURN,
         &Func_Dispatcher,
-        1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
+        IDX_FUNC_MAX  // archetype and one array slot (will be filled)
     );
 
     return Init_Action(OUT, func, ANONYMOUS, UNBOUND);

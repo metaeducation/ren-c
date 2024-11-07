@@ -312,21 +312,17 @@ INLINE Value* Details_At(Details* details, Length n) {
 // the PARAMLIST_FLAG_IS_NATIVE set.
 //
 enum {
-    // !!! Originally the body was introduced as a feature to let natives
-    // specify "equivalent usermode code".  As the types of natives expanded,
-    // it was used for things like storing the text source of C user natives...
-    // or the "verb" WORD! of a "generic" (like APPEND).  So ordinary natives
-    // just store blank here, and the usages are sometimes dodgy (e.g. a user
-    // native checks to see if it's a user native if this is a TEXT!...which
-    // might collide with other natives in the future).  The idea needs review.
-    //
-    IDX_NATIVE_BODY = 1,
-
-    IDX_NATIVE_CONTEXT,  // libRebol binds strings here (and lib)
+    IDX_NATIVE_CONTEXT = 1,  // libRebol binds strings here (and lib)
 
     IDX_NATIVE_MAX
 };
 
+// If you use Make_Interpreted_Action_May_Fail() then it will automatically
+// put the relativized body into slot 1 of the details.  Referring to this
+// IDX value in the IDX enums of things like LAMBDA and FUNC helps to make
+// it clearer that the index position is reserved.
+//
+#define IDX_INTERPRETED_BODY  1
 
 enum {
     IDX_TYPECHECKER_DECIDER_INDEX = 1,  // datatype or typeset to check

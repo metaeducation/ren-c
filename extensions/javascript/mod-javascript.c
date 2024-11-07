@@ -248,30 +248,54 @@ INLINE Value* Value_From_Value_Id(heapaddr_t id) {
 
 
 //=//// JS-NATIVE PER-ACTION! DETAILS /////////////////////////////////////=//
-//
-// All Rebol ACTION!s that claim to be natives have to provide a BODY field
-// for source, and an ANY-CONTEXT? that indicates where any API calls will
-// be bound while that native is on the stack.  For now, if you're writing
-// any JavaScript native it will presume binding in the user context.
-//
-// (A refinement could be added to control this, e.g. JS-NATIVE:CONTEXT.
-// But generally the caller of the API can override with their own binding.)
-//
-// For the JS-native-specific information, it uses a HANDLE!...but only to
-// get the GC hook a handle provides.  When a JavaScript native is GC'd, it
-// calls into JavaScript to remove the mapping from integer to function that
-// was put in that table at the time of creation (the native_id).
-//
+
+enum {
+    // The API uses some clever variable shadowing tricks to make it so that
+    // the `reb` that is seen in each function for making calls like
+    // `reb.Value("some-native-arg")` has visibility of the frame variables
+    // of the native being called, for the duration of its specific body.
+    // But that frame has to inherit from some context to get definitions
+    // to get things out of lib or the module that's running.  This context
+    // is set for natives at construction time to know what to make the
+    // frame inherit from.
+    //
+    // !!! This is a limiting idea, and it may be better to allow (require?)
+    // the body of a JavaScript native to be a block with a string in it...
+    // so that the block can capture an environment.  This way you could make
+    // a JavaScript native inside a function and inherit the visibility of
+    // variables inside that function, etc.
+    //
+    IDX_JS_NATIVE_CONTEXT = IDX_NATIVE_CONTEXT,
+
+    // Each native has a corresponding JavaScript object that holds the
+    // actual implementation function of the body.  Since pointers to JS
+    // objects can't be held directly by WebAssembly (yet), instead they
+    // are stored in a map that is indexed by a numeric key.
+    //
+    // A HANDLE! is used to store the map key, so that it can also save a
+    // cleanup callback that will be run during GC, so that map entries
+    // in the JavaScript do not leak.
+    //
+    IDX_JS_NATIVE_OBJECT,
+
+    // The JavaScript source code for the function.  We don't technically
+    // need to hang onto this...and could presumably ask JavaScript to give
+    // it back to us for the SOURCE command.
+    //
+    IDX_JS_NATIVE_SOURCE,
+
+    // A LOGIC! is stored of whether this native is an awaiter or not.
+    // (There should probably be some kind of ACTION_FLAG_XXX that is given
+    // by the system to natives to use for simple flags like this)
+    //
+    IDX_JS_NATIVE_IS_AWAITER,
+
+    IDX_JS_NATIVE_MAX
+};
+
 
 INLINE heapaddr_t Native_Id_For_Action(Action* act)
   { return Heapaddr_From_Pointer(ACT_IDENTITY(act)); }
-
-enum {
-    IDX_JS_NATIVE_OBJECT = IDX_NATIVE_MAX,
-            // ^-- handle gives hookpoint for GC of table entry
-    IDX_JS_NATIVE_IS_AWAITER,  // LOGIC! of if this is an awaiter or not
-    IDX_JS_NATIVE_MAX
-};
 
 Bounce JavaScript_Dispatcher(Level* L);
 
@@ -834,11 +858,11 @@ DECLARE_NATIVE(js_native)
 
     Details* details = Phase_Details(native);
 
-    if (Is_Flex_Frozen(Cell_String(source)))
-        Copy_Cell(Details_At(details, IDX_NATIVE_BODY), source);  // no copy
+    if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
+        Copy_Cell(Details_At(details, IDX_JS_NATIVE_SOURCE), source);
     else {
         Init_Text(
-            Details_At(details, IDX_NATIVE_BODY),
+            Details_At(details, IDX_JS_NATIVE_SOURCE),
             Copy_String_At(source)  // might change
         );
     }

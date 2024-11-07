@@ -45,7 +45,7 @@
 #include "sys-core.h"
 
 enum {
-    IDX_LAMBDA_BLOCK = 1,
+    IDX_LAMBDA_BODY = IDX_INTERPRETED_BODY,
     IDX_LAMBDA_MAX
 };
 
@@ -65,7 +65,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_LAMBDA_MAX);
 
-    const Value* block = Details_At(details, IDX_LAMBDA_BLOCK);
+    const Value* block = Details_At(details, IDX_LAMBDA_BODY);
     assert(Is_Block(block));
 
     Force_Level_Varlist_Managed(L);
@@ -223,7 +223,7 @@ DECLARE_NATIVE(lambda)
             body,
             MKF_MASK_NONE,  // no MKF_RETURN
             &Lambda_Unoptimized_Dispatcher,
-            1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
+            IDX_LAMBDA_MAX  // archetype and one array slot (will be filled)
         );
 
         return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
@@ -247,7 +247,7 @@ DECLARE_NATIVE(lambda)
     assert(ACT_ADJUNCT(lambda) == nullptr);
 
     Details* details = Phase_Details(lambda);
-    Copy_Cell(Array_At(details, IDX_LAMBDA_BLOCK), body);
+    Copy_Cell(Array_At(details, IDX_LAMBDA_BODY), body);
 
     return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
 }

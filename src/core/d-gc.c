@@ -240,14 +240,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Is_Action_Native(a)) {
             Details* details = Phase_Details(a);
             assert(Array_Len(details) >= IDX_NATIVE_MAX);
-            Value* body = Details_At(details, IDX_NATIVE_BODY);
             Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
-            assert(
-                Is_Blank(body)
-                or Is_Handle(body)  // Intrinsics use the slot for Intrinsic*
-                or Is_Text(body)  // TCC uses the slot for "source"
-                or Is_Word(body)  // GENERIC uses the slot for the "verb"
-            );
             assert(Any_Context(context));
         }
 

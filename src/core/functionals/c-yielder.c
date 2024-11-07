@@ -32,7 +32,7 @@
 
 
 enum {
-    IDX_YIELDER_BODY = 1,  // Push_Continuation_Details_0() uses details[0]
+    IDX_YIELDER_BODY = IDX_INTERPRETED_BODY,  // see Make_Interpreted_Action()
     IDX_YIELDER_MODE = 2,  // can't be frame spare (that's reset each call!)
     IDX_YIELDER_LAST_YIELDER_CONTEXT = 3,  // frame stack fragment to resume
     IDX_YIELDER_LAST_YIELD_RESULT = 4,  // so that `z: yield 1 + 2` is useful
@@ -40,8 +40,6 @@ enum {
     IDX_YIELDER_META_OUT = 6,  // whatever L->out was when interrupted
     IDX_YIELDER_MAX
 };
-
-STATIC_ASSERT((int)IDX_YIELDER_BODY == (int)IDX_NATIVE_BODY);
 
 enum {
     ST_YIELDER_WAS_INVOKED = 0,

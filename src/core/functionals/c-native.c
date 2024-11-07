@@ -96,7 +96,6 @@ Phase* Make_Native(
 
     Details* details = Phase_Details(native);
 
-    Init_Blank(Details_At(details, IDX_NATIVE_BODY));
     Copy_Cell(
         Details_At(details, IDX_NATIVE_CONTEXT),
         Varlist_Archetype(module)

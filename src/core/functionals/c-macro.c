@@ -36,6 +36,11 @@
 
 #include "sys-core.h"
 
+enum {
+    IDX_MACRO_BODY = IDX_INTERPRETED_BODY,
+    IDX_MACRO_MAX
+};
+
 
 //
 //  Splice_Block_Into_Feed: C
@@ -177,7 +182,7 @@ DECLARE_NATIVE(macro)
         body,
         MKF_RETURN,
         &Macro_Dispatcher,
-        IDX_DETAILS_1 + 1  // details capacity, just body slot (and archetype)
+        IDX_MACRO_MAX  // details capacity, just body slot (and archetype)
     );
 
     return Init_Action(OUT, macro, ANONYMOUS, UNBOUND);

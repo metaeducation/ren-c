@@ -87,33 +87,15 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 // details array can be longer and store more information specific to the
 // dispatcher being used, these fields are used by "user natives"
 
-#define IDX_TCC_NATIVE_LINKNAME \
-    IDX_NATIVE_MAX // generated if the native doesn't specify
+enum {
+    IDX_TCC_NATIVE_LINKNAME = IDX_NATIVE_MAX,  // auto-generated if unspecified
 
-#define IDX_TCC_NATIVE_STATE \
-    IDX_TCC_NATIVE_LINKNAME + 1 // will be a BLANK! until COMPILE happens
+    IDX_TCC_NATIVE_SOURCE,  // textual source code
 
-#define IDX_TCC_NATIVE_MAX \
-    (IDX_TCC_NATIVE_STATE + 1)
+    IDX_TCC_NATIVE_STATE,  // will be a BLANK! until COMPILE happens
 
-
-// COMPILE replaces &Pending_Native_Dispatcher that user natives start with,
-// so the dispatcher alone can't be used to detect them.  ACTION_FLAG_XXX are
-// in too short of a supply to give them their own flag.  Other natives put
-// their source in Phase_Details [0] and their context in Phase_Details [1], so
-// for the moment just assume if the source is text it's a user native.
-//
-bool Is_User_Native(Action* act) {
-    if (not Is_Action_Native(act))
-        return false;
-
-    if (Stub_Flavor(act) != FLAVOR_DETAILS)
-        return false;
-
-    Details* details = Phase_Details(cast(Phase*, act));
-    assert(Array_Len(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
-    return Is_Text(Details_At(details, IDX_NATIVE_BODY));
-}
+    IDX_TCC_NATIVE_MAX
+};
 
 
 // This is the function registered to receive error messages during the
@@ -332,11 +314,11 @@ DECLARE_NATIVE(make_native)
 
     Details* details = Phase_Details(native);
 
-    if (Is_Flex_Frozen(Cell_String(source)))
-        Copy_Cell(Details_At(details, IDX_NATIVE_BODY), source); // no copy
+    if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
+        Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
     else {
         Init_Text(
-            Details_At(details, IDX_NATIVE_BODY),
+            Details_At(details, IDX_TCC_NATIVE_SOURCE),
             Copy_String_At(source)  // might change before COMPILE call
         );
     }
@@ -516,7 +498,9 @@ DECLARE_NATIVE(compile_p)
         const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (Is_Frame(item)) {
-                assert(Is_User_Native(VAL_ACTION(item)));
+                Action* action = VAL_ACTION(item);
+                if (ACT_DISPATCHER(action) != &Pending_Native_Dispatcher)
+                    fail ("Only user natives can be in COMPILABLES list");
 
                 // Remember this function, because we're going to need to come
                 // back and fill in its dispatcher and TCC_State after the
@@ -525,7 +509,7 @@ DECLARE_NATIVE(compile_p)
                 Copy_Cell(PUSH(), item);
 
                 Details* details = Phase_Details(cast(Phase*, VAL_ACTION(item)));
-                Value* source = Details_At(details, IDX_NATIVE_BODY);
+                Value* source = Details_At(details, IDX_TCC_NATIVE_SOURCE);
                 Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
                 // !!! Level* is not exported by libRebol, though it could be
@@ -671,7 +655,7 @@ DECLARE_NATIVE(compile_p)
     //
     while (TOP_INDEX != STACK_BASE) {
         Action* action = VAL_ACTION(TOP);  // stack will hold action live
-        assert(Is_User_Native(action));  // can't cache stack pointer, extract
+        assert(ACT_DISPATCHER(action) == &Pending_Native_Dispatcher);
 
         Details* details = Phase_Details(cast(Phase*, action));
         Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
