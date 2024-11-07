@@ -297,15 +297,15 @@ void Set_Parameter_Spec(
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
           handle_predicate: {
             Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
-            if (ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher) {
-                Intrinsic* intrinsic = Extract_Intrinsic(phase);
-                if (intrinsic == &N_any_value_q)
+            if (Get_Action_Flag(phase, CAN_RUN_AS_INTRINSIC)) {
+                Dispatcher* dispatcher = ACT_DISPATCHER(phase);
+                if (dispatcher == &N_any_value_q)
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
-                else if (intrinsic == &N_any_atom_q)
+                else if (dispatcher == &N_any_atom_q)
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
-                else if (intrinsic == &N_nihil_q)
+                else if (dispatcher == &N_nihil_q)
                     *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
-                else if (intrinsic == &Typechecker_Intrinsic) {
+                else if (dispatcher == &Typechecker_Dispatcher) {
                     if (optimized == optimized_tail) {
                         *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                         continue;
@@ -356,16 +356,17 @@ void Set_Parameter_Spec(
 //      ^value  ; cannot take parameter antiform as normal argument [1]
 //  ]
 //
-DECLARE_INTRINSIC(hole_q)
+DECLARE_NATIVE(hole_q)
 //
 // 1. Although the antiform of PARAMETER! is stable, it is fundamental to the
 //    argument gathering process that it represents an unspecialized slot.
 //    Hence any function intending to take parameter antiforms must use the
 //    ^META argument convention.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_HOLE_Q;
 
-    Init_Logic(out, Is_Meta_Of_Hole(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Meta_Of_Hole(meta));
 }
 
 

@@ -327,14 +327,9 @@ enum {
     IDX_NATIVE_MAX
 };
 
-enum {
-    IDX_INTRINSIC_CFUNC = 1,
-    IDX_INTRINSIC_MAX
-};
 
 enum {
-    IDX_TYPECHECKER_CFUNC = IDX_INTRINSIC_CFUNC,  // uses Intrinsic_Dispatcher()
-    IDX_TYPECHECKER_DECIDER_INDEX,  // datatype or typeset to check
+    IDX_TYPECHECKER_DECIDER_INDEX = 1,  // datatype or typeset to check
     IDX_TYPECHECKER_MAX
 };
 

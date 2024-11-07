@@ -41,12 +41,7 @@
 #define DECLARE_NATIVE(n) \
     Bounce N_##n(Level* level_)
 
-// Helper for declaring an intrinsic native (can be dispatched w/o a frame).
-//
-#define DECLARE_INTRINSIC(n) \
-    void N_##n(Atom* out, Phase* phase, Value* arg)
-
-// Forward definitions of DECLARE_NATIVE() and DECLARE_INTRINSIC() for all
+// Forward definitions of DECLARE_NATIVE() and DECLARE_NATIVE() for all
 // the core natives.  This means functions are available as &N_native_name
 // throughout the core code if they are needed.
 //

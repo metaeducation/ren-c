@@ -387,19 +387,25 @@ INLINE void Free_Level_Internal(Level* L) {
 //    belief that local state for a native will never be exposed by a debugger
 //    and hence these locations can be used as evaluation targets.
 //
-// 2. Levels are pushed to reuse for several sequential operations like ANY,
+// 2. The commitment of an Intrinsic is that if it runs without a Level, then
+//    it won't perform evaluations or use continuations.  Those mechanics are
+//    not available when being called directly from the Stepper_Executor.
+//
+// 3. Levels are pushed to reuse for several sequential operations like ANY,
 //    ALL, CASE, REDUCE.  It is allowed to change the output cell for each
 //    evaluation.  But the GC expects initialized bits in the output slot at
-//    all times; use null until first eval call if needed
+//    all times.
 //
-// 3. Uninterruptibility is inherited by default by Push_Level(), but
+// 4. Uninterruptibility is inherited by default by Push_Level(), but
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
     Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
-    L->out = out;  // must be a valid cell for GC [2]
+    assert(not TOP_LEVEL or Not_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC));
+
+    L->out = out;  // must be a valid cell for GC [3]
   #if RUNTIME_CHECKS
     if (L->out)
         assert(not Is_Api_Value(L->out));
@@ -420,12 +426,12 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
 }
 
-INLINE void Push_Level(  // inherits uninterruptibility [3]
+INLINE void Push_Level(  // inherits uninterruptibility [4]
     Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
     Push_Level_Dont_Inherit_Interruptibility(out, L);
-    L->flags.bits |= L->prior->flags.bits & LEVEL_FLAG_UNINTERRUPTIBLE;  // [3]
+    L->flags.bits |= L->prior->flags.bits & LEVEL_FLAG_UNINTERRUPTIBLE;  // [4]
 }
 
 
@@ -566,8 +572,16 @@ INLINE Level* Prep_Level_Core(
 #define DECLARE_PARAM(n,name) \
     static const int p_##name##_ = n
 
+#define DECLARE_INTRINSIC_PARAM(name)  /* only intrinsics should use ARG_1 */ \
+    static const int p_intrinsic_1_ = 2  // skip RETURN in slot 1
+
 #define ARG(name) \
     Level_Arg(level_, (p_##name##_))
+
+#define ARG_1  /* only used by intrinsics, varies by dispatch mode */ \
+    (Get_Level_Flag(level_, DISPATCHING_INTRINSIC) \
+        ? cast(Value*, &level_->spare) \
+        : Level_Arg(level_, p_intrinsic_1_))
 
 #define LOCAL(name) \
     cast(Atom*, ARG(name))  // see Push_Level() for why this is allowed

@@ -160,9 +160,20 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(17)
 
 
-//=//// LEVEL_FLAG_18 /////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_DISPATCHING_INTRINSIC //////////////////////////////////=//
 //
-#define LEVEL_FLAG_18 \
+// Intrinsics can be run without creating levels for them, if they do not
+// use refinements, and if you're not using a debug mode which mandates that
+// levels always be created.  In this case there is no Level* to pass to the
+// native, so instead of an Action_Executor()-based Level*, the the Level* of
+// the Stepper_Executor() is passed.
+//
+// The stepper's OUT can be used, but the macro for getting the argument will
+// look for that argument in the SPARE cell, which in an intrinsic is
+// called ARG_1.  If the level is being dispatched normally, then ARG_1
+// will be in the frame as usual.
+//
+#define LEVEL_FLAG_DISPATCHING_INTRINSIC \
     FLAG_LEFT_BIT(18)
 
 
@@ -261,11 +272,6 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 //
 typedef Bounce (Executor)(Level* level_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
-
-// Intrinsics are a special form of implementing natives that do not need
-// to instantiate a frame.  See Intrinsic_Dispatcher().
-//
-typedef void (Intrinsic)(Atom* out, Phase* phase, Value* arg);
 
 // Deciders are a narrow kind of boolean predicate used in type checking.
 //

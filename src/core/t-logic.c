@@ -34,11 +34,11 @@
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(null_q)
+DECLARE_NATIVE(null_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NULL_Q;
 
-    Init_Logic(out, Is_Nulled(arg));
+    return Init_Logic(OUT, Is_Nulled(ARG_1));
 }
 
 
@@ -51,45 +51,46 @@ DECLARE_INTRINSIC(null_q)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(okay_q)
+DECLARE_NATIVE(okay_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_OKAY_Q;
 
-    Init_Logic(out, Is_Okay(arg));
+    return Init_Logic(OUT, Is_Okay(ARG_1));
 }
 
 
 //
 //  /logic?: native:intrinsic [
 //
-//  "Tells you if the argument is NULL or #"
+//  "Tells you if the argument is either the ~null~ or ~okay~ antiform"
 //
 //      return: "null or okay"  ; can't use LOGIC? to typecheck
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(logic_q)
+DECLARE_NATIVE(logic_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_LOGIC_Q;
 
-    Init_Logic(out, Is_Logic(arg));
+    return Init_Logic(OUT, Is_Logic(ARG_1));
 }
 
 
 //
 //  /logical: native:intrinsic [
 //
-//  "Produces NULL for 0, or # for all other integers"
+//  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"
 //
 //      return: [logic?]
-//      value [integer!]
+//      number [integer!]
 //  ]
 //
-DECLARE_INTRINSIC(logical)
+DECLARE_NATIVE(logical)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_LOGICAL;
 
-    Init_Logic(out, VAL_INT64(arg) != 0);
+    Element* n = cast(Element*, ARG_1);
+    return Init_Logic(OUT, VAL_INT64(n) != 0);
 }
 
 
@@ -99,14 +100,15 @@ DECLARE_INTRINSIC(logical)
 //  "Tells you if the argument is the TRUE or FALSE word"
 //
 //      return: [logic?]
-//      value [any-value?]
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(boolean_q)
+DECLARE_NATIVE(boolean_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
-    Init_Logic(out, Is_Boolean(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Boolean(e));
 }
 
 
@@ -119,11 +121,12 @@ DECLARE_INTRINSIC(boolean_q)
 //      value [any-value?]
 //  ]
 //
-DECLARE_INTRINSIC(onoff_q)
+DECLARE_NATIVE(onoff_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ONOFF_Q;
 
-    Init_Logic(out, Is_OnOff(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_OnOff(e));
 }
 
 
@@ -136,11 +139,12 @@ DECLARE_INTRINSIC(onoff_q)
 //      value [any-value?]
 //  ]
 //
-DECLARE_INTRINSIC(yesno_q)
+DECLARE_NATIVE(yesno_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_YESNO_Q;
 
-    Init_Logic(out, Is_YesNo(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_YesNo(e));
 }
 
 
@@ -403,11 +407,11 @@ DECLARE_NATIVE(null_if_zero)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
+DECLARE_NATIVE(not_1)  // see TO-C-NAME
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NOT_1;
 
-    Init_Logic(out, Is_Inhibitor(arg));
+    return Init_Logic(OUT, Is_Inhibitor(ARG_1));
 }
 
 

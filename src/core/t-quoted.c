@@ -99,16 +99,17 @@ DECLARE_NATIVE(the)
 //
 //      return: "Input value, verbatim"
 //          [any-value?]
-//      'value [element?]
+//      'element [element?]
 //  ]
 //
-DECLARE_INTRINSIC(just)
+DECLARE_NATIVE(just)
 //
 // Note: JUST:SOFT doesn't make any sense, it cannot evaluate without binding.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_JUST;
 
-    Copy_Cell(out, arg);
+    Element* quoted = cast(Element*, ARG_1);
+    return COPY(quoted);
 }
 
 
@@ -119,7 +120,7 @@ DECLARE_INTRINSIC(just)
 //
 //      return: "Quoted value (if depth = 0, may not be quoted)"
 //          [element?]
-//      optional [element?]
+//      element [element?]
 //      :depth "Number of quoting levels to apply (default 1)"
 //          [integer!]
 //  ]
@@ -128,12 +129,14 @@ DECLARE_NATIVE(quote)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
+    Element* e = cast(Element*, ARG(element));
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
     if (depth < 0)
         return FAIL(PARAM(depth));
 
-    return COPY(Quotify(ARG(optional), depth));
+    Quotify(e, depth);
+    return COPY(e);
 }
 
 
@@ -190,14 +193,15 @@ DECLARE_NATIVE(meta)
 //  "META operator that works on any value (errors, packs, barriers, etc.)"
 //
 //      return: [quoted! quasi?]
-//      ^optional [any-atom?]
+//      ^atom [any-atom?]
 //  ]
 //
-DECLARE_INTRINSIC(meta_p)
+DECLARE_NATIVE(meta_p)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_META_P;
 
-    Copy_Cell(out, arg);  // argument was ^META, so no need to Meta_Quotify()
+    Element* meta = cast(Element*, ARG_1);
+    return COPY(meta);  // argument was ^META, so no need to Meta_Quotify()
 }
 
 
@@ -260,15 +264,15 @@ DECLARE_NATIVE(quasi)
 //  "Turn quasiforms into common forms"
 //
 //      return: [any-isotopic?]  ; a non-quasi, non-quoted element
-//      value [quasi?]
+//      quasiform [quasi?]
 //  ]
 //
-DECLARE_INTRINSIC(unquasi)
+DECLARE_NATIVE(unquasi)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_UNQUASI;
 
-    Unquasify(arg);
-    Copy_Cell(out, arg);
+    Element* quasi = cast(Element*, ARG_1);
+    return COPY(Unquasify(quasi));
 }
 
 
@@ -281,15 +285,16 @@ DECLARE_INTRINSIC(unquasi)
 //      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(antiform_q)
+DECLARE_NATIVE(antiform_q)
 //
 // !!! This can be deceptive, in the sense that you could ask if something
 // like an antiform pack is an antiform, and it will say yes...but then
 // another routine like integer? might say it's an integer.  Be aware.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
-    Init_Logic(out, Is_Quasiform(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Quasiform(meta));
 }
 
 
@@ -369,12 +374,12 @@ DECLARE_NATIVE(unmeta)
 //      value [quoted? quasi?]
 //  ]
 //
-DECLARE_INTRINSIC(unmeta_p)
+DECLARE_NATIVE(unmeta_p)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_UNMETA_P;
 
-    Copy_Cell(out, arg);
-    Meta_Unquotify_Undecayed(out);
+    Copy_Cell(OUT, ARG_1);
+    return Meta_Unquotify_Undecayed(OUT);
 }
 
 
@@ -388,7 +393,7 @@ DECLARE_INTRINSIC(unmeta_p)
 //      value [~null~ ~void~ blank! any-list? quasi?]  ; see [1] [2] [3]
 //  ]
 //
-DECLARE_INTRINSIC(spread)
+DECLARE_NATIVE(spread)
 //
 // !!! The name SPREAD is being chosen because it is more uncommon than splice,
 // and there is no particular contention for its design.  SPLICE may be a more
@@ -410,26 +415,26 @@ DECLARE_INTRINSIC(spread)
 //    one vs. the other, e.g. GLOM expects splices to be mutable.  Void is
 //    cheap and agnostic, so it's the logical choice here.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SPREAD;
 
-    if (Any_List(arg)) {  // most common case
-        HEART_BYTE(arg) = REB_GROUP;
-        Coerce_To_Stable_Antiform(arg);
-        Copy_Cell(out, arg);
+    Value* v = ARG_1;
+
+    if (Any_List(v)) {  // most common case
+        HEART_BYTE(v) = REB_GROUP;  // throws away original heart
+        Coerce_To_Stable_Antiform(v);
+        return COPY(v);
     }
-    else if (Is_Blank(arg)) {
-        Init_Void(out);  // empty array has problems if used with GLOM [3]
-    }
-    else if (Is_Void(arg) or Is_Quasi_Void(arg)) {  // quasi ok [2]
-        Init_Void(out);  // pass through [1]
-    }
-    else if (Is_Nulled(arg) or Is_Quasi_Null(arg)) {  // quasi ok [2]
-        Init_Nulled(out);  // pass through [1]
-    }
-    else {
-        assert(Is_Quasiform(arg));
-        fail (arg);
-    }
+
+    if (Is_Blank(v))
+        return Init_Void(OUT);  // empty array makes problems for GLOM [3]
+
+    if (Is_Void(v) or Is_Quasi_Void(v))  // quasi ok [2]
+        return Init_Void(OUT);  // pass through [1]
+
+    if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]
+        return Init_Nulled(OUT);  // pass through [1]
+
+    return FAIL(v);
 }
 
 
@@ -612,11 +617,11 @@ DECLARE_NATIVE(matches)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(splice_q)
+DECLARE_NATIVE(splice_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SPLICE_Q;
 
-    Init_Logic(out, Is_Splice(arg));
+    return Init_Logic(OUT, Is_Splice(ARG_1));
 }
 
 
@@ -629,11 +634,12 @@ DECLARE_INTRINSIC(splice_q)
 //      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(lazy_q)
+DECLARE_NATIVE(lazy_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_LAZY_Q;
 
-    Init_Logic(out, Is_Meta_Of_Lazy(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Meta_Of_Lazy(meta));
 }
 
 
@@ -646,11 +652,12 @@ DECLARE_INTRINSIC(lazy_q)
 //      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(pack_q)
+DECLARE_NATIVE(pack_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_PACK_Q;
 
-    Init_Logic(out, Is_Meta_Of_Pack(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Meta_Of_Pack(meta));
 }
 
 
@@ -663,11 +670,11 @@ DECLARE_INTRINSIC(pack_q)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(keyword_q)
+DECLARE_NATIVE(keyword_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_KEYWORD_Q;
 
-    Init_Logic(out, Is_Keyword(arg));
+    return Init_Logic(OUT, Is_Keyword(ARG_1));
 }
 
 
@@ -680,11 +687,11 @@ DECLARE_INTRINSIC(keyword_q)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(action_q)
+DECLARE_NATIVE(action_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ACTION_Q;
 
-    Init_Logic(out, Is_Action(arg));
+    return Init_Logic(OUT, Is_Action(ARG_1));
 }
 
 
@@ -697,7 +704,7 @@ DECLARE_INTRINSIC(action_q)
 //      frame [<unrun> frame! action?]
 //  ]
 //
-DECLARE_INTRINSIC(runs)
+DECLARE_NATIVE(runs)
 //
 // 1. In order for a frame to properly report answers to things like
 //    `parameters of`, the specializations have to be committed to...because
@@ -705,14 +712,13 @@ DECLARE_INTRINSIC(runs)
 //    public interface that are specialized.  At the moment, this means
 //    making a copy.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_RUNS;
 
-    Value* frame = arg;
+    Value* frame = ARG_1;
 
     if (Is_Frame_Details(frame)) {
         Coerce_To_Stable_Antiform(frame);
-        Copy_Cell(out, frame);
-        return;
+        return COPY(frame);
     }
 
     Phase* specialized = Make_Action(
@@ -722,7 +728,7 @@ DECLARE_INTRINSIC(runs)
         IDX_SPECIALIZER_MAX  // details array capacity
     );
 
-    Init_Action(out, specialized, VAL_FRAME_LABEL(frame), UNBOUND);
+    return Init_Action(OUT, specialized, VAL_FRAME_LABEL(frame), UNBOUND);
 }
 
 
@@ -735,12 +741,13 @@ DECLARE_INTRINSIC(runs)
 //      action [<maybe> frame! action?]
 //  ]
 //
-DECLARE_INTRINSIC(unrun)
+DECLARE_NATIVE(unrun)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_UNRUN;
 
-    Copy_Cell(out, arg);  // may or may not be antiform
-    QUOTE_BYTE(out) = NOQUOTE_1;  // now it's known to not be antiform
+    Value* action = ARG_1;  // may or may not be antiform
+    QUOTE_BYTE(action) = NOQUOTE_1;  // now it's known to not be antiform
+    return COPY(action);
 }
 
 
@@ -753,7 +760,7 @@ DECLARE_INTRINSIC(unrun)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(maybe)
+DECLARE_NATIVE(maybe)
 //
 // 1. !!! Should MAYBE of a parameter pack be willing to twist that parameter
 //    pack, e.g. with a NULL in the first slot--into one with a void in the
@@ -765,16 +772,17 @@ DECLARE_INTRINSIC(maybe)
 //
 // 2. !!! Should MAYBE of a raised error pass through the raised error?
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_MAYBE;
 
-    if (Is_Void(arg)) {
-        Init_Void(out);  // passthru
-    }
-    else if (Is_Nulled(arg)) {
-        Init_Void(out);  // main purpose of function: NULL => VOID
-    }
-    else
-        Copy_Cell(out, arg);  // passthru
+    Value* v = ARG_1;
+
+    if (Is_Void(v))
+        return Init_Void(OUT);  // passthru
+
+    if (Is_Nulled(v))
+        return Init_Void(OUT);  // main purpose of function: NULL => VOID
+
+    return COPY(v);  // passthru
 }
 
 
@@ -784,14 +792,15 @@ DECLARE_INTRINSIC(maybe)
 //  "Tells you if the argument is QUOTED! or not"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(quoted_q)
+DECLARE_NATIVE(quoted_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_QUOTED_Q;
 
-    Init_Logic(out, VAL_TYPE(arg) == REB_QUOTED);
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, QUOTE_BYTE(e) >= ONEQUOTE_3);
 }
 
 
@@ -801,14 +810,15 @@ DECLARE_INTRINSIC(quoted_q)
 //  "Tells you if the argument is a quasiform or not"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(quasi_q)
+DECLARE_NATIVE(quasi_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_QUASI_Q;
 
-    Init_Logic(out, VAL_TYPE(arg) == REB_QUASIFORM);
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, QUOTE_BYTE(e) == QUASIFORM_2);
 }
 
 
@@ -818,31 +828,14 @@ DECLARE_INTRINSIC(quasi_q)
 //  "Removes all levels of quoting from a quoted value"
 //
 //      return: [element?]
-//      optional [element?]
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(noquote)
+DECLARE_NATIVE(noquote)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NOQUOTE;
 
-    Copy_Cell(out, arg);
-    Unquotify(out, Cell_Num_Quotes(out));
-}
-
-
-//
-//  /atom?: native:intrinsic [
-//
-//  "Tells you if argument is truly anything--e.g. packs, raised, voids, etc."
-//
-//      return: [logic?]
-//      ^atom
-//  ]
-//
-DECLARE_INTRINSIC(atom_q)
-{
-    UNUSED(phase);
-    UNUSED(arg);
-
-    Init_Logic(out, true);
+    Element* e = cast(Element*, ARG_1);
+    QUOTE_BYTE(e) = NOQUOTE_1;
+    return COPY(e);
 }

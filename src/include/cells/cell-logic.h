@@ -148,7 +148,7 @@ INLINE bool Cell_Logic(Need(const Value*) v) {
 #define Is_True(out)        Is_Word_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Word_With_Id((out), SYM_FALSE)
 
-INLINE bool Is_Boolean(Need(const Value*) v) {
+INLINE bool Is_Boolean(const Value* v) {
     Assert_Cell_Readable(v);
 
     if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != REB_WORD)
@@ -176,7 +176,7 @@ INLINE bool Cell_True(Need(const Value*) v) {  // corresponds to TRUE?
 
 //=//// [ON OFF] WORDS ////////////////////////////////////////////////////=//
 
-INLINE bool Is_OnOff(Need(const Value*) v) {
+INLINE bool Is_OnOff(const Value* v) {
     Assert_Cell_Readable(v);
     if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != REB_WORD)
         return false;
@@ -187,7 +187,7 @@ INLINE bool Is_OnOff(Need(const Value*) v) {
 #define Init_OnOff(out,flag) \
     Init_Word((out), (flag) ? Canon(ON) : Canon(OFF))
 
-INLINE bool Cell_On(Need(const Value*) v) {  // corresponds to ON?
+INLINE bool Cell_On(const Value* v) {  // corresponds to ON?
     assert(Is_Word(v));
     Option(SymId) id = Cell_Word_Id(v);
     if (id == SYM_ON)
@@ -202,7 +202,7 @@ INLINE bool Cell_On(Need(const Value*) v) {  // corresponds to ON?
 
 //=//// [YES NO] WORDS ////////////////////////////////////////////////////=//
 
-INLINE bool Is_YesNo(Need(const Value*) v) {
+INLINE bool Is_YesNo(const Value* v) {
     Assert_Cell_Readable(v);
     if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != REB_WORD)
         return false;
@@ -213,7 +213,7 @@ INLINE bool Is_YesNo(Need(const Value*) v) {
 #define Init_YesNo(out,flag) \
     Init_Word((out), (flag) ? Canon(YES) : Canon(NO))
 
-INLINE bool Cell_Yes(Need(const Value*) v) {  // corresponds to YES?
+INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
     assert(Is_Word(v));
     Option(SymId) id = Cell_Word_Id(v);
     if (id == SYM_YES)

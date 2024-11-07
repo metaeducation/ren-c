@@ -1059,15 +1059,8 @@ sections: [
 ]
 
 nats: collect [
-    ;
-    ; Most C functions backing natives are Dispatchers (take a "Frame" pointer,
-    ; return a "Bounce").  But some are intrinsics and are able to be called
-    ; without building a frame.  It would be a nuisance to separate these
-    ; into distinct tables, so they're all coerced to a CFunction, and then
-    ; Make_Native() decides which actual function type to cast them to.
-    ;
     for-each 'name native-names [
-        keep cscape [name "cast(CFunction*, N_${name})"]
+        keep cscape [name "&N_${name}"]
     ]
 ]
 
@@ -1101,10 +1094,9 @@ e-bootblock/emit [nats --{
     #define NUM_NATIVES $<length of nats>
 
     /*
-     * Note: These functions may be Dispatcher* or they may be Intrinsic*.
-     * Easiest to keep them in the same table, so they're typed as CFunction*.
+     * C Functions for the natives.
      */
-    CFunction* const g_core_native_cfuncs[NUM_NATIVES] = {
+    Dispatcher* const g_core_native_dispatchers[NUM_NATIVES] = {
         $(Nats),
     };
 
@@ -1190,7 +1182,7 @@ e-boot/emit [fields --{
      * Raw C function pointers for natives, take Level* and return Bounce.
      */
     EXTERN_C const REBLEN g_num_core_natives;
-    EXTERN_C CFunction* const g_core_native_cfuncs[];
+    EXTERN_C Dispatcher* const g_core_native_dispatchers[];
 
     /*
      * Builtin Extensions

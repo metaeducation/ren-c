@@ -222,7 +222,7 @@ Bounce Stepper_Executor(Level* L)
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Action* action = VAL_ACTION(L_current);
         assert(Is_Stub_Details(action));
-        Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
+        Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
         Param* param = ACT_PARAM(action, 2);
 
         if (Cell_ParamClass(param) == PARAMCLASS_META)
@@ -234,7 +234,12 @@ Bounce Stepper_Executor(Level* L)
             const Key* key = ACT_KEY(action, 2);
             return FAIL(Error_Arg_Type(label, key, param, stable_SPARE));
         }
-        (*intrinsic)(OUT, cast(Phase*, action), stable_SPARE);
+        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+        Set_Level_Flag(L, DISPATCHING_INTRINSIC);
+        Bounce bounce = (*dispatcher)(L);  // flag says level_ is not its Level
+        assert(bounce == L->out);
+        UNUSED(bounce);
+        Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
         goto lookahead; }
 
       case REB_SIGIL:
@@ -685,7 +690,7 @@ Bounce Stepper_Executor(Level* L)
 
             if (
                 not infix_mode  // too rare a case for intrinsic optimization
-                and ACT_DISPATCHER(action) == &Intrinsic_Dispatcher
+                and Get_Action_Flag(action, CAN_RUN_AS_INTRINSIC)
                 and Is_Stub_Details(action)  // don't do specializations
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // checked builds sometimes bypass

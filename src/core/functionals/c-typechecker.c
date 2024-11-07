@@ -39,21 +39,32 @@
 //
 //  Typechecker_Intrinsic: C
 //
-// Can be called by the Intrinsic_Dispatcher() in normal function application.
-// Or in optimized circumstances, this Intrinsic handler is extracted directly
-// and called without the frame that a dispatcher would expect.
+// Typecheckers may be dispatched as intrinsics, which is to say they may
+// not have their own Level and frame variables.
 //
-void Typechecker_Intrinsic(Atom* out, Phase* phase, Value* arg)
+// See LEVEL_FLAG_DISPATCHING_INTRINSIC for more information.
+//
+Bounce Typechecker_Dispatcher(Level* level_)
 {
-    assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
+    Value* arg_1;
+    Details* details;
+    if (Get_Level_Flag(level_, DISPATCHING_INTRINSIC)) {
+        arg_1 = stable_SPARE;
+        details = Phase_Details(
+            cast(Phase*, VAL_ACTION(&level_->u.eval.current))
+        );
+    }
+    else {
+        arg_1 = Level_Arg(level_, 2);  // skip RETURN
+        details = Phase_Details(PHASE);
+    }
 
-    Details* details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
     Decider* decider = g_type_deciders[VAL_UINT8(index)];
 
-    Init_Logic(out, decider(arg));
+    return Init_Logic(OUT, decider(arg_1));
 }
 
 
@@ -90,16 +101,13 @@ Phase* Make_Typechecker(Offset decider_index) {
     Phase* typechecker = Make_Action(
         paramlist,
         nullptr,  // no partials
-        &Intrinsic_Dispatcher,  // leverage Intrinsic's optimized calls
+        &Typechecker_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
+    Set_Action_Flag(typechecker, CAN_RUN_AS_INTRINSIC);
 
     Details* details = Phase_Details(typechecker);
 
-    Init_Handle_Cfunc(
-        Details_At(details, IDX_TYPECHECKER_CFUNC),
-        cast(CFunction*, &Typechecker_Intrinsic)
-    );
     Init_Integer(
         Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX),
         decider_index
@@ -161,7 +169,7 @@ bool Typecheck_Atom_Core(
 ){
     assert(not (Is_Antiform(v) and HEART_BYTE(v) == REB_PARAMETER));  // [1]
 
-    DECLARE_ATOM (spare);  // !!! stackful
+    DECLARE_ATOM (scratch);  // !!! stackful
 
     const Element* tail;
     const Element* item;
@@ -293,23 +301,33 @@ bool Typecheck_Atom_Core(
           run_action: {
             Action* action = VAL_ACTION(test);
 
-            if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {
-                assert(Is_Stub_Details(action));
-                Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
+            if (Get_Action_Flag(action, CAN_RUN_AS_INTRINSIC)) {
+                Level L_struct;
+                Level* L = &L_struct;
 
-                Param* param = ACT_PARAM(action, 2);
-                DECLARE_ATOM (arg);
-                Copy_Cell(arg, v);
-                if (Cell_ParamClass(param) == PARAMCLASS_META)
-                    Meta_Quotify(arg);
-                if (not Typecheck_Coerce_Argument(param, arg))
+                L->flags.bits = LEVEL_FLAG_DISPATCHING_INTRINSIC;
+
+                assert(Is_Stub_Details(action));
+                Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
+
+                L->u.action.param = ACT_PARAM(action, 2);
+                Erase_Cell(&L->spare);
+                Copy_Cell(&L->spare, v);
+                if (Cell_ParamClass(L->u.action.param) == PARAMCLASS_META)
+                    Meta_Quotify(&L->spare);
+                if (not Typecheck_Coerce_Argument(L->u.action.param, &L->spare))
                     goto test_failed;
 
-                DECLARE_ATOM (out);
-                (*intrinsic)(out, cast(Phase*, action), Stable_Unchecked(arg));
-                if (not Is_Logic(out))
+                L->out = scratch;
+                Erase_Cell(&L->u.eval.current);
+                Copy_Cell(&L->u.eval.current, test);
+                Bounce bounce = (*dispatcher)(L);
+                assert(bounce == L->out);
+                UNUSED(bounce);
+
+                if (not Is_Logic(scratch))
                     fail (Error_No_Logic_Typecheck(label));
-                if (Cell_Logic(out))
+                if (Cell_Logic(scratch))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -346,17 +364,17 @@ bool Typecheck_Atom_Core(
                 continue;
             }
 
-            Push_Level(spare, L);
+            Push_Level(scratch, L);
 
             if (Trampoline_With_Top_As_Root_Throws())
                 fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
             Drop_Level(L);
 
-            if (not Is_Logic(spare))
+            if (not Is_Logic(scratch))
                 fail (Error_No_Logic_Typecheck(label));
 
-            if (not Cell_Logic(spare))
+            if (not Cell_Logic(scratch))
                 goto test_failed;
             break; }
 

@@ -34,42 +34,6 @@
 
 
 //
-//  Extract_Intrinsic: C
-//
-Intrinsic* Extract_Intrinsic(Phase* phase)
-{
-    assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
-
-    Details* details = Phase_Details(phase);
-    assert(Array_Len(details) >= IDX_INTRINSIC_MAX);  // typecheck uses more
-
-    Cell* handle = Details_At(details, IDX_INTRINSIC_CFUNC);
-    return cast(Intrinsic*, Cell_Handle_Cfunc(handle));
-}
-
-
-//
-//  Intrinsic_Dispatcher: C
-//
-// While frames aren't necessary to execute intrinsics, the system is able to
-// run intrinsics using this thin wrapper of a dispatcher as if they were
-// ordinary natives.
-//
-Bounce Intrinsic_Dispatcher(Level* const L)
-{
-    USE_LEVEL_SHORTHANDS (L);
-
-    assert(ACT_HAS_RETURN(PHASE));
-    Value* arg = Level_Arg(L, 2);  // skip the RETURN
-
-    Intrinsic* intrinsic = Extract_Intrinsic(PHASE);
-    (*intrinsic)(OUT, PHASE, arg);  // typechecking done when frame was built
-
-    return OUT;
-}
-
-
-//
 //  Make_Native: C
 //
 // Reused function in Startup_Natives() as well as extensions loading natives,
@@ -94,7 +58,7 @@ Bounce Intrinsic_Dispatcher(Level* const L)
 Phase* Make_Native(
     Element* spec,
     NativeType native_type,
-    CFunction* cfunc,  // may be Dispatcher*, may be Intrinsic*
+    Dispatcher* dispatcher,
     VarList* module
 ){
     // There are implicit parameters to both NATIVE:COMBINATOR and usermode
@@ -112,7 +76,7 @@ Phase* Make_Native(
 
     // With the components extracted, generate the native and add it to
     // the Natives table.  The associated C function is provided by a
-    // table built in the bootstrap scripts, `g_core_native_cfuncs`.
+    // table built in the bootstrap scripts, `g_core_native_dispatchers`.
 
     VarList* meta;
     Flags flags = MKF_RETURN;
@@ -123,36 +87,22 @@ Phase* Make_Native(
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
-    Phase* native;
-    if (native_type == NATIVE_INTRINSIC) {
-        native = Make_Action(
-            paramlist,
-            nullptr,  // no partials
-            &Intrinsic_Dispatcher,
-            IDX_INTRINSIC_MAX  // details array capacity
-        );
+    Phase* native = Make_Action(
+        paramlist,
+        nullptr,  // no partials
+        dispatcher,  // dispatcher is unique to this native
+        IDX_NATIVE_MAX  // details array capacity
+    );
 
-        Details* details = Phase_Details(native);
-        Init_Handle_Cfunc(Details_At(details, IDX_INTRINSIC_CFUNC), cfunc);
-    }
-    else {
-        native = Make_Action(
-            paramlist,
-            nullptr,  // no partials
-            cast(Dispatcher*, cfunc),  // dispatcher is unique to this native
-            IDX_NATIVE_MAX  // details array capacity
-        );
+    Details* details = Phase_Details(native);
 
-        Details* details = Phase_Details(native);
+    Init_Blank(Details_At(details, IDX_NATIVE_BODY));
+    Copy_Cell(
+        Details_At(details, IDX_NATIVE_CONTEXT),
+        Varlist_Archetype(module)
+    );
 
-        Init_Blank(Details_At(details, IDX_NATIVE_BODY));
-        Copy_Cell(
-            Details_At(details, IDX_NATIVE_CONTEXT),
-            Varlist_Archetype(module)
-        );
-
-        Set_Action_Flag(native, IS_NATIVE);
-    }
+    Set_Action_Flag(native, IS_NATIVE);
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like
@@ -180,15 +130,16 @@ Phase* Make_Native(
     assert(ACT_ADJUNCT(native) == nullptr);
     mutable_ACT_ADJUNCT(native) = meta;
 
-    // Some features are not supported by intrinsics, because it would make
-    // them too complicated.
+    // Some features are not supported by intrinsics on their first argument,
+    // because it would make them too complicated.
     //
     if (native_type == NATIVE_INTRINSIC) {
-        assert(ACT_NUM_PARAMS(native) == 2);  // return + 1 argument
         const Param* param = ACT_PARAM(native, 2);
         assert(Not_Parameter_Flag(param, REFINEMENT));
         assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);
+
+        Set_Action_Flag(native, CAN_RUN_AS_INTRINSIC);
     }
 
     return native;
@@ -213,7 +164,7 @@ DECLARE_NATIVE(native)
 
     UNUSED(ARG(generic));  // commentary only, at this time
 
-    if (not g_native_cfunc_pos)
+    if (not g_native_dispatcher_pos)
         return FAIL(
             "NATIVE is for internal use during boot and extension loading"
         );
@@ -227,13 +178,13 @@ DECLARE_NATIVE(native)
         : REF(intrinsic) ? NATIVE_INTRINSIC
         : NATIVE_NORMAL;
 
-    CFunction* cfunc = *g_native_cfunc_pos;
-    ++g_native_cfunc_pos;
+    Dispatcher* dispatcher = *g_native_dispatcher_pos;
+    ++g_native_dispatcher_pos;
 
     Phase* native = Make_Native(
         spec,
         native_type,
-        cfunc,
+        dispatcher,
         PG_Currently_Loading_Module
     );
 
@@ -299,8 +250,8 @@ Source* Startup_Natives(const Element* boot_natives)
     // function which carries those arguments, which would be cleaner.  The
     // C function could be passed as a HANDLE!.
     //
-    assert(g_native_cfunc_pos == nullptr);
-    g_native_cfunc_pos = g_core_native_cfuncs;
+    assert(g_native_dispatcher_pos == nullptr);
+    g_native_dispatcher_pos = g_core_native_dispatchers;
     assert(PG_Currently_Loading_Module == nullptr);
     PG_Currently_Loading_Module = Lib_Context;
 
@@ -323,10 +274,10 @@ Source* Startup_Natives(const Element* boot_natives)
     Phase* the_native_action = Make_Native(
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
-        *g_native_cfunc_pos,
+        *g_native_dispatcher_pos,
         PG_Currently_Loading_Module
     );
-    ++g_native_cfunc_pos;
+    ++g_native_dispatcher_pos;
 
     Init_Action(
         Sink_Lib_Var(NATIVE),
@@ -346,9 +297,12 @@ Source* Startup_Natives(const Element* boot_natives)
     if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
         panic (discarded);
 
-    assert(g_native_cfunc_pos == g_core_native_cfuncs + g_num_core_natives);
+    assert(
+        g_native_dispatcher_pos
+        == g_core_native_dispatchers + g_num_core_natives
+    );
 
-    g_native_cfunc_pos = nullptr;
+    g_native_dispatcher_pos = nullptr;
     PG_Currently_Loading_Module = nullptr;
 
   #if RUNTIME_CHECKS  // ensure a couple of functions can be looked up by ID

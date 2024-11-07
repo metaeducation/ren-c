@@ -3349,7 +3349,7 @@ RebolValue* API_rebCollateExtension_internal(
     const unsigned char* script_compressed,
     size_t script_compressed_size,
     int script_num_codepoints,
-    void *cfuncs,  // Dispatcher* or Intrinsic* (not in API either way)
+    void *cfuncs,  // Dispatcher*
     int cfuncs_len
 ){
     Source* a = Make_Source(IDX_COLLATOR_MAX);  // details

@@ -282,14 +282,15 @@ DECLARE_NATIVE(except)
 //  "Tells you if argument is an ERROR! antiform, doesn't fail if it is"
 //
 //      return: [logic?]
-//      ^optional
+//      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(raised_q)
+DECLARE_NATIVE(raised_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_RAISED_Q;
 
-    Init_Logic(out, Is_Meta_Of_Raised(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Meta_Of_Raised(meta));
 }
 
 
@@ -299,14 +300,27 @@ DECLARE_INTRINSIC(raised_q)
 //  "Tells you if argument is not an ERROR! antiform, doesn't fail if it is"
 //
 //      return: [logic?]
-//      ^optional
+//      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(unraised_q)
+DECLARE_NATIVE(unraised_q)
+//
+// !!! What this should be called is still under debate.  It may be that it
+// should be called SUCCESS?, e.g.
+//
+//      if success? parse "bb" [some "a"] [print "Succeeded!"]
+//
+// Note the same number of characters comes from:
+//
+//      if not trap parse "bb" [some "a"] [print "Succeeded!"]
+//
+// SUCCESS? seems good but it's also pretty vague, while UNRAISED? is laser
+// focused for what the test is actually doing.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_UNRAISED_Q;
 
-    Init_Logic(out, not Is_Meta_Of_Raised(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, not Is_Meta_Of_Raised(meta));
 }
 
 

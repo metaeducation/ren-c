@@ -771,15 +771,15 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(something_q)
+DECLARE_NATIVE(something_q)
 //
 // Comparisons in particular do not allow you to compare against NOTHING.
 //
 //   https://forum.rebol.info/t/2068
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SOMETHING_Q;
 
-    Init_Logic(out, not Is_Nothing(arg));
+    return Init_Logic(OUT, not Is_Nothing(ARG_1));
 }
 
 
@@ -792,16 +792,17 @@ DECLARE_INTRINSIC(something_q)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_INTRINSIC(vacancy_q)
+DECLARE_NATIVE(vacancy_q)
 //
 // 1. Because PARAMETER! antiforms signify unspecialized function call slots,
 //    they must be taken as ^META values if passed as an argument--even
 //    though they are stable antiforms.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_VACANCY_Q;
 
-    Meta_Unquotify_Known_Stable(arg);  // checked as ANY-VALUE?, so stable [1]
-    Init_Logic(out, Any_Vacancy(arg));
+    Value* v = ARG_1;  // meta
+    Meta_Unquotify_Known_Stable(v);  // checked ANY-VALUE?, so stable [1]
+    return Init_Logic(OUT, Any_Vacancy(v));
 }
 
 
@@ -814,16 +815,17 @@ DECLARE_INTRINSIC(vacancy_q)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_INTRINSIC(defaultable_q)
+DECLARE_NATIVE(defaultable_q)
 //
 // 1. Because PARAMETER! antiforms signify unspecialized function call slots,
 //    they must be taken as ^META values if passed as an argument--even
 //    though they are stable antiforms.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_DEFAULTABLE_Q;
 
-    Meta_Unquotify_Known_Stable(arg);  // checked as ANY-VALUE?, so stable [1]
-    Init_Logic(out, Any_Vacancy(arg) or Is_Void(arg) or Is_Nulled(arg));
+    Value* v = ARG_1;  // meta
+    Meta_Unquotify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
+    return Init_Logic(OUT, Any_Vacancy(v) or Is_Void(v) or Is_Nulled(v));
 }
 
 

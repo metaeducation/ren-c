@@ -400,17 +400,18 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 //
 //  /refinement?: native:intrinsic [
 //
-//  "Test if an argument is a path with a leading blank"
+//  "Test if an argument is a chain with a leading blank"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(refinement_q)
+DECLARE_NATIVE(refinement_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_REFINEMENT_Q;
 
-    Init_Logic(out, Is_Get_Word(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Get_Word(e));
 }
 
 
@@ -420,14 +421,15 @@ DECLARE_INTRINSIC(refinement_q)
 //  "Test if an argument is a chain with a word and trailing blank"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(set_word_q)
+DECLARE_NATIVE(set_word_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SET_WORD_Q;
 
-    Init_Logic(out, Is_Set_Word(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Set_Word(e));
 }
 
 
@@ -437,17 +439,18 @@ DECLARE_INTRINSIC(set_word_q)
 //  "Test if argument is a path like /WORD: (for setting action variables)"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(set_run_word_q)
+DECLARE_NATIVE(set_run_word_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
-    Init_Logic(
-        out,
-        Is_Path(arg)
-        and Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, arg))
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(
+        OUT,
+        Is_Path(e)
+        and Try_Get_Settable_Word_Symbol(nullptr, e)
     );
 }
 
@@ -458,14 +461,15 @@ DECLARE_INTRINSIC(set_run_word_q)
 //  "Test if an argument is a chain with a leading blank and a word"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(get_word_q)
+DECLARE_NATIVE(get_word_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_GET_WORD_Q;
 
-    Init_Logic(out, Is_Get_Word(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Get_Word(e));
 }
 
 
@@ -475,14 +479,15 @@ DECLARE_INTRINSIC(get_word_q)
 //  "Test if an argument is a chain with a tuple and trailing blank"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(set_tuple_q)
+DECLARE_NATIVE(set_tuple_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SET_TUPLE_Q;
 
-    Init_Logic(out, Is_Set_Tuple(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Set_Tuple(e));
 }
 
 
@@ -492,14 +497,15 @@ DECLARE_INTRINSIC(set_tuple_q)
 //  "Test if an argument is a chain with a leading blank and a tuple"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(get_tuple_q)
+DECLARE_NATIVE(get_tuple_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_GET_TUPLE_Q;
 
-    Init_Logic(out, Is_Get_Tuple(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Get_Tuple(e));
 }
 
 
@@ -509,14 +515,15 @@ DECLARE_INTRINSIC(get_tuple_q)
 //  "Test if an argument is a chain with a group and trailing blank"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(set_group_q)
+DECLARE_NATIVE(set_group_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SET_GROUP_Q;
 
-    Init_Logic(out, Is_Set_Group(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Set_Group(e));
 }
 
 
@@ -526,14 +533,15 @@ DECLARE_INTRINSIC(set_group_q)
 //  "Test if an argument is a chain with a leading blank and a group"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(get_group_q)
+DECLARE_NATIVE(get_group_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_GET_GROUP_Q;
 
-    Init_Logic(out, Is_Get_Group(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Get_Group(e));
 }
 
 
@@ -543,14 +551,15 @@ DECLARE_INTRINSIC(get_group_q)
 //  "Test if an argument is a chain with a block and trailing blank"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(set_block_q)
+DECLARE_NATIVE(set_block_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SET_BLOCK_Q;
 
-    Init_Logic(out, Is_Set_Block(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Set_Block(e));
 }
 
 
@@ -560,14 +569,15 @@ DECLARE_INTRINSIC(set_block_q)
 //  "Test if an argument is a chain with a leading blank and a block"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(get_block_q)
+DECLARE_NATIVE(get_block_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_GET_BLOCK_Q;
 
-    Init_Logic(out, Is_Get_Block(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Get_Block(e));
 }
 
 
@@ -577,14 +587,15 @@ DECLARE_INTRINSIC(get_block_q)
 //  "Test if an argument is a 2-element chain with a trailing blank"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(any_set_value_q)
+DECLARE_NATIVE(any_set_value_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ANY_SET_VALUE_Q;
 
-    Init_Logic(out, Any_Set_Value(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Any_Set_Value(e));
 }
 
 
@@ -597,11 +608,12 @@ DECLARE_INTRINSIC(any_set_value_q)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(any_get_value_q)
+DECLARE_NATIVE(any_get_value_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ANY_GET_VALUE_Q;
 
-    Init_Logic(out, Any_Get_Value(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Any_Get_Value(e));
 }
 
 
@@ -611,14 +623,15 @@ DECLARE_INTRINSIC(any_get_value_q)
 //  "Test if an argument is an QUASI form of word"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(quasi_word_q)
+DECLARE_NATIVE(quasi_word_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_QUASI_WORD_Q;
 
-    Init_Logic(out, Is_Quasiform(arg) and HEART_BYTE(arg) == REB_WORD);
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Quasiform(e) and HEART_BYTE(e) == REB_WORD);
 }
 
 
@@ -628,14 +641,15 @@ DECLARE_INTRINSIC(quasi_word_q)
 //  "Test if an argument is an issue with one codepoint (or #{00} NUL blob)"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(char_q)
+DECLARE_NATIVE(char_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_CHAR_Q;
 
-    Init_Logic(out, IS_CHAR(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, IS_CHAR(e));
 }
 
 
@@ -645,16 +659,17 @@ DECLARE_INTRINSIC(char_q)
 //  "Test if an argument is quoted word"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(lit_word_q)
+DECLARE_NATIVE(lit_word_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_LIT_WORD_Q;
 
-    Init_Logic(
-        out,
-        QUOTE_BYTE(arg) == ONEQUOTE_3 and HEART_BYTE(arg) == REB_WORD
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(
+        OUT,
+        QUOTE_BYTE(e) == ONEQUOTE_3 and HEART_BYTE(e) == REB_WORD
     );
 }
 
@@ -665,14 +680,15 @@ DECLARE_INTRINSIC(lit_word_q)
 //  "Test if an argument is a quoted path"
 //
 //      return: [logic?]
-//      value
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(lit_path_q)
+DECLARE_NATIVE(lit_path_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
-    Init_Logic(out, IS_QUOTED_PATH(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, IS_QUOTED_PATH(e));
 }
 
 
@@ -685,13 +701,14 @@ DECLARE_INTRINSIC(lit_path_q)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(any_inert_q)
+DECLARE_NATIVE(any_inert_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
-    Init_Logic(
-        out,
-        Not_Antiform(arg) and Any_Inert(arg)
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(
+        OUT,
+        Not_Antiform(e) and Any_Inert(e)
     );
 }
 
@@ -904,11 +921,12 @@ DECLARE_NATIVE(proxy_exports)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_INTRINSIC(infix_q)
+DECLARE_NATIVE(infix_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_INFIX_Q;
 
-    Init_Logic(out, Is_Cell_Infix(arg));
+    Element* frame = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Cell_Infix(frame));
 }
 
 
@@ -1067,14 +1085,16 @@ DECLARE_NATIVE(aliases_q)
 //      ^value
 //  ]
 //
-DECLARE_INTRINSIC(any_value_q)
+DECLARE_NATIVE(any_value_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
-    if (not Is_Quasiform(arg))  // meta
-        Init_Logic(out, true);
-    else
-        Init_Logic(out, Is_Stable_Antiform_Heart(Cell_Heart(arg)));
+    Element* meta = cast(Element*, ARG_1);
+
+    if (not Is_Quasiform(meta))  // meta, so quasiform
+        return Init_Logic(OUT, true);
+
+    return Init_Logic(OUT, Is_Stable_Antiform_Heart(Cell_Heart(meta)));
 }
 
 
@@ -1087,11 +1107,12 @@ DECLARE_INTRINSIC(any_value_q)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(element_q)
+DECLARE_NATIVE(element_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ELEMENT_Q;
 
-    Init_Logic(out, Not_Antiform(arg));
+    Value* v = ARG_1;
+    return Init_Logic(OUT, Not_Antiform(v));
 }
 
 
@@ -1104,7 +1125,7 @@ DECLARE_INTRINSIC(element_q)
 //      ^value
 //  ]
 //
-DECLARE_INTRINSIC(non_void_value_q)
+DECLARE_NATIVE(non_void_value_q)
 //
 // Being able to specify that a function does not accept voids on its type
 // checking is fundamentally different from taking ANY-VALUE? and then failing
@@ -1112,16 +1133,18 @@ DECLARE_INTRINSIC(non_void_value_q)
 // accept voids, and only pass them if they do.  So a function like REIFY
 // needs to use NON-VOID-VALUE? in its type spec to work with REDUCE.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NON_VOID_VALUE_Q;
 
-    if (not Is_Quasiform(arg)) {
-        if (Is_Meta_Of_Void(arg))
-            Init_Logic(out, false);
-        else
-            Init_Logic(out, true);
+    Element* meta = cast(Element*, ARG_1);
+
+    if (not Is_Quasiform(meta)) {
+        if (Is_Meta_Of_Void(meta))
+            return Init_Logic(OUT, false);
+
+        return Init_Logic(OUT, true);
     }
-    else
-        Init_Logic(out, Is_Stable_Antiform_Heart(Cell_Heart(arg)));
+
+    return Init_Logic(OUT, Is_Stable_Antiform_Heart(Cell_Heart(meta)));
 }
 
 
@@ -1134,12 +1157,15 @@ DECLARE_INTRINSIC(non_void_value_q)
 //      ^value
 //  ]
 //
-DECLARE_INTRINSIC(any_atom_q)
+DECLARE_NATIVE(any_atom_q)
+//
+// !!! ELEMENT? isn't ANY-ELEMENT?, so should this just be ATOM?  The policy
+// for putting ANY- in front of things has been in flux.
 {
-    UNUSED(phase);
-    UNUSED(arg);
+    INCLUDE_PARAMS_OF_ANY_ATOM_Q;
+    UNUSED(ARG_1);
 
-    Init_Logic(out, true);
+    return Init_Okay(OUT);
 }
 
 
@@ -1153,11 +1179,12 @@ DECLARE_INTRINSIC(any_atom_q)
 //      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(nihil_q)
+DECLARE_NATIVE(nihil_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NIHIL_Q;
 
-    Init_Logic(out, Is_Meta_Of_Nihil(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Meta_Of_Nihil(meta));
 }
 
 
@@ -1170,11 +1197,12 @@ DECLARE_INTRINSIC(nihil_q)
 //      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(barrier_q)
+DECLARE_NATIVE(barrier_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_BARRIER_Q;
 
-    Init_Logic(out, Is_Meta_Of_Barrier(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Meta_Of_Barrier(meta));
 }
 
 
@@ -1187,11 +1215,12 @@ DECLARE_INTRINSIC(barrier_q)
 //      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(elision_q)
+DECLARE_NATIVE(elision_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_ELISION_Q;
 
-    Init_Logic(out, Is_Meta_Of_Elision(arg));
+    Element* meta = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Meta_Of_Elision(meta));
 }
 
 
@@ -1204,65 +1233,63 @@ DECLARE_INTRINSIC(elision_q)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(void_q)
+DECLARE_NATIVE(void_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_VOID_Q;
 
-    Init_Logic(out, Is_Void(arg));
+    return Init_Logic(OUT, Is_Void(ARG_1));
 }
 
 
 //
 //  /nothing?: native:intrinsic [
 //
-//  "Tells you if argument is the state used to indicate an unset variable"
+//  "Is argument antiform blank (the state used to indicate an unset variable)"
 //
 //      return: [logic?]
-//      value "Tested to see if it is antiform blank"
-//          [any-value?]
+//      value
 //  ]
 //
-DECLARE_INTRINSIC(nothing_q)
+DECLARE_NATIVE(nothing_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NOTHING_Q;
 
-    Init_Logic(out, Is_Nothing(arg));
+    return Init_Logic(OUT, Is_Nothing(ARG_1));
 }
 
 
 //
 //  /tripwire?: native:intrinsic [
 //
-//  "Tells you if argument is a named variant of nothing (acts like unset)"
+//  "Is argument antiform tag (acts like an unset variable with a message)"
 //
 //      return: [logic?]
-//      value "Tested to see if it is antiform tag"
-//          [any-value?]
+//      value
 //  ]
 //
-DECLARE_INTRINSIC(tripwire_q)
+DECLARE_NATIVE(tripwire_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_TRIPWIRE_Q;
 
-    Init_Logic(out, Is_Tripwire(arg));
+    return Init_Logic(OUT, Is_Tripwire(ARG_1));
 }
 
 
 //
 //  /trash?: native:intrinsic [
 //
-//  "Tells you if argument is a quasiform blank (~), most routines don't take"
+//  "Tells you if argument is a quasiform blank (~)"
 //
 //      return: [logic?]
-//      value "Tested to see if it is quasiform blank"
-//          [any-value?]
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(trash_q)
+DECLARE_NATIVE(trash_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_TRASH_Q;
 
-    Init_Logic(out, Is_Trash(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Trash(e));
 }
 
 
@@ -1272,14 +1299,15 @@ DECLARE_INTRINSIC(trash_q)
 //  "Tells you if argument is a space character (#)"
 //
 //      return: [logic?]
-//      value [any-value?]
+//      element [<maybe> element?]
 //  ]
 //
-DECLARE_INTRINSIC(space_q)
+DECLARE_NATIVE(space_q)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_SPACE_Q;
 
-    Init_Logic(out, Is_Space(arg));
+    Element* e = cast(Element*, ARG_1);
+    return Init_Logic(OUT, Is_Space(e));
 }
 
 
@@ -1349,7 +1377,7 @@ DECLARE_NATIVE(light) {
 //      atom
 //  ]
 //
-DECLARE_INTRINSIC(decay)
+DECLARE_NATIVE(decay)
 //
 // 1. We take the argument as a plain (non-^META) parameter in order to make
 //    the decay process happen in the parameter fulfillment, because an idea
@@ -1358,10 +1386,11 @@ DECLARE_INTRINSIC(decay)
 //    break the contract in the case of an error.  So we let the parameter
 //    fulfillment cause the problem.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_DECAY;
 
-    Assert_Cell_Stable(arg);  // Value* should always be stable
-    Copy_Cell(out, arg);  // pre-decayed by non-^META argument [1]
+    Value* v = ARG_1;
+    Assert_Cell_Stable(v);  // Value* should always be stable
+    return COPY(v);  // pre-decayed by non-^META argument [1]
 }
 
 
@@ -1374,7 +1403,7 @@ DECLARE_INTRINSIC(decay)
 //      value [any-value?]
 //  ]
 //
-DECLARE_INTRINSIC(reify)
+DECLARE_NATIVE(reify)
 //
 // There isn't a /NOQUASI refinement to REIFY so it can be an intrinsic.  This
 // speeds up all REIFY operations, and (noquasi reify ...) will be faster
@@ -1386,9 +1415,11 @@ DECLARE_INTRINSIC(reify)
 // seem to be important...but let's see if we can get away without them and
 // have this be an intrinsic.
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_REIFY;
 
-    Reify(Copy_Cell(out, arg));
+    Value* v = ARG_1;
+    Reify(v);
+    return COPY(v);
 }
 
 
@@ -1398,16 +1429,17 @@ DECLARE_INTRINSIC(reify)
 //  "Make quasiforms into their plain forms, pass through all other elements"
 //
 //      return: [element?]
-//      value [element?]
+//      element [element?]
 //  ]
 //
-DECLARE_INTRINSIC(noquasi)
+DECLARE_NATIVE(noquasi)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NOQUASI;
 
-    Copy_Cell(out, arg);
-    if (Is_Quasiform(out))
-        QUOTE_BYTE(out) = NOQUOTE_1;
+    Element* e = cast(Element*, ARG_1);
+    if (Is_Quasiform(e))
+        QUOTE_BYTE(e) = NOQUOTE_1;
+    return COPY(e);
 }
 
 
@@ -1438,12 +1470,12 @@ DECLARE_NATIVE(degrade)
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(noantiform)
+DECLARE_NATIVE(noantiform)
 {
-    UNUSED(phase);
+    INCLUDE_PARAMS_OF_NOANTIFORM;
 
-    Copy_Cell(out, arg);
-
-    if (Is_Antiform(out))
-        QUOTE_BYTE(out) = NOQUOTE_1;
+    Value* v = ARG_1;
+    if (Is_Antiform(v))
+        QUOTE_BYTE(v) = NOQUOTE_1;
+    return COPY(v);
 }

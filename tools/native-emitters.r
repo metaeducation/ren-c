@@ -118,10 +118,6 @@ export /emit-include-params-macro: func [
     proto [text!]
     :extension [text!] "extension name"  ; once used not used now
 ][
-    if find proto "native:intrinsic" [
-        return ~  ; intrinsics don't have INCLUDE_PARAMS_OF macros
-    ]
-
     let native-name: ~
     parse3:match proto [
         opt some newline  ; stripload preserves newlines
@@ -186,6 +182,8 @@ export /emit-include-params-macro: func [
         ]
     ]
 
+    is-intrinsic: did find proto "native:intrinsic"
+
     let n: 1
     let items: collect* [
         ;
@@ -199,12 +197,20 @@ export /emit-include-params-macro: func [
         ; the user provides...so making actions may have to shuffle the
         ; position.  But it may come to be enforced for efficiency).
         ;
-        while [text? :paramlist.1] [paramlist: next paramlist]
-        if (the return:) <> :paramlist.1 [
+        ; 1. We don't want to say USED(ARG(return)) because it might be an
+        ;    intrinsic, and there is no associated frame location.
+        ;
+        while [all [
+            not tail? paramlist
+            text? paramlist.1
+        ]][
+            paramlist: next paramlist
+        ]
+        if (the return:) <> paramlist.1 [
             fail [native-name "does not have a RETURN: specification"]
         ] else [
             keep "DECLARE_PARAM(1, return)"
-            keep "USED(ARG(return))"  ; Suppress warning about not using return
+            keep "USED(p_return_)"  ; Suppress warning on not using return [1]
             n: n + 1
             paramlist: next paramlist
         ]
@@ -218,7 +224,16 @@ export /emit-include-params-macro: func [
             ]
 
             let param-name: as text! to word! noquote item
-            keep cscape [n param-name "DECLARE_PARAM($<n>, ${param-name})"]
+            all [
+                is-intrinsic
+                n = 2  ; return is 1
+            ] then [
+                keep cscape [
+                    param-name "DECLARE_INTRINSIC_PARAM(${param-name})"
+                ]
+            ] else [
+                keep cscape [n param-name "DECLARE_PARAM($<n>, ${param-name})"]
+            ]
             n: n + 1
         ]
     ]
@@ -238,7 +253,8 @@ export /emit-include-params-macro: func [
     let prefix: all [extension unspaced [extension "_"]]
     e/emit [prefix native-name items --{
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
-            Set_Flex_Info(level_->varlist, HOLD); \
+            if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC)) \
+                Set_Flex_Info(level_->varlist, HOLD); \
             $[Items]; \
     }--]
     e/emit newline

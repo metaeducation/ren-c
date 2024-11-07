@@ -38,7 +38,7 @@ PVAR SeaOfVars* Lib_Context;
 PVAR SeaOfVars* Sys_Context;
 PVAR SeaOfVars* User_Context;
 
-PVAR CFunction* const* g_native_cfunc_pos;
+PVAR Dispatcher* const* g_native_dispatcher_pos;
 PVAR VarList* PG_Currently_Loading_Module;
 
 //-- Various char tables:

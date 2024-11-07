@@ -97,10 +97,15 @@ typedef enum {
 } NativeType;
 
 
-//=//// DETAILS_FLAG_30 ///////////////////////////////////////////////////=//
+//=//// DETAILS_FLAG_CAN_RUN_AS_INTRINSIC /////////////////////////////////=//
 //
-#define DETAILS_FLAG_30 \
-    STUB_SUBCLASS_30
+// If a native is declared as `native:intrinsic`, that means it's capable of
+// running without its own Level...looking for its argument in the SPARE
+// cell of the level that dispatches it.  But it also is able to run with
+// a frame if it needs to.
+//
+#define DETAILS_FLAG_CAN_RUN_AS_INTRINSIC \
+    STUB_SUBCLASS_FLAG_30
 
 
 //=//// DETAILS_FLAG_31 ///////////////////////////////////////////////////=//

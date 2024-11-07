@@ -220,9 +220,9 @@ for-each 'info all-protos [
 e-params/write-emitted
 
 
-=== "EMIT DECLARE_NATIVE() or DECLARE_INTRINSIC() FORWARD DECLS" ===
+=== "EMIT DECLARE_NATIVE() or DECLARE_NATIVE() FORWARD DECLS" ===
 
-e-forward: make-emitter "DECLARE_NATIVE() DECLARE_INTRINSIC() forward decls" (
+e-forward: make-emitter "DECLARE_NATIVE() DECLARE_NATIVE() forward decls" (
     join output-dir %include/tmp-native-fwd-decls.h
 )
 
@@ -238,7 +238,7 @@ e-forward/emit {
      *     if (ACT_DISPATCHER(VAL_ACTION(native)) == &N_parse) { ... }
      *
      * There is also a special subclass of natives known as intrinsics, which
-     * are defined via DECLARE_INTRINSIC().  These share a common simple
+     * are defined via DECLARE_NATIVE().  These share a common simple
      * dispatcher based around a C function that can be called without a
      * frame.  See `Intrinsic` vs. `Dispatcher` types for more information.
      */
@@ -247,7 +247,7 @@ e-forward/emit newline
 
 for-each 'info all-protos [
     if info.native-type = 'intrinsic [
-        e-forward/emit [info {DECLARE_INTRINSIC(${info/name});}]
+        e-forward/emit [info {DECLARE_NATIVE(${info/name});}]
     ] else [
         e-forward/emit [info {DECLARE_NATIVE(${info/name});}]
     ]

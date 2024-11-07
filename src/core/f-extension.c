@@ -168,13 +168,13 @@ DECLARE_NATIVE(load_extension)
         = Array_At(collated, IDX_COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
         = VAL_UINT32(Array_At(collated, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
-    const Cell* cfuncs_handle
+    const Cell* dispatchers_handle
         = Array_At(collated, IDX_COLLATOR_CFUNCS);
 
-    REBLEN num_natives = Cell_Handle_Len(cfuncs_handle);
-    CFunction* *cfuncs = Cell_Handle_Pointer(
-        CFunction*,
-        cfuncs_handle
+    REBLEN num_natives = Cell_Handle_Len(dispatchers_handle);
+    Dispatcher* *dispatchers = Cell_Handle_Pointer(
+        Dispatcher*,
+        dispatchers_handle
     );
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
@@ -182,7 +182,7 @@ DECLARE_NATIVE(load_extension)
     VarList* module_ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
     node_LINK(NextVirtual, module_ctx) = Lib_Context;
 
-    g_native_cfunc_pos = cfuncs;
+    g_native_dispatcher_pos = dispatchers;
     PG_Currently_Loading_Module = module_ctx;
 
     DECLARE_ATOM (module);
@@ -236,9 +236,9 @@ DECLARE_NATIVE(load_extension)
 
     // !!! Note: This does not get cleaned up in case of an error.
     //
-    if (g_native_cfunc_pos != cfuncs + num_natives)
+    if (g_native_dispatcher_pos != dispatchers + num_natives)
         panic ("NATIVE calls did not line up with stored C function count");
-    g_native_cfunc_pos = nullptr;
+    g_native_dispatcher_pos = nullptr;
 
     assert(PG_Currently_Loading_Module == module_ctx);
     PG_Currently_Loading_Module = nullptr;
