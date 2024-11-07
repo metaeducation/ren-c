@@ -54,3 +54,22 @@
       #{61626364} = bin
    ]
 )
+
+
+~series-frozen~ !! (append as block! _ [a b c])
+~series-frozen~ !! (append as text! _ "a b c")
+~series-frozen~ !! (append as binary! _ #{AABBCC})
+
+([[a b c]] = append to block! _ [a b c])
+("a b c" = append to text! _ "a b c")
+(#{AABBCC} = append to blob! _ #{AABBCC})
+
+(_ = to blank! '{})
+(_ = to blank! make tag! 0)
+(_ = to blank! #{})
+(_ = to blank! #"")
+
+~???~ !! (to blank! '{a})
+~???~ !! (to blank! <a>)
+~???~ !! (to blank! #{AA})
+~???~ !! (to blank! #"a")

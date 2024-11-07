@@ -104,11 +104,11 @@ PVAR Element* Root_Unrun_Tag;  // parameters that degrade antiform actions
 
 PVAR Element* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 
-PVAR Element* Root_Empty_Text; // read-only ""
-PVAR Element* Root_Empty_Binary; // read-only #{}
-PVAR Element* Root_Empty_Block; // read-only []
+PVAR Element* g_empty_text; // read-only ""
+PVAR Element* g_empty_blob; // read-only #{}
+PVAR Element* g_empty_block; // read-only []
 PVAR Element* Root_Quasi_Null;  // ~null~ quasiform
-PVAR Source* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
+PVAR Source* PG_Empty_Array; // optimization of Cell_Array(g_empty_block)
 PVAR Source* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
 PVAR Source* PG_1_Quasi_Void_Array;  // used by heavy voids ~[~void~]~
 

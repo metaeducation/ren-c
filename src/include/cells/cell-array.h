@@ -1,10 +1,10 @@
 // %cell-array.h
 
 #define EMPTY_BLOCK \
-    Root_Empty_Block
+    g_empty_block
 
 #define EMPTY_ARRAY \
-    PG_Empty_Array // Note: initialized from Cell_Array(Root_Empty_Block)
+    PG_Empty_Array // Note: initialized from Cell_Array(g_empty_block)
 
 
 INLINE bool Listlike_Cell(const Cell* v) {

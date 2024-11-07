@@ -346,11 +346,11 @@ static void Init_Root_Vars(void)
     PG_Empty_Array = Make_Source_Managed(0);
     Freeze_Source_Deep(PG_Empty_Array);
 
-    ensure(nullptr, Root_Empty_Block) = Init_Block(
+    ensure(nullptr, g_empty_block) = Init_Block(
         Alloc_Value(),
         PG_Empty_Array  // holds empty array alive
     );
-    Force_Value_Frozen_Deep(Root_Empty_Block);
+    Force_Value_Frozen_Deep(g_empty_block);
 
   blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
@@ -385,12 +385,12 @@ static void Init_Root_Vars(void)
     assert(String_Len(nulled_uni) == 0);
   #endif
 
-    ensure(nullptr, Root_Empty_Text) = Init_Text(Alloc_Value(), nulled_uni);
-    Force_Value_Frozen_Deep(Root_Empty_Text);
+    ensure(nullptr, g_empty_text) = Init_Text(Alloc_Value(), nulled_uni);
+    Force_Value_Frozen_Deep(g_empty_text);
 
     Binary* bzero = Make_Binary(0);
-    ensure(nullptr, Root_Empty_Binary) = Init_Blob(Alloc_Value(), bzero);
-    Force_Value_Frozen_Deep(Root_Empty_Binary);
+    ensure(nullptr, g_empty_blob) = Init_Blob(Alloc_Value(), bzero);
+    Force_Value_Frozen_Deep(g_empty_blob);
 
     ensure(nullptr, Root_Quasi_Null) = Init_Quasi_Null(Alloc_Value());
     Protect_Cell(Root_Quasi_Null);
@@ -409,15 +409,15 @@ static void Shutdown_Root_Vars(void)
     Erase_Cell(&PG_Bounce_Delegation);
     Erase_Cell(&PG_Bounce_Suspend);
 
-    rebReleaseAndNull(&Root_Empty_Text);
-    rebReleaseAndNull(&Root_Empty_Block);
+    rebReleaseAndNull(&g_empty_text);
+    rebReleaseAndNull(&g_empty_block);
     PG_Empty_Array = nullptr;
     rebReleaseAndNull(&Root_Meta_Heavy_Null);
     PG_1_Quasi_Null_Array = nullptr;
     rebReleaseAndNull(&Root_Meta_Heavy_Void);
     PG_1_Quasi_Void_Array = nullptr;
     rebReleaseAndNull(&Root_Feed_Null_Substitute);
-    rebReleaseAndNull(&Root_Empty_Binary);
+    rebReleaseAndNull(&g_empty_blob);
     rebReleaseAndNull(&Root_Quasi_Null);
 }
 

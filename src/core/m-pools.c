@@ -1280,7 +1280,7 @@ void Assert_Pointer_Detection_Working(void)
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
-    const Binary* b = Cell_Binary(Root_Empty_Binary);
+    const Binary* b = Cell_Binary(g_empty_blob);
     assert(Detect_Rebol_Pointer(b) == DETECTED_AS_STUB);
 }
 

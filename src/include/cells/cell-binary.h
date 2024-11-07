@@ -48,7 +48,7 @@ INLINE const Byte* Cell_Blob_Size_At(
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//
 
 #define EMPTY_BINARY \
-    Root_Empty_Binary
+    g_empty_blob
 
 #define BYTE_BUF TG_Byte_Buf
 

@@ -349,7 +349,7 @@ DECLARE_GENERICS(Blob)
             Codepoint c;
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
             if (e)
-                return RAISE(e);
+                return RAISE(unwrap e);
             ++bp;  // Back_Scan() requires increment
             if (bp != Binary_Tail(Cell_Binary(v)))
                 return RAISE(Error_Not_One_Codepoint_Raw());
@@ -388,6 +388,9 @@ DECLARE_GENERICS(Blob)
             return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
         }
 
+        if (to == REB_BLANK)
+            goto handle_as_conversion;
+
         return UNHANDLED; }
 
     //=//// AS CONVERSIONS ////////////////////////////////////////////////=//
@@ -409,6 +412,7 @@ DECLARE_GENERICS(Blob)
       //    also to allow aliasing the binary in place.  Ultimately that
       //    may supplant AS, but this is what we have for now.
 
+      handle_as_conversion:
       case SYM_AS: {
         INCLUDE_PARAMS_OF_AS;
         UNUSED(ARG(element));  // v
@@ -495,6 +499,14 @@ DECLARE_GENERICS(Blob)
 
             Init_Any_String_At(ARG(element), REB_TEXT, str, index);
             return T_String(level_, verb);  // delegate word validation/etc.
+        }
+
+        if (as == REB_BLANK) {
+            Size size;
+            Cell_Bytes_At(&size, v);
+            if (size == 0)
+                return Init_Blank(OUT);
+            return RAISE("Can only AS/TO convert empty series to BLANK!");
         }
 
         return UNHANDLED; }

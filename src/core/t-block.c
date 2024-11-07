@@ -843,6 +843,9 @@ DECLARE_GENERICS(List)
             return Init_Map(OUT, map);
         }
 
+        if (to == REB_BLANK)
+            goto handle_as_conversion;
+
         return UNHANDLED; }
 
   //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
@@ -852,6 +855,7 @@ DECLARE_GENERICS(List)
     //    use the array or not is an implementation detail.  It will reuse
     //    the array at least some of the time, so freeze it all of the time.
 
+      handle_as_conversion:
       case SYM_AS: {
         INCLUDE_PARAMS_OF_AS;
         Element* v = cast(Element*, ARG(element));  // list
@@ -881,6 +885,15 @@ DECLARE_GENERICS(List)
 
             return OUT;
         }
+
+        if (as == REB_BLANK) {
+            Length len;
+            Cell_List_Len_At(&len, v);
+            if (len == 0)
+                return Init_Blank(OUT);
+            return RAISE("Can only AS/TO convert empty series to BLANK!");
+        }
+
         return UNHANDLED; }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//

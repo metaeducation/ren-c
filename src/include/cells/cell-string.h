@@ -193,4 +193,4 @@ INLINE Element* Init_Any_String_At(
 //=//// GLOBAL STRING CONSTANTS //////////////////////////////////////////=//
 
 #define EMPTY_TEXT \
-    Root_Empty_Text
+    g_empty_text

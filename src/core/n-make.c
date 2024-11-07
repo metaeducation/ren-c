@@ -335,6 +335,7 @@ DECLARE_NATIVE(to)
 //          ~null~ integer!
 //          any-sequence? any-series? any-word? any-utf8?
 //          frame!
+//          blank!
 //      ]
 //      type [type-block!]
 //      element [
@@ -342,6 +343,7 @@ DECLARE_NATIVE(to)
 //          integer!
 //          any-sequence? any-series? any-word? any-utf8?
 //          frame!
+//          blank!
 //      ]
 //  ]
 //

@@ -627,6 +627,9 @@ DECLARE_GENERICS(Utf8)
                 Canon(AS), ARG(type), Canon(TO), Canon(BLOCK_X), rebQ(v)
             );
 
+        if (to == REB_BLANK)
+            goto handle_as_conversion;
+
         return UNHANDLED; }
 
   //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
@@ -745,6 +748,14 @@ DECLARE_GENERICS(Utf8)
 
         if (as == REB_EMAIL or as == REB_URL)
             goto handle_to_conversion;  // not optimized yet, treat as TO
+
+        if (as == REB_BLANK) {
+            Size size;
+            Cell_Utf8_Size_At(&size, v);
+            if (size == 0)
+                return Init_Blank(OUT);
+            return RAISE("Can only AS/TO convert empty series to BLANK!");
+        }
 
         return UNHANDLED; }
 
