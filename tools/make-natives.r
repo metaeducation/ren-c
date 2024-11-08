@@ -120,9 +120,6 @@ leaders: [
     infix
     any-value?
     any-atom?
-    element?
-    quasi?
-    quoted?
     set-word?
     get-word?
     set-tuple?

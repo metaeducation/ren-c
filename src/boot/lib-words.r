@@ -33,7 +33,9 @@ null
 okay
 NUL
 
-blackhole
+atom?
+element?
+quasi?
 
 newline
 space

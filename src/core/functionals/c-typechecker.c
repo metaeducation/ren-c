@@ -457,6 +457,9 @@ bool Typecheck_Coerce_Argument(
     const Param* param,
     Atom* arg  // need mutability for coercion
 ){
+    if (Get_Parameter_Flag(param, NOOP_IF_VOID))
+        assert(not Is_Stable(arg) or not Is_Void(arg));  // should've bypassed
+
     if (Get_Parameter_Flag(param, CONST))
         Set_Cell_Flag(arg, CONST);  // mutability override?  [1]
 
@@ -526,9 +529,6 @@ bool Typecheck_Coerce_Argument(
     const Array* spec = maybe Cell_Parameter_Spec(param);
     const Byte* optimized = spec->misc.any.at_least_4;
     const Byte* optimized_tail = optimized + sizeof(spec->misc.any.at_least_4);
-
-    if (Get_Parameter_Flag(param, NOOP_IF_VOID))
-        assert(not Is_Stable(arg) or not Is_Void(arg));  // should've bypassed
 
     if (Is_Stable(arg)) {
         for (; optimized != optimized_tail; ++optimized) {

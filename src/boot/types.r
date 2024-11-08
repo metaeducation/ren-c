@@ -63,6 +63,9 @@ REBOL [
     }--
 ]
 
+; ============== BEGIN "ELEMENTS" THAT CAN BE PUT IN BLOCKS ==================
+<ANY-ELEMENT?>
+; ============================================================================
 
 blank       "placeholder unit type"
 ~nothing~   (CELL_MASK_NO_NODES)
@@ -476,6 +479,10 @@ quoted      "container for arbitrary levels of quoting"
             (:node1 :node2)
             [any-branch?]
             [-           -       -]
+
+; =============== END "ELEMENTS" THAT CAN BE PUT IN BLOCKS ===================
+</ANY-ELEMENT?>
+; ============================================================================
 
 antiform    "special states that cannot be stored in blocks"
             (:node1 :node2)

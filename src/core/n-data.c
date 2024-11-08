@@ -1099,24 +1099,6 @@ DECLARE_NATIVE(any_value_q)
 
 
 //
-//  /element?: native:intrinsic [
-//
-//  "Tells you if the argument is storable in a list"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(element_q)
-{
-    INCLUDE_PARAMS_OF_ELEMENT_Q;
-
-    Value* v = ARG_1;
-    return Init_Logic(OUT, Not_Antiform(v));
-}
-
-
-//
 //  /non-void-value?: native:intrinsic [
 //
 //  "If the argument (taken as meta) non void, and storable in a variable"

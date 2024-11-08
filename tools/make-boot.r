@@ -158,9 +158,10 @@ type-table: load %types.r
     var: has obj var
 
     heart*: 1  ; 0 is reserved
-    parse3:match type-table [some [not <end>
+    parse3:match type-table [some [
+        [opt some tag! <end> accept (okay)]
+        |
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
-
         name*: word!
         description*: text!
         [antiname*: quasiform! | (antiname*: null)]  ; quasiform is word in boot
@@ -238,7 +239,7 @@ type-table: load %types.r
 
     heart*: 1  ; 0 is reserved
     cycle [  ; need to be in loop for BREAK to work
-        parse3:match type-table [some [
+        parse3:match type-table [some [not <end>
             opt some [name*: tag! (
                 name*: to text! name*
                 lowercase name*
@@ -273,18 +274,20 @@ type-table: load %types.r
                     eval body  ; no support for BREAK/CONTINUE in bootstrap
                 ]
             )]
-            [name*: word! (if not blank? types* [
-                name*: to text! name*
-                assert [#"?" <> last name*]
-                append types* to text! name*
-            ])]
-            text!
-            opt quasiform!
-            group!
-            opt issue!
-            block!
-            block!
-            (heart*: heart* + 1)
+            [<end> | [
+                [name*: word! (if not blank? types* [
+                    name*: to text! name*
+                    assert [#"?" <> last name*]
+                    append types* to text! name*
+                ])]
+                text!
+                opt quasiform!
+                group!
+                opt issue!
+                block!
+                block!
+                (heart*: heart* + 1)
+            ]]
         ]] else [
             fail "Couldn't fully parse %types.r"
         ]

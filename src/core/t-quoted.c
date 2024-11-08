@@ -787,42 +787,6 @@ DECLARE_NATIVE(maybe)
 
 
 //
-//  /quoted?: native:intrinsic [
-//
-//  "Tells you if the argument is QUOTED! or not"
-//
-//      return: [logic?]
-//      element [<maybe> element?]
-//  ]
-//
-DECLARE_NATIVE(quoted_q)
-{
-    INCLUDE_PARAMS_OF_QUOTED_Q;
-
-    Element* e = cast(Element*, ARG_1);
-    return Init_Logic(OUT, Is_Quoted(e));
-}
-
-
-//
-//  /quasi?: native:intrinsic [
-//
-//  "Tells you if the argument is a quasiform or not"
-//
-//      return: [logic?]
-//      element [<maybe> element?]
-//  ]
-//
-DECLARE_NATIVE(quasi_q)
-{
-    INCLUDE_PARAMS_OF_QUASI_Q;
-
-    Element* e = cast(Element*, ARG_1);
-    return Init_Logic(OUT, QUOTE_BYTE(e) == QUASIFORM_2);
-}
-
-
-//
 //  /noquote: native:intrinsic [
 //
 //  "Removes all levels of quoting from a quoted value"

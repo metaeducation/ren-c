@@ -89,6 +89,11 @@ void Startup_Type_Predicates(void)
             UNBOUND
         );
     }
+
+    // Shorthands used in native specs, so have to be available in boot
+    //
+    Copy_Cell(Mutable_Lib_Var(ELEMENT_Q), Lib(ANY_ELEMENT_Q));
+    Copy_Cell(Mutable_Lib_Var(QUASI_Q), Lib(QUASIFORM_Q));
 }
 
 
