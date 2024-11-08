@@ -270,7 +270,7 @@ DECLARE_GENERICS(Integer)
         }
 
         if (to == REB_MONEY) {
-            deci d = int_to_deci(cast(REBDEC, VAL_INT64(val)));
+            deci d = int_to_deci(VAL_INT64(val));
             return Init_Money(OUT, d);
         }
 

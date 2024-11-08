@@ -195,12 +195,14 @@ DECLARE_GENERICS(Money)
         if (to == REB_DECIMAL or to == REB_PERCENT)
             return Init_Decimal_Or_Percent(OUT, to, deci_to_decimal(d));
 
-        if (to == REB_INTEGER) {
-            if (d.e != 0 or d.m1 != 0 or d.m2 != 0)
+        if (to == REB_INTEGER) {  // !!! how to check for digits after dot?
+            REBI64 i = deci_to_int(d);
+            deci reverse = int_to_deci(i);
+            if (not deci_is_equal(d, reverse))
                 return RAISE(
                     "Can't TO INTEGER! a MONEY! w/digits after decimal point"
                 );
-            return Init_Integer(OUT, deci_to_int(d));
+            return Init_Integer(OUT, i);
         }
 
         if (Any_Utf8_Kind(to)) {
