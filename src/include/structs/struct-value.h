@@ -66,34 +66,17 @@
     struct c_cast_helper<Byte*, Sink(Value) const&>
       { typedef Byte* type; };
 
-    template<typename V, typename T>
-    struct cast_helper<NeedWrapper<V, true>,T>
-      { static T convert(NeedWrapper<V, true> v) { return (T)(v.p);} };
-
-    template<typename V, typename T>
-    struct cast_helper<NeedWrapper<V, false>,T>
-      { static T convert(NeedWrapper<V, false> v) { return (T)(v.p);} };
-
-    // !!! Originally when NeedWrapper was specific to Cell* subclasses, it
-    // had these methods.  But commenting them out didn't break anything.
-    // Now that it's generic it shouldn't mention Node...and it's unclear why
-    // they were there.  It may be that this predated the cast operator being
-    // generalized and what it was for is now done a better way, but hold onto
-    // for a bit until sure.
-    /*
-        struct NeedWrapper { ...
-            operator copy_const_t<Node,T>* () const
-              { return p; }
-            explicit operator copy_const_t<Byte,T>* () const
-              { return reinterpret_cast<copy_const_t<Byte,T>*>(p); }
-        ... };
-    */
-
-   #if (! DEBUG_STATIC_ANALYZING)
-      template<typename V>
-      void Corrupt_If_Debug(NeedWrapper<V, true> sink)
-         { Corrupt_If_Debug(*sink.p); }
-   #endif
+    template<typename V, typename T, bool Vsink>
+    struct cast_helper<NeedWrapper<V, Vsink>,T> {
+        static T convert(const NeedWrapper<V, Vsink>& wrapper) {
+            using MV = typename std::remove_const<V>::type;
+            if (wrapper.corruption_pending) {
+                Corrupt_If_Debug(*const_cast<MV*>(wrapper.p));
+                wrapper.corruption_pending = false;
+            }
+            return (T)(wrapper.p);
+        }
+    };
 #endif
 
 

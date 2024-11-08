@@ -165,13 +165,13 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     #define Ensure_Writable(c) (c)
   #else
     template<typename T>
-    T Ensure_Readable(T cell) {
+    const T& Ensure_Readable(const T& cell) {
         Assert_Cell_Readable(cell);
         return cell;
     }
 
     template<typename T>
-    T Ensure_Writable(T cell) {
+    const T& Ensure_Writable(const T& cell) {
         Assert_Cell_Writable(cell);
         return cell;
     }
@@ -620,7 +620,7 @@ INLINE Cell* Copy_Cell_Untracked(
             && !std::is_convertible<T,const Element*>::value
         >::type* = nullptr
     >
-    INLINE Value* Copy_Cell_Overload(Init(Value) out, T v) {
+    INLINE Value* Copy_Cell_Overload(Init(Value) out, const T& v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
@@ -685,7 +685,7 @@ INLINE Cell* Move_Cell_Untracked(
             && !std::is_convertible<T,Element*>::value
         >::type* = nullptr
     >
-    INLINE Value* Move_Cell_Overload(Init(Value) out, T v) {
+    INLINE Value* Move_Cell_Overload(Init(Value) out, const T& v) {
         Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }

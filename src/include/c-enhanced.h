@@ -1378,96 +1378,169 @@
 // The idea behind a Sink() is to be able to mark on a function's interface
 // when a function argument passed by pointer is intended as an output.
 //
-// This has benefits of documentation, and can also be somewhat enforced by
+// This has benefits of documentation, and can also be given some teeth by
 // scrambling the memory that the pointer points at (so long as it isn't an
-// "in-out" parameter).
+// "in-out" parameter).  But it also applied in CHECK_CELL_SUBCLASSES, by
+// enforcing "covariance" for input parameters, and "contravariance" for
+// output parameters.
 //
-// But more than that: This can be used to address the case when a type would
-// not be accepted as an input parameter (e.g. how an Atom* cannot be passed
-// to an Element* as it may contain states invalid for an Element*).  It can
-// invert the class heirarchy (e.g. it's okay to take a pointer to an Atom*
-// for an Element* if you're going to -write- to it, because an Atom is
-// suitable for -holding- an Element.)
+// 1. If USE_CELL_SUBCLASSES is enabled, then the inheritance heirarchy has
+//    Atom at the base, with Element at the top.  Since what Elements can
+//    contain is more constrained than what Atoms can contain, this means
+//    you can pass Atom* to Element*, but not vice-versa.
+//
+//    However, when you have a Sink(Element) parameter instead of an Element*,
+//    the checking needs to be reversed.  You are -writing- an Element, so
+//    the receiving caller can pass an Atom* and it will be okay.  But if you
+//    were writing an Atom, then passing an Element* would not be okay, as
+//    after the initialization the Element could hold invalid states.
+//
+//    We use "SFINAE" to selectively enable the upside-down hierarchy, based
+//    on the `std::is_base_of<>` type trait.
+//
+// 2. The original implementation was simpler, by just doing the corruption
+//    at the moment of construction.  But this faced a problem:
+//
+//        bool some_function(Sink(char*) out, char* in) { ... }
+//
+//        if (some_function(&ptr, ptr)) { ...}
+//
+//    If you corrupt the data at the address the sink points to, you can
+//    actually be corrupting the value of a stack variable being passed as
+//    another argument before it's calculated as an argument.  So deferring
+//    the corruption after construction is necessary.  It's a bit tricky
+//    in terms of the handoffs and such.
+//
+//    While this could be factored, function calls aren't inlined in the
+//    debug build, so given the simplicity of the code
+//
+// !!! Review: the copy-and-swap idiom doesn't seem to be very helpful here,
+// as we aren't dealing with exceptions and self-assignment has to be handled
+// manually due to the handoff of the corruption_pending flag.
+//
+//    https://stackoverflow.com/questions/3279543/
 //
 #if DEBUG_USE_SINKS
     template<typename T, bool sink>
     struct NeedWrapper {
         T* p;
+        mutable bool corruption_pending;  // can't corrupt on construct [2]
+
+      //=//// TYPE ALIASES ////////////////////////////////////////////////=//
+
+        using MT = typename std::remove_const<T>::type;
+
+        template<typename U>  // for CHECK_CELL_SUBCLASSES [1]
+        using ReverseInheritable = typename std::enable_if<
+            std::is_same<U,T>::value || std::is_base_of<U,T>::value
+        >::type;
+
+      //=//// CONSTRUCTORS ////////////////////////////////////////////////=//
 
         NeedWrapper() = default;  // or MSVC warns making Option(Sink(Value))
-        NeedWrapper(nullptr_t) : p (nullptr) {}
 
-        template<
-            typename U,
-            typename std::enable_if<
-                sink  // corrupt if it's a "sink" and not a "need"
-                and not std::is_same<U,T>::value and
-                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
-            >::type* = nullptr
-        >
-        NeedWrapper(U* u) : p (u_cast(T*, u)) {
-            Corrupt_If_Debug(*p);
+        NeedWrapper(nullptr_t) {
+            p = nullptr;
+            corruption_pending = false;
         }
 
-        template<
-            typename U,
-            typename std::enable_if<
-                not sink  // don't corrupt if it's a "need" and not a "sink"
-                and not std::is_same<U,T>::value and
-                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
-            >::type* = nullptr
-        >
-        NeedWrapper(U* u) : p (u_cast(T*, u)) {
+        NeedWrapper (const NeedWrapper<T,sink>& other) {
+            p = other.p;
+            corruption_pending = p and (other.corruption_pending or sink);
+            other.corruption_pending = false;
         }
 
-        template<
-            typename U,
-            bool Usink,
-            typename std::enable_if<
-                not std::is_same<U,T>::value and
-                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
-            >::type* = nullptr
-        >
-        NeedWrapper(NeedWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
+        template<typename U, ReverseInheritable<U>* = nullptr>
+        NeedWrapper(U* u) {
+            p = u_cast(T*, u);
+            corruption_pending = p and sink;
         }
 
-        template<
-            typename U,
-            typename std::enable_if<
-                sink and
-                std::is_same<U,T>::value
-            >::type* = nullptr
-        >
-        NeedWrapper(U* u) : p (u) {
-            Corrupt_If_Debug(*p);
+        template<typename U, bool B, ReverseInheritable<U>* = nullptr>
+        NeedWrapper(const NeedWrapper<U, B>& other) {
+            p = u_cast(T*, other.p);
+            corruption_pending = p and (other.corruption_pending or sink);
+            other.corruption_pending = false;
         }
 
-        template<
-            typename U,
-            typename std::enable_if<
-                not sink
-                and std::is_same<U,T>::value
-            >::type* = nullptr
-        >
-        NeedWrapper(U* u) : p (u) {
+      //=//// ASSIGNMENT //////////////////////////////////////////////////=//
+
+        NeedWrapper& operator=(nullptr_t) {
+            p = nullptr;
+            corruption_pending = false;
+            return *this;
         }
 
-        template<
-            typename U,
-            bool Usink,
-            typename std::enable_if<
-                std::is_same<U,T>::value
-            >::type* = nullptr
-        >
-        NeedWrapper(NeedWrapper<U, Usink> u) : p (u_cast(T*, u.p)) {
+        NeedWrapper& operator=(const NeedWrapper<T,sink> other) {
+            if (this != &other) {  // self-assignment possible
+                p = other.p;
+                corruption_pending = p and (other.corruption_pending or sink);
+                other.corruption_pending = false;
+            }
+            return *this;
         }
+
+        template<typename U, ReverseInheritable<U>* = nullptr>
+        NeedWrapper& operator=(const NeedWrapper& other) {
+            if (this != &other) {  // self-assignment possible
+                p = other.p;
+                corruption_pending = p and (other.corruption_pending or sink);
+                other.corruption_pending = false;
+            }
+            return *this;
+        }
+
+        template<typename U, ReverseInheritable<U>* = nullptr>
+        NeedWrapper& operator=(U* other) {
+            p = u_cast(T*, other);
+            corruption_pending = p and sink;
+            return *this;
+        }
+
+      //=//// OPERATORS ///////////////////////////////////////////////////=//
 
         operator bool () const { return p != nullptr; }
 
-        operator T* () const { return p; }
+        operator T* () const {
+            if (corruption_pending) {
+                Corrupt_If_Debug(*const_cast<MT*>(p));
+                corruption_pending = false;
+            }
+            return p;
+        }
 
-        T* operator->() const { return p; }
+        T* operator->() const {
+            if (corruption_pending) {
+                Corrupt_If_Debug(*const_cast<MT*>(p));
+                corruption_pending = false;
+            }
+            return p;
+        }
+
+      //=//// DESTRUCTOR //////////////////////////////////////////////////=//
+
+        ~NeedWrapper() {
+            if (corruption_pending)
+                Corrupt_If_Debug(*const_cast<MT*>(p));
+        }
     };
+
+    template<typename T, bool B>
+    void Corrupt_If_Debug(NeedWrapper<T, B>& wrapper) {
+        Corrupt_If_Debug(wrapper.p);  // asked to corrupt the actual pointer
+        wrapper.corruption_pending = false;  // destructor would crash
+    }
+
+    template<typename T, bool B>
+    void Unused_Helper(NeedWrapper<T, B>& wrapper) {
+        Corrupt_If_Debug(wrapper.p);  // asked to corrupt the actual pointer
+        wrapper.corruption_pending = false;  // destructor would crash
+    }
+
+    template<typename T, bool B>
+    void Unused_Helper(const NeedWrapper<T, B>& wrapper) {
+        USED(wrapper.p);
+    }
 
     #define SinkTypemacro(T) \
         NeedWrapper<T, true>

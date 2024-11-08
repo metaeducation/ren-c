@@ -133,7 +133,7 @@
 
         explicit operator Byte* () const { return cast(Byte*, p); }
 
-        T* operator->() { return p; }
+        T* operator->() const { return p; }
 
         bool operator==(const OnStackPointer &other)
             { return this->p == other.p; }

@@ -512,8 +512,6 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
     const Element* path,
     Context* context
 ){
-    UNUSED(safe);
-
     if (not Sequence_Has_Node(path)) {  // byte compressed
         Copy_Cell(out, path);
         goto ensure_out_is_action;  // will fail, it's not an action
