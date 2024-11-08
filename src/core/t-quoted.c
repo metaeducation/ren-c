@@ -800,7 +800,7 @@ DECLARE_NATIVE(quoted_q)
     INCLUDE_PARAMS_OF_QUOTED_Q;
 
     Element* e = cast(Element*, ARG_1);
-    return Init_Logic(OUT, QUOTE_BYTE(e) >= ONEQUOTE_3);
+    return Init_Logic(OUT, Is_Quoted(e));
 }
 
 

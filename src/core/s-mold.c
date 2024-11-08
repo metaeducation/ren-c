@@ -382,7 +382,7 @@ void MF_Unhooked(Molder* mo, const Cell* v, bool form)
 //
 //  Mold_Or_Form_Cell_Ignore_Quotes: C
 //
-// Variation which molds a cell, e.g. no quoting is considered.
+// Variation which molds a cell.  Quoting is not considered, but quasi is.
 //
 // 1. It's hard to detect the exact moment of tripping over the length limit
 //    unless all code paths that add to the mold buffer (e.g. tacking on
@@ -404,7 +404,20 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     }
 
     MoldHook* hook = Mold_Hook_For_Heart(Cell_Heart(cell));
-    hook(mo, cell, form);
+
+    if (
+        GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
+        or (QUOTE_BYTE(cell) & NONQUASI_BIT)
+    ){
+        hook(mo, cell, form);
+    }
+    else {
+        Append_Codepoint(mo->string, '~');
+        if (HEART_BYTE(cell) != REB_BLANK) {
+            hook(mo, cell, form);
+            Append_Codepoint(mo->string, '~');
+        }
+    }
 
     Assert_Flex_Term_If_Needed(s);
 }
@@ -431,15 +444,7 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     for (i = 0; i < Cell_Num_Quotes(e); ++i)
         Append_Codepoint(mo->string, '\'');
 
-    if (QUOTE_BYTE(e) & NONQUASI_BIT)
-        Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
-    else {
-        Append_Codepoint(mo->string, '~');
-        if (HEART_BYTE(e) != REB_BLANK) {
-            Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
-            Append_Codepoint(mo->string, '~');
-        }
-    }
+    Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
 }
 
 

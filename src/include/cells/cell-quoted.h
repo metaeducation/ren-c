@@ -68,7 +68,7 @@ INLINE Count Cell_Num_Quotes(const Cell* v) {
     (QUOTE_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
 
 #define Is_Quoted(v) \
-    (QUOTE_BYTE(Ensure_Readable(v)) >= ONEQUOTE_3)  // '~a~ quoted, not quasi
+    (QUOTE_BYTE(Ensure_Readable(v)) >= ONEQUOTE_NONQUASI_3)
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
 //

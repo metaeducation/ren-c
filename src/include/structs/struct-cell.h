@@ -192,7 +192,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define NOQUOTE_1                   1
 #define NONQUASI_BIT                1
 #define QUASIFORM_2_COERCE_ONLY     2
-#define ONEQUOTE_3                  3  // non-QUASI state of one quote level
+#define ONEQUOTE_NONQUASI_3         3  // non-quasiquoted state of 1 quote
+#define ONEQUOTE_QUASI_3            4  // quasiquoted state of 1 quote
 
 #if RUNTIME_CHECKS && CPLUSPLUS_11  // Stop `QUOTE_BYTE(cell) = ANTIFORM_0` [2]
     struct Antiform_0_Struct {};

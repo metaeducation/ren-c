@@ -669,7 +669,7 @@ DECLARE_NATIVE(lit_word_q)
     Element* e = cast(Element*, ARG_1);
     return Init_Logic(
         OUT,
-        QUOTE_BYTE(e) == ONEQUOTE_3 and HEART_BYTE(e) == REB_WORD
+        QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and HEART_BYTE(e) == REB_WORD
     );
 }
 

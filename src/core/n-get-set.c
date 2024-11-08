@@ -722,7 +722,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
-        QUOTE_BYTE(temp) = ONEQUOTE_3;
+        QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
         const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
         if (rebRunCoreThrows_internal(
             out,  // <-- output cell
@@ -894,7 +894,7 @@ bool Set_Var_Core_Updater_Throws(
             // as BINDING OF is reviewed in terms of answers for LET.
             //
             Derelativize(temp, var, context);
-            QUOTE_BYTE(temp) = ONEQUOTE_3;
+            QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
             Push_Lifeguard(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
@@ -1044,7 +1044,7 @@ bool Set_Var_Core_Updater_Throws(
 
     Move_Cell(temp, out);
     Byte quote_byte = QUOTE_BYTE(temp);
-    QUOTE_BYTE(temp) = ONEQUOTE_3;
+    QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
     const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
     assert(Is_Action(updater));
     if (rebRunThrows(

@@ -514,21 +514,22 @@ REBLEN Find_Value_In_Binstr(
     Heart binstr_heart = Cell_Heart(binstr);
     Heart pattern_heart = Cell_Heart(pattern);
 
-    if (REB_BLOB == pattern_heart) {
+    if (REB_BLOB == pattern_heart and binstr_heart != REB_BLOB) {
         //
         // Can't search for BLOB! in an ANY-STRING? (might match on a "half
         // codepoint").  Solution is to alias input as UTF-8 binary.
         //
         if (binstr_heart != REB_BLOB)
             fail (Error_Find_String_Binary_Raw());
-        goto find_binstr_in_binstr;
     }
 
+    Count num_quotes = Cell_Num_Quotes(pattern);
     if (
-        QUOTE_BYTE(pattern) == ONEQUOTE_3
-        or (QUOTE_BYTE(pattern) == NOQUOTE_1 and (
+        num_quotes == 1
+        or (num_quotes == 0 and (
             Any_Utf8_Kind(pattern_heart)
             or REB_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
+            or REB_BLOB == pattern_heart  // binstr_heart checked for REB_BLOB
         ))
     ){
         if (binstr_heart != REB_BLOB and (
@@ -536,8 +537,6 @@ REBLEN Find_Value_In_Binstr(
         )){
             return NOT_FOUND;  // can't find NUL # in strings, only BLOB!
         }
-
-      find_binstr_in_binstr: ;
 
         // FIND provides the basis for matching things literally in strings
         // via quoted items, while the baseline behavior for finding things
@@ -550,12 +549,8 @@ REBLEN Find_Value_In_Binstr(
         //   == "<c>d"
 
         String* molded = nullptr;
-        if (
-            QUOTE_BYTE(pattern) == ONEQUOTE_3
-            or Cell_Heart(pattern) == REB_INTEGER
-         ){
+        if (num_quotes == 1 or Cell_Heart(pattern) == REB_INTEGER)
             molded = Copy_Mold_Cell_Ignore_Quotes(pattern, 0);
-        }
 
         DECLARE_ELEMENT (temp);  // !!! Note: unmanaged
         if (molded) {

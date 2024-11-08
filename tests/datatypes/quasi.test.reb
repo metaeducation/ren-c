@@ -3,7 +3,7 @@
 (not quasi? 1)
 
 (
-    v: make quasiform! 'labeled
+    v: quasi 'labeled
     all [
         quasi? v
         '~labeled~ = v
