@@ -179,26 +179,47 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 //
 //  CT_Utf8: C
 //
-// As the replacement for CHAR!, ISSUE! inherits the behavior that there are
-// no non-strict comparisons.  To compare non-strictly, they must be aliased
-// as TEXT!.
+// 1. As the replacement for CHAR!, ISSUE! inherits the behavior that there
+//    are no non-strict comparisons.  To compare non-strictly, they must be
+//    aliased as TEXT!.  (!!! This should be reviewed.)
 //
 REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 {
-    UNUSED(strict);  // always strict
+    assert(Any_Utf8_Kind(Cell_Heart(a)));
+    assert(Any_Utf8_Kind(Cell_Heart(b)));
 
-    if (IS_CHAR_CELL(a) and IS_CHAR_CELL(b)) {
-        Codepoint ca = Cell_Codepoint(a);
-        Codepoint cb = Cell_Codepoint(b);
-        REBINT num = Cast_Signed(ca) - Cast_Signed(cb);
-        if (num == 0)
-            return 0;
-        return (num > 0) ? 1 : -1;
+    if (Cell_Heart(a) == REB_ISSUE or Cell_Heart(b) == REB_ISSUE)
+        strict = true;  // always true? [1]
+
+    REBLEN l1;
+    Utf8(const*) cp1 = Cell_Utf8_Len_Size_At(&l1, nullptr, a);
+
+    REBLEN l2;
+    Utf8(const*) cp2 = Cell_Utf8_Len_Size_At(&l2, nullptr, b);
+
+    REBLEN len = MIN(l1, l2);
+
+    for (; len > 0; len--) {
+        Codepoint c1;
+        Codepoint c2;
+
+        cp1 = Utf8_Next(&c1, cp1);
+        cp2 = Utf8_Next(&c2, cp2);
+
+        REBINT d;
+        if (strict)
+            d = Cast_Signed(c1) - Cast_Signed(c2);
+        else
+            d = Cast_Signed(LO_CASE(c1)) - Cast_Signed(LO_CASE(c2));
+
+        if (d != 0)
+            return d > 0 ? 1 : -1;
     }
-    else if (not IS_CHAR_CELL(a) and not IS_CHAR_CELL(b))
-        return CT_String(a, b, true);  // strict=true
-    else
-        return IS_CHAR_CELL(a) ? -1 : 1;
+
+    if (l1 == l2)
+        return 0;
+
+    return l1 > l2 ? 1 : -1;
 }
 
 
@@ -796,7 +817,7 @@ DECLARE_GENERICS(Utf8)
         for (; n != 1; --n)
             cp = Utf8_Next(&c, cp);
 
-        return Init_Integer(OUT, c); }
+        return Init_Char_Unchecked(OUT, c); }
 
       default:
         break;

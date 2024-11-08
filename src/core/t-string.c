@@ -228,38 +228,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 //
 REBINT CT_String(const Cell* a, const Cell* b, bool strict)
 {
-    assert(Any_Utf8_Kind(Cell_Heart(a)));
-    assert(Any_Utf8_Kind(Cell_Heart(b)));
-
-    REBLEN l1;
-    Utf8(const*) cp1 = Cell_Utf8_Len_Size_At(&l1, nullptr, a);
-
-    REBLEN l2;
-    Utf8(const*) cp2 = Cell_Utf8_Len_Size_At(&l2, nullptr, b);
-
-    REBLEN len = MIN(l1, l2);
-
-    for (; len > 0; len--) {
-        Codepoint c1;
-        Codepoint c2;
-
-        cp1 = Utf8_Next(&c1, cp1);
-        cp2 = Utf8_Next(&c2, cp2);
-
-        REBINT d;
-        if (strict)
-            d = Cast_Signed(c1) - Cast_Signed(c2);
-        else
-            d = Cast_Signed(LO_CASE(c1)) - Cast_Signed(LO_CASE(c2));
-
-        if (d != 0)
-            return d > 0 ? 1 : -1;
-    }
-
-    if (l1 == l2)
-        return 0;
-
-    return l1 > l2 ? 1 : -1;
+    return CT_Utf8(a, b, strict);
 }
 
 
