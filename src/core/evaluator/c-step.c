@@ -224,7 +224,12 @@ Bounce Stepper_Executor(Level* L)
         assert(Is_Stub_Details(action));
         Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
         Param* param = ACT_PARAM(action, 2);
-
+        if (Get_Parameter_Flag(param, NOOP_IF_VOID)) {
+            if (Is_Void(SPARE)) {
+                Init_Nulled(OUT);
+                goto lookahead;
+            }
+        }
         if (Cell_ParamClass(param) == PARAMCLASS_META)
             Meta_Quotify(SPARE);
         else

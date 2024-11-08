@@ -60,7 +60,7 @@ Source* Startup_Datatypes(Array* boot_typespecs)
         // less error prone to just make them here.
         //
         SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
-        Phase* typechecker = Make_Typechecker(kind);
+        Phase* typechecker = Make_Decider_Intrinsic(kind);
         Init_Action(
             Sink_Lib_Var_For_Id(constraint_sym),
             typechecker,

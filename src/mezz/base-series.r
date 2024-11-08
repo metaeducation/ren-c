@@ -80,11 +80,11 @@ last: redescribe [
     "Concatenates values to the end of a copy of a value"
 
     return:
-        [any-series? issue! url! any-sequence? port!
+        [any-series? any-utf8? any-sequence? port!
             map! object! module! bitset!]
     base [
         type-block!
-        any-string? issue! url!
+        any-series? any-utf8?
         any-sequence?
         any-list?
         blob!
@@ -124,11 +124,8 @@ last: redescribe [
         return as type append (to text! base) :value
     ]
 
-    if find:case reduce [
-        block! the-block! meta-block!
-        group! the-group! meta-group!
-    ] type [
-        return append (copy base) :value
+    if any-list?:type type [
+        return append (copy base) value
     ]
 
     let sep

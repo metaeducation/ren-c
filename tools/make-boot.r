@@ -433,7 +433,8 @@ e-types: make-emitter "Datatype Definitions" (
 
 e-types/emit [--{
     /* Tables generated from %types.r for builtin typesets */
-    extern Decider* const g_type_deciders[];
+    extern Decider* const g_instance_deciders[];
+    extern Decider* const g_datatype_deciders[];
     extern uint_fast32_t const g_typeset_memberships[];
 }--]
 e-types/emit newline
@@ -660,16 +661,28 @@ e-typesets/emit --{
 }--
 e-typesets/emit newline
 
-decider-names: copy []
+instance-decider-names: copy []
+datatype-decider-names: copy []
 memberships: copy []
 
 for-each-datatype 't [
     e-typesets/emit [t --{
-        bool ${Propercase T.Name}_Decider(const Value* arg)
-          { return Is_${Propercase T.Name}(arg); }
+        bool ${Propercase T.Name}_Instance_Decider(const Value* v)
+          { return Is_${Propercase T.Name}(v); }
     }--]
     e-typesets/emit newline
-    append decider-names cscape [t "${Propercase T.Name}_Decider"]
+    append instance-decider-names cscape [t
+        "${Propercase T.Name}_Instance_Decider"
+    ]
+
+    e-typesets/emit [t --{
+        bool ${Propercase T.Name}_Datatype_Decider(const Value* datatype)
+          { return VAL_TYPE_KIND(datatype) == REB_${T.NAME}; }
+    }--]
+    e-typesets/emit newline
+    append datatype-decider-names cscape [t
+        "${Propercase T.Name}_Datatype_Decider"
+    ]
 
     flagits: collect [
         for-each [ts-name types] typeset-sets [
@@ -690,23 +703,53 @@ for-each-datatype 't [
 
 for-each [ts-name types] typeset-sets [
     e-typesets/emit [ts-name --{
-        bool Any_${Propercase Ts-Name}_Decider(const Value* arg)
+        bool Any_${Propercase Ts-Name}_Instance_Decider(const Value* arg)
           { return Any_${Propercase Ts-Name}(arg); }
     }--]
     e-typesets/emit newline
-    append decider-names cscape [ts-name
-        --{Any_${Propercase Ts-Name}_Decider}--
+    append instance-decider-names cscape [ts-name
+        --{Any_${Propercase Ts-Name}_Instance_Decider}--
+    ]
+
+    e-typesets/emit [ts-name --{
+        bool Any_${Propercase Ts-Name}_Datatype_Decider(const Value* arg)
+          { return Any_${Propercase Ts-Name}_Kind(VAL_TYPE_KIND(arg)); }
+    }--]
+    e-typesets/emit newline
+    append datatype-decider-names cscape [ts-name
+        --{Any_${Propercase Ts-Name}_Datatype_Decider}--
     ]
 ]
 
 e-typesets/emit [--{
-    Decider* const g_type_deciders[] = {
+    /*
+     * Instance Deciders are used when checking an instance of a type.
+     *
+     *     >> any-utf8? "abc"
+     *     == ~okay~  ; anti
+     *
+     *     >> any-utf8? [a b c]
+     *     == ~null~  ; anti
+     */
+    Decider* const g_instance_deciders[] = {
         nullptr,  /* REB_0 is reserved */
-        &$(Decider-Names),
+        &$(Instance-Decider-Names),
     };
-}--]
 
-e-typesets/emit [--{
+    /*
+     * Datatype Deciders are used when asking about a type itself.
+     *
+     *     >> any-utf8?:type text!
+     *     == ~okay~  ; anti
+     *
+     *     >> any-utf8?:type block!
+     *     == ~null~  ; anti
+     */
+    Decider* const g_datatype_deciders[] = {
+        nullptr,  /* REB_0 is reserved */
+        &$(Datatype-Decider-Names),
+    };
+
     uint_fast32_t const g_typeset_memberships[REB_MAX] = {
         0,  /* REB_0 is reserved */
         $(Memberships),

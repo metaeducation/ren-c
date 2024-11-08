@@ -80,11 +80,11 @@ void Startup_Type_Predicates(void)
     for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 1) {
         REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q);  // skip REB_T_RETURN
 
-        Phase* typechecker = Make_Typechecker(n);  // n is decider_index
+        Phase* decider = Make_Decider_Intrinsic(n);  // n is decider_index
 
         Init_Action(
             Sink_Lib_Var_For_Id(cast(SymId, id)),
-            typechecker,
+            decider,
             Canon_Symbol(cast(SymId, id)),  // cached symbol for function
             UNBOUND
         );
@@ -305,7 +305,7 @@ void Set_Parameter_Spec(
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
                 else if (dispatcher == &N_nihil_q)
                     *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
-                else if (dispatcher == &Typechecker_Dispatcher) {
+                else if (dispatcher == &Decider_Intrinsic_Dispatcher) {
                     if (optimized == optimized_tail) {
                         *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                         continue;

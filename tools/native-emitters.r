@@ -250,12 +250,20 @@ export /emit-include-params-macro: func [
     ; is an inconvenience, and if a native wants to do it for expedience then
     ; it needs to clear this bit itself (and set it back when done).
     ;
+    varlist-hold: if is-intrinsic [
+        [
+            {if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))}
+            {    Set_Flex_Info(level_->varlist, HOLD);}
+        ]
+    ] else [
+        [{Set_Flex_Info(level_->varlist, HOLD);}]
+    ]
+
     let prefix: all [extension unspaced [extension "_"]]
     e/emit [prefix native-name items --{
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
-            if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC)) \
-                Set_Flex_Info(level_->varlist, HOLD); \
-            $[Items]; \
+            $[Varlist-Hold] \
+            $(Items); \
     }--]
     e/emit newline
     e/emit newline

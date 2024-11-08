@@ -37,39 +37,43 @@
 
 
 //
-//  Typechecker_Intrinsic: C
+//  Decider_Intrinsic_Dispatcher: C
 //
 // Typecheckers may be dispatched as intrinsics, which is to say they may
 // not have their own Level and frame variables.
 //
 // See LEVEL_FLAG_DISPATCHING_INTRINSIC for more information.
 //
-Bounce Typechecker_Dispatcher(Level* level_)
+Bounce Decider_Intrinsic_Dispatcher(Level* level_)
 {
-    Value* arg_1;
-    Details* details;
     if (Get_Level_Flag(level_, DISPATCHING_INTRINSIC)) {
-        arg_1 = stable_SPARE;
-        details = Phase_Details(
+        Details* details = Phase_Details(
             cast(Phase*, VAL_ACTION(&level_->u.eval.current))
         );
-    }
-    else {
-        arg_1 = Level_Arg(level_, 2);  // skip RETURN
-        details = Phase_Details(PHASE);
+        Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
+        Decider* decider = g_instance_deciders[VAL_UINT8(index)];
+        return Init_Logic(OUT, decider(stable_SPARE));
     }
 
+    Value* arg_1 = Level_Arg(level_, 2);  // skip RETURN
+    bool check_datatype = Cell_Logic(Level_Arg(level_, 3));
+    if (check_datatype and not Is_Type_Block(arg_1))
+        return nullptr;
+
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
-    Decider* decider = g_type_deciders[VAL_UINT8(index)];
+    Decider* decider = check_datatype
+        ? g_datatype_deciders[VAL_UINT8(index)]
+        : g_instance_deciders[VAL_UINT8(index)];
 
     return Init_Logic(OUT, decider(arg_1));
 }
 
 
 //
-//  Make_Typechecker: C
+//  Make_Decider_Intrinsic: C
 //
 // The typecheckers for things like INTEGER? and ANY-SERIES? are all created
 // at boot time.
@@ -83,10 +87,12 @@ Bounce Typechecker_Dispatcher(Level* level_)
 // 1. We need a spec for our typecheckers, which is really just `value` with
 //    no type restrictions as the argument.  !!! REVIEW: add help strings?
 //
-Phase* Make_Typechecker(Offset decider_index) {
+Phase* Make_Decider_Intrinsic(Offset decider_index) {
     DECLARE_ELEMENT (spec);  // simple spec [1]
-    Source* spec_array = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
-    Init_Word(Stub_Cell(spec_array), Canon(VALUE));
+    Source* spec_array = Make_Source_Managed(2);
+    Set_Flex_Len(spec_array, 2);
+    Init_Word(Array_At(spec_array, 0), Canon(VALUE));
+    Init_Get_Word(Array_At(spec_array, 1), Canon(TYPE));
     Init_Block(spec, spec_array);
 
     VarList* meta;
@@ -101,7 +107,7 @@ Phase* Make_Typechecker(Offset decider_index) {
     Phase* typechecker = Make_Action(
         paramlist,
         nullptr,  // no partials
-        &Typechecker_Dispatcher,
+        &Decider_Intrinsic_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
     Set_Action_Flag(typechecker, CAN_RUN_AS_INTRINSIC);
@@ -311,13 +317,20 @@ bool Typecheck_Atom_Core(
                 Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
 
                 L->u.action.param = ACT_PARAM(action, 2);
+                if (Get_Parameter_Flag(L->u.action.param, NOOP_IF_VOID))
+                    if (Is_Void(v))
+                        goto test_failed;
+
                 Erase_Cell(&L->spare);
                 Copy_Cell(&L->spare, v);
                 if (Cell_ParamClass(L->u.action.param) == PARAMCLASS_META)
                     Meta_Quotify(&L->spare);
-                if (not Typecheck_Coerce_Argument(L->u.action.param, &L->spare))
+                if (not Typecheck_Coerce_Argument(
+                    L->u.action.param,
+                    u_cast(Atom*, &L->spare)
+                )){
                     goto test_failed;
-
+                }
                 L->out = scratch;
                 Erase_Cell(&L->u.eval.current);
                 Copy_Cell(&L->u.eval.current, test);
@@ -522,7 +535,7 @@ bool Typecheck_Coerce_Argument(
             if (*optimized == 0)
                 break;
 
-            Decider* decider = g_type_deciders[*optimized];
+            Decider* decider = g_instance_deciders[*optimized];
             if (decider(Stable_Unchecked(arg)))
                 goto return_true;
         }
