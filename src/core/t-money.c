@@ -70,9 +70,9 @@ REBINT CT_Money(const Cell* a, const Cell* b, bool strict)
 //
 //  Makehook_Money: C
 //
-Bounce Makehook_Money(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_MONEY);
-    UNUSED(kind);
+Bounce Makehook_Money(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_MONEY);
+    UNUSED(heart);
 
     switch (VAL_TYPE(arg)) {
       case REB_INTEGER:

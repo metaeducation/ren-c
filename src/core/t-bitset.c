@@ -90,9 +90,9 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
 //
 //  Makehook_Bitset: C
 //
-Bounce Makehook_Bitset(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_BITSET);
-    UNUSED(kind);
+Bounce Makehook_Bitset(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_BITSET);
+    UNUSED(heart);
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)

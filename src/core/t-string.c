@@ -310,8 +310,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
 //    (typically 4) per CHAR!.  For now we just assume the integer is the
 //    expected *byte* capacity, not length, as we can do that.
 //
-Bounce Makehook_String(Level* level_, Kind k, Element* def) {
-    Heart heart = cast(Heart, k);
+Bounce Makehook_String(Level* level_, Heart heart, Element* def) {
     assert(Any_String_Kind(heart) or Any_Utf8_Kind(heart));  // issue calls [1]
 
     if (Is_Integer(def))  // new string with given integer capacity [2]

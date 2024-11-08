@@ -32,15 +32,15 @@
 // to MAKE a TUPLE! from.  But primarily, this is an evaluative form of
 // TO TUPLE! on BLOCK!, with the checking that performs included.
 //
-Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg)
+Bounce Makehook_Sequence(Level* level_, Heart heart, Element* arg)
 {
     if (Is_Block(arg))
         return rebValue(
-            Canon(TO), Datatype_From_Kind(kind), Canon(REDUCE), arg
+            Canon(TO), Datatype_From_Kind(heart), Canon(REDUCE), arg
         );
 
     if (Is_Text(arg)) {
-        Option(Error*) error = Trap_Transcode_One(OUT, cast(Heart, kind), arg);
+        Option(Error*) error = Trap_Transcode_One(OUT, heart, arg);
         if (error)
             return RAISE(unwrap error);
         return OUT;

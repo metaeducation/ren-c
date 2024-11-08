@@ -105,11 +105,13 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 // of creating a word based on its symbol ID.  But generally speaking, it's
 // hard to think of anything besides [...] and @[...] being useful.
 //
-Bounce Makehook_Word(Level* level_, Kind k, Element* arg) {
-    assert(Any_Word_Kind(k));
+Bounce Makehook_Word(Level* level_, Heart heart, Element* arg) {
+    assert(Any_Word_Kind(heart));
 
     if (Is_Block(arg) or Is_The_Block(arg))
-        return rebValue(Canon(AS), Datatype_From_Kind(k), "unspaced", rebQ(arg));
+        return rebValue(
+            Canon(AS), Datatype_From_Kind(heart), "unspaced", rebQ(arg)
+        );
 
     if (Any_Sequence(arg)) {  // (make word! '/a) or (make word! 'a:) etc.
         do {
@@ -119,7 +121,7 @@ Bounce Makehook_Word(Level* level_, Kind k, Element* arg) {
         } while (Any_Sequence(arg));
 
         if (Any_Word(arg)) {
-            HEART_BYTE(arg) = k;
+            HEART_BYTE(arg) = heart;
             return COPY(arg);
         }
 
@@ -129,7 +131,7 @@ Bounce Makehook_Word(Level* level_, Kind k, Element* arg) {
         );
     }
 
-    return RAISE(Error_Bad_Make(k, arg));
+    return RAISE(Error_Bad_Make(heart, arg));
 }
 
 

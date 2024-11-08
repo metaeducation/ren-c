@@ -368,13 +368,14 @@ void Append_Map(
 // Since TO MAP! doesn't do any evaluation, drop MAKE MAP! for now...it may
 // return as an evaluating or otherwise interesting form.
 //
-Bounce Makehook_Map(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_MAP);
+Bounce Makehook_Map(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_MAP);
+    UNUSED(heart);
 
     if (Any_Number(arg))
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return FAIL(Error_Bad_Make(REB_MAP, arg));
 }
 
 

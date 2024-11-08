@@ -64,9 +64,9 @@ REBINT CT_Pair(const Cell* a, const Cell* b, bool strict)
 //
 //  Makehook_Pair: C
 //
-Bounce Makehook_Pair(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_PAIR);
-    UNUSED(kind);
+Bounce Makehook_Pair(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_PAIR);
+    UNUSED(heart);
 
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
         Option(Error*) error = Trap_Transcode_One(OUT, REB_PAIR, arg);

@@ -512,9 +512,9 @@ Value* Time_Between_Dates(
 //
 //  Makehook_Date: C
 //
-Bounce Makehook_Date(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_DATE);
-    UNUSED(kind);
+Bounce Makehook_Date(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_DATE);
+    UNUSED(heart);
 
     if (Any_List(arg))
         goto make_from_array;

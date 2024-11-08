@@ -28,8 +28,8 @@
 //
 //  Makehook_Fail: C
 //
-Bounce Makehook_Fail(Level* level_, Kind kind, Element* arg) {
-    UNUSED(kind);
+Bounce Makehook_Fail(Level* level_, Heart heart, Element* arg) {
+    UNUSED(heart);
     UNUSED(arg);
 
     return RAISE("Datatype does not have a MAKE handler registered");
@@ -43,10 +43,10 @@ Bounce Makehook_Fail(Level* level_, Kind kind, Element* arg) {
 // aren't ready yet as a general concept, this hook is overwritten in the
 // dispatch table when the extension loads.
 //
-Bounce Makehook_Unhooked(Level* level_, Kind kind, Element* arg) {
+Bounce Makehook_Unhooked(Level* level_, Heart heart, Element* arg) {
     UNUSED(arg);
 
-    const Value* type = Datatype_From_Kind(kind);
+    const Value* type = Datatype_From_Kind(heart);
     UNUSED(type); // !!! put in error message?
 
     return RAISE(

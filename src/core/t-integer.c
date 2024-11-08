@@ -69,8 +69,9 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 //    being scarcely clear why that's a logical TO moreso than 1, or 100, or
 //    anything else.  We move this oddity to MAKE.
 //
-Bounce Makehook_Integer(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_INTEGER);
+Bounce Makehook_Integer(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_INTEGER);
+    UNUSED(heart);
 
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Option(Error*) error = Trap_Transcode_One(OUT, REB_0, arg);
@@ -98,7 +99,7 @@ Bounce Makehook_Integer(Level* level_, Kind kind, Element* arg) {
     if (Is_Money(arg))  // !!! Better idea than MAKE for this?
         return Init_Integer(OUT, deci_to_int(VAL_MONEY_AMOUNT(arg)));
 
-    return FAIL(Error_Bad_Make(kind, arg));
+    return FAIL(Error_Bad_Make(REB_INTEGER, arg));
 }
 
 

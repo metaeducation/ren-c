@@ -226,12 +226,12 @@ REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 //
 //  Makehook_Utf8: C
 //
-Bounce Makehook_Utf8(Level* level_, Kind k, Element* arg) {
-    assert(Any_Utf8_Kind(k));
+Bounce Makehook_Utf8(Level* level_, Heart heart, Element* arg) {
+    assert(Any_Utf8_Kind(heart));
 
     switch(VAL_TYPE(arg)) {
       case REB_INTEGER: {
-        if (k != REB_ISSUE)
+        if (heart != REB_ISSUE)
             fail ("Only ISSUE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
@@ -241,7 +241,7 @@ Bounce Makehook_Utf8(Level* level_, Kind k, Element* arg) {
         return OUT; }
 
       case REB_BLOB: {
-        if (k != REB_ISSUE)
+        if (heart != REB_ISSUE)
             fail ("Only ISSUE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
@@ -276,7 +276,7 @@ Bounce Makehook_Utf8(Level* level_, Kind k, Element* arg) {
 
   bad_make:
 
-    return RAISE(Error_Bad_Make(k, arg));
+    return RAISE(Error_Bad_Make(heart, arg));
 }
 
 

@@ -70,7 +70,7 @@ typedef REBINT (CompareHook)(const Cell*, const Cell*, bool strict);
 // (either in the output cell given or an API cell)...or they can return
 // BOUNCE_THROWN if they throw.  (e.g. `make object! [return ...]` can throw)
 //
-typedef Bounce (MakeHook)(Level* level_, Kind kind, Element* def);
+typedef Bounce (MakeHook)(Level* level_, Heart heart, Element* def);
 
 
 // PER-TYPE TO HOOKS: for `to datatype value`

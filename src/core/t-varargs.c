@@ -360,9 +360,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 //
 //  Makehook_Varargs: C
 //
-Bounce Makehook_Varargs(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_VARARGS);
-    UNUSED(kind);
+Bounce Makehook_Varargs(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_VARARGS);
+    UNUSED(heart);
 
     // With MAKE VARARGS! on an ANY-LIST?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to

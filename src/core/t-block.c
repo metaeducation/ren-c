@@ -94,8 +94,7 @@ REBINT CT_List(const Cell* a, const Cell* b, bool strict)
 // "Make Type" dispatcher for BLOCK!, GROUP!, FENCE!, and variants (THE-GROUP!,
 // TYPE-FENCE!, etc.)
 //
-Bounce Makehook_List(Level* level_, Kind k, Element* arg) {
-    Heart heart = cast(Heart, k);
+Bounce Makehook_List(Level* level_, Heart heart, Element* arg) {
     assert(Any_List_Kind(heart));
 
     if (Is_Integer(arg) or Is_Decimal(arg)) {

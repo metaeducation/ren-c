@@ -43,9 +43,9 @@ REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 // Create a new port. This is done by calling the MAKE-PORT* function in
 // the system context.
 //
-Bounce Makehook_Port(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_PORT);
-    UNUSED(kind);
+Bounce Makehook_Port(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_PORT);
+    UNUSED(heart);
 
     if (Is_Object(arg)) {
         //

@@ -131,9 +131,8 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 //        rebol2>> make decimal! [10 2]
 //        == 1000.0
 //
-Bounce Makehook_Decimal(Level* level_, Kind k, Element* arg) {
-    assert(k == REB_DECIMAL or k == REB_PERCENT);
-    Heart heart = cast(Heart, k);
+Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_DECIMAL or heart == REB_PERCENT);
 
     switch (VAL_TYPE(arg)) {
       case REB_ISSUE: {

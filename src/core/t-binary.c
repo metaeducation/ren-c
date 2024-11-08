@@ -164,9 +164,9 @@ DECLARE_NATIVE(decode_ieee_754) {
 //
 // See also: Makehook_String(), which is similar.
 //
-Bounce Makehook_Blob(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_BLOB);
-    UNUSED(kind);
+Bounce Makehook_Blob(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_BLOB);
+    UNUSED(heart);
 
     switch (VAL_TYPE(arg)) {
       case REB_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(

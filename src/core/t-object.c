@@ -396,8 +396,9 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 //
 // For now just support ACTION! (or path/word to specify an action)
 //
-Bounce Makehook_Frame(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_FRAME);
+Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_FRAME);
+    UNUSED(heart);
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -441,7 +442,7 @@ Bounce Makehook_Frame(Level* level_, Kind kind, Element* arg) {
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
     if (not Is_Frame(arg))
-        return RAISE(Error_Bad_Make(kind, arg));
+        return RAISE(Error_Bad_Make(REB_FRAME, arg));
 
     VarList* exemplar = Make_Varlist_For_Action(
         arg,  // being used here as input (e.g. the ACTION!)
@@ -460,12 +461,11 @@ Bounce Makehook_Frame(Level* level_, Kind kind, Element* arg) {
 //
 //  Makehook_Context: C
 //
-Bounce Makehook_Context(Level* level_, Kind k, Element* arg) {
+Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
     //
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
-    assert(k == REB_OBJECT or k == REB_MODULE);
-    Heart heart = cast(Heart, k);
+    assert(heart == REB_OBJECT or heart == REB_MODULE);
 
     if (heart == REB_MODULE) {
         if (not Any_List(arg))

@@ -408,9 +408,9 @@ void Set_Location_Of_Error(
 // existing landscape so that if it is to be changed then it can be seen
 // exactly what is changing.
 //
-Bounce Makehook_Error(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_ERROR);
-    UNUSED(kind);
+Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_ERROR);
+    UNUSED(heart);
 
     // Frame from the error object template defined in %sysobj.r
     //

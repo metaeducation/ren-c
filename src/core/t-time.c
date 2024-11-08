@@ -236,9 +236,9 @@ REBINT CT_Time(const Cell* a, const Cell* b, bool strict)
 //
 //  Makehook_Time: C
 //
-Bounce Makehook_Time(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_TIME);
-    UNUSED(kind);
+Bounce Makehook_Time(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_TIME);
+    UNUSED(heart);
 
     switch (VAL_TYPE(arg)) {
       case REB_INTEGER:  // interpret as seconds

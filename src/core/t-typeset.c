@@ -378,9 +378,9 @@ DECLARE_NATIVE(hole_q)
 //
 //  Makehook_Parameter: C
 //
-Bounce Makehook_Parameter(Level* level_, Kind kind, Element* arg) {
-    assert(kind == REB_PARAMETER);
-    UNUSED(kind);
+Bounce Makehook_Parameter(Level* level_, Heart heart, Element* arg) {
+    assert(heart == REB_PARAMETER);
+    UNUSED(heart);
     return RAISE(Error_Bad_Make(REB_PARAMETER, arg));
 }
 
