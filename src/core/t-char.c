@@ -627,6 +627,11 @@ DECLARE_GENERICS(Utf8)
                 Canon(AS), ARG(type), Canon(TO), Canon(BLOCK_X), rebQ(v)
             );
 
+        if (to == REB_PAIR)
+            return rebValue(
+                Canon(TO), Canon(PAIR_X), Canon(TO), Canon(BLOCK_X), v
+            );
+
         if (to == REB_BLANK)
             goto handle_as_conversion;
 

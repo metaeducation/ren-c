@@ -4,9 +4,9 @@
 (pair! = type of 1x2)
 (1x1 = make pair! 1)
 (1x2 = make pair! [1 2])
-(1x1 = to pair! 1)
+~bad-cast~ !! (to pair! 1)
 [#17
-    (error? trap [to pair! [0.4]])
+    ~???~ !! (to pair! [0.4])
 ]
 (1x2 = to pair! [1 2])
 ("1x1" = mold 1x1)

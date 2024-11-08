@@ -843,6 +843,19 @@ DECLARE_GENERICS(List)
             return Init_Map(OUT, map);
         }
 
+        if (to == REB_PAIR) {
+            const Element* tail;
+            const Element* item = Cell_List_At(&tail, list);
+
+            if (
+                Is_Integer(item) and Is_Integer(item + 1)
+                and (tail == item + 2)
+            ){
+                return Init_Pair(OUT, VAL_INT64(item), VAL_INT64(item + 1));
+            }
+            return FAIL("TO PAIR! only works on lists with two integers");
+        }
+
         if (to == REB_BLANK)
             goto handle_as_conversion;
 

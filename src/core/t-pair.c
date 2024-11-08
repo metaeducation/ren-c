@@ -68,9 +68,6 @@ Bounce Makehook_Pair(Level* level_, Kind kind, Element* arg) {
     assert(kind == REB_PAIR);
     UNUSED(kind);
 
-    if (Is_Pair(arg))
-        return Copy_Cell(OUT, arg);
-
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
         Option(Error*) error = Trap_Transcode_One(OUT, REB_PAIR, arg);
         if (error)
@@ -78,41 +75,11 @@ Bounce Makehook_Pair(Level* level_, Kind kind, Element* arg) {
         return OUT;
     }
 
-    const Cell* x;
-    const Cell* y;
+    if (Is_Integer(arg))
+        return Init_Pair(OUT, VAL_INT64(arg), VAL_INT64(arg));
 
-    if (Is_Integer(arg)) {
-        x = arg;
-        y = arg;
-    }
-    else if (Is_Block(arg)) {
-        const Element* tail;
-        const Element* item = Cell_List_At(&tail, arg);
-
-        if (Is_Integer(item))
-            x = item;
-        else
-            goto bad_make;
-
-        ++item;
-        if (item == tail)
-            goto bad_make;
-
-        if (Is_Integer(item))
-            y = item;
-        else
-            goto bad_make;
-
-        ++item;
-        if (item != tail)
-            goto bad_make;
-    }
-    else
-        goto bad_make;
-
-    return Init_Pair(OUT, VAL_INT64(x), VAL_INT64(y));
-
-  bad_make:
+    if (Is_Block(arg))
+        return rebValue(Canon(TO), Canon(PAIR_X), Canon(REDUCE), arg);
 
     return RAISE(Error_Bad_Make(REB_PAIR, arg));
 }
@@ -211,6 +178,46 @@ DECLARE_GENERICS(Pair)
     Value* y2 = nullptr;
 
     switch (id) {
+
+    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+      case SYM_TO: {
+        INCLUDE_PARAMS_OF_TO;
+        UNUSED(ARG(element));
+        Heart to = VAL_TYPE_HEART(ARG(type));
+
+        if (Any_List_Kind(to)) {
+            Source* a = Make_Source_Managed(2);
+            Set_Flex_Len(a, 2);
+            Copy_Cell(Array_At(a, 0), Cell_Pair_First(v));
+            Copy_Cell(Array_At(a, 1), Cell_Pair_Second(v));
+            return Init_Any_List(OUT, to, a);
+        }
+
+        if (Any_String_Kind(to) or to == REB_ISSUE) {
+            DECLARE_MOLDER (mo);
+            Push_Mold(mo);
+            Mold_Element(mo, Cell_Pair_First(v));
+            Append_Codepoint(mo->string, ' ');
+            Mold_Element(mo, Cell_Pair_Second(v));
+            if (Any_String_Kind(to))
+                return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+
+            if (Try_Init_Small_Utf8_Untracked(
+                OUT,
+                to,
+                Binary_At(mo->string, mo->base.size),
+                String_Len(mo->string) - mo->base.index,
+                String_Size(mo->string) - mo->base.size
+            )){
+                return OUT;
+            }
+            String* s = Pop_Molded_String(mo);
+            Freeze_Flex(s);
+            return Init_Any_String(OUT, to, s);
+        }
+
+        return UNHANDLED; }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
