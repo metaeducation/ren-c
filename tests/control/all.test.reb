@@ -126,11 +126,11 @@
 )
 (
     a-value: ""
-    same? :a-value all [:a-value]
+    same? a-value all [a-value]
 )
 (
-    a-value: make tag! ""
-    same? :a-value all [:a-value]
+    a-value: to tag! ""
+    same? a-value all [a-value]
 )
 (0:00 == all [0:00])
 (0.0.0 == all [0.0.0])
@@ -222,11 +222,11 @@
 )
 (
     a-value: ""
-    same? :a-value all [okay :a-value]
+    same? a-value all [okay a-value]
 )
 (
-    a-value: make tag! ""
-    same? :a-value all [okay :a-value]
+    a-value: to tag! ""
+    same? a-value all [okay a-value]
 )
 (0:00 == all [okay 0:00])
 (0.0.0 == all [okay 0.0.0])
@@ -320,8 +320,8 @@
     okay = all [:a-value okay]
 )
 (
-    a-value: make tag! ""
-    okay = all [:a-value okay]
+    a-value: to tag! ""
+    okay = all [a-value okay]
 )
 (okay = all [0:00 okay])
 (okay = all [0.0.0 okay])

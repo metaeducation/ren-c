@@ -5,7 +5,7 @@
 ; minimum
 (text? "")
 ; alternative literal form
-("" == make text! "")
+("" == to text! "")
 ("" == make text! 0)
 
 ; !!! The test system uses TRANSCODE to get past strings with illegal content.
@@ -155,7 +155,7 @@
 ("^(esc)" = "^(1B)")
 ("^(back)" = "^(08)")
 ("^(del)" = "^(7f)")
-("ahoj" = make text! "ahoj")
+("ahoj" = to text! "ahoj")
 ("1" = to text! 1)
 (-{""}- = mold "")
 
@@ -169,7 +169,7 @@
 
 
 [#207
-    ~illegal-zero-byte~ !! (trap [to text! as issue! 0])
+    ~bad-cast~ !! (as issue! 0)
 ]
 
 [#2280 (  ; Byte-Order-Mark ("BOM") deprecated in UTF-8, don't hide it

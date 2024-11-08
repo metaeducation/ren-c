@@ -173,8 +173,8 @@
     same? :a-value eval reduce [:a-value]
 )
 (
-    a-value: make tag! ""
-    same? :a-value eval reduce [:a-value]
+    a-value: to tag! ""
+    same? a-value eval reduce [a-value]
 )
 (0:00 == eval [0:00])
 (0.0.0 == eval [0.0.0])

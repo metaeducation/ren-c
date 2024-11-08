@@ -70,24 +70,10 @@
     insert b a
     a == b
 )
-; email
-(
-    a: make email! 0
-    insert a #"0"
-    a == make email! "0"
-)
-(
-    a: make email! "0"
-    b: make email! 0
-    insert b first a
-    a == b
-)
-(
-    a: make email! "0"
-    b: make email! 0
-    insert b a
-    a == b
-)
+
+~???~ !! (make email! 0)
+~bad-make-arg~ !! (make email! "0")
+
 ; tag
 (
     a: make tag! 0

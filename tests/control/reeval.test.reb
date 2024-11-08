@@ -91,8 +91,8 @@
     (reeval a-value)  ; no value to assign after it...
 )
 (
-    a-value: make tag! ""
-    same? :a-value reeval :a-value
+    a-value: to tag! ""
+    same? a-value reeval a-value
 )
 (0:00 == reeval 0:00)
 (0.0.0 == reeval 0.0.0)

@@ -4,7 +4,7 @@
 (not email? 1)
 (email! = type of me@here.com)
 
-~illegal-zero-byte~ !! (to email! "")
+~scan-invalid~ !! (to email! "")
 ~???~ !! (make email! 0)
 ~???~ !! (make email! 100)
 

@@ -52,7 +52,7 @@
        counter = 1
    ]
 )(
-    m: to map! 10
+    m: make map! 10
     set @[m (1 + 2)] <hard>
     all [
         <hard> = pick m the (1 + 2)

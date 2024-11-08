@@ -18,16 +18,6 @@
 (not same? #{00} make bitset! #{00})
 ; symmetry
 (equal? same? make bitset! #{00} #{00} same? #{00} make bitset! #{00})
-; email versus text
-(
-    a-value: to email! ""
-    not same? a-value to text! a-value
-)
-; symmetry
-(
-    a-value: to email! ""
-    equal? same? to text! a-value a-value same? a-value to text! a-value
-)
 (
     a-value: %""
     not same? a-value to text! a-value

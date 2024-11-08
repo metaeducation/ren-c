@@ -17,16 +17,6 @@
 (not strict-equal? #{00} make bitset! #{00})
 ; symmetry
 (equal? strict-equal? make bitset! #{00} #{00} strict-equal? #{00} make bitset! #{00})
-; email versus text
-(
-    a-value: to email! ""
-    not strict-equal? a-value to text! a-value
-)
-; symmetry
-(
-    a-value: to email! ""
-    equal? strict-equal? to text! a-value a-value strict-equal? a-value to text! a-value
-)
 (
     a-value: %""
     not strict-equal? a-value to text! a-value

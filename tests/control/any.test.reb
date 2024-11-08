@@ -121,8 +121,8 @@
     same? :a-value any [:a-value]
 )
 (
-    a-value: make tag! ""
-    same? :a-value any [:a-value]
+    a-value: to tag! ""
+    same? a-value any [a-value]
 )
 (0:00 == any [0:00])
 (0.0.0 == any [0.0.0])
@@ -219,8 +219,8 @@
     same? :a-value any [null :a-value]
 )
 (
-    a-value: make tag! ""
-    same? :a-value any [null :a-value]
+    a-value: to tag! ""
+    same? a-value any [null a-value]
 )
 (0:00 == any [null 0:00])
 (0.0.0 == any [null 0.0.0])
@@ -315,8 +315,8 @@
     same? :a-value any [:a-value null]
 )
 (
-    a-value: make tag! ""
-    same? :a-value any [:a-value null]
+    a-value: to tag! ""
+    same? a-value any [a-value null]
 )
 (0:00 == any [0:00 null])
 (0.0.0 == any [0.0.0 null])

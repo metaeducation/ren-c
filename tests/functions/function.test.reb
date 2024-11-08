@@ -168,9 +168,9 @@
     same? :a-value f
 )
 (
-    a-value: make tag! ""
-    /f: does [:a-value]
-    same? :a-value f
+    a-value: to tag! ""
+    /f: does [a-value]
+    same? a-value f
 )
 (
     /f: does [0:00]

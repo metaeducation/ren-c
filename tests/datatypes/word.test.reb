@@ -133,8 +133,8 @@
     same? :a-value a-value
 )
 (
-    a-value: make tag! ""
-    same? :a-value a-value
+    a-value: to tag! ""
+    same? a-value a-value
 )
 (
     a-value: 0:00

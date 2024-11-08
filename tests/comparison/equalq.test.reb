@@ -32,17 +32,6 @@
 [#1459
     (not-equal? #{0141} #{0161})
 ]
-; email! vs. text!
-; RAMBO #3518
-(
-    a-value: to email! ""
-    equal? a-value to text! a-value
-)
-; email! vs. text! symmetry
-(
-    a-value: to email! ""
-    equal? equal? to text! a-value a-value equal? a-value to text! a-value
-)
 ; file! vs. text!
 ; RAMBO #3518
 (
