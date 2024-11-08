@@ -606,20 +606,28 @@ DECLARE_GENERICS(Utf8)
             );
         }
 
-        if (to == REB_EMAIL or to == REB_URL) {
+        if (to == REB_EMAIL or to == REB_URL or to == REB_SIGIL) {
             Length len;
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
 
             if (to == REB_EMAIL) {
                 if (utf8 + size != Try_Scan_Email_To_Stack(utf8, size))
-                    return FAIL(Error_Scan_Invalid_Raw(ARG(type), v));
+                    return RAISE(Error_Scan_Invalid_Raw(ARG(type), v));
+                return Move_Drop_Top_Stack_Element(OUT);
             }
-            else {
+
+            if (to == REB_URL) {
                 if (utf8 + size != Try_Scan_URL_To_Stack(utf8, size))
-                    return FAIL(Error_Scan_Invalid_Raw(ARG(type), v));
+                    return RAISE(Error_Scan_Invalid_Raw(ARG(type), v));
+                return Move_Drop_Top_Stack_Element(OUT);
             }
-            return Move_Drop_Top_Stack_Element(OUT);
+
+            assert(to == REB_SIGIL);  // transcoding is slow--need to refactor
+            Option(Error*) error = Trap_Transcode_One(OUT, REB_SIGIL, v);
+            if (error)
+                return RAISE(unwrap error);
+            return OUT;
         }
 
         if (
@@ -772,8 +780,17 @@ DECLARE_GENERICS(Utf8)
             return OUT;
         }
 
-        if (as == REB_EMAIL or as == REB_URL)
+        if (as == REB_EMAIL or as == REB_URL or as == REB_SIGIL) {
+            if (Stringlike_Has_Node(v)) {
+                const String *s = Cell_String(v);
+                if (not Is_Flex_Frozen(s)) {  // always force frozen
+                    if (Get_Cell_Flag(v, CONST))
+                        return FAIL(Error_Alias_Constrains_Raw());
+                    Freeze_Flex(s);
+                }
+            }
             goto handle_to_conversion;  // not optimized yet, treat as TO
+        }
 
         if (as == REB_BLANK) {
             Size size;

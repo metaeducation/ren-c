@@ -3035,8 +3035,8 @@ Option(Error*) Trap_Transcode_One(
     Option(Heart) heart,
     const Element* any_utf8
 ){
-    assert(Any_Utf8(any_utf8));
-    Value* trapped = rebEntrap("transcode:one as text!", any_utf8);
+    assert(Any_Utf8(any_utf8));  // use rebQ(), as SIGIL!, WORD!, evaluative
+    Value* trapped = rebEntrap("transcode:one as text!", rebQ(any_utf8));
     if (Is_Error(trapped)) {
         Error* error = Cell_Error(trapped);
         rebRelease(trapped);
