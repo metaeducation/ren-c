@@ -164,7 +164,7 @@ parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~
             emit host: [
                 ; IP-address style, make a TUPLE!
                 ;
-                /to (tuple!) across [
+                /make (tuple!) across [
                     opt some [some digit "."], some digit
                     not ahead host-char  ; don't match "1.2.3.4a" as IP address
                 ]

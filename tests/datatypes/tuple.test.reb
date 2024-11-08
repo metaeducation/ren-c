@@ -16,8 +16,7 @@
 
 ("1.2.3" = mold 1.2.3)
 
-; minimum
-(tuple? make tuple! [])
+~sequence-too-short~ !! (tuple? make tuple! [])
 
 ; there is no longer a maximum (if it won't fit in a cell, it will allocate
 ; a series)
@@ -37,9 +36,7 @@
 ; TO Conversion tests
 (
     tests: [
-        "a.b.c" [a b c]
         "a b c" [a b c]
-        "1.2.3" [1 2 3]
         "1 2 3" [1 2 3]
     ]
 

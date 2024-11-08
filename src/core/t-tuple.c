@@ -39,6 +39,13 @@ Bounce Makehook_Sequence(Level* level_, Kind kind, Element* arg)
             Canon(TO), Datatype_From_Kind(kind), Canon(REDUCE), arg
         );
 
+    if (Is_Text(arg)) {
+        Option(Error*) error = Trap_Transcode_One(OUT, cast(Heart, kind), arg);
+        if (error)
+            return RAISE(unwrap error);
+        return OUT;
+    }
+
     REBLEN alen;
 
     if (Is_Issue(arg)) {
@@ -243,8 +250,14 @@ DECLARE_GENERICS(Sequence)
         }
 
         if (Any_List_Kind(as)) {  // give immutable form, try to share memory
-            if (not Sequence_Has_Node(v))
-                return FAIL("Array Conversions of byte-oriented sequences TBD");
+            if (not Sequence_Has_Node(v)) {  // byte packed sequence
+                Source* a = Make_Source_Managed(len);
+                Set_Flex_Len(a, len);
+                Offset i;
+                for (i = 0; i < len; ++i)
+                    Copy_Sequence_At(Array_At(a, i), sequence, i);
+                return Init_Any_List(OUT, as, a);
+            }
 
             const Node* node1 = Cell_Node1(v);
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [2]
