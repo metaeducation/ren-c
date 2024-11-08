@@ -552,28 +552,42 @@ void Force_Value_Frozen_Core(
 
     if (Any_List_Kind(heart)) {
         const Source* a = Cell_Array(v);
-        if (deep)
-            Freeze_Source_Deep(a);
-        else
-            Freeze_Source_Shallow(a);
-        if (locker)
-            Set_Flex_Info(a, AUTO_LOCKED);
+        if (deep) {
+            if (not Is_Source_Frozen_Deep(a)) {
+                Freeze_Source_Deep(a);
+                if (locker)
+                    Set_Flex_Info(a, AUTO_LOCKED);
+            }
+        }
+        else {
+            if (not Is_Source_Frozen_Shallow(a)) {
+                Freeze_Source_Shallow(a);
+                if (locker)
+                    Set_Flex_Info(a, AUTO_LOCKED);
+            }
+        }
     }
     else if (Any_Context_Kind(heart)) {
         VarList* c = Cell_Varlist(v);
-        if (deep)
-            Deep_Freeze_Context(c);
+        if (deep) {
+            /*if (not Is_Context_Frozen_Deep(c)) {*/  // !!! review
+                Deep_Freeze_Context(c);
+                if (locker)
+                    Set_Flex_Info(Varlist_Array(c), AUTO_LOCKED);
+            /*}*/
+        }
         else
             fail ("What does a shallow freeze of a context mean?");
-        if (locker)
-            Set_Flex_Info(Varlist_Array(c), AUTO_LOCKED);
     }
     else if (Any_Series_Kind(heart)) {
-        const Flex* f = Cell_Flex(v);
-        Freeze_Flex(f);
         UNUSED(deep);
-        if (locker)
-            Set_Flex_Info(f, AUTO_LOCKED);
+
+        const Flex* f = Cell_Flex(v);
+        if (not Is_Flex_Frozen(f)) {
+            Freeze_Flex(f);
+            if (locker)
+                Set_Flex_Info(f, AUTO_LOCKED);
+        }
     }
     else if (Any_Sequence_Kind(heart)) {
         // No freezing needed

@@ -91,7 +91,7 @@ INLINE void Fail_If_Read_Only_Flex(const Flex* f) {
         return;
 
     if (Get_Flex_Info(f, AUTO_LOCKED))
-        fail (Error_Series_Auto_Locked_Raw());
+        fail (Error_Series_Auto_Frozen_Raw());
 
     if (Get_Flex_Info(f, HOLD))
         fail (Error_Series_Held_Raw());
@@ -137,14 +137,16 @@ INLINE const Source* Freeze_Source_Shallow(const Source* a) {
 #define Is_Array_Shallow_Read_Only(a) \
     Is_Flex_Read_Only(a)
 
+#define BLAMELESS nullptr
+
 #define Force_Value_Frozen_Deep(v) \
-    Force_Value_Frozen_Core((v), true, EMPTY_ARRAY)  // auto-locked
+    Force_Value_Frozen_Core((v), true, BLAMELESS)
 
 #define Force_Value_Frozen_Deep_Blame(v,blame) \
     Force_Value_Frozen_Core((v), true, blame)
 
 #define Force_Value_Frozen_Shallow(v) \
-    Force_Value_Frozen_Core((v), false, EMPTY_ARRAY)  // auto-locked
+    Force_Value_Frozen_Core((v), false, BLAMELESS)
 
 
 #if NO_RUNTIME_CHECKS

@@ -127,8 +127,8 @@
     ('II = m.(the ''[x y]))
     ('IIII = m.(the ''''[m n o p]))
 
-    ~series-auto-locked~ !! (append noquote b2 'z)
-    ~series-auto-locked~ !! (append noquote b4 'q)
+    ~series-auto-frozen~ !! (append noquote b2 'z)
+    ~series-auto-frozen~ !! (append noquote b4 'q)
 ]
 
 

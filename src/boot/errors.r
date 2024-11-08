@@ -269,9 +269,9 @@ Access: [
     const-value:        ["CONST or iterative value (see MUTABLE):" :arg1]
 
     series-protected:   "series read-only due to PROTECT (see UNPROTECT)"
-    series-frozen:      "series is source or permanently locked, can't modify"
+    series-frozen:      "series is permanently frozen, can't modify"
     series-held:        "series has temporary read-only hold for iteration"
-    series-auto-locked: "series was implicitly locked (e.g. as key for MAP!)"
+    series-auto-frozen: "series was implicitly frozen (e.g. as key for MAP!)"
 
     series-data-freed:  "series contents no longer available due to FREE"
 
