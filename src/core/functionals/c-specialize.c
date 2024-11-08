@@ -222,7 +222,7 @@ VarList* Make_Varlist_For_Action(
 //
 bool Specialize_Action_Throws(
     Sink(Value) out,
-    Value* specializee,
+    const Value* specializee,
     Option(Value*) def,  // !!! REVIEW: binding modified directly, not copied
     StackIndex lowest_stackindex
 ){

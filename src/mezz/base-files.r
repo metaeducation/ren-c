@@ -195,7 +195,7 @@ REBOL [
 ][
     return all [
         let pos: find system.options.file-types maybe suffix-of file
-        first maybe find pos matches word!
+        first maybe find pos word?/
     ]
 ]
 

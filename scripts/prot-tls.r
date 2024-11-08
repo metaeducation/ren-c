@@ -1885,11 +1885,11 @@ sys.util/make-scheme [
                 suite: null
 
                 ; !!! Doesn't appear to be used
-                cipher-suite: accessor does [first find suite matches word!]
+                cipher-suite: accessor does [first find suite word?/]
 
-                key-method: accessor does [first find suite matches tag!]
+                key-method: accessor does [first find suite tag?/]
 
-                hashspec: accessor does [find suite matches issue!]
+                hashspec: accessor does [find suite issue?/]
                 hash-method: accessor does [to word! first hashspec]
                 hash-size: accessor does [
                     select (ensure block! second hashspec) 'size
@@ -1916,7 +1916,7 @@ sys.util/make-scheme [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
 
-                cryptspec: accessor does [find suite matches the-word!]
+                cryptspec: accessor does [find suite the-word?/]
                 crypt-method: accessor does [first cryptspec]
                 crypt-size: accessor does [
                     select (ensure block! second cryptspec) 'size

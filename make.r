@@ -1947,7 +1947,7 @@ prep: make rebmake.entry-class [
                 unspaced ["MODULE=" ext.name]
                 unspaced ["SRC=extensions/" switch type of ext.source [
                     file! [ext.source]
-                    block! [first find ext.source matches file!]
+                    block! [first find ext.source typechecker file!]
                     fail "ext.source must be BLOCK! or FILE!"
                 ]]
                 unspaced ["OS_ID=" platform-config.id]

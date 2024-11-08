@@ -590,3 +590,200 @@ bool Typecheck_Coerce_Argument(
 
     return true;
 }
+
+
+//
+//  Init_Typechecker: C
+//
+// Give back an action antiform which can act as a checkerfor a datatype.
+//
+Value* Init_Typechecker(Init(Value) out, const Element* types) {
+    if (Is_Type_Block(types)) {
+        Kind kind = VAL_TYPE_KIND(types);
+        Offset n = cast(Offset, kind);
+
+        SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
+        return Copy_Cell(out, Lib_Var_For_Id(constraint_sym));
+    }
+
+    assert(Is_Type_Word(types));
+
+    return Get_Var_May_Fail(out, types, SPECIFIED);
+}
+
+
+//
+//  /typechecker: native [
+//
+//  "Make a function for checking types (generated function gives LOGIC!)"
+//
+//      return: [action?]
+//      types [type-word! type-block!]
+//  ]
+//
+DECLARE_NATIVE(typechecker)
+//
+// Compare with MATCHER:
+//
+//    >> t: typechecker [null? integer!]
+//
+//    >> t 1020
+//    == ~okay~  ; anti
+//
+//    >> t <abc>
+//    == ~null~  ; anti
+//
+//    >> t null
+//    == ~okay~  ; anti
+{
+    INCLUDE_PARAMS_OF_TYPECHECKER;
+
+    Element* types = cast(Element*, ARG(types));
+    return Init_Typechecker(OUT, types);
+}
+
+
+//
+//  /match: native [
+//
+//  "Check value using the same typechecking that functions use for parameters"
+//
+//      return: "Input if it matched, NULL if it did not"
+//          [any-value?]
+//      test "Type specification, can use NULL instead of [null?]"  ; [1]
+//          [~null~ block! type-word! type-group! type-block! parameter!]
+//      value "If not /META, NULL values illegal, and VOID returns NULL"  ; [2]
+//          [any-value?]
+//      :meta "Return the ^^META result (allows checks on NULL and VOID)"
+//  ]
+//
+DECLARE_NATIVE(match)
+//
+// Note: Ambitious ideas for the "MATCH dialect" are on hold, and this function
+// just does some fairly simple matching:
+//
+//   https://forum.rebol.info/t/time-to-meet-your-match-dialect/1009/5
+//
+// 1. Passing in NULL for test is taken as a synonym for [null?], which isn't
+//    usually very useful for MATCH, but it's useful for things built on it
+//    (like ENSURE and NON):
+//
+//        >> result: null
+//
+//        >> ensure null result
+//        == null
+//
+//        >> non null result
+//        ** Error: NON argument cannot be [null?]
+//
+// 2. Passing in NULL for *value* creates a problem, because it conflates the
+//    "didn't match" signal with the "did match" signal.  To solve this problem
+//    requires MATCH:META
+//
+//        >> match:meta [~null~ integer!] 10
+//        == '10
+//
+//        >> match:meta [~null~ integer!] null
+//        == ~null~
+//
+//        >> match:meta [~null~ integer!] <some-tag>
+//        == ~null~  ; anti
+{
+    INCLUDE_PARAMS_OF_MATCH;
+
+    Value* v = ARG(value);
+    Value* test = ARG(test);
+
+    if (not REF(meta)) {
+        if (Is_Nulled(v))
+            return FAIL(Error_Need_Non_Null_Raw());  // [1]
+    }
+
+    if (Is_Nulled(test)) {
+        if (not REF(meta))
+            return FAIL(
+                "Can't give coherent answer for NULL matching without /META"
+            );
+
+        if (Is_Nulled(v))
+            return Init_Meta_Of_Null(OUT);
+
+        return Init_Nulled(OUT);
+    }
+
+    switch (VAL_TYPE(test)) {
+      case REB_PARAMETER:
+      case REB_BLOCK:
+      case REB_TYPE_WORD:
+      case REB_TYPE_GROUP:
+      case REB_TYPE_BLOCK:
+        if (not Typecheck_Atom(test, v))
+            return nullptr;
+        break;
+
+      default:
+        assert(false);  // all test types should be accounted for in switch
+        return FAIL(PARAM(test));
+    }
+
+    //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
+
+    if (Is_Void(v) and not REF(meta))  // not a good case of void-in-null-out
+        return FAIL("~void~ antiform needs MATCH:META if in set being tested");
+
+    Copy_Cell(OUT, v);
+
+    if (REF(meta))
+        Meta_Quotify(OUT);
+
+    return OUT;
+}
+
+
+//
+//  /matcher: native [
+//
+//  "Make a specialization of the MATCH function for a fixed type argument"
+//
+//      return: [action?]
+//      test "Type specification, can use NULL instead of [null?]"  ; [1]
+//          [~null~ block! type-word! type-group! type-block! parameter!]
+//  ]
+//
+DECLARE_NATIVE(matcher)
+//
+// This is a bit faster at making a specialization than usermode code.
+//
+// Compare with TYPECHECKER
+//
+//    >> m: matcher [null? integer!]
+//
+//    >> m 1020
+//    == 1020
+//
+//    >> m <abc>
+//    == ~null~  ; anti
+//
+//    >> m null
+//    ** Script Error: non-NULL value required
+//
+//    >> m:meta null
+//    == ~null~
+//
+// 1. See MATCH for comments.
+{
+    INCLUDE_PARAMS_OF_MATCHER;
+
+    Value* test = ARG(test);
+
+    Source* a = Make_Source_Managed(2);
+    Set_Flex_Len(a, 2);
+    Init_Set_Word(Array_At(a, 0), Canon(TEST));
+    Copy_Meta_Cell(Array_At(a, 1), test);
+    Init_Block(SPARE, a);
+
+    if (Specialize_Action_Throws(OUT, Lib(MATCH), stable_SPARE, STACK_BASE))
+        return THROWN;
+
+    return OUT;
+}

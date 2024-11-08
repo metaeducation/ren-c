@@ -571,44 +571,6 @@ DECLARE_NATIVE(pack_p)
 
 
 //
-//  Init_Matcher: C
-//
-// Give back an action antiform which can act as a matcher for a datatype.
-//
-Value* Init_Matcher(Init(Value) out, const Element* types) {
-    if (Is_Type_Block(types)) {
-        Kind kind = VAL_TYPE_KIND(types);
-        Offset n = cast(Offset, kind);
-
-        SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
-        return Copy_Cell(out, Lib_Var_For_Id(constraint_sym));
-    }
-
-    assert(Is_Type_Word(types));
-
-    return Get_Var_May_Fail(out, types, SPECIFIED);
-}
-
-
-//
-//  /matches: native [
-//
-//  "Make a function for matching types"
-//
-//      return: [action?]
-//      types [type-word! type-block!]
-//  ]
-//
-DECLARE_NATIVE(matches)
-{
-    INCLUDE_PARAMS_OF_MATCHES;
-
-    Element* types = cast(Element*, ARG(types));
-    return Init_Matcher(OUT, types);
-}
-
-
-//
 //  /splice?: native:intrinsic [
 //
 //  "Tells you if argument is a splice (antiform group)"

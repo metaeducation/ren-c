@@ -99,7 +99,7 @@ assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
     ; faster than this usermode prelude.
     ;
     all [
-        not find spec matches tag!
+        not find spec tag?/
         return func* spec body
     ]
 

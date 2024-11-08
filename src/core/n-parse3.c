@@ -1054,7 +1054,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Get_Var_May_Fail(temp, rule, P_RULE_BINDING);
         }
         else if (Is_Type_Word(rule) or Is_Type_Block(rule)) {
-            Init_Matcher(temp, rule);
+            Init_Typechecker(temp, rule);
         }
         else {
             Copy_Cell(temp, rule);

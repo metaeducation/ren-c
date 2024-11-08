@@ -1,0 +1,28 @@
+; %typechecker.test.reb
+; 
+; The typechecker and matcher are functions that need to have their
+; implementations merged and streamlined.
+;
+; It's not entirely clear what circumstances will require a pure
+; LOGIC! result like what the typechecker returns (e.g. would FIND
+; allow you to use a MATCHER instead of a TYPECHECKER, and consider
+; any non-null (and non-void) output to be a "branch trigger"?
+;
+; Similar questions exist for type constraint functions used in
+; type specs.
+
+(all [
+    t: typechecker word!
+    okay? t 'abc
+    null? t <abc>
+    null? t null
+    null? t void
+])
+
+(all [
+    m: matcher word!
+    'abc = m 'abc
+    null = m <abc>
+    e: sys.util/rescue [m null]
+    e.id = 'need-non-null
+])

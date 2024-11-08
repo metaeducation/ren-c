@@ -128,7 +128,7 @@ INLINE void Set_Cell_Infix_Mode(Cell* c, Option(InfixMode) mode) {
     Set_Cell_Crumb(c, maybe mode);
 }
 
-INLINE bool Is_Cell_Infix(Cell* c) {  // slightly faster than != PREFIX_0 check
+INLINE bool Is_Cell_Infix(const Cell* c) {  // slightly faster than != PREFIX_0
     assert(HEART_BYTE(c) == REB_FRAME);
     return did (c->header.bits & CELL_MASK_CRUMB);
 }

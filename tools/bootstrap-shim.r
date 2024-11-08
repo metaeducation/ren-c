@@ -401,8 +401,8 @@ get-path!: func3 [] [
 /any-value?: func3 [x] [true]  ; now inclusive of null
 /element?: any-value?/  ; used to exclude null
 
-/matches: func3 [x [~null~ datatype! typeset! block!]] [
-    if :x [if block? x [make typeset! x] else [x]]
+/typechecker: func3 [x [datatype! typeset! block!]] [
+    if x [if block? x [make typeset! x] else [x]]
 ]
 
 

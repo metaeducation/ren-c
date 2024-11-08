@@ -45,6 +45,7 @@ errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 
 optimized-out
 
+test  ; used by MATCHER
 
 ;=== COMBINATORS ===
 

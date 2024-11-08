@@ -164,6 +164,7 @@
 %functions/return.test.reb
 %functions/shove.test.reb
 %functions/specialize.test.reb
+%functions/typechecker.test.reb
 %functions/unwind.test.reb
 
 %loops/break.test.reb
