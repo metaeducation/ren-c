@@ -1089,6 +1089,12 @@ e-lib/emit [ver --{
      * the variadic arguments, it can offer hooks to convert C++ values into
      * Rebol values.  (See the Argument Conversion Functions above).
      *
+     * !!! NOTE: Because API calls are being done with macros, it's already
+     * feasible that they might be able to pass the __FILE__ and __LINE__
+     * information somehow.  This could be folded into the variadi
+     * mechanisms with reb__FILE__(const char*) and reb__LINE__(int) being
+     * instructions that debug builds of API client code could slip in.
+     *
      * 1. In the spirit of dependency control, we only include <stdarg.h> if
      *    actually using the C variadic method.  This means the API table
      *    uses `void* vaptr` instead of `va_list* vaptr`.

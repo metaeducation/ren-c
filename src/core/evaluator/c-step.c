@@ -242,8 +242,11 @@ Bounce Stepper_Executor(Level* L)
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);
         Bounce bounce = (*dispatcher)(L);  // flag says level_ is not its Level
-        assert(bounce == L->out);
-        UNUSED(bounce);
+        if (bounce == BOUNCE_FAIL)
+            return bounce;
+        if (Is_Raised(OUT))
+            return FAIL(Cell_Error(OUT));
+        assert(bounce == L->out);  // no BOUNCE_CONTINUE, or API handles, etc.
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
         goto lookahead; }
 

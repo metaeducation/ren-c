@@ -146,6 +146,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 
 #define Init_Block(v,a)     Init_Any_List((v), REB_BLOCK, (a))
 #define Init_Group(v,a)     Init_Any_List((v), REB_GROUP, (a))
+#define Init_Fence(v,a)     Init_Any_List((v), REB_FENCE, (a))
 
 
 INLINE Element* Init_Relative_Block_At(

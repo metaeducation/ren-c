@@ -183,12 +183,9 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(19)
 
 
-//=//// LEVEL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_20 /////////////////////////////////////////////////////=//
 //
-// Marks an error to hint that a level is internal, and that reporting an
-// error on it probably won't give a good report.
-//
-#define LEVEL_FLAG_BLAME_PARENT \
+#define LEVEL_FLAG_20 \
     FLAG_LEFT_BIT(20)
 
 

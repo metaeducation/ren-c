@@ -138,7 +138,10 @@ Bounce Reflect_Core(Level* level_)
             const Source* s = Cell_Array(v);
             if (Not_Source_Flag(s, HAS_FILE_LINE))
                 return nullptr;
-            return Init_File(OUT, LINK(Filename, s)); }
+            Option(const String*) file = LINK(Filename, s);
+            if (not file)
+                return nullptr;
+            return Init_File(OUT, unwrap file); }
 
           case SYM_LINE: {
             if (not Any_List(v))

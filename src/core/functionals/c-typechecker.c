@@ -334,9 +334,13 @@ bool Typecheck_Atom_Core(
                 L->out = scratch;
                 Erase_Cell(&L->u.eval.current);
                 Copy_Cell(&L->u.eval.current, test);
+
                 Bounce bounce = (*dispatcher)(L);
-                assert(bounce == L->out);
-                UNUSED(bounce);
+                if (bounce == BOUNCE_FAIL)
+                    fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+                if (Is_Raised(L->out))
+                    fail (Cell_Error(L->out));
+                assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
 
                 if (not Is_Logic(scratch))
                     fail (Error_No_Logic_Typecheck(label));

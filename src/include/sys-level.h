@@ -323,12 +323,32 @@ INLINE VarList* Varlist_Of_Level_Force_Managed(Level* L) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-INLINE void Get_Level_Label_Or_Nulled(Sink(Value) out, Level* L) {
+// How good levels are at retaining their labels may vary in the future.  It's
+// only a Symbol for now (e.g. the symbol of the last WORD! in a TUPLE! that
+// ran the action).  But it could perhaps store full TUPLE! information,
+// maybe only in a Debug mode.
+//
+// We abstract that idea by writing a cell.  This also gives us a chance to
+// make sure you're only asking about Action levels, or levels that are
+// dispatching intrinsics.
+//
+// 1. If LEVEL_FLAG_DISPATCHING_INTRINSIC is true, then we could get label
+//    information here.  But it's probably better to have the very few callers
+//    that can deal with intrinsics do so, to avoid giving the impression that
+//    the label we give back is for the level itself (it may be that Action
+//    levels can call intrinsics using their level, and we don't want to wind
+//    up skipping the Action level in a stack trace by thinking its label has
+//    been accounted for by the intrinsic).
+
+INLINE Option(Element*) Try_Get_Action_Level_Label(
+    Sink(Element) out,
+    Level* L
+){
+    assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));  // be cautious [1]
     assert(Is_Action_Level(L));
     if (L->label)
-        Init_Word(out, unwrap L->label);  // WORD!, PATH!, or stored invoke
-    else
-        Init_Nulled(out);  // anonymous invocation
+        return Init_Word(out, unwrap L->label);
+    return nullptr;
 }
 
 INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {

@@ -315,66 +315,82 @@ const Value* Find_Error_For_Sym(SymId id)
 // the cheaper DEBUG_PRINTF_FAIL_LOCATIONS was added, which works well enough
 // if you're not running under a C debugger.)
 //
+// 1. Intrinsic natives are very limited in what they are allowed to do (when
+//    they are executing as an intrinsic, e.g. they have only one argument
+//    that lives in their parent Level's SPARE).  But FAIL is one of the
+//    things they should be able to do, and we need to know what's failing...
+//    so we can't implicate the parent.
+//
+// 2. The WHERE is a backtrace of a block of words, starting from the top of
+//    the stack and going downwards.  If a label is not available for a level,
+//    we could omit it (which would be deceptive) or we could put ~anonymous~
+//    there.  The lighter tidle of trash (~) is a fairly slight choice, but
+//    so far it has seemed to be less abrasive while still useful.
+//
+// 3. A Level that is in the process of gathering its arguments isn't running
+//    its own code yet.  So it's kind of important to distinguish it in the
+//    stack trace to make that fact clear.  (For a time it was not listed
+//    at all, but that wasn't as informative.)  Putting it inside a FENCE!
+//    is generalized, so that if Level labels could ever be TUPLE! it would
+//    still be possible to do it.
+//
+// 4. !!! Review: The "near" information is used in things like the scanner
+//    missing a closing quote mark, and pointing to the source code (not
+//    the implementation of LOAD).  We don't want to override that or we
+//    would lose the message.  But we still want the stack of where the
+//    LOAD was being called in the "where".  For the moment don't overwrite
+//    any existing near, but a less-random design is needed here.
+//
+// 5. For the file and line of the error, we look at SOURCE-flavored arrays,
+//    which have SOURCE_FLAG_HAS_FILE_LINE...which either was put on at
+//    the time of scanning, or derived when the code is running based on
+//    whatever information was on a running array.
+//
+//    But we currently skip any calls from C (e.g. rebValue()).  Though
+//    rebValue() might someday accept reb__FILE__() and reb__LINE__(),
+//    instructions, which could let us implicate C source here.
+//
 void Set_Location_Of_Error(
     Error* error,
     Level* where  // must be valid and executing on the stack
 ) {
-    while (Get_Level_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
-        where = where->prior;
-
     StackIndex base = TOP_INDEX;
 
     ERROR_VARS *vars = ERR_VARS(error);
 
-    // WHERE is a backtrace in the form of a block of label words, that start
-    // from the top of stack and go downward.
-    //
     Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
-        //
-        // Only invoked functions (not pending functions, groups, etc.)
-        //
+        if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
+            Option(const Symbol*) label = VAL_FRAME_LABEL(&L->u.eval.current);
+            if (label)
+                Init_Word(PUSH(), unwrap label);
+            else
+                Init_Trash(PUSH());  // less space than ~ANYONYMOUS~ [2]
+            continue;
+        }
+
         if (not Is_Action_Level(L))
             continue;
-        if (Is_Level_Fulfilling(L))
+
+        PUSH();
+        if (not Try_Get_Action_Level_Label(TOP, L))
+            Init_Trash(TOP);  // [2]
+
+        if (Is_Level_Fulfilling(L)) { // differentiate fulfilling levels [3]
+            Source* a = Alloc_Singular(FLAG_FLAVOR(SOURCE) | NODE_FLAG_MANAGED);
+            Move_Cell(Stub_Cell(a), TOP);
+            Init_Fence(TOP, a);
             continue;
-
-        Get_Level_Label_Or_Nulled(PUSH(), L);
-
-        // !!! We can't push a NULL to stack to pop in block.  BLANK! is one
-        // option...it's not as informative as (anonymous) but also takes up
-        // less space, so people might come to appreciate it.  Review.
-        //
-        if (Is_Nulled(TOP))
-            Init_Blank(TOP);
+        }
     }
     Init_Block(&vars->where, Pop_Source_From_Stack(base));
 
-    // Nearby location of the error.  Reify any valist that is running,
-    // so that the error has an array to present.
-    //
-    // !!! Review: The "near" information is used in things like the scanner
-    // missing a closing quote mark, and pointing to the source code (not
-    // the implementation of LOAD).  We don't want to override that or we
-    // would lose the message.  But we still want the stack of where the
-    // LOAD was being called in the "where".  For the moment don't overwrite
-    // any existing near, but a less-random design is needed here.
-    //
-    if (Is_Nulled(&vars->nearest))
+    if (Is_Nulled(&vars->nearest))  // don't override scanner data [4]
         Init_Near_For_Level(&vars->nearest, where);
 
-    // Try to fill in the file and line information of the error from the
-    // stack, looking for arrays with SOURCE_FLAG_HAS_FILE_LINE.
-    //
     L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
-        if (Level_Is_Variadic(L)) {
-            //
-            // !!! We currently skip any calls from C (e.g. rebValue()) and look
-            // for calls from Rebol files for the file and line.  However,
-            // rebValue() might someday supply its C code __FILE__ and __LINE__,
-            // which might be interesting to put in the error instead.
-            //
+        if (Level_Is_Variadic(L)) {  // could rebValue() have file/line? [5]
             continue;
         }
         if (Not_Source_Flag(Level_Array(L), HAS_FILE_LINE))
@@ -383,11 +399,11 @@ void Set_Location_Of_Error(
     }
 
     if (L != BOTTOM_LEVEL) {  // found a level with file and line information
-        const String* file = LINK(Filename, Level_Array(L));
+        Option(const String*) file = LINK(Filename, Level_Array(L));
         LineNumber line = Level_Array(L)->misc.line;
 
         if (file)
-            Init_File(&vars->file, file);
+            Init_File(&vars->file, unwrap file);
         if (line != 0)
             Init_Integer(&vars->line, line);
     }
@@ -1164,8 +1180,9 @@ Error* Error_Bad_Argless_Refine(const Key* key)
 //  Error_Bad_Return_Type: C
 //
 Error* Error_Bad_Return_Type(Level* L, Atom* atom) {
-    DECLARE_VALUE (label);
-    Get_Level_Label_Or_Nulled(label, L);
+    DECLARE_ELEMENT (label);
+    if (not Try_Get_Action_Level_Label(label, L))
+        Init_Word(label, Canon(ANONYMOUS));
 
     if (Is_Void(atom))  // void's "kind" is null, no type (good idea?)
         return Error_Bad_Void_Return_Raw(label);
@@ -1464,7 +1481,7 @@ void MF_Error(Molder* mo, const Cell* v, bool form)
         if (Is_Block(where)) {
             Append_Codepoint(mo->string, '\n');
             Append_Ascii(mo->string, RM_ERROR_WHERE);
-            Form_Element(mo, cast(Element*, where));
+            Mold_Element(mo, cast(Element*, where));  // want {fence} shown
         }
         else
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
