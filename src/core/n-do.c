@@ -787,7 +787,7 @@ DECLARE_NATIVE(apply)
         if (Is_Specialized(var))
             return FAIL(Error_Bad_Parameter_Raw(at));
 
-        DECLARE_ELEMENT (lookback);  // for error
+        Sink(Value) lookback = SCRATCH;  // for error
         Copy_Cell(lookback, At_Level(L));
         Fetch_Next_In_Feed(L->feed);
         at = Try_At_Level(L);

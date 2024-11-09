@@ -195,7 +195,7 @@ DECLARE_GENERICS(Sequence)
             Push_Mold(mo);
             Offset i;
             for (i = 0; i < len; ++i) {
-                DECLARE_ELEMENT (temp);
+                Sink(Element) temp = SCRATCH;
                 Copy_Sequence_At(temp, sequence, i);
                 Mold_Element(mo, temp);
                 if (i != len - 1)

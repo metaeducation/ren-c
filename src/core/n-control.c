@@ -707,7 +707,6 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
 //          [block! the-block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
-//      <local> scratch
 //  ]
 //
 DECLARE_NATIVE(all)
@@ -730,14 +729,12 @@ DECLARE_NATIVE(all)
 //
 // 3. The only way a falsey evaluation should make it to the end is if a
 //    predicate let it pass.  Don't want that to trip up `if all` so make it
-//    heavy...but this way `(all:predicate [null] :not?) then [<runs>]`
+//    heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 {
     INCLUDE_PARAMS_OF_ALL;
 
     Value* block = ARG(block);
     Value* predicate = ARG(predicate);
-
-    Atom* scratch = LOCAL(scratch);
 
     Value* condition;  // will be found in OUT or scratch
 
@@ -795,7 +792,7 @@ DECLARE_NATIVE(all)
         SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [2]
 
         STATE = ST_ALL_PREDICATE;
-        return CONTINUE(scratch, predicate, SPARE);
+        return CONTINUE(SCRATCH, predicate, SPARE);
     }
 
     condition = stable_SPARE;  // without predicate, `condition` is same as evaluation
@@ -803,7 +800,7 @@ DECLARE_NATIVE(all)
 
 } predicate_result_in_scratch: {  ////////////////////////////////////////////
 
-    if (Is_Void(scratch))  // !!! Should void predicate results signal opt-out?
+    if (Is_Void(SCRATCH))  // !!! Should void predicate results signal opt-out?
         return FAIL(Error_Bad_Void());
 
     Packify_If_Inhibitor(SPARE);  // predicates can approve inhibitors [3]
@@ -811,7 +808,7 @@ DECLARE_NATIVE(all)
     SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
 
-    condition = Decay_If_Unstable(scratch);
+    condition = Decay_If_Unstable(SCRATCH);
     goto process_condition;  // with predicate, `condition` is predicate result
 
 } process_condition: {  //////////////////////////////////////////////////////
@@ -987,7 +984,6 @@ DECLARE_NATIVE(any)
 //      :all "Do not stop after finding first logically true case"
 //      :predicate "Unary case-processing action (default is DID)"
 //          [<unrun> frame!]
-//      <local> branch
 //  ]
 //
 DECLARE_NATIVE(case)
@@ -1034,7 +1030,7 @@ DECLARE_NATIVE(case)
     Value* cases = ARG(cases);
     Value* predicate = ARG(predicate);
 
-    Atom* branch = LOCAL(branch);  // evaluator-writable local slot
+    Atom* branch = SCRATCH;
 
     enum {
         ST_CASE_INITIAL_ENTRY = STATE_0,
@@ -1196,7 +1192,6 @@ DECLARE_NATIVE(case)
 //      :type "Match based on type constraints, not equality"
 //      :predicate "Binary switch-processing action (default is EQUAL?)"
 //          [<unrun> frame!]
-//      <local> scratch
 //  ]
 //
 DECLARE_NATIVE(switch)
@@ -1239,8 +1234,6 @@ DECLARE_NATIVE(switch)
     Value* left = ARG(value);
     Value* predicate = ARG(predicate);
     Value* cases = ARG(cases);
-
-    Atom* scratch = LOCAL(scratch);
 
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
@@ -1321,8 +1314,8 @@ DECLARE_NATIVE(switch)
         Decay_If_Unstable(SPARE);
 
         const bool strict = false;
-        Copy_Cell(scratch, left);
-        if (0 != Compare_Modify_Values(scratch, SPARE, strict))
+        Copy_Cell(SCRATCH, left);
+        if (0 != Compare_Modify_Values(SCRATCH, SPARE, strict))
             goto next_switch_step;
     }
     else {
@@ -1330,14 +1323,14 @@ DECLARE_NATIVE(switch)
         // The ARG(value) passed in is the left/first argument to compare.
         //
         if (rebRunThrows(
-            cast(Value*, scratch),  // <-- output cell
+            cast(Sink(Value), SCRATCH),  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(SPARE)  // second arg (right hand side if infix)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
-        if (Is_Inhibitor(Stable_Unchecked(scratch)))
+        if (Is_Inhibitor(stable_SCRATCH))
             goto next_switch_step;
     }
 

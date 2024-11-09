@@ -225,7 +225,7 @@ DECLARE_NATIVE(combinator)
     // That might not be needed if the Make_Paramlist_Managed() could take an
     // array and an index.
     //
-    DECLARE_ELEMENT (expanded_spec);
+    Sink(Element) expanded_spec = SCRATCH;
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     VarList* meta;
