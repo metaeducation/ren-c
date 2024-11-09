@@ -255,9 +255,6 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     return OUT;
 }}
 
-#endif
-
-
 static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     INCLUDE_PARAMS_OF_TO;  // frame compatible with AS
 
@@ -281,6 +278,8 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L
 }
+
+#endif
 
 
 //

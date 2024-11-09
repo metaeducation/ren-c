@@ -404,7 +404,10 @@ INLINE void Free_Level_Internal(Level* L) {
 
     assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
 
+  #if TRAMPOLINE_COUNTS_TICKS
     L->tick = TICK;
+  #endif
+
     Free_Pooled(LEVEL_POOL, L);
 }
 

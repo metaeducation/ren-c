@@ -315,7 +315,7 @@ struct JumpStruct {
       { return Derive_Error_From_Pointer(need.p); }
   #endif
 #else
-    #define Derive_Error_From_Pointer  Derive_Error_From_Pointer
+    #define Derive_Error_From_Pointer  Derive_Error_From_Pointer_Core
 #endif
 
 
