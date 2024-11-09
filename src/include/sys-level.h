@@ -311,6 +311,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 #else
     INLINE Value* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
+        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         return L->rootvar + n;  // 1-indexed
     }
 #endif
@@ -621,16 +622,11 @@ INLINE Level* Prep_Level_Core(
 #define DECLARE_PARAM(n,name) \
     static const int p_##name##_ = n
 
-#define DECLARE_INTRINSIC_PARAM(name)  /* only intrinsics should use ARG_1 */ \
-    static const int p_intrinsic_1_ = 2  // skip RETURN in slot 1
+#define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
+    NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use
 
 #define ARG(name) \
     Level_Arg(level_, (p_##name##_))
-
-#define ARG_1  /* only used by intrinsics, varies by dispatch mode */ \
-    (Get_Level_Flag(level_, DISPATCHING_INTRINSIC) \
-        ? cast(Value*, &level_->spare) \
-        : Level_Arg(level_, p_intrinsic_1_))
 
 #define LOCAL(name) \
     cast(Atom*, ARG(name))  // see Push_Level() for why this is allowed
@@ -850,4 +846,85 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
     assert(Level_State_Byte(L) != STATE_0);
     assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
     Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
+}
+
+INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
+    Sink(Element*) e,
+    Level* L
+){
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
+        *e = u_cast(Element*, Level_Arg(L, 2));
+        return nullptr;  // already checked
+    }
+
+    Atom* arg = Level_Spare(L);
+
+    if (Is_Raised(arg))
+        return Native_Fail_Result(L, Cell_Error(arg));
+
+    Decay_If_Unstable(arg);
+
+    if (QUOTE_BYTE(arg) != ANTIFORM_0) {
+        *e = u_cast(Element*, arg);
+        return nullptr;  // means "no bounce" in this case, not Init_Nulled()
+    }
+
+    if (Is_Void(arg))  // simulate PARAMETER_FLAG_NOOP_IF_VOID
+        return Init_Nulled(L->out);
+
+    return Native_Fail_Result(L, Error_Invalid_Intrinsic_Arg_1(L));
+}
+
+INLINE Option(Bounce) Trap_Bounce_Meta_Atom_Intrinsic(
+    Sink(Element*) meta,
+    Level* L
+){
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
+        *meta = u_cast(Element*, Level_Arg(L, 2));  // already checked
+        return nullptr;
+    }
+
+    *meta = Meta_Quotify(Level_Spare(L));
+    return nullptr;
+}
+
+INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
+    Sink(Value*) v,
+    Level* L
+){
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
+        *v = u_cast(Element*, Level_Arg(L, 2));  // already checked
+        return nullptr;
+    }
+
+    Atom* arg = Level_Spare(L);
+
+    if (Is_Raised(arg))
+        return Native_Fail_Result(L, Cell_Error(arg));
+
+    Decay_If_Unstable(arg);
+
+    *v = u_cast(Value*, arg);
+    return nullptr;
+}
+
+INLINE Option(Bounce) Trap_Bounce_Meta_Decay_Value_Intrinsic(
+    Sink(Element*) meta,
+    Level* L
+){
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
+        *meta = u_cast(Element*, Level_Arg(L, 2));  // already checked
+        return nullptr;
+    }
+
+    Atom* arg = Level_Spare(L);
+
+    if (Is_Raised(arg))
+        return Native_Fail_Result(L, Cell_Error(arg));
+
+    Decay_If_Unstable(arg);
+    Meta_Quotify(arg);
+
+    *meta = u_cast(Element*, arg);
+    return nullptr;
 }

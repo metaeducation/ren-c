@@ -93,7 +93,7 @@ DECLARE_NATIVE(the)
 
 
 //
-//  /just: native:intrinsic [
+//  /just: native [
 //
 //  "Returns value passed in without evaluation, and no additional binding"
 //
@@ -108,7 +108,7 @@ DECLARE_NATIVE(just)
 {
     INCLUDE_PARAMS_OF_JUST;
 
-    Element* quoted = cast(Element*, ARG_1);
+    Element* quoted = cast(Element*, ARG(element));
     return COPY(quoted);
 }
 
@@ -193,14 +193,18 @@ DECLARE_NATIVE(meta)
 //  "META operator that works on any value (errors, packs, barriers, etc.)"
 //
 //      return: [quoted! quasi?]
-//      ^atom [any-atom?]
+//      ^atom
 //  ]
 //
 DECLARE_NATIVE(meta_p)
 {
     INCLUDE_PARAMS_OF_META_P;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return COPY(meta);  // argument was ^META, so no need to Meta_Quotify()
 }
 
@@ -259,7 +263,7 @@ DECLARE_NATIVE(quasi)
 
 
 //
-//  /unquasi: native:intrinsic [
+//  /unquasi: native [
 //
 //  "Turn quasiforms into common forms"
 //
@@ -271,7 +275,7 @@ DECLARE_NATIVE(unquasi)
 {
     INCLUDE_PARAMS_OF_UNQUASI;
 
-    Element* quasi = cast(Element*, ARG_1);
+    Element* quasi = cast(Element*, ARG(quasiform));
     return COPY(Unquasify(quasi));
 }
 
@@ -293,7 +297,11 @@ DECLARE_NATIVE(antiform_q)
 {
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Quasiform(meta));
 }
 
@@ -366,25 +374,25 @@ DECLARE_NATIVE(unmeta)
 
 
 //
-//  /unmeta*: native:intrinsic [
+//  /unmeta*: native [
 //
 //  "Variant of UNMETA that can synthesize any atom (raised, pack, barrier...)"
 //
 //      return: [any-atom?]
-//      value [quoted? quasi?]
+//      metaform [quoted? quasi?]
 //  ]
 //
 DECLARE_NATIVE(unmeta_p)
 {
     INCLUDE_PARAMS_OF_UNMETA_P;
 
-    Copy_Cell(OUT, ARG_1);
+    Copy_Cell(OUT, ARG(metaform));
     return Meta_Unquotify_Undecayed(OUT);
 }
 
 
 //
-//  /spread: native:intrinsic [
+//  /spread: native [
 //
 //  "Make block arguments splice"
 //
@@ -417,7 +425,7 @@ DECLARE_NATIVE(spread)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    Value* v = ARG_1;
+    Value* v = ARG(value);
 
     if (Any_List(v)) {  // most common case
         HEART_BYTE(v) = REB_GROUP;  // throws away original heart
@@ -583,7 +591,12 @@ DECLARE_NATIVE(splice_q)
 {
     INCLUDE_PARAMS_OF_SPLICE_Q;
 
-    return Init_Logic(OUT, Is_Splice(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Splice(v));
 }
 
 
@@ -600,7 +613,11 @@ DECLARE_NATIVE(lazy_q)
 {
     INCLUDE_PARAMS_OF_LAZY_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Meta_Of_Lazy(meta));
 }
 
@@ -618,7 +635,11 @@ DECLARE_NATIVE(pack_q)
 {
     INCLUDE_PARAMS_OF_PACK_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Meta_Of_Pack(meta));
 }
 
@@ -636,7 +657,12 @@ DECLARE_NATIVE(keyword_q)
 {
     INCLUDE_PARAMS_OF_KEYWORD_Q;
 
-    return Init_Logic(OUT, Is_Keyword(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Keyword(v));
 }
 
 
@@ -653,12 +679,17 @@ DECLARE_NATIVE(action_q)
 {
     INCLUDE_PARAMS_OF_ACTION_Q;
 
-    return Init_Logic(OUT, Is_Action(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Action(v));
 }
 
 
 //
-//  /runs: native:intrinsic [
+//  /runs: native [
 //
 //  "Make frames run when fetched through word access"
 //
@@ -676,7 +707,7 @@ DECLARE_NATIVE(runs)
 {
     INCLUDE_PARAMS_OF_RUNS;
 
-    Value* frame = ARG_1;
+    Value* frame = ARG(frame);
 
     if (Is_Frame_Details(frame)) {
         Coerce_To_Stable_Antiform(frame);
@@ -695,7 +726,7 @@ DECLARE_NATIVE(runs)
 
 
 //
-//  /unrun: native:intrinsic [
+//  /unrun: native [
 //
 //  "Give back a frame! for action? input"
 //
@@ -707,7 +738,7 @@ DECLARE_NATIVE(unrun)
 {
     INCLUDE_PARAMS_OF_UNRUN;
 
-    Value* action = ARG_1;  // may or may not be antiform
+    Value* action = ARG(action);  // may or may not be antiform
     QUOTE_BYTE(action) = NOQUOTE_1;  // now it's known to not be antiform
     return COPY(action);
 }
@@ -736,7 +767,10 @@ DECLARE_NATIVE(maybe)
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
-    Value* v = ARG_1;
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
 
     if (Is_Void(v))
         return Init_Void(OUT);  // passthru
@@ -751,7 +785,7 @@ DECLARE_NATIVE(maybe)
 //
 //  /noquote: native:intrinsic [
 //
-//  "Removes all levels of quoting from a quoted value"
+//  "Removes all levels of quoting from a (potentially) quoted element"
 //
 //      return: [element?]
 //      element [<maybe> element?]
@@ -761,7 +795,11 @@ DECLARE_NATIVE(noquote)
 {
     INCLUDE_PARAMS_OF_NOQUOTE;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     QUOTE_BYTE(e) = NOQUOTE_1;
     return COPY(e);
 }

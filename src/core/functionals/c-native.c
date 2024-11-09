@@ -138,7 +138,7 @@ Phase* Make_Native(
         assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);
 
-        Set_Action_Flag(native, CAN_RUN_AS_INTRINSIC);
+        Set_Action_Flag(native, CAN_DISPATCH_AS_INTRINSIC);
     }
 
     return native;

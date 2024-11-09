@@ -165,13 +165,13 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
 // Intrinsics can be run without creating levels for them, if they do not
 // use refinements, and if you're not using a debug mode which mandates that
 // levels always be created.  In this case there is no Level* to pass to the
-// native, so instead of an Action_Executor()-based Level*, the the Level* of
-// the Stepper_Executor() is passed.
+// native, so a parent level is passed (which may be a Stepper_Executor(),
+// for instance, instead of an Action_Executor())
 //
-// The stepper's OUT can be used, but the macro for getting the argument will
-// look for that argument in the SPARE cell, which in an intrinsic is
-// called ARG_1.  If the level is being dispatched normally, then ARG_1
-// will be in the frame as usual.
+// The parent's OUT can be used, but the macro for getting the argument will
+// look for that argument in the SPARE cell.  If the level is being dispatched
+// normally, the argument will be in the frame as usual.  A value for the
+// action that is currently running will be in SCRATCH.
 //
 #define LEVEL_FLAG_DISPATCHING_INTRINSIC \
     FLAG_LEFT_BIT(18)

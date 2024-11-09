@@ -925,6 +925,49 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 
 
 //
+//  Error_Invalid_Intrinsic_Arg_1: C
+//
+// 1. See DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC for why a non-intrinsic
+//    dispatch doesn't defer typechecking and reuse the "fast" work of
+//    the intrinsic mode.
+//
+Error* Error_Invalid_Intrinsic_Arg_1(Level* const L)
+{
+    assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // valid otherwise [1]
+
+    USE_LEVEL_SHORTHANDS (L);
+
+    Action* action;
+    Value* arg;
+    DECLARE_ATOM (label);
+
+    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
+        action = VAL_ACTION(SCRATCH);
+        arg = stable_SPARE;
+        Option(const Symbol*) symbol = VAL_FRAME_LABEL(SCRATCH);
+        if (symbol)
+            Init_Word(label, unwrap symbol);
+        else
+            Init_Word(label, Canon(ANONYMOUS));
+    }
+    else {
+        action = Level_Phase(L);
+        arg = Level_Arg(L, 2);
+        if (not Try_Get_Action_Level_Label(label, L))
+            Init_Word(label, Canon(ANONYMOUS));
+    }
+
+    Param* param = ACT_PARAM(action, 2);
+    assert(Is_Hole(c_cast(Value*, param)));
+
+    DECLARE_ATOM (param_name);
+    Init_Word(param_name, Key_Symbol(ACT_KEY(action, 2)));
+
+    return Error_Invalid_Arg_Raw(label, param_name, arg);
+}
+
+
+//
 //  Error_Bad_Value: C
 //
 // This is the very vague and generic error citing a value with no further

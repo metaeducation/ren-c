@@ -38,7 +38,12 @@ DECLARE_NATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    return Init_Logic(OUT, Is_Nulled(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Nulled(v));
 }
 
 
@@ -55,7 +60,12 @@ DECLARE_NATIVE(okay_q)
 {
     INCLUDE_PARAMS_OF_OKAY_Q;
 
-    return Init_Logic(OUT, Is_Okay(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Okay(v));
 }
 
 
@@ -72,12 +82,17 @@ DECLARE_NATIVE(logic_q)
 {
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
-    return Init_Logic(OUT, Is_Logic(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Logic(v));
 }
 
 
 //
-//  /logical: native:intrinsic [
+//  /logical: native [
 //
 //  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"
 //
@@ -89,7 +104,7 @@ DECLARE_NATIVE(logical)
 {
     INCLUDE_PARAMS_OF_LOGICAL;
 
-    Element* n = cast(Element*, ARG_1);
+    Element* n = cast(Element*, ARG(number));
     return Init_Logic(OUT, VAL_INT64(n) != 0);
 }
 
@@ -107,7 +122,11 @@ DECLARE_NATIVE(boolean_q)
 {
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Boolean(e));
 }
 
@@ -118,14 +137,18 @@ DECLARE_NATIVE(boolean_q)
 //  "Tells you if the argument is the ON or OFF word"
 //
 //      return: [logic?]
-//      value [any-value?]
+//      element [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(onoff_q)
 {
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_OnOff(e));
 }
 
@@ -136,14 +159,18 @@ DECLARE_NATIVE(onoff_q)
 //  "Tells you if the argument is the YES or NO word"
 //
 //      return: [logic?]
-//      value [any-value?]
+//      value [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(yesno_q)
 {
     INCLUDE_PARAMS_OF_YESNO_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_YesNo(e));
 }
 
@@ -411,7 +438,12 @@ DECLARE_NATIVE(not_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
-    return Init_Logic(OUT, Is_Inhibitor(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Inhibitor(v));
 }
 
 

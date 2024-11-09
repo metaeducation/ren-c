@@ -223,22 +223,8 @@ Bounce Stepper_Executor(Level* L)
         Action* action = VAL_ACTION(CURRENT);
         assert(Is_Stub_Details(action));
         Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
-        Param* param = ACT_PARAM(action, 2);
-        if (Get_Parameter_Flag(param, NOOP_IF_VOID)) {
-            if (Is_Void(SPARE)) {
-                Init_Nulled(OUT);
-                goto lookahead;
-            }
-        }
-        if (Cell_ParamClass(param) == PARAMCLASS_META)
-            Meta_Quotify(SPARE);
-        else
-            Decay_If_Unstable(SPARE);  // error parity with non-intrinsic
-        if (not Typecheck_Coerce_Argument(param, SPARE)) {
-            Option(const Symbol*) label = VAL_FRAME_LABEL(CURRENT);
-            const Key* key = ACT_KEY(action, 2);
-            return FAIL(Error_Arg_Type(label, key, param, stable_SPARE));
-        }
+
+        possibly(Is_Antiform_Unstable(SPARE));  // intrinsic typechecks/decays
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);
         Bounce bounce = (*dispatcher)(L);  // flag says level_ is not its Level
@@ -698,7 +684,7 @@ Bounce Stepper_Executor(Level* L)
 
             if (
                 not infix_mode  // too rare a case for intrinsic optimization
-                and Get_Action_Flag(action, CAN_RUN_AS_INTRINSIC)
+                and Get_Action_Flag(action, CAN_DISPATCH_AS_INTRINSIC)
                 and Is_Stub_Details(action)  // don't do specializations
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // checked builds sometimes bypass

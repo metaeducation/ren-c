@@ -289,7 +289,11 @@ DECLARE_NATIVE(raised_q)
 {
     INCLUDE_PARAMS_OF_RAISED_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Meta_Of_Raised(meta));
 }
 
@@ -319,7 +323,11 @@ DECLARE_NATIVE(unraised_q)
 {
     INCLUDE_PARAMS_OF_UNRAISED_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, not Is_Meta_Of_Raised(meta));
 }
 

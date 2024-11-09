@@ -97,14 +97,32 @@ typedef enum {
 } NativeType;
 
 
-//=//// DETAILS_FLAG_CAN_RUN_AS_INTRINSIC /////////////////////////////////=//
+//=//// DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC ////////////////////////////=//
 //
 // If a native is declared as `native:intrinsic`, that means it's capable of
 // running without its own Level...looking for its argument in the SPARE
 // cell of the level that dispatches it.  But it also is able to run with
 // a frame if it needs to.
 //
-#define DETAILS_FLAG_CAN_RUN_AS_INTRINSIC \
+// ** WHEN RUN AS AN INTRINSIC, THE SPARE CELL CONTAINS A COMPLETELY NON
+// TYPECHECKED ATOM, AND THE NATIVE IS RESPONSIBLE FOR ALL TYPECHECKING **
+//
+// The goal is making intrinsic dispatch cheap.  And quite simply, it won't
+// be cheap if you turn around and have to do typechecking on the argument,
+// because that throws a wrench into the idea of using things like the
+// Level's SPARE and SCRATCH...because you have to nest more levels for the
+// typecheckers.
+//
+// It might seem that since the intrinsic has to do all the work of writing
+// a type check for the first argument, that the case where dispatch is
+// being done with a frame should use that same fast check code.  But this
+// would create bad invariants...like making varlists with unstable antiforms
+// in them, and the frame may be created for tweaking by other routines
+// before running the native (if it ever runs it).  So we can't have a
+// corrupted frame, so better to branch on LEVEL_FLAG_DISPATCHING_INTRINSIC
+// and assume the first argument is checked if that's not set.
+//
+#define DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC \
     STUB_SUBCLASS_FLAG_30
 
 

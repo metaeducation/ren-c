@@ -779,12 +779,17 @@ DECLARE_NATIVE(something_q)
 {
     INCLUDE_PARAMS_OF_SOMETHING_Q;
 
-    return Init_Logic(OUT, not Is_Nothing(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, not Is_Nothing(v));
 }
 
 
 //
-//  /vacancy?: native:intrinsic [
+//  /vacancy?: native [
 //
 //  "Tells you if the argument causes errors on WORD! access (and defaultable)"
 //
@@ -800,14 +805,14 @@ DECLARE_NATIVE(vacancy_q)
 {
     INCLUDE_PARAMS_OF_VACANCY_Q;
 
-    Value* v = ARG_1;  // meta
+    Value* v = ARG(value);  // meta
     Meta_Unquotify_Known_Stable(v);  // checked ANY-VALUE?, so stable [1]
     return Init_Logic(OUT, Any_Vacancy(v));
 }
 
 
 //
-//  /defaultable?: native:intrinsic [
+//  /defaultable?: native [
 //
 //  "Tells you if default would overwrite a value (VACANCY?, NULL?, VOID?)"
 //
@@ -823,7 +828,7 @@ DECLARE_NATIVE(defaultable_q)
 {
     INCLUDE_PARAMS_OF_DEFAULTABLE_Q;
 
-    Value* v = ARG_1;  // meta
+    Value* v = ARG(value);  // meta
     Meta_Unquotify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
     return Init_Logic(OUT, Any_Vacancy(v) or Is_Void(v) or Is_Nulled(v));
 }

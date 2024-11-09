@@ -410,7 +410,11 @@ DECLARE_NATIVE(refinement_q)
 {
     INCLUDE_PARAMS_OF_REFINEMENT_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Get_Word(e));
 }
 
@@ -428,7 +432,11 @@ DECLARE_NATIVE(set_word_q)
 {
     INCLUDE_PARAMS_OF_SET_WORD_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Set_Word(e));
 }
 
@@ -446,7 +454,11 @@ DECLARE_NATIVE(set_run_word_q)
 {
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(
         OUT,
         Is_Path(e)
@@ -468,7 +480,11 @@ DECLARE_NATIVE(get_word_q)
 {
     INCLUDE_PARAMS_OF_GET_WORD_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Get_Word(e));
 }
 
@@ -486,7 +502,11 @@ DECLARE_NATIVE(set_tuple_q)
 {
     INCLUDE_PARAMS_OF_SET_TUPLE_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Set_Tuple(e));
 }
 
@@ -504,7 +524,11 @@ DECLARE_NATIVE(get_tuple_q)
 {
     INCLUDE_PARAMS_OF_GET_TUPLE_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Get_Tuple(e));
 }
 
@@ -522,7 +546,11 @@ DECLARE_NATIVE(set_group_q)
 {
     INCLUDE_PARAMS_OF_SET_GROUP_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Set_Group(e));
 }
 
@@ -540,7 +568,11 @@ DECLARE_NATIVE(get_group_q)
 {
     INCLUDE_PARAMS_OF_GET_GROUP_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Get_Group(e));
 }
 
@@ -558,7 +590,11 @@ DECLARE_NATIVE(set_block_q)
 {
     INCLUDE_PARAMS_OF_SET_BLOCK_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Set_Block(e));
 }
 
@@ -576,7 +612,11 @@ DECLARE_NATIVE(get_block_q)
 {
     INCLUDE_PARAMS_OF_GET_BLOCK_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Get_Block(e));
 }
 
@@ -594,7 +634,11 @@ DECLARE_NATIVE(any_set_value_q)
 {
     INCLUDE_PARAMS_OF_ANY_SET_VALUE_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Any_Set_Value(e));
 }
 
@@ -612,7 +656,11 @@ DECLARE_NATIVE(any_get_value_q)
 {
     INCLUDE_PARAMS_OF_ANY_GET_VALUE_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Any_Get_Value(e));
 }
 
@@ -630,7 +678,11 @@ DECLARE_NATIVE(quasi_word_q)
 {
     INCLUDE_PARAMS_OF_QUASI_WORD_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Quasiform(e) and HEART_BYTE(e) == REB_WORD);
 }
 
@@ -648,7 +700,11 @@ DECLARE_NATIVE(char_q)
 {
     INCLUDE_PARAMS_OF_CHAR_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, IS_CHAR(e));
 }
 
@@ -666,7 +722,11 @@ DECLARE_NATIVE(lit_word_q)
 {
     INCLUDE_PARAMS_OF_LIT_WORD_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(
         OUT,
         QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and HEART_BYTE(e) == REB_WORD
@@ -687,7 +747,11 @@ DECLARE_NATIVE(lit_path_q)
 {
     INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, IS_QUOTED_PATH(e));
 }
 
@@ -705,10 +769,14 @@ DECLARE_NATIVE(any_inert_q)
 {
     INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(
         OUT,
-        Not_Antiform(e) and Any_Inert(e)
+        Not_Antiform(v) and Any_Inert(v)
     );
 }
 
@@ -913,7 +981,7 @@ DECLARE_NATIVE(proxy_exports)
 
 
 //
-//  /infix?: native:intrinsic [
+//  /infix?: native [
 //
 //  "non-null if a function that gets first argument before the call"
 //
@@ -925,7 +993,7 @@ DECLARE_NATIVE(infix_q)
 {
     INCLUDE_PARAMS_OF_INFIX_Q;
 
-    Element* frame = cast(Element*, ARG_1);
+    Element* frame = cast(Element*, ARG(frame));
     return Init_Logic(OUT, Is_Cell_Infix(frame));
 }
 
@@ -1082,14 +1150,22 @@ DECLARE_NATIVE(aliases_q)
 //  "Tells you if the argument (taken as meta) is storable in a variable"
 //
 //      return: [logic?]
-//      ^value
+//      ^atom
 //  ]
 //
 DECLARE_NATIVE(any_value_q)
+//
+// This works in concert with the decaying mechanisms of typechecking.  So
+// if you say your function has [return: [any-value?]] and you try to return
+// something like an unstable antiform pack, the type check will fail...but
+// it will try again after decaying.
 {
     INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
 
     if (not Is_Quasiform(meta))  // meta, so quasiform
         return Init_Logic(OUT, true);
@@ -1104,7 +1180,7 @@ DECLARE_NATIVE(any_value_q)
 //  "If the argument (taken as meta) non void, and storable in a variable"
 //
 //      return: [logic?]
-//      ^value
+//      ^atom
 //  ]
 //
 DECLARE_NATIVE(non_void_value_q)
@@ -1117,7 +1193,10 @@ DECLARE_NATIVE(non_void_value_q)
 {
     INCLUDE_PARAMS_OF_NON_VOID_VALUE_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
 
     if (not Is_Quasiform(meta)) {
         if (Is_Meta_Of_Void(meta))
@@ -1136,7 +1215,7 @@ DECLARE_NATIVE(non_void_value_q)
 //  "Accepts absolutely any argument state (unstable antiforms included)"
 //
 //      return: [logic?]
-//      ^value
+//      ^atom
 //  ]
 //
 DECLARE_NATIVE(any_atom_q)
@@ -1145,7 +1224,6 @@ DECLARE_NATIVE(any_atom_q)
 // for putting ANY- in front of things has been in flux.
 {
     INCLUDE_PARAMS_OF_ANY_ATOM_Q;
-    UNUSED(ARG_1);
 
     return Init_Okay(OUT);
 }
@@ -1165,7 +1243,11 @@ DECLARE_NATIVE(nihil_q)
 {
     INCLUDE_PARAMS_OF_NIHIL_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Meta_Of_Nihil(meta));
 }
 
@@ -1183,7 +1265,11 @@ DECLARE_NATIVE(barrier_q)
 {
     INCLUDE_PARAMS_OF_BARRIER_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Meta_Of_Barrier(meta));
 }
 
@@ -1201,7 +1287,11 @@ DECLARE_NATIVE(elision_q)
 {
     INCLUDE_PARAMS_OF_ELISION_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Meta_Of_Elision(meta));
 }
 
@@ -1219,7 +1309,12 @@ DECLARE_NATIVE(void_q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
-    return Init_Logic(OUT, Is_Void(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Void(v));
 }
 
 
@@ -1236,7 +1331,12 @@ DECLARE_NATIVE(nothing_q)
 {
     INCLUDE_PARAMS_OF_NOTHING_Q;
 
-    return Init_Logic(OUT, Is_Nothing(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Nothing(v));
 }
 
 
@@ -1253,7 +1353,12 @@ DECLARE_NATIVE(tripwire_q)
 {
     INCLUDE_PARAMS_OF_TRIPWIRE_Q;
 
-    return Init_Logic(OUT, Is_Tripwire(ARG_1));
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return Init_Logic(OUT, Is_Tripwire(v));
 }
 
 
@@ -1270,7 +1375,11 @@ DECLARE_NATIVE(trash_q)
 {
     INCLUDE_PARAMS_OF_TRASH_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Trash(e));
 }
 
@@ -1288,7 +1397,11 @@ DECLARE_NATIVE(space_q)
 {
     INCLUDE_PARAMS_OF_SPACE_Q;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     return Init_Logic(OUT, Is_Space(e));
 }
 
@@ -1370,7 +1483,11 @@ DECLARE_NATIVE(decay)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    Value* v = ARG_1;
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     Assert_Cell_Stable(v);  // Value* should always be stable
     return COPY(v);  // pre-decayed by non-^META argument [1]
 }
@@ -1382,7 +1499,7 @@ DECLARE_NATIVE(decay)
 //  "Make antiforms into their quasiforms, quote all other values"
 //
 //      return: [element?]
-//      value [any-value?]
+//      value
 //  ]
 //
 DECLARE_NATIVE(reify)
@@ -1399,7 +1516,11 @@ DECLARE_NATIVE(reify)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    Value* v = ARG_1;
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     Reify(v);
     return COPY(v);
 }
@@ -1411,14 +1532,18 @@ DECLARE_NATIVE(reify)
 //  "Make quasiforms into their plain forms, pass through all other elements"
 //
 //      return: [element?]
-//      element [element?]
+//      element [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(noquasi)
 {
     INCLUDE_PARAMS_OF_NOQUASI;
 
-    Element* e = cast(Element*, ARG_1);
+    Element* e;
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    if (b)
+        return unwrap b;
+
     if (Is_Quasiform(e))
         QUOTE_BYTE(e) = NOQUOTE_1;
     return COPY(e);
@@ -1456,7 +1581,11 @@ DECLARE_NATIVE(noantiform)
 {
     INCLUDE_PARAMS_OF_NOANTIFORM;
 
-    Value* v = ARG_1;
+    Value* v;
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     if (Is_Antiform(v))
         QUOTE_BYTE(v) = NOQUOTE_1;
     return COPY(v);

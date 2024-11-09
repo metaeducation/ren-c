@@ -302,7 +302,7 @@ void Set_Parameter_Spec(
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
           handle_predicate: {
             Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
-            if (Get_Action_Flag(phase, CAN_RUN_AS_INTRINSIC)) {
+            if (Get_Action_Flag(phase, CAN_DISPATCH_AS_INTRINSIC)) {
                 Dispatcher* dispatcher = ACT_DISPATCHER(phase);
                 if (dispatcher == &N_any_value_q)
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
@@ -358,7 +358,7 @@ void Set_Parameter_Spec(
 //  "Tells you if argument is parameter antiform, used for unspecialized args"
 //
 //      return: [logic?]
-//      ^value  ; cannot take parameter antiform as normal argument [1]
+//      ^value [any-value?] ; can't take parameter antiform without meta [1]
 //  ]
 //
 DECLARE_NATIVE(hole_q)
@@ -370,7 +370,13 @@ DECLARE_NATIVE(hole_q)
 {
     INCLUDE_PARAMS_OF_HOLE_Q;
 
-    Element* meta = cast(Element*, ARG_1);
+    Element* meta;
+    Option(Bounce) bounce = Trap_Bounce_Meta_Decay_Value_Intrinsic(
+        &meta, LEVEL
+    );
+    if (bounce)
+        return unwrap bounce;
+
     return Init_Logic(OUT, Is_Meta_Of_Hole(meta));
 }
 

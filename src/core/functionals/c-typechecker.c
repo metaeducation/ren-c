@@ -46,16 +46,20 @@
 //
 Bounce Decider_Intrinsic_Dispatcher(Level* level_)
 {
+    Value* v;  // not decayed or typechecked
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
     if (Get_Level_Flag(level_, DISPATCHING_INTRINSIC)) {
         Details* details = Phase_Details(cast(Phase*, VAL_ACTION(SCRATCH)));
         Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
         Decider* decider = g_instance_deciders[VAL_UINT8(index)];
-        return Init_Logic(OUT, decider(stable_SPARE));
+        return Init_Logic(OUT, decider(v));
     }
 
-    Value* arg_1 = Level_Arg(level_, 2);  // skip RETURN
     bool check_datatype = Cell_Logic(Level_Arg(level_, 3));
-    if (check_datatype and not Is_Type_Block(arg_1))
+    if (check_datatype and not Is_Type_Block(v))
         return nullptr;
 
     Details* details = Phase_Details(PHASE);
@@ -66,7 +70,7 @@ Bounce Decider_Intrinsic_Dispatcher(Level* level_)
         ? g_datatype_deciders[VAL_UINT8(index)]
         : g_instance_deciders[VAL_UINT8(index)];
 
-    return Init_Logic(OUT, decider(arg_1));
+    return Init_Logic(OUT, decider(v));
 }
 
 
@@ -108,7 +112,7 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
         &Decider_Intrinsic_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
-    Set_Action_Flag(typechecker, CAN_RUN_AS_INTRINSIC);
+    Set_Action_Flag(typechecker, CAN_DISPATCH_AS_INTRINSIC);
 
     Details* details = Phase_Details(typechecker);
 
@@ -305,7 +309,7 @@ bool Typecheck_Atom_Core(
           run_action: {
             Action* action = VAL_ACTION(test);
 
-            if (Get_Action_Flag(action, CAN_RUN_AS_INTRINSIC)) {
+            if (Get_Action_Flag(action, CAN_DISPATCH_AS_INTRINSIC)) {
                 Level L_struct;
                 Level* L = &L_struct;
 
@@ -314,24 +318,12 @@ bool Typecheck_Atom_Core(
                 assert(Is_Stub_Details(action));
                 Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
 
-                L->u.action.param = ACT_PARAM(action, 2);
-                if (Get_Parameter_Flag(L->u.action.param, NOOP_IF_VOID))
-                    if (Is_Void(v))
-                        goto test_failed;
-
                 Erase_Cell(&L->spare);
                 Copy_Cell(&L->spare, v);
-                if (Cell_ParamClass(L->u.action.param) == PARAMCLASS_META)
-                    Meta_Quotify(&L->spare);
-                if (not Typecheck_Coerce_Argument(
-                    L->u.action.param,
-                    u_cast(Atom*, &L->spare)
-                )){
-                    goto test_failed;
-                }
+
                 L->out = scratch;
                 Erase_Cell(&L->scratch);
-                Copy_Cell(&L->scratch, test);
+                Copy_Cell(&L->scratch, test);  // intrinsic typechecks/decays
 
                 Bounce bounce = (*dispatcher)(L);
                 if (bounce == BOUNCE_FAIL)
