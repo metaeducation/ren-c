@@ -134,6 +134,16 @@ struct EvaluatorExecutorStateStruct {
 
     Option(const Value*) current_gotten;
 
+    // The error reporting machinery doesn't want where `index` is right now,
+    // but where it was at the beginning of a single EVALUATE step.
+    //
+    // !!! With the conversion to using feeds, it doesn't seem anything is
+    // using this field at time of writing.  It's not displaying the start
+    // of the expression, just where it is--which is poor for debugging.
+    // That should be fixed, along with general debugging design.
+    //
+    uintptr_t expr_index;
+
     Option(StackIndex) stackindex_circled;  // used only by multi-return
 };
 

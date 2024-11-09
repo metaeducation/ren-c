@@ -184,9 +184,10 @@ INLINE REBLEN Level_Array_Index(Level* L) {
     return FEED_INDEX(L->feed) - 1;
 }
 
-INLINE REBLEN Level_Expression_Index(Level* L) {
+INLINE REBLEN Level_Expression_Index(Level* L) {  // !!! Not called?
+    assert(L->executor == &Stepper_Executor);
     assert(not Level_Is_Variadic(L));
-    return L->expr_index - 1;
+    return L->u.eval.expr_index - 1;
 }
 
 INLINE Option(const String*) File_Of_Level(Level* L) {
@@ -272,7 +273,10 @@ INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
 
 INLINE Option(const Symbol*) Level_Label(Level* L) {
     assert(Is_Action_Level(L));
-    return L->label;
+  #if DEBUG_LEVEL_LABELS
+    assert(L->label_utf8);  // should be non-nullptr if label valid
+  #endif
+    return L->u.action.label;
 }
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
@@ -346,17 +350,29 @@ INLINE Option(Element*) Try_Get_Action_Level_Label(
 ){
     assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));  // be cautious [1]
     assert(Is_Action_Level(L));
-    if (L->label)
-        return Init_Word(out, unwrap L->label);
+  #if DEBUG_LEVEL_LABELS
+    assert(L->label_utf8);
+  #endif
+    if (L->u.action.label)
+        return Init_Word(out, unwrap L->u.action.label);
     return nullptr;
 }
 
 INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
     assert(Is_Action_Level(L));
-    if (L->label)
-        return String_UTF8(unwrap L->label);
+    if (L->u.action.label)
+        return String_UTF8(unwrap L->u.action.label);
     return "[anonymous]";
 }
+
+INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
+    L->u.action.label = label;
+  #if DEBUG_LEVEL_LABELS
+    assert(L->label_utf8 == nullptr);
+    L->label_utf8 = Level_Label_Or_Anonymous_UTF8(L);
+  #endif
+}
+
 
 
 //=//// LEVEL ALLOCATION AND FREEING //////////////////////////////////////=//
@@ -456,8 +472,12 @@ INLINE void Push_Level(  // inherits uninterruptibility [4]
 
 
 INLINE void Update_Expression_Start(Level* L) {
+    assert(
+        L->executor == &Stepper_Executor
+        or L->executor == &Evaluator_Executor
+    );
     if (not Level_Is_Variadic(L))
-        L->expr_index = Level_Array_Index(L);
+        L->u.eval.expr_index = Level_Array_Index(L);
 }
 
 
@@ -524,9 +544,8 @@ INLINE Level* Prep_Level_Core(
 
     Erase_Cell(&L->u.eval.current);
 
-    Corrupt_Pointer_If_Debug(L->label);
-  #if DEBUG_LEVEL_LABELS
-    Corrupt_Pointer_If_Debug(L->label_utf8);
+  #if DEBUG_LEVEL_LABELS  // only applicable to L->u.action.label levels...
+    L->label_utf8 = nullptr;  // ...but in Level for easy C watchlisting
   #endif
 
     Snap_State(&L->baseline);  // [2] (also see notes on `baseline` in Level)

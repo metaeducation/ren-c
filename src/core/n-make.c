@@ -113,7 +113,7 @@ DECLARE_NATIVE(copy)
     Byte quote_byte = QUOTE_BYTE(v);
     QUOTE_BYTE(v) = NOQUOTE_1;
 
-    Option(const Symbol*) label = level_->label;
+    Option(const Symbol*) label = Level_Label(level_);
     Option(VarList*) coupling = Level_Coupling(level_);
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
@@ -128,13 +128,7 @@ DECLARE_NATIVE(copy)
     Tweak_Level_Coupling(sub, coupling);
 
     sub->u.action.original = VAL_ACTION(Lib(COPY));
-    sub->label = label;
-
-  #if RUNTIME_CHECKS
-    sub->label_utf8 = label
-        ? String_UTF8(unwrap label)
-        : "(anonymous)";
-  #endif
+    Set_Action_Level_Label(sub, label);
 
     if (quote_byte == ANTIFORM_0)
         STATE = NOQUOTE_1;  // 0 state is reserved
@@ -267,7 +261,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     INCLUDE_PARAMS_OF_TO;  // frame compatible with AS
 
-    Option(const Symbol*) label = level_->label;
+    Option(const Symbol*) label = Level_Label(level_);
 
     Element* type = cast(Element*, ARG(type));
     STATE = VAL_TYPE_HEART(type);  // generic code may trash TYPE when it runs
@@ -283,10 +277,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     SymId id = Get_Level_Flag(level_, CHECKING_TO) ? SYM_TO : SYM_AS;
 
     sub->u.action.original = VAL_ACTION(Lib_Var_For_Id(id));
-    sub->label = label;
-    sub->label_utf8 = label
-        ? String_UTF8(unwrap label)
-        : "(anonymous)";
+    Set_Action_Level_Label(sub, label);
 
     return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L
 }

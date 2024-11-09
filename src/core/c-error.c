@@ -913,10 +913,8 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
     REBLEN index = 1 + (param - headparam);
 
     DECLARE_ATOM (label);
-    if (not L->label)
-        Init_Nulled(label);
-    else
-        Init_Word(label, unwrap L->label);
+    if (not Try_Get_Action_Level_Label(label, L))
+        Init_Word(label, Canon(ANONYMOUS));
 
     DECLARE_ATOM (param_name);
     Init_Word(param_name, Key_Symbol(ACT_KEY(Level_Phase(L), index)));
@@ -1078,16 +1076,16 @@ Error* Error_Arg_Type(
     if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return Cell_Error(arg);
 
-    DECLARE_ATOM (param_word);
+    DECLARE_ELEMENT (param_word);
     Init_Word(param_word, Key_Symbol(key));
 
-    DECLARE_ATOM (label);
+    DECLARE_VALUE (label);
     if (name)
         Init_Word(label, unwrap name);
     else
         Init_Nulled(label);
 
-    DECLARE_ATOM (spec);
+    DECLARE_ELEMENT (spec);
     Option(const Source*) param_array = Cell_Parameter_Spec(param);
     if (param_array)
         Init_Block(spec, unwrap param_array);
@@ -1118,12 +1116,12 @@ Error* Error_Phase_Arg_Type(
     const Value* arg
 ){
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
-        return Error_Arg_Type(L->label, key, param, arg);
+        return Error_Arg_Type(Level_Label(L), key, param, arg);
 
     if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return Cell_Error(arg);
 
-    Error* error = Error_Arg_Type(L->label, key, param, arg);
+    Error* error = Error_Arg_Type(Level_Label(L), key, param, arg);
     ERROR_VARS* vars = ERR_VARS(error);
     assert(Is_Word(&vars->id));
     assert(Cell_Word_Id(&vars->id) == SYM_EXPECT_ARG);
@@ -1180,9 +1178,9 @@ Error* Error_Bad_Argless_Refine(const Key* key)
 //  Error_Bad_Return_Type: C
 //
 Error* Error_Bad_Return_Type(Level* L, Atom* atom) {
-    DECLARE_ELEMENT (label);
+    DECLARE_VALUE (label);
     if (not Try_Get_Action_Level_Label(label, L))
-        Init_Word(label, Canon(ANONYMOUS));
+        Init_Nulled(label);
 
     if (Is_Void(atom))  // void's "kind" is null, no type (good idea?)
         return Error_Bad_Void_Return_Raw(label);

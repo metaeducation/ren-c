@@ -466,6 +466,9 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_MONITOR_FLEX  RUNTIME_CHECKS
 #endif
 
+// Extra field added to Level for the UTF-8 string of a currently dispatched
+// function.  Helpful for viewing in C watchlists...
+//
 #if !defined(DEBUG_LEVEL_LABELS)
     #define DEBUG_LEVEL_LABELS  RUNTIME_CHECKS
 #endif

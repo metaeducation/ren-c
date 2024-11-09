@@ -150,11 +150,19 @@ Bounce Encloser_Dispatcher(Level* const L)
     Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]
     Set_Level_Infix_Mode(L, PREFIX_0);  // clear out for reuse...?
 
-    Option(const Symbol*) original_label = L->label;
-    Corrupt_Pointer_If_Debug(L->label);  // Begin_Action() requires
+    Option(const Symbol*) original_label = L->u.action.label;
+    Corrupt_Pointer_If_Debug(L->u.action.label);
+  #if DEBUG_LEVEL_LABELS
+    L->label_utf8 = nullptr;  // Begin_Action() requires
+  #endif
     Prep_Action_Level(L, outer, rootcopy);
-    if (original_label)
-        L->label = original_label;  // prefer original name [7]
+    if (original_label) {
+        Corrupt_Pointer_If_Debug(L->u.action.label);
+      #if DEBUG_LEVEL_LABELS
+        L->label_utf8 = nullptr;
+      #endif
+        Set_Action_Level_Label(L, original_label);  // prefer original name [7]
+    }
 
     STATE = ST_ACTION_TYPECHECKING;
 

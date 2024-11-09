@@ -1292,9 +1292,9 @@ DECLARE_GENERICS(Frame)
             return Init_Integer(OUT, line); }
 
           case SYM_LABEL: {
-            if (not L->label)
-                return nullptr;
-            return Init_Word(OUT, unwrap L->label); }
+            if (Try_Get_Action_Level_Label(OUT, L))
+                return OUT;
+            return nullptr; }
 
           case SYM_NEAR:
             return Init_Near_For_Level(OUT, L);

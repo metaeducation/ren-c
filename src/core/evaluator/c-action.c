@@ -363,7 +363,7 @@ Bounce Action_Executor(Level* L)
                 }
 
                 if (Not_Parameter_Flag(PARAM, ENDABLE))
-                    return FAIL(Error_No_Arg(L->label, Key_Symbol(KEY)));
+                    return FAIL(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
 
                 Init_Nulled(ARG);
                 goto continue_fulfilling;
@@ -774,7 +774,7 @@ Bounce Action_Executor(Level* L)
         }
         else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
             if (Not_Parameter_Flag(PARAM, ENDABLE))
-                return FAIL(Error_No_Arg(L->label, Key_Symbol(KEY)));
+                return FAIL(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
             Init_Nulled(ARG);  // more convenient, use ^META for nuance
             continue;
         }
@@ -803,10 +803,10 @@ Bounce Action_Executor(Level* L)
 
 } dispatch: {  ///////////////////////////////////////////////////////////////
 
-  // 1. Here we free the union for use by the dispatcher...though currently
-  //    one slot is stolen for the base stack address the dispatcher should
-  //    consider (variables can be stored to write back to for multi-return).
-  //    It's also needed to keep L->original.  Think about how to improve.
+  // 1. When dispatching, we aren't using the parameter enumeration states.
+  //    These are essentially 4 free pointers (though once a BOUNCE is
+  //    returned, the Action_Executor() may start using them again, so they
+  //    are only scratch space for the Dispatcher while it is running).
   //
   // 2. This happens if you have something intending to act as infix but
   //    that does not consume arguments, e.g. (/x: infix func [] []).  An
@@ -823,9 +823,10 @@ Bounce Action_Executor(Level* L)
     assert(Not_Action_Executor_Flag(L, IN_DISPATCH));
     Set_Action_Executor_Flag(L, IN_DISPATCH);
 
-    Action* save_original = L->u.action.original;
-    Corrupt_If_Debug(L->u);  // freed for dispatcher use...
-    L->u.action.original = save_original;  // ...er, mostly.  [1]
+    Corrupt_If_Debug(L->u.action.key);  // freed param enum for dispatcher [1]
+    Corrupt_If_Debug(L->u.action.key_tail);
+    Corrupt_If_Debug(L->u.action.arg);
+    Corrupt_If_Debug(L->u.action.param);
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
         if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))  // see notes
@@ -1134,11 +1135,7 @@ void Begin_Action(
     PARAM = cast(Param*, Varlist_Slots_Head(ACT_EXEMPLAR(ORIGINAL)));
     ARG = L->rootvar + 1;
 
-    assert(Is_Pointer_Corrupt_Debug(L->label));  // ACTION! makes valid
-    L->label = label;
-  #if DEBUG_LEVEL_LABELS  // helpful for looking in the debugger
-    L->label_utf8 = Level_Label_Or_Anonymous_UTF8(L);
-  #endif
+    Set_Action_Level_Label(L, label);
 
     if (not infix_mode) {
         assert(not Is_Level_Infix(L));
@@ -1177,7 +1174,7 @@ void Begin_Action(
 //    reuse varlists, but it was a premature optimization with no benefit.)
 //
 void Drop_Action(Level* L) {
-    Corrupt_Pointer_If_Debug(L->label);  // do first (for data breakpoints)
+    Corrupt_Pointer_If_Debug(L->u.action.label);  // first (data breakpoint)
 
     assert(BONUS(KeySource, L->varlist) == L);
 
@@ -1203,6 +1200,6 @@ void Drop_Action(Level* L) {
     L->executor = nullptr;  // so GC won't think level needs Action marking
 
   #if DEBUG_LEVEL_LABELS
-    Corrupt_Pointer_If_Debug(L->label_utf8);
+    L->label_utf8 = nullptr;  // do last (for debug watchlist)
   #endif
 }

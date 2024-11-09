@@ -775,8 +775,11 @@ static void Mark_Level_Stack_Deep(void)
             cast(const Node**, m_cast(const Action**, &L->u.action.original))
         );
 
-        if (L->label) { // nullptr if anonymous
-            const Symbol* sym = unwrap L->label;
+      #if DEBUG_LEVEL_LABELS
+        assert(L->label_utf8 != nullptr);
+      #endif
+        if (L->u.action.label) { // nullptr if anonymous
+            const Symbol* sym = unwrap L->u.action.label;
             if (not Is_Node_Marked(sym))
                 Queue_Unmarked_Accessible_Stub_Deep(sym);
         }

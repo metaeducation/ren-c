@@ -1321,7 +1321,7 @@ DECLARE_NATIVE(subparse)
 
     const Element* rule = P_AT_END ? nullptr : P_RULE;
 
-    Update_Expression_Start(L);
+    /*Update_Expression_Start(L);*/  // only valid for evaluator levels now
 
     //=//// FIRST THINGS FIRST: CHECK FOR END /////////////////////////////=//
 

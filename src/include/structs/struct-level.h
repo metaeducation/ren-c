@@ -325,17 +325,13 @@ typedef bool (Decider)(const Value* arg);
     //
     Feed* feed;
 
-    // The level's "spare" is used for different purposes.  PARSE uses it as a
-    // scratch storage space.  Path evaluation uses it as where the calculated
-    // "picker" goes (so if `foo/(1 + 2)`, the 3 would be stored there to be
-    // used to pick the next value in the chain).
-    //
-    // The evaluator uses it as a general temporary place for evaluations, but
-    // it is available for use by natives while they are running.  This is
-    // particularly useful because it is GC guarded and also a valid target
+    // Executors use SPARE as a general temporary place for evaluations, but
+    // it is available for use by native Dispatchers while they are running.
+    // It's particularly useful because it is GC guarded, and a valid target
     // location for evaluations.  (The argument cells of a native are *not*
-    // legal evaluation targets, although they can be used as GC safe scratch
-    // space for things other than evaluation.)
+    // legal evaluation targets...because a debugger that is triggered while
+    // a nested level is running might expose intermediate bad states.  The
+    // argument cells can be used to hold other fully formed cells.)
     //
     Cell spare;
 
@@ -379,23 +375,6 @@ typedef bool (Decider)(const Value* arg);
     // to a final result, due to being GC-safe during function evaluation.
     //
     Atom* out;
-
-    // The error reporting machinery doesn't want where `index` is right now,
-    // but where it was at the beginning of a single EVALUATE step.
-    //
-    uintptr_t expr_index;
-
-    // Functions don't have "names", though they can be assigned to words.
-    // However, not all function invocations are through words or paths, so
-    // the label may not be known.  Mechanics with labeling try to make sure
-    // that *some* name is known, but a few cases can't be, e.g.:
-    //
-    //     run func [x] [print "This function never got a label"]
-    //
-    // The evaluator only enforces that the symbol be set during function
-    // calls--in the release build, it is allowed to be garbage otherwise.
-    //
-    Option(const Symbol*) label;
 
     // The varlist is where arguments for FRAME! are kept.  Though it is
     // ultimately usable as an ordinary Varlist_Array() for a FRAME! value, it
@@ -465,6 +444,10 @@ typedef bool (Decider)(const Value* arg);
     // Knowing the label symbol is not as handy as knowing the actual string
     // of the function this call represents (if any).  It is in UTF8 format,
     // and cast to `char*` to help debuggers that have trouble with Byte.
+    //
+    // (Only Action_Executor() levels can have a label in L->u.action.label,
+    // but this debug field is in the Level struct for all levels, because it
+    // is a pain in C watchlists to have to drill down into u.action.)
     //
     const char *label_utf8;
   #endif

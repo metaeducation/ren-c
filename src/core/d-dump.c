@@ -122,10 +122,8 @@ void Dump_Stack(Level* L)
     const char *label;
     if (not Is_Action_Level(L))
         label = "<eval>";
-    else if (not L->label)
-        label = "<anonymous>";
     else
-        label = String_UTF8(unwrap L->label);
+        label = Level_Label_Or_Anonymous_UTF8(L);
 
     printf("LABEL: %s @ FILE: %s @ LINE: %" PRIuPTR "\n",  // uintptr_t format
         label,

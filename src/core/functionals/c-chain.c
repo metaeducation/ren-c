@@ -78,7 +78,10 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     Corrupt_Pointer_If_Debug(L->rootvar);
 
     Corrupt_Function_Pointer_If_Debug(L->executor);  // caller must set
-    Corrupt_Pointer_If_Debug(L->label);
+    Corrupt_Pointer_If_Debug(L->u.action.label);
+  #if DEBUG_LEVEL_LABELS
+    L->label_utf8 = nullptr;
+  #endif
 
     Corrupt_If_Debug(L->u);  // no longer action; corrupt after get stack base
 
@@ -171,12 +174,7 @@ Bounce Cascader_Executor(Level* const L)
     Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
 
     sub->u.action.original = VAL_ACTION(first);
-    sub->label = VAL_FRAME_LABEL(first);
-  #if RUNTIME_CHECKS
-    sub->label_utf8 = sub->label
-        ? String_UTF8(unwrap sub->label)
-        : "(anonymous)";
-  #endif
+    Set_Action_Level_Label(sub, VAL_FRAME_LABEL(first));
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);

@@ -209,6 +209,15 @@ struct ActionExecutorStateStruct {
     //
     Action* original;
 
+    // Functions don't have "names", though they can be assigned to words.
+    // However, not all function invocations are through words or paths, so
+    // the label may not be known.  Mechanics with labeling try to make sure
+    // that *some* name is known, but a few cases can't be, e.g.:
+    //
+    //     run func [x] [print "This function never got a label"]
+    //
+    Option(const Symbol*) label;
+
     // When enumerating across the key/arg/param trios in unison, the length
     // of the keylist is used to dictate how far to go.
     //
