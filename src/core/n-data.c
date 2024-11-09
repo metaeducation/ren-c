@@ -415,7 +415,7 @@ DECLARE_NATIVE(refinement_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Get_Word(e));
+    return LOGIC(Is_Get_Word(e));
 }
 
 
@@ -437,7 +437,7 @@ DECLARE_NATIVE(set_word_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Set_Word(e));
+    return LOGIC(Is_Set_Word(e));
 }
 
 
@@ -459,11 +459,7 @@ DECLARE_NATIVE(set_run_word_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(
-        OUT,
-        Is_Path(e)
-        and Try_Get_Settable_Word_Symbol(nullptr, e)
-    );
+    return LOGIC(Is_Path(e) and Try_Get_Settable_Word_Symbol(nullptr, e));
 }
 
 
@@ -485,7 +481,7 @@ DECLARE_NATIVE(get_word_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Get_Word(e));
+    return LOGIC(Is_Get_Word(e));
 }
 
 
@@ -507,7 +503,7 @@ DECLARE_NATIVE(set_tuple_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Set_Tuple(e));
+    return LOGIC(Is_Set_Tuple(e));
 }
 
 
@@ -529,7 +525,7 @@ DECLARE_NATIVE(get_tuple_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Get_Tuple(e));
+    return LOGIC(Is_Get_Tuple(e));
 }
 
 
@@ -551,7 +547,7 @@ DECLARE_NATIVE(set_group_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Set_Group(e));
+    return LOGIC(Is_Set_Group(e));
 }
 
 
@@ -573,7 +569,7 @@ DECLARE_NATIVE(get_group_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Get_Group(e));
+    return LOGIC(Is_Get_Group(e));
 }
 
 
@@ -595,7 +591,7 @@ DECLARE_NATIVE(set_block_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Set_Block(e));
+    return LOGIC(Is_Set_Block(e));
 }
 
 
@@ -617,7 +613,7 @@ DECLARE_NATIVE(get_block_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Get_Block(e));
+    return LOGIC(Is_Get_Block(e));
 }
 
 
@@ -639,7 +635,7 @@ DECLARE_NATIVE(any_set_value_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Any_Set_Value(e));
+    return LOGIC(Any_Set_Value(e));
 }
 
 
@@ -661,7 +657,7 @@ DECLARE_NATIVE(any_get_value_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Any_Get_Value(e));
+    return LOGIC(Any_Get_Value(e));
 }
 
 
@@ -683,7 +679,7 @@ DECLARE_NATIVE(quasi_word_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Quasiform(e) and HEART_BYTE(e) == REB_WORD);
+    return LOGIC(Is_Quasiform(e) and HEART_BYTE(e) == REB_WORD);
 }
 
 
@@ -705,7 +701,7 @@ DECLARE_NATIVE(char_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, IS_CHAR(e));
+    return LOGIC(IS_CHAR(e));
 }
 
 
@@ -727,8 +723,7 @@ DECLARE_NATIVE(lit_word_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(
-        OUT,
+    return LOGIC(
         QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and HEART_BYTE(e) == REB_WORD
     );
 }
@@ -752,7 +747,7 @@ DECLARE_NATIVE(lit_path_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, IS_QUOTED_PATH(e));
+    return LOGIC(IS_QUOTED_PATH(e));
 }
 
 
@@ -774,10 +769,7 @@ DECLARE_NATIVE(any_inert_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(
-        OUT,
-        Not_Antiform(v) and Any_Inert(v)
-    );
+    return LOGIC(Not_Antiform(v) and Any_Inert(v));
 }
 
 
@@ -1168,9 +1160,9 @@ DECLARE_NATIVE(any_value_q)
         return unwrap bounce;
 
     if (not Is_Quasiform(meta))  // meta, so quasiform
-        return Init_Logic(OUT, true);
+        return OKAY;
 
-    return Init_Logic(OUT, Is_Stable_Antiform_Heart(Cell_Heart(meta)));
+    return LOGIC(Is_Stable_Antiform_Heart(Cell_Heart(meta)));
 }
 
 
@@ -1200,12 +1192,12 @@ DECLARE_NATIVE(non_void_value_q)
 
     if (not Is_Quasiform(meta)) {
         if (Is_Meta_Of_Void(meta))
-            return Init_Logic(OUT, false);
+            return nullptr;
 
-        return Init_Logic(OUT, true);
+        return OKAY;
     }
 
-    return Init_Logic(OUT, Is_Stable_Antiform_Heart(Cell_Heart(meta)));
+    return LOGIC(Is_Stable_Antiform_Heart(Cell_Heart(meta)));
 }
 
 
@@ -1225,7 +1217,7 @@ DECLARE_NATIVE(any_atom_q)
 {
     INCLUDE_PARAMS_OF_ANY_ATOM_Q;
 
-    return Init_Okay(OUT);
+    return OKAY;
 }
 
 
@@ -1248,7 +1240,7 @@ DECLARE_NATIVE(nihil_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Meta_Of_Nihil(meta));
+    return LOGIC(Is_Meta_Of_Nihil(meta));
 }
 
 
@@ -1270,7 +1262,7 @@ DECLARE_NATIVE(barrier_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Meta_Of_Barrier(meta));
+    return LOGIC(Is_Meta_Of_Barrier(meta));
 }
 
 
@@ -1292,7 +1284,7 @@ DECLARE_NATIVE(elision_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Meta_Of_Elision(meta));
+    return LOGIC(Is_Meta_Of_Elision(meta));
 }
 
 
@@ -1314,7 +1306,7 @@ DECLARE_NATIVE(void_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Void(v));
+    return LOGIC(Is_Void(v));
 }
 
 
@@ -1336,7 +1328,7 @@ DECLARE_NATIVE(nothing_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Nothing(v));
+    return LOGIC(Is_Nothing(v));
 }
 
 
@@ -1358,7 +1350,7 @@ DECLARE_NATIVE(tripwire_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Tripwire(v));
+    return LOGIC(Is_Tripwire(v));
 }
 
 
@@ -1380,7 +1372,7 @@ DECLARE_NATIVE(trash_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Trash(e));
+    return LOGIC(Is_Trash(e));
 }
 
 
@@ -1402,7 +1394,7 @@ DECLARE_NATIVE(space_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Space(e));
+    return LOGIC(Is_Space(e));
 }
 
 

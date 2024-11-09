@@ -377,7 +377,7 @@ DECLARE_NATIVE(hole_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Meta_Of_Hole(meta));
+    return LOGIC(Is_Meta_Of_Hole(meta));
 }
 
 

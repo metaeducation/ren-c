@@ -43,7 +43,7 @@ DECLARE_NATIVE(null_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Nulled(v));
+    return LOGIC(Is_Nulled(v));
 }
 
 
@@ -65,7 +65,7 @@ DECLARE_NATIVE(okay_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Okay(v));
+    return LOGIC(Is_Okay(v));
 }
 
 
@@ -87,7 +87,7 @@ DECLARE_NATIVE(logic_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Logic(v));
+    return LOGIC(Is_Logic(v));
 }
 
 
@@ -127,7 +127,7 @@ DECLARE_NATIVE(boolean_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_Boolean(e));
+    return LOGIC(Is_Boolean(e));
 }
 
 
@@ -149,7 +149,7 @@ DECLARE_NATIVE(onoff_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_OnOff(e));
+    return LOGIC(Is_OnOff(e));
 }
 
 
@@ -171,7 +171,7 @@ DECLARE_NATIVE(yesno_q)
     if (b)
         return unwrap b;
 
-    return Init_Logic(OUT, Is_YesNo(e));
+    return LOGIC(Is_YesNo(e));
 }
 
 
@@ -443,7 +443,7 @@ DECLARE_NATIVE(not_1)  // see TO-C-NAME
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Inhibitor(v));
+    return LOGIC(Is_Inhibitor(v));
 }
 
 

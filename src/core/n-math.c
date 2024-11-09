@@ -784,7 +784,7 @@ DECLARE_NATIVE(something_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, not Is_Nothing(v));
+    return LOGIC(not Is_Nothing(v));
 }
 
 

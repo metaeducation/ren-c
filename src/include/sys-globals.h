@@ -86,6 +86,7 @@ PVAR Value PG_Bounce_Fail;
 PVAR Value PG_Bounce_Continuation;
 PVAR Value PG_Bounce_Delegation;
 PVAR Value PG_Bounce_Suspend;
+PVAR Value PG_Bounce_Okay;
 
 
 // These are root variables which used to be described in %root.r and kept

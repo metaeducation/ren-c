@@ -342,6 +342,7 @@ static void Init_Root_Vars(void)
     Init_Return_Signal(&PG_Bounce_Continuation, C_CONTINUATION);
     Init_Return_Signal(&PG_Bounce_Delegation, C_DELEGATION);
     Init_Return_Signal(&PG_Bounce_Suspend, C_SUSPEND);
+    Init_Return_Signal(&PG_Bounce_Okay, C_OKAY);
 
     PG_Empty_Array = Make_Source_Managed(0);
     Freeze_Source_Deep(PG_Empty_Array);
@@ -408,6 +409,7 @@ static void Shutdown_Root_Vars(void)
     Erase_Cell(&PG_Bounce_Continuation);
     Erase_Cell(&PG_Bounce_Delegation);
     Erase_Cell(&PG_Bounce_Suspend);
+    Erase_Cell(&PG_Bounce_Okay);
 
     rebReleaseAndNull(&g_empty_text);
     rebReleaseAndNull(&g_empty_block);

@@ -108,6 +108,15 @@ INLINE Bounce Run_Generic_Dispatch(
     cast(Bounce, &PG_Bounce_Suspend)
 
 
+// Intrinsic typecheckers want to be able to run in the same Level as an
+// action, but not overwrite the ->out cell of the level.  They motivate
+// a special state for OKAY so that the L->out can be left as-is.
+//
+#define C_OKAY 'O'
+#define BOUNCE_OKAY \
+    cast(Bounce, &PG_Bounce_Okay)
+
+
 //=//// CONTINUATION HELPER MACROS ////////////////////////////////////////=//
 //
 // Normal continuations come in catching and non-catching forms; they evaluate

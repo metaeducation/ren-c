@@ -786,6 +786,8 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
+    #define OKAY        BOUNCE_OKAY
+    #define LOGIC(b)    ((b) == true ? BOUNCE_OKAY : nullptr)
 
     #define RAISE(p) \
         Native_Raised_Result(level_, Derive_Error_From_Pointer(p))

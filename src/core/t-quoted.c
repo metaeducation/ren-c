@@ -302,7 +302,7 @@ DECLARE_NATIVE(antiform_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Quasiform(meta));
+    return LOGIC(Is_Quasiform(meta));
 }
 
 
@@ -596,7 +596,7 @@ DECLARE_NATIVE(splice_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Splice(v));
+    return LOGIC(Is_Splice(v));
 }
 
 
@@ -618,7 +618,7 @@ DECLARE_NATIVE(lazy_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Meta_Of_Lazy(meta));
+    return LOGIC(Is_Meta_Of_Lazy(meta));
 }
 
 
@@ -640,7 +640,7 @@ DECLARE_NATIVE(pack_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Meta_Of_Pack(meta));
+    return LOGIC(Is_Meta_Of_Pack(meta));
 }
 
 
@@ -662,7 +662,7 @@ DECLARE_NATIVE(keyword_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Keyword(v));
+    return LOGIC(Is_Keyword(v));
 }
 
 
@@ -684,7 +684,7 @@ DECLARE_NATIVE(action_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Action(v));
+    return LOGIC(Is_Action(v));
 }
 
 

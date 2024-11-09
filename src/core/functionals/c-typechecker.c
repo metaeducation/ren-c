@@ -55,7 +55,7 @@ Bounce Decider_Intrinsic_Dispatcher(Level* level_)
         Details* details = Phase_Details(cast(Phase*, VAL_ACTION(SCRATCH)));
         Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
         Decider* decider = g_instance_deciders[VAL_UINT8(index)];
-        return Init_Logic(OUT, decider(v));
+        return LOGIC(decider(v));
     }
 
     bool check_datatype = Cell_Logic(Level_Arg(level_, 3));
@@ -70,7 +70,7 @@ Bounce Decider_Intrinsic_Dispatcher(Level* level_)
         ? g_datatype_deciders[VAL_UINT8(index)]
         : g_instance_deciders[VAL_UINT8(index)];
 
-    return Init_Logic(OUT, decider(v));
+    return LOGIC(decider(v));
 }
 
 
@@ -326,17 +326,17 @@ bool Typecheck_Atom_Core(
                 Copy_Cell(&L->scratch, test);  // intrinsic typechecks/decays
 
                 Bounce bounce = (*dispatcher)(L);
+                if (bounce == nullptr)
+                    goto test_failed;
+                if (bounce == BOUNCE_OKAY)
+                    goto test_succeeded;
+
                 if (bounce == BOUNCE_FAIL)
                     fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+                assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
                 if (Is_Raised(L->out))
                     fail (Cell_Error(L->out));
-                assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
-
-                if (not Is_Logic(scratch))
-                    fail (Error_No_Logic_Typecheck(label));
-                if (Cell_Logic(scratch))
-                    goto test_succeeded;
-                goto test_failed;
+                fail (Error_No_Logic_Typecheck(label));
             }
 
             Flags flags = 0;

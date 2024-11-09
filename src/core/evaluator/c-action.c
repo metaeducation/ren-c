@@ -872,6 +872,10 @@ Bounce Action_Executor(Level* L)
     }
     else switch (VAL_RETURN_SIGNAL(b)) {  // it's a "pseudotype" instruction
 
+      case C_OKAY:  // essential to typechecker intrinsic optimization...
+        Init_Okay(OUT);  // ...optimization doesn't write OUT, but we do here
+        break;
+
       case C_CONTINUATION:
         return BOUNCE_CONTINUE;  // Note: may not have pushed a new level...
 

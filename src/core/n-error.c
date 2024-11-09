@@ -294,7 +294,7 @@ DECLARE_NATIVE(raised_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, Is_Meta_Of_Raised(meta));
+    return LOGIC(Is_Meta_Of_Raised(meta));
 }
 
 
@@ -328,7 +328,7 @@ DECLARE_NATIVE(unraised_q)
     if (bounce)
         return unwrap bounce;
 
-    return Init_Logic(OUT, not Is_Meta_Of_Raised(meta));
+    return LOGIC(not Is_Meta_Of_Raised(meta));
 }
 
 
