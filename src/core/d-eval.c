@@ -62,9 +62,8 @@ void Dump_Level_Location(Level* L)
         L->executor == &Stepper_Executor  // looks ahead by one
         and Level_State_Byte(L) != ST_STEPPER_INITIAL_ENTRY  // L->u corrupt
     ){
-        Derelativize(dump, cast(Element*, &L->u.eval.current), L_binding);
         printf("Dump_Level_Location() current\n");
-        PROBE(dump);
+        PROBE(Evaluator_Level_Current(L));
     }
 
     if (Get_Feed_Flag(L->feed, NEEDS_SYNC)) {

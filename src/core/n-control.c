@@ -117,7 +117,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
         return THROWN;
 
     Value* with = stable_SPARE;  // value passed to branch if it runs [1]
-    Atom* branch = cast(Atom*, &L->u.eval.current);  // GC-safe if eval target
+    Atom* branch = SCRATCH;  // GC-safe if eval target
 
     enum {
         ST_GROUP_BRANCH_INITIAL_ENTRY = STATE_0,

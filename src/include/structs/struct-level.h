@@ -335,6 +335,23 @@ typedef bool (Decider)(const Value* arg);
     //
     Cell spare;
 
+    // A second GC-safe cell is available, but with a particular purpose in
+    // the evaluator.  It stores a copy of the current cell being evaluated.
+    // That can't be the Feed->p cell, because the evaluator has to seek ahead
+    // one unit to find lookback quoters, such as `x: default [...]`, where
+    // DEFAULT wants to quote the X: to its left.
+    //
+    // (An attempt was made to optimize this by multiplexing the OUT cell for
+    // this purpose...after all, inert items want to wind up in the output cell
+    // anyway.  But besides obfuscating the code, it was slower, since the
+    // output cell involves a level of indirection to address.)
+    //
+    // Other executors can use this for what they want -but- if you use
+    // LEVEL_FLAG_DISPATCHING_INTRINSIC then current must hold the cell of
+    // the intrinsic being run.
+    //
+    Cell scratch;  // raw vs. derived class due to union/destructor combo
+
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the
     // `spare` is on a (2 * sizeof(uintptr_t)) alignment, in case there are

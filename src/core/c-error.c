@@ -361,7 +361,7 @@ void Set_Location_Of_Error(
     Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
         if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
-            Option(const Symbol*) label = VAL_FRAME_LABEL(&L->u.eval.current);
+            Option(const Symbol*) label = VAL_FRAME_LABEL(Level_Scratch(L));
             if (label)
                 Init_Word(PUSH(), unwrap label);
             else

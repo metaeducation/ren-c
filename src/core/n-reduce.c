@@ -104,7 +104,7 @@ DECLARE_NATIVE(reduce)
     );
     Push_Level(OUT, sub);
 
-    Copy_Cell(&sub->u.eval.current, v);
+    Copy_Cell(Evaluator_Level_Current(sub), v);
     sub->u.eval.current_gotten = nullptr;
 
     return DELEGATE_SUBLEVEL(sub);

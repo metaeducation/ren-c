@@ -86,12 +86,12 @@
 #undef At_Level
 #define L_next              cast(const Element*, L->feed->p)
 #define L_next_gotten       L->feed->gotten
-#define L_current           cast(const Element*, &L->u.eval.current)
 #define L_current_gotten    L->u.eval.current_gotten
 
-#define level_ L  // for OUT, SPARE, STATE macros
+#undef SCRATCH  // rename for its specific use in the evaluator
+#define CURRENT  u_cast(Element*, &L->scratch)  // no executor check
 
-#define CURRENT cast(Element*, &(L->u.eval.current))
+#define level_ L  // for OUT, SPARE, STATE macros
 
 // We make the macro for getting binding a bit more complex here, to account
 // for reevaluation.
@@ -148,7 +148,7 @@ STATIC_ASSERT(
 INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
     if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
-        fail (Error_Need_Non_End(L_current));
+        fail (Error_Need_Non_End(CURRENT));
 
     Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
 
@@ -220,7 +220,7 @@ Bounce Stepper_Executor(Level* L)
 
       intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
-        Action* action = VAL_ACTION(L_current);
+        Action* action = VAL_ACTION(CURRENT);
         assert(Is_Stub_Details(action));
         Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
         Param* param = ACT_PARAM(action, 2);
@@ -235,7 +235,7 @@ Bounce Stepper_Executor(Level* L)
         else
             Decay_If_Unstable(SPARE);  // error parity with non-intrinsic
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
-            Option(const Symbol*) label = VAL_FRAME_LABEL(L_current);
+            Option(const Symbol*) label = VAL_FRAME_LABEL(CURRENT);
             const Key* key = ACT_KEY(action, 2);
             return FAIL(Error_Arg_Type(label, key, param, stable_SPARE));
         }
@@ -374,13 +374,13 @@ Bounce Stepper_Executor(Level* L)
         goto give_up_backward_quote_priority;
 
     if (pclass == PARAMCLASS_JUST)  // infix func ['x ...] [...]
-        Copy_Cell(OUT, L_current);  // put left side in OUT [1]
+        Copy_Cell(OUT, CURRENT);  // put left side in OUT [1]
     else {
         assert(
             pclass == PARAMCLASS_THE  // infix func [@x ...] [...]
             or pclass == PARAMCLASS_SOFT
         );
-        Derelativize(OUT, L_current, L_binding);  // put left side in OUT [1]
+        Derelativize(OUT, CURRENT, L_binding);  // put left side in OUT [1]
     }
 
     L_current_gotten = L_next_gotten;
@@ -425,9 +425,9 @@ Bounce Stepper_Executor(Level* L)
         Cell_Frame_Coupling(unwrap L_current_gotten)
     );
 
-    Option(const Symbol*) label = Is_Word(L_current)
-        ? Cell_Word_Symbol(L_current)
-        : VAL_FRAME_LABEL(L_current);
+    Option(const Symbol*) label = Is_Word(CURRENT)
+        ? Cell_Word_Symbol(CURRENT)
+        : VAL_FRAME_LABEL(CURRENT);
 
     Begin_Action(sub, label, infix_mode);
     goto process_action;
@@ -454,11 +454,11 @@ Bounce Stepper_Executor(Level* L)
 
     assert(Is_Fresh(OUT));
 
-    if (QUOTE_BYTE(L_current) != NOQUOTE_1) {  // quasiform or quoted [1]
-        Copy_Cell(OUT, L_current);
+    if (QUOTE_BYTE(CURRENT) != NOQUOTE_1) {  // quasiform or quoted [1]
+        Copy_Cell(OUT, CURRENT);
         Meta_Unquotify_Undecayed(OUT);  // checks that antiform is legal
     }
-    else switch ((STATE = HEART_BYTE(L_current))) {  // states include type [2]
+    else switch ((STATE = HEART_BYTE(CURRENT))) {  // states include type [2]
 
     //=//// COMMA! ////////////////////////////////////////////////////////=//
     //
@@ -498,19 +498,19 @@ Bounce Stepper_Executor(Level* L)
     //    hand side argument.
 
       case REB_FRAME: {
-        if (IS_FRAME_PHASED(L_current))  // running frame if phased
+        if (IS_FRAME_PHASED(CURRENT))  // running frame if phased
             return FAIL("Use REDO to restart a running FRAME! (can't EVAL)");
 
         Level* sub = Make_Action_Sublevel(L);
         Push_Level(OUT, sub);
         Push_Action(
             sub,
-            VAL_ACTION(L_current),
-            Cell_Frame_Coupling(L_current)
+            VAL_ACTION(CURRENT),
+            Cell_Frame_Coupling(CURRENT)
         );
-        Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(L_current);
+        Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
         assert(Is_Fresh(OUT));  // so nothing on left [1]
-        Begin_Action(sub, VAL_FRAME_LABEL(L_current), infix_mode);
+        Begin_Action(sub, VAL_FRAME_LABEL(CURRENT), infix_mode);
 
         goto process_action; }
 
@@ -586,12 +586,12 @@ Bounce Stepper_Executor(Level* L)
     //    antiforms from being seen by any other part of the code.
 
       case REB_SIGIL: {
-        Sigil sigil = Cell_Sigil(L_current);
+        Sigil sigil = Cell_Sigil(CURRENT);
         switch (sigil) {
           case SIGIL_QUOTE:
           case SIGIL_THE: {
             if (Is_Feed_At_End(L->feed))  // no literal to take if (@), (')
-                return FAIL(Error_Need_Non_End(L_current));
+                return FAIL(Error_Need_Non_End(CURRENT));
 
             assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
             const Element* elem = c_cast(Element*, L->feed->p);
@@ -628,7 +628,7 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead; }
 
       sigil_rightside_in_out: {
-        switch (Cell_Sigil(L_current)) {
+        switch (Cell_Sigil(CURRENT)) {
           case SIGIL_META:  // ^
             Meta_Quotify(OUT);
             break;
@@ -668,7 +668,7 @@ Bounce Stepper_Executor(Level* L)
       word_common: ///////////////////////////////////////////////////////////
 
       case REB_WORD: {
-        Option(Error*) error = Trap_Get_Any_Word(OUT, L_current, L_binding);
+        Option(Error*) error = Trap_Get_Any_Word(OUT, CURRENT, L_binding);
         if (error)
             return FAIL(unwrap error);  // don't conflate with function result
 
@@ -676,7 +676,7 @@ Bounce Stepper_Executor(Level* L)
             Action* action = VAL_ACTION(OUT);
             Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
             Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
-            const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
+            const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
             Erase_Cell(OUT);  // sanity check, plus don't want infix to see
 
             if (infix_mode) {
@@ -749,7 +749,7 @@ Bounce Stepper_Executor(Level* L)
         }
 
         if (Any_Vacancy(stable_OUT))  // checked second
-            return FAIL(Error_Bad_Word_Get(L_current, OUT));
+            return FAIL(Error_Bad_Word_Get(CURRENT, OUT));
 
         goto lookahead; }
 
@@ -761,13 +761,13 @@ Bounce Stepper_Executor(Level* L)
     // and dispatch to the appropriate behavior.
 
       case REB_CHAIN: {
-        switch (Try_Get_Sequence_Singleheart(L_current)) {
+        switch (Try_Get_Sequence_Singleheart(CURRENT)) {
           case NOT_SINGLEHEART_0:
             break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
           case TRAILING_BLANK_AND(WORD):  // FOO:, set word
             Derelativize(  // !!! binding may be sensitive to "set-words only"
-                SPARE, L_current, L_binding
+                SPARE, CURRENT, L_binding
             );
             Unchain(Copy_Cell(CURRENT, cast(Element*, SPARE)));
             STATE = ST_STEPPER_SET_WORD;
@@ -789,7 +789,7 @@ Bounce Stepper_Executor(Level* L)
             Init_Void(Alloc_Evaluator_Primed_Result());
             Level* sub = Make_Level_At_Core(
                 &Evaluator_Executor,
-                L_current,
+                CURRENT,
                 L_binding,
                 LEVEL_MASK_NONE
             );
@@ -810,7 +810,7 @@ Bounce Stepper_Executor(Level* L)
 
           case LEADING_BLANK_AND(BLOCK):  // !!! :[a b] reduces, not great...
             Unchain(CURRENT);
-            Derelativize(SPARE, L_current, L_binding);
+            Derelativize(SPARE, CURRENT, L_binding);
             if (rebRunThrows(
                 cast(Value*, OUT),  // <-- output, API won't make atoms
                 Canon(REDUCE), SPARE
@@ -830,7 +830,7 @@ Bounce Stepper_Executor(Level* L)
         Option(Error*) error = Trap_Get_Chain_Push_Refinements(
             OUT,  // where to write action
             SPARE,  // temporary GC-safe scratch space
-            L_current,
+            CURRENT,
             L_binding
         );
         if (error)  // lookup failed, a GROUP! in path threw, etc.
@@ -869,12 +869,12 @@ Bounce Stepper_Executor(Level* L)
       handle_get_word:  // jumps here for CHAIN! that's like a GET-WORD!
       case REB_META_WORD: {
         assert(
-            (STATE == ST_STEPPER_GET_WORD and Is_Word(L_current))
-            or (STATE == REB_META_WORD and Is_Meta_Word(L_current))
+            (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
+            or (STATE == REB_META_WORD and Is_Meta_Word(CURRENT))
         );
         Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
             OUT,
-            L_current,
+            CURRENT,
             L_binding
         );
         if (error)
@@ -913,7 +913,7 @@ Bounce Stepper_Executor(Level* L)
         Init_Nihil(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level_At_Core(
             &Evaluator_Executor,
-            L_current,
+            CURRENT,
             L_binding,
             flags
         );
@@ -938,19 +938,19 @@ Bounce Stepper_Executor(Level* L)
     // fetching nothing is what you actually intended.
 
       case REB_TUPLE: {
-        Copy_Sequence_At(SPARE, L_current, 0);
+        Copy_Sequence_At(SPARE, CURRENT, 0);
         if (
             not Is_Blank(SPARE)  // `.a` means pick member from "self"
             and Any_Inert(SPARE)  // `1.2.3` is inert
         ){
-            Derelativize(OUT, L_current, L_binding);
+            Derelativize(OUT, CURRENT, L_binding);
             goto lookahead;
         }
 
         Option(Error*) error = Trap_Get_Any_Tuple(  // vacant will cause error
             OUT,
             GROUPS_OK,
-            L_current,
+            CURRENT,
             L_binding
         );
         if (error) {  // tuples never run actions, won't conflate to raise it
@@ -1010,23 +1010,23 @@ Bounce Stepper_Executor(Level* L)
       case REB_PATH: {
         bool slash_at_head;
         bool slash_at_tail;
-        Option(SingleHeart) single = Try_Get_Sequence_Singleheart(L_current);
+        Option(SingleHeart) single = Try_Get_Sequence_Singleheart(CURRENT);
 
         if (not single) {
-            Copy_Sequence_At(SPARE, L_current, 0);
+            Copy_Sequence_At(SPARE, CURRENT, 0);
             if (Any_Inert(SPARE)) {
                 if (Is_Blank(SPARE))
                     slash_at_head = true;
                 else {
-                    Derelativize(OUT, L_current, L_binding);  // inert [2]
+                    Derelativize(OUT, CURRENT, L_binding);  // inert [2]
                     goto lookahead;
                 }
             }
             else
                 slash_at_head = false;
 
-            Length len = Cell_Sequence_Len(L_current);
-            Copy_Sequence_At(SPARE, L_current, len - 1);
+            Length len = Cell_Sequence_Len(CURRENT);
+            Copy_Sequence_At(SPARE, CURRENT, len - 1);
             slash_at_tail = Is_Blank(SPARE);
         }
         else switch (unwrap single) {
@@ -1036,7 +1036,7 @@ Bounce Stepper_Executor(Level* L)
           case LEADING_BLANK_AND(CHAIN): {  // /abc: or /?:?:?
             Unpath(CURRENT);
 
-            switch (Try_Get_Sequence_Singleheart(L_current)) {
+            switch (Try_Get_Sequence_Singleheart(CURRENT)) {
               case TRAILING_BLANK_AND(WORD):  // /abc: is set actions only
                 Unchain(CURRENT);
                 Set_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION);
@@ -1064,7 +1064,7 @@ Bounce Stepper_Executor(Level* L)
         Option(Error*) error = Trap_Get_Path_Push_Refinements(
             OUT,  // where to write action
             SPARE,  // temporary GC-safe scratch space
-            L_current,
+            CURRENT,
             L_binding
         );
         if (error) {  // lookup failed, a GROUP! in path threw, etc.
@@ -1126,9 +1126,9 @@ Bounce Stepper_Executor(Level* L)
 
     handle_generic_set: { ////////////////////////////////////////////////////
         assert(
-            (STATE == ST_STEPPER_SET_WORD and Is_Word(L_current))
-            or (STATE == ST_STEPPER_SET_TUPLE and Is_Tuple(L_current))
-            or (STATE == ST_STEPPER_SET_VOID and Is_Meta_Of_Void(L_current))
+            (STATE == ST_STEPPER_SET_WORD and Is_Word(CURRENT))
+            or (STATE == ST_STEPPER_SET_TUPLE and Is_Tuple(CURRENT))
+            or (STATE == ST_STEPPER_SET_VOID and Is_Meta_Of_Void(CURRENT))
         );
 
         Level* right = Maybe_Rightward_Continuation_Needed(L);
@@ -1140,7 +1140,7 @@ Bounce Stepper_Executor(Level* L)
     } generic_set_rightside_in_out: {  ///////////////////////////////////////
 
         if (Is_Barrier(OUT))  // even `(void):,` needs to error
-            return FAIL(Error_Need_Non_End(L_current));
+            return FAIL(Error_Need_Non_End(CURRENT));
 
         if (STATE == ST_STEPPER_SET_VOID) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
@@ -1153,10 +1153,10 @@ Bounce Stepper_Executor(Level* L)
 
             if (Is_Action(OUT)) {  // !!! Review: When to update labels?
                 if (STATE == ST_STEPPER_SET_WORD)
-                    INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
+                    INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(CURRENT));
             }
             else {  // assignments of /foo: or /obj.field: require action
-                if (Get_Cell_Flag(L_current, CURRENT_NOTE_SET_ACTION))
+                if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))
                     return FAIL(
                         "/word: and /obj.field: assignments require Action"
                     );
@@ -1165,7 +1165,7 @@ Bounce Stepper_Executor(Level* L)
             if (Set_Var_Core_Throws(  // cheaper on fail vs. Set_Var_May_Fail()
                 SPARE,
                 GROUPS_OK,
-                L_current,
+                CURRENT,
                 L_binding,
                 stable_OUT  // should take unstable?  handle blocks?
             )){
@@ -1227,13 +1227,13 @@ Bounce Stepper_Executor(Level* L)
       handle_get_tuple:
       case REB_META_TUPLE: {
         assert(
-            (STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(L_current))
-            or (STATE == REB_META_TUPLE and Is_Meta_Tuple(L_current))
+            (STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT))
+            or (STATE == REB_META_TUPLE and Is_Meta_Tuple(CURRENT))
         );
         Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
             OUT,
             GROUPS_OK,
-            L_current,
+            CURRENT,
             L_binding
         );
         if (error) {
@@ -1310,14 +1310,14 @@ Bounce Stepper_Executor(Level* L)
       //
 
       handle_set_block: {
-        assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(L_current));
+        assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
 
-        if (Cell_Series_Len_At(L_current) == 0)  // not supported [1]
+        if (Cell_Series_Len_At(CURRENT) == 0)  // not supported [1]
             return FAIL("SET-BLOCK! must not be empty for now.");
 
         const Element* tail;
-        const Element* check = Cell_List_At(&tail, L_current);
-        Context* check_binding = Derive_Binding(L_binding, L_current);
+        const Element* check = Cell_List_At(&tail, CURRENT);
+        Context* check_binding = Derive_Binding(L_binding, CURRENT);
 
         // we've extracted the array at and tail, can reuse current now
 
@@ -1602,7 +1602,7 @@ Bounce Stepper_Executor(Level* L)
     // (It's hard to think of another meaning that would be sensible.)
 
       case REB_META_BLOCK:
-        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         HEART_BYTE(OUT) = REB_BLOCK;
         Quotify(OUT, 1);
         goto lookahead;
@@ -1662,7 +1662,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_THE_PATH:
       case REB_THE_CHAIN:
       case REB_THE_TUPLE:
-        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         goto lookahead;
 
 
@@ -1693,7 +1693,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_VAR_PATH:
       case REB_VAR_TUPLE:
       case REB_VAR_CHAIN:
-        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         HEART_BYTE(OUT) = Plainify_Any_Var_Kind(STATE);
         goto lookahead;
 
@@ -1750,14 +1750,14 @@ Bounce Stepper_Executor(Level* L)
         //
       case REB_HANDLE:
 
-        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         goto lookahead;
 
 
     //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
 
       default:
-        panic (L_current);
+        panic (CURRENT);
     }
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//

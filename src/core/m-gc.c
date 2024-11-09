@@ -756,11 +756,7 @@ static void Mark_Level_Stack_Deep(void)
         //
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->fetched);
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
-
-        if (L->executor == &Stepper_Executor) {  // has extra GC-safe cell
-            Queue_Mark_Maybe_Fresh_Cell_Deep(&L->u.eval.current);
-            goto propagate_and_continue;
-        }
+        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->scratch);
 
         if (not Is_Action_Level(L)) {
             //

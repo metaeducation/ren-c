@@ -156,7 +156,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Element* input = cast(Element*, Level_Spare(L));
     Heart from = Cell_Heart_Ensure_Noquote(input);
 
-    Atom* reverse = cast(Atom*, &L->u.eval.current);
+    Atom* reverse = Level_Scratch(L);
 
     if (Get_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING))
         goto ensure_results_equal;

@@ -228,6 +228,14 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
 #define Level_Spare(L) \
     u_cast(Atom*, &(L)->spare)
 
+#define Level_Scratch(L) \
+    u_cast(Atom*, &(L->scratch))
+
+INLINE Element* Evaluator_Level_Current(Level* L) {
+    assert(L->executor == &Stepper_Executor);
+    return u_cast(Element*, &(L->scratch));
+}
+
 
 // A level's varlist is unmanaged by default, because when running code like
 // a native there's typically no way to get access to the frame directly.
@@ -536,6 +544,7 @@ INLINE Level* Prep_Level_Core(
 
     L->feed = feed;
     Erase_Cell(&L->spare);
+    Erase_Cell(&L->scratch);
     Corrupt_Pointer_If_Debug(L->out);
 
     L->varlist = nullptr;
@@ -544,8 +553,6 @@ INLINE Level* Prep_Level_Core(
     Corrupt_Pointer_If_Debug(L->alloc_value_list);
 
     Corrupt_If_Debug(L->u);
-
-    Erase_Cell(&L->u.eval.current);
 
   #if DEBUG_LEVEL_LABELS  // only applicable to L->u.action.label levels...
     L->label_utf8 = nullptr;  // ...but in Level for easy C watchlisting
@@ -767,10 +774,12 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define LEVEL   level_
     #define OUT     level_->out         // GC-safe slot for output value
     #define SPARE   Level_Spare(level_)       // scratch GC-safe cell
+    #define SCRATCH Level_Scratch(level_)
     #define STATE   Level_State_Byte(level_)
     #define PHASE   Level_Phase(level_)
 
     #define stable_SPARE            Stable_Unchecked(SPARE)
+    #define stable_SCRATCH          Stable_Unchecked(SCRATCH)
     #define stable_OUT              Stable_Unchecked(OUT)
 
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)

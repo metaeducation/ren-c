@@ -47,9 +47,7 @@
 Bounce Decider_Intrinsic_Dispatcher(Level* level_)
 {
     if (Get_Level_Flag(level_, DISPATCHING_INTRINSIC)) {
-        Details* details = Phase_Details(
-            cast(Phase*, VAL_ACTION(&level_->u.eval.current))
-        );
+        Details* details = Phase_Details(cast(Phase*, VAL_ACTION(SCRATCH)));
         Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
         Decider* decider = g_instance_deciders[VAL_UINT8(index)];
         return Init_Logic(OUT, decider(stable_SPARE));
@@ -332,8 +330,8 @@ bool Typecheck_Atom_Core(
                     goto test_failed;
                 }
                 L->out = scratch;
-                Erase_Cell(&L->u.eval.current);
-                Copy_Cell(&L->u.eval.current, test);
+                Erase_Cell(&L->scratch);
+                Copy_Cell(&L->scratch, test);
 
                 Bounce bounce = (*dispatcher)(L);
                 if (bounce == BOUNCE_FAIL)

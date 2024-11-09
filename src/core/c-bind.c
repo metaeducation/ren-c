@@ -779,7 +779,7 @@ DECLARE_NATIVE(let)
         | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 
     Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
-    Copy_Cell(&sub->u.eval.current, cast(Element*, SPARE));
+    Copy_Cell(Evaluator_Level_Current(sub), cast(Element*, SPARE));
     sub->u.eval.current_gotten = nullptr;
 
     Push_Level(OUT, sub);
