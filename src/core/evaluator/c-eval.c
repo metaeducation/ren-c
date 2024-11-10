@@ -51,45 +51,16 @@
 #include "sys-core.h"
 
 
+#define PRIMED  cast(Atom*, &L->u.eval.primed)
+
+
 //
 //  Evaluator_Executor: C
 //
 // 1. *Before* a level is created for Evaluator_Executor(), the creator should
-//    push the "primed" value for what they want as a result if there
-//    are no non-invisible evaluations.  It's important to do it before, so
-//    that the pushed cell is not part of the level's baseline.  Right now the
-//    only two things requested are nihil and void, so we can test for those.
-//
-// 2. As mentioned in the notes at the top of this file, the primary reason
-//    for Evaluator_Executor() to be separate from Stepper_Executor() is to
-//    facilitate a general debugging loop hooked into the Trampoline that
-//    can see results generated at the granularity of a step.  But that
-//    generalized debugger doesn't exist yet.  So to make sure that both the
-//    "fast" no-Level mode and the "slow" added Level mode would be able to
-//    toggle based on whether such a hypothetical debugger were turned on,
-//    it sporadically spawns levels in the RUNTIME_CHECKS builds.
-//
-// 3. An idea was tried once where the error was not raised until a step was
-//    shown to be non-invisible.  This would allow invisible evaluations to
-//    come after an error and still fall out:
-//
-//        >> raised? (raise "some error" comment "invisible")
-//        == ~true~  ; anti
-//
-//    However, this means you have to wait until you know if the next
-//    evaluation is invisible to raise the error.  This means things don't
-//    stop running soon enough:
-//
-//        >> data: []
-//
-//        >> take [] append data 'a
-//        ** Error: Can't take from empty block
-//
-//        >> data
-//        == [a]
-//
-//    That's a bad enough outcome that the feature of being able to put
-//    invisible material after the raised error has to be sacrificed.
+//    set the "primed" value for what they want as a result if there
+//    are no non-invisible evaluations.  Right now the only two things
+//    requested are nihil and void, so we can test for those.
 //
 Bounce Evaluator_Executor(Level* const L)
 {
@@ -106,7 +77,7 @@ Bounce Evaluator_Executor(Level* const L)
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
         assert(Not_Level_Flag(L, TRAMPOLINE_KEEPALIVE));
-        assert(Is_Nihil(TOP_ATOM) or Is_Void(TOP));  // primed [1]
+        assert(Is_Nihil(PRIMED) or Is_Void(PRIMED));  // primed [1]
         goto initial_entry;
 
       default:
@@ -121,8 +92,19 @@ Bounce Evaluator_Executor(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    // 2. As mentioned in the notes at the top of this file, the main reason
+    //    for Evaluator_Executor() to be separate from Stepper_Executor() is
+    //    to facilitate a general debugging loop hooked into the Trampoline
+    //    that can see results generated at the granularity of a step.
+    //
+    //    But that generalized debugger doesn't exist yet.  So to make sure
+    //    that both the "fast" no-Level mode and the "slow" added Level mode
+    //    would be able to toggle based on whether such a hypothetical
+    //    debugger were turned on, it sporadically spawns levels in the
+    //    RUNTIME_CHECKS builds.
+
     if (Is_Feed_At_End(L->feed)) {
-        Copy_Cell(OUT, TOP_ATOM);
+        Copy_Cell(OUT, PRIMED);
         return OUT;
     }
 
@@ -165,11 +147,33 @@ Bounce Evaluator_Executor(Level* const L)
 
 } step_result_in_out: {  /////////////////////////////////////////////////////
 
+    // 3. An idea was tried once where the error was not raised until a step
+    //    was shown to be non-invisible.  This would allow invisible
+    //    evaluations to come after an error and still fall out:
+    //
+    //        >> raised? (raise "some error" comment "invisible")
+    //        == ~true~  ; anti
+    //
+    //    However, this means you have to wait until you know if the next
+    //    evaluation is invisible to raise the error.  This means things don't
+    //    stop running soon enough:
+    //
+    //        >> data: []
+    //
+    //        >> take [] append data 'a
+    //        ** Error: Can't take from empty block
+    //
+    //        >> data
+    //        == [a]
+    //
+    //    That's a bad enough outcome that the feature of being able to put
+    //    invisible material after the raised error has to be sacrificed.
+
     if (Is_Elision(OUT))  {  // was something like an ELIDE, COMMENT, COMMA!
         if (Not_Feed_At_End(L->feed))
-            goto new_step;  // leave previous result as-is on stack
+            goto new_step;  // leave previous result as-is in PRIMED
 
-        Move_Cell(OUT, TOP_ATOM);  // finished, so extract result from stack
+        Move_Cell(OUT, PRIMED);  // finished, so extract result from PRIMED
         goto finished;
     }
 
@@ -179,7 +183,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Raised(OUT))   // raise errors synchronously if not at end [3]
         return FAIL(Cell_Error(OUT));
 
-    Move_Cell(TOP_ATOM, OUT);  // make current result the preserved one
+    Move_Cell(PRIMED, OUT);  // make current result the preserved one
     goto new_step;
 
 } finished: {  ///////////////////////////////////////////////////////////////

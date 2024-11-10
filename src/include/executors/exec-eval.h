@@ -113,6 +113,26 @@
 
 
 struct EvaluatorExecutorStateStruct {
+    //
+    // Invisibility is a critical feature in Ren-C:
+    //
+    //     >> 1 + 2 elide print "Invisibility is central to many things"
+    //     Invisibility is central to many things
+    //     == 3
+    //
+    // It was once accomplished with a BOUNCE_INVISIBILE that didn't actually
+    // overwrite the previous output, but set a flag on the cell that could
+    // be un-set to recover the value.  But this approach predated the
+    // semantics of empty antiform blocks (NIHIL), and could no longer work.
+    //
+    // So unfortunately, the evaluator really does need to save the prior
+    // value when doing multiple steps.  If not performing multiple steps,
+    // then it can be used...though likely by the parent (e.g. an Action
+    // Level that knows it's only requesting a single step could write
+    // some value there if it needed to.)
+    //
+    Cell primed;
+
     Option(const Value*) current_gotten;
 
     // The error reporting machinery doesn't want where `index` is right now,

@@ -198,9 +198,6 @@
     (assert(QUOTE_BYTE(g_ds.movable_top) != ANTIFORM_0), \
         cast(OnStack(Element*), cast(Element*, g_ds.movable_top)))
 
-#define TOP_ATOM \
-    cast(Atom*, g_ds.movable_top)  // only legal in narrow cases
-
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to
 //    check if it is or not.

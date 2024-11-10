@@ -759,7 +759,9 @@ static void Mark_Level_Stack_Deep(void)
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->scratch);
 
         if (not Is_Action_Level(L)) {
-            //
+            if (L->executor == &Evaluator_Executor)
+                Queue_Mark_Maybe_Fresh_Cell_Deep(&L->u.eval.primed);
+
             // Consider something like `eval copy '(recycle)`, because
             // while evaluating the group it has no anchor anywhere in the
             // root set and could be GC'd.  The Level's array ref is it.

@@ -99,12 +99,12 @@ DECLARE_NATIVE(enrescue)
     if (Not_Cell_Flag(code, CONST))
         Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // read EVAL source for why
 
-    Init_Nihil(Alloc_Evaluator_Primed_Result());  // able to produce nihil [1]
     Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
         LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK
     );
+    Init_Nihil(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
     Push_Level_Freshen_Out_If_State_0(OUT, L);
 

@@ -648,15 +648,6 @@ void Drop_Level_Core(Level* L) {
 
     g_ts.top_level = L->prior;
 
-    // The Evaluator_Executor() has a trick up its sleeve, where it can actually
-    // pass through to the Stepper_Executor().  It manages to get the one
-    // cell of storage it needs to do the work by sneaking it in the data
-    // stack...*underneath* the level (so the level functions relative to the
-    // baseline predictably).  When we drop the level, drop that cell.
-    //
-    if (L->executor == &Evaluator_Executor)
-        DROP();
-
     // Note: Free_Feed() will handle feeding a feed through to its end (which
     // may release handles/etc), so no requirement Level_At(L) be at END.
 

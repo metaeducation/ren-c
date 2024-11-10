@@ -54,10 +54,12 @@
 
 
 // See Evaluator_Executor().  This helps document the places where the primed
-// result is being pushed, and gives a breakpoint opportunity for it.
+// result is being loaded.
 //
-INLINE Atom* Alloc_Evaluator_Primed_Result() {
-    return atom_PUSH();
+INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
+    assert(L->executor == &Evaluator_Executor);
+    Erase_Cell_Untracked(&L->u.eval.primed);
+    return cast(Atom*, &L->u.eval.primed);
 }
 
 // Does not check for ST_STEPPER_LEVEL_FINISHED, because generalized loops
@@ -123,13 +125,13 @@ INLINE bool Eval_Any_List_At_Core_Throws(
     const Cell* list,
     Context* context
 ){
-    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level_At_Core(
         &Evaluator_Executor,
         list,
         context,
         flags
     );
+    Init_Void(Evaluator_Primed_Cell(L));
 
     return Trampoline_Throws(out, L);
 }

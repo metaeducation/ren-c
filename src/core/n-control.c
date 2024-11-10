@@ -143,13 +143,13 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (Is_Fresh(with))
         Init_Nulled(with);
 
-    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* sub = Make_Level(
         &Evaluator_Executor,
         LEVEL->feed,
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
             & (~ LEVEL_FLAG_BRANCH)  // take off branch flag [2]
     );
+    Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Freshen_Out_If_State_0(branch, sub);  // branch GC-protected during evaluation
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
@@ -1128,13 +1128,13 @@ DECLARE_NATIVE(case)
     if (not Is_Group(branch))
         goto handle_processed_branch;
 
-    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* sub = Make_Level_At_Core(
         &Evaluator_Executor,
         branch,  // non "THE-" GROUP! branches are run unconditionally
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     );
+    Init_Void(Evaluator_Primed_Cell(sub));
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;

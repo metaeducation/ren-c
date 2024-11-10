@@ -671,17 +671,17 @@ Bounce Composer_Executor(Level* const L)
     if (label)
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-    Init_Void(Alloc_Evaluator_Primed_Result());
-    Level* sublevel = Make_Level(
+    Level* sub = Make_Level(
         &Evaluator_Executor,
         subfeed,  // used subfeed so we could skip the label if there was one
         LEVEL_MASK_NONE
     );
+    Init_Void(Evaluator_Primed_Cell(sub));
 
-    Push_Level_Freshen_Out_If_State_0(OUT, sublevel);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
     STATE = ST_COMPOSER_EVAL_GROUP;
-    return CONTINUE_SUBLEVEL(sublevel);
+    return CONTINUE_SUBLEVEL(sub);
 
 }} process_out: {  ///////////////////////////////////////////////////////////
 

@@ -1076,8 +1076,8 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
     else
         FEED_BINDING(feed) = Get_Context_From_Stack();
 
-    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level(&Evaluator_Executor, feed, flags);
+    Init_Void(Evaluator_Primed_Cell(L));
 
     if (interruptible)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
@@ -1296,8 +1296,8 @@ void API_rebPushContinuation_internal(
     else
         BINDING(block) = Lib_Context;  // [3]
 
-    Init_Void(Alloc_Evaluator_Primed_Result());
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
+    Init_Void(Evaluator_Primed_Cell(L));
     Push_Level_Freshen_Out_If_State_0(cast(Atom*, out), L);
 }
 

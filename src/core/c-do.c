@@ -217,10 +217,10 @@ bool Pushed_Continuation(
 
       case REB_META_BLOCK:
       case REB_BLOCK: {
-        Init_Void(Alloc_Evaluator_Primed_Result());
         Level* L = Make_Level_At_Core(
             &Evaluator_Executor, branch, binding, flags
         );
+        Init_Void(Evaluator_Primed_Cell(L));
         if (Cell_Heart_Unchecked(branch) == REB_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);

@@ -350,14 +350,13 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
-        if (not REF(step))
-            Init_Nihil(Alloc_Evaluator_Primed_Result());
-
         Level* sub = Make_Level(
             REF(step) ? &Stepper_Executor : &Evaluator_Executor,
             feed,
             flags
         );
+        if (not REF(step))
+            Init_Nihil(Evaluator_Primed_Cell(sub));
         Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
         if (not REF(step)) {  // plain evaluation to end, maybe invisible
@@ -441,8 +440,8 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
         if (Is_Level_At_End(L))
             return VOID;
 
-        Init_Void(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level(&Evaluator_Executor, L->feed, LEVEL_MASK_NONE);
+        Init_Void(Evaluator_Primed_Cell(sub));
         Push_Level_Freshen_Out_If_State_0(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
 
