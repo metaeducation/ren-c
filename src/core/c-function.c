@@ -83,20 +83,36 @@ static void Ensure_Adjunct(VarList* *adjunct_out) {
 
 
 //
-//  Push_Keys_And_Parameters_May_Fail: C
+//  Push_Keys_And_Holes_May_Fail: C
 //
 // This is an implementation routine for Make_Paramlist_Managed_May_Fail().
 // It was broken out into its own separate routine so that the AUGMENT
 // function could reuse the logic for function spec analysis.  It may not
 // be broken out in a particularly elegant way, but it's a start.
 //
-void Push_Keys_And_Parameters_May_Fail(
+// 1. Definitional RETURN slots must have their argument value fulfilled with
+//    an ACTION! specific to the action called on *every instantiation*.
+//    They are marked with special parameter classes to avoid needing to
+//    separately do canon comparison of their symbols to find them.
+//
+//    Note: Since RETURN's typeset holds types that need to be checked at
+//    the end of the function run, it is moved to a predictable location:
+//    first slot of the paramlist.  Initially it was the last slot...but this
+//    enables adding more arguments/refinements/locals in derived functions.
+//
+void Push_Keys_And_Holes_May_Fail(
     VarList* *adjunct_out,
     const Value* spec,
-    Flags *flags,
-    StackIndex *return_stackindex
+    Flags *flags
 ){
+    StackIndex base = TOP_INDEX;
+
     assert(Is_Block(spec));
+
+    if (*flags & MKF_RETURN) {
+        Init_Word(PUSH(), Canon(RETURN));  // top of stack
+        Init_Unreadable(PUSH());  // becomes parameter (explicitly or implicit)
+    }
 
     enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
 
@@ -306,23 +322,25 @@ void Push_Keys_And_Parameters_May_Fail(
 
         *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
 
-        // Pushing description values for a new named element...
-
-        Init_Word(PUSH(), symbol);
-
-        if (symbol == Canon(RETURN)) {
-            if (*return_stackindex != 0) {
-                DECLARE_ATOM (word);
-                Init_Word(word, symbol);
-                fail (Error_Dup_Vars_Raw(word));  // most dup checks are later
-            }
-            if (*flags & MKF_RETURN) {
-                assert(pclass == PARAMCLASS_RETURN);
-                *return_stackindex = TOP_INDEX;  // RETURN: explicit
+        OnStack(Value*) param;
+        if (
+            symbol == Canon(RETURN)
+            and (*flags & MKF_RETURN)  // explicit return: specification
+        ){
+            assert(
+                Cell_Word_Symbol(Data_Stack_At(Element, base + 1))
+                == Canon(RETURN)
+            );
+            param = Data_Stack_At(Value, base + 2);
+            if (Is_Cell_Readable(param)) {
+                assert(Is_Hole(param));
+                fail ("Duplicate RETURN: in function spec");
             }
         }
-
-        OnStack(Value*) param = PUSH();
+        else {  // Pushing description values for a new named element...
+            Init_Word(PUSH(), symbol);  // duplicates caught when popping
+            param = PUSH();
+        }
 
         // Non-annotated arguments allow all parameter types.
 
@@ -331,7 +349,7 @@ void Push_Keys_And_Parameters_May_Fail(
             assert(mode == SPEC_MODE_LOCAL);
         }
         else if (refinement) {
-            Init_Unconstrained_Parameter(
+            Init_Unconstrained_Hole(
                 param,
                 FLAG_PARAMCLASS_BYTE(pclass)
                     | PARAMETER_FLAG_REFINEMENT  // must preserve if type block
@@ -340,12 +358,27 @@ void Push_Keys_And_Parameters_May_Fail(
             mode = SPEC_MODE_PUSHED;
         }
         else {
-            Init_Unconstrained_Parameter(
+            Init_Unconstrained_Hole(
                 param,
                 FLAG_PARAMCLASS_BYTE(pclass)
             );
             mode = SPEC_MODE_PUSHED;
         }
+    }
+
+    if (*flags & MKF_RETURN) {  // default RETURN: to unconstrained if not seen
+        assert(
+            Cell_Word_Symbol(Data_Stack_At(Element, base + 1)) == Canon(RETURN)
+        );
+        OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
+        if (Not_Cell_Readable(param_1)) {
+            Init_Unconstrained_Hole(  // return anything by default
+                param_1,
+                FLAG_PARAMCLASS_BYTE(PARAMCLASS_RETURN)
+            );
+        }
+        else
+            assert(Is_Hole(param_1));
     }
 
     *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
@@ -362,45 +395,9 @@ void Push_Keys_And_Parameters_May_Fail(
 // as part of this popping process.
 //
 Array* Pop_Paramlist_With_Adjunct_May_Fail(
-    VarList* *adjunct_out,
-    StackIndex base,
-    Flags flags,
-    StackIndex return_stackindex
+    Sink(VarList*) adjunct,
+    StackIndex base
 ){
-    // Definitional RETURN slots must have their argument value fulfilled with
-    // an ACTION! specific to the action called on *every instantiation*.
-    // They are marked with special parameter classes to avoid needing to
-    // separately do canon comparison of their symbols to find them.
-    //
-    // Note: Since RETURN's typeset holds types that need to be checked at
-    // the end of the function run, it is moved to a predictable location:
-    // first slot of the paramlist.  Initially it was the last slot...but this
-    // enables adding more arguments/refinements/locals in derived functions.
-
-    if (flags & MKF_RETURN) {
-        if (return_stackindex == 0) { // no explicit RETURN: pure local
-
-            Init_Word(PUSH(), Canon(RETURN));
-            return_stackindex = TOP_INDEX;
-
-            Init_Unconstrained_Parameter(  // return anything by default
-                PUSH(),
-                FLAG_PARAMCLASS_BYTE(PARAMCLASS_RETURN)
-            );
-        }
-        else {
-            assert(
-                Cell_Word_Id(Data_Stack_At(Element, return_stackindex))
-                    == SYM_RETURN
-            );
-        }
-
-        // definitional_return handled specially when paramlist copied
-        // off of the stack...moved to head position.
-
-        flags |= MKF_HAS_RETURN;
-    }
-
     Count num_params = (TOP_INDEX - base) / 2;
 
     KeyList* keylist = Make_Flex(
@@ -417,8 +414,13 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     );
     Set_Flex_Len(paramlist, num_params + 1);
 
-    if (flags & MKF_HAS_RETURN)
-        paramlist->leader.bits |= VARLIST_FLAG_PARAMLIST_HAS_RETURN;
+    if (num_params > 0) {
+        assert(Is_Word(Data_Stack_At(Element, base + 1)));
+        OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
+        if (Is_Hole(param_1))  // could be a LAMBDA with a <local> 1st arg
+            if (Cell_ParamClass(param_1) == PARAMCLASS_RETURN)
+                Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
+    }
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but fail() isn't allowed while binders are in effect.
@@ -434,15 +436,6 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
   blockscope {
     Value* param = 1 + Init_Unreadable(Array_Head(paramlist));
     Key* key = Flex_Head(Key, keylist);
-
-    if (return_stackindex != 0) {
-        assert(flags & MKF_RETURN);
-        *key = Cell_Word_Symbol(Data_Stack_At(Element, return_stackindex));
-        ++key;
-
-        Copy_Cell(param, Data_Stack_At(Element, return_stackindex + 1));
-        ++param;
-    }
 
     StackIndex stackindex = base + 1;  // empty stack base would be 0, bad cell
     for (; stackindex <= TOP_INDEX; stackindex += 2) {
@@ -471,9 +464,6 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
             hidden = false;
         }
-
-        if (stackindex == return_stackindex)
-            continue;  // was added to the head of the list already
 
         *key = symbol;
 
@@ -528,7 +518,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     //
     // Currently only contains description, assigned during parameter pushes.
 
-    UNUSED(adjunct_out);
+    UNUSED(adjunct);
 
     return paramlist;
 }
@@ -573,24 +563,18 @@ Array* Make_Paramlist_Managed_May_Fail(
 ){
     StackIndex base = TOP_INDEX;
 
-    StackIndex return_stackindex = 0;
-
     *adjunct_out = nullptr;
 
     // The process is broken up into phases so that the spec analysis code
     // can be reused in AUGMENT.
     //
-    Push_Keys_And_Parameters_May_Fail(
+    Push_Keys_And_Holes_May_Fail(
         adjunct_out,
         spec,
-        flags,
-        &return_stackindex
+        flags
     );
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        adjunct_out,
-        base,
-        *flags,
-        return_stackindex
+        adjunct_out, base
     );
 
     return paramlist;

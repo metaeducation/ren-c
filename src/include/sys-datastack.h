@@ -221,8 +221,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
         assert(Is_Cell_Poisoned(at));
     }
     else if (i < TOP_INDEX + 1) {  // in the range of PUSH()'d cells
-        if (not Is_Cell_Erased(at))
-            Assert_Cell_Readable(at);
+        Assert_Cell_Writable(at);
     }
     else {
         assert(i == TOP_INDEX + 1);  // allow getting tail's address [3]

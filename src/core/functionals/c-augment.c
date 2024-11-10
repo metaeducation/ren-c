@@ -79,15 +79,9 @@ DECLARE_NATIVE(augment)
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.
 
-    StackIndex return_stackindex = 0;
+    Flags flags = MKF_MASK_NONE;  // if original had no return, we don't add
 
-    Flags flags = MKF_MASK_NONE;
-    if (ACT_HAS_RETURN(augmentee)) {
-        flags |= MKF_RETURN;
-        return_stackindex = TOP_INDEX + 1;
-    }
-
-    // For each parameter in the original function, push a "quad"
+    // For each parameter in the original function, push word and parameter
     //
   blockscope {
     const Key* key_tail;
@@ -114,18 +108,14 @@ DECLARE_NATIVE(augment)
     // the stack.  This may add duplicates--which will be detected when we
     // try to pop the stack into a paramlist.
     //
-    Push_Keys_And_Parameters_May_Fail(
+    Push_Keys_And_Holes_May_Fail(
         &adjunct,
         ARG(spec),
-        &flags,
-        &return_stackindex
+        &flags
     );
 
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        &adjunct,
-        STACK_BASE,
-        flags,
-        return_stackindex
+        &adjunct, STACK_BASE
     );
 
     // Usually when you call Make_Action() on a freshly generated paramlist,

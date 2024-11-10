@@ -888,7 +888,7 @@ Error* Error_Not_Varargs(
     // an "honest" parameter has to be made to give the error.
     //
     DECLARE_ATOM (honest_param);
-    Init_Unconstrained_Parameter(
+    Init_Unconstrained_Hole(
         honest_param,
         FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
             | PARAMETER_FLAG_VARIADIC

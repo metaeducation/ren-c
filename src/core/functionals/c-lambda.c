@@ -211,7 +211,7 @@ DECLARE_NATIVE(lambda)
         }
 
         Init_Word(PUSH(), symbol);
-        Init_Unconstrained_Parameter(
+        Init_Unconstrained_Hole(
             PUSH(),
             FLAG_PARAMCLASS_BYTE(pclass) | param_flags
         );
@@ -231,10 +231,7 @@ DECLARE_NATIVE(lambda)
 
     VarList* adjunct;  // reuses Pop_Paramlist() [1]
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        &adjunct,
-        STACK_BASE,
-        MKF_MASK_NONE,
-        0  // no return_stackindex
+        &adjunct, STACK_BASE
     );
 
     Phase* lambda = Make_Action(

@@ -301,7 +301,7 @@ INLINE bool Is_Specialized(const Value* v) {
 #define Not_Specialized(v)      (not Is_Specialized(v))
 
 
-INLINE Param* Init_Unconstrained_Parameter_Untracked(
+INLINE Param* Init_Unconstrained_Hole_Untracked(
     Init(Value) out,
     Flags flags
 ){
@@ -321,8 +321,8 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     return cast(Param*, Coerce_To_Stable_Antiform(out));
 }
 
-#define Init_Unconstrained_Parameter(out,param_flags) \
-    TRACK(Init_Unconstrained_Parameter_Untracked((out), (param_flags)))
+#define Init_Unconstrained_Hole(out,param_flags) \
+    TRACK(Init_Unconstrained_Hole_Untracked((out), (param_flags)))
 
 
 INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
