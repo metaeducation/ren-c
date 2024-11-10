@@ -54,11 +54,8 @@ INLINE void Probe_Print_Helper(
 }
 
 
-INLINE void Probe_Molded_Value(const Value* v)
+INLINE void Probe_Molded_Value(Molder* mo, const Value* v)
 {
-    DECLARE_MOLDER (mo);
-    Push_Mold(mo);
-
     if (Is_Antiform(v)) {
         DECLARE_VALUE (temp);
         Copy_Cell(temp, v);
@@ -69,11 +66,6 @@ INLINE void Probe_Molded_Value(const Value* v)
     else {
         Mold_Element(mo, c_cast(Element*, v));
     }
-
-    printf("%s\n", c_cast(char*, Binary_At(mo->string, mo->base.size)));
-    fflush(stdout);
-
-    Drop_Mold(mo);
 }
 
 void Probe_Cell_Print_Helper(
@@ -122,6 +114,9 @@ void* Probe_Core_Debug(
     int line
 ){
     DECLARE_MOLDER (mo);
+    SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
+    mo->limit = 10000;  // what's useful?
+
     Push_Mold(mo);
 
     bool was_disabled = g_gc.disabled;
@@ -184,7 +179,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_VARLIST:  // currently same as FLAVOR_PARAMLIST
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
-        Probe_Molded_Value(Varlist_Archetype(x_cast(VarList*, f)));
+        Probe_Molded_Value(mo, Varlist_Archetype(x_cast(VarList*, f)));
         break;
 
       case FLAVOR_DETAILS:
@@ -330,6 +325,10 @@ void* Probe_Core_Debug(
 
     if (mo->base.size != String_Size(mo->string))
         printf("%s\n", c_cast(char*, Binary_At(mo->string, mo->base.size)));
+
+    if (mo->opts & MOLD_FLAG_WAS_TRUNCATED)
+        printf("...\\\\truncated\\\\...\n");
+
     fflush(stdout);
 
     Drop_Mold(mo);

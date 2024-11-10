@@ -259,6 +259,14 @@ void MF_Blob(Molder* mo, const Cell* v, bool form)
     Size size;
     const Byte* data = Cell_Blob_Size_At(&size, v);
 
+    if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {  // truncation is imprecise...
+        Length mold_len = String_Len(mo->string) - mo->base.index;
+        if (mold_len + (2 * size) > mo->limit) {  //
+            size = (mo->limit - mold_len) / 2;
+            SET_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED);
+        }
+    }
+
     REBINT binary_base = 16;  // molding based on system preference is bad [1]
     /* binary_base = Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16); */
 
@@ -286,7 +294,8 @@ void MF_Blob(Molder* mo, const Cell* v, bool form)
         break; }
     }
 
-    Append_Codepoint(mo->string, '}');
+    if (NOT_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED))
+        Append_Codepoint(mo->string, '}');
 }
 
 
