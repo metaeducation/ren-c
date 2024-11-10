@@ -44,29 +44,20 @@ REBOL [
 ]
 
 assert [null = coupling of return/]  ; it's archetypal, nowhere to return to
-/return: func* [] [
-    fail "RETURN archetype called when no generator is providing it"
-]
 
-/continue: func* [] [
-    fail "CONTINUE archetype called when no loop is providing it"
-]
+return: ~<RETURN used when no function generator is providing it>~
 
-/break: func* [] [
-    fail "BREAK archetype called when no loop is providing it"
-]
+continue: ~<CONTINUE used when no loop is providing it>~
 
-/stop: func* [] [
-    fail "STOP archetype called when no loop is providing it"
-]
+break: ~<BREAK used when no loop is providing it>~
 
-/throw: func* [] [
-    fail "THROW archetype called when no catch is providing it"
-]
+stop: ~<STOP used when no loop is providing it>~
 
-/quit: func* [] [
-    fail "QUIT archetype called when no [DO IMPORT CONSOLE] is providing it"
-]
+throw: ~<THROW used when no catch is providing it>~
+
+quit: ~<QUIT used when no [DO IMPORT CONSOLE] is providing it>~
+
+yield: ~<YIELD used when no generator or yielder is providing it>~
 
 /catch: specialize catch*/ [name: 'throw]
 

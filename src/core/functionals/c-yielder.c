@@ -279,7 +279,7 @@ DECLARE_NATIVE(yielder)
     // has a local "yield" which is bound to the frame upon execution.
     //
     Value* body = rebValue("compose [",
-        "let yield: couple lib/yield/ coupling of return/",
+        "let yield: couple lib.definitional-yield/ coupling of return/",
         "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
     "]");
 
@@ -325,7 +325,7 @@ DECLARE_NATIVE(generator)
 
 
 //
-//  /yield: native [
+//  /definitional-yield: native [
 //
 //  "Function used with GENERATOR and YIELDER to give back results"
 //
@@ -335,14 +335,14 @@ DECLARE_NATIVE(generator)
 //          [any-value?]
 //  ]
 //
-DECLARE_NATIVE(yield)
+DECLARE_NATIVE(definitional_yield)
 //
 // The benefits of distinguishing NULL as a generator result meaning the body
 // has completed are considered to outweigh the ability to yield pure NULL.
 // A modified generator that yields quoted values and unquotes on exit points
 // can be used to work around this.
 {
-    INCLUDE_PARAMS_OF_YIELD;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_YIELD;
 
     enum {
         ST_YIELD_WAS_INVOKED = 0,
@@ -357,9 +357,12 @@ DECLARE_NATIVE(yield)
 
   invoked: {  ////////////////////////////////////////////////////////////////
 
-    assert(level_ == TOP_LEVEL);  // level_ is an implicit arg to natives
-    assert(Level_Phase(level_) == ACT_IDENTITY(VAL_ACTION(Lib(YIELD))));
-    Level* yield_level = level_;  // ...make synonyms more obvious
+    assert(LEVEL == TOP_LEVEL);  // LEVEL is an implicit arg to natives
+    assert(
+        Level_Phase(LEVEL)
+        == ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_YIELD)))
+    );
+    Level* yield_level = LEVEL;  // ...make synonyms more obvious
 
     VarList* yielder_context = maybe Level_Coupling(yield_level);
     if (not yielder_context)
