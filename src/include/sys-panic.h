@@ -53,7 +53,7 @@
 //
 
 #if TRAMPOLINE_COUNTS_TICKS
-    #define TICK g_ts.tick
+    #define TICK g_tick
 #else
     #define TICK 0  // easier to write TRAMPOLINE_COUNTS_TICKS agnostic code
 #endif
@@ -108,14 +108,14 @@
 
 #if TRAMPOLINE_COUNTS_TICKS
     #define BREAK_ON_TICK(tick) \
-        if (tick == g_ts.tick) BREAK_NOW()
+        if (tick == g_tick) BREAK_NOW()
 #endif
 
 #if NO_RUNTIME_CHECKS || (! TRAMPOLINE_COUNTS_TICKS)
     #define SPORADICALLY(modulus)  false
 #else
     #define SPORADICALLY(modulus) \
-        (g_ts.tick % modulus == 0)
+        (g_tick % modulus == 0)
 #endif
 
 // Generally, you should prefer SPORADICALLY.  But some cases, like wanting

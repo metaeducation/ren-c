@@ -594,7 +594,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
    Feed* feed = u_cast(Feed*, preallocated);
 
   #if TRAMPOLINE_COUNTS_TICKS
-    feed->tick = g_ts.tick;
+    feed->tick = g_tick;
   #endif
 
     Erase_Cell(&feed->fetched);

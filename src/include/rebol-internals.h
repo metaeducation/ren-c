@@ -415,10 +415,6 @@ typedef struct {
 } DataStackState;
 
 typedef struct {
-  #if TRAMPOLINE_COUNTS_TICKS
-    Tick tick;  // Note: starts out at 1 so that 0 means (! TRAMPOLINE_COUNTS_TICKS)
-  #endif
-
     Level* top_level;
     Level* bottom_level;
 
@@ -484,7 +480,7 @@ typedef struct {
     #endif
 #endif
 
-#include "sys-globals.h"  // includes things like g_ts.tick, used by panic()
+#include "sys-globals.h"  // includes things like g_tick, used by panic()
 
 
 #include "sys-panic.h"  // "blue screen of death"-style termination

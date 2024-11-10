@@ -345,7 +345,7 @@ DECLARE_NATIVE(panic)
     Value* v = ARG(reason);  // remove quote level from @reason
 
   #if TRAMPOLINE_COUNTS_TICKS
-    Tick tick = level_->tick;  // use Level's tick instead of g_ts.tick
+    Tick tick = level_->tick;  // use Level's tick instead of g_tick
   #else
     Tick tick = 0;
   #endif

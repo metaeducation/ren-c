@@ -88,7 +88,7 @@ Bounce Just_Use_Out_Executor(Level* L)
 Bounce Trampoline_From_Top_Maybe_Root(void)
 {
   #if RUNTIME_CHECKS && CPLUSPLUS_11  // capture to easily view in watchlist
-    Tick& tick = g_ts.tick;  // C++ reference always reflects current value
+    Tick& tick = g_tick;  // C++ reference always reflects current value
     USED(tick);
   #endif
 
@@ -453,8 +453,8 @@ bool Trampoline_Throws(Atom* out, Level* root)
 void Startup_Signals(void)
 {
   #if TRAMPOLINE_COUNTS_TICKS
-    assert(g_ts.tick == 0);
-    g_ts.tick = 1;  // this way tick 0 helps signify no TRAMPOLINE_COUNTS_TICKS
+    assert(g_tick == 0);
+    g_tick = 1;  // this way tick 0 helps signify no TRAMPOLINE_COUNTS_TICKS
   #endif
 
     g_ts.signal_flags = 0;
@@ -590,7 +590,7 @@ void Shutdown_Trampoline(void)
   #endif
 
   #if TRAMPOLINE_COUNTS_TICKS
-    g_ts.tick = 0;
+    g_tick = 0;
   #endif
 }
 

@@ -49,16 +49,16 @@
 
     #define Update_Tick_If_Enabled() \
         do { \
-            if (g_ts.tick < UINT64_MAX) /* avoid rollover */ \
-                g_ts.tick += 1; \
+            if (g_tick < UINT64_MAX) /* avoid rollover */ \
+                g_tick += 1; \
         } while (false)  // macro so that breakpoint is at right stack level!
 
     #define Maybe_Debug_Break_On_Tick(L) \
         do { \
             if ( \
-                g_break_at_tick != 0 and g_ts.tick >= g_break_at_tick \
+                g_break_at_tick != 0 and g_tick >= g_break_at_tick \
             ){ \
-                printf("BREAK_ON_TICK(%" PRIu64 ")\n", g_ts.tick); \
+                printf("BREAK_ON_TICK(%" PRIu64 ")\n", g_tick); \
                 Dump_Level_Location(L); \
                 debug_break(); /* see %debug_break.h */ \
                 g_break_at_tick = 0; \
@@ -123,7 +123,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
         g_ts.total_eval_cycles = UINTPTR_MAX;
 
   #if TRAMPOLINE_COUNTS_TICKS
-    assert(g_ts.total_eval_cycles == g_ts.tick);
+    assert(g_ts.total_eval_cycles == g_tick);
   #endif
 
     g_ts.eval_countdown = -1;

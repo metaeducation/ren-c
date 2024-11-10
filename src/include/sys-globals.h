@@ -153,6 +153,10 @@ TVAR DataStackState g_ds;
 
 TVAR TrampolineState g_ts;
 
+#if TRAMPOLINE_COUNTS_TICKS  // C watchlist uses too often to put in g_ts.tick
+    TVAR Tick g_tick;  // starts at 1, so 0 means (! TRAMPOLINE_COUNTS_TICKS)
+#endif
+
 TVAR MoldState g_mold;
 
 #if RUNTIME_CHECKS

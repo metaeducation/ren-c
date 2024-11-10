@@ -223,7 +223,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
             if (g_mem.fuzz_factor == 0)
                 return nullptr;
         }
-        else if ((g_ts.tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
+        else if ((g_tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
             g_mem.fuzz_factor = 0;
             return nullptr;
         }
@@ -259,7 +259,7 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
 
   #if RUNTIME_CHECKS && TRAMPOLINE_COUNTS_TICKS  // scramble occasionally [2]
     if (SPORADICALLY(8))
-        FIRST_BYTE(unit) = u_cast(Byte, g_ts.tick % 256);
+        FIRST_BYTE(unit) = u_cast(Byte, g_tick % 256);
   #endif
 
     return cast(void*, unit);

@@ -115,7 +115,7 @@ void* Try_Alloc_Memory_Core(Size size)
             if (g_mem.fuzz_factor == 0)
                 return nullptr;
         }
-        else if ((g_ts.tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
+        else if ((g_tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
             g_mem.fuzz_factor = 0;
             return nullptr;
         }
@@ -646,7 +646,7 @@ void Free_Pairing(Cell* paired) {
     // This wasn't actually a Series, but poke the tick where the node was
     // freed into the memory spot so panic finds it.
     //
-    x_cast(Stub*, paired)->tick = g_ts.tick;
+    x_cast(Stub*, paired)->tick = g_tick;
   #endif
 }
 
