@@ -488,22 +488,26 @@ DECLARE_NATIVE(lazy)
 //    is by design, so we get:
 //
 //        >> pack [1 + 2, comment "hi", if null [1020]]
-//        == ~[3 ~[]~ ']
+//        == ~[3 ~[]~ ']~
 //
 INLINE bool Pack_Native_Core_Throws(
     Sink(Atom) out,
     const Value* block,
     const Value* predicate
 ){
-    if (Is_The_Block(block)) {
-        StackIndex base = TOP_INDEX;
-
+    if (Is_The_Block(block)) {  // as-is: pack @[1 + 2] -> ~['1 '+ '2']~ anti
         const Element* tail;
         const Element* at = Cell_List_At(&tail, block);
-        for (; at != tail; ++at)
-            Copy_Meta_Cell(PUSH(), at);
 
-        Init_Pack(out, Pop_Source_From_Stack(base));
+        Length len = tail - at;
+        Source* a = Make_Source_Managed(len);  // same size array
+        Set_Flex_Len(a, len);
+        Element *dest = Array_Head(a);
+
+        for (; at != tail; ++at, ++dest)
+            Copy_Meta_Cell(dest, at);
+
+        Init_Pack(out, a);
         return false;
     }
 
