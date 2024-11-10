@@ -1656,11 +1656,10 @@ DECLARE_NATIVE(construct)
 
     assert(Is_The_Block(spec));
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-        | FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    Level* sub = Make_Level_At(&Stepper_Executor, spec, flags);
-    Push_Level(SPARE, sub);
+    Level* sub = Make_Level_At(&Inert_Stepper_Executor, spec, flags);
+    Push_Level_Freshen_Out_If_State_0(SPARE, sub);
 
 } continue_processing_spec: {  ////////////////////////////////////////////////
 
@@ -1719,7 +1718,7 @@ DECLARE_NATIVE(construct)
     }
 
     assert(STATE == ST_CONSTRUCT_EVAL_STEP);
-    Assert_Stepper_Level_Ready(SUBLEVEL);
+    Reset_Evaluator_Freshen_Out(SUBLEVEL);
 
     goto continue_processing_spec;
 }}

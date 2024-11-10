@@ -96,7 +96,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
     );
     L->baseline.stack_base = base;  // incorporate refinements
-    Push_Level(cast(Atom*, out), L);
+    Push_Level_Freshen_Out_If_State_0(cast(Atom*, out), L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;

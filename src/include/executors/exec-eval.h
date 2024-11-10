@@ -150,24 +150,6 @@ enum {
 
   //=//// STEPPER STATES ABOVE REB_MAX ////////////////////////////////////=//
 
-    // ST_STEPPER_FETCHING_INERTLY - It might seem strange to have an eval
-    // mode in which no evaluations are performed.  But this simplifies the
-    // implementation of operators that can run in an "inert" mode:
-    //
-    //     >> any [1 + 2]
-    //     == 3
-    //
-    //     >> any @[1 + 2]
-    //     == 1
-    //
-    // Inert operations wind up costing a bit more because they push a frame
-    // when it seems "they don't need to".  But it means the code can be
-    // written in a regularized form that applies whether evaluations are done
-    // or not, and it handles all the things like locking the array from
-    // modification during the iteration, etc.
-    //
-    ST_STEPPER_FETCHING_INERTLY,
-
     ST_STEPPER_LOOKING_AHEAD,
     ST_STEPPER_REEVALUATING,
     ST_STEPPER_CALCULATING_INTRINSIC_ARG,
@@ -180,3 +162,11 @@ enum {
     ST_STEPPER_SET_BLOCK,
     ST_STEPPER_SET_GROUP
 };
+
+// There's a rule that the Level's OUT has to be fresh if it's in the
+// initial state.  So if an evaluator Level gets reused, it needs to
+// set the state back to zero each time.
+//
+#if RUNTIME_CHECKS
+    #define ST_STEPPER_FINISHED_DEBUG  255
+#endif

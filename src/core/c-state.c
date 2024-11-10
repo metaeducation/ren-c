@@ -184,7 +184,7 @@ void Unplug_Stack(
             // when we plug it back in.  Also we have to set it to something
             // legal to mark in GC as the cell will go stale.
             //
-            assert(Level_State_Byte(temp->prior) != 0);  // must be continuation
+            assert(LEVEL_STATE_BYTE(temp->prior) != 0);  // must be continuation
 
             // !!! This is true for YIELD's relationship to the YIELDER, but
             // why would it be generically the case?
@@ -200,7 +200,7 @@ void Unplug_Stack(
         if (temp == TOP_LEVEL)  // "alive", but couldn't find in the stack walk
             fail ("Cannot yield to a generator that is suspended");
 
-        assert(Level_State_Byte(temp) != 0);  // must be a continuation
+        assert(LEVEL_STATE_BYTE(temp) != 0);  // must be a continuation
     }
 
     // If any data stack has been accrued, we capture it into an array.  We
@@ -279,7 +279,7 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
         if (temp->prior == nullptr)
             break;
         temp = temp->prior;
-       /* assert(Level_State_Byte(temp) != 0); */ // must be continuation (why?)
+       /* assert(LEVEL_STATE_BYTE(temp) != 0); */ // must be continuation (why?)
     }
 
     temp->prior = base;

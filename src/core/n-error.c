@@ -106,7 +106,7 @@ DECLARE_NATIVE(enrescue)
         LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK
     );
 
-    Push_Level(OUT, L);
+    Push_Level_Freshen_Out_If_State_0(OUT, L);
 
     STATE = ST_ENRESCUE_EVALUATING;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // fail not caught by default
@@ -186,7 +186,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
             code,  // REB_BLOCK or REB_GROUP
             flags
         );
-        Push_Level(SPARE, sub);
+        Push_Level_Freshen_Out_If_State_0(SPARE, sub);
     }
     else {
         bool pushed = Pushed_Continuation(
@@ -220,7 +220,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     if (Is_Level_At_End(SUBLEVEL))
         goto finished;
 
-    Assert_Stepper_Level_Ready(SUBLEVEL);
+    Reset_Evaluator_Freshen_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } finished: {  ///////////////////////////////////////////////////////////////

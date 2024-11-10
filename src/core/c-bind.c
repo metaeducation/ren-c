@@ -782,7 +782,7 @@ DECLARE_NATIVE(let)
     Copy_Cell(Evaluator_Level_Current(sub), cast(Element*, SPARE));
     sub->u.eval.current_gotten = nullptr;
 
-    Push_Level(OUT, sub);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
     assert(STATE == ST_LET_EVAL_STEP);  // checked above
     return CONTINUE_SUBLEVEL(sub);

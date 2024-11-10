@@ -788,7 +788,7 @@ static void Mark_Level_Stack_Deep(void)
             //
             assert(
                 not Is_Level_Fulfilling(L)
-                or Level_State_Byte(L) == ST_ACTION_TYPECHECKING  // filled/safe
+                or LEVEL_STATE_BYTE(L) == ST_ACTION_TYPECHECKING  // filled/safe
             );
 
             // "may not pass cast(VarList*) test in DEBUG_CHECK_CASTS"
@@ -802,8 +802,8 @@ static void Mark_Level_Stack_Deep(void)
         if (
             Is_Level_Fulfilling(L)
             and (
-                Level_State_Byte(L) == ST_ACTION_INITIAL_ENTRY
-                or Level_State_Byte(L) == ST_ACTION_INITIAL_ENTRY_INFIX
+                LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY
+                or LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY_INFIX
             )
         ){
             goto propagate_and_continue;  // args and locals poison/garbage

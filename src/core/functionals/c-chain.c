@@ -61,7 +61,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     flags |= L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level* sub = Make_Level(&Action_Executor, L->feed, flags);
-    Push_Level(out, sub);
+    Push_Level_Freshen_Out_If_State_0(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
     assert(BONUS(KeySource, sub->varlist) == L);
@@ -206,7 +206,7 @@ Bounce Cascader_Executor(Level* const L)
 
     Begin_Action(sub, VAL_FRAME_LABEL(pipeline_at), PREFIX_0);
 
-    Level_State_Byte(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [4]
+    LEVEL_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
 

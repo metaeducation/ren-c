@@ -129,7 +129,7 @@ Bounce Action_Executor(Level* L)
 {
     if (THROWING) {
         if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES)) {
-            assert(Level_State_Byte(L) != STATE_0);  // need to update
+            assert(LEVEL_STATE_BYTE(L) != STATE_0);  // need to update
             goto dispatch_phase;  // wants to see the throw
         }
         goto handle_thrown_maybe_redo;
@@ -517,7 +517,7 @@ Bounce Action_Executor(Level* L)
             }
 
             Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-            Push_Level(ARG, sub);
+            Push_Level_Freshen_Out_If_State_0(ARG, sub);
 
             return CONTINUE_SUBLEVEL(sub); }
 
@@ -596,7 +596,7 @@ Bounce Action_Executor(Level* L)
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
                 Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-                Push_Level(ARG, sub);
+                Push_Level_Freshen_Out_If_State_0(ARG, sub);
                 return CONTINUE_SUBLEVEL(sub);
             }
             else if (Is_Soft_Escapable_Group(cast(Element*, ARG))) {
@@ -1157,7 +1157,7 @@ void Begin_Action(
         //
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
-        Level_State_Byte(L) = ST_ACTION_INITIAL_ENTRY_INFIX;
+        LEVEL_STATE_BYTE(L) = ST_ACTION_INITIAL_ENTRY_INFIX;
     }
 }
 

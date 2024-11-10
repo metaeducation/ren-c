@@ -99,7 +99,7 @@ void Push_Frame_Continuation(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
         Prep_Action_Level(L, frame, with);
-        Push_Level(out, L);
+        Push_Level_Freshen_Out_If_State_0(out, L);
         return;
     }
 
@@ -146,7 +146,7 @@ void Push_Frame_Continuation(
 
     Begin_Action(L, VAL_FRAME_LABEL(frame), PREFIX_0);
 
-    Push_Level(out, L);
+    Push_Level_Freshen_Out_If_State_0(out, L);
 }
 
 
@@ -196,7 +196,7 @@ bool Pushed_Continuation(
             Freshen_Cell(Level_Spare(grouper));
         else
             Copy_Cell(Level_Spare(grouper), unwrap with);
-        Push_Level(out, grouper);
+        Push_Level_Freshen_Out_If_State_0(out, grouper);
         goto pushed_continuation;
     }
 
@@ -226,7 +226,7 @@ bool Pushed_Continuation(
             Set_Level_Flag(L, RAISED_RESULT_OK);
         }
 
-        Push_Level(out, L);
+        Push_Level_Freshen_Out_If_State_0(out, L);
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
 
       case REB_CHAIN: {  // effectively REDUCE
@@ -254,7 +254,7 @@ bool Pushed_Continuation(
         Derelativize(arg, c_cast(Element*, branch), binding);
         HEART_BYTE(arg) = REB_BLOCK;  // :[1 + 2] => [3], not :[3]
 
-        Push_Level(out, L);
+        Push_Level_Freshen_Out_If_State_0(out, L);
         goto pushed_continuation; }
 
       handle_action:

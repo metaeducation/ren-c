@@ -133,7 +133,7 @@ Bounce Evaluator_Executor(Level* const L)
             LEVEL_FLAG_RAISED_RESULT_OK
                 | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
-        Push_Level(OUT, sub);
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);
         STATE = ST_EVALUATOR_STEPPING;
         return CONTINUE_SUBLEVEL(sub);  // executors *must* catch
     }
@@ -144,12 +144,12 @@ Bounce Evaluator_Executor(Level* const L)
 
   #if RUNTIME_CHECKS
     if (L != TOP_LEVEL) {  // detect if a sublevel was used [2]
-        Assert_Stepper_Level_Ready(SUBLEVEL);
+        Reset_Evaluator_Freshen_Out(SUBLEVEL);
         return BOUNCE_CONTINUE;
     }
   #endif
 
-    STATE = 0;
+    Reset_Evaluator_Freshen_Out(L);
     goto call_stepper_executor;
 
 } call_stepper_executor: {  ////////////////////////////////////////////////
@@ -166,10 +166,9 @@ Bounce Evaluator_Executor(Level* const L)
 } step_result_in_out: {  /////////////////////////////////////////////////////
 
     if (Is_Elision(OUT))  {  // was something like an ELIDE, COMMENT, COMMA!
-        if (Not_Feed_At_End(L->feed)) {
-            Erase_Cell(OUT);
+        if (Not_Feed_At_End(L->feed))
             goto new_step;  // leave previous result as-is on stack
-        }
+
         Move_Cell(OUT, TOP_ATOM);  // finished, so extract result from stack
         goto finished;
     }

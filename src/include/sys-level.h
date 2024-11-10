@@ -288,10 +288,10 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 }
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define Level_State_Byte(L) \
+    #define LEVEL_STATE_BYTE(L) \
         SECOND_BYTE(ensure(Level*, L))
 #else
-    INLINE Byte& Level_State_Byte(Level* L) {
+    INLINE Byte& LEVEL_STATE_BYTE(Level* L) {
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         return SECOND_BYTE(L);
     }
@@ -420,7 +420,7 @@ INLINE void Free_Level_Internal(Level* L) {
     Free_Pooled(LEVEL_POOL, L);
 }
 
-// 1. Push_Level() takes an Atom* for the output.  It is a Need() and not a
+// 1. Push_Level_Freshen_Out_If_State_0() takes an Atom* for the output.  It is a Need() and not a
 //    Sink() because we may not want to corrupt the cell we are given (e.g.
 //    if we're pushing a level to do infix processing on an already calculated
 //    result).  The cell will be erased by the trampoline mechanics on the
@@ -444,7 +444,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    evaluation.  But the GC expects initialized bits in the output slot at
 //    all times.
 //
-// 4. Uninterruptibility is inherited by default by Push_Level(), but
+// 4. Uninterruptibility is inherited by default by Push_Level_Freshen_Out_If_State_0(), but
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
@@ -458,6 +458,9 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     if (L->out)
         assert(not Is_Api_Value(L->out));
   #endif
+
+    if (not (L->flags.bits & FLAG_STATE_BYTE(255)))  // no FLAG_STATE_BYTE()
+        Freshen_Cell(L->out);  // STATE_0 requires the output to be "fresh"
 
   #if RUNTIME_CHECKS
     //
@@ -474,7 +477,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
 }
 
-INLINE void Push_Level(  // inherits uninterruptibility [4]
+INLINE void Push_Level_Freshen_Out_If_State_0(  // inherits uninterruptibility [4]
     Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
@@ -527,10 +530,10 @@ INLINE void Drop_Level(Level* L)
 //    executor is the evaluator (it's just writing a single zero).  Review.
 //
 // 2. Previously just TOP_STACK was captured in L->baseline.stack_base, but
-//    then redundantly captured via a Snap_State() in Push_Level().  The
-//    responsibilities of Prep_Level() vs Push_Level() aren't clearly laid
+//    then redundantly captured via a Snap_State() in Push_Level_Freshen_Out_If_State_0().  The
+//    responsibilities of Prep_Level() vs Push_Level_Freshen_Out_If_State_0() aren't clearly laid
 //    out, but some clients do depend on the StackIndex being captured before
-//    Push_Level() is called, so this snaps the whole baseline here.
+//    Push_Level_Freshen_Out_If_State_0() is called, so this snaps the whole baseline here.
 //
 INLINE Level* Prep_Level_Core(
     Executor* executor,
@@ -629,7 +632,7 @@ INLINE Level* Prep_Level_Core(
     Level_Arg(level_, (p_##name##_))
 
 #define LOCAL(name) \
-    cast(Atom*, ARG(name))  // see Push_Level() for why this is allowed
+    cast(Atom*, ARG(name))  // see Push_Level_Freshen_Out_If_State_0() for why this is allowed
 
 #define PARAM(name) \
     ACT_PARAM(Level_Phase(level_), (p_##name##_))  // a TYPESET!
@@ -771,7 +774,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define OUT     level_->out         // GC-safe slot for output value
     #define SPARE   Level_Spare(level_)       // scratch GC-safe cell
     #define SCRATCH Level_Scratch(level_)
-    #define STATE   Level_State_Byte(level_)
+    #define STATE   LEVEL_STATE_BYTE(level_)
     #define PHASE   Level_Phase(level_)
 
     #define stable_SPARE            Stable_Unchecked(SPARE)
@@ -838,14 +841,14 @@ INLINE Atom* Native_Copy_Result_Untracked(
 
 INLINE void Enable_Dispatcher_Catching_Of_Throws(Level* L)
 {
-    assert(Level_State_Byte(L) != STATE_0);
+    assert(LEVEL_STATE_BYTE(L) != STATE_0);
     assert(Not_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
     Set_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
 }
 
 INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
 {
-    assert(Level_State_Byte(L) != STATE_0);
+    assert(LEVEL_STATE_BYTE(L) != STATE_0);
     assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
     Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
 }

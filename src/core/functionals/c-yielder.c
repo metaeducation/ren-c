@@ -224,7 +224,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 } body_finished_or_threw: {  /////////////////////////////////////////////////
 
     assert(L == TOP_LEVEL);
-    assert(Level_State_Byte(TOP_LEVEL) != 0);
+    assert(LEVEL_STATE_BYTE(TOP_LEVEL) != 0);
 
     // Clean up all the details fields so the GC can reclaim the memory
     //
@@ -438,7 +438,7 @@ DECLARE_NATIVE(yield)
 
     /* REBACT *target_fun = FRM_UNDERLYING(target_frame); */
 
-    Level_State_Byte(yielder_level) = ST_YIELDER_IS_YIELDING;
+    LEVEL_STATE_BYTE(yielder_level) = ST_YIELDER_IS_YIELDING;
 
     STATE = ST_YIELD_YIELDED;
     return BOUNCE_CONTINUE;  // was DEWIND

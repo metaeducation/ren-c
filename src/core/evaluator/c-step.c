@@ -161,9 +161,43 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
-    Push_Level(OUT, sub);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
     return sub;
+}
+
+
+//
+//  Inert_Stepper_Executor: C
+//
+// This simplifies implementation of operators that can run in an "inert" mode:
+//
+//     >> any [1 + 2]
+//     == 3
+//
+//     >> any @[1 + 2]
+//     == 1
+//
+// Inert operations wind up costing a bit more because they push a Level when
+// it seems "they don't need to".  But it means the code can be written in a
+// regularized form that applies whether evaluations are done or not, and it
+// handles all the things like locking the array from modification during the
+// iteration, etc.
+//
+Bounce Inert_Stepper_Executor(Level* L)
+{
+    enum {
+        ST_INERT_STEPPER_INITIAL_ENTRY = 0,
+        ST_INERT_STEPPER_FINISHED
+    };
+
+    assert(STATE == ST_INERT_STEPPER_INITIAL_ENTRY);
+    assert(not Is_Feed_At_End(L->feed));
+
+    Derelativize(OUT, At_Feed(L->feed), FEED_BINDING(L->feed));
+    Fetch_Next_In_Feed(L->feed);
+    STATE = ST_INERT_STEPPER_FINISHED;
+    return OUT;
 }
 
 
@@ -194,13 +228,6 @@ Bounce Stepper_Executor(Level* L)
     switch (STATE) {
       case ST_STEPPER_INITIAL_ENTRY:
         goto start_new_expression;
-
-      case ST_STEPPER_FETCHING_INERTLY:  // see definition for rationale
-        if (Is_Feed_At_End(L->feed))
-            return OUT;
-        Derelativize(OUT, At_Feed(L->feed), FEED_BINDING(L->feed));
-        Fetch_Next_In_Feed(L->feed);
-        return OUT;
 
       case ST_STEPPER_LOOKING_AHEAD:
         goto lookahead;
@@ -266,6 +293,12 @@ Bounce Stepper_Executor(Level* L)
       case REB_FRAME:
         goto lookahead;
 
+    #if RUNTIME_CHECKS
+      case ST_STEPPER_FINISHED_DEBUG:
+        assert(!"Stepper STATE not re-initialized after completion");
+        break;
+    #endif
+
       default:
         assert(false);
     }
@@ -276,12 +309,20 @@ Bounce Stepper_Executor(Level* L)
 
   start_new_expression: {  ///////////////////////////////////////////////////
 
+    // 1. !!! There is a current edge case with rebValue(""), where a bad mix
+    //    of FEED_FLAG_NEEDS_SYNC and end testing means that the stepper can
+    //    be called on an end Level.  It is non-trivial to sort out the set
+    //    of concerns so for now just return void...but ultimately this
+    //    should be fixed.
+
     Sync_Feed_At_Cell_Or_End_May_Fail(L->feed);
 
     Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
+    /* assert(Not_Level_At_End(L)); */  // edge case with rebValue("") [1]
     if (Is_Level_At_End(L)) {
         Init_Void(OUT);
+        STATE = REB_ANTIFORM;  // can't leave as STATE_0
         goto finished;
     }
 
@@ -410,7 +451,6 @@ Bounce Stepper_Executor(Level* L)
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Level(OUT, sub);
     Push_Action(
         sub,
         VAL_ACTION(unwrap L_current_gotten),
@@ -422,6 +462,7 @@ Bounce Stepper_Executor(Level* L)
         : VAL_FRAME_LABEL(CURRENT);
 
     Begin_Action(sub, label, infix_mode);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action;
 
 }} give_up_backward_quote_priority:
@@ -448,7 +489,14 @@ Bounce Stepper_Executor(Level* L)
 
     if (QUOTE_BYTE(CURRENT) != NOQUOTE_1) {  // quasiform or quoted [1]
         Copy_Cell(OUT, CURRENT);
-        Meta_Unquotify_Undecayed(OUT);  // checks that antiform is legal
+        if (QUOTE_BYTE(CURRENT) == QUASIFORM_2) {
+            Coerce_To_Antiform(OUT);  // checks that antiform is legal
+            STATE = REB_QUASIFORM;  // can't leave as STATE_0
+        }
+        else {
+            QUOTE_BYTE(OUT) -= Quote_Shift(1);
+            STATE = REB_QUOTED;  // can't leave as STATE_0
+        }
     }
     else switch ((STATE = HEART_BYTE(CURRENT))) {  // states include type [2]
 
@@ -494,7 +542,6 @@ Bounce Stepper_Executor(Level* L)
             return FAIL("Use REDO to restart a running FRAME! (can't EVAL)");
 
         Level* sub = Make_Action_Sublevel(L);
-        Push_Level(OUT, sub);
         Push_Action(
             sub,
             VAL_ACTION(CURRENT),
@@ -503,6 +550,7 @@ Bounce Stepper_Executor(Level* L)
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
         assert(Is_Fresh(OUT));  // so nothing on left [1]
         Begin_Action(sub, VAL_FRAME_LABEL(CURRENT), infix_mode);
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
         goto process_action; }
 
@@ -656,6 +704,13 @@ Bounce Stepper_Executor(Level* L)
     // this switch, it's by some code at the `lookahead:` label.  You only see
     // infix here when there was nothing to the left, so cases like `(+ 1 2)`
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
+    //
+    // 1. When dispatching infix and you have something on the left, you
+    //    want to push the level *after* the flag for infixness has been
+    //    set...to avoid overwriting the output cell that's the left hand
+    //    side input.  But in this case we don't have a left input, even
+    //    though we're doing infix.  So pushing *before* we set the flags
+    //    means the FLAG_STATE_BYTE() will be 0, and we get clearing.
 
       word_common: ///////////////////////////////////////////////////////////
 
@@ -669,7 +724,6 @@ Bounce Stepper_Executor(Level* L)
             Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
             Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
             const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
-            Erase_Cell(OUT);  // sanity check, plus don't want infix to see
 
             if (infix_mode) {
                 if (infix_mode != INFIX_TIGHT) {  // defer or postpone
@@ -727,15 +781,16 @@ Bounce Stepper_Executor(Level* L)
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
                 Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-                Push_Level(SPARE, sub);
+                Push_Level_Freshen_Out_If_State_0(SPARE, sub);
                 STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
                 return CONTINUE_SUBLEVEL(sub);
             }
 
             Level* sub = Make_Action_Sublevel(L);
-            Push_Level(OUT, sub);
+            Push_Level_Freshen_Out_If_State_0(OUT, sub);  // *always* clear out
             Push_Action(sub, action, coupling);
             Begin_Action(sub, label, infix_mode);
+            /* Push_Level_Freshen_Out_If_State_0(OUT, sub); */  // see [1]
 
             goto process_action;
         }
@@ -785,7 +840,7 @@ Bounce Stepper_Executor(Level* L)
                 L_binding,
                 LEVEL_MASK_NONE
             );
-            Push_Level(SPARE, sub);
+            Push_Level_Freshen_Out_If_State_0(SPARE, sub);
 
             STATE = ST_STEPPER_SET_GROUP;
             return CONTINUE_SUBLEVEL(sub); }
@@ -845,9 +900,9 @@ Bounce Stepper_Executor(Level* L)
         Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
         Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
 
-        Push_Level(OUT, sub);
         Push_Action(sub, action, coupling);
-        Begin_Action(sub, label, PREFIX_0);
+        Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);
         goto process_action; }
 
 
@@ -909,7 +964,7 @@ Bounce Stepper_Executor(Level* L)
             L_binding,
             flags
         );
-        Push_Level(OUT, sub);
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
         return CONTINUE_SUBLEVEL(sub); }
 
@@ -1775,30 +1830,29 @@ Bounce Stepper_Executor(Level* L)
     // to give it a "second chance" to take the infix.  (See 'deferred'.)
     //
     // So this post-switch step is where all of it happens, and it's tricky!
+    //
+    // 1. With COMMA!, we skip the lookahead step, which means (then [...])
+    //    will have the same failure mode as (1 + 2, then [...]).  In order
+    //    to make this the same behavior anything else that evaluates to
+    //    a barrier (COMMA! antiform) we make this hinge on producing a
+    //    barrier--not on being a source level comma.  Note it's different
+    //    from what would happen with (nihil then [...]) which shows a nuance
+    //    between barriers and nihils.
+    //
+    // 2. If something was run with the expectation it should take the next
+    //    arg from the output cell, and an evaluation cycle ran that wasn't
+    //    an ACTION! (or that was an arity-0 action), that's not what was
+    //    meant.  But it can happen, e.g. `x: 10 | x ->-`, where ->- doesn't
+    //    get an opportunity to quote left because it has no argument...and
+    //    instead retriggers and lets x run.
 
   lookahead:
 
     if (Is_Barrier(OUT)) {
-        //
-        // With COMMA!, we skip the lookahead step, which means (then [...])
-        // will have the same failure mode as (1 + 2, then [...]).  In order
-        // to make this the same behavior anything else that evaluates to
-        // a barrier (COMMA! antiform) we make this hinge on producing a
-        // barrier--not on being a source level comma.  Note it's different
-        // from what would happen with (nihil then [...]) which shows a nuance
-        // between barriers and nihils.
-
       skip_lookahead:
-        assert(Is_Barrier(OUT));  // only jump in for barriers
+        assert(Is_Barrier(OUT));  // only jump in for barriers [1]
         goto finished;
     }
-
-    // If something was run with the expectation it should take the next arg
-    // from the output cell, and an evaluation cycle ran that wasn't an
-    // ACTION! (or that was an arity-0 action), that's not what was meant.
-    // But it can happen, e.g. `x: 10 | x ->-`, where ->- doesn't get an
-    // opportunity to quote left because it has no argument...and instead
-    // retriggers and lets x run.
 
     if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
         return FAIL(Error_Literal_Left_Path_Raw());
@@ -1994,7 +2048,6 @@ Bounce Stepper_Executor(Level* L)
     // into the new function's frame.
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Level(OUT, sub);
     Push_Action(sub, infixed, Cell_Frame_Coupling(unwrap L_next_gotten));
 
     Option(const Symbol*) label = Is_Word(L_next)
@@ -2004,6 +2057,7 @@ Bounce Stepper_Executor(Level* L)
     Begin_Action(sub, label, infix_mode);
     Fetch_Next_In_Feed(L->feed);
 
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action; }}
 
   finished:
@@ -2019,11 +2073,12 @@ Bounce Stepper_Executor(Level* L)
 
   #if RUNTIME_CHECKS
     Evaluator_Exit_Checks_Debug(L);
+
+    assert(STATE != ST_STEPPER_INITIAL_ENTRY);
+    STATE = ST_STEPPER_FINISHED_DEBUG;  // must reset to STATE_0 if reused
   #endif
 
-    assert(not Is_Fresh(OUT));  // should have been assigned
-    STATE = STATE_0;  // Make frame reusable for another step
-    return OUT;
+    return OUT;  // trampoline checks that OUT is not unreadable/erased
 
   return_thrown:
 

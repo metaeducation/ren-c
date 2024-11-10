@@ -118,6 +118,26 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
 
+    // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
+    //    for the executor just to make it more obvously intentional that a
+    //    passthru is intended.  (Review in light of use of nonzero for GC
+    //    and bookkeeping purposes; could STATE of 255 mean Just_Use_Out?)
+    //
+    // 2. The rule for Levels that are continuations/delegations is that they
+    //    cannot be in STATE_0.  But an additional constraint is that if a
+    //    Level is in STATE_0 that its output cell is erased.  It's something
+    //    that helps avoid leaking values into an evaluation, and also makes
+    //    sure that Executors and Dispatchers write something to the output
+    //    before returning it.  Plus, it gives Executors and Dispatchers a
+    //    reliable test for whether they've written the output or not--which
+    //    can be a useful implicit "flag".  So there's a lot of benefits.
+    //
+    //    (At one point the Trampoline itself did a Freshen_Cell() here, but
+    //    that meant every trampoline bounce in the release build would have
+    //    to test the state byte...and sometimes cells were getting doubly
+    //    freshened.  So the responsbility was shifted to Push_Level() and
+    //    cases that reuse levels, e.g. Reset_Evaluator_Freshen_Out())
+
   bounce_on_trampoline_skip_just_use_out:
 
     while (L->executor == &Just_Use_Out_Executor)
@@ -125,36 +145,25 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   bounce_on_trampoline:
 
-  // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
-  //    for the executor just to make it more obvously intentional that a
-  //    passthru is intended.  (Review in light of use of nonzero for GC
-  //    and bookkeeping purposes; e.g. could STATE of 255 mean Just_Use_Out?)
-
     Assert_No_DataStack_Pointers_Extant();
 
     assert(L->executor != &Just_Use_Out_Executor);  // drops skip [1]
 
-    if (Level_State_Byte(L) == STATE_0) {
-        Freshen_Cell(L->out);
-    }
+    if (LEVEL_STATE_BYTE(L) == STATE_0)
+        assert(Is_Fresh(L->out));  // very useful invariant for STATE_0 [2]
+
+    possibly(L != TOP_LEVEL);  // e.g. REDUCE keeps an evaluator pushed
+
+    Maybe_Debug_Break_On_Tick(L);  // C-DEBUG-BREAK native calls land here
 
   //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
 
-    // The executor may push more levels or change the executor of the level
-    // it receives.  L may not match TOP_LEVEL at this moment.
+    // Note that the executor may push more levels, or change the executor of
+    // the level it receives.
     //
-    // DON'T CALL THE GARBAGE COLLECTOR BEFORE THE EXECUTOR, IT MUST BE AFTER.
-    // It's not generically safe to call it before, because if the level had
-    // been trusting a sublevel's OUT to GC guard a slot, then that guard is
-    // no longer in effect once the sublevel had been dropped.
-
-    Maybe_Debug_Break_On_Tick(L);
-
-    // vvv-- This is the g_break_at_tick or C-DEBUG-BREAK landing spot --vvv
+    // **STEP IN** if you want to debug the next evaluation...!
 
     Bounce bounce = ((( L->executor )))((( L )));
-
-    // ^^^-- **STEP IN** to this call using the debugger to debug it!!! --^^^
 
   //=//// PROCESS SIGNALS (RECYCLE, HALT, ETC.) ///////////////////////////=//
 
@@ -164,20 +173,21 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //  * Noticing when a HALT was requested
     //  * (future?) Allowing a break into an interactive debugger
     //
-    // We process signals *after* calling the Level's executor and not before.
-    // This is for several reasons, but one is that since the level is still
-    // on the stack it is able to guard its OUT slot.
-    //
     // 1. We could increment total_eval_cycles here so it's always up-to-date.
     //    But we keep a micro-optimization from R3-Alpha where we only adjust
     //    one counter (the `eval_countdown`) each time through the loop.  Then
     //    we reconcile total_eval_cycles in Do_Signals_Throws() only when the
     //    countdown reaches zero.
+    //
+    // 2. Garbage collection has to be *after* the Level's Executor is run,
+    //    and not before.  This is for several reasons, but one is that code
+    //    may depend on the Level being on the stack to guard its OUT slot,
+    //    on a Cell that would otherwise not be guarded.
 
     Update_Tick_If_Enabled();  // Do_Signals_Throws() expects tick in sync
 
     if (--g_ts.eval_countdown <= 0) {  // defer total_eval_cycles update, [1]
-        if (Do_Signals_Throws(L))
+        if (Do_Signals_Throws(L))  // garbage collection *after* executor [2]
             goto handle_thrown;
     }
 
@@ -244,7 +254,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     if (bounce == BOUNCE_CONTINUE) {
         if (L != TOP_LEVEL)  // continuing self ok [1]
-            assert(Level_State_Byte(L) != 0);  // else state nonzero [2]
+            assert(LEVEL_STATE_BYTE(L) != 0);  // else state nonzero [2]
 
         L = TOP_LEVEL;
         goto bounce_on_trampoline_skip_just_use_out;
@@ -436,7 +446,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 bool Trampoline_Throws(Atom* out, Level* root)
 {
-    Push_Level(out, root);
+    Push_Level_Freshen_Out_If_State_0(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(root);
     return threw;
@@ -490,7 +500,7 @@ void Startup_Trampoline(void)
         &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     );
-    Push_Level_Dont_Inherit_Interruptibility(nullptr, L);  // API handles [3]
+    Push_Level_Dont_Inherit_Interruptibility(&g_erased_cell, L);  // API [3]
 
     Corrupt_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
     g_ts.bottom_level = L;

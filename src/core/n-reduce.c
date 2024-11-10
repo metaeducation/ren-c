@@ -83,7 +83,7 @@ DECLARE_NATIVE(reduce)
         &Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     );
-    Push_Level(OUT, sub);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
     Copy_Cell(Evaluator_Level_Current(sub), v);
     sub->u.eval.current_gotten = nullptr;
@@ -98,7 +98,7 @@ DECLARE_NATIVE(reduce)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
             | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
     );
-    Push_Level(SPARE, sub);
+    Push_Level_Freshen_Out_If_State_0(SPARE, sub);
     goto next_reduce_step;
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
@@ -118,7 +118,7 @@ DECLARE_NATIVE(reduce)
 
     SUBLEVEL->executor = &Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
-    Assert_Stepper_Level_Ready(SUBLEVEL);
+    Reset_Evaluator_Freshen_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_result_in_spare: {  ////////////////////////////////////////////
@@ -256,9 +256,8 @@ DECLARE_NATIVE(reduce_each)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Is_Meta_Word(vars)) {  // Note: gets converted to object in next step
+    if (Is_Meta_Word(vars))  // Note: gets converted to object in next step
         flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
-    }
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
@@ -269,11 +268,16 @@ DECLARE_NATIVE(reduce_each)
     assert(Is_Block(body));
     Add_Definitional_Break_Continue(body, level_);
 
+    Executor* executor;
     if (Is_The_Block(block))
-        flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
+        executor = &Inert_Stepper_Executor;
+    else {
+        assert(Is_Block(block));
+        executor = &Stepper_Executor;
+    }
 
-    Level* sub = Make_Level_At(&Stepper_Executor, block, flags);
-    Push_Level(SPARE, sub);
+    Level* sub = Make_Level_At(executor, block, flags);
+    Push_Level_Freshen_Out_If_State_0(SPARE, sub);
     goto reduce_next;
 
 } reduce_next: {  ////////////////////////////////////////////////////////////
@@ -284,7 +288,7 @@ DECLARE_NATIVE(reduce_each)
     SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
-    Assert_Stepper_Level_Ready(SUBLEVEL);
+    Reset_Evaluator_Freshen_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
@@ -399,7 +403,7 @@ static void Push_Composer_Level(
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
     );
-    Push_Level(out, sub);  // sublevel may raise definitional failure
+    Push_Level_Freshen_Out_If_State_0(out, sub);  // sublevel may raise definitional failure
 
     if (adjusted)
         rebRelease(adjusted);
@@ -674,7 +678,7 @@ Bounce Composer_Executor(Level* const L)
         LEVEL_MASK_NONE
     );
 
-    Push_Level(OUT, sublevel);
+    Push_Level_Freshen_Out_If_State_0(OUT, sublevel);
 
     STATE = ST_COMPOSER_EVAL_GROUP;
     return CONTINUE_SUBLEVEL(sublevel);

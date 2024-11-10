@@ -132,6 +132,8 @@ PVAR Value* g_error_codepoint_too_high;
 PVAR Value* g_error_no_utf8_surrogates;
 PVAR Value* g_error_illegal_zero_byte;
 
+PVAR Cell g_erased_cell;  // target of bottommost level, always erased cell
+
 TVAR Feed* TG_End_Feed;
 
 TVAR Binary* TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)

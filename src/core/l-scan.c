@@ -74,12 +74,12 @@ INLINE bool Is_Interstitial_Scan(Level* L)  // speedy check via flag
   { return Get_Scan_Executor_Flag(L, INTERSTITIAL_SCAN); }
 
 INLINE bool Is_List_Scan(Level* L) {  // only used in errors, need not be fast
-    Byte mode = Level_State_Byte(L);
+    Byte mode = LEVEL_STATE_BYTE(L);
     return mode == ']' or mode == ')';
 }
 
 INLINE bool Is_Lex_Sub_Interstitial(Level *L, Byte sub) {
-    Byte mode = Level_State_Byte(L);
+    Byte mode = LEVEL_STATE_BYTE(L);
     assert(Is_Lex_Interstitial(mode));
     assert(Is_Lex_Interstitial(sub));
     assert(mode != sub);
@@ -104,7 +104,7 @@ INLINE bool Interstitial_Match(Byte b, Byte mode) {
 
 INLINE bool Scan_Mode_Matches(Level* L, Byte mode) {
     assert(Is_Lex_Interstitial(mode) or Is_Lex_End_List(mode));
-    return Level_State_Byte(L) == mode;
+    return LEVEL_STATE_BYTE(L) == mode;
 }
 
 INLINE Sigil Sigil_From_Token(Token t) {
@@ -1912,7 +1912,7 @@ Level* Make_Scan_Level(
 ){
     Level* L = Make_Level(&Scanner_Executor, feed, flags);
 
-    Byte mode = Level_State_Byte(L);
+    Byte mode = LEVEL_STATE_BYTE(L);
     assert(mode != 0);  // must use non-zero state byte
     if (mode == '/' or mode == ':' or mode == '.')
         assert(flags & SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN);
@@ -2052,7 +2052,7 @@ Bounce Scanner_Executor(Level* const L) {
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
   #if RUNTIME_CHECKS
-    char scan_mode = Level_State_Byte(L);  // to see in C debug watchlist
+    char scan_mode = LEVEL_STATE_BYTE(L);  // to see in C debug watchlist
     if (scan_mode == '/' or scan_mode == ':' or scan_mode == '.')
         assert(Get_Scan_Executor_Flag(L, INTERSTITIAL_SCAN));
     else
@@ -2287,7 +2287,7 @@ Bounce Scanner_Executor(Level* const L) {
                 | LEVEL_FLAG_RAISED_RESULT_OK
                 | FLAG_STATE_BYTE(mode)
         );
-        Push_Level(OUT, sub);
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);
         return CONTINUE_SUBLEVEL(sub); }
 
       case TOKEN_TUPLE:
@@ -2525,7 +2525,7 @@ Bounce Scanner_Executor(Level* const L) {
                 | FLAG_STATE_BYTE(ST_SCANNER_BLOCK_MODE)
         );
 
-        Push_Level(OUT, sub);  // do stackful, for now
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);  // do stackful, for now
 
         bool threw = Trampoline_With_Top_As_Root_Throws();
 
@@ -2668,7 +2668,7 @@ Bounce Scanner_Executor(Level* const L) {
     }
 
     Heart heart;
-    switch (Level_State_Byte(SUBLEVEL)) {
+    switch (LEVEL_STATE_BYTE(SUBLEVEL)) {
       case ST_SCANNER_BLOCK_MODE:
         heart = REB_BLOCK;
         break;
@@ -2752,7 +2752,7 @@ Bounce Scanner_Executor(Level* const L) {
                 | FLAG_STATE_BYTE(sub_mode)
                 | SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN
         );
-        Push_Level(OUT, sub);
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
         bool threw = Trampoline_With_Top_As_Root_Throws();
 
@@ -3205,7 +3205,7 @@ DECLARE_NATIVE(transcode)
 
     Level* sub = Make_Scan_Level(ss, feed, flags);
 
-    Push_Level(OUT, sub);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);
     STATE = ST_TRANSCODE_SCANNING;
     return CONTINUE_SUBLEVEL(sub);
 
@@ -3398,7 +3398,7 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     Level* L = Make_Scan_Level(&ss, feed, flags);
 
     DECLARE_ATOM (temp);
-    Push_Level(temp, L);
+    Push_Level_Freshen_Out_If_State_0(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
         fail (Error_No_Catch_For_Throw(L));
 

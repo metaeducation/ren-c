@@ -392,7 +392,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 &Action_Executor,
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
-            Push_Level(SCRATCH, sub);  // write sub's output to L->scratch
+            Push_Level_Freshen_Out_If_State_0(SCRATCH, sub);  // write sub's output to L->scratch
             Push_Action(sub, VAL_ACTION(test), Cell_Frame_Coupling(test));
             Begin_Action(sub, VAL_FRAME_LABEL(test), PREFIX_0);
 

@@ -60,17 +60,23 @@ INLINE Atom* Alloc_Evaluator_Primed_Result() {
     return atom_PUSH();
 }
 
-#if NO_RUNTIME_CHECKS
-    #define Assert_Stepper_Level_Ready(L) NOOP
-#else
-    INLINE void Assert_Stepper_Level_Ready(Level* L) {
-        assert(L->executor == &Stepper_Executor);
-        assert(
-            Level_State_Byte(L) == STATE_0
-            or Level_State_Byte(L) == ST_STEPPER_FETCHING_INERTLY
-        );
-    }
-#endif
+// Does not check for ST_STEPPER_LEVEL_FINISHED, because generalized loops
+// may skip items and never actually call the executor.
+//
+// Note: At one time the trampoline looked for STATE_0 and automatically
+// freshened the cell, and the Stepper_Executor() automatically zeroed its
+// state on exit.  But that added a branch on every trampoline bounce to
+// check the Level's state, and led to erasing cells redundantly.
+//
+INLINE void Reset_Evaluator_Freshen_Out(Level* L) {
+    assert(
+        L->executor == &Stepper_Executor
+        or L->executor == &Inert_Stepper_Executor
+        or L->executor == &Evaluator_Executor
+    );
+    LEVEL_STATE_BYTE(L) = STATE_0;
+    Freshen_Cell(L->out);
+}
 
 #define Init_Pushed_Refinement(out,symbol) \
     Init_Any_Word((out), REB_THE_WORD, symbol)
@@ -93,7 +99,10 @@ INLINE Element* Refinify_Pushed_Refinement(Element* e) {
 INLINE bool Eval_Step_Throws(Atom* out, Level* L) {
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
-    assert(L->executor == &Stepper_Executor);
+    assert(
+        L->executor == &Stepper_Executor
+        or L->executor == &Inert_Stepper_Executor
+    );
 
     L->out = out;
     assert(L->baseline.stack_base == TOP_INDEX);

@@ -239,7 +239,7 @@ static bool Subparse_Throws(
 ){
     assert(Any_Series_Kind(Cell_Heart(input)));
 
-    Push_Level(out, L);  // checks for C stack overflow
+    Push_Level_Freshen_Out_If_State_0(out, L);  // checks for C stack overflow
 
     Push_Action(L, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 

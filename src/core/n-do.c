@@ -232,7 +232,7 @@ DECLARE_NATIVE(shove)
     Push_Action(sub, VAL_ACTION(shovee), Cell_Frame_Coupling(shovee));
     Begin_Action(sub, label, infix_mode);  // can know if it's infix [2]
 
-    Push_Level(OUT, sub);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 }
 
@@ -358,7 +358,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
             feed,
             flags
         );
-        Push_Level(OUT, sub);
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);
 
         if (not REF(step)) {  // plain evaluation to end, maybe invisible
             if (REF(undecayed))
@@ -443,7 +443,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
         Init_Void(Alloc_Evaluator_Primed_Result());
         Level* sub = Make_Level(&Evaluator_Executor, L->feed, LEVEL_MASK_NONE);
-        Push_Level(OUT, sub);
+        Push_Level_Freshen_Out_If_State_0(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
 
       case REB_ERROR :
@@ -739,7 +739,7 @@ DECLARE_NATIVE(apply)
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
-    Push_Level(SPARE, L);
+    Push_Level_Freshen_Out_If_State_0(SPARE, L);
 
     EVARS *e = Try_Alloc_Memory(EVARS);
     Init_Evars(e, frame);  // Varlist_Archetype(exemplar) is phased, sees locals
@@ -841,7 +841,7 @@ DECLARE_NATIVE(apply)
     else
         Clear_Level_Flag(SUBLEVEL, META_RESULT);
 
-    Assert_Stepper_Level_Ready(SUBLEVEL);
+    Reset_Evaluator_Freshen_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
@@ -975,7 +975,7 @@ DECLARE_NATIVE(run)
     UNUSED(ARG(args));  // uses internal mechanisms to act variadic
 
     Level* sub = Make_Action_Sublevel(level_);
-    Push_Level(OUT, sub);
+    Push_Level_Freshen_Out_If_State_0(OUT, sub);
     Push_Action(
         sub,
         VAL_ACTION(action),

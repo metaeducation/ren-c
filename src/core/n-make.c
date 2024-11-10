@@ -150,7 +150,7 @@ DECLARE_NATIVE(copy)
 //
 Bounce To_Or_As_Checker_Executor(Level* const L)
 {
-    Heart to_or_as = cast(Heart, Level_State_Byte(L));
+    Heart to_or_as = cast(Heart, LEVEL_STATE_BYTE(L));
     assert(to_or_as != REB_0);
 
     Element* input = cast(Element*, Level_Spare(L));

@@ -72,7 +72,7 @@
 
 //=//// SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN //////////////////////////////=//
 //
-// We know from the Level_State_Byte() of the scanner that it's interstitial
+// We know from the LEVEL_STATE_BYTE() of the scanner that it's interstitial
 // if the character is "." or ":" or "/", but instead of comparing that
 // state byte against those three characters we can do it in one quick flag
 // check by putting this flag on the scan.

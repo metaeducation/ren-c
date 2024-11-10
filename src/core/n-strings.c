@@ -181,14 +181,16 @@ DECLARE_NATIVE(delimit)
     //
     //    The same principle would apply to a "space-delimited format".
 
-    Flags flags = LEVEL_MASK_NONE;
+    Executor* executor;
     if (Is_The_Block(ARG(line)))
-        flags |= FLAG_STATE_BYTE(ST_STEPPER_FETCHING_INERTLY);
-    else
+        executor = &Inert_Stepper_Executor;
+    else {
         assert(Is_Block(line));
+        executor = &Stepper_Executor;
+    }
 
-    Level* L = Make_Level_At(&Stepper_Executor, line, flags);
-    Push_Level(OUT, L);
+    Level* L = Make_Level_At(executor, line, LEVEL_MASK_NONE);
+    Push_Level_Freshen_Out_If_State_0(OUT, L);
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -199,7 +201,7 @@ DECLARE_NATIVE(delimit)
     if (REF(head) and delimiter)  // speculatively start with delimiter
         Form_Element(mo, unwrap delimiter);  // (thrown out if `nothing` made)
 
-    while (Not_Level_At_End(L)) {
+    for (; Not_Level_At_End(L); Reset_Evaluator_Freshen_Out(L)) {
         bool mold = false;
         const Element* item = At_Level(L);
         if (Is_Block(item) and REF(delimiter)) {  // hack [1]
@@ -249,8 +251,6 @@ DECLARE_NATIVE(delimit)
         else {
             if (Eval_Step_Throws(OUT, L))
                 goto threw;
-
-            Assert_Stepper_Level_Ready(L);
         }
 
         if (Is_Elision(OUT))  // spaced [elide print "hi"], etc
