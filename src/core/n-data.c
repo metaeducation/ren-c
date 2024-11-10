@@ -1154,15 +1154,14 @@ DECLARE_NATIVE(any_value_q)
 {
     INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Heart heart;
+    Byte quote_byte;
+    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    if (not Is_Quasiform(meta))  // meta, so quasiform
+    if (quote_byte != ANTIFORM_0)
         return OKAY;
 
-    return LOGIC(Is_Stable_Antiform_Heart(Cell_Heart(meta)));
+    return LOGIC(Is_Stable_Antiform_Heart(heart));
 }
 
 
@@ -1185,17 +1184,14 @@ DECLARE_NATIVE(non_void_value_q)
 {
     INCLUDE_PARAMS_OF_NON_VOID_VALUE_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    DECLARE_ELEMENT (meta);
+    Get_Meta_Atom_Intrinsic(meta, LEVEL);
 
-    if (not Is_Quasiform(meta)) {
-        if (Is_Meta_Of_Void(meta))
-            return nullptr;
-
+     if (not Is_Quasiform(meta))
         return OKAY;
-    }
+
+    if (Is_Meta_Of_Void(meta))
+        return nullptr;
 
     return LOGIC(Is_Stable_Antiform_Heart(Cell_Heart(meta)));
 }
@@ -1235,12 +1231,10 @@ DECLARE_NATIVE(nihil_q)
 {
     INCLUDE_PARAMS_OF_NIHIL_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    DECLARE_ELEMENT (temp);
+    Get_Meta_Atom_Intrinsic(temp, LEVEL);
 
-    return LOGIC(Is_Meta_Of_Nihil(meta));
+    return LOGIC(Is_Meta_Of_Nihil(temp));
 }
 
 
@@ -1257,12 +1251,11 @@ DECLARE_NATIVE(barrier_q)
 {
     INCLUDE_PARAMS_OF_BARRIER_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Heart heart;
+    Byte quote_byte;
+    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(Is_Meta_Of_Barrier(meta));
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_COMMA);
 }
 
 
@@ -1279,10 +1272,8 @@ DECLARE_NATIVE(elision_q)
 {
     INCLUDE_PARAMS_OF_ELISION_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    DECLARE_ELEMENT (meta);
+    Get_Meta_Atom_Intrinsic(meta, LEVEL);
 
     return LOGIC(Is_Meta_Of_Elision(meta));
 }

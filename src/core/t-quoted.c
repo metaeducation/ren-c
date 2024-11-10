@@ -200,12 +200,9 @@ DECLARE_NATIVE(meta_p)
 {
     INCLUDE_PARAMS_OF_META_P;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Get_Meta_Atom_Intrinsic(OUT, LEVEL);
 
-    return COPY(meta);  // argument was ^META, so no need to Meta_Quotify()
+    return OUT;  // argument was ^META, so no need to Meta_Quotify()
 }
 
 
@@ -297,12 +294,11 @@ DECLARE_NATIVE(antiform_q)
 {
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Heart heart;
+    Byte quote_byte;
+    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(Is_Quasiform(meta));
+    return LOGIC(quote_byte == ANTIFORM_0);
 }
 
 
@@ -617,12 +613,11 @@ DECLARE_NATIVE(lazy_q)
 {
     INCLUDE_PARAMS_OF_LAZY_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Heart heart;
+    Byte quote_byte;
+    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(Is_Meta_Of_Lazy(meta));
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_OBJECT);
 }
 
 
@@ -639,12 +634,11 @@ DECLARE_NATIVE(pack_q)
 {
     INCLUDE_PARAMS_OF_PACK_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Heart heart;
+    Byte quote_byte;
+    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(Is_Meta_Of_Pack(meta));
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_BLOCK);
 }
 
 

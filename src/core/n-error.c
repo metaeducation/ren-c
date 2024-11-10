@@ -289,12 +289,11 @@ DECLARE_NATIVE(raised_q)
 {
     INCLUDE_PARAMS_OF_RAISED_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Heart heart;
+    Byte quote_byte;
+    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(Is_Meta_Of_Raised(meta));
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_ERROR);
 }
 
 
@@ -323,12 +322,11 @@ DECLARE_NATIVE(unraised_q)
 {
     INCLUDE_PARAMS_OF_UNRAISED_Q;
 
-    Element* meta;
-    Option(Bounce) bounce = Trap_Bounce_Meta_Atom_Intrinsic(&meta, LEVEL);
-    if (bounce)
-        return unwrap bounce;
+    Heart heart;
+    Byte quote_byte;
+    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(not Is_Meta_Of_Raised(meta));
+    return LOGIC(not (quote_byte == ANTIFORM_0 and heart == REB_ERROR));
 }
 
 

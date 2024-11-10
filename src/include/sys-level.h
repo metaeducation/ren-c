@@ -877,17 +877,38 @@ INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
     return Native_Fail_Result(L, Error_Invalid_Intrinsic_Arg_1(L));
 }
 
-INLINE Option(Bounce) Trap_Bounce_Meta_Atom_Intrinsic(
-    Sink(Element*) meta,
+INLINE void Get_Heart_Quote_Unmeta_Atom_Intrinsic(
+    Sink(Heart) heart,
+    Sink(Byte) quote_byte,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        *meta = u_cast(Element*, Level_Arg(L, 2));  // already checked
-        return nullptr;
+        Value* arg = Level_Arg(L, 2);  // already checked
+        *heart = Cell_Heart(arg);
+        assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
+        *quote_byte = QUOTE_BYTE(arg) - Quote_Shift(1);  // calculate "unmeta"
+        return;
     }
 
-    *meta = Meta_Quotify(Level_Spare(L));
-    return nullptr;
+    Atom* arg = Level_Spare(L);
+    *heart = Cell_Heart(arg);
+    *quote_byte = QUOTE_BYTE(arg);  // not meta, as-is
+    return;
+}
+
+INLINE void Get_Meta_Atom_Intrinsic(  // can't modify arg of intrinsic!
+    Sink(Element) meta,
+    Level* L
+){
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
+        Value* arg = Level_Arg(L, 2);  // already checked, already meta
+        assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
+        Copy_Cell(meta, cast(Element*, arg));
+        return;
+    }
+
+    Copy_Meta_Cell(meta, Level_Spare(L));
+    return;
 }
 
 INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
