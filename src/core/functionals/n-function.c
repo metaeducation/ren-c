@@ -153,10 +153,17 @@ Bounce Func_Dispatcher(Level* const L)
 
     Init_Nothing(OUT);  // NOTHING, regardless of body result [2]
 
-    if (not Typecheck_Coerce_Return(L, OUT))
-        return FAIL(
-            "End of function without a RETURN, but ~ not in RETURN: spec"
-        );
+    Phase* phase = Level_Phase(L);
+
+    if (ACT_HAS_RETURN(phase)) {
+        assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+        const Param* param = ACT_PARAMS_HEAD(phase);
+
+        if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
+            return FAIL(
+                "End of function without a RETURN, but ~ not in RETURN: spec"
+            );
+    }
 
     return OUT;
 }}
@@ -479,21 +486,15 @@ DECLARE_NATIVE(unwind)
 
 
 //
-//  Typecheck_Coerce_Return: C
+//  Typecheck_Coerce_Return_Uses_Spare_And_Scratch: C
 //
-bool Typecheck_Coerce_Return(
-    Level* L,
+bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
+    Level* L,  // Level whose spare/scratch used (not necessarily return level)
+    const Param* param,  // parameter for the RETURN
     Atom* atom  // coercion needs mutability
 ){
     if (Is_Raised(atom))
         return true;  // For now, all functions return definitional errors
-
-    // Typeset bits for locals in frames are usually ignored, but the RETURN:
-    // local uses them for the return types of a function.
-    //
-    Phase* phase = Level_Phase(L);
-    const Param* param = ACT_PARAMS_HEAD(phase);
-    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
     if (Get_Parameter_Flag(param, NOTHING_DEFINITELY_OK) and Is_Nothing(atom))
         return true;  // common case, make fast
@@ -501,7 +502,7 @@ bool Typecheck_Coerce_Return(
     if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
         return true;  // kind of common... necessary?
 
-    if (Typecheck_Coerce_Argument(param, atom))
+    if (Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom))
         return true;
 
     if (Is_Nihil(atom)) {  // RETURN NIHIL
@@ -515,7 +516,7 @@ bool Typecheck_Coerce_Return(
         Init_Nothing(atom);
     }
 
-    return Typecheck_Coerce_Argument(param, atom);
+    return Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom);
 }
 
 
@@ -528,6 +529,7 @@ bool Typecheck_Coerce_Return(
 //      ^value [any-atom?]
 //      :run "Reuse stack level for another call (<redo> uses locals/args too)"
 //      ;   [<variadic> any-value?]  ; would force this frame managed
+//      <local> atom
 //  ]
 //
 DECLARE_NATIVE(definitional_return)
@@ -555,7 +557,7 @@ DECLARE_NATIVE(definitional_return)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Atom* atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
+    Atom* atom = Copy_Cell(LOCAL(atom), ARG(value));  // ARG can't be unstable
     Meta_Unquotify_Undecayed(atom);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
@@ -565,10 +567,17 @@ DECLARE_NATIVE(definitional_return)
         return FAIL(Error_Archetype_Invoked_Raw());
 
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
+    Phase* target_phase = Level_Phase(target_level);
+    assert(ACT_HAS_RETURN(target_phase));  // continuations can RETURN [1]
+    assert(KEY_SYM(ACT_KEYS_HEAD(target_phase)) == SYM_RETURN);
+    const Param* return_param = ACT_PARAMS_HEAD(target_phase);
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
-        if (not Typecheck_Coerce_Return(target_level, atom))  // check now [2]
+        if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]
+            LEVEL, return_param, atom
+        )){
             return FAIL(Error_Bad_Return_Type(target_level, atom));
+        }
 
         DECLARE_VALUE (label);
         Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value

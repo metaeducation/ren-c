@@ -959,6 +959,7 @@ Error* Error_Invalid_Intrinsic_Arg_1(Level* const L)
 
     Param* param = ACT_PARAM(action, 2);
     assert(Is_Hole(c_cast(Value*, param)));
+    UNUSED(param);
 
     DECLARE_ATOM (param_name);
     Init_Word(param_name, Key_Symbol(ACT_KEY(action, 2)));

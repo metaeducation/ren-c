@@ -646,8 +646,13 @@ static REBIXO Parse_One_Rule(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
-            if (Typecheck_Atom_Core(rule, P_RULE_BINDING, item))
+            assert(rule != SPARE);
+            Copy_Cell(SPARE, item);
+            if (Typecheck_Atom_In_Spare_Uses_Scratch(
+                LEVEL, rule, P_RULE_BINDING
+            )){
                 return pos + 1;  // type was in typeset
+            }
             return END_FLAG; }
 
           case REB_TEXT:

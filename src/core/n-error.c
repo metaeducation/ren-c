@@ -291,7 +291,7 @@ DECLARE_NATIVE(raised_q)
 
     Heart heart;
     Byte quote_byte;
-    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_ERROR);
 }
@@ -324,7 +324,7 @@ DECLARE_NATIVE(unraised_q)
 
     Heart heart;
     Byte quote_byte;
-    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(not (quote_byte == ANTIFORM_0 and heart == REB_ERROR));
 }

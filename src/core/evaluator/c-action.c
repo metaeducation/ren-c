@@ -737,7 +737,7 @@ Bounce Action_Executor(Level* L)
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
-    Freshen_Cell(OUT);
+    Freshen_Cell_Suppress_Raised(OUT);  // !!! for REDUCE with error/predicate
 
     KEY = ACT_KEYS(&KEY_TAIL, Level_Phase(L));
     ARG = Level_Args_Head(L);
@@ -795,7 +795,7 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        if (not Typecheck_Coerce_Argument(PARAM, ARG))
+        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, PARAM, ARG))
             return FAIL(Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
     }
 

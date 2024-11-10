@@ -274,7 +274,8 @@ Bounce Makehook_List(Level* level_, Heart heart, Element* arg) {
             else
                 param += VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
 
-            if (Typecheck_Atom(param, Lib(NULL)))
+            Init_Nulled(SPARE);
+            if (Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
                 return RAISE(Error_Null_Vararg_List_Raw());
         }
 

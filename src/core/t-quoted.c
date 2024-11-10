@@ -296,7 +296,7 @@ DECLARE_NATIVE(antiform_q)
 
     Heart heart;
     Byte quote_byte;
-    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0);
 }
@@ -591,8 +591,8 @@ DECLARE_NATIVE(splice_q)
 {
     INCLUDE_PARAMS_OF_SPLICE_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -615,7 +615,7 @@ DECLARE_NATIVE(lazy_q)
 
     Heart heart;
     Byte quote_byte;
-    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_OBJECT);
 }
@@ -636,7 +636,7 @@ DECLARE_NATIVE(pack_q)
 
     Heart heart;
     Byte quote_byte;
-    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_BLOCK);
 }
@@ -655,8 +655,8 @@ DECLARE_NATIVE(keyword_q)
 {
     INCLUDE_PARAMS_OF_KEYWORD_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -677,8 +677,8 @@ DECLARE_NATIVE(action_q)
 {
     INCLUDE_PARAMS_OF_ACTION_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -765,8 +765,8 @@ DECLARE_NATIVE(maybe)
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -793,11 +793,10 @@ DECLARE_NATIVE(noquote)
 {
     INCLUDE_PARAMS_OF_NOQUOTE;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(OUT, LEVEL);
     if (b)
         return unwrap b;
 
-    QUOTE_BYTE(e) = NOQUOTE_1;
-    return COPY(e);
+    QUOTE_BYTE(OUT) = NOQUOTE_1;
+    return OUT;
 }

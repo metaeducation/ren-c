@@ -292,7 +292,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
         SECOND_BYTE(ensure(Level*, L))
 #else
     INLINE Byte& Level_State_Byte(Level* L) {
-        // !!! Add checks here...
+        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         return SECOND_BYTE(L);
     }
 #endif
@@ -848,106 +848,4 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
     assert(Level_State_Byte(L) != STATE_0);
     assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
     Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
-}
-
-INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
-    Sink(Element*) e,
-    Level* L
-){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        *e = u_cast(Element*, Level_Arg(L, 2));
-        return nullptr;  // already checked
-    }
-
-    Atom* arg = Level_Spare(L);
-
-    if (Is_Raised(arg))
-        return Native_Fail_Result(L, Cell_Error(arg));
-
-    Decay_If_Unstable(arg);
-
-    if (QUOTE_BYTE(arg) != ANTIFORM_0) {
-        *e = u_cast(Element*, arg);
-        return nullptr;  // means "no bounce" in this case, not Init_Nulled()
-    }
-
-    if (Is_Void(arg))  // simulate PARAMETER_FLAG_NOOP_IF_VOID
-        return Init_Nulled(L->out);
-
-    return Native_Fail_Result(L, Error_Invalid_Intrinsic_Arg_1(L));
-}
-
-INLINE void Get_Heart_Quote_Unmeta_Atom_Intrinsic(
-    Sink(Heart) heart,
-    Sink(Byte) quote_byte,
-    Level* L
-){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Value* arg = Level_Arg(L, 2);  // already checked
-        *heart = Cell_Heart(arg);
-        assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
-        *quote_byte = QUOTE_BYTE(arg) - Quote_Shift(1);  // calculate "unmeta"
-        return;
-    }
-
-    Atom* arg = Level_Spare(L);
-    *heart = Cell_Heart(arg);
-    *quote_byte = QUOTE_BYTE(arg);  // not meta, as-is
-    return;
-}
-
-INLINE void Get_Meta_Atom_Intrinsic(  // can't modify arg of intrinsic!
-    Sink(Element) meta,
-    Level* L
-){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Value* arg = Level_Arg(L, 2);  // already checked, already meta
-        assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
-        Copy_Cell(meta, cast(Element*, arg));
-        return;
-    }
-
-    Copy_Meta_Cell(meta, Level_Spare(L));
-    return;
-}
-
-INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
-    Sink(Value*) v,
-    Level* L
-){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        *v = u_cast(Element*, Level_Arg(L, 2));  // already checked
-        return nullptr;
-    }
-
-    Atom* arg = Level_Spare(L);
-
-    if (Is_Raised(arg))
-        return Native_Fail_Result(L, Cell_Error(arg));
-
-    Decay_If_Unstable(arg);
-
-    *v = u_cast(Value*, arg);
-    return nullptr;
-}
-
-INLINE Option(Bounce) Trap_Bounce_Meta_Decay_Value_Intrinsic(
-    Sink(Element*) meta,
-    Level* L
-){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        *meta = u_cast(Element*, Level_Arg(L, 2));  // already checked
-        return nullptr;
-    }
-
-    Atom* arg = Level_Spare(L);
-
-    if (Is_Raised(arg))
-        return Native_Fail_Result(L, Cell_Error(arg));
-
-    Decay_If_Unstable(arg);
-    Meta_Quotify(arg);
-
-    *meta = u_cast(Element*, arg);
-    return nullptr;
 }

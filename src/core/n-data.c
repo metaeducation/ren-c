@@ -410,8 +410,8 @@ DECLARE_NATIVE(refinement_q)
 {
     INCLUDE_PARAMS_OF_REFINEMENT_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -432,8 +432,8 @@ DECLARE_NATIVE(set_word_q)
 {
     INCLUDE_PARAMS_OF_SET_WORD_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -454,8 +454,8 @@ DECLARE_NATIVE(set_run_word_q)
 {
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -476,8 +476,8 @@ DECLARE_NATIVE(get_word_q)
 {
     INCLUDE_PARAMS_OF_GET_WORD_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -498,8 +498,8 @@ DECLARE_NATIVE(set_tuple_q)
 {
     INCLUDE_PARAMS_OF_SET_TUPLE_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -520,8 +520,8 @@ DECLARE_NATIVE(get_tuple_q)
 {
     INCLUDE_PARAMS_OF_GET_TUPLE_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -542,8 +542,8 @@ DECLARE_NATIVE(set_group_q)
 {
     INCLUDE_PARAMS_OF_SET_GROUP_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -564,8 +564,8 @@ DECLARE_NATIVE(get_group_q)
 {
     INCLUDE_PARAMS_OF_GET_GROUP_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -586,8 +586,8 @@ DECLARE_NATIVE(set_block_q)
 {
     INCLUDE_PARAMS_OF_SET_BLOCK_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -608,8 +608,8 @@ DECLARE_NATIVE(get_block_q)
 {
     INCLUDE_PARAMS_OF_GET_BLOCK_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -630,8 +630,8 @@ DECLARE_NATIVE(any_set_value_q)
 {
     INCLUDE_PARAMS_OF_ANY_SET_VALUE_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -652,8 +652,8 @@ DECLARE_NATIVE(any_get_value_q)
 {
     INCLUDE_PARAMS_OF_ANY_GET_VALUE_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -674,8 +674,8 @@ DECLARE_NATIVE(quasi_word_q)
 {
     INCLUDE_PARAMS_OF_QUASI_WORD_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -696,8 +696,8 @@ DECLARE_NATIVE(char_q)
 {
     INCLUDE_PARAMS_OF_CHAR_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -718,8 +718,8 @@ DECLARE_NATIVE(lit_word_q)
 {
     INCLUDE_PARAMS_OF_LIT_WORD_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -742,8 +742,8 @@ DECLARE_NATIVE(lit_path_q)
 {
     INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -764,8 +764,8 @@ DECLARE_NATIVE(any_inert_q)
 {
     INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -1156,7 +1156,7 @@ DECLARE_NATIVE(any_value_q)
 
     Heart heart;
     Byte quote_byte;
-    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     if (quote_byte != ANTIFORM_0)
         return OKAY;
@@ -1253,7 +1253,7 @@ DECLARE_NATIVE(barrier_q)
 
     Heart heart;
     Byte quote_byte;
-    Get_Heart_Quote_Unmeta_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
+    Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_COMMA);
 }
@@ -1292,8 +1292,8 @@ DECLARE_NATIVE(void_q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -1314,8 +1314,8 @@ DECLARE_NATIVE(nothing_q)
 {
     INCLUDE_PARAMS_OF_NOTHING_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -1336,8 +1336,8 @@ DECLARE_NATIVE(tripwire_q)
 {
     INCLUDE_PARAMS_OF_TRIPWIRE_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -1358,8 +1358,8 @@ DECLARE_NATIVE(trash_q)
 {
     INCLUDE_PARAMS_OF_TRASH_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -1380,8 +1380,8 @@ DECLARE_NATIVE(space_q)
 {
     INCLUDE_PARAMS_OF_SPACE_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -1466,13 +1466,12 @@ DECLARE_NATIVE(decay)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(OUT, LEVEL);
     if (bounce)
         return unwrap bounce;
 
-    Assert_Cell_Stable(v);  // Value* should always be stable
-    return COPY(v);  // pre-decayed by non-^META argument [1]
+    Assert_Cell_Stable(OUT);  // Value* should always be stable
+    return OUT;  // pre-decayed by non-^META argument [1]
 }
 
 
@@ -1499,13 +1498,11 @@ DECLARE_NATIVE(reify)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(OUT, LEVEL);
     if (bounce)
         return unwrap bounce;
 
-    Reify(v);
-    return COPY(v);
+    return Reify(OUT);
 }
 
 
@@ -1522,14 +1519,13 @@ DECLARE_NATIVE(noquasi)
 {
     INCLUDE_PARAMS_OF_NOQUASI;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(OUT, LEVEL);
     if (b)
         return unwrap b;
 
-    if (Is_Quasiform(e))
-        QUOTE_BYTE(e) = NOQUOTE_1;
-    return COPY(e);
+    if (Is_Quasiform(OUT))
+        QUOTE_BYTE(OUT) = NOQUOTE_1;
+    return OUT;
 }
 
 
@@ -1564,8 +1560,8 @@ DECLARE_NATIVE(noantiform)
 {
     INCLUDE_PARAMS_OF_NOANTIFORM;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 

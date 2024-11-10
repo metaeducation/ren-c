@@ -68,6 +68,13 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 #define Init_Unreadable(out) \
     TRACK(Init_Unreadable_Untracked_Inline((out)))
 
+#if RUNTIME_CHECKS
+    #define Suppress_Raised_If_Debug(c)  /* no-op in release build*/ \
+        Init_Unreadable(c)
+#else
+    #define Suppress_Raised_If_Debug(c)  NOOP
+#endif
+
 
 #if RUNTIME_CHECKS && CPLUSPLUS_11 && (! DEBUG_STATIC_ANALYZING)
     //

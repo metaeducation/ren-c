@@ -263,10 +263,10 @@ INLINE Element* Quasify_Antiform(Atom* v) {
     return u_cast(Element*, v);
 }
 
-INLINE Value* Reify(Atom* v) {
+INLINE Element* Reify(Atom* v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0)
         QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // all antiforms can be quasi
-    return cast(Value*, v);
+    return cast(Element*, v);
 }
 
 INLINE Atom* Degrade(Atom* a) {

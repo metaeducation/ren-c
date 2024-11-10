@@ -226,10 +226,14 @@ void Do_After_Action_Checks_Debug(Level* L) {
     // so native return types are checked instead of just trusting the C.
     //
   #if CHECK_NATIVE_RETURNS
-    Action* phase = Level_Phase(L);
-
+    Phase* phase = Level_Phase(L);
     if (ACT_HAS_RETURN(phase) and Is_Stable(L->out)) {
-        if (not Typecheck_Coerce_Return(L, L->out)) {
+        const Param* param = ACT_PARAMS_HEAD(phase);
+        assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+
+        if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
+            L, param, L->out
+        )){
             assert(!"Native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(L, L->out));
         }

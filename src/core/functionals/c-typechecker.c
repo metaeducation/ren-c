@@ -46,8 +46,8 @@
 //
 Bounce Decider_Intrinsic_Dispatcher(Level* level_)
 {
-    Value* v;  // not decayed or typechecked
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -126,7 +126,7 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
 
 
 //
-//  Typecheck_Pack: C
+//  Typecheck_Pack_In_Spare_Uses_Scratch: C
 //
 // It's possible in function type specs to check packs with ~[...]~ notation.
 // This routine itemwise checks a pack against one of those type specs.
@@ -134,33 +134,73 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
 // Note that blocks are legal, as in ~[[integer! word!] object!]~, which would
 // mean that the first item in the pack can be either an integer or word.
 //
-bool Typecheck_Pack(const Element* types, const Atom* pack) {
+// 1. Due to the way that the intrinsic optimization works, it has to have
+//    the argument to the intrinsic in the spare...and it uses the scratch
+//    cell for putting the intrinsic action itself value into.  Since we're
+//    recursing and want intrinsic optimizations to still work, we have
+//    to push the existing SPARE out of the way.  If we used Alloc_Value()
+//    we'd be creating an API handle with an unstable antiform in it.
+//
+bool Typecheck_Pack_In_Spare_Uses_Scratch(
+    Level* const L,
+    const Element* types
+){
+    USE_LEVEL_SHORTHANDS (L);
+
+    const Atom* pack = SPARE;
+
     assert(Is_Quasi_Block(types));  // could relax this to any list
     assert(Is_Pack(pack));  // could relax this also to any list
-    if (Cell_Series_Len_At(types) != Cell_Series_Len_At(pack))
-        return false;
 
     const Element* pack_tail;
     const Element* pack_at = Cell_List_At(&pack_tail, pack);
 
     const Element* types_tail;
     const Element* types_at = Cell_List_At(&types_tail, types);
+
+    if ((pack_tail - pack_at) != (types_tail - types_at))  // not same length
+        return false;
+
+    if (pack_at == pack_tail)  // pack is empty (so both are empty)
+        return true;
+
+    bool result = true;
+
+    assert(TOP_INDEX == L->baseline.stack_base);
+    Move_Cell(cast(Atom*, PUSH()), SPARE);  // need somewhere to save spare [1]
+    ++L->baseline.stack_base;  // typecheck functions should not see that push
+    assert(TOP_INDEX == L->baseline.stack_base);
+
     Context* types_binding = Cell_List_Binding(types);
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
-        DECLARE_ATOM (temp);  // !!! wasteful to make another cell, rethink
-        Copy_Cell(temp, pack_at);
-        Meta_Unquotify_Undecayed(temp);
-        if (not Typecheck_Atom_Core(types_at, types_binding, temp))
-            return false;
+        Copy_Cell(SPARE, pack_at);
+        Meta_Unquotify_Undecayed(SPARE);
+        if (not Typecheck_Atom_In_Spare_Uses_Scratch(
+            L, types_at, types_binding
+        )){
+            result = false;
+            goto return_result;
+        }
     }
 
-    return true;
+  return_result:
+
+    assert(TOP_INDEX == L->baseline.stack_base);
+    --L->baseline.stack_base;
+    Suppress_Raised_If_Debug(SPARE);
+    Move_Drop_Top_Stack_Value(SPARE);  // restore pack to the SPARE [1]
+
+  #if RUNTIME_CHECKS
+    Init_Unreadable(SCRATCH);
+  #endif
+
+    return result;
 }
 
 
 //
-//  Typecheck_Atom_Core: C
+//  Typecheck_Atom_In_Spare_Uses_Scratch: C
 //
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
 // for TYPE-BLOCK! and TYPE-GROUP!.
@@ -170,14 +210,19 @@ bool Typecheck_Pack(const Element* types, const Atom* pack) {
 //    trying to fill the argument to MATCH with an antiform parameter just
 //    should not be possible.
 //
-bool Typecheck_Atom_Core(
+bool Typecheck_Atom_In_Spare_Uses_Scratch(
+    Level* const L,
     const Value* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
-    Context* tests_binding,
-    const Atom* v
+    Context* tests_binding
 ){
+    USE_LEVEL_SHORTHANDS (L);
+
+    assert(tests != SCRATCH);
+
+    const Atom* v = SPARE;
     assert(not (Is_Antiform(v) and HEART_BYTE(v) == REB_PARAMETER));  // [1]
 
-    DECLARE_ATOM (scratch);  // !!! stackful
+    bool result;
 
     const Element* tail;
     const Element* item;
@@ -234,7 +279,7 @@ bool Typecheck_Atom_Core(
             if (Cell_Heart(item) == REB_BLOCK) {  // typecheck pack
                 if (not Is_Pack(v))
                     goto test_failed;
-                if (Typecheck_Pack(item, v))
+                if (Typecheck_Pack_In_Spare_Uses_Scratch(L, item))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -310,22 +355,25 @@ bool Typecheck_Atom_Core(
             Action* action = VAL_ACTION(test);
 
             if (Get_Action_Flag(action, CAN_DISPATCH_AS_INTRINSIC)) {
-                Level L_struct;
-                Level* L = &L_struct;
-
-                L->flags.bits = LEVEL_FLAG_DISPATCHING_INTRINSIC;
-
                 assert(Is_Stub_Details(action));
                 Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
 
-                Erase_Cell(&L->spare);
-                Copy_Cell(&L->spare, v);
+                Copy_Cell(SCRATCH, test);  // intrinsic may need action
 
-                L->out = scratch;
-                Erase_Cell(&L->scratch);
-                Copy_Cell(&L->scratch, test);  // intrinsic typechecks/decays
+              #if DEBUG_CELL_READ_WRITE
+                assert(Not_Cell_Flag(SPARE, PROTECTED));
+                Set_Cell_Flag(SPARE, PROTECTED);
+              #endif
 
+                assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+                Set_Level_Flag(L, DISPATCHING_INTRINSIC);
                 Bounce bounce = (*dispatcher)(L);
+                Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
+
+              #if DEBUG_CELL_READ_WRITE
+                Clear_Cell_Flag(SPARE, PROTECTED);
+              #endif
+
                 if (bounce == nullptr)
                     goto test_failed;
                 if (bounce == BOUNCE_OKAY)
@@ -340,22 +388,23 @@ bool Typecheck_Atom_Core(
             }
 
             Flags flags = 0;
-            Level* L = Make_End_Level(
+            Level* sub = Make_End_Level(
                 &Action_Executor,
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
-            Push_Action(L, VAL_ACTION(test), Cell_Frame_Coupling(test));
-            Begin_Action(L, VAL_FRAME_LABEL(test), PREFIX_0);
+            Push_Level(SCRATCH, sub);  // write sub's output to L->scratch
+            Push_Action(sub, VAL_ACTION(test), Cell_Frame_Coupling(test));
+            Begin_Action(sub, VAL_FRAME_LABEL(test), PREFIX_0);
 
-            const Key* key = L->u.action.key;
-            const Param* param = L->u.action.param;
-            Atom* arg = L->u.action.arg;
-            for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
+            const Key* key = sub->u.action.key;
+            const Param* param = sub->u.action.param;
+            Atom* arg = sub->u.action.arg;
+            for (; key != sub->u.action.key_tail; ++key, ++param, ++arg) {
                 Erase_Cell(arg);  // uninitialized in release, poison in debug
                 Copy_Cell(arg, param);
             }
 
-            arg = First_Unspecialized_Arg(&param, L);
+            arg = First_Unspecialized_Arg(&param, sub);
             if (not arg)
                 fail (Error_No_Arg_Typecheck(label));  // must take argument
 
@@ -364,36 +413,41 @@ bool Typecheck_Atom_Core(
             if (Cell_ParamClass(param) == PARAMCLASS_META)
                 Meta_Quotify(arg);
 
-            if (not Typecheck_Coerce_Argument(param, arg)) {
-                Drop_Action(L);
-                if (match_all)
-                    return false;
-                continue;
+            if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+                sub, param, arg
+            )) {
+                Drop_Action(sub);
+                Drop_Level(sub);
+                goto test_failed;
             }
 
-            Push_Level(scratch, L);
-
             if (Trampoline_With_Top_As_Root_Throws())
-                fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+                fail (Error_No_Catch_For_Throw(sub));
 
-            Drop_Level(L);
+            Drop_Level(sub);
 
-            if (not Is_Logic(scratch))
+            if (not Is_Logic(SCRATCH))  // sub wasn't limited to intrinsics
                 fail (Error_No_Logic_Typecheck(label));
 
-            if (not Cell_Logic(scratch))
+            if (not Cell_Logic(SCRATCH))
                 goto test_failed;
             break; }
 
           case REB_TYPE_WORD:
-            if (not Typecheck_Atom_Core(test, tests_binding, v))
+            if (not Typecheck_Atom_In_Spare_Uses_Scratch(
+                L, test, tests_binding
+            )){
                 goto test_failed;
+            }
             break;
 
           case REB_TYPE_GROUP: {
             Context* sub_binding = Derive_Binding(tests_binding, test);
-            if (not Typecheck_Atom_Core(test, sub_binding, v))
+            if (not Typecheck_Atom_In_Spare_Uses_Scratch(
+                L, test, sub_binding
+            )){
                 goto test_failed;
+            }
             break; }
 
           case REB_QUOTED:
@@ -401,8 +455,11 @@ bool Typecheck_Atom_Core(
             fail ("QUOTED? and QUASI? not supported in TYPE-XXX!"); }
 
           case REB_PARAMETER: {
-            if (not Typecheck_Atom(test, v))
+            if (not Typecheck_Atom_In_Spare_Uses_Scratch(
+                L, test, SPECIFIED
+            )){
                 goto test_failed;
+            }
             break; }
 
           case REB_TYPE_BLOCK: {
@@ -421,41 +478,70 @@ bool Typecheck_Atom_Core(
         goto test_succeeded;
 
       test_succeeded:
-        if (not match_all)
-            return true;
+        if (not match_all) {
+            result = true;
+            goto return_result;
+        }
         continue;
 
       test_failed:
-        if (match_all)
-            return false;
+        if (match_all) {
+            result = false;
+            goto return_result;
+        }
         continue;
     }
 
     if (match_all)
-        return true;
-    return false;
+        result = true;
+    else
+        result = false;
+    goto return_result;
+
+  return_result:
+
+  #if RUNTIME_CHECKS
+    Init_Unreadable(SCRATCH);
+  #endif
+
+    return result;
 }
 
 
 //
-//  Typecheck_Coerce_Argument: C
+//  Typecheck_Coerce_Arg_Uses_Spare_And_Scratch: C
 //
 // This does extra typechecking pertinent to function parameters, compared to
 // the basic type checking.
 //
-// 1. !!! Should explicit mutability override, so people can say things
+// 1. SPARE and SCRATCH are GC-safe cells in a Level that are usually free
+//    for whatever purposes an Executor wants.  But when a Level is being
+//    multiplexed with an intrinsic (see LEVEL_FLAG_CAN_DISPATCH_AS_INTRINSIC)
+//    it has to give up those cells for the duration of that call.  Type
+//    checking uses intrinsics a vast majority of the time, so this function
+//    ensures you don't rely on SCRATCH or SPARE not being modified (it
+//    marks them unreadable at the end).
+//
+// 2. !!! Should explicit mutability override, so people can say things
 //    like (/foo: func [...] mutable [...]) ?  This seems bad, because the
 //    contract of the function hasn't been "tweaked" with reskinning.
 //
-bool Typecheck_Coerce_Argument(
+bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+    Level* const L,
     const Param* param,
     Atom* arg  // need mutability for coercion
 ){
+    USE_LEVEL_SHORTHANDS (L);
+
+    assert(arg != SCRATCH and arg != SPARE);
+
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
         assert(not Is_Stable(arg) or not Is_Void(arg));  // should've bypassed
 
     if (Get_Parameter_Flag(param, CONST))
-        Set_Cell_Flag(arg, CONST);  // mutability override?  [1]
+        Set_Cell_Flag(arg, CONST);  // mutability override? [2]
+
+    bool result;
 
     bool coerced = false;
 
@@ -536,7 +622,8 @@ bool Typecheck_Coerce_Argument(
     }
 
     if (Get_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)) {
-        if (Typecheck_Atom(param, arg))
+        Copy_Cell(SPARE, arg);
+        if (Typecheck_Atom_In_Spare_Uses_Scratch(L, param, SPECIFIED))
             goto return_true;
     }
   }
@@ -569,20 +656,28 @@ bool Typecheck_Coerce_Argument(
 
   return_false:
 
-    if (unquoted)
-        Meta_Quotify(arg);
-
-    return false;
+    result = false;
+    goto return_result;
 
   return_true:
 
+    result = true;
+    goto return_result;
+
+  return_result:
+
     if (unquoted)
         Meta_Quotify(arg);
 
-    if (Not_Stable(arg))
+    if ((result == true) and Not_Stable(arg))
         assert(Cell_ParamClass(param) == PARAMCLASS_RETURN);
 
-    return true;
+  #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]
+    Init_Unreadable(SPARE);
+    Init_Unreadable(SCRATCH);
+  #endif
+
+    return result;
 }
 
 
@@ -711,7 +806,8 @@ DECLARE_NATIVE(match)
       case REB_TYPE_WORD:
       case REB_TYPE_GROUP:
       case REB_TYPE_BLOCK:
-        if (not Typecheck_Atom(test, v))
+        Copy_Cell(SPARE, v);
+        if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
             return nullptr;
         break;
 

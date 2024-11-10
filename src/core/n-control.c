@@ -1192,6 +1192,7 @@ DECLARE_NATIVE(case)
 //      :type "Match based on type constraints, not equality"
 //      :predicate "Binary switch-processing action (default is EQUAL?)"
 //          [<unrun> frame!]
+//      <local> right
 //  ]
 //
 DECLARE_NATIVE(switch)
@@ -1235,6 +1236,8 @@ DECLARE_NATIVE(switch)
     Value* predicate = ARG(predicate);
     Value* cases = ARG(cases);
 
+    Atom* right = LOCAL(right);
+
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
         ST_SWITCH_EVALUATING_RIGHT,
@@ -1246,7 +1249,7 @@ DECLARE_NATIVE(switch)
         goto initial_entry;
 
       case ST_SWITCH_EVALUATING_RIGHT:
-        goto right_result_in_spare;
+        goto right_result_in_right;
 
       case ST_SWITCH_RUNNING_BRANCH:
         if (not REF(all)) {
@@ -1260,7 +1263,7 @@ DECLARE_NATIVE(switch)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    assert(Is_Fresh(SPARE));  // initial condition
+    Freshen_Cell(right);  // initial condition
     assert(Is_Fresh(OUT));  // if no writes to out performed, we act void
 
     if (REF(type) and REF(predicate))
@@ -1272,11 +1275,11 @@ DECLARE_NATIVE(switch)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
-    Push_Level(SPARE, sub);
+    Push_Level(right, sub);
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
-    Freshen_Cell(SPARE);  // fallout must be reset each time
+    Freshen_Cell(right);  // fallout must be reset each time
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
@@ -1293,29 +1296,33 @@ DECLARE_NATIVE(switch)
     Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
-} right_result_in_spare: {  //////////////////////////////////////////////////
+} right_result_in_right: {  //////////////////////////////////////////////////
 
-    if (Is_Elision(SPARE))  // skip comments or ELIDEs
+    if (Is_Elision(right))  // skip comments or ELIDEs
         goto next_switch_step;  // see note [2] in comments for CASE
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
     if (REF(type)) {
-        Decay_If_Unstable(SPARE);
+        Decay_If_Unstable(right);
 
-        if (not Any_Type_Value(SPARE))
+        if (not Any_Type_Value(right))
             return FAIL("switch:type requires comparisons to TYPE-XXX!");
 
-        if (not Typecheck_Atom(stable_SPARE, left))
+        Copy_Cell(SPARE, left);
+        if (not Typecheck_Atom_In_Spare_Uses_Scratch(
+            LEVEL, cast(Value*, right), SPECIFIED
+        )){
             goto next_switch_step;
+        }
     }
     else if (Is_Nulled(predicate)) {
-        Decay_If_Unstable(SPARE);
+        Decay_If_Unstable(right);
 
         const bool strict = false;
         Copy_Cell(SCRATCH, left);
-        if (0 != Compare_Modify_Values(SCRATCH, SPARE, strict))
+        if (0 != Compare_Modify_Values(SCRATCH, right, strict))
             goto next_switch_step;
     }
     else {
@@ -1326,7 +1333,7 @@ DECLARE_NATIVE(switch)
             cast(Sink(Value), SCRATCH),  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
-                rebQ(SPARE)  // second arg (right hand side if infix)
+                rebQ(right)  // second arg (right hand side if infix)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
@@ -1361,8 +1368,8 @@ DECLARE_NATIVE(switch)
 
     Drop_Level(SUBLEVEL);
 
-    if (not Is_Fresh(SPARE)) {  // see remarks in CASE on fallout prioritization
-        Move_Cell(OUT, SPARE);
+    if (not Is_Fresh(right)) {  // see remarks in CASE on fallout prioritization
+        Move_Cell(OUT, right);
         return BRANCHED(OUT);
     }
 

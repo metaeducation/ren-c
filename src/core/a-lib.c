@@ -3162,8 +3162,10 @@ enum {
 //
 Bounce Api_Function_Dispatcher(Level* const L)
 {
-    assert(ACT_HAS_RETURN(Level_Phase(L)));  // continuations can RETURN [1]
-    assert(KEY_SYM(ACT_KEYS_HEAD(Level_Phase(L))) == SYM_RETURN);
+    Phase* phase = Level_Phase(L);
+    assert(ACT_HAS_RETURN(phase));  // continuations can RETURN [1]
+    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+    const Param* param = ACT_PARAMS_HEAD(phase);
 
     Value* cell = Level_Arg(L, 1);
     assert(Not_Specialized(cell));
@@ -3195,7 +3197,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     Value* result = cast(Value*, bounce);
 
-    if (not Typecheck_Coerce_Return(L, result))
+    if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, result))
         fail (Error_Bad_Return_Type(L, result));
 
     return result;

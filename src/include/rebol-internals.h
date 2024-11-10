@@ -665,6 +665,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "sys-throw.h"
 #include "sys-feed.h"
 #include "sys-level.h"  // needs words for frame-label helpers
+#include "sys-intrinsic.h"  // helpers because intrinsics don't process args
 
 #include "sys-eval.h"  // low-level single-step evaluation API
 #include "sys-bounce.h"

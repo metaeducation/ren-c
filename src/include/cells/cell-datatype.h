@@ -108,10 +108,6 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
     TRACK(Init_Builtin_Datatype_Untracked((out), (kind)))
 
 
-#define Typecheck_Atom(tests,atom) \
-    Typecheck_Atom_Core((tests), SPECIFIED, (atom))
-
-
 // This table is generated from %types.r - the actual table is located in
 // %tmp-dispatch.c and linked in only once.
 //

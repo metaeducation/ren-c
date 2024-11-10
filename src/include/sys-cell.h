@@ -246,14 +246,14 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 INLINE void Inline_Freshen_Cell_Untracked(Cell* c)
   { Freshen_Cell_Untracked(c); }
 
-#define Freshen_Cell(v) \
-    Inline_Freshen_Cell_Untracked(TRACK(v))
+#define Freshen_Cell(c) \
+    Inline_Freshen_Cell_Untracked(TRACK(c))
 
 INLINE void Inline_Freshen_Cell_Suppress_Raised_Untracked(Cell* c)
   { Freshen_Cell_Suppress_Raised_Untracked(c); }
 
-#define Freshen_Cell_Suppress_Raised(v)  /* [2] */ \
-    Inline_Freshen_Cell_Suppress_Raised_Untracked(TRACK(v))
+#define Freshen_Cell_Suppress_Raised(c)  /* [2] */ \
+    Inline_Freshen_Cell_Suppress_Raised_Untracked(TRACK(c))
 
 
 //=//// CELL "POISONING" //////////////////////////////////////////////////=//

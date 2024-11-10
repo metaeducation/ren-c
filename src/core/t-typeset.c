@@ -370,9 +370,9 @@ DECLARE_NATIVE(hole_q)
 {
     INCLUDE_PARAMS_OF_HOLE_Q;
 
-    Element* meta;
+    DECLARE_ELEMENT (meta);
     Option(Bounce) bounce = Trap_Bounce_Meta_Decay_Value_Intrinsic(
-        &meta, LEVEL
+        meta, LEVEL
     );
     if (bounce)
         return unwrap bounce;

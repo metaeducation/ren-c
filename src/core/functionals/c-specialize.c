@@ -325,7 +325,9 @@ bool Specialize_Action_Throws(
         if (Get_Parameter_Flag(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not Typecheck_Coerce_Argument(param, arg)) {
+        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+            TOP_LEVEL, param, arg
+        )){
             Option(const Symbol*) label = VAL_FRAME_LABEL(specializee);
             fail (Error_Arg_Type(label, key, param, arg));
         }
@@ -740,8 +742,11 @@ Phase* Alloc_Action_From_Exemplar(
             continue;
         }
 
-        if (not Typecheck_Coerce_Argument(param, arg))
+        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+            TOP_LEVEL, param, arg
+        )){
             fail (Error_Arg_Type(label, key, param, arg));
+        }
     }
 
     // This code parallels Specialize_Action_Throws(), see comments there

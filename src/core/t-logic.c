@@ -38,8 +38,8 @@ DECLARE_NATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -60,8 +60,8 @@ DECLARE_NATIVE(okay_q)
 {
     INCLUDE_PARAMS_OF_OKAY_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -82,8 +82,8 @@ DECLARE_NATIVE(logic_q)
 {
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
@@ -122,8 +122,8 @@ DECLARE_NATIVE(boolean_q)
 {
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -144,8 +144,8 @@ DECLARE_NATIVE(onoff_q)
 {
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -166,8 +166,8 @@ DECLARE_NATIVE(yesno_q)
 {
     INCLUDE_PARAMS_OF_YESNO_Q;
 
-    Element* e;
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(&e, LEVEL);
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
     if (b)
         return unwrap b;
 
@@ -438,8 +438,8 @@ DECLARE_NATIVE(not_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 

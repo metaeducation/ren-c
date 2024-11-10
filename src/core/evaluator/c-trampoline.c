@@ -371,6 +371,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     L = TOP_LEVEL;
 
+    possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // fail in intrinsic
+    Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
+
     CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  // no way around it with longjmp :-(
     goto bounce_on_trampoline_with_rescue;  // abrupt failure "used up" rescue
 }}

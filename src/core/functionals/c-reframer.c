@@ -331,6 +331,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 //          [<unrun> frame!]
 //      :parameter "Shim parameter receiving the frame--defaults to last"
 //          [word!]
+//      <local> temp
 //  ]
 //
 DECLARE_NATIVE(reframer)
@@ -384,8 +385,9 @@ DECLARE_NATIVE(reframer)
     // needing an instance of the type to check.  It may suggest that we
     // shouldn't do this at all, and just let it fail when called.  :-/
     //
-    Copy_Cell(SPARE, LEVEL->rootvar);
-    if (not Typecheck_Coerce_Argument(param, SPARE)) {
+    Sink(Element) temp = LOCAL(temp);
+    Copy_Cell(temp, LEVEL->rootvar);
+    if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(LEVEL, param, temp)) {
         DECLARE_ATOM (label_word);
         if (label)
             Init_Word(label_word, unwrap label);

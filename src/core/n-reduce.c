@@ -41,31 +41,6 @@
 //  ]
 //
 DECLARE_NATIVE(reduce)
-//
-// 1. It's not completely clear what the semantics of non-block REDUCE should
-//    be, but right now single value REDUCE does a REEVALUATE where it does
-//    not allow arguments.  This is a variant of REEVAL with an END feed.
-//
-//    (R3-Alpha, would return the input, e.g. `reduce ':foo` => :foo)
-//
-// 2. We want the output newline status to mirror the newlines of the start
-//    of the eval positions.  But when the evaluation callback happens, we
-//    won't have the starting value anymore.  Cache the newline flag on the
-//    ARG(value) cell, as newline flags on ARG()s are available.
-//
-// 3. There is an assert which checks to make sure that no values overwrite
-//    a raised error--cells must be cleared first (see Freshen_Cell()).  This
-//    makes it tough in situations where you are trying to pass a const
-//    cell pointer to something like a continuation--it makes a copy of the
-//    raised error, leaving it in its old location.  The aggressive assert
-//    may be infeasible long-term but it has been helpful in designing
-//    raised errors--workaround it for now.
-//
-// 4. The sublevel that is pushed to run the reduce evaluations uses the data
-//    stack position captured in BASELINE to tell things like whether a
-//    function dispatch has pushed refinements, etc.  So when the REDUCE level
-//    underneath it pushes a value to the data stack, that level must be
-//    informed the stack element is "not for it" before the next call.
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
@@ -85,7 +60,7 @@ DECLARE_NATIVE(reduce)
         goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
-        goto reduce_step_result_in_out;
+        goto reduce_step_result_in_spare;
 
       case ST_REDUCE_RUNNING_PREDICATE:
         goto process_out;
@@ -94,6 +69,12 @@ DECLARE_NATIVE(reduce)
     }
 
   initial_entry_non_list: {  /////////////////////////////////////////////////
+
+    // It's not completely clear what the semantics of non-block REDUCE should
+    // be, but right now single value REDUCE does a REEVALUATE with no
+    // arguments.  This is a variant of REEVAL with an END feed.
+    //
+    // (R3-Alpha, would return the input, e.g. `reduce ':foo` => :foo)
 
     if (Any_Inert(v))
         return COPY(v);  // save time if it's something like a TEXT!
@@ -117,10 +98,15 @@ DECLARE_NATIVE(reduce)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
             | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
     );
-    Push_Level(OUT, sub);
+    Push_Level(SPARE, sub);
     goto next_reduce_step;
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
+
+    // 2. We want the output newline status to mirror newlines of the start
+    //    of the eval positions.  But when the evaluation callback happens,
+    //    we won't have the starting value anymore.  Cache the newline flag on
+    //    the ARG(value) cell, as newline flags on ARG()s are available.
 
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
@@ -135,69 +121,68 @@ DECLARE_NATIVE(reduce)
     Assert_Stepper_Level_Ready(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} reduce_step_result_in_out: {  //////////////////////////////////////////////
+} reduce_step_result_in_spare: {  ////////////////////////////////////////////
 
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_Barrier(OUT))  // voids and nihils offered to predicate, not commas
+    if (Is_Barrier(SPARE))  // void and nihil offered to predicate, not commas
         goto next_reduce_step;
 
     if (
-        (Is_Stable(OUT) and Is_Void(OUT))  // !!! Review stability issue
-        or Is_Nihil(OUT)
+        (Is_Stable(SPARE) and Is_Void(SPARE))  // !!! Review stability issue
+        or Is_Nihil(SPARE)
     ){
         const Param* param = First_Unspecialized_Param(
             nullptr,
             VAL_ACTION(predicate)
         );
-        if (not Typecheck_Atom(param, OUT))
+        if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
             goto next_reduce_step;
     }
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
 
-    if (Is_Raised(OUT)) {  // workaround for assert about error clearing [3]
-        Move_Cell(SPARE, OUT);
-        return CONTINUE(OUT, predicate, SPARE);
-    }
-
-    return CONTINUE(OUT, predicate, OUT);  // arg can be same as output
+    return CONTINUE(SPARE, predicate, SPARE);  // arg can be same as output
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    Freshen_Cell_Suppress_Raised(SPARE);  // aggressive assert [3]
+    // 3. The sublevel that is pushed to run reduce evaluations uses the data
+    //    stack position captured in BASELINE to tell things like whether a
+    //    function dispatch has pushed refinements, etc.  When the REDUCE
+    //    underneath it pushes a value to the data stack, that level must be
+    //    informed the stack element is "not for it" before the next call.
 
-    if (Is_Elision(OUT))
+    if (Is_Elision(SPARE))
         goto next_reduce_step;  // void results are skipped by reduce
 
-    Decay_If_Unstable(OUT);
+    Decay_If_Unstable(SPARE);
 
-    if (Is_Void(OUT))
+    if (Is_Void(SPARE))
         goto next_reduce_step;
 
-    if (Is_Nulled(OUT))
-        return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
+    if (Is_Nulled(SPARE))
+        return RAISE(Error_Need_Non_Null_Raw());  // enables e.g. CURTAIL
 
-    if (Is_Splice(OUT)) {
+    if (Is_Splice(SPARE)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, OUT);
+        const Element* at = Cell_List_At(&tail, SPARE);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
-            Derelativize(PUSH(), at, Cell_List_Binding(OUT));
-            SUBLEVEL->baseline.stack_base += 1;  // [4]
+            Derelativize(PUSH(), at, Cell_List_Binding(SPARE));
+            SUBLEVEL->baseline.stack_base += 1;  // [3]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
                 newline = false;
             }
         }
     }
-    else if (Is_Antiform(OUT))
-        return RAISE(Error_Bad_Antiform(OUT));
+    else if (Is_Antiform(SPARE))
+        return RAISE(Error_Bad_Antiform(SPARE));
     else {
-        Move_Cell(PUSH(), cast(Element*, OUT));  // not void, not antiform
-        SUBLEVEL->baseline.stack_base += 1;  // [4]
+        Move_Cell(PUSH(), cast(Element*, SPARE));  // not void, not antiform
+        SUBLEVEL->baseline.stack_base += 1;  // [3]
 
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
             Set_Cell_Flag(TOP, NEWLINE_BEFORE);

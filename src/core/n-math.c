@@ -779,8 +779,8 @@ DECLARE_NATIVE(something_q)
 {
     INCLUDE_PARAMS_OF_SOMETHING_Q;
 
-    Value* v;
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(&v, LEVEL);
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
