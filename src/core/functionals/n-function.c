@@ -88,19 +88,6 @@ enum {
 // Puts a definitional return ACTION! in the RETURN slot of the frame, and
 // runs the body block associated with this function.
 //
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// 1. The body result is never used as a return value.  Only RETURN can give
-//    non-NOTHING.
-//
-// 2. If no RETURN statement is given, the result is NOTHING, and typechecking
-//    is performed to make sure NOTHING? was a legitimate return.  This has a
-//    little bit of a negative side in that if someone is to hook the RETURN
-//    function, it will not be called in these "fallout" cases.  It's deemed
-//    too ugly to slip in a "hidden" call to RETURN for this case, and too
-//    much of a hassle to force people to put RETURN ~ or RETURN at the end.
-//    So this is the compromise chosen...at the moment.
-//
 Bounce Func_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
@@ -117,6 +104,17 @@ Bounce Func_Dispatcher(Level* const L)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    // 1. One way of handling RETURN would be if this dispatcher asked to
+    //    receive throws.  But for one thing, we wouldn't want to do type
+    //    checking of the return result in this dispatcher... RETURN needs
+    //    to do it so it can deliver the error at the source location where
+    //    the return is called, prior ot the throw.
+    //
+    //    So really all this function would be doing at that point would be
+    //    to catch the result.  The Trampoline has a generic UNWIND that
+    //    deals with that already.  So long as that exists, then this
+    //    dispatcher merely catching a "teleport" would be redundant.
 
     Details* details = Phase_Details(PHASE);
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
@@ -141,17 +139,21 @@ Bounce Func_Dispatcher(Level* const L)
     node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(SPARE) = L->varlist;
 
-    assert(Is_Fresh(OUT));
-    return CONTINUE_CORE(
-        OUT,  // body evaluative result discarded [1]
-        LEVEL_MASK_NONE,
-        SPECIFIED,
-        stable_SPARE
-    );
+    /* Enable_Dispatcher_Catching_Of_Throws(L); */  // RETURN uses UNWIND [1]
+
+    return CONTINUE(OUT, stable_SPARE);  // body result is discarded
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    Init_Nothing(OUT);  // NOTHING, regardless of body result [2]
+    // 1. If no RETURN is used, the result is NOTHING, and typechecking is
+    //    performed to make sure NOTHING? was a legitimate return.  This has a
+    //    little bit of a negative side that if someone is to hook the RETURN
+    //    function, it won't be called in these "fallout" cases.  It's deemed
+    //    too ugly to slip in a "hidden" call to RETURN for this case, and too
+    //    big a hassle to force people to put RETURN ~ or RETURN at the end.
+    //    So this is the compromise chosen...at the moment.
+
+    Init_Nothing(OUT);  // NOTHING, regardless of body result [1]
 
     Phase* phase = Level_Phase(L);
 

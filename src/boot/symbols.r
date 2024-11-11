@@ -93,6 +93,7 @@ line
 near
 label
 #sigil
+coupling
 
 value ; used by TYPECHECKER to name the argument of the generated function
 

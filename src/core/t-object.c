@@ -1328,10 +1328,11 @@ DECLARE_GENERICS(Frame)
         Value* property = ARG(property);
         Option(SymId) sym = Cell_Word_Id(property);
         switch (sym) {
-          case SYM_BINDING: {
-            if (Try_Get_Binding_Of(OUT, frame))
-                return OUT;
-            return nullptr; }
+          case SYM_COUPLING: {
+            Option(VarList*) coupling = Cell_Frame_Coupling(frame);
+            if (not coupling)
+                return nullptr;
+            return COPY(Varlist_Archetype(unwrap coupling)); }
 
           case SYM_LABEL: {
             Option(const Symbol*) label = VAL_FRAME_LABEL(frame);
