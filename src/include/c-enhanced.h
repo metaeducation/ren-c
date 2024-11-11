@@ -1412,7 +1412,7 @@
 //    in terms of the handoffs and such.
 //
 //    While this could be factored, function calls aren't inlined in the
-//    debug build, so given the simplicity of the code
+//    debug build, so given the simplicity of the code it's just repeated.
 //
 // !!! Review: the copy-and-swap idiom doesn't seem to be very helpful here,
 // as we aren't dealing with exceptions and self-assignment has to be handled
@@ -1431,8 +1431,8 @@
         using MT = typename std::remove_const<T>::type;
 
         template<typename U>  // for CHECK_CELL_SUBCLASSES [1]
-        using ReverseInheritable = typename std::enable_if<
-            std::is_same<U,T>::value || std::is_base_of<U,T>::value
+        using IfReverseInheritable = typename std::enable_if<
+            std::is_same<U,T>::value or std::is_base_of<U,T>::value
         >::type;
 
       //=//// CONSTRUCTORS ////////////////////////////////////////////////=//
@@ -1450,13 +1450,13 @@
             other.corruption_pending = false;
         }
 
-        template<typename U, ReverseInheritable<U>* = nullptr>
+        template<typename U, IfReverseInheritable<U>* = nullptr>
         NeedWrapper(U* u) {
             p = u_cast(T*, u);
             corruption_pending = p and sink;
         }
 
-        template<typename U, bool B, ReverseInheritable<U>* = nullptr>
+        template<typename U, bool B, IfReverseInheritable<U>* = nullptr>
         NeedWrapper(const NeedWrapper<U, B>& other) {
             p = u_cast(T*, other.p);
             corruption_pending = p and (other.corruption_pending or sink);
@@ -1471,7 +1471,7 @@
             return *this;
         }
 
-        NeedWrapper& operator=(const NeedWrapper<T,sink> other) {
+        NeedWrapper& operator=(const NeedWrapper<T,sink>& other) {
             if (this != &other) {  // self-assignment possible
                 p = other.p;
                 corruption_pending = p and (other.corruption_pending or sink);
@@ -1480,7 +1480,7 @@
             return *this;
         }
 
-        template<typename U, ReverseInheritable<U>* = nullptr>
+        template<typename U, IfReverseInheritable<U>* = nullptr>
         NeedWrapper& operator=(const NeedWrapper& other) {
             if (this != &other) {  // self-assignment possible
                 p = other.p;
@@ -1490,7 +1490,7 @@
             return *this;
         }
 
-        template<typename U, ReverseInheritable<U>* = nullptr>
+        template<typename U, IfReverseInheritable<U>* = nullptr>
         NeedWrapper& operator=(U* other) {
             p = u_cast(T*, other);
             corruption_pending = p and sink;
