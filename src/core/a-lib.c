@@ -120,7 +120,7 @@ INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
     do { \
         ENTER_API_RECYCLING_OK; \
         if (g_gc.recycling) \
-            panic ("Can't call libRebol API from HANDLE!'s CLEANUP_CFUNC()"); \
+            panic ("Can't call libRebol API from HANDLE!'s RebolHandleCleaner()"); \
     } while (0)
 
 
@@ -856,7 +856,7 @@ RebolValue* API_rebTextWide(const REBWCHAR* wstr)
 RebolValue* API_rebHandle(
     void *data,  // !!! What about `const void*`?  How to handle const?
     size_t length,
-    CLEANUP_CFUNC *cleaner
+    RebolHandleCleaner* cleaner
 ){
     ENTER_API;
 
@@ -900,7 +900,7 @@ void API_rebModifyHandleLength(RebolValue* v, size_t length) {
 //
 //  rebModifyHandleCleaner: API
 //
-void API_rebModifyHandleCleaner(RebolValue* v, CLEANUP_CFUNC *cleaner) {
+void API_rebModifyHandleCleaner(RebolValue* v, RebolHandleCleaner* cleaner) {
     ENTER_API;
 
     if (not Is_Handle(v))
@@ -1931,7 +1931,7 @@ void* API_rebUnboxHandleCData(
 //
 // May return nullptr.
 //
-CLEANUP_CFUNC* API_rebExtractHandleCleaner(
+RebolHandleCleaner* API_rebExtractHandleCleaner(
     RebolContext** binding_ref,
     const void* p, void* vaptr
 ){

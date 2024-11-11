@@ -822,7 +822,7 @@ e-lib/emit [ver --{
      * this might create some unpredictable nesting.
      */
 
-    typedef void (CLEANUP_CFUNC)(const RebolValue*);
+    typedef void (RebolHandleCleaner)(const RebolValue*);
 
 
     /*

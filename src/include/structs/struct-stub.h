@@ -417,7 +417,7 @@ union StubMiscUnion {
 
     // some HANDLE!s use this for GC finalization
     //
-    Option(CLEANUP_CFUNC*) cleaner;
+    Option(RebolHandleCleaner*) cleaner;
 
     // Because a BITSET! can get very large, the negation state is stored
     // as a boolean in the Flex.  Since negating a BITSET! is intended
