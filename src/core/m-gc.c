@@ -690,173 +690,179 @@ static void Mark_Guarded_Nodes(void)
 
 
 //
-//  Mark_Level_Stack_Deep: C
+//  Mark_Level: C
 //
-// Mark values being kept live by all stack levels.  If a function is running,
-// then this will keep the function itself live, as well as the arguments.
-// There is also an "out" slot--which may point to an arbitrary cell
-// on the C stack (and must contain valid GC-readable bits at all times).
+// Some logic applies to all Levels, with a bit of nuance for marking the
+// fields in the L->u union based on their Executor.
 //
-// Since function argument slots are not pre-initialized, how far the function
-// has gotten in its fulfillment must be taken into account.  Only those
-// argument slots through points of fulfillment may be GC protected.
-//
-// This should be called at the top level, not from Propagate_All_GC_Marks().
-// All marks will be propagated.
-//
-static void Mark_Level_Stack_Deep(void)
-{
-    Level* L = TOP_LEVEL;
+static void Mark_Level(Level* L) {
 
-    while (true) {  // mark all levels (even BOTTOM_LEVEL)
-        //
-        // Note: MISC_PENDING() should either live in FEED_ARRAY(), or
-        // it may be corrupt (e.g. if it's an apply).  GC can ignore it.
-        //
-        Stub* singular = FEED_SINGULAR(L->feed);
-        do {
-            Queue_Mark_Cell_Deep(Stub_Cell(singular));
-            singular = LINK(Splice, singular);
-        } while (singular);
+  //=//// MARK FEED (INCLUDES BINDING) ////////////////////////////////////=//
 
-        // !!! This used to mark L->feed->p; but we probably do not need to.
-        // All variadics are reified as arrays in the GC (we could avoid this
-        // using va_copy, but probably not worth it).  All values in feed
-        // should be covered in terms of GC protection.
+    // 1. MISC(Pending, feed) should either live in FEED_ARRAY(), or it may
+    //    be corrupt (e.g. if it's an apply).  GC can ignore it.
+    //
+    // 2. This used to mark L->feed->p; but we probably do not need to.  All
+    //    variadics are reified as arrays in the GC (we could avoid this
+    //    using va_copy, but probably not worth it).  All values in feed
+    //    should be covered in terms of GC protection.
+    //
+    // 3. If ->gotten is set, it usually shouldn't need marking because
+    //    it's fetched via L->value and so would be kept alive by it.  Any
+    //    code that a level runs that might disrupt that relationship so it
+    //    would fetch differently should have meant clearing ->gotten.
 
-        Context* L_binding = Level_Binding(L);
+    Stub* singular = FEED_SINGULAR(L->feed);  // don't mark MISC(Pending) [1]
+    do {
+        Queue_Mark_Cell_Deep(Stub_Cell(singular));
+        singular = LINK(Splice, singular);
+    } while (singular);
 
-        // If ->gotten is set, it usually shouldn't need markeding because
-        // it's fetched via L->value and so would be kept alive by it.  Any
-        // code that a level runs that might disrupt that relationship so it
-        // would fetch differently should have meant clearing ->gotten.
-        //
-        if (L->feed->gotten)
-            assert(L->feed->gotten == Lookup_Word(At_Level(L), L_binding));
+    Context* L_binding = Level_Binding(L);  // marks binding, not feed->p [2]
+    if (
+        L_binding != SPECIFIED
+        and (L_binding->leader.bits & NODE_FLAG_MANAGED)
+    ){
+        Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.Any.node);
+    }
 
-        if (
-            L_binding != SPECIFIED
-            and (L_binding->leader.bits & NODE_FLAG_MANAGED)
-        ){
-            // Expand L_binding.
-            //
-            // !!! Should this instead check that it isn't inaccessible?
-            //
-            Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.Any.node);
-        }
+    if (L->feed->gotten)  // shouldn't need to mark feed->gotten [3]
+        assert(L->feed->gotten == Lookup_Word(At_Level(L), L_binding));
 
-        // L->out can be nullptr at the moment, when a level is created that
-        // can ask for a different output each evaluation.
-        //
-        if (L->out)  // output is allowed to be Freshen_Cell()
-            Queue_Mark_Maybe_Fresh_Cell_Deep(L->out);
+  //=//// MARK FRAME CELLS ////////////////////////////////////////////////=//
 
-        // Level temporary cell should always contain initialized bits, as
-        // Make_Level() sets it up and no one is supposed to corrupt it.
-        //
-        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->fetched);
-        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
-        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->scratch);
+    // Level cells should always contain initialized bits, though erased or
+    // fresh cells are allowed.
 
-        if (not Is_Action_Level(L)) {
-            if (L->executor == &Evaluator_Executor)
-                Queue_Mark_Maybe_Fresh_Cell_Deep(&L->u.eval.primed);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(L->out);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->fetched);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(&L->scratch);
 
-            // Consider something like `eval copy '(recycle)`, because
-            // while evaluating the group it has no anchor anywhere in the
-            // root set and could be GC'd.  The Level's array ref is it.
-            //
-            goto propagate_and_continue;
-        }
+    if (not Is_Action_Level(L)) {
+        if (L->executor == &Evaluator_Executor)
+            Queue_Mark_Maybe_Fresh_Cell_Deep(&L->u.eval.primed);
 
-        Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
-            cast(const Node**, m_cast(const Action**, &L->u.action.original))
+        return;
+    }
+
+  //=//// SPECIAL MARKING FOR ACTION_EXECUTOR() LEVELS ////////////////////=//
+
+    // 1. If the context is all set up with valid values and managed, then it
+    //    can be marked normally...no need for partial parameter traversal.
+    //
+    // 2. The cast(VarList, ...) operation does extra integrity checking of
+    //    the VarList in some debug builds, and the VarList may not be
+    //    complete at this point.  Cast to an array.
+    //
+    // 3. For efficiency, function argument slots are not pre-formatted--they
+    //    are initialized during the sunk cost of the parameter walk.  Hence
+    //    how far the function has gotten in its fulfillment must be taken
+    //    into account.  Only those argument slots that have been fulfilled
+    //    may be GC protected, since the others contain random bits.
+    //
+    // 4. Natives are allowed to use their locals as evaluation targets,
+    //    which can be Is_Fresh() or unstable antiforms when the GC sees them.
+    //    But we want the checked build to catch cases where erased cells
+    //    appear anywhere that the user might encounter them.
+
+    Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
+        cast(const Node**, m_cast(const Action**, &L->u.action.original))
+    );
+
+  #if DEBUG_LEVEL_LABELS
+    assert(L->label_utf8 != nullptr);
+  #endif
+    if (L->u.action.label) {  // nullptr if ANONYMOUS
+        const Symbol* s = unwrap L->u.action.label;
+        if (not Is_Node_Marked(s))
+            Queue_Unmarked_Accessible_Stub_Deep(s);
+    }
+
+    if (L->varlist and Is_Node_Managed(L->varlist)) {  // normal marking [1]
+        assert(
+            not Is_Level_Fulfilling(L)
+            or LEVEL_STATE_BYTE(L) == ST_ACTION_TYPECHECKING  // filled/safe
         );
 
-      #if DEBUG_LEVEL_LABELS
-        assert(L->label_utf8 != nullptr);
-      #endif
-        if (L->u.action.label) { // nullptr if anonymous
-            const Symbol* sym = unwrap L->u.action.label;
-            if (not Is_Node_Marked(sym))
-                Queue_Unmarked_Accessible_Stub_Deep(sym);
+        Queue_Mark_Node_Deep(  // may be incomplete, can't cast(VarList*) [2]
+            cast(const Node**, m_cast(const Array**, &L->varlist))
+        );
+        return;
+    }
+
+    if (
+        Is_Level_Fulfilling(L)
+        and (
+            LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY
+            or LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY_INFIX
+        )
+    ){
+        return;  // args and locals are poison/garbage
+    }
+
+    Phase* phase = Level_Phase(L);
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, phase);
+
+    if (
+        Is_Level_Fulfilling(L)
+        and Not_Executor_Flag(ACTION, L, DOING_PICKUPS)
+    ){
+        key_tail = L->u.action.key + 1;  // don't mark uninitialized bits [3]
+    }
+
+    Value* arg = Level_Args_Head(L);
+    for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [3]
+        if (not Is_Fresh(arg)) {
+            Queue_Mark_Cell_Deep(arg);
+            continue;
         }
 
-        if (L->varlist and Is_Node_Managed(L->varlist)) {
-            //
-            // If the context is all set up with valid values and managed,
-            // then it can just be marked normally...no need to do custom
-            // partial parameter traversal.
-            //
-            assert(
-                not Is_Level_Fulfilling(L)
-                or LEVEL_STATE_BYTE(L) == ST_ACTION_TYPECHECKING  // filled/safe
-            );
-
-            // "may not pass cast(VarList*) test in DEBUG_CHECK_CASTS"
-            //
-            Queue_Mark_Node_Deep(
-                cast(const Node**, m_cast(const Array**, &L->varlist))
-            );
-            goto propagate_and_continue;
+        if (Is_Level_Fulfilling(L)) {
+            assert(key == L->u.action.key);
+            continue;
         }
 
-        if (
-            Is_Level_Fulfilling(L)
-            and (
-                LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY
-                or LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY_INFIX
-            )
-        ){
-            goto propagate_and_continue;  // args and locals poison/garbage
-        }
+        Action* action = cast(Action*, cast(Flex*, phase));
+        assert(Is_Action_Native(action));
+        Param* param = ACT_PARAMS_HEAD(action);
+        param += (key - ACT_KEYS_HEAD(action));
+        assert(Is_Specialized(param));  // only legal for LOCAL(...) [4]
+        UNUSED(param);
+        UNUSED(action);
+    }
+}
 
-        Phase* phase; // goto would cross initialization
-        phase = Level_Phase(L);
-        const Key* key;
-        const Key* key_tail;
-        key = ACT_KEYS(&key_tail, phase);
 
-        if (
-            Is_Level_Fulfilling(L)
-            and Not_Executor_Flag(ACTION, L, DOING_PICKUPS)
-        ){
-            key_tail = L->u.action.key + 1;  // key may be fresh
-        }
+//
+//  Mark_All_Levels: C
+//
+// Levels are not "Nodes" and are not garbage collected.  But they may not
+// all be reachable from the TOP_LEVEL -> BOTTOM_LEVEL stack, due to the
+// fact that ranges of Levels are sometimes "unplugged" by Generators and
+// Yielders.  The HANDLE!s holding those Levels are responsible for the
+// replugging of the Levels or freeing of them, but we have to enumerate
+// the pool to find all the live Levels since there's not another good way.
+//
+static void Mark_All_Levels(void)
+{
+    Segment* seg = g_mem.pools[LEVEL_POOL].segments;
+    Size wide = g_mem.pools[LEVEL_POOL].wide;
+    assert(wide >= Size_Of(Level));
 
-        Value* arg;
-        for (arg = Level_Args_Head(L); key != key_tail; ++key, ++arg) {
-            if (not Is_Fresh(arg)) {
-                Queue_Mark_Cell_Deep(arg);
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = g_mem.pools[LEVEL_POOL].num_units_per_segment;
+        Byte* unit = cast(Byte*, seg + 1);  // byte beats strict alias
+
+        for (; n > 0; --n, unit += wide) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
-            }
 
-            if (Is_Level_Fulfilling(L)) {
-                assert(key == L->u.action.key);
-                continue;
-            }
-
-            // Natives are allowed to use their locals as evaluation targets,
-            // which can be fresh at various times when the GC sees them.
-            // But we want the checked build to catch cases where erased cells
-            // appear anywhere that the user might encounter them.
-            //
-            Action* action = cast(Action*, cast(Flex*, phase));
-            assert(Is_Action_Native(action));
-            Param* param = ACT_PARAMS_HEAD(action);
-            param += (key - ACT_KEYS_HEAD(action));
-            assert(Is_Specialized(param));
-            UNUSED(param);
-            UNUSED(action);
+            Level* level = cast(Level*, unit);
+            Mark_Level(level);
+            Propagate_All_GC_Marks();
         }
-
-      propagate_and_continue:;
-
-        Propagate_All_GC_Marks();
-        if (L == BOTTOM_LEVEL)
-            break;
-
-        L = L->prior;
     }
 }
 
@@ -887,6 +893,9 @@ Count Sweep_Stubs(void)
 
   blockscope {
     Segment* seg = g_mem.pools[STUB_POOL].segments;
+    Size wide = g_mem.pools[STUB_POOL].wide;
+    assert(wide == sizeof(Stub));
+    UNUSED(wide);
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
@@ -942,12 +951,14 @@ Count Sweep_Stubs(void)
   #if UNUSUAL_CELL_SIZE  // pairing pool is separate in this case [2]
   blockscope {
     Segment* seg = g_mem.pools[PAIR_POOL].segments;
+    Size wide = g_mem.pools[PAIR_POOL].wide;
+    assert(wide >= 2 * Size_Of(Cell));
 
     for (; seg != nullptr; seg = seg->next) {
         Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
 
         Byte *unit = cast(Byte*, seg + 1);
-        for (; n > 0; --n, unit += 2 * sizeof(Cell)) {
+        for (; n > 0; --n, unit += wide) {
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
@@ -1109,12 +1120,16 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // are bound to Levels will be freed, if the Level is expired.)
     //
     Mark_Root_Stubs();
-    Propagate_All_GC_Marks();
+    Assert_No_GC_Marks_Pending();
 
     Mark_Data_Stack();
+    Assert_No_GC_Marks_Pending();
+
     Mark_Guarded_Nodes();
-    Mark_Level_Stack_Deep();
-    Propagate_All_GC_Marks();
+    Assert_No_GC_Marks_Pending();
+
+    Mark_All_Levels();
+    Assert_No_GC_Marks_Pending();
 
     // The last thing we do is go through all the "sea contexts" and make sure
     // that if anyone referenced the context, then their variables remain live.

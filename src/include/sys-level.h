@@ -444,7 +444,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    evaluation.  But the GC expects initialized bits in the output slot at
 //    all times.
 //
-// 4. Uninterruptibility is inherited by default by Push_Level_Freshen_Out_If_State_0(), but
+// 4. Uninterruptibility is inherited by default by Push_Level(), but
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
@@ -530,10 +530,10 @@ INLINE void Drop_Level(Level* L)
 //    executor is the evaluator (it's just writing a single zero).  Review.
 //
 // 2. Previously just TOP_STACK was captured in L->baseline.stack_base, but
-//    then redundantly captured via a Snap_State() in Push_Level_Freshen_Out_If_State_0().  The
-//    responsibilities of Prep_Level() vs Push_Level_Freshen_Out_If_State_0() aren't clearly laid
+//    then redundantly captured via a Snap_State() in Push_Level().  The
+//    responsibilities of Prep_Level() vs Push_Level() aren't clearly laid
 //    out, but some clients do depend on the StackIndex being captured before
-//    Push_Level_Freshen_Out_If_State_0() is called, so this snaps the whole baseline here.
+//    Push_Level() is called, so this snaps the whole baseline here.
 //
 INLINE Level* Prep_Level_Core(
     Executor* executor,
