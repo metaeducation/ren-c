@@ -420,20 +420,24 @@ INLINE void Free_Level_Internal(Level* L) {
     Free_Pooled(LEVEL_POOL, L);
 }
 
-// 1. Push_Level_Freshen_Out_If_State_0() takes an Atom* for the output.  It is a Need() and not a
+// 1. Push_Level() takes an Atom* for the output.  It is a Need() and not a
 //    Sink() because we may not want to corrupt the cell we are given (e.g.
 //    if we're pushing a level to do infix processing on an already calculated
-//    result).  The cell will be erased by the trampoline mechanics on the
-//    initial entry state automatically.
+//    result).
 //
 //    Taking an Atom* is important, as we don't want to evaluate into variables
 //    or array slots.  Not only can they have their memory moved during an
 //    evaluation, but we don't want unstable antiforms being put into variables
 //    (or any antiforms being put in array cells).
 //
-//    Note that a special exception is made by LOCAL() in frames, based on the
-//    belief that local state for a native will never be exposed by a debugger
-//    and hence these locations can be used as evaluation targets.
+//    We want the cell to be easy to cheaply erase with Erase_Cell() for
+//    performance reasons.  But also, if we allowed API cells as evaluation
+//    targets that would create some confusion with wanting API cells to
+//    be freed when they are return targets (there might be some way to say
+//    that cells in L->out don't count for the rule, but this would confuse
+//    some invariants...and it's better to just say that evaluations into
+//    API cells must leave those cells erased until the eval is complete,
+//    and put NODE_FLAG_ROOT on afterward).
 //
 // 2. The commitment of an Intrinsic is that if it runs without a Level, then
 //    it won't perform evaluations or use continuations.  Those mechanics are
@@ -448,7 +452,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
-    Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
+    Need(Atom*) out,  // prohibits passing Element or Value as output [1]
     Level* L
 ){
     assert(not TOP_LEVEL or Not_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC));
@@ -459,8 +463,13 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
         assert(not Is_Api_Value(L->out));
   #endif
 
+    assert(
+        not (L->out->header.bits &
+            (NODE_FLAG_ROOT | NODE_FLAG_MARKED | NODE_FLAG_MANAGED)
+        )
+    );
     if (not (L->flags.bits & FLAG_STATE_BYTE(255)))  // no FLAG_STATE_BYTE()
-        Freshen_Cell(L->out);  // STATE_0 requires the output to be "fresh"
+        Erase_Cell(L->out);  // STATE_0 requires erased cell [1]
 
   #if RUNTIME_CHECKS
     //
@@ -477,7 +486,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
 }
 
-INLINE void Push_Level_Freshen_Out_If_State_0(  // inherits uninterruptibility [4]
+INLINE void Push_Level_Erase_Out_If_State_0(  // inherits uninterruptibility [4]
     Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
@@ -547,8 +556,8 @@ INLINE Level* Prep_Level_Core(
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 
     L->feed = feed;
-    Erase_Cell(&L->spare);
-    Erase_Cell(&L->scratch);
+    Force_Erase_Cell(&L->spare);
+    Force_Erase_Cell(&L->scratch);
     Corrupt_Pointer_If_Debug(L->out);
 
     L->varlist = nullptr;
@@ -632,7 +641,7 @@ INLINE Level* Prep_Level_Core(
     Level_Arg(level_, (p_##name##_))
 
 #define LOCAL(name) \
-    cast(Atom*, ARG(name))  // see Push_Level_Freshen_Out_If_State_0() for why this is allowed
+    ARG(name)  // alias (should p_##name## be different to enforce?)
 
 #define PARAM(name) \
     ACT_PARAM(Level_Phase(level_), (p_##name##_))  // a TYPESET!
@@ -652,12 +661,12 @@ INLINE Level* Prep_Level_Core(
 )
 
 INLINE Bounce Native_Thrown_Result(Level* L) {
-    Freshen_Cell_Suppress_Raised(L->out);
+    Erase_Cell(L->out);
     assert(Is_Throwing(L));
 
     while (TOP_LEVEL != L) {  // convenience
         Drop_Level(TOP_LEVEL);
-        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
+        Erase_Cell(TOP_LEVEL->out);
     }
 
     return BOUNCE_THROWN;
@@ -693,7 +702,7 @@ INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
 
     while (TOP_LEVEL != L) {  // convenience
         Drop_Level(TOP_LEVEL);
-        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
+        Erase_Cell(TOP_LEVEL->out);
     }
 
     Force_Location_Of_Error(error, L);
@@ -712,7 +721,7 @@ INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
 
     while (TOP_LEVEL != L) {  // convenience
         Drop_Level(TOP_LEVEL);
-        Freshen_Cell_Suppress_Raised(TOP_LEVEL->out);
+        Erase_Cell(TOP_LEVEL->out);
     }
 
     Force_Location_Of_Error(error, L);

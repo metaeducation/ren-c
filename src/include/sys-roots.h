@@ -166,7 +166,7 @@ INLINE void Free_Value(Value* v)
     if (Is_Node_Managed(stub))
         Unlink_Api_Handle_From_Level(stub);
 
-    Poison_Cell(v);  // has to be last (removes NODE_FLAG_ROOT if set)
+    Force_Poison_Cell(v);  // do last (removes NODE_FLAG_ROOT if set)
     stub->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
     GC_Kill_Stub(stub);
 }

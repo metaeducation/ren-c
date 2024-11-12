@@ -2287,7 +2287,7 @@ Bounce Scanner_Executor(Level* const L) {
                 | LEVEL_FLAG_RAISED_RESULT_OK
                 | FLAG_STATE_BYTE(mode)
         );
-        Push_Level_Freshen_Out_If_State_0(OUT, sub);
+        Push_Level_Erase_Out_If_State_0(OUT, sub);
         return CONTINUE_SUBLEVEL(sub); }
 
       case TOKEN_TUPLE:
@@ -2525,7 +2525,7 @@ Bounce Scanner_Executor(Level* const L) {
                 | FLAG_STATE_BYTE(ST_SCANNER_BLOCK_MODE)
         );
 
-        Push_Level_Freshen_Out_If_State_0(OUT, sub);  // do stackful, for now
+        Push_Level_Erase_Out_If_State_0(OUT, sub);  // do stackful, for now
 
         bool threw = Trampoline_With_Top_As_Root_Throws();
 
@@ -2752,7 +2752,7 @@ Bounce Scanner_Executor(Level* const L) {
                 | FLAG_STATE_BYTE(sub_mode)
                 | SCAN_EXECUTOR_FLAG_INTERSTITIAL_SCAN
         );
-        Push_Level_Freshen_Out_If_State_0(OUT, sub);
+        Push_Level_Erase_Out_If_State_0(OUT, sub);
 
         bool threw = Trampoline_With_Top_As_Root_Throws();
 
@@ -3205,7 +3205,7 @@ DECLARE_NATIVE(transcode)
 
     Level* sub = Make_Scan_Level(ss, feed, flags);
 
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
     STATE = ST_TRANSCODE_SCANNING;
     return CONTINUE_SUBLEVEL(sub);
 
@@ -3398,7 +3398,7 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     Level* L = Make_Scan_Level(&ss, feed, flags);
 
     DECLARE_ATOM (temp);
-    Push_Level_Freshen_Out_If_State_0(temp, L);
+    Push_Level_Erase_Out_If_State_0(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
         fail (Error_No_Catch_For_Throw(L));
 

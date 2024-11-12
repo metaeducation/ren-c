@@ -153,7 +153,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Level* sub = Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE);
     Erase_Cell(OUT);
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 }
 
@@ -223,6 +223,6 @@ DECLARE_NATIVE(inline)
     }
 
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE);
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 }

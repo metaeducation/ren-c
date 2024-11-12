@@ -201,7 +201,7 @@ Bounce Action_Executor(Level* L)
 
       skip_fulfilling_arg_for_now:
         assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-        assert(Is_Hole(ARG));
+        assert(Not_Cell_Readable(ARG));
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -278,7 +278,7 @@ Bounce Action_Executor(Level* L)
                     goto continue_fulfilling;
                 }
 
-                Copy_Cell(ARG, PARAM);
+                Init_Unreadable(ARG);
                 goto skip_fulfilling_arg_for_now;
             }
         }
@@ -353,7 +353,7 @@ Bounce Action_Executor(Level* L)
         if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {
             STATE = ST_ACTION_FULFILLING_ARGS;
 
-            if (Is_Fresh(OUT)) {  // "nothing" to left, but [1]
+            if (Is_Cell_Erased(OUT)) {  // "nothing" to left, but [1]
                 if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
                     return FAIL(Error_Literal_Left_Path_Raw());  // [2]
 
@@ -373,26 +373,26 @@ Bounce Action_Executor(Level* L)
                 assert(not Is_Nothing(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Infix(ARG, stable_OUT);
-                Freshen_Cell(OUT);
+                Erase_Cell(OUT);
             }
             else switch (pclass) {
               case PARAMCLASS_NORMAL:
                 Decay_If_Unstable(OUT);
-                Move_Cell(ARG, OUT);
+                Move_Atom(ARG, OUT);
                 break;
 
               case PARAMCLASS_META: {
-                Move_Meta_Cell(ARG, OUT);
+                Move_Meta_Atom(ARG, OUT);
                 break; }
 
               case PARAMCLASS_JUST:
                 assert(Not_Antiform(OUT));
-                Move_Cell(ARG, OUT);
+                Move_Atom(ARG, OUT);
                 break;
 
               case PARAMCLASS_THE:
                 assert(Not_Antiform(OUT));
-                Move_Cell(ARG, OUT);
+                Move_Atom(ARG, OUT);
                 break;
 
               case PARAMCLASS_SOFT:
@@ -405,10 +405,10 @@ Bounce Action_Executor(Level* L)
                     )){
                         goto handle_thrown_maybe_redo;
                     }
-                    Freshen_Cell(OUT);
+                    Erase_Cell(OUT);
                 }
                 else
-                    Move_Cell(ARG, OUT);
+                    Move_Atom(ARG, OUT);
                 break;
 
               default:
@@ -429,7 +429,7 @@ Bounce Action_Executor(Level* L)
                     Set_Feed_Flag(L->feed, NO_LOOKAHEAD);
             }
 
-            assert(Is_Fresh(OUT));  // output should have been "used up"
+            assert(Is_Cell_Erased(OUT));  // output should have been "used up"
             goto continue_fulfilling;
         }
 
@@ -517,7 +517,7 @@ Bounce Action_Executor(Level* L)
             }
 
             Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-            Push_Level_Freshen_Out_If_State_0(ARG, sub);
+            Push_Level_Erase_Out_If_State_0(ARG, sub);
 
             return CONTINUE_SUBLEVEL(sub); }
 
@@ -591,12 +591,12 @@ Bounce Action_Executor(Level* L)
                 // and it knows to get the arg from there.
 
                 Flags flags =
-                    FLAG_STATE_BYTE(ST_STEPPER_LOOKING_AHEAD)  // no Freshen_Cell()
+                    FLAG_STATE_BYTE(ST_STEPPER_LOOKING_AHEAD)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
                 Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-                Push_Level_Freshen_Out_If_State_0(ARG, sub);
+                Push_Level_Erase_Out_If_State_0(ARG, sub);  // not state 0
                 return CONTINUE_SUBLEVEL(sub);
             }
             else if (Is_Soft_Escapable_Group(cast(Element*, ARG))) {
@@ -604,7 +604,7 @@ Bounce Action_Executor(Level* L)
                 // We did not defer the literal argument.  If the argument
                 // is a GROUP!, it has to be evaluated.
                 //
-                Move_Cell(SPARE, ARG);
+                Move_Atom(SPARE, ARG);
                 if (Eval_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
                     goto handle_thrown_maybe_redo;
             }
@@ -682,7 +682,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill_and_any_pickups_done;
         }
 
-        assert(Is_Hole(ARG));
+        assert(Not_Cell_Readable(ARG));
 
         Set_Action_Executor_Flag(L, DOING_PICKUPS);
         goto fulfill_arg;
@@ -691,7 +691,7 @@ Bounce Action_Executor(Level* L)
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
-        assert(Is_Fresh(OUT));  // didn't touch out, should be fresh
+        assert(Is_Cell_Erased(OUT));  // didn't touch out, should be fresh
         Init_Nothing(OUT);  // trampoline requires some valid OUT result
         goto skip_output_check;
     }
@@ -737,7 +737,7 @@ Bounce Action_Executor(Level* L)
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
-    Freshen_Cell_Suppress_Raised(OUT);  // !!! for REDUCE with error/predicate
+    Suppress_Raised_Warning_If_Debug(OUT);  // e.g. REDUCE w/ error+predicate
 
     KEY = ACT_KEYS(&KEY_TAIL, Level_Phase(L));
     ARG = Level_Args_Head(L);
@@ -816,9 +816,20 @@ Bounce Action_Executor(Level* L)
   //
   //    !!! This is dealt with in `skip_output_check`, is it needed here too?
   //
-  // 3. Resetting the spare cell here has a slight cost, but stops leaks of
-  //    internal processing to actions.  It means that any attempts to read
-  //    the spare cell will give an assert.
+  // 3. Resetting OUT, SPARE, and SCRATCH for a dispatcher's STATE_0 entry
+  //    has a slight cost.  The output cell may have CELL_MASK_PERSIST flags
+  //    so we bit mask it, but the SPARE and SCRATCH are guaranteed not to,
+  //    and can just have 0 written to their header.
+  //
+  //    But the cost is worth it.  Not only does it stop leaks of internal
+  //    processing information to Dispatchers, it triggers asserts if you try
+  //    to read them before assignment.  Plus the Dispatcher can take for
+  //    granted that's the initial state--and use it as a kind of state flag
+  //    to know whether it has written the output or not, and be able to do
+  //    things like default it.  Also, when Levels are being persisted in
+  //    something like a Plug, their SPARE and SCRATCH have to be stored...
+  //    and if they are erased, then that can be an indicator that no
+  //    storage is needed.
 
     assert(Not_Action_Executor_Flag(L, IN_DISPATCH));
     Set_Action_Executor_Flag(L, IN_DISPATCH);
@@ -833,7 +844,6 @@ Bounce Action_Executor(Level* L)
             return FAIL(Error_Literal_Left_Path_Raw());
 
         assert(Is_Level_Infix(L));
-        Freshen_Cell(OUT);
     }
 
     assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
@@ -843,7 +853,10 @@ Bounce Action_Executor(Level* L)
         goto skip_output_check;
     }
 
-    Freshen_Cell(SPARE);  // tiny cost (one bit clear) but worth it [3]
+    Erase_Cell(OUT);  // three 0 assignments to cell headers, worth it [3]
+    Erase_Cell(SPARE);
+    Erase_Cell(SCRATCH);
+
     STATE = STATE_0;  // reset to zero for each phase
 
     L_next_gotten = nullptr;  // arbitrary code changes fetched variables
@@ -859,7 +872,7 @@ Bounce Action_Executor(Level* L)
     Bounce b = (*dispatcher)(L);
 
     if (b == OUT) {  // common case, made fastest
-        assert(not Is_Fresh(OUT));  // must write output, even if just void
+        assert(Is_Cell_Readable(OUT));  // must write output, even if just void
     }
     else if (b == nullptr) {  // API and internal code can both return `nullptr`
         Init_Nulled(OUT);
@@ -1074,8 +1087,7 @@ void Push_Action(
     L->varlist = x_cast(Array*, s);
 
     L->rootvar = cast(Element*, s->content.dynamic.data);
-    USED(Erase_Cell(L->rootvar));  // want the tracking info, overwriting header
-    L->rootvar->header.bits =
+    TRACK(L->rootvar)->header.bits =
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/coupling tweaked, but not by user
@@ -1092,15 +1104,15 @@ void Push_Action(
     Cell* tail = Array_Tail(L->varlist);
     Cell* prep = L->rootvar + 1;
     for (; prep < tail; ++prep)
-        Poison_Cell(prep);
+        Force_Poison_Cell(prep);
 
     #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
         for (; prep < L->rootvar + s->content.dynamic.rest; ++prep)
-            Poison_Cell(prep);  // unreadable + unwritable
+            Force_Poison_Cell(prep);  // unreadable + unwritable
     #endif
 
     #if DEBUG_POISON_FLEX_TAILS  // redundant if excess capacity poisoned
-        Poison_Cell(Array_Tail(L->varlist));
+        Force_Poison_Cell(Array_Tail(L->varlist));
     #endif
   #endif
 

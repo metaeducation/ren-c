@@ -96,7 +96,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
     );
     L->baseline.stack_base = base;  // incorporate refinements
-    Push_Level_Freshen_Out_If_State_0(cast(Atom*, out), L);
+    Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
@@ -155,10 +155,8 @@ bool Init_Invokable_From_Feed_Throws(
     // Not all callers necessarily want to tolerate an end condition, so this
     // needs review.
     //
-    if (v == nullptr) {  // no first, and feed was at end
-        Freshen_Cell(out);
+    if (v == nullptr)  // no first, and feed was at end
         return false;
-    }
 
     // Unfortunately, it means that `[x y]: ^(eval f)` and `[x y]: ^ eval f`
     // can't work.  The problem is that you don't know how many expressions

@@ -126,8 +126,8 @@
 
 static void Queue_Mark_Cell_Deep(const Cell* v);
 
-INLINE void Queue_Mark_Maybe_Fresh_Cell_Deep(const Cell* v) {
-    if (not Is_Fresh(v))
+INLINE void Queue_Mark_Maybe_Erased_Cell_Deep(const Cell* v) {
+    if (not Is_Cell_Erased(v))
         Queue_Mark_Cell_Deep(v);
 }
 
@@ -336,8 +336,6 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
 {
     if (Not_Cell_Readable(c))
         return;
-
-    assert(not Is_Fresh(c));
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED?), we want
@@ -606,11 +604,12 @@ static void Mark_Root_Stubs(void)
                 //
                 // 1. Mark_Level_Stack_Deep() marks the owner.
                 //
-                // 2. Evaluation may target API cells, may be Is_Fresh().
-                // (They should only be fresh if they are targeted by some
-                // Level's L->out...could we verify that?)
+                // 2. Evaluation may target API cells, may be Is_Cell_Erased().
+                // (though they should not have NODE_FLAG_ROOT set until after
+                // the evaluation is finished).  (They should only be fresh if
+                // targeted by some Level's L->out...could we verify that?)
                 //
-                Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(s));  // [2]
+                Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(s));  // [2]
             }
             else {  // It's a rebAlloc()
                 assert(Stub_Flavor(s) == FLAVOR_BINARY);
@@ -679,7 +678,7 @@ static void Mark_Guarded_Nodes(void)
         const Node** npp = cast(const Node**, pp);
         if (Is_Node_A_Cell(*npp)) {
             assert(Not_Node_Marked(*npp));  // shouldn't live in array [2]
-            Queue_Mark_Maybe_Fresh_Cell_Deep(c_cast(Cell*, *npp));
+            Queue_Mark_Maybe_Erased_Cell_Deep(c_cast(Cell*, *npp));
         }
         else  // a Flex Stub
             Queue_Mark_Node_Deep(npp);
@@ -734,14 +733,14 @@ static void Mark_Level(Level* L) {
     // Level cells should always contain initialized bits, though erased or
     // fresh cells are allowed.
 
-    Queue_Mark_Maybe_Fresh_Cell_Deep(L->out);
-    Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->fetched);
-    Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
-    Queue_Mark_Maybe_Fresh_Cell_Deep(&L->scratch);
+    Queue_Mark_Maybe_Erased_Cell_Deep(L->out);
+    Queue_Mark_Maybe_Erased_Cell_Deep(&L->feed->fetched);
+    Queue_Mark_Maybe_Erased_Cell_Deep(&L->spare);
+    Queue_Mark_Maybe_Erased_Cell_Deep(&L->scratch);
 
     if (not Is_Action_Level(L)) {
         if (L->executor == &Evaluator_Executor)
-            Queue_Mark_Maybe_Fresh_Cell_Deep(&L->u.eval.primed);
+            Queue_Mark_Maybe_Erased_Cell_Deep(&L->u.eval.primed);
 
         return;
     }
@@ -761,10 +760,12 @@ static void Mark_Level(Level* L) {
     //    into account.  Only those argument slots that have been fulfilled
     //    may be GC protected, since the others contain random bits.
     //
-    // 4. Natives are allowed to use their locals as evaluation targets,
-    //    which can be Is_Fresh() or unstable antiforms when the GC sees them.
-    //    But we want the checked build to catch cases where erased cells
-    //    appear anywhere that the user might encounter them.
+    // 4. Erasure (CELL_MASK_0 in a cell's header) is a transitional state
+    //    that is legal during evaluation, but not a valid state for cells
+    //    in VarLists (or Arrays).  It's thus only legal for frames that
+    //    are fulfilling, and only in the slot that is being fulfilled at
+    //    the present moment (skipped arguments that will be fulfilled
+    //    later are set to CELL_MASK_UNREADABLE).
 
     Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
         cast(const Node**, m_cast(const Action**, &L->u.action.original))
@@ -814,23 +815,11 @@ static void Mark_Level(Level* L) {
 
     Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [3]
-        if (not Is_Fresh(arg)) {
-            Queue_Mark_Cell_Deep(arg);
-            continue;
+        if (Is_Cell_Erased(arg)) {
+            assert(Is_Level_Fulfilling(L) and key == L->u.action.key);
+            continue;  // only the current cell is allowed to be erased [4]
         }
-
-        if (Is_Level_Fulfilling(L)) {
-            assert(key == L->u.action.key);
-            continue;
-        }
-
-        Action* action = cast(Action*, cast(Flex*, phase));
-        assert(Is_Action_Native(action));
-        Param* param = ACT_PARAMS_HEAD(action);
-        param += (key - ACT_KEYS_HEAD(action));
-        assert(Is_Specialized(param));  // only legal for LOCAL(...) [4]
-        UNUSED(param);
-        UNUSED(action);
+        Queue_Mark_Cell_Deep(arg);
     }
 }
 
@@ -1100,7 +1089,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
         Stub* patch = &PG_Lib_Patches[id];
         if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
-            Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(patch));
+            Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(patch));
         }
     }
     Propagate_All_GC_Marks();
@@ -1109,8 +1098,8 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // was in a thrown state.  There's no particular reason to enforce that
     // in stackless, so it has been relaxed.
     //
-    Queue_Mark_Maybe_Fresh_Cell_Deep(&g_ts.thrown_arg);
-    Queue_Mark_Maybe_Fresh_Cell_Deep(&g_ts.thrown_label);
+    Queue_Mark_Maybe_Erased_Cell_Deep(&g_ts.thrown_arg);
+    Queue_Mark_Maybe_Erased_Cell_Deep(&g_ts.thrown_label);
     Propagate_All_GC_Marks();
 
     // MARKING PHASE: the "root set" from which we determine the liveness

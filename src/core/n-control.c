@@ -140,7 +140,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Fresh(with))
+    if (Is_Cell_Erased(with))
         Init_Nulled(with);
 
     Level* sub = Make_Level(
@@ -150,7 +150,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
             & (~ LEVEL_FLAG_BRANCH)  // take off branch flag [2]
     );
     Init_Void(Evaluator_Primed_Cell(sub));
-    Push_Level_Freshen_Out_If_State_0(branch, sub);  // branch GC-protected during evaluation
+    Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected during evaluation
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CONTINUE_SUBLEVEL(sub);
@@ -770,7 +770,7 @@ DECLARE_NATIVE(all)
     }
 
     Level* sub = Make_Level_At(executor, block, flags);
-    Push_Level_Freshen_Out_If_State_0(SPARE, sub);
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
     STATE = ST_ALL_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
@@ -783,7 +783,7 @@ DECLARE_NATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        Reset_Evaluator_Freshen_Out(SUBLEVEL);
+        Reset_Evaluator_Erase_Out(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
@@ -833,7 +833,7 @@ DECLARE_NATIVE(all)
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    Reset_Evaluator_Freshen_Out(SUBLEVEL);
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
@@ -908,7 +908,7 @@ DECLARE_NATIVE(any)
     }
 
     Level* sub = Make_Level_At(executor, block, flags);
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     STATE = ST_ANY_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
@@ -921,7 +921,7 @@ DECLARE_NATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        Reset_Evaluator_Freshen_Out(SUBLEVEL);
+        Reset_Evaluator_Erase_Out(SUBLEVEL);
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
@@ -963,7 +963,7 @@ DECLARE_NATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    Reset_Evaluator_Freshen_Out(SUBLEVEL);
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } return_out: {  /////////////////////////////////////////////////////////////
@@ -1078,21 +1078,21 @@ DECLARE_NATIVE(case)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
-    Push_Level_Freshen_Out_If_State_0(SPARE, L);
+    Push_Level_Erase_Out_If_State_0(SPARE, L);
 
-    assert(Is_Fresh(OUT));  // out starts as fresh
-    assert(Is_Fresh(SPARE));  // spare starts out as fresh
+    assert(Is_Cell_Erased(OUT));  // erased if STATE_0
+    assert(Is_Cell_Erased(SPARE));  // erased if STATE_0
 
 } handle_next_clause: {  /////////////////////////////////////////////////////
 
-    Freshen_Cell(SPARE);  // must do before goto reached_end
+    Erase_Cell(SPARE);  // must do before goto reached_end
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
     STATE = ST_CASE_CONDITION_EVAL_STEP;
     SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
-    Reset_Evaluator_Freshen_Out(SUBLEVEL);
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
 
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
@@ -1138,7 +1138,7 @@ DECLARE_NATIVE(case)
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
-    Push_Level_Freshen_Out_If_State_0(branch, sub);  // level captured array and index
+    Push_Level_Erase_Out_If_State_0(branch, sub);  // level has array and index
     return CONTINUE_SUBLEVEL(sub);
 
 } handle_processed_branch: {  ////////////////////////////////////////////////
@@ -1172,16 +1172,16 @@ DECLARE_NATIVE(case)
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    assert(REF(all) or Is_Fresh(OUT));  // never ran a branch, or running /ALL
+    assert(REF(all) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
 
     Drop_Level(SUBLEVEL);
 
-    if (not Is_Fresh(SPARE)) {  // prioritize fallout result [4]
+    if (Not_Cell_Erased(SPARE)) {  // prioritize fallout result [4]
         Move_Cell(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
-    if (Is_Fresh(OUT))  // none of the clauses of an /ALL ran a branch
+    if (Is_Cell_Erased(OUT))  // none of the clauses of an :ALL ran a branch
         return Init_Nulled(OUT);
 
     return BRANCHED(OUT);
@@ -1202,7 +1202,6 @@ DECLARE_NATIVE(case)
 //      :type "Match based on type constraints, not equality"
 //      :predicate "Binary switch-processing action (default is EQUAL?)"
 //          [<unrun> frame!]
-//      <local> right
 //  ]
 //
 DECLARE_NATIVE(switch)
@@ -1246,7 +1245,7 @@ DECLARE_NATIVE(switch)
     Value* predicate = ARG(predicate);
     Value* cases = ARG(cases);
 
-    Atom* right = LOCAL(right);
+    Atom* right = SPARE;
 
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
@@ -1259,7 +1258,7 @@ DECLARE_NATIVE(switch)
         goto initial_entry;
 
       case ST_SWITCH_EVALUATING_RIGHT:
-        goto right_result_in_right;
+        goto right_result_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
         if (not REF(all)) {
@@ -1273,8 +1272,8 @@ DECLARE_NATIVE(switch)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Freshen_Cell(right);  // initial condition
-    assert(Is_Fresh(OUT));  // if no writes to out performed, we act void
+    assert(Is_Cell_Erased(right));  // initial condition
+    assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
     if (REF(type) and REF(predicate))
         return FAIL(Error_Bad_Refines_Raw());
@@ -1285,11 +1284,11 @@ DECLARE_NATIVE(switch)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
 
-    Push_Level_Freshen_Out_If_State_0(right, sub);
+    Push_Level_Erase_Out_If_State_0(right, sub);
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
-    Freshen_Cell(right);  // fallout must be reset each time
+    Erase_Cell(right);  // fallout must be reset each time
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
@@ -1303,10 +1302,10 @@ DECLARE_NATIVE(switch)
 
     STATE = ST_SWITCH_EVALUATING_RIGHT;
     SUBLEVEL->executor = &Stepper_Executor;
-    Reset_Evaluator_Freshen_Out(SUBLEVEL);
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
-} right_result_in_right: {  //////////////////////////////////////////////////
+} right_result_in_spare: {  //////////////////////////////////////////////////
 
     if (Is_Elision(right))  // skip comments or ELIDEs
         goto next_switch_step;  // see note [2] in comments for CASE
@@ -1320,9 +1319,9 @@ DECLARE_NATIVE(switch)
         if (not Any_Type_Value(right))
             return FAIL("switch:type requires comparisons to TYPE-XXX!");
 
-        Copy_Cell(SPARE, left);
-        if (not Typecheck_Atom_In_Spare_Uses_Scratch(
-            LEVEL, cast(Value*, right), SPECIFIED
+        Copy_Cell(Level_Spare(SUBLEVEL), left);
+        if (not Typecheck_Atom_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!
+            SUBLEVEL, cast(Value*, right), SPECIFIED
         )){
             goto next_switch_step;
         }
@@ -1332,7 +1331,7 @@ DECLARE_NATIVE(switch)
 
         const bool strict = false;
         Copy_Cell(SCRATCH, left);
-        if (0 != Compare_Modify_Values(SCRATCH, right, strict))
+        if (0 != Compare_Modify_Values(SCRATCH, cast(Value*, right), strict))
             goto next_switch_step;
     }
     else {
@@ -1343,7 +1342,7 @@ DECLARE_NATIVE(switch)
             cast(Sink(Value), SCRATCH),  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
-                rebQ(right)  // second arg (right hand side if infix)
+                rebQ(cast(Value*, right))  // second arg (right side if infix)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
@@ -1374,16 +1373,17 @@ DECLARE_NATIVE(switch)
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    assert(REF(all) or Is_Fresh(OUT));
+    assert(REF(all) or Is_Cell_Erased(OUT));
 
     Drop_Level(SUBLEVEL);
 
-    if (not Is_Fresh(right)) {  // see remarks in CASE on fallout prioritization
+    if (Not_Cell_Erased(right)) {  // see remarks in CASE on fallout
+        Assert_Cell_Stable(right);
         Move_Cell(OUT, right);
         return BRANCHED(OUT);
     }
 
-    if (Is_Fresh(OUT))  // no fallout, and no branches ran
+    if (Is_Cell_Erased(OUT))  // no fallout, and no branches ran
         return Init_Nulled(OUT);
 
     return BRANCHED(OUT);

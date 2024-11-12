@@ -86,19 +86,19 @@ INLINE void Prep_Array(
 
     REBLEN n;
     for (n = 0; n < capacity; ++n, ++prep)
-        Erase_Cell(prep);  // 0 header, but corrupts rest, adds TRACK() info
+        Force_Erase_Cell(prep);  // 0 header, adds TRACK() info
 
     if (Get_Flex_Flag(a, FIXED_SIZE)) {  // can't expand, poison any excess
         for (; n < a->content.dynamic.rest; ++n, ++prep)
-            Poison_Cell(prep);  // unreadable + unwritable
+            Force_Poison_Cell(prep);  // unreadable + unwritable
     }
     else {  // array is expandable, so prep all cells [1]
         for (; n < a->content.dynamic.rest; ++n, ++prep)
-            Erase_Cell(prep);
+            Force_Erase_Cell(prep);
     }
 
     #if DEBUG_POISON_FLEX_TAILS  // allocation deliberately oversized by 1
-        Poison_Cell(prep - 1);
+        Force_Poison_Cell(prep - 1);
     #endif
   #endif
 }
@@ -129,11 +129,11 @@ INLINE Array* Make_Array_Core_Into(
         Prep_Array(a, capacity);
 
       #if DEBUG_POISON_FLEX_TAILS
-        Poison_Cell(Array_Head(a));
+        Force_Poison_Cell(Array_Head(a));
       #endif
     }
     else {
-        Poison_Cell(Stub_Cell(a));  // optimized prep for 0 length
+        Force_Poison_Cell(Stub_Cell(a));  // optimized prep for 0 leng
     }
 
     if (Flavor_From_Flags(flags) == FLAVOR_SOURCE) {  // add file/line [1]
@@ -175,7 +175,7 @@ INLINE Source* Alloc_Singular(Flags flags) {
         1
     ));
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
-    Erase_Cell(Stub_Cell(a));  // poison means length 0, erased length 1
+    Force_Erase_Cell(Stub_Cell(a));  // poison len 0, erased len 1
     return a;
 }
 

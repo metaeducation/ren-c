@@ -161,7 +161,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     return sub;
 }
@@ -241,7 +241,7 @@ Bounce Stepper_Executor(Level* L)
         // Note: What if the re-evaluate functionality doesn't want to heed
         // the infix state in the action itself?
         //
-        Freshen_Cell(OUT);
+        Erase_Cell(OUT);
         L_current_gotten = nullptr;  // !!! allow/require to be passed in?
         goto look_ahead_for_left_literal_infix; }
 
@@ -427,11 +427,11 @@ Bounce Stepper_Executor(Level* L)
             or VAL_TYPE_UNCHECKED(OUT) == REB_PATH
         )
     ){  // exemption: put OUT back in CURRENT and CURRENT back in feed [2]
-        Move_Cell(&L->feed->fetched, CURRENT);
+        Move_Atom(&L->feed->fetched, CURRENT);
         L->feed->p = &L->feed->fetched;
         L->feed->gotten = L_current_gotten;
 
-        Move_Cell(CURRENT, cast(Element*, OUT));
+        Move_Atom(CURRENT, cast(Element*, OUT));
         L_current_gotten = nullptr;
 
         Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
@@ -462,7 +462,7 @@ Bounce Stepper_Executor(Level* L)
         : VAL_FRAME_LABEL(CURRENT);
 
     Begin_Action(sub, label, infix_mode);
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);  // infix_mode sets state
+    Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action;
 
 }} give_up_backward_quote_priority:
@@ -485,7 +485,7 @@ Bounce Stepper_Executor(Level* L)
     // 2. The Stepper_Executor()'s state bytes are a superset of the VAL_TYPE
     //    of processed values.  See the ST_STEPPER_XXX enumeration.
 
-    assert(Is_Fresh(OUT));
+    assert(Is_Cell_Erased(OUT));
 
     if (QUOTE_BYTE(CURRENT) != NOQUOTE_1) {  // quasiform or quoted [1]
         Copy_Cell(OUT, CURRENT);
@@ -548,9 +548,9 @@ Bounce Stepper_Executor(Level* L)
             Cell_Frame_Coupling(CURRENT)
         );
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
-        assert(Is_Fresh(OUT));  // so nothing on left [1]
+        assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
         Begin_Action(sub, VAL_FRAME_LABEL(CURRENT), infix_mode);
-        Push_Level_Freshen_Out_If_State_0(OUT, sub);  // infix_mode sets state
+        Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
         goto process_action; }
 
@@ -781,16 +781,16 @@ Bounce Stepper_Executor(Level* L)
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
                 Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-                Push_Level_Freshen_Out_If_State_0(SPARE, sub);
+                Push_Level_Erase_Out_If_State_0(SPARE, sub);
                 STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
                 return CONTINUE_SUBLEVEL(sub);
             }
 
             Level* sub = Make_Action_Sublevel(L);
-            Push_Level_Freshen_Out_If_State_0(OUT, sub);  // *always* clear out
+            Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
             Push_Action(sub, action, coupling);
             Begin_Action(sub, label, infix_mode);
-            /* Push_Level_Freshen_Out_If_State_0(OUT, sub); */  // see [1]
+            /* Push_Level_Erase_Out_If_State_0(OUT, sub); */  // see [1]
 
             goto process_action;
         }
@@ -840,7 +840,7 @@ Bounce Stepper_Executor(Level* L)
                 LEVEL_MASK_NONE
             );
             Init_Void(Evaluator_Primed_Cell(sub));
-            Push_Level_Freshen_Out_If_State_0(SPARE, sub);
+            Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
             STATE = ST_STEPPER_SET_GROUP;
             return CONTINUE_SUBLEVEL(sub); }
@@ -902,7 +902,7 @@ Bounce Stepper_Executor(Level* L)
 
         Push_Action(sub, action, coupling);
         Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
-        Push_Level_Freshen_Out_If_State_0(OUT, sub);
+        Push_Level_Erase_Out_If_State_0(OUT, sub);
         goto process_action; }
 
 
@@ -964,7 +964,7 @@ Bounce Stepper_Executor(Level* L)
             flags
         );
         Init_Nihil(Evaluator_Primed_Cell(sub));
-        Push_Level_Freshen_Out_If_State_0(OUT, sub);
+        Push_Level_Erase_Out_If_State_0(OUT, sub);
 
         return CONTINUE_SUBLEVEL(sub); }
 
@@ -1128,7 +1128,7 @@ Bounce Stepper_Executor(Level* L)
                 )){
                     goto return_thrown;
                 }
-                Move_Cell(OUT, SPARE);
+                Move_Atom(OUT, SPARE);
             }
             goto lookahead;
         }
@@ -2057,7 +2057,7 @@ Bounce Stepper_Executor(Level* L)
     Begin_Action(sub, label, infix_mode);
     Fetch_Next_In_Feed(L->feed);
 
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);  // infix_mode sets state
+    Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action; }}
 
   finished:

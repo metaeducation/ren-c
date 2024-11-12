@@ -132,16 +132,16 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //    reliable test for whether they've written the output or not--which
     //    can be a useful implicit "flag".  So there's a lot of benefits.
     //
-    //    (At one point the Trampoline itself did a Freshen_Cell() here, but
+    //    (At one point the Trampoline itself did an Erase_Cell() here, but
     //    that meant every trampoline bounce in the release build would have
     //    to test the state byte...and sometimes cells were getting doubly
-    //    freshened.  So the responsbility was shifted to Push_Level() and
-    //    cases that reuse levels, e.g. Reset_Evaluator_Freshen_Out())
+    //    erased.  So the responsbility was shifted to Push_Level() and
+    //    cases that reuse levels, e.g. Reset_Evaluator_Erase_Out())
 
   bounce_on_trampoline_skip_just_use_out:
 
     while (L->executor == &Just_Use_Out_Executor)
-        L = L->prior;  // fast skip, allow Is_Fresh() output
+        L = L->prior;  // fast skip, allow Is_Cell_Erased() output
 
   bounce_on_trampoline:
 
@@ -150,7 +150,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(L->executor != &Just_Use_Out_Executor);  // drops skip [1]
 
     if (LEVEL_STATE_BYTE(L) == STATE_0)
-        assert(Is_Fresh(L->out));  // very useful invariant for STATE_0 [2]
+        assert(Is_Cell_Erased(L->out));  // useful invariant for STATE_0 [2]
 
     possibly(L != TOP_LEVEL);  // e.g. REDUCE keeps an evaluator pushed
 
@@ -298,7 +298,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         L = Adjust_Level_For_Downshift(L);
 
-        possibly(Is_Fresh(L->out));  // not completely enforced ATM, review
+        possibly(Is_Cell_Erased(L->out));  // not completely enforced ATM
 
         // Corrupting the pointer here was well-intentioned, but Drop_Level()
         // needs to know if it is an Action_Executor to drop a stack cell.
@@ -445,7 +445,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 bool Trampoline_Throws(Atom* out, Level* root)
 {
-    Push_Level_Freshen_Out_If_State_0(out, root);
+    Push_Level_Erase_Out_If_State_0(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(root);
     return threw;
@@ -622,7 +622,7 @@ void Drop_Level_Core(Level* L) {
         while (n != L) {
             Stub* s = cast(Stub*, n);
             n = LINK(ApiNext, s);
-            Poison_Cell(Stub_Cell(s));
+            Force_Poison_Cell(Stub_Cell(s));  // lose NODE_FLAG_ROOT
             s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
             GC_Kill_Stub(s);
         }

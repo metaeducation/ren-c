@@ -240,7 +240,7 @@ static void Shutdown_Lib(void)
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
         Stub* patch = &PG_Lib_Patches[id];
 
-        Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrites PROTECT...
+        Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 
         /* assert(INODE(PatchContext, patch) == Lib_Context); */  // !!! freed
         INODE(PatchContext, patch) = nullptr;  // we already checked it [1]
@@ -399,17 +399,17 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
-    Erase_Cell(&PG_Nothing_Value);
+    Force_Erase_Cell(&PG_Nothing_Value);
 
-    Erase_Cell(&PG_Bounce_Thrown);
-    Erase_Cell(&PG_Bounce_Fail);
-    Erase_Cell(&PG_Bounce_Redo_Unchecked);
-    Erase_Cell(&PG_Bounce_Redo_Checked);
-    Erase_Cell(&PG_Bounce_Downshifted);
-    Erase_Cell(&PG_Bounce_Continuation);
-    Erase_Cell(&PG_Bounce_Delegation);
-    Erase_Cell(&PG_Bounce_Suspend);
-    Erase_Cell(&PG_Bounce_Okay);
+    Force_Erase_Cell(&PG_Bounce_Thrown);
+    Force_Erase_Cell(&PG_Bounce_Fail);
+    Force_Erase_Cell(&PG_Bounce_Redo_Unchecked);
+    Force_Erase_Cell(&PG_Bounce_Redo_Checked);
+    Force_Erase_Cell(&PG_Bounce_Downshifted);
+    Force_Erase_Cell(&PG_Bounce_Continuation);
+    Force_Erase_Cell(&PG_Bounce_Delegation);
+    Force_Erase_Cell(&PG_Bounce_Suspend);
+    Force_Erase_Cell(&PG_Bounce_Okay);
 
     rebReleaseAndNull(&g_empty_text);
     rebReleaseAndNull(&g_empty_block);

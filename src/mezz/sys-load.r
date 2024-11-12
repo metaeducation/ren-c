@@ -417,7 +417,7 @@ REBOL [
 ][
     /return: adapt return/ [  ; make sure all return paths actually import vars
         ;
-        ; Note: `value` below is the argument to RETURN.  It is a ^META
+        ; Note: `atom` below is the argument to RETURN.  It is a ^META
         ; parameter so should be a quoted pack containing a module.  We don't
         ; disrupt that, else falling through to RETURN would get tripped up.
         ;
@@ -427,9 +427,9 @@ REBOL [
         ; should maybe ban it as well (or at least make it inconvenient).  But
         ; do it for the moment since that is how it has worked in the past.
         ;
-        assert [pack? unmeta value]
+        assert [pack? unmeta atom]
         if where [
-            let mod: ensure module! unquote first unquasi value
+            let mod: ensure module! unquote first unquasi atom
             let exports: select (maybe adjunct-of mod) 'exports
             proxy-exports where mod (maybe exports)
         ]

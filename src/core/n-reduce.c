@@ -83,7 +83,7 @@ DECLARE_NATIVE(reduce)
         &Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     );
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     Copy_Cell(Evaluator_Level_Current(sub), v);
     sub->u.eval.current_gotten = nullptr;
@@ -98,7 +98,7 @@ DECLARE_NATIVE(reduce)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
             | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
     );
-    Push_Level_Freshen_Out_If_State_0(SPARE, sub);
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
     goto next_reduce_step;
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
@@ -118,7 +118,7 @@ DECLARE_NATIVE(reduce)
 
     SUBLEVEL->executor = &Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
-    Reset_Evaluator_Freshen_Out(SUBLEVEL);
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_result_in_spare: {  ////////////////////////////////////////////
@@ -277,7 +277,7 @@ DECLARE_NATIVE(reduce_each)
     }
 
     Level* sub = Make_Level_At(executor, block, flags);
-    Push_Level_Freshen_Out_If_State_0(SPARE, sub);
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
     goto reduce_next;
 
 } reduce_next: {  ////////////////////////////////////////////////////////////
@@ -288,7 +288,7 @@ DECLARE_NATIVE(reduce_each)
     SUBLEVEL->executor = &Stepper_Executor;  // undo &Just_Use_Out_Executor
 
     STATE = ST_REDUCE_EACH_REDUCING_STEP;
-    Reset_Evaluator_Freshen_Out(SUBLEVEL);
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
 } reduce_step_output_in_spare: {  ////////////////////////////////////////////
@@ -342,7 +342,7 @@ DECLARE_NATIVE(reduce_each)
     if (THROWING)
         return THROWN;
 
-    if (Is_Fresh(OUT))  // body never ran
+    if (Is_Cell_Erased(OUT))  // body never ran
         return VOID;
 
     if (breaking)
@@ -403,7 +403,7 @@ static void Push_Composer_Level(
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
     );
-    Push_Level_Freshen_Out_If_State_0(out, sub);  // sublevel may raise definitional failure
+    Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may raise definitional failure
 
     if (adjusted)
         rebRelease(adjusted);
@@ -678,7 +678,7 @@ Bounce Composer_Executor(Level* const L)
     );
     Init_Void(Evaluator_Primed_Cell(sub));
 
-    Push_Level_Freshen_Out_If_State_0(OUT, sub);
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     STATE = ST_COMPOSER_EVAL_GROUP;
     return CONTINUE_SUBLEVEL(sub);

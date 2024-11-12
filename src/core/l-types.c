@@ -664,11 +664,10 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
   end_date:
 
     // Overwriting scanned REB_TIME...
+    // payload.time.nanoseconds set
+    // may be NO_DATE_TIME, don't Freshen_Cell_Header()
     //
     Reset_Cell_Header_Untracked(PUSH(), CELL_MASK_DATE);
-
-    // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't Freshen_Cell()
-
     VAL_YEAR(TOP) = year;
     VAL_MONTH(TOP) = month;
     VAL_DAY(TOP) = day;

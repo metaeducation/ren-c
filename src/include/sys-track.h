@@ -75,11 +75,6 @@
     // fully separate, and doesn't try to exploit that not all cell types use
     // all bits to hide more information.
     //
-    // (For similar reasons, the idea of making Init_XXX() functions require
-    // a reset cell so people had to call `Init_XXX(Freshen_Cell(out), ...)` was
-    // scrapped...it made things more complex, and inevitably some optimization
-    // level for Clang or on Android would trigger problems.)
-    //
     #define TRACK(v) \
         Track_Cell_Debug((v), __FILE__, __LINE__)
 

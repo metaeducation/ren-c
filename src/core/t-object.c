@@ -1660,7 +1660,7 @@ DECLARE_NATIVE(construct)
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     Level* sub = Make_Level_At(&Inert_Stepper_Executor, spec, flags);
-    Push_Level_Freshen_Out_If_State_0(SPARE, sub);
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } continue_processing_spec: {  ////////////////////////////////////////////////
 
@@ -1719,7 +1719,7 @@ DECLARE_NATIVE(construct)
     }
 
     assert(STATE == ST_CONSTRUCT_EVAL_STEP);
-    Reset_Evaluator_Freshen_Out(SUBLEVEL);
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
 
     goto continue_processing_spec;
 }}

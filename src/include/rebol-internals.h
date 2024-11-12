@@ -579,6 +579,8 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #endif
 
 #include "sys-cell.h"
+#include "cells/cell-unreadable.h"
+
 #include "sys-stub.h"
 
 #include "stubs/stub-flex.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
@@ -610,9 +612,10 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 #include "cells/cell-quoted.h"  // has special handling for voids/nones
 
+#include "cells/cell-blank.h"
+
 #include "sys-datastack.h"
 
-#include "cells/cell-blank.h"
 #include "cells/cell-integer.h"
 #include "cells/cell-decimal.h"
 #include "cells/cell-time.h"
@@ -628,7 +631,6 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 
 #include "cells/cell-word.h"  // needs to know about QUOTED! for binding
-#include "cells/cell-unreadable.h"  // requires WORD! for `unreadable`
 #include "cells/cell-void.h"  // uses pack array for Init_Heavy_Void()
 #include "cells/cell-nulled.h"  // ~null~ is an antiform word
 #include "cells/cell-logic.h"  // TRUE, FALSE, YES, NO, ON, OFF are words

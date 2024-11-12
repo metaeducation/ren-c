@@ -390,7 +390,7 @@ INLINE Stub* Make_Untracked_Stub(Flags flags) {
     UNUSED(flavor);
     assert(not (flags & (STUB_FLAG_DYNAMIC | FLEX_FLAG_FIXED_SIZE)));
     Stub* s = Prep_Stub(flags | FLEX_FLAG_FIXED_SIZE, Alloc_Stub());
-    Erase_Cell(&s->content.fixed.cell);  // !!! should callers have to do this?
+    Force_Erase_Cell(&s->content.fixed.cell);  // should callers do?
     return s;
 }
 

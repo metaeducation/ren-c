@@ -42,6 +42,17 @@
         | CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2 \
         | FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
 
+#define Prep_Unreadable_Cell_Untracked(out) \
+    ((out)->header.bits = CELL_MASK_UNREADABLE)
+
+INLINE Element* Prep_Unreadable_Cell_Untracked_Inline(Init(Element) out) {
+    Prep_Unreadable_Cell_Untracked(out);
+    return out;
+}
+
+#define Prep_Unreadable_Cell(out) \
+    Prep_Unreadable_Cell_Untracked_Inline(TRACK(out))
+
 #define Init_Unreadable_Untracked(out) do { \
     STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
     Assert_Cell_Initable(out); \
@@ -68,12 +79,6 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 #define Init_Unreadable(out) \
     TRACK(Init_Unreadable_Untracked_Inline((out)))
 
-#if RUNTIME_CHECKS
-    #define Suppress_Raised_If_Debug(c)  /* no-op in release build*/ \
-        Init_Unreadable(c)
-#else
-    #define Suppress_Raised_If_Debug(c)  NOOP
-#endif
 
 
 #if RUNTIME_CHECKS && CPLUSPLUS_11 && (! DEBUG_STATIC_ANALYZING)

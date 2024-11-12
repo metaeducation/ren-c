@@ -141,3 +141,98 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out) {
 
 INLINE bool Is_Trash(Need(const Element*) v)
   { return HEART_BYTE(v) == REB_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
+
+
+
+//=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
+//
+// Moving a cell invalidates the old location.  This idea is a potential
+// prelude to being able to do some sort of reference counting on Arrays based
+// on the cells that refer to them tracking when they are overwritten.  One
+// advantage would be being able to leave the reference counting as-is.
+//
+// In the meantime, this just does a Copy and a set of the moved-from location
+// to Trash, where it doesn't worry about overwriting raised errors.  Trash
+// is chosen as a "cheap" choice for initialization that does not create
+// invalid states.
+
+INLINE Cell* Move_Cell_Untracked(
+    Cell* out,
+    Cell* c,
+    Flags copy_mask
+){
+    Copy_Cell_Untracked(out, c, copy_mask);  // Move_Cell() adds track to `out`
+    Suppress_Raised_Warning_If_Debug(c);  // moved error, not dropping it on the floor
+    Init_Trash(c);  // erasing cells not safe in general
+
+  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
+    c->file = out->file;
+    c->line = out->line;
+    c->tick = TICK;
+  #endif
+
+    return out;
+}
+
+#if DONT_CHECK_CELL_SUBCLASSES
+    #define Move_Cell(out,v) \
+        TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
+#else
+    INLINE Element* Move_Cell_Overload(Init(Element) out, Element* v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
+    }
+
+    template<  // avoid overload conflict when Element* coerces to Value* [3]
+        typename T,
+        typename std::enable_if<
+            std::is_convertible<T,Value*>::value
+            && !std::is_convertible<T,Element*>::value
+        >::type* = nullptr
+    >
+    INLINE Value* Move_Cell_Overload(Init(Value) out, const T& v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
+    }
+
+    INLINE Atom* Move_Cell_Overload(Init(Atom) out, Atom* v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
+    }
+
+    #define Move_Cell(out,v) \
+        TRACK(Move_Cell_Overload((out), (v)))
+#endif
+
+#define Move_Cell_Core(out,v,cell_mask) \
+    TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))
+
+#define Move_Meta_Cell(out,v) \
+    cast(Element*, Meta_Quotify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
+
+
+// Its cheaper and better for Atoms to leave the result erased.
+//
+INLINE Atom* Move_Atom_Untracked(
+    Atom* out,
+    Atom* a,
+    Flags copy_mask
+){
+    Copy_Cell_Untracked(out, a, copy_mask);  // Move_Cell() adds track to `out`
+    Suppress_Raised_Warning_If_Debug(a);  // moved error, not dropping it on the floor
+    Erase_Cell(a);
+
+  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
+    a->file = out->file;
+    a->line = out->line;
+    a->tick = TICK;
+  #endif
+
+    return out;
+}
+
+#define Move_Atom(out,a) \
+    TRACK(Move_Atom_Untracked((out), (a), CELL_MASK_COPY))
+
+#define Move_Meta_Atom(out,a) \
+    cast(Element*, Meta_Quotify(Move_Atom_Untracked((out), (a), CELL_MASK_COPY)))

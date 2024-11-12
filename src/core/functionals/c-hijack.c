@@ -137,7 +137,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     Level* L2 = Make_Level_At(&Action_Executor, block, flags);
     L2->baseline.stack_base = base;
 
-    Push_Level_Freshen_Out_If_State_0(out, L2);
+    Push_Level_Erase_Out_If_State_0(out, L2);
     Push_Action(L2, VAL_ACTION(run), Cell_Frame_Coupling(run));
     Begin_Action(L2, VAL_FRAME_LABEL(run), PREFIX_0);
 }

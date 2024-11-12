@@ -1183,7 +1183,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         FEED_BINDING(feed) = Get_Context_From_Stack();
 
     Level* L = Make_Level(&Stepper_Executor, feed, flags);
-    Push_Level_Freshen_Out_If_State_0(cast(Atom*, out), L);
+    Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
         Drop_Level(L);
@@ -1298,7 +1298,7 @@ void API_rebPushContinuation_internal(
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
     Init_Void(Evaluator_Primed_Cell(L));
-    Push_Level_Freshen_Out_If_State_0(cast(Atom*, out), L);
+    Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
 }
 
 
@@ -2385,7 +2385,7 @@ RebolValue* API_rebRescueWith(
         LEVEL_MASK_NONE
     );
     DECLARE_ATOM (sink);
-    Push_Level_Freshen_Out_If_State_0(sink, dummy);  // for owning API cells [1]
+    Push_Level_Erase_Out_If_State_0(sink, dummy);  // for owning API cells [1]
 
   RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
 

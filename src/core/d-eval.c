@@ -23,7 +23,7 @@
 //
 // Due to the length of %c-eval.c and debug checks it already has, some
 // debug-only routines are separated out here.  (Note that these are in
-// addition to the checks already done by Push_Level_Freshen_Out_If_State_0() and Drop_Level() time)
+// addition to the checks already done by Push_Level() and Drop_Level() time)
 //
 // * Evaluator_Expression_Checks_Debug() runs before each full "expression"
 //   is evaluated, e.g. before each EVALUATE step.  It makes sure the state

@@ -1567,8 +1567,8 @@
 //
 // BUT if you want to double check the initializations, it should still work
 // to make Init() equivalent to Sink() and corrupt the cell.  It's not likely
-// to catch any bugs...AND YOU'LL LOSE THE CHECK IN Freshen_Cell() THAT YOU
-// AREN'T OVERWRITING RAISED ERRORS (because the unwritable mask will set
+// to catch any bugs...AND YOU'LL LOSE THE CHECK IN Freshen_Cell_Header() THAT
+// YOU AREN'T OVERWRITING RAISED ERRORS (because the unwritable mask will set
 // the HEART_BYTE() and QUOTE_BYTE() to 255, so it will never be heart of
 // REB_ERROR with quote of ANTIFORM_0).  But, the option is there.
 //

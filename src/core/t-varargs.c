@@ -187,7 +187,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             );
-            Push_Level_Freshen_Out_If_State_0(out, L_temp);
+            Push_Level_Erase_Out_If_State_0(out, L_temp);
 
             // Note: a sublevel is not needed here because this is a single use
             // level, whose state can be overwritten.
@@ -325,7 +325,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
   type_check_and_return:;
 
-    if (Is_Fresh(out))
+    if (Is_Cell_Erased(out))
         return false;
 
     if (op == VARARG_OP_TAIL_Q) {

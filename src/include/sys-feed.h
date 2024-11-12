@@ -597,13 +597,13 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     feed->tick = g_tick;
   #endif
 
-    Erase_Cell(&feed->fetched);
+    Force_Erase_Cell(&feed->fetched);
 
     Stub* s = Prep_Stub(
         NODE_FLAG_NODE | FLAG_FLAVOR(FEED),
         &feed->singular  // preallocated
     );
-    Erase_Cell(FEED_SINGLE(feed));
+    Force_Erase_Cell(Stub_Cell(s));
     LINK(Splice, s) = nullptr;
     MISC(Pending, s) = nullptr;
 

@@ -197,7 +197,7 @@ REBLEN Modify_Array(
 
   #if DEBUG_POISON_FLEX_TAILS
     if (Get_Stub_Flag(dst_arr, DYNAMIC))
-        Poison_Cell(Array_Tail(dst_arr));
+        Force_Poison_Cell(Array_Tail(dst_arr));
   #endif
 
     Assert_Array(dst_arr);

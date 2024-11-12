@@ -526,7 +526,7 @@ DECLARE_NATIVE(some_combinator)
         return OUT;  // return previous successful parser result
     }
 
-    Move_Cell(OUT, SPARE);  // update last successful result
+    Move_Atom(OUT, SPARE);  // update last successful result
     goto call_parser_again;
 }}
 

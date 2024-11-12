@@ -61,7 +61,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     flags |= L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level* sub = Make_Level(&Action_Executor, L->feed, flags);
-    Push_Level_Freshen_Out_If_State_0(out, sub);
+    Push_Level_Erase_Out_If_State_0(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
     assert(BONUS(KeySource, sub->varlist) == L);

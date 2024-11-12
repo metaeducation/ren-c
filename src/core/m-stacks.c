@@ -64,7 +64,7 @@ void Startup_Data_Stack(Length capacity)
     DROP();  // drop the hypothetical thing that triggered the expand
 
     assert(Get_Stub_Flag(g_ds.array, DYNAMIC));
-    Poison_Cell(Array_Head(g_ds.array));  // new head
+    Force_Poison_Cell(Array_Head(g_ds.array));  // new head
 }
 
 
@@ -206,7 +206,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     Cell* poison = g_ds.movable_top;
     REBLEN n;
     for (n = len_old; n < len_new; ++n, ++poison)
-        Poison_Cell(poison);
+        Force_Poison_Cell(poison);
     assert(poison == Flex_Tail(Cell, g_ds.array));
   #endif
 
@@ -257,7 +257,7 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
         Move_Cell_Untracked(dest, src, CELL_MASK_ALL);
 
         #if DEBUG_POISON_DROPPED_STACK_CELLS
-          Poison_Cell(src);
+          Force_Poison_Cell(src);
         #endif
     }
   #endif

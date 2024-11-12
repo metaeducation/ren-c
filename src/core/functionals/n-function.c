@@ -528,10 +528,9 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
 //  "RETURN, giving a result to the caller"
 //
 //      return: []
-//      ^value [any-atom?]
+//      ^atom [any-atom?]
 //      :run "Reuse stack level for another call (<redo> uses locals/args too)"
 //      ;   [<variadic> any-value?]  ; would force this frame managed
-//      <local> atom
 //  ]
 //
 DECLARE_NATIVE(definitional_return)
@@ -559,7 +558,7 @@ DECLARE_NATIVE(definitional_return)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Atom* atom = Copy_Cell(LOCAL(atom), ARG(value));  // ARG can't be unstable
+    Atom* atom = Copy_Cell(OUT, ARG(atom));  // ARG can't be unstable
     Meta_Unquotify_Undecayed(atom);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
@@ -576,16 +575,16 @@ DECLARE_NATIVE(definitional_return)
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]
-            LEVEL, return_param, atom
+            LEVEL, return_param, OUT
         )){
-            return FAIL(Error_Bad_Return_Type(target_level, atom));
+            return FAIL(Error_Bad_Return_Type(target_level, OUT));
         }
 
         DECLARE_VALUE (label);
         Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
 
-        return Init_Thrown_With_Label(LEVEL, atom, label);
+        return Init_Thrown_With_Label(LEVEL, OUT, label);
     }
 
   //=//// TAIL-CALL HANDLING //////////////////////////////////////////////=//

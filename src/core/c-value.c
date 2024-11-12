@@ -79,15 +79,17 @@ void Probe_Cell_Print_Helper(
 
     const Atom* atom = c_cast(Value*, p);
 
-    if (Not_Cell_Readable(atom)) {  // Is_Nulled() asserts on unreadables
+    if (Is_Cell_Poisoned(atom)) {
+        Append_Ascii(mo->string, "\\\\poisoned\\\\");
+        return;
+    }
+
+    if (Not_Cell_Readable(atom)) {
         Append_Ascii(mo->string, "\\\\unreadable\\\\");
         return;
     }
 
-    if (Is_Cell_Poisoned(atom)) {
-        Append_Ascii(mo->string, "**POISONED CELL**");
-    }
-    else if (Is_Antiform(atom)) {
+    if (Is_Antiform(atom)) {
         DECLARE_ELEMENT (reified);
         Copy_Meta_Cell(reified, atom);
         Mold_Element(mo, reified);

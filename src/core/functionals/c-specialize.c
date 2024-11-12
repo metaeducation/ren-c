@@ -275,7 +275,7 @@ bool Specialize_Action_Throws(
             return true;
         }
 
-        Freshen_Cell(out);
+        Erase_Cell(out);
     }
 
     const Key* tail;

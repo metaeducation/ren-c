@@ -58,7 +58,7 @@
 //
 INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
     assert(L->executor == &Evaluator_Executor);
-    Erase_Cell_Untracked(&L->u.eval.primed);
+    Force_Erase_Cell_Untracked(&L->u.eval.primed);
     return cast(Atom*, &L->u.eval.primed);
 }
 
@@ -70,14 +70,14 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
 // state on exit.  But that added a branch on every trampoline bounce to
 // check the Level's state, and led to erasing cells redundantly.
 //
-INLINE void Reset_Evaluator_Freshen_Out(Level* L) {
+INLINE void Reset_Evaluator_Erase_Out(Level* L) {
     assert(
         L->executor == &Stepper_Executor
         or L->executor == &Inert_Stepper_Executor
         or L->executor == &Evaluator_Executor
     );
     LEVEL_STATE_BYTE(L) = STATE_0;
-    Freshen_Cell(L->out);
+    Erase_Cell(L->out);
 }
 
 #define Init_Pushed_Refinement(out,symbol) \

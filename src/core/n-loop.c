@@ -270,7 +270,7 @@ static Bounce Loop_Series_Common(
         *state += bump;
     }
 
-    if (Is_Fresh(OUT))
+    if (Is_Cell_Erased(OUT))
         return VOID;
 
     return BRANCHED(OUT);
@@ -417,7 +417,7 @@ static Bounce Loop_Number_Common(
         *state += b;
     }
 
-    if (Is_Fresh(OUT))
+    if (Is_Cell_Erased(OUT))
         return VOID;
 
     return BRANCHED(OUT);
@@ -607,7 +607,7 @@ DECLARE_NATIVE(for_skip)
         VAL_INDEX_UNBOUNDED(var) += skip;
     }
 
-    if (Is_Fresh(OUT))
+    if (Is_Cell_Erased(OUT))
         return VOID;
 
     return BRANCHED(OUT);
@@ -1155,7 +1155,7 @@ DECLARE_NATIVE(for_each)
     if (breaking)
         return nullptr;
 
-    if (Is_Fresh(OUT))
+    if (Is_Cell_Erased(OUT))
         return VOID;
 
     return BRANCHED(OUT);
@@ -1270,7 +1270,7 @@ DECLARE_NATIVE(every)
     if (Is_Inhibitor(stable_SPARE)) {
         Init_Nulled(OUT);
     }
-    else if (Is_Fresh(OUT) or not Is_Nulled(OUT)) {
+    else if (Is_Cell_Erased(OUT) or not Is_Nulled(OUT)) {
         Move_Cell(OUT, SPARE);
     }
 
@@ -1283,7 +1283,7 @@ DECLARE_NATIVE(every)
     if (THROWING)
         return THROWN;
 
-    if (Is_Fresh(OUT))
+    if (Is_Cell_Erased(OUT))
         return VOID;
 
     return OUT;
@@ -1736,7 +1736,7 @@ DECLARE_NATIVE(map)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    assert(Is_Fresh(OUT));  // output only written during MAP if BREAK hit
+    assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
     if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Source(0));
@@ -1825,7 +1825,7 @@ DECLARE_NATIVE(map)
     if (THROWING)
         return THROWN;  // automatically drops to baseline
 
-    if (not Is_Fresh(OUT)) {  // only modifies on break
+    if (Not_Cell_Erased(OUT)) {  // only modifies on break
         assert(Is_Nulled(OUT));  // BREAK, so *must* return null
         Drop_Data_Stack_To(STACK_BASE);
         return nullptr;
@@ -2206,7 +2206,7 @@ DECLARE_NATIVE(while)
     Decay_If_Unstable(SPARE);
 
     if (Is_Inhibitor(stable_SPARE)) {  // falsey condition => last body result
-        if (Is_Fresh(OUT))
+        if (Is_Cell_Erased(OUT))
             return VOID;  // body never ran, so no result to return!
 
         return BRANCHED(OUT);  // put void and null in packs [3]

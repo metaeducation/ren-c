@@ -115,7 +115,7 @@ Bounce Evaluator_Executor(Level* const L)
             LEVEL_FLAG_RAISED_RESULT_OK
                 | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );
-        Push_Level_Freshen_Out_If_State_0(OUT, sub);
+        Push_Level_Erase_Out_If_State_0(OUT, sub);
         STATE = ST_EVALUATOR_STEPPING;
         return CONTINUE_SUBLEVEL(sub);  // executors *must* catch
     }
@@ -126,12 +126,12 @@ Bounce Evaluator_Executor(Level* const L)
 
   #if RUNTIME_CHECKS
     if (L != TOP_LEVEL) {  // detect if a sublevel was used [2]
-        Reset_Evaluator_Freshen_Out(SUBLEVEL);
+        Reset_Evaluator_Erase_Out(SUBLEVEL);
         return BOUNCE_CONTINUE;
     }
   #endif
 
-    Reset_Evaluator_Freshen_Out(L);
+    Reset_Evaluator_Erase_Out(L);
     goto call_stepper_executor;
 
 } call_stepper_executor: {  ////////////////////////////////////////////////
@@ -173,7 +173,7 @@ Bounce Evaluator_Executor(Level* const L)
         if (Not_Feed_At_End(L->feed))
             goto new_step;  // leave previous result as-is in PRIMED
 
-        Move_Cell(OUT, PRIMED);  // finished, so extract result from PRIMED
+        Move_Atom(OUT, PRIMED);  // finished, so extract result from PRIMED
         goto finished;
     }
 
@@ -183,7 +183,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Raised(OUT))   // raise errors synchronously if not at end [3]
         return FAIL(Cell_Error(OUT));
 
-    Move_Cell(PRIMED, OUT);  // make current result the preserved one
+    Move_Atom(PRIMED, OUT);  // make current result the preserved one
     goto new_step;
 
 } finished: {  ///////////////////////////////////////////////////////////////

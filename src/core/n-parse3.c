@@ -239,7 +239,7 @@ static bool Subparse_Throws(
 ){
     assert(Any_Series_Kind(Cell_Heart(input)));
 
-    Push_Level_Freshen_Out_If_State_0(out, L);  // checks for C stack overflow
+    Push_Level_Erase_Out_If_State_0(out, L);  // checks for C stack overflow
 
     Push_Action(L, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 
@@ -1149,7 +1149,7 @@ static void Handle_Mark_Rule(
         )){
             fail (Error_No_Catch_For_Throw(LEVEL));
         }
-        Freshen_Cell(OUT);
+        Erase_Cell(OUT);
     }
     else
         fail (Error_Parse3_Variable(level_));
@@ -1503,7 +1503,7 @@ DECLARE_NATIVE(subparse)
                         fail ("REPEAT range can't have lower max than minimum");
                 }
 
-                Freshen_Cell(OUT);
+                Erase_Cell(OUT);
 
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
@@ -1975,7 +1975,7 @@ DECLARE_NATIVE(subparse)
                 if (Is_Api_Value(into))
                     rebRelease(x_cast(Value*, into));  // !!! or use SPARE?
 
-                Freshen_Cell(OUT);  // restore invariant
+                Erase_Cell(OUT);  // restore invariant
                 break; }
 
               default:

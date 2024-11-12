@@ -68,7 +68,7 @@
 INLINE bool Is_Throwing(Level* level_) {
     if (not Is_Cell_Erased(&g_ts.thrown_arg)) {
         possibly(level_ == TOP_LEVEL);  // don't enforce this for now [1]
-        possibly(Is_Fresh(level_->out));  // not fully enforced at present
+        possibly(Is_Cell_Erased(level_->out));  // not enforced at present
         UNUSED(level_);
         return true;
     }
@@ -89,8 +89,11 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* L,
     const Atom* arg,
-    const Value* label  // Note: is allowed to be same as OUT
+    const Value* label
 ){
+    possibly(label == L->out);
+    possibly(arg == L->out);
+
     assert(not Is_Throwing(L));
 
     assert(Is_Cell_Erased(&g_ts.thrown_arg));
@@ -100,7 +103,8 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Copy_Cell(&g_ts.thrown_label, label);
     Deactivate_If_Action(&g_ts.thrown_label);
 
-    Freshen_Cell_Suppress_Raised(L->out);
+    Suppress_Raised_Warning_If_Debug(L->out);
+    Erase_Cell(L->out);
 
     assert(Is_Throwing(L));
 
@@ -117,14 +121,13 @@ INLINE Bounce Init_Thrown_Failure(Level* L, Error* error) {
 }
 
 INLINE void CATCH_THROWN(
-    Cell* arg_out,
+    Atom* arg_out,
     Level* L
 ){
     assert(Is_Throwing(L));
 
-    Copy_Cell(arg_out, &g_ts.thrown_arg);
+    Move_Atom(arg_out, &g_ts.thrown_arg);
 
-    Erase_Cell(&g_ts.thrown_arg);
     Erase_Cell(&g_ts.thrown_label);
 
     assert(not Is_Throwing(L));

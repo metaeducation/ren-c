@@ -190,7 +190,7 @@ DECLARE_NATIVE(delimit)
     }
 
     Level* L = Make_Level_At(executor, line, LEVEL_MASK_NONE);
-    Push_Level_Freshen_Out_If_State_0(OUT, L);
+    Push_Level_Erase_Out_If_State_0(OUT, L);
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -201,7 +201,7 @@ DECLARE_NATIVE(delimit)
     if (REF(head) and delimiter)  // speculatively start with delimiter
         Form_Element(mo, unwrap delimiter);  // (thrown out if `nothing` made)
 
-    for (; Not_Level_At_End(L); Reset_Evaluator_Freshen_Out(L)) {
+    for (; Not_Level_At_End(L); Reset_Evaluator_Erase_Out(L)) {
         bool mold = false;
         const Element* item = At_Level(L);
         if (Is_Block(item) and REF(delimiter)) {  // hack [1]

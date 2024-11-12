@@ -167,7 +167,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
     bool result = true;
 
     assert(TOP_INDEX == L->baseline.stack_base);
-    Move_Cell(cast(Atom*, PUSH()), SPARE);  // need somewhere to save spare [1]
+    Move_Atom(cast(Atom*, PUSH()), SPARE);  // need somewhere to save spare [1]
     ++L->baseline.stack_base;  // typecheck functions should not see that push
     assert(TOP_INDEX == L->baseline.stack_base);
 
@@ -188,7 +188,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     assert(TOP_INDEX == L->baseline.stack_base);
     --L->baseline.stack_base;
-    Suppress_Raised_If_Debug(SPARE);
+    Suppress_Raised_Warning_If_Debug(SPARE);
     Move_Drop_Top_Stack_Value(SPARE);  // restore pack to the SPARE [1]
 
   #if RUNTIME_CHECKS
@@ -392,7 +392,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 &Action_Executor,
                 FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
             );
-            Push_Level_Freshen_Out_If_State_0(SCRATCH, sub);  // write sub's output to L->scratch
+            Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // write sub's output to L->scratch
             Push_Action(sub, VAL_ACTION(test), Cell_Frame_Coupling(test));
             Begin_Action(sub, VAL_FRAME_LABEL(test), PREFIX_0);
 
