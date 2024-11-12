@@ -93,6 +93,9 @@ Script: [
     ;
     done-enumerating:   "Enumeration is complete, no more values to YIELD"
 
+    yielder-failed:     "Can't run a Yielder that has abruptly failed"
+    yielder-reentered:  "Can't re-entrantly call a Yielder not in YIELD state"
+
     ; NOTE: Preallocated errors for quick UTF-8 failing
     ;
     overlong-utf8:      "Invalid or overlong UTF-8 encoding detected"

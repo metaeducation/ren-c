@@ -289,7 +289,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     //     >> g: generator [g]  ; not legal!
 
     if (Not_Cell_Readable(plug))
-        return FAIL("Can't re-entrantly call a Yielder not in YIELD state");
+        return FAIL(Error_Yielder_Reentered_Raw());
 
   //=//// RECLAIM ORIGINAL YIELDER'S VARLIST IDENTITY /////////////////////=//
 
@@ -460,7 +460,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     assert(Is_Trash(original_frame));
 
-    return FAIL("Can't run a Yielder that has abruptly failed");
+    return FAIL(Error_Yielder_Failed_Raw());
 }}
 
 

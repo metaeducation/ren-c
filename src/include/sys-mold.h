@@ -87,12 +87,16 @@ enum {
 
 #define MOLD_MASK_NONE 0
 
+INLINE void Construct_Molder(Molder* mo) {
+    mo->string = nullptr;  // used to tell if pushed or not
+    mo->opts = 0;
+    mo->indent = 0;
+}
+
 #define DECLARE_MOLDER(name) \
     Molder name##_struct; \
-    name##_struct.string = nullptr; /* used to tell if pushed or not */ \
-    name##_struct.opts = 0; \
-    name##_struct.indent = 0; \
     Molder* name = &name##_struct; \
+    Construct_Molder(name)
 
 #define SET_MOLD_FLAG(mo,f) \
     ((mo)->opts |= (f))

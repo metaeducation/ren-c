@@ -2140,7 +2140,7 @@ DECLARE_NATIVE(until)
 //
 //      return: "VOID if body never run, NULL if BREAK, else last body result"
 //          [any-value?]
-//      condition [<const> block!]  ; literals not allowed, [1]
+//      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
 //      body [<unrun> <const> block! frame!]
 //  ]
 //
@@ -2199,24 +2199,28 @@ DECLARE_NATIVE(while)
 } evaluate_condition: {  /////////////////////////////////////////////////////
 
     STATE = ST_WHILE_EVALUATING_CONDITION;
-    return CONTINUE(SPARE, condition);
+    return CONTINUE_CORE(
+        SPARE,
+        LEVEL_FLAG_RAISED_RESULT_OK,  // want to catch DONE error
+        SPECIFIED,
+        condition
+    );
 
 } condition_eval_in_spare: {  ////////////////////////////////////////////////
 
+    if (Is_Raised(SPARE) and Is_Error_Done_Signal(SPARE))
+        goto return_out;
+
     Decay_If_Unstable(SPARE);
 
-    if (Is_Inhibitor(stable_SPARE)) {  // falsey condition => last body result
-        if (Is_Cell_Erased(OUT))
-            return VOID;  // body never ran, so no result to return!
-
-        return BRANCHED(OUT);  // put void and null in packs [3]
-    }
+    if (Is_Inhibitor(stable_SPARE))  // falsey condition => last body result
+        goto return_out;
 
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
     return CONTINUE_BRANCH(OUT, body, SPARE);
 
-} body_eval_in_out: {  ///////////////////////////////////////////////////////
+} body_eval_in_out: { ////////////////////////////////////////////////////////
 
     if (THROWING) {
         bool breaking;
@@ -2229,4 +2233,11 @@ DECLARE_NATIVE(while)
 
     Disable_Dispatcher_Catching_Of_Throws(LEVEL);
     goto evaluate_condition;
+
+} return_out: {  /////////////////////////////////////////////////////////////
+
+    if (Is_Cell_Erased(OUT))
+        return VOID;  // body never ran, so no result to return!
+
+    return BRANCHED(OUT);  // put void and null in packs [3]
 }}

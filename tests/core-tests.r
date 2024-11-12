@@ -147,6 +147,7 @@
 %functions/enclose.test.reb
 %functions/frame.test.reb
 %functions/function.test.reb
+%functions/generator.test.reb
 %functions/hijack.test.reb
 %functions/infix.test.reb
 %functions/invisible.test.reb
@@ -166,6 +167,7 @@
 %functions/specialize.test.reb
 %functions/typechecker.test.reb
 %functions/unwind.test.reb
+%functions/yielder.test.reb
 
 %loops/break.test.reb
 %loops/cfor.test.reb

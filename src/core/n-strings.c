@@ -86,6 +86,14 @@ DECLARE_NATIVE(latin1_q)
 }
 
 
+#define LEVEL_FLAG_DELIMIT_MOLD_RESULT  LEVEL_FLAG_MISCELLANEOUS
+
+#define nothing_delimited                   Not_Cell_Erased(OUT)  // or NULL
+#define Mark_Delimit_Produced_Something()   Erase_Cell(OUT)
+
+#define CELL_FLAG_DELIMITER_NOTE_PENDING    CELL_FLAG_NOTE
+
+
 //
 //  /delimit: native [
 //
@@ -103,43 +111,117 @@ DECLARE_NATIVE(latin1_q)
 DECLARE_NATIVE(delimit)
 //
 // Evaluates each item in a block and forms it, with an optional delimiter.
-// If all the items in the block are null, or no items are found, this will
+// If all the items in the block vaporize, or no items are found, this will
 // return a nulled value.
-//
-// 1. It's hard to unify this mold with code below that uses a level due to
-//    the asserts on states balancing.  Easiest to repeat a small bit of code!
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
     Element* line = cast(Element*, ARG(line));
+    Value* mold_handle = ARG(return);
+    Molder* mo;  // sometimes uses handle stored in ARG(return), sometimes not
 
-    Option(const Element*) delimiter;
-    if (REF(delimiter))
-        delimiter = cast(const Element*, ARG(delimiter));
-    else
-        delimiter = nullptr;
+    Value* delimiter = ARG(delimiter);
+    possibly(Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
 
-    if (Is_Block(line) or Is_The_Block(line))
-        goto delimit_block;
+    enum {
+        ST_DELIMIT_INITIAL_ENTRY = STATE_0,
+        ST_DELIMIT_INITIALIZED_MOLDER,  // need to enable dispatcher catching
+        ST_DELIMIT_STEPPING,
+        ST_DELIMIT_EVALUATING_THE_GROUP
+    };
 
-  { ///////////////////////////////////////////////////////////////////////////
+    if (Is_Throwing(LEVEL)) {  // must clean up allocated Molder
+        mo = Cell_Handle_Pointer(Molder, mold_handle);
+        goto threw;
+    }
+
+    switch (STATE) {
+      case ST_DELIMIT_INITIAL_ENTRY: {
+        if (Is_Block(line) or Is_The_Block(line))
+            goto delimit_block_initial_entry;
+
+        goto simple_delimit_initial_entry; }
+
+      case ST_DELIMIT_STEPPING:
+        mo = Cell_Handle_Pointer(Molder, mold_handle);
+        assert(Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
+        goto delimit_result_in_spare;
+
+      case ST_DELIMIT_EVALUATING_THE_GROUP:
+        mo = Cell_Handle_Pointer(Molder, mold_handle);
+        if (Is_The_Block(ARG(line)))
+            SUBLEVEL->executor = &Inert_Stepper_Executor;
+        else {
+            assert(Is_Block(line));
+            SUBLEVEL->executor = &Stepper_Executor;
+        }
+        assert(Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
+        goto delimit_result_in_spare;
+
+      default: assert(false);
+    }
+
+  simple_delimit_initial_entry: { ////////////////////////////////////////////
+
+    // 1. Hard to unify this mold with code below that uses a level due to
+    //    asserts on states balancing.  Easiest to repeat a small bit of code!
 
     assert(Is_Text(line) or Is_Issue(line));  // shortcut, no evals needed [1]
 
-    DECLARE_MOLDER (mo);
+    Molder molder_struct;
+    mo = &molder_struct;
+    Construct_Molder(mo);
     Push_Mold(mo);
 
-    if (REF(head) and delimiter)
-        Form_Element(mo, unwrap delimiter);
+    if (REF(head) and not Is_Nulled(delimiter))
+        Form_Element(mo, cast(Element*, delimiter));
 
-    Form_Element(mo, cast(Element*, line));
+    Form_Element(mo, line);
 
-    if (REF(tail) and delimiter)
-        Form_Element(mo, unwrap delimiter);
+    if (REF(tail) and not Is_Nulled(delimiter))
+        Form_Element(mo, cast(Element*, delimiter));
 
     return Init_Text(OUT, Pop_Molded_String(mo));
 
-} delimit_block: { ////////////////////////////////////////////////////////////
+} delimit_block_initial_entry: { /////////////////////////////////////////////
+
+    mo = Try_Alloc_Memory(Molder);
+    Construct_Molder(mo);
+    Init_Handle_Cdata(mold_handle, mo, 1);
+    STATE = ST_DELIMIT_INITIALIZED_MOLDER;  // can't be STATE_0 if catch enable
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // have to free Molder
+
+    Push_Mold(mo);
+
+    Executor* executor;
+    if (Is_The_Block(ARG(line)))
+        executor = &Inert_Stepper_Executor;
+    else {
+        assert(Is_Block(line));
+        executor = &Stepper_Executor;
+    }
+
+    Level* sub = Make_Level_At(executor, line, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE);
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
+
+    assert(Not_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
+
+    Init_Nulled(OUT);  // all elements seen so far void (erased if not true)
+    assert(nothing_delimited);
+
+    if (REF(head) and not Is_Nulled(delimiter))  // speculatively start with
+        Form_Element(mo, cast(Element*, delimiter));  // may be tossed
+
+    goto first_delimit_step;
+
+} next_delimit_step: { ///////////////////////////////////////////////////////
+
+    Reset_Evaluator_Erase_Out(SUBLEVEL);
+    Clear_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
+
+} first_delimit_step: { //////////////////////////////////////////////////////
+
+    Level* sub = SUBLEVEL;
 
     // 1. There's a concept that being able to put undelimited portions in the
     //    delimit is useful--and it really is:
@@ -154,7 +236,68 @@ DECLARE_NATIVE(delimit)
     //    to fetch them from variables and have them mean space).  This is
     //    a long-running experiment that may not pan out, but is cool enough to
     //    keep weighing the pros/cons.  Looked-up-to blanks are illegal.
-    //
+
+    if (Is_Level_At_End(sub))
+        goto finished;
+
+    const Element* item = At_Level(sub);
+    if (Is_Block(item) and not Is_Nulled(delimiter)) {  // hack [1]
+        Derelativize(SPARE, item, Level_Binding(sub));
+        Fetch_Next_In_Feed(sub->feed);
+
+        Value* unspaced = rebValue(Canon(UNSPACED), rebQ(SPARE));
+        if (unspaced == nullptr)  // vaporized, allow it
+            goto next_delimit_step;
+
+        Copy_Cell(SPARE, unspaced);
+        rebRelease(unspaced);
+        goto delimit_result_in_spare;
+    }
+
+    if (Is_Blank(item)) {  // BLANK! acts as space [2]
+        Append_Codepoint(mo->string, ' ');
+        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
+        Mark_Delimit_Produced_Something();
+        Fetch_Next_In_Feed(sub->feed);
+        goto next_delimit_step;
+    }
+
+    if (Any_The_Value(item)) {  // fetch and mold
+        Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
+
+        if (Is_The_Word(item) or Is_The_Tuple(item)) {
+            Get_Var_May_Fail(SPARE, item, Level_Binding(sub));
+            Fetch_Next_In_Feed(sub->feed);
+            goto delimit_result_in_spare;
+        }
+
+        if (Is_The_Group(item)) {
+            STATE = ST_DELIMIT_EVALUATING_THE_GROUP;
+            SUBLEVEL->executor = &Just_Use_Out_Executor;
+            Derelativize(SCRATCH, item, Level_Binding(sub));
+            HEART_BYTE(SCRATCH) = REB_BLOCK;  // the-block is different
+            Fetch_Next_In_Feed(sub->feed);
+            return CONTINUE(SPARE, cast(Element*, SCRATCH));
+        }
+
+        return FAIL(item);
+    }
+
+    if (Is_Quoted(item)) {  // just mold it
+        Copy_Cell(SPARE, item);
+        Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
+
+        Fetch_Next_In_Feed(sub->feed);
+        goto delimit_result_in_spare;
+    }
+
+    STATE = ST_DELIMIT_STEPPING;
+    return CONTINUE_SUBLEVEL(sub);  // just evaluate it
+
+} delimit_result_in_spare: { /////////////////////////////////////////////////
+
+    bool mold = Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
+
     // 3. Erroring on NULL has been found to catch real bugs in practice.  It
     //    also enables clever constructs like CURTAIL.
     //
@@ -181,155 +324,93 @@ DECLARE_NATIVE(delimit)
     //
     //    The same principle would apply to a "space-delimited format".
 
-    Executor* executor;
-    if (Is_The_Block(ARG(line)))
-        executor = &Inert_Stepper_Executor;
-    else {
-        assert(Is_Block(line));
-        executor = &Stepper_Executor;
+    if (Is_Elision(SPARE))  // spaced [elide print "hi"], etc
+        goto next_delimit_step;  // vaporize
+
+    Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
+
+    if (Is_Void(SPARE))  // spaced [maybe null], spaced [if null [<a>]], etc
+        goto next_delimit_step;  // vaporize
+
+    if (Is_Nulled(SPARE))  // catches bugs in practice [3]
+        return RAISE(Error_Need_Non_Null_Raw());
+
+    if (Is_Splice(SPARE) and mold) {  // only allow splice for mold, for now
+        if (Cell_Series_Len_At(SPARE) == 0)
+            goto next_delimit_step;  // vaporize
+    }
+    else if (Is_Antiform(SPARE))
+        return RAISE(Error_Bad_Antiform(SPARE));
+
+    if (not mold) {
+        if (Any_List(SPARE))  // guessing a behavior is bad [4]
+            return FAIL("DELIMIT requires @var to mold lists");
+
+        if (Any_Sequence(SPARE))  // can have lists in them, dicey [4]
+            return FAIL("DELIMIT requires @var to mold sequences");
+
+        if (Sigil_Of(cast(Element*, SPARE)))
+            return FAIL("DELIMIT requires @var for elements with sigils");
+
+        if (Is_Blank(SPARE))
+            return FAIL("DELIMIT only treats source-level BLANK! as space");
     }
 
-    Level* L = Make_Level_At(executor, line, LEVEL_MASK_NONE);
-    Push_Level_Erase_Out_If_State_0(OUT, L);
+    Mark_Delimit_Produced_Something();
 
-    DECLARE_MOLDER (mo);
-    Push_Mold(mo);
+    if (Is_Issue(SPARE)) {  // do not delimit (unified w/char) [5]
+        Form_Element(mo, cast(Element*, SPARE));
+        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
+        goto next_delimit_step;
+    }
 
-    bool pending = false;  // pending delimiter output, *if* more non-nulls
-    bool nothing = true;  // all elements seen so far have been void
+    if (
+        not Is_Nulled(delimiter)
+        and Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)
+    ){
+        Form_Element(mo, cast(Element*, delimiter));
+    }
 
-    if (REF(head) and delimiter)  // speculatively start with delimiter
-        Form_Element(mo, unwrap delimiter);  // (thrown out if `nothing` made)
-
-    for (; Not_Level_At_End(L); Reset_Evaluator_Erase_Out(L)) {
-        bool mold = false;
-        const Element* item = At_Level(L);
-        if (Is_Block(item) and REF(delimiter)) {  // hack [1]
-            Derelativize(SPARE, item, Level_Binding(L));
-            Fetch_Next_In_Feed(L->feed);
-
-            Value* unspaced = rebValue(Canon(UNSPACED), rebQ(SPARE));
-            if (unspaced == nullptr)  // vaporized, allow it
-                continue;
-
-            Copy_Cell(OUT, unspaced);
-            rebRelease(unspaced);
+    if (mold) {
+        if (Is_Splice(SPARE)) {
+            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            Mold_Or_Form_Cell_Ignore_Quotes(mo, SPARE, false);
+            CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         }
-        else if (Is_Blank(item)) {  // BLANK! acts as space [2]
-            Append_Codepoint(mo->string, ' ');
-            pending = false;
-            nothing = false;
-            Fetch_Next_In_Feed(L->feed);
-            continue;
-        }
-        else if (Any_The_Value(item)) {  // fetch and mold
-            if (Is_The_Word(item) or Is_The_Tuple(item)) {
-                Get_Var_May_Fail(OUT, item, Level_Binding(L));
-            }
-            else if (Is_The_Group(item)) {
-                if (Eval_Any_List_At_Throws(
-                    OUT,
-                    item,
-                    Level_Binding(L)
-                )){
-                    goto threw;
-                }
-            }
-            else
-                return FAIL(item);
+        else
+            Mold_Element(mo, cast(Element*, SPARE));
+    }
+    else {
+        Form_Element(mo, cast(Element*, SPARE));
+    }
 
-            Fetch_Next_In_Feed(L->feed);
+    Set_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);  // empty strings too [6]
 
-            mold = true;
-        }
-        else if (Is_Quoted(item)) {  // just mold it
-            Copy_Cell(OUT, item);
-            mold = true;
+    goto next_delimit_step;
 
-            Fetch_Next_In_Feed(L->feed);
-        }
-        else {
-            if (Eval_Step_Throws(OUT, L))
-                goto threw;
-        }
+} finished: { ////////////////////////////////////////////////////////////////
 
-        if (Is_Elision(OUT))  // spaced [elide print "hi"], etc
-            continue;  // vaporize
-
-        Decay_If_Unstable(OUT);  // spaced [match [logic?] false ...]
-
-        if (Is_Void(OUT))  // spaced [maybe null], spaced [if null [<a>]], etc
-            continue;  // vaporize
-
-        if (Is_Nulled(OUT))  // catches bugs in practice [3]
-            return RAISE(Error_Need_Non_Null_Raw());
-
-        if (Is_Splice(OUT) and mold) {  // only allow splice for mold, for now
-            if (Cell_Series_Len_At(OUT) == 0)
-                continue;  // vaporize;
-        }
-        else if (Is_Antiform(OUT))
-            return RAISE(Error_Bad_Antiform(OUT));
-
-        if (not mold) {
-            if (Any_List(OUT))  // guessing a behavior is bad [4]
-                return FAIL("DELIMIT requires @var to mold lists");
-
-            if (Any_Sequence(OUT))  // can have lists in them, dicey [4]
-                return FAIL("DELIMIT requires @var to mold sequences");
-
-            if (Sigil_Of(cast(Element*, OUT)))
-                return FAIL("DELIMIT requires @var for elements with sigils");
-
-            if (Is_Blank(OUT))
-                return FAIL("DELIMIT only treats source-level BLANK! as space");
-        }
-
-        nothing = false;
-
-        if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [5]
-            Form_Element(mo, cast(Element*, OUT));
-            pending = false;
-            continue;
-        }
-
-        if (pending and delimiter)
-            Form_Element(mo, unwrap delimiter);
-
-        if (mold) {
-            if (Is_Splice(OUT)) {
-                SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-                Mold_Or_Form_Cell_Ignore_Quotes(mo, OUT, false);
-                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-            }
-            else
-                Mold_Element(mo, cast(Element*, OUT));
-        }
-        else {
-            Form_Element(mo, cast(Element*, OUT));
-        }
-
-        pending = true;  // note this includes empty strings [6]
-
-    } while (Not_Level_At_End(L));
-
-    if (nothing) {
+    if (nothing_delimited) {
+        assert(Is_Nulled(OUT));  // this is the signal for nothing delimited
         Drop_Mold(mo);
-        Init_Nulled(OUT);
     }
     else {
-        if (REF(tail) and delimiter)
-            Form_Element(mo, unwrap delimiter);
+        assert(Is_Cell_Erased(OUT));  // signal for something delimited
+
+        if (REF(tail) and not Is_Nulled(delimiter))
+            Form_Element(mo, cast(Element*, delimiter));
         Init_Text(OUT, Pop_Molded_String(mo));
     }
 
-    Drop_Level(L);
+    Drop_Level(SUBLEVEL);
+    Free_Memory(Molder, mo);
     return OUT;
 
-  threw: //////////////////////////////////////////////////////////////////////
+} threw: { ///////////////////////////////////////////////////////////////////
 
     Drop_Mold(mo);
-    Drop_Level(L);
+    Free_Memory(Molder, mo);
+    unnecessary(Drop_Level(SUBLEVEL));  // automatically dropped on throws
     return THROWN;
 }}
 

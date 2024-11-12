@@ -847,11 +847,6 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_POISON_DROPPED_STACK_CELLS  RUNTIME_CHECKS
 #endif
 
-#if !defined(DEBUG_ERASE_ALLOC_TAIL_CELLS)
-    #define DEBUG_ERASE_ALLOC_TAIL_CELLS  RUNTIME_CHECKS
-#endif
-
-
 #if !defined(DEBUG_HOOK_HEART_BYTE)
     #define DEBUG_HOOK_HEART_BYTE 0
 #endif
