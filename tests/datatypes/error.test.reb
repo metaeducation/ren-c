@@ -132,7 +132,7 @@
 (error? make error! [type: 'internal id: 'stack-overflow])
 (error? make error! [type: 'internal id: 'globals-full])
 (error? make error! [type: 'internal id: 'bad-sys-func])
-(error? make error! [type: 'internal id: 'not-done])
+(error? make error! [type: 'internal id: 'done-enumerating])
 
 ; are error reports for DO and EVALUATE consistent?
 (

@@ -227,7 +227,6 @@ wrote
 lookup
 
 ready
-done
 #time
 
 show

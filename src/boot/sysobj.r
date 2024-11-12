@@ -386,5 +386,5 @@ cgi: construct [ ; CGI environment variables
     other-headers: '[]
 ]
 
-; Boot process does sanity check that this eval ends with ~done~ QUASI-WORD!
-'~done~
+; Boot process does sanity check that this eval ends with ~end~ QUASI-WORD!
+'~end~

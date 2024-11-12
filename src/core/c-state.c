@@ -104,8 +104,52 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 }
 
 
-#define PLUG_FLAG_HAS_DATA_STACK    STUB_SUBCLASS_FLAG_24
-#define PLUG_FLAG_HAS_MOLD          STUB_SUBCLASS_FLAG_25
+#define DATASTACK_FLAG_HAS_PUSHED_CELLS     STUB_SUBCLASS_FLAG_24
+#define DATASTACK_FLAG_HAS_MOLD             STUB_SUBCLASS_FLAG_25
+#define DATASTACK_FLAG_HAS_SPARE            STUB_SUBCLASS_FLAG_26
+#define DATASTACK_FLAG_HAS_SCRATCH          STUB_SUBCLASS_FLAG_27
+
+#define LINK_SuspendedLevel_TYPE       Level*
+#define HAS_LINK_SuspendedLevel        FLAVOR_DATASTACK
+
+#define SPARE_PROXY     x_cast(Atom*, Lib(BLANK))
+#define SCRATCH_PROXY   x_cast(Atom*, Lib(NULL))
+
+
+// Depending on whether they have state to restore (mold buffers, data stacks,
+// or spare and scratch cells), plugs may have an array of data.  It's
+// actually not super uncommon for them not to need state...so there's a
+// compressed form that just holds the Level directly.
+//
+static Level* Level_Of_Plug(const Value* plug) {
+    if (Handle_Holds_Node(plug))
+        return LINK(SuspendedLevel, c_cast(Array*, Cell_Handle_Node(plug)));
+
+    return Cell_Handle_Pointer(Level, plug);
+}
+
+// Plugs hold a detached stack of Levels, which if they don't get plugged back
+// into the stack with Replug_Stack() need to be freed.
+//
+// !!! This raises new questions about the generalized destruction of a Level
+// that is not plugged into the running Level stack, and during garbage
+// collection where the legal operations are more limited.  It's very much
+// a work in progress.
+//
+static void Clean_Plug_Handle(const RebolValue* plug) {
+    Level* L = Level_Of_Plug(plug);
+    DECLARE_ATOM (raised);
+    Init_Error(raised, Cell_Error(g_error_done_enumerating));  // !!! hack
+    Raisify(raised);
+    while (L != nullptr) {
+        Level* prior = L->prior;
+        L->out = raised;  // make API handles free as if there were an error
+        if (Is_Action_Level(L))
+            Drop_Action(L);
+        Drop_Level_Core(L);
+        L = prior;
+    }
+}
 
 
 //
@@ -113,18 +157,18 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 //
 // Pulls a stack out into an independent list of levels, subtracting out the
 // base level as a baseline.  The resulting level stack will end in nullptr
-// (instead of BOTTOM_LEVEL).  You can then replug with Replug_Stack, e.g.
+// (instead of BOTTOM_LEVEL).  You can then replug with Replug_Stack(), e.g.
 // the following should be a no-op:
 //
 //      Level* base = level_->prior->prior;
-//      assert(level_->prior != nullptr);
 //
-//      Unplug_Stack(SPARE, level_, base);
+//      Unplug_Stack(SPARE, base, level_);
 //
-//      assert(level_->prior == nullptr);
+//      assert(level_->prior->prior == nullptr);  // detached
 //      assert(TOP_LEVEL == base);
 //
-//      Replug_Stack(level_, TOP_LEVEL, SPARE);
+//      Replug_Stack(level_, TOP_LEVEL);
+//      assert(level_->prior->prior == base);
 //
 // This is used by something like YIELD, which unplugs the stack of Levels
 // all the way up to the GENERATOR (or YIELDER) that it's running under...
@@ -135,8 +179,8 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 //
 void Unplug_Stack(
     Value* plug,  // cell where global state differentials can be stored
-    Level* L,  // level to unplug (currently can only unplug topmost level)
-    Level* base  // base level to unplug relative to
+    Level* base,  // base level to unplug relative to
+    Level* L  // level to unplug (currently can only unplug topmost level)
 ){
     assert(L == TOP_LEVEL);
 
@@ -151,17 +195,11 @@ void Unplug_Stack(
             fail ("Cannot yield across level that's not a continuation");
         }
 
-        if (temp->out == base->out) {
-            //
-            // Reassign to mark the output as something randomly bad, but
-            // still GC safe.  When the stack gets patched back in, it will
-            // be recognized and reset to the new base's out.
-            //
-            temp->out = m_cast(Value*, Lib(BLANK));
-        }
-        else if (temp->out == &base->spare) {
-            temp->out = m_cast(Value*, Lib(NULL));
-        }
+        assert(temp->out != base->out);  // can't guarantee restoration!
+        if (temp->out == Level_Spare(base))
+            temp->out = SPARE_PROXY;
+        else if (temp->out == Level_Scratch(base))
+            temp->out = SCRATCH_PROXY;
 
         // We make the baseline stack pointers in each level relative to the
         // base level, with that level as if it were 0.  When the level
@@ -210,10 +248,27 @@ void Unplug_Stack(
     // values in it alive during GC.  But for simplicity, we keep it in a
     // value cell, and manage it.
     //
-    Flags flags = FLAG_FLAVOR(PLUG);  // be agnostic, to be generic!
+    Flags flags = 0;
+
+    if (Not_Cell_Erased(&base->spare)) {
+        if (Is_Cell_Readable(&base->spare))
+            Copy_Meta_Cell(PUSH(), &base->spare);
+        else
+            Init_Trash(PUSH());
+        flags |= DATASTACK_FLAG_HAS_SPARE;
+    }
+
+    if (Not_Cell_Erased(&base->scratch)) {
+        if (Is_Cell_Readable(&base->scratch))
+            Copy_Meta_Cell(PUSH(), &base->scratch);
+        else
+            Init_Trash(PUSH());
+
+        flags |= DATASTACK_FLAG_HAS_SCRATCH;
+    }
 
     if (String_Size(g_mold.buffer) > base->baseline.mold_buf_size) {
-        flags |= PLUG_FLAG_HAS_MOLD;
+        flags |= DATASTACK_FLAG_HAS_MOLD;
         Init_Text(
             PUSH(),
             Pop_Molded_String_Core(
@@ -225,15 +280,20 @@ void Unplug_Stack(
     }
 
     if (TOP_INDEX > base->baseline.stack_base)  // do first (other flags push)
-        flags |= PLUG_FLAG_HAS_DATA_STACK;
+        flags |= DATASTACK_FLAG_HAS_PUSHED_CELLS;
 
-    if (flags == FLAG_FLAVOR(PLUG))
-        Init_Block(plug, EMPTY_ARRAY);
-    else
-        Init_Block(
-            plug,
-            Pop_Managed_Source_From_Stack(base->baseline.stack_base)
+    if (not flags) {
+        Init_Handle_Cdata_Managed(plug, L, 1, &Clean_Plug_Handle);
+    }
+    else {
+        Array* a = Pop_Stack_Values_Core(
+            flags | FLAG_FLAVOR(DATASTACK) | NODE_FLAG_MANAGED,
+            base->baseline.stack_base
         );
+        LINK(SuspendedLevel, a) = L;
+        Init_Handle_Node_Managed(plug, a, &Clean_Plug_Handle);
+    }
+    assert(L == Level_Of_Plug(plug));
 
     g_ts.top_level = base;
 }
@@ -245,14 +305,10 @@ void Unplug_Stack(
 // This reverses the process of Unplug_Stack, patching a stack onto a new
 // base location.
 //
-// 1. The top level for base at unplug time may have targeted any output cell.
-//    That output is likely gone (an argument fulfillment for a now-finished
-//    function, an API cell that was released, etc.)  But more levels than
-//    that could have inherited the same L->out.
-//
-//    Unplug_Stack() put a bogus pointer to the read-only Lib(BLANK) cell,
-//    it's good enough to be GC safe and also distinct.  Anywhere we see that,
-//    replace with the output this new base wants to write its output to.
+// 1. The previous base Level probably was freed, which means that if it had
+//    given out pointers to its SPARE or SCRATCH cells that serve as the
+//    OUT pointer for any nested Levels those pointers would have gone bad.
+//    We redirect the pointers to the new base's SPARE and SCRATCH.
 //
 // 2. Unplug made the stack_base be relative to 0.  We're going to restore the
 //    values that were between the base and the unplugged level on the data
@@ -264,15 +320,17 @@ void Unplug_Stack(
 //    of that sublevel to match the output of the current level (see assert in
 //    Unplug_Stack() proving sublevel had same L->out).
 //
-void Replug_Stack(Level* L, Level* base, Value* plug) {
+void Replug_Stack(Level* base, Value* plug) {
     assert(base == TOP_LEVEL);  // currently can only plug atop topmost frame
+
+    Level* L = Level_Of_Plug(plug);
 
     Level* temp = L;
     while (true) {
-        if (temp->out == Lib(BLANK))  // replace output placeholder [1]
-            temp->out = base->out;
-        else if (temp->out == Lib(NULL))
-            temp->out = cast(Value*, &base->spare);
+        if (temp->out == SPARE_PROXY)  // replace output placeholder [1]
+            temp->out = Level_Spare(base);
+        else if (temp->out == SCRATCH_PROXY)
+            temp->out = Level_Scratch(base);
 
         temp->baseline.stack_base += base->baseline.stack_base;  // [2]
 
@@ -287,33 +345,61 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
     // Now add in all the residual elements from the plug to global buffers
     // like the mold buffer and data stack.
 
-    assert(Is_Block(plug));  // restore data stack from plug's block
-    assert(VAL_INDEX(plug) == 0);  // could store some number (?)
-
-    if (Cell_Array(plug) == EMPTY_ARRAY)
+    if (not Handle_Holds_Node(plug))  // no array of additional information
         goto finished;
 
   blockscope {
 
-    Array* array = Cell_Array_Known_Mutable(plug);
+    Array* array = x_cast(Array*, Cell_Handle_Node(plug));
+    assert(Stub_Flavor(array) == FLAVOR_DATASTACK);
+
     Value* item = Flex_Tail(Value, array);
 
-    if (Get_Flavor_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
+    if (Get_Flavor_Flag(DATASTACK, array, HAS_MOLD)) {  // restore mold
         --item;
         assert(Is_Text(item));
         assert(VAL_INDEX(item) == 0);
         Append_Any_Utf8(g_mold.buffer, item);
     }
 
-    if (Get_Flavor_Flag(PLUG, array, HAS_DATA_STACK)) {
+    if (Get_Flavor_Flag(DATASTACK, array, HAS_SCRATCH)) {
+        --item;
+        if (Is_Trash(item))
+            Init_Unreadable(Level_Scratch(base));
+        else {
+            Copy_Cell(Level_Scratch(base), item);
+            Meta_Unquotify_Undecayed(Level_Scratch(base));
+        }
+    }
+    else
+        Erase_Cell(Level_Scratch(base));
+
+    if (Get_Flavor_Flag(DATASTACK, array, HAS_SPARE)) {
+        --item;
+        if (Is_Trash(item))
+            Init_Unreadable(Level_Spare(base));
+        else {
+            Copy_Cell(&base->spare, item);
+            Meta_Unquotify_Undecayed(Level_Spare(base));
+        }
+    }
+    else
+        Erase_Cell(&base->spare);
+
+    if (Get_Flavor_Flag(DATASTACK, array, HAS_PUSHED_CELLS)) {
         Value* stacked = Flex_Head(Value, array);
         for (; stacked != item; ++stacked)
             Move_Cell(PUSH(), stacked);
     }
 
+    Decay_Stub(array);  // didn't technically need to be managed...
+
 } finished: {
 
-    Init_Unreadable(plug);  // no longer needed, let it be GC'd
+    Stub* stub = Extract_Cell_Handle_Stub(plug);
+    Set_Stub_Unreadable(stub);  // indicate decayed, but skip cleaner
+    GC_Kill_Stub(stub);
+    Init_Unreadable(plug);  // no longer needed
 
     g_ts.top_level = L;  // make the jump deeper into the stack official...
 }}

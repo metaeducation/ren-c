@@ -91,6 +91,16 @@ enum StubFlavorEnum {
 
     FLAVOR_MIN_ANTIFORMS_OK,  //=//// BELOW HERE, ARRAYS CAN HOLD ANTIFORMS
 
+    // The data stack is implemented as an array but has its own special
+    // marking routine.  However, antiforms are legal in the data stack... but
+    // when popping the stack it is checked that the array being popped *into*
+    // allows antiforms.
+    //
+    // (This is also used by "PLUG" cells which preserve the datastack, along
+    // with some additional values.)
+    //
+    FLAVOR_DATASTACK = FLAVOR_MIN_ANTIFORMS_OK,
+
     // This indicates this Flex represents the "varlist" of a context (which
     // is interchangeable with the identity of the varlist itself).  A second
     // Flex can be reached from it via the LINK() in the Array Stub, which
@@ -98,7 +108,7 @@ enum StubFlavorEnum {
     //
     // See notes on Context for further details about what a context is.
     //
-    FLAVOR_VARLIST = FLAVOR_MIN_ANTIFORMS_OK,
+    FLAVOR_VARLIST,
 
     FLAVOR_PARAMLIST = FLAVOR_VARLIST,  // review
 
@@ -123,16 +133,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_PATCH,
 
-    // The data stack is implemented as an array but has its own special
-    // marking routine.  However, antiforms are legal in the data stack... but
-    // when popping the stack it is checked that the array being popped *into*
-    // allows antiforms.
-    //
-    FLAVOR_DATASTACK,
-
-    FLAVOR_PLUG,
-
-    FLAVOR_MAX_HOLDS_CELLS = FLAVOR_PLUG,  //=//// ^-- WIDTH IS sizeof(Cell)
+    FLAVOR_MAX_HOLDS_CELLS = FLAVOR_PATCH,  //=//// ^-- WIDTH IS sizeof(Cell)
 
     // For the moment all Flexes that don't store Cells or or byte data of
     // WIDTH=1 store items of size pointer.

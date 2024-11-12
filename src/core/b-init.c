@@ -479,7 +479,7 @@ static void Init_System_Object(
     DECLARE_ATOM (result);
     if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         panic (result);
-    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(result), SYM_DONE))
+    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(result), SYM_END))
         panic (result);
 
     // Init_Action_Adjunct_Shim() made Root_Action_Adjunct as a bootstrap hack
@@ -771,6 +771,8 @@ void Startup_Core(void)
     //
     Startup_Utf8_Errors();
 
+    Startup_Yielder_Errors();
+
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
   //=//// INITIALIZE SYSTEM.CONTEXTS.LIB //////////////////////////////////=//
@@ -859,7 +861,7 @@ void Startup_Core(void)
         "sys.util:", Sys_Util_Module,
 
         "wrap*", Sys_Util_Module, rebQ(&boot->system_util),
-        "if not equal? '~done~",
+        "if not equal? '~end~",
           "evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
             "[fail -{sys.util}-]",
 
@@ -986,6 +988,7 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Data_Stack();
 
+    Shutdown_Yielder_Errors();
     Shutdown_Utf8_Errors();
     Shutdown_Stackoverflow();
     Shutdown_Typesets();

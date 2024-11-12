@@ -42,8 +42,6 @@ Internal: [
     ;
     stack-overflow:     "stack overflow"
 
-    not-done:           "reserved for future use (or not yet implemented)"
-
     no-memory:          ["not enough memory:" :arg1 "bytes"]
 
     io-error:           "problem with IO"
@@ -90,6 +88,10 @@ Script: [
 
     collectable-bound:  ["Collectable" :arg1 "bound, use :PREBOUND if intended"]
     assertion-failure:  ["assertion failure:" :arg1]
+
+    ; NOTE: Preallocated error for enumeration
+    ;
+    done-enumerating:   "Enumeration is complete, no more values to YIELD"
 
     ; NOTE: Preallocated errors for quick UTF-8 failing
     ;

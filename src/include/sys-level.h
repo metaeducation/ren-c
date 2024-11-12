@@ -253,6 +253,11 @@ INLINE Element* Evaluator_Level_Current(Level* L) {
 #define Force_Level_Varlist_Managed(L) \
     Set_Node_Managed_Bit((L)->varlist)
 
+INLINE VarList* Level_Varlist(Level* L) {
+    assert(not Is_Level_Fulfilling(L));
+    return u_cast(VarList*, L->varlist);
+}
+
 
 // The "phase" slot of a FRAME! value is the second node pointer in PAYLOAD().
 // If a frame value is non-archetypal, this slot may be occupied by a String*
@@ -506,6 +511,8 @@ INLINE void Update_Expression_Start(Level* L) {
 
 
 INLINE void Drop_Level_Unbalanced(Level* L) {
+    assert(TOP_LEVEL == L);
+    g_ts.top_level = L->prior;
     Drop_Level_Core(L);
 }
 

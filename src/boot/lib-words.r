@@ -100,6 +100,7 @@ end  ; must be last (SYM_END referred to by GET_VAR() in %n-parse3.c)
 ; definitional forms as DEFINITIONAL-RETURN, DEFINITIONAL-BREAK, ...
 #return
 #break
+yield
 continue
 stop
 quit

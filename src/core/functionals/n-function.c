@@ -661,7 +661,7 @@ DECLARE_NATIVE(definitional_return)
         gather_args = Lib(OKAY);
     }
     else
-        return FAIL("RETURN/RUN requires action, frame, or <redo> as argument");
+        return FAIL("RETURN:RUN requires action, frame, or <redo> as argument");
 
     // We need to cooperatively throw a restart instruction up to the level
     // of the frame.  Use REDO as the throw label that Eval_Core() will

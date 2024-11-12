@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2022 Ren-C Open Source Contributors
+// Copyright 2020-2024 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -31,20 +31,137 @@
 #include "sys-core.h"
 
 
+//
+//  Startup_Yielder_Errors: C
+//
+void Startup_Yielder_Errors(void)
+{
+    ensure(nullptr, g_error_done_enumerating) = Init_Error(
+        Alloc_Value(),
+        Error_Done_Enumerating_Raw()
+    );
+}
+
+
+//
+//  Shutdown_Yielder_Errors: C
+//
+void Shutdown_Yielder_Errors(void)
+{
+    rebReleaseAndNull(&g_error_done_enumerating);
+}
+
+
+//
+//  Is_Error_Done_Signal: C
+//
+bool Is_Error_Done_Signal(const Cell* c) {
+    assert(Cell_Heart(c) == REB_ERROR);
+
+    ERROR_VARS *vars = ERR_VARS(Cell_Error(c));
+    if (not Is_Word(&vars->id))
+        return false;
+    return Cell_Word_Id(&vars->id) == SYM_DONE_ENUMERATING;
+}
+
+
+//
+//  /done: native [
+//
+//  "Give back a raised error with the id DONE-ENUMERATING (pass to YIELD)"
+//
+//      return: [raised?]
+//  ]
+//
+DECLARE_NATIVE(done) {
+    INCLUDE_PARAMS_OF_DONE;
+
+    Copy_Cell(OUT, g_error_done_enumerating);
+    return Raisify(OUT);
+}
+
+
+//
+//  /done?: native:intrinsic [
+//
+//  "Detect whether argument is the DONE-ENUMERATING raised error"
+//
+//      return: [logic?]
+//      ^atom
+//  ]
+//
+DECLARE_NATIVE(done_q) {
+    INCLUDE_PARAMS_OF_DONE_Q;
+
+    DECLARE_ELEMENT (meta);
+    Get_Meta_Atom_Intrinsic(meta, LEVEL);
+
+    if (not Is_Meta_Of_Raised(meta))
+        return nullptr;
+
+    return LOGIC(Is_Error_Done_Signal(meta));
+}
+
+
+
 enum {
     IDX_YIELDER_BODY = IDX_INTERPRETED_BODY,  // see Make_Interpreted_Action()
-    IDX_YIELDER_MODE = 2,  // can't be frame spare (that's reset each call!)
-    IDX_YIELDER_LAST_YIELDER_CONTEXT = 3,  // frame stack fragment to resume
-    IDX_YIELDER_LAST_YIELD_RESULT = 4,  // so that `z: yield 1 + 2` is useful
-    IDX_YIELDER_PLUG = 5,  // saved if you YIELD, captures data stack etc.
-    IDX_YIELDER_META_OUT = 6,  // whatever L->out was when interrupted
+    IDX_YIELDER_ORIGINAL_FRAME,  // varlist identity to steal on resume
+    IDX_YIELDER_PLUG,  // saved when you YIELD (captures data stack etc.)
+    IDX_YIELDER_META_YIELDED,  // the argument YIELD was passed
     IDX_YIELDER_MAX
 };
 
+//=//// YIELDER STATE BYTE (DIFFERENT: VERY LIMITED!) /////////////////////=//
+//
+// The STATE byte in a Level is usually quite useful to continuation-based
+// functions, to know what "mode" they are in.  They always start at STATE_0
+// and then bump the STATE along through various steps, until they calculate
+// a final result and return it in OUT.
+//
+// But Yielders (and Generators) are weird, because the same "conceptual"
+// function is being called and returning a value in OUT many times.  Each
+// call starts over at STATE_0.  This means the actual knowledge of where
+// things are in a particular yielder instance's process has to be stored
+// in the Details array, in order to persist between invocations.
+//
+// So really, there's only two state bytes.  One indicates a new invocation
+// that has to check to see if the Details array contains information
+// suggests it should start running the body or resume it.  And the other
+// is the state an invocation goes to when it is in flight, and needs to
+// catch YIELDs or termination of the body.
+//
 enum {
-    ST_YIELDER_WAS_INVOKED = 0,
-    ST_YIELDER_IS_YIELDING,
+    ST_YIELDER_INVOKED = 0,  // could be initial invocation, or subsequent
     ST_YIELDER_RUNNING_BODY
+};
+
+
+//=//// YIELD STATE BYTE //////////////////////////////////////////////////=//
+//
+// The YIELD statement itself is simpler.  When it gets called, it knows its
+// associated YIELDER based on the "Coupling" stored in the Action Cell.
+// So it suspends the stack state between it and the yielder and puts that
+// suspended "plug" into the yielder's Details, while its own Level gets
+// stored as part of the plug.
+//
+// When the plug is restored by the next call to the yielder, it pushes the
+// YIELD's Level back on the stack.  That might seem like a good time for
+// Yielder_Dispatcher() to return the yield_level->out, to signal that the
+// YIELD has finished so it doesn't need a Trampoline bounce.  But the
+// Action_Executor() is not expecting the Level to change out from under
+// it (at time of writing), unless it returns BOUNCE_CONTINUE.  So there has
+// to be another state of ST_YIELD_SUSPENDED for the Yield's Dispatcher to get
+// called with and return OUT.
+//
+// (This isn't perfectly efficient, and the balance of making it possible
+// for the Action_Executor() to tolerate returning the TOP_LEVEL's OUT when
+// it is not the Level it dispatched is something that could be considered,
+// but this works for now.)
+//
+enum {
+    ST_YIELD_INITIAL_ENTRY = STATE_0,
+    ST_YIELD_SUSPENDED
 };
 
 
@@ -60,201 +177,290 @@ Bounce Yielder_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
+    assert(L == TOP_LEVEL);
+
     Details* details = Phase_Details(PHASE);
-    Value* mode = Details_At(details, IDX_YIELDER_MODE);
 
-    switch (STATE) {
-      case ST_YIELDER_WAS_INVOKED: goto invoked;
-      case ST_YIELDER_IS_YIELDING: return OUT;
-      case ST_YIELDER_RUNNING_BODY: goto body_finished_or_threw;
-      default: assert(false);
+    Value* body = Details_At(details, IDX_YIELDER_BODY);
+    Value* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
+    Value* plug = Details_At(details, IDX_YIELDER_PLUG);
+    Value* meta_yielded = Details_At(details, IDX_YIELDER_META_YIELDED);
+
+    switch (STATE) {  // Can't use STATE byte for "mode" (see ST_YIELDER enum)
+      case ST_YIELDER_INVOKED: {
+        if (Not_Cell_Readable(original_frame))
+            goto begin_body;  // first run, haven't set original frame yet
+
+        if (Is_Frame(original_frame))
+            goto resume_body_if_not_reentrant;
+
+        if (Is_Blank(original_frame))
+            goto invoke_completed_yielder;
+
+        assert(Is_Trash(original_frame));
+        goto invoke_yielder_that_abruptly_failed; }
+
+      case ST_YIELDER_RUNNING_BODY: {
+        if (Is_Cell_Readable(meta_yielded))  // YIELD is suspending us
+            goto yielding;
+
+        goto body_finished_or_threw; }
+
+      default:
+        assert(false);
     }
 
-  invoked: {  ////////////////////////////////////////////////////////////////
+  begin_body: {  /////////////////////////////////////////////////////////////
 
-    // Because yielders accrue state as they run, more than one can't be in
-    // flight at a time.  Hence what would usually be an "initial entry" of
-    // a new call for other dispatchers, each call is effectively to the same
-    // "instance" of this yielder.  So the Phase_Details() is modified while
-    // running, and it's the `state` we pay attention to.
-
-    if (Is_Quasi_Blank(mode))  // currently on the stack and running
-        return FAIL("Yielder was re-entered");
-
-    if (Is_Boolean(mode)) {  // terminated due to finishing the body or error
-        if (Cell_True(mode))  // terminated due to finishing the body
-            return nullptr;
-
-        return FAIL("Yielder called again after raising an error");
-    }
-
-    if (Is_Frame(mode))  // we were suspended by YIELD, and want to resume
-        goto resume_body;
-
-    assert(Is_Blank(mode));  // set by the YIELDER creation routine
-    goto first_run;
-
-} first_run: {  //////////////////////////////////////////////////////////////
-
-    // Whatever we pass through here as the binding has to stay working,
-    // because it will be threaded and preserved in variables by the
-    // running code (also, it's the binding of the YIELD statement, which
-    // needs to be able to find the right frame).
+    // 1. Many calls can be made to a yielder, with each call having a new
+    //    FRAME!'s worth of arguments (and a new VarList identity for that
+    //    frame).  However, when we poke an identity into the definitional
+    //    YIELDs that are associated with a yielder, that YIELD could be
+    //    copied or stowed places besides in the Yielder's frame...and
+    //    they need to still work.  So resumptions need to take over the
+    //    original VarList identity each time, moving their arguments in to
+    //    overwrite the last call.  Stow that original VarList in Details.
     //
-    // If there is no yield, we want a callback so we can mark the
-    // generator as finished.
+    // 2. We can't fire-and-forget to run the yielder body, because we have
+    //    to clean up the Details array on completion or a throw/failure.
+    //    That cleanup isn't just to free things up for the GC, but also to
+    //    make sure future attempts to invoke the yielder see information in
+    //    the Details array telling them it has finished.
     //
-    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
+    // 3. We use CONTINUE() instead of DELEGATE() because we need a call
+    //    back when the body finishes running.  The result of the body
+    //    evaluation is not used, so we write it into SPARE (which must be
+    //    preserved in suspension).
 
-    Init_Quasi_Blank(mode);  // indicate "running"
+    assert(Not_Cell_Readable(original_frame));
+    Force_Level_Varlist_Managed(L);
+    Init_Frame(original_frame, Level_Varlist(L), Level_Label(L));  // [1]
+
+    assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_YIELD);
+    Value* cell = Level_Arg(L, 1);
+    assert(Is_Nothing(cell));  // YIELD is a local, initialized to nothing
+    Init_Action(
+        cell,
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_YIELD))),
+        Canon(YIELD),  // relabel (the YIELD in lib is a tripwire)
+        Level_Varlist(L)  // extant YIELDs hold original varlist [1]
+    );
+
+    assert(Is_Block(body));  // can mutate (only one call)
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
+    BINDING(body) = L->varlist;
+
     STATE = ST_YIELDER_RUNNING_BODY;
 
-    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // can't resume after failure
+    Enable_Dispatcher_Catching_Of_Throws(L);  // need to finalize on throws [2]
+    return CONTINUE(SPARE, body);  // need finalize, body result discarded [3]
 
-    return CONTINUE_CORE(
-        OUT,  // body evaluative result
-        LEVEL_MASK_NONE,
-        cast(VarList*, L->varlist),  // binding
-        body
-    );
+} yielding: {  ///////////////////////////////////////////////////////////////
 
-} resume_body: {  ////////////////////////////////////////////////////////////
+    // When YIELD is called, it unplugs the stack and stores it in the
+    // YIELDER_PLUG slot of the Yielder's Details.  After it has done this,
+    // the Yielder_Dispatcher()'s Level becomes the top of the stack, and
+    // gets bounced to, and it's what bubbles the value in OUT.
 
-    assert(Is_Frame(mode));
+    if (Not_Cell_Readable(plug)) {  // no plug, must be YIELD of a RAISED...
+        assert(Is_Meta_Of_Raised(meta_yielded));
+
+        if (Is_Error_Done_Signal(meta_yielded)) {
+            // don't promote to failure, just consider it finished
+        }
+        else {  // all other raised errors promoted to failure
+            Init_Thrown_Failure(L, Cell_Error(meta_yielded));
+        }
+        goto body_finished_or_threw;
+    }
+
+    assert(not Is_Meta_Of_Raised(meta_yielded));
+    assert(Is_Handle(plug));
+
+    Copy_Cell(OUT, meta_yielded);  // keep meta_yielded around for resume
+    return Meta_Unquotify_Undecayed(OUT);
+
+} resume_body_if_not_reentrant: {  ///////////////////////////////////////////
+
+    // If we're given a request for an invocation that isn't the initial
+    // invocation, and there's no stored "plug" of suspended levels, then
+    // that means the code isn't suspended.  So it's something like:
+    //
+    //     >> g: generator [g]  ; not legal!
+
+    if (Not_Cell_Readable(plug))
+        return FAIL("Can't re-entrantly call a Yielder not in YIELD state");
+
+  //=//// RECLAIM ORIGINAL YIELDER'S VARLIST IDENTITY /////////////////////=//
+
+    // 1. We want the identity of the old varlist to replace this yielder's
+    //    varlist identity.  But we want the frame's values to reflect the
+    //    args the user passed in to this invocation of the yielder.  So move
+    //    those into the old varlist before replacing this varlist with that
+    //    prior identity.
+    //
+    // 2. With variables extracted, we no longer need the varlist for this
+    //    invocation (wrong identity) so we free it, if it isn't GC-managed,
+    //    as it wouldn't get freed otherwise.
+    //
+    // 3. It may seem like there'd be no reason for the varlist to become
+    //    managed (Yielder_Dispatcher() is the native dispatcher, and in this
+    //    case we're not putting the VarList into a YIELD cell or doing
+    //    anything to otherwise manage it).  But things like ENCLOSE or
+    //    other operations can lead to the VarList being managed before it
+    //    gets to Yielder_Dispatcher(), so if it did we can't free it, but
+    //    just decay it minimally down to a Stub.)
+    //
+    // 3. Now that the last call's context varlist is pointing at our current
+    //    invocation level, we point the other way from the level to the
+    //    varlist.  We also update the cached pointer to the rootvar of that
+    //    frame (used to speed up Level_Phase() and Level_Coupling())
 
     Level* yielder_level = L;  // alias for clarity
-    Level* yield_level = Level_Of_Varlist_If_Running(Cell_Varlist(mode));
-    assert(yield_level != nullptr);
+    VarList* original_varlist = Cell_Varlist(original_frame);
 
-    // The YIELD binding pointed to the context varlist we used in the
-    // original yielder dispatch.  That completed--but we need to reuse
-    // the identity for this new yielder frame for the YIELD to find it
-    // in the stack walk.
-    //
-    VarList* last_yielder_varlist = Cell_Varlist(
-        Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
-    );
-
-    // We want the identity of the old varlist to replace this yielder's
-    // varlist identity.  But we want the frame's values to reflect the
-    // args the user passed in to this invocation of the yielder.  So move
-    // those into the old varlist before replacing this varlist with that
-    // prior identity.
-    //
-    const Key* key_tail;
-    const Key* key = Varlist_Keys(&key_tail, last_yielder_varlist);
-    Param* param = ACT_PARAMS_HEAD(Level_Phase(yielder_level));
-    Value* dest = Varlist_Slots_Head(last_yielder_varlist);
-    Value* src = Level_Args_Head(yielder_level);
+    const Key* key_tail;  // move this yielder call frame into old varlist [1]
+    const Key* key = Varlist_Keys(&key_tail, original_varlist);
+    Param* param = ACT_PARAMS_HEAD(Level_Phase(L));
+    Value* dest = Varlist_Slots_Head(original_varlist);
+    Value* src = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))
-            continue;  // don't overwrite locals (including YIELD)0
+            continue;  // don't overwrite locals (including definitional YIELD)
         Move_Cell(dest, src);  // all arguments/refinements are fair game
     }
 
-    // With variables extracted, we no longer need the varlist for this
-    // invocation (wrong identity) so we free it, if it isn't GC-managed,
-    // as it wouldn't get freed otherwise.
-    //
-/*    if (Not_Node_Managed(yielder_level->varlist)) {
-        //
-        // We only want to kill off this one frame; but the GC will think
-        // that we want to kill the whole stack of frames if we don't
-        // zero out the keylist node.
-        //
-        LINK(yielder_level->varlist).custom.node = nullptr;
+    if (Not_Node_Managed(L->varlist))  // don't need it [2]
+        GC_Kill_Flex(L->varlist);
+    else
+        Decay_Stub(L->varlist);  // maybe lingering references [3]
 
-        GC_Kill_Flex(yielder_level->varlist);  // Note: no tracking
-    } */
+    Tweak_Varlist_Keysource(original_varlist, L);  // [4]
+    L->varlist = Varlist_Array(original_varlist);  // rootvar must match
+    L->rootvar = m_cast(Element*, Varlist_Archetype(original_varlist));
 
-    // When the last yielder dropped from the frame stack, it should have
-    // decayed its keysource from a REBFRM* to the action that was
-    // invoked (which could be an arbitrary specialization--e.g. different
-    // variants of the yielder with different f_original could be used
-    // between calls).  This means we can only compare underlying actions.
-    //
-    // Now we have a new REBFRM*, so we can reattach the context to that.
-    //
-/*    assert(
-        ACT_UNDERLYING(cast(Action*, BONUS(KeySource, last_yielder_varlist)))
-        == ACT_UNDERLYING(yielder_level->u.action.original)
-    ); */
-    Tweak_Varlist_Keysource(last_yielder_varlist, yielder_level);
+  //=//// RESUME THE YIELD-SUSPENDED STATE ////////////////////////////////=//
 
-    // Now that the last call's context varlist is pointing at our current
-    // invocation level, we point the other way from the level to the
-    // varlist.  We also update the cached pointer to the rootvar of that
-    // frame (used to speed up Level_Phase() and Level_Coupling())
+    // 1. Restore the in-progress SPARE state that was going on when the YIELD
+    //    ran (e.g. if it interrupted a CASE or something, it could have held
+    //    state in its OUT cell which would be the Level's SPARE, that goes
+    //    away when that Level is destroyed.  We have to is would be what
+    //    the case had in the OUT cell at moment of interrupt,
+    //    which may have been a meaningful state).
     //
-    L->varlist = Varlist_Array(last_yielder_varlist);  // rootvar must match
-    L->rootvar = m_cast(Element*, Varlist_Archetype(last_yielder_varlist));
+    // 2. We could make YIELD appear to return void when we jump back in
+    //    to resume it.  But it's more interesting to return what the YIELD
+    //    received as an arg (YIELD cached it in details before unwinding).
 
-    Value* plug = Details_At(details, IDX_YIELDER_PLUG);
-    Replug_Stack(yield_level, yielder_level, plug);
+    Replug_Stack(yielder_level, plug);
     assert(Not_Cell_Readable(plug));  // Replug wiped, make GC safe
 
-    // Restore the in-progress output cell state that was going on when
-    // the YIELD ran (e.g. if it interrupted a CASE or something, this
-    // would be what the case had in the out cell at moment of interrupt).
-    //
-    Value* out_copy = Details_At(details, IDX_YIELDER_META_OUT);
-    Move_Cell(yielder_level->out, out_copy);
-    Meta_Unquotify_Undecayed(yielder_level->out);
+    Level* yield_level = TOP_LEVEL;
+    assert(yield_level != L);
+    assert(LEVEL_STATE_BYTE(yield_level) == ST_YIELD_SUSPENDED);
 
-    // We could make YIELD appear to return a VOID! when we jump back in
-    // to resume it.  But it's more interesting to return what the YIELD
-    // received as an arg (YIELD cached it in details before jumping)
-    //
-    Move_Cell(
-        yield_level->out,
-        Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT)
-    );
+    Copy_Cell(yield_level->out, meta_yielded);  // resumed YIELD's result [2]
+    Meta_Unquotify_Undecayed(yield_level->out);
+    Init_Unreadable(meta_yielded);
 
-    // If the yielder actually reaches its end (instead of YIELD-ing)
-    // we need to know, so we can mark that it is finished.
-    //
-    assert(Not_Executor_Flag(ACTION, yielder_level, DELEGATE_CONTROL));
+    assert(STATE == ST_YIELDER_INVOKED);
+    STATE = ST_YIELDER_RUNNING_BODY;  // resume where the last YIELD left off
 
-    Init_Quasi_Blank(mode);  // indicate running
-    STATE = ST_YIELDER_RUNNING_BODY;  // set again
-
-    Enable_Dispatcher_Catching_Of_Throws(yielder_level);
-    return BOUNCE_CONTINUE;  // ...resuming where we left off (was DEWIND)
+    Enable_Dispatcher_Catching_Of_Throws(L);  // need to finalize on throws
+    return BOUNCE_CONTINUE;  // see notes in begin_body about CONTINUE + catch
 
 } body_finished_or_threw: {  /////////////////////////////////////////////////
 
-    assert(L == TOP_LEVEL);
-    assert(LEVEL_STATE_BYTE(TOP_LEVEL) != 0);
-
-    // Clean up all the details fields so the GC can reclaim the memory
+    // 1. It's a question as to whether to error or not if you do something
+    //    like THROW out of a yielder or generator:
     //
-    Init_Unreadable(
-        Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
-    );
-    Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_META_OUT));
+    //        catch [g: generator [yield 1, throw 20, print "???"], g, g]
+    //
+    //    Throwing destroys the evaluation state, and you can't bring it
+    //    back to make another call.  But should it be considered a
+    //    successful completion?  A THROW of this nature in a normal
+    //    function running its body would be all right, so we go by that
+    //    and say that cooperative (non-abrupt-fail) throws are valid
+    //    ways to signal the yielder is finished.
+    //
+    // 2. There are some big picture issues about the garbage collection of
+    //    yielders and generators that don't get run to completion--because
+    //    there's really nothing that will clean them up.  Do what we can
+    //    here, at least, and reduce the GC burden when they do complete
+    //    by clearing out references to frames and the original body.
+    //
+    // 3. When you have (g: generator [yield 1, yield 2, append [a b] 'c])
+    //    one might ask if the third call to G should yield [a b c], or
+    //    be like a function and yield trash (~), or just be considered
+    //    an end state.  End state makes the most sense by far.
 
- /*   if (Is_Throwing(L)) {
-        if (Is_Throwing_Failure(L)) {
-            //
-            // We treat a failure as if it was an invalid termination of the
-            // yielder.  Future calls will raise an error.
-            //
-            Init_False(mode);
-        }
-        else {
-            // We treat a throw as if it was a valid termination of the
-            // yielder (e.g. a RETURN which crosses out of it).  Future calls
-            // will return NULL.
-            //
-            Init_True(mode);
-        }
+    assert(Is_Block(body));  // clean up details for GC [2]
+    Init_Unreadable(body);
+    assert(Not_Cell_Readable(plug));
+    assert(Not_Cell_Readable(meta_yielded));
+
+    assert(Is_Frame(original_frame));
+
+    if (not Is_Throwing(L)) {
+        Init_Blank(original_frame);  // body reached end, signal completed [3]
+        goto invoke_completed_yielder;
+    }
+
+    if (Is_Throwing_Failure(L)) {  // abrupt fail inside yielder
+        Init_Trash(original_frame);
         return THROWN;
-    } */
+    }
 
-    Init_True(mode);  // finished successfully
-    return nullptr;  // the true signals return NULL for all future calls
+    const Value* label = VAL_THROWN_LABEL(L);
+    if (
+        Is_Frame(label)
+        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_yield
+        and BINDING(label) == Level_Varlist(L)
+    ){
+        CATCH_THROWN(OUT, L);
+        if (not Is_Meta_Of_Raised(OUT)) {  // THROW:FINAL value
+            Init_Blank(original_frame);
+            return Meta_Unquotify_Undecayed(OUT);  // done, this is last value
+        }
+        if (Is_Error_Done_Signal(OUT)) {
+            Init_Blank(original_frame);
+            goto invoke_completed_yielder;
+        }
+        Init_Trash(original_frame);
+        Init_Thrown_Failure(L, Cell_Error(OUT));
+        return THROWN;
+    }
+
+    Init_Blank(original_frame);  // THROW counts as completion [1]
+    return THROWN;
+
+} invoke_completed_yielder: {  ///////////////////////////////////////////////
+
+    // Our signal of completion is the DONE-ENUMERATING definitional error.
+    // Using a definitional error pushes it out of band from all other
+    // return states, because any other raised error passed to YIELD is
+    // handled as an abrupt failure.
+
+    assert(Is_Blank(original_frame));
+
+    Copy_Cell(OUT, g_error_done_enumerating);
+    return Raisify(OUT);
+
+} invoke_yielder_that_abruptly_failed: {  ////////////////////////////////////
+
+    // A yielder that has abruptly failed currently does not store the error
+    // that caused it to fail.  It conceivably could do so, and then every
+    // subsequent call could keep returning that error...but that might
+    // be misleading, suggesting that the error had happened again (when it
+    // may represent something that would no longer be an error if the same
+    // operation were tried).  Also, holding the error would prevent it from
+    // garbage collecting.  So we instead just report a generic error about
+    // a previous failure...which is probably better than conflating it
+    // with saying that the yielder is done.
+
+    assert(Is_Trash(original_frame));
+
+    return FAIL("Can't run a Yielder that has abruptly failed");
 }}
 
 
@@ -267,41 +473,36 @@ Bounce Yielder_Dispatcher(Level* const L)
 //          [block!]
 //      body "Code containing YIELD statements"
 //          [block!]
+//      ; :resettable  ; should yielders offer a reset facility?
 //  ]
 //
 DECLARE_NATIVE(yielder)
+//
+// 1. Having the generated yielder offer a :RESET that puts it back to the
+//    initial state might be a useful feature.  Though not all generators
+//    are resettable in terms of their semantics--just putting the function
+//    back to the initial state is no guarantee that's enough that it can
+//    do the enumeration again.
 {
     INCLUDE_PARAMS_OF_YIELDER;
 
     Element* spec = cast(Element*, ARG(spec));
-
-    // We start by making an ordinary-seeming interpreted function, but that
-    // has a local "yield" which is bound to the frame upon execution.
-    //
-    Value* body = rebValue("compose [",
-        "let yield: couple lib.definitional-yield/ coupling of return/",
-        "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
-    "]");
+    Element* body = cast(Element*, ARG(body));
 
     Phase* yielder = Make_Interpreted_Action_May_Fail(
         spec,
-        cast(Element*, body),
-        MKF_RETURN,  // give it a RETURN
+        body,  // relativized and put in Details array at IDX_YIELDER_BODY
+        MKF_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
         &Yielder_Dispatcher,
         IDX_YIELDER_MAX  // details array capacity
     );
-    rebRelease(body);
 
     Details* details = Phase_Details(yielder);
 
-    assert(Is_Block(Array_At(details, IDX_YIELDER_BODY)));
-    Init_Blank(Details_At(details, IDX_YIELDER_MODE));  // starting
-    Init_Unreadable(
-        Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
-    );
-    Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
+    assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
+    Init_Unreadable(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_META_OUT));
+    Init_Unreadable(Details_At(details, IDX_YIELDER_META_YIELDED));
 
     return Init_Action(OUT, yielder, ANONYMOUS, UNBOUND);
 }
@@ -312,56 +513,73 @@ DECLARE_NATIVE(yielder)
 //
 //      return: "Arity-0 action you can call repeatedly until it yields NULL"
 //          [action?]
+//      :spec [] "internal use only"
 //      body "Code containing YIELD statements"
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(generator)
+DECLARE_NATIVE(generator)  // could also be made in LIB with SPECIALIZE
 {
     INCLUDE_PARAMS_OF_GENERATOR;
 
-    return rebValue(Canon(YIELDER), EMPTY_BLOCK, ARG(body));
+    assert(STATE == STATE_0);
+
+    Copy_Cell(ARG(spec), EMPTY_BLOCK);
+    USED(ARG(body));
+    return N_yielder(level_);
 }
 
 
 //
 //  /definitional-yield: native [
 //
-//  "Function used with GENERATOR and YIELDER to give back results"
+//  "Function used with GENERATOR and YIELDER to emit results"
 //
-//      return: "Same value given as input (NULL/VOID enclosed in pack)"
-//          [any-value?]
-//      value "Value to yield"
-//          [any-value?]
+//      return: "Same atom given as input is returned when YIELD resumes"
+//          [any-atom?]
+//      ^atom "Atom to yield, or the 'done' raised error to signal completion"
+//          [any-atom?]
+//      :final "Yield, but also signal the yielder or generator is done"
 //  ]
 //
 DECLARE_NATIVE(definitional_yield)
 //
-// The benefits of distinguishing NULL as a generator result meaning the body
-// has completed are considered to outweigh the ability to yield pure NULL.
-// A modified generator that yields quoted values and unquotes on exit points
-// can be used to work around this.
+// 1. It would be possible to give yielders a definitional RETURN, with the
+//    meaning "YIELD but then be finished".  e.g.
+//
+//        yielder [x] [if x = 10 [return x, ~<not run>~] yield 20]
+//        =>
+//        yielder [x] [if x = 10 [yield x, yield done, ~<not run>~] yield 20]
+//
+//    But the usefulness of having a slightly shorter way of saying that is
+//    limited, compared to having visibility of the RETURN of any enclosing
+//    function to use inside of yielders and generators.  So instead YIELD
+//
+//    Instead YIELD offers a :FINAL refinement, which can be specialized
+//    if you really want to.
+//
+//        yielder [x] [
+//            let return: yield:final/
+//            if x = 10 [return x, ~<not run>~]
+//            yield 20
+//        ]
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_YIELD;
 
-    enum {
-        ST_YIELD_WAS_INVOKED = 0,
-        ST_YIELD_YIELDED
-    };
-
     switch (STATE) {
-      case ST_YIELD_WAS_INVOKED: goto invoked;
-      case ST_YIELD_YIELDED: return OUT;
+      case ST_YIELD_INITIAL_ENTRY:
+        break;
+
+      case ST_YIELD_SUSPENDED:  // see definition for why this state exists
+        return OUT;
+
       default: assert(false);
     }
 
-  invoked: {  ////////////////////////////////////////////////////////////////
+    Element* meta = cast(Element*, ARG(atom));
 
-    assert(LEVEL == TOP_LEVEL);  // LEVEL is an implicit arg to natives
-    assert(
-        Level_Phase(LEVEL)
-        == ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_YIELD)))
-    );
+  //=//// EXTRACT YIELDER FROM DEFINITIONAL YIELD'S CELL ///////////////////=//
+
     Level* yield_level = LEVEL;  // ...make synonyms more obvious
 
     VarList* yielder_context = maybe Level_Coupling(yield_level);
@@ -370,79 +588,60 @@ DECLARE_NATIVE(definitional_yield)
 
     Level* yielder_level = Level_Of_Varlist_May_Fail(yielder_context);
     if (not yielder_level)
-        return FAIL("Cannot yield to generator that has completed");
+        return FAIL("Cannot yield to generator that completed or errored");
+
+    if (LEVEL_STATE_BYTE(yielder_level) != ST_YIELDER_RUNNING_BODY)
+        return FAIL("YIELD called when body of bound yielder is not running");
 
     Phase* yielder_phase = Level_Phase(yielder_level);
     assert(ACT_DISPATCHER(yielder_phase) == &Yielder_Dispatcher);
 
-    // !!! How much sanity checking should be done before doing the passing
-    // thru of the NULL?  Err on the side of safety first, and don't let NULL
-    // be yielded to the unbound archetype or completed generators.
-    //
-    if (Is_Nulled(ARG(value)))
-        return nullptr;
-
     Details* yielder_details = Phase_Details(yielder_phase);
-
-    // Evaluations will frequently use the L->out to accrue state, perhaps
-    // preloading with something (like NULL) that is expected to be there.
-    // But we're interrupting the frame and returning what YIELD had instead
-    // of that evaluative product.  It must be preserved.  But since we can't
-    // put END values in blocks, use the hidden block to indicate that
-    //
-    Value* out_copy = Details_At(yielder_details, IDX_YIELDER_META_OUT);
-    Copy_Meta_Cell(out_copy, yielder_level->out);
 
     Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
     assert(Not_Cell_Readable(plug));
-    Unplug_Stack(plug, yield_level, yielder_level);
 
-    // We preserve the fragment of call stack leading from the yield up to the
-    // yielder in a FRAME! value that the yielder holds in its `details`.
-    // The garbage collector should notice it is there, and mark it live up
-    // until the nullptr that we put at the root.
+    Value* meta_yielded = Details_At(yielder_details, IDX_YIELDER_META_YIELDED);
+    assert(Not_Cell_Readable(meta_yielded));
+
+  //=//// IF YIELD:FINAL OR RAISED ERROR, THROW YIELD'S ARGUMENT //////////=//
+
+    // If we are doing a YIELD with no intent to resume, then we can just use
+    // a conventional BOUNCE_THROWN mechanic, which destroys the stack levels
+    // as it climbs up the trampoline.  So that works for either YIELD:FINAL
+    // of one value, YIELD DONE, or YIELD of any other raised error which the
+    // yielder will promote to an abrupt failure.
+
+    if (Is_Meta_Of_Raised(meta) or REF(final)) {  // not resumable, throw
+        Init_Action(
+            SPARE,  // use as label for throw
+            ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_YIELD))),
+            Canon(YIELD),
+            Level_Varlist(yielder_level)
+        );
+        return Init_Thrown_With_Label(LEVEL, meta, stable_SPARE);
+    }
+
+  //=//// PLAIN YIELD MUST "UNPLUG STACK" FOR LATER RESUMPTION ////////////=//
+
+    // 1. Instead of destroying the stack with a throw, we unplug stack Levels
+    //    into a HANDLE! that is a "plug" structure.  Once that plug has been
+    //    formed, the Yielder's Level will be back at the top of the stack to
+    //    return the yielded value.  Future calls to the Yielder can then put
+    //    the Levels back to where this YIELD is at the top again.
     //
-    Value* mode = Details_At(yielder_details, IDX_YIELDER_MODE);
-    assert(Is_Quasi_Blank(mode));  // should be signal for "currently running"
-    Init_Frame(mode, Varlist_Of_Level_Force_Managed(yield_level), ANONYMOUS);
-    Assert_Flex_Managed(Cell_Varlist(mode));
-    assert(Level_Of_Varlist_If_Running(Cell_Varlist(mode)) == yield_level);
+    // 2. The way the Trampoline works at the moment, it has the notion of
+    //    a Level that was in effect when it called the Executor...and then
+    //    even if you rearrange the stack so that Level isn't on the stack
+    //    at all any more (as this Yield won't be), it still checks the
+    //    Level it called with for its state byte, which can't be STATE_0.
+    //    There could be a different BOUNCE_XXX that doesn't check that...
 
-    // We store the frame chain into the yielder, as a FRAME! value.  The
-    // GC of the ACTION's details will keep it alive.
-    //
-    Init_Frame(
-        Details_At(yielder_details, IDX_YIELDER_LAST_YIELDER_CONTEXT),
-        yielder_context,
-        ANONYMOUS
-    );
+    Unplug_Stack(plug, yielder_level, yield_level);  // preserve stack [1]
+    assert(yielder_level == TOP_LEVEL);
 
-    // The Init_Frame() should have managed the yielder_level varlist, which
-    // means that when the yielder does Drop_Level() yielder_context survives.
-    // It should decay the keysource from a REBFRM* to the action paramlist,
-    // but the next run of the yielder will swap in its new REBFRM* over that.
-    //
-    assert(yielder_context == Varlist_Of_Level_Maybe_Unmanaged(yielder_level));
-    Assert_Flex_Managed(yielder_level->varlist);
+    Copy_Cell(meta_yielded, meta);  // atom argument is already ^META
 
-    // We don't only write the yielded value into the output slot so it is
-    // returned from the yielder.  We also stow an extra copy of the value
-    // into the yielder details, which we use to make it act act as the
-    // apparent return result of the YIELD when the yielder is called again.
-    //
-    //    x: yield 1 + 2
-    //    print [x]  ; could be useful if this was 3 upon resumption, right?
-    //
-    Copy_Cell(yielder_level->out, ARG(value));
-    Move_Cell(
-        Details_At(yielder_details, IDX_YIELDER_LAST_YIELD_RESULT),
-        ARG(value)
-    );
-
-    /* REBACT *target_fun = FRM_UNDERLYING(target_frame); */
-
-    LEVEL_STATE_BYTE(yielder_level) = ST_YIELDER_IS_YIELDING;
-
-    STATE = ST_YIELD_YIELDED;
-    return BOUNCE_CONTINUE;  // was DEWIND
-}}
+    STATE = ST_YIELD_SUSPENDED;  // can't BOUNCE_CONTINUE with STATE_0 [2]
+    return BOUNCE_CONTINUE;  // now continues yielder_level, not yield_level
+}

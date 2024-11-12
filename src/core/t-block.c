@@ -1636,8 +1636,6 @@ DECLARE_NATIVE(glom)
 //
 void Assert_Array_Core(const Array* a)
 {
-    assert(Stub_Flavor(a) != FLAVOR_DATASTACK);  // has special handling
-
     Assert_Flex_Basics_Core(a);  // not marked free, etc.
 
     if (not Stub_Holds_Cells(a))
@@ -1647,6 +1645,15 @@ void Assert_Array_Core(const Array* a)
     Offset n;
     Length len = Array_Len(a);
     for (n = 0; n < len; ++n, ++item) {
+        if (Stub_Flavor(a) == FLAVOR_DATASTACK) {
+            if (Is_Cell_Poisoned(item))
+                continue;  // poison okay in datastacks
+        }
+        if (Stub_Flavor(a) == FLAVOR_DETAILS) {
+            if (not Is_Cell_Readable(item))
+                continue;  // unreadable cells ok in details
+        }
+
         Assert_Cell_Readable(item);
         if (HEART_BYTE(item) >= REB_MAX) {
             printf("Invalid HEART_BYTE() at index %d\n", cast(int, n));

@@ -293,7 +293,7 @@ Source* Startup_Natives(const Element* boot_natives)
     DECLARE_ATOM (discarded);
     if (Eval_Any_List_At_Throws(discarded, skipped, lib))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(discarded), SYM_DONE))
+    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(discarded), SYM_END))
         panic (discarded);
 
     assert(

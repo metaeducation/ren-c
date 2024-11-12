@@ -43,10 +43,11 @@
 #define Tweak_Cell_Handle_Stub          Tweak_Cell_Node1
 #define Extract_Cell_Handle_Stub(c)     cast(Stub*, Cell_Node1(c))
 
-#define CELL_HANDLE_LENGTH_U(v)         PAYLOAD(Any, (v)).second.u
+#define CELL_HANDLE_LENGTH_U(c)         EXTRA(Any, (c)).u
 
-#define CELL_HANDLE_CDATA_P(v)          EXTRA(Any, (v)).p
-#define CELL_HANDLE_CFUNC_P(v)          EXTRA(Any, (v)).cfunc
+#define CELL_HANDLE_CDATA_P(c)          PAYLOAD(Any, (c)).second.p
+#define CELL_HANDLE_CFUNC_P(c)          PAYLOAD(Any, (c)).second.cfunc
+#define CELL_HANDLE_NODE_P(c)           PAYLOAD(Any, (c)).second.node
 
 
 INLINE bool Is_Handle_Cfunc(const Cell* v) {
@@ -72,12 +73,23 @@ INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
 
 INLINE uintptr_t Cell_Handle_Len(const Cell* v) {
     assert(not Is_Handle_Cfunc(v));
-    return CELL_HANDLE_LENGTH_U(Extract_Cell_Handle_Canon(v));
+    const Cell* canon = Extract_Cell_Handle_Canon(v);
+    assert(Get_Cell_Flag(canon, DONT_MARK_NODE2));
+    return CELL_HANDLE_LENGTH_U(canon);
 }
 
 INLINE void* Cell_Handle_Void_Pointer(const Cell* v) {
     assert(not Is_Handle_Cfunc(v));
-    return CELL_HANDLE_CDATA_P(Extract_Cell_Handle_Canon(v));
+    const Cell* canon = Extract_Cell_Handle_Canon(v);
+    assert(Get_Cell_Flag(canon, DONT_MARK_NODE2));
+    return CELL_HANDLE_CDATA_P(canon);
+}
+
+INLINE const Node* Cell_Handle_Node(const Cell* v) {
+    assert(not Is_Handle_Cfunc(v));
+    const Cell* canon = Extract_Cell_Handle_Canon(v);
+    assert(Not_Cell_Flag(canon, DONT_MARK_NODE2));
+    return CELL_HANDLE_NODE_P(canon);
 }
 
 #define Cell_Handle_Pointer(T, v) \
@@ -145,6 +157,22 @@ INLINE Element* Init_Handle_Cfunc(
     return out;
 }
 
+INLINE Element* Init_Handle_Node(
+    Init(Element) out,
+    const Node* node
+){
+    Reset_Cell_Header_Untracked(
+        out,
+        FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_DONT_MARK_NODE1
+    );
+  #if ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
+  #endif
+    CELL_HANDLE_NODE_P(out) = node;
+    CELL_HANDLE_LENGTH_U(out) = 1;
+    return out;
+}
+
 INLINE void Init_Handle_Managed_Common(
     Init(Element) out,
     uintptr_t length,
@@ -196,7 +224,7 @@ INLINE Element* Init_Handle_Cdata_Managed(
     return out;
 }
 
-INLINE Element* Init_Handle_Cdata_Managed_Cfunc(
+INLINE Element* Init_Handle_Cfunc_Managed(
     Init(Element) out,
     CFunction* cfunc,
     RebolHandleCleaner* cleaner
@@ -209,3 +237,21 @@ INLINE Element* Init_Handle_Cdata_Managed_Cfunc(
     CELL_HANDLE_CFUNC_P(Stub_Cell(stub)) = cfunc;
     return out;
 }
+
+INLINE Element* Init_Handle_Node_Managed(
+    Init(Element) out,
+    const Node* node,
+    RebolHandleCleaner* cleaner
+){
+    Init_Handle_Managed_Common(out, 1, cleaner);
+
+    // Leave the non-singular cdata corrupt; clients should not be using
+
+    Cell* cell = Stub_Cell(Extract_Cell_Handle_Stub(out));
+    Clear_Cell_Flag(cell, DONT_MARK_NODE2);
+    CELL_HANDLE_NODE_P(cell) = node;
+    return out;
+}
+
+#define Handle_Holds_Node(c) \
+    Cell_Has_Node2(Stub_Cell(Extract_Cell_Handle_Stub(c)))

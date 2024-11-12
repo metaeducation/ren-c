@@ -1673,7 +1673,7 @@ DECLARE_NATIVE(subparse)
                 goto post_match_processing;
 
               case SYM_LIMIT:
-                fail (Error_Not_Done_Raw());
+                fail ("LIMIT not implemented");
 
               case SYM__Q_Q:
                 Print_Parse_Index(L);

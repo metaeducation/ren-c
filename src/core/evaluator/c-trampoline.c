@@ -533,15 +533,9 @@ void Startup_Trampoline(void)
 void Shutdown_Trampoline(void)
 {
     assert(TOP_LEVEL == BOTTOM_LEVEL);
-
     assert(Is_Pointer_Corrupt_Debug(BOTTOM_LEVEL->prior));  // corrupt [1]
-    BOTTOM_LEVEL->prior = nullptr;
 
-  blockscope {
-    Level* L = TOP_LEVEL;
-    Drop_Level_Core(L);  // can't Drop_Level()/Drop_Level_Unbalanced() [2]
-    assert(not TOP_LEVEL);
-  }
+    Drop_Level_Core(TOP_LEVEL);  // can't do balance check [2]
 
     g_ts.top_level = nullptr;
     g_ts.bottom_level = nullptr;
@@ -608,7 +602,7 @@ void Shutdown_Trampoline(void)
 //  Drop_Level_Core: C
 //
 void Drop_Level_Core(Level* L) {
-    assert(TOP_LEVEL == L);
+    possibly(L != TOP_LEVEL);  // e.g. called by Clean_Plug_Handle()
 
     if (
         Is_Throwing(L)
@@ -644,8 +638,6 @@ void Drop_Level_Core(Level* L) {
         Corrupt_Pointer_If_Debug(L->alloc_value_list);
       #endif
     }
-
-    g_ts.top_level = L->prior;
 
     // Note: Free_Feed() will handle feeding a feed through to its end (which
     // may release handles/etc), so no requirement Level_At(L) be at END.

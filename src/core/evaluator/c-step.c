@@ -187,7 +187,7 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 Bounce Inert_Stepper_Executor(Level* L)
 {
     enum {
-        ST_INERT_STEPPER_INITIAL_ENTRY = 0,
+        ST_INERT_STEPPER_INITIAL_ENTRY = STATE_0,
         ST_INERT_STEPPER_FINISHED
     };
 

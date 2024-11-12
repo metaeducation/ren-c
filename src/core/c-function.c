@@ -114,6 +114,11 @@ void Push_Keys_And_Holes_May_Fail(
         Init_Unreadable(PUSH());  // becomes parameter (explicitly or implicit)
     }
 
+    if (*flags & MKF_YIELD) {
+        Init_Word(PUSH(), Canon(YIELD));
+        Init_Nothing(PUSH());  // locals are initialized as nothing
+    }
+
     enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
 
     const Element* tail;
@@ -307,6 +312,13 @@ void Push_Keys_And_Holes_May_Fail(
             and pclass != PARAMCLASS_RETURN
         ){
             fail ("Generator provides RETURN:, use LAMBDA if not desired");
+        }
+
+        if (
+            (*flags & MKF_YIELD)
+            and Symbol_Id(symbol) == SYM_YIELD
+        ){
+            fail ("Generator provides YIELD, don't include in spec");
         }
 
         // Because FUNC does not do any locals gathering by default, the main

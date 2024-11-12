@@ -187,7 +187,7 @@ for-each 'info all-protos [
 
 append output-buffer unspaced [
     newline
-    "'~done~  ; C code checks for this eval product" newline
+    "'~end~  ; C code checks for this eval product" newline
     newline
 ]
 

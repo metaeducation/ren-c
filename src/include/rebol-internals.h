@@ -513,7 +513,7 @@ enum Boot_Levels {
 // Modes allowed by Make_Function:
 enum {
     MKF_RETURN      = 1 << 0,   // built-in FUNC-style RETURN (vs LAMBDA)
-    MKF_1           = 1 << 1,
+    MKF_YIELD       = 1 << 1,
     MKF_PARAMETER_SEEN = 1 << 2,  // text will be description until this
 
     // These flags are set during the process of spec analysis.  It helps
