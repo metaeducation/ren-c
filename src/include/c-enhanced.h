@@ -916,10 +916,9 @@
 #if NO_CPLUSPLUS_11
     #define possibly(expr)  NOOP
 #else
-    template <typename T>
-    constexpr void Possibly_Helper() {}
-
-    #define possibly(expr)  (void)(Possibly_Helper<decltype(expr)>())
+    #define possibly(expr) \
+        static_assert(std::is_convertible<decltype((expr)), bool>::value, \
+            "possibly() expression must be convertible to bool")
 #endif
 
 

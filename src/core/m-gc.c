@@ -279,7 +279,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         }
     }
     else if (Stub_Holds_Cells(s)) {
-        Array* a = u_cast(Array*, s);
+        Array* a = x_cast(Array*, s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -298,9 +298,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
 
             assert(Is_Stub_Keylist(cast(Stub*, node_BONUS(Node, a))));
 
-            Queue_Mark_Node_Deep(
-                &m_cast(Array*, a)->content.dynamic.bonus.node
-            );
+            Queue_Mark_Node_Deep(&a->content.dynamic.bonus.node);
         }
 
         skip_mark_frame_bonus:

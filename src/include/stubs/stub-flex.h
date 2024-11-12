@@ -508,7 +508,7 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
 #endif
 
 #define Note_Flex_Maybe_Term(f) \
-    possibly(Assert_Flex_Term_If_Needed(f))  // no-op, validates expr
+    possibly(f)  // no-op, validates expr
 
 
 //=//// SETTING FLEX LENGTH/SIZE //////////////////////////////////////////=//

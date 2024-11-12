@@ -55,7 +55,7 @@
 #if TRAMPOLINE_COUNTS_TICKS
     #define TICK g_tick
 #else
-    #define TICK 0  // easier to write TRAMPOLINE_COUNTS_TICKS agnostic code
+    #define TICK u_cast(Tick, 0)  // for TRAMPOLINE_COUNTS_TICKS agnostic code
 #endif
 
 

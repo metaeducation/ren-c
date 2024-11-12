@@ -545,7 +545,7 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
         return nullptr;
     }
 
-    Heart h = u_cast(Heart, MIRROR_BYTE(u_cast(Source*, f)));
+    Heart h = u_cast(Heart, MIRROR_BYTE(c_cast(Source*, f)));
     if (h != REB_0) {  // no length 2 sequence arrays unless mirror
         HEART_BYTE(out) = h;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary
