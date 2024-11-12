@@ -208,8 +208,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
                 //
-                QUOTE_BYTE(L->out) = NOQUOTE_1;
-                Init_Thrown_Failure(TOP_LEVEL, cast(Element*, L->out));
+                Init_Thrown_Failure(TOP_LEVEL, Cell_Error(L->out));
                 L = TOP_LEVEL;
                 goto bounce_on_trampoline;
             }
@@ -357,7 +356,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (cast(void*, bounce));
 
-} ON_ABRUPT_FAILURE(VarList* e) {  ///////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Error* e) {  ///////////////////////////////////////////
 
     // A fail() can happen at any moment--even due to something like a failed
     // memory allocation requested by an executor itself.  These are called
@@ -377,7 +376,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(CTX_TYPE(e) == REB_ERROR);
 
     possibly(L != TOP_LEVEL);  // we give pushed levels chance to clean up [1]
-    Init_Thrown_Failure(TOP_LEVEL, Varlist_Archetype(e));
+    Init_Thrown_Failure(TOP_LEVEL, e);
 
     L = TOP_LEVEL;
 

@@ -717,7 +717,7 @@ INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
 
     Force_Location_Of_Error(error, L);
 
-    Init_Thrown_Failure(L, Varlist_Archetype(error));
+    Init_Thrown_Failure(L, error);
     return BOUNCE_FAIL;  // means we can be renotified
 }
 

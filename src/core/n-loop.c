@@ -1807,8 +1807,7 @@ DECLARE_NATIVE(map)
             Derelativize(PUSH(), v, Cell_List_Binding(SPARE));
     }
     else if (Is_Antiform(SPARE)) {
-        Init_Error(SPARE, Error_Bad_Antiform(SPARE));
-        Init_Thrown_Failure(LEVEL, stable_SPARE);
+        Init_Thrown_Failure(LEVEL, Error_Bad_Antiform(SPARE));
         goto finalize_map;
     }
     else if (Is_Nulled(SPARE)) {

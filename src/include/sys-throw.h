@@ -109,13 +109,11 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
 
 // When failures are put in the throw state, they are the label--not the value.
 //
-INLINE Bounce Init_Thrown_Failure(
-    Level* L,
-    const Value* error  // error may be same as L->out
-){
+INLINE Bounce Init_Thrown_Failure(Level* L, Error* error) {
     UNUSED(L);
-    assert(Is_Error(error));
-    return Init_Thrown_With_Label(TOP_LEVEL, Lib(NULL), error);
+    return Init_Thrown_With_Label(
+        TOP_LEVEL, Lib(NULL), Varlist_Archetype(error)  // error is the "label"
+    );
 }
 
 INLINE void CATCH_THROWN(

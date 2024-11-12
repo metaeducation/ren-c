@@ -218,7 +218,7 @@ unsigned char* API_rebTryAllocBytes(size_t size)
         p = API_rebAllocBytes(size);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return p;
-    } ON_ABRUPT_FAILURE (VarList* e) {
+    } ON_ABRUPT_FAILURE (Error* e) {
         UNUSED(e);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return nullptr;
@@ -2434,7 +2434,7 @@ RebolValue* API_rebRescueWith(
     CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
     return result;
 
-} ON_ABRUPT_FAILURE(VarList* e) {  /////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Error* e) {  /////////////////////////////////////////
 
     Drop_Level(dummy);
 

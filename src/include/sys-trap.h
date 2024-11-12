@@ -32,7 +32,7 @@
 //        //
 //        // code that may trigger a fail() ...
 //        //
-//     } ON_ABRUPT_FAILURE(VarList* e) {
+//     } ON_ABRUPT_FAILURE(Error* e) {
 //        //
 //        // code that handles the error in `e`
 //        //
