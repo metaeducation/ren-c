@@ -104,7 +104,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 
 
 //
-//  Fail_Abruptly_By_Jumping_Stack: C
+//  Fail_Abruptly_Helper: C
 //
 // Trigger failure of an error by longjmp'ing to enclosing RESCUE_SCOPE.  Note
 // that these failures interrupt code mid-stream, so if a Rebol function is
@@ -131,14 +131,10 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 // error than just using a RE_MISC error code, and can be found just as easily
 // to clean up later with a textual search for `fail ("`
 //
-ATTRIBUTE_NO_RETURN void Fail_Abruptly_By_Jumping_Stack(Error* error)
+Error* Fail_Abruptly_Helper(Error* error)
 {
     Assert_Varlist(error);
     assert(CTX_TYPE(error) == REB_ERROR);
-
-  #if FAIL_JUST_ABORTS
-    assert(!"Fail_Abruptly_By_Jumping_Stack() called when FAIL_JUST_ABORTS");
-  #endif
 
     // You can't abruptly fail during the handling of abrupt failure.
     //
@@ -217,22 +213,7 @@ ATTRIBUTE_NO_RETURN void Fail_Abruptly_By_Jumping_Stack(Error* error)
     Erase_Cell(&g_ts.thrown_arg);
     Erase_Cell(&g_ts.thrown_label);
 
-  #if FAIL_JUST_ABORTS
-    panic (nullptr);  // all branches need to do something, this never happens
-  #elif FAIL_USES_TRY_CATCH
-    throw error;
-  #else
-    STATIC_ASSERT(FAIL_USES_LONGJMP);
-
-    // "If the function that called setjmp has exited (whether by return or
-    //  by a different longjmp higher up the stack), the behavior is undefined.
-    //  In other words, only long jumps up the call stack are allowed."
-    //
-    //  http://en.cppreference.com/w/c/program/longjmp
-
-    g_ts.jump_list->error = error;  // longjmp() argument too small for pointer
-    LONG_JUMP(g_ts.jump_list->cpu_state, 1);  // 1 so setjmp() returns nonzero
-  #endif
+    return error;
 }
 
 

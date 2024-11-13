@@ -320,10 +320,34 @@ struct JumpStruct {
 
 
 #if FAIL_JUST_ABORTS
-    #define fail panic
-#else
+
     #define fail(p) do { \
         Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-        Fail_Abruptly_By_Jumping_Stack(Derive_Error_From_Pointer(p)); \
+        panic (Fail_Abruptly_Helper(Derive_Error_From_Pointer(p))); \
     } while (0)
+
+#elif FAIL_USES_TRY_CATCH
+
+    #define fail(p) do { \
+        Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+        throw Fail_Abruptly_Helper(Derive_Error_From_Pointer(p)); \
+    } while (0)
+
+#else
+    STATIC_ASSERT(FAIL_USES_LONGJMP);
+
+    // "If the function that called setjmp has exited (whether by return or
+    //  by a different longjmp higher up the stack), the behavior is undefined.
+    //  In other words, only long jumps up the call stack are allowed."
+    //
+    //  http://en.cppreference.com/w/c/program/longjmp
+
+    #define fail(p) do { \
+        Fail_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+        g_ts.jump_list->error = Fail_Abruptly_Helper( \
+            Derive_Error_From_Pointer(p)  /* longjmp() arg too small */ \
+        ); \
+        LONG_JUMP(g_ts.jump_list->cpu_state, 1);  /* 1 is setjmp() return */ \
+    } while (0)
+
 #endif
