@@ -152,9 +152,8 @@ INLINE bool Is_Trash(Need(const Element*) v)
 // advantage would be being able to leave the reference counting as-is.
 //
 // In the meantime, this just does a Copy and a set of the moved-from location
-// to Trash, where it doesn't worry about overwriting raised errors.  Trash
-// is chosen as a "cheap" choice for initialization that does not create
-// invalid states.
+// to Trash.  Trash is chosen as a "cheap" choice for initialization that does
+// not create invalid states.
 
 INLINE Cell* Move_Cell_Untracked(
     Cell* out,
@@ -162,7 +161,6 @@ INLINE Cell* Move_Cell_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, c, copy_mask);  // Move_Cell() adds track to `out`
-    Suppress_Raised_Warning_If_Debug(c);  // moved error, not dropping it on the floor
     Init_Trash(c);  // erasing cells not safe in general
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
@@ -195,11 +193,6 @@ INLINE Cell* Move_Cell_Untracked(
         return out;
     }
 
-    INLINE Atom* Move_Cell_Overload(Init(Atom) out, Atom* v) {
-        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
-        return out;
-    }
-
     #define Move_Cell(out,v) \
         TRACK(Move_Cell_Overload((out), (v)))
 #endif
@@ -211,7 +204,12 @@ INLINE Cell* Move_Cell_Untracked(
     cast(Element*, Meta_Quotify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
 
 
-// Its cheaper and better for Atoms to leave the result erased.
+// 1. Atoms have an additional concern of potentially moving a raised error.
+//    A warning in the system helps catch cases of overwriting raised errors
+//    without doing so consciously, but that doesn't apply when things are
+//    being moved.  We know atoms shouldn't have "persistent bits", but
+//    Erase_Cell() double checks that...we skip the check here, and by just
+//    overwriting with CELL_MASK_0 we don't get the raised error warning.
 //
 INLINE Atom* Move_Atom_Untracked(
     Atom* out,
@@ -219,8 +217,8 @@ INLINE Atom* Move_Atom_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, a, copy_mask);  // Move_Cell() adds track to `out`
-    Suppress_Raised_Warning_If_Debug(a);  // moved error, not dropping it on the floor
-    Erase_Cell(a);
+    unnecessary(Suppress_Raised_Warning_If_Debug_Untracked(a));  // [1]
+    a->header.bits = CELL_MASK_0;  // atom cells can't have persistent bits
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     a->file = out->file;

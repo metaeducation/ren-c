@@ -827,7 +827,7 @@ DECLARE_NATIVE(all)
 
 } update_out_from_spare: {  //////////////////////////////////////////////////
 
-    Move_Cell(OUT, SPARE);  // leaves SPARE as fresh...good for next step
+    Move_Atom(OUT, SPARE);  // leaves SPARE as fresh...good for next step
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
@@ -1177,7 +1177,7 @@ DECLARE_NATIVE(case)
     Drop_Level(SUBLEVEL);
 
     if (Not_Cell_Erased(SPARE)) {  // prioritize fallout result [4]
-        Move_Cell(OUT, SPARE);
+        Move_Atom(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
@@ -1379,7 +1379,7 @@ DECLARE_NATIVE(switch)
 
     if (Not_Cell_Erased(right)) {  // see remarks in CASE on fallout
         Assert_Cell_Stable(right);
-        Move_Cell(OUT, right);
+        Move_Atom(OUT, right);
         return BRANCHED(OUT);
     }
 

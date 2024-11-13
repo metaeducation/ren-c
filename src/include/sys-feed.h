@@ -200,17 +200,18 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 //
 INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
     Sink(Element) out,
-    const Cell* cell
+    const Value* v
 ){
-    if (Is_Nulled(cell))
-        assert(not Is_Api_Value(cell));  // only internals can be nulled [1]
+    if (Is_Nulled(v))
+        assert(not Is_Api_Value(v));  // only internals can be nulled [1]
 
-    if (QUOTE_BYTE(cell) == ANTIFORM_0) {
-        Copy_Meta_Cell(out, cell);
+    if (QUOTE_BYTE(v) == ANTIFORM_0) {
+        Assert_Cell_Stable(v);
+        Copy_Meta_Cell(out, v);
         Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]
     }
     else
-        Copy_Cell(out, c_cast(Element*, cell));
+        Copy_Cell(out, c_cast(Element*, v));
 
     return out;
 }
@@ -275,7 +276,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(
             &feed->fetched,
-            c_cast(Cell*, feed->p)
+            c_cast(Value*, feed->p)
         );
         rebRelease(single);  // *is* the instruction
         break; }

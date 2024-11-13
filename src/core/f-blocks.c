@@ -184,28 +184,17 @@ Array* Copy_Array_Core_Managed(  // always managed, [1]
 //
 //  Alloc_Tail_Array: C
 //
-// Append an Erased Cell to a Rebol Array Flex at its tail.  Returns the
-// new cell for you to initialize.
+// Append a cell to a Rebol Array Flex at its tail.
+// Returns the new cell for you to initialize.
 //
 // Will use existing memory capacity already in the Flex if it is available,
 // but will expand the Flex if necessary.
 //
-// Note: Updates the termination and tail.
-//
-Element* Alloc_Tail_Array(Array* a)
+Sink(Element) Alloc_Tail_Array(Array* a)
 {
     Expand_Flex_Tail(a, 1);
     Set_Flex_Len(a, Array_Len(a));
-    Element* last = Array_Last(a);
-
-  #if DEBUG_ERASE_ALLOC_TAIL_CELLS
-    if (not Is_Cell_Erased(last)) {
-        Assert_Cell_Writable(last);
-        Erase_Cell(last);  // helps ensure new values written
-    }
-  #endif
-
-    return last;
+    return Array_Last(a);
 }
 
 

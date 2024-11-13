@@ -166,7 +166,7 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 #define Not_Cell_Erased(c)  (not Is_Cell_Erased(c))
 
 
-//=//// CELL READABLE/WRITABLE CHECKS (don't apply in release builds) /////=//
+//=//// CELL READABLE + WRITABLE + INITABLE CHECKS ////////////////////////=//
 //
 // [READABILITY]
 //
@@ -199,6 +199,14 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 // non-const Cell reference without going through a runtime check that
 // makes sure the cell is not protected.
 //
+// [INITABILITY]
+//
+// A special exception for writability is made for initialization, that
+// allows cells initialized to zero.  See Freshen_Cell() for why this is done
+// and how it is taken advantage of.
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
 // 1. These macros are "evil", because in the checked build, functions aren't
 //    inlined, and the overhead actually adds up very quickly.  We repeat
 //    arguments to speed up these critical tests, then wrap them in
@@ -212,7 +220,14 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 //    You might just be asking if it could be written if someone had non
 //    const access to it.
 
-#if DEBUG_CELL_READ_WRITE
+#if (! DEBUG_CELL_READ_WRITE)  // these are all no-ops in release builds!
+    #define Assert_Cell_Readable(c)    NOOP
+    #define Assert_Cell_Writable(c)    NOOP
+    #define Assert_Cell_Initable(c)    NOOP
+
+    #define Ensure_Readable(c) (c)
+    #define Ensure_Writable(c) (c)
+#else
     #define Assert_Cell_Readable(c) do { \
         STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
         if ( \
@@ -235,6 +250,12 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
         } \
     } while (0)
 
+    #define Assert_Cell_Initable(out) do { \
+        STATIC_ASSERT_LVALUE(out);  /* evil macro [1] */ \
+        if (not Is_Cell_Erased(out))  /* CELL_MASK_0 considered initable */ \
+            Assert_Cell_Writable(out);  /* else need NODE and CELL flags */ \
+    } while (0)
+
   #if NO_CPLUSPLUS_11
     #define Ensure_Readable(c) (c)
     #define Ensure_Writable(c) (c)
@@ -251,12 +272,94 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
         return cell;
     }
   #endif
-#else
-    #define Assert_Cell_Readable(c)    NOOP
-    #define Assert_Cell_Writable(c)    NOOP
+#endif
 
-    #define Ensure_Readable(c) (c)
-    #define Ensure_Writable(c) (c)
+
+//=//// UNREADABLE CELLS //////////////////////////////////////////////////=//
+//
+// Unreadable cells are write-only cells.  They're used when placeholder is
+// needed in a non-user-exposed slot, where the code knows it's supposed to
+// come back and fill something in at a later time--spanning an evaluation.
+// Debug asserts help catch cases where it's accidentally read from.
+//
+// It will panic if you try to test it and will also refuse VAL_TYPE() checks.
+// To check if something is unreadable, use Not_Cell_Readable().
+//
+// (This was originally a debug-build-only feature...so release builds would
+// not set the NODE_FLAG_UNREADABLE bit on unreadable cells.  That means the
+// unreadability couldn't be used for things like unused map elements,
+// because the release build wouldn't see the bit.  Yet it turns out that
+// it's fairly desirable to allow the unreadable bit to be meaningful for
+// such cases.  So the only difference is that the release build does not
+// raise alerts about the bit being set--not that the bit isn't there.)
+
+#define CELL_MASK_UNREADABLE \
+    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
+        | CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2 \
+        | FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
+
+#define Force_Unreadable_Cell_Untracked(out) \
+    ((out)->header.bits = CELL_MASK_UNREADABLE)
+
+INLINE Element* Force_Unreadable_Cell_Untracked_Inline(Init(Element) out) {
+    Force_Unreadable_Cell_Untracked(out);
+    return out;
+}
+
+#define Force_Unreadable_Cell(out) \
+    Force_Unreadable_Cell_Untracked_Inline(TRACK(out))
+
+#define Init_Unreadable_Untracked(out) do { \
+    STATIC_ASSERT_LVALUE(out);  /* evil macro: make it safe */ \
+    Assert_Cell_Initable(out); \
+    (out)->header.bits |= CELL_MASK_UNREADABLE; \
+} while (0)
+
+
+INLINE Element* Init_Unreadable_Untracked_Inline(Init(Element) out) {
+    Init_Unreadable_Untracked(out);
+    return out;
+}
+
+INLINE bool Is_Cell_Readable(const Cell* c) {
+    if (Is_Node_Readable(c)) {
+        Assert_Cell_Readable(c);  // also needs NODE_FLAG_NODE, NODE_FLAG_CELL
+        return true;
+    }
+    assert((c->header.bits & CELL_MASK_UNREADABLE) == CELL_MASK_UNREADABLE);
+    return false;
+}
+
+#define Not_Cell_Readable(c)  (not Is_Cell_Readable(c))
+
+#define Init_Unreadable(out) \
+    TRACK(Init_Unreadable_Untracked_Inline((out)))
+
+#if RUNTIME_CHECKS && CPLUSPLUS_11 && (! DEBUG_STATIC_ANALYZING)
+    //
+    // We don't actually want things like Sink(Value) to set a cell's bits to
+    // a corrupt pattern, as we need to be able to call Init_Xxx() routines
+    // and can't do that on garbage.  But we don't want to Erase_Cell() either
+    // because that would lose header bits like whether the cell is an API
+    // value.  We use the Init_Unreadable_Untracked().
+    //
+    // Note that Init_Unreadable_Untracked() is an "evil macro" that checks
+    // to be sure that its argument is an LVALUE, so we have to take an
+    // address locally...but there's no function call.
+
+    INLINE void Corrupt_If_Debug(Cell& ref)
+      { Cell* c = &ref; Init_Unreadable_Untracked(c); }
+
+  #if CHECK_CELL_SUBCLASSES
+    INLINE void Corrupt_If_Debug(Atom& ref)
+      { Atom* a = &ref; Init_Unreadable_Untracked(a); }
+
+    INLINE void Corrupt_If_Debug(Value& ref)
+      { Value* v = &ref; Init_Unreadable_Untracked(v); }
+
+    INLINE void Corrupt_If_Debug(Element& ref)
+      { Element* e = &ref; Init_Unreadable_Untracked(e); }
+  #endif
 #endif
 
 
@@ -290,16 +393,13 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 //    suppression does not apply to a cell that is being erased after having
 //    been moved, as the new cell takes over the "hot potato" of the error.
 //
-
-#if DEBUG_CELL_READ_WRITE
-    #define Assert_Cell_Initable(out) do { \
-        STATIC_ASSERT_LVALUE(out);  /* evil macro [1] */ \
-        if (not Is_Cell_Erased(out))  /* CELL_MASK_0 considered initable */ \
-            Assert_Cell_Writable(out);  /* else need NODE and CELL flags */ \
-    } while (0)
-#else
-    #define Assert_Cell_Initable(c)    NOOP
-#endif
+//    We don't want to pay at runtime for this in release builds (since the
+//    check isn't there).  But we also don't want to canonize what this
+//    sets the cell to, because that could lead to accidents where the
+//    debug build always setting to the same thing creates a dependency
+//    on that state which won't be there in release builds.  Make it an
+//    unreadable cell half the time, and an erased cell the other half.
+//
 
 #define Freshen_Cell_Header(c) do { \
     STATIC_ASSERT_LVALUE(c);  /* evil macro [1] */ \
@@ -309,11 +409,20 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     (c)->header.bits &= CELL_MASK_PERSIST;  /* won't add cell + node flags */ \
 } while (0)
 
-#if NO_RUNTIME_CHECKS
-    #define Suppress_Raised_Warning_If_Debug(c)  NOOP
+#if NO_RUNTIME_CHECKS  // stop Freshen_Cell() from complaining [2]
+    #define Suppress_Raised_Warning_If_Debug(a)  NOOP
 #else
-    #define Suppress_Raised_Warning_If_Debug(c) \
-        (HEART_BYTE(c) = REB_0)  // stop Freshen_Cell() from complaining [2]
+    INLINE Atom* Suppress_Raised_Warning_If_Debug_Untracked(Atom* a) {
+        Assert_Cell_Initable(a);
+        if (SPORADICALLY(2))
+            a->header.bits = CELL_MASK_0;
+        else
+            a->header.bits = CELL_MASK_UNREADABLE;
+        return a;
+    }
+
+    #define Suppress_Raised_Warning_If_Debug(a) \
+        TRACK(Suppress_Raised_Warning_If_Debug_Untracked(a))
 #endif
 
 
@@ -620,12 +729,12 @@ INLINE Cell* Copy_Cell_Untracked(
 
     out->extra = v->extra;  // binding or inert bits
 
-  #if DEBUG_TRACK_EXTEND_CELLS
+  /*#if DEBUG_TRACK_EXTEND_CELLS  // if you want the copy origin...
     out->file = v->file;
     out->line = v->line;
     out->tick = v->tick;
     out->touch = v->touch;
-  #endif
+  #endif*/
 
     return out;
 }
@@ -657,15 +766,14 @@ INLINE Cell* Copy_Cell_Untracked(
     }
 
     #define Copy_Cell(out,v) \
-        Copy_Cell_Overload((out), (v))
+        TRACK(Copy_Cell_Overload((out), (v)))
 #endif
 
 #define Copy_Cell_Core(out,v,copy_mask) \
     Copy_Cell_Untracked((out), (v), (copy_mask))
 
 #define Copy_Meta_Cell(out,v) \
-    cast(Element*, \
-        Meta_Quotify(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY)))
+    cast(Element*, Meta_Quotify(Copy_Cell(u_cast(Atom*, (out)), (v))))
 
 
 
@@ -741,12 +849,15 @@ INLINE Value* Constify(Value* v) {
 
 #define DECLARE_ATOM(name) \
     Atom name##_atom; \
-    Atom* name = Prep_Unreadable_Cell(&name##_atom)
+    Atom* name = TRACK(&name##_atom); \
+    Force_Unreadable_Cell_Untracked(name)  // macro, not a function (fast)
 
 #define DECLARE_VALUE(name) \
     Value name##_value; \
-    Value* name = Prep_Unreadable_Cell(&name##_value)
+    Value* name = TRACK(&name##_value); \
+    Force_Unreadable_Cell_Untracked(name)  // macro, not a function (fast)
 
 #define DECLARE_ELEMENT(name) \
     Element name##_element; \
-    Element* name = Prep_Unreadable_Cell(&name##_element)
+    Element* name = TRACK(&name##_element); \
+    Force_Unreadable_Cell_Untracked(name)  // macro, not a function (fast)

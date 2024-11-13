@@ -1153,7 +1153,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
           case DETECTED_AS_CELL: {
             Copy_Reified_Variadic_Feed_Cell(
                 PUSH(),
-                c_cast(Cell*, L->feed->p)
+                c_cast(Value*, L->feed->p)
             );
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);

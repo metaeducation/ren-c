@@ -252,7 +252,7 @@ void Unplug_Stack(
 
     if (Not_Cell_Erased(&base->spare)) {
         if (Is_Cell_Readable(&base->spare))
-            Copy_Meta_Cell(PUSH(), &base->spare);
+            Copy_Meta_Cell(PUSH(), Level_Spare(base));
         else
             Init_Trash(PUSH());
         flags |= DATASTACK_FLAG_HAS_SPARE;
@@ -260,7 +260,7 @@ void Unplug_Stack(
 
     if (Not_Cell_Erased(&base->scratch)) {
         if (Is_Cell_Readable(&base->scratch))
-            Copy_Meta_Cell(PUSH(), &base->scratch);
+            Copy_Meta_Cell(PUSH(), Level_Scratch(base));
         else
             Init_Trash(PUSH());
 

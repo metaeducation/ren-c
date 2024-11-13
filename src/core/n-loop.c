@@ -1271,7 +1271,7 @@ DECLARE_NATIVE(every)
         Init_Nulled(OUT);
     }
     else if (Is_Cell_Erased(OUT) or not Is_Nulled(OUT)) {
-        Move_Cell(OUT, SPARE);
+        Move_Atom(OUT, SPARE);
     }
 
     goto next_iteration;

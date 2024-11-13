@@ -255,6 +255,7 @@ Bounce Stepper_Executor(Level* L)
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);
         Bounce bounce = (*dispatcher)(L);  // flag says level_ is not its Level
+        Suppress_Raised_Warning_If_Debug(SPARE);  // tested it...
         if (bounce == nullptr)
             Init_Nulled(OUT);
         else if (bounce == BOUNCE_OKAY)

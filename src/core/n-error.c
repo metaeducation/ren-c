@@ -209,13 +209,13 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 
     if (Is_Raised(SPARE)) {
         Drop_Level(SUBLEVEL);
-        Move_Cell(OUT, SPARE);
+        Move_Atom(OUT, SPARE);
         QUOTE_BYTE(OUT) = NOQUOTE_1;  // change antiform error to plain
         return BRANCHED(OUT);
     }
 
     if (not Is_Elision(SPARE))
-        Move_Cell(OUT, SPARE);
+        Move_Atom(OUT, SPARE);
 
     if (Is_Level_At_End(SUBLEVEL))
         goto finished;
