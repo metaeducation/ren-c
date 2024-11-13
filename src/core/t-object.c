@@ -1645,21 +1645,17 @@ DECLARE_NATIVE(construct)
     );
     Init_Object(OUT, varlist);  // GC protects context
 
-    if (Is_Block(spec)) {
-        BINDING(spec) = Make_Use_Core(
-            Varlist_Archetype(varlist),
-            BINDING(spec),
-            CELL_FLAG_USE_NOTE_SET_WORDS
-        );
-        STATE = ST_CONSTRUCT_FULLY_EVALUATING;
-        return CONTINUE(SPARE, spec);
+    Executor* executor;
+    if (Is_The_Block(spec))
+        executor = &Inert_Stepper_Executor;
+    else {
+        assert(Is_Block(spec));
+        executor = &Stepper_Executor;
     }
-
-    assert(Is_The_Block(spec));
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    Level* sub = Make_Level_At(&Inert_Stepper_Executor, spec, flags);
+    Level* sub = Make_Level_At(executor, spec, flags);
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } continue_processing_spec: {  ////////////////////////////////////////////////
