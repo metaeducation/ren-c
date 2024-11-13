@@ -897,7 +897,7 @@
 #endif
 
 
-//=//// "POSSIBLY" NON-ASSERT /////////////////////////////////////////////=//
+//=//// "POSSIBLY" NON-ASSERT, and "UNNECESSARY" //////////////////////////=//
 //
 // Comments often carry information about when something may be true:
 //
@@ -913,12 +913,21 @@
 // comment might have made a line overlong), but also it's less likely to
 // get out of date because it is validating the expression.
 //
+// `unnecessary` is another strange construct of this sort, where you can
+// put some code that people might think you have to write--but don't.  This
+// helps cue people into realizing that the omission was intentional, with
+// the advantage of showing the precise code they might think they need.
+//
 #if NO_CPLUSPLUS_11
     #define possibly(expr)  NOOP
+    #define unnecessary(expr)  NOOP
 #else
     #define possibly(expr) \
         static_assert(std::is_convertible<decltype((expr)), bool>::value, \
             "possibly() expression must be convertible to bool")
+
+    #define unnecessary(expr) \
+        static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
 #endif
 
 
