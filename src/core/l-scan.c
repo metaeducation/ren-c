@@ -2842,13 +2842,6 @@ Bounce Scanner_Executor(Level* const L) {
         a->misc.line = transcode->line;
         LINK(Filename, a) = maybe transcode->file;
         Set_Source_Flag(a, HAS_FILE_LINE);
-
-        // !!! Does this mean anything for paths?  The initial code
-        // had it, but it was exploratory and predates the ideas that
-        // are currently being used to solidify paths.
-        //
-        if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
-            Set_Source_Flag(a, NEWLINE_AT_TAIL);
     }
 
     if (transcode->at == nullptr)  // reached e.g. with a/'
