@@ -887,10 +887,10 @@ DECLARE_NATIVE(apply)
         Init_Unreadable(iterator);
     }
 
-    Drop_Level(SUBLEVEL);
-
     if (THROWING)
         return THROWN;
+
+    Drop_Level(SUBLEVEL);
 
     Disable_Dispatcher_Catching_Of_Throws(LEVEL);  // no more finalize needed
     return DELEGATE(OUT, frame);
