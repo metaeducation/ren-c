@@ -834,7 +834,7 @@ Bounce Stepper_Executor(Level* L)
           case TRAILING_BLANK_AND(GROUP): {  // (xxx): -- generic retrigger set
             Unchain(CURRENT);
             L_next_gotten = nullptr;  // arbitrary code changes fetched vars
-            Level* sub = Make_Level_At_Core(
+            Level* sub = Make_Level_At_Inherit_Const(
                 &Evaluator_Executor,
                 CURRENT,
                 L_binding,
@@ -958,7 +958,7 @@ Bounce Stepper_Executor(Level* L)
         if (STATE == REB_META_GROUP)
             flags |= LEVEL_FLAG_META_RESULT;
 
-        Level* sub = Make_Level_At_Core(
+        Level* sub = Make_Level_At_Inherit_Const(
             &Evaluator_Executor,
             CURRENT,
             L_binding,

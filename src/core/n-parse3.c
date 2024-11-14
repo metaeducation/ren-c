@@ -594,7 +594,7 @@ static REBIXO Parse_One_Rule(
         REBLEN pos_before = P_POS;
         P_POS = pos;  // modify input position
 
-        Level* sub = Make_Level_At_Core(
+        Level* sub = Make_Level_At_Inherit_Const(
             &Action_Executor,  // !!! Parser_Executor?
             rule, rule_binding(),
             LEVEL_MASK_NONE
@@ -1942,7 +1942,7 @@ DECLARE_NATIVE(subparse)
                     break;
                 }
 
-                Level* sub = Make_Level_At_Core(
+                Level* sub = Make_Level_At_Inherit_Const(
                     &Action_Executor,  // !!! Parser_Executor?
                     subrule, P_RULE_BINDING,
                     LEVEL_MASK_NONE

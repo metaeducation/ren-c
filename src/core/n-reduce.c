@@ -396,7 +396,7 @@ static void Push_Composer_Level(
     else
         assert(Any_List_Kind(heart));
 
-    Level* sub = Make_Level_At_Core(
+    Level* sub = Make_Level_At_Inherit_Const(
         &Composer_Executor,
         adjusted ? adjusted : e,
         Derive_Binding(context, adjusted ? adjusted : e),

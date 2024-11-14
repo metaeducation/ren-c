@@ -997,43 +997,6 @@ DECLARE_NATIVE(any)
 //  ]
 //
 DECLARE_NATIVE(case)
-//
-// 1. It may seem tempting to run PREDICATE from on `f` directly, allowing it
-//    to take arity > 2.  Don't do this.  We have to get a true/false answer
-//    *and* know what the right hand argument was, for fallout to work.
-//
-// 2. Expressions that are between branches are allowed to vaporize via NIHIL
-//    (e.g. ELIDE), but voids are not skipped...it would create problems:
-//
-//        >> condition: false
-//        >> case [if condition [<a>] [print "Whoops?"] [<hmm>]]
-//        Whoops?
-//        == <hmm>
-//
-// 3. Maintain symmetry with IF on non-taken branches:
-//
-//        >> if null <some-tag>
-//        ** Script Error: if does not allow tag! for its branch...
-//
-// 4. Last evaluation will "fall out" if there is no branch:
-//
-//        >> case [null [<a>] null [<b>]]
-//        == ~null~  ; anti
-//
-//        >> case [null [<a>] null [<b>] 10 + 20]
-//        == 30
-//
-//    It's a little bit like a quick-and-dirty ELSE (or /DEFAULT), however
-//    when you use CASE:ALL it's what is returned even if there's a match:
-//
-//        >> case:all [1 < 2 [<a>] 3 < 4 [<b>]]
-//        == <b>
-//
-//        >> case:all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
-//        == 30  ; so not the same as an ELSE, it's just "fallout"
-//
-//    This counts as a "branch taken", so void and null are boxed into an
-//    antiform pack.
 {
     INCLUDE_PARAMS_OF_CASE;
 
@@ -1085,6 +1048,10 @@ DECLARE_NATIVE(case)
 
 } handle_next_clause: {  /////////////////////////////////////////////////////
 
+    // 1. It may seem tempting to run PREDICATE from on `f` directly, allowing
+    //    it to take arity > 2.  But we have to get a true/false answer
+    //    *and* know what the right hand argument was, for fallout to work.
+
     Erase_Cell(SPARE);  // must do before goto reached_end
 
     if (Is_Level_At_End(SUBLEVEL))
@@ -1098,7 +1065,7 @@ DECLARE_NATIVE(case)
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Elision(SPARE))  // skip nihils, e.g. ELIDE [2]
+    if (Is_Elision(SPARE))  // skip nihils, e.g. ELIDE
         goto handle_next_clause;
 
     Decay_If_Unstable(SPARE);
@@ -1115,20 +1082,41 @@ DECLARE_NATIVE(case)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Void(SPARE))  // error on void predicate results (not same as [2])
+    // 1. Expressions between branches are allowed to vaporize via NIHIL
+    //    (e.g. ELIDE), but voids are not skipped...it would create problems:
+    //
+    //        >> condition: false
+    //        >> case [if condition [<a>] [print "Whoops?"] [<hmm>]]
+    //        Whoops?
+    //        == <hmm>
+
+    if (Is_Void(SPARE))  // error on void predicate results (not same as [1])
         return FAIL(Error_Bad_Void());
 
     goto processed_result_in_spare;
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    Copy_Cell(branch, At_Level(SUBLEVEL));
+    // 1. We want this to fail:
+    //
+    //       >> foo: func [] [return case [okay ["a"]]]
+    //
+    //       >> append foo "b"
+    //       ** Access Error: CONST or iterative value (see MUTABLE): "a"
+    //
+    //    So the FUNC's const body evaluation led to CASE's argument block
+    //    being evaluated as const.  But we have to proxy that const flag
+    //    over to the block.
+
+    Derelativize(branch, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL));
+    Inherit_Const(branch, cases);  // branch needs to respect const [1]
+
     Fetch_Next_In_Feed(SUBLEVEL->feed);
 
     if (not Is_Group(branch))
         goto handle_processed_branch;
 
-    Level* sub = Make_Level_At_Core(
+    Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
         branch,  // non "THE-" GROUP! branches are run unconditionally
         Level_Binding(SUBLEVEL),
@@ -1143,23 +1131,25 @@ DECLARE_NATIVE(case)
 
 } handle_processed_branch: {  ////////////////////////////////////////////////
 
+    // 1. Maintain symmetry with IF on non-taken branches:
+    //
+    //        >> if null <some-tag>
+    //        ** Script Error: if does not allow tag! for its branch...
+
+    Assert_Cell_Stable(branch);
+
     bool matched = Is_Trigger(stable_SPARE);
 
     if (not matched) {
         if (not Any_Branch(branch))
-            return FAIL(Error_Bad_Value_Raw(branch));  // like IF [3]
+            return FAIL(Error_Bad_Value_Raw(branch));  // like IF [1]
 
         goto handle_next_clause;
     }
 
     STATE = ST_CASE_RUNNING_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE_CORE(
-        OUT,
-        LEVEL_FLAG_BRANCH,
-        Level_Binding(SUBLEVEL), cast(Value*, branch),
-        SPARE
-    );
+    return CONTINUE_BRANCH(OUT, cast(Value*, branch), SPARE);
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
@@ -1172,11 +1162,31 @@ DECLARE_NATIVE(case)
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
+    // 1. Last evaluation will "fall out" if there is no branch:
+    //
+    //        >> case [null [<a>] null [<b>]]
+    //        == ~null~  ; anti
+    //
+    //        >> case [null [<a>] null [<b>] 10 + 20]
+    //        == 30
+    //
+    //    It's a little bit like a quick-and-dirty ELSE (or /DEFAULT), however
+    //    when you use CASE:ALL it's what is returned even if there's a match:
+    //
+    //        >> case:all [1 < 2 [<a>] 3 < 4 [<b>]]
+    //        == <b>
+    //
+    //        >> case:all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
+    //        == 30  ; so not the same as an ELSE, it's just "fallout"
+    //
+    //    This counts as a "branch taken", so void and null are boxed into an
+    //    antiform pack.
+
     assert(REF(all) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
 
     Drop_Level(SUBLEVEL);
 
-    if (Not_Cell_Erased(SPARE)) {  // prioritize fallout result [4]
+    if (Not_Cell_Erased(SPARE)) {  // prioritize fallout result [1]
         Move_Atom(OUT, SPARE);
         return BRANCHED(OUT);
     }
@@ -1193,7 +1203,7 @@ DECLARE_NATIVE(case)
 //
 //  "Selects a choice and evaluates the block that follows it"
 //
-//      return: "Last case evaluation, or void if no cases matched"
+//      return: "Last case evaluation, or null if no cases matched"
 //          [any-value?]
 //      value [any-value?]
 //      cases "Block of cases (comparison lists followed by block branches)"
@@ -1205,39 +1215,6 @@ DECLARE_NATIVE(case)
 //  ]
 //
 DECLARE_NATIVE(switch)
-//
-// 1. With switch, we have one fixed value ("left") and then an evaluated
-//    value from the block ("right") which we pass to a comparison predicate
-//    to determine a match.  It may seem tempting to build a frame for the
-//    predicate partially specialized with the left, and allow it to consume
-//    the right from the feed...allowing it to take arity > 2 (as well as
-//    to honor any quoting convention the predicate has.
-//
-//    Right now that's not what we do, because it would preclude being able
-//    to have "fallout".  This should probably be reconsidered, but there are
-//    some other SWITCH redesign questions up in the air already:
-//
-//    https://forum.rebol.info/t/match-in-rust-vs-switch/1835
-//
-// 2. At one point it was allowed to corrupt the value during comparison, due
-//    to the idea equality was transitive.  So if it changes 0.01 to 1% in
-//    order to compare it, anything 0.01 would have compared equal to so
-//    will 1%.  (Would be required for `a = b` and `b = c` to properly imply
-//    `a = c`.)
-//
-//    ...HOWEVER... this mutated the branch fallout, and quote removals were
-//    distorting comparisons.  So it copies the cell into a scratch location.
-//
-// 3. Fallout is used in situations like:
-//
-//        lib: switch config.platform [
-//            'Windows [%windows.lib]
-//            'Linux [%linux.a]
-//            %whatever.a
-//        ]
-//
-//    These cases still count as "branch taken", so if a null or void fall
-//    out they will be put in a pack.
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
@@ -1288,6 +1265,19 @@ DECLARE_NATIVE(switch)
 
 } next_switch_step: {  ///////////////////////////////////////////////////////
 
+    // 1. With switch, we have one fixed value ("left") and then an evaluated
+    //    value from the block ("right") passed to a comparison predicate to
+    //    determine a match.  It may seem tempting to build a frame for the
+    //    predicate partially specialized with left, and allow it to consume
+    //    the right from the feed...allowing it to take arity > 2 (as well as
+    //    to honor any quoting convention the predicate has.
+    //
+    //    Right now that's not what we do, since it would preclude being able
+    //    to have "fallout".  This should probably be reconsidered, but there
+    //    are some other SWITCH redesign questions up in the air already:
+    //
+    //      https://forum.rebol.info/t/match-in-rust-vs-switch/1835
+
     Erase_Cell(right);  // fallout must be reset each time
 
     if (Is_Level_At_End(SUBLEVEL))
@@ -1307,8 +1297,28 @@ DECLARE_NATIVE(switch)
 
 } right_result_in_spare: {  //////////////////////////////////////////////////
 
+    // 1. At one point the value was allowed to corrupt during comparison, due
+    //    to the idea equality was transitive.  So if it changes 0.01 to 1% in
+    //    order to compare it, anything 0.01 would have compared equal to so
+    //    will 1%.  (Would be required for `a = b` and `b = c` to properly
+    //    imply `a = c`.)
+    //
+    //    HOWEVER this mutated the branch fallout, and quote removals were
+    //    distorting comparisons.  So it copies into a scratch location.
+    //
+    // 2. We want this to fail:
+    //
+    //       >> foo: func [] [return switch 1 + 2 [3 ["a"]]]
+    //
+    //       >> append foo "b"
+    //       ** Access Error: CONST or iterative value (see MUTABLE): "a"
+    //
+    //    So the FUNC's const body evaluation led to SWITCH's argument block
+    //    being evaluated as const.  But we have to proxy that const flag
+    //    over to the block.
+
     if (Is_Elision(right))  // skip comments or ELIDEs
-        goto next_switch_step;  // see note [2] in comments for CASE
+        goto next_switch_step;
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
@@ -1330,14 +1340,11 @@ DECLARE_NATIVE(switch)
         Decay_If_Unstable(right);
 
         const bool strict = false;
-        Copy_Cell(SCRATCH, left);
+        Copy_Cell(SCRATCH, left);  // don't alter left directly, see [1]
         if (0 != Compare_Modify_Values(SCRATCH, cast(Value*, right), strict))
             goto next_switch_step;
     }
     else {
-        // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
-        // The ARG(value) passed in is the left/first argument to compare.
-        //
         if (rebRunThrows(
             cast(Sink(Value), SCRATCH),  // <-- output cell
             predicate,
@@ -1363,21 +1370,31 @@ DECLARE_NATIVE(switch)
         at = At_Level(SUBLEVEL);
     }
 
+    Derelativize(SCRATCH, at, Level_Binding(SUBLEVEL));
+    Inherit_Const(SCRATCH, cases);  // need to inherit proxy const bit [3]
+
     STATE = ST_SWITCH_RUNNING_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE_CORE(
-        OUT,
-        LEVEL_FLAG_BRANCH,
-        Level_Binding(SUBLEVEL), at
-    );
+    return CONTINUE_BRANCH(OUT, cast(Element*, SCRATCH), right);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
+
+    // 1. Fallout is used in situations like:
+    //
+    //        lib: switch config.platform [
+    //            'Windows [%windows.lib]
+    //            'Linux [%linux.a]
+    //            %whatever.a
+    //        ]
+    //
+    //    These cases still count as "branch taken", so if a null or void fall
+    //    out they will be put in a pack.  (See additional remarks in CASE)
 
     assert(REF(all) or Is_Cell_Erased(OUT));
 
     Drop_Level(SUBLEVEL);
 
-    if (Not_Cell_Erased(right)) {  // see remarks in CASE on fallout
+    if (Not_Cell_Erased(right)) {  // something counts as fallout [1]
         Assert_Cell_Stable(right);
         Move_Atom(OUT, right);
         return BRANCHED(OUT);

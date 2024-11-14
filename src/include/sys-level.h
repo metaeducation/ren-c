@@ -591,7 +591,7 @@ INLINE Level* Prep_Level_Core(
     Prep_Level_Core(executor, u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), \
         Add_Feed_Reference(feed), (flags))
 
-#define Make_Level_At_Core(executor,list,binding,level_flags) \
+#define Make_Level_At_Inherit_Const(executor,list,binding,level_flags) \
     Make_Level( \
         (executor), \
         Prep_At_Feed( \
@@ -599,6 +599,18 @@ INLINE Level* Prep_Level_Core(
             (list), \
             (binding), \
             TOP_LEVEL->feed->flags.bits \
+        ), \
+        (level_flags) \
+    )
+
+#define Make_Level_At_Core(executor,list,binding,level_flags) \
+    Make_Level( \
+        (executor), \
+        Prep_At_Feed( \
+            Alloc_Feed(), \
+            (list), \
+            (binding), \
+            FEED_MASK_DEFAULT  /* don't inherit TOP_LEVEL's const feed bit */ \
         ), \
         (level_flags) \
     )
