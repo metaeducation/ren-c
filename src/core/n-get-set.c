@@ -25,12 +25,15 @@
 #include "sys-core.h"
 
 
+//
+//  Adjust_Context_For_Coupling: C
+//
 // Ren-C injects the object from which a function was dispatched in a path
 // into the function call, as something called a "coupling".  This coupling is
 // tied in with the FRAME! for the function call, and can be used as a context
 // to do special lookups in.
 //
-static Context* Adjust_Context_For_Coupling(Context* c) {
+Context* Adjust_Context_For_Coupling(Context* c) {
     for (; c != nullptr; c = Context_Parent(c)) {
         VarList* frame_varlist;
         if (Is_Stub_Varlist(c)) {  // ordinary FUNC frame context
@@ -48,19 +51,15 @@ static Context* Adjust_Context_For_Coupling(Context* c) {
 
         Level* level = Level_Of_Varlist_If_Running(frame_varlist);
         if (not level)
-            return Error_User(
-                ".field access only in running functions"
-            );
+            fail (".field access only in running functions");  // nullptr?
         VarList* coupling = maybe Level_Coupling(level);
         if (not coupling)
             continue;  // skip NULL couplings (default for FUNC, DOES, etc.)
         if (coupling == UNCOUPLED)
-            return Error_User(
-                ".field object used on uncoupled frame"
-            );
+            return nullptr;  // uncoupled frame (method, just not coupled)
         return coupling;
     }
-    fail (".field access used but no coupling found");
+    return nullptr;
 }
 
 
@@ -133,7 +132,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
     else
         dot_at_head = false;
 
-    if (dot_at_head)  // avoid adjust if tuple has non-cache binding?
+    if (dot_at_head and context)  // avoid adjust if tuple has non-cache binding?
         context = Adjust_Context_For_Coupling(context);
 
   //=//// HANDLE SIMPLE "WORDLIKE" CASE (.a or a.) ////////////////////////=//
@@ -156,8 +155,12 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
             HEART_BYTE(unwrap steps_out) = REB_THE_TUPLE;  // REB_THE_WORD ?
         }
         if (dot_at_head and Is_Action(out)) {  // need the coupling
-            if (Cell_Coupling(out) == UNCOUPLED)
-                Tweak_Cell_Coupling(out, cast(VarList*, context));
+            if (Cell_Coupling(out) == UNCOUPLED) {
+                if (IS_WORD_BOUND(tuple))
+                    Tweak_Cell_Coupling(out, cast(VarList*, BINDING(tuple)));
+                else
+                    Tweak_Cell_Coupling(out, cast(VarList*, context));
+            }
         }
         return nullptr; }
 
@@ -1278,6 +1281,8 @@ DECLARE_NATIVE(dot_1)
     INCLUDE_PARAMS_OF_DOT_1;
 
     Context* coupling = Adjust_Context_For_Coupling(Level_Binding(LEVEL));
+    if (not coupling)
+        return RAISE("No current coupling in effect");
 
     return Init_Object(OUT, cast(VarList*, coupling));
 }

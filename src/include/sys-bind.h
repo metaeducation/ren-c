@@ -112,8 +112,19 @@ INLINE Element* Derelativize_Untracked(
         if (Is_Node_A_Cell(node1))  // x.y pairing
             goto any_listlike;
         Stub* stub1 = cast(Stub*, node1);
-        if (FLAVOR_SYMBOL == Stub_Flavor(stub1))  // x. or /x, wordlike
+        if (FLAVOR_SYMBOL == Stub_Flavor(stub1)) {  // x. or /x, wordlike
+            if (
+                Any_Tuple_Kind(heart)
+                and Get_Cell_Flag(v, LEADING_BLANK)  // !!! HACK for .word form
+            ){
+                context = Adjust_Context_For_Coupling(context);
+                if (not context) {
+                    out->extra = v->extra;
+                    return out;
+                }
+            }
             goto any_wordlike;
+        }
         goto any_listlike;
     }
 
