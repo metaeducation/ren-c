@@ -125,7 +125,7 @@
     ;
     ; Hopefully you see some of the ambition, here--what I am trying to do.
     ;
-    <-: infix func* [
+    pf: infix func* [
         "Declare action by example instantiation, missing args unspecialized"
 
         return: [action?]
@@ -166,7 +166,7 @@
     )
 
     (
-        apabc: (<- append [a b c])
+        apabc: (pf append [a b c])
         [a b c [d e]] = apabc [d e]
     )
 
@@ -175,14 +175,14 @@
     )
 
     (
-        ap1twice: (<- append:dup _ 1 2)
+        ap1twice: (pf append:dup _ 1 2)
         [a b c 1 1] = ap1twice [a b c]
     )
 
 (
     x: [1 2 3 4 5 6]
     all [
-        5 = until:predicate [take x] (<- greater? _ 4)
+        5 = until:predicate [take x] (pf greater? _ 4)
         x = [6]
     ]
 )]

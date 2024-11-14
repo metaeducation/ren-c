@@ -219,6 +219,10 @@ each: quote/
     lambda words body
 ]
 
+; Particularly helpful for annotating when a branch result is used.
+; https://forum.rebol.info/t/2165/
+;
+<-: identity/
 
 ; !!! NEXT and BACK seem somewhat "noun-like" and desirable to use as variable
 ; names, but are very entrenched in Rebol history.  Also, since they are
