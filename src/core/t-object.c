@@ -487,7 +487,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
             tail,
             nullptr  // no parent (MAKE SOME-OBJ [...] calls DECLARE_GENERICS(Context))
         );
-        Remember_Cell_Is_Lifeguard(Init_Context_Cell(OUT, heart, ctx));
+        Init_Context_Cell(OUT, heart, ctx);
 
         BINDING(arg) = Make_Use_Core(
             Varlist_Archetype(ctx),
@@ -497,8 +497,6 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
 
         bool threw = Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED);
         UNUSED(SPARE);  // result disregarded
-
-        Forget_Cell_Was_Lifeguard(OUT);
 
         if (threw)
             return BOUNCE_THROWN;
@@ -993,7 +991,7 @@ DECLARE_GENERICS(Context)
                 tail,
                 c
             );
-            Remember_Cell_Is_Lifeguard(Init_Context_Cell(OUT, heart, derived));
+            Init_Context_Cell(OUT, heart, derived);
 
             BINDING(def) = Make_Use_Core(
                 Varlist_Archetype(derived),
@@ -1005,7 +1003,6 @@ DECLARE_GENERICS(Context)
             if (Eval_Any_List_At_Throws(dummy, def, SPECIFIED))
                 return BOUNCE_THROWN;
 
-            Forget_Cell_Was_Lifeguard(OUT);
             return OUT;
         }
 
