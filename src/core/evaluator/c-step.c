@@ -720,86 +720,89 @@ Bounce Stepper_Executor(Level* L)
         if (error)
             return FAIL(unwrap error);  // don't conflate with function result
 
-        if (Is_Action(OUT)) {
-            Action* action = VAL_ACTION(OUT);
-            Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
-            Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
-            const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
-
-            if (infix_mode) {
-                if (infix_mode != INFIX_TIGHT) {  // defer or postpone
-                    if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
-                        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
-                        Set_Feed_Flag(L->feed, DEFERRING_INFIX);
-                        goto finished;
-                    }
-                }
-            }
-
-            if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH)) {
-                if (infix_mode)
-                    assert(false);  // !!! this won't work, can it happen?
-
-                Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
-            }
-
-            if (
-                not infix_mode  // too rare a case for intrinsic optimization
-                and Get_Action_Flag(action, CAN_DISPATCH_AS_INTRINSIC)
-                and Is_Stub_Details(action)  // don't do specializations
-                and Not_Level_At_End(L)  // can't do <end>, fallthru to error
-                and not SPORADICALLY(10)  // checked builds sometimes bypass
-            ){
-                Init_Frame_Details_Core(
-                    CURRENT,
-                    cast(Phase*, action),  // !!! is this legitimate?
-                    label,
-                    coupling
-                );
-                Param* param = ACT_PARAM(action, 2);
-                Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
-
-                switch (Cell_ParamClass(param)) {
-                  case PARAMCLASS_NORMAL:
-                    break;
-
-                  case PARAMCLASS_META:
-                    flags |= LEVEL_FLAG_RAISED_RESULT_OK;
-                    break;
-
-                  case PARAMCLASS_JUST:
-                    Just_Next_In_Feed(SPARE, L->feed);
-                    goto intrinsic_arg_in_spare;
-
-                  case PARAMCLASS_THE:
-                    The_Next_In_Feed(SPARE, L->feed);
-                    goto intrinsic_arg_in_spare;
-
-                  default:
-                    return FAIL("Unsupported Intrinsic parameter convention");
-                }
-
-                Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
-
-                Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
-                Push_Level_Erase_Out_If_State_0(SPARE, sub);
-                STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
-                return CONTINUE_SUBLEVEL(sub);
-            }
-
-            Level* sub = Make_Action_Sublevel(L);
-            Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
-            Push_Action(sub, action, coupling);
-            Begin_Action(sub, label, infix_mode);
-            /* Push_Level_Erase_Out_If_State_0(OUT, sub); */  // see [1]
-
-            goto process_action;
-        }
+        if (Is_Action(OUT))
+            goto run_action_in_out;
 
         if (Any_Vacancy(stable_OUT))  // checked second
             return FAIL(Error_Bad_Word_Get(CURRENT, OUT));
 
         goto lookahead; }
+
+      run_action_in_out: { ///////////////////////////////////////////////////
+
+        Action* action = VAL_ACTION(OUT);
+        Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
+        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
+        const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
+
+        if (infix_mode) {
+            if (infix_mode != INFIX_TIGHT) {  // defer or postpone
+                if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
+                    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
+                    Set_Feed_Flag(L->feed, DEFERRING_INFIX);
+                    goto finished;
+                }
+            }
+        }
+
+        if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH)) {
+            if (infix_mode)
+                assert(false);  // !!! this won't work, can it happen?
+
+            Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
+        }
+
+        if (
+            not infix_mode  // too rare a case for intrinsic optimization
+            and Get_Action_Flag(action, CAN_DISPATCH_AS_INTRINSIC)
+            and Is_Stub_Details(action)  // don't do specializations
+            and Not_Level_At_End(L)  // can't do <end>, fallthru to error
+            and not SPORADICALLY(10)  // checked builds sometimes bypass
+        ){
+            Init_Frame_Details_Core(
+                CURRENT,
+                cast(Phase*, action),  // !!! is this legitimate?
+                label,
+                coupling
+            );
+            Param* param = ACT_PARAM(action, 2);
+            Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
+
+            switch (Cell_ParamClass(param)) {
+                case PARAMCLASS_NORMAL:
+                break;
+
+                case PARAMCLASS_META:
+                flags |= LEVEL_FLAG_RAISED_RESULT_OK;
+                break;
+
+                case PARAMCLASS_JUST:
+                Just_Next_In_Feed(SPARE, L->feed);
+                goto intrinsic_arg_in_spare;
+
+                case PARAMCLASS_THE:
+                The_Next_In_Feed(SPARE, L->feed);
+                goto intrinsic_arg_in_spare;
+
+                default:
+                return FAIL("Unsupported Intrinsic parameter convention");
+            }
+
+            Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
+
+            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+            Push_Level_Erase_Out_If_State_0(SPARE, sub);
+            STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
+            return CONTINUE_SUBLEVEL(sub);
+        }
+
+        Level* sub = Make_Action_Sublevel(L);
+        Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
+        Push_Action(sub, action, coupling);
+        Begin_Action(sub, label, infix_mode);
+        unnecessary(Push_Level_Erase_Out_If_State_0(OUT, sub)); // see [1]
+
+        goto process_action; }
 
 
     //=//// CHAIN! ////////////////////////////////////////////////////////=//
@@ -987,8 +990,9 @@ Bounce Stepper_Executor(Level* L)
 
       case REB_TUPLE: {
         Copy_Sequence_At(SPARE, CURRENT, 0);
+        bool blank_at_head = Is_Blank(SPARE);
         if (
-            not Is_Blank(SPARE)  // `.a` means pick member from "self"
+            not blank_at_head  // `.a` means pick member from "self"
             and Any_Inert(SPARE)  // `1.2.3` is inert
         ){
             Derelativize(OUT, CURRENT, L_binding);
@@ -1007,8 +1011,12 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;  // e.g. EXCEPT might want error
         }
 
-        if (Is_Action(OUT))  // don't conflate with NOT-FOUND for TRY
+        if (Is_Action(OUT)) {  // don't RAISE, conflates
+            if (blank_at_head)
+                goto run_action_in_out;
+
             return FAIL("Can't fetch actions (FRAME! antiform) with TUPLE!");
+        }
 
         goto lookahead; }
 
