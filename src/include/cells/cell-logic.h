@@ -260,8 +260,8 @@ INLINE bool Is_Trigger(const Value* v) {
         fail (Error_Bad_Antiform(v));  // !!! special error?
     }
 
-  #if RUNTIME_CHECKS
-    if (Is_Word(v)) {  // temporary for logic-WORD! transition
+  #if DEBUG_CHECK_POSSIBLE_BOOLEAN_MISUSE
+    if (Is_Word(v)) {
         Option(SymId) id = Cell_Word_Id(v);
         if (id == SYM_TRUE)
             fail ("Warning: TRUE used as branch trigger");
