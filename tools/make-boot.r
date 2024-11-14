@@ -40,6 +40,7 @@ platform-config: configure-platform args.OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
+git-commit: ~
 if args.GIT_COMMIT = "unknown" [
     git-commit: null
 ] else [
@@ -152,8 +153,9 @@ type-table: load %types.r
     <local>
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
     completed* running* is-unstable* decorated pos
+    obj
 ][
-    obj: make object! compose [(to-set-word var) ~]  ; make variable
+    obj: construct compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
@@ -229,8 +231,9 @@ type-table: load %types.r
     body "Block to evaluate each time"
         [block!]
     <local> name* heart* any-name!* stack types* starting
+    obj
 ][
-    obj: make object! compose [(to-set-word var) ~]  ; make variable
+    obj: construct compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
@@ -486,7 +489,8 @@ for-each-datatype 't [
         append t.typesets "isotopic"  ; add to the Any_Isotopic() typeset
     ]
 
-    for-each ts-name t.typesets [
+    for-each 'ts-name t.typesets [
+        let spot
         if spot: select typeset-sets ts-name [
             append spot t.name  ; not the first time we've seen this typeset
             continue
@@ -513,15 +517,15 @@ for-each-typerange 'tr [
 
     append typeset-sets spread reduce [tr.name tr.types]
 
-    name: copy tr.name
+    let proper-name: propercase-of tr.name
 
     e-types/emit newline
-    e-types/emit [propercase-of tr --{
-        INLINE bool Any_${propercase-of Tr.Name}_Kind(Byte k)
+    e-types/emit [tr --{
+        INLINE bool Any_${Proper-Name}_Kind(Byte k)
           { return k >= $<TR.START> and k < $<TR.END>; }
 
-        #define Any_${propercase-of Tr.Name}(v) \
-            Any_${propercase-of Tr.Name}_Kind(VAL_TYPE(v))
+        #define Any_${Proper-Name}(v) \
+            Any_${Proper-Name}_Kind(VAL_TYPE(v))
     }--]
 ]
 
@@ -550,26 +554,28 @@ add-sym 'datatypes  ; signal where the datatypes stop
 for-each-datatype 't [
     if not t.antiname [continue]  ; no special name for antiform form
 
-    need: either yes? t.unstable ["Atom"] ["Value"]
+    let need: either yes? t.unstable ["Atom"] ["Value"]
+
+    let proper-name: propercase-of t.antiname
 
     ; Note: Ensure_Readable() not defined yet at this point, so defined as
     ; a macro vs. an inline function.  Revisit.
     ;
-    e-types/emit [t --{
-        INLINE bool Is_$<Propercase T.Antiname>_Core(Need(const $<Need>*) v) { \
+    e-types/emit [t proper-name --{
+        INLINE bool Is_$<Proper-Name>_Core(Need(const $<Need>*) v) { \
             return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
                 == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART_BYTE(REB_$<T.NAME>))); \
         }
 
-        #define Is_$<Propercase T.Antiname>(v) \
-            Is_$<Propercase T.Antiname>_Core(Ensure_Readable(v))
+        #define Is_$<Proper-Name>(v) \
+            Is_$<Proper-Name>_Core(Ensure_Readable(v))
 
-        #define Is_Meta_Of_$<Propercase T.Antiname>(v) \
+        #define Is_Meta_Of_$<Proper-Name>(v) \
         ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
             == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART_BYTE(REB_$<T.NAME>)))
 
-        #define Is_Quasi_$<Propercase T.Name>(v) \
-            Is_Meta_Of_$<Propercase T.Antiname>(v)  /* alternative */
+        #define Is_Quasi_$<Propercase-Of T.Name>(v) \
+            Is_Meta_Of_$<Proper-Name>(v)  /* alternative */
     }--]
     e-types/emit newline
 ]
@@ -669,25 +675,27 @@ datatype-decider-names: copy []
 memberships: copy []
 
 for-each-datatype 't [
+    let proper-name: propercase-of t.name
+
     e-typesets/emit [t --{
-        bool ${Propercase T.Name}_Instance_Decider(const Value* v)
-          { return Is_${Propercase T.Name}(v); }
+        bool ${Proper-Name}_Instance_Decider(const Value* v)
+          { return Is_${Proper-Name}(v); }
     }--]
     e-typesets/emit newline
     append instance-decider-names cscape [t
-        "${Propercase T.Name}_Instance_Decider"
+        "${Proper-Name}_Instance_Decider"
     ]
 
     e-typesets/emit [t --{
-        bool ${Propercase T.Name}_Datatype_Decider(const Value* datatype)
+        bool ${Proper-Name}_Datatype_Decider(const Value* datatype)
           { return VAL_TYPE_KIND(datatype) == REB_${T.NAME}; }
     }--]
     e-typesets/emit newline
     append datatype-decider-names cscape [t
-        "${Propercase T.Name}_Datatype_Decider"
+        "${Proper-Name}_Datatype_Decider"
     ]
 
-    flagits: collect [
+    let flagits: collect [
         for-each [ts-name types] typeset-sets [
             if blank? types [continue]
             if not find types t.name [continue]
@@ -705,22 +713,24 @@ for-each-datatype 't [
 ]
 
 for-each [ts-name types] typeset-sets [
+    let proper-name: propercase-of ts-name
+
     e-typesets/emit [ts-name --{
-        bool Any_${Propercase Ts-Name}_Instance_Decider(const Value* arg)
-          { return Any_${Propercase Ts-Name}(arg); }
+        bool Any_${Proper-Name}_Instance_Decider(const Value* arg)
+          { return Any_${Proper-Name}(arg); }
     }--]
     e-typesets/emit newline
     append instance-decider-names cscape [ts-name
-        --{Any_${Propercase Ts-Name}_Instance_Decider}--
+        --{Any_${Proper-Name}_Instance_Decider}--
     ]
 
     e-typesets/emit [ts-name --{
-        bool Any_${Propercase Ts-Name}_Datatype_Decider(const Value* arg)
-          { return Any_${Propercase Ts-Name}_Kind(VAL_TYPE_KIND(arg)); }
+        bool Any_${Proper-Name}_Datatype_Decider(const Value* arg)
+          { return Any_${Proper-Name}_Kind(VAL_TYPE_KIND(arg)); }
     }--]
     e-typesets/emit newline
     append datatype-decider-names cscape [ts-name
-        --{Any_${Propercase Ts-Name}_Datatype_Decider}--
+        --{Any_${Proper-Name}_Datatype_Decider}--
     ]
 ]
 
@@ -836,7 +846,7 @@ e-sysobj: make-emitter "System Object" (
     join prep-dir %include/tmp-sysobj.h
 )
 
-/at-value: func [field] [return next find boot-sysobj to-set-word field]
+/at-value: func [field] [return next find boot-sysobj setify field]
 
 boot-sysobj: load %sysobj.r
 change (at-value 'version) version
@@ -956,7 +966,7 @@ boot-errors: load %errors.r
 
 for-each [sw-cat list] boot-errors [
     assert [set-word? sw-cat]
-    cat: to word! sw-cat
+    let cat: resolve sw-cat
     ensure block! list
 
     add-sym cat  ; category might incidentally exist as SYM_XXX
@@ -965,8 +975,8 @@ for-each [sw-cat list] boot-errors [
         if not set-word? sw-id [
             fail ["%errors.r parse error, not SET-WORD!" mold sw-id]
         ]
-        id: to word! sw-id
-        message: t-message
+        let id: resolve sw-id
+        let message: t-message
 
         ; Add a SYM_XXX constant for the error's ID word
         ;
@@ -974,7 +984,7 @@ for-each [sw-cat list] boot-errors [
             fail ["Duplicate error ID found:" id]
         ]
 
-        arity: 0
+        let arity: 0
         if block? message [  ; can have N GET-WORD! substitution slots
             parse3 message [opt some [get-word?! (arity: arity + 1) | one]]
         ] else [
@@ -983,7 +993,8 @@ for-each [sw-cat list] boot-errors [
 
         ; Camel Case and make legal for C (e.g. "not-found*" => "Not_Found_P")
         ;
-        f-name: uppercase:part to-c-name id 1
+        let f-name: uppercase:part to-c-name id 1
+        let w
         parse3 f-name [
             opt some [
                 "_" w: <here>
@@ -993,6 +1004,8 @@ for-each [sw-cat list] boot-errors [
             ]
         ]
 
+        let params
+        let args
         if arity = 0 [
             params: ["void"]  ; In C, f(void) has a distinct meaning from f()
             args: ["rebEND"]
@@ -1049,8 +1062,9 @@ sys-toplevel: copy []
 ;    are weird, and we don't use a tripwire like ~<end>~ because the bootstrap
 ;    executable doesn't know how to load tripwires.  Quasi-word is sufficient.
 ;
+boot-constants: boot-base: boot-system-util: boot-mezz: ~  ; !!! better answer?
 for-each 'section [boot-constants boot-base boot-system-util boot-mezz] [
-    set (inside [] section) s: make text! 20000
+    let s: make text! 20000
     append:line s "["
     for-each 'file first mezz-files [  ; doesn't use LOAD to strip
         text: stripload:gather (
@@ -1060,6 +1074,8 @@ for-each 'section [boot-constants boot-base boot-system-util boot-mezz] [
     ]
     append:line s "'~end~"  ; sanity check [1]
     append:line s "]"
+
+    set (inside [] section) s
 
     mezz-files: next mezz-files
 ]
@@ -1203,10 +1219,10 @@ e-boot: make-emitter "Bootstrap Structure and Root Module" (
 
 fields: collect [
     for-each 'word sections [
-        word: form as word! word
-        remove:part word 5  ; 5 leading characters, [boot-]xxx
-        word: to-c-name word
-        keep cscape [word "Element ${word}"]
+        let name: form resolve word
+        parse3 name [remove "boot-" accept (okay)]
+        name: to-c-name name
+        keep cscape [name "Element ${name}"]
     ]
 ]
 

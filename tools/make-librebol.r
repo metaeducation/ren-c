@@ -69,7 +69,23 @@ api-objects: make block! 50
     ]
 ]
 
-/emit-proto: func [return: [~] proto] [
+/emit-proto: func [
+    return: [~]
+    proto [text!]
+    <local>
+        identifier-chars
+        pos param
+        header name return-type paramlist is-variadic
+][
+    identifier-chars: charset [
+        #"A" - #"Z"
+        #"a" - #"z"
+        #"0" - #"9"
+        #"_"
+
+        ; #"." in variadics (but all va_list* in API defs)
+    ]
+
     header: proto-parser.data
 
     all [
@@ -100,14 +116,7 @@ api-objects: make block! 50
                     ; the tail to find space, or non-[letter digit underscore]
                     ;
                     trim:head:tail param
-                    identifier-chars: charset [
-                        #"A" - #"Z"
-                        #"a" - #"z"
-                        #"0" - #"9"
-                        #"_"
 
-                        ; #"." in variadics (but all va_list* in API defs)
-                    ]
                     pos: back tail param
                     while [pick identifier-chars pos.1] [
                         pos: back pos
@@ -121,7 +130,7 @@ api-objects: make block! 50
         ]
     ]
 
-    if (to-set-word name) != header.1 [  ; e.g. `//  rebValue: API`
+    if (setify to word! name) != header.1 [  ; e.g. `//  rebValue: API`
         fail [
             "Name in comment header (" header.1 ") isn't C function name"
             "minus API_ prefix to match" (name)
@@ -155,7 +164,7 @@ api-objects: make block! 50
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
     append api-objects make object! compose [
-        spec: match block! third header  ; Rebol metadata API comment
+        spec: ensure [~null~ block!] try header.3  ; Rebol metadata API comment
         name: (ensure text! name)
         return-type: (ensure text! trim:tail return-type)
         paramlist: (ensure block! paramlist)
@@ -166,7 +175,7 @@ api-objects: make block! 50
 
 /process: func [return: [~] file] [
     proto-parser.file: file
-    proto-parser.emit-proto: :emit-proto
+    /proto-parser.emit-proto: emit-proto/
     proto-parser/process as text! read file
 ]
 
@@ -187,7 +196,7 @@ extern-prototypes: map-each-api [
 ]
 
 lib-struct-fields: map-each-api [
-    cfunc-params: delimit ", " compose [
+    let cfunc-params: delimit ", " compose [
         (if yes? is-variadic ["RebolContext** binding_ref"])
         (spread map-each [type var] paramlist [spaced [type var]])
         (if yes? is-variadic [
@@ -217,6 +226,8 @@ for-each-api [
         continue
     ]
 
+    let attributes
+    let epilogue
     all [
         spec
         find spec #noreturn
@@ -231,14 +242,14 @@ for-each-api [
         epilogue: null
     ]
 
-    helper-params: map-each [type var] paramlist [
+    let helper-params: map-each [type var] paramlist [
         spaced [type var]
     ]
-    proxied-args: map-each [type var] paramlist [
+    let proxied-args: map-each [type var] paramlist [
         to-text var
     ]
 
-    return-keyword: if return-type != "void" ["return "] else [null]
+    let return-keyword: if return-type != "void" ["return "] else [null]
 
     append variadic-api-c-helpers cscape [:api --{
         $<Maybe Attributes>
@@ -282,7 +293,7 @@ for-each-api [
 
 variadic-api-binding-capturing-macros: map-each-api [
     if yes? is-variadic [
-        fixed-params: map-each [type var] paramlist [
+        let fixed-params: map-each [type var] paramlist [
             to-text var
         ]
 
@@ -298,7 +309,7 @@ variadic-api-binding-capturing-macros: map-each-api [
 
 variadic-api-explicit-binding-macros: map-each-api [
     if yes? is-variadic [
-        fixed-params: map-each [type var] paramlist [
+        let fixed-params: map-each [type var] paramlist [
             to-text var
         ]
 
@@ -391,9 +402,9 @@ e-lib/emit [ver --{
      * Keeping as a placeholder.
      */
 
-    #define LIBREBOL_VERSION        $<ver/1>
-    #define LIBREBOL_MAJOR          $<ver/2>
-    #define LIBREBOL_MINOR          $<ver/3>
+    #define LIBREBOL_VERSION        $<ver.1>
+    #define LIBREBOL_MAJOR          $<ver.2>
+    #define LIBREBOL_MINOR          $<ver.3>
 
 
     /*
@@ -1349,9 +1360,9 @@ saved-dir: what-dir
 ; first...
 ;
 change-dir (join repo-dir %extensions/tcc/tools/)
-eval overbind (binding of $prep-dir) load %prep-libr3-tcc.reb
+eval wrap overbind (binding of $prep-dir) load %prep-libr3-tcc.reb
 
 change-dir (join repo-dir %extensions/javascript/tools/)
-eval overbind (binding of $prep-dir) load %prep-libr3-js.reb
+eval wrap overbind (binding of $prep-dir) load %prep-libr3-js.reb
 
 change-dir saved-dir

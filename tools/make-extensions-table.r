@@ -49,7 +49,7 @@ import <common-emitter.r>
 args: parse-args system.script.args  ; either from command line or DO:ARGS
 output-dir: join system.options.path %prep/
 
-extensions: map-each 'e (split args/EXTENSIONS #":") [
+extensions: map-each 'e (split args.EXTENSIONS #":") [
     to-c-name e  ; so SOME-EXTENSION becomes SOME_EXTENSION for C macros
 ]
 

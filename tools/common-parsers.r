@@ -35,9 +35,9 @@ import <parsing-tools.reb>
 ][
     let wsp: compose [some (charset -{ ^-}-)]
 
-    let dummy: ~  ; /NEXT3 requires arg (could shim for plain /NEXT, but...)
+    let dummy  ; :NEXT3 requires arg
     let rebol-value: parsing-at 'x [
-        try transcode:next3 x 'dummy  ; transcode gives pos, null, or error
+        try transcode:next3 x $dummy  ; transcode gives pos, null, or error
     ]
 
     let terminator: [opt wsp newline opt wsp newline]
@@ -64,9 +64,9 @@ export proto-parser: context [
     unsorted-buffer: ~
     file: ~
 
-    emit-fileheader: null
-    emit-proto: null
-    emit-directive: null
+    emit-fileheader: ~
+    emit-proto: ~
+    emit-directive: ~
 
     parse-position: ~
     notes: ~
@@ -80,6 +80,10 @@ export proto-parser: context [
 
     /process: func [return: [~] text] [
         parse3 text grammar.rule
+
+        emit-fileheader: ~
+        emit-proto: ~
+        emit-directive: ~
     ]
 
     grammar: context bind [
@@ -99,7 +103,9 @@ export proto-parser: context [
             and is-fileheader
             eoh: <here>
             (
-                emit-fileheader data
+                if set? $emit-fileheader [
+                    emit-fileheader data
+                ]
             )
         ]
 
@@ -118,7 +124,9 @@ export proto-parser: context [
                 opt some [not ahead newline c-pp-token]
             ] eol
             (
-                emit-directive data
+                if set? $emit-directive [
+                    emit-directive data
+                ]
             )
         ]
 

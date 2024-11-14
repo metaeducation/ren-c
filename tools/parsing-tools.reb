@@ -59,7 +59,7 @@ export /parsing-at: func [
     <local> code-group obj
 ][
     use [instruction position] [  ; vars need to outlive this function call
-        obj: make object! compose [(setify var) ~]  ; make variable [3]
+        obj: construct compose [(setify var) ~]  ; make variable [3]
         code: overbind obj code  ; make variable visible to code
         var: has obj var
 

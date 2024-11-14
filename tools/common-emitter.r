@@ -54,7 +54,7 @@ export /cscape: func [
         [text!]
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
         [block!]
-    <local> col prefix suffix mode pattern void-marker
+    <local> col start finish prefix suffix expr mode pattern void-marker
 ][
     assert [text? last template]
 
@@ -311,7 +311,7 @@ export /make-emitter: func [
     print unspaced [-{Generating "}- title -{" (via }- by -{)}-]
 
     let stem
-    split-path3/file file $stem
+    split-path3:file file $stem
 
     temporary: boolean any [
         temporary
@@ -396,7 +396,7 @@ export /make-emitter: func [
             ************************************************************************
             **
             **  Title: $<Mold Title>
-            **  Build: A$<Boot-Version/3>
+            **  Build: A$<Boot-Version.3>
             **  File: $<Mold Stem>
             **  Author: $<Mold By>
             **  License: --{

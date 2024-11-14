@@ -464,8 +464,9 @@ export /for-each-platform: func [
     var [word!]
     body "Body of code to run for each platform"
         [block!]
+    <local> obj
 ][
-    obj: make object! compose [(to-set-word var) ~]  ; make variable
+    obj: construct compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
@@ -485,7 +486,7 @@ export /for-each-platform: func [
 
     parse3:match platforms overbind p [ some [
         name: set-word?! (
-            name: to-word name
+            name: unchain name
         )
         number: integer!
         opt some [
@@ -507,10 +508,10 @@ export /for-each-platform: func [
                 cflags: map-each 'x cflags [to-word to-text x]
             )
             ldflags: across [opt some &run-word?] (
-                ldflags: map-each 'x ldflags [to-word x]
+                ldflags: map-each 'x ldflags [unpath x]
             )
             libraries: across [opt some file!] (
-                libraries: map-each 'x libraries [to-word to-text x]
+                libraries: map-each 'x libraries [to-word x]
             )
 
             (
@@ -528,7 +529,7 @@ export /for-each-platform: func [
 
 ; Do a little bit of sanity-checking on the platforms table
 use [
-    unknown-flags used-flags build-flags word context
+    unknown-flags used-flags unused-flags build-flags word context
 ][
     used-flags: copy []
     for-each-platform 'p [
@@ -566,7 +567,7 @@ use [
         ][
             ; Exclude should mutate (CC#2222), but this works either way
             unknown-flags: exclude (
-                    unknown_flags: copy any [build-flags: get has p word, []]
+                    unknown-flags: copy any [build-flags: get has p word, []]
                 )
                 words-of context
             if not empty? unknown-flags [

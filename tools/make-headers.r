@@ -49,7 +49,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
 /emit-proto: func [
     return: [~]
-    proto
+    proto [text!]
 ][
     any [
         find proto "static"
@@ -62,14 +62,14 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
         return ~
     ]
 
-    header: proto-parser/data
+    let header: proto-parser.data
 
     all [
         block? header
         2 <= length of header
         set-word? header.1
     ] else [
-        print mold proto-parser/data
+        print mold proto-parser.data
         fail [
             proto
             newline
@@ -134,11 +134,12 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 ]
 
 /process: func [return: [~] file] [
-    proto-parser.emit-proto: :emit-proto
+    /proto-parser.emit-proto: emit-proto/
     proto-parser.file: file
-    proto-parser.emit-directive: :emit-directive
+    /proto-parser.emit-directive: emit-directive/
     proto-parser/process (as text! read file)
 ]
+
 
 ;-------------------------------------------------------------------------
 
@@ -226,6 +227,7 @@ sys-globals-parser: context [
     emit-identifier: null
     parse-position: ~
     id: null
+    data: ~
 
     /process: func [return: [~] text] [
         parse3 text grammar.rule  ; Review: no END (return result unused?)
@@ -302,6 +304,7 @@ e-strings/emit --{
      */
 }--
 for-each 'line read:lines %a-constants.c [
+    let constd
     case [
         parse3:match line ["#define" to <end>] [
             e-strings/emit line

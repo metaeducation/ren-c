@@ -119,7 +119,7 @@ any-value?!: any-value!
             |
             {^^"}  ; (actually `^"`) escaped quote, never count
             |
-            "{" (if <Q> != last pushed [append pushed <B>])
+            "{" (if <Q> != last pushed [append pushed <B>])  ; no TRY
             |
             "}" (if <B> = last pushed [take/last pushed])
             |

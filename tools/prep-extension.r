@@ -53,7 +53,8 @@ args: parse-args system.script.args  ; either from command line or DO:ARGS
 ; just point at a directory and follow the specification.
 ;
 src: to file! :args.SRC
-in-dir: split-path3/file src $file-name
+file-name: ~
+in-dir: split-path3:file src $file-name
 
 ; Assume we start up in the directory where build products are being made
 ;
@@ -64,20 +65,20 @@ src: join repo-dir src
 mkdir:deep output-dir
 
 
-platform-config: configure-platform args/OS_ID
+platform-config: configure-platform args.OS_ID
 
-use-librebol: switch args/USE_LIBREBOL [
+use-librebol: switch args.USE_LIBREBOL [
     "no" ['no]
     "yes" ['yes]
     fail "%prep-extension.r needs USE_LIBREBOL as yes or no"
 ]
 
-mod: ensure text! args/MODULE
+mod: ensure text! args.MODULE
 m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: join repo-dir (as file! ensure text! args/SRC)
+c-src: join repo-dir (as file! ensure text! args.SRC)
 
 
 === "CALCULATE NAMES OF BUILD PRODUCTS" ===
@@ -101,7 +102,8 @@ parse3:match script-name [
     ]  ; auto-generating version of initial (and poor) manual naming scheme
 ]
 
-split-path3/file c-src $inc-name
+inc-name: ~
+split-path3:file c-src $inc-name
 parse3:match inc-name [
     change "mod-" ("tmp-mod-")
     to "."
@@ -244,6 +246,7 @@ e1/emit newline
 
 if yes? use-librebol [
     for-each 'info all-protos [
+        let proto-name
         parse3 info.proto [
             opt ["export" space] "/" proto-name: across to ":"
             to <end>
@@ -253,7 +256,7 @@ if yes? use-librebol [
         ; We trickily shadow the global `librebol_binding` with a version
         ; extracted from the passed-in level.
         ;
-        e1/emit [info --{
+        e1/emit [info proto-name --{
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 LIBREBOL_BINDING_USED();  /* global, before local define */ \
                 RebolContext* librebol_binding; \
@@ -265,7 +268,7 @@ if yes? use-librebol [
 ]
 else [
     for-each 'info all-protos [
-        emit-include-params-macro e1 info/proto
+        emit-include-params-macro e1 info.proto
         e1/emit newline
     ]
 ]
@@ -280,11 +283,7 @@ else [
 
 dispatcher-forward-decls: collect [
     for-each 'info all-protos [
-        name: info.name
-        if info.native-type = 'intrinsic [  ; not that hard to do if needed
-            fail "Intrinsics not currently supported in extensions"
-        ]
-        keep cscape [name "DECLARE_NATIVE(${Name})"]
+        keep cscape [info "DECLARE_NATIVE(${Info.Name})"]
     ]
 ]
 
@@ -341,6 +340,7 @@ e1/write-emitted
 
 e: make-emitter "Ext custom init code" (join output-dir inc-name)
 
+header: ~
 initscript-body: stripload:header script-name $header
 ensure text! header  ; stripload gives back textual header
 
@@ -367,8 +367,7 @@ script-compressed: gzip script-uncompressed
 
 dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
     for-each 'info all-protos [
-        name: info.name
-        keep cscape [mod name "N_${MOD}_${Name}"]
+        keep cscape [mod info "N_${MOD}_${Info.Name}"]
     ]
 ]
 

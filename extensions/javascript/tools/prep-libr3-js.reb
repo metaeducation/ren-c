@@ -67,7 +67,7 @@ e-cwrap: make-emitter "JavaScript C Wrapper functions" (
 ; !!! There may be few enough routines involved that the better answer is to
 ; dodge `cwrap`/`ccall` altogether and just by-hand wrap the routines.
 ;
-e-cwrap/emit {
+e-cwrap/emit ---{
 
   // Returns the C function with a specified identifier (for C++, you need to do manual name mangling)
     function getCFunc(ident) {
@@ -206,12 +206,12 @@ e-cwrap/emit {
         return ccall_tolerant(ident, returnType, argTypes, arguments, opts);
       }
     }
-}
+}---
 
 
 === "GENERATE C WRAPPER FUNCTIONS" ===
 
-e-cwrap/emit {
+e-cwrap/emit ---{
     /* The C API uses names like rebValue().  This is because calls from the
      * core do not go through a struct, but inline directly...also some of
      * the helpers are macros.  However, Node.js does not permit libraries
@@ -248,7 +248,7 @@ e-cwrap/emit {
             reb.m = self  /* module exports are at global scope on worker? */
         }
      }
-}
+}---
 
 to-js-type: func [
     return: [~null~ text! tag!]
@@ -392,18 +392,18 @@ for-each-api [
         continue
     ]
 
-    no-reb-name: null
+    let no-reb-name: null
     parse3:match name ["reb" no-reb-name: across to <end>] else [
         fail ["API name must start with `reb`" name]
     ]
 
-    js-return-type: any [
+    let js-return-type: any [
         if find name "Promise" [<promise>]
         to-js-type return-type
         fail ["No JavaScript return mapping for type" return-type]
     ]
 
-    js-param-types: collect* [  ; CSCAPE won't auto-delimit [], use COLLECT*
+    let js-param-types: collect* [  ; CSCAPE won't auto-delimit [], use COLLECT*
         for-each [type var] paramlist [
             keep to-js-type type else [
                 fail [
@@ -415,14 +415,14 @@ for-each-api [
     ]
 
     if no? is-variadic [
-        e-cwrap/emit cscape [:api {
+        e-cwrap/emit cscape [:api --{
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'API_$<Name>',
                 $<Js-Return-Type>, [
                     $(Maybe Js-Param-Types),
                 ]
             )
-        }]
+        }--]
         continue
     ]
 
@@ -434,7 +434,7 @@ for-each-api [
         continue
     ]
 
-    prologue: if null [
+    let prologue: if null [
         ; It can be useful for debugging to see the API entry points;
         ; using console.error() adds a stack trace to it.
         ;
@@ -443,7 +443,7 @@ for-each-api [
         null
     ]
 
-    epilogue: if null [
+    let epilogue: if null [
         ; Similar to debugging on entry, it can be useful on exit to see
         ; when APIs return...code comes *before* the return statement.
         ;
@@ -452,16 +452,16 @@ for-each-api [
         null
     ]
 
-    code-for-returning: trim:auto copy (switch js-return-type [
+    let code-for-returning: trim:auto copy (switch js-return-type [
         "'string'" [
             ;
             ; If `char *` is returned, it was rebAlloc'd and needs to be freed
             ; if it is to be converted into a JavaScript string
-            {
+            --{
                 var js_str = UTF8ToString(a)
                 reb.Free(a)
                 return js_str
-            }
+            }--
         ]
         <promise> [
             ;
@@ -469,20 +469,20 @@ for-each-api [
             ; for the [resolve, reject] pair.  It will run the code that
             ; will call the rebResolveNative() later...after a setTimeout, so
             ; it is sure that this table entry has been entered.
-            {
+            --{
                 return new Promise(function(resolve, reject) {
                     reb.RegisterId_internal(a, [resolve, reject])
                 })
-            }
+            }--
         ]
     ] else [
         ; !!! Doing return and argument transformation needs more work!
         ; See suggestions: https://forum.rebol.info/t/817
 
-        {return a}
+        --{return a}--
     ])
 
-    e-cwrap/emit cscape [:api {
+    e-cwrap/emit cscape [:api --{
         reb.$<No-Reb-Name> = function() {
             $<Maybe Prologue>
             let argc = arguments.length
@@ -524,10 +524,10 @@ for-each-api [
             $<Maybe Epilogue>
             $<Code-For-Returning>
         }
-    }]
+    }--]
 ]
 
-e-cwrap/emit {
+e-cwrap/emit ---{
     /*
      * JavaScript lacks the idea of "virtual fields" which you can mention in
      * methods in a base class, but then shadow in a derived class such that
@@ -895,14 +895,14 @@ e-cwrap/emit {
             return reb.Nothing()
         }
     }
-}
+}---
 
 if null [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
-    e-cwrap/emit {
+    e-cwrap/emit --{
         reb.GetSilentTrace_internal = function() {
             return UTF8ToString(reb.m._API_rebGetSilentTrace_internal())
         }
-    }
+    }--
 ]
 
 e-cwrap/write-emitted
@@ -1000,7 +1000,7 @@ e-node-preload: make-emitter "Emterpreter Preload for Node.js" (
     join prep-dir %include/node-preload.js
 )
 
-e-node-preload/emit {
+e-node-preload/emit ---{
     var R3Module = {};
     console.log("Yes we're getting a chance to preload...")
     console.log(__dirname + '/libr3.bytecode')
@@ -1013,6 +1013,6 @@ e-node-preload/emit {
         fs.readFileSync(__dirname + '/libr3.bytecode').buffer
 
     console.log(R3Module.emterpreterFile)
-}
+}---
 
 e-node-preload/write-emitted

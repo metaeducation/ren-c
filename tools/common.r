@@ -287,7 +287,7 @@ export /lowercase-of: func [
 export /propercase: func [text [text!]] [
     assert [not empty? text]
     change text uppercase text.1
-    pos: next text
+    let pos: next text
     while [pos: any [find pos "_", find pos "-"]] [
         if not pos: next pos [break]
         change pos uppercase pos.1
@@ -390,13 +390,13 @@ export /stripload: func [
             |
             -{^^"}-  ; (actually `^"`) escaped quote, never count
             |
-            "-{" (if <Q> != last pushed [append pushed <B>])
+            "-{" (if <Q> != try last pushed [append pushed <B>])
             |
-            "}-" (if <B> = last pushed [take:last pushed])
+            "}-" (if <B> = try last pushed [take:last pushed])
             |
             -{"}- (
                 case [
-                    <Q> = last pushed [take:last pushed]
+                    <Q> = try last pushed [take:last pushed]
                     empty? pushed [append pushed <Q>]
                 ]
             )
@@ -438,7 +438,7 @@ export /stripload: func [
                     t: newline-pos
                     continue
                 ]
-                str: copy:part t colon-pos
+                let str: copy:part t colon-pos
                 if not parse3:match str [some "/"] [  ; symbols like ///:
                     if str.1 = #"/" [str: next str]  ; /foo: -> foo as name
                 ]
@@ -456,7 +456,7 @@ export /stripload: func [
                         parse3:match str [some "."]
                     ]
                 ] then [
-                    keep as word! str
+                    keep to word! str  ; AS WORD! must be at head
                 ]
                 t: newline-pos
             ]

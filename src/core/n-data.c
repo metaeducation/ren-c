@@ -464,6 +464,32 @@ DECLARE_NATIVE(set_run_word_q)
 
 
 //
+//  /run-word?: native:intrinsic [
+//
+//  "Test if argument is a path like /WORD"
+//
+//      return: [logic?]
+//      element [<maybe> element?]
+//  ]
+//
+DECLARE_NATIVE(run_word_q)
+{
+    INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
+
+    DECLARE_ELEMENT (e);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    if (b)
+        return unwrap b;
+
+    if (not Is_Path(e))
+        return nullptr;
+
+    Option(SingleHeart) single = Try_Get_Sequence_Singleheart(e);
+    return LOGIC(single == LEADING_BLANK_AND(WORD));
+}
+
+
+//
 //  /get-word?: native:intrinsic [
 //
 //  "Test if an argument is a chain with a leading blank and a word"

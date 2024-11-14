@@ -268,7 +268,7 @@ export analyse: context [
                 ]
             ]
 
-            proto-parser.emit-proto: :emit-proto
+            /proto-parser.emit-proto: emit-proto/
             proto-parser/process data
 
             if non-std-func-space [

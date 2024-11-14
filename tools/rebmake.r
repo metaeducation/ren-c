@@ -198,7 +198,7 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        if let tool: any [get $cmd/strip, get $default-strip] [
+        if let tool: any [get $cmd.strip, get $default-strip] [
             let b: ensure block! tool/commands cmd.file cmd.options
             assert [1 = length of b]
             return b.1
@@ -565,15 +565,15 @@ gcc: make compiler-class [
 
             keep "-o"
 
-            .output: file-to-local .output
+            output: file-to-local output
 
             any [E, ends-with? output target-platform.obj-suffix] then [
-                keep .output
+                keep output
             ] else [
-                keep [.output target-platform.obj-suffix]
+                keep [output target-platform.obj-suffix]
             ]
 
-            keep file-to-local .source
+            keep file-to-local source
         ]
     ]
 ]
@@ -673,16 +673,16 @@ cl: make compiler-class [
                 ]
             ]
 
-            .output: file-to-local .output
+            output: file-to-local output
             keep unspaced [
                 either E ["/Fi"]["/Fo"]
                 any [
                     E
-                    ends-with? .output target-platform.obj-suffix
+                    ends-with? output target-platform.obj-suffix
                 ] then [
-                    .output
+                    output
                 ] else [
-                    unspaced [.output target-platform.obj-suffix]
+                    unspaced [output target-platform.obj-suffix]
                 ]
             ]
 
@@ -751,22 +751,22 @@ ld: make linker-class [
 
             keep "-o"
 
-            .output: file-to-local .output
-            either ends-with? .output maybe suffix [
-                keep .output
+            output: file-to-local output
+            either ends-with? output maybe suffix [
+                keep output
             ][
-                keep unspaced [.output suffix]
+                keep unspaced [output suffix]
             ]
 
-            for-each 'search (maybe map-files-to-local maybe .searches) [
+            for-each 'search (maybe map-files-to-local maybe searches) [
                 keep unspaced ["-L" search]
             ]
 
-            for-each 'flg .ldflags [
+            for-each 'flg ldflags [
                 keep maybe filter-flag flg id
             ]
 
-            for-each 'dep .depends [
+            for-each 'dep depends [
                 keep maybe accept dep
             ]
         ]
@@ -916,6 +916,7 @@ link: make linker-class [
     id: "msc"
     version: null
     exec-file: null
+
     /command: method [
         return: [text!]
         output [file!]
@@ -939,24 +940,24 @@ link: make linker-class [
             keep "/NOLOGO"  ; don't show startup banner (link takes uppercase!)
             if dynamic [keep "/DLL"]
 
-            .output: file-to-local .output
+            output: file-to-local output
             keep unspaced [
-                "/OUT:" either ends-with? .output maybe suffix [
+                "/OUT:" either ends-with? output maybe suffix [
                     output
                 ][
                     unspaced [output suffix]
                 ]
             ]
 
-            for-each 'search (maybe map-files-to-local maybe .searches) [
+            for-each 'search (maybe map-files-to-local maybe searches) [
                 keep unspaced ["/LIBPATH:" search]
             ]
 
-            for-each 'flg .ldflags [
+            for-each 'flg ldflags [
                 keep maybe filter-flag flg id
             ]
 
-            for-each 'dep .depends [
+            for-each 'dep depends [
                 keep maybe accept dep
             ]
         ]
@@ -1092,15 +1093,15 @@ object-file-class: make object! [
         ]
 
         return cc.command // [
-            output
-            source
+            .output
+            .source
 
             :I compose [(maybe spread .includes) (maybe spread I)]
             :D compose [(maybe spread .definitions) (maybe spread D)]
             :F compose [(maybe spread F) (maybe spread .cflags)]
                                                 ; ^-- reverses priority, why?
 
-            ; "current setting overwrites /refinement"
+            ; "current setting overwrites :refinement"
             ; "because the refinements are inherited from the parent" (?)
 
             :O any [O, .optimization]
@@ -1235,7 +1236,7 @@ generator-class: make object! [
                     #cmd-create #cmd-delete #cmd-strip
                 ] cmd.class
             ]
-            cmd: .gen-cmd/ cmd
+            cmd: .gen-cmd cmd
         ]
         if not cmd [return null]
 
@@ -1269,7 +1270,7 @@ generator-class: make object! [
         solution [object!]
     ][
         if find words-of solution 'output [
-            .setup-outputs/ solution
+            .setup-outputs solution
         ]
         flip-flag solution 'no
 
@@ -1318,6 +1319,7 @@ generator-class: make object! [
             return ~
         ]
 
+        let basename
         case [
             null? project.output [
                 switch project.class [
@@ -1330,7 +1332,9 @@ generator-class: make object! [
 
                     fail ["Unexpected project class:" (project.class)]
                 ]
-                if output-ext: find-last project.output #"." [
+
+                let output-ext: find-last project.output #"."
+                if output-ext [
                     remove output-ext
                 ]
 
@@ -1370,7 +1374,7 @@ generator-class: make object! [
                 .setup-output project
                 project.generated: 'yes
                 for-each 'dep project.depends [
-                    setup-outputs dep
+                    .setup-outputs dep
                 ]
             ]
             #object-file [
@@ -1403,7 +1407,7 @@ makefile: make generator-class [
                 keep spaced either entry.value [
                     [entry.name "=" entry.value]
                 ][
-                    [entry.name either yes? is-nmake ["="]["?="] entry.default]
+                    [entry.name either yes? .is-nmake ["="]["?="] entry.default]
                 ]
             ]
 
@@ -1455,7 +1459,7 @@ makefile: make generator-class [
                     for-each 'cmd (ensure block! entry.commands) [
                         let c: any [
                             match text! cmd
-                            gen-cmd cmd
+                            .gen-cmd cmd
                             continue
                         ]
                         if empty? c [continue]  ; !!! Review why this happens
@@ -1497,14 +1501,14 @@ makefile: make generator-class [
                             append objs spread obj.depends
                         ]
                     ]
-                    append buf gen-rule make entry-class [
+                    append buf .gen-rule make entry-class [
                         target: dep.output
                         depends: append copy objs (
                             spread map-each 'ddep dep.depends [
                                 if ddep.class <> #object-library [ddep]
                             ]
                         )
-                        commands: append reduce [dep.command] maybe (
+                        commands: append reduce [dep/command] maybe (
                             spread dep.post-build-commands
                         )
                     ]
@@ -1520,7 +1524,7 @@ makefile: make generator-class [
                         assert [obj.class = #object-file]
                         if no? obj.generated [
                             obj.generated: 'yes
-                            append buf (gen-rule obj.gen-entries // [
+                            append buf (.gen-rule obj.gen-entries // [
                                 dep
                                 :PIC (project.class = #dynamic-library)
                             ])
@@ -1528,10 +1532,10 @@ makefile: make generator-class [
                     ]
                 ]
                 #object-file [
-                    append buf gen-rule dep/gen-entries project
+                    append buf .gen-rule dep/gen-entries project
                 ]
                 #entry #variable [
-                    append buf gen-rule dep
+                    append buf .gen-rule dep
                 ]
                 #dynamic-extension #static-extension [
                     ; nothing to do
@@ -1618,12 +1622,12 @@ export execution: make generator-class [
                 ]
                 either block? target.commands [
                     for-each 'cmd target.commands [
-                        cmd: .do-substitutions/ cmd
+                        cmd: .do-substitutions cmd
                         print ["Running:" cmd]
                         call:shell cmd
                     ]
                 ][
-                    let cmd: .do-substitutions/ target.commands
+                    let cmd: .do-substitutions target.commands
                     print ["Running:" cmd]
                     call:shell cmd
                 ]
@@ -1660,12 +1664,12 @@ export execution: make generator-class [
                     ]
                 ]
                 for-each 'dep project.depends [
-                    .run/parent dep project
+                    .run:parent dep project
                 ]
-                .run-target/ make entry-class [
+                .run-target make entry-class [
                     target: project.output
                     depends: join project.depends spread objs
-                    commands: reduce [project.command]
+                    commands: reduce [project/command]
                 ]
             ]
             #object-library [
@@ -1682,17 +1686,17 @@ export execution: make generator-class [
             ]
             #object-file [
                 assert [parent]
-                run-target project/gen-entries p-project
+                .run-target project/gen-entries p-project
             ]
             #entry #variable [
-                run-target project
+                .run-target project
             ]
             #dynamic-extension #static-extension [
                 ; nothing to do
             ]
             #solution [
                 for-each 'dep project.depends [
-                    run dep
+                    .run dep
                 ]
             ]
             (elide dump project)

@@ -94,7 +94,7 @@ sys.util/rescue [
     ]
 
     export /split-path3: enclose (
-        augment split-path/ [:file [any-word? any-path?]]
+        augment split-path/ [:file [any-word? any-tuple?]]
     ) f -> [
         let file: f.file
         let results: meta:lite eval f  ; no [...]: in bootstrap load of file
@@ -112,9 +112,8 @@ sys.util/rescue [
             return eval f
         ]
         f.next: okay
-        let [dummy block]
-        block: (  ; no SET-BLOCK, @, in boot
-            compose [dummy (to chain! reduce [_ f.next3])]
+        let block: (  ; no SET-BLOCK in boot, no # in boot (space -> #)
+            compose [(space) (join chain! [_ f.next3])]  ; synthesized optional
         )
         return eval compose [(setify block) eval f]
     ]
@@ -132,6 +131,11 @@ sys.util/rescue [
     export /boolean?!: boolean?/
     export /onoff?!: onoff?/
     export /yesno?!: yesno?/
+
+    export set-word?!: &set-word?
+    export get-word?!: &get-word?
+    export set-tuple?!: &set-tuple?
+    export get-tuple?!: &get-tuple?
 
     quit 0
 ]
@@ -330,6 +334,7 @@ quasiform!: word!  ; conflated, but can work in a very limited sense
 /overbind: in/  ; works in a limited sense
 /bindable: func3 [what] [:what]
 /inside: func3 [where value] [:value]  ; no-op in bootstrap
+/wrap: identity/  ; no op in bootstrap
 
 /in: func3 [] [
     fail:blame "Use HAS or OVERBIND instead of IN in bootstrap" $return
@@ -397,6 +402,13 @@ get-path!: func3 [] [
     either word? plain [to-set-word plain] [to-set-path plain]
 ]
 
+/unchain: func3 [chain [set-word?! set-tuple?!]] [
+    either set-word? chain [to-word chain] [to-path chain]
+]
+
+/unpath: func3 [path [refinement3!]] [
+    to-word path
+]
 
 /any-value?: func3 [x] [true]  ; now inclusive of null
 /element?: any-value?/  ; used to exclude null
@@ -806,6 +818,11 @@ get-path!: func3 [] [
         lit-path! [return to path! x]
     ]
     x
+]
+
+/resolve: func3 [x [any-word! any-path!]] [
+    if any-word? x [return to word! x]
+    return to path! x
 ]
 
 ; We've scrapped the form of refinements via GROUP! for function dispatch, and

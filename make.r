@@ -42,6 +42,9 @@ rebmake: import <tools/rebmake.r>
 ; We default to building in a subdirectory called %build/ if they launch from
 ; the repository directory itself.  Otherwise we build wherever they are.
 
+output-dir: ~
+launched-from-root: ~
+
 if repo-dir = what-dir [
     launched-from-root: 'yes
     output-dir: join repo-dir %build/
@@ -83,6 +86,8 @@ args: parse-args system.script.args  ; either from command line or DO:ARGS
 ; now args are ordered and separated by bar:
 ; [NAME VALUE ... '| COMMAND ...]
 ;
+options: commands: ~
+
 if (commands: find args '|) [
     options: copy:part args commands
     commands: next commands
@@ -97,9 +102,9 @@ for-each [name value] options [
             ; A config file can inherit from other configurations with the
             ; `Inherits: %some-config.r` header option.
             ;
-            config: to-file value
+            let config: to-file value
 
-            saved-dir: what-dir
+            let saved-dir: what-dir
 
             ; Because the goal is to create an OBJECT! from the top-level
             ; declarations in the file, this has to build an inheritance stack.
@@ -107,9 +112,9 @@ for-each [name value] options [
             ; otherwise, the outermost configs wouldn't have the innermost
             ; config fields visible when the run.
             ;
-            config-stack: copy []
+            let config-stack: copy []
             while [config] [
-                dir: split-path3:file config $file
+                let dir: split-path3:file config $file
                 change-dir dir
                 append config-stack (load read file)
 
@@ -852,7 +857,7 @@ use [extension-dir entry][
             dir? entry
             find read (join extension-dir entry) %make-spec.r
         ] then [
-            spec: load join (join extension-dir entry) %make-spec.r
+            let spec: load join (join extension-dir entry) %make-spec.r
 
             ; !!! The specs use `repo-dir` and some other variables.
             ; Splice those in for starters, but will need deep thought.
@@ -863,7 +868,7 @@ use [extension-dir entry][
                 user-config: (user-config)
             ]
 
-            parsed: parse-ext-build-spec spec
+            let parsed: parse-ext-build-spec spec
             assert [not parsed.mode]  ; no build mode assigned at first yet
             append extensions parsed
         ]
@@ -1049,6 +1054,8 @@ help-spec: [
   }--
 ]
 
+topic: spec: ~  ; no LET in PARSE3
+
 help-topics: collect [parse3 help-spec [
     some ['=== topic: word! '=== spec: text! (
         keep as text! topic
@@ -1070,6 +1077,8 @@ help-object: make object! collect [parse3 help-spec [
         )
     ]
 ]]
+
+topic: spec: ~  ; avoid leaks (FWIW)
 
 
 /help: func [
@@ -1132,30 +1141,32 @@ if yes? launched-from-root [
     ]
 ]
 
+cc-exec: linker-exec: strip-exec: ~  ; no LET in PARSE3
+pos: ~
 parse3:match user-config.toolset [
     opt some [
-        'gcc opt cc-exec: [file! | text! | blank!] (
+        'gcc cc-exec: opt [file! | text! | blank!] (
             rebmake.default-compiler: rebmake.gcc
         )
-        | 'clang opt cc-exec: [file! | text! | blank!] (
+        | 'clang cc-exec: opt [file! | text! | blank!] (
             rebmake.default-compiler: rebmake.clang
         )
-        | 'cl opt cc-exec: [file! | text! | blank!] (
+        | 'cl cc-exec: opt [file! | text! | blank!] (
             rebmake.default-compiler: rebmake.cl
         )
-        | 'ld opt linker-exec: [file! | text! | blank!] (
+        | 'ld linker-exec: opt [file! | text! | blank!] (
             rebmake.default-linker: rebmake.ld
         )
-        | 'llvm-link opt linker-exec: [file! | text! | blank!] (
+        | 'llvm-link linker-exec: opt [file! | text! | blank!] (
             rebmake.default-linker: rebmake.llvm-link
         )
-        | 'link opt linker-exec: [file! | text! | blank!] (
+        | 'link linker-exec: opt [file! | text! | blank!] (
             rebmake.default-linker: rebmake.link
         )
-        | 'strip opt strip-exec: [file! | text! | blank!] (
+        | 'strip strip-exec: opt [file! | text! | blank!] (
             rebmake.default-strip: rebmake.strip
             rebmake.default-strip.options: [<gnu:-S> <gnu:-x> <gnu:-X>]
-            if get 'strip-exec [
+            if strip-exec [
                 set-exec-path rebmake.default-strip strip-exec
             ]
         )
@@ -1164,6 +1175,7 @@ parse3:match user-config.toolset [
 ] else [
     fail ["failed to parse toolset at:" mold pos]
 ]
+pos: ~  ; avoid leaks, FWIW
 
 
 === "SANITY CHECK COMPILER AND LINKER" ===
@@ -1234,7 +1246,7 @@ switch user-config.debug [
         app-config.debug: 'off
     ]
     'asserts [
-        ; /debug should only affect the "-g -g3" symbol inclusions in rebmake.
+        ; :debug should only affect the "-g -g3" symbol inclusions in rebmake.
         ; To actually turn off asserts or other checking features, NDEBUG must
         ; be defined.
         ;
@@ -1523,7 +1535,7 @@ for-each [category entries] file-base [
                         ; assume taken care of
                     ]
                     path! [
-                        dir: split-path3 to file! entry
+                        let dir: split-path3 to file! entry
                         if not find folders dir [
                             append folders join %objs/ dir
                         ]
@@ -1546,6 +1558,7 @@ for-each [category entries] file-base [
 ; This translates to an ext.mode of <builtin>, <dynamic>, or null.
 
 for-each 'ext extensions [
+    let mode
     if mode: select user-config.extensions ext.name [
         ;
         ; Bootstrap executable (at least on mac) had problems setting to null.
@@ -1706,12 +1719,12 @@ for-each 'ext extensions [
 
     assert [find [<builtin> <dynamic>] ext.mode]
 
-    ext-objlib: make rebmake.object-library-class [  ; #object-library
+    let ext-objlib: make rebmake.object-library-class [  ; #object-library
         name: ext.name
         depends: map-each 's (
             append reduce [ext.source] maybe spread ext.depends
         )[
-            dep: case [
+            let dep: case [
                 match [file! block!] s [
                     gen-obj:dir s (join repo-dir %extensions/)
                 ]
@@ -1758,8 +1771,8 @@ for-each 'ext extensions [
     ; array of dispatcher CFunction pointers for the natives) and RX_Collate
     ; function.  It is located in the %prep/ directory for the extension.
     ;
-    ext-name-lower: lowercase to text! ext.name
-    ext-init-source: as file! unspaced [
+    let ext-name-lower: lowercase to text! ext.name
+    let ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
     append ext-objlib.depends gen-obj // [
@@ -1880,6 +1893,8 @@ for-each 'ext extensions [
 ; TARGET to be a makefile.  It only runs the compilation if you are using
 ; Rebmake to run the compiler via CALL.
 
+reb-tool: ~  ; used in code below :-/
+
 vars: reduce [
     reb-tool: make rebmake.var-class [
         name: "REBOL_TOOL"
@@ -1933,12 +1948,12 @@ prep: make rebmake.entry-class [
         keep ["$(REBOL)" join tools-dir %make-headers.r]
         keep [
             "$(REBOL)" join tools-dir %make-boot.r
-            unspaced ["OS_ID=" platform-config.id]
+            unspaced ["OS_ID=" mold platform-config.id]
             "GIT_COMMIT=$(GIT_COMMIT)"
         ]
         keep [
             "$(REBOL)" join tools-dir %make-librebol.r
-            unspaced ["OS_ID=" platform-config.id]
+            unspaced ["OS_ID=" mold platform-config.id]
         ]
 
         for-each 'ext extensions [
@@ -1950,7 +1965,7 @@ prep: make rebmake.entry-class [
                     block! [first find ext.source typechecker file!]
                     fail "ext.source must be BLOCK! or FILE!"
                 ]]
-                unspaced ["OS_ID=" platform-config.id]
+                unspaced ["OS_ID=" mold platform-config.id]
                 unspaced ["USE_LIBREBOL=" ext.use-librebol]
             ]
 
@@ -1970,7 +1985,7 @@ prep: make rebmake.entry-class [
                 )
                 keep [
                     "$(REBOL)" hook-script
-                    unspaced ["OS_ID=" platform-config.id]
+                    unspaced ["OS_ID=" mold platform-config.id]
                 ]
             ]
         ]

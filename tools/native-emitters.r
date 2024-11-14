@@ -62,7 +62,7 @@ export /extract-native-protos: func [
     return: "Returns block of NATIVE-INFO! objects"
         [block!]
     c-source-file [file!]
-    <local> proto name exported
+    <local> proto name exported native-type
 ][
     return collect [
         parse3 read:string c-source-file [opt some [
@@ -86,7 +86,7 @@ export /extract-native-protos: func [
             ]
             (
                 replace proto unspaced [newline "//"] newline
-                replace proto "//  " {}
+                replace proto "//  " -{}-
 
                 keep make native-info! compose [
                     proto: (proto)
@@ -132,7 +132,7 @@ export /emit-include-params-macro: func [
     ]
     let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
-    replace spec "^^" {}
+    replace spec "^^" -{}-
 
     ; We used stripload to get the function specs, so it has @output form
     ; parameters.  The bootstrap executable thinks that's an illegal email.
@@ -141,7 +141,7 @@ export /emit-include-params-macro: func [
     ; !!! Review replacing with / when specs are changed, so /(...) and /xxx
     ; will both work.
     ;
-    replace spec "@" ""
+    replace spec "@" -{}-
 
     spec: transcode:one spec
 
@@ -182,7 +182,7 @@ export /emit-include-params-macro: func [
         ]
     ]
 
-    is-intrinsic: did find proto "native:intrinsic"
+    let is-intrinsic: did find proto "native:intrinsic"
 
     let n: 1
     let items: collect* [
@@ -223,7 +223,7 @@ export /emit-include-params-macro: func [
                 continue
             ]
 
-            let param-name: as text! to word! noquote item
+            let param-name: resolve noquote item
             all [
                 is-intrinsic
                 n = 2  ; return is 1
@@ -250,17 +250,17 @@ export /emit-include-params-macro: func [
     ; is an inconvenience, and if a native wants to do it for expedience then
     ; it needs to clear this bit itself (and set it back when done).
     ;
-    varlist-hold: if is-intrinsic [
+    let varlist-hold: if is-intrinsic [
         [
-            {if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))}
-            {    Set_Flex_Info(level_->varlist, HOLD);}
+            -{if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))}-
+            -{    Set_Flex_Info(level_->varlist, HOLD);}-
         ]
     ] else [
-        [{Set_Flex_Info(level_->varlist, HOLD);}]
+        [-{Set_Flex_Info(level_->varlist, HOLD);}-]
     ]
 
     let prefix: all [extension unspaced [extension "_"]]
-    e/emit [prefix native-name items --{
+    e/emit [prefix native-name items varlist-hold --{
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Varlist-Hold] \
             $(Items); \
