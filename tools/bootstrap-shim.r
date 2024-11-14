@@ -787,10 +787,7 @@ get-path!: func3 [] [
     fail:blame "FUNCTION deprecated (will be FUNC synonym, eventually)" $return
 ]
 
-/meth: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
-/method: func3 [] [
-    fail:blame "METHOD deprecated temporarily, use METH" $return
-]
+/method: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
 
 /mold: adapt mold3/ [  ; update so MOLD SPREAD works
     if all [

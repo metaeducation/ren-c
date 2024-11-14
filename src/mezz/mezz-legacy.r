@@ -26,24 +26,6 @@ binary!: blob!
 ]
 
 
-; See notes on the future where FUNC and FUNCTION are synonyms (same will be
-; true of METH and METHOD:
-;
-; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
-;
-/function: method: func [] [
-    fail:blame [
-        "The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was"
-        "the gathering of SET-WORD! as locals.  This behavior led to many"
-        "problems with gathering irrelevant locals in the frame (e.g. any"
-        "object fields for MAKE OBJECT! [KEY: ...]), and also made it hard"
-        "to abstract functions.  With virtual binding, there is now LET..."
-        "which has some runtime cost but is much more versatile.  If you"
-        "don't want to pay the cost then use <local> in the spec."
-    ] $return
-]
-
-
 /REBOL: func [] [
     fail:blame [
         "The REBOL [] header of a script must be interpreted by LOAD (and"

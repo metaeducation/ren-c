@@ -131,7 +131,7 @@
 
     o2/b = 10
 )(
-    o1: make object! [a: 10 /b: meth [] [/f: lambda [] [.a] return f]]
+    o1: make object! [a: 10 /b: method [] [/f: lambda [] [.a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 20
@@ -152,13 +152,13 @@
         ]
         count-up 'n 256 [
             ;
-            ; /fun-1: meth [] [.var-1]
-            ; /fun-2: meth [] [.var-1 + .var-2]
+            ; /fun-1: method [] [.var-1]
+            ; /fun-2: method [] [.var-1 + .var-2]
             ; ...
-            ; /fun-256: meth [] [.var-1 + .var-2 ... + .var-256]
+            ; /fun-256: method [] [.var-1 + .var-2 ... + .var-256]
             ;
             keep spread compose [
-                /(as word! unspaced ["meth-" n]): meth [] (collect [
+                /(as word! unspaced ["meth-" n]): method [] (collect [
                     keep 'return
                     count-up 'i n [
                         keep spread compose:deep [

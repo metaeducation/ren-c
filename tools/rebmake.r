@@ -176,7 +176,7 @@ posix: make platform-class [
     obj-suffix: ".o"
     archive-suffix: ".a"
 
-    /gen-cmd-create: meth [
+    /gen-cmd-create: method [
         return: [text!]
         cmd [object!]
     ][
@@ -187,14 +187,14 @@ posix: make platform-class [
         ]
     ]
 
-    /gen-cmd-delete: meth [
+    /gen-cmd-delete: method [
         return: [text!]
         cmd [object!]
     ][
         return spaced ["rm -fr" cmd.file]
     ]
 
-    /gen-cmd-strip: meth [
+    /gen-cmd-strip: method [
         return: [text!]
         cmd [object!]
     ][
@@ -238,7 +238,7 @@ windows: make platform-class [
     obj-suffix: ".obj"
     archive-suffix: ".lib"
 
-    /gen-cmd-create: meth [
+    /gen-cmd-create: method [
         return: [text!]
         cmd [object!]
     ][
@@ -251,7 +251,7 @@ windows: make platform-class [
         ]
     ]
 
-    /gen-cmd-delete: meth [
+    /gen-cmd-delete: method [
         return: [text!]
         cmd [object!]
     ][
@@ -269,7 +269,7 @@ windows: make platform-class [
         ]
     ]
 
-    /gen-cmd-strip: meth [
+    /gen-cmd-strip: method [
         return: [text!]
         cmd [object!]
     ][
@@ -367,11 +367,11 @@ application-class: make project-class [
     searches: null
     ldflags: null
 
-    /link: meth [return: [~]] [
+    /link: method [return: [~]] [
         linker/link .output .depends .ldflags
     ]
 
-    /command: meth [return: [text!]] [
+    /command: method [return: [text!]] [
         let ld: any [linker, default-linker]
         return ld.command // [
             .output, .depends, .searches, .ldflags,
@@ -389,11 +389,11 @@ dynamic-library-class: make project-class [
 
     searches: null
     ldflags: null
-    /link: meth [return: [~]] [
+    /link: method [return: [~]] [
         linker/link .output .depends .ldflags
     ]
 
-    /command: meth [
+    /command: method [
         return: [text!]
         <with>
         default-linker
@@ -422,7 +422,7 @@ compiler-class: make object! [
     id: null  ; flag prefix
     version: null
     exec-file: null
-    /compile: meth [
+    /compile: method [
         return: [~]
         output [file!]
         source [file!]
@@ -432,7 +432,7 @@ compiler-class: make object! [
     ][
     ]
 
-    /command: meth [
+    /command: method [
         return: [text!]
         output
         source
@@ -442,7 +442,7 @@ compiler-class: make object! [
     ][
     ]
 
-    /check: meth [
+    /check: method [
         "Check if the compiler is available"
         return: [logic?!]
         path [<maybe> any-string?]
@@ -455,7 +455,7 @@ gcc: make compiler-class [
     name: 'gcc
     id: "gnu"
 
-    /check: meth [
+    /check: method [
         "Assigns .exec-file, extracts the compiler version"
         return: [logic?!]
         :exec [file!]
@@ -483,7 +483,7 @@ gcc: make compiler-class [
         ]
     ]
 
-    /command: meth [
+    /command: method [
         return: [text!]
         output [file!]
         source [file!]
@@ -595,7 +595,7 @@ clang: make gcc [
 cl: make compiler-class [
     name: 'cl
     id: "msc" ;flag id
-    /command: meth [
+    /command: method [
         return: [text!]
         output [file!]
         source
@@ -696,12 +696,12 @@ linker-class: make object! [
     name: null
     id: null  ; flag prefix
     version: null
-    /link: meth [
+    /link: method [
         return: [~]
     ][
         ...  ; overridden
     ]
-    /commands: meth [
+    /commands: method [
         return: [~null~ block!]
         output [file!]
         depends [~null~ block!]
@@ -725,7 +725,7 @@ ld: make linker-class [
     version: null
     exec-file: null
     id: "gnu"
-    /command: meth [
+    /command: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -772,7 +772,7 @@ ld: make linker-class [
         ]
     ]
 
-    /accept: meth [
+    /accept: method [
         return: [~null~ text!]
         dep [object!]
     ][
@@ -816,7 +816,7 @@ ld: make linker-class [
         ]
     ]
 
-    /check: meth [
+    /check: method [
         return: [logic?!]
         :exec [file!]
     ][
@@ -832,7 +832,7 @@ llvm-link: make linker-class [
     version: null
     exec-file: null
     id: "llvm"
-    /command: meth [
+    /command: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -876,7 +876,7 @@ llvm-link: make linker-class [
         ]
     ]
 
-    /accept: meth [
+    /accept: method [
         return: [~null~ text!]
         dep [object!]
     ][
@@ -916,7 +916,7 @@ link: make linker-class [
     id: "msc"
     version: null
     exec-file: null
-    /command: meth [
+    /command: method [
         return: [text!]
         output [file!]
         depends [~null~ block!]
@@ -962,7 +962,7 @@ link: make linker-class [
         ]
     ]
 
-    /accept: meth [
+    /accept: method [
         return: [~null~ text!]
         dep [object!]
     ][
@@ -1013,7 +1013,7 @@ strip-class: make object! [
     id: null  ; flag prefix
     exec-file: null
     options: null
-    /commands: meth [
+    /commands: method [
         return: [block!]
         target [file!]
         params [~null~ blank! block! any-string?]
@@ -1041,7 +1041,7 @@ strip-class: make object! [
 
 strip: make strip-class [
     id: "gnu"
-    /check: meth [
+    /check: method [
         return: [logic?!]
         :exec [file!]
     ][
@@ -1065,11 +1065,11 @@ object-file-class: make object! [
     generated: 'no
     depends: null
 
-    /compile: meth [return: [~]] [
+    /compile: method [return: [~]] [
         compiler/compile
     ]
 
-    /command: meth [
+    /command: method [
         return: [text!]
         :I "extra includes" [block!]
         :D "extra definitions" [block!]
@@ -1111,7 +1111,7 @@ object-file-class: make object! [
         ]
     ]
 
-    /gen-entries: meth [
+    /gen-entries: method [
         return: [object!]
         parent [object!]
         :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
@@ -1183,7 +1183,7 @@ generator-class: make object! [
     gen-cmd-delete: null
     gen-cmd-strip: null
 
-    /gen-cmd: meth [
+    /gen-cmd: method [
         return: [text!]
         cmd [object!]
     ][
@@ -1217,7 +1217,7 @@ generator-class: make object! [
         ]
     ]
 
-    /do-substitutions: meth [
+    /do-substitutions: method [
         "Substitute variables (recursively) in the command with its value"
 
         return: [~null~ object! any-string?]
@@ -1264,7 +1264,7 @@ generator-class: make object! [
         return cmd
     ]
 
-    /prepare: meth [
+    /prepare: method [
         return: [~]
         solution [object!]
     ][
@@ -1285,7 +1285,7 @@ generator-class: make object! [
         ]
     ]
 
-    /flip-flag: meth [
+    /flip-flag: method [
         return: [~]
         project [object!]
         to [yesno?!]
@@ -1303,7 +1303,7 @@ generator-class: make object! [
         ]
     ]
 
-    /setup-output: meth [
+    /setup-output: method [
         return: [~]
         project [object!]
     ][
@@ -1353,7 +1353,7 @@ generator-class: make object! [
         project.basename: basename
     ]
 
-    /setup-outputs: meth [
+    /setup-outputs: method [
         "Set the output and implib for the project tree"
         return: [~]
         project [object!]
@@ -1390,7 +1390,7 @@ makefile: make generator-class [
     /gen-cmd-delete: get $posix.gen-cmd-delete
     /gen-cmd-strip: get $posix.gen-cmd-strip
 
-    /gen-rule: meth [
+    /gen-rule: method [
         return: "Possibly multi-line text for rule, with extra newline @ end"
             [text!]
         entry [object!]
@@ -1473,7 +1473,7 @@ makefile: make generator-class [
         ; to the caller to decide to add the spacing line or not
     ]
 
-    /emit: meth [
+    /emit: method [
         return: [~]
         buf [blob!]
         project [object!]
@@ -1542,7 +1542,7 @@ makefile: make generator-class [
         ]
     ]
 
-    /generate: meth [
+    /generate: method [
         return: [~]
         output [file!]
         solution [object!]
@@ -1597,7 +1597,7 @@ export execution: make generator-class [
     gen-cmd-delete: get $host.gen-cmd-delete
     gen-cmd-strip: get $host.gen-cmd-strip
 
-    /run-target: meth [
+    /run-target: method [
         return: [~]
         target [object!]
         :cwd "change working directory"  ; !!! Not heeded (?)
@@ -1633,7 +1633,7 @@ export execution: make generator-class [
         ]
     ]
 
-    /run: meth [
+    /run: method [
         return: [~]
         project [object!]
         :parent "parent project"

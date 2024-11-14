@@ -81,7 +81,7 @@
 )(
     o1: make object! [
         a: 10
-        /b: meth [] [/f: does [a], return f]
+        /b: method [] [/f: does [a], return f]
     ]
     o2: make o1 [a: 20]
 

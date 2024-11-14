@@ -234,7 +234,7 @@ elf-format: context [
     ;    So we alias what we're comparing to BINARY! instead of aliasing the
     ;    section as TEXT! (avoiding the validation is more performant anyway)
     ;
-    /find-section: meth [
+    /find-section: method [
         return: "The index of the section header with encap (sh_xxx vars set)"
             [~null~ integer!]
         name [text!]
@@ -260,7 +260,7 @@ elf-format: context [
         return null
     ]
 
-    /update-offsets: meth [
+    /update-offsets: method [
         "Adjust headers to account for insertion or removal of data @ offset"
 
         return: [~]
@@ -296,7 +296,7 @@ elf-format: context [
         ]
     ]
 
-    /update-embedding: meth [
+    /update-embedding: method [
         return: [~]
         executable "Executable to mutate to either add or update an embedding"
             [blob!]
@@ -492,7 +492,7 @@ elf-format: context [
         ]
     ]
 
-    /get-embedding: meth [
+    /get-embedding: method [
         return: [~null~ blob!]
         file [file!]
     ][
@@ -1171,7 +1171,7 @@ generic-format: context [
     signature: as blob! "ENCAP000"
     sig-length: length of signature
 
-    /update-embedding: meth [
+    /update-embedding: method [
         return: [~]
         executable "Executable to mutate to either add or update an embedding"
             [blob!]
@@ -1215,7 +1215,7 @@ generic-format: context [
         append executable signature
     ]
 
-    /get-embedding: meth [
+    /get-embedding: method [
         return: [~null~ blob!]
         file [file!]
     ][

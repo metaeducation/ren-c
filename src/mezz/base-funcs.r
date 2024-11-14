@@ -743,13 +743,13 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
 <|: infix:postpone eval-all/
 
 
-; Currently, METH is just a synonym for FUNC as a way of annotating that you
+; Currently, METHOD is just a synonym for FUNC as a way of annotating that you
 ; are using the `.field` notation and as such depend on the function invocation
 ; being coupled with an object.  This coupling can be done explicitly by the
 ; user with COUPLE or an implicit coupling will be supplied when a function
 ; is invoked from a TUPLE! where an object is on the left hand side.
 ;
-/meth: func/
+/method: func/
 
 
 ; It's a bit odd that `foo: accessor does [...]` will evaluate to nothing.

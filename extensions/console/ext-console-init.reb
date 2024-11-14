@@ -84,7 +84,7 @@ export console!: make object! [
   HELP    - For starting information
   ABOUT   - Information about your Rebol}--
 
-    /print-greeting: meth [
+    /print-greeting: method [
         "Adds live elements to static greeting content (build #, version)"
         return: [~]
     ][
@@ -97,7 +97,7 @@ export console!: make object! [
         boot-print greeting
     ]
 
-    /print-prompt: meth [return: [~]] [
+    /print-prompt: method [return: [~]] [
         ;
         ; Note: See example override in skin in the Debugger extension, which
         ; adds the stack "level" number and "current" function name.
@@ -109,7 +109,7 @@ export console!: make object! [
         write-stdout space
     ]
 
-    /print-result: meth [
+    /print-result: method [
         return: [~]
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-atom?]
@@ -249,27 +249,27 @@ export console!: make object! [
         ]
     ]
 
-    /print-warning: meth [return: [~] s] [print [warning reduce s]]
+    /print-warning: method [return: [~] s] [print [warning reduce s]]
 
-    /print-error: meth [return: [~] e [error!]] [
+    /print-error: method [return: [~] e [error!]] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
         print form e
     ]
 
-    /print-halted: meth [return: [~]] [
+    /print-halted: method [return: [~]] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    /print-info: meth [return: [~] s] [print [info reduce s]]
+    /print-info: method [return: [~] s] [print [info reduce s]]
 
-    /print-gap: meth [return: [~]] [print newline]
+    /print-gap: method [return: [~]] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
-    /input-hook: meth [
+    /input-hook: method [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
         return: "~escape~ if canceled, null on no input, else line of text"
@@ -305,7 +305,7 @@ export console!: make object! [
     ;    whatever binding was on the block.  Leave it open for now, as these
     ;    unbound block cases aren't the only ones to consider.
     ;
-    /dialect-hook: meth [
+    /dialect-hook: method [
         "Receives full code block, bind and process, send back to CONSOLE eval"
         return: [block!]
         b [block!]
@@ -336,7 +336,7 @@ export console!: make object! [
 
     === HELPERS (could be overridden!) ===
 
-    /add-shortcut: meth [
+    /add-shortcut: method [
         "Add/Change console shortcut"
         return: [~]
         name [word!] "Shortcut name"
