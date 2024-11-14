@@ -455,7 +455,7 @@ Bounce Stepper_Executor(Level* L)
     Push_Action(
         sub,
         VAL_ACTION(unwrap L_current_gotten),
-        Cell_Frame_Coupling(unwrap L_current_gotten)
+        Cell_Coupling(unwrap L_current_gotten)
     );
 
     Option(const Symbol*) label = Is_Word(CURRENT)
@@ -546,7 +546,7 @@ Bounce Stepper_Executor(Level* L)
         Push_Action(
             sub,
             VAL_ACTION(CURRENT),
-            Cell_Frame_Coupling(CURRENT)
+            Cell_Coupling(CURRENT)
         );
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
         assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
@@ -732,7 +732,7 @@ Bounce Stepper_Executor(Level* L)
 
         Action* action = VAL_ACTION(OUT);
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
-        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
+        Option(VarList*) coupling = Cell_Coupling(OUT);
         const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
 
         if (infix_mode) {
@@ -901,7 +901,7 @@ Bounce Stepper_Executor(Level* L)
         sub->baseline.stack_base = STACK_BASE;  // refinements
 
         Action* action = VAL_ACTION(OUT);
-        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
+        Option(VarList*) coupling = Cell_Coupling(OUT);
         Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
 
         Push_Action(sub, action, coupling);
@@ -2057,7 +2057,7 @@ Bounce Stepper_Executor(Level* L)
     // into the new function's frame.
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, infixed, Cell_Frame_Coupling(unwrap L_next_gotten));
+    Push_Action(sub, infixed, Cell_Coupling(unwrap L_next_gotten));
 
     Option(const Symbol*) label = Is_Word(L_next)
         ? Cell_Word_Symbol(L_next)

@@ -111,17 +111,12 @@ INLINE Heart CTX_TYPE(Context* c) {
 INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
   { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutability
 
-INLINE Phase* CTX_FRAME_PHASE(VarList* c) {
+INLINE Phase* CTX_ARCHETYPE_PHASE(VarList* c) {
     const Value* archetype = Varlist_Archetype(c);
     assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
     return cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
 }
 
-INLINE VarList* CTX_FRAME_BINDING(VarList* c) {
-    const Value* archetype = Varlist_Archetype(c);
-    assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
-    return cast(VarList*, BINDING(archetype));
-}
 
 //=//// FRAME COUPLING ////////////////////////////////////////////////////=//
 //
@@ -148,13 +143,15 @@ INLINE VarList* CTX_FRAME_BINDING(VarList* c) {
 
 #define UNCOUPLED  g_empty_varlist  // instruct TUPLE! processing to couple [1]
 
-INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
-    assert(Cell_Heart(c) == REB_FRAME);
+#define NONMETHOD  nullptr  // non-methods aren't coupled
+
+INLINE Option(VarList*) Cell_Coupling(const Cell* c) {
+    assert(Any_Context_Kind(Cell_Heart(c)));
     return cast(VarList*, m_cast(Node*, EXTRA(Any, c).node));
 }
 
-INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+INLINE void Tweak_Cell_Coupling(Cell* c, Option(VarList*) coupling) {
+    assert(Any_Context_Kind(Cell_Heart(c)));
     EXTRA(Any, c).node = maybe coupling;
 }
 
@@ -178,7 +175,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
             | CELL_FLAG_PROTECTED  // should not be modified
     );
     Tweak_Cell_Context_Varlist(rootvar, varlist);
-    BINDING(rootvar) = UNBOUND;  // not a frame
+    Tweak_Cell_Coupling(rootvar, NONMETHOD);  // not a frame, no coupling
     Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // not a frame
 }
 
@@ -194,7 +191,7 @@ INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
     assert(phase != nullptr);
     Reset_Cell_Header_Untracked(rootvar, CELL_MASK_FRAME);
     Tweak_Cell_Context_Varlist(rootvar, varlist);
-    Tweak_Cell_Frame_Coupling(rootvar, coupling);
+    Tweak_Cell_Coupling(rootvar, coupling);
     Tweak_Cell_Frame_Phase_Or_Label(rootvar, phase);
   #if RUNTIME_CHECKS
     rootvar->header.bits |= CELL_FLAG_PROTECTED;
@@ -226,7 +223,7 @@ INLINE KeyList* Keylist_Of_Varlist(VarList* c) {
         //
         // running frame, KeySource is Level*, so use action's paramlist.
         //
-        return ACT_KEYLIST(CTX_FRAME_PHASE(c));
+        return ACT_KEYLIST(CTX_ARCHETYPE_PHASE(c));
     }
     return cast(KeyList*, node_BONUS(KeySource, c));  // not Level
 }
@@ -378,7 +375,7 @@ INLINE Value* Varlist_Slots(const Value* * tail_out, VarList* v) {
 //=//// FRAME! VarList* <-> Level* STRUCTURE //////////////////////////=//
 //
 // For a FRAME! context, the keylist is redundant with the paramlist of the
-// CTX_FRAME_PHASE() that the frame is for.  That is taken advantage of when
+// CTX_ARCHETYPE_PHASE() that the frame is for.  That is taken advantage of when
 // a frame is executing in order to use the LINK() keysource to point at the
 // running Level* structure for that stack level.  This provides a cheap
 // way to navigate from a VarList* to the Level* that's running it.

@@ -61,7 +61,7 @@ bool Try_Catch_Break_Or_Continue(
 
     if (
         ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_break
-        and BINDING(label) == loop_level->varlist
+        and Cell_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
         Init_Unreadable(out);  // caller must interpret breaking flag
@@ -71,7 +71,7 @@ bool Try_Catch_Break_Or_Continue(
 
     if (
         ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_continue
-        and BINDING(label) == loop_level->varlist
+        and Cell_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
         Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
@@ -748,7 +748,7 @@ DECLARE_NATIVE(cycle)
     if (
         Is_Frame(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_stop
-        and BINDING(label) == LEVEL->varlist
+        and Cell_Coupling(label) == Level_Varlist(LEVEL)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
 

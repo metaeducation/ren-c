@@ -668,7 +668,7 @@ Phase* Make_Action(
             | CELL_FLAG_PROTECTED  // archetype cells should not be mutated
     );
     Tweak_Cell_Action_Details(archetype, details);
-    BINDING(archetype) = UNBOUND;
+    Tweak_Cell_Coupling(archetype, NONMETHOD);
     Tweak_Cell_Action_Partials_Or_Label(archetype, partials);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
@@ -735,7 +735,7 @@ Phase* Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
 {
-    Option(VarList*) coupling = Cell_Frame_Coupling(action);
+    Option(VarList*) coupling = Cell_Coupling(action);
     Action* a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
@@ -883,10 +883,10 @@ DECLARE_NATIVE(couple)
     assert(Cell_Heart(action_or_frame) == REB_FRAME);
 
     if (Is_Nulled(coupling))
-        Tweak_Cell_Frame_Coupling(action_or_frame, nullptr);
+        Tweak_Cell_Coupling(action_or_frame, nullptr);
     else {
         assert(Is_Object(coupling) or Is_Frame(coupling));
-        Tweak_Cell_Frame_Coupling(action_or_frame, Cell_Varlist(coupling));
+        Tweak_Cell_Coupling(action_or_frame, Cell_Varlist(coupling));
     }
 
     return COPY(action_or_frame);
@@ -910,7 +910,7 @@ DECLARE_NATIVE(uncouple)
 
     assert(Cell_Heart(action_or_frame) == REB_FRAME);
 
-    Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
+    Tweak_Cell_Coupling(action_or_frame, UNCOUPLED);
 
     return COPY(action_or_frame);
 }

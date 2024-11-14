@@ -156,8 +156,8 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
             HEART_BYTE(unwrap steps_out) = REB_THE_TUPLE;  // REB_THE_WORD ?
         }
         if (dot_at_head and Is_Action(out)) {  // need the coupling
-            if (Cell_Frame_Coupling(out) == UNCOUPLED)
-                Tweak_Cell_Frame_Coupling(out, cast(VarList*, context));
+            if (Cell_Coupling(out) == UNCOUPLED)
+                Tweak_Cell_Coupling(out, cast(VarList*, context));
         }
         return nullptr; }
 

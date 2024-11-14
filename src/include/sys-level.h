@@ -273,7 +273,7 @@ INLINE void Tweak_Level_Phase(Level* L, Phase* phase)  // check types
   { Tweak_Cell_Frame_Phase_Or_Label(L->rootvar, phase); }  // ...only
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
-  { Tweak_Cell_Frame_Coupling(L->rootvar, coupling); }  // also fast
+  { Tweak_Cell_Coupling(L->rootvar, coupling); }  // also fast
 
 // Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
 // information in it that can can be unique (the "coupling").  When invoked,
@@ -282,7 +282,7 @@ INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
 // intended to return from (break out of, etc.)
 //
 #define Level_Coupling(L) \
-    Cell_Frame_Coupling((L)->rootvar)
+    Cell_Coupling((L)->rootvar)
 
 INLINE Option(const Symbol*) Level_Label(Level* L) {
     assert(Is_Action_Level(L));

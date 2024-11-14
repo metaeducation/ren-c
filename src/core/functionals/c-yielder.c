@@ -415,7 +415,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     if (
         Is_Frame(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_yield
-        and BINDING(label) == Level_Varlist(L)
+        and Cell_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
         if (not Is_Meta_Of_Raised(OUT)) {  // THROW:FINAL value

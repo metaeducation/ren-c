@@ -76,7 +76,7 @@ typedef Context Let;
 //  +------------------------------+        +-------------------------------+
 //
 // (For executing frames, the ---Link--> is actually to its Level* structure
-// so the paramlist of the CTX_FRAME_PHASE() must be consulted.  When the
+// so the paramlist of the CTX_ARCHETYPE_PHASE() must be consulted.  When the
 // frame stops running, the paramlist is written back to the link again.)
 //
 // The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s cell.  This

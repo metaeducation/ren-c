@@ -371,7 +371,7 @@ DECLARE_NATIVE(endable_q)
         return FAIL("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
     VarList* ctx = Cell_Varlist(SPARE);
-    Action* act = CTX_FRAME_PHASE(ctx);
+    Action* act = CTX_ARCHETYPE_PHASE(ctx);
 
     Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = Get_Parameter_Flag(param, ENDABLE);
@@ -648,7 +648,7 @@ DECLARE_NATIVE(definitional_return)
         Push_Action(
             target_level,
             VAL_ACTION(atom),
-            Cell_Frame_Coupling(atom)
+            Cell_Coupling(atom)
         );
         Begin_Action(target_level, VAL_FRAME_LABEL(atom), PREFIX_0);
 
@@ -668,7 +668,7 @@ DECLARE_NATIVE(definitional_return)
     // identify for that behavior.
     //
     Copy_Cell(SPARE, Lib(REDO));
-    Tweak_Cell_Frame_Coupling(  // comment said "may have changed"?
+    Tweak_Cell_Coupling(  // comment said "may have changed"?
         SPARE,
         Varlist_Of_Level_Force_Managed(target_level)
     );

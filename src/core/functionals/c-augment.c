@@ -131,7 +131,7 @@ DECLARE_NATIVE(augment)
     Tweak_Frame_Varlist_Rootvar(
         paramlist,
         ACT_IDENTITY(VAL_ACTION(ARG(original))),
-        Cell_Frame_Coupling(ARG(original))
+        Cell_Coupling(ARG(original))
     );
 
     Phase* augmentated = Make_Action(

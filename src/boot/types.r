@@ -72,11 +72,6 @@ blank       "placeholder unit type"
             [any-unit? any-inert?]  ; allow as `branch`?
             [blank       -       +]
 
-comma       "separator between full evaluations (that is otherwise invisible)"
-~barrier~   (CELL_MASK_NO_NODES)
-#unstable   [any-unit?]  ; NOT inert
-            [comma       -       +]
-
 decimal     "64bit floating point number (IEEE standard)"
             (CELL_MASK_NO_NODES)
             [any-number? any-scalar? any-inert?]
@@ -106,6 +101,11 @@ integer     "64 bit integer"
             (CELL_MASK_NO_NODES)  ; would change with bignum ints
             [any-number? any-scalar? any-inert? any-sequencable?]
             [integer     +       +]
+
+pair        "two dimensional point or size"
+            (node1)
+            [any-scalar? any-inert?]
+            [pair        +       +]
 
 parameter   "function parameter description"
 ~hole~      (node1 node2)
@@ -192,11 +192,6 @@ varargs     "evaluator position for variable numbers of arguments"
             (node2)
             [any-inert?]
             [varargs     +       +]
-
-pair        "two dimensional point or size"
-            (node1)
-            [any-scalar? any-inert?]
-            [pair        +       +]
 
 <ANY-CONTEXT?>
 
@@ -448,6 +443,15 @@ pair        "two dimensional point or size"
   </ANY-GROUP?>
 
 </ANY-LIST?>
+
+; COMMA! is weirdly bindable, due to its application in variadic feeds.
+; It's an implementation detail which would require inventing another datatype
+; that was FEED-specific.  Better ideas welcome.
+
+comma       "separator between full evaluations (that is otherwise invisible)"
+~barrier~   (CELL_MASK_NO_NODES)
+#unstable   [any-unit?]  ; NOT inert
+            [comma       -       +]
 
 </BINDABLE?>
 

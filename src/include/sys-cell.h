@@ -600,8 +600,8 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 #define EXTRA(Type,cell) \
     (cell)->extra.Type
 
-#if NO_RUNTIME_CHECKS
-    #define Assert_Cell_Binding_Valid(v) NOOP
+#if (! DEBUG_CHECK_BINDING)
+    #define Assert_Cell_Binding_Valid(v)  NOOP
 #else
     #define Assert_Cell_Binding_Valid(v) \
         Assert_Cell_Binding_Valid_Core(v)
@@ -610,7 +610,7 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 #define Cell_Binding(v) \
     x_cast(Context*, (v)->extra.Any.node)
 
-#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
+#if (! DEBUG_CHECK_BINDING)
     #define BINDING(v) \
         *x_cast(Context**, m_cast(Node**, &(v)->extra.Any.node))
 #else
@@ -619,7 +619,9 @@ INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
 
         BindingHolder(const Cell* const& ref)
             : ref (const_cast<Cell* &>(ref))
-          {}
+        {
+            assert(Is_Bindable_Heart(Cell_Heart(ref)));
+        }
 
         void operator=(Stub* right) {
             ref->extra.Any.node = right;

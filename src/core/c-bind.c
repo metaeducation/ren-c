@@ -368,7 +368,7 @@ Option(Stub*) Get_Word_Container(
                 and binding  // word has a cache for if it's in an action frame
                 and Action_Is_Base_Of(
                     cast(Action*, binding),
-                    CTX_FRAME_PHASE(vlist)
+                    CTX_ARCHETYPE_PHASE(vlist)
                 )
             ){
                 assert(CELL_WORD_INDEX_I32(any_word) <= 0);
@@ -391,7 +391,7 @@ Option(Stub*) Get_Word_Container(
                     CELL_WORD_INDEX_I32(
                         m_cast(Cell*, any_word)
                     ) = -(maybe index);
-                    BINDING(m_cast(Cell*, any_word)) = CTX_FRAME_PHASE(vlist);
+                    BINDING(m_cast(Cell*, any_word)) = CTX_ARCHETYPE_PHASE(vlist);
                 }
             }
           #endif
@@ -1339,15 +1339,12 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 //
 void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 {
-    /* assert(Is_Bindable_Heart(cell)); */  // called with nullptr on text/etc.
+    Heart heart = Cell_Heart_Unchecked(cell);
+    assert(Is_Bindable_Heart(heart));
 
-    Context* binding = BINDING(cell);  // read doesn't assert, only write
+    Context* binding = u_cast(Context*, cell->extra.Any.node);
     if (not binding)
         return;
-
-    Heart heart = Cell_Heart_Unchecked(cell);
-    if (heart != REB_COMMA)  // weird trick used by va_list feeds
-        assert(Is_Bindable_Heart(heart));
 
     assert(Is_Node(binding));
     assert(Is_Node_Managed(binding));

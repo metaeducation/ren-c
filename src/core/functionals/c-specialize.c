@@ -52,8 +52,8 @@ Bounce Specializer_Dispatcher(Level* L)
 {
     VarList* exemplar = ACT_EXEMPLAR(Level_Phase(L));
 
-    Tweak_Level_Phase(L, CTX_FRAME_PHASE(exemplar));
-    Tweak_Level_Coupling(L, CTX_FRAME_BINDING(exemplar));
+    Tweak_Level_Phase(L, CTX_ARCHETYPE_PHASE(exemplar));
+    Tweak_Level_Coupling(L, CTX_ARCHETYPE_COUPLING(exemplar));
 
     return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
 }
@@ -94,7 +94,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
     Tweak_Frame_Varlist_Rootvar(
         a,
         ACT_IDENTITY(VAL_ACTION(action)),
-        Cell_Frame_Coupling(action)
+        Cell_Coupling(action)
     );
 
     // If there is a PARTIALS list, then push its refinements.
@@ -722,7 +722,7 @@ Phase* Alloc_Action_From_Exemplar(
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Action* unspecialized = CTX_FRAME_PHASE(exemplar);
+    Action* unspecialized = CTX_ARCHETYPE_PHASE(exemplar);
 
     const Key* tail;
     const Key* key = ACT_KEYS(&tail, unspecialized);

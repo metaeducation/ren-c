@@ -62,7 +62,7 @@ INLINE Element* Init_Frame_Details_Core(
     Reset_Cell_Header_Untracked(out, CELL_MASK_FRAME);
     Tweak_Cell_Action_Details(out, a);
     INIT_VAL_ACTION_LABEL(out, label);
-    Tweak_Cell_Frame_Coupling(out, coupling);
+    Tweak_Cell_Coupling(out, coupling);
 
     return out;
 }

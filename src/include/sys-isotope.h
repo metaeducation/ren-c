@@ -81,7 +81,7 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
             Unbind_Any_Word(c);
         }
         else {
-            assert(Any_List_Kind(heart));
+            assert(Any_List_Kind(heart) or heart == REB_COMMA);
             BINDING(c) = UNBOUND;
         }
     }

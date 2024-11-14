@@ -986,7 +986,7 @@ Bounce Action_Executor(Level* L)
     if (Is_Frame(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]
-            and Cell_Frame_Coupling(label) == cast(VarList*, L->varlist)
+            and Cell_Coupling(label) == cast(VarList*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
             assert(Is_Logic(OUT));  // signal if we want to gather args or not
@@ -1096,7 +1096,7 @@ void Push_Action(
     Tweak_Cell_Context_Varlist(L->rootvar, L->varlist);
 
     Tweak_Cell_Frame_Phase(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()
-    Tweak_Cell_Frame_Coupling(L->rootvar, coupling);  // Level_Coupling()
+    Tweak_Cell_Coupling(L->rootvar, coupling);  // Level_Coupling()
 
     s->content.dynamic.used = num_args + 1;
 

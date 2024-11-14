@@ -84,10 +84,11 @@ INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
         CELL_MASK_PAIR | FLAG_HEART_BYTE(REB_PAIR)
     );
     Tweak_Cell_Node1(out, p);
+
   #if ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;  // payload second not used
+    EXTRA(Any, out).corrupt = CORRUPTZERO;
   #endif
-    BINDING(out) = UNBOUND;  // "arraylike", needs binding
 
     return out;
 }

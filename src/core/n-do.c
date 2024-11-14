@@ -229,7 +229,7 @@ DECLARE_NATIVE(shove)
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_INFIX);  // [1]
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
-    Push_Action(sub, VAL_ACTION(shovee), Cell_Frame_Coupling(shovee));
+    Push_Action(sub, VAL_ACTION(shovee), Cell_Coupling(shovee));
     Begin_Action(sub, label, infix_mode);  // can know if it's infix [2]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -550,11 +550,11 @@ DECLARE_NATIVE(redo)
         }
 
         Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(sibling)));
-        Tweak_Level_Coupling(L, Cell_Frame_Coupling(sibling));
+        Tweak_Level_Coupling(L, Cell_Coupling(sibling));
     }
     else {
         Tweak_Level_Phase(L, VAL_FRAME_PHASE(restartee));
-        Tweak_Level_Coupling(L, Cell_Frame_Coupling(restartee));
+        Tweak_Level_Coupling(L, Cell_Coupling(restartee));
     }
 
     Action* redo_action = u_cast(Action*, Level_Phase(L));
@@ -573,7 +573,7 @@ DECLARE_NATIVE(redo)
     }
 
     Copy_Cell(SPARE, Lib(REDO));  // label used for throw
-    Tweak_Cell_Frame_Coupling(SPARE, c);  // coupling has restartee as varlist
+    Tweak_Cell_Coupling(SPARE, c);  // coupling has restartee as varlist
 
     const Value* gather_args = Lib(NULL);
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
@@ -978,7 +978,7 @@ DECLARE_NATIVE(run)
     Push_Action(
         sub,
         VAL_ACTION(action),
-        Cell_Frame_Coupling(action)
+        Cell_Coupling(action)
     );
     Begin_Action(sub, VAL_FRAME_LABEL(action), PREFIX_0);
 

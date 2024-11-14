@@ -60,7 +60,7 @@ INLINE void Tweak_Cell_Frame_Phase(Cell* v, Phase* phase) {
 INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
     Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
     if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
-        return CTX_FRAME_PHASE(Cell_Varlist(v));  // use archetype
+        return CTX_ARCHETYPE_PHASE(Cell_Varlist(v));  // use archetype
     return cast(Phase*, f);  // cell has its own phase, return it
 }
 

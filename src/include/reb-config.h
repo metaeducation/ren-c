@@ -501,6 +501,13 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_CELL_READ_WRITE  RUNTIME_CHECKS
 #endif
 
+#if !defined(DEBUG_CHECK_BINDING)
+    #define DEBUG_CHECK_BINDING  (RUNTIME_CHECKS && CPLUSPLUS_11)
+#endif
+#if DEBUG_CHECK_BINDING
+    STATIC_ASSERT(CPLUSPLUS_11);
+#endif
+
 
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and
 // does not apply (some platforms need this invariant for `double` to work).

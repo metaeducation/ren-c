@@ -171,7 +171,7 @@ Bounce Cascader_Executor(Level* const L)
         sub,
         ACT_IDENTITY(VAL_ACTION(first))  // has varlist already [3]
     );
-    Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
+    Tweak_Level_Coupling(sub, Cell_Coupling(first));
 
     sub->u.action.original = VAL_ACTION(first);
     Set_Action_Level_Label(sub, VAL_FRAME_LABEL(first));
@@ -202,7 +202,7 @@ Bounce Cascader_Executor(Level* const L)
     ++VAL_INDEX_RAW(pipeline);  // update series index to next FRAME! to call
 
     Restart_Action_Level(sub);  // see notes
-    Push_Action(sub, VAL_ACTION(pipeline_at), Cell_Frame_Coupling(pipeline_at));
+    Push_Action(sub, VAL_ACTION(pipeline_at), Cell_Coupling(pipeline_at));
 
     Begin_Action(sub, VAL_FRAME_LABEL(pipeline_at), PREFIX_0);
 

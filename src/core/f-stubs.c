@@ -276,11 +276,11 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
     assert(Cell_Varlist(archetype) == v);
     assert(CTX_TYPE(v) == kind);
 
-    // Currently only FRAME! uses the ->binding field, in order to capture the
-    // ->binding of the function value it links to (which is in ->phase)
+    // Currently only FRAME! uses the extra field, in order to capture the
+    // ->coupling of the function value it links to (which is in ->phase)
     //
     assert(
-        BINDING(archetype) == UNBOUND
+        Cell_Coupling(archetype) == NONMETHOD
         or CTX_TYPE(v) == REB_FRAME
     );
 

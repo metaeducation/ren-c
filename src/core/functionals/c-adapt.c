@@ -113,7 +113,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     Value* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
 
     Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
-    Tweak_Level_Coupling(L, Cell_Frame_Coupling(adaptee));
+    Tweak_Level_Coupling(L, Cell_Coupling(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding [3]
 }}

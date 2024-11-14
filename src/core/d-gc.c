@@ -277,12 +277,12 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // could apply to any OBJECT!, but the binding cheaply makes it
         // a method for that object.)
         //
-        if (BINDING(v) != UNBOUND) {
+        if (Cell_Coupling(v) != NONMETHOD) {
             if (CTX_TYPE(context) == REB_FRAME) {
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
                 if (L)  // comes from execution, not MAKE FRAME!
-                    assert(Cell_Frame_Coupling(v) == Level_Coupling(L)); */
+                    assert(Cell_Coupling(v) == Level_Coupling(L)); */
             }
             else
                 assert(Is_Stub_Let(Compact_Stub_From_Cell(v)));
@@ -433,7 +433,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     if (Is_Stub_Details(a)) {
         const Element* archetype = Array_Head(a);
         assert(Is_Frame(archetype));
-        assert(not Cell_Frame_Coupling(archetype));
+        assert(not Cell_Coupling(archetype));
 
         // These queueings cannot be done in Queue_Mark_Function_Deep
         // because of the potential for overflowing the C stack with calls
@@ -454,7 +454,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         //
         assert(Any_Context(archetype));
         assert(
-            BINDING(archetype) == UNBOUND
+            Cell_Coupling(archetype) == NONMETHOD
             or VAL_TYPE(archetype) == REB_FRAME
         );
 

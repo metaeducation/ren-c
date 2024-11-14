@@ -138,7 +138,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     L2->baseline.stack_base = base;
 
     Push_Level_Erase_Out_If_State_0(out, L2);
-    Push_Action(L2, VAL_ACTION(run), Cell_Frame_Coupling(run));
+    Push_Action(L2, VAL_ACTION(run), Cell_Coupling(run));
     Begin_Action(L2, VAL_FRAME_LABEL(run), PREFIX_0);
 }
 
@@ -269,6 +269,6 @@ DECLARE_NATIVE(hijack)
         OUT,
         victim_identity,
         VAL_FRAME_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? [4]
-        Cell_Frame_Coupling(ARG(hijacker))
+        Cell_Coupling(ARG(hijacker))
     );
 }

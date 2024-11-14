@@ -167,7 +167,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
             Phase* phase;
             if (not IS_FRAME_PHASED(v)) {  // not running, inputs visible [3]
-                phase = CTX_FRAME_PHASE(e->ctx);
+                phase = CTX_ARCHETYPE_PHASE(e->ctx);
 
                 Array* varlist = Varlist_Array(e->ctx);
                 if (Get_Flavor_Flag(
@@ -183,7 +183,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                 phase = VAL_FRAME_PHASE(v);
 
                 VarList* exemplar = ACT_EXEMPLAR(phase);
-                if (CTX_FRAME_PHASE(exemplar) == phase)  // phase reuses [4]
+                if (CTX_ARCHETYPE_PHASE(exemplar) == phase)  // phase reuses [4]
                     e->visibility = VAR_VISIBILITY_ALL;
                 else
                     e->visibility = VAR_VISIBILITY_INPUTS;
@@ -1068,9 +1068,9 @@ DECLARE_GENERICS(Context)
         if (
             HEART_BYTE(var) == REB_FRAME
             and QUOTE_BYTE(var) == ANTIFORM_0
-            and Cell_Frame_Coupling(var) == UNCOUPLED
+            and Cell_Coupling(var) == UNCOUPLED
         ){
-            Tweak_Cell_Frame_Coupling(OUT, c);
+            Tweak_Cell_Coupling(OUT, c);
         }
 
         return OUT; }
@@ -1266,7 +1266,7 @@ DECLARE_GENERICS(Frame)
                 OUT,
                 VAL_FRAME_PHASE(frame),  // just a Action*, no binding
                 VAL_FRAME_LABEL(frame),
-                Cell_Frame_Coupling(frame)  // e.g. where RETURN returns to
+                Cell_Coupling(frame)  // e.g. where RETURN returns to
             );
         } */
 
@@ -1274,7 +1274,7 @@ DECLARE_GENERICS(Frame)
             return T_Context(level_, verb);
 
         if (prop == SYM_EXEMPLAR) {
-            Init_Frame_Details(frame, CTX_FRAME_PHASE(c), ANONYMOUS, nullptr);
+            Init_Frame_Details(frame, CTX_ARCHETYPE_PHASE(c), ANONYMOUS, nullptr);
             goto handle_reflect_action;
         }
 
@@ -1331,8 +1331,8 @@ DECLARE_GENERICS(Frame)
         Option(SymId) sym = Cell_Word_Id(property);
         switch (sym) {
           case SYM_COUPLING: {
-            Option(VarList*) coupling = Cell_Frame_Coupling(frame);
-            if (not coupling)
+            Option(VarList*) coupling = Cell_Coupling(frame);
+            if (not coupling)  // NONMETHOD
                 return nullptr;
             if (unwrap coupling == UNCOUPLED)
                 return NOTHING;
@@ -1376,7 +1376,7 @@ DECLARE_GENERICS(Frame)
             //
             Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
             Tweak_Cell_Context_Varlist(OUT, ACT_PARAMLIST(act));
-            Tweak_Cell_Frame_Coupling(OUT, Cell_Frame_Coupling(frame));
+            Tweak_Cell_Coupling(OUT, Cell_Coupling(frame));
             Tweak_Cell_Frame_Phase_Or_Label(OUT, act);
             return OUT; }
 
@@ -1491,7 +1491,7 @@ DECLARE_GENERICS(Frame)
             OUT,
             proxy,
             VAL_FRAME_LABEL(frame),  // keep symbol (if any) from original
-            Cell_Frame_Coupling(frame)  // same (e.g. RETURN to same frame)
+            Cell_Coupling(frame)  // same (e.g. RETURN to same frame)
         ); }
 
       default:
@@ -1518,7 +1518,7 @@ DECLARE_GENERICS(Frame)
         // paramlist, but the binding is different in the cell instances
         // in order to know where to "exit from".
         //
-        return Cell_Frame_Coupling(a) == Cell_Frame_Coupling(b);
+        return Cell_Coupling(a) == Cell_Coupling(b);
     }
 
     return false;

@@ -140,7 +140,15 @@ INLINE Element* Init_Series_At_Core_Untracked(
     );
     Tweak_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;
-    BINDING(out) = binding;  // asserts if unbindable type tries to bind
+
+    EXTRA(Any, out).node = binding;  // checked below if DEBUG_CHECK_BINDING
+
+  #if DEBUG_CHECK_BINDING
+    if (Any_Bindable_Kind(heart))
+        Assert_Cell_Binding_Valid(out);
+    else
+        assert(binding == nullptr);  // all non-bindables use nullptr for now
+  #endif
 
   #if RUNTIME_CHECKS  // if non-string UTF-8 fits in cell, should be in cell
     if (Any_Utf8_Kind(heart) and not Any_String_Kind(heart)) {

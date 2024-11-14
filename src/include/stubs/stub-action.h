@@ -187,12 +187,12 @@ INLINE void Tweak_Cell_Action_Partials_Or_Label(Cell* c, Option(const Flex*) f)
   { Tweak_Cell_Node2(c, maybe f); }
 
 
-INLINE Phase* CTX_FRAME_PHASE(VarList* c);
+INLINE Phase* CTX_ARCHETYPE_PHASE(VarList* c);
 
 INLINE Phase* ACT_IDENTITY(Action* action) {
     if (Is_Stub_Details(action))
         return cast(Phase*, action);  // don't want hijacked archetype details
-    return CTX_FRAME_PHASE(x_cast(VarList*, action));  // always ACT_IDENTITY()
+    return CTX_ARCHETYPE_PHASE(x_cast(VarList*, action));  // always ACT_IDENTITY()
 }
 
 

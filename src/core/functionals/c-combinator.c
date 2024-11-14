@@ -763,7 +763,7 @@ DECLARE_NATIVE(combinatorize)
 
     Action* act = VAL_ACTION(ARG(c));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
-    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(c));
+    Option(VarList*) coupling = Cell_Coupling(ARG(c));
 
     Value* rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
