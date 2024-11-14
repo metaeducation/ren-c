@@ -743,13 +743,13 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
 <|: infix:postpone eval-all/
 
 
-; Currently, METHOD is just a synonym for FUNC as a way of annotating that you
-; are using the `.field` notation and as such depend on the function invocation
-; being coupled with an object.  This coupling can be done explicitly by the
-; user with COUPLE or an implicit coupling will be supplied when a function
-; is invoked from a TUPLE! where an object is on the left hand side.
+; METHOD is a near-synonym for FUNC, with the difference that it marks the
+; produced action as being "uncoupled".  This means that when TUPLE! dispatch
+; occurs, it will poke a pointer to the object that the function was
+; dispatched from into the action's cell.  This enables the `.field` notation,
+; which looks up the coupling in the virtual bind chain.
 ;
-/method: func/
+/method: cascade [func/ uncouple/]
 
 
 ; It's a bit odd that `foo: accessor does [...]` will evaluate to nothing.

@@ -108,8 +108,10 @@ PVAR Element* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 PVAR Element* g_empty_text; // read-only ""
 PVAR Element* g_empty_blob; // read-only #{}
 PVAR Element* g_empty_block; // read-only []
+PVAR Element* g_empty_object;
 PVAR Element* Root_Quasi_Null;  // ~null~ quasiform
 PVAR Source* PG_Empty_Array; // optimization of Cell_Array(g_empty_block)
+PVAR VarList* g_empty_varlist;
 PVAR Source* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
 PVAR Source* PG_1_Quasi_Void_Array;  // used by heavy voids ~[~void~]~
 

@@ -1068,8 +1068,13 @@ DECLARE_GENERICS(Context)
 
         Copy_Cell(OUT, var);
 
-        if (HEART_BYTE(var) == REB_FRAME)
+        if (
+            HEART_BYTE(var) == REB_FRAME
+            and QUOTE_BYTE(var) == ANTIFORM_0
+            and Cell_Frame_Coupling(var) == UNCOUPLED
+        ){
             Tweak_Cell_Frame_Coupling(OUT, c);
+        }
 
         return OUT; }
 
@@ -1332,6 +1337,8 @@ DECLARE_GENERICS(Frame)
             Option(VarList*) coupling = Cell_Frame_Coupling(frame);
             if (not coupling)
                 return nullptr;
+            if (unwrap coupling == UNCOUPLED)
+                return NOTHING;
             return COPY(Varlist_Archetype(unwrap coupling)); }
 
           case SYM_LABEL: {

@@ -63,27 +63,27 @@
 
     o2/b = 20
 )(
-    o1: make object! [
+    o1: construct [
         a: 10
-        /b: does [/f: does [.a] f]
+        /b: method [] [let /f: does [.a] return f]
     ]
     o2: make o1 [a: 20]
 
     o2/b = 20
 )(
-    o1: make object! [
+    o1: construct [
         a: 10
-        /b: does [/f: lambda [] [.a] f]
+        /b: method [] [let /f: lambda [] [.a] return f]
     ]
     o2: make o1 [a: 20]
 
     o2/b = 20
 )(
-    o1: make object! [
+    o1: make object! [  ; "CONTEXT"
         a: 10
-        /b: method [] [/f: does [a], return f]
+        /b: does [let /f: does [a], f]
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2/b = 10  ; need METHOD to get the member selection
 )

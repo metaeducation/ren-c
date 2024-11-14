@@ -53,8 +53,10 @@ static Context* Adjust_Context_For_Coupling(Context* c) {
             );
         VarList* coupling = maybe Level_Coupling(level);
         if (not coupling)
+            continue;  // skip NULL couplings (default for FUNC, DOES, etc.)
+        if (coupling == UNCOUPLED)
             return Error_User(
-                ".field object used on frame with no coupling"
+                ".field object used on uncoupled frame"
             );
         return coupling;
     }
@@ -1256,4 +1258,22 @@ DECLARE_NATIVE(set_accessor)
     Set_Node_Unreadable_Bit(var);  // help trap unintentional reads [1]
 
     return NOTHING;
+}
+
+
+//
+//  /.: native [
+//
+//  "Get the current coupling from the binding environment"
+//
+//      return: [~null~ object!]
+//  ]
+//
+DECLARE_NATIVE(dot_1)
+{
+    INCLUDE_PARAMS_OF_DOT_1;
+
+    Context* coupling = Adjust_Context_For_Coupling(Level_Binding(LEVEL));
+
+    return Init_Object(OUT, cast(VarList*, coupling));
 }

@@ -154,6 +154,8 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
     if (h == REB_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(e);
+        if (symbol == Canon(DOT_1) and not Any_Tuple_Kind(sequence_heart))
+            return nullptr;
         if (
             sequence_heart != REB_CHAIN  // !!! temporary for //: -- review
             and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)

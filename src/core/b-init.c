@@ -353,6 +353,39 @@ static void Init_Root_Vars(void)
     );
     Force_Value_Frozen_Deep(g_empty_block);
 
+  blockscope {
+    Length len = 0;
+    Array* a = Make_Array_Core(
+        FLEX_MASK_VARLIST
+            | NODE_FLAG_MANAGED, // Note: Rebind below requires managed context
+        1 + len  // needs room for rootvar
+    );
+    Set_Flex_Len(a, 1 + len);
+    MISC(VarlistAdjunct, a) = nullptr;
+    node_LINK(NextVirtual, a) = nullptr;
+
+    KeyList* keylist = Make_Flex(
+        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
+        KeyList,
+        len  // no terminator, 0-based
+    );
+
+    Set_Flex_Used(keylist, len);
+
+    Tweak_Keylist_Of_Varlist_Unique(a, keylist);
+    LINK(Ancestor, keylist) = keylist;  // ancestors terminate in self
+
+    Tweak_Non_Frame_Varlist_Rootvar(a, REB_OBJECT);
+
+    g_empty_varlist = cast(VarList*, a);
+
+    ensure(nullptr, g_empty_object) = Init_Object(
+        Alloc_Value(),
+        g_empty_varlist  // holds empty varlist alive
+    );
+    Force_Value_Frozen_Deep(g_empty_object);
+  }
+
   blockscope {  // keep array alive via stable API handle (META PACK, not PACK)
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
     Init_Quasi_Null(Stub_Cell(a));
@@ -414,6 +447,8 @@ static void Shutdown_Root_Vars(void)
     rebReleaseAndNull(&g_empty_text);
     rebReleaseAndNull(&g_empty_block);
     PG_Empty_Array = nullptr;
+    rebReleaseAndNull(&g_empty_object);
+    g_empty_varlist = nullptr;
     rebReleaseAndNull(&Root_Meta_Heavy_Null);
     PG_1_Quasi_Null_Array = nullptr;
     rebReleaseAndNull(&Root_Meta_Heavy_Void);

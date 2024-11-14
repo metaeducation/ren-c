@@ -207,3 +207,14 @@
 
     (null = has o 'i)
 ]
+
+(
+    obj: construct [
+        x: 10
+        /foo: method [] [
+            let /helper: does [.]  ; . looks in frame binding for coupling
+            return helper
+        ]
+    ]
+    obj/foo = obj
+)

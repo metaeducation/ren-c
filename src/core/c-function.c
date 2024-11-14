@@ -872,7 +872,7 @@ DECLARE_GENERICS(Fail)
 //
 DECLARE_NATIVE(couple)
 //
-// !!! Should this require an /OVERRIDE if the action already has a non-null
+// !!! Should this require an :OVERRIDE if the action already has a non-null
 // coupling in its cell?
 {
     INCLUDE_PARAMS_OF_COUPLE;
@@ -888,6 +888,29 @@ DECLARE_NATIVE(couple)
         assert(Is_Object(coupling) or Is_Frame(coupling));
         Tweak_Cell_Frame_Coupling(action_or_frame, Cell_Varlist(coupling));
     }
+
+    return COPY(action_or_frame);
+}
+
+
+//
+//  /uncouple: native [
+//
+//  "Disassociate an ACTION from OBJECT!"
+//
+//      return: [action? frame!]
+//      action [action? frame!]
+//  ]
+//
+DECLARE_NATIVE(uncouple)
+{
+    INCLUDE_PARAMS_OF_UNCOUPLE;
+
+    Value* action_or_frame = ARG(action);  // could also be a FRAME!
+
+    assert(Cell_Heart(action_or_frame) == REB_FRAME);
+
+    Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
 
     return COPY(action_or_frame);
 }

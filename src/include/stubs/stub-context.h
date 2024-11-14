@@ -123,18 +123,30 @@ INLINE VarList* CTX_FRAME_BINDING(VarList* c) {
     return cast(VarList*, BINDING(archetype));
 }
 
-//=//// FRAME TARGET //////////////////////////////////////////////////////=//
+//=//// FRAME COUPLING ////////////////////////////////////////////////////=//
 //
-// A FRAME! cell can store a context as a target.  RETURN here would store
+// A FRAME! cell can store a context as a "coupling".  RETURN here would store
 // the action that the return will return from.  A METHOD will store the
 // object that the method is linked to.  Since it is per-cell, the same
-// archetypal actoin can be specialized to many different targets.
+// archetypal action can be specialized to many different targets.
 //
 // Note: The presence of targets in non-archetype values makes it possible
 // for FRAME! values that have phases to carry the binding of that phase.
 // This is a largely unexplored feature, but is used in REDO scenarios where
 // a running frame gets re-executed.  More study is needed.
 //
+// 1. The way that a FRAME! cell made by METHOD gets connected with an object
+//    is when the TUPLE! dispatch happens.  `/foo: method [...]` is uncoupled
+//    until the moment that you say `obj.foo`, at which point the returned
+//    action gets OBJ's pointer poked into the result.  But not all functions
+//    have this happen: it would stow arbitrary unintentional data in
+//    non-methods just because they were accessed from an object--and worse,
+//    it would create contention where meanings of member words as `.member`
+//    would be looked up in helper functions.  So only intentionally
+//    uncoupled functions--not functions with mere couplings of NULL--are
+//    processed by TUPLE! to embed the pointer.
+
+#define UNCOUPLED  g_empty_varlist  // instruct TUPLE! processing to couple [1]
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
     assert(Cell_Heart(c) == REB_FRAME);
@@ -145,6 +157,13 @@ INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
     assert(HEART_BYTE(c) == REB_FRAME);
     EXTRA(Any, c).node = maybe coupling;
 }
+
+INLINE VarList* CTX_ARCHETYPE_COUPLING(VarList* c) {
+    const Value* archetype = Varlist_Archetype(c);
+    assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
+    return maybe Cell_Coupling(archetype);
+}
+
 
 INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Array* varlist,
