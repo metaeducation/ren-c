@@ -1165,8 +1165,8 @@ void GC_Kill_Flex(Flex* s)
   #if RUNTIME_CHECKS
     PG_Reb_Stats->Series_Freed++;
 
-    #if DEBUG_COUNT_TICKS
-        s->tick = TG_Tick; // update to be tick on which series was freed
+    #if DEBUG_STUB_ORIGINS
+        s->tick = TICK;  // update to be tick on which series was freed
     #endif
   #endif
 }

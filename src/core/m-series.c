@@ -410,7 +410,7 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
 
     fprintf(stderr, " Flex");
 
-  #if DEBUG_COUNT_TICKS
+  #if DEBUG_STUB_ORIGINS
     fprintf(stderr, " was likely ");
     if (s->leader.bits & NODE_FLAG_UNREADABLE)
         fprintf(stderr, "freed");
@@ -420,13 +420,8 @@ ATTRIBUTE_NO_RETURN void Panic_Flex_Debug(Flex* s)
     fprintf(
         stderr, " during evaluator tick: %lu\n", cast(unsigned long, s->tick)
     );
-  #else
-    fprintf(stderr, " has no tick tracking (see DEBUG_COUNT_TICKS)\n");
-  #endif
-
     fflush(stderr);
 
-  #if DEBUG_STUB_ORIGINS
     if (*s->guard == 1020) // should make valgrind or asan alert
         panic ("Flex guard didn't trigger ASAN/valgrind trap");
 
