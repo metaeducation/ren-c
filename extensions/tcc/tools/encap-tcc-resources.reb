@@ -76,7 +76,7 @@ all [
     ]
 
     tcc-libtcc1-file: (local-to-file try get-env "TCC_LIBTCC1_FILE") else [
-         join config-tccdir %libtcc1.a
+        join config-tccdir %libtcc1.a
     ]
     if exists? tcc-libtcc1-file [<ok>] else [
         print ["TCC_LIBTCC1_FILE setting is invalid" tcc-libtcc1-file]

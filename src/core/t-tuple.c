@@ -152,55 +152,22 @@ DECLARE_GENERICS(Sequence)
         UNUSED(ARG(element));  // sequence
         Heart to = VAL_TYPE_HEART(ARG(type));
 
-        if (Any_Sequence_Kind(to)) {  // e.g. `to the-chain! 'a.b.c` [1]
-            if (
-                (Any_Path_Kind(to) and Any_Path_Kind(heart))
-                or (Any_Chain_Kind(to) and Any_Chain_Kind(heart))
-                or (Any_Tuple_Kind(to) and Any_Tuple_Kind(heart))
-            ){
-                HEART_BYTE(sequence) = to;
-                return COPY(sequence);
-            }
-
-            Offset i;
-            for (i = 0; i < len; ++i) {
-                Copy_Sequence_At(
-                    PUSH(), sequence, i
-                );
-            }
-            Option(Error*) error = Trap_Pop_Sequence(OUT, to, STACK_BASE);
-            if (error)
-                return RAISE(unwrap error);
-
-            return OUT;
-        }
+        if (Any_Sequence_Kind(to))  // e.g. `to the-chain! 'a.b.c` [1]
+            goto handle_as_conversion;  // immutable, same code
 
         if (Any_List_Kind(to)) {  // !!! Should list have isomorphic binding?
-            Source* a = Make_Source_Managed(len);
-            Set_Flex_Len(a, len);
-            Offset i;
-            for (i = 0; i < len; ++i) {
-                Derelativize_Sequence_At(
-                    Array_At(a, i),
-                    sequence,
-                    Cell_Sequence_Binding(sequence),
-                    i
-                );
-            }
+            Source* a = Make_Source_Managed(1);
+            Set_Flex_Len(a, 1);
+            Copy_Cell(Array_Head(a), sequence);
+            Plainify(Array_Head(a));  // to block! @a.b.c -> [a.b.c]
             return Init_Any_List(OUT, to, a);
         }
 
         if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
             DECLARE_MOLDER (mo);
             Push_Mold(mo);
-            Offset i;
-            for (i = 0; i < len; ++i) {
-                Sink(Element) temp = SCRATCH;
-                Copy_Sequence_At(temp, sequence, i);
-                Mold_Element(mo, temp);
-                if (i != len - 1)
-                    Append_Codepoint(mo->string, ' ');
-            }
+            Plainify(sequence);  // to text! @a.b.c -> "a.b.c"
+            Form_Element(mo, sequence);
             const String* s = Pop_Molded_String(mo);
             if (not Any_String_Kind(to))
                 Freeze_Flex(s);
@@ -216,7 +183,7 @@ DECLARE_GENERICS(Sequence)
     //    constructed tuple of length 2, with two tuples in it.  The TO
     //    conversion code constructs new tuples, but AS is supposed to be
     //    for efficiency.  The code should be merged into a version that is
-    //    efficienty when it can be: TO and AS should maybe be the same.
+    //    efficient when it can be: TO and AS should maybe be the same.
     //
     // 2. Pairings are usually the same size as stubs...but not always.  If the
     //    UNUSUAL_CELL_SIZE flag is set, pairings will be in their own pool.
@@ -227,21 +194,30 @@ DECLARE_GENERICS(Sequence)
     //    make a new array, since the symbol absolutely can't be mutated into
     //    an array node).  Review.
 
+      handle_as_conversion:
       case SYM_AS: {
         INCLUDE_PARAMS_OF_AS;
         Element* v = cast(Element*, ARG(element));  // sequence
         Heart as = VAL_TYPE_HEART(ARG(type));
 
         if (Any_Sequence_Kind(as)) {  // not all aliasings are legal [1]
-            if (
-                (Any_Path_Kind(heart) and not Any_Path_Kind(as))
-                or (Any_Chain_Kind(heart) and not (
-                    Any_Path_Kind(as) or Any_Chain_Kind(as)
-                ))
-            ){
-                return FAIL(
-                    "Conservative AS aliasing only: PATH! > CHAIN! > TUPLE!"
-                );
+            REBINT i;
+            for (i = 0; i < len; ++i) {
+                Copy_Sequence_At(SPARE, v, i);
+                if (not Any_Sequence(SPARE))
+                    continue;
+
+                assert(not Any_Path(SPARE));  // impossible!
+                if (Any_Chain(SPARE) and (as == REB_TUPLE or as == REB_CHAIN))
+                    return FAIL(
+                        "Can't AS alias CHAIN!-containing sequence"
+                        "as TUPLE! or CHAIN!"
+                    );
+
+                if (Any_Tuple(SPARE) and as == REB_TUPLE)
+                    return FAIL(
+                        "Can't AS alias TUPLE!-containing sequence as TUPLE!"
+                    );
             }
 
             Copy_Cell(OUT, v);
@@ -357,7 +333,7 @@ DECLARE_GENERICS(Sequence)
 
         return rebDelegate(
             "let t: type of", rebQ(sequence),
-            "as t reverse:part to block!", rebQ(sequence), rebI(part)
+            "as t reverse:part copy as block!", rebQ(sequence), rebI(part)
         ); }
 
     // !!! RANDOM is SHUFFLE by default, so same question about mutability
@@ -381,7 +357,7 @@ DECLARE_GENERICS(Sequence)
 
         return rebDelegate(
             "let t: type of", rebQ(sequence),
-            "as t random to block!", rebQ(sequence)
+            "as t random as block!", rebQ(sequence)
         ); }
 
       case SYM_ADD:

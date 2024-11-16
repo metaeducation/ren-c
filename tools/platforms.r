@@ -598,7 +598,7 @@ export /configure-platform: func [
         [~null~ text! tuple!]
 ][
     if null? hint [  ; Try same version as this r3-make was built with
-        hint: to tuple! reduce [0 system.version.4 system.version.5]
+        hint: join tuple! [0 system.version.4 system.version.5]
     ]
 
     let version: switch type of hint [  ; no switch:type in bootstrap

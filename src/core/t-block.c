@@ -751,15 +751,9 @@ DECLARE_GENERICS(List)
   //    cells in any array...and the data stack just being an example of that.
   //    Then we wouldn't have to push the cells here.
   //
-  // 3. What (to word! [...]) should do hasn't exactly been hammered out.
-  //    TO isn't supposed to evaluate, so it could be a synonym for
-  //    (as word! unspaced @[...]) just as a nice quick way to say that.
-  //    But another school of thought aims for reversibility where a block
-  //    with a single word in it can be converted back and forth, e.g.
-  //    ((to block! 'a) -> [a]) and ((to word! [a]) -> a) with all other
-  //    cases being errors by virtue of not preserving the transformation.
-  //    Between those two possibilities, acting on a single element block
-  //    with a word in it is common behavior.  Do that as a placeholder.
+  // 3. While it may not seem useful (to word! [...]) only works on single
+  //    element blocks with a word in them, e.g. (to word! [a]).  All other
+  //    blocks are errors.
 
       case SYM_TO: {
         INCLUDE_PARAMS_OF_TO;
@@ -774,26 +768,32 @@ DECLARE_GENERICS(List)
             );
         }
 
-        if (Any_Sequence_Kind(to)) {  // (to path! [a b c]) -> a/b/c
-            const Element* tail;
-            const Element* at = Cell_List_At(&tail, list);
-            for (; at != tail; ++at)
-                Copy_Cell(PUSH(), at);  // !!! bypass stack? [2]
+        if (Any_Sequence_Kind(to)) {  // (to path! [a/b/c]) -> a/b/c
+            Length len;
+            const Element* item = Cell_List_Len_At(&len, list);
+            if (Cell_Series_Len_At(list) != 1)
+                return RAISE("Can't TO ANY-SEQUENCE? on list with length > 1");
 
-            Option(Error*) trap = Trap_Pop_Sequence(OUT, to, STACK_BASE);
-            if (trap)
-                return RAISE(unwrap trap);
+            if (
+                (Is_Path(item) and Any_Path_Kind(to))
+                or (Is_Chain(item) and Any_Chain_Kind(to))
+                or (Is_Tuple(item) and Any_Tuple_Kind(to))
+            ){
+                Copy_Cell(OUT, item);
+                HEART_BYTE(OUT) = to;
+                return OUT;
+            }
 
-            return OUT;
+            return RAISE("TO ANY-SEQUENCE? needs list with a sequence in it");
         }
 
-        if (Any_Word_Kind(to)) {
+        if (Any_Word_Kind(to)) {  // to word! '{a} -> a, see [3]
             Length len;
             const Element* item = Cell_List_Len_At(&len, list);
             if (Cell_Series_Len_At(list) != 1)
                 return RAISE("Can't TO ANY-WORD? on list with length > 1");
             if (not Is_Word(item))
-                return RAISE("TO ANY-WORD? requires list with one word in it");
+                return RAISE("TO ANY-WORD? needs list with one word in it");
             Copy_Cell(OUT, item);
             HEART_BYTE(OUT) = to;
             return OUT;

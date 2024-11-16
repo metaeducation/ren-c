@@ -238,6 +238,9 @@ each: quote/
 /max: maximum/
 /abs: absolute/
 
+/delimit: lambda [delimiter line :head :tail] [
+    join // [text! line :with delimiter :head head :tail tail]
+]
 /unspaced: specialize delimit/ [delimiter: null]
 /spaced: specialize delimit/ [delimiter: space]
 /newlined: specialize delimit/ [delimiter: newline, tail: ok]
@@ -289,17 +292,6 @@ each: quote/
     ]
 ]
 
-
-; bridge compatibility, as LIT-WORD! and LIT-PATH! are no longer fundamental
-; datatypes... but type constraints (LIT-WORD? and LIT-PATH?)
-
-/to-lit-word: func* [return: [quoted?] value [element?]] [
-    return quote to word! noquote value
-]
-
-/to-lit-path: func* [return: [quoted?] value [element?]] [
-    return quote to path! noquote value
-]
 
 /print: func* [
     "Output SPACED text with newline (evaluating elements if BLOCK!)"

@@ -875,8 +875,9 @@ use [extension-dir entry][
     ]
 ]
 
-extension-names: map-each 'x extensions [to-lit-word x.name]
-
+extension-names: map-each 'x extensions [
+    quote x.name  ; in bootstrap, can't (delimit "," inert extension-names)
+]
 
 === "TARGETS" ===
 
@@ -1871,7 +1872,7 @@ for-each 'ext extensions [
         add-project-flags // [
             ext-proj
             :I app-config.includes
-            :D join ["LIBREBOL_USES_API_TABLE"] spread app-config.definitions
+            :D join ["LIBREBOL_USES_API_TABLE"] inert app-config.definitions
             :c app-config.cflags
             :O app-config.optimization
             :g app-config.debug

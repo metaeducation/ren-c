@@ -1668,7 +1668,7 @@ export execution: make generator-class [
                 ]
                 .run-target make entry-class [
                     target: project.output
-                    depends: join project.depends spread objs
+                    depends: append copy project.depends objs  ; JOIN reduces
                     commands: reduce [project/command]
                 ]
             ]

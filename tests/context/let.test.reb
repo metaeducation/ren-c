@@ -112,8 +112,8 @@
 (
     /maker: func [name] [
         frame: binding of $return
-        add-let-binding frame (to word! unspaced [name 1]) <one>
-        add-let-binding frame (to word! unspaced [name 2]) <two>
+        add-let-binding frame (join word! [name 1]) <one>
+        add-let-binding frame (join word! [name 2]) <two>
     ]
     maker "demo"
     all [

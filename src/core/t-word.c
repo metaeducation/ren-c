@@ -89,12 +89,8 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 //
 // Historically, WORD! creation was done with AS and TO.
 //
-// But MAKE has the ability to heed bindings and do evaluations.  So it seems
-// that this shorthand is useful:
-//
-//     as word! unspaced [...]
-//     ->
-//     make word! [...]  ; saves 8 characters
+// (make word! [...]) was considered to mean (as word! unspaced [...]), but
+// this responsibility was moved to (join word! [...])
 //
 // It doesn't seem to do a lot of good to have (make word! "some-string") as
 // an alternative to (to word! "some-string") or (as word! "some-string").
@@ -102,16 +98,10 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 // string vs. copying it, and adding make into the mix doesn't really help.
 //
 // There might be applications of things like (make word! 241) being a way
-// of creating a word based on its symbol ID.  But generally speaking, it's
-// hard to think of anything besides [...] and @[...] being useful.
+// of creating a word based on its symbol ID.
 //
 Bounce Makehook_Word(Level* level_, Heart heart, Element* arg) {
     assert(Any_Word_Kind(heart));
-
-    if (Is_Block(arg) or Is_The_Block(arg))
-        return rebValue(
-            Canon(AS), Datatype_From_Kind(heart), "unspaced", rebQ(arg)
-        );
 
     if (Any_Sequence(arg)) {  // (make word! '/a) or (make word! 'a:) etc.
         do {

@@ -61,7 +61,7 @@
     ~need-non-null~ !! (
         a: 1, b: null, c: 3
         date: null
-        /get-ver: func [] [to tuple! reduce [a b c]]
+        /get-ver: func [] [join tuple! [a b c]]
 
         spaced [
             curtail spaced ["Version:" get-ver]

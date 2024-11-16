@@ -147,7 +147,7 @@
             ; var-256: 256
             ;
             keep spread compose [
-                (as word! unspaced ["var-" n]): (n)
+                (join 'var- [n]): (n)
             ]
         ]
         count-up 'n 256 [
@@ -158,11 +158,11 @@
             ; /fun-256: method [] [.var-1 + .var-2 ... + .var-256]
             ;
             keep spread compose [
-                /(as word! unspaced ["meth-" n]): method [] (collect [
+                /(join 'meth- [n]): method [] (collect [
                     keep 'return
                     count-up 'i n [
-                        keep spread compose:deep [
-                            .(as word! unspaced ["var-" i]) (if i <> n ['+])
+                        keep spread compose [
+                            .(join 'var- [i]) (if i <> n ['+])
                         ]
                     ]
                 ])

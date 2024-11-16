@@ -81,6 +81,7 @@
 (error? make error! [type: 'script id: 'parse3-command])
 (error? make error! [type: 'script id: 'parse3-series])
 (error? make error! [type: 'script id: 'bad-utf8])
+(error? make error! [type: 'script id: 'done-enumerating])
 
 (error? make error! [type: 'math id: 'zero-divide])
 (error? make error! [type: 'math id: 'overflow])
@@ -132,7 +133,6 @@
 (error? make error! [type: 'internal id: 'stack-overflow])
 (error? make error! [type: 'internal id: 'globals-full])
 (error? make error! [type: 'internal id: 'bad-sys-func])
-(error? make error! [type: 'internal id: 'done-enumerating])
 
 ; are error reports for DO and EVALUATE consistent?
 (

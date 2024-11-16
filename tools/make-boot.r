@@ -69,7 +69,7 @@ e-version: make-emitter "Version Information" (
 )
 
 version: transcode:one read %version.r
-version: to tuple! reduce [
+version: join tuple! [
     version.1 version.2 version.3 platform-config.id.2 platform-config.id.3
 ]
 

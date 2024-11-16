@@ -85,7 +85,7 @@
 [#753
     (
         b: ~
-        ws: to-bitset unspaced [tab newline CR SP]
+        ws: make bitset! unspaced [tab newline CR SP]
         abc: charset ["a" "b" "c"]
         rls: ["a", some ws, b: across some abc, some ws, "c"]
         rla: ["a", opt some ws, b: across some abc, opt some ws, "c"]

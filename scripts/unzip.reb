@@ -200,7 +200,7 @@ data-descriptor-sig: #{504B0708}
         return value
     ]
     value: decode-url value
-    return join %"" spread reduce [value.host "/" value.path value.target]
+    return join %"" [value.host "/" value.path value.target]
 ]
 
 /zip: func [

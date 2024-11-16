@@ -827,7 +827,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
           default:
             if (first >= 1 and first <= 26) {  // Ctrl-A, Ctrl-B, etc.
                 e = rebValue(
-                    "as word! unspaced [",
+                    "join word! [",
                         "--{ctrl-}--", rebR(rebChar(first - 1 + 'a')),
                     "]"
                 );

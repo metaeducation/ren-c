@@ -212,7 +212,7 @@ cloudroot: https://dd498l1ilnrxu.cloudfront.net/travis-builds/  ; perma-cached
         variant: default [
             if undefined? $test-librebol ['release] else ['debug]
         ]
-        to tuple! reduce [0 system.version.4 system.version.5]
+        join tuple! [0 system.version.4 system.version.5]
     ]
     if 3 <> length of os [
         fail ["OS specification must be 3 digit tuple:" os]

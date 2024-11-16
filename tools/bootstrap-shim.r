@@ -524,17 +524,30 @@ get-path!: func3 [] [
     base [blob! any-string! path! datatype!]
     value [void! any-value!]
 ][
+    if block? value [
+        if #splice! = (first value) [
+            fail:blame "SPLICE no longer supported in JOIN" $return
+        ]
+    ]
+
     if datatype? base [
         if base = blob! [
             assert [block? value]
             return to blob! value
         ]
-        fail ["JOIN of DATATYPE! only supported for BLOB! in bootstrap"]
+        any [base = path!, base = tuple!] then [
+            assert [block? value]
+            return to base reduce value
+        ]
+        fail ["JOIN of DATATYPE! only [BLOB! TUPLE! PATH!] in bootstrap"]
     ]
     if void? :value [
         return copy base
     ]
-    append copy base :value  ; not APPEND3, shim APPEND with SPLICE behavior
+    if block? value [
+        return append3 copy base reduce value
+    ]
+    return append3 copy base value
 ]
 
 /collect*: func3 [  ; variant giving NULL if no actual material kept

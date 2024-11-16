@@ -886,7 +886,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
         }
         if (not e and (wchar >= 1 and wchar <= 26)) {  // Ctrl-A, Ctrl-B, etc.
             e = rebValue(
-                "as word! unspaced [",
+                "join word! [",
                     "--{ctrl-}--", rebR(rebChar(wchar - 1 + 'a')),
                 "]"
             );

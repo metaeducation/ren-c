@@ -392,7 +392,7 @@ static void Push_Composer_Level(
     Heart heart = Cell_Heart(e);
     const Value* adjusted = nullptr;
     if (Any_Sequence_Kind(heart))  // allow sequences [1]
-        adjusted = rebValue(Canon(TO), Canon(BLOCK_X), rebQ(e));  // AS BLOCK! broken, review
+        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(e));
     else
         assert(Any_List_Kind(heart));
 

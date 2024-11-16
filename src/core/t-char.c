@@ -636,10 +636,28 @@ DECLARE_GENERICS(Utf8)
             or to == REB_PERCENT
             or to == REB_DATE
             or to == REB_TIME
+            or to == REB_PAIR
         ){
             Option(Error*) error = Trap_Transcode_One(OUT, to, v);
             if (error)
                 return RAISE(unwrap error);
+            return OUT;
+        }
+
+        if (Any_Sequence_Kind(to)) {  // to the-tuple! "a.b.c" -> @a.b.c
+            Heart plain;
+            if (Any_Tuple_Kind(to))
+                plain = REB_TUPLE;
+            else if (Any_Chain_Kind(to))
+                plain = REB_CHAIN;
+            else {
+                assert(Any_Path_Kind(to));
+                plain = REB_PATH;
+            }
+            Option(Error*) error = Trap_Transcode_One(OUT, plain, v);
+            if (error)
+                return RAISE(unwrap error);
+            HEART_BYTE(OUT) = to;
             return OUT;
         }
 
@@ -650,16 +668,6 @@ DECLARE_GENERICS(Utf8)
             }
             return rebValue(Canon(AS), ARG(type), Canon(TRANSCODE), rebQ(v));
         }
-
-        if (Any_Sequence_Kind(to))
-            return rebValue(
-                Canon(AS), ARG(type), Canon(TO), Canon(BLOCK_X), rebQ(v)
-            );
-
-        if (to == REB_PAIR)
-            return rebValue(
-                Canon(TO), Canon(PAIR_X), Canon(TO), Canon(BLOCK_X), v
-            );
 
         if (to == REB_BLANK)
             goto handle_as_conversion;

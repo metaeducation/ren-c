@@ -3032,7 +3032,7 @@ comment [/combinatorize: func [
                 for-each 'key (words of value) [
                     let param: meta:lite select value key
                     if not param.optional [
-                        append parsers unrun f.(make word! ["param" n])/
+                        append parsers unrun f.(join 'param [n])/
                         n: n + 1
                     ]
                 ]
@@ -3049,11 +3049,11 @@ comment [/combinatorize: func [
         if any-sequence? r [any [
             all [
                 blank? last r
-                comb: try state.combinators.(to type of r [* _])  ; hack!
+                comb: try state.combinators.(as type of r '*.)  ; hack!
             ]
             all [
                 blank? first r
-                comb: try state.combinators.(to type of r [_ *])  ; hack!
+                comb: try state.combinators.(as type of r '.*)  ; hack!
             ]
         ]]
         try state.combinators.(type of r)

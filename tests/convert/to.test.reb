@@ -18,12 +18,12 @@
 
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
-([a b c] = to block! 'a/b/c)
-(the (a b c) = to group! 'a/b/c)
+([a/b/c] = to block! 'a/b/c)
+(the (a/b/c) = to group! 'a/b/c)
 ([a b c] = to block! the (a b c))
 (the (a b c) = to group! [a b c])
-(the a/b/c = to path! [a b c])
-(the /(a b c) = to path! the (a b c))
+(the a/b/c = join path! @[a b c])
+(the /(a b c) = join path! [_ the (a b c)])
 
 ; strings and words can TO-convert to ISSUE!
 [

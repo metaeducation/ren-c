@@ -89,45 +89,46 @@ DECLARE_NATIVE(latin1_q)
 #define LEVEL_FLAG_DELIMIT_MOLD_RESULT  LEVEL_FLAG_MISCELLANEOUS
 
 #define nothing_delimited                   Not_Cell_Erased(OUT)  // or NULL
-#define Mark_Delimit_Produced_Something()   Erase_Cell(OUT)
+#define Mark_Join_Produced_Something()      Erase_Cell(OUT)
 
 #define CELL_FLAG_DELIMITER_NOTE_PENDING    CELL_FLAG_NOTE
+#define CELL_FLAG_BASE_NOTE_WAS_TYPE        CELL_FLAG_NOTE
 
 
 //
-//  /delimit: native [
+//  /join: native [
 //
-//  "Joins a block of values into TEXT! with delimiters"
+//  "Join elements to produce a new value"
 //
-//      return: "Null if blank input or block's contents are all null"
-//          [~null~ text!]
-//      delimiter [~null~ blank! char? text!]
-//      line "Will be copied if already a text value"
-//          [<maybe> text! block! the-block! issue!]
+//      return: "Null if no base element and no material in rest to join"
+//          [~null~ any-utf8? any-list? any-sequence? blob!]
+//      base [type-block! any-utf8? any-list? any-sequence? blob!]
+//      rest "Plain [...] blocks reduced, @[...] block items used as is"
+//          [~void~ block! the-block! any-utf8? blob!]
+//      :with [element? splice?]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"
 //  ]
 //
-DECLARE_NATIVE(delimit)
-//
-// Evaluates each item in a block and forms it, with an optional delimiter.
-// If all the items in the block vaporize, or no items are found, this will
-// return a nulled value.
+DECLARE_NATIVE(join)
 {
-    INCLUDE_PARAMS_OF_DELIMIT;
+    INCLUDE_PARAMS_OF_JOIN;
 
-    Element* line = cast(Element*, ARG(line));
+    Element* base = cast(Element*, ARG(base));
+    Value* rest = ARG(rest);
+
     Value* mold_handle = ARG(return);
     Molder* mo;  // sometimes uses handle stored in ARG(return), sometimes not
 
-    Value* delimiter = ARG(delimiter);
+    Value* delimiter = ARG(with);
     possibly(Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
 
     enum {
-        ST_DELIMIT_INITIAL_ENTRY = STATE_0,
-        ST_DELIMIT_INITIALIZED_MOLDER,  // need to enable dispatcher catching
-        ST_DELIMIT_STEPPING,
-        ST_DELIMIT_EVALUATING_THE_GROUP
+        ST_JOIN_INITIAL_ENTRY = STATE_0,
+        ST_JOIN_INITIALIZED_MOLDER,  // need to enable dispatcher catching
+        ST_JOIN_STACK_STEPPING,
+        ST_JOIN_MOLD_STEPPING,
+        ST_JOIN_EVALUATING_THE_GROUP
     };
 
     if (Is_Throwing(LEVEL)) {  // must clean up allocated Molder
@@ -136,37 +137,45 @@ DECLARE_NATIVE(delimit)
     }
 
     switch (STATE) {
-      case ST_DELIMIT_INITIAL_ENTRY: {
-        if (Is_Block(line) or Is_The_Block(line))
-            goto delimit_block_initial_entry;
+      case ST_JOIN_INITIAL_ENTRY: {
+        if (Is_Void(rest)) {  // simple base case: nullptr or COPY
+            if (Is_Type_Block(base))
+                return nullptr;
+            return rebValue(Canon(COPY), base);
+        }
+        if (Is_Type_Block(base) and Any_Utf8(rest))
+            goto simple_join;
+        goto join_initial_entry; }
 
-        goto simple_delimit_initial_entry; }
-
-      case ST_DELIMIT_STEPPING:
+      case ST_JOIN_MOLD_STEPPING:
         mo = Cell_Handle_Pointer(Molder, mold_handle);
         assert(Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
-        goto delimit_result_in_spare;
+        goto mold_step_result_in_spare;
 
-      case ST_DELIMIT_EVALUATING_THE_GROUP:
+      case ST_JOIN_STACK_STEPPING:
+        mo = nullptr;
+        goto stack_step_result_in_spare;
+
+      case ST_JOIN_EVALUATING_THE_GROUP:
         mo = Cell_Handle_Pointer(Molder, mold_handle);
-        if (Is_The_Block(ARG(line)))
+        if (Is_The_Block(rest))
             SUBLEVEL->executor = &Inert_Stepper_Executor;
         else {
-            assert(Is_Block(line));
+            assert(Is_Block(rest));
             SUBLEVEL->executor = &Stepper_Executor;
         }
         assert(Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
-        goto delimit_result_in_spare;
+        goto mold_step_result_in_spare;
 
       default: assert(false);
     }
 
-  simple_delimit_initial_entry: { ////////////////////////////////////////////
+  simple_join: { /////////////////////////////////////////////////////////////
 
     // 1. Hard to unify this mold with code below that uses a level due to
     //    asserts on states balancing.  Easiest to repeat a small bit of code!
 
-    assert(Is_Text(line) or Is_Issue(line));  // shortcut, no evals needed [1]
+    assert(Any_Utf8(rest));  // shortcut, no evals needed [1]
 
     Molder molder_struct;
     mo = &molder_struct;
@@ -176,32 +185,44 @@ DECLARE_NATIVE(delimit)
     if (REF(head) and not Is_Nulled(delimiter))
         Form_Element(mo, cast(Element*, delimiter));
 
-    Form_Element(mo, line);
+    Form_Element(mo, cast(Element*, rest));
 
     if (REF(tail) and not Is_Nulled(delimiter))
         Form_Element(mo, cast(Element*, delimiter));
 
     return Init_Text(OUT, Pop_Molded_String(mo));
 
-} delimit_block_initial_entry: { /////////////////////////////////////////////
+} join_initial_entry: { //////////////////////////////////////////////////////
 
-    mo = Try_Alloc_Memory(Molder);
-    Construct_Molder(mo);
-    Init_Handle_Cdata(mold_handle, mo, 1);
-    STATE = ST_DELIMIT_INITIALIZED_MOLDER;  // can't be STATE_0 if catch enable
-    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // have to free Molder
+    // 1. It's difficult to handle the edge cases like `join:with:head` when
+    //    you are doing (join 'a 'b) and get it right.  So we make a feed
+    //    without having to make a fake @[...] array (though we could do
+    //    that as well).  It's a very minor optimization and may not be
+    //    worth it, but it points to maybe being able to use a better
+    //    optimization in the future (maybe one that wouldn't require a
+    //    Level at all).
 
-    Push_Mold(mo);
+    Level* sub;
 
-    Executor* executor;
-    if (Is_The_Block(ARG(line)))
-        executor = &Inert_Stepper_Executor;
+    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
+    if (Is_Block(rest)) {
+        sub = Make_Level_At(&Stepper_Executor, rest, flags);
+    }
+    else if (Is_The_Block(rest))
+        sub = Make_Level_At(&Inert_Stepper_Executor, rest, flags);
     else {
-        assert(Is_Block(line));
-        executor = &Stepper_Executor;
+        Feed* feed = Prep_Array_Feed(  // leverage feed mechanics [1]
+            Alloc_Feed(),
+            rest,  // first--in this case, the only value in the feed...
+            EMPTY_ARRAY,  // ...because we're using the empty array after that
+            0,  // ...at index 0
+            SPECIFIED,  // !!! context shouldn't matter
+            FEED_MASK_DEFAULT | (rest->header.bits & FEED_FLAG_CONST)
+        );
+
+        sub = Make_Level(&Inert_Stepper_Executor, feed, flags);
     }
 
-    Level* sub = Make_Level_At(executor, line, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE);
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
     assert(Not_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
@@ -209,17 +230,80 @@ DECLARE_NATIVE(delimit)
     Init_Nulled(OUT);  // all elements seen so far void (erased if not true)
     assert(nothing_delimited);
 
+    Heart result_heart;
+    if (Is_Type_Block(base))
+        result_heart = VAL_TYPE_HEART(base);
+    else
+        result_heart = Cell_Heart_Ensure_Noquote(base);
+
+    if (Any_Utf8_Kind(result_heart))
+        goto start_mold_join;
+
+    if (result_heart == REB_BLOB)
+        return FAIL("BLOB! JOIN NOT WRITTEN YET");
+
+    assert(Any_List_Kind(result_heart) or Any_Sequence_Kind(result_heart));
+    goto start_stack_join;
+
+  start_mold_join: { /////////////////////////////////////////////////////////
+
+    mo = Try_Alloc_Memory(Molder);
+    Construct_Molder(mo);
+    Init_Handle_Cdata(mold_handle, mo, 1);
+    STATE = ST_JOIN_INITIALIZED_MOLDER;  // can't be STATE_0 if catch enable
+    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // have to free Molder
+
+    Push_Mold(mo);
+
+    if (not Is_Type_Block(base)) {
+        Form_Element(mo, cast(Element*, base));
+        Mark_Join_Produced_Something();
+    }
+
     if (REF(head) and not Is_Nulled(delimiter))  // speculatively start with
         Form_Element(mo, cast(Element*, delimiter));  // may be tossed
 
-    goto first_delimit_step;
+    goto first_mold_step;
 
-} next_delimit_step: { ///////////////////////////////////////////////////////
+} start_stack_join: { ////////////////////////////////////////////////////////
+
+    // 1. We want (join 'a: [...]) to work, and (join 'a: []) to give `a:`
+    //    In order to do that we use the flag of whether the join produced
+    //    anything (e.g. the output is non-null) and if it didn't, we will
+    //    add a blank back.
+
+    mo = nullptr;
+
+    if (not Is_Type_Block(base)) {
+        if (Any_Sequence_Kind(result_heart)) {
+            Length len = Cell_Sequence_Len(base);
+            REBINT i;
+            for (i = 0; i < len; ++i)
+                Copy_Sequence_At(PUSH(), base, i);
+            if (Is_Blank(TOP))
+                DROP();  // will add back if join produces nothing [1]
+        }
+        else {
+            const Element* tail;
+            const Element* at = Cell_List_At(&tail, base);
+
+            for (; at != tail; ++at)
+                Copy_Cell(PUSH(), at);
+        }
+    }
+
+    if (REF(head) and not Is_Nulled(delimiter))  // speculatively start with
+        Copy_Cell(PUSH(), cast(Element*, delimiter));  // may be tossed
+
+    STATE = ST_JOIN_STACK_STEPPING;
+    return CONTINUE_SUBLEVEL(sub);  // no special source rules
+
+}} next_mold_step: { /////////////////////////////////////////////////////////
 
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     Clear_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
-} first_delimit_step: { //////////////////////////////////////////////////////
+} first_mold_step: { /////////////////////////////////////////////////////////
 
     Level* sub = SUBLEVEL;
 
@@ -238,7 +322,7 @@ DECLARE_NATIVE(delimit)
     //    keep weighing the pros/cons.  Looked-up-to blanks are illegal.
 
     if (Is_Level_At_End(sub))
-        goto finished;
+        goto finish_mold_join;
 
     const Element* item = At_Level(sub);
     if (Is_Block(item) and not Is_Nulled(delimiter)) {  // hack [1]
@@ -247,19 +331,19 @@ DECLARE_NATIVE(delimit)
 
         Value* unspaced = rebValue(Canon(UNSPACED), rebQ(SPARE));
         if (unspaced == nullptr)  // vaporized, allow it
-            goto next_delimit_step;
+            goto next_mold_step;
 
         Copy_Cell(SPARE, unspaced);
         rebRelease(unspaced);
-        goto delimit_result_in_spare;
+        goto mold_step_result_in_spare;
     }
 
     if (Is_Blank(item)) {  // BLANK! acts as space [2]
         Append_Codepoint(mo->string, ' ');
         Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
-        Mark_Delimit_Produced_Something();
+        Mark_Join_Produced_Something();
         Fetch_Next_In_Feed(sub->feed);
-        goto next_delimit_step;
+        goto next_mold_step;
     }
 
     if (Any_The_Value(item)) {  // fetch and mold
@@ -268,11 +352,11 @@ DECLARE_NATIVE(delimit)
         if (Is_The_Word(item) or Is_The_Tuple(item)) {
             Get_Var_May_Fail(SPARE, item, Level_Binding(sub));
             Fetch_Next_In_Feed(sub->feed);
-            goto delimit_result_in_spare;
+            goto mold_step_result_in_spare;
         }
 
         if (Is_The_Group(item)) {
-            STATE = ST_DELIMIT_EVALUATING_THE_GROUP;
+            STATE = ST_JOIN_EVALUATING_THE_GROUP;
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Derelativize(SCRATCH, item, Level_Binding(sub));
             HEART_BYTE(SCRATCH) = REB_BLOCK;  // the-block is different
@@ -285,16 +369,17 @@ DECLARE_NATIVE(delimit)
 
     if (Is_Quoted(item)) {  // just mold it
         Copy_Cell(SPARE, item);
+        Unquotify(SPARE, 1);
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
         Fetch_Next_In_Feed(sub->feed);
-        goto delimit_result_in_spare;
+        goto mold_step_result_in_spare;
     }
 
-    STATE = ST_DELIMIT_STEPPING;
+    STATE = ST_JOIN_MOLD_STEPPING;
     return CONTINUE_SUBLEVEL(sub);  // just evaluate it
 
-} delimit_result_in_spare: { /////////////////////////////////////////////////
+} mold_step_result_in_spare: { ///////////////////////////////////////////////
 
     bool mold = Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
@@ -325,51 +410,22 @@ DECLARE_NATIVE(delimit)
     //    The same principle would apply to a "space-delimited format".
 
     if (Is_Elision(SPARE))  // spaced [elide print "hi"], etc
-        goto next_delimit_step;  // vaporize
+        goto next_mold_step;  // vaporize
 
     Decay_If_Unstable(SPARE);  // spaced [match [logic?] false ...]
 
     if (Is_Void(SPARE))  // spaced [maybe null], spaced [if null [<a>]], etc
-        goto next_delimit_step;  // vaporize
+        goto next_mold_step;  // vaporize
 
     if (Is_Nulled(SPARE))  // catches bugs in practice [3]
         return RAISE(Error_Need_Non_Null_Raw());
 
     if (Is_Splice(SPARE) and mold) {  // only allow splice for mold, for now
         if (Cell_Series_Len_At(SPARE) == 0)
-            goto next_delimit_step;  // vaporize
+            goto next_mold_step;  // vaporize
     }
     else if (Is_Antiform(SPARE))
         return RAISE(Error_Bad_Antiform(SPARE));
-
-    if (not mold) {
-        if (Any_List(SPARE))  // guessing a behavior is bad [4]
-            return FAIL("DELIMIT requires @var to mold lists");
-
-        if (Any_Sequence(SPARE))  // can have lists in them, dicey [4]
-            return FAIL("DELIMIT requires @var to mold sequences");
-
-        if (Sigil_Of(cast(Element*, SPARE)))
-            return FAIL("DELIMIT requires @var for elements with sigils");
-
-        if (Is_Blank(SPARE))
-            return FAIL("DELIMIT only treats source-level BLANK! as space");
-    }
-
-    Mark_Delimit_Produced_Something();
-
-    if (Is_Issue(SPARE)) {  // do not delimit (unified w/char) [5]
-        Form_Element(mo, cast(Element*, SPARE));
-        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
-        goto next_delimit_step;
-    }
-
-    if (
-        not Is_Nulled(delimiter)
-        and Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)
-    ){
-        Form_Element(mo, cast(Element*, delimiter));
-    }
 
     if (mold) {
         if (Is_Splice(SPARE)) {
@@ -379,16 +435,90 @@ DECLARE_NATIVE(delimit)
         }
         else
             Mold_Element(mo, cast(Element*, SPARE));
+
+        Mark_Join_Produced_Something();
+        goto next_mold_step;
     }
-    else {
+
+    if (Any_List(SPARE))  // guessing a behavior is bad [4]
+        return FAIL("DELIMIT requires @var to mold lists");
+
+    if (Any_Sequence(SPARE))  // can have lists in them, dicey [4]
+        return FAIL("DELIMIT requires @var to mold sequences");
+
+    if (Sigil_Of(cast(Element*, SPARE)))
+        return FAIL("DELIMIT requires @var for elements with sigils");
+
+    if (Is_Blank(SPARE))
+        return FAIL("DELIMIT only treats source-level BLANK! as space");
+
+    Mark_Join_Produced_Something();
+
+    if (Is_Issue(SPARE)) {  // do not delimit (unified w/char) [5]
         Form_Element(mo, cast(Element*, SPARE));
+        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
+        goto next_mold_step;
     }
+
+    if (
+        not Is_Nulled(delimiter)
+        and Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)
+    ){
+        Form_Element(mo, cast(Element*, delimiter));
+    }
+
+    Form_Element(mo, cast(Element*, SPARE));
 
     Set_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);  // empty strings too [6]
 
-    goto next_delimit_step;
+    goto next_mold_step;
 
-} finished: { ////////////////////////////////////////////////////////////////
+} next_stack_step: { /////////////////////////////////////////////////////////
+
+    Level* sub = SUBLEVEL;
+
+    if (Is_Level_At_End(sub))
+        goto finish_stack_join;
+
+    Reset_Evaluator_Erase_Out(sub);
+    /* Clear_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT); */
+
+    return CONTINUE_SUBLEVEL(sub);
+
+} stack_step_result_in_spare: { //////////////////////////////////////////////
+
+    if (Is_Elision(SPARE))
+        goto next_stack_step;  // vaporize
+
+    Decay_If_Unstable(SPARE);
+
+    if (Is_Void(SPARE))
+        goto next_stack_step;  // vaporize
+
+    if (Is_Nulled(SPARE))  // catches bugs in practice [3]
+        return RAISE(Error_Need_Non_Null_Raw());
+
+    if (Is_Splice(SPARE)) {
+        const Element* tail;
+        const Element* at = Cell_List_At(&tail, SPARE);
+
+        if (at == tail)
+            goto next_stack_step;  // don't mark produced something
+
+        for (; at != tail; ++at)
+            Copy_Cell(PUSH(), at);
+
+        Mark_Join_Produced_Something();
+        goto next_stack_step;
+    }
+    else if (Is_Antiform(SPARE))
+        return RAISE(Error_Bad_Antiform(SPARE));
+
+    Copy_Cell(PUSH(), stable_SPARE);
+    Mark_Join_Produced_Something();
+    goto next_stack_step;
+
+} finish_mold_join: { /////////////////////////////////////////////////////////
 
     if (nothing_delimited) {
         assert(Is_Nulled(OUT));  // this is the signal for nothing delimited
@@ -399,11 +529,71 @@ DECLARE_NATIVE(delimit)
 
         if (REF(tail) and not Is_Nulled(delimiter))
             Form_Element(mo, cast(Element*, delimiter));
-        Init_Text(OUT, Pop_Molded_String(mo));
+
+        Heart heart;
+        if (Is_Type_Block(base))
+            heart = VAL_TYPE_HEART(base);
+        else
+            heart = Cell_Heart_Ensure_Noquote(base);
+
+        if (Any_Word_Kind(heart)) {
+            Utf8(const*) utf8 = cast(
+                Utf8(const*), Binary_At(mo->string, mo->base.size)
+            );
+            Size size = String_Size(mo->string) - mo->base.size;
+            const Symbol* s = Intern_UTF8_Managed(utf8, size);
+            Init_Any_Word(OUT, heart, s);
+        }
+        else if (Any_String_Kind(heart)) {
+            Init_Any_String(OUT, heart, Pop_Molded_String(mo));
+        }
+        else if (heart == REB_ISSUE) {
+            Utf8(const*) utf8 = cast(
+                Utf8(const*), Binary_At(mo->string, mo->base.size)
+            );
+            Size size = String_Size(mo->string) - mo->base.size;
+            Length len = String_Len(mo->string) - mo->base.index;
+            Init_Utf8_Non_String(OUT, heart, utf8, size, len);
+        }
+        else
+            return FAIL(PARAM(base));
     }
 
     Drop_Level(SUBLEVEL);
     Free_Memory(Molder, mo);
+    return OUT;
+
+} finish_stack_join: { ///////////////////////////////////////////////////////
+
+    Heart heart;
+    if (Is_Type_Block(base))
+        heart = VAL_TYPE_HEART(base);
+    else
+        heart = Cell_Heart_Ensure_Noquote(base);
+
+    if (Any_Sequence_Kind(heart)) {
+        if (nothing_delimited)
+            Init_Blank(PUSH());  // for (join 'a: []), see start_stack_join
+
+        Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
+        if (error)
+            return RAISE(unwrap error);
+
+        if (not Is_Type_Block(base))
+            BINDING(OUT) = BINDING(base);
+    }
+    else if (nothing_delimited) {
+        assert(Is_Nulled(OUT));  // signal for nothing delimited
+        Drop_Data_Stack_To(STACK_BASE);
+    }
+    else {
+        Init_Any_List(OUT, heart, Pop_Managed_Source_From_Stack(STACK_BASE));
+
+        if (not Is_Type_Block(base))
+            BINDING(OUT) = BINDING(base);
+    }
+
+    Drop_Level(SUBLEVEL);
     return OUT;
 
 } threw: { ///////////////////////////////////////////////////////////////////

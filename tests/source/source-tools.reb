@@ -390,7 +390,7 @@ export analyse: context [
             ]
         ]
 
-        for-each 'list :[$tabbed $whitespace-at-eol] [
+        for-each 'list reduce [$tabbed $whitespace-at-eol] [
             if not empty? get list [
                 emit as tag! list [(file) (get list)]
             ]

@@ -55,7 +55,7 @@ parse: ~<higher-level %uparse.r hasn't set SYS.UTIL/PARSE yet>~
             ;        scheme: 'tls
             ;        host: port.spec.host
             ;        port-id: port.spec.port-id
-            ;        ref: join tcp:// spread reduce [host ":" port-id]
+            ;        ref: join tcp:// [host ":" port-id]
             ;    ]
             ;
             ; So it's a bit weird, being a block that has to survive a call

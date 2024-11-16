@@ -324,7 +324,7 @@ export console!: make object! [
         list-shortcuts: [print [system.console.shortcuts]]
         changes: [
             let gitroot: https://github.com/metaeducation/ren-c/blob/master/
-            browse join gitroot spread reduce [
+            browse join gitroot [
                 %CHANGES.md "#"
                 system.version.1 "." system.version.2 "." system.version.3
             ]
@@ -875,7 +875,7 @@ export /why: func [
     if error? err [
         err: lowercase unspaced [err.type "-" err.id]
         let docroot: http://www.rebol.com/r3/docs/errors/
-        browse join docroot spread reduce [err ".html"]
+        browse join docroot [err ".html"]
     ] else [
         print "No information is available."
     ]

@@ -28,7 +28,7 @@
 )
 ~bad-sequence-item~ !! (
     blk: reduce [charset "a" 3]
-    to path! reduce ['blk charset "a"]
+    join path! ['blk charset "a"]
 )
 (
     blk: [[] 3]
@@ -177,13 +177,13 @@
 )
 
 [
-    ~bad-sequence-item~ !! (to path! [/run inement path])
-    ~bad-sequence-item~ !! (to path! [/run 2])
+    ~bad-sequence-item~ !! (join path! @[/run inement path])
+    ~bad-sequence-item~ !! (join path! @[/run 2])
     (('/run).2 = 'run)
     (r: '/run, r.2 = 'run)
 ][
-    ("te"/xt/path = to path! ["te" xt path])
-    ("text"/3 = to path! ["text" 3])
+    ("te"/xt/path = join path! @["te" xt path])
+    ("text"/3 = join path! @["text" 3])
     (("text").3 = #"x")
     (t: "text", t.3 = #"x")
 ]
@@ -194,9 +194,9 @@
     all [
         1 = bl.a
         [e/r 42] = bl.('q/w)
-        [e/r 42] = reduce inside [] to-tuple [bl ('q/w)]
+        [e/r 42] = reduce inside [] join tuple! @[bl ('q/w)]
         42 = bl.('q/w).('e/r)
-        42 = reduce inside [] to-tuple [bl ('q/w) ('e/r)]
+        42 = reduce inside [] join tuple! @[bl ('q/w) ('e/r)]
     ]
 )
 
@@ -207,10 +207,10 @@
 ; foo/ is a length 2 PATH! in Ren-C
 (path! = type of the foo/ )
 (2 = length of the foo/ )
-(the foo/ = to path! [foo _])
+(the foo/ = join path! @[foo _])
 
 (
-    e: trap [to path! [_ _]]
+    e: trap [join path! @[_ _]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = word!
@@ -219,7 +219,7 @@
     ]
 )
 (
-    e: trap [to path! [~ ~]]
+    e: trap [join path! @[~ ~]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = quasiform!
@@ -229,7 +229,7 @@
     ]
 )
 (
-    e: trap [to path! [a _ b]]
+    e: trap [join path! @[a _ b]]
     all [
         e.id = 'bad-sequence-blank
     ]

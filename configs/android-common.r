@@ -103,10 +103,10 @@ ndk-version: make object! [major: minor: patch: null]
         ;
         ; !!! Review the 4.9 non-sequitur in this older method.  What's that?
         ;
-        join ndk-root spread reduce [
+        join ndk-root [
              %toolchains/ (abi) "-4.9" "/prebuilt/"
                 (host) "/" %bin/
-                    (abi) -gcc
+                    (abi) "-gcc"
         ]
     ] [
         ; Although ld and other tools for arm have names like:
@@ -124,7 +124,7 @@ ndk-version: make object! [major: minor: patch: null]
             abi: 'armv7a-linux-androideabi
         ]
 
-        join ndk-root spread reduce [
+        join ndk-root [
             %toolchains/llvm/prebuilt/ (host) "/" %bin/
                 (abi) (android-api-level) "-clang"
         ]
@@ -263,13 +263,13 @@ android-api-level: either ndk-version.major < 18 [
             ;
             ; Old convention: linker sysroot lives in %platforms/
             ;
-            join ndk-root spread reduce [
+            join ndk-root [
                 %platforms/ "android-" (android-api-level) "/" "arch-arm"
             ]
         ][
             ; New convention: linker sysroot lives in %toolchains/llvm/
             ;
-            join ndk-root spread reduce [
+            join ndk-root [
                 %toolchains/llvm/prebuilt/ (host) "/" %sysroot/
             ]
         ])

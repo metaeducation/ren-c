@@ -6,17 +6,17 @@
 
 ; Test that scanner compacted forms match forms built from lists
 ;
-(1.2.3 = to tuple! [1 2 3])
-;(1x2 = to tuple! [1 2])  ; !!! TBD when unified with pairs
+(1.2.3 = join tuple! [1 2 3])
+;(1x2 = join tuple! [1 2])  ; !!! TBD when unified with pairs
 
 (error? sys.util/rescue [load "1."])  ; !!! Reserved
 (error? sys.util/rescue [load ".1"])  ; !!! Reserved
-;(.1 = to tuple! [_ 1])  ; No representation due to reservation
-;(1. = to tuple! [1 _])  ; No representation due to reservation
+;(.1 = join tuple! [_ 1])  ; No representation due to reservation
+;(1. = join tuple! [1 _])  ; No representation due to reservation
 
 ("1.2.3" = mold 1.2.3)
 
-~sequence-too-short~ !! (tuple? make tuple! [])
+~sequence-too-short~ !! (join tuple! [])
 
 ; there is no longer a maximum (if it won't fit in a cell, it will allocate
 ; a series)
@@ -36,8 +36,8 @@
 ; TO Conversion tests
 (
     tests: [
-        "a b c" [a b c]
-        "1 2 3" [1 2 3]
+        "a.b.c" [a b c]
+        "1.2.3" [1 2 3]
     ]
 
     for-each [text structure] tests [
@@ -91,7 +91,7 @@
 ]
 
 (
-    e: trap [to tuple! [_ _]]
+    e: trap [join tuple! @[_ _]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = word!
@@ -100,7 +100,7 @@
     ]
 )
 (
-    e: trap [to tuple! [~ ~]]
+    e: trap [join tuple! @[~ ~]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = quasiform!
@@ -110,7 +110,7 @@
     ]
 )
 (
-    e: trap [to tuple! [a _ b]]
+    e: trap [join tuple! @[a _ b]]
     all [
         e.id = 'bad-sequence-blank
     ]

@@ -1976,7 +1976,7 @@ sys.util/make-scheme [
                 scheme: 'tcp
                 host: port.spec.host
                 port-id: port.spec.port-id
-                ref: join tcp:// spread reduce [host ":" port-id]
+                ref: join tcp:// [host ":" port-id]
             ]
 
             port.data: port.state.port-data

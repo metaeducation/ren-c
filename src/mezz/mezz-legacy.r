@@ -60,7 +60,7 @@ binary!: blob!
     fail:blame [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by JOIN, which accepts datatypes as a first parameter,"
-        "e.g. `join blob! spread [-{ABC}- 1 + 2 3 + 4]`"
+        "e.g. `join blob! [-{ABC}- 1 + 2 3 + 4]`"
         https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/
     ] $return
 ]

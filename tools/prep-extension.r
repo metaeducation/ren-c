@@ -58,7 +58,7 @@ in-dir: split-path3:file src $file-name
 
 ; Assume we start up in the directory where build products are being made
 ;
-output-dir: join what-dir spread reduce [%prep/ in-dir]
+output-dir: join what-dir [%prep/ in-dir]
 
 src: join repo-dir src
 
@@ -178,7 +178,7 @@ for-each 'info all-protos [
 === "EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES" ===
 
 e1: make-emitter "Module C Header File Preface" (
-    join output-dir spread reduce ["tmp-mod-" (l-m-name) ".h"]
+    join output-dir ["tmp-mod-" (l-m-name) ".h"]
 )
 
 if yes? use-librebol [
