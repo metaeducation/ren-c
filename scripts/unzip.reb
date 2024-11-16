@@ -146,7 +146,7 @@ data-descriptor-sig: #{504B0708}
 
     let compressed-size: to-ilong length of compressed-data
 
-    let central-dir-entry: make blob! [
+    let central-dir-entry: join blob! [
         central-file-sig
         #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
         #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
@@ -170,7 +170,7 @@ data-descriptor-sig: #{504B0708}
         comment <filecomment>  ; not used
     ]
 
-    let local-file-entry: make blob! [
+    let local-file-entry: join blob! [
         local-file-sig
         #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
         #{0000}  ; flags
@@ -288,7 +288,7 @@ data-descriptor-sig: #{504B0708}
         offset: me + length of file-entry
     ]
 
-    append where make blob! [
+    append where join blob! [
         central-directory
         end-of-central-sig
         #{0000}  ; disk num

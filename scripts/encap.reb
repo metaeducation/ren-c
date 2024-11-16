@@ -836,7 +836,7 @@ pe-format: context [
         pos [blob!]
         section [object!]
     ][
-        change pos let new-section: make blob! [
+        change pos let new-section: join blob! [
             copy:part (head of insert:dup
                 tail of as blob! copy section.name
                 #{00}

@@ -36,7 +36,7 @@ flags: [<64bit> <r3only> <r3>]
 
 check: checksum 'sha1 encode 'UTF-8 mold system.build
 
-log-file-prefix: join %r spread collect [
+log-file-prefix: join %r collect [
     for 'i length of let version: system.version [
         keep "_"
         keep version.(i)

@@ -511,7 +511,7 @@ update-write-state: make-state-updater 'write [
     random:seed now:time:precise
     repeat 28 [append ctx.client-random (random-secure 256) - 1]
 
-    let cs-data: make blob! map-each 'item cipher-suites [
+    let cs-data: join blob! inert map-each 'item cipher-suites [
         maybe match blob! item
     ]
 
@@ -711,7 +711,7 @@ update-write-state: make-state-updater 'write [
             )
 
             ; we use the 65-byte uncompressed format to send our key back
-            key-data: make blob! [
+            key-data: join blob! [
                 #{04}
                 ctx.ecdh-keypair.public-key.x
                 ctx.ecdh-keypair.public-key.y
@@ -842,7 +842,7 @@ update-write-state: make-state-updater 'write [
     ctx.seq-num-w: 0
 
     let seed: if ctx.version < 1.2 [
-        make blob! [
+        join blob! [
             checksum 'md5 ctx.handshake-messages
             checksum 'sha1 ctx.handshake-messages
         ]
@@ -854,7 +854,7 @@ update-write-state: make-state-updater 'write [
         checksum ctx.prf-method ctx.handshake-messages
     ]
 
-    return make blob! [
+    return join blob! [
         #{14}       ; protocol message type (20=Finished)
         #{00 00 0c} ; protocol message length (12 bytes)
 
@@ -901,7 +901,7 @@ update-write-state: make-state-updater 'write [
     ; Message Authentication Code
     ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
     ;
-    let MAC: checksum/key ctx.hash-method make blob! [
+    let MAC: checksum/key ctx.hash-method join blob! [
         to-8bin ctx.seq-num-w               ; sequence number (64-bit int)
         type                                ; msg type
         ctx.ver-bytes                       ; version
@@ -1414,7 +1414,7 @@ update-write-state: make-state-updater 'write [
                     <finished> [
                         ctx.seq-num-r: 0
                         let seed: if ctx.version < 1.2 [
-                            make blob! [
+                            join blob! [
                                 checksum 'md5 ctx.handshake-messages
                                 checksum 'sha1 ctx.handshake-messages
                             ]
@@ -1452,7 +1452,7 @@ update-write-state: make-state-updater 'write [
                 let skip-amount: either yes? ctx.is-encrypted [
                     let mac: copy:part skip data len + 4 ctx.hash-size
 
-                    let mac-check: checksum/key ctx.hash-method make blob! [
+                    let mac-check: checksum/key ctx.hash-method join blob! [
                         to-8bin ctx.seq-num-r   ; 64-bit sequence number
                         #{16}                   ; msg type
                         ctx.ver-bytes           ; version
@@ -1487,7 +1487,7 @@ update-write-state: make-state-updater 'write [
             ]
             let len: length of msg-obj.content
             let mac: copy:part skip data len ctx.hash-size
-            let mac-check: checksum/key ctx.hash-method make blob! [
+            let mac-check: checksum/key ctx.hash-method join blob! [
                 to-8bin ctx.seq-num-r   ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
                 ctx.ver-bytes           ; version
@@ -1548,7 +1548,7 @@ update-write-state: make-state-updater 'write [
     ;
     ; PRF(secret, label, seed) = P_<hash>(secret, label + seed)
     ;
-    seed: make blob! [label seed]
+    seed: join blob! [label seed]
 
     if ctx.version < 1.2 [
         ;

@@ -88,11 +88,21 @@ DECLARE_NATIVE(latin1_q)
 
 #define LEVEL_FLAG_DELIMIT_MOLD_RESULT  LEVEL_FLAG_MISCELLANEOUS
 
-#define nothing_delimited                   Not_Cell_Erased(OUT)  // or NULL
-#define Mark_Join_Produced_Something()      Erase_Cell(OUT)
-
 #define CELL_FLAG_DELIMITER_NOTE_PENDING    CELL_FLAG_NOTE
-#define CELL_FLAG_BASE_NOTE_WAS_TYPE        CELL_FLAG_NOTE
+
+#define CELL_FLAG_STACK_NOTE_MOLD           CELL_FLAG_NOTE
+
+
+#define Push_Join_Delimiter_If_Pending() do { \
+    if (not Is_Nulled(delimiter) and  \
+      Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)) { \
+        Copy_Cell(PUSH(), delimiter); \
+        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING); \
+    } \
+  } while (0)
+
+#define Mark_Join_Delimiter_Pending() \
+    Set_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)
 
 
 //
@@ -117,24 +127,17 @@ DECLARE_NATIVE(join)
     Element* base = cast(Element*, ARG(base));
     Value* rest = ARG(rest);
 
-    Value* mold_handle = ARG(return);
-    Molder* mo;  // sometimes uses handle stored in ARG(return), sometimes not
+    Value* original_index = ARG(return);
 
     Value* delimiter = ARG(with);
     possibly(Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
 
     enum {
         ST_JOIN_INITIAL_ENTRY = STATE_0,
-        ST_JOIN_INITIALIZED_MOLDER,  // need to enable dispatcher catching
         ST_JOIN_STACK_STEPPING,
         ST_JOIN_MOLD_STEPPING,
         ST_JOIN_EVALUATING_THE_GROUP
     };
-
-    if (Is_Throwing(LEVEL)) {  // must clean up allocated Molder
-        mo = Cell_Handle_Pointer(Molder, mold_handle);
-        goto threw;
-    }
 
     switch (STATE) {
       case ST_JOIN_INITIAL_ENTRY: {
@@ -148,16 +151,13 @@ DECLARE_NATIVE(join)
         goto join_initial_entry; }
 
       case ST_JOIN_MOLD_STEPPING:
-        mo = Cell_Handle_Pointer(Molder, mold_handle);
         assert(Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
         goto mold_step_result_in_spare;
 
       case ST_JOIN_STACK_STEPPING:
-        mo = nullptr;
         goto stack_step_result_in_spare;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
-        mo = Cell_Handle_Pointer(Molder, mold_handle);
         if (Is_The_Block(rest))
             SUBLEVEL->executor = &Inert_Stepper_Executor;
         else {
@@ -177,9 +177,7 @@ DECLARE_NATIVE(join)
 
     assert(Any_Utf8(rest));  // shortcut, no evals needed [1]
 
-    Molder molder_struct;
-    mo = &molder_struct;
-    Construct_Molder(mo);
+    DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     if (REF(head) and not Is_Nulled(delimiter))
@@ -227,41 +225,27 @@ DECLARE_NATIVE(join)
 
     assert(Not_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
 
-    Init_Nulled(OUT);  // all elements seen so far void (erased if not true)
-    assert(nothing_delimited);
-
     Heart result_heart;
     if (Is_Type_Block(base))
         result_heart = VAL_TYPE_HEART(base);
     else
         result_heart = Cell_Heart_Ensure_Noquote(base);
 
-    if (Any_Utf8_Kind(result_heart))
+    if (Any_Utf8_Kind(result_heart) or result_heart == REB_BLOB)
         goto start_mold_join;
-
-    if (result_heart == REB_BLOB)
-        return FAIL("BLOB! JOIN NOT WRITTEN YET");
 
     assert(Any_List_Kind(result_heart) or Any_Sequence_Kind(result_heart));
     goto start_stack_join;
 
   start_mold_join: { /////////////////////////////////////////////////////////
 
-    mo = Try_Alloc_Memory(Molder);
-    Construct_Molder(mo);
-    Init_Handle_Cdata(mold_handle, mo, 1);
-    STATE = ST_JOIN_INITIALIZED_MOLDER;  // can't be STATE_0 if catch enable
-    Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // have to free Molder
-
-    Push_Mold(mo);
-
-    if (not Is_Type_Block(base)) {
-        Form_Element(mo, cast(Element*, base));
-        Mark_Join_Produced_Something();
-    }
+    if (not Is_Type_Block(base))
+        Copy_Cell(PUSH(), base);
 
     if (REF(head) and not Is_Nulled(delimiter))  // speculatively start with
-        Form_Element(mo, cast(Element*, delimiter));  // may be tossed
+        Copy_Cell(PUSH(), cast(Element*, delimiter));  // may be tossed
+
+    Init_Integer(original_index, TOP_INDEX);
 
     goto first_mold_step;
 
@@ -271,8 +255,6 @@ DECLARE_NATIVE(join)
     //    In order to do that we use the flag of whether the join produced
     //    anything (e.g. the output is non-null) and if it didn't, we will
     //    add a blank back.
-
-    mo = nullptr;
 
     if (not Is_Type_Block(base)) {
         if (Any_Sequence_Kind(result_heart)) {
@@ -295,6 +277,9 @@ DECLARE_NATIVE(join)
     if (REF(head) and not Is_Nulled(delimiter))  // speculatively start with
         Copy_Cell(PUSH(), cast(Element*, delimiter));  // may be tossed
 
+    Init_Integer(original_index, TOP_INDEX);
+
+    SUBLEVEL->baseline.stack_base = TOP_INDEX;
     STATE = ST_JOIN_STACK_STEPPING;
     return CONTINUE_SUBLEVEL(sub);  // no special source rules
 
@@ -333,15 +318,16 @@ DECLARE_NATIVE(join)
         if (unspaced == nullptr)  // vaporized, allow it
             goto next_mold_step;
 
-        Copy_Cell(SPARE, unspaced);
+        Push_Join_Delimiter_If_Pending();
+        Copy_Cell(PUSH(), unspaced);
         rebRelease(unspaced);
-        goto mold_step_result_in_spare;
+        Mark_Join_Delimiter_Pending();
+        goto next_mold_step;
     }
 
     if (Is_Blank(item)) {  // BLANK! acts as space [2]
-        Append_Codepoint(mo->string, ' ');
         Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
-        Mark_Join_Produced_Something();
+        Init_Space(PUSH());
         Fetch_Next_In_Feed(sub->feed);
         goto next_mold_step;
     }
@@ -356,11 +342,13 @@ DECLARE_NATIVE(join)
         }
 
         if (Is_The_Group(item)) {
-            STATE = ST_JOIN_EVALUATING_THE_GROUP;
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Derelativize(SCRATCH, item, Level_Binding(sub));
             HEART_BYTE(SCRATCH) = REB_BLOCK;  // the-block is different
             Fetch_Next_In_Feed(sub->feed);
+
+            SUBLEVEL->baseline.stack_base = TOP_INDEX;
+            STATE = ST_JOIN_EVALUATING_THE_GROUP;
             return CONTINUE(SPARE, cast(Element*, SCRATCH));
         }
 
@@ -368,46 +356,27 @@ DECLARE_NATIVE(join)
     }
 
     if (Is_Quoted(item)) {  // just mold it
-        Copy_Cell(SPARE, item);
-        Unquotify(SPARE, 1);
-        Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
+        Push_Join_Delimiter_If_Pending();
+
+        Copy_Cell(PUSH(), item);
+        Unquotify(TOP, 1);
+        Set_Cell_Flag(TOP, STACK_NOTE_MOLD);
+
+        Mark_Join_Delimiter_Pending();
 
         Fetch_Next_In_Feed(sub->feed);
-        goto mold_step_result_in_spare;
+        goto next_mold_step;
     }
 
+    SUBLEVEL->baseline.stack_base = TOP_INDEX;
     STATE = ST_JOIN_MOLD_STEPPING;
     return CONTINUE_SUBLEVEL(sub);  // just evaluate it
 
 } mold_step_result_in_spare: { ///////////////////////////////////////////////
 
-    bool mold = Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
-
     // 3. Erroring on NULL has been found to catch real bugs in practice.  It
     //    also enables clever constructs like CURTAIL.
     //
-    // 4. BLOCK!s are prohibitied in DELIMIT because it's too often the case
-    //    the result is gibberish--guessing what to do is bad:
-    //
-    //        >> block: [1 2 <x> hello]
-    //
-    //        >> print ["Your block is:" block]
-    //        Your block is: 12<x>hello  ; ugh.
-    //
-    // 5. CHAR! suppresses the delimiter logic.  Hence:
-    //
-    //        >> delimit ":" ["a" space "b" newline void "c" newline "d" "e"]
-    //        == "a b^/c^/d:e"
-    //
-    //    Only the last interstitial is considered a candidate for delimiting.
-    //
-    // 6. Empty strings distinct from voids in terms of still being delimited.
-    //    This is important, e.g. in comma-delimited formats for empty fields.
-    //
-    //        >> delimit "," [field1 field2 field3]  ; field2 is ""
-    //        one,,three
-    //
-    //    The same principle would apply to a "space-delimited format".
 
     if (Is_Elision(SPARE))  // spaced [elide print "hi"], etc
         goto next_mold_step;  // vaporize
@@ -420,56 +389,35 @@ DECLARE_NATIVE(join)
     if (Is_Nulled(SPARE))  // catches bugs in practice [3]
         return RAISE(Error_Need_Non_Null_Raw());
 
-    if (Is_Splice(SPARE) and mold) {  // only allow splice for mold, for now
-        if (Cell_Series_Len_At(SPARE) == 0)
+    if (Is_Splice(SPARE)) {  // only allow splice for mold, for now
+        const Element* tail;
+        const Element* at = Cell_List_At(&tail, SPARE);
+        if (at == tail)
             goto next_mold_step;  // vaporize
+
+        if (Not_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT)) {
+            for (; at != tail; ++at) {
+                Push_Join_Delimiter_If_Pending();
+                Copy_Cell(PUSH(), at);
+                Mark_Join_Delimiter_Pending();
+            }
+            goto next_mold_step;
+        }
     }
     else if (Is_Antiform(SPARE))
         return RAISE(Error_Bad_Antiform(SPARE));
 
-    if (mold) {
-        if (Is_Splice(SPARE)) {
-            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-            Mold_Or_Form_Cell_Ignore_Quotes(mo, SPARE, false);
-            CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-        }
-        else
-            Mold_Element(mo, cast(Element*, SPARE));
-
-        Mark_Join_Produced_Something();
-        goto next_mold_step;
-    }
-
-    if (Any_List(SPARE))  // guessing a behavior is bad [4]
-        return FAIL("DELIMIT requires @var to mold lists");
-
-    if (Any_Sequence(SPARE))  // can have lists in them, dicey [4]
-        return FAIL("DELIMIT requires @var to mold sequences");
-
-    if (Sigil_Of(cast(Element*, SPARE)))
-        return FAIL("DELIMIT requires @var for elements with sigils");
-
-    if (Is_Blank(SPARE))
-        return FAIL("DELIMIT only treats source-level BLANK! as space");
-
-    Mark_Join_Produced_Something();
-
     if (Is_Issue(SPARE)) {  // do not delimit (unified w/char) [5]
-        Form_Element(mo, cast(Element*, SPARE));
         Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
+        Copy_Cell(PUSH(), stable_SPARE);
         goto next_mold_step;
     }
 
-    if (
-        not Is_Nulled(delimiter)
-        and Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)
-    ){
-        Form_Element(mo, cast(Element*, delimiter));
-    }
-
-    Form_Element(mo, cast(Element*, SPARE));
-
-    Set_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);  // empty strings too [6]
+    Push_Join_Delimiter_If_Pending();
+    Copy_Cell(PUSH(), stable_SPARE);
+    if (Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT))
+        Set_Cell_Flag(TOP, STACK_NOTE_MOLD);
+    Mark_Join_Delimiter_Pending();
 
     goto next_mold_step;
 
@@ -505,65 +453,236 @@ DECLARE_NATIVE(join)
         if (at == tail)
             goto next_stack_step;  // don't mark produced something
 
-        for (; at != tail; ++at)
+        for (; at != tail; ++at) {
+            Push_Join_Delimiter_If_Pending();
             Copy_Cell(PUSH(), at);
+            Mark_Join_Delimiter_Pending();
+        }
 
-        Mark_Join_Produced_Something();
         goto next_stack_step;
     }
     else if (Is_Antiform(SPARE))
         return RAISE(Error_Bad_Antiform(SPARE));
 
+    Push_Join_Delimiter_If_Pending();
     Copy_Cell(PUSH(), stable_SPARE);
-    Mark_Join_Produced_Something();
+    Mark_Join_Delimiter_Pending();
+
     goto next_stack_step;
 
 } finish_mold_join: { /////////////////////////////////////////////////////////
 
-    if (nothing_delimited) {
-        assert(Is_Nulled(OUT));  // this is the signal for nothing delimited
-        Drop_Mold(mo);
-    }
-    else {
-        assert(Is_Cell_Erased(OUT));  // signal for something delimited
+    // Process the items that made it to the stack.
+    //
+    // 4. BLOCK!s are prohibitied in DELIMIT because it's too often the case
+    //    the result is gibberish--guessing what to do is bad:
+    //
+    //        >> block: [1 2 <x> hello]
+    //
+    //        >> print ["Your block is:" block]
+    //        Your block is: 12<x>hello  ; ugh.
+    //
+    // 5. CHAR! suppresses the delimiter logic.  Hence:
+    //
+    //        >> delimit ":" ["a" space "b" newline void "c" newline "d" "e"]
+    //        == "a b^/c^/d:e"
+    //
+    //    Only the last interstitial is considered a candidate for delimiting.
+    //
+    // 6. Empty strings distinct from voids in terms of still being delimited.
+    //    This is important, e.g. in comma-delimited formats for empty fields.
+    //
+    //        >> delimit "," [field1 field2 field3]  ; field2 is ""
+    //        one,,three
+    //
+    //    The same principle would apply to a "space-delimited format".
 
-        if (REF(tail) and not Is_Nulled(delimiter))
-            Form_Element(mo, cast(Element*, delimiter));
+    Drop_Level_Unbalanced(SUBLEVEL);
 
-        Heart heart;
+    if (TOP_INDEX == VAL_INT32(original_index)) {  // nothing pushed
+        Drop_Data_Stack_To(STACK_BASE);
         if (Is_Type_Block(base))
-            heart = VAL_TYPE_HEART(base);
-        else
-            heart = Cell_Heart_Ensure_Noquote(base);
-
-        if (Any_Word_Kind(heart)) {
-            Utf8(const*) utf8 = cast(
-                Utf8(const*), Binary_At(mo->string, mo->base.size)
-            );
-            Size size = String_Size(mo->string) - mo->base.size;
-            const Symbol* s = Intern_UTF8_Managed(utf8, size);
-            Init_Any_Word(OUT, heart, s);
-        }
-        else if (Any_String_Kind(heart)) {
-            Init_Any_String(OUT, heart, Pop_Molded_String(mo));
-        }
-        else if (heart == REB_ISSUE) {
-            Utf8(const*) utf8 = cast(
-                Utf8(const*), Binary_At(mo->string, mo->base.size)
-            );
-            Size size = String_Size(mo->string) - mo->base.size;
-            Length len = String_Len(mo->string) - mo->base.index;
-            Init_Utf8_Non_String(OUT, heart, utf8, size, len);
-        }
-        else
-            return FAIL(PARAM(base));
+            return nullptr;
+        return rebValue(Canon(COPY), rebQ(base));
     }
 
-    Drop_Level(SUBLEVEL);
-    Free_Memory(Molder, mo);
+    if (REF(tail) and not Is_Nulled(delimiter))
+        Copy_Cell(PUSH(), cast(Element*, delimiter));
+
+    Heart heart;
+    if (Is_Type_Block(base))
+        heart = VAL_TYPE_HEART(base);
+    else
+        heart = Cell_Heart_Ensure_Noquote(base);
+
+    if (heart == REB_BLOB)
+        goto finish_blob_join;
+
+    goto finish_utf8_join;
+
+  finish_utf8_join: { ////////////////////////////////////////////////////////
+
+    DECLARE_MOLDER (mo);
+    Push_Mold(mo);
+
+  blockscope {
+    OnStack(Value*) at = Data_Stack_At(Value, STACK_BASE + 1);
+    OnStack(Value*) tail = Data_Stack_At(Value, TOP_INDEX + 1);
+
+    for (; at != tail; ++at) {
+        if (Get_Cell_Flag(at, STACK_NOTE_MOLD)) {
+            assert(NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD));
+            if (Is_Splice(at))
+                SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            Mold_Or_Form_Cell_Ignore_Quotes(mo, at, false);
+            CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            continue;
+        }
+
+        assert(not Is_Antiform(at));  // non-molded splices push items
+
+        if (Any_List(at))  // guessing a behavior is bad [4]
+            return FAIL("JOIN requires @var to mold lists");
+
+        if (Any_Sequence(at))  // can have lists in them, dicey [4]
+            return FAIL("JOIN requires @var to mold sequences");
+
+        if (Sigil_Of(cast(Element*, at)))
+            return FAIL("JOIN requires @var for elements with sigils");
+
+        if (Is_Blank(at))
+            return FAIL("JOIN only treats source-level BLANK! as space");
+
+        Form_Element(mo, cast(Element*, at));
+    }
+  }
+
+    Drop_Data_Stack_To(STACK_BASE);  // can't be while OnStack() is in scope
+
+    Utf8(const*) utf8 = cast(
+        Utf8(const*), Binary_At(mo->string, mo->base.size)
+    );
+    Size size = String_Size(mo->string) - mo->base.size;
+    Length len = String_Len(mo->string) - mo->base.index;
+
+    if (Any_Word_Kind(heart)) {
+        const Symbol* s = Intern_UTF8_Managed(utf8, size);
+        Init_Any_Word(OUT, heart, s);
+    }
+    else if (Any_String_Kind(heart)) {
+        Init_Any_String(OUT, heart, Pop_Molded_String(mo));
+    }
+    else if (heart == REB_ISSUE) {
+        Init_Utf8_Non_String(OUT, heart, utf8, size, len);
+    }
+    else if (heart == REB_EMAIL) {
+        if (utf8 + size != Try_Scan_Email_To_Stack(utf8, size))
+            return RAISE("Invalid EMAIL!");
+        Move_Drop_Top_Stack_Element(OUT);
+    }
+    else if (heart == REB_URL) {
+        if (utf8 + size != Try_Scan_URL_To_Stack(utf8, size))
+            return RAISE("Invalid URL!");
+        Move_Drop_Top_Stack_Element(OUT);
+    }
+    else
+        return FAIL(PARAM(base));
+
+    if (mo->string)
+        Drop_Mold(mo);
+
     return OUT;
 
-} finish_stack_join: { ///////////////////////////////////////////////////////
+} finish_blob_join: { ////////////////////////////////////////////////////////
+
+    Binary* buf = BYTE_BUF;
+    Count used = 0;
+
+    Set_Flex_Len(buf, 0);
+
+  blockscope {
+    OnStack(Value*) at = Data_Stack_At(Value, STACK_BASE + 1);
+    OnStack(Value*) tail = Data_Stack_At(Value, TOP_INDEX + 1);
+
+    for (; at != tail; ++at) {
+        if (Get_Cell_Flag(at, STACK_NOTE_MOLD)) {
+            DECLARE_MOLDER (mo);
+            Push_Mold(mo);
+            if (Is_Splice(at))
+                SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+            Mold_Or_Form_Cell_Ignore_Quotes(mo, at, false);
+
+            Utf8(const*) utf8 = cast(
+                Utf8(const*), Binary_At(mo->string, mo->base.size)
+            );
+            Size size = String_Size(mo->string) - mo->base.size;
+
+            Expand_Flex_Tail(buf, size);
+            memcpy(Binary_At(buf, used), utf8, size);
+
+            Drop_Mold(mo);
+        }
+        else switch (VAL_TYPE(at)) {
+          case REB_BLANK:
+            return FAIL("JOIN only treats source-level BLANK! as space");
+
+          case REB_INTEGER:
+            Expand_Flex_Tail(buf, 1);
+            *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can fail()
+            break;
+
+          case REB_BLOB: {
+            Size size;
+            const Byte* data = Cell_Blob_Size_At(&size, at);
+            Expand_Flex_Tail(buf, size);
+            memcpy(Binary_At(buf, used), data, size);
+            break; }
+
+          case REB_ISSUE:
+          case REB_TEXT:
+          case REB_FILE:
+          case REB_EMAIL:
+          case REB_URL:
+          case REB_TAG: {
+            Size utf8_size;
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, at);
+
+            Expand_Flex_Tail(buf, utf8_size);
+            memcpy(Binary_At(buf, used), utf8, utf8_size);
+            /*Set_Flex_Len(buf, used + utf8_size); */
+            break; }
+
+          default:
+            return FAIL(Error_Bad_Value(at));
+        }
+
+        used = Flex_Used(buf);
+    }
+  }
+
+    Drop_Data_Stack_To(STACK_BASE);  // can't be while OnStack() is in scope
+
+    Binary* bin = Make_Binary(used);
+    Term_Binary_Len(bin, used);
+    Mem_Copy(Binary_Head(bin), Binary_Head(buf), used);
+
+    Set_Flex_Len(buf, 0);
+
+    return Init_Blob(OUT, bin);
+
+}} finish_stack_join: { //////////////////////////////////////////////////////
+
+    Drop_Level_Unbalanced(SUBLEVEL);
+
+    if (TOP_INDEX == VAL_INT32(original_index)) {  // nothing pushed
+        Drop_Data_Stack_To(STACK_BASE);
+        if (Is_Type_Block(base))
+            return nullptr;
+        return rebValue(Canon(COPY), rebQ(base));
+    }
+
+    if (REF(tail) and not Is_Nulled(delimiter))
+        Copy_Cell(PUSH(), cast(Element*, delimiter));
 
     Heart heart;
     if (Is_Type_Block(base))
@@ -572,19 +691,12 @@ DECLARE_NATIVE(join)
         heart = Cell_Heart_Ensure_Noquote(base);
 
     if (Any_Sequence_Kind(heart)) {
-        if (nothing_delimited)
-            Init_Blank(PUSH());  // for (join 'a: []), see start_stack_join
-
         Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
         if (error)
             return RAISE(unwrap error);
 
         if (not Is_Type_Block(base))
             BINDING(OUT) = BINDING(base);
-    }
-    else if (nothing_delimited) {
-        assert(Is_Nulled(OUT));  // signal for nothing delimited
-        Drop_Data_Stack_To(STACK_BASE);
     }
     else {
         Init_Any_List(OUT, heart, Pop_Managed_Source_From_Stack(STACK_BASE));
@@ -593,15 +705,8 @@ DECLARE_NATIVE(join)
             BINDING(OUT) = BINDING(base);
     }
 
-    Drop_Level(SUBLEVEL);
     return OUT;
 
-} threw: { ///////////////////////////////////////////////////////////////////
-
-    Drop_Mold(mo);
-    Free_Memory(Molder, mo);
-    unnecessary(Drop_Level(SUBLEVEL));  // automatically dropped on throws
-    return THROWN;
 }}
 
 

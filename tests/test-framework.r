@@ -281,7 +281,7 @@ export /do-recover: func [
 
     === GENERATE NAME FOR LOG FILE FROM INTERPRETER AND TEST CHECKSUMS ===
 
-    log-file: clean-path join log-file-prefix unspaced [
+    log-file: clean-path join log-file-prefix [
         if code-checksum ["_"]
         if code-checksum [copy:part (skip mold code-checksum 2) 6]
         "_"

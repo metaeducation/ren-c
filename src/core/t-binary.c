@@ -172,14 +172,6 @@ Bounce Makehook_Blob(Level* level_, Heart heart, Element* arg) {
       case REB_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
         return Init_Blob(OUT, Make_Binary(Int32s(arg, 0)));
 
-      case REB_BLOCK: {
-        Join_Binary_In_Byte_Buf(arg, -1);
-        Binary* b = cast(
-            Binary*,
-            Copy_Flex_Core(FLEX_FLAGS_NONE, BYTE_BUF)
-        );
-        return Init_Blob(OUT, b); }
-
       case REB_TUPLE: {
         REBLEN len = Cell_Sequence_Len(arg);
         Binary* b = Make_Binary(len);

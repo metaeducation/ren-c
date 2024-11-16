@@ -2,11 +2,8 @@
 ;
 ; JOIN has become the unified replacement for REJOIN, AJOIN, etc.
 ;
-; It does not reduce block arguments that are being joined onto the base value.
-; You need to use either a GET-BLOCK! or run reduce.
-;
-; An additional feature is that it accepts a datatype as the first argument,
-; to say what the JOIN result should be typed as.
+; It accepts a datatype as the first argument, to say what the JOIN result
+; should be typed as.
 ;
 ; https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/248
 
@@ -65,17 +62,27 @@
     ('a/b/c = join 'a/b/ 'c)
 ]
 
-; BLANK! when joining BLOB! or ANY-STRING? should be ignored, but ANY-LIST?
-; has to keep them.
 [
-    (#{1020} = join #{10} spread [_ #{20} _])
-    ("A B " = join "A" spread [_ "B" _])
+    (#{1020} = join #{10} @[_ #{20} _])
+    ("A B " = join "A" @[_ "B" _])
 
-    ([A _ B _] = join [A] spread [_ B _])
-    ('(A _ B _) = join '(A) spread [_ B _])
+    ([A _ B _] = join [A] @[_ B _])
+    ('(A _ B _) = join '(A) @[_ B _])
 ]
 
 [
     https://github.com/metaeducation/ren-c/issues/1085
     (#a30bc = join #a spread reduce [10 + 20 "b" #c])
 ]
+
+(
+    [a b] = join:with:head:tail [a b] [] '+
+)(
+    [a b + c +] = join:with:head:tail [a b] ['c] '+
+)(
+    [a b + c + d +] = join:with:head:tail [a b] ['c 'd] '+
+)(
+    [a b + c + d] = join:with:head [a b] ['c 'd] '+
+)(
+    [a + b + c + d] = join:with block! [spread [a b] 'c 'd] '+
+)
