@@ -38,10 +38,6 @@
 //          [any-word? any-context?]
 //      value "Value whose binding is to be set (modified) (returned)"
 //          [any-list? any-path? any-word? quoted?]
-//      :copy "Bind and return a deep copy of a block, don't modify original"
-//      :only "Bind only first block (not deep)"
-//      :new "Add to context any new words found"
-//      :set "Add to context any new set-words found"
 //  ]
 //
 DECLARE_NATIVE(bind)
@@ -49,23 +45,9 @@ DECLARE_NATIVE(bind)
     INCLUDE_PARAMS_OF_BIND;
 
     Value* v = ARG(value);
-    Value* target = ARG(target);
+    Element* target = cast(Element*, ARG(target));
 
-    REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
-
-    Option(SymId) add_midstream_types;
-    if (REF(new)) {
-        add_midstream_types = SYM_ANY;
-    }
-    else if (REF(set)) {
-        add_midstream_types = SYM_SET;
-    }
-    else
-        add_midstream_types = SYM_0;
-
-    const Value* context;
-
-    // !!! For now, force reification before doing any binding.
+    const Element* context;
 
     if (Any_Context(target)) {
         //
@@ -89,13 +71,6 @@ DECLARE_NATIVE(bind)
         if (Try_Bind_Word(context, v))
             return COPY(v);
 
-        // not in context, BIND:NEW means add it if it's not.
-        //
-        if (REF(new) or (Is_Set_Word(v) and REF(set))) {
-            Init_Nothing(Append_Context_Bind_Word(Cell_Varlist(context), v));
-            return COPY(v);
-        }
-
         return FAIL(Error_Not_In_Context_Raw(v));
     }
 
@@ -104,26 +79,9 @@ DECLARE_NATIVE(bind)
 
     Element* at;
     const Element* tail;
-    if (REF(copy)) {
-        bool deeply = true;
-        Source* copy = cast(Source*, Copy_Array_Core_Managed(
-            FLEX_MASK_MANAGED_SOURCE,
-            Cell_Array(v),
-            VAL_INDEX(v), // at
-            Array_Len(Cell_Array(v)), // tail
-            0, // extra
-            deeply  // !!! types to copy deeply (was once just TS_ARRAY)
-        ));
-        at = Array_Head(copy);
-        tail = Array_Tail(copy);
-        Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(v), copy);
-        BINDING(OUT) = BINDING(v);
-    }
-    else {
-        Ensure_Mutable(v);  // use IN for virtual binding
-        at = Cell_List_At_Mutable_Hack(&tail, v);  // !!! only *after* index!
-        Copy_Cell(OUT, v);
-    }
+    Ensure_Mutable(v);  // use IN for virtual binding
+    at = Cell_List_At_Mutable_Hack(&tail, v);  // !!! only *after* index!
+    Copy_Cell(OUT, v);
 
     Bind_Values_Core(
         at,

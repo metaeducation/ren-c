@@ -465,7 +465,7 @@ c-parser-extension: context bind c-lexical.grammar bind proto-parser [
     braced: [lbrace opt some [braced | not ahead rbrace one] rbrace]
 
     function-spacing-rule: (
-        bind:copy c-lexical.grammar standard.function-spacing
+        bind c-lexical.grammar standard.function-spacing
     )
 
     grammar.function-body: braced

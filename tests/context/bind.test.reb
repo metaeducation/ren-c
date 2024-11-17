@@ -10,7 +10,7 @@
     b1: [self]
     ob: make object! [
         b2: [self]
-        set $a same? first b2 first bind:copy (binding of $b2) b1
+        set $a same? first b2 first bind (binding of $b2) copy b1
     ]
     a
 )]
@@ -19,7 +19,7 @@
     b1: [self]
     /f: lambda [<local> b2] [
         let b2: [self]
-        same? first b2 first bind:copy (binding of $b2) b1
+        same? first b2 first bind (binding of $b2) copy b1
     ]
     f
 )]
@@ -28,7 +28,7 @@
     b1: [self]
     count-up 'i 1 [
         let b2: [self]
-        same? first b2 first bind:copy (binding of $i) b1
+        same? first b2 first bind (binding of $i) copy b1
     ]
 )]
 [#892 #216
