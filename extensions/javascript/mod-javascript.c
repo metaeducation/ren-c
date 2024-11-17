@@ -489,6 +489,10 @@ void RunPromise(void)
             //
             info->state = PROMISE_STATE_REJECTED;
             TRACE("RunPromise() => promise is rejecting due to error");
+          #if DEBUG_HAS_PROBE
+            if (PG_Probe_Failures)
+                PROBE(metaresult);
+          #endif
             Free_Value(metaresult);  // !!! report the error?
         }
         else {
