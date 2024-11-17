@@ -22,8 +22,9 @@ REBOL [
         [element? <variadic>]
     :prefix "Put a custom marker at the beginning of each output line"
         [text!]
-
-    <static> enablements (to map! [])
+]
+bind construct [
+    enablements: to map! []
 ][
     let /print: enclose lib.print/ lambda [f [frame!]] [
         if prefix [
@@ -163,11 +164,12 @@ REBOL [
         ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        /d: func [return: [~[]~] /on /off <static> d'] compose:deep [
-            let /d': default [
+        /d: func [return: [~[]~] :on :off] bind construct [
+            /d': (
                 let /d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
-            ]
+            )
+        ] compose:deep [
             case [
                 on [d' #on]
                 off [d' #off]

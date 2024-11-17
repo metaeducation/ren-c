@@ -353,8 +353,9 @@ export console!: make object! [
     return: [~]
     :skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
-    <static>
-        o (system.options)  ; shorthand since options are often read or written
+]
+bind construct [
+    o: system.options  ; shorthand since options are often read or written
 ][
     === MAKE CONSOLE! INSTANCE FOR SKINNING ===
 

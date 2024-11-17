@@ -212,8 +212,9 @@ boot-banner: [
     <with>
     main-startup  ; unset when finished with itself
     about usage license  ; exported to lib, see notes
-    <static>
-        o (system.options)  ; shorthand since options are often read or written
+]
+bind construct [
+    o: system.options  ; shorthand since options are often read or written
 ][
     ; We hook the RETURN function so that it actually returns an instruction
     ; that the code can build up from multiple EMIT statements.

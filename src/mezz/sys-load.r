@@ -111,10 +111,10 @@ REBOL [
     :only "Only process header, don't decompress body"
     :required "Script header is required"
 
-    <static>
-    non-ws (make bitset! [not 1 - 32])
-
     <local> body line final
+]
+bind construct [
+    non-ws: make bitset! [not 1 - 32]
 ][
     line: 1
 
@@ -412,8 +412,9 @@ REBOL [
         [element?]
     :into "e.g. reuse VarList* already made for NATIVEs loading from extension"
         [module!]
-    <static>
-        importing-remotely ('no)
+]
+bind construct [
+    importing-remotely: 'no
 ][
     /return: adapt return/ [  ; make sure all return paths actually import vars
         ;

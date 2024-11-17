@@ -148,14 +148,16 @@
 
         value [element?]
         <local> mtype
-        <static> mapping (reduce [
+    ]
+    bind construct [
+        mapping: reduce [
             path! block!
             tuple! group!
             chain! fence!
             block! meta-block!
             group! meta-group!
             fence! meta-fence!
-        ])
+        ]
     ][
         mtype: select:skip:case mapping (type of get:any $value) 2
         if mtype [

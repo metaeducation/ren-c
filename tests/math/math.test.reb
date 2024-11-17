@@ -13,70 +13,70 @@
     expr "Block to evaluate"
         [block!]
     :only "Translate operators to their prefix calls, but don't execute"
-
+]
+bind construct [
+    ;
     ; !!! This creation of static rules helps avoid creating those rules
     ; every time, but has the problem that the references to what should
     ; be locals are bound to statics as well (e.g. everything below which
-    ; is assigned with BLANK! really should be relatively bound to the
+    ; is assigned with NULL really should be relatively bound to the
     ; function, so that it will refer to the specific call.)  It's not
-    ; technically obvious how to do that, not the least of the problem is
-    ; that statics are currently a usermode feature...and injecting relative
-    ; binding information into something that's not the function body itself
-    ; isn't implemented.
+    ; technically obvious how to do that.
+    ;
+    ; !!! Modern UPARSE can synthesize multi-return products, and could
+    ; probably have ways to tackle this.
 
-    <static>
+    slash: '/
 
-    slash (the /)
+    expr-val: null
 
-    expr-val (null)
+    expr-op: null
 
-    expr-op (null)
-
-    expression  ([
+    expression: [
         term (expr-val: term-val)
         opt some [
             ['+ (expr-op: 'add) | '- (expr-op: 'subtract)]
             term (expr-val: compose [(expr-op) (expr-val) (term-val)])
         ]
         <end>
-    ])
+    ]
 
-    term-val (null)
+    term-val: null
 
-    term-op (null)
+    term-op: null
 
-    term ([
+    term: [
         pow (term-val: power-val)
         opt some [
             ['* (term-op: 'multiply) | slash (term-op: 'divide)]
             pow (term-val: compose [(term-op) (term-val) (power-val)])
         ]
-    ])
+    ]
 
-    power-val (null)
+    power-val: null
 
-    pow ([
+    pow: [
         unary (power-val: unary-val)
         opt ['** unary (power-val: compose [power (power-val) (unary-val)])]
-    ])
+    ]
 
-    unary-val (null)
+    unary-val: null
 
-    pre-uop (null)
+    pre-uop: null
 
-    post-uop (null)
+    post-uop: null
 
-    unary ([
+    unary: [
         (post-uop: pre-uop: [])
         opt ['- (pre-uop: 'negate)]
         primary
         opt ['! (post-uop: 'factorial)]
         (unary-val: compose [(post-uop) (pre-uop) (prim-val)])
-    ])
+    ]
 
-    prim-val (null)
+    prim-val: null
 
-    primary ([
+    primary: [
         set prim-val &any-number?
         | set prim-val [word! | path!] (prim-val: reduce [prim-val])
             ; might be a funtion call, looking for arguments
@@ -84,40 +84,39 @@
                 nested-expression (append prim-val take nested-expr-val)
             ]
         | ahead group! into nested-expression (prim-val: take nested-expr-val)
-    ])
+    ]
 
-    p-recursion (null)
+    p-recursion: null
 
-    nested-expr-val ([])
+    nested-expr-val: []
 
-    save-vars (func [][
-            p-recursion: reduce [
-                :p-recursion :expr-val :expr-op :term-val :term-op :power-val :unary-val
-                :pre-uop :post-uop :prim-val
-            ]
-        ])
+    save-vars: func [] [
+        p-recursion: reduce [
+            :p-recursion :expr-val :expr-op :term-val :term-op :power-val :unary-val
+            :pre-uop :post-uop :prim-val
+        ]
+    ]
 
-    restore-vars (func [][
-            set [
-                p-recursion expr-val expr-op term-val term-op power-val unary-val
-                pre-uop post-uop prim-val
-            ] p-recursion
-        ])
+    restore-vars: func [] [
+        set [
+            p-recursion expr-val expr-op term-val term-op power-val unary-val
+            pre-uop post-uop prim-val
+        ] p-recursion
+    ]
 
-    nested-expression ([
-            ;all of the static variables have to be saved
-            (save-vars)
-            expression
-            (
-                ; This rule can be recursively called as well,
-                ; so result has to be passed via a stack
-                insert nested-expr-val expr-val
-                restore-vars
-            )
-            ; vars could be changed even it failed, so restore them and fail
-            | (restore-vars) fail
-
-    ])
+    nested-expression: [
+        ;all of the static variables have to be saved
+        (save-vars)
+        expression
+        (
+            ; This rule can be recursively called as well,
+            ; so result has to be passed via a stack
+            insert nested-expr-val expr-val
+            restore-vars
+        )
+        ; vars could be changed even it failed, so restore them and fail
+        | (restore-vars) fail
+    ]
 ][
     clear nested-expr-val
     let res: if parse3:match expr expression [expr-val] else [blank]

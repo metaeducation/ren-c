@@ -107,20 +107,19 @@ Rebol [
 
     spec [block!]
     body [block!]
-
-    <static> wrapper (
-        func [
-            "Enclosing function for hooking all combinators"
-            return: [pack?]
-            f [frame!]
+]
+bind construct [
+    wrapper: func [
+        "Enclosing function for hooking all combinators"
+        return: [pack?]
+        f [frame!]
+    ][
+        return either f.state.hook [
+            run f.state.hook f
         ][
-            return either f.state.hook [
-                run f.state.hook f
-            ][
-                eval:undecayed f
-            ]
+            eval:undecayed f
         ]
-    )
+    ]
 ][
     let autopipe: ~
 

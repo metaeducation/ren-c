@@ -175,18 +175,14 @@ REBOL [
     :case "Characters are case-sensitive"
     :escape "Escape char(s) or [prefix suffix] delimiters (default is $)"
         [char? any-string? word! blob! block!]
-
-    <static>
-
+]
+bind construct [
+    ;
     ; Note: this list should be the same as above with delimiters, with
     ; BLOCK! excluded.
     ;
-    delimiter-types (
-        [char?! | &any-string? | word! | blob!]
-    )
-    keyword-types (
-        [char?! | &any-string? | integer! | word! | blob!]
-    )
+    delimiter-types: [char?! | &any-string? | word! | blob!]
+    keyword-types: [char?! | &any-string? | integer! | word! | blob!]
 ][
     let case_REWORD: case
     case: lib.case/

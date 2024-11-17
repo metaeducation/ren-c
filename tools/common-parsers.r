@@ -55,9 +55,9 @@ import <parsing-tools.reb>
 ]
 
 
-collapse-whitespace: [some [change some white-space (space) | one] <end>]
-bind c-lexical.grammar collapse-whitespace
-
+collapse-whitespace: bind:copy3 c-lexical.grammar [
+    some [change some white-space (space) | one] <end>
+]
 
 export proto-parser: context [
 
@@ -86,7 +86,7 @@ export proto-parser: context [
         emit-directive: ~
     ]
 
-    grammar: context bind c-lexical.grammar [
+    grammar: context bind:copy3 c-lexical.grammar [
 
         rule: [
             parse-position: <here>

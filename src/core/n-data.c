@@ -77,21 +77,9 @@ DECLARE_NATIVE(bind)
     if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
         return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
-    Element* at;
-    const Element* tail;
-    Ensure_Mutable(v);  // use IN for virtual binding
-    at = Cell_List_At_Mutable_Hack(&tail, v);  // !!! only *after* index!
-    Copy_Cell(OUT, v);
+    BINDING(v) = Make_Use_Core(context, BINDING(v), CELL_MASK_0);
 
-    Bind_Values_Core(
-        at,
-        tail,
-        context,
-        add_midstream_types,
-        flags
-    );
-
-    return OUT;
+    return COPY(v);
 }
 
 

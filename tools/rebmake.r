@@ -460,7 +460,7 @@ gcc: make compiler-class [
         return: [logic?!]
         :exec [file!]
     ][
-        let digit: charset "0123456789"  ; no <static> in bootstrap
+        let digit: charset "0123456789"
 
         version: copy ""
 

@@ -62,7 +62,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
 /catch: specialize catch*/ [name: 'throw]
 
 /func: func* [
-    "Augment action with <static>, <in>, <with> features"
+    "Augment action with <in>, <with> features"
 
     return: [action?]
     spec "Help string (opt) followed by arg words (and opt type and string)"
@@ -71,7 +71,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
         [<const> block!]
     <local>
         new-spec var loc other
-        new-body defaulters statics with-return
+        new-body defaulters with-return
 ][
     ; R3-Alpha offered features on FUNCTION (a complex usermode construct)
     ; that the simpler/faster FUNC did not have.  Ren-C seeks to make FUNC and
@@ -80,7 +80,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
     ; https://forum.rebol.info/t/abbreviations-as-synonyms/1211
     ;
     ; To get a little ways along this path, there needs to be a way for FUNC
-    ; to get features like <static> which are easier to write in usermode.
+    ; to get features like <with> which are easier to write in usermode.
     ; So the lower-level FUNC* is implemented as a native, and this wrapper
     ; does a fast shortcut to check to see if the spec has no tags...and if
     ; not, it quickly falls through to that fast implementation.
@@ -105,7 +105,6 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
     new-spec: clear copy spec  ; also inherits binding
 
     new-body: null
-    statics: null
     defaulters: null
     var: #dummy  ; enter PARSE with truthy state (gets overwritten)
     loc: null
@@ -171,7 +170,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
                 if not object? other [
                     other: ensure [any-context?] get inside spec other
                 ]
-                bind other new-body
+                new-body: bind other new-body
             )
         ]
     |
@@ -187,28 +186,6 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
             text!  ; skip over as commentary
         ]
     |
-        ; For static variables to see each other, the GROUP!s can't have an
-        ; hardened context.  We ignore their binding here for now.
-        ;
-        ; https://forum.rebol.info/t/2132
-        ;
-        '<static> (
-            statics: default [copy inside spec '[]]
-            new-body: default [
-                copy:deep body
-            ]
-        )
-        opt some [
-            var: word!, other: opt group! (
-                append statics setify var
-                append statics any [
-                    bindable maybe other  ; !!! ignore binding on group
-                    '~
-                ]
-            )
-        ]
-        (var: null)
-    |
         <end> accept (~)
     |
         other: <here> (
@@ -220,11 +197,6 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
             ]
         )
     ]]
-
-    if statics [
-        statics: make object! statics
-        bind statics new-body
-    ]
 
     append new-spec maybe with-return  ; if FUNC* suppresses return generation
 
@@ -251,7 +223,9 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
     return: [~[]~]
     'remarks [element? <variadic>]
     :visibility [onoff?]
-    <static> showing ('no)
+]
+bind construct [
+    showing: 'no
 ][
     if visibility [showing: visibility, return ~[]~]
 

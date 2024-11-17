@@ -137,6 +137,10 @@ sys.util/rescue [
     export set-tuple?!: &set-tuple?
     export get-tuple?!: &get-tuple?
 
+    export /bind: augment bind/ [
+        :copy3  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
+    ]
+
     quit 0
 ]
 
@@ -911,11 +915,19 @@ get-path!: func3 [] [
     return action
 ]
 
-; The semantics surrounding BIND are completely rethought.  But one big change
-; is that the parameters are reversed.
+; The semantics surrounding BIND are completely rethought, and it's not a
+; mutating operation.  But in the bootstrap executable it is a mutating
+; operation, and requires mutable access...and source is locked...so you
+; have to copy.  :COPY3 is a no-op in the modern executable.
 ;
-/bind: func3 [context element] [
-    bind3 element context
+; Another big change is that the parameters are reversed.
+;
+/bind: func3 [context element /copy3] [
+    either copy3 [
+        bind3:copy element context
+    ][
+        bind3 element context
+    ]
 ]
 
 ; This is a surrogate for being able to receive the environment for string
@@ -938,7 +950,7 @@ get-path!: func3 [] [
             get-word? item [
                 item: get item
                 assert [object? item]
-                bind item code
+                code: bind item code
             ]
         ] else [
             assert [word? item]
@@ -946,7 +958,7 @@ get-path!: func3 [] [
             obj.(item): get:any item
         ]
     ]
-    bind obj code  ; simulates ability to bind to single words
+    code: bind obj code  ; simulates ability to bind to single words
     return code
 ]
 

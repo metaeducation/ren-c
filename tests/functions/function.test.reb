@@ -404,7 +404,9 @@
         :count [integer!]
         <in> o1 o1.o2
         <with> outer
-        <static> static (10 + n)
+    ]
+    bind construct [
+        static: 10 + n
     ][
         count: default [2]
         let data: reduce [count x y outer static]

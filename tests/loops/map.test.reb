@@ -29,8 +29,8 @@
 (
     /make-one-thru-five: func [
         return: [~null~ integer!]
-        <static> count (0)
-    ][
+    ]
+    bind construct [count: 0] [
         if count = 5 [return null]
         return count: count + 1
     ]
@@ -40,8 +40,8 @@
 )(
     /make-one-thru-five: func [
         return: [~null~ integer!]
-        <static> count (0)
-    ][
+    ]
+    bind construct [count: 0] [
         if count = 5 [return null]
         return count: count + 1
     ]

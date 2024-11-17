@@ -30,9 +30,9 @@
     tracked-word!-combinator: unrun enclose default-combinators.(word!)/ func [
         return: [~null~ pack?]
         f [frame!]
-        <static> indent (0)
         <local> result' remainder subpending
-    ][
+    ]
+    bind construct [indent: 0] [
         let input: f.input  ; save to use after EVAL F
         let name: f.value
 

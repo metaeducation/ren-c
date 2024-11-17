@@ -20,8 +20,10 @@
             ]]
             append words w
         ]
-        let spec: compose [:reset [block!] <static> (spread unique words) count]
-        let body: compose:deep [
+        let spec: compose [:reset [block!]]
+        let body: bind construct [
+            (spread map-each 'w unique words [setify w]) count
+        ] compose:deep [
             if reset [count: reset return]
             if block? count [
                 let result: bind $count count
@@ -65,9 +67,9 @@
             ]
         ]
 
-        return func compose [
-            <static> buffer (to group! [make blob! 4096])
-            <static> port (groupify src)
+        return func [] bind construct [
+            buffer: to group! [make blob! 4096]
+            port: groupify src
         ] compose:deep [
             let crlf: charset "^/^M"
             let data: null

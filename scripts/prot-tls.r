@@ -274,10 +274,9 @@ bytes-to-version: reverse copy version-to-bytes
 
     return: [~null~ block!]
     data [blob!]
-
-    <static>
-
-    universal-tags ([
+]
+bind construct [
+    universal-tags: [
         <eoc>
         <boolean>
         <integer>
@@ -309,9 +308,9 @@ bytes-to-version: reverse copy version-to-bytes
         <universal-string>
         <character-string>
         <bmp-string>
-    ])
+    ]
 
-    class-types ([@universal @application @context-specific @private])
+    class-types: [@universal @application @context-specific @private]
 ][
     let data-start: data  ; may not be at head
     let index: accessor does [1 + offset-of data-start data]  ; effective index
@@ -979,15 +978,14 @@ update-write-state: make-state-updater 'write [
 /parse-protocol: func [
     return: [object!]
     data [blob!]
-
-    <static>
-
-    protocol-types ([
+]
+bind construct [
+    protocol-types: [
         20 <change-cipher-spec>
         21 #alert
         22 #handshake
         23 #application
-    ])
+    ]
 ][
     return make object! [
         type: select protocol-types data.1 else [
@@ -1033,9 +1031,13 @@ update-write-state: make-state-updater 'write [
     ctx [object!]
     proto [object!]
 
-    <static>
-
-    message-types ([
+    ; The structure has a field called LENGTH, so when an ACTION! is used
+    ; that field is picked up.
+    ;
+    <with> length
+]
+bind construct [
+    message-types: [
         0 #hello-request
         1 <client-hello>
         2 <server-hello>
@@ -1046,9 +1048,9 @@ update-write-state: make-state-updater 'write [
         15 @certificate-verify  ; not yet implemented
         16 <client-key-exchange>
         20 <finished>
-    ])
+    ]
 
-    alert-descriptions ([
+    alert-descriptions: [
         0 "Close notify"
         10 "Unexpected message"
         20 "Bad record MAC"
@@ -1074,12 +1076,7 @@ update-write-state: make-state-updater 'write [
         90 "User cancelled"
        100 "No renegotiation"
        110 "Unsupported extension"
-    ])
-
-    ; The structure has a field called LENGTH, so when an ACTION! is used
-    ; that field is picked up.
-    ;
-    <with> length
+    ]
 ][
     let result: make block! 8
     let data: proto.messages

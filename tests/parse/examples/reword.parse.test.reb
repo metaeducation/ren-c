@@ -9,15 +9,10 @@
     values [map! object! block!]
     :case
     :escape [char?! any-string? word! blob! block!]
-
-    <static>
-
-    delimiter-types (
-        [char?! &any-string? word! blob!]
-    )
-    keyword-types (
-        [char?! &any-string? integer! word! blob!]
-    )
+]
+bind construct [
+    delimiter-types: [char?! &any-string? word! blob!]
+    keyword-types: [char?! &any-string? integer! word! blob!]
 ][
     let case_REWORD: case
     case: get $lib/case

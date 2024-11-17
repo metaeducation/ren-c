@@ -58,9 +58,10 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
     :inline [block!] "Block of filenames to inline if seen"
     :stdio "Disable stdio.h"
     <local> name line-iter line pos
-    <static>
-    open-include (charset -{"<}-)
-    close-include (charset -{">}-)
+]
+bind construct [
+    open-include: charset -{"<}-
+    close-include: charset -{">}-
 ][
     let include-rule: compose [
         (if stdio [
@@ -151,7 +152,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
 ][
     let tmp-start
     let name
-    let single-param: bind c-lexical.grammar copy:deep [
+    let single-param: bind:copy3 c-lexical.grammar [
         identifier  ; (part of)type
         some [
             opt some white-space
@@ -174,7 +175,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
     let param-ser
     let param-spec
     let check-point
-    parse3 source bind c-lexical.grammar copy:deep [
+    parse3 source bind:copy3 c-lexical.grammar [
         opt some [
             fn: across identifier
             opt some white-space
@@ -309,7 +310,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
 /fix-const-char: func [
     source
 ][
-    parse3 source bind c-lexical.grammar copy:deep [
+    parse3 source bind c-lexical.grammar [
         opt some [
             "strm" opt some white-space "->" opt some white-space
             "msg" opt some white-space "=" opt some white-space
