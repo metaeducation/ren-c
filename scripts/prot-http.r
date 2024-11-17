@@ -55,7 +55,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
     ] except [
         fail ["Invalid idate:" idate]
     ]
-    to date! unspaced [day "-" month "-" year "/" time zone]
+    make date! unspaced [day "-" month "-" year "/" time zone]
 ]
 
 /make-http-error: lambda [

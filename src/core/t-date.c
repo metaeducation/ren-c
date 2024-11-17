@@ -519,6 +519,14 @@ Bounce Makehook_Date(Level* level_, Heart heart, Element* arg) {
     if (Any_List(arg))
         goto make_from_array;
 
+    if (Is_Text(arg)) {
+        Size size;
+        Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, arg);
+        if (utf8 + size != Try_Scan_Date_To_Stack(utf8, size))
+            goto bad_make;
+        return Move_Drop_Top_Stack_Element(OUT);
+    }
+
     goto bad_make;
 
   make_from_array: {  ////////////////////////////////////////////////////////
