@@ -658,12 +658,13 @@ bind construct [
         ] else [
             word: resolve what
         ]
+        args: try take args  ; eval before EXTEND clears variable...
         return (  ; can't append until after, if prev. definition used in expr
             (
                 if word [  ; no "attached" state, must append word to get IN
                     extend where word  ; maybe bound e.g. WHAT-DIR
                 ]
-            ): try take args
+            ): get:any $args
             elide if word [append exports word]
         )
     ]
