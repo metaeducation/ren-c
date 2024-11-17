@@ -572,8 +572,8 @@ void Throttle_Mold(Molder* mo) {
             String_Size(mo->string) - (tail - cp)
         );
 
-        assert(not (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
-        mo->opts |= MOLD_FLAG_WAS_TRUNCATED;
+        possibly(GET_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED));  // mold may set
+        SET_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED);
     }
 }
 
