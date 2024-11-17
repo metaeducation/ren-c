@@ -441,16 +441,13 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
         if (Eval_Value_Throws(out, head, derived))
             return Error_No_Catch_For_Throw(TOP_LEVEL);
     }
-    else if (Is_Tuple(head)) {
-        fail ("TUPLE! in CHAIN! not supported at this time");
-    /*
+    else if (Is_Tuple(head)) {  // .member-function:refinement is legal
         DECLARE_VALUE (steps);
         Option(Error*) error = Trap_Get_Any_Tuple(  // vacant is error
             out, steps, head, derived
         );
         if (error)
             fail (unwrap error);  // must be abrupt
-    */
     }
     else if (Is_Word(head)) {
         Option(Error*) error = Trap_Get_Any_Word(out, head, derived);
