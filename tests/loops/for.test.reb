@@ -128,7 +128,7 @@
     (
         sum: 0
         for compose [
-            x (bind '@x obj1)
+            x (bind obj1 '@x)
         ] each [
             1 2 3 4
         ][
@@ -142,7 +142,7 @@
     (
         sum: 0
         for compose [
-            (bind '@x obj2) x
+            (bind obj2 '@x) x
         ] each [
             1 2 3 4
         ][
@@ -156,7 +156,7 @@
     (
         sum: 0
         for compose [
-            (bind '@x obj1) (bind '@x obj2)
+            (bind obj1 '@x) (bind obj2 '@x)
         ] each [
             1 2 3 4
         ][

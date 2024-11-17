@@ -1375,16 +1375,16 @@ append app-config.ldflags spread switch user-config.static [
 ; Not quite sure what counts as system definitions (?)  Review.
 
 append app-config.definitions spread flatten:deep (
-    reduce bind (copy platform-config.definitions) platform-definitions
+    reduce bind platform-definitions (copy platform-config.definitions)
 )
 
 append app-config.cflags spread flatten:deep (  ; !!! can be string?
-    reduce bind copy platform-config.cflags compiler-flags
+    reduce bind compiler-flags copy platform-config.cflags
 )
 
 append app-config.libraries spread (
     let value: flatten:deep reduce (
-        bind copy platform-config.libraries platform-libraries
+        bind platform-libraries copy platform-config.libraries
     )
     map-each 'w flatten value [
         make rebmake.ext-dynamic-class [
@@ -1394,7 +1394,7 @@ append app-config.libraries spread (
 )
 
 append app-config.ldflags spread flatten:deep (
-    reduce bind copy platform-config.ldflags linker-flags
+    reduce bind linker-flags copy platform-config.ldflags
 )
 
 print ["definitions:" mold app-config.definitions]

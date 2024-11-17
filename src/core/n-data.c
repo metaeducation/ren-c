@@ -34,10 +34,10 @@
 //  "Binds words or words in lists to the specified context"
 //
 //      return: [frame! action? any-list? any-path? any-word? quoted?]
-//      value "Value whose binding is to be set (modified) (returned)"
-//          [any-list? any-path? any-word? quoted?]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word? any-context?]
+//      value "Value whose binding is to be set (modified) (returned)"
+//          [any-list? any-path? any-word? quoted?]
 //      :copy "Bind and return a deep copy of a block, don't modify original"
 //      :only "Bind only first block (not deep)"
 //      :new "Add to context any new words found"

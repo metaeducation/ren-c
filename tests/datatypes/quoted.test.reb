@@ -97,8 +97,8 @@
     o1: make object! [a: 1]
     o2: make object! [a: 2]
     word: ''''''''''a:
-    w1: bind word o1
-    w2: bind word o2
+    w1: bind o1 word
+    w2: bind o2 word
     all [
         (0 = get noquote inside [] word)
         (1 = get noquote w1)
@@ -110,8 +110,8 @@
         let o1: make object! [a: 1]
         let o2: make object! [a: 2]
         let word: ''''''''''a:
-        let w1: bind word o1
-        let w2: bind word o2
+        let w1: bind o1 word
+        let w2: bind o2 word
         return all [
             (0 = get noquote inside [] word)
             (1 = get noquote w1)
@@ -185,18 +185,13 @@
 (did the ''''''''~false~)
 
 
-; An escaped word that can't fit in a cell and has to do an additional
-; allocation will reuse that cell if it can (e.g. on each deliteralization
-; step).  However, if that contains an ANY-WORD?, then a binding operation
-; on that word will create a new cell allocation...similar to how bindings
-; in LIT-WORD! could not be mutated, only create a new LIT-WORD!.
 (
     a: 0
     o1: make object! [a: 1]
     o2: make object! [a: 2]
     word: '''''''''a
-    w1: bind word o1
-    w2: bind word o2
+    w1: bind o1 word
+    w2: bind o2 word
     all [
         a = 0
         1 = get noquote w1

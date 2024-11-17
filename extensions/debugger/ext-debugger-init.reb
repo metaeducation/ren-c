@@ -101,7 +101,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
         ]
 
         if focus-frame [
-            bind b focus-frame
+            bind focus-frame b
         ]
         return b
     ]

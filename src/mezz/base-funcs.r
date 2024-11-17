@@ -171,7 +171,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
                 if not object? other [
                     other: ensure [any-context?] get inside spec other
                 ]
-                bind new-body other
+                bind other new-body
             )
         ]
     |
@@ -223,7 +223,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
 
     if statics [
         statics: make object! statics
-        bind new-body statics
+        bind statics new-body
     ]
 
     append new-spec maybe with-return  ; if FUNC* suppresses return generation

@@ -188,7 +188,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
         ]
     )
 
-    if object? mixin [bind body mixin]
+    if object? mixin [bind mixin body]
 
     trap [  ; !!! currently `then x -> [...] except e -> [...]` is broken
         catch* 'quit [  ; fill in definitional QUIT slot in module [4]

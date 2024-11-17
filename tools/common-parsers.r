@@ -56,7 +56,7 @@ import <parsing-tools.reb>
 
 
 collapse-whitespace: [some [change some white-space (space) | one] <end>]
-bind collapse-whitespace c-lexical.grammar
+bind c-lexical.grammar collapse-whitespace
 
 
 export proto-parser: context [
@@ -86,7 +86,7 @@ export proto-parser: context [
         emit-directive: ~
     ]
 
-    grammar: context bind [
+    grammar: context bind c-lexical.grammar [
 
         rule: [
             parse-position: <here>
@@ -260,7 +260,7 @@ export proto-parser: context [
             ]
         ]
 
-    ] c-lexical.grammar
+    ]
 ]
 
 export /rewrite-if-directives: func [

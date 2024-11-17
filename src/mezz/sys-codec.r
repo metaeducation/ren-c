@@ -51,7 +51,7 @@ REBOL [
     ; Media-types block format: [.abc .def type ...]
     ; !!! Should be a map, with blocks of codecs on collisions
     ;
-    append append system.options.file-types suffixes (bind name system.codecs)
+    append append system.options.file-types suffixes (bind system.codecs name)
 
     return codec
 ]

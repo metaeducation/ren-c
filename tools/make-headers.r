@@ -233,7 +233,7 @@ sys-globals-parser: context [
         parse3 text grammar.rule  ; Review: no END (return result unused?)
     ]
 
-    grammar: context bind [
+    grammar: context bind c-lexical.grammar [
 
         rule: [
             opt some [
@@ -283,7 +283,7 @@ sys-globals-parser: context [
 
         other-segment: [thru newline]
 
-    ] c-lexical.grammar
+    ]
 
 ]
 

@@ -184,4 +184,4 @@ charsets: context [
     not-wsp: complement ws-char
 ]
 
-export grammar: context bind grammar charsets
+export grammar: context bind charsets grammar

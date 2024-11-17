@@ -151,7 +151,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
 ][
     let tmp-start
     let name
-    let single-param: bind copy:deep [
+    let single-param: bind c-lexical.grammar copy:deep [
         identifier  ; (part of)type
         some [
             opt some white-space
@@ -166,7 +166,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
             opt some white-space
             opt some ["*" opt some white-space]
         ]
-    ] c-lexical.grammar
+    ]
 
     let fn
     let open-paren
@@ -174,7 +174,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
     let param-ser
     let param-spec
     let check-point
-    parse3 source bind copy:deep [
+    parse3 source bind c-lexical.grammar copy:deep [
         opt some [
             fn: across identifier
             opt some white-space
@@ -301,7 +301,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
             | one
         ]
         <end> | (fail)
-    ] c-lexical.grammar
+    ]
 
     return source
 ]
@@ -309,7 +309,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
 /fix-const-char: func [
     source
 ][
-    parse3 source bind copy:deep [
+    parse3 source bind c-lexical.grammar copy:deep [
         opt some [
             "strm" opt some white-space "->" opt some white-space
             "msg" opt some white-space "=" opt some white-space
@@ -317,7 +317,7 @@ make-warning-lines: lamda [filename [file!] title [text!]] [  ; use CSCAPE?
                 opt some white-space "*" opt some white-space ")"
             | one
         ]
-    ] c-lexical.grammar
+    ]
     return source
 ]
 

@@ -114,7 +114,7 @@
 ;
 ; https://forum.rebol.info/t/765/2
 [
-    (21 = eval bind use [x] [x: 10, [x + 1]] make object! [x: 20])
+    (21 = eval bind make object! [x: 20] use [x] [x: 10, [x + 1]])
 ]
 
 ; This was originally a test for "virtual binding chain reuse".  That is a

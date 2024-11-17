@@ -24,7 +24,7 @@
         let body: compose:deep [
             if reset [count: reset return]
             if block? count [
-                let result: bind count 'count
+                let result: bind $count count
                 count: 1
                 return eval result
             ]

@@ -454,7 +454,7 @@ list: context [
     ]
 ]
 
-c-parser-extension: context bind bind [
+c-parser-extension: context bind c-lexical.grammar bind proto-parser [
 
     ; Extend parser to support checking of function spacing.
 
@@ -465,7 +465,7 @@ c-parser-extension: context bind bind [
     braced: [lbrace opt some [braced | not ahead rbrace one] rbrace]
 
     function-spacing-rule: (
-        bind:copy standard.function-spacing c-lexical.grammar
+        bind:copy c-lexical.grammar standard.function-spacing
     )
 
     grammar.function-body: braced
@@ -478,8 +478,7 @@ c-parser-extension: context bind bind [
     append grammar.other-segment $(
         last-func-end: null
     )
-
-] proto-parser c-lexical.grammar
+]
 
 /extension-of: func [
     "Return file extension for file"

@@ -178,6 +178,7 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     or3:                        ; OR takes GROUP!s on right (not BLOCK!)
     refinement3?                ; Former refinements of /FOO now :FOO
     refinement3!                ; ...
+    bind3                       ; BIND's arguments reversed
 ][
     ; Assign the alias what the existing version (minus the terminal "3") is
     ; (e.g. func3: func/)
@@ -910,6 +911,12 @@ get-path!: func3 [] [
     return action
 ]
 
+; The semantics surrounding BIND are completely rethought.  But one big change
+; is that the parameters are reversed.
+;
+/bind: func3 [context element] [
+    bind3 element context
+]
 
 ; This is a surrogate for being able to receive the environment for string
 ; interpolation from a block.  Instead, the words that aren't in the user
@@ -931,7 +938,7 @@ get-path!: func3 [] [
             get-word? item [
                 item: get item
                 assert [object? item]
-                bind code item
+                bind item code
             ]
         ] else [
             assert [word? item]
@@ -939,7 +946,7 @@ get-path!: func3 [] [
             obj.(item): get:any item
         ]
     ]
-    bind code obj  ; simulates ability to bind to single words
+    bind obj code  ; simulates ability to bind to single words
     return code
 ]
 

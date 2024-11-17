@@ -81,7 +81,7 @@
 ; value doesn't un-hide it...
 (
     obj: make object! [x: 10, y: 20]
-    word: bind 'y obj
+    word: bind obj 'y
     all [
         20 = get word
         [x y] = words of obj  ; starts out visible

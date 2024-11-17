@@ -6,7 +6,7 @@
 
 (
     obj: make object! [x: 1020]
-    for-each 'item bind [
+    for-each 'item bind obj [
         x 'x ''x '''x ''''x
         @x '@x ''@x '''@x ''''@x
         :x ':x '':x ''':x '''':x
@@ -19,7 +19,7 @@
         ; .x '.x ''.x '''.x ''''.x
         ; x/ 'x/ ''x/ '''x/ ''''x/
         ; x. 'x. ''x. '''x. ''''x.
-    ] obj [
+    ][
         if obj <> binding of item [
             fail ["Binding of" ^item "is not to expected object"]
         ]
