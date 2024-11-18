@@ -100,7 +100,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
         ]
     ]
     append result unspaced [CR LF]
-    result: to blob! result  ; AS BLOB! would be UTF-8 constrained
+    result: encode 'UTF-8 result  ; AS BLOB! would be UTF-8 constrained
     if content [append result content]  ; ...but content can be arbitrary
     return result
 ]
@@ -211,7 +211,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
             continue
         ]
 
-        info.response-line: line: to text! copy:part conn.data d1
+        info.response-line: line: decode 'UTF-8 copy:part conn.data d1
 
         ; !!! In R3-Alpha, CONSTRUCT:WITH allowed passing in data that could
         ; be a STRING! or a BLOB! which would be interpreted as an HTTP/SMTP
