@@ -1610,28 +1610,29 @@ DECLARE_NATIVE(construct)
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
+    Value* spec = ARG(spec);
+
     enum {
         ST_CONSTRUCT_INITIAL_ENTRY = STATE_0,
-        ST_CONSTRUCT_FULLY_EVALUATING,
-        ST_CONSTRUCT_EVAL_STEP
+        ST_CONSTRUCT_EVAL_STEP,
+        ST_CONSTRUCT_EVAL_SET_STEP
     };
 
     switch (STATE) {
       case ST_CONSTRUCT_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_CONSTRUCT_FULLY_EVALUATING:
-        return OUT;
-
       case ST_CONSTRUCT_EVAL_STEP:
-        goto eval_step_result_in_spare;
+        Reset_Evaluator_Erase_Out(SUBLEVEL);
+        goto continue_processing_spec;
+
+      case ST_CONSTRUCT_EVAL_SET_STEP:
+        goto eval_set_step_result_in_spare;
 
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
-
-    Value* spec = ARG(spec);
 
     VarList* parent = REF(with)
         ? Cell_Varlist(ARG(with))
@@ -1664,53 +1665,60 @@ DECLARE_NATIVE(construct)
 
 } continue_processing_spec: {  ////////////////////////////////////////////////
 
-    while (Not_Level_At_End(SUBLEVEL)) {
-        const Element* at = At_Level(SUBLEVEL);
-        if (Is_Comma(at)) {
-            Fetch_Next_In_Feed(SUBLEVEL->feed);
-            continue;
-        }
+    if (Is_Level_At_End(SUBLEVEL)) {
+        Drop_Level(SUBLEVEL);
+        return OUT;
+    }
 
-        if (not Try_Get_Settable_Word_Symbol(nullptr, at))  // /foo: or foo:
-            return FAIL(at);
+    VarList* varlist = Cell_Varlist(OUT);
 
-        do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
-            Copy_Cell(PUSH(), at);
+    const Element* at = At_Level(SUBLEVEL);
 
-            Fetch_Next_In_Feed(SUBLEVEL->feed);
-
-            if (Is_Level_At_End(SUBLEVEL))
-                return FAIL("Unexpected end after SET-WORD! in CONTEXT");
-
-            at = At_Level(SUBLEVEL);
-            if (Is_Comma(at))
-                return FAIL("Unexpected COMMA! after SET-WORD! in CONTEXT");
-
-        } while (Try_Get_Settable_Word_Symbol(nullptr, at));
-
-        STATE = ST_CONSTRUCT_EVAL_STEP;
+    Option(const Symbol*) symbol = Try_Get_Settable_Word_Symbol(nullptr, at);
+    if (not symbol) {  // not /foo: or foo:
+        STATE = ST_CONSTRUCT_EVAL_STEP;  // plain evaluation
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    Drop_Level(SUBLEVEL);
+    do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
+        Option(Index) index = Find_Symbol_In_Context(
+            Varlist_Archetype(varlist),
+            unwrap symbol,
+            true
+        );
+        assert(index);  // created a key for every SET-WORD! above!
 
-    return OUT;
+        Copy_Cell(PUSH(), at);
+        BINDING(TOP) = varlist;
+        CELL_WORD_INDEX_I32(TOP) = unwrap index;
 
-} eval_step_result_in_spare: {  ///////////////////////////////////////////////
+        Fetch_Next_In_Feed(SUBLEVEL->feed);
+
+        if (Is_Level_At_End(SUBLEVEL))
+            return FAIL("Unexpected end after SET-WORD! in CONTEXT");
+
+        at = At_Level(SUBLEVEL);
+        if (Is_Comma(at))
+            return FAIL("Unexpected COMMA! after SET-WORD! in CONTEXT");
+
+    } while ((symbol = Try_Get_Settable_Word_Symbol(nullptr, at)));
+
+    if (not Is_The_Block(spec)) {
+        Copy_Cell(Level_Scratch(SUBLEVEL), TOP);
+        DROP();
+
+        LEVEL_STATE_BYTE(SUBLEVEL) = ST_STEPPER_REEVALUATING;
+    }
+
+    STATE = ST_CONSTRUCT_EVAL_SET_STEP;
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
+
+} eval_set_step_result_in_spare: {  //////////////////////////////////////////
 
     VarList* varlist = Cell_Varlist(OUT);
 
     while (TOP_INDEX != STACK_BASE) {
-        const Symbol* symbol = unwrap Try_Get_Settable_Word_Symbol(
-            nullptr,
-            TOP_ELEMENT
-        );
-
-        Option(Index) index = Find_Symbol_In_Context(
-            Varlist_Archetype(varlist),
-            symbol,
-            true
-        );
+        Option(Index) index = CELL_WORD_INDEX_I32(TOP);
         assert(index);  // created a key for every SET-WORD! above!
 
         Copy_Cell(Varlist_Slot(varlist, unwrap index), stable_SPARE);
@@ -1718,7 +1726,7 @@ DECLARE_NATIVE(construct)
         DROP();
     }
 
-    assert(STATE == ST_CONSTRUCT_EVAL_STEP);
+    assert(STATE == ST_CONSTRUCT_EVAL_SET_STEP);
     Reset_Evaluator_Erase_Out(SUBLEVEL);
 
     goto continue_processing_spec;
