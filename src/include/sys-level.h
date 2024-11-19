@@ -724,7 +724,17 @@ INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
         Erase_Cell(TOP_LEVEL->out);
     }
 
+  #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in error location set
+    Count save_extant = g_ds.num_refs_extant;
+    g_ds.num_refs_extant = 0;
+  #endif
+
     Force_Location_Of_Error(error, L);
+
+  #if DEBUG_EXTANT_STACK_POINTERS
+    assert(g_ds.num_refs_extant == 0);
+    g_ds.num_refs_extant = save_extant;
+  #endif
 
     Init_Error(L->out, error);
     return Raisify(L->out);
@@ -743,7 +753,17 @@ INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
         Erase_Cell(TOP_LEVEL->out);
     }
 
+  #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in error location set
+    Count save_extant = g_ds.num_refs_extant;
+    g_ds.num_refs_extant = 0;
+  #endif
+
     Force_Location_Of_Error(error, L);
+
+  #if DEBUG_EXTANT_STACK_POINTERS
+    assert(g_ds.num_refs_extant == 0);
+    g_ds.num_refs_extant = save_extant;
+  #endif
 
     Init_Thrown_Failure(L, error);
     return BOUNCE_FAIL;  // means we can be renotified

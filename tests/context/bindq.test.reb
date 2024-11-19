@@ -21,7 +21,7 @@
         ; x. 'x. ''x. '''x. ''''x.
     ][
         if obj <> binding of item [
-            fail ["Binding of" ^item "is not to expected object"]
+            fail ["Binding of" @item "is not to expected object"]
         ]
     ]
     ok
