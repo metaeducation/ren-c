@@ -1193,10 +1193,10 @@ default-combinators: to map! reduce [
             ; !!! MAKE OBJECT! fails if any top-level SET-WORD! have bindings.
             ; Revisit if that rule changes and this becomes unnecessary.
             ;
-            if binding of target [
+            if binding of target: resolve target [
                 fail ["EMIT can't use bound words for object keys:" target]
             ]
-            target: setify to-word target
+            target: setify target
         ] else [
             target: unbind target  ; `emit foo:` okay in function defining foo
         ]
