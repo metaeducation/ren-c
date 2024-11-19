@@ -2047,7 +2047,15 @@ default-combinators: to map! reduce [
         'value [element?]
     ][
         remainder: input
-        return :value
+        return value
+    ]
+
+    'the combinator [
+        return: "Quoted form of literal value (not matched)" [element?]
+        @value [element?]
+    ][
+        remainder: input
+        return value
     ]
 
     === THE-XXX! COMBINATORS ===
@@ -2849,7 +2857,7 @@ comment [/combinatorize: func [
                     set key null
                 ]
                 else [
-                    set key r
+                    set key either param.class = 'just [r] [inside rules r]
                     rules: next rules
                 ]
             ]
