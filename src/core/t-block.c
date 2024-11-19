@@ -118,108 +118,6 @@ Bounce Makehook_List(Level* level_, Heart heart, Element* arg) {
         );
         return OUT;
     }
-    else if (Any_List(arg)) {
-        //
-        // !!! Ren-C unified MAKE and construction syntax, see #2263.  This is
-        // now a questionable idea, as MAKE and TO have their roles defined
-        // with more clarity (e.g. MAKE is allowed to throw and run arbitrary
-        // code, while TO is not, so MAKE seems bad to run while scanning.)
-        //
-        // However, the idea was that if MAKE of a BLOCK! via a definition
-        // itself was a block, then the block would have 2 elements in it,
-        // with one existing array and an index into that array:
-        //
-        //     >> p1: #[path! [[a b c] 2]]
-        //     == b/c
-        //
-        //     >> head p1
-        //     == a/b/c
-        //
-        //     >> block: [a b c]
-        //     >> p2: make path! compose [((block)) 2]
-        //     == b/c
-        //
-        //     >> append block 'd
-        //     == [a b c d]
-        //
-        //     >> p2
-        //     == b/c/d
-        //
-        // !!! This could be eased to not require the index, but without it
-        // then it can be somewhat confusing as to why [[a b c]] is needed
-        // instead of just [a b c] as the construction spec.
-        //
-        REBLEN len;
-        const Element* at = Cell_List_Len_At(&len, arg);
-
-        if (len != 2 or not Any_List(at) or not Is_Integer(at + 1))
-            goto bad_make;
-
-        const Cell* list = at;
-        REBINT index = VAL_INDEX(list) + Int32(at + 1) - 1;
-
-        if (index < 0 or index > Cell_Series_Len_Head(list))
-            goto bad_make;
-
-        // !!! Previously this code would clear line break options on path
-        // elements, using `Clear_Cell_Flag(..., CELL_FLAG_LINE)`.  But if
-        // lists are allowed to alias each others contents, the aliasing
-        // via MAKE shouldn't modify the store.  Line marker filtering out of
-        // paths should be part of the MOLDing logic -or- a path with embedded
-        // line markers should use construction syntax to preserve them.
-
-        Context* derived = Derive_Binding(Cell_List_Binding(arg), list);
-        return Init_Series_At_Core(
-            OUT,
-            heart,
-            Cell_Array(list),
-            index,
-            derived
-        );
-    }
-    else if (Any_List(arg)) {
-        //
-        // `to group! [1 2 3]` etc. -- copy the array data at the index
-        // position and change the type.  (Note: MAKE does not copy the
-        // data, but aliases it under a new kind.)
-        //
-        REBLEN len;
-        const Element* at = Cell_List_Len_At(&len, arg);
-        return Init_Any_List(
-            OUT,
-            heart,
-            Copy_Values_Len_Shallow(at, len)
-        );
-    }
-    else if (Is_Text(arg)) {
-        //
-        // `to block! "some string"` historically runs TRANSCODE, so you
-        // get unbound code.
-        //
-        Size utf8_size;
-        Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
-        Option(const String*) file = ANONYMOUS;
-        return Init_Any_List(
-            OUT,
-            heart,
-            Scan_UTF8_Managed(file, utf8, utf8_size)
-        );
-    }
-    else if (Is_Blob(arg)) {
-        //
-        // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
-        // uses TRANSCODE to make unbound code.
-        //
-        Option(const String*) file = ANONYMOUS;
-
-        Size size;
-        const Byte* at = Cell_Blob_Size_At(&size, arg);
-        return Init_Any_List(
-            OUT,
-            heart,
-            Scan_UTF8_Managed(file, at, size)
-        );
-    }
     else if (Is_Frame(arg)) {
         //
         // !!! Experimental behavior; if action can run as arity-0, then
@@ -299,8 +197,6 @@ Bounce Makehook_List(Level* level_, Heart heart, Element* arg) {
 
         return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
     }
-
-  bad_make:
 
     return RAISE(Error_Bad_Make(heart, arg));
 }
