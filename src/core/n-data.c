@@ -35,8 +35,8 @@
 //
 //      return: [frame! action? any-list? any-path? any-word? quoted?]
 //      target "Target context or a word whose binding should be the target"
-//          [any-word? any-context?]
-//      value "Value whose binding is to be set (modified) (returned)"
+//          [the-word? any-context?]
+//      value "Value whose bound form is to be returned"
 //          [any-list? any-path? any-word? quoted?]
 //  ]
 //
@@ -56,12 +56,17 @@ DECLARE_NATIVE(bind)
         context = target;
     }
     else {
-        assert(Any_Word(target));
-
-        if (IS_WORD_UNBOUND(target))
+        assert(Is_The_Word(target));
+        if (not IS_WORD_BOUND(target))
             return FAIL(Error_Not_Bound_Raw(target));
 
-        return FAIL("Bind to WORD! only implemented via INSIDE at this time");
+        if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
+            return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
+
+        HEART_BYTE(target) = REB_WORD;
+        BINDING(v) = Make_Use_Core(target, BINDING(v), CELL_MASK_0);
+
+        return COPY(v);
     }
 
     if (Wordlike_Cell(v)) {
