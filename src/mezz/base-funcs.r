@@ -225,11 +225,11 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
     :visibility [onoff?]
 ]
 bind construct [
-    showing: 'no
+    logging: 'off
 ][
-    if visibility [showing: visibility, return ~[]~]
+    if visibility [logging: visibility, return ~[]~]
 
-    if yes? showing [
+    if on? logging [
         print form collect [
             keep [===]
             until [equal? '=== keep take remarks]  ; prints tail `===`
