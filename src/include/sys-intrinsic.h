@@ -43,6 +43,17 @@
 //   BOUNCE_FAIL, and the Level's out pointer.
 
 
+// In order to be fast, intrinsics fold their typechecking into their native
+// implementation.  If that check fails, then they want to act like they
+// were never called...which may mean erroring in some places, or just being
+// bypassed (e.g. if used as a typechecker).  To make sure their type check
+// case is cheap, they simply return this bounce value.
+//
+#define C_BAD_INTRINSIC_ARG 'B'
+#define BOUNCE_BAD_INTRINSIC_ARG \
+    cast(Bounce, &PG_Bounce_Downshifted)
+
+
 //=//// HELPERS TO PROCESS UNPROCESSED ARGUMENTS //////////////////////////=//
 //
 // ** WHEN RUN AS AN INTRINSIC, THE ARG IN THE SPARE CELL CONTAINS A FULLY NON
@@ -119,7 +130,7 @@ INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
     Atom* arg = Level_Spare(L);
 
     if (Is_Raised(arg))
-        return Native_Fail_Result(L, Cell_Error(arg));
+        return BOUNCE_BAD_INTRINSIC_ARG;
 
     Copy_Cell(u_cast(Atom*, e), arg);
     Decay_If_Unstable(u_cast(Atom*, e));  // not necessarily Element, yet...
@@ -130,7 +141,7 @@ INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
     if (Is_Void(u_cast(Value*, arg)))  // do PARAMETER_FLAG_NOOP_IF_VOID [2]
         return Init_Nulled(L->out);  // can't return nullptr [1]
 
-    return Native_Fail_Result(L, Error_Invalid_Intrinsic_Arg_1(L));
+    return BOUNCE_BAD_INTRINSIC_ARG;
 }
 
 INLINE void Get_Meta_Atom_Intrinsic(  // can't modify arg of intrinsic!
@@ -160,7 +171,7 @@ INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
     Atom* arg = Level_Spare(L);  // typecheckers can't modify SPARE
 
     if (Is_Raised(arg))
-        return Native_Fail_Result(L, Cell_Error(arg));
+        return BOUNCE_BAD_INTRINSIC_ARG;
 
     Copy_Cell(u_cast(Atom*, v), arg);
     Decay_If_Unstable(u_cast(Atom*, v));

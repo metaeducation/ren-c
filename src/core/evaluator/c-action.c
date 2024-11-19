@@ -922,6 +922,11 @@ Bounce Action_Executor(Level* L)
         assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
         goto dispatch_phase;
 
+      case C_BAD_INTRINSIC_ARG:
+        assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
+        b = Native_Fail_Result(L, Error_Bad_Intrinsic_Arg_1(L));
+        goto handle_thrown_maybe_redo;
+
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");
     }

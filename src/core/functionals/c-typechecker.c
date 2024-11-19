@@ -374,7 +374,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 Clear_Cell_Flag(SPARE, PROTECTED);
               #endif
 
-                if (bounce == nullptr)
+                if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)
                     goto test_failed;
                 if (bounce == BOUNCE_OKAY)
                     goto test_succeeded;

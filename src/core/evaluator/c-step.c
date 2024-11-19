@@ -260,13 +260,18 @@ Bounce Stepper_Executor(Level* L)
             Init_Nulled(OUT);
         else if (bounce == BOUNCE_OKAY)
             Init_Okay(OUT);
-        else if (bounce == BOUNCE_FAIL)
-            return bounce;
-        else {
-            assert(bounce == L->out);  // no BOUNCE_CONTINUE, API handles, etc.
+        else if (bounce == L->out) {
             if (Is_Raised(OUT))
                 return FAIL(Cell_Error(OUT));
         }
+        else if (bounce == BOUNCE_BAD_INTRINSIC_ARG)
+            return Native_Fail_Result(L, Error_Bad_Intrinsic_Arg_1(L));
+        else {
+            assert(bounce == L->out);
+            assert(bounce == BOUNCE_FAIL);  // no BOUNCE_CONTINUE, API handles
+            return bounce;
+        }
+
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
         goto lookahead; }
 

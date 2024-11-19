@@ -906,13 +906,13 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 
 
 //
-//  Error_Invalid_Intrinsic_Arg_1: C
+//  Error_Bad_Intrinsic_Arg_1: C
 //
 // 1. See DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC for why a non-intrinsic
 //    dispatch doesn't defer typechecking and reuse the "fast" work of
 //    the intrinsic mode.
 //
-Error* Error_Invalid_Intrinsic_Arg_1(Level* const L)
+Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // valid otherwise [1]
 
