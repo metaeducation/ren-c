@@ -264,35 +264,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 //
 //      https://forum.rebol.info/t/re-imagining-eval-next/767
 //
-// 2. This may be the only GC reference holding the array, don't lose it!
-//
-// 3. It might seem that since EVAL [] is VOID, that EVAL:STEP [] should
-//    produce a VOID.  But in practice, there's a dummy step at the end
-//    of every enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three
-//    steps, where the third step is []... and if we were to say that "step"
-//    produced anything, it would be NIHIL...because that step does not
-//    contribute to the output (the result is 30).  But we actually don't
-//    produce anything--because we don't return a pack of values when nothing
-//    is synthesized, we just return NULL.
-//
-// 4. We want EVALUATE to treat all ANY-LIST? the same.  (e.g. a ^[1 + 2] just
-//    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
-//    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
-//    a feed from the array directly.
-//
-// 6. There may have been a LET statement in the code.  If there was, we have
-//    to incorporate the binding it added into the reported state *somehow*.
-//    Right now we add it to the block we give back...this gives rise to
-//    questionable properties, such as if the user goes backward in the block
-//    and were to evaluate it again:
-//
-//      https://forum.rebol.info/t/1496
-//
-//    Right now we can politely ask "don't do that", but better would probably
-//    be to make EVALUATE return something with more limited privileges... more
-//    like a FRAME!/VARARGS!.
-//
-// 7. FAIL is the preferred operation for triggering errors, as it has a
+// 2. FAIL is the preferred operation for triggering errors, as it has a
 //    natural behavior for blocks passed to construct readable messages and
 //    "FAIL X" more clearly communicates a failure than "EVAL X".  But EVAL of
 //    an ERROR! would have to raise an error anyway, so it might as well use
@@ -301,8 +273,6 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     INCLUDE_PARAMS_OF_EVALUATE;
 
     Element* source = cast(Element*, ARG(source));
-    if (Is_Chain(source))  // e.g. :(...) or [...]/
-        Unchain(source);
 
     enum {
         ST_EVALUATE_INITIAL_ENTRY = STATE_0,
@@ -311,143 +281,171 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     };
 
     switch (STATE) {
-      case ST_EVALUATE_INITIAL_ENTRY :
-        goto initial_entry;
+      case ST_EVALUATE_INITIAL_ENTRY: {
+        Remember_Cell_Is_Lifeguard(source);  // may be only reference!
 
-      case ST_EVALUATE_SINGLE_STEPPING :
+        if (Is_Chain(source)) {  // e.g. :(...) or [...]:
+            Unchain(source);
+            assert(Any_List(source));
+            goto initial_entry_list;
+        }
+        if (Any_List(source))
+            goto initial_entry_list;
+
+        if (Is_Frame(source))
+            goto initial_entry_frame;
+
+        if (Is_Varargs(source))
+            goto initial_entry_varargs;
+
+        assert(Is_Error(source));
+        return FAIL(Cell_Error(source)); }  // would fail anyway [2]
+
+      case ST_EVALUATE_SINGLE_STEPPING:
         goto single_step_result_in_out;
 
-      case ST_EVALUATE_RUNNING_TO_END :
+      case ST_EVALUATE_RUNNING_TO_END:
         goto result_in_out;
 
       default: assert(false);
     }
 
-  initial_entry: {  //////////////////////////////////////////////////////////
+  initial_entry_list: {  /////////////////////////////////////////////////////
 
-    Remember_Cell_Is_Lifeguard(source);  // may be only reference! [2]
+    // 1. It might seem that since EVAL [] is VOID, that EVAL:STEP [] should
+    //    produce a VOID.  But in practice, there's a dummy step at the end
+    //    of every enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three
+    //    steps, where the third step is [].  If we were to say that "step"
+    //    produced anything, it would be NIHIL...because that step does not
+    //    contribute to the output (the result is 30).  But we actually don't
+    //    produce anything--because we don't return a pack of values when
+    //    nothing is synthesized, we just return NULL.
+    //
+    // 2. We want EVALUATE to treat all ANY-LIST? the same.  (e.g. a ^[1 + 2]
+    //    just does the same thing as [1 + 2] and gives 3, not '3)
 
-    if (Any_List(source)) {
-        if (Cell_Series_Len_At(source) == 0) {
-            if (REF(step))  // `eval:step []` doesn't "count" [3]
-                return nullptr;  // need pure null for THEN/ELSE to work right
+    if (Cell_Series_Len_At(source) == 0) {
+        if (REF(step))  // `eval:step []` doesn't "count" [1]
+            return nullptr;  // need pure null for THEN/ELSE to work right
 
-            if (REF(undecayed))
-                Init_Nihil(OUT);  // undecayed allows vanishing
-            else
-                Init_Void(OUT);  // `eval []` is ~void~
+        if (REF(undecayed))
+            Init_Nihil(OUT);  // undecayed allows vanishing
+        else
+            Init_Void(OUT);  // `eval []` is ~void~
 
-            return OUT;
-        }
-
-        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
-
-        Level* sub = Make_Level_At(
-            REF(step) ? &Stepper_Executor : &Evaluator_Executor,
-            source,
-            flags
-        );
-        if (not REF(step))
-            Init_Nihil(Evaluator_Primed_Cell(sub));
-        Push_Level_Erase_Out_If_State_0(OUT, sub);
-
-        if (not REF(step)) {  // plain evaluation to end, maybe invisible
-            if (REF(undecayed))
-                return DELEGATE_SUBLEVEL(sub);
-
-            STATE = ST_EVALUATE_RUNNING_TO_END;
-            return CONTINUE_SUBLEVEL(sub);  // need callback to decay
-        }
-
-        STATE = ST_EVALUATE_SINGLE_STEPPING;
-
-        Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
-
-        return CONTINUE_SUBLEVEL(sub);
+        return OUT;
     }
-    else switch (VAL_TYPE(source)) {
 
-      case REB_FRAME : {
-        //
-        // !!! It is likely that the return result for the :STEP will actually
-        // be a FRAME! when the input to EVALUATE is a BLOCK!, so that the
-        // LET bindings can be preserved.  Binding is still a mess when it
-        // comes to questions like backtracking in blocks, so review.
-        //
-        if (REF(step))
-            return FAIL(":STEP not implemented for FRAME! in EVALUATE");
+    Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
-        if (Is_Frame_Details(source))
-            if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-                return FAIL(Error_Do_Arity_Non_Zero_Raw());  // see notes in DO
+    Level* sub = Make_Level_At(
+        REF(step) ? &Stepper_Executor : &Evaluator_Executor,
+        source,  // all lists treated the same [2]
+        flags
+    );
+    if (not REF(step))
+        Init_Nihil(Evaluator_Primed_Cell(sub));
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-        Option(const Atom*) with = nullptr;
-        bool copy_frame = false;  // EVAL consumes by default
-        Push_Frame_Continuation(
-            OUT,
-            LEVEL_FLAG_RAISED_RESULT_OK,
-            source,
-            with,
-            copy_frame
-        );
-        return BOUNCE_DELEGATE; }
+    if (not REF(step)) {  // plain evaluation to end, maybe invisible
+        if (REF(undecayed))
+            return DELEGATE_SUBLEVEL(sub);
 
-      case REB_VARARGS : {
-        Element* position;
-        if (Is_Block_Style_Varargs(&position, source)) {
-            //
-            // We can execute the array, but we must "consume" elements out
-            // of it (e.g. advance the index shared across all instances)
-            //
-            // !!! If any VARARGS! op does not honor the "locked" flag on the
-            // array during execution, there will be problems if it is TAKE'n
-            // or DO'd while this operation is in progress.
-            //
-            if (Eval_Any_List_At_Throws(OUT, position, SPECIFIED)) {
-                //
-                // !!! A BLOCK! varargs doesn't technically need to "go bad"
-                // on a throw, since the block is still around.  But a FRAME!
-                // varargs does.  This will cause an assert if reused, and
-                // having BLANK! mean "thrown" may evolve into a convention.
-                //
-                Init_Unreadable(position);
-                return THROWN;
-            }
+        STATE = ST_EVALUATE_RUNNING_TO_END;
+        return CONTINUE_SUBLEVEL(sub);  // need callback to decay
+    }
 
-            Erase_Cell(position); // convention for shared data at endpoint
+    Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
 
-            if (Is_Void(OUT))
-                return VOID;
-            return OUT;
+    STATE = ST_EVALUATE_SINGLE_STEPPING;
+    return CONTINUE_SUBLEVEL(sub);
+
+} initial_entry_frame: { /////////////////////////////////////////////////////
+
+    // 1. It's an open question of whether something like a BLOCK! is a good
+    //    enough encoder of the evaluator state to be the result of an
+    //    operation like EVAL:STEP, or if something like a FRAME! would be
+    //    a better way to abstract things like "accumulated LETs".  It may
+    //    evolve that EVAL:STEP on a BLOCK! actually produces a FRAME!...
+
+    if (REF(step))  // !!! may be legal (or mandatory) in the future [1]
+        return FAIL(":STEP not implemented for FRAME! in EVALUATE");
+
+    if (Is_Frame_Details(source))
+        if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
+            return FAIL(Error_Do_Arity_Non_Zero_Raw());  // see notes in DO
+
+    Option(const Atom*) with = nullptr;
+    bool copy_frame = false;  // EVAL consumes by default
+    Push_Frame_Continuation(
+        OUT,
+        LEVEL_FLAG_RAISED_RESULT_OK,
+        source,
+        with,
+        copy_frame
+    );
+    return BOUNCE_DELEGATE;
+
+} initial_entry_varargs: { ///////////////////////////////////////////////////
+
+    // 1. We can execute the array, but we must "consume" elements out of it
+    //    (e.g. advance the index shared across all instances)
+    //
+    //    !!! If any VARARGS! op does not honor the "locked" flag on the
+    //    array during execution, there will be problems if it is TAKE'n
+    //    or EVAL'd while this operation is in progress.
+    //
+    // 2. A BLOCK! varargs doesn't technically need to "go bad" on a throw,
+    //    since the block is still around.  But a FRAME! varargs does.
+    //
+    // 3. By definition, we are in the middle of a function call in the level
+    //    the varargs came from.  It's still on the stack, and we don't want
+    //    to disrupt its state.  Use a sublevel.
+
+    if (REF(step))
+        return FAIL(":STEP not implemented for VARARGS! in EVALUATE");
+
+    Element* position;
+    if (Is_Block_Style_Varargs(&position, source)) {  // must consume [1]
+        if (Eval_Any_List_At_Throws(OUT, position, SPECIFIED)) {
+            Init_Unreadable(position);  // "goes bad" for consistency [2]
+            return THROWN;
         }
 
-        Level* L;
-        if (not Is_Level_Style_Varargs_May_Fail(&L, source))
-            panic (source); // Frame is the only other type
+        Erase_Cell(position); // convention for shared data at endpoint
 
-        // By definition, we are in the middle of a function call in the level
-        // the varargs came from.  It's still on the stack, and we don't want
-        // to disrupt its state.  Use a sublevel.
-
-        if (Is_Level_At_End(L))
+        if (Is_Void(OUT))
             return VOID;
-
-        Level* sub = Make_Level(&Evaluator_Executor, L->feed, LEVEL_MASK_NONE);
-        Init_Void(Evaluator_Primed_Cell(sub));
-        Push_Level_Erase_Out_If_State_0(OUT, sub);
-        return DELEGATE_SUBLEVEL(sub); }
-
-      case REB_ERROR :
-        return FAIL(Cell_Error(source));  // would fail anyway [7]
-
-      default:
-        assert(false);
-        return FAIL(PARAM(source));
+        return OUT;
     }
 
-    DEAD_END;
+    Level* L;
+    if (not Is_Level_Style_Varargs_May_Fail(&L, source))
+        panic (source); // Frame is the only other type
+
+    if (Is_Level_At_End(L))
+        return VOID;
+
+    Level* sub = Make_Level(  // need to do evaluation in a sublevel [3]
+        &Evaluator_Executor, L->feed, LEVEL_MASK_NONE
+    );
+    Init_Void(Evaluator_Primed_Cell(sub));
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
+    return DELEGATE_SUBLEVEL(sub);
 
 } single_step_result_in_out: {  //////////////////////////////////////////////
+
+    // 1. There may have been a LET statement in the code.  If there was, we
+    //    have to incorporate the binding it added into the reported state
+    //    *somehow*.  Right now we add it to the block we give back...this
+    //    gives rise to questionable properties, such as if the user goes
+    //    backward in the block and were to evaluate it again:
+    //
+    //      https://forum.rebol.info/t/1496
+    //
+    //    Right now we can politely ask "don't do that".  But better would
+    //    probably be to make EVALUATE return something with more limited
+    //    privileges... more like a FRAME!/VARARGS!.
 
     assert(REF(step));
 
@@ -457,7 +455,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
-    BINDING(source) = binding;  // integrate LETs [6]
+    BINDING(source) = binding;  // integrate LETs [1]
     goto result_in_out;
 
 } result_in_out: {  //////////////////////////////////////////////////////////
