@@ -30,22 +30,18 @@
 //
 //  "Return value whose access level doesn't allow mutation to its content"
 //
-//      return: [any-value?]
+//      return: [~null~ element?]
 //      value "Argument to change access to (can be locked or not)"
-//          [any-value?]  ; !!! should affect INTEGER! when it's a bignum
+//          [<maybe> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
 //
 DECLARE_NATIVE(const) {
     INCLUDE_PARAMS_OF_CONST;
 
-    Value* v = ARG(value);
-    if (Is_Nulled(v))
-        return nullptr;
+    Element* e = cast(Element*, ARG(value));
+    Set_Cell_Flag(e, CONST);
 
-    Clear_Cell_Flag(v, EXPLICITLY_MUTABLE);
-    Set_Cell_Flag(v, CONST);
-
-    return COPY(v);
+    return COPY(e);
 }
 
 
@@ -75,30 +71,19 @@ DECLARE_NATIVE(const_q) {
 //  "Return value whose access allows mutation to its argument (if unlocked)"
 //
 //      return: "Same as input -- no errors are given if locked or immediate"
-//          [any-value?]
+//          [~null~ element?]
 //      value "Argument to change access to (if such access can be granted)"
-//          [any-value?]  ; !!! should affect INTEGER! when it's a bignum
+//          [<maybe> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
 //
 DECLARE_NATIVE(mutable)
 {
     INCLUDE_PARAMS_OF_MUTABLE;
 
-    Value* v = ARG(value);
+    Element* e = cast(Element*, ARG(value));
+    Clear_Cell_Flag(e, CONST);
 
-    if (Is_Nulled(v))
-        return nullptr; // make it easier to pass through values
-
-    // !!! The reason no error is given here is to make it easier to write
-    // generic code which grants mutable access on things you might want
-    // such access on, but passes through things like INTEGER!/etc.  If it
-    // errored here, that would make the calling code more complex.  Better
-    // to just error when they realize the thing is locked.
-
-    Clear_Cell_Flag(v, CONST);
-    Set_Cell_Flag(v, EXPLICITLY_MUTABLE);
-
-    return COPY(v);
+    return COPY(e);
 }
 
 

@@ -255,23 +255,9 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     FLAG_LEFT_BIT(24)  // NOTE: Must be SAME BIT as FEED_FLAG_CONST
 
 
-//=//// CELL_FLAG_EXPLICITLY_MUTABLE //////////////////////////////////////=//
+//=//// CELL_FLAG_25 //////////////////////////////////////////////////////=//
 //
-// While it may seem that a mutable value would be merely one that did not
-// carry CELL_FLAG_CONST, there's a need for a separate bit to indicate when
-// MUTABLE has been specified explicitly.  That way, evaluative situations
-// like `eval mutable compose $() [...]` or `make object! mutable load ...`
-// can realize that they should switch into a mode which doesn't enforce const
-// by default--which it would ordinarily do.
-//
-// If this flag did not exist, then to get the feature of disabled mutability
-// would require every such operation taking something like a /MUTABLE
-// refinement.  This moves the flexibility onto the values themselves.
-//
-// While CONST can be added by the system implicitly during an evaluation,
-// the MUTABLE flag should only be added by running MUTABLE.
-//
-#define CELL_FLAG_EXPLICITLY_MUTABLE \
+#define CELL_FLAG_25 \
     FLAG_LEFT_BIT(25)
 
 

@@ -419,7 +419,9 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
                 return FAIL("Expected BLOCK!-style varargs");
             }
 
-            feed = Make_At_Feed_Core(shared, SPECIFIED);
+            feed = Prep_At_Feed(
+                Alloc_Feed(), shared, SPECIFIED, FEED_MASK_DEFAULT
+            );
         }
 
         Add_Feed_Reference(feed);

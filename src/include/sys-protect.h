@@ -172,20 +172,3 @@ INLINE const Cell* Ensure_Mutable(const Cell* v) {
 
     fail (Error_Const_Value_Raw(v));
 }
-
-
-// (Used by DO and EVALUATE)
-//
-// If `source` is not const, tweak it to be explicitly mutable--because
-// otherwise, it would wind up inheriting the FEED_MASK_CONST of our
-// currently executing level.  That's no good for `repeat 2 [do block]`,
-// because we want whatever constness is on block...
-//
-// (Note we *can't* tweak values that are Cell in source.  So we either
-// bias to having to do this or Do_XXX() versions explode into passing
-// mutability parameters all over the place.  This is better.)
-//
-INLINE void Tweak_Non_Const_To_Explicitly_Mutable(Value* source) {
-    if (Not_Cell_Flag(source, CONST))
-        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
-}

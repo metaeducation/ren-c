@@ -96,9 +96,6 @@ DECLARE_NATIVE(enrescue)
     //    that to void, and maybe even that should be the default, but at
     //    time of writing serving the needs of the console is most important.
 
-    if (Not_Cell_Flag(code, CONST))
-        Set_Cell_Flag(code, EXPLICITLY_MUTABLE);  // read EVAL source for why
-
     Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
@@ -172,8 +169,6 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
   initial_entry: {  /////////////////////////////////////////////////////////
 
     Init_Void(OUT);  // default if all evaluations produce void
-
-    Tweak_Non_Const_To_Explicitly_Mutable(code);  // see comments on function
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step

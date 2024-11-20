@@ -68,6 +68,7 @@
 ; While a value fetched from a WORD! during evaluation isn't subject to the
 ; wave of constness that a loop or function body puts on a frame, if you
 ; EVAL a COMPOSE then it looks the same from the evaluator's point of view.
+;
 ; Hence, if you want to modify composed-in blocks, use explicit mutability.
 [
     ([<legal> <legal>] = eval [repeat 2 [append mutable [] <legal>]])
@@ -77,9 +78,21 @@
         eval compose:deep $() [repeat 2 [append (block) <illegal>]]
     )
 
-    (
+    ~const-value~ !! (  ; CELL_FLAG_EXPLICITLY_MUTABLE killed off
         block: mutable []
         eval compose:deep $() [repeat 2 [append (block) <legal>]]
+        block = [<legal> <legal>]
+    )
+
+    (  ; quotes can work around it
+        block: []
+        eval compose:deep $() [repeat 2 [append '(block) <legal>]]
+        block = [<legal> <legal>]
+    )
+
+    (  ; mutable after the compose can work around it
+        block: []
+        eval compose:deep $() [repeat 2 [append mutable (block) <legal>]]
         block = [<legal> <legal>]
     )
 ]
@@ -182,18 +195,6 @@
 ;        [10 20] = aggregator 20
 ;    ]
 ;
-
-; COMPOSE should splice with awareness of const/mutability
-[
-    ~const-value~ !! (
-        repeat 2 compose $() [append ([1 2 3]) <bad>]
-    )
-
-    (
-        block: repeat 2 compose $() [append (mutable [1 2 3]) <legal>]
-        block = [1 2 3 <legal> <legal>]
-    )
-]
 
 ; If soft-quoted branches are allowed to exist, they should not allow
 ; breaking of rules that would apply to values in a block-based branch.

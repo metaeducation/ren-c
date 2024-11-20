@@ -325,8 +325,6 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Tweak_Non_Const_To_Explicitly_Mutable(source);
-
     Remember_Cell_Is_Lifeguard(source);  // may be only reference! [2]
 
     if (Any_List(source)) {
@@ -342,17 +340,11 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
             return OUT;
         }
 
-        Feed* feed = Make_At_Feed_Core(  // use feed, ignore type [4]
-            source,
-            SPECIFIED
-        );
-        assert(Not_Feed_At_End(feed));
-
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
-        Level* sub = Make_Level(
+        Level* sub = Make_Level_At(
             REF(step) ? &Stepper_Executor : &Evaluator_Executor,
-            feed,
+            source,
             flags
         );
         if (not REF(step))

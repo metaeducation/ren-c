@@ -511,13 +511,11 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 //
 INLINE void Inertly_Derelativize_Inheriting_Const(
     Sink(Element) out,
-    const Element* v,
+    const Element* e,
     Feed* feed
 ){
-    Derelativize(out, v, FEED_BINDING(feed));
-
-    if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
-        out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
+    Derelativize(out, e, FEED_BINDING(feed));
+    out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
 INLINE void The_Next_In_Feed(Sink(Element) out, Feed* feed) {
@@ -527,8 +525,7 @@ INLINE void The_Next_In_Feed(Sink(Element) out, Feed* feed) {
 
 INLINE void Just_Next_In_Feed(Sink(Element) out, Feed* feed) {
     Copy_Cell(out, At_Feed(feed));
-    if (Not_Cell_Flag(At_Feed(feed), EXPLICITLY_MUTABLE))
-        out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
+    out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
     Fetch_Next_In_Feed(feed);
 }
 
@@ -746,13 +743,9 @@ INLINE Feed* Prep_At_Feed(
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
     assert(Any_List_Kind(Cell_Heart(list)));
 
-    Flags flags;
-    if (Get_Cell_Flag(list, EXPLICITLY_MUTABLE))
-        flags = FEED_MASK_DEFAULT;  // override const from parent level
-    else
-        flags = FEED_MASK_DEFAULT
-            | (parent_flags & FEED_FLAG_CONST)  // inherit
-            | (list->header.bits & CELL_FLAG_CONST);  // heed
+    Flags flags = FEED_MASK_DEFAULT
+        | (parent_flags & FEED_FLAG_CONST)  // inherit
+        | (list->header.bits & CELL_FLAG_CONST);  // heed
 
     return Prep_Array_Feed(
         preallocated,
@@ -763,12 +756,3 @@ INLINE Feed* Prep_At_Feed(
         flags
     );
 }
-
-#define Make_At_Feed_Core(list,binding) \
-    Prep_At_Feed( \
-        Alloc_Feed(), \
-        (list), (binding), TOP_LEVEL->feed->flags.bits \
-    );
-
-#define Make_At_Feed(name,list) \
-    Make_At_Feed_Core(name, (list), SPECIFIED)

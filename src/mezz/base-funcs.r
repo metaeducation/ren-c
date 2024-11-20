@@ -205,7 +205,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
     ; default, but TWEAK can be used to create variations e.g. a compatible
     ; implementation with Rebol2's FUNC.
     ;
-    if const? body [new-body: const new-body]
+    if const? body [new-body: const maybe new-body]
 
     return func* new-spec either defaulters [
         append defaulters as group! bindable any [new-body body]
