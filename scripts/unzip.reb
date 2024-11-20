@@ -75,7 +75,7 @@ data-descriptor-sig: #{504B0708}
 ][
     return to-ishort (time.hour * 2048)
         or+ (time.minute * 32)
-        or+ to integer! time.second / 2
+        or+ round:down time.second / 2
 ]
 
 /to-msdos-date: func [
@@ -106,7 +106,7 @@ data-descriptor-sig: #{504B0708}
     binary [blob!]
 ][
     let i: decode [LE + 2] binary
-    return to date! reduce [
+    return make date! reduce [
         65024 and+ i / 512 + 1980
         480 and+ i / 32
         31 and+ i
@@ -426,7 +426,7 @@ data-descriptor-sig: #{504B0708}
         internal-attributes: across skip 2  ; not in local header
         external-attributes: across skip 4  ; not in local header
         local-header-offset: uint32-rule  ; (for finding local header)
-        name: [temp: across skip (name-length), (to-file temp)]
+        name: [temp: across skip (name-length), (as file! temp)]
 
         skip (extra-field-length)  ; !!! Expose "extra" field?
         skip (file-comment-length)  ; !!! Expose file comment?
@@ -483,7 +483,7 @@ data-descriptor-sig: #{504B0708}
         ;
         let local-extra-field-length: uint16-rule
 
-        x: across skip (name-length), (assert [(to-file x) = name])
+        x: across skip (name-length) (assert [name = as file! x])
 
         skip (local-extra-field-length)
     ]
