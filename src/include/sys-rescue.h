@@ -1,13 +1,13 @@
 //
-//  File: %sys-trap.h
-//  Summary: "CPU and Interpreter State Snapshot/Restore"
+//  File: %sys-rescue.h
+//  Summary: "Abstraction of setjmp/longjmp and C++ throw/catch"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -87,7 +87,7 @@
 //
 struct JumpStruct {
   #if FAIL_USES_LONGJMP
-    #ifdef HAS_POSIX_SIGNAL
+    #if HAS_POSIX_SIGNAL
         sigjmp_buf cpu_state;  // jmp_buf as first field of struct [1]
     #else
         jmp_buf cpu_state;
@@ -185,7 +185,7 @@ struct JumpStruct {
     #if defined(__MINGW64__) && (__GNUC__ < 5)  // [1]
         #define SET_JUMP(s)     __builtin_setjmp(s)
         #define LONG_JUMP(s,v)  __builtin_longjmp((s), (v))
-    #elif defined(HAS_POSIX_SIGNAL)  // [2]
+    #elif HAS_POSIX_SIGNAL  // [2]
         #define SET_JUMP(s)     sigsetjmp((s), 1)
         #define LONG_JUMP(s,v)  siglongjmp((s), (v))
     #else
@@ -254,17 +254,21 @@ struct JumpStruct {
 #endif
 
 
+//=//// *NON-COOPERATIVE* ABRUPT fail() MECHANISM /////////////////////////=//
 //
-// FAIL
+// "Abrupt Failures" come in "cooperative" and "uncooperative" forms.  The
+// cooperative form happens when a native's C code does `return FAIL(...)`,
+// and should be used when possible, as it is more efficient and also will
+// work on platforms that don't have exception handling or longjmp().
 //
-// The fail() macro implements a form of error which is "trappable" with the
-// macros above:
+// But the uncooperative form of `fail (...)` can be called at any moment,
+// and is what the RESCUE_SCOPE() abstraction is designed to catch:
 //
 //     if (Foo_Type(foo) == BAD_FOO) {
 //         fail (Error_Bad_Foo_Operation(...));
 //
-//         /* this line will never be reached, because it
-//            longjmp'd up the stack where execution continues */
+//         /* this line will never be reached, because it longjmp'd or
+//            C++ throw'd up the stack where execution continues */
 //     }
 //
 // Errors that originate from C code are created via Make_Error, and are
@@ -292,7 +296,7 @@ struct JumpStruct {
 #endif
 
 
-#if CPLUSPLUS_11  // add checking
+#if CPLUSPLUS_11  // add type checking of fail() argument in C++ build [1]
     template <class T>
     INLINE Error* Derive_Error_From_Pointer(T* p) {
         static_assert(
