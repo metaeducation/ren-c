@@ -61,8 +61,8 @@
                 return null
             ]
         ]
-        x0: ((to integer! (x - 1) / 3)) * 3 + 1
-        y0: ((to integer! (y - 1) / 3)) * 3 + 1
+        x0: ((round:down (x - 1) / 3)) * 3 + 1
+        y0: ((round:down (y - 1) / 3)) * 3 + 1
         count-up 'i 3 [
             count-up 'j 3 [
                 if n = input.(9 * (y0 + (i - 1) - 1) + (x0 + (j - 1))) [

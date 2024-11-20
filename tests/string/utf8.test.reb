@@ -9,7 +9,7 @@
     ;         data = myfile.read()
     ;         print(len(data))
     (
-        t: to text! read %../fixtures/utf8-plain-text.txt
+        t: decode 'UTF-8 read %../fixtures/utf8-plain-text.txt
         tlen: length of t
         assert [tlen = 7086]
 

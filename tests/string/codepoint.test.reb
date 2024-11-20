@@ -21,7 +21,7 @@
         assert [raised? codepoint of bincopy]  ; tail data bad
 
         txtcopy: to text! c
-        assert [cp = codepoint of txtcopy] 
+        assert [cp = codepoint of txtcopy]
         txtcopy: insert txtcopy "A"
         assert [cp = codepoint of txtcopy]  ; non-head ok
         append txtcopy "B"

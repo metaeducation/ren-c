@@ -23,6 +23,7 @@
 (
     data: copy []
     /gmaker: func [] [
+        let g
         /g: generator [yield 1 yield 2 yield 3 return g/ yield 4]
         cycle [
             append data g

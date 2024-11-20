@@ -1,5 +1,5 @@
 ; %typechecker.test.reb
-; 
+;
 ; The typechecker and matcher are functions that need to have their
 ; implementations merged and streamlined.
 ;
@@ -12,7 +12,7 @@
 ; type specs.
 
 (all [
-    t: typechecker word!
+    let t: typechecker word!
     okay? t 'abc
     null? t <abc>
     null? t null
@@ -20,9 +20,9 @@
 ])
 
 (all [
-    m: matcher word!
+    let m: matcher word!
     'abc = m 'abc
     null = m <abc>
-    e: sys.util/rescue [m null]
+    let e: sys.util/rescue [m null]
     e.id = 'need-non-null
 ])

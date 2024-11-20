@@ -76,7 +76,7 @@
     b-value: ~
     all [
         raised? parse as block! a-value [b-value: <here>]
-        a-value = to path! b-value
+        a-value = as path! b-value
     ]
 )
 (

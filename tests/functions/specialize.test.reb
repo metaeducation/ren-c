@@ -62,7 +62,7 @@
         ; is an implementation detail that affects code that subverts the
         ; traditional calling mode.
         ;
-        let /return-5: specialize return/ [value: quote 5]
+        let /return-5: specialize return/ [atom: quote 5]
         return-5
         "this shouldn't be returned"
     ]

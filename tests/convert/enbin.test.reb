@@ -32,7 +32,7 @@
         ][
             r: r - ((power 256 num-bytes) / 2)
         ]
-        value: to integer! r
+        value: round:down r
         bin: encode settings value
         check: decode settings bin
         if value != check [

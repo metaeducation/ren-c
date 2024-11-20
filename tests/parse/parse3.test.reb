@@ -429,7 +429,7 @@
     a-value: first [a/b]
     b-value: ~
     'true = parse3 as block! a-value [b-value: <here>, accept ('true)]
-    a-value = to path! b-value
+    a-value = as path! b-value
 )
 (
     a-value: first [()]

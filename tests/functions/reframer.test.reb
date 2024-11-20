@@ -53,7 +53,7 @@
         date: null
 
         x: spaced [
-            curtail spaced ["Version:" ver] curtail spaced ["Date:" date]
+            curtail spaced ["Version:" @ver] curtail spaced ["Date:" date]
         ]
         x = "Version: 1.2.3"
     )

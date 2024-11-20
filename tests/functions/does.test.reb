@@ -57,7 +57,7 @@
 (
     o1: make object! [
         a: 10
-        /b: does [if ok [.a]]
+        /b: method [] [return if ok [.a]]
     ]
     o2: make o1 [a: 20]
 
