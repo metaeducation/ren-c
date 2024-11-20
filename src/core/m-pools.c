@@ -437,7 +437,7 @@ void Shutdown_Pools(void)
 
 
 //
-//  Fill_Pool: C
+//  Try_Fill_Pool: C
 //
 // Allocate memory for a pool.  The amount allocated will be determined from
 // the size and units specified when the pool header was created.  The nodes

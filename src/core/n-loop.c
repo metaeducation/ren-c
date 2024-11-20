@@ -848,7 +848,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
 
 
 //
-//  Loop_Each_Throws: C
+//  Try_Loop_Each_Next: C
 //
 // Common to FOR-EACH, MAP-EACH, and EVERY.  This takes an enumeration state
 // and fills variables in a context with as much of that state as possible.

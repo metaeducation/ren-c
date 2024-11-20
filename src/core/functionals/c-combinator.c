@@ -75,7 +75,7 @@ enum {
 
 
 //
-//  Combinator_Dispactcher: C
+//  Combinator_Dispatcher: C
 //
 // The main responsibilities of the combinator dispatcher is to provide a hook
 // for verbose debugging, as well as to record the furthest point reached.
@@ -270,7 +270,7 @@ DECLARE_NATIVE(combinator)
 
 
 //
-//  Call_Parser_Throws: C
+//  Push_Parser_Sublevel: C
 //
 // This service routine does a faster version of something like:
 //

@@ -441,7 +441,7 @@ static const Element* Get_Parse_Value(
 }
 
 //
-//  Process_Group_For_Parse: C
+//  Process_Group_For_Parse_Throws: C
 //
 // Historically a single group in PARSE ran code, discarding the value (with
 // a few exceptions when appearing in an argument position to a rule).  Ren-C

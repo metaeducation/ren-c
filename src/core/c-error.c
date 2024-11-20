@@ -27,7 +27,7 @@
 
 
 //
-//  Derive_Error_From_Pointer: C
+//  Derive_Error_From_Pointer_Core: C
 //
 // This is the polymorphic code behind fail(), FAIL(), and RAISE():
 //
@@ -705,7 +705,7 @@ Error* Make_Error_Managed_Vaptr(
 
 
 //
-//  Error: C
+//  Make_Error_Managed: C
 //
 // This variadic function takes a number of Value* arguments appropriate for
 // the error category and ID passed.  It is commonly used with fail():

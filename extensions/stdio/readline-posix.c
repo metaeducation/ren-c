@@ -257,7 +257,7 @@ void Quit_Terminal(STD_TERM *t)
 
 
 //
-//  Read_Bytes_Interrupted: C
+//  Read_Bytes_Interruptible: C
 //
 // Read the next "chunk" of data into the terminal buffer.  If data is read
 // successfully, return true.  If not return false...and `interrupted` will

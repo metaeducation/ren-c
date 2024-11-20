@@ -225,9 +225,9 @@ export analyse: context [
                 ]
 
                 let name: ~
-                if true? (parse proto-parser.data [
+                if parse proto-parser.data [
                     opt 'export
-                    name: &set-run-word? (name: resolve name)
+                    name: ['//: | &set-run-word?] (name: resolve name)
                     opt ['infix | 'infix:defer | 'infix:postpone]
                     [
                         'native
@@ -235,10 +235,10 @@ export analyse: context [
                         | 'native:generic
                         | 'native:intrinsic
                     ]
-                    accept ('true)
+                    accept (okay)
                     |
-                    accept ('false)
-                ]) [
+                    accept (null)
+                ] [
                     ;
                     ; It's a `/some-name?: native [...]`, so we expect
                     ; `DECLARE_NATIVE(some_name_q)` to be correctly lined up

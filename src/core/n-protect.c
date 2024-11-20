@@ -509,7 +509,7 @@ DECLARE_NATIVE(locked_q)
 
 
 //
-//  Force_Value_Frozen: C
+//  Force_Value_Frozen_Core: C
 //
 // !!! The concept behind `locker` is that it might be able to give the
 // user more information about why data would be automatically locked, e.g.

@@ -32,7 +32,7 @@
 
 
 //
-//  Grab_Int: C
+//  Try_Grab_Int: C
 //
 // Grab an integer value from the string.
 //

@@ -197,7 +197,7 @@ static void Expand_Word_Table(void)
 
 
 //
-//  Intern_UTF8_Managed: C
+//  Intern_UTF8_Managed_Core: C
 //
 // Makes only one copy of each distinct character string.
 //

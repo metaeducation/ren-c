@@ -32,7 +32,7 @@ const z_crc_t *crc32_table; // pointer to the zlib CRC32 table
 
 
 //
-//  Hash_UTF8: C
+//  Hash_Scan_UTF8_Caseless_May_Fail: C
 //
 // Return a case-insensitive hash value for UTF-8 data that has not previously
 // been validated, with the size in bytes.

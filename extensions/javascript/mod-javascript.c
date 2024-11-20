@@ -575,7 +575,7 @@ EXTERN_C void API_rebIdle_internal(void)  // NO user JS code on stack!
 }
 
 
-// Note: Initially this was rebSignalResolveNative() and not rebResolveNative()
+// Initially this was rebSignalResolveNative() and not rebResolveNative()
 // The reason was that the empterpreter build had the Ren-C interpreter
 // suspended, and there was no way to build a Value* to pass through to it.
 // So the result was stored as a function in a table to generate the value.

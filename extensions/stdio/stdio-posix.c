@@ -27,7 +27,7 @@
 
 #include "rebol-internals.h"
 
-// Note: We are only using the limited facilities of stdin and fgetc().
+// We are only using the limited facilities of stdin and fgetc().
 // Generally speaking, we avoid usage of other stdio functions in the system.
 // (Outside of printf() in RUNTIME_CHECKS builds).
 //

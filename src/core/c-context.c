@@ -283,7 +283,7 @@ Value* Append_Context_Bind_Word(
 }
 
 //
-//  Apend_Context: C
+//  Append_Context: C
 //
 Value* Append_Context(Context* context, const Symbol* symbol)
 {
@@ -390,7 +390,7 @@ void Collect_Context_Keys(
 
 
 //
-//  Collect_Inner_Loop: C
+//  Trap_Collect_Inner_Loop: C
 //
 // The inner recursive loop used for collecting context keys or ANY-WORD?s.
 //
