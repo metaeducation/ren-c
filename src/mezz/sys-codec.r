@@ -33,7 +33,7 @@ REBOL [
 ][
     if not block? suffixes [suffixes: reduce [suffixes]]
 
-    codec: make object! compose [
+    codec: make object! compose $() '[
         name: '(name)
 
         ; !!! There was a "type:" field here before, which was always set to
@@ -83,7 +83,7 @@ append system.options.file-types spread switch fourth system.version [
         [blob!]
 ][
     let options: either block? type [
-        type: compose type
+        type: compose (inside type '()) type
         next type
         elide type: first type
     ][
@@ -108,7 +108,7 @@ append system.options.file-types spread switch fourth system.version [
     data [element?]
 ][
     let options: either block? type [
-        type: compose type
+        type: compose (inside type '()) type
         next type
         elide type: first type
     ][

@@ -59,19 +59,19 @@ export /parsing-at: func [
     <local> code-group obj
 ][
     use [instruction position] [  ; vars need to outlive this function call
-        obj: construct compose [(setify var) ~]  ; make variable [3]
+        obj: construct compose1 [(setify var) ~]  ; make variable [3]
         code: overbind obj code  ; make variable visible to code
         var: has obj var
 
         if end [
             code-group: as group! code
         ] else [
-            code-group: as group! compose [
+            code-group: as group! compose1 [
                 either not tail? (var) (code) [null]
             ]
         ]
 
-        code-group: as group! compose [
+        code-group: as group! compose1 [
             instruction: either position: (code-group) [
                 [seek position]
             ][
@@ -79,6 +79,6 @@ export /parsing-at: func [
             ]
         ]
 
-        return compose [(setify var) <here>, (code-group), instruction]
+        return compose1 [(setify var) <here>, (code-group), instruction]
     ]
 ]

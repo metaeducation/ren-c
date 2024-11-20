@@ -88,7 +88,7 @@ export /extract-native-protos: func [
                 replace proto unspaced [newline "//"] newline
                 replace proto "//  " -{}-
 
-                keep make native-info! compose [
+                keep make native-info! compose1 [
                     proto: (proto)
                     name: (name)
                     exported: (quote exported)

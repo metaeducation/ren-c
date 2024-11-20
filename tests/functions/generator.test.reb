@@ -132,7 +132,7 @@
 ; what generates the termination condition.
 (
     /e-generator: func [body [block!]] [
-        let /g: generator compose [
+        let /g: generator [
             /yield: enclose yield/ func [f [frame!] <local> temp] [
                 f.atom: either f.atom = ^null [^ done] [meta f.atom]
                 return unmeta eval f
@@ -190,7 +190,7 @@
 ; COMPOSE test
 (
     /g: generator [
-        yield compose:deep [
+        yield compose:deep $() [
             So (yield "How") [(yield "About")] (yield "This") ?
         ]
     ]
@@ -265,7 +265,7 @@
 ;
 ;    (
 ;        /g: generator [yield (get-obj elide yield <foo>).(yield 'sub).f/]
-;        (compose [<foo> sub (twenty/) _ _]) == reduce [g g g try g try g]
+;        (compose $() [<foo> sub (twenty/) _ _]) == reduce [g g g try g try g]
 ;    )
 ;
 ;    (

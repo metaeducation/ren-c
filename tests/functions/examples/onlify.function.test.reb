@@ -16,7 +16,7 @@
         augment frame [
             :only "Use value literally (don't splice blocks or unquote)"
         ]
-    ) compose:deep [
+    ) compose:deep $() [
         all [not only, any-list? series, any-list? (param)] then [
             set:any $(param) spread (param)
         ]

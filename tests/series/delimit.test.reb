@@ -55,7 +55,7 @@
 [
     ("Hello World" = spaced ["Hello" void "World"])
     ("Hello World" = spaced ["Hello" if null ["Cruel"] "World"])
-    ("Hello World" = spaced compose ["Hello" (if null ["Cruel"]) "World"])
+    ("Hello World" = spaced compose $() ["Hello" (if null ["Cruel"]) "World"])
 
     ("HelloWorld" = unspaced ["Hello" void "World"])
     (

@@ -111,7 +111,7 @@ REBOL [
         b: next b
 
         if block? var [  ; at present, this always means multiple paths
-            for-each 'item compose [(arg)] [
+            for-each 'item compose $() '[(arg)] [
                 switch:type item [
                     text! []
                     file! [item: file-to-local:full item]
@@ -297,7 +297,7 @@ REBOL [
             triplet: if 40 = fifth system.version [  ; 64-bit
                 "x86_64-linux-gnu"
             ]
-            insert config.library-path spread compose [
+            insert config.library-path spread compose $() '[
                 (unspaced ["/usr/" lddir])
                 (if triplet [unspaced ["/usr/" lddir "/" triplet]])
                 (unspaced ["/" lddir])
@@ -483,7 +483,7 @@ REBOL [
 
     let settings: collect [
         let option-no-arg-rule: [option: across to [space | <end>] (
-            keep spread compose [options (option)]
+            keep spread compose $() '[options (option)]
         )]
 
         let option
@@ -499,7 +499,7 @@ REBOL [
                 ;
                 replace option -{"}- -{\"}-
 
-                keep spread compose [options (option)]
+                keep spread compose $() '[options (option)]
             )
         ]
 
@@ -512,7 +512,7 @@ REBOL [
             last-pos: <here>  ; Save for errors
 
             "-c" (  ; just compile (no link phase)
-                keep spread compose [output-type (outtype: 'OBJ)]
+                keep spread compose $() '[output-type (outtype: 'OBJ)]
                 outfile: null  ; don't need to specify
             )
             |
@@ -520,7 +520,7 @@ REBOL [
             option-with-arg-rule
             |
             "-E" (  ; preprocess only, print to standard output (not file)
-                keep spread compose [output-type (outtype: 'PREPROCESS)]
+                keep spread compose $() '[output-type (outtype: 'PREPROCESS)]
                 outfile: null  ; don't need to specify
             )
             |
@@ -529,17 +529,17 @@ REBOL [
             |
             "-I"  ; add directory to search for #include files
             opt space temp: across to [space | <end>] (
-                keep spread compose [include-path (temp)]
+                keep spread compose $() '[include-path (temp)]
             )
             |
             "-L"  ; add directory to search for library files
             opt space temp: across to [space | <end>] (
-                keep spread compose [library-path (temp)]
+                keep spread compose $() '[library-path (temp)]
             )
             |
             "-l"  ; add library (-llibrary means search for "liblibrary.a")
             opt space temp: across to [space | <end>] (
-                keep spread compose [library (temp)]
+                keep spread compose $() '[library (temp)]
             )
             |
             ahead "-O"  ; optimization level
@@ -547,7 +547,7 @@ REBOL [
             |
             "-o"  ; output file (else default should be "a.out")
             opt space outfile: across to [space | <end>] (  ; overwrites a.out
-                keep spread compose [output-file (outfile)]
+                keep spread compose $() '[output-file (outfile)]
             )
             |
             ahead "-s"  ; strip out any extra information (don't use with -g)
@@ -589,7 +589,7 @@ REBOL [
     ]
 
     if not outtype [  ; no -c or -E, so assume EXE
-        append settings spread compose [output-type EXE]
+        append settings spread compose $() '[output-type EXE]
     ]
 
     if not outfile [
@@ -599,7 +599,7 @@ REBOL [
                 ; COMPILE error if you don't give it an output filename than
                 ; just guess "a.out", so make that decision in this command)
                 ;
-                append settings spread compose [output-file ("a.out")]
+                append settings spread compose $() '[output-file ("a.out")]
             ]
             'OBJ [
                 if infile != <multi> [
@@ -612,7 +612,7 @@ REBOL [
     ]
 
     if runtime [  ; overrides search for environment variable CONFIG_TCCDIR
-        append settings spread compose [runtime-path (runtime)]
+        append settings spread compose $() '[runtime-path (runtime)]
     ]
 
     if inspect [

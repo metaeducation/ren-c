@@ -56,15 +56,15 @@ ver: transcode:one read join repo-dir %src/boot/version.r
 api-objects: make block! 50
 
 /map-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
-    return map-each 'api api-objects compose [  ; compose so bootstrap sees 'API
-        let aux: make object! compose [break: (^break) continue: (^continue)]
+    return map-each 'api api-objects compose1 [  ; so bootstrap sees 'API
+        let aux: make object! compose1 [break: (^break) continue: (^continue)]
         eval overbind aux overbind api (code)
     ]
 ]
 
 /for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
-    return for-each 'api api-objects compose [  ; compose so bootstrap sees 'API
-        let aux: make object! compose [break: (^break) continue: (^continue)]
+    return for-each 'api api-objects compose1 [  ; so bootstrap sees 'API
+        let aux: make object! compose1 [break: (^break) continue: (^continue)]
         eval overbind aux overbind api (code)
     ]
 ]
@@ -163,7 +163,7 @@ api-objects: make block! 50
     ; Note: Cannot set object fields directly from R3-Alpha PARSE in Bootstrap
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
-    append api-objects make object! compose [
+    append api-objects make object! compose1 [
         spec: ensure [~null~ block!] try header.3  ; Rebol metadata API comment
         name: (ensure text! name)
         return-type: (ensure text! trim:tail return-type)
@@ -196,7 +196,7 @@ extern-prototypes: map-each-api [
 ]
 
 lib-struct-fields: map-each-api [
-    let cfunc-params: delimit ", " compose [
+    let cfunc-params: delimit ", " compose1 [
         (if yes? is-variadic ["RebolContext** binding_ref"])
         (spread map-each [type var] paramlist [spaced [type var]])
         (if yes? is-variadic [

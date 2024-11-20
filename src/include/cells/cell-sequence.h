@@ -530,13 +530,13 @@ INLINE Option(Error*) Trap_Pop_Sequence(
 // either pathlike or value like.  It is used in COMPOSE of paths, which
 // allows things like:
 //
-//     >> compose (void)/a
+//     >> compose $() '(void)/a
 //     == a
 //
-//     >> compose (blank)/a
+//     >> compose $() '(blank)/a
 //     == /a
 //
-//     >> compose (void)/(void)/(void)
+//     >> compose $() '(void)/(void)/(void)
 //     == ~null~  ; anti
 //
 // While you can't create a PATH! or TUPLE! out of just blanks, this function

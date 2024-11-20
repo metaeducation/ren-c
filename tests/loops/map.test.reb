@@ -46,7 +46,7 @@
         return count: count + 1
     ]
     [[1 2] [3 4] [5]]  = map [a b] :make-one-thru-five [
-        compose [(a) (maybe b)]
+        compose $() [(a) (maybe b)]
     ]
 )
 

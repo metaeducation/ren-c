@@ -205,6 +205,14 @@ each: quote/
     ] else [null])
 ]
 
+; COMPOSE1 is the classic compose (may be renamed to COMPOSE*), which assumes
+; you want to compose groups..and that the binding you want to use for the
+; group is the binding of the passed-in list.
+;
+compose1: specialize (adapt compose/ [
+    pattern: inside template pattern
+]) [pattern: just ()]
+
 
 ; If <end> is used, e.g. `x: -> [print "hi"]` then this will act like DOES.
 ; (It's still up in the air whether DOES has different semantics or not.)

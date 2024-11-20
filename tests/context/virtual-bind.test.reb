@@ -10,7 +10,7 @@
 (
     x: 1000
     block: '[add x 20]
-    obj284: make object! compose [x: 284, add: (^add)]
+    obj284: make object! compose $() [x: 284, add: (^add)]
     all [
         1020 = eval $ block
         304 = eval inside obj284 block
@@ -24,10 +24,10 @@
 (
     /make-rule: func [:make-rule] [  ; refinement helps recognize in C Probe()
         use [rule position][
-            rule: compose:deep [
+            rule: compose:deep $() [
                 [[position: <here>, "a"]]
             ]
-            return use [x] compose:deep [
+            return use [x] compose:deep $() [
                 [(as group! rule) rule]
             ]
         ]
@@ -47,16 +47,16 @@
     (
         /add1020: func [x] [return use [y] [y: 1020, $(((x + y)))]]
         /add1324: func [x] [
-            return use [z] compose:label:deep [
+            return use [z] compose:deep $(<*>) [
                 z: 304
                 $(((z + (<*> add1020 x))))
-            ] <*>
+            ]
         ]
         /add2020: func [x] [
-            return use [zz] compose:label:deep [
+            return use [zz] compose:deep $(<*>) [
                 zz: 696
                 $(((zz + (<*> add1324 x))))
-            ] <*>
+            ]
         ]
         ok
     )
@@ -75,21 +75,21 @@
     ; Basic robustness
     ;
     (30 = eval group)
-    (30 = eval compose [(group)])
-    (30 = eval compose:deep [eval [(group)]])
-    (30 = reeval unrun does [eval compose [(group)]])
+    (30 = eval compose $() [(group)])
+    (30 = eval compose:deep $() [eval [(group)]])
+    (30 = reeval unrun does [eval compose $() [(group)]])
 
     ; Unrelated USE should not interfere
     ;
-    (30 = use [z] [z: ~<whatever>~ eval compose [(group)]])
+    (30 = use [z] [z: ~<whatever>~ eval compose $() [(group)]])
 
     ; Related USE shouldn't interfere, either
     ;
-    (30 = use [y] [y: 100, eval compose [(group)]])
+    (30 = use [y] [y: 100, eval compose $() [(group)]])
 
     ; You have to invasvely overbind to see an effect
     ;
-    (110 = use [y] [y: 100, eval compose [(overbind $y group)]])
+    (110 = use [y] [y: 100, eval compose $() [(overbind $y group)]])
 ]
 
 
@@ -100,7 +100,7 @@
     for-each 'x data wrap [
         code: copy []  ; block captures binding that can see X
         for-each 'y data [  ; block can't see Y w/o overbind, let's COMPOSE it
-            append code spread compose:deep [sum: sum + eval [x + (y) + z]]
+            append code spread compose:deep $() [sum: sum + eval [x + (y) + z]]
         ]
         for-each 'z data code  ; FOR-EACH overbinds for Z visibility
     ]
@@ -124,20 +124,20 @@
     y: 200
     plus-global: '[x + y]  ; unbound--no capture
     minus-global: [x - y]  ; captures x and y
-    alpha: make object! compose [  ; virtual binds body to obj
+    alpha: make object! compose $() [  ; virtual binds body to obj
         x: 10
         y: 20
         plus: (plus-global)
         minus: (minus-global)
     ]
-    beta: make object! compose [  ; virtual binds body to obj
+    beta: make object! compose $() [  ; virtual binds body to obj
         x: 1000
         y: 2000
         plus: (plus-global)
         minus: (minus-global)
     ]
     [30 3000 -100 -100 30 -100 3000 -100 101 -100 101 -100] = collect [
-        for-each 'y [1] compose [
+        for-each 'y [1] compose $() [
             keep eval (alpha.plus)
             keep eval (beta.plus)
             keep eval (alpha.minus)

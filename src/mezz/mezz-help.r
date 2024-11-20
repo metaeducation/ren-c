@@ -28,7 +28,7 @@ REBOL [
         let r-param: return of action
 
         if r-param and (r-param.spec or r-param.text) [
-            keep spread compose [
+            keep spread compose $() '[
                 return: (? r-param.spec)
                     (? r-param.text)
             ]
@@ -36,7 +36,7 @@ REBOL [
 
         for-each 'key words of action [
             let param: meta:lite select action key
-            keep spread compose [
+            keep spread compose $() '[
                 (decorate-parameter param key) (? param.spec)
                     (? param.text)
             ]
@@ -333,8 +333,8 @@ REBOL [
 
         let string: to text! topic
         if "!" = last string [
-            browse to url! compose [
-                http://www.rebol.com/r3/docs/datatypes/ (string) .html
+            browse join url! [
+                http://www.rebol.com/r3/docs/datatypes/ (string) ".html"
             ]
             return ~
         ]
@@ -358,8 +358,8 @@ REBOL [
             replace item a b
         ]
 
-        browse to url! compose [
-            https://github.com/gchiu/reboldocs/blob/master/ (item) .MD
+        browse join url! [
+            https://github.com/gchiu/reboldocs/blob/master/ (item) ".MD"
         ]
         return ~
     ]

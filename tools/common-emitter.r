@@ -110,7 +110,7 @@ export /cscape: func [
                 )
                 suffix: across remove to newline
             ] (
-                keep compose [
+                keep compose1 [
                     (reify pattern) (col) (mode) (expr)
                     (reify prefix) (reify suffix)
                 ]
@@ -322,7 +322,7 @@ export /make-emitter: func [
 
     let is-js: did parse3:match stem [thru ".js" <end>]
 
-    let e: make object! compose [
+    let e: make object! compose1 [
         ;
         ; NOTE: %make-headers.r directly manipulates the buffer, because it
         ; wishes to merge #ifdef and #endif cases

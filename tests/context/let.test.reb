@@ -17,14 +17,14 @@
     (
        x: <in-user-context>
        all [
-           1020 = eval compose [let (unbind 'x:) 20, 1000 + (unbind 'x)]
+           1020 = eval compose $() [let (unbind 'x:) 20, 1000 + (unbind 'x)]
            x = <in-user-context>
        ]
     )
     (
        x: <in-user-context>
        all [
-           1020 = eval compose [let x: 20, 1000 + x]
+           1020 = eval compose $() [let x: 20, 1000 + x]
            x = <in-user-context>
        ]
     )
@@ -127,7 +127,7 @@
         let x: 10
         let y: [x + z]
 
-        let /foo: func [] compose [let z: 20, (spread y)]
+        let /foo: func [] compose $() [let z: 20, (spread y)]
         foo
     ]
     bar = 30
@@ -138,8 +138,12 @@
         let x: 10
         let y: [x + z]
 
-        let /foo: func [] compose [let z: 20, (y)]
-        func [] compose collect [keep [let z: 2000], keep y, keep [eval (y)]]
+        let /foo: func [] compose $() [let z: 20, (y)]
+        func [] compose $() collect [
+            keep [let z: 2000]
+            keep y
+            keep [eval (y)]
+        ]
     ]
     baz: bar
     baz = 2010
@@ -179,7 +183,7 @@
     )
     (
         /bar: func [b] [
-            eval compose [
+            eval compose $() [
                 let n: 10
                 reeval (b.1)  ; updated LET of N should apply (LET "sees" (n))
             ]
@@ -201,11 +205,11 @@
     (
         x: 10
         y: 'x
-        20 = eval compose [let x: 20, reeval '(y)]
+        20 = eval compose $() [let x: 20, reeval '(y)]
     )
     (
         x: 10
-        20 = eval compose [let x: 20, reeval 'x]  ; sanity check
+        20 = eval compose $() [let x: 20, reeval 'x]  ; sanity check
     )
 ]
 

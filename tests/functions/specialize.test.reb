@@ -9,7 +9,7 @@
 [
     (
         /foo: func [:A [integer!] :B [integer!] :C [integer!]] [
-            return compose [
+            return compose $() [
                 :A (reify A) :B (reify B) :C (reify C)
             ]
         ]

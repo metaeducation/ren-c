@@ -108,7 +108,7 @@ REBOL [
 ;
 ; https://tools.ietf.org/html/rfc7465
 ;
-cipher-suites: compose [
+cipher-suites: compose $() '[
     ;
     ; #{XX XX} [  ; two byte cipher suite identification code
     ;    CIPHER_SUITE_NAME
@@ -346,7 +346,7 @@ bind construct [
                     data: skip data old-size
                 ]
                 if zero? size [
-                    keep:line compose:deep [
+                    keep:line compose:deep $() '[
                         (tag) [
                             (either constructed ["constructed"] ["primitive"])
                             (index)
@@ -364,7 +364,7 @@ bind construct [
                 switch class [
                     @universal [
                         val: copy:part data size
-                        keep:line compose:deep [
+                        keep:line compose:deep $() '[
                             (tag) [
                                 (either constructed ["constructed"] ["primitive"])
                                 (index)
@@ -375,7 +375,7 @@ bind construct [
                     ]
 
                     @context-specific [
-                        keep:line compose:deep [(tag) [(val) (size)]]
+                        keep:line compose:deep $() '[(tag) [(val) (size)]]
                         parse-asn copy:part data size  ; !!! ensures valid?
                     ]
                 ]
@@ -1826,7 +1826,7 @@ sys.util/make-scheme [
             value [any-value?]
         ][
             if find [#encrypted-handshake #application] port.state.mode [
-                do-commands port compose [
+                do-commands port compose $() '[
                     #application (value)
                 ]
                 return port

@@ -53,12 +53,12 @@
         ; a line to the stack.  Queue that up as code, bracketing the code
         ; that's bubbled up.
 
-        insert subpending as group! compose [
+        insert subpending as group! compose $() [
             append stack (spaced collect [
                 repeat indent * 4 [keep space], keep as text! name, keep "["
             ])
         ]
-        append subpending as group! compose [
+        append subpending as group! compose $() [
             append stack (spaced collect [
                 repeat indent * 4 [keep space], keep "] =>", keep mold consumed
             ])

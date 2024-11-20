@@ -39,7 +39,7 @@ parse3 cnt [
     some [
         name: across to ";"
         ";" copy code-2 to "^/" (
-            append iso-3166-table spread compose [
+            append iso-3166-table spread compose1 [
                 (to text! code-2) (to text! capitalize name)
             ]
         )

@@ -225,7 +225,7 @@ error: ~
             'collect-tests body: block! (
                 log ["@collect-tests" space mold body]
 
-                let [# collected]: module void compose:deep [collect [
+                let [# collected]: module void compose:deep $() [collect [
                     let /keep-test: adapt keep/ [
                         if not block? :value [
                             fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"

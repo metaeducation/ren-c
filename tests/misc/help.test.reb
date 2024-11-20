@@ -27,7 +27,7 @@
         dump w
         if vacant? w [continue]
         if action? get w
-            (compose:deep [assert [nothing? help (w)]])
+            (compose:deep $() [assert [nothing? help (w)]])
         else [
             if not issue? get w [  ; "don't open web browser"
                 assert [nothing? help (get w)]
@@ -44,7 +44,7 @@
         dump w
         if quasi? ^(get:any w) [continue]
         if action? get w
-            (compose:deep [assert [nothing? source (w)]])
+            (compose:deep $() [assert [nothing? source (w)]])
     ]
     ok
 )

@@ -36,7 +36,7 @@ bind construct [
         term (expr-val: term-val)
         opt some [
             ['+ (expr-op: 'add) | '- (expr-op: 'subtract)]
-            term (expr-val: compose [(expr-op) (expr-val) (term-val)])
+            term (expr-val: compose $() [(expr-op) (expr-val) (term-val)])
         ]
         <end>
     ]
@@ -49,7 +49,7 @@ bind construct [
         pow (term-val: power-val)
         opt some [
             ['* (term-op: 'multiply) | slash (term-op: 'divide)]
-            pow (term-val: compose [(term-op) (term-val) (power-val)])
+            pow (term-val: compose $() [(term-op) (term-val) (power-val)])
         ]
     ]
 
@@ -57,7 +57,7 @@ bind construct [
 
     pow: [
         unary (power-val: unary-val)
-        opt ['** unary (power-val: compose [power (power-val) (unary-val)])]
+        opt ['** unary (power-val: compose $() [power (power-val) (unary-val)])]
     ]
 
     unary-val: null
@@ -71,7 +71,7 @@ bind construct [
         opt ['- (pre-uop: 'negate)]
         primary
         opt ['! (post-uop: 'factorial)]
-        (unary-val: compose [(post-uop) (pre-uop) (prim-val)])
+        (unary-val: compose $() [(post-uop) (pre-uop) (prim-val)])
     ]
 
     prim-val: null

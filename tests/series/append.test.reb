@@ -116,7 +116,7 @@
 [
     ([a b c '[d e]] = append [a b c] ^[d e])
 
-    ([a b c '[3 d e]] = append [a b c] ^ compose [(1 + 2) d e])
+    ([a b c '[3 d e]] = append [a b c] ^ compose $() [(1 + 2) d e])
 
     ([a b c ~void~] = append [a b c] meta void)
 

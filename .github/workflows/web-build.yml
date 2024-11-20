@@ -378,7 +378,7 @@ jobs:
         script: |
           redbol
           block: [b c]
-          assert [[a b c d] = compose [a (block) d]]
+          assert [[a b c d] = compose $() [a (block) d]]
 
 
     # Early on, @gchiu wrote some code to interoperate with a JS chess board.

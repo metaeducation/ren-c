@@ -113,9 +113,9 @@ sys.util/rescue [
         ]
         f.next: okay
         let block: (  ; no SET-BLOCK in boot, no # in boot (space -> #)
-            compose [(space) (join chain! [_ f.next3])]  ; synthesized optional
+            compose the () [(space) (join chain! [_ f.next3])]  ; synth optional
         )
-        return eval compose [(setify block) eval f]
+        return eval compose the () [(setify block) eval f]
     ]
 
     export /cscape-inside: inside/  ; modern string interpolation tool
@@ -174,7 +174,7 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     change3:                    ; CHANGE handles splices
     insert3:                    ; INSERT handles splices
     join3:                      ; JOIN handles splices
-    compose3:                   ; COMPOSE processes splices
+    compose3:                   ; COMPOSE now arity-2, processes splices
     split-path3:                ; bootstrap uses SPLIT-PATH3 not SPLIT-PATH
     collect3:                   ; COLLECT's KEEP processes splices
     mold3:                      ; MOLD takes splices instead of MOLD/ONLY
@@ -584,7 +584,11 @@ get-path!: func3 [] [
     specialize 'else [branch: [copy []]]
 ]
 
-/compose: func3 [block [block!] /deep <local> result pos product count] [
+; COMPOSE1 is a single-arity compose, which uses a GROUP! with the same binding
+; as the list passed for the pattern.  This is distinct from COMPOSE3 which is
+; the historical compose that splices blocks.
+;
+/compose1: func3 [block [block!] /deep <local> result pos product count] [
     if deep [
         fail:blame "COMPOSE bootstrap shim doesn't recurse, yet" $block
     ]
@@ -714,7 +718,7 @@ get-path!: func3 [] [
                 keep3:only proxy
                 keep3:only modernize-typespec spec.1
 
-                append3 proxiers compose [
+                append3 proxiers compose3 [
                     (to-set-word last-refine-word) (to-get-word proxy)
                     (to-set-word proxy) ~
                 ]

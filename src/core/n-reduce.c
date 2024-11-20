@@ -352,19 +352,69 @@ DECLARE_NATIVE(reduce_each)
 }}
 
 
-bool Match_For_Compose(const Cell* group, const Element* label) {
-    assert(Any_Group_Kind(HEART_BYTE(group)));
+// 1. Here the idea is that `compose $() [@(first [a b])]` will give `[@a]`,
+//    so ANY-GROUP? will count for a group pattern.  But once you go a level
+//    deeper, `compose $(()) [@(@(first [a b]))] won't match.  It would have
+//    to be `[@((first [a b]))]`
+//
+bool Try_Match_For_Compose(
+    Sink(Element) match,  // returns a BLOCK! for use with CONTINUE(...)
+    const Element* at,
+    const Element* pattern
+){
+    assert(Any_List(pattern));
+    Context* binding = Cell_Binding(pattern);
 
-    assert(Is_Tag(label) or Is_File(label));
+    if (Is_Group(pattern)) {  // top level only has to match plain heart [1]
+        if (not Any_Group_Kind(Cell_Heart(at)))
+            return false;
+    }
+    else if (Is_Fence(pattern)) {
+        if (not Any_Fence_Kind(Cell_Heart(at)))
+            return false;
+    }
+    else {
+        assert(Is_Block(pattern));
+        if (not Any_Block_Kind(Cell_Heart(at)))
+            return false;
+    }
 
-    if (Cell_Series_Len_At(group) == 0) // you have a pattern, so leave `()` as-is
-        return false;
+    Copy_Cell(match, at);
 
-    const Element* first = Cell_List_Item_At(group);
-    if (VAL_TYPE(first) != VAL_TYPE(label))
-        return false;
+    while (Cell_Series_Len_At(pattern) != 0) {
+        if (Cell_Series_Len_At(pattern) != 1)
+            fail ("COMPOSE patterns only nested length 1 or 0 right now");
 
-    return (CT_String(label, first, 1) == 0);
+        if (Cell_Series_Len_At(match) == 0)
+            return false;  // no nested list or item to match
+
+        const Element* match_1 = Cell_List_Item_At(match);
+        const Element* pattern_1 = Cell_List_Item_At(pattern);
+
+        if (Any_List(pattern_1)) {
+            if (VAL_TYPE(match_1) != VAL_TYPE(pattern_1))
+                return false;
+            pattern = pattern_1;
+            Copy_Cell(match, match_1);
+            continue;
+        }
+        if (not (Is_Tag(pattern_1) or Is_File(pattern_1)))
+            fail ("COMPOSE non-list patterns just TAG! and FILE! atm");
+
+        if (VAL_TYPE(match_1) != VAL_TYPE(pattern_1))
+            return false;
+
+        if (CT_String(match_1, pattern_1, 1) != 0)
+            return false;
+
+        VAL_INDEX_RAW(match) += 1;
+        break;
+    }
+
+    QUOTE_BYTE(match) = NOQUOTE_1;  // want to get rid of quasi, too
+    HEART_BYTE(match) = REB_BLOCK;
+    BINDING(match) = binding;  // override? combine?
+    return true;
 }
 
 
@@ -418,9 +468,8 @@ static void Push_Composer_Level(
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// 1. If you write something like `compose @ (void)/3:`, it would try to leave
-//    behind something like the "SET-INTEGER!" of `3:`.  Currently that is
-//    not allowed, though it could be a WORD! (like |3|:) ?
+// 1. If you write something like `compose $() '(void)/3:`, it tried to leave
+//    behind something like the "SET-INTEGER!" of `3:`.
 //
 // 2. See Try_Pop_Sequence_Or_Element_Or_Nulled() for how reduced cases like
 //    `(void).1` will turn into just INTEGER!, not `.1` -- this is in contrast
@@ -432,7 +481,7 @@ static void Push_Composer_Level(
 // 4. It is legal to COMPOSE:DEEP into lists that are antiforms or quoted
 //    (or potentially both).  So we transfer the QUOTE_BYTE.
 //
-//        >> compose:deep [a ''~[(1 + 2)]~ b]
+//        >> compose:deep $() [a ''~[(1 + 2)]~ b]
 //        == [a ''~[3]~ b]
 //
 static Option(Error*) Trap_Finalize_Composer_Level(
@@ -503,7 +552,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 //
 // 2. HEART byte is used as a GROUP! matches regardless of quoting, so:
 //
-//        >> compose [a ''(1 + 2) b]
+//        >> compose $() [a ''(1 + 2) b]
 //        == [a ''3 b]
 //
 // 3. Splicing semantics match the rules for APPEND etc.
@@ -517,7 +566,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 //               thing3
 //           ]
 //
-//        >> compose [thing1 (spread block-of-things)]  ; no newline flag ()
+//        >> compose $() [thing1 (spread block-of-things)]  ; no newline flag
 //        == [thing1
 //               thing2  ; we proxy the flag, but is this what you wanted?
 //               thing3
@@ -536,37 +585,33 @@ Bounce Composer_Executor(Level* const L)
     if (THROWING)
         return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
 
-  //=//// EXTRACT REFINEMENTS FROM THE COMPOSE CALL ///////////////////////=//
+  //=//// EXTRACT ARGUMENTS FROM THE ORIGINAL COMPOSE CALL ////////////////=//
 
     // We have levels for each "recursion" that processes the :DEEP blocks in
     // the COMPOSE.  (These don't recurse as C functions, the levels are
     // stacklessly processed by the trampoline, see %c-trampoline.c)
     //
-    // But each level wants to access the refinements to the COMPOSE that
+    // But each level wants to access the arguments to the COMPOSE that
     // kicked off the process.  A pointer to the Level of the main compose is
     // tucked into each Composer_Executor() level to use.
     //
     // !!! IF YOU REARRANGE THESE, YOU HAVE TO UPDATE THE NUMBERING ALSO !!!
 
     DECLARE_PARAM(1, return);
-    DECLARE_PARAM(2, value);
-    DECLARE_PARAM(3, deep);
-    DECLARE_PARAM(4, label);
+    DECLARE_PARAM(2, pattern);
+    DECLARE_PARAM(3, template);
+    DECLARE_PARAM(4, deep);
     DECLARE_PARAM(5, conflate);
     DECLARE_PARAM(6, predicate);
 
     Level* main_level = L->u.compose.main_level;  // invoked COMPOSE native
 
     UNUSED(Level_Arg(main_level, p_return_));
-    UNUSED(Level_Arg(main_level, p_value_));
+    UNUSED(Level_Arg(main_level, p_template_));  // accounted for by Level feed
 
     bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
 
-    Option(Element*) label;
-    if (Is_Nulled(Level_Arg(main_level, p_label_)))
-        label = nullptr;
-    else
-        label = cast(Element*, Level_Arg(main_level, p_label_));
+    Element* pattern = cast(Element*, Level_Arg(main_level, p_pattern_));
 
     bool conflate;
     if (Is_Nulled(Level_Arg(main_level, p_conflate_)))
@@ -621,77 +666,38 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    Context* match_binding = nullptr;
-    const Element* match = nullptr;
-
-    if (not Any_Group_Kind(heart)) {
-        //
-        // Don't compose at this level, but may need to walk deeply to
-        // find compositions if :DEEP and it's an array
-    }
-    else {  // plain compose, if match
-        if (not label or Match_For_Compose(at, unwrap label)) {
-            match = at;
-            match_binding = L_binding;
-        }
-    }
-
-    if (not match) {
+    if (not Try_Match_For_Compose(SPARE, at, pattern)) {
         if (deep or Any_Sequence_Kind(heart)) {  // sequences same level
-            // compose:deep [does [(1 + 2)] nested] => [does [3] nested]
+            // compose:deep $() [does [(1 + 2)] nested] => [does [3] nested]
 
             Push_Composer_Level(OUT, main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             return CONTINUE_SUBLEVEL(SUBLEVEL);
         }
 
-        // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
+        // compose $() [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
         //
         Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
-    if (Is_Nulled(predicate))
-        goto evaluate_group;
-
-    Derelativize(SPARE, match, L_binding);
-    Dequotify(SPARE);  // cast was needed because there may have been quotes
-    HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
-    if (label)
-        VAL_INDEX_RAW(SPARE) += 1;  // wasn't possibly at END
+    if (Is_Nulled(predicate)) {
+        STATE = ST_COMPOSER_EVAL_GROUP;
+        return CONTINUE(OUT, cast(Element*, SPARE));
+    }
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
     return CONTINUE(OUT, predicate, SPARE);
 
-  evaluate_group: { //////////////////////////////////////////////////////////
-
-    // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
-    //
-    Feed* subfeed = Make_At_Feed_Core(match, match_binding);
-    if (label)
-        Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
-
-    Level* sub = Make_Level(
-        &Evaluator_Executor,
-        subfeed,  // used subfeed so we could skip the label if there was one
-        LEVEL_MASK_NONE
-    );
-    Init_Void(Evaluator_Primed_Cell(sub));
-
-    Push_Level_Erase_Out_If_State_0(OUT, sub);
-
-    STATE = ST_COMPOSER_EVAL_GROUP;
-    return CONTINUE_SUBLEVEL(sub);
-
-}} process_out: {  ///////////////////////////////////////////////////////////
+} process_out: {  ///////////////////////////////////////////////////////////
 
     assert(
         STATE == ST_COMPOSER_EVAL_GROUP
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
-    Heart group_heart = Cell_Heart(At_Level(L));
-    Byte group_quote_byte = QUOTE_BYTE(At_Level(L));
+    Heart list_heart = Cell_Heart(At_Level(L));
+    Byte list_quote_byte = QUOTE_BYTE(At_Level(L));
 
     Decay_If_Unstable(OUT);
 
@@ -702,9 +708,9 @@ Bounce Composer_Executor(Level* const L)
         return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
     if (Is_Void(OUT)) {
-        if (group_heart == REB_GROUP and group_quote_byte == NOQUOTE_1) {
+        if (Any_Plain_Kind(list_heart) and list_quote_byte == NOQUOTE_1) {
             L->u.compose.changed = true;
-            goto handle_next_item;  // compose [(void)] => []
+            goto handle_next_item;  // compose $() [(void)] => []
         }
 
         // We can actually handle e.g. [''(void)] now as being some levels of
@@ -720,21 +726,21 @@ Bounce Composer_Executor(Level* const L)
     else
         Copy_Cell(PUSH(), cast(Element*, OUT));
 
-    if (group_heart == REB_META_GROUP)
+    if (Any_Meta_Kind(list_heart))
         Metafy(TOP);
-    else if (group_heart == REB_THE_GROUP)
+    else if (Any_The_Kind(list_heart))
         Theify(TOP);
     else
-        assert(group_heart == REB_GROUP);
+        assert(Any_Plain_Kind(list_heart));
 
-    if (group_quote_byte & NONQUASI_BIT)
-        Quotify(TOP, group_quote_byte / 2);  // add to existing quotes
+    if (list_quote_byte & NONQUASI_BIT)
+        Quotify(TOP, list_quote_byte / 2);  // add to existing quotes
     else {
         if (QUOTE_BYTE(TOP) != NOQUOTE_1)
             return FAIL(
                 "COMPOSE cannot quasify items not at quote level 0"
             );
-        QUOTE_BYTE(TOP) = group_quote_byte;
+        QUOTE_BYTE(TOP) = list_quote_byte;
     }
 
     // Use newline intent from the GROUP! in the compose pattern
@@ -749,10 +755,10 @@ Bounce Composer_Executor(Level* const L)
 
   push_out_spliced:  /////////////////////////////////////////////////////////
 
-    // compose [(spread [a b]) merges] => [a b merges]... [3]
+    // compose $() [(spread [a b]) merges] => [a b merges]... [3]
 
-    if (group_quote_byte != NOQUOTE_1 or group_heart != REB_GROUP)
-        return RAISE("Currently can only splice plain unquoted GROUP!s");
+    if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Kind(list_heart))
+        return RAISE("Currently can only splice plain unquoted ANY-LIST?s");
 
     assert(Is_Splice(OUT));  // GROUP! at "quoting level -1" means splice
 
@@ -807,7 +813,7 @@ Bounce Composer_Executor(Level* const L)
         return FAIL(unwrap e);
 
     if (Is_Nulled(OUT)) {
-        // compose:deep [a (void)/(void) b] => path makes null, vaporize it
+        // compose:deep $() [a (void)/(void) b] => path makes null, vaporize it
     }
     else {
         assert(not Is_Antiform(OUT));
@@ -839,11 +845,11 @@ Bounce Composer_Executor(Level* const L)
 //          any-word?  ; passed through as-is, or /CONFLATE can produce
 //          ~null~ quasi-word? blank! trash?  ; /CONFLATE can produce these
 //      ]
+//      pattern "Supplies the pattern as well as the binding for composing"
+//          [any-list?]
 //      template "The template to fill in (no-op if WORD!)"
 //          [<maybe> any-list? any-sequence? any-word? action?]
 //      :deep "Compose deeply into nested lists and sequences"
-//      :label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
-//          [tag! file!]
 //      :conflate "Let illegal sequence compositions produce lookalike WORD!s"
 //      :predicate "Function to run on composed slots (default: META)"
 //          [<unrun> frame!]
@@ -868,8 +874,8 @@ DECLARE_NATIVE(compose)
 
     Element* t = cast(Element*, ARG(template));
 
-    USED(ARG(predicate));  // used by Composer_Executor() via main_level
-    USED(ARG(label));
+    USED(ARG(pattern));  // used by Composer_Executor() via main_level
+    USED(ARG(predicate));
     USED(ARG(deep));
 
     enum {

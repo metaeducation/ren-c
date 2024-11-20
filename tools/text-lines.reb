@@ -22,8 +22,8 @@ import <bootstrap-shim.r>
     line-prefix [text! block!] "matched using parse, usually ** or // -"
     indent [text! block!] -{Matched using parse, usually "  "}-
 ] [
-    let pattern: compose [(line-prefix)]
-    if not empty? indent [append pattern compose [opt (indent)]]
+    let pattern: compose1 [(line-prefix)]
+    if not empty? indent [append pattern compose1 [opt (indent)]]
 
     let [pos rest]
     let line-rule: [
@@ -92,14 +92,14 @@ import <bootstrap-shim.r>
         [block!]
     <local> obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    obj: construct compose1 [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
     while [not tail? text] [
         let eol: any [find text newline, tail of text]
 
-        set var compose [
+        set var compose1 [
             position (text) length (subtract index of eol index of text)
         ]
         text: next eol

@@ -70,16 +70,16 @@
 ; EVAL a COMPOSE then it looks the same from the evaluator's point of view.
 ; Hence, if you want to modify composed-in blocks, use explicit mutability.
 [
-    ([<legal> <legal>] = eval compose [repeat 2 [append mutable [] <legal>]])
+    ([<legal> <legal>] = eval [repeat 2 [append mutable [] <legal>]])
 
     ~const-value~ !! (
         block: []
-        eval compose:deep [repeat 2 [append (block) <illegal>]]
+        eval compose:deep $() [repeat 2 [append (block) <illegal>]]
     )
 
     (
         block: mutable []
-        eval compose:deep [repeat 2 [append (block) <legal>]]
+        eval compose:deep $() [repeat 2 [append (block) <legal>]]
         block = [<legal> <legal>]
     )
 ]
@@ -109,7 +109,7 @@
 )(
     sub: ~
     repeat 1 [sub: copy:deep [b [c]]]
-    data: copy compose [a (sub)]
+    data: copy compose $() [a (sub)]
     append data <success>
     append data.2 <success>
     append data.2.2 <success>
@@ -148,6 +148,28 @@
     )
 ]
 
+[
+    (did /symbol-to-string: func [s] [
+       return case [
+           s = '+ ["plus"]
+           s = '- ["minus"]
+       ]
+    ])
+
+    ~const-value~ !! (
+        p: symbol-to-string '+
+        insert p "double-" append p "-good"
+    )
+
+    (
+        p: symbol-to-string '+
+        p: mutable p
+        insert p "you-" append p "-asked-for-it"
+        "you-plus-asked-for-it" = symbol-to-string '+
+    )
+]
+
+
 
 ; Reskinning capabilities can remove the <const> default
 ; !!! RESKINNED is temporarily out of service, pending reworking of the way
@@ -164,11 +186,11 @@
 ; COMPOSE should splice with awareness of const/mutability
 [
     ~const-value~ !! (
-        repeat 2 compose [append ([1 2 3]) <bad>]
+        repeat 2 compose $() [append ([1 2 3]) <bad>]
     )
 
     (
-        block: repeat 2 compose [append (mutable [1 2 3]) <legal>]
+        block: repeat 2 compose $() [append (mutable [1 2 3]) <legal>]
         block = [1 2 3 <legal> <legal>]
     )
 ]

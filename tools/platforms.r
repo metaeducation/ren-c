@@ -466,7 +466,7 @@ export /for-each-platform: func [
         [block!]
     <local> obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    obj: construct compose1 [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
@@ -559,7 +559,7 @@ use [
         for-each 'flag p.libraries [assert [word? flag]]
         for-each 'flag p.ldflags [assert [word? flag]]
 
-        for-each [word context] compose [
+        for-each [word context] compose1 [
             definitions (platform-definitions)
             libraries (platform-libraries)
             cflags (compiler-flags)
@@ -578,7 +578,7 @@ use [
         ]
     ]
 
-    unused-flags: exclude compose [
+    unused-flags: exclude compose1 [
         (spread words-of compiler-flags)
         (spread words-of linker-flags)
         (spread words-of platform-definitions)

@@ -65,8 +65,8 @@
 ]
 
 [#1457
-    (#a == parse "ba" compose [to (charset "a") one])
-    ~parse-mismatch~ !! (parse "ba" compose [to (charset "a") "ba"])
+    (#a == parse "ba" compose $() [to (charset "a") one])
+    ~parse-mismatch~ !! (parse "ba" compose $() [to (charset "a") "ba"])
 ]
 
 [https://github.com/red/red/issues/2515

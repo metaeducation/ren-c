@@ -126,7 +126,7 @@ void Shutdown_Typesets(void)
 // 3. Everything non-TAG! can be abstracted via WORD!.  This can lead to some
 //    strange mixtures:
 //
-//        func compose:deep [x [word! (integer!)]] [ ... ]
+//        func compose:deep $() [x [word! (integer!)]] [ ... ]
 //
 //    (But then the help will show the types as [word! &integer].  Is it
 //    preferable to enforce words for some things?  That's not viable for

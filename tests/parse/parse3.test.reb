@@ -369,18 +369,18 @@
 
 [#1457
     (
-        parse3 "a" compose [thru (charset "a")]
+        parse3 "a" compose $() [thru (charset "a")]
         ok
     )
     ~parse3-incomplete~ !! (
-        parse3 "a" compose [thru (charset "a") one]
+        parse3 "a" compose $() [thru (charset "a") one]
     )
     (
-        parse3 "ba" compose [to (charset "a") one]
+        parse3 "ba" compose $() [to (charset "a") one]
         ok
     )
     ~parse3-incomplete~ !! (
-        parse3 "ba" compose [to (charset "a") "ba"]
+        parse3 "ba" compose $() [to (charset "a") "ba"]
     )
 ]
 
@@ -680,12 +680,12 @@
             for-each 't things [
                 counts.(t): 0
                 keep t
-                keep compose:deep $(counts.(t): me + 1)
+                keep compose:deep $() $(counts.(t): me + 1)
                 keep:line '|
             ]
             keep 'bypass
         ]
-        parse3 data (compose:deep [
+        parse3 data (compose:deep $() [
             opt some [(spread rules)]  ; could also be `opt some [rules]`
         ]) except [
             return <outlier>

@@ -140,7 +140,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
                 ]
             ]
             defaulters: default [inside body copy '[]]
-            append defaulters spread compose [
+            append defaulters spread compose $() '[
                 (var): default (meta eval inside spec other)
             ]
         )
@@ -153,7 +153,7 @@ yield: ~<YIELD used when no generator or yielder is providing it>~
             append new-spec var
             if other [
                 defaulters: default [inside body copy '[]]
-                append defaulters spread compose [  ; always sets
+                append defaulters spread compose $() '[  ; always sets
                     (var): (meta eval inside spec other)
                 ]
             ]
@@ -410,7 +410,7 @@ bind construct [
         fail:blame make error! [
             type: 'Script
             id: 'assertion-failure
-            arg1: compose [~null~ so]
+            arg1: [~null~ so]
         ] $condition
     ]
     if tail? feed [return ~]
@@ -426,7 +426,7 @@ bind construct [
             fail:blame make error! [
                 type: 'Script
                 id: 'assertion-failure
-                arg1: compose [(:left) is (:right)]
+                arg1: compose $() '[(:left) is (:right)]
             ] $return
         ]
         :left  ; choose left in case binding or case matters somehow

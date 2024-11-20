@@ -36,7 +36,7 @@ libraries: switch platform-config.os-base [
 ] else [
     ; On some systems (32-bit Ubuntu 12.04), odbc requires ltdl
     ;
-    compose [
+    compose1 [
         %odbc (if yes? user-config.odbc-requires-ltdl [%ltdl])
     ]
 ]

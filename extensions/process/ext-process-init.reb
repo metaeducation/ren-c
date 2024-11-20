@@ -37,7 +37,8 @@ REBOL [
             ; turned into their text equivalents.  This lets you write code in
             ; the CALL block that looks a bit more like a shell invocation.
             ;
-            map-each 'arg compose command [
+            let pattern: inside command '()
+            map-each 'arg compose pattern command [
                 switch:type arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
@@ -93,7 +94,7 @@ REBOL [
     if result = 0 [
         return ~  ;  avoid `if 1 = call:shell "dir" [...]`, see [1]
     ]
-    return raise make error! compose [
+    return raise make error! compose $() '[
         message: ["Process returned non-zero exit code:" exit-code]
         exit-code: (result)
     ]

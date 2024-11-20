@@ -49,7 +49,11 @@ import %% (repo-dir)/tools/read-deep.reb
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
-/logfn: func [message][print mold new-line:all compose message 'no]
+/logfn: func [message][
+    message: compose (inside message '()) message
+    new-line:all message 'no
+    print mold message
+]
 /log: logfn/
 
 standard: context [
@@ -115,7 +119,8 @@ whitelisted: [
     label [tag!]
     body [block!]
 ][
-    body: new-line:all compose body 'no
+    body: compose (inside body '()) body
+    new-line:all body 'no
     append:line log spread (head insert body label)
 ]
 

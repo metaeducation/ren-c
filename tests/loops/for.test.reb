@@ -127,7 +127,7 @@
     )
     (
         sum: 0
-        for compose [
+        for compose $() [
             x (bind obj1 '@x)
         ] each [
             1 2 3 4
@@ -141,7 +141,7 @@
     )
     (
         sum: 0
-        for compose [
+        for compose $() [
             (bind obj2 '@x) x
         ] each [
             1 2 3 4
@@ -155,7 +155,7 @@
     )
     (
         sum: 0
-        for compose [
+        for compose $() [
             (bind obj1 '@x) (bind obj2 '@x)
         ] each [
             1 2 3 4

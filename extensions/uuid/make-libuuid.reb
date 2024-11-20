@@ -146,11 +146,11 @@ comment-out-includes: [
     return text
 ]
 
-files: compose [
+files: compose1 [
     %include/nls.h              _
     %include/randutils.h        _
-    %lib/randutils.c            (unrun :fix-randutils-c)
-    %libuuid/src/gen_uuid.c     (unrun :fix-gen_uuid-c)
+    %lib/randutils.c            (unrun fix-randutils-c/)
+    %libuuid/src/gen_uuid.c     (unrun fix-gen_uuid-c/)
     %libuuid/src/pack.c         _
     %libuuid/src/unpack.c       _
     %libuuid/src/uuidd.h        _

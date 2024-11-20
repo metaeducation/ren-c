@@ -90,7 +90,7 @@ export console!: make object! [
     ][
         boot-print [
             "Rebol 3 (Ren-C branch)"
-            mold compose [version: (system.version) build: (system.build)]
+            mold compose $() '[version: (system.version) build: (system.build)]
             newline
         ]
 
@@ -314,7 +314,7 @@ export console!: make object! [
         return inside system.contexts.user b  ; two operations for now [2]
     ]
 
-    shortcuts: make object! compose:deep [
+    shortcuts: make object! compose:deep $() [
         d: [dump]
         h: [help]
         q: [quit 0]
@@ -499,11 +499,12 @@ bind construct [
                 insert instruction item
             ]
             text! [
-                append:line instruction spread compose [comment (item)]
+                append:line instruction spread compose $() [comment (item)]
             ]
             block! [
                 if not empty? instruction [append:line instruction ',]
-                append:line instruction spread compose:label:deep item <*>
+                let pattern: inside item '(<*>)
+                append:line instruction spread compose:deep pattern item
             ]
             fail
         ]

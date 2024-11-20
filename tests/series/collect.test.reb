@@ -24,7 +24,7 @@
     (collect-lines: redescribe [
         "Evaluate body, and return block of spaced TEXT! from kept blocks"
     ] adapt collect/ [  ; https://forum.rebol.info/t/945/1
-        body: compose [
+        body: compose $() [
             /keep: adapt specialize keep/ [
                 line: ok
                 part: null
@@ -48,7 +48,7 @@
         "Evaluate body, returning single spaced TEXT!, KEEPed blocks UNSPACED"
     ] cascade [  ; https://forum.rebol.info/t/945/2
         adapt collect/ [
-            body: compose [
+            body: compose $() [
                 /keep: adapt specialize keep/ [
                     line: null
                     part: null

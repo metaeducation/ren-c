@@ -119,7 +119,7 @@ Bounce Combinator_Dispatcher(Level* L)
 //
 // The original usermode version of this was:
 //
-//     compose [
+//     compose $() [
 //         ; Get the text description if given
 //
 //         (if text? spec.1 [spec.1, elide spec: my next])

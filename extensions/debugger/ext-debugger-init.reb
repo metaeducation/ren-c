@@ -97,7 +97,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}--
             integer? :b.1
         ] then [
             print-info "Interpreting integer input as DEBUG"
-            return compose [debug (b.1)]
+            return compose $() [debug (b.1)]
         ]
 
         if focus-frame [

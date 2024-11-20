@@ -20,10 +20,10 @@
             ]]
             append words w
         ]
-        let spec: compose [:reset [block!]]
+        let spec: compose $() [:reset [block!]]
         let body: bind construct [
             (spread map-each 'w unique words [setify w]) count
-        ] compose:deep [
+        ] compose:deep $() [
             if reset [count: reset return]
             if block? count [
                 let result: bind $count count
@@ -34,7 +34,7 @@
             let result: (to group! iteration)
             (spread either empty? condition
                 [[ return result ]]
-                [compose [ return if (to group! condition) [result] ]]
+                [compose $() [ return if (to group! condition) [result] ]]
             )
         ]
         let /f: func spec body
@@ -54,7 +54,7 @@
         if file? src [src: open src]
 
         let pos
-        let rule: compose:deep either delimiter [
+        let rule: compose:deep $() either delimiter [
             either keep
             [ [thru (delimiter) pos: <here>] ]
             [ [to (delimiter) remove (delimiter) pos: <here>] ]
@@ -70,7 +70,7 @@
         return func [] bind construct [
             buffer: to group! [make blob! 4096]
             port: groupify src
-        ] compose:deep [
+        ] compose:deep $() [
             let crlf: charset "^/^M"
             let data: null
             let eof: 'false

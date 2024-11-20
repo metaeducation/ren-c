@@ -48,19 +48,19 @@ libtcc-lib-dir: any [
 ]
 
 
-cflags: compose [
+cflags: compose1 [
     (if libtcc-include-dir [
         unspaced ["-I" -{"}- file-to-local libtcc-include-dir -{"}-]
     ])
 ]
 
-ldflags: compose [
+ldflags: compose1 [
     (if libtcc-lib-dir [
         unspaced [{-L} -{"}- file-to-local libtcc-lib-dir -{"}-]
     ])
 ]
 
-libraries: compose [  ; Note: dependent libraries first, dependencies after.
+libraries: compose1 [  ; Note: dependent libraries first, dependencies after.
     %tcc
 
     ; As of 10-Dec-2019, pthreads became a dependency for libtcc on linux:

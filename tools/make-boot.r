@@ -155,7 +155,7 @@ type-table: load %types.r
     completed* running* is-unstable* decorated pos
     obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    obj: construct compose1 [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
@@ -233,7 +233,7 @@ type-table: load %types.r
     <local> name* heart* any-name!* stack types* starting
     obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    obj: construct compose1 [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 

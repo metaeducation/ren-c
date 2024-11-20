@@ -104,7 +104,7 @@
     (
         b2: copy the ''[x y]
         b4: copy the ''''[m n o p]
-        m: to map! compose [
+        m: to map! compose $() [
             a 0 'a 1 ''a 2 '''a 3 ''''a 4
             A 10 'A 11 ''A 12 '''A 13 ''''A 14
             (b2) II (b4) IIII

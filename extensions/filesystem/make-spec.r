@@ -354,7 +354,7 @@ uv-depends: map-each 'tuple uv-sources [  ; WORD! in bootstrap
     ] else [
         join %filesystem/libuv/src/unix/ tuple
     ]
-    compose [(file) #no-c++ (spread uv-nowarn)]
+    compose1 [(file) #no-c++ (spread uv-nowarn)]
 ]
 
 append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
@@ -370,7 +370,7 @@ append uv-depends spread map-each 'tuple [  ; WORD! in bootstrap
     %uv-data-getter-setters.c
     %version.c
 ][
-    compose [
+    compose1 [
         (join %filesystem/libuv/src/ tuple) #no-c++ (spread uv-nowarn)
     ]
 ]
@@ -385,7 +385,7 @@ includes: reduce [
 ]
 
 
-depends: compose [
+depends: compose1 [
     ;
     ; If you `#include "uv.h"` and try to build as C++ with warnings up you
     ; will get warning 5220.
@@ -403,7 +403,7 @@ depends: compose [
     ])
 ]
 
-ldflags: compose [
+ldflags: compose1 [
     (if "1" = get-env "USE_BACKDATED_GLIBC" [
         "-Wl,--wrap=fcntl64 -Wl,--wrap=log -Wl,--wrap=pow"
     ])

@@ -203,7 +203,7 @@
 
 (
     port: ~
-    for-each 'item compose [
+    for-each 'item compose $() '[
         (^+)
         word
         set-word:

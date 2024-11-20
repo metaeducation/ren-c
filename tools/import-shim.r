@@ -180,7 +180,7 @@ wrap-module: 'no
 
         system.script: make system.standard.script [
             title: "Script imported by import shim"
-            header: make system.standard.header compose [
+            header: make system.standard.header lib3/compose [
                 title: "Script imported by import shim"
                 file: (file)
             ]
@@ -202,7 +202,7 @@ wrap-module: 'no
 
         ; Wrap the whole thing in an object if needed
         ;
-        replace:one f.source unspaced [newline "]"] unspaced compose [
+        replace:one f.source unspaced [newline "]"] unspaced lib3/compose [
             newline
             "]" newline
             (if yes? wrap-module ["make object! ["]) newline
@@ -300,7 +300,7 @@ already-imported: to map! []  ; avoid importing things twice
 
 ; Poor-man's export in a non-working R3-Alpha module system.
 ;
-append lib compose [
+append lib lib3/compose [
     lib3: (lib3)
     import: (import/)
     do: (do/)

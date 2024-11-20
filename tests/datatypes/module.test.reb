@@ -83,7 +83,7 @@
     var: <outer>
 
     m1: module [Exports: [var]] [var: <1>]
-    m2: module [Exports: [fetch]] compose [
+    m2: module [Exports: [fetch]] compose $() [
         var: <2>
         import (<m2compose> m1)
         fetch: does [var]
