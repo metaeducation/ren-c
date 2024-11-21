@@ -280,7 +280,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
         return true;
     }
 
-    if (!Any_List(val))
+    if (not Is_Block(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     const Element* tail;
@@ -298,13 +298,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     // Loop through block of bit specs:
 
     for (; item != tail; item++) {
-
-        switch (VAL_TYPE(item)) {
-        case REB_ISSUE: {
-            if (not IS_CHAR(item)) {  // no special handling for hyphen
-                Set_Bits(bset, item, set);
-                break;
-            }
+        if (IS_CHAR(item)) {  // may be #{00} for NUL
             Codepoint c = Cell_Codepoint(item);
             if (
                 item + 1 != tail
@@ -325,6 +319,13 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             }
             else
                 Set_Bit(bset, c, set);
+        }
+        else switch (VAL_TYPE(item)) {
+        case REB_ISSUE: {
+            if (not IS_CHAR(item)) {  // no special handling for hyphen
+                Set_Bits(bset, item, set);
+                break;
+            }
             break; }
 
         case REB_INTEGER: {
