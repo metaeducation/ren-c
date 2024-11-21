@@ -287,3 +287,18 @@
     ('a = compose:conflate $() '('a).(void))
     (@a = compose:conflate $() the @('a).(void))
 ]
+
+; === STRING COMPOSE ===
+;
+; COMPOSE on a string interpolates.  Only works with $() at time of writing.
+
+("a 3 b 30 c" = compose $() "a (1 + 2) b (10 + 20) c")
+("3 a b c 30" = compose $() "(1 + 2) a b c (10 + 20)")
+
+("abc" = compose $() "a(if 1 > 2 ['x])b(void)c")
+("abc" = compose $() "(if 1 > 2 ['x])abc(void)")
+
+(
+    e: trap [compose $() "(null)abc"]
+    e.id = 'need-non-null
+)

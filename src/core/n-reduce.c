@@ -839,26 +839,27 @@ Bounce Composer_Executor(Level* const L)
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
-//      return: "Strange types if /CONFLATE, like ('~)/('~) => ~/~ WORD!"
+//      return: "Strange types if :CONFLATE, like ('~)/('~) => ~/~ WORD!"
 //      [
 //          any-list? any-sequence?
-//          any-word?  ; passed through as-is, or /CONFLATE can produce
-//          ~null~ quasi-word? blank! trash?  ; /CONFLATE can produce these
+//          any-word?  ; passed through as-is, or :CONFLATE can produce
+//          any-string?
+//          ~null~ quasi-word? blank! trash?  ; :CONFLATE can produce these
 //      ]
 //      pattern "Supplies the pattern as well as the binding for composing"
 //          [any-list?]
 //      template "The template to fill in (no-op if WORD!)"
-//          [<maybe> any-list? any-sequence? any-word? action?]
+//          [<maybe> any-list? any-sequence? any-word? any-string?]
 //      :deep "Compose deeply into nested lists and sequences"
 //      :conflate "Let illegal sequence compositions produce lookalike WORD!s"
-//      :predicate "Function to run on composed slots (default: META)"
+//      :predicate "Function to run on composed slots"
 //          [<unrun> frame!]
 //  ]
 //
-//  ; Note: /INTO is intentionally no longer supported
+//  ; Note: :INTO is intentionally no longer supported
 //  ; https://forum.rebol.info/t/stopping-the-into-virus/705
 //
-//  ; Note: /ONLY is intentionally no longer supported
+//  ; Note: :ONLY is intentionally no longer supported
 //  https://forum.rebol.info/t/the-superpowers-of-ren-cs-revamped-compose/979/7
 //
 DECLARE_NATIVE(compose)
@@ -872,34 +873,50 @@ DECLARE_NATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
+    Element* pattern = cast(Element*, ARG(pattern));
     Element* t = cast(Element*, ARG(template));
 
-    USED(ARG(pattern));  // used by Composer_Executor() via main_level
-    USED(ARG(predicate));
+    USED(ARG(predicate));  // used by Composer_Executor() via main_level
     USED(ARG(deep));
 
     enum {
         ST_COMPOSE_INITIAL_ENTRY = STATE_0,
-        ST_COMPOSE_COMPOSING
+        ST_COMPOSE_COMPOSING_LIST,
+        ST_COMPOSE_STRING_SCAN,
+        ST_COMPOSE_STRING_EVAL
     };
 
     switch (STATE) {
-      case ST_COMPOSE_INITIAL_ENTRY: goto initial_entry;
-      case ST_COMPOSE_COMPOSING: goto composer_finished;
+      case ST_COMPOSE_INITIAL_ENTRY: {
+        if (Any_Word(t))
+            return COPY(t);  // makes it easier to `set compose target`
+
+        if (Any_String(t))
+            goto string_initial_entry;
+
+        assert(Any_List(t) or Any_Sequence(t));
+        goto list_initial_entry; }
+
+      case ST_COMPOSE_COMPOSING_LIST:
+        goto list_compose_finished;
+
+      case ST_COMPOSE_STRING_SCAN:
+        goto string_scan_result_in_top;
+
+      case ST_COMPOSE_STRING_EVAL:
+        goto string_eval_in_out;
+
       default: assert(false);
     }
 
-  initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (Any_Word(t))
-        return COPY(t);  // makes it easier to `set compose target`
+  list_initial_entry: {  /////////////////////////////////////////////////////
 
     Push_Composer_Level(OUT, level_, t, Cell_List_Binding(t));
 
-    STATE = ST_COMPOSE_COMPOSING;
+    STATE = ST_COMPOSE_COMPOSING_LIST;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} composer_finished: {  //////////////////////////////////////////////////////
+} list_compose_finished: {  //////////////////////////////////////////////////
 
     if (not Is_Raised(OUT)) {  // sublevel was killed
         assert(Is_Trash(OUT));
@@ -912,7 +929,194 @@ DECLARE_NATIVE(compose)
 
     Drop_Level(SUBLEVEL);
     return OUT;
+
+} string_initial_entry: {  ///////////////////////////////////////////////////
+
+    if (not (Is_Group(pattern) and Cell_Series_Len_At(pattern) == 0))
+        return FAIL("Preliminary string compose only works with $()");
+
+    Utf8(const*) head = Cell_Utf8_At(t);
+    Utf8(const*) at = head;
+
+    Codepoint c;
+    Utf8(const*) next = Utf8_Next(&c, at);
+
+    while (c != '\0') {
+        if (c == '(')
+            goto found_first_string_pattern;
+        at = next;
+        next = Utf8_Next(&c, at);
+    }
+
+    return rebValue(Canon(COPY), t);  // didn't find anything to substitute.
+
+  found_first_string_pattern: { ///////////////////////////////////////////////
+
+    TranscodeState* ss = Try_Alloc_Memory(TranscodeState);
+    Init_Handle_Cdata(ARG(return), ss, 1);
+
+    const LineNumber start_line = 1;
+    Init_Transcode(
+        ss,
+        ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
+        start_line,
+        at  // we'll reset this on each pattern find
+    );
+
+    Flags flags =
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
+        /*| LEVEL_FLAG_RAISED_RESULT_OK*/  // definitional errors?
+        | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN)
+        | SCAN_EXECUTOR_FLAG_JUST_ONCE;
+
+    Level* sub = Make_Scan_Level(ss, TG_End_Feed, flags);
+
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
+
+    Offset start_offset = at - head;
+    Init_Integer(PUSH(), start_offset);
+    STATE = ST_COMPOSE_STRING_SCAN;
+    return CONTINUE_SUBLEVEL(sub);
+
+}} string_scan_result_in_top: { //////////////////////////////////////////////
+
+    TranscodeState* ss = Cell_Handle_Pointer(TranscodeState, ARG(return));
+
+    Utf8(const*) head = Cell_Utf8_At(t);
+    Offset end_offset = ss->at - head;
+    Init_Integer(PUSH(), end_offset);
+
+    Codepoint c;
+    Utf8(const*) next = Utf8_Next(&c, ss->at);
+
+    while (c != '\0') {
+        if (c == '(')
+            goto found_subsequent_string_pattern;
+        ss->at = next;
+        next = Utf8_Next(&c, ss->at);
+    }
+
+    Drop_Level(SUBLEVEL);
+    Free_Memory(TranscodeState, ss);
+    goto string_start_evaluations;
+
+  found_subsequent_string_pattern: { /////////////////////////////////////////
+
+    Offset start_offset = ss->at - head;
+    Init_Integer(PUSH(), start_offset);
+    assert(STATE == ST_COMPOSE_STRING_SCAN);
+    return CONTINUE_SUBLEVEL(SUBLEVEL);
+
+}} string_start_evaluations: { ///////////////////////////////////////////////
+
+    // We do all the scans first, and then the evaluations.  This means that
+    // no user code is run if the string being interpolated is malformed,
+    // which is preferable.  It also helps with locality.  But it means the
+    // evaluations have to be done on an already built stack.
+
+    Init_Integer(ARG(return), 2);
+    goto do_string_eval_from_stack;
+
+} string_eval_in_out: { //////////////////////////////////////////////////////
+
+    Decay_If_Unstable(OUT);
+
+    StackIndex index = VAL_INT32(ARG(return)) + STACK_BASE;
+    Copy_Cell(Data_Stack_At(Value, index), stable_OUT);
+
+    index += 3;
+
+    if (index > TOP_INDEX)
+        goto string_evaluations_done;
+
+    Init_Integer(ARG(return), index - STACK_BASE);
+    goto do_string_eval_from_stack;
+
+} do_string_eval_from_stack: { ///////////////////////////////////////////////
+
+    StackIndex index = VAL_INT32(ARG(return)) + STACK_BASE;
+
+    assert(Is_Integer(Data_Stack_At(Element, index - 1)));  // start offset
+    assert(VAL_TYPE(Data_Stack_At(Element, index)) == VAL_TYPE(pattern));
+    assert(Is_Integer(Data_Stack_At(Element, index + 1)));  // end offset
+
+    Copy_Cell(SPARE, Data_Stack_At(Element, index));
+    HEART_BYTE(SPARE) = REB_BLOCK;
+    BINDING(SPARE) = BINDING(pattern);
+
+    Init_Integer(ARG(return), index - STACK_BASE);
+
+    STATE = ST_COMPOSE_STRING_EVAL;
+    return CONTINUE(OUT, stable_SPARE);
+
+} string_evaluations_done: { /////////////////////////////////////////////////
+
+    DECLARE_MOLDER (mo);
+    Push_Mold(mo);
+
+    StackIndex index = STACK_BASE + 2;
+
+    Offset at_offset = 0;
+
+    Size size;
+    Utf8(const*) head = Cell_Utf8_Size_At(&size, t);
+
+    for (; index < TOP_INDEX; index += 3) {
+        Offset start_offset = VAL_INT32(Data_Stack_At(Element, index - 1));
+        Value* eval = Data_Stack_At(Value, index);
+        Offset end_offset = VAL_INT32(Data_Stack_At(Element, index + 1));
+
+        Append_UTF8_May_Fail(
+            mo->string,
+            cast(const char*, head + at_offset),
+            start_offset - at_offset,
+            STRMODE_NO_CR
+        );
+
+        at_offset = end_offset;
+
+        if (Is_Nulled(eval))
+            return RAISE(Error_Need_Non_Null_Raw());
+
+        if (Is_Void(eval))
+            continue;
+
+        if (QUOTE_BYTE(eval) != NOQUOTE_1)
+            return FAIL("For the moment, COMPOSE string only does NOQUOTE_1");
+
+        Form_Element(mo, cast(Element*, eval));
+    }
+    Append_UTF8_May_Fail(
+        mo->string,
+        cast(const char*, head + at_offset),
+        size - at_offset,
+        STRMODE_NO_CR
+    );
+
+    Drop_Data_Stack_To(STACK_BASE);
+
+    return Init_Text(OUT, Pop_Molded_String(mo));
 }}
+
+
+//
+//  /print*: native [
+//
+//  "Sneaky capturing PRINT with interpolation, native to be sneaky for now"
+//
+//      return: [~]
+//      line [text!]
+//  ]
+//
+DECLARE_NATIVE(print_p)
+{
+    INCLUDE_PARAMS_OF_PRINT_P;
+
+    Init_Group(SPARE, EMPTY_ARRAY);
+    BINDING(SPARE) = Level_Binding(level_);
+
+    return rebDelegate(Canon(PRINT), Canon(COMPOSE), rebQ(SPARE), ARG(line));
+}
 
 
 enum FLATTEN_LEVEL {

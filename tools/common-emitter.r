@@ -417,7 +417,7 @@ export /make-emitter: func [
     ]
     else [
         e/emit unspaced ["REBOL" space]  ; no COMPOSE:DEEP in bootstrap shim
-        e/emit mold spread compose [
+        e/emit mold spread compose1 [
             System: "REBOL [R3] Language Interpreter and Run-time Environment"
             Title: (title)
             File: (stem)
