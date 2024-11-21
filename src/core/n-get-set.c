@@ -941,8 +941,11 @@ bool Set_Var_Core_Updater_Throws(
         }
         else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
-            if (Get_Cell_Flag(var, LEADING_BLANK))  // `/a` or `.a`
-               goto set_target;
+            if (Get_Cell_Flag(var, LEADING_BLANK)) {  // `/a` or `.a`
+                if (Any_Tuple_Kind(var_heart))
+                    context = Adjust_Context_For_Coupling(context);
+                goto set_target;
+            }
 
             // `a/` or `a.`
             //

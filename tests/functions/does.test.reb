@@ -87,3 +87,16 @@
 
     o2/b = 10  ; need METHOD to get the member selection
 )
+
+(
+    o1: construct [
+        a: 10
+        /b: method [] [let /f: lambda [] [.a: 30] return f]
+    ]
+    o2: make o1 [a: 20]
+
+    all [
+        o2/b = 30
+        o2.a = 30
+    ]
+)
