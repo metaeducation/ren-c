@@ -34,37 +34,64 @@
 //  "Binds words or words in lists to the specified context"
 //
 //      return: [frame! action? any-list? any-path? any-word? quoted?]
-//      target "Target context or a word whose binding should be the target"
-//          [the-word? any-context?]
+//      spec "Target context or a word whose binding should be the target"
+//          [block! the-word? any-context?]
 //      value "Value whose bound form is to be returned"
 //          [any-list? any-path? any-word? quoted?]
 //  ]
 //
 DECLARE_NATIVE(bind)
+//
+// !!! The "BIND dialect" is just being mapped out.  Right now, it accepts
+// a context, or a THE-WORD!, or a block of THE-WORD!s.
 {
     INCLUDE_PARAMS_OF_BIND;
 
     Value* v = ARG(value);
-    Element* target = cast(Element*, ARG(target));
+    Element* spec = cast(Element*, ARG(spec));
 
-    const Element* context;
+    Sink(Element) spare = SPARE;
 
-    if (Any_Context(target)) {
-        //
-        // Get target from an OBJECT!, ERROR!, PORT!, MODULE!, FRAME!
-        //
-        context = target;
-    }
-    else {
-        assert(Is_The_Word(target));
-        if (not IS_WORD_BOUND(target))
-            return FAIL(Error_Not_Bound_Raw(target));
+    if (Is_Block(spec)) {
+        const Element* tail;
+        const Element* at = Cell_List_At(&tail, spec);
 
         if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
             return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
-        HEART_BYTE(target) = REB_WORD;
-        BINDING(v) = Make_Use_Core(target, BINDING(v), CELL_MASK_0);
+        for (; at != tail; ++at) {
+            if (not Is_The_Word(at))
+                return FAIL("BLOCK! binds all @word for the moment");
+
+            Derelativize(spare, at, Cell_Binding(spec));
+            if (not IS_WORD_BOUND(spare))
+                return FAIL(Error_Not_Bound_Raw(spare));
+
+            HEART_BYTE(spare) = REB_WORD;
+            BINDING(v) = Make_Use_Core(spare, BINDING(v), CELL_MASK_0);
+        }
+
+        return COPY(v);
+    }
+
+    const Element* context;
+
+    if (Any_Context(spec)) {
+        //
+        // Get target from an OBJECT!, ERROR!, PORT!, MODULE!, FRAME!
+        //
+        context = spec;
+    }
+    else {
+        assert(Is_The_Word(spec));
+        if (not IS_WORD_BOUND(spec))
+            return FAIL(Error_Not_Bound_Raw(spec));
+
+        if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
+            return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
+
+        HEART_BYTE(spec) = REB_WORD;
+        BINDING(v) = Make_Use_Core(spec, BINDING(v), CELL_MASK_0);
 
         return COPY(v);
     }

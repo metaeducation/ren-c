@@ -402,7 +402,7 @@ bind construct [
         [<maybe> block!]
 ][
     let out: null
-    let /keeper: specialize (  ; SPECIALIZE to hide series argument
+    let /keep: specialize (  ; SPECIALIZE to hide series argument
         enclose append/ lambda [  ; Derive from APPEND for /LINE /DUP
             f [frame!]
             <with> out
@@ -419,10 +419,7 @@ bind construct [
         series: <replaced>
     ]
 
-    ; use LAMBDA for binding work of connecting KEEP with the keeper function
-    ; (Doesn't have or enforce RETURN)
-    ;
-    run lambda [keep] body :keeper
+    eval bind @keep body  ; discard result (should it be secondary return?)
 
     return out  ; might be null if no KEEPs that kept anything yet
 ]
