@@ -120,9 +120,8 @@ REBOL [
     replacement "Value to replace with (called each time if action)"
         [~void~ element? splice? action?]
 
-    ; !!! Note this aliases CASE native!
-    :one "Replace all occurrences"
-    :case "Case-sensitive replacement"
+    :one "Replace one (or zero) occurrences"
+    :case "Case-sensitive replacement"  ; !!! Note this aliases CASE native!
 
     <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][

@@ -121,17 +121,16 @@
 )
 
 
-; Change from R3-Alpha, FUNC and FUNCTION do not by default participate in
-; "derived binding" but keep their bindings as-is.  The ACTION! must have a
-; binding set up with BIND to get the derived behavior, which is done
-; "magically" by METHOD.
+; Change from R3-Alpha, FUNC and FUNCTION do not do any rebinding of words.
+; when derived objects are created.  You have to use METHOD, and you have
+; to use .WORD accesses to indicate you want a member variable.
 (
-    o1: make object! [a: 10 /b: func [] [/f: lambda [] [a] return f]]
+    o1: make object! [a: 10 /b: func [] [let /f: lambda [] [a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 10
 )(
-    o1: make object! [a: 10 /b: method [] [/f: lambda [] [.a] return f]]
+    o1: make object! [a: 10 /b: method [] [let /f: lambda [] [.a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 20

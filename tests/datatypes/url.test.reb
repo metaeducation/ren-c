@@ -3,7 +3,8 @@
 (not url? 1)
 (url! = type of http://www.fm.tul.cz/~ladislav/rebol)
 
-~???~ !! (make url! "")
+~bad-make-arg~ !! (make url! "http://example.com")
+~???~ !! (to url! "")
 
 ("http://" = mold http://)
 ("http://a%2520b" = mold http://a%2520b)

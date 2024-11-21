@@ -7,7 +7,7 @@
     obj: make object! [x: 1020]
     steps: ~
     all [
-        @[obj x] = get:steps $obj.(first [x y])
+        @[obj x] = steps: get:steps $obj.(first [x y])
         1020 = get steps
     ]
 )
