@@ -1020,7 +1020,7 @@ Bounce Stepper_Executor(Level* L)
             if (blank_at_head)
                 goto run_action_in_out;
 
-            return FAIL("Can't fetch actions (FRAME! antiform) with TUPLE!");
+            return FAIL(Error_Action_Tuple_Raw(CURRENT));
         }
 
         goto lookahead; }

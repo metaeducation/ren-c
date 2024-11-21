@@ -121,6 +121,8 @@ Script: [
     ambiguous-infix:    "Ambiguous infix expression--use GROUP! to clarify"
     literal-left-path:  "Use ->- to pass literal left PATH! parameters right"
 
+    action-tuple:       ["Can't get actions (frame antiforms) with tuple" :arg1]
+
     sequence-too-short: "PATH!, CHAIN!, and TUPLE! must have more than 2 items"
     conflated-sequence: ["Sequence would conflate with" :arg1 "--" :arg2]
     bad-sequence-blank: "BLANK! only legal at head and tail of sequence"
