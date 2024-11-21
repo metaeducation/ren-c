@@ -388,7 +388,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     Drop_Lifeguard(client);
 
-    rebElide("(", listening_port, ").spec.accept", Varlist_Archetype(client));
+    rebElide("(", listening_port, ").spec/accept", Varlist_Archetype(client));
 }
 
 

@@ -118,7 +118,7 @@ alpha: charset [#"a" - #"z" #"A" - #"Z"]
         Accept: "*/*"
         Accept-Charset: "utf-8"
         Host: if not find [80 443] spec.port-id [
-            unspaced [spec.host ":" spec.port-id]
+            unspaced [@spec.host ":" spec.port-id]  ; spec.host can be TUPLE!
         ]
         else [
             form spec.host
@@ -702,9 +702,9 @@ sys.util/make-scheme [
                 scheme: (
                     either port.spec.scheme = 'http [the 'tcp][the 'tls]
                 )
-                host: port.spec.host
+                host: port.spec.host  ; can be tuple, e.g. 127.0.0.1
                 port-id: port.spec.port-id
-                ref: join tcp:// [host ":" port-id]
+                ref: join tcp:// [@host ":" port-id]
             ]
             conn.locals: port
             open conn
