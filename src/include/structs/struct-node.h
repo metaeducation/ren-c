@@ -261,8 +261,8 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 //
 // Because the watchlist often orders the flags alphabetically, name them so
 // it will sort them in order.  Note that these flags can get out of date
-// easily, so sync with %rebser.h or %rebval.h if they do...and double check
-// against the FLAG_BIT_LEFT(xx) numbers if anything seems fishy.
+// easily, so sync with %struct-stub.h or %struct-cell.h if they do...and
+// double check against FLAG_BIT_LEFT(xx) numbers if anything seems fishy.
 //
 // Note: Bitfields are notoriously underspecified, and there's no way to do
 // `#if sizeof(struct StubHeaderPun) <= sizeof(uint32_t)`.  Hence
@@ -270,25 +270,25 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 //
 #if DEBUG_USE_BITFIELD_HEADER_PUNS
     struct StubHeaderPun {
-        int _07_cell_always_false:1;
+        int _07_marked:1;
         int _06_root:1;
-        int _05_misc_needs_mark:1;
-        int _04_link_needs_mark:1;
-        int _03_marked:1;
-        int _02_managed:1;
-        int _01_free:1;
+        int _05_managed:1;
+        int _04_cell_always_false:1;
+        int _03_misc_needs_mark:1;
+        int _02_link_needs_mark:1;
+        int _01_unreadable:1;
         int _00_node_always_true:1;
 
-        int _15_flag_15:1;
-        int _14_black:1;
-        int _13_flag_13:1;
-        int _12_flag_12:1;
-        int _11_dynamic:1;
-        int _10_power_of_two:1;
-        int _09_fixed_size:1;
-        int _08_inaccessible:1;
+        unsigned int _08to15_flavor:8;
 
-        unsigned int _16to23_flavor:8;
+        int _23_fixed_size:1;
+        int _22_power_of_2:1;
+        int _21_flag_21:1;
+        int _20_flag_20:1;
+        int _19_flag_19:1;
+        int _18_black:1;
+        int _17_dynamic:1;
+        int _16_info_node_needs_mark:1;
 
         int _31_subclass:1;
         int _30_subclass:1;
@@ -301,14 +301,14 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
     }__attribute__((packed));
 
     struct InfoHeaderPun {
-        int _07_cell_always_false:1;
+        int _07_flag_07:1;
         int _06_frozen_shallow:1;
         int _05_hold:1;
         int _04_frozen_deep:1;
         int _03_protected:1;
         int _02_auto_locked:1;
-        int _01_free_always_false:1;
-        int _00_node_always_true:1;
+        int _01_flag_01:1;
+        int _00_node_always_false:1;
 
         unsigned int _08to15_used:8;
 
@@ -316,27 +316,27 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
     }__attribute__((packed));
 
     struct CellHeaderPun {
-        int _07_cell_always_true:1;
+        int _07_marked:1;
         int _06_root:1;
-        int _05_second_needs_mark:1;
-        int _04_first_needs_mark:1;
-        int _03_marked:1;
-        int _02_managed:1;
-        int _01_free:1;
+        int _05_managed:1;
+        int _04_cell_always_true:1;
+        int _03_dont_mark_node2:1;
+        int _02_dont_mark_node1:1;
+        int _01_unreadable:1;
         int _00_node_always_true:1;
 
-        unsigned int _08to15_kind3q:8;
+        unsigned int _08to15_heart_byte:8;
 
-        unsigned int _16to23_heart:8;
+        unsigned int _16to23_quote_byte:8;
 
-        int _31_explicitly_mutable:1;
-        int _30_const:1;
+        int _31_type_specific_b:1;
+        int _30_type_specific_a:1;
         int _29_newline_before:1;
         int _28_note:1;
-        int _27_unevaluated:1;
+        int _27_protected:1;
         int _26_cell:1;
         int _25_cell:1;
-        int _24_protected:1;
+        int _24_const:1;
     }__attribute__((packed));
 #endif
 
