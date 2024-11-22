@@ -150,11 +150,9 @@ INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
     );
     BINDING(out) = nullptr;
-
     PAYLOAD(Any, out).first.u = ch;
-  #if ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
-  #endif
+    Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
+
     return out;
 }
 

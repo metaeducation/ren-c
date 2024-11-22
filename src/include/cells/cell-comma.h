@@ -56,18 +56,9 @@
 
 INLINE Element* Init_Comma(Init(Element) out) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_COMMA);
-
-    // Although COMMA! carries no data, it is not inert.  To make Any_Inert()
-    // fast, it's in the part of the list of bindable evaluative types.
-    // This means the binding has to be nulled out in the cell to keep the
-    // GC from crashing on it.
-    //
-    BINDING(out) = nullptr;
-
-  #if ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
-    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
-  #endif
+    BINDING(out) = nullptr;  // Is_Bindable() due to niche variadic feed use
+    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
+    Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
 
     return out;
 }

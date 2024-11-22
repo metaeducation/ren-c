@@ -129,15 +129,15 @@ INLINE Element* Init_Handle_Cdata(
     uintptr_t length
 ){
     assert(length != 0);  // can't be 0 unless cfunc (see also malloc(0))
+
     Reset_Cell_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
-  #if ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
-  #endif
+    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
     CELL_HANDLE_CDATA_P(out) = cdata;
     CELL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
+
     return out;
 }
 
@@ -149,9 +149,7 @@ INLINE Element* Init_Handle_Cfunc(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
-  #if ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
-  #endif
+    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
     CELL_HANDLE_CFUNC_P(out) = cfunc;
     CELL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
     return out;
@@ -165,9 +163,7 @@ INLINE Element* Init_Handle_Node(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_DONT_MARK_NODE1
     );
-  #if ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
-  #endif
+    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
     CELL_HANDLE_NODE_P(out) = node;
     CELL_HANDLE_LENGTH_U(out) = 1;
     return out;

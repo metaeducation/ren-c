@@ -79,6 +79,10 @@
     #define DEBUG_CHECK_INIT_SINKS_BUT_NOT_RAISED_OVERWRITES 0
 #endif
 
+#if !defined(ASSIGN_UNUSED_FIELDS)
+    #define ASSIGN_UNUSED_FIELDS 1
+#endif
+
 
 //=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
 //
@@ -1588,4 +1592,43 @@
     #endif
 #else
     #define InitTypemacro(T) T *
+#endif
+
+
+//=//// CORRUPT UNUSED FIELDS /////////////////////////////////////////////=//
+//
+// It would seem that structs--such as the Cell struct for REB_BLANK--which
+// don't use their payloads could just leave them uninitialized...saving time
+// on the assignments.
+//
+// Unfortunately, this is a technically gray area in C.  If you try to
+// copy the memory of that cell (as cells are often copied), it might be a
+// "trap representation".  Reading such representations to copy them...
+// even if not interpreted... is undefined behavior:
+//
+//   https://stackoverflow.com/q/60112841
+//   https://stackoverflow.com/q/33393569/
+//
+// Odds are it would still work fine if you didn't zero them.  However,
+// compilers will warn you--especially at higher optimization levels--if
+// they notice uninitialized values being used in copies.  This is a bad
+// warning to turn off, because it often points out defective code.
+//
+// So to play it safe and be able to keep warnings on, fields are zeroed out.
+// But it's set up as its own independent flag, so that someone looking
+// to squeak out a tiny bit more optimization could turn this off in a
+// release build.  It would save on a few null assignments.
+//
+// (In release builds, the fields are assigned 0 because it's presumably a
+// fast value to assign as an immediate.  In checked builds, they're assigned
+// a corrupt value because it's more likely to cause trouble if accessed.)
+//
+#if ASSIGN_UNUSED_FIELDS
+  #if RUNTIME_CHECKS
+    #define Corrupt_Unused_Field(ref)  Corrupt_If_Debug(ref)
+  #else
+    #define Corrupt_Unused_Field(ref)  ((ref) = 0)
+  #endif
+#else
+    #define Corrupt_Unused_Field(ref)  NOOP
 #endif

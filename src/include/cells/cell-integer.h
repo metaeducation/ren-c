@@ -55,11 +55,10 @@
 
 INLINE Element* Init_Integer_Untracked(Init(Element) out, REBI64 i64) {
     Reset_Cell_Header_Untracked(out, CELL_MASK_INTEGER);
+    Corrupt_Unused_Field(EXTRA(Any, out).corrupt);
     PAYLOAD(Integer, out).i64 = i64;
-  #if ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).corrupt = CORRUPTZERO;
-  #endif
-    return cast(Element*, out);
+
+    return out;
 }
 
 #define Init_Integer(out,i64) \

@@ -439,9 +439,8 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
 
     Byte at_least_4[sizeof(uintptr_t)];
 
-    // This should be initialized with ZERO_UNUSED, which permits optimization
-    // in release builds and more likely to cause an error in checked builds.
-    // See remarks in ZERO_UNUSED_CELL_FIELDS regarding the rationale.
+    // See remarks on ASSIGN_UNUSED_FIELDS regarding this, which you should
+    // use Corrupt_Unused_Field(...) on when compiler warnings are enabled.
     //
     void *corrupt;
 };
