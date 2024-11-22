@@ -222,7 +222,9 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 #include "reb-defs.h"  // basic typedefs like Byte (wraps symbol IDs as SymId)
 
+#include "sys-flags.h"  // byte-order sensitive macros, used by node
 #include "structs/struct-node.h"
+
 #include "mem-pools.h"
 
 #include "tmp-hearts.h"  // HeartEnum and KindEnum (REB_BLOCK, REB_TEXT, etc.)

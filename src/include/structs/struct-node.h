@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -23,7 +23,7 @@
 // In order to implement several "tricks", the first pointer-size slots of
 // many datatypes is a `HeaderUnion` union.  Using byte-order-sensitive
 // macros like FLAG_LEFT_BIT(), the layout of this header is chosen in such a
-// way that not only can Cell pointers be distinguished from Flex pointers,
+// way that not only can Cell pointers be distinguished from Stub pointers,
 // but these can be discerned from a valid UTF-8 string just by looking at the
 // first byte.  That's a safe C operation since reading a `char*` is not
 // subject to "strict aliasing" requirements.
@@ -51,346 +51,6 @@
 // For lack of a better name, the generic type covering the superclass is
 // called a "Node".
 //
-
-
-//=//// Node Base Type: Empty Base Class (or minimal C struct) ////////////=//
-//
-// If we were willing to commit to building with a C++ compiler, we'd want to
-// make the NodeStruct contain the common `header` bits that Stub and Cell
-// would share.  But since we're not, we instead make a less invasive empty
-// base class, that doesn't disrupt the memory layout of derived classes due
-// to the "Empty Base Class Optimization":
-//
-//   https://en.cppreference.com/w/cpp/language/ebo
-//
-// In plain C builds, there's no such thing as "base classes".  So the only
-// way to make a function that can accept either a Flex* or a Value* without
-// knowing which is to use a `void*`.  So the Node is defined as `void`, and
-// the C++ build is trusted to do the more strict type checking.
-//
-// Note: At one time there was an attempt to make Context/Action/Map derive
-// from Node, but not Flex.  Facilitating that through multiple inheritance
-// foils the Empty Base Class optimization, and creates other headaches.  So
-// it was decided that so long as they are Flex, not Array, that's still
-// abstract enough to block most casual misuses.
-//
-#if CPLUSPLUS_11
-    struct RebolNodeStruct {};  // empty base for Stub, Flex, Cell, Level...
-    typedef struct RebolNodeStruct Node;
-#else
-    struct RebolNodeStruct {  // Node is void*, but must define struct for API
-        Byte first;
-    };
-    typedef void Node;  // couldn't pass Flex* to a RebolNodeStruct* in C
-#endif
-
-
-//=////////////////////////////////////////////////////////////////////=///=//
-//
-// BYTE-ORDER SENSITIVE BIT FLAGS & MASKING
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// To facilitate the tricks of the Rebol Node, these macros are purposefully
-// arranging bit flags with respect to the "leftmost" and "rightmost" bytes of
-// the underlying platform, when encoding them into an unsigned integer the
-// size of a platform pointer:
-//
-//     uintptr_t flags = FLAG_LEFT_BIT(0);
-//     Byte byte = *cast(Byte*, &flags);
-//
-// In the code above, the leftmost bit of the flags has been set to 1, giving
-// `ch == 128` on all supported platforms.
-//
-// These can form *compile-time constants*, which can be singly assigned to
-// a uintptr_t in one instruction.  Quantities smaller than a byte can be
-// mixed in on with bytes:
-//
-//    uintptr_t flags
-//        = FLAG_LEFT_BIT(0) | FLAG_LEFT_BIT(1) | FLAG_SECOND_BYTE(13);
-//
-// They can be masked or shifted out efficiently:
-//
-//    unsigned int left = LEFT_N_BITS(flags, 3); // == 6 (binary `110`)
-//    unsigned int right = SECOND_BYTE(flags); // == 13
-//
-// Other tools that might be tried with this all have downsides:
-//
-// * bitfields arranged in a `union` with integers have no layout guarantee
-// * `#pragma pack` is not standard C98 or C99...nor is any #pragma
-// * `char[4]` or `char[8]` targets don't usually assign in one instruction
-//
-
-#define PLATFORM_BITS \
-    (sizeof(uintptr_t) * 8)
-
-#if defined(ENDIAN_BIG)  // Byte w/most significant bit first
-
-    // 63,62,61...or...31,30,20
-    #define FLAG_LEFT_BIT(n) \
-        (u_cast(uintptr_t, 1) << (PLATFORM_BITS - (n) - 1))
-
-    #define FLAG_FIRST_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (24 + (PLATFORM_BITS - 8)))
-
-    #define FLAG_SECOND_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (16 + (PLATFORM_BITS - 8)))
-
-    #define FLAG_THIRD_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (8 + (PLATFORM_BITS - 32)))
-
-    #define FLAG_FOURTH_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (0 + (PLATFORM_BITS - 32)))
-
-#elif defined(ENDIAN_LITTLE)  // Byte w/least significant bit first (e.g. x86)
-
-    // 7,6,..0|15,14..8|..
-    #define FLAG_LEFT_BIT(n) \
-        (u_cast(uintptr_t, 1) << (7 + ((n) / 8) * 8 - (n) % 8))
-
-    #define FLAG_FIRST_BYTE(b)      u_cast(uintptr_t, (b))
-    #define FLAG_SECOND_BYTE(b)     (u_cast(uintptr_t, (b)) << 8)
-    #define FLAG_THIRD_BYTE(b)      (u_cast(uintptr_t, (b)) << 16)
-    #define FLAG_FOURTH_BYTE(b)     (u_cast(uintptr_t, (b)) << 24)
-#else
-    // !!! There are macro hacks which can actually make reasonable guesses
-    // at endianness, and should possibly be used in the config if nothing is
-    // specified explicitly.
-    //
-    // http://stackoverflow.com/a/2100549/211160
-    //
-    #error "ENDIAN_BIG or ENDIAN_LITTLE must be defined"
-    #include <stophere>  // https://stackoverflow.com/a/45661130
-#endif
-
-// Byte alias for `unsigned char` is used below vs. `uint8_t`, due to the
-// strict aliasing exemption for char types (some say uint8_t should count...)
-//
-// To make it possible to use these as the left hand side of assignments,
-// the C build throws away the const information in the macro.  But the
-// C++11 build can use references to accomplish it.  This requires inline
-// functions that cost a little in the checked build for these very commonly
-// used functions... so it's only in the DEBUG_CHECK_CASTS builds.
-//
-// c_cast() is used so that if the input pointer is const, the output will
-// be a `const Byte*` and not a `Byte*`.
-
-#if (! DEBUG_CHECK_CASTS)  // use x_cast and throw away const knowledge
-    #define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]
-    #define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]
-    #define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]
-    #define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
-#else
-    INLINE Byte FIRST_BYTE(const void* p)
-      { return cast(const Byte*, p)[0]; }
-
-    INLINE Byte& FIRST_BYTE(void* p)
-      { return cast(Byte*, p)[0]; }
-
-    INLINE Byte SECOND_BYTE(const void* p)
-      { return cast(const Byte*, p)[1]; }
-
-    INLINE Byte& SECOND_BYTE(void* p)
-      { return cast(Byte*, p)[1]; }
-
-    INLINE Byte THIRD_BYTE(const void* p)
-      { return cast(const Byte*, p)[2]; }
-
-    INLINE Byte& THIRD_BYTE(void *p)
-      { return cast(Byte*, p)[2]; }
-
-    INLINE Byte FOURTH_BYTE(const void* p)
-      { return cast(const Byte*, p)[3]; }
-
-    INLINE Byte& FOURTH_BYTE(void* p)
-      { return cast(Byte*, p)[3]; }
-#endif
-
-
-// There might not seem to be a good reason to keep the uint16_t variant in
-// any particular order.  But if you cast a uintptr_t (or otherwise) to byte
-// and then try to read it back as a uint16_t, compilers see through the
-// cast and complain about strict aliasing.  Building it out of bytes makes
-// these generic (so they work with uint_fast32_t, or uintptr_t, etc.) and
-// as long as there has to be an order, might as well be platform-independent.
-
-INLINE uint16_t FIRST_UINT16(const void* p) {
-    const Byte* bp = c_cast(Byte*, p);
-    return cast(uint16_t, bp[0] << 8) | bp[1];
-}
-
-INLINE uint16_t SECOND_UINT16(const void* p) {
-    const Byte* bp = c_cast(Byte*, p);
-    return cast(uint16_t, bp[2] << 8) | bp[3];
-}
-
-INLINE void SET_FIRST_UINT16(void *p, uint16_t u) {
-    Byte* bp = cast(Byte*, p);
-    bp[0] = u / 256;
-    bp[1] = u % 256;
-}
-
-INLINE void SET_SECOND_UINT16(void* p, uint16_t u) {
-    Byte* bp = cast(Byte*, p);
-    bp[2] = u / 256;
-    bp[3] = u % 256;
-}
-
-INLINE uintptr_t FLAG_FIRST_UINT16(uint16_t u)
-  { return FLAG_FIRST_BYTE(u / 256) | FLAG_SECOND_BYTE(u % 256); }
-
-INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
-  { return FLAG_THIRD_BYTE(u / 256) | FLAG_FOURTH_BYTE(u % 256); }
-
-
-// !!! SECOND_UINT32 should be defined on 64-bit platforms, for any enhanced
-// features that might be taken advantage of when that storage is available.
-
-
-//=////////////////////////////////////////////////////////////////////=///=//
-//
-// TYPE-PUNNING BITFIELD DEBUG HELPERS (GCC LITTLE-ENDIAN ONLY)
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// Disengaged union states are used to give alternative debug views into
-// the header bits.  This is called type punning, and it can't be relied
-// on (endianness, undefined behavior)--purely for GDB watchlists!
-//
-// https://en.wikipedia.org/wiki/Type_punning
-//
-// Because the watchlist often orders the flags alphabetically, name them so
-// it will sort them in order.  Note that these flags can get out of date
-// easily, so sync with %struct-stub.h or %struct-cell.h if they do...and
-// double check against FLAG_BIT_LEFT(xx) numbers if anything seems fishy.
-//
-// Note: Bitfields are notoriously underspecified, and there's no way to do
-// `#if sizeof(struct StubHeaderPun) <= sizeof(uint32_t)`.  Hence
-// the DEBUG_USE_BITFIELD_HEADER_PUNS flag should be set with caution.
-//
-#if DEBUG_USE_BITFIELD_HEADER_PUNS
-    struct StubHeaderPun {
-        int _07_marked:1;
-        int _06_root:1;
-        int _05_managed:1;
-        int _04_cell_always_false:1;
-        int _03_misc_needs_mark:1;
-        int _02_link_needs_mark:1;
-        int _01_unreadable:1;
-        int _00_node_always_true:1;
-
-        unsigned int _08to15_flavor:8;
-
-        int _23_fixed_size:1;
-        int _22_power_of_2:1;
-        int _21_flag_21:1;
-        int _20_flag_20:1;
-        int _19_flag_19:1;
-        int _18_black:1;
-        int _17_dynamic:1;
-        int _16_info_node_needs_mark:1;
-
-        int _31_subclass:1;
-        int _30_subclass:1;
-        int _29_subclass:1;
-        int _28_subclass:1;
-        int _27_subclass:1;
-        int _26_subclass:1;
-        int _25_subclass:1;
-        int _24_subclass:1;
-    }__attribute__((packed));
-
-    struct InfoHeaderPun {
-        int _07_flag_07:1;
-        int _06_frozen_shallow:1;
-        int _05_hold:1;
-        int _04_frozen_deep:1;
-        int _03_protected:1;
-        int _02_auto_locked:1;
-        int _01_flag_01:1;
-        int _00_node_always_false:1;
-
-        unsigned int _08to15_used:8;
-
-        unsigned int _16to31_symid_if_sym:8;
-    }__attribute__((packed));
-
-    struct CellHeaderPun {
-        int _07_marked:1;
-        int _06_root:1;
-        int _05_managed:1;
-        int _04_cell_always_true:1;
-        int _03_dont_mark_node2:1;
-        int _02_dont_mark_node1:1;
-        int _01_unreadable:1;
-        int _00_node_always_true:1;
-
-        unsigned int _08to15_heart_byte:8;
-
-        unsigned int _16to23_quote_byte:8;
-
-        int _31_type_specific_b:1;
-        int _30_type_specific_a:1;
-        int _29_newline_before:1;
-        int _28_note:1;
-        int _27_protected:1;
-        int _26_cell:1;
-        int _25_cell:1;
-        int _24_const:1;
-    }__attribute__((packed));
-#endif
-
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  NODE HEADER a.k.a `union HeaderUnion` (for Cell and Stub uses)
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// Assignments to bits and fields in the header are done through a native
-// pointer-sized integer...while still being able to control the underlying
-// order of those bits in memory.  See FLAG_LEFT_BIT() in %c-enhanced.h for
-// how this is achieved.
-//
-// This control allows the leftmost byte of a Rebol header (the one you'd
-// get by casting Value* to an unsigned char*) to always start with the bit
-// pattern `10`.  This pattern corresponds to what UTF-8 calls "continuation
-// bytes", which may never legally start a UTF-8 string:
-//
-// https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
-//
-
-union HeaderUnion {
-    //
-    // unsigned integer that's the size of a platform pointer (e.g. 32-bits on
-    // 32 bit platforms and 64-bits on 64 bit machines).  See macros like
-    // FLAG_LEFT_BIT() for how these bits are laid out in a special way.
-    //
-    // !!! Future application of the 32 unused header bits on 64-bit machines
-    // might add some kind of optimization or instrumentation.
-    //
-    // !!! uintptr_t may not be the fastest type for operating on 32-bits.
-    // But using a `uint_fast32_t` would prohibit 64-bit platforms from
-    // exploiting the additional bit space (due to strict aliasing).
-    //
-    uintptr_t bits;
-
-    // !!! For some reason, at least on 64-bit Ubuntu, TCC will bloat the
-    // header structure to be 16 bytes instead of 8 if you put a 4 byte char
-    // array in the header.  There's probably a workaround, but for now skip
-    // this debugging pun if __TINYC__ is defined.
-    //
-  #if DEBUG_USE_UNION_PUNS && !defined(__TINYC__)
-    unsigned char bytes_pun[4];
-    char chars_pun[4];
-
-    #if DEBUG_USE_BITFIELD_HEADER_PUNS
-        struct StubHeaderPun stub_pun;
-        struct CellHeaderPun cell_pun;
-        struct InfoHeaderPun info_pun;
-    #endif
-  #endif
-};
 
 
 //=//// NODE_FLAG_NODE (leftmost bit) /////////////////////////////////////=//
@@ -426,7 +86,7 @@ union HeaderUnion {
 
 //=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (third/fourth-leftmost bit) ////=//
 //
-// Both Cell* and Flex* have two bits in their NODE_BYTE which can be called
+// Both Cell* and Stub* have two bits in their NODE_BYTE which can be called
 // out for attention from the GC.  Though these bits are scarce, sacrificing
 // them means not needing to do a switch() on the REB_TYPE of the cell to
 // know how to mark them.
@@ -449,7 +109,7 @@ union HeaderUnion {
 // If this bit is set in the header, it indicates the slot the header is for
 // is `sizeof(Cell)`.
 //
-// In checked builds, it provides some safety for all value writing routines.
+// In checked builds, it provides some safety for all cell writing routines.
 // In the release build, it distinguishes "Pairing" Nodes (holders for two
 // cells in the same Pool as ordinary Stubs) from an ordinary Flex Stub.
 // Stubs have the cell bit clear, while Pairings in the STUB_POOL have it set.
@@ -554,3 +214,181 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
 #define FREE_POOLUNIT_BYTE 0xF6
 
 #define NODE_BYTE_RESERVED 0xF5
+
+
+//=//// Node Base Type: Empty Base Class (or minimal C struct) ////////////=//
+//
+// If we were willing to commit to building with a C++ compiler, we'd want to
+// make the NodeStruct contain the common `header` bits that Stub and Cell
+// would share.  But since we're not, we instead make a less invasive empty
+// base class, that doesn't disrupt the memory layout of derived classes due
+// to the "Empty Base Class Optimization":
+//
+//   https://en.cppreference.com/w/cpp/language/ebo
+//
+// In plain C builds, there's no such thing as "base classes".  So the only
+// way to make a function that can accept either a Flex* or a Value* without
+// knowing which is to use a `void*`.  So the Node is defined as `void`, and
+// the C++ build is trusted to do the more strict type checking.
+//
+// Note: At one time there was an attempt to make Context/Action/Map derive
+// from Node, but not Flex.  Facilitating that through multiple inheritance
+// foils the Empty Base Class optimization, and creates other headaches.  So
+// it was decided that so long as they are Flex, not Array, that's still
+// abstract enough to block most casual misuses.
+//
+#if CPLUSPLUS_11
+    struct RebolNodeStruct {};  // empty base for Stub, Flex, Cell, Level...
+    typedef struct RebolNodeStruct Node;
+#else
+    struct RebolNodeStruct {  // Node is void*, but must define struct for API
+        Byte first;
+    };
+    typedef void Node;  // couldn't pass Flex* to a RebolNodeStruct* in C
+#endif
+
+
+//=////////////////////////////////////////////////////////////////////=///=//
+//
+// TYPE-PUNNING BITFIELD DEBUG HELPERS (GCC LITTLE-ENDIAN ONLY)
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Disengaged union states are used to give alternative debug views into
+// the header bits.  This is called type punning, and it can't be relied
+// on (endianness, undefined behavior)--purely for GDB watchlists!
+//
+// https://en.wikipedia.org/wiki/Type_punning
+//
+// Because the watchlist often orders the flags alphabetically, name them so
+// it will sort them in order.  Note that these flags can get out of date
+// easily, so sync with %struct-stub.h or %struct-cell.h if they do...and
+// double check against FLAG_BIT_LEFT(xx) numbers if anything seems fishy.
+//
+// Note: Bitfields are notoriously underspecified, and there's no way to do
+// `#if sizeof(struct StubHeaderPun) <= sizeof(uint32_t)`.  Hence
+// the DEBUG_USE_BITFIELD_HEADER_PUNS flag should be set with caution.
+//
+#if DEBUG_USE_BITFIELD_HEADER_PUNS
+    struct StubHeaderPun {
+        int _07_marked:1;
+        int _06_root:1;
+        int _05_managed:1;
+        int _04_cell_always_false:1;
+        int _03_misc_needs_mark:1;
+        int _02_link_needs_mark:1;
+        int _01_unreadable:1;
+        int _00_node_always_true:1;
+
+        unsigned int _08to15_flavor:8;
+
+        int _23_fixed_size:1;
+        int _22_power_of_2:1;
+        int _21_flag_21:1;
+        int _20_flag_20:1;
+        int _19_flag_19:1;
+        int _18_black:1;
+        int _17_dynamic:1;
+        int _16_info_node_needs_mark:1;
+
+        int _31_subclass:1;
+        int _30_subclass:1;
+        int _29_subclass:1;
+        int _28_subclass:1;
+        int _27_subclass:1;
+        int _26_subclass:1;
+        int _25_subclass:1;
+        int _24_subclass:1;
+    }__attribute__((packed));
+
+    struct InfoHeaderPun {
+        int _07_flag_07:1;
+        int _06_frozen_shallow:1;
+        int _05_hold:1;
+        int _04_frozen_deep:1;
+        int _03_protected:1;
+        int _02_auto_locked:1;
+        int _01_flag_01:1;
+        int _00_node_always_false:1;
+
+        unsigned int _08to15_used:8;
+
+        unsigned int _16to31_symid_if_sym:8;
+    }__attribute__((packed));
+
+    struct CellHeaderPun {
+        int _07_marked:1;
+        int _06_root:1;
+        int _05_managed:1;
+        int _04_cell_always_true:1;
+        int _03_dont_mark_node2:1;
+        int _02_dont_mark_node1:1;
+        int _01_unreadable:1;
+        int _00_node_always_true:1;
+
+        unsigned int _08to15_heart_byte:8;
+
+        unsigned int _16to23_quote_byte:8;
+
+        int _31_type_specific_b:1;
+        int _30_type_specific_a:1;
+        int _29_newline_before:1;
+        int _28_note:1;
+        int _27_protected:1;
+        int _26_flag_26:1;
+        int _25_flag_25:1;
+        int _24_const:1;
+    }__attribute__((packed));
+#endif
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
+//  NODE HEADER a.k.a `union HeaderUnion` (for Cell and Stub uses)
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Assignments to bits and fields in the header are done through a native
+// pointer-sized integer...while still being able to control the underlying
+// order of those bits in memory.  See FLAG_LEFT_BIT() in %c-enhanced.h for
+// how this is achieved.
+//
+// This control allows the leftmost byte of a Rebol header (the one you'd
+// get by casting Value* to an unsigned char*) to always start with the bit
+// pattern `10`.  This pattern corresponds to what UTF-8 calls "continuation
+// bytes", which may never legally start a UTF-8 string:
+//
+// https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
+//
+
+union HeaderUnion {
+    //
+    // unsigned integer that's the size of a platform pointer (e.g. 32-bits on
+    // 32 bit platforms and 64-bits on 64 bit machines).  See macros like
+    // FLAG_LEFT_BIT() for how these bits are laid out in a special way.
+    //
+    // !!! Future application of the 32 unused header bits on 64-bit machines
+    // might add some kind of optimization or instrumentation.
+    //
+    // !!! uintptr_t may not be the fastest type for operating on 32-bits.
+    // But using a `uint_fast32_t` would prohibit 64-bit platforms from
+    // exploiting the additional bit space (due to strict aliasing).
+    //
+    uintptr_t bits;
+
+    // !!! For some reason, at least on 64-bit Ubuntu, TCC will bloat the
+    // header structure to be 16 bytes instead of 8 if you put a 4 byte char
+    // array in the header.  There's probably a workaround, but for now skip
+    // this debugging pun if __TINYC__ is defined.
+    //
+  #if DEBUG_USE_UNION_PUNS && !defined(__TINYC__)
+    unsigned char bytes_pun[4];
+    char chars_pun[4];
+
+    #if DEBUG_USE_BITFIELD_HEADER_PUNS
+        struct StubHeaderPun stub_pun;
+        struct CellHeaderPun cell_pun;
+        struct InfoHeaderPun info_pun;
+    #endif
+  #endif
+};
