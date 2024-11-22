@@ -30,7 +30,7 @@
     ;
     ;        specialize append/ [value: [d e]]  ; leave series unspecialized
     ;
-    /pointfree*: func* [
+    /pointfree*: func [
         "Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming"
 
         return: [action?]
@@ -125,7 +125,7 @@
     ;
     ; Hopefully you see some of the ambition, here--what I am trying to do.
     ;
-    pf: infix func* [
+    pf: infix func [
         "Declare action by example instantiation, missing args unspecialized"
 
         return: [action?]

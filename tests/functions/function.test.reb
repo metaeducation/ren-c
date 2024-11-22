@@ -280,10 +280,11 @@
 ; Argument passing of "escapable (soft) literal arguments"
 [
     (
+        got: null
+
         /soft: func [@(x) <with> got] [got: :x, return 1000]
         /Lsoft: infix soft/
 
-        got: null
         /test: lambda [expr [block!]] [
             got: '~junk~
             compose $() [(eval expr), (:got)]

@@ -139,7 +139,7 @@ Bounce Func_Dispatcher(Level* const L)
     node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(SPARE) = L->varlist;
 
-    /* Enable_Dispatcher_Catching_Of_Throws(L); */  // RETURN uses UNWIND [1]
+    unnecessary(Enable_Dispatcher_Catching_Of_Throws(L));  // RETURN unwind [1]
 
     return CONTINUE(OUT, stable_SPARE);  // body result is discarded
 
@@ -315,7 +315,7 @@ Phase* Make_Interpreted_Action_May_Fail(
 
 
 //
-//  /func*: native [
+//  /function: native [
 //
 //  "Defines an ACTION! with given spec and body"
 //
@@ -326,9 +326,9 @@ Phase* Make_Interpreted_Action_May_Fail(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(func_p)
+DECLARE_NATIVE(function)
 {
-    INCLUDE_PARAMS_OF_FUNC_P;
+    INCLUDE_PARAMS_OF_FUNCTION;
 
     Element* spec = cast(Element*, ARG(spec));
     Element* body = cast(Element*, ARG(body));

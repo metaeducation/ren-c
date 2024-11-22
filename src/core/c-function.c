@@ -121,10 +121,17 @@ void Push_Keys_And_Holes_May_Fail(
 
     enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
 
-    const Element* tail;
-    const Element* item = Cell_List_At(&tail, spec);
+    DECLARE_ATOM (eval);
+    Level* L = Make_Level_At(
+        &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+    );
+    Push_Level_Erase_Out_If_State_0(eval, L);
 
-    for (; item != tail; ++item) {
+    for (; Not_Level_At_End(L); Fetch_Next_In_Feed(L->feed)) {
+
+      loop_dont_fetch_next: ;
+
+        const Element* item = At_Level(L);
 
   //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <with> etc. ///////////////////=//
 
@@ -143,6 +150,79 @@ void Push_Keys_And_Holes_May_Fail(
                 fail (Error_Bad_Func_Def_Raw(item));
         }
 
+  //=//// CHECK BINDING FOR <with> WORD!s /////////////////////////////////=//
+
+    // The higher-level function generator that implemented <static> and <in>
+    // was removed, in favor of BIND operations on the body as a more generic
+    // answer that could apply in arbitrary situations.  But there were some
+    // cases of <with> hanging around that were non-useless, though they were
+    // only comments.
+    //
+    // Enforce that they're at least WORD!s that are bound.
+
+    if (mode == SPEC_MODE_WITH) {
+        if (not Is_Word(item))
+            fail ("<with> must be followed by WORD!s in FUNCTION spec");
+
+        if (not Lookup_Word(item, Cell_Binding(spec)))
+            fail (Error_Not_Bound_Raw(item));
+
+        continue;
+    }
+
+  //=//// ALLOW <local> WITH PLAIN WORD, POSSIBLE GROUP! INITIALIZER //////=//
+
+    // The higher-level function generator that implemented <local> default
+    // was removed, but this means that it can actually be done efficiently
+    // because the frame cells can be set with the value.
+
+    if (mode == SPEC_MODE_LOCAL) {
+        const Symbol* symbol;
+        bool must_be_action;
+        if (Is_Word(item)) {
+            symbol = Cell_Word_Symbol(item);
+            must_be_action = false;
+        }
+        else if (
+            Is_Path(item) and
+            LEADING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(item)
+        ){
+            symbol = Cell_Word_Symbol(item);
+            must_be_action = true;
+        }
+        else
+            fail (Error_Bad_Func_Def_Raw(item));
+
+        Init_Word(PUSH(), symbol);
+
+        Fetch_Next_In_Feed(L->feed);
+
+        if (Is_Level_At_End(L)) {
+            Init_Nothing(PUSH());  // default initializer for local
+            break;
+        }
+
+        if (not Is_Group(At_Level(L))) {
+            Init_Nothing(PUSH());
+            goto loop_dont_fetch_next;
+        }
+
+        if (Trampoline_With_Top_As_Root_Throws())  // run the group
+            fail (Error_No_Catch_For_Throw(L));
+
+        Decay_If_Unstable(eval);
+
+        if (must_be_action and not Is_Action(eval))
+            fail ("Assignment using /FOO must be an action");
+
+        Move_Cell(PUSH(), cast(Value*, eval));
+
+        if (Is_Level_At_End(L))
+            break;
+
+        goto loop_dont_fetch_next;
+    }
+
   //=//// TEXT! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////////=//
 
     // 1. Consider `[<with> some-extern "description of that extern"]` to be
@@ -150,9 +230,6 @@ void Push_Keys_And_Holes_May_Fail(
     //    the information for <with> or <local>)
 
         if (Is_Text(item)) {
-            if (mode == SPEC_MODE_LOCAL or mode == SPEC_MODE_WITH)
-                continue;  // treat as a comment [1]
-
             if (not (*flags & MKF_PARAMETER_SEEN)) {
                 assert(mode != SPEC_MODE_PUSHED);  // none seen, none pushed!
                 // no keys seen yet, act as overall description
@@ -392,6 +469,8 @@ void Push_Keys_And_Holes_May_Fail(
         else
             assert(Is_Hole(param_1));
     }
+
+    Drop_Level_Unbalanced(L);
 
     *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
 }

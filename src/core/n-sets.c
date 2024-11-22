@@ -512,7 +512,7 @@ DECLARE_NATIVE(exclude)
 //
 //      return: [any-list? any-string? blob! bitset!]
 //      series [any-list? any-string? blob! bitset!]
-//      <local> dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
+//      :dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
 //      :case "Use case-sensitive comparison (except bitsets)"
 //      :skip "Treat the series as records of fixed size"
 //          [integer!]

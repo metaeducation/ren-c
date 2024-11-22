@@ -79,11 +79,7 @@ comment-out-includes: [
 
 /fix-gen_uuid-c: func [
     text [text!]
-    <with>
-    exclude-headers
-    comment-out-includes
-    add-config-h
-    space
+    <with> exclude-headers comment-out-includes add-config-h space
 ][
     exclude-headers: [
         -{"all-io.h"}-

@@ -297,9 +297,6 @@ export /make-emitter: func [
     file "Filename to be emitted... .r/.reb/.c/.h/.inc files supported"
         [file!]
     :temporary "DO-NOT-EDIT warning (automatic if file begins with 'tmp-')"
-
-    <with>
-    system  ; The `System:` SET-WORD! below overrides the global for access
 ][
     if not let by: system.script.header.file [
         fail [
@@ -322,7 +319,7 @@ export /make-emitter: func [
 
     let is-js: did parse3:match stem [thru ".js" <end>]
 
-    let e: make object! compose1 [
+    let e: construct compose1 [
         ;
         ; NOTE: %make-headers.r directly manipulates the buffer, because it
         ; wishes to merge #ifdef and #endif cases
@@ -331,55 +328,53 @@ export /make-emitter: func [
         ;
         buf-emit: make text! 32000
 
-        file: (file)
+        file: (file)  ; need COMPOSE1 for bootstrap
         title: (title)
 
-        /emit: func [
+        /emit: method [
             "Write data to the emitter using CSCAPE templating (see HELP)"
 
             return: [~]
             template [text! char?! block!]
-            <with> buf-emit
         ][
             case [  ; no switch:type in bootstrap
                 text? template [
-                    append buf-emit trim:auto copy template
+                    append .buf-emit trim:auto copy template
                 ]
                 char? template [
-                    append buf-emit template
+                    append .buf-emit template
                 ]
             ] else [
-                append buf-emit cscape template
+                append .buf-emit cscape template
             ]
         ]
 
-        /write-emitted: func [
+        /write-emitted: method [
             return: [~]
             :tabbed
-            <with> file buf-emit
         ][
-            if newline != last buf-emit [
-                probe skip (tail-of buf-emit) -100
+            if newline != last .buf-emit [
+                probe skip (tail-of .buf-emit) -100
                 fail "WRITE-EMITTED needs NEWLINE as last character in buffer"
             ]
 
-            if let tab-pos: find buf-emit tab [
+            if let tab-pos: find .buf-emit tab [
                 probe skip tab-pos -100
                 fail "tab character passed to emit"
             ]
 
             if tabbed [
-                replace buf-emit spaced-tab tab
+                replace .buf-emit spaced-tab tab
             ]
 
-            print ["WRITING =>" file]
+            print ["WRITING =>" .file]
 
-            write-if-changed file buf-emit
+            write-if-changed .file .buf-emit
 
             ; For clarity/simplicity, emitters are not reused.
             ;
-            file: ~
-            buf-emit: ~
+            .file: ~
+            .buf-emit: ~
         ]
     ]
 

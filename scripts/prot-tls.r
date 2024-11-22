@@ -1030,11 +1030,6 @@ bind construct [
 
     ctx [object!]
     proto [object!]
-
-    ; The structure has a field called LENGTH, so when an ACTION! is used
-    ; that field is picked up.
-    ;
-    <with> length
 ]
 bind construct [
     message-types: [

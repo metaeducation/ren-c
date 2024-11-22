@@ -402,7 +402,7 @@ bind construct [
 ][
     let out: null
     let /keep: specialize (  ; SPECIALIZE to hide series argument
-        enclose append/ lambda [  ; Derive from APPEND for /LINE /DUP
+        enclose append/ lambda [  ; Derive from APPEND for :LINE :DUP
             f [frame!]
             <with> out
         ][

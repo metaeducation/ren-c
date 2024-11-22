@@ -17,7 +17,7 @@ REBOL [
     }--
 ]
 
-/assert: func* [
+/assert: func [
     "Ensure conditions are branch triggers if hooked by debugging"
 
     return: [~[]~]
@@ -60,159 +60,6 @@ quit: ~<QUIT used when no [DO IMPORT CONSOLE] is providing it>~
 yield: ~<YIELD used when no generator or yielder is providing it>~
 
 /catch: specialize catch*/ [name: 'throw]
-
-/func: func* [
-    "Augment action with <in>, <with> features"
-
-    return: [action?]
-    spec "Help string (opt) followed by arg words (and opt type and string)"
-        [block!]
-    body "The body block of the function"
-        [<const> block!]
-    <local>
-        new-spec var loc other
-        new-body defaulters with-return
-][
-    ; R3-Alpha offered features on FUNCTION (a complex usermode construct)
-    ; that the simpler/faster FUNC did not have.  Ren-C seeks to make FUNC and
-    ; FUNCTION synonyms:
-    ;
-    ; https://forum.rebol.info/t/abbreviations-as-synonyms/1211
-    ;
-    ; To get a little ways along this path, there needs to be a way for FUNC
-    ; to get features like <with> which are easier to write in usermode.
-    ; So the lower-level FUNC* is implemented as a native, and this wrapper
-    ; does a fast shortcut to check to see if the spec has no tags...and if
-    ; not, it quickly falls through to that fast implementation.
-    ;
-    ; Note: Long term, FUNC could be a native which does this check in raw
-    ; C and then calls out to usermode if there are tags.  That would be even
-    ; faster than this usermode prelude.
-    ;
-    all [
-        not find spec tag?/
-        return func* spec body
-    ]
-
-    ; Rather than MAKE BLOCK! LENGTH OF SPEC here, we copy the spec and clear
-    ; it.  This costs slightly more, but it means we inherit the file and line
-    ; number of the original spec...so when we pass NEW-SPEC to FUNC or PROC
-    ; it uses that to give the FILE OF and LINE OF the function itself.
-    ;
-    ; !!! General API control to set the file and line on blocks is another
-    ; possibility, but since it's so new, we'd rather get experience first.
-    ;
-    new-spec: clear copy spec  ; also inherits binding
-
-    new-body: null
-    defaulters: null
-    var: #dummy  ; enter PARSE with truthy state (gets overwritten)
-    loc: null
-    with-return: null
-
-    parse3 spec [opt some [
-        :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
-            var: [
-                &set-word? | &get-word? | &any-word? | &refinement?
-                | quoted!
-                | the-group!  ; new soft-literal format
-            ] (
-                append new-spec var
-            )
-            |
-            other: block! (
-                append new-spec other  ; data type blocks
-            )
-            |
-            other: across some text! (
-                append new-spec spaced other  ; spec notes
-            )
-        ] else [
-            'bypass
-        ])
-    |
-        other: group! (
-            if not var [
-                fail [
-                    ; <where> spec
-                    ; <near> other
-                    "Default value not paired with argument:" (mold other)
-                ]
-            ]
-            defaulters: default [inside body copy '[]]
-            append defaulters spread compose $() '[
-                (var): default (meta eval inside spec other)
-            ]
-        )
-    |
-        (var: null)  ; everything below this line resets var
-        bypass  ; failing here means rolling over to next rule
-    |
-        '<local> (append new-spec <local>)
-        opt some [var: word! other: opt group! (
-            append new-spec var
-            if other [
-                defaulters: default [inside body copy '[]]
-                append defaulters spread compose $() '[  ; always sets
-                    (var): (meta eval inside spec other)
-                ]
-            ]
-        )]
-        (var: null)  ; don't consider further GROUP!s or variables
-    |
-        '<in> (
-            new-body: default [
-                copy:deep body
-            ]
-        )
-        opt some [
-            other: [object! | word! | tuple!] (
-                if not object? other [
-                    other: ensure [any-context?] get inside spec other
-                ]
-                new-body: bind other new-body
-            )
-        ]
-    |
-        '<with> opt some [
-            other: [word! | path!] (
-                ;
-                ; Definitional returns need to be signaled even if FUNC, so
-                ; the FUNC* doesn't automatically generate one.
-                ;
-                if other = 'return [with-return: '[<with> return]]
-            )
-        |
-            text!  ; skip over as commentary
-        ]
-    |
-        <end> accept (~)
-    |
-        other: <here> (
-            fail [
-                ; <where> spec
-                ; <near> other
-                "Invalid spec item:" @(other.1)
-                "in spec" @spec
-            ]
-        )
-    ]]
-
-    append new-spec maybe with-return  ; if FUNC* suppresses return generation
-
-    ; The constness of the body parameter influences whether FUNC* will allow
-    ; mutations of the created function body or not.  It's disallowed by
-    ; default, but TWEAK can be used to create variations e.g. a compatible
-    ; implementation with Rebol2's FUNC.
-    ;
-    if const? body [new-body: const maybe new-body]
-
-    return func* new-spec either defaulters [
-        append defaulters as group! bindable any [new-body body]
-    ][
-        any [new-body body]
-    ]
-]
 
 
 ; Simple "divider-style" thing for remarks.  At a certain verbosity level,
@@ -717,13 +564,13 @@ bind construct [
 <|: infix:postpone eval-all/
 
 
-; METHOD is a near-synonym for FUNC, with the difference that it marks the
+; METHOD is a near-synonym for FUNCTION, with the difference that it marks the
 ; produced action as being "uncoupled".  This means that when TUPLE! dispatch
 ; occurs, it will poke a pointer to the object that the function was
 ; dispatched from into the action's cell.  This enables the `.field` notation,
 ; which looks up the coupling in the virtual bind chain.
 ;
-/method: cascade [func/ uncouple/]
+/method: cascade [function/ uncouple/]
 
 
 ; It's a bit odd that `foo: accessor does [...]` will evaluate to nothing.

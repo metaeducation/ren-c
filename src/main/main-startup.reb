@@ -209,9 +209,6 @@ boot-banner: [
     return: [any-value?] "!!! Narrow down return type?"
     argv "Raw command line argument block received by main() as TEXT!s"
         [block!]
-    <with>
-    main-startup  ; unset when finished with itself
-    about usage license  ; exported to lib, see notes
 ]
 bind construct [
     o: system.options  ; shorthand since options are often read or written
@@ -259,8 +256,8 @@ bind construct [
         return: []
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! type-block!]
-        <with> instruction prior
-        <local> return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
+        <with> instruction
+        <local> /return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
     ][
         switch state [
             <die> [

@@ -562,7 +562,10 @@ get-path!: func3 [] [
 ][
     out: null
     keeper: specialize (  ; SPECIALIZE to remove series argument
-        enclose 'append func3 [f [frame!] <with> out] [  ; gets :LINE, :DUP
+        enclose 'append func3 [  ; gets :LINE, :DUP
+            f [frame!]
+            <with> out
+        ][
             assert [not action? get $f.value]
             if void? f.value [return void]  ; doesn't "count" as collected
 

@@ -515,8 +515,8 @@ bind construct [
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! type-block! meta-group! handle!]
-        <with> instruction prior
-        <local> return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
+        <with> instruction
+        <local> /return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
     ][
         switch state [
             <prompt> [
