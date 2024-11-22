@@ -202,13 +202,13 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     Heart heart,
     Flags flag
 ){
-    assert(flag == CELL_MASK_0 or flag == CELL_FLAG_LEADING_BLANK);
+    assert(flag == CELL_MASK_ERASED_0 or flag == CELL_FLAG_LEADING_BLANK);
     assert(Any_Sequence_Kind(heart));
 
     Option(Error*) error = Trap_Check_Sequence_Element(
         heart,
         e,
-        flag == CELL_MASK_0  // 0 means no leading blank, item is "head"
+        flag == CELL_MASK_ERASED_0  // 0 means no leading blank, item is "head"
     );
     if (error)
         return error;
@@ -386,7 +386,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     else if (Is_Blank(second)) {
         Copy_Cell(out, first);
         return Trap_Blank_Head_Or_Tail_Sequencify(  // optimize `a/` or `a:`
-            out, heart, CELL_MASK_0
+            out, heart, CELL_MASK_ERASED_0
         );
     }
 

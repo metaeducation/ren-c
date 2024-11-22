@@ -442,7 +442,7 @@ Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
         BINDING(arg) = Make_Use_Core(
             Varlist_Archetype(error),
             Cell_List_Binding(arg),
-            CELL_MASK_0
+            CELL_MASK_ERASED_0
         );
 
         DECLARE_ATOM (evaluated);

@@ -209,7 +209,7 @@ INLINE Cell* Move_Cell_Untracked(
 //    without doing so consciously, but that doesn't apply when things are
 //    being moved.  We know atoms shouldn't have "persistent bits", but
 //    Erase_Cell() double checks that...we skip the check here, and by just
-//    overwriting with CELL_MASK_0 we don't get the raised error warning.
+//    overwriting with CELL_MASK_ERASED_0 we stop the raised error warning.
 //
 INLINE Atom* Move_Atom_Untracked(
     Atom* out,
@@ -218,7 +218,7 @@ INLINE Atom* Move_Atom_Untracked(
 ){
     Copy_Cell_Untracked(out, a, copy_mask);  // Move_Cell() adds track to `out`
     unnecessary(Suppress_Raised_Warning_If_Debug_Untracked(a));  // [1]
-    a->header.bits = CELL_MASK_0;  // atom cells can't have persistent bits
+    a->header.bits = CELL_MASK_ERASED_0;  // atom cells have no persistent bits
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     a->file = out->file;

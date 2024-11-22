@@ -552,7 +552,7 @@ DECLARE_NATIVE(wrap_p)
     /* BINDING(list) = Make_Use_Core(  // what should do what? [1]
         Varlist_Archetype(context),
         Cell_List_Binding(list),
-        CELL_MASK_0
+        CELL_MASK_ERASED_0
     );
     return COPY(list); */
 

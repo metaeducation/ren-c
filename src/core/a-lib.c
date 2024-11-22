@@ -1217,7 +1217,7 @@ RebolValue* API_rebValue(
 ){
     ENTER_API;
 
-    Value* result = Alloc_Value_Core(CELL_MASK_0);
+    Value* result = Alloc_Value_Core(CELL_MASK_ERASED_0);
     Run_Va_Decay_May_Fail_Calls_Va_End(binding_ref, result, p, vaptr);
 
     if (Is_Nulled(result)) {
@@ -1411,7 +1411,7 @@ RebolValue* API_rebMeta(
 ){
     ENTER_API;
 
-    Value* v = Alloc_Value_Core(CELL_MASK_0);
+    Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
     bool interruptible = false;
     if (Run_Va_Throws(
         binding_ref,
@@ -1442,7 +1442,7 @@ RebolValue* API_rebEntrap(
 ){
     ENTER_API;
 
-    Value* v = Alloc_Value_Core(CELL_MASK_0);
+    Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
     bool interruptible = false;
     if (Run_Va_Throws(
         binding_ref,
@@ -1479,7 +1479,7 @@ RebolValue* API_rebEnrescue(
 ){
     ENTER_API;
 
-    Value* v = Alloc_Value_Core(CELL_MASK_0);
+    Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
     bool interruptible = false;
     if (Run_Va_Throws(
         binding_ref,
@@ -1517,7 +1517,7 @@ RebolValue* API_rebEnrescueInterruptible(
 ){
     ENTER_API;
 
-    Value* v = Alloc_Value_Core(CELL_MASK_0);
+    Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
     bool interruptible = true;
     if (Run_Va_Throws(
         binding_ref,

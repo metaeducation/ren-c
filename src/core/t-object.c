@@ -494,7 +494,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
         BINDING(arg) = Make_Use_Core(
             Varlist_Archetype(ctx),
             Cell_List_Binding(arg),
-            CELL_MASK_0
+            CELL_MASK_ERASED_0
         );
 
         bool threw = Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED);
@@ -998,7 +998,7 @@ DECLARE_GENERICS(Context)
             BINDING(def) = Make_Use_Core(
                 Varlist_Archetype(derived),
                 Cell_List_Binding(def),
-                CELL_MASK_0
+                CELL_MASK_ERASED_0
             );
 
             DECLARE_ATOM (dummy);

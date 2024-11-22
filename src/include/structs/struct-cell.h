@@ -78,11 +78,6 @@
 typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 
-#define CELL_MASK_0 0  // Erased mask--initable, but not readable or writable
-
-#define CELL_MASK_NO_NODES \
-    (CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2)
-
 
 //=//// BITS 0-7: NODE FLAGS //////////////////////////////////////////////=//
 //
@@ -150,6 +145,9 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //
 #define CELL_FLAG_DONT_MARK_NODE2 \
     NODE_FLAG_GC_TWO
+
+#define CELL_MASK_NO_NODES \
+    (CELL_FLAG_DONT_MARK_NODE1 | CELL_FLAG_DONT_MARK_NODE2)
 
 
 //=//// BITS 8-15: CELL LAYOUT TYPE BYTE ("HEART") ////////////////////////=//
@@ -355,42 +353,6 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     FLAG_LEFT_BIT(31)
 
 #define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC_B  // ANY-SEQUENCE?
-
-
-//=//// CELL RESET AND COPY MASKS /////////////////////////////////////////=//
-//
-// It's important for operations that write to cells not to overwrite *all*
-// the bits in the header, because some of those bits give information about
-// the nature of the cell's storage and lifetime.  Similarly, if bits are
-// being copied from one cell to another, those header bits must be masked
-// out to avoid corrupting the information in the target cell.
-//
-// (!!! In the future, the 64-bit build may use more flags for optimization
-// purposes, though not hinge core functionality on those extra 32 bits.)
-//
-// Additionally, operations that copy need to not copy any of those bits that
-// are owned by the cell, plus additional bits that would be reset in the
-// cell if overwritten but not copied.
-//
-// Note that this will clear NODE_FLAG_UNREADABLE, so it should be checked
-// before resetting.
-//
-// Notice that NODE_FLAG_MARKED is "sticky"; the mark persists with the cell.
-// That makes it good for annotating when a frame field is hidden, such as
-// when it is local...because you don't want a function assigning a local to
-// make it suddenly visible in views of that frame that shouldn't have
-// access to the implementation detail phase.  CELL_FLAG_NOTE is a generic
-// and more transient flag.
-//
-
-#define CELL_MASK_PERSIST \
-    (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED)
-
-#define CELL_MASK_COPY \
-    ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_PROTECTED)
-
-#define CELL_MASK_ALL \
-    ~cast(Flags, 0)
 
 
 //=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//
@@ -724,42 +686,9 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     typedef struct RebolValueStruct Atom;
     typedef struct RebolValueStruct Element;
 #else
-    struct Atom : public Cell  // can hold unstable antiforms
-    {
-      #if RUNTIME_CHECKS
-        Atom() = default;
-        ~Atom() {
-            assert(
-                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
-                or this->header.bits == CELL_MASK_0
-            );
-        }
-      #endif
-    };
-
-    struct RebolValueStruct : public Atom {  // can't hold unstable antiforms
-      #if RUNTIME_CHECKS
-        RebolValueStruct () = default;
-        ~RebolValueStruct () {
-            assert(
-                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
-                or this->header.bits == CELL_MASK_0
-            );
-        }
-      #endif
-    };
-
-    struct Element : public RebolValueStruct {  // can't hold antiforms at all
-      #if RUNTIME_CHECKS
-        Element () = default;
-        ~Element () {
-            assert(
-                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
-                or this->header.bits == CELL_MASK_0
-            );
-        }
-      #endif
-    };
+    struct Atom : public Cell {};  // can hold unstable antiforms
+    struct RebolValueStruct : public Atom {};  // can't hold unstable antiforms
+    struct Element : public RebolValueStruct {};  // can't hold any antiforms
 #endif
 
 

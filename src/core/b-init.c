@@ -508,7 +508,7 @@ static void Init_System_Object(
     BINDING(sysobj_spec_virtual) = Make_Use_Core(
         Varlist_Archetype(system),
         Cell_List_Binding(sysobj_spec_virtual),
-        CELL_MASK_0
+        CELL_MASK_ERASED_0
     );
 
     // Evaluate the block (will eval CONTEXTs within).

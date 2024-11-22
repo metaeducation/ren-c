@@ -499,7 +499,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 //
 Element* Setify(Element* out) {  // called on stack values; can't call eval
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        out, REB_CHAIN, CELL_MASK_0
+        out, REB_CHAIN, CELL_MASK_ERASED_0
     );
     if (error)
         fail (unwrap error);

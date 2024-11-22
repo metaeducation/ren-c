@@ -758,12 +758,11 @@ static void Mark_Level(Level* L) {
     //    into account.  Only those argument slots that have been fulfilled
     //    may be GC protected, since the others contain random bits.
     //
-    // 4. Erasure (CELL_MASK_0 in a cell's header) is a transitional state
-    //    that is legal during evaluation, but not a valid state for cells
-    //    in VarLists (or Arrays).  It's thus only legal for frames that
-    //    are fulfilling, and only in the slot that is being fulfilled at
-    //    the present moment (skipped arguments that will be fulfilled
-    //    later are set to CELL_MASK_UNREADABLE).
+    // 4. Erasure (CELL_MASK_ERASED_0 in a cell's header) is a state that is
+    //    legal during evaluation, but not a valid state for cells in VarLists
+    //    (or Arrays).  It's thus only legal for frames that are fulfilling,
+    //    and only in the slot that is being fulfilled at the present moment
+    //    (skipped arguments picked up later are set to CELL_MASK_UNREADABLE).
 
     Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
         cast(const Node**, m_cast(const Action**, &L->u.action.original))

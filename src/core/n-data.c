@@ -68,7 +68,7 @@ DECLARE_NATIVE(bind)
                 return FAIL(Error_Not_Bound_Raw(spare));
 
             HEART_BYTE(spare) = REB_WORD;
-            BINDING(v) = Make_Use_Core(spare, BINDING(v), CELL_MASK_0);
+            BINDING(v) = Make_Use_Core(spare, BINDING(v), CELL_MASK_ERASED_0);
         }
 
         return COPY(v);
@@ -91,7 +91,7 @@ DECLARE_NATIVE(bind)
             return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
         HEART_BYTE(spec) = REB_WORD;
-        BINDING(v) = Make_Use_Core(spec, BINDING(v), CELL_MASK_0);
+        BINDING(v) = Make_Use_Core(spec, BINDING(v), CELL_MASK_ERASED_0);
 
         return COPY(v);
     }
@@ -109,7 +109,7 @@ DECLARE_NATIVE(bind)
     if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
         return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
-    BINDING(v) = Make_Use_Core(context, BINDING(v), CELL_MASK_0);
+    BINDING(v) = Make_Use_Core(context, BINDING(v), CELL_MASK_ERASED_0);
 
     return COPY(v);
 }
@@ -171,7 +171,7 @@ DECLARE_NATIVE(overbind)
     else
         assert(Any_Context(defs));
 
-    BINDING(v) = Make_Use_Core(defs, Cell_List_Binding(v), CELL_MASK_0);
+    BINDING(v) = Make_Use_Core(defs, Cell_List_Binding(v), CELL_MASK_ERASED_0);
 
     return COPY(v);
 }
@@ -255,7 +255,7 @@ DECLARE_NATIVE(without)
     BINDING(v) = Make_Use_Core(
         Varlist_Archetype(ctx),
         Cell_List_Binding(v),
-        CELL_MASK_0
+        CELL_MASK_ERASED_0
     );
 
     return COPY(v);

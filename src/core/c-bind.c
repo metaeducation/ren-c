@@ -883,7 +883,7 @@ DECLARE_NATIVE(add_use_object) {
     if (L_binding)
         Set_Node_Managed_Bit(L_binding);
 
-    Use* use = Make_Use_Core(object, L_binding, CELL_MASK_0);
+    Use* use = Make_Use_Core(object, L_binding, CELL_MASK_ERASED_0);
 
     BINDING(FEED_SINGLE(L->feed)) = use;
 
@@ -1294,7 +1294,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
         BINDING(body_in_out) = Make_Use_Core(
             Varlist_Archetype(c),
             Cell_List_Binding(body_in_out),
-            CELL_MASK_0
+            CELL_MASK_ERASED_0
         );
     }
 

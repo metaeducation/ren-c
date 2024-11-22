@@ -673,8 +673,10 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
         assert(Cell_ParamClass(param) == PARAMCLASS_RETURN);
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]
-    Init_Unreadable(SPARE);
-    Init_Unreadable(SCRATCH);
+    Suppress_Raised_Warning_If_Debug(SPARE);
+    Suppress_Raised_Warning_If_Debug(SCRATCH);
+    unnecessary(Init_Unreadable(SPARE));  // suppress makes erased/unreadable
+    unnecessary(Init_Unreadable(SCRATCH));
   #endif
 
     return result;

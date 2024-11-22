@@ -451,7 +451,7 @@ void RunPromise(void)
     Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL);
 
     Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
-        cast(Atom*, Alloc_Value_Core(CELL_MASK_0)),  // don't set API bit
+        cast(Atom*, Alloc_Value_Core(CELL_MASK_ERASED_0)),  // don't set root
         L
     );
     goto run_promise;

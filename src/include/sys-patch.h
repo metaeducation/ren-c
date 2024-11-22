@@ -89,7 +89,7 @@ INLINE Use* Make_Use_Core(
     Context* parent,
     Flags note
 ){
-    assert(note == CELL_MASK_0 or note == CELL_FLAG_USE_NOTE_SET_WORDS);
+    assert(note == CELL_MASK_ERASED_0 or note == CELL_FLAG_USE_NOTE_SET_WORDS);
 
     Stub* use = Make_Untracked_Stub(
         FLAG_FLAVOR(USE)
