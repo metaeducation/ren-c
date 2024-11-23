@@ -188,7 +188,6 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     assert(TOP_INDEX == L->baseline.stack_base);
     --L->baseline.stack_base;
-    Suppress_Raised_Warning_If_Debug(SPARE);
     Move_Drop_Top_Stack_Value(SPARE);  // restore pack to the SPARE [1]
 
   #if RUNTIME_CHECKS
@@ -673,10 +672,8 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
         assert(Cell_ParamClass(param) == PARAMCLASS_RETURN);
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]
-    Suppress_Raised_Warning_If_Debug(SPARE);
-    Suppress_Raised_Warning_If_Debug(SCRATCH);
-    unnecessary(Init_Unreadable(SPARE));  // suppress makes erased/unreadable
-    unnecessary(Init_Unreadable(SCRATCH));
+    Init_Unreadable(SPARE);
+    Init_Unreadable(SCRATCH);
   #endif
 
     return result;

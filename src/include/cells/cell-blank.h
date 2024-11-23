@@ -201,12 +201,7 @@ INLINE Cell* Move_Cell_Untracked(
     cast(Element*, Meta_Quotify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
 
 
-// 1. Atoms have an additional concern of potentially moving a raised error.
-//    A warning in the system helps catch cases of overwriting raised errors
-//    without doing so consciously, but that doesn't apply when things are
-//    being moved.  We know atoms shouldn't have "persistent bits", but
-//    Erase_Cell() double checks that...we skip the check here, and by just
-//    overwriting with CELL_MASK_ERASED_0 we stop the raised error warning.
+// Atoms can be left erased, which is slightly more efficient.
 //
 INLINE Atom* Move_Atom_Untracked(
     Atom* out,
@@ -214,7 +209,6 @@ INLINE Atom* Move_Atom_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, a, copy_mask);  // Move_Cell() adds track to `out`
-    unnecessary(Suppress_Raised_Warning_If_Debug_Untracked(a));  // [1]
     a->header.bits = CELL_MASK_ERASED_0;  // atom cells have no persistent bits
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use

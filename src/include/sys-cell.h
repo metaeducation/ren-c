@@ -85,22 +85,12 @@
 //    You might just be asking if it could be written if someone had non
 //    const access to it.
 //
-// 3. When raised (antiform) errors were added to the system, there were
-//    concerns that code might overlook handling of those errors, since they
-//    were being piped around as regular values much of the time.  To help
-//    reduce the odds of them being dropped on the floor, initialization
-//    was blocked in the debug build unless there was explicit suppression of
-//    the raised signal (or the cell was moved with Move_Cell() to indicate
-//    the hot potato was passed on).  This has proven to be a bit annoying,
-//    and it has been on the chopping block a few times...but it's still
-//    around for the moment.
 
 #define CELL_MASK_ERASED_0  0  // "initable", but not readable or writable
 
 #if (! DEBUG_CELL_READ_WRITE)  // these are all no-ops in release builds!
     #define Assert_Cell_Readable(c)    NOOP
     #define Assert_Cell_Writable(c)    NOOP
-    #define Assert_Cell_Not_Raised(c)  NOOP
     #define Assert_Cell_Initable(c)    NOOP
 
     #define Ensure_Readable(c) (c)
@@ -128,17 +118,10 @@
         } \
     } while (0)
 
-    #define Assert_Cell_Not_Raised(c) do { \
-        STATIC_ASSERT_LVALUE(c);  /* ensure "evil macro" used safely [1] */ \
-        if (HEART_BYTE(c) == REB_ERROR)  /* warn on overwrite if raised [3] */ \
-            assert(QUOTE_BYTE(c) != ANTIFORM_0); \
-    } while (0)
-
     #define Assert_Cell_Initable(c) do { \
         STATIC_ASSERT_LVALUE(c);  /* evil macro [1] */ \
         if ((c)->header.bits != CELL_MASK_ERASED_0)  /* 0 is initable */ \
             Assert_Cell_Writable(c);  /* else need NODE and CELL flags */ \
-        Assert_Cell_Not_Raised(c);  /* don't drop raised errors [3] */ \
     } while (0)
 
   #if NO_CPLUSPLUS_11
@@ -216,7 +199,6 @@
                 | NODE_FLAG_MANAGED | CELL_FLAG_PROTECTED) \
         ) \
     ); \
-    Assert_Cell_Not_Raised(c);  /* assert on overwriting raised errors */ \
   } while (0)
 
 INLINE Cell* Poison_Cell_Untracked(Cell* c) {
@@ -402,18 +384,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 // erased (with Force_Erase_Cell()) in order to overwrite it.
 //
 // 1. "evil macros" for checked build performance, see STATIC_ASSERT_LVALUE()
-//
-// 2. In order to avoid accidentally overlooking raised errors, they must
-//    be deliberately suppressed vs. overwritten.  e.g. the requirement for
-//    suppression does not apply to a cell that is being erased after having
-//    been moved, as the new cell takes over the "hot potato" of the error.
-//
-//    We don't want to pay at runtime for this in release builds (since the
-//    check isn't there).  But we also don't want to canonize what this
-//    sets the cell to, because that could lead to accidents where the
-//    debug build always setting to the same thing creates a dependency
-//    on that state which won't be there in release builds.  Make it an
-//    unreadable cell half the time, and an erased cell the other half.
+
 
 #define CELL_MASK_PERSIST \
     (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED)
@@ -423,23 +394,6 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
     Assert_Cell_Initable(c);  /* if CELL_MASK_ERASED_0, no node+cell flags */ \
     (c)->header.bits &= CELL_MASK_PERSIST;  /* won't add node+cell flags */ \
 } while (0)
-
-#if NO_RUNTIME_CHECKS  // stop Freshen_Cell() from complaining [2]
-    #define Suppress_Raised_Warning_If_Debug(a)  NOOP
-#else
-    INLINE Atom* Suppress_Raised_Warning_If_Debug_Untracked(Atom* a) {
-        if (a->header.bits != CELL_MASK_ERASED_0)
-            Assert_Cell_Writable(a);
-        if (SPORADICALLY(2))
-            a->header.bits = CELL_MASK_ERASED_0;
-        else
-            a->header.bits = CELL_MASK_UNREADABLE;
-        return a;
-    }
-
-    #define Suppress_Raised_Warning_If_Debug(a) \
-        TRACK(Suppress_Raised_Warning_If_Debug_Untracked(a))
-#endif
 
 
 #define Cell_Heart_Unchecked(c) \

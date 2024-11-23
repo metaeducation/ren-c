@@ -103,7 +103,6 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Copy_Cell(&g_ts.thrown_label, label);
     Deactivate_If_Action(&g_ts.thrown_label);
 
-    Suppress_Raised_Warning_If_Debug(L->out);
     Erase_Cell(L->out);
 
     assert(Is_Throwing(L));

@@ -737,8 +737,6 @@ Bounce Action_Executor(Level* L)
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
-    Suppress_Raised_Warning_If_Debug(OUT);  // e.g. REDUCE w/ error+predicate
-
     KEY = ACT_KEYS(&KEY_TAIL, Level_Phase(L));
     ARG = Level_Args_Head(L);
     PARAM = ACT_PARAMS_HEAD(Level_Phase(L));
