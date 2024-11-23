@@ -384,7 +384,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 // erased (with Force_Erase_Cell()) in order to overwrite it.
 //
 // 1. "evil macros" for checked build performance, see STATIC_ASSERT_LVALUE()
-
+//
 
 #define CELL_MASK_PERSIST \
     (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED)
@@ -395,6 +395,44 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
     (c)->header.bits &= CELL_MASK_PERSIST;  /* won't add node+cell flags */ \
 } while (0)
 
+
+//=//// HOOKABLE HEART_BYTE() ACCESSOR ////////////////////////////////////=//
+//
+// This has to be defined after `Cell` is fully defined.
+//
+// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
+//    a field called ->header with .bits in it is good enough.  All methods of
+//    checking seem to add overhead in the RUNTIME_CHECKS build that isn't
+//    worth it.  To help avoid accidentally passing stubs, the HeaderUnion in
+//    a Stub is named "leader" instead of "header".
+//
+// 2. It can often be helpful to inject code to when the HEART_BYTE() is being
+//    assigned.  This mechanism also intercepts reads of the HEART_BYTE() too,
+//    which is done pervasively.  It slows down the code in checked builds by
+//    a noticeable amount, so we don't put it in all checked builds...only
+//    special situations.
+//
+#if (! DEBUG_HOOK_HEART_BYTE)
+    #define HEART_BYTE(cell) \
+        SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
+#else
+    struct HeartHolder {  // class for intercepting heart assignments [2]
+        Cell* & ref;
+
+        HeartHolder(const Cell* const& ref)
+            : ref (const_cast<Cell* &>(ref))
+          {}
+
+        void operator=(Byte right) {
+            SECOND_BYTE(&(ref)->header.bits) = right;
+        }
+
+        operator Heart () const
+          { return static_cast<Heart>(SECOND_BYTE(&(ref)->header.bits)); }
+    };
+    #define HEART_BYTE(cell) \
+        HeartHolder {cell}
+#endif
 
 #define Cell_Heart_Unchecked(c) \
     u_cast(Heart, HEART_BYTE(c))
@@ -482,6 +520,39 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
     m_cast(union HeaderUnion*, &Ensure_Readable(c)->header)->bits \
         &= ~CELL_FLAG_##name
 
+
+//=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
+//
+// The cell flags are structured so that the top two bits of the byte are
+// "type specific", so that you can just take the last 2 bits.  This 2-bit
+// state (called a "crumb") holds the one of four possible infix states for
+// actions--for example.
+//
+// THEY ARE THE LAST TWO BITS ON PURPOSE.  If they needed to be shifted, the
+// fact that there's no unit smaller than a byte means static analyzers
+// will warn you about overflow if any shifting is involved, e.g.:
+//
+//     (((crumb << 6)) << 24)  <-- generates uintptr_t overflow warning
+//
+
+STATIC_ASSERT(
+    CELL_FLAG_TYPE_SPECIFIC_A == FLAG_LEFT_BIT(30)
+    and CELL_FLAG_TYPE_SPECIFIC_B == FLAG_LEFT_BIT(31)
+);
+
+#define CELL_MASK_CRUMB \
+    (CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B)
+
+#define Get_Cell_Crumb(c) \
+    (FOURTH_BYTE(&(c)->header.bits) & 0x3)
+
+#define FLAG_CELL_CRUMB(crumb) \
+    FLAG_FOURTH_BYTE(crumb)
+
+INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
+    c->header.bits &= ~(CELL_MASK_CRUMB);
+    c->header.bits |= FLAG_CELL_CRUMB(crumb);
+}
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//
@@ -841,3 +912,17 @@ INLINE Value* Constify(Value* v) {
     Element name##_element; \
     Element* name = TRACK(&name##_element); \
     Force_Unreadable_Cell_Untracked(name)  // macro, not a function (fast)
+
+
+//=//// rebReleaseAndNull overload ////////////////////////////////////////=//
+//
+// rebReleaseAndNull is in the API, but because the API doesn't make
+// distinctions between Element and Value the double pointer trips it up
+// in the C++ build.  Add an overload.
+//
+#if CHECK_CELL_SUBCLASSES
+    static inline void rebReleaseAndNull(Element** e) {
+        rebRelease(*e);
+        *e = nullptr;
+    }
+#endif
