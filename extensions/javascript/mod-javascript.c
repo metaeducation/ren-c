@@ -994,7 +994,7 @@ DECLARE_NATIVE(js_native)
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), User_Context_Value);
+    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), g_user_module);
 
     // We want this native and its JS Object to GC in the same step--because
     // if the native GC'd without removing its identity from the table, then

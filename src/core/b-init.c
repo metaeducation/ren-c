@@ -165,9 +165,9 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 static void Startup_Lib(void)
 {
     VarList* lib = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
-    ensure(nullptr, Lib_Module) = Alloc_Element();
-    Init_Context_Cell(Lib_Module, REB_MODULE, lib);
-    ensure(nullptr, Lib_Context) = cast(SeaOfVars*, lib);
+    ensure(nullptr, g_lib_module) = Alloc_Element();
+    Init_Context_Cell(g_lib_module, REB_MODULE, lib);
+    ensure(nullptr, g_lib_context) = cast(SeaOfVars*, lib);
 
     assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // leave invalid
 
@@ -212,7 +212,7 @@ static void Startup_Lib(void)
 //    we'd be comparing to a freed pointer (which trips up some asserts).
 //    Check the pointer integrity in a pre-pass.
 //
-// 2. It might be handy to have the stale value of the Lib_Context on hand
+// 2. It might be handy to have the stale value of the g_lib_context on hand
 //    when debugging this function.
 //
 // 3. Since the GC never frees the builtin Lib patches, they don't get
@@ -223,15 +223,15 @@ static void Startup_Lib(void)
 //
 static void Shutdown_Lib(void)
 {
-  #if RUNTIME_CHECKS  // verify patches point to Lib_Context before freeing [1]
+  #if RUNTIME_CHECKS  // verify patches point to g_lib_context before freeing [1]
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
         Stub* patch = &PG_Lib_Patches[id];
-        assert(INODE(PatchContext, patch) == Lib_Context);
+        assert(INODE(PatchContext, patch) == g_lib_context);
     }
   #endif
 
-    rebReleaseAndNull(&Lib_Module);
-    /* Lib_Context = nullptr; */  // do this at end of function [2]
+    rebReleaseAndNull(&g_lib_module);
+    /* g_lib_context = nullptr; */  // do this at end of function [2]
 
     Sweep_Stubs();  // free all managed Stubs so Lib is all that's left [3]
 
@@ -242,7 +242,7 @@ static void Shutdown_Lib(void)
 
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 
-        /* assert(INODE(PatchContext, patch) == Lib_Context); */  // !!! freed
+        /* assert(INODE(PatchContext, patch) == g_lib_context); */  // !!! freed
         INODE(PatchContext, patch) = nullptr;  // we already checked it [1]
 
         assert(LINK(PatchReserved, patch) == nullptr);
@@ -259,7 +259,7 @@ static void Shutdown_Lib(void)
         Erase_Stub(patch);
     }
 
-    Lib_Context = nullptr;  // do this last to have freed value on hand [2]
+    g_lib_context = nullptr;  // do this last to have freed value on hand [2]
 }
 
 
@@ -725,7 +725,7 @@ void Startup_Core(void)
 
     // Before any code can start running (even simple bootstrap code), some
     // basic words need to be defined.  For instance: You can't run %sysobj.r
-    // unless `true` and `false` have been added to the Lib_Context--they'd be
+    // unless `true` and `false` have been added to the g_lib_context--they'd be
     // undefined.  And while analyzing the function specs during the
     // definition of natives, things like the <maybe> tag are needed as a
     // basis for comparison to see if a usage matches that.
@@ -760,8 +760,8 @@ void Startup_Core(void)
     // the system object).  So this code should stay pretty simple.
 
     rebElide(
-        "wrap*", Lib_Module, rebQ(&boot->constants),
-        "evaluate inside", Lib_Module, rebQ(&boot->constants)
+        "wrap*", g_lib_module, rebQ(&boot->constants),
+        "evaluate inside", g_lib_module, rebQ(&boot->constants)
     );
 
     Protect_Cell(Mutable_Lib_Var(SYM_NULL));
@@ -777,7 +777,7 @@ void Startup_Core(void)
     VarList* errors_catalog = Startup_Errors(&boot->errors);
     Push_Lifeguard(errors_catalog);
 
-    BINDING(&boot->sysobj) = Lib_Context;
+    BINDING(&boot->sysobj) = g_lib_context;
     Init_System_Object(
         &boot->sysobj,
         datatypes_catalog,
@@ -825,7 +825,7 @@ void Startup_Core(void)
     // something tries to use it before startup finishes.
 
   blockscope {
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Module);
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), g_lib_module);
     bool threw = rebRunThrows(
         Get_System(SYS_CONTEXTS, CTX_USER),  // where to write antiform tag
         "~<SYS.CONTEXTS.USER not available: STARTUP-MEZZ not finished yet>~"
@@ -836,7 +836,7 @@ void Startup_Core(void)
 
   //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED ///////=//
 
-    // By this point, the Lib_Context contains basic definitions for things
+    // By this point, the g_lib_context contains basic definitions for things
     // like null, blank, the natives, and the generics.  `system` is set up.
     //
     // There is theoretically some level of error recovery that could be done
@@ -865,8 +865,8 @@ void Startup_Core(void)
         //
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "wrap*", Lib_Module, rebQ(&boot->base),
-        "evaluate inside", Lib_Module, rebQ(&boot->base)
+        "wrap*", g_lib_module, rebQ(&boot->base),
+        "evaluate inside", g_lib_module, rebQ(&boot->base)
         //
         // Note: ENSURE not available yet.
     );
@@ -885,21 +885,21 @@ void Startup_Core(void)
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
     VarList* util = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
-    node_LINK(NextVirtual, util) = Lib_Context;
-    ensure(nullptr, Sys_Util_Module) = Alloc_Element();
-    Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
-    ensure(nullptr, Sys_Context) = cast(SeaOfVars*, util);
+    node_LINK(NextVirtual, util) = g_lib_context;
+    ensure(nullptr, g_sys_util_module) = Alloc_Element();
+    Init_Context_Cell(g_sys_util_module, REB_MODULE, util);
+    ensure(nullptr, g_sys_util_context) = cast(SeaOfVars*, util);
 
     rebElide(
         //
-        // The scan of the boot block interned everything to Lib_Context, but
-        // we want to overwrite that with the Sys_Context here.
+        // The scan of the boot block interned everything to g_lib_context, but
+        // we want to overwrite that with the g_sys_util_context here.
         //
-        "sys.util:", Sys_Util_Module,
+        "sys.util:", g_sys_util_module,
 
-        "wrap*", Sys_Util_Module, rebQ(&boot->system_util),
+        "wrap*", g_sys_util_module, rebQ(&boot->system_util),
         "if not equal? '~end~",
-          "evaluate inside", Sys_Util_Module, rebQ(&boot->system_util),
+          "evaluate inside", g_sys_util_module, rebQ(&boot->system_util),
             "[fail -{sys.util}-]",
 
         // SYS contains the implementation of the module machinery itself, so
@@ -910,7 +910,7 @@ void Startup_Core(void)
             "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "Exports: [do module load decode encode encoding-of]",
         "]",
-        "sys.util/import*", Lib_Module, Sys_Util_Module
+        "sys.util/import*", g_lib_module, g_sys_util_module
     );
 
     // !!! It was a stated goal at one point that it should be possible to
@@ -929,8 +929,8 @@ void Startup_Core(void)
 
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "wrap*", Lib_Module, rebQ(&boot->mezz),
-        "evaluate inside", Lib_Module, rebQ(&boot->mezz)
+        "wrap*", g_lib_module, rebQ(&boot->mezz),
+        "evaluate inside", g_lib_module, rebQ(&boot->mezz)
     );
 
   //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
@@ -944,7 +944,7 @@ void Startup_Core(void)
     // Doing this as a proper module creation gives us IMPORT and INTERN (as
     // well as EXPORT...?  When do you export from the user context?)
     //
-    // rebElide() here runs in the Lib_Context by default, which means the
+    // rebElide() here runs in the g_lib_context by default, which means the
     // block we are passing evaluatively as the module body will evaluate
     // and carry the lib context.  This achieves the desired inheritance,
     // because when we say EVAL INSIDE SYSTEM.CONTEXTS.USER CODE we want the
@@ -954,12 +954,12 @@ void Startup_Core(void)
         "system.contexts.user: module [Name: User] []"
     );
 
-    ensure(nullptr, User_Context_Value) = cast(Element*, Copy_Cell(
+    ensure(nullptr, g_user_module) = cast(Element*, Copy_Cell(
         Alloc_Value(),
         Get_System(SYS_CONTEXTS, CTX_USER)
     ));
-    rebUnmanage(User_Context_Value);
-    User_Context = cast(SeaOfVars*, Cell_Varlist(User_Context_Value));
+    rebUnmanage(g_user_module);
+    g_user_context = cast(SeaOfVars*, Cell_Varlist(g_user_module));
 
   //=//// FINISH UP ///////////////////////////////////////////////////////=//
 
@@ -1034,11 +1034,11 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Datatypes();
 
-    rebReleaseAndNull(&Sys_Util_Module);
-    Sys_Context = nullptr;
+    rebReleaseAndNull(&g_sys_util_module);
+    g_sys_util_context = nullptr;
 
-    rebReleaseAndNull(&User_Context_Value);
-    User_Context = nullptr;
+    rebReleaseAndNull(&g_user_module);
+    g_user_context = nullptr;
 
     Shutdown_Action_Spec_Tags();
     Shutdown_Root_Vars();

@@ -135,9 +135,9 @@ VarList* Get_Context_From_Stack(void)
         // No natives are in effect, so this is API code running directly from
         // an `int main()`.  Previously this always ran in the user context,
         // but the user context is now no longer available during much of the
-        // boot...so we fall back to the Lib_Context during boot.
+        // boot...so we fall back to the g_lib_context during boot.
         //
-        return User_Context != nullptr ? User_Context : Lib_Context;
+        return g_user_context != nullptr ? g_user_context : g_lib_context;
     }
 
     // This would happen if you call the API from something like a traced
@@ -145,7 +145,7 @@ VarList* Get_Context_From_Stack(void)
     // you want the code to bind into the lib context.
     //
     if (not Is_Action_Native(phase))
-        return Lib_Context;
+        return g_lib_context;
 
     Details* details = Phase_Details(phase);
     Value* context = Details_At(details, IDX_NATIVE_CONTEXT);

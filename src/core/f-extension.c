@@ -180,7 +180,7 @@ DECLARE_NATIVE(load_extension)
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
     VarList* module_ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
-    node_LINK(NextVirtual, module_ctx) = Lib_Context;
+    node_LINK(NextVirtual, module_ctx) = g_lib_context;
 
     g_native_dispatcher_pos = dispatchers;
     PG_Currently_Loading_Module = module_ctx;

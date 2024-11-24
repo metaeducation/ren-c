@@ -157,7 +157,7 @@ Value* Append_To_Sea_Core(
     Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
 ){
     Option(SymId) id;
-    if (sea == Lib_Context)
+    if (sea == g_lib_context)
         id = Symbol_Id(symbol);
     else
         id = SYM_0;

@@ -294,9 +294,9 @@ INLINE Sink(Value) Sink_Lib_Var(SymId id) {
 
 
 #define SYS_UTIL(name) \
-    cast(const Value*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
+    cast(const Value*, MOD_VAR(g_sys_util_context, Canon_Symbol(SYM_##name), true))
 
-// Optimization for Lib_Context for datatypes + natives + generics; usage is
+// Optimization for g_lib_context for datatypes + natives + generics; usage is
 // tailored in order for SYM_XXX constants to beeline for the storage.  The
 // entries were all allocated during Startup_Lib().
 //
@@ -307,7 +307,7 @@ INLINE Sink(Value) Sink_Lib_Var(SymId id) {
 //    have two-cased variations of anything.
 //
 INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
-    if (sea == Lib_Context) {
+    if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
             if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)  // [1]

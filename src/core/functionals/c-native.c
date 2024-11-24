@@ -70,7 +70,7 @@ Phase* Make_Native(
     DECLARE_ELEMENT (expanded_spec);
     if (native_type == NATIVE_COMBINATOR) {
         Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
-        BINDING(expanded_spec) = Lib_Context;
+        BINDING(expanded_spec) = g_lib_context;
         spec = expanded_spec;
     }
 
@@ -231,7 +231,7 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 Source* Startup_Natives(const Element* boot_natives)
 {
-    Context* lib = Lib_Context;  // native variables already exist [1]
+    Context* lib = g_lib_context;  // native variables already exist [1]
 
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
     assert(BINDING(boot_natives) == UNBOUND);
@@ -252,7 +252,7 @@ Source* Startup_Natives(const Element* boot_natives)
     assert(g_native_dispatcher_pos == nullptr);
     g_native_dispatcher_pos = g_core_native_dispatchers;
     assert(PG_Currently_Loading_Module == nullptr);
-    PG_Currently_Loading_Module = Lib_Context;
+    PG_Currently_Loading_Module = g_lib_context;
 
     // Due to the bootstrapping of `/native: native [...]`, we can't actually
     // create NATIVE itself that way.  So the prep process should have moved

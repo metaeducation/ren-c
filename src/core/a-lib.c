@@ -1294,7 +1294,7 @@ void API_rebPushContinuation_internal(
     if (binding_ref)
         BINDING(block) = *cast(Context**, binding_ref);  // [2]
     else
-        BINDING(block) = Lib_Context;  // [3]
+        BINDING(block) = g_lib_context;  // [3]
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
     Init_Void(Evaluator_Primed_Cell(L));
@@ -3247,7 +3247,7 @@ RebolValue* API_rebFunc(
     if (binding_ref and *binding_ref)
         BINDING(spec) = *cast(Context**, binding_ref);  // [2]
     else
-        BINDING(spec) = Lib_Context;  // !!! Review: needs module isolation!
+        BINDING(spec) = g_lib_context;  // !!! Review: needs module isolation!
 
     Flags mkf_flags = MKF_RETURN;
 

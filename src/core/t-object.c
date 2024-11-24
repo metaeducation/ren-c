@@ -129,7 +129,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                     found = patch;
                     break;
                 }
-             /*   if (Lib_Context == INODE(PatchContext, patch))
+             /*   if (g_lib_context == INODE(PatchContext, patch))
                     found = patch;  // will match if not overridden */
             }
             if (found) {

@@ -300,7 +300,7 @@ Let* Make_Let_Variable(
 //    been somehow previously declared.  However, that is a bit too ambitious
 //    for a first rollout...as just having the traditional behavior of "any
 //    assignment works" is something people are used to.  Don't do it for the
-//    Lib_Context (so mezzanine is still guarded) but as a first phase, permit
+//    g_lib_context (so mezzanine is still guarded) but as a first phase, permit
 //    the "emergence" of any variable that is attached to a module.
 //
 // 3. RELATIVE BINDING: The word was made during a deep copy of the block

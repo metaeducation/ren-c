@@ -30,13 +30,13 @@ PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 //
 PVAR Stub PG_Lib_Patches[LIB_SYMS_MAX];
 
-PVAR Element* Lib_Module;
-PVAR Element* Sys_Util_Module;
-PVAR Element* User_Context_Value;
+PVAR Element* g_lib_module;
+PVAR Element* g_sys_util_module;
+PVAR Element* g_user_module;
 
-PVAR SeaOfVars* Lib_Context;
-PVAR SeaOfVars* Sys_Context;
-PVAR SeaOfVars* User_Context;
+PVAR SeaOfVars* g_lib_context;
+PVAR SeaOfVars* g_sys_util_context;
+PVAR SeaOfVars* g_user_context;
 
 PVAR Dispatcher* const* g_native_dispatcher_pos;
 PVAR VarList* PG_Currently_Loading_Module;
