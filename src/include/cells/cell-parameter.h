@@ -313,7 +313,7 @@ INLINE Param* Init_Unconstrained_Hole_Untracked(
     }
     UNUSED(pclass);
 
-    Reset_Cell_Header_Untracked(out, CELL_MASK_PARAMETER);
+    Reset_Cell_Header_Noquote(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
     Tweak_Cell_Parameter_Spec(out, nullptr);
     Tweak_Cell_Node2(out, nullptr);  // parameter string

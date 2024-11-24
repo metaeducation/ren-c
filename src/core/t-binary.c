@@ -139,7 +139,7 @@ DECLARE_NATIVE(decode_ieee_754) {
     if (size < 8)
         return RAISE(blob);
 
-    Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_DECIMAL);
+    Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_DECIMAL);
 
     Byte* dp = cast(Byte*, &VAL_DECIMAL(OUT));
 

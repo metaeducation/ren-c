@@ -372,7 +372,7 @@ DECLARE_GENERICS(Integer)
             REBDEC dec = Round_Dec(
                 cast(REBDEC, num), level_, VAL_DECIMAL(to)
             );
-            Reset_Cell_Header_Untracked(
+            Reset_Cell_Header_Noquote(
                 TRACK(OUT),
                 FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
             );

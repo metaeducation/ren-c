@@ -132,7 +132,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
 
     Force_Flex_Managed(f);
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // series stub needs mark

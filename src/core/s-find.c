@@ -554,7 +554,7 @@ REBLEN Find_Value_In_Binstr(
 
         DECLARE_ELEMENT (temp);  // !!! Note: unmanaged
         if (molded) {
-            Reset_Cell_Header_Untracked(temp, CELL_MASK_TEXT);
+            Reset_Cell_Header_Noquote(temp, CELL_MASK_TEXT);
             Tweak_Cell_Node1(temp, molded);
             PAYLOAD(Any, temp).second.u = 0;  // index
         }

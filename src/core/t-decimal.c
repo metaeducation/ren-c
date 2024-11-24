@@ -567,7 +567,7 @@ setDec:
     if (not FINITE(d1))
         return FAIL(Error_Overflow_Raw());
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         TRACK(OUT),
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );

@@ -79,7 +79,7 @@ INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
     Init_Integer(Pairing_First(p), x);
     Init_Integer(Pairing_Second(p), y);
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         CELL_MASK_PAIR | FLAG_HEART_BYTE(REB_PAIR)
     );

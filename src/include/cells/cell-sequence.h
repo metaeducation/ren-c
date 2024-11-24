@@ -249,7 +249,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
         Init_Blank(Pairing_Second(p));
     }
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         e,
         FLAG_HEART_BYTE(heart)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // mark the pairing
@@ -286,7 +286,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     Size size
 ){
     assert(Any_Sequence_Kind(heart));
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
@@ -326,7 +326,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     if (len < 2)
         return nullptr;
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
@@ -435,7 +435,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     Copy_Cell(Pairing_First(pairing), first);
     Copy_Cell(Pairing_Second(pairing), second);
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // first is pairing

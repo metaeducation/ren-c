@@ -292,7 +292,7 @@ static Bounce Loop_Integer_Common(
     // if they change `var` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to a non-integer form.
     //
-    Reset_Cell_Header_Untracked(TRACK(var), CELL_MASK_INTEGER);
+    Reset_Cell_Header_Noquote(TRACK(var), CELL_MASK_INTEGER);
     REBI64* state = &mutable_VAL_INT64(var);
     *state = start;
 
@@ -377,7 +377,7 @@ static Bounce Loop_Number_Common(
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
     //
-    Reset_Cell_Header_Untracked(TRACK(var), CELL_MASK_DECIMAL);
+    Reset_Cell_Header_Noquote(TRACK(var), CELL_MASK_DECIMAL);
     REBDEC *state = &VAL_DECIMAL(var);
     *state = s;
 

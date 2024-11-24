@@ -105,7 +105,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
 ){
     assert(Any_Word_Kind(heart));
     assert(index != 0);
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark

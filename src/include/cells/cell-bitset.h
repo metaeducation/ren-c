@@ -56,7 +56,7 @@ INLINE Binary* VAL_BITSET(const Cell* v) {
     m_cast(Binary*, VAL_BITSET(Ensure_Mutable(v)))
 
 INLINE Element* Init_Bitset(Init(Element) out, Binary* bset) {
-    Reset_Cell_Header_Untracked(out, CELL_MASK_BITSET);
+    Reset_Cell_Header_Noquote(out, CELL_MASK_BITSET);
     Assert_Flex_Managed(bset);
     Tweak_Cell_Node1(out, bset);
     return out;

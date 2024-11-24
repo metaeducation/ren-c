@@ -186,7 +186,7 @@ INLINE Value* Init_Time_Nanoseconds(
     Init(Element) v,
     REBI64 nanoseconds
 ){
-    Reset_Cell_Header_Untracked(v, CELL_MASK_TIME);
+    Reset_Cell_Header_Noquote(v, CELL_MASK_TIME);
     PAYLOAD(Time, v).nanoseconds = nanoseconds;
     return cast(Value*, v);
 }

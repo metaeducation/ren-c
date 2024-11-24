@@ -1376,7 +1376,7 @@ DECLARE_GENERICS(Frame)
             // for the varlist could be reclaimed in this case and a label
             // used, as the read-only frame is archetypal.
             //
-            Reset_Cell_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
+            Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_FRAME);
             Tweak_Cell_Context_Varlist(OUT, ACT_PARAMLIST(act));
             Tweak_Cell_Coupling(OUT, Cell_Coupling(frame));
             Tweak_Cell_Frame_Phase_Or_Label(OUT, act);

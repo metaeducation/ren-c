@@ -168,7 +168,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 ){
     assert(heart != REB_FRAME);  // use Tweak_Frame_Varlist_Rootvar() instead
     Cell* rootvar = Array_Head(varlist);
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         rootvar,
         FLAG_HEART_BYTE(heart)
             | CELL_MASK_ANY_CONTEXT
@@ -189,7 +189,7 @@ INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
 ){
     Cell* rootvar = Array_Head(varlist);
     assert(phase != nullptr);
-    Reset_Cell_Header_Untracked(rootvar, CELL_MASK_FRAME);
+    Reset_Cell_Header_Noquote(rootvar, CELL_MASK_FRAME);
     Tweak_Cell_Context_Varlist(rootvar, varlist);
     Tweak_Cell_Coupling(rootvar, coupling);
     Tweak_Cell_Frame_Phase_Or_Label(rootvar, phase);

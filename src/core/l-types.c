@@ -667,7 +667,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     // payload.time.nanoseconds set
     // may be NO_DATE_TIME, don't Freshen_Cell_Header()
     //
-    Reset_Cell_Header_Untracked(PUSH(), CELL_MASK_DATE);
+    Reset_Cell_Header_Noquote(PUSH(), CELL_MASK_DATE);
     VAL_YEAR(TOP) = year;
     VAL_MONTH(TOP) = month;
     VAL_DAY(TOP) = day;

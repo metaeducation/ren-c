@@ -130,7 +130,7 @@ INLINE Element* Init_Handle_Cdata(
 ){
     assert(length != 0);  // can't be 0 unless cfunc (see also malloc(0))
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
@@ -145,7 +145,7 @@ INLINE Element* Init_Handle_Cfunc(
     Init(Element) out,
     CFunction* cfunc
 ){
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
@@ -159,7 +159,7 @@ INLINE Element* Init_Handle_Node(
     Init(Element) out,
     const Node* node
 ){
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_DONT_MARK_NODE1
     );
@@ -178,7 +178,7 @@ INLINE void Init_Handle_Managed_Common(
     stub->misc.cleaner = cleaner;
 
     Cell* single = Stub_Cell(stub);
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         single,
         FLAG_HEART_BYTE(REB_HANDLE)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
@@ -193,7 +193,7 @@ INLINE void Init_Handle_Managed_Common(
     // effectively update all instances...since the bits live in the shared
     // Flex component.
     //
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(REB_HANDLE)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to stub

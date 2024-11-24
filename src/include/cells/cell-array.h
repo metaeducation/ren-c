@@ -155,7 +155,7 @@ INLINE Element* Init_Relative_Block_At(
     Array* array,
     REBLEN index
 ){
-    Reset_Cell_Header_Untracked(out, CELL_MASK_BLOCK);
+    Reset_Cell_Header_Noquote(out, CELL_MASK_BLOCK);
     Tweak_Cell_Node1(out, array);
     VAL_INDEX_RAW(out) = index;
     BINDING(out) = action;

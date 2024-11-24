@@ -560,12 +560,21 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 // Assert_Cell_Initable() for the explanation of what "freshening" is, and why
 // it tolerates CELL_MASK_ERASED_0 in a cell header.
 
-INLINE void Reset_Cell_Header_Untracked(Cell* c, uintptr_t flags)
+INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
         NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(NOQUOTE_1)
+    );
+}
+
+INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
+{
+    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
+    Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
+    c->header.bits |= (  // need to ensure node+cell flag get set
+        NODE_FLAG_NODE | NODE_FLAG_CELL | flags | FLAG_QUOTE_BYTE(quote_byte)
     );
 }
 
@@ -827,19 +836,129 @@ INLINE Cell* Copy_Cell_Untracked(
     cast(Element*, Meta_Quotify(Copy_Cell(u_cast(Atom*, (out)), (v))))
 
 
-
-// !!! Super primordial experimental `const` feature.  Concept is that various
-// operations have to be complicit (e.g. SELECT or FIND) in propagating the
-// constness from the input series to the output value.  const input always
-// gets you const output, but mutable input will get you const output if
-// the value itself is const (so it inherits).
+//=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
 //
+// Cell movement is distinct from cell copying, because it invalidates the
+// old location (which must be mutable).  The old location is erased if it's
+// an Atom and can legally hold CELL_MASK_ERASED_0 for GC, or it's set
+// to be trash (quasiform BLANK!) if it can't hold that state.
+//
+// Currently the advantage to moving vs. copying is that if the old location
+// held GC nodes live, it doesn't anymore.  So it speeds up the GC and also
+// increases the likelihood of stale nodes being collected.  But the advantage
+// would go away if you were going to immediately overwrite the moved-from
+// cell with something else.
+//
+// A theoretical longer-term advantage would be if cells were incrementing
+// some kind of reference count in the series they pointed to.  The AddRef()
+// and Release() mechanics that would be required would be painful to write
+// in C, so this is not likely to happen.  Hence moving a cell out of a
+// data stack slot and then dropping it is technically wasteful.  But it
+// only costs one platform-pointer-sized write operation more than a cell
+// copy, so future-proofing for that scenario has some value.
+//
+
+#define CELL_MASK_TRASH \
+    (NODE_FLAG_NODE | NODE_FLAG_CELL \
+        | FLAG_HEART_BYTE(REB_BLANK) | FLAG_QUOTE_BYTE(NOQUOTE_1) \
+        | CELL_MASK_NO_NODES)
+
+INLINE Cell* Move_Cell_Untracked(
+    Cell* out,
+    Cell* c,
+    Flags copy_mask
+){
+    Copy_Cell_Untracked(out, c, copy_mask);  // Move_Cell() adds track to `out`
+    Assert_Cell_Header_Overwritable(c);
+    c->header.bits = CELL_MASK_TRASH;  // fast overwrite
+
+    Corrupt_Pointer_If_Debug(c->extra.Any.corrupt);
+    Corrupt_Pointer_If_Debug(c->payload.Any.first.corrupt);
+    Corrupt_Pointer_If_Debug(c->payload.Any.second.corrupt);
+
+  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
+    c->file = out->file;
+    c->line = out->line;
+    c->tick = TICK;
+  #endif
+
+    return out;
+}
+
+#if DONT_CHECK_CELL_SUBCLASSES
+    #define Move_Cell(out,v) \
+        TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
+#else
+    INLINE Element* Move_Cell_Overload(Init(Element) out, Element* v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
+    }
+
+    template<  // avoid overload conflict when Element* coerces to Value* [3]
+        typename T,
+        typename std::enable_if<
+            std::is_convertible<T,Value*>::value
+            && !std::is_convertible<T,Element*>::value
+        >::type* = nullptr
+    >
+    INLINE Value* Move_Cell_Overload(Init(Value) out, const T& v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
+    }
+
+    #define Move_Cell(out,v) \
+        TRACK(Move_Cell_Overload((out), (v)))
+#endif
+
+#define Move_Cell_Core(out,v,cell_mask) \
+    TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))
+
+#define Move_Meta_Cell(out,v) \
+    cast(Element*, Meta_Quotify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
+
+INLINE Atom* Move_Atom_Untracked(
+    Atom* out,
+    Atom* a,
+    Flags copy_mask
+){
+    Copy_Cell_Untracked(out, a, copy_mask);  // Move_Cell() adds track to `out`
+    Assert_Cell_Header_Overwritable(a);  // atoms can't have persistent bits
+    a->header.bits = CELL_MASK_ERASED_0;  // legal state for atoms
+
+    Corrupt_Pointer_If_Debug(a->extra.Any.corrupt);
+    Corrupt_Pointer_If_Debug(a->payload.Any.first.corrupt);
+    Corrupt_Pointer_If_Debug(a->payload.Any.second.corrupt);
+
+  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
+    a->file = out->file;
+    a->line = out->line;
+    a->tick = TICK;
+  #endif
+
+    return out;
+}
+
+#define Move_Atom(out,a) \
+    TRACK(Move_Atom_Untracked((out), (a), CELL_MASK_COPY))
+
+#define Move_Meta_Atom(out,a) \
+    cast(Element*, Meta_Quotify(Move_Atom_Untracked((out), (a), CELL_MASK_COPY)))
+
+
+//=//// CELL CONST INHERITANCE ////////////////////////////////////////////=//
+//
+// Various operations are complicit (e.g. SELECT or FIND) in propagating the
+// constness from the input series to the output value.
+//
+// (See CELL_FLAG_CONST for more information.)
+
 INLINE Atom* Inherit_Const(Atom* out, const Cell* influencer) {
     out->header.bits |= (influencer->header.bits & CELL_FLAG_CONST);
     return out;
 }
+
 #define Trust_Const(value) \
-    (value) // just a marking to say the const is accounted for already
+    (value)  // just a marking to say the const is accounted for already
 
 INLINE Value* Constify(Value* v) {
     Set_Cell_Flag(v, CONST);

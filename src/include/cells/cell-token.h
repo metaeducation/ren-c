@@ -139,7 +139,7 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
     assert(len <= size);
     if (size + 1 > Size_Of(PAYLOAD(Bytes, out).at_least_8))
         return false;
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
@@ -184,7 +184,7 @@ INLINE Element* Init_Utf8_Non_String(
 // this routine can be used.
 //
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
     );

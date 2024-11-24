@@ -58,7 +58,7 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
     if (not FINITE(dec))
         fail (Error_Overflow_Raw());
 
-    Reset_Cell_Header_Untracked(
+    Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
