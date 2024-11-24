@@ -24,11 +24,11 @@
 //-- Bootstrap variables:
 PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 
-// This is a C array that holds 8-platform-pointer Array Flex Stubs (the
-// structures themselves, not pointers to them), arranged in canon order.
-// It provides fast access to Patches for variables in LIB by SymId.
+// This is a C array that holds 8-platform-pointer Stubs (the structures
+// themselves, not pointers to them), arranged in canon order.  It provides
+// fast access to Patches for variables in LIB() by SymId.
 //
-PVAR Stub PG_Lib_Patches[LIB_SYMS_MAX];
+PVAR Stub g_lib_patches[LIB_SYMS_MAX];
 
 PVAR Element* g_lib_module;
 PVAR Element* g_sys_util_module;

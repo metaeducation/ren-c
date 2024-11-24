@@ -1080,10 +1080,10 @@ REBLEN Recycle_Core(Flex* sweeplist)
     // speeds up references that would mark them to see they're spoken for
     // (so they don't have to detect it's an array, queue the cell...)
 
-    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // skip SYM_0
+    assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &PG_Lib_Patches[id];
+        Stub* patch = &g_lib_patches[id];
         if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
             Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(patch));
@@ -1185,10 +1185,10 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     // Unmark the LIB() fixed patches (not in stub pool, never get swept)
 
-    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // skip SYM_0
+    assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &PG_Lib_Patches[id];
+        Stub* patch = &g_lib_patches[id];
         Remove_GC_Mark(patch);
     }
 

@@ -131,7 +131,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 }
 
 
-// 1. Low symbol IDs are all in PG_Lib_Patches for fast access, and were
+// 1. Low symbol IDs are all in g_lib_patches for fast access, and were
 //    created as a continguous array of memory in Startup_Lib().
 //
 // 2. The GC behavior of these patches is special and does not fit into the
@@ -164,7 +164,7 @@ Value* Append_To_Sea_Core(
 
     Stub* patch;
     if (id and id < LIB_SYMS_MAX) {
-        patch = &PG_Lib_Patches[id];  // patch memory pre-allocated at boot [1]
+        patch = &g_lib_patches[id];  // patch memory pre-allocated at boot [1]
         assert(INODE(PatchContext, patch) == nullptr);  // don't double add
         // patch->header.bits should be already set
 

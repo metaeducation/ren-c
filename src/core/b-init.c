@@ -169,10 +169,10 @@ static void Startup_Lib(void)
     Init_Context_Cell(g_lib_module, REB_MODULE, lib);
     ensure(nullptr, g_lib_context) = cast(SeaOfVars*, lib);
 
-    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // leave invalid
+    assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // leave invalid
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &PG_Lib_Patches[id];
+        Stub* patch = &g_lib_patches[id];
         assert(Is_Stub_Erased(patch));  // pre-boot state
 
         patch->leader.bits = (
@@ -201,7 +201,7 @@ static void Startup_Lib(void)
 //
 //  Shutdown_Lib: C
 //
-// Since PG_Lib_Patches are array stubs that live outside the pools,
+// Since g_lib_patches are array stubs that live outside the pools,
 // Shutdown_GC() will not kill them off.  We want to make sure the variables
 // are Erase_Cell() and that the patches are Erase_Stub() in case the
 // Startup_Core() gets called again.
@@ -225,7 +225,7 @@ static void Shutdown_Lib(void)
 {
   #if RUNTIME_CHECKS  // verify patches point to g_lib_context before freeing [1]
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &PG_Lib_Patches[id];
+        Stub* patch = &g_lib_patches[id];
         assert(INODE(PatchContext, patch) == g_lib_context);
     }
   #endif
@@ -235,10 +235,10 @@ static void Shutdown_Lib(void)
 
     Sweep_Stubs();  // free all managed Stubs so Lib is all that's left [3]
 
-    assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));
+    assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &PG_Lib_Patches[id];
+        Stub* patch = &g_lib_patches[id];
 
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 

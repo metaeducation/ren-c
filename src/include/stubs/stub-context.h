@@ -273,21 +273,21 @@ INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
 
 INLINE Value* Mutable_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
-    Value* slot = cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
+    Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
     assert(Not_Cell_Flag(slot, PROTECTED));
     return slot;
 }
 
 INLINE const Value* Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
-    Value* slot = cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
+    Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
     assert(not Is_Nothing(slot));
     return slot;
 }
 
 INLINE Sink(Value) Sink_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
-    return cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
+    return cast(Value*, Stub_Cell(&g_lib_patches[id]));
 }
 
 #define LIB(name)  Lib_Var(SYM_##name)
@@ -310,10 +310,10 @@ INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
     if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
-            if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)  // [1]
+            if (INODE(PatchContext, &g_lib_patches[id]) == nullptr)  // [1]
                 return nullptr;
 
-            return &PG_Lib_Patches[id];
+            return &g_lib_patches[id];
         }
     }
 
