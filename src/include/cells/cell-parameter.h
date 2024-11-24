@@ -28,7 +28,7 @@
 // So for example, for the paramlist generated from the following spec:
 //
 //     /foo: func [
-//         return: [integer!]  ; PARAMCLASS_RETURN
+//         return: [integer!]  ; specialized to plain PARAMETER! (not antiform)
 //         arg [~null~ block!]  ; PARAMCLASS_NORMAL
 //         'qarg [word!]       ; PARAMCLASS_QUOTED
 //         earg [<end> time!]  ; PARAMCLASS_NORMAL + PARAMETER_FLAG_ENDABLE
@@ -309,7 +309,6 @@ INLINE Param* Init_Unconstrained_Hole_Untracked(
     assert(pclass != PARAMCLASS_0);  // must have class
     if (flags & PARAMETER_FLAG_REFINEMENT) {
         assert(flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
-        assert(pclass != PARAMCLASS_RETURN);
     }
     UNUSED(pclass);
 

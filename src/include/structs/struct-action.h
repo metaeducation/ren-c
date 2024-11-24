@@ -154,15 +154,6 @@ typedef enum {
 typedef enum {
     PARAMCLASS_0,  // temporary state for Option(ParamClass)
 
-    // `PARAMCLASS_RETURN` isn't really a parameter...but the slot which is
-    // used to hold a function's definitional return is also on the interface
-    // to hold the typechecking information for returning.  It isn't ideal
-    // to make it look like a parameter on the public interface of the
-    // function--it's more an artifact of the implementation that needs to
-    // be rethought.
-    //
-    PARAMCLASS_RETURN,
-
     // `PARAMCLASS_NORMAL` is cued by an ordinary WORD! in the function spec
     // to indicate that you would like that argument to be evaluated normally.
     //

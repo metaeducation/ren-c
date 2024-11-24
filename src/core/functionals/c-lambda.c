@@ -231,7 +231,7 @@ DECLARE_NATIVE(lambda)
 
     VarList* adjunct;  // reuses Pop_Paramlist() [1]
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        &adjunct, STACK_BASE
+        &adjunct, STACK_BASE, MKF_MASK_NONE
     );
 
     Phase* lambda = Make_Action(

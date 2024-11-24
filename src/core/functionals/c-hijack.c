@@ -105,9 +105,6 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
         if (Is_Specialized(e.param))  // specialized or local
             continue;
 
-        if (Cell_ParamClass(e.param) == PARAMCLASS_RETURN)
-            continue;  // !!! hack, has PARAMETER_FLAG_REFINEMENT, don't stack it
-
         if (Get_Parameter_Flag(e.param, REFINEMENT)) {
             if (Is_Nulled(e.var))  // don't add to PATH!
                 continue;

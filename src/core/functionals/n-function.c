@@ -124,7 +124,7 @@ Bounce Func_Dispatcher(Level* const L)
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
 
     Value* cell = Level_Arg(L, 1);
-    assert(Not_Specialized(cell));
+    assert(Is_Parameter(cell));
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
@@ -504,7 +504,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
         return true;  // kind of common... necessary?
 
-    if (Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom))
+    if (Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom, true))
         return true;
 
     if (Is_Nihil(atom)) {  // RETURN NIHIL
@@ -518,7 +518,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
         Init_Nothing(atom);
     }
 
-    return Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom);
+    return Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom, false);
 }
 
 
@@ -625,10 +625,7 @@ DECLARE_NATIVE(definitional_return)
         Value* arg = Level_Args_Head(target_level);
         target_level->u.action.arg = arg;
         for (; key != key_tail; ++key, ++arg, ++param) {
-            if (
-                Is_Specialized(param)  // must reset [2]
-                or Cell_ParamClass(param) == PARAMCLASS_RETURN
-            ){
+            if (Is_Specialized(param)) {  // must reset [2]
                 Copy_Cell(arg, param);
             }
             else {

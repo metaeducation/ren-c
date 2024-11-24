@@ -3168,7 +3168,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     const Param* param = ACT_PARAMS_HEAD(phase);
 
     Value* cell = Level_Arg(L, 1);
-    assert(Not_Specialized(cell));
+    assert(Is_Parameter(cell));
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,

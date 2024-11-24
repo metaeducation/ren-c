@@ -413,7 +413,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 Meta_Quotify(arg);
 
             if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
-                sub, param, arg
+                sub, param, arg, false
             )) {
                 Drop_Action(sub);
                 Drop_Level(sub);
@@ -528,7 +528,8 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
     Level* const L,
     const Param* param,
-    Atom* arg  // need mutability for coercion
+    Atom* arg,  // need mutability for coercion
+    bool is_return
 ){
     USE_LEVEL_SHORTHANDS (L);
 
@@ -559,7 +560,7 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
         Meta_Unquotify_Undecayed(arg);  // temporary adjustment (easiest option)
         unquoted = true;
     }
-    else if (Cell_ParamClass(param) == PARAMCLASS_RETURN) {
+    else if (is_return) {
         unquoted = false;
     }
     else {
@@ -669,7 +670,7 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
         Meta_Quotify(arg);
 
     if ((result == true) and Not_Stable(arg))
-        assert(Cell_ParamClass(param) == PARAMCLASS_RETURN);
+        assert(is_return);
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]
     Init_Unreadable(SPARE);

@@ -554,10 +554,7 @@ DECLARE_NATIVE(redo)
     Param* param = ACT_PARAMS_HEAD(redo_action);
     Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg, ++param) {
-        if (
-            Is_Specialized(param)  // must reset [2]
-            or Cell_ParamClass(param) == PARAMCLASS_RETURN
-        ){
+        if (Is_Specialized(param)) {  // must reset [2]
             Copy_Cell(arg, param);
         }
     }
@@ -810,12 +807,9 @@ DECLARE_NATIVE(apply)
                 break;
             }
 
-            if (
-                Cell_ParamClass(e->param) == PARAMCLASS_RETURN
-                or Get_Parameter_Flag(e->param, REFINEMENT)
-            ){
+            if (Get_Parameter_Flag(e->param, REFINEMENT))
                 continue;
-            }
+
             if (Not_Specialized(e->var)) {
                 param = e->param;
                 break;

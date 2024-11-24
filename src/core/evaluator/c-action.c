@@ -298,17 +298,6 @@ Bounce Action_Executor(Level* L)
 
         ParamClass pclass = Cell_ParamClass(PARAM);
 
-  //=//// SKIP OVER RETURN /////////////////////////////////////////////////=//
-
-        // The return function is filled in by the dispatchers that provide it.
-
-        if (pclass == PARAMCLASS_RETURN) {
-            assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-            assert(Is_Cell_Erased(ARG));
-            Copy_Cell(ARG, PARAM);
-            goto continue_fulfilling;
-        }
-
   //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. INFIX, CHAIN) ///////////=//
 
     // 1. Seeing a fresh  output slot could mean that there was really
@@ -610,10 +599,6 @@ Bounce Action_Executor(Level* L)
             }
             break;
 
-          case PARAMCLASS_RETURN:  // should not happen!
-            assert(false);
-            break;
-
           default:
             assert(false);
         }
@@ -747,11 +732,6 @@ Bounce Action_Executor(Level* L)
         if (Is_Specialized(PARAM))  // checked when specialized [1]
             continue;
 
-        if (Cell_ParamClass(PARAM) == PARAMCLASS_RETURN) {
-            assert(Not_Specialized(stable_ARG));
-            continue;  // typeset is its legal return types, wants to be unset
-        }
-
         if (Not_Specialized(stable_ARG)) {
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
@@ -793,7 +773,7 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, PARAM, ARG))
+        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, PARAM, ARG, false))
             return FAIL(Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
     }
 

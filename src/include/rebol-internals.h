@@ -514,19 +514,15 @@ enum Boot_Levels {
 
 // Modes allowed by Make_Function:
 enum {
-    MKF_RETURN      = 1 << 0,   // built-in FUNC-style RETURN (vs LAMBDA)
-    MKF_YIELD       = 1 << 1,
-    MKF_PARAMETER_SEEN = 1 << 2,  // text will be description until this
+    MKF_RETURN = 1 << 0,  // slot 1 contains RETURN (for FUNC, NATIVE, etc.)
+    MKF_YIELD = 1 << 1,  // slot 1 contains YIELD (for YIELDER, GENERATOR)
 
     // These flags are set during the process of spec analysis.  It helps
     // avoid the inefficiency of creating documentation frames on functions
     // that don't have any.
     //
-    MKF_HAS_DESCRIPTION = 1 << 3,
-
-    // These flags are also set during the spec analysis process.
-    //
-    MKF_HAS_RETURN = 1 << 6
+    MKF_PARAMETER_SEEN = 1 << 2,  // text will be description until this
+    MKF_HAS_DESCRIPTION = 1 << 3
 };
 
 #define MKF_MASK_NONE 0 // no special handling

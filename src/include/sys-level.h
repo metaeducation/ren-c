@@ -674,8 +674,7 @@ INLINE Level* Prep_Level_Core(
 // This lets you access arguments by number, not counting return
 //
 #define ARG_N(n) ( \
-    assert(Cell_ParamClass(ACT_PARAMS_HEAD(Level_Phase(level_))) \
-        == PARAMCLASS_RETURN), \
+    assert(Is_Parameter(ACT_PARAMS_HEAD(Level_Phase(level_)))),  /* return */ \
     Level_Arg(level_, (n) + 1) \
 )
 

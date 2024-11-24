@@ -300,18 +300,6 @@ bool Specialize_Action_Throws(
             continue;
         }
 
-        // !!! Current entanglements of wanting to get help information for
-        // return and output parameters means they are exposed to the user
-        // in the external view of frames.  They should not be.
-        //
-        ParamClass pclass = Cell_ParamClass(param);
-        if (pclass == PARAMCLASS_RETURN) {
-            if (Is_Specialized(arg))
-                fail ("Can't specialize RETURN parameters");
-            Copy_Cell(arg, param);
-            continue;
-        }
-
         if (Not_Specialized(arg)) {
             Copy_Cell(arg, param);
             if (first_param)
@@ -326,7 +314,7 @@ bool Specialize_Action_Throws(
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
         if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
-            TOP_LEVEL, param, arg
+            TOP_LEVEL, param, arg, false
         )){
             Option(const Symbol*) label = VAL_FRAME_LABEL(specializee);
             fail (Error_Arg_Type(label, key, param, arg));
@@ -495,9 +483,6 @@ void For_Each_Unspecialized_Param(
         if (Get_Parameter_Flag(param, REFINEMENT))
             continue;
 
-        if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
-            continue;
-
         Flags flags = 0;
 
         if (partials) {  // even normal parameters can appear in partials
@@ -550,12 +535,8 @@ void For_Each_Unspecialized_Param(
         if (Is_Specialized(param))
             continue;
 
-        if (
-            Not_Parameter_Flag(param, REFINEMENT)
-            or Cell_ParamClass(param) == PARAMCLASS_RETURN
-        ){
+        if (Not_Parameter_Flag(param, REFINEMENT))
             continue;
-        }
 
         if (partials) {
             const Cell* partial_tail = Array_Tail(unwrap partials);
@@ -743,7 +724,7 @@ Phase* Alloc_Action_From_Exemplar(
         }
 
         if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
-            TOP_LEVEL, param, arg
+            TOP_LEVEL, param, arg, false
         )){
             fail (Error_Arg_Type(label, key, param, arg));
         }

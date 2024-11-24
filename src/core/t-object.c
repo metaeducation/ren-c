@@ -285,14 +285,6 @@ bool Try_Advance_Evars(EVARS *e) {
 
             if (Is_Specialized(e->param))  // parameter replaced with the value
                 continue;  // public should not see specialized args
-
-            if (e->visibility == VAR_VISIBILITY_INPUTS) {
-              #if 0
-                ParamClass pclass = Cell_ParamClass(e->param);
-                if (pclass == PARAMCLASS_RETURN)  // false "input" [2]
-                    continue;
-              #endif
-            }
         }
 
         return true;

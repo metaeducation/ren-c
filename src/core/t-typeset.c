@@ -152,7 +152,6 @@ void Set_Parameter_Spec(
     uintptr_t* flags = &PARAMETER_FLAGS(param);
     if (*flags & PARAMETER_FLAG_REFINEMENT) {
         assert(*flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
-        assert(pclass != PARAMCLASS_RETURN);
     }
     UNUSED(pclass);
 
@@ -436,7 +435,6 @@ Element* Decorate_According_To_Parameter(
         Refinify(e);
 
     switch (Cell_ParamClass(param)) {
-      case PARAMCLASS_RETURN:
       case PARAMCLASS_NORMAL:
         break;
 
@@ -541,9 +539,6 @@ DECLARE_GENERICS(Parameter)
 
               case PARAMCLASS_JUST:
                 return Init_Word(OUT, CANON(JUST));
-
-              case PARAMCLASS_RETURN:
-                return Init_Word(OUT, CANON(RETURN));
 
               default: assert(false);
             }

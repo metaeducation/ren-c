@@ -335,7 +335,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
     if (param and not Is_Barrier(out)) {
         if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
-            TOP_LEVEL, param, out
+            TOP_LEVEL, param, out, false
         )){
             // !!! Array-based varargs only store the parameter list they are
             // stamped with, not the level.  This is because storing non-reified

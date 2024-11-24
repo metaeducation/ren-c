@@ -305,6 +305,7 @@ void Push_Keys_And_Holes_May_Fail(
 
         bool refinement = false;  // paths with blanks at head are refinements
         bool local = false;
+        bool is_return = false;
         if (heart == REB_CHAIN or heart == REB_META_CHAIN) {
             switch (Try_Get_Sequence_Singleheart(item)) {
               case LEADING_BLANK_AND(WORD): {
@@ -331,7 +332,8 @@ void Push_Keys_And_Holes_May_Fail(
               case TRAILING_BLANK_AND(WORD):
                 if (not quoted and Cell_Word_Id(item) == SYM_RETURN) {
                     symbol = Cell_Word_Symbol(item);
-                    pclass = PARAMCLASS_RETURN;
+                    pclass = PARAMCLASS_NORMAL;
+                    is_return = true;
                 }
                 break;
 
@@ -386,7 +388,7 @@ void Push_Keys_And_Holes_May_Fail(
         if (
             (*flags & MKF_RETURN)
             and Symbol_Id(symbol) == SYM_RETURN
-            and pclass != PARAMCLASS_RETURN
+            and not is_return
         ){
             fail ("Generator provides RETURN:, use LAMBDA if not desired");
         }
@@ -463,11 +465,12 @@ void Push_Keys_And_Holes_May_Fail(
         if (Not_Cell_Readable(param_1)) {
             Init_Unconstrained_Hole(  // return anything by default
                 param_1,
-                FLAG_PARAMCLASS_BYTE(PARAMCLASS_RETURN)
+                FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
             );
         }
         else
             assert(Is_Hole(param_1));
+        QUOTE_BYTE(param_1) = NOQUOTE_1;  // normal parameter
     }
 
     Drop_Level_Unbalanced(L);
@@ -487,7 +490,8 @@ void Push_Keys_And_Holes_May_Fail(
 //
 Array* Pop_Paramlist_With_Adjunct_May_Fail(
     Sink(VarList*) adjunct,
-    StackIndex base
+    StackIndex base,
+    Flags flags
 ){
     Count num_params = (TOP_INDEX - base) / 2;
 
@@ -505,12 +509,9 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     );
     Set_Flex_Len(paramlist, num_params + 1);
 
-    if (num_params > 0) {
-        assert(Is_Word(Data_Stack_At(Element, base + 1)));
-        OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
-        if (Is_Hole(param_1))  // could be a LAMBDA with a <local> 1st arg
-            if (Cell_ParamClass(param_1) == PARAMCLASS_RETURN)
-                Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
+    if (flags & MKF_RETURN) {
+        assert(num_params >= 1);
+        Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
     }
 
     // We want to check for duplicates and a Binder can be used for that
@@ -665,7 +666,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         flags
     );
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        adjunct_out, base
+        adjunct_out, base, *flags
     );
 
     return paramlist;
@@ -775,7 +776,6 @@ Phase* Make_Action(
     if (first) {
         ParamClass pclass = Cell_ParamClass(first);
         switch (pclass) {
-          case PARAMCLASS_RETURN:
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META:
             break;

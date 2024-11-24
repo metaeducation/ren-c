@@ -385,7 +385,7 @@ DECLARE_NATIVE(reframer)
     //
     Sink(Element) temp = LOCAL(temp);
     Copy_Cell(temp, LEVEL->rootvar);
-    if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(LEVEL, param, temp)) {
+    if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(LEVEL, param, temp, false)) {
         DECLARE_ATOM (label_word);
         if (label)
             Init_Word(label_word, unwrap label);

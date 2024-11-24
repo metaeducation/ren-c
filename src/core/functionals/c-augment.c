@@ -115,7 +115,7 @@ DECLARE_NATIVE(augment)
     );
 
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        &adjunct, STACK_BASE
+        &adjunct, STACK_BASE, flags
     );
 
     // Usually when you call Make_Action() on a freshly generated paramlist,

@@ -791,6 +791,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     if (ACT_HAS_RETURN(phase)) {  // !!! does it always have RETURN? [1]
         assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
         const Param* param = ACT_PARAMS_HEAD(phase);
+        assert(Is_Parameter(param));
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
             return FAIL(Error_Bad_Return_Type(L, OUT));
