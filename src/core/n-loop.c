@@ -109,12 +109,12 @@ DECLARE_NATIVE(definitional_break)
 
     Init_Action(
         SPARE,  // use as label for throw
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
         Canon(BREAK),
         cast(VarList*, loop_level->varlist)
     );
 
-    return Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
+    return Init_Thrown_With_Label(LEVEL, LIB(NULL), stable_SPARE);
 }
 
 
@@ -153,7 +153,7 @@ DECLARE_NATIVE(definitional_continue)
 
     Init_Action(
         SPARE,  // use as label for throw
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
         Canon(CONTINUE),
         Varlist_Of_Level_Force_Managed(loop_level)
     );
@@ -174,7 +174,7 @@ void Add_Definitional_Break_Continue(
 
     Init_Action(
         Stub_Cell(let_continue),
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
         Canon(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to continue
     );
@@ -182,7 +182,7 @@ void Add_Definitional_Break_Continue(
     Let* let_break = Make_Let_Variable(Canon(BREAK), let_continue);
     Init_Action(
         Stub_Cell(let_break),
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
         Canon(BREAK),  // relabel (the BREAK in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
@@ -642,7 +642,7 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 
     Init_Action(
         SPARE,  // use as label for throw
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
         Canon(STOP),
         cast(VarList*, loop_level->varlist)
     );
@@ -665,7 +665,7 @@ void Add_Definitional_Stop(
     Let* let_stop = Make_Let_Variable(Canon(STOP), parent);
     Init_Action(
         Stub_Cell(let_stop),
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
         Canon(STOP),  // relabel (the STOP in lib is a dummy action)
         cast(VarList*, loop_level->varlist)  // what to stop
    );
@@ -1459,7 +1459,7 @@ DECLARE_NATIVE(remove_each)
                 SPARE,
                 Error_User("Use [~null~ ~okay~ ~void~] with REMOVE-EACH")
             );
-            Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
+            Init_Thrown_With_Label(LEVEL, LIB(NULL), stable_SPARE);
             goto finalize_remove_each;
         }
 
@@ -1670,10 +1670,10 @@ DECLARE_NATIVE(map_each)
     //
     Quotify(ARG(data), 1);
 
-    Tweak_Level_Phase(LEVEL, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
+    Tweak_Level_Phase(LEVEL, ACT_IDENTITY(VAL_ACTION(LIB(MAP))));
     // Tweak_Level_Coupling ?
 
-    Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
+    Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(LIB(MAP)));
     return dispatcher(LEVEL);
 }
 

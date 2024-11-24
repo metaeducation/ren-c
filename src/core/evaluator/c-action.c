@@ -988,7 +988,7 @@ Bounce Action_Executor(Level* L)
     const Value* label = VAL_THROWN_LABEL(level_);
     if (Is_Frame(label)) {
         if (
-            VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]
+            VAL_ACTION(label) == VAL_ACTION(LIB(REDO))  // REDO [1]
             and Cell_Coupling(label) == cast(VarList*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);

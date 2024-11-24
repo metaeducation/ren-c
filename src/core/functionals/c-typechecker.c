@@ -871,7 +871,7 @@ DECLARE_NATIVE(matcher)
     Copy_Meta_Cell(Array_At(a, 1), test);
     Init_Block(SPARE, a);
 
-    if (Specialize_Action_Throws(OUT, Lib(MATCH), stable_SPARE, STACK_BASE))
+    if (Specialize_Action_Throws(OUT, LIB(MATCH), stable_SPARE, STACK_BASE))
         return THROWN;
 
     return OUT;

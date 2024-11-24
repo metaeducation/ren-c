@@ -3172,7 +3172,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );

@@ -86,7 +86,7 @@ DECLARE_NATIVE(does)
     assert(!"DOES with types other than BLOCK! not currently active");  // [1]
 
     VarList* exemplar = Make_Varlist_For_Action(
-        Lib(EVALUATE),
+        LIB(EVALUATE),
         TOP_INDEX,  // lower stackindex would be if wanting to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
     );

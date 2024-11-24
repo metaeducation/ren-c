@@ -352,7 +352,7 @@ DECLARE_NATIVE(to_char)
     if (size == 1) {
         if (*at == 0) {
             assert(Is_Blob(e));
-            return COPY(Lib(NUL));
+            return COPY(LIB(NUL));
         }
     }
     Codepoint c;

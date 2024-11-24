@@ -562,10 +562,10 @@ DECLARE_NATIVE(redo)
         }
     }
 
-    Copy_Cell(SPARE, Lib(REDO));  // label used for throw
+    Copy_Cell(SPARE, LIB(REDO));  // label used for throw
     Tweak_Cell_Coupling(SPARE, c);  // coupling has restartee as varlist
 
-    const Value* gather_args = Lib(NULL);
+    const Value* gather_args = LIB(NULL);
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
 }
 

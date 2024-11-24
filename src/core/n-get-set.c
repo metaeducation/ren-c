@@ -1066,7 +1066,7 @@ bool Set_Var_Core_Updater_Throws(
 
     // Subsequent updates become pokes, regardless of initial updater function
 
-    updater = Lib(POKE);
+    updater = LIB(POKE);
 
     if (not Is_Nulled(out)) {
         Move_Cell(writeback, out);

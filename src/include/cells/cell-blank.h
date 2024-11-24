@@ -148,4 +148,4 @@ INLINE Value* Init_Nothing_Untracked(Init(Value) out) {
 #define Init_Meta_Of_Nothing(out)  Init_Trash(out)
 
 #define NOTHING_VALUE \
-    cast(const Value*, &PG_Nothing_Value)  // Lib(NOTHING) would be an action
+    cast(const Value*, &PG_Nothing_Value)  // LIB(NOTHING) would be an action

@@ -65,7 +65,7 @@ bool Do_Breakpoint_Throws(
     Value* inst = rebValue("debug-console");
 
     if (Is_Integer(inst)) {
-        Init_Thrown_With_Label(TOP_LEVEL, inst, Lib(QUIT));
+        Init_Thrown_With_Label(TOP_LEVEL, inst, LIB(QUIT));
         rebRelease(inst);
         return true;
     }
@@ -117,7 +117,7 @@ DECLARE_NATIVE(breakpoint_p)
     if (Do_Breakpoint_Throws(
         SPARE,
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
-        Lib(BLANK)  // default result if RESUME does not override
+        LIB(BLANK)  // default result if RESUME does not override
     )){
         return THROWN;
     }

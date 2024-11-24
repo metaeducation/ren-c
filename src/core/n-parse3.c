@@ -241,7 +241,7 @@ static bool Subparse_Throws(
 
     Push_Level_Erase_Out_If_State_0(out, L);  // checks for C stack overflow
 
-    Push_Action(L, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
+    Push_Action(L, VAL_ACTION(LIB(SUBPARSE)), UNBOUND);
 
     Begin_Action(L, Canon(SUBPARSE), PREFIX_0);
 
@@ -298,13 +298,13 @@ static bool Subparse_Throws(
         //
         const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
-            if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
+            if (VAL_ACTION(label) == VAL_ACTION(LIB(PARSE_REJECT))) {
                 CATCH_THROWN(out, LEVEL);
                 *interrupted_out = true;
                 return false;
             }
 
-            if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_BREAK))) {
+            if (VAL_ACTION(label) == VAL_ACTION(LIB(PARSE_BREAK))) {
                 CATCH_THROWN(out, LEVEL);
                 assert(Is_Integer(out));
                 *interrupted_out = true;
@@ -1645,7 +1645,7 @@ DECLARE_NATIVE(subparse)
                 else
                     fail ("PARSE3 ACCEPT only works with GROUP! and <here>");
 
-                Init_Thrown_With_Label(LEVEL, thrown_arg, Lib(PARSE_ACCEPT));
+                Init_Thrown_With_Label(LEVEL, thrown_arg, LIB(PARSE_ACCEPT));
                 goto return_thrown; }
 
               case SYM_BREAK: {
@@ -1657,14 +1657,14 @@ DECLARE_NATIVE(subparse)
                 DECLARE_ATOM (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
-                Init_Thrown_With_Label(LEVEL, thrown_arg, Lib(PARSE_BREAK));
+                Init_Thrown_With_Label(LEVEL, thrown_arg, LIB(PARSE_BREAK));
                 goto return_thrown; }
 
               case SYM_REJECT: {
                 //
                 // Similarly, this is a break/continue style "throw"
                 //
-                Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(PARSE_REJECT));
+                Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(PARSE_REJECT));
                 goto return_thrown; }
 
               case SYM_BYPASS:  // skip to next alternate
@@ -2397,7 +2397,7 @@ DECLARE_NATIVE(parse3)
 
         const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
-            if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
+            if (VAL_ACTION(label) == VAL_ACTION(LIB(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, LEVEL);
                 return OUT;
             }

@@ -112,8 +112,8 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 #define LINK_SuspendedLevel_TYPE       Level*
 #define HAS_LINK_SuspendedLevel        FLAVOR_DATASTACK
 
-#define SPARE_PROXY     x_cast(Atom*, Lib(BLANK))
-#define SCRATCH_PROXY   x_cast(Atom*, Lib(NULL))
+#define SPARE_PROXY     x_cast(Atom*, LIB(BLANK))
+#define SCRATCH_PROXY   x_cast(Atom*, LIB(NULL))
 
 
 // Depending on whether they have state to restore (mold buffers, data stacks,
@@ -227,7 +227,7 @@ void Unplug_Stack(
             // !!! This is true for YIELD's relationship to the YIELDER, but
             // why would it be generically the case?
             //
-            /* assert(temp->out == Lib(BLANK)); */  // should have matched base
+            /* assert(temp->out == LIB(BLANK)); */  // should have matched base
 
             temp->prior = nullptr;  // show where the fragment of stack ends
             break;

@@ -317,7 +317,7 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 static void Init_Root_Vars(void)
 {
-    // Simple isolated values, not available via lib, e.g. not Lib(BLANK)
+    // Simple isolated values, not available via lib, e.g. not LIB(BLANK)
 
     Init_Nothing(&PG_Nothing_Value);
     Set_Cell_Flag(&PG_Nothing_Value, PROTECTED);  // prevent overwriting

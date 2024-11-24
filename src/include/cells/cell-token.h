@@ -190,7 +190,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     );
 
     if (c == 0) {  // NUL is #{00}, a BLOB! not an ISSUE! (see Is_NUL())
-        Copy_Cell(out, cast(const Element*, Lib(NUL)));
+        Copy_Cell(out, cast(const Element*, LIB(NUL)));
     }
     else {
         Size encoded_size = Encoded_Size_For_Codepoint(c);

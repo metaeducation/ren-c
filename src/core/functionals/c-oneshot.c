@@ -125,7 +125,7 @@ DECLARE_NATIVE(n_shot)
     REBI64 n = VAL_INT64(ARG(n));
 
     Phase* n_shot = Make_Action(
-        ACT_PARAMLIST(VAL_ACTION(Lib(DO_BRANCH))),
+        ACT_PARAMLIST(VAL_ACTION(LIB(DO_BRANCH))),
         nullptr,  // no partials
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
         IDX_ONESHOT_MAX  // details array capacity

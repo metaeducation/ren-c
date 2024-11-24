@@ -1545,7 +1545,7 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
 
     Init_Action(
         Stub_Cell(let_throw),
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_THROW))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_THROW))),
         Cell_Word_Symbol(name),  // relabel (THROW in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(catch_level)  // what to continue
     );

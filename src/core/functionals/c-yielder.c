@@ -241,7 +241,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Nothing(cell));  // YIELD is a local, initialized to nothing
     Init_Action(
         cell,
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_YIELD))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
         Canon(YIELD),  // relabel (the YIELD in lib is a tripwire)
         Level_Varlist(L)  // extant YIELDs hold original varlist [1]
     );
@@ -615,7 +615,7 @@ DECLARE_NATIVE(definitional_yield)
     if (Is_Meta_Of_Raised(meta) or REF(final)) {  // not resumable, throw
         Init_Action(
             SPARE,  // use as label for throw
-            ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_YIELD))),
+            ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
             Canon(YIELD),
             Level_Varlist(yielder_level)
         );

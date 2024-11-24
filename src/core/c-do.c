@@ -238,7 +238,7 @@ bool Pushed_Continuation(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
         );
 
-        const Value* action = Lib(REDUCE);
+        const Value* action = LIB(REDUCE);
         Push_Action(L, VAL_ACTION(action), Cell_Coupling(action));
         Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 

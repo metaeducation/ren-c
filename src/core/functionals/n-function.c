@@ -128,7 +128,7 @@ Bounce Func_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
-        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
+        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
@@ -396,7 +396,7 @@ Bounce Init_Thrown_Unwind_Value(
     Level* target // required if level is INTEGER! or ACTION!
 ) {
     DECLARE_VALUE (label);
-    Copy_Cell(label, Lib(UNWIND));
+    Copy_Cell(label, LIB(UNWIND));
 
     if (Is_Frame(seek) and Is_Frame_On_Stack(Cell_Varlist(seek))) {
         g_ts.unwind_level = Level_Of_Varlist_If_Running(Cell_Varlist(seek));
@@ -581,7 +581,7 @@ DECLARE_NATIVE(definitional_return)
         }
 
         DECLARE_VALUE (label);
-        Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
+        Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
 
         return Init_Thrown_With_Label(LEVEL, OUT, label);
@@ -639,7 +639,7 @@ DECLARE_NATIVE(definitional_return)
         // leave phase as-is... we redo the phase we were in
         // (also if we redid original, note there's no original_binding :-/)
 
-        gather_args = Lib(NULL);
+        gather_args = LIB(NULL);
     }
     else if (Is_Action(atom) or Is_Frame(atom)) {  // just reuse Level
         Drop_Action(target_level);
@@ -658,7 +658,7 @@ DECLARE_NATIVE(definitional_return)
 
         Set_Node_Managed_Bit(target_level->varlist);
 
-        gather_args = Lib(OKAY);
+        gather_args = LIB(OKAY);
     }
     else
         return FAIL("RETURN:RUN requires action, frame, or <redo> as argument");
@@ -667,7 +667,7 @@ DECLARE_NATIVE(definitional_return)
     // of the frame.  Use REDO as the throw label that Eval_Core() will
     // identify for that behavior.
     //
-    Copy_Cell(SPARE, Lib(REDO));
+    Copy_Cell(SPARE, LIB(REDO));
     Tweak_Cell_Coupling(  // comment said "may have changed"?
         SPARE,
         Varlist_Of_Level_Force_Managed(target_level)

@@ -1275,7 +1275,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     if (Get_Trampoline_Flag(HALT)) {
         Clear_Trampoline_Flag(HALT);
 
-        return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
+        return Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(HALT));
     }
 
     if (Get_Trampoline_Flag(DEBUG_BREAK)) {

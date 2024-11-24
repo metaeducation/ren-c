@@ -818,7 +818,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
         //
         Clear_Trampoline_Flag(HALT);
 
-        return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
+        return Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(HALT));
     }
 
     TRACE("Calling fail() with error context");

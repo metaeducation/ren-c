@@ -240,7 +240,7 @@ const Value* Type_Of(const Atom* value)
 //
 Value* Get_System(REBLEN i1, REBLEN i2)
 {
-    Value* obj = Varlist_Slot(Cell_Varlist(Lib(SYSTEM)), i1);
+    Value* obj = Varlist_Slot(Cell_Varlist(LIB(SYSTEM)), i1);
     if (i2 == 0)
         return obj;
 

@@ -397,7 +397,7 @@ DECLARE_NATIVE(protect)
             e,
             SPECIFIED,
             stable_SPARE,
-            Lib(PROTECT_P)
+            LIB(PROTECT_P)
         )){
             return THROWN;
         }
@@ -457,7 +457,7 @@ DECLARE_NATIVE(unprotect)
             e,
             SPECIFIED,
             stable_SPARE,
-            Lib(PROTECT_P)
+            LIB(PROTECT_P)
         )){
             return THROWN;
         }

@@ -385,7 +385,7 @@ DECLARE_GENERICS(Blob)
         }
 
         if (to == REB_BLOB) {
-            const Value* part = Lib(NULL);  // no :PART, copy to end
+            const Value* part = LIB(NULL);  // no :PART, copy to end
             return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
         }
 

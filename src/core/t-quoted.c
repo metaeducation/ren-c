@@ -544,7 +544,7 @@ DECLARE_NATIVE(pack)
 
     Element* block = cast(Element*, ARG(block));
 
-    if (Pack_Native_Core_Throws(OUT, block, Lib(META)))  // no raised [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(META)))  // no raised [1]
         return THROWN;
     return OUT;
 }
@@ -572,7 +572,7 @@ DECLARE_NATIVE(pack_p)
 
     Element* block = cast(Element*, ARG(block));
 
-    if (Pack_Native_Core_Throws(OUT, block, Lib(META_P)))  // raise ok [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(META_P)))  // raise ok [1]
         return THROWN;
     return OUT;
 }

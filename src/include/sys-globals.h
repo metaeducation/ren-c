@@ -54,7 +54,7 @@ PVAR Codepoint *Lower_Cases;
     PVAR bool PG_Callgrind_On;
 #endif
 
-// These are some canon cells that cannot be offered via Lib(XXX).  e.g. if
+// These are some canon cells that cannot be offered via LIB(XXX).  e.g. if
 // NOTHING were a variable in Lib, users couldn't access it by typing
 // `nothing` (they'd get an error on antiform var access)...so it's a function.
 //

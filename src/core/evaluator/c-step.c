@@ -1580,7 +1580,7 @@ Bounce Stepper_Executor(Level* L)
                 or var_heart == REB_META_TUPLE
             ){
                 if (pack_meta_at == pack_meta_tail) {  // special detection
-                    Set_Var_May_Fail(var, SPECIFIED, Lib(NULL));
+                    Set_Var_May_Fail(var, SPECIFIED, LIB(NULL));
                     goto circled_check;
                 }
                 Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);  // is meta'd

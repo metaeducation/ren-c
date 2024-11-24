@@ -1070,7 +1070,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     g_gc.recycled_stubs = g_mem.pools[STUB_POOL].free;
   #endif
 
-    // Builtin patches for Lib contain variables that can be read by Lib(XXX)
+    // Builtin patches for Lib contain variables that can be read by LIB(XXX)
     // in the C code.  Since effectively any of them could become referred
     // to in code, we need to keep the cells alive.
     //
@@ -1183,7 +1183,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     else
         sweep_count = Sweep_Stubs();
 
-    // Unmark the Lib() fixed patches (not in stub pool, never get swept)
+    // Unmark the LIB() fixed patches (not in stub pool, never get swept)
 
     assert(Is_Stub_Erased(&PG_Lib_Patches[SYM_0]));  // skip SYM_0
 

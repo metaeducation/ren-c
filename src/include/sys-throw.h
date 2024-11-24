@@ -115,7 +115,7 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
 INLINE Bounce Init_Thrown_Failure(Level* L, Error* error) {
     UNUSED(L);
     return Init_Thrown_With_Label(
-        TOP_LEVEL, Lib(NULL), Varlist_Archetype(error)  // error is the "label"
+        TOP_LEVEL, LIB(NULL), Varlist_Archetype(error)  // error is the "label"
     );
 }
 

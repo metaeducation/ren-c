@@ -285,7 +285,7 @@ Source* Startup_Natives(const Element* boot_natives)
         UNBOUND  // coupling
     );
 
-    assert(VAL_ACTION(Lib(NATIVE)) == the_native_action);
+    assert(VAL_ACTION(LIB(NATIVE)) == the_native_action);
 
     DECLARE_ATOM (skipped);
     Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
@@ -305,18 +305,18 @@ Source* Startup_Natives(const Element* boot_natives)
     PG_Currently_Loading_Module = nullptr;
 
   #if RUNTIME_CHECKS  // ensure a couple of functions can be looked up by ID
-    if (not Is_Action(Lib(FOR_EACH)))
-        panic (Lib(FOR_EACH));
+    if (not Is_Action(LIB(FOR_EACH)))
+        panic (LIB(FOR_EACH));
 
-    if (not Is_Action(Lib(PARSE_REJECT)))
-        panic (Lib(PARSE_REJECT));
+    if (not Is_Action(LIB(PARSE_REJECT)))
+        panic (LIB(PARSE_REJECT));
 
-    Count num_append_args = ACT_NUM_PARAMS(VAL_ACTION(Lib(APPEND)));
-    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(Lib(INSERT))));
-    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(Lib(CHANGE))));
+    Count num_append_args = ACT_NUM_PARAMS(VAL_ACTION(LIB(APPEND)));
+    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(LIB(INSERT))));
+    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(LIB(CHANGE))));
 
-    Count num_find_args = ACT_NUM_PARAMS(VAL_ACTION(Lib(FIND)));
-    assert(num_find_args == ACT_NUM_PARAMS(VAL_ACTION(Lib(SELECT))));
+    Count num_find_args = ACT_NUM_PARAMS(VAL_ACTION(LIB(FIND)));
+    assert(num_find_args == ACT_NUM_PARAMS(VAL_ACTION(LIB(SELECT))));
   #endif
 
     return catalog;

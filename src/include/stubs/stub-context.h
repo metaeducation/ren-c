@@ -290,7 +290,7 @@ INLINE Sink(Value) Sink_Lib_Var_For_Id(SymId id) {
     return cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
 }
 
-#define Lib(name) \
+#define LIB(name) \
     Lib_Var_For_Id(SYM_##name)
 
 #define Sink_Lib_Var(name) \
@@ -307,7 +307,7 @@ INLINE Sink(Value) Sink_Lib_Var_For_Id(SymId id) {
 // tailored in order for SYM_XXX constants to beeline for the storage.  The
 // entries were all allocated during Startup_Lib().
 //
-// Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
+// Note: Call LIB() macro directly if you have a SYM in hand vs. a canon.
 //
 // 1. !!! We need to consider the strictness here, with case sensitive binding
 //    we can't be sure it's a match.  :-/  For this moment hope lib doesn't

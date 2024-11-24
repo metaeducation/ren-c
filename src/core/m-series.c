@@ -343,7 +343,7 @@ void Remove_Any_Series_Len(Value* v, REBLEN index, REBINT len)
         Modify_String_Or_Binary(
             temp,
             SYM_CHANGE,
-            Lib(VOID),
+            LIB(VOID),
             AM_PART,
             len,
             1  // dups

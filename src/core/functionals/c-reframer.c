@@ -251,7 +251,7 @@ bool Init_Frame_From_Feed_Throws(
 
     assert(Is_Quoted(out));
     VarList* exemplar = Make_Varlist_For_Action(
-        Lib(IDENTITY),
+        LIB(IDENTITY),
         TOP_INDEX,
         nullptr
     );

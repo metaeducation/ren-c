@@ -283,7 +283,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 
         // This lets you use a symbol and it assumes you want a WORD!.  If all
         // you have is an antiform ACTION! available, this means Canon(WORD)
-        // can be cheaper than rebM(Lib(WORD)) for the action, especially if
+        // can be cheaper than rebM(LIB(WORD)) for the action, especially if
         // the ->gotten field is set up.  Using words can also be more clear
         // in debugging than putting the actions themselves.
         //
