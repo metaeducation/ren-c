@@ -79,7 +79,7 @@
 //
 // 1. At present, the default behavior for rebol.h is that if you don't have
 //    a definition for LIBREBOL_BINDING, it will assume it's null.  Then,
-//    the internals of the code use Get_Context_From_Stack() in the null
+//    the internals of the code use Get_Context_From_Top_Level() in the null
 //    case for the behavior.
 //
 // 2. An attempt was made for Bounce to be a smart pointer, when I thought
@@ -111,7 +111,7 @@
   #include <time.h>  // needed for srand()
 #endif
 
-/*#define LIBREBOL_BINDING Get_Context_From_Stack() */  // not needed [1]
+/*#define LIBREBOL_BINDING Get_Context_From_Top_Level() */  // not needed [1]
 #include "rebol.h"
 typedef RebolValue Value;
 typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]

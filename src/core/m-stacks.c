@@ -30,41 +30,36 @@
 //
 //  Startup_Data_Stack: C
 //
+// 1. Start the data stack out with just one element in it.  We could start
+//    it off as a dynamic allocation, but by letting it be a singular array
+//    and then expanding it here it's a chance to test that logic early on.
+//
+// 2. Poison the cell at the head of the data stack (unreadable/unwritable).
+//    Having nothing at [0] means that StackIndex can be unsigned (no need
+//    for -1 to mean empty, because 0 means that).
+//
 void Startup_Data_Stack(Length capacity)
 {
-    // Start the data stack out with just one element in it, and poison it
-    // (unreadable/unwritable).  This helps avoid accidental accesses in the
-    // checked build.  It also means that indices into the data stack can be
-    // unsigned (no need for -1 to mean empty, because 0 can)
-    //
-    // We could start it off as a dynamic allocation, but by letting it be
-    // a singular array and then expanding it here it's a chance to test out
-    // that logic early in the boot.
-    //
     ensure(nullptr, g_ds.array) = Make_Array_Core(FLAG_FLAVOR(DATASTACK), 1);
-    Set_Flex_Len(g_ds.array, 1);
+    Set_Flex_Len(g_ds.array, 1);  // one element, helps test expansion [1]
     assert(Not_Stub_Flag(g_ds.array, DYNAMIC));
 
+  blockscope {  // head will move after expansion
     Cell* head = Array_Head(g_ds.array);
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
     Init_Unreadable(head);
+  }
 
-    // The tail marker will signal PUSH() that it has run out of space,
-    // and it will perform the allocation at that time.
-    //
-    g_ds.movable_tail = Array_Tail(g_ds.array);
+    g_ds.movable_tail = Array_Tail(g_ds.array);  // signals PUSH() out of space
 
-    // Reuse the expansion logic that happens on a PUSH() to get the
-    // initial stack size.  It requires you to be on an END to run.
-    //
     g_ds.index = 1;
     g_ds.movable_top = Flex_At(Cell, g_ds.array, g_ds.index);
-    Expand_Data_Stack_May_Fail(capacity);
+    Expand_Data_Stack_May_Fail(capacity);  // leverage expansion logic [1]
 
     DROP();  // drop the hypothetical thing that triggered the expand
 
     assert(Get_Stub_Flag(g_ds.array, DYNAMIC));
-    Force_Poison_Cell(Array_Head(g_ds.array));  // new head
+    Force_Poison_Cell(Array_Head(g_ds.array));  // poison the head [2]
 }
 
 
@@ -95,6 +90,7 @@ void Startup_Feeds(void)
     assert(Is_Feed_At_End(TG_End_Feed));
 }
 
+
 //
 //  Shutdown_Feeds: C
 //
@@ -107,44 +103,40 @@ void Shutdown_Feeds(void) {
 
 
 //
-//  Get_Context_From_Stack: C
+//  Get_Context_From_Top_Level: C
 //
-// Generally speaking, Rebol does not have a "current context" in effect; as
-// should you call an `IF` in a function body, there is now a Rebol IF on the
-// stack.  But the story for ACTION!s that are implemented in C is different,
-// as they have one Rebol action in effect while their C code is in control.
+// libRebol cleverly uses variable shadowing to let API code capture either
+// a local or global definition of LIBREBOL_BINDING, and thus know whether
+// to make arguments to a native implementation visible when evaluating
+// expressions from text in the API.
 //
-// This is used to an advantage in the APIs like rebValue(), to be able to get
-// a notion of a "current context" applicable *only* to when natives run.
+// Traditional native code uses ARG() and REF() macros for speed, that know
+// the exact offsets to search for arguments at.  But when they run API code,
+// they want visibility of the definitions in their module.  So when an
+// extension is being initialized, it pokes the module into the Details array
+// of the natives it loads.
 //
-VarList* Get_Context_From_Stack(void)
+// 1. When no natives could be in effect--such as in `int main()`, this used
+//    to run API code in the user context.  But the user context is now no
+//    longer available during much of the boot...so we fall back to the
+//    g_lib_context if not available.
+//
+VarList* Get_Context_From_Top_Level(void)
 {
     Level* L = TOP_LEVEL;
-    Phase* phase = nullptr;  // avoid uninitialized variable warning
 
-    for (; L != BOTTOM_LEVEL; L = L->prior) {
-        if (not Is_Action_Level(L))
-            continue;
-
-        phase = Level_Phase(L);
-        break;
-    }
-
-    if (L == BOTTOM_LEVEL) {
-        //
-        // No natives are in effect, so this is API code running directly from
-        // an `int main()`.  Previously this always ran in the user context,
-        // but the user context is now no longer available during much of the
-        // boot...so we fall back to the g_lib_context during boot.
-        //
+    if (L == BOTTOM_LEVEL)  // no natives in effect, e.g. main() [1]
         return g_user_context != nullptr ? g_user_context : g_lib_context;
-    }
 
-    // This would happen if you call the API from something like a traced
-    // eval hook, or a Func_Dispatcher().  For now, just assume that means
-    // you want the code to bind into the lib context.
-    //
-    if (not Is_Action_Native(phase))
+    if (not Is_Action_Level(L))
+        return g_lib_context;  // e.g. API call from Stepper_Executor()
+
+    if (Is_Level_Fulfilling(L))
+        return g_lib_context;  // e.g. API call from Action_Executor() itself
+
+    Phase* phase = Level_Phase(L);
+
+    if (not Is_Action_Native(phase))  // e.g. API call from Func_Dispatcher()
         return g_lib_context;
 
     Details* details = Phase_Details(phase);
@@ -165,39 +157,30 @@ VarList* Get_Context_From_Stack(void)
 // which could do a push or pop.  (Currently stable w.r.t. pop but there may
 // be compaction at some point.)
 //
+// 1. Operations like PUSH() increment first, and then notice they hit the
+//    `movable_tail` to call into an expand.  So if we're not going to grant
+//    the expansion, we have to decrement the pointer prior to failing.
+//
 void Expand_Data_Stack_May_Fail(REBLEN amount)
 {
     REBLEN len_old = Array_Len(g_ds.array);
 
-    // The current requests for expansion should only happen when the stack
-    // is at its end.  Sanity check that.
-    //
-    assert(len_old == g_ds.index);
+    assert(len_old == g_ds.index);  // only request expansion when tail hit
     assert(g_ds.movable_top == Flex_Tail(Cell, g_ds.array));
     assert(
         g_ds.movable_top - Flex_Head(Cell, g_ds.array)
         == cast(int, len_old)
     );
 
-    // If adding in the requested amount would overflow the stack limit, then
-    // give a data stack overflow error.
-    //
-    if (Flex_Rest(g_ds.array) + amount >= STACK_LIMIT) {
-        //
-        // Because the stack pointer was incremented and hit the END marker
-        // before the expansion, we have to decrement it if failing.
-        //
-        --g_ds.index;
+    if (Flex_Rest(g_ds.array) + amount >= STACK_LIMIT) {  // catch overflow
+        --g_ds.index;  // have to correct for pre-increment [1]
         --g_ds.movable_top;
         Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
     Extend_Flex_If_Necessary(g_ds.array, amount);
 
-    // Update the pointer used for fast access to the top of the stack that
-    // likely was moved by the above allocation (needed before using TOP)
-    //
-    g_ds.movable_top = Flex_At(Cell, g_ds.array, g_ds.index);
+    g_ds.movable_top = Flex_At(Cell, g_ds.array, g_ds.index);  // needs update
 
     REBLEN len_new = len_old + amount;
     Set_Flex_Len(g_ds.array, len_new);
@@ -210,10 +193,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     assert(poison == Flex_Tail(Cell, g_ds.array));
   #endif
 
-    // Update the end marker to serve as the indicator for when the next
-    // stack push would need to expand.
-    //
-    g_ds.movable_tail = Flex_Tail(Cell, g_ds.array);
+    g_ds.movable_tail = Flex_Tail(Cell, g_ds.array);  // next expansion point
 }
 
 

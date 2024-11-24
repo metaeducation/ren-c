@@ -405,7 +405,7 @@ EXTERN_C intptr_t API_rebPromise(
     struct Reb_Promise_Info *info = Try_Alloc_Memory(struct Reb_Promise_Info);
     info->state = PROMISE_STATE_QUEUEING;
     info->promise_id = Heapaddr_From_Pointer(code);
-    info->binding = Get_Context_From_Stack();
+    info->binding = Get_Context_From_Top_Level();
     info->next = PG_Promises;
     PG_Promises = info;
 

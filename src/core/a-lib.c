@@ -1074,7 +1074,7 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
         FEED_BINDING(feed) = cast(Stub*, *binding_ref);
     }
     else
-        FEED_BINDING(feed) = Get_Context_From_Stack();
+        FEED_BINDING(feed) = Get_Context_From_Top_Level();
 
     Level* L = Make_Level(&Evaluator_Executor, feed, flags);
     Init_Void(Evaluator_Primed_Cell(L));
@@ -1180,7 +1180,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         FEED_BINDING(feed) = cast(Stub*, *binding_ref);
     }
     else
-        FEED_BINDING(feed) = Get_Context_From_Stack();
+        FEED_BINDING(feed) = Get_Context_From_Top_Level();
 
     Level* L = Make_Level(&Stepper_Executor, feed, flags);
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
