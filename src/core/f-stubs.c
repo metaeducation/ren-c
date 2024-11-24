@@ -215,7 +215,7 @@ const Element* Datatype_From_Kind(Kind kind)
     assert(kind < REB_MAX);
     Offset n = cast(Offset, kind);
     SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
-    const Value* type = Lib_Var_For_Id(datatype_sym);  // succeeds
+    const Value* type = Lib_Var(datatype_sym);  // succeeds
     assert(Is_Type_Block(type));
     return c_cast(Element*, type);
 }

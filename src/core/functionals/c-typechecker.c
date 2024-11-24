@@ -691,7 +691,7 @@ Value* Init_Typechecker(Init(Value) out, const Element* types) {
         Offset n = cast(Offset, kind);
 
         SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
-        return Copy_Cell(out, Lib_Var_For_Id(constraint_sym));
+        return Copy_Cell(out, Lib_Var(constraint_sym));
     }
 
     assert(Is_Type_Word(types));

@@ -279,7 +279,7 @@ Source* Startup_Natives(const Element* boot_natives)
     ++g_native_dispatcher_pos;
 
     Init_Action(
-        Sink_Lib_Var(NATIVE),
+        Sink_Lib_Var(SYM_NATIVE),
         the_native_action,
         CANON(NATIVE),  // label
         UNBOUND  // coupling

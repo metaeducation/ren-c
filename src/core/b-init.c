@@ -499,8 +499,8 @@ static void Init_System_Object(
     // UTIL in SYSTEM, and then abbreviate SYS as a synonym for SYSTEM.
     // Hence the utilities are available as SYS.UTIL
     //
-    Init_Object(Sink_Lib_Var(SYSTEM), system);
-    Init_Object(Sink_Lib_Var(SYS), system);
+    Init_Object(Sink_Lib_Var(SYM_SYSTEM), system);
+    Init_Object(Sink_Lib_Var(SYM_SYS), system);
 
     DECLARE_VALUE (sysobj_spec_virtual);
     Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
@@ -764,11 +764,11 @@ void Startup_Core(void)
         "evaluate inside", Lib_Module, rebQ(&boot->constants)
     );
 
-    Protect_Cell(Mutable_Lib_Var(NULL));  // !!! need generalized immutability
-    Protect_Cell(Mutable_Lib_Var(VOID));
-    Protect_Cell(Mutable_Lib_Var(BLANK));
-    Protect_Cell(Mutable_Lib_Var(TRASH));
-    Protect_Cell(Mutable_Lib_Var(NUL));
+    Protect_Cell(Mutable_Lib_Var(SYM_NULL));
+    Protect_Cell(Mutable_Lib_Var(SYM_VOID));
+    Protect_Cell(Mutable_Lib_Var(SYM_BLANK));
+    Protect_Cell(Mutable_Lib_Var(SYM_TRASH));
+    Protect_Cell(Mutable_Lib_Var(SYM_NUL));
 
   //=//// STARTUP ERRORS AND SYSTEM OBJECT ////////////////////////////////=//
 
@@ -877,7 +877,7 @@ void Startup_Core(void)
     // "system" features.  It is lower-level than the LIB context, but has
     // natives, generics, and the definitions from Startup_Base() available.
     //
-    // See the helper SysUtil() for a quick way of getting at the functions by
+    // See the helper SYS_UTIL() for a quick way of getting the functions by
     // their symbol.
     //
     // (Note: The SYSTEM.UTIL context was renamed from just "SYS" to avoid

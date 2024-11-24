@@ -62,7 +62,7 @@ Bounce Makehook_Port(Level* level_, Heart heart, Element* arg) {
 
     if (rebRunThrows(
         cast(Value*, OUT),  // <-- output cell
-        rebRUN(SysUtil(MAKE_PORT_P)), rebQ(arg)
+        rebRUN(SYS_UTIL(MAKE_PORT_P)), rebQ(arg)
     )){
         return FAIL(Error_No_Catch_For_Throw(TOP_LEVEL));
     }

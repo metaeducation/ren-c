@@ -271,36 +271,29 @@ INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
     return cast(Value*, x_cast(Array*, c)->content.dynamic.data) + n;
 }
 
-INLINE Value* Mutable_Lib_Var_For_Id(SymId id) {
+INLINE Value* Mutable_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
     Value* slot = cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
     assert(Not_Cell_Flag(slot, PROTECTED));
     return slot;
 }
 
-INLINE const Value* Lib_Var_For_Id(SymId id) {
+INLINE const Value* Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
     Value* slot = cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
     assert(not Is_Nothing(slot));
     return slot;
 }
 
-INLINE Sink(Value) Sink_Lib_Var_For_Id(SymId id) {
+INLINE Sink(Value) Sink_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
     return cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
 }
 
-#define LIB(name) \
-    Lib_Var_For_Id(SYM_##name)
-
-#define Sink_Lib_Var(name) \
-    Sink_Lib_Var_For_Id(SYM_##name)
-
-#define Mutable_Lib_Var(name) \
-    Mutable_Lib_Var_For_Id(SYM_##name)
+#define LIB(name)  Lib_Var(SYM_##name)
 
 
-#define SysUtil(name) \
+#define SYS_UTIL(name) \
     cast(const Value*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
 
 // Optimization for Lib_Context for datatypes + natives + generics; usage is

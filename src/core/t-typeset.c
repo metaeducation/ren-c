@@ -83,7 +83,7 @@ void Startup_Type_Predicates(void)
         Phase* decider = Make_Decider_Intrinsic(n);  // n is decider_index
 
         Init_Action(
-            Sink_Lib_Var_For_Id(cast(SymId, id)),
+            Sink_Lib_Var(cast(SymId, id)),
             decider,
             Canon_Symbol(cast(SymId, id)),  // cached symbol for function
             UNBOUND
@@ -92,8 +92,8 @@ void Startup_Type_Predicates(void)
 
     // Shorthands used in native specs, so have to be available in boot
     //
-    Copy_Cell(Mutable_Lib_Var(ELEMENT_Q), LIB(ANY_ELEMENT_Q));
-    Copy_Cell(Mutable_Lib_Var(QUASI_Q), LIB(QUASIFORM_Q));
+    Copy_Cell(Mutable_Lib_Var(SYM_ELEMENT_Q), LIB(ANY_ELEMENT_Q));
+    Copy_Cell(Mutable_Lib_Var(SYM_QUASI_Q), LIB(QUASIFORM_Q));
 }
 
 

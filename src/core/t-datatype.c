@@ -51,7 +51,7 @@ Source* Startup_Datatypes(Array* boot_typespecs)
         // Things like INTEGER! are defined to be &INTEGER
         //
         SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
-        Element* datatype = cast(Element*, Sink_Lib_Var_For_Id(datatype_sym));
+        Element* datatype = cast(Element*, Sink_Lib_Var(datatype_sym));
         Protect_Cell(Init_Builtin_Datatype(datatype, kind));
         assert(datatype == Datatype_From_Kind(kind));
 
@@ -62,7 +62,7 @@ Source* Startup_Datatypes(Array* boot_typespecs)
         SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
         Phase* typechecker = Make_Decider_Intrinsic(kind);
         Init_Action(
-            Sink_Lib_Var_For_Id(constraint_sym),
+            Sink_Lib_Var(constraint_sym),
             typechecker,
             Canon_Symbol(constraint_sym),  // cached symbol for function
             UNBOUND
