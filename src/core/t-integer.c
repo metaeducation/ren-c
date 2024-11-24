@@ -79,7 +79,7 @@ Bounce Makehook_Integer(Level* level_, Heart heart, Element* arg) {
             if (Is_Integer(OUT))
                 return OUT;
             if (Is_Decimal(OUT))
-                return rebValue(Canon(ROUND), stable_OUT);
+                return rebValue(CANON(ROUND), stable_OUT);
             return RAISE(Error_User("Trap_Transcode_One() gave unwanted type"));
         }
 
@@ -261,7 +261,7 @@ DECLARE_GENERICS(Integer)
         }
 
         if (Any_List_Kind(to))
-            return rebValue(Canon(ENVELOP), ARG(type), val);
+            return rebValue(CANON(ENVELOP), ARG(type), val);
 
         if (to == REB_DECIMAL or to == REB_PERCENT) {
             REBDEC d = cast(REBDEC, VAL_INT64(val));

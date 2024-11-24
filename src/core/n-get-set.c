@@ -624,7 +624,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         DECLARE_ATOM (temp);
         if (rebRunThrows(
             cast(RebolValue*, temp),
-            Canon(PICK),
+            CANON(PICK),
             cast(const RebolValue*, out),  // was quoted above
             rebQ(cast(const RebolValue*, at)))  // Cell, but is Element*
         ){
@@ -735,7 +735,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
             EVAL_EXECUTOR_FLAG_NO_RESIDUE
                 | LEVEL_FLAG_UNINTERRUPTIBLE
                 | LEVEL_FLAG_RAISED_RESULT_OK,
-            Canon(PICK), temp, ins
+            CANON(PICK), temp, ins
         )){
             Drop_Data_Stack_To(base);
             Drop_Lifeguard(temp);
@@ -1039,7 +1039,7 @@ bool Set_Var_Core_Updater_Throws(
         const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
-            Canon(PICK), temp, ins
+            CANON(PICK), temp, ins
         )){
             Drop_Lifeguard(temp);
             Drop_Lifeguard(writeback);

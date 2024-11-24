@@ -196,7 +196,7 @@ Value* Lookup_Socket_Synchronously(
     assert(Is_Text(hostname));
     const char *hostname_utf8 = cs_cast(Cell_Utf8_At(hostname));
     char *port_number_utf8 = rebSpell(
-        Canon(TO), Canon(TEXT_X), rebI(sock->remote_port_number)
+        CANON(TO), CANON(TEXT_X), rebI(sock->remote_port_number)
     );
 
     // !!! You can leave the "hints" argument as nullptr.  But this is what

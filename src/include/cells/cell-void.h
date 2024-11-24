@@ -49,13 +49,13 @@ INLINE bool Is_Void(Need(const Value*) v) {
 }
 
 #define Init_Void_Untracked(out) \
-    Init_Anti_Word_Untracked((out), Canon(VOID))
+    Init_Anti_Word_Untracked((out), CANON(VOID))
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
 
 #define Init_Quasi_Void(out) \
-    Init_Quasi_Word((out), Canon(VOID))
+    Init_Quasi_Word((out), CANON(VOID))
 
 INLINE bool Is_Quasi_Void(const Cell* v) {
     if (not Is_Quasiform(v))

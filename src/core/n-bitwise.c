@@ -53,7 +53,7 @@ DECLARE_NATIVE(bitwise_not)
     }
 
     Element* e = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e, LEVEL, Canon(BITWISE_NOT));
+    return Run_Generic_Dispatch(e, LEVEL, CANON(BITWISE_NOT));
 }
 
 
@@ -88,7 +88,7 @@ DECLARE_NATIVE(bitwise_and)
     }
 
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_AND));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_AND));
 }
 
 
@@ -111,7 +111,7 @@ DECLARE_NATIVE(bitwise_or)
     }
 
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_OR));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_OR));
 }
 
 
@@ -134,7 +134,7 @@ DECLARE_NATIVE(bitwise_xor)
     }
 
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_XOR));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_XOR));
 }
 
 
@@ -157,7 +157,7 @@ DECLARE_NATIVE(bitwise_and_not)
     }
 
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(BITWISE_AND_NOT));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_AND_NOT));
 }
 
 

@@ -303,7 +303,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
@@ -335,7 +335,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 REBINT c = n;
                 item += 2;
@@ -445,7 +445,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
             Codepoint c = Cell_Codepoint(item);
             if (
                 Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
@@ -470,7 +470,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 return false;
             if (
                 Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 REBINT c = n;
                 item += 2;

@@ -71,7 +71,7 @@ INLINE const Symbol* Canon_Symbol(SymId symid) {
     return &g_symbols.builtin_canons[symid];
 }
 
-#define Canon(name) \
+#define CANON(name) \
     Canon_Symbol(SYM_##name)
 
 INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {

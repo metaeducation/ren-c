@@ -134,7 +134,7 @@ DECLARE_NATIVE(pick)
     }
 
     Element* location = cast(Element*, ARG(location));
-    return Run_Generic_Dispatch(location, LEVEL, Canon(PICK));
+    return Run_Generic_Dispatch(location, LEVEL, CANON(PICK));
 }
 
 
@@ -171,7 +171,7 @@ DECLARE_NATIVE(poke)
 // in obj.date would have to be changed.
 {
     Element* location = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(location, LEVEL, Canon(POKE));
+    return Run_Generic_Dispatch(location, LEVEL, CANON(POKE));
 }
 
 

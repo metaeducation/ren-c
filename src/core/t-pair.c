@@ -79,7 +79,7 @@ Bounce Makehook_Pair(Level* level_, Heart heart, Element* arg) {
         return Init_Pair(OUT, VAL_INT64(arg), VAL_INT64(arg));
 
     if (Is_Block(arg))
-        return rebValue(Canon(TO), Canon(PAIR_X), Canon(REDUCE), arg);
+        return rebValue(CANON(TO), CANON(PAIR_X), CANON(REDUCE), arg);
 
     return RAISE(Error_Bad_Make(REB_PAIR, arg));
 }
@@ -285,12 +285,12 @@ DECLARE_GENERICS(Pair)
     Copy_Cell(ARG_N(1), x1);
     if (x2)
         Copy_Cell(ARG_N(2), x2);  // use extracted arg x instead of pair arg
-    Value* x_frame = rebValue(Canon(COPY), rebQ(frame));
+    Value* x_frame = rebValue(CANON(COPY), rebQ(frame));
 
     Copy_Cell(ARG_N(1), y1);
     if (y2)
         Copy_Cell(ARG_N(2), y2);  // use extracted arg y instead of pair arg
-    Value* y_frame = rebValue(Canon(COPY), rebQ(frame));
+    Value* y_frame = rebValue(CANON(COPY), rebQ(frame));
 
     return rebValue(
         "make pair! reduce [",

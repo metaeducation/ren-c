@@ -813,5 +813,5 @@ DECLARE_NATIVE(put)
 //
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, Canon(PUT));
+    return Run_Generic_Dispatch(number, LEVEL, CANON(PUT));
 }

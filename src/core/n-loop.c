@@ -110,7 +110,7 @@ DECLARE_NATIVE(definitional_break)
     Init_Action(
         SPARE,  // use as label for throw
         ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
-        Canon(BREAK),
+        CANON(BREAK),
         cast(VarList*, loop_level->varlist)
     );
 
@@ -154,7 +154,7 @@ DECLARE_NATIVE(definitional_continue)
     Init_Action(
         SPARE,  // use as label for throw
         ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
-        Canon(CONTINUE),
+        CANON(CONTINUE),
         Varlist_Of_Level_Force_Managed(loop_level)
     );
 
@@ -170,20 +170,20 @@ void Add_Definitional_Break_Continue(
     Level* loop_level
 ){
     Context* parent = Cell_List_Binding(body);
-    Let* let_continue = Make_Let_Variable(Canon(CONTINUE), parent);
+    Let* let_continue = Make_Let_Variable(CANON(CONTINUE), parent);
 
     Init_Action(
         Stub_Cell(let_continue),
         ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
-        Canon(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
+        CANON(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to continue
     );
 
-    Let* let_break = Make_Let_Variable(Canon(BREAK), let_continue);
+    Let* let_break = Make_Let_Variable(CANON(BREAK), let_continue);
     Init_Action(
         Stub_Cell(let_break),
         ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
-        Canon(BREAK),  // relabel (the BREAK in lib is a dummy action)
+        CANON(BREAK),  // relabel (the BREAK in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
 
@@ -643,7 +643,7 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
     Init_Action(
         SPARE,  // use as label for throw
         ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
-        Canon(STOP),
+        CANON(STOP),
         cast(VarList*, loop_level->varlist)
     );
 
@@ -662,11 +662,11 @@ void Add_Definitional_Stop(
 
     Force_Level_Varlist_Managed(loop_level);
 
-    Let* let_stop = Make_Let_Variable(Canon(STOP), parent);
+    Let* let_stop = Make_Let_Variable(CANON(STOP), parent);
     Init_Action(
         Stub_Cell(let_stop),
         ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
-        Canon(STOP),  // relabel (the STOP in lib is a dummy action)
+        CANON(STOP),  // relabel (the STOP in lib is a dummy action)
         cast(VarList*, loop_level->varlist)  // what to stop
    );
 
@@ -796,7 +796,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
     //
     assert(not Is_Api_Value(data));  // we will free API handles
     if (Any_Sequence(data)) {
-        data = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(data));
+        data = rebValue(CANON(AS), CANON(BLOCK_X), rebQ(data));
         rebUnmanage(data);
     }
 
@@ -1976,7 +1976,7 @@ DECLARE_NATIVE(for)
         rebPushContinuation_internal(
             cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
-            Canon(FOR_EACH), rebQ(ARG(vars)), rebQ(value), body
+            CANON(FOR_EACH), rebQ(ARG(vars)), rebQ(value), body
         );
         return BOUNCE_DELEGATE;
     }

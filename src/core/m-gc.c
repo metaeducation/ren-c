@@ -458,7 +458,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
     if (Not_Feed_At_End(feed)) {
         if (truncated)
-            Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
+            Init_Quasi_Word(PUSH(), CANON(OPTIMIZED_OUT));
 
         do {
             Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
@@ -495,7 +495,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         Finalize_Variadic_Feed(feed);
 
         if (truncated) {
-            Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
+            Init_Quasi_Word(PUSH(), CANON(OPTIMIZED_OUT));
 
             Source* a = Pop_Managed_Source_From_Stack(base);
             Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, a, 1);
@@ -1192,7 +1192,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
         Remove_GC_Mark(patch);
     }
 
-    // Unmark the Canon() fixed symbols (not in stub pool, never get swept)
+    // Unmark the CANON() fixed symbols (not in stub pool, never get swept)
 
     assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));  // skip SYM_0
 

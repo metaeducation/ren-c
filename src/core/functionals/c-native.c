@@ -281,7 +281,7 @@ Source* Startup_Natives(const Element* boot_natives)
     Init_Action(
         Sink_Lib_Var(NATIVE),
         the_native_action,
-        Canon(NATIVE),  // label
+        CANON(NATIVE),  // label
         UNBOUND  // coupling
     );
 

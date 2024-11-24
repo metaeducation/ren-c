@@ -1750,5 +1750,5 @@ DECLARE_NATIVE(construct)
 DECLARE_NATIVE(extend)
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, Canon(EXTEND));
+    return Run_Generic_Dispatch(number, LEVEL, CANON(EXTEND));
 }

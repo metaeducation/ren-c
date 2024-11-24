@@ -501,10 +501,10 @@ void Startup_Interning(void)
 //  Startup_Builtin_Symbols: C
 //
 // Initializes a table for mapping from SYM_XXX => Symbol Flex.  This is used
-// by Canon_Symbol(id) and Canon(XXX) to get the Symbol from SymId.
+// by Canon_Symbol(id) and CANON(XXX) to get the Symbol from SymId.
 //
 // 1. All words that do not have a SYM_XXX get back Cell_Word_Id(w) == SYM_0.
-//    Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being true
+//    Hence CANON(0) is illegal, to avoid `CANON(X) == CANON(Y)` being true
 //    when X and Y are different symbols with no SYM_XXX id.
 //
 // 2. A Symbol Flex stores its SymId in the header's 2nd uint16_t.  Could
@@ -550,17 +550,17 @@ void Startup_Builtin_Symbols(
 
     rebFree(bytes);
 
-    if (0 != strcmp("blank!", String_UTF8(Canon(BLANK_X))))
-        panic (Canon(BLANK_X));
+    if (0 != strcmp("blank!", String_UTF8(CANON(BLANK_X))))
+        panic (CANON(BLANK_X));
 
-    if (0 != strcmp("true", String_UTF8(Canon(TRUE))))
-        panic (Canon(TRUE));
+    if (0 != strcmp("true", String_UTF8(CANON(TRUE))))
+        panic (CANON(TRUE));
 
-    if (0 != strcmp("open", String_UTF8(Canon(OPEN))))
-        panic (Canon(OPEN));
+    if (0 != strcmp("open", String_UTF8(CANON(OPEN))))
+        panic (CANON(OPEN));
 
-    if (0 != strcmp("parse-reject", String_UTF8(Canon(PARSE_REJECT))))
-        panic (Canon(PARSE_REJECT));
+    if (0 != strcmp("parse-reject", String_UTF8(CANON(PARSE_REJECT))))
+        panic (CANON(PARSE_REJECT));
 }
 
 

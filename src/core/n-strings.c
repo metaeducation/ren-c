@@ -144,7 +144,7 @@ DECLARE_NATIVE(join)
         if (Is_Void(rest)) {  // simple base case: nullptr or COPY
             if (Is_Type_Block(base))
                 return nullptr;
-            return rebValue(Canon(COPY), base);
+            return rebValue(CANON(COPY), base);
         }
         if (Is_Type_Block(base) and Any_Utf8(rest))
             goto simple_join;
@@ -314,7 +314,7 @@ DECLARE_NATIVE(join)
         Derelativize(SPARE, item, Level_Binding(sub));
         Fetch_Next_In_Feed(sub->feed);
 
-        Value* unspaced = rebValue(Canon(UNSPACED), rebQ(SPARE));
+        Value* unspaced = rebValue(CANON(UNSPACED), rebQ(SPARE));
         if (unspaced == nullptr)  // vaporized, allow it
             goto next_mold_step;
 
@@ -503,7 +503,7 @@ DECLARE_NATIVE(join)
         Drop_Data_Stack_To(STACK_BASE);
         if (Is_Type_Block(base))
             return nullptr;
-        return rebValue(Canon(COPY), rebQ(base));
+        return rebValue(CANON(COPY), rebQ(base));
     }
 
     if (REF(tail) and not Is_Nulled(delimiter))
@@ -678,7 +678,7 @@ DECLARE_NATIVE(join)
         Drop_Data_Stack_To(STACK_BASE);
         if (Is_Type_Block(base))
             return nullptr;
-        return rebValue(Canon(COPY), rebQ(base));
+        return rebValue(CANON(COPY), rebQ(base));
     }
 
     if (REF(tail) and not Is_Nulled(delimiter))

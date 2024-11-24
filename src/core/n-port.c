@@ -37,7 +37,7 @@
 DECLARE_NATIVE(create)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, Canon(CREATE));
+    return Run_Generic_Dispatch(port, LEVEL, CANON(CREATE));
 }
 
 
@@ -53,7 +53,7 @@ DECLARE_NATIVE(create)
 DECLARE_NATIVE(delete)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, Canon(DELETE));
+    return Run_Generic_Dispatch(port, LEVEL, CANON(DELETE));
 }
 
 
@@ -72,7 +72,7 @@ DECLARE_NATIVE(delete)
 DECLARE_NATIVE(open)
 {
     Element* spec = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(spec, LEVEL, Canon(OPEN));
+    return Run_Generic_Dispatch(spec, LEVEL, CANON(OPEN));
 }
 
 
@@ -88,7 +88,7 @@ DECLARE_NATIVE(open)
 DECLARE_NATIVE(connect)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, Canon(CONNECT));
+    return Run_Generic_Dispatch(port, LEVEL, CANON(CONNECT));
 }
 
 
@@ -104,7 +104,7 @@ DECLARE_NATIVE(connect)
 DECLARE_NATIVE(close)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, Canon(CLOSE));
+    return Run_Generic_Dispatch(port, LEVEL, CANON(CLOSE));
 }
 
 
@@ -133,7 +133,7 @@ DECLARE_NATIVE(close)
 DECLARE_NATIVE(read)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, Canon(READ));
+    return Run_Generic_Dispatch(port, LEVEL, CANON(READ));
 }
 
 
@@ -157,7 +157,7 @@ DECLARE_NATIVE(read)
 DECLARE_NATIVE(write)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, Canon(WRITE));
+    return Run_Generic_Dispatch(port, LEVEL, CANON(WRITE));
 }
 
 
@@ -173,7 +173,7 @@ DECLARE_NATIVE(write)
 DECLARE_NATIVE(query)
 {
     Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, Canon(QUERY));
+    return Run_Generic_Dispatch(port, LEVEL, CANON(QUERY));
 }
 
 
@@ -192,7 +192,7 @@ DECLARE_NATIVE(query)
 DECLARE_NATIVE(modify)
 {
     Element* target = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(target, LEVEL, Canon(MODIFY));
+    return Run_Generic_Dispatch(target, LEVEL, CANON(MODIFY));
 }
 
 
@@ -209,5 +209,5 @@ DECLARE_NATIVE(modify)
 DECLARE_NATIVE(rename)
 {
     Element* from = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(from, LEVEL, Canon(RENAME));
+    return Run_Generic_Dispatch(from, LEVEL, CANON(RENAME));
 }

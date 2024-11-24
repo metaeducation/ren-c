@@ -129,7 +129,7 @@ Bounce Func_Dispatcher(Level* const L)
     Init_Action(
         cell,
         ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
-        Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
+        CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
 

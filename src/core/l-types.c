@@ -156,7 +156,7 @@ Bounce Reflect_Core(Level* level_)
         }
     }
 
-    return Run_Generic_Dispatch(cast(Element*, v), LEVEL, Canon(REFLECT));
+    return Run_Generic_Dispatch(cast(Element*, v), LEVEL, CANON(REFLECT));
 }
 
 

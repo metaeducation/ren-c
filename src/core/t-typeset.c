@@ -221,28 +221,28 @@ void Set_Parameter_Spec(
                 // to shuffle should only be done once (when final is known).
                 //
                 *flags |= PARAMETER_FLAG_VARIADIC;
-                Init_Quasi_Word(dest, Canon(VARIADIC_Q)); // !!!
+                Init_Quasi_Word(dest, CANON(VARIADIC_Q)); // !!!
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_ENDABLE;
-                Init_Quasi_Word(dest, Canon(NULL));  // !!!
+                Init_Quasi_Word(dest, CANON(NULL));  // !!!
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-                Init_Quasi_Word(dest, Canon(VOID));  // !!!
+                Init_Quasi_Word(dest, CANON(VOID));  // !!!
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_CONST;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-                Init_Quasi_Word(dest, Canon(CONST));
+                Init_Quasi_Word(dest, CANON(CONST));
             }
             else if (0 == CT_String(item, Root_Unrun_Tag, strict)) {
                 // !!! Currently just commentary, degrading happens due
                 // to type checking.  Review this.
                 //
-                Init_Quasi_Word(dest, Canon(UNRUN));
+                Init_Quasi_Word(dest, CANON(UNRUN));
             }
             else {
                 fail (item);
@@ -530,20 +530,20 @@ DECLARE_GENERICS(Parameter)
           case SYM_CLASS:
             switch (Cell_ParamClass(param)) {
               case PARAMCLASS_NORMAL:
-                return Init_Word(OUT, Canon(NORMAL));
+                return Init_Word(OUT, CANON(NORMAL));
 
               case PARAMCLASS_META:
-                return Init_Word(OUT, Canon(META));
+                return Init_Word(OUT, CANON(META));
 
               case PARAMCLASS_THE:
               case PARAMCLASS_SOFT:
-                return Init_Word(OUT, Canon(THE));
+                return Init_Word(OUT, CANON(THE));
 
               case PARAMCLASS_JUST:
-                return Init_Word(OUT, Canon(JUST));
+                return Init_Word(OUT, CANON(JUST));
 
               case PARAMCLASS_RETURN:
-                return Init_Word(OUT, Canon(RETURN));
+                return Init_Word(OUT, CANON(RETURN));
 
               default: assert(false);
             }

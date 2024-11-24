@@ -962,9 +962,9 @@ Bounce Call_Core(Level* level_) {
     if (REF(info)) {
         VarList* info = Alloc_Varlist(REB_OBJECT, 2);
 
-        Init_Integer(Append_Context(info, Canon(ID)), forked_pid);
+        Init_Integer(Append_Context(info, CANON(ID)), forked_pid);
         if (REF(wait))
-            Init_Integer(Append_Context(info, Canon(EXIT_CODE)), exit_code);
+            Init_Integer(Append_Context(info, CANON(EXIT_CODE)), exit_code);
 
         return Init_Object(OUT, info);
     }

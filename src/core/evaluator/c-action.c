@@ -151,7 +151,7 @@ Bounce Action_Executor(Level* L)
             if (Cell_ParamClass(PARAM) != PARAMCLASS_META) {
                 if (Is_Barrier(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
-                    Init_Anti_Word(ARG, Canon(END));
+                    Init_Anti_Word(ARG, CANON(END));
                 }
                 else
                     Decay_If_Unstable(ARG);
@@ -346,7 +346,7 @@ Bounce Action_Executor(Level* L)
     //    first-cut approximation by unbinding.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
-            Init_Anti_Word(ARG, Canon(END));
+            Init_Anti_Word(ARG, CANON(END));
             goto continue_fulfilling;
         }
 
@@ -496,7 +496,7 @@ Bounce Action_Executor(Level* L)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Level_At_End(L)) {
-            Init_Anti_Word(ARG, Canon(END));
+            Init_Anti_Word(ARG, CANON(END));
             goto continue_fulfilling;
         }
 
@@ -507,7 +507,7 @@ Bounce Action_Executor(Level* L)
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
-                Init_Anti_Word(ARG, Canon(END));
+                Init_Anti_Word(ARG, CANON(END));
                 goto continue_fulfilling;
             }
 

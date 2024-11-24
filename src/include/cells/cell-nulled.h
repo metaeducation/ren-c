@@ -72,10 +72,10 @@ INLINE bool Is_Nulled(Need(const Value*) v) {
 }
 
 #define Init_Nulled(out) \
-    Init_Anti_Word((out), Canon(NULL))
+    Init_Anti_Word((out), CANON(NULL))
 
 #define Init_Quasi_Null(out) \
-    Init_Quasi_Word((out), Canon(NULL))
+    Init_Quasi_Word((out), CANON(NULL))
 
 INLINE bool Is_Quasi_Null(const Cell* v) {
     if (not Is_Quasiform(v))

@@ -298,7 +298,7 @@ DECLARE_NATIVE(unload_extension)
 
     Value* extension = ARG(extension);
 
-    Value* pos = rebValue(Canon(FIND), "system.extensions", extension);
+    Value* pos = rebValue(CANON(FIND), "system.extensions", extension);
 
     // Remove the extension from the loaded extensions list.
     //
@@ -309,7 +309,7 @@ DECLARE_NATIVE(unload_extension)
     //
     if (not pos)
         return FAIL("Could not find extension in loaded extensions list");
-    rebElide(Canon(TAKE), rebR(pos));
+    rebElide(CANON(TAKE), rebR(pos));
 
     // There is a murky issue about how to disconnect DECLARE_NATIVE()s from
     // dispatchers that have been unloaded.  If an extension is unloaded
@@ -339,7 +339,7 @@ DECLARE_NATIVE(unload_extension)
 
    Value* shutdown_action = MOD_VAR(
        cast(SeaOfVars*, Cell_Varlist(extension)),
-       Canon(SHUTDOWN_P),
+       CANON(SHUTDOWN_P),
        true
     );
    if (shutdown_action == nullptr)

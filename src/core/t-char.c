@@ -664,9 +664,9 @@ DECLARE_GENERICS(Utf8)
         if (Any_List_Kind(to)) {  // limited TRANSCODE (how limited?...) [1]
             if (Stringlike_Has_Node(v)) {
                 if (Stub_Flavor(Cell_String(v)) == FLAVOR_SYMBOL)  // [2]
-                    return rebValue(Canon(ENVELOP), ARG(type), rebQ(v));
+                    return rebValue(CANON(ENVELOP), ARG(type), rebQ(v));
             }
-            return rebValue(Canon(AS), ARG(type), Canon(TRANSCODE), rebQ(v));
+            return rebValue(CANON(AS), ARG(type), CANON(TRANSCODE), rebQ(v));
         }
 
         if (to == REB_BLANK)

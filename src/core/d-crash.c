@@ -421,7 +421,7 @@ DECLARE_NATIVE(fail)
     printf("!!! Early-Boot FAIL, e.g. /fail: native [], not /fail: func []\n");
     PROBE(blame);
 
-    rebElide(Canon(WRITE_STDOUT), Canon(DELIMIT), Canon(SPACE), reason);
+    rebElide(CANON(WRITE_STDOUT), CANON(DELIMIT), CANON(SPACE), reason);
   #endif
 
     panic (reason);

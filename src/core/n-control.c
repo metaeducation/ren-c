@@ -330,11 +330,11 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
   handle_lazy_object: {  /////////////////////////////////////////////////////
 
-    Option(Value*) then_hook = Select_Symbol_In_Context(in, Canon(THEN));
+    Option(Value*) then_hook = Select_Symbol_In_Context(in, CANON(THEN));
     if (then_hook and Is_Void(unwrap then_hook))
         then_hook = nullptr;  // can be unset by Debranch_Output()
 
-    Option(Value*) else_hook = Select_Symbol_In_Context(in, Canon(ELSE));
+    Option(Value*) else_hook = Select_Symbol_In_Context(in, CANON(ELSE));
     if (else_hook and Is_Void(unwrap else_hook))
         else_hook = nullptr;  // can be unset by Debranch_Output()
 
@@ -477,7 +477,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Quotify(Quasify(Init_Word(ARG(branch), Canon(DID_1))), 1);  // [1]
+    Quotify(Quasify(Init_Word(ARG(branch), CANON(DID_1))), 1);  // [1]
 
     goto reifying_input;
 
@@ -1621,7 +1621,7 @@ void Debranch_Output(Atom* out) {
             // We don't have to fully reify the object, we just need to make sure
             // its THEN and ELSE fields are unset.
             //
-            const Symbol* syms[2] = {Canon(ELSE), Canon(THEN)};
+            const Symbol* syms[2] = {CANON(ELSE), CANON(THEN)};
             int i;
             for (i = 0; i < 2; ++i) {
                 Option(Value*) hook = Select_Symbol_In_Context(out, syms[i]);
@@ -1646,7 +1646,7 @@ bool Pushed_Decaying_Level(Atom* out, const Atom* obj, Flags flags) {
     QUOTE_BYTE(out) = NOQUOTE_1;
     Option(Value*) decayer = Select_Symbol_In_Context(
         cast(const Cell*, out),
-        Canon(DECAY)
+        CANON(DECAY)
     );
     if (not decayer)
         fail ("Asked to decay lazy object with no DECAY method");

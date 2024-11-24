@@ -70,7 +70,7 @@ Bounce Makehook_Unhooked(Level* level_, Heart heart, Element* arg) {
 DECLARE_NATIVE(make)
 {
     Element* type = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(type, LEVEL, Canon(MAKE));
+    return Run_Generic_Dispatch(type, LEVEL, CANON(MAKE));
 }
 
 
@@ -108,7 +108,7 @@ DECLARE_NATIVE(copy)
     Value* v = ARG_N(1);
 
     if (QUOTE_BYTE(v) == NOQUOTE_1)  // don't have to requote/etc.
-        return Run_Generic_Dispatch(cast(Element*, v), LEVEL, Canon(COPY));
+        return Run_Generic_Dispatch(cast(Element*, v), LEVEL, CANON(COPY));
 
     Byte quote_byte = QUOTE_BYTE(v);
     QUOTE_BYTE(v) = NOQUOTE_1;
@@ -237,7 +237,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 
     Push_Lifeguard(reverse);  // was guarded as level_->OUT, but no longer
     bool equal_reversal = rebUnboxLogic(
-        Canon(EQUAL_Q), rebQ(input), rebQ(cast(Value*, reverse))
+        CANON(EQUAL_Q), rebQ(input), rebQ(cast(Value*, reverse))
     );
     Drop_Lifeguard(reverse);
 
@@ -246,7 +246,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 
     if (to_or_as == from and Get_Level_Flag(L, CHECKING_TO)) {
         bool equal_copy = rebUnboxLogic(
-            Canon(EQUAL_Q), rebQ(input), Canon(COPY), rebQ(input)
+            CANON(EQUAL_Q), rebQ(input), CANON(COPY), rebQ(input)
         );
         if (not equal_copy)
             return FAIL("Reverse TO/AS transform not same as COPY");
@@ -302,12 +302,12 @@ DECLARE_NATIVE(to)
 
   #if NO_RUNTIME_CHECKS
 
-    return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(TO));
+    return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(TO));
 
   #else  // add monitor to ensure result is right
 
     if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(TO));
+        return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(TO));
 
     assert(Not_Level_Flag(LEVEL, CHECKING_TO));
     Set_Level_Flag(LEVEL, CHECKING_TO);
@@ -349,12 +349,12 @@ DECLARE_NATIVE(as)
   #if NO_RUNTIME_CHECKS
 
     UNUSED(ARG(type));
-    return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(AS));
+    return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(AS));
 
   #else  // add monitor to ensure result is right
 
     if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Run_Generic_Dispatch(e, TOP_LEVEL, Canon(AS));
+        return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(AS));
 
     assert(Not_Level_Flag(LEVEL, CHECKING_TO));
     return Downshift_For_To_Or_As_Checker(LEVEL);

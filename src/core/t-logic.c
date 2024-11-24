@@ -222,7 +222,7 @@ DECLARE_NATIVE(boolean)
 {
     INCLUDE_PARAMS_OF_BOOLEAN;
 
-    return Init_Word(OUT, Is_Trigger(ARG(value)) ? Canon(TRUE) : Canon(FALSE));
+    return Init_Word(OUT, Is_Trigger(ARG(value)) ? CANON(TRUE) : CANON(FALSE));
 }
 
 
@@ -273,7 +273,7 @@ DECLARE_NATIVE(to_yesno)
 {
     INCLUDE_PARAMS_OF_TO_YESNO;
 
-    return Init_Word(OUT, Is_Trigger(ARG(value)) ? Canon(YES) : Canon(NO));
+    return Init_Word(OUT, Is_Trigger(ARG(value)) ? CANON(YES) : CANON(NO));
 }
 
 
@@ -324,7 +324,7 @@ DECLARE_NATIVE(to_onoff)
 {
     INCLUDE_PARAMS_OF_TO_ONOFF;
 
-    return Init_Word(OUT, Is_Trigger(ARG(value)) ? Canon(ON) : Canon(OFF));
+    return Init_Word(OUT, Is_Trigger(ARG(value)) ? CANON(ON) : CANON(OFF));
 }
 
 

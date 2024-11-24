@@ -93,8 +93,8 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
     DECLARE_ELEMENT (spec);  // simple spec [1]
     Source* spec_array = Make_Source_Managed(2);
     Set_Flex_Len(spec_array, 2);
-    Init_Word(Array_At(spec_array, 0), Canon(VALUE));
-    Init_Get_Word(Array_At(spec_array, 1), Canon(TYPE));
+    Init_Word(Array_At(spec_array, 0), CANON(VALUE));
+    Init_Get_Word(Array_At(spec_array, 1), CANON(TYPE));
     Init_Block(spec, spec_array);
 
     VarList* meta;
@@ -867,7 +867,7 @@ DECLARE_NATIVE(matcher)
 
     Source* a = Make_Source_Managed(2);
     Set_Flex_Len(a, 2);
-    Init_Set_Word(Array_At(a, 0), Canon(TEST));
+    Init_Set_Word(Array_At(a, 0), CANON(TEST));
     Copy_Meta_Cell(Array_At(a, 1), test);
     Init_Block(SPARE, a);
 

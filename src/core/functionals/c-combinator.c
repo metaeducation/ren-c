@@ -494,7 +494,7 @@ DECLARE_NATIVE(some_combinator)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Cell* loop_last = Alloc_Tail_Array(loops);
-    Init_Frame(loop_last, cast(VarList*, level_->varlist), Canon(SOME));
+    Init_Frame(loop_last, cast(VarList*, level_->varlist), CANON(SOME));
     Tweak_Cell_Frame_Phase(loop_last, Level_Phase(level_));  // need phase [1]
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);

@@ -467,7 +467,7 @@ DECLARE_NATIVE(lazy)
         return Unquotify(Copy_Cell(OUT, v), 1);
 
     if (Is_Block(v)) {
-        if (rebRunThrows(cast(Value*, OUT), Canon(MAKE), Canon(OBJECT_X), v))
+        if (rebRunThrows(cast(Value*, OUT), CANON(MAKE), CANON(OBJECT_X), v))
             return THROWN;
     }
     else
@@ -511,7 +511,7 @@ INLINE bool Pack_Native_Core_Throws(
 
     if (rebRunThrows(
         cast(Value*, out),  // output cell
-        Canon(QUASI), "reduce:predicate",  // commas excluded by :PREDICATE [1]
+        CANON(QUASI), "reduce:predicate",  // commas excluded by :PREDICATE [1]
             rebQ(block), rebQ(predicate)
     )){
         return true;

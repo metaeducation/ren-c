@@ -442,7 +442,7 @@ static void Push_Composer_Level(
     Heart heart = Cell_Heart(e);
     const Value* adjusted = nullptr;
     if (Any_Sequence_Kind(heart))  // allow sequences [1]
-        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(e));
+        adjusted = rebValue(CANON(AS), CANON(BLOCK_X), rebQ(e));
     else
         assert(Any_List_Kind(heart));
 
@@ -948,7 +948,7 @@ DECLARE_NATIVE(compose)
         next = Utf8_Next(&c, at);
     }
 
-    return rebValue(Canon(COPY), t);  // didn't find anything to substitute.
+    return rebValue(CANON(COPY), t);  // didn't find anything to substitute.
 
   found_first_string_pattern: { ///////////////////////////////////////////////
 
@@ -1115,7 +1115,7 @@ DECLARE_NATIVE(print_p)
     Init_Group(SPARE, EMPTY_ARRAY);
     BINDING(SPARE) = Level_Binding(level_);
 
-    return rebDelegate(Canon(PRINT), Canon(COMPOSE), rebQ(SPARE), ARG(line));
+    return rebDelegate(CANON(PRINT), CANON(COMPOSE), rebQ(SPARE), ARG(line));
 }
 
 

@@ -1389,7 +1389,7 @@ DECLARE_NATIVE(envelop)
     Element* copy;
 
     if (Is_Type_Block(ARG(example)))
-        copy = cast(Element*, rebValue(Canon(MAKE), ARG(example), rebI(1)));
+        copy = cast(Element*, rebValue(CANON(MAKE), ARG(example), rebI(1)));
     else
         copy = cast(Element*, rebValue("copy:deep", rebQ(ARG(example))));
 
@@ -1406,7 +1406,7 @@ DECLARE_NATIVE(envelop)
         const Element* tail;
         Element* at = Cell_List_At_Known_Mutable(&tail, temp);
         if (at == tail) {  // empty list, just append
-            rebElide(Canon(APPEND), rebQ(temp), rebQ(content));
+            rebElide(CANON(APPEND), rebQ(temp), rebQ(content));
             return copy;
         }
         if (Any_List(at)) {  // content should be inserted deeper
@@ -1414,7 +1414,7 @@ DECLARE_NATIVE(envelop)
             continue;
         }
         VAL_INDEX_UNBOUNDED(temp) += 1;  // just skip first item
-        rebElide(Canon(INSERT), rebQ(temp), rebQ(content));
+        rebElide(CANON(INSERT), rebQ(temp), rebQ(content));
         VAL_INDEX_UNBOUNDED(temp) -= 1;  // put back if copy = temp for head
         return copy;
     }

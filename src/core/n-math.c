@@ -57,7 +57,7 @@
 DECLARE_NATIVE(negate)
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, Canon(NEGATE));
+    return Run_Generic_Dispatch(number, LEVEL, CANON(NEGATE));
 }
 
 
@@ -109,7 +109,7 @@ DECLARE_NATIVE(add)
         return OUT;
     }
 
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(ADD));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(ADD));
 }
 
 
@@ -147,7 +147,7 @@ DECLARE_NATIVE(subtract)
         return FAIL("Only CHAR? can have NUL? #{00} state subtracted");
     }
 
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(SUBTRACT));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(SUBTRACT));
 }
 
 
@@ -164,7 +164,7 @@ DECLARE_NATIVE(subtract)
 DECLARE_NATIVE(multiply)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(MULTIPLY));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(MULTIPLY));
 }
 
 
@@ -181,7 +181,7 @@ DECLARE_NATIVE(multiply)
 DECLARE_NATIVE(divide)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(DIVIDE));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(DIVIDE));
 }
 
 
@@ -199,7 +199,7 @@ DECLARE_NATIVE(divide)
 DECLARE_NATIVE(remainder)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, Canon(REMAINDER));
+    return Run_Generic_Dispatch(e1, LEVEL, CANON(REMAINDER));
 }
 
 
@@ -216,7 +216,7 @@ DECLARE_NATIVE(remainder)
 DECLARE_NATIVE(power)
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, Canon(POWER));
+    return Run_Generic_Dispatch(number, LEVEL, CANON(POWER));
 }
 
 
@@ -232,7 +232,7 @@ DECLARE_NATIVE(power)
 DECLARE_NATIVE(absolute)
 {
     Element* e = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e, LEVEL, Canon(ABSOLUTE));
+    return Run_Generic_Dispatch(e, LEVEL, CANON(ABSOLUTE));
 }
 
 
@@ -256,7 +256,7 @@ DECLARE_NATIVE(absolute)
 DECLARE_NATIVE(round)
 {
     Element* e = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e, LEVEL, Canon(ROUND));
+    return Run_Generic_Dispatch(e, LEVEL, CANON(ROUND));
 }
 
 
@@ -272,7 +272,7 @@ DECLARE_NATIVE(round)
 DECLARE_NATIVE(odd_q)
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, Canon(ODD_Q));
+    return Run_Generic_Dispatch(number, LEVEL, CANON(ODD_Q));
 }
 
 
@@ -288,7 +288,7 @@ DECLARE_NATIVE(odd_q)
 DECLARE_NATIVE(even_q)
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, Canon(EVEN_Q));
+    return Run_Generic_Dispatch(number, LEVEL, CANON(EVEN_Q));
 }
 
 
@@ -307,7 +307,7 @@ DECLARE_NATIVE(even_q)
 DECLARE_NATIVE(random)
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, Canon(RANDOM));
+    return Run_Generic_Dispatch(number, LEVEL, CANON(RANDOM));
 }
 
 

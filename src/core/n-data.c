@@ -315,7 +315,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
             return false;
 
         if (Is_Stub_Let(BINDING(v))) {  // temporary (LETs not exposed)
-            Init_Word(out, Canon(LET));
+            Init_Word(out, CANON(LET));
             return true;
         }
 

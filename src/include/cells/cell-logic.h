@@ -80,10 +80,10 @@ INLINE bool Is_Logic(Need(const Value*) v) {
     Is_Anti_Word_With_Id((v), SYM_OKAY)
 
 #define Init_Okay(out) \
-    Init_Anti_Word((out), Canon(OKAY))
+    Init_Anti_Word((out), CANON(OKAY))
 
 INLINE Value* Init_Logic(Init(Value) out, bool flag) {
-    return Init_Anti_Word(out, flag ? Canon(OKAY) : Canon(NULL));
+    return Init_Anti_Word(out, flag ? CANON(OKAY) : CANON(NULL));
 }
 
 INLINE bool Cell_Logic(Need(const Value*) v) {
@@ -142,8 +142,8 @@ INLINE bool Cell_Logic(Need(const Value*) v) {
 // once given the freedom to choose.)
 //
 
-#define Init_True(out)      Init_Word((out), Canon(TRUE))
-#define Init_False(out)     Init_Word((out), Canon(FALSE))
+#define Init_True(out)      Init_Word((out), CANON(TRUE))
+#define Init_False(out)     Init_Word((out), CANON(FALSE))
 
 #define Is_True(out)        Is_Word_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Word_With_Id((out), SYM_FALSE)
@@ -159,7 +159,7 @@ INLINE bool Is_Boolean(const Value* v) {
 }
 
 #define Init_Boolean(out,flag) \
-    Init_Word((out), (flag) ? Canon(TRUE) : Canon(FALSE))
+    Init_Word((out), (flag) ? CANON(TRUE) : CANON(FALSE))
 
 INLINE bool Cell_True(Need(const Value*) v) {  // corresponds to TRUE?
     assert(Is_Word(v));
@@ -185,7 +185,7 @@ INLINE bool Is_OnOff(const Value* v) {
 }
 
 #define Init_OnOff(out,flag) \
-    Init_Word((out), (flag) ? Canon(ON) : Canon(OFF))
+    Init_Word((out), (flag) ? CANON(ON) : CANON(OFF))
 
 INLINE bool Cell_On(const Value* v) {  // corresponds to ON?
     assert(Is_Word(v));
@@ -211,7 +211,7 @@ INLINE bool Is_YesNo(const Value* v) {
 }
 
 #define Init_YesNo(out,flag) \
-    Init_Word((out), (flag) ? Canon(YES) : Canon(NO))
+    Init_Word((out), (flag) ? CANON(YES) : CANON(NO))
 
 INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
     assert(Is_Word(v));

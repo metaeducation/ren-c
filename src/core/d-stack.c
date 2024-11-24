@@ -51,7 +51,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
                 limit + 1
             );
 
-            Init_Word(Array_At(copy, limit), Canon(ELLIPSIS_1));
+            Init_Word(Array_At(copy, limit), CANON(ELLIPSIS_1));
 
             Collapsify_Array(copy, limit);
 
@@ -109,7 +109,7 @@ Element* Init_Near_For_Level(Sink(Element) out, Level* L)
 
     REBINT start = Level_Array_Index(L) - 3;
     if (start > 0)
-        Init_Word(PUSH(), Canon(ELLIPSIS_1));
+        Init_Word(PUSH(), CANON(ELLIPSIS_1));
     else if (start < 0)
         start = 0;
 
@@ -127,12 +127,12 @@ Element* Init_Near_For_Level(Sink(Element) out, Level* L)
             // mean "error source is to the left" or just "frame is at a
             // breakpoint at that position".
             //
-            Init_Word(PUSH(), Canon(_P_P));
+            Init_Word(PUSH(), CANON(_P_P));
         }
     }
 
     if (item != tail)
-        Init_Word(PUSH(), Canon(ELLIPSIS_1));
+        Init_Word(PUSH(), CANON(ELLIPSIS_1));
 
     // !!! This code can be called on an executing level, such as when an
     // error happens in that level.  Or it can be called on a pending level

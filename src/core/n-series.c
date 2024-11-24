@@ -47,7 +47,7 @@
 DECLARE_NATIVE(insert)  // Must be frame-compatible with APPEND, CHANGE
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(INSERT));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(INSERT));
 }
 
 
@@ -71,7 +71,7 @@ DECLARE_NATIVE(insert)  // Must be frame-compatible with APPEND, CHANGE
 DECLARE_NATIVE(append)  // Must be frame-compatible with CHANGE, INSERT
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(APPEND));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(APPEND));
 }
 
 
@@ -95,7 +95,7 @@ DECLARE_NATIVE(append)  // Must be frame-compatible with CHANGE, INSERT
 DECLARE_NATIVE(change)  // Must be frame-compatible with APPEND, INSERT
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(CHANGE));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(CHANGE));
 }
 
 
@@ -116,7 +116,7 @@ DECLARE_NATIVE(change)  // Must be frame-compatible with APPEND, INSERT
 DECLARE_NATIVE(take)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(TAKE));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(TAKE));
 }
 
 
@@ -135,7 +135,7 @@ DECLARE_NATIVE(take)
 DECLARE_NATIVE(remove)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(REMOVE));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(REMOVE));
 }
 
 
@@ -152,7 +152,7 @@ DECLARE_NATIVE(remove)
 DECLARE_NATIVE(clear)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(CLEAR));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(CLEAR));
 }
 
 
@@ -169,7 +169,7 @@ DECLARE_NATIVE(clear)
 DECLARE_NATIVE(swap)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(SWAP));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(SWAP));
 }
 
 
@@ -188,7 +188,7 @@ DECLARE_NATIVE(swap)
 DECLARE_NATIVE(reverse)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(REVERSE));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(REVERSE));
 }
 
 
@@ -214,7 +214,7 @@ DECLARE_NATIVE(reverse)
 DECLARE_NATIVE(sort)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(SORT));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(SORT));
 }
 
 
@@ -233,7 +233,7 @@ DECLARE_NATIVE(sort)
 DECLARE_NATIVE(skip)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(SKIP));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(SKIP));
 }
 
 
@@ -252,7 +252,7 @@ DECLARE_NATIVE(skip)
 DECLARE_NATIVE(at)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(AT));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(AT));
 }
 
 
@@ -277,7 +277,7 @@ DECLARE_NATIVE(at)
 DECLARE_NATIVE(find)  // Must be frame-compatible with SELECT
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(FIND));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(FIND));
 }
 
 
@@ -300,5 +300,5 @@ DECLARE_NATIVE(find)  // Must be frame-compatible with SELECT
 DECLARE_NATIVE(select)  // Must be frame-compatible with FIND
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, Canon(SELECT));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(SELECT));
 }

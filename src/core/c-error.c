@@ -674,7 +674,7 @@ Error* Make_Error_Managed_Vaptr(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Anti_Word(var, Canon(END));
+                Init_Anti_Word(var, CANON(END));
                 break;
 
               case DETECTED_AS_CELL : {
@@ -895,7 +895,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 
     DECLARE_ATOM (label);
     if (not Try_Get_Action_Level_Label(label, L))
-        Init_Word(label, Canon(ANONYMOUS));
+        Init_Word(label, CANON(ANONYMOUS));
 
     DECLARE_ATOM (param_name);
     Init_Word(param_name, Key_Symbol(ACT_KEY(Level_Phase(L), index)));
@@ -929,13 +929,13 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
         if (symbol)
             Init_Word(label, unwrap symbol);
         else
-            Init_Word(label, Canon(ANONYMOUS));
+            Init_Word(label, CANON(ANONYMOUS));
     }
     else {
         action = Level_Phase(L);
         arg = Level_Arg(L, 2);
         if (not Try_Get_Action_Level_Label(label, L))
-            Init_Word(label, Canon(ANONYMOUS));
+            Init_Word(label, CANON(ANONYMOUS));
     }
 
     Param* param = ACT_PARAM(action, 2);
@@ -1150,7 +1150,7 @@ Error* Error_Phase_Arg_Type(
     ERROR_VARS* vars = ERR_VARS(error);
     assert(Is_Word(&vars->id));
     assert(Cell_Word_Id(&vars->id) == SYM_EXPECT_ARG);
-    Init_Word(&vars->id, Canon(PHASE_EXPECT_ARG));
+    Init_Word(&vars->id, CANON(PHASE_EXPECT_ARG));
     return error;
 }
 
@@ -1318,7 +1318,7 @@ VarList* Startup_Errors(const Element* boot_errors)
 
     assert(VAL_INDEX(boot_errors) == 0);
 
-    Value* catalog_val = rebValue(Canon(CONSTRUCT), Canon(INERT), boot_errors);
+    Value* catalog_val = rebValue(CANON(CONSTRUCT), CANON(INERT), boot_errors);
     VarList* catalog = Cell_Varlist(catalog_val);
 
     // Morph blocks into objects for all error categories.
@@ -1327,7 +1327,7 @@ VarList* Startup_Errors(const Element* boot_errors)
     Value* category = Varlist_Slots(&category_tail, catalog);
     for (; category != category_tail; ++category) {
         assert(Is_Block(category));
-        Value* error = rebValue(Canon(CONSTRUCT), Canon(INERT), category);
+        Value* error = rebValue(CANON(CONSTRUCT), CANON(INERT), category);
         Copy_Cell(category, error);  // actually an OBJECT! :-/
         rebRelease(error);
     }

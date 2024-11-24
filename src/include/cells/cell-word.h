@@ -163,7 +163,7 @@ INLINE bool Is_Bar(const Value* v) {
     return (
         HEART_BYTE(v) == REB_WORD
         and QUOTE_BYTE(v) == NOQUOTE_1
-        and Cell_Word_Symbol(v) == Canon(BAR_1)  // caseless | always canon
+        and Cell_Word_Symbol(v) == CANON(BAR_1)  // caseless | always canon
     );
 }
 
@@ -171,7 +171,7 @@ INLINE bool Is_Bar_Bar(const Atom* v) {
     return (
         HEART_BYTE(v) == REB_WORD
         and QUOTE_BYTE(v) == NOQUOTE_1
-        and Cell_Word_Symbol(v) == Canon(_B_B)  // caseless || always canon
+        and Cell_Word_Symbol(v) == CANON(_B_B)  // caseless || always canon
     );
 }
 

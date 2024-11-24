@@ -36,7 +36,7 @@ Bounce Makehook_Sequence(Level* level_, Heart heart, Element* arg)
 {
     if (Is_Block(arg))
         return rebValue(
-            Canon(TO), Datatype_From_Kind(heart), Canon(REDUCE), arg
+            CANON(TO), Datatype_From_Kind(heart), CANON(REDUCE), arg
         );
 
     if (Is_Text(arg)) {

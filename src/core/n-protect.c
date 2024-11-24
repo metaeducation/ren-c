@@ -360,7 +360,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 DECLARE_NATIVE(protect_p)
 {
     Element* location = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(location, LEVEL, Canon(PROTECT_P));
+    return Run_Generic_Dispatch(location, LEVEL, CANON(PROTECT_P));
 }
 
 
@@ -388,9 +388,9 @@ DECLARE_NATIVE(protect)
     Element* e = cast(Element*, ARG(value));
     if (Any_Word(e) or Any_Tuple(e)) {
         if (REF(hide))
-            Init_Word(SPARE, Canon(HIDE));
+            Init_Word(SPARE, CANON(HIDE));
         else
-            Init_Word(SPARE, Canon(PROTECT));
+            Init_Word(SPARE, CANON(PROTECT));
         if (Set_Var_Core_Updater_Throws(
             OUT,
             nullptr,
@@ -450,7 +450,7 @@ DECLARE_NATIVE(unprotect)
 
     Element* e = cast(Element*, ARG(value));
     if (Any_Word(e) or Any_Tuple(e)) {
-        Init_Word(SPARE, Canon(UNPROTECT));
+        Init_Word(SPARE, CANON(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(
             OUT,
             nullptr,

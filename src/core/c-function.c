@@ -110,12 +110,12 @@ void Push_Keys_And_Holes_May_Fail(
     assert(Is_Block(spec));
 
     if (*flags & MKF_RETURN) {
-        Init_Word(PUSH(), Canon(RETURN));  // top of stack
+        Init_Word(PUSH(), CANON(RETURN));  // top of stack
         Init_Unreadable(PUSH());  // becomes parameter (explicitly or implicit)
     }
 
     if (*flags & MKF_YIELD) {
-        Init_Word(PUSH(), Canon(YIELD));
+        Init_Word(PUSH(), CANON(YIELD));
         Init_Nothing(PUSH());  // locals are initialized as nothing
     }
 
@@ -413,12 +413,12 @@ void Push_Keys_And_Holes_May_Fail(
 
         OnStack(Value*) param;
         if (
-            symbol == Canon(RETURN)
+            symbol == CANON(RETURN)
             and (*flags & MKF_RETURN)  // explicit return: specification
         ){
             assert(
                 Cell_Word_Symbol(Data_Stack_At(Element, base + 1))
-                == Canon(RETURN)
+                == CANON(RETURN)
             );
             param = Data_Stack_At(Value, base + 2);
             if (Is_Cell_Readable(param)) {
@@ -457,7 +457,7 @@ void Push_Keys_And_Holes_May_Fail(
 
     if (*flags & MKF_RETURN) {  // default RETURN: to unconstrained if not seen
         assert(
-            Cell_Word_Symbol(Data_Stack_At(Element, base + 1)) == Canon(RETURN)
+            Cell_Word_Symbol(Data_Stack_At(Element, base + 1)) == CANON(RETURN)
         );
         OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
         if (Not_Cell_Readable(param_1)) {

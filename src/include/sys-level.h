@@ -200,7 +200,7 @@ INLINE Option(const String*) File_Of_Level(Level* L) {
 
 INLINE const char* File_UTF8_Of_Level(Level* L) {
     //
-    // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
+    // !!! Note: Too early in boot at the moment to use CANON(ANONYMOUS).
     //
     Option(const String*) str = File_Of_Level(L);
     return str ? String_UTF8(unwrap str) : "~anonymous~";

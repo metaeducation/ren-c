@@ -154,7 +154,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
     if (h == REB_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(e);
-        if (symbol == Canon(DOT_1) and not Any_Tuple_Kind(sequence_heart))
+        if (symbol == CANON(DOT_1) and not Any_Tuple_Kind(sequence_heart))
             return nullptr;
         if (
             sequence_heart != REB_CHAIN  // !!! temporary for //: -- review
@@ -366,10 +366,10 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         or (Is_Blank(first) and Is_Blank(second))  // plain / is a WORD!
     ){
         if (Any_Path_Kind(heart))
-            Init_Word(out, Canon(SLASH_1));
+            Init_Word(out, CANON(SLASH_1));
         else {
             assert(Any_Tuple_Kind(heart));
-            Init_Word(out, Canon(DOT_1));
+            Init_Word(out, CANON(DOT_1));
         }
         if (Is_Trash(first))
             Quasify(out);

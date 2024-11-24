@@ -151,7 +151,7 @@
 #define FETCH_TO_BAR_OR_END(L) \
     while (not P_AT_END and not ( \
         VAL_TYPE_UNCHECKED(P_RULE) == REB_WORD \
-        and Cell_Word_Symbol(P_RULE) == Canon(BAR_1) \
+        and Cell_Word_Symbol(P_RULE) == CANON(BAR_1) \
     )){ \
         FETCH_NEXT_RULE(L); \
     }
@@ -243,7 +243,7 @@ static bool Subparse_Throws(
 
     Push_Action(L, VAL_ACTION(LIB(SUBPARSE)), UNBOUND);
 
-    Begin_Action(L, Canon(SUBPARSE), PREFIX_0);
+    Begin_Action(L, CANON(SUBPARSE), PREFIX_0);
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle
@@ -413,7 +413,7 @@ static const Element* Get_Parse_Value(
         return rule;
 
     if (Is_Void(sink)) {  // void means ignore
-        Init_Quasi_Word(sink, Canon(VOID));
+        Init_Quasi_Word(sink, CANON(VOID));
         return cast(Element*, sink);
     }
 
@@ -483,7 +483,7 @@ bool Process_Group_For_Parse_Throws(
 
         if (Is_Antiform(atom_out)) {
             if (Is_Void(atom_out))
-                Init_Quasi_Word(atom_out, Canon(VOID));
+                Init_Quasi_Word(atom_out, CANON(VOID));
             else if (Is_Logic(atom_out))
                 Meta_Quotify(atom_out);
             else
@@ -1145,7 +1145,7 @@ static void Handle_Mark_Rule(
         Quotify(Derelativize(OUT, rule, context), 1);
         if (rebRunThrows(
             cast(Value*, temp),  // <-- output cell
-            Canon(SET), OUT, ARG(position)
+            CANON(SET), OUT, ARG(position)
         )){
             fail (Error_No_Catch_For_Throw(LEVEL));
         }
@@ -2354,7 +2354,7 @@ DECLARE_NATIVE(parse3)
     if (Any_Sequence(input)) {
         if (rebRunThrows(
             cast(Value*, SPARE),  // <-- output cell
-            Canon(AS), Canon(BLOCK_X), rebQ(input)
+            CANON(AS), CANON(BLOCK_X), rebQ(input)
         )){
             return THROWN;
         }
@@ -2363,7 +2363,7 @@ DECLARE_NATIVE(parse3)
     else if (Is_Url(input)) {
         if (rebRunThrows(
             cast(Value*, SPARE),  // <-- output cell
-            Canon(AS), Canon(TEXT_X), input
+            CANON(AS), CANON(TEXT_X), input
         )){
             return THROWN;
         }
