@@ -2651,7 +2651,7 @@ default-combinators: to map! reduce [
                 ; exposed, which were not visible to the inner function that
                 ; ACTION OF BINDING OF $RETURN received.
                 ;
-                f: make frame! :block-combinator  ; this combinator
+                f: make frame! block-combinator/  ; this combinator
                 f.state: state
                 f.value: rules
                 f.limit: sublimit
@@ -2662,7 +2662,7 @@ default-combinators: to map! reduce [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! unrun [{#} rules]: parsify state rules
+                f: make frame! [{#} rules]: parsify state rules
             ]
 
             f.input: pos
