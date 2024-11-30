@@ -56,11 +56,6 @@
 
 #include "sys-core.h"
 
-// See notes why the Augmenter gets away with reusing Specializer_Dispatcher
-//
-#define Augmenter_Dispatcher Specializer_Dispatcher
-#define IDX_AUGMENTER_MAX 1
-
 
 //
 //  /augment: native [
@@ -131,21 +126,13 @@ DECLARE_NATIVE(augment)
         Cell_Coupling(ARG(original))
     );
 
-    Phase* augmentated = Make_Phase(
-        paramlist,
-        ACT_PARTIALS(augmentee),  // partials should still work
-        &Augmenter_Dispatcher,
-        IDX_AUGMENTER_MAX  // same as specialization, just 1 (for archetype)
-    );
+    Action* augmentated = cast(Action*, paramlist);
 
     assert(ACT_ADJUNCT(augmentated) == nullptr);
-    mutable_ACT_ADJUNCT(augmentated) = adjunct;
+    Tweak_Action_Adjunct(augmentated, adjunct);
 
-    // Keep track that the derived keylist is related to the original, so
-    // that it's possible to tell a frame built for the augmented function is
-    // compatible with the original function (and its ancestors, too)
-    //
-    LINK(Ancestor, ACT_KEYLIST(augmentated)) = ACT_KEYLIST(augmentee);
+    Init_Frame(OUT, cast(VarList*, paramlist), label);
+    Actionify(OUT);
 
-    return Init_Action(OUT, augmentated, label, UNBOUND);
+    return OUT;
 }

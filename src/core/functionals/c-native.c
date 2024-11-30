@@ -127,7 +127,7 @@ Phase* Make_Native(
     // NATIVE-COMBINATOR.
     //
     assert(ACT_ADJUNCT(native) == nullptr);
-    mutable_ACT_ADJUNCT(native) = meta;
+    Tweak_Action_Adjunct(native, meta);
 
     // Some features are not supported by intrinsics on their first argument,
     // because it would make them too complicated.

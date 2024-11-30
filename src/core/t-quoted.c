@@ -692,34 +692,24 @@ DECLARE_NATIVE(action_q)
 //  "Make frames run when fetched through word access"
 //
 //      return: [action?]
-//      frame [<unrun> frame! action?]
+//      frame [frame! action?]
 //  ]
 //
 DECLARE_NATIVE(runs)
 //
-// 1. In order for a frame to properly report answers to things like
-//    `parameters of`, the specializations have to be committed to...because
-//    until that commitment, the frame hasn't hidden the parameters on its
-//    public interface that are specialized.  At the moment, this means
-//    making a copy.
+// 1. Is allowing things that are already antiforms a good idea?
+//
+// 2. This is designed to be a type checked synonym for `anti`...all the
+//    actual work would be done regardless of using this routine.
 {
     INCLUDE_PARAMS_OF_RUNS;
 
     Value* frame = ARG(frame);
-
-    if (Is_Frame_Details(frame)) {
-        Coerce_To_Stable_Antiform(frame);
+    if (Is_Action(frame))  // already antiform, no need to pay for coercion [1]
         return COPY(frame);
-    }
 
-    Phase* specialized = Make_Phase(
-        Varlist_Array(Cell_Varlist(frame)),
-        nullptr,
-        &Specializer_Dispatcher,
-        IDX_SPECIALIZER_MAX  // details array capacity
-    );
-
-    return Init_Action(OUT, specialized, VAL_FRAME_LABEL(frame), UNBOUND);
+    Coerce_To_Stable_Antiform(frame);  // typechecks specialization, etc. [2]
+    return COPY(frame);
 }
 
 

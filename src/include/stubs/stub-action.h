@@ -348,8 +348,18 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 
-#define mutable_ACT_ADJUNCT(a)     MISC(DetailsAdjunct, ACT_IDENTITY(a))
-#define ACT_ADJUNCT(a)             MISC(DetailsAdjunct, ACT_IDENTITY(a))
+INLINE void Tweak_Action_Adjunct(Action* a, Option(VarList*) adjunct) {
+    if (Is_Stub_Details(a))
+        MISC(DetailsAdjunct, a) = maybe adjunct;
+    else
+        MISC(VarlistAdjunct, a) = maybe adjunct;
+}
+
+INLINE Option(VarList*) ACT_ADJUNCT(Action* a) {
+    if (Is_Stub_Details(a))
+        return MISC(DetailsAdjunct, a);
+    return MISC(VarlistAdjunct, a);
+}
 
 
 //=//// ANCESTRY / FRAME COMPATIBILITY ////////////////////////////////////=//

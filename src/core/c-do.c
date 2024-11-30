@@ -139,10 +139,15 @@ void Push_Frame_Continuation(
     L->rootvar = Rootvar_Of_Varlist(varlist);
     Tweak_Varlist_Keysource(varlist, L);
 
-    assert(Level_Phase(L) == CTX_ARCHETYPE_PHASE(varlist));
+    Phase* phase = Level_Phase(L);
+    assert(phase == CTX_ARCHETYPE_PHASE(varlist));
     Tweak_Level_Coupling(L, Cell_Coupling(frame));
 
-    L->u.action.original = Level_Phase(L);
+    L->u.action.original = phase;  // VAL_ACTION() is gone...
+
+    L->u.action.key = ACT_KEYS(&L->u.action.key, phase);
+    L->u.action.param = ACT_PARAMS_HEAD(phase);
+    L->u.action.arg = L->rootvar + 1;
 
     Begin_Action(L, VAL_FRAME_LABEL(frame), PREFIX_0);
 

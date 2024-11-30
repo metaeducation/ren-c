@@ -292,7 +292,10 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
         Assert_Flex_Managed(keylist);
     }
 
-    assert(not CTX_ADJUNCT(v) or Any_Context_Kind(CTX_TYPE(CTX_ADJUNCT(v))));
+    assert(
+        not CTX_ADJUNCT(v)
+        or Any_Context_Kind(CTX_TYPE(unwrap CTX_ADJUNCT(v)))
+    );
 
     // FRAME!s must always fill in the phase slot, but that piece of the
     // Cell is reserved for future use in other context types...so make
@@ -328,7 +331,10 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
     // !!! Currently only a context can serve as the "meta" information,
     // though the interface may expand.
     //
-    assert(not ACT_ADJUNCT(a) or Any_Context_Kind(CTX_TYPE(ACT_ADJUNCT(a))));
+    assert(
+        not ACT_ADJUNCT(a)
+        or Any_Context_Kind(CTX_TYPE(unwrap ACT_ADJUNCT(a)))
+    );
 }
 
 #endif

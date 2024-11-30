@@ -3251,9 +3251,9 @@ RebolValue* API_rebFunc(
 
     Flags mkf_flags = MKF_RETURN;
 
-    VarList* meta;
+    VarList* adjunct;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
+        &adjunct,
         spec,
         &mkf_flags
     );
@@ -3266,7 +3266,7 @@ RebolValue* API_rebFunc(
     );
 
     assert(ACT_ADJUNCT(a) == nullptr);
-    mutable_ACT_ADJUNCT(a) = meta;
+    Tweak_Action_Adjunct(a, adjunct);
 
     Details* details = Phase_Details(a);
     Init_Handle_Cfunc(

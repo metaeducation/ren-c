@@ -1087,6 +1087,10 @@ void Push_Action(
     assert(Not_Node_Managed(L->varlist));
 
     ORIGINAL = act;
+
+    KEY = ACT_KEYS(&KEY_TAIL, ORIGINAL);
+    PARAM = ACT_PARAMS_HEAD(ORIGINAL);
+    ARG = L->rootvar + 1;
 }
 
 
@@ -1103,12 +1107,11 @@ void Begin_Action(
     assert(not Is_Level_Infix(L));
     /* assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX)); */  // !!! happens? [1]
 
+    assert(KEY == KEY_TAIL or Is_Stub_Symbol(*KEY));
+    assert(ARG == L->rootvar + 1);
+
     assert(Not_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
-
-    KEY = ACT_KEYS(&KEY_TAIL, ACT_IDENTITY(ORIGINAL));
-    PARAM = cast(Param*, Varlist_Slots_Head(ACT_EXEMPLAR(ORIGINAL)));
-    ARG = L->rootvar + 1;
 
     Set_Action_Level_Label(L, label);
 

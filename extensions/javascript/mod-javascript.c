@@ -867,7 +867,7 @@ DECLARE_NATIVE(js_native)
     Set_Phase_Flag(native, IS_NATIVE);
 
     assert(ACT_ADJUNCT(native) == nullptr);  // should default to nullptr
-    mutable_ACT_ADJUNCT(native) = meta;
+    Tweak_Action_Adjunct(native, meta);
 
     heapaddr_t native_id = Native_Id_For_Phase(native);
 

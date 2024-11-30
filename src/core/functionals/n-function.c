@@ -247,7 +247,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     );
 
     assert(ACT_ADJUNCT(a) == nullptr);
-    mutable_ACT_ADJUNCT(a) = meta;
+    Tweak_Action_Adjunct(a, meta);
 
     Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action

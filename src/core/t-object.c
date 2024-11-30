@@ -537,7 +537,7 @@ DECLARE_NATIVE(adjunct_of)
 
     Value* v = ARG(value);
 
-    VarList* meta;
+    Option(VarList*) meta;
     if (Is_Frame(v)) {
         if (not Is_Frame_Details(v))
             return nullptr;
@@ -552,7 +552,7 @@ DECLARE_NATIVE(adjunct_of)
     if (not meta)
         return nullptr;
 
-    return COPY(Varlist_Archetype(meta));
+    return COPY(Varlist_Archetype(unwrap meta));
 }
 
 
@@ -647,7 +647,7 @@ VarList* Copy_Varlist_Extra_Managed(
 
         if (CTX_ADJUNCT(original)) {
             MISC(VarlistAdjunct, varlist) = Copy_Varlist_Shallow_Managed(
-                CTX_ADJUNCT(original)
+                unwrap CTX_ADJUNCT(original)
             );
         }
         else {
@@ -1468,9 +1468,9 @@ DECLARE_GENERICS(Frame)
             1  // copy doesn't need details of its own, just archetype
         );
 
-        VarList* meta = ACT_ADJUNCT(act);
+        Option(VarList*) meta = ACT_ADJUNCT(act);
         assert(ACT_ADJUNCT(proxy) == nullptr);
-        mutable_ACT_ADJUNCT(proxy) = meta;  // !!! Note: not a copy of meta
+        Tweak_Action_Adjunct(proxy, meta);  // !!! Note: not a copy of meta
 
         // !!! Do this with masking?
 
@@ -1548,7 +1548,7 @@ REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
 //
 void MF_Frame(Molder* mo, const Cell* v, bool form) {
 
-    if (Is_Frame_Exemplar(v)) {
+    if (QUOTE_BYTE(v) != QUASIFORM_2) {
         MF_Context(mo, v, form);
         return;
     }
@@ -1557,9 +1557,10 @@ void MF_Frame(Molder* mo, const Cell* v, bool form) {
 
     Option(const Symbol*) label = VAL_FRAME_LABEL(v);
     if (label) {
-        Append_Codepoint(mo->string, '{');
+        Append_Codepoint(mo->string, '"');
         Append_Spelling(mo->string, unwrap label);
-        Append_Ascii(mo->string, "} ");
+        Append_Codepoint(mo->string, '"');
+        Append_Codepoint(mo->string, ' ');
     }
 
     Array* parameters = Make_Action_Words_Array(VAL_ACTION(v));

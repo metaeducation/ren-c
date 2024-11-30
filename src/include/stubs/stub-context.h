@@ -65,7 +65,9 @@
 // is another object's-worth of data *about* the module's contents (e.g. the
 // processed header)
 //
-#define CTX_ADJUNCT(c)     MISC(VarlistAdjunct, Varlist_Array(c))
+INLINE Option(VarList*) CTX_ADJUNCT(VarList* c) {
+    return MISC(VarlistAdjunct, Varlist_Array(c));
+}
 
 #define Tweak_Cell_Context_Varlist            Tweak_Cell_Node1
 

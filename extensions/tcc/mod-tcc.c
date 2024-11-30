@@ -310,7 +310,7 @@ DECLARE_NATIVE(make_native)
     );
 
     assert(ACT_ADJUNCT(native) == nullptr);
-    mutable_ACT_ADJUNCT(native) = meta;
+    Tweak_Action_Adjunct(native, meta);
 
     Details* details = Phase_Details(native);
 

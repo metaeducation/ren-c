@@ -41,26 +41,6 @@
 
 
 //
-//  Specializer_Dispatcher: C
-//
-// The evaluator does not do any special "running" of a specialized frame.
-// All of the contribution that the specialization had to make was taken care
-// of when Eval_Core() used L->param to fill from the exemplar.  So all this
-// does is change the phase and binding to match the function this layer was
-// specializing.
-//
-Bounce Specializer_Dispatcher(Level* L)
-{
-    VarList* exemplar = ACT_EXEMPLAR(Level_Phase(L));
-
-    Tweak_Level_Phase(L, CTX_ARCHETYPE_PHASE(exemplar));
-    Tweak_Level_Coupling(L, CTX_ARCHETYPE_COUPLING(exemplar));
-
-    return BOUNCE_REDO_UNCHECKED; // redo uses the updated phase and binding
-}
-
-
-//
 //  Make_Varlist_For_Action_Push_Partials: C
 //
 // For partial refinement specializations in the action, this will push the
@@ -383,15 +363,8 @@ bool Specialize_Action_Throws(
         }
     }
 
-    Phase* specialized = Make_Phase(
-        Varlist_Array(exemplar),
-        partials,
-        &Specializer_Dispatcher,
-        IDX_SPECIALIZER_MAX  // details array capacity
-    );
-    assert(Keylist_Of_Varlist(exemplar) == ACT_KEYLIST(unspecialized));
-
-    Init_Action(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
+    Init_Frame(out, exemplar, VAL_FRAME_LABEL(specializee));
+    Actionify(out);
 
     Set_Cell_Infix_Mode(out, infix_mode);
 

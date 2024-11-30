@@ -910,18 +910,6 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
         return;
     }
 
-    if (Phase_Dispatcher(phase) == &Specializer_Dispatcher) {
-        //
-        // The FRAME! stored in the body for the specialization has a phase
-        // which is actually the function to be run.
-        //
-        const Value* frame = Varlist_Archetype(ACT_EXEMPLAR(a));
-        assert(Is_Frame(frame));
-        Copy_Meta_Cell(out, frame);
-        QUOTE_BYTE(out) = NOQUOTE_1;
-        return;
-    }
-
     Init_Blank(out); // natives, ffi routines, etc.
     return;
 }
