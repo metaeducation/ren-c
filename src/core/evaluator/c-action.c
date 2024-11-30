@@ -706,9 +706,7 @@ Bounce Action_Executor(Level* L)
   //    modified.  Even though it's hidden, it may need to be typechecked
   //    again (unless it was *fully* hidden).
   //
-  // 2. Parameter antiforms are the default values from MAKE FRAME!.
-  //
-  // 3. We can't a-priori typecheck the variadic argument, since the values
+  // 2. We can't a-priori typecheck the variadic argument, since the values
   //    aren't calculated until the function starts running.  Instead we stamp
   //    this instance of the varargs with a way to reach back and see the
   //    parameter type signature.
@@ -716,7 +714,7 @@ Bounce Action_Executor(Level* L)
   //    The data feed is unchanged (can come from this frame, or another, or
   //    just an array from MAKE VARARGS! of a BLOCK!)
   //
-  // 4. Store the offset so that both the arg and param locations can quickly
+  // 3. Store the offset so that both the arg and param locations can quickly
   //    be recovered, while using only a single slot in the cell.  Sign denotes
   //    whether the parameter was infix or not.
 
@@ -757,14 +755,14 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // can't check now [3]
+        if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // can't check now [2]
             if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
                 return FAIL(Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
 
             Tweak_Cell_Varargs_Phase(ARG, Level_Phase(L));
 
             bool infix = false;  // !!! how does infix matter?
-            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [4]
+            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [3]
                 infix
                     ? -(ARG - cast(Atom*, Level_Args_Head(L)) + 1)
                     : ARG - cast(Atom*, Level_Args_Head(L)) + 1;
@@ -1001,36 +999,15 @@ Bounce Action_Executor(Level* L)
 // Allocate the Array of Values inspected by a function when executed (the
 // Cells behind ARG(name), REF(name), ARG_N(3),  etc.)
 //
-// 1. We perform a traversal of the argument slots.  This fills any cells that
-//    have been specialized with the specialized value, and erases cells
-//    that need to be fulfilled from the callsite.
+// The argument slots are left uninitialized at the outset, and are fulfilled
+// as the Action_Executor() walks through the parameter list.  This makes the
+// GC have to be sensitive to how far fulfillment has progressed, to avoid
+// marking uninitialized memory.
 //
-//    Originally the idea was to leave the argument slots uninitialized here,
-//    and have the code that fulfills the arguments handle copying the
-//    specialized values.  This makes the GC have to be more sensitive to
-//    how far fulfillment has progressed and not try to mark uninitialized
-//    memory--the invariants are messier, but it's technically possible.  But
-//    the unification of frames and actions nixed this idea, since if frames
-//    are mutable they could be modified by code that runs in mid-fulfillment.
-//
-//    Additionally, only a subset of the information needed for specialization
-//    is available to the fulfillment process.  It walks the "paramlist" of
-//    the underlying action, which contains typechecking information for
-//    slots that are nothing (and hence unspecialized) for frame invocations.
-//    But walking exemplar frames to see specializations would only see those
-//    nothing cells and not know how to typecheck.
-//
-//    Empirically this extra walk can be costing us as much as 5% of runtime
-//    vs. leaving memory uninitialized and folding the walks together.  If
-//    frames could somehow be rigged to store parameters instead of nothing
-//    and merely give the impression of nothing on extraction, the gains could
-//    be substantial.
-//
-// 2. Each layer of specialization of a function can only add specializations
-//    of arguments which have not been specialized already.  For efficiency,
-//    the act of specialization merges all the underlying specializations
-//    together.  This means only the outermost specialization is needed to
-//    fill the specialized slots contributed by later phases.
+// This is separated from Begin_Action() because the idea was that you could
+// use an already existing VarList*, in which case you'd not need allocations
+// done by this routine.  In practice, Begin_Action() is a tiny amount of
+// reused work.  This separation may be reconsidered.
 //
 void Push_Action(
     Level* L,
@@ -1116,16 +1093,15 @@ void Push_Action(
 //
 //  Begin_Action: C
 //
+// 1. This can happen during Encloser_Dispatcher().  Review.
+//
 void Begin_Action(
     Level* L,
     Option(const Symbol*) label,
     Option(InfixMode) infix_mode
 ){
-    // These assertions were blocking code sharing with SET-BLOCK! mechanics.
-    // Review where the right place to put them is.
-    //
-    /*assert(not Is_Level_Infix(L));
-    assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX));*/
+    assert(not Is_Level_Infix(L));
+    /* assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX)); */  // !!! happens? [1]
 
     assert(Not_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Set_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);

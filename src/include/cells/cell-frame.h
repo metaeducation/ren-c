@@ -1,4 +1,63 @@
-// %cell-frame.h
+//
+//  File: %cell-frame.h
+//  Summary: "Definitions for FRAME! Cells (Antiform of FRAME! is action)"
+//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  Homepage: https://github.com/metaeducation/ren-c/
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Copyright 2012 REBOL Technologies
+// Copyright 2012-2024 Ren-C Open Source Contributors
+// REBOL is a trademark of REBOL Technologies
+//
+// See README.md and CREDITS.md for more information
+//
+// Licensed under the Lesser GPL, Version 3.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// https://www.gnu.org/licenses/lgpl-3.0.html
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// The FRAME! type originated as simply a variation of OBJECT!, which held
+// a VarList* representing the parameters of a function, as well as a pointer
+// to that function itself.  This meant you could do things like:
+//
+//     >> f: make frame! negate/
+//     == #[frame! [value: ~]]  ; remembered it was for negate
+//
+//     >> f.value: 1020
+//
+//     >> eval f
+//     == -1020
+//
+// But FRAME!s were not simply objects which represented the parameters to
+// call the function with.  The actual in-memory reprsentation of the VarList
+// was used as the function's variables.
+//
+// This became more complex, because functions could be composed through
+// things like specializations and adaptations.  In each adapted phase,
+// different variables needed to be visible--e.g. someone could specialize
+// fields out of a function with a certain name, and then augment the
+// function with another field of the same name.  Which field should be
+// visible depended on how far into the composition an execution had gotten.
+//
+// That concept of "Phase" became another field in FRAME! cells.  Plus, it
+// was added that the way to say a frame wasn't running was to store a label
+// for the function in the phase slot so that a frame could indicate the
+// name that should show in the stack when being invoked.
+//
+// Further contributing to the complexity of FRAME! was that it was decided
+// that the concept of an "action" that would run when dispatched from WORD!
+// would be an antiform frame.  This meant that a FRAME! was the result of
+// functions like ADAPT and ENCLOSE...but those generated new function
+// identities without creating new VarLists to represent the parameters.
+// Rather than making copies for no reason, the alternative was to make frames
+// able to point directly at an Initial_Phase() of a function...which would
+// then have to be queried for a VarList*.
+//
+
 
 INLINE Action* VAL_ACTION(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);

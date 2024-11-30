@@ -1020,7 +1020,7 @@ void Clonify_And_Bind_Relative(
 //
 Source* Copy_And_Bind_Relative_Deep_Managed(
     const Value* body,
-    Action* relative,
+    Phase* relative,
     enum Reb_Var_Visibility visibility
 ){
     DECLARE_BINDER (binder);

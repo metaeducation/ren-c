@@ -23,7 +23,7 @@
 // frame, adding new parameters.  It does so without affecting the execution:
 //
 //     >> /foo-x: func [x [integer!]] [print ["x is" x]]
-//     >> /foo-xy: augment ^foo-x [y [integer!]]
+//     >> /foo-xy: augment foo-x/ [y [integer!]]
 //
 //     >> foo-x 10
 //     x is 10
@@ -38,15 +38,20 @@
 // is only useful when combined with something like ADAPT or ENCLOSE... to
 // inject in phases of code at a higher level that see these parameters:
 //
-//     >> /foo-xy: adapt (augment ^foo-x [y [integer!]]) [print ["y is" y]]
+//     >> /foo-xy: adapt (augment foo-x/ [y [integer!]]) [print ["y is" y]]
 //
 //     >> foo-xy 10 20
 //     y is 20
 //     x is 10
 //
-// AUGMENT leverages Ren-C's concept of "refinements are their own arguments"
-// in order to allow normal parameters to be added to the frame after a
-// refinement already has appeared.
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * AUGMENT in historical Redbol would have been complicated by the idea
+//   that refinements could span multiple arguments.  So if a function's spec
+//   was `[arg1 /refine refarg1 refarg2]` then augmenting it would look like
+//   `[arg1 /refine refarg1 refarg2 arg2]` and seem like it was adding an
+//   argument to the refinement.  Since Ren-C refinements are the name of
+//   the single argument they represent, this is not a problem.
 //
 
 #include "sys-core.h"
@@ -70,20 +75,31 @@
 //  ]
 //
 DECLARE_NATIVE(augment)
+//
+// 1. We reuse the process from Make_Paramlist_Managed_May_Fail(), which
+//    pushes WORD! and PARAMETER! antiform pairs for each argument.
+//
+// 2. For any specialized (including local) parameters in the paramlist we are
+//    copying, we want to "seal" them from view.  We wouldn't have access to
+//    them if we were an ADAPT and not making a copy (since the action in the
+//    exemplar would not match the phase).  So making a copy should not
+//    suddenly subvert the access.
+//
+// 3. We don't need a new Phase.  AUGMENT itself doesn't add any new behavior,
+//    so we can get away with patching the augmentee's action information
+//    (phase and coupling) into the paramlist.
 {
     INCLUDE_PARAMS_OF_AUGMENT;
 
-    Action* augmentee = VAL_ACTION(ARG(original));
-    Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(original));
+    Element* spec = cast(Element*, ARG(spec));
+    Element* original = cast(Element*, ARG(original));
 
-    // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
-    // pushes descriptors to the stack in groups for each parameter.
+    Option(const Symbol*) label = VAL_FRAME_LABEL(original);
+    Action* augmentee = VAL_ACTION(original);
 
     Flags flags = MKF_MASK_NONE;  // if original had no return, we don't add
 
-    // For each parameter in the original function, push word and parameter
-    //
-  blockscope {
+  blockscope {  // copying the augmentee's parameter names and values [1]
     const Key* key_tail;
     const Key* key = ACT_KEYS(&key_tail, augmentee);
     const Param* param = ACT_PARAMS_HEAD(augmentee);
@@ -91,44 +107,25 @@ DECLARE_NATIVE(augment)
         Init_Word(PUSH(), *key);
         Copy_Cell(PUSH(), param);
 
-        // For any specialized (incl. local) parameters in the paramlist we are
-        // copying, we want to "seal" them from view.  We wouldn't have access
-        // to them if we were an ADAPT and not making a copy (since the action
-        // in the exemplar would not match the phase).  So making a copy should
-        // not suddenly subvert the access.
-        //
         if (Is_Specialized(param))
-            Set_Cell_Flag(TOP, STACK_NOTE_SEALED);
+            Set_Cell_Flag(TOP, STACK_NOTE_SEALED);  // seal parameters [2]
     }
   }
 
     VarList* adjunct = nullptr;
 
-    // Now we reuse the spec analysis logic, which pushes more parameters to
-    // the stack.  This may add duplicates--which will be detected when we
-    // try to pop the stack into a paramlist.
-    //
-    Push_Keys_And_Holes_May_Fail(
+    Push_Keys_And_Holes_May_Fail(  // add spec parameters, may add duplicates
         &adjunct,
-        ARG(spec),
+        spec,
         &flags
     );
 
-    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(  // checks dups
         &adjunct, STACK_BASE, flags
     );
 
-    // Usually when you call Make_Phase() on a freshly generated paramlist,
-    // it notices that the rootvar is void and hasn't been filled in... so it
-    // makes the frame the paramlist is the varlist of (the exemplar) have a
-    // rootvar pointing to the phase of the newly generated action.
-    //
-    // But since AUGMENT itself doesn't add any new behavior, we can get away
-    // with patching the augmentee's action information (phase and binding)
-    // into the paramlist...and reusing the Specializer_Dispatcher.
-
     assert(Not_Cell_Readable(Flex_Head(Value, paramlist)));
-    Tweak_Frame_Varlist_Rootvar(
+    Tweak_Frame_Varlist_Rootvar(  // no new phase needed, just use frame [3]
         paramlist,
         ACT_IDENTITY(VAL_ACTION(ARG(original))),
         Cell_Coupling(ARG(original))
