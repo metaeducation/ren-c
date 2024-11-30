@@ -359,7 +359,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                     cast(Phase*, action), CAN_DISPATCH_AS_INTRINSIC
                 )
             ){
-                Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
+                Dispatcher* dispatcher = Phase_Dispatcher(cast(Phase*, action));
 
                 Copy_Cell(SCRATCH, test);  // intrinsic may need action
 

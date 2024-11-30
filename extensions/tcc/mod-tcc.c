@@ -246,7 +246,7 @@ static void cleanup(const Value* val)
 //
 Bounce Pending_Native_Dispatcher(Level* L) {
     Phase* phase = Level_Phase(L);
-    assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
+    assert(Phase_Dispatcher(phase) == &Pending_Native_Dispatcher);
 
     Value* action = Phase_Archetype(phase);  // this action's value
 
@@ -268,7 +268,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
     // function pointer that lives in the TCC_State.  Use REDO, and don't
     // bother re-checking the argument types.
     //
-    assert(ACT_DISPATCHER(phase) != &Pending_Native_Dispatcher);
+    assert(Phase_Dispatcher(phase) != &Pending_Native_Dispatcher);
     return BOUNCE_REDO_UNCHECKED;
 }
 
@@ -384,7 +384,7 @@ DECLARE_NATIVE(compile_p)
 
     // The state is where the code for the TCC_OUTPUT_MEMORY natives will be
     // living.  It must be kept alive for as long as you expect the user
-    // natives to be able to execute, as this is where their ACT_DISPATCHER()
+    // natives to be able to execute, as this is where the Phase_Dispatcher()
     // pointers are located.  The GCC manages it via handle (see cleanup())
     //
     TCCState *state = tcc_new();
@@ -499,8 +499,15 @@ DECLARE_NATIVE(compile_p)
         for (; item != tail; ++item) {
             if (Is_Frame(item)) {
                 Action* action = VAL_ACTION(item);
-                if (ACT_DISPATCHER(action) != &Pending_Native_Dispatcher)
+                if (
+                    not Is_Stub_Details(action)
+                    or (
+                        Phase_Dispatcher(cast(Phase*, action))
+                        != &Pending_Native_Dispatcher
+                    )
+                ){
                     fail ("Only user natives can be in COMPILABLES list");
+                }
 
                 // Remember this function, because we're going to need to come
                 // back and fill in its dispatcher and TCC_State after the
@@ -655,7 +662,9 @@ DECLARE_NATIVE(compile_p)
     //
     while (TOP_INDEX != STACK_BASE) {
         Action* action = VAL_ACTION(TOP);  // stack will hold action live
-        assert(ACT_DISPATCHER(action) == &Pending_Native_Dispatcher);
+        assert(Is_Stub_Details(action));
+        Phase* phase = cast(Phase*, action);
+        assert(Phase_Dispatcher(phase) == &Pending_Native_Dispatcher);
 
         Details* details = Phase_Details(cast(Phase*, action));
         Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
@@ -675,7 +684,7 @@ DECLARE_NATIVE(compile_p)
         assert(sizeof(c_func) == sizeof(void*));
         memcpy(&c_func, &sym, sizeof(c_func));
 
-        INIT_ACT_DISPATCHER(action, c_func);
+        Tweak_Phase_Dispatcher(phase, c_func);
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_STATE), handle);
 
         DROP();

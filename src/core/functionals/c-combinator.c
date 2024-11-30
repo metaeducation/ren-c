@@ -90,8 +90,11 @@ Bounce Combinator_Dispatcher(Level* L)
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
         Set_Flex_Info(L->varlist, HOLD);  // mandatory for natives.
-        Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
-        b = dispatcher(L);
+        assert(Is_Stub_Details(VAL_ACTION(body)));
+        Dispatcher* dispatcher = Phase_Dispatcher(
+            cast(Phase*, VAL_ACTION(body))
+        );
+        b = (*dispatcher)(L);
     }
     else {  // usermode COMBINATOR
         assert(Is_Block(body));

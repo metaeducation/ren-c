@@ -31,8 +31,6 @@
 //   level variables is uppercase L.
 //
 
-typedef struct RebolLevelStruct Level;
-
 
 // !!! A Level* answers that it is a node, and a cell.  This is questionable
 // and should be reviewed now that many features no longer depend on it.
@@ -264,27 +262,6 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 #define Not_Level_Flag(L,name) \
     (((L)->flags.bits & LEVEL_FLAG_##name) == 0)
 
-
-// C function implementing a native ACTION!
-//
-typedef Bounce (Executor)(Level* level_);
-typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
-
-// Deciders are a narrow kind of boolean predicate used in type checking.
-//
-typedef bool (Decider)(const Value* arg);
-
-// This is for working around pedantic C and C++ errors, when an extension
-// that doesn't use %sys-core.h tries to redefine dispatcher in terms of
-// taking a void* and returning a Value*.
-//
-#ifdef __cplusplus
-    #define dispatcher_cast(ptr) \
-        cast(Dispatcher*, cast(void*, (ptr)))
-#else
-    #define dispatcher_cast(ptr) \
-        cast(Dispatcher*, (ptr))
-#endif
 
 #include "executors/exec-eval.h"
 #include "executors/exec-action.h"

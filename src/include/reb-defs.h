@@ -354,6 +354,17 @@ enum Reb_Vararg_Op {
     VARARG_OP_TAKE // doesn't modify underlying data stream--advances index
 };
 
+typedef struct RebolLevelStruct Level;
+
+// C function implementing a native ACTION!
+//
+typedef Bounce (Executor)(Level* level_);
+typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
+
+// Deciders are a narrow kind of boolean predicate used in type checking.
+//
+typedef bool (Decider)(const Value* arg);
+
 
 //=//// INFIX MODES ///////////////////////////////////////////////////////=//
 //

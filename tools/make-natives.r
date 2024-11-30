@@ -229,15 +229,8 @@ e-forward/emit --{
      *
      * DECLARE_NATIVE() is a macro expanding so DECLARE_NATIVE(parse) will
      * define a function named `N_parse`.  The prototypes are included in a
-     * system-wide header in order to allow recognizing a given native by
-     * identity in the C code, e.g.:
-     *
-     *     if (ACT_DISPATCHER(VAL_ACTION(native)) == &N_parse) { ... }
-     *
-     * There is also a special subclass of natives known as intrinsics, which
-     * are defined via DECLARE_NATIVE().  These share a common simple
-     * dispatcher based around a C function that can be called without a
-     * frame.  See `Intrinsic` vs. `Dispatcher` types for more information.
+     * system-wide header so you can call a native dispatcher directly if
+     * you need to.
      */
 }--
 e-forward/emit newline

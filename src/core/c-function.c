@@ -753,7 +753,7 @@ Phase* Make_Phase(
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
-    mutable_LINK_DISPATCHER(details) = cast(CFunction*, dispatcher);
+    Tweak_Phase_Dispatcher(cast(Phase*, details), dispatcher);
     MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
     INODE(Exemplar, details) = cast(VarList*, paramlist);
@@ -812,10 +812,18 @@ Phase* Make_Phase(
 // dispatchers to code to get the BODY OF an ACTION.  For the moment, just
 // handle common kinds so the SOURCE command works adquately, revisit later.
 //
-void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
+void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
 {
     Option(VarList*) coupling = Cell_Coupling(action);
     Action* a = VAL_ACTION(action);
+
+    if (Is_Stub_Varlist(a)) {  // specialization or similar
+        Copy_Meta_Cell(out, action);
+        QUOTE_BYTE(out) = NOQUOTE_1;
+        return;
+    }
+
+    Phase* phase = cast(Phase*, a);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
     // But if it does, bypass it to get to the "real" action implementation.
@@ -823,10 +831,8 @@ void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
     // !!! Should the source inject messages like {This is a hijacking} at
     // the top of the returned body?
     //
-    while (ACT_DISPATCHER(a) == &Hijacker_Dispatcher) {
-        a = VAL_ACTION(ACT_ARCHETYPE(a));
-        // !!! Review what should happen to binding
-    }
+    if (Phase_Dispatcher(phase) == &Hijacker_Dispatcher)
+        return Get_Maybe_Fake_Action_Body(out, ACT_ARCHETYPE(phase));
 
     // !!! Should the coupling make a difference in the returned body?  It is
     // exposed programmatically via COUPLING OF.
@@ -834,13 +840,13 @@ void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
     UNUSED(coupling);
 
     if (
-        ACT_DISPATCHER(a) == &Func_Dispatcher
-        or ACT_DISPATCHER(a) == &Lambda_Unoptimized_Dispatcher
+        Phase_Dispatcher(phase) == &Func_Dispatcher
+        or Phase_Dispatcher(phase) == &Lambda_Unoptimized_Dispatcher
     ){
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        Details* details = Phase_Details(ACT_IDENTITY(a));
+        Details* details = Phase_Details(phase);
         Cell* body = Array_At(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
@@ -850,7 +856,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
 
         Value* example;
         REBLEN real_body_index;
-        if (ACT_DISPATCHER(a) == &Lambda_Dispatcher) {
+        if (Phase_Dispatcher(phase) == &Lambda_Dispatcher) {
             example = nullptr;
             real_body_index = 0;
             UNUSED(real_body_index);
@@ -904,14 +910,15 @@ void Get_Maybe_Fake_Action_Body(Sink(Value) out, const Value* action)
         return;
     }
 
-    if (ACT_DISPATCHER(a) == &Specializer_Dispatcher) {
+    if (Phase_Dispatcher(phase) == &Specializer_Dispatcher) {
         //
         // The FRAME! stored in the body for the specialization has a phase
         // which is actually the function to be run.
         //
         const Value* frame = Varlist_Archetype(ACT_EXEMPLAR(a));
         assert(Is_Frame(frame));
-        Copy_Cell(out, frame);
+        Copy_Meta_Cell(out, frame);
+        QUOTE_BYTE(out) = NOQUOTE_1;
         return;
     }
 

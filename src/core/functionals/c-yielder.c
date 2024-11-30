@@ -414,7 +414,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Value* label = VAL_THROWN_LABEL(L);
     if (
         Is_Frame(label)
-        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_yield
+        and VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_YIELD))
         and Cell_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
@@ -594,7 +594,7 @@ DECLARE_NATIVE(definitional_yield)
         return FAIL("YIELD called when body of bound yielder is not running");
 
     Phase* yielder_phase = Level_Phase(yielder_level);
-    assert(ACT_DISPATCHER(yielder_phase) == &Yielder_Dispatcher);
+    assert(Phase_Dispatcher(yielder_phase) == &Yielder_Dispatcher);
 
     Details* yielder_details = Phase_Details(yielder_phase);
 

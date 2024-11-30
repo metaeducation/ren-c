@@ -169,8 +169,10 @@ Bounce Hijacker_Dispatcher(Level* level_)
     KeyList* exemplar_keylist = Keylist_Of_Varlist(ACT_EXEMPLAR(hijacker));
     KeyList* keylist = Keylist_Of_Varlist(cast(VarList*, LEVEL->varlist));
     while (true) {
-        if (keylist == exemplar_keylist)
-            return ACT_DISPATCHER(hijacker)(LEVEL);
+        if (keylist == exemplar_keylist) {
+            Dispatcher* dispatcher = Phase_Dispatcher(ACT_IDENTITY(hijacker));
+            return (*dispatcher)(LEVEL);
+        }
         if (keylist == LINK(Ancestor, keylist))  // terminates with self ref.
             break;
         keylist = LINK(Ancestor, keylist);
@@ -241,12 +243,12 @@ DECLARE_NATIVE(hijack)
     Phase* hijacker_identity = ACT_IDENTITY(hijacker);
 
     if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed [1]
-        mutable_LINK_DISPATCHER(victim_identity)
-            = cast(CFunction*, LINK_DISPATCHER(hijacker_identity));
+        Tweak_Phase_Dispatcher(
+            victim_identity, Phase_Dispatcher(hijacker_identity)
+        );
     }
     else {  // mismatch, so shim required [2]
-        mutable_LINK_DISPATCHER(victim_identity)
-            = cast(CFunction*, &Hijacker_Dispatcher);
+        Tweak_Phase_Dispatcher(victim_identity, &Hijacker_Dispatcher);
     }
 
     Clear_Cell_Flag(  // change on purpose

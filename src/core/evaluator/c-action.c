@@ -843,9 +843,9 @@ Bounce Action_Executor(Level* L)
 
     assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
 
-    Action* phase = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
 
-    Dispatcher* dispatcher = ACT_DISPATCHER(phase);
+    Dispatcher* dispatcher = Phase_Dispatcher(phase);
 
     Bounce b = (*dispatcher)(L);
 

@@ -1464,7 +1464,7 @@ DECLARE_GENERICS(Frame)
         Phase* proxy = Make_Phase(
             ACT_PARAMLIST(act),  // not changing the interface
             ACT_PARTIALS(act),  // keeping partial specializations
-            ACT_DISPATCHER(act),  // have to preserve in case original hijacked
+            Phase_Dispatcher(act),  // preserve in case original hijacked
             1  // copy doesn't need details of its own, just archetype
         );
 

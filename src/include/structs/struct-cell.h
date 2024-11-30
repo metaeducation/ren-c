@@ -428,6 +428,8 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     //
     const Node* node;
 
+    Dispatcher* dispatcher;
+
     // The GC is only marking one field in the union...the node.  So that is
     // the only field that should be assigned and read.  These "type puns"
     // are unreliable, and for debug viewing only--in case they help.

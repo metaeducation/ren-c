@@ -249,7 +249,7 @@ Bounce Stepper_Executor(Level* L)
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Action* action = VAL_ACTION(CURRENT);
         assert(Is_Stub_Details(action));
-        Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
+        Dispatcher* dispatcher = Phase_Dispatcher(cast(Phase*, action));
 
         possibly(Is_Antiform_Unstable(SPARE));  // intrinsic typechecks/decays
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));

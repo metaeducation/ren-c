@@ -284,14 +284,11 @@ INLINE Param* ACT_PARAMS_HEAD(Action* a) {
     return cast(Param*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
-#define LINK_DISPATCHER(a)              cast(Dispatcher*, (a)->link.any.cfunc)
-#define mutable_LINK_DISPATCHER(a)      (a)->link.any.cfunc
+#define Phase_Dispatcher(a) \
+    ensure(Phase*, (a))->link.any.dispatcher
 
-#define ACT_DISPATCHER(a) \
-    LINK_DISPATCHER(ACT_IDENTITY(a))
-
-#define INIT_ACT_DISPATCHER(a,cfunc) \
-    mutable_LINK_DISPATCHER(ACT_IDENTITY(a)) = cast(CFunction*, (cfunc))
+#define Tweak_Phase_Dispatcher(p,cfunc) \
+    (ensure(Phase*, (p))->link.any.dispatcher = (cfunc))
 
 
 // The DETAILS array isn't guaranteed to be STUB_FLAG_DYNAMIC (it may hold

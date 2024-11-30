@@ -60,7 +60,7 @@ bool Try_Catch_Break_Or_Continue(
         return false;
 
     if (
-        ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_break
+        VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_BREAK))
         and Cell_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
@@ -70,7 +70,7 @@ bool Try_Catch_Break_Or_Continue(
     }
 
     if (
-        ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_continue
+        VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))
         and Cell_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
@@ -747,7 +747,7 @@ DECLARE_NATIVE(cycle)
     const Value* label = VAL_THROWN_LABEL(LEVEL);
     if (
         Is_Frame(label)
-        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_stop
+        and VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_STOP))
         and Cell_Coupling(label) == Level_Varlist(LEVEL)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
@@ -1670,11 +1670,15 @@ DECLARE_NATIVE(map_each)
     //
     Quotify(ARG(data), 1);
 
-    Tweak_Level_Phase(LEVEL, ACT_IDENTITY(VAL_ACTION(LIB(MAP))));
-    // Tweak_Level_Coupling ?
+    const Value* map_action = LIB(MAP);
+    assert(Is_Stub_Details(VAL_ACTION(map_action)));
+    Phase* phase = cast(Phase*, VAL_ACTION(map_action));
 
-    Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(LIB(MAP)));
-    return dispatcher(LEVEL);
+    Tweak_Level_Phase(LEVEL, phase);
+    Tweak_Level_Coupling(LEVEL, Cell_Coupling(map_action));
+
+    Dispatcher* dispatcher = Phase_Dispatcher(phase);
+    return (*dispatcher)(LEVEL);
 }
 
 

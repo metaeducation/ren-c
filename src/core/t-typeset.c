@@ -308,7 +308,7 @@ void Set_Parameter_Spec(
                 )
             ){
                 Phase* phase = cast(Phase*, action);
-                Dispatcher* dispatcher = ACT_DISPATCHER(phase);
+                Dispatcher* dispatcher = Phase_Dispatcher(phase);
                 if (dispatcher == &N_any_value_q)
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
                 else if (dispatcher == &N_any_atom_q)
