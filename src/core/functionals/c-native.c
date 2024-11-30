@@ -101,7 +101,7 @@ Phase* Make_Native(
         Varlist_Archetype(module)
     );
 
-    Set_Action_Flag(native, IS_NATIVE);
+    Set_Phase_Flag(native, IS_NATIVE);
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like
@@ -138,7 +138,7 @@ Phase* Make_Native(
         assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);
 
-        Set_Action_Flag(native, CAN_DISPATCH_AS_INTRINSIC);
+        Set_Phase_Flag(native, CAN_DISPATCH_AS_INTRINSIC);
     }
 
     return native;

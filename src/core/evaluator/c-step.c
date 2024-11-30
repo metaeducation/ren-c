@@ -758,8 +758,8 @@ Bounce Stepper_Executor(Level* L)
 
         if (
             not infix_mode  // too rare a case for intrinsic optimization
-            and Get_Action_Flag(action, CAN_DISPATCH_AS_INTRINSIC)
             and Is_Stub_Details(action)  // don't do specializations
+            and Get_Phase_Flag(cast(Phase*, action), CAN_DISPATCH_AS_INTRINSIC)
             and Not_Level_At_End(L)  // can't do <end>, fallthru to error
             and not SPORADICALLY(10)  // checked builds sometimes bypass
         ){

@@ -294,8 +294,8 @@ enum {
 };
 
 
-INLINE heapaddr_t Native_Id_For_Action(Action* act)
-  { return Heapaddr_From_Pointer(ACT_IDENTITY(act)); }
+INLINE heapaddr_t Native_Id_For_Phase(Phase* p)
+  { return Heapaddr_From_Pointer(p); }
 
 Bounce JavaScript_Dispatcher(Level* L);
 
@@ -864,12 +864,12 @@ DECLARE_NATIVE(js_native)
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
     );
-    Set_Action_Flag(native, IS_NATIVE);
+    Set_Phase_Flag(native, IS_NATIVE);
 
     assert(ACT_ADJUNCT(native) == nullptr);  // should default to nullptr
     mutable_ACT_ADJUNCT(native) = meta;
 
-    heapaddr_t native_id = Native_Id_For_Action(native);
+    heapaddr_t native_id = Native_Id_For_Phase(native);
 
     Details* details = Phase_Details(native);
 
@@ -1005,7 +1005,7 @@ DECLARE_NATIVE(js_native)
     //
     Init_Handle_Cdata_Managed(
         Details_At(details, IDX_JS_NATIVE_OBJECT),
-        ACT_IDENTITY(native),
+        native,
         1,  // 0 size interpreted to mean it's a C function
         &cleanup_js_object
     );

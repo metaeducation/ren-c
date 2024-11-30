@@ -237,8 +237,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Extract_Cell_Action_Partials_Or_Label(v))
             assert(Is_Node_Marked(Extract_Cell_Action_Partials_Or_Label(v)));
 
-        if (Is_Action_Native(a)) {
-            Details* details = Phase_Details(a);
+        Details* details = Phase_Details(a);
+
+        if (Get_Flavor_Flag(DETAILS, details, IS_NATIVE)) {
             assert(Array_Len(details) >= IDX_NATIVE_MAX);
             Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
             assert(Any_Context(context));

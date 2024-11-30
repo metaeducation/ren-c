@@ -136,7 +136,7 @@ VarList* Get_Context_From_Top_Level(void)
 
     Phase* phase = Level_Phase(L);
 
-    if (not Is_Action_Native(phase))  // e.g. API call from Func_Dispatcher()
+    if (Not_Phase_Flag(phase, IS_NATIVE))  // e.g. API call in Func_Dispatcher()
         return g_lib_context;
 
     Details* details = Phase_Details(phase);

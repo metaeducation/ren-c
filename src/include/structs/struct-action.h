@@ -111,17 +111,17 @@ typedef enum {
     STUB_SUBCLASS_FLAG_31
 
 
-#define Set_Action_Flag(act,name) \
-    Set_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
+#define Set_Phase_Flag(p,name) \
+    Set_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
 
-#define Get_Action_Flag(act,name) \
-    Get_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
+#define Get_Phase_Flag(p,name) \
+    Get_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
 
-#define Clear_Action_Flag(act,name) \
-    Clear_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
+#define Clear_Phase_Flag(p,name) \
+    Clear_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
 
-#define Not_Action_Flag(act,name) \
-    Not_Flavor_Flag(DETAILS, ACT_IDENTITY(act), name)
+#define Not_Phase_Flag(p,name) \
+    Not_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
 
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always

@@ -3099,7 +3099,7 @@ RebolContext* API_rebBindingFromLevel_internal(
     // under IDX_NATIVE_CONTEXT.  Extract that, and put it in NextVirtual.
     //
     Phase* phase = Level_Phase(level);
-    assert(Get_Action_Flag(phase, IS_NATIVE));
+    assert(Get_Phase_Flag(phase, IS_NATIVE));
     Details* details = Phase_Details(phase);
     Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
     node_LINK(NextVirtual, level->varlist) = Cell_Varlist(module);

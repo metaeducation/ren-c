@@ -36,13 +36,6 @@ INLINE void INIT_VAL_ACTION_LABEL(
 }
 
 
-// Only the archetype should be asked if it is native (because the archetype
-// guides interpretation of the details array).
-//
-#define Is_Action_Native(a) \
-    Get_Action_Flag(VAL_ACTION(ACT_ARCHETYPE(a)), IS_NATIVE)
-
-
 // A fully constructed action can reconstitute the ACTION! cell
 // that is its canon form from a single pointer...the cell sitting in
 // the 0 slot of the action's details.  That action has no binding and

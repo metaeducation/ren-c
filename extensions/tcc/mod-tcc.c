@@ -356,7 +356,7 @@ DECLARE_NATIVE(make_native)
 
     Init_Blank(Details_At(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
 
-    Set_Action_Flag(native, IS_NATIVE);
+    Set_Phase_Flag(native, IS_NATIVE);
     return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
 }
 

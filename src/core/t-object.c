@@ -1474,8 +1474,8 @@ DECLARE_GENERICS(Frame)
 
         // !!! Do this with masking?
 
-        if (Get_Action_Flag(act, IS_NATIVE))
-            Set_Action_Flag(proxy, IS_NATIVE);
+        if (Get_Phase_Flag(act, IS_NATIVE))
+            Set_Phase_Flag(proxy, IS_NATIVE);
 
         Clear_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // changing it
         Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(act));

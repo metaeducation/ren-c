@@ -112,7 +112,7 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
         &Decider_Intrinsic_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
-    Set_Action_Flag(typechecker, CAN_DISPATCH_AS_INTRINSIC);
+    Set_Phase_Flag(typechecker, CAN_DISPATCH_AS_INTRINSIC);
 
     Details* details = Phase_Details(typechecker);
 
@@ -353,8 +353,12 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
           run_action: {
             Action* action = VAL_ACTION(test);
 
-            if (Get_Action_Flag(action, CAN_DISPATCH_AS_INTRINSIC)) {
-                assert(Is_Stub_Details(action));
+            if (
+                Is_Stub_Details(action)
+                and Get_Phase_Flag(
+                    cast(Phase*, action), CAN_DISPATCH_AS_INTRINSIC
+                )
+            ){
                 Dispatcher* dispatcher = ACT_DISPATCHER(cast(Phase*, action));
 
                 Copy_Cell(SCRATCH, test);  // intrinsic may need action

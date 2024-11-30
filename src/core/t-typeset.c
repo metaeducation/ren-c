@@ -300,8 +300,14 @@ void Set_Parameter_Spec(
         }
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
           handle_predicate: {
-            Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
-            if (Get_Action_Flag(phase, CAN_DISPATCH_AS_INTRINSIC)) {
+            Action* action = VAL_ACTION(lookup);
+            if (
+                Is_Stub_Details(action)
+                and Get_Phase_Flag(
+                    cast(Phase*, action), CAN_DISPATCH_AS_INTRINSIC
+                )
+            ){
+                Phase* phase = cast(Phase*, action);
                 Dispatcher* dispatcher = ACT_DISPATCHER(phase);
                 if (dispatcher == &N_any_value_q)
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
