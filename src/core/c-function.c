@@ -484,7 +484,7 @@ void Push_Keys_And_Holes_May_Fail(
 //
 // Assuming the stack is formed in a rhythm of the parameter, a type spec
 // block, and a description...produce a paramlist in a state suitable to be
-// passed to Make_Action().  It may not succeed because there could be
+// passed to Make_Phase().  It may not succeed because there could be
 // duplicate parameters on the stack, and the checking via a binder is done
 // as part of this popping process.
 //
@@ -674,7 +674,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 
 
 //
-//  Make_Action: C
+//  Make_Phase: C
 //
 // Create an archetypal form of a function, given C code implementing a
 // dispatcher that will be called by Eval_Core.  Dispatchers are of the form:
@@ -697,7 +697,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 // take several forms depending on how much detail there is.  See the
 // ACT_SPECIALTY() definition for more information on how this is laid out.
 //
-Phase* Make_Action(
+Phase* Make_Phase(
     Array* paramlist,
     Option(Array*) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()

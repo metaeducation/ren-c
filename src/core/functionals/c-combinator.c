@@ -236,7 +236,7 @@ DECLARE_NATIVE(combinator)
         &flags
     );
 
-    Phase* combinator = Make_Action(
+    Phase* combinator = Make_Phase(
         paramlist,
         nullptr,  // no partials
         &Combinator_Dispatcher,

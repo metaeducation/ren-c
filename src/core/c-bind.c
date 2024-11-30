@@ -1014,7 +1014,7 @@ void Clonify_And_Bind_Relative(
 //
 //  Copy_And_Bind_Relative_Deep_Managed: C
 //
-// This routine is called by Make_Action to copy the body deeply, and while
+// This routine is called by Make_Phase to copy the body deeply, and while
 // it is doing that it puts a cache in any unbound words of whether or not
 // that words can be found in the function's frame.
 //

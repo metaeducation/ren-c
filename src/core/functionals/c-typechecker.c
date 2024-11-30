@@ -106,7 +106,7 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
-    Phase* typechecker = Make_Action(
+    Phase* typechecker = Make_Phase(
         paramlist,
         nullptr,  // no partials
         &Decider_Intrinsic_Dispatcher,

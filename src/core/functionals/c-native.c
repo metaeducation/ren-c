@@ -87,7 +87,7 @@ Phase* Make_Native(
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
-    Phase* native = Make_Action(
+    Phase* native = Make_Phase(
         paramlist,
         nullptr,  // no partials
         dispatcher,  // dispatcher is unique to this native
@@ -110,7 +110,7 @@ Phase* Make_Native(
     //
     if (native_type == NATIVE_COMBINATOR) {
         Phase* native_combinator = native;
-        native = Make_Action(
+        native = Make_Phase(
             ACT_PARAMLIST(native_combinator),
             nullptr,  // no partials
             &Combinator_Dispatcher,

@@ -712,7 +712,7 @@ DECLARE_NATIVE(runs)
         return COPY(frame);
     }
 
-    Phase* specialized = Make_Action(
+    Phase* specialized = Make_Phase(
         Varlist_Array(Cell_Varlist(frame)),
         nullptr,
         &Specializer_Dispatcher,

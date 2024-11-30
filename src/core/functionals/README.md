@@ -26,7 +26,7 @@ is invoked.
 
 This provides a pattern for adding new function categories easily to the core,
 or in extensions--without creating a new "Rebol type" in the process.  See the
-`Make_Action()` routine for how this is applied.
+`Make_Phase()` routine for how this is applied.
 
 Of particular interest to Ren-C is creating actions that are slight variants
 of other actions, without having to repeat their interface.  These variants

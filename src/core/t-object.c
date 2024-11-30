@@ -1461,7 +1461,7 @@ DECLARE_GENERICS(Frame)
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        Phase* proxy = Make_Action(
+        Phase* proxy = Make_Phase(
             ACT_PARAMLIST(act),  // not changing the interface
             ACT_PARTIALS(act),  // keeping partial specializations
             ACT_DISPATCHER(act),  // have to preserve in case original hijacked

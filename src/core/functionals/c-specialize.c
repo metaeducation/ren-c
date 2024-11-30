@@ -382,7 +382,7 @@ bool Specialize_Action_Throws(
         }
     }
 
-    Phase* specialized = Make_Action(
+    Phase* specialized = Make_Phase(
         Varlist_Array(exemplar),
         partials,
         &Specializer_Dispatcher,
@@ -732,7 +732,7 @@ Phase* Alloc_Action_From_Exemplar(
 
     // This code parallels Specialize_Action_Throws(), see comments there
 
-    Phase* action = Make_Action(
+    Phase* action = Make_Phase(
         Varlist_Array(exemplar),
         nullptr,  // no partials
         dispatcher,

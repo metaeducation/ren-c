@@ -210,7 +210,7 @@ typedef Context Use;
 
 //=//// VARLIST_FLAG_PARAMLIST_LITERAL_FIRST ///////////////////////////////=//
 //
-// This is a calculated property, which is cached by Make_Action().
+// This is a calculated property, which is cached by Make_Phase().
 //
 // This is another cached property, needed because lookahead/lookback is done
 // so frequently, and it's quicker to check a bit on the function than to
@@ -226,7 +226,7 @@ typedef Context Use;
     STUB_SUBCLASS_FLAG_26
 
 
-// These are the flags which are scanned for and set during Make_Action
+// These are the flags which are scanned for and set during Make_Phase
 //
 #define PARAMLIST_MASK_CACHED \
     (PARAMLIST_FLAG_QUOTES_FIRST)

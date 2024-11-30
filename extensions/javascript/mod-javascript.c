@@ -858,7 +858,7 @@ DECLARE_NATIVE(js_native)
         &flags
     );
 
-    Phase* native = Make_Action(
+    Phase* native = Make_Phase(
         paramlist,
         nullptr,  // no partials
         &JavaScript_Dispatcher,

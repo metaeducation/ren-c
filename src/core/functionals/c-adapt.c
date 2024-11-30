@@ -142,7 +142,7 @@ DECLARE_NATIVE(adapt)
     // access to the locals.  That requires creating a new paramlist.  Is
     // there a better way to do that with phasing?
 
-    Phase* adaptation = Make_Action(
+    Phase* adaptation = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
         ACT_PARTIALS(VAL_ACTION(adaptee)),
         &Adapter_Dispatcher,

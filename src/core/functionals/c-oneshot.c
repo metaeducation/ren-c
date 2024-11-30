@@ -124,7 +124,7 @@ DECLARE_NATIVE(n_shot)
 
     REBI64 n = VAL_INT64(ARG(n));
 
-    Phase* n_shot = Make_Action(
+    Phase* n_shot = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(LIB(DO_BRANCH))),
         nullptr,  // no partials
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,

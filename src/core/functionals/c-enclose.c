@@ -193,7 +193,7 @@ DECLARE_NATIVE(enclose)
     //
     // !!! Return result may differ; similar issue comes up with CHAIN
     //
-    Phase* enclosure = Make_Action(
+    Phase* enclosure = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner
         ACT_PARTIALS(VAL_ACTION(inner)),
         &Encloser_Dispatcher,

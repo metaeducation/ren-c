@@ -234,7 +234,7 @@ DECLARE_NATIVE(reorder)
         base
     );
 
-    Phase* reordered = Make_Action(
+    Phase* reordered = Make_Phase(
         Varlist_Array(exemplar),
         partials,
         &Reorderer_Dispatcher,

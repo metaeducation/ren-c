@@ -234,7 +234,7 @@ DECLARE_NATIVE(lambda)
         &adjunct, STACK_BASE, MKF_MASK_NONE
     );
 
-    Phase* lambda = Make_Action(
+    Phase* lambda = Make_Phase(
         paramlist,
         nullptr,  // no partials
         &Lambda_Dispatcher,

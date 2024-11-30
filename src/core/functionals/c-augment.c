@@ -118,7 +118,7 @@ DECLARE_NATIVE(augment)
         &adjunct, STACK_BASE, flags
     );
 
-    // Usually when you call Make_Action() on a freshly generated paramlist,
+    // Usually when you call Make_Phase() on a freshly generated paramlist,
     // it notices that the rootvar is void and hasn't been filled in... so it
     // makes the frame the paramlist is the varlist of (the exemplar) have a
     // rootvar pointing to the phase of the newly generated action.
@@ -134,7 +134,7 @@ DECLARE_NATIVE(augment)
         Cell_Coupling(ARG(original))
     );
 
-    Phase* augmentated = Make_Action(
+    Phase* augmentated = Make_Phase(
         paramlist,
         ACT_PARTIALS(augmentee),  // partials should still work
         &Augmenter_Dispatcher,

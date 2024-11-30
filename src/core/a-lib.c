@@ -3258,7 +3258,7 @@ RebolValue* API_rebFunc(
         &mkf_flags
     );
 
-    Phase* a = Make_Action(
+    Phase* a = Make_Phase(
         paramlist,
         nullptr,  // no partials
         &Api_Function_Dispatcher,

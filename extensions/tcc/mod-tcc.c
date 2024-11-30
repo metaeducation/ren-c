@@ -302,7 +302,7 @@ DECLARE_NATIVE(make_native)
         spec,
         &flags
     );
-    Phase* native = Make_Action(
+    Phase* native = Make_Phase(
         paramlist,
         nullptr,  // no partials
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE

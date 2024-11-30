@@ -239,7 +239,7 @@ Phase* Make_Interpreted_Action_May_Fail(
         &mkf_flags
     );
 
-    Phase* a = Make_Action(
+    Phase* a = Make_Phase(
         paramlist,
         nullptr,  // no partials
         dispatcher,

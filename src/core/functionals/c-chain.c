@@ -266,7 +266,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
     // general, possibly that all actions put the return slot in a separate
     // sliver that includes the partials?
     //
-    Phase* cascade = Make_Action(
+    Phase* cascade = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
         ACT_PARTIALS(VAL_ACTION(first)),
         &Cascader_Executor,
