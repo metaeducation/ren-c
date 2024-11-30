@@ -20,14 +20,15 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A specialization is an ACTION! which has some of its parameters fixed.
+// A specialization is an Action which has some of its parameters fixed.
 // e.g. (/ap10: specialize append/ [value: 5 + 5]) makes ap10 have all the same
 // refinements available as APPEND, but otherwise just takes one series arg,
 // as it will always be appending 10.
 //
 // Specialization is done by means of making a new "exemplar" frame for the
-// action.  Slots in that frame that would have held TYPESET! information for
-// the parameter are replaced by the fixed value, which is type checked.
+// action.  Slots in that frame that would have held PARAMETER! antiforms to
+// indicate they should gather arguments ("Holes") are replaced by the fixed
+// value, which is type checked.
 //
 // Partial specialization uses a different mechanism.  FILE-TO-LOCAL:PASS
 // fulfills a frame slot value since :PASS has no arguments, but APPEND:PART
@@ -292,7 +293,7 @@ bool Specialize_Action_Throws(
     // !!! Needs handling for interaction with REORDER.
     //
     bool first_param = true;
-    bool infix = Is_Cell_Infix(specializee);
+    Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(specializee);
 
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param)) {  // was specialized in underlying phase
@@ -322,7 +323,7 @@ bool Specialize_Action_Throws(
 
         if (first_param) {
             first_param = false;
-            infix = false;  // specialized out the first parameter
+            infix_mode = PREFIX_0;  // specialized out the first parameter
         }
     }
 
@@ -392,8 +393,7 @@ bool Specialize_Action_Throws(
 
     Init_Action(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
 
-    if (infix)  // incoming was infix, and we didn't specialize out first arg
-        Set_Cell_Infix_Mode(out, INFIX_TIGHT);
+    Set_Cell_Infix_Mode(out, infix_mode);
 
     return false;  // code block did not throw
 }
