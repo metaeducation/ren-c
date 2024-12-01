@@ -346,9 +346,17 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // that was running when they were raised.  This means they get a chance
     // to do cleanup (just as they have for the longjmp() and C++ exception
     // cases).
+    //
+    // 1. STATE_BYTE() won't allow reads if you are DISPATCHING_INTRINSIC,
+    //    since the intrinsic does not own the state byte.  But the flag has
+    //    to be set for (return FAIL(...)) in order to blame the right call
+    //    (e.g. Native_Fail_Result() is DISPATCHING_INTRINSIC-aware).  It
+    //    would be a burden for the Executor to have to clear the flag between
+    //    generating the error blame and returning, so just clear flag here.
 
     if (bounce == BOUNCE_FAIL) {
         assert(Is_Throwing_Failure(TOP_LEVEL));
+        Clear_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);  // convenience [1]
         L = TOP_LEVEL;
         goto bounce_on_trampoline;
     }

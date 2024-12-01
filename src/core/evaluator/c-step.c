@@ -266,7 +266,6 @@ Bounce Stepper_Executor(Level* L)
         else if (bounce == BOUNCE_BAD_INTRINSIC_ARG)
             return Native_Fail_Result(L, Error_Bad_Intrinsic_Arg_1(L));
         else {
-            assert(bounce == L->out);
             assert(bounce == BOUNCE_FAIL);  // no BOUNCE_CONTINUE, API handles
             return bounce;
         }

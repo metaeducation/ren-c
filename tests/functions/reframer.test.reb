@@ -7,7 +7,7 @@
 ; Simple test: make sure a reframer which does nothing but echo
 ; the built frame matches what we'd expect by building manually.
 (
-    f1: make frame! unrun :append
+    f1: make frame! append/
     assert [unspecialized? $f1.return]
     f1.series: [a b c]
     f1.value: <d>
