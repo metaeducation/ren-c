@@ -74,7 +74,7 @@
 
     /trackparse: enclose trackparse*/ lambda [f [frame!]] [
         stack: copy []
-        eval f then [
+        eval-free f then [
             append stack ""  ; give final newline
             (delimit newline stack, elide clear stack)
         ]

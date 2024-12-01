@@ -88,69 +88,16 @@ void Push_Frame_Continuation(
     Atom* out,
     Flags flags,
     const Value* frame,  // may be antiform
-    Option(const Atom*) with,
-    bool copy_frame
+    Option(const Atom*) with
 ){
-    if (Is_Frame_Details(frame)) {
-        UNUSED(copy_frame);  // !!! have to copy (details are locked)
-
-        Level* L = Make_End_Level(
-            &Action_Executor,
-            FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
-        );
-        Prep_Action_Level(L, frame, with);
-        Push_Level_Erase_Out_If_State_0(out, L);
-        return;
-    }
-
-    UNUSED(with);  // !!! no handling at present
-
     if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
         fail ("Use REDO to restart a running FRAME! (not DO)");
-
-    if (Get_Flavor_Flag(
-        VARLIST,
-        Cell_Varlist(frame),
-        FRAME_HAS_BEEN_INVOKED
-    )){
-        fail (Error_Stale_Frame_Raw());
-    }
-
-    // We want to run a COPY of the FRAME!, not the frame itself
-
-    StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
-
-    VarList* varlist;
-    if (copy_frame) {
-        varlist = Make_Varlist_For_Action(
-            frame,  // being used here as input (e.g. the ACTION!)
-            lowest_stackindex,  // will weave in any refinements pushed
-            nullptr  // no binder needed, not running any code
-        );
-    } else
-        varlist = Cell_Varlist(frame);
 
     Level* L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     );
-
-    L->varlist = Varlist_Array(varlist);
-    L->rootvar = Rootvar_Of_Varlist(varlist);
-    Tweak_Varlist_Keysource(varlist, L);
-
-    Phase* phase = Level_Phase(L);
-    assert(phase == CTX_ARCHETYPE_PHASE(varlist));
-    Tweak_Level_Coupling(L, Cell_Coupling(frame));
-
-    L->u.action.original = phase;  // VAL_ACTION() is gone...
-
-    L->u.action.key = ACT_KEYS(&L->u.action.key, phase);
-    L->u.action.param = ACT_PARAMS_HEAD(phase);
-    L->u.action.arg = L->rootvar + 1;
-
-    Begin_Action(L, VAL_FRAME_LABEL(frame), PREFIX_0);
-
+    Prep_Action_Level(L, frame, with);
     Push_Level_Erase_Out_If_State_0(out, L);
 }
 
@@ -264,8 +211,7 @@ bool Pushed_Continuation(
 
       handle_action:
       case REB_FRAME: {
-        bool copy_frame = true;  // !!! dicate based on freeze status?
-        Push_Frame_Continuation(out, flags, branch, with, copy_frame);
+        Push_Frame_Continuation(out, flags, branch, with);
         goto pushed_continuation; }
 
       default:

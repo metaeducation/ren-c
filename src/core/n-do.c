@@ -376,13 +376,11 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
             return FAIL(Error_Do_Arity_Non_Zero_Raw());  // see notes in DO
 
     Option(const Atom*) with = nullptr;
-    bool copy_frame = false;  // EVAL consumes by default
     Push_Frame_Continuation(
         OUT,
         LEVEL_FLAG_RAISED_RESULT_OK,
         source,
-        with,
-        copy_frame
+        with
     );
     return BOUNCE_DELEGATE;
 
@@ -473,6 +471,84 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
         Init_Pack(OUT, pack);
     }
+
+    return OUT;
+}}
+
+
+//
+//  /eval-free: native [
+//
+//  "Optimized version of EVAL that frees its target frame"
+//
+//      return: [any-atom?]
+//      frame [frame!]
+//      :undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
+//  ]
+//
+DECLARE_NATIVE(eval_free)
+{
+    INCLUDE_PARAMS_OF_EVAL_FREE;
+
+    Value* frame = ARG(frame);
+
+    enum {
+        ST_EVAL_FREE_INITIAL_ENTRY = STATE_0,
+        ST_EVAL_FREE_EVALUATING
+    };
+
+    switch (STATE) {
+      case ST_EVAL_FREE_INITIAL_ENTRY: goto initial_entry;
+      case ST_EVAL_FREE_EVALUATING: goto result_in_out;
+      default: assert(false);
+    }
+
+  initial_entry: { ///////////////////////////////////////////////////////////
+
+    if (Is_Stub_Details(VAL_ACTION(frame)))
+        fail ("Can't currently EVAL-FREE a Details-based Stub");
+
+    if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
+        fail ("Use REDO to restart a running FRAME! (not DO)");
+
+    VarList* varlist = Cell_Varlist(frame);
+
+    Level* L = Make_End_Level(
+        &Action_Executor,
+        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
+            | LEVEL_FLAG_RAISED_RESULT_OK
+    );
+
+    L->varlist = Varlist_Array(varlist);
+    L->rootvar = Rootvar_Of_Varlist(varlist);
+    Tweak_Varlist_Keysource(varlist, L);
+
+    Phase* phase = Level_Phase(L);
+    assert(phase == CTX_ARCHETYPE_PHASE(varlist));
+    Tweak_Level_Coupling(L, Cell_Coupling(frame));
+
+    L->u.action.original = phase;  // VAL_ACTION() is gone...
+
+    L->u.action.key = ACT_KEYS(&L->u.action.key, phase);
+    L->u.action.param = ACT_PARAMS_HEAD(phase);
+    L->u.action.arg = L->rootvar + 1;
+
+    Begin_Action(L, VAL_FRAME_LABEL(frame), PREFIX_0);
+
+    Push_Level_Erase_Out_If_State_0(OUT, L);
+
+    if (REF(undecayed))
+        return DELEGATE_SUBLEVEL(L);
+
+    STATE = ST_EVAL_FREE_EVALUATING;
+    return CONTINUE_SUBLEVEL(L);
+
+} result_in_out: { ///////////////////////////////////////////////////////////
+
+    Decay_Stub(VAL_ACTION(frame));  // the "FREE" of EVAL-FREE
+
+    if (Is_Elision(OUT))
+        return Init_Void(OUT);
 
     return OUT;
 }}

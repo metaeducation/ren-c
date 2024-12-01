@@ -31,7 +31,7 @@ script-pre-load-hook: ~
 
 /enrescue: lib.enrescue/
 /rescue: enclose enrescue/ lambda [f] [
-    match error! eval f
+    match error! eval-free f
 ]
 
 lib.enrescue: ~<See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871>~

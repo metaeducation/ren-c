@@ -86,9 +86,8 @@ REBOL [
         :relax "If exit code is non-zero, return the integer vs. raising error"
     ]
 ) func [f [frame!]] [
-    let relax: f.relax
     let result: eval f
-    if relax [
+    if f.relax [
         return result
     ]
     if result = 0 [

@@ -163,8 +163,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
     //            :default "Default case if no others are found"
     //            [block!]
     //        ]) lambda [f [frame!]] [
-    //            let def: f.default
-    //            eval f else (maybe def)
+    //            eval f else (maybe f.default)
     //        ]
 
     assert(Is_Level_At_End(L));

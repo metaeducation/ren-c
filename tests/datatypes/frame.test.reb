@@ -14,21 +14,24 @@
 ; https://github.com/metaeducation/ren-c/issues/393#issuecomment-745730620
 
 ; An "original" FRAME! that is created is considered to be phaseless.  When
-; you execute that frame, the function will destructively use it as the
+; you execute it with EVAL-FREE, that will destructively use it as the
 ; memory backing the invocation.  This means it will treat the argument cells
 ; as if they were locals, manipulating them in such a way that the frame
 ; cannot meaningfully be used again.  The system flags such frames so that
 ; you don't accidentally try to reuse them or assume their arguments can
 ; act as caches of the input.
 (
-    f: make frame! unrun :append
+    f: make frame! unrun append/
     f.series: [a b c]
     f.value: <d>
     all [
-        [a b c <d>] = eval copy f  ; making a copy works around the expiration
+        [a b c <d>] = eval f
         f.series = [a b c <d>]
         f.value = <d>
-        [a b c <d> <d>] = eval f
+        [a b c <d> <d>] = eval-free copy f  ; should act same as EVAL F
+        f.series = [a b c <d> <d>]
+        f.value = <d>
+        [a b c <d> <d> <d>] = eval-free f
         'stale-frame = pick sys.util/rescue [eval f] 'id
         'bad-pick = pick sys.util/rescue [f.series] 'id
         'bad-pick = pick sys.util/rescue [f.value] 'id

@@ -116,7 +116,7 @@ bind construct [
         either f.state.hook [
             run f.state.hook f
         ][
-            eval:undecayed f
+            eval-free:undecayed f
         ]
     ]
 ][
@@ -189,7 +189,7 @@ bind construct [
                         <local> result' remainder subpending
                     ][
                         [^result' remainder subpending]:
-                            eval:undecayed f2 except e -> [
+                            eval-free:undecayed f2 except e -> [
                                 return raise e
                             ]
                         pending: glom pending spread subpending
@@ -300,7 +300,7 @@ default-combinators: to map! reduce [
                 return raise e
             ]
         ]
-        if not negatable-parser? :parser [
+        if not negatable-parser? parser/ [
             fail "NOT called on non-negatable combinator"
         ]
         return [{~} remainder]: parser:negated input except e -> [
@@ -3223,7 +3223,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     "Process input in the parse dialect, definitional error on failure"
 ] ]
     enclose parse*/ func [f] [
-        let [^synthesized' pending]: eval:undecayed f except e -> [
+        let [^synthesized' pending]: eval-free:undecayed f except e -> [
             return raise e
         ]
         if not empty? pending [
@@ -3239,7 +3239,7 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
     enclose parse*/ func [f] [
         f.rules: compose $() [(f.rules) || accept <here>]
 
-        let [^synthesized' pending]: eval:undecayed f except [
+        let [^synthesized' pending]: eval-free:undecayed f except [
             return null
         ]
         if not empty? pending [

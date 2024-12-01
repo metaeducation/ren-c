@@ -111,7 +111,7 @@
         ; It is running in the same frame's memory, but...
         ; CAPTURED-FRAME is a FRAME! value that stowed outer's "phase"
 
-        return eval f
+        return eval-free f
     ]
 
     <success> = outer 1

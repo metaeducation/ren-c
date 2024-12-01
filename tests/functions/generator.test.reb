@@ -112,7 +112,7 @@
     /g: generator [
         let /yy: enclose yield/ func [f] [
             f.atom: meta (unmeta f.atom) * 10
-            return 1 + eval f
+            return 1 + eval-free f
         ]
         yy yy yy 10
     ]
@@ -136,7 +136,7 @@
         let /g: generator [
             /yield: enclose yield/ func [f [frame!] <local> temp] [
                 f.atom: either f.atom = ^null [^ done] [meta f.atom]
-                return unmeta eval f
+                return unmeta eval-free f
             ]
             eval overbind binding of $yield body
         ]

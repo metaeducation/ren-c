@@ -71,9 +71,8 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
             --do "write-stdout read system.ports.input"
         ]
     ] frame -> [
-        let out: frame.output
         eval frame
-        out
+        frame.output
     ], ok)
 
     ("Foo" = echoer "Foo" "")

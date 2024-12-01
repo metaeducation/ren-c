@@ -96,9 +96,8 @@ sys.util/rescue [
     export /split-path3: enclose (
         augment split-path/ [:file [any-word? any-tuple?]]
     ) f -> [
-        let file: f.file
         let results: meta:lite eval f  ; no [...]: in bootstrap load of file
-        set maybe file unmeta results.2
+        set maybe f.file unmeta results.2
         unmeta results.1
     ]
     export /split-path: func [] [
@@ -109,13 +108,13 @@ sys.util/rescue [
         augment lib.transcode/ [:next3 [word!] "set to transcoded value"]
     ) func [f] [
         if not f.next3 [
-            return eval f
+            return eval-free f
         ]
         f.next: okay
         let block: (  ; no SET-BLOCK in boot, no # in boot (space -> #)
             compose the () [(space) (join chain! [_ f.next3])]  ; synth optional
         )
-        return eval compose the () [(setify block) eval f]
+        return eval compose the () [(setify block) eval-free f]
     ]
 
     export /cscape-inside: inside/  ; modern string interpolation tool

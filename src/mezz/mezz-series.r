@@ -411,7 +411,7 @@ bind construct [
             ][
                 f.series: out: default [make block! 16]  ; no null return now
                 f.value  ; ELIDE leaves as result
-                elide eval f  ; would invalidate f.value (hence ELIDE)
+                elide eval-free f  ; would invalidate f.value (hence ELIDE)
             ]
         ]
     )[

@@ -33,11 +33,11 @@ write %hello-tcc.c trim:auto --{
 /c99-logged: enclose c99/ function [f [frame!]] [
     ; f.runtime: "..."  ; set this to override CONFIG_TCCDIR
 
-    fdebug: copy f
+    let fdebug: copy f
     fdebug.inspect: ok
-    eval fdebug  ; Run command once with /INSPECT (don't compile)
+    eval fdebug  ; Run command once with :INSPECT (don't compile)
 
-    return eval f  ; Run original command without /INSPECT
+    return eval f  ; Run original command without :INSPECT
 ]
 
 print "== ONE STEP COMPILATION (direct to executable) =="

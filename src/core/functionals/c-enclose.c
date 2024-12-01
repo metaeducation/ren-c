@@ -49,10 +49,10 @@
 //     Print me
 //     Print me again!
 //
-// (Note: Each time you EVAL a FRAME!, the original frame becomes inaccessible,
-// because its contents--the "varlist"--are stolen for function execution,
-// where the function freely modifies the argument data while it runs.  If
-// the frame did not expire, it would not be practically reusable.)
+// Note: Each time you EVAL a FRAME!, it makes a copy instead of using the
+// frame's variables for the execution to destructively use.  Hence you can
+// still access the fields of the input frame after the EVAL.  If you wish,
+// you can FREE the frame after the EVAL to reclaim memory faster than GC.
 //
 // ENCLOSE has the benefit of inheriting the interface of the function it
 // wraps, and should perform better than trying to accomplish similar
@@ -88,7 +88,7 @@ enum {
 //    Update CTX_ARCHETYPE_PHASE() to point to the `inner` that was enclosed.
 //
 // 3. EVAL does not allow you to invoke a FRAME! that is currently running.
-//    we have to clear the FRAME_HAS_BEEN_INVOKED_FLAG to allow EVLA INNER.
+//    we have to clear the FRAME_HAS_BEEN_INVOKED_FLAG to allow EVAL INNER.
 //
 // 4. The FRAME! we're making demands that the varlist be managed to put it
 //    into a cell.  It may already have been managed...but since varlists

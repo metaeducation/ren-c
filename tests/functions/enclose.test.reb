@@ -3,7 +3,7 @@
 (
     /e-multiply: enclose multiply/ lambda [f [frame!]] [
         let diff: abs (f.value1 - f.value2)
-        diff + eval f
+        diff + eval-free f
     ]
 
     73 = e-multiply 7 10
@@ -12,7 +12,7 @@
     /n-add: enclose add/ lambda [f [frame!]] [
         if 10 <> f.value1 [
             f.value1: 5
-            eval f
+            eval-free f
         ]
     ]
 
@@ -29,7 +29,7 @@
         return var: 1020
     ]
     /outer: enclose inner/ func [f] [
-        assert [1020 = eval f]
+        assert [1020 = eval-free f]
         return ~[]~
     ]
     all [
@@ -44,7 +44,7 @@
         return ~[]~
     ]
     /outer: enclose inner/ func [return: [quoted? quasiform!] f] [
-        return ^(eval f)  ; don't unquote it here
+        return ^(eval-free f)  ; don't unquote it here
     ]
     all [
         '~[]~ = outer
@@ -57,7 +57,7 @@
         return ~[]~
     ]
     /outer: enclose inner/ func [return: [~[]~ any-value?] f] [
-        return eval f  ; now try unquoting
+        return eval-free f  ; now try unquoting
     ]
     all [
         '~[]~ = ^(outer)
@@ -70,7 +70,7 @@
         func [in] [return pack [~, in + 1]]
     ) f -> wrap [
         x: f.in
-        [# o]: eval f
+        [# o]: eval-free f
         o * 10
     ]
     110 = wrapped 10
@@ -81,7 +81,7 @@
         func [in] [return pack [~, in + 1]]
     ) f -> [
         let x: f.in
-        eval f
+        eval-free f
         f.in
     ]
 

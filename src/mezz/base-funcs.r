@@ -309,7 +309,6 @@ bind construct [
     "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
     enclose match:meta/ lambda [f] [
-        let value: :f.value  ; EVAL makes frame arguments unavailable
         eval f else [  ; :META allows any value, must UNMETA
             ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;
@@ -317,10 +316,10 @@ bind construct [
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    (mold reify try type of :value) else ["VOID"]
+                    (mold reify try type of :f.value) else ["VOID"]
             ]
         ]
-        :value
+        :f.value
     ]
 )
 
@@ -332,9 +331,9 @@ bind construct [
     "Pass through value if it *doesn't* match test, else null"
 ](
     enclose match/ func [f] [
-        let value: :f.value  ; EVAL makes frame arguments unavailable
-        if f.meta [value: ^value]
-        eval f then [return null] else [return :value]
+        eval f then [return null]
+        if f.meta [return ^f.value]
+        return :f.value
     ]
 )
 
@@ -342,7 +341,6 @@ bind construct [
     "Pass through value if it *doesn't* match test, else fail"
 ](
     enclose match:meta/ lambda [f] [
-        let value: :f.value  ; EVAL makes frame arguments unavailable
         eval f then [
             ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;
@@ -350,10 +348,10 @@ bind construct [
             ;
             fail [
                 "PROHIBIT failed with argument of type"
-                    (mold reify try type of :value) else ["NULL"]
+                    (mold reify try type of :f.value) else ["NULL"]
             ]
         ]
-        :value
+        :f.value
     ]
 )
 
@@ -453,20 +451,20 @@ bind construct [
     specialize enclose for-skip/ func [f] [
         if blank? let word: f.word [return null]
         assert [the-word? f.word]
-        let saved: f.series: get word
+        f.series: get word
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
             let result
             trap [result: eval f] then e -> [
-                set word saved
+                set word f.series
                 fail e
             ]
-            set word saved
+            set word f.series
             :result
         ]
 
-        return (eval f, elide set word saved)
+        return (eval f, elide set word f.series)
     ][
         series: <overwritten>
     ]

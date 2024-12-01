@@ -13,7 +13,7 @@
 [
     (/replace: enclose lib.replace/ func [f [frame!] <local> head tail rule] [
         if not all [match [text! blob!] f.target, block? f.pattern] [
-            return eval f
+            return eval-free f
         ]
         rule: if action? :f.replacement '[
             head: <here>
