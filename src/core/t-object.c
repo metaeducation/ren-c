@@ -1352,7 +1352,7 @@ DECLARE_GENERICS(Frame)
             assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
             VarList* exemplar = ACT_EXEMPLAR(act);
             Value* param = Varlist_Slots_Head(exemplar);
-            assert(Is_Hole(param));
+            assert(Is_Parameter(param));
             Copy_Cell(OUT, param);
             QUOTE_BYTE(OUT) = NOQUOTE_1;  // no reason to give back antiform
             return OUT; }
