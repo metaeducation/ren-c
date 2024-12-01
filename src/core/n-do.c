@@ -603,27 +603,30 @@ DECLARE_NATIVE(redo)
     VarList* c = Cell_Varlist(restartee);
 
     Level* L = Level_Of_Varlist_If_Running(c);
-    if (L == NULL)
+    if (L == nullptr)
         return FAIL("EVAL starts a not-currently running FRAME! (not REDO)");
+
+    Action* redo_action;
 
     if (REF(sibling)) {  // ensure frame compatibility [1]
         Value* sibling = ARG(sibling);
+        redo_action = VAL_ACTION(sibling);
+
         if (
             ACT_KEYLIST(L->u.action.original)
-            != ACT_KEYLIST(VAL_ACTION(sibling))
+            != ACT_KEYLIST(redo_action)
         ){
             return FAIL(":OTHER passed to REDO has incompatible FRAME!");
         }
 
-        Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(sibling)));
+        Tweak_Level_Phase(L, ACT_IDENTITY(redo_action));
         Tweak_Level_Coupling(L, Cell_Coupling(sibling));
     }
     else {
+        redo_action = VAL_FRAME_PHASE(restartee);
         Tweak_Level_Phase(L, VAL_FRAME_PHASE(restartee));
         Tweak_Level_Coupling(L, Cell_Coupling(restartee));
     }
-
-    Action* redo_action = u_cast(Action*, Level_Phase(L));
 
     const Key* key_tail;
     const Key* key = ACT_KEYS(&key_tail, redo_action);

@@ -172,9 +172,9 @@
 ; the chained functions will get that result.  The string is translated to
 ; a tag and signals success.
 (
-    log: (
+    /log: (
         func ['x] []  comment "no-op"
-        elide (:dump)  comment "un-elide to get output"
+        elide dump/  comment "un-elide to get output"
     )
 
     /base: func [return: [text!] n delta :captured-frame [frame!]] [
@@ -187,12 +187,12 @@
         return "base got no frame"
     ]
 
-    c: cascade [
+    /c: cascade [
         adapt base/ [
            log ["C" n delta]
 
            captured-frame: binding of $n
-           redo:sibling $n :s
+           redo:sibling $n s/
 
            comment "fall through to base"
         ]
