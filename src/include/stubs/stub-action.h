@@ -178,12 +178,7 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 }
 
 
-#define Tweak_Cell_Action_Details                 Tweak_Cell_Node1
-#define Extract_Cell_Action_Partials_Or_Label(c)  cast(Flex*, Cell_Node2(c))
-
-INLINE void Tweak_Cell_Action_Partials_Or_Label(Cell* c, Option(const Flex*) f)
-  { Tweak_Cell_Node2(c, maybe f); }
-
+#define Tweak_Cell_Frame_Details  Tweak_Cell_Node1
 
 INLINE Phase* CTX_ARCHETYPE_PHASE(VarList* c);
 
@@ -252,12 +247,6 @@ INLINE Details* Phase_Details(Phase* a) {
 #define INODE_Exemplar_CAST     CTX
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
-
-INLINE Option(Array*) ACT_PARTIALS(Action* a) {
-    if (Is_Stub_Details(a))
-        return x_cast(Array*, Cell_Node2(ACT_ARCHETYPE(a)));
-    return nullptr;  // !!! how to preserve partials in exemplars?
-}
 
 INLINE VarList* ACT_EXEMPLAR(Action* a) {
     if (Is_Stub_Details(a))
@@ -447,11 +436,3 @@ INLINE bool Action_Is_Base_Of(Action* base, Action* derived) {
 
 #define ACT_HAS_RETURN(a) \
     Get_Flavor_Flag(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
-
-
-// The exemplar alone is sufficient information for the specialization frame.
-// Hence a compact "singular" array of 1 cell can be used for the details.
-//
-enum {
-    IDX_SPECIALIZER_MAX = 1  // has just Phase_Details[0], the ACT_ARCHETYPE()
-};

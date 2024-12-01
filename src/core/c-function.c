@@ -25,41 +25,31 @@
 #include "sys-core.h"
 
 
-struct Params_Of_State {
-    bool dummy;  // used to pass in "just words" or decorated symbols
-};
-
-// Reconstitute parameter back into a full value, e.g. REB_P_REFINEMENT
-// becomes `/spelling`.
-//
-// !!! Review why caller isn't filtering locals.
-//
-static bool Params_Of_Hook(
-    const Key* key,
-    const Param* param,
-    Flags flags,
-    void *opaque
-){
-    struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
-    UNUSED(s);
-    UNUSED(param);
-    UNUSED(flags);
-
-    Init_Word(PUSH(), Key_Symbol(key));
-    return true;
-}
-
 //
 //  Make_Action_Words_Array: C
 //
 // Returns array of function words, unbound.
 //
+// 1. This used to go through multiple passes, in order to put the refinement
+//    words after all the non-refinement ones.  It's not clear exactly what
+//    the purpose of this routine is any longer, but it was being used by
+//    UPARSE to detect if a parser had a `negated` parameter, which was
+//    a refinement.  Try doing this unsorted for now, as a bare minimum for
+//    making that work.
+//
 Source* Make_Action_Words_Array(Action* act)
 {
-    struct Params_Of_State s;
-
     StackIndex base = TOP_INDEX;
-    For_Each_Unspecialized_Param(act, &Params_Of_Hook, &s);
+
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, act);
+    Param* param = ACT_PARAMS_HEAD(act);
+    for (; key != key_tail; ++key, ++param) {
+        if (Is_Specialized(param))
+            continue;
+        possibly(Get_Parameter_Flag(param, REFINEMENT));  // sorted? [1]
+        Init_Word(PUSH(), *key);
+    }
     return Pop_Source_From_Stack(base);
 }
 
@@ -699,7 +689,6 @@ Array* Make_Paramlist_Managed_May_Fail(
 //
 Phase* Make_Phase(
     Array* paramlist,
-    Option(Array*) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of Phase_Details (including archetype)
 ){
@@ -747,9 +736,9 @@ Phase* Make_Phase(
         CELL_MASK_FRAME
             | CELL_FLAG_PROTECTED  // archetype cells should not be mutated
     );
-    Tweak_Cell_Action_Details(archetype, details);
+    Tweak_Cell_Frame_Details(archetype, details);
     Tweak_Cell_Coupling(archetype, NONMETHOD);
-    Tweak_Cell_Action_Partials_Or_Label(archetype, partials);
+    Tweak_Cell_Frame_Phase_Or_Label(archetype, ANONYMOUS);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
@@ -831,8 +820,10 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
     // !!! Should the source inject messages like {This is a hijacking} at
     // the top of the returned body?
     //
-    if (Phase_Dispatcher(phase) == &Hijacker_Dispatcher)
-        return Get_Maybe_Fake_Action_Body(out, ACT_ARCHETYPE(phase));
+    if (Phase_Dispatcher(phase) == &Hijacker_Dispatcher) {
+        Get_Maybe_Fake_Action_Body(out, ACT_ARCHETYPE(phase));
+        return;
+    }
 
     // !!! Should the coupling make a difference in the returned body?  It is
     // exposed programmatically via COUPLING OF.

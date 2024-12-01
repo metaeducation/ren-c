@@ -162,7 +162,6 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 #define Is_Stub_Varlist(f)          (Stub_Flavor(f) == FLAVOR_VARLIST)
 #define Is_Stub_Pairlist(f)         (Stub_Flavor(f) == FLAVOR_PAIRLIST)
 #define Is_Stub_Details(f)          (Stub_Flavor(f) == FLAVOR_DETAILS)
-#define Is_Stub_Partials(f)         (Stub_Flavor(f) == FLAVOR_PARTIALS)
 
 
 //=//// STUB FLAVOR-SPECIFIC FLAGS ////////////////////////////////////////=//

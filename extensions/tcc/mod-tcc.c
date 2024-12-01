@@ -304,7 +304,6 @@ DECLARE_NATIVE(make_native)
     );
     Phase* native = Make_Phase(
         paramlist,
-        nullptr,  // no partials
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
         IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
     );

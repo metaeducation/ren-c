@@ -144,7 +144,6 @@ DECLARE_NATIVE(adapt)
 
     Phase* adaptation = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
-        ACT_PARTIALS(VAL_ACTION(adaptee)),
         &Adapter_Dispatcher,
         IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]
     );

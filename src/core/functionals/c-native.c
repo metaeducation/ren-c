@@ -89,7 +89,6 @@ Phase* Make_Native(
 
     Phase* native = Make_Phase(
         paramlist,
-        nullptr,  // no partials
         dispatcher,  // dispatcher is unique to this native
         IDX_NATIVE_MAX  // details array capacity
     );
@@ -112,7 +111,6 @@ Phase* Make_Native(
         Phase* native_combinator = native;
         native = Make_Phase(
             ACT_PARAMLIST(native_combinator),
-            nullptr,  // no partials
             &Combinator_Dispatcher,
             2  // IDX_COMBINATOR_MAX  // details array capacity
         );

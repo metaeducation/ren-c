@@ -234,8 +234,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         Phase* a = cast(Phase*, VAL_ACTION(v));
         assert(Is_Node_Marked(a));
-        if (Extract_Cell_Action_Partials_Or_Label(v))
-            assert(Is_Node_Marked(Extract_Cell_Action_Partials_Or_Label(v)));
+        if (Extract_Cell_Frame_Phase_Or_Label(v))
+            assert(Is_Node_Marked(Extract_Cell_Frame_Phase_Or_Label(v)));
 
         Details* details = Phase_Details(a);
 

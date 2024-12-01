@@ -241,7 +241,6 @@ Phase* Make_Interpreted_Action_May_Fail(
 
     Phase* a = Make_Phase(
         paramlist,
-        nullptr,  // no partials
         dispatcher,
         details_capacity  // we fill in details[0], caller fills any extra
     );

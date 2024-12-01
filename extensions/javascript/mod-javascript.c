@@ -860,7 +860,6 @@ DECLARE_NATIVE(js_native)
 
     Phase* native = Make_Phase(
         paramlist,
-        nullptr,  // no partials
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
     );

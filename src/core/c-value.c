@@ -214,10 +214,6 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Hitch", file, line);
         break;
 
-      case FLAVOR_PARTIALS:
-        Probe_Print_Helper(p, expr, "Partials", file, line);
-        break;
-
       case FLAVOR_LIBRARY:
         Probe_Print_Helper(p, expr, "Library", file, line);
         break;

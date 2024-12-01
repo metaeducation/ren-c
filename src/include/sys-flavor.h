@@ -67,12 +67,6 @@ enum StubFlavorEnum {
     //
     FLAVOR_HITCH,
 
-    // To make it possible to reuse exemplars and paramlists in action
-    // variations that have different partial specializations, a splice of
-    // partial refinements sit between the action cell and its "speciality".
-    //
-    FLAVOR_PARTIALS,
-
     FLAVOR_LIBRARY,
     FLAVOR_HANDLE,
 

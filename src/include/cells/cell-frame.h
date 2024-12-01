@@ -78,20 +78,16 @@ INLINE Action* VAL_ACTION(const Cell* v) {
 // contain a label of the ANY-WORD? it was taken from.  If it is an array
 // node, it is presumed an archetype and has no label.
 //
-// !!! Theoretically, longer forms like `.not.equal?` for PREDICATE! could
-// use an array node here.  But since CHAINs store ACTION!s that can cache
-// the words, you get the currently executing label instead...which may
-// actually make more sense.
+// !!! Theoretically, longer forms could be used here as labels...e.g. an
+// entire array or pairing backing a sequence.  However, that would get
+// tough if the sequence contained GROUP!s which were evaluated, and then
+// you'd be storing something that wouldn't be stored otherwise, so it would
+// stop being "cheap".
 
-INLINE void INIT_VAL_ACTION_LABEL(
-    Cell* v,
-    Option(const Symbol*) label
-){
-    Assert_Cell_Writable(v);  // archetype R/O
-    if (label)
-        Tweak_Cell_Action_Partials_Or_Label(v, unwrap label);
-    else
-        Tweak_Cell_Action_Partials_Or_Label(v, ANONYMOUS);
+INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
+    assert(Cell_Heart(c) == REB_FRAME);
+    Assert_Cell_Writable(c);  // archetype R/O
+    Tweak_Cell_Frame_Phase_Or_Label(c, label);
 }
 
 
@@ -112,8 +108,8 @@ INLINE Element* Init_Frame_Details_Core(
     Force_Flex_Managed(a);
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
-    Tweak_Cell_Action_Details(out, a);
-    INIT_VAL_ACTION_LABEL(out, label);
+    Tweak_Cell_Frame_Details(out, a);
+    Tweak_Cell_Frame_Phase_Or_Label(out, label);
     Tweak_Cell_Coupling(out, coupling);
 
     return out;

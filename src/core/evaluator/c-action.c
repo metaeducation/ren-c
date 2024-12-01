@@ -1076,14 +1076,6 @@ void Push_Action(
     #endif
   #endif
 
-    Array* partials = maybe ACT_PARTIALS(act);
-    if (partials) {
-        const Element* word_tail = Array_Tail(partials);
-        const Element* word = Array_Head(partials);
-        for (; word != word_tail; ++word)
-            Copy_Cell(PUSH(), word);
-    }
-
     assert(Not_Node_Managed(L->varlist));
 
     ORIGINAL = act;

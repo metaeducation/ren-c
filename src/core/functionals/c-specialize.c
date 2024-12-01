@@ -78,18 +78,6 @@ VarList* Make_Varlist_For_Action_Push_Partials(
         Cell_Coupling(action)
     );
 
-    // If there is a PARTIALS list, then push its refinements.
-    //
-    Array* partials = maybe ACT_PARTIALS(act);
-    if (partials) {
-        const Element* word_tail = Array_Tail(partials);
-        const Element* word = Array_Head(partials);
-        for (; word != word_tail; ++word) {
-            Copy_Cell(PUSH(), word);
-            assert(Is_Pushed_Refinement(TOP));
-        }
-    }
-
     const Key* tail;
     const Key* key = ACT_KEYS(&tail, act);
     const Param* param = ACT_PARAMS_HEAD(act);
@@ -323,8 +311,7 @@ bool Specialize_Action_Throws(
         // case that duplicate refinements or non-existent ones create waste,
         // but since we error and throw those arrays away it doesn't matter.
         //
-        partials = Make_Array_Core(
-            FLEX_MASK_PARTIALS,  // don't manage, yet... may free
+        partials = Make_Source(
             TOP_INDEX - ordered_stackindex  // maximum partial count possible
         );
 
@@ -360,6 +347,7 @@ bool Specialize_Action_Throws(
         }
         else {
             Manage_Flex(partials);
+            fail ("Refinement Promotion is being rethought");
         }
     }
 
@@ -410,197 +398,30 @@ DECLARE_NATIVE(specialize)
 
 
 //
-//  For_Each_Unspecialized_Param: C
-//
-// We have to take into account specialization of refinements in order to know
-// the correct order.  If someone has:
-//
-//     /foo: func [a [integer!] :b [integer!] :c [integer!]] [...]
-//
-// They can partially specialize this as foo:c:b/ - this makes it seem to the
-// caller a function originally written with spec:
-//
-//     [a [integer!] c [integer!] b [integer!]]
-//
-// But the frame order doesn't change; the information for knowing the order
-// is encoded in a "partials" array.  See remarks on ACT_PARTIALS().
-//
-// The true order could be cached when the function is generated, but to keep
-// things "simple" we capture the behavior in this routine.
-//
-// Unspecialized parameters are visited in two passes: unsorted, then sorted.
-//
-void For_Each_Unspecialized_Param(
-    Action* act,
-    PARAM_HOOK hook,
-    void *opaque
-){
-    Option(Array*) partials = ACT_PARTIALS(act);
-
-    // Walking the parameters in a potentially "unsorted" fashion.  Offer them
-    // to the passed-in hook in case it has a use for this first pass (e.g.
-    // just counting, to make an array big enough to hold what's going to be
-    // given to it in the second pass.
-    //
-  blockscope {
-    const Key* tail;
-    const Key* key = ACT_KEYS(&tail, act);
-    const Param* param = ACT_PARAMS_HEAD(act);
-
-    // Loop through and pass just the normal args.
-    //
-    for (; key != tail; ++key, ++param) {
-        if (Is_Specialized(param))
-            continue;
-
-        if (Get_Parameter_Flag(param, REFINEMENT))
-            continue;
-
-        Flags flags = 0;
-
-        if (partials) {  // even normal parameters can appear in partials
-            const Cell* partial_tail = Array_Tail(unwrap partials);
-            const Cell* partial = Array_Head(unwrap partials);
-            for (; partial != partial_tail; ++partial) {
-                if (Are_Synonyms(
-                    Cell_Word_Symbol(partial),
-                    Key_Symbol(key)
-                )){
-                    goto skip_in_first_pass;
-                }
-            }
-        }
-
-        if (not hook(key, param, flags, opaque))
-            return;
-
-      skip_in_first_pass: {}
-    }
-  }
-
-    // Now jump around and take care of the partial refinements.
-
-    if (partials) {
-        assert(Array_Len(unwrap partials) > 0);  // no partials means no array
-
-        // the highest priority are at *top* of stack, so we have to go
-        // "downward" in the push order...e.g. the reverse of the array.
-
-        Cell* partial = Array_Tail(unwrap partials);
-        Cell* head = Array_Head(unwrap partials);
-        for (; partial-- != head; ) {
-            const Key* key = ACT_KEY(act, VAL_WORD_INDEX(partial));
-            const Param* param = ACT_PARAM(act, VAL_WORD_INDEX(partial));
-
-            if (not hook(key, param, PHF_UNREFINED, opaque))
-                return;
-        }
-    }
-
-    // Finally, output any fully unspecialized refinements
-
-  blockscope {
-    const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, act);
-    const Param* param = ACT_PARAMS_HEAD(act);
-
-    for (; key != key_tail; ++key, ++param) {
-        if (Is_Specialized(param))
-            continue;
-
-        if (Not_Parameter_Flag(param, REFINEMENT))
-            continue;
-
-        if (partials) {
-            const Cell* partial_tail = Array_Tail(unwrap partials);
-            const Cell* partial = Array_Head(unwrap partials);
-            for (; partial != partial_tail; ++partial) {
-                if (Are_Synonyms(
-                    Cell_Word_Symbol(partial),
-                    Key_Symbol(key)
-                )){
-                    goto continue_unspecialized_loop;
-                }
-            }
-        }
-
-        if (not hook(key, param, 0, opaque))
-            return;
-
-      continue_unspecialized_loop:
-        NOOP;
-    }
-  }
-}
-
-
-struct Find_Param_State {
-    const Key* key;
-    const Param* param;
-};
-
-static bool First_Param_Hook(
-    const Key* key,
-    const Param* param,
-    Flags flags,
-    void *opaque
-){
-    struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);
-    assert(not s->key);  // should stop enumerating if found
-
-    if (
-        not (flags & PHF_UNREFINED)
-        and Get_Parameter_Flag(param, REFINEMENT)
-    ){
-        return false;  // we know WORD!-based invocations will be 0 arity
-    }
-
-    s->key = key;
-    s->param = param;
-    return false;  // found first unspecialized, no need to look more
-}
-
-static bool Last_Param_Hook(
-    const Key* key,
-    const Param* param,
-    Flags flags,
-    void *opaque
-){
-    struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);
-
-    if (
-        not (flags & PHF_UNREFINED)
-        and Get_Parameter_Flag(param, REFINEMENT)
-    ){
-        return false;  // we know WORD!-based invocations will be 0 arity
-    }
-
-    s->key = key;
-    s->param = param;
-    return true;  // keep looking and be left with the last
-}
-
-//
 //  First_Unspecialized_Param: C
 //
-// This can be somewhat complex in the worst case:
+// Note that refinement promotion can make this a bit strange:
 //
 //     >> /foo: func [:a [block!] :b [block!] :c [block!] :d [block!]] [...]
 //     >> foo-d: foo:d/
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //
-const Param* First_Unspecialized_Param(const Key* * key, Action* act)
+const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Action* act)
 {
-    struct Find_Param_State s;
-    s.key = nullptr;
-    s.param = nullptr;
-
-    For_Each_Unspecialized_Param(act, &First_Param_Hook, &s);
-
-    if (key)
-        *key = s.key;
-    return s.param;  // may be nullptr
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, act);
+    Param* param = ACT_PARAMS_HEAD(act);
+    for (; key != key_tail; ++key, ++param) {
+        if (Is_Specialized(param))
+            continue;
+        if (Get_Parameter_Flag(param, REFINEMENT))
+            continue;
+        if (key_out)
+            *key_out = key;
+        return param;
+    }
+    return nullptr;
 }
 
 
@@ -632,17 +453,24 @@ Option(ParamClass) Get_First_Param_Literal_Class(Action* action) {
 //
 // See notes on First_Unspecialized_Param() regarding complexity
 //
-const Param* Last_Unspecialized_Param(const Key* * key, Action* act)
+const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Action* act)
 {
-    struct Find_Param_State s;
-    s.key = nullptr;
-    s.param = nullptr;
+    const Key* key;
+    const Key* key_head = ACT_KEYS(&key, act);
+    Param* param = ACT_PARAMS_HEAD(act) + (key - key_head);
 
-    For_Each_Unspecialized_Param(act, &Last_Param_Hook, &s);
-
-    if (key)
-        *key = s.key;
-    return s.param;  // may be nullptr
+    while (key != key_head) {
+        --key;
+        --param;
+        if (Is_Specialized(param))
+            continue;
+        if (Get_Parameter_Flag(param, REFINEMENT))
+            continue;
+        if (key_out)
+            *key_out = key;
+        return param;
+    }
+    return nullptr;
 }
 
 //
@@ -707,7 +535,6 @@ Phase* Alloc_Action_From_Exemplar(
 
     Phase* action = Make_Phase(
         Varlist_Array(exemplar),
-        nullptr,  // no partials
         dispatcher,
         details_capacity
     );

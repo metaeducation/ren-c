@@ -195,7 +195,6 @@ DECLARE_NATIVE(enclose)
     //
     Phase* enclosure = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner
-        ACT_PARTIALS(VAL_ACTION(inner)),
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );

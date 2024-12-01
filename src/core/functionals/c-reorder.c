@@ -134,8 +134,6 @@ DECLARE_NATIVE(reorder)
     //
     Option(Error*) error = nullptr;
 
-    StackIndex base = TOP_INDEX;
-
     // We proceed through the list, and remove the binder indices as we go.
     // This lets us check for double uses or use of words that aren't in the
     // spec, and a final pass can check to make sure all mandatory parameters
@@ -229,14 +227,8 @@ DECLARE_NATIVE(reorder)
     if (error)  // *now* it's safe to fail...
         return FAIL(unwrap error);
 
-    Array* partials = Pop_Stack_Values_Core(
-        NODE_FLAG_MANAGED | FLEX_MASK_PARTIALS,
-        base
-    );
-
     Phase* reordered = Make_Phase(
         Varlist_Array(exemplar),
-        partials,
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX
     );
@@ -244,5 +236,6 @@ DECLARE_NATIVE(reorder)
     Details* details = Phase_Details(reordered);
     Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(original));
 
+    Drop_Data_Stack_To(STACK_BASE);  // !!! None of this works ATM.
     return Init_Action(OUT, reordered, label, UNBOUND);
 }

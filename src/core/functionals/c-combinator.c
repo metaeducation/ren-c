@@ -241,7 +241,6 @@ DECLARE_NATIVE(combinator)
 
     Phase* combinator = Make_Phase(
         paramlist,
-        nullptr,  // no partials
         &Combinator_Dispatcher,
         IDX_COMBINATOR_MAX  // details array capacity
     );
@@ -590,23 +589,18 @@ DECLARE_NATIVE(further_combinator)
 }}
 
 
-struct Combinator_Param_State {
+struct CombinatorParamStateStruct {
     VarList* ctx;
     Level* level_;
     Value* rule_end;
 };
+typedef struct CombinatorParamStateStruct CombinatorParamState;
 
 static bool Combinator_Param_Hook(
     const Key* key,
     const Param* param,
-    Flags flags,
-    void *opaque
+    CombinatorParamState* s
 ){
-    UNUSED(flags);
-
-    struct Combinator_Param_State *s
-        = cast(struct Combinator_Param_State*, opaque);
-
     Level* level_ = s->level_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
@@ -781,7 +775,7 @@ DECLARE_NATIVE(combinatorize)
     if (REF(path))
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
-    struct Combinator_Param_State s;
+    CombinatorParamState s;
     s.ctx = Make_Varlist_For_Action(ARG(c), TOP_INDEX, nullptr);
     s.level_ = level_;
     s.rule_end = nullptr;  // argument found by param hook
@@ -790,7 +784,15 @@ DECLARE_NATIVE(combinatorize)
 
     USED(REF(state));
     USED(REF(value));
-    For_Each_Unspecialized_Param(act, &Combinator_Param_Hook, &s);
+
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, act);
+    Param* param = ACT_PARAMS_HEAD(act);
+    for (; key != key_tail; ++key, ++param) {
+        if (Is_Specialized(param))
+            continue;
+        Combinator_Param_Hook(key, param, &s);
+    }
 
     Drop_Lifeguard(s.ctx);
 

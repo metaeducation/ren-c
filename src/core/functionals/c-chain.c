@@ -268,7 +268,6 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
     //
     Phase* cascade = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
-        ACT_PARTIALS(VAL_ACTION(first)),
         &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity
     );

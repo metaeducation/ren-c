@@ -1213,7 +1213,7 @@ Bounce Stepper_Executor(Level* L)
 
             if (Is_Action(OUT)) {  // !!! Review: When to update labels?
                 if (STATE == ST_STEPPER_SET_WORD)
-                    INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(CURRENT));
+                    Update_Frame_Cell_Label(OUT, Cell_Word_Symbol(CURRENT));
             }
             else {  // assignments of /foo: or /obj.field: require action
                 if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_SET_ACTION))

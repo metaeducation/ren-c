@@ -3260,7 +3260,6 @@ RebolValue* API_rebFunc(
 
     Phase* a = Make_Phase(
         paramlist,
-        nullptr,  // no partials
         &Api_Function_Dispatcher,
         IDX_API_ACTION_MAX
     );

@@ -142,12 +142,6 @@ typedef enum {
         /* LINK is dispatcher, a c function pointer, should not mark */ \
         | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* exemplar */ )
 
-#define FLEX_MASK_PARTIALS \
-    (NODE_FLAG_NODE \
-        | FLAG_FLAVOR(PARTIALS) \
-        /* LINK is unused at this time */ \
-        /* MISC is unused at this time (could be paramlist cache?) */)
-
 
 //=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
 

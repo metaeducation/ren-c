@@ -70,12 +70,10 @@ INLINE bool IS_FRAME_PHASED(const Cell* v) {
     return f and not Is_Stub_Symbol(f);
 }
 
-// 1. Extract_Cell_Action_Partials_Or_Label as well
-//
-// 2. as a phase (or partials), so no label (maybe findable if running)
+// 1. Has a phase, so no label (maybe findable if running)
 //
 INLINE Option(const Symbol*) VAL_FRAME_LABEL(const Cell* v) {
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);  // [1]
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
     if (f and Is_Stub_Symbol(f))  // label in value
         return cast(Symbol*, f);
     return ANONYMOUS;  // [2]

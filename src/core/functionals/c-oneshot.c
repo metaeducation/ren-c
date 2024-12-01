@@ -126,7 +126,6 @@ DECLARE_NATIVE(n_shot)
 
     Phase* n_shot = Make_Phase(
         ACT_PARAMLIST(VAL_ACTION(LIB(DO_BRANCH))),
-        nullptr,  // no partials
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
         IDX_ONESHOT_MAX  // details array capacity
     );

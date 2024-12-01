@@ -108,7 +108,6 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
 
     Phase* typechecker = Make_Phase(
         paramlist,
-        nullptr,  // no partials
         &Decider_Intrinsic_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
