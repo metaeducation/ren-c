@@ -761,14 +761,18 @@ INLINE void Copy_Cell_Header(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     Assert_Cell_Readable(v);
 
+  #if DEBUG_TRACK_EXTEND_CELLS
+    assert(out->tick == TICK);  // should TRACK(out) before call, not after
+  #endif
+
     Freshen_Cell_Header(out);
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & CELL_MASK_COPY));
 
-  #if DEBUG_TRACK_EXTEND_CELLS
+  #if DEBUG_TRACK_COPY_PRESERVES
     out->file = v->file;
     out->line = v->line;
-    out->tick = TICK;
+    out->tick = v->tick;
     out->touch = v->touch;  // see also arbitrary debug use via Touch_Cell()
   #endif
 }
@@ -781,6 +785,10 @@ INLINE Cell* Copy_Cell_Untracked(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     Assert_Cell_Readable(v);
 
+  #if DEBUG_TRACK_EXTEND_CELLS
+    assert(out->tick == TICK);  // should TRACK(out) before call, not after
+  #endif
+
     Freshen_Cell_Header(out);  // optimizer elides this after erasure [1]
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & copy_mask));
@@ -789,19 +797,19 @@ INLINE Cell* Copy_Cell_Untracked(
 
     out->extra = v->extra;  // binding or inert bits
 
-  /*#if DEBUG_TRACK_EXTEND_CELLS  // if you want the copy origin...
+  #if DEBUG_TRACK_COPY_PRESERVES
     out->file = v->file;
     out->line = v->line;
     out->tick = v->tick;
     out->touch = v->touch;
-  #endif*/
+  #endif
 
     return out;
 }
 
 #if DONT_CHECK_CELL_SUBCLASSES
     #define Copy_Cell(out,v) \
-        TRACK(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY))
+        Copy_Cell_Untracked(TRACK(out), (v), CELL_MASK_COPY)
 #else
     INLINE Element* Copy_Cell_Overload(Init(Element) out, const Element* v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
@@ -826,11 +834,11 @@ INLINE Cell* Copy_Cell_Untracked(
     }
 
     #define Copy_Cell(out,v) \
-        TRACK(Copy_Cell_Overload((out), (v)))
+        Copy_Cell_Overload(TRACK(out), (v))
 #endif
 
 #define Copy_Cell_Core(out,v,copy_mask) \
-    Copy_Cell_Untracked((out), (v), (copy_mask))
+    Copy_Cell_Untracked(TRACK(out), (v), (copy_mask))
 
 #define Copy_Meta_Cell(out,v) \
     cast(Element*, Meta_Quotify(Copy_Cell(u_cast(Atom*, (out)), (v))))
@@ -876,18 +884,12 @@ INLINE Cell* Move_Cell_Untracked(
     Corrupt_Pointer_If_Debug(c->payload.Any.first.corrupt);
     Corrupt_Pointer_If_Debug(c->payload.Any.second.corrupt);
 
-  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
-    c->file = out->file;
-    c->line = out->line;
-    c->tick = TICK;
-  #endif
-
     return out;
 }
 
 #if DONT_CHECK_CELL_SUBCLASSES
     #define Move_Cell(out,v) \
-        TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
+        Move_Cell_Untracked(TRACK(out), (v), CELL_MASK_COPY)
 #else
     INLINE Element* Move_Cell_Overload(Init(Element) out, Element* v) {
         Move_Cell_Untracked(out, v, CELL_MASK_COPY);
@@ -907,11 +909,11 @@ INLINE Cell* Move_Cell_Untracked(
     }
 
     #define Move_Cell(out,v) \
-        TRACK(Move_Cell_Overload((out), (v)))
+        Move_Cell_Overload(TRACK(out), (v))
 #endif
 
 #define Move_Cell_Core(out,v,cell_mask) \
-    TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))
+    Move_Cell_Untracked(TRACK(out), (v), (cell_mask))
 
 #define Move_Meta_Cell(out,v) \
     cast(Element*, Meta_Quotify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
@@ -929,20 +931,15 @@ INLINE Atom* Move_Atom_Untracked(
     Corrupt_Pointer_If_Debug(a->payload.Any.first.corrupt);
     Corrupt_Pointer_If_Debug(a->payload.Any.second.corrupt);
 
-  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
-    a->file = out->file;
-    a->line = out->line;
-    a->tick = TICK;
-  #endif
-
     return out;
 }
 
 #define Move_Atom(out,a) \
-    TRACK(Move_Atom_Untracked((out), (a), CELL_MASK_COPY))
+    Move_Atom_Untracked(TRACK(out), (a), CELL_MASK_COPY)
 
 #define Move_Meta_Atom(out,a) \
-    cast(Element*, Meta_Quotify(Move_Atom_Untracked((out), (a), CELL_MASK_COPY)))
+    cast(Element*, Meta_Quotify( \
+        Move_Atom_Untracked(TRACK(out), (a), CELL_MASK_COPY)))
 
 
 //=//// CELL CONST INHERITANCE ////////////////////////////////////////////=//

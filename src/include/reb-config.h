@@ -849,9 +849,21 @@ Special internal defines used by RT, not Host-Kit developers:
   #endif
 #endif
 
+
 #if !defined(DEBUG_TRACK_EXTEND_CELLS)
     #define DEBUG_TRACK_EXTEND_CELLS 0
 #endif
+
+#if !defined(DEBUG_TRACK_COPY_PRESERVES)
+    #define DEBUG_TRACK_COPY_PRESERVES 0
+#endif
+
+#if DEBUG_TRACK_COPY_PRESERVES
+    #if (! DEBUG_TRACK_EXTEND_CELLS)
+        #error "DEBUG_TRACK_COPY_PRESERVES requires DEBUG_TRACK_EXTEND_CELLS"
+    #endif
+#endif
+
 
 #if !defined(UNUSUAL_CELL_SIZE)  // sizeof(Cell)*2 may be > sizeof(Stub)
     #define UNUSUAL_CELL_SIZE DEBUG_TRACK_EXTEND_CELLS

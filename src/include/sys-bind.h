@@ -133,7 +133,7 @@ INLINE Element* Derelativize_Untracked(
 
 
 #define Derelativize(dest,v,context) \
-    TRACK(Derelativize_Untracked((dest), (v), (context)))
+    Derelativize_Untracked(TRACK(dest), (v), (context))
 
 
 // The concept behind `Cell` usage is that it represents a view of a cell
