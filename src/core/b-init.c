@@ -826,12 +826,11 @@ void Startup_Core(void)
 
   blockscope {
     Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), g_lib_module);
-    bool threw = rebRunThrows(
-        Get_System(SYS_CONTEXTS, CTX_USER),  // where to write antiform tag
-        "~<SYS.CONTEXTS.USER not available: STARTUP-MEZZ not finished yet>~"
+    RebolValue* tripwire = rebValue(
+        "~<SYS.CONTEXTS.USER not available: Mezzanine Startup not finished>~"
     );
-    assert(not threw);
-    UNUSED(threw);
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_USER), tripwire);
+    rebRelease(tripwire);
   }
 
   //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED ///////=//
