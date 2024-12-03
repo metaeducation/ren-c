@@ -192,7 +192,7 @@ typedef Context Use;
 // and is not part of the calling contract.
 //
 #define VARLIST_FLAG_FRAME_HAS_BEEN_INVOKED \
-    STUB_SUBCLASS_FLAG_24
+    STUB_SUBCLASS_FLAG_25
 
 
 //=//// VARLIST_FLAG_PARAMLIST_LITERAL_FIRST ///////////////////////////////=//
@@ -204,13 +204,13 @@ typedef Context Use;
 // walk the parameter list every time that function is called.
 //
 #define VARLIST_FLAG_PARAMLIST_LITERAL_FIRST \
-    STUB_SUBCLASS_FLAG_25
+    STUB_SUBCLASS_FLAG_26
 
 
 //=//// VARLIST_FLAG_IMMUTABLE ////////////////////////////////////////////=//
 //
 #define VARLIST_FLAG_IMMUTABLE \
-    STUB_SUBCLASS_FLAG_26
+    STUB_SUBCLASS_FLAG_27
 
 
 // These are the flags which are scanned for and set during Make_Phase
