@@ -537,12 +537,12 @@ struct cast_helper<V*,VarList*> {  // [2]
             return nullptr;
 
         if ((reinterpret_cast<Stub*>(p)->leader.bits & (
-            FLEX_MASK_VARLIST
+            FLEX_MASK_LEVEL_VARLIST  // MISC_NODE_NEEDS_MARK
                 | NODE_FLAG_UNREADABLE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         )) !=
-            FLEX_MASK_VARLIST
+            FLEX_MASK_LEVEL_VARLIST
         ){
             panic (p);
         }
@@ -607,13 +607,13 @@ struct cast_helper<V*,Action*> {  // [2]
         }
         else {
             if ((stub->leader.bits & ((
-                FLEX_MASK_VARLIST
+                FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NODE_NEEDS_MARK
                     | NODE_FLAG_UNREADABLE
                     | NODE_FLAG_CELL
                     | FLAG_FLAVOR_BYTE(255)
                 )
             )) !=
-                FLEX_MASK_VARLIST
+                FLEX_MASK_LEVEL_VARLIST
             ){
                 panic (p);
             }

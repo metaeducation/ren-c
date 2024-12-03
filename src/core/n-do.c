@@ -521,7 +521,9 @@ DECLARE_NATIVE(eval_free)
 
     L->varlist = Varlist_Array(varlist);
     L->rootvar = Rootvar_Of_Varlist(varlist);
-    Tweak_Varlist_Keysource(varlist, L);
+    assert(Get_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
+    Clear_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
+    MISC(RunLevel, varlist) = L;
 
     Phase* phase = Level_Phase(L);
     assert(phase == CTX_ARCHETYPE_PHASE(varlist));

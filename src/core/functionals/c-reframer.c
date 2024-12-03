@@ -210,14 +210,13 @@ bool Init_Invokable_From_Feed_Throws(
     // managed, but Push_Action() does not use ordinary series creation to
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
-    Action* act = VAL_ACTION(action);
     assert(Level_Coupling(L) == Cell_Coupling(action));
 
     assert(Not_Node_Managed(L->varlist));
 
     Array* varlist = L->varlist;  // !!! still is fulfilling?
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
-    Tweak_Bonus_Keysource(varlist, ACT_KEYLIST(act));  // disconnect from f
+    MISC(RunLevel, varlist) = nullptr;  // disconnect from f
     Drop_Level(L);
     Drop_Lifeguard(action);
 

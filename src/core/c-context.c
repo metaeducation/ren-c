@@ -37,14 +37,6 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 {
     assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make varlist
 
-    KeyList* keylist = Make_Flex(
-        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,  // always shareable
-        KeyList,
-        capacity  // no terminator
-    );
-    LINK(Ancestor, keylist) = keylist;  // default to keylist itself
-    assert(Flex_Used(keylist) == 0);
-
     Array* a = Make_Array_Core(
         FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags,  // e.g. NODE_FLAG_MANAGED
@@ -52,10 +44,25 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     );
     MISC(VarlistAdjunct, a) = nullptr;
     node_LINK(NextVirtual, a) = nullptr;
-    Tweak_Keylist_Of_Varlist_Unique(a, keylist);  // hasn't been shared yet...
 
     Alloc_Tail_Array(a);  // allocate rootvar
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
+
+    if (heart == REB_MODULE) {
+        assert(capacity == 0);
+        BONUS(KeyList, a) = nullptr;
+    }
+    else {
+        KeyList* keylist = Make_Flex(
+            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,  // always shareable
+            KeyList,
+            capacity  // no terminator
+        );
+        LINK(Ancestor, keylist) = keylist;  // default to keylist itself
+        assert(Flex_Used(keylist) == 0);
+
+        Tweak_Keylist_Of_Varlist_Unique(a, keylist);  // not shared yet...
+    }
 
     return cast(VarList*, a);  // varlist pointer is context handle
 }

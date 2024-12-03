@@ -164,7 +164,7 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 //
 static void Startup_Lib(void)
 {
-    VarList* lib = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
+    VarList* lib = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
     ensure(nullptr, g_lib_module) = Alloc_Element();
     Init_Context_Cell(g_lib_module, REB_MODULE, lib);
     ensure(nullptr, g_lib_context) = cast(SeaOfVars*, lib);
@@ -883,7 +883,7 @@ void Startup_Core(void)
     //  being confused with "the system object", which is a different thing.
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
-    VarList* util = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
+    VarList* util = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
     node_LINK(NextVirtual, util) = g_lib_context;
     ensure(nullptr, g_sys_util_module) = Alloc_Element();
     Init_Context_Cell(g_sys_util_module, REB_MODULE, util);

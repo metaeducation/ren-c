@@ -130,8 +130,9 @@ Bounce Encloser_Dispatcher(Level* const L)
     L->varlist = nullptr;  // we're going to push new action in this level
     Corrupt_Pointer_If_Debug(L->rootvar);
 
-    assert(BONUS(KeySource, varlist) == L);  // need to change keysource [1]
-    Tweak_Varlist_Keysource(varlist, ACT_KEYLIST(L->u.action.original));
+    assert(MISC(RunLevel, varlist) == L);  // need to change runlevel [1]
+    MISC(VarlistAdjunct, varlist) = nullptr;
+    Set_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
     Tweak_Cell_Frame_Phase(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));

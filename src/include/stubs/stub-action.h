@@ -83,47 +83,17 @@
 
 
 // Context types use this field of their varlist (which is the identity of
-// an ANY-CONTEXT?) to find their "keylist".  It is stored in the Stub
-// node of the varlist Array* vs. in the Cell of the ANY-CONTEXT? so
-// that the keylist can be changed without needing to update all the
-// REBVALs for that object.
+// an ANY-CONTEXT?) to find their "keylist".
 //
-// It may be a simple Flex* -or- in the case of the varlist of a running
-// FRAME! on the stack, it points to a Level*.  If it's a FRAME! that
-// is not running on the stack, it will be the function paramlist of the
-// actual phase that function is for.  Since Level* all start with a
-// Cell, this means NODE_FLAG_CELL can be used on the node to
-// discern the case where it can be cast to a Level* vs. Array*.
+// Note: At one time Level->varlist would swap in a Level* in this spot, in
+// order to be able to find a running Level* from a VarList.  This was due to
+// the belief that the MISC() field could not be sacrificed on FRAME! to
+// store that Level*, because it was needed to store a link to the "adjunct
+// object" which all VarList* wanted to offer.  It turns out that adjunct
+// objects are not needed on running frame varlists, they can be on the phase.
 //
-// (Note: FRAME!s used to use a field `misc.L` to track the associated
-// level...but that prevented the ability to SET-ADJUNCT on a frame.  While
-// that feature may not be essential, it seems awkward to not allow it
-// since it's allowed for other ANY-CONTEXT?s.  Also, it turns out that
-// heap-based FRAME! values--such as those that come from MAKE FRAME!--
-// have to get their keylist via the specifically applicable ->phase field
-// anyway, and it's a faster test to check this for NODE_FLAG_CELL than to
-// separately extract the CTX_TYPE() and treat frames differently.)
-//
-// It is done as a base-class Node* as opposed to a union in order to
-// not run afoul of C's rules, by which you cannot assign one member of
-// a union and then read from another.
-//
-#define BONUS_KeySource_TYPE        Node*
-#define HAS_BONUS_KeySource         FLAVOR_VARLIST
-
-INLINE void Tweak_Bonus_Keysource(Flex* varlist, Node* keysource) {
-    if (keysource != nullptr) {
-        if (Is_Node_A_Stub(keysource))
-            assert(Is_Stub_Keylist(cast(Flex*, keysource)));
-        else
-            assert(Is_Non_Cell_Node_A_Level(keysource));
-    }
-
-    BONUS(KeySource, varlist) = keysource;
-}
-
-#define Tweak_Varlist_Keysource(varlist,keysource) \
-    Tweak_Bonus_Keysource(Varlist_Array(varlist), (keysource))
+#define BONUS_KeyList_TYPE        KeyList*
+#define HAS_BONUS_KeyList         FLAVOR_VARLIST
 
 
 //=//// PSEUDOTYPES FOR RETURN VALUES /////////////////////////////////////=//
@@ -258,7 +228,7 @@ INLINE VarList* ACT_EXEMPLAR(Action* a) {
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
-    cast(KeyList*, node_BONUS(KeySource, ACT_EXEMPLAR(a)))
+    BONUS(KeyList, ACT_EXEMPLAR(a))
 
 #define ACT_KEYS_HEAD(a) \
     Flex_Head(const Key, ACT_KEYLIST(a))

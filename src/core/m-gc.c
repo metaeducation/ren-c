@@ -286,22 +286,15 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // Whether the bonus slot needs to be marked is dictated by internal
         // Flex Flavor, not an extension-usable flag (due to flag scarcity).
         //
-        if (Is_Stub_Varlist(a) and node_BONUS(Node, a)) {
-            //
-            // !!! The keysource for varlists can be set to a Level*, which
-            // at the moment pretends to be a cell to distinguish itself.
-            // This makes less sense than pretending to be a Flex that is
-            // already marked, and has a detectable FLAVOR_XXX.  Review.
-            //
-            if (Is_Non_Cell_Node_A_Level(node_BONUS(Node, a)))
-                goto skip_mark_frame_bonus;
-
-            assert(Is_Stub_Keylist(cast(Stub*, node_BONUS(Node, a))));
-
-            Queue_Mark_Node_Deep(&a->content.dynamic.bonus.node);
+        if (Is_Stub_Varlist(a)) {  // bonus is keylist (if not module varlist)
+            if (node_BONUS(KeyList, a) == nullptr)
+                assert(CTX_TYPE(cast(VarList*, a)) == REB_MODULE);
+            else {
+                assert(CTX_TYPE(cast(VarList*, a)) != REB_MODULE);
+                assert(Is_Stub_Keylist(BONUS(KeyList, a)));
+                Queue_Mark_Node_Deep(&a->content.dynamic.bonus.node);
+            }
         }
-
-        skip_mark_frame_bonus:
 
     //=//// MARK ARRAY ELEMENT CELLS (if array) ///////////////////////////=//
 

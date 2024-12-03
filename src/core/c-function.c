@@ -569,7 +569,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     Manage_Flex(paramlist);
 
-    Tweak_Bonus_Keysource(paramlist, keylist);
+    BONUS(KeyList, paramlist) = keylist;
     MISC(VarlistAdjunct, paramlist) = nullptr;
     node_LINK(NextVirtual, paramlist) = nullptr;
 
@@ -709,7 +709,7 @@ Phase* Make_Phase(
     // a placeholder for more useful consistency checking which might be done.
     //
   blockscope {
-    KeyList* keylist = cast(KeyList*, node_BONUS(KeySource, paramlist));
+    KeyList* keylist = BONUS(KeyList, paramlist);
 
     Assert_Flex_Managed(keylist);  // paramlists/keylists, can be shared
     assert(Flex_Used(keylist) + 1 == Array_Len(paramlist));

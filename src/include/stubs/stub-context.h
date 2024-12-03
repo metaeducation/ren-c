@@ -221,25 +221,19 @@ INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
 
 INLINE KeyList* Keylist_Of_Varlist(VarList* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    if (Is_Node_A_Cell(BONUS(KeySource, Varlist_Array(c)))) {
-        //
-        // running frame, KeySource is Level*, so use action's paramlist.
-        //
-        return ACT_KEYLIST(CTX_ARCHETYPE_PHASE(c));
-    }
-    return cast(KeyList*, node_BONUS(KeySource, c));  // not Level
+    return BONUS(KeyList, c);
 }
 
 INLINE void Tweak_Keylist_Of_Varlist_Shared(Flex* f, KeyList* keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
     Set_Flavor_Flag(KEYLIST, keylist, SHARED);
-    Tweak_Bonus_Keysource(f, keylist);
+    BONUS(KeyList, f) = keylist;
 }
 
 INLINE void Tweak_Keylist_Of_Varlist_Unique(Flex* f, KeyList *keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
     assert(Not_Flavor_Flag(KEYLIST, keylist, SHARED));
-    Tweak_Bonus_Keysource(f, keylist);
+    BONUS(KeyList, f) = keylist;
 }
 
 
@@ -376,22 +370,22 @@ INLINE Value* Varlist_Slots(const Value* * tail_out, VarList* v) {
 // way to navigate from a VarList* to the Level* that's running it.
 //
 
-INLINE bool Is_Frame_On_Stack(VarList* c) {
-    assert(Is_Frame(Varlist_Archetype(c)));
-    return Is_Node_A_Cell(BONUS(KeySource, Varlist_Array(c)));
-}
+INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {
+    assert(Is_Frame(Varlist_Archetype(varlist)));
+    if (Get_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK))
+        return nullptr;  // MISC is used for VarlistAdjunct, not Level*
 
-INLINE Level* Level_Of_Varlist_If_Running(VarList* c) {
-    Node* keysource = BONUS(KeySource, Varlist_Array(c));
-    if (not Is_Node_A_Cell(keysource))
-        return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
+    Level* L = MISC(RunLevel, varlist);
+    if (not L)
+        return nullptr;
 
-    assert(Is_Frame(Varlist_Archetype(c)));
-
-    Level* L = cast(Level*, keysource);
     assert(L->executor == &Action_Executor);
     return L;
 }
+
+#define Is_Frame_On_Stack(varlist) \
+    (Level_Of_Varlist_If_Running(varlist) != nullptr)
+
 
 INLINE Level* Level_Of_Varlist_May_Fail(VarList* c) {
     Level* L = Level_Of_Varlist_If_Running(c);
@@ -472,9 +466,7 @@ INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
             | FLEX_FLAG_FIXED_SIZE,
         Alloc_Stub()
     );
-    Corrupt_Pointer_If_Debug(BONUS(KeySource, copy)); // needs update
     Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
-    MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
     node_LINK(NextVirtual, copy) = nullptr;
 
     Value* rootvar = cast(Value*, copy->content.dynamic.data);

@@ -69,19 +69,15 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (CTX_TYPE(cast(VarList*, binding)) != REB_FRAME)
             break;
 
-        Node* keysource = BONUS(KeySource, binding);
-        if (Is_Node_A_Cell(keysource))  // actually a Level
-            break;
-
-        KeyList* keylist = cast(KeyList*, keysource);
+        KeyList* keylist = BONUS(KeyList, binding);
         if (
             (keylist->leader.bits & FLEX_MASK_KEYLIST)
             != FLEX_MASK_KEYLIST
         ){
             panic (binding);
         }
-        if (Not_Node_Managed(keysource))
-            panic (keysource);
+        if (Not_Node_Managed(keylist))
+            panic (keylist);
         break;
     }
 
@@ -463,23 +459,11 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Context_Deep.
 
-        Node* keysource = BONUS(KeySource, a);
-        if (not keysource) {
+        KeyList* keylist = BONUS(KeyList, a);
+        if (not keylist) {
             assert(VAL_TYPE(archetype) == REB_MODULE);
         }
-        else if (Is_Non_Cell_Node_A_Level(keysource)) {
-            //
-            // Must be a FRAME! and it must be on the stack running.  If
-            // it has stopped running, then the keylist must be set to
-            // UNBOUND which would not be a cell.
-            //
-            // There's nothing to mark for GC since the frame is on the
-            // stack, which should preserve the function paramlist.
-            //
-            assert(Is_Frame(archetype));
-        }
         else {
-            KeyList* keylist = cast(KeyList*, keysource);
             assert(Is_Stub_Keylist(keylist));
 
             if (Is_Frame(archetype)) {

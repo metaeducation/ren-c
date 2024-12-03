@@ -335,7 +335,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     else
         Decay_Stub(L->varlist);  // maybe lingering references [3]
 
-    Tweak_Varlist_Keysource(original_varlist, L);  // [4]
+    MISC(RunLevel, original_varlist) = L;  // [4]
     L->varlist = Varlist_Array(original_varlist);  // rootvar must match
     L->rootvar = m_cast(Element*, Varlist_Archetype(original_varlist));
 

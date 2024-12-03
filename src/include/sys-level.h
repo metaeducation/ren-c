@@ -399,17 +399,11 @@ INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
 //    throw to the trampoline so that Drop_Action() has to be run by
 //    the trampoline when it drops the levels automatically.
 //
-// 2. If Drop_Action() isn't run, then it will leave the keysource as the
-//    Level (e.g. Is_Non_Cell_Node_A_Level()).  That would be corrupt after
-//    this free if it hasn't been set back to the keylist.
-//
 INLINE void Free_Level_Internal(Level* L) {
     Release_Feed(L->feed);  // frees if refcount goes to 0
 
     if (L->varlist) {  // !!! Can be not null if abrupt failure [1]
-        assert(  // must be keylist, not a Level* [2]
-            Is_Stub_Keylist(cast(Stub*, node_BONUS(KeySource, L->varlist)))
-        );
+        assert(MISC(RunLevel, L->varlist) == nullptr);  // Drop_Action() nulls
         if (Not_Node_Managed(L->varlist))
             GC_Kill_Flex(L->varlist);
     }

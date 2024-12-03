@@ -465,7 +465,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
         if (not Any_List(arg))
             return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
 
-        VarList* ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 1);
+        VarList* ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
         node_LINK(NextVirtual, ctx) = BINDING(arg);
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
@@ -653,7 +653,7 @@ VarList* Copy_Varlist_Extra_Managed(
         else {
             MISC(VarlistAdjunct, varlist) = nullptr;
         }
-        Tweak_Bonus_Keysource(varlist, nullptr);
+        BONUS(KeyList, varlist) = nullptr;  // modules don't have keylists
         node_LINK(NextVirtual, varlist) = nullptr;
 
         VarList* copy = cast(VarList*, varlist); // now a well-formed context

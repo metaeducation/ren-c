@@ -1024,13 +1024,13 @@ void Push_Action(
     assert(L->varlist == nullptr);
 
     Flex* s = cast(Flex*, Prep_Stub(
-        FLEX_MASK_VARLIST
+        FLEX_MASK_LEVEL_VARLIST
             | FLEX_FLAG_FIXED_SIZE,  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
         Alloc_Stub()
     ));
-    Tweak_Bonus_Keysource(x_cast(Array*, s), L);  // maps varlist back to L
-    MISC(VarlistAdjunct, s) = nullptr;
+    MISC(RunLevel, s) = L;  // maps varlist back to L
+    BONUS(KeyList, s) = ACT_KEYLIST(act);
     node_LINK(NextVirtual, s) = nullptr;
 
     if (not Try_Flex_Data_Alloc(
@@ -1146,13 +1146,13 @@ void Begin_Action(
 void Drop_Action(Level* L) {
     Corrupt_Pointer_If_Debug(L->u.action.label);  // first (data breakpoint)
 
-    assert(BONUS(KeySource, L->varlist) == L);
+    assert(MISC(RunLevel, L->varlist) == L);
 
     if (
         Is_Node_Managed(L->varlist)  // outstanding references may exist [1]
         or Get_Action_Executor_Flag(L, FULFILL_ONLY)
     ){
-        Tweak_Bonus_Keysource(L->varlist, ACT_KEYLIST(ORIGINAL));
+        MISC(RunLevel, L->varlist) = nullptr;
     }
     else {  // no outstanding references [2]
         GC_Kill_Flex(L->varlist);  // not in manuals tracking list

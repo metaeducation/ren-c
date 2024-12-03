@@ -270,19 +270,23 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 // !!! Overlaps with Assert_Varlist, review folding them together.
 //
 void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
-    assert((v->leader.bits & FLEX_MASK_VARLIST) == FLEX_MASK_VARLIST);
+    assert(CTX_TYPE(v) == kind);
+
+    if (kind == REB_FRAME)  // may not have VarlistAdjunct
+        assert(
+            (v->leader.bits & FLEX_MASK_LEVEL_VARLIST)
+            == FLEX_MASK_LEVEL_VARLIST
+        );
+    else
+        assert((v->leader.bits & FLEX_MASK_VARLIST) == FLEX_MASK_VARLIST);
 
     const Value* archetype = Varlist_Archetype(v);
     assert(Cell_Varlist(archetype) == v);
-    assert(CTX_TYPE(v) == kind);
 
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
     //
-    assert(
-        Cell_Coupling(archetype) == NONMETHOD
-        or CTX_TYPE(v) == REB_FRAME
-    );
+    assert(Cell_Coupling(archetype) == NONMETHOD or kind == REB_FRAME);
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.

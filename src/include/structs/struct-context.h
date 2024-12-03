@@ -63,7 +63,7 @@ typedef Context Let;
 // Indices into the arrays are 0-based for keys and 1-based for values, with
 // the [0] elements of the varlist used an archetypal value:
 //
-//    VARLIST ARRAY (aka VarList*)  --Link--+
+//    VARLIST ARRAY (aka VarList*) --Bonus--+
 //  +------------------------------+        |
 //  +          "ROOTVAR"           |        |
 //  | Archetype ANY-CONTEXT? Value |        v         KEYLIST SERIES
@@ -74,10 +74,6 @@ typedef Context Let;
 //  +------------------------------+        +-------------------------------+
 //  |         Value Cell ...       |        |         Symbol* key ...       |
 //  +------------------------------+        +-------------------------------+
-//
-// (For executing frames, the ---Link--> is actually to its Level* structure
-// so the paramlist of the CTX_ARCHETYPE_PHASE() must be consulted.  When the
-// frame stops running, the paramlist is written back to the link again.)
 //
 // The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s cell.  This
 // trick allows a single VarList* pointer to be passed around rather than the
@@ -173,6 +169,10 @@ typedef Context Use;
 #define HAS_MISC_VarlistAdjunct       FLAVOR_VARLIST
 
 
+#define MISC_RunLevel_TYPE      Level*
+#define HAS_MISC_RunLevel       FLAVOR_VARLIST
+
+
 //=//// PARAMLIST_HAS_RETURN //////////////////////////////////////////////=//
 //
 // See ACT_HAS_RETURN() for remarks.  Note: This is a flag on PARAMLIST, not
@@ -232,12 +232,15 @@ typedef Context Use;
 // to reclaim the dynamic memory to make a singular cell...but that flag
 // can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
-#define FLEX_MASK_VARLIST \
+#define FLEX_MASK_LEVEL_VARLIST \
     (NODE_FLAG_NODE \
         | FLAG_FLAVOR(VARLIST) \
         | STUB_FLAG_DYNAMIC \
         | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
-        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
+        /* STUB_FLAG_MISC_NODE_NEEDS_MARK */  /* no Adjunct */)
+
+#define FLEX_MASK_VARLIST \
+    (FLEX_MASK_LEVEL_VARLIST | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
 
 #define FLEX_MASK_KEYLIST \
     (NODE_FLAG_NODE  /* NOT always dynamic */ \
