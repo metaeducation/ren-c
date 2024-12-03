@@ -273,36 +273,36 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 //
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define LINK(Field, flex) \
-        *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(flex)->link.any.node))
+    #define LINK(Field,stub) \
+        *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(stub)->link.any.node))
 
-    #define MISC(Field, flex) \
-        *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(flex)->misc.any.node))
+    #define MISC(Field,stub) \
+        *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(stub)->misc.any.node))
 
-    #define INODE(Field, flex) \
-        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(flex)->info.any.node))
+    #define INODE(Field,stub) \
+        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(stub)->info.any.node))
 #else
-    #define LINK(Field, flex) \
+    #define LINK(Field,stub) \
         NodeHolder<LINK_##Field##_TYPE>( \
-            ensure_flavor(HAS_LINK_##Field, (flex))->link.any.node)
+            ensure_flavor(HAS_LINK_##Field, (stub))->link.any.node)
 
-    #define MISC(Field, flex) \
+    #define MISC(Field,stub) \
         NodeHolder<MISC_##Field##_TYPE>( \
-            ensure_flavor(HAS_MISC_##Field, (flex))->misc.any.node)
+            ensure_flavor(HAS_MISC_##Field, (stub))->misc.any.node)
 
-    #define INODE(Field,flex) \
+    #define INODE(Field,stub) \
         NodeHolder<INODE_##Field##_TYPE>( \
-            ensure_flavor(HAS_INODE_##Field, (flex))->info.any.node)
+            ensure_flavor(HAS_INODE_##Field, (stub))->info.any.node)
 #endif
 
-#define node_LINK(Field, flex) \
-    *m_cast(Node**, &(flex)->link.any.node)  // const ok for strict alias
+#define node_LINK(Field,stub) \
+    *m_cast(Node**, &(stub)->link.any.node)  // const ok for strict alias
 
-#define node_MISC(Field, flex) \
-    *m_cast(Node**, &(flex)->misc.any.node)  // const ok for strict alias
+#define node_MISC(Field,stub) \
+    *m_cast(Node**, &(stub)->misc.any.node)  // const ok for strict alias
 
-#define node_INODE(Field, flex) \
-    *m_cast(Node**, &(flex)->info.any.node)  // const ok for strict alias
+#define node_INODE(Field,stub) \
+    *m_cast(Node**, &(stub)->info.any.node)  // const ok for strict alias
 
 
 //=//// STUB CELL ACCESS //////////////////////////////////////////////////=//
