@@ -229,7 +229,7 @@ DECLARE_NATIVE(shove)
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_INFIX);  // [1]
 
     Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
-    Push_Action(sub, VAL_ACTION(shovee), Cell_Coupling(shovee));
+    Push_Action(sub, shovee);
     Begin_Action(sub, label, infix_mode);  // can know if it's infix [2]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -1040,11 +1040,7 @@ DECLARE_NATIVE(run)
 
     Level* sub = Make_Action_Sublevel(level_);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
-    Push_Action(
-        sub,
-        VAL_ACTION(action),
-        Cell_Coupling(action)
-    );
+    Push_Action(sub, action);
     Begin_Action(sub, VAL_FRAME_LABEL(action), PREFIX_0);
 
     return DELEGATE_SUBLEVEL(sub);

@@ -101,7 +101,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
 
-    Push_Action(L, VAL_ACTION(action), Cell_Coupling(action));
+    Push_Action(L, action);
     Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 
     Array* varlist = L->varlist;  // Drop_Action() will null out L->varlist

@@ -1009,15 +1009,14 @@ Bounce Action_Executor(Level* L)
 // done by this routine.  In practice, Begin_Action() is a tiny amount of
 // reused work.  This separation may be reconsidered.
 //
-void Push_Action(
-    Level* L,
-    Action* act,
-    Option(VarList*) coupling  // actions may only be coupled to contexts ATM
-){
+void Push_Action(Level* L, const Cell* frame) {
     assert(L->executor == &Action_Executor);
 
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
     assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
+
+    Action* act = VAL_ACTION(frame);
+    Option(VarList*) coupling = Cell_Coupling(frame);
 
     Length num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 

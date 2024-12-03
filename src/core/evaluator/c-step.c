@@ -455,11 +455,7 @@ Bounce Stepper_Executor(Level* L)
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(
-        sub,
-        VAL_ACTION(unwrap L_current_gotten),
-        Cell_Coupling(unwrap L_current_gotten)
-    );
+    Push_Action(sub, unwrap L_current_gotten);
 
     Option(const Symbol*) label = Is_Word(CURRENT)
         ? Cell_Word_Symbol(CURRENT)
@@ -546,11 +542,7 @@ Bounce Stepper_Executor(Level* L)
             return FAIL("Use REDO to restart a running FRAME! (can't EVAL)");
 
         Level* sub = Make_Action_Sublevel(L);
-        Push_Action(
-            sub,
-            VAL_ACTION(CURRENT),
-            Cell_Coupling(CURRENT)
-        );
+        Push_Action(sub, CURRENT);
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
         assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
         Begin_Action(sub, VAL_FRAME_LABEL(CURRENT), infix_mode);
@@ -800,8 +792,8 @@ Bounce Stepper_Executor(Level* L)
         }
 
         Level* sub = Make_Action_Sublevel(L);
+        Push_Action(sub, OUT);
         Push_Level_Erase_Out_If_State_0(OUT, sub);  // *always* clear out
-        Push_Action(sub, action, coupling);
         Begin_Action(sub, label, infix_mode);
         unnecessary(Push_Level_Erase_Out_If_State_0(OUT, sub)); // see [1]
 
@@ -903,11 +895,9 @@ Bounce Stepper_Executor(Level* L)
         Level* sub = Make_Action_Sublevel(L);
         sub->baseline.stack_base = STACK_BASE;  // refinements
 
-        Action* action = VAL_ACTION(OUT);
-        Option(VarList*) coupling = Cell_Coupling(OUT);
         Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
 
-        Push_Action(sub, action, coupling);
+        Push_Action(sub, OUT);
         Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
         Push_Level_Erase_Out_If_State_0(OUT, sub);
         goto process_action; }
@@ -2060,7 +2050,7 @@ Bounce Stepper_Executor(Level* L)
     // into the new function's frame.
 
     Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, infixed, Cell_Coupling(unwrap L_next_gotten));
+    Push_Action(sub, unwrap L_next_gotten);
 
     Option(const Symbol*) label = Is_Word(L_next)
         ? Cell_Word_Symbol(L_next)

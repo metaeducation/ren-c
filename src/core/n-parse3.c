@@ -241,8 +241,7 @@ static bool Subparse_Throws(
 
     Push_Level_Erase_Out_If_State_0(out, L);  // checks for C stack overflow
 
-    Push_Action(L, VAL_ACTION(LIB(SUBPARSE)), UNBOUND);
-
+    Push_Action(L, LIB(SUBPARSE));
     Begin_Action(L, CANON(SUBPARSE), PREFIX_0);
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what

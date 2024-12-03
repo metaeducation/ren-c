@@ -53,7 +53,7 @@ void Prep_Action_Level(
     const Cell* action,
     Option(const Atom*) with
 ){
-    Push_Action(L, VAL_ACTION(action), Cell_Coupling(action));
+    Push_Action(L, action);
     Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 
     const Key* key = L->u.action.key;
@@ -191,7 +191,7 @@ bool Pushed_Continuation(
         );
 
         const Value* action = LIB(REDUCE);
-        Push_Action(L, VAL_ACTION(action), Cell_Coupling(action));
+        Push_Action(L, action);
         Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
 
         const Key* key = L->u.action.key;
