@@ -963,7 +963,7 @@ const RebolNodeInternal* API_rebArgR(
     const Symbol* symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
 
     const Key* tail;
-    const Key* key = ACT_KEYS(&tail, act);
+    const Key* key = Phase_Keys(&tail, act);
     Value* arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(Key_Symbol(key), symbol))
@@ -3163,8 +3163,8 @@ Bounce Api_Function_Dispatcher(Level* const L)
 {
     Details* details = Level_Phase(L);
     assert(ACT_HAS_RETURN(details));  // continuations can RETURN [1]
-    assert(KEY_SYM(ACT_KEYS_HEAD(details)) == SYM_RETURN);
-    const Param* param = ACT_PARAMS_HEAD(details);
+    assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+    const Param* param = Phase_Params_Head(details);
 
     Value* cell = Level_Arg(L, 1);
     assert(Is_Parameter(cell));
@@ -3249,7 +3249,7 @@ RebolValue* API_rebFunc(
     Flags mkf_flags = MKF_RETURN;
 
     VarList* adjunct;
-    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
         &mkf_flags
@@ -3261,8 +3261,8 @@ RebolValue* API_rebFunc(
         IDX_API_ACTION_MAX
     );
 
-    assert(ACT_ADJUNCT(details) == nullptr);
-    Tweak_Action_Adjunct(details, adjunct);
+    assert(Phase_Adjunct(details) == nullptr);
+    Tweak_Phase_Adjunct(details, adjunct);
 
     Init_Handle_Cfunc(
         Details_At(details, IDX_API_ACTION_CFUNC),

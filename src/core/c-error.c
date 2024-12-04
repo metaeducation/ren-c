@@ -87,8 +87,8 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         if (not Is_Action_Level(TOP_LEVEL))
             return Error_Bad_Value(v);
 
-        const Param* head = ACT_PARAMS_HEAD(Level_Phase(TOP_LEVEL));
-        REBLEN num_params = ACT_NUM_PARAMS(Level_Phase(TOP_LEVEL));
+        const Param* head = Phase_Params_Head(Level_Phase(TOP_LEVEL));
+        REBLEN num_params = Phase_Num_Params(Level_Phase(TOP_LEVEL));
 
         if (v >= head and v < head + num_params) {  // PARAM() error [2]
             const Param* param = cast_PAR(c_cast(Value*, v));
@@ -342,7 +342,7 @@ void Set_Location_Of_Error(
     Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
         if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
-            Option(const Symbol*) label = VAL_FRAME_LABEL(Level_Scratch(L));
+            Option(const Symbol*) label = Cell_Frame_Label(Level_Scratch(L));
             if (label)
                 Init_Word(PUSH(), unwrap label);
             else
@@ -887,7 +887,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 {
     assert(Is_Hole(c_cast(Value*, param)));
 
-    const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
+    const Param* headparam = Phase_Params_Head(Level_Phase(L));
     assert(param >= headparam);
     assert(param <= headparam + Level_Num_Args(L));
 
@@ -898,7 +898,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
         Init_Word(label, CANON(ANONYMOUS));
 
     DECLARE_ATOM (param_name);
-    Init_Word(param_name, Key_Symbol(ACT_KEY(Level_Phase(L), index)));
+    Init_Word(param_name, Key_Symbol(Phase_Key(Level_Phase(L), index)));
 
     Value* arg = Level_Arg(L, index);
     return Error_Invalid_Arg_Raw(label, param_name, arg);
@@ -925,7 +925,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         action = VAL_ACTION(SCRATCH);
         arg = stable_SPARE;
-        Option(const Symbol*) symbol = VAL_FRAME_LABEL(SCRATCH);
+        Option(const Symbol*) symbol = Cell_Frame_Label(SCRATCH);
         if (symbol)
             Init_Word(label, unwrap symbol);
         else
@@ -938,12 +938,12 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
             Init_Word(label, CANON(ANONYMOUS));
     }
 
-    Param* param = ACT_PARAM(action, 2);
+    Param* param = Phase_Param(action, 2);
     assert(Is_Hole(c_cast(Value*, param)));
     UNUSED(param);
 
     DECLARE_ATOM (param_name);
-    Init_Word(param_name, Key_Symbol(ACT_KEY(action, 2)));
+    Init_Word(param_name, Key_Symbol(Phase_Key(action, 2)));
 
     return Error_Invalid_Arg_Raw(label, param_name, arg);
 }

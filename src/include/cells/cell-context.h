@@ -11,7 +11,7 @@
 
 INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
-    VarList* c;
+    VarList* list;
     if (Not_Node_Readable(Cell_Node1(v))) {
         if (HEART_BYTE(v) == REB_FRAME)
             fail (Error_Expired_Frame_Raw());  // !!! different error?
@@ -19,73 +19,19 @@ INLINE VarList* Cell_Varlist(const Cell* v) {
     }
 
     if (Is_Stub_Varlist(cast(Stub*, Cell_Node1(v)))) {
-        c = cast(VarList*, Cell_Node1(v));
+        list = cast(VarList*, Cell_Node1(v));
     }
     else {
         assert(Cell_Heart_Unchecked(v) == REB_FRAME);
         assert(Is_Stub_Details(cast(Stub*, Cell_Node1(v))));
-        c = INODE(Exemplar, cast(Array*, Cell_Node1(v)));
+        list = INODE(Exemplar, cast(Details*, Cell_Node1(v)));
     }
-    return c;
+    return list;
 }
 
 INLINE Error* Cell_Error(const Cell* c) {
     assert(Cell_Heart(c) == REB_ERROR);
     return cast(Error*, Cell_Varlist(c));
-}
-
-
-//=//// FRAME PHASE AND LABELING //////////////////////////////////////////=//
-//
-// A frame's phase is usually a pointer to the component action in effect for
-// a composite function (e.g. an ADAPT).
-//
-// But if the node where a phase would usually be found is a String* then that
-// implies there isn't any special phase besides the action stored by the
-// archetype.  Hence the value cell is storing a name to be used with the
-// action when it is extracted from the frame.  That's why this works:
-//
-//     >> f: make frame! unrun :append
-//     >> label of f
-//     == append  ; useful in debug stack traces if you `eval f`
-//
-// So extraction of the phase has to be sensitive to this.
-//
-
-INLINE void Tweak_Cell_Frame_Phase(Cell* v, Details* phase) {
-    assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
-    Tweak_Cell_Frame_Phase_Or_Label(v, phase);
-}
-
-INLINE Details* VAL_FRAME_PHASE(const Cell* v) {
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
-    if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
-        return CTX_ARCHETYPE_PHASE(Cell_Varlist(v));  // use archetype
-    return cast(Details*, f);  // cell has its own phase, return it
-}
-
-INLINE bool IS_FRAME_PHASED(const Cell* v) {
-    assert(Cell_Heart(v) == REB_FRAME);
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
-    return f and not Is_Stub_Symbol(f);
-}
-
-// 1. Has a phase, so no label (maybe findable if running)
-//
-INLINE Option(const Symbol*) VAL_FRAME_LABEL(const Cell* v) {
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
-    if (f and Is_Stub_Symbol(f))  // label in value
-        return cast(Symbol*, f);
-    return ANONYMOUS;  // [2]
-}
-
-INLINE void INIT_VAL_FRAME_LABEL(
-    Cell* v,
-    Option(const String*) label
-){
-    assert(Cell_Heart(v) == REB_FRAME);
-    Assert_Cell_Writable(v);  // No label in archetype
-    Tweak_Cell_Frame_Phase_Or_Label(v, maybe label);
 }
 
 
@@ -115,16 +61,6 @@ INLINE Element* Init_Context_Cell(
 
 #define Init_Port(out,c) \
     Init_Context_Cell((out), REB_PORT, (c))
-
-INLINE Element* Init_Frame(
-    Init(Element) out,
-    VarList* c,
-    Option(const String*) label  // nullptr (ANONYMOUS) is okay
-){
-    Init_Context_Cell(out, REB_FRAME, c);
-    INIT_VAL_FRAME_LABEL(out, label);
-    return out;
-}
 
 
 // Ports are unusual hybrids of user-mode code dispatched with native code, so

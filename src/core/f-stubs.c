@@ -286,7 +286,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
     //
-    assert(Cell_Coupling(archetype) == NONMETHOD or kind == REB_FRAME);
+    assert(EXTRA(Any, archetype).node == nullptr or kind == REB_FRAME);
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
@@ -326,7 +326,7 @@ void Extra_Init_Frame_Details_Checks_Debug(Details* details) {
     //
     UNUSED(archetype);
 
-    KeyList* keylist = ACT_KEYLIST(details);
+    KeyList* keylist = Phase_Keylist(details);
     assert(
         (keylist->leader.bits & FLEX_MASK_KEYLIST)
         == FLEX_MASK_KEYLIST
@@ -336,8 +336,8 @@ void Extra_Init_Frame_Details_Checks_Debug(Details* details) {
     // though the interface may expand.
     //
     assert(
-        not ACT_ADJUNCT(details)
-        or Any_Context_Kind(CTX_TYPE(unwrap ACT_ADJUNCT(details)))
+        not Phase_Adjunct(details)
+        or Any_Context_Kind(CTX_TYPE(unwrap Phase_Adjunct(details)))
     );
 }
 

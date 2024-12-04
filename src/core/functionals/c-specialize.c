@@ -57,7 +57,7 @@
 // refinements added on the stack) we go ahead and collect bindings from the
 // frame if needed.
 //
-VarList* Make_Varlist_For_Action_Push_Partials(
+ParamList* Make_Varlist_For_Action_Push_Partials(
     const Value* action,  // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,  // caller can add refinements
     Option(Binder*) binder
@@ -66,21 +66,21 @@ VarList* Make_Varlist_For_Action_Push_Partials(
 
     Phase* act = VAL_ACTION(action);
 
-    REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for Varlist_Archetype()
+    REBLEN num_slots = Phase_Num_Params(act) + 1;  // +1 is for Varlist_Archetype()
     Array* a = Make_Array_Core(FLEX_MASK_VARLIST, num_slots);
     Set_Flex_Len(a, num_slots);
 
-    Tweak_Keylist_Of_Varlist_Shared(a, ACT_KEYLIST(act));
+    Tweak_Keylist_Of_Varlist_Shared(a, Phase_Keylist(act));
 
     Tweak_Frame_Varlist_Rootvar(
         a,
         Phase_Details(VAL_ACTION(action)),
-        Cell_Coupling(action)
+        Cell_Frame_Coupling(action)
     );
 
     const Key* tail;
-    const Key* key = ACT_KEYS(&tail, act);
-    const Param* param = ACT_PARAMS_HEAD(act);
+    const Key* key = Phase_Keys(&tail, act);
+    const Param* param = Phase_Params_Head(act);
 
     Value* arg = Flex_At(Value, a, 1);
 
@@ -143,7 +143,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
     MISC(VarlistAdjunct, a) = nullptr;
     node_LINK(NextVirtual, a) = nullptr;
 
-    return cast(VarList*, a);
+    return cast(ParamList*, a);
 }
 
 
@@ -159,12 +159,12 @@ VarList* Make_Varlist_For_Action_Push_Partials(
 // which to make it usable should be relative to the lowest ordered StackIndex
 // and not absolute.
 //
-VarList* Make_Varlist_For_Action(
+ParamList* Make_Varlist_For_Action(
     const Value* action, // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,
     Option(Binder*) binder
 ){
-    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
+    ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         action,
         lowest_stackindex,
         binder
@@ -197,6 +197,9 @@ bool Specialize_Action_Throws(
 ){
     assert(out != specializee);
 
+    Option(const Symbol*) label = Cell_Frame_Label(specializee);
+    Option(VarList*) coupling = Cell_Frame_Coupling(specializee);
+
     DECLARE_BINDER (binder);
     if (def)
         Construct_Binder_Core(binder);  // conditional, must use _Core()
@@ -207,7 +210,7 @@ bool Specialize_Action_Throws(
     // will be on the stack (including any we are adding "virtually", from
     // the current TOP_INDEX down to the lowest_stackindex).
     //
-    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
+    ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         specializee,
         lowest_stackindex,
         def ? binder : nullptr
@@ -248,8 +251,8 @@ bool Specialize_Action_Throws(
     }
 
     const Key* tail;
-    const Key* key = ACT_KEYS(&tail, unspecialized);
-    const Param* param = ACT_PARAMS_HEAD(unspecialized);
+    const Key* key = Phase_Keys(&tail, unspecialized);
+    const Param* param = Phase_Params_Head(unspecialized);
 
     Value* arg = Varlist_Slots_Head(exemplar);
 
@@ -285,7 +288,6 @@ bool Specialize_Action_Throws(
         if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
             TOP_LEVEL, param, arg, false
         )){
-            Option(const Symbol*) label = VAL_FRAME_LABEL(specializee);
             fail (Error_Arg_Type(label, key, param, arg));
         }
 
@@ -351,7 +353,7 @@ bool Specialize_Action_Throws(
         }
     }
 
-    Init_Frame(out, exemplar, VAL_FRAME_LABEL(specializee));
+    Init_Frame(out, exemplar, label, coupling);
     Actionify(out);
 
     Set_Cell_Infix_Mode(out, infix_mode);
@@ -410,8 +412,8 @@ DECLARE_NATIVE(specialize)
 const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 {
     const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, act);
-    Param* param = ACT_PARAMS_HEAD(act);
+    const Key* key = Phase_Keys(&key_tail, act);
+    Param* param = Phase_Params_Head(act);
     for (; key != key_tail; ++key, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -432,7 +434,7 @@ const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 // in the frame somehow.
 //
 Option(ParamClass) Get_First_Param_Literal_Class(Phase* action) {
-    Array* paramlist = ACT_PARAMLIST(action);
+    ParamList* paramlist = Phase_Paramlist(action);
     if (Not_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
         return PARAMCLASS_0;
 
@@ -456,8 +458,8 @@ Option(ParamClass) Get_First_Param_Literal_Class(Phase* action) {
 const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 {
     const Key* key;
-    const Key* key_head = ACT_KEYS(&key, act);
-    Param* param = ACT_PARAMS_HEAD(act) + (key - key_head);
+    const Key* key_head = Phase_Keys(&key, act);
+    Param* param = Phase_Params_Head(act) + (key - key_head);
 
     while (key != key_head) {
         --key;
@@ -488,7 +490,7 @@ Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
     if (param == nullptr)
         return nullptr;
 
-    REBLEN index = param - ACT_PARAMS_HEAD(phase);
+    REBLEN index = param - Phase_Params_Head(phase);
     return Level_Args_Head(L) + index;
 }
 
@@ -499,17 +501,17 @@ Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 // Leaves details blank, and lets you specify the dispatcher.
 //
 Details* Alloc_Action_From_Exemplar(
-    VarList* exemplar,
+    ParamList* paramlist,
     Option(const Symbol*) label,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Phase* unspecialized = CTX_ARCHETYPE_PHASE(exemplar);
+    Phase* unspecialized = Paramlist_Archetype_Phase(paramlist);
 
     const Key* tail;
-    const Key* key = ACT_KEYS(&tail, unspecialized);
-    const Param* param = ACT_PARAMS_HEAD(unspecialized);
-    Value* arg = Varlist_Slots_Head(exemplar);
+    const Key* key = Phase_Keys(&tail, unspecialized);
+    const Param* param = Phase_Params_Head(unspecialized);
+    Value* arg = Varlist_Slots_Head(paramlist);
     for (; key != tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -534,7 +536,7 @@ Details* Alloc_Action_From_Exemplar(
     // This code parallels Specialize_Action_Throws(), see comments there
 
     Details* details = Make_Dispatch_Details(
-        Varlist_Array(exemplar),
+        paramlist,
         dispatcher,
         details_capacity
     );

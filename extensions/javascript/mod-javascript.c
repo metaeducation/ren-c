@@ -788,8 +788,8 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
     Details* phase = Level_Phase(L);
     if (ACT_HAS_RETURN(phase)) {  // !!! does it always have RETURN? [1]
-        assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
-        const Param* param = ACT_PARAMS_HEAD(phase);
+        assert(Key_Id(Phase_Keys_Head(phase)) == SYM_RETURN);
+        const Param* param = Phase_Params_Head(phase);
         assert(Is_Parameter(param));
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
@@ -851,7 +851,7 @@ DECLARE_NATIVE(js_native)
 
     VarList* meta;
     Flags flags = MKF_RETURN;
-    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags
@@ -864,8 +864,8 @@ DECLARE_NATIVE(js_native)
     );
     Set_Details_Flag(details, IS_NATIVE);
 
-    assert(ACT_ADJUNCT(details) == nullptr);  // should default to nullptr
-    Tweak_Action_Adjunct(details, meta);
+    assert(Phase_Adjunct(details) == nullptr);  // should default to nullptr
+    Tweak_Phase_Adjunct(details, meta);
 
     heapaddr_t native_id = Native_Id_For_Details(details);
 

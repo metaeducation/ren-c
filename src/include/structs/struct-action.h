@@ -26,11 +26,11 @@
 //
 
 #if CPLUSPLUS_11
-    struct Phase : public Flex {};
     struct Details : public Phase {};
+    struct ParamList : public VarList {};  // see VarList (inherits from Phase)
 #else
-    typedef Flex Phase;
-    typedef Phase Details;
+    typedef Flex Details;
+    typedef Flex ParamList;
 #endif
 
 
@@ -124,7 +124,7 @@ typedef enum {
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always
 // allocated dynamically, in order to make access to the archetype and the
-// parameters faster than Array_At().  See code for ACT_KEY(), etc.
+// parameters faster than Array_At().  See code for Phase_Key(), etc.
 //
 // !!! This used to include FLEX_FLAG_FIXED_SIZE for both.  However, that
 // meant the mask was different for paramlists and context keylists (which

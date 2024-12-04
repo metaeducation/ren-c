@@ -99,7 +99,7 @@ Details* Make_Decider_Intrinsic(Offset decider_index) {
 
     VarList* meta;
     Flags flags = MKF_RETURN;
-    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags  // native return types checked only if RUNTIME_CHECKS
@@ -394,7 +394,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             );
             Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // write sub's output to L->scratch
             Push_Action(sub, test);
-            Begin_Action(sub, VAL_FRAME_LABEL(test), PREFIX_0);
+            Begin_Action(sub, Cell_Frame_Label(test), PREFIX_0);
 
             const Key* key = sub->u.action.key;
             const Param* param = sub->u.action.param;

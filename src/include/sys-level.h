@@ -253,9 +253,9 @@ INLINE Element* Evaluator_Level_Current(Level* L) {
 #define Force_Level_Varlist_Managed(L) \
     Set_Node_Managed_Bit((L)->varlist)
 
-INLINE VarList* Level_Varlist(Level* L) {
+INLINE ParamList* Level_Varlist(Level* L) {
     assert(not Is_Level_Fulfilling(L));
-    return u_cast(VarList*, L->varlist);
+    return u_cast(ParamList*, L->varlist);
 }
 
 
@@ -273,7 +273,7 @@ INLINE void Tweak_Level_Phase(Level* L, Details* phase)  // check types
   { Tweak_Cell_Frame_Phase_Or_Label(L->rootvar, phase); }  // ...only
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
-  { Tweak_Cell_Coupling(L->rootvar, coupling); }  // also fast
+  { Tweak_Cell_Frame_Coupling(L->rootvar, coupling); }  // also fast
 
 // Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
 // information in it that can can be unique (the "coupling").  When invoked,
@@ -282,7 +282,7 @@ INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
 // intended to return from (break out of, etc.)
 //
 #define Level_Coupling(L) \
-    Cell_Coupling((L)->rootvar)
+    Cell_Frame_Coupling((L)->rootvar)
 
 INLINE Option(const Symbol*) Level_Label(Level* L) {
     assert(Is_Action_Level(L));
@@ -332,10 +332,10 @@ INLINE VarList* Varlist_Of_Level_Maybe_Unmanaged(Level* L) {
     return cast(VarList*, L->varlist);
 }
 
-INLINE VarList* Varlist_Of_Level_Force_Managed(Level* L) {
+INLINE ParamList* Varlist_Of_Level_Force_Managed(Level* L) {
     assert(not Is_Level_Fulfilling(L));
     Force_Level_Varlist_Managed(L);  // may already be managed
-    return cast(VarList*, L->varlist);
+    return cast(ParamList*, L->varlist);
 }
 
 
@@ -657,10 +657,10 @@ INLINE Level* Prep_Level_Core(
     ARG(name)  // alias (should p_##name## be different to enforce?)
 
 #define PARAM(name) \
-    ACT_PARAM(Level_Phase(level_), (p_##name##_))  // a TYPESET!
+    Phase_Param(Level_Phase(level_), (p_##name##_))  // a TYPESET!
 
 #define PARAM_SYMBOL(name) \
-    Key_Symbol(ACT_KEY(Level_Phase(level_), (p_##name##_)))
+    Key_Symbol(Phase_Key(Level_Phase(level_), (p_##name##_)))
 
 #define REF(name) \
     (not Is_Nulled(ARG(name)))
@@ -668,7 +668,7 @@ INLINE Level* Prep_Level_Core(
 // This lets you access arguments by number, not counting return
 //
 #define ARG_N(n) ( \
-    assert(Is_Parameter(ACT_PARAMS_HEAD(Level_Phase(level_)))),  /* return */ \
+    assert(Is_Parameter(Phase_Params_Head(Level_Phase(level_)))),  /* return */ \
     Level_Arg(level_, (n) + 1) \
 )
 

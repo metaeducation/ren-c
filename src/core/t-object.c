@@ -89,11 +89,11 @@ void Init_Evars(EVARS *e, const Cell* v) {
         Corrupt_Pointer_If_Debug(e->ctx);
 
         Phase* act = VAL_ACTION(v);
-        e->key = ACT_KEYS(&e->key_tail, act) - 1;
+        e->key = Phase_Keys(&e->key_tail, act) - 1;
         e->var = nullptr;
-        e->param = ACT_PARAMS_HEAD(act) - 1;
+        e->param = Phase_Params_Head(act) - 1;
 
-        assert(Flex_Used(ACT_KEYLIST(act)) <= ACT_NUM_PARAMS(act));
+        assert(Flex_Used(Phase_Keylist(act)) <= Phase_Num_Params(act));
 
         e->visibility = VAR_VISIBILITY_INPUTS;  // conservative guess [1]
 
@@ -167,7 +167,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
             Details* phase;
             if (not IS_FRAME_PHASED(v)) {  // not running, inputs visible [3]
-                phase = CTX_ARCHETYPE_PHASE(e->ctx);
+                phase = Paramlist_Archetype_Phase(cast(ParamList*, e->ctx));
 
                 Array* varlist = Varlist_Array(e->ctx);
                 if (Get_Flavor_Flag(
@@ -182,17 +182,16 @@ void Init_Evars(EVARS *e, const Cell* v) {
             else {  // is running, phase determines field visibility
                 phase = VAL_FRAME_PHASE(v);
 
-                VarList* exemplar = ACT_EXEMPLAR(phase);
-                if (CTX_ARCHETYPE_PHASE(exemplar) == phase)  // phase reuses [4]
+                ParamList* paramlist = Phase_Paramlist(phase);
+                if (Paramlist_Archetype_Phase(paramlist) == phase)  // phase reuses [4]
                     e->visibility = VAR_VISIBILITY_ALL;
                 else
                     e->visibility = VAR_VISIBILITY_INPUTS;
             }
 
-            Phase* action = phase;
-            e->param = ACT_PARAMS_HEAD(action) - 1;
-            e->key = ACT_KEYS(&e->key_tail, action) - 1;
-            assert(Flex_Used(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
+            e->param = Phase_Params_Head(phase) - 1;
+            e->key = Phase_Keys(&e->key_tail, phase) - 1;
+            assert(Flex_Used(Phase_Keylist(phase)) <= Phase_Num_Params(phase));
         }
 
         Corrupt_Pointer_If_Debug(e->wordlist);
@@ -438,7 +437,10 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
     if (not Is_Frame(arg))
         return RAISE(Error_Bad_Make(REB_FRAME, arg));
 
-    VarList* exemplar = Make_Varlist_For_Action(
+    Option(const Symbol*) label = Cell_Frame_Label(arg);
+    Option(VarList*) coupling = Cell_Frame_Coupling(arg);
+
+    ParamList* exemplar = Make_Varlist_For_Action(
         arg,  // being used here as input (e.g. the ACTION!)
         lowest_stackindex,  // will weave in any refinements pushed
         nullptr  // no binder needed, not running any code
@@ -448,7 +450,7 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
     // put /REFINEMENTs in refinement slots (instead of true/false/null)
     // to preserve the order of execution.
 
-    return Init_Frame(OUT, exemplar, VAL_FRAME_LABEL(arg));
+    return Init_Frame(OUT, exemplar, label, coupling);
 }
 
 
@@ -542,7 +544,7 @@ DECLARE_NATIVE(adjunct_of)
         if (not Is_Frame_Details(v))
             return nullptr;
 
-        meta = ACT_ADJUNCT(VAL_ACTION(v));
+        meta = Phase_Adjunct(VAL_ACTION(v));
     }
     else {
         assert(Any_Context(v));
@@ -893,8 +895,11 @@ static Element* Copy_Any_Context(
     if (Is_Frame(context)) {  // handled specially [1]
         return Init_Frame(
             out,
-            Copy_Varlist_Extra_Managed(Cell_Varlist(context), 0, deep),
-            VAL_FRAME_LABEL(context)
+            cast(ParamList*,
+                Copy_Varlist_Extra_Managed(Cell_Varlist(context), 0, deep)
+            ),
+            Cell_Frame_Label(context),
+            Cell_Frame_Coupling(context)
         );
     }
 
@@ -1062,9 +1067,9 @@ DECLARE_GENERICS(Context)
         if (
             HEART_BYTE(var) == REB_FRAME
             and QUOTE_BYTE(var) == ANTIFORM_0
-            and Cell_Coupling(var) == UNCOUPLED
+            and Cell_Frame_Coupling(var) == UNCOUPLED
         ){
-            Tweak_Cell_Coupling(OUT, c);
+            Tweak_Cell_Frame_Coupling(OUT, c);
         }
 
         return OUT; }
@@ -1238,7 +1243,7 @@ DECLARE_GENERICS(Frame)
             // Can be answered for frames that have no execution phase, if
             // they were initialized with a label.
             //
-            Option(const Symbol*) label = VAL_FRAME_LABEL(frame);
+            Option(const Symbol*) label = Cell_Frame_Label(frame);
             if (label)
                 return Init_Word(OUT, unwrap label);
 
@@ -1256,11 +1261,11 @@ DECLARE_GENERICS(Frame)
             // GC'd if all the frames pointing to them were expired but still
             // referenced somewhere.
             //
-            return Init_Frame_Details(
+            return Init_Frame(
                 OUT,
                 VAL_FRAME_PHASE(frame),  // just a Phase*, no binding
-                VAL_FRAME_LABEL(frame),
-                Cell_Coupling(frame)  // e.g. where RETURN returns to
+                Cell_Frame_Label(frame),
+                Cell_Frame_Coupling(frame)  // e.g. where RETURN returns to
             );
         } */
 
@@ -1268,7 +1273,12 @@ DECLARE_GENERICS(Frame)
             return T_Context(level_, verb);
 
         if (prop == SYM_EXEMPLAR) {
-            Init_Frame_Details(frame, CTX_ARCHETYPE_PHASE(c), ANONYMOUS, nullptr);
+            Init_Frame(
+                frame,
+                Paramlist_Archetype_Phase(cast(ParamList*, c)),
+                ANONYMOUS,
+                NONMETHOD
+            );
             goto handle_reflect_action;
         }
 
@@ -1325,7 +1335,7 @@ DECLARE_GENERICS(Frame)
         Option(SymId) sym = Cell_Word_Id(property);
         switch (sym) {
           case SYM_COUPLING: {
-            Option(VarList*) coupling = Cell_Coupling(frame);
+            Option(VarList*) coupling = Cell_Frame_Coupling(frame);
             if (not coupling)  // NONMETHOD
                 return nullptr;
             if (unwrap coupling == UNCOUPLED)
@@ -1333,7 +1343,7 @@ DECLARE_GENERICS(Frame)
             return COPY(Varlist_Archetype(unwrap coupling)); }
 
           case SYM_LABEL: {
-            Option(const Symbol*) label = VAL_FRAME_LABEL(frame);
+            Option(const Symbol*) label = Cell_Frame_Label(frame);
             if (not label)
                 return nullptr;
             return Init_Word(OUT, unwrap label); }
@@ -1349,8 +1359,8 @@ DECLARE_GENERICS(Frame)
             if (not ACT_HAS_RETURN(details))
                 return nullptr;
 
-            assert(KEY_SYM(ACT_KEYS_HEAD(details)) == SYM_RETURN);
-            VarList* exemplar = ACT_EXEMPLAR(details);
+            assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+            ParamList* exemplar = Phase_Paramlist(details);
             Value* param = Varlist_Slots_Head(exemplar);
             assert(Is_Parameter(param));
             Copy_Cell(OUT, param);
@@ -1369,13 +1379,13 @@ DECLARE_GENERICS(Frame)
             // used, as the read-only frame is archetypal.
             //
             Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_FRAME);
-            Tweak_Cell_Context_Varlist(OUT, ACT_PARAMLIST(details));
-            Tweak_Cell_Coupling(OUT, Cell_Coupling(frame));
+            Tweak_Cell_Context_Varlist(OUT, Phase_Paramlist(details));
+            Tweak_Cell_Frame_Coupling(OUT, Cell_Frame_Coupling(frame));
             Tweak_Cell_Frame_Phase_Or_Label(OUT, details);
             return OUT; }
 
           case SYM_TYPES:
-            return Copy_Cell(OUT, Varlist_Archetype(ACT_EXEMPLAR(details)));
+            return Copy_Cell(OUT, Varlist_Archetype(Phase_Paramlist(details)));
 
           case SYM_FILE:
           case SYM_LINE: {
@@ -1465,14 +1475,14 @@ DECLARE_GENERICS(Frame)
         // so `underlying = VAL_ACTION(value)`
 
         Details* proxy = Make_Dispatch_Details(
-            ACT_PARAMLIST(original),  // not changing the interface
+            Phase_Paramlist(original),  // not changing the interface
             Details_Dispatcher(original),  // preserve in case original hijacked
             1  // copy doesn't need details of its own, just archetype
         );
 
-        Option(VarList*) adjunct = ACT_ADJUNCT(original);
-        assert(ACT_ADJUNCT(proxy) == nullptr);
-        Tweak_Action_Adjunct(proxy, adjunct);  // !!! Note: not a copy
+        Option(VarList*) adjunct = Phase_Adjunct(original);
+        assert(Phase_Adjunct(proxy) == nullptr);
+        Tweak_Phase_Adjunct(proxy, adjunct);  // !!! Note: not a copy
 
         // !!! Do this with masking?
 
@@ -1483,11 +1493,11 @@ DECLARE_GENERICS(Frame)
         Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(original));
         Set_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // restore invariant
 
-        return Init_Frame_Details(
+        return Init_Frame(
             OUT,
             proxy,
-            VAL_FRAME_LABEL(frame),  // keep symbol (if any) from original
-            Cell_Coupling(frame)  // same (e.g. RETURN to same frame)
+            Cell_Frame_Label(frame),  // keep symbol (if any) from original
+            Cell_Frame_Coupling(frame)  // same (e.g. RETURN to same frame)
         ); }
 
       default:
@@ -1514,7 +1524,7 @@ DECLARE_GENERICS(Frame)
         // paramlist, but the binding is different in the cell instances
         // in order to know where to "exit from".
         //
-        return Cell_Coupling(a) == Cell_Coupling(b);
+        return Cell_Frame_Coupling(a) == Cell_Frame_Coupling(b);
     }
 
     return false;
@@ -1557,7 +1567,7 @@ void MF_Frame(Molder* mo, const Cell* v, bool form) {
 
     Append_Ascii(mo->string, "#[frame! ");
 
-    Option(const Symbol*) label = VAL_FRAME_LABEL(v);
+    Option(const Symbol*) label = Cell_Frame_Label(v);
     if (label) {
         Append_Codepoint(mo->string, '"');
         Append_Spelling(mo->string, unwrap label);

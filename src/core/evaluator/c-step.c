@@ -459,7 +459,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(const Symbol*) label = Is_Word(CURRENT)
         ? Cell_Word_Symbol(CURRENT)
-        : VAL_FRAME_LABEL(CURRENT);
+        : Cell_Frame_Label(CURRENT);
 
     Begin_Action(sub, label, infix_mode);
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
@@ -545,7 +545,7 @@ Bounce Stepper_Executor(Level* L)
         Push_Action(sub, CURRENT);
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
         assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
-        Begin_Action(sub, VAL_FRAME_LABEL(CURRENT), infix_mode);
+        Begin_Action(sub, Cell_Frame_Label(CURRENT), infix_mode);
         Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
         goto process_action; }
@@ -727,7 +727,7 @@ Bounce Stepper_Executor(Level* L)
 
         Phase* action = VAL_ACTION(OUT);
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
-        Option(VarList*) coupling = Cell_Coupling(OUT);
+        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
         const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
 
         if (infix_mode) {
@@ -754,13 +754,13 @@ Bounce Stepper_Executor(Level* L)
             and Not_Level_At_End(L)  // can't do <end>, fallthru to error
             and not SPORADICALLY(10)  // checked builds sometimes bypass
         ){
-            Init_Frame_Details_Core(
+            Init_Frame(
                 CURRENT,
-                cast(Details*, action),  // !!! is this legitimate?
+                action,
                 label,
                 coupling
             );
-            Param* param = ACT_PARAM(action, 2);
+            Param* param = Phase_Param(action, 2);
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             switch (Cell_ParamClass(param)) {
@@ -895,7 +895,7 @@ Bounce Stepper_Executor(Level* L)
         Level* sub = Make_Action_Sublevel(L);
         sub->baseline.stack_base = STACK_BASE;  // refinements
 
-        Option(const Symbol*) label = VAL_FRAME_LABEL(OUT);
+        Option(const Symbol*) label = Cell_Frame_Label(OUT);
 
         Push_Action(sub, OUT);
         Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
@@ -1924,7 +1924,7 @@ Bounce Stepper_Executor(Level* L)
 
   blockscope {
     Phase* infixed = VAL_ACTION(unwrap L_next_gotten);
-    Array* paramlist = ACT_PARAMLIST(infixed);
+    ParamList* paramlist = Phase_Paramlist(infixed);
 
     if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {
         //
@@ -2054,7 +2054,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(const Symbol*) label = Is_Word(L_next)
         ? Cell_Word_Symbol(L_next)
-        : VAL_FRAME_LABEL(L_next);
+        : Cell_Frame_Label(L_next);
 
     Begin_Action(sub, label, infix_mode);
     Fetch_Next_In_Feed(L->feed);

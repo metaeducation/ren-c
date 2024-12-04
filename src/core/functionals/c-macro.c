@@ -105,7 +105,7 @@ Bounce Macro_Dispatcher(Level* const L)
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));
-    assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
+    assert(Key_Id(Phase_Keys_Head(PHASE)) == SYM_RETURN);
 
     Force_Level_Varlist_Managed(L);
 

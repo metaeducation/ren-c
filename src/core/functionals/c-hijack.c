@@ -136,7 +136,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 
     Push_Level_Erase_Out_If_State_0(out, L2);
     Push_Action(L2, run);
-    Begin_Action(L2, VAL_FRAME_LABEL(run), PREFIX_0);
+    Begin_Action(L2, Cell_Frame_Label(run), PREFIX_0);
 }
 
 
@@ -166,8 +166,8 @@ Bounce Hijacker_Dispatcher(Level* level_)
     // specalization etc. which was made *after* the hijack, the frame should
     // be compatible.  Check by seeing if the keylists are derived.
     //
-    KeyList* exemplar_keylist = Keylist_Of_Varlist(ACT_EXEMPLAR(hijacker));
-    KeyList* keylist = Keylist_Of_Varlist(cast(VarList*, LEVEL->varlist));
+    KeyList* exemplar_keylist = Phase_Keylist(hijacker);
+    KeyList* keylist = Phase_Keylist(Level_Phase(LEVEL));
     while (true) {
         if (keylist == exemplar_keylist) {
             Dispatcher* dispatcher = Details_Dispatcher(Phase_Details(hijacker));
@@ -267,7 +267,7 @@ DECLARE_NATIVE(hijack)
     return Init_Action(  // don't bother returning copy of original [3]
         OUT,
         victim_identity,
-        VAL_FRAME_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? [4]
-        Cell_Coupling(ARG(hijacker))
+        Cell_Frame_Label(ARG(victim)),  // MISC(victim_paramlist).meta? [4]
+        Cell_Frame_Coupling(ARG(hijacker))
     );
 }

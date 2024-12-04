@@ -121,7 +121,7 @@ Bounce Func_Dispatcher(Level* const L)
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
-    assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
+    assert(Key_Id(Phase_Keys_Head(PHASE)) == SYM_RETURN);
 
     Value* cell = Level_Arg(L, 1);
     assert(Is_Parameter(cell));
@@ -158,8 +158,8 @@ Bounce Func_Dispatcher(Level* const L)
     Details* phase = Level_Phase(L);
 
     if (ACT_HAS_RETURN(phase)) {
-        assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
-        const Param* param = ACT_PARAMS_HEAD(phase);
+        assert(Key_Id(Phase_Keys_Head(phase)) == SYM_RETURN);
+        const Param* param = Phase_Params_Head(phase);
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
             return FAIL(
@@ -233,7 +233,7 @@ Details* Make_Interpreted_Action_May_Fail(
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
     VarList* meta;
-    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &mkf_flags
@@ -245,8 +245,8 @@ Details* Make_Interpreted_Action_May_Fail(
         details_capacity  // we fill in details[0], caller fills any extra
     );
 
-    assert(ACT_ADJUNCT(details) == nullptr);
-    Tweak_Action_Adjunct(details, meta);
+    assert(Phase_Adjunct(details) == nullptr);
+    Tweak_Phase_Adjunct(details, meta);
 
     Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
@@ -368,10 +368,9 @@ DECLARE_NATIVE(endable_q)
     if (not Is_Frame(SPARE))
         return FAIL("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
-    VarList* ctx = Cell_Varlist(SPARE);
-    Phase* act = CTX_ARCHETYPE_PHASE(ctx);
+    Phase* phase = VAL_ACTION(SPARE);
 
-    Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
+    Param* param = Phase_Param(phase, VAL_WORD_INDEX(v));
     bool endable = Get_Parameter_Flag(param, ENDABLE);
 
     return Init_Logic(OUT, endable);
@@ -568,8 +567,8 @@ DECLARE_NATIVE(definitional_return)
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
     Details* target_phase = Level_Phase(target_level);
     assert(ACT_HAS_RETURN(target_phase));  // continuations can RETURN [1]
-    assert(KEY_SYM(ACT_KEYS_HEAD(target_phase)) == SYM_RETURN);
-    const Param* return_param = ACT_PARAMS_HEAD(target_phase);
+    assert(Key_Id(Phase_Keys_Head(target_phase)) == SYM_RETURN);
+    const Param* return_param = Phase_Params_Head(target_phase);
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]
@@ -615,11 +614,11 @@ DECLARE_NATIVE(definitional_return)
     ){
         Phase* redo_action = target_level->u.action.original;
         const Key* key_tail;
-        const Key* key = ACT_KEYS(&key_tail, redo_action);
+        const Key* key = Phase_Keys(&key_tail, redo_action);
         target_level->u.action.key = key;
         target_level->u.action.key_tail = key_tail;
-        Param* param = cast(Param*, Varlist_Slots_Head(ACT_EXEMPLAR(redo_action)));
-        target_level->u.action.param = ACT_PARAMS_HEAD(redo_action);
+        Param* param = cast(Param*, Varlist_Slots_Head(Phase_Paramlist(redo_action)));
+        target_level->u.action.param = Phase_Params_Head(redo_action);
         Value* arg = Level_Args_Head(target_level);
         target_level->u.action.arg = arg;
         for (; key != key_tail; ++key, ++arg, ++param) {
@@ -641,7 +640,7 @@ DECLARE_NATIVE(definitional_return)
 
         Restart_Action_Level(target_level);
         Push_Action(target_level, atom);
-        Begin_Action(target_level, VAL_FRAME_LABEL(atom), PREFIX_0);
+        Begin_Action(target_level, Cell_Frame_Label(atom), PREFIX_0);
 
         Release_Feed(target_level->feed);
         target_level->feed = return_level->feed;
@@ -659,7 +658,7 @@ DECLARE_NATIVE(definitional_return)
     // identify for that behavior.
     //
     Copy_Cell(SPARE, LIB(REDO));
-    Tweak_Cell_Coupling(  // comment said "may have changed"?
+    Tweak_Cell_Frame_Coupling(  // comment said "may have changed"?
         SPARE,
         Varlist_Of_Level_Force_Managed(target_level)
     );

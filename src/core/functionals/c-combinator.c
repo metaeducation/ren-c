@@ -232,7 +232,7 @@ DECLARE_NATIVE(combinator)
 
     VarList* meta;
     Flags flags = MKF_RETURN;
-    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         expanded_spec,
         &flags
@@ -261,7 +261,7 @@ DECLARE_NATIVE(combinator)
         relativized
     );
 
-    return Init_Frame_Details(  // not an antiform
+    return Init_Frame(  // not an antiform
         OUT,
         details,
         ANONYMOUS,
@@ -293,13 +293,13 @@ void Push_Parser_Sublevel(
     assert(Any_Series(input));
     assert(Is_Frame(parser));
 
-    VarList* ctx = Make_Varlist_For_Action(parser, TOP_INDEX, nullptr);
+    ParamList* ctx = Make_Varlist_For_Action(parser, TOP_INDEX, nullptr);
 
     const Key* remainder_key = Varlist_Key(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
     const Key* input_key = Varlist_Key(ctx, IDX_COMBINATOR_PARAM_INPUT);
     if (
-        KEY_SYM(remainder_key) != SYM_REMAINDER
-        or KEY_SYM(input_key) != SYM_INPUT
+        Key_Id(remainder_key) != SYM_REMAINDER
+        or Key_Id(input_key) != SYM_INPUT
     ){
         fail ("Push_Parser_Sublevel() only works on unadulterated combinators");
     }
@@ -308,7 +308,7 @@ void Push_Parser_Sublevel(
     Copy_Cell(Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_INPUT), input);
 
     DECLARE_ELEMENT (temp);  // can't overwrite spare
-    Init_Frame(temp, ctx, ANONYMOUS);
+    Init_Frame(temp, ctx, ANONYMOUS, NONMETHOD);
 
     bool pushed = Pushed_Continuation(
         out,
@@ -495,7 +495,7 @@ DECLARE_NATIVE(some_combinator)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Cell* loop_last = Alloc_Tail_Array(loops);
-    Init_Frame(loop_last, cast(VarList*, level_->varlist), CANON(SOME));
+    Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), NONMETHOD);
     Tweak_Cell_Frame_Phase(loop_last, Level_Phase(level_));  // need phase [1]
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
@@ -605,7 +605,7 @@ static bool Combinator_Param_Hook(
 
     UNUSED(REF(path));  // used by caller of hook
 
-    Option(SymId) symid = KEY_SYM(key);
+    Option(SymId) symid = Key_Id(key);
 
     if (symid == SYM_INPUT or symid == SYM_REMAINDER) {
         //
@@ -620,7 +620,7 @@ static bool Combinator_Param_Hook(
     // we need to calculate what variable slot this lines up with.  Can be
     // done based on the offset of the param from the head.
 
-    REBLEN offset = param - ACT_PARAMS_HEAD(VAL_ACTION(ARG(c)));
+    REBLEN offset = param - Phase_Params_Head(VAL_ACTION(ARG(c)));
     Value* var = Varlist_Slots_Head(s->ctx) + offset;
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
@@ -758,8 +758,8 @@ DECLARE_NATIVE(combinatorize)
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     Phase* act = VAL_ACTION(ARG(c));
-    Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
-    Option(VarList*) coupling = Cell_Coupling(ARG(c));
+    Option(const Symbol*) label = Cell_Frame_Label(ARG(c));
+    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(c));
 
     Value* rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
@@ -774,8 +774,9 @@ DECLARE_NATIVE(combinatorize)
     if (REF(path))
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
+    ParamList* paramlist = Make_Varlist_For_Action(ARG(c), TOP_INDEX, nullptr);
     CombinatorParamState s;
-    s.ctx = Make_Varlist_For_Action(ARG(c), TOP_INDEX, nullptr);
+    s.ctx = paramlist;
     s.level_ = level_;
     s.rule_end = nullptr;  // argument found by param hook
 
@@ -785,8 +786,8 @@ DECLARE_NATIVE(combinatorize)
     USED(REF(value));
 
     const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, act);
-    Param* param = ACT_PARAMS_HEAD(act);
+    const Key* key = Phase_Keys(&key_tail, act);
+    Param* param = Phase_Params_Head(act);
     for (; key != key_tail; ++key, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -802,8 +803,7 @@ DECLARE_NATIVE(combinatorize)
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
-    Quasify(Init_Frame(Array_At(pack, 0), s.ctx, label));  // meta-action
-    UNUSED(coupling);  // !!! should be put in there somewhere
+    Quasify(Init_Frame(Array_At(pack, 0), paramlist, label, coupling));
 
     Copy_Meta_Cell(Array_At(pack, 1), ARG(rules));  // advanced by param hook
 

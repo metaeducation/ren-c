@@ -362,12 +362,12 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         Level* L = Level_Of_Varlist_If_Running(c);
         if (L) {
             Tweak_Cell_Frame_Phase(out, Level_Phase(L));
-            Tweak_Cell_Coupling(out, Level_Coupling(L));
+            Tweak_Cell_Frame_Coupling(out, Level_Coupling(L));
         }
         else {
             // !!! Assume the canon FRAME! value in varlist[0] is useful?
             //
-            assert(not Cell_Coupling(out));  // canon, no binding
+            assert(not Cell_Frame_Coupling(out));  // canon, no binding
         }
     }
 

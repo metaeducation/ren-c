@@ -228,8 +228,8 @@ void Do_After_Action_Checks_Debug(Level* L) {
   #if CHECK_NATIVE_RETURNS
     Details* phase = Level_Phase(L);
     if (ACT_HAS_RETURN(phase) and Is_Stable(L->out)) {
-        const Param* param = ACT_PARAMS_HEAD(phase);
-        assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+        const Param* param = Phase_Params_Head(phase);
+        assert(Key_Id(Phase_Keys_Head(phase)) == SYM_RETURN);
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
             L, param, L->out

@@ -80,7 +80,7 @@ Details* Make_Native_Dispatch_Details(
 
     VarList* meta;
     Flags flags = MKF_RETURN;
-    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags  // native return types checked only if RUNTIME_CHECKS
@@ -108,7 +108,7 @@ Details* Make_Native_Dispatch_Details(
     if (native_type == NATIVE_COMBINATOR) {
         Details* native_details = details;
         details = Make_Dispatch_Details(
-            ACT_PARAMLIST(native_details),
+            Phase_Paramlist(native_details),
             &Combinator_Dispatcher,
             2  // IDX_COMBINATOR_MAX  // details array capacity
         );
@@ -122,14 +122,14 @@ Details* Make_Native_Dispatch_Details(
     // We want the meta information on the wrapped version if it's a
     // NATIVE-COMBINATOR.
     //
-    assert(ACT_ADJUNCT(details) == nullptr);
-    Tweak_Action_Adjunct(details, meta);
+    assert(Phase_Adjunct(details) == nullptr);
+    Tweak_Phase_Adjunct(details, meta);
 
     // Some features are not supported by intrinsics on their first argument,
     // because it would make them too complicated.
     //
     if (native_type == NATIVE_INTRINSIC) {
-        const Param* param = ACT_PARAM(details, 2);
+        const Param* param = Phase_Param(details, 2);
         assert(Not_Parameter_Flag(param, REFINEMENT));
         assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);
@@ -307,12 +307,12 @@ Source* Startup_Natives(const Element* boot_natives)
     if (not Is_Action(LIB(PARSE_REJECT)))
         panic (LIB(PARSE_REJECT));
 
-    Count num_append_args = ACT_NUM_PARAMS(VAL_ACTION(LIB(APPEND)));
-    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(LIB(INSERT))));
-    assert(num_append_args == ACT_NUM_PARAMS(VAL_ACTION(LIB(CHANGE))));
+    Count num_append_args = Phase_Num_Params(VAL_ACTION(LIB(APPEND)));
+    assert(num_append_args == Phase_Num_Params(VAL_ACTION(LIB(INSERT))));
+    assert(num_append_args == Phase_Num_Params(VAL_ACTION(LIB(CHANGE))));
 
-    Count num_find_args = ACT_NUM_PARAMS(VAL_ACTION(LIB(FIND)));
-    assert(num_find_args == ACT_NUM_PARAMS(VAL_ACTION(LIB(SELECT))));
+    Count num_find_args = Phase_Num_Params(VAL_ACTION(LIB(FIND)));
+    assert(num_find_args == Phase_Num_Params(VAL_ACTION(LIB(SELECT))));
   #endif
 
     return catalog;

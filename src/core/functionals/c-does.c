@@ -85,17 +85,16 @@ DECLARE_NATIVE(does)
 
     assert(!"DOES with types other than BLOCK! not currently active");  // [1]
 
-    VarList* exemplar = Make_Varlist_For_Action(
+    ParamList* exemplar = Make_Varlist_For_Action(
         LIB(EVALUATE),
         TOP_INDEX,  // lower stackindex would be if wanting to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
     );
     assert(Is_Node_Managed(exemplar));
 
-    assert(KEY_SYM(Varlist_Key(exemplar, 1)) == SYM_RETURN);
+    assert(Key_Id(Varlist_Key(exemplar, 1)) == SYM_RETURN);
     Copy_Cell(Varlist_Slot(exemplar, 2), source);
 
     const Symbol* label = CANON(EVALUATE);  // !!! Better answer?
-    Init_Frame(OUT, exemplar, label);
-    return Actionify(OUT);
+    return Init_Action(OUT, exemplar, label, NONMETHOD);
 }

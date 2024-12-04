@@ -85,10 +85,23 @@ typedef Context Let;
 // word's symbol in the context's KeyList, for a fast lookup to get to the
 // corresponding var.
 //
+// 1. Not all VarList* can be Phase, only ParamList*.  But it's sufficiently
+//    annoying to not be able to do "VarList things" with a ParamList that
+//    in order for ParamList to be passed to places both that accept Phase
+//    and VarList, something has to give.  This is the tradeoff made.
+//
+//    (Ideally ParamList could multiply inherit from VarList and Phase.  But
+//    that would require virtual inheritance so that two copies of the
+//    underlying Flex aren't included, and virtual inheritance breaks all
+//    sorts of things...including the requirement that the C++ build make
+//    standard layout types.)
+//
 #if CPLUSPLUS_11
+    struct Phase : public Flex {};
     struct KeyList : public Flex {};
-    struct VarList : public Flex {};  // Array is implementation detail
+    struct VarList : public Phase {};  // pragmatic inheritance decision [1]
 #else
+    typedef Flex Phase;
     typedef Flex KeyList;
     typedef Flex VarList;
 #endif

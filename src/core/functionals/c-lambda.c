@@ -230,7 +230,7 @@ DECLARE_NATIVE(lambda)
     }
 
     VarList* adjunct;  // reuses Pop_Paramlist() [1]
-    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+    ParamList* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct, STACK_BASE, MKF_MASK_NONE
     );
 
@@ -240,7 +240,7 @@ DECLARE_NATIVE(lambda)
         IDX_LAMBDA_MAX  // same as specialization, just 1 (for archetype)
     );
 
-    assert(ACT_ADJUNCT(details) == nullptr);
+    assert(Phase_Adjunct(details) == nullptr);
 
     Copy_Cell(Array_At(details, IDX_LAMBDA_BODY), body);
 

@@ -164,13 +164,12 @@ Bounce Makehook_List(Level* level_, Heart heart, Element* arg) {
             VarList* context = cast(VarList*, Cell_Varargs_Source(arg));
             Level* param_level = Level_Of_Varlist_May_Fail(context);
 
-            Value* param = Array_Head(
-                Varlist_Array(ACT_EXEMPLAR(Level_Phase(param_level)))
-            );
+            Phase* phase = Level_Phase(param_level);
+            Param* param;
             if (VAL_VARARGS_SIGNED_PARAM_INDEX(arg) < 0)
-                param += - VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
+                param = Phase_Param(phase, - VAL_VARARGS_SIGNED_PARAM_INDEX(arg));
             else
-                param += VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
+                param = Phase_Param(phase, VAL_VARARGS_SIGNED_PARAM_INDEX(arg));
 
             Init_Nulled(SPARE);
             if (Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))

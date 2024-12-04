@@ -61,7 +61,7 @@ bool Try_Catch_Break_Or_Continue(
 
     if (
         VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_BREAK))
-        and Cell_Coupling(label) == Level_Varlist(loop_level)
+        and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
         Init_Unreadable(out);  // caller must interpret breaking flag
@@ -71,7 +71,7 @@ bool Try_Catch_Break_Or_Continue(
 
     if (
         VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))
-        and Cell_Coupling(label) == Level_Varlist(loop_level)
+        and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
         Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
@@ -748,7 +748,7 @@ DECLARE_NATIVE(cycle)
     if (
         Is_Frame(label)
         and VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_STOP))
-        and Cell_Coupling(label) == Level_Varlist(LEVEL)
+        and Cell_Frame_Coupling(label) == Level_Varlist(LEVEL)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
 
@@ -1675,7 +1675,7 @@ DECLARE_NATIVE(map_each)
     Details* phase = cast(Details*, VAL_ACTION(map_action));
 
     Tweak_Level_Phase(LEVEL, phase);
-    Tweak_Level_Coupling(LEVEL, Cell_Coupling(map_action));
+    Tweak_Level_Coupling(LEVEL, Cell_Frame_Coupling(map_action));
 
     Dispatcher* dispatcher = Details_Dispatcher(phase);
     return (*dispatcher)(LEVEL);

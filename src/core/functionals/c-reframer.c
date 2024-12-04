@@ -102,13 +102,13 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
 
     Push_Action(L, action);
-    Begin_Action(L, VAL_FRAME_LABEL(action), PREFIX_0);
+    Begin_Action(L, Cell_Frame_Label(action), PREFIX_0);
 
     Array* varlist = L->varlist;  // Drop_Action() will null out L->varlist
 
     Set_Executor_Flag(ACTION, L, FULFILL_ONLY);  // Push_Action() won't allow
 
-    assert(Level_Coupling(L) == Cell_Coupling(action));  // no invocation
+    assert(Level_Coupling(L) == Cell_Frame_Coupling(action));  // no invocation
 
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
@@ -126,7 +126,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         L,
         Phase_Details(VAL_ACTION(action))
     );
-    Tweak_Level_Coupling(L, Cell_Coupling(action));
+    Tweak_Level_Coupling(L, Cell_Frame_Coupling(action));
 
     return L;  // may not be at end or thrown, e.g. (/x: does+ just y x = 'y)
 }
@@ -190,7 +190,8 @@ bool Init_Invokable_From_Feed_Throws(
     Move_Cell(action, out);
     Push_Lifeguard(action);
 
-    Option(const String*) label = VAL_FRAME_LABEL(action);
+    Option(const Symbol*) label = Cell_Frame_Label(action);
+    Option(VarList*) coupling = Cell_Frame_Coupling(action);
 
     Level* L = Make_Pushed_Level_From_Action_Feed_May_Throw(
         out,
@@ -210,11 +211,11 @@ bool Init_Invokable_From_Feed_Throws(
     // managed, but Push_Action() does not use ordinary series creation to
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
-    assert(Level_Coupling(L) == Cell_Coupling(action));
+    assert(Level_Coupling(L) == Cell_Frame_Coupling(action));
 
     assert(Not_Node_Managed(L->varlist));
 
-    Array* varlist = L->varlist;  // !!! still is fulfilling?
+    ParamList* varlist = Level_Varlist(L);  // !!! still is fulfilling?
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
     MISC(RunLevel, varlist) = nullptr;  // disconnect from f
     Drop_Level(L);
@@ -222,7 +223,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     Set_Node_Managed_Bit(varlist);  // can't use Manage_Flex
 
-    Init_Frame(out, cast(VarList*, varlist), label);
+    Init_Frame(out, varlist, label, coupling);
     return false;  // didn't throw
 }
 
@@ -249,7 +250,7 @@ bool Init_Frame_From_Feed_Throws(
         return false;
 
     assert(Is_Quoted(out));
-    VarList* exemplar = Make_Varlist_For_Action(
+    ParamList* exemplar = Make_Varlist_For_Action(
         LIB(IDENTITY),
         TOP_INDEX,
         nullptr
@@ -261,7 +262,7 @@ bool Init_Frame_From_Feed_Throws(
     // the identity alias?
     //
     Option(const Symbol*) label = nullptr;
-    Init_Frame(out, exemplar, label);
+    Init_Frame(out, exemplar, label, NONMETHOD);
     return false;
 }
 
@@ -312,7 +313,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     Move_Cell(arg, stable_SPARE);
 
     Tweak_Level_Phase(L, Phase_Details(VAL_ACTION(shim)));
-    Tweak_Level_Coupling(L, Cell_Coupling(shim));
+    Tweak_Level_Coupling(L, Cell_Frame_Coupling(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
 }
@@ -336,11 +337,11 @@ DECLARE_NATIVE(reframer)
     INCLUDE_PARAMS_OF_REFRAMER;
 
     Phase* shim = VAL_ACTION(ARG(shim));
-    Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(shim));
+    Option(const Symbol*) label = Cell_Frame_Label(ARG(shim));
 
     DECLARE_BINDER (binder);
     Construct_Binder(binder);
-    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(
+    ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         ARG(shim),
         STACK_BASE,
         binder
@@ -368,7 +369,7 @@ DECLARE_NATIVE(reframer)
     }
     else {
         param = Last_Unspecialized_Param(&key, shim);
-        param_index = param - ACT_PARAMS_HEAD(shim) + 1;
+        param_index = param - Phase_Params_Head(shim) + 1;
     }
 
     Destruct_Binder(binder);

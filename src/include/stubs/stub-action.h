@@ -148,14 +148,14 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 }
 
 
-#define Tweak_Cell_Frame_Details  Tweak_Cell_Node1
+#define Tweak_Cell_Frame_Identity  Tweak_Cell_Node1
 
-INLINE Details* CTX_ARCHETYPE_PHASE(VarList* c);
+INLINE Details* Paramlist_Archetype_Phase(ParamList* paramlist);
 
-INLINE Details* Phase_Details(Phase* action) {
-    if (Is_Stub_Details(action))
-        return cast(Details*, action);  // don't want hijacked archetype details
-    return CTX_ARCHETYPE_PHASE(x_cast(VarList*, action));  // always Phase_Details()
+INLINE Details* Phase_Details(Phase* p) {
+    if (Is_Stub_Details(p))
+        return cast(Details*, p);  // don't want hijacked archetype details
+    return Paramlist_Archetype_Phase(x_cast(ParamList*, p));  // always Phase_Details()
 }
 
 
@@ -189,33 +189,31 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 // before the place where the exemplar is to be found.
 //
 
-#define INODE_Exemplar_TYPE     VarList*
+#define INODE_Exemplar_TYPE     ParamList*
 #define INODE_Exemplar_CAST     CTX
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
 
-INLINE VarList* ACT_EXEMPLAR(Phase* a) {
+INLINE ParamList* Phase_Paramlist(Phase* a) {
     if (Is_Stub_Details(a))
         return INODE(Exemplar, a);
-    return x_cast(VarList*, a);
+    return x_cast(ParamList*, a);
 }
 
-// Note: This is a more optimized version of Keylist_Of_Varlist(ACT_EXEMPLAR(a)),
+// More optimized version of Keylist_Of_Varlist(Phase_Paramlist(a)),
 // and also forward declared.
 //
-#define ACT_KEYLIST(a) \
-    BONUS(KeyList, ACT_EXEMPLAR(a))
+#define Phase_Keylist(p) \
+    BONUS(KeyList, Phase_Paramlist(p))
 
-#define ACT_KEYS_HEAD(a) \
-    Flex_Head(const Key, ACT_KEYLIST(a))
+#define Phase_Keys_Head(p) \
+    Flex_Head(const Key, Phase_Keylist(p))
 
-#define ACT_KEYS(tail,a) \
-    Varlist_Keys((tail), ACT_EXEMPLAR(a))
+#define Phase_Keys(tail,p) \
+    Varlist_Keys((tail), Phase_Paramlist(p))
 
-#define ACT_PARAMLIST(a)            Varlist_Array(ACT_EXEMPLAR(a))
-
-INLINE Param* ACT_PARAMS_HEAD(Phase* a) {
-    Array* list = Varlist_Array(ACT_EXEMPLAR(a));
+INLINE Param* Phase_Params_Head(Phase* p) {
+    ParamList* list = Phase_Paramlist(p);
     return cast(Param*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
@@ -299,14 +297,17 @@ INLINE const Symbol* Key_Symbol(const Key* key)
 INLINE void Init_Key(Key* dest, const Symbol* symbol)
   { *dest = symbol; }
 
-#define KEY_SYM(key) \
+#define Key_Id(key) \
     Symbol_Id(Key_Symbol(key))
 
-#define ACT_KEY(a,n)            Varlist_Key(ACT_EXEMPLAR(a), (n))
-#define ACT_PARAM(a,n)          cast_PAR(Varlist_Slot(ACT_EXEMPLAR(a), (n)))
+#define Phase_Key(a,n) \
+    Varlist_Key(Phase_Paramlist(a), (n))
 
-#define ACT_NUM_PARAMS(a) \
-    Varlist_Len(ACT_EXEMPLAR(a))
+#define Phase_Param(a,n) \
+    cast(Param*, Varlist_Slot(Phase_Paramlist(a), (n)))
+
+#define Phase_Num_Params(a) \
+    Varlist_Len(Phase_Paramlist(a))
 
 
 //=//// META OBJECT ///////////////////////////////////////////////////////=//
@@ -315,14 +316,14 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 
-INLINE void Tweak_Action_Adjunct(Phase* a, Option(VarList*) adjunct) {
+INLINE void Tweak_Phase_Adjunct(Phase* a, Option(VarList*) adjunct) {
     if (Is_Stub_Details(a))
         MISC(DetailsAdjunct, a) = maybe adjunct;
     else
         MISC(VarlistAdjunct, a) = maybe adjunct;
 }
 
-INLINE Option(VarList*) ACT_ADJUNCT(Phase* a) {
+INLINE Option(VarList*) Phase_Adjunct(Phase* a) {
     if (Is_Stub_Details(a))
         return MISC(DetailsAdjunct, a);
     return MISC(VarlistAdjunct, a);
@@ -363,8 +364,8 @@ INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
     if (Phase_Details(derived) == Phase_Details(base))
         return true;  // Covers COPY + HIJACK cases (seemingly)
 
-    KeyList* keylist_test = ACT_KEYLIST(derived);
-    KeyList* keylist_base = ACT_KEYLIST(base);
+    KeyList* keylist_test = Phase_Keylist(derived);
+    KeyList* keylist_base = Phase_Keylist(base);
     while (true) {
         if (keylist_test == keylist_base)
             return true;
@@ -413,4 +414,4 @@ INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
 //
 
 #define ACT_HAS_RETURN(a) \
-    Get_Flavor_Flag(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
+    Get_Flavor_Flag(VARLIST, Phase_Paramlist(a), PARAMLIST_HAS_RETURN)

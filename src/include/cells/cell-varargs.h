@@ -189,27 +189,20 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
 
     Phase* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {
-        Array* paramlist = Varlist_Array(ACT_EXEMPLAR(phase));
         if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. infix
             if (key)
-                *key = ACT_KEY(
+                *key = Phase_Key(
                     phase,
                     (- VAL_VARARGS_SIGNED_PARAM_INDEX(v))
                 );
-            return cast(Param*, Array_At(
-                paramlist,
-                - VAL_VARARGS_SIGNED_PARAM_INDEX(v)
-            ));
+            return Phase_Param(
+                phase,
+                (- VAL_VARARGS_SIGNED_PARAM_INDEX(v))
+            );
         }
 
-        *key = ACT_KEY(
-            phase,
-            VAL_VARARGS_SIGNED_PARAM_INDEX(v)
-        );
-        return cast(Param*, Array_At(
-            paramlist,
-            VAL_VARARGS_SIGNED_PARAM_INDEX(v)
-        ));
+        *key = Phase_Key(phase, VAL_VARARGS_SIGNED_PARAM_INDEX(v));
+        return Phase_Param(phase, VAL_VARARGS_SIGNED_PARAM_INDEX(v));
     }
 
     if (key)

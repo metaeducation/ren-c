@@ -272,12 +272,12 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // could apply to any OBJECT!, but the binding cheaply makes it
         // a method for that object.)
         //
-        if (Cell_Coupling(v) != NONMETHOD) {
+        if (EXTRA(Any, v).node != nullptr) {
             if (CTX_TYPE(context) == REB_FRAME) {
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
                 if (L)  // comes from execution, not MAKE FRAME!
-                    assert(Cell_Coupling(v) == Level_Coupling(L)); */
+                    assert(Cell_Frame_Coupling(v) == Level_Coupling(L)); */
             }
             else
                 assert(Is_Stub_Let(Compact_Stub_From_Cell(v)));
@@ -428,7 +428,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     if (Is_Stub_Details(a)) {
         const Element* archetype = Array_Head(a);
         assert(Is_Frame(archetype));
-        assert(not Cell_Coupling(archetype));
+        assert(not Cell_Frame_Coupling(archetype));
 
         // These queueings cannot be done in Queue_Mark_Function_Deep
         // because of the potential for overflowing the C stack with calls
@@ -437,19 +437,18 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         Details* details = cast(Details*, VAL_ACTION(archetype));
         assert(Is_Node_Marked(details));
 
-        Array* list = Varlist_Array(ACT_EXEMPLAR(VAL_ACTION(archetype)));
-        assert(Is_Stub_Varlist(list));
+        assert(Is_Stub_Varlist(Phase_Paramlist(VAL_ACTION(archetype))));
     }
     else if (Is_Stub_Varlist(a)) {
         const Value* archetype = Varlist_Archetype(
             cast(VarList*, m_cast(Array*, a))
         );
 
-        // Currently only FRAME! archetypes use binding
+        // Currently only FRAME! archetypes use coupling
         //
         assert(Any_Context(archetype));
         assert(
-            Cell_Coupling(archetype) == NONMETHOD
+            EXTRA(Any, archetype).node == nullptr
             or VAL_TYPE(archetype) == REB_FRAME
         );
 

@@ -639,8 +639,8 @@ DECLARE_NATIVE(variadic_q)
     Phase* action = VAL_ACTION(ARG(frame));
 
     const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, action);
-    const Value* param = ACT_PARAMS_HEAD(action);
+    const Key* key = Phase_Keys(&key_tail, action);
+    const Value* param = Phase_Params_Head(action);
     for (; key != key_tail; ++param, ++key) {
         if (Get_Parameter_Flag(param, VARIADIC))
             return Init_Logic(OUT, true);

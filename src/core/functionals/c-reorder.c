@@ -80,7 +80,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
     Tweak_Level_Phase(L, Phase_Details(VAL_ACTION(reorderee)));
-    Tweak_Level_Coupling(L, Cell_Coupling(reorderee));
+    Tweak_Level_Coupling(L, Cell_Frame_Coupling(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
 }
@@ -102,13 +102,13 @@ DECLARE_NATIVE(reorder)
     INCLUDE_PARAMS_OF_REORDER;
 
     Phase* reorderee = VAL_ACTION(ARG(original));
-    Option(const Symbol*) label  = VAL_FRAME_LABEL(ARG(original));
+    Option(const Symbol*) label  = Cell_Frame_Label(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the
     // caller is to specify a complete ordering.
     //
-    VarList* exemplar = ACT_EXEMPLAR(reorderee);
+    ParamList* paramlist = Phase_Paramlist(reorderee);
 
     // We need a binder to efficiently map arguments to their position in
     // the parameters array, and track which parameters are mentioned.
@@ -118,8 +118,8 @@ DECLARE_NATIVE(reorder)
 
   blockscope {
     const Key* tail;
-    const Key* key = ACT_KEYS(&tail, reorderee);
-    const Param* param = ACT_PARAMS_HEAD(reorderee);
+    const Key* key = Phase_Keys(&tail, reorderee);
+    const Param* param = Phase_Params_Head(reorderee);
     REBLEN index = 1;
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))
@@ -185,13 +185,13 @@ DECLARE_NATIVE(reorder)
         if (ignore)
             continue;
 
-        const Value* param = ACT_PARAM(reorderee, index);
+        const Value* param = Phase_Param(reorderee, index);
         if (Get_Parameter_Flag(param, REFINEMENT) and Is_Parameter_Unconstrained(param)) {
             error = Error_User("Can't reorder refinements with no argument");
             goto cleanup_binder;
         }
 
-        Init_Any_Word_Bound(PUSH(), REB_WORD, symbol, exemplar, index);
+        Init_Any_Word_Bound(PUSH(), REB_WORD, symbol, paramlist, index);
     }
 
     // Make sure that all parameters that were mandatory got a place in the
@@ -199,8 +199,8 @@ DECLARE_NATIVE(reorder)
 
   cleanup_binder: {
     const Key* tail;
-    const Key* key = ACT_KEYS(&tail, reorderee);
-    const Param* param = ACT_PARAMS_HEAD(reorderee);
+    const Key* key = Phase_Keys(&tail, reorderee);
+    const Param* param = Phase_Params_Head(reorderee);
     REBLEN index = 1;
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))
@@ -228,7 +228,7 @@ DECLARE_NATIVE(reorder)
         return FAIL(unwrap error);
 
     Details* details = Make_Dispatch_Details(
-        Varlist_Array(exemplar),
+        paramlist,
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX
     );

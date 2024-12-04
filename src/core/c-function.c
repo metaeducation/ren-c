@@ -42,8 +42,8 @@ Source* Make_Action_Words_Array(Phase* act)
     StackIndex base = TOP_INDEX;
 
     const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, act);
-    Param* param = ACT_PARAMS_HEAD(act);
+    const Key* key = Phase_Keys(&key_tail, act);
+    Param* param = Phase_Params_Head(act);
     for (; key != key_tail; ++key, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -478,7 +478,7 @@ void Push_Keys_And_Holes_May_Fail(
 // duplicate parameters on the stack, and the checking via a binder is done
 // as part of this popping process.
 //
-Array* Pop_Paramlist_With_Adjunct_May_Fail(
+ParamList* Pop_Paramlist_With_Adjunct_May_Fail(
     Sink(VarList*) adjunct,
     StackIndex base,
     Flags flags
@@ -602,7 +602,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     UNUSED(adjunct);
 
-    return paramlist;
+    return cast(ParamList*, paramlist);
 }
 
 
@@ -638,7 +638,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 // You don't have to use it if you don't want to...and may overwrite the
 // variable.  But it won't be a void at the start.
 //
-Array* Make_Paramlist_Managed_May_Fail(
+ParamList* Make_Paramlist_Managed_May_Fail(
     VarList* *adjunct_out,
     const Element* spec,
     Flags *flags  // flags may be modified to carry additional information
@@ -655,7 +655,7 @@ Array* Make_Paramlist_Managed_May_Fail(
         spec,
         flags
     );
-    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+    ParamList* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         adjunct_out, base, *flags
     );
 
@@ -685,7 +685,7 @@ Array* Make_Paramlist_Managed_May_Fail(
 // identifies the pointer of the FRAME! to exit).
 //
 Details* Make_Dispatch_Details(
-    Array* paramlist,
+    ParamList* paramlist,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of Phase_Details (including archetype)
 ){
@@ -694,13 +694,13 @@ Details* Make_Dispatch_Details(
     assert(Is_Node_Managed(paramlist));
     assert(
         Not_Cell_Readable(Flex_Head(Value, paramlist))
-        or CTX_TYPE(cast(VarList*, paramlist)) == REB_FRAME
+        or CTX_TYPE(paramlist) == REB_FRAME
     );
 
     // !!! There used to be more validation code needed here when it was
     // possible to pass a specialization frame separately from a paramlist.
     // But once paramlists were separated out from the function's identity
-    // array (using Phase_Details() as the identity instead of ACT_KEYLIST())
+    // array (using Phase_Details() as the identity instead of Phase_Keylist())
     // then all the "shareable" information was glommed up minus redundancy
     // into the ACT_SPECIALTY().  Here's some of the residual checking, as
     // a placeholder for more useful consistency checking which might be done.
@@ -709,10 +709,10 @@ Details* Make_Dispatch_Details(
     KeyList* keylist = BONUS(KeyList, paramlist);
 
     Assert_Flex_Managed(keylist);  // paramlists/keylists, can be shared
-    assert(Flex_Used(keylist) + 1 == Array_Len(paramlist));
+    assert(Flex_Used(keylist) + 1 == Array_Len(Varlist_Array(paramlist)));
     if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
         const Key* key = Flex_At(const Key, keylist, 0);
-        assert(KEY_SYM(key) == SYM_RETURN);
+        assert(Key_Id(key) == SYM_RETURN);
         UNUSED(key);
     }
   }
@@ -733,8 +733,8 @@ Details* Make_Dispatch_Details(
         CELL_MASK_FRAME
             | CELL_FLAG_PROTECTED  // archetype cells should not be mutated
     );
-    Tweak_Cell_Frame_Details(archetype, details);
-    Tweak_Cell_Coupling(archetype, NONMETHOD);
+    Tweak_Cell_Frame_Identity(archetype, details);
+    Tweak_Cell_Frame_Coupling(archetype, NONMETHOD);
     Tweak_Cell_Frame_Phase_Or_Label(archetype, ANONYMOUS);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
@@ -742,7 +742,7 @@ Details* Make_Dispatch_Details(
     Tweak_Details_Dispatcher(cast(Details*, details), dispatcher);
     MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
-    INODE(Exemplar, details) = cast(VarList*, paramlist);
+    INODE(Exemplar, details) = paramlist;
 
     Phase* act = cast(Phase*, details);  // now it's a legitimate Action
 
@@ -750,7 +750,9 @@ Details* Make_Dispatch_Details(
     //
     Value* rootvar = Flex_Head(Value, paramlist);
     if (Not_Cell_Readable(rootvar))
-        Tweak_Frame_Varlist_Rootvar(paramlist, Phase_Details(act), UNBOUND);
+        Tweak_Frame_Varlist_Rootvar(
+            Varlist_Array(paramlist), Phase_Details(act), UNBOUND
+        );
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can
@@ -800,7 +802,7 @@ Details* Make_Dispatch_Details(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
 {
-    Option(VarList*) coupling = Cell_Coupling(action);
+    Option(VarList*) coupling = Cell_Frame_Coupling(action);
     Phase* a = VAL_ACTION(action);
 
     if (Is_Stub_Varlist(a)) {  // specialization or similar
@@ -944,10 +946,10 @@ DECLARE_NATIVE(couple)
     assert(Cell_Heart(action_or_frame) == REB_FRAME);
 
     if (Is_Nulled(coupling))
-        Tweak_Cell_Coupling(action_or_frame, nullptr);
+        Tweak_Cell_Frame_Coupling(action_or_frame, nullptr);
     else {
         assert(Is_Object(coupling) or Is_Frame(coupling));
-        Tweak_Cell_Coupling(action_or_frame, Cell_Varlist(coupling));
+        Tweak_Cell_Frame_Coupling(action_or_frame, Cell_Varlist(coupling));
     }
 
     return COPY(action_or_frame);
@@ -971,7 +973,7 @@ DECLARE_NATIVE(uncouple)
 
     assert(Cell_Heart(action_or_frame) == REB_FRAME);
 
-    Tweak_Cell_Coupling(action_or_frame, UNCOUPLED);
+    Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
 
     return COPY(action_or_frame);
 }

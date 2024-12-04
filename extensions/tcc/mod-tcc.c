@@ -297,7 +297,7 @@ DECLARE_NATIVE(make_native)
 
     VarList* meta;
     Flags flags = MKF_RETURN;
-    Array* paramlist = Make_Paramlist_Managed_May_Fail(
+    ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags
@@ -308,8 +308,8 @@ DECLARE_NATIVE(make_native)
         IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
     );
 
-    assert(ACT_ADJUNCT(details) == nullptr);
-    Tweak_Action_Adjunct(details, meta);
+    assert(Phase_Adjunct(details) == nullptr);
+    Tweak_Phase_Adjunct(details, meta);
 
     if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);

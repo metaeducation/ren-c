@@ -149,7 +149,7 @@ DECLARE_NATIVE(shove)
     Option(InfixMode) infix_mode;
     if (Is_Frame(shovee)) {
         if (not label)
-            label = VAL_FRAME_LABEL(shovee);
+            label = Cell_Frame_Label(shovee);
         infix_mode = Get_Cell_Infix_Mode(shovee);
     }
     else {
@@ -526,16 +526,16 @@ DECLARE_NATIVE(eval_free)
     MISC(RunLevel, varlist) = L;
 
     Details* phase = Level_Phase(L);
-    assert(phase == CTX_ARCHETYPE_PHASE(varlist));
-    Tweak_Level_Coupling(L, Cell_Coupling(frame));
+    assert(phase == Paramlist_Archetype_Phase(cast(ParamList*, varlist)));
+    Tweak_Level_Coupling(L, Cell_Frame_Coupling(frame));
 
     L->u.action.original = phase;  // VAL_ACTION() is gone...
 
-    L->u.action.key = ACT_KEYS(&L->u.action.key, phase);
-    L->u.action.param = ACT_PARAMS_HEAD(phase);
+    L->u.action.key = Phase_Keys(&L->u.action.key, phase);
+    L->u.action.param = Phase_Params_Head(phase);
     L->u.action.arg = L->rootvar + 1;
 
-    Begin_Action(L, VAL_FRAME_LABEL(frame), PREFIX_0);
+    Begin_Action(L, Cell_Frame_Label(frame), PREFIX_0);
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
@@ -615,24 +615,24 @@ DECLARE_NATIVE(redo)
         redo_action = VAL_ACTION(sibling);
 
         if (
-            ACT_KEYLIST(L->u.action.original)
-            != ACT_KEYLIST(redo_action)
+            Phase_Keylist(L->u.action.original)
+            != Phase_Keylist(redo_action)
         ){
             return FAIL(":OTHER passed to REDO has incompatible FRAME!");
         }
 
         Tweak_Level_Phase(L, Phase_Details(redo_action));
-        Tweak_Level_Coupling(L, Cell_Coupling(sibling));
+        Tweak_Level_Coupling(L, Cell_Frame_Coupling(sibling));
     }
     else {
         redo_action = VAL_FRAME_PHASE(restartee);
         Tweak_Level_Phase(L, VAL_FRAME_PHASE(restartee));
-        Tweak_Level_Coupling(L, Cell_Coupling(restartee));
+        Tweak_Level_Coupling(L, Cell_Frame_Coupling(restartee));
     }
 
     const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, redo_action);
-    Param* param = ACT_PARAMS_HEAD(redo_action);
+    const Key* key = Phase_Keys(&key_tail, redo_action);
+    Param* param = Phase_Params_Head(redo_action);
     Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param)) {  // must reset [2]
@@ -641,7 +641,7 @@ DECLARE_NATIVE(redo)
     }
 
     Copy_Cell(SPARE, LIB(REDO));  // label used for throw
-    Tweak_Cell_Coupling(SPARE, c);  // coupling has restartee as varlist
+    Tweak_Cell_Frame_Coupling(SPARE, c);  // coupling has restartee as varlist
 
     const Value* gather_args = LIB(NULL);
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
@@ -691,13 +691,18 @@ DECLARE_NATIVE(applique)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
+    ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // no binder needed
     );
     Manage_Flex(exemplar);
-    Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
+    Init_Frame(
+        frame,
+        exemplar,
+        Cell_Frame_Label(op),
+        Cell_Frame_Coupling(op)
+    );
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
@@ -790,13 +795,18 @@ DECLARE_NATIVE(apply)
     // 2. Binders cannot be held across evaluations at this time.  Do slow
     //    lookups for refinements, but this is something that needs rethinking.
 
-    VarList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
+    ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
         nullptr  // doesn't use a Binder [2]
     );
     Manage_Flex(exemplar); // Putting into a frame
-    Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
+    Init_Frame(
+        frame,
+        exemplar,
+        Cell_Frame_Label(op),
+        Cell_Frame_Coupling(op)
+    );
     Remember_Cell_Is_Lifeguard(frame);
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
@@ -849,7 +859,7 @@ DECLARE_NATIVE(apply)
             return FAIL(Error_Bad_Parameter_Raw(at));
 
         var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
-        param = ACT_PARAM(VAL_ACTION(op), unwrap index);
+        param = Phase_Param(VAL_ACTION(op), unwrap index);
 
         if (Is_Specialized(var))
             return FAIL(Error_Bad_Parameter_Raw(at));
@@ -913,7 +923,7 @@ DECLARE_NATIVE(apply)
     REBLEN index = VAL_UINT32(ARG(index));
 
     var = Varlist_Slot(Cell_Varlist(frame), index);
-    param = ACT_PARAM(VAL_ACTION(op), index);
+    param = Phase_Param(VAL_ACTION(op), index);
 
     goto copy_spare_to_var_in_frame;
 
@@ -1041,7 +1051,7 @@ DECLARE_NATIVE(run)
     Level* sub = Make_Action_Sublevel(level_);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     Push_Action(sub, action);
-    Begin_Action(sub, VAL_FRAME_LABEL(action), PREFIX_0);
+    Begin_Action(sub, Cell_Frame_Label(action), PREFIX_0);
 
     return DELEGATE_SUBLEVEL(sub);
 }

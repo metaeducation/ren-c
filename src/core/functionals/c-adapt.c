@@ -113,7 +113,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     Value* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
 
     Tweak_Level_Phase(L, Phase_Details(VAL_ACTION(adaptee)));
-    Tweak_Level_Coupling(L, Cell_Coupling(adaptee));
+    Tweak_Level_Coupling(L, Cell_Frame_Coupling(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding [3]
 }}
@@ -143,7 +143,7 @@ DECLARE_NATIVE(adapt)
     // there a better way to do that with phasing?
 
     Details* details = Make_Dispatch_Details(
-        ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
+        Phase_Paramlist(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
         &Adapter_Dispatcher,
         IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]
     );
@@ -172,5 +172,5 @@ DECLARE_NATIVE(adapt)
 
     Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
-    return Init_Action(OUT, details, VAL_FRAME_LABEL(adaptee), UNBOUND);
+    return Init_Action(OUT, details, Cell_Frame_Label(adaptee), UNBOUND);
 }

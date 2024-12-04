@@ -171,10 +171,10 @@ Bounce Cascader_Executor(Level* const L)
         sub,
         Phase_Details(VAL_ACTION(first))  // has varlist already [3]
     );
-    Tweak_Level_Coupling(sub, Cell_Coupling(first));
+    Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
 
     sub->u.action.original = VAL_ACTION(first);
-    Set_Action_Level_Label(sub, VAL_FRAME_LABEL(first));
+    Set_Action_Level_Label(sub, Cell_Frame_Label(first));
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
@@ -204,7 +204,7 @@ Bounce Cascader_Executor(Level* const L)
     Restart_Action_Level(sub);  // see notes
     Push_Action(sub, pipeline_at);
 
-    Begin_Action(sub, VAL_FRAME_LABEL(pipeline_at), PREFIX_0);
+    Begin_Action(sub, Cell_Frame_Label(pipeline_at), PREFIX_0);
 
     LEVEL_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
@@ -267,7 +267,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
     // sliver that includes the partials?
     //
     Details* details = Make_Dispatch_Details(
-        ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
+        Phase_Paramlist(VAL_ACTION(first)),  // same interface as first action
         &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity
     );
@@ -277,5 +277,5 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         pipeline
     );
 
-    return Init_Action(out, details, VAL_FRAME_LABEL(first), UNBOUND);
+    return Init_Action(out, details, Cell_Frame_Label(first), UNBOUND);
 }

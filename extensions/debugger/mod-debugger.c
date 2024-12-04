@@ -206,7 +206,7 @@ DECLARE_NATIVE(resume)
     // is no NATIVE() variant for extensions yet.  Extract from current level.)
     //
     DECLARE_VALUE (resume);
-    Init_Frame_Details(
+    Init_Frame(
         resume,
         Level_Phase(LEVEL),
         Level_Label(LEVEL),

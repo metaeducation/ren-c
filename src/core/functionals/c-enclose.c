@@ -85,7 +85,7 @@ enum {
 // 2. We're passing the built context to the `outer` function as a FRAME!,
 //    which that function can EVAL (or not).  But when the EVAL runs, we don't
 //    want it to run the encloser again--that would be an infinite loop.
-//    Update CTX_ARCHETYPE_PHASE() to point to the `inner` that was enclosed.
+//    Update Paramlist_Archetype_Phase() to point to the `inner` that was enclosed.
 //
 // 3. EVAL does not allow you to invoke a FRAME! that is currently running.
 //    we have to clear the FRAME_HAS_BEEN_INVOKED_FLAG to allow EVAL INNER.
@@ -136,7 +136,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
     Tweak_Cell_Frame_Phase(rootvar, Phase_Details(VAL_ACTION(inner)));
-    Tweak_Cell_Coupling(rootvar, Cell_Coupling(inner));
+    Tweak_Cell_Frame_Coupling(rootvar, Cell_Frame_Coupling(inner));
 
     assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
@@ -145,7 +145,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
     Element* rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]
-    Tweak_Cell_Frame_Phase_Or_Label(SPARE, VAL_FRAME_LABEL(inner));
+    Tweak_Cell_Frame_Phase_Or_Label(SPARE, Cell_Frame_Label(inner));
 
     assert(Is_Level_Dispatching(L));
     Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]
@@ -195,7 +195,7 @@ DECLARE_NATIVE(enclose)
     Value* outer = ARG(outer);
 
     Details* details = Make_Dispatch_Details(
-        ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner [1]
+        Phase_Paramlist(VAL_ACTION(inner)),  // same interface as inner [1]
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );
@@ -203,5 +203,5 @@ DECLARE_NATIVE(enclose)
     Copy_Cell(Details_At(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
-    return Init_Action(OUT, details, VAL_FRAME_LABEL(inner), UNBOUND);
+    return Init_Action(OUT, details, Cell_Frame_Label(inner), UNBOUND);
 }

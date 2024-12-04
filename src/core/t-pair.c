@@ -279,7 +279,8 @@ DECLARE_GENERICS(Pair)
     Value* frame = Init_Frame(
         OUT,
         Varlist_Of_Level_Force_Managed(level_),
-        Level_Label(level_)
+        Level_Label(level_),
+        Level_Coupling(level_)
     );
 
     Copy_Cell(ARG_N(1), x1);

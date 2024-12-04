@@ -69,7 +69,61 @@ INLINE Phase* VAL_ACTION(const Cell* v) {
 }
 
 #define VAL_ACTION_KEYLIST(v) \
-    ACT_KEYLIST(VAL_ACTION(v))
+    Phase_Keylist(VAL_ACTION(v))
+
+
+//=//// FRAME PHASE AND LABELING //////////////////////////////////////////=//
+//
+// A frame's phase is usually a pointer to the component action in effect for
+// a composite function (e.g. an ADAPT).
+//
+// But if the node where a phase would usually be found is a Symbol* then that
+// implies there isn't any special phase besides the action stored by the
+// archetype.  Hence the value cell is storing a name to be used with the
+// action when it is extracted from the frame.  That's why this works:
+//
+//     >> f: make frame! unrun :append
+//     >> label of f
+//     == append  ; useful in debug stack traces if you `eval f`
+//
+// So extraction of the phase has to be sensitive to this.
+//
+
+INLINE void Tweak_Cell_Frame_Phase(Cell* v, Details* phase) {
+    assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
+    Tweak_Cell_Frame_Phase_Or_Label(v, phase);
+}
+
+INLINE Details* VAL_FRAME_PHASE(const Cell* v) {
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
+    if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
+        return Paramlist_Archetype_Phase(Phase_Paramlist(VAL_ACTION(v)));
+    return cast(Details*, f);  // cell has its own phase, return it
+}
+
+INLINE bool IS_FRAME_PHASED(const Cell* v) {
+    assert(Cell_Heart(v) == REB_FRAME);
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
+    return f and not Is_Stub_Symbol(f);
+}
+
+// 1. Has a phase, so no label (maybe findable if running)
+//
+INLINE Option(const Symbol*) Cell_Frame_Label(const Cell* v) {
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
+    if (f and Is_Stub_Symbol(f))  // label in value
+        return cast(Symbol*, f);
+    return ANONYMOUS;  // [2]
+}
+
+INLINE void INIT_Cell_Frame_Label(
+    Cell* v,
+    Option(const String*) label
+){
+    assert(Cell_Heart(v) == REB_FRAME);
+    Assert_Cell_Writable(v);  // No label in archetype
+    Tweak_Cell_Frame_Phase_Or_Label(v, maybe label);
+}
 
 
 //=//// ACTION LABELING ///////////////////////////////////////////////////=//
@@ -91,33 +145,53 @@ INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
 }
 
 
-// A fully constructed action can reconstitute the ACTION! cell
-// that is its canon form from a single pointer...the cell sitting in
-// the 0 slot of the action's details.  That action has no binding and
-// no label.
+//=//// FRAME CELL INITIALIZATION /////////////////////////////////////////=//
 //
-INLINE Element* Init_Frame_Details_Core(
+// When a FRAME! is initialized, it isn't running, so it is able to store a
+// label in the slot that would usually hold the "current" Phase.
+//
+// 1. VarList inherits from Phase for the pragmatic reason that ParamList
+//    wants to be a Phase as well as inherit from VarList.  But all VarList
+//    are not actually ParamList--hence not always candidates for Phase.
+//    Since we can't use multiple inheritance to solve this, do a little
+//    prevention by stopping Init_Frame() calls with plain VarList.
+//
+
+INLINE Element* Init_Frame_Untracked(
     Init(Element) out,
-    Details* details,
+    Phase* identity,
     Option(const Symbol*) label,
     Option(VarList*) coupling
 ){
   #if RUNTIME_CHECKS
-    Extra_Init_Frame_Details_Checks_Debug(details);
+    if (Is_Stub_Details(identity))
+        Extra_Init_Frame_Details_Checks_Debug(cast(Details*, identity));
   #endif
-    Force_Flex_Managed(details);
+    Force_Flex_Managed(identity);
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
-    Tweak_Cell_Frame_Details(out, details);
+    Tweak_Cell_Frame_Identity(out, identity);
     Tweak_Cell_Frame_Phase_Or_Label(out, label);
-    Tweak_Cell_Coupling(out, coupling);
+    Tweak_Cell_Frame_Coupling(out, coupling);
 
     return out;
 }
 
-#define Init_Frame_Details(out,a,label,coupling) \
-    TRACK(Init_Frame_Details_Core((out), (a), (label), (coupling)))
+#if CPLUSPLUS_11
+    template<
+        typename T,
+        typename std::enable_if<std::is_same<T,VarList>::value>::type* = nullptr
+    >
+    void Init_Frame_Untracked(
+        Init(Element) out,
+        T* identity,  // mitigate awkward "VarList inherits Phase" [1]
+        Option(const Symbol*) label,
+        Option(VarList*) coupling
+    ) = delete;
+#endif
 
+#define Init_Frame(out,identity,label,coupling) \
+    TRACK(Init_Frame_Untracked((out), (identity), (label), (coupling)))
 
 
 //=//// ACTIONS (FRAME! Antiforms) ////////////////////////////////////////=//
@@ -142,8 +216,8 @@ INLINE Element* Init_Frame_Details_Core(
 //
 
 #define Init_Action(out,a,label,binding) \
-    Actionify(cast(Value*, Init_Frame_Details_Core( \
-        ensure(Sink(Value), TRACK(out)), (a), (label), (binding)) \
+    Actionify(cast(Value*, Init_Frame( \
+        ensure(Sink(Value), (out)), (a), (label), (binding)) \
     ))
 
 INLINE Value* Actionify(Need(Value*) v) {

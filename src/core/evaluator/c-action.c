@@ -570,7 +570,7 @@ Bounce Action_Executor(Level* L)
                 Lookahead_To_Sync_Infix_Defer_Flag(L->feed) and  // ensure got
                 (Get_Flavor_Flag(
                     VARLIST,
-                    ACT_PARAMLIST(VAL_ACTION(unwrap L->feed->gotten)),
+                    Phase_Paramlist(VAL_ACTION(unwrap L->feed->gotten)),
                     PARAMLIST_LITERAL_FIRST
                 ))
             ){
@@ -720,9 +720,9 @@ Bounce Action_Executor(Level* L)
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
-    KEY = ACT_KEYS(&KEY_TAIL, Level_Phase(L));
+    KEY = Phase_Keys(&KEY_TAIL, Level_Phase(L));
     ARG = Level_Args_Head(L);
-    PARAM = ACT_PARAMS_HEAD(Level_Phase(L));
+    PARAM = Phase_Params_Head(Level_Phase(L));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         assert(Is_Stable(ARG));  // implicitly asserts Ensure_Readable(ARG)
@@ -967,7 +967,7 @@ Bounce Action_Executor(Level* L)
     if (Is_Frame(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(LIB(REDO))  // REDO [1]
-            and Cell_Coupling(label) == cast(VarList*, L->varlist)
+            and Cell_Frame_Coupling(label) == cast(VarList*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
             assert(Is_Logic(OUT));  // signal if we want to gather args or not
@@ -1016,9 +1016,9 @@ void Push_Action(Level* L, const Cell* frame) {
     assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
 
     Phase* act = VAL_ACTION(frame);
-    Option(VarList*) coupling = Cell_Coupling(frame);
+    Option(VarList*) coupling = Cell_Frame_Coupling(frame);
 
-    Length num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
+    Length num_args = Phase_Num_Params(act);  // includes specialized + locals
 
     assert(L->varlist == nullptr);
 
@@ -1029,7 +1029,7 @@ void Push_Action(Level* L, const Cell* frame) {
         Alloc_Stub()
     ));
     MISC(RunLevel, s) = L;  // maps varlist back to L
-    BONUS(KeyList, s) = ACT_KEYLIST(act);
+    BONUS(KeyList, s) = Phase_Keylist(act);
     node_LINK(NextVirtual, s) = nullptr;
 
     if (not Try_Flex_Data_Alloc(
@@ -1055,7 +1055,7 @@ void Push_Action(Level* L, const Cell* frame) {
     Tweak_Cell_Context_Varlist(L->rootvar, L->varlist);
 
     Tweak_Cell_Frame_Phase(L->rootvar, Phase_Details(act));  // Level_Phase()
-    Tweak_Cell_Coupling(L->rootvar, coupling);  // Level_Coupling()
+    Tweak_Cell_Frame_Coupling(L->rootvar, coupling);  // Level_Coupling()
 
     s->content.dynamic.used = num_args + 1;
 
@@ -1079,8 +1079,8 @@ void Push_Action(Level* L, const Cell* frame) {
 
     ORIGINAL = act;
 
-    KEY = ACT_KEYS(&KEY_TAIL, ORIGINAL);
-    PARAM = ACT_PARAMS_HEAD(ORIGINAL);
+    KEY = Phase_Keys(&KEY_TAIL, ORIGINAL);
+    PARAM = Phase_Params_Head(ORIGINAL);
     ARG = L->rootvar + 1;
 }
 

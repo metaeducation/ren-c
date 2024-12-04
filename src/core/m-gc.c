@@ -794,7 +794,7 @@ static void Mark_Level(Level* L) {
 
     Details* phase = Level_Phase(L);
     const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, phase);
+    const Key* key = Phase_Keys(&key_tail, phase);
 
     if (
         Is_Level_Fulfilling(L)

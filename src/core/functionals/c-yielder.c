@@ -232,11 +232,11 @@ Bounce Yielder_Dispatcher(Level* const L)
     //    evaluation is not used, so we write it into SPARE (which must be
     //    preserved in suspension).
 
-    assert(Not_Cell_Readable(original_frame));
+    assert(Not_Cell_Readable(original_frame));  // each call needs [1]
     Force_Level_Varlist_Managed(L);
-    Init_Frame(original_frame, Level_Varlist(L), Level_Label(L));  // [1]
+    Init_Frame(original_frame, Level_Varlist(L), Level_Label(L), NONMETHOD);
 
-    assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_YIELD);
+    assert(Key_Id(Phase_Keys_Head(PHASE)) == SYM_YIELD);
     Value* cell = Level_Arg(L, 1);
     assert(Is_Nothing(cell));  // YIELD is a local, initialized to nothing
     Init_Action(
@@ -321,7 +321,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     const Key* key_tail;  // move this yielder call frame into old varlist [1]
     const Key* key = Varlist_Keys(&key_tail, original_varlist);
-    Param* param = ACT_PARAMS_HEAD(Level_Phase(L));
+    Param* param = Phase_Params_Head(Level_Phase(L));
     Value* dest = Varlist_Slots_Head(original_varlist);
     Value* src = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
@@ -415,7 +415,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     if (
         Is_Frame(label)
         and VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_YIELD))
-        and Cell_Coupling(label) == Level_Varlist(L)
+        and Cell_Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
         if (not Is_Meta_Of_Raised(OUT)) {  // THROW:FINAL value

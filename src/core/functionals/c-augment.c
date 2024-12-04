@@ -89,15 +89,17 @@ DECLARE_NATIVE(augment)
     Element* spec = cast(Element*, ARG(spec));
     Element* original = cast(Element*, ARG(original));
 
-    Option(const Symbol*) label = VAL_FRAME_LABEL(original);
+    Option(const Symbol*) label = Cell_Frame_Label(original);
+    Option(VarList*) coupling = Cell_Frame_Coupling(original);
+
     Phase* augmentee = VAL_ACTION(original);
 
     Flags flags = MKF_MASK_NONE;  // if original had no return, we don't add
 
   blockscope {  // copying the augmentee's parameter names and values [1]
     const Key* key_tail;
-    const Key* key = ACT_KEYS(&key_tail, augmentee);
-    const Param* param = ACT_PARAMS_HEAD(augmentee);
+    const Key* key = Phase_Keys(&key_tail, augmentee);
+    const Param* param = Phase_Params_Head(augmentee);
     for (; key != key_tail; ++key, ++param) {
         Init_Word(PUSH(), *key);
         Copy_Cell(PUSH(), param);
@@ -115,24 +117,19 @@ DECLARE_NATIVE(augment)
         &flags
     );
 
-    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(  // checks dups
+    ParamList* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(  // checks dups
         &adjunct, STACK_BASE, flags
     );
 
     assert(Not_Cell_Readable(Flex_Head(Value, paramlist)));
     Tweak_Frame_Varlist_Rootvar(  // no new phase needed, just use frame [3]
-        paramlist,
+        Varlist_Array(paramlist),
         Phase_Details(VAL_ACTION(ARG(original))),
-        Cell_Coupling(ARG(original))
+        Cell_Frame_Coupling(ARG(original))
     );
 
-    Phase* augmentated = cast(Phase*, paramlist);
+    assert(Phase_Adjunct(paramlist) == nullptr);
+    Tweak_Phase_Adjunct(paramlist, adjunct);
 
-    assert(ACT_ADJUNCT(augmentated) == nullptr);
-    Tweak_Action_Adjunct(augmentated, adjunct);
-
-    Init_Frame(OUT, cast(VarList*, paramlist), label);
-    Actionify(OUT);
-
-    return OUT;
+    return Init_Action(OUT, paramlist, label, coupling);
 }
