@@ -544,7 +544,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     // ANY-CONTEXT?  // see %sys-context.h
     //     VarList* varlist;  // has MISC.meta, LINK.keysource
-    //     Action* phase;  // used by FRAME! contexts, see %sys-frame.h
+    //     Phase* phase;  // used by FRAME! contexts, see %sys-frame.h
     //
     // ANY-SERIES?  // see %sys-series.h
     //     Flex* flex;  // vector/double-ended-queue of equal-sized items
@@ -556,7 +556,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     // VARARGS!  // see %sys-varargs.h
     //     REBINT signed_param_index;  // if negative, consider arg infix
-    //     Action* phase;  // where to look up parameter by its offset
+    //     Phase* phase;  // where to look up parameter by its offset
 
     struct CharacterPayloadStruct Character;
     struct IntegerPayloadStruct Integer;

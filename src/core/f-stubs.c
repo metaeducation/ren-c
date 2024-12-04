@@ -318,15 +318,15 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
 //
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
-void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
-    Value* archetype = Phase_Archetype(a);
+void Extra_Init_Frame_Details_Checks_Debug(Details* details) {
+    Value* archetype = Phase_Archetype(details);
 
     // Once it was true that `VAL_ACTION(archetype) == a`.  That's no longer
     // true, but there might be some checks that apply regarding the two?
     //
     UNUSED(archetype);
 
-    KeyList* keylist = ACT_KEYLIST(a);
+    KeyList* keylist = ACT_KEYLIST(details);
     assert(
         (keylist->leader.bits & FLEX_MASK_KEYLIST)
         == FLEX_MASK_KEYLIST
@@ -336,8 +336,8 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
     // though the interface may expand.
     //
     assert(
-        not ACT_ADJUNCT(a)
-        or Any_Context_Kind(CTX_TYPE(unwrap ACT_ADJUNCT(a)))
+        not ACT_ADJUNCT(details)
+        or Any_Context_Kind(CTX_TYPE(unwrap ACT_ADJUNCT(details)))
     );
 }
 

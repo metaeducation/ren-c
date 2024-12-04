@@ -80,11 +80,11 @@ void Startup_Type_Predicates(void)
     for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 1) {
         REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q);  // skip REB_T_RETURN
 
-        Phase* decider = Make_Decider_Intrinsic(n);  // n is decider_index
+        Details* details = Make_Decider_Intrinsic(n);  // n is decider_index
 
         Init_Action(
             Sink_Lib_Var(cast(SymId, id)),
-            decider,
+            details,
             Canon_Symbol(cast(SymId, id)),  // cached symbol for function
             UNBOUND
         );
@@ -300,15 +300,15 @@ void Set_Parameter_Spec(
         }
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
           handle_predicate: {
-            Action* action = VAL_ACTION(lookup);
+            Phase* action = VAL_ACTION(lookup);
             if (
                 Is_Stub_Details(action)
-                and Get_Phase_Flag(
-                    cast(Phase*, action), CAN_DISPATCH_AS_INTRINSIC
+                and Get_Details_Flag(
+                    cast(Details*, action), CAN_DISPATCH_AS_INTRINSIC
                 )
             ){
-                Phase* phase = cast(Phase*, action);
-                Dispatcher* dispatcher = Phase_Dispatcher(phase);
+                Details* details = cast(Details*, action);
+                Dispatcher* dispatcher = Details_Dispatcher(details);
                 if (dispatcher == &N_any_value_q)
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
                 else if (dispatcher == &N_any_atom_q)
@@ -321,8 +321,7 @@ void Set_Parameter_Spec(
                         continue;
                     }
 
-                    Details* details = Phase_Details(phase);
-                    assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
+                    assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
                     Value* index = Details_At(
                         details,

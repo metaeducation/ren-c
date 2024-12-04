@@ -26,13 +26,11 @@
 //
 
 #if CPLUSPLUS_11
-    struct Details : public Array {};
-    struct Action : public Flex {};
-    struct Phase : public Action {};
+    struct Phase : public Flex {};
+    struct Details : public Phase {};
 #else
-    typedef Array Details;
-    typedef Flex Action;
-    typedef Action Phase;
+    typedef Flex Phase;
+    typedef Phase Details;
 #endif
 
 
@@ -111,17 +109,17 @@ typedef enum {
     STUB_SUBCLASS_FLAG_31
 
 
-#define Set_Phase_Flag(p,name) \
-    Set_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
+#define Set_Details_Flag(p,name) \
+    Set_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
 
-#define Get_Phase_Flag(p,name) \
-    Get_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
+#define Get_Details_Flag(p,name) \
+    Get_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
 
-#define Clear_Phase_Flag(p,name) \
-    Clear_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
+#define Clear_Details_Flag(p,name) \
+    Clear_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
 
-#define Not_Phase_Flag(p,name) \
-    Not_Flavor_Flag(DETAILS, ensure(Phase*, (p)), name)
+#define Not_Details_Flag(p,name) \
+    Not_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
 
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always

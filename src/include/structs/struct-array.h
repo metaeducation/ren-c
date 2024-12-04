@@ -27,7 +27,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Several important types (Action* for function, VarList* for context) are
+// * Several important types (Phase* for function, VarList* for context) are
 //   actually stylized Arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other Flexes in their
 //   `->misc` and `->link` fields of the Flex Stub.

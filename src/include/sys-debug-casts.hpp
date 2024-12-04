@@ -567,17 +567,17 @@ struct cast_helper<V*,const VarList*> {
 };
 
 
-//=//// cast(Action*, ...) ////////////////////////////////////////////////=//
+//=//// cast(Phase*, ...) ////////////////////////////////////////////////=//
 
 template<typename V>  // [1]
-struct cast_helper<V*,Action*> {  // [2]
+struct cast_helper<V*,Phase*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
     template<typename V_ = V>
     static typename std::enable_if<
         std::is_same<V_, V>::value  // [3]
         and not std::is_const<V>::value,
-    Action*>::type convert(V_* p) {
+    Phase*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -585,7 +585,7 @@ struct cast_helper<V*,Action*> {  // [2]
                 or std::is_same<V0, Stub>::value
                 or std::is_same<V0, Flex>::value
                 or std::is_same<V0, Array>::value,
-            "downcast(Action*) works on [void* Byte* Node* Stub* Flex* Array*]"
+            "downcast(Phase*) works on [void* Byte* Node* Stub* Flex* Array*]"
         );
 
         if (not p)
@@ -619,19 +619,19 @@ struct cast_helper<V*,Action*> {  // [2]
             }
         }
 
-        return reinterpret_cast<Action*>(p);
+        return reinterpret_cast<Phase*>(p);
     }
 };
 
 template<typename V>
-struct cast_helper<V*,const Action*> {
+struct cast_helper<V*,const Phase*> {
     template<typename V_ = V>
     static constexpr typename std::enable_if<
         std::is_same<V_, V>::value,  // [3]
-    const Action*>::type convert(V_* p) {
+    const Phase*>::type convert(V_* p) {
         static_assert(
             not std::is_same<V_, V>::value,
-            "const Action* pointers currently shouldn't exist, can't cast to"
+            "const Phase* pointers currently shouldn't exist, can't cast to"
         );
         UNUSED(p);
         return nullptr;

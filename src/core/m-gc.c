@@ -758,7 +758,7 @@ static void Mark_Level(Level* L) {
     //    (skipped arguments picked up later are set to CELL_MASK_UNREADABLE).
 
     Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
-        cast(const Node**, m_cast(const Action**, &L->u.action.original))
+        cast(const Node**, m_cast(const Phase**, &L->u.action.original))
     );
 
   #if DEBUG_LEVEL_LABELS
@@ -792,7 +792,7 @@ static void Mark_Level(Level* L) {
         return;  // args and locals are poison/garbage
     }
 
-    Phase* phase = Level_Phase(L);
+    Details* phase = Level_Phase(L);
     const Key* key_tail;
     const Key* key = ACT_KEYS(&key_tail, phase);
 

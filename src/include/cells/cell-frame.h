@@ -59,13 +59,13 @@
 //
 
 
-INLINE Action* VAL_ACTION(const Cell* v) {
+INLINE Phase* VAL_ACTION(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     if (Not_Node_Readable(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
     Flex* f = cast(Flex*, Cell_Node1(v));  // maybe exemplar, maybe details
-    return cast(Action*, f);
+    return cast(Phase*, f);
 }
 
 #define VAL_ACTION_KEYLIST(v) \
@@ -98,17 +98,17 @@ INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
 //
 INLINE Element* Init_Frame_Details_Core(
     Init(Element) out,
-    Phase* a,
+    Details* details,
     Option(const Symbol*) label,
     Option(VarList*) coupling
 ){
   #if RUNTIME_CHECKS
-    Extra_Init_Frame_Details_Checks_Debug(a);
+    Extra_Init_Frame_Details_Checks_Debug(details);
   #endif
-    Force_Flex_Managed(a);
+    Force_Flex_Managed(details);
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
-    Tweak_Cell_Frame_Details(out, a);
+    Tweak_Cell_Frame_Details(out, details);
     Tweak_Cell_Frame_Phase_Or_Label(out, label);
     Tweak_Cell_Coupling(out, coupling);
 

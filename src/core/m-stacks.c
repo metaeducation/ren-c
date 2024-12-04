@@ -134,12 +134,11 @@ VarList* Get_Context_From_Top_Level(void)
     if (Is_Level_Fulfilling(L))
         return g_lib_context;  // e.g. API call from Action_Executor() itself
 
-    Phase* phase = Level_Phase(L);
+    Details* details = Level_Phase(L);
 
-    if (Not_Phase_Flag(phase, IS_NATIVE))  // e.g. API call in Func_Dispatcher()
-        return g_lib_context;
+    if (Not_Details_Flag(details, IS_NATIVE))
+        return g_lib_context;  // e.g. API call in Func_Dispatcher()
 
-    Details* details = Phase_Details(phase);
     Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
     return Cell_Varlist(context);
 }

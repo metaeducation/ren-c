@@ -88,7 +88,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         Corrupt_Pointer_If_Debug(e->ctx);
 
-        Action* act = VAL_ACTION(v);
+        Phase* act = VAL_ACTION(v);
         e->key = ACT_KEYS(&e->key_tail, act) - 1;
         e->var = nullptr;
         e->param = ACT_PARAMS_HEAD(act) - 1;
@@ -165,7 +165,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
         else {
             e->var = Varlist_Slots_Head(e->ctx) - 1;
 
-            Phase* phase;
+            Details* phase;
             if (not IS_FRAME_PHASED(v)) {  // not running, inputs visible [3]
                 phase = CTX_ARCHETYPE_PHASE(e->ctx);
 
@@ -189,7 +189,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                     e->visibility = VAR_VISIBILITY_INPUTS;
             }
 
-            Action* action = phase;
+            Phase* action = phase;
             e->param = ACT_PARAMS_HEAD(action) - 1;
             e->key = ACT_KEYS(&e->key_tail, action) - 1;
             assert(Flex_Used(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
@@ -590,7 +590,7 @@ DECLARE_NATIVE(set_adjunct)
 
     if (Is_Frame(v)) {
         if (Is_Frame_Details(v))
-            MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
+            MISC(DetailsAdjunct, Phase_Details(VAL_ACTION(v))) = ctx;
     }
     else
         MISC(VarlistAdjunct, Varlist_Array(Cell_Varlist(v))) = ctx;
@@ -1258,7 +1258,7 @@ DECLARE_GENERICS(Frame)
             //
             return Init_Frame_Details(
                 OUT,
-                VAL_FRAME_PHASE(frame),  // just a Action*, no binding
+                VAL_FRAME_PHASE(frame),  // just a Phase*, no binding
                 VAL_FRAME_LABEL(frame),
                 Cell_Coupling(frame)  // e.g. where RETURN returns to
             );
@@ -1318,8 +1318,8 @@ DECLARE_GENERICS(Frame)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));
 
-        Phase* act = cast(Phase*, VAL_ACTION(frame));
-        assert(Is_Stub_Details(act));
+        Details* details = cast(Details*, VAL_ACTION(frame));
+        assert(Is_Stub_Details(details));
 
         Value* property = ARG(property);
         Option(SymId) sym = Cell_Word_Id(property);
@@ -1339,18 +1339,18 @@ DECLARE_GENERICS(Frame)
             return Init_Word(OUT, unwrap label); }
 
           case SYM_WORDS:
-            return Init_Block(OUT, Make_Action_Words_Array(act));
+            return Init_Block(OUT, Make_Action_Words_Array(details));
 
           case SYM_BODY:
             Get_Maybe_Fake_Action_Body(OUT, frame);
             return OUT;
 
           case SYM_RETURN: {
-            if (not ACT_HAS_RETURN(act))
+            if (not ACT_HAS_RETURN(details))
                 return nullptr;
 
-            assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
-            VarList* exemplar = ACT_EXEMPLAR(act);
+            assert(KEY_SYM(ACT_KEYS_HEAD(details)) == SYM_RETURN);
+            VarList* exemplar = ACT_EXEMPLAR(details);
             Value* param = Varlist_Slots_Head(exemplar);
             assert(Is_Parameter(param));
             Copy_Cell(OUT, param);
@@ -1369,13 +1369,13 @@ DECLARE_GENERICS(Frame)
             // used, as the read-only frame is archetypal.
             //
             Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_FRAME);
-            Tweak_Cell_Context_Varlist(OUT, ACT_PARAMLIST(act));
+            Tweak_Cell_Context_Varlist(OUT, ACT_PARAMLIST(details));
             Tweak_Cell_Coupling(OUT, Cell_Coupling(frame));
-            Tweak_Cell_Frame_Phase_Or_Label(OUT, act);
+            Tweak_Cell_Frame_Phase_Or_Label(OUT, details);
             return OUT; }
 
           case SYM_TYPES:
-            return Copy_Cell(OUT, Varlist_Archetype(ACT_EXEMPLAR(act)));
+            return Copy_Cell(OUT, Varlist_Archetype(ACT_EXEMPLAR(details)));
 
           case SYM_FILE:
           case SYM_LINE: {
@@ -1384,11 +1384,14 @@ DECLARE_GENERICS(Frame)
             // is an Array with the file and line bits set, then that's what
             // it returns for FILE OF and LINE OF.
 
-            Details* details = Phase_Details(act);
-            if (Array_Len(details) < 1 or not Any_List(Array_Head(details)))
+            if (
+                Details_Max(details) < 1
+                or not Any_List(Details_At(details, 1))
+            ){
                 return nullptr;
+            }
 
-            const Source* a = Cell_Array(Array_Head(details));
+            const Source* a = Cell_Array(Details_At(details, 1));
             if (Not_Source_Flag(a, HAS_FILE_LINE))
                 return nullptr;
 
@@ -1453,7 +1456,7 @@ DECLARE_GENERICS(Frame)
             // !!! always "deep", allow it?
         }
 
-        Phase* act = cast(Phase*, VAL_ACTION(frame));
+        Details* original = cast(Details*, VAL_ACTION(frame));
 
         // If the function had code, then that code will be bound relative
         // to the original paramlist that's getting hijacked.  So when the
@@ -1461,23 +1464,23 @@ DECLARE_GENERICS(Frame)
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        Phase* proxy = Make_Phase(
-            ACT_PARAMLIST(act),  // not changing the interface
-            Phase_Dispatcher(act),  // preserve in case original hijacked
+        Details* proxy = Make_Dispatch_Details(
+            ACT_PARAMLIST(original),  // not changing the interface
+            Details_Dispatcher(original),  // preserve in case original hijacked
             1  // copy doesn't need details of its own, just archetype
         );
 
-        Option(VarList*) meta = ACT_ADJUNCT(act);
+        Option(VarList*) adjunct = ACT_ADJUNCT(original);
         assert(ACT_ADJUNCT(proxy) == nullptr);
-        Tweak_Action_Adjunct(proxy, meta);  // !!! Note: not a copy of meta
+        Tweak_Action_Adjunct(proxy, adjunct);  // !!! Note: not a copy
 
         // !!! Do this with masking?
 
-        if (Get_Phase_Flag(act, IS_NATIVE))
-            Set_Phase_Flag(proxy, IS_NATIVE);
+        if (Get_Details_Flag(original, IS_NATIVE))
+            Set_Details_Flag(proxy, IS_NATIVE);
 
         Clear_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // changing it
-        Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(act));
+        Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(original));
         Set_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // restore invariant
 
         return Init_Frame_Details(

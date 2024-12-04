@@ -52,7 +52,7 @@ Bounce Decider_Intrinsic_Dispatcher(Level* level_)
         return unwrap bounce;
 
     if (Get_Level_Flag(level_, DISPATCHING_INTRINSIC)) {
-        Details* details = Phase_Details(cast(Phase*, VAL_ACTION(SCRATCH)));
+        Details* details = cast(Details*, VAL_ACTION(SCRATCH));
         Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
         Decider* decider = g_instance_deciders[VAL_UINT8(index)];
         return LOGIC(decider(v));
@@ -62,8 +62,8 @@ Bounce Decider_Intrinsic_Dispatcher(Level* level_)
     if (check_datatype and not Is_Type_Block(v))
         return nullptr;
 
-    Details* details = Phase_Details(PHASE);
-    assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
+    Details* details = DETAILS;
+    assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
     Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
     Decider* decider = check_datatype
@@ -89,7 +89,7 @@ Bounce Decider_Intrinsic_Dispatcher(Level* level_)
 // 1. We need a spec for our typecheckers, which is really just `value` with
 //    no type restrictions as the argument.  !!! REVIEW: add help strings?
 //
-Phase* Make_Decider_Intrinsic(Offset decider_index) {
+Details* Make_Decider_Intrinsic(Offset decider_index) {
     DECLARE_ELEMENT (spec);  // simple spec [1]
     Source* spec_array = Make_Source_Managed(2);
     Set_Flex_Len(spec_array, 2);
@@ -106,21 +106,19 @@ Phase* Make_Decider_Intrinsic(Offset decider_index) {
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
-    Phase* typechecker = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         &Decider_Intrinsic_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
-    Set_Phase_Flag(typechecker, CAN_DISPATCH_AS_INTRINSIC);
-
-    Details* details = Phase_Details(typechecker);
+    Set_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC);
 
     Init_Integer(
         Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX),
         decider_index
     );
 
-    return typechecker;
+    return details;
 }
 
 
@@ -350,15 +348,15 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         switch (kind) {
           run_action: {
-            Action* action = VAL_ACTION(test);
+            Phase* action = VAL_ACTION(test);
 
             if (
                 Is_Stub_Details(action)
-                and Get_Phase_Flag(
-                    cast(Phase*, action), CAN_DISPATCH_AS_INTRINSIC
+                and Get_Details_Flag(
+                    cast(Details*, action), CAN_DISPATCH_AS_INTRINSIC
                 )
             ){
-                Dispatcher* dispatcher = Phase_Dispatcher(cast(Phase*, action));
+                Dispatcher* dispatcher = Details_Dispatcher(cast(Details*, action));
 
                 Copy_Cell(SCRATCH, test);  // intrinsic may need action
 

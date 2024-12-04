@@ -109,7 +109,7 @@ DECLARE_NATIVE(definitional_break)
 
     Init_Action(
         SPARE,  // use as label for throw
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
         CANON(BREAK),
         cast(VarList*, loop_level->varlist)
     );
@@ -153,7 +153,7 @@ DECLARE_NATIVE(definitional_continue)
 
     Init_Action(
         SPARE,  // use as label for throw
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
         CANON(CONTINUE),
         Varlist_Of_Level_Force_Managed(loop_level)
     );
@@ -174,7 +174,7 @@ void Add_Definitional_Break_Continue(
 
     Init_Action(
         Stub_Cell(let_continue),
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
         CANON(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to continue
     );
@@ -182,7 +182,7 @@ void Add_Definitional_Break_Continue(
     Let* let_break = Make_Let_Variable(CANON(BREAK), let_continue);
     Init_Action(
         Stub_Cell(let_break),
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
         CANON(BREAK),  // relabel (the BREAK in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
@@ -642,7 +642,7 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 
     Init_Action(
         SPARE,  // use as label for throw
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
         CANON(STOP),
         cast(VarList*, loop_level->varlist)
     );
@@ -665,7 +665,7 @@ void Add_Definitional_Stop(
     Let* let_stop = Make_Let_Variable(CANON(STOP), parent);
     Init_Action(
         Stub_Cell(let_stop),
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
         CANON(STOP),  // relabel (the STOP in lib is a dummy action)
         cast(VarList*, loop_level->varlist)  // what to stop
    );
@@ -1672,12 +1672,12 @@ DECLARE_NATIVE(map_each)
 
     const Value* map_action = LIB(MAP);
     assert(Is_Stub_Details(VAL_ACTION(map_action)));
-    Phase* phase = cast(Phase*, VAL_ACTION(map_action));
+    Details* phase = cast(Details*, VAL_ACTION(map_action));
 
     Tweak_Level_Phase(LEVEL, phase);
     Tweak_Level_Coupling(LEVEL, Cell_Coupling(map_action));
 
-    Dispatcher* dispatcher = Phase_Dispatcher(phase);
+    Dispatcher* dispatcher = Details_Dispatcher(phase);
     return (*dispatcher)(LEVEL);
 }
 

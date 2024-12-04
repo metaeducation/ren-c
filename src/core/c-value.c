@@ -188,7 +188,7 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Details", file, line);
         MF_Frame(
             mo,
-            Phase_Archetype(cast(Phase*, cast(Action*, m_cast(void*, p)))),
+            Phase_Archetype(cast(Details*, cast(Phase*, m_cast(void*, p)))),
             false
         );
         break;

@@ -940,7 +940,7 @@ const RebolNodeInternal* API_rebArgR(
     UNUSED(binding_ref);  // not used...should not be a variadic
 
     Level* L = TOP_LEVEL;
-    Phase* act = Level_Phase(L);
+    Details* act = Level_Phase(L);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
     // taking just a `const char*`, so this falsely is a variadic to get the
@@ -3098,9 +3098,8 @@ RebolContext* API_rebBindingFromLevel_internal(
     // Natives store the module they are part of in their Details array
     // under IDX_NATIVE_CONTEXT.  Extract that, and put it in NextVirtual.
     //
-    Phase* phase = Level_Phase(level);
-    assert(Get_Phase_Flag(phase, IS_NATIVE));
-    Details* details = Phase_Details(phase);
+    Details* details = Level_Phase(level);
+    assert(Get_Details_Flag(details, IS_NATIVE));
     Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
     node_LINK(NextVirtual, level->varlist) = Cell_Varlist(module);
 
@@ -3162,22 +3161,20 @@ enum {
 //
 Bounce Api_Function_Dispatcher(Level* const L)
 {
-    Phase* phase = Level_Phase(L);
-    assert(ACT_HAS_RETURN(phase));  // continuations can RETURN [1]
-    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
-    const Param* param = ACT_PARAMS_HEAD(phase);
+    Details* details = Level_Phase(L);
+    assert(ACT_HAS_RETURN(details));  // continuations can RETURN [1]
+    assert(KEY_SYM(ACT_KEYS_HEAD(details)) == SYM_RETURN);
+    const Param* param = ACT_PARAMS_HEAD(details);
 
     Value* cell = Level_Arg(L, 1);
     assert(Is_Parameter(cell));
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
         CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
-
-    Details* details = Phase_Details(Level_Phase(L));
 
     Value* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
     RebolActionCFunction* cfunc = cast(RebolActionCFunction*,
@@ -3258,16 +3255,15 @@ RebolValue* API_rebFunc(
         &mkf_flags
     );
 
-    Phase* a = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         &Api_Function_Dispatcher,
         IDX_API_ACTION_MAX
     );
 
-    assert(ACT_ADJUNCT(a) == nullptr);
-    Tweak_Action_Adjunct(a, adjunct);
+    assert(ACT_ADJUNCT(details) == nullptr);
+    Tweak_Action_Adjunct(details, adjunct);
 
-    Details* details = Phase_Details(a);
     Init_Handle_Cfunc(
         Details_At(details, IDX_API_ACTION_CFUNC),
         cast(CFunction*, cfunc)
@@ -3276,7 +3272,7 @@ RebolValue* API_rebFunc(
     Init_Block(holder, EMPTY_ARRAY);  // only care about binding GC safety
     BINDING(holder) = BINDING(spec);
 
-    return Init_Action(Alloc_Value(), a, ANONYMOUS, UNBOUND);
+    return Init_Action(Alloc_Value(), details, ANONYMOUS, UNBOUND);
 }
 
 

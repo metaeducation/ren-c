@@ -228,15 +228,13 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         {
         assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
 
-        Phase* a = cast(Phase*, VAL_ACTION(v));
-        assert(Is_Node_Marked(a));
+        Details* details = cast(Details*, VAL_ACTION(v));
+        assert(Is_Node_Marked(details));
         if (Extract_Cell_Frame_Phase_Or_Label(v))
             assert(Is_Node_Marked(Extract_Cell_Frame_Phase_Or_Label(v)));
 
-        Details* details = Phase_Details(a);
-
-        if (Get_Flavor_Flag(DETAILS, details, IS_NATIVE)) {
-            assert(Array_Len(details) >= IDX_NATIVE_MAX);
+        if (Get_Flavor_Flag(DETAILS, Details_Array(details), IS_NATIVE)) {
+            assert(Details_Max(details) >= IDX_NATIVE_MAX);
             Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
             assert(Any_Context(context));
         }
@@ -245,7 +243,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // that is consistent with the details itself.  That is no longer true
         // (by design), see HIJACK and COPY of actions for why.
         //
-        Value* archetype = Phase_Archetype(a);
+        Value* archetype = Phase_Archetype(details);
         assert(Is_Frame(archetype));
         break; }
 
@@ -302,7 +300,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_VARARGS: {
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
-        Action* phase = Extract_Cell_Varargs_Phase(v);
+        Phase* phase = Extract_Cell_Varargs_Phase(v);
         if (phase)  // null if came from MAKE VARARGS!
             assert(Is_Node_Marked(phase));
         break; }

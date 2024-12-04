@@ -245,8 +245,8 @@ static void cleanup(const Value* val)
 // simple COMPILE for just that one function, using default options.
 //
 Bounce Pending_Native_Dispatcher(Level* L) {
-    Phase* phase = Level_Phase(L);
-    assert(Phase_Dispatcher(phase) == &Pending_Native_Dispatcher);
+    Details* phase = Level_Phase(L);
+    assert(Details_Dispatcher(phase) == &Pending_Native_Dispatcher);
 
     Value* action = Phase_Archetype(phase);  // this action's value
 
@@ -268,7 +268,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
     // function pointer that lives in the TCC_State.  Use REDO, and don't
     // bother re-checking the argument types.
     //
-    assert(Phase_Dispatcher(phase) != &Pending_Native_Dispatcher);
+    assert(Details_Dispatcher(phase) != &Pending_Native_Dispatcher);
     return BOUNCE_REDO_UNCHECKED;
 }
 
@@ -302,16 +302,14 @@ DECLARE_NATIVE(make_native)
         spec,
         &flags
     );
-    Phase* native = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
         IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
     );
 
-    assert(ACT_ADJUNCT(native) == nullptr);
-    Tweak_Action_Adjunct(native, meta);
-
-    Details* details = Phase_Details(native);
+    assert(ACT_ADJUNCT(details) == nullptr);
+    Tweak_Action_Adjunct(details, meta);
 
     if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
@@ -355,8 +353,8 @@ DECLARE_NATIVE(make_native)
 
     Init_Blank(Details_At(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
 
-    Set_Phase_Flag(native, IS_NATIVE);
-    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
+    Set_Details_Flag(details, IS_NATIVE);
+    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }
 
 
@@ -383,7 +381,7 @@ DECLARE_NATIVE(compile_p)
 
     // The state is where the code for the TCC_OUTPUT_MEMORY natives will be
     // living.  It must be kept alive for as long as you expect the user
-    // natives to be able to execute, as this is where the Phase_Dispatcher()
+    // natives to be able to execute, as this is where the Details_Dispatcher()
     // pointers are located.  The GCC manages it via handle (see cleanup())
     //
     TCCState *state = tcc_new();
@@ -497,11 +495,11 @@ DECLARE_NATIVE(compile_p)
         const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (Is_Frame(item)) {
-                Action* action = VAL_ACTION(item);
+                Phase* action = VAL_ACTION(item);
                 if (
                     not Is_Stub_Details(action)
                     or (
-                        Phase_Dispatcher(cast(Phase*, action))
+                        Details_Dispatcher(cast(Details*, action))
                         != &Pending_Native_Dispatcher
                     )
                 ){
@@ -514,7 +512,7 @@ DECLARE_NATIVE(compile_p)
                 //
                 Copy_Cell(PUSH(), item);
 
-                Details* details = Phase_Details(cast(Phase*, VAL_ACTION(item)));
+                Details* details = cast(Details*, VAL_ACTION(item));
                 Value* source = Details_At(details, IDX_TCC_NATIVE_SOURCE);
                 Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
@@ -660,12 +658,11 @@ DECLARE_NATIVE(compile_p)
     // their function pointers to substitute in for the dispatcher.
     //
     while (TOP_INDEX != STACK_BASE) {
-        Action* action = VAL_ACTION(TOP);  // stack will hold action live
+        Phase* action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_Stub_Details(action));
-        Phase* phase = cast(Phase*, action);
-        assert(Phase_Dispatcher(phase) == &Pending_Native_Dispatcher);
+        Details* details = cast(Details*, action);
+        assert(Details_Dispatcher(details) == &Pending_Native_Dispatcher);
 
-        Details* details = Phase_Details(cast(Phase*, action));
         Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);
@@ -683,7 +680,7 @@ DECLARE_NATIVE(compile_p)
         assert(sizeof(c_func) == sizeof(void*));
         memcpy(&c_func, &sym, sizeof(c_func));
 
-        Tweak_Phase_Dispatcher(phase, c_func);
+        Tweak_Details_Dispatcher(details, c_func);
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_STATE), handle);
 
         DROP();

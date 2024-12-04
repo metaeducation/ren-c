@@ -123,7 +123,7 @@ DECLARE_NATIVE(copy)
     assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
     assert(Get_Executor_Flag(ACTION, sub, IN_DISPATCH));
 
-    Phase* phase = cast(Phase*, VAL_ACTION(LIB(COPY)));
+    Details* phase = cast(Details*, VAL_ACTION(LIB(COPY)));
     Tweak_Level_Phase(sub, phase);
     Tweak_Level_Coupling(sub, coupling);
 

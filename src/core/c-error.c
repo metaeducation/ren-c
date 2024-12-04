@@ -918,7 +918,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     USE_LEVEL_SHORTHANDS (L);
 
-    Action* action;
+    Phase* action;
     Value* arg;
     DECLARE_ATOM (label);
 

@@ -58,7 +58,7 @@
     PAYLOAD(Any, (v)).first.i
 
 #define Tweak_Cell_Varargs_Phase        Tweak_Cell_Node2
-#define Extract_Cell_Varargs_Phase(v)   cast(Action*, Cell_Node2(v))
+#define Extract_Cell_Varargs_Phase(v)   cast(Phase*, Cell_Node2(v))
 
 INLINE Array* Cell_Varargs_Source(const Cell* v) {
     assert(Cell_Heart(v) == REB_VARARGS);
@@ -187,7 +187,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
 
-    Action* phase = Extract_Cell_Varargs_Phase(v);
+    Phase* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {
         Array* paramlist = Varlist_Array(ACT_EXEMPLAR(phase));
         if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. infix

@@ -525,7 +525,7 @@ DECLARE_NATIVE(eval_free)
     Clear_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
     MISC(RunLevel, varlist) = L;
 
-    Phase* phase = Level_Phase(L);
+    Details* phase = Level_Phase(L);
     assert(phase == CTX_ARCHETYPE_PHASE(varlist));
     Tweak_Level_Coupling(L, Cell_Coupling(frame));
 
@@ -608,7 +608,7 @@ DECLARE_NATIVE(redo)
     if (L == nullptr)
         return FAIL("EVAL starts a not-currently running FRAME! (not REDO)");
 
-    Action* redo_action;
+    Phase* redo_action;
 
     if (REF(sibling)) {  // ensure frame compatibility [1]
         Value* sibling = ARG(sibling);
@@ -621,7 +621,7 @@ DECLARE_NATIVE(redo)
             return FAIL(":OTHER passed to REDO has incompatible FRAME!");
         }
 
-        Tweak_Level_Phase(L, ACT_IDENTITY(redo_action));
+        Tweak_Level_Phase(L, Phase_Details(redo_action));
         Tweak_Level_Coupling(L, Cell_Coupling(sibling));
     }
     else {

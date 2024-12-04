@@ -37,7 +37,7 @@
 //    a refinement.  Try doing this unsorted for now, as a bare minimum for
 //    making that work.
 //
-Source* Make_Action_Words_Array(Action* act)
+Source* Make_Action_Words_Array(Phase* act)
 {
     StackIndex base = TOP_INDEX;
 
@@ -474,7 +474,7 @@ void Push_Keys_And_Holes_May_Fail(
 //
 // Assuming the stack is formed in a rhythm of the parameter, a type spec
 // block, and a description...produce a paramlist in a state suitable to be
-// passed to Make_Phase().  It may not succeed because there could be
+// passed to Make_Dispatch_Details().  It may not succeed because there could be
 // duplicate parameters on the stack, and the checking via a binder is done
 // as part of this popping process.
 //
@@ -664,30 +664,27 @@ Array* Make_Paramlist_Managed_May_Fail(
 
 
 //
-//  Make_Phase: C
+//  Make_Dispatch_Details: C
 //
 // Create an archetypal form of a function, given C code implementing a
 // dispatcher that will be called by Eval_Core.  Dispatchers are of the form:
 //
-//     const Value* Dispatcher(Level* L) {...}
+//     Bounce Dispatcher(Level* L) {...}
 //
-// The REBACT returned is "archetypal" because individual cells which hold
-// the same REBACT may differ in a per-Cell "binding".  (This is how one
+// The `paramlist` argument is an interface structure that holds information
+// that can be shared between function instances.  It encodes information
+// about the parameter names and types and specialization data.
+//
+// Details are Arrays, but for reasons of inheritance are not exposed as such.
+// You need to use Details_At() to access the array items.  This is where they
+// can store information that will be available when the dispatcher is called.
+//
+// The Details returned is "archetypal" because individual cells which hold
+// the same Details may differ in a per-Cell "binding".  (This is how one
 // RETURN is distinguished from another--the binding data stored in the cell
 // identifies the pointer of the FRAME! to exit).
 //
-// Actions have an associated Array* of data, accessible via Phase_Details().
-// This is where they can store information that will be available when the
-// dispatcher is called.
-//
-// The `specialty` argument is an interface structure that holds information
-// that can be shared between function instances.  It encodes information
-// about the parameter names and types, specialization data, as well as any
-// partial specialization or parameter reordering instructions.  This can
-// take several forms depending on how much detail there is.  See the
-// ACT_SPECIALTY() definition for more information on how this is laid out.
-//
-Phase* Make_Phase(
+Details* Make_Dispatch_Details(
     Array* paramlist,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of Phase_Details (including archetype)
@@ -742,18 +739,18 @@ Phase* Make_Phase(
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
-    Tweak_Phase_Dispatcher(cast(Phase*, details), dispatcher);
+    Tweak_Details_Dispatcher(cast(Details*, details), dispatcher);
     MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
     INODE(Exemplar, details) = cast(VarList*, paramlist);
 
-    Action* act = cast(Action*, details);  // now it's a legitimate Action
+    Phase* act = cast(Phase*, details);  // now it's a legitimate Action
 
     // !!! We may have to initialize the exemplar rootvar.
     //
     Value* rootvar = Flex_Head(Value, paramlist);
     if (Not_Cell_Readable(rootvar))
-        Tweak_Frame_Varlist_Rootvar(paramlist, ACT_IDENTITY(act), UNBOUND);
+        Tweak_Frame_Varlist_Rootvar(paramlist, Phase_Details(act), UNBOUND);
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can
@@ -788,7 +785,7 @@ Phase* Make_Phase(
     Set_Flex_Flag(paramlist, FIXED_SIZE);
     Set_Flavor_Flag(VARLIST, paramlist, IMMUTABLE);
 
-    return ACT_IDENTITY(act);
+    return Phase_Details(act);
 }
 
 
@@ -804,7 +801,7 @@ Phase* Make_Phase(
 void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
 {
     Option(VarList*) coupling = Cell_Coupling(action);
-    Action* a = VAL_ACTION(action);
+    Phase* a = VAL_ACTION(action);
 
     if (Is_Stub_Varlist(a)) {  // specialization or similar
         Copy_Meta_Cell(out, action);
@@ -812,7 +809,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
         return;
     }
 
-    Phase* phase = cast(Phase*, a);
+    Details* details = cast(Details*, a);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
     // But if it does, bypass it to get to the "real" action implementation.
@@ -820,8 +817,8 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
     // !!! Should the source inject messages like {This is a hijacking} at
     // the top of the returned body?
     //
-    if (Phase_Dispatcher(phase) == &Hijacker_Dispatcher) {
-        Get_Maybe_Fake_Action_Body(out, ACT_ARCHETYPE(phase));
+    if (Details_Dispatcher(details) == &Hijacker_Dispatcher) {
+        Get_Maybe_Fake_Action_Body(out, ACT_ARCHETYPE(details));
         return;
     }
 
@@ -831,13 +828,12 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
     UNUSED(coupling);
 
     if (
-        Phase_Dispatcher(phase) == &Func_Dispatcher
-        or Phase_Dispatcher(phase) == &Lambda_Unoptimized_Dispatcher
+        Details_Dispatcher(details) == &Func_Dispatcher
+        or Details_Dispatcher(details) == &Lambda_Unoptimized_Dispatcher
     ){
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        Details* details = Phase_Details(phase);
         Cell* body = Array_At(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
@@ -847,7 +843,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
 
         Value* example;
         REBLEN real_body_index;
-        if (Phase_Dispatcher(phase) == &Lambda_Dispatcher) {
+        if (Details_Dispatcher(details) == &Lambda_Dispatcher) {
             example = nullptr;
             real_body_index = 0;
             UNUSED(real_body_index);

@@ -62,8 +62,8 @@ Bounce Lambda_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = Phase_Details(PHASE);
-    assert(Array_Len(details) == IDX_LAMBDA_MAX);
+    Details* details = DETAILS;
+    assert(Details_Max(details) == IDX_LAMBDA_MAX);
 
     const Value* block = Details_At(details, IDX_LAMBDA_BODY);
     assert(Is_Block(block));
@@ -100,7 +100,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = Phase_Details(PHASE);
+    Details* details = DETAILS;
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
@@ -218,7 +218,7 @@ DECLARE_NATIVE(lambda)
     }
 
     if (not optimizable) {
-        Phase* lambda = Make_Interpreted_Action_May_Fail(
+        Details* details = Make_Interpreted_Action_May_Fail(
             cast(Element*, spec),
             body,
             MKF_MASK_NONE,  // no MKF_RETURN
@@ -226,7 +226,7 @@ DECLARE_NATIVE(lambda)
             IDX_LAMBDA_MAX  // archetype and one array slot (will be filled)
         );
 
-        return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
+        return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
     }
 
     VarList* adjunct;  // reuses Pop_Paramlist() [1]
@@ -234,16 +234,15 @@ DECLARE_NATIVE(lambda)
         &adjunct, STACK_BASE, MKF_MASK_NONE
     );
 
-    Phase* lambda = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         &Lambda_Dispatcher,
         IDX_LAMBDA_MAX  // same as specialization, just 1 (for archetype)
     );
 
-    assert(ACT_ADJUNCT(lambda) == nullptr);
+    assert(ACT_ADJUNCT(details) == nullptr);
 
-    Details* details = Phase_Details(lambda);
     Copy_Cell(Array_At(details, IDX_LAMBDA_BODY), body);
 
-    return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

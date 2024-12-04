@@ -52,16 +52,16 @@ INLINE Error* Cell_Error(const Cell* c) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-INLINE void Tweak_Cell_Frame_Phase(Cell* v, Phase* phase) {
+INLINE void Tweak_Cell_Frame_Phase(Cell* v, Details* phase) {
     assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
     Tweak_Cell_Frame_Phase_Or_Label(v, phase);
 }
 
-INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
+INLINE Details* VAL_FRAME_PHASE(const Cell* v) {
     Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
     if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
         return CTX_ARCHETYPE_PHASE(Cell_Varlist(v));  // use archetype
-    return cast(Phase*, f);  // cell has its own phase, return it
+    return cast(Details*, f);  // cell has its own phase, return it
 }
 
 INLINE bool IS_FRAME_PHASED(const Cell* v) {

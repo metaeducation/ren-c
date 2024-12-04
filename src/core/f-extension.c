@@ -267,7 +267,7 @@ DECLARE_NATIVE(load_extension)
 //
 static Bounce Unloaded_Dispatcher(Level* level_)
 {
-    Phase* phase = Level_Phase(level_);
+    Details* phase = Level_Phase(level_);
     return FAIL(Error_Native_Unloaded_Raw(Phase_Archetype(phase)));
 }
 

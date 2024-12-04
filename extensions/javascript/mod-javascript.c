@@ -294,7 +294,7 @@ enum {
 };
 
 
-INLINE heapaddr_t Native_Id_For_Phase(Phase* p)
+INLINE heapaddr_t Native_Id_For_Details(Details* p)
   { return Heapaddr_From_Pointer(p); }
 
 Bounce JavaScript_Dispatcher(Level* L);
@@ -726,8 +726,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details* details = Phase_Details(PHASE);
-    bool is_awaiter = Cell_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER));
+    bool is_awaiter = Cell_Logic(Details_At(DETAILS, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
@@ -743,7 +742,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     else
         assert(not info or info->state == PROMISE_STATE_RUNNING);
 
-    heapaddr_t native_id = Native_Id_For_Action(Level_Phase(L));
+    heapaddr_t native_id = Native_Id_For_Details(Level_Phase(L));
 
     STATE = ST_JS_NATIVE_RUNNING;  // resolve/reject change this STATE byte
 
@@ -787,7 +786,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     //    It doesn't seem like it should have.  :-/  Added a check to see
     //    if the phase had a return or not.
 
-    Phase* phase = Level_Phase(L);
+    Details* phase = Level_Phase(L);
     if (ACT_HAS_RETURN(phase)) {  // !!! does it always have RETURN? [1]
         assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
         const Param* param = ACT_PARAMS_HEAD(phase);
@@ -858,19 +857,17 @@ DECLARE_NATIVE(js_native)
         &flags
     );
 
-    Phase* native = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
     );
-    Set_Phase_Flag(native, IS_NATIVE);
+    Set_Details_Flag(details, IS_NATIVE);
 
-    assert(ACT_ADJUNCT(native) == nullptr);  // should default to nullptr
-    Tweak_Action_Adjunct(native, meta);
+    assert(ACT_ADJUNCT(details) == nullptr);  // should default to nullptr
+    Tweak_Action_Adjunct(details, meta);
 
-    heapaddr_t native_id = Native_Id_For_Phase(native);
-
-    Details* details = Phase_Details(native);
+    heapaddr_t native_id = Native_Id_For_Details(details);
 
     if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_JS_NATIVE_SOURCE), source);
@@ -1004,12 +1001,12 @@ DECLARE_NATIVE(js_native)
     //
     Init_Handle_Cdata_Managed(
         Details_At(details, IDX_JS_NATIVE_OBJECT),
-        native,
+        details,
         1,  // 0 size interpreted to mean it's a C function
         &cleanup_js_object
     );
 
-    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }
 
 

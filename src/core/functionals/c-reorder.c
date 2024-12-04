@@ -74,12 +74,12 @@ enum {
 // tweak them (e.g. ADAPT).
 //
 Bounce Reorderer_Dispatcher(Level* L) {
-    Details* details = Phase_Details(Level_Phase(L));
-    assert(Array_Len(details) == IDX_REORDERER_MAX);
+    Details* details = Level_Phase(L);
+    assert(Details_Max(details) == IDX_REORDERER_MAX);
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
-    Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(reorderee)));
+    Tweak_Level_Phase(L, Phase_Details(VAL_ACTION(reorderee)));
     Tweak_Level_Coupling(L, Cell_Coupling(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
@@ -101,7 +101,7 @@ DECLARE_NATIVE(reorder)
 {
     INCLUDE_PARAMS_OF_REORDER;
 
-    Action* reorderee = VAL_ACTION(ARG(original));
+    Phase* reorderee = VAL_ACTION(ARG(original));
     Option(const Symbol*) label  = VAL_FRAME_LABEL(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering
@@ -227,15 +227,14 @@ DECLARE_NATIVE(reorder)
     if (error)  // *now* it's safe to fail...
         return FAIL(unwrap error);
 
-    Phase* reordered = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         Varlist_Array(exemplar),
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX
     );
 
-    Details* details = Phase_Details(reordered);
     Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(original));
 
     Drop_Data_Stack_To(STACK_BASE);  // !!! None of this works ATM.
-    return Init_Action(OUT, reordered, label, UNBOUND);
+    return Init_Action(OUT, details, label, UNBOUND);
 }

@@ -197,7 +197,7 @@ typedef Context Use;
 
 //=//// VARLIST_FLAG_PARAMLIST_LITERAL_FIRST ///////////////////////////////=//
 //
-// This is a calculated property, which is cached by Make_Phase().
+// This is a calculated property, which is cached by Make_Dispatch_Details().
 //
 // This is another cached property, needed because lookahead/lookback is done
 // so frequently, and it's quicker to check a bit on the function than to

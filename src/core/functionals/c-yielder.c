@@ -179,7 +179,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     assert(L == TOP_LEVEL);
 
-    Details* details = Phase_Details(PHASE);
+    Details* details = DETAILS;
 
     Value* body = Details_At(details, IDX_YIELDER_BODY);
     Value* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
@@ -241,7 +241,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Nothing(cell));  // YIELD is a local, initialized to nothing
     Init_Action(
         cell,
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
         CANON(YIELD),  // relabel (the YIELD in lib is a tripwire)
         Level_Varlist(L)  // extant YIELDs hold original varlist [1]
     );
@@ -489,7 +489,7 @@ DECLARE_NATIVE(yielder)
     Element* spec = cast(Element*, ARG(spec));
     Element* body = cast(Element*, ARG(body));
 
-    Phase* yielder = Make_Interpreted_Action_May_Fail(
+    Details* details = Make_Interpreted_Action_May_Fail(
         spec,
         body,  // relativized and put in Details array at IDX_YIELDER_BODY
         MKF_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
@@ -497,14 +497,12 @@ DECLARE_NATIVE(yielder)
         IDX_YIELDER_MAX  // details array capacity
     );
 
-    Details* details = Phase_Details(yielder);
-
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
     Init_Unreadable(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
     Init_Unreadable(Details_At(details, IDX_YIELDER_META_YIELDED));
 
-    return Init_Action(OUT, yielder, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }
 
 
@@ -593,10 +591,8 @@ DECLARE_NATIVE(definitional_yield)
     if (LEVEL_STATE_BYTE(yielder_level) != ST_YIELDER_RUNNING_BODY)
         return FAIL("YIELD called when body of bound yielder is not running");
 
-    Phase* yielder_phase = Level_Phase(yielder_level);
-    assert(Phase_Dispatcher(yielder_phase) == &Yielder_Dispatcher);
-
-    Details* yielder_details = Phase_Details(yielder_phase);
+    Details* yielder_details = Level_Phase(yielder_level);
+    assert(Details_Dispatcher(yielder_details) == &Yielder_Dispatcher);
 
     Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
     assert(Not_Cell_Readable(plug));
@@ -615,7 +611,7 @@ DECLARE_NATIVE(definitional_yield)
     if (Is_Meta_Of_Raised(meta) or REF(final)) {  // not resumable, throw
         Init_Action(
             SPARE,  // use as label for throw
-            ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
+            Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );

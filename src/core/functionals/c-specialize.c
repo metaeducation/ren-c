@@ -58,13 +58,13 @@
 // frame if needed.
 //
 VarList* Make_Varlist_For_Action_Push_Partials(
-    const Value* action,  // need ->binding, so can't just be a Action*
+    const Value* action,  // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,  // caller can add refinements
     Option(Binder*) binder
 ){
     StackIndex highest_stackindex = TOP_INDEX;
 
-    Action* act = VAL_ACTION(action);
+    Phase* act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for Varlist_Archetype()
     Array* a = Make_Array_Core(FLEX_MASK_VARLIST, num_slots);
@@ -74,7 +74,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
 
     Tweak_Frame_Varlist_Rootvar(
         a,
-        ACT_IDENTITY(VAL_ACTION(action)),
+        Phase_Details(VAL_ACTION(action)),
         Cell_Coupling(action)
     );
 
@@ -160,7 +160,7 @@ VarList* Make_Varlist_For_Action_Push_Partials(
 // and not absolute.
 //
 VarList* Make_Varlist_For_Action(
-    const Value* action, // need ->binding, so can't just be a Action*
+    const Value* action, // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,
     Option(Binder*) binder
 ){
@@ -201,7 +201,7 @@ bool Specialize_Action_Throws(
     if (def)
         Construct_Binder_Core(binder);  // conditional, must use _Core()
 
-    Action* unspecialized = VAL_ACTION(specializee);
+    Phase* unspecialized = VAL_ACTION(specializee);
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
@@ -407,7 +407,7 @@ DECLARE_NATIVE(specialize)
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //
-const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Action* act)
+const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 {
     const Key* key_tail;
     const Key* key = ACT_KEYS(&key_tail, act);
@@ -431,7 +431,7 @@ const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Action* act)
 // !!! This is very inefficient, and the parameter class should be cached
 // in the frame somehow.
 //
-Option(ParamClass) Get_First_Param_Literal_Class(Action* action) {
+Option(ParamClass) Get_First_Param_Literal_Class(Phase* action) {
     Array* paramlist = ACT_PARAMLIST(action);
     if (Not_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
         return PARAMCLASS_0;
@@ -453,7 +453,7 @@ Option(ParamClass) Get_First_Param_Literal_Class(Action* action) {
 //
 // See notes on First_Unspecialized_Param() regarding complexity
 //
-const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Action* act)
+const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 {
     const Key* key;
     const Key* key_head = ACT_KEYS(&key, act);
@@ -480,7 +480,7 @@ const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Action* act)
 //
 Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 {
-    Phase* phase = Level_Phase(L);
+    Details* phase = Level_Phase(L);
     const Param* param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
         *(unwrap param_out) = param;
@@ -498,13 +498,13 @@ Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 //
 // Leaves details blank, and lets you specify the dispatcher.
 //
-Phase* Alloc_Action_From_Exemplar(
+Details* Alloc_Action_From_Exemplar(
     VarList* exemplar,
     Option(const Symbol*) label,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Action* unspecialized = CTX_ARCHETYPE_PHASE(exemplar);
+    Phase* unspecialized = CTX_ARCHETYPE_PHASE(exemplar);
 
     const Key* tail;
     const Key* key = ACT_KEYS(&tail, unspecialized);
@@ -533,11 +533,11 @@ Phase* Alloc_Action_From_Exemplar(
 
     // This code parallels Specialize_Action_Throws(), see comments there
 
-    Phase* action = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         Varlist_Array(exemplar),
         dispatcher,
         details_capacity
     );
 
-    return action;
+    return details;
 }

@@ -636,7 +636,7 @@ DECLARE_NATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    Action* action = VAL_ACTION(ARG(frame));
+    Phase* action = VAL_ACTION(ARG(frame));
 
     const Key* key_tail;
     const Key* key = ACT_KEYS(&key_tail, action);

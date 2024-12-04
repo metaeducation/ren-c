@@ -367,7 +367,7 @@ Option(Stub*) Get_Word_Container(
                 CTX_TYPE(vlist) == REB_FRAME
                 and binding  // word has a cache for if it's in an action frame
                 and Action_Is_Base_Of(
-                    cast(Action*, binding),
+                    cast(Phase*, binding),
                     CTX_ARCHETYPE_PHASE(vlist)
                 )
             ){
@@ -924,7 +924,7 @@ void Clonify_And_Bind_Relative(
     Flags flags,
     bool deeply,
     Option(Binder*) binder,
-    Option(Action*) relative
+    Option(Phase*) relative
 ){
     assert(flags & NODE_FLAG_MANAGED);
 
@@ -1020,7 +1020,7 @@ void Clonify_And_Bind_Relative(
 //
 Source* Copy_And_Bind_Relative_Deep_Managed(
     const Value* body,
-    Phase* relative,
+    Details* relative,
     enum Reb_Var_Visibility visibility
 ){
     DECLARE_BINDER (binder);

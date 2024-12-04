@@ -117,8 +117,8 @@ Bounce Encloser_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = Phase_Details(PHASE);
-    assert(Array_Len(details) == IDX_ENCLOSER_MAX);
+    Details* details = DETAILS;
+    assert(Details_Max(details) == IDX_ENCLOSER_MAX);
 
     Value* inner = Details_At(details, IDX_ENCLOSER_INNER);
     assert(Is_Frame(inner));  // same args as f
@@ -135,7 +135,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     Set_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
-    Tweak_Cell_Frame_Phase(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
+    Tweak_Cell_Frame_Phase(rootvar, Phase_Details(VAL_ACTION(inner)));
     Tweak_Cell_Coupling(rootvar, Cell_Coupling(inner));
 
     assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
@@ -184,25 +184,24 @@ Bounce Encloser_Dispatcher(Level* const L)
 //  ]
 //
 DECLARE_NATIVE(enclose)
+//
+// 1. The ENCLOSE'd function will have the same arguments and refinements, so
+//    it can reuse the interface of INNER.  But note that the return result
+//    will be typed according to the result of OUTER.
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
     Value* inner = ARG(inner);
     Value* outer = ARG(outer);
 
-    // The new function has the same interface as `inner`
-    //
-    // !!! Return result may differ; similar issue comes up with CHAIN
-    //
-    Phase* enclosure = Make_Phase(
-        ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner
+    Details* details = Make_Dispatch_Details(
+        ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner [1]
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );
 
-    Details* details = Phase_Details(enclosure);
     Copy_Cell(Details_At(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
-    return Init_Action(OUT, enclosure, VAL_FRAME_LABEL(inner), UNBOUND);
+    return Init_Action(OUT, details, VAL_FRAME_LABEL(inner), UNBOUND);
 }

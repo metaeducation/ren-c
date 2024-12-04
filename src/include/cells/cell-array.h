@@ -151,7 +151,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 
 INLINE Element* Init_Relative_Block_At(
     Init(Element) out,
-    Action* action,  // action to which array has relative bindings
+    Phase* action,  // action to which array has relative bindings
     Array* array,
     REBLEN index
 ){

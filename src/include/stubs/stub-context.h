@@ -59,7 +59,7 @@
     STUB_SUBCLASS_FLAG_24
 
 
-// VarList* properties (note: shares BONUS_KEYSOURCE() with Action*)
+// VarList* properties (note: shares BONUS_KEYSOURCE() with Phase*)
 //
 // Note: MODULE! contexts depend on a property stored in the META field, which
 // is another object's-worth of data *about* the module's contents (e.g. the
@@ -113,10 +113,10 @@ INLINE Heart CTX_TYPE(Context* c) {
 INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
   { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutability
 
-INLINE Phase* CTX_ARCHETYPE_PHASE(VarList* c) {
+INLINE Details* CTX_ARCHETYPE_PHASE(VarList* c) {
     const Value* archetype = Varlist_Archetype(c);
     assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
-    return cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
+    return cast(Details*, Extract_Cell_Frame_Phase_Or_Label(archetype));
 }
 
 
@@ -186,7 +186,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 
 INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
     Array* varlist,
-    Phase* phase,
+    Details* phase,
     Option(VarList*) coupling
 ){
     Cell* rootvar = Array_Head(varlist);

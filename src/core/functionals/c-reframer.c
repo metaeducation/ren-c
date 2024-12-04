@@ -124,7 +124,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     L->u.action.original = VAL_ACTION(action);
     Tweak_Level_Phase(  // Drop_Action() cleared, restore
         L,
-        ACT_IDENTITY(VAL_ACTION(action))
+        Phase_Details(VAL_ACTION(action))
     );
     Tweak_Level_Coupling(L, Cell_Coupling(action));
 
@@ -280,8 +280,8 @@ Bounce Reframer_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = Phase_Details(PHASE);
-    assert(Array_Len(details) == IDX_REFRAMER_MAX);
+    Details* details = DETAILS;
+    assert(Details_Max(details) == IDX_REFRAMER_MAX);
 
     Value* shim = Details_At(details, IDX_REFRAMER_SHIM);
     assert(Is_Frame(shim));
@@ -311,7 +311,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     Value* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, stable_SPARE);
 
-    Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(shim)));
+    Tweak_Level_Phase(L, Phase_Details(VAL_ACTION(shim)));
     Tweak_Level_Coupling(L, Cell_Coupling(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
@@ -335,7 +335,7 @@ DECLARE_NATIVE(reframer)
 {
     INCLUDE_PARAMS_OF_REFRAMER;
 
-    Action* shim = VAL_ACTION(ARG(shim));
+    Phase* shim = VAL_ACTION(ARG(shim));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(shim));
 
     DECLARE_BINDER (binder);
@@ -417,16 +417,15 @@ DECLARE_NATIVE(reframer)
     // which parameter to fill with the *real* frame instance.
     //
     Manage_Flex(exemplar);
-    Phase* reframer = Alloc_Action_From_Exemplar(
+    Details* details = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         label,
         &Reframer_Dispatcher,
         IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]
     );
 
-    Details* details = Phase_Details(reframer);
     Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(shim));
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
-    return Init_Action(OUT, reframer, label, UNBOUND);
+    return Init_Action(OUT, details, label, UNBOUND);
 }

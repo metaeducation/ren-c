@@ -83,16 +83,15 @@ enum {
 //
 Bounce Combinator_Dispatcher(Level* L)
 {
-    Phase* phase = Level_Phase(L);
-    Details* details = Phase_Details(phase);
+    Details* details = Level_Phase(L);
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
         Set_Flex_Info(L->varlist, HOLD);  // mandatory for natives.
         assert(Is_Stub_Details(VAL_ACTION(body)));
-        Dispatcher* dispatcher = Phase_Dispatcher(
-            cast(Phase*, VAL_ACTION(body))
+        Dispatcher* dispatcher = Details_Dispatcher(
+            cast(Details*, VAL_ACTION(body))
         );
         b = (*dispatcher)(L);
     }
@@ -239,7 +238,7 @@ DECLARE_NATIVE(combinator)
         &flags
     );
 
-    Phase* combinator = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         &Combinator_Dispatcher,
         IDX_COMBINATOR_MAX  // details array capacity
@@ -252,19 +251,19 @@ DECLARE_NATIVE(combinator)
     //
     Array* relativized = Copy_And_Bind_Relative_Deep_Managed(
         body,
-        combinator,
+        details,
         VAR_VISIBILITY_ALL
     );
 
     Init_Relative_Block(
-        Array_At(Phase_Details(combinator), IDX_COMBINATOR_BODY),
-        combinator,
+        Details_At(details, IDX_COMBINATOR_BODY),
+        details,
         relativized
     );
 
     return Init_Frame_Details(  // not an antiform
         OUT,
-        combinator,
+        details,
         ANONYMOUS,
         UNBOUND
     );
@@ -758,7 +757,7 @@ DECLARE_NATIVE(combinatorize)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    Action* act = VAL_ACTION(ARG(c));
+    Phase* act = VAL_ACTION(ARG(c));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
     Option(VarList*) coupling = Cell_Coupling(ARG(c));
 

@@ -207,7 +207,7 @@ struct ActionExecutorStateStruct {
     // as a frame field is because bindings use it.  Similarly, that is
     // where the binding is stored.
     //
-    Action* original;
+    Phase* original;
 
     // Functions don't have "names", though they can be assigned to words.
     // However, not all function invocations are through words or paths, so

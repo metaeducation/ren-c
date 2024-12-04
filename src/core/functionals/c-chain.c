@@ -153,8 +153,8 @@ Bounce Cascader_Executor(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details* details = Phase_Details(PHASE);
-    assert(Array_Len(details) == IDX_CASCADER_MAX);
+    Details* details = DETAILS;
+    assert(Details_Max(details) == IDX_CASCADER_MAX);
 
     Value* pipeline = Init_Block(
         SPARE,  // index of BLOCK! is current step
@@ -169,7 +169,7 @@ Bounce Cascader_Executor(Level* const L)
 
     Tweak_Level_Phase(
         sub,
-        ACT_IDENTITY(VAL_ACTION(first))  // has varlist already [3]
+        Phase_Details(VAL_ACTION(first))  // has varlist already [3]
     );
     Tweak_Level_Coupling(sub, Cell_Coupling(first));
 
@@ -266,16 +266,16 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
     // general, possibly that all actions put the return slot in a separate
     // sliver that includes the partials?
     //
-    Phase* cascade = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
         &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity
     );
     Force_Value_Frozen_Shallow(pipeline);
     Copy_Cell(  // index of this block gets incremented as pipeline executes
-        Array_At(Phase_Details(cascade), IDX_CASCADER_PIPELINE),
+        Array_At(details, IDX_CASCADER_PIPELINE),
         pipeline
     );
 
-    return Init_Action(out, cascade, VAL_FRAME_LABEL(first), UNBOUND);
+    return Init_Action(out, details, VAL_FRAME_LABEL(first), UNBOUND);
 }

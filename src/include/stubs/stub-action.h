@@ -150,12 +150,12 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 
 #define Tweak_Cell_Frame_Details  Tweak_Cell_Node1
 
-INLINE Phase* CTX_ARCHETYPE_PHASE(VarList* c);
+INLINE Details* CTX_ARCHETYPE_PHASE(VarList* c);
 
-INLINE Phase* ACT_IDENTITY(Action* action) {
+INLINE Details* Phase_Details(Phase* action) {
     if (Is_Stub_Details(action))
-        return cast(Phase*, action);  // don't want hijacked archetype details
-    return CTX_ARCHETYPE_PHASE(x_cast(VarList*, action));  // always ACT_IDENTITY()
+        return cast(Details*, action);  // don't want hijacked archetype details
+    return CTX_ARCHETYPE_PHASE(x_cast(VarList*, action));  // always Phase_Details()
 }
 
 
@@ -169,10 +169,10 @@ INLINE Phase* ACT_IDENTITY(Action* action) {
 // to be STUB_FLAG_DYNAMIC, so we use Flex_Data() that handles it.
 //
 #define ACT_ARCHETYPE(action) \
-    cast(Element*, Flex_Data(ACT_IDENTITY(action)))
+    cast(Element*, Flex_Data(Phase_Details(action)))
 
 #define Phase_Archetype(phase) \
-    cast(Element*, Flex_Data(ensure(Phase*, phase)))
+    cast(Element*, Flex_Data(ensure(Details*, phase)))
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
@@ -181,30 +181,6 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 }
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
-
-
-// An action's details array is stored in the archetype, which is the first
-// element of the action array.  That's *usually* the same thing as the
-// action array itself, -but not always-:
-//
-// * When you COPY an action, it creates a minimal details array of length 1
-//   whose archetype points at the details array of what it copied...not
-//   back to itself.  So the dispatcher of the original funciton may run for a
-//   phase with this mostly-empty-array, but expect Phase_Details() to give
-//   it the original details.
-//
-// * HIJACK swaps out the archetype in the 0 details slot and puts in the
-//   archetype of the hijacker.  (It leaves the rest of the array alone.)
-//   When the hijacking function runs, it wants Phase_Details() for the phase
-//   to give the details that the hijacking dispatcher wants.
-//
-// So consequently, all phases have to look in the archetype, in case they
-// are running the implementation of a copy or are spliced in as a hijacker.
-//
-INLINE Details* Phase_Details(Phase* a) {
-    assert(Is_Stub_Details(a));
-    return x_cast(Details*, Phase_Archetype(a)->payload.Any.first.node);
-}
 
 
 //=//// PARAMLIST, EXEMPLAR, AND PARTIALS /////////////////////////////////=//
@@ -218,7 +194,7 @@ INLINE Details* Phase_Details(Phase* a) {
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
 
-INLINE VarList* ACT_EXEMPLAR(Action* a) {
+INLINE VarList* ACT_EXEMPLAR(Phase* a) {
     if (Is_Stub_Details(a))
         return INODE(Exemplar, a);
     return x_cast(VarList*, a);
@@ -238,27 +214,59 @@ INLINE VarList* ACT_EXEMPLAR(Action* a) {
 
 #define ACT_PARAMLIST(a)            Varlist_Array(ACT_EXEMPLAR(a))
 
-INLINE Param* ACT_PARAMS_HEAD(Action* a) {
+INLINE Param* ACT_PARAMS_HEAD(Phase* a) {
     Array* list = Varlist_Array(ACT_EXEMPLAR(a));
     return cast(Param*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
-#define Phase_Dispatcher(a) \
-    ensure(Phase*, (a))->link.any.dispatcher
+#define Details_Dispatcher(a) \
+    ensure(Details*, (a))->link.any.dispatcher
 
-#define Tweak_Phase_Dispatcher(p,cfunc) \
-    (ensure(Phase*, (p))->link.any.dispatcher = (cfunc))
+#define Tweak_Details_Dispatcher(p,cfunc) \
+    (ensure(Details*, (p))->link.any.dispatcher = (cfunc))
 
 
-// The DETAILS array isn't guaranteed to be STUB_FLAG_DYNAMIC (it may hold
-// only the archetype, e.g. with a specialized function).  *BUT* if you are
-// asking for elements in the details array, you must know it is dynamic.
+// An Details Array is stored in the archetype, which is the first element of
+// the Details array.  That's *usually* the same thing as the Details array
+// itself, -but not always-:
+//
+// * When you COPY an action, it creates a minimal details array of length 1
+//   whose archetype points at the details array of what it copied...not
+//   back to itself.  So the dispatcher of the original funciton may run for a
+//   phase with this mostly-empty-array, but expect Details_Array() to give
+//   it the original details.
+//
+// * HIJACK swaps out the archetype in the 0 details slot and puts in the
+//   archetype of the hijacker.  (It leaves the rest of the array alone.)
+//   When the hijacking function runs, it wants Details_Array() for the phase
+//   to give the details that the hijacking dispatcher wants.
+//
+// So consequently, all Details have to look in the archetype, in case they
+// are running the implementation of a copy or are spliced in as a hijacker.
+//
+INLINE Array* Details_Array(Details* details) {
+    assert(Is_Stub_Details(details));
+    return x_cast(Array*, Phase_Archetype(details)->payload.Any.first.node);
+}
+
+
+// Details is not a subclass of Array, because it's a subclass of Phase...
+// and Phase isn't a subclass of Array.  So accessing the items of the array
+// is done with Details_At().
+//
+// The Details_Array() isn't guaranteed to be STUB_FLAG_DYNAMIC (it may hold
+// only the archetype).  *BUT* if you are asking for elements in the details
+// array, you must know it is dynamic.  So we can take advantage of that for
+// better performance.
 //
 INLINE Value* Details_At(Details* details, Length n) {
-    assert(n != 0 and n < Flex_Dynamic_Used(details));
-    Cell* at = cast(Cell*, details->content.dynamic.data) + n;
-    return cast(Value*, at);
+    Array* a = Details_Array(details);
+    assert(n != 0 and n < Array_Len(a));
+    return cast(Value*, a->content.dynamic.data) + n;
 }
+
+#define Details_Max(details) \
+    Array_Len(Details_Array(details))
 
 #define IDX_DETAILS_1 1  // Common index used for code body location
 
@@ -307,14 +315,14 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 
-INLINE void Tweak_Action_Adjunct(Action* a, Option(VarList*) adjunct) {
+INLINE void Tweak_Action_Adjunct(Phase* a, Option(VarList*) adjunct) {
     if (Is_Stub_Details(a))
         MISC(DetailsAdjunct, a) = maybe adjunct;
     else
         MISC(VarlistAdjunct, a) = maybe adjunct;
 }
 
-INLINE Option(VarList*) ACT_ADJUNCT(Action* a) {
+INLINE Option(VarList*) ACT_ADJUNCT(Phase* a) {
     if (Is_Stub_Details(a))
         return MISC(DetailsAdjunct, a);
     return MISC(VarlistAdjunct, a);
@@ -348,11 +356,11 @@ INLINE Option(VarList*) ACT_ADJUNCT(Action* a) {
 #define LINK_Ancestor_TYPE              KeyList*
 #define HAS_LINK_Ancestor               FLAVOR_KEYLIST
 
-INLINE bool Action_Is_Base_Of(Action* base, Action* derived) {
+INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
     if (derived == base)
         return true;  // fast common case (review how common)
 
-    if (ACT_IDENTITY(derived) == ACT_IDENTITY(base))
+    if (Phase_Details(derived) == Phase_Details(base))
         return true;  // Covers COPY + HIJACK cases (seemingly)
 
     KeyList* keylist_test = ACT_KEYLIST(derived);

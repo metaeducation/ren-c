@@ -160,7 +160,7 @@ Bounce Hijacker_Dispatcher(Level* level_)
     // The PHASE here is the *identity that the hijacker has overtaken*
     // But the actual hijacker is in the archetype.
 
-    Action* hijacker = VAL_ACTION(Phase_Archetype(PHASE));
+    Phase* hijacker = VAL_ACTION(Phase_Archetype(PHASE));
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
@@ -170,7 +170,7 @@ Bounce Hijacker_Dispatcher(Level* level_)
     KeyList* keylist = Keylist_Of_Varlist(cast(VarList*, LEVEL->varlist));
     while (true) {
         if (keylist == exemplar_keylist) {
-            Dispatcher* dispatcher = Phase_Dispatcher(ACT_IDENTITY(hijacker));
+            Dispatcher* dispatcher = Details_Dispatcher(Phase_Details(hijacker));
             return (*dispatcher)(LEVEL);
         }
         if (keylist == LINK(Ancestor, keylist))  // terminates with self ref.
@@ -233,22 +233,22 @@ DECLARE_NATIVE(hijack)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
-    Action* victim = VAL_ACTION(ARG(victim));
-    Action* hijacker = VAL_ACTION(ARG(hijacker));
+    Phase* victim = VAL_ACTION(ARG(victim));
+    Phase* hijacker = VAL_ACTION(ARG(hijacker));
 
     if (victim == hijacker)
         return nullptr;  // permitting no-op hijack has some practical uses
 
-    Phase* victim_identity = ACT_IDENTITY(victim);
-    Phase* hijacker_identity = ACT_IDENTITY(hijacker);
+    Details* victim_identity = Phase_Details(victim);
+    Details* hijacker_identity = Phase_Details(hijacker);
 
     if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed [1]
-        Tweak_Phase_Dispatcher(
-            victim_identity, Phase_Dispatcher(hijacker_identity)
+        Tweak_Details_Dispatcher(
+            victim_identity, Details_Dispatcher(hijacker_identity)
         );
     }
     else {  // mismatch, so shim required [2]
-        Tweak_Phase_Dispatcher(victim_identity, &Hijacker_Dispatcher);
+        Tweak_Details_Dispatcher(victim_identity, &Hijacker_Dispatcher);
     }
 
     Clear_Cell_Flag(  // change on purpose

@@ -296,7 +296,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         //
         // Besides instructions, other series types aren't currenlty
         // supported...though it was considered that you could use
-        // VarList* or Action* directly instead of their archetypes.  This
+        // VarList* or Phase* directly instead of their archetypes.  This
         // was considered when thinking about ditching value archetypes
         // altogether (e.g. no usable cell pattern guaranteed at the head)
         // but it's important in several APIs to emphasize a value gives

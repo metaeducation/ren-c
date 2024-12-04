@@ -74,8 +74,8 @@ Bounce Adapter_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = Phase_Details(PHASE);
-    assert(Array_Len(details) == IDX_ADAPTER_MAX);
+    Details* details = DETAILS;
+    assert(Details_Max(details) == IDX_ADAPTER_MAX);
 
     enum {
         ST_ADAPTER_INITIAL_ENTRY = STATE_0,
@@ -112,7 +112,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Value* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
 
-    Tweak_Level_Phase(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
+    Tweak_Level_Phase(L, Phase_Details(VAL_ACTION(adaptee)));
     Tweak_Level_Coupling(L, Cell_Coupling(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding [3]
@@ -142,7 +142,7 @@ DECLARE_NATIVE(adapt)
     // access to the locals.  That requires creating a new paramlist.  Is
     // there a better way to do that with phasing?
 
-    Phase* adaptation = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
         &Adapter_Dispatcher,
         IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]
@@ -155,7 +155,7 @@ DECLARE_NATIVE(adapt)
     //
     Source* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(
         prelude,
-        adaptation,
+        details,
         VAR_VISIBILITY_INPUTS
     );
 
@@ -164,7 +164,6 @@ DECLARE_NATIVE(adapt)
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `Level* L` it is dispatching).
     //
-    Details* details = Phase_Details(adaptation);
     Value* rebound = Init_Block(
         Array_At(details, IDX_ADAPTER_PRELUDE),
         prelude_copy
@@ -173,5 +172,5 @@ DECLARE_NATIVE(adapt)
 
     Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
-    return Init_Action(OUT, adaptation, VAL_FRAME_LABEL(adaptee), UNBOUND);
+    return Init_Action(OUT, details, VAL_FRAME_LABEL(adaptee), UNBOUND);
 }

@@ -34,7 +34,7 @@
 
 
 //
-//  Make_Native: C
+//  Make_Native_Dispatch_Details: C
 //
 // Reused function in Startup_Natives() as well as extensions loading natives,
 // which can be parameterized with a different context in which to look up
@@ -55,7 +55,7 @@
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-Phase* Make_Native(
+Details* Make_Native_Dispatch_Details(
     Element* spec,
     NativeType native_type,
     Dispatcher* dispatcher,
@@ -87,20 +87,18 @@ Phase* Make_Native(
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
-    Phase* native = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         dispatcher,  // dispatcher is unique to this native
         IDX_NATIVE_MAX  // details array capacity
     );
-
-    Details* details = Phase_Details(native);
 
     Copy_Cell(
         Details_At(details, IDX_NATIVE_CONTEXT),
         Varlist_Archetype(module)
     );
 
-    Set_Phase_Flag(native, IS_NATIVE);
+    Set_Details_Flag(details, IS_NATIVE);
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like
@@ -108,38 +106,38 @@ Phase* Make_Native(
     // that the actual "native" in that case.
     //
     if (native_type == NATIVE_COMBINATOR) {
-        Phase* native_combinator = native;
-        native = Make_Phase(
-            ACT_PARAMLIST(native_combinator),
+        Details* native_details = details;
+        details = Make_Dispatch_Details(
+            ACT_PARAMLIST(native_details),
             &Combinator_Dispatcher,
             2  // IDX_COMBINATOR_MAX  // details array capacity
         );
 
         Copy_Cell(
-            Array_At(Phase_Details(native), 1),  // IDX_COMBINATOR_BODY
-            Phase_Archetype(native_combinator)
+            Array_At(details, 1),  // IDX_COMBINATOR_BODY
+            Phase_Archetype(native_details)
         );
     }
 
     // We want the meta information on the wrapped version if it's a
     // NATIVE-COMBINATOR.
     //
-    assert(ACT_ADJUNCT(native) == nullptr);
-    Tweak_Action_Adjunct(native, meta);
+    assert(ACT_ADJUNCT(details) == nullptr);
+    Tweak_Action_Adjunct(details, meta);
 
     // Some features are not supported by intrinsics on their first argument,
     // because it would make them too complicated.
     //
     if (native_type == NATIVE_INTRINSIC) {
-        const Param* param = ACT_PARAM(native, 2);
+        const Param* param = ACT_PARAM(details, 2);
         assert(Not_Parameter_Flag(param, REFINEMENT));
         assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);
 
-        Set_Phase_Flag(native, CAN_DISPATCH_AS_INTRINSIC);
+        Set_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC);
     }
 
-    return native;
+    return details;
 }
 
 
@@ -178,14 +176,14 @@ DECLARE_NATIVE(native)
     Dispatcher* dispatcher = *g_native_dispatcher_pos;
     ++g_native_dispatcher_pos;
 
-    Phase* native = Make_Native(
+    Details* details = Make_Native_Dispatch_Details(
         spec,
         native_type,
         dispatcher,
         PG_Currently_Loading_Module
     );
 
-    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }
 
 
@@ -268,7 +266,7 @@ Source* Startup_Natives(const Element* boot_natives)
     Derelativize(spec, at, lib);
     ++at;
 
-    Phase* the_native_action = Make_Native(
+    Details* the_native_details = Make_Native_Dispatch_Details(
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
         *g_native_dispatcher_pos,
@@ -278,12 +276,12 @@ Source* Startup_Natives(const Element* boot_natives)
 
     Init_Action(
         Sink_Lib_Var(SYM_NATIVE),
-        the_native_action,
+        the_native_details,
         CANON(NATIVE),  // label
         UNBOUND  // coupling
     );
 
-    assert(VAL_ACTION(LIB(NATIVE)) == the_native_action);
+    assert(VAL_ACTION(LIB(NATIVE)) == the_native_details);
 
     DECLARE_ATOM (skipped);
     Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);

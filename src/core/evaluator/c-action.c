@@ -841,9 +841,9 @@ Bounce Action_Executor(Level* L)
 
     assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
 
-    Phase* phase = Level_Phase(L);
+    Details* phase = Level_Phase(L);
 
-    Dispatcher* dispatcher = Phase_Dispatcher(phase);
+    Dispatcher* dispatcher = Details_Dispatcher(phase);
 
     Bounce b = (*dispatcher)(L);
 
@@ -1015,7 +1015,7 @@ void Push_Action(Level* L, const Cell* frame) {
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
     assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
 
-    Action* act = VAL_ACTION(frame);
+    Phase* act = VAL_ACTION(frame);
     Option(VarList*) coupling = Cell_Coupling(frame);
 
     Length num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
@@ -1054,7 +1054,7 @@ void Push_Action(Level* L, const Cell* frame) {
             | FLAG_QUOTE_BYTE(NOQUOTE_1);
     Tweak_Cell_Context_Varlist(L->rootvar, L->varlist);
 
-    Tweak_Cell_Frame_Phase(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()
+    Tweak_Cell_Frame_Phase(L->rootvar, Phase_Details(act));  // Level_Phase()
     Tweak_Cell_Coupling(L->rootvar, coupling);  // Level_Coupling()
 
     s->content.dynamic.used = num_args + 1;

@@ -100,7 +100,7 @@ Bounce Macro_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = Phase_Details(PHASE);
+    Details* details = DETAILS;
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
@@ -118,7 +118,7 @@ Bounce Macro_Dispatcher(Level* const L)
     Value* cell = Level_Arg(L, 1);
     Init_Action(
         cell,
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
         CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
@@ -177,7 +177,7 @@ DECLARE_NATIVE(macro)
     Element* spec = cast(Element*, ARG(spec));
     Element* body = cast(Element*, ARG(body));
 
-    Phase* macro = Make_Interpreted_Action_May_Fail(
+    Details* details = Make_Interpreted_Action_May_Fail(
         spec,
         body,
         MKF_RETURN,
@@ -185,7 +185,7 @@ DECLARE_NATIVE(macro)
         IDX_MACRO_MAX  // details capacity, just body slot (and archetype)
     );
 
-    return Init_Action(OUT, macro, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }
 
 

@@ -90,7 +90,7 @@ DECLARE_NATIVE(augment)
     Element* original = cast(Element*, ARG(original));
 
     Option(const Symbol*) label = VAL_FRAME_LABEL(original);
-    Action* augmentee = VAL_ACTION(original);
+    Phase* augmentee = VAL_ACTION(original);
 
     Flags flags = MKF_MASK_NONE;  // if original had no return, we don't add
 
@@ -122,11 +122,11 @@ DECLARE_NATIVE(augment)
     assert(Not_Cell_Readable(Flex_Head(Value, paramlist)));
     Tweak_Frame_Varlist_Rootvar(  // no new phase needed, just use frame [3]
         paramlist,
-        ACT_IDENTITY(VAL_ACTION(ARG(original))),
+        Phase_Details(VAL_ACTION(ARG(original))),
         Cell_Coupling(ARG(original))
     );
 
-    Action* augmentated = cast(Action*, paramlist);
+    Phase* augmentated = cast(Phase*, paramlist);
 
     assert(ACT_ADJUNCT(augmentated) == nullptr);
     Tweak_Action_Adjunct(augmentated, adjunct);

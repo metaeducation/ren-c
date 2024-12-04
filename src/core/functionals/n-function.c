@@ -116,7 +116,7 @@ Bounce Func_Dispatcher(Level* const L)
     //    deals with that already.  So long as that exists, then this
     //    dispatcher merely catching a "teleport" would be redundant.
 
-    Details* details = Phase_Details(PHASE);
+    Details* details = DETAILS;
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
@@ -128,7 +128,7 @@ Bounce Func_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
-        ACT_IDENTITY(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
+        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
         CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
@@ -155,7 +155,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Init_Nothing(OUT);  // NOTHING, regardless of body result [1]
 
-    Phase* phase = Level_Phase(L);
+    Details* phase = Level_Phase(L);
 
     if (ACT_HAS_RETURN(phase)) {
         assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
@@ -222,7 +222,7 @@ Bounce Func_Dispatcher(Level* const L)
 //    made these optimizations give diminishing returns, so they were all
 //    eliminated (though they set useful precedent for varying dispatchers).
 //
-Phase* Make_Interpreted_Action_May_Fail(
+Details* Make_Interpreted_Action_May_Fail(
     const Element* spec,
     const Element* body,
     Flags mkf_flags,  // MKF_RETURN, etc.
@@ -239,18 +239,18 @@ Phase* Make_Interpreted_Action_May_Fail(
         &mkf_flags
     );
 
-    Phase* a = Make_Phase(
+    Details* details = Make_Dispatch_Details(
         paramlist,
         dispatcher,
         details_capacity  // we fill in details[0], caller fills any extra
     );
 
-    assert(ACT_ADJUNCT(a) == nullptr);
-    Tweak_Action_Adjunct(a, meta);
+    assert(ACT_ADJUNCT(details) == nullptr);
+    Tweak_Action_Adjunct(details, meta);
 
     Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
-        a,
+        details,
         VAR_VISIBILITY_ALL // we created exemplar, see all!
     );
 
@@ -277,9 +277,8 @@ Phase* Make_Interpreted_Action_May_Fail(
     // running frame instance (the Level* received by the dispatcher) before
     // executing the interpreted code.
     //
-    Details* details = Phase_Details(a);
     Cell* rebound = Init_Block(
-        Array_At(details, IDX_INTERPRETED_BODY),
+        Details_At(details, IDX_INTERPRETED_BODY),
         copy
     );
     BINDING(rebound) = Cell_List_Binding(body);
@@ -309,7 +308,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     if (Get_Cell_Flag(body, CONST))
         Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
 
-    return a;
+    return details;
 }
 
 
@@ -332,7 +331,7 @@ DECLARE_NATIVE(function)
     Element* spec = cast(Element*, ARG(spec));
     Element* body = cast(Element*, ARG(body));
 
-    Phase* func = Make_Interpreted_Action_May_Fail(
+    Details* details = Make_Interpreted_Action_May_Fail(
         spec,
         body,
         MKF_RETURN,
@@ -340,7 +339,7 @@ DECLARE_NATIVE(function)
         IDX_FUNC_MAX  // archetype and one array slot (will be filled)
     );
 
-    return Init_Action(OUT, func, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }
 
 
@@ -370,7 +369,7 @@ DECLARE_NATIVE(endable_q)
         return FAIL("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
     VarList* ctx = Cell_Varlist(SPARE);
-    Action* act = CTX_ARCHETYPE_PHASE(ctx);
+    Phase* act = CTX_ARCHETYPE_PHASE(ctx);
 
     Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = Get_Parameter_Flag(param, ENDABLE);
@@ -567,7 +566,7 @@ DECLARE_NATIVE(definitional_return)
         return FAIL(Error_Archetype_Invoked_Raw());
 
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
-    Phase* target_phase = Level_Phase(target_level);
+    Details* target_phase = Level_Phase(target_level);
     assert(ACT_HAS_RETURN(target_phase));  // continuations can RETURN [1]
     assert(KEY_SYM(ACT_KEYS_HEAD(target_phase)) == SYM_RETURN);
     const Param* return_param = ACT_PARAMS_HEAD(target_phase);
@@ -614,7 +613,7 @@ DECLARE_NATIVE(definitional_return)
         Is_Tag(atom)
         and strcmp(c_cast(char*, Cell_Utf8_At(atom)), "redo") == 0
     ){
-        Action* redo_action = target_level->u.action.original;
+        Phase* redo_action = target_level->u.action.original;
         const Key* key_tail;
         const Key* key = ACT_KEYS(&key_tail, redo_action);
         target_level->u.action.key = key;
