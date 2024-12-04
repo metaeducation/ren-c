@@ -83,7 +83,7 @@ INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
         out,
         CELL_MASK_PAIR | FLAG_HEART_BYTE(REB_PAIR)
     );
-    Corrupt_Unused_Field(EXTRA(Any, out).corrupt);
+    Corrupt_Unused_Field(EXTRA(out).corrupt);
     Tweak_Cell_Node1(out, p);
     Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
 

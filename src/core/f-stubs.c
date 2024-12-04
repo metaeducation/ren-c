@@ -286,7 +286,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
     //
-    assert(EXTRA(Any, archetype).node == nullptr or kind == REB_FRAME);
+    assert(EXTRA(archetype).node == nullptr or kind == REB_FRAME);
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.

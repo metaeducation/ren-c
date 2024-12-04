@@ -55,7 +55,7 @@ INLINE Bounce Run_Generic_Dispatch(
 // the L->phase in the frame.  This function may be changed by the dispatcher
 // from what was originally called.
 //
-// If EXTRA(Any).flag is not set on the cell, then the types will be checked
+// If EXTRA(...).flag is not set on the cell, then the types will be checked
 // again.  Note it is not safe to let arbitrary user code change values in a
 // frame from expected types, and then let those reach an underlying native
 // who thought the types had been checked.

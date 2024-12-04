@@ -1203,8 +1203,8 @@ INLINE Element* Init_Zeroed_Hack(Sink(Element) out, Heart heart) {
         Reset_Cell_Header_Noquote(
             TRACK(out), FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
         );
-        memset(&out->extra, 0, sizeof(union ExtraUnion));
-        memset(&out->payload, 0, sizeof(union PayloadUnion));
+        memset(&out->extra, 0, sizeof(out->extra));
+        memset(&out->payload, 0, sizeof(out->payload));
     }
     return out;
 }

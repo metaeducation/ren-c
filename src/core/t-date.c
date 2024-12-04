@@ -364,10 +364,10 @@ static Element* Init_Normalized_Date(
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_DATE)));
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_DATE);
-    EXTRA(Date, out).year = year;
-    EXTRA(Date, out).month = month + 1;
-    EXTRA(Date, out).day = day + 1;
-    EXTRA(Date, out).zone = tz;
+    EXTRA(out).date.year = year;
+    EXTRA(out).date.month = month + 1;
+    EXTRA(out).date.day = day + 1;
+    EXTRA(out).date.zone = tz;
     PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME;
 
     return out;

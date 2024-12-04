@@ -51,13 +51,13 @@ INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
         HEART_BYTE(out) = REB_SIGIL;
     }
 
-    EXTRA(Bytes, out).at_least_4[IDX_EXTRA_SIGIL] = sigil;
+    EXTRA(out).at_least_4[IDX_EXTRA_SIGIL] = sigil;
     return out;
 }
 
 INLINE Sigil Cell_Sigil(const Cell* cell) {
     assert(Cell_Heart(cell) == REB_SIGIL);
-    Byte sigil_byte = EXTRA(Bytes, cell).at_least_4[IDX_EXTRA_SIGIL];
+    Byte sigil_byte = EXTRA(cell).at_least_4[IDX_EXTRA_SIGIL];
     assert(sigil_byte != 0 and sigil_byte < SIGIL_MAX);
     return u_cast(Sigil, sigil_byte);
 }

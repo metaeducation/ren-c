@@ -102,7 +102,7 @@ INLINE bool IS_CHAR_CELL(const Cell* c) {
     if (Stringlike_Has_Node(c))
         return false;  // allocated form, too long to be a character
 
-    return EXTRA(Bytes, c).at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
+    return EXTRA(c).at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
 }
 
 INLINE bool IS_CHAR(const Atom* v) {
@@ -118,7 +118,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* c) {  // must pass IS_CHAR_CELL()
     assert(Cell_Heart(c) == REB_ISSUE);
     assert(not Stringlike_Has_Node(c));
 
-    assert(EXTRA(Bytes, c).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
+    assert(EXTRA(c).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
 
     Codepoint codepoint;
     Back_Scan_Utf8_Char_Unchecked(&codepoint, PAYLOAD(Bytes, c).at_least_8);
@@ -145,8 +145,8 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
     );
     memcpy(&PAYLOAD(Bytes, out).at_least_8, utf8, size + 1);  // copy '\0' term
     PAYLOAD(Bytes, out).at_least_8[size] = '\0';
-    EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = size;
-    EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = len;
+    EXTRA(out).at_least_4[IDX_EXTRA_USED] = size;
+    EXTRA(out).at_least_4[IDX_EXTRA_LEN] = len;
     return true;
 }
 
@@ -197,8 +197,8 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
         Encode_UTF8_Char(PAYLOAD(Bytes, out).at_least_8, c, encoded_size);
         PAYLOAD(Bytes, out).at_least_8[encoded_size] = '\0';  // terminate
 
-        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
-        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
+        EXTRA(out).at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
+        EXTRA(out).at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
         HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
     }
 
@@ -267,10 +267,10 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         Size size;
         if (
             not limit
-            or *(unwrap limit) >= EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN]
+            or *(unwrap limit) >= EXTRA(v).at_least_4[IDX_EXTRA_LEN]
         ){
-            len = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN];
-            size = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_USED];
+            len = EXTRA(v).at_least_4[IDX_EXTRA_LEN];
+            size = EXTRA(v).at_least_4[IDX_EXTRA_USED];
         }
         else {
             len = 0;

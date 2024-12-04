@@ -272,7 +272,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // could apply to any OBJECT!, but the binding cheaply makes it
         // a method for that object.)
         //
-        if (EXTRA(Any, v).node != nullptr) {
+        if (EXTRA(v).node != nullptr) {
             if (CTX_TYPE(context) == REB_FRAME) {
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
@@ -448,7 +448,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         //
         assert(Any_Context(archetype));
         assert(
-            EXTRA(Any, archetype).node == nullptr
+            EXTRA(archetype).node == nullptr
             or VAL_TYPE(archetype) == REB_FRAME
         );
 

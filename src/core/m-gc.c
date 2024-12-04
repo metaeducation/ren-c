@@ -339,8 +339,8 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     in_mark = true;
   #endif
 
-    if (Is_Extra_Mark_Kind(heart) and c->extra.Any.node)
-        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Any.node);
+    if (Is_Extra_Mark_Kind(heart) and c->extra.node)
+        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.node);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE1) and Cell_Node1(c))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).first.node);
@@ -713,7 +713,7 @@ static void Mark_Level(Level* L) {
         L_binding != SPECIFIED
         and (L_binding->leader.bits & NODE_FLAG_MANAGED)
     ){
-        Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.Any.node);
+        Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.node);
     }
 
     if (L->feed->gotten)  // shouldn't need to mark feed->gotten [3]

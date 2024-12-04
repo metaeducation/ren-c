@@ -148,7 +148,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         hash = PAYLOAD(Any, cell).first.u;
         hash ^= PAYLOAD(Any, cell).second.u;
-        hash ^= EXTRA(Any, cell).u;
+        hash ^= EXTRA(cell).u;
         break; }
 
       hash_pair:

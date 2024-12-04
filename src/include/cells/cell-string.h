@@ -81,7 +81,7 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
     assert(Any_Utf8_Kind(Cell_Heart(c)));
 
     if (not Stringlike_Has_Node(c)) {  // content in cell direct
-        Size size = EXTRA(Bytes, c).at_least_4[IDX_EXTRA_USED];
+        Size size = EXTRA(c).at_least_4[IDX_EXTRA_USED];
         return cast(Utf8(const*), PAYLOAD(Bytes, c).at_least_8 + size);
     }
 
@@ -103,7 +103,7 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
         return Cell_Series_Len_At(c);
 
     if (not Stringlike_Has_Node(c))  // content directly in cell
-        return EXTRA(Bytes, c).at_least_4[IDX_EXTRA_LEN];
+        return EXTRA(c).at_least_4[IDX_EXTRA_LEN];
 
     const String* str = cast(String*, Cell_Node1(c));
     return String_Len(str);

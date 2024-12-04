@@ -48,14 +48,9 @@
 
 #define MAX_YEAR 0x3fff
 
-#define VAL_YEAR(v) \
-    EXTRA(Date, Ensure_Date(v)).year
-
-#define VAL_MONTH(v) \
-    EXTRA(Date, Ensure_Date(v)).month
-
-#define VAL_DAY(v) \
-    EXTRA(Date, Ensure_Date(v)).day
+#define VAL_YEAR(v)     EXTRA(Ensure_Date(v)).date.year
+#define VAL_MONTH(v)    EXTRA(Ensure_Date(v)).date.month
+#define VAL_DAY(v)      EXTRA(Ensure_Date(v)).date.day
 
 #define ZONE_MINS 15
 
@@ -80,7 +75,7 @@ INLINE bool Does_Date_Have_Time(const Cell* v)
 {
     assert(Cell_Heart(v) == REB_DATE);
     if (PAYLOAD(Time, v).nanoseconds == NO_DATE_TIME) {
-        assert(EXTRA(Date, v).zone == NO_DATE_ZONE);
+        assert(EXTRA(v).date.zone == NO_DATE_ZONE);
         return false;
     }
     return true;
@@ -89,7 +84,7 @@ INLINE bool Does_Date_Have_Time(const Cell* v)
 INLINE bool Does_Date_Have_Zone(const Cell* v)
 {
     assert(Cell_Heart(v) == REB_DATE);
-    if (EXTRA(Date, v).zone == NO_DATE_ZONE)  // out of band of 7-bit field
+    if (EXTRA(v).date.zone == NO_DATE_ZONE)  // out of band of 7-bit field
         return false;
     assert(PAYLOAD(Time, v).nanoseconds != NO_DATE_TIME);
     return true;
@@ -97,7 +92,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* v)
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_ZONE(v) \
-        EXTRA(Date, Ensure_Date(v)).zone
+        EXTRA(Ensure_Date(v)).date.zone
 #else
     template<typename TP>
     struct ZoneHolder {
@@ -108,8 +103,8 @@ INLINE bool Does_Date_Have_Zone(const Cell* v)
           { assert(Cell_Heart(cell) == REB_DATE); }
 
         operator int () {  // stop accidental reads of NO_DATE_ZONE
-            assert(EXTRA(Date, cell).zone != NO_DATE_ZONE);
-            return EXTRA(Date, cell).zone;
+            assert(EXTRA(cell).date.zone != NO_DATE_ZONE);
+            return EXTRA(cell).date.zone;
         }
 
         template<
@@ -117,7 +112,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* v)
             typename std::enable_if<not std::is_const<U>::value, int>::type = 0
         >
         void operator=(int zone) {  // zone writes allow NO_DATE_ZONE
-            EXTRA(Date, cell).zone = zone;
+            EXTRA(cell).date.zone = zone;
         }
 
     };

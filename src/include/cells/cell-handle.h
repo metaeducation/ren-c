@@ -43,7 +43,7 @@
 #define Tweak_Cell_Handle_Stub          Tweak_Cell_Node1
 #define Extract_Cell_Handle_Stub(c)     cast(Stub*, Cell_Node1(c))
 
-#define CELL_HANDLE_LENGTH_U(c)         EXTRA(Any, (c)).u
+#define CELL_HANDLE_LENGTH_U(c)         EXTRA(c).u
 
 #define CELL_HANDLE_CDATA_P(c)          PAYLOAD(Any, (c)).second.p
 #define CELL_HANDLE_CFUNC_P(c)          PAYLOAD(Any, (c)).second.cfunc

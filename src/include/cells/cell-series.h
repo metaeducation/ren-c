@@ -141,7 +141,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     Tweak_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;
 
-    EXTRA(Any, out).node = binding;  // checked below if DEBUG_CHECK_BINDING
+    EXTRA(out).node = binding;  // checked below if DEBUG_CHECK_BINDING
 
   #if DEBUG_CHECK_BINDING
     if (Any_Bindable_Kind(heart))

@@ -62,7 +62,7 @@
 
 INLINE Array* Cell_Varargs_Source(const Cell* v) {
     assert(Cell_Heart(v) == REB_VARARGS);
-    return cast(Array*, m_cast(Node*, EXTRA(Any, v).node));
+    return cast(Array*, m_cast(Node*, EXTRA(v).node));
 }
 
 INLINE void Tweak_Cell_Varargs_Source(
@@ -70,7 +70,7 @@ INLINE void Tweak_Cell_Varargs_Source(
     Stub* source  // either a feed, or a frame varlist
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
-    EXTRA(Any, v).node = source;
+    EXTRA(v).node = source;
 }
 
 

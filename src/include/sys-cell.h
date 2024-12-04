@@ -647,8 +647,8 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 //     increased clarity of having unbound be nullptr is also in its benefit.
 //
 
-#define EXTRA(Type,cell) \
-    (cell)->extra.Type
+#define EXTRA(cell) \
+    (cell)->extra
 
 #if (! DEBUG_CHECK_BINDING)
     #define Assert_Cell_Binding_Valid(v)  NOOP
@@ -658,11 +658,11 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 #endif
 
 #define Cell_Binding(v) \
-    x_cast(Context*, (v)->extra.Any.node)
+    x_cast(Context*, (v)->extra.node)
 
 #if (! DEBUG_CHECK_BINDING)
     #define BINDING(v) \
-        *x_cast(Context**, m_cast(Node**, &(v)->extra.Any.node))
+        *x_cast(Context**, m_cast(Node**, &(v)->extra.node))
 #else
     struct BindingHolder {
         Cell* & ref;
@@ -675,30 +675,30 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 
         void operator=(Stub* right) {
             Assert_Cell_Writable(ref);
-            ref->extra.Any.node = right;
+            EXTRA(ref).node = right;
             Assert_Cell_Binding_Valid(ref);
         }
         void operator=(BindingHolder const& right) {
             Assert_Cell_Writable(ref);
-            ref->extra.Any.node = right.ref->extra.Any.node;
+            EXTRA(ref).node = EXTRA(right.ref).node;
             Assert_Cell_Binding_Valid(ref);
         }
         void operator=(nullptr_t) {
             Assert_Cell_Writable(ref);
-            ref->extra.Any.node = nullptr;
+            EXTRA(ref).node = nullptr;
         }
         template<typename T>
         void operator=(Option(T) right) {
             Assert_Cell_Writable(ref);
-            ref->extra.Any.node = maybe right;
+            EXTRA(ref).node = maybe right;
             Assert_Cell_Binding_Valid(ref);
         }
 
         Context* operator-> () const
-          { return x_cast(Context*, ref->extra.Any.node); }
+          { return x_cast(Context*, EXTRA(ref).node); }
 
         operator Context* () const
-          { return x_cast(Context*, ref->extra.Any.node); }
+          { return x_cast(Context*, EXTRA(ref).node); }
     };
 
     #define BINDING(v) \
@@ -707,12 +707,12 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
     template<typename T>
     struct cast_helper<BindingHolder,T> {
         static constexpr T convert(BindingHolder const& holder) {
-            return cast(T, x_cast(Context*, holder.ref->extra.Any.node));
+            return cast(T, x_cast(Context*, EXTRA(holder.ref).node));
         }
     };
 
     INLINE void Corrupt_Pointer_If_Debug(BindingHolder const& bh) {
-        bh.ref->extra.Any.node = p_cast(Context*, cast(uintptr_t, 0xDECAFBAD));
+        EXTRA(bh.ref).node = p_cast(Context*, cast(uintptr_t, 0xDECAFBAD));
     }
 #endif
 
@@ -880,7 +880,7 @@ INLINE Cell* Move_Cell_Untracked(
     Assert_Cell_Header_Overwritable(c);
     c->header.bits = CELL_MASK_TRASH;  // fast overwrite
 
-    Corrupt_Pointer_If_Debug(c->extra.Any.corrupt);
+    Corrupt_Pointer_If_Debug(EXTRA(c).corrupt);
     Corrupt_Pointer_If_Debug(c->payload.Any.first.corrupt);
     Corrupt_Pointer_If_Debug(c->payload.Any.second.corrupt);
 
@@ -927,7 +927,7 @@ INLINE Atom* Move_Atom_Untracked(
     Assert_Cell_Header_Overwritable(a);  // atoms can't have persistent bits
     a->header.bits = CELL_MASK_ERASED_0;  // legal state for atoms
 
-    Corrupt_Pointer_If_Debug(a->extra.Any.corrupt);
+    Corrupt_Pointer_If_Debug(EXTRA(a).corrupt);
     Corrupt_Pointer_If_Debug(a->payload.Any.first.corrupt);
     Corrupt_Pointer_If_Debug(a->payload.Any.second.corrupt);
 

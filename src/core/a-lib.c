@@ -2217,7 +2217,7 @@ static size_t Bytes_Into(
 
         assert(Is_Issue(v));
         assert(not Stringlike_Has_Node(v));
-        assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);
+        assert(EXTRA(v).at_least_4[IDX_EXTRA_LEN] == 1);
 
         memcpy(buf, PAYLOAD(Bytes, v).at_least_8, limit);  // !!! '\0' term?
         return size;

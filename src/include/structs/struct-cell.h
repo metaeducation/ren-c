@@ -19,15 +19,15 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Cell is the structure/union for all Rebol values. It's designed to be
-// four C pointers in size (so 16 bytes on 32-bit platforms and 32 bytes
-// on 64-bit platforms).  Operation will be most efficient with those sizes,
-// and there are checks on boot to ensure that `sizeof(Cell)` is the
-// correct value for the platform.  But from a mechanical standpoint, the
-// system should be *able* to work even if the size is bigger.
+// Cell is the struct underlying all Rebol values.  It's designed to be four C
+// pointers in size (so 16 bytes on 32-bit platforms and 32 bytes on 64-bit
+// platforms).  Operation will be most efficient with those sizes, and there
+// are checks on boot to ensure that `sizeof(Cell)` is the correct value for
+// the platform.  But mechanically, the system should be *able* to work even
+// if the size is bigger.
 //
 // Of the four 32-or-64-bit slots that each value has, the first slot is used
-// for the value's "Header":
+// for the value's "Header".  Those four bytes are:
 //
 // * NODE_BYTE: the first byte is a set of flags specially chosen to not
 //   collide with the leading byte of a valid UTF-8 sequence.  The flags
@@ -380,25 +380,12 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // It's also likely preferred by x86.
 //
 
-struct CharacterExtraStruct {  // see %sys-char.h
-    Codepoint codepoint;  // !!! Surrogates are "codepoints"...disallow them?
-};
-
-struct DateExtraStruct  // see %sys-time.h
+struct DateStruct  // see %sys-time.h
 {
     unsigned year:16;
     unsigned month:4;
     unsigned day:5;
     int zone:7; // +/-15:00 res: 0:15
-};
-
-struct ParameterExtraStruct  // see %sys-parameter.h
-{
-    Flags parameter_flags;  // PARAMETER_FLAG_XXX and PARAMCLASS_BYTE
-};
-
-struct BytesExtraStruct {
-    Byte at_least_4[sizeof(uintptr_t)];
 };
 
 union AnyUnion {  // needed to beat strict aliasing, used in payload
@@ -413,6 +400,10 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     uint_fast32_t u32;
 
     REBD32 d32;  // 32-bit float not in C standard, typically just `float`
+
+    Codepoint codepoint;  // !!! Surrogates are "codepoints"...disallow them?
+
+    struct DateStruct date;
 
     void *p;
     CFunction* cfunc;  // C function/data pointers pointers may differ in size
@@ -457,16 +448,6 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
 // it's used for binding on these types.  Length is in the payload itself.
 //
 #define IDX_SEQUENCE_USED 0  // index into at_least_8 when used for storage
-
-union ExtraUnion { //=//////////////////////// ACTUAL EXTRA DEFINITION ////=//
-
-    struct CharacterExtraStruct Character;
-    struct DateExtraStruct Date;
-    struct ParameterExtraStruct Parameter;
-    struct BytesExtraStruct Bytes;
-
-    union AnyUnion Any;
-};
 
 
 //=//// CELL's `PAYLOAD` FIELD DEFINITION /////////////////////////////////=//
@@ -614,7 +595,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #endif
     {
         union HeaderUnion header;
-        union ExtraUnion extra;
+        union AnyUnion extra;
         union PayloadUnion payload;
 
       #if DEBUG_TRACK_EXTEND_CELLS  // can be VERY handy [2]

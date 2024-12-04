@@ -1341,7 +1341,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     Heart heart = Cell_Heart_Unchecked(cell);
     assert(Is_Bindable_Heart(heart));
 
-    Context* binding = u_cast(Context*, cell->extra.Any.node);
+    Context* binding = u_cast(Context*, cell->extra.node);
     if (not binding)
         return;
 

@@ -58,7 +58,7 @@
 INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
     deci amount;
 
-    uintptr_t u = EXTRA(Any, v).u;
+    uintptr_t u = EXTRA(v).u;
     assert(u <= UINT32_MAX);
     amount.m0 = u; // "significand, lowest part" (32 bits)
 
@@ -83,7 +83,7 @@ INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
 INLINE Element* Init_Money(Init(Element) out, deci amount) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_MONEY);
 
-    EXTRA(Any, out).u = amount.m0;  // "significand, lowest part"
+    EXTRA(out).u = amount.m0;  // "significand, lowest part"
     PAYLOAD(Any, out).first.u = amount.m1;  // "significand, continuation"
 
     uintptr_t u2 = amount.m2;  // "significand, highest part" (23 bits)

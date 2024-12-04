@@ -513,7 +513,7 @@ DECLARE_GENERICS(Utf8)
           case SYM_CODEPOINT:
             if (
                 Stringlike_Has_Node(issue)
-                or EXTRA(Bytes, issue).at_least_4[IDX_EXTRA_LEN] != 1
+                or EXTRA(issue).at_least_4[IDX_EXTRA_LEN] != 1
             ){
                 return RAISE(Error_Not_One_Codepoint_Raw());
             }

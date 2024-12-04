@@ -55,7 +55,7 @@
 
 INLINE Element* Init_Integer_Untracked(Init(Element) out, REBI64 i64) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_INTEGER);
-    Corrupt_Unused_Field(EXTRA(Any, out).corrupt);
+    Corrupt_Unused_Field(EXTRA(out).corrupt);
     PAYLOAD(Integer, out).i64 = i64;
 
     return out;
