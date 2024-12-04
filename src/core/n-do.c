@@ -861,7 +861,7 @@ DECLARE_NATIVE(apply)
         var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
         param = Phase_Param(VAL_ACTION(op), unwrap index);
 
-        if (Is_Specialized(var))
+        if (not Is_Hole(var))
             return FAIL(Error_Bad_Parameter_Raw(at));
 
         Sink(Value) lookback = SCRATCH;  // for error
@@ -901,7 +901,7 @@ DECLARE_NATIVE(apply)
             if (Get_Parameter_Flag(e->param, REFINEMENT))
                 continue;
 
-            if (Not_Specialized(e->var)) {
+            if (Is_Hole(e->var)) {
                 param = e->param;
                 break;
             }

@@ -411,7 +411,7 @@ DECLARE_NATIVE(reframer)
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
     Value* var = Varlist_Slot(exemplar, param_index);
-    assert(Not_Specialized(var));
+    assert(Is_Hole(var));
     Copy_Cell(var, Varlist_Archetype(exemplar));
 
     // Make action with enough space to store the implementation phase and

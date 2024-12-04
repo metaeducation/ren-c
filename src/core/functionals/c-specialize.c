@@ -268,11 +268,11 @@ bool Specialize_Action_Throws(
 
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param)) {  // was specialized in underlying phase
-            assert(Is_Specialized(arg));  // user couldn't have changed it!
+            assert(not Is_Hole(arg));  // user couldn't have changed it!
             continue;
         }
 
-        if (Not_Specialized(arg)) {
+        if (Is_Hole(arg)) {
             Copy_Cell(arg, param);
             if (first_param)
                 first_param = false;  // leave infix as is
@@ -521,7 +521,7 @@ Details* Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Not_Specialized(arg)) {
+        if (Is_Hole(arg)) {
             Copy_Cell(arg, param);
             continue;
         }

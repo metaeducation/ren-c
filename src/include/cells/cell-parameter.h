@@ -289,9 +289,9 @@ INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
 // are then fixed at a value and hence specialized--so not part of the public
 // interface of the function.
 //
-INLINE bool Is_Specialized(const Value* v) {
-    if (Is_Hole(v)) {
-        if (Get_Cell_Flag_Unchecked(v, VAR_MARKED_HIDDEN))
+INLINE bool Is_Specialized(const Param* p) {
+    if (Is_Hole(c_cast(Value*, p))) {
+        if (Get_Cell_Flag_Unchecked(p, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
     }

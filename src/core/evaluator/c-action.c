@@ -730,7 +730,7 @@ Bounce Action_Executor(Level* L)
         if (Is_Specialized(PARAM))  // checked when specialized [1]
             continue;
 
-        if (Not_Specialized(stable_ARG)) {
+        if (Is_Hole(stable_ARG)) {  // not specialized
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
