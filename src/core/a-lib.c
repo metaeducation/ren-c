@@ -3246,13 +3246,11 @@ RebolValue* API_rebFunc(
     else
         BINDING(spec) = g_lib_context;  // !!! Review: needs module isolation!
 
-    Flags mkf_flags = MKF_RETURN;
-
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        &mkf_flags
+        MKF_RETURN
     );
 
     Details* details = Make_Dispatch_Details(

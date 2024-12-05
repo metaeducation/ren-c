@@ -236,8 +236,11 @@ Details* Make_Interpreted_Action_May_Fail(
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
-        &mkf_flags
+        mkf_flags
     );
+
+    if (mkf_flags & MKF_RETURN)
+        Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
 
     Details* details = Make_Dispatch_Details(
         paramlist,

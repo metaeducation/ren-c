@@ -62,7 +62,7 @@ enum Reb_Spec_Mode {
 };
 
 
-static void Ensure_Adjunct(VarList* *adjunct_out) {
+static void Force_Adjunct(VarList* *adjunct_out) {
     if (*adjunct_out)
         return;
 
@@ -91,20 +91,20 @@ static void Ensure_Adjunct(VarList* *adjunct_out) {
 //    enables adding more arguments/refinements/locals in derived functions.
 //
 void Push_Keys_And_Holes_May_Fail(
-    VarList* *adjunct_out,
+    VarList* *adjunct,
     const Value* spec,
-    Flags *flags
+    Flags flags
 ){
     StackIndex base = TOP_INDEX;
 
     assert(Is_Block(spec));
 
-    if (*flags & MKF_RETURN) {
+    if (flags & MKF_RETURN) {
         Init_Word(PUSH(), CANON(RETURN));  // top of stack
         Init_Unreadable(PUSH());  // becomes parameter (explicitly or implicit)
     }
 
-    if (*flags & MKF_YIELD) {
+    if (flags & MKF_YIELD) {
         Init_Word(PUSH(), CANON(YIELD));
         Init_Nothing(PUSH());  // locals are initialized as nothing
     }
@@ -117,6 +117,14 @@ void Push_Keys_And_Holes_May_Fail(
     );
     Push_Level_Erase_Out_If_State_0(eval, L);
 
+    if (*adjunct) {
+        assert(flags & MKF_PARAMETER_SEEN);
+        assert(Is_Stub_Varlist(*adjunct));
+        Push_Lifeguard(*adjunct);  // need to guard (we do evals :-/)
+    }
+    else  // may push guard during enumeration, has to be after Level push
+        assert(*adjunct == nullptr);
+
     for (; Not_Level_At_End(L); Fetch_Next_In_Feed(L->feed)) {
 
       loop_dont_fetch_next: ;
@@ -127,7 +135,7 @@ void Push_Keys_And_Holes_May_Fail(
 
         bool strict = false;
         if (Is_Tag(item)) {
-            *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
+            flags |= MKF_PARAMETER_SEEN;  // don't look for description after
             if (0 == CT_String(item, Root_With_Tag, strict)) {
                 mode = SPEC_MODE_WITH;
                 continue;
@@ -220,19 +228,21 @@ void Push_Keys_And_Holes_May_Fail(
     //    the information for <with> or <local>)
 
         if (Is_Text(item)) {
-            if (not (*flags & MKF_PARAMETER_SEEN)) {
+            if (not (flags & MKF_PARAMETER_SEEN)) {
                 assert(mode != SPEC_MODE_PUSHED);  // none seen, none pushed!
                 // no keys seen yet, act as overall description
 
-                Ensure_Adjunct(adjunct_out);
+                assert(not *adjunct);
+                Force_Adjunct(adjunct);
 
                 String* string = Copy_String_At(item);
                 Manage_Flex(string);
                 Freeze_Flex(string);
                 Init_Text(
-                    Varlist_Slot(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
+                    Varlist_Slot(*adjunct, STD_ACTION_ADJUNCT_DESCRIPTION),
                     string
                 );
+                Push_Lifeguard(*adjunct);
             }
             else {
                 // act as description for current parameter
@@ -376,7 +386,7 @@ void Push_Keys_And_Holes_May_Fail(
         }
 
         if (
-            (*flags & MKF_RETURN)
+            (flags & MKF_RETURN)
             and Symbol_Id(symbol) == SYM_RETURN
             and not is_return
         ){
@@ -384,7 +394,7 @@ void Push_Keys_And_Holes_May_Fail(
         }
 
         if (
-            (*flags & MKF_YIELD)
+            (flags & MKF_YIELD)
             and Symbol_Id(symbol) == SYM_YIELD
         ){
             fail ("Generator provides YIELD, don't include in spec");
@@ -401,12 +411,12 @@ void Push_Keys_And_Holes_May_Fail(
         if (mode == SPEC_MODE_WITH)
             continue;
 
-        *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
+        flags |= MKF_PARAMETER_SEEN;  // don't look for description after
 
         OnStack(Value*) param;
         if (
             symbol == CANON(RETURN)
-            and (*flags & MKF_RETURN)  // explicit return: specification
+            and (flags & MKF_RETURN)  // explicit return: specification
         ){
             assert(
                 Cell_Word_Symbol(Data_Stack_At(Element, base + 1))
@@ -447,7 +457,7 @@ void Push_Keys_And_Holes_May_Fail(
         }
     }
 
-    if (*flags & MKF_RETURN) {  // default RETURN: to unconstrained if not seen
+    if (flags & MKF_RETURN) {  // default RETURN: to unconstrained if not seen
         assert(
             Cell_Word_Symbol(Data_Stack_At(Element, base + 1)) == CANON(RETURN)
         );
@@ -463,25 +473,27 @@ void Push_Keys_And_Holes_May_Fail(
         QUOTE_BYTE(param_1) = NOQUOTE_1;  // normal parameter
     }
 
-    Drop_Level_Unbalanced(L);
+    if (*adjunct)
+        Drop_Lifeguard(*adjunct);
 
-    *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
+    Drop_Level_Unbalanced(L);
 }
 
 
 //
-//  Pop_Paramlist_With_Adjunct_May_Fail: C
+//  Pop_Paramlist_May_Fail: C
 //
-// Assuming the stack is formed in a rhythm of the parameter, a type spec
-// block, and a description...produce a paramlist in a state suitable to be
-// passed to Make_Dispatch_Details().  It may not succeed because there could be
-// duplicate parameters on the stack, and the checking via a binder is done
-// as part of this popping process.
+// Assuming the stack is formed in pairs of symbol WORD! for key and a
+// parameter (possibly an antiform PARAMETER!, or specialized local), this
+// produces a paramlist in a state suitable for Make_Dispatch_Details().
 //
-ParamList* Pop_Paramlist_With_Adjunct_May_Fail(
-    Sink(VarList*) adjunct,
+// It may not succeed because there could be duplicate parameters on the stack,
+// and the checking via a binder is done as part of this popping process.
+//
+ParamList* Pop_Paramlist_May_Fail(
     StackIndex base,
-    Flags flags
+    Option(Phase*) prior,
+    Option(VarList*) prior_coupling
 ){
     Count num_params = (TOP_INDEX - base) / 2;
 
@@ -499,11 +511,6 @@ ParamList* Pop_Paramlist_With_Adjunct_May_Fail(
     );
     Set_Flex_Len(paramlist, num_params + 1);
 
-    if (flags & MKF_RETURN) {
-        assert(num_params >= 1);
-        Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
-    }
-
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but fail() isn't allowed while binders are in effect.
     //
@@ -515,8 +522,10 @@ ParamList* Pop_Paramlist_With_Adjunct_May_Fail(
 
     const Symbol* duplicate = nullptr;
 
-  blockscope {
-    Value* param = 1 + Init_Unreadable(Array_Head(paramlist));
+    Value* rootvar = Flex_Head(Value, paramlist);
+    Tweak_Frame_Varlist_Rootvar(paramlist, prior, prior_coupling);
+
+    Value* param = 1 + rootvar;
     Key* key = Flex_Head(Key, keylist);
 
     StackIndex stackindex = base + 1;  // empty stack base would be 0, bad cell
@@ -576,11 +585,9 @@ ParamList* Pop_Paramlist_With_Adjunct_May_Fail(
     // With all the values extracted from stack to array, restore stack pointer
     //
     Drop_Data_Stack_To(base);
-  }
 
     // Must remove binder indexes for all words, even if about to fail
     //
-  blockscope {
     Destruct_Binder(binder);
 
     if (duplicate) {
@@ -588,20 +595,8 @@ ParamList* Pop_Paramlist_With_Adjunct_May_Fail(
         Init_Word(word, duplicate);
         fail (Error_Dup_Vars_Raw(word));
     }
-  }
 
-    //=///////////////////////////////////////////////////////////////////=//
-    //
-    // BUILD ADJUNCT INFORMATION OBJECT (IF NEEDED)
-    //
-    //=///////////////////////////////////////////////////////////////////=//
-
-    // !!! See notes on ACTION-ADJUNCT in %sysobj.r
-    //
-    // Currently only contains description, assigned during parameter pushes.
-
-    UNUSED(adjunct);
-
+    Assert_Flex_Term_If_Needed(paramlist);
     return cast(ParamList*, paramlist);
 }
 
@@ -639,25 +634,31 @@ ParamList* Pop_Paramlist_With_Adjunct_May_Fail(
 // variable.  But it won't be a void at the start.
 //
 ParamList* Make_Paramlist_Managed_May_Fail(
-    VarList* *adjunct_out,
+    Sink(VarList*) adjunct,
     const Element* spec,
-    Flags *flags  // flags may be modified to carry additional information
+    Flags flags  // flags may be modified to carry additional information
 ){
     StackIndex base = TOP_INDEX;
-
-    *adjunct_out = nullptr;
 
     // The process is broken up into phases so that the spec analysis code
     // can be reused in AUGMENT.
     //
+    *adjunct = nullptr;
     Push_Keys_And_Holes_May_Fail(
-        adjunct_out,
+        adjunct,
         spec,
         flags
     );
-    ParamList* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        adjunct_out, base, *flags
+
+    Option(Phase*) prior = nullptr;
+    Option(VarList*) prior_coupling = nullptr;
+
+    ParamList* paramlist = Pop_Paramlist_May_Fail(
+        base, prior, prior_coupling
     );
+
+    if (flags & MKF_RETURN)
+        Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
 
     return paramlist;
 }
@@ -692,10 +693,7 @@ Details* Make_Dispatch_Details(
     assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
 
     assert(Is_Node_Managed(paramlist));
-    assert(
-        Not_Cell_Readable(Flex_Head(Value, paramlist))
-        or CTX_TYPE(paramlist) == REB_FRAME
-    );
+    assert(CTX_TYPE(paramlist) == REB_FRAME);
 
     // !!! There used to be more validation code needed here when it was
     // possible to pass a specialization frame separately from a paramlist.
@@ -745,14 +743,6 @@ Details* Make_Dispatch_Details(
     INODE(Exemplar, details) = paramlist;
 
     Phase* act = cast(Phase*, details);  // now it's a legitimate Action
-
-    // !!! We may have to initialize the exemplar rootvar.
-    //
-    Value* rootvar = Flex_Head(Value, paramlist);
-    if (Not_Cell_Readable(rootvar))
-        Tweak_Frame_Varlist_Rootvar(
-            Varlist_Array(paramlist), Phase_Details(act), UNBOUND
-        );
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can

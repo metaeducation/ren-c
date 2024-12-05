@@ -295,13 +295,13 @@ DECLARE_NATIVE(make_native)
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
 
-    VarList* meta;
-    Flags flags = MKF_RETURN;
+    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
+        &adjunct,
         spec,
-        &flags
+        MKF_RETURN
     );
+
     Details* details = Make_Dispatch_Details(
         paramlist,
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
@@ -309,7 +309,7 @@ DECLARE_NATIVE(make_native)
     );
 
     assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, meta);
+    Tweak_Phase_Adjunct(details, adjunct);
 
     if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);

@@ -230,12 +230,11 @@ DECLARE_NATIVE(combinator)
     Sink(Element) expanded_spec = SCRATCH;
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
-    VarList* meta;
-    Flags flags = MKF_RETURN;
+    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
+        &adjunct,
         expanded_spec,
-        &flags
+        MKF_RETURN
     );
 
     Details* details = Make_Dispatch_Details(

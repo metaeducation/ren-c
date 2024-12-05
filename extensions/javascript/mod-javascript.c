@@ -849,12 +849,11 @@ DECLARE_NATIVE(js_native)
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
 
-    VarList* meta;
-    Flags flags = MKF_RETURN;
+    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
+        &adjunct,
         spec,
-        &flags
+        MKF_RETURN
     );
 
     Details* details = Make_Dispatch_Details(
@@ -865,7 +864,7 @@ DECLARE_NATIVE(js_native)
     Set_Details_Flag(details, IS_NATIVE);
 
     assert(Phase_Adjunct(details) == nullptr);  // should default to nullptr
-    Tweak_Phase_Adjunct(details, meta);
+    Tweak_Phase_Adjunct(details, adjunct);
 
     heapaddr_t native_id = Native_Id_For_Details(details);
 

@@ -180,15 +180,14 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 
 INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
     Array* varlist,
-    Details* phase,
+    Option(Phase*) phase,
     Option(VarList*) coupling
 ){
     Cell* rootvar = Array_Head(varlist);
-    assert(phase != nullptr);
     Reset_Cell_Header_Noquote(rootvar, CELL_MASK_FRAME);
     Tweak_Cell_Context_Varlist(rootvar, varlist);
     Tweak_Cell_Frame_Coupling(rootvar, coupling);
-    Tweak_Cell_Frame_Phase_Or_Label(rootvar, phase);
+    Tweak_Cell_Frame_Phase_Or_Label(rootvar, unwrap phase);
   #if RUNTIME_CHECKS
     rootvar->header.bits |= CELL_FLAG_PROTECTED;
   #endif

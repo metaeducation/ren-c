@@ -114,18 +114,14 @@ DECLARE_NATIVE(augment)
     Push_Keys_And_Holes_May_Fail(  // add spec parameters, may add duplicates
         &adjunct,
         spec,
-        &flags
+        flags | MKF_PARAMETER_SEEN
     );
 
-    ParamList* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(  // checks dups
-        &adjunct, STACK_BASE, flags
-    );
+    Phase* prior = VAL_ACTION(ARG(original));
+    Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(original));
 
-    assert(Not_Cell_Readable(Flex_Head(Value, paramlist)));
-    Tweak_Frame_Varlist_Rootvar(  // no new phase needed, just use frame [3]
-        Varlist_Array(paramlist),
-        Phase_Details(VAL_ACTION(ARG(original))),
-        Cell_Frame_Coupling(ARG(original))
+    ParamList* paramlist = Pop_Paramlist_May_Fail(  // checks dups
+        STACK_BASE, prior, prior_coupling
     );
 
     assert(Phase_Adjunct(paramlist) == nullptr);

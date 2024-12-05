@@ -78,12 +78,11 @@ Details* Make_Native_Dispatch_Details(
     // the Natives table.  The associated C function is provided by a
     // table built in the bootstrap scripts, `g_core_native_dispatchers`.
 
-    VarList* meta;
-    Flags flags = MKF_RETURN;
+    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
+        &adjunct,
         spec,
-        &flags  // native return types checked only if RUNTIME_CHECKS
+        MKF_RETURN  // native return types checked only if RUNTIME_CHECKS
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
@@ -123,7 +122,7 @@ Details* Make_Native_Dispatch_Details(
     // NATIVE-COMBINATOR.
     //
     assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, meta);
+    Tweak_Phase_Adjunct(details, adjunct);
 
     // Some features are not supported by intrinsics on their first argument,
     // because it would make them too complicated.

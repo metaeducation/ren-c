@@ -229,9 +229,11 @@ DECLARE_NATIVE(lambda)
         return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
     }
 
-    VarList* adjunct;  // reuses Pop_Paramlist() [1]
-    ParamList* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
-        &adjunct, STACK_BASE, MKF_MASK_NONE
+    Option(Phase*) prior = nullptr;
+    Option(VarList*) prior_coupling = nullptr;
+
+    ParamList* paramlist = Pop_Paramlist_May_Fail(
+        STACK_BASE, prior, prior_coupling
     );
 
     Details* details = Make_Dispatch_Details(

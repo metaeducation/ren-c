@@ -521,8 +521,7 @@ enum {
     // avoid the inefficiency of creating documentation frames on functions
     // that don't have any.
     //
-    MKF_PARAMETER_SEEN = 1 << 2,  // text will be description until this
-    MKF_HAS_DESCRIPTION = 1 << 3
+    MKF_PARAMETER_SEEN = 1 << 2  // text will be description until this
 };
 
 #define MKF_MASK_NONE 0 // no special handling

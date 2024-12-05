@@ -97,14 +97,13 @@ Details* Make_Decider_Intrinsic(Offset decider_index) {
     Init_Get_Word(Array_At(spec_array, 1), CANON(TYPE));
     Init_Block(spec, spec_array);
 
-    VarList* meta;
-    Flags flags = MKF_RETURN;
+    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
+        &adjunct,
         spec,
-        &flags  // native return types checked only if RUNTIME_CHECKS
+        MKF_RETURN  // native return types checked only if RUNTIME_CHECKS
     );
-    Assert_Flex_Term_If_Needed(paramlist);
+    assert(adjunct == nullptr);
 
     Details* details = Make_Dispatch_Details(
         paramlist,
