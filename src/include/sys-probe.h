@@ -49,6 +49,7 @@
         typename T,
         typename std::enable_if<
             std::is_pointer<T>::value  // assume pointers are Node*
+            or std::is_convertible<T,Cell*>::value
         >::type* = nullptr
     >
     T Probe_Cpp_Helper(T v, const char *expr, const char *file, int line)
@@ -61,6 +62,7 @@
         typename T,
         typename std::enable_if<
             !std::is_pointer<T>::value  // ordinary << output operator
+            and !std::is_convertible<T,Cell*>::value
         >::type* = nullptr
     >
     T Probe_Cpp_Helper(T v, const char *expr, const char *file, int line)
