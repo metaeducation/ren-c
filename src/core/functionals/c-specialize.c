@@ -285,7 +285,7 @@ bool Specialize_Action_Throws(
         if (Get_Parameter_Flag(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
             TOP_LEVEL, param, arg, false
         )){
             fail (Error_Arg_Type(label, key, param, arg));

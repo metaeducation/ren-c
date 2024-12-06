@@ -217,7 +217,6 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     assert(tests != SCRATCH);
 
     const Atom* v = SPARE;
-    possibly(Is_Antiform(v) and HEART_BYTE(v) == REB_PARAMETER);  // [1]
 
     bool result;
 
@@ -414,7 +413,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             if (Cell_ParamClass(param) == PARAMCLASS_META)
                 Meta_Quotify(arg);
 
-            if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+            if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
                 sub, param, arg, false
             )) {
                 Drop_Action(sub);
@@ -510,7 +509,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
 
 //
-//  Typecheck_Coerce_Arg_Uses_Spare_And_Scratch: C
+//  Typecheck_Coerce_Uses_Spare_And_Scratch: C
 //
 // This does extra typechecking pertinent to function parameters, compared to
 // the basic type checking.
@@ -527,21 +526,23 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 //    like (/foo: func [...] mutable [...]) ?  This seems bad, because the
 //    contract of the function hasn't been "tweaked" with reskinning.
 //
-bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     Level* const L,
     const Param* param,
-    Atom* arg,  // need mutability for coercion
+    Atom* atom,  // need mutability for coercion
     bool is_return
 ){
     USE_LEVEL_SHORTHANDS (L);
 
-    assert(arg != SCRATCH and arg != SPARE);
+    assert(atom != SCRATCH and atom != SPARE);
+    if (not is_return)  // antiform parameters legal as returns, but not args
+        assert(not (Is_Antiform(atom) and HEART_BYTE(atom) == REB_PARAMETER));
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
-        assert(not Is_Stable(arg) or not Is_Void(arg));  // should've bypassed
+        assert(not Is_Stable(atom) or not Is_Void(atom));  // should bypass
 
     if (Get_Parameter_Flag(param, CONST))
-        Set_Cell_Flag(arg, CONST);  // mutability override? [2]
+        Set_Cell_Flag(atom, CONST);  // mutability override? [2]
 
     bool result;
 
@@ -553,13 +554,13 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
     bool unquoted = false;
 
     if (Cell_ParamClass(param) == PARAMCLASS_META) {
-        if (Is_Nulled(arg))
+        if (Is_Nulled(atom))
             return Get_Parameter_Flag(param, ENDABLE);
 
-        if (not Is_Quasiform(arg) and not Is_Quoted(arg))
+        if (not Is_Quasiform(atom) and not Is_Quoted(atom))
             return false;
 
-        Meta_Unquotify_Undecayed(arg);  // temporary adjustment (easiest option)
+        Meta_Unquotify_Undecayed(atom);  // temp adjustment (easiest option)
         unquoted = true;
     }
     else if (is_return) {
@@ -568,31 +569,31 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
     else {
         unquoted = false;
 
-        if (Not_Stable(arg))
+        if (Not_Stable(atom))
             goto do_coercion;
     }
 
   typecheck_again:
 
-    if (Is_Antiform(arg)) {
-        if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(arg))
+    if (Is_Antiform(atom)) {
+        if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(atom))
             goto return_true;
 
-        if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(arg))
+        if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
             goto return_true;
 
-        if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(arg))
+        if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
             goto return_true;
 
         if (
             Get_Parameter_Flag(param, NOTHING_DEFINITELY_OK)
-            and Is_Nothing(arg)
+            and Is_Nothing(atom)
         ){
             goto return_true;
         }
     }
 
-    if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Stable(arg))
+    if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Stable(atom))
         goto return_true;
 
     if (Get_Parameter_Flag(param, ANY_ATOM_OK))
@@ -600,7 +601,7 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
 
     if (Is_Parameter_Unconstrained(param)) {
         if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
-            if (Is_Okay(arg))
+            if (Is_Okay(atom))
                 goto return_true;  // nulls handled by NULL_DEFINITELY_OK
             goto return_false;
         }
@@ -612,19 +613,19 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
     const Byte* optimized = spec->misc.any.at_least_4;
     const Byte* optimized_tail = optimized + sizeof(spec->misc.any.at_least_4);
 
-    if (Is_Stable(arg)) {
+    if (Is_Stable(atom)) {
         for (; optimized != optimized_tail; ++optimized) {
             if (*optimized == 0)
                 break;
 
             Decider* decider = g_instance_deciders[*optimized];
-            if (decider(Stable_Unchecked(arg)))
+            if (decider(Stable_Unchecked(atom)))
                 goto return_true;
         }
     }
 
     if (Get_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)) {
-        Copy_Cell(SPARE, arg);
+        Copy_Cell(SPARE, atom);
         if (Typecheck_Atom_In_Spare_Uses_Scratch(L, param, SPECIFIED))
             goto return_true;
     }
@@ -634,23 +635,23 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
 
       do_coercion:
 
-        if (Is_Action(arg)) {
-            QUOTE_BYTE(arg) = NOQUOTE_1;
+        if (Is_Action(atom)) {
+            QUOTE_BYTE(atom) = NOQUOTE_1;
             coerced = true;
             goto typecheck_again;
         }
 
-        if (Is_Raised(arg))
+        if (Is_Raised(atom))
             goto return_false;
 
-        if (Is_Pack(arg) and Is_Pack_Undecayable(arg))
+        if (Is_Pack(atom) and Is_Pack_Undecayable(atom))
             goto return_false;  // nihil or unstable isotope in first slot
 
-        if (Is_Barrier(arg))
+        if (Is_Barrier(atom))
             goto return_false;  // comma antiforms
 
-        if (Is_Antiform(arg) and Is_Antiform_Unstable(arg)) {
-            Decay_If_Unstable(arg);
+        if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {
+            Decay_If_Unstable(atom);
             coerced = true;
             goto typecheck_again;
         }
@@ -669,9 +670,9 @@ bool Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
   return_result:
 
     if (unquoted)
-        Meta_Quotify(arg);
+        Meta_Quotify(atom);
 
-    if ((result == true) and Not_Stable(arg))
+    if ((result == true) and Not_Stable(atom))
         assert(is_return);
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]

@@ -507,7 +507,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
         return true;  // kind of common... necessary?
 
-    if (Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom, true))
+    if (Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true))
         return true;
 
     if (Is_Nihil(atom)) {  // RETURN NIHIL
@@ -521,7 +521,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
         Init_Nothing(atom);
     }
 
-    return Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, param, atom, false);
+    return Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, false);
 }
 
 

@@ -779,7 +779,7 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, PARAM, ARG, false))
+        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, PARAM, ARG, false))
             return FAIL(Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
     }
 

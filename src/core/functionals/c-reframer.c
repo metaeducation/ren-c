@@ -350,7 +350,7 @@ Details* Alloc_Action_From_Exemplar(
             continue;
         }
 
-        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(
             TOP_LEVEL, param, arg, false
         )){
             fail (Error_Arg_Type(label, key, param, arg));
@@ -436,7 +436,7 @@ DECLARE_NATIVE(reframer)
     //
     Sink(Element) temp = LOCAL(temp);
     Copy_Cell(temp, LEVEL->rootvar);
-    if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(LEVEL, param, temp, false)) {
+    if (not Typecheck_Coerce_Uses_Spare_And_Scratch(LEVEL, param, temp, false)) {
         DECLARE_ATOM (label_word);
         if (label)
             Init_Word(label_word, unwrap label);
