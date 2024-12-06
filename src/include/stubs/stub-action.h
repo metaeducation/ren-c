@@ -384,6 +384,20 @@ INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
 }
 
 
+
+#define Set_Details_Flag(p,name) \
+    Set_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+
+#define Get_Details_Flag(p,name) \
+    Get_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+
+#define Clear_Details_Flag(p,name) \
+    Clear_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+
+#define Not_Details_Flag(p,name) \
+    Not_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+
+
 //=//// RETURN HANDLING (WIP) /////////////////////////////////////////////=//
 //
 // The well-understood and working part of definitional return handling is
@@ -418,5 +432,5 @@ INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
 // more design work on this is needed.
 //
 
-#define ACT_HAS_RETURN(a) \
-    Get_Flavor_Flag(VARLIST, Phase_Paramlist(a), PARAMLIST_HAS_RETURN)
+#define Details_Has_Return(details) \
+    Get_Details_Flag((details), PARAMLIST_HAS_RETURN)

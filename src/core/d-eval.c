@@ -227,7 +227,7 @@ void Do_After_Action_Checks_Debug(Level* L) {
     //
   #if CHECK_NATIVE_RETURNS
     Details* details = Ensure_Level_Details(L);
-    if (ACT_HAS_RETURN(details) and Is_Stable(L->out)) {
+    if (Details_Has_Return(details) and Is_Stable(L->out)) {
         const Param* param = Phase_Params_Head(details);
         assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 

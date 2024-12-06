@@ -108,11 +108,12 @@ Details* Make_Decider_Intrinsic(Offset decider_index) {
     assert(adjunct == nullptr);
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN
+            | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
         paramlist,
         &Decider_Intrinsic_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
-    Set_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC);
 
     Init_Integer(
         Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX),
@@ -202,10 +203,9 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
 // for TYPE-BLOCK! and TYPE-GROUP!.
 //
-// 1. For the moment, we prohibit typechecking parameter antiforms.  If you
-//    write something like (match [antiform?] frame.unspecialized-arg) then
-//    trying to fill the argument to MATCH with an antiform parameter just
-//    should not be possible.
+// 1. RETURN can typecheck parameter antiforms, though arguments should not
+//    support it, so (match [antiform?] frame.unspecialized-arg) is illegal.
+//    Review where a check for prohibiting this might be put.
 //
 bool Typecheck_Atom_In_Spare_Uses_Scratch(
     Level* const L,
@@ -217,7 +217,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     assert(tests != SCRATCH);
 
     const Atom* v = SPARE;
-    assert(not (Is_Antiform(v) and HEART_BYTE(v) == REB_PARAMETER));  // [1]
+    possibly(Is_Antiform(v) and HEART_BYTE(v) == REB_PARAMETER);  // [1]
 
     bool result;
 

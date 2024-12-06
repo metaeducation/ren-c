@@ -65,9 +65,15 @@
     STUB_SUBCLASS_FLAG_27
 
 
-//=//// DETAILS_FLAG_28 ///////////////////////////////////////////////////=//
+//=//// DETAILS_FLAG_PARAMLIST_HAS_RETURN /////////////////////////////////=//
 //
-#define DETAILS_FLAG_28 \
+// The mechanics for RETURN are being worked on, to where it really should be
+// Dispatcher-specific (e.g. the Encloser_Dispatcher() knows that the return
+// comes from the enclosing function, not the enclosed one).  But this flag
+// is on the Details array, as a slight improvement over putting it on the
+// ParamList (where flags are more scarce).
+//
+#define DETAILS_FLAG_PARAMLIST_HAS_RETURN \
     STUB_SUBCLASS_FLAG_28
 
 
@@ -109,17 +115,12 @@ typedef enum {
     STUB_SUBCLASS_FLAG_31
 
 
-#define Set_Details_Flag(p,name) \
-    Set_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+#define DETAILS_MASK_NONE  0
 
-#define Get_Details_Flag(p,name) \
-    Get_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
-
-#define Clear_Details_Flag(p,name) \
-    Clear_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
-
-#define Not_Details_Flag(p,name) \
-    Not_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+#define DETAILS_MASK_PROXY ( \
+    DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC \
+        | DETAILS_FLAG_IS_NATIVE \
+        | DETAILS_FLAG_PARAMLIST_HAS_RETURN)
 
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always

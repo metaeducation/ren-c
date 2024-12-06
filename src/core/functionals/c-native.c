@@ -86,7 +86,15 @@ Details* Make_Native_Dispatch_Details(
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
+    Flags details_flags = (
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN
+            | DETAILS_FLAG_IS_NATIVE);
+
+    if (native_type == NATIVE_INTRINSIC)
+        details_flags |= DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC;
+
     Details* details = Make_Dispatch_Details(
+        details_flags,
         paramlist,
         dispatcher,  // dispatcher is unique to this native
         IDX_NATIVE_MAX  // details array capacity
@@ -97,8 +105,6 @@ Details* Make_Native_Dispatch_Details(
         Varlist_Archetype(module)
     );
 
-    Set_Details_Flag(details, IS_NATIVE);
-
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like
     // calculating the furthest amount of progress in the parse.  So we call
@@ -107,6 +113,7 @@ Details* Make_Native_Dispatch_Details(
     if (native_type == NATIVE_COMBINATOR) {
         Details* native_details = details;
         details = Make_Dispatch_Details(
+            DETAILS_FLAG_PARAMLIST_HAS_RETURN,  // *not* a native, calls one...
             Phase_Paramlist(native_details),
             &Combinator_Dispatcher,
             2  // IDX_COMBINATOR_MAX  // details array capacity
@@ -132,8 +139,6 @@ Details* Make_Native_Dispatch_Details(
         assert(Not_Parameter_Flag(param, REFINEMENT));
         assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);
-
-        Set_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC);
     }
 
     return details;

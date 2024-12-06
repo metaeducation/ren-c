@@ -125,6 +125,7 @@ DECLARE_NATIVE(n_shot)
     REBI64 n = VAL_INT64(ARG(n));
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN,
         Phase_Paramlist(VAL_ACTION(LIB(DO_BRANCH))),
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
         IDX_ONESHOT_MAX  // details array capacity

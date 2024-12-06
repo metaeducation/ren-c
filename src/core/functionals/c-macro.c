@@ -104,7 +104,7 @@ Bounce Macro_Dispatcher(Level* const L)
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    assert(ACT_HAS_RETURN(details));
+    assert(Details_Has_Return(details));
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
     Force_Level_Varlist_Managed(L);

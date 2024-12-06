@@ -195,6 +195,7 @@ DECLARE_NATIVE(enclose)
     Value* outer = ARG(outer);
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_MASK_NONE,
         Phase_Paramlist(VAL_ACTION(inner)),  // same interface as inner [1]
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]

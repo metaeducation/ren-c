@@ -789,7 +789,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     //    if the phase had a return or not.
 
     Details* details = Ensure_Level_Details(L);
-    if (ACT_HAS_RETURN(details)) {  // !!! does it always have RETURN? [1]
+    if (Details_Has_Return(details)) {  // !!! does it always have RETURN? [1]
         assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
         const Param* param = Phase_Params_Head(details);
         assert(Is_Parameter(param));
@@ -859,11 +859,11 @@ DECLARE_NATIVE(js_native)
     );
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN | DETAILS_FLAG_IS_NATIVE
         paramlist,
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
     );
-    Set_Details_Flag(details, IS_NATIVE);
 
     assert(Phase_Adjunct(details) == nullptr);  // should default to nullptr
     Tweak_Phase_Adjunct(details, adjunct);

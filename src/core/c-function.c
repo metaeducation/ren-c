@@ -657,9 +657,6 @@ ParamList* Make_Paramlist_Managed_May_Fail(
         base, prior, prior_coupling
     );
 
-    if (flags & MKF_RETURN)
-        Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
-
     return paramlist;
 }
 
@@ -686,41 +683,23 @@ ParamList* Make_Paramlist_Managed_May_Fail(
 // identifies the pointer of the FRAME! to exit).
 //
 Details* Make_Dispatch_Details(
+    Flags flags,
     ParamList* paramlist,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of Phase_Details (including archetype)
 ){
+    assert(0 == (flags & (~ DETAILS_MASK_PROXY)));  // ensure only legal flags
     assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
 
     assert(Is_Node_Managed(paramlist));
     assert(CTX_TYPE(paramlist) == REB_FRAME);
-
-    // !!! There used to be more validation code needed here when it was
-    // possible to pass a specialization frame separately from a paramlist.
-    // But once paramlists were separated out from the function's identity
-    // array (using Phase_Details() as the identity instead of Phase_Keylist())
-    // then all the "shareable" information was glommed up minus redundancy
-    // into the ACT_SPECIALTY().  Here's some of the residual checking, as
-    // a placeholder for more useful consistency checking which might be done.
-    //
-  blockscope {
-    KeyList* keylist = BONUS(KeyList, paramlist);
-
-    Assert_Flex_Managed(keylist);  // paramlists/keylists, can be shared
-    assert(Flex_Used(keylist) + 1 == Array_Len(Varlist_Array(paramlist)));
-    if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
-        const Key* key = Flex_At(const Key, keylist, 0);
-        assert(Key_Id(key) == SYM_RETURN);
-        UNUSED(key);
-    }
-  }
 
     // "details" for an action is an array of cells which can be anything
     // the dispatcher understands it to be, by contract.  Terminate it
     // at the given length implicitly.
     //
     Array* details = Make_Array_Core(
-        FLEX_MASK_DETAILS | NODE_FLAG_MANAGED,
+        FLEX_MASK_DETAILS | NODE_FLAG_MANAGED | flags,
         details_capacity  // Note: may be just 1 (so non-dynamic!)
     );
     Set_Flex_Len(details, details_capacity);
@@ -840,7 +819,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
             real_body_index = 0;
             UNUSED(real_body_index);
         }
-        else if (ACT_HAS_RETURN(a)) {
+        else if (Details_Has_Return(details)) {
             example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
             real_body_index = 4;
         }

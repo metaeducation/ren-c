@@ -238,6 +238,7 @@ DECLARE_NATIVE(combinator)
     );
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN,
         paramlist,
         &Combinator_Dispatcher,
         IDX_COMBINATOR_MAX  // details array capacity
@@ -260,12 +261,7 @@ DECLARE_NATIVE(combinator)
         relativized
     );
 
-    return Init_Frame(  // not an antiform
-        OUT,
-        details,
-        ANONYMOUS,
-        UNBOUND
-    );
+    return Init_Frame(OUT, details, ANONYMOUS, NONMETHOD);
 }
 
 

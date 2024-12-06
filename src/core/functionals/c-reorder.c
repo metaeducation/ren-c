@@ -228,6 +228,7 @@ DECLARE_NATIVE(reorder)
         return FAIL(unwrap error);
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_MASK_NONE,
         paramlist,
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX

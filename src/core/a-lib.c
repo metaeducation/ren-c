@@ -3162,7 +3162,7 @@ enum {
 Bounce Api_Function_Dispatcher(Level* const L)
 {
     Details* details = Ensure_Level_Details(L);
-    assert(ACT_HAS_RETURN(details));  // continuations can RETURN [1]
+    assert(Details_Has_Return(details));  // continuations can RETURN [1]
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
     const Param* param = Phase_Params_Head(details);
 
@@ -3254,6 +3254,7 @@ RebolValue* API_rebFunc(
     );
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN,
         paramlist,
         &Api_Function_Dispatcher,
         IDX_API_ACTION_MAX

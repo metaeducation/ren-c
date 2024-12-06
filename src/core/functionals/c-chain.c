@@ -264,6 +264,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
     }
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_MASK_NONE,
         Phase_Paramlist(VAL_ACTION(first)),  // interface of first action [2]
         &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity

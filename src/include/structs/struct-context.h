@@ -186,12 +186,9 @@ typedef Context Use;
 #define HAS_MISC_RunLevel       FLAVOR_VARLIST
 
 
-//=//// PARAMLIST_HAS_RETURN //////////////////////////////////////////////=//
+//=//// VARLIST_FLAG_24 ///////////////////////////////////////////////////=//
 //
-// See ACT_HAS_RETURN() for remarks.  Note: This is a flag on PARAMLIST, not
-// on DETAILS...e.g. the varlist of an exemplar context.
-//
-#define VARLIST_FLAG_PARAMLIST_HAS_RETURN \
+#define VARLIST_FLAG_24 \
     STUB_SUBCLASS_FLAG_24
 
 

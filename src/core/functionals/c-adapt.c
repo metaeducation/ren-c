@@ -144,6 +144,7 @@ DECLARE_NATIVE(adapt)
     Value* prelude = ARG(prelude);
 
     Details* details = Make_Dispatch_Details(
+        DETAILS_MASK_NONE,
         Phase_Paramlist(VAL_ACTION(adaptee)),  // same parameters as adaptee
         &Adapter_Dispatcher,
         IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]

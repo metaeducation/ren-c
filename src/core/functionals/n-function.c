@@ -120,7 +120,7 @@ Bounce Func_Dispatcher(Level* const L)
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    assert(ACT_HAS_RETURN(details));  // all FUNC have RETURN
+    assert(Details_Has_Return(details));  // all FUNC have RETURN
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
     Value* cell = Level_Arg(L, 1);
@@ -155,11 +155,11 @@ Bounce Func_Dispatcher(Level* const L)
 
     Init_Nothing(OUT);  // NOTHING, regardless of body result [1]
 
-    Details* phase = Ensure_Level_Details(L);
+    Details* details = Ensure_Level_Details(L);
 
-    if (ACT_HAS_RETURN(phase)) {
-        assert(Key_Id(Phase_Keys_Head(phase)) == SYM_RETURN);
-        const Param* param = Phase_Params_Head(phase);
+    if (Details_Has_Return(details)) {
+        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+        const Param* param = Phase_Params_Head(details);
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
             return FAIL(
@@ -239,14 +239,17 @@ Details* Make_Interpreted_Action_May_Fail(
         mkf_flags
     );
 
+    Flags details_flags = 0;
     if (mkf_flags & MKF_RETURN)
-        Set_Flavor_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN);
+        details_flags |= DETAILS_FLAG_PARAMLIST_HAS_RETURN;
 
     Details* details = Make_Dispatch_Details(
+        details_flags,
         paramlist,
         dispatcher,
         details_capacity  // we fill in details[0], caller fills any extra
     );
+
 
     assert(Phase_Adjunct(details) == nullptr);
     Tweak_Phase_Adjunct(details, meta);
@@ -569,7 +572,7 @@ DECLARE_NATIVE(definitional_return)
 
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
     Details* target_phase = Ensure_Level_Details(target_level);
-    assert(ACT_HAS_RETURN(target_phase));  // continuations can RETURN [1]
+    assert(Details_Has_Return(target_phase));  // continuations can RETURN [1]
     assert(Key_Id(Phase_Keys_Head(target_phase)) == SYM_RETURN);
     const Param* return_param = Phase_Params_Head(target_phase);
 

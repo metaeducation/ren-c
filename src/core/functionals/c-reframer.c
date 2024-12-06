@@ -320,6 +320,57 @@ Bounce Reframer_Dispatcher(Level* const L)
 
 
 //
+//  Alloc_Action_From_Exemplar: C
+//
+// Leaves details blank, and lets you specify the dispatcher.
+//
+Details* Alloc_Action_From_Exemplar(
+    ParamList* paramlist,
+    Option(const Symbol*) label,
+    Dispatcher* dispatcher,
+    REBLEN details_capacity
+){
+    Phase* unspecialized = Paramlist_Archetype_Phase(paramlist);
+
+    const Key* tail;
+    const Key* key = Phase_Keys(&tail, unspecialized);
+    const Param* param = Phase_Params_Head(unspecialized);
+    Value* arg = Varlist_Slots_Head(paramlist);
+    for (; key != tail; ++key, ++arg, ++param) {
+        if (Is_Specialized(param))
+            continue;
+
+        // Leave non-hidden unspecialized args to be handled by the evaluator.
+        //
+        // https://forum.rebol.info/t/default-values-and-make-frame/1412
+        // https://forum.rebol.info/t/1413
+        //
+        if (Is_Hole(arg)) {
+            Copy_Cell(arg, param);
+            continue;
+        }
+
+        if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(
+            TOP_LEVEL, param, arg, false
+        )){
+            fail (Error_Arg_Type(label, key, param, arg));
+        }
+    }
+
+    // This code parallels Specialize_Action_Throws(), see comments there
+
+    Details* details = Make_Dispatch_Details(
+        DETAILS_MASK_NONE,
+        paramlist,
+        dispatcher,
+        details_capacity
+    );
+
+    return details;
+}
+
+
+//
 //  /reframer: native [
 //
 //  "Make a function that manipulates an invocation at the callsite"

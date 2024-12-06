@@ -1324,7 +1324,7 @@ DECLARE_GENERICS(Frame)
             return OUT;
 
           case SYM_RETURN: {
-            if (not ACT_HAS_RETURN(details))
+            if (not Details_Has_Return(details))
                 return nullptr;
 
             assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
@@ -1436,6 +1436,8 @@ DECLARE_GENERICS(Frame)
 
         Details* original = cast(Details*, VAL_ACTION(frame));
 
+        Flags details_flags = original->leader.bits & DETAILS_MASK_PROXY;
+
         // If the function had code, then that code will be bound relative
         // to the original paramlist that's getting hijacked.  So when the
         // proxy is called, we want the frame pushed to be relative to
@@ -1443,6 +1445,7 @@ DECLARE_GENERICS(Frame)
         // so `underlying = VAL_ACTION(value)`
 
         Details* proxy = Make_Dispatch_Details(
+            details_flags,
             Phase_Paramlist(original),  // not changing the interface
             Details_Dispatcher(original),  // preserve in case original hijacked
             1  // copy doesn't need details of its own, just archetype
@@ -1451,11 +1454,6 @@ DECLARE_GENERICS(Frame)
         Option(VarList*) adjunct = Phase_Adjunct(original);
         assert(Phase_Adjunct(proxy) == nullptr);
         Tweak_Phase_Adjunct(proxy, adjunct);  // !!! Note: not a copy
-
-        // !!! Do this with masking?
-
-        if (Get_Details_Flag(original, IS_NATIVE))
-            Set_Details_Flag(proxy, IS_NATIVE);
 
         Clear_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // changing it
         Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(original));
