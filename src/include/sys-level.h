@@ -480,7 +480,11 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     L->out = out;  // must be a valid cell for GC [3]
   #if RUNTIME_CHECKS
     if (L->out)
-        assert(not Is_Api_Value(L->out));
+        assert(
+            Is_Cell_Erased(L->out)
+            or Not_Cell_Readable(L->out)
+            or not Is_Api_Value(L->out)
+        );
   #endif
 
     assert(

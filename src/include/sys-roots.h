@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -20,26 +20,19 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// API cells live in singular arrays (which fit within an array Stub, that
-// is the size of 2 REBVALs).  But they aren't kept alive by references from
-// other values, like the way that an Array* used by a BLOCK! is kept alive.
-// They are kept alive by being roots (currently implemented with a flag
-// NODE_FLAG_ROOT, but it could also mean living in a distinct pool from
-// other series nodes).
+// API cells live in the single-Cell-worth of content of a "compact" Stub.
+// But they aren't kept alive by references from other Cells, the way that an
+// Array Stub used by a BLOCK! is kept alive.  They are kept alive by being
+/// "roots" (currently implemented with a flag NODE_FLAG_ROOT, but it could
+// also mean living in a distinct pool from other Stubs).
 //
-// The API value content is in the single cell, with LINK().owner holding
-// a VarList* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
-// link field exists in the pointer immediately prior to the Value*, which
-// means it can be sniffed as NODE_FLAG_CELL, distinguished from handles that
-// were given back with rebAlloc(), so routines can discern them.
+// The LINK() and MISC() slots of the Stub pointing to the next and previous
+// API handles which are owned by the same Level* (if the handle is owned by
+// a Level* at all, and has not been rebUnmanage()'d).  These are a circularly
+// linked list, which terminates with the Level* itself.
 //
-// MISC() is currently unused, but could serve as a reference count or other
-// purpose.  It's not particularly necessary to have API handles use array
-// stubs--though the 2*sizeof(Cell) provides some optimality, and it
-// means that API stubs can be recycled for more purposes.  But it would
-// potentially be better to have them in their own pools, because being
-// roots could be discovered without a "pre-pass" in the GC.
-//
+// INFO() is currently free, and there are several API header flags that
+// are available.
 
 
 #define LINK_ApiNext_TYPE       Node*
@@ -59,22 +52,20 @@
 // What distinguishes an API value is that it has both the NODE_FLAG_CELL and
 // NODE_FLAG_ROOT bits set.
 //
-// !!! Note: The FLAVOR_API state can be converted to an instruction for
-// releasing the handle...so beware using FLAVOR_API for detection.
-//
-INLINE bool Is_Api_Value(const Cell* v) {
-    return did (v->header.bits & NODE_FLAG_ROOT);
+INLINE bool Is_Api_Value(const Cell* c) {
+    Assert_Cell_Readable(c);
+    return Is_Node_Root_Bit_Set(c);
 }
 
+// 1. The head of the list isn't null, but points at the level, so that
+//    API freeing operations can update the head of the list in the level
+//    when given only the node pointer.
+//
 INLINE void Link_Api_Handle_To_Level(Stub* stub, Level* L)
 {
-    // The head of the list isn't null, but points at the level, so that
-    // API freeing operations can update the head of the list in the level
-    // when given only the node pointer.
+    MISC(ApiPrev, stub) = L;  // back pointer for doubly linked list [1]
 
-    MISC(ApiPrev, stub) = L;  // back pointer for doubly linked list
-
-    bool empty_list = L->alloc_value_list == L;
+    bool empty_list = (L->alloc_value_list == L);
 
     if (not empty_list) {  // head of list exists, take its spot at the head
         Stub* head = cast(Stub*, L->alloc_value_list);
@@ -128,7 +119,7 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 // 3. Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
 //    either a "public" API handle or not.  We don't want evaluation targets
 //    to have this flag, because it's legal for the Level's ->out cell to be
-//    nulled--not legal for API values.  So if an evaluation is done into an
+//    erased--not legal for API values.  So if an evaluation is done into an
 //    API handle, the flag has to be off...and then added later.
 //
 //    Having NODE_FLAG_ROOT is still tolerated as a "fresh" state for
