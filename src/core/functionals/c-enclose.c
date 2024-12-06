@@ -117,7 +117,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_ENCLOSER_MAX);
 
     Value* inner = Details_At(details, IDX_ENCLOSER_INNER);

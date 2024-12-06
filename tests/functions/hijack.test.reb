@@ -4,7 +4,7 @@
     /foo: func [x] [return x + 1]
     /another-foo: foo/
 
-    old-foo: copy foo/
+    /old-foo: copy foo/
 
     all [
         (old-foo 10) = 11
@@ -29,7 +29,7 @@
     (
         /old-three: copy three/
 
-        two-30: specialize three/ [z: 30]
+        /two-30: specialize three/ [z: 30]
         60 = (two-30 10 20)
     )
 
@@ -52,7 +52,7 @@
     (240000 = (two-30:available 10 20 40))
 
     (
-        one-20: specialize two-30/ [y: 20]
+        /one-20: specialize two-30/ [y: 20]
 
         hijack three/ func [q r s] [
             return q - r - s

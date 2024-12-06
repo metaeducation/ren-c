@@ -83,25 +83,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
     e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
 
-    if (heart == REB_FRAME and Is_Frame_Details(v)) {
-        e->index = 0;  // will be bumped to 1
-
-        Corrupt_Pointer_If_Debug(e->ctx);
-
-        Phase* act = VAL_ACTION(v);
-        e->key = Phase_Keys(&e->key_tail, act) - 1;
-        e->var = nullptr;
-        e->param = Phase_Params_Head(act) - 1;
-
-        assert(Flex_Used(Phase_Keylist(act)) <= Phase_Num_Params(act));
-
-        e->visibility = VAR_VISIBILITY_INPUTS;  // conservative guess [1]
-
-        Corrupt_Pointer_If_Debug(e->wordlist);
-        e->word = nullptr;
-        Corrupt_Pointer_If_Debug(e->word_tail);
-    }
-    else if (heart == REB_MODULE) {  // !!! module enumeration is bad/slow [2]
+    if (heart == REB_MODULE) {  // !!! module enumeration is bad/slow [2]
         e->index = INDEX_PATCHED;
 
         e->ctx = Cell_Varlist(v);
@@ -165,28 +147,14 @@ void Init_Evars(EVARS *e, const Cell* v) {
         else {
             e->var = Varlist_Slots_Head(e->ctx) - 1;
 
-            Details* phase;
-            if (not IS_FRAME_PHASED(v)) {  // not running, inputs visible [3]
-                phase = Paramlist_Archetype_Phase(cast(ParamList*, e->ctx));
-
-                Array* varlist = Varlist_Array(e->ctx);
-                if (Get_Flavor_Flag(
-                    VARLIST,
-                    varlist,
-                    FRAME_HAS_BEEN_INVOKED  // optimization, see definition
-                )){
-                    e->visibility = VAR_VISIBILITY_NONE;
-                } else
-                    e->visibility = VAR_VISIBILITY_INPUTS;
+            Phase* phase;
+            if (not Is_Frame_Phased(v)) {  // not running, inputs visible [3]
+                e->visibility = VAR_VISIBILITY_INPUTS;
+                phase = Cell_Frame_Initial_Phase(v);
             }
             else {  // is running, phase determines field visibility
-                phase = VAL_FRAME_PHASE(v);
-
-                ParamList* paramlist = Phase_Paramlist(phase);
-                if (Paramlist_Archetype_Phase(paramlist) == phase)  // phase reuses [4]
-                    e->visibility = VAR_VISIBILITY_ALL;
-                else
-                    e->visibility = VAR_VISIBILITY_INPUTS;
+                e->visibility = VAR_VISIBILITY_ALL;
+                phase = Cell_Frame_Phase(v);
             }
 
             e->param = Phase_Params_Head(phase) - 1;
@@ -777,7 +745,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
     }
     Push_Pointer_To_Flex(g_mold.stack, c);
 
-    if (Cell_Heart(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
+    if (Cell_Heart(v) == REB_FRAME and not Is_Frame_Phased(v)) {
         Array* varlist = Varlist_Array(Cell_Varlist(v));
         if (Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
@@ -1263,7 +1231,7 @@ DECLARE_GENERICS(Frame)
             //
             return Init_Frame(
                 OUT,
-                VAL_FRAME_PHASE(frame),  // just a Phase*, no binding
+                Cell_Frame_Phase(frame),  // just a Phase*, no binding
                 Cell_Frame_Label(frame),
                 Cell_Frame_Coupling(frame)  // e.g. where RETURN returns to
             );

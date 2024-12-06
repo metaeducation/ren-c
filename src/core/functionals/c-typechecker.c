@@ -44,25 +44,27 @@
 //
 // See LEVEL_FLAG_DISPATCHING_INTRINSIC for more information.
 //
-Bounce Decider_Intrinsic_Dispatcher(Level* level_)
+Bounce Decider_Intrinsic_Dispatcher(Level* const L)
 {
+    USE_LEVEL_SHORTHANDS (L);
+
     DECLARE_VALUE (v);
     Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
     if (bounce)
         return unwrap bounce;
 
-    if (Get_Level_Flag(level_, DISPATCHING_INTRINSIC)) {
+    if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         Details* details = cast(Details*, VAL_ACTION(SCRATCH));
         Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
         Decider* decider = g_instance_deciders[VAL_UINT8(index)];
         return LOGIC(decider(v));
     }
 
-    bool check_datatype = Cell_Logic(Level_Arg(level_, 3));
+    bool check_datatype = Cell_Logic(Level_Arg(L, 3));
     if (check_datatype and not Is_Type_Block(v))
         return nullptr;
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
     Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);

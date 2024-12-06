@@ -215,7 +215,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     assert(Not_Node_Managed(L->varlist));
 
-    ParamList* varlist = Level_Varlist(L);  // !!! still is fulfilling?
+    ParamList* varlist = cast(ParamList*, L->varlist);  // executor is nullptr
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
     MISC(RunLevel, varlist) = nullptr;  // disconnect from f
     Drop_Level(L);
@@ -281,7 +281,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_REFRAMER_MAX);
 
     Value* shim = Details_At(details, IDX_REFRAMER_SHIM);

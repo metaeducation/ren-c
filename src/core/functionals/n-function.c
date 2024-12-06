@@ -116,12 +116,12 @@ Bounce Func_Dispatcher(Level* const L)
     //    deals with that already.  So long as that exists, then this
     //    dispatcher merely catching a "teleport" would be redundant.
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
-    assert(Key_Id(Phase_Keys_Head(PHASE)) == SYM_RETURN);
+    assert(ACT_HAS_RETURN(details));  // all FUNC have RETURN
+    assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
     Value* cell = Level_Arg(L, 1);
     assert(Is_Parameter(cell));
@@ -155,7 +155,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Init_Nothing(OUT);  // NOTHING, regardless of body result [1]
 
-    Details* phase = Level_Phase(L);
+    Details* phase = Ensure_Level_Details(L);
 
     if (ACT_HAS_RETURN(phase)) {
         assert(Key_Id(Phase_Keys_Head(phase)) == SYM_RETURN);
@@ -568,7 +568,7 @@ DECLARE_NATIVE(definitional_return)
         return FAIL(Error_Archetype_Invoked_Raw());
 
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
-    Details* target_phase = Level_Phase(target_level);
+    Details* target_phase = Ensure_Level_Details(target_level);
     assert(ACT_HAS_RETURN(target_phase));  // continuations can RETURN [1]
     assert(Key_Id(Phase_Keys_Head(target_phase)) == SYM_RETURN);
     const Param* return_param = Phase_Params_Head(target_phase);

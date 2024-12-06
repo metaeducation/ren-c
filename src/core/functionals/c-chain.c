@@ -54,6 +54,12 @@ enum {
 // move the built level into a new level that can be executed with a new
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
+// 1. Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
+//    of something like another CASCADE, that it intends to reuse (!)  This
+//    means it started out thinking we were going to run an action in that
+//    frame and drop it, when in reality we're changing the executor and
+//    everything.  This is clearly voodoo but maybe it can be formalized.
+//
 Level* Push_Downshifted_Level(Atom* out, Level* L) {
     assert(L->executor == &Action_Executor);
 
@@ -68,13 +74,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     MISC(RunLevel, sub->varlist) = sub;
     sub->rootvar = Array_Head(sub->varlist);
 
-    // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
-    // of something like another CASCADE, that it intends to reuse (!)  This
-    // means it started out thinking we were going to run an action in that
-    // frame and drop it, when in reality we're changing the executor and
-    // everything.  This is clearly voodoo but maybe it can be formalized.
-    //
-    L->varlist = nullptr;
+    L->varlist = nullptr;  // Note: may be TRAMPOLINE_KEEPALIVE! [1]
     Corrupt_Pointer_If_Debug(L->rootvar);
 
     Corrupt_Function_Pointer_If_Debug(L->executor);  // caller must set
@@ -96,7 +96,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
 // function in the pipeline.  Having the same interface as that function
 // makes a cascaded function specializable.
 //
-// A first cut at implementing CASCADE did it all within one level.  It changed
+// The first CASCADE implementation did it all within one level.  It changed
 // the Level_Phase() and returned a REDO signal--pushing actions to the data
 // stack that the evaluator was complicit in processing as "things to run
 // afterward".  This baked awareness of cascading into %c-action.c, when it is
@@ -114,30 +114,10 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
 // causes an error.)
 //
 Bounce Cascader_Executor(Level* const L)
-//
-// 1. Stealing the varlist leaves the actual cascader frame with no varlist
-//    content.  That means debuggers introspecting the stack may see a
-//    "stolen" frame state.
-//
-// 2. You can't have an Action_Executor()-based frame on the stack unless it
-//    has a lot of things (like a varlist, which provides the phase, etc.)
-//    So we switch it around to where the level that had its varlist stolen
-//    just uses Cascader_Executor() as its executor, so we get called back.
-//
-// 3. At the head of the pipeline we start at the dispatching phase since the
-//    frame is already filled, but each step after that uses infix and runs
-//    from the top.)
-//
-// 4. We use the same mechanism as infix operations do...give the next cascade
-//    step its first argument coming from L->out.
-//
-//    !!! One side effect of this is that unless CASCADE is changed to check,
-//    pipeline items can consume more than one argument.  Might be interesting
-//    or it might be bugs waiting to happen, trying it this way for now.
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    if (THROWING)  // this routine is both dispatcher and executor [2]
+    if (THROWING)  // Unlike dispatchers, *all* executors must handle throws
         return THROWN;
 
     enum {
@@ -153,10 +133,23 @@ Bounce Cascader_Executor(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details* details = DETAILS;
+    // 1. Stealing the varlist leaves the actual cascader frame w/no varlist
+    //    content.  That means debuggers introspecting the stack may see a
+    //    "stolen" frame state.
+    //
+    // 2. You can't have an Action_Executor() Level on the stack unless it
+    //    has a lot of things (like a varlist, which provides the phase, etc.)
+    //    We switch it around to where the level that had its varlist stolen
+    //    uses Cascader_Executor() as its executor, so we get called back.
+    //
+    // 3. At the head of the pipeline we start at the dispatching phase since
+    //    the frame is already filled, but each step after that uses infix and
+    //    runs from the top.)
+
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_CASCADER_MAX);
 
-    Value* pipeline = Init_Block(
+    Element* pipeline = Init_Block(
         SPARE,  // index of BLOCK! is current step
         Cell_Array(Details_At(details, IDX_CASCADER_PIPELINE))
     );
@@ -182,6 +175,13 @@ Bounce Cascader_Executor(Level* const L)
 
 } run_next_in_pipeline: {  ///////////////////////////////////////////////////
 
+    // 1. We use the same mechanism as infix operations do...give the next
+    //    cascade step its first argument coming from L->out.
+    //
+    //    !!! One side effect of this is that unless CASCADE changes to check,
+    //    pipeline items can consume more than one argument.  Interesting,
+    //    but it might be bugs waiting to happen, trying it this way for now.
+
     Level* sub = SUBLEVEL;
     if (Get_Level_Flag(L, RAISED_RESULT_OK))
         assert(Get_Level_Flag(sub, RAISED_RESULT_OK));
@@ -192,7 +192,7 @@ Bounce Cascader_Executor(Level* const L)
     sub->varlist = nullptr;
 
     assert(Is_Block(SPARE));
-    Value* pipeline = cast(Value*, SPARE);  // series index at FRAME! to call
+    Element* pipeline = cast(Element*, SPARE);  // series indexes frame to call
     const Element* pipeline_tail;
     const Element* pipeline_at = Cell_List_At(&pipeline_tail, pipeline);
 
@@ -206,7 +206,7 @@ Bounce Cascader_Executor(Level* const L)
 
     Begin_Action(sub, Cell_Frame_Label(pipeline_at), PREFIX_0);
 
-    LEVEL_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [4]
+    LEVEL_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [1]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
@@ -237,6 +237,14 @@ Bounce Cascader_Executor(Level* const L)
 //  ]
 //
 DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
+//
+// 1. !!! Current validation is that all are frames.  Should there be other
+//    checks?  (That inputs match outputs in the pipeline?)  Should it be a
+//    dialect and allow things other than functions?
+//
+// 2. The cascaded function has the same interface as head.
+//
+//    !!! Output (RETURN) should match the *tail* of the pipeline (TBD)
 {
     INCLUDE_PARAMS_OF_CASCADE_P;
 
@@ -246,12 +254,8 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
     const Element* tail;
     const Element* first = Cell_List_At(&tail, pipeline);
 
-    // !!! Current validation is that all are frames.  Should there be other
-    // checks?  (That inputs match outputs in the pipeline?)  Should it be
-    // a dialect and allow things other than functions?
-    //
     const Element* check = first;
-    for (; check != tail; ++check) {
+    for (; check != tail; ++check) {  // validate pipeline is all FRAME! [1]
         if (not Is_Frame(check)) {
             DECLARE_ATOM (specific);
             Derelativize(specific, check, Cell_List_Binding(pipeline));
@@ -259,15 +263,8 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         }
     }
 
-    // The cascaded function has the same interface as head.
-    //
-    // !!! Output (RETURN) should match the *tail* of the pipeline.  Is this
-    // worth a new paramlist?  Should return mechanics be just reviewed in
-    // general, possibly that all actions put the return slot in a separate
-    // sliver that includes the partials?
-    //
     Details* details = Make_Dispatch_Details(
-        Phase_Paramlist(VAL_ACTION(first)),  // same interface as first action
+        Phase_Paramlist(VAL_ACTION(first)),  // interface of first action [2]
         &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity
     );
@@ -277,5 +274,5 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         pipeline
     );
 
-    return Init_Action(out, details, Cell_Frame_Label(first), UNBOUND);
+    return Init_Action(out, details, Cell_Frame_Label(first), NONMETHOD);
 }

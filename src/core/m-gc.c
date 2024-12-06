@@ -792,7 +792,7 @@ static void Mark_Level(Level* L) {
         return;  // args and locals are poison/garbage
     }
 
-    Details* phase = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);
 

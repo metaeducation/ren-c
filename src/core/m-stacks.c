@@ -134,7 +134,7 @@ VarList* Get_Context_From_Top_Level(void)
     if (Is_Level_Fulfilling(L))
         return g_lib_context;  // e.g. API call from Action_Executor() itself
 
-    Details* details = Level_Phase(L);
+    Details* details = Ensure_Level_Details(L);
 
     if (Not_Details_Flag(details, IS_NATIVE))
         return g_lib_context;  // e.g. API call in Func_Dispatcher()

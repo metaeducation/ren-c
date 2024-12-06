@@ -74,7 +74,7 @@ enum {
 // tweak them (e.g. ADAPT).
 //
 Bounce Reorderer_Dispatcher(Level* L) {
-    Details* details = Level_Phase(L);
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_REORDERER_MAX);
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);

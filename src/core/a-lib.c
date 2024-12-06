@@ -940,7 +940,7 @@ const RebolNodeInternal* API_rebArgR(
     UNUSED(binding_ref);  // not used...should not be a variadic
 
     Level* L = TOP_LEVEL;
-    Details* act = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
     // taking just a `const char*`, so this falsely is a variadic to get the
@@ -963,7 +963,7 @@ const RebolNodeInternal* API_rebArgR(
     const Symbol* symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
 
     const Key* tail;
-    const Key* key = Phase_Keys(&tail, act);
+    const Key* key = Phase_Keys(&tail, phase);
     Value* arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(Key_Symbol(key), symbol))
@@ -3098,7 +3098,7 @@ RebolContext* API_rebBindingFromLevel_internal(
     // Natives store the module they are part of in their Details array
     // under IDX_NATIVE_CONTEXT.  Extract that, and put it in NextVirtual.
     //
-    Details* details = Level_Phase(level);
+    Details* details = Ensure_Level_Details(level);
     assert(Get_Details_Flag(details, IS_NATIVE));
     Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
     node_LINK(NextVirtual, level->varlist) = Cell_Varlist(module);
@@ -3161,7 +3161,7 @@ enum {
 //
 Bounce Api_Function_Dispatcher(Level* const L)
 {
-    Details* details = Level_Phase(L);
+    Details* details = Ensure_Level_Details(L);
     assert(ACT_HAS_RETURN(details));  // continuations can RETURN [1]
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
     const Param* param = Phase_Params_Head(details);

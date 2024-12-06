@@ -179,7 +179,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     assert(L == TOP_LEVEL);
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
 
     Value* body = Details_At(details, IDX_YIELDER_BODY);
     Value* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
@@ -236,7 +236,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
     Init_Frame(original_frame, Level_Varlist(L), Level_Label(L), NONMETHOD);
 
-    assert(Key_Id(Phase_Keys_Head(PHASE)) == SYM_YIELD);
+    assert(Key_Id(Phase_Keys_Head(details)) == SYM_YIELD);
     Value* cell = Level_Arg(L, 1);
     assert(Is_Nothing(cell));  // YIELD is a local, initialized to nothing
     Init_Action(
@@ -591,7 +591,7 @@ DECLARE_NATIVE(definitional_yield)
     if (LEVEL_STATE_BYTE(yielder_level) != ST_YIELDER_RUNNING_BODY)
         return FAIL("YIELD called when body of bound yielder is not running");
 
-    Details* yielder_details = Level_Phase(yielder_level);
+    Details* yielder_details = Ensure_Level_Details(yielder_level);
     assert(Details_Dispatcher(yielder_details) == &Yielder_Dispatcher);
 
     Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);

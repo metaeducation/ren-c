@@ -726,7 +726,9 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    bool is_awaiter = Cell_Logic(Details_At(DETAILS, IDX_JS_NATIVE_IS_AWAITER));
+    Details* details = Ensure_Level_Details(L);
+    assert(Details_Max(details) == IDX_JS_NATIVE_MAX);
+    bool is_awaiter = Cell_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
@@ -786,10 +788,10 @@ Bounce JavaScript_Dispatcher(Level* const L)
     //    It doesn't seem like it should have.  :-/  Added a check to see
     //    if the phase had a return or not.
 
-    Details* phase = Level_Phase(L);
-    if (ACT_HAS_RETURN(phase)) {  // !!! does it always have RETURN? [1]
-        assert(Key_Id(Phase_Keys_Head(phase)) == SYM_RETURN);
-        const Param* param = Phase_Params_Head(phase);
+    Details* details = Ensure_Level_Details(L);
+    if (ACT_HAS_RETURN(details)) {  // !!! does it always have RETURN? [1]
+        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+        const Param* param = Phase_Params_Head(details);
         assert(Is_Parameter(param));
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))

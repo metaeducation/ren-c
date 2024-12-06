@@ -83,7 +83,7 @@ enum {
 //
 Bounce Combinator_Dispatcher(Level* L)
 {
-    Details* details = Level_Phase(L);
+    Details* details = Ensure_Level_Details(L);
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
@@ -447,19 +447,6 @@ DECLARE_NATIVE(text_x_combinator)
 //  ]
 //
 DECLARE_NATIVE(some_combinator)
-//
-// 1. If we don't put a phase on this, then it will pay attention to the
-//    FRAME_HAS_BEEN_INVOKED flag and prohibit things like STOP from advancing
-//    the input because `f.input` assignment will raise an error.  Review.
-//
-// 2. Currently the usermode parser has no support for intercepting throws
-//    removing frames from the loops list in usermode.  Mirror that limitation
-//    here in the native implementation for now.
-//
-// 3. There's no guarantee that a parser that fails leaves the remainder as-is
-//    (in fact multi-returns have historically unset variables to hide their
-//    previous values from acting as input).  So we have to put the remainder
-//    back to the input we just tried but didn't work.
 {
     INCLUDE_PARAMS_OF_SOME_COMBINATOR;
 
@@ -493,9 +480,17 @@ DECLARE_NATIVE(some_combinator)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    // 1. If we don't put a phase on this, then it will pay attention to the
+    //    FRAME_HAS_BEEN_INVOKED and prohibit things like STOP from advancing
+    //    the input because `f.input` assignment will raise an error.  Review.
+    //
+    // 2. Currently the usermode parser has no support for intercepting throws
+    //    removing frames from the loops list in usermode.  Mirror that
+    //    limitation here in the native implementation for now.
+
     Cell* loop_last = Alloc_Tail_Array(loops);
     Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), NONMETHOD);
-    Tweak_Cell_Frame_Phase(loop_last, Level_Phase(level_));  // need phase [1]
+    Tweak_Cell_Frame_Phase(loop_last, Ensure_Level_Details(level_));  // [1]
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
 

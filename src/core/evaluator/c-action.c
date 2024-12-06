@@ -717,6 +717,14 @@ Bounce Action_Executor(Level* L)
   // 3. Store the offset so that both the arg and param locations can quickly
   //    be recovered, while using only a single slot in the cell.  Sign denotes
   //    whether the parameter was infix or not.
+  //
+  // 4. When we get to the point of dispatching, what we dispatch has to be
+  //    a "Details" Phase... e.g. not just a SPECIALIZE or AUGMENT ParamList
+  //    of values, but something that actually has a Dispatcher* C function.
+  //    We have to "dig" down through the phases to find it (possibly more
+  //    than one, as you can SPECIALIZE a SPECIALIZE of an AUGMENT).  We
+  //    do this digging *once* when type checking is over, as opposed to
+  //    having to do it for each continuation, so the
 
     assert(STATE == ST_ACTION_TYPECHECKING);
 
@@ -773,6 +781,13 @@ Bounce Action_Executor(Level* L)
 
         if (not Typecheck_Coerce_Arg_Uses_Spare_And_Scratch(L, PARAM, ARG, false))
             return FAIL(Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
+    }
+
+    Phase* phase = Level_Phase(L);  // ensure Level_Phase() is Details [4]
+    while (Is_Stub_Varlist(phase)) {
+        Element* archetype = Flex_Head(Element, phase);
+        phase = cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
+        Tweak_Level_Phase(L, phase);
     }
 
   // Action arguments now gathered, begin dispatching
@@ -839,11 +854,12 @@ Bounce Action_Executor(Level* L)
 
 } dispatch_phase: {  /////////////////////////////////////////////////////////
 
+    // 1. After typechecking is complete, it "digs" through the phases until
+    //    it finds a Details*, so we should be
     assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
 
-    Details* phase = Level_Phase(L);
-
-    Dispatcher* dispatcher = Details_Dispatcher(phase);
+    Details* details = Ensure_Level_Details(L);  // guaranteed Details [1]
+    Dispatcher* dispatcher = Details_Dispatcher(details);
 
     Bounce b = (*dispatcher)(L);
 

@@ -226,10 +226,10 @@ void Do_After_Action_Checks_Debug(Level* L) {
     // so native return types are checked instead of just trusting the C.
     //
   #if CHECK_NATIVE_RETURNS
-    Details* phase = Level_Phase(L);
-    if (ACT_HAS_RETURN(phase) and Is_Stable(L->out)) {
-        const Param* param = Phase_Params_Head(phase);
-        assert(Key_Id(Phase_Keys_Head(phase)) == SYM_RETURN);
+    Details* details = Ensure_Level_Details(L);
+    if (ACT_HAS_RETURN(details) and Is_Stable(L->out)) {
+        const Param* param = Phase_Params_Head(details);
+        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
             L, param, L->out

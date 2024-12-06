@@ -90,7 +90,7 @@ void Push_Frame_Continuation(
     const Value* frame,  // may be antiform
     Option(const Atom*) with
 ){
-    if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
+    if (Is_Frame_Phased(frame))  // see REDO for tail-call recursion
         fail ("Use REDO to restart a running FRAME! (not DO)");
 
     Level* L = Make_End_Level(

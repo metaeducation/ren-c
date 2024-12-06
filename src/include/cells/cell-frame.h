@@ -94,14 +94,23 @@ INLINE void Tweak_Cell_Frame_Phase(Cell* v, Details* phase) {
     Tweak_Cell_Frame_Phase_Or_Label(v, phase);
 }
 
-INLINE Details* VAL_FRAME_PHASE(const Cell* v) {
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
-    if (not f or Is_Stub_Symbol(f))  // ANONYMOUS or label, not a phase
-        return Paramlist_Archetype_Phase(Phase_Paramlist(VAL_ACTION(v)));
-    return cast(Details*, f);  // cell has its own phase, return it
+INLINE Phase* Cell_Frame_Phase(const Cell* c) {
+    assert(Cell_Heart(c) == REB_FRAME);
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label(c);
+    assert(Is_Stub_Varlist(f) or Is_Stub_Details(f));
+    return cast(Phase*, f);
 }
 
-INLINE bool IS_FRAME_PHASED(const Cell* v) {
+INLINE Phase* Cell_Frame_Initial_Phase(const Cell* c) {
+    assert(Cell_Heart(c) == REB_FRAME);
+    Flex* f = VAL_ACTION(c);
+    if (Is_Stub_Details(f))
+        return INODE(Exemplar, f);
+    Element* archetype = Flex_Head(Element, f);
+    return Cell_Frame_Phase(archetype);
+}
+
+INLINE bool Is_Frame_Phased(const Cell* v) {
     assert(Cell_Heart(v) == REB_FRAME);
     Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
     return f and not Is_Stub_Symbol(f);

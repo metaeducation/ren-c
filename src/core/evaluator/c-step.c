@@ -538,7 +538,7 @@ Bounce Stepper_Executor(Level* L)
     //    hand side argument.
 
       case REB_FRAME: {
-        if (IS_FRAME_PHASED(CURRENT))  // running frame if phased
+        if (Is_Frame_Phased(CURRENT))  // running frame if phased
             return FAIL("Use REDO to restart a running FRAME! (can't EVAL)");
 
         Level* sub = Make_Action_Sublevel(L);

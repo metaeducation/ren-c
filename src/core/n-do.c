@@ -508,7 +508,7 @@ DECLARE_NATIVE(eval_free)
     if (Is_Stub_Details(VAL_ACTION(frame)))
         fail ("Can't currently EVAL-FREE a Details-based Stub");
 
-    if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
+    if (Is_Frame_Phased(frame))  // see REDO for tail-call recursion
         fail ("Use REDO to restart a running FRAME! (not DO)");
 
     VarList* varlist = Cell_Varlist(frame);
@@ -525,7 +525,7 @@ DECLARE_NATIVE(eval_free)
     Clear_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
     MISC(RunLevel, varlist) = L;
 
-    Details* phase = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
     assert(phase == Paramlist_Archetype_Phase(cast(ParamList*, varlist)));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(frame));
 
@@ -625,8 +625,8 @@ DECLARE_NATIVE(redo)
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(sibling));
     }
     else {
-        redo_action = VAL_FRAME_PHASE(restartee);
-        Tweak_Level_Phase(L, VAL_FRAME_PHASE(restartee));
+        redo_action = Cell_Frame_Phase(restartee);
+        Tweak_Level_Phase(L, cast(Details*, Cell_Frame_Phase(restartee)));
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(restartee));
     }
 

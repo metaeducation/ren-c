@@ -71,11 +71,6 @@ INLINE Option(VarList*) CTX_ADJUNCT(VarList* c) {
 
 #define Tweak_Cell_Context_Varlist            Tweak_Cell_Node1
 
-INLINE void Tweak_Cell_Frame_Phase_Or_Label(Cell* c, Option(const Flex*) f)
-  { Tweak_Cell_Node2(c, maybe f); }
-
-#define Extract_Cell_Frame_Phase_Or_Label(v)  cast(Flex*, Cell_Node2(v))
-
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
 //
@@ -187,7 +182,7 @@ INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
     Reset_Cell_Header_Noquote(rootvar, CELL_MASK_FRAME);
     Tweak_Cell_Context_Varlist(rootvar, varlist);
     Tweak_Cell_Frame_Coupling(rootvar, coupling);
-    Tweak_Cell_Frame_Phase_Or_Label(rootvar, unwrap phase);
+    Tweak_Cell_Frame_Phase_Or_Label(rootvar, maybe phase);
   #if RUNTIME_CHECKS
     rootvar->header.bits |= CELL_FLAG_PROTECTED;
   #endif

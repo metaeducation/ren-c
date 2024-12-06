@@ -245,10 +245,10 @@ static void cleanup(const Value* val)
 // simple COMPILE for just that one function, using default options.
 //
 Bounce Pending_Native_Dispatcher(Level* L) {
-    Details* phase = Level_Phase(L);
-    assert(Details_Dispatcher(phase) == &Pending_Native_Dispatcher);
+    Details* details = Ensure_Level_Details(L);
+    assert(Details_Dispatcher(details) == &Pending_Native_Dispatcher);
 
-    Value* action = Phase_Archetype(phase);  // this action's value
+    Value* action = Phase_Archetype(details);  // this action's value
 
     // !!! We're calling COMPILE here via a textual binding.  However, the
     // pending native dispatcher's IDX_NATIVE_CONTEXT for binding lookup is
@@ -268,7 +268,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
     // function pointer that lives in the TCC_State.  Use REDO, and don't
     // bother re-checking the argument types.
     //
-    assert(Details_Dispatcher(phase) != &Pending_Native_Dispatcher);
+    assert(Details_Dispatcher(details) != &Pending_Native_Dispatcher);
     return BOUNCE_REDO_UNCHECKED;
 }
 

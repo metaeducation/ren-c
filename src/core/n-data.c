@@ -361,7 +361,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         VarList* c = Cell_Varlist(out);
         Level* L = Level_Of_Varlist_If_Running(c);
         if (L) {
-            Tweak_Cell_Frame_Phase(out, Level_Phase(L));
+            Tweak_Cell_Frame_Phase(out, Ensure_Level_Details(L));
             Tweak_Cell_Frame_Coupling(out, Level_Coupling(L));
         }
         else {

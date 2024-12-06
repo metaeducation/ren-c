@@ -53,7 +53,7 @@ Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_ONESHOT_MAX);
 
     Value* n = Details_At(details, IDX_ONESHOT_COUNTER);
@@ -70,7 +70,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_ONESHOT_MAX);
 
     Value* n = Details_At(details, IDX_ONESHOT_COUNTER);

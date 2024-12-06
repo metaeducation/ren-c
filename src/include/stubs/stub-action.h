@@ -193,11 +193,16 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 #define INODE_Exemplar_CAST     CTX
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
+INLINE void Tweak_Cell_Frame_Phase_Or_Label(Cell* c, Option(const Flex*) f)
+  { Tweak_Cell_Node2(c, maybe f); }
 
-INLINE ParamList* Phase_Paramlist(Phase* a) {
-    if (Is_Stub_Details(a))
-        return INODE(Exemplar, a);
-    return x_cast(ParamList*, a);
+#define Extract_Cell_Frame_Phase_Or_Label(v)  cast(Flex*, Cell_Node2(v))
+
+
+INLINE ParamList* Phase_Paramlist(Phase* p) {
+    if (Is_Stub_Details(p))
+        return INODE(Exemplar, p);
+    return x_cast(ParamList*, p);
 }
 
 // More optimized version of Keylist_Of_Varlist(Phase_Paramlist(a)),

@@ -155,23 +155,26 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 // an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
 // paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
 //
-Bounce Hijacker_Dispatcher(Level* level_)
+Bounce Hijacker_Dispatcher(Level* const L)
 {
-    // The PHASE here is the *identity that the hijacker has overtaken*
+    USE_LEVEL_SHORTHANDS (L);
+
+    // The details here is the *identity that the hijacker has overtaken*
     // But the actual hijacker is in the archetype.
 
-    Phase* hijacker = VAL_ACTION(Phase_Archetype(PHASE));
+    Details* details = Ensure_Level_Details(L);
+    Phase* hijacker = VAL_ACTION(Phase_Archetype(details));
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
     // be compatible.  Check by seeing if the keylists are derived.
     //
     KeyList* exemplar_keylist = Phase_Keylist(hijacker);
-    KeyList* keylist = Phase_Keylist(Level_Phase(LEVEL));
+    KeyList* keylist = Phase_Keylist(details);
     while (true) {
         if (keylist == exemplar_keylist) {
             Dispatcher* dispatcher = Details_Dispatcher(Phase_Details(hijacker));
-            return (*dispatcher)(LEVEL);
+            return (*dispatcher)(L);
         }
         if (keylist == LINK(Ancestor, keylist))  // terminates with self ref.
             break;
@@ -181,7 +184,7 @@ Bounce Hijacker_Dispatcher(Level* level_)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    Push_Redo_Action_Level(OUT, LEVEL, Phase_Archetype(PHASE));
+    Push_Redo_Action_Level(OUT, L, Phase_Archetype(details));
     return DELEGATE_SUBLEVEL(TOP_LEVEL);
 }
 

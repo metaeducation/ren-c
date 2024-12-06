@@ -62,7 +62,7 @@ Bounce Lambda_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_LAMBDA_MAX);
 
     const Value* block = Details_At(details, IDX_LAMBDA_BODY);
@@ -100,7 +100,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details* details = DETAILS;
+    Details* details = Ensure_Level_Details(L);
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 

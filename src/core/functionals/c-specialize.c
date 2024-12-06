@@ -482,7 +482,7 @@ const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 //
 Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 {
-    Details* phase = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
     const Param* param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
         *(unwrap param_out) = param;

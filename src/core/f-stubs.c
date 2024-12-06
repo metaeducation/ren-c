@@ -320,11 +320,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
 //
 void Extra_Init_Frame_Details_Checks_Debug(Details* details) {
     Value* archetype = Phase_Archetype(details);
-
-    // Once it was true that `VAL_ACTION(archetype) == a`.  That's no longer
-    // true, but there might be some checks that apply regarding the two?
-    //
-    UNUSED(archetype);
+    assert(ANONYMOUS == Extract_Cell_Frame_Phase_Or_Label(archetype));
 
     KeyList* keylist = Phase_Keylist(details);
     assert(

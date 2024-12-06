@@ -267,9 +267,15 @@ INLINE ParamList* Level_Varlist(Level* L) {
 // called *a lot*) this is a macro and is unchecked.
 //
 #define Level_Phase(L) \
-    cast(Details*, Extract_Cell_Frame_Phase_Or_Label((L)->rootvar))
+    cast(Phase*, Extract_Cell_Frame_Phase_Or_Label((L)->rootvar))
 
-INLINE void Tweak_Level_Phase(Level* L, Details* phase)  // check types
+INLINE Details* Ensure_Level_Details(Level* L) {
+    Flex* f = Extract_Cell_Frame_Phase_Or_Label((L)->rootvar);
+    assert(Is_Stub_Details(f));
+    return cast(Details*, f);
+}
+
+INLINE void Tweak_Level_Phase(Level* L, Phase* phase)  // check types
   { Tweak_Cell_Frame_Phase_Or_Label(L->rootvar, phase); }  // ...only
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
@@ -816,8 +822,6 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define SPARE   Level_Spare(level_)       // scratch GC-safe cell
     #define SCRATCH Level_Scratch(level_)
     #define STATE   LEVEL_STATE_BYTE(level_)
-    #define PHASE   Level_Phase(level_)
-    #define DETAILS Level_Phase(level_)
 
     #define stable_SPARE            Stable_Unchecked(SPARE)
     #define stable_SCRATCH          Stable_Unchecked(SCRATCH)
