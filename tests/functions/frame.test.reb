@@ -17,7 +17,7 @@
 ; Names are cached in non-archetypal FRAME! values in order to eventually be
 ; tunneled out to any ACTION!s or invocations that are produced from them.
 (
-    f: make frame! unrun :append
+    f: make frame! append/
     f.series: 1  ; not a valid APPEND target
     f.value: <ae>
     e: sys.util/rescue [eval f]

@@ -61,7 +61,7 @@ void Prep_Action_Level(
     Atom* arg = L->u.action.arg;
     for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
         Erase_Cell(arg);
-        Copy_Cell(arg, param);
+        Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
         assert(Is_Stable(arg));
     }
 
@@ -199,7 +199,7 @@ bool Pushed_Continuation(
         Atom* arg = L->u.action.arg;
         for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             Erase_Cell(arg);
-            Copy_Cell(arg, param);
+            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
         }
 
         arg = First_Unspecialized_Arg(&param, L);

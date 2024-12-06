@@ -226,7 +226,7 @@ Bounce Action_Executor(Level* L)
         // underlying phase that will be running.
         //
         if (Is_Specialized(PARAM)) {
-            Copy_Cell(ARG, PARAM);
+            Copy_Cell_Core(ARG, PARAM, CELL_MASK_COPY_PARAM);
             goto continue_fulfilling;
         }
 
@@ -733,39 +733,52 @@ Bounce Action_Executor(Level* L)
     PARAM = Phase_Params_Head(Level_Phase(L));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        assert(Is_Stable(ARG));  // implicitly asserts Ensure_Readable(ARG)
-
-        if (Is_Specialized(PARAM))  // checked when specialized [1]
-            continue;
+        Assert_Cell_Stable(ARG);  // implicitly asserts Ensure_Readable(ARG)
 
         if (Is_Hole(stable_ARG)) {  // not specialized
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
-                Init_Nulled(ARG);
+                Mark_Typechecked(Init_Nulled(ARG));
                 continue;
             }
             Init_Nulled(ARG);  // happens if EVAL of FRAME! w/unspecialized
         }
+        else if (Is_Typechecked(stable_ARG)) {
+            continue;
+        }
         else if (Is_Void(ARG)) {
             if (Get_Parameter_Flag(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
-                Init_Nulled(OUT);
+                Mark_Typechecked(Init_Nulled(OUT));
                 continue;
             }
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
-                Init_Nulled(ARG);
+                Mark_Typechecked(Init_Nulled(ARG));
                 continue;
             }
         }
         else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
             if (Not_Parameter_Flag(PARAM, ENDABLE))
                 return FAIL(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
-            Init_Nulled(ARG);  // more convenient, use ^META for nuance
+            Mark_Typechecked(Init_Nulled(ARG));  // use ^META for nuance
             continue;
         }
 
-        if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // can't check now [2]
+        Phase* phase = Level_Phase(L);
+        const Param* param = PARAM;
+        while (Is_Specialized(param)) {
+            if (Is_Stub_Varlist(phase)) {
+                Element* archetype = Flex_Head(Element, phase);
+                phase = cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
+            }
+            else {
+                phase = INODE(Exemplar, phase);
+            }
+            param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
+        }
+
+        if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]
             if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
-                return FAIL(Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
+                return FAIL(Error_Not_Varargs(L, KEY, param, stable_ARG));
 
             Tweak_Cell_Varargs_Phase(ARG, Level_Phase(L));
 
@@ -779,8 +792,10 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, PARAM, ARG, false))
-            return FAIL(Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
+        if (not Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, ARG, false))
+            return FAIL(Error_Phase_Arg_Type(L, KEY, param, stable_ARG));
+
+        Mark_Typechecked(stable_ARG);
     }
 
     Phase* phase = Level_Phase(L);  // ensure Level_Phase() is Details [4]

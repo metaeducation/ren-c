@@ -629,7 +629,7 @@ DECLARE_NATIVE(definitional_return)
         target_level->u.action.arg = arg;
         for (; key != key_tail; ++key, ++arg, ++param) {
             if (Is_Specialized(param)) {  // must reset [2]
-                Copy_Cell(arg, param);
+                Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
             }
             else {
                 // assume arguments assigned to values desired for recursion

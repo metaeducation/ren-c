@@ -636,7 +636,7 @@ DECLARE_NATIVE(redo)
     Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param)) {  // must reset [2]
-            Copy_Cell(arg, param);
+            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
         }
     }
 

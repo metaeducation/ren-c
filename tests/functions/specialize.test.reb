@@ -50,7 +50,7 @@
     [a b c 10 10] = eval f
 )
 (
-    f: make frame! unrun :append
+    f: make frame! append/
     f.series: copy [a b c]
     f.value: [d e f]
     [a b c [d e f]] = eval f

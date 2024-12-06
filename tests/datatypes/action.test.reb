@@ -34,7 +34,7 @@
     )
 
     (
-        f: make frame! unrun :append
+        f: make frame! append/
         all [
             'append = label of f
             'append = label of runs f

@@ -141,6 +141,13 @@ DECLARE_NATIVE(join)
 
     switch (STATE) {
       case ST_JOIN_INITIAL_ENTRY: {
+        STATIC_ASSERT(
+            CELL_FLAG_DELIMITER_NOTE_PENDING
+            == CELL_FLAG_PARAM_NOTE_TYPECHECKED
+        );
+        assert(Get_Cell_Flag(delimiter, PARAM_NOTE_TYPECHECKED));
+        Clear_Cell_Flag(delimiter, PARAM_NOTE_TYPECHECKED);
+
         if (Is_Void(rest)) {  // simple base case: nullptr or COPY
             if (Is_Type_Block(base))
                 return nullptr;

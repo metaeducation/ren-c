@@ -401,7 +401,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             Atom* arg = sub->u.action.arg;
             for (; key != sub->u.action.key_tail; ++key, ++param, ++arg) {
                 Erase_Cell(arg);  // uninitialized in release, poison in debug
-                Copy_Cell(arg, param);
+                Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
             }
 
             arg = First_Unspecialized_Arg(&param, sub);

@@ -143,6 +143,10 @@ typedef enum {
 
 
 //=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
+//
+// This has to be defined in a file included before %tmp-internals.h, since
+// ParamClass is used in function interfaces.  Cant be in %cell-parameter.h
+//
 
 typedef enum {
     PARAMCLASS_0,  // temporary state for Option(ParamClass)

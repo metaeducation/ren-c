@@ -82,7 +82,7 @@ INLINE Phase* VAL_ACTION(const Cell* v) {
 // archetype.  Hence the value cell is storing a name to be used with the
 // action when it is extracted from the frame.  That's why this works:
 //
-//     >> f: make frame! unrun :append
+//     >> f: make frame! append/
 //     >> label of f
 //     == append  ; useful in debug stack traces if you `eval f`
 //

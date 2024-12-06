@@ -301,6 +301,64 @@ INLINE bool Is_Specialized(const Param* p) {
 #define Not_Specialized(v)      (not Is_Specialized(v))
 
 
+//=//// CELL_FLAG_PARAM_NOTE_CHECKED //////////////////////////////////////=//
+//
+// For specialized or fulfilled values, a parameter which is checked does not
+// need to be checked again.  This bit encodes that knowledge in a way that
+// any new overwriting will signal need for another check:
+//
+//    >> /bad-negate: adapt negate/ [number: to text! number]
+//
+//    >> bad-negate 1020
+//    ** Error: Internal phase disallows TEXT! for its `number` argument
+//
+// If you hadn't overwritten `number`, then it would still have CELL_FLAG_NOTE
+// and not run type checking again:
+//
+//    good-negate: adapt negate/ [print "not modifying number, no check"]
+//
+// When a Param in a ParamList is unspecialized (e.g. antiform PARAMETER!, aka
+// a "Hole") then if it does not carry CELL_FLAG_NOTE, then that means type
+// checking against it is not the last word: there is a type underlying it
+// which also needs to be checked.  Consider:
+//
+//     >> ap-int: copy meta:lite append/
+//
+//     >> ap-int.value: anti make parameter! [integer!]  ; or whatever syntax
+//     == ~#[parameter! [integer!]]~  ; anti
+//
+//     >> /ap-int: anti ap-int
+//     == ~#[frame! ...]~  ; anti
+//
+// You've just created a version of APPEND with a tighter type constraint.
+// But what if that type were -looser-?  You must check this type, and also
+// the type "underneath" it.
+//
+
+#define CELL_FLAG_PARAM_NOTE_TYPECHECKED  CELL_FLAG_NOTE
+
+#define CELL_MASK_COPY_PARAM \
+    (CELL_MASK_COPY | CELL_FLAG_PARAM_NOTE_TYPECHECKED)
+
+INLINE bool Is_Typechecked(const Value* v) {
+    Assert_Cell_Stable(v);
+    assert(not Is_Hole(v));
+    return Get_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
+}
+
+INLINE void Mark_Typechecked(const Value* v) {
+    Assert_Cell_Stable(v);
+    assert(not Is_Hole(v));
+    Set_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
+}
+
+INLINE bool Is_Hole_Final_Type(const Param* p) {
+    assert(Is_Hole(c_cast(Value*, p)));
+    return Get_Cell_Flag(p, PARAM_NOTE_TYPECHECKED);
+}
+
+
+
 INLINE Param* Init_Unconstrained_Hole_Untracked(
     Init(Value) out,
     Flags flags

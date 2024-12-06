@@ -34,9 +34,9 @@
 // "adaptee", as failure to do so could pass bad bit patterns to natives
 // and lead to crashes.
 //
-//    >> /negbad: adapt negate/ [number: to text! number]
+//    >> /bad-negate: adapt negate/ [number: to text! number]
 //
-//    >> negbad 1020
+//    >> bad-negate 1020
 //    ** Error: Internal phase disallows TEXT! for its `number` argument
 //
 // More complete control of execution and manipulating the return result is

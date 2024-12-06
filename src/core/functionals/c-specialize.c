@@ -90,7 +90,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
         Erase_Cell(arg);
 
         if (Is_Specialized(param)) {  // includes locals
-            Copy_Cell(arg, param);
+            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
 
           continue_specialized:
 
@@ -102,7 +102,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
           continue_unspecialized:
 
-            Copy_Cell(arg, param);
+            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
             if (binder)
                 Add_Binder_Index(unwrap binder, symbol, index);
 
@@ -273,7 +273,7 @@ bool Specialize_Action_Throws(
         }
 
         if (Is_Hole(arg)) {
-            Copy_Cell(arg, param);
+            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
             if (first_param)
                 first_param = false;  // leave infix as is
             continue;
@@ -290,6 +290,8 @@ bool Specialize_Action_Throws(
         )){
             fail (Error_Arg_Type(label, key, param, arg));
         }
+
+        Mark_Typechecked(arg);
 
         if (first_param) {
             first_param = false;

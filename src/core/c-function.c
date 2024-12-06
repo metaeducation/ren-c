@@ -563,6 +563,7 @@ ParamList* Pop_Paramlist_May_Fail(
             slot,
             CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
         );
+        Set_Cell_Flag(param, PARAM_NOTE_TYPECHECKED);  // always typechecked
 
         if (hidden)
             Set_Cell_Flag(param, VAR_MARKED_HIDDEN);

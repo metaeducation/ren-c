@@ -115,7 +115,10 @@ INLINE const Element* At_Feed(Feed* feed) {
     assert(feed->p != &PG_Feed_At_End);
 
     const Element* elem = c_cast(Element*, feed->p);
-    if (Get_Cell_Flag(elem, FEED_NOTE_META)) {
+    if (
+        feed->p == &feed->fetched  // CELL_FLAG_NOTE may have other meaning!
+        and Get_Cell_Flag(elem, FEED_NOTE_META)  // ...if not in this location
+    ){
         DECLARE_VALUE (temp);
         Copy_Cell(temp, elem);
         Meta_Unquotify_Known_Stable(temp);

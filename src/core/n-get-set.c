@@ -80,7 +80,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
     if (error)
         return error;
 
-    if (not (lookup->header.bits & CELL_FLAG_VAR_NOTE_ACCESSOR)) {
+    if (not (lookup->header.bits & CELL_FLAG_VAR_IS_ACCESSOR)) {
         Copy_Cell(out, lookup);  // non-accessor variable, just plain value
         return nullptr;
     }
@@ -1258,7 +1258,7 @@ DECLARE_NATIVE(set_accessor)
 
     Value* var = Lookup_Mutable_Word_May_Fail(word, SPECIFIED);
     Copy_Cell(var, action);
-    Set_Cell_Flag(var, VAR_NOTE_ACCESSOR);
+    Set_Cell_Flag(var, VAR_IS_ACCESSOR);
 
     Set_Cell_Flag(var, PROTECTED);  // help trap unintentional writes [1]
     Set_Node_Unreadable_Bit(var);  // help trap unintentional reads [1]

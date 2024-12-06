@@ -253,9 +253,12 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     FLAG_LEFT_BIT(24)  // NOTE: Must be SAME BIT as FEED_FLAG_CONST
 
 
-//=//// CELL_FLAG_25 //////////////////////////////////////////////////////=//
+//=//// CELL_FLAG_VAR_IS_ACCESSOR /////////////////////////////////////////=//
 //
-#define CELL_FLAG_25 \
+// WIP: Accessor feature.  This bit could be multiplexed with other features,
+// as it only applies to variable-bearing cells.
+//
+#define CELL_FLAG_VAR_IS_ACCESSOR \
     FLAG_LEFT_BIT(25)
 
 
@@ -301,7 +304,6 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_FLAG_STACK_NOTE_SEALED CELL_FLAG_NOTE
 #define CELL_FLAG_FEED_NOTE_META CELL_FLAG_NOTE
 #define CELL_FLAG_USE_NOTE_SET_WORDS CELL_FLAG_NOTE
-#define CELL_FLAG_VAR_NOTE_ACCESSOR CELL_FLAG_NOTE
 #define CELL_FLAG_CURRENT_NOTE_SET_ACTION CELL_FLAG_NOTE
 
 
