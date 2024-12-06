@@ -322,7 +322,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             return BOUNCE_THROWN;
         }
 
-        Drop_Level(L);  // restores to baseline
+        Rollback_Level(L);  // restores to baseline
+        Drop_Level(L);
         L = TOP_LEVEL;
 
         if (L->executor == &Just_Use_Out_Executor) {
@@ -543,7 +544,7 @@ void Shutdown_Trampoline(void)
     assert(TOP_LEVEL == BOTTOM_LEVEL);
     assert(Is_Pointer_Corrupt_Debug(BOTTOM_LEVEL->prior));  // corrupt [1]
 
-    Drop_Level_Core(TOP_LEVEL);  // can't do balance check [2]
+    Drop_Level_Unbalanced(TOP_LEVEL);  // can't do balance check [2]
 
     g_ts.top_level = nullptr;
     g_ts.bottom_level = nullptr;
@@ -607,48 +608,28 @@ void Shutdown_Trampoline(void)
 
 
 //
-//  Drop_Level_Core: C
+//  Rollback_Level: C
 //
-void Drop_Level_Core(Level* L) {
-    possibly(L != TOP_LEVEL);  // e.g. called by Clean_Plug_Handle()
-
-    if (
-        Is_Throwing(L)
-        or (L->out and not Is_Cell_Erased(L->out) and Is_Raised(L->out))
-    ){
-        // On normal completion with a return result, we do not allow API
-        // handles attached to a level to leak--you are expected to release
-        // everything.  But definitional failure and throw cases are exempt.
-        //
-        Node* n = L->alloc_value_list;
-        while (n != L) {
-            Stub* s = cast(Stub*, n);
-            n = LINK(ApiNext, s);
-            Force_Poison_Cell(Stub_Cell(s));  // lose NODE_FLAG_ROOT
-            s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
-            GC_Kill_Stub(s);
-        }
-        Corrupt_Pointer_If_Debug(L->alloc_value_list);
-
-        // There could be outstanding values on the data stack, or data in the
-        // mold buffer...we clean it up automatically in these cases.
-        //
-        Rollback_Globals_To_State(&L->baseline);
+// 1. On normal completion with a return result, we do not allow API handles
+//    attached to a level to leak--you are expected to release everything.
+//    But return FAIL() or return RAISE() cases are exempt.
+//
+//    !!! This may be reviewed in light of wanting to make API programming
+//    easier, especially for JavaScript.
+//
+// 2. There could be outstanding values on the data stack, or data in the
+//    mold buffer...we clean it up automatically in these cases.
+//
+void Rollback_Level(Level* L) {
+    Node* n = L->alloc_value_list;
+    while (n != L) {
+        Stub* s = cast(Stub*, n);
+        n = LINK(ApiNext, s);
+        Force_Poison_Cell(Stub_Cell(s));  // lose NODE_FLAG_ROOT
+        s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
+        GC_Kill_Stub(s);
     }
-    else {
-      #if RUNTIME_CHECKS
-        Node* n = L->alloc_value_list;
-        while (n != L) {
-            Stub* stub = cast(Stub*, n);
-            printf("API handle was allocated but not freed, panic'ing leak\n");
-            panic (stub);
-        }
-        Corrupt_Pointer_If_Debug(L->alloc_value_list);
-      #endif
-    }
+    L->alloc_value_list = L;  // circularly linked list (terminates in L)
 
-    // Note: Free_Feed() will handle feeding a feed through to its end (which
-    // may release handles/etc), so no requirement Level_At(L) be at END.
-
-    Free_Level_Internal(L);
+    Rollback_Globals_To_State(&L->baseline);  // values on data stack, etc. [2]
 }

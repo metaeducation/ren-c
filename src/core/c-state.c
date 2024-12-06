@@ -138,15 +138,12 @@ static Level* Level_Of_Plug(const Value* plug) {
 //
 static void Clean_Plug_Handle(const RebolValue* plug) {
     Level* L = Level_Of_Plug(plug);
-    DECLARE_ATOM (raised);
-    Init_Error(raised, Cell_Error(g_error_done_enumerating));  // !!! hack
-    Raisify(raised);
     while (L != nullptr) {
         Level* prior = L->prior;
-        L->out = raised;  // make API handles free as if there were an error
         if (Is_Action_Level(L))
             Drop_Action(L);
-        Drop_Level_Core(L);
+        Rollback_Level(L);
+        Free_Level_Internal(L);
         L = prior;
     }
 }

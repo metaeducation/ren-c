@@ -2758,11 +2758,13 @@ Bounce Scanner_Executor(Level* const L) {
 
         Drop_Level_Unbalanced(sub);  // allow stack accrual
 
-        if (threw)  // drop failing stack before throwing
+        if (threw)  // automatically drops failing stack before throwing
             return FAIL(Error_No_Catch_For_Throw(L));
 
-        if (Is_Raised(OUT))
+        if (Is_Raised(OUT)) {  // no auto-drop without `return RAISE()`
+            Drop_Data_Stack_To(STACK_BASE);
             return OUT;
+        }
     }
 
     // Run through the generalized pop path code, which does any

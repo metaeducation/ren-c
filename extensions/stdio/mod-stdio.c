@@ -266,8 +266,8 @@ DECLARE_NATIVE(read_line)
     UNUSED(ARG(source));
   #endif
 
-    bool raw = did REF(raw);
-    bool hide = did REF(hide);
+    bool raw = REF(raw);
+    bool hide = REF(hide);
 
     if (hide)  // an interesting feature, but a very low-priority one
         return rebDelegate("fail [",
@@ -280,13 +280,16 @@ DECLARE_NATIVE(read_line)
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         line = Read_Line(Term_IO);
-        if (rebUnboxLogic(rebQ(line), "= '~halt~"))
+        if (rebUnboxLogic(rebQ(line), "= '~halt~")) {
+            rebRelease(line);
             return rebDelegate("halt");  // Execute throwing HALT [1]
-
-        if (rebUnboxLogic(rebQ(line), "= '~escape~"))  // distinct from eof [2]
+        }
+        if (rebUnboxLogic(rebQ(line), "= '~escape~")) { // distinct from eof [2]
+            rebRelease(line);
             return rebDelegate(  // return definitional error
-                "raise", Make_Escape_Error("READ-LINE")
+                "raise", rebR(Make_Escape_Error("READ-LINE"))
             );
+        }
         goto got_line;
     }
     else  // we have a smart console but aren't using it (redirected to file?)
@@ -413,7 +416,7 @@ DECLARE_NATIVE(read_char)
     UNUSED(ARG(source));
   #endif
 
-    bool raw = did REF(raw);
+    bool raw = REF(raw);
 
     int timeout_msec;
     if (not REF(timeout))
@@ -463,7 +466,9 @@ DECLARE_NATIVE(read_char)
             if (rebUnboxLogic("'escape = @", e)) {
                 Term_Abandon_Pending_Events(Term_IO);
                 rebRelease(e);
-                return rebDelegate("raise", Make_Escape_Error("READ-CHAR"));
+                return rebDelegate(
+                    "raise", rebR(Make_Escape_Error("READ-CHAR"))
+                );
             }
 
             rebRelease(e);  // ignore all other non-printable keys

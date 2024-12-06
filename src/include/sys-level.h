@@ -397,6 +397,9 @@ INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
 
 //=//// LEVEL ALLOCATION AND FREEING //////////////////////////////////////=//
 
+// Note: Free_Feed() will handle feeding a feed through to its end (which may
+// release handles/etc), so no requirement Level_At(L) be at END.
+//
 // 1. Exactly how and when the varlist is detached from the level has been
 //    evolving, but it's generally the case that Drop_Action() at the end
 //    of the Action_Executor() will do it.  There's an exception when the
@@ -406,6 +409,18 @@ INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
 //    the trampoline when it drops the levels automatically.
 //
 INLINE void Free_Level_Internal(Level* L) {
+    possibly(L != TOP_LEVEL);  // e.g. called by Clean_Plug_Handle()
+
+  #if RUNTIME_CHECKS
+    Node* n = L->alloc_value_list;
+    while (n != L) {
+        Stub* stub = cast(Stub*, n);
+        printf("API handle was allocated but not freed, panic'ing leak\n");
+        panic (stub);
+    }
+    Corrupt_Pointer_If_Debug(L->alloc_value_list);
+  #endif
+
     Release_Feed(L->feed);  // frees if refcount goes to 0
 
     if (L->varlist) {  // !!! Can be not null if abrupt failure [1]
@@ -513,26 +528,21 @@ INLINE void Update_Expression_Start(Level* L) {
 INLINE void Drop_Level_Unbalanced(Level* L) {
     assert(TOP_LEVEL == L);
     g_ts.top_level = L->prior;
-    Drop_Level_Core(L);
+    Free_Level_Internal(L);
 }
 
 INLINE void Drop_Level(Level* L)
 {
-    if (
-        not Is_Throwing(L)
-        and not (L->out and not Is_Cell_Erased(L->out) and Is_Raised(L->out))
-    ){
-      #if DEBUG_BALANCE_STATE
-        //
-        // To avoid slowing down checked builds, Eval_Core() doesn't check on
-        // every cycle, just on drop.  But if it's hard to find the cycle
-        // causing problems, see BALANCE_CHECK_EVERY_EVALUATION_STEP.
-        //
-        ASSERT_STATE_BALANCED(&L->baseline);
-      #else
-        assert(TOP_INDEX == L->baseline.stack_base);  // Cheaper check
-      #endif
-    }
+  #if DEBUG_BALANCE_STATE
+    //
+    // To avoid slowing down checked builds, Eval_Core() doesn't check on
+    // every cycle, just on drop.  But if it's hard to find the cycle
+    // causing problems, see BALANCE_CHECK_EVERY_EVALUATION_STEP.
+    //
+    Assert_State_Balanced(&L->baseline);
+  #else
+    assert(TOP_INDEX == L->baseline.stack_base);  // Cheaper check
+  #endif
 
     Drop_Level_Unbalanced(L);
 }
@@ -719,9 +729,11 @@ INLINE Bounce Native_Raised_Result(Level* L, Error* error) {
     assert(not Is_Throwing(L));
 
     while (TOP_LEVEL != L) {  // convenience
+        Rollback_Level(TOP_LEVEL);
         Drop_Level(TOP_LEVEL);
         Erase_Cell(TOP_LEVEL->out);
     }
+    Rollback_Level(L);  // trampoline won't rollback TOP_LEVEL (not throwing)
 
   #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in error location set
     Count save_extant = g_ds.num_refs_extant;
@@ -748,9 +760,11 @@ INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
     assert(not Is_Throwing(L));
 
     while (TOP_LEVEL != L) {  // convenience
+        Rollback_Level(TOP_LEVEL);
         Drop_Level(TOP_LEVEL);
         Erase_Cell(TOP_LEVEL->out);
     }
+    // let trampoline rollback TOP_LEVEL
 
   #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in error location set
     Count save_extant = g_ds.num_refs_extant;

@@ -1075,7 +1075,7 @@ DECLARE_GENERICS(List)
             index, // at
             tail, // tail
             0, // extra
-            did REF(deep)
+            REF(deep)
         ));
 
         Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);

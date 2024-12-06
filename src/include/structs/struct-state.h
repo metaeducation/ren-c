@@ -84,8 +84,8 @@ struct Reb_State {
 // Check that the current global state lines up with the passed-in state.
 //
 #ifdef NO_RUNTIME_CHECKS
-    #define ASSERT_STATE_BALANCED(s) NOOP
+    #define Assert_State_Balanced(s) NOOP
 #else
-    #define ASSERT_STATE_BALANCED(s) \
+    #define Assert_State_Balanced(s) \
         Assert_State_Balanced_Debug((s), __FILE__, __LINE__)
 #endif

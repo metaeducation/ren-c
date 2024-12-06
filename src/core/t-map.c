@@ -679,7 +679,7 @@ DECLARE_GENERICS(Map)
         if (REF(part))
             return FAIL(Error_Bad_Refines_Raw());
 
-        return Init_Map(OUT, Copy_Map(VAL_MAP(map), did REF(deep))); }
+        return Init_Map(OUT, Copy_Map(VAL_MAP(map), REF(deep))); }
 
     //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
 
