@@ -131,11 +131,11 @@ Bounce Encloser_Dispatcher(Level* const L)
     Corrupt_Pointer_If_Debug(L->rootvar);
 
     assert(MISC(RunLevel, varlist) == L);  // need to change runlevel [1]
-    MISC(VarlistAdjunct, varlist) = nullptr;
+    MISC(RunLevel, varlist) = nullptr;
     Set_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
-    Tweak_Cell_Frame_Phase(rootvar, Phase_Details(VAL_ACTION(inner)));
+    Tweak_Cell_Frame_Phase(rootvar, VAL_ACTION(inner));
     Tweak_Cell_Frame_Coupling(rootvar, Cell_Frame_Coupling(inner));
 
     assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));

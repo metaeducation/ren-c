@@ -27,7 +27,7 @@
        return either tail? args [b] ["not at end"]
     ]
     x: make varargs! [~null~]
-    null? applique :f [args: x]
+    null? applique f/ [args: x]
 )
 
 (

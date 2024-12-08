@@ -738,32 +738,6 @@ Bounce Action_Executor(Level* L)
         if (Is_Typechecked(stable_ARG))
             continue;
 
-        if (Is_Nothing(stable_ARG)) {  // unspecialized
-            if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
-                Mark_Typechecked(Init_Nulled(ARG));
-                continue;
-            }
-            return FAIL(Error_Unspecified_Arg(L));
-        }
-
-        if (Is_Void(ARG)) {
-            if (Get_Parameter_Flag(PARAM, NOOP_IF_VOID)) {  // <maybe> param
-                Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
-                Mark_Typechecked(Init_Nulled(OUT));
-                continue;
-            }
-            if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
-                Mark_Typechecked(Init_Nulled(ARG));
-                continue;
-            }
-        }
-        else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
-            if (Not_Parameter_Flag(PARAM, ENDABLE))
-                return FAIL(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
-            Mark_Typechecked(Init_Nulled(ARG));  // use ^META for nuance
-            continue;
-        }
-
         Phase* phase = Level_Phase(L);
         const Param* param = PARAM;
         while (Is_Specialized(param)) {
@@ -777,11 +751,37 @@ Bounce Action_Executor(Level* L)
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
+        if (Is_Nothing(stable_ARG)) {  // unspecialized
+            if (Get_Parameter_Flag(param, REFINEMENT)) {
+                Mark_Typechecked(Init_Nulled(ARG));
+                continue;
+            }
+            return FAIL(Error_Unspecified_Arg(L));
+        }
+
+        if (Is_Void(ARG)) {
+            if (Get_Parameter_Flag(param, NOOP_IF_VOID)) {  // <maybe> param
+                Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
+                Mark_Typechecked(Init_Nulled(OUT));
+                continue;
+            }
+            if (Get_Parameter_Flag(param, REFINEMENT)) {
+                Mark_Typechecked(Init_Nulled(ARG));
+                continue;
+            }
+        }
+        else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
+            if (Not_Parameter_Flag(param, ENDABLE))
+                return FAIL(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
+            Mark_Typechecked(Init_Nulled(ARG));  // use ^META for nuance
+            continue;
+        }
+
         if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]
             if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
                 return FAIL(Error_Not_Varargs(L, KEY, param, stable_ARG));
 
-            Tweak_Cell_Varargs_Phase(ARG, Level_Phase(L));
+            Tweak_Cell_Varargs_Phase(ARG, phase);
 
             bool infix = false;  // !!! how does infix matter?
             VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [3]
@@ -1086,7 +1086,7 @@ void Push_Action(Level* L, const Cell* frame) {
             | FLAG_QUOTE_BYTE(NOQUOTE_1);
     Tweak_Cell_Context_Varlist(L->rootvar, L->varlist);
 
-    Tweak_Cell_Frame_Phase(L->rootvar, Phase_Details(act));  // Level_Phase()
+    Tweak_Cell_Frame_Phase(L->rootvar, act);  // Level_Phase()
     Tweak_Cell_Frame_Coupling(L->rootvar, coupling);  // Level_Coupling()
 
     s->content.dynamic.used = num_args + 1;

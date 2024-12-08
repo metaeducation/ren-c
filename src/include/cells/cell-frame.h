@@ -89,7 +89,7 @@ INLINE Phase* VAL_ACTION(const Cell* v) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-INLINE void Tweak_Cell_Frame_Phase(Cell* v, Details* phase) {
+INLINE void Tweak_Cell_Frame_Phase(Cell* v, Phase* phase) {
     assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
     Tweak_Cell_Frame_Phase_Or_Label(v, phase);
 }
@@ -107,7 +107,9 @@ INLINE Phase* Cell_Frame_Initial_Phase(const Cell* c) {
     if (Is_Stub_Details(f))
         return INODE(Exemplar, f);
     Element* archetype = Flex_Head(Element, f);
-    return Cell_Frame_Phase(archetype);
+    Phase* phase = Cell_Frame_Phase(archetype);
+    assert(phase != nullptr);
+    return phase;
 }
 
 INLINE bool Is_Frame_Phased(const Cell* v) {
@@ -173,8 +175,7 @@ INLINE Element* Init_Frame_Untracked(
     Option(VarList*) coupling
 ){
   #if RUNTIME_CHECKS
-    if (Is_Stub_Details(identity))
-        Extra_Init_Frame_Details_Checks_Debug(cast(Details*, identity));
+    Extra_Init_Frame_Checks_Debug(identity);
   #endif
     Force_Flex_Managed(identity);
 

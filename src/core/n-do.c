@@ -551,8 +551,10 @@ DECLARE_NATIVE(eval_free)
 
     Decay_Stub(VAL_ACTION(frame));  // the "FREE" of EVAL-FREE
 
-    if (Is_Elision(OUT))
-        return Init_Void(OUT);
+    if (not REF(undecayed)) {
+        if (Is_Elision(OUT))
+            Init_Void(OUT);
+    }
 
     return OUT;
 }}

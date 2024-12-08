@@ -314,27 +314,38 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
 
 
 //
-//  Extra_Init_Frame_Details_Checks_Debug: C
+//  Extra_Init_Frame_Checks_Debug: C
 //
-// !!! Overlaps with ASSERT_ACTION, review folding them together.
-//
-void Extra_Init_Frame_Details_Checks_Debug(Details* details) {
-    Value* archetype = Phase_Archetype(details);
-    assert(ANONYMOUS == Extract_Cell_Frame_Phase_Or_Label(archetype));
+void Extra_Init_Frame_Checks_Debug(Phase* initial) {
+    if (Is_Stub_Varlist(initial)) {
+        Phase* phase = initial;
+        while (Is_Stub_Varlist(phase)) {
+            Element* archetype = Flex_Head(Element, phase);
+            phase = cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
+            assert(phase != nullptr);
+        }
+        assert(Is_Stub_Details(phase));
+    }
+    else {
+        assert(Is_Stub_Details(initial));
+        Value* archetype = Phase_Archetype(cast(Details*, initial));
+        assert(ANONYMOUS == Extract_Cell_Frame_Phase_Or_Label(archetype));
+    }
 
-    KeyList* keylist = Phase_Keylist(details);
+    KeyList* keylist = Phase_Keylist(initial);
     assert(
         (keylist->leader.bits & FLEX_MASK_KEYLIST)
         == FLEX_MASK_KEYLIST
     );
 
-    // !!! Currently only a context can serve as the "meta" information,
-    // though the interface may expand.
-    //
-    assert(
-        not Phase_Adjunct(details)
-        or Any_Context_Kind(CTX_TYPE(unwrap Phase_Adjunct(details)))
-    );
+    if (Get_Stub_Flag(initial, MISC_NODE_NEEDS_MARK)) {
+        assert(
+            Phase_Adjunct(initial) == nullptr
+            or Any_Context_Kind(CTX_TYPE(unwrap Phase_Adjunct(initial)))
+        );
+    }
+    else
+        assert(Is_Stub_Varlist(initial));  // running Level* is allowed
 }
 
 #endif
