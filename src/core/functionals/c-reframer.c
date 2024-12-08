@@ -253,7 +253,8 @@ bool Init_Frame_From_Feed_Throws(
     ParamList* exemplar = Make_Varlist_For_Action(
         LIB(IDENTITY),
         TOP_INDEX,
-        nullptr
+        nullptr,
+        nullptr  // leave unspecialized slots with parameter! antiforms
     );
 
     Unquotify(Copy_Cell(Varlist_Slot(exemplar, 2), out), 1);
@@ -413,7 +414,8 @@ DECLARE_NATIVE(reframer)
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         ARG(shim),
         STACK_BASE,
-        binder
+        binder,
+        nullptr  // no placeholder, leave parameter! antiforms
     );
 
     REBLEN param_index = 0;

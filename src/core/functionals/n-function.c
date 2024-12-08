@@ -250,7 +250,6 @@ Details* Make_Interpreted_Action_May_Fail(
         details_capacity  // we fill in details[0], caller fills any extra
     );
 
-
     assert(Phase_Adjunct(details) == nullptr);
     Tweak_Phase_Adjunct(details, meta);
 
@@ -521,7 +520,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
         Init_Nothing(atom);
     }
 
-    return Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, false);
+    return Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, atom, true);
 }
 
 

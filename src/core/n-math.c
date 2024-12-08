@@ -763,32 +763,6 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 
 
 //
-//  /something?: native:intrinsic [
-//
-//  "Tells you if the argument is not antiform blank (e.g. not nothing)"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(something_q)
-//
-// Comparisons in particular do not allow you to compare against NOTHING.
-//
-//   https://forum.rebol.info/t/2068
-{
-    INCLUDE_PARAMS_OF_SOMETHING_Q;
-
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(not Is_Nothing(v));
-}
-
-
-//
 //  /vacancy?: native [
 //
 //  "Tells you if the argument causes errors on WORD! access (and defaultable)"
@@ -799,7 +773,7 @@ DECLARE_NATIVE(something_q)
 //
 DECLARE_NATIVE(vacancy_q)
 //
-// 1. Because PARAMETER! antiforms signify unspecialized function call slots,
+// 1. Because BLANK! antiforms signify unspecialized function call slots,
 //    they must be taken as ^META values if passed as an argument--even
 //    though they are stable antiforms.
 {

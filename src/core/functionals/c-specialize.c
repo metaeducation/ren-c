@@ -60,7 +60,8 @@
 ParamList* Make_Varlist_For_Action_Push_Partials(
     const Value* action,  // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,  // caller can add refinements
-    Option(Binder*) binder
+    Option(Binder*) binder,
+    Option(const Value*) placeholder
 ){
     StackIndex highest_stackindex = TOP_INDEX;
 
@@ -102,7 +103,11 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
           continue_unspecialized:
 
-            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+            if (placeholder)
+                Copy_Cell_Core(arg, unwrap placeholder, CELL_MASK_COPY_PARAM);
+            else
+                Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+
             if (binder)
                 Add_Binder_Index(unwrap binder, symbol, index);
 
@@ -162,12 +167,14 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 ParamList* Make_Varlist_For_Action(
     const Value* action, // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,
-    Option(Binder*) binder
+    Option(Binder*) binder,
+    Option(const Value*) placeholder
 ){
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         action,
         lowest_stackindex,
-        binder
+        binder,
+        placeholder
     );
 
     Manage_Flex(exemplar);  // !!! was needed before, review
@@ -213,7 +220,8 @@ bool Specialize_Action_Throws(
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         specializee,
         lowest_stackindex,
-        def ? binder : nullptr
+        def ? binder : nullptr,
+        nullptr  // no placeholder, leave parameter! antiforms
     );
     Manage_Flex(exemplar);  // destined to be managed, guarded
 

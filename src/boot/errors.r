@@ -148,8 +148,6 @@ Script: [
 
     evaluative-quote:   "Can't quote non-literal from an evaluative source"
 
-    do-arity-non-zero:  "Use REEVAL or APPLY on actions of arity > 0, not DO"
-
     limited-fail-input: "FAIL requires complex expressions to be in a GROUP!"
 
     ; BAD-VALUE is the laziest error with an argument.  BAD-ARGUMENT now
@@ -160,6 +158,7 @@ Script: [
 
     invalid-arg:        [:arg1 "has an invalid" :arg2 "argument:" :arg3]
     no-arg:             [:arg1 "is missing its" :arg2 "argument"]
+    unspecified-arg:    [:arg1 "has" :arg2 "unspecified (~ antiform)"]
 
     ; These need to have the same arguments (shared code coerces them)
     ;

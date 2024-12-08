@@ -154,9 +154,29 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* v) {
     FLAG_LEFT_BIT(11)
 
 
-//=//// PARAMETER_FLAG_12 /////////////////////////////////////////////////=//
+//=//// PARAMETER_FLAG_FINAL_TYPECHECK ////////////////////////////////////=//
 //
-#define PARAMETER_FLAG_12 \
+// When a Param in a ParamList is unspecialized (e.g. antiform PARAMETER!, aka
+// a "Hole") then if it does not carry this flag, then that means typechecking
+// against it is not the last word.  There is a type underlying it which also
+// needs to be checked.  Consider:
+//
+//     >> ap-int: copy meta:lite append/
+//
+//     >> ap-int.value: anti make parameter! [integer!]  ; or whatever syntax
+//     == ~#[parameter! [integer!]]~  ; anti
+//
+//     >> /ap-int: anti ap-int
+//     == ~#[frame! ...]~  ; anti
+//
+// You've just created a version of APPEND with a tighter type constraint.
+// But what if that type were -looser-?  You must check this type, and also
+// the type "underneath" it.
+//
+// So parameters don't get this bit by default, just when they are initially
+// created.
+//
+#define PARAMETER_FLAG_FINAL_TYPECHECK \
     FLAG_LEFT_BIT(12)
 
 
@@ -301,7 +321,7 @@ INLINE bool Is_Specialized(const Param* p) {
 #define Not_Specialized(v)      (not Is_Specialized(v))
 
 
-//=//// CELL_FLAG_PARAM_NOTE_CHECKED //////////////////////////////////////=//
+//=//// CELL_FLAG_PARAM_NOTE_TYPECHECKED //////////////////////////////////=//
 //
 // For specialized or fulfilled values, a parameter which is checked does not
 // need to be checked again.  This bit encodes that knowledge in a way that
@@ -317,24 +337,6 @@ INLINE bool Is_Specialized(const Param* p) {
 //
 //    good-negate: adapt negate/ [print "not modifying number, no check"]
 //
-// When a Param in a ParamList is unspecialized (e.g. antiform PARAMETER!, aka
-// a "Hole") then if it does not carry CELL_FLAG_NOTE, then that means type
-// checking against it is not the last word: there is a type underlying it
-// which also needs to be checked.  Consider:
-//
-//     >> ap-int: copy meta:lite append/
-//
-//     >> ap-int.value: anti make parameter! [integer!]  ; or whatever syntax
-//     == ~#[parameter! [integer!]]~  ; anti
-//
-//     >> /ap-int: anti ap-int
-//     == ~#[frame! ...]~  ; anti
-//
-// You've just created a version of APPEND with a tighter type constraint.
-// But what if that type were -looser-?  You must check this type, and also
-// the type "underneath" it.
-//
-
 #define CELL_FLAG_PARAM_NOTE_TYPECHECKED  CELL_FLAG_NOTE
 
 #define CELL_MASK_COPY_PARAM \
@@ -342,19 +344,18 @@ INLINE bool Is_Specialized(const Param* p) {
 
 INLINE bool Is_Typechecked(const Value* v) {
     Assert_Cell_Stable(v);
-    assert(not Is_Hole(v));
     return Get_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
 }
 
 INLINE void Mark_Typechecked(const Value* v) {
     Assert_Cell_Stable(v);
-    assert(not Is_Hole(v));
+    assert(not Is_Nothing(v));  // only local creation can flag nothing
     Set_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
 }
 
 INLINE bool Is_Hole_Final_Type(const Param* p) {
     assert(Is_Hole(c_cast(Value*, p)));
-    return Get_Cell_Flag(p, PARAM_NOTE_TYPECHECKED);
+    return Get_Parameter_Flag(p, FINAL_TYPECHECK);
 }
 
 
@@ -395,7 +396,7 @@ INLINE bool Any_Vacancy(Need(const Value*) a) {
         return false;
 
     Heart heart = Cell_Heart(a);
-    if (heart == REB_BLANK or heart == REB_PARAMETER or heart == REB_TAG)
+    if (heart == REB_BLANK or heart == REB_TAG)
         return true;
 
     return false;

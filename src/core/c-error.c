@@ -838,6 +838,26 @@ Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 
 
 //
+//  Error_Unspecified_Arg: C
+//
+Error* Error_Unspecified_Arg(Level* L) {
+    assert(Is_Nothing(L->u.action.arg));
+
+    DECLARE_ELEMENT (param_word);
+    Init_Word(param_word, Key_Symbol(L->u.action.key));
+
+    Option(const Symbol*) label = Level_Label(L);
+    DECLARE_ELEMENT (label_word);
+    if (label)
+        Init_Word(label_word, unwrap label);
+    else
+        Init_Nulled(label_word);
+
+    return Error_Unspecified_Arg_Raw(label_word, param_word);
+}
+
+
+//
 //  Error_No_Memory: C
 //
 // !!! Historically, Rebol had a stack overflow error that didn't want to

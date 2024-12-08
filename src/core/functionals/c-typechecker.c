@@ -405,7 +405,10 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             Atom* arg = sub->u.action.arg;
             for (; key != sub->u.action.key_tail; ++key, ++param, ++arg) {
                 Erase_Cell(arg);  // uninitialized in release, poison in debug
-                Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+                if (Not_Specialized(param))
+                    Init_Nothing(arg);
+                else
+                    Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
             }
 
             arg = First_Unspecialized_Arg(&param, sub);
@@ -539,8 +542,8 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     USE_LEVEL_SHORTHANDS (L);
 
     assert(atom != SCRATCH and atom != SPARE);
-    if (not is_return)  // antiform parameters legal as returns, but not args
-        assert(not (Is_Antiform(atom) and HEART_BYTE(atom) == REB_PARAMETER));
+    if (not is_return)
+        assert(not Is_Nothing(atom));  // antiform blank must be ^META as argument
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
         assert(not Is_Stable(atom) or not Is_Void(atom));  // should bypass

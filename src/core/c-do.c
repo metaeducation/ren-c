@@ -61,8 +61,10 @@ void Prep_Action_Level(
     Atom* arg = L->u.action.arg;
     for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
         Erase_Cell(arg);
-        Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
-        assert(Is_Stable(arg));
+        if (Is_Specialized(param))
+            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+        else
+            Init_Nothing(arg);
     }
 
     if (with) do {

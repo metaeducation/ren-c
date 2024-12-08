@@ -223,6 +223,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
       case REB_FRAME:
+        if (not Is_Node_Readable(Cell_Node1(v)))  // e.g. EVAL-FREE freed it
+            break;
         if (Is_Frame_Exemplar(v))
             goto mark_object;
         {

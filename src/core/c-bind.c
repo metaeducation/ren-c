@@ -819,7 +819,7 @@ DECLARE_NATIVE(let)
 //      return: [frame! any-list?]
 //      environment [frame! any-list?]
 //      word [word!]
-//      value [any-value?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(add_let_binding)
@@ -830,11 +830,16 @@ DECLARE_NATIVE(add_let_binding)
 // environment by passing in a rule block with a version of that rule block
 // with an updated binding.  A function that wants to add to the evaluator
 // environment uses the frame at the moment.
+//
+// 1. This function allows you to set the value to nothing, which requires
+//    taking parameters as ^META even though nothing is "stable".
 {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
     Value* env = ARG(environment);
     Context* parent;
+
+    Value* v = Meta_Unquotify_Known_Stable(ARG(value));  // can be nothing [1]
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
@@ -848,7 +853,7 @@ DECLARE_NATIVE(add_let_binding)
 
     Let* let = Make_Let_Variable(Cell_Word_Symbol(ARG(word)), parent);
 
-    Move_Cell(Stub_Cell(let), ARG(value));
+    Move_Cell(Stub_Cell(let), v);
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));

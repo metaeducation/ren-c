@@ -64,14 +64,16 @@
 //
 //      return: "Block of test numbers and failures"
 //          [text! block!]
-//      value "Argument that may be useful for ad hoc tests"
-//          [any-value?]
+//      ^value "Argument that may be useful for ad hoc tests"
+//          [any-value?]  ; ^META to allow passing antiform blank (NOTHING)
 //  ]
 //
 DECLARE_NATIVE(test_librebol)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
-    UNUSED(ARG(value));
+
+    Value* v = Meta_Unquotify_Known_Stable(ARG(value));
+    UNUSED(v);
 
   #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
     return Init_Text(  // text! vs. failing to distinguish from test failure

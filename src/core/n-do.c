@@ -371,9 +371,8 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     if (REF(step))  // !!! may be legal (or mandatory) in the future [1]
         return FAIL(":STEP not implemented for FRAME! in EVALUATE");
 
-    if (Is_Frame_Details(source))
-        if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-            return FAIL(Error_Do_Arity_Non_Zero_Raw());  // see notes in DO
+    if (Not_Node_Readable(Cell_Node1(source)))
+        return FAIL(Error_Series_Data_Freed_Raw());
 
     Option(const Atom*) with = nullptr;
     Push_Frame_Continuation(
@@ -504,6 +503,9 @@ DECLARE_NATIVE(eval_free)
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////
+
+    if (Not_Node_Readable(Cell_Node1(frame)))
+        return FAIL(Error_Series_Data_Freed_Raw());
 
     if (Is_Stub_Details(VAL_ACTION(frame)))
         fail ("Can't currently EVAL-FREE a Details-based Stub");
@@ -694,7 +696,8 @@ DECLARE_NATIVE(applique)
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
-        nullptr  // no binder needed
+        nullptr,  // no binder needed
+        NOTHING_VALUE  // fill all slots with nothing to start
     );
     Manage_Flex(exemplar);
     Init_Frame(
@@ -798,7 +801,8 @@ DECLARE_NATIVE(apply)
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_stackindex of refinements to weave in
-        nullptr  // doesn't use a Binder [2]
+        nullptr,  // doesn't use a Binder [2]
+        nullptr  // leave unspecialized slots as antiform parameter!
     );
     Manage_Flex(exemplar); // Putting into a frame
     Init_Frame(

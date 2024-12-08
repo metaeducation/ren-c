@@ -288,7 +288,12 @@ void Push_Parser_Sublevel(
     assert(Any_Series(input));
     assert(Is_Frame(parser));
 
-    ParamList* ctx = Make_Varlist_For_Action(parser, TOP_INDEX, nullptr);
+    ParamList* ctx = Make_Varlist_For_Action(
+        parser,
+        TOP_INDEX,
+        nullptr,
+        nullptr  // leave unspecialized slots with parameter! antiforms
+    );
 
     const Key* remainder_key = Varlist_Key(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
     const Key* input_key = Varlist_Key(ctx, IDX_COMBINATOR_PARAM_INPUT);
@@ -764,7 +769,12 @@ DECLARE_NATIVE(combinatorize)
     if (REF(path))
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
-    ParamList* paramlist = Make_Varlist_For_Action(ARG(c), TOP_INDEX, nullptr);
+    ParamList* paramlist = Make_Varlist_For_Action(
+        ARG(c),
+        TOP_INDEX,
+        nullptr,
+        nullptr  // leave unspecialized slots with parameter! antiforms
+    );
     CombinatorParamState s;
     s.ctx = paramlist;
     s.level_ = level_;

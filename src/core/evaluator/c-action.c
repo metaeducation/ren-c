@@ -274,7 +274,7 @@ Bounce Action_Executor(Level* L)
                     // for this one.  But we did need to set its index
                     // so we knew it was valid (errors later if not set).
                     //
-                    Init_Okay(ARG);  // ~okay~ antiform means refinement used
+                    Mark_Typechecked(Init_Okay(ARG));  // means refinement used
                     goto continue_fulfilling;
                 }
 
@@ -288,7 +288,7 @@ Bounce Action_Executor(Level* L)
         if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));  // jump lower
             assert(Is_Cell_Erased(ARG));
-            Copy_Cell(ARG, PARAM);  // fills with pickup, or null by typecheck
+            Mark_Typechecked(Init_Nulled(ARG));  // pickup may overwrite
             goto continue_fulfilling;
         }
 
@@ -735,18 +735,19 @@ Bounce Action_Executor(Level* L)
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         Assert_Cell_Stable(ARG);  // implicitly asserts Ensure_Readable(ARG)
 
-        if (Is_Hole(stable_ARG)) {  // not specialized
+        if (Is_Typechecked(stable_ARG))
+            continue;
+
+        if (Is_Nothing(stable_ARG)) {  // unspecialized
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
                 Mark_Typechecked(Init_Nulled(ARG));
                 continue;
             }
-            Init_Nulled(ARG);  // happens if EVAL of FRAME! w/unspecialized
+            return FAIL(Error_Unspecified_Arg(L));
         }
-        else if (Is_Typechecked(stable_ARG)) {
-            continue;
-        }
-        else if (Is_Void(ARG)) {
-            if (Get_Parameter_Flag(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
+
+        if (Is_Void(ARG)) {
+            if (Get_Parameter_Flag(PARAM, NOOP_IF_VOID)) {  // <maybe> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Mark_Typechecked(Init_Nulled(OUT));
                 continue;

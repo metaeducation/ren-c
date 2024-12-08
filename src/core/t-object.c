@@ -411,7 +411,8 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
     ParamList* exemplar = Make_Varlist_For_Action(
         arg,  // being used here as input (e.g. the ACTION!)
         lowest_stackindex,  // will weave in any refinements pushed
-        nullptr  // no binder needed, not running any code
+        nullptr,  // no binder needed, not running any code
+        NOTHING_VALUE  // use COPY UNRUN FRAME! for parameters vs. nothing
     );
 
     // See notes in %c-specialize.c about the special encoding used to
@@ -668,7 +669,7 @@ VarList* Copy_Varlist_Extra_Managed(
         Copy_Cell_Core(  // trying to duplicate slot precisely
             dest,
             src,
-            CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
+            CELL_MASK_ALL  // include VAR_MARKED_HIDDEN, PARAM_NOTE_TYPECHECKED
         );
 
         Flags flags = NODE_FLAG_MANAGED;  // !!! Review, which flags?

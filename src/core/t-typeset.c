@@ -362,26 +362,21 @@ void Set_Parameter_Spec(
 //  "Tells you if argument is parameter antiform, used for unspecialized args"
 //
 //      return: [logic?]
-//      ^value [any-value?] ; can't take parameter antiform without meta [1]
+//      value
 //  ]
 //
 DECLARE_NATIVE(hole_q)
-//
-// 1. Although the antiform of PARAMETER! is stable, it is fundamental to the
-//    argument gathering process that it represents an unspecialized slot.
-//    Hence any function intending to take parameter antiforms must use the
-//    ^META argument convention.
 {
     INCLUDE_PARAMS_OF_HOLE_Q;
 
-    DECLARE_ELEMENT (meta);
-    Option(Bounce) bounce = Trap_Bounce_Meta_Decay_Value_Intrinsic(
-        meta, LEVEL
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(
+        v, LEVEL
     );
     if (bounce)
         return unwrap bounce;
 
-    return LOGIC(Is_Meta_Of_Hole(meta));
+    return LOGIC(Is_Hole(v));
 }
 
 
