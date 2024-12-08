@@ -379,11 +379,29 @@ Details* Alloc_Action_From_Exemplar(
 //      shim "The action that has a FRAME! (or QUOTED?) argument to supply"
 //          [<unrun> frame!]
 //      :parameter "Shim parameter receiving the frame--defaults to last"
-//          [word!]
-//      <local> temp
+//          [word!]  ; parameter not checked for FRAME! type compatibility [1]
 //  ]
 //
 DECLARE_NATIVE(reframer)
+//
+// 1. At one time, the REFRAMER generator would typecheck a dummy FRAME! so
+//    that at creation time you'd get an error if you specified a parameter
+//    that wouldn't accept frames, vs. getting the error later.  This was
+//    dodgy because there may be a more specific typecheck on the frame
+//    than just "any frame".  There also aren't any obvious frames on hand
+//    to use, so it used this invocation Level's frame...but that forced it
+//    managed, which had cost.  The check was removed and so if you pick a
+//    parameter that doesn't accept frames you'll just find out at call time.
+//
+// 2. We need the dispatcher to be willing to start the reframing step even
+//    though the frame to be processed isn't ready yet.  So we have to
+//    specialize the argument with something that type checks.  It wants a
+//    FRAME!, so temporarily fill it with the exemplar frame itself.
+//
+//    !!! We could set CELL_FLAG_PARAM_NOTE_TYPEHCHECKED on the argument and
+//    have it be some other placeholder.  See also SPECIALIZE:RELAX:
+//
+//      https://forum.rebol.info/t/generalized-argument-removal/2297
 {
     INCLUDE_PARAMS_OF_REFRAMER;
 
@@ -425,49 +443,10 @@ DECLARE_NATIVE(reframer)
 
     Destruct_Binder(binder);
 
-    // Make sure the parameter is able to accept FRAME! arguments (the type
-    // checking will ultimately use the same slot we overwrite here!)
-    //
-    // !!! This checks to see if it accepts *an* instance of a frame, but it's
-    // not narrow enough because there might be some additional check on the
-    // properties of the frame.  This is a limit of the type constraints
-    // needing an instance of the type to check.  It may suggest that we
-    // shouldn't do this at all, and just let it fail when called.  :-/
-    //
-    Sink(Element) temp = LOCAL(temp);
-    Copy_Cell(temp, LEVEL->rootvar);
-    if (not Typecheck_Coerce_Uses_Spare_And_Scratch(LEVEL, param, temp, false)) {
-        DECLARE_ATOM (label_word);
-        if (label)
-            Init_Word(label_word, unwrap label);
-        else
-            Init_Blank(label_word);
-
-        DECLARE_ATOM (param_word);
-        Init_Word(param_word, Key_Symbol(key));
-
-        return FAIL(Error_Expect_Arg_Raw(
-            label_word,
-            Datatype_From_Kind(REB_FRAME),
-            param_word
-        ));
-    }
-
-    // We need the dispatcher to be willing to start the reframing step even
-    // though the frame to be processed isn't ready yet.  So we have to
-    // specialize the argument with something that type checks.  It wants a
-    // FRAME!, so temporarily fill it with the exemplar frame itself.
-    //
-    // !!! An expired frame would be better, or tweaking the argument so it
-    // takes a void and giving it ~pending~; would make bugs more obvious.
-    //
-    Value* var = Varlist_Slot(exemplar, param_index);
+    Value* var = Varlist_Slot(exemplar, param_index);  // "specialize" slot [2]
     assert(Is_Hole(var));
     Copy_Cell(var, Varlist_Archetype(exemplar));
 
-    // Make action with enough space to store the implementation phase and
-    // which parameter to fill with the *real* frame instance.
-    //
     Manage_Flex(exemplar);
     Details* details = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
