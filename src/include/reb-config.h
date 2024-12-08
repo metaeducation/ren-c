@@ -878,6 +878,20 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// This is a *painfully* slow debug switch, which allows you to say that the
+// intrinsic functions never run intrinsically, but are called normally with
+// their own Level.  That means type checking is very slow, because things
+// like ANY-VALUE? become first-class function calls in all cases.
+//
+// If you don't use this switch, the debug build SPORADICALLY() throws in a
+// normal evaluation for intrinsics just to test the code path.  But if you
+// want to really torture it, set this to 1.
+//
+#if !defined(DEBUG_DISABLE_INTRINSICS)
+    #define DEBUG_DISABLE_INTRINSICS  0
+#endif
+
+
 // It can be very difficult in release builds to know where a fail came
 // from.  This arises in pathological cases where an error only occurs in
 // release builds, or if making a full checked build bloats the code too much.

@@ -348,15 +348,18 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         switch (kind) {
           run_action: {
+          #if (! DEBUG_DISABLE_INTRINSICS)
             Phase* action = VAL_ACTION(test);
-
             if (
                 Is_Stub_Details(action)
                 and Get_Details_Flag(
                     cast(Details*, action), CAN_DISPATCH_AS_INTRINSIC
                 )
+                and not SPORADICALLY(100)
             ){
-                Dispatcher* dispatcher = Details_Dispatcher(cast(Details*, action));
+                Dispatcher* dispatcher = Details_Dispatcher(
+                    cast(Details*, action)
+                );
 
                 Copy_Cell(SCRATCH, test);  // intrinsic may need action
 
@@ -386,6 +389,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                     fail (Cell_Error(L->out));
                 fail (Error_No_Logic_Typecheck(label));
             }
+          #endif
 
             Flags flags = 0;
             Level* sub = Make_End_Level(

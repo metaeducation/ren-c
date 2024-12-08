@@ -245,6 +245,7 @@ Bounce Stepper_Executor(Level* L)
         L_current_gotten = nullptr;  // !!! allow/require to be passed in?
         goto look_ahead_for_left_literal_infix; }
 
+    #if (! DEBUG_DISABLE_INTRINSICS)
       intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Phase* action = VAL_ACTION(CURRENT);
@@ -272,6 +273,7 @@ Bounce Stepper_Executor(Level* L)
 
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
         goto lookahead; }
+      #endif
 
       case REB_SIGIL:
         goto sigil_rightside_in_out;
@@ -725,9 +727,7 @@ Bounce Stepper_Executor(Level* L)
 
       run_action_in_out: { ///////////////////////////////////////////////////
 
-        Phase* action = VAL_ACTION(OUT);
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
-        Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
         const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
 
         if (infix_mode) {
@@ -747,6 +747,8 @@ Bounce Stepper_Executor(Level* L)
             Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
         }
 
+     #if (! DEBUG_DISABLE_INTRINSICS)
+        Phase* action = VAL_ACTION(OUT);
         if (
             not infix_mode  // too rare a case for intrinsic optimization
             and Is_Stub_Details(action)  // don't do specializations
@@ -754,6 +756,7 @@ Bounce Stepper_Executor(Level* L)
             and Not_Level_At_End(L)  // can't do <end>, fallthru to error
             and not SPORADICALLY(10)  // checked builds sometimes bypass
         ){
+            Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
             Init_Frame(
                 CURRENT,
                 action,
@@ -790,6 +793,7 @@ Bounce Stepper_Executor(Level* L)
             STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
             return CONTINUE_SUBLEVEL(sub);
         }
+      #endif
 
         Level* sub = Make_Action_Sublevel(L);
         Push_Action(sub, OUT);
