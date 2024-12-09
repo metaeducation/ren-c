@@ -448,7 +448,30 @@ e-types/emit newline
 e-types/emit --{
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
+     *
+     * Originally these macros looked like:
+     *
+     *     #define Is_Text(cell) \
+     *         (VAL_TYPE(cell) == REB_TEXT)
+     *
+     * So you'd calculate REB_QUOTED, REB_QUASI, or REB_ANTIFORM from the
+     * QUOTE_BYTE(), and those would be filtered out and not match.
+     *
+     * This was changed to instead mask out the heart byte and quote byte
+     * from the header, and compare to the precise mask of NOQUOTE_1 with
+     * the specific heart byte:
+     *
+     *     #define Is_Text(cell) \
+     *         ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
+     *           == (FLAG_HEART_BYTE(REB_TEXT) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
+     *
+     * This avoids the branching in VAL_TYPE(), so it's a slight bit faster.
+     *
+     * Note that Ensure_Readable() is a no-op in the release build.
      */
+
+    #define CELL_HEART_QUOTE_MASK \
+        (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
 }--
 e-types/emit newline
 
@@ -469,8 +492,9 @@ for-each-datatype 't [
     ]
 
     e-types/emit [propercase-of t --{
-        #define Is_${propercase-of T.name}(v) \
-            (VAL_TYPE(v) == REB_${T.NAME})  /* $<T.HEART> */
+        #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
+            ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
+              == (FLAG_HEART_BYTE(REB_${T.NAME}) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
     }--]
     e-types/emit newline
 ]
