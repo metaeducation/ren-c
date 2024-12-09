@@ -92,8 +92,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     USED(tick);
   #endif
 
-    Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
-
   bounce_on_trampoline_with_rescue:
 
   // RESCUE_SCOPE is an abstraction of `try {} catch(...) {}` which can also
@@ -117,6 +115,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // to put the rescue back into effect.
 
   RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
+
+    Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
 
     // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
     //    for the executor just to make it more obvously intentional that a
@@ -372,22 +372,20 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // "abrupt failures", and they cannot be TRAP'd or TRY'd in the same way
     // a raised error can be.
     //
-    // 1. We don't really know *what* failed...we just know what level we were
-    //    running (L) and there may be other levels on top of that.  All
-    //    levels get a chance to clean up the state.
+    // 1. We don't really know *what* failed...all levels get a chance to
+    //    clean up the state.
     //
     //    (Example: When something like ALL is "between steps", the level it
     //    pushed to process its block will be above it on the stack.  If the
     //    ALL decides to call fail(), the non-running stack level can be
-    //    "TOP_LEVEL" above the ALL's "L" level.)
+    //    "TOP_LEVEL" above the ALL's level whose executor was pushed.)
+
+    Level* L = TOP_LEVEL;  // may not be same as L whose executor() called [1]
 
     Assert_Varlist(e);
     assert(CTX_TYPE(e) == REB_ERROR);
 
-    possibly(L != TOP_LEVEL);  // we give pushed levels chance to clean up [1]
-    Init_Thrown_Failure(TOP_LEVEL, e);
-
-    L = TOP_LEVEL;
+    Init_Thrown_Failure(L, e);
 
     possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // fail in intrinsic
     Clear_Level_Flag(L, DISPATCHING_INTRINSIC);

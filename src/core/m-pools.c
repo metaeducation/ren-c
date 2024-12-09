@@ -278,17 +278,12 @@ void  Startup_Pools(REBINT scale)
 
     g_mem.pools = Try_Alloc_Memory_N(Pool, MAX_POOLS);
 
-    // Copy pool sizes to new pool structure:
-    //
     REBLEN n;
-    for (n = 0; n < MAX_POOLS; n++) {
+    for (n = 0; n < MAX_POOLS; n++) {  // copy pool sizes to new pool structure
         g_mem.pools[n].segments = nullptr;
         g_mem.pools[n].first = nullptr;
         g_mem.pools[n].last = nullptr;
 
-        // A panic is used instead of an assert, since the debug sizes and
-        // release sizes may be different...and both must be checked.
-        //
       #if CHECK_MEMORY_ALIGNMENT
         if (Mem_Pool_Spec[n].wide % sizeof(REBI64) != 0)
             panic ("memory pool width is not 64-bit aligned");
@@ -329,6 +324,8 @@ void  Startup_Pools(REBINT scale)
   #endif
 
     g_mem.prior_expand = Try_Alloc_Memory_N(Flex*, MAX_EXPAND_LIST);
+    if (not g_mem.prior_expand)
+        panic (nullptr);
     memset(g_mem.prior_expand, 0, sizeof(Flex*) * MAX_EXPAND_LIST);
     g_mem.prior_expand[0] = (Flex*)1;
 }
@@ -511,8 +508,12 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 
             if (unit[0] & NODE_BYTEMASK_0x08_CELL) {  // a "pairing"
                 Pairing* pairing = x_cast(Pairing*, unit);
-                if (p >= Pairing_Head(pairing) and p < Pairing_Tail(pairing))
+                if (
+                    p >= cast(void*, Pairing_Head(pairing))
+                    and p < cast(void*, Pairing_Tail(pairing))
+                ){
                     return pairing;  // in stub pool, but actually Cell[2]
+                }
                 continue;
             }
 

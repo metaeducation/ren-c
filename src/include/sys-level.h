@@ -508,8 +508,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     L->prior = TOP_LEVEL;
     g_ts.top_level = L;
 
-    assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
-    L->alloc_value_list = L;  // doubly link list, terminates in `L`
+    assert(L->alloc_value_list == L);
 }
 
 INLINE void Push_Level_Erase_Out_If_State_0(  // inherits uninterruptibility [4]
@@ -586,7 +585,7 @@ INLINE Level* Prep_Level_Core(
     L->varlist = nullptr;
     L->executor = executor;
 
-    Corrupt_Pointer_If_Debug(L->alloc_value_list);
+    L->alloc_value_list = L;  // doubly link list, terminates in `L`
 
     Corrupt_If_Debug(L->u);
 
