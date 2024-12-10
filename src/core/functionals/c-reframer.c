@@ -439,7 +439,7 @@ DECLARE_NATIVE(reframer)
             return FAIL(Error_No_Arg(label, symbol));
         }
         key = Varlist_Key(exemplar, param_index);
-        param = cast_PAR(Varlist_Slot(exemplar, param_index));
+        param = cast(Param*, Varlist_Slot(exemplar, param_index));
     }
     else {
         param = Last_Unspecialized_Param(&key, shim);

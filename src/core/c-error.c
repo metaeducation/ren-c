@@ -91,7 +91,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         REBLEN num_params = Phase_Num_Params(Level_Phase(TOP_LEVEL));
 
         if (v >= head and v < head + num_params) {  // PARAM() error [2]
-            const Param* param = cast_PAR(c_cast(Value*, v));
+            const Param* param = cast(const Param*, v);
             return Error_Invalid_Arg(TOP_LEVEL, param);
         }
         return Error_Bad_Value(v); }

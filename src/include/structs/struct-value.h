@@ -22,25 +22,16 @@
 //
 
 
-//=//// VARS and PARAMs ///////////////////////////////////////////////////=//
+//=//// "Param" SUBCLASS OF "Value" ///////////////////////////////////////=//
 //
-// These are lightweight classes on top of cells that help catch cases of
-// testing for flags that only apply if you're sure something is a parameter
-// cell or variable cell.
+// There are some tests (e.g. for Is_Specialized()) which interprets the
+// CELL_FLAG_NOTE in a particular way.  Having a subclass to help indicate
+// when this test is meaningful was believed to add some safety.
 //
-
 #if CHECK_CELL_SUBCLASSES
     struct Param : public Value {};
-
-    INLINE const Param* cast_PAR(const Value* v)
-        { return c_cast(Param*, v); }
-
-    INLINE Param* cast_PAR(Value* v)
-        { return cast(Param*, v); }
 #else
-    #define Param Value
-
-    #define cast_PAR(v) (v)
+    typedef Value Param;
 #endif
 
 
