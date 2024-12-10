@@ -80,10 +80,19 @@ INLINE bool Is_Logic(Need(const Value*) v) {
     Is_Anti_Word_With_Id((v), SYM_OKAY)
 
 #define Init_Okay(out) \
-    Init_Anti_Word((out), CANON(OKAY))
+    Init_Any_Word_Untracked( \
+        (out), \
+        REB_WORD, \
+        ANTIFORM_0_COERCE_ONLY,  /* OKAY is valid keyword symbol */ \
+        CANON(OKAY))
 
 INLINE Value* Init_Logic(Init(Value) out, bool flag) {
-    return Init_Anti_Word(out, flag ? CANON(OKAY) : CANON(NULL));
+    return Init_Any_Word_Untracked(
+        out,
+        REB_WORD,
+        ANTIFORM_0_COERCE_ONLY,  // OKAY and NULL are valid keyword symbols
+        flag ? CANON(OKAY) : CANON(NULL)
+    );
 }
 
 INLINE bool Cell_Logic(Need(const Value*) v) {

@@ -72,7 +72,11 @@ INLINE bool Is_Nulled(Need(const Value*) v) {
 }
 
 #define Init_Nulled(out) \
-    Init_Anti_Word((out), CANON(NULL))
+    Init_Any_Word_Untracked( \
+        (out), \
+        REB_WORD, \
+        ANTIFORM_0_COERCE_ONLY,  /* NULL is valid keyword symbol */ \
+        CANON(NULL))
 
 #define Init_Quasi_Null(out) \
     Init_Quasi_Word((out), CANON(NULL))

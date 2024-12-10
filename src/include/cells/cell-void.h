@@ -49,7 +49,11 @@ INLINE bool Is_Void(Need(const Value*) v) {
 }
 
 #define Init_Void_Untracked(out) \
-    Init_Anti_Word_Untracked((out), CANON(VOID))
+    Init_Any_Word_Untracked( \
+        (out), \
+        REB_WORD, \
+        ANTIFORM_0_COERCE_ONLY,  /* VOID is valid keyword symbol */ \
+        CANON(VOID))
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))

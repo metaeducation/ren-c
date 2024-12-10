@@ -71,13 +71,14 @@ INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
 INLINE Element* Init_Any_Word_Untracked(
     Sink(Element) out,
     Heart heart,
+    Byte quote_byte,
     const Symbol* sym
 ){
     assert(Any_Word_Kind(heart));
     Freshen_Cell_Header(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(NOQUOTE_1)
+            | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(quote_byte)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
@@ -88,7 +89,7 @@ INLINE Element* Init_Any_Word_Untracked(
 }
 
 #define Init_Any_Word(out,heart,spelling) \
-    TRACK(Init_Any_Word_Untracked((out), (heart), (spelling)))
+    TRACK(Init_Any_Word_Untracked((out), (heart), NOQUOTE_1, (spelling)))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Type_Word(out,str)     Init_Any_Word((out), REB_TYPE_WORD, (str))
@@ -132,15 +133,16 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     TRACK(Init_Any_Word_Bound_Untracked((out), \
             (heart), (symbol), (context), (index)))
 
-#define Init_Quasi_Word(out,label) \
-    TRACK(Coerce_To_Quasiform( \
-        Init_Any_Word_Untracked((out), REB_WORD, (label))))
+#define Init_Quasi_Word(out,symbol) \
+    TRACK(Init_Any_Word_Untracked( \
+        (out), REB_WORD, QUASIFORM_2_COERCE_ONLY, (symbol)))
 
-#define Init_Anti_Word_Untracked(out,label) \
-    Coerce_To_Stable_Antiform(Init_Any_Word_Untracked((out), REB_WORD, (label)))
+#define Init_Anti_Word_Untracked(out,symbol) \
+    Coerce_To_Stable_Antiform(Init_Any_Word_Untracked( \
+        (out), REB_WORD, NOQUOTE_1, (symbol)))  // must validate symbol
 
-#define Init_Anti_Word(out,label) \
-    TRACK(Init_Anti_Word_Untracked((out), (label)))
+#define Init_Anti_Word(out,symbol) \
+    TRACK(Init_Anti_Word_Untracked((out), (symbol)))
 
 
 // Helper calls strsize() so you can more easily use literals at callsite.
