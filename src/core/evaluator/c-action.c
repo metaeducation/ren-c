@@ -201,7 +201,7 @@ Bounce Action_Executor(Level* L)
 
       skip_fulfilling_arg_for_now:
         assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-        assert(Not_Cell_Readable(ARG));
+        assert(Is_Cell_Erased(ARG));
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -227,8 +227,6 @@ Bounce Action_Executor(Level* L)
             Blit_Param_Drop_Mark(ARG, PARAM);
             goto continue_fulfilling;
         }
-
-        Erase_Cell(ARG);  // poison in debug, uninitialized memory in release
 
   //=//// CHECK FOR ORDER OVERRIDE ////////////////////////////////////////=//
 
@@ -274,11 +272,11 @@ Bounce Action_Executor(Level* L)
                     // for this one.  But we did need to set its index
                     // so we knew it was valid (errors later if not set).
                     //
-                    Mark_Typechecked(Init_Okay(ARG));  // means refinement used
+                    Blit_Okay_Typechecked(ARG);  // refinement used
                     goto continue_fulfilling;
                 }
 
-                Init_Unreadable(ARG);
+                Erase_Cell(ARG);
                 goto skip_fulfilling_arg_for_now;
             }
         }
@@ -287,10 +285,11 @@ Bounce Action_Executor(Level* L)
 
         if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));  // jump lower
-            assert(Is_Cell_Erased(ARG));
-            Mark_Typechecked(Init_Nulled(ARG));  // pickup may overwrite
+            Blit_Null_Typechecked(ARG);  // pickup can change
             goto continue_fulfilling;
         }
+
+        Erase_Cell(ARG);
 
   //=//// ARGUMENT FULFILLMENT ////////////////////////////////////////////=//
 
@@ -667,7 +666,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill_and_any_pickups_done;
         }
 
-        assert(Not_Cell_Readable(ARG));
+        assert(Is_Cell_Erased(ARG));
 
         Set_Action_Executor_Flag(L, DOING_PICKUPS);
         goto fulfill_arg;

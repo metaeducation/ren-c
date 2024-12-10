@@ -400,6 +400,43 @@ INLINE Cell* Blit_Param_Unmarked_Untracked(Cell* out, const Param* p) {
     Blit_Cell(out,p)  // for when not making a running varlist [1]
 
 
+//=//// FAST ANTI-WORD "BLITTING" /////////////////////////////////////////=//
+//
+// ~null~ and ~okay~ antiforms are put into varlist slots during argument
+// fulfillment, where those slots have nothing to worry about overwriting.
+// We can write the bits faster.
+//
+
+INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
+    Cell* out,
+    const Symbol* symbol
+){
+  #if DEBUG_POISON_UNINITIALIZED_CELLS
+    assert(Is_Cell_Poisoned(out) or Is_Cell_Erased(out));
+  #endif
+    out->header.bits = (
+        NODE_FLAG_NODE | NODE_FLAG_CELL
+            | FLAG_HEART_BYTE(REB_WORD)
+            | FLAG_QUOTE_BYTE(ANTIFORM_0_COERCE_ONLY)
+            | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
+            | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
+            | CELL_FLAG_PARAM_NOTE_TYPECHECKED
+    );
+    CELL_WORD_INDEX_I32(out) = 0;
+    BINDING(out) = nullptr;
+    Tweak_Cell_Word_Symbol(out, symbol);
+    return out;
+}
+
+#define Blit_Anti_Word_Typechecked(out,symbol) \
+    TRACK(Blit_Anti_Word_Typechecked_Untracked((out), (symbol)))
+
+#define Blit_Null_Typechecked(out) \
+    Blit_Anti_Word_Typechecked((out), CANON(NULL));
+
+#define Blit_Okay_Typechecked(out) \
+    Blit_Anti_Word_Typechecked((out), CANON(OKAY));
+
 
 INLINE Param* Init_Unconstrained_Hole_Untracked(
     Init(Value) out,
