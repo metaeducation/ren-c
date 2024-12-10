@@ -916,26 +916,40 @@ INLINE Cell* Move_Cell_Untracked(
 
 INLINE Atom* Move_Atom_Untracked(
     Atom* out,
-    Atom* a,
-    Flags copy_mask
+    Atom* a
 ){
-    Copy_Cell_Untracked(out, a, copy_mask);  // Move_Cell() adds track to `out`
+    Assert_Cell_Header_Overwritable(out);  // atoms can't have persistent bits
     Assert_Cell_Header_Overwritable(a);  // atoms can't have persistent bits
+
+  #if DEBUG_TRACK_EXTEND_CELLS
+    assert(out->tick == TICK);  // should TRACK(out) before call, not after
+  #endif
+
+    out->header = a->header;
+    out->extra = a->extra;
+    out->payload = a->payload;
+
     a->header.bits = CELL_MASK_ERASED_0;  // legal state for atoms
 
     Corrupt_Pointer_If_Debug(EXTRA(a).corrupt);
     Corrupt_Pointer_If_Debug(a->payload.Any.first.corrupt);
     Corrupt_Pointer_If_Debug(a->payload.Any.second.corrupt);
 
+  #if DEBUG_TRACK_COPY_PRESERVES
+    out->file = v->file;
+    out->line = v->line;
+    out->tick = v->tick;
+    out->touch = v->touch;  // see also arbitrary debug use via Touch_Cell()
+  #endif
+
     return out;
 }
 
 #define Move_Atom(out,a) \
-    Move_Atom_Untracked(TRACK(out), (a), CELL_MASK_COPY)
+    Move_Atom_Untracked(TRACK(out), (a))
 
 #define Move_Meta_Atom(out,a) \
-    cast(Element*, Meta_Quotify( \
-        Move_Atom_Untracked(TRACK(out), (a), CELL_MASK_COPY)))
+    cast(Element*, Meta_Quotify(Move_Atom_Untracked(TRACK(out), (a))))
 
 
 //=//// CELL "BLITTING" (COMPLETE OVERWRITE) //////////////////////////////=//
