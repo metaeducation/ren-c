@@ -208,7 +208,7 @@ Bounce Action_Executor(Level* L)
 
       fulfill_loop_body:
 
-      #if RUNTIME_CHECKS
+      #if DEBUG_POISON_UNINITIALIZED_CELLS
         assert(Is_Cell_Poisoned(ARG));
       #endif
 
@@ -1091,20 +1091,24 @@ void Push_Action(Level* L, const Cell* frame) {
 
     s->content.dynamic.used = num_args + 1;
 
-  #if RUNTIME_CHECKS
+  #if DEBUG_POISON_UNINITIALIZED_CELLS
+  {
     Cell* tail = Array_Tail(L->varlist);
-    Cell* prep = L->rootvar + 1;
-    for (; prep < tail; ++prep)
-        Force_Poison_Cell(prep);
+    Cell* uninitialized = L->rootvar + 1;
+    for (; uninitialized < tail; ++uninitialized)
+        Force_Poison_Cell(uninitialized);
+  }
+  #endif
 
-    #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
-        for (; prep < L->rootvar + s->content.dynamic.rest; ++prep)
-            Force_Poison_Cell(prep);  // unreadable + unwritable
-    #endif
-
-    #if DEBUG_POISON_FLEX_TAILS  // redundant if excess capacity poisoned
-        Force_Poison_Cell(Array_Tail(L->varlist));
-    #endif
+  #if DEBUG_POISON_EXCESS_CAPACITY
+  {
+    Cell* tail = L->rootvar + s->content.dynamic.rest;
+    Cell* excess = L->rootvar + 1 + num_args;
+    for (; excess < tail ; ++excess)
+        Force_Poison_Cell(excess);
+  }
+  #elif DEBUG_POISON_FLEX_TAILS  // redundant if excess capacity poisoned
+    Force_Poison_Cell(Array_Tail(L->varlist));
   #endif
 
     assert(Not_Node_Managed(L->varlist));

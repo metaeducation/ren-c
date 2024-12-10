@@ -828,6 +828,18 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// Uninitialized memory has no predictable pattern.  We could pay to memset()
+// all uninitialized cells to zero to erase them, but that has a cost you
+// don't want to pay if you're just going to overwrite it.  Poisoning the
+// uninitialized cells in the checked build has the advantage of letting
+// "fast" operations that ovewrite all a cell's bit without masking know that
+// you're not overwriting something important.
+//
+#if !defined(DEBUG_POISON_UNINITIALIZED_CELLS)
+    #define DEBUG_POISON_UNINITIALIZED_CELLS  RUNTIME_CHECKS
+#endif
+
+
 // In order to make sure that a good mix of debug settings get tested, this
 // does array termination checks on non-sanitizer checked builds.  Arrays are
 // not usually marked at their tails (unlike R3-Alpha which used END! cells to

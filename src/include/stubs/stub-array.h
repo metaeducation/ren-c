@@ -92,7 +92,7 @@ INLINE void Prep_Array(
         for (; n < a->content.dynamic.rest; ++n, ++prep)
             Force_Poison_Cell(prep);  // unreadable + unwritable
     }
-    else {  // array is expandable, so prep all cells [1]
+    else {  // array is expandable, so prep all cells [2]
         for (; n < a->content.dynamic.rest; ++n, ++prep)
             Force_Erase_Cell(prep);
     }
