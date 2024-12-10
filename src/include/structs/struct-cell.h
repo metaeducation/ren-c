@@ -581,8 +581,9 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //    Cell) in a bytewise fashion, the copy disablement in [2] throws a wrench
 //    into things.  Some compilers will disable memcpy() and memset() under
 //    the assumption that those should count as "copying and assignment".
-//    This is defeated by casting the destination address to a void*, so
-//    Mem_Copy() and Mem_Fill() are macros that do that:
+//    This is defeated by casting the destination address to a char* (void*
+//    seems to have strict aliasing issues).  So Mem_Copy() and Mem_Fill()
+//    are macros that do that:
 //
 //    https://stackoverflow.com/a/76426676
 //
@@ -625,10 +626,10 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     };
 
 #define Mem_Copy(dst,src,size) \
-    memcpy(cast(void*, (dst)), (src), (size))  // [4]
+    memcpy(cast(char*, (dst)), (src), (size))  // [4]
 
 #define Mem_Fill(dst,byte,size) \
-    memset(cast(void*, (dst)), (byte), (size))  // [4]
+    memset(cast(char*, (dst)), (byte), (size))  // [4]
 
 
 //=//// CELL SUBCLASSES FOR QUARANTINING STABLE AND UNSTABLE ANTIFORMS /////=//
