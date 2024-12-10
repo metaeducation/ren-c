@@ -219,12 +219,8 @@ INLINE Cell* Force_Poison_Cell_Untracked(Cell* c) {  // for random bits [3]
 #define Force_Poison_Cell(c)  /* unchecked version, use sparingly! [3] */ \
     TRACK(Force_Poison_Cell_Untracked(c))
 
-INLINE bool Is_Cell_Poisoned(const Cell* c) {
-    if (c->header.bits == CELL_MASK_POISON)
-        return true;
-    /* Assert_Cell_Initable(c); */  // not always initable/readable [4]
-    return false;
-}
+#define Is_Cell_Poisoned(c)  /* non-poison state not always readable [4] */ \
+    ((c)->header.bits == CELL_MASK_POISON)
 
 
 //=//// CELL "ERASING" ////////////////////////////////////////////////////=//
