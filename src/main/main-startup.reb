@@ -534,7 +534,7 @@ bind construct [
 
             emit [
                 do (<*> spaced ["Rebol []" param]) except e -> [
-                    quit e.exit-code
+                    sys.contexts.user/quit e.exit-code
                 ]
             ]
         )

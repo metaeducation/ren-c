@@ -264,18 +264,18 @@ int main(int argc, char *argv_ansi[])
     // arbitrary code by way of its return results.  The ENTRAP is thus here
     // to intercept bugs *in MAIN-STARTUP itself*.
     //
-    Value* trapped = rebValue(
-        "entrap [",  // MAIN-STARTUP frame takes one argument (argv[])
+    Value* enrescued = rebValue(
+        "sys.util/enrescue [",  // MAIN-STARTUP takes one argument (argv[])
             rebRUN(main_startup), rebR(argv_block),
         "]"
     );
     rebRelease(main_startup);
 
-    if (rebUnboxLogic("error?", trapped))  // error in MAIN-STARTUP itself
-        rebJumps("panic", trapped);  // terminates
+    if (rebUnboxLogic("error?", enrescued))  // error in MAIN-STARTUP itself
+        rebJumps("panic", enrescued);  // terminates
 
-    Value* code = rebValue("unquote @", trapped);  // entrap quotes non-errors
-    rebRelease(trapped);  // don't need the outer block any more
+    Value* code = rebValue("unmeta @", enrescued);  // non-errors are ^META
+    rebRelease(enrescued);
 
     // !!! For the moment, the CONSOLE extension does all the work of running
     // usermode code or interpreting exit codes.  This requires significant
