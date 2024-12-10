@@ -640,7 +640,10 @@ DECLARE_NATIVE(redo)
     Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param)) {  // must reset [2]
-            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+          #if DEBUG_POISON_UNINITIALIZED_CELLS
+            Poison_Cell(arg);
+          #endif
+            Blit_Param_Drop_Mark(arg, param);
         }
     }
 

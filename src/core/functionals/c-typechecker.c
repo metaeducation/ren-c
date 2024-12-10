@@ -404,11 +404,12 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             const Param* param = sub->u.action.param;
             Atom* arg = sub->u.action.arg;
             for (; key != sub->u.action.key_tail; ++key, ++param, ++arg) {
-                Erase_Cell(arg);  // uninitialized in release, poison in debug
-                if (Not_Specialized(param))
+                if (Is_Specialized(param))
+                    Blit_Param_Drop_Mark(arg, param);
+                else {
+                    Erase_Cell(arg);
                     Init_Nothing(arg);
-                else
-                    Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+                }
             }
 
             arg = First_Unspecialized_Arg(&param, sub);

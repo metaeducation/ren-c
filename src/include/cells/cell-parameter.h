@@ -337,10 +337,8 @@ INLINE bool Is_Specialized(const Param* p) {
 //
 //    good-negate: adapt negate/ [print "not modifying number, no check"]
 //
-#define CELL_FLAG_PARAM_NOTE_TYPECHECKED  CELL_FLAG_NOTE
 
-#define CELL_MASK_COPY_PARAM \
-    (CELL_MASK_COPY | CELL_FLAG_PARAM_NOTE_TYPECHECKED)
+#define CELL_FLAG_PARAM_NOTE_TYPECHECKED  CELL_FLAG_NOTE
 
 INLINE bool Is_Typechecked(const Value* v) {
     Assert_Cell_Stable(v);
@@ -357,6 +355,49 @@ INLINE bool Is_Hole_Final_Type(const Param* p) {
     assert(Is_Hole(c_cast(Value*, p)));
     return Get_Parameter_Flag(p, FINAL_TYPECHECK);
 }
+
+
+//=//// PARAMETER "BLITTING" //////////////////////////////////////////////=//
+//
+// There's a not-insignificant optimization when building function call frames
+// to assume the target slot is uninitialized, and overwrite its bits without
+// doing masking operations to preserve CELL_MASK_PERSIST.  So when proxying
+// specialized slots we can just take the bits directly.
+//
+// 1. "sealed" parameters in the ParamList carry CELL_FLAG_VAR_MARKED_HIDDEN.
+//    If there were more free Cell bits, we could make this something that
+//    only had significance in the "phase" slot of a frame.  But since we
+//    don't, the flag does double duty--and we don't want running frames
+//    to confuse it with PROTECT:HIDE slots.  We have to clear it if the
+//    slot is being filled on behalf of a running varlist.
+//
+
+INLINE Cell* Blit_Param_Drop_Mark_Untracked(Cell* out, const Param* p) {
+    Blit_Cell_Untracked(out, p);  // checked build ensures out is poison/erased
+    Clear_Cell_Flag(out, VAR_MARKED_HIDDEN);  // sealed params marked [1]
+  #if DEBUG_PROTECT_PARAM_CELLS
+    Clear_Cell_Flag(out, PROTECTED);
+  #endif
+    return out;
+}
+
+#define Blit_Param_Drop_Mark(out,p) \
+    TRACK(Blit_Param_Drop_Mark_Untracked(out,p))
+
+INLINE Cell* Blit_Param_Unmarked_Untracked(Cell* out, const Param* p) {
+    assert(Not_Cell_Flag(p, VAR_MARKED_HIDDEN));
+    Blit_Cell_Untracked(out, p);  // checked build ensures out is poison/erased
+  #if DEBUG_PROTECT_PARAM_CELLS
+    Clear_Cell_Flag(out, PROTECTED);
+  #endif
+    return out;
+}
+
+#define Blit_Param_Unmarked(out,p) \
+    TRACK(Blit_Param_Unmarked_Untracked(out,p));
+
+#define Blit_Param_Keep_Mark(out,p) \
+    Blit_Cell(out,p)  // for when not making a running varlist [1]
 
 
 

@@ -212,8 +212,6 @@ Bounce Action_Executor(Level* L)
         assert(Is_Cell_Poisoned(ARG));
       #endif
 
-        Erase_Cell(ARG);  // poison in debug, uninitialized memory in release
-
   //=//// SKIP ALREADY SPECIALIZED ARGUMENTS //////////////////////////////=//
 
         // In the fulfillment walk, the PARAM is coming from the exemplar.
@@ -226,9 +224,11 @@ Bounce Action_Executor(Level* L)
         // underlying phase that will be running.
         //
         if (Is_Specialized(PARAM)) {
-            Copy_Cell_Core(ARG, PARAM, CELL_MASK_COPY_PARAM);
+            Blit_Param_Drop_Mark(ARG, PARAM);
             goto continue_fulfilling;
         }
+
+        Erase_Cell(ARG);  // poison in debug, uninitialized memory in release
 
   //=//// CHECK FOR ORDER OVERRIDE ////////////////////////////////////////=//
 

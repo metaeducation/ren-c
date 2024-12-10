@@ -571,7 +571,7 @@ ParamList* Pop_Paramlist_May_Fail(
         if (hidden)
             Set_Cell_Flag(param, VAR_MARKED_HIDDEN);
 
-      #if DEBUG_CELL_READ_WRITE
+      #if DEBUG_PROTECT_PARAM_CELLS
         Set_Cell_Flag(param, PROTECTED);
       #endif
 

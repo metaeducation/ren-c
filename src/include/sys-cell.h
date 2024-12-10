@@ -938,6 +938,27 @@ INLINE Atom* Move_Atom_Untracked(
         Move_Atom_Untracked(TRACK(out), (a), CELL_MASK_COPY)))
 
 
+//=//// CELL "BLITTING" (COMPLETE OVERWRITE) //////////////////////////////=//
+//
+// The term "blitting" originates from "BLock Transfer", and it means you
+// are blindly overwriting the bits of the target location.  The debug build
+// makes sure you're not ovewriting anything important by requiring the
+// target cell to be poisoned or erased.
+//
+
+INLINE Cell* Blit_Cell_Untracked(Cell* out, const Cell* c) {
+  #if DEBUG_POISON_UNINITIALIZED_CELLS
+    assert(Is_Cell_Poisoned(out) or Is_Cell_Erased(out));
+  #endif
+    out->header = c->header;
+    out->extra = c->extra;
+    out->payload = c->payload;
+    return out;
+}
+
+#define Blit_Cell(out,c)   TRACK(Blit_Cell_Untracked(out, c))
+
+
 //=//// CELL CONST INHERITANCE ////////////////////////////////////////////=//
 //
 // Various operations are complicit (e.g. SELECT or FIND) in propagating the

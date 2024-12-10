@@ -88,10 +88,8 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     REBLEN index = 1;  // used to bind REFINEMENT? values to parameter slots
 
     for (; key != tail; ++key, ++param, ++arg, ++index) {
-        Erase_Cell(arg);
-
         if (Is_Specialized(param)) {  // includes locals
-            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+            Blit_Param_Keep_Mark(arg, param);
 
           continue_specialized:
 
@@ -103,16 +101,19 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
           continue_unspecialized:
 
+            Erase_Cell(arg);
             if (placeholder)
-                Copy_Cell_Core(arg, unwrap placeholder, CELL_MASK_COPY_PARAM);
+                Copy_Cell(arg, unwrap placeholder);
             else
-                Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+                Copy_Cell(arg, param);
 
             if (binder)
                 Add_Binder_Index(unwrap binder, symbol, index);
 
             continue;
         }
+
+        Erase_Cell(arg);
 
         // Unspecialized refinement slot.  It may be partially specialized,
         // e.g. we may have pushed to the stack from the PARTIALS for it.
@@ -281,7 +282,10 @@ bool Specialize_Action_Throws(
         }
 
         if (Is_Hole(arg)) {
-            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+          #if DEBUG_POISON_UNINITIALIZED_CELLS
+            Poison_Cell(arg);
+          #endif
+            Blit_Param_Unmarked(arg, param);
             if (first_param)
                 first_param = false;  // leave infix as is
             continue;

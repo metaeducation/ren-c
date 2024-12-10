@@ -347,7 +347,10 @@ Details* Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/1413
         //
         if (Is_Hole(arg)) {
-            Copy_Cell_Core(arg, param, CELL_MASK_COPY_PARAM);
+          #if DEBUG_POISON_UNINITIALIZED_CELLS
+            Poison_Cell(arg);
+          #endif
+            Blit_Param_Unmarked(arg, param);
             continue;
         }
 
