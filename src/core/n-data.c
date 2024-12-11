@@ -1336,6 +1336,26 @@ DECLARE_NATIVE(nothing_q)
 
 
 //
+//  /noop: native [  ; native:intrinsic currently needs at least 1 argument
+//
+//  "Has no effect, besides returning antiform BLANK! (aka NOTHING)"
+//
+//      return: [nothing?]
+//  ]
+//
+DECLARE_NATIVE(noop)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
+//
+// This function is preferred to having a function called NOTHING, due to the
+// potential confusion of people not realizing that (get $nothing) would be
+// a function, and not the antiform blank state.
+{
+    INCLUDE_PARAMS_OF_NOOP;
+
+    return Init_Nothing(OUT);
+}
+
+
+//
 //  /something?: native:intrinsic [
 //
 //  "Tells you if the argument is not antiform blank (e.g. not nothing)"

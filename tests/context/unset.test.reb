@@ -10,3 +10,7 @@
     unset $a
     not set? $a
 )
+
+(
+    nothing? noop
+)
