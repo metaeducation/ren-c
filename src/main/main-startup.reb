@@ -302,7 +302,8 @@ bind construct [
     ; useful to know that is what happened (and it demonstrates the ability
     ; to hook it, just to remind us that we can).
     ;
-    hijack panic/ adapt (copy unrun panic/) [
+    let panic-old: hijack panic/ void
+    hijack panic/ adapt panic-old/ [
         print "PANIC ACTION! is being triggered from a usermode call"
         print mold reason
         ;

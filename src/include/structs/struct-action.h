@@ -137,6 +137,7 @@ typedef enum {
 #define FLEX_MASK_DETAILS \
     (NODE_FLAG_NODE \
         | FLAG_FLAVOR(DETAILS) \
+        | STUB_FLAG_DYNAMIC \
         | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* meta */ \
         /* LINK is dispatcher, a c function pointer, should not mark */ \
         | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* exemplar */ )

@@ -159,20 +159,10 @@ INLINE Details* Phase_Details(Phase* p) {
 }
 
 
-// An action's "archetype" is data in the head cell (index [0]) of the array
-// that is the paramlist.  This is an ACTION! cell which must have its
-// paramlist value match the paramlist it is in.  So when copying one array
-// to make a new paramlist from another, you must ensure the new array's
-// archetype is updated to match its container.
+// For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.
 //
-// Note that the details array represented by the identity is not guaranteed
-// to be STUB_FLAG_DYNAMIC, so we use Flex_Data() that handles it.
-//
-#define ACT_ARCHETYPE(action) \
-    cast(Element*, Flex_Data(Phase_Details(action)))
-
 #define Phase_Archetype(phase) \
-    cast(Element*, Flex_Data(ensure(Details*, phase)))
+    cast(Element*, ensure(Phase*, (phase))->content.dynamic.data)
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
@@ -229,27 +219,11 @@ INLINE Param* Phase_Params_Head(Phase* p) {
     (ensure(Details*, (p))->link.any.dispatcher = (cfunc))
 
 
-// An Details Array is stored in the archetype, which is the first element of
-// the Details array.  That's *usually* the same thing as the Details array
-// itself, -but not always-:
-//
-// * When you COPY an action, it creates a minimal details array of length 1
-//   whose archetype points at the details array of what it copied...not
-//   back to itself.  So the dispatcher of the original funciton may run for a
-//   phase with this mostly-empty-array, but expect Details_Array() to give
-//   it the original details.
-//
-// * HIJACK swaps out the archetype in the 0 details slot and puts in the
-//   archetype of the hijacker.  (It leaves the rest of the array alone.)
-//   When the hijacking function runs, it wants Details_Array() for the phase
-//   to give the details that the hijacking dispatcher wants.
-//
-// So consequently, all Details have to look in the archetype, in case they
-// are running the implementation of a copy or are spliced in as a hijacker.
+// The Array is the details identity itself.
 //
 INLINE Array* Details_Array(Details* details) {
     assert(Is_Stub_Details(details));
-    return x_cast(Array*, Phase_Archetype(details)->payload.Any.first.node);
+    return x_cast(Array*, details);
 }
 
 

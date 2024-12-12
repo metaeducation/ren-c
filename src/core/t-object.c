@@ -1391,85 +1391,27 @@ DECLARE_GENERICS(Frame)
 
   //=//// COPY /////////////////////////////////////////////////////////////=//
 
-    // Being able to COPY functions was added so that you could create a new
-    // function identity which behaved the same as an existing function, but
-    // kept working if the original function was HIJACK'ed.  (See %c-hijack.c)
-    // To do this means being able to create an independent identity that can
-    // run the same code without needing to invoke the prior identity to do so.
-    //
-    // (By contrast: specialization also creates a new identity, but then falls
-    // through via a reference to the old identity to run the implementation.
-    // Hence hijacking a function that has been specialized will hijack all of
-    // its specializations.)
-    //
-    // Originally COPY was done just by copying the details array.  But that
-    // puts two copies of the details array in play--which can be technically
-    // dangerous, since the relationship between a function dispatcher and its
-    // details is currently treated as a black box.  (The array could contain a
-    // reference to an arbitrary C pointer, which might get freed in one clone
-    // with an extant reference still lingering in the other.)
-    //
-    // The modified solution tweaks it so that the identity array for an
-    // action is not necessarily where it looks for its Phase_Details(), with
-    // the details instead coming out of the archetype slot [0] of that array.
-    //
-    // !!! There are higher-level interesting mechanics that might be called
-    // COPY that aren't covered at all here.  For instance: Someone might like
-    // to have a generator that counts from 1 to 10 that is at 5, and be able
-    // to COPY it...then have two generators that will count from 5 to 10
-    // independently.  That requires methodization and cooperation with the
-    // specific dispatcher.
-
-      case SYM_COPY:
-        if (Is_Frame_Exemplar(frame))
-            break;
-      {
-        INCLUDE_PARAMS_OF_COPY;
-
-        UNUSED(PARAM(value));
-
-        if (REF(part))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(deep)) {
-            // !!! always "deep", allow it?
-        }
-
-        Details* original = cast(Details*, VAL_ACTION(frame));
-
-        Flags details_flags = original->leader.bits & DETAILS_MASK_PROXY;
-
-        // If the function had code, then that code will be bound relative
-        // to the original paramlist that's getting hijacked.  So when the
-        // proxy is called, we want the frame pushed to be relative to
-        // whatever underlied the function...even if it was foundational
-        // so `underlying = VAL_ACTION(value)`
-
-        Details* proxy = Make_Dispatch_Details(
-            details_flags,
-            Phase_Paramlist(original),  // not changing the interface
-            Details_Dispatcher(original),  // preserve in case original hijacked
-            1  // copy doesn't need details of its own, just archetype
+      case SYM_COPY: {
+        ParamList* copy = Make_Varlist_For_Action(
+            frame,
+            TOP_INDEX,
+            nullptr,  // no binder
+            nullptr  // no placeholder, use parameters
         );
-
-        Option(VarList*) adjunct = Phase_Adjunct(original);
-        assert(Phase_Adjunct(proxy) == nullptr);
-        Tweak_Phase_Adjunct(proxy, adjunct);  // !!! Note: not a copy
-
-        Clear_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // changing it
-        Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(original));
-        Set_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // restore invariant
 
         return Init_Frame(
             OUT,
-            proxy,
-            Cell_Frame_Label(frame),  // keep symbol (if any) from original
-            Cell_Frame_Coupling(frame)  // same (e.g. RETURN to same frame)
+            copy,
+            Cell_Frame_Label(frame),
+            Cell_Frame_Coupling(frame)
         ); }
 
       default:
         break;
     }
+
+    if (not Is_Frame_Exemplar(frame))
+        return FAIL("Generic Operation not enabled for Details-based FRAME!");
 
     return T_Context(level_, verb);
 }

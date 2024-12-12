@@ -21,7 +21,7 @@
 ; you don't accidentally try to reuse them or assume their arguments can
 ; act as caches of the input.
 (
-    f: make frame! unrun append/
+    f: make frame! append/
     f.series: [a b c]
     f.value: <d>
     all [
@@ -73,14 +73,14 @@
     ; interesting if possible to rename them, and then reset them to
     ; undefined while typechecking for lower level phases.  Think about it.
     (
-        f-inner-prelude: '~junk~
+        f-inner-prelude: ~<junk>~
         private: <not-in-prelude>
         /adapted-foo: adapt foo/ [
             f-inner-prelude: binding of $public
             assert [private = <not-in-prelude>]  ; should not be bound
         ]
 
-        f-outer-adapt: make frame! unrun :adapted-foo
+        f-outer-adapt: make frame! adapted-foo/
         f-outer-adapt.public: 1020
 
         f-inner-foo: eval copy f-outer-adapt

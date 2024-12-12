@@ -317,20 +317,24 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
 //  Extra_Init_Frame_Checks_Debug: C
 //
 void Extra_Init_Frame_Checks_Debug(Phase* initial) {
+    Value* archetype = Phase_Archetype(initial);
+    assert(VAL_ACTION(archetype) == initial);
+
     if (Is_Stub_Varlist(initial)) {
         Phase* phase = initial;
-        while (Is_Stub_Varlist(phase)) {
-            Element* archetype = Flex_Head(Element, phase);
-            phase = cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
+        do {
+            Element* temp = Phase_Archetype(phase);
+            phase = cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(temp));
             assert(phase != nullptr);
-        }
+        } while (Is_Stub_Varlist(phase));
         assert(Is_Stub_Details(phase));
     }
     else {
         assert(Is_Stub_Details(initial));
-        Value* archetype = Phase_Archetype(cast(Details*, initial));
         assert(ANONYMOUS == Extract_Cell_Frame_Phase_Or_Label(archetype));
     }
+
+    assert(Is_Stub_Varlist(Phase_Paramlist(initial)));
 
     KeyList* keylist = Phase_Keylist(initial);
     assert(

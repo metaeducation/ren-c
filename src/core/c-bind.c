@@ -1039,7 +1039,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
     //
   blockscope {
     EVARS e;
-    Init_Evars(&e, ACT_ARCHETYPE(relative));
+    Init_Evars(&e, Phase_Archetype(relative));
     e.visibility = visibility;
     while (Try_Advance_Evars(&e))
         Add_Binder_Index(binder, Key_Symbol(e.key), e.index);

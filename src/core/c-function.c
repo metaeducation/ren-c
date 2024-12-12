@@ -793,7 +793,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
     // the top of the returned body?
     //
     if (Details_Dispatcher(details) == &Hijacker_Dispatcher) {
-        Get_Maybe_Fake_Action_Body(out, ACT_ARCHETYPE(details));
+        Get_Maybe_Fake_Action_Body(out, Phase_Archetype(details));
         return;
     }
 

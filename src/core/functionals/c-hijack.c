@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2021 Ren-C Open Source Contributors
+// Copyright 2016-2024 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -51,31 +51,40 @@
 //   hold "references" to functions internally.  These references are also
 //   affected by the hijacking, which means it's easy to get infinite loops:
 //
-//       >> hijack load/ (adapt load/ [print "LOADING!"])
+//       >> hijack transcode/ (adapt transcode/ [print "TRANSCODING!"])
 //
-//       >> load "<for example>"
-//       LOADING!
-//       LOADING!
-//       LOADING!  ; ... infinite loop
+//       >> transcode "<for example>"
+//       TRANSCODING!
+//       TRANSCODING!
+//       TRANSCODING!  ; ... infinite loop
 //
 //   The problem there is that the adaptation performs its printout and then
 //   falls through to the original LOAD, which is now the hijacked version
-//   that has the adaptation.  Working around this problem means remembering
-//   to ADAPT a COPY:
+//   that has the adaptation.
 //
-//       >> hijack load/ (adapt copy load/ [print "LOADING!"])
+//   Working around this problem requires saving the old function (which is
+//   returned under a new identity from HIJACK):
 //
-//       >> load "<for example>"
-//       LOADING!
+//       >> /old-transcode: hijack transcode/ void
+//
+//       >> hijack transcode/ (adapt old-transcode/ [print "LOADING!"])
+//
+//       >> transcode "<for example>"
+//       TRANSCODING!
 //       == [<for example>]
 //
 // * Hijacking is only efficient when the frames of the functions match--e.g.
-//   when the "hijacker" is an ADAPT or ENCLOSE of a copy of the "victim".  But
+//   when the "hijacker" is an ADAPT or ENCLOSE of the old "victim".  But
 //   if the frames don't line up, there's an attempt to remap the parameters in
 //   the frame based on their name.  This should be avoided if possible.
 //
 
 #include "sys-core.h"
+
+enum {
+    IDX_HIJACKER_FRAME = 1,  // The action to run in lieu of the original one
+    IDX_HIJACKER_MAX
+};
 
 
 //
@@ -141,12 +150,28 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 
 
 //
+//  Unimplemented_Dispatcher: C
+//
+// If you HIJACK a function with void, it puts an unimplemented dispatcher
+// that will generate an error if the function is called.
+//
+Bounce Unimplemented_Dispatcher(Level* const L) {
+    USE_LEVEL_SHORTHANDS (L);
+
+    Details* details = Ensure_Level_Details(L);
+    assert(Details_Max(details) == 1);  // no details slots needed
+    assert(Get_Stub_Flag(details, DYNAMIC));  // but all details are dynamic
+    UNUSED(details);
+
+    return FAIL("FRAME! hasn't been associated with code, or HIJACK'd VOID");
+}
+
+
+//
 //  Hijacker_Dispatcher: C
 //
 // A hijacker takes over another function's identity, replacing it with its
-// own implementation.  It leaves the details array intact (in case it is
-// being used by some other COPY of the action), but slips its own archetype
-// into the [0] slot of that array.
+// own implementation.
 //
 // Sometimes the hijacking function has the same underlying function
 // as the victim, in which case there's no need to insert a new dispatcher.
@@ -159,22 +184,24 @@ Bounce Hijacker_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    // The details here is the *identity that the hijacker has overtaken*
-    // But the actual hijacker is in the archetype.
-
     Details* details = Ensure_Level_Details(L);
-    Phase* hijacker = VAL_ACTION(Phase_Archetype(details));
+
+    Value* hijacker_frame = Details_At(details, IDX_HIJACKER_FRAME);
+
+    Phase* hijacker = VAL_ACTION(hijacker_frame);
+    Option(VarList*) hijacker_coupling = Cell_Frame_Coupling(hijacker_frame);
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
     // be compatible.  Check by seeing if the keylists are derived.
     //
-    KeyList* exemplar_keylist = Phase_Keylist(hijacker);
-    KeyList* keylist = Phase_Keylist(details);
+    KeyList* hijacker_keylist = Phase_Keylist(hijacker);
+    KeyList* keylist = Keylist_Of_Varlist(Level_Varlist(L));
     while (true) {
-        if (keylist == exemplar_keylist) {
-            Dispatcher* dispatcher = Details_Dispatcher(Phase_Details(hijacker));
-            return (*dispatcher)(L);
+        if (keylist == hijacker_keylist) {
+            Tweak_Level_Phase(L, hijacker);
+            Tweak_Level_Coupling(L, hijacker_coupling);
+            return BOUNCE_REDO_UNCHECKED;
         }
         if (keylist == LINK(Ancestor, keylist))  // terminates with self ref.
             break;
@@ -184,7 +211,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    Push_Redo_Action_Level(OUT, L, Phase_Archetype(details));
+    Push_Redo_Action_Level(OUT, L, hijacker_frame);
     return DELEGATE_SUBLEVEL(TOP_LEVEL);
 }
 
@@ -194,83 +221,102 @@ Bounce Hijacker_Dispatcher(Level* const L)
 //
 //  "Cause all existing references to a frame to invoke another frame"
 //
-//      return: "The hijacked action value, null if self-hijack (no-op)"
-//          [~null~ action?]
+//      return: "New identity for calling victim (nothing if victim was TBD)"
+//          [action? ~]
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
-//      hijacker "The frame to run in its place"
-//          [<unrun> frame!]
+//      hijacker "The frame to run in its place (void to leave TBD)"
+//          [<unrun> frame! ~void~]
 //  ]
 //
 DECLARE_NATIVE(hijack)
 //
-// 1. Should the paramlists of the hijacker and victim match, that means any
-//    ADAPT or CHAIN or SPECIALIZE of the victim can work equally well if we
-//    just use the hijacker's dispatcher directly.  This is a reasonably
-//    common case, and especially common when putting a copy of the originally
-//    hijacked function back.
+// 1. It may seem useful to change the interface to that of the hijacker,
+//    so that any added refinements would be exposed.  However, that would
+//    create a variance in terms of specializations created before the
+//    hijack and those after.  It seems better to avoid the "sometimes it
+//    will work, and sometimes it won't" property and keep the interface
+//    consistent.  (Perhaps it could be an option to :EXPAND the interface?)
 //
-// 2. A mismatch means there could be someone out there pointing at the
-//    victim function function who expects it to have a different frame than
-//    it does.  In case that someone needs to run the function with that frame,
-//    a proxy "shim" is needed.
+// 2. Miserly initial attempts at HIJACK tried to get away with a single
+//    element Details array, so it could fit in a Stub.  But when you
+//    consider that you're trying to maintain the old interface, and fit in
+//    a whole FRAME! Cell's worth of information for the hijacker, it was
+//    not working--and the "Archetype" cell was no longer representing an
+//    instance of the action.  A 2-cell array works and is cleaner.
 //
-//    !!! It could be possible to do things here like test to see if frames
-//    were compatible in some way that could accelerate the process of building
-//    a new frame.  But in general one basically needs a new function call.
+// 3. If a function carries something like a description, that seems to apply
+//    both to the hijacker and the original function being returned under
+//    a new identity.  It's not totally understood what ADJUNCT is or is not
+//    for, so this just assigns a shared copy.
 //
-// 3. We do not return a copy of the original function that can be used to
-//    restore the behavior.  Because you can make such a copy yourself if
-//    you intend to put the behavior back:
-//
-//        foo-saved: copy unrun foo/  ; should antiform frame be copyable?
-//        hijack foo/ bar/
-//        ...
-//        hijack foo/ foo-saved
-//
-//    Making such a copy in this routine would be wasteful if it wasn't used.
-//
-// 4. !!! What should be done about MISC(victim_paramlist).meta?  Leave it
-//    alone?  Add a note about the hijacking?  Also: how should binding and
-//    hijacking interact?
+// 4. Because of action/frame duality, you can have an action identified by
+//    a list of values in a VarList.  But that VarList is also the interface
+//    for that function in [1].  Hence swapping the identity of the proxy
+//    with the victim will mess up the INODE(Exemplar) passed in.  We have
+//    to fix it up after the swap.
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
     Phase* victim = VAL_ACTION(ARG(victim));
-    Phase* hijacker = VAL_ACTION(ARG(hijacker));
 
-    if (victim == hijacker)
-        return nullptr;  // permitting no-op hijack has some practical uses
+    bool hijack_void = Is_Void(ARG(hijacker));
 
-    Details* victim_identity = Phase_Details(victim);
-    Details* hijacker_identity = Phase_Details(hijacker);
+    bool victim_unimplemented =
+        Is_Stub_Details(victim) and
+        Details_Dispatcher(cast(Details*, victim)) == &Unimplemented_Dispatcher;
 
-    if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed [1]
-        Tweak_Details_Dispatcher(
-            victim_identity, Details_Dispatcher(hijacker_identity)
-        );
-    }
-    else {  // mismatch, so shim required [2]
-        Tweak_Details_Dispatcher(victim_identity, &Hijacker_Dispatcher);
+    if (not hijack_void) {
+        Phase* hijacker = VAL_ACTION(ARG(hijacker));
+        if (victim == hijacker)
+            return FAIL("Cannot HIJACK function with itself");  // right?
     }
 
-    Clear_Cell_Flag(  // change on purpose
-        Phase_Archetype(victim_identity),
-        PROTECTED
-    );
-    Copy_Cell(  // move the archetype into the 0 slot of victim's identity
-        Phase_Archetype(victim_identity),
-        Phase_Archetype(hijacker_identity)
-    );
-    Set_Cell_Flag(  // restore invariant
-        Phase_Archetype(victim_identity),
-        PROTECTED
+    Option(VarList*) adjunct = Phase_Adjunct(victim);
+
+    Details* proxy = Make_Dispatch_Details(
+        DETAILS_MASK_NONE,
+        Phase_Paramlist(victim),  // not changing the interface [1]
+        hijack_void
+            ? &Unimplemented_Dispatcher
+            : &Hijacker_Dispatcher,
+        hijack_void
+            ? 1  // no data used (stub is still dynamic)
+            : IDX_HIJACKER_MAX  // tried just archetype, it was messed up [2]
     );
 
-    return Init_Action(  // don't bother returning copy of original [3]
+    if (not hijack_void)
+        Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), ARG(hijacker));
+
+    Tweak_Phase_Adjunct(proxy, adjunct);  // not a copy, shared reference [3]
+
+    bool must_adjust_exemplar;
+    if (Is_Stub_Varlist(victim)) {
+        assert(Phase_Paramlist(victim) == victim);  // must be fixed up [4]
+        must_adjust_exemplar = true;
+    }
+    else
+        must_adjust_exemplar = false;
+
+    Swap_Flex_Content(victim, proxy);  // after swap, victim is hijacker
+
+    if (must_adjust_exemplar) {  // see [4]
+        assert(Is_Stub_Varlist(proxy));
+        INODE(Exemplar, victim) = proxy;
+    }
+
+    Element* proxy_archetype = Phase_Archetype(proxy);
+    Element* victim_archetype = Phase_Archetype(victim);
+    Tweak_Cell_Frame_Identity(proxy_archetype, proxy);
+    Tweak_Cell_Frame_Identity(victim_archetype, victim);
+
+    if (victim_unimplemented)
+        return NOTHING;
+
+    return Init_Action(
         OUT,
-        victim_identity,
-        Cell_Frame_Label(ARG(victim)),  // MISC(victim_paramlist).meta? [4]
-        Cell_Frame_Coupling(ARG(hijacker))
+        proxy,  // after Swap_Flex_Content(), new identity for victim
+        Cell_Frame_Label(ARG(victim)),
+        Cell_Frame_Coupling(ARG(victim))
     );
 }

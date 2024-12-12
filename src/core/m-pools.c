@@ -917,56 +917,45 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 // Retain the identity of the two Flexes but do a low-level swap of their
 // content with each other.
 //
-// It does not swap flags, e.g. whether something is managed or a paramlist
-// or anything of that nature.  Those are properties that cannot change, due
-// to the expectations of things that link to the Flex.  Hence this is
-// a risky operation that should only be called when the client is sure it
-// is safe to do so (more asserts would probably help).
+// This is a low-level operation that should only be called when the client is
+// sure it is safe to do so (more asserts would probably help).
+//
+// 1. Sequences that have put mirror bytes into arrays intend that to encode a
+//    list type, and the sequence needs that to persist.  Review what to do if
+//    such arrays ever are seen to be used with this routine.
+//
+// 2. Swapping managed stubs with unmanaged ones does come up, and when it
+//    does the flags have to be correct for their original identity.
 //
 void Swap_Flex_Content(Flex* a, Flex* b)
 {
-    // Can't think of any reasonable case for mutating an Array Flex into a
-    // non-Array or vice versa.  Cases haven't come up for swapping Flexes
-    // of varying width, either.
-    //
-    assert(Stub_Holds_Cells(a) == Stub_Holds_Cells(b));
-    assert(Flex_Wide(a) == Flex_Wide(b));
+    assert(Flex_Wide(a) == Flex_Wide(b));  // seemingly should always be true
+    assert(Stub_Holds_Cells(a) == Stub_Holds_Cells(b));  // also seems sane
 
-    bool a_dynamic = Get_Stub_Flag(a, DYNAMIC);
-    if (Get_Stub_Flag(b, DYNAMIC))
-        Set_Stub_Flag(a, DYNAMIC);
-    else
-        Clear_Stub_Flag(a, DYNAMIC);
-    if (a_dynamic)
-        Set_Stub_Flag(b, DYNAMIC);
-    else
-        Clear_Stub_Flag(b, DYNAMIC);
-
-    // !!! Sequences that have put mirror bytes into arrays intend that to
-    // encode a list type, and the sequence needs that to persist.  Review
-    // what to do if such arrays ever are seen to be used with this routine.
-    //
-    if (Stub_Flavor(a) == FLAVOR_SOURCE)
+    if (Stub_Flavor(a) == FLAVOR_SOURCE)  // mirror bytes complicate things [1]
         assert(MIRROR_BYTE(cast(Source*, a)) == REB_0);
     if (Stub_Flavor(b) == FLAVOR_SOURCE)
         assert(MIRROR_BYTE(cast(Source*, b)) == REB_0);
 
-    Byte a_second = SECOND_BYTE(&FLEX_INFO(a));  // may be USED_BYTE()
-    SECOND_BYTE(&FLEX_INFO(a)) = SECOND_BYTE(&FLEX_INFO(b));
-    SECOND_BYTE(&FLEX_INFO(b)) = a_second;
+    bool a_managed = Is_Node_Managed(a);
+    bool b_managed = Is_Node_Managed(b);
 
-    union StubContentUnion a_content;
-    Mem_Copy(&a_content, &a->content, sizeof(union StubContentUnion));
-    Mem_Copy(&a->content, &b->content, sizeof(union StubContentUnion));
-    Mem_Copy(&b->content, &a_content, sizeof(union StubContentUnion));
+    Stub temp;
+    Mem_Copy(&temp, a, sizeof(Stub));
+    Mem_Copy(a, b, sizeof(Stub));
+    Mem_Copy(b, &temp, sizeof(Stub));
 
-    union StubMiscUnion a_misc = a->misc;
-    a->misc = b->misc;
-    b->misc = a_misc;
+    if (a_managed != b_managed) {  // managedness mismatches do come up [2]
+        if (a_managed)
+            Set_Node_Managed_Bit(a);
+        else
+            Clear_Node_Managed_Bit(a);
 
-    union StubLinkUnion a_link = a->link;
-    a->link = b->link;
-    b->link = a_link;
+        if (b_managed)
+            Set_Node_Managed_Bit(b);
+        else
+            Clear_Node_Managed_Bit(b);
+    }
 }
 
 

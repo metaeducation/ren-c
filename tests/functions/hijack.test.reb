@@ -4,7 +4,7 @@
     /foo: func [x] [return x + 1]
     /another-foo: foo/
 
-    /old-foo: copy foo/
+    /old-foo: hijack foo/ void
 
     all [
         (old-foo 10) = 11
@@ -27,7 +27,8 @@
     )
 
     (
-        /old-three: copy three/
+        /old-three: three/
+        /three: adapt three/ []  ; so OLD-THREE not hijacked by THREE hijack
 
         /two-30: specialize three/ [z: 30]
         60 = (two-30 10 20)

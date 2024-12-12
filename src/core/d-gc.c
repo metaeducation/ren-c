@@ -436,10 +436,12 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        Details* details = cast(Details*, VAL_ACTION(archetype));
-        assert(Is_Node_Marked(details));
+        Details* arch_details = cast(Details*, VAL_ACTION(archetype));
+        assert(Is_Node_Marked(arch_details));
+        assert(Is_Stub_Details(arch_details));
 
-        assert(Is_Stub_Varlist(Phase_Paramlist(VAL_ACTION(archetype))));
+        ParamList* arch_paramlist = Phase_Paramlist(arch_details);
+        assert(Is_Stub_Varlist(arch_paramlist));
     }
     else if (Is_Stub_Varlist(a)) {
         const Value* archetype = Varlist_Archetype(
