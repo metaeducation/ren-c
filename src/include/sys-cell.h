@@ -273,11 +273,12 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 // Unreadable cells are write-only cells.  They will give errors on attempts
 // to read from them e.g. with VAL_TYPE(), which is similar to erased cells.
 // But with the advantage that they have NODE_FLAG_NODE and NODE_FLAG_CELL
-// set in their header, hence they do not conflate with empty UTF-8 strings,
-// and functions like Push_Lifeguard() can detect that they are cells.
+// set in their header, hence they do not conflate with empty UTF-8 strings.
+// The GC tolerates them in places where an erased cell would trigger an
+// assertion indicating an element hadn't been initialized.
 //
-// They are used to initialize stack variables e.g. DECLARE_ELEMENT(), and
-// are used in MAP! to denote "zombie" slots.
+// They're not legal in Source arrays exposed to users.  But are found in
+// other places, such as in MAP! to denote "zombie" slots.
 //
 // 1. Setting a cell unreadable does not affect bits like NODE_FLAG_ROOT
 //    or NODE_FLAG_MARKED, so it's "safe" to use them with cells that need
@@ -1006,7 +1007,7 @@ INLINE Value* Constify(Value* v) {
 // do something to format the cell, for instance Force_Erase_Cell():
 //
 //     Element element;
-//     Force_Erase_Cell(&element);  // one possibility for making inits valid
+//     Force_Erase_Cell(&element);
 //     Init_Integer(&element, 1020);
 //
 // We can abstract this with a macro, that can also remove the need to use &,
@@ -1014,16 +1015,6 @@ INLINE Value* Constify(Value* v) {
 //
 //     DECLARE_ELEMENT (element)
 //     Init_Integer(element, 1020);
-//
-// However, Force_Erase_Cell() has a header that's all 0 bits, hence it does
-// not carry NODE_FLAG_NODE or NODE_FLAG_CELL.  We would like to be able to
-// protect the lifetimes of these cells without giving them content:
-//
-//     DECLARE_ELEMENT (element);
-//     Push_Lifeguard(element);
-//
-// But Push_Lifeguard() shouldn't be tolerant of erased cells.  So we assign
-// the header with CELL_MASK_UNREADABLE instead of CELL_MASK_ERASED_0.
 //
 // * These cells are not protected from having their insides GC'd unless
 //   you guard them with Push_Lifeguard(), or if a routine you call protects
@@ -1037,7 +1028,7 @@ INLINE Value* Constify(Value* v) {
 //   as targets...and sometimes it's possible to use the spare/scratch of
 //   child or parent levels as well.
 //
-// * Although writing CELL_MASK_UNREADABLE to the header is very cheap, it
+// * Although writing CELL_MASK_ERASED_0 to the header is very cheap, it
 //   still costs *something*.  In checked builds it can cost more to declare
 //   the cell, because DEBUG_TRACK_EXTEND_CELLS makes TRACK() write
 //   the file, line, and tick where the cell was initialized in the extended
@@ -1048,17 +1039,17 @@ INLINE Value* Constify(Value* v) {
 #define DECLARE_ATOM(name) \
     Atom name##_atom; \
     Atom* name = TRACK(&name##_atom); \
-    Force_Unreadable_Cell_Untracked(name)  // macro, not a function (fast)
+    Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_VALUE(name) \
     Value name##_value; \
     Value* name = TRACK(&name##_value); \
-    Force_Unreadable_Cell_Untracked(name)  // macro, not a function (fast)
+    Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_ELEMENT(name) \
     Element name##_element; \
     Element* name = TRACK(&name##_element); \
-    Force_Unreadable_Cell_Untracked(name)  // macro, not a function (fast)
+    Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 
 //=//// rebReleaseAndNull overload ////////////////////////////////////////=//

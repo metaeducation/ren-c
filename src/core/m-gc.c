@@ -661,7 +661,7 @@ static void Mark_Guarded_Nodes(void)
     const void* *pp = Flex_Head(const void*, g_gc.guarded);
     REBLEN n = Flex_Used(g_gc.guarded);
     for (; n > 0; --n, ++pp) {
-        if (*c_cast(Byte*, *pp) == 0) {  // assume erased cell, tolerate [1]
+        if (FIRST_BYTE(*pp) == 0) {  // assume erased cell, tolerate [1]
             assert(Is_Cell_Erased(c_cast(Cell*, *pp)));
             continue;
         }
@@ -1266,36 +1266,40 @@ REBLEN Recycle(void)
 //
 //  Push_Guard_Node: C
 //
-// 1. Technically we should never call this routine to guard a value that lives
+// 1. It is legal to guard erased cells, which do not have the NODE_FLAG_NODE
+//    bit set.  So an exemption is made if a header slot is all 0 bits.
+//
+// 2. Technically we should never call this routine to guard a value that lives
 //    in some array.  Not only would we have to guard the containing array, we
 //    would also have to lock the array from being able to resize and
 //    reallocate the data pointer.  But this is a somewhat expensive check, so
 //    only feasible to run occasionally.
 //
-// 2. At one time this didn't ensure the Stub being guarded was managed, based
+// 3. At one time this didn't ensure the Stub being guarded was managed, based
 //    on the idea of guarding the contents of an unmanaged array.  That idea
 //    didn't get any usage, and allowing unmanaged guards here just obfuscated
 //    errors when they occurred.  So the assert has been put back.  Review.
 //
-void Push_Guard_Node(const void* p)
+void Push_Guard_Node(const void* p)  // NODE_FLAG_NODE may not be set [1]
 {
-    assert(Is_Node(p));
-
-    if (Is_Node_A_Cell(c_cast(Node*, p))) {
+    if (FIRST_BYTE(p) == 0) {  // assume erased cell [1]
+        assert(Is_Cell_Erased(c_cast(Cell*, p)));
+    }
+    else if (Is_Node_A_Cell(c_cast(Node*, p))) {
         assert(Not_Node_Marked(c_cast(Node*, p)));  // don't guard during GC
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
         const Cell* cell = c_cast(Cell*, p);
 
         Node* containing = Try_Find_Containing_Node_Debug(v);
-        if (containing)  // cell shouldn't live in array or pairing [1]
+        if (containing)  // cell shouldn't live in array or pairing [2]
             panic (containing);
       #endif
     }
     else {  // It's a Stub
         assert(Is_Node_Readable(c_cast(Node*, p)));  // not decayed
         assert(Not_Node_Marked(c_cast(Node*, p)));  // don't guard during GC
-        assert(Is_Node_Managed(c_cast(Node*, p)));  // [2]
+        assert(Is_Node_Managed(c_cast(Node*, p)));  // [3]
     }
 
     if (Is_Flex_Full(g_gc.guarded))
