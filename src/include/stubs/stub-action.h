@@ -162,7 +162,7 @@ INLINE Details* Phase_Details(Phase* p) {
 // For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.
 //
 #define Phase_Archetype(phase) \
-    cast(Element*, ensure(Phase*, (phase))->content.dynamic.data)
+    Flex_Head_Dynamic(Element, ensure(Phase*, (phase)))
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
@@ -209,7 +209,7 @@ INLINE ParamList* Phase_Paramlist(Phase* p) {
 
 INLINE Param* Phase_Params_Head(Phase* p) {
     ParamList* list = Phase_Paramlist(p);
-    return cast(Param*, list->content.dynamic.data) + 1;  // skip archetype
+    return Flex_Head_Dynamic(Param, list) + 1;  // skip archetype
 }
 
 #define Details_Dispatcher(a) \
@@ -239,7 +239,7 @@ INLINE Array* Details_Array(Details* details) {
 INLINE Value* Details_At(Details* details, Length n) {
     Array* a = Details_Array(details);
     assert(n != 0 and n < Array_Len(a));
-    return cast(Value*, a->content.dynamic.data) + n;
+    return Flex_Head_Dynamic(Value, a) + n;
 }
 
 #define Details_Max(details) \

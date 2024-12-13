@@ -390,6 +390,9 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
         c_cast(T*, Flex_Data(f))  // slightly faster, but no width check
 #endif
 
+#define Flex_Head_Dynamic(T,f) \
+    c_cast(T*, (f)->content.dynamic.data)  // faster when you know it's dynamic
+
 #define Flex_Data_Tail(w,f) \
     c_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
 

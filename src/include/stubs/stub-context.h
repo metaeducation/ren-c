@@ -97,8 +97,7 @@ INLINE Option(VarList*) CTX_ADJUNCT(VarList* c) {
 //
 
 INLINE const Element* Varlist_Archetype(VarList* c) {  // read-only form
-    const Flex* varlist = Varlist_Array(c);
-    return c_cast(Element*, varlist->content.dynamic.data);
+    return Flex_Head_Dynamic(Element, c);
 }
 
 INLINE Heart CTX_TYPE(Context* c) {
@@ -252,7 +251,7 @@ INLINE const Key* Varlist_Key(VarList* c, Index n) {  // 1-based
 
 INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
-    return cast(Value*, x_cast(Array*, c)->content.dynamic.data) + n;
+    return Flex_Head_Dynamic(Value, c) + n;
 }
 
 INLINE Value* Mutable_Lib_Var(SymId id) {
@@ -334,17 +333,17 @@ INLINE Value* MOD_VAR(SeaOfVars* sea, const Symbol* sym, bool strict) {
     Flex_At(Key, Keylist_Of_Varlist(c), 0)  // 0-based
 
 #define Varlist_Slots_Head(c) \
-    (cast(Value*, x_cast(Flex*, (c))->content.dynamic.data) + 1)
+    (Flex_Head_Dynamic(Value, c) + 1)
 
-INLINE const Key* Varlist_Keys(const Key* * tail_out, VarList* c) {
+INLINE const Key* Varlist_Keys(Sink(const Key*) tail, VarList* c) {
     KeyList* keylist = Keylist_Of_Varlist(c);
-    *tail_out = Flex_Tail(Key, keylist);
+    *tail = Flex_Tail(Key, keylist);
     return Flex_Head(Key, keylist);
 }
 
-INLINE Value* Varlist_Slots(const Value* * tail_out, VarList* v) {
+INLINE Value* Varlist_Slots(Sink(const Value*) tail, VarList* v) {
     Value* head = Varlist_Slots_Head(v);
-    *tail_out = head + x_cast(Flex*, (v))->content.dynamic.used - 1;
+    *tail = head + v->content.dynamic.used - 1;
     return head;
 }
 
@@ -420,47 +419,3 @@ INLINE void Deep_Freeze_Context(VarList* c) {
 
 #define Is_Context_Frozen_Deep(c) \
     Is_Source_Frozen_Deep(Varlist_Array(c))
-
-
-//
-//  Steal_Varlist_Vars: C
-//
-// This is a low-level trick which mutates a context's varlist into a stub
-// "free" node, while grabbing the underlying memory for its variables into
-// an array of values.
-//
-// It has a notable use by EVAL of a heap-based FRAME!, so that the frame's
-// filled-in heap memory can be directly used as the args for the invocation,
-// instead of needing to push a redundant run of stack-based memory cells.
-//
-// 1. Rather than Mem_Copy() the whole stub and touch up the header and info
-//    to remove FLEX_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or things like
-//    NODE_FLAG_MANAGED, etc.--use constant assignments and only copy the
-//    remaining fields.
-//
-// 2. Once this tried to leave some amount of "information" in the stolen
-//    from context, despite marking it inaccessible.  The modern idea is
-//    that once a stub becomes inaccessible, the GC canonizes it to a
-//    single inaccessible node so it can free up the other stubs.  So it
-//    should lose all of its information.
-//
-INLINE VarList* Steal_Varlist_Vars(VarList* c, Node* keysource) {
-    UNUSED(keysource);
-
-    Stub* stub = c;
-
-    Stub* copy = Prep_Stub(  // don't Mem_Copy() the incoming stub [1]
-        FLEX_MASK_VARLIST
-            | FLEX_FLAG_FIXED_SIZE,
-        Alloc_Stub()
-    );
-    Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
-    node_LINK(NextVirtual, copy) = nullptr;
-
-    Value* rootvar = cast(Value*, copy->content.dynamic.data);
-    Tweak_Cell_Context_Varlist(rootvar, x_cast(Array*, copy));
-
-    Set_Stub_Unreadable(c);  // Make unusable [2]
-
-    return cast(VarList*, copy);
-}

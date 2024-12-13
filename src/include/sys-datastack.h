@@ -212,7 +212,7 @@
 //    to know the address after the content.
 //
 INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
-    Cell* at = cast(Cell*, g_ds.array->content.dynamic.data) + i;  // [1]
+    Cell* at = Flex_Head_Dynamic(Cell, g_ds.array) + i;  // [1]
 
     if (i == 0) {
         assert(Is_Cell_Poisoned(at));

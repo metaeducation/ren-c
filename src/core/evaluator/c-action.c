@@ -1076,7 +1076,7 @@ void Push_Action(Level* L, const Cell* frame) {
 
     L->varlist = x_cast(Array*, s);
 
-    L->rootvar = cast(Element*, s->content.dynamic.data);
+    L->rootvar = Flex_Head_Dynamic(Element, s);
     TRACK(L->rootvar)->header.bits =
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
