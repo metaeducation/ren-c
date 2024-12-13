@@ -1777,9 +1777,9 @@ default-combinators: to map! reduce [
     ; Blanks match themselves literally in blocks.  This is particularly
     ; helpful for recognizing things like refinement:
     ;
-    ;     >> refinement-rule: subparse path! [_ word!]
+    ;     >> refinement-rule: [subparse chain! [_ word!]]
     ;
-    ;     >> parse [/a] [refinement-rule]
+    ;     >> parse [:a] [refinement-rule]
     ;     == a
     ;
     ; In strings, they are matched as spaces, saving you the need to write out
@@ -2346,8 +2346,8 @@ default-combinators: to map! reduce [
     ; it was a good idea, but maybe allowing calling zero-arity functions.
     ;
     ; With Ren-C it's easier to try these ideas out.  So the concept is that
-    ; you can make a PATH! that ends in / and that will be run as a normal
-    ; ACTION!, but whose arguments are fulfilled via PARSE.
+    ; you can make a PATH! that starts with / and that will be run as a normal
+    ; action but whose arguments are fulfilled via PARSE.
 
     frame! combinator [
         "Run an ordinary action with parse rule products as its arguments"
@@ -2368,14 +2368,14 @@ default-combinators: to map! reduce [
         ; tricky because the variadic step is before this function actually
         ; runs...review as the prototype evolves.
 
-        ; !!! We cannot use the autopipe mechanism because the hooked combinator
+        ; !!! We cannot use the autopipe mechanism because hooked combinator
         ; does not see the augmented frame.  Have to do it manually.
         ;
         pending: _
 
         let f: make frame! value
-        for-each 'key (words of value) [
-            let param: meta:lite select f key
+        for-each 'key f [
+            let param: select value key
             if not param.optional [
                 ensure frame! parsers.1
                 if param.class = 'meta [
@@ -2818,7 +2818,7 @@ comment [/combinatorize: func [
     for-each 'key words of f [
         let param: select f key
         case [
-            param = 'input [
+            key = 'input [
                 ; All combinators should have an input.  But the
                 ; idea is that we leave this unspecialized.
             ]
@@ -3018,7 +3018,7 @@ comment [/combinatorize: func [
             comb: unrun adapt (augment comb inside [] collect [
                 let n: 1
                 for-each 'key (words of gotten) [
-                    let param: meta:lite select gotten key
+                    let param: select gotten key
                     if not param.optional [
                         keep spread compose $() '[
                             (to word! unspaced ["param" n]) [action?]
@@ -3036,7 +3036,7 @@ comment [/combinatorize: func [
 
                 let n: 1
                 for-each 'key (words of value) [
-                    let param: meta:lite select value key
+                    let param: select value key
                     if not param.optional [
                         append parsers unrun f.(join 'param [n])/
                         n: n + 1
@@ -3128,7 +3128,7 @@ comment [/combinatorize: func [
     ;
     ; https://forum.rebol.info/t/1276/16
     ;
-    lib/case [  ; !!! Careful... /CASE is a refinement to this function
+    lib/case [  ; !!! Careful... :CASE is a refinement to this function
         any-sequence? input [input: as block! input]
         url? input [input: as text! input]
     ]

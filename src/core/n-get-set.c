@@ -200,9 +200,6 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
             }
             Decay_If_Unstable(cast(Atom*, out));
 
-            if (Is_Antiform(out))
-                fail (Error_Bad_Antiform(out));  // can't PICK on antifoms
-
             Move_Cell(PUSH(), out);
             if (at == head)
                 Quotify(TOP, 1);  // signify not literal

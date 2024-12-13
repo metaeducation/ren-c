@@ -1410,9 +1410,6 @@ DECLARE_GENERICS(Frame)
         break;
     }
 
-    if (not Is_Frame_Exemplar(frame))
-        return FAIL("Generic Operation not enabled for Details-based FRAME!");
-
     return T_Context(level_, verb);
 }
 

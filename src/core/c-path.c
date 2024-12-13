@@ -107,7 +107,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 //
 //      return: "Picked value, or null if picker can't fulfill the request"
 //          [any-value?]
-//      location [<maybe> element?]
+//      location [<maybe> element? action? hole?]
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element? logic?]
 //  ]
@@ -133,8 +133,12 @@ DECLARE_NATIVE(pick)
         Init_Integer(picker, 2);
     }
 
-    Element* location = cast(Element*, ARG(location));
-    return Run_Generic_Dispatch(location, LEVEL, CANON(PICK));
+    Value* location = ARG(location);
+    if (not Is_Parameter(location) or Is_Action(location))
+        assert(Is_Unquoted(location));
+    QUOTE_BYTE(location) = NOQUOTE_1;
+
+    return Run_Generic_Dispatch(cast(Element*, location), LEVEL, CANON(PICK));
 }
 
 
