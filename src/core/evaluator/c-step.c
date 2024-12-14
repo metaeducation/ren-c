@@ -248,9 +248,8 @@ Bounce Stepper_Executor(Level* L)
     #if (! DEBUG_DISABLE_INTRINSICS)
       intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
-        Phase* action = VAL_ACTION(CURRENT);
-        assert(Is_Stub_Details(action));
-        Dispatcher* dispatcher = Details_Dispatcher(cast(Details*, action));
+        Details* details = Ensure_Cell_Frame_Details(CURRENT);
+        Dispatcher* dispatcher = Details_Dispatcher(details);
 
         possibly(Is_Antiform_Unstable(SPARE));  // intrinsic typechecks/decays
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
@@ -385,7 +384,7 @@ Bounce Stepper_Executor(Level* L)
         ){
             goto give_up_backward_quote_priority;
         }
-        infixed = VAL_ACTION(unwrap L_next_gotten);
+        infixed = Cell_Frame_Phase(unwrap L_next_gotten);
         break; }
 
       case REB_CHAIN:
@@ -748,22 +747,22 @@ Bounce Stepper_Executor(Level* L)
         }
 
      #if (! DEBUG_DISABLE_INTRINSICS)
-        Phase* action = VAL_ACTION(OUT);
+        Details* details = maybe Try_Cell_Frame_Details(OUT);
         if (
             not infix_mode  // too rare a case for intrinsic optimization
-            and Is_Stub_Details(action)  // don't do specializations
-            and Get_Details_Flag(cast(Details*, action), CAN_DISPATCH_AS_INTRINSIC)
+            and details
+            and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
             and Not_Level_At_End(L)  // can't do <end>, fallthru to error
             and not SPORADICALLY(10)  // checked builds sometimes bypass
         ){
             Option(VarList*) coupling = Cell_Frame_Coupling(OUT);
             Init_Frame(
                 CURRENT,
-                action,
+                details,
                 label,
                 coupling
             );
-            Param* param = Phase_Param(action, 2);
+            Param* param = Phase_Param(details, 2);
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             switch (Cell_ParamClass(param)) {
@@ -1927,7 +1926,7 @@ Bounce Stepper_Executor(Level* L)
   //=//// IS WORD INFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
 
   blockscope {
-    Phase* infixed = VAL_ACTION(unwrap L_next_gotten);
+    Phase* infixed = Cell_Frame_Phase(unwrap L_next_gotten);
     ParamList* paramlist = Phase_Paramlist(infixed);
 
     if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {

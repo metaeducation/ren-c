@@ -113,7 +113,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Value* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
 
-    Tweak_Level_Phase(L, VAL_ACTION(adaptee));
+    Tweak_Level_Phase(L, Cell_Frame_Phase(adaptee));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & coupling [1]
@@ -134,7 +134,11 @@ Bounce Adapter_Dispatcher(Level* const L)
 //
 DECLARE_NATIVE(adapt)
 //
-// 1. As with FUNC, we deep copy the block the user gives us.  Perhaps this
+// 1. !!! We could probably make ADAPT cheaper, if the full cell of the
+//    adaptee were put in the Details[0] slot.  Then the Details array
+//    would only need to hold the prelude in Details[1].  Review.
+//
+// 2. As with FUNC, we deep copy the block the user gives us.  Perhaps this
 //    should be optional...but so long as we are copying it, we might as well
 //    mutably bind it.
 {
@@ -143,14 +147,16 @@ DECLARE_NATIVE(adapt)
     Value* adaptee = ARG(original);
     Value* prelude = ARG(prelude);
 
+    ParamList* adaptee_paramlist = Phase_Paramlist(Cell_Frame_Phase(adaptee));
+
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        Phase_Paramlist(VAL_ACTION(adaptee)),  // same parameters as adaptee
+        adaptee_paramlist,  // same parameters as adaptee [1]
         &Adapter_Dispatcher,
         IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]
     );
 
-    Source* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(  // copy [1]
+    Source* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(  // copy [2]
         prelude,
         details,
         VAR_VISIBILITY_INPUTS  // adapted code should not see adaptee locals

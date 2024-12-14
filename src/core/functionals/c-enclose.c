@@ -199,9 +199,10 @@ DECLARE_NATIVE(enclose)
     Value* inner = ARG(inner);
     Value* outer = ARG(outer);
 
+    ParamList* inner_paramlist = Phase_Paramlist(Cell_Frame_Phase(inner));
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        Phase_Paramlist(VAL_ACTION(inner)),  // same interface as inner [1]
+        inner_paramlist,  // same interface as inner [1]
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );

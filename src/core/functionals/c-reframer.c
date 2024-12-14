@@ -121,11 +121,8 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     assert(Get_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);  // [2]
 
-    L->u.action.original = VAL_ACTION(action);
-    Tweak_Level_Phase(  // Drop_Action() cleared, restore
-        L,
-        Phase_Details(VAL_ACTION(action))
-    );
+    L->u.action.original = Cell_Frame_Phase(action);
+    Tweak_Level_Phase(L, Cell_Frame_Phase(action));  // Drop_Action() cleared
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(action));
 
     return L;  // may not be at end or thrown, e.g. (/x: does+ just y x = 'y)
@@ -313,7 +310,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     Value* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, stable_SPARE);
 
-    Tweak_Level_Phase(L, VAL_ACTION(shim));
+    Tweak_Level_Phase(L, Cell_Frame_Phase(shim));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
@@ -331,7 +328,7 @@ Details* Alloc_Action_From_Exemplar(
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Phase* unspecialized = VAL_ACTION(Phase_Archetype(paramlist));
+    Phase* unspecialized = Cell_Frame_Phase(Phase_Archetype(paramlist));
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, unspecialized);
@@ -409,7 +406,7 @@ DECLARE_NATIVE(reframer)
 {
     INCLUDE_PARAMS_OF_REFRAMER;
 
-    Phase* shim = VAL_ACTION(ARG(shim));
+    Phase* shim = Cell_Frame_Phase(ARG(shim));
     Option(const Symbol*) label = Cell_Frame_Label(ARG(shim));
 
     DECLARE_BINDER (binder);

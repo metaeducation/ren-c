@@ -180,7 +180,9 @@ DECLARE_NATIVE(shove)
   //    to the binding environment of the callsite.  That interferes with
   //    abstraction, so any binding should
 
-    const Param* param = First_Unspecialized_Param(nullptr, VAL_ACTION(shovee));
+    const Param* param = First_Unspecialized_Param(
+        nullptr, Cell_Frame_Phase(shovee)
+    );
     ParamClass pclass = Cell_ParamClass(param);
 
     switch (Cell_ParamClass(param)) {
@@ -507,7 +509,7 @@ DECLARE_NATIVE(eval_free)
     if (Not_Node_Readable(Cell_Node1(frame)))
         return FAIL(Error_Series_Data_Freed_Raw());
 
-    if (Is_Stub_Details(VAL_ACTION(frame)))
+    if (Is_Stub_Details(Cell_Frame_Phase(frame)))
         fail ("Can't currently EVAL-FREE a Details-based Stub");
 
     if (Cell_Frame_Lens(frame))  // see REDO for tail-call recursion
@@ -528,10 +530,12 @@ DECLARE_NATIVE(eval_free)
     MISC(RunLevel, varlist) = L;
 
     Phase* phase = Level_Phase(L);
-    assert(phase == VAL_ACTION(Phase_Archetype(cast(ParamList*, varlist))));
+    assert(phase == Cell_Frame_Phase(
+        Phase_Archetype(cast(ParamList*, varlist)))
+    );
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(frame));
 
-    L->u.action.original = phase;  // VAL_ACTION() is gone...
+    L->u.action.original = phase;
 
     L->u.action.key = Phase_Keys(&L->u.action.key, phase);
     L->u.action.param = Phase_Params_Head(phase);
@@ -549,7 +553,7 @@ DECLARE_NATIVE(eval_free)
 
 } result_in_out: { ///////////////////////////////////////////////////////////
 
-    Decay_Stub(VAL_ACTION(frame));  // the "FREE" of EVAL-FREE
+    Decay_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE
 
     if (not REF(undecayed)) {
         if (Is_Elision(OUT))
@@ -612,31 +616,27 @@ DECLARE_NATIVE(redo)
     if (L == nullptr)
         return FAIL("EVAL starts a not-currently running FRAME! (not REDO)");
 
-    Phase* redo_action;
+    Phase* redo_phase;
 
     if (REF(sibling)) {  // ensure frame compatibility [1]
         Value* sibling = ARG(sibling);
-        redo_action = VAL_ACTION(sibling);
+        redo_phase = Cell_Frame_Phase(sibling);
 
-        if (
-            Phase_Keylist(L->u.action.original)
-            != Phase_Keylist(redo_action)
-        ){
+        if (Phase_Keylist(L->u.action.original) != Phase_Keylist(redo_phase))
             return FAIL(":OTHER passed to REDO has incompatible FRAME!");
-        }
 
-        Tweak_Level_Phase(L, Phase_Details(redo_action));
+        Tweak_Level_Phase(L, redo_phase);
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(sibling));
     }
     else {
-        redo_action = VAL_ACTION(restartee);
-        Tweak_Level_Phase(L, cast(Details*, VAL_ACTION(restartee)));
+        redo_phase = Cell_Frame_Phase(restartee);
+        Tweak_Level_Phase(L, Cell_Frame_Phase(restartee));
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(restartee));
     }
 
     const Key* key_tail;
-    const Key* key = Phase_Keys(&key_tail, redo_action);
-    Param* param = Phase_Params_Head(redo_action);
+    const Key* key = Phase_Keys(&key_tail, redo_phase);
+    Param* param = Phase_Params_Head(redo_phase);
     Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param)) {  // must reset [2]
@@ -868,7 +868,7 @@ DECLARE_NATIVE(apply)
             return FAIL(Error_Bad_Parameter_Raw(at));
 
         var = Varlist_Slot(Cell_Varlist(frame), unwrap index);
-        param = Phase_Param(VAL_ACTION(op), unwrap index);
+        param = Phase_Param(Cell_Frame_Phase(op), unwrap index);
 
         if (not Is_Hole(var))
             return FAIL(Error_Bad_Parameter_Raw(at));
@@ -932,7 +932,7 @@ DECLARE_NATIVE(apply)
     REBLEN index = VAL_UINT32(ARG(index));
 
     var = Varlist_Slot(Cell_Varlist(frame), index);
-    param = Phase_Param(VAL_ACTION(op), index);
+    param = Phase_Param(Cell_Frame_Phase(op), index);
 
     goto copy_spare_to_var_in_frame;
 

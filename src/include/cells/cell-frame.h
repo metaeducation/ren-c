@@ -33,7 +33,7 @@
 //     == -1020
 //
 // But FRAME!s were not simply objects which represented the parameters to
-// call the function with.  The actual in-memory reprsentation of the VarList
+// call the function with.  The actual in-memory representation of the VarList
 // was used as the function's variables.
 //
 // This became more complex, because functions could be composed through
@@ -43,9 +43,9 @@
 // function with another field of the same name.  Which field should be
 // visible depended on how far into the composition an execution had gotten.
 //
-// That concept of "Phase" became another field in FRAME! cells.  Plus, it
+// That concept of "Lens" became another field in FRAME! cells.  Plus, it
 // was added that the way to say a frame wasn't running was to store a label
-// for the function in the phase slot so that a frame could indicate the
+// for the function in the lens slot so that a frame could indicate the
 // name that should show in the stack when being invoked.
 //
 // Further contributing to the complexity of FRAME! was that it was decided
@@ -53,23 +53,32 @@
 // would be an antiform frame.  This meant that a FRAME! was the result of
 // functions like ADAPT and ENCLOSE...but those generated new function
 // identities without creating new VarLists to represent the parameters.
-// Rather than making copies for no reason, the alternative was to make frames
-// able to point directly at an Initial_Phase() of a function...which would
-// then have to be queried for a VarList*.
+// So the Details* and VarList* types were multiplexed into a Phase* type.
 //
 
 
-INLINE Phase* VAL_ACTION(const Cell* v) {
-    assert(HEART_BYTE(v) == REB_FRAME);
-    if (Not_Node_Readable(Cell_Node1(v)))
+INLINE Phase* Cell_Frame_Phase(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_FRAME);
+    if (Not_Node_Readable(Cell_Node1(c)))
         fail (Error_Series_Data_Freed_Raw());
 
-    Flex* f = cast(Flex*, Cell_Node1(v));  // maybe exemplar, maybe details
+    Flex* f = cast(Flex*, Cell_Node1(c));
+    assert(Is_Stub_Details(f) or Is_Stub_Varlist(f));
     return cast(Phase*, f);
 }
 
-#define VAL_ACTION_KEYLIST(v) \
-    Phase_Keylist(VAL_ACTION(v))
+INLINE Details* Ensure_Cell_Frame_Details(const Cell* c) {
+    Phase* phase = Cell_Frame_Phase(c);
+    assert(Is_Stub_Details(phase));
+    return cast(Details*, phase);
+}
+
+INLINE Option(Details*) Try_Cell_Frame_Details(const Cell* c) {
+    Phase* phase = Cell_Frame_Phase(c);
+    if (not Is_Stub_Details(phase))
+        return nullptr;
+    return cast(Details*, phase);
+}
 
 
 //=//// FRAME LENS AND LABELING ///////////////////////////////////////////=//
@@ -141,12 +150,12 @@ INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
 
 INLINE void Init_Frame_Unchecked_Untracked(
     Init(Element) out,  // may be rootvar
-    Flex* identity,  // may not be completed or managed if out is rootvar
+    Flex* phase,  // may not be completed or managed if out is rootvar
     Option(const Symbol*) label,
     Option(VarList*) coupling
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
-    Tweak_Cell_Frame_Identity(out, identity);
+    Tweak_Cell_Frame_Phase(out, phase);
     Tweak_Cell_Frame_Lens_Or_Label(out, label);
     Tweak_Cell_Frame_Coupling(out, coupling);
 }
@@ -157,15 +166,15 @@ INLINE void Init_Frame_Unchecked_Untracked(
 
 INLINE Element* Init_Frame_Untracked(
     Init(Element) out,
-    Phase* identity,
+    Phase* phase,
     Option(const Symbol*) label,
     Option(VarList*) coupling
 ){
-    Force_Flex_Managed(identity);
-    Init_Frame_Unchecked_Untracked(out, identity, label, coupling);
+    Force_Flex_Managed(phase);
+    Init_Frame_Unchecked_Untracked(out, phase, label, coupling);
 
   #if RUNTIME_CHECKS
-    Extra_Init_Frame_Checks_Debug(identity);
+    Extra_Init_Frame_Checks_Debug(phase);
   #endif
 
     return out;
@@ -209,9 +218,9 @@ INLINE Element* Init_Frame_Untracked(
 // the signal that the function should be invoked, and not searched for.
 //
 
-#define Init_Action(out,a,label,binding) \
+#define Init_Action(out,a,label,coupling) \
     Actionify(cast(Value*, Init_Frame( \
-        ensure(Sink(Value), (out)), (a), (label), (binding)) \
+        ensure(Sink(Value), (out)), (a), (label), (coupling)) \
     ))
 
 INLINE Value* Actionify(Need(Value*) v) {

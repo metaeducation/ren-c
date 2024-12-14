@@ -60,7 +60,7 @@ bool Try_Catch_Break_Or_Continue(
         return false;
 
     if (
-        VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_BREAK))
+        Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_BREAK))
         and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
@@ -70,7 +70,7 @@ bool Try_Catch_Break_Or_Continue(
     }
 
     if (
-        VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))
+        Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_CONTINUE))
         and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
@@ -107,14 +107,14 @@ DECLARE_NATIVE(definitional_break)
 
     Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
-    Init_Action(
-        SPARE,  // use as label for throw
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
+    Element* label = Init_Frame(
+        SPARE,
+        Cell_Frame_Phase(LIB(DEFINITIONAL_BREAK)),
         CANON(BREAK),
         cast(VarList*, loop_level->varlist)
     );
 
-    return Init_Thrown_With_Label(LEVEL, LIB(NULL), stable_SPARE);
+    return Init_Thrown_With_Label(LEVEL, LIB(NULL), label);
 }
 
 
@@ -139,9 +139,9 @@ DECLARE_NATIVE(definitional_continue)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
-    Value* v = ARG(with);
+    Value* with = ARG(with);
     if (not REF(with))
-        Init_Void(v);  // See: https://forum.rebol.info/t/1965/3 [1]
+        Init_Void(with);  // See: https://forum.rebol.info/t/1965/3 [1]
 
     Level* continue_level = LEVEL;  // Level of this CONTINUE call
 
@@ -151,14 +151,14 @@ DECLARE_NATIVE(definitional_continue)
 
     Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
-    Init_Action(
-        SPARE,  // use as label for throw
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
+    Element* label = Init_Frame(
+        SPARE,
+        Cell_Frame_Phase(LIB(DEFINITIONAL_CONTINUE)),
         CANON(CONTINUE),
         Varlist_Of_Level_Force_Managed(loop_level)
     );
 
-    return Init_Thrown_With_Label(LEVEL, v, stable_SPARE);
+    return Init_Thrown_With_Label(LEVEL, with, label);
 }
 
 
@@ -174,7 +174,7 @@ void Add_Definitional_Break_Continue(
 
     Init_Action(
         Stub_Cell(let_continue),
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_CONTINUE))),
+        Cell_Frame_Phase(LIB(DEFINITIONAL_CONTINUE)),
         CANON(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to continue
     );
@@ -182,7 +182,7 @@ void Add_Definitional_Break_Continue(
     Let* let_break = Make_Let_Variable(CANON(BREAK), let_continue);
     Init_Action(
         Stub_Cell(let_break),
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_BREAK))),
+        Cell_Frame_Phase(LIB(DEFINITIONAL_BREAK)),
         CANON(BREAK),  // relabel (the BREAK in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
@@ -628,9 +628,9 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
-    Value* v = ARG(with);
+    Value* with = ARG(with);
     if (not REF(with))
-        Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
+        Init_Void(with);  // See: https://forum.rebol.info/t/1965/3
 
     Level* stop_level = LEVEL;  // Level of this STOP call
 
@@ -640,14 +640,14 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 
     Level* loop_level = Level_Of_Varlist_May_Fail(unwrap coupling);
 
-    Init_Action(
-        SPARE,  // use as label for throw
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
+    Element* label = Init_Frame(
+        SPARE,
+        Cell_Frame_Phase(LIB(DEFINITIONAL_STOP)),
         CANON(STOP),
         cast(VarList*, loop_level->varlist)
     );
 
-    return Init_Thrown_With_Label(LEVEL, v, stable_SPARE);
+    return Init_Thrown_With_Label(LEVEL, with, label);
 }
 
 
@@ -665,7 +665,7 @@ void Add_Definitional_Stop(
     Let* let_stop = Make_Let_Variable(CANON(STOP), parent);
     Init_Action(
         Stub_Cell(let_stop),
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_STOP))),
+        Cell_Frame_Phase(LIB(DEFINITIONAL_STOP)),
         CANON(STOP),  // relabel (the STOP in lib is a dummy action)
         cast(VarList*, loop_level->varlist)  // what to stop
    );
@@ -747,7 +747,7 @@ DECLARE_NATIVE(cycle)
     const Value* label = VAL_THROWN_LABEL(LEVEL);
     if (
         Is_Frame(label)
-        and VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_STOP))
+        and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_STOP))
         and Cell_Frame_Coupling(label) == Level_Varlist(LEVEL)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
@@ -1653,6 +1653,12 @@ DECLARE_NATIVE(map_each)
 //
 // MAP-EACH lacks the planned flexibility of MAP.  The syntax of FOR and MAP
 // are intended to be generic to work with generators or a dialect.
+//
+// 1. The theory is that MAP would use a dialect on BLOCK! arguments for data
+//    by default, like [1 thru 10].  But you could give it an arbitrary
+//    enumerating action and it would iteratively call it.  Since such an
+//    iterator does not exist yet (and would not be cheap) a QUOTED? BLOCK!
+//    is used temporarily as a substitute for passing a block iterator.
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
@@ -1662,22 +1668,15 @@ DECLARE_NATIVE(map_each)
     if (Is_Blank(ARG(data)))  // should have same result as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
-    // The theory is that MAP would use a dialect on BLOCK! arguments for data
-    // by default, like [1 thru 10].  But you could give it an arbitrary
-    // enumerating action and it would iteratively call it.  Since such an
-    // iterator does not exist yet (and would not be cheap) a QUOTED? BLOCK!
-    // is used temporarily as a substitute for passing a block iterator.
-    //
-    Quotify(ARG(data), 1);
+    Quotify(ARG(data), 1);  // dialect, in theroy [1]
 
     const Value* map_action = LIB(MAP);
-    assert(Is_Stub_Details(VAL_ACTION(map_action)));
-    Details* phase = cast(Details*, VAL_ACTION(map_action));
+    Details* details = Ensure_Cell_Frame_Details(map_action);
 
-    Tweak_Level_Phase(LEVEL, phase);
+    Tweak_Level_Phase(LEVEL, details);
     Tweak_Level_Coupling(LEVEL, Cell_Frame_Coupling(map_action));
 
-    Dispatcher* dispatcher = Details_Dispatcher(phase);
+    Dispatcher* dispatcher = Details_Dispatcher(details);
     return (*dispatcher)(LEVEL);
 }
 

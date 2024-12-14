@@ -309,7 +309,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         const Value* label = VAL_THROWN_LABEL(L);  // unwind [1]
         if (
             Is_Frame(label)
-            and VAL_ACTION(label) == VAL_ACTION(LIB(UNWIND))
+            and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(UNWIND))
             and g_ts.unwind_level == L  // may be inaccessible [2]
         ){
             CATCH_THROWN(L->out, L);

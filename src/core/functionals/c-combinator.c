@@ -89,9 +89,9 @@ Bounce Combinator_Dispatcher(Level* L)
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
         Set_Flex_Info(L->varlist, HOLD);  // mandatory for natives.
-        assert(Is_Stub_Details(VAL_ACTION(body)));
+        assert(Is_Stub_Details(Cell_Frame_Phase(body)));
         Dispatcher* dispatcher = Details_Dispatcher(
-            cast(Details*, VAL_ACTION(body))
+            cast(Details*, Cell_Frame_Phase(body))
         );
         b = (*dispatcher)(L);
     }
@@ -610,7 +610,9 @@ static bool Combinator_Param_Hook(
     // we need to calculate what variable slot this lines up with.  Can be
     // done based on the offset of the param from the head.
 
-    REBLEN offset = param - Phase_Params_Head(VAL_ACTION(ARG(c)));
+    REBLEN offset = param - Phase_Params_Head(
+        Cell_Frame_Phase(ARG(combinator))
+    );
     Value* var = Varlist_Slots_Head(s->ctx) + offset;
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
@@ -716,7 +718,7 @@ static bool Combinator_Param_Hook(
 //
 //      return: "Parser function and advanced position in rules"
 //          [~[action? block!]~]
-//      c "Parser combinator taking input, but also other parameters"
+//      combinator "Parser combinator taking input, but also other parameters"
 //          [frame!]
 //      rules [block!]
 //      state "Parse State" [frame!]
@@ -747,9 +749,9 @@ DECLARE_NATIVE(combinatorize)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    Phase* act = VAL_ACTION(ARG(c));
-    Option(const Symbol*) label = Cell_Frame_Label(ARG(c));
-    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(c));
+    Phase* phase = Cell_Frame_Phase(ARG(combinator));
+    Option(const Symbol*) label = Cell_Frame_Label(ARG(combinator));
+    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(combinator));
 
     Value* rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
@@ -765,7 +767,7 @@ DECLARE_NATIVE(combinatorize)
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     ParamList* paramlist = Make_Varlist_For_Action(
-        ARG(c),
+        ARG(combinator),
         TOP_INDEX,
         nullptr,
         nullptr  // leave unspecialized slots with parameter! antiforms
@@ -781,8 +783,8 @@ DECLARE_NATIVE(combinatorize)
     USED(REF(value));
 
     const Key* key_tail;
-    const Key* key = Phase_Keys(&key_tail, act);
-    Param* param = Phase_Params_Head(act);
+    const Key* key = Phase_Keys(&key_tail, phase);
+    Param* param = Phase_Params_Head(phase);
     for (; key != key_tail; ++key, ++param) {
         if (Is_Specialized(param))
             continue;

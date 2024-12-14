@@ -495,11 +495,11 @@ DECLARE_NATIVE(compile_p)
         const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (Is_Frame(item)) {
-                Phase* action = VAL_ACTION(item);
+                Phase* phase = Cell_Frame_Phase(item);
                 if (
-                    not Is_Stub_Details(action)
+                    not Is_Stub_Details(phase)
                     or (
-                        Details_Dispatcher(cast(Details*, action))
+                        Details_Dispatcher(cast(Details*, phase))
                         != &Pending_Native_Dispatcher
                     )
                 ){
@@ -512,7 +512,7 @@ DECLARE_NATIVE(compile_p)
                 //
                 Copy_Cell(PUSH(), item);
 
-                Details* details = cast(Details*, VAL_ACTION(item));
+                Details* details = cast(Details*, phase);
                 Value* source = Details_At(details, IDX_TCC_NATIVE_SOURCE);
                 Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
@@ -658,9 +658,7 @@ DECLARE_NATIVE(compile_p)
     // their function pointers to substitute in for the dispatcher.
     //
     while (TOP_INDEX != STACK_BASE) {
-        Phase* action = VAL_ACTION(TOP);  // stack will hold action live
-        assert(Is_Stub_Details(action));
-        Details* details = cast(Details*, action);
+        Details* details = Ensure_Cell_Frame_Details(TOP);  // stack holds live
         assert(Details_Dispatcher(details) == &Pending_Native_Dispatcher);
 
         Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);

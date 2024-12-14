@@ -297,13 +297,13 @@ static bool Subparse_Throws(
         //
         const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
-            if (VAL_ACTION(label) == VAL_ACTION(LIB(PARSE_REJECT))) {
+            if (Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(PARSE_REJECT))) {
                 CATCH_THROWN(out, LEVEL);
                 *interrupted_out = true;
                 return false;
             }
 
-            if (VAL_ACTION(label) == VAL_ACTION(LIB(PARSE_BREAK))) {
+            if (Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(PARSE_BREAK))) {
                 CATCH_THROWN(out, LEVEL);
                 assert(Is_Integer(out));
                 *interrupted_out = true;
@@ -2396,7 +2396,7 @@ DECLARE_NATIVE(parse3)
 
         const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
-            if (VAL_ACTION(label) == VAL_ACTION(LIB(PARSE_ACCEPT))) {
+            if (Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, LEVEL);
                 return OUT;
             }

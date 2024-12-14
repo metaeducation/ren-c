@@ -126,7 +126,7 @@ DECLARE_NATIVE(n_shot)
 
     Details* details = Make_Dispatch_Details(
         DETAILS_FLAG_PARAMLIST_HAS_RETURN,
-        Phase_Paramlist(VAL_ACTION(LIB(DO_BRANCH))),
+        Phase_Paramlist(Cell_Frame_Phase(LIB(DO_BRANCH))),
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
         IDX_ONESHOT_MAX  // details array capacity
     );

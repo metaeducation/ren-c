@@ -636,11 +636,11 @@ DECLARE_NATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    Phase* action = VAL_ACTION(ARG(frame));
+    Phase* phase = Cell_Frame_Phase(ARG(frame));
 
     const Key* key_tail;
-    const Key* key = Phase_Keys(&key_tail, action);
-    const Value* param = Phase_Params_Head(action);
+    const Key* key = Phase_Keys(&key_tail, phase);
+    const Value* param = Phase_Params_Head(phase);
     for (; key != key_tail; ++param, ++key) {
         if (Get_Parameter_Flag(param, VARIADIC))
             return Init_Logic(OUT, true);

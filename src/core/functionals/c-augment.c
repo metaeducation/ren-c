@@ -92,7 +92,7 @@ DECLARE_NATIVE(augment)
     Option(const Symbol*) label = Cell_Frame_Label(original);
     Option(VarList*) coupling = Cell_Frame_Coupling(original);
 
-    Phase* augmentee = VAL_ACTION(original);
+    Phase* augmentee = Cell_Frame_Phase(original);
 
     Flags flags = MKF_MASK_NONE;  // if original had no return, we don't add
 
@@ -117,7 +117,7 @@ DECLARE_NATIVE(augment)
         flags | MKF_PARAMETER_SEEN
     );
 
-    Phase* prior = VAL_ACTION(ARG(original));
+    Phase* prior = Cell_Frame_Phase(ARG(original));
     Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(original));
 
     ParamList* paramlist = Pop_Paramlist_May_Fail(  // checks dups

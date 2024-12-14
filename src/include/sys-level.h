@@ -259,15 +259,12 @@ INLINE ParamList* Level_Varlist(Level* L) {
 }
 
 
-// The "phase" slot of a FRAME! value is the second node pointer in PAYLOAD().
-// If a frame value is non-archetypal, this slot may be occupied by a String*
-// which represents the cached name of the action from which the frame
-// was created.  This FRAME! value is archetypal, however...which never holds
-// such a cache.  For performance (even in the checked build, where this is
-// called *a lot*) this is a macro and is unchecked.
+// The Level's Phase is tracked by the Rootvar slot of the L->varlist (that
+// slot is cached in L->rootvar for performance).  It is updated as the
+// execution of an action unfolds through each phase.
 //
 #define Level_Phase(L) \
-    VAL_ACTION((L)->rootvar)
+    Cell_Frame_Phase((L)->rootvar)
 
 INLINE Details* Ensure_Level_Details(Level* L) {
     Phase* phase = Level_Phase(L);
@@ -277,7 +274,7 @@ INLINE Details* Ensure_Level_Details(Level* L) {
 
 INLINE void Tweak_Level_Phase(Level* L, Phase* phase) {
     assert(Is_Stub_Details(phase) or Is_Stub_Varlist(phase));
-    Tweak_Cell_Frame_Identity(L->rootvar, phase);
+    Tweak_Cell_Frame_Phase(L->rootvar, phase);
 }
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)

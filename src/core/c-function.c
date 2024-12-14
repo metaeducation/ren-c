@@ -26,7 +26,7 @@
 
 
 //
-//  Make_Action_Words_Array: C
+//  Make_Phase_Words_Array: C
 //
 // Returns array of function words, unbound.
 //
@@ -37,13 +37,13 @@
 //    a refinement.  Try doing this unsorted for now, as a bare minimum for
 //    making that work.
 //
-Source* Make_Action_Words_Array(Phase* act)
+Source* Make_Phase_Words_Array(Phase* phase)
 {
     StackIndex base = TOP_INDEX;
 
     const Key* key_tail;
-    const Key* key = Phase_Keys(&key_tail, act);
-    Param* param = Phase_Params_Head(act);
+    const Key* key = Phase_Keys(&key_tail, phase);
+    Param* param = Phase_Params_Head(phase);
     for (; key != key_tail; ++key, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -524,7 +524,7 @@ ParamList* Pop_Paramlist_May_Fail(
 
     Value* rootvar = Flex_Head(Value, paramlist);
     if (prior)
-        Init_Frame(rootvar, prior, ANONYMOUS, prior_coupling);
+        Init_Frame(rootvar, unwrap prior, ANONYMOUS, prior_coupling);
     else
         Init_Frame_Unchecked(rootvar, paramlist, ANONYMOUS, NONMETHOD);
 
@@ -771,7 +771,7 @@ Details* Make_Dispatch_Details(
 void Get_Maybe_Fake_Action_Body(Sink(Element) out, const Value* action)
 {
     Option(VarList*) coupling = Cell_Frame_Coupling(action);
-    Phase* a = VAL_ACTION(action);
+    Phase* a = Cell_Frame_Phase(action);
 
     if (Is_Stub_Varlist(a)) {  // specialization or similar
         Copy_Meta_Cell(out, action);

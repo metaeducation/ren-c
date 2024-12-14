@@ -117,7 +117,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     );
     Tweak_Cell_Frame_Lens(
         frame1,
-        Phase_Paramlist(VAL_ACTION(Phase_Archetype(varlist)))
+        Phase_Paramlist(Cell_Frame_Phase(Phase_Archetype(varlist)))
     );
 
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
@@ -201,7 +201,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
 
     Value* hijacker_frame = Details_At(details, IDX_HIJACKER_FRAME);
 
-    Phase* hijacker = VAL_ACTION(hijacker_frame);
+    Phase* hijacker = Cell_Frame_Phase(hijacker_frame);
     Option(VarList*) hijacker_coupling = Cell_Frame_Coupling(hijacker_frame);
 
     // If the hijacked function was called directly -or- by an adaptation or
@@ -265,7 +265,7 @@ DECLARE_NATIVE(hijack)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
-    Phase* victim = VAL_ACTION(ARG(victim));
+    Phase* victim = Cell_Frame_Phase(ARG(victim));
 
     bool hijack_void = Is_Void(ARG(hijacker));
 
@@ -274,7 +274,7 @@ DECLARE_NATIVE(hijack)
         Details_Dispatcher(cast(Details*, victim)) == &Unimplemented_Dispatcher;
 
     if (not hijack_void) {
-        Phase* hijacker = VAL_ACTION(ARG(hijacker));
+        Phase* hijacker = Cell_Frame_Phase(ARG(hijacker));
         if (victim == hijacker)
             return FAIL("Cannot HIJACK function with itself");  // right?
     }

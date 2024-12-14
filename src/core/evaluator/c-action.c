@@ -569,7 +569,7 @@ Bounce Action_Executor(Level* L)
                 Lookahead_To_Sync_Infix_Defer_Flag(L->feed) and  // ensure got
                 (Get_Flavor_Flag(
                     VARLIST,
-                    Phase_Paramlist(VAL_ACTION(unwrap L->feed->gotten)),
+                    Phase_Paramlist(Cell_Frame_Phase(unwrap L->feed->gotten)),
                     PARAMLIST_LITERAL_FIRST
                 ))
             ){
@@ -741,7 +741,7 @@ Bounce Action_Executor(Level* L)
         const Param* param = PARAM;
         while (Is_Specialized(param)) {
             Element* archetype = Flex_Head(Element, phase);
-            phase = VAL_ACTION(archetype);
+            phase = Cell_Frame_Phase(archetype);
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
@@ -793,12 +793,7 @@ Bounce Action_Executor(Level* L)
         Mark_Typechecked(stable_ARG);
     }
 
-    Phase* phase = Level_Phase(L);  // ensure Level_Phase() is Details [4]
-    while (Is_Stub_Varlist(phase)) {
-        Element* archetype = Flex_Head(Element, phase);
-        phase = VAL_ACTION(archetype);
-        Tweak_Level_Phase(L, phase);
-    }
+    Tweak_Level_Phase(L, Phase_Details(Level_Phase(L)));  // ensure Details [4]
 
   // Action arguments now gathered, begin dispatching
 
@@ -992,7 +987,7 @@ Bounce Action_Executor(Level* L)
     const Value* label = VAL_THROWN_LABEL(level_);
     if (Is_Frame(label)) {
         if (
-            VAL_ACTION(label) == VAL_ACTION(LIB(REDO))  // REDO [1]
+            Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(REDO))  // REDO [1]
             and Cell_Frame_Coupling(label) == cast(VarList*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
@@ -1041,9 +1036,9 @@ void Push_Action(Level* L, const Cell* frame) {
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
     assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
 
-    Phase* act = VAL_ACTION(frame);
+    Phase* phase = Cell_Frame_Phase(frame);
 
-    Length num_args = Phase_Num_Params(act);  // includes specialized + locals
+    Length num_args = Phase_Num_Params(phase);  // includes specialized, locals
 
     assert(L->varlist == nullptr);
 
@@ -1054,7 +1049,7 @@ void Push_Action(Level* L, const Cell* frame) {
         Alloc_Stub()
     ));
     MISC(RunLevel, s) = L;  // maps varlist back to L
-    BONUS(KeyList, s) = Phase_Keylist(act);
+    BONUS(KeyList, s) = Phase_Keylist(phase);
     node_LINK(NextVirtual, s) = nullptr;
 
     if (not Try_Flex_Data_Alloc(
@@ -1104,7 +1099,7 @@ void Push_Action(Level* L, const Cell* frame) {
 
     assert(Not_Node_Managed(L->varlist));
 
-    ORIGINAL = act;
+    ORIGINAL = phase;
 
     KEY = Phase_Keys(&KEY_TAIL, ORIGINAL);
     PARAM = Phase_Params_Head(ORIGINAL);

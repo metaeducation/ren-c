@@ -241,7 +241,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Nothing(cell));  // YIELD is a local, initialized to nothing
     Init_Action(
         cell,
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
+        Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
         CANON(YIELD),  // relabel (the YIELD in lib is a tripwire)
         Level_Varlist(L)  // extant YIELDs hold original varlist [1]
     );
@@ -414,7 +414,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Value* label = VAL_THROWN_LABEL(L);
     if (
         Is_Frame(label)
-        and VAL_ACTION(label) == VAL_ACTION(LIB(DEFINITIONAL_YIELD))
+        and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD))
         and Cell_Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
@@ -611,7 +611,7 @@ DECLARE_NATIVE(definitional_yield)
     if (Is_Meta_Of_Raised(meta) or REF(final)) {  // not resumable, throw
         Init_Action(
             SPARE,  // use as label for throw
-            Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_YIELD))),
+            Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );

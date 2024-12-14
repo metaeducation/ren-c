@@ -230,7 +230,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         {
         assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
 
-        Details* details = cast(Details*, VAL_ACTION(v));
+        Details* details = Ensure_Cell_Frame_Details(v);
         assert(Is_Node_Marked(details));
         if (Extract_Cell_Frame_Lens_Or_Label(v))
             assert(Is_Node_Marked(Extract_Cell_Frame_Lens_Or_Label(v)));
@@ -436,7 +436,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        Phase* arch_phase = VAL_ACTION(archetype);
+        Phase* arch_phase = Cell_Frame_Phase(archetype);
         assert(Is_Node_Marked(arch_phase));
         assert(Is_Stub_Varlist(arch_phase));
     }

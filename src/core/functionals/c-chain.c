@@ -162,11 +162,11 @@ Bounce Cascader_Executor(Level* const L)
 
     Tweak_Level_Phase(
         sub,
-        Phase_Details(VAL_ACTION(first))  // has varlist already [3]
+        Phase_Details(Cell_Frame_Phase(first))  // has varlist already [3]
     );
     Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
 
-    sub->u.action.original = VAL_ACTION(first);
+    sub->u.action.original = Cell_Frame_Phase(first);
     Set_Action_Level_Label(sub, Cell_Frame_Label(first));
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
@@ -242,9 +242,8 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
 //    checks?  (That inputs match outputs in the pipeline?)  Should it be a
 //    dialect and allow things other than functions?
 //
-// 2. The cascaded function has the same interface as head.
-//
-//    !!! Output (RETURN) should match the *tail* of the pipeline (TBD)
+// 2. !!! While the cascaded function has the same interface as head, its
+//    RETURN should match the *tail* of the pipeline (TBD)
 {
     INCLUDE_PARAMS_OF_CASCADE_P;
 
@@ -263,9 +262,10 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         }
     }
 
+    ParamList* first_paramlist = Phase_Paramlist(Cell_Frame_Phase(first));
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        Phase_Paramlist(VAL_ACTION(first)),  // interface of first action [2]
+        first_paramlist,  // cascade has same interface as its first action [2]
         &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity
     );

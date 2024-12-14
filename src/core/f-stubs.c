@@ -322,7 +322,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* initial) {
     if (Is_Stub_Varlist(initial)) {
         Phase* phase = initial;
         do {
-            Phase* next_phase = VAL_ACTION(Phase_Archetype(phase));
+            Phase* next_phase = Cell_Frame_Phase(Phase_Archetype(phase));
             if (next_phase == phase) {
                 phase = nullptr;
                 break;

@@ -308,12 +308,11 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_FRAME:
         //
         // Because function equality is by identity only and they are
-        // immutable once created, it is legal to put them in hashes.  The
-        // VAL_ACTION() is the paramlist Array, guaranteed unique per function
+        // immutable once created, it is legal to put them in hashes.
         //
         if (Is_Frame_Exemplar(cell))
             goto hash_object;
-        hash = i_cast(uintptr_t, VAL_ACTION(cell)) >> 4;
+        hash = i_cast(uintptr_t, Cell_Frame_Phase(cell)) >> 4;
         break;
 
       hash_object:

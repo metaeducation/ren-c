@@ -79,7 +79,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
-    Tweak_Level_Phase(L, VAL_ACTION(reorderee));
+    Tweak_Level_Phase(L, Cell_Frame_Phase(reorderee));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
@@ -101,7 +101,7 @@ DECLARE_NATIVE(reorder)
 {
     INCLUDE_PARAMS_OF_REORDER;
 
-    Phase* reorderee = VAL_ACTION(ARG(original));
+    Phase* reorderee = Cell_Frame_Phase(ARG(original));
     Option(const Symbol*) label  = Cell_Frame_Label(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering

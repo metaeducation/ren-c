@@ -128,7 +128,7 @@ Bounce Func_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
+        Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)),
         CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
@@ -349,40 +349,6 @@ DECLARE_NATIVE(function)
 
 
 //
-//  /endable?: native [
-//
-//  "Tell whether a parameter is registered as <end> or not"
-//
-//      return: [logic?]
-//      parameter [word!]
-//  ]
-//
-DECLARE_NATIVE(endable_q)
-//
-// !!! The general mechanics by which parameter properties are extracted have
-// not been designed.  This extraction feature was added to support making
-// semi-"variadic" combinators in UPARSE, but better is needed.
-{
-    INCLUDE_PARAMS_OF_ENDABLE_Q;
-
-    Value* v = ARG(parameter);
-
-    if (not Try_Get_Binding_Of(SPARE, v))
-        return FAIL(PARAM(parameter));
-
-    if (not Is_Frame(SPARE))
-        return FAIL("ENDABLE? requires a WORD! bound into a FRAME! at present");
-
-    Phase* phase = VAL_ACTION(SPARE);
-
-    Param* param = Phase_Param(phase, VAL_WORD_INDEX(v));
-    bool endable = Get_Parameter_Flag(param, ENDABLE);
-
-    return Init_Logic(OUT, endable);
-}
-
-
-//
 //  Init_Thrown_Unwind_Value: C
 //
 // This routine generates a thrown signal that can be used to indicate a
@@ -415,7 +381,7 @@ Bounce Init_Thrown_Unwind_Value(
             if (Is_Level_Fulfilling(L))
                 continue; // not ready to exit
 
-            if (VAL_ACTION(seek) == L->u.action.original) {
+            if (Cell_Frame_Phase(seek) == L->u.action.original) {
                 g_ts.unwind_level = L;
                 break;
             }

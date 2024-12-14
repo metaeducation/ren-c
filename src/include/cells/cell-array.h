@@ -151,14 +151,14 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 
 INLINE Element* Init_Relative_Block_At(
     Init(Element) out,
-    Phase* action,  // action to which array has relative bindings
+    Details* details,  // action to which array has relative bindings
     Array* array,
     REBLEN index
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_BLOCK);
     Tweak_Cell_Node1(out, array);
     VAL_INDEX_RAW(out) = index;
-    BINDING(out) = action;
+    BINDING(out) = details;
     return out;
 }
 

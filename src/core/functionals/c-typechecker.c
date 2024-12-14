@@ -54,7 +54,7 @@ Bounce Decider_Intrinsic_Dispatcher(Level* const L)
         return unwrap bounce;
 
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Details* details = cast(Details*, VAL_ACTION(SCRATCH));
+        Details* details = Ensure_Cell_Frame_Details(SCRATCH);
         Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
         Decider* decider = g_instance_deciders[VAL_UINT8(index)];
         return LOGIC(decider(v));
@@ -349,17 +349,13 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         switch (kind) {
           run_action: {
           #if (! DEBUG_DISABLE_INTRINSICS)
-            Phase* action = VAL_ACTION(test);
+            Details* details = maybe Try_Cell_Frame_Details(test);
             if (
-                Is_Stub_Details(action)
-                and Get_Details_Flag(
-                    cast(Details*, action), CAN_DISPATCH_AS_INTRINSIC
-                )
+                details
+                and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
                 and not SPORADICALLY(100)
             ){
-                Dispatcher* dispatcher = Details_Dispatcher(
-                    cast(Details*, action)
-                );
+                Dispatcher* dispatcher = Details_Dispatcher(details);
 
                 Copy_Cell(SCRATCH, test);  // intrinsic may need action
 
@@ -524,7 +520,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 //
 // 1. SPARE and SCRATCH are GC-safe cells in a Level that are usually free
 //    for whatever purposes an Executor wants.  But when a Level is being
-//    multiplexed with an intrinsic (see LEVEL_FLAG_CAN_DISPATCH_AS_INTRINSIC)
+//    multiplexed with intrinsics (see DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC)
 //    it has to give up those cells for the duration of that call.  Type
 //    checking uses intrinsics a vast majority of the time, so this function
 //    ensures you don't rely on SCRATCH or SPARE not being modified (it

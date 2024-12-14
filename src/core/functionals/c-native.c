@@ -285,7 +285,7 @@ Source* Startup_Natives(const Element* boot_natives)
         UNBOUND  // coupling
     );
 
-    assert(VAL_ACTION(LIB(NATIVE)) == the_native_details);
+    assert(Cell_Frame_Phase(LIB(NATIVE)) == the_native_details);
 
     DECLARE_ATOM (skipped);
     Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
@@ -311,12 +311,12 @@ Source* Startup_Natives(const Element* boot_natives)
     if (not Is_Action(LIB(PARSE_REJECT)))
         panic (LIB(PARSE_REJECT));
 
-    Count num_append_args = Phase_Num_Params(VAL_ACTION(LIB(APPEND)));
-    assert(num_append_args == Phase_Num_Params(VAL_ACTION(LIB(INSERT))));
-    assert(num_append_args == Phase_Num_Params(VAL_ACTION(LIB(CHANGE))));
+    Count num_append_args = Phase_Num_Params(Cell_Frame_Phase(LIB(APPEND)));
+    assert(num_append_args == Phase_Num_Params(Cell_Frame_Phase(LIB(INSERT))));
+    assert(num_append_args == Phase_Num_Params(Cell_Frame_Phase(LIB(CHANGE))));
 
-    Count num_find_args = Phase_Num_Params(VAL_ACTION(LIB(FIND)));
-    assert(num_find_args == Phase_Num_Params(VAL_ACTION(LIB(SELECT))));
+    Count num_find_args = Phase_Num_Params(Cell_Frame_Phase(LIB(FIND)));
+    assert(num_find_args == Phase_Num_Params(Cell_Frame_Phase(LIB(SELECT))));
   #endif
 
     return catalog;

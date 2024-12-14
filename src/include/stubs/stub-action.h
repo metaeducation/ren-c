@@ -148,7 +148,7 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 }
 
 
-#define Tweak_Cell_Frame_Identity  Tweak_Cell_Node1
+#define Tweak_Cell_Frame_Phase  Tweak_Cell_Node1
 
 // For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.
 //

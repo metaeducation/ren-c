@@ -938,12 +938,12 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     USE_LEVEL_SHORTHANDS (L);
 
-    Phase* action;
+    Details* details;
     Value* arg;
     DECLARE_ATOM (label);
 
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        action = VAL_ACTION(SCRATCH);
+        details = Ensure_Cell_Frame_Details(SCRATCH);
         arg = stable_SPARE;
         Option(const Symbol*) symbol = Cell_Frame_Label(SCRATCH);
         if (symbol)
@@ -952,18 +952,18 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
             Init_Word(label, CANON(ANONYMOUS));
     }
     else {
-        action = Level_Phase(L);
+        details = Ensure_Level_Details(L);
         arg = Level_Arg(L, 2);
         if (not Try_Get_Action_Level_Label(label, L))
             Init_Word(label, CANON(ANONYMOUS));
     }
 
-    Param* param = Phase_Param(action, 2);
+    Param* param = Phase_Param(details, 2);
     assert(Is_Hole(c_cast(Value*, param)));
     UNUSED(param);
 
     DECLARE_ATOM (param_name);
-    Init_Word(param_name, Key_Symbol(Phase_Key(action, 2)));
+    Init_Word(param_name, Key_Symbol(Phase_Key(details, 2)));
 
     return Error_Invalid_Arg_Raw(label, param_name, arg);
 }

@@ -150,7 +150,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             ParamList* lens = maybe Cell_Frame_Lens(v);
             if (not lens) {  // not running, inputs visible [3]
                 e->visibility = VAR_VISIBILITY_INPUTS;
-                lens = Phase_Paramlist(VAL_ACTION(v));
+                lens = Phase_Paramlist(Cell_Frame_Phase(v));
             }
 
             e->param = Phase_Params_Head(lens) - 1;
@@ -517,10 +517,7 @@ DECLARE_NATIVE(adjunct_of)
 
     Option(VarList*) meta;
     if (Is_Frame(v)) {
-        if (not Is_Frame_Details(v))
-            return nullptr;
-
-        meta = Phase_Adjunct(VAL_ACTION(v));
+        meta = Phase_Adjunct(Cell_Frame_Phase(v));
     }
     else {
         assert(Any_Context(v));
@@ -567,8 +564,7 @@ DECLARE_NATIVE(set_adjunct)
     Value* v = ARG(value);
 
     if (Is_Frame(v)) {
-        if (Is_Frame_Details(v))
-            MISC(DetailsAdjunct, Phase_Details(VAL_ACTION(v))) = ctx;
+        Tweak_Phase_Adjunct(Cell_Frame_Phase(v), ctx);
     }
     else
         MISC(VarlistAdjunct, Varlist_Array(Cell_Varlist(v))) = ctx;
@@ -1288,7 +1284,7 @@ DECLARE_GENERICS(Frame)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));
 
-        Details* details = cast(Details*, VAL_ACTION(frame));
+        Details* details = Ensure_Cell_Frame_Details(frame);
         assert(Is_Stub_Details(details));
 
         Value* property = ARG(property);
@@ -1309,7 +1305,7 @@ DECLARE_GENERICS(Frame)
             return Init_Word(OUT, unwrap label); }
 
           case SYM_WORDS:
-            return Init_Block(OUT, Make_Action_Words_Array(details));
+            return Init_Block(OUT, Make_Phase_Words_Array(details));
 
           case SYM_BODY:
             Get_Maybe_Fake_Action_Body(OUT, frame);
@@ -1328,7 +1324,7 @@ DECLARE_GENERICS(Frame)
             return OUT; }
 
           case SYM_EXEMPLAR:
-            return COPY(Phase_Archetype(VAL_ACTION(frame)));
+            return COPY(Phase_Archetype(Cell_Frame_Phase(frame)));
 
           case SYM_TYPES:
             return Copy_Cell(OUT, Varlist_Archetype(Phase_Paramlist(details)));
@@ -1391,48 +1387,29 @@ DECLARE_GENERICS(Frame)
 }
 
 
-// Temporarily unused... COUPLING is being worked on and breaking CATCH/QUIT
-// in comparisons, when actions are used for identity.
-//
-/*static bool Same_Action(const Cell* a, const Cell* b)
-{
-    assert(Cell_Heart(a) == REB_FRAME and Cell_Heart(b) == REB_FRAME);
-    if (not Is_Frame_Details(a) or not Is_Frame_Details(b))
-        return false;
-
-    if (VAL_ACTION_KEYLIST(a) == VAL_ACTION_KEYLIST(b)) {
-        //
-        // All actions that have the same paramlist are not necessarily the
-        // "same action".  For instance, every RETURN shares a common
-        // paramlist, but the binding is different in the cell instances
-        // in order to know where to "exit from".
-        //
-        return Cell_Frame_Coupling(a) == Cell_Frame_Coupling(b);
-    }
-
-    return false;
-}*/
-
-
 //
 //  CT_Frame: C
+//
+// !!! What are the semantics of comparison in frames?
 //
 REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
-    if (Is_Frame_Details(a)) {
-        if (not Is_Frame_Details(b))
-            return -1;
-        /*if (Same_Action(a, b))
-            return 0; */  // REVIEW: Coupling, interferes with CATCH/QUIT
-        if (VAL_ACTION(a) == VAL_ACTION(b))
-            return 0;
-        return a > b ? 1 : -1;  // !!! Review arbitrary ordering
-    }
+    Phase* a_phase = Cell_Frame_Phase(a);
+    Phase* b_phase = Cell_Frame_Phase(b);
 
-    if (not Is_Frame_Exemplar(b))
-        return 1;
+    Details* a_details = Phase_Details(a_phase);
+    Details* b_details = Phase_Details(b_phase);
+
+    if (a_details != b_details)
+        return a_details > b_details ? 1 : -1;
+
+    VarList* a_coupling = maybe Cell_Frame_Coupling(a);
+    VarList* b_coupling = maybe Cell_Frame_Coupling(b);
+
+    if (a_coupling != b_coupling)
+        return a_coupling > b_coupling ? 1 : -1;
 
     return CT_Context(a, b, strict);
 }
@@ -1458,7 +1435,7 @@ void MF_Frame(Molder* mo, const Cell* v, bool form) {
         Append_Codepoint(mo->string, ' ');
     }
 
-    Array* parameters = Make_Action_Words_Array(VAL_ACTION(v));
+    Array* parameters = Make_Phase_Words_Array(Cell_Frame_Phase(v));
     Mold_Array_At(mo, parameters, 0, "[]");
     Free_Unmanaged_Flex(parameters);
 

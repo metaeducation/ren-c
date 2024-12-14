@@ -135,7 +135,7 @@ DECLARE_NATIVE(reduce)
     ){
         const Param* param = First_Unspecialized_Param(
             nullptr,
-            VAL_ACTION(predicate)
+            Cell_Frame_Phase(predicate)
         );
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
             goto next_reduce_step;

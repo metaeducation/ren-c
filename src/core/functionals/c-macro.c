@@ -118,7 +118,7 @@ Bounce Macro_Dispatcher(Level* const L)
     Value* cell = Level_Arg(L, 1);
     Init_Action(
         cell,
-        Phase_Details(VAL_ACTION(LIB(DEFINITIONAL_RETURN))),
+        Ensure_Cell_Frame_Details(LIB(DEFINITIONAL_RETURN)),
         CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
         cast(VarList*, L->varlist)  // so RETURN knows where to return from
     );
@@ -134,7 +134,7 @@ Bounce Macro_Dispatcher(Level* const L)
         const Value* label = VAL_THROWN_LABEL(L);
         if (
             Is_Frame(label)  // catch UNWIND here [2]
-            and VAL_ACTION(label) == VAL_ACTION(LIB(UNWIND))
+            and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(UNWIND))
             and g_ts.unwind_level == L
         ){
             CATCH_THROWN(OUT, L);

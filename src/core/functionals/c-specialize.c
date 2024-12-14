@@ -65,13 +65,13 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 ){
     StackIndex highest_stackindex = TOP_INDEX;
 
-    Phase* act = VAL_ACTION(action);
+    Phase* phase = Cell_Frame_Phase(action);
 
-    REBLEN num_slots = Phase_Num_Params(act) + 1;  // +1 is for Varlist_Archetype()
+    REBLEN num_slots = Phase_Num_Params(phase) + 1;  // +1 for rootvar
     Array* a = Make_Array_Core(FLEX_MASK_VARLIST, num_slots);
     Set_Flex_Len(a, num_slots);
 
-    Tweak_Keylist_Of_Varlist_Shared(a, Phase_Keylist(act));
+    Tweak_Keylist_Of_Varlist_Shared(a, Phase_Keylist(phase));
 
     assert(Is_Action(action) or Is_Frame(action));  // tolerate either?
     Value* rootvar = Flex_Head_Dynamic(Element, a);
@@ -80,8 +80,8 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     Protect_Rootvar_If_Debug(rootvar);
 
     const Key* tail;
-    const Key* key = Phase_Keys(&tail, act);
-    const Param* param = Phase_Params_Head(act);
+    const Key* key = Phase_Keys(&tail, phase);
+    const Param* param = Phase_Params_Head(phase);
 
     Value* arg = Flex_At(Value, a, 1);
 
@@ -129,7 +129,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
             assert(BINDING(ordered) == nullptr);  // we bind only one
             Tweak_Cell_Word_Index(ordered, index);
-            BINDING(ordered) = act;
+            BINDING(ordered) = phase;  // !!! Review
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument
                 goto continue_unspecialized;
@@ -213,7 +213,7 @@ bool Specialize_Action_Throws(
     if (def)
         Construct_Binder_Core(binder);  // conditional, must use _Core()
 
-    Phase* unspecialized = VAL_ACTION(specializee);
+    Phase* unspecialized = Cell_Frame_Phase(specializee);
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
@@ -426,11 +426,11 @@ DECLARE_NATIVE(specialize)
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //
-const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
+const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Phase* phase)
 {
     const Key* key_tail;
-    const Key* key = Phase_Keys(&key_tail, act);
-    Param* param = Phase_Params_Head(act);
+    const Key* key = Phase_Keys(&key_tail, phase);
+    Param* param = Phase_Params_Head(phase);
     for (; key != key_tail; ++key, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -450,13 +450,13 @@ const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 // !!! This is very inefficient, and the parameter class should be cached
 // in the frame somehow.
 //
-Option(ParamClass) Get_First_Param_Literal_Class(Phase* action) {
-    ParamList* paramlist = Phase_Paramlist(action);
+Option(ParamClass) Get_First_Param_Literal_Class(Phase* phase) {
+    ParamList* paramlist = Phase_Paramlist(phase);
     if (Not_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
         return PARAMCLASS_0;
 
     ParamClass pclass = Cell_ParamClass(
-        First_Unspecialized_Param(nullptr, action)
+        First_Unspecialized_Param(nullptr, phase)
     );
     assert(  // !!! said it quoted its first parameter!
         pclass == PARAMCLASS_JUST
