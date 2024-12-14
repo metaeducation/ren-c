@@ -70,9 +70,17 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Force_Level_Varlist_Managed(L);
 
+    DECLARE_ELEMENT (frame);
+    Init_Frame(
+        frame,
+        cast(ParamList*, Varlist_Of_Level_Force_Managed(L)),
+        Level_Label(L),
+        Level_Coupling(L)
+    );
+
     Context* parent = Cell_List_Binding(block);
-    Use* use = Make_Use_Core(  // have to USE here
-        Varlist_Archetype(Varlist_Of_Level_Force_Managed(L)),
+    Use* use = Make_Use_Core(  // have to USE here [1]
+        frame,
         parent,
         CELL_MASK_ERASED_0
     );

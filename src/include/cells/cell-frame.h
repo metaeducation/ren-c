@@ -91,6 +91,7 @@ INLINE Phase* VAL_ACTION(const Cell* v) {
 
 INLINE void Tweak_Cell_Frame_Phase(Cell* v, Phase* phase) {
     assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
+    assert(Is_Stub_Varlist(phase) or Is_Stub_Details(phase));
     Tweak_Cell_Frame_Phase_Or_Label(v, phase);
 }
 
@@ -99,17 +100,6 @@ INLINE Phase* Cell_Frame_Phase(const Cell* c) {
     Flex* f = Extract_Cell_Frame_Phase_Or_Label(c);
     assert(Is_Stub_Varlist(f) or Is_Stub_Details(f));
     return cast(Phase*, f);
-}
-
-INLINE Phase* Cell_Frame_Initial_Phase(const Cell* c) {
-    assert(Cell_Heart(c) == REB_FRAME);
-    Flex* f = VAL_ACTION(c);
-    if (Is_Stub_Details(f))
-        return INODE(Exemplar, f);
-    Element* archetype = Flex_Head(Element, f);
-    Phase* phase = Cell_Frame_Phase(archetype);
-    assert(phase != nullptr);
-    return phase;
 }
 
 INLINE bool Is_Frame_Phased(const Cell* v) {
@@ -168,21 +158,34 @@ INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
 //    prevention by stopping Init_Frame() calls with plain VarList.
 //
 
+INLINE void Init_Frame_Unchecked_Untracked(
+    Init(Element) out,  // may be rootvar
+    Flex* identity,  // may not be completed or managed if out is rootvar
+    Option(const Symbol*) label,
+    Option(VarList*) coupling
+){
+    Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
+    Tweak_Cell_Frame_Identity(out, identity);
+    Tweak_Cell_Frame_Phase_Or_Label(out, label);
+    Tweak_Cell_Frame_Coupling(out, coupling);
+}
+
+#define Init_Frame_Unchecked(out,identity,label,coupling) \
+    TRACK(Init_Frame_Unchecked_Untracked( \
+        (out), (identity), (label), (coupling)))
+
 INLINE Element* Init_Frame_Untracked(
     Init(Element) out,
     Phase* identity,
     Option(const Symbol*) label,
     Option(VarList*) coupling
 ){
+    Force_Flex_Managed(identity);
+    Init_Frame_Unchecked_Untracked(out, identity, label, coupling);
+
   #if RUNTIME_CHECKS
     Extra_Init_Frame_Checks_Debug(identity);
   #endif
-    Force_Flex_Managed(identity);
-
-    Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
-    Tweak_Cell_Frame_Identity(out, identity);
-    Tweak_Cell_Frame_Phase_Or_Label(out, label);
-    Tweak_Cell_Frame_Coupling(out, coupling);
 
     return out;
 }

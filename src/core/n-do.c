@@ -528,7 +528,7 @@ DECLARE_NATIVE(eval_free)
     MISC(RunLevel, varlist) = L;
 
     Phase* phase = Level_Phase(L);
-    assert(phase == Paramlist_Archetype_Phase(cast(ParamList*, varlist)));
+    assert(phase == VAL_ACTION(Phase_Archetype(cast(ParamList*, varlist))));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(frame));
 
     L->u.action.original = phase;  // VAL_ACTION() is gone...

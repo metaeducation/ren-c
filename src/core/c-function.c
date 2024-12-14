@@ -523,7 +523,10 @@ ParamList* Pop_Paramlist_May_Fail(
     const Symbol* duplicate = nullptr;
 
     Value* rootvar = Flex_Head(Value, paramlist);
-    Tweak_Frame_Varlist_Rootvar(paramlist, prior, prior_coupling);
+    if (prior)
+        Init_Frame(rootvar, prior, ANONYMOUS, prior_coupling);
+    else
+        Init_Frame_Unchecked(rootvar, paramlist, ANONYMOUS, NONMETHOD);
 
     Value* param = 1 + rootvar;
     Key* key = Flex_Head(Key, keylist);
@@ -708,22 +711,14 @@ Details* Make_Dispatch_Details(
     );
     Set_Flex_Len(details, details_capacity);
 
-    Cell* archetype = Array_Head(details);
-    Reset_Cell_Header_Noquote(
-        TRACK(archetype),
-        CELL_MASK_FRAME
-            | CELL_FLAG_PROTECTED  // archetype cells should not be mutated
-    );
-    Tweak_Cell_Frame_Identity(archetype, details);
-    Tweak_Cell_Frame_Coupling(archetype, NONMETHOD);
-    Tweak_Cell_Frame_Phase_Or_Label(archetype, ANONYMOUS);
+    Cell* rootvar = Array_Head(details);
+    Init_Frame(rootvar, paramlist, ANONYMOUS, NONMETHOD);
+    Protect_Rootvar_If_Debug(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
     Tweak_Details_Dispatcher(cast(Details*, details), dispatcher);
     MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
-
-    INODE(Exemplar, details) = paramlist;
 
     Phase* act = cast(Phase*, details);  // now it's a legitimate Action
 

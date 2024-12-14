@@ -291,8 +291,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
 
         const Value* archetype = Varlist_Archetype(context);
-        assert(CTX_TYPE(context) == heart);
-        assert(Cell_Varlist(archetype) == context);
+        possibly(Cell_Varlist(archetype) == context);  // no longer a rule
+        assert(CTX_TYPE(context) == heart);  // but this still is
 
         // Note: for VAL_CONTEXT_FRAME, the FRM_CALL is either on the stack
         // (in which case it's already taken care of for marking) or it
@@ -436,12 +436,9 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        Details* arch_details = cast(Details*, VAL_ACTION(archetype));
-        assert(Is_Node_Marked(arch_details));
-        assert(Is_Stub_Details(arch_details));
-
-        ParamList* arch_paramlist = Phase_Paramlist(arch_details);
-        assert(Is_Stub_Varlist(arch_paramlist));
+        Phase* arch_phase = VAL_ACTION(archetype);
+        assert(Is_Node_Marked(arch_phase));
+        assert(Is_Stub_Varlist(arch_phase));
     }
     else if (Is_Stub_Varlist(a)) {
         const Value* archetype = Varlist_Archetype(

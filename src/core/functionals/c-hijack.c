@@ -107,8 +107,18 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 
     StackIndex base = TOP_INDEX;  // we push refinements as we find them
 
+    ParamList* varlist = Varlist_Of_Level_Force_Managed(L1);
+    DECLARE_ELEMENT (frame1);
+    Init_Frame(
+        frame1,
+        varlist,
+        Level_Label(L1),
+        Level_Coupling(L1)
+    );
+    Tweak_Cell_Frame_Phase(frame1, VAL_ACTION(Phase_Archetype(varlist)));
+
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
-    Init_Evars(&e, Varlist_Archetype(Varlist_Of_Level_Force_Managed(L1)));
+    Init_Evars(&e, frame1);
 
     while (Try_Advance_Evars(&e)) {
         if (Is_Specialized(e.param))  // specialized or local
@@ -249,12 +259,6 @@ DECLARE_NATIVE(hijack)
 //    both to the hijacker and the original function being returned under
 //    a new identity.  It's not totally understood what ADJUNCT is or is not
 //    for, so this just assigns a shared copy.
-//
-// 4. Because of action/frame duality, you can have an action identified by
-//    a list of values in a VarList.  But that VarList is also the interface
-//    for that function in [1].  Hence swapping the identity of the proxy
-//    with the victim will mess up the INODE(Exemplar) passed in.  We have
-//    to fix it up after the swap.
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
@@ -290,25 +294,7 @@ DECLARE_NATIVE(hijack)
 
     Tweak_Phase_Adjunct(proxy, adjunct);  // not a copy, shared reference [3]
 
-    bool must_adjust_exemplar;
-    if (Is_Stub_Varlist(victim)) {
-        assert(Phase_Paramlist(victim) == victim);  // must be fixed up [4]
-        must_adjust_exemplar = true;
-    }
-    else
-        must_adjust_exemplar = false;
-
     Swap_Flex_Content(victim, proxy);  // after swap, victim is hijacker
-
-    if (must_adjust_exemplar) {  // see [4]
-        assert(Is_Stub_Varlist(proxy));
-        INODE(Exemplar, victim) = proxy;
-    }
-
-    Element* proxy_archetype = Phase_Archetype(proxy);
-    Element* victim_archetype = Phase_Archetype(victim);
-    Tweak_Cell_Frame_Identity(proxy_archetype, proxy);
-    Tweak_Cell_Frame_Identity(victim_archetype, victim);
 
     if (victim_unimplemented)
         return NOTHING;

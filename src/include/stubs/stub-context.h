@@ -96,6 +96,22 @@ INLINE Option(VarList*) CTX_ADJUNCT(VarList* c) {
 // For the moment that is done with the CTX_ADJUNCT() field instead.
 //
 
+#if DEBUG_CELL_READ_WRITE
+    INLINE void Protect_Rootvar_If_Debug(Cell* rootvar) {
+        assert(Not_Cell_Flag(rootvar, PROTECTED));
+        Set_Cell_Flag(rootvar, PROTECTED);
+    }
+
+    INLINE void Unprotect_Rootvar_If_Debug(Cell* rootvar) {
+        assert(Get_Cell_Flag(rootvar, PROTECTED));
+        Clear_Cell_Flag(rootvar, PROTECTED);
+    }
+#else
+    #define Protect_Rootvar_If_Debug(rootvar)    NOOP
+    #define Unprotect_Rootvar_If_Debug(rootvar)  NOOP
+#endif
+
+
 INLINE const Element* Varlist_Archetype(VarList* c) {  // read-only form
     return Flex_Head_Dynamic(Element, c);
 }
@@ -106,12 +122,6 @@ INLINE Heart CTX_TYPE(Context* c) {
 
 INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
   { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutability
-
-INLINE Details* Paramlist_Archetype_Phase(ParamList* paramlist) {
-    const Value* archetype = Varlist_Archetype(paramlist);
-    assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
-    return cast(Details*, Extract_Cell_Frame_Phase_Or_Label(archetype));
-}
 
 
 //=//// FRAME COUPLING ////////////////////////////////////////////////////=//
@@ -171,24 +181,6 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 
 #define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \
     Tweak_Non_Frame_Varlist_Rootvar_Untracked((heart), (varlist))
-
-INLINE void Tweak_Frame_Varlist_Rootvar_Untracked(
-    Array* varlist,
-    Option(Phase*) phase,
-    Option(VarList*) coupling
-){
-    Cell* rootvar = Array_Head(varlist);
-    Reset_Cell_Header_Noquote(rootvar, CELL_MASK_FRAME);
-    Tweak_Cell_Context_Varlist(rootvar, varlist);
-    Tweak_Cell_Frame_Coupling(rootvar, coupling);
-    Tweak_Cell_Frame_Phase_Or_Label(rootvar, maybe phase);
-  #if RUNTIME_CHECKS
-    rootvar->header.bits |= CELL_FLAG_PROTECTED;
-  #endif
-}
-
-#define Tweak_Frame_Varlist_Rootvar(varlist,phase,target) \
-    Tweak_Frame_Varlist_Rootvar_Untracked((varlist), (phase), (target))
 
 
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
@@ -348,13 +340,10 @@ INLINE Value* Varlist_Slots(Sink(const Value*) tail, VarList* v) {
 }
 
 
-//=//// FRAME! VarList* <-> Level* STRUCTURE //////////////////////////=//
+//=//// FRAME! VarList* <-> Level* STRUCTURE //////////////////////////////=//
 //
-// For a FRAME! context, the keylist is redundant with the paramlist of the
-// Paramlist_Archetype_Phase() that the frame is for.  That is taken advantage of when
-// a frame is executing in order to use the LINK() keysource to point at the
-// running Level* structure for that stack level.  This provides a cheap
-// way to navigate from a VarList* to the Level* that's running it.
+// The MISC() field of frames which can be tied to levels can be a Level*,
+// instead of an "adjunct" object.
 //
 
 INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {

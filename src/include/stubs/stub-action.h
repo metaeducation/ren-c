@@ -150,19 +150,16 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 
 #define Tweak_Cell_Frame_Identity  Tweak_Cell_Node1
 
-INLINE Details* Paramlist_Archetype_Phase(ParamList* paramlist);
-
-INLINE Details* Phase_Details(Phase* p) {
-    if (Is_Stub_Details(p))
-        return cast(Details*, p);  // don't want hijacked archetype details
-    return Paramlist_Archetype_Phase(x_cast(ParamList*, p));  // always Phase_Details()
-}
-
-
 // For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.
 //
 #define Phase_Archetype(phase) \
     Flex_Head_Dynamic(Element, ensure(Phase*, (phase)))
+
+INLINE Details* Phase_Details(Phase* p) {
+    while (not Is_Stub_Details(p))
+        p = cast(Phase*, Cell_Node1(Phase_Archetype(p)));
+    return cast(Details*, p);
+}
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
@@ -179,10 +176,6 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 // before the place where the exemplar is to be found.
 //
 
-#define INODE_Exemplar_TYPE     ParamList*
-#define INODE_Exemplar_CAST     CTX
-#define HAS_INODE_Exemplar      FLAVOR_DETAILS
-
 INLINE void Tweak_Cell_Frame_Phase_Or_Label(Cell* c, Option(const Flex*) f)
   { Tweak_Cell_Node2(c, maybe f); }
 
@@ -191,7 +184,7 @@ INLINE void Tweak_Cell_Frame_Phase_Or_Label(Cell* c, Option(const Flex*) f)
 
 INLINE ParamList* Phase_Paramlist(Phase* p) {
     if (Is_Stub_Details(p))
-        return INODE(Exemplar, p);
+        return x_cast(ParamList*, Cell_Node1(Phase_Archetype(p)));
     return x_cast(ParamList*, p);
 }
 

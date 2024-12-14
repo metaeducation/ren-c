@@ -331,9 +331,14 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         if (CTX_TYPE(c) == REB_FRAME) {
             Level* L = Level_Of_Varlist_If_Running(c);
             if (L == nullptr)
-                Copy_Cell(out, Varlist_Archetype(c));
+                Init_Frame(out, cast(ParamList*, c), ANONYMOUS, NONMETHOD);
             else
-                Copy_Cell(out, L->rootvar);  // rootvar has phase, binding
+                Init_Frame(
+                    out,
+                    Varlist_Of_Level_Force_Managed(L),
+                    Level_Label(L),
+                    Level_Coupling(L)
+                );
         }
         else
             Copy_Cell(out, Varlist_Archetype(c));

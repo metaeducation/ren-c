@@ -85,7 +85,7 @@ enum {
 // 2. We're passing the built context to the `outer` function as a FRAME!,
 //    which that function can EVAL (or not).  But when the EVAL runs, we don't
 //    want it to run the encloser again--that would be an infinite loop.
-//    Update Paramlist_Archetype_Phase() to point to the `inner` that was enclosed.
+//    Update rootvar to point to the `inner` that was enclosed.
 //
 // 3. EVAL does not allow you to invoke a FRAME! that is currently running.
 //    we have to clear the FRAME_HAS_BEEN_INVOKED_FLAG to allow EVAL INNER.
@@ -99,7 +99,7 @@ enum {
 //    "phaseless".  The property of phaselessness allows detection of when
 //    the frame should heed FRAME_HAS_BEEN_INVOKED (phased frames internal
 //    to the implementation must have full visibility of locals/etc.)  Hence
-//    we make a separate FRAME! in SPARE and don't use the ROOTVAR directly.
+//    we make a FRAME! in SPARE.
 //
 // 6. At one time, the encloser would leave its level on the frame with a
 //    garbage varlist, that had to be handled specially when Drop_Action()
@@ -120,9 +120,9 @@ Bounce Encloser_Dispatcher(Level* const L)
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_ENCLOSER_MAX);
 
-    Value* inner = Details_At(details, IDX_ENCLOSER_INNER);
+    Element* inner = cast(Element*, Details_At(details, IDX_ENCLOSER_INNER));
     assert(Is_Frame(inner));  // same args as f
-    Value* outer = Details_At(details, IDX_ENCLOSER_OUTER);
+    Element* outer = cast(Element*, Details_At(details, IDX_ENCLOSER_OUTER));
     assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 
     VarList* varlist = Varlist_Of_Level_Maybe_Unmanaged(L);
@@ -135,8 +135,9 @@ Bounce Encloser_Dispatcher(Level* const L)
     Set_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
-    Tweak_Cell_Frame_Phase(rootvar, VAL_ACTION(inner));
-    Tweak_Cell_Frame_Coupling(rootvar, Cell_Frame_Coupling(inner));
+    Unprotect_Rootvar_If_Debug(rootvar);
+    Copy_Cell(rootvar, inner);
+    Protect_Rootvar_If_Debug(rootvar);
 
     assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
@@ -144,8 +145,12 @@ Bounce Encloser_Dispatcher(Level* const L)
     possibly(Is_Node_Managed(varlist));
     Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
-    Element* rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]
-    Tweak_Cell_Frame_Phase_Or_Label(SPARE, Cell_Frame_Label(inner));
+    Element* arg = Init_Frame(  // this is the FRAME! passed as an arg [5]
+        SPARE,
+        cast(ParamList*, varlist),
+        Cell_Frame_Label(inner),
+        NONMETHOD
+    );
 
     assert(Is_Level_Dispatching(L));
     Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]
@@ -156,7 +161,7 @@ Bounce Encloser_Dispatcher(Level* const L)
   #if DEBUG_LEVEL_LABELS
     L->label_utf8 = nullptr;  // Begin_Action() requires
   #endif
-    Prep_Action_Level(L, outer, rootcopy);
+    Prep_Action_Level(L, outer, arg);
     if (original_label) {
         Corrupt_Pointer_If_Debug(L->u.action.label);
       #if DEBUG_LEVEL_LABELS

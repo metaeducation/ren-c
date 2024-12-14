@@ -740,13 +740,8 @@ Bounce Action_Executor(Level* L)
         Phase* phase = Level_Phase(L);
         const Param* param = PARAM;
         while (Is_Specialized(param)) {
-            if (Is_Stub_Varlist(phase)) {
-                Element* archetype = Flex_Head(Element, phase);
-                phase = cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
-            }
-            else {
-                phase = INODE(Exemplar, phase);
-            }
+            Element* archetype = Flex_Head(Element, phase);
+            phase = VAL_ACTION(archetype);
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
@@ -801,7 +796,7 @@ Bounce Action_Executor(Level* L)
     Phase* phase = Level_Phase(L);  // ensure Level_Phase() is Details [4]
     while (Is_Stub_Varlist(phase)) {
         Element* archetype = Flex_Head(Element, phase);
-        phase = cast(Phase*, Extract_Cell_Frame_Phase_Or_Label(archetype));
+        phase = VAL_ACTION(archetype);
         Tweak_Level_Phase(L, phase);
     }
 
@@ -1047,7 +1042,6 @@ void Push_Action(Level* L, const Cell* frame) {
     assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
 
     Phase* act = VAL_ACTION(frame);
-    Option(VarList*) coupling = Cell_Frame_Coupling(frame);
 
     Length num_args = Phase_Num_Params(act);  // includes specialized + locals
 
@@ -1083,10 +1077,8 @@ void Push_Action(Level* L, const Cell* frame) {
             | CELL_FLAG_PROTECTED  // payload/coupling tweaked, but not by user
             | CELL_MASK_FRAME
             | FLAG_QUOTE_BYTE(NOQUOTE_1);
-    Tweak_Cell_Context_Varlist(L->rootvar, L->varlist);
-
-    Tweak_Cell_Frame_Phase(L->rootvar, act);  // Level_Phase()
-    Tweak_Cell_Frame_Coupling(L->rootvar, coupling);  // Level_Coupling()
+    L->rootvar->extra = frame->extra;
+    L->rootvar->payload = frame->payload;
 
     s->content.dynamic.used = num_args + 1;
 

@@ -267,17 +267,17 @@ INLINE ParamList* Level_Varlist(Level* L) {
 // called *a lot*) this is a macro and is unchecked.
 //
 #define Level_Phase(L) \
-    cast(Phase*, Extract_Cell_Frame_Phase_Or_Label((L)->rootvar))
+    VAL_ACTION((L)->rootvar)
 
 INLINE Details* Ensure_Level_Details(Level* L) {
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label((L)->rootvar);
-    assert(Is_Stub_Details(f));
-    return cast(Details*, f);
+    Phase* phase = Level_Phase(L);
+    assert(Is_Stub_Details(phase));
+    return cast(Details*, phase);
 }
 
 INLINE void Tweak_Level_Phase(Level* L, Phase* phase) {
     assert(Is_Stub_Details(phase) or Is_Stub_Varlist(phase));
-    Tweak_Cell_Frame_Phase_Or_Label(L->rootvar, phase);
+    Tweak_Cell_Frame_Identity(L->rootvar, phase);
 }
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)

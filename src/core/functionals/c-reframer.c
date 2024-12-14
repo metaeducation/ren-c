@@ -313,7 +313,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     Value* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, stable_SPARE);
 
-    Tweak_Level_Phase(L, Phase_Details(VAL_ACTION(shim)));
+    Tweak_Level_Phase(L, VAL_ACTION(shim));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
@@ -331,7 +331,7 @@ Details* Alloc_Action_From_Exemplar(
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Phase* unspecialized = Paramlist_Archetype_Phase(paramlist);
+    Phase* unspecialized = VAL_ACTION(Phase_Archetype(paramlist));
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, unspecialized);

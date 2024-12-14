@@ -1596,7 +1596,9 @@ DECLARE_NATIVE(definitional_throw)
     if (not coupling)
         return FAIL(Error_Archetype_Invoked_Raw());
 
-    const Value* label = Varlist_Archetype(unwrap coupling);
+    Element* label = Init_Frame(
+        SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, NONMETHOD
+    );
     return Init_Thrown_With_Label(LEVEL, atom, label);
 }
 

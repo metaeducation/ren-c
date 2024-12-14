@@ -179,19 +179,35 @@ void* Probe_Core_Debug(
         Mold_Array_At(mo, cast(const Array*, f), 0, "[]");
         break;
 
-      case FLAVOR_VARLIST:  // currently same as FLAVOR_PARAMLIST
+      case FLAVOR_VARLIST: {  // currently same as FLAVOR_PARAMLIST
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
-        Probe_Molded_Value(mo, Varlist_Archetype(x_cast(VarList*, f)));
-        break;
+        DECLARE_ELEMENT (elem);
+        VarList* varlist = cast(VarList*, m_cast(void*, p));
+        if (CTX_TYPE(varlist) == REB_FRAME) {
+            if (
+                Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK)
+                and Not_Node_Managed(varlist)
+            ){
+                Set_Node_Managed_Bit(varlist);
+            }
+            Init_Frame(elem, cast(ParamList*, varlist), ANONYMOUS, NONMETHOD);
+        }
+        else
+            Init_Context_Cell(elem, CTX_TYPE(varlist), varlist);
+        Push_Lifeguard(elem);
+        Probe_Molded_Value(mo, elem);
+        Drop_Lifeguard(elem);
+        break; }
 
-      case FLAVOR_DETAILS:
+      case FLAVOR_DETAILS: {
         Probe_Print_Helper(p, expr, "Details", file, line);
-        MF_Frame(
-            mo,
-            Phase_Archetype(cast(Details*, cast(Phase*, m_cast(void*, p)))),
-            false
-        );
-        break;
+        DECLARE_ELEMENT (frame);
+        Details* details = cast(Details*, m_cast(void*, p));
+        Init_Frame(frame, details, ANONYMOUS, NONMETHOD);
+        Push_Lifeguard(frame);
+        MF_Frame(mo, frame, false);
+        Drop_Lifeguard(frame);
+        break; }
 
       case FLAVOR_PAIRLIST:
         Probe_Print_Helper(p, expr, "Pairlist", file, line);

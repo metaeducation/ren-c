@@ -368,7 +368,7 @@ Option(Stub*) Get_Word_Container(
                 and binding  // word has a cache for if it's in an action frame
                 and Action_Is_Base_Of(
                     cast(Phase*, binding),
-                    Paramlist_Archetype_Phase(cast(ParamList*, vlist))
+                    cast(ParamList*, vlist)
                 )
             ){
                 assert(CELL_WORD_INDEX_I32(any_word) <= 0);
@@ -391,7 +391,7 @@ Option(Stub*) Get_Word_Container(
                     CELL_WORD_INDEX_I32(
                         m_cast(Cell*, any_word)
                     ) = -(maybe index);
-                    BINDING(m_cast(Cell*, any_word)) = Paramlist_Archetype_Phase(vlist);
+                    BINDING(m_cast(Cell*, any_word)) = Phase_Details(vlist);
                 }
             }
           #endif

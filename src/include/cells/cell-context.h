@@ -24,7 +24,8 @@ INLINE VarList* Cell_Varlist(const Cell* v) {
     else {
         assert(Cell_Heart_Unchecked(v) == REB_FRAME);
         assert(Is_Stub_Details(cast(Stub*, Cell_Node1(v))));
-        list = INODE(Exemplar, cast(Details*, Cell_Node1(v)));
+        Cell* rootvar = Flex_Head_Dynamic(Cell, cast(Details*, Cell_Node1(v)));
+        list = cast(VarList*, Cell_Node1(rootvar));
     }
     return list;
 }

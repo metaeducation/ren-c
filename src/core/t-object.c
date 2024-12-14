@@ -150,7 +150,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             Phase* phase;
             if (not Is_Frame_Phased(v)) {  // not running, inputs visible [3]
                 e->visibility = VAR_VISIBILITY_INPUTS;
-                phase = Cell_Frame_Initial_Phase(v);
+                phase = VAL_ACTION(v);
             }
             else {  // is running, phase determines field visibility
                 e->visibility = VAR_VISIBILITY_ALL;
@@ -250,8 +250,19 @@ bool Try_Advance_Evars(EVARS *e) {
             if (e->visibility == VAR_VISIBILITY_ALL)
                 return true;  // private sees ONE level of specialization
 
-            if (Is_Specialized(e->param))  // parameter replaced with the value
-                continue;  // public should not see specialized args
+            // !!! This used to be:
+            //
+            //    if (Is_Specialized(e->param))
+            //       continue;
+            //
+            // But that has the problem that if a frame has been filled (e.g.
+            // ENCLOSE) you won't see the parameters for tweaking.  Temporary
+            // solution is to go by type checking, assuming anything that has
+            // not been type checked is available to tweak--and hence should
+            // be present on the interface.
+            //
+            if (not Is_Typechecked(e->param))  // show non-typecheck arg
+                return true;
         }
 
         return true;
@@ -746,15 +757,6 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
     }
     Push_Pointer_To_Flex(g_mold.stack, c);
 
-    if (Cell_Heart(v) == REB_FRAME and not Is_Frame_Phased(v)) {
-        Array* varlist = Varlist_Array(Cell_Varlist(v));
-        if (Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
-            Append_Ascii(s, "make frame! [...invoked frame...]\n");
-            Drop_Pointer_From_Flex(g_mold.stack, c);
-            return;
-        }
-    }
-
     EVARS e;
     Init_Evars(&e, v);
 
@@ -1241,15 +1243,8 @@ DECLARE_GENERICS(Frame)
         if (prop == SYM_WORDS)
             return T_Context(level_, verb);
 
-        if (prop == SYM_EXEMPLAR) {
-            Init_Frame(
-                frame,
-                Paramlist_Archetype_Phase(cast(ParamList*, c)),
-                ANONYMOUS,
-                NONMETHOD
-            );
+        if (prop == SYM_EXEMPLAR)
             goto handle_reflect_action;
-        }
 
         Level* L = Level_Of_Varlist_May_Fail(c);
 
@@ -1336,22 +1331,8 @@ DECLARE_GENERICS(Frame)
             QUOTE_BYTE(OUT) = NOQUOTE_1;  // no reason to give back antiform
             return OUT; }
 
-          case SYM_EXEMPLAR: {
-            //
-            // We give back the exemplar of the frame, which contains the
-            // parameter descriptions.  Since exemplars are reused, this is
-            // not enough to make the right action out of...so the phase has
-            // to be set to the action that we are returning.
-            //
-            // !!! This loses the label information.  Technically the space
-            // for the varlist could be reclaimed in this case and a label
-            // used, as the read-only frame is archetypal.
-            //
-            Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_FRAME);
-            Tweak_Cell_Context_Varlist(OUT, Phase_Paramlist(details));
-            Tweak_Cell_Frame_Coupling(OUT, Cell_Frame_Coupling(frame));
-            Tweak_Cell_Frame_Phase_Or_Label(OUT, details);
-            return OUT; }
+          case SYM_EXEMPLAR:
+            return COPY(Phase_Archetype(VAL_ACTION(frame)));
 
           case SYM_TYPES:
             return Copy_Cell(OUT, Varlist_Archetype(Phase_Paramlist(details)));

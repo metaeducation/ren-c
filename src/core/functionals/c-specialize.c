@@ -73,11 +73,11 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
     Tweak_Keylist_Of_Varlist_Shared(a, Phase_Keylist(act));
 
-    Tweak_Frame_Varlist_Rootvar(
-        a,
-        Phase_Details(VAL_ACTION(action)),
-        Cell_Frame_Coupling(action)
-    );
+    assert(Is_Action(action) or Is_Frame(action));  // tolerate either?
+    Value* rootvar = Flex_Head_Dynamic(Element, a);
+    Copy_Cell(rootvar, action);
+    QUOTE_BYTE(rootvar) = NOQUOTE_1;  // make sure it's a plain FRAME!
+    Protect_Rootvar_If_Debug(rootvar);
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, act);
@@ -235,8 +235,10 @@ bool Specialize_Action_Throws(
         // to whatever value was in the context the specialization is running
         // in, but this is likely the more useful behavior.
         //
+        DECLARE_ELEMENT (elem);
+        Init_Frame(elem, exemplar, label, coupling);
         BINDING(unwrap def) = Make_Use_Core(
-            Varlist_Archetype(exemplar),
+            elem,
             Cell_List_Binding(unwrap def),
             CELL_FLAG_USE_NOTE_SET_WORDS
         );
