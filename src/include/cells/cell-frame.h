@@ -72,13 +72,15 @@ INLINE Phase* VAL_ACTION(const Cell* v) {
     Phase_Keylist(VAL_ACTION(v))
 
 
-//=//// FRAME PHASE AND LABELING //////////////////////////////////////////=//
+//=//// FRAME LENS AND LABELING ///////////////////////////////////////////=//
 //
-// A frame's phase is usually a pointer to the component action in effect for
-// a composite function (e.g. an ADAPT).
+// When a FRAME! has a "Lens", that dictates what variables in the VarList
+// should be exposed--which is important for executing frames (even though
+// an adaptation's frame contains the adaptee's variables, it should not be
+// able to do things like assign its locals).
 //
-// But if the node where a phase would usually be found is a Symbol* then that
-// implies there isn't any special phase besides the action stored by the
+// But if the node where a Lens would usually be found is a Symbol* then that
+// implies there isn't any special Lens besides the action stored by the
 // archetype.  Hence the value cell is storing a name to be used with the
 // action when it is extracted from the frame.  That's why this works:
 //
@@ -86,52 +88,7 @@ INLINE Phase* VAL_ACTION(const Cell* v) {
 //     >> label of f
 //     == append  ; useful in debug stack traces if you `eval f`
 //
-// So extraction of the phase has to be sensitive to this.
-//
-
-INLINE void Tweak_Cell_Frame_Phase(Cell* v, Phase* phase) {
-    assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
-    assert(Is_Stub_Varlist(phase) or Is_Stub_Details(phase));
-    Tweak_Cell_Frame_Phase_Or_Label(v, phase);
-}
-
-INLINE Phase* Cell_Frame_Phase(const Cell* c) {
-    assert(Cell_Heart(c) == REB_FRAME);
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(c);
-    assert(Is_Stub_Varlist(f) or Is_Stub_Details(f));
-    return cast(Phase*, f);
-}
-
-INLINE bool Is_Frame_Phased(const Cell* v) {
-    assert(Cell_Heart(v) == REB_FRAME);
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
-    return f and not Is_Stub_Symbol(f);
-}
-
-// 1. Has a phase, so no label (maybe findable if running)
-//
-INLINE Option(const Symbol*) Cell_Frame_Label(const Cell* v) {
-    Flex* f = Extract_Cell_Frame_Phase_Or_Label(v);
-    if (f and Is_Stub_Symbol(f))  // label in value
-        return cast(Symbol*, f);
-    return ANONYMOUS;  // [2]
-}
-
-INLINE void INIT_Cell_Frame_Label(
-    Cell* v,
-    Option(const String*) label
-){
-    assert(Cell_Heart(v) == REB_FRAME);
-    Assert_Cell_Writable(v);  // No label in archetype
-    Tweak_Cell_Frame_Phase_Or_Label(v, maybe label);
-}
-
-
-//=//// ACTION LABELING ///////////////////////////////////////////////////=//
-//
-// When an ACTION! is stored in a cell (e.g. not an "archetype"), it can
-// contain a label of the ANY-WORD? it was taken from.  If it is an array
-// node, it is presumed an archetype and has no label.
+// So extraction of the Lens has to be sensitive to this.
 //
 // !!! Theoretically, longer forms could be used here as labels...e.g. an
 // entire array or pairing backing a sequence.  However, that would get
@@ -139,10 +96,34 @@ INLINE void INIT_Cell_Frame_Label(
 // you'd be storing something that wouldn't be stored otherwise, so it would
 // stop being "cheap".
 
+INLINE void Tweak_Cell_Frame_Lens(Cell* v, ParamList* lens) {
+    assert(HEART_BYTE(v) == REB_FRAME);  // may be protected (e.g. archetype)
+    assert(Is_Stub_Varlist(lens));
+    Tweak_Cell_Frame_Lens_Or_Label(v, lens);
+}
+
+INLINE Option(ParamList*) Cell_Frame_Lens(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_FRAME);
+    Flex* f = Extract_Cell_Frame_Lens_Or_Label(c);
+    if (not f or Is_Stub_Symbol(f))
+        return nullptr;
+    assert(Is_Stub_Varlist(f));
+    return cast(ParamList*, f);
+}
+
+INLINE Option(const Symbol*) Cell_Frame_Label(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_FRAME);
+    Flex* f = Extract_Cell_Frame_Lens_Or_Label(c);
+    if (not f or Is_Stub_Varlist(f))  // label in value
+        return nullptr;
+    assert(Is_Stub_Symbol(f));
+    return cast(Symbol*, f);
+}
+
 INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
-    assert(Cell_Heart(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == REB_FRAME);
     Assert_Cell_Writable(c);  // archetype R/O
-    Tweak_Cell_Frame_Phase_Or_Label(c, label);
+    Tweak_Cell_Frame_Lens_Or_Label(c, label);
 }
 
 
@@ -166,7 +147,7 @@ INLINE void Init_Frame_Unchecked_Untracked(
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
     Tweak_Cell_Frame_Identity(out, identity);
-    Tweak_Cell_Frame_Phase_Or_Label(out, label);
+    Tweak_Cell_Frame_Lens_Or_Label(out, label);
     Tweak_Cell_Frame_Coupling(out, coupling);
 }
 

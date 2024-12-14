@@ -915,7 +915,7 @@ Source* Context_To_Array(const Value* context, REBINT mode)
 // not found.
 //
 // Note that since contexts like FRAME! can have multiple keys with the same
-// name, the Cell_Frame_Phase() of the context has to be taken into account.
+// name, the Cell_Frame_Lens() of the context has to be taken into account.
 //
 Option(Index) Find_Symbol_In_Context(
     const Cell* context,

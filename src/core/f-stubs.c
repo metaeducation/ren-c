@@ -301,15 +301,15 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
         or Any_Context_Kind(CTX_TYPE(unwrap CTX_ADJUNCT(v)))
     );
 
-    // FRAME!s must always fill in the phase slot, but that piece of the
+    // FRAME!s must always fill in the lens slot, but that piece of the
     // Cell is reserved for future use in other context types...so make
     // sure it's null at this point in time.
     //
-    Flex* archetype_phase = Extract_Cell_Frame_Phase_Or_Label(archetype);
+    Flex* archetype_lens = Extract_Cell_Frame_Lens_Or_Label(archetype);
     if (CTX_TYPE(v) == REB_FRAME)
-        assert(Is_Stub_Details(archetype_phase));
+        assert(Is_Stub_Details(archetype_lens));
     else
-        assert(archetype_phase == nullptr);
+        assert(archetype_lens == nullptr);
 }
 
 
@@ -333,7 +333,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* initial) {
     }
     else {
         assert(Is_Stub_Details(initial));
-        assert(ANONYMOUS == Extract_Cell_Frame_Phase_Or_Label(archetype));
+        assert(ANONYMOUS == Extract_Cell_Frame_Lens_Or_Label(archetype));
     }
 
     assert(Is_Stub_Varlist(Phase_Paramlist(initial)));

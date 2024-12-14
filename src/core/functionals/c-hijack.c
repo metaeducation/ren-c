@@ -115,7 +115,10 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
         Level_Label(L1),
         Level_Coupling(L1)
     );
-    Tweak_Cell_Frame_Phase(frame1, VAL_ACTION(Phase_Archetype(varlist)));
+    Tweak_Cell_Frame_Lens(
+        frame1,
+        Phase_Paramlist(VAL_ACTION(Phase_Archetype(varlist)))
+    );
 
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
     Init_Evars(&e, frame1);

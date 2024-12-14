@@ -176,10 +176,10 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 // before the place where the exemplar is to be found.
 //
 
-INLINE void Tweak_Cell_Frame_Phase_Or_Label(Cell* c, Option(const Flex*) f)
+INLINE void Tweak_Cell_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f)
   { Tweak_Cell_Node2(c, maybe f); }
 
-#define Extract_Cell_Frame_Phase_Or_Label(v)  cast(Flex*, Cell_Node2(v))
+#define Extract_Cell_Frame_Lens_Or_Label(v)  cast(Flex*, Cell_Node2(v))
 
 
 INLINE ParamList* Phase_Paramlist(Phase* p) {

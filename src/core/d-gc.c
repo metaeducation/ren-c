@@ -232,8 +232,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         Details* details = cast(Details*, VAL_ACTION(v));
         assert(Is_Node_Marked(details));
-        if (Extract_Cell_Frame_Phase_Or_Label(v))
-            assert(Is_Node_Marked(Extract_Cell_Frame_Phase_Or_Label(v)));
+        if (Extract_Cell_Frame_Lens_Or_Label(v))
+            assert(Is_Node_Marked(Extract_Cell_Frame_Lens_Or_Label(v)));
 
         if (Get_Flavor_Flag(DETAILS, Details_Array(details), IS_NATIVE)) {
             assert(Details_Max(details) >= IDX_NATIVE_MAX);

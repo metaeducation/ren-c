@@ -481,22 +481,17 @@ DECLARE_NATIVE(some_combinator)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. If we don't put a phase on this, then it will pay attention to the
-    //    FRAME_HAS_BEEN_INVOKED and prohibit things like STOP from advancing
-    //    the input because `f.input` assignment will raise an error.  Review.
-    //
-    // 2. Currently the usermode parser has no support for intercepting throws
+    // 1. Currently the usermode parser has no support for intercepting throws
     //    removing frames from the loops list in usermode.  Mirror that
     //    limitation here in the native implementation for now.
 
     Cell* loop_last = Alloc_Tail_Array(loops);
     Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), NONMETHOD);
-    Tweak_Cell_Frame_Phase(loop_last, Ensure_Level_Details(level_));  // [1]
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_FIRST_PARSER_RUN;
-    return CONTINUE_SUBLEVEL(SUBLEVEL);  // mirror usermode [2]
+    return CONTINUE_SUBLEVEL(SUBLEVEL);  // mirror usermode [1]
 
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 

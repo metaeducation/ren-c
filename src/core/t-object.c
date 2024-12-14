@@ -147,19 +147,15 @@ void Init_Evars(EVARS *e, const Cell* v) {
         else {
             e->var = Varlist_Slots_Head(e->ctx) - 1;
 
-            Phase* phase;
-            if (not Is_Frame_Phased(v)) {  // not running, inputs visible [3]
+            ParamList* lens = maybe Cell_Frame_Lens(v);
+            if (not lens) {  // not running, inputs visible [3]
                 e->visibility = VAR_VISIBILITY_INPUTS;
-                phase = VAL_ACTION(v);
-            }
-            else {  // is running, phase determines field visibility
-                e->visibility = VAR_VISIBILITY_ALL;
-                phase = Cell_Frame_Phase(v);
+                lens = Phase_Paramlist(VAL_ACTION(v));
             }
 
-            e->param = Phase_Params_Head(phase) - 1;
-            e->key = Phase_Keys(&e->key_tail, phase) - 1;
-            assert(Flex_Used(Phase_Keylist(phase)) <= Phase_Num_Params(phase));
+            e->param = Phase_Params_Head(lens) - 1;
+            e->key = Phase_Keys(&e->key_tail, lens) - 1;
+            assert(Flex_Used(Phase_Keylist(lens)) <= Phase_Num_Params(lens));
         }
 
         Corrupt_Pointer_If_Debug(e->wordlist);

@@ -510,7 +510,7 @@ DECLARE_NATIVE(eval_free)
     if (Is_Stub_Details(VAL_ACTION(frame)))
         fail ("Can't currently EVAL-FREE a Details-based Stub");
 
-    if (Is_Frame_Phased(frame))  // see REDO for tail-call recursion
+    if (Cell_Frame_Lens(frame))  // see REDO for tail-call recursion
         fail ("Use REDO to restart a running FRAME! (not DO)");
 
     VarList* varlist = Cell_Varlist(frame);
@@ -629,8 +629,8 @@ DECLARE_NATIVE(redo)
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(sibling));
     }
     else {
-        redo_action = Cell_Frame_Phase(restartee);
-        Tweak_Level_Phase(L, cast(Details*, Cell_Frame_Phase(restartee)));
+        redo_action = VAL_ACTION(restartee);
+        Tweak_Level_Phase(L, cast(Details*, VAL_ACTION(restartee)));
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(restartee));
     }
 

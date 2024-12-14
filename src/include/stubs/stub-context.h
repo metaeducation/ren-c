@@ -176,7 +176,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     );
     Tweak_Cell_Context_Varlist(rootvar, varlist);
     EXTRA(rootvar).node = nullptr;  // no coupling, but extra is marked
-    Tweak_Cell_Frame_Phase_Or_Label(rootvar, nullptr);  // not a frame
+    Tweak_Cell_Frame_Lens_Or_Label(rootvar, nullptr);  // not a frame
 }
 
 #define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \

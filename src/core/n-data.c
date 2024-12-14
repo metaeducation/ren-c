@@ -353,29 +353,6 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         assert(false);
     }
 
-    // A FRAME! has special properties of ->phase and ->binding which
-    // affect the interpretation of which layer of a function composition
-    // they correspond to.  If you REDO a FRAME! value it will restart at
-    // different points based on these properties.  Assume the time of
-    // asking is the layer in the composition the user is interested in.
-    //
-    // !!! This may not be the correct answer, but it seems to work in
-    // practice...keep an eye out for counterexamples.
-    //
-    if (Is_Frame(out)) {
-        VarList* c = Cell_Varlist(out);
-        Level* L = Level_Of_Varlist_If_Running(c);
-        if (L) {
-            Tweak_Cell_Frame_Phase(out, Ensure_Level_Details(L));
-            Tweak_Cell_Frame_Coupling(out, Level_Coupling(L));
-        }
-        else {
-            // !!! Assume the canon FRAME! value in varlist[0] is useful?
-            //
-            assert(not Cell_Frame_Coupling(out));  // canon, no binding
-        }
-    }
-
     return true;
 }
 
