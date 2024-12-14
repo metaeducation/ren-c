@@ -744,7 +744,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     else
         assert(not info or info->state == PROMISE_STATE_RUNNING);
 
-    heapaddr_t native_id = Native_Id_For_Details(Level_Phase(L));
+    heapaddr_t native_id = Native_Id_For_Details(Ensure_Level_Details(L));
 
     STATE = ST_JS_NATIVE_RUNNING;  // resolve/reject change this STATE byte
 
@@ -860,7 +860,7 @@ DECLARE_NATIVE(js_native)
 
     Details* details = Make_Dispatch_Details(
         DETAILS_FLAG_PARAMLIST_HAS_RETURN | DETAILS_FLAG_IS_NATIVE
-        paramlist,
+        Phase_Archetype(paramlist),
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
     );

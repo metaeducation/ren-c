@@ -316,42 +316,26 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
 //
 //  Extra_Init_Frame_Checks_Debug: C
 //
-void Extra_Init_Frame_Checks_Debug(Phase* initial) {
-    Value* archetype = Phase_Archetype(initial);
+void Extra_Init_Frame_Checks_Debug(Phase* phase) {
+    assert(Is_Frame(Phase_Archetype(phase)));
 
-    if (Is_Stub_Varlist(initial)) {
-        Phase* phase = initial;
-        do {
-            Phase* next_phase = Cell_Frame_Phase(Phase_Archetype(phase));
-            if (next_phase == phase) {
-                phase = nullptr;
-                break;
-            }
-            phase = next_phase;
-        } while (Is_Stub_Varlist(phase));
-        assert(phase == nullptr or Is_Stub_Details(phase));
-    }
-    else {
-        assert(Is_Stub_Details(initial));
-        assert(ANONYMOUS == Extract_Cell_Frame_Lens_Or_Label(archetype));
-    }
+    assert(Is_Stub_Details(Phase_Details(phase)));
+    assert(Is_Stub_Varlist(Phase_Paramlist(phase)));
 
-    assert(Is_Stub_Varlist(Phase_Paramlist(initial)));
-
-    KeyList* keylist = Phase_Keylist(initial);
+    KeyList* keylist = Phase_Keylist(phase);
     assert(
         (keylist->leader.bits & FLEX_MASK_KEYLIST)
         == FLEX_MASK_KEYLIST
     );
 
-    if (Get_Stub_Flag(initial, MISC_NODE_NEEDS_MARK)) {
+    if (Get_Stub_Flag(phase, MISC_NODE_NEEDS_MARK)) {
         assert(
-            Phase_Adjunct(initial) == nullptr
-            or Any_Context_Kind(CTX_TYPE(unwrap Phase_Adjunct(initial)))
+            Phase_Adjunct(phase) == nullptr
+            or Any_Context_Kind(CTX_TYPE(unwrap Phase_Adjunct(phase)))
         );
     }
     else
-        assert(Is_Stub_Varlist(initial));  // running Level* is allowed
+        assert(Is_Stub_Varlist(phase));  // running Level* is allowed
 }
 
 #endif

@@ -41,11 +41,6 @@
 
 #include "sys-core.h"
 
-enum {
-    IDX_COMBINATOR_BODY = 1,  // Code wrapped up
-    IDX_COMBINATOR_MAX
-};
-
 // !!! These are the positions that COMBINATOR has for its known arguments in
 // the generated spec.  Changes to COMBINATOR could change this.
 //
@@ -239,7 +234,7 @@ DECLARE_NATIVE(combinator)
 
     Details* details = Make_Dispatch_Details(
         DETAILS_FLAG_PARAMLIST_HAS_RETURN,
-        paramlist,
+        Phase_Archetype(paramlist),
         &Combinator_Dispatcher,
         IDX_COMBINATOR_MAX  // details array capacity
     );

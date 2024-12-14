@@ -362,7 +362,7 @@ Details* Alloc_Action_From_Exemplar(
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        paramlist,
+        Phase_Archetype(paramlist),
         dispatcher,
         details_capacity
     );

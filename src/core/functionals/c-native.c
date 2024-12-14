@@ -95,7 +95,7 @@ Details* Make_Native_Dispatch_Details(
 
     Details* details = Make_Dispatch_Details(
         details_flags,
-        paramlist,
+        Phase_Archetype(paramlist),
         dispatcher,  // dispatcher is unique to this native
         IDX_NATIVE_MAX  // details array capacity
     );
@@ -111,18 +111,20 @@ Details* Make_Native_Dispatch_Details(
     // that the actual "native" in that case.
     //
     if (native_type == NATIVE_COMBINATOR) {
-        Details* native_details = details;
+        DECLARE_ELEMENT (native);
+        Init_Frame(native, details, ANONYMOUS, NONMETHOD);
         details = Make_Dispatch_Details(
             DETAILS_FLAG_PARAMLIST_HAS_RETURN,  // *not* a native, calls one...
-            Phase_Paramlist(native_details),
+            native,
             &Combinator_Dispatcher,
-            2  // IDX_COMBINATOR_MAX  // details array capacity
+            IDX_COMBINATOR_MAX  // details array capacity
         );
 
-        Copy_Cell(
-            Array_At(details, 1),  // IDX_COMBINATOR_BODY
-            Phase_Archetype(native_details)
-        );
+        // !!! Not strictly needed, as it's available as Details[0]
+        // However, there's a non-native form of combinator as well, which
+        // puts a body block in the slot.
+        //
+        Copy_Cell(Details_At(details, IDX_COMBINATOR_BODY), native);
     }
 
     // We want the meta information on the wrapped version if it's a

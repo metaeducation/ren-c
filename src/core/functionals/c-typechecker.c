@@ -110,7 +110,7 @@ Details* Make_Decider_Intrinsic(Offset decider_index) {
     Details* details = Make_Dispatch_Details(
         DETAILS_FLAG_PARAMLIST_HAS_RETURN
             | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
-        paramlist,
+        Phase_Archetype(paramlist),
         &Decider_Intrinsic_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );

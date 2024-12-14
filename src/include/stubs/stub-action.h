@@ -183,9 +183,9 @@ INLINE void Tweak_Cell_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f)
 
 
 INLINE ParamList* Phase_Paramlist(Phase* p) {
-    if (Is_Stub_Details(p))
-        return x_cast(ParamList*, Cell_Node1(Phase_Archetype(p)));
-    return x_cast(ParamList*, p);
+    while (Is_Stub_Details(p))
+        p = u_cast(Phase*, Cell_Node1(Phase_Archetype(p)));
+    return u_cast(ParamList*, p);
 }
 
 // More optimized version of Keylist_Of_Varlist(Phase_Paramlist(a)),
@@ -247,6 +247,11 @@ enum {
     IDX_NATIVE_CONTEXT = 1,  // libRebol binds strings here (and lib)
 
     IDX_NATIVE_MAX
+};
+
+enum {
+    IDX_COMBINATOR_BODY = 1,  // either native or BLOCK!
+    IDX_COMBINATOR_MAX
 };
 
 // If you use Make_Interpreted_Action_May_Fail() then it will automatically

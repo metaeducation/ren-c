@@ -691,15 +691,12 @@ ParamList* Make_Paramlist_Managed_May_Fail(
 //
 Details* Make_Dispatch_Details(
     Flags flags,
-    ParamList* paramlist,
+    const Value* exemplar,  // FRAME! "interface" is keyword in MSVC :-(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of Phase_Details (including archetype)
 ){
     assert(0 == (flags & (~ DETAILS_MASK_PROXY)));  // ensure only legal flags
     assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
-
-    assert(Is_Node_Managed(paramlist));
-    assert(CTX_TYPE(paramlist) == REB_FRAME);
 
     // "details" for an action is an array of cells which can be anything
     // the dispatcher understands it to be, by contract.  Terminate it
@@ -711,8 +708,14 @@ Details* Make_Dispatch_Details(
     );
     Set_Flex_Len(details, details_capacity);
 
+    assert(HEART_BYTE(exemplar) == REB_FRAME);
+    assert(
+        QUOTE_BYTE(exemplar) == NOQUOTE_1
+        or QUOTE_BYTE(exemplar) == ANTIFORM_0  // allow action antiform
+    );
     Cell* rootvar = Array_Head(details);
-    Init_Frame(rootvar, paramlist, ANONYMOUS, NONMETHOD);
+    Copy_Cell(rootvar, exemplar);
+    QUOTE_BYTE(rootvar) = NOQUOTE_1;  // canonize action antiforms to FRAME!
     Protect_Rootvar_If_Debug(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
@@ -720,15 +723,16 @@ Details* Make_Dispatch_Details(
     Tweak_Details_Dispatcher(cast(Details*, details), dispatcher);
     MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
-    Phase* act = cast(Phase*, details);  // now it's a legitimate Action
+    Phase* phase = cast(Phase*, details);  // now it's a legitimate Action
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can
     // be tricky to figure out with partial refinement specialization.  So
     // the work of doing that is factored into a routine (`PARAMETERS OF`
-    // uses it as well).
+    // uses it as well).  !!! Wrong place for this!
 
-    const Param* first = First_Unspecialized_Param(nullptr, act);
+    ParamList* paramlist = Phase_Paramlist(phase);
+    const Param* first = First_Unspecialized_Param(nullptr, phase);
     if (first) {
         ParamClass pclass = Cell_ParamClass(first);
         switch (pclass) {
@@ -755,7 +759,7 @@ Details* Make_Dispatch_Details(
     Set_Flex_Flag(paramlist, FIXED_SIZE);
     Set_Flavor_Flag(VARLIST, paramlist, IMMUTABLE);
 
-    return Phase_Details(act);
+    return Phase_Details(phase);
 }
 
 

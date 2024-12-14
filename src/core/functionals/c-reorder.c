@@ -229,7 +229,7 @@ DECLARE_NATIVE(reorder)
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        paramlist,
+        Phase_Archetype(paramlist),
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX
     );

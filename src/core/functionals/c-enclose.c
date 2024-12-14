@@ -64,8 +64,8 @@
 #include "sys-core.h"
 
 enum {
-    IDX_ENCLOSER_INNER = 1,  // The ACTION! being enclosed
-    IDX_ENCLOSER_OUTER,  // ACTION! that gets control of inner's FRAME!
+    IDX_ENCLOSER_OUTER = 1,  // ACTION! that gets control of inner's FRAME!
+    /* IDX_ENCLOSER_INNER, */  // Inner function implicit (Details rootvar)
     IDX_ENCLOSER_MAX
 };
 
@@ -120,7 +120,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_ENCLOSER_MAX);
 
-    Element* inner = cast(Element*, Details_At(details, IDX_ENCLOSER_INNER));
+    Element* inner = Phase_Archetype(details);
     assert(Is_Frame(inner));  // same args as f
     Element* outer = cast(Element*, Details_At(details, IDX_ENCLOSER_OUTER));
     assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
@@ -199,15 +199,13 @@ DECLARE_NATIVE(enclose)
     Value* inner = ARG(inner);
     Value* outer = ARG(outer);
 
-    ParamList* inner_paramlist = Phase_Paramlist(Cell_Frame_Phase(inner));
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        inner_paramlist,  // same interface as inner [1]
+        inner,  // same interface as inner [1]
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );
 
-    Copy_Cell(Details_At(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
     return Init_Action(OUT, details, Cell_Frame_Label(inner), UNBOUND);

@@ -56,7 +56,7 @@
 
 enum {
     IDX_ADAPTER_PRELUDE = 1,  // Relativized block to run before Adaptee
-    IDX_ADAPTER_ADAPTEE,  // The ACTION! being adapted
+    /* IDX_ADAPTER_ADAPTEE, */  // Adaptee is implicit (Details rootvar)
     IDX_ADAPTER_MAX
 };
 
@@ -111,7 +111,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     //    may have put invalid types in parameter slots.  So it needs to be
     //    typechecked before executing.
 
-    Value* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
+    Value* adaptee = Phase_Archetype(details);
 
     Tweak_Level_Phase(L, Cell_Frame_Phase(adaptee));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(adaptee));
@@ -147,11 +147,9 @@ DECLARE_NATIVE(adapt)
     Value* adaptee = ARG(original);
     Value* prelude = ARG(prelude);
 
-    ParamList* adaptee_paramlist = Phase_Paramlist(Cell_Frame_Phase(adaptee));
-
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        adaptee_paramlist,  // same parameters as adaptee [1]
+        adaptee,  // same parameters as adaptee [1]
         &Adapter_Dispatcher,
         IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]
     );
@@ -167,8 +165,6 @@ DECLARE_NATIVE(adapt)
         prelude_copy
     );
     BINDING(rebound) = Cell_List_Binding(prelude);
-
-    Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
     return Init_Action(OUT, details, Cell_Frame_Label(adaptee), UNBOUND);
 }

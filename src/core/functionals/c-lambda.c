@@ -246,7 +246,7 @@ DECLARE_NATIVE(lambda)
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        paramlist,
+        Phase_Archetype(paramlist),
         &Lambda_Dispatcher,
         IDX_LAMBDA_MAX  // same as specialization, just 1 (for archetype)
     );

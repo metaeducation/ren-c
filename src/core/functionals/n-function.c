@@ -245,7 +245,7 @@ Details* Make_Interpreted_Action_May_Fail(
 
     Details* details = Make_Dispatch_Details(
         details_flags,
-        paramlist,
+        Phase_Archetype(paramlist),
         dispatcher,
         details_capacity  // we fill in details[0], caller fills any extra
     );

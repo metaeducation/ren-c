@@ -262,10 +262,9 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         }
     }
 
-    ParamList* first_paramlist = Phase_Paramlist(Cell_Frame_Phase(first));
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        first_paramlist,  // cascade has same interface as its first action [2]
+        first,  // cascade has same interface as its first action [2]
         &Cascader_Executor,
         IDX_CASCADER_MAX  // details array capacity
     );

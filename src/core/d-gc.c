@@ -430,7 +430,6 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     if (Is_Stub_Details(a)) {
         const Element* archetype = Array_Head(a);
         assert(Is_Frame(archetype));
-        assert(not Cell_Frame_Coupling(archetype));
 
         // These queueings cannot be done in Queue_Mark_Function_Deep
         // because of the potential for overflowing the C stack with calls
@@ -438,7 +437,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
 
         Phase* arch_phase = Cell_Frame_Phase(archetype);
         assert(Is_Node_Marked(arch_phase));
-        assert(Is_Stub_Varlist(arch_phase));
+        assert(Is_Stub_Varlist(arch_phase) or Is_Stub_Details(arch_phase));
     }
     else if (Is_Stub_Varlist(a)) {
         const Value* archetype = Varlist_Archetype(

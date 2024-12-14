@@ -283,7 +283,7 @@ DECLARE_NATIVE(hijack)
 
     Details* proxy = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        Phase_Paramlist(victim),  // not changing the interface [1]
+        ARG(victim),  // not changing the interface [1]
         hijack_void
             ? &Unimplemented_Dispatcher
             : &Hijacker_Dispatcher,
@@ -298,6 +298,10 @@ DECLARE_NATIVE(hijack)
     Tweak_Phase_Adjunct(proxy, adjunct);  // not a copy, shared reference [3]
 
     Swap_Flex_Content(victim, proxy);  // after swap, victim is hijacker
+
+    Element* victim_archetype = Phase_Archetype(victim);
+    assert(Cell_Frame_Phase(victim_archetype) == victim);  // inf. recursive!
+    Tweak_Cell_Frame_Phase(victim_archetype, proxy);  // adjust for swap
 
     if (victim_unimplemented)
         return NOTHING;
