@@ -1188,24 +1188,26 @@ DECLARE_GENERICS(Frame)
     Element* frame = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
     );
-    VarList* c = Cell_Varlist(frame);
+
+    Phase* phase = Cell_Frame_Phase(frame);
 
     switch (id) {
-
-      case SYM_REFLECT :
-        if (Is_Frame_Details(frame))
-            goto handle_reflect_action;
-      {
+      case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `frame`
 
         Option(SymId) prop = Cell_Word_Id(ARG(property));
 
-        if (prop == SYM_LABEL) {
-            //
-            // Can be answered for frames that have no execution phase, if
-            // they were initialized with a label.
-            //
+        switch (prop) {
+          case SYM_COUPLING: {
+            Option(VarList*) coupling = Cell_Frame_Coupling(frame);
+            if (not coupling)  // NONMETHOD
+                return nullptr;
+            if (unwrap coupling == UNCOUPLED)
+                return NOTHING;
+            return COPY(Varlist_Archetype(unwrap coupling)); }
+
+          case SYM_LABEL: {
             Option(const Symbol*) label = Cell_Frame_Label(frame);
             if (label)
                 return Init_Word(OUT, unwrap label);
@@ -1214,31 +1216,72 @@ DECLARE_GENERICS(Frame)
             // Level*, which will tell us what the overall execution label
             // would be.  This might be confusing, however...if the phase
             // is drastically different.  Review.
+
+            break; }
+
+          case SYM_EXEMPLAR:
+          case SYM_TYPES:  // !!! Does this name make sense?
+            return COPY(Phase_Archetype(Cell_Frame_Phase(frame)));
+
+          case SYM_WORDS:
+            return Init_Block(OUT, Make_Phase_Words_Array(phase));
+
+          case SYM_BODY:
+            Get_Maybe_Fake_Action_Body(OUT, frame);
+            return OUT;
+
+          case SYM_RETURN: {
+            Details* details = Phase_Details(phase);
+            if (not Details_Has_Return(details))
+                return nullptr;
+
+            assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+            ParamList* exemplar = Phase_Paramlist(details);
+            Value* param = Varlist_Slots_Head(exemplar);
+            assert(Is_Parameter(param));
+            Copy_Cell(OUT, param);
+            QUOTE_BYTE(OUT) = NOQUOTE_1;  // no reason to give back antiform
+            return OUT; }
+
+          case SYM_FILE:
+          case SYM_LINE: {
+            if (not Is_Stub_Details(phase))
+                break;  // try to check and see if there's runtime info
+
+            Details* details = cast(Details*, phase);
+
+            // Use a heuristic that if the first element of a function's body
+            // is an Array with the file and line bits set, then that's what
+            // it returns for FILE OF and LINE OF.
+
+            if (
+                Details_Max(details) < 1
+                or not Any_List(Details_At(details, 1))
+            ){
+                return nullptr;
+            }
+
+            const Source* a = Cell_Array(Details_At(details, 1));
+            if (Not_Source_Flag(a, HAS_FILE_LINE))
+                return nullptr;
+
+            // !!! How to tell URL! vs FILE! ?
+            //
+            if (prop == SYM_FILE)
+                Init_File(OUT, LINK(Filename, a));
+            else
+                Init_Integer(OUT, a->misc.line);
+
+            return OUT; }
+
+          default:
+            break;
         }
 
-       /* if (prop == SYM_ACTION) {
-            //
-            // Currently this can be answered for any frame, even if it is
-            // expired...though it probably shouldn't do this unless it's
-            // an indefinite lifetime object, so that paramlists could be
-            // GC'd if all the frames pointing to them were expired but still
-            // referenced somewhere.
-            //
-            return Init_Frame(
-                OUT,
-                Cell_Frame_Phase(frame),  // just a Phase*, no binding
-                Cell_Frame_Label(frame),
-                Cell_Frame_Coupling(frame)  // e.g. where RETURN returns to
-            );
-        } */
+        if (Is_Stub_Details(phase))
+            return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property)));
 
-        if (prop == SYM_WORDS)
-            return T_Context(level_, verb);
-
-        if (prop == SYM_EXEMPLAR)
-            goto handle_reflect_action;
-
-        Level* L = Level_Of_Varlist_May_Fail(c);
+        Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
 
         switch (prop) {
           case SYM_FILE: {
@@ -1278,89 +1321,7 @@ DECLARE_GENERICS(Frame)
           default:
             break;
         }
-      }
-
-    handle_reflect_action: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));
-
-        Details* details = Ensure_Cell_Frame_Details(frame);
-        assert(Is_Stub_Details(details));
-
-        Value* property = ARG(property);
-        Option(SymId) sym = Cell_Word_Id(property);
-        switch (sym) {
-          case SYM_COUPLING: {
-            Option(VarList*) coupling = Cell_Frame_Coupling(frame);
-            if (not coupling)  // NONMETHOD
-                return nullptr;
-            if (unwrap coupling == UNCOUPLED)
-                return NOTHING;
-            return COPY(Varlist_Archetype(unwrap coupling)); }
-
-          case SYM_LABEL: {
-            Option(const Symbol*) label = Cell_Frame_Label(frame);
-            if (not label)
-                return nullptr;
-            return Init_Word(OUT, unwrap label); }
-
-          case SYM_WORDS:
-            return Init_Block(OUT, Make_Phase_Words_Array(details));
-
-          case SYM_BODY:
-            Get_Maybe_Fake_Action_Body(OUT, frame);
-            return OUT;
-
-          case SYM_RETURN: {
-            if (not Details_Has_Return(details))
-                return nullptr;
-
-            assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-            ParamList* exemplar = Phase_Paramlist(details);
-            Value* param = Varlist_Slots_Head(exemplar);
-            assert(Is_Parameter(param));
-            Copy_Cell(OUT, param);
-            QUOTE_BYTE(OUT) = NOQUOTE_1;  // no reason to give back antiform
-            return OUT; }
-
-          case SYM_EXEMPLAR:
-            return COPY(Phase_Archetype(Cell_Frame_Phase(frame)));
-
-          case SYM_TYPES:
-            return Copy_Cell(OUT, Varlist_Archetype(Phase_Paramlist(details)));
-
-          case SYM_FILE:
-          case SYM_LINE: {
-            //
-            // Use a heuristic that if the first element of a function's body
-            // is an Array with the file and line bits set, then that's what
-            // it returns for FILE OF and LINE OF.
-
-            if (
-                Details_Max(details) < 1
-                or not Any_List(Details_At(details, 1))
-            ){
-                return nullptr;
-            }
-
-            const Source* a = Cell_Array(Details_At(details, 1));
-            if (Not_Source_Flag(a, HAS_FILE_LINE))
-                return nullptr;
-
-            // !!! How to tell URL! vs FILE! ?
-            //
-            if (Cell_Word_Id(property) == SYM_FILE)
-                Init_File(OUT, LINK(Filename, a));
-            else
-                Init_Integer(OUT, a->misc.line);
-
-            return OUT; }
-
-          default:
-            return FAIL(Error_Cannot_Reflect(REB_FRAME, property));
-        }
-        break; }
-
+        return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property))); }
 
   //=//// COPY /////////////////////////////////////////////////////////////=//
 
