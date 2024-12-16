@@ -85,6 +85,10 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
             BINDING(c) = UNBOUND;
         }
     }
+    else if (heart == REB_FRAME) {
+        if (Cell_Frame_Lens(c))  // no lens on antiforms...show only inputs
+            Tweak_Cell_Frame_Lens_Or_Label(c, ANONYMOUS);
+    }
 
     QUOTE_BYTE(c) = ANTIFORM_0_COERCE_ONLY;  // nowhere else should assign!
     return c;

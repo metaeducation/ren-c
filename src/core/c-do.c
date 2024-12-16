@@ -93,9 +93,6 @@ void Push_Frame_Continuation(
     const Value* frame,  // may be antiform
     Option(const Atom*) with
 ){
-    if (Cell_Frame_Lens(frame))  // see REDO for tail-call recursion
-        fail ("Use REDO to restart a running FRAME! (not DO)");
-
     Level* L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags

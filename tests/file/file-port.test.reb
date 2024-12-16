@@ -260,7 +260,7 @@
             ]
             all [
                 0 != length of buffer  ; RANDOM won't take 0
-                4 = random 4  ; same with /SEEK
+                4 = random 4  ; same with :SEEK
             ] then [
                 seek: (random length of buffer) - 1
             ]

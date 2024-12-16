@@ -11,23 +11,18 @@
 
 INLINE VarList* Cell_Varlist(const Cell* v) {
     assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
-    VarList* list;
     if (Not_Node_Readable(Cell_Node1(v))) {
         if (HEART_BYTE(v) == REB_FRAME)
             fail (Error_Expired_Frame_Raw());  // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
     }
 
-    if (Is_Stub_Varlist(cast(Stub*, Cell_Node1(v)))) {
-        list = cast(VarList*, Cell_Node1(v));
-    }
-    else {
+    while (not Is_Stub_Varlist(cast(Stub*, Cell_Node1(v)))) {
         assert(Cell_Heart_Unchecked(v) == REB_FRAME);
         assert(Is_Stub_Details(cast(Stub*, Cell_Node1(v))));
-        Cell* rootvar = Flex_Head_Dynamic(Cell, cast(Details*, Cell_Node1(v)));
-        list = cast(VarList*, Cell_Node1(rootvar));
+        v = Flex_Head_Dynamic(Cell, cast(Details*, Cell_Node1(v)));
     }
-    return list;
+    return cast(VarList*, Cell_Node1(v));
 }
 
 INLINE Error* Cell_Error(const Cell* c) {

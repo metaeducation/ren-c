@@ -105,27 +105,30 @@ INLINE Option(Details*) Try_Cell_Frame_Details(const Cell* c) {
 // you'd be storing something that wouldn't be stored otherwise, so it would
 // stop being "cheap".
 
-INLINE void Tweak_Cell_Frame_Lens(Cell* v, ParamList* lens) {
+INLINE void Tweak_Cell_Frame_Lens(Cell* v, Phase* lens) {
     assert(HEART_BYTE(v) == REB_FRAME);  // may be protected (e.g. archetype)
-    assert(Is_Stub_Varlist(lens));
+    assert(Is_Stub_Varlist(lens) or Is_Stub_Details(lens));
     Tweak_Cell_Frame_Lens_Or_Label(v, lens);
 }
 
-INLINE Option(ParamList*) Cell_Frame_Lens(const Cell* c) {
+INLINE Option(Phase*) Cell_Frame_Lens(const Cell* c) {
     assert(HEART_BYTE(c) == REB_FRAME);
     Flex* f = Extract_Cell_Frame_Lens_Or_Label(c);
     if (not f or Is_Stub_Symbol(f))
         return nullptr;
-    assert(Is_Stub_Varlist(f));
-    return cast(ParamList*, f);
+    assert(Is_Stub_Varlist(f) or Is_Stub_Details(f));
+    return cast(Phase*, f);
 }
 
 INLINE Option(const Symbol*) Cell_Frame_Label(const Cell* c) {
     assert(HEART_BYTE(c) == REB_FRAME);
     Flex* f = Extract_Cell_Frame_Lens_Or_Label(c);
-    if (not f or Is_Stub_Varlist(f))  // label in value
+    if (not f)
         return nullptr;
-    assert(Is_Stub_Symbol(f));
+    if (not Is_Stub_Symbol(f)) { // label in value
+        assert(Is_Stub_Varlist(f) or Is_Stub_Details(f));
+        return nullptr;
+    }
     return cast(Symbol*, f);
 }
 
@@ -148,7 +151,7 @@ INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
 //    prevention by stopping Init_Frame() calls with plain VarList.
 //
 
-INLINE void Init_Frame_Unchecked_Untracked(
+INLINE Element* Init_Frame_Unchecked_Untracked(
     Init(Element) out,  // may be rootvar
     Flex* phase,  // may not be completed or managed if out is rootvar
     Option(const Symbol*) label,
@@ -158,6 +161,7 @@ INLINE void Init_Frame_Unchecked_Untracked(
     Tweak_Cell_Frame_Phase(out, phase);
     Tweak_Cell_Frame_Lens_Or_Label(out, label);
     Tweak_Cell_Frame_Coupling(out, coupling);
+    return out;
 }
 
 #define Init_Frame_Unchecked(out,identity,label,coupling) \
@@ -171,13 +175,12 @@ INLINE Element* Init_Frame_Untracked(
     Option(VarList*) coupling
 ){
     Force_Flex_Managed(phase);
-    Init_Frame_Unchecked_Untracked(out, phase, label, coupling);
 
   #if RUNTIME_CHECKS
     Extra_Init_Frame_Checks_Debug(phase);
   #endif
 
-    return out;
+    return Init_Frame_Unchecked_Untracked(out, phase, label, coupling);;
 }
 
 #if CPLUSPLUS_11

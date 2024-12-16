@@ -151,6 +151,7 @@ Bounce Encloser_Dispatcher(Level* const L)
         Cell_Frame_Label(inner),
         NONMETHOD
     );
+    Tweak_Cell_Frame_Lens(SPARE, Phase_Paramlist(Cell_Frame_Phase(inner)));
 
     assert(Is_Level_Dispatching(L));
     Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]

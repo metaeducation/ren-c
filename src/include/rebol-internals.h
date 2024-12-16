@@ -266,22 +266,24 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 // There is a significant amount of code that wants to enumerate the parameters
 // of functions or keys of a frame.  It's fairly complex logic, because the
-// same frame context is viewed different ways depending on what phase is
+// same frame context is viewed different ways depending on what "Lens" is
 // encoded in the FRAME! value cell.  Doing it in a callback style creates a
 // lot of inconvenience for C code, needing to wrap up state...so this does
 // it with an enumeration struct.
 
-enum Reb_Var_Visibility {
-    VAR_VISIBILITY_ALL,
-    VAR_VISIBILITY_INPUTS,
-    VAR_VISIBILITY_NONE
+enum LensModeEnum {
+    LENS_MODE_INPUTS,
+    LENS_MODE_PARTIALS,
+    LENS_MODE_ALL_UNSEALED
+    // Note: viewing ALL including sealed could expose duplicate keys, illegal!
 };
+typedef enum LensModeEnum LensMode;
 
 struct Reb_Enum_Vars {
     const Key* key;
     const Key* key_tail;
     Param* param;
-    enum Reb_Var_Visibility visibility;
+    LensMode lens_mode;
     Value* var;
     REBLEN index;  // important for enumerations that are binding
 

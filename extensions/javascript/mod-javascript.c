@@ -859,7 +859,9 @@ DECLARE_NATIVE(js_native)
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN | DETAILS_FLAG_IS_NATIVE
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN
+            | DETAILS_FLAG_IS_NATIVE
+            | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]

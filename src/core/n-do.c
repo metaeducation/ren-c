@@ -512,10 +512,10 @@ DECLARE_NATIVE(eval_free)
     if (Is_Stub_Details(Cell_Frame_Phase(frame)))
         fail ("Can't currently EVAL-FREE a Details-based Stub");
 
-    if (Cell_Frame_Lens(frame))  // see REDO for tail-call recursion
-        fail ("Use REDO to restart a running FRAME! (not DO)");
-
     VarList* varlist = Cell_Varlist(frame);
+
+    if (Level_Of_Varlist_If_Running(varlist))
+        fail ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
 
     Level* L = Make_End_Level(
         &Action_Executor,
@@ -629,8 +629,10 @@ DECLARE_NATIVE(redo)
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(sibling));
     }
     else {
-        redo_phase = Cell_Frame_Phase(restartee);
-        Tweak_Level_Phase(L, Cell_Frame_Phase(restartee));
+        redo_phase = maybe Cell_Frame_Lens(restartee);
+        if (not redo_phase)
+            return FAIL("FRAME! passed to REDO is not Lensed, can't REDO");
+        Tweak_Level_Phase(L, redo_phase);
         Tweak_Level_Coupling(L, Cell_Frame_Coupling(restartee));
     }
 
@@ -715,7 +717,7 @@ DECLARE_NATIVE(applique)
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
     BINDING(def) = Make_Use_Core(
-        Varlist_Archetype(exemplar),
+        cast(Element*, frame),
         Cell_List_Binding(def),
         CELL_FLAG_USE_NOTE_SET_WORDS
     );

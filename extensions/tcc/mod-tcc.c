@@ -303,8 +303,10 @@ DECLARE_NATIVE(make_native)
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN | DETAILS_FLAG_IS_NATIVE,
-        paramlist,
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN
+            | DETAILS_FLAG_IS_NATIVE
+            | DETAILS_FLAG_OWNS_PARAMLIST,
+        Phase_Archetype(paramlist),
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
         IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
     );

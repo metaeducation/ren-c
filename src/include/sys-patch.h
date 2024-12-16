@@ -100,6 +100,8 @@ INLINE Use* Make_Use_Core(
     );
 
     assert(Any_Context(defs) or Is_Word(defs));
+    if (Is_Frame(defs))
+        assert(Is_Stub_Varlist(Cell_Frame_Phase(defs)));
     Copy_Cell(Stub_Cell(use), defs);
 
     if (note)

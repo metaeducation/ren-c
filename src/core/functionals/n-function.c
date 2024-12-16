@@ -239,7 +239,7 @@ Details* Make_Interpreted_Action_May_Fail(
         mkf_flags
     );
 
-    Flags details_flags = 0;
+    Flags details_flags = DETAILS_FLAG_OWNS_PARAMLIST;
     if (mkf_flags & MKF_RETURN)
         details_flags |= DETAILS_FLAG_PARAMLIST_HAS_RETURN;
 
@@ -256,7 +256,7 @@ Details* Make_Interpreted_Action_May_Fail(
     Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
         details,
-        VAR_VISIBILITY_ALL // we created exemplar, see all!
+        LENS_MODE_ALL_UNSEALED // we created exemplar, see all!
     );
 
     // Favor the spec first, then the body, for file and line information.

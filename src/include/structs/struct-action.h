@@ -59,9 +59,16 @@
     STUB_SUBCLASS_FLAG_26
 
 
-//=//// DETAILS_FLAG_27 ///////////////////////////////////////////////////=//
+//=//// DETAILS_FLAG_OWNS_PARAMLIST ////////////////////////////////////////=//
 //
-#define DETAILS_FLAG_27 \
+// When the Cell_Frame_Lens() of a FRAME! is a Details*, then this flag drives
+// whether or not all the variables of the associated ParamList* are visible
+// or just the inputs.  It's important because while ADAPT shares the same
+// ParamList* as the function it's adapting, you shouldn't be able to get
+// at the locals of that adaptee...so it shouldn't use this flag.  But things
+// like FUNCTION need it, otherwise locals and RETURN wouldn't be visible.
+//
+#define DETAILS_FLAG_OWNS_PARAMLIST \
     STUB_SUBCLASS_FLAG_27
 
 
@@ -116,11 +123,6 @@ typedef enum {
 
 
 #define DETAILS_MASK_NONE  0
-
-#define DETAILS_MASK_PROXY ( \
-    DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC \
-        | DETAILS_FLAG_IS_NATIVE \
-        | DETAILS_FLAG_PARAMLIST_HAS_RETURN)
 
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always

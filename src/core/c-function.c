@@ -25,35 +25,6 @@
 #include "sys-core.h"
 
 
-//
-//  Make_Phase_Words_Array: C
-//
-// Returns array of function words, unbound.
-//
-// 1. This used to go through multiple passes, in order to put the refinement
-//    words after all the non-refinement ones.  It's not clear exactly what
-//    the purpose of this routine is any longer, but it was being used by
-//    UPARSE to detect if a parser had a `negated` parameter, which was
-//    a refinement.  Try doing this unsorted for now, as a bare minimum for
-//    making that work.
-//
-Source* Make_Phase_Words_Array(Phase* phase)
-{
-    StackIndex base = TOP_INDEX;
-
-    const Key* key_tail;
-    const Key* key = Phase_Keys(&key_tail, phase);
-    Param* param = Phase_Params_Head(phase);
-    for (; key != key_tail; ++key, ++param) {
-        if (Is_Specialized(param))
-            continue;
-        possibly(Get_Parameter_Flag(param, REFINEMENT));  // sorted? [1]
-        Init_Word(PUSH(), *key);
-    }
-    return Pop_Source_From_Stack(base);
-}
-
-
 enum Reb_Spec_Mode {
     SPEC_MODE_DEFAULT,  // waiting, words seen will be arguments
     SPEC_MODE_PUSHED,  // argument pushed, information can be augmented
@@ -695,7 +666,13 @@ Details* Make_Dispatch_Details(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of Phase_Details (including archetype)
 ){
-    assert(0 == (flags & (~ DETAILS_MASK_PROXY)));  // ensure only legal flags
+    assert(0 == (flags & (~ (  // make sure no stray flags passed in
+        DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC
+            | DETAILS_FLAG_IS_NATIVE
+            | DETAILS_FLAG_PARAMLIST_HAS_RETURN
+            | DETAILS_FLAG_OWNS_PARAMLIST
+    ))));
+
     assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
 
     // "details" for an action is an array of cells which can be anything

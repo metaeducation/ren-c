@@ -855,7 +855,7 @@ VarList* Make_Varlist_Detect_Managed(
 //     2 for value
 //     3 for words and values
 //
-Source* Context_To_Array(const Value* context, REBINT mode)
+Source* Context_To_Array(const Cell* context, REBINT mode)
 {
     assert(!(mode & 4));
 
@@ -900,7 +900,7 @@ Source* Context_To_Array(const Value* context, REBINT mode)
 
     Shutdown_Evars(&e);
 
-    Source* a = Pop_Managed_Source_From_Stack(base);
+    Source* a = Pop_Source_From_Stack(base);
     if (mode & 2)
         Set_Source_Flag(a, NEWLINE_AT_TAIL);
 

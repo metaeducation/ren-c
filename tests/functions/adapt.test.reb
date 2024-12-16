@@ -10,8 +10,8 @@
     capture: blank
     /foo: adapt any/ [capture: block]
     all [
-      foo [1 2 3]
-      capture = [1 2 3]
+        foo [1 2 3]
+        capture = [1 2 3]
     ]
 )
 (
@@ -34,7 +34,7 @@
         /foo: func [x] [return "available now"]
         /bar: adapt foo/ [
             captured-x: x
-            assert [unspecialized? $return]
+            assert [not has binding of $x 'return]
         ]
         all [
             "available now" = bar 1020

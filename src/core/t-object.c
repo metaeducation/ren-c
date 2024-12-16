@@ -55,35 +55,21 @@
 // The init initializes to one behind the enumeration, so you have to call
 // Try_Advance_Evars() on even the first.
 //
-//////////////////////////////////////////////////////////////////////////////
-//
-//
-// 1. There's no clear best answer to whether the locals should be visible when
-//    enumerating an action, only the caller knows if it's a context where they
-//    should be.  Guess conservatively and let them set e->visibility if they
-//    think they should see more.
-//
-// 2. !!! Module enumeration is slow, and you should not do it often...it
-//    requires walking over the global word table.  The global table gets
-//    rehashed in a way that we'd have a hard time maintainining a consistent
-//    enumerator state in the current design.  So for the moment we fabricate
-//    an array to enumerate.  The enumeration won't see changes.
-//
-// 3. The frame can be phaseless, which means it is not running (such as the
-//    direct result of a MAKE FRAME! call, which is awaiting an EVAL to start).
-//    These frames should only show variables on the public interface.
-//
-// 4. Since phases can reuse exemplars, we have to check for an exact match of
-//    the action of the exemplar with the phase in order to know if the locals
-//    should be visible.  If you ADAPT a function that reuses its exemplar,
-//    but should not be able to see the locals (for instance).
-//
 void Init_Evars(EVARS *e, const Cell* v) {
     Heart heart = Cell_Heart(v);
 
-    e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
+    e->lens_mode = LENS_MODE_ALL_UNSEALED;  // ensure not uninitialized
 
     if (heart == REB_MODULE) {  // !!! module enumeration is bad/slow [2]
+
+  //=//// MODULE ENUMERATION //////////////////////////////////////////////=//
+
+    // !!! Module enumeration is slow, and you should not do it often...it
+    // requires walking over the global word table.  The global table gets
+    // rehashed in a way that we'd have a hard time maintainining a consistent
+    // enumerator state in the current design.  So for the moment we fabricate
+    // an array to enumerate.  The enumeration won't see changes.
+
         e->index = INDEX_PATCHED;
 
         e->ctx = Cell_Varlist(v);
@@ -145,12 +131,29 @@ void Init_Evars(EVARS *e, const Cell* v) {
             e->key = Varlist_Keys(&e->key_tail, e->ctx) - 1;
         }
         else {
+
+  //=//// FRAME ENUMERATION ///////////////////////////////////////////////=//
+
+    // 1. It makes the most sense for unlensed frames to show the inputs only.
+    //    This is because the Lens slot is used for a label when not lensed,
+    //    common with antiforms.
+
             e->var = Varlist_Slots_Head(e->ctx) - 1;
 
-            ParamList* lens = maybe Cell_Frame_Lens(v);
-            if (not lens) {  // not running, inputs visible [3]
-                e->visibility = VAR_VISIBILITY_INPUTS;
-                lens = Phase_Paramlist(Cell_Frame_Phase(v));
+            Phase* lens = maybe Cell_Frame_Lens(v);
+            if (not lens) {  // unlensed, only inputs visible [1]
+                e->lens_mode = LENS_MODE_INPUTS;
+                lens = Cell_Frame_Phase(v);
+            }
+            else if (Is_Stub_Varlist(lens)) {
+                e->lens_mode = LENS_MODE_PARTIALS;
+            }
+            else {
+                assert(Is_Stub_Details(lens));
+                if (Get_Details_Flag(cast(Details*, lens), OWNS_PARAMLIST))
+                    e->lens_mode = LENS_MODE_ALL_UNSEALED;  // (func, etc.)
+                else
+                    e->lens_mode = LENS_MODE_INPUTS;  // (adapt, etc.)
             }
 
             e->param = Phase_Params_Head(lens) - 1;
@@ -191,16 +194,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 //    the copy.  The hidden bit must be added during that copy in order to
 //    honor this property.)
 //
-// 2. !!! Unfortunately, the code for associating comments with return and
-//    output parameters uses a FRAME! for the function to do it.  This means
-//    that it expects keys for those values as public.  A rethought mechanism
-//    will be needed to keep HELP working if we actually suppress these from
-//    the "input" view of a FRAME!.
-//
 bool Try_Advance_Evars(EVARS *e) {
-    if (e->visibility == VAR_VISIBILITY_NONE)
-        return false;
-
     if (e->word) {
         while (++e->word != e->word_tail) {
             e->var = MOD_VAR(
@@ -243,22 +237,20 @@ bool Try_Advance_Evars(EVARS *e) {
                 continue;
             }
 
-            if (e->visibility == VAR_VISIBILITY_ALL)
-                return true;  // private sees ONE level of specialization
+            if (e->lens_mode == LENS_MODE_ALL_UNSEALED)
+                return true;  // anything that wasn't "sealed" is fair game
 
-            // !!! This used to be:
-            //
-            //    if (Is_Specialized(e->param))
-            //       continue;
-            //
-            // But that has the problem that if a frame has been filled (e.g.
-            // ENCLOSE) you won't see the parameters for tweaking.  Temporary
-            // solution is to go by type checking, assuming anything that has
-            // not been type checked is available to tweak--and hence should
-            // be present on the interface.
-            //
-            if (not Is_Typechecked(e->param))  // show non-typecheck arg
+            if (e->lens_mode == LENS_MODE_INPUTS) {
+                if (Is_Specialized(e->param))
+                    continue;
                 return true;
+            }
+
+            assert(e->lens_mode == LENS_MODE_PARTIALS);
+            if (not Is_Hole(cast(Value*, e->param)))
+                continue;
+
+            return true;
         }
 
         return true;
@@ -422,11 +414,10 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
         NOTHING_VALUE  // use COPY UNRUN FRAME! for parameters vs. nothing
     );
 
-    // See notes in %c-specialize.c about the special encoding used to
-    // put /REFINEMENTs in refinement slots (instead of true/false/null)
-    // to preserve the order of execution.
+    Init_Frame(OUT, exemplar, label, coupling);
+    Tweak_Cell_Frame_Lens(OUT, Phase_Paramlist(Cell_Frame_Phase(arg)));
 
-    return Init_Frame(OUT, exemplar, label, coupling);
+    return OUT;
 }
 
 
@@ -1224,7 +1215,7 @@ DECLARE_GENERICS(Frame)
             return COPY(Phase_Archetype(Cell_Frame_Phase(frame)));
 
           case SYM_WORDS:
-            return Init_Block(OUT, Make_Phase_Words_Array(phase));
+            return Init_Block(OUT, Context_To_Array(frame, 1));
 
           case SYM_BODY:
             Get_Maybe_Fake_Action_Body(OUT, frame);
@@ -1396,7 +1387,7 @@ void MF_Frame(Molder* mo, const Cell* v, bool form) {
         Append_Codepoint(mo->string, ' ');
     }
 
-    Array* parameters = Make_Phase_Words_Array(Cell_Frame_Phase(v));
+    Array* parameters = Context_To_Array(v, 1);
     Mold_Array_At(mo, parameters, 0, "[]");
     Free_Unmanaged_Flex(parameters);
 

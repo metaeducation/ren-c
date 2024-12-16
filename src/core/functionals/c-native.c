@@ -88,7 +88,8 @@ Details* Make_Native_Dispatch_Details(
 
     Flags details_flags = (
         DETAILS_FLAG_PARAMLIST_HAS_RETURN
-            | DETAILS_FLAG_IS_NATIVE);
+            | DETAILS_FLAG_IS_NATIVE
+            | DETAILS_FLAG_OWNS_PARAMLIST);
 
     if (native_type == NATIVE_INTRINSIC)
         details_flags |= DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC;

@@ -247,7 +247,7 @@ DECLARE_NATIVE(combinator)
     Array* relativized = Copy_And_Bind_Relative_Deep_Managed(
         body,
         details,
-        VAR_VISIBILITY_ALL
+        LENS_MODE_ALL_UNSEALED
     );
 
     Init_Relative_Block(

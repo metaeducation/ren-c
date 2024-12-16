@@ -157,7 +157,7 @@ DECLARE_NATIVE(adapt)
     Source* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(  // copy [2]
         prelude,
         details,
-        VAR_VISIBILITY_INPUTS  // adapted code should not see adaptee locals
+        LENS_MODE_INPUTS  // adapted code should not see adaptee locals
     );
 
     Element* rebound = Init_Block(

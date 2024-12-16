@@ -2,9 +2,9 @@
 ;
 ; The FRAME! type is foundational to the mechanics of Ren-C vs. historical
 ; Rebol.  While its underlying storage is similar to an OBJECT!, it has a
-; more complex mechanic based on being able to be seen through the lens of
-; multiple different "views" based on which phase of a function composition
-; it has been captured for.
+; more complex mechanic based on being able to be seen through multiple
+; different "Lenses" based on which phase of a function composition it has
+; been captured for.
 
 
 ; Due to some fundamental changes to how parameter lists work, such that
@@ -32,9 +32,9 @@
         f.series = [a b c <d> <d>]
         f.value = <d>
         [a b c <d> <d> <d>] = eval-free f
-        'stale-frame = pick sys.util/rescue [eval f] 'id
-        'bad-pick = pick sys.util/rescue [f.series] 'id
-        'bad-pick = pick sys.util/rescue [f.value] 'id
+        'series-data-freed = pick sys.util/rescue [eval f] 'id
+        'series-data-freed = pick sys.util/rescue [f.series] 'id
+        'series-data-freed = pick sys.util/rescue [f.value] 'id
     ]
 )
 
@@ -121,7 +121,7 @@
 
         assert [private = <not-in-prelude>]  ; should be untouched
 
-        f-outer-augment: make frame! unrun :augmented-foo
+        f-outer-augment: make frame! augmented-foo/
         f-outer-augment.public: 1020
         f-outer-augment.additional: 1020304
 
@@ -132,7 +132,7 @@
 
     (f-outer-augment.public = 1020)
     (f-outer-augment.additional = 1020304)
-    (unspecialized? $f-outer-augment.private)  ; we didn't assign it
+    (unset? $f-outer-augment.private)  ; we didn't assign it
 
     (f-inner-augment.public = 1020)
     (f-inner-augment.additional = 1020304)

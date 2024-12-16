@@ -221,6 +221,9 @@ bool Init_Invokable_From_Feed_Throws(
     Set_Node_Managed_Bit(varlist);  // can't use Manage_Flex
 
     Init_Frame(out, varlist, label, coupling);
+
+    Tweak_Cell_Frame_Lens(out, Phase_Paramlist(Cell_Frame_Phase(action)));
+
     return false;  // didn't throw
 }
 
@@ -358,11 +361,12 @@ Details* Alloc_Action_From_Exemplar(
         }
     }
 
-    // This code parallels Specialize_Action_Throws(), see comments there
+    DECLARE_ELEMENT (elem);
+    Init_Frame(elem, paramlist, ANONYMOUS, NONMETHOD);
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        Phase_Archetype(paramlist),
+        elem,
         dispatcher,
         details_capacity
     );
@@ -450,6 +454,7 @@ DECLARE_NATIVE(reframer)
     Copy_Cell(var, Varlist_Archetype(exemplar));
 
     Manage_Flex(exemplar);
+
     Details* details = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         label,
@@ -460,5 +465,5 @@ DECLARE_NATIVE(reframer)
     Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(shim));
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
-    return Init_Action(OUT, details, label, UNBOUND);
+    return Init_Action(OUT, details, label, NONMETHOD);
 }

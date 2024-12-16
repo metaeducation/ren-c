@@ -90,7 +90,6 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     for (; key != tail; ++key, ++param, ++arg, ++index) {
         if (Is_Specialized(param)) {  // includes locals
             Blit_Param_Keep_Mark(arg, param);
-            Set_Cell_Flag(arg, VAR_MARKED_HIDDEN);  // !!! test
 
           continue_specialized:
 

@@ -748,7 +748,7 @@ DECLARE_NATIVE(typechecker)
 //          [any-value?]
 //      test "Type specification, can use NULL instead of [null?]"  ; [1]
 //          [~null~ block! type-word! type-group! type-block! parameter!]
-//      value "If not /META, NULL values illegal, and VOID returns NULL"  ; [2]
+//      value "If not :META, NULL values illegal, and VOID returns NULL"  ; [2]
 //          [any-value?]
 //      :meta "Return the ^^META result (allows checks on NULL and VOID)"
 //  ]

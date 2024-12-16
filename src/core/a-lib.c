@@ -3254,7 +3254,7 @@ RebolValue* API_rebFunc(
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN,
+        DETAILS_FLAG_PARAMLIST_HAS_RETURN | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Api_Function_Dispatcher,
         IDX_API_ACTION_MAX

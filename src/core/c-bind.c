@@ -378,8 +378,20 @@ Option(Stub*) Get_Word_Container(
                 return vlist;
             }
 
+            DECLARE_ELEMENT (elem);
+            if (CTX_TYPE(vlist) == REB_FRAME) {
+                Init_Frame(elem, cast(ParamList*, vlist), nullptr, NONMETHOD);
+                Tweak_Cell_Frame_Lens(
+                    elem,
+                    Phase_Details(cast(ParamList*, vlist))
+                );
+            }
+            else {
+                Copy_Cell(elem, Varlist_Archetype(vlist));
+            }
+
             Option(Index) index = Find_Symbol_In_Context(  // must search
-                Varlist_Archetype(vlist),
+                elem,
                 symbol,
                 true
             );
@@ -1026,7 +1038,7 @@ void Clonify_And_Bind_Relative(
 Source* Copy_And_Bind_Relative_Deep_Managed(
     const Value* body,
     Details* relative,
-    enum Reb_Var_Visibility visibility
+    LensMode lens_mode
 ){
     DECLARE_BINDER (binder);
     Construct_Binder(binder);
@@ -1040,7 +1052,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
   blockscope {
     EVARS e;
     Init_Evars(&e, Phase_Archetype(relative));
-    e.visibility = visibility;
+    e.lens_mode = lens_mode;
     while (Try_Advance_Evars(&e))
         Add_Binder_Index(binder, Key_Symbol(e.key), e.index);
     Shutdown_Evars(&e);
