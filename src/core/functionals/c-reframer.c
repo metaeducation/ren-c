@@ -187,7 +187,6 @@ bool Init_Invokable_From_Feed_Throws(
     Move_Cell(action, out);
     Push_Lifeguard(action);
 
-    Option(const Symbol*) label = Cell_Frame_Label(action);
     Option(VarList*) coupling = Cell_Frame_Coupling(action);
 
     Level* L = Make_Pushed_Level_From_Action_Feed_May_Throw(
@@ -220,9 +219,8 @@ bool Init_Invokable_From_Feed_Throws(
 
     Set_Node_Managed_Bit(varlist);  // can't use Manage_Flex
 
-    Init_Frame(out, varlist, label, coupling);
-
-    Tweak_Cell_Frame_Lens(out, Phase_Paramlist(Cell_Frame_Phase(action)));
+    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(action));
+    Init_Lensed_Frame(out, varlist, lens, coupling);
 
     return false;  // didn't throw
 }
@@ -411,7 +409,7 @@ DECLARE_NATIVE(reframer)
     INCLUDE_PARAMS_OF_REFRAMER;
 
     Phase* shim = Cell_Frame_Phase(ARG(shim));
-    Option(const Symbol*) label = Cell_Frame_Label(ARG(shim));
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(shim));
 
     DECLARE_BINDER (binder);
     Construct_Binder(binder);

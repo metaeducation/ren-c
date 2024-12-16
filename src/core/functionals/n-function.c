@@ -614,7 +614,7 @@ DECLARE_NATIVE(definitional_return)
 
         Restart_Action_Level(target_level);
         Push_Action(target_level, atom);
-        Begin_Action(target_level, Cell_Frame_Label(atom), PREFIX_0);
+        Begin_Action(target_level, Cell_Frame_Label_Deep(atom), PREFIX_0);
 
         Release_Feed(target_level->feed);
         target_level->feed = return_level->feed;

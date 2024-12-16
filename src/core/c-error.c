@@ -342,7 +342,9 @@ void Set_Location_Of_Error(
     Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
         if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
-            Option(const Symbol*) label = Cell_Frame_Label(Level_Scratch(L));
+            Option(const Symbol*) label = Cell_Frame_Label_Deep(
+                Level_Scratch(L)
+            );
             if (label)
                 Init_Word(PUSH(), unwrap label);
             else
@@ -945,7 +947,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         details = Ensure_Cell_Frame_Details(SCRATCH);
         arg = stable_SPARE;
-        Option(const Symbol*) symbol = Cell_Frame_Label(SCRATCH);
+        Option(const Symbol*) symbol = Cell_Frame_Label_Deep(SCRATCH);
         if (symbol)
             Init_Word(label, unwrap symbol);
         else

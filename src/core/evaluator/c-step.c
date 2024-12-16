@@ -460,7 +460,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(const Symbol*) label = Is_Word(CURRENT)
         ? Cell_Word_Symbol(CURRENT)
-        : Cell_Frame_Label(CURRENT);
+        : Cell_Frame_Label_Deep(CURRENT);
 
     Begin_Action(sub, label, infix_mode);
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
@@ -546,7 +546,7 @@ Bounce Stepper_Executor(Level* L)
         Push_Action(sub, CURRENT);
         Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
         assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
-        Begin_Action(sub, Cell_Frame_Label(CURRENT), infix_mode);
+        Begin_Action(sub, Cell_Frame_Label_Deep(CURRENT), infix_mode);
         Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
         goto process_action; }
@@ -898,7 +898,7 @@ Bounce Stepper_Executor(Level* L)
         Level* sub = Make_Action_Sublevel(L);
         sub->baseline.stack_base = STACK_BASE;  // refinements
 
-        Option(const Symbol*) label = Cell_Frame_Label(OUT);
+        Option(const Symbol*) label = Cell_Frame_Label_Deep(OUT);
 
         Push_Action(sub, OUT);
         Begin_Action(sub, label, PREFIX_0);  // not infix so, sub state is 0
@@ -2057,7 +2057,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(const Symbol*) label = Is_Word(L_next)
         ? Cell_Word_Symbol(L_next)
-        : Cell_Frame_Label(L_next);
+        : Cell_Frame_Label_Deep(L_next);
 
     Begin_Action(sub, label, infix_mode);
     Fetch_Next_In_Feed(L->feed);

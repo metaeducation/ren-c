@@ -108,16 +108,15 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     StackIndex base = TOP_INDEX;  // we push refinements as we find them
 
     ParamList* varlist = Varlist_Of_Level_Force_Managed(L1);
+    ParamList* lens = Phase_Paramlist(
+        Cell_Frame_Phase(Phase_Archetype(varlist))
+    );
     DECLARE_ELEMENT (frame1);
-    Init_Frame(
+    Init_Lensed_Frame(
         frame1,
         varlist,
-        Level_Label(L1),
+        lens,
         Level_Coupling(L1)
-    );
-    Tweak_Cell_Frame_Lens(
-        frame1,
-        Phase_Paramlist(Cell_Frame_Phase(Phase_Archetype(varlist)))
     );
 
     EVARS e;  // use EVARS to get parameter reordering right (in theory?)
@@ -158,7 +157,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 
     Push_Level_Erase_Out_If_State_0(out, L2);
     Push_Action(L2, run);
-    Begin_Action(L2, Cell_Frame_Label(run), PREFIX_0);
+    Begin_Action(L2, Cell_Frame_Label_Deep(run), PREFIX_0);
 }
 
 

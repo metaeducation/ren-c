@@ -102,7 +102,7 @@ DECLARE_NATIVE(reorder)
     INCLUDE_PARAMS_OF_REORDER;
 
     Phase* reorderee = Cell_Frame_Phase(ARG(original));
-    Option(const Symbol*) label  = Cell_Frame_Label(ARG(original));
+    Option(const Symbol*) label  = Cell_Frame_Label_Deep(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the

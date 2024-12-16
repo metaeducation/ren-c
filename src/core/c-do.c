@@ -54,7 +54,7 @@ void Prep_Action_Level(
     Option(const Atom*) with
 ){
     Push_Action(L, action);
-    Begin_Action(L, Cell_Frame_Label(action), PREFIX_0);
+    Begin_Action(L, Cell_Frame_Label_Deep(action), PREFIX_0);
 
     const Key* key = L->u.action.key;
     const Param* param = L->u.action.param;

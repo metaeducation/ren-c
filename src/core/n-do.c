@@ -149,7 +149,7 @@ DECLARE_NATIVE(shove)
     Option(InfixMode) infix_mode;
     if (Is_Frame(shovee)) {
         if (not label)
-            label = Cell_Frame_Label(shovee);
+            label = Cell_Frame_Label_Deep(shovee);
         infix_mode = Get_Cell_Infix_Mode(shovee);
     }
     else {
@@ -541,7 +541,7 @@ DECLARE_NATIVE(eval_free)
     L->u.action.param = Phase_Params_Head(phase);
     L->u.action.arg = L->rootvar + 1;
 
-    Begin_Action(L, Cell_Frame_Label(frame), PREFIX_0);
+    Begin_Action(L, Cell_Frame_Label_Deep(frame), PREFIX_0);
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
@@ -1062,7 +1062,7 @@ DECLARE_NATIVE(run)
     Level* sub = Make_Action_Sublevel(level_);
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     Push_Action(sub, action);
-    Begin_Action(sub, Cell_Frame_Label(action), PREFIX_0);
+    Begin_Action(sub, Cell_Frame_Label_Deep(action), PREFIX_0);
 
     return DELEGATE_SUBLEVEL(sub);
 }

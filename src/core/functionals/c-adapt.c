@@ -166,5 +166,5 @@ DECLARE_NATIVE(adapt)
     );
     BINDING(rebound) = Cell_List_Binding(prelude);
 
-    return Init_Action(OUT, details, Cell_Frame_Label(adaptee), UNBOUND);
+    return Init_Action(OUT, details, Cell_Frame_Label_Deep(adaptee), UNBOUND);
 }

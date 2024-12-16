@@ -89,7 +89,7 @@ DECLARE_NATIVE(augment)
     Element* spec = cast(Element*, ARG(spec));
     Element* original = cast(Element*, ARG(original));
 
-    Option(const Symbol*) label = Cell_Frame_Label(original);
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(original);
     Option(VarList*) coupling = Cell_Frame_Coupling(original);
 
     Phase* augmentee = Cell_Frame_Phase(original);

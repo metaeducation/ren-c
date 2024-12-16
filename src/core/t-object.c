@@ -404,7 +404,6 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
     if (not Is_Frame(arg))
         return RAISE(Error_Bad_Make(REB_FRAME, arg));
 
-    Option(const Symbol*) label = Cell_Frame_Label(arg);
     Option(VarList*) coupling = Cell_Frame_Coupling(arg);
 
     ParamList* exemplar = Make_Varlist_For_Action(
@@ -414,8 +413,8 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
         NOTHING_VALUE  // use COPY UNRUN FRAME! for parameters vs. nothing
     );
 
-    Init_Frame(OUT, exemplar, label, coupling);
-    Tweak_Cell_Frame_Lens(OUT, Phase_Paramlist(Cell_Frame_Phase(arg)));
+    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(arg));
+    Init_Lensed_Frame(OUT, exemplar, lens, coupling);
 
     return OUT;
 }
@@ -1199,7 +1198,7 @@ DECLARE_GENERICS(Frame)
             return COPY(Varlist_Archetype(unwrap coupling)); }
 
           case SYM_LABEL: {
-            Option(const Symbol*) label = Cell_Frame_Label(frame);
+            Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
             if (label)
                 return Init_Word(OUT, unwrap label);
 
@@ -1324,10 +1323,11 @@ DECLARE_GENERICS(Frame)
             nullptr  // no placeholder, use parameters
         );
 
-        return Init_Frame(
+        ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(frame));
+        return Init_Lensed_Frame(
             OUT,
             copy,
-            Cell_Frame_Label(frame),
+            lens,
             Cell_Frame_Coupling(frame)
         ); }
 
@@ -1379,7 +1379,7 @@ void MF_Frame(Molder* mo, const Cell* v, bool form) {
 
     Append_Ascii(mo->string, "#[frame! ");
 
-    Option(const Symbol*) label = Cell_Frame_Label(v);
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(v);
     if (label) {
         Append_Codepoint(mo->string, '"');
         Append_Spelling(mo->string, unwrap label);

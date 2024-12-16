@@ -167,7 +167,7 @@ Bounce Cascader_Executor(Level* const L)
     Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
 
     sub->u.action.original = Cell_Frame_Phase(first);
-    Set_Action_Level_Label(sub, Cell_Frame_Label(first));
+    Set_Action_Level_Label(sub, Cell_Frame_Label_Deep(first));
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
@@ -204,7 +204,7 @@ Bounce Cascader_Executor(Level* const L)
     Restart_Action_Level(sub);  // see notes
     Push_Action(sub, pipeline_at);
 
-    Begin_Action(sub, Cell_Frame_Label(pipeline_at), PREFIX_0);
+    Begin_Action(sub, Cell_Frame_Label_Deep(pipeline_at), PREFIX_0);
 
     LEVEL_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [1]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
@@ -274,5 +274,5 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         pipeline
     );
 
-    return Init_Action(out, details, Cell_Frame_Label(first), NONMETHOD);
+    return Init_Action(out, details, Cell_Frame_Label_Deep(first), NONMETHOD);
 }

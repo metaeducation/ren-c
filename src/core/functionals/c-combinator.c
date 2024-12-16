@@ -745,7 +745,7 @@ DECLARE_NATIVE(combinatorize)
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     Phase* phase = Cell_Frame_Phase(ARG(combinator));
-    Option(const Symbol*) label = Cell_Frame_Label(ARG(combinator));
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(combinator));
     Option(VarList*) coupling = Cell_Frame_Coupling(ARG(combinator));
 
     Value* rule_start = ARG(rule_start);

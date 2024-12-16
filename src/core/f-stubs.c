@@ -300,16 +300,6 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
         not CTX_ADJUNCT(v)
         or Any_Context_Kind(CTX_TYPE(unwrap CTX_ADJUNCT(v)))
     );
-
-    // FRAME!s must always fill in the lens slot, but that piece of the
-    // Cell is reserved for future use in other context types...so make
-    // sure it's null at this point in time.
-    //
-    Flex* archetype_lens = Extract_Cell_Frame_Lens_Or_Label(archetype);
-    if (CTX_TYPE(v) == REB_FRAME)
-        assert(Is_Stub_Details(archetype_lens));
-    else
-        assert(archetype_lens == nullptr);
 }
 
 

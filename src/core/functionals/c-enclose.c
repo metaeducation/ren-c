@@ -145,13 +145,13 @@ Bounce Encloser_Dispatcher(Level* const L)
     possibly(Is_Node_Managed(varlist));
     Set_Node_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
-    Element* arg = Init_Frame(  // this is the FRAME! passed as an arg [5]
+    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(inner));
+    Element* arg = Init_Lensed_Frame(  // the FRAME! passed as an arg [5]
         SPARE,
         cast(ParamList*, varlist),
-        Cell_Frame_Label(inner),
-        NONMETHOD
+        lens,
+        Cell_Frame_Coupling(inner)
     );
-    Tweak_Cell_Frame_Lens(SPARE, Phase_Paramlist(Cell_Frame_Phase(inner)));
 
     assert(Is_Level_Dispatching(L));
     Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]

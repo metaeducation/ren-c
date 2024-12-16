@@ -380,10 +380,9 @@ Option(Stub*) Get_Word_Container(
 
             DECLARE_ELEMENT (elem);
             if (CTX_TYPE(vlist) == REB_FRAME) {
-                Init_Frame(elem, cast(ParamList*, vlist), nullptr, NONMETHOD);
-                Tweak_Cell_Frame_Lens(
-                    elem,
-                    Phase_Details(cast(ParamList*, vlist))
+                Details* lens = Phase_Details(cast(ParamList*, vlist));
+                Init_Lensed_Frame(
+                    elem, cast(ParamList*, vlist), lens, NONMETHOD
                 );
             }
             else {

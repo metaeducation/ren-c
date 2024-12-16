@@ -132,6 +132,13 @@ INLINE Option(const Symbol*) Cell_Frame_Label(const Cell* c) {
     return cast(Symbol*, f);
 }
 
+INLINE Option(const Symbol*) Cell_Frame_Label_Deep(const Cell* c) {
+    Option(const Symbol*) label = Cell_Frame_Label(c);
+    if (label)
+        return label;
+    return Cell_Frame_Label(Phase_Archetype(Cell_Frame_Phase(c)));
+}
+
 INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
     assert(HEART_BYTE(c) == REB_FRAME);
     Assert_Cell_Writable(c);  // archetype R/O
@@ -154,12 +161,12 @@ INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
 INLINE Element* Init_Frame_Unchecked_Untracked(
     Init(Element) out,  // may be rootvar
     Flex* phase,  // may not be completed or managed if out is rootvar
-    Option(const Symbol*) label,
+    Option(const Flex*) lens_or_label,
     Option(VarList*) coupling
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
     Tweak_Cell_Frame_Phase(out, phase);
-    Tweak_Cell_Frame_Lens_Or_Label(out, label);
+    Tweak_Cell_Frame_Lens_Or_Label(out, maybe lens_or_label);
     Tweak_Cell_Frame_Coupling(out, coupling);
     return out;
 }
@@ -171,7 +178,7 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
 INLINE Element* Init_Frame_Untracked(
     Init(Element) out,
     Phase* phase,
-    Option(const Symbol*) label,
+    Option(const Flex*) lens_or_label,
     Option(VarList*) coupling
 ){
     Force_Flex_Managed(phase);
@@ -180,24 +187,36 @@ INLINE Element* Init_Frame_Untracked(
     Extra_Init_Frame_Checks_Debug(phase);
   #endif
 
-    return Init_Frame_Unchecked_Untracked(out, phase, label, coupling);;
+    return Init_Frame_Unchecked_Untracked(out, phase, lens_or_label, coupling);
 }
 
 #if CPLUSPLUS_11
     template<
-        typename T,
-        typename std::enable_if<std::is_same<T,VarList>::value>::type* = nullptr
+        typename P,
+        typename L,
+        typename std::enable_if<
+            std::is_same<P,VarList*>::value
+            or not (
+                std::is_convertible<L,Option(const Symbol*)>::value
+                or std::is_convertible<L,Option(Phase*)>::value
+            )
+        >::type* = nullptr
     >
     void Init_Frame_Untracked(
         Init(Element) out,
-        T* identity,  // mitigate awkward "VarList inherits Phase" [1]
-        Option(const Symbol*) label,
+        P phase,  // mitigate awkward "VarList inherits Phase" [1]
+        L lens_or_label,  // restrict to Option(const Symbol*), Option(Phase*)
         Option(VarList*) coupling
     ) = delete;
 #endif
 
 #define Init_Frame(out,identity,label,coupling) \
-    TRACK(Init_Frame_Untracked((out), (identity), (label), (coupling)))
+    TRACK(Init_Frame_Untracked((out), (identity), \
+        ensure(Option(const Symbol*), (label)), (coupling)))
+
+#define Init_Lensed_Frame(out,identity,lens,coupling) \
+    TRACK(Init_Frame_Untracked((out), (identity), \
+        ensure(Phase*, (lens)), (coupling)))
 
 
 //=//// ACTIONS (FRAME! Antiforms) ////////////////////////////////////////=//
@@ -224,7 +243,7 @@ INLINE Element* Init_Frame_Untracked(
 #define Init_Action(out,a,label,coupling) \
     Actionify(cast(Value*, Init_Frame( \
         ensure(Sink(Value), (out)), (a), (label), (coupling)) \
-    ))
+    ))  // note that antiform frames can't have lenses, only labels
 
 INLINE Value* Actionify(Need(Value*) v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);

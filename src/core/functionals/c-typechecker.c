@@ -394,7 +394,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             );
             Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // write sub's output to L->scratch
             Push_Action(sub, test);
-            Begin_Action(sub, Cell_Frame_Label(test), PREFIX_0);
+            Begin_Action(sub, Cell_Frame_Label_Deep(test), PREFIX_0);
 
             const Key* key = sub->u.action.key;
             const Param* param = sub->u.action.param;

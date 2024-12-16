@@ -333,13 +333,13 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
             if (L == nullptr)
                 Init_Frame(out, cast(ParamList*, c), ANONYMOUS, NONMETHOD);
             else {
-                Init_Frame(
+                Phase* lens = Level_Phase(L);
+                Init_Lensed_Frame(
                     out,
                     Varlist_Of_Level_Force_Managed(L),
-                    Level_Label(L),
+                    lens,
                     Level_Coupling(L)
                 );
-                Tweak_Cell_Frame_Lens(out, Level_Phase(L));
             }
         }
         else
