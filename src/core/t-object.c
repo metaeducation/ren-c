@@ -247,7 +247,7 @@ bool Try_Advance_Evars(EVARS *e) {
             }
 
             assert(e->lens_mode == LENS_MODE_PARTIALS);
-            if (not Is_Hole(cast(Value*, e->param)))
+            if (not Is_Parameter(e->param))
                 continue;
 
             return true;
@@ -1209,9 +1209,13 @@ DECLARE_GENERICS(Frame)
 
             break; }
 
-          case SYM_EXEMPLAR:
-          case SYM_TYPES:  // !!! Does this name make sense?
-            return COPY(Phase_Archetype(Cell_Frame_Phase(frame)));
+          case SYM_PARAMETERS:
+            return Init_Frame(
+                OUT,
+                Cell_Frame_Phase(frame),
+                ANONYMOUS,
+                Cell_Frame_Coupling(frame)
+            );
 
           case SYM_WORDS:
             return Init_Block(OUT, Context_To_Array(frame, 1));
@@ -1228,9 +1232,12 @@ DECLARE_GENERICS(Frame)
             assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
             ParamList* exemplar = Phase_Paramlist(details);
             Value* param = Varlist_Slots_Head(exemplar);
-            assert(Is_Parameter(param));
+            assert(
+                QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+                and HEART_BYTE(param) == REB_PARAMETER
+            );
             Copy_Cell(OUT, param);
-            QUOTE_BYTE(OUT) = NOQUOTE_1;  // no reason to give back antiform
+            QUOTE_BYTE(OUT) = NOQUOTE_1;  // don't give back quoted form
             return OUT; }
 
           case SYM_FILE:

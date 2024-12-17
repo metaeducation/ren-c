@@ -3167,7 +3167,10 @@ Bounce Api_Function_Dispatcher(Level* const L)
     const Param* param = Phase_Params_Head(details);
 
     Value* cell = Level_Arg(L, 1);
-    assert(Is_Parameter(cell));
+    assert(
+        QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
+        and HEART_BYTE(cell) == REB_PARAMETER
+    );
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,

@@ -44,7 +44,7 @@
         return ~[]~
     ]
     /outer: enclose inner/ func [return: [quoted? quasiform!] f] [
-        return ^(eval-free f)  ; don't unquote it here
+        return ^(eval-free:undecayed f)  ; don't unquote it here
     ]
     all [
         '~[]~ = outer
@@ -57,7 +57,7 @@
         return ~[]~
     ]
     /outer: enclose inner/ func [return: [~[]~ any-value?] f] [
-        return eval-free f  ; now try unquoting
+        return eval-free:undecayed f  ; now try unquoting
     ]
     all [
         '~[]~ = ^(outer)
@@ -76,7 +76,7 @@
     110 = wrapped 10
 )
 
-~bad-pick~ !! (
+~series-data-freed~ !! (
     /wrapped: enclose (
         func [in] [return pack [~, in + 1]]
     ) f -> [

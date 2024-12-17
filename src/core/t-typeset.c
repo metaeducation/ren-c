@@ -354,30 +354,6 @@ void Set_Parameter_Spec(
 
 
 //
-//  /hole?: native:intrinsic [
-//
-//  "Tells you if argument is parameter antiform, used for unspecialized args"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(hole_q)
-{
-    INCLUDE_PARAMS_OF_HOLE_Q;
-
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(
-        v, LEVEL
-    );
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(Is_Hole(v));
-}
-
-
-//
 //  Makehook_Parameter: C
 //
 Bounce Makehook_Parameter(Level* level_, Heart heart, Element* arg) {

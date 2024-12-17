@@ -108,7 +108,7 @@ pair        "two dimensional point or size"
             [pair        +       +]
 
 parameter   "function parameter description"
-~hole~      (node1 node2)
+            (node1 node2)
             [any-inert?]
             [parameter   +       +]
 

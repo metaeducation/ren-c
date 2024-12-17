@@ -85,5 +85,5 @@
     (null? map-each 'x ~void~ [fail])
 
     ~expect-arg~ !! (map-each 'x '~ [fail])
-    ~expect-arg~ !! (map-each 'x ~ [fail])
+    ~unspecified-arg~ !! (map-each 'x ~ [fail])
 ]

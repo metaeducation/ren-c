@@ -344,7 +344,7 @@ Details* Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_Hole(arg)) {
+        if (Is_Parameter(arg)) {
           #if DEBUG_POISON_UNINITIALIZED_CELLS
             Poison_Cell(arg);
           #endif
@@ -448,7 +448,7 @@ DECLARE_NATIVE(reframer)
     Destruct_Binder(binder);
 
     Value* var = Varlist_Slot(exemplar, param_index);  // "specialize" slot [2]
-    assert(Is_Hole(var));
+    assert(Is_Parameter(var));
     Copy_Cell(var, Varlist_Archetype(exemplar));
 
     Manage_Flex(exemplar);

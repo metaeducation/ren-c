@@ -185,12 +185,8 @@ Bounce Unimplemented_Dispatcher(Level* const L) {
 // A hijacker takes over another function's identity, replacing it with its
 // own implementation.
 //
-// Sometimes the hijacking function has the same underlying function
-// as the victim, in which case there's no need to insert a new dispatcher.
-// The hijacker just takes over the identity.  But otherwise it cannot, and
-// it's not legitimate to reshape the exemplar of the victim (as something like
-// an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
-// paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
+// Sometimes the hijacking function has a compatible underlying function
+// to the victim, in which case there's no need to build a new frame.
 //
 Bounce Hijacker_Dispatcher(Level* const L)
 {

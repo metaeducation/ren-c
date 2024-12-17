@@ -279,11 +279,11 @@ bool Specialize_Action_Throws(
 
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param)) {  // was specialized in underlying phase
-            assert(not Is_Hole(arg));  // user couldn't have changed it!
+            assert(not Is_Parameter(arg));  // user couldn't have changed it!
             continue;
         }
 
-        if (Is_Hole(arg)) {
+        if (Is_Parameter(arg)) {
           #if DEBUG_POISON_UNINITIALIZED_CELLS
             Poison_Cell(arg);
           #endif

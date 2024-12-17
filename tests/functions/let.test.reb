@@ -9,6 +9,6 @@
         1020 = plus1000 20
         b = <global>
         [j] = words of plus1000/
-        [return j] = words of make frame! plus1000/
+        [j] = words of make frame! plus1000/
     ]
 )

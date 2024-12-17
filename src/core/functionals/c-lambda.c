@@ -219,7 +219,7 @@ DECLARE_NATIVE(lambda)
         }
 
         Init_Word(PUSH(), symbol);
-        Init_Unconstrained_Hole(
+        Init_Unconstrained_Parameter(
             PUSH(),
             FLAG_PARAMCLASS_BYTE(pclass) | param_flags
         );

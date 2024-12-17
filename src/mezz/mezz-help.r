@@ -34,8 +34,7 @@ REBOL [
             ]
         ]
 
-        for-each 'key words of action [
-            let param: meta:lite select action key
+        for-each [key param] (parameters of action) [
             keep spread compose $() '[
                 (decorate-parameter param key) (? param.spec)
                     (? param.text)
@@ -49,9 +48,7 @@ REBOL [
     return: [block!]
     frame [<unrun> frame!]
 ][
-    let e: exemplar of frame
-    return map-each 'key (words of frame) [
-        let param: meta:lite select e key
+    return map-each [key param] (parameters of frame) [
         decorate-parameter param key
     ]
 ]
@@ -131,15 +128,12 @@ REBOL [
 
     print "USAGE:"
 
-    let keys: words of frame
-
     let args: copy []  ; foo baz bar
     let deco-args: copy []  ; foo 'baz @(bar)
     let refinements: copy []  ; mumble frotz
     let deco-refinements: copy []  ; :mumble :/@(frotz)
 
-    for-each 'key keys [
-        let param: meta:lite select frame key
+    for-each [key param] (parameters of frame) [
         if param.optional [
             append refinements key
             append deco-refinements decorate-parameter param key
@@ -165,7 +159,7 @@ REBOL [
 
     let print-args: [list :indent-words] -> [
         for-each 'key list [
-            let param: meta:lite select frame key
+            let param: select frame key
             print [_ _ _ _ @(decorate-parameter param key) @(maybe param.spec)]
             if param.text [
                 print [_ _ _ _ _ _ _ _ param.text]

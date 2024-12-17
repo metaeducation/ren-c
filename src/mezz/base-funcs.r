@@ -168,7 +168,7 @@ bind construct [
     return: [logic?]
     var [word! tuple!]
 ][
-    return hole? get:any var
+    return parameter? get:any var
 ]
 
 /specialized?: func [
@@ -176,7 +176,7 @@ bind construct [
     return: [logic?]
     var [word! tuple!]
 ][
-    return not hole? get:any var
+    return not parameter? get:any var
 ]
 
 

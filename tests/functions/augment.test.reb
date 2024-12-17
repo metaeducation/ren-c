@@ -79,9 +79,9 @@
         if m: adjunct-of aug [
             m.description = null  ; description not inherited ATM
         ]
-        (unquasi ^aug.a).text = "a"
-        (unquasi ^aug.b).text = "b"
-        (unquasi ^aug.c).text = "c"
-        (unquasi ^aug.d).text = "d"
+        aug.a.text = "a"
+        aug.b.text = "b"
+        aug.c.text = "c"
+        aug.d.text = "d"
     ]
 )]

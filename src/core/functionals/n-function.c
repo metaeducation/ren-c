@@ -124,7 +124,10 @@ Bounce Func_Dispatcher(Level* const L)
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
     Value* cell = Level_Arg(L, 1);
-    assert(Is_Parameter(cell));
+    assert(
+        QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
+        and HEART_BYTE(cell) == REB_PARAMETER
+    );
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,

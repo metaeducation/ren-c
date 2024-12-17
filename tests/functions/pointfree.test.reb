@@ -39,18 +39,15 @@
             [block!]
         <local> e
     ][
-        frame: make frame! frame  ; don't mutate incoming frame [1]
-        e: exemplar of frame
+        frame: copy frame  ; don't mutate incoming frame [1]
 
-        for-each 'key (words of frame) [
+        for-each [key param] (parameters of frame) [
             if tail? block [break]  ; no more args, leave rest unspecialized
 
             if blank? block.1 [  ; means leave unspecialized [3]
                 block: skip block 1  ; this code avoided NEXT when mezzanine
                 continue
             ]
-
-            let param: meta:lite select e key
 
             if param.optional [
                 continue  ; skip unused refinements [2]
@@ -110,20 +107,16 @@
         frame: unrun get $panic:value  ; overwritten, best to be something mean
     ]
 
-    ; <- is a variadic operator that lets you express a pointfree expression
-    ; inside a GROUP!
+    ; pf demonstrates a concept of a variadic operator that lets you express a
+    ; pointfree expression inside a GROUP!
     ;
-    ;    (<- append _ [d e])
+    ;    (pf append _ [d e])
     ;    =>
     ;    pointfree [append _ [d e]]
     ;    =>
-    ;    pointfree* :append [_ [d e]]
+    ;    pointfree* append/ [_ [d e]]
     ;
-    ; It's not clear that this is better than just having it mean POINTFREE
-    ;
-    ;    <- [append _ [d e]]
-    ;
-    ; Hopefully you see some of the ambition, here--what I am trying to do.
+    ; Hopefully you see some of the ambition, here.
     ;
     pf: infix func [
         "Declare action by example instantiation, missing args unspecialized"
@@ -141,41 +134,41 @@
 )
 
     (
-        apde: pointfree* :append [_ [d e]]
+        /apde: pointfree* append/ [_ [d e]]
         [a b c [d e]] = apde [a b c]
     )
 
     (
-        apde: pointfree [append _ [d e]]
+        /apde: pointfree [append _ [d e]]
         [a b c [d e]] = apde [a b c]
     )
 
     (
-        apde: (<- append _ [d e])
+        /apde: (pf append _ [d e])
         [a b c [d e]] = apde [a b c]
     )
 
     (
-        apabc: pointfree* :append [[a b c]]
+        /apabc: pointfree* append/ [[a b c]]
         [a b c [d e]] = apabc [d e]
     )
 
     (
-        apabc: pointfree [append [a b c]]
+        /apabc: pointfree [append [a b c]]
         [a b c [d e]] = apabc [d e]
     )
 
     (
-        apabc: (pf append [a b c])
+        /apabc: (pf append [a b c])
         [a b c [d e]] = apabc [d e]
     )
 
     ~???~ !! (
-        ap12invalid: (<- append _ 1 2)  ; unused data at end
+        ap12invalid: (pf append _ 1 2)  ; unused data at end
     )
 
     (
-        ap1twice: (pf append:dup _ 1 2)
+        /ap1twice: (pf append:dup _ 1 2)
         [a b c 1 1] = ap1twice [a b c]
     )
 

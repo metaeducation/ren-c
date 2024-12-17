@@ -310,7 +310,7 @@ INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
 // interface of the function.
 //
 INLINE bool Is_Specialized(const Param* p) {
-    if (Is_Hole(c_cast(Value*, p))) {
+    if (Is_Parameter(p)) {
         if (Get_Cell_Flag_Unchecked(p, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
@@ -351,8 +351,8 @@ INLINE void Mark_Typechecked(const Value* v) {
     Set_Cell_Flag(v, PARAM_NOTE_TYPECHECKED);
 }
 
-INLINE bool Is_Hole_Final_Type(const Param* p) {
-    assert(Is_Hole(c_cast(Value*, p)));
+INLINE bool Is_Parameter_Final_Type(const Param* p) {
+    assert(HEART_BYTE(p) == REB_PARAMETER);
     return Get_Parameter_Flag(p, FINAL_TYPECHECK);
 }
 
@@ -438,8 +438,8 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
     Blit_Anti_Word_Typechecked((out), CANON(OKAY));
 
 
-INLINE Param* Init_Unconstrained_Hole_Untracked(
-    Init(Value) out,
+INLINE Param* Init_Unconstrained_Parameter_Untracked(
+    Init(Element) out,
     Flags flags
 ){
     ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
@@ -454,11 +454,11 @@ INLINE Param* Init_Unconstrained_Hole_Untracked(
     Tweak_Cell_Parameter_Spec(out, nullptr);
     Tweak_Cell_Node2(out, nullptr);  // parameter string
 
-    return cast(Param*, Coerce_To_Stable_Antiform(out));
+    return cast(Param*, out);
 }
 
-#define Init_Unconstrained_Hole(out,param_flags) \
-    TRACK(Init_Unconstrained_Hole_Untracked((out), (param_flags)))
+#define Init_Unconstrained_Parameter(out,param_flags) \
+    TRACK(Init_Unconstrained_Parameter_Untracked((out), (param_flags)))
 
 
 INLINE bool Is_Parameter_Unconstrained(const Cell* param) {

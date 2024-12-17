@@ -395,7 +395,10 @@ void Push_Keys_And_Holes_May_Fail(
             );
             param = Data_Stack_At(Value, base + 2);
             if (Is_Cell_Readable(param)) {
-                assert(Is_Hole(param));
+                assert(
+                    QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+                    and HEART_BYTE(param) == REB_PARAMETER
+                );
                 fail ("Duplicate RETURN: in function spec");
             }
         }
@@ -411,7 +414,7 @@ void Push_Keys_And_Holes_May_Fail(
             assert(mode == SPEC_MODE_LOCAL);
         }
         else if (refinement) {
-            Init_Unconstrained_Hole(
+            Init_Unconstrained_Parameter(
                 param,
                 FLAG_PARAMCLASS_BYTE(pclass)
                     | PARAMETER_FLAG_REFINEMENT  // must preserve if type block
@@ -420,7 +423,7 @@ void Push_Keys_And_Holes_May_Fail(
             mode = SPEC_MODE_PUSHED;
         }
         else {
-            Init_Unconstrained_Hole(
+            Init_Unconstrained_Parameter(
                 param,
                 FLAG_PARAMCLASS_BYTE(pclass)
             );
@@ -434,14 +437,14 @@ void Push_Keys_And_Holes_May_Fail(
         );
         OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
         if (Not_Cell_Readable(param_1)) {
-            Init_Unconstrained_Hole(  // return anything by default
+            Init_Unconstrained_Parameter(  // return anything by default
                 param_1,
                 FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
             );
         }
         else
-            assert(Is_Hole(param_1));
-        QUOTE_BYTE(param_1) = NOQUOTE_1;  // normal parameter
+            assert(Is_Parameter(param_1));
+        QUOTE_BYTE(param_1) = ONEQUOTE_NONQUASI_3;  // quoted parameter
     }
 
     if (*adjunct)
@@ -537,7 +540,7 @@ ParamList* Pop_Paramlist_May_Fail(
             slot,
             CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
         );
-        if (Is_Hole(param))
+        if (Is_Parameter(param))
             Set_Parameter_Flag(param, FINAL_TYPECHECK);
         else
             Set_Cell_Flag(param, PARAM_NOTE_TYPECHECKED);  // locals "checked"

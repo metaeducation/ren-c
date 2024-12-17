@@ -21,57 +21,69 @@
 ;
 ; (Though there are several issues in flux at time of writing regarding how
 ; DATATYPE!s and type checking work...)
-[(
+[
+(
+    /get-params: func [f [frame!]] [
+        return map-each [key param] f [
+            assert [parameter? param]
+            reduce [key (reify param.spec) (reify param.text)]
+        ]
+    ]
+    ok
+)
+(
     all wrap [  ; try with no RETURN:
-        foo: meta:lite func ["description" a "a" b "b"] []
-        m: adjunct-of foo
+        f: meta:lite func ["description" a "a" b "b"] []
+        m: adjunct-of f
         m.description = "description"
-        (unquasi ^foo.return).spec = null
-        (unquasi ^foo.return).text = null
-        (unquasi ^foo.a).spec = null
-        (unquasi ^foo.a).text = "a"
-        (unquasi ^foo.b).spec = null
-        (unquasi ^foo.b).text = "b"
+        null = return of f
+        (get-params f) = [
+            [a ~null~ "a"]
+            [b ~null~ "b"]
+        ]
     ]
 )(
     all wrap [  ; try RETURN: with no type
-        foo: meta:lite func ["description" return: "returns" a "a" b "b"] []
-        m: adjunct-of foo
+        f: meta:lite func ["description" return: "returns" a "a" b "b"] []
+        m: adjunct-of f
         m.description = "description"
-        (unquasi ^foo.return).spec = null
-        (unquasi ^foo.return).text = "returns"
-        (unquasi ^foo.a).spec = null
-        (unquasi ^foo.a).text = "a"
-        (unquasi ^foo.b).spec = null
-        (unquasi ^foo.b).text = "b"
+        r: return of f
+        r.spec = null
+        r.text = "returns"
+        (get-params f) = [
+            [a ~null~ "a"]
+            [b ~null~ "b"]
+        ]
     ]
 )(
     all wrap [  ; try RETURN: with type
-        foo: meta:lite func [
+        f: meta:lite func [
             "description" return: [integer!] "returns" a "a" b "b"
         ][
         ]
-        m: adjunct-of foo
+        m: adjunct-of f
         m.description = "description"
-        (unquasi ^foo.return).spec = [integer!]
-        (unquasi ^foo.return).text = "returns"
-        (unquasi ^foo.a).spec = null
-        (unquasi ^foo.a).text = "a"
-        (unquasi ^foo.b).spec = null
-        (unquasi ^foo.b).text = "b"
+        r: return of f
+        r.spec = [integer!]
+        r.text = "returns"
+        (get-params f) = [
+            [a ~null~ "a"]
+            [b ~null~ "b"]
+        ]
     ]
 )(
     all wrap [  ; try without description
-        foo: meta:lite func [return: [integer!] "returns" a "a" :b "b"] []
-        if m: adjunct-of foo [
+        f: meta:lite func [return: [integer!] "returns" a "a" :b "b"] []
+        if m: adjunct-of f [
             m.description = null
         ]
-        (unquasi ^foo.return).spec = [integer!]
-        (unquasi ^foo.return).text = "returns"
-        (unquasi ^foo.a).spec = null
-        (unquasi ^foo.a).text = "a"
-        (unquasi ^foo.b).spec = null
-        (unquasi ^foo.b).text = "b"
+        r: return of f
+        r.spec = [integer!]
+        r.text = "returns"
+        (get-params f) = [
+            [a ~null~ "a"]
+            [b ~null~ "b"]
+        ]
     ]
 )]
 

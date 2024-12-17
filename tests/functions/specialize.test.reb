@@ -185,7 +185,7 @@
 (
     data: [a b c]
 
-    f: make frame! append/
+    f: copy unrun append/
     f.series: data
 
     apd: runs f

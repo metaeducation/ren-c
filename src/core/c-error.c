@@ -891,7 +891,7 @@ Error* Error_Not_Varargs(
     // an "honest" parameter has to be made to give the error.
     //
     DECLARE_ATOM (honest_param);
-    Init_Unconstrained_Hole(
+    Init_Unconstrained_Parameter(
         honest_param,
         FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
             | PARAMETER_FLAG_VARIADIC
@@ -907,7 +907,7 @@ Error* Error_Not_Varargs(
 //
 Error* Error_Invalid_Arg(Level* L, const Param* param)
 {
-    assert(Is_Hole(c_cast(Value*, param)));
+    assert(Is_Parameter(param));
 
     const Param* headparam = Phase_Params_Head(Level_Phase(L));
     assert(param >= headparam);
@@ -961,7 +961,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
     }
 
     Param* param = Phase_Param(details, 2);
-    assert(Is_Hole(c_cast(Value*, param)));
+    assert(Is_Parameter(param));
     UNUSED(param);
 
     DECLARE_ATOM (param_name);

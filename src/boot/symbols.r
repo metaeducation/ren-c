@@ -80,7 +80,6 @@ spec
 body
 words
 parameters
-exemplar
 escapable
 normal
 class

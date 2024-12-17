@@ -243,5 +243,5 @@
     (null? for-each 'x ~void~ [fail])
 
     ~expect-arg~ !! (for-each 'x '~ [fail])
-    ~expect-arg~ !! (for-each 'x ~ [fail])
+    ~unspecified-arg~ !! (for-each 'x ~ [fail])
 ]
