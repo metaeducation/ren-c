@@ -679,31 +679,30 @@ Details* Make_Dispatch_Details(
     assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
 
     // "details" for an action is an array of cells which can be anything
-    // the dispatcher understands it to be, by contract.  Terminate it
-    // at the given length implicitly.
+    // the dispatcher understands it to be, by contract.
     //
-    Array* details = Make_Array_Core(
+    Array* a = Make_Array_Core(
         FLEX_MASK_DETAILS | NODE_FLAG_MANAGED | flags,
-        details_capacity  // Note: may be just 1 (so non-dynamic!)
+        details_capacity  // if 1, then only Phase_Archetype()
     );
-    Set_Flex_Len(details, details_capacity);
+    Set_Flex_Len(a, details_capacity);
 
     assert(HEART_BYTE(exemplar) == REB_FRAME);
     assert(
         QUOTE_BYTE(exemplar) == NOQUOTE_1
         or QUOTE_BYTE(exemplar) == ANTIFORM_0  // allow action antiform
     );
-    Cell* rootvar = Array_Head(details);
+    Cell* rootvar = Array_Head(a);
     Copy_Cell(rootvar, exemplar);
     QUOTE_BYTE(rootvar) = NOQUOTE_1;  // canonize action antiforms to FRAME!
     Protect_Rootvar_If_Debug(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
-    Tweak_Details_Dispatcher(cast(Details*, details), dispatcher);
-    MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
+    Tweak_Details_Dispatcher(cast(Details*, a), dispatcher);
+    MISC(DetailsAdjunct, a) = nullptr;  // caller can fill in
 
-    Phase* phase = cast(Phase*, details);  // now it's a legitimate Action
+    Details* details = cast(Details*, a);  // now it's legitimate, can be cast
 
     // Precalculate cached function flags.  This involves finding the first
     // unspecialized argument which would be taken at a callsite, which can
@@ -711,8 +710,8 @@ Details* Make_Dispatch_Details(
     // the work of doing that is factored into a routine (`PARAMETERS OF`
     // uses it as well).  !!! Wrong place for this!
 
-    ParamList* paramlist = Phase_Paramlist(phase);
-    const Param* first = First_Unspecialized_Param(nullptr, phase);
+    ParamList* paramlist = Phase_Paramlist(details);
+    const Param* first = First_Unspecialized_Param(nullptr, details);
     if (first) {
         ParamClass pclass = Cell_ParamClass(first);
         switch (pclass) {
@@ -739,7 +738,61 @@ Details* Make_Dispatch_Details(
     Set_Flex_Flag(paramlist, FIXED_SIZE);
     Set_Flavor_Flag(VARLIST, paramlist, IMMUTABLE);
 
-    return Phase_Details(phase);
+    assert(Details_Querier(details));  // must register querier
+    return details;
+}
+
+
+//
+//  Register_Dispatcher: C
+//
+// There is querying functionality specific to each dispatcher (getting the
+// RETURN or BODY, etc.)  This is provided by a DetailsQuerier, that is
+// mapped to on a per-dispatcher basis.  e.g. the FUNC dispatcher knows how
+// to tell you what its return value is.
+//
+// (Note that all natives use a common DetailsQuerier.)
+//
+void Register_Dispatcher(Dispatcher* dispatcher, DetailsQuerier* querier)
+{
+    if (Is_Flex_Full(g_dispatcher_table))
+        Extend_Flex_If_Necessary(g_dispatcher_table, 8);
+
+    Sink(DispatcherAndQuerier) d_and_q =
+        &(Flex_Head_Dynamic(DispatcherAndQuerier, g_dispatcher_table)[
+            g_dispatcher_table->content.dynamic.used++
+        ]);
+
+    d_and_q->dispatcher = dispatcher;
+    d_and_q->querier = querier;
+}
+
+
+//
+//  Details_Querier: C
+//
+// This just does a linear search through the registered dispatchers.  It
+// is thus not particularly fast to find a DetailsQuerier for a Dispatcher
+// that isn't a native, so it shouldn't be used in performance-sensitive
+// spots (e.g. a Func_Dispatcher() or DEFINITIONAL-RETURN shouldn't call
+// Details_Querier() to get its RETURN slot, rather use its internal knowledge
+// to find the slot, this is for generalized usermode queries only).
+//
+DetailsQuerier* Details_Querier(Details *details) {
+    if (Get_Details_Flag(details, IS_NATIVE))
+        return &Native_Details_Querier;
+
+    Dispatcher* dispatcher = Details_Dispatcher(details);
+
+    DispatcherAndQuerier* d_and_q = Flex_Head_Dynamic(
+        DispatcherAndQuerier, g_dispatcher_table
+    );
+    Count used = g_dispatcher_table->content.dynamic.used;
+    for (; used > 0; ++d_and_q, --used) {
+        if (d_and_q->dispatcher == dispatcher)
+            return d_and_q->querier;
+    }
+    panic ("Non-native Dispatcher used without calling Register_Dispatcher()");
 }
 
 

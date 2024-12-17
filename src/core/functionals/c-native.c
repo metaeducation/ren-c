@@ -34,6 +34,36 @@
 
 
 //
+//  Native_Details_Querier: C
+//
+bool Native_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    switch (property) {
+      case SYM_RETURN: {
+        assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
+        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+        ParamList* exemplar = Phase_Paramlist(details);
+        Value* param = Varlist_Slots_Head(exemplar);
+        assert(
+            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+            and HEART_BYTE(param) == REB_PARAMETER
+        );
+        Copy_Cell(cast(Cell*, out), param);
+        QUOTE_BYTE(out) = NOQUOTE_1;
+        return true; }
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
+
+//
 //  Make_Native_Dispatch_Details: C
 //
 // Reused function in Startup_Natives() as well as extensions loading natives,

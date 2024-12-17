@@ -1226,18 +1226,9 @@ DECLARE_GENERICS(Frame)
 
           case SYM_RETURN: {
             Details* details = Phase_Details(phase);
-            if (not Details_Has_Return(details))
-                return nullptr;
-
-            assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-            ParamList* exemplar = Phase_Paramlist(details);
-            Value* param = Varlist_Slots_Head(exemplar);
-            assert(
-                QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-                and HEART_BYTE(param) == REB_PARAMETER
-            );
-            Copy_Cell(OUT, param);
-            QUOTE_BYTE(OUT) = NOQUOTE_1;  // don't give back quoted form
+            DetailsQuerier* querier = Details_Querier(details);
+            if (not (*querier)(OUT, details, SYM_RETURN))
+                return FAIL("FRAME!'s Details does not offer RETURN info");
             return OUT; }
 
           case SYM_FILE:

@@ -141,6 +141,7 @@ enum StubFlavorEnum {
 
     FLAVOR_HASHLIST,  // outlier, sizeof(REBLEN)...
     FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(Bookmark)
+    FLAVOR_DISPATCHERTABLE,  // also outlier, sizeof(DispatcherAndQuerier)
 
     FLAVOR_MIN_BYTESIZE,  //=/////////////////// BELOW THIS LINE HAS WIDTH = 1
 

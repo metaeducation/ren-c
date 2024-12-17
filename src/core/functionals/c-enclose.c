@@ -178,6 +178,34 @@ Bounce Encloser_Dispatcher(Level* const L)
 
 
 //
+//  Encloser_Details_Querier: C
+//
+bool Encloser_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Encloser_Dispatcher);
+    assert(Details_Max(details) == IDX_ENCLOSER_MAX);
+
+    switch (property) {
+      case SYM_RETURN: {
+        Element* outer = cast(Element*, Details_At(details, IDX_ENCLOSER_OUTER));
+        assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
+
+        Details* outer_details = Phase_Details(Cell_Frame_Phase(outer));
+        DetailsQuerier* querier = Details_Querier(outer_details);
+        return (*querier)(out, outer_details, SYM_RETURN); }
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
+
+//
 //  /enclose: native [
 //
 //  "Wrap code around a frame with access to its instance and return value"

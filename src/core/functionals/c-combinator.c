@@ -110,6 +110,33 @@ Bounce Combinator_Dispatcher(Level* L)
     return r;
 }
 
+//
+//  Combinator_Details_Querier: C
+//
+bool Combinator_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Combinator_Dispatcher);
+    assert(Details_Max(details) == IDX_COMBINATOR_MAX);
+
+    switch (property) {
+      case SYM_RETURN: {
+        Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
+        assert(Is_Frame(body));  // takes 1 arg (a FRAME!)
+
+        Details* body_details = Phase_Details(Cell_Frame_Phase(body));
+        DetailsQuerier* querier = Details_Querier(body_details);
+        return (*querier)(out, body_details, SYM_RETURN); }
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
 
 //
 //  Expanded_Combinator_Spec: C

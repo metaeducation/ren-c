@@ -312,7 +312,7 @@ void Set_Parameter_Spec(
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
                 else if (dispatcher == &N_nihil_q)
                     *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
-                else if (dispatcher == &Decider_Intrinsic_Dispatcher) {
+                else if (dispatcher == &Typechecker_Dispatcher) {
                     if (optimized == optimized_tail) {
                         *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                         continue;
@@ -321,10 +321,8 @@ void Set_Parameter_Spec(
                     assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
                     Value* index = Details_At(
-                        details,
-                        IDX_TYPECHECKER_DECIDER_INDEX
+                        details, IDX_TYPECHECKER_DECIDER_INDEX
                     );
-
                     *optimized = VAL_UINT8(index);
                     ++optimized;
                 }

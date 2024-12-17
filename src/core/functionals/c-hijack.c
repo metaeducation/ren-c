@@ -180,6 +180,21 @@ Bounce Unimplemented_Dispatcher(Level* const L) {
 
 
 //
+//  Unimplemented_Details_Querier: C
+//
+bool Unimplemented_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    UNUSED(out);
+    UNUSED(details);
+    UNUSED(property);
+    return false;
+}
+
+
+//
 //  Hijacker_Dispatcher: C
 //
 // A hijacker takes over another function's identity, replacing it with its
@@ -221,6 +236,27 @@ Bounce Hijacker_Dispatcher(Level* const L)
     //
     Push_Redo_Action_Level(OUT, L, hijacker_frame);
     return DELEGATE_SUBLEVEL(TOP_LEVEL);
+}
+
+
+//
+//  Hijacker_Details_Querier: C
+//
+// All questions are forwarded to the hijacker.
+//
+bool Hijacker_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Hijacker_Dispatcher);
+    assert(Details_Max(details) == IDX_HIJACKER_MAX);
+
+    Value* hijacker = Details_At(details, IDX_HIJACKER_FRAME);
+
+    Details* hijacker_details = Phase_Details(Cell_Frame_Phase(hijacker));
+    DetailsQuerier* querier = Details_Querier(hijacker_details);
+    return (*querier)(out, hijacker_details, property);
 }
 
 

@@ -139,6 +139,8 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
         return sizeof(Bookmark);
     if (flavor == FLAVOR_HASHLIST)
         return sizeof(REBLEN);
+    if (flavor == FLAVOR_DISPATCHERTABLE)
+        return sizeof(DispatcherAndQuerier);
     return sizeof(void*);
 }
 

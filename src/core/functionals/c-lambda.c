@@ -128,6 +128,32 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 
 
 //
+//  Lambda_Details_Querier: C
+//
+bool Lambda_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(
+        Details_Dispatcher(details) == &Lambda_Dispatcher
+        or Details_Dispatcher(details) == &Lambda_Unoptimized_Dispatcher
+    );
+
+    switch (property) {
+      case SYM_RETURN:
+        Init_Nulled(out);  // unconstrained parameter, instead?
+        return true;
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
+
+//
 //  /lambda: native [
 //
 //  "Makes an anonymous function that evaluates to its body, and has no RETURN"

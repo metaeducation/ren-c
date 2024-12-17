@@ -89,6 +89,8 @@ PVAR Value PG_Bounce_Suspend;
 PVAR Value PG_Bounce_Okay;
 PVAR Value PG_Bounce_Bad_Intrinsic_Arg;
 
+PVAR Flex* g_dispatcher_table;
+
 
 // These are root variables which used to be described in %root.r and kept
 // alive by keeping that array alive.  Now they are API handles, kept alive

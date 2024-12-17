@@ -117,6 +117,8 @@ Bounce Func_Dispatcher(Level* const L)
     //    dispatcher merely catching a "teleport" would be redundant.
 
     Details* details = Ensure_Level_Details(L);
+    assert(Details_Max(details) == IDX_FUNC_MAX);
+
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
@@ -172,6 +174,39 @@ Bounce Func_Dispatcher(Level* const L)
 
     return OUT;
 }}
+
+
+//
+//  Func_Details_Querier: C
+//
+bool Func_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Func_Dispatcher);
+    assert(Details_Max(details) == IDX_FUNC_MAX);
+
+    switch (property) {
+      case SYM_RETURN: {
+        assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
+        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+        ParamList* exemplar = Phase_Paramlist(details);
+        Value* param = Varlist_Slots_Head(exemplar);
+        assert(
+            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+            and HEART_BYTE(param) == REB_PARAMETER
+        );
+        Copy_Cell(cast(Cell*, out), param);
+        QUOTE_BYTE(out) = NOQUOTE_1;
+        return true; }
+
+      default:
+        break;
+    }
+
+    return false;
+}
 
 
 //

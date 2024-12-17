@@ -227,6 +227,38 @@ Bounce Cascader_Executor(Level* const L)
 
 
 //
+//  Cascader_Details_Querier: C
+//
+bool Cascader_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Cascader_Executor);
+    assert(Details_Max(details) == IDX_CASCADER_MAX);
+
+    switch (property) {
+      case SYM_RETURN: {
+        Element* pipeline = cast(Element*,
+            Details_At(details, IDX_CASCADER_PIPELINE)
+        );
+        assert(Is_Block(pipeline));
+
+        const Element* last = Array_Tail(Cell_Array(pipeline));
+
+        Details* last_details = Phase_Details(Cell_Frame_Phase(last));
+        DetailsQuerier* querier = Details_Querier(last_details);
+        return (*querier)(out, last_details, SYM_RETURN); }
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
+
+//
 //  /cascade*: native [
 //
 //  "Create a processing pipeline of actions, each consuming the last result"

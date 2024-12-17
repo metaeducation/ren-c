@@ -429,10 +429,19 @@ static void Init_Root_Vars(void)
 
     ensure(nullptr, Root_Quasi_Null) = Init_Quasi_Null(Alloc_Value());
     Protect_Cell(Root_Quasi_Null);
+
+    ensure(nullptr, g_dispatcher_table) = Make_Flex(
+        FLAG_FLAVOR(DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
+        Flex,
+        15
+    );
 }
 
 static void Shutdown_Root_Vars(void)
 {
+    Free_Unmanaged_Flex(g_dispatcher_table);
+    g_dispatcher_table = nullptr;
+
     Force_Erase_Cell(&PG_Nothing_Value);
 
     Force_Erase_Cell(&PG_Bounce_Thrown);
@@ -720,6 +729,34 @@ void Startup_Core(void)
     // Symbol_Id(), Cell_Word_Id() and CANON(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
+
+  //=//// REGISTER BUILT-IN DISPATCHERS ///////////////////////////////////=//
+
+    // We need to be able to navigate from dispatcher to querier.  It would
+    // be too costly to store queriers in stubs, and we'd have to double
+    // dereference the dispatcher to get one function to imply another
+    // without a global sidestructure of some kind.
+
+    Register_Dispatcher(&Func_Dispatcher, &Func_Details_Querier);
+    Register_Dispatcher(&Adapter_Dispatcher, &Adapter_Details_Querier);
+    Register_Dispatcher(&Encloser_Dispatcher, &Encloser_Details_Querier);
+    Register_Dispatcher(&Lambda_Dispatcher, &Lambda_Details_Querier);
+    Register_Dispatcher(
+        &Lambda_Unoptimized_Dispatcher,
+        &Lambda_Details_Querier
+    );
+    Register_Dispatcher(&Cascader_Executor, &Cascader_Details_Querier);
+    Register_Dispatcher(&Macro_Dispatcher, &Macro_Details_Querier);
+    Register_Dispatcher(&Combinator_Dispatcher, &Combinator_Details_Querier);
+    Register_Dispatcher(&Typechecker_Dispatcher, &Typechecker_Details_Querier);
+    Register_Dispatcher(&Hijacker_Dispatcher, &Hijacker_Details_Querier);
+    Register_Dispatcher(&Reframer_Dispatcher, &Reframer_Details_Querier);
+    Register_Dispatcher(&Upshot_Dispatcher, &Oneshot_Details_Querier);
+    Register_Dispatcher(&Downshot_Dispatcher, &Oneshot_Details_Querier);
+    Register_Dispatcher(
+        &Unimplemented_Dispatcher,
+        &Unimplemented_Details_Querier
+    );
 
   //=//// CREATE BASIC VALUES /////////////////////////////////////////////=//
 

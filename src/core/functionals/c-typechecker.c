@@ -37,14 +37,31 @@
 
 
 //
-//  Decider_Intrinsic_Dispatcher: C
+//  /decider-archetype: native [
+//
+//  "For internal use (builds parameters and return slot)"
+//
+//      return: "Whether the type matched"
+//          [logic?]
+//      value "Value to test"
+//      :type "Test a concrete type, (integer?:type integer!) passes"
+//  ]
+//
+DECLARE_NATIVE(decider_archetype)
+{
+    return FAIL("DECIDER-ARCHETYPE called (internal use only)");
+}
+
+
+//
+//  Typechecker_Dispatcher: C
 //
 // Typecheckers may be dispatched as intrinsics, which is to say they may
 // not have their own Level and frame variables.
 //
 // See LEVEL_FLAG_DISPATCHING_INTRINSIC for more information.
 //
-Bounce Decider_Intrinsic_Dispatcher(Level* const L)
+Bounce Typechecker_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -73,6 +90,31 @@ Bounce Decider_Intrinsic_Dispatcher(Level* const L)
         : g_instance_deciders[VAL_UINT8(index)];
 
     return LOGIC(decider(v));
+}
+
+
+//
+//  Typechecker_Details_Querier: C
+//
+bool Typechecker_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Typechecker_Dispatcher);
+    assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
+
+    switch (property) {
+      case SYM_RETURN: {
+        const Value* archetype = LIB(DECIDER_ARCHETYPE);
+        Details* archetype_details = Ensure_Cell_Frame_Details(archetype);
+        return Native_Details_Querier(out, archetype_details, SYM_RETURN); }
+
+      default:
+        break;
+    }
+
+    return false;
 }
 
 
@@ -111,7 +153,7 @@ Details* Make_Decider_Intrinsic(Offset decider_index) {
         DETAILS_FLAG_PARAMLIST_HAS_RETURN
             | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
         Phase_Archetype(paramlist),
-        &Decider_Intrinsic_Dispatcher,
+        &Typechecker_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity
     );
 

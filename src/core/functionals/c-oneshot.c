@@ -49,6 +49,9 @@ enum {
 };
 
 
+//
+//  Downshot_Dispatcher: C
+//
 Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
@@ -66,6 +69,9 @@ Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
 }
 
 
+//
+//  Upshot_Dispatcher: C
+//
 Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
@@ -81,6 +87,31 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 
     Value* code = Level_Arg(L, 2);  // skip the RETURN
     return DELEGATE_BRANCH(OUT, code);
+}
+
+//
+//  Oneshot_Details_Querier: C
+//
+bool Oneshot_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(
+        Details_Dispatcher(details) == &Upshot_Dispatcher
+        or Details_Dispatcher(details) == &Downshot_Dispatcher
+    );
+
+    switch (property) {
+      case SYM_RETURN:
+        Init_Nulled(out);  // unconstrained parameter, instead?
+        return true;
+
+      default:
+        break;
+    }
+
+    return false;
 }
 
 

@@ -121,6 +121,32 @@ Bounce Adapter_Dispatcher(Level* const L)
 
 
 //
+//  Adapter_Details_Querier: C
+//
+bool Adapter_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Adapter_Dispatcher);
+    assert(Details_Max(details) == IDX_ADAPTER_MAX);
+
+    switch (property) {
+      case SYM_RETURN: {
+        Value* adaptee = Phase_Archetype(details);
+        Details* adaptee_details = Phase_Details(Cell_Frame_Phase(adaptee));
+        DetailsQuerier* querier = Details_Querier(adaptee_details);
+        return (*querier)(out, adaptee_details, SYM_RETURN); }
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
+
+//
 //  /adapt: native [
 //
 //  "Create a variant of an action that preprocesses its arguments"

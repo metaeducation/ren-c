@@ -266,6 +266,9 @@ bool Init_Frame_From_Feed_Throws(
 }
 
 
+//
+//  Reframer_Dispatcher: C
+//
 // The REFRAMER native specializes out the FRAME! argument of the function
 // being modified when it builds the interface.
 //
@@ -315,6 +318,34 @@ Bounce Reframer_Dispatcher(Level* const L)
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
+}
+
+
+//
+//  Reframer_Details_Querier: C
+//
+bool Reframer_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Reframer_Dispatcher);
+    assert(Details_Max(details) == IDX_REFRAMER_MAX);
+
+    switch (property) {
+      case SYM_RETURN: {
+        Element* shim = cast(Element*, Details_At(details, IDX_REFRAMER_SHIM));
+        assert(Is_Frame(shim));
+
+        Details* shim_details = Phase_Details(Cell_Frame_Phase(shim));
+        DetailsQuerier* querier = Details_Querier(shim_details);
+        return (*querier)(out, shim_details, SYM_RETURN); }
+
+      default:
+        break;
+    }
+
+    return false;
 }
 
 

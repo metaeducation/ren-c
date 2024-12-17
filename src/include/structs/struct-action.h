@@ -243,3 +243,17 @@ typedef enum {
     //
     PARAMCLASS_META
 } ParamClass;
+
+
+// DetailsQueriers are used for getting things like the RETURN or BODY of
+// a function.  They are specific to each dispatcher (with a common function
+// used by all natives).
+//
+typedef bool (DetailsQuerier)(
+    Sink(Value) out, Details* details, SymId property
+);
+
+typedef struct {
+    Dispatcher* dispatcher;
+    DetailsQuerier* querier;
+} DispatcherAndQuerier;
