@@ -244,6 +244,9 @@ Bounce Hijacker_Dispatcher(Level* const L)
 //
 // All questions are forwarded to the hijacker.
 //
+// !!! If asked for SYM_BODY, should the body come back with some added
+// content, like (comment "this is a hijacking!")
+//
 bool Hijacker_Details_Querier(
     Sink(Value) out,
     Details* details,

@@ -188,6 +188,9 @@ bool Func_Details_Querier(
     assert(Details_Max(details) == IDX_FUNC_MAX);
 
     switch (property) {
+
+  //=////RETURN ///////////////////////////////////////////////////////////=//
+
       case SYM_RETURN: {
         assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
         assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
@@ -199,6 +202,41 @@ bool Func_Details_Querier(
         );
         Copy_Cell(cast(Cell*, out), param);
         QUOTE_BYTE(out) = NOQUOTE_1;
+        return true; }
+
+  //=//// BODY ////////////////////////////////////////////////////////////=//
+
+    // A longstanding idea about FUNC is it could be implemented equivalently
+    // in userspace.  So there was an idea about "lying" about what the body
+    // of an optimized FUNC is, in order to make it look like what a user
+    // would have to write to get equivalent behavior.  To not have holes,
+    // this means anything used in the boilerplate can't be hijacked and a
+    // debugger would have to simulate it if stepping was requested.
+    //
+    // 1. See %sysobj.r for STANDARD.FUNC-BODY
+    //
+    // 2. Index 7 (or 6 in zero-based C) should be #BODY, a "real" body.  To
+    //    give it the appearance of executing code in place, we use a GROUP!.
+
+      case SYM_BODY: {
+        Element* body = cast(Element*, Array_At(details, IDX_DETAILS_1));
+
+        Value* example = Get_System(SYS_STANDARD, STD_FUNC_BODY);  // [1]
+        REBLEN real_body_index = 6;
+
+        Source* fake = cast(Source*, Copy_Array_Shallow_Flags(
+            FLEX_MASK_MANAGED_SOURCE,
+            Cell_Array(example)
+        ));
+
+        Element* slot = Array_At(fake, real_body_index);
+        assert(Is_Issue(slot));  // should be #BODY [2]
+
+        assert(VAL_INDEX(body) == 0);
+        Init_Group(slot, Cell_Array(body));
+        Set_Cell_Flag(slot, NEWLINE_BEFORE);
+
+        Init_Block(out, fake);
         return true; }
 
       default:

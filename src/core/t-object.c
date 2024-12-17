@@ -1221,14 +1221,11 @@ DECLARE_GENERICS(Frame)
             return Init_Block(OUT, Context_To_Array(frame, 1));
 
           case SYM_BODY:
-            Get_Maybe_Fake_Action_Body(OUT, frame);
-            return OUT;
-
           case SYM_RETURN: {
             Details* details = Phase_Details(phase);
             DetailsQuerier* querier = Details_Querier(details);
-            if (not (*querier)(OUT, details, SYM_RETURN))
-                return FAIL("FRAME!'s Details does not offer RETURN info");
+            if (not (*querier)(OUT, details, prop))
+                return FAIL("FRAME!'s Details does not offer BODY/RETURN");
             return OUT; }
 
           case SYM_FILE:

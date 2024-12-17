@@ -145,6 +145,11 @@ bool Lambda_Details_Querier(
         Init_Nulled(out);  // unconstrained parameter, instead?
         return true;
 
+      case SYM_BODY: {
+        Copy_Cell(out, Details_At(details, IDX_DETAILS_1));
+        assert(Is_Block(out));  // !!! just return as-is, even if relativized?
+        return true; }
+
       default:
         break;
     }

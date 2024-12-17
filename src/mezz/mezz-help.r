@@ -18,12 +18,12 @@ REBOL [
     return: [block!]
     action [<unrun> frame!]
 ][
-    let adjunct: (match object! maybe adjunct-of action) else [
-        return [~bad-spec~]
-    ]
+    let adjunct: match object! maybe adjunct-of action
 
     return collect [
-        keep:line ? ensure [~null~ text!] select adjunct 'description
+        if adjunct [
+            keep:line ? ensure [~null~ text!] select adjunct 'description
+        ]
 
         let r-param: return of action
 
@@ -441,26 +441,25 @@ REBOL [
 
         word! path! [
             name: arg
-            f: get arg else [
+            if action? (f: get arg else [
                 print [name "is not set to a value"]
                 return ~
+            ]) [
+                f: unrun f/
             ]
         ]
     ] else [
         name: "anonymous"
         f: arg
-        if action? :f [
-            f: unrun :f
-        ]
     ]
 
     case [
-        match [text! url!] :f [
+        match [text! url!] f [
             print f
         ]
-        not frame? (unrun :f) [
+        not frame? (unrun f) [
             print [
-                name "is" an any [mold maybe type of :f, "NULL"]
+                name "is" an any [mold maybe type of f, "NULL"]
                 "and not a FRAME!"
             ]
         ]
@@ -473,7 +472,7 @@ REBOL [
     ; from combining the the ADJUNCT-OF information.
 
     write-stdout unspaced [
-        mold name ":" _ "make action! [" _ mold spec-of :f
+        mold name ":" _ "lambda" _ mold spec-of f
     ]
 
     ; While all interfaces as far as invocation is concerned has been unified
@@ -481,14 +480,14 @@ REBOL [
     ; some kind of displayable "source" would have to depend on the dispatcher
     ; used.  For the moment, BODY OF hands back limited information.  Review.
     ;
-    let body: body of :f
+    let body: body of f
     switch:type body [
-        block! [  ; FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
-            print [mold body "]"]
+        block! [  ; FUNC, LAMBDA
+            print [mold body]
         ]
 
         frame! [  ; SPECIALIZE (or DOES of an ACTION!)
-            print [mold body "]"]
+            print [mold body]
         ]
     ] else [
         print "...native code, no source available..."

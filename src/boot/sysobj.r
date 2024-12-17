@@ -156,23 +156,13 @@ standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
     ; (substituted in #BODY), this template is used to "lie" when asked what
     ; the BODY-OF the function is.
     ;
-    ; The substitution location is hardcoded at index 5.  It does not "scan"
+    ; The substitution location is hardcoded at index 7.  It does not "scan"
     ; to find #BODY, just asserts the position is an ISSUE!.
 
     func-body: [
-        /return: lambda [
-            "(pseudocode) returns a value from an action" ^atom [atom?]
-        ][
-            if not typecheck 'return unmeta atom [
-                fail ["Invalid Return type, expects:" types of 'return]
-            ]
-            [
-                unwind:with
-                    (binding of $return)
-                    typecheck 'return unmeta value
-            ]
-        ] #BODY
-        ; if you don't call RETURN, the result is a ~ antiform (nothing)
+        /return: couple definitional-return/ binding of $return
+        #BODY
+        ~  ; if you don't call RETURN, the result is a ~ antiform (nothing)
     ]
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the
