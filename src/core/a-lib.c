@@ -3205,6 +3205,42 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
 
 //
+//  Api_Function_Details_Querier: C
+//
+bool Api_Function_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Api_Function_Dispatcher);
+    assert(Details_Max(details) == IDX_API_ACTION_MAX);
+
+    switch (property) {
+
+  //=////RETURN ///////////////////////////////////////////////////////////=//
+
+      case SYM_RETURN: {
+        assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
+        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+        ParamList* exemplar = Phase_Paramlist(details);
+        Value* param = Varlist_Slots_Head(exemplar);
+        assert(
+            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+            and HEART_BYTE(param) == REB_PARAMETER
+        );
+        Copy_Cell(cast(Cell*, out), param);
+        QUOTE_BYTE(out) = NOQUOTE_1;
+        return true; }
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
+
+//
 //  rebFunc: API
 //
 // 1. Due to technical limitations of the variadic machinery, the C function

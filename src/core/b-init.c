@@ -754,6 +754,10 @@ void Startup_Core(void)
     Register_Dispatcher(&Upshot_Dispatcher, &Oneshot_Details_Querier);
     Register_Dispatcher(&Downshot_Dispatcher, &Oneshot_Details_Querier);
     Register_Dispatcher(
+        &Api_Function_Dispatcher,
+        &Api_Function_Details_Querier
+      );
+    Register_Dispatcher(
         &Unimplemented_Dispatcher,
         &Unimplemented_Details_Querier
     );
