@@ -94,8 +94,6 @@ DECLARE_NATIVE(augment)
 
     Phase* augmentee = Cell_Frame_Phase(original);
 
-    Flags flags = MKF_MASK_NONE;  // if original had no return, we don't add
-
   blockscope {  // copying the augmentee's parameter names and values [1]
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, augmentee);
@@ -114,7 +112,8 @@ DECLARE_NATIVE(augment)
     Push_Keys_And_Holes_May_Fail(  // add spec parameters, may add duplicates
         &adjunct,
         spec,
-        flags | MKF_PARAMETER_SEEN
+        MKF_PARAMETER_SEEN,  // don't assume description string
+        SYM_0  // if original had no return, we don't add
     );
 
     Phase* prior = Cell_Frame_Phase(ARG(original));

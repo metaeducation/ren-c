@@ -227,9 +227,11 @@ void Do_After_Action_Checks_Debug(Level* L) {
     //
   #if CHECK_NATIVE_RETURNS
     Details* details = Ensure_Level_Details(L);
-    if (Details_Has_Return(details) and Is_Stable(L->out)) {
-        const Param* param = Phase_Params_Head(details);
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+    if (Get_Details_Flag(details, IS_NATIVE) and Is_Stable(L->out)) {
+        const Param* param = cast(Param*,
+            Details_At(details, IDX_NATIVE_RETURN)
+        );
+        assert(Is_Parameter(param));
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
             L, param, L->out

@@ -683,13 +683,8 @@ INLINE Level* Prep_Level_Core(
 #define REF(name) \
     (not Is_Nulled(ARG(name)))
 
-// This lets you access arguments by number, not counting return, the first
-// slot is a quoted PARAMETER.
-//
-#define ARG_N(n) ( \
-    assert(HEART_BYTE(Phase_Params_Head(Level_Phase(level_))) == REB_PARAMETER), \
-    Level_Arg(level_, (n) + 1) \
-)
+#define ARG_N(n) \
+    Level_Arg(level_, (n))
 
 INLINE Bounce Native_Thrown_Result(Level* L) {
     Erase_Cell(L->out);

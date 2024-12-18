@@ -260,7 +260,7 @@ DECLARE_NATIVE(lambda)
         Details* details = Make_Interpreted_Action_May_Fail(
             cast(Element*, spec),
             body,
-            MKF_MASK_NONE,  // no MKF_RETURN
+            SYM_0,  // no RETURN: in lambda (can have RETURN as parameter)
             &Lambda_Unoptimized_Dispatcher,
             IDX_LAMBDA_MAX  // archetype and one array slot (will be filled)
         );

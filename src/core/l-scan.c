@@ -3063,6 +3063,7 @@ Option(Error*) Trap_Transcode_One(
 //          [file! url!]
 //      :line "Line number for start of scan, word variable will be updated"
 //          [integer! any-word?]
+//      <local> buffer
 //  ]
 //
 DECLARE_NATIVE(transcode)
@@ -3075,7 +3076,7 @@ DECLARE_NATIVE(transcode)
     const Byte* bp = Cell_Bytes_At(&size, source);
 
     TranscodeState* ss;
-    Value* ss_buffer = ARG(return);  // kept as a BLOB!, gets GC'd
+    Value* ss_buffer = LOCAL(buffer);  // kept as a BLOB!, gets GC'd
 
     enum {
         ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
@@ -3151,7 +3152,7 @@ DECLARE_NATIVE(transcode)
     else
         file = ANONYMOUS;
 
-    Value* line_number = ARG(return);  // use as scratch space
+    Value* line_number = stable_SCRATCH;  // use as scratch space
     if (Any_Word(ARG(line)))
         Get_Var_May_Fail(
             line_number,
@@ -3247,8 +3248,7 @@ DECLARE_NATIVE(transcode)
     Drop_Level(SUBLEVEL);
 
     if (REF(line) and Is_Word(ARG(line))) {  // wanted the line number updated
-        Value* line_int = ARG(return);  // use return as scratch slot
-        Init_Integer(line_int, ss->line);
+        Element* line_int = Init_Integer(SCRATCH, ss->line);
         const Element* line_var = cast(Element*, ARG(line));
         if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
             return THROWN;

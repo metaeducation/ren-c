@@ -256,11 +256,12 @@ DECLARE_NATIVE(combinator)
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         expanded_spec,
-        MKF_RETURN
+        MKF_MASK_NONE,
+        SYM_RETURN  // want RETURN:
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN,
+        DETAILS_MASK_NONE,
         Phase_Archetype(paramlist),
         &Combinator_Dispatcher,
         IDX_COMBINATOR_MAX  // details array capacity

@@ -1419,6 +1419,7 @@ DECLARE_NATIVE(switch)
 //          [any-branch?]
 //      :predicate "Test for what's considered *not* needing to be defaulted"
 //          [<unrun> frame!]
+//      <local> steps
 //  ]
 //
 DECLARE_NATIVE(default)
@@ -1441,7 +1442,7 @@ DECLARE_NATIVE(default)
     Value* branch = ARG(branch);
     Value* predicate = ARG(predicate);
 
-    Element* steps = cast(Element*, ARG(return));  // hold resolved steps [1]
+    Element* steps = cast(Element*, LOCAL(steps));  // hold resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,

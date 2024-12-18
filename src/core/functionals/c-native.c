@@ -43,16 +43,9 @@ bool Native_Details_Querier(
 ){
     switch (property) {
       case SYM_RETURN: {
-        assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-        ParamList* exemplar = Phase_Paramlist(details);
-        Value* param = Varlist_Slots_Head(exemplar);
-        assert(
-            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-            and HEART_BYTE(param) == REB_PARAMETER
-        );
-        Copy_Cell(cast(Cell*, out), param);
-        QUOTE_BYTE(out) = NOQUOTE_1;
+        Value* param = Details_At(details, IDX_NATIVE_RETURN);
+        assert(Is_Parameter(param));
+        Copy_Cell(out, param);
         return true; }
 
       default:
@@ -108,17 +101,19 @@ Details* Make_Native_Dispatch_Details(
     // the Natives table.  The associated C function is provided by a
     // table built in the bootstrap scripts, `g_core_native_dispatchers`.
 
+    StackIndex base = TOP_INDEX;
+
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_RETURN  // native return types checked only if RUNTIME_CHECKS
+        MKF_DONT_POP_RETURN,  // we put it in Details, not ParamList
+        SYM_RETURN  // native RETURN: types checked only if RUNTIME_CHECKS
     );
     Assert_Flex_Term_If_Needed(paramlist);
 
     Flags details_flags = (
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN
-            | DETAILS_FLAG_IS_NATIVE
+        DETAILS_FLAG_IS_NATIVE
             | DETAILS_FLAG_OWNS_PARAMLIST);
 
     if (native_type == NATIVE_INTRINSIC)
@@ -136,6 +131,8 @@ Details* Make_Native_Dispatch_Details(
         Varlist_Archetype(module)
     );
 
+    Pop_Unpopped_Return(Details_At(details, IDX_NATIVE_RETURN), base);
+
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like
     // calculating the furthest amount of progress in the parse.  So we call
@@ -145,7 +142,7 @@ Details* Make_Native_Dispatch_Details(
         DECLARE_ELEMENT (native);
         Init_Frame(native, details, ANONYMOUS, NONMETHOD);
         details = Make_Dispatch_Details(
-            DETAILS_FLAG_PARAMLIST_HAS_RETURN,  // *not* a native, calls one...
+            DETAILS_MASK_NONE,  // *not* a native, calls one...
             native,
             &Combinator_Dispatcher,
             IDX_COMBINATOR_MAX  // details array capacity
@@ -168,7 +165,7 @@ Details* Make_Native_Dispatch_Details(
     // because it would make them too complicated.
     //
     if (native_type == NATIVE_INTRINSIC) {
-        const Param* param = Phase_Param(details, 2);
+        const Param* param = Phase_Param(details, 1);
         assert(Not_Parameter_Flag(param, REFINEMENT));
         assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);

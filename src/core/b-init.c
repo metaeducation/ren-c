@@ -748,10 +748,12 @@ void Startup_Core(void)
     Register_Dispatcher(&Cascader_Executor, &Cascader_Details_Querier);
     Register_Dispatcher(&Macro_Dispatcher, &Macro_Details_Querier);
     Register_Dispatcher(&Combinator_Dispatcher, &Combinator_Details_Querier);
+    Register_Dispatcher(&Yielder_Dispatcher, &Yielder_Details_Querier);
     Register_Dispatcher(&Typechecker_Dispatcher, &Typechecker_Details_Querier);
     Register_Dispatcher(&Hijacker_Dispatcher, &Hijacker_Details_Querier);
     Register_Dispatcher(&Reframer_Dispatcher, &Reframer_Details_Querier);
     Register_Dispatcher(&Upshot_Dispatcher, &Oneshot_Details_Querier);
+    Register_Dispatcher(&Reorderer_Dispatcher, &Reorderer_Details_Querier);
     Register_Dispatcher(&Downshot_Dispatcher, &Oneshot_Details_Querier);
     Register_Dispatcher(
         &Api_Function_Dispatcher,

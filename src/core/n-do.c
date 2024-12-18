@@ -666,6 +666,7 @@ DECLARE_NATIVE(redo)
 //      operation [<unrun> frame!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
+//      <local> frame
 //  ]
 //
 DECLARE_NATIVE(applique)
@@ -681,7 +682,7 @@ DECLARE_NATIVE(applique)
     Value* op = ARG(operation);
     Value* def = ARG(def);
 
-    Value* frame = ARG(return);  // reuse as GC-safe cell for FRAME!
+    Value* frame = LOCAL(frame);  // GC-safe cell for FRAME!
 
     enum {
         ST_APPLIQUE_INITIAL_ENTRY = STATE_0,
@@ -741,7 +742,7 @@ DECLARE_NATIVE(applique)
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
 //      :relax "Don't worry about too many arguments to the APPLY"
-//      <local> frame index  ; update // native if ANY of this changes [1]
+//      <local> frame index iterator  ; update // native if this changes [1]
 //  ]
 //
 DECLARE_NATIVE(apply)
@@ -757,7 +758,7 @@ DECLARE_NATIVE(apply)
     Value* args = ARG(args);
 
     Value* frame = ARG(frame);  // local variable for holding GC-safe frame
-    Value* iterator = ARG(return);  // reuse to hold Evars iterator
+    Value* iterator = ARG(iterator);  // reuse to hold Evars iterator
 
     Value* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
@@ -993,7 +994,7 @@ DECLARE_NATIVE(apply)
 //      args "Arguments and Refinements, e.g. [arg1 arg2 :ref refine1]"
 //          [block!]
 //      :relax "Don't worry about too many arguments to the APPLY"
-//      <local> frame index  ; need frame compatibility with APPLY
+//      <local> frame index iterator ; need frame compatibility with APPLY [1]
 //  ]
 //
 DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
@@ -1028,6 +1029,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
     UNUSED(REF(args));
     UNUSED(LOCAL(frame));
     UNUSED(LOCAL(index));
+    UNUSED(LOCAL(iterator));
 
     return N_apply(level_);
 }

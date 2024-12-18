@@ -483,6 +483,7 @@ Option(Stub*) Get_Word_Container(
 //          [word! block! group! set-run-word? set-word? set-block? set-group?]
 //      @expression "Optional Expression to assign"
 //          [<variadic> element?]
+//      <local> bindings-holder
 //  ]
 //
 DECLARE_NATIVE(let)
@@ -567,7 +568,7 @@ DECLARE_NATIVE(let)
     Level* L = level_;  // fake variadic [1]
     Context* L_binding = Level_Binding(L);
 
-    Value* bindings_holder = ARG(return);
+    Value* bindings_holder = LOCAL(bindings_holder);
 
     enum {
         ST_LET_INITIAL_ENTRY = STATE_0,

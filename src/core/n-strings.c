@@ -118,6 +118,7 @@ DECLARE_NATIVE(latin1_q)
 //      :with [element? splice?]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"
+//      <local> original-index
 //  ]
 //
 DECLARE_NATIVE(join)
@@ -127,7 +128,7 @@ DECLARE_NATIVE(join)
     Element* base = cast(Element*, ARG(base));
     Value* rest = ARG(rest);
 
-    Value* original_index = ARG(return);
+    Value* original_index = LOCAL(original_index);
 
     Value* delimiter = ARG(with);
     possibly(Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));

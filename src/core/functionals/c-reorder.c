@@ -87,6 +87,27 @@ Bounce Reorderer_Dispatcher(Level* L) {
 
 
 //
+//  Reorderer_Details_Querier: C
+//
+// All questions are forwarded to the reorderee.
+//
+bool Reorderer_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Reorderer_Dispatcher);
+    assert(Details_Max(details) == IDX_REORDERER_MAX);
+
+    Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
+
+    Details* reorderee_details = Phase_Details(Cell_Frame_Phase(reorderee));
+    DetailsQuerier* querier = Details_Querier(reorderee_details);
+    return (*querier)(out, reorderee_details, property);
+}
+
+
+//
 //  /reorder: native [
 //
 //  "Create variation of a frame with its parameters reordered"

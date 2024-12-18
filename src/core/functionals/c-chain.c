@@ -23,9 +23,9 @@
 // function, and then pipes its results through to several subsequent
 // post-processing actions:
 //
-//     >> negadd: cascade [add/ negate/]
+//     >> negate-add: cascade [add/ negate/]
 //
-//     >> negadd 2 2
+//     >> negate-add 2 2
 //     == -4
 //
 // For more complex post-processing which may involve access to the original
@@ -37,7 +37,6 @@
 
 enum {
     IDX_CASCADER_PIPELINE = 1,  // BLOCK! of what should be all FRAME!
-    /* IDX_CASCADER_PIPELINE_INDEX, */  // Series index in PIPELINE is used
     IDX_CASCADER_MAX
 };
 
@@ -52,7 +51,7 @@ enum {
 // But if it wants to stay in control and do post-processing (as CASCADE does)
 // then it needs to remain linked into the stack.  This function helps to
 // move the built level into a new level that can be executed with a new
-// entry to Process_Action().  The ability is also used by RESKINNED.
+// entry to Process_Action().
 //
 // 1. Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
 //    of something like another CASCADE, that it intends to reuse (!)  This
@@ -244,7 +243,7 @@ bool Cascader_Details_Querier(
         );
         assert(Is_Block(pipeline));
 
-        const Element* last = Array_Tail(Cell_Array(pipeline));
+        const Element* last = Array_Last(Cell_Array(pipeline));
 
         Details* last_details = Phase_Details(Cell_Frame_Phase(last));
         DetailsQuerier* querier = Details_Querier(last_details);

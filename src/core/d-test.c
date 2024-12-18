@@ -47,6 +47,7 @@
 
     static const char* Sum_Plus_1000_Spec = "[ \
         -{Demonstration native that shadows ASSERT and ADD}- \
+        return: [integer!] \
         assert [integer!] \
         add [integer!] \
     ]";
@@ -148,12 +149,18 @@ DECLARE_NATIVE(test_librebol)
   }
 
   blockscope {
-    Set_Cell_Flag(Init_Integer(PUSH(), 7), NEWLINE_BEFORE);
   #if NO_CPLUSPLUS_11
+    Set_Cell_Flag(Init_Integer(PUSH(), 7), NEWLINE_BEFORE);
     Init_Integer(PUSH(), 1020);  // fake success result
+
+    Set_Cell_Flag(Init_Integer(PUSH(), 8), NEWLINE_BEFORE);
+    RebolValue* result_type = rebValue("[integer!]");  // another fake success
+    Copy_Cell(PUSH(), result_type);
+    rebRelease(result_type);
   #else
     Value* action = rebFunction(R"([
         -{Demonstration native that shadows ASSERT and ADD (C++ version)}-
+        return: [integer!]
         assert [integer!]
         add [integer!]
     ])",
@@ -166,14 +173,22 @@ DECLARE_NATIVE(test_librebol)
         "let sum-plus-1000: @", action,
         "sum-plus-1000 5 15"
     );
+    Set_Cell_Flag(Init_Integer(PUSH(), 7), NEWLINE_BEFORE);
+    Init_Integer(PUSH(), sum);
+
+    RebolValue* result_type = rebValue(
+        "pick return of", rebQ(action), "'spec"
+    );
+    Set_Cell_Flag(Init_Integer(PUSH(), 8), NEWLINE_BEFORE);
+    Copy_Cell(PUSH(), result_type);
+    rebRelease(result_type);
 
     rebRelease(action);
-    Init_Integer(PUSH(), sum);
   #endif
   }
 
   blockscope {  // !!! Note: FEED_FLAG_NEEDS_SYNC needs review
-    Set_Cell_Flag(Init_Integer(PUSH(), 8), NEWLINE_BEFORE);
+    Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
     Value* noop = rebValue("");
     assert(Is_Void(noop));

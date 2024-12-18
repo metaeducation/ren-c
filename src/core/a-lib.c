@@ -3129,8 +3129,9 @@ RebolContext** API_rebAllocSpecifierRefFromLevel_internal(
 
 
 enum {
-    IDX_API_ACTION_CFUNC = 1,  // HANDLE! of RebolActionCFunction*
-    IDX_API_ACTION_BINDING_BLOCK = 2,  // BLOCK! so binding is GC marked
+    IDX_API_ACTION_RETURN = 1,
+    IDX_API_ACTION_CFUNC,  // HANDLE! of RebolActionCFunction*
+    IDX_API_ACTION_BINDING_BLOCK,  // BLOCK! so binding is GC marked
     IDX_API_ACTION_MAX
 };
 
@@ -3143,41 +3144,19 @@ enum {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// 1. If you use rebFunction(), we still put a RETURN in the frame.  It may
-//    seem like that's not useful, because while a C function is on the
-//    stack we cannot RETURN across it.  *BUT* it is possible for the C
-//    function to return a continuation of code.  When that happens, the C
-//    function is off the stack and the definitional return can be acted upon.
-//
-// 2. The Level L gives us the visibility of variables for the function args,
+// 1. The Level L gives us the visibility of variables for the function args,
 //    but we need to see more than that to run code.  When rebFunction() was
 //    run there was a context in effect.  We stored it in a dummy BLOCK!
 //    so that the GC will keep it alive (if we poked the context into a
 //    HANDLE! it would not be marked).  Make the context passed to the
 //    CFunction inherit that original environment.
 //
-// 3. RebolContext accepts an Array* in the C++ build, but not the C build.
+// 2. RebolContext accepts an Array* in the C++ build, but not the C build.
 //    So the cast is needed here.
 //
 Bounce Api_Function_Dispatcher(Level* const L)
 {
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Has_Return(details));  // continuations can RETURN [1]
-    assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-    const Param* param = Phase_Params_Head(details);
-
-    Value* cell = Level_Arg(L, 1);
-    assert(
-        QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
-        and HEART_BYTE(cell) == REB_PARAMETER
-    );
-    Force_Level_Varlist_Managed(L);
-    Init_Action(
-        cell,
-        Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)),
-        CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        cast(VarList*, L->varlist)  // so RETURN knows where to return from
-    );
 
     Value* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
     RebolActionCFunction* cfunc = cast(RebolActionCFunction*,
@@ -3185,8 +3164,10 @@ Bounce Api_Function_Dispatcher(Level* const L)
     );
 
     Value *holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(holder);  // [2]
-    RebolContext* context = cast(RebolContext*, L->varlist);  // [3]
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(holder);  // [1]
+
+    Force_Level_Varlist_Managed(L);  // needs to be managed to pass around...
+    RebolContext* context = cast(RebolContext*, L->varlist);  // [2]
 
     Bounce bounce = cast(Bounce, (*cfunc)(context));
 
@@ -3196,6 +3177,11 @@ Bounce Api_Function_Dispatcher(Level* const L)
     assert(Is_Stable(cast(Atom*, bounce)));  // API can't do unstable values
 
     Value* result = cast(Value*, bounce);
+
+    const Param* param = cast(Param*,
+        Details_At(details, IDX_API_ACTION_RETURN)
+    );
+    assert(Is_Parameter(param));
 
     if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, result))
         fail (Error_Bad_Return_Type(L, result));
@@ -3216,20 +3202,10 @@ bool Api_Function_Details_Querier(
     assert(Details_Max(details) == IDX_API_ACTION_MAX);
 
     switch (property) {
-
-  //=////RETURN ///////////////////////////////////////////////////////////=//
-
       case SYM_RETURN: {
-        assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-        ParamList* exemplar = Phase_Paramlist(details);
-        Value* param = Varlist_Slots_Head(exemplar);
-        assert(
-            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-            and HEART_BYTE(param) == REB_PARAMETER
-        );
-        Copy_Cell(cast(Cell*, out), param);
-        QUOTE_BYTE(out) = NOQUOTE_1;
+        Value* param = Details_At(details, IDX_API_ACTION_RETURN);
+        assert(Is_Parameter(param));
+        Copy_Cell(out, param);
         return true; }
 
       default:
@@ -3285,22 +3261,24 @@ RebolValue* API_rebFunc(
     else
         BINDING(spec) = g_lib_context;  // !!! Review: needs module isolation!
 
+    StackIndex base = TOP_INDEX;
+
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_RETURN
+        MKF_DONT_POP_RETURN,
+        SYM_RETURN  // has return for type checking
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN | DETAILS_FLAG_OWNS_PARAMLIST,
+        DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Api_Function_Dispatcher,
         IDX_API_ACTION_MAX
     );
 
-    assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, adjunct);
+    Pop_Unpopped_Return(Details_At(details, IDX_API_ACTION_RETURN), base);
 
     Init_Handle_Cfunc(
         Details_At(details, IDX_API_ACTION_CFUNC),
@@ -3309,6 +3287,9 @@ RebolValue* API_rebFunc(
     Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
     Init_Block(holder, EMPTY_ARRAY);  // only care about binding GC safety
     BINDING(holder) = BINDING(spec);
+
+    assert(Phase_Adjunct(details) == nullptr);
+    Tweak_Phase_Adjunct(details, adjunct);
 
     return Init_Action(Alloc_Value(), details, ANONYMOUS, UNBOUND);
 }

@@ -96,7 +96,7 @@ INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Value* arg = Level_Arg(L, 2);  // already checked
+        Value* arg = Level_Arg(L, 1);  // already checked
         *heart = Cell_Heart(arg);
         assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
         *quote_byte = QUOTE_BYTE(arg) - Quote_Shift(1);  // calculate "unmeta"
@@ -123,7 +123,7 @@ INLINE Option(Bounce) Trap_Bounce_Maybe_Element_Intrinsic(
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(e, u_cast(Element*, Level_Arg(L, 2)));
+        Copy_Cell(e, u_cast(Element*, Level_Arg(L, 1)));
         return nullptr;  // already checked
     }
 
@@ -149,7 +149,7 @@ INLINE void Get_Meta_Atom_Intrinsic(  // can't modify arg of intrinsic!
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Value* arg = Level_Arg(L, 2);  // already checked, already meta
+        Value* arg = Level_Arg(L, 1);  // already checked, already meta
         assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
         Copy_Cell(meta, cast(Element*, arg));
         return;
@@ -164,7 +164,7 @@ INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(v, Level_Arg(L, 2));  // already checked
+        Copy_Cell(v, Level_Arg(L, 1));  // already checked
         return nullptr;
     }
 
@@ -183,7 +183,7 @@ INLINE Option(Bounce) Trap_Bounce_Meta_Decay_Value_Intrinsic(
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(meta, u_cast(Element*, Level_Arg(L, 2)));  // already checked
+        Copy_Cell(meta, u_cast(Element*, Level_Arg(L, 1)));  // already checked
         return nullptr;
     }
 

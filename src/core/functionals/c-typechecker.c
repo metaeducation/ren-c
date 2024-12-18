@@ -77,7 +77,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
         return LOGIC(decider(v));
     }
 
-    bool check_datatype = Cell_Logic(Level_Arg(L, 3));
+    bool check_datatype = Cell_Logic(Level_Arg(L, 2));
     if (check_datatype and not Is_Type_Block(v))
         return nullptr;
 
@@ -103,6 +103,7 @@ bool Typechecker_Details_Querier(
 ){
     assert(Details_Dispatcher(details) == &Typechecker_Dispatcher);
     assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
+    UNUSED(details);
 
     switch (property) {
       case SYM_RETURN: {
@@ -119,7 +120,7 @@ bool Typechecker_Details_Querier(
 
 
 //
-//  Make_Decider_Intrinsic: C
+//  Make_Typechecker: C
 //
 // The typecheckers for things like INTEGER? and ANY-SERIES? are all created
 // at boot time.
@@ -130,11 +131,22 @@ bool Typechecker_Details_Querier(
 // function is implied via that byte... and then just have the table of bytes
 // to blast through the deciders when type checking the arguments.
 //
-// 1. We need a spec for our typecheckers, which is really just `value` with
+// 1. While space is limited in the PARAMETER! Cell, it has a packed array of
+//    bytes it uses to store cached decider indices.  This way it doesn't look
+//    them up each time.  Hence there's currently a limit of 255 deciders
+//    (0 is reserved to prematurely terminate the array).
+//
+// 2. We need a spec for our typecheckers, which is really just `value` with
 //    no type restrictions as the argument.  !!! REVIEW: add help strings?
 //
-Details* Make_Decider_Intrinsic(Offset decider_index) {
-    DECLARE_ELEMENT (spec);  // simple spec [1]
+// 3. Since the return type is always a LOGIC?, Typechecker_Details_Querier()
+//    can fabricate that return without it taking up a cell's worth of space
+//    on each typechecker instantiation (that isn't intrinsic).
+//
+Details* Make_Typechecker(Offset decider_index) {
+    assert(decider_index != 0 and decider_index < 256);  // parameter cache [1]
+
+    DECLARE_ELEMENT (spec);  // simple spec [2]
     Source* spec_array = Make_Source_Managed(2);
     Set_Flex_Len(spec_array, 2);
     Init_Word(Array_At(spec_array, 0), CANON(VALUE));
@@ -145,13 +157,13 @@ Details* Make_Decider_Intrinsic(Offset decider_index) {
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_RETURN  // native return types checked only if RUNTIME_CHECKS
+        MKF_MASK_NONE,
+        SYM_0  // return type for all deciders is the same [3]
     );
     assert(adjunct == nullptr);
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN
-            | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
+        DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
         Phase_Archetype(paramlist),
         &Typechecker_Dispatcher,
         IDX_TYPECHECKER_MAX  // details array capacity

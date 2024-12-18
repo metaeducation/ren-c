@@ -1067,6 +1067,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //           action?]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
 //          [<const> block! meta-block!]
+//      <local> iterator
 //  ]
 //
 DECLARE_NATIVE(for_each)
@@ -1077,7 +1078,7 @@ DECLARE_NATIVE(for_each)
     Value* data = ARG(data);
     Value* body = ARG(body);  // bound to vars context on initial_entry
 
-    Value* iterator = ARG(return);  // reuse to hold Loop_Each_State
+    Value* iterator = LOCAL(iterator);  // reuse to hold Loop_Each_State
 
     bool breaking = false;
 
@@ -1175,6 +1176,7 @@ DECLARE_NATIVE(for_each)
 //          [<maybe> blank! any-series? any-context? map! action?]
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
+//      <local> iterator
 //  ]
 //
 DECLARE_NATIVE(every)
@@ -1195,7 +1197,7 @@ DECLARE_NATIVE(every)
     Value* data = ARG(data);
     Value* body = ARG(body);  // bound to vars context on initial_entry
 
-    Value* iterator = ARG(return);  // place to store iteration state
+    Value* iterator = LOCAL(iterator);  // place to store iteration state
 
     enum {
         ST_EVERY_INITIAL_ENTRY = STATE_0,
@@ -1647,6 +1649,7 @@ DECLARE_NATIVE(remove_each)
 //           action?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
+//      <local> iterator
 //  ]
 //
 DECLARE_NATIVE(map_each)
@@ -1664,6 +1667,7 @@ DECLARE_NATIVE(map_each)
 
     UNUSED(PARAM(vars));
     UNUSED(PARAM(body));
+    UNUSED(LOCAL(iterator));
 
     if (Is_Blank(ARG(data)))  // should have same result as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
@@ -1694,6 +1698,7 @@ DECLARE_NATIVE(map_each)
 //          [<maybe> blank! quoted? action?]
 //      @(body) "Block to evaluate each time"
 //          [<const> block! meta-block!]
+//      <local> iterator
 //  ]
 //
 DECLARE_NATIVE(map)
@@ -1715,7 +1720,7 @@ DECLARE_NATIVE(map)
     Value* data = ARG(data);
     Value* body = ARG(body);  // bound to vars context on initial_entry
 
-    Value* iterator = ARG(return);  // reuse to hold Loop_Each_State
+    Value* iterator = LOCAL(iterator);  // reuse to hold Loop_Each_State
 
     enum {
         ST_MAP_INITIAL_ENTRY = STATE_0,

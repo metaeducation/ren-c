@@ -122,9 +122,7 @@ Bounce Func_Dispatcher(Level* const L)
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    assert(Details_Has_Return(details));  // all FUNC have RETURN
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-
     Value* cell = Level_Arg(L, 1);
     assert(
         QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
@@ -162,15 +160,13 @@ Bounce Func_Dispatcher(Level* const L)
 
     Details* details = Ensure_Level_Details(L);
 
-    if (Details_Has_Return(details)) {
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-        const Param* param = Phase_Params_Head(details);
+    assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
+    const Param* param = Phase_Params_Head(details);
 
-        if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
-            return FAIL(
-                "End of function without a RETURN, but ~ not in RETURN: spec"
-            );
-    }
+    if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
+        return FAIL(
+            "End of function without a RETURN, but ~ not in RETURN: spec"
+        );
 
     return OUT;
 }}
@@ -192,7 +188,6 @@ bool Func_Details_Querier(
   //=////RETURN ///////////////////////////////////////////////////////////=//
 
       case SYM_RETURN: {
-        assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
         assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
         ParamList* exemplar = Phase_Paramlist(details);
         Value* param = Varlist_Slots_Head(exemplar);
@@ -301,7 +296,7 @@ bool Func_Details_Querier(
 Details* Make_Interpreted_Action_May_Fail(
     const Element* spec,
     const Element* body,
-    Flags mkf_flags,  // MKF_RETURN, etc.
+    Option(SymId) returner,  // SYM_RETURN, SYM_YIELD, SYM_0 ...
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
@@ -312,12 +307,11 @@ Details* Make_Interpreted_Action_May_Fail(
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
-        mkf_flags
+        MKF_MASK_NONE,
+        returner
     );
 
     Flags details_flags = DETAILS_FLAG_OWNS_PARAMLIST;
-    if (mkf_flags & MKF_RETURN)
-        details_flags |= DETAILS_FLAG_PARAMLIST_HAS_RETURN;
 
     Details* details = Make_Dispatch_Details(
         details_flags,
@@ -415,7 +409,7 @@ DECLARE_NATIVE(function)
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,
         body,
-        MKF_RETURN,
+        SYM_RETURN,  // has a RETURN: in the paramlist
         &Func_Dispatcher,
         IDX_FUNC_MAX  // archetype and one array slot (will be filled)
     );
@@ -588,7 +582,8 @@ DECLARE_NATIVE(definitional_return)
 // which you will bind to and run if there is no definitional return in effect.
 //
 // 1. The cached name for values holding this native is set to RETURN by the
-//    dispatchers that use it, which might seem confusing debugging this.
+//    dispatchers that use it, overriding DEFINITIONAL-RETURN, which might
+//    seem confusing debugging this.
 //
 // 2. Check type NOW instead of waiting and having the dispatcher check it.
 //    Reasoning is that that lets the error indicate the callsite, e.g. the
@@ -611,9 +606,10 @@ DECLARE_NATIVE(definitional_return)
     if (not coupling)
         return FAIL(Error_Archetype_Invoked_Raw());
 
+    possibly(Level_Label(LEVEL) == CANON(RETURN));  // common renaming [1]
+
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
     Details* target_phase = Ensure_Level_Details(target_level);
-    assert(Details_Has_Return(target_phase));  // continuations can RETURN [1]
     assert(Key_Id(Phase_Keys_Head(target_phase)) == SYM_RETURN);
     const Param* return_param = Phase_Params_Head(target_phase);
 

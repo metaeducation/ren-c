@@ -265,7 +265,8 @@ enum {
     // a JavaScript native inside a function and inherit the visibility of
     // variables inside that function, etc.
     //
-    IDX_JS_NATIVE_CONTEXT = IDX_NATIVE_CONTEXT,
+    //   IDX_NATIVE_CONTEXT,
+    //   IDX_NATIVE_RETURN,
 
     // Each native has a corresponding JavaScript object that holds the
     // actual implementation function of the body.  Since pointers to JS
@@ -276,7 +277,7 @@ enum {
     // cleanup callback that will be run during GC, so that map entries
     // in the JavaScript do not leak.
     //
-    IDX_JS_NATIVE_OBJECT,
+    IDX_JS_NATIVE_OBJECT = IDX_NATIVE_MAX,
 
     // The JavaScript source code for the function.  We don't technically
     // need to hang onto this...and could presumably ask JavaScript to give
@@ -784,19 +785,14 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
-    // 1. This code previously always called the typecheck for the return.
-    //    It doesn't seem like it should have.  :-/  Added a check to see
-    //    if the phase had a return or not.
+    // Need to typecheck the result.
 
     Details* details = Ensure_Level_Details(L);
-    if (Details_Has_Return(details)) {  // !!! does it always have RETURN? [1]
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-        const Param* param = Phase_Params_Head(details);
-        assert(Is_Parameter(param));
+    const Param* param = Details_At(details, IDX_NATIVE_RETURN);
+    assert(Is_Parameter(param));
 
-        if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
-            return FAIL(Error_Bad_Return_Type(L, OUT));
-    }
+    if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
+        return FAIL(Error_Bad_Return_Type(L, OUT));
 
     return OUT;
 
@@ -851,24 +847,30 @@ DECLARE_NATIVE(js_native)
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
 
+    StackIndex base = TOP_INDEX;
+
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_RETURN
+        MKF_DONT_POP_RETURN,
+        SYM_RETURN  // want return
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN
-            | DETAILS_FLAG_IS_NATIVE
-            | DETAILS_FLAG_OWNS_PARAMLIST,
+        DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
     );
 
-    assert(Phase_Adjunct(details) == nullptr);  // should default to nullptr
-    Tweak_Phase_Adjunct(details, adjunct);
+    // !!! Natives on the stack can specify where APIs like reb.Run() should
+    // look for bindings.  For the moment, set user natives to use the user
+    // context...it could be a parameter of some kind (?)
+    //
+    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), g_user_module);
+
+    Pop_Unpopped_Return(Details_At(details, IDX_NATIVE_RETURN), base);
 
     heapaddr_t native_id = Native_Id_For_Details(details);
 
@@ -990,12 +992,6 @@ DECLARE_NATIVE(js_native)
 
     Drop_Mold(mo);
 
-    // !!! Natives on the stack can specify where APIs like reb.Run() should
-    // look for bindings.  For the moment, set user natives to use the user
-    // context...it could be a parameter of some kind (?)
-    //
-    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), g_user_module);
-
     // We want this native and its JS Object to GC in the same step--because
     // if the native GC'd without removing its identity from the table, then
     // a new native could come into existence recycling that pointer before
@@ -1008,6 +1004,9 @@ DECLARE_NATIVE(js_native)
         1,  // 0 size interpreted to mean it's a C function
         &cleanup_js_object
     );
+
+    assert(Phase_Adjunct(details) == nullptr);  // should default to nullptr
+    Tweak_Phase_Adjunct(details, adjunct);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

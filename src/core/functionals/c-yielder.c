@@ -238,7 +238,10 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_YIELD);
     Value* cell = Level_Arg(L, 1);
-    assert(Is_Nothing(cell));  // YIELD is a local, initialized to nothing
+    assert(  // YIELD is a local, originally the type of yielded results
+        HEART_BYTE(cell) == REB_PARAMETER
+        and QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
+    );
     Init_Action(
         cell,
         Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
@@ -465,6 +468,45 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 
 //
+//  Yielder_Details_Querier: C
+//
+bool Yielder_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    assert(Details_Dispatcher(details) == &Yielder_Dispatcher);
+    assert(Details_Max(details) == IDX_YIELDER_MAX);
+
+    switch (property) {
+
+  //=//// RETURN ///////////////////////////////////////////////////////////=//
+
+    // The "Return" from a Yielder is actually what its YIELD function gives
+    // back...it always includes the definitional error for generator being
+    // exhausted (how to add this legitimately?)
+
+      case SYM_RETURN: {
+        assert(Key_Id(Phase_Keys_Head(details)) == SYM_YIELD);
+        ParamList* exemplar = Phase_Paramlist(details);
+        Value* param = Varlist_Slots_Head(exemplar);
+        assert(
+            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+            and HEART_BYTE(param) == REB_PARAMETER
+        );
+        Copy_Cell(cast(Cell*, out), param);
+        QUOTE_BYTE(out) = NOQUOTE_1;
+        return true; }
+
+      default:
+        break;
+    }
+
+    return false;
+}
+
+
+//
 //  /yielder: native [
 //
 //      return: "Action that can be called repeatedly until it yields NULL"
@@ -492,7 +534,7 @@ DECLARE_NATIVE(yielder)
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,
         body,  // relativized and put in Details array at IDX_YIELDER_BODY
-        MKF_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
+        SYM_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
         &Yielder_Dispatcher,
         IDX_YIELDER_MAX  // details array capacity
     );

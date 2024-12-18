@@ -64,7 +64,7 @@ Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
         return nullptr;  // always return null once 0 is reached
     mutable_VAL_INT64(n) -= 1;
 
-    Value* code = Level_Arg(L, 2);  // skip the RETURN
+    Value* code = Level_Arg(L, 1);
     return DELEGATE_BRANCH(OUT, code);
 }
 
@@ -85,7 +85,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
         return nullptr;  // return null until 0 is reached
     }
 
-    Value* code = Level_Arg(L, 2);  // skip the RETURN
+    Value* code = Level_Arg(L, 1);  // skip the RETURN
     return DELEGATE_BRANCH(OUT, code);
 }
 
@@ -101,6 +101,7 @@ bool Oneshot_Details_Querier(
         Details_Dispatcher(details) == &Upshot_Dispatcher
         or Details_Dispatcher(details) == &Downshot_Dispatcher
     );
+    UNUSED(details);
 
     switch (property) {
       case SYM_RETURN:
@@ -156,7 +157,7 @@ DECLARE_NATIVE(n_shot)
     REBI64 n = VAL_INT64(ARG(n));
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN,
+        DETAILS_MASK_NONE,
         LIB(DO_BRANCH),
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
         IDX_ONESHOT_MAX  // details array capacity

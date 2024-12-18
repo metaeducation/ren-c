@@ -104,7 +104,6 @@ Bounce Macro_Dispatcher(Level* const L)
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    assert(Details_Has_Return(details));
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
     Force_Level_Varlist_Managed(L);
@@ -171,7 +170,6 @@ bool Macro_Details_Querier(
 
     switch (property) {
       case SYM_RETURN: {
-        assert(Get_Details_Flag(details, PARAMLIST_HAS_RETURN));
         assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
         ParamList* exemplar = Phase_Paramlist(details);
         Value* param = Varlist_Slots_Head(exemplar);
@@ -213,7 +211,7 @@ DECLARE_NATIVE(macro)
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,
         body,
-        MKF_RETURN,
+        SYM_RETURN,
         &Macro_Dispatcher,
         IDX_MACRO_MAX  // details capacity, just body slot (and archetype)
     );

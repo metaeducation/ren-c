@@ -72,15 +72,9 @@
     STUB_SUBCLASS_FLAG_27
 
 
-//=//// DETAILS_FLAG_PARAMLIST_HAS_RETURN /////////////////////////////////=//
+//=//// DETAILS_FLAG_28 ///////////////////////////////////////////////////=//
 //
-// The mechanics for RETURN are being worked on, to where it really should be
-// Dispatcher-specific (e.g. the Encloser_Dispatcher() knows that the return
-// comes from the enclosing function, not the enclosed one).  But this flag
-// is on the Details array, as a slight improvement over putting it on the
-// ParamList (where flags are more scarce).
-//
-#define DETAILS_FLAG_PARAMLIST_HAS_RETURN \
+#define DETAILS_FLAG_28 \
     STUB_SUBCLASS_FLAG_28
 
 

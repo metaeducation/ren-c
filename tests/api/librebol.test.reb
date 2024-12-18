@@ -25,7 +25,8 @@
             5 true
             6 1020
             7 1020
-            8 ~void~
+            8 [integer!]
+            9 ~void~
         ]
     ]
 )

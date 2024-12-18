@@ -597,16 +597,14 @@ Bounce Composer_Executor(Level* const L)
     //
     // !!! IF YOU REARRANGE THESE, YOU HAVE TO UPDATE THE NUMBERING ALSO !!!
 
-    DECLARE_PARAM(1, return);
-    DECLARE_PARAM(2, pattern);
-    DECLARE_PARAM(3, template);
-    DECLARE_PARAM(4, deep);
-    DECLARE_PARAM(5, conflate);
-    DECLARE_PARAM(6, predicate);
+    DECLARE_PARAM(1, pattern);
+    DECLARE_PARAM(2, template);
+    DECLARE_PARAM(3, deep);
+    DECLARE_PARAM(4, conflate);
+    DECLARE_PARAM(5, predicate);
 
     Level* main_level = L->u.compose.main_level;  // invoked COMPOSE native
 
-    UNUSED(Level_Arg(main_level, p_return_));
     UNUSED(Level_Arg(main_level, p_template_));  // accounted for by Level feed
 
     bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
@@ -901,7 +899,7 @@ DECLARE_NATIVE(compose)
         goto list_compose_finished;
 
       case ST_COMPOSE_STRING_SCAN:
-        goto string_scan_result_in_top;
+        goto string_scan_result_in_top_scratch_is_transcode_state;
 
       case ST_COMPOSE_STRING_EVAL:
         goto string_eval_in_out;
@@ -953,7 +951,7 @@ DECLARE_NATIVE(compose)
   found_first_string_pattern: { ///////////////////////////////////////////////
 
     TranscodeState* ss = Try_Alloc_Memory(TranscodeState);
-    Init_Handle_Cdata(ARG(return), ss, 1);
+    Init_Handle_Cdata(SCRATCH, ss, 1);
 
     const LineNumber start_line = 1;
     Init_Transcode(
@@ -978,9 +976,9 @@ DECLARE_NATIVE(compose)
     STATE = ST_COMPOSE_STRING_SCAN;
     return CONTINUE_SUBLEVEL(sub);
 
-}} string_scan_result_in_top: { //////////////////////////////////////////////
+}} string_scan_result_in_top_scratch_is_transcode_state: { ///////////////////
 
-    TranscodeState* ss = Cell_Handle_Pointer(TranscodeState, ARG(return));
+    TranscodeState* ss = Cell_Handle_Pointer(TranscodeState, SCRATCH);
 
     Utf8(const*) head = Cell_Utf8_At(t);
     Offset end_offset = ss->at - head;
@@ -1014,14 +1012,14 @@ DECLARE_NATIVE(compose)
     // which is preferable.  It also helps with locality.  But it means the
     // evaluations have to be done on an already built stack.
 
-    Init_Integer(ARG(return), 2);
-    goto do_string_eval_from_stack;
+    Init_Integer(SCRATCH, 2);
+    goto do_string_eval_from_stack_scratch_is_offset;
 
 } string_eval_in_out: { //////////////////////////////////////////////////////
 
     Decay_If_Unstable(OUT);
 
-    StackIndex index = VAL_INT32(ARG(return)) + STACK_BASE;
+    StackIndex index = VAL_INT32(SCRATCH) + STACK_BASE;
     Copy_Cell(Data_Stack_At(Value, index), stable_OUT);
 
     index += 3;
@@ -1029,12 +1027,12 @@ DECLARE_NATIVE(compose)
     if (index > TOP_INDEX)
         goto string_evaluations_done;
 
-    Init_Integer(ARG(return), index - STACK_BASE);
-    goto do_string_eval_from_stack;
+    Init_Integer(SCRATCH, index - STACK_BASE);
+    goto do_string_eval_from_stack_scratch_is_offset;
 
-} do_string_eval_from_stack: { ///////////////////////////////////////////////
+} do_string_eval_from_stack_scratch_is_offset: { /////////////////////////////
 
-    StackIndex index = VAL_INT32(ARG(return)) + STACK_BASE;
+    StackIndex index = VAL_INT32(SCRATCH) + STACK_BASE;
 
     assert(Is_Integer(Data_Stack_At(Element, index - 1)));  // start offset
     assert(VAL_TYPE(Data_Stack_At(Element, index)) == VAL_TYPE(pattern));
@@ -1044,7 +1042,7 @@ DECLARE_NATIVE(compose)
     HEART_BYTE(SPARE) = REB_BLOCK;
     BINDING(SPARE) = BINDING(pattern);
 
-    Init_Integer(ARG(return), index - STACK_BASE);
+    Init_Integer(SCRATCH, index - STACK_BASE);
 
     STATE = ST_COMPOSE_STRING_EVAL;
     return CONTINUE(OUT, stable_SPARE);

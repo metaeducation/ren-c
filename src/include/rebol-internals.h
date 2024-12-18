@@ -516,8 +516,7 @@ enum Boot_Levels {
 
 // Modes allowed by Make_Function:
 enum {
-    MKF_RETURN = 1 << 0,  // slot 1 contains RETURN (for FUNC, NATIVE, etc.)
-    MKF_YIELD = 1 << 1,  // slot 1 contains YIELD (for YIELDER, GENERATOR)
+    MKF_DONT_POP_RETURN = 1 << 1,  // leave RETURN parameter on stack (natives)
 
     // These flags are set during the process of spec analysis.  It helps
     // avoid the inefficiency of creating documentation frames on functions

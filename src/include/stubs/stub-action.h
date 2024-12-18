@@ -245,6 +245,7 @@ INLINE Value* Details_At(Details* details, Length n) {
 //
 enum {
     IDX_NATIVE_CONTEXT = 1,  // libRebol binds strings here (and lib)
+    IDX_NATIVE_RETURN = 2,  // return type for natives
 
     IDX_NATIVE_MAX
 };
@@ -368,41 +369,3 @@ INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
 
 #define Not_Details_Flag(p,name) \
     Not_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
-
-
-//=//// RETURN HANDLING (WIP) /////////////////////////////////////////////=//
-//
-// The well-understood and working part of definitional return handling is
-// that function frames have a local slot named RETURN.  This slot is filled
-// by the dispatcher before running the body, with a function bound to the
-// executing frame.  This way it knows where to return to.
-//
-// !!! Lots of other things are not worked out (yet):
-//
-// * How do function derivations share this local cell (or do they at all?)
-//   e.g. if an ADAPT has prelude code, that code runs before the original
-//   dispatcher would fill in the RETURN.  Does the cell hold a return whose
-//   phase meaning changes based on which phase is running (which the user
-//   could not do themselves)?  Or does ADAPT need its own RETURN?  Or do
-//   ADAPTs just not have returns?
-//
-// * The typeset in the RETURN local key is where legal return types are
-//   stored (in lieu of where a parameter would store legal argument types).
-//   Derivations may wish to change this.  Needing to generate a whole new
-//   paramlist just to change the return type seems excessive.
-//
-// * To make the position of RETURN consistent and easy to find, it is moved
-//   to the first parameter slot of the paramlist (regardless of where it
-//   is declared).  This complicates the paramlist building code, and being
-//   at that position means it often needs to be skipped over (e.g. by a
-//   GENERIC which wants to dispatch on the type of the first actual argument)
-//   The ability to create functions that don't have a return complicates
-//   this mechanic as well.
-//
-// The only bright idea in practice right now is that parameter lists which
-// have a definitional return in the first slot have a flag saying so.  Much
-// more design work on this is needed.
-//
-
-#define Details_Has_Return(details) \
-    Get_Details_Flag((details), PARAMLIST_HAS_RETURN)

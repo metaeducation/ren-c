@@ -295,24 +295,31 @@ DECLARE_NATIVE(make_native)
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
 
+    StackIndex base = TOP_INDEX;
+
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_RETURN
+        MKF_DONT_POP_RETURN,
+        SYM_RETURN  // want return
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_PARAMLIST_HAS_RETURN
-            | DETAILS_FLAG_IS_NATIVE
+        DETAILS_FLAG_IS_NATIVE  // e.g. IDX_NATIVE_CONTEXT, IDX_NATIVE_RETURN
             | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
         IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
     );
 
-    assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, adjunct);
+    // !!! Natives on the stack can specify where APIs like rebValue() should
+    // look for bindings.  For the moment, set user natives to use the user
+    // context...it could be a parameter of some kind (?)
+    //
+    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), g_user_module);
+
+    Pop_Unpopped_Return(Details_At(details, IDX_NATIVE_RETURN), base);
 
     if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
@@ -322,12 +329,6 @@ DECLARE_NATIVE(make_native)
             Copy_String_At(source)  // might change before COMPILE call
         );
     }
-
-    // !!! Natives on the stack can specify where APIs like rebValue() should
-    // look for bindings.  For the moment, set user natives to use the user
-    // context...it could be a parameter of some kind (?)
-    //
-    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), g_user_module);
 
     if (REF(linkname)) {
         Value* linkname = ARG(linkname);
@@ -355,6 +356,9 @@ DECLARE_NATIVE(make_native)
     }
 
     Init_Blank(Details_At(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
+
+    assert(Phase_Adjunct(details) == nullptr);
+    Tweak_Phase_Adjunct(details, adjunct);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

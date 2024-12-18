@@ -762,7 +762,7 @@ Bounce Stepper_Executor(Level* L)
                 label,
                 coupling
             );
-            Param* param = Phase_Param(details, 2);
+            Param* param = Phase_Param(details, 1);
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             switch (Cell_ParamClass(param)) {

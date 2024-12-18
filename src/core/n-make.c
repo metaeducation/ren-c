@@ -201,11 +201,9 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
 
     INCLUDE_PARAMS_OF_TO;
-    Erase_Cell(ARG(return));
     Erase_Cell(ARG(type));
     Erase_Cell(ARG(element));
 
-    Init_Nulled(ARG(return));
     Copy_Cell(ARG(type), Datatype_From_Kind(from));
     Copy_Cell(ARG(element), cast(Element*, stable_OUT));
     STATE = STATE_0;

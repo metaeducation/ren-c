@@ -185,20 +185,16 @@ export /emit-include-params-macro: func [
     let is-intrinsic: did find proto "native:intrinsic"
 
     let n: 1
-    let items: collect* [
+    let items: collect [
         ;
         ; All natives *should* specify a `return:`, because it's important
         ; to document what the return types are (and HELP should show it).
         ; However, only CHECK_NATIVE_RETURNS builds actually *type check* the
         ; result; the C code is trusted otherwise to do the correct thing.
         ;
-        ; By convention, definitional returns are the first argument.  (It is
-        ; not currently enforced they actually be first in the parameter list
-        ; the user provides...so making actions may have to shuffle the
-        ; position.  But it may come to be enforced for efficiency).
-        ;
-        ; 1. We don't want to say USED(ARG(return)) because it might be an
-        ;    intrinsic, and there is no associated frame location.
+        ; Natives store their return type specification in their Details,
+        ; not in their ParamList (the way a FUNC does), because there is no
+        ; need for instances of natives to have a RETURN function slot.
         ;
         while [all [
             not tail? paramlist
@@ -208,12 +204,8 @@ export /emit-include-params-macro: func [
         ]
         if (the return:) <> paramlist.1 [
             fail [native-name "does not have a RETURN: specification"]
-        ] else [
-            keep "DECLARE_PARAM(1, return)"
-            keep "USED(p_return_)"  ; Suppress warning on not using return [1]
-            n: n + 1
-            paramlist: next paramlist
         ]
+        paramlist: next paramlist
 
         for-each 'item paramlist [
             if group? item [
@@ -226,7 +218,7 @@ export /emit-include-params-macro: func [
             let param-name: resolve noquote item
             all [
                 is-intrinsic
-                n = 2  ; return is 1
+                n = 1  ; first parameter
             ] then [
                 keep cscape [
                     param-name "DECLARE_INTRINSIC_PARAM(${param-name})"
@@ -257,6 +249,10 @@ export /emit-include-params-macro: func [
         ]
     ] else [
         [-{Set_Flex_Info(level_->varlist, HOLD);}-]
+    ]
+
+    if empty? items [  ; vaporization currently not allowed
+        insert items "NOOP"
     ]
 
     let prefix: all [extension unspaced [extension "_"]]

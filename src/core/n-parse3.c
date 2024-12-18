@@ -253,8 +253,6 @@ static bool Subparse_Throws(
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_SUBPARSE;
 
-    Init_Nulled(Erase_Cell(ARG(return)));
-
     Derelativize(
         Erase_Cell(ARG(input)),
         c_cast(Element*, input),

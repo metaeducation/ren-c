@@ -64,20 +64,16 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 void Push_Keys_And_Holes_May_Fail(
     VarList* *adjunct,
     const Value* spec,
-    Flags flags
+    Flags flags,
+    Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){
     StackIndex base = TOP_INDEX;
 
     assert(Is_Block(spec));
 
-    if (flags & MKF_RETURN) {
-        Init_Word(PUSH(), CANON(RETURN));  // top of stack
+    if (returner) {
+        Init_Word(PUSH(), Canon_Symbol(unwrap returner));  // top of stack
         Init_Unreadable(PUSH());  // becomes parameter (explicitly or implicit)
-    }
-
-    if (flags & MKF_YIELD) {
-        Init_Word(PUSH(), CANON(YIELD));
-        Init_Nothing(PUSH());  // locals are initialized as nothing
     }
 
     enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
@@ -276,7 +272,7 @@ void Push_Keys_And_Holes_May_Fail(
 
         bool refinement = false;  // paths with blanks at head are refinements
         bool local = false;
-        bool is_return = false;
+        bool is_returner = false;
         if (heart == REB_CHAIN or heart == REB_META_CHAIN) {
             switch (Try_Get_Sequence_Singleheart(item)) {
               case LEADING_BLANK_AND(WORD): {
@@ -301,10 +297,12 @@ void Push_Keys_And_Holes_May_Fail(
                 break; }
 
               case TRAILING_BLANK_AND(WORD):
-                if (not quoted and Cell_Word_Id(item) == SYM_RETURN) {
+                if (not returner)
+                    fail ("SET-WORD in spec but no RETURN or YIELD in effect");
+                if (not quoted and Cell_Word_Id(item) == unwrap returner) {
                     symbol = Cell_Word_Symbol(item);
                     pclass = PARAMCLASS_NORMAL;
-                    is_return = true;
+                    is_returner = true;
                 }
                 break;
 
@@ -357,18 +355,14 @@ void Push_Keys_And_Holes_May_Fail(
         }
 
         if (
-            (flags & MKF_RETURN)
-            and Symbol_Id(symbol) == SYM_RETURN
-            and not is_return
+            returner
+            and Symbol_Id(symbol) == unwrap returner
+            and not is_returner
         ){
-            fail ("Generator provides RETURN:, use LAMBDA if not desired");
-        }
-
-        if (
-            (flags & MKF_YIELD)
-            and Symbol_Id(symbol) == SYM_YIELD
-        ){
-            fail ("Generator provides YIELD, don't include in spec");
+            if (unwrap returner == SYM_RETURN)
+                fail ("Generator provides RETURN:, use LAMBDA if not desired");
+            assert(unwrap returner == SYM_YIELD);
+            fail ("Generator provides YIELD:, can't have YIELD parameter");
         }
 
         // Because FUNC does not do any locals gathering by default, the main
@@ -386,12 +380,12 @@ void Push_Keys_And_Holes_May_Fail(
 
         OnStack(Value*) param;
         if (
-            symbol == CANON(RETURN)
-            and (flags & MKF_RETURN)  // explicit return: specification
+            returner
+            and Symbol_Id(symbol) == unwrap returner
         ){
             assert(
-                Cell_Word_Symbol(Data_Stack_At(Element, base + 1))
-                == CANON(RETURN)
+                Cell_Word_Id(Data_Stack_At(Element, base + 1))
+                == unwrap returner
             );
             param = Data_Stack_At(Value, base + 2);
             if (Is_Cell_Readable(param)) {
@@ -399,7 +393,10 @@ void Push_Keys_And_Holes_May_Fail(
                     QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
                     and HEART_BYTE(param) == REB_PARAMETER
                 );
-                fail ("Duplicate RETURN: in function spec");
+                if (SYM_RETURN == unwrap returner)
+                    fail ("Duplicate RETURN: in function spec");
+                assert(SYM_YIELD == unwrap returner);
+                fail ("Duplicate YIELD: in function spec");
             }
         }
         else {  // Pushing description values for a new named element...
@@ -431,9 +428,10 @@ void Push_Keys_And_Holes_May_Fail(
         }
     }
 
-    if (flags & MKF_RETURN) {  // default RETURN: to unconstrained if not seen
+    if (returner) {  // default RETURN: or YIELD: to unconstrained if not seen
         assert(
-            Cell_Word_Symbol(Data_Stack_At(Element, base + 1)) == CANON(RETURN)
+            Cell_Word_Id(Data_Stack_At(Element, base + 1))
+            == unwrap returner
         );
         OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
         if (Not_Cell_Readable(param_1)) {
@@ -617,7 +615,8 @@ ParamList* Pop_Paramlist_May_Fail(
 ParamList* Make_Paramlist_Managed_May_Fail(
     Sink(VarList*) adjunct,
     const Element* spec,
-    Flags flags  // flags may be modified to carry additional information
+    Flags flags,  // flags may be modified to carry additional information
+    Option(SymId) returner  // e.g. SYM_YIELD or SYM_RETURN
 ){
     StackIndex base = TOP_INDEX;
 
@@ -628,17 +627,47 @@ ParamList* Make_Paramlist_Managed_May_Fail(
     Push_Keys_And_Holes_May_Fail(
         adjunct,
         spec,
-        flags
+        flags,
+        returner
     );
 
     Option(Phase*) prior = nullptr;
     Option(VarList*) prior_coupling = nullptr;
+
+    if (flags & MKF_DONT_POP_RETURN) {
+        assert(returner);
+        assert(TOP_INDEX - base >= 2);
+        base += 2;
+    }
 
     ParamList* paramlist = Pop_Paramlist_May_Fail(
         base, prior, prior_coupling
     );
 
     return paramlist;
+}
+
+
+//
+//  Pop_Unpopped_Return: C
+//
+// If you use MKF_DONT_POP_RETURN, the return won't be part of the paramlist
+// but left on the stack.  Natives put this in the Details array.
+//
+void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
+{
+    assert(TOP_INDEX == base + 2);
+    assert(
+        HEART_BYTE(TOP) == REB_PARAMETER
+        and QUOTE_BYTE(TOP) == ONEQUOTE_NONQUASI_3
+    );
+    QUOTE_BYTE(TOP) = NOQUOTE_1;
+    Copy_Cell(out, TOP_ELEMENT);
+    DROP();
+    assert(Cell_Word_Id(TOP) == SYM_RETURN);
+    DROP();
+
+    UNUSED(base);
 }
 
 
@@ -672,7 +701,6 @@ Details* Make_Dispatch_Details(
     assert(0 == (flags & (~ (  // make sure no stray flags passed in
         DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC
             | DETAILS_FLAG_IS_NATIVE
-            | DETAILS_FLAG_PARAMLIST_HAS_RETURN
             | DETAILS_FLAG_OWNS_PARAMLIST
     ))));
 

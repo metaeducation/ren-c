@@ -1224,7 +1224,7 @@ DECLARE_GENERICS(Frame)
           case SYM_RETURN: {
             Details* details = Phase_Details(phase);
             DetailsQuerier* querier = Details_Querier(details);
-            if (not (*querier)(OUT, details, prop))
+            if (not (*querier)(OUT, details, unwrap prop))
                 return FAIL("FRAME!'s Details does not offer BODY/RETURN");
             return OUT; }
 

@@ -80,7 +80,7 @@ void Startup_Type_Predicates(void)
     for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 1) {
         REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q);  // skip REB_T_RETURN
 
-        Details* details = Make_Decider_Intrinsic(n);  // n is decider_index
+        Details* details = Make_Typechecker(n);  // n is decider_index
 
         Init_Action(
             Sink_Lib_Var(cast(SymId, id)),
