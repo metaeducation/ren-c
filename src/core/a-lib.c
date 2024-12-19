@@ -1069,12 +1069,13 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
         FEED_MASK_DEFAULT
     );
 
-    if (binding) {
-        assert(Is_Node_Managed(binding));
-        FEED_BINDING(feed) = cast(Stub*, binding);
+    if (binding == nullptr) {
+        assert(Is_Stub_Varlist(g_user_context));
+        binding = g_user_context;
     }
-    else
-        FEED_BINDING(feed) = Get_Context_From_Top_Level();
+
+    assert(Is_Node_Managed(binding));
+    FEED_BINDING(feed) = cast(Stub*, binding);
 
     Level* L = Make_Level(&Evaluator_Executor, feed, flags);
     Init_Void(Evaluator_Primed_Cell(L));
@@ -1175,12 +1176,13 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         FEED_MASK_DEFAULT
     );
 
-    if (binding) {
-        assert(Is_Node_Managed(binding));
-        FEED_BINDING(feed) = cast(Stub*, binding);
+    if (binding == nullptr) {
+        assert(Is_Stub_Varlist(g_user_context));
+        binding = g_user_context;
     }
-    else
-        FEED_BINDING(feed) = Get_Context_From_Top_Level();
+
+    assert(Is_Node_Managed(binding));
+    FEED_BINDING(feed) = cast(Stub*, binding);
 
     Level* L = Make_Level(&Stepper_Executor, feed, flags);
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
@@ -3373,6 +3375,7 @@ RebolBounce API_rebContinueInterruptible(
 //    that the cfuncs can be Dispatcher* or RebolActionCFunction*  :-(
 //
 RebolValue* API_rebCollateExtension_internal(
+    RebolContext** binding_ref,  // initialized to module when loaded
     bool use_librebol,
     const unsigned char* script_compressed,
     size_t script_compressed_size,
@@ -3383,6 +3386,11 @@ RebolValue* API_rebCollateExtension_internal(
     Source* a = Make_Source(IDX_COLLATOR_MAX);  // details
     Set_Flex_Len(a, IDX_COLLATOR_MAX);
 
+    Init_Handle_Cdata(
+        Array_At(a, IDX_COLLATOR_BINDING_REF),
+        binding_ref,
+        1
+    );
     Init_Handle_Cdata(
         Array_At(a, IDX_COLLATOR_SCRIPT),
         m_cast(Byte*, script_compressed),  // !!! by contract, don't change!

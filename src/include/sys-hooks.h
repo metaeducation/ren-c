@@ -54,10 +54,13 @@ typedef REBINT (CompareHook)(const Cell*, const Cell*, bool strict);
 #else
     typedef Value* (ExtensionCollator)(RebolApiTable*);
 #endif
-#define IDX_COLLATOR_SCRIPT 0
-#define IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS 1
-#define IDX_COLLATOR_CFUNCS 2
-#define IDX_COLLATOR_MAX 3
+enum {
+    IDX_COLLATOR_BINDING_REF = 0,
+    IDX_COLLATOR_SCRIPT,
+    IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS,
+    IDX_COLLATOR_CFUNCS,
+    IDX_COLLATOR_MAX
+};
 
 #define CELL_FLAG_CFUNCS_NOTE_USE_LIBREBOL  CELL_FLAG_NOTE
 

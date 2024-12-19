@@ -164,6 +164,8 @@ DECLARE_NATIVE(load_extension)
     assert(Array_Len(collated) == IDX_COLLATOR_MAX);
     Push_Lifeguard(collated);
 
+    const Cell* binding_ref_handle
+        = Array_At(collated, IDX_COLLATOR_BINDING_REF);
     const Cell* script_compressed
         = Array_At(collated, IDX_COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
@@ -252,6 +254,10 @@ DECLARE_NATIVE(load_extension)
     Drop_Lifeguard(collated);
 
     rebElide("append system.extensions", Varlist_Archetype(module_ctx));
+
+    RebolContext** binding_ref
+        = Cell_Handle_Pointer(RebolContext*, binding_ref_handle);
+    *binding_ref = PG_Currently_Loading_Module;
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions

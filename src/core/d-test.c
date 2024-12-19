@@ -28,8 +28,6 @@
 // built only in certain checked builds.
 //
 
-#define LIBREBOL_BINDING  librebol_binding
-
 #include "sys-core.h"
 
 #if INCLUDE_TEST_LIBREBOL_NATIVE
@@ -37,8 +35,6 @@
     // Altered to fit into this file's automated testing.
 
     static int Subroutine(void) {
-        RebolContext* librebol_binding = nullptr;
-
         return rebUnboxInteger(
             "assert [action? :print]",
             "add 304 696"
@@ -84,12 +80,10 @@ DECLARE_NATIVE(test_librebol)
         )
     );
   #else
-    RebolContext* librebol_binding = nullptr;
-
-  // !!! NOTICE: We are pushing values to the data stack, but we can't hold
-  // a pointer to the stack via PUSH() on the same line as doing an API
-  // call, because API calls can move the stack.  This doesn't always make
-  // an assert since argument order can vary across compilers.
+    // !!! NOTICE: We are pushing values to the data stack, but we can't hold
+    // a pointer to the stack via PUSH() on the same line as doing an API
+    // call, because API calls can move the stack.  This doesn't always make
+    // an assert since argument order can vary across compilers.
 
   blockscope {
     Set_Cell_Flag(Init_Integer(PUSH(), 1), NEWLINE_BEFORE);

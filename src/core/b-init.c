@@ -195,6 +195,8 @@ static void Startup_Lib(void)
 
         Init_Nothing(Stub_Cell(patch));  // start as unset variable
     }
+
+    ensure(nullptr, librebol_binding) = g_lib_context;
 }
 
 
@@ -223,6 +225,10 @@ static void Startup_Lib(void)
 //
 static void Shutdown_Lib(void)
 {
+    assert(Is_Stub_Varlist(librebol_binding));
+    assert(librebol_binding == g_lib_context);
+    librebol_binding = nullptr;
+
   #if RUNTIME_CHECKS  // verify patches point to g_lib_context before freeing [1]
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
         Stub* patch = &g_lib_patches[id];
@@ -634,6 +640,11 @@ void Startup_Core(void)
     Startup_Trampoline();  // uses CANON() in File_Of_Level() currently
 
   //=//// INITIALIZE API //////////////////////////////////////////////////=//
+
+    // The API contains functionality for memory allocation, decompression,
+    // and other things needed to generate Lib.  So it has to be initialized
+    // first...but you can't call any variadic APIs until Lib is available
+    // to do binding.
 
     Startup_Api();
 

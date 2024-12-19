@@ -3,8 +3,6 @@ REBOL []
 name: 'UUID
 source: [
     %uuid/mod-uuid.c
-
-    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_BINDING
 ]
 includes: reduce [
     (join repo-dir %extensions/uuid/libuuid/)

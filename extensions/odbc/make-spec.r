@@ -21,8 +21,6 @@ source: [
     ;     nonstandard extension used: nameless struct/union
     ;
     <msc:/wd4201>
-
-    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_BINDING
 ]
 
 includes: [

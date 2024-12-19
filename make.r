@@ -647,6 +647,13 @@ rebmake/set-target-platform platform-config.os-base
                 ; const variable is not used, triggers in MS's type_traits
                 ;
                 <msc:/wd5264>
+
+                ; We actively use global shadowing as a feature, for the
+                ; LIBREBOL_BINDING_NAME mechanic.
+                ;
+                ; https://forum.rebol.info/t/2157
+                ;
+                <msc:/wd4459>
             ]
         ]
         'no [

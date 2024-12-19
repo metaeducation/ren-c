@@ -78,9 +78,11 @@
 // work with isolated values that need indefinite duration.
 //
 // 1. At present, the default behavior for rebol.h is that if you don't have
-//    a definition for LIBREBOL_BINDING, it will assume it's null.  Then,
-//    the internals of the code use Get_Context_From_Top_Level() in the null
-//    case for the behavior.
+//    a definition for LIBREBOL_BINDING_NAME, it will assume the user
+//    context.  This hasn't really been fleshed out yet.  In any case, we
+//    want the core to assume the lib context, in particular because we
+//    need to be able to run API functions before the user context has
+//    been completely formed.
 //
 // 2. An attempt was made for Bounce to be a smart pointer, when I thought
 //    that if it was `struct Bounce { Node* node; }` that it would be able to
@@ -111,7 +113,9 @@
   #include <time.h>  // needed for srand()
 #endif
 
-/*#define LIBREBOL_BINDING  nullptr */  // not needed [1]
+#if !defined(LIBREBOL_BINDING_NAME)  // core modules define differently
+    #define LIBREBOL_BINDING_NAME  librebol_binding  // set to g_lib_context [1]
+#endif
 #include "rebol.h"
 typedef RebolValue Value;
 typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]

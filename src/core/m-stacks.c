@@ -103,48 +103,6 @@ void Shutdown_Feeds(void) {
 
 
 //
-//  Get_Context_From_Top_Level: C
-//
-// libRebol cleverly uses variable shadowing to let API code capture either
-// a local or global definition of LIBREBOL_BINDING, and thus know whether
-// to make arguments to a native implementation visible when evaluating
-// expressions from text in the API.
-//
-// Traditional native code uses ARG() and REF() macros for speed, that know
-// the exact offsets to search for arguments at.  But when they run API code,
-// they want visibility of the definitions in their module.  So when an
-// extension is being initialized, it pokes the module into the Details array
-// of the natives it loads.
-//
-// 1. When no natives could be in effect--such as in `int main()`, this used
-//    to run API code in the user context.  But the user context is now no
-//    longer available during much of the boot...so we fall back to the
-//    g_lib_context if not available.
-//
-VarList* Get_Context_From_Top_Level(void)
-{
-    Level* L = TOP_LEVEL;
-
-    if (L == BOTTOM_LEVEL)  // no natives in effect, e.g. main() [1]
-        return g_user_context != nullptr ? g_user_context : g_lib_context;
-
-    if (not Is_Action_Level(L))
-        return g_lib_context;  // e.g. API call from Stepper_Executor()
-
-    if (Is_Level_Fulfilling(L))
-        return g_lib_context;  // e.g. API call from Action_Executor() itself
-
-    Details* details = Ensure_Level_Details(L);
-
-    if (Not_Details_Flag(details, IS_NATIVE))
-        return g_lib_context;  // e.g. API call in Func_Dispatcher()
-
-    Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
-    return Cell_Varlist(context);
-}
-
-
-//
 //  Expand_Data_Stack_May_Fail: C
 //
 // The data stack is expanded when the pushed pointer matches the known tail

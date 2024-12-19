@@ -4,8 +4,6 @@ name: 'Crypt
 loadable: 'no  ; TLS depends on this, so it has to be builtin
 source: [
     %crypt/mod-crypt.c
-
-    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_BINDING
 ]
 includes: reduce [
     (join repo-dir %extensions/crypt/)

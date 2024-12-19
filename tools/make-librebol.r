@@ -300,7 +300,7 @@ variadic-api-binding-capturing-macros: map-each-api [
         cscape [:api --{
             #define $<Name>($<Fixed-Params,>...) \
                 $<Name>_helper( \
-                    LIBREBOL_BINDING,  /* captured from callsite! */ \
+                    LIBREBOL_BINDING_NAME,  /* captured from callsite! */ \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
         }--]
@@ -714,7 +714,7 @@ e-lib/emit [ver --{
      *
      * It requires a little boilerplate to do the trick, but it's a neat one!
      *
-     *     #define LIBREBOL_BINDING  binding
+     *     #define LIBREBOL_BINDING_NAME  binding
      *
      *     #include "rebol.h"
      *
@@ -1141,7 +1141,7 @@ e-lib/emit [ver --{
     /*
      * VARIADIC API BINDING CAPTURING MACROS
      *
-     * LIBREBOL_BINDING defines the name of the variable which will be
+     * LIBREBOL_BINDING_NAME defines the name of the variable which will be
      * sneakily picked up by these variadic API macros, in order to provide a
      * binding context that is relevant.  e.g. when inside a rebFunction(),
      * the context should be for that native's function parameters, chained to
@@ -1180,15 +1180,15 @@ e-lib/emit [ver --{
 
     #if (! LIBREBOL_USE_C89)
 
-        #if !defined(LIBREBOL_BINDING)  /* must be (RebolContext*) [1] */
-            #define LIBREBOL_BINDING 0  /* nullptr may not be available */
+        #if !defined(LIBREBOL_BINDING_NAME)  /* must be (RebolContext*) [1] */
+            #define LIBREBOL_BINDING_NAME 0  /* nullptr may not be available */
         #endif
 
         $[Variadic-Api-Binding-Capturing-Macros]
 
         #define rebFunction(spec,cfunc)  /* not variadic, but captures [2] */ \
             LIBREBOL_PREFIX(rebFunction)( \
-                LIBREBOL_BINDING,  /* captured from callsite! */ \
+                LIBREBOL_BINDING_NAME,  /* captured from callsite! */ \
                 spec, cfunc \
             )
 

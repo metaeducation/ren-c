@@ -328,7 +328,7 @@ enum Reb_Promise_State {
 struct Reb_Promise_Info {
     enum Reb_Promise_State state;
     heapaddr_t promise_id;
-    Context* binding;  // where code is to be run
+    RebolContext* binding;  // where code is to be run
 
     struct Reb_Promise_Info *next;
 };
@@ -394,7 +394,6 @@ EXTERN_C intptr_t API_rebPromise(
     // already exists.
 
     DECLARE_VALUE (block);
-    UNUSED(binding);  // shouldn't use one if we're transcoding?
     API_rebTranscodeInto(binding, block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
@@ -409,7 +408,10 @@ EXTERN_C intptr_t API_rebPromise(
     struct Reb_Promise_Info *info = Try_Alloc_Memory(struct Reb_Promise_Info);
     info->state = PROMISE_STATE_QUEUEING;
     info->promise_id = Heapaddr_From_Pointer(code);
-    info->binding = Get_Context_From_Top_Level();
+    if (binding)
+        info->binding = binding;
+    else
+        info->binding = cast(RebolContext*, g_user_context);
     info->next = PG_Promises;
     PG_Promises = info;
 

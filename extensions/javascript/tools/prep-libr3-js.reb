@@ -514,7 +514,7 @@ for-each-api [
             HEAP32[(packed>>2) + argc] = reb.END
 
             a = reb.m._API_$<Name>(
-                this.getSpecifierRef(),  /* "virtual", overridden in shadow */
+                this.getBinding(),  /* "virtual", overridden in shadow */
                 packed,
                 0   /* null vaptr means `p` is array of `const void*` */
             )
@@ -535,7 +535,7 @@ e-cwrap/emit ---{
      * that override will effectively be "virtual", such that the methods
      * will call it.
      */
-    reb.getSpecifierRef = function() { return 0 }
+    reb.getBinding = function() { return 0 }  /* null means use user context */
 
     reb.R = reb.RELEASING
     reb.Q = reb.QUOTING
@@ -812,8 +812,8 @@ e-cwrap/emit ---{
          * knows what frame it's in.
          */
         let reb_shadow = {
-            binding: frame_id,
-            getSpecifierRef: function() { return this.binding },
+            binding: frame_id,  /* won't be seen by base class reb */
+            getBinding: function() { return this.binding },  /* will be seen */
             __proto__: reb
         }
 

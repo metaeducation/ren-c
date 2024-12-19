@@ -185,47 +185,58 @@ if yes? use-librebol [
     e1/emit [--{
         /* extension configuration says [use-librebol: 'yes] */
 
-        #define LIBREBOL_BINDING  librebol_binding
+        #define LIBREBOL_BINDING_NAME  librebol_binding_$<l-m-name>
         #include "rebol.h"  /* not %rebol-internals.h ! */
+    }--]
+] else [
+    e1/emit [--{
+        /* extension configuration says [use-librebol: 'no] */
 
-        /*
-         * This global definition is shadowed by the local definitions that
-         * are picked up by APIs like `rebValue()`, to know how to look up
-         * arguments to natives in frames.  Right now, being nullptr indicates
-         * to use the stack to find which module the native is running in.
-         * This needs to be revisited.
-         */
-        static RebolContext* librebol_binding = 0;  /* nullptr */
+        #define LIBREBOL_BINDING_NAME  librebol_binding_$<l-m-name>
+        #include "rebol-internals.h"  /* superset of %rebol.h */
+    }--]
+]
+e1/emit newline
 
-        /*
-         * Helpful warnings tell us when static variables are unused.  We
-         * could turn off that warning, but instead just have the natives
-         * do it before they define their own binding.  As long as at least
-         * one native is in the file, this works.
-         */
-        #define LIBREBOL_BINDING_USED() (void)librebol_binding
+e1/emit [--{
+    /*
+     * This global definition is shadowed by the local definitions that
+     * are picked up by APIs like `rebValue()`, to know how to look up
+     * arguments to natives in frames.  It is intialized by the module
+     * machinery to be the module these natives are in, which receives the
+     * address of the variable via rebCollateExtension_internal().
+     *
+     * The consequence is that if you call a service function inside
+     * your module implementation, it will be able to find definitions in
+     * the module with calls to rebValue() and other APIs...but it won't
+     * see the parameters of the function that called it.
+     */
+    extern RebolContext* LIBREBOL_BINDING_NAME;
 
+    /*
+     * Helpful warnings tell us when static variables are unused.  We
+     * could turn off that warning, but instead just have the natives
+     * do it before they define their own binding.  As long as at least
+     * one native is in the file, this works.
+     */
+    #define LIBREBOL_BINDING_USED() (void)LIBREBOL_BINDING_NAME
+}--]
+e1/emit newline
+
+if yes? use-librebol [
+    e1/emit [--{
         /*
          * Define DECLARE_NATIVE macro to include extension name.
          * This avoids name collisions with the core, or with other extensions.
          *
          * The API form takes a Context*, e.g. a varlist.  Its name should be
-         * whatever the LIBREBOL_BINDING macro expands to (can't be nullptr).
+         * whatever the LIBREBOL_BINDING_NAME macro expands to (can't be 0).
          */
         #define DECLARE_NATIVE(name) \
-            RebolBounce N_${MOD}_##name(RebolContext* LIBREBOL_BINDING)
+            RebolBounce N_${MOD}_##name(RebolContext* LIBREBOL_BINDING_NAME)
     }--]
 ] else [
     e1/emit [--{
-        /* extension configuration says [use-librebol: 'no] */
-        #include "rebol-internals.h"  /* superset of %rebol.h */
-
-        /*
-         * No binding used currently for core API extensions, but need the
-         * macro for the module init to compile.
-         */
-        #define LIBREBOL_BINDING_USED()
-
         /*
          * Define DECLARE_NATIVE macro to include extension name.
          * This avoids name collisions with the core, or with other extensions.
@@ -397,6 +408,13 @@ e/emit [--{
     #endif
 
     /*
+     * When the extension is loaded, this global is set to the module's
+     * pointer.  It means that lookups will be done in that module when you
+     * call things like rebValue() etc.
+     */
+    RebolContext* LIBREBOL_BINDING_NAME;
+
+    /*
      * Gzip compression of $<Script-Name> (no \0 terminator in array)
      * Originally $<length of script-uncompressed> bytes
      */
@@ -444,11 +462,6 @@ e/emit [--{
      * extension implementations.
      */
     DECLARE_EXTENSION_COLLATOR(${Mod}) {
-        /*
-         * Compiler will warn if static librebol_binding is defined w/o use.
-         */
-        LIBREBOL_BINDING_USED();
-
       #ifdef LIBREBOL_USES_API_TABLE
         /*
          * Librebol extensions use `rebXXX()` APIs => `g_librebol->rebXXX()`
@@ -462,6 +475,7 @@ e/emit [--{
       #endif
 
         return rebCollateExtension_internal(
+            &LIBREBOL_BINDING_NAME,  /* where to put module pointer on init */
             $<either yes? use-librebol ["true"] ["false"]>,  /* CFunc type */
             script_compressed,  /* script compressed data */
             sizeof(script_compressed),  /* size of script compressed data */
