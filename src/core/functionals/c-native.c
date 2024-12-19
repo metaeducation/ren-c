@@ -193,7 +193,7 @@ DECLARE_NATIVE(native)
 
     UNUSED(ARG(generic));  // commentary only, at this time
 
-    if (not g_native_dispatcher_pos)
+    if (not g_native_cfunc_pos)
         return FAIL(
             "NATIVE is for internal use during boot and extension loading"
         );
@@ -207,17 +207,30 @@ DECLARE_NATIVE(native)
         : REF(intrinsic) ? NATIVE_INTRINSIC
         : NATIVE_NORMAL;
 
-    Dispatcher* dispatcher = *g_native_dispatcher_pos;
-    ++g_native_dispatcher_pos;
+    CFunction* cfunc = *g_native_cfunc_pos;
+    ++g_native_cfunc_pos;
 
-    Details* details = Make_Native_Dispatch_Details(
-        spec,
-        native_type,
-        dispatcher,
-        PG_Currently_Loading_Module
-    );
+    if (g_current_uses_librebol) {
+        UNUSED(native_type);  // !!! no :INTRINSIC, but what about :COMBINATOR?
+        Value* action = rebFunctionCore(
+            PG_Currently_Loading_Module,
+            spec,
+            cast(RebolActionCFunction*, cfunc)
+        );
+        Copy_Cell(OUT, action);
+        rebRelease(action);
+    }
+    else {
+        Details* details = Make_Native_Dispatch_Details(
+            spec,
+            native_type,
+            cast(Dispatcher*, cfunc),
+            PG_Currently_Loading_Module
+        );
+        Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    }
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return OUT;
 }
 
 
@@ -279,10 +292,12 @@ Source* Startup_Natives(const Element* boot_natives)
     // function which carries those arguments, which would be cleaner.  The
     // C function could be passed as a HANDLE!.
     //
-    assert(g_native_dispatcher_pos == nullptr);
-    g_native_dispatcher_pos = g_core_native_dispatchers;
+    assert(g_native_cfunc_pos == nullptr);
+    g_native_cfunc_pos = cast(CFunction* const*, g_core_native_dispatchers);
     assert(PG_Currently_Loading_Module == nullptr);
     PG_Currently_Loading_Module = g_lib_context;
+
+    g_current_uses_librebol = false;  // raw natives don't use librebol
 
     // Due to the bootstrapping of `/native: native [...]`, we can't actually
     // create NATIVE itself that way.  So the prep process should have moved
@@ -303,10 +318,10 @@ Source* Startup_Natives(const Element* boot_natives)
     Details* the_native_details = Make_Native_Dispatch_Details(
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
-        *g_native_dispatcher_pos,
+        cast(Dispatcher*, *g_native_cfunc_pos),
         PG_Currently_Loading_Module
     );
-    ++g_native_dispatcher_pos;
+    ++g_native_cfunc_pos;
 
     Init_Action(
         Sink_Lib_Var(SYM_NATIVE),
@@ -327,11 +342,14 @@ Source* Startup_Natives(const Element* boot_natives)
         panic (discarded);
 
     assert(
-        g_native_dispatcher_pos
-        == g_core_native_dispatchers + g_num_core_natives
+        g_native_cfunc_pos
+        == (
+            cast(CFunction* const*, g_core_native_dispatchers)
+            + g_num_core_natives
+        )
     );
 
-    g_native_dispatcher_pos = nullptr;
+    g_native_cfunc_pos = nullptr;
     PG_Currently_Loading_Module = nullptr;
 
   #if RUNTIME_CHECKS  // ensure a couple of functions can be looked up by ID

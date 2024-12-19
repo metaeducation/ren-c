@@ -59,6 +59,8 @@ typedef REBINT (CompareHook)(const Cell*, const Cell*, bool strict);
 #define IDX_COLLATOR_CFUNCS 2
 #define IDX_COLLATOR_MAX 3
 
+#define CELL_FLAG_CFUNCS_NOTE_USE_LIBREBOL  CELL_FLAG_NOTE
+
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //

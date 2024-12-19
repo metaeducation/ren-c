@@ -695,19 +695,20 @@
 // functions in your program, find less than 255, and use bytes for function
 // pointers:
 //
-// http://stackoverflow.com/questions/3941793/
+//   http://stackoverflow.com/questions/3941793/
 //
 // So if you want something to hold either a function pointer or a data
 // pointer, you have to implement that as a union...and know what you're doing
 // when writing and reading it.
 //
-// For info on the difference between __stdcall and __cdecl:
+// 1. __cdecl is a Microsoft-specific thing that probably isn't really needed
+//   in modern compilers, that presume cdecl.  Consider just dropping it:
 //
-// http://stackoverflow.com/questions/3404372/
+//     http://stackoverflow.com/questions/3404372/
 //
 //
 #if defined(_WIN32)  // 32-bit or 64-bit windows
-    typedef void (__cdecl CFunction)(void);
+    typedef void (__cdecl CFunction)(void);  // __cdecl is kind of outdated [1]
 #else
     typedef void (CFunction)(void);
 #endif

@@ -1303,106 +1303,6 @@ void API_rebPushContinuation_internal(
 
 
 //
-//  rebDelegate: API
-//
-// This lets a native delegate its response to some code, which is run through
-// the trampoline.  It can only be used as `return rebDelegate(...)`.
-//
-// While the C implementation function is removed from the C stack (due to
-// executing the `return`) an interpreter stack level for the native remains
-// in effect, so it will show up in stack traces if there's an error.
-//
-// rebDelegate() can be used to work around the inability of Value* to store
-// unstable isotopes.  So if a native based on the librebol API wants to
-// return something like a raised error or a pack, it must use rebDelegate().
-//
-// It's also the right way to perform an abrupt failure, by doing a call
-// to `rebDelegate("fail" ...)`.  Otherwise, exceptions or longjmp() have
-// to dangerously cross arbitrary C stack levels of user code that may not
-// be designed for it (e.g. if the interpreter was built with longjmp() and
-// the API client uses C++ code, things like destructors won't be run.)
-//
-RebolBounce API_rebDelegate(
-    RebolContext* binding,
-    const void* p, void* vaptr
-){
-    ENTER_API;
-
-    API_rebPushContinuation_internal(
-        binding,
-        cast(Value*, TOP_LEVEL->out),
-        LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
-        p, vaptr
-    );
-    return BOUNCE_DELEGATE;
-}
-
-
-enum {
-    ST_API_FUNC_INITIAL_ENTRY = STATE_0,
-    ST_API_FUNC_CONTINUING
-};
-
-
-//
-//  rebContinue: API
-//
-// 1. Typically internal natives use the LEVEL_STATE_BYTE() to track what
-//    mode of a continuation they are in.  But actions made by rebFunction()
-//    don't speak directly in terms of their "level", and also can't receive
-//    a value in OUT or SPARE as the result of a continuation.  So they should
-//    track their state in a local variable, and also the code they pass to
-//    the continuation should write to some other local variable or argument
-//    to get the result, e.g.
-//
-//         return rebContinue(
-//             "local-state: 'evaluating",
-//             "local-result: eval", block
-//         );
-//
-RebolBounce API_rebContinue(
-    RebolContext* binding,
-    const void* p, void* vaptr
-){
-    ENTER_API;
-
-    LEVEL_STATE_BYTE(TOP_LEVEL) = ST_API_FUNC_CONTINUING;  // can't be zero [1]
-
-    API_rebPushContinuation_internal(
-        binding,
-        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
-        LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
-        p, vaptr
-    );
-    return BOUNCE_CONTINUE;
-}
-
-
-//
-//  rebContinueInterruptible: API
-//
-// If you want an interruptible continuation,
-//
-RebolBounce API_rebContinueInterruptible(
-    RebolContext* binding,
-    const void* p, void* vaptr
-){
-    ENTER_API;
-
-    LEVEL_STATE_BYTE(TOP_LEVEL) = 1;  // rebFunction() can't see, can't be 0
-
-    API_rebPushContinuation_internal(
-        binding,
-        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
-        LEVEL_MASK_NONE,  // will inherit interruptibility of parent.
-        p, vaptr
-    );
-    Clear_Level_Flag(TOP_LEVEL, UNINTERRUPTIBLE);
-    return BOUNCE_CONTINUE;
-}
-
-
-//
 //  rebMeta: API
 //
 // Builds in a ^META operation to rebValue; shorthand that's more efficient.
@@ -3064,62 +2964,6 @@ DECLARE_NATIVE(api_transient)
 }
 
 
-//
-//  rebBindingFromLevel_internal: API
-//
-// This is used by the INCLUDE_PARAMS_OF_XXX macros in extensions that use
-// #include "rebol.h" instead of #include "sys-core.h".  The source is like:
-//
-//     DECLARE_NATIVE(native_name_here) {
-//         INCLUDE_PARAMS_OF_NATIVE_NAME_HERE;
-//         ...
-//     }
-//
-// This expands to:
-//
-//     RebolBounce N_native_name_here(RebolLevel* level_) {
-//         RebolContext librebol_binding;
-//         librebol_binding = rebBindingFromLevel_internal(level_)
-//         (void)librebol_binding  /* USED(librebol_binding) */
-//         ...
-//     }
-//
-// `librebol_binding` is implicitly picked up by the macros that implement
-// things like `rebValue()`.  By also declaring `librebol_binding` as a
-// global static, those macros are able to detect whether they are being used
-// inside a native or not, in order to find the arguments of the native when
-// scanning the text source passed.
-//
-RebolContext* API_rebBindingFromLevel_internal(
-    RebolLevel* level
-){
-    if (LEVEL_STATE_BYTE(level) == ST_API_FUNC_CONTINUING) {  // continuation
-        assert(Is_Node_Managed(level->varlist));
-        assert(node_LINK(NextVirtual, level->varlist) != nullptr);
-        return cast(RebolContext*, level->varlist);
-    }
-
-    Set_Node_Managed_Bit(level->varlist);  // may or may not be managed
-
-    // We want to be able to use the binding to not only look up arguments
-    // but also things in the module where the native lives.  This requires
-    // setting the `NextVirtual` property of the frame's varlist.  Typically
-    // this is set by the `Dispatcher`, but since natives are their own
-    // dispatchers nothing has set it yet.
-    //
-    // Natives store the module they are part of in their Details array
-    // under IDX_NATIVE_CONTEXT.  Extract that, and put it in NextVirtual.
-    //
-    Details* details = Ensure_Level_Details(level);
-    assert(Get_Details_Flag(details, IS_NATIVE));
-    Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
-    assert(node_LINK(NextVirtual, level->varlist) == nullptr);
-    node_LINK(NextVirtual, level->varlist) = Cell_Varlist(module);
-
-    return cast(RebolContext*, level->varlist);
-}
-
-
 enum {
     IDX_API_ACTION_RETURN = 1,
     IDX_API_ACTION_CFUNC,  // HANDLE! of RebolActionCFunction*
@@ -3134,52 +2978,112 @@ enum {
 // Puts a definitional return ACTION! in the RETURN slot of the frame, and
 // runs the CFunction associated with this action.
 //
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// 1. The Level L gives us the visibility of variables for the function args,
-//    but we need to see more than that to run code.  When rebFunction() was
-//    run there was a context in effect.  We stored it in a dummy BLOCK!
-//    so that the GC will keep it alive (if we poked the context into a
-//    HANDLE! it would not be marked).  Make the context passed to the
-//    CFunction inherit that original environment.
-//
-// 2. RebolContext accepts an Array* in the C++ build, but not the C build.
-//    So the cast is needed here.
-//
 Bounce Api_Function_Dispatcher(Level* const L)
 {
     Details* details = Ensure_Level_Details(L);
+
+    enum {
+        ST_API_FUNC_INITIAL_ENTRY = STATE_0,
+        ST_API_FUNC_CONTINUING,
+        ST_API_FUNC_DELEGATING
+    };
+
+    switch (LEVEL_STATE_BYTE(L)) {
+      case ST_API_FUNC_INITIAL_ENTRY:
+        goto initial_entry;
+
+      case ST_API_FUNC_CONTINUING:  // the CFunc wants to get called again
+        goto run_cfunction;
+
+      case ST_API_FUNC_DELEGATING:  // doesn't want callback, but typecheck
+        goto typecheck_out;
+
+      default:
+        assert(false);
+    }
+
+  initial_entry: { ///////////////////////////////////////////////////////////
+
+    // 1. The Level L gives us the visibility of variables for function args,
+    //    but we need to see more than that to run code.  When rebFunction()
+    //    was run there was a context in effect.  It's in a dummy BLOCK!
+    //    so that the GC will keep it alive (if we poked the context into a
+    //    HANDLE! it would not be GC marked).  Make the context passed to the
+    //    CFunction inherit that original environment.
+
+    Force_Level_Varlist_Managed(L);  // may or may not be managed
+
+    Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(holder);  // [1]
+
+    goto run_cfunction;
+
+} run_cfunction: { ///////////////////////////////////////////////////////////
+
+    // 1. RebolContext accepts an Array* in the C++ build, but not the C build.
+    //    So the cast is needed here.
+    //
+    // 2. As of yet, no API functions have been exported which return an
+    //    unstable Atom directly.  If it did, it would have to return it as
+    //    a RebolBounce* not a Value*.  There's no particular reason why
+    //    we couldn't offer a `rebPack()` function that did give back a
+    //    pack, solely intended to use in the form `return rebPack(...)`,
+    //    but it hasn't yet happened...because even if it returned a Bounce
+    //    it would backed by an API cell form holding an unstable value,
+    //    which is currently not legal.  Some rules and tightening would
+    //    be needed, so for now we do `rebContinue("pack [...]")`
+
+    assert(Is_Node_Managed(L->varlist));
+    assert(node_LINK(NextVirtual, L->varlist) != nullptr);
+
+    RebolContext* context = cast(RebolContext*, L->varlist);  // [1]
 
     Value* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
     RebolActionCFunction* cfunc = cast(RebolActionCFunction*,
         Cell_Handle_Cfunc(cfunc_handle)
     );
 
-    Value *holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(holder);  // [1]
-
-    Force_Level_Varlist_Managed(L);  // needs to be managed to pass around...
-    RebolContext* context = cast(RebolContext*, L->varlist);  // [2]
-
     Bounce bounce = cast(Bounce, (*cfunc)(context));
 
-    if (not Is_Bounce_An_Atom(bounce))
-        return bounce;  // e.g. a continuation.
+    if (Is_Bounce_An_Atom(bounce)) {
+        Value* result = cast(Value*, bounce);
+        Assert_Cell_Stable(result);  // can't make unstable directly [2]
+        assert(Is_Api_Value(result));  // rebArg(), other violators?
+        Copy_Cell(L->out, result);
+        rebRelease(result);
+        goto typecheck_out;
+    }
 
-    assert(Is_Stable(cast(Atom*, bounce)));  // API can't do unstable values
+    if (bounce == BOUNCE_DELEGATE) {  // still need to type check
+        LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
+        return BOUNCE_CONTINUE;
+    }
 
-    Value* result = cast(Value*, bounce);
+    if (bounce == BOUNCE_CONTINUE) {  // wants callback after execution
+        LEVEL_STATE_BYTE(L) = ST_API_FUNC_CONTINUING;
+        return BOUNCE_CONTINUE;
+    }
+
+    return Native_Fail_Result(
+        L,
+        Derive_Error_From_Pointer(
+            "Bad RebolBounce return in rebFunction() C implementation"
+        )
+    );
+
+} typecheck_out: { ///////////////////////////////////////////////////////////
 
     const Param* param = cast(Param*,
         Details_At(details, IDX_API_ACTION_RETURN)
     );
     assert(Is_Parameter(param));
 
-    if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, result))
-        fail (Error_Bad_Return_Type(L, result));
+    if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, L->out))
+        fail (Error_Bad_Return_Type(L, L->out));
 
-    return result;
-}
+    return L->out;
+}}
 
 
 //
@@ -3331,6 +3235,116 @@ RebolValue* API_rebFunction(
 }
 
 
+static void Fail_If_Top_Level_Not_Api_Func() {
+    if (
+        TOP_LEVEL->executor != &Action_Executor
+        or not Is_Stub_Details(Level_Phase(TOP_LEVEL))
+        or (
+            Details_Dispatcher(cast(Details*, Level_Phase(TOP_LEVEL)))
+            != Api_Function_Dispatcher
+        )
+    ){
+        fail ("Can't Delegate/Continue unless inside rebFunction() call");
+    }
+}
+
+
+//
+//  rebDelegate: API
+//
+// This lets a native delegate its response to some code, which is run through
+// the trampoline.  It can only be used as `return rebDelegate(...)`.
+//
+// While the C implementation function is removed from the C stack (due to
+// executing the `return`) an interpreter stack level for the native remains
+// in effect, so it will show up in stack traces if there's an error.
+//
+// rebDelegate() can be used to work around the inability of Value* to store
+// unstable isotopes.  So if a native based on the librebol API wants to
+// return something like a raised error or a pack, it must use rebDelegate().
+//
+// It's also the right way to perform an abrupt failure, by doing a call
+// to `rebDelegate("fail" ...)`.  Otherwise, exceptions or longjmp() have
+// to dangerously cross arbitrary C stack levels of user code that may not
+// be designed for it (e.g. if the interpreter was built with longjmp() and
+// the API client uses C++ code, things like destructors won't be run.)
+//
+RebolBounce API_rebDelegate(
+    RebolContext* binding,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    Fail_If_Top_Level_Not_Api_Func();
+
+    API_rebPushContinuation_internal(
+        binding,
+        cast(Value*, TOP_LEVEL->out),
+        LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
+        p, vaptr
+    );
+    return BOUNCE_DELEGATE;
+}
+
+
+//
+//  rebContinue: API
+//
+// 1. Typically internal natives use the LEVEL_STATE_BYTE() to track what
+//    mode of a continuation they are in.  But actions made by rebFunction()
+//    don't speak directly in terms of their "level", and also can't receive
+//    a value in OUT or SPARE as the result of a continuation.  So they should
+//    track their state in a local variable, and also the code they pass to
+//    the continuation should write to some other local variable or argument
+//    to get the result, e.g.
+//
+//         return rebContinue(
+//             "local-state: 'evaluating",
+//             "local-result: eval", block
+//         );
+//
+RebolBounce API_rebContinue(
+    RebolContext* binding,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    Fail_If_Top_Level_Not_Api_Func();
+
+    API_rebPushContinuation_internal(
+        binding,
+        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
+        LEVEL_FLAG_UNINTERRUPTIBLE,  // default, see rebContinueInterruptbile()
+        p, vaptr
+    );
+    return BOUNCE_CONTINUE;
+}
+
+
+//
+//  rebContinueInterruptible: API
+//
+// If you want an interruptible continuation,
+//
+RebolBounce API_rebContinueInterruptible(
+    RebolContext* binding,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    Fail_If_Top_Level_Not_Api_Func();
+
+    API_rebPushContinuation_internal(
+        binding,
+        cast(Value*, TOP_LEVEL->out),  // rebFunction() also won't see result
+        LEVEL_MASK_NONE,  // will inherit interruptibility of parent.
+        p, vaptr
+    );
+    Clear_Level_Flag(TOP_LEVEL, UNINTERRUPTIBLE);
+    return BOUNCE_CONTINUE;
+}
+
+
 //
 //  rebCollateExtension_internal: API
 //
@@ -3353,11 +3367,17 @@ RebolValue* API_rebFunction(
 // if the information were not used immediately or it otherwise was not run.
 // This has to be considered in the unloading mechanics.
 //
+// 1. The proto parser chokes on `void (**cfuncs)(void)`.  We would have to
+//    fix that, or create some typedef that's available in the API to
+//    clients who don't include %c-enhanced.h.  This is all due to the fact
+//    that the cfuncs can be Dispatcher* or RebolActionCFunction*  :-(
+//
 RebolValue* API_rebCollateExtension_internal(
+    bool use_librebol,
     const unsigned char* script_compressed,
     size_t script_compressed_size,
     int script_num_codepoints,
-    void *cfuncs,  // Dispatcher*
+    void* cfuncs,  // should be CFunction** [1]
     int cfuncs_len
 ){
     Source* a = Make_Source(IDX_COLLATOR_MAX);  // details
@@ -3372,11 +3392,13 @@ RebolValue* API_rebCollateExtension_internal(
         Array_At(a, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS),
         script_num_codepoints
     );
-    Init_Handle_Cdata(
+    Element* cfuncs_handle = Init_Handle_Cdata(
         Array_At(a, IDX_COLLATOR_CFUNCS),
         cfuncs,
         cfuncs_len
     );
+    if (use_librebol)
+        Set_Cell_Flag(cfuncs_handle, CFUNCS_NOTE_USE_LIBREBOL);
 
     return Init_Block(Alloc_Value(), a);
 }

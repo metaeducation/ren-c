@@ -204,6 +204,16 @@ if yes? use-librebol [
          * one native is in the file, this works.
          */
         #define LIBREBOL_BINDING_USED() (void)librebol_binding
+
+        /*
+         * Define DECLARE_NATIVE macro to include extension name.
+         * This avoids name collisions with the core, or with other extensions.
+         *
+         * The API form takes a Context*, e.g. a varlist.  Its name should be
+         * whatever the LIBREBOL_BINDING macro expands to (can't be nullptr).
+         */
+        #define DECLARE_NATIVE(name) \
+            RebolBounce N_${MOD}_##name(RebolContext* LIBREBOL_BINDING)
     }--]
 ] else [
     e1/emit [--{
@@ -215,18 +225,15 @@ if yes? use-librebol [
          * macro for the module init to compile.
          */
         #define LIBREBOL_BINDING_USED()
+
+        /*
+         * Define DECLARE_NATIVE macro to include extension name.
+         * This avoids name collisions with the core, or with other extensions.
+         */
+        #define DECLARE_NATIVE(name) \
+            Bounce N_${MOD}_##name(Level* level_)
     }--]
 ]
-e1/emit newline
-
-e1/emit [--{
-    /*
-     * Define DECLARE_NATIVE macro to include extension name.
-     * This avoids name collisions with the core, or with other extensions.
-     */
-    #define DECLARE_NATIVE(name) \
-        RebolBounce N_${MOD}_##name(RebolLevel* level_)
-}--]
 e1/emit newline
 
 e1/emit --{
@@ -239,8 +246,11 @@ e1/emit newline
 
 e1/emit --{
     /*
-    ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
-    */
+     * INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
+     *
+     * Note these are not technically required if the extension uses
+     * librebol.
+     */
 }--
 e1/emit newline
 
@@ -253,15 +263,14 @@ if yes? use-librebol [
         ]
         proto-name: to-c-name proto-name
 
+        ; We don't technically need to do anything for the INCLUDE_PARAMS_OF
+        ; macros for librebol.  But we can mark the
         ; We trickily shadow the global `librebol_binding` with a version
         ; extracted from the passed-in level.
         ;
         e1/emit [info proto-name --{
             #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
-                LIBREBOL_BINDING_USED();  /* global, before local define */ \
-                RebolContext* librebol_binding; \
-                librebol_binding = rebBindingFromLevel_internal(level_); \
-                LIBREBOL_BINDING_USED();  /* local, after shadowing */
+                LIBREBOL_BINDING_USED()
         }--]
         e1/emit newline
     ]
@@ -281,17 +290,17 @@ else [
 ; There have to be prototypes in our `.inc` file with the arrays, in order
 ; to get at the addresses of those functions.
 
-dispatcher-forward-decls: collect [
+cfunc-forward-decls: collect [
     for-each 'info all-protos [
         keep cscape [info "DECLARE_NATIVE(${Info.Name})"]
     ]
 ]
 
-e1/emit [dispatcher-forward-decls --{
+e1/emit [cfunc-forward-decls --{
     /*
-     * Forward-declare DECLARE_NATIVE() dispatcher prototypes
+     * Forward-declare DECLARE_NATIVE()-based function prototypes
      */
-    $[Dispatcher-Forward-Decls];
+    $[Cfunc-Forward-Decls];
 }--]
 e1/emit newline
 
@@ -310,7 +319,7 @@ e1/write-emitted
 ;    ]
 ;
 ;    ; These native specs are extracted from the C comments in the extension
-;    ; They must be in the same order as `dispatcher_c_names`, because that's
+;    ; They must be in the same order as `cfunc-names`, because that's
 ;    ; the array that NATIVE steps through on each call to find the C code!
 ;    ;
 ;    export /alpha: native [...]  ; v-- see EXPORT note below
@@ -365,7 +374,7 @@ write (join output-dir %script-uncompressed.r) script-uncompressed
 
 script-compressed: gzip script-uncompressed
 
-dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
+cfunc-names: collect [  ; must be in the order that NATIVE is called!
     for-each 'info all-protos [
         keep cscape [mod info "N_${MOD}_${Info.Name}"]
     ]
@@ -376,16 +385,6 @@ script-len: length of script-compressed
 e/emit [--{
     #include "assert.h"
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
-
-    /*
-     * We may be only including "rebol.h" and not "rebol-internals.h", in
-     * which case CFunction is not defined.
-     */
-    #if defined(_WIN32)  /* 32-bit or 64-bit windows */
-        typedef void (__cdecl CFunction_ext)(void);
-    #else
-        typedef void (CFunction_ext)(void);
-    #endif
 
     /*
      * See comments on RebolApiTable, and how it is used to pass an API table
@@ -410,10 +409,24 @@ e/emit [--{
      * order of native specs after being loaded).  Cast is used so that if
      * an extension uses "rebol.h" and doesn't return a Bounce C++ class it
      * should still work (it's a standard layout type).
+     *
+     * These may be Dispatcher* or RebolActionCFunction* depending on
+     * whether use-librebol is yes or no.  The former takes a Level* in order
+     * to be able to work with intrinsics that don't have varlists (or that
+     * don't necessarily manage varlists and link them virtually for lookup),
+     * and the latter takes a Context* which is always a varlist and has
+     * always been managed and set up for lookup.
+     *
+     * 1. This is really just `CFunction* native_cfuncs[...]`, but since the
+     *    CFunction is defined in %c-enhanced.h, we don't know all API
+     *    clients will have it available.  Rather than make up some proxy
+     *    name for CFunction that contaminates the interface, assume people
+     *    can use AI to ask what this means if they can't read it.  See the
+     *    definition of CFunction for why we can't just use void* here.
      */
-    static CFunction_ext* native_cfuncs[$<num-natives> + 1] = {
-        (CFunction_ext*)$[Dispatcher_C_Names],
-        0  /* just here to ensure > 0 length array (C++ requirement) */
+    static void (*native_cfuncs[$<num-natives> + 1])(void) = {  /* ick [1] */
+        (void (*)(void))$[Cfunc-Names],  /* cast to ick [1] */
+        0  /* just here to ensure > 0 length array (language requirement) */
     };
 
     /*
@@ -449,6 +462,7 @@ e/emit [--{
       #endif
 
         return rebCollateExtension_internal(
+            $<either yes? use-librebol ["true"] ["false"]>,  /* CFunc type */
             script_compressed,  /* script compressed data */
             sizeof(script_compressed),  /* size of script compressed data */
             $<script-num-codepoints>,  /* codepoints in uncompressed utf8 */
