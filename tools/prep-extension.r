@@ -185,7 +185,7 @@ if yes? use-librebol [
     e1/emit [--{
         /* extension configuration says [use-librebol: 'yes] */
 
-        #define LIBREBOL_BINDING (&librebol_binding)
+        #define LIBREBOL_BINDING  librebol_binding
         #include "rebol.h"  /* not %rebol-internals.h ! */
 
         /*

@@ -567,10 +567,12 @@ SQLRETURN ODBC_BindParameter(
     //    switch (VAL_TYPE(v)) { case REB_INTEGER: {...} ...}
     //
     // But since the goal is to translate into ODBC types anyway, we can go
-    // ahead and do that with Rebol code that embeds those types.  See
-    // the `rebPrepare()` proposal for how this pattern could be sped up:
+    // ahead and do that with Rebol code that embeds those types.
     //
-    // https://forum.rebol.info/t/689/2
+    // This could be sped up by making it a function, so you aren't paying
+    // for the scanning of the code each time:
+    //
+    //   https://forum.rebol.info/t/540/4
     //
     SQLSMALLINT c_type = rebUnboxInteger("switch:type @", v, "[",
         "word! [",

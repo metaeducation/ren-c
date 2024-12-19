@@ -28,7 +28,7 @@
 // built only in certain checked builds.
 //
 
-#define LIBREBOL_BINDING (&librebol_binding)
+#define LIBREBOL_BINDING  librebol_binding
 
 #include "sys-core.h"
 

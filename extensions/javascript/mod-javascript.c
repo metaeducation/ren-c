@@ -361,7 +361,7 @@ enum Reb_Native_State {
 // actual JavaScript ES6 Promise.
 //
 EXTERN_C intptr_t API_rebPromise(
-    RebolContext** binding_ref,
+    RebolContext* binding,
     void* p, void* vaptr
 ){
     TRACE("rebPromise() called");
@@ -394,8 +394,8 @@ EXTERN_C intptr_t API_rebPromise(
     // already exists.
 
     DECLARE_VALUE (block);
-    UNUSED(binding_ref);  // shouldn't use one if we're transcoding?
-    API_rebTranscodeInto(binding_ref, block, p, vaptr);
+    UNUSED(binding);  // shouldn't use one if we're transcoding?
+    API_rebTranscodeInto(binding, block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
     assert(Is_Node_Managed(code));

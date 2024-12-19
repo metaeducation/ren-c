@@ -111,7 +111,7 @@
   #include <time.h>  // needed for srand()
 #endif
 
-/*#define LIBREBOL_BINDING Get_Context_From_Top_Level() */  // not needed [1]
+/*#define LIBREBOL_BINDING  nullptr */  // not needed [1]
 #include "rebol.h"
 typedef RebolValue Value;
 typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]

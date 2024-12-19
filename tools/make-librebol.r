@@ -149,7 +149,7 @@ api-objects: make block! 50
             ;
             ; But now, it's needed for passing in the binding.
 
-            "RebolContext**" 'binding_ref
+            "RebolContext*" 'binding
 
             paramlist: across to "const void*"  ; signal start of variadic
 
@@ -197,7 +197,7 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     let cfunc-params: delimit ", " compose1 [
-        (if yes? is-variadic ["RebolContext** binding_ref"])
+        (if yes? is-variadic ["RebolContext* binding"])
         (spread map-each [type var] paramlist [spaced [type var]])
         (if yes? is-variadic [
             spread ["const void* p" "void* vaptr"]
@@ -254,7 +254,7 @@ for-each-api [
     append variadic-api-c-helpers cscape [:api --{
         $<Maybe Attributes>
         static inline $<Return-Type> $<Name>_helper(  /* C version */
-            RebolContext** binding_ref,
+            RebolContext* binding,
             $<Helper-Params, >
             const void* p, ...
         ){
@@ -262,7 +262,7 @@ for-each-api [
             va_start(va, p);  /* $<Name>() calls va_end() */
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
-                binding_ref,  /* pointer-to-pointer, may update variable */
+                binding,
                 $<Proxied-Args, >
                 p, &va  /* non-null vaptr means p is first item */
             );
@@ -274,7 +274,7 @@ for-each-api [
         template <typename... Ts>
         $<Maybe Attributes>
         inline $<Return-Type> $<Name>_helper(  /* C++ version */
-            RebolContext** binding_ref,
+            RebolContext* binding,
             $<Helper-Params, >
             const Ts & ...args
         ){
@@ -282,7 +282,7 @@ for-each-api [
             rebVariadicPacker_internal(0, p, args...);
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
-                binding_ref,  /* pointer-to-pointer, may be updated */
+                binding,
                 $<Proxied-Args, >
                 p, nullptr  /* null vaptr means p is array of items */
             );
@@ -314,9 +314,9 @@ variadic-api-explicit-binding-macros: map-each-api [
         ]
 
         cscape [:api --{
-            #define $<Name>Core(binding_ref, $<Fixed-Params,>...) \
+            #define $<Name>Core(binding, $<Fixed-Params,>...) \
                 $<Name>_helper( \
-                    binding_ref, \
+                    binding, \
                     $<Fixed-Params, >__VA_ARGS__, rebEND \
                 )
         }--]
@@ -712,18 +712,13 @@ e-lib/emit [ver --{
      * It takes exactly one RebolContext* parameter, and acts as the
      * implementation of an action.
      *
-     * To use it with rebFunction(), you pass your C function as the first
-     * parameter.  The variadic portion after the pointer is a normal API feed
-     * of values for making a spec block.  (But if your spec is just a string
-     * you can declare that beforehand...just remember that C strings joined
-     * in this way will not have spaces at the merge points unless you put
-     * them in manually.  I suggest putting them at the start of the line.)
-     *
      * It requires a little boilerplate to do the trick, but it's a neat one!
      *
-     *     #define LIBREBOL_BINDING (&binding)
+     *     #define LIBREBOL_BINDING  binding
      *
      *     #include "rebol.h"
+     *
+     *     // optional shorthands
      *     typedef RebolValue Value;
      *     typedef RebolContext Context;
      *     typedef RebolBounce Bounce;
@@ -733,12 +728,12 @@ e-lib/emit [ver --{
      *     void Subroutine(void) {
      *         rebElide(
      *             "assert [action? :print]",
-     *             "print {Subroutine() has original ASSERT and PRINT!}"
+     *             "print -{Subroutine() has original ASSERT and PRINT!}-"
      *         );
      *     }
      *
      *     const char* Sum_Plus_1000_Spec = "[ \
-     *         {Demonstration native that shadows ASSERT and PRINT}" \
+     *         -{Demonstration native that shadows ASSERT and PRINT}-" \
      *         assert [integer!]" \
      *         print [integer!]" \
      *     ]";
@@ -751,14 +746,14 @@ e-lib/emit [ver --{
      *     int main() {
      *         rebStartup();
      *
-     *         Value* action = rebFunction(
+     *         Value* action = rebFunction(  // see also: rebFunctionFlipped()
      *             Sum_Plus_1000_Spec,
      *             &Sum_Plus_1000_Impl
      *         );
      *
      *         rebElide(
      *             "let sum-plus-1000: @", action,
-     *             "print [{Sum Plus 1000 is:} sum-plus-1000 5 15]"
+     *             "print [-{Sum Plus 1000 is:}- sum-plus-1000 5 15]"
      *         )
      *
      *         rebRelease(action);
@@ -783,11 +778,11 @@ e-lib/emit [ver --{
      * With C++ you can use raw strings and lambdas:
      *
      *     Value* action = rebFunction(R"(
-     *         {Another way to do functions}
+     *         -{Another way to do functions}-
      *         message [text!]
      *     ])",
      *     [](Context* binding) {
-     *         rebElide("print [{The message is:}", message, "]");
+     *         rebElide("print [-{The message is:}-", message, "]");
      *         return rebTrash();
      *     });
      */
@@ -1148,7 +1143,7 @@ e-lib/emit [ver --{
      *
      * LIBREBOL_BINDING defines the name of the variable which will be
      * sneakily picked up by these variadic API macros, in order to provide a
-     * binding context that is relevant.  e.g. if you're inside a native, then
+     * binding context that is relevant.  e.g. when inside a rebFunction(),
      * the context should be for that native's function parameters, chained to
      * the module, then inheriting from lib.
      *
@@ -1162,6 +1157,20 @@ e-lib/emit [ver --{
      * the API execution will be done in its own isolated environment that
      * just inherits from lib.
      *
+     * 1. Initially a pointer-to-pointer (RebolContext**) was used for a
+     *    "binding_ref", so API functions might update the context with LETs:
+     *
+     *      rebElide("let x: 100");  // imagine it could update "binding_ref"
+     *      assert(100 = rebUnboxInteger("x"));  // could see new value
+     *
+     *    It's more complex to explain and implement (note that JavaScript
+     *    doesn't have pointer-to-pointer support, workarounds are needed).
+     *    But the biggest problem is that there's no knowledge in the GC
+     *    of these outstanding RebolContext*.  It would take an elaborate
+     *    scheme to track the lifetime of such LETs, with additional APIs.
+     *    If users are to get involved, it's better to do that with the
+     *    already-existing APIs, passing objects explicitly.
+     *
      * 1. rebFunction() is an oddity in that it wants to do some parameter
      *    reversal to put the spec first and the function last, so it can't
      *    be variadic or the C version wouldn't compile-time type check the
@@ -1171,13 +1180,13 @@ e-lib/emit [ver --{
 
     #if (! LIBREBOL_USE_C89)
 
-        #if !defined(LIBREBOL_BINDING)
+        #if !defined(LIBREBOL_BINDING)  /* must be (RebolContext*) [1] */
             #define LIBREBOL_BINDING 0  /* nullptr may not be available */
         #endif
 
         $[Variadic-Api-Binding-Capturing-Macros]
 
-        #define rebFunction(spec,cfunc)  /* not variadic, but captures [1] */ \
+        #define rebFunction(spec,cfunc)  /* not variadic, but captures [2] */ \
             LIBREBOL_PREFIX(rebFunction)( \
                 LIBREBOL_BINDING,  /* captured from callsite! */ \
                 spec, cfunc \
@@ -1198,9 +1207,9 @@ e-lib/emit [ver --{
 
         $[Variadic-Api-Explicit-Binding-Macros]
 
-        #define rebFunctionCore(binding_ref,spec,cfunc)  /* anomaly [1] */ \
+        #define rebFunctionCore(binding,spec,cfunc)  /* anomaly [1] */ \
             LIBREBOL_PREFIX(rebFunction)( \
-                binding_ref, \
+                binding, \
                 spec, cfunc \
             )
 
