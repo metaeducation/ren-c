@@ -746,9 +746,9 @@ e-cwrap/emit ---{
         delete reb.JS_NATIVES[id]
     }
 
-    reb.RunNative_internal = function(id, level_id) {
-        if (!(id in reb.JS_NATIVES))
-            throw Error("Can't dispatch " + id + " in JS_NATIVES table")
+    reb.RunNative_internal = function(native_id, frame_id) {
+        if (!(native_id in reb.JS_NATIVES))
+            throw Error("Can't dispatch " + native_id + " in JS_NATIVES table")
 
         let resolver = function(res) {
             if (arguments.length > 1)
@@ -778,7 +778,7 @@ e-cwrap/emit ---{
                 )
             }
 
-            reb.m._API_rebResolveNative_internal(level_id, result_id)
+            reb.m._API_rebResolveNative_internal(frame_id, result_id)
         }
 
         let rejecter = function(rej) {
@@ -804,7 +804,7 @@ e-cwrap/emit ---{
             else
                 error_id = reb.JavaScriptError(rej)
 
-            reb.m._API_rebRejectNative_internal(level_id, error_id)
+            reb.m._API_rebRejectNative_internal(frame_id, error_id)
         }
 
         /*
@@ -813,13 +813,13 @@ e-cwrap/emit ---{
          */
         let reb_shadow = {
             binding_ref: (
-                reb.m._API_rebAllocSpecifierRefFromLevel_internal(level_id)
+                reb.m._API_rebAllocSpecifierRefFromContext_internal(frame_id)
             ),
             getSpecifierRef: function() { return this.binding_ref },
             __proto__: reb
         }
 
-        let native = reb.JS_NATIVES[id]
+        let native = reb.JS_NATIVES[native_id]
         if (native.is_awaiter) {
             /*
              * There is no built in capability of ES6 promises to cancel, but

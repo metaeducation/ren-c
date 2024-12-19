@@ -1338,21 +1338,27 @@ RebolBounce API_rebDelegate(
 }
 
 
+enum {
+    ST_API_FUNC_INITIAL_ENTRY = STATE_0,
+    ST_API_FUNC_CONTINUING
+};
+
+
 //
 //  rebContinue: API
 //
-// Typically internal natives use the LEVEL_STATE_BYTE() to track what
-// mode of a continuation they are in.  But actions made by rebFunction()
-// don't speak directly in terms of their "level", and also can't receive
-// a value in OUT or SPARE as the result of a continuation.  So they should
-// track their state in a local variable, and also the code they pass to
-// the continuation should write to some other local variable or argument
-// to get the result, e.g.
+// 1. Typically internal natives use the LEVEL_STATE_BYTE() to track what
+//    mode of a continuation they are in.  But actions made by rebFunction()
+//    don't speak directly in terms of their "level", and also can't receive
+//    a value in OUT or SPARE as the result of a continuation.  So they should
+//    track their state in a local variable, and also the code they pass to
+//    the continuation should write to some other local variable or argument
+//    to get the result, e.g.
 //
-//     return rebContinue(
-//         "local-state: 'evaluating",
-//         "local-result: eval", block
-//     );
+//         return rebContinue(
+//             "local-state: 'evaluating",
+//             "local-result: eval", block
+//         );
 //
 RebolBounce API_rebContinue(
     RebolContext** binding_ref,
@@ -1360,7 +1366,7 @@ RebolBounce API_rebContinue(
 ){
     ENTER_API;
 
-    LEVEL_STATE_BYTE(TOP_LEVEL) = 1;  // rebFunction() can't see, can't be 0
+    LEVEL_STATE_BYTE(TOP_LEVEL) = ST_API_FUNC_CONTINUING;  // can't be zero [1]
 
     API_rebPushContinuation_internal(
         binding_ref,
@@ -3087,7 +3093,13 @@ DECLARE_NATIVE(api_transient)
 RebolContext* API_rebBindingFromLevel_internal(
     RebolLevel* level
 ){
-    Set_Node_Managed_Bit(level->varlist);
+    if (LEVEL_STATE_BYTE(level) == ST_API_FUNC_CONTINUING) {  // continuation
+        assert(Is_Node_Managed(level->varlist));
+        assert(node_LINK(NextVirtual, level->varlist) != nullptr);
+        return cast(RebolContext*, level->varlist);
+    }
+
+    Set_Node_Managed_Bit(level->varlist);  // may or may not be managed
 
     // We want to be able to use the binding to not only look up arguments
     // but also things in the module where the native lives.  This requires
@@ -3101,6 +3113,7 @@ RebolContext* API_rebBindingFromLevel_internal(
     Details* details = Ensure_Level_Details(level);
     assert(Get_Details_Flag(details, IS_NATIVE));
     Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
+    assert(node_LINK(NextVirtual, level->varlist) == nullptr);
     node_LINK(NextVirtual, level->varlist) = Cell_Varlist(module);
 
     return cast(RebolContext*, level->varlist);
@@ -3108,13 +3121,13 @@ RebolContext* API_rebBindingFromLevel_internal(
 
 
 //
-//  rebAllocSpecifierRefFromLevel_internal: API
+//  rebAllocSpecifierRefFromContext_internal: API
 //
 // This bridges being able to do a pointer-to-pointer in JavaScript without
 // needing to use low-level Webassembly byte fiddling.
 //
-RebolContext** API_rebAllocSpecifierRefFromLevel_internal(
-    RebolLevel* level
+RebolContext** API_rebAllocSpecifierRefFromContext_internal(
+    RebolContext* context
 ){
     ENTER_API;
 
@@ -3123,7 +3136,7 @@ RebolContext** API_rebAllocSpecifierRefFromLevel_internal(
         API_rebAllocBytes(sizeof(RebolContext*))
     );
 
-    *ref = API_rebBindingFromLevel_internal(level);
+    *ref = context;
     return ref;
 }
 

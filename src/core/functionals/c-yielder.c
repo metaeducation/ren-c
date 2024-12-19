@@ -250,6 +250,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     );
 
     assert(Is_Block(body));  // can mutate (only one call)
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
     node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(body) = L->varlist;
 

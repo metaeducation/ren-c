@@ -123,6 +123,7 @@ Bounce Macro_Dispatcher(Level* const L)
     );
 
     Copy_Cell(SPARE, body);
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
     node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(SPARE) = L->varlist;
 

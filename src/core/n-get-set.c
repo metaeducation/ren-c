@@ -34,7 +34,7 @@
 // to do special lookups in.
 //
 Context* Adjust_Context_For_Coupling(Context* c) {
-    for (; c != nullptr; c = Context_Parent(c)) {
+    for (; c != nullptr; c = Next_Virtual_Link(c)) {
         VarList* frame_varlist;
         if (Is_Stub_Varlist(c)) {  // ordinary FUNC frame context
             frame_varlist = cast(VarList*, c);

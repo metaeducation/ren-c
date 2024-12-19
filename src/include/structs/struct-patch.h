@@ -96,5 +96,5 @@
 
 // Common extractor for the next field, used on either LET or USE
 //
-#define Context_Parent(let_or_use) \
-    cast(Stub*, node_LINK(NextLet, let_or_use))
+#define Next_Virtual_Link(context) \
+    cast(Stub*, node_LINK(NextLet, context))

@@ -139,6 +139,7 @@ Bounce Func_Dispatcher(Level* const L)
     STATE = ST_FUNC_BODY_EXECUTING;
 
     Copy_Cell(SPARE, body);
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
     node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(SPARE) = L->varlist;
 

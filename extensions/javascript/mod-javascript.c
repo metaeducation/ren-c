@@ -229,12 +229,14 @@ static void cleanup_js_object(const Value* v) {
 //  from JavaScript code may only be caught by JavaScript code."
 //
 
-INLINE heapaddr_t Level_Id_For_Level(Level* L) {
-    return Heapaddr_From_Pointer(L);
+INLINE heapaddr_t Frame_Id_For_Level(Level* L) {
+    assert(Is_Node_Managed(L->varlist));
+    return Heapaddr_From_Pointer(L->varlist);
 }
 
-INLINE Level* Level_From_Level_Id(heapaddr_t id) {
-    return cast(Level*, Pointer_From_Heapaddr(id));
+INLINE Level* Level_From_Frame_Id(heapaddr_t id) {
+    VarList* varlist = cast(VarList*, Pointer_From_Heapaddr(id));
+    return Level_Of_Varlist_May_Fail(varlist);  // should still be valid...
 }
 
 INLINE Value* Value_From_Value_Id(heapaddr_t id) {
@@ -265,8 +267,9 @@ enum {
     // a JavaScript native inside a function and inherit the visibility of
     // variables inside that function, etc.
     //
-    //   IDX_NATIVE_CONTEXT,
-    //   IDX_NATIVE_RETURN,
+    IDX_JS_NATIVE_CONTEXT = 1,
+
+    IDX_JS_NATIVE_RETURN,  // parameter for checking return type
 
     // Each native has a corresponding JavaScript object that holds the
     // actual implementation function of the body.  Since pointers to JS
@@ -277,7 +280,7 @@ enum {
     // cleanup callback that will be run during GC, so that map entries
     // in the JavaScript do not leak.
     //
-    IDX_JS_NATIVE_OBJECT = IDX_NATIVE_MAX,
+    IDX_JS_NATIVE_OBJECT,
 
     // The JavaScript source code for the function.  We don't technically
     // need to hang onto this...and could presumably ask JavaScript to give
@@ -583,10 +586,10 @@ EXTERN_C void API_rebIdle_internal(void)  // NO user JS code on stack!
 // Now it pokes the result directly into the frame's output slot.
 //
 EXTERN_C void API_rebResolveNative_internal(
-    intptr_t level_id,
+    intptr_t frame_id,
     intptr_t result_id
 ){
-    Level* const L = Level_From_Level_Id(level_id);
+    Level* const L = Level_From_Frame_Id(frame_id);
     USE_LEVEL_SHORTHANDS (L);
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
@@ -618,10 +621,10 @@ EXTERN_C void API_rebResolveNative_internal(
 // See notes on rebResolveNative()
 //
 EXTERN_C void API_rebRejectNative_internal(
-    intptr_t level_id,
+    intptr_t frame_id,
     intptr_t error_id
 ){
-    Level* const L = Level_From_Level_Id(level_id);
+    Level* const L = Level_From_Frame_Id(frame_id);
     USE_LEVEL_SHORTHANDS (L);
 
     TRACE("reb.RejectNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
@@ -695,7 +698,8 @@ Bounce JavaScript_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    heapaddr_t level_id = Level_Id_For_Level(L);
+    Details* details = Ensure_Level_Details(L);
+    assert(Details_Max(details) == IDX_JS_NATIVE_MAX);
 
     TRACE(
         "JavaScript_Dispatcher(%s, %d)",
@@ -728,7 +732,6 @@ Bounce JavaScript_Dispatcher(Level* const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_JS_NATIVE_MAX);
     bool is_awaiter = Cell_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
@@ -747,12 +750,20 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
     heapaddr_t native_id = Native_Id_For_Details(Ensure_Level_Details(L));
 
+    Value* inherit = Details_At(details, IDX_JS_NATIVE_CONTEXT);
+    assert(Is_Module(inherit));  // !!! review what to support here
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
+    node_LINK(NextVirtual, L->varlist) = Cell_Varlist(inherit);
+    Force_Level_Varlist_Managed(L);
+
+    heapaddr_t frame_id = Frame_Id_For_Level(L);
+
     STATE = ST_JS_NATIVE_RUNNING;  // resolve/reject change this STATE byte
 
     EM_ASM(
         { reb.RunNative_internal($0, $1) },
         native_id,  // => $0, how it finds the javascript code to run
-        level_id  // => $1, how it knows to find this frame to update STATE
+        frame_id  // => $1, is API context, plus how it finds Level for STATE
     );
 
     if (not is_awaiter)  // same tactic for non-awaiter [1]
@@ -787,8 +798,9 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
     // Need to typecheck the result.
 
-    Details* details = Ensure_Level_Details(L);
-    const Param* param = Details_At(details, IDX_NATIVE_RETURN);
+    const Param* param = cast(Param*,
+        Details_At(details, IDX_JS_NATIVE_RETURN)
+    );
     assert(Is_Parameter(param));
 
     if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
@@ -824,6 +836,34 @@ Bounce JavaScript_Dispatcher(Level* const L)
     Error* e = Cell_Error(OUT);
     return FAIL(e);
 }}
+
+
+//
+//  Javascript_Details_Querier: C
+//
+bool Javascript_Details_Querier(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+){
+    switch (property) {
+      case SYM_RETURN: {
+        Value* param = Details_At(details, IDX_JS_NATIVE_RETURN);
+        assert(Is_Parameter(param));
+        Copy_Cell(out, param);
+        return true; }
+
+      case SYM_BODY: {
+        Copy_Cell(out, Details_At(details, IDX_JS_NATIVE_SOURCE));
+        assert(Is_Text(out));
+        return true; }
+
+      default:
+        break;
+    }
+
+    return false;
+}
 
 
 //
@@ -868,9 +908,9 @@ DECLARE_NATIVE(js_native)
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), g_user_module);
+    Copy_Cell(Details_At(details, IDX_JS_NATIVE_CONTEXT), g_user_module);
 
-    Pop_Unpopped_Return(Details_At(details, IDX_NATIVE_RETURN), base);
+    Pop_Unpopped_Return(Details_At(details, IDX_JS_NATIVE_RETURN), base);
 
     heapaddr_t native_id = Native_Id_For_Details(details);
 
@@ -1137,6 +1177,8 @@ DECLARE_NATIVE(startup_p)
   #endif
 
     TRACE("INIT-JAVASCRIPT-EXTENSION called");
+
+    Register_Dispatcher(&JavaScript_Dispatcher, &Javascript_Details_Querier);
 
     return NOTHING;
 }

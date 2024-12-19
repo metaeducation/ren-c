@@ -115,6 +115,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
 
     Copy_Cell(SPARE, body);
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
     node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(SPARE) = L->varlist;
 

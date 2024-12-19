@@ -87,20 +87,37 @@ Bounce Adapter_Dispatcher(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    // 1. The lightweight usage of a frame varlist as the binding would lead
+    //    to ambiguities in terms of what phase was implied, if it wasn't
+    //    restricted to the single phase of the "final execution".  An ADAPT
+    //    is not generally a final execution (REVIEW: could an ADAPT sense
+    //    if it's a final phase, e.g. an ADAPT on a phaseless ParamList?)
+
     Value* prelude = Details_At(details, IDX_ADAPTER_PRELUDE);
     assert(Is_Block(prelude) and VAL_INDEX(prelude) == 0);
 
-    STATE = ST_ADAPTER_RUNNING_PRELUDE;  // no definitional RETURN [1]
+    STATE = ST_ADAPTER_RUNNING_PRELUDE;
+
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);  // can't own [1]
 
     Force_Level_Varlist_Managed(L);
 
     Copy_Cell(SPARE, prelude);
-    node_LINK(NextVirtual, L->varlist) = BINDING(prelude);
-    BINDING(SPARE) = L->varlist;
+    Element* frame = Init_Lensed_Frame(
+        SCRATCH,
+        Level_Varlist(L),
+        details,  // make only this action's inputs visible
+        Level_Coupling(L)
+    );
+    BINDING(SPARE) = Make_Use_Core(  // must USE [1]
+        frame,
+        BINDING(prelude),
+        CELL_MASK_ERASED_0
+    );
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
-        OUT,  // result discarded [1]
-        LEVEL_MASK_NONE,  // plain result
+        OUT,  // note: result is discarded
+        LEVEL_MASK_NONE,  // plain result (error if raised)
         SPECIFIED,
         stable_SPARE
     );
@@ -160,13 +177,15 @@ bool Adapter_Details_Querier(
 //
 DECLARE_NATIVE(adapt)
 //
-// 1. !!! We could probably make ADAPT cheaper, if the full cell of the
-//    adaptee were put in the Details[0] slot.  Then the Details array
-//    would only need to hold the prelude in Details[1].  Review.
+// 1. The adaptee is in the Details[0] slot, so we don't need a separate
+//    place to put it.
 //
-// 2. As with FUNC, we deep copy the block the user gives us.  Perhaps this
-//    should be optional...but so long as we are copying it, we might as well
-//    mutably bind it.
+// 2. We copy the given block, and relativize it against the inputs.  However,
+//    for technical reasons we can't make the Level's varlist what is used
+//    as the binding of the evaluation, because we cannot uniquely take over
+//    the NextVirtual slot of something that will have that slot filled when
+//    the final step of the adaptee is run.  Therefore this relativization
+//    may not be doing anything useful beyond just making a copy...review.
 {
     INCLUDE_PARAMS_OF_ADAPT;
 
@@ -177,7 +196,7 @@ DECLARE_NATIVE(adapt)
         DETAILS_MASK_NONE,
         adaptee,  // same parameters as adaptee [1]
         &Adapter_Dispatcher,
-        IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]
+        IDX_ADAPTER_MAX  // details array capacity => [prelude]
     );
 
     Source* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(  // copy [2]
