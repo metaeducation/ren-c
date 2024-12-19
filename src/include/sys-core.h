@@ -38,8 +38,8 @@
 // Helper for declaring a native dispatcher function.  Extensions do this
 // differently, by including the module name in the function name.
 //
-#define DECLARE_NATIVE(n) \
-    Bounce N_##n(Level* level_)
+#define DECLARE_NATIVE(name) \
+    Bounce N_##name(Level* level_)
 
 // Forward definitions of DECLARE_NATIVE() and DECLARE_NATIVE() for all
 // the core natives.  This means functions are available as &N_native_name

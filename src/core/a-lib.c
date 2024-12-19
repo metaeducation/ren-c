@@ -3230,19 +3230,32 @@ bool Api_Function_Details_Querier(
 
 
 //
-//  rebFunc: API
+//  rebFunctionFlipped: API
+//
+// This version of rebFunction() has its arguments "flipped" (in the Haskell
+// sense of "flip")...it takes the CFunction first, then the spec:
+//
+//    Value* a = rebFunction("[-{I'm a Spec}- arg [text!]", &F_Impl);
+//
+//    Value* b = rebFlipFunction(&F_Impl, "[-{I'm A Spec}- arg [text!]]");
+//
+// The reason for the existence of the flipped form is that it is variadic,
+// so you can make the spec from composed values:
+//
+//    Value* description = rebValue("-{I'm A Spec}-");
+//
+//    Value* c = rebFlipFunction(&F_Impl, "[", description, "arg [text!]]");
 //
 // 1. Due to technical limitations of the variadic machinery, the C function
 //    pointer can't be the last item in the va_list--it has to be the first
-//    in order to get typechecking in C.  (rebFunction() flips it so you can
-//    give the spec first, but it isn't variadic.)
+//    in order to get typechecking in C.
 //
 // 2. Can't leave the spec unbound, or it wouldn't find definitions like
 //    INTEGER! to use in typechecking.  (This probably should be some kind of
 //    one-off module, because we don't want code executed in the spec to
 //    write to lib by default.)
 //
-RebolValue* API_rebFunc(
+RebolValue* API_rebFunctionFlipped(
     RebolContext** binding_ref,
     RebolActionCFunction* cfunc,  // for typechecking, must be first [1]
     const void* p, void* vaptr
@@ -3317,38 +3330,25 @@ RebolValue* API_rebFunc(
 // gets typechecked.  This can give a more pleasing ordering in some
 // situations (e.g. C++ lambdas as second arg).
 //
+// 1. By design, we cannot pass void* to the variadic API (this helps to
+//    prevent accidents, as that would accept any random pointer type you
+//    happened to have around).  But there is no "base type" besides void*
+//    that can have char* alignment and be checked by to_rebarg().  Easiest
+//    thing to do is to bypass the variadic packing code checks by just
+//    building a pack ourselves.
+//
 RebolValue* API_rebFunction(
     RebolContext** binding_ref,
     const void* spec,
     RebolActionCFunction* cfunc
 ){
-    // By design, we cannot pass void* to the variadic API (this helps to
-    // prevent accidents, as that would accept any random pointer type you
-    // happened to have around).  But there is no "base type" besides void*
-    // that can have char* alignment and be checked by to_rebarg().  So we have
-    // to use pointer detection to decide what we were passed, then cast.
+    const void* packed[2];  // manually pack to subvert void* check in APIs [1]
+    packed[0] = spec;
+    packed[1] = rebEND;
 
-    PointerDetect detect = Detect_Rebol_Pointer(spec);
-    switch (detect) {
-      case DETECTED_AS_UTF8:
-        return rebFuncCore(binding_ref, cfunc, cast(const char*, spec));
+    void* vaptr = nullptr;  // packed form C++ API clients use, so no vaptr
 
-      case DETECTED_AS_CELL:
-        return rebFuncCore(binding_ref, cfunc, cast(const RebolValue*, spec));
-
-      case DETECTED_AS_STUB:
-        return rebFuncCore(
-            binding_ref,
-            cfunc,
-            cast(const RebolNodeInternal*, spec)
-        );
-
-      case DETECTED_AS_END:
-        return rebFuncCore(binding_ref, cfunc, rebEND);
-
-      default:
-        panic ("Invalid spec pointer passed to rebFunction()");
-    }
+    return API_rebFunctionFlipped(binding_ref, cfunc, packed, vaptr);
 }
 
 
