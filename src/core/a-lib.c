@@ -1071,7 +1071,7 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
 
     if (binding == nullptr) {
         assert(Is_Stub_Varlist(g_user_context));
-        binding = g_user_context;
+        binding = cast(RebolContext*, g_user_context);
     }
 
     assert(Is_Node_Managed(binding));
@@ -1178,7 +1178,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
 
     if (binding == nullptr) {
         assert(Is_Stub_Varlist(g_user_context));
-        binding = g_user_context;
+        binding = cast(RebolContext*, g_user_context);
     }
 
     assert(Is_Node_Managed(binding));
@@ -2964,14 +2964,6 @@ DECLARE_NATIVE(api_transient)
     //
     return Init_Integer(level_->out, i_cast(intptr_t, stub));
 }
-
-
-enum {
-    IDX_API_ACTION_RETURN = 1,
-    IDX_API_ACTION_CFUNC,  // HANDLE! of RebolActionCFunction*
-    IDX_API_ACTION_BINDING_BLOCK,  // BLOCK! so binding is GC marked
-    IDX_API_ACTION_MAX
-};
 
 
 //

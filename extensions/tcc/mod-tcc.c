@@ -81,14 +81,13 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
     { tcc_set_lib_path(s, path); return 0; } // make into a TCC_CSTR_API
 
 
-// Native actions all have common structure for fields up to IDX_NATIVE_MAX
-// in their Phase_Details().  This lets the system know what context to do
-// binding into while the native is running--for instance.  However, the
-// details array can be longer and store more information specific to the
-// dispatcher being used, these fields are used by "user natives"
 
 enum {
-    IDX_TCC_NATIVE_LINKNAME = IDX_NATIVE_MAX,  // auto-generated if unspecified
+    IDX_TCC_NATIVE_CONTEXT = 1,
+
+    IDX_TCC_NATIVE_RETURN,
+
+    IDX_TCC_NATIVE_LINKNAME,  // auto-generated if unspecified
 
     IDX_TCC_NATIVE_SOURCE,  // textual source code
 
@@ -248,27 +247,17 @@ Bounce Pending_Native_Dispatcher(Level* L) {
     Details* details = Ensure_Level_Details(L);
     assert(Details_Dispatcher(details) == &Pending_Native_Dispatcher);
 
-    Value* action = Phase_Archetype(details);  // this action's value
+    Element* frame = Init_Frame(
+        Level_Spare(L), details, Level_Label(L), Level_Coupling(L)
+    );
 
-    // !!! We're calling COMPILE here via a textual binding.  However, the
-    // pending native dispatcher's IDX_NATIVE_CONTEXT for binding lookup is
-    // what's in effect.  And that's set up to look up its bindings in where
-    // the user native's body will be looking them up (this is defaulting to
-    // user context for now).
-    //
-    // We could also use something like MOD_VAR() to get SYM_COMPILE out of
-    // the TCC module, so a parallel to CANON(COMPILE) for extension contexts.
-    //
-    rebElide("compile [", rebQ(action), "]");
+    rebElide("compile [", rebQ(frame), "]");
     //
     // ^-- !!! Today's COMPILE doesn't return a result on success (just fails
     // on errors), but if it changes to return one consider what to do.
 
-    // Now that it's compiled, it should have replaced the dispatcher with a
-    // function pointer that lives in the TCC_State.  Use REDO, and don't
-    // bother re-checking the argument types.
-    //
-    assert(Details_Dispatcher(details) != &Pending_Native_Dispatcher);
+    assert(Details_Dispatcher(details) == &Api_Function_Dispatcher);
+
     return BOUNCE_REDO_UNCHECKED;
 }
 
@@ -306,8 +295,7 @@ DECLARE_NATIVE(make_native)
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_IS_NATIVE  // e.g. IDX_NATIVE_CONTEXT, IDX_NATIVE_RETURN
-            | DETAILS_FLAG_OWNS_PARAMLIST,
+        DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
         IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
@@ -317,9 +305,9 @@ DECLARE_NATIVE(make_native)
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), g_user_module);
+    Copy_Cell(Details_At(details, IDX_TCC_NATIVE_CONTEXT), g_user_module);
 
-    Pop_Unpopped_Return(Details_At(details, IDX_NATIVE_RETURN), base);
+    Pop_Unpopped_Return(Details_At(details, IDX_TCC_NATIVE_RETURN), base);
 
     if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
@@ -522,20 +510,15 @@ DECLARE_NATIVE(compile_p)
                 Value* source = Details_At(details, IDX_TCC_NATIVE_SOURCE);
                 Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
-                // !!! Level* is not exported by libRebol, though it could be
-                // opaquely...and there could be some very narrow routines for
-                // interacting with it (such as picking arguments directly by
-                // value).  But transformations would be needed for Rebol arg
-                // names to make valid C, as with to-c-name...and that's not
-                // something to expose to the average user.  Hence rebArg()
-                // gives a solution that's more robust, albeit slower than
-                // picking by index:
-                //
-                // https://forum.rebol.info/t/817
-                //
+                // !!! Review: how to choose LIBREBOL_BINDING_NAME when doing
+                // TCC natives?  It includes "rebol.h".
+
                 Append_Ascii(mo->string, "const Value* ");
                 Append_Any_Utf8(mo->string, linkname);
-                Append_Ascii(mo->string, "(void *level_)\n{");
+                Append_Ascii(
+                    mo->string,
+                    "(RebolContext* LIBREBOL_BINDING_NAME)\n{"
+                );
 
                 Append_Any_Utf8(mo->string, source);
 
@@ -664,10 +647,10 @@ DECLARE_NATIVE(compile_p)
     // their function pointers to substitute in for the dispatcher.
     //
     while (TOP_INDEX != STACK_BASE) {
-        Details* details = Ensure_Cell_Frame_Details(TOP);  // stack holds live
-        assert(Details_Dispatcher(details) == &Pending_Native_Dispatcher);
+        Details* details_tcc = Ensure_Cell_Frame_Details(TOP);  // stack live
+        assert(Details_Dispatcher(details_tcc) == &Pending_Native_Dispatcher);
 
-        Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
+        Value* linkname = Details_At(details_tcc, IDX_TCC_NATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);
         void *sym = tcc_get_symbol(state, name_utf8);
@@ -680,12 +663,34 @@ DECLARE_NATIVE(compile_p)
 
         // Circumvent ISO C++ forbidding cast between function/data pointers
         //
-        Dispatcher* c_func;
-        assert(sizeof(c_func) == sizeof(void*));
-        memcpy(&c_func, &sym, sizeof(c_func));
+        RebolActionCFunction* cfunc;
+        assert(sizeof(cfunc) == sizeof(void*));
+        memcpy(&cfunc, &sym, sizeof(cfunc));
 
-        Tweak_Details_Dispatcher(details, c_func);
-        Copy_Cell(Details_At(details, IDX_TCC_NATIVE_STATE), handle);
+        Details* details_api = Make_Dispatch_Details(
+            DETAILS_FLAG_OWNS_PARAMLIST,
+            Phase_Archetype(details_tcc),  // reuse paramlist
+            &Api_Function_Dispatcher,
+            IDX_API_ACTION_MAX
+        );
+
+        Copy_Cell(
+            Details_At(details_api, IDX_API_ACTION_RETURN),
+            Details_At(details_tcc, IDX_API_ACTION_RETURN)
+        );
+        Init_Handle_Cfunc(
+            Details_At(details_api, IDX_API_ACTION_CFUNC),
+            cast(CFunction*, cfunc)
+        );
+        Element* block = Init_Block(
+            Details_At(details_api, IDX_API_ACTION_BINDING_BLOCK),
+            EMPTY_ARRAY
+        );
+        BINDING(block) = g_user_context;  // !!! capture from MAKE-NATIVE
+
+        Swap_Flex_Content(details_tcc, details_api);
+
+        Free_Unmanaged_Flex(details_api);  // now not managed
 
         DROP();
     }

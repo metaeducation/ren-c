@@ -188,7 +188,7 @@ DECLARE_NATIVE(load_extension)
     node_LINK(NextVirtual, module_ctx) = g_lib_context;
 
     g_native_cfunc_pos = cfuncs;
-    PG_Currently_Loading_Module = module_ctx;
+    g_currently_loading_module = module_ctx;
 
     DECLARE_ATOM (module);
     Init_Context_Cell(module, REB_MODULE, module_ctx);
@@ -245,8 +245,8 @@ DECLARE_NATIVE(load_extension)
         panic ("NATIVE calls did not line up with stored C function count");
     g_native_cfunc_pos = nullptr;
 
-    assert(PG_Currently_Loading_Module == module_ctx);
-    PG_Currently_Loading_Module = nullptr;
+    assert(g_currently_loading_module == module_ctx);
+    g_currently_loading_module = nullptr;
 
     rebRelease(script);
 
@@ -257,7 +257,7 @@ DECLARE_NATIVE(load_extension)
 
     RebolContext** binding_ref
         = Cell_Handle_Pointer(RebolContext*, binding_ref_handle);
-    *binding_ref = PG_Currently_Loading_Module;
+    *binding_ref = cast(RebolContext*, g_currently_loading_module);
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions

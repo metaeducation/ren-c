@@ -89,8 +89,8 @@
 //    do checks on the types it received while being compatible with a void*
 //    in the dispatchers using %rebol.h.  So these would be compatible:
 //
-//      typedef Bounce (Dispatcher)(Level* level_);  // %sys-core.h clients
-//      typedef void* (Dispatcher)(RebolLevel* level_);  // %rebol.h clients
+//      typedef Bounce (Dispatcher)(...);  // %sys-core.h clients
+//      typedef void* (RebolActionCFunction)(...);  // %rebol.h clients
 //
 //    As it turns out the compiler doesn't generate compatible output, even
 //    with Bounce being a standard_layout struct.  :-/

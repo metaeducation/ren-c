@@ -278,9 +278,9 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 //
 
 #if CPLUSPLUS_11
-    struct RebolLevelStruct : public Node
+    struct LevelStruct : public Node
 #else
-    struct RebolLevelStruct
+    struct LevelStruct
 #endif
 {
     // These are LEVEL_FLAG_XXX or'd together--see their documentation above.

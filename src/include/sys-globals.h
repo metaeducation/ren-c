@@ -38,11 +38,11 @@ PVAR SeaOfVars* g_lib_context;
 PVAR SeaOfVars* g_sys_util_context;
 PVAR SeaOfVars* g_user_context;
 
-PVAR Context* librebol_binding;  // global, set to g_lib_context
+PVAR RebolContext* librebol_binding;  // global, set to g_lib_context
 
 PVAR bool g_current_uses_librebol;
 PVAR CFunction* const* g_native_cfunc_pos;
-PVAR VarList* PG_Currently_Loading_Module;
+PVAR VarList* g_currently_loading_module;
 
 //-- Various char tables:
 PVAR Byte* White_Chars;

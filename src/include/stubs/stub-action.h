@@ -240,14 +240,12 @@ INLINE Value* Details_At(Details* details, Length n) {
 
 #define IDX_DETAILS_1 1  // Common index used for code body location
 
-// These are indices into the details array agreed upon by actions which have
-// the PARAMLIST_FLAG_IS_NATIVE set.
+// These are indices into the details array used by actions which have
+// the DETAILS_RAW_NATIVE set.
 //
 enum {
-    IDX_NATIVE_CONTEXT = 1,  // libRebol binds strings here (and lib)
-    IDX_NATIVE_RETURN = 2,  // return type for natives
-
-    IDX_NATIVE_MAX
+    IDX_RAW_NATIVE_RETURN = 1,  // return type for natives
+    IDX_RAW_NATIVE_MAX
 };
 
 enum {

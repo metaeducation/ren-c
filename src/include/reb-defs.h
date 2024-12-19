@@ -354,7 +354,8 @@ enum Reb_Vararg_Op {
     VARARG_OP_TAKE // doesn't modify underlying data stream--advances index
 };
 
-typedef struct RebolLevelStruct Level;
+struct LevelStruct;
+typedef struct LevelStruct Level;
 
 // C function implementing a native ACTION!
 //

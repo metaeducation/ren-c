@@ -657,8 +657,8 @@ Special internal defines used by RT, not Host-Kit developers:
 // checked in the release build.  It's assumed they will only return the
 // correct types.  This switch is used to panic() if they're wrong.
 //
-#if !defined(CHECK_NATIVE_RETURNS)
-    #define CHECK_NATIVE_RETURNS  RUNTIME_CHECKS
+#if !defined(CHECK_RAW_NATIVE_RETURNS)
+    #define CHECK_RAW_NATIVE_RETURNS  RUNTIME_CHECKS
 #endif
 
 // It can be nice to see aliases of platform pointers as if they were

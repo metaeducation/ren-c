@@ -225,18 +225,18 @@ void Do_After_Action_Checks_Debug(Level* L) {
     // double checks any function marked with RETURN in the checked build,
     // so native return types are checked instead of just trusting the C.
     //
-  #if CHECK_NATIVE_RETURNS
+  #if CHECK_RAW_NATIVE_RETURNS
     Details* details = Ensure_Level_Details(L);
-    if (Get_Details_Flag(details, IS_NATIVE) and Is_Stable(L->out)) {
+    if (Get_Details_Flag(details, RAW_NATIVE) and Is_Stable(L->out)) {
         const Param* param = cast(Param*,
-            Details_At(details, IDX_NATIVE_RETURN)
+            Details_At(details, IDX_RAW_NATIVE_RETURN)
         );
         assert(Is_Parameter(param));
 
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
             L, param, L->out
         )){
-            assert(!"Native code violated return type contract!\n");
+            assert(!"'Raw' native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(L, L->out));
         }
     }

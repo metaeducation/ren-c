@@ -235,12 +235,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Extract_Cell_Frame_Lens_Or_Label(v))
             assert(Is_Node_Marked(Extract_Cell_Frame_Lens_Or_Label(v)));
 
-        if (Get_Flavor_Flag(DETAILS, Details_Array(details), IS_NATIVE)) {
-            assert(Details_Max(details) >= IDX_NATIVE_MAX);
-            Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
-            assert(Any_Context(context));
-        }
-
         // We used to check the [0] slot of the details holds an archetype
         // that is consistent with the details itself.  That is no longer true
         // (by design), see HIJACK and COPY of actions for why.

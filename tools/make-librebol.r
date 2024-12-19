@@ -652,18 +652,6 @@ e-lib/emit [ver --{
 
 
     /*
-     * LEVEL TYPE (internal)
-     *
-     * Levels are the C structure backing the state of a FRAME! that is in the
-     * running state.  A pointer to a level is what gets received by a native
-     * from which things like the arguments to an invocation can be extracted.
-     */
-
-    struct RebolLevelStruct;
-    typedef struct RebolLevelStruct RebolLevel;
-
-
-    /*
      * REBOL BOUNCE
      *
      * A "Bounce" is the return result from a native.  It can be a RebolValue

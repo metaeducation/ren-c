@@ -34,16 +34,19 @@
 
 
 //
-//  Native_Details_Querier: C
+//  Raw_Native_Details_Querier: C
 //
-bool Native_Details_Querier(
+// See DETAILS_FLAG_RAW_NATIVE for explanation of why raw natives do not
+// have per-Dispatcher Details Queriers.
+//
+bool Raw_Native_Details_Querier(
     Sink(Value) out,
     Details* details,
     SymId property
 ){
     switch (property) {
       case SYM_RETURN: {
-        Value* param = Details_At(details, IDX_NATIVE_RETURN);
+        Value* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
         assert(Is_Parameter(param));
         Copy_Cell(out, param);
         return true; }
@@ -81,8 +84,7 @@ bool Native_Details_Querier(
 Details* Make_Native_Dispatch_Details(
     Element* spec,
     NativeType native_type,
-    Dispatcher* dispatcher,
-    VarList* module
+    Dispatcher* dispatcher
 ){
     // There are implicit parameters to both NATIVE:COMBINATOR and usermode
     // COMBINATOR.  The native needs the full spec.
@@ -113,7 +115,7 @@ Details* Make_Native_Dispatch_Details(
     Assert_Flex_Term_If_Needed(paramlist);
 
     Flags details_flags = (
-        DETAILS_FLAG_IS_NATIVE
+        DETAILS_FLAG_RAW_NATIVE
             | DETAILS_FLAG_OWNS_PARAMLIST);
 
     if (native_type == NATIVE_INTRINSIC)
@@ -123,15 +125,10 @@ Details* Make_Native_Dispatch_Details(
         details_flags,
         Phase_Archetype(paramlist),
         dispatcher,  // dispatcher is unique to this native
-        IDX_NATIVE_MAX  // details array capacity
+        IDX_RAW_NATIVE_MAX  // details array capacity
     );
 
-    Copy_Cell(
-        Details_At(details, IDX_NATIVE_CONTEXT),
-        Varlist_Archetype(module)
-    );
-
-    Pop_Unpopped_Return(Details_At(details, IDX_NATIVE_RETURN), base);
+    Pop_Unpopped_Return(Details_At(details, IDX_RAW_NATIVE_RETURN), base);
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like
@@ -213,7 +210,7 @@ DECLARE_NATIVE(native)
     if (g_current_uses_librebol) {
         UNUSED(native_type);  // !!! no :INTRINSIC, but what about :COMBINATOR?
         Value* action = rebFunctionCore(
-            PG_Currently_Loading_Module,
+            cast(RebolContext*, g_currently_loading_module),
             spec,
             cast(RebolActionCFunction*, cfunc)
         );
@@ -224,8 +221,7 @@ DECLARE_NATIVE(native)
         Details* details = Make_Native_Dispatch_Details(
             spec,
             native_type,
-            cast(Dispatcher*, cfunc),
-            PG_Currently_Loading_Module
+            cast(Dispatcher*, cfunc)
         );
         Init_Action(OUT, details, ANONYMOUS, UNBOUND);
     }
@@ -294,8 +290,8 @@ Source* Startup_Natives(const Element* boot_natives)
     //
     assert(g_native_cfunc_pos == nullptr);
     g_native_cfunc_pos = cast(CFunction* const*, g_core_native_dispatchers);
-    assert(PG_Currently_Loading_Module == nullptr);
-    PG_Currently_Loading_Module = g_lib_context;
+    assert(g_currently_loading_module == nullptr);
+    g_currently_loading_module = g_lib_context;
 
     g_current_uses_librebol = false;  // raw natives don't use librebol
 
@@ -318,8 +314,7 @@ Source* Startup_Natives(const Element* boot_natives)
     Details* the_native_details = Make_Native_Dispatch_Details(
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
-        cast(Dispatcher*, *g_native_cfunc_pos),
-        PG_Currently_Loading_Module
+        cast(Dispatcher*, *g_native_cfunc_pos)
     );
     ++g_native_cfunc_pos;
 
@@ -350,7 +345,7 @@ Source* Startup_Natives(const Element* boot_natives)
     );
 
     g_native_cfunc_pos = nullptr;
-    PG_Currently_Loading_Module = nullptr;
+    g_currently_loading_module = nullptr;
 
   #if RUNTIME_CHECKS  // ensure a couple of functions can be looked up by ID
     if (not Is_Action(LIB(FOR_EACH)))

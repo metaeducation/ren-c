@@ -189,8 +189,8 @@ export /emit-include-params-macro: func [
         ;
         ; All natives *should* specify a `return:`, because it's important
         ; to document what the return types are (and HELP should show it).
-        ; However, only CHECK_NATIVE_RETURNS builds actually *type check* the
-        ; result; the C code is trusted otherwise to do the correct thing.
+        ; However, only CHECK_RAW_NATIVE_RETURNS builds actually *type check*
+        ; the result; the C code is trusted otherwise to do the correct thing.
         ;
         ; Natives store their return type specification in their Details,
         ; not in their ParamList (the way a FUNC does), because there is no

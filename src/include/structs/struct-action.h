@@ -78,21 +78,33 @@
     STUB_SUBCLASS_FLAG_28
 
 
-//=//// DETAILS_FLAG_IS_NATIVE ////////////////////////////////////////////=//
+//=//// DETAILS_FLAG_RAW_NATIVE ///////////////////////////////////////////=//
 //
-// Native functions are flagged that their dispatcher represents a native in
-// order to say that their Phase_Details() follow the protocol that the [0]
-// slot is "equivalent source" (may be a TEXT!, as in user natives, or a
-// BLOCK!).  The [1] slot is a module or other context into which APIs like
-// rebValue() etc. should consider for binding, in addition to lib.  A BLANK!
-// in the 1 slot means no additional consideration...bind to lib only.
+// Once the Action_Executor() has fulfilled a function's frame, it will
+// sub-dispatch it to the Dispatcher* function in the Details.  There are
+// different dispatchers for things like FUNC or CASCADE or ADAPT or ENCLOSE,
+// which know how to interpret the Details array into the right kind of
+// behavior to execute.
 //
-// Note: This was tactially set to be the same as FLEX_INFO_HOLD to make it
-// possible to branchlessly mask in the bit to stop frames from being mutable
-// by user code once native code starts running.  Shuffling made this no
-// longer possible, so that was dropped...but it could be brought back.
+// Functions that have their implementations as C code, but that intend to
+// use the API, have a dispatcher as well: the Api_Function_Dispatcher().  It
+// doesn't do much...but it extracts the varlist from the Level and gets it
+// managed and inheritance linked to be used with the API.  It also does
+// checking to make sure the return result coming back from that C function
+// implementation is the right type.
 //
-#define DETAILS_FLAG_IS_NATIVE \
+// But then there are "Raw" natives, whose Dispatcher* actually -is- the full
+// implementation of the function itself.  This is for fundamental functions
+// like IF or ANY or the FUNC native itself.  To get the most efficiency,
+// these take Level* instead of Context*...and there is no type checking in
+// the release build of their results.  There's no automatic management or
+// inheritance of the varlist to use it for API calls (in fact, there may
+// be no varlist at all...see DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC).
+//
+// Because each of these functions is a fully unique Dispatcher, there is no
+// Details_Querier() that covers them.
+//
+#define DETAILS_FLAG_RAW_NATIVE \
     STUB_SUBCLASS_FLAG_29
 
 typedef enum {

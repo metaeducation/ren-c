@@ -700,7 +700,7 @@ Details* Make_Dispatch_Details(
 ){
     assert(0 == (flags & (~ (  // make sure no stray flags passed in
         DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC
-            | DETAILS_FLAG_IS_NATIVE
+            | DETAILS_FLAG_RAW_NATIVE
             | DETAILS_FLAG_OWNS_PARAMLIST
     ))));
 
@@ -807,8 +807,8 @@ void Register_Dispatcher(Dispatcher* dispatcher, DetailsQuerier* querier)
 // to find the slot, this is for generalized usermode queries only).
 //
 DetailsQuerier* Details_Querier(Details *details) {
-    if (Get_Details_Flag(details, IS_NATIVE))
-        return &Native_Details_Querier;
+    if (Get_Details_Flag(details, RAW_NATIVE))
+        return &Raw_Native_Details_Querier;
 
     Dispatcher* dispatcher = Details_Dispatcher(details);
 

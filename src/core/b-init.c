@@ -196,7 +196,7 @@ static void Startup_Lib(void)
         Init_Nothing(Stub_Cell(patch));  // start as unset variable
     }
 
-    ensure(nullptr, librebol_binding) = g_lib_context;
+    ensure(nullptr, librebol_binding) = cast(RebolContext*, g_lib_context);
 }
 
 
@@ -225,8 +225,8 @@ static void Startup_Lib(void)
 //
 static void Shutdown_Lib(void)
 {
-    assert(Is_Stub_Varlist(librebol_binding));
     assert(librebol_binding == g_lib_context);
+    assert(Is_Stub_Varlist(g_lib_context));
     librebol_binding = nullptr;
 
   #if RUNTIME_CHECKS  // verify patches point to g_lib_context before freeing [1]

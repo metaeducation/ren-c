@@ -109,7 +109,9 @@ bool Typechecker_Details_Querier(
       case SYM_RETURN: {
         const Value* archetype = LIB(DECIDER_ARCHETYPE);
         Details* archetype_details = Ensure_Cell_Frame_Details(archetype);
-        return Native_Details_Querier(out, archetype_details, SYM_RETURN); }
+        return Raw_Native_Details_Querier(
+            out, archetype_details, SYM_RETURN
+        ); }
 
       default:
         break;
