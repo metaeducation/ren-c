@@ -236,18 +236,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
     Init_Frame(original_frame, Level_Varlist(L), Level_Label(L), NONMETHOD);
 
-    assert(Key_Id(Phase_Keys_Head(details)) == SYM_YIELD);
-    Value* cell = Level_Arg(L, 1);
-    assert(  // YIELD is a local, originally the type of yielded results
-        HEART_BYTE(cell) == REB_PARAMETER
-        and QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
-    );
-    Init_Action(
-        cell,
-        Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
-        CANON(YIELD),  // relabel (the YIELD in lib is a tripwire)
-        Level_Varlist(L)  // extant YIELDs hold original varlist [1]
-    );
+    Inject_Definitional_Returner(L, LIB(DEFINITIONAL_YIELD), SYM_YIELD);
 
     assert(Is_Block(body));  // can mutate (only one call)
     assert(node_LINK(NextVirtual, L->varlist) == nullptr);
@@ -488,15 +477,7 @@ bool Yielder_Details_Querier(
     // exhausted (how to add this legitimately?)
 
       case SYM_RETURN: {
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_YIELD);
-        ParamList* exemplar = Phase_Paramlist(details);
-        Value* param = Varlist_Slots_Head(exemplar);
-        assert(
-            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-            and HEART_BYTE(param) == REB_PARAMETER
-        );
-        Copy_Cell(cast(Cell*, out), param);
-        QUOTE_BYTE(out) = NOQUOTE_1;
+        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_YIELD);
         return true; }
 
       default:

@@ -588,7 +588,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 //
 bool Typecheck_Coerce_Uses_Spare_And_Scratch(
     Level* const L,
-    const Param* param,
+    const Value* param,
     Atom* atom,  // need mutability for coercion
     bool is_return
 ){

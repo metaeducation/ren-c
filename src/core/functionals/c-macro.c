@@ -106,6 +106,8 @@ Bounce Macro_Dispatcher(Level* const L)
 
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     Force_Level_Varlist_Managed(L);
 
     // !!! Using this form of RETURN is based on UNWIND, which means we must
@@ -114,17 +116,9 @@ Bounce Macro_Dispatcher(Level* const L)
     // use a different form of return.  Because under this model, UNWIND
     // can't unwind a macro frame to make it return an arbitrary result.
     //
-    Value* cell = Level_Arg(L, 1);
-    Init_Action(
-        cell,
-        Ensure_Cell_Frame_Details(LIB(DEFINITIONAL_RETURN)),
-        CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        cast(VarList*, L->varlist)  // so RETURN knows where to return from
-    );
+    Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 
     Copy_Cell(SPARE, body);
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(SPARE) = L->varlist;
 
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
@@ -171,15 +165,7 @@ bool Macro_Details_Querier(
 
     switch (property) {
       case SYM_RETURN: {
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-        ParamList* exemplar = Phase_Paramlist(details);
-        Value* param = Varlist_Slots_Head(exemplar);
-        assert(
-            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-            and HEART_BYTE(param) == REB_PARAMETER
-        );
-        Copy_Cell(cast(Cell*, out), param);
-        QUOTE_BYTE(out) = NOQUOTE_1;
+        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
         return true; }
 
       default:

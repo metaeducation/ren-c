@@ -762,13 +762,13 @@ e-cwrap/emit ---{
              * undefined...such auto-conversions may expand in scope.
              */
 
-            let result_id
+            let bounce_id
             if (res === undefined)  /* `resolve()`, `resolve(undefined)` */
-                result_id = reb.Nothing()  /* allow it */
+                bounce_id = reb.Nothing()  /* allow it */
             else if (res === null)  /* explicitly, e.g. `resolve(null)` */
-                result_id = 0  /* allow it */
+                bounce_id = 0  /* allow it */
             else if (typeof res == "number") { /* hope it's API heap handle */
-                result_id = res
+                bounce_id = res
             }
             else {
                 console.log("typeof " + typeof res)
@@ -778,7 +778,7 @@ e-cwrap/emit ---{
                 )
             }
 
-            reb.m._API_rebResolveNative_internal(frame_id, result_id)
+            reb.m._API_rebResolveNative_internal(frame_id, bounce_id)
         }
 
         let rejecter = function(rej) {

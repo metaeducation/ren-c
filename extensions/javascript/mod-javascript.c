@@ -248,6 +248,14 @@ INLINE Value* Value_From_Value_Id(heapaddr_t id) {
     return v;
 }
 
+INLINE Bounce* Bounce_From_Bounce_Id(heapaddr_t id) {
+    if (id == 0)
+        return nullptr;
+
+    Bounce* b = cast(Bounce*, Pointer_From_Heapaddr(id));
+    return b;
+}
+
 
 //=//// JS-NATIVE PER-ACTION! DETAILS /////////////////////////////////////=//
 
@@ -268,8 +276,6 @@ enum {
     // variables inside that function, etc.
     //
     IDX_JS_NATIVE_CONTEXT = 1,
-
-    IDX_JS_NATIVE_RETURN,  // parameter for checking return type
 
     // Each native has a corresponding JavaScript object that holds the
     // actual implementation function of the body.  Since pointers to JS
@@ -589,14 +595,26 @@ EXTERN_C void API_rebIdle_internal(void)  // NO user JS code on stack!
 //
 EXTERN_C void API_rebResolveNative_internal(
     intptr_t frame_id,
-    intptr_t result_id
+    intptr_t bounce_id
 ){
     Level* const L = Level_From_Frame_Id(frame_id);
     USE_LEVEL_SHORTHANDS (L);
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    Value* result = Value_From_Value_Id(result_id);
+    Bounce* bounce = Bounce_From_Bounce_Id(bounce_id);
+
+    if (bounce == BOUNCE_DELEGATE)
+        fail ("reb.Delegate() not yet supported in JavaScript Natives");
+
+    if (bounce == BOUNCE_CONTINUE)
+        fail ("reb.Continue() not yet supported in JavaScript Natives");
+
+    if (not Is_Bounce_An_Atom(bounce))
+        fail ("non-Value Bounce returned from JavaScript Native");
+
+    Value* result = cast(Value*, bounce);
+    Assert_Cell_Stable(result);
 
     if (result == nullptr)
         Init_Nulled(OUT);
@@ -758,6 +776,8 @@ Bounce JavaScript_Dispatcher(Level* const L)
     node_LINK(NextVirtual, L->varlist) = Cell_Varlist(inherit);
     Force_Level_Varlist_Managed(L);
 
+    Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
+
     heapaddr_t frame_id = Frame_Id_For_Level(L);
 
     STATE = ST_JS_NATIVE_RUNNING;  // resolve/reject change this STATE byte
@@ -800,10 +820,9 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
     // Need to typecheck the result.
 
-    const Param* param = cast(Param*,
-        Details_At(details, IDX_JS_NATIVE_RETURN)
+    const Element* param = Quoted_Returner_Of_Paramlist(
+        Phase_Paramlist(details), SYM_RETURN
     );
-    assert(Is_Parameter(param));
 
     if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
         return FAIL(Error_Bad_Return_Type(L, OUT));
@@ -850,9 +869,7 @@ bool Javascript_Details_Querier(
 ){
     switch (property) {
       case SYM_RETURN: {
-        Value* param = Details_At(details, IDX_JS_NATIVE_RETURN);
-        assert(Is_Parameter(param));
-        Copy_Cell(out, param);
+        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
         return true; }
 
       case SYM_BODY: {
@@ -895,12 +912,13 @@ DECLARE_NATIVE(js_native)
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_DONT_POP_RETURN,
+        MKF_MASK_NONE,
         SYM_RETURN  // want return
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_OWNS_PARAMLIST,
+        DETAILS_FLAG_OWNS_PARAMLIST
+            | DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
@@ -911,8 +929,6 @@ DECLARE_NATIVE(js_native)
     // context...it could be a parameter of some kind (?)
     //
     Copy_Cell(Details_At(details, IDX_JS_NATIVE_CONTEXT), g_user_module);
-
-    Pop_Unpopped_Return(Details_At(details, IDX_JS_NATIVE_RETURN), base);
 
     heapaddr_t native_id = Native_Id_For_Details(details);
 

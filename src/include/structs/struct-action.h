@@ -72,9 +72,15 @@
     STUB_SUBCLASS_FLAG_27
 
 
-//=//// DETAILS_FLAG_28 ///////////////////////////////////////////////////=//
+//=//// DETAILS_FLAG_API_CONTINUATIONS_OK /////////////////////////////////=//
 //
-#define DETAILS_FLAG_28 \
+// Originally the rebContinue() and rebDelegate() functions would look to see
+// if TOP_LEVEL was explicitly the Api_Function_Dispatcher(), and only let
+// you do a continuation if it was.  But there's no real reason why the
+// JavaScript code can't do reb.Continue() and reb.Delegate(), so instead
+// it checks for this flag on TOP_LEVEL.
+//
+#define DETAILS_FLAG_API_CONTINUATIONS_OK \
     STUB_SUBCLASS_FLAG_28
 
 

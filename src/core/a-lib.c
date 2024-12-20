@@ -3004,12 +3004,20 @@ Bounce Api_Function_Dispatcher(Level* const L)
     //    so that the GC will keep it alive (if we poked the context into a
     //    HANDLE! it would not be GC marked).  Make the context passed to the
     //    CFunction inherit that original environment.
+    //
+    // 2. If you use rebFunction(), we still put a RETURN in the frame.  It may
+    //    seem like that's not useful, because while a C function is on the
+    //    stack we cannot RETURN across it.  *BUT* it is possible for the C
+    //    function to return a continuation of code.  When that happens, the C
+    //    function is off the stack and the return can be acted upon.
 
     Force_Level_Varlist_Managed(L);  // may or may not be managed
 
     Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
     assert(node_LINK(NextVirtual, L->varlist) == nullptr);
     node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(holder);  // [1]
+
+    Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 
     goto run_cfunction;
 
@@ -3068,10 +3076,9 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
 } typecheck_out: { ///////////////////////////////////////////////////////////
 
-    const Param* param = cast(Param*,
-        Details_At(details, IDX_API_ACTION_RETURN)
+    const Element* param = Quoted_Returner_Of_Paramlist(
+        Phase_Paramlist(details), SYM_RETURN
     );
-    assert(Is_Parameter(param));
 
     if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, L->out))
         fail (Error_Bad_Return_Type(L, L->out));
@@ -3093,9 +3100,7 @@ bool Api_Function_Details_Querier(
 
     switch (property) {
       case SYM_RETURN: {
-        Value* param = Details_At(details, IDX_API_ACTION_RETURN);
-        assert(Is_Parameter(param));
-        Copy_Cell(out, param);
+        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
         return true; }
 
       default:
@@ -3164,24 +3169,21 @@ RebolValue* API_rebFunctionFlipped(
     else
         BINDING(spec) = g_lib_context;  // !!! Review: needs module isolation!
 
-    StackIndex base = TOP_INDEX;
-
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_DONT_POP_RETURN,
-        SYM_RETURN  // has return for type checking
+        MKF_MASK_NONE,
+        SYM_RETURN  // has return for type checking and continuation use
     );
 
     Details* details = Make_Dispatch_Details(
-        DETAILS_FLAG_OWNS_PARAMLIST,
+        DETAILS_FLAG_OWNS_PARAMLIST |
+            DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),
         &Api_Function_Dispatcher,
         IDX_API_ACTION_MAX
     );
-
-    Pop_Unpopped_Return(Details_At(details, IDX_API_ACTION_RETURN), base);
 
     Init_Handle_Cfunc(
         Details_At(details, IDX_API_ACTION_CFUNC),
@@ -3229,16 +3231,16 @@ RebolValue* API_rebFunction(
 }
 
 
-static void Fail_If_Top_Level_Not_Api_Func() {
+static void Fail_If_Top_Level_Not_Continuable() {
     if (
         TOP_LEVEL->executor != &Action_Executor
         or not Is_Stub_Details(Level_Phase(TOP_LEVEL))
-        or (
-            Details_Dispatcher(cast(Details*, Level_Phase(TOP_LEVEL)))
-            != Api_Function_Dispatcher
+        or Not_Details_Flag(
+            cast(Details*, Level_Phase(TOP_LEVEL)),
+            API_CONTINUATIONS_OK
         )
     ){
-        fail ("Can't Delegate/Continue unless inside rebFunction() call");
+        fail ("Can't Delegate/Continue unless inside API-ready function call");
     }
 }
 
@@ -3269,7 +3271,7 @@ RebolBounce API_rebDelegate(
 ){
     ENTER_API;
 
-    Fail_If_Top_Level_Not_Api_Func();
+    Fail_If_Top_Level_Not_Continuable();
 
     API_rebPushContinuation_internal(
         binding,
@@ -3303,7 +3305,7 @@ RebolBounce API_rebContinue(
 ){
     ENTER_API;
 
-    Fail_If_Top_Level_Not_Api_Func();
+    Fail_If_Top_Level_Not_Continuable();
 
     API_rebPushContinuation_internal(
         binding,
@@ -3326,7 +3328,7 @@ RebolBounce API_rebContinueInterruptible(
 ){
     ENTER_API;
 
-    Fail_If_Top_Level_Not_Api_Func();
+    Fail_If_Top_Level_Not_Continuable();
 
     API_rebPushContinuation_internal(
         binding,

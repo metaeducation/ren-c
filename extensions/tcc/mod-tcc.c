@@ -85,8 +85,6 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 enum {
     IDX_TCC_NATIVE_CONTEXT = 1,
 
-    IDX_TCC_NATIVE_RETURN,
-
     IDX_TCC_NATIVE_LINKNAME,  // auto-generated if unspecified
 
     IDX_TCC_NATIVE_SOURCE,  // textual source code
@@ -284,13 +282,11 @@ DECLARE_NATIVE(make_native)
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
 
-    StackIndex base = TOP_INDEX;
-
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
         &adjunct,
         spec,
-        MKF_DONT_POP_RETURN,
+        MKF_MASK_NONE,
         SYM_RETURN  // want return
     );
 
@@ -306,8 +302,6 @@ DECLARE_NATIVE(make_native)
     // context...it could be a parameter of some kind (?)
     //
     Copy_Cell(Details_At(details, IDX_TCC_NATIVE_CONTEXT), g_user_module);
-
-    Pop_Unpopped_Return(Details_At(details, IDX_TCC_NATIVE_RETURN), base);
 
     if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
@@ -674,10 +668,6 @@ DECLARE_NATIVE(compile_p)
             IDX_API_ACTION_MAX
         );
 
-        Copy_Cell(
-            Details_At(details_api, IDX_API_ACTION_RETURN),
-            Details_At(details_tcc, IDX_API_ACTION_RETURN)
-        );
         Init_Handle_Cfunc(
             Details_At(details_api, IDX_API_ACTION_CFUNC),
             cast(CFunction*, cfunc)

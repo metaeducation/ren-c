@@ -32,8 +32,7 @@
 // reuse the paramlist it already has.
 //
 enum {
-    IDX_API_ACTION_RETURN = 1,
-    IDX_API_ACTION_CFUNC,  // HANDLE! of RebolActionCFunction*
+    IDX_API_ACTION_CFUNC = 1,  // HANDLE! of RebolActionCFunction*
     IDX_API_ACTION_BINDING_BLOCK,  // BLOCK! so binding is GC marked
     IDX_API_ACTION_MAX
 };

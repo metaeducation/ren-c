@@ -367,3 +367,32 @@ INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
 
 #define Not_Details_Flag(p,name) \
     Not_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+
+
+INLINE const Element* Quoted_Returner_Of_Paramlist(
+    ParamList* paramlist,
+    SymId returner
+){
+    assert(Key_Id(Phase_Keys_Head(paramlist)) == returner);
+    UNUSED(returner);
+    Value* param = Phase_Params_Head(paramlist);
+    assert(
+        QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+        and HEART_BYTE(param) == REB_PARAMETER
+    );
+    return cast(Element*, param);
+}
+
+// There's a minor compression used by FUNC and YIELDER which stores the type
+// information for RETURN as a quoted PARAMETER! in the paramlist slot that
+// defines the cell where the DEFINITIONAL-RETURN is put.
+//
+INLINE void Extract_Paramlist_Returner(
+    Sink(Element) out,
+    ParamList* paramlist,
+    SymId returner
+){
+    const Element* param = Quoted_Returner_Of_Paramlist(paramlist, returner);
+    Copy_Cell(out, param);
+    QUOTE_BYTE(out) = NOQUOTE_1;
+}

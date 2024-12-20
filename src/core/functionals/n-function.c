@@ -122,25 +122,15 @@ Bounce Func_Dispatcher(Level* const L)
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-    Value* cell = Level_Arg(L, 1);
-    assert(
-        QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
-        and HEART_BYTE(cell) == REB_PARAMETER
-    );
+    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
+    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     Force_Level_Varlist_Managed(L);
-    Init_Action(
-        cell,
-        Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)),
-        CANON(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        cast(VarList*, L->varlist)  // so RETURN knows where to return from
-    );
+
+    Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 
     STATE = ST_FUNC_BODY_EXECUTING;
 
     Copy_Cell(SPARE, body);
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
     BINDING(SPARE) = L->varlist;
 
     unnecessary(Enable_Dispatcher_Catching_Of_Throws(L));  // RETURN unwind [1]
@@ -161,8 +151,9 @@ Bounce Func_Dispatcher(Level* const L)
 
     Details* details = Ensure_Level_Details(L);
 
-    assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-    const Param* param = Phase_Params_Head(details);
+    const Element* param = Quoted_Returner_Of_Paramlist(
+        Phase_Paramlist(details), SYM_RETURN
+    );
 
     if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(L, param, OUT))
         return FAIL(
@@ -189,15 +180,7 @@ bool Func_Details_Querier(
   //=////RETURN ///////////////////////////////////////////////////////////=//
 
       case SYM_RETURN: {
-        assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-        ParamList* exemplar = Phase_Paramlist(details);
-        Value* param = Varlist_Slots_Head(exemplar);
-        assert(
-            QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-            and HEART_BYTE(param) == REB_PARAMETER
-        );
-        Copy_Cell(cast(Cell*, out), param);
-        QUOTE_BYTE(out) = NOQUOTE_1;
+        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
         return true; }
 
   //=//// BODY ////////////////////////////////////////////////////////////=//
@@ -531,9 +514,17 @@ DECLARE_NATIVE(unwind)
 //
 bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     Level* L,  // Level whose spare/scratch used (not necessarily return level)
-    const Param* param,  // parameter for the RETURN
+    const Value* param,  // parameter for the RETURN (may be quoted)
     Atom* atom  // coercion needs mutability
 ){
+    assert(  // to be in specialized slot, RETURN can't be a plain PARAMETER!
+        HEART_BYTE(param) == REB_PARAMETER
+        and (
+            QUOTE_BYTE(param) == NOQUOTE_1
+            or QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
+        )
+    );
+
     if (Is_Raised(atom))
         return true;  // For now, all functions return definitional errors
 
@@ -610,9 +601,11 @@ DECLARE_NATIVE(definitional_return)
     possibly(Level_Label(LEVEL) == CANON(RETURN));  // common renaming [1]
 
     Level* target_level = Level_Of_Varlist_May_Fail(unwrap coupling);
-    Details* target_phase = Ensure_Level_Details(target_level);
-    assert(Key_Id(Phase_Keys_Head(target_phase)) == SYM_RETURN);
-    const Param* return_param = Phase_Params_Head(target_phase);
+    Details* target_details = Ensure_Level_Details(target_level);
+
+    const Element* return_param = Quoted_Returner_Of_Paramlist(
+        Phase_Paramlist(target_details), SYM_RETURN
+    );
 
     if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]

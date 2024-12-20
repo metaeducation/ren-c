@@ -910,3 +910,28 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
     assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
     Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
 }
+
+
+// Shared code for putting a definitional RETURN or YIELD into the first slot
+// of a Level's frame.
+//
+INLINE void Inject_Definitional_Returner(
+    Level* L,
+    const Cell* definitional,  // LIB(DEFINITIONAL_RETURN), or YIELD
+    SymId returner  // SYM_YIELD, SYM_RETURN
+){
+    assert(Key_Id(Phase_Keys_Head(Ensure_Level_Details(L))) == returner);
+    assert(Is_Node_Managed(L->varlist));
+
+    Value* cell = Level_Arg(L, 1);  // should start out specialized
+    assert(
+        QUOTE_BYTE(cell) == ONEQUOTE_NONQUASI_3
+        and HEART_BYTE(cell) == REB_PARAMETER
+    );
+    Init_Action(
+        cell,
+        Cell_Frame_Phase(definitional),  // DEFINITIONAL-RETURN or YIELD
+        Canon_Symbol(returner),  // relabel as plain RETURN or YIELD
+        cast(VarList*, L->varlist)  // so knows where to RETURN/YIELD from
+    );
+}
