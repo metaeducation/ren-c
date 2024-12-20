@@ -612,14 +612,22 @@ DECLARE_GENERICS(Utf8)
             Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
 
             if (to == REB_EMAIL) {
-                if (utf8 + size != Try_Scan_Email_To_Stack(utf8, size))
+                if (
+                    cast(const Byte*, utf8) + size
+                    != Try_Scan_Email_To_Stack(utf8, size)
+                ){
                     return RAISE(Error_Scan_Invalid_Raw(ARG(type), v));
+                }
                 return Move_Drop_Top_Stack_Element(OUT);
             }
 
             if (to == REB_URL) {
-                if (utf8 + size != Try_Scan_URL_To_Stack(utf8, size))
+                if (
+                    cast(const Byte*, utf8) + size
+                    != Try_Scan_URL_To_Stack(utf8, size)
+                ){
                     return RAISE(Error_Scan_Invalid_Raw(ARG(type), v));
+                }
                 return Move_Drop_Top_Stack_Element(OUT);
             }
 

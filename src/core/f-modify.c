@@ -561,9 +561,9 @@ REBLEN Modify_String_Or_Binary(
         if (Is_Stub_String(dst_flex)) {
             book = LINK(Bookmarks, dst_flex);
 
-            if (book and BMK_INDEX(book) > dst_idx) {  // only INSERT
-                BMK_INDEX(book) += src_len_total;
-                BMK_OFFSET(book) += src_size_total;
+            if (book and BOOKMARK_INDEX(book) > dst_idx) {  // only INSERT
+                BOOKMARK_INDEX(book) += src_len_total;
+                BOOKMARK_OFFSET(book) += src_size_total;
             }
             dst_flex->misc.num_codepoints = dst_len_old + src_len_total;
         }
@@ -699,9 +699,9 @@ REBLEN Modify_String_Or_Binary(
         if (Is_Stub_String(dst_flex)) {
             book = LINK(Bookmarks, dst_flex);
 
-            if (book and BMK_INDEX(book) > dst_idx) {
-                BMK_INDEX(book) = dst_idx;
-                BMK_OFFSET(book) = dst_off;
+            if (book and BOOKMARK_INDEX(book) > dst_idx) {
+                BOOKMARK_INDEX(book) = dst_idx;
+                BOOKMARK_OFFSET(book) = dst_off;
             }
             dst_flex->misc.num_codepoints = dst_len_old + src_len_total - part;
         }
@@ -731,7 +731,7 @@ REBLEN Modify_String_Or_Binary(
 
     if (book) {
         String* dst_str = cast(String*, dst_flex);
-        if (BMK_INDEX(book) > String_Len(dst_str)) {  // past active
+        if (BOOKMARK_INDEX(book) > String_Len(dst_str)) {  // past active
             assert(op == SYM_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(dst_str);
         }

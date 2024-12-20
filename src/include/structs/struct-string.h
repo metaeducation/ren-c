@@ -34,9 +34,15 @@
 #endif
 
 
-//=//// SYMBOL_FLAG_24 ////////////////////////////////////////////////////=//
+//=//// SYMBOL_FLAG_ALL_ASCII /////////////////////////////////////////////=//
 //
-#define SYMBOL_FLAG_24 \
+// Symbols don't store a Stub.misc.num_codepoints (they need space in the Stub
+// for other properties).  They're assumed to be short, so counting their
+// codepoints isn't that slow.  But since they're immutable, we can save
+// whether they're all ASCII at creation time, tells us their num_codepoints
+// is the same as their byte size, and speeds up seeking to O(1).
+//
+#define SYMBOL_FLAG_ALL_ASCII \
     STUB_SUBCLASS_FLAG_24
 
 

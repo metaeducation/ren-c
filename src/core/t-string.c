@@ -63,8 +63,11 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     assert(at <= String_Len(s));
 
-    if (Is_String_Definitely_ASCII(s)) {  // can't have any false positives
-        assert(not LINK(Bookmarks, s));  // mutations must ensure this
+    if (
+        Is_String_All_Ascii(s)
+        and not SPORADICALLY(20)  // test non-ASCII codepath for ASCII
+    ){
+        possibly(LINK(Bookmarks, s));  // mutations maintain for long strings
         return cast(Utf8(*), cast(Byte*, String_Head(s)) + at);
     }
 
@@ -129,7 +132,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     assert(not book or Flex_Used(book) == 1);  // only one
 
   blockscope {
-    REBLEN booked = book ? BMK_INDEX(book) : 0;
+    REBLEN booked = book ? BOOKMARK_INDEX(book) : 0;
 
     // `at` is always positive.  `booked - at` may be negative, but if it
     // is positive and bigger than `at`, faster to seek from head.
@@ -151,7 +154,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     index = booked;
     if (book)
-        cp = cast(Utf8(*), Flex_Data(s) + BMK_OFFSET(book));
+        cp = cast(Utf8(*), Flex_Data(s) + BOOKMARK_OFFSET(book));
     else
         cp = cast(Utf8(*), Flex_Data(s));
   }
@@ -208,8 +211,8 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("caching %ld\n", index);
   #endif
-    BMK_INDEX(book) = index;
-    BMK_OFFSET(book) = cp - String_Head(s);
+    BOOKMARK_INDEX(book) = index;
+    BOOKMARK_OFFSET(book) = cp - String_Head(s);
 
   #if DEBUG_VERIFY_STR_AT
     Utf8(*) check_cp = String_Head(s);
@@ -244,7 +247,10 @@ static void reverse_string(String* str, REBLEN index, Length len)
     if (len == 0)
         return; // if non-zero, at least one character in the string
 
-    if (Is_String_Definitely_ASCII(str)) {
+    if (
+        Is_String_All_Ascii(str)
+        and not SPORADICALLY(3)  // test non-ASCII code path on ASCII
+    ){
         Byte* bp = String_At(str, index);
 
         REBLEN n = 0;
@@ -792,7 +798,7 @@ DECLARE_GENERICS(String)
             return Init_Integer(OUT, size); }
 
           case SYM_CODEPOINT: {
-            Utf8(const*) bp = Cell_String_At(v);
+            const Byte* bp = Cell_String_At(v);  // downgrade validated Utf8(*)
 
             Codepoint c;
             if (
@@ -1264,7 +1270,7 @@ DECLARE_GENERICS(String)
 
         String* str = Cell_String_Ensure_Mutable(v);
 
-        if (not Is_String_Definitely_ASCII(str))
+        if (not Is_String_All_Ascii(str))
             return FAIL("UTF-8 Everywhere: String shuffle temp. unavailable");
 
         bool secure = REF(secure);

@@ -32,8 +32,8 @@
 // * Avoiding loops which try to access by index, and instead make it easier
 //   to smoothly traverse known good UTF-8 data using Utf8(*).
 //
-// * Monitoring strings if they are ASCII only and using that to make an
-//   optimized jump.  !!! Work in progress, see notes below.
+// * Noticing when number of codepoints equals the size in bytes, and knowing
+//   that means O(1) seeks are legal.
 //
 // * Maintaining caches (called "Bookmarks") that map from codepoint indexes
 //   to byte offsets for larger strings.  These caches must be updated
@@ -181,16 +181,11 @@ INLINE Utf8(*) Write_Codepoint(Utf8(*) utf8, Codepoint c) {
 //   compared with the stored used size in bytes.  If these are equal
 //   then the string is all ASCII.
 //
-// For the moment, we punt on this optimization.  The main reason is that it
-// means the non-ASCII code is exercised on every code path, which is a good
-// substitute for finding high-codepoint data to pass through to places that
-// would not receive it otherwise.
 
-INLINE bool Is_String_Definitely_ASCII(const String* str) {
+INLINE bool Is_String_All_Ascii(const String* str) {
     if (Is_Stub_Symbol(str))
-        return false;  // symbols could maintain a flag...
-    possibly(Flex_Used(str) == str->misc.num_codepoints);
-    return false;  // test high codepoint code paths at all times
+        return Get_Flavor_Flag(SYMBOL, str, ALL_ASCII);
+    return Flex_Used(str) == str->misc.num_codepoints;
 }
 
 #define String_UTF8(s)      Flex_Head(char, ensure(const String*, s))
@@ -226,7 +221,7 @@ INLINE REBLEN String_Index_At(
     const String* s,
     Size byteoffset  // offset must be at an encoded codepoint start
 ){
-    if (Is_String_Definitely_ASCII(s))
+    if (Is_String_All_Ascii(s))
         return byteoffset;
 
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
@@ -284,10 +279,10 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 // Flex Stub otherwise.  Bookmarks aren't generated for a String that is
 // very short, or one that is never enumerated.
 
-#define BMK_INDEX(b) \
+#define BOOKMARK_INDEX(b) \
     Flex_Head(Bookmark, (b))->index
 
-#define BMK_OFFSET(b) \
+#define BOOKMARK_OFFSET(b) \
     Flex_Head(Bookmark, (b))->offset
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
@@ -316,8 +311,8 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
         if (not book)
             return;
 
-        REBLEN index = BMK_INDEX(book);
-        Size offset = BMK_OFFSET(book);
+        REBLEN index = BOOKMARK_INDEX(book);
+        Size offset = BOOKMARK_OFFSET(book);
 
         Utf8(*) cp = String_Head(s);
         REBLEN i;
@@ -424,8 +419,8 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
         // that character position...
         //
         BookmarkList* book = LINK(Bookmarks, s);
-        if (book and BMK_OFFSET(book) > cp_offset)
-            BMK_OFFSET(book) += delta;
+        if (book and BOOKMARK_OFFSET(book) > cp_offset)
+            BOOKMARK_OFFSET(book) += delta;
     }
 
   #if DEBUG_UTF8_EVERYWHERE  // see note on `len` at start of function

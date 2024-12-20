@@ -584,13 +584,21 @@ DECLARE_NATIVE(join)
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
     }
     else if (heart == REB_EMAIL) {
-        if (utf8 + size != Try_Scan_Email_To_Stack(utf8, size))
+        if (
+            cast(const Byte*, utf8) + size
+            != Try_Scan_Email_To_Stack(utf8, size)
+        ){
             return RAISE("Invalid EMAIL!");
+        }
         Move_Drop_Top_Stack_Element(OUT);
     }
     else if (heart == REB_URL) {
-        if (utf8 + size != Try_Scan_URL_To_Stack(utf8, size))
+        if (
+            cast(const Byte*, utf8) + size
+            != Try_Scan_URL_To_Stack(utf8, size)
+        ){
             return RAISE("Invalid URL!");
+        }
         Move_Drop_Top_Stack_Element(OUT);
     }
     else

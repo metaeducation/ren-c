@@ -984,14 +984,16 @@ DECLARE_NATIVE(compose)
     Offset end_offset = ss->at - head;
     Init_Integer(PUSH(), end_offset);
 
+    Utf8(const*) at = cast(Utf8(const*), ss->at);  // was pre-validated UTF-8
+
     Codepoint c;
-    Utf8(const*) next = Utf8_Next(&c, ss->at);
+    Utf8(const*) next = Utf8_Next(&c, at);
 
     while (c != '\0') {
         if (c == '(')
             goto found_subsequent_string_pattern;
         ss->at = next;
-        next = Utf8_Next(&c, ss->at);
+        next = Utf8_Next(&c, at);
     }
 
     Drop_Level(SUBLEVEL);
@@ -1066,7 +1068,7 @@ DECLARE_NATIVE(compose)
 
         Append_UTF8_May_Fail(
             mo->string,
-            cast(const char*, head + at_offset),
+            cast(const char*, head) + at_offset,
             start_offset - at_offset,
             STRMODE_NO_CR
         );
@@ -1086,7 +1088,7 @@ DECLARE_NATIVE(compose)
     }
     Append_UTF8_May_Fail(
         mo->string,
-        cast(const char*, head + at_offset),
+        cast(const char*, head) + at_offset,
         size - at_offset,
         STRMODE_NO_CR
     );

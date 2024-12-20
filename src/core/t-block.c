@@ -708,7 +708,7 @@ DECLARE_GENERICS(List)
             Init_Utf8_Non_String(
                 OUT,
                 to,
-                Binary_At(mo->string, mo->base.size),
+                cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
                 String_Len(mo->string) - mo->base.index,
                 String_Size(mo->string) - mo->base.size
             );

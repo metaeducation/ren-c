@@ -142,7 +142,9 @@ DECLARE_GENERICS(Blank)
             return UNHANDLED;
 
         if (as == REB_ISSUE) {
-            bool check = Try_Init_Small_Utf8(OUT, as, cb_cast(""), 0, 0);
+            bool check = Try_Init_Small_Utf8(
+                OUT, as, cast(Utf8(const*), ""), 0, 0
+            );
             assert(check);
             UNUSED(check);
             return OUT;
@@ -173,7 +175,9 @@ DECLARE_GENERICS(Blank)
             return UNHANDLED;
 
         if (as == REB_ISSUE) {
-            bool check = Try_Init_Small_Utf8(OUT, as, cb_cast(""), 0, 0);
+            bool check = Try_Init_Small_Utf8(
+                OUT, as, cast(Utf8(const*), ""), 0, 0
+            );
             assert(check);
             UNUSED(check);
             return OUT;

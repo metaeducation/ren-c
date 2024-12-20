@@ -206,7 +206,7 @@ DECLARE_GENERICS(Pair)
             if (Try_Init_Small_Utf8_Untracked(
                 OUT,
                 to,
-                Binary_At(mo->string, mo->base.size),
+                cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
                 String_Len(mo->string) - mo->base.index,
                 String_Size(mo->string) - mo->base.size
             )){

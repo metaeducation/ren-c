@@ -171,7 +171,7 @@ DECLARE_GENERICS(Word)
             Length len = 0;
             for (; cp != tail; cp = Skip_Codepoint(cp))  // manually walk
                 len = len + 1;
-            assert(*cp == '\0');
+            assert(Codepoint_At(cp) == '\0');
             return Init_Integer(OUT, len); }
 
           case SYM_BINDING: {

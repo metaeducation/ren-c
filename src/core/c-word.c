@@ -293,7 +293,8 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
   new_interning: {
 
     Binary* b = cast(Binary*, Make_Flex_Into(
-        FLEX_MASK_SYMBOL,
+        FLEX_MASK_SYMBOL
+            | SYMBOL_FLAG_ALL_ASCII,  // removed below if non-ascii found
         preallocated ? unwrap preallocated : Alloc_Stub(),
         utf8_size + 1  // small sizes fit in a Stub (no dynamic allocation)
     ));
@@ -308,6 +309,9 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     assert(Get_Lex_Class(utf8[0]) != LEX_CLASS_NUMBER);  // no leading digit
     for (Offset i = 0; i < utf8_size; ++i) {
         assert(not Is_Lex_Whitespace(utf8[i]));  // spaces/newlines illegal
+
+        if (Is_Continuation_Byte(utf8[i]))
+            Clear_Flavor_Flag(SYMBOL, b, ALL_ASCII);
 
         if (utf8[i] == 0xC2 and utf8[i + 1] == 0xA0)
             fail ("Non-breaking space illegal in WORD!");
