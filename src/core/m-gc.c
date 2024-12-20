@@ -256,7 +256,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
     // flag is what determines whether the slot is used for info or not.  So
     // if it's available for non-info uses, it is always a live marked node.
 
-    if (Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
+    if (Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK) and s->info.node)
         Queue_Mark_Node_Deep(&m_cast(Stub*, s)->info.node);
 
     if (Is_Stub_Keylist(s)) {
@@ -287,7 +287,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // Flex Flavor, not an extension-usable flag (due to flag scarcity).
         //
         if (Is_Stub_Varlist(a)) {  // bonus is keylist (if not module varlist)
-            if (node_BONUS(KeyList, a) == nullptr)
+            if (BONUS(KeyList, a) == nullptr)
                 assert(CTX_TYPE(cast(VarList*, a)) == REB_MODULE);
             else {
                 assert(CTX_TYPE(cast(VarList*, a)) != REB_MODULE);

@@ -300,9 +300,6 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 #define node_MISC(Field,stub) \
     *m_cast(Node**, &(stub)->misc.node)  // const ok for strict alias
 
-#define node_INODE(Field,stub) \
-    *m_cast(Node**, &(stub)->info.node)  // const ok for strict alias
-
 
 //=//// STUB CELL ACCESS //////////////////////////////////////////////////=//
 //

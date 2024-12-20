@@ -269,9 +269,6 @@ INLINE Size Flex_Total(const Flex* f)
             FLEX_BONUS(ensure_flavor(HAS_BONUS_##Field, (s))))
 #endif
 
-#define node_BONUS(Field, s) \
-    *m_cast(Node**, &FLEX_BONUS(s))  // const ok for strict alias
-
 
 //=//// NUMBER OF WIDTH-SIZED UNITS "USED" IN FLEX ////////////////////////=//
 //
