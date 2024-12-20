@@ -168,7 +168,7 @@ void Set_Parameter_Spec(
     Set_Flex_Len(copy, len);
     Cell* dest = Array_Head(copy);
 
-    Byte* optimized = copy->misc.any.at_least_4;
+    Byte* optimized = copy->misc.at_least_4;
     Byte* optimized_tail = optimized + sizeof(uintptr_t);
 
     for (; item != tail; ++item, ++dest) {

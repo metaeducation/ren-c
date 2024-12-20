@@ -94,10 +94,10 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
     assert(NODE_BYTE(s) == DECAYED_NON_CANON_BYTE);
 
-    Corrupt_Pointer_If_Debug(s->link.any.corrupt);
-    Corrupt_Pointer_If_Debug(s->misc.any.corrupt);
+    Corrupt_Pointer_If_Debug(s->link.corrupt);
+    Corrupt_Pointer_If_Debug(s->misc.corrupt);
     Corrupt_If_Debug(s->content);
-    Corrupt_Pointer_If_Debug(s->info.any.corrupt);
+    Corrupt_Pointer_If_Debug(s->info.corrupt);
 
     return s;
 }
@@ -149,11 +149,11 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //
 #if NO_CPLUSPLUS_11
     #define FLEX_INFO(f) \
-        x_cast(Flex*, ensure(const Flex*, (f)))->info.any.flags  // [1]
+        x_cast(Flex*, ensure(const Flex*, (f)))->info.flags  // [1]
 #else
     INLINE uintptr_t &FLEX_INFO(const Flex* f) {
         assert(Not_Stub_Flag(f, INFO_NODE_NEEDS_MARK));  // [2]
-        return m_cast(Flex*, f)->info.any.flags;  // [1]
+        return m_cast(Flex*, f)->info.flags;  // [1]
     }
 #endif
 
@@ -186,6 +186,13 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //=//// FLEX CAPACITY AND TOTAL SIZE //////////////////////////////////////=//
 //
 // See documentation of `bias` and `rest` in %struct-stub.h
+//
+// In R3-Alpha, the bias was not a full REBLEN but was limited in range to
+// 16 bits or so.  This means 16 info bits are likely available if needed
+// for a dynamic Flex...though it would complicate the logic for biasing
+// to have to notice when you TAKE 65535 units from the head of a larger
+// Flex and need to allocate a new pointer (though this needs to be
+// done anyway, otherwise memory is wasted).
 //
 
 INLINE bool Is_Flex_Biased(const Flex* f) {
@@ -521,8 +528,8 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
 //    length.  If this routine were to disallow it, then the flag wouldn't
 //    be passed into Flex creation but could only be added afterward.
 //
-// 2. UTF-8 Strings maintain a length in codepoints (in misc.length), as well
-//    as the size in bytes (as "used").  It's expected that both will be
+// 2. UTF-8 Strings maintain a length in codepoints (in misc.num_codpoints),
+//    plus the size in bytes (as "used").  It's expected that both will be
 //    updated together--see Term_String_Len_Size().  But sometimes the used
 //    field is updated solo by a Binary-based routine in an intermediate step.
 //    That's okay so long as the length is not consulted before the String
@@ -553,7 +560,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_Stub_NonSymbol(f)) {
-        Corrupt_If_Debug(f->misc.length);  // catch violators [2]
+        Corrupt_If_Debug(f->misc.num_codepoints);  // catch violators [2]
         Touch_Stub_If_Debug(f);
     }
   #endif

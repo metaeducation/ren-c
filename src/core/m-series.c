@@ -171,7 +171,7 @@ Flex* Copy_Flex_Core(Flags flags, const Flex* f)
         Set_Flex_Used(copy, used);
         *Flex_Tail(Byte, copy) = '\0';
         LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
-        copy->misc.length = f->misc.length;
+        copy->misc.num_codepoints = f->misc.num_codepoints;
     }
     else if (Flex_Wide(f) == 1) {  // non-string BLOB!
         copy = Make_Flex_Core(flags, used + 1);  // term space

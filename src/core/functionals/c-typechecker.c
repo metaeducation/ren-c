@@ -670,8 +670,8 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
   blockscope {
     const Array* spec = maybe Cell_Parameter_Spec(param);
-    const Byte* optimized = spec->misc.any.at_least_4;
-    const Byte* optimized_tail = optimized + sizeof(spec->misc.any.at_least_4);
+    const Byte* optimized = spec->misc.at_least_4;
+    const Byte* optimized_tail = optimized + sizeof(spec->misc.at_least_4);
 
     if (Is_Stable(atom)) {
         for (; optimized != optimized_tail; ++optimized) {

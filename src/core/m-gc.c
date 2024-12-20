@@ -244,11 +244,11 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
     // references that are intended to keep them live).  So the Flex header
     // flags control whether the marking is done or not.
 
-    if (Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK) and s->link.any.node)
-        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->link.any.node);
+    if (Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK) and s->link.node)
+        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->link.node);
 
-    if (Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK) and s->misc.any.node)
-        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->misc.any.node);
+    if (Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK) and s->misc.node)
+        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->misc.node);
 
   //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
 
@@ -257,7 +257,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
     // if it's available for non-info uses, it is always a live marked node.
 
     if (Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
-        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->info.any.node);
+        Queue_Mark_Node_Deep(&m_cast(Stub*, s)->info.node);
 
     if (Is_Stub_Keylist(s)) {
         //

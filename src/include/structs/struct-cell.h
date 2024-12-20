@@ -357,30 +357,37 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_FLAG_LEADING_BLANK   CELL_FLAG_TYPE_SPECIFIC_B  // ANY-SEQUENCE?
 
 
-//=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//
+//=//// PLATFORM-POINTER-SIZED VARIANT UNION //////////////////////////////=//
 //
-// Each value cell has a header, "extra", and payload.  Having the header come
-// first is taken advantage of by the byte-order-sensitive macros to be
-// differentiated from UTF-8 strings, etc. (See: Detect_Rebol_Pointer())
+// This is a grab bag of all the different types that can be put in Cell and
+// Stub slots that are the size of a platform pointer.  It's what is used for
+// generic data representation in Stub.link, Stub.misc, Stub.info, Cell.extra,
+// Cell.payload.any.first, and Cell.payload.any.second.
 //
-// Conceptually speaking, one might think of the "extra" as being part of
-// the payload.  But it is broken out into a separate field.  This is because
-// the `binding` property is written using common routines for several
-// different types.  If the common routine picked just one of the payload
-// forms initialize, it would "disengage" the other forms.
+// The idea is that extensions that want to have their own custom Stub or
+// Cell types would be able to define those custom types without needing to
+// rebuild the core, since there's enough data types here and they can
+// indicate whether they need GC marking with STUB_FLAG_LINK_NODE_NEEDS_MARK
+// and CELL_FLAG_DONT_MARK_NODE1, etc.  But for built-in Cells and Stubs it's
+// okay to add fields here just for the sake of clarity...though all Node
+// subclasses have to be assigned to just node. [1]
 //
-// (C permits *reading* of common leading elements from another union member,
-// even if that wasn't the last union used to write it.  But all bets are off
-// for other unions if you *write* a leading member through another one.
-// For longwinded details: http://stackoverflow.com/a/11996970/211160 )
+// 1. The garbage collector is designed to generically mark `Node*` entities
+//    living in Cell and Stub slots.  To do this generic marking, no matter
+//    what node subclass was used, the same ->node field in a Union has to be
+//    assigned in all cases...because if differently typed or different named
+//    fields were assigned, then C++ compilers are not obligated to allow
+//    access through some kind of canon "type pun":
 //
-// Another aspect of breaking out the "extra" is so that on 32-bit platforms,
-// the starting address of the payload is on a 64-bit alignment boundary.
-// See Reb_Integer and Reb_Decimal  for examples where the 64-bit quantity
-// requires things like REBDEC to have 64-bit alignment.  At time of writing,
-// this is necessary for the "C-to-Javascript" emscripten build to work.
-// It's also likely preferred by x86.
+//      https://en.wikipedia.org/wiki/Type_punning#Use_of_union
 //
+//    This means generic slots that want to have nodes marked by the GC have
+//    to use the ->node field of this union...regardless of what Node subtype
+//    (Stub, Cell, VarList, Array, String, etc.) they refer to.
+//
+//    Care should be taken on extraction to give back a `const` reference
+//    if the intent is immutability, or a conservative state of possible
+//    immutability (e.g. the CONST usermode status hasn't been checked)
 
 struct DateStruct  // see %sys-time.h
 {
@@ -390,7 +397,14 @@ struct DateStruct  // see %sys-time.h
     int zone:7; // +/-15:00 res: 0:15
 };
 
-union AnyUnion {  // needed to beat strict aliasing, used in payload
+union AnyUnion {
+    const Node* node;  // all Node subclasses should be assigned to this [1]
+
+  #if DEBUG_USE_UNION_PUNS  // dodgy, use in debug watch at your own risk!
+    Stub* stub_pun;  // *maybe* see node as a Stub
+    RebolValue* cell_pun;  // *maybe* see node as a Cell
+  #endif
+
     bool bit;  // "wasteful" to just use for one flag, but fast read and write
 
     Flags flags;
@@ -410,35 +424,50 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     void *p;
     CFunction* cfunc;  // C function/data pointers pointers may differ in size
 
-    // The NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are used by Cells (for
-    // Cell_Node1() and Cell_Node2()) and by Stubs (for LINK() and MISC()) to
-    // be able to signal the GC to mark those slots if this node field
-    // is in use.
-    //
-    // Care should be taken on extraction to give back a `const` reference
-    // if the intent is immutability, or a conservative state of possible
-    // immutability (e.g. the CONST usermode status hasn't been checked)
-    //
-    const Node* node;
+    REBLEN bias;  // some dynamic Flexes use to track offset from allocation
 
     Dispatcher* dispatcher;
 
-    // The GC is only marking one field in the union...the node.  So that is
-    // the only field that should be assigned and read.  These "type puns"
-    // are unreliable, and for debug viewing only--in case they help.
-    //
-  #if DEBUG_USE_UNION_PUNS
-    Stub* stub_pun;
-    RebolValue* cell_pun;
-  #endif
+    Byte at_least_4[sizeof(uintptr_t)];  // 8 bytes on 64-bit systems...
 
-    Byte at_least_4[sizeof(uintptr_t)];
+    void *corrupt;  // see ASSIGN_UNUSED_FIELDS
 
-    // See remarks on ASSIGN_UNUSED_FIELDS regarding this, which you should
-    // use Corrupt_Unused_Field(...) on when compiler warnings are enabled.
-    //
-    void *corrupt;
+    void *fd;  // file descriptor (used by LIBRARY!)
+
+    LineNumber line;  // see ARRAY_FLAG_FILE_LINE
+
+    Length num_codepoints;  // UTF-8 Everywhere caches to get String_Len()
+
+    Option(RebolHandleCleaner*) cleaner;  // HANDLE!s use for GC finalization
+
+    bool negated;  // alternate bool name, used by bitset (easier to find)
 };
+
+
+//=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//
+//
+// Each value cell has a header, "extra", and payload.  Having the header come
+// first is taken advantage of by the byte-order-sensitive macros to be
+// differentiated from UTF-8 strings, etc. (See: Detect_Rebol_Pointer())
+//
+// Conceptually speaking, one might think of the "extra" as being part of
+// the payload.  But it is broken out into a separate field.  This is because
+// the `binding` property is written using common routines for several
+// different types.  If the common routine picked just one of the payload
+// forms initialize, it would "disengage" the other forms.
+//
+// (C permits *reading* of common leading elements from another union member,
+// even if that wasn't the last union used to write it.  But all bets are off
+// for other unions if you *write* a leading member through another one.
+// For longwinded details: http://stackoverflow.com/a/11996970/211160 )
+//
+// Another aspect of breaking out the "extra" is so that on 32-bit platforms,
+// the starting address of the payload is on a 64-bit alignment boundary.
+// See IntegerPayload + DecimalPayload for examples where the 64-bit quantity
+// requires things like REBDEC to have 64-bit alignment.  At time of writing,
+// this is necessary for the "C-to-Javascript" emscripten build to work.
+// It's also likely preferred by x86.
+//
 
 // These indices are used into at_least_4 when used as in-cell storage.
 //

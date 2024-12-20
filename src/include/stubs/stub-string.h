@@ -169,27 +169,28 @@ INLINE Utf8(*) Write_Codepoint(Utf8(*) utf8, Codepoint c) {
 }
 
 
-//=//// STRING ALL-ASCII FLAG /////////////////////////////////////////////=//
+//=//// STRING ALL-ASCII TEST /////////////////////////////////////////////=//
 //
-// One of the best optimizations that can be done on strings is to keep track
-// of if they contain only ASCII codepoints.  Such a flag would likely have
-// false negatives, unless all removals checked the removed portion for if
-// the ASCII flag is true.  It could be then refreshed by any routine that
-// walks an entire string for some other reason (like molding or printing).
+// We can test if UTF-8 strings contain only ASCII codepoints by seeing if
+// their length in codepoints is equal to their size in bytes.
+//
+// * Symbol strings are created once and are immutable, hence they can
+//   cache a flag saying whether they're all ascii or not.
+//
+// * Non-Symbol strings cache their length in codepoints, which can be
+//   compared with the stored used size in bytes.  If these are equal
+//   then the string is all ASCII.
 //
 // For the moment, we punt on this optimization.  The main reason is that it
 // means the non-ASCII code is exercised on every code path, which is a good
 // substitute for finding high-codepoint data to pass through to places that
 // would not receive it otherwise.
-//
-// But ultimately this optimization will be necessary, and decisions on how
-// up-to-date the flag should be kept would need to be made.
-
-#define Is_Definitely_Ascii(s) false
 
 INLINE bool Is_String_Definitely_ASCII(const String* str) {
-    UNUSED(str);
-    return false;
+    if (Is_Stub_Symbol(str))
+        return false;  // symbols could maintain a flag...
+    possibly(Flex_Used(str) == str->misc.num_codepoints);
+    return false;  // test high codepoint code paths at all times
 }
 
 #define String_UTF8(s)      Flex_Head(char, ensure(const String*, s))
@@ -205,16 +206,11 @@ INLINE bool Is_String_Definitely_ASCII(const String* str) {
 INLINE Length String_Len(const String* s) {
     if (not Is_String_Symbol(s)) {
       #if DEBUG_UTF8_EVERYWHERE
-        if (s->misc.length > Flex_Used(s))  // includes 0xDECAFBAD
+        if (s->misc.num_codepoints > Flex_Used(s))  // includes 0xDECAFBAD
             panic(s);
-        if (Is_Definitely_Ascii(s))
-            assert(s->misc.length == String_Size(s));
       #endif
-        return s->misc.length;  // length cached in misc for non-ANY-WORD?
+        return s->misc.num_codepoints;  // length cached for non-ANY-WORD?
     }
-
-    if (Is_Definitely_Ascii(s))
-        return String_Size(s);
 
     Length len = 0;  // no length cache; hope symbol is short!
     Utf8(const*) ep = String_Tail(s);
@@ -230,14 +226,14 @@ INLINE REBLEN String_Index_At(
     const String* s,
     Size byteoffset  // offset must be at an encoded codepoint start
 ){
-    if (Is_Definitely_Ascii(s))
+    if (Is_String_Definitely_ASCII(s))
         return byteoffset;
 
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
     if (Is_Stub_NonSymbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
-        if (s->misc.length > Flex_Used(s))  // includes 0xDECAFBAD
+        if (s->misc.num_codepoints > Flex_Used(s))  // includes 0xDECAFBAD
             panic (s);
       #endif
 
@@ -262,7 +258,7 @@ INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
     assert(not Is_String_Symbol(s));
     assert(len <= used);
     assert(used == Flex_Used(s));
-    s->misc.length = len;
+    s->misc.num_codepoints = len;
     assert(*Binary_At(s, used) == '\0');
     UNUSED(used);
 }
@@ -271,7 +267,7 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
     assert(not Is_String_Symbol(s));
     assert(len <= used);
     Set_Flex_Used(s, used);
-    s->misc.length = len;
+    s->misc.num_codepoints = len;
     *Binary_At(s, used) = '\0';
 }
 
@@ -433,7 +429,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
     }
 
   #if DEBUG_UTF8_EVERYWHERE  // see note on `len` at start of function
-    s->misc.length = len;
+    s->misc.num_codepoints = len;
   #endif
 
     Encode_UTF8_Char(cp, c, size);

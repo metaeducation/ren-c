@@ -40,6 +40,12 @@
 
 #define MAX_BITSET 0x7fffffff
 
+
+// Because a BITSET! can get very large, the negation state is stored
+// as a boolean in the Flex.  Since negating a BITSET! is intended
+// to affect all references, it has to be stored somewhere that all
+// Cells would see a change--hence the field is in the Flex.
+
 INLINE bool BITS_NOT(const Flex* f)
   { return f->misc.negated; }
 

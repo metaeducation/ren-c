@@ -206,10 +206,10 @@ INLINE Param* Phase_Params_Head(Phase* p) {
 }
 
 #define Details_Dispatcher(a) \
-    ensure(Details*, (a))->link.any.dispatcher
+    ensure(Details*, (a))->link.dispatcher
 
 #define Tweak_Details_Dispatcher(p,cfunc) \
-    (ensure(Details*, (p))->link.any.dispatcher = (cfunc))
+    (ensure(Details*, (p))->link.dispatcher = (cfunc))
 
 
 // The Array is the details identity itself.

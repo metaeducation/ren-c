@@ -565,7 +565,7 @@ REBLEN Modify_String_Or_Binary(
                 BMK_INDEX(book) += src_len_total;
                 BMK_OFFSET(book) += src_size_total;
             }
-            dst_flex->misc.length = dst_len_old + src_len_total;
+            dst_flex->misc.num_codepoints = dst_len_old + src_len_total;
         }
     }
     else {  // CHANGE only expands if more content added than overwritten
@@ -703,7 +703,7 @@ REBLEN Modify_String_Or_Binary(
                 BMK_INDEX(book) = dst_idx;
                 BMK_OFFSET(book) = dst_off;
             }
-            dst_flex->misc.length = dst_len_old + src_len_total - part;
+            dst_flex->misc.num_codepoints = dst_len_old + src_len_total - part;
         }
     }
 

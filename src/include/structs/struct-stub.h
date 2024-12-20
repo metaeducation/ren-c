@@ -96,11 +96,11 @@
 
 //=//// STUB_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a Stub's LINK() field is the `any.node`, and should
-// be marked (if not null).
+// This indicates that the Stub.link.node field is in use, and should be
+// marked (if not null).
 //
-// Note: Even if this flag is not set, *link.any might still be a node*...
-// just not one that should be marked.
+// Note: Even if this flag is not set, *link.node might still be assigned*,
+// just not to a node that needs to be marked.
 //
 #define STUB_FLAG_LINK_NODE_NEEDS_MARK \
     NODE_FLAG_GC_ONE
@@ -108,11 +108,11 @@
 
 //=//// STUB_FLAG_MISC_NODE_NEEDS_MARK //////////////////////////////////=//
 //
-// This indicates that a Stub's MISC() field is the `any.node`, and should
-// be marked (if not null).
+// This indicates that the Stub.misc.node field is in use, and should be
+// marked (if not null).
 //
-// Note: Even if this flag is not set, *misc.any might still be a node*...
-// just not one that should be marked.
+// Note: Even if this flag is not set, *misc.node might still be assigned*,
+// just not to a node that needs to be marked.
 //
 #define STUB_FLAG_MISC_NODE_NEEDS_MARK \
     NODE_FLAG_GC_TWO
@@ -159,8 +159,13 @@
 //
 // Bits are hard to come by in a Stub, especially a Compact Stub which
 // uses the cell content for an arbitrary value (e.g. API handles).  The
-// space for the INFO bits is thus sometimes claimed for a node ("INODE"),
-// which may need marking.
+// space for the INFO bits is thus sometimes claimed for a node
+//
+// This indicates that the Stub.info.node field is in use, and should be
+// marked (if not null).
+//
+// Note: Even if this flag is not set, *info.node might still be assigned*,
+// just not to a node that needs to be marked.
 //
 #define STUB_FLAG_INFO_NODE_NEEDS_MARK \
     FLAG_LEFT_BIT(16)
@@ -301,25 +306,6 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-
-union StubBonusUnion {
-    //
-    // In R3-Alpha, the bias was not a full REBLEN but was limited in range to
-    // 16 bits or so.  This means 16 info bits are likely available if needed
-    // for a dynamic Flex...though it would complicate the logic for biasing
-    // to have to notice when you TAKE 65535 units from the head of a larger
-    // Flex and need to allocate a new pointer (though this needs to be
-    // done anyway, otherwise memory is wasted).
-    //
-    REBLEN bias;
-
-    // Flex Stubs that do not use bias (e.g. context varlists) can use the
-    // bonus slot for other information.
-    //
-    const Node* node;
-};
-
-
 struct StubDynamicStruct {
     //
     // `data` is the "head" of the Flex data.  It might not point directly
@@ -334,7 +320,7 @@ struct StubDynamicStruct {
     // `used` is the count of *physical* units.  If a Flex is byte-sized
     // and holding a UTF-8 String, then this may be a size in bytes distinct
     // than the count of "logical" units, e.g. codepoints.  The actual
-    // logical length in such cases will be in the MISC(length) field.
+    // logical length in such cases is in Stub.misc.num_codepoints
     //
     Length used;
 
@@ -345,9 +331,10 @@ struct StubDynamicStruct {
     Length rest;
 
     // This is the 4th pointer on 32-bit platforms which could be used for
-    // something when a Flex is dynamic.
+    // something when a Flex is dynamic.  It is the "bias" when a Flex needs
+    // to maintain how much the data pointer is offset from the allocation.
     //
-    union StubBonusUnion bonus;
+    union AnyUnion bonus;
 };
 
 
@@ -375,76 +362,6 @@ union StubContentUnion {
 };
 
 
-union StubLinkUnion {
-    //
-    // For LIBRARY!, the file descriptor.  This is set to NULL when the
-    // library is not loaded.
-    //
-    // !!! As with some other types, this may not need the optimization of
-    // being in the Flex Stub--but be handled via user defined types
-    //
-    void *fd;
-
-    // If a Node* is stored in the link field, it has to use this union
-    // member for STUB_INFO_LINK_NODE_NEEDS_MARK to see it.  To help make
-    // the reference sites be unique for each purpose and still be type safe,
-    // see the LINK() macro helpers.
-    //
-    union AnyUnion any;
-};
-
-
-// The `misc` field is an extra pointer-sized piece of data which is resident
-// in the Flex Stub, and hence visible to all Cells that might be
-// referring to the Flex.
-//
-union StubMiscUnion {
-    //
-    // See ARRAY_FLAG_FILE_LINE.  Ordinary source Arrays store the line number
-    // here.  It perhaps could have some bits taken out of it, vs. being a
-    // full 32-bit integer on 32-bit platforms or 64-bit integer on 64-bit
-    // platforms...or have some kind of "extended line" flag which interprets
-    // it as a dynamic allocation otherwise to get more bits.
-    //
-    LineNumber line;
-
-    // Under UTF-8 everywhere, Strings are byte-sized...so the Flex "used"
-    // is actually counting *bytes*, not logical character codepoint units.
-    // Flex_Used() and String_Len() can therefore be different...String_Len()
-    // on a String Flex comes from here, vs. just report the used units.
-    //
-    Length length;
-
-    // some HANDLE!s use this for GC finalization
-    //
-    Option(RebolHandleCleaner*) cleaner;
-
-    // Because a BITSET! can get very large, the negation state is stored
-    // as a boolean in the Flex.  Since negating a BITSET! is intended
-    // to affect all references, it has to be stored somewhere that all
-    // Cells would see a change--hence the field is in the Flex.
-    //
-    bool negated;
-
-    // If a Node* is stored in the misc field, it has to use this union
-    // member for STUB_INFO_MISC_NODE_NEEDS_MARK to see it.  To help make
-    // the reference sites be unique for each purpose and still be type safe,
-    // see the MISC() macro helpers.
-    //
-    union AnyUnion any;
-};
-
-
-// Some Flex flags imply the INFO is used not for flags, but for another
-// markable pointer.  This is not legal for any Flex that needs to encode
-// its Flex_Used(), so only String and Array can pull this trick...when
-// they are used to implement internal structures.
-//
-union StubInfoUnion {
-    union AnyUnion any;
-};
-
-
 #if CPLUSPLUS_11
     struct StubStruct : public Node  // Note: empty base class optimization
 #else
@@ -466,13 +383,11 @@ union StubInfoUnion {
     //
     // This field is in the second pointer-sized slot in the Stub node to
     // push the `content` so it is 64-bit aligned on 32-bit platforms.  This
-    // is because a cell may be the StubContentUnion, and a cell assumes
+    // is because a Cell may be the StubContentUnion, and a cell assumes
     // it is on a 64-bit boundary to start with...in order to position its
     // "payload" which might need to be 64-bit aligned as well.
     //
-    // Use the LINK() macro to acquire this field...don't access directly.
-    //
-    union StubLinkUnion link;
+    union AnyUnion link;
 
     // `content` is the sizeof(Cell) data for the Flex, which is thus
     // 4 platform pointers in size.  If the Flex is small enough, the header
@@ -482,27 +397,25 @@ union StubInfoUnion {
     //
     union StubContentUnion content;
 
-    // `info` consists of bits that could apply equally to any Flex, and
-    // that may need to be tested together as a group.  Make_Flex()
-    // calls presume all the info bits are initialized to zero, so any flag
-    // that controls the allocation should be a FLEX_FLAG_XXX instead.
+    // If STUB_FLAG_INFO_NODE_NEEDS_MARK, then the `info.node` field is marked
+    // by the garbage collector.
     //
-    // `info` is not the start of a "Rebol Node" (e.g. either a Stub or Cell)
-    // But in the Fixed case it is positioned right where the next cell after
-    // the embedded Cell would be.  To lower the risk of stepping into that
-    // location and thinking it is a cell, it keeps the info bit corresponding
-    // to NODE_FLAG_CELL clear.
+    // Otherwise it is used for 32-bits [1] of FLEX_INFO_XXX flags, and other
+    // optional data.  (For instance, a Symbol Stub stores its optional SymId
+    // in this space).  Make_Flex() calls presume all the info bits are
+    // initialized to zero, so any flag that controls the allocation should be
+    // a FLEX_FLAG_XXX instead.
     //
-    // !!! Only 32-bits are used on 64-bit platforms.  There could be some
-    // interesting added caching feature or otherwise that would use
-    // it, while not making any feature specifically require a 64-bit CPU.
+    // 1. Only 32-bits are used on 64-bit platforms.  There could be some
+    //    interesting added caching feature or otherwise that would use
+    //    it, while not making any feature specifically require a 64-bit CPU.
     //
-    union StubInfoUnion info;
+    union AnyUnion info;
 
     // This is the second pointer-sized piece of Flex data that is used
     // for various purposes, similar to link.
     //
-    union StubMiscUnion misc;
+    union AnyUnion misc;
 
   #if DEBUG_STUB_ORIGINS
     Byte* guard;  // intentionally alloc'd and freed for use by panic()

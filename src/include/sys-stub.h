@@ -276,35 +276,35 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define LINK(Field,stub) \
-        *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(stub)->link.any.node))
+        *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(stub)->link.node))
 
     #define MISC(Field,stub) \
-        *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(stub)->misc.any.node))
+        *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(stub)->misc.node))
 
     #define INODE(Field,stub) \
-        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(stub)->info.any.node))
+        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(stub)->info.node))
 #else
     #define LINK(Field,stub) \
         NodeHolder<LINK_##Field##_TYPE>( \
-            ensure_flavor(HAS_LINK_##Field, (stub))->link.any.node)
+            ensure_flavor(HAS_LINK_##Field, (stub))->link.node)
 
     #define MISC(Field,stub) \
         NodeHolder<MISC_##Field##_TYPE>( \
-            ensure_flavor(HAS_MISC_##Field, (stub))->misc.any.node)
+            ensure_flavor(HAS_MISC_##Field, (stub))->misc.node)
 
     #define INODE(Field,stub) \
         NodeHolder<INODE_##Field##_TYPE>( \
-            ensure_flavor(HAS_INODE_##Field, (stub))->info.any.node)
+            ensure_flavor(HAS_INODE_##Field, (stub))->info.node)
 #endif
 
 #define node_LINK(Field,stub) \
-    *m_cast(Node**, &(stub)->link.any.node)  // const ok for strict alias
+    *m_cast(Node**, &(stub)->link.node)  // const ok for strict alias
 
 #define node_MISC(Field,stub) \
-    *m_cast(Node**, &(stub)->misc.any.node)  // const ok for strict alias
+    *m_cast(Node**, &(stub)->misc.node)  // const ok for strict alias
 
 #define node_INODE(Field,stub) \
-    *m_cast(Node**, &(stub)->info.any.node)  // const ok for strict alias
+    *m_cast(Node**, &(stub)->info.node)  // const ok for strict alias
 
 
 //=//// STUB CELL ACCESS //////////////////////////////////////////////////=//
@@ -352,15 +352,15 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
     s->leader.bits = flags | NODE_FLAG_NODE;  // #1
 
   #if (NO_RUNTIME_CHECKS)
-    s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
+    s->info.flags = FLEX_INFO_MASK_NONE;  // #7
   #else
-    SafeCorrupt_Pointer_Debug(s->link.any.corrupt);  // #2
+    SafeCorrupt_Pointer_Debug(s->link.corrupt);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
     if (flags & STUB_FLAG_INFO_NODE_NEEDS_MARK)
-        Corrupt_Pointer_If_Debug(s->info.any.node);  // #7
+        Corrupt_Pointer_If_Debug(s->info.node);  // #7
     else
-        s->info.any.flags = FLEX_INFO_MASK_NONE;  // #7
-    SafeCorrupt_Pointer_Debug(s->misc.any.corrupt);  // #8
+        s->info.flags = FLEX_INFO_MASK_NONE;  // #7
+    SafeCorrupt_Pointer_Debug(s->misc.corrupt);  // #8
 
   #if DEBUG_STUB_ORIGINS
     s->guard = nullptr;  // so Touch_Stub() can tell data is invalid

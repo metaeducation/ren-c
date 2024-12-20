@@ -63,7 +63,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     assert(at <= String_Len(s));
 
-    if (Is_Definitely_Ascii(s)) {  // can't have any false positives
+    if (Is_String_Definitely_ASCII(s)) {  // can't have any false positives
         assert(not LINK(Bookmarks, s));  // mutations must ensure this
         return cast(Utf8(*), cast(Byte*, String_Head(s)) + at);
     }
