@@ -369,7 +369,7 @@ static void Init_Root_Vars(void)
     );
     Set_Flex_Len(a, 1 + len);
     MISC(VarlistAdjunct, a) = nullptr;
-    node_LINK(NextVirtual, a) = nullptr;
+    Tweak_Link_Inherit_Bind(a, nullptr);
 
     KeyList* keylist = Make_Flex(
         FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
@@ -938,7 +938,7 @@ void Startup_Core(void)
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
     VarList* util = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
-    node_LINK(NextVirtual, util) = g_lib_context;
+    Tweak_Link_Inherit_Bind(util, g_lib_context);
     ensure(nullptr, g_sys_util_module) = Alloc_Element();
     Init_Context_Cell(g_sys_util_module, REB_MODULE, util);
     ensure(nullptr, g_sys_util_context) = cast(SeaOfVars*, util);

@@ -3014,8 +3014,8 @@ Bounce Api_Function_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);  // may or may not be managed
 
     Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(holder);  // [1]
+
+    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(holder));  // [1]
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 
@@ -3037,7 +3037,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     //    be needed, so for now we do `rebContinue("pack [...]")`
 
     assert(Is_Node_Managed(L->varlist));
-    assert(node_LINK(NextVirtual, L->varlist) != nullptr);
+    assert(Link_Inherit_Bind(L->varlist));  // must inherit from something (?)
 
     RebolContext* context = cast(RebolContext*, L->varlist);  // [1]
 

@@ -345,7 +345,7 @@ Option(Stub*) Get_Word_Container(
         goto loop_body;  // avoid compiler warnings on `goto next_context` [1]
 
       next_context:
-        c = Next_Virtual_Link(c);
+        c = maybe Link_Inherit_Bind(c);
         continue;
 
       loop_body:

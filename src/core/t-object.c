@@ -434,7 +434,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
             return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
 
         VarList* ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
-        node_LINK(NextVirtual, ctx) = BINDING(arg);
+        Tweak_Link_Inherit_Bind(ctx, BINDING(arg));
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
 
@@ -618,7 +618,7 @@ VarList* Copy_Varlist_Extra_Managed(
             MISC(VarlistAdjunct, varlist) = nullptr;
         }
         BONUS(KeyList, varlist) = nullptr;  // modules don't have keylists
-        node_LINK(NextVirtual, varlist) = nullptr;
+        Tweak_Link_Inherit_Bind(varlist, nullptr);
 
         VarList* copy = cast(VarList*, varlist); // now a well-formed context
         assert(Get_Stub_Flag(varlist, DYNAMIC));
@@ -707,7 +707,7 @@ VarList* Copy_Varlist_Extra_Managed(
         MISC(VarlistAdjunct, varlist) = nullptr;
     }
 
-    node_LINK(NextVirtual, varlist) = nullptr;
+    Tweak_Link_Inherit_Bind(varlist, nullptr);
 
     return copy;
 }

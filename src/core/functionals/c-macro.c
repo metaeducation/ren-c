@@ -106,8 +106,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
+    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
     Force_Level_Varlist_Managed(L);
 
     // !!! Using this form of RETURN is based on UNWIND, which means we must

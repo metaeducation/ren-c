@@ -1050,7 +1050,7 @@ void Push_Action(Level* L, const Cell* frame) {
     ));
     MISC(RunLevel, s) = L;  // maps varlist back to L
     BONUS(KeyList, s) = Phase_Keylist(phase);
-    node_LINK(NextVirtual, s) = nullptr;
+    Tweak_Link_Inherit_Bind(s, nullptr);
 
     if (not Try_Flex_Data_Alloc(
         s,

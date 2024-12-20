@@ -98,7 +98,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;
 
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);  // can't own [1]
+    assert(not Link_Inherit_Bind(L->varlist));  // can't own [1]
 
     Force_Level_Varlist_Managed(L);
 

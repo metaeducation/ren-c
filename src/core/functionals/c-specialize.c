@@ -147,7 +147,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     }
 
     MISC(VarlistAdjunct, a) = nullptr;
-    node_LINK(NextVirtual, a) = nullptr;
+    Tweak_Link_Inherit_Bind(a, nullptr);
 
     return cast(ParamList*, a);
 }

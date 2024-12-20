@@ -185,7 +185,7 @@ DECLARE_NATIVE(load_extension)
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
     VarList* module_ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
-    node_LINK(NextVirtual, module_ctx) = g_lib_context;
+    Tweak_Link_Inherit_Bind(module_ctx, g_lib_context);
 
     g_native_cfunc_pos = cfuncs;
     g_currently_loading_module = module_ctx;

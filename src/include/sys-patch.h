@@ -79,7 +79,7 @@
 //    it is a use, a let, a frame context, or nullptr.
 //
 // 6. In the past, "Variant" was a circularly linked list of variations of this
-//    USE with different Next_Virtual_Link() data.  The idea was to assist in
+//    USE with different Link_Inherit_Bind() data.  The idea was to assist in
 //    avoiding creating unnecessary duplicate chains.  Decay_Stub() would
 //    remove patches from the list during GC.  But see the notes on the
 //    Variant definition for why it was removed.

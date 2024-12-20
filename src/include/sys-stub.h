@@ -297,9 +297,6 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
             ensure_flavor(HAS_INODE_##Field, (stub))->info.node)
 #endif
 
-#define node_LINK(Field,stub) \
-    *m_cast(Node**, &(stub)->link.node)  // const ok for strict alias
-
 #define node_MISC(Field,stub) \
     *m_cast(Node**, &(stub)->misc.node)  // const ok for strict alias
 

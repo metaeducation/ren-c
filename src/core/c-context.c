@@ -43,7 +43,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
         capacity + 1  // size + room for rootvar (array terminator implicit)
     );
     MISC(VarlistAdjunct, a) = nullptr;
-    node_LINK(NextVirtual, a) = nullptr;
+    Tweak_Link_Inherit_Bind(a, nullptr);
 
     Alloc_Tail_Array(a);  // allocate rootvar
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
@@ -602,7 +602,7 @@ DECLARE_NATIVE(wrap)
         tail,
         parent
     );
-    node_LINK(NextVirtual, varlist) = Cell_Binding(list);
+    Tweak_Link_Inherit_Bind(varlist, Cell_Binding(list));
     BINDING(list) = varlist;
 
     Source* pack = Make_Source_Managed(2);
@@ -766,7 +766,7 @@ VarList* Make_Varlist_Detect_Managed(
     );
     Set_Flex_Len(a, 1 + len);
     MISC(VarlistAdjunct, a) = nullptr;
-    node_LINK(NextVirtual, a) = nullptr;
+    Tweak_Link_Inherit_Bind(a, nullptr);
 
     if (
         parent

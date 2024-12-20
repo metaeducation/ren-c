@@ -92,9 +92,3 @@
 
 #define MISC_Variant_TYPE               void*  // see note
 #define HAS_MISC_Variant                FLAVOR_USE
-
-
-// Common extractor for the next field, used on either LET or USE
-//
-#define Next_Virtual_Link(context) \
-    cast(Stub*, node_LINK(NextLet, context))

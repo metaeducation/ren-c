@@ -239,8 +239,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_YIELD), SYM_YIELD);
 
     assert(Is_Block(body));  // can mutate (only one call)
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
+    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
     BINDING(body) = L->varlist;
 
     STATE = ST_YIELDER_RUNNING_BODY;

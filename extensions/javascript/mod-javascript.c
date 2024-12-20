@@ -772,8 +772,8 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
     Value* inherit = Details_At(details, IDX_JS_NATIVE_CONTEXT);
     assert(Is_Module(inherit));  // !!! review what to support here
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
-    node_LINK(NextVirtual, L->varlist) = Cell_Varlist(inherit);
+    assert(not Link_Inherit_Bind(L->varlist));
+    Tweak_Link_Inherit_Bind(L->varlist, Cell_Varlist(inherit));
     Force_Level_Varlist_Managed(L);
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);

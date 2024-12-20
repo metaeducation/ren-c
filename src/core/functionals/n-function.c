@@ -122,8 +122,7 @@ Bounce Func_Dispatcher(Level* const L)
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    assert(node_LINK(NextVirtual, L->varlist) == nullptr);
-    node_LINK(NextVirtual, L->varlist) = Cell_List_Binding(body);
+    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
     Force_Level_Varlist_Managed(L);
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);

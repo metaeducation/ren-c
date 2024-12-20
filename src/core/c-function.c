@@ -559,7 +559,7 @@ ParamList* Pop_Paramlist_May_Fail(
 
     BONUS(KeyList, paramlist) = keylist;
     MISC(VarlistAdjunct, paramlist) = nullptr;
-    node_LINK(NextVirtual, paramlist) = nullptr;
+    Tweak_Link_Inherit_Bind(paramlist, nullptr);
 
     // With all the values extracted from stack to array, restore stack pointer
     //
