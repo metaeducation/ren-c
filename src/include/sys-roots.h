@@ -35,11 +35,11 @@
 // are available.
 
 
-#define LINK_ApiNext_TYPE       Node*
-#define HAS_LINK_ApiNext        FLAVOR_API
+#define LINK_API_STUB_NEXT(stub) \
+    *x_cast(Node**, &ensure_flavor(FLAVOR_API, (stub))->link.node)
 
-#define MISC_ApiPrev_TYPE       Node*
-#define HAS_MISC_ApiPrev        FLAVOR_API
+#define MISC_API_STUB_PREV(stub) \
+    *x_cast(Node**, &ensure_flavor(FLAVOR_API, (stub))->misc.node)
 
 
 // The rebR() function can be used with an API handle to tell a variadic
@@ -61,25 +61,25 @@ INLINE bool Is_Api_Value(const Cell* c) {
 //    API freeing operations can update the head of the list in the level
 //    when given only the node pointer.
 //
-INLINE void Link_Api_Handle_To_Level(Stub* stub, Level* L)
+INLINE void Connect_Api_Handle_To_Level(Stub* stub, Level* L)
 {
-    MISC(ApiPrev, stub) = L;  // back pointer for doubly linked list [1]
+    MISC_API_STUB_PREV(stub) = L;  // back pointer for doubly linked list [1]
 
     bool empty_list = (L->alloc_value_list == L);
 
     if (not empty_list) {  // head of list exists, take its spot at the head
         Stub* head = cast(Stub*, L->alloc_value_list);
-        MISC(ApiPrev, head) = stub;  // link back
+        MISC_API_STUB_PREV(head) = stub;  // link back
     }
 
-    LINK(ApiNext, stub) = L->alloc_value_list;  // forward pointer
+    LINK_API_STUB_NEXT(stub) = L->alloc_value_list;  // forward pointer
     L->alloc_value_list = stub;
 }
 
-INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
+INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 {
-    Node* prev_node = MISC(ApiPrev, stub);
-    Node* next_node = LINK(ApiNext, stub);
+    Node* prev_node = MISC_API_STUB_PREV(stub);
+    Node* next_node = LINK_API_STUB_NEXT(stub);
     bool at_head = Is_Node_A_Cell(prev_node);
     bool at_tail = Is_Node_A_Cell(next_node);
 
@@ -89,16 +89,16 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 
         if (not at_tail) {  // only set next item's backlink if it exists
             Stub* next = cast(Stub*, next_node);
-            MISC(ApiPrev, next) = L;
+            MISC_API_STUB_PREV(next) = L;
         }
     }
     else {
         Stub* prev = cast(Stub*, prev_node);  // not at head, api val before us
-        LINK(ApiNext, prev) = next_node;  // forward prev's next to our next
+        LINK_API_STUB_NEXT(prev) = next_node;  // forward prev next to our next
 
         if (not at_tail) {  // only set next item's backlink if it exists
             Stub* next = cast(Stub*, next_node);
-            MISC(ApiPrev, next) = prev_node;
+            MISC_API_STUB_PREV(next) = prev_node;
         }
     }
 
@@ -137,7 +137,7 @@ INLINE Value* Alloc_Value_Core(Flags flags)
     Cell* cell = Stub_Cell(stub);
     cell->header.bits = flags;  // can't be corrupt [1]
 
-    Link_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
+    Connect_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
 
     return cast(Value*, cell);
 }
@@ -155,7 +155,7 @@ INLINE void Free_Value(Value* v)
     assert(Is_Node_Root_Bit_Set(stub));
 
     if (Is_Node_Managed(stub))
-        Unlink_Api_Handle_From_Level(stub);
+        Disconnect_Api_Handle_From_Level(stub);
 
     Force_Poison_Cell(v);  // do last (removes NODE_FLAG_ROOT if set)
     stub->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;

@@ -2331,8 +2331,8 @@ RebolValue* API_rebRescueWith(
 
           proxy_result: {
             Stub* stub = Compact_Stub_From_Cell(result);
-            Unlink_Api_Handle_From_Level(stub);  // e.g. linked to f
-            Link_Api_Handle_To_Level(stub, dummy->prior);  // link to caller
+            Disconnect_Api_Handle_From_Level(stub);  // e.g. linked to f
+            Connect_Api_Handle_To_Level(stub, dummy->prior);  // link to caller
           }
         }
     }
@@ -2629,7 +2629,7 @@ RebolValue* API_rebManage(RebolValue* v)
         fail ("Attempt to rebManage() an API value that's already managed.");
 
     Set_Node_Managed_Bit(stub);
-    Link_Api_Handle_To_Level(stub, TOP_LEVEL);
+    Connect_Api_Handle_To_Level(stub, TOP_LEVEL);
 
     return v;
 }
@@ -2664,7 +2664,7 @@ void API_rebUnmanage(void *p)
     // own risk to do this, and not use those pointers after a free.
     //
     Clear_Node_Managed_Bit(stub);
-    Unlink_Api_Handle_From_Level(stub);
+    Disconnect_Api_Handle_From_Level(stub);
 }
 
 
