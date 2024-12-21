@@ -219,15 +219,15 @@ void* Probe_Core_Debug(
 
       case FLAVOR_LET: {
         Probe_Print_Helper(p, expr, "LET single variable", file, line);
-        Append_Spelling(mo->string, INODE(LetSymbol, f));
+        Append_Spelling(mo->string, Info_Let_Symbol(f));
         break; }
 
       case FLAVOR_USE: {
         Probe_Print_Helper(p, expr, "Virtual Bind USE", file, line);
         break; }
 
-      case FLAVOR_BINDINFO:
-        Probe_Print_Helper(p, expr, "BindInfo", file, line);
+      case FLAVOR_STUMP:
+        Probe_Print_Helper(p, expr, "Binding Stump", file, line);
         break;
 
       case FLAVOR_LIBRARY:

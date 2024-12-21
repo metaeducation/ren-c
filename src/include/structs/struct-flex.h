@@ -135,12 +135,6 @@
 // bits.  These are the info bits, which are more likely to be changed over
 // the lifetime of the Flex--defaulting to FALSE.
 //
-// !!! The current main application of Flex info is a byte's worth of space
-// for the Flex_Used() of Flex content that fits in the Cell area, and
-// flags pertaining to locking.  The idea of "popping out" that Flex info
-// upon a hold lock being taken--such that the info bits move and the slot
-// holds a locking pointer--is currently being thought about.  See the INODE()
-// for the beginnings of that.
 
 
 //=//// FLEX_INFO_0_IS_FALSE ////////////////////////////////////////////=//

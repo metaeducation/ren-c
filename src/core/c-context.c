@@ -172,7 +172,7 @@ Value* Append_To_Sea_Core(
     Stub* patch;
     if (id and id < LIB_SYMS_MAX) {
         patch = &g_lib_patches[id];  // patch memory pre-allocated at boot [1]
-        assert(INODE(PatchContext, patch) == nullptr);  // don't double add
+        assert(INFO_PATCH_SEA_RAW(patch) == nullptr);  // don't double add
         // patch->header.bits should be already set
 
         TRACK(Erase_Cell(Stub_Cell(patch)));  // prepare for addition
@@ -198,12 +198,12 @@ Value* Append_To_Sea_Core(
     //    for that symbol.  We skip over those.
 
     Stub* updating = m_cast(Symbol*, symbol);  // skip binding hitches [1]
-    if (Get_Flavor_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
+    if (Get_Flavor_Flag(SYMBOL, updating, MISC_IS_BIND_STUMP))
         updating = Misc_Hitch(updating);  // skip
 
     Tweak_Misc_Hitch(patch, Misc_Hitch(updating));
-    INODE(PatchContext, patch) = sea;
-    Tweak_Misc_Hitch(updating, patch);  // may be bindinfo
+    Tweak_Info_Patch_Sea(patch, sea);
+    Tweak_Misc_Hitch(updating, patch);  // may be binding stump
 
     if (any_word) {  // bind word while we're at it
         Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
@@ -214,7 +214,7 @@ Value* Append_To_Sea_Core(
   blockscope {
     Stub *check = Misc_Hitch(patch);
     while (check != symbol) {  // walk chain to look for duplicates
-        assert(INODE(PatchContext, check) != sea);
+        assert(Info_Patch_Sea(check) != sea);
         check = Misc_Hitch(check);
     }
   }
@@ -343,7 +343,7 @@ void Construct_Collector_Core(
     else
         cl->sea = nullptr;
 
-    cl->base_hitch = cl->binder.hitch_list;
+    cl->base_stump = cl->binder.stump_list;
 }
 
 
@@ -356,7 +356,7 @@ void Construct_Collector_Core(
 void Destruct_Collector_Core(Collector *cl)
 {
     Destruct_Binder_Core(&cl->binder);
-    Corrupt_Pointer_If_Debug(cl->base_hitch);
+    Corrupt_If_Debug(cl->base_stump);
 }
 
 
@@ -517,9 +517,9 @@ Option(Error*) Trap_Wrap_Extend_Core(
         return e;
     }
 
-    Stub* hitch = cl->binder.hitch_list;
-    for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
-        const Symbol* symbol = INODE(BindSymbol, hitch);
+    Option(Stub*) stump = cl->binder.stump_list;
+    for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
+        const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
         Init_Nothing(Append_Context(context, symbol));
     }
 
@@ -707,13 +707,13 @@ DECLARE_NATIVE(collect_words)
 
     StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
 
-    Stub* hitch = cl->binder.hitch_list;
-    for (; hitch != cl->base_hitch; hitch = LINK(NextBind, hitch)) {
-        REBINT index = VAL_INT32(Stub_Cell(hitch));
+    Option(Stub*) stump = cl->binder.stump_list;
+    for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
+        REBINT index = VAL_INT32(Stub_Cell(unwrap stump));
         assert(index != 0);
         if (index < 0)
             continue;
-        Init_Word(PUSH(), INODE(BindSymbol, hitch));
+        Init_Word(PUSH(), Info_Stump_Bind_Symbol(unwrap stump));
     }
 
     Source* array = Pop_Managed_Source_From_Stack(base);
@@ -787,9 +787,9 @@ VarList* Make_Varlist_Detect_Managed(
         Set_Flex_Used(keylist, len);
 
         Key* key = Flex_Tail(Key, keylist);  // keys are backwards order
-        Stub* hitch = cl->binder.hitch_list;  // want ALL, not cl->base_hitch
-        for (; hitch != nullptr; hitch = LINK(NextBind, hitch)) {
-            const Symbol* s = INODE(BindSymbol, hitch);
+        Option(Stub*) stump = cl->binder.stump_list;  // ALL not cl->base_stump
+        for (; stump != nullptr; stump = Link_Stump_Next(unwrap stump)) {
+            const Symbol* s = Info_Stump_Bind_Symbol(unwrap stump);
             --key;
             Init_Key(key, s);
         }

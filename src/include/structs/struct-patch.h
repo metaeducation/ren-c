@@ -49,29 +49,24 @@
 //    can be looked up in that module by following the list reachable through
 //    the symbol in a WORD!.  It also means the spelling can be found in
 //    that list looking for the symbol.
-
-#define INODE_PatchContext_TYPE          VarList*
-#define HAS_INODE_PatchContext           FLAVOR_PATCH
+//
+//    LINK: Unused
+//    MISC: "Hitch" (links to other patches for other modules, and symbol) [1]
+//    INFO: Info_Patch_Sea()
 
 #define LINK_PatchReserved_TYPE           void*
 #define HAS_LINK_PatchReserved            FLAVOR_PATCH
-
-// MISC is Misc_Hitch(), circular list [1]
 
 
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//
 //
 // Next node is either to another let, a frame binding context, or nullptr.
 //
+//    LINK: Link_Inherit_Bind()
+//    MISC: Unused
+//    INFO: Info_Let_Symbol()
 
-#define INODE_LetSymbol_TYPE           const Symbol*
-#define HAS_INODE_LetSymbol            FLAVOR_LET
 
-#define LINK_NextLet_TYPE              Stub*
-#define HAS_LINK_NextLet               FLAVOR_LET
-
-#define MISC_LetReserved_TYPE          void*
-#define HAS_MISC_LetReserved           FLAVOR_LET
 
 
 //=//// "USE" FOR VIRTUAL BINDING TO OBJECTS //////////////////////////////=//
@@ -82,12 +77,6 @@
 // This optimization was adding complexity and didn't seem to be hitting
 // all that often in practice.  It was removed for now.
 //
-
-#define INODE_UseReserved_TYPE          Stub*  // no use yet
-#define HAS_INODE_UseReserved           FLAVOR_USE
-
-#define LINK_NextUse_TYPE               Stub*
-#define HAS_LINK_NextUse                FLAVOR_USE
-
-#define MISC_Variant_TYPE               void*  // see note
-#define HAS_MISC_Variant                FLAVOR_USE
+//     LINK: Link_Inherit_Bind()
+//     MISC: Unused
+//     INFO: Unused

@@ -183,8 +183,9 @@ static void Startup_Lib(void)
             /* | STUB_FLAG_LINK_NODE_NEEDS_MARK */  // reserved
         );
 
-        assert(INODE(PatchContext, patch) == nullptr);
-        INODE(PatchContext, patch) = lib;
+        assert(INFO_PATCH_SEA_RAW(patch) == nullptr);
+        assert(LINK_PATCH_RESERVED_RAW(patch) == nullptr);
+        Tweak_Info_Patch_Sea(patch, g_lib_context);
 
         assert(LINK(PatchReserved, patch) == nullptr);
 
@@ -232,7 +233,7 @@ static void Shutdown_Lib(void)
   #if RUNTIME_CHECKS  // verify patches point to g_lib_context before freeing [1]
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
         Stub* patch = &g_lib_patches[id];
-        assert(INODE(PatchContext, patch) == g_lib_context);
+        assert(Info_Patch_Sea(patch) == g_lib_context);
     }
   #endif
 
@@ -248,10 +249,10 @@ static void Shutdown_Lib(void)
 
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 
-        /* assert(INODE(PatchContext, patch) == g_lib_context); */  // !!! freed
-        INODE(PatchContext, patch) = nullptr;  // we already checked it [1]
+        /* assert(Info_Patch_Sea(patch) == g_lib_context); */  // !!! freed
+        INFO_PATCH_SEA_RAW(patch) = nullptr;  // we already checked it [1]
 
-        assert(LINK(PatchReserved, patch) == nullptr);
+        assert(LINK_PATCH_RESERVED_RAW(patch) == nullptr);
 
         Symbol* symbol = &g_symbols.builtin_canons[id];
 

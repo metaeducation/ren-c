@@ -261,11 +261,9 @@ Let* Make_Let_Variable(
         );
         assert(Is_Node_Managed(parent));
     }
-    LINK(NextLet, let) = parent;  // linked list [1]
-
-    MISC(LetReserved, let) = nullptr;  // not currently used
-
-    INODE(LetSymbol, let) = symbol;  // surrogate for context "key"
+    Tweak_Link_Inherit_Bind(let, parent);  // linked list [1]
+    Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
+    Tweak_Info_Let_Symbol(let, symbol);  // surrogate for context key
 
     return let;
 }
@@ -419,7 +417,7 @@ Option(Stub*) Get_Word_Container(
         }
 
         if (Is_Stub_Let(c)) {
-            if (INODE(LetSymbol, c) == symbol) {
+            if (Info_Let_Symbol(c) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return c;
             }

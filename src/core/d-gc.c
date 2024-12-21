@@ -370,7 +370,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         // GC can't run during bind
         //
-        assert(Not_Flavor_Flag(SYMBOL, spelling, MISC_IS_BINDINFO));
+        assert(Not_Flavor_Flag(SYMBOL, spelling, MISC_IS_BIND_STUMP));
 
         REBINT index = CELL_WORD_INDEX_I32(v);
         Context* binding = Cell_Binding(v);

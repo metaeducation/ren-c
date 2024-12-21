@@ -161,6 +161,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 #define Is_Stub_Let(f)              (Stub_Flavor(f) == FLAVOR_LET)
 #define Is_Stub_Use(f)              (Stub_Flavor(f) == FLAVOR_USE)
 #define Is_Stub_Patch(f)            (Stub_Flavor(f) == FLAVOR_PATCH)
+#define Is_Stub_Stump(f)            (Stub_Flavor(f) == FLAVOR_STUMP)
 #define Is_Stub_Varlist(f)          (Stub_Flavor(f) == FLAVOR_VARLIST)
 #define Is_Stub_Pairlist(f)         (Stub_Flavor(f) == FLAVOR_PAIRLIST)
 #define Is_Stub_Details(f)          (Stub_Flavor(f) == FLAVOR_DETAILS)
@@ -280,9 +281,6 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 
     #define MISC(Field,stub) \
         *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(stub)->misc.node))
-
-    #define INODE(Field,stub) \
-        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(stub)->info.node))
 #else
     #define LINK(Field,stub) \
         NodeHolder<LINK_##Field##_TYPE>( \
@@ -291,10 +289,6 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
     #define MISC(Field,stub) \
         NodeHolder<MISC_##Field##_TYPE>( \
             ensure_flavor(HAS_MISC_##Field, (stub))->misc.node)
-
-    #define INODE(Field,stub) \
-        NodeHolder<INODE_##Field##_TYPE>( \
-            ensure_flavor(HAS_INODE_##Field, (stub))->info.node)
 #endif
 
 

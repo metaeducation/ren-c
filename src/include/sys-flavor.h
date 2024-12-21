@@ -58,12 +58,12 @@ enum StubFlavorEnum {
     //
     FLAVOR_USE,
 
-    // A FLAVOR_BINDINFO is an ephemeral element which is chained into the
+    // A FLAVOR_STUMP is an ephemeral element which is chained into the
     // "hitch" list on a symbol, when that symbol is being bound.  Currently
     // it holds an integer for a binding position, but allowing it to hold
     // arbitrary things for a mapping is being considered.
     //
-    FLAVOR_BINDINFO,
+    FLAVOR_STUMP,
 
     FLAVOR_LIBRARY,
     FLAVOR_HANDLE,

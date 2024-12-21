@@ -259,6 +259,36 @@ INLINE void Tweak_Keylist_Of_Varlist_Unique(Flex* f, KeyList *keylist) {
 }
 
 
+
+INLINE const Symbol* Info_Let_Symbol(const Stub* stub) {
+    assert(Is_Stub_Let(stub));
+    return cast(const Symbol*, stub->info.node);
+}
+
+INLINE void Tweak_Info_Let_Symbol(Stub* stub, const Symbol* symbol) {
+    assert(Is_Stub_Let(stub));
+    stub->info.node = symbol;
+}
+
+
+#define LINK_PATCH_RESERVED_RAW(patch)  *x_cast(Node**, &(patch)->link.node)
+#define INFO_PATCH_SEA_RAW(patch)       *x_cast(Node**, &(patch)->info.node)
+
+INLINE SeaOfVars* Info_Patch_Sea(const Stub* patch) {
+    assert(Is_Stub_Patch(patch));
+    SeaOfVars* sea = cast(SeaOfVars*, INFO_PATCH_SEA_RAW(patch));
+    assert(CTX_TYPE(sea) == REB_MODULE);
+    return sea;
+}
+
+INLINE void Tweak_Info_Patch_Sea(const Stub* patch, SeaOfVars* sea) {
+    assert(Is_Stub_Patch(patch));
+    assert(sea != nullptr);
+    INFO_PATCH_SEA_RAW(patch) = sea;
+}
+
+
+
 //=//// VarList* ACCESSORS /////////////////////////////////////////////////=//
 //
 // These are access functions that should be used when what you have in your
@@ -314,6 +344,7 @@ INLINE Sink(Value) Sink_Lib_Var(SymId id) {
 #define SYS_UTIL(name) \
     cast(const Value*, MOD_VAR(g_sys_util_context, Canon_Symbol(SYM_##name), true))
 
+
 // Optimization for g_lib_context for datatypes + natives + generics; usage is
 // tailored in order for SYM_XXX constants to beeline for the storage.  The
 // entries were all allocated during Startup_Lib().
@@ -328,7 +359,7 @@ INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
     if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
-            if (INODE(PatchContext, &g_lib_patches[id]) == nullptr)  // [1]
+            if (INFO_PATCH_SEA_RAW(&g_lib_patches[id]) == nullptr)  // [1]
                 return nullptr;
 
             return &g_lib_patches[id];
@@ -338,11 +369,11 @@ INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
     Symbol* synonym = m_cast(Symbol*, sym);
     do {
         Stub* patch = Misc_Hitch(sym);
-        if (Get_Flavor_Flag(SYMBOL, sym, MISC_IS_BINDINFO))
-            patch = Misc_Hitch(patch);  // skip bindinfo
+        if (Get_Flavor_Flag(SYMBOL, sym, MISC_IS_BIND_STUMP))
+            patch = Misc_Hitch(patch);  // skip binding stump
 
         for (; patch != sym; patch = Misc_Hitch(patch)) {
-            if (INODE(PatchContext, patch) == sea)
+            if (Info_Patch_Sea(patch) == sea)
                 return patch;
         }
         if (strict)

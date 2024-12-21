@@ -95,7 +95,7 @@ INLINE Stub* Misc_Hitch(const Stub* stub) {
     Flavor flavor_stub = Stub_Flavor(stub);
     assert(
         flavor_stub == FLAVOR_SYMBOL
-        or flavor_stub == FLAVOR_BINDINFO
+        or flavor_stub == FLAVOR_STUMP
         or flavor_stub == FLAVOR_PATCH
     );
     UNUSED(flavor_stub);
@@ -103,7 +103,7 @@ INLINE Stub* Misc_Hitch(const Stub* stub) {
     Flavor flavor_hitch = Stub_Flavor(hitch);
     assert(
         flavor_hitch == FLAVOR_SYMBOL
-        or flavor_hitch == FLAVOR_BINDINFO
+        or flavor_hitch == FLAVOR_STUMP
         or flavor_hitch == FLAVOR_PATCH
     );
     UNUSED(flavor_hitch);
@@ -114,14 +114,14 @@ INLINE void Tweak_Misc_Hitch(Stub* stub, Stub* hitch) {
     Flavor flavor_stub = Stub_Flavor(stub);
     assert(
         flavor_stub == FLAVOR_SYMBOL
-        or flavor_stub == FLAVOR_BINDINFO
+        or flavor_stub == FLAVOR_STUMP
         or flavor_stub == FLAVOR_PATCH
     );
     UNUSED(flavor_stub);
     Flavor flavor_hitch = Stub_Flavor(hitch);
     assert(
         flavor_hitch == FLAVOR_SYMBOL
-        or flavor_hitch == FLAVOR_BINDINFO
+        or flavor_hitch == FLAVOR_STUMP
         or flavor_hitch == FLAVOR_PATCH
     );
     UNUSED(flavor_hitch);

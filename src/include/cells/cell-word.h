@@ -121,9 +121,9 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
         assert(symbol == *Varlist_Key(cast(VarList*, binding), index));
     }
     else {
-        assert(Is_Stub_Let(binding) or Is_Stub_Patch(binding));
+        assert(Is_Stub_Let(binding));
         assert(index == INDEX_PATCHED);
-        assert(symbol == INODE(LetSymbol, binding));
+        assert(symbol == Info_Let_Symbol(binding));
     }
 
     return out;

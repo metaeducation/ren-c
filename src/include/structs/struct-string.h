@@ -77,7 +77,7 @@
     STUB_SUBCLASS_FLAG_27
 
 
-//=//// SYMBOL_FLAG_MISC_IS_BINDINFO ///////////////////////////////////////=//
+//=//// SYMBOL_FLAG_MISC_IS_BIND_STUMP ////////////////////////////////////=//
 //
 // The symbol hash table itself doubles as a "binding table", by making an
 // in-progress bind point to a small stub to hold a binding index into an
@@ -85,7 +85,7 @@
 // original incarnation had to follow the misc pointer and check a flag
 // on the next pointer that was reached, which was slower).
 //
-#define SYMBOL_FLAG_MISC_IS_BINDINFO \
+#define SYMBOL_FLAG_MISC_IS_BIND_STUMP \
     STUB_SUBCLASS_FLAG_28
 
 
@@ -114,12 +114,6 @@
 
 // MISC in non-Symbol strings are used for Stub.misc.num_codepoints
 // MISC in Symbol strings used for "hitches"
-
-#define INODE_BindSymbol_TYPE   const Symbol*
-#define HAS_INODE_BindSymbol    FLAVOR_BINDINFO
-
-#define LINK_NextBind_TYPE      Stub*
-#define HAS_LINK_NextBind       FLAVOR_BINDINFO
 
 
 //=//// KEY (POINTER TO SYMBOL) ////////////////////////////////////////=//

@@ -107,9 +107,9 @@ INLINE Use* Make_Use_Core(
     if (note)
         Stub_Cell(use)->header.bits |= note;
 
-    LINK(NextUse, use) = parent;  // use, let, frame context, nullptr... [5]
-    MISC(Variant, use) = nullptr;  // "Variant" feature removed for now [6]
-    INODE(UseReserved, use) = nullptr;  // no application yet [2]
+    Tweak_Link_Inherit_Bind(use, parent); // use, let, frame context... [5]
+    Corrupt_Unused_Field(use->misc.corrupt);  // "Variant" removed for now [6]
+    Corrupt_Unused_Field(use->info.corrupt);  // no application yet [2]
 
     return use;
 }

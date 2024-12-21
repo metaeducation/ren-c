@@ -1127,12 +1127,12 @@ REBLEN Recycle_Core(Flex* sweeplist)
                 continue;
             Stub* patch = Misc_Hitch(*psym);
             for (; patch != *psym; patch = Misc_Hitch(patch)) {
-                VarList* context = INODE(PatchContext, patch);
+                SeaOfVars* sea = Info_Patch_Sea(patch);
                 if (Is_Node_Marked(patch)) {
-                    assert(Is_Node_Marked(context));
+                    assert(Is_Node_Marked(sea));
                     continue;
                 }
-                if (Is_Node_Marked(context)) {
+                if (Is_Node_Marked(sea)) {
                     Add_GC_Mark(patch);
                     added_marks = true;
 

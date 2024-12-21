@@ -83,17 +83,17 @@ void Init_Evars(EVARS *e, const Cell* v) {
                 continue;
 
             Stub* patch = Misc_Hitch(*psym);
-            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
-                patch = Misc_Hitch(patch);  // skip bindinfo
+            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
+                patch = Misc_Hitch(patch);  // skip binding stump
 
             Stub* found = nullptr;
 
             for (; patch != *psym; patch = Misc_Hitch(patch)) {
-                if (e->ctx == INODE(PatchContext, patch)) {
+                if (e->ctx == Info_Patch_Sea(patch)) {
                     found = patch;
                     break;
                 }
-             /*   if (g_lib_context == INODE(PatchContext, patch))
+             /*   if (g_lib_context == Info_Patch_Sea(patch))
                     found = patch;  // will match if not overridden */
             }
             if (found) {
@@ -626,11 +626,11 @@ VarList* Copy_Varlist_Extra_Managed(
                 continue;
 
             Stub* patch = Misc_Hitch(*psym);
-            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
-                patch = Misc_Hitch(patch);  // skip bindinfo
+            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
+                patch = Misc_Hitch(patch);  // skip binding stump
 
             for (; patch != *psym; patch = Misc_Hitch(patch)) {
-                if (original == INODE(PatchContext, patch)) {
+                if (original == Info_Patch_Sea(patch)) {
                     Value* var = Append_Context(copy, *psym);
                     Copy_Cell(var, Stub_Cell(patch));
                     break;
