@@ -278,17 +278,10 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define LINK(Field,stub) \
         *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(stub)->link.node))
-
-    #define MISC(Field,stub) \
-        *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(stub)->misc.node))
 #else
     #define LINK(Field,stub) \
         NodeHolder<LINK_##Field##_TYPE>( \
             ensure_flavor(HAS_LINK_##Field, (stub))->link.node)
-
-    #define MISC(Field,stub) \
-        NodeHolder<MISC_##Field##_TYPE>( \
-            ensure_flavor(HAS_MISC_##Field, (stub))->misc.node)
 #endif
 
 

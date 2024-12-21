@@ -74,14 +74,14 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
         assert(Not_Node_Managed(saved));
 
         LINK(Splice, &feed->singular) = saved;  // old feed now after splice
-        MISC(Pending, saved) = At_Feed(feed);  // save feed->p [3]
+        Tweak_Misc_Feedstub_Pending(saved, At_Feed(feed));  // save feed->p [3]
     }
 
     feed->p = Cell_List_Item_At(splice);
     Copy_Cell(Feed_Data(feed), splice);
     ++VAL_INDEX_UNBOUNDED(Feed_Data(feed));
 
-    MISC(Pending, &feed->singular) = nullptr;
+    Tweak_Misc_Feedstub_Pending(&feed->singular, nullptr);
 
     if (  // take per-feed hold, should be per-splice [1]
         Not_Feed_At_End(feed)

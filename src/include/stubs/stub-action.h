@@ -87,7 +87,7 @@
 //
 // Note: At one time Level->varlist would swap in a Level* in this spot, in
 // order to be able to find a running Level* from a VarList.  This was due to
-// the belief that the MISC() field could not be sacrificed on FRAME! to
+// the belief that the Stub.misc field could not be sacrificed on FRAME! to
 // store that Level*, because it was needed to store a link to the "adjunct
 // object" which all VarList* wanted to offer.  It turns out that adjunct
 // objects are not needed on running frame varlists, they can be on the phase.

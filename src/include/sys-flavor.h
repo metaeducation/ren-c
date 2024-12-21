@@ -150,11 +150,11 @@ enum StubFlavorEnum {
     FLAVOR_NONSYMBOL = FLAVOR_MIN_STRING,
 
     // While the content format is UTF-8 for both ANY-STRING? and ANY-WORD?,
-    // MISC() and LINK() fields are used differently.  String caches its length
-    // in codepoints so that doesn't have to be recalculated, and it also has
+    // String.misc and String.link are used differently.  Non-symbols cache
+    // the length in codepoints so that isn't recalculated, and it also has
     // caches of "bookmarks" mapping codepoint indexes to byte offsets.  Words
     // store a pointer that is used in a circularly linked list to find their
-    // canon spelling form...as well as hold binding information.
+    // canon spelling form...as well as point to module variable instances.
     //
     FLAVOR_SYMBOL,
 

@@ -578,7 +578,7 @@ VarList* Copy_Varlist_Extra_Managed(
 
     Array* varlist = Make_Array_For_Copy(
         FLEX_MASK_VARLIST | NODE_FLAG_MANAGED,
-        nullptr,  // original_array, N/A because LINK()/MISC() used otherwise
+        nullptr,  // original_array, N/A because link/misc used otherwise
         len + extra + 1
     );
     if (CTX_TYPE(original) == REB_MODULE)

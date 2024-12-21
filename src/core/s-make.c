@@ -288,7 +288,7 @@ void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
 //
 // * It's needed to know how many characters (length) are in the String, not
 //   just how many bytes.  The higher level concept of "length" gets stored
-//   in the String's MISC() field.
+//   in String.misc.num_codepoints
 //
 String* Append_UTF8_May_Fail(
     String* dst,  // if nullptr, that means make a new string

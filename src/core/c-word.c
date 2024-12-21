@@ -225,10 +225,10 @@ static void Expand_Word_Table(void)
 //
 //    (Idea to extend SYM_XXX values: https://forum.rebol.info/t/1188)
 //
-// 4. In addition to a circularly linked list of synonyms via LINK(), the
-//    MISC() field of the Symbol is another circularly linked list of stubs
-//    holding module-level variables with that symbol as a name.  Upon the
-//    initial interning of a Symbol, this list is empty.
+// 4. In addition to a circularly linked list of synonyms via Symbol.link, the
+//    Symbol.misc field is another circularly linked list of Stubs called
+//    "Patch" that hold module-level variables with that Symbol as a name.
+//    Upon the initial interning of a Symbol, this list is empty.
 //
 const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     Option(void*) preallocated,  // most calls don't know if allocation needed

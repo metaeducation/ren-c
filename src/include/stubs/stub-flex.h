@@ -137,9 +137,8 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //
 // Using token pasting macros helps avoid mixups with FLEX_FLAG_XXX!
 //
-// Not all Flex Stubs have info bits, as some use the space to store a GC
-// markable Node.  This "INODE" is accessed via macros in the same way as the
-// LINK() and MISC() macros (described in the section above):
+// Not all Flex Stubs have info bits, as some use Stub.node to store a GC
+// markable Node.
 //
 // 1. See mutability notes on Set_Flex_Flag()/Get_Flex_Flag().  The same
 //    applies to the info flags.

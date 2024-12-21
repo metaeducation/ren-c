@@ -101,11 +101,24 @@
 #define FEED_SPLICE(feed) \
     LINK(Splice, &(feed)->singular)
 
+INLINE Option(const Cell*) Misc_Feedstub_Pending(Stub* stub) {
+    assert(Stub_Flavor(stub) == FLAVOR_FEED);
+    return u_cast(const Cell*, stub->misc.node);
+}
+
+INLINE void Tweak_Misc_Feedstub_Pending(
+    Stub* stub,
+    Option(const Cell*) pending
+){
+    assert(Stub_Flavor(stub) == FLAVOR_FEED);
+    stub->misc.node = maybe pending;
+}
+
 // This contains a nullptr if the next fetch should be an attempt
 // to consult the va_list (if any).
 //
-#define FEED_PENDING(feed) \
-    MISC(Pending, &(feed)->singular)
+#define Feed_Pending(feed) \
+    Misc_Feedstub_Pending(&(feed)->singular)
 
 #define FEED_IS_VARIADIC(feed) \
     (REB_COMMA == HEART_BYTE(Feed_Data(feed)))
@@ -177,7 +190,7 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 //
 INLINE void Finalize_Variadic_Feed(Feed* feed) {
     assert(FEED_IS_VARIADIC(feed));
-    assert(FEED_PENDING(feed) == nullptr);
+    assert(Feed_Pending(feed) == nullptr);
 
     assert(Is_Feed_At_End(feed));  // must spool, regardless of throw/fail!
 
@@ -249,7 +262,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         }
 
         if (Is_Block(single)) {
-            feed->p = &PG_Feed_At_End;  // will become FEED_PENDING(), ignored
+            feed->p = &PG_Feed_At_End;  // will become Feed_Pending(), ignored
             Splice_Block_Into_Feed(feed, single);
         }
         else {
@@ -324,7 +337,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 {
     assert(FEED_IS_VARIADIC(feed));
-    assert(FEED_PENDING(feed) == nullptr);
+    assert(Feed_Pending(feed) == nullptr);
 
   detect: {  /////////////////////////////////////////////////////////////////
 
@@ -437,11 +450,11 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
     feed->gotten = nullptr;
 
   retry_splice:
-    if (FEED_PENDING(feed)) {
-        assert(FEED_PENDING(feed) != nullptr);
+    if (Feed_Pending(feed)) {
+        assert(Feed_Pending(feed) != nullptr);
 
-        feed->p = FEED_PENDING(feed);
-        MISC(Pending, &feed->singular) = nullptr;
+        feed->p = unwrap Feed_Pending(feed);
+        Tweak_Misc_Feedstub_Pending(&feed->singular, nullptr);
     }
     else if (FEED_IS_VARIADIC(feed)) {
         //
@@ -567,7 +580,7 @@ INLINE void Free_Feed(Feed* feed) {
     while (Not_Feed_At_End(feed))
         Fetch_Next_In_Feed(feed);
 
-    assert(FEED_PENDING(feed) == nullptr);
+    assert(Feed_Pending(feed) == nullptr);
 
     // !!! See notes in Fetch_Next regarding the somewhat imperfect way in
     // which splices release their holds.  (We wait until Free_Feed() so that
@@ -612,7 +625,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     );
     Force_Erase_Cell(Stub_Cell(s));
     LINK(Splice, s) = nullptr;
-    MISC(Pending, s) = nullptr;
+    Tweak_Misc_Feedstub_Pending(s, nullptr);
 
     feed->flags.bits = flags;
     Corrupt_Pointer_If_Debug(feed->p);
@@ -665,7 +678,7 @@ INLINE Feed* Prep_Array_Feed(
 
     feed->gotten = nullptr;
     if (Is_Feed_At_End(feed))
-        assert(FEED_PENDING(feed) == nullptr);
+        assert(Feed_Pending(feed) == nullptr);
     else
         assert(Ensure_Readable(c_cast(Cell*, feed->p)));
 

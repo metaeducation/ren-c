@@ -26,13 +26,16 @@
 /// "roots" (currently implemented with a flag NODE_FLAG_ROOT, but it could
 // also mean living in a distinct pool from other Stubs).
 //
-// The LINK() and MISC() slots of the Stub pointing to the next and previous
-// API handles which are owned by the same Level* (if the handle is owned by
-// a Level* at all, and has not been rebUnmanage()'d).  These are a circularly
-// linked list, which terminates with the Level* itself.
+// The Stub.link and Stub.misc slots point to the next and previous API handles
+// which are owned by the same Level* (if the handle is owned by a Level* at
+// all, and has not been rebUnmanage()'d).  These are a circularly linked list,
+// which terminates with the Level* itself.
 //
-// INFO() is currently free, and there are several API header flags that
-// are available.
+// Stub.info is currently free, and there are several API header flags that
+// are available.  This could be useful in a language binding (e.g. C++ could
+// leverage the available space in the API handle stub for something like
+// a reference count for a smart pointer wrapper)
+//
 
 
 #define LINK_API_STUB_NEXT(stub) \

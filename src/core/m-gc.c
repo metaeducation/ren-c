@@ -65,14 +65,6 @@
 #include "sys-int-funcs.h"
 
 
-// The reason the LINK() and MISC() macros are so weird is because regardless
-// of who assigns the fields, the GC wants to be able to mark them.  So the
-// same generic field must be used for all cases...which those macros help
-// to keep distinct for comprehensibility purposes.
-//
-// But access via the GC just sees the fields as their generic nodes (though
-// through a non-const point of view, to mark them).
-
 #define LINK_Node_TYPE      Node*
 #define LINK_Node_CAST
 
@@ -227,7 +219,7 @@ static void Queue_Mark_Node_Deep(const Node** npp) {  // ** for canonizing
 //
 // !!! The reason queueing is used was because things were generating stack
 // overflows for deeply nested structures.  With the generic marking of fields
-// like LINK() and MISC(), the chains are now becoming long enough just through
+// like Stub.link and Stub.misc, the chains are now long enough just through
 // that to generate some deep stacks...even without any cells being marked.
 // It hasn't caused any crashes yet, but is something that bears scrutiny.
 //
@@ -641,9 +633,8 @@ static void Mark_Data_Stack(void)
 //
 //  Mark_Guarded_Nodes: C
 //
-// Mark Flexes and Cells that have been temporarily protected from garbage
-// collection with Push_Lifeguard.  Subclasses e.g. ARRAY_IS_CONTEXT will
-// have their LINK() and MISC() fields guarded appropriately for the class.
+// Mark Stubs and Cells that have been temporarily protected from garbage
+// collection with Push_Lifeguard.
 //
 // 1. For efficiency, the system allows ranges of places that cells will be
 //    put to be memset() to 0.  The Init_XXX() routines will then make sure
@@ -671,7 +662,7 @@ static void Mark_Guarded_Nodes(void)
             assert(Not_Node_Marked(*npp));  // shouldn't live in array [2]
             Queue_Mark_Maybe_Erased_Cell_Deep(c_cast(Cell*, *npp));
         }
-        else  // a Flex Stub
+        else  // a Stub
             Queue_Mark_Node_Deep(npp);
 
         Propagate_All_GC_Marks();
@@ -689,8 +680,8 @@ static void Mark_Level(Level* L) {
 
   //=//// MARK FEED (INCLUDES BINDING) ////////////////////////////////////=//
 
-    // 1. MISC(Pending, feed) should either live in Feed_Array(), or it may
-    //    be corrupt (e.g. if it's an apply).  GC can ignore it.
+    // 1. Misc_Feedstub_Pending() should either live in Feed_Array(), or it
+    //    may be corrupt (e.g. if it's an apply).  GC can ignore it.
     //
     // 2. This used to mark L->feed->p; but we probably do not need to.  All
     //    variadics are reified as arrays in the GC (we could avoid this
@@ -702,7 +693,7 @@ static void Mark_Level(Level* L) {
     //    code that a level runs that might disrupt that relationship so it
     //    would fetch differently should have meant clearing ->gotten.
 
-    Stub* singular = Feed_Singular(L->feed);  // don't mark MISC(Pending) [1]
+    Stub* singular = Feed_Singular(L->feed);  // don't mark Misc Pending [1]
     do {
         Queue_Mark_Cell_Deep(Stub_Cell(singular));
         singular = LINK(Splice, singular);

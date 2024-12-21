@@ -27,15 +27,14 @@
 // (Such binary "views" are possible due to things like the AS operator,
 // e.g `as blob! "abc"`)
 //
-// R3-Alpha used a binary Flex to hold the data for BITSET!.  See notes in
-// %sys-bitset.h regarding this usage (which has a "negated" bit in the
-// MISC() field).
+// R3-Alpha used a Binary Flex to hold the data for BITSET!.  See notes in
+// %sys-bitset.h regarding this usage, and the use of Binary.misc.negated
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Since String uses MISC() and LINK() for various features, and Binary can
-//   be a "view" on a String Flex, this means that generally speaking a
-//   Binary can't use MISC() and LINK() for its own purposes.  (AT the moment,
+// * Since String.misc String.link are used for various features, and Binary
+//   can be a "view" on a String Flex, this means that generally speaking you
+//   can't use Binary.misc or Binary.link for other purposes.  (At the moment,
 //   bitsets cannot be aliased, so you can't get into a situation like
 //   `as text! as blob! make bitset! [...]`)
 //

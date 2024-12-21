@@ -397,11 +397,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 //
 //  Assert_Array_Marked_Correctly: C
 //
-// This code used to be run in the GC because outside of the flags dictating
-// what type of array it was, it didn't know whether it needed to mark the
-// LINK() or MISC(), or which fields had been assigned to correctly use for
-// reading back what to mark.  This has been standardized.
-//
 void Assert_Array_Marked_Correctly(const Array* a) {
     assert(Is_Node_Marked(a));
 
