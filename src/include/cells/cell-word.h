@@ -83,7 +83,7 @@ INLINE Element* Init_Any_Word_Untracked(
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
     CELL_WORD_INDEX_I32(out) = 0;
-    BINDING(out) = nullptr;
+    Tweak_Cell_Binding(out, UNBOUND);
     Tweak_Cell_Word_Symbol(out, sym);
     return out;
 }
@@ -114,7 +114,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     );
     Tweak_Cell_Word_Symbol(out, symbol);
     CELL_WORD_INDEX_I32(out) = index;
-    BINDING(out) = binding;
+    Tweak_Cell_Binding(out, binding);
 
     if (Is_Stub_Varlist(binding)) {
         assert(CTX_TYPE(cast(VarList*, binding)) != REB_MODULE);  // must patch

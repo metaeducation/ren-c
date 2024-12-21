@@ -199,7 +199,7 @@ DECLARE_NATIVE(reduce)
         Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
     Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(v), a);
-    BINDING(OUT) = BINDING(v);
+    Tweak_Cell_Binding(OUT, Cell_Binding(v));
     return OUT;
 }}
 
@@ -413,7 +413,7 @@ bool Try_Match_For_Compose(
 
     QUOTE_BYTE(match) = NOQUOTE_1;  // want to get rid of quasi, too
     HEART_BYTE(match) = REB_BLOCK;
-    BINDING(match) = binding;  // override? combine?
+    Tweak_Cell_Binding(match, binding);  // override? combine?
     return true;
 }
 
@@ -523,7 +523,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 
     Init_Any_List(out, heart, a);
 
-    BINDING(out) = BINDING(composee);  // preserve binding
+    Tweak_Cell_Binding(out, Cell_Binding(composee));  // preserve binding
     QUOTE_BYTE(out) = QUOTE_BYTE(composee);  // apply quote byte [4]
     return nullptr;
 }
@@ -1042,7 +1042,7 @@ DECLARE_NATIVE(compose)
 
     Copy_Cell(SPARE, Data_Stack_At(Element, index));
     HEART_BYTE(SPARE) = REB_BLOCK;
-    BINDING(SPARE) = BINDING(pattern);
+    Tweak_Cell_Binding(SPARE, Cell_Binding(pattern));
 
     Init_Integer(SCRATCH, index - STACK_BASE);
 
@@ -1113,7 +1113,7 @@ DECLARE_NATIVE(print_p)
     INCLUDE_PARAMS_OF_PRINT_P;
 
     Init_Group(SPARE, EMPTY_ARRAY);
-    BINDING(SPARE) = Level_Binding(level_);
+    Tweak_Cell_Binding(SPARE, Level_Binding(level_));
 
     return rebDelegate(CANON(PRINT), CANON(COMPOSE), rebQ(SPARE), ARG(line));
 }

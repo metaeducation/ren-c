@@ -126,9 +126,9 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
             if (Cell_Word_Symbol(ordered) != symbol)
                 continue;  // just continuing this loop
 
-            assert(BINDING(ordered) == nullptr);  // we bind only one
+            assert(Cell_Binding(ordered) == UNBOUND);  // we bind only one
             Tweak_Cell_Word_Index(ordered, index);
-            BINDING(ordered) = phase;  // !!! Review
+            Tweak_Cell_Binding(ordered, phase);  // !!! Review
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument
                 goto continue_unspecialized;
@@ -236,11 +236,11 @@ bool Specialize_Action_Throws(
         //
         DECLARE_ELEMENT (elem);
         Init_Frame(elem, exemplar, label, coupling);
-        BINDING(unwrap def) = Make_Use_Core(
+        Tweak_Cell_Binding(unwrap def, Make_Use_Core(
             elem,
             Cell_List_Binding(unwrap def),
             CELL_FLAG_USE_NOTE_SET_WORDS
-        );
+        ));
 
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
@@ -338,7 +338,7 @@ bool Specialize_Action_Throws(
             OnStack(Element*) ordered = Data_Stack_At(
                 Element, ordered_stackindex
             );
-            if (not BINDING(ordered)) {  // specialize print:asdf/
+            if (not Cell_Binding(ordered)) {  // specialize print:asdf/
                 Refinify_Pushed_Refinement(ordered);
                 fail (Error_Bad_Parameter_Raw(ordered));
             }

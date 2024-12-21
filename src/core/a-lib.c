@@ -1075,7 +1075,7 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
     }
 
     assert(Is_Node_Managed(binding));
-    FEED_BINDING(feed) = cast(Stub*, binding);
+    Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Level* L = Make_Level(&Evaluator_Executor, feed, flags);
     Init_Void(Evaluator_Primed_Cell(L));
@@ -1182,7 +1182,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     }
 
     assert(Is_Node_Managed(binding));
-    FEED_BINDING(feed) = cast(Stub*, binding);
+    Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Level* L = Make_Level(&Stepper_Executor, feed, flags);
     Push_Level_Erase_Out_If_State_0(cast(Atom*, out), L);
@@ -1255,7 +1255,7 @@ RebolValue* API_rebTranscodeInto(
 
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
-        Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
+        Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
         Fetch_Next_In_Feed(feed);
     }
 
@@ -1294,9 +1294,9 @@ void API_rebPushContinuation_internal(
     API_rebTranscodeInto(dummy_binding, block, p, vaptr);  // use "API_" [1]
 
     if (binding)
-        BINDING(block) = cast(Context*, binding);  // [2]
+        Tweak_Cell_Binding(block, cast(Context*, binding));  // [2]
     else
-        BINDING(block) = g_lib_context;  // [3]
+        Tweak_Cell_Binding(block, g_lib_context);  // [3]
 
     Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
     Init_Void(Evaluator_Primed_Cell(L));
@@ -3165,9 +3165,9 @@ RebolValue* API_rebFunctionFlipped(
     Release_Feed(feed);  // Note: exhausting feed takes care of the va_end()
 
     if (binding)
-        BINDING(spec) = cast(Context*, binding);  // [2]
+        Tweak_Cell_Binding(spec, cast(Context*, binding));  // [2]
     else
-        BINDING(spec) = g_lib_context;  // !!! Review: needs module isolation!
+        Tweak_Cell_Binding(spec, g_lib_context);  // !!! needs module isolation
 
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
@@ -3191,7 +3191,7 @@ RebolValue* API_rebFunctionFlipped(
     );
     Value* holder = Details_At(details, IDX_API_ACTION_BINDING_BLOCK);
     Init_Block(holder, EMPTY_ARRAY);  // only care about binding GC safety
-    BINDING(holder) = BINDING(spec);
+    Tweak_Cell_Binding(holder, Cell_Binding(spec));
 
     assert(Phase_Adjunct(details) == nullptr);
     Tweak_Phase_Adjunct(details, adjunct);

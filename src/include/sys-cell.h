@@ -658,58 +658,21 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
     x_cast(Context*, (v)->extra.node)
 
 #if (! DEBUG_CHECK_BINDING)
-    #define BINDING(v) \
-        *x_cast(Context**, m_cast(Node**, &(v)->extra.node))
+    #define Tweak_Cell_Binding(c,binding) \
+        ((c)->extra.node = binding)
+
+    #define Tweak_Cell_Relative_Binding(c,binding) \
+        ((c)->extra.node = binding)
 #else
-    struct BindingHolder {
-        Cell* & ref;
-
-        BindingHolder(const Cell* const& ref)
-            : ref (const_cast<Cell* &>(ref))
-        {
-            assert(Is_Bindable_Heart(Cell_Heart(ref)));
-        }
-
-        void operator=(Stub* right) {
-            Assert_Cell_Writable(ref);
-            EXTRA(ref).node = right;
-            Assert_Cell_Binding_Valid(ref);
-        }
-        void operator=(BindingHolder const& right) {
-            Assert_Cell_Writable(ref);
-            EXTRA(ref).node = EXTRA(right.ref).node;
-            Assert_Cell_Binding_Valid(ref);
-        }
-        void operator=(nullptr_t) {
-            Assert_Cell_Writable(ref);
-            EXTRA(ref).node = nullptr;
-        }
-        template<typename T>
-        void operator=(Option(T) right) {
-            Assert_Cell_Writable(ref);
-            EXTRA(ref).node = maybe right;
-            Assert_Cell_Binding_Valid(ref);
-        }
-
-        Context* operator-> () const
-          { return x_cast(Context*, EXTRA(ref).node); }
-
-        operator Context* () const
-          { return x_cast(Context*, EXTRA(ref).node); }
-    };
-
-    #define BINDING(v) \
-        BindingHolder{v}
-
-    template<typename T>
-    struct cast_helper<BindingHolder,T> {
-        static constexpr T convert(BindingHolder const& holder) {
-            return cast(T, x_cast(Context*, EXTRA(holder.ref).node));
-        }
-    };
-
-    INLINE void Corrupt_Pointer_If_Debug(BindingHolder const& bh) {
-        EXTRA(bh.ref).node = p_cast(Context*, cast(uintptr_t, 0xDECAFBAD));
+    INLINE void Tweak_Cell_Binding(Cell* c, Option(Context*) binding) {
+        assert(Is_Bindable_Heart(Cell_Heart(c)));
+        Assert_Cell_Writable(c);
+        c->extra.node = maybe binding;
+        if (binding)
+            Assert_Cell_Binding_Valid(c);
+    }
+    INLINE void Tweak_Cell_Relative_Binding(Cell* c, Phase* phase) {
+        c->extra.node = phase;
     }
 #endif
 

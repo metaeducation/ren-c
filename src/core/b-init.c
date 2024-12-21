@@ -517,11 +517,11 @@ static void Init_System_Object(
     DECLARE_VALUE (sysobj_spec_virtual);
     Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
 
-    BINDING(sysobj_spec_virtual) = Make_Use_Core(
+    Tweak_Cell_Binding(sysobj_spec_virtual, Make_Use_Core(
         Varlist_Archetype(system),
         Cell_List_Binding(sysobj_spec_virtual),
         CELL_MASK_ERASED_0
-    );
+    ));
 
     // Evaluate the block (will eval CONTEXTs within).
     //
@@ -828,7 +828,7 @@ void Startup_Core(void)
     VarList* errors_catalog = Startup_Errors(&boot->errors);
     Push_Lifeguard(errors_catalog);
 
-    BINDING(&boot->sysobj) = g_lib_context;
+    Tweak_Cell_Binding(&boot->sysobj, g_lib_context);
     Init_System_Object(
         &boot->sysobj,
         datatypes_catalog,

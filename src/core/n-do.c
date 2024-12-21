@@ -454,7 +454,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
-    BINDING(source) = binding;  // integrate LETs [1]
+    Tweak_Cell_Binding(source, binding);  // integrate LETs [1]
     goto result_in_out;
 
 } result_in_out: {  //////////////////////////////////////////////////////////
@@ -717,11 +717,11 @@ DECLARE_NATIVE(applique)
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
-    BINDING(def) = Make_Use_Core(
+    Tweak_Cell_Binding(def, Make_Use_Core(
         cast(Element*, frame),
         Cell_List_Binding(def),
         CELL_FLAG_USE_NOTE_SET_WORDS
-    );
+    ));
 
     STATE = ST_APPLIQUE_RUNNING_DEF_BLOCK;
     return CONTINUE(SPARE, def);  // first run block bound to frame

@@ -2960,7 +2960,7 @@ Source* Scan_UTF8_Managed(
 
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
-        Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
+        Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
         Fetch_Next_In_Feed(feed);
     }
     // Note: exhausting feed should take care of the va_end()

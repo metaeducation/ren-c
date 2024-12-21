@@ -77,7 +77,7 @@ Source* Startup_Datatypes(Array* boot_typespecs)
             Canon_Symbol(datatype_sym)
         );
         Tweak_Cell_Word_Index(word, INDEX_PATCHED);
-        BINDING(word) = &g_lib_patches[datatype_sym];
+        Tweak_Cell_Binding(word, &g_lib_patches[datatype_sym]);
     }
 
     return catalog;

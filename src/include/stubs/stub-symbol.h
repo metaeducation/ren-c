@@ -92,19 +92,21 @@ INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
 // for the word, as well as declared variables in "sea" contexts.
 
 INLINE Stub* Misc_Hitch(const Stub* stub) {
-    Flavor stub_flavor = Stub_Flavor(stub);
+    Flavor flavor_stub = Stub_Flavor(stub);
     assert(
-        stub_flavor == FLAVOR_SYMBOL
-        or stub_flavor == FLAVOR_BINDINFO
-        or stub_flavor == FLAVOR_PATCH
+        flavor_stub == FLAVOR_SYMBOL
+        or flavor_stub == FLAVOR_BINDINFO
+        or flavor_stub == FLAVOR_PATCH
     );
+    UNUSED(flavor_stub);
     Stub* hitch = u_cast(Stub*, m_cast(Node*, stub->misc.node));
-    Flavor hitch_flavor = Stub_Flavor(hitch);
+    Flavor flavor_hitch = Stub_Flavor(hitch);
     assert(
-        hitch_flavor == FLAVOR_SYMBOL
-        or hitch_flavor == FLAVOR_BINDINFO
-        or hitch_flavor == FLAVOR_PATCH
+        flavor_hitch == FLAVOR_SYMBOL
+        or flavor_hitch == FLAVOR_BINDINFO
+        or flavor_hitch == FLAVOR_PATCH
     );
+    UNUSED(flavor_hitch);
     return hitch;
 }
 
@@ -115,12 +117,14 @@ INLINE void Tweak_Misc_Hitch(Stub* stub, Stub* hitch) {
         or flavor_stub == FLAVOR_BINDINFO
         or flavor_stub == FLAVOR_PATCH
     );
+    UNUSED(flavor_stub);
     Flavor flavor_hitch = Stub_Flavor(hitch);
     assert(
         flavor_hitch == FLAVOR_SYMBOL
         or flavor_hitch == FLAVOR_BINDINFO
         or flavor_hitch == FLAVOR_PATCH
     );
+    UNUSED(flavor_hitch);
     stub->misc.node = hitch;
 }
 

@@ -56,7 +56,7 @@
 
 INLINE Element* Init_Comma(Init(Element) out) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_COMMA);
-    BINDING(out) = nullptr;  // Is_Bindable() due to niche variadic feed use
+    Tweak_Cell_Binding(out, UNBOUND);  // Is_Bindable() due to niche feed use
     Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
     Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
 

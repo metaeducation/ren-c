@@ -67,7 +67,7 @@ INLINE Element* Derelativize_Untracked(
         return out;
     }
 
-    Context* binding = BINDING(v);
+    Context* binding = Cell_Binding(v);
 
     if (Bindable_Heart_Is_Any_Word(heart)) {  // any-word?
       any_wordlike:
@@ -85,7 +85,7 @@ INLINE Element* Derelativize_Untracked(
             }
             else {
                 Tweak_Cell_Word_Index(out, index);
-                BINDING(out) = s;
+                Tweak_Cell_Binding(out, s);
             }
         }
     }
@@ -99,10 +99,10 @@ INLINE Element* Derelativize_Untracked(
             Is_Stub_Use(context)
             and Get_Cell_Flag(Stub_Cell(context), USE_NOTE_SET_WORDS)
         ){
-            BINDING(out) = LINK(NextUse, context);
+            Tweak_Cell_Binding(out, LINK(NextUse, context));
         }
         else
-            BINDING(out) = context;
+            Tweak_Cell_Binding(out, context);
     }
     else if (not Sequence_Has_Node(v)) {
         out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
@@ -345,7 +345,7 @@ struct CollectorStruct {
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Wordlike_Cell(v));
     if (CELL_WORD_INDEX_I32(v) < 0)
-        assert(Is_Stub_Details(BINDING(v)));
+        assert(Is_Stub_Details(Cell_Binding(v)));
     return CELL_WORD_INDEX_I32(v) <= 0;
 }
 
@@ -363,12 +363,12 @@ INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
 INLINE void Unbind_Any_Word(Cell* v) {
     assert(Wordlike_Cell(v));
     CELL_WORD_INDEX_I32(v) = 0;
-    BINDING(v) = nullptr;
+    Tweak_Cell_Binding(v, UNBOUND);
 }
 
 INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
-    Context* binding = BINDING(v);
+    Context* binding = Cell_Binding(v);
     if (Is_Stub_Patch(binding)) {
         VarList* patch_context = INODE(PatchContext, binding);
         binding = patch_context;
@@ -516,7 +516,7 @@ INLINE Context* Derive_Binding(
 ){
     assert(Listlike_Cell(list));
 
-    Context* binding = BINDING(list);
+    Context* binding = Cell_Binding(list);
     if (binding)
         return binding;
 

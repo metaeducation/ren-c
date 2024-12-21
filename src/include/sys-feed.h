@@ -71,8 +71,11 @@
     (not Is_End(p))
 
 
-#define FEED_SINGULAR(feed)     (&(feed)->singular)
-#define FEED_SINGLE(feed)       Stub_Cell(&(feed)->singular)
+#define Feed_Singular(feed) \
+    (&(feed)->singular)
+
+#define Feed_Data(feed) \
+    Stub_Cell(&(feed)->singular)  // REB_BLOCK, REB_COMMA if va_list
 
 #define LINK_Splice_TYPE        Stub*
 #define HAS_LINK_Splice         FLAVOR_FEED
@@ -105,10 +108,10 @@
     MISC(Pending, &(feed)->singular)
 
 #define FEED_IS_VARIADIC(feed) \
-    (REB_COMMA == HEART_BYTE(FEED_SINGLE(feed)))
+    (REB_COMMA == HEART_BYTE(Feed_Data(feed)))
 
-#define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
-#define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
+#define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, Feed_Data(feed)).vaptr
+#define FEED_PACKED(feed)           PAYLOAD(Comma, Feed_Data(feed)).packed
 
 INLINE const Element* At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
@@ -148,14 +151,17 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 // always SPECIFIED).  However, Cell_List_Binding() only runs on arrays, so
 // we sneak past that by accessing the node directly.
 //
-#define FEED_BINDING(feed) \
-    BINDING(FEED_SINGLE(feed))
+#define Feed_Binding(feed) \
+    Cell_Binding(Feed_Data(feed))
 
-#define FEED_ARRAY(feed) \
-    Cell_Array(FEED_SINGLE(feed))
+#define Tweak_Feed_Binding(feed,binding) \
+    Tweak_Cell_Binding(Feed_Data(feed), (binding))
+
+#define Feed_Array(feed) \
+    Cell_Array(Feed_Data(feed))
 
 #define FEED_INDEX(feed) \
-    VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed))
+    VAL_INDEX_UNBOUNDED(Feed_Data(feed))
 
 
 // 1. The va_end() is taken care of here; all code--regardless of throw or
@@ -355,7 +361,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         // !!! Scans that produce only one value (which are likely very
         // common) can go into feed->fetched and not make an array at all.
         //
-        Context* binding = FEED_BINDING(feed);
+        Context* binding = Feed_Binding(feed);
         Source* reified = maybe Try_Scan_Variadic_Feed_Utf8_Managed(feed);
 
         if (not reified) {  // rebValue("", ...) [1]
@@ -371,8 +377,8 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         Finalize_Variadic_Feed(feed);
 
         feed->p = Array_Head(reified);
-        Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
-        FEED_BINDING(feed) = binding;
+        Init_Any_List_At(Feed_Data(feed), REB_BLOCK, reified, 1);
+        Tweak_Feed_Binding(feed, binding);
         break; }
 
       default:
@@ -456,8 +462,8 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
     }
     else {
-        if (FEED_INDEX(feed) != Array_Len(FEED_ARRAY(feed))) {
-            feed->p = Array_At(FEED_ARRAY(feed), FEED_INDEX(feed));
+        if (FEED_INDEX(feed) != Array_Len(Feed_Array(feed))) {
+            feed->p = Array_At(Feed_Array(feed), FEED_INDEX(feed));
             ++FEED_INDEX(feed);
         }
         else {
@@ -472,14 +478,14 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
             //
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
-                    assert(Get_Flex_Info(FEED_ARRAY(feed), HOLD));
-                    Clear_Flex_Info(FEED_ARRAY(feed), HOLD);
+                    assert(Get_Flex_Info(Feed_Array(feed), HOLD));
+                    Clear_Flex_Info(Feed_Array(feed), HOLD);
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
                 Stub* splice = FEED_SPLICE(feed);
                 Mem_Copy(
-                    FEED_SINGULAR(feed),
+                    Feed_Singular(feed),
                     FEED_SPLICE(feed),
                     sizeof(Stub)
                 );
@@ -517,7 +523,7 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
     const Element* e,
     Feed* feed
 ){
-    Derelativize(out, e, FEED_BINDING(feed));
+    Derelativize(out, e, Feed_Binding(feed));
     out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
@@ -572,8 +578,8 @@ INLINE void Free_Feed(Feed* feed) {
         Finalize_Variadic_Feed(feed);
     }
     else if (Get_Feed_Flag(feed, TOOK_HOLD)) {
-        assert(Get_Flex_Info(FEED_ARRAY(feed), HOLD));
-        Clear_Flex_Info(FEED_ARRAY(feed), HOLD);
+        assert(Get_Flex_Info(Feed_Array(feed), HOLD));
+        Clear_Flex_Info(Feed_Array(feed), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -632,7 +638,7 @@ INLINE Feed* Prep_Array_Feed(
     if (first) {
         feed->p = unwrap first;
         Init_Any_List_At_Core(
-            FEED_SINGLE(feed), REB_BLOCK, array, index, binding
+            Feed_Data(feed), REB_BLOCK, array, index, binding
         );
     }
     else {
@@ -640,7 +646,7 @@ INLINE Feed* Prep_Array_Feed(
         if (feed->p == Array_Tail(array))
             feed->p = &PG_Feed_At_End;
         Init_Any_List_At_Core(
-            FEED_SINGLE(feed), REB_BLOCK, array, index + 1, binding
+            Feed_Data(feed), REB_BLOCK, array, index + 1, binding
         );
     }
 
@@ -703,7 +709,7 @@ INLINE Feed* Prep_Variadic_Feed(
     // We want to initialize with something that will give back SPECIFIED.
     // It must therefore be bindable.  Try a COMMA!
     //
-    Init_Comma(FEED_SINGLE(feed));
+    Init_Comma(Feed_Data(feed));
 
     if (not vaptr) {  // `p` should be treated as a packed void* array
         FEED_VAPTR_POINTER(feed) = nullptr;

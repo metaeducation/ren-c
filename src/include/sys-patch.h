@@ -30,11 +30,11 @@
 
 #if NO_RUNTIME_CHECKS
     #define Cell_List_Binding(v) \
-        BINDING(v)
+        Cell_Binding(v)
 #else
     INLINE Context* Cell_List_Binding(const Cell* v) {
         assert(Listlike_Cell(v));
-        Context* c = BINDING(v);
+        Context* c = Cell_Binding(v);
         if (not c)
             return SPECIFIED;
 

@@ -187,7 +187,7 @@ void Add_Definitional_Break_Continue(
         Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
 
-    BINDING(body) = let_break;  // extend chain
+    Tweak_Cell_Binding(body, let_break);  // extend chain
 }
 
 
@@ -668,9 +668,9 @@ void Add_Definitional_Stop(
         Cell_Frame_Phase(LIB(DEFINITIONAL_STOP)),
         CANON(STOP),  // relabel (the STOP in lib is a dummy action)
         cast(VarList*, loop_level->varlist)  // what to stop
-   );
+    );
 
-    BINDING(body) = let_stop;  // extend chain
+    Tweak_Cell_Binding(body, let_stop);  // extend chain
 }
 
 
@@ -929,15 +929,15 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 
                 if (heart == REB_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
-                    BINDING(var) = MOD_PATCH(
+                    Tweak_Cell_Binding(var, MOD_PATCH(
                         cast(SeaOfVars*, Cell_Varlist(les->data)),
                         Key_Symbol(les->u.evars.key),
                         true
-                    );
+                    ));
                 }
                 else {
                     Tweak_Cell_Word_Index(var, les->u.evars.index);
-                    BINDING(var) = Cell_Varlist(les->data);
+                    Tweak_Cell_Binding(var, Cell_Varlist(les->data));
                 }
             }
 

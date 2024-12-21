@@ -213,7 +213,7 @@ Source* Expanded_Combinator_Spec(const Value* original)
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     while (Not_Feed_At_End(feed)) {
-        Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
+        Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
         Fetch_Next_In_Feed(feed);
     }
 

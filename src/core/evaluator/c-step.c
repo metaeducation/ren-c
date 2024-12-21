@@ -194,7 +194,7 @@ Bounce Inert_Stepper_Executor(Level* L)
     assert(STATE == ST_INERT_STEPPER_INITIAL_ENTRY);
     assert(not Is_Feed_At_End(L->feed));
 
-    Derelativize(OUT, At_Feed(L->feed), FEED_BINDING(L->feed));
+    Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
     STATE = ST_INERT_STEPPER_FINISHED;
     return OUT;
@@ -355,7 +355,7 @@ Bounce Stepper_Executor(Level* L)
     //    advance the expression index, so as far as error messages and such
     //    are concerned, `reeval x` will still start with `reeval`.
     //
-    // 2. !!! Using L_binding here instead of FEED_BINDING(L->feed) seems to
+    // 2. !!! Using L_binding here instead of Feed_Binding(L->feed) seems to
     //    break `let x: me + 1`, due to something about the conditionality on
     //    reevaluation.  L_binding's conditionality should be reviewed for
     //    relevance in the modern binding model.
@@ -375,7 +375,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_WORD: {
         L_next_gotten = Lookup_Word(
             L_next,
-            FEED_BINDING(L->feed)  // L_binding breaks here [2]
+            Feed_Binding(L->feed)  // L_binding breaks here [2]
         );
         if (
             not L_next_gotten
@@ -1877,9 +1877,9 @@ Bounce Stepper_Executor(Level* L)
     switch (VAL_TYPE_UNCHECKED(L_next)) {
       case REB_WORD:
         if (not L_next_gotten)
-            L_next_gotten = Lookup_Word(L_next, FEED_BINDING(L->feed));
+            L_next_gotten = Lookup_Word(L_next, Feed_Binding(L->feed));
         else
-            assert(L_next_gotten == Lookup_Word(L_next, FEED_BINDING(L->feed)));
+            assert(L_next_gotten == Lookup_Word(L_next, Feed_Binding(L->feed)));
         break;  // need to check for lookahead
 
       case REB_FRAME:

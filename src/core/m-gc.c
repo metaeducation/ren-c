@@ -454,7 +454,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Init_Quasi_Word(PUSH(), CANON(OPTIMIZED_OUT));
 
         do {
-            Derelativize(PUSH(), At_Feed(feed), FEED_BINDING(feed));
+            Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
             assert(Not_Antiform(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_Feed_At_End(feed));
@@ -466,14 +466,14 @@ void Reify_Variadic_Feed_As_Array_Feed(
         Offset index = truncated ? 2 : 1;  // skip --optimized-out--
 
         Source* a = Pop_Managed_Source_From_Stack(base);
-        Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
+        Init_Any_List_At(Feed_Data(feed), REB_BLOCK, a, index);
 
         // need to be sure feed->p isn't invalid... and not end
 
         if (truncated)
-            feed->p = Array_At(FEED_ARRAY(feed), 1);  // skip trunc
+            feed->p = Array_At(Feed_Array(feed), 1);  // skip trunc
         else
-            feed->p = Array_Head(FEED_ARRAY(feed));
+            feed->p = Array_Head(Feed_Array(feed));
 
         assert(Ensure_Readable(At_Feed(feed)));  // not end at start, not end now
 
@@ -481,7 +481,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         // level...so safe to say we're holding it.
         //
         assert(Not_Feed_Flag(feed, TOOK_HOLD));
-        Set_Flex_Info(FEED_ARRAY(feed), HOLD);
+        Set_Flex_Info(Feed_Array(feed), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
     else {
@@ -491,15 +491,15 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Init_Quasi_Word(PUSH(), CANON(OPTIMIZED_OUT));
 
             Source* a = Pop_Managed_Source_From_Stack(base);
-            Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, a, 1);
+            Init_Any_List_At(Feed_Data(feed), REB_BLOCK, a, 1);
         }
         else
-            Init_Any_List_At(FEED_SINGLE(feed), REB_BLOCK, EMPTY_ARRAY, 0);
+            Init_Any_List_At(Feed_Data(feed), REB_BLOCK, EMPTY_ARRAY, 0);
 
         feed->p = &PG_Feed_At_End;
     }
 
-    assert(FEED_INDEX(feed) <= Array_Len(FEED_ARRAY(feed)));
+    assert(FEED_INDEX(feed) <= Array_Len(Feed_Array(feed)));
 }
 
 
@@ -689,7 +689,7 @@ static void Mark_Level(Level* L) {
 
   //=//// MARK FEED (INCLUDES BINDING) ////////////////////////////////////=//
 
-    // 1. MISC(Pending, feed) should either live in FEED_ARRAY(), or it may
+    // 1. MISC(Pending, feed) should either live in Feed_Array(), or it may
     //    be corrupt (e.g. if it's an apply).  GC can ignore it.
     //
     // 2. This used to mark L->feed->p; but we probably do not need to.  All
@@ -702,7 +702,7 @@ static void Mark_Level(Level* L) {
     //    code that a level runs that might disrupt that relationship so it
     //    would fetch differently should have meant clearing ->gotten.
 
-    Stub* singular = FEED_SINGULAR(L->feed);  // don't mark MISC(Pending) [1]
+    Stub* singular = Feed_Singular(L->feed);  // don't mark MISC(Pending) [1]
     do {
         Queue_Mark_Cell_Deep(Stub_Cell(singular));
         singular = LINK(Splice, singular);
@@ -713,7 +713,7 @@ static void Mark_Level(Level* L) {
         L_binding != SPECIFIED
         and (L_binding->leader.bits & NODE_FLAG_MANAGED)
     ){
-        Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.node);
+        Queue_Mark_Node_Deep(&Feed_Data(L->feed)->extra.node);
     }
 
     if (L->feed->gotten)  // shouldn't need to mark feed->gotten [3]

@@ -157,7 +157,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
         if (dot_at_head and Is_Action(out)) {  // need the coupling
             if (Cell_Frame_Coupling(out) == UNCOUPLED) {
                 if (IS_WORD_BOUND(tuple))
-                    Tweak_Cell_Frame_Coupling(out, cast(VarList*, BINDING(tuple)));
+                    Tweak_Cell_Frame_Coupling(out, cast(VarList*, Cell_Binding(tuple)));
                 else
                     Tweak_Cell_Frame_Coupling(out, cast(VarList*, context));
             }

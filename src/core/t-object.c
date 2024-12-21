@@ -99,7 +99,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
             if (found) {
                 Init_Any_Word(PUSH(), REB_WORD, *psym);
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                BINDING(TOP) = found;
+                Tweak_Cell_Binding(TOP, found);
             }
         }
 
@@ -430,7 +430,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
             return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
 
         VarList* ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
-        Tweak_Link_Inherit_Bind(ctx, BINDING(arg));
+        Tweak_Link_Inherit_Bind(ctx, Cell_Binding(arg));
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
 
@@ -447,11 +447,11 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
         );
         Init_Context_Cell(OUT, heart, ctx);
 
-        BINDING(arg) = Make_Use_Core(
+        Tweak_Cell_Binding(arg, Make_Use_Core(
             Varlist_Archetype(ctx),
             Cell_List_Binding(arg),
             CELL_MASK_ERASED_0
-        );
+        ));
 
         bool threw = Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED);
         UNUSED(SPARE);  // result disregarded
@@ -937,11 +937,11 @@ DECLARE_GENERICS(Context)
             );
             Init_Context_Cell(OUT, heart, derived);
 
-            BINDING(def) = Make_Use_Core(
+            Tweak_Cell_Binding(def, Make_Use_Core(
                 Varlist_Archetype(derived),
                 Cell_List_Binding(def),
                 CELL_MASK_ERASED_0
-            );
+            ));
 
             DECLARE_ATOM (dummy);
             if (Eval_Any_List_At_Throws(dummy, def, SPECIFIED))
@@ -1093,11 +1093,11 @@ DECLARE_GENERICS(Context)
             if (i) {
                 CELL_WORD_INDEX_I32(def) = unwrap i;
                 if (Is_Module(context))
-                    BINDING(def) = MOD_PATCH(
+                    Tweak_Cell_Binding(def, MOD_PATCH(
                         cast(SeaOfVars*, c), Cell_Word_Symbol(def), strict
-                    );
+                    ));
                 else
-                    BINDING(def) = c;
+                    Tweak_Cell_Binding(def, c);
                 return COPY(def);
             }
             Init_Nothing(Append_Context_Bind_Word(c, def));
@@ -1115,9 +1115,9 @@ DECLARE_GENERICS(Context)
             return FAIL(unwrap e);
 
         Use* use = Make_Use_Core(
-            context, BINDING(def), CELL_FLAG_USE_NOTE_SET_WORDS
+            context, Cell_Binding(def), CELL_FLAG_USE_NOTE_SET_WORDS
         );
-        BINDING(def) = use;
+        Tweak_Cell_Binding(def, use);
 
         bool threw = Eval_Any_List_At_Throws(OUT, def, SPECIFIED);
         if (threw)
@@ -1495,7 +1495,7 @@ DECLARE_NATIVE(construct)
         assert(index);  // created a key for every SET-WORD! above!
 
         Copy_Cell(PUSH(), at);
-        BINDING(TOP) = varlist;
+        Tweak_Cell_Binding(TOP, varlist);
         CELL_WORD_INDEX_I32(TOP) = unwrap index;
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);

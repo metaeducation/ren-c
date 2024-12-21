@@ -68,7 +68,11 @@ DECLARE_NATIVE(bind)
                 return FAIL(Error_Not_Bound_Raw(spare));
 
             HEART_BYTE(spare) = REB_WORD;
-            BINDING(v) = Make_Use_Core(spare, BINDING(v), CELL_MASK_ERASED_0);
+            Tweak_Cell_Binding(v, Make_Use_Core(
+                spare,
+                Cell_Binding(v),
+                CELL_MASK_ERASED_0
+            ));
         }
 
         return COPY(v);
@@ -91,7 +95,11 @@ DECLARE_NATIVE(bind)
             return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
         HEART_BYTE(spec) = REB_WORD;
-        BINDING(v) = Make_Use_Core(spec, BINDING(v), CELL_MASK_ERASED_0);
+        Tweak_Cell_Binding(v, Make_Use_Core(
+            spec,
+            Cell_Binding(v),
+            CELL_MASK_ERASED_0
+        ));
 
         return COPY(v);
     }
@@ -109,7 +117,11 @@ DECLARE_NATIVE(bind)
     if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
         return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
-    BINDING(v) = Make_Use_Core(context, BINDING(v), CELL_MASK_ERASED_0);
+    Tweak_Cell_Binding(v, Make_Use_Core(
+        context,
+        Cell_Binding(v),
+        CELL_MASK_ERASED_0
+    ));
 
     return COPY(v);
 }
@@ -136,7 +148,7 @@ DECLARE_NATIVE(inside)
     if (Any_Context(where))
         context = Cell_Varlist(where);
     else if (Any_List(where))
-        context = BINDING(where);
+        context = Cell_Binding(where);
     else {
         assert(Any_Sequence(where));
         context = Cell_Sequence_Binding(where);
@@ -171,7 +183,11 @@ DECLARE_NATIVE(overbind)
     else
         assert(Any_Context(defs));
 
-    BINDING(v) = Make_Use_Core(defs, Cell_List_Binding(v), CELL_MASK_ERASED_0);
+    Tweak_Cell_Binding(v, Make_Use_Core(
+        defs,
+        Cell_List_Binding(v),
+        CELL_MASK_ERASED_0
+    ));
 
     return COPY(v);
 }
@@ -207,7 +223,7 @@ DECLARE_NATIVE(has)
 
     Init_Any_Word(OUT, heart, symbol);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
-    BINDING(OUT) = MOD_PATCH(cast(SeaOfVars*, ctx), symbol, strict);
+    Tweak_Cell_Binding(OUT, MOD_PATCH(cast(SeaOfVars*, ctx), symbol, strict));
     return OUT;
 }
 
@@ -252,11 +268,11 @@ DECLARE_NATIVE(without)
         );
     }
 
-    BINDING(v) = Make_Use_Core(
+    Tweak_Cell_Binding(v, Make_Use_Core(
         Varlist_Archetype(ctx),
         Cell_List_Binding(v),
         CELL_MASK_ERASED_0
-    );
+    ));
 
     return COPY(v);
 }
@@ -314,7 +330,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         if (IS_WORD_UNBOUND(v))
             return false;
 
-        if (Is_Stub_Let(BINDING(v))) {  // temporary (LETs not exposed)
+        if (Is_Stub_Let(Cell_Binding(v))) {  // temporary (LETs not exposed)
             Init_Word(out, CANON(LET));
             return true;
         }
@@ -814,7 +830,7 @@ DECLARE_NATIVE(bindable)
     else {
         assert(Any_List(v));
 
-        BINDING(v) = UNBOUND;
+        Tweak_Cell_Binding(v, UNBOUND);
     }
 
     return COPY(v);

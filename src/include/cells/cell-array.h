@@ -158,7 +158,7 @@ INLINE Element* Init_Relative_Block_At(
     Reset_Cell_Header_Noquote(out, CELL_MASK_BLOCK);
     Tweak_Cell_Node1(out, array);
     VAL_INDEX_RAW(out) = index;
-    BINDING(out) = details;
+    Tweak_Cell_Relative_Binding(out, details);
     return out;
 }
 

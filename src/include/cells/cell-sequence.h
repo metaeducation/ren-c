@@ -255,7 +255,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // mark the pairing
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
-    BINDING(e) = UNBOUND;  // "arraylike", needs binding
+    Tweak_Cell_Binding(e, UNBOUND);  // "arraylike", needs binding
     Tweak_Cell_Node1(e, p);
     Corrupt_Unused_Field(PAYLOAD(Any, e).second.corrupt);
 
@@ -290,7 +290,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
-    BINDING(out) = nullptr;  // paths are bindable, can't have garbage
+    Tweak_Cell_Binding(out, UNBOUND);  // paths bindable, can't have garbage
 
     if (size > Size_Of(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
         Source* a = Make_Source_Managed(size);
@@ -330,7 +330,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
-    BINDING(out) = nullptr;  // paths are bindable, can't be garbage
+    Tweak_Cell_Binding(out, UNBOUND);  // paths are bindable, can't be garbage
 
     PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = len;
 
@@ -441,7 +441,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // first is pairing
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
-    BINDING(out) = UNBOUND;  // "arraylike", needs binding
+    Tweak_Cell_Binding(out, UNBOUND);  // "arraylike", needs binding
     Tweak_Cell_Node1(out, pairing);
     Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
 
@@ -727,7 +727,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
 
     const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1))  // see if it's a pairing
-        return BINDING(sequence);  // compressed 2-element sequence
+        return Cell_Binding(sequence);  // compressed 2-element sequence
 
     switch (Stub_Flavor(c_cast(Flex*, node1))) {
       case FLAVOR_SYMBOL:  // compressed single WORD! sequence
@@ -737,7 +737,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
         const Source* a = Cell_Array(sequence);
         if (MIRROR_BYTE(a) != REB_0)
             return SPECIFIED;
-        return BINDING(sequence); }
+        return Cell_Binding(sequence); }
 
       default :
         assert(false);

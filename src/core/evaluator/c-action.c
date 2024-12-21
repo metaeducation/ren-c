@@ -103,7 +103,7 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
     if (VAL_TYPE_UNCHECKED(At_Feed(feed)) != REB_WORD)
         return false;
 
-    feed->gotten = Lookup_Word(At_Feed(feed), FEED_BINDING(feed));
+    feed->gotten = Lookup_Word(At_Feed(feed), Feed_Binding(feed));
 
     if (
         not feed->gotten
@@ -264,7 +264,7 @@ Bounce Action_Executor(Level* L)
 
                 REBLEN offset = ARG - cast(Atom*, Level_Args_Head(L));
                 Tweak_Cell_Word_Index(ordered, offset + 1);
-                BINDING(ordered) = L->u.action.original;
+                Tweak_Cell_Binding(ordered, L->u.action.original);
 
                 if (Is_Parameter_Unconstrained(PARAM)) {
                     //
@@ -641,7 +641,7 @@ Bounce Action_Executor(Level* L)
 
         assert(Is_Pushed_Refinement(TOP));
 
-        if (not BINDING(TOP)) {  // the loop didn't index it
+        if (not Cell_Binding(TOP)) {  // the loop didn't index it
             Refinify_Pushed_Refinement(TOP_ELEMENT);
             Copy_Cell(SPARE, TOP);  // FAIL() uses the data stack
             return FAIL(Error_Bad_Parameter_Raw(SPARE));  // duplicate or junk

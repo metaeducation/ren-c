@@ -423,7 +423,7 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED
     );
     CELL_WORD_INDEX_I32(out) = 0;
-    BINDING(out) = nullptr;
+    Tweak_Cell_Binding(out, UNBOUND);
     Tweak_Cell_Word_Symbol(out, symbol);
     return out;
 }

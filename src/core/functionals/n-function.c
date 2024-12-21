@@ -130,7 +130,7 @@ Bounce Func_Dispatcher(Level* const L)
     STATE = ST_FUNC_BODY_EXECUTING;
 
     Copy_Cell(SPARE, body);
-    BINDING(SPARE) = L->varlist;
+    Tweak_Cell_Binding(SPARE, L->varlist);
 
     unnecessary(Enable_Dispatcher_Catching_Of_Throws(L));  // RETURN unwind [1]
 
@@ -339,7 +339,7 @@ Details* Make_Interpreted_Action_May_Fail(
         Details_At(details, IDX_INTERPRETED_BODY),
         copy
     );
-    BINDING(rebound) = Cell_List_Binding(body);
+    Tweak_Cell_Binding(rebound, Cell_List_Binding(body));
 
     // Capture the mutability flag that was in effect when this action was
     // created.  This allows the following to work:

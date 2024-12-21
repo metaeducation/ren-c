@@ -109,11 +109,11 @@ Bounce Adapter_Dispatcher(Level* const L)
         details,  // make only this action's inputs visible
         Level_Coupling(L)
     );
-    BINDING(SPARE) = Make_Use_Core(  // must USE [1]
+    Tweak_Cell_Binding(SPARE, Make_Use_Core(  // must USE [1]
         frame,
-        BINDING(prelude),
+        Cell_Binding(prelude),
         CELL_MASK_ERASED_0
-    );
+    ));
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         OUT,  // note: result is discarded
@@ -209,7 +209,7 @@ DECLARE_NATIVE(adapt)
         Array_At(details, IDX_ADAPTER_PRELUDE),
         prelude_copy
     );
-    BINDING(rebound) = Cell_List_Binding(prelude);
+    Tweak_Cell_Binding(rebound, Cell_List_Binding(prelude));
 
     return Init_Action(OUT, details, Cell_Frame_Label_Deep(adaptee), UNBOUND);
 }

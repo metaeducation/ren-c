@@ -53,7 +53,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     Heart heart = Cell_Heart_Unchecked(v);
 
     while (Is_Bindable_Heart(heart)) {  // for `break` convenience
-        Context* binding = BINDING(v);
+        Context* binding = Cell_Binding(v);
         if (not binding)
             break;
 
@@ -373,7 +373,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Not_Flavor_Flag(SYMBOL, spelling, MISC_IS_BINDINFO));
 
         REBINT index = CELL_WORD_INDEX_I32(v);
-        Context* binding = BINDING(v);
+        Context* binding = Cell_Binding(v);
         if (binding) {
             if (Is_Stub_Varlist(binding)) {
                 assert(CTX_TYPE(cast(VarList*, binding)) != REB_MODULE);

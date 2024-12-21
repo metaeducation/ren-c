@@ -240,7 +240,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     assert(Is_Block(body));  // can mutate (only one call)
     Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
-    BINDING(body) = L->varlist;
+    Tweak_Cell_Binding(body, L->varlist);
 
     STATE = ST_YIELDER_RUNNING_BODY;
 

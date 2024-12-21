@@ -207,7 +207,7 @@ Value* Append_To_Sea_Core(
 
     if (any_word) {  // bind word while we're at it
         Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
-        BINDING(unwrap any_word) = patch;
+        Tweak_Cell_Binding(unwrap any_word, patch);
     }
 
   #if RUNTIME_CHECKS  // ensure we didn't add a duplicate patch for this sea
@@ -253,7 +253,7 @@ static Value* Append_To_Varlist_Core(
     if (any_word) {
         Length len = Varlist_Len(varlist);  // length we just bumped
         Tweak_Cell_Word_Index(unwrap any_word, len);
-        BINDING(unwrap any_word) = varlist;
+        Tweak_Cell_Binding(unwrap any_word, varlist);
     }
 
     return cast(Value*, slot);  // location we just added (void cell)
@@ -556,11 +556,11 @@ DECLARE_NATIVE(wrap_p)
     if (e)
         return FAIL(unwrap e);
 
-    /* BINDING(list) = Make_Use_Core(  // what should do what? [1]
+    /* Tweak_Cell_Binding(list, Make_Use_Core(  // what should do what? [1]
         Varlist_Archetype(context),
         Cell_List_Binding(list),
         CELL_MASK_ERASED_0
-    );
+    ));
     return COPY(list); */
 
     return NOTHING;
@@ -603,7 +603,7 @@ DECLARE_NATIVE(wrap)
         parent
     );
     Tweak_Link_Inherit_Bind(varlist, Cell_Binding(list));
-    BINDING(list) = varlist;
+    Tweak_Cell_Binding(list, varlist);
 
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
@@ -872,13 +872,13 @@ Source* Context_To_Array(const Cell* context, REBINT mode)
                 Setify(TOP_ELEMENT);
             if (Is_Module(context)) {
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                BINDING(TOP) = MOD_PATCH(
+                Tweak_Cell_Binding(TOP, MOD_PATCH(
                     cast(SeaOfVars*, e.ctx), Key_Symbol(e.key), true
-                );
+                ));
             }
             else {
                 Tweak_Cell_Word_Index(TOP, e.index);
-                BINDING(TOP) = e.ctx;
+                Tweak_Cell_Binding(TOP, e.ctx);
             }
 
             if (mode & 2)

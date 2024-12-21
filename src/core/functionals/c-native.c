@@ -95,7 +95,7 @@ Details* Make_Native_Dispatch_Details(
     DECLARE_ELEMENT (expanded_spec);
     if (native_type == NATIVE_COMBINATOR) {
         Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
-        BINDING(expanded_spec) = g_lib_context;
+        Tweak_Cell_Binding(expanded_spec, g_lib_context);
         spec = expanded_spec;
     }
 
@@ -273,7 +273,7 @@ Source* Startup_Natives(const Element* boot_natives)
     Context* lib = g_lib_context;  // native variables already exist [1]
 
     assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
-    assert(BINDING(boot_natives) == UNBOUND);
+    assert(Cell_Binding(boot_natives) == UNBOUND);
 
     Source* catalog = Make_Source(g_num_core_natives);
 

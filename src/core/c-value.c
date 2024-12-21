@@ -377,7 +377,7 @@ void Where_Core_Debug(Level* L) {
 
         REBLEN before_index = index > 3 ? index - 3 : 0;
         Push_Mold(mo);
-        Mold_Array_At(mo, FEED_ARRAY(L->feed), before_index, "[]");
+        Mold_Array_At(mo, Feed_Array(L->feed), before_index, "[]");
         Throttle_Mold(mo);
         printf("Where(Before):\n");
         printf("%s\n\n", Binary_At(mo->string, mo->base.size));
@@ -388,7 +388,7 @@ void Where_Core_Debug(Level* L) {
     SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
     mo->limit = 40 * 20;  // 20 lines of length 40, or so?
     Push_Mold(mo);
-    Mold_Array_At(mo, FEED_ARRAY(L->feed), index, "[]");
+    Mold_Array_At(mo, Feed_Array(L->feed), index, "[]");
     Throttle_Mold(mo);
     printf("Where(At):\n");
     printf("%s\n\n", Binary_At(mo->string, mo->base.size));

@@ -441,11 +441,11 @@ Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
         //
         Init_Error(OUT, error);
 
-        BINDING(arg) = Make_Use_Core(
+        Tweak_Cell_Binding(arg, Make_Use_Core(
             Varlist_Archetype(error),
             Cell_List_Binding(arg),
             CELL_MASK_ERASED_0
-        );
+        ));
 
         DECLARE_ATOM (evaluated);
         if (Eval_Any_List_At_Throws(evaluated, arg, SPECIFIED))

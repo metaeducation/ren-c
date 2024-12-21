@@ -61,8 +61,8 @@ enum {
 //
 void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // !!! holds need work [1]
-        assert(Get_Flex_Info(FEED_ARRAY(feed), HOLD));
-        Clear_Flex_Info(FEED_ARRAY(feed), HOLD);
+        assert(Get_Flex_Info(Feed_Array(feed), HOLD));
+        Clear_Flex_Info(Feed_Array(feed), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -70,7 +70,7 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
         Stub* saved = Make_Untracked_Stub(  // save old feed stub [2]
             FLAG_FLAVOR(FEED)
         );
-        Mem_Copy(saved, FEED_SINGULAR(feed), sizeof(Stub));
+        Mem_Copy(saved, Feed_Singular(feed), sizeof(Stub));
         assert(Not_Node_Managed(saved));
 
         LINK(Splice, &feed->singular) = saved;  // old feed now after splice
@@ -78,16 +78,16 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
     }
 
     feed->p = Cell_List_Item_At(splice);
-    Copy_Cell(FEED_SINGLE(feed), splice);
-    ++VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed));
+    Copy_Cell(Feed_Data(feed), splice);
+    ++VAL_INDEX_UNBOUNDED(Feed_Data(feed));
 
     MISC(Pending, &feed->singular) = nullptr;
 
     if (  // take per-feed hold, should be per-splice [1]
         Not_Feed_At_End(feed)
-        and Not_Flex_Info(FEED_ARRAY(feed), HOLD)
+        and Not_Flex_Info(Feed_Array(feed), HOLD)
     ){
-        Set_Flex_Info(FEED_ARRAY(feed), HOLD);
+        Set_Flex_Info(Feed_Array(feed), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }
@@ -118,7 +118,7 @@ Bounce Macro_Dispatcher(Level* const L)
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 
     Copy_Cell(SPARE, body);
-    BINDING(SPARE) = L->varlist;
+    Tweak_Cell_Binding(SPARE, L->varlist);
 
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.

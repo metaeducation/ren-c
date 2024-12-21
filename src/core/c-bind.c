@@ -53,7 +53,7 @@ void Bind_Values_Inner_Loop(
             Value* lookup = MOD_VAR(cast(SeaOfVars*, context), symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
-                BINDING(v) = Compact_Stub_From_Cell(lookup);
+                Tweak_Cell_Binding(v, Compact_Stub_From_Cell(lookup));
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -80,7 +80,7 @@ void Bind_Values_Inner_Loop(
                 // been relative.
 
                 Tweak_Cell_Word_Index(v, n);
-                BINDING(v) = context;
+                Tweak_Cell_Binding(v, context);
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -178,7 +178,7 @@ void Unbind_Values_Core(
     for (; v != tail; ++v) {
         if (
             Wordlike_Cell(v)
-            and (not context or BINDING(v) == unwrap context)
+            and (not context or Cell_Binding(v) == unwrap context)
         ){
             Unbind_Any_Word(v);
         }
@@ -209,7 +209,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
         if (not patch)
             return false;
         Tweak_Cell_Word_Index(word, INDEX_PATCHED);
-        BINDING(word) = patch;
+        Tweak_Cell_Binding(word, patch);
         return true;
     }
 
@@ -222,7 +222,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
         return false;
 
     Tweak_Cell_Word_Index(word, unwrap index);  // ^-- may have been relative
-    BINDING(word) = Cell_Varlist(context);
+    Tweak_Cell_Binding(word, Cell_Varlist(context));
     return true;
 }
 
@@ -325,7 +325,7 @@ Option(Stub*) Get_Word_Container(
     const Element* any_word,
     Context* context
 ){
-    Context* binding = BINDING(any_word);
+    Context* binding = Cell_Binding(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 
     if (IS_WORD_BOUND(any_word)) {  // leave binding alone
@@ -402,7 +402,10 @@ Option(Stub*) Get_Word_Container(
                     CELL_WORD_INDEX_I32(
                         m_cast(Cell*, any_word)
                     ) = -(maybe index);
-                    BINDING(m_cast(Cell*, any_word)) = Phase_Details(vlist);
+                    Tweak_Cell_Binding(
+                        m_cast(Cell*, any_word),
+                        Phase_Details(vlist)
+                    );
                 }
             }
           #endif
@@ -447,7 +450,7 @@ Option(Stub*) Get_Word_Container(
             Element* word = u_cast(Element*, Stub_Cell(c));
             if (Cell_Word_Symbol(word) == symbol) {
                 *index_out = VAL_WORD_INDEX(word);
-                return BINDING(word);
+                return Cell_Binding(word);
             }
             goto next_context;
         }
@@ -727,7 +730,7 @@ DECLARE_NATIVE(let)
                 symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Variable(symbol, bindings);
                 CELL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
-                BINDING(TOP) = bindings;
+                Tweak_Cell_Binding(TOP, bindings);
                 break; }
 
               default:
@@ -757,7 +760,7 @@ DECLARE_NATIVE(let)
             if (vars != where)
                 Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed
         }
-        BINDING(where) = bindings;
+        Tweak_Cell_Binding(where, bindings);
 
         Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
@@ -772,7 +775,7 @@ DECLARE_NATIVE(let)
     // Leverage same mechanism as REEVAL to preload the next execution step
     // with the rebound SET-WORD! or SET-BLOCK!
 
-    BINDING(bindings_holder) = bindings;
+    Tweak_Cell_Binding(bindings_holder, bindings);
     Corrupt_Pointer_If_Debug(bindings);  // catch uses after this point in scope
 
     if (STATE != ST_LET_EVAL_STEP) {
@@ -814,7 +817,7 @@ DECLARE_NATIVE(let)
     // needs systemic review.
 
     Context* bindings = Cell_List_Binding(bindings_holder);
-    BINDING(FEED_SINGLE(L->feed)) = bindings;
+    Tweak_Cell_Binding(Feed_Data(L->feed), bindings);
 
     if (Is_Pack(OUT))
         Decay_If_Unstable(OUT);
@@ -869,10 +872,10 @@ DECLARE_NATIVE(add_let_binding)
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
-        BINDING(FEED_SINGLE(L->feed)) = let;
+        Tweak_Cell_Binding(Feed_Data(L->feed), let);
     }
     else {
-        BINDING(env) = let;
+        Tweak_Cell_Binding(env, let);
     }
 
     return COPY(env);
@@ -902,7 +905,7 @@ DECLARE_NATIVE(add_use_object) {
 
     Use* use = Make_Use_Core(object, L_binding, CELL_MASK_ERASED_0);
 
-    BINDING(FEED_SINGLE(L->feed)) = use;
+    Tweak_Cell_Binding(Feed_Data(L->feed), use);
 
     return NOTHING;
 }
@@ -956,7 +959,7 @@ void Clonify_And_Bind_Relative(
             unwrap binder, Cell_Word_Symbol(v)
         );
         CELL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
-        BINDING(v) = unwrap relative;
+        Tweak_Cell_Relative_Binding(v, unwrap relative);
     }
     else if (deeply and (Any_Series_Kind(heart) or Any_Sequence_Kind(heart))) {
         //
@@ -1308,11 +1311,11 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //
     if (rebinding) {
-        BINDING(body_in_out) = Make_Use_Core(
+        Tweak_Cell_Binding(body_in_out, Make_Use_Core(
             Varlist_Archetype(c),
             Cell_List_Binding(body_in_out),
             CELL_MASK_ERASED_0
-        );
+        ));
     }
 
     return c;

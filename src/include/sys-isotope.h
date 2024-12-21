@@ -82,7 +82,7 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
         }
         else {
             assert(Any_List_Kind(heart) or heart == REB_COMMA);
-            BINDING(c) = UNBOUND;
+            Tweak_Cell_Binding(c, UNBOUND);
         }
     }
     else if (heart == REB_FRAME) {

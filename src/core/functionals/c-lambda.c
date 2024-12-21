@@ -86,7 +86,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     );
 
     Copy_Cell(SPARE, block);
-    BINDING(SPARE) = use;
+    Tweak_Cell_Binding(SPARE, use);
 
     return DELEGATE_CORE(
         OUT,
@@ -116,7 +116,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 
     Copy_Cell(SPARE, body);
     Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
-    BINDING(SPARE) = L->varlist;
+    Tweak_Cell_Binding(SPARE, L->varlist);
 
     return DELEGATE_CORE(
         OUT,  // output

@@ -676,7 +676,7 @@ DECLARE_NATIVE(compile_p)
             Details_At(details_api, IDX_API_ACTION_BINDING_BLOCK),
             EMPTY_ARRAY
         );
-        BINDING(block) = g_user_context;  // !!! capture from MAKE-NATIVE
+        Tweak_Cell_Binding(block, g_user_context);  // !!! MAKE-NATIVE capture?
 
         Swap_Flex_Content(details_tcc, details_api);
 

@@ -712,13 +712,13 @@ DECLARE_NATIVE(join)
             return RAISE(unwrap error);
 
         if (not Is_Type_Block(base))
-            BINDING(OUT) = BINDING(base);
+            Tweak_Cell_Binding(OUT, Cell_Binding(base));
     }
     else {
         Init_Any_List(OUT, heart, Pop_Managed_Source_From_Stack(STACK_BASE));
 
         if (not Is_Type_Block(base))
-            BINDING(OUT) = BINDING(base);
+            Tweak_Cell_Binding(OUT, Cell_Binding(base));
     }
 
     return OUT;

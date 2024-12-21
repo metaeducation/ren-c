@@ -162,11 +162,11 @@ INLINE bool Level_Is_Variadic(Level* L) {
 
 INLINE const Source* Level_Array(Level* L) {
     assert(not Level_Is_Variadic(L));
-    return FEED_ARRAY(L->feed);
+    return Feed_Array(L->feed);
 }
 
 INLINE Context* Level_Binding(Level *L) {
-    return FEED_BINDING(L->feed);
+    return Feed_Binding(L->feed);
 }
 
 

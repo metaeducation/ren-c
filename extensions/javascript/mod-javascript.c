@@ -458,7 +458,7 @@ void RunPromise(void)
 
     DECLARE_ATOM (code);
     Init_Block(code, a);
-    BINDING(code) = info->binding;
+    Tweak_Cell_Binding(code, info->binding);
 
     Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL);
 

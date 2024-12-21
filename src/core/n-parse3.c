@@ -1539,10 +1539,10 @@ DECLARE_NATIVE(subparse)
                 // the in-effect binding.
                 //
                 if (cmd == SYM_LET) {
-                    BINDING(FEED_SINGLE(L->feed)) = Make_Let_Variable(
+                    Tweak_Cell_Binding(Feed_Data(L->feed), Make_Let_Variable(
                         Cell_Word_Symbol(P_RULE),
                         P_RULE_BINDING
-                    );
+                    ));
                     if (Is_Word(P_RULE)) {  // no further action
                         FETCH_NEXT_RULE(L);
                         goto pre_rule;

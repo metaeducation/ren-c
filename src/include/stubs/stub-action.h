@@ -119,7 +119,7 @@ INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
     );
-    BINDING(out) = nullptr;
+    Tweak_Cell_Binding(out, UNBOUND);
     PAYLOAD(Any, out).first.u = ch;
     Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
 

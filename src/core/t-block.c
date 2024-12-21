@@ -788,8 +788,8 @@ DECLARE_GENERICS(List)
             if (error)
                 return FAIL(unwrap error);
 
-            /* BINDING(temp) = BINDING(v); */  // may be unfit after compress
-            Derelativize(OUT, temp, BINDING(v));  // try this instead (?)
+            /* Tweak_Cell_Binding(temp) = Cell_Binding(v); */  // may be unfit
+            Derelativize(OUT, temp, Cell_Binding(v));  // try this instead (?)
 
             return OUT;
         }
@@ -1079,7 +1079,7 @@ DECLARE_GENERICS(List)
         ));
 
         Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
-        BINDING(OUT) = Cell_List_Binding(list);
+        Tweak_Cell_Binding(OUT, Cell_List_Binding(list));
         return OUT; }
 
     //-- Special actions:

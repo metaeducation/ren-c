@@ -181,7 +181,7 @@ struct FeedStruct {
     // the initial value in order to display full error messages.
     //
     const void *p;  // nullptr if feed is finished (Is_Feed_At_End())
-    // Note: The binding comes from FEED_BINDING()
+    // Note: The binding comes from Feed_Binding()
 
     //=//// ^-- be sure above fields align cells below to 64-bits --v /////=//
     // (two intptr_t sized things should take care of it on both 32/64-bit) //
