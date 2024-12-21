@@ -88,6 +88,43 @@ INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
     Intern_UTF8_Managed_Core(nullptr, (utf8), (size))
 
 
+// Hitches are a circularly linked list that includes transient binding info
+// for the word, as well as declared variables in "sea" contexts.
+
+INLINE Stub* Misc_Hitch(const Stub* stub) {
+    Flavor stub_flavor = Stub_Flavor(stub);
+    assert(
+        stub_flavor == FLAVOR_SYMBOL
+        or stub_flavor == FLAVOR_BINDINFO
+        or stub_flavor == FLAVOR_PATCH
+    );
+    Stub* hitch = u_cast(Stub*, m_cast(Node*, stub->misc.node));
+    Flavor hitch_flavor = Stub_Flavor(hitch);
+    assert(
+        hitch_flavor == FLAVOR_SYMBOL
+        or hitch_flavor == FLAVOR_BINDINFO
+        or hitch_flavor == FLAVOR_PATCH
+    );
+    return hitch;
+}
+
+INLINE void Tweak_Misc_Hitch(Stub* stub, Stub* hitch) {
+    Flavor flavor_stub = Stub_Flavor(stub);
+    assert(
+        flavor_stub == FLAVOR_SYMBOL
+        or flavor_stub == FLAVOR_BINDINFO
+        or flavor_stub == FLAVOR_PATCH
+    );
+    Flavor flavor_hitch = Stub_Flavor(hitch);
+    assert(
+        flavor_hitch == FLAVOR_SYMBOL
+        or flavor_hitch == FLAVOR_BINDINFO
+        or flavor_hitch == FLAVOR_PATCH
+    );
+    stub->misc.node = hitch;
+}
+
+
 // When you pass a symbol to the variadic API interfaces, it assumes that you
 // want to make a plain WORD! with that symbol.  This is faster than needing
 // to allocate a separate word for the purpose of passing in.

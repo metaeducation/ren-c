@@ -56,8 +56,7 @@
 #define LINK_PatchReserved_TYPE           void*
 #define HAS_LINK_PatchReserved            FLAVOR_PATCH
 
-#define MISC_PatchHitch_TYPE              Stub*  // circular list [1]
-#define HAS_MISC_PatchHitch               FLAVOR_PATCH
+// MISC is Misc_Hitch(), circular list [1]
 
 
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//

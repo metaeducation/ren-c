@@ -1125,12 +1125,8 @@ REBLEN Recycle_Core(Flex* sweeplist)
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
-            Stub* patch = MISC(Hitch, *psym);
-            for (
-                ;
-                patch != *psym;
-                patch = cast(Stub*, node_MISC(Hitch, patch))
-            ){
+            Stub* patch = Misc_Hitch(*psym);
+            for (; patch != *psym; patch = Misc_Hitch(patch)) {
                 VarList* context = INODE(PatchContext, patch);
                 if (Is_Node_Marked(patch)) {
                     assert(Is_Node_Marked(context));

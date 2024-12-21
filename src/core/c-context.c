@@ -199,11 +199,11 @@ Value* Append_To_Sea_Core(
 
     Stub* updating = m_cast(Symbol*, symbol);  // skip binding hitches [1]
     if (Get_Flavor_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
-        updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
+        updating = Misc_Hitch(updating);  // skip
 
-    node_MISC(PatchHitch, patch) = node_MISC(Hitch, updating);
+    Tweak_Misc_Hitch(patch, Misc_Hitch(updating));
     INODE(PatchContext, patch) = sea;
-    node_MISC(Hitch, updating) = patch;  // may be bindinfo
+    Tweak_Misc_Hitch(updating, patch);  // may be bindinfo
 
     if (any_word) {  // bind word while we're at it
         Tweak_Cell_Word_Index(unwrap any_word, INDEX_PATCHED);
@@ -212,10 +212,10 @@ Value* Append_To_Sea_Core(
 
   #if RUNTIME_CHECKS  // ensure we didn't add a duplicate patch for this sea
   blockscope {
-    Stub *check = MISC(PatchHitch, patch);
+    Stub *check = Misc_Hitch(patch);
     while (check != symbol) {  // walk chain to look for duplicates
         assert(INODE(PatchContext, check) != sea);
-        check = MISC(PatchHitch, check);
+        check = Misc_Hitch(check);
     }
   }
   #endif

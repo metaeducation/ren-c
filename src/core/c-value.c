@@ -226,8 +226,8 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Virtual Bind USE", file, line);
         break; }
 
-      case FLAVOR_HITCH:
-        Probe_Print_Helper(p, expr, "Hitch", file, line);
+      case FLAVOR_BINDINFO:
+        Probe_Print_Helper(p, expr, "BindInfo", file, line);
         break;
 
       case FLAVOR_LIBRARY:

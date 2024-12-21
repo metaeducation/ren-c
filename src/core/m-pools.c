@@ -1099,12 +1099,11 @@ Stub* Decay_Stub(Stub* s)
         // same name in other modules...with the name itself as a symbol
         // being in that circular list.  Remove this patch from that list.
         //
-        Stub* temp = MISC(PatchHitch, s);
-        while (node_MISC(Hitch, temp) != s) {
-            temp = cast(Stub*, node_MISC(Hitch, temp));
-            assert(Is_Stub_Patch(temp) or Is_Stub_Symbol(temp));
+        Stub* temp = Misc_Hitch(s);
+        while (Misc_Hitch(temp) != s) {
+            temp = Misc_Hitch(temp);
         }
-        node_MISC(Hitch, temp) = node_MISC(Hitch, s);
+        Tweak_Misc_Hitch(temp, Misc_Hitch(s));
         break; }
 
       case FLAVOR_LET:

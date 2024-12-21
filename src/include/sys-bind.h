@@ -209,7 +209,7 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
         const Symbol* s = INODE(BindSymbol, hitch);
         assert(Get_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO));
         Clear_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO);
-        node_MISC(Hitch, s) = node_MISC(Hitch, hitch);
+        Tweak_Misc_Hitch(m_cast(Symbol*, s), Misc_Hitch(hitch));
 
         assert(Is_Node_Readable(hitch));
         Set_Node_Unreadable_Bit(hitch);
@@ -246,18 +246,17 @@ INLINE bool Try_Add_Binder_Index(
     if (Get_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return false;  // already has a mapping
 
-    Stub* hitch = Make_Untracked_Stub(  // don't pay for manuals tracking
-        FLAG_FLAVOR(HITCH)
-            | STUB_FLAG_BLACK  // !!! does not get counted if created like this
+    Stub* bindinfo = Make_Untracked_Stub(  // don't pay for manuals tracking
+        FLAG_FLAVOR(BINDINFO)
             | STUB_FLAG_INFO_NODE_NEEDS_MARK  // symbol (but no GC runs!) [1]
     );
-    INODE(BindSymbol, hitch) = s;
-    Init_Integer(Stub_Cell(hitch), index);
-    node_MISC(Hitch, hitch) = node_MISC(Hitch, s);
-    LINK(NextBind, hitch) = binder->hitch_list;
-    binder->hitch_list = hitch;
+    INODE(BindSymbol, bindinfo) = s;
+    Init_Integer(Stub_Cell(bindinfo), index);
+    Tweak_Misc_Hitch(bindinfo, Misc_Hitch(s));
+    LINK(NextBind, bindinfo) = binder->hitch_list;
+    binder->hitch_list = bindinfo;
 
-    MISC(Hitch, s) = hitch;
+    Tweak_Misc_Hitch(m_cast(Symbol*, s), bindinfo);
     Set_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO);
 
     return true;
@@ -287,9 +286,9 @@ INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
     if (Not_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return 0;
 
-    Stub* hitch = MISC(Hitch, s);  // unmanaged stub used for binding
-    assert(INODE(BindSymbol, hitch) == s);
-    REBINT index = VAL_INT32(Stub_Cell(hitch));
+    Stub* bindinfo = Misc_Hitch(s);
+    assert(INODE(BindSymbol, bindinfo) == s);
+    REBINT index = VAL_INT32(Stub_Cell(bindinfo));
     assert(index != 0);
     return index;
 }
@@ -309,10 +308,10 @@ INLINE void Update_Binder_Index(
     UNUSED(binder);
     assert(Get_Flavor_Flag(SYMBOL, s, MISC_IS_BINDINFO));
 
-    Stub* hitch = MISC(Hitch, s);  // unmanaged stub used for binding
-    assert(INODE(BindSymbol, hitch) == s);
-    assert(VAL_INT32(Stub_Cell(hitch)) != 0);
-    Init_Integer(Stub_Cell(hitch), index);
+    Stub* bindinfo = Misc_Hitch(s);
+    assert(INODE(BindSymbol, bindinfo) == s);
+    assert(VAL_INT32(Stub_Cell(bindinfo)) != 0);
+    Init_Integer(Stub_Cell(bindinfo), index);
 }
 
 

@@ -189,9 +189,9 @@ static void Startup_Lib(void)
         assert(LINK(PatchReserved, patch) == nullptr);
 
         Symbol* symbol =  &g_symbols.builtin_canons[id];
-        assert(node_MISC(Hitch, symbol) == symbol);  // no module patches yet
-        node_MISC(Hitch, symbol) = patch;  // ...but now it has one!
-        MISC(PatchHitch, patch) = symbol;  // link back for singly-linked-list
+        assert(Misc_Hitch(symbol) == symbol);  // no module patches yet
+        Tweak_Misc_Hitch(symbol, patch);  // ...but now it has one!
+        Tweak_Misc_Hitch(patch, symbol);  // link back for singly-linked-list
 
         Init_Nothing(Stub_Cell(patch));  // start as unset variable
     }
@@ -253,14 +253,11 @@ static void Shutdown_Lib(void)
 
         assert(LINK(PatchReserved, patch) == nullptr);
 
-        const Symbol* symbol = &g_symbols.builtin_canons[id];
+        Symbol* symbol = &g_symbols.builtin_canons[id];
 
-        assert(node_MISC(PatchHitch, patch) == symbol);
-        Stub* symbol_hitch = cast(Stub*, node_MISC(Hitch, symbol));
-        assert(symbol_hitch == patch);
-        UNUSED(symbol_hitch);
-        assert(node_MISC(Hitch, symbol) == patch);
-        node_MISC(Hitch, symbol) = m_cast(Symbol*, symbol);
+        assert(Misc_Hitch(patch) == symbol);
+        assert(Misc_Hitch(symbol) == patch);
+        Tweak_Misc_Hitch(symbol, symbol);
 
         Erase_Stub(patch);
     }

@@ -82,17 +82,13 @@ void Init_Evars(EVARS *e, const Cell* v) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
-            Stub* patch = MISC(Hitch, *psym);
+            Stub* patch = Misc_Hitch(*psym);
             if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
-                patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
+                patch = Misc_Hitch(patch);  // skip bindinfo
 
             Stub* found = nullptr;
 
-            for (
-                ;
-                patch != *psym;
-                patch = cast(Stub*, node_MISC(Hitch, patch))
-            ){
+            for (; patch != *psym; patch = Misc_Hitch(patch)) {
                 if (e->ctx == INODE(PatchContext, patch)) {
                     found = patch;
                     break;
@@ -629,15 +625,11 @@ VarList* Copy_Varlist_Extra_Managed(
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
-            Stub* patch = MISC(Hitch, *psym);
+            Stub* patch = Misc_Hitch(*psym);
             if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
-                patch = MISC(Hitch, patch);  // skip bindinfo
+                patch = Misc_Hitch(patch);  // skip bindinfo
 
-            for (
-                ;
-                patch != *psym;
-                patch = cast(Stub*, node_MISC(Hitch, patch))
-            ){
+            for (; patch != *psym; patch = Misc_Hitch(patch)) {
                 if (original == INODE(PatchContext, patch)) {
                     Value* var = Append_Context(copy, *psym);
                     Copy_Cell(var, Stub_Cell(patch));

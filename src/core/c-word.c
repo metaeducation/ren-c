@@ -373,7 +373,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
         SET_SECOND_UINT16(&b->info, Symbol_Id(synonym));
     }
 
-    MISC(Hitch, b) = b;  // circular list of module vars and bind info [4]
+    Tweak_Misc_Hitch(b, b);  // circular list of module vars and bind info [4]
 
     if (deleted_slot) {
         *deleted_slot = cast(Symbol*, b);  // reuse the deleted slot
@@ -421,12 +421,12 @@ void GC_Kill_Interning(const Symbol* symbol)
         temp = LINK(Synonym, temp);
     LINK(Synonym, temp) = synonym;  // cut symbol out of synonyms (maybe no-op)
 
-    const Stub* patch = symbol;  // cut symbol out of module vars list
-    while (node_MISC(Hitch, patch) != symbol) {
+    Stub* patch = m_cast(Symbol*, symbol);  // cut symbol from module vars list
+    while (Misc_Hitch(patch) != symbol) {
         assert(Not_Node_Marked(patch));  // no live vars with symbol's name [2]
-        patch = cast(Stub*, node_MISC(Hitch, patch));
+        patch = Misc_Hitch(patch);
     }
-    node_MISC(Hitch, patch) = node_MISC(Hitch, symbol);  // may be no-op
+    Tweak_Misc_Hitch(patch, Misc_Hitch(symbol));  // may be no-op
 
     Length num_slots = Flex_Used(g_symbols.by_hash);
     Symbol** symbols_by_hash = Flex_Head(Symbol*, g_symbols.by_hash);

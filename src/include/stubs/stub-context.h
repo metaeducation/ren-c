@@ -312,13 +312,13 @@ INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
         }
     }
 
-    const Symbol* synonym = sym;
+    Symbol* synonym = m_cast(Symbol*, sym);
     do {
-        Stub* patch = MISC(Hitch, sym);
+        Stub* patch = Misc_Hitch(sym);
         if (Get_Flavor_Flag(SYMBOL, sym, MISC_IS_BINDINFO))
-            patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
+            patch = Misc_Hitch(patch);  // skip bindinfo
 
-        for (; patch != sym; patch = cast(Stub*, node_MISC(Hitch, patch))) {
+        for (; patch != sym; patch = Misc_Hitch(patch)) {
             if (INODE(PatchContext, patch) == sea)
                 return patch;
         }

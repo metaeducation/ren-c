@@ -112,17 +112,14 @@
 #define LINK_Synonym_TYPE       const Symbol*
 #define HAS_LINK_Synonym        FLAVOR_SYMBOL
 
-// Hitches are a circularly linked list that includes transient binding info
-// for the word, as well as declared variables in "sea" contexts.
-//
-#define MISC_Hitch_TYPE         Stub*
-#define HAS_MISC_Hitch          FLAVOR_SYMBOL
-
-#define LINK_NextBind_TYPE      Stub*
-#define HAS_LINK_NextBind       FLAVOR_HITCH
+// MISC in non-Symbol strings are used for Stub.misc.num_codepoints
+// MISC in Symbol strings used for "hitches"
 
 #define INODE_BindSymbol_TYPE   const Symbol*
-#define HAS_INODE_BindSymbol    FLAVOR_HITCH
+#define HAS_INODE_BindSymbol    FLAVOR_BINDINFO
+
+#define LINK_NextBind_TYPE      Stub*
+#define HAS_LINK_NextBind       FLAVOR_BINDINFO
 
 
 //=//// KEY (POINTER TO SYMBOL) ////////////////////////////////////////=//
