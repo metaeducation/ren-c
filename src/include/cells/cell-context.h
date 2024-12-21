@@ -48,7 +48,7 @@ INLINE Element* Init_Context_Cell(
     UNUSED(heart);
     Assert_Flex_Managed(c);
     if (CTX_TYPE(c) != REB_MODULE)
-        Assert_Flex_Managed(Keylist_Of_Varlist(c));
+        Assert_Flex_Managed(Bonus_Keylist(c));
     return Copy_Cell(out, Varlist_Archetype(c));
 }
 

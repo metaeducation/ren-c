@@ -50,7 +50,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 
     if (heart == REB_MODULE) {
         assert(capacity == 0);
-        BONUS(KeyList, a) = nullptr;
+        BONUS_KEYLIST_RAW(a) = nullptr;
     }
     else {
         KeyList* keylist = Make_Flex(
@@ -61,7 +61,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
         Tweak_Link_Keylist_Ancestor(keylist, keylist);  // default to self
         assert(Flex_Used(keylist) == 0);
 
-        Tweak_Keylist_Of_Varlist_Unique(a, keylist);  // not shared yet...
+        Tweak_Bonus_Keylist_Unique(a, keylist);  // not shared yet...
     }
 
     return cast(VarList*, a);  // varlist pointer is context handle
@@ -74,7 +74,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 // Expand a varlist. Copy keylist if is not unique (returns it to help
 // emphasize that the keylist you saw the varlist have before may change.)
 //
-// 1. Tweak_Keylist_Of_Varlist_Shared was used to set the flag that indicates
+// 1. Tweak_Bonus_Keylist_Shared was used to set the flag that indicates
 //    this keylist is shared with one or more other contexts.  Can't expand
 //    the shared copy without impacting the others, so break away from the
 //    sharing group by making a new copy.
@@ -94,13 +94,13 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 //    !!! NOTE: Ancestor keylists are no longer used for what they used to be
 //    and may be gotten rid of or rethought.
 //
-// 3. Tweak_Keylist_Of_Varlist_Unique() was used to set this keylist in the
-//    varlist, and no Tweak_Keylist_Of_Varlist_Shared() was used by another
+// 3. Tweak_Bonus_Keylist_Unique() was used to set this keylist in the
+//    varlist, and no Tweak_Bonus_Keylist_Shared() was used by another
 //    varlist to mark the flag indicating it's shared.  Extend it directly.
 //
 KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 {
-    KeyList* k = Keylist_Of_Varlist(varlist);
+    KeyList* k = Bonus_Keylist(varlist);
     assert(Is_Stub_Keylist(k));
     if (delta == 0)  // should we allow 0 delta?
         return k;
@@ -125,7 +125,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
             Tweak_Link_Keylist_Ancestor(k_copy, k);
 
         Manage_Flex(k_copy);
-        Tweak_Keylist_Of_Varlist_Unique(varlist, k_copy);
+        Tweak_Bonus_Keylist_Unique(varlist, k_copy);
 
         Set_Flex_Len(k_copy, len + delta);
         return k_copy;
@@ -236,7 +236,7 @@ static Value* Append_To_Varlist_Core(
 ){
   #if RUNTIME_CHECKS  // catch duplicate insertions
   blockscope {
-    KeyList* before = Keylist_Of_Varlist(varlist);  // may change if shared [1]
+    KeyList* before = Bonus_Keylist(varlist);  // may change if shared [1]
     const Key* check_tail = Flex_Tail(Key, before);
     const Key* check = Flex_Head(Key, before);
     for (; check != check_tail; ++check)
@@ -772,9 +772,9 @@ VarList* Make_Varlist_Detect_Managed(
         parent
         and Varlist_Len(unwrap parent) == len  // no new keys, reuse list
     ){
-        Tweak_Keylist_Of_Varlist_Shared(
+        Tweak_Bonus_Keylist_Shared(
             a,
-            Keylist_Of_Varlist(unwrap parent)  // leave ancestor link as-is
+            Bonus_Keylist(unwrap parent)  // leave ancestor link as-is
         );
     }
     else {  // new keys, need new keylist
@@ -794,10 +794,10 @@ VarList* Make_Varlist_Detect_Managed(
             Init_Key(key, s);
         }
 
-        Tweak_Keylist_Of_Varlist_Unique(a, keylist);
+        Tweak_Bonus_Keylist_Unique(a, keylist);
         if (parent)
             Tweak_Link_Keylist_Ancestor(
-                keylist, Keylist_Of_Varlist(unwrap parent)
+                keylist, Bonus_Keylist(unwrap parent)
             );
         else
             Tweak_Link_Keylist_Ancestor(
@@ -1037,7 +1037,7 @@ void Assert_Varlist_Core(VarList* varlist)
     if (not Any_Context(rootvar) or Cell_Varlist(rootvar) != varlist)
         panic (rootvar);
 
-    KeyList* keylist = Keylist_Of_Varlist(varlist);
+    KeyList* keylist = Bonus_Keylist(varlist);
 
     Length keys_len = Flex_Used(keylist);
     Length array_len = Array_Len(a);

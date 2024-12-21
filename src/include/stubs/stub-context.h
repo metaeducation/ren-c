@@ -228,34 +228,40 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
 //
-// If a context represents a FRAME! that is currently executing, one often
-// needs to quickly navigate to the Level* structure for the corresponding
-// stack level.  This is sped up by swapping the Level* in Stub.misc.runlevel
-// of varlist until the frame is finished.  In this state, the paramlist of
-// the FRAME! action is consulted. When the action is finished, this is put
-// back in BONUS_KEYSOURCE().
+// Context types use this field of their varlist (which is the identity of
+// an ANY-CONTEXT?) to find their "keylist".
 //
 // Note: Due to the sharing of keylists, features like whether a value in a
 // context is hidden or protected are accomplished using special bits on the
 // var cells, and *not the keys*.  These bits are not copied when the value
 // is moved (see CELL_MASK_COPY regarding this mechanic)
 //
+// Note: At one time Level->varlist would swap in a Level* in this spot, in
+// order to be able to find a running Level* from a VarList.  This was due to
+// the belief that the Stub.misc field could not be sacrificed on FRAME! to
+// store that Level*, because it was needed to store a link to the "adjunct
+// object" which all VarList* wanted to offer.  It turns out that adjunct
+// objects are not needed on running frame varlists, they can be on the phase.
+//
 
-INLINE KeyList* Keylist_Of_Varlist(VarList* c) {
+#define BONUS_KEYLIST_RAW(varlist) \
+    *x_cast(Node**, &(varlist)->content.dynamic.bonus.node)
+
+INLINE KeyList* Bonus_Keylist(VarList* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    return BONUS(KeyList, c);
+    return cast(KeyList*, BONUS_KEYLIST_RAW(c));
 }
 
-INLINE void Tweak_Keylist_Of_Varlist_Shared(Flex* f, KeyList* keylist) {
+INLINE void Tweak_Bonus_Keylist_Shared(Flex* f, KeyList* keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
     Set_Flavor_Flag(KEYLIST, keylist, SHARED);
-    BONUS(KeyList, f) = keylist;
+    BONUS_KEYLIST_RAW(f) = keylist;
 }
 
-INLINE void Tweak_Keylist_Of_Varlist_Unique(Flex* f, KeyList *keylist) {
+INLINE void Tweak_Bonus_Keylist_Unique(Flex* f, KeyList *keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
     assert(Not_Flavor_Flag(KEYLIST, keylist, SHARED));
-    BONUS(KeyList, f) = keylist;
+    BONUS_KEYLIST_RAW(f) = keylist;
 }
 
 
@@ -310,7 +316,7 @@ INLINE REBLEN Varlist_Len(VarList* c) {
 
 INLINE const Key* Varlist_Key(VarList* c, Index n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
-    return Flex_At(const Key, Keylist_Of_Varlist(c), n - 1);
+    return Flex_At(const Key, Bonus_Keylist(c), n - 1);
 }
 
 INLINE Value* Varlist_Slot(VarList* c, Index n) {  // 1-based
@@ -395,13 +401,13 @@ INLINE Value* MOD_VAR(SeaOfVars* sea, const Symbol* sym, bool strict) {
 // Varlist_Slot() does not.  Also, Varlist_Keys_Head() gives a mutable slot.
 
 #define Varlist_Keys_Head(c) \
-    Flex_At(Key, Keylist_Of_Varlist(c), 0)  // 0-based
+    Flex_At(Key, Bonus_Keylist(c), 0)  // 0-based
 
 #define Varlist_Slots_Head(c) \
     (Flex_Head_Dynamic(Value, c) + 1)
 
 INLINE const Key* Varlist_Keys(Sink(const Key*) tail, VarList* c) {
-    KeyList* keylist = Keylist_Of_Varlist(c);
+    KeyList* keylist = Bonus_Keylist(c);
     *tail = Flex_Tail(Key, keylist);
     return Flex_Head(Key, keylist);
 }

@@ -375,7 +375,7 @@ static void Init_Root_Vars(void)
 
     Set_Flex_Used(keylist, len);
 
-    Tweak_Keylist_Of_Varlist_Unique(a, keylist);
+    Tweak_Bonus_Keylist_Unique(a, keylist);
     Tweak_Link_Keylist_Ancestor(keylist, keylist);  // terminate in self
 
     Tweak_Non_Frame_Varlist_Rootvar(a, REB_OBJECT);

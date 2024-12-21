@@ -557,7 +557,7 @@ ParamList* Pop_Paramlist_May_Fail(
 
     Manage_Flex(paramlist);
 
-    BONUS(KeyList, paramlist) = keylist;
+    Tweak_Bonus_Keylist_Unique(paramlist, keylist);
     Tweak_Misc_Varlist_Adjunct(paramlist, nullptr);
     Tweak_Link_Inherit_Bind(paramlist, nullptr);
 

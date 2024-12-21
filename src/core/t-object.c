@@ -120,7 +120,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         e->var = Varlist_Slots_Head(e->ctx) - 1;
 
-        assert(Flex_Used(Keylist_Of_Varlist(e->ctx)) <= Varlist_Len(e->ctx));
+        assert(Flex_Used(Bonus_Keylist(e->ctx)) <= Varlist_Len(e->ctx));
 
         if (heart != REB_FRAME) {
             e->param = nullptr;
@@ -613,7 +613,7 @@ VarList* Copy_Varlist_Extra_Managed(
         else {
             Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
         }
-        BONUS(KeyList, varlist) = nullptr;  // modules don't have keylists
+        BONUS_KEYLIST_RAW(varlist) = nullptr;  // modules don't have keylists
         Tweak_Link_Inherit_Bind(varlist, nullptr);
 
         VarList* copy = cast(VarList*, varlist); // now a well-formed context
@@ -641,7 +641,7 @@ VarList* Copy_Varlist_Extra_Managed(
         return copy;
     }
 
-    Assert_Flex_Managed(Keylist_Of_Varlist(original));
+    Assert_Flex_Managed(Bonus_Keylist(original));
 
     ++dest;
 
@@ -666,24 +666,24 @@ VarList* Copy_Varlist_Extra_Managed(
     VarList* copy = cast(VarList*, varlist); // now a well-formed context
 
     if (extra == 0)
-        Tweak_Keylist_Of_Varlist_Shared(
+        Tweak_Bonus_Keylist_Shared(
             copy,
-            Keylist_Of_Varlist(original)
+            Bonus_Keylist(original)
         );
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
         KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
             FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
-            Keylist_Of_Varlist(original),
+            Bonus_Keylist(original),
             0,
             Varlist_Len(original),
             extra
         ));
 
-        Tweak_Link_Keylist_Ancestor(keylist, Keylist_Of_Varlist(original));
+        Tweak_Link_Keylist_Ancestor(keylist, Bonus_Keylist(original));
 
-        Tweak_Keylist_Of_Varlist_Unique(copy, keylist);
+        Tweak_Bonus_Keylist_Unique(copy, keylist);
     }
 
     // A FRAME! in particular needs to know if it points back to a stack

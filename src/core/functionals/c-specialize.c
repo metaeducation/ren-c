@@ -71,7 +71,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     Array* a = Make_Array_Core(FLEX_MASK_VARLIST, num_slots);
     Set_Flex_Len(a, num_slots);
 
-    Tweak_Keylist_Of_Varlist_Shared(a, Phase_Keylist(phase));
+    Tweak_Bonus_Keylist_Shared(a, Phase_Keylist(phase));
 
     assert(Is_Action(action) or Is_Frame(action));  // tolerate either?
     Value* rootvar = Flex_Head_Dynamic(Element, a);

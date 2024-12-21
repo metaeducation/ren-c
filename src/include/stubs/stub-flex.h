@@ -238,37 +238,6 @@ INLINE Size Flex_Total(const Flex* f)
   { return (Flex_Rest(f) + Flex_Bias(f)) * Flex_Wide(f); }
 
 
-//=//// FLEX "BONUS" //////////////////////////////////////////////////////=//
-//
-// If a dynamic Flex isn't modified in ways that can leave extra capacity at
-// the head, it might want to use the bias slot for something else.  This usage
-// is called the "bonus".
-//
-
-#if NO_CPLUSPLUS_11
-    #define FLEX_BONUS(f) \
-        (f)->content.dynamic.bonus.node
-#else
-    INLINE const Node* const &FLEX_BONUS(const Stub* f) {
-        assert(Get_Stub_Flag(f, DYNAMIC));
-        return f->content.dynamic.bonus.node;
-    }
-    INLINE const Node* &FLEX_BONUS(Stub* f) {
-        assert(Get_Stub_Flag(f, DYNAMIC));
-        return f->content.dynamic.bonus.node;
-    }
-#endif
-
-#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define BONUS(Field, s) \
-        *x_cast(BONUS_##Field##_TYPE*, m_cast(Node**, &FLEX_BONUS(s)))
-#else
-    #define BONUS(Field, s) \
-        NodeHolder<BONUS_##Field##_TYPE>( \
-            FLEX_BONUS(ensure_flavor(HAS_BONUS_##Field, (s))))
-#endif
-
-
 //=//// NUMBER OF WIDTH-SIZED UNITS "USED" IN FLEX ////////////////////////=//
 //
 // There is an optimization based on STUB_FLAG_DYNAMIC that allows data

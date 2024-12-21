@@ -82,20 +82,6 @@
 //
 
 
-// Context types use this field of their varlist (which is the identity of
-// an ANY-CONTEXT?) to find their "keylist".
-//
-// Note: At one time Level->varlist would swap in a Level* in this spot, in
-// order to be able to find a running Level* from a VarList.  This was due to
-// the belief that the Stub.misc field could not be sacrificed on FRAME! to
-// store that Level*, because it was needed to store a link to the "adjunct
-// object" which all VarList* wanted to offer.  It turns out that adjunct
-// objects are not needed on running frame varlists, they can be on the phase.
-//
-#define BONUS_KeyList_TYPE        KeyList*
-#define HAS_BONUS_KeyList         FLAVOR_VARLIST
-
-
 //=//// PSEUDOTYPES FOR RETURN VALUES /////////////////////////////////////=//
 //
 // An arbitrary cell pointer may be returned from a native--in which case it
@@ -188,11 +174,11 @@ INLINE ParamList* Phase_Paramlist(Phase* p) {
     return u_cast(ParamList*, p);
 }
 
-// More optimized version of Keylist_Of_Varlist(Phase_Paramlist(a)),
+// More optimized version of Bonus_Keylist(Phase_Paramlist(a)),
 // and also forward declared.
 //
 #define Phase_Keylist(p) \
-    BONUS(KeyList, Phase_Paramlist(p))
+    Bonus_Keylist(Phase_Paramlist(p))
 
 #define Phase_Keys_Head(p) \
     Flex_Head(const Key, Phase_Keylist(p))
@@ -327,6 +313,8 @@ INLINE void Tweak_Misc_Details_Adjunct(
 // did not have a concept of expansion.  So they only applied to keylists.
 // The code for processing derivation is slightly different; it should be
 // unified more if possible.
+
+INLINE KeyList* Bonus_Keylist(VarList* c);
 
 INLINE KeyList* Link_Keylist_Ancestor(KeyList* keylist) {
     KeyList* ancestor = cast(KeyList*, m_cast(Node*, keylist->link.node));

@@ -219,7 +219,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
     // be compatible.  Check by seeing if the keylists are derived.
     //
     KeyList* hijacker_keylist = Phase_Keylist(hijacker);
-    KeyList* keylist = Keylist_Of_Varlist(Level_Varlist(L));
+    KeyList* keylist = Bonus_Keylist(Level_Varlist(L));
     while (true) {
         if (keylist == hijacker_keylist) {
             Tweak_Level_Phase(L, hijacker);

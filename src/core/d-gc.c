@@ -69,7 +69,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (CTX_TYPE(cast(VarList*, binding)) != REB_FRAME)
             break;
 
-        KeyList* keylist = BONUS(KeyList, binding);
+        KeyList* keylist = Bonus_Keylist(cast(VarList*, binding));
         if (
             (keylist->leader.bits & FLEX_MASK_KEYLIST)
             != FLEX_MASK_KEYLIST
@@ -445,11 +445,11 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Context_Deep.
 
-        KeyList* keylist = BONUS(KeyList, a);
-        if (not keylist) {
+        if (not BONUS_KEYLIST_RAW(a)) {
             assert(VAL_TYPE(archetype) == REB_MODULE);
         }
         else {
+            KeyList* keylist = Bonus_Keylist(cast(VarList*, m_cast(Array*, a)));
             assert(Is_Stub_Keylist(keylist));
 
             if (Is_Frame(archetype)) {

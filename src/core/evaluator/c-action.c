@@ -1049,7 +1049,7 @@ void Push_Action(Level* L, const Cell* frame) {
         Alloc_Stub()
     ));
     Tweak_Misc_Runlevel(s, L);  // maps varlist back to L
-    BONUS(KeyList, s) = Phase_Keylist(phase);
+    Tweak_Bonus_Keylist_Shared(s, Phase_Keylist(phase));
     Tweak_Link_Inherit_Bind(s, nullptr);
 
     if (not Try_Flex_Data_Alloc(
