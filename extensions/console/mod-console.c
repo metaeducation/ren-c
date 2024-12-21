@@ -301,7 +301,9 @@ DECLARE_NATIVE(console)
 
   recover: ;  // Note: semicolon needed as next statement is declaration
 
-    Value* metacode = rebEnrescue(  // enrescue catches buggy CONSOLE* [1]
+    Value* code;
+    Value* error = rebRescue(  // Rescue catches buggy CONSOLE* [1]
+        &code,
         "console*",  // action that takes 4 args, run it
             "code",  // group! or block! executed prior (or null)
             "metaresult",  // prior result meta, or error (or null)
@@ -309,20 +311,20 @@ DECLARE_NATIVE(console)
             "skin"
     );
 
-    if (rebUnboxLogic("error? @", metacode)) {  // error in CONSOLE* itself [2]
+    if (error) {  // failure happened in CONSOLE* code itself [2]
         if (rebUnboxLogic("no? can-recover"))
-            return rebDelegate("panic @", rebR(metacode));
+            return rebDelegate("panic @", rebR(error));
 
         rebElide(
             "code: [#host-console-error]",
-            "metaresult:", metacode,
+            "metaresult:", error,
             "can-recover: 'no"  // unrecoverable until user can request eval
         );
         goto recover;
     }
 
-    rebElide("code: unquote @", metacode);  // meta quotes non-error
-    rebRelease(metacode); // don't need the outer block any more
+    rebElide("code: @", code);  // meta quotes non-error
+    rebRelease(code); // don't need the outer block any more
 
 } provoked: {  ///////////////////////////////////////////////////////////////
 

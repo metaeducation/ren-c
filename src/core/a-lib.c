@@ -43,9 +43,9 @@
 //
 //     RebolValue* result = rebValue(
 //         "if not", item1, "[\n",
-//             item2, "| print {Close brace separate from content}\n",
+//             item2, "| print -{Close brace separate from content}-\n",
 //         "] else [\n",
-//             item3, "| print {Close brace with content}]\n"
+//             item3, "| print -{Close brace with content}-]\n"
 //     );
 //
 // (Note: C can't count how many arguments a variadic takes, so this is done
@@ -296,8 +296,8 @@ void API_rebFreeMaybe(void *ptr)
     if (Is_Node_A_Cell(b) or not (NODE_BYTE(b) & NODE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
             "panic [",
-                "{rebFree() mismatched with allocator!}"
-                "{Did you mean to use free() instead of rebFree()?}",
+                "-{rebFree() mismatched with allocator!}-"
+                "-{Did you mean to use free() instead of rebFree()?}-",
             "]"
         );
     }
@@ -1019,6 +1019,26 @@ RebolValue* API_rebArg(
 // The default evaluators splice Rebol values "as-is" into the feed.  This
 // means that any evaluator active types (like WORD!, ACTION!, GROUP!...)
 // will run.  This can be mitigated with rebQ or "@"
+//
+//=//// EXCEPTION HANDLING ////////////////////////////////////////////////=//
+//
+// Exception handling with the API is a work-in-progress.  A lot has changed
+// in the implementation, in particular support for either compiling with
+// setjmp/longjmp -or- try/catch as the mechanic managing abrupt failures.
+//
+// But also, with stackless processing, only one setjmp() or try{} is needed
+// for each invocation of the trampoline.  This means that abrupt failure
+// protection comes "for free" with every API call that invokes a new
+// trampoline...and it's just a matter of deciding what to do at the
+// interface level if the result is an unhandled raised error.
+//
+// It's a largely uncharted territory at this time...so the hope is that
+// your code "just works".  The JavaScript ReplPad runs the console extension
+// code which is already protected by SYS.UTIL/RESCUE, so this captures the
+// failures in API calls in JS-NATIVEs pretty well...but other scenarios
+// might be messier.
+//
+//=////////////////////////////////////////////////////////////////////////=//
 
 
 //
@@ -1108,7 +1128,7 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
 //
 INLINE void Run_Va_Undecayed_May_Fail_Calls_Va_End(
     RebolContext* binding,
-    Atom* out,
+    Sink(Atom) out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
     void* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
@@ -1135,11 +1155,11 @@ INLINE void Run_Va_Undecayed_May_Fail_Calls_Va_End(
 //
 INLINE void Run_Va_Decay_May_Fail_Calls_Va_End(
     RebolContext* binding,
-    Value* out,
+    Sink(Value) out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
     void* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding, out, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding, cast(Atom*, out), p, vaptr);
 
     Decay_If_Unstable(cast(Atom*, out));
 }
@@ -1375,14 +1395,15 @@ RebolValue* API_rebEntrap(
 
 
 //
-//  rebEnrescue: API
+//  rebRescue: API
 //
-// Builds in an ENRESCUE operation to rebValue; shorthand that's more efficient.
+// Builds in an RESCUE operation to rebValue; shorthand that's more efficient.
 //
-//     rebEnrescue(...) => rebValue("enrescue [", ..., "]")
+//     rebRescue(...) => rebValue("enrescue [", ..., "]")
 //
-RebolValue* API_rebEnrescue(
+RebolValue* API_rebRescue(
     RebolContext* binding,
+    RebolValue** value,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1391,36 +1412,34 @@ RebolValue* API_rebEnrescue(
     bool interruptible = false;
     if (Run_Va_Throws(
         binding,
-        v,
+        cast(Atom*, v),
         interruptible,
-        LEVEL_FLAG_META_RESULT,
+        LEVEL_MASK_NONE,
         p, vaptr
     )){
         Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
         Set_Node_Root_Bit(v);
+        Corrupt_If_Debug(*value);  // !!! corrupt in release builds?
         return v;
     }
-    assert(not Is_Nulled(v));  // meta operations cannot produce NULL
-
-    if (Is_Meta_Of_Raised(v))
-        QUOTE_BYTE(v) = NOQUOTE_1;  // plain error, catch raiseds as well
-    else
-        assert(QUOTE_BYTE(v) > NOQUOTE_1);
-
+    assert(not Is_Raised(cast(Atom*, v)));  // no LEVEL_FLAG_RAISED_RESULT_OK
+    Decay_If_Unstable(cast(Atom*, v));
     Set_Node_Root_Bit(v);
-    return v;  // caller must rebRelease()
+    *value = v;
+    return nullptr;
 }
 
 
 //
-//  rebEnrescueInterruptible: API
+//  rebRescueInterruptible: API
 //
-// !!! This is the core interruptible routine, used by the console code.
-// More will be needed, but this is made to quarantine the unfinished design
-// points to one routine for now.
+// !!! How should interruptibility be communicated more generally in the
+// API, if more functions have Rescue variations?  An API instruction, like
+// rebINTERRUPTIBLE(), that you pass in?
 //
-RebolValue* API_rebEnrescueInterruptible(
+RebolValue* API_rebRescueInterruptible(
     RebolContext* binding,
+    RebolValue** value,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1429,24 +1448,21 @@ RebolValue* API_rebEnrescueInterruptible(
     bool interruptible = true;
     if (Run_Va_Throws(
         binding,
-        v,
+        cast(Atom*, v),
         interruptible,
-        LEVEL_FLAG_META_RESULT,
+        LEVEL_MASK_NONE,
         p, vaptr
     )){
         Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
         Set_Node_Root_Bit(v);
+        Corrupt_If_Debug(*value);  // !!! corrupt in release builds?
         return v;
     }
-    assert(not Is_Nulled(v));  // META operations can't return null
-
-    if (Is_Meta_Of_Raised(v))
-        QUOTE_BYTE(v) = NOQUOTE_1;  // plain error, catch raiseds as well
-    else
-        assert(QUOTE_BYTE(v) > NOQUOTE_1);
-
+    assert(not Is_Raised(cast(Atom*, v)));  // no LEVEL_FLAG_RAISED_RESULT_OK
+    Decay_If_Unstable(cast(Atom*, v));
     Set_Node_Root_Bit(v);
-    return v;  // caller must rebRelease()
+    *value = v;
+    return nullptr;
 }
 
 
@@ -1596,6 +1612,7 @@ bool API_rebDidnt(
 
     return Is_Nulled(condition) or Is_Void(condition);
 }
+
 
 //
 //  rebTruthy: API
@@ -2221,142 +2238,6 @@ unsigned char* API_rebBytes(
         fail ("rebBytes() does not take NULL, see rebBytesMaybe()");
     return bytes;
 }
-
-
-//=//// EXCEPTION HANDLING ////////////////////////////////////////////////=//
-//
-// Exception handling with the API is a work-in-progress.  A lot has changed
-// in the implementation, in particular support for either compiling with
-// setjmp/longjmp -or- try/catch as the mechanic managing abrupt failures.
-//
-// But also, with stackless processing, only one setjmp() or try{} is needed
-// for each invocation of the trampoline.  This means that abrupt failure
-// protection comes "for free" with every API call that invokes a new
-// trampoline...and it's just a matter of deciding what to do at the
-// interface level if the result is an unhandled raised error.
-//
-// It's a largely uncharted territory at this time...so the hope is that
-// your code "just works".  The JavaScript ReplPad runs the console extension
-// code which is already protected by SYS.UTIL/RESCUE, so this captures the
-// failures in API calls in JS-NATIVEs pretty well...but other scenarios
-// might be messier.
-//
-//=////////////////////////////////////////////////////////////////////////=//
-
-
-//
-//  rebRescue: API
-//
-// This API was an early attempt at wrapping arbitrary API calls which might
-// have failures in the code they evaluate.  It is named after Ruby's
-// operation, which deals with the identical problem:
-//
-// http://silverhammermba.github.io/emberb/c/#rescue
-//
-// Unlike SYS.UTIL/RESCUE, it returns an ERROR! in case of failure, or the
-// result of the code otherwise.  This creates conflation problems when
-// the code actually returned an ERROR!.  SYS.UTIL/ENRESCUE solves this
-// problem by returning a plain ERROR! in case of failure or a META result
-// otherwise, so a plain error would appear quoted.
-//
-// !!! Redesign of this function at this time is probably not as good an
-// investment as working more on interoperability of exceptions with
-// JavaScript try/catch.  Code which is protecting against errors and
-// knows it needs to can just use SYS.UTIL/RESCUE in the API call itself.
-//
-RebolValue* API_rebRescue(
-    REBDNG *dangerous,  // !!! pure C function if FAIL_USES_LONGJMP
-    void *opaque
-){
-    return API_rebRescueWith(dangerous, nullptr, opaque);
-}
-
-
-//
-//  rebRescueWith: API
-//
-// Variant of rebRescue() with a handler, similar to Ruby's rescue2 operation.
-//
-// 1. We want API allocations via rebValue() or rebAlloc() that occur in the
-//    body of the C function for the rebRescue() to be automatically cleaned
-//    up in the case of an error.  There must be a frame to attach them to.
-//
-RebolValue* API_rebRescueWith(
-    REBDNG *dangerous,  // !!! pure C function only if not using throw/catch!
-    REBRSC *rescuer,  // errors in the rescuer function will *not* be caught
-    void *opaque
-){
-    ENTER_API;
-
-    Level* dummy = Make_End_Level(
-        &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
-        LEVEL_MASK_NONE
-    );
-    DECLARE_ATOM (sink);
-    Push_Level_Erase_Out_If_State_0(sink, dummy);  // for owning API cells [1]
-
-  RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
-
-    Value* result = (*dangerous)(opaque);
-
-    if (not result) {
-        // null is considered a legal result
-    }
-    else if (
-        rescuer == nullptr
-        and QUOTE_BYTE(result) == NOQUOTE_1
-        and HEART_BYTE(result) == REB_ERROR
-    ){
-        // If you don't have a handler for the error case then you can't
-        // return an ERROR!, since all errors indicate a failure.  Use
-        // HEART_BYTE() since BOUNCE_THROWN or other special things can be
-        // used internally, and literal errors don't count either.
-        //
-        if (Is_Api_Value(result))
-            rebRelease(result);
-
-        Init_Anti_Word(result, CANON(ERRORED));
-        goto proxy_result;
-    }
-    else {
-        if (not Is_Api_Value(result)) {
-            // no proxying needed
-        }
-        else {
-            assert(not Is_Nulled(result));  // leaked API nulled cell
-
-            // !!! Automatically proxy the ownership of any managed handles
-            // to the caller.  Any other handles that leak out (e.g. via
-            // state) won't be covered by this, and must be unmanaged.
-
-          proxy_result: {
-            Stub* stub = Compact_Stub_From_Cell(result);
-            Disconnect_Api_Handle_From_Level(stub);  // e.g. linked to f
-            Connect_Api_Handle_To_Level(stub, dummy->prior);  // link to caller
-          }
-        }
-    }
-
-    Drop_Level(dummy);  // Drop_Level_Unbalanced() if for some internal uses
-
-    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-    return result;
-
-} ON_ABRUPT_FAILURE(Error* e) {  /////////////////////////////////////////
-
-    Drop_Level(dummy);
-
-    Value* error = Init_Error(Alloc_Value(), e);
-
-    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-
-    if (not rescuer)
-        return error;  // plain rebRescue() behavior
-
-    Value* result = (*rescuer)(error, opaque);  // *not* guarded by RESCUE!
-    rebRelease(error);
-    return result;  // no special handling, may be null
-}}
 
 
 //

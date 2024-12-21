@@ -779,31 +779,6 @@ e-lib/emit [ver --{
 
 
     /*
-     * "Dangerous Function" which is called by rebRescue().  Argument can be a
-     * RebolValue* but does not have to be.
-     *
-     * Result must be a RebolValue* or nullptr.
-     *
-     * !!! If the dangerous function returns an ERROR!, it will currently be
-     * converted to null, which parallels TRAP without a handler.  nulls will
-     * be converted to voids.
-     */
-
-    typedef RebolValue* (REBDNG)(void *opaque);
-
-
-    /*
-     * "Rescue Function" called as the handler in rebRescueWith().  Receives
-     * the RebolValue* of the error that occurred, and the opaque pointer.
-     *
-     * !!! If either the dangerous function or the rescuing function return an
-     * ERROR! value, that is not interfered with the way rebRescue() does.
-     */
-
-    typedef RebolValue* (REBRSC)(RebolValue* error, void *opaque);
-
-
-    /*
      * For some HANDLE!s GC callback.  Note that because these cleanups are
      * called during recycling, they cannot run most API routines.  Some
      * exceptions are made for extracting handle properties and running
