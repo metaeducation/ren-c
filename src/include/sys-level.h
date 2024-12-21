@@ -419,7 +419,7 @@ INLINE void Free_Level_Internal(Level* L) {
     Release_Feed(L->feed);  // frees if refcount goes to 0
 
     if (L->varlist) {  // !!! Can be not null if abrupt failure [1]
-        assert(MISC(RunLevel, L->varlist) == nullptr);  // Drop_Action() nulls
+        assert(Misc_Runlevel(L->varlist) == nullptr);  // Drop_Action() nulls
         if (Not_Node_Managed(L->varlist))
             GC_Kill_Flex(L->varlist);
     }

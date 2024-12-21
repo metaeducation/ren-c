@@ -213,7 +213,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     ParamList* varlist = cast(ParamList*, L->varlist);  // executor is nullptr
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
-    MISC(RunLevel, varlist) = nullptr;  // disconnect from f
+    Tweak_Misc_Runlevel(varlist, nullptr);  // disconnect from L
     Drop_Level(L);
     Drop_Lifeguard(action);
 

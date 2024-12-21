@@ -182,9 +182,6 @@ typedef Context Use;
 #define HAS_MISC_VarlistAdjunct       FLAVOR_VARLIST
 
 
-#define MISC_RunLevel_TYPE      Level*
-#define HAS_MISC_RunLevel       FLAVOR_VARLIST
-
 
 //=//// VARLIST_FLAG_24 ///////////////////////////////////////////////////=//
 //

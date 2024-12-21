@@ -1048,7 +1048,7 @@ void Push_Action(Level* L, const Cell* frame) {
             // not managed by default, see Force_Level_Varlist_Managed()
         Alloc_Stub()
     ));
-    MISC(RunLevel, s) = L;  // maps varlist back to L
+    Tweak_Misc_Runlevel(s, L);  // maps varlist back to L
     BONUS(KeyList, s) = Phase_Keylist(phase);
     Tweak_Link_Inherit_Bind(s, nullptr);
 
@@ -1167,13 +1167,13 @@ void Begin_Action(
 void Drop_Action(Level* L) {
     Corrupt_Pointer_If_Debug(L->u.action.label);  // first (data breakpoint)
 
-    assert(MISC(RunLevel, L->varlist) == L);
+    assert(Misc_Runlevel(L->varlist) == L);
 
     if (
         Is_Node_Managed(L->varlist)  // outstanding references may exist [1]
         or Get_Action_Executor_Flag(L, FULFILL_ONLY)
     ){
-        MISC(RunLevel, L->varlist) = nullptr;
+        Tweak_Misc_Runlevel(L->varlist, nullptr);
     }
     else {  // no outstanding references [2]
         GC_Kill_Flex(L->varlist);  // not in manuals tracking list

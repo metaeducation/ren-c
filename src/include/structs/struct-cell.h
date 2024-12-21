@@ -441,6 +441,8 @@ union AnyUnion {
     Option(RebolHandleCleaner*) cleaner;  // HANDLE!s use for GC finalization
 
     bool negated;  // alternate bool name, used by bitset (easier to find)
+
+    Level* runlevel;  // used by running frames to map back to their Level
 };
 
 

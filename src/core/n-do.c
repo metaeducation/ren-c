@@ -527,7 +527,7 @@ DECLARE_NATIVE(eval_free)
     L->rootvar = Rootvar_Of_Varlist(varlist);
     assert(Get_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
     Clear_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK);
-    MISC(RunLevel, varlist) = L;
+    Tweak_Misc_Runlevel(varlist, L);
 
     Phase* phase = Level_Phase(L);
     assert(phase == Cell_Frame_Phase(

@@ -69,8 +69,8 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     Push_Level_Erase_Out_If_State_0(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
-    assert(MISC(RunLevel, sub->varlist) == L);
-    MISC(RunLevel, sub->varlist) = sub;
+    assert(Misc_Runlevel(sub->varlist) == L);
+    Tweak_Misc_Runlevel(sub->varlist, sub);
     sub->rootvar = Array_Head(sub->varlist);
 
     L->varlist = nullptr;  // Note: may be TRAMPOLINE_KEEPALIVE! [1]

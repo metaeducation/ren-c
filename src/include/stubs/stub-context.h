@@ -362,16 +362,30 @@ INLINE Value* Varlist_Slots(Sink(const Value*) tail, VarList* v) {
 
 //=//// FRAME! VarList* <-> Level* STRUCTURE //////////////////////////////=//
 //
-// The MISC() field of frames which can be tied to levels can be a Level*,
+// The Stub.misc field of frames which can be tied to levels can be a Level*,
 // instead of an "adjunct" object.
 //
+
+INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
+    assert(Is_Stub_Varlist(varlist));
+    assert(CTX_TYPE(varlist) == REB_FRAME);
+    assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
+    return varlist->misc.runlevel;
+}
+
+INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
+    assert(Is_Stub_Varlist(varlist));
+    possibly(CTX_TYPE(varlist) == REB_FRAME);  // may not be fully formed yet
+    assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
+    varlist->misc.runlevel = maybe L;
+}
 
 INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {
     assert(Is_Frame(Varlist_Archetype(varlist)));
     if (Get_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK))
         return nullptr;  // MISC is used for VarlistAdjunct, not Level*
 
-    Level* L = MISC(RunLevel, varlist);
+    Level* L = maybe Misc_Runlevel(varlist);
     if (not L)
         return nullptr;
 
