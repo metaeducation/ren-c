@@ -339,8 +339,8 @@ DECLARE_NATIVE(make_native)
 
     Init_Blank(Details_At(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
 
-    assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, adjunct);
+    assert(Misc_Phase_Adjunct(details) == nullptr);
+    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

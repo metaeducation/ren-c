@@ -558,7 +558,7 @@ ParamList* Pop_Paramlist_May_Fail(
     Manage_Flex(paramlist);
 
     BONUS(KeyList, paramlist) = keylist;
-    MISC(VarlistAdjunct, paramlist) = nullptr;
+    Tweak_Misc_Varlist_Adjunct(paramlist, nullptr);
     Tweak_Link_Inherit_Bind(paramlist, nullptr);
 
     // With all the values extracted from stack to array, restore stack pointer
@@ -729,7 +729,7 @@ Details* Make_Dispatch_Details(
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
     Tweak_Details_Dispatcher(cast(Details*, a), dispatcher);
-    MISC(DetailsAdjunct, a) = nullptr;  // caller can fill in
+    Tweak_Misc_Details_Adjunct(a, nullptr);  // caller can fill in
 
     Details* details = cast(Details*, a);  // now it's legitimate, can be cast
 

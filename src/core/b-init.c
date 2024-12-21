@@ -365,7 +365,7 @@ static void Init_Root_Vars(void)
         1 + len  // needs room for rootvar
     );
     Set_Flex_Len(a, 1 + len);
-    MISC(VarlistAdjunct, a) = nullptr;
+    Tweak_Misc_Varlist_Adjunct(a, nullptr);
     Tweak_Link_Inherit_Bind(a, nullptr);
 
     KeyList* keylist = Make_Flex(

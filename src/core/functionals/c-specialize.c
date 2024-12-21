@@ -146,7 +146,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
         goto continue_unspecialized;
     }
 
-    MISC(VarlistAdjunct, a) = nullptr;
+    Tweak_Misc_Varlist_Adjunct(a, nullptr);
     Tweak_Link_Inherit_Bind(a, nullptr);
 
     return cast(ParamList*, a);

@@ -155,8 +155,8 @@ Details* Make_Native_Dispatch_Details(
     // We want the meta information on the wrapped version if it's a
     // NATIVE-COMBINATOR.
     //
-    assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, adjunct);
+    assert(Misc_Phase_Adjunct(details) == nullptr);
+    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     // Some features are not supported by intrinsics on their first argument,
     // because it would make them too complicated.

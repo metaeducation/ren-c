@@ -292,17 +292,16 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 
-INLINE void Tweak_Phase_Adjunct(Phase* a, Option(VarList*) adjunct) {
-    if (Is_Stub_Details(a))
-        MISC(DetailsAdjunct, a) = maybe adjunct;
-    else
-        MISC(VarlistAdjunct, a) = maybe adjunct;
+INLINE Option(VarList*) Misc_Details_Adjunct(Details* details) {
+    return cast(VarList*, m_cast(Node*, Details_Array(details)->misc.node));
 }
 
-INLINE Option(VarList*) Phase_Adjunct(Phase* a) {
-    if (Is_Stub_Details(a))
-        return MISC(DetailsAdjunct, a);
-    return MISC(VarlistAdjunct, a);
+INLINE void Tweak_Misc_Details_Adjunct(
+    Stub* details,  // may not be formed yet
+    Option(VarList*) adjunct
+){
+    assert(Is_Stub_Details(details));
+    details->misc.node = maybe adjunct;
 }
 
 

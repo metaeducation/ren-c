@@ -178,10 +178,6 @@ typedef Context Use;
 #endif
 
 
-#define MISC_VarlistAdjunct_TYPE      VarList*
-#define HAS_MISC_VarlistAdjunct       FLAVOR_VARLIST
-
-
 
 //=//// VARLIST_FLAG_24 ///////////////////////////////////////////////////=//
 //

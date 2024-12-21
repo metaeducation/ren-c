@@ -303,8 +303,8 @@ Details* Make_Interpreted_Action_May_Fail(
         details_capacity  // we fill in details[0], caller fills any extra
     );
 
-    assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, meta);
+    assert(Misc_Phase_Adjunct(details) == nullptr);
+    Tweak_Misc_Phase_Adjunct(details, meta);
 
     Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action

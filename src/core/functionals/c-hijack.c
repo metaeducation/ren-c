@@ -313,7 +313,7 @@ DECLARE_NATIVE(hijack)
             return FAIL("Cannot HIJACK function with itself");  // right?
     }
 
-    Option(VarList*) adjunct = Phase_Adjunct(victim);
+    Option(VarList*) adjunct = Misc_Phase_Adjunct(victim);
 
     Details* proxy = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
@@ -329,7 +329,7 @@ DECLARE_NATIVE(hijack)
     if (not hijack_void)
         Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), ARG(hijacker));
 
-    Tweak_Phase_Adjunct(proxy, adjunct);  // not a copy, shared reference [3]
+    Tweak_Misc_Phase_Adjunct(proxy, adjunct);  // shared reference [3]
 
     Swap_Flex_Content(victim, proxy);  // after swap, victim is hijacker
 

@@ -42,7 +42,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
             | flags,  // e.g. NODE_FLAG_MANAGED
         capacity + 1  // size + room for rootvar (array terminator implicit)
     );
-    MISC(VarlistAdjunct, a) = nullptr;
+    Tweak_Misc_Varlist_Adjunct(a, nullptr);
     Tweak_Link_Inherit_Bind(a, nullptr);
 
     Alloc_Tail_Array(a);  // allocate rootvar
@@ -765,7 +765,7 @@ VarList* Make_Varlist_Detect_Managed(
         1 + len  // needs room for rootvar
     );
     Set_Flex_Len(a, 1 + len);
-    MISC(VarlistAdjunct, a) = nullptr;
+    Tweak_Misc_Varlist_Adjunct(a, nullptr);
     Tweak_Link_Inherit_Bind(a, nullptr);
 
     if (

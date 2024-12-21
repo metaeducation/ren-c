@@ -85,9 +85,32 @@ INLINE void Add_Link_Inherit_Bind(Context* context, Option(Context*) next) {
 // is another object's-worth of data *about* the module's contents (e.g. the
 // processed header)
 //
-INLINE Option(VarList*) CTX_ADJUNCT(VarList* c) {
-    return MISC(VarlistAdjunct, Varlist_Array(c));
+INLINE Option(VarList*) Misc_Varlist_Adjunct(VarList* varlist) {
+    return cast(VarList*, m_cast(Node*, Varlist_Array(varlist)->misc.node));
 }
+
+INLINE void Tweak_Misc_Varlist_Adjunct(
+    Stub* varlist,
+    Option(VarList*) adjunct
+){
+    assert(Is_Stub_Varlist(varlist));
+    varlist->misc.node = maybe adjunct;
+}
+
+INLINE void Tweak_Misc_Phase_Adjunct(Phase* a, Option(VarList*) adjunct) {
+    if (Is_Stub_Details(a))
+        Tweak_Misc_Details_Adjunct(cast(Details*, a), adjunct);
+    else
+        Tweak_Misc_Varlist_Adjunct(cast(ParamList*, a), adjunct);
+}
+
+INLINE Option(VarList*) Misc_Phase_Adjunct(Phase* a) {
+    if (Is_Stub_Details(a))
+        return Misc_Details_Adjunct(cast(Details*, a));
+    return Misc_Varlist_Adjunct(cast(ParamList*, a));
+}
+
+
 
 #define Tweak_Cell_Context_Varlist            Tweak_Cell_Node1
 
@@ -113,7 +136,7 @@ INLINE Option(VarList*) CTX_ADJUNCT(VarList* c) {
 //
 // Note: Other context types could use the slots for binding and phase for
 // other purposes.  For instance, MODULE! could store its header information.
-// For the moment that is done with the CTX_ADJUNCT() field instead.
+// For the moment that is done with the Misc_Varlist_Adjunct() field instead.
 //
 
 #if DEBUG_CELL_READ_WRITE
@@ -383,7 +406,7 @@ INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
 INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {
     assert(Is_Frame(Varlist_Archetype(varlist)));
     if (Get_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK))
-        return nullptr;  // MISC is used for VarlistAdjunct, not Level*
+        return nullptr;  // Stub.misc is Misc_Varlist_Adjunct(), not Level*
 
     Level* L = maybe Misc_Runlevel(varlist);
     if (not L)

@@ -34,9 +34,6 @@
 #endif
 
 
-#define MISC_DetailsAdjunct_TYPE      VarList*
-#define HAS_MISC_DetailsAdjunct       FLAVOR_DETAILS
-
 // Note: LINK on details is the DISPATCHER, on varlists it's KEYSOURCE
 
 

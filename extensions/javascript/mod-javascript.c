@@ -1063,8 +1063,8 @@ DECLARE_NATIVE(js_native)
         &cleanup_js_object
     );
 
-    assert(Phase_Adjunct(details) == nullptr);  // should default to nullptr
-    Tweak_Phase_Adjunct(details, adjunct);
+    assert(Misc_Phase_Adjunct(details) == nullptr);
+    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
 }

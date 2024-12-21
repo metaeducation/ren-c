@@ -123,8 +123,8 @@ DECLARE_NATIVE(augment)
         STACK_BASE, prior, prior_coupling
     );
 
-    assert(Phase_Adjunct(paramlist) == nullptr);
-    Tweak_Phase_Adjunct(paramlist, adjunct);
+    assert(Misc_Phase_Adjunct(paramlist) == nullptr);
+    Tweak_Misc_Phase_Adjunct(paramlist, adjunct);
 
     return Init_Action(OUT, paramlist, label, coupling);
 }

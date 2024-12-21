@@ -3193,8 +3193,8 @@ RebolValue* API_rebFunctionFlipped(
     Init_Block(holder, EMPTY_ARRAY);  // only care about binding GC safety
     Tweak_Cell_Binding(holder, Cell_Binding(spec));
 
-    assert(Phase_Adjunct(details) == nullptr);
-    Tweak_Phase_Adjunct(details, adjunct);
+    assert(Misc_Phase_Adjunct(details) == nullptr);
+    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     return Init_Action(Alloc_Value(), details, ANONYMOUS, UNBOUND);
 }

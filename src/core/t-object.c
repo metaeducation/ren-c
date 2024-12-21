@@ -501,19 +501,19 @@ DECLARE_NATIVE(adjunct_of)
 
     Value* v = ARG(value);
 
-    Option(VarList*) meta;
+    Option(VarList*) adjunct;
     if (Is_Frame(v)) {
-        meta = Phase_Adjunct(Cell_Frame_Phase(v));
+        adjunct = Misc_Phase_Adjunct(Cell_Frame_Phase(v));
     }
     else {
         assert(Any_Context(v));
-        meta = CTX_ADJUNCT(Cell_Varlist(v));
+        adjunct = Misc_Varlist_Adjunct(Cell_Varlist(v));
     }
 
-    if (not meta)
+    if (not adjunct)
         return nullptr;
 
-    return COPY(Varlist_Archetype(unwrap meta));
+    return COPY(Varlist_Archetype(unwrap adjunct));
 }
 
 
@@ -535,7 +535,7 @@ DECLARE_NATIVE(set_adjunct)
 
     Value* adjunct = ARG(adjunct);
 
-    VarList* ctx;
+    Option(VarList*) ctx;
     if (Any_Context(adjunct)) {
         if (Is_Frame(adjunct))
             return FAIL("SET-ADJUNCT can't store bindings, FRAME! disallowed");
@@ -550,10 +550,10 @@ DECLARE_NATIVE(set_adjunct)
     Value* v = ARG(value);
 
     if (Is_Frame(v)) {
-        Tweak_Phase_Adjunct(Cell_Frame_Phase(v), ctx);
+        Tweak_Misc_Phase_Adjunct(Cell_Frame_Phase(v), ctx);
     }
     else
-        MISC(VarlistAdjunct, Varlist_Array(Cell_Varlist(v))) = ctx;
+        Tweak_Misc_Varlist_Adjunct(Varlist_Array(Cell_Varlist(v)), ctx);
 
     return COPY(adjunct);
 }
@@ -605,13 +605,13 @@ VarList* Copy_Varlist_Extra_Managed(
 
         assert(extra == 0);
 
-        if (CTX_ADJUNCT(original)) {
-            MISC(VarlistAdjunct, varlist) = Copy_Varlist_Shallow_Managed(
-                unwrap CTX_ADJUNCT(original)
-            );
+        if (Misc_Varlist_Adjunct(original)) {
+            Tweak_Misc_Varlist_Adjunct(varlist, Copy_Varlist_Shallow_Managed(
+                unwrap Misc_Varlist_Adjunct(original)
+            ));
         }
         else {
-            MISC(VarlistAdjunct, varlist) = nullptr;
+            Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
         }
         BONUS(KeyList, varlist) = nullptr;  // modules don't have keylists
         Tweak_Link_Inherit_Bind(varlist, nullptr);
@@ -691,12 +691,12 @@ VarList* Copy_Varlist_Extra_Managed(
     // If we're copying a frame here, we know it's not running.
     //
     if (CTX_TYPE(original) == REB_FRAME)
-        MISC(VarlistAdjunct, varlist) = nullptr;
+        Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
     else {
         // !!! Should the meta object be copied for other context types?
         // Deep copy?  Shallow copy?  Just a reference to the same object?
         //
-        MISC(VarlistAdjunct, varlist) = nullptr;
+        Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
     }
 
     Tweak_Link_Inherit_Bind(varlist, nullptr);

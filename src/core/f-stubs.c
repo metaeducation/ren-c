@@ -272,7 +272,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
     assert(CTX_TYPE(v) == kind);
 
-    if (kind == REB_FRAME)  // may not have VarlistAdjunct
+    if (kind == REB_FRAME)  // may not have Misc_Varlist_Adjunct()
         assert(
             (v->leader.bits & FLEX_MASK_LEVEL_VARLIST)
             == FLEX_MASK_LEVEL_VARLIST
@@ -297,8 +297,8 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
     }
 
     assert(
-        not CTX_ADJUNCT(v)
-        or Any_Context_Kind(CTX_TYPE(unwrap CTX_ADJUNCT(v)))
+        not Misc_Varlist_Adjunct(v)
+        or Any_Context_Kind(CTX_TYPE(unwrap Misc_Varlist_Adjunct(v)))
     );
 }
 
@@ -320,8 +320,8 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
 
     if (Get_Stub_Flag(phase, MISC_NODE_NEEDS_MARK)) {
         assert(
-            Phase_Adjunct(phase) == nullptr
-            or Any_Context_Kind(CTX_TYPE(unwrap Phase_Adjunct(phase)))
+            Misc_Phase_Adjunct(phase) == nullptr
+            or Any_Context_Kind(CTX_TYPE(unwrap Misc_Phase_Adjunct(phase)))
         );
     }
     else

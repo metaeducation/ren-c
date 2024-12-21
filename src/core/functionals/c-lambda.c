@@ -282,7 +282,7 @@ DECLARE_NATIVE(lambda)
         IDX_LAMBDA_MAX  // same as specialization, just 1 (for archetype)
     );
 
-    assert(Phase_Adjunct(details) == nullptr);
+    assert(Misc_Phase_Adjunct(details) == nullptr);
 
     Copy_Cell(Array_At(details, IDX_LAMBDA_BODY), body);
 
