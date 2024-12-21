@@ -43,8 +43,18 @@ INLINE PairList* MAP_PAIRLIST(const_if_c Map* map)
       { return x_cast(const PairList*, map); }
 #endif
 
+INLINE HashList* Link_Hashlist(const Array* pairlist) {
+    assert(Is_Stub_Pairlist(pairlist));
+    return u_cast(HashList*, m_cast(Node*, pairlist->link.node));
+}
+
+INLINE void Tweak_Link_Hashlist(Array* pairlist, HashList* hashlist) {
+    assert(Is_Stub_Pairlist(pairlist));
+    pairlist->link.node = hashlist;
+}
+
 #define MAP_HASHLIST(m) \
-    LINK(Hashlist, MAP_PAIRLIST(m))
+    Link_Hashlist(MAP_PAIRLIST(m))
 
 #define MAP_HASHES(m) \
     Flex_Head(MAP_HASHLIST(m))

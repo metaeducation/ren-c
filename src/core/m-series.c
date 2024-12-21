@@ -170,7 +170,7 @@ Flex* Copy_Flex_Core(Flags flags, const Flex* f)
         copy = Make_String_Core(flags, used);
         Set_Flex_Used(copy, used);
         *Flex_Tail(Byte, copy) = '\0';
-        LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
+        Tweak_Link_Bookmarks(cast(String*, copy), nullptr);  // !!! copy these?
         copy->misc.num_codepoints = f->misc.num_codepoints;
     }
     else if (Flex_Wide(f) == 1) {  // non-string BLOB!

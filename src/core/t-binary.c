@@ -479,7 +479,7 @@ DECLARE_GENERICS(Blob)
                     num_codepoints,
                     Binary_Len(bin)
                 );
-                LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
+                Tweak_Link_Bookmarks(str, nullptr);
 
                 // !!! TBD: cache index/offset
             }

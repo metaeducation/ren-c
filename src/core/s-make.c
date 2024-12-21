@@ -43,7 +43,7 @@ String* Make_String_Core(Flags flags, Size encoded_capacity)
         encoded_capacity + 1  // + 1 makes room for '\0' terminator
     );
     str->misc.num_codepoints = 0;
-    LINK(Bookmarks, str) = nullptr;  // generated on demand
+    Tweak_Link_Bookmarks(str, nullptr);  // generated on demand
     *Binary_Head(str) = '\0';  // zero length, so head = tail
     return str;
 }

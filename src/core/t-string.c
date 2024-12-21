@@ -67,16 +67,16 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         Is_String_All_Ascii(s)
         and not SPORADICALLY(20)  // test non-ASCII codepath for ASCII
     ){
-        possibly(LINK(Bookmarks, s));  // mutations maintain for long strings
+        possibly(Link_Bookmarks(s));  // mutations maintain for long strings
         return cast(Utf8(*), cast(Byte*, String_Head(s)) + at);
     }
 
     Utf8(*) cp;  // can be used to calculate offset (relative to String_Head())
     REBLEN index;
 
-    BookmarkList* book = nullptr;  // updated at end if not nulled out
+    Option(BookmarkList*) book = nullptr;  // updated at end if not nulled out
     if (not Is_String_Symbol(s))
-        book = LINK(Bookmarks, s);
+        book = Link_Bookmarks(s);
 
   #if DEBUG_SPORADICALLY_DROP_BOOKMARKS
     if (book and SPORADICALLY(100)) {
@@ -103,7 +103,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         }
         if (not book and not Is_String_Symbol(s)) {
             book = Alloc_BookmarkList();
-            LINK(Bookmarks, m_cast(String*, s)) = book;
+            Tweak_Link_Bookmarks(m_cast(String*, s), book);
             goto scan_from_head;  // will fill in bookmark
         }
     }
@@ -118,7 +118,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         }
         if (not book and not Is_String_Symbol(s)) {
             book = Alloc_BookmarkList();
-            LINK(Bookmarks, m_cast(String*, s)) = book;
+            Tweak_Link_Bookmarks(m_cast(String*, s), book);
             goto scan_from_tail;  // will fill in bookmark
         }
     }
@@ -129,10 +129,10 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     // track the last access--which speeds up the most common case of an
     // iteration.  Improve as time permits!
     //
-    assert(not book or Flex_Used(book) == 1);  // only one
+    assert(not book or Flex_Used(unwrap book) == 1);  // only one
 
   blockscope {
-    REBLEN booked = book ? BOOKMARK_INDEX(book) : 0;
+    REBLEN booked = book ? BOOKMARK_INDEX(unwrap book) : 0;
 
     // `at` is always positive.  `booked - at` may be negative, but if it
     // is positive and bigger than `at`, faster to seek from head.
@@ -154,7 +154,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     index = booked;
     if (book)
-        cp = cast(Utf8(*), Flex_Data(s) + BOOKMARK_OFFSET(book));
+        cp = cast(Utf8(*), Flex_Data(s) + BOOKMARK_OFFSET(unwrap book));
     else
         cp = cast(Utf8(*), Flex_Data(s));
   }
@@ -211,8 +211,8 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("caching %ld\n", index);
   #endif
-    BOOKMARK_INDEX(book) = index;
-    BOOKMARK_OFFSET(book) = cp - String_Head(s);
+    BOOKMARK_INDEX(unwrap book) = index;
+    BOOKMARK_OFFSET(unwrap book) = cp - String_Head(s);
 
   #if DEBUG_VERIFY_STR_AT
     Utf8(*) check_cp = String_Head(s);

@@ -230,8 +230,8 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 //
 // If a context represents a FRAME! that is currently executing, one often
 // needs to quickly navigate to the Level* structure for the corresponding
-// stack level.  This is sped up by swapping the Level* into the LINK() of
-// the varlist until the frame is finished.  In this state, the paramlist of
+// stack level.  This is sped up by swapping the Level* in Stub.misc.runlevel
+// of varlist until the frame is finished.  In this state, the paramlist of
 // the FRAME! action is consulted. When the action is finished, this is put
 // back in BONUS_KEYSOURCE().
 //
@@ -257,7 +257,6 @@ INLINE void Tweak_Keylist_Of_Varlist_Unique(Flex* f, KeyList *keylist) {
     assert(Not_Flavor_Flag(KEYLIST, keylist, SHARED));
     BONUS(KeyList, f) = keylist;
 }
-
 
 
 INLINE const Symbol* Info_Let_Symbol(const Stub* stub) {
@@ -378,7 +377,7 @@ INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
         }
         if (strict)
             return nullptr;
-        sym = LINK(Synonym, sym);
+        sym = Link_Next_Synonym(sym);
     } while (synonym != sym);
 
     return nullptr;

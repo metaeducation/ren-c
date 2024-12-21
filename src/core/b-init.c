@@ -187,8 +187,6 @@ static void Startup_Lib(void)
         assert(LINK_PATCH_RESERVED_RAW(patch) == nullptr);
         Tweak_Info_Patch_Sea(patch, g_lib_context);
 
-        assert(LINK(PatchReserved, patch) == nullptr);
-
         Symbol* symbol =  &g_symbols.builtin_canons[id];
         assert(Misc_Hitch(symbol) == symbol);  // no module patches yet
         Tweak_Misc_Hitch(symbol, patch);  // ...but now it has one!
@@ -378,7 +376,7 @@ static void Init_Root_Vars(void)
     Set_Flex_Used(keylist, len);
 
     Tweak_Keylist_Of_Varlist_Unique(a, keylist);
-    LINK(Ancestor, keylist) = keylist;  // ancestors terminate in self
+    Tweak_Link_Keylist_Ancestor(keylist, keylist);  // terminate in self
 
     Tweak_Non_Frame_Varlist_Rootvar(a, REB_OBJECT);
 

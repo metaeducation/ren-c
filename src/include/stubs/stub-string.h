@@ -49,19 +49,6 @@
 //
 
 
-// For a writable String, a list of entities that cache the mapping from
-// index to character offset is maintained.  Without some help, it would
-// be necessary to search from the head or tail of the string, character
-// by character, to turn an index into an offset.  This is prohibitive.
-//
-// These bookmarks must be kept in sync.  How many bookmarks are kept
-// should be reigned in proportionally to the length of the String.  As
-// a first try of this strategy, one bookmark is being used.
-//
-#define LINK_Bookmarks_TYPE     BookmarkList*  // alias of Flex for now
-#define HAS_LINK_Bookmarks      FLAVOR_NONSYMBOL
-
-
 INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) utf8) {
     Byte* bp = x_cast(Byte*, utf8);
     do {
@@ -226,7 +213,7 @@ INLINE REBLEN String_Index_At(
 
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
-    if (Is_Stub_NonSymbol(s)) {  // length is cached for non-ANY-WORD?
+    if (Is_Stub_Non_Symbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
         if (s->misc.num_codepoints > Flex_Used(s))  // includes 0xDECAFBAD
             panic (s);
@@ -272,7 +259,7 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 // BookMarkList in this terminology is simply a Flex which contains a list
 // of indexes and offsets.  This helps to accelerate finding positions in
 // UTF-8 strings based on index, vs. having to necessarily search from the
-// beginning.
+// head or tail.
 //
 // !!! At the moment, only one bookmark is in effect at a time.  Even though
 // it's just two numbers, there's only one pointer's worth of space in the
@@ -284,6 +271,20 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 
 #define BOOKMARK_OFFSET(b) \
     Flex_Head(Bookmark, (b))->offset
+
+INLINE Option(BookmarkList*) Link_Bookmarks(const String* string)
+{
+    assert(Is_Stub_Non_Symbol(string));
+    return cast(BookmarkList*, m_cast(Node*, string->link.node));
+}
+
+INLINE void Tweak_Link_Bookmarks(
+    const String* string,
+    Option(BookmarkList*) book
+){
+    assert(Is_Stub_Non_Symbol(string));
+    m_cast(String*, string)->link.node = maybe book;
+}
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
     BookmarkList* books = Make_Flex(
@@ -299,15 +300,16 @@ INLINE BookmarkList* Alloc_BookmarkList(void) {
 
 INLINE void Free_Bookmarks_Maybe_Null(String* str) {
     assert(not Is_String_Symbol(str));
-    if (LINK(Bookmarks, str)) {
-        GC_Kill_Flex(LINK(Bookmarks, str));
-        LINK(Bookmarks, str) = nullptr;
+    BookmarkList* book = maybe Link_Bookmarks(str);
+    if (book) {
+        GC_Kill_Flex(book);
+        Tweak_Link_Bookmarks(str, nullptr);
     }
 }
 
 #if RUNTIME_CHECKS
     INLINE void Check_Bookmarks_Debug(String* s) {
-        BookmarkList* book = LINK(Bookmarks, s);
+        BookmarkList* book = maybe Link_Bookmarks(s);
         if (not book)
             return;
 
@@ -418,7 +420,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
         // dealing with.  Only update bookmark if it's an offset *after*
         // that character position...
         //
-        BookmarkList* book = LINK(Bookmarks, s);
+        BookmarkList* book = maybe Link_Bookmarks(s);
         if (book and BOOKMARK_OFFSET(book) > cp_offset)
             BOOKMARK_OFFSET(book) += delta;
     }

@@ -154,7 +154,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 
 #define Is_Stub_String(f)           (Stub_Flavor(f) >= FLAVOR_MIN_STRING)
 #define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)
-#define Is_Stub_NonSymbol(f)        (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
+#define Is_Stub_Non_Symbol(f)        (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
 
 #define Is_Stub_Keylist(f)          (Stub_Flavor(f) == FLAVOR_KEYLIST)
 
@@ -208,81 +208,6 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
     m_cast(union HeaderUnion*, /* [1] */ \
         &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
         &= ~subclass##_FLAG_##name
-
-
-//=//// LINK, MISC, and INODE HELPERS /////////////////////////////////////=//
-//
-// Every Stub Node has two generic platform-pointer-sized slots, called LINK
-// and MISC, that can store arbitrary information.  How that is interpreted
-// depends on the Flex subtype (its FLAVOR_XXX byte).  If a Stub isn't a
-// Flex that uses its INFO bits, then it can use that space for another
-// generic platform-pointer slot.
-//
-// Some of these slots hold other Node pointers that need to be GC marked.  But
-// rather than a switch() statement based on subtype to decide what to mark
-// or not, the GC is guided by generic flags in the Stub header called
-// LINK_NODE_NEEDS_MARK, MISC_NODE_NEEDS_MARK, and INFO_NODE_NEEDS_MARK.
-//
-// Yet the link and misc actually mean different things for different subtypes.
-// A FLAVOR_NONSYMBOL node's LINK points to a list that maps byte positions to
-// UTF-8 codepoint boundaries.  But a FLAVOR_SYMBOL Flex uses the LINK for a
-// pointer to another symbol's synonym.
-//
-// A C program could typically deal with this using a union, to name the same
-// memory offset in different ways.  Here `link` would be a union {}:
-//
-//      BookmarkList* books = string.link.bookmarks;
-//      string.link.bookmarks = books;
-//
-//      const Symbol* synonym = symbol.link.synonym;
-//      symbol.link.synonym = synonym;
-//
-// The GC could then read a generic field like `stub->link.node` when doing
-// its marking.  This would be fine in C so long as the types were compatible,
-// it's called "type punning".
-//
-// But that's not legal in C++!
-//
-//  "It's undefined behavior to read from the member of the union that
-//   wasn't most recently written."
-//
-//  https://en.cppreference.com/w/cpp/language/union
-//
-// We use a workaround that brings in some heavy checked build benefits.  The
-// LINK() and MISC() macros force all assignments and reads through a common
-// field.  e.g. the following assigns and reads the same field ("node"), but
-// the instances document it is for "bookmarks" or "synonym":
-//
-//      BookmarkList* books = LINK(Bookmarks, string);  // reads `node`
-//      LINK(Bookmarks, string) = books;
-//
-//      const Symbol* synonym = LINK(Synonym, symbol);  // also reads `node`
-//      LINK(Synonym, symbol) = synonym;
-//
-// The syntax is *almost* as readable, but throws in benefits of offering some
-// helpful debug runtime checks that you're accessing what the Flex holds.
-// It has yet another advantage because it allows new "members" to be "added"
-// by extension code that wouldn't be able to edit a union in a core header.
-//
-// To use the LINK(), MISC() or INODE(), you define two macros, like this:
-//
-//      #define LINK_Bookmarks_TYPE     BookmarkList*
-//      #define HAS_LINK_Bookmarks      FLAVOR_NONSYMBOL
-//
-// You get the desired properties of being easy to find cases of a particular
-// interpretation of the field, along with type checking on the assignment,
-// and a cast operation that does potentially heavy debug checks on the
-// extraction.
-//
-
-#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define LINK(Field,stub) \
-        *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(stub)->link.node))
-#else
-    #define LINK(Field,stub) \
-        NodeHolder<LINK_##Field##_TYPE>( \
-            ensure_flavor(HAS_LINK_##Field, (stub))->link.node)
-#endif
 
 
 //=//// STUB CELL ACCESS //////////////////////////////////////////////////=//

@@ -681,7 +681,7 @@ VarList* Copy_Varlist_Extra_Managed(
             extra
         ));
 
-        LINK(Ancestor, keylist) = Keylist_Of_Varlist(original);
+        Tweak_Link_Keylist_Ancestor(keylist, Keylist_Of_Varlist(original));
 
         Tweak_Keylist_Of_Varlist_Unique(copy, keylist);
     }

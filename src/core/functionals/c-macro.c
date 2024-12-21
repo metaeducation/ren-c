@@ -73,7 +73,7 @@ void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
         Mem_Copy(saved, Feed_Singular(feed), sizeof(Stub));
         assert(Not_Node_Managed(saved));
 
-        LINK(Splice, &feed->singular) = saved;  // old feed now after splice
+        Tweak_Link_Feedstub_Splice(&feed->singular, saved);  // old feed after
         Tweak_Misc_Feedstub_Pending(saved, At_Feed(feed));  // save feed->p [3]
     }
 

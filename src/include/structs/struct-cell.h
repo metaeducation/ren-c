@@ -443,6 +443,8 @@ union AnyUnion {
     bool negated;  // alternate bool name, used by bitset (easier to find)
 
     Level* runlevel;  // used by running frames to map back to their Level
+
+    Level* suspended_level;  // used by yielder plugs to store suspended Level
 };
 
 

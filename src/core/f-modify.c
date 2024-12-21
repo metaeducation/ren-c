@@ -559,7 +559,7 @@ REBLEN Modify_String_Or_Binary(
         Set_Flex_Used(dst_flex, dst_used + src_size_total);
 
         if (Is_Stub_String(dst_flex)) {
-            book = LINK(Bookmarks, dst_flex);
+            book = maybe Link_Bookmarks(cast(String*, dst_flex));
 
             if (book and BOOKMARK_INDEX(book) > dst_idx) {  // only INSERT
                 BOOKMARK_INDEX(book) += src_len_total;
@@ -579,12 +579,10 @@ REBLEN Modify_String_Or_Binary(
         REBLEN dst_len_at;
         Size dst_size_at;
         if (Is_Stub_String(dst_flex)) {
+            String* dst_str = cast(String*, dst_flex);
             if (Is_Blob(dst)) {
                 dst_size_at = Cell_Series_Len_At(dst);  // byte count
-                dst_len_at = String_Index_At(
-                    cast(String*, dst_flex),
-                    dst_size_at
-                );
+                dst_len_at = String_Index_At(dst_str, dst_size_at);
             }
             else
                 dst_size_at = Cell_String_Size_Limit_At(
@@ -595,7 +593,7 @@ REBLEN Modify_String_Or_Binary(
 
             // Note: above functions may update the bookmarks --^
             //
-            book = LINK(Bookmarks, dst_flex);
+            book = maybe Link_Bookmarks(dst_str);
         }
         else {
             dst_len_at = Cell_Series_Len_At(dst);
@@ -697,7 +695,7 @@ REBLEN Modify_String_Or_Binary(
         // good a cache as any to be relevant for the next operation.
         //
         if (Is_Stub_String(dst_flex)) {
-            book = LINK(Bookmarks, dst_flex);
+            book = maybe Link_Bookmarks(cast(String*, dst_flex));
 
             if (book and BOOKMARK_INDEX(book) > dst_idx) {
                 BOOKMARK_INDEX(book) = dst_idx;

@@ -77,12 +77,6 @@
 #define Feed_Data(feed) \
     Stub_Cell(&(feed)->singular)  // REB_BLOCK, REB_COMMA if va_list
 
-#define LINK_Splice_TYPE        Stub*
-#define HAS_LINK_Splice         FLAVOR_FEED
-
-#define MISC_Pending_TYPE       const Cell*
-#define HAS_MISC_Pending        FLAVOR_FEED
-
 
 // Nullptr is used by the API to indicate null cells.  We want the frequent
 // tests for being at the end of a feed to not require a dereference, which
@@ -98,9 +92,6 @@
 #define Not_Feed_At_End(feed) \
     (not Is_Feed_At_End(feed))
 
-#define FEED_SPLICE(feed) \
-    LINK(Splice, &(feed)->singular)
-
 INLINE Option(const Cell*) Misc_Feedstub_Pending(Stub* stub) {
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
     return u_cast(const Cell*, stub->misc.node);
@@ -113,6 +104,22 @@ INLINE void Tweak_Misc_Feedstub_Pending(
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
     stub->misc.node = maybe pending;
 }
+
+INLINE Option(Stub*) Link_Feedstub_Splice(Stub* stub) {
+    assert(Stub_Flavor(stub) == FLAVOR_FEED);
+    return u_cast(Stub*, stub->link.node);
+}
+
+INLINE void Tweak_Link_Feedstub_Splice(
+    Stub* stub,
+    Option(Stub*) splice
+){
+    assert(Stub_Flavor(stub) == FLAVOR_FEED);
+    stub->link.node = maybe splice;
+}
+
+#define FEED_SPLICE(feed) \
+    Link_Feedstub_Splice(&(feed)->singular)
 
 // This contains a nullptr if the next fetch should be an attempt
 // to consult the va_list (if any).
@@ -489,17 +496,17 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
             // Instead we do the drop in Free_Feed(), though drops on splices
             // happen here.  It's not perfect, but holds need systemic review.
             //
-            if (FEED_SPLICE(feed)) {  // one or more additional splices to go
+            Stub* splice = maybe FEED_SPLICE(feed);
+            if (splice) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
                     assert(Get_Flex_Info(Feed_Array(feed), HOLD));
                     Clear_Flex_Info(Feed_Array(feed), HOLD);
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
-                Stub* splice = FEED_SPLICE(feed);
                 Mem_Copy(
                     Feed_Singular(feed),
-                    FEED_SPLICE(feed),
+                    splice,
                     sizeof(Stub)
                 );
                 Set_Node_Unreadable_Bit(splice);
@@ -624,7 +631,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
         &feed->singular  // preallocated
     );
     Force_Erase_Cell(Stub_Cell(s));
-    LINK(Splice, s) = nullptr;
+    Tweak_Link_Feedstub_Splice(s, nullptr);
     Tweak_Misc_Feedstub_Pending(s, nullptr);
 
     feed->flags.bits = flags;

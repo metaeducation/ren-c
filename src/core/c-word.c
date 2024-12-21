@@ -356,15 +356,15 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     Freeze_Flex(b);
 
     if (not synonym) {
-        LINK(Synonym, b) = c_cast(Symbol*, b);  // 1-item circular list
+        Tweak_Link_Next_Synonym(b, c_cast(Symbol*, b));  // 1-item circle list
         assert(SECOND_UINT16(&b->info) == SYM_0);  // Startup may assign [3]
     }
     else {
         // This is a synonym for an existing canon.  Link it into the synonyms
         // circularly linked list, and direct link the canon form.
         //
-        LINK(Synonym, b) = LINK(Synonym, synonym);
-        LINK(Synonym, synonym) = c_cast(Symbol*, b);
+        Tweak_Link_Next_Synonym(b, Link_Next_Synonym(synonym));
+        Tweak_Link_Next_Synonym(synonym, c_cast(Symbol*, b));
 
         // If the canon form had a SYM_XXX for quick comparison of %words.r
         // words in C switch statements, the synonym inherits that number.
@@ -415,11 +415,11 @@ void GC_Kill_Interning(const Symbol* symbol)
 {
     assert(Not_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP));  // [1]
 
-    const Symbol* synonym = LINK(Synonym, symbol);  // may be same as symbol
+    const Symbol* synonym = Link_Next_Synonym(symbol);  // maybe same as symbol
     const Symbol* temp = synonym;
-    while (LINK(Synonym, temp) != symbol)
-        temp = LINK(Synonym, temp);
-    LINK(Synonym, temp) = synonym;  // cut symbol out of synonyms (maybe no-op)
+    while (Link_Next_Synonym(temp) != symbol)
+        temp = Link_Next_Synonym(temp);
+    Tweak_Link_Next_Synonym(m_cast(Symbol*, temp), synonym);  // maybe noop
 
     Stub* patch = m_cast(Symbol*, symbol);  // cut symbol from module vars list
     while (Misc_Hitch(patch) != symbol) {

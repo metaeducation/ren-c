@@ -696,7 +696,7 @@ static void Mark_Level(Level* L) {
     Stub* singular = Feed_Singular(L->feed);  // don't mark Misc Pending [1]
     do {
         Queue_Mark_Cell_Deep(Stub_Cell(singular));
-        singular = LINK(Splice, singular);
+        singular = maybe Link_Feedstub_Splice(singular);
     } while (singular);
 
     Context* L_binding = Level_Binding(L);  // marks binding, not feed->p [2]

@@ -109,9 +109,6 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 #define DATASTACK_FLAG_HAS_SPARE            STUB_SUBCLASS_FLAG_26
 #define DATASTACK_FLAG_HAS_SCRATCH          STUB_SUBCLASS_FLAG_27
 
-#define LINK_SuspendedLevel_TYPE       Level*
-#define HAS_LINK_SuspendedLevel        FLAVOR_DATASTACK
-
 #define SPARE_PROXY     x_cast(Atom*, LIB(BLANK))
 #define SCRATCH_PROXY   x_cast(Atom*, LIB(NULL))
 
@@ -122,8 +119,11 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 // compressed form that just holds the Level directly.
 //
 static Level* Level_Of_Plug(const Value* plug) {
-    if (Handle_Holds_Node(plug))
-        return LINK(SuspendedLevel, c_cast(Array*, Cell_Handle_Node(plug)));
+    if (Handle_Holds_Node(plug)) {
+        const Array* a = c_cast(Array*, Cell_Handle_Node(plug));
+        assert(Stub_Flavor(a) == FLAVOR_DATASTACK);
+        return a->link.suspended_level;
+    }
 
     return Cell_Handle_Pointer(Level, plug);
 }
@@ -287,7 +287,7 @@ void Unplug_Stack(
             flags | FLAG_FLAVOR(DATASTACK) | NODE_FLAG_MANAGED,
             base->baseline.stack_base
         );
-        LINK(SuspendedLevel, a) = L;
+        a->link.suspended_level = L;
         Init_Handle_Node_Managed(plug, a, &Clean_Plug_Handle);
     }
     assert(L == Level_Of_Plug(plug));

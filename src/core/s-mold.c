@@ -497,7 +497,7 @@ void Push_Mold(Molder* mo)
     assert(mo->string == nullptr);  // Indicates not pushed, see DECLARE_MOLDER
 
     String* s = g_mold.buffer;
-    assert(LINK(Bookmarks, s) == nullptr);  // should never bookmark buffer
+    assert(Link_Bookmarks(s) == nullptr);  // should never bookmark buffer
 
     Assert_Flex_Term_If_Needed(s);
 
@@ -717,7 +717,7 @@ void Startup_Mold(Size encoded_capacity)
 //
 void Shutdown_Mold(void)
 {
-    assert(LINK(Bookmarks, g_mold.buffer) == nullptr);  // should not be set
+    assert(Link_Bookmarks(g_mold.buffer) == nullptr);  // should not be set
     Free_Unmanaged_Flex(g_mold.buffer);
     g_mold.buffer = nullptr;
 

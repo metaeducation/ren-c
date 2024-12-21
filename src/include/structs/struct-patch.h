@@ -54,9 +54,6 @@
 //    MISC: "Hitch" (links to other patches for other modules, and symbol) [1]
 //    INFO: Info_Patch_Sea()
 
-#define LINK_PatchReserved_TYPE           void*
-#define HAS_LINK_PatchReserved            FLAVOR_PATCH
-
 
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//
 //

@@ -89,11 +89,19 @@
     STUB_SUBCLASS_FLAG_28
 
 
+// For a *read-only* Symbol, circularly linked list of othEr-CaSed string
+// forms.  It should be relatively quick to find the canon form on
+// average, since many-cased forms are somewhat rare.
+//
+// 1. One synonym need not keep another alive, because the process of freeing
+//    string nodes unlinks them from the list.  (Hence the canon can change!)
+//
 #define FLEX_MASK_SYMBOL \
     (NODE_FLAG_NODE \
         | FLAG_FLAVOR(SYMBOL) \
         | FLEX_FLAG_FIXED_SIZE \
-        | NODE_FLAG_MANAGED)
+        | NODE_FLAG_MANAGED \
+        /* | STUB_FLAG_LINK_NODE_NEEDS_MARK */ /* synonym not marked [1] */)
 
 #define FLEX_MASK_UNMANAGED_STRING  FLAG_FLAVOR(NONSYMBOL)
 
@@ -101,16 +109,6 @@
     (FLAG_FLAVOR(NONSYMBOL) | NODE_FLAG_MANAGED)
 
 
-// For a *read-only* Symbol, circularly linked list of othEr-CaSed string
-// forms.  It should be relatively quick to find the canon form on
-// average, since many-cased forms are somewhat rare.
-//
-// Note: A String Flex using this doesn't have STUB_FLAG_LINK_NODE_NEEDS_MARK.
-// One synonym need not keep another alive, because the process of freeing
-// string nodes unlinks them from the list.  (Hence the canon can change!)
-//
-#define LINK_Synonym_TYPE       const Symbol*
-#define HAS_LINK_Synonym        FLAVOR_SYMBOL
 
 // MISC in non-Symbol strings are used for Stub.misc.num_codepoints
 // MISC in Symbol strings used for "hitches"

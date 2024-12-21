@@ -207,7 +207,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Node_Marked(s));
 
         if (not Is_String_Symbol(s)) {
-            BookmarkList* book = LINK(Bookmarks, s);
+            BookmarkList* book = maybe Link_Bookmarks(s);
             if (book) {
                 assert(Flex_Used(book) == 1);  // just one for now
                 //
@@ -457,7 +457,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
                 // place to put an ancestor link.
             }
             else {
-                KeyList* ancestor = LINK(Ancestor, keylist);
+                KeyList* ancestor = Link_Keylist_Ancestor(keylist);
                 UNUSED(ancestor);  // maybe keylist
             }
         }
@@ -470,7 +470,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // seemed to be a source of bugs, but it may be added again...in
         // which case the hashlist may be NULL.
         //
-        HashList* hashlist = LINK(Hashlist, a);
+        HashList* hashlist = Link_Hashlist(a);
         assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
         UNUSED(hashlist);
     }

@@ -1067,7 +1067,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         f->content.dynamic.used = 0;
 
   #if DEBUG_UTF8_EVERYWHERE
-    if (Is_Stub_NonSymbol(f))
+    if (Is_Stub_Non_Symbol(f))
         f->misc.num_codepoints = 0xDECAFBAD;
   #endif
 

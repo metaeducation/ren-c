@@ -58,7 +58,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
             KeyList,
             capacity  // no terminator
         );
-        LINK(Ancestor, keylist) = keylist;  // default to keylist itself
+        Tweak_Link_Keylist_Ancestor(keylist, keylist);  // default to self
         assert(Flex_Used(keylist) == 0);
 
         Tweak_Keylist_Of_Varlist_Unique(a, keylist);  // not shared yet...
@@ -119,10 +119,10 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
             delta
         ));
 
-        if (LINK(Ancestor, k) == k)  // preserve ancestor link [2]
-            LINK(Ancestor, k_copy) = k_copy;
+        if (Link_Keylist_Ancestor(k) == k)  // preserve ancestor link [2]
+            Tweak_Link_Keylist_Ancestor(k_copy, k_copy);
         else
-            LINK(Ancestor, k_copy) = LINK(Ancestor, k);
+            Tweak_Link_Keylist_Ancestor(k_copy, k);
 
         Manage_Flex(k_copy);
         Tweak_Keylist_Of_Varlist_Unique(varlist, k_copy);
@@ -796,9 +796,13 @@ VarList* Make_Varlist_Detect_Managed(
 
         Tweak_Keylist_Of_Varlist_Unique(a, keylist);
         if (parent)
-            LINK(Ancestor, keylist) = Keylist_Of_Varlist(unwrap parent);
+            Tweak_Link_Keylist_Ancestor(
+                keylist, Keylist_Of_Varlist(unwrap parent)
+            );
         else
-            LINK(Ancestor, keylist) = keylist;  // ancestors terminate in self
+            Tweak_Link_Keylist_Ancestor(
+                keylist, keylist  // ancestors terminate in self
+            );
     }
 
     Destruct_Collector(cl);  // !!! binder might be useful for ensuing operations...

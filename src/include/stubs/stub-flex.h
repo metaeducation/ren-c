@@ -555,7 +555,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
     }
 
   #if DEBUG_UTF8_EVERYWHERE
-    if (Is_Stub_NonSymbol(f)) {
+    if (Is_Stub_Non_Symbol(f)) {
         Corrupt_If_Debug(f->misc.num_codepoints);  // catch violators [2]
         Touch_Stub_If_Debug(f);
     }

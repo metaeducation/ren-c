@@ -307,11 +307,10 @@ INLINE void Tweak_Misc_Details_Adjunct(
 
 //=//// ANCESTRY / FRAME COMPATIBILITY ////////////////////////////////////=//
 //
-// On the keylist of an object, LINK_ANCESTOR points at a keylist which has
-// the same number of keys or fewer, which represents an object which this
-// object is derived from.  Note that when new object instances are
-// created which do not require expanding the object, their keylist will
-// be the same as the object they are derived from.
+// Keylist.link.node points at a keylist which has the same number of keys or
+// fewer, which represents an object which this object is derived from.  Note
+// that when new object instances are created which do not require expanding
+// the object, their keylist will be the same as the object derived from.
 //
 // Paramlists have the same relationship, with each expansion (e.g. via
 // AUGMENT) having larger frames pointing to the potentially shorter frames.
@@ -329,8 +328,17 @@ INLINE void Tweak_Misc_Details_Adjunct(
 // The code for processing derivation is slightly different; it should be
 // unified more if possible.
 
-#define LINK_Ancestor_TYPE              KeyList*
-#define HAS_LINK_Ancestor               FLAVOR_KEYLIST
+INLINE KeyList* Link_Keylist_Ancestor(KeyList* keylist) {
+    KeyList* ancestor = cast(KeyList*, m_cast(Node*, keylist->link.node));
+    assert(Is_Stub_Keylist(ancestor));
+    possibly(ancestor == keylist);
+    return ancestor;
+}
+
+INLINE void Tweak_Link_Keylist_Ancestor(KeyList* keylist, KeyList* ancestor) {
+    possibly(keylist == ancestor);  // keylists terminate on self
+    keylist->link.node = ancestor;
+}
 
 INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
     if (derived == base)
@@ -345,7 +353,7 @@ INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {
         if (keylist_test == keylist_base)
             return true;
 
-        KeyList* ancestor = LINK(Ancestor, keylist_test);
+        KeyList* ancestor = Link_Keylist_Ancestor(keylist_test);
         if (ancestor == keylist_test)
             return false;  // signals end of the chain, no match found
 

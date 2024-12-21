@@ -74,12 +74,24 @@ INLINE const Symbol* Canon_Symbol(SymId symid) {
 #define CANON(name) \
     Canon_Symbol(SYM_##name)
 
+INLINE const Symbol* Link_Next_Synonym(const Symbol* symbol) {
+    const Symbol* synonym = cast(const Symbol*, symbol->link.node);
+    possibly(synonym == symbol);  // circularly linked list
+    return synonym;
+}
+
+INLINE void Tweak_Link_Next_Synonym(Stub* symbol, const Stub* synonym) {
+    assert(Is_Stub_Symbol(symbol));
+    possibly(synonym == symbol);  // circularly linked list
+    symbol->link.node = synonym;
+}
+
 INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
     const Symbol* temp = s1;
     do {
         if (temp == s2)
             return true;
-    } while ((temp = LINK(Synonym, temp)) != s1);
+    } while ((temp = Link_Next_Synonym(temp)) != s1);
 
     return false;  // stopped when circularly linked list loops back to self
 }

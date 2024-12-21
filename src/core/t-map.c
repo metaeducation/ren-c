@@ -85,7 +85,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
 Map* Make_Map(REBLEN capacity)
 {
     Array* pairlist = Make_Array_Core(FLEX_MASK_PAIRLIST, capacity * 2);
-    LINK(Hashlist, pairlist) = Make_Hashlist(capacity);
+    Tweak_Link_Hashlist(pairlist, Make_Hashlist(capacity));
 
     return cast(Map*, pairlist);
 }
@@ -393,7 +393,7 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
         FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST),  // !!! No NODE_FLAG_MANAGED?
         MAP_HASHLIST(map)
     ));
-    LINK(Hashlist, copy) = hashlist;
+    Tweak_Link_Hashlist(copy, hashlist);
 
     if (not deeply)
         return cast(Map*, copy);  // shallow is ok

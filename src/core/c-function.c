@@ -475,7 +475,7 @@ ParamList* Pop_Paramlist_May_Fail(
         num_params
     );
     Set_Flex_Used(keylist, num_params);  // no terminator
-    LINK(Ancestor, keylist) = keylist;  // chain
+    Tweak_Link_Keylist_Ancestor(keylist, keylist);  // chain
 
     Array* paramlist = Make_Array_Core(
         FLEX_MASK_PARAMLIST,

@@ -94,11 +94,8 @@ enum StubFlavorEnum {
     FLAVOR_DATASTACK = FLAVOR_MIN_ANTIFORMS_OK,
 
     // This indicates this Flex represents the "varlist" of a context (which
-    // is interchangeable with the identity of the varlist itself).  A second
-    // Flex can be reached from it via the LINK() in the Array Stub, which
-    // is known as a "KeyList".
-    //
-    // See notes on Context for further details about what a context is.
+    // is interchangeable with the identity of the varlist itself).  See
+    // notes on the definition of VarList.
     //
     FLAVOR_VARLIST,
 
