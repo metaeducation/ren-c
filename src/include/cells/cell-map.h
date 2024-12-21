@@ -24,12 +24,16 @@
 //   (but the discussion has not yet finaliezd).
 //
 
-INLINE const Map* VAL_MAP(const Cell* v) {
-    assert(Cell_Heart(v) == REB_MAP);
-    if (Not_Node_Readable(Cell_Node1(v)))
+#define CELL_MAP_PAIRLIST_NODE  CELL_NODE1
+
+INLINE const Map* VAL_MAP(const Cell* c) {
+    assert(Cell_Heart(c) == REB_MAP);
+
+    Node* node = CELL_MAP_PAIRLIST_NODE(c);
+    if (Not_Node_Readable(node))
         fail (Error_Series_Data_Freed_Raw());
 
-    return cast(Map*, Cell_Node1(v));  // identity is the PairList
+    return cast(Map*, node);  // identity is the PairList
 }
 
 #define VAL_MAP_Ensure_Mutable(v) \
@@ -37,3 +41,22 @@ INLINE const Map* VAL_MAP(const Cell* v) {
 
 #define VAL_MAP_Known_Mutable(v) \
     m_cast(Map*, VAL_MAP(Known_Mutable(v)))
+
+
+// A map has an additional hash element hidden in the ->extra field of the
+// Stub which needs to be given to memory management as well.
+//
+INLINE Element* Init_Map(Init(Element) out, Map* map)
+{
+    if (MAP_HASHLIST(map))
+        Force_Flex_Managed(MAP_HASHLIST(map));
+
+    Force_Flex_Managed(MAP_PAIRLIST(map));
+
+    Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_MAP);
+    Corrupt_Unused_Field(out->extra.corrupt);
+    CELL_MAP_PAIRLIST_NODE(out) = MAP_PAIRLIST(map);
+    Corrupt_Unused_Field(out->payload.split.two);
+
+    return out;
+}

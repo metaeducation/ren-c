@@ -480,7 +480,7 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
     if (not Cell_Has_Node1(v))
         return true;  // payloads that live in cell are already immutable
 
-    Node* node = Cell_Node1(v);
+    Node* node = CELL_NODE1(v);
     if (node == nullptr or Is_Node_A_Cell(node))
         return true;  // !!! Will all non-quoted Pairings be frozen?
 

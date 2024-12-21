@@ -44,11 +44,11 @@
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the quote byte do not affect it.
 
-#define Is_Extra_Mark_Kind(k) \
+#define Is_Extra_Mark_Heart(k) \
     ((k) >= REB_VARARGS)
 
 #define Cell_Extra_Needs_Mark(v) \
-    Is_Extra_Mark_Kind(HEART_BYTE(v))  // readable checked elsewhere
+    Is_Extra_Mark_Heart(HEART_BYTE(v))  // readable checked elsewhere
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//

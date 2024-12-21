@@ -243,10 +243,10 @@ REBINT CT_Handle(const Cell* a, const Cell* b, bool strict)
         if (not Cell_Has_Node1(b))
             return 1;
 
-        if (Cell_Node1(a) == Cell_Node1(b))
+        if (CELL_NODE1(a) == CELL_NODE1(b))
             return 0;
 
-        return Cell_Node1(a) > Cell_Node1(b) ? 1 : -1;
+        return CELL_NODE1(a) > CELL_NODE1(b) ? 1 : -1;
     }
     else if (Cell_Has_Node1(b))
         return -1;

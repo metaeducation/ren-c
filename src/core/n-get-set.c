@@ -137,7 +137,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
 
   //=//// HANDLE SIMPLE "WORDLIKE" CASE (.a or a.) ////////////////////////=//
 
-    const Node* node1 = Cell_Node1(tuple);
+    const Node* node1 = CELL_NODE1(tuple);
     if (Is_Node_A_Cell(node1)) { // pair compressed
         // is considered "Listlike", can answer Cell_List_At()
     }
@@ -530,7 +530,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
         fail ("PATH! must retrieve an action or frame");
     }
 
-    const Node* node1 = Cell_Node1(path);
+    const Node* node1 = CELL_NODE1(path);
     if (Is_Node_A_Cell(node1)) {
         // pairing, but "Listlike", so Cell_List_At() will work on it
     }
@@ -931,7 +931,7 @@ bool Set_Var_Core_Updater_Throws(
         if (not Sequence_Has_Node(var))  // compressed byte form
             fail (var);
 
-        const Node* node1 = Cell_Node1(var);
+        const Node* node1 = CELL_NODE1(var);
         if (Is_Node_A_Cell(node1)) {  // pair optimization
             // pairings considered "Listlike", handled by Cell_List_At()
         }

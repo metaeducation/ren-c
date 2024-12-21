@@ -58,8 +58,8 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     if (not Cell_Has_Node1(c))  // must store bytes in cell direct
         return cast(Utf8(const*), c->payload.at_least_8);
 
-    const String* str = cast(String*, Cell_Node1(c));  // symbols are strings
-    return String_Head(str);
+    const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));
+    return String_Head(str);  // symbols are strings
 }
 
 INLINE Utf8(const*) Cell_String_At(const Cell* v) {
@@ -85,7 +85,7 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
         return cast(Utf8(const*), c->payload.at_least_8 + size);
     }
 
-    const String* str = cast(String*, Cell_Node1(c));
+    const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));
     return String_Tail(str);
 }
 
@@ -105,7 +105,7 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
     if (not Stringlike_Has_Node(c))  // content directly in cell
         return c->extra.at_least_4[IDX_EXTRA_LEN];
 
-    const String* str = cast(String*, Cell_Node1(c));
+    const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));
     return String_Len(str);
 }
 

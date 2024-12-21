@@ -335,7 +335,7 @@ DECLARE_NATIVE(hijack)
 
     Element* victim_archetype = Phase_Archetype(victim);
     assert(Cell_Frame_Phase(victim_archetype) == victim);  // inf. recursive!
-    Tweak_Cell_Frame_Phase(victim_archetype, proxy);  // adjust for swap
+    CELL_FRAME_PHASE_NODE(victim_archetype) = proxy;  // adjust for swap
 
     if (victim_unimplemented)
         return NOTHING;

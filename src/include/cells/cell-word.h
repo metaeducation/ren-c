@@ -30,6 +30,8 @@
 // For routines that manage binding, see %sys-bind.h.
 //
 
+#define CELL_WORDLIKE_SYMBOL_NODE  CELL_SERIESLIKE_NODE
+
 INLINE bool Wordlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
     if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
@@ -38,18 +40,15 @@ INLINE bool Wordlike_Cell(const Cell* v) {
         return false;
     if (not Cell_Has_Node1(v))
         return false;
-    const Node* node1 = Cell_Node1(v);
+    const Node* node1 = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node1))
         return false;
     return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SYMBOL;
 }
 
-#define Tweak_Cell_Word_Symbol(c,symbol) \
-    Tweak_Cell_Node1((c), ensure(const Symbol*, (symbol)))
-
-INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
-    assert(Wordlike_Cell(cell));
-    return cast(Symbol*, Cell_Node1(cell));
+INLINE const Symbol* Cell_Word_Symbol(const Cell* c) {
+    assert(Wordlike_Cell(c));
+    return c_cast(Symbol*, CELL_WORDLIKE_SYMBOL_NODE(c));
 }
 
 #define Cell_Word_Id(v) \
@@ -83,8 +82,8 @@ INLINE Element* Init_Any_Word_Untracked(
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
     CELL_WORD_INDEX_I32(out) = 0;
+    CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, sym);
     Tweak_Cell_Binding(out, UNBOUND);
-    Tweak_Cell_Word_Symbol(out, sym);
     return out;
 }
 
@@ -112,7 +111,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
-    Tweak_Cell_Word_Symbol(out, symbol);
+    CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
     CELL_WORD_INDEX_I32(out) = index;
     Tweak_Cell_Binding(out, binding);
 

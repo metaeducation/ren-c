@@ -270,7 +270,7 @@ INLINE Details* Ensure_Level_Details(Level* L) {
 
 INLINE void Tweak_Level_Phase(Level* L, Phase* phase) {
     assert(Is_Stub_Details(phase) or Is_Stub_Varlist(phase));
-    Tweak_Cell_Frame_Phase(L->rootvar, phase);
+    CELL_FRAME_PHASE_NODE(L->rootvar) = phase;
 }
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)

@@ -256,7 +256,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
     Tweak_Cell_Binding(e, UNBOUND);  // "arraylike", needs binding
-    Tweak_Cell_Node1(e, p);
+    CELL_SERIESLIKE_NODE(e) = p;
     Corrupt_Unused_Field(e->payload.split.two.corrupt);
 
     return nullptr;
@@ -442,7 +442,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             | CELL_FLAG_DONT_MARK_NODE2  // payload second not used
     );
     Tweak_Cell_Binding(out, UNBOUND);  // "arraylike", needs binding
-    Tweak_Cell_Node1(out, pairing);
+    CELL_PAIRLIKE_PAIRING_NODE(out) = pairing;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return nullptr;
@@ -602,7 +602,7 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
         return c->payload.at_least_8[IDX_SEQUENCE_USED];
     }
 
-    const Node* node1 = Cell_Node1(c);
+    const Node* node1 = CELL_NODE1(c);
     if (Is_Node_A_Cell(node1))  // see if it's a pairing
         return 2;  // compressed 2-element sequence, sizeof(Stub)
 
@@ -656,7 +656,7 @@ INLINE Element* Derelativize_Sequence_At(
         return Init_Integer(out, sequence->payload.at_least_8[n + 1]);
     }
 
-    const Node* node1 = Cell_Node1(sequence);
+    const Node* node1 = CELL_NODE1(sequence);
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
         const Pairing* p = c_cast(Pairing*, node1);  // compressed pair
         if (n == 0)
@@ -677,7 +677,7 @@ INLINE Element* Derelativize_Sequence_At(
         return out; }
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
-        const Source* a = c_cast(Source*, Cell_Node1(sequence));
+        const Source* a = c_cast(Source*, CELL_SERIESLIKE_NODE(sequence));
         if (MIRROR_BYTE(a) != REB_0) {  // [4]
             assert(n < 2);
             if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
@@ -725,7 +725,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
     if (not Sequence_Has_Node(sequence))  // compressed bytes
         return SPECIFIED;
 
-    const Node* node1 = Cell_Node1(sequence);
+    const Node* node1 = CELL_NODE1(sequence);
     if (Is_Node_A_Cell(node1))  // see if it's a pairing
         return Cell_Binding(sequence);  // compressed 2-element sequence
 
@@ -822,8 +822,8 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
     if (not Sequence_Has_Node(c))  // compressed bytes
         return NOT_SINGLEHEART_0;
 
-    if (Is_Node_A_Cell(Cell_Node1(c))) {
-        const Pairing* p = u_cast(const Pairing*, Cell_Node1(c));
+    if (Is_Node_A_Cell(CELL_SERIESLIKE_NODE(c))) {
+        const Pairing* p = u_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
 
         if (Is_Blank(Pairing_First(p)))
             return Leading_Blank_And(Cell_Heart(Pairing_Second(p)));
@@ -834,7 +834,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return NOT_SINGLEHEART_0;
     }
 
-    const Flex* f = u_cast(const Flex*, Cell_Node1(c));
+    const Flex* f = cast(Flex*, CELL_NODE1(c));
     if (Stub_Flavor(f) == FLAVOR_SYMBOL) {
         if (c->header.bits & CELL_FLAG_LEADING_BLANK)
             return Leading_Blank_And(REB_WORD);

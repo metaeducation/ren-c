@@ -1071,7 +1071,7 @@ DECLARE_NATIVE(free)
     if (Any_Context(v) or Is_Handle(v))
         return FAIL("FREE only implemented for ANY-SERIES? at the moment");
 
-    if (Not_Node_Readable(Cell_Node1(v)))
+    if (Not_Node_Readable(CELL_NODE1(v)))
         return FAIL("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
@@ -1110,7 +1110,7 @@ DECLARE_NATIVE(free_q)
     if (not Cell_Has_Node1(v))  // freeable values have Flex in payload node1
         return nullptr;
 
-    Node* n = Cell_Node1(v);
+    Node* n = CELL_NODE1(v);
     if (n == nullptr or Is_Node_A_Cell(n))
         return nullptr;  // no decayed pairing form at this time [1]
 

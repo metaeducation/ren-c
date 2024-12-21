@@ -108,10 +108,10 @@ INLINE Element* Derelativize_Untracked(
         out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
     }
     else {  // any-path? or any-tuple?, may be wordlike or listlike
-        Node* node1 = Cell_Node1(v);
+        const Node* node1 = CELL_NODE1(v);
         if (Is_Node_A_Cell(node1))  // x.y pairing
             goto any_listlike;
-        Stub* stub1 = cast(Stub*, node1);
+        const Stub* stub1 = c_cast(Stub*, node1);
         if (FLAVOR_SYMBOL == Stub_Flavor(stub1)) {  // x. or /x, wordlike
             if (
                 Any_Tuple_Kind(heart)
@@ -200,12 +200,12 @@ INLINE const Symbol* Info_Stump_Bind_Symbol(const Stub* stump) {
 
 INLINE void Tweak_Info_Stump_Bind_Symbol(Stub* stump, const Symbol* symbol) {
     assert(Is_Stub_Stump(stump));
-    stump->info.node = symbol;
+    stump->info.node = m_cast(Symbol*, symbol);  // extracted as const
 }
 
 INLINE Option(Stub*) Link_Stump_Next(const Stub* stump) {
     assert(Is_Stub_Stump(stump));
-    return u_cast(Stub*, m_cast(Node*, stump->link.node));
+    return u_cast(Stub*, stump->link.node);
 }
 
 INLINE void Tweak_Link_Stump_Next(Stub* stump, Option(Stub*) next) {

@@ -123,7 +123,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_PAIR: {
-        Pairing* pairing = x_cast(Pairing*, Cell_Node1(v));
+        Pairing* pairing = x_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
         assert(Is_Node_Marked(pairing));
         break; }
 
@@ -138,9 +138,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BITSET: {
         assert(Cell_Has_Node1(v));
-        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
+        if (Not_Node_Accessible_Canon(CELL_BITSET_BINARY_NODE(v)))
             break;
-        Flex* f = cast(Flex*, Cell_Node1(v));
+        const Flex* f = c_cast(Flex*, CELL_BITSET_BINARY_NODE(v));
         Assert_Flex_Term_Core(f);
         assert(Is_Node_Marked(f));
         break; }
@@ -184,10 +184,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BLOB: {
         assert(Cell_Has_Node1(v));
-        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
+        if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
-        Binary* b = cast(Binary*, Cell_Node1(v));
+        const Binary* b = c_cast(Binary*, CELL_SERIESLIKE_NODE(v));
         assert(Flex_Wide(b) == sizeof(Byte));
         Assert_Flex_Term_If_Needed(b);
         assert(Is_Node_Marked(b));
@@ -196,11 +196,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_TEXT:
       case REB_FILE:
       case REB_TAG: {
-        assert(Cell_Has_Node1(v));
-        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
+        if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
-        const String* s = c_cast(String*, Cell_Node1(v));
+        const String* s = c_cast(String*, CELL_SERIESLIKE_NODE(v));
         Assert_Flex_Term_If_Needed(s);
 
         assert(Flex_Wide(s) == sizeof(Byte));
@@ -222,18 +221,19 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
-      case REB_FRAME:
-        if (not Is_Node_Readable(Cell_Node1(v)))  // e.g. EVAL-FREE freed it
+      case REB_FRAME: {
+        Node* node = CELL_FRAME_PHASE_NODE(v);
+        if (not Is_Node_Readable(node))  // e.g. EVAL-FREE freed it
             break;
-        if (Is_Frame_Exemplar(v))
+        if (Is_Stub_Varlist(cast(Stub*, node)))
             goto mark_object;
-        {
+
         assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
 
-        Details* details = Ensure_Cell_Frame_Details(v);
+        Details* details = cast(Details*, node);
         assert(Is_Node_Marked(details));
-        if (Extract_Cell_Frame_Lens_Or_Label(v))
-            assert(Is_Node_Marked(Extract_Cell_Frame_Lens_Or_Label(v)));
+        if (CELL_FRAME_LENS_OR_LABEL_NODE(v))
+            assert(Is_Node_Marked(CELL_FRAME_LENS_OR_LABEL_NODE(v)));
 
         // We used to check the [0] slot of the details holds an archetype
         // that is consistent with the details itself.  That is no longer true
@@ -248,14 +248,15 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
-        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
+        Node* node = CELL_CONTEXT_VARLIST_NODE(v);
+        if (Not_Node_Accessible_Canon(node))
             break;
 
         assert(
             (v->header.bits & CELL_MASK_ANY_CONTEXT)
             == CELL_MASK_ANY_CONTEXT
         );
-        VarList* context = Cell_Varlist(v);
+        VarList* context = cast(VarList*, node);
         assert(Is_Node_Marked(context));
 
         // Currently the "binding" in a context is only used by FRAME! to
@@ -268,7 +269,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // could apply to any OBJECT!, but the binding cheaply makes it
         // a method for that object.)
         //
-        if (v->extra.node != nullptr) {
+        if (CELL_EXTRA(v) != nullptr) {
             if (CTX_TYPE(context) == REB_FRAME) {
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
@@ -318,11 +319,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_META_GROUP:
       case REB_TYPE_GROUP:
       case REB_VAR_GROUP: {
-        assert(Cell_Has_Node1(v));
-        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
+        if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
-        Array* a = cast(Array*, Cell_Node1(v));
+        const Array* a = c_cast(Array*, CELL_SERIESLIKE_NODE(v));
         Assert_Flex_Term_If_Needed(a);
         assert(Is_Node_Marked(a));
         break; }
@@ -352,7 +352,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (not Sequence_Has_Node(v))
             break;  // should be just bytes
 
-        const Node* node1 = Cell_Node1(v);
+        const Node* node1 = CELL_NODE1(v);
         assert(Is_Node_Marked(node1));
         break; }
 

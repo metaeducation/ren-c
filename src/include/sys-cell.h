@@ -590,27 +590,56 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 #define Sequence_Has_Node(c) /* make findable */ \
     Cell_Has_Node1(c)
 
-// Note: If incoming p is mutable, we currently assume that's allowed by the
-// flag bits of the node.  This could have RUNTIME_CHECKS with a C++ variation
-// that only takes mutable pointers.
+
+//=//// CELL NODE EXTRACTORS FOR CLARIFYING SLOT USAGE ////////////////////=//
 //
-#define Tweak_Cell_Node1(c,n) do { \
-    STATIC_ASSERT_LVALUE(c);  /* macro repeats c, make sure calls are safe */ \
-    assert(Cell_Has_Node1(c)); \
-    (c)->payload.split.one.node = (n); \
-} while (0)
+// There was a general decision against "trickery" which makes higher level
+// checked operations look like assignments, favoring Cell_Xxx() and
+// Tweak_Cell_Xxx() operations:
+//
+//     https://forum.rebol.info/t/c-magic-for-lvalue-checking/2350
+//
+// However, there is value in making it possible to map out slots in a cell
+// with a single define that can be used by those functions.  This way, you
+// can do:
+//
+//     #define CELL_SOMETHING_PROPERTY_A_NODE  CELL_EXTRA
+//     #define CELL_SOMETHING_PROPERTY_B_NODE  CELL_NODE1
+//     #define CELL_SOMETHING_PROPERTY_C_NODE  CELL_NODE2
+//
+// Then, don't use CELL_NODE1/NODE2/EXTRA in any of the implementation.  This
+// makes it much easier to see up front what a certain cell's use of its
+// slots is, and a lot easier to adjust when there are changes.
+//
+#if NO_RUNTIME_CHECKS
+    #define Ensure_Cell_Has_Extra_Node(c)   (c)
+    #define Ensure_Cell_Has_Node1(c)        (c)
+    #define Ensure_Cell_Has_Node2(c)        (c)
+#else
+    INLINE Cell* Ensure_Cell_Has_Extra_Node(const_if_c Cell* c)
+      { assert(Is_Extra_Mark_Heart(HEART_BYTE(c))); return c; }
 
-#define Tweak_Cell_Node2(c,n) do { \
-    STATIC_ASSERT_LVALUE(c);  /* macro repeats c, make sure calls are safe */ \
-    assert(Cell_Has_Node2(c)); \
-    (c)->payload.split.two.node = (n); \
-} while (0)
+    INLINE Cell* Ensure_Cell_Has_Node1(const_if_c Cell* c)
+      { assert(Not_Cell_Flag(c, DONT_MARK_NODE1)); return c; }
 
-#define Cell_Node1(c) \
-    m_cast(Node*, (c)->payload.split.one.node)
+    INLINE Cell* Ensure_Cell_Has_Node2(const_if_c Cell* c)
+      { assert(Not_Cell_Flag(c, DONT_MARK_NODE2)); return c; }
 
-#define Cell_Node2(c) \
-    m_cast(Node*, (c)->payload.split.two.node)
+  #if CPLUSPLUS_11
+    INLINE const Cell* Ensure_Cell_Has_Extra_Node(const Cell* c)
+      { assert(Is_Extra_Mark_Heart(HEART_BYTE(c))); return c; }
+
+    INLINE const Cell* Ensure_Cell_Has_Node1(const Cell* c)
+      { assert(Not_Cell_Flag(c, DONT_MARK_NODE1)); return c; }
+
+    INLINE const Cell* Ensure_Cell_Has_Node2(const Cell* c)
+     { assert(Not_Cell_Flag(c, DONT_MARK_NODE2)); return c; }
+  #endif
+#endif
+
+#define CELL_EXTRA(c)  Ensure_Cell_Has_Extra_Node(c)->extra.node
+#define CELL_NODE1(c)  Ensure_Cell_Has_Node1(c)->payload.split.one.node
+#define CELL_NODE2(c)  Ensure_Cell_Has_Node2(c)->payload.split.two.node
 
 
 //=///// BINDING //////////////////////////////////////////////////////////=//

@@ -61,17 +61,18 @@
 //   object, but Ren-C only uses a single pointer-to-symbol.)
 //
 
-INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* v) {
-    assert(HEART_BYTE(v) == REB_PARAMETER);
-    if (Cell_Node1(v) != nullptr and Not_Node_Readable(Cell_Node1(v)))
+#define CELL_PARAMETER_SPEC_NODE  CELL_NODE1
+#define CELL_PARAMETER_STRING_NODE  CELL_NODE2
+
+INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_PARAMETER);
+
+    const Node* node = CELL_PARAMETER_SPEC_NODE(c);
+    if (node != nullptr and Not_Node_Readable(node))
         fail (Error_Series_Data_Freed_Raw());
 
-    return cast(Source*, Cell_Node1(v));
+    return c_cast(Source*, node);
 }
-
-#define Tweak_Cell_Parameter_Spec(v,a) \
-    Tweak_Cell_Node1((v), (a))
-
 
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
@@ -299,16 +300,16 @@ INLINE ParamClass Cell_ParamClass(const Cell* param) {
 
 INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
-    return cast(const String*, Cell_Node2(param));
+    return cast(const String*, CELL_PARAMETER_STRING_NODE(param));
 }
 
 INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
-    Tweak_Cell_Node2(param, maybe string);
+    CELL_PARAMETER_STRING_NODE(param) = m_cast(String*, maybe string);
 }
 
 
-// Antiform parameters are used to represent unspecialized parameters.  When
+// Antiform parameters are used to represent unspecialpized parameters.  When
 // the slot they are in is overwritten by another value, that indicates they
 // are then fixed at a value and hence specialized--so not part of the public
 // interface of the function.
@@ -426,9 +427,9 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED
     );
+    CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
     CELL_WORD_INDEX_I32(out) = 0;
     Tweak_Cell_Binding(out, UNBOUND);
-    Tweak_Cell_Word_Symbol(out, symbol);
     return out;
 }
 
@@ -455,8 +456,8 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
-    Tweak_Cell_Parameter_Spec(out, nullptr);
-    Tweak_Cell_Node2(out, nullptr);  // parameter string
+    CELL_PARAMETER_SPEC_NODE(out) = nullptr;
+    CELL_PARAMETER_STRING_NODE(out) = nullptr;
 
     return cast(Param*, out);
 }

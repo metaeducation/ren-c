@@ -225,7 +225,7 @@ uint32_t Hash_Value(const Cell* cell)
             break;
         }
 
-        const Node* node1 = Cell_Node1(cell);
+        const Node* node1 = CELL_NODE1(cell);
 
         if (Is_Node_A_Cell(node1))
             goto hash_pair;
@@ -378,27 +378,6 @@ HashList* Make_Hashlist(REBLEN len)
     Set_Flex_Len(f, n);
 
     return cast(HashList*, f);
-}
-
-
-//
-//  Init_Map: C
-//
-// A map has an additional hash element hidden in the ->extra field of the
-// Stub which needs to be given to memory management as well.
-//
-Element* Init_Map(Init(Element) out, Map* map)
-{
-    if (MAP_HASHLIST(map))
-        Force_Flex_Managed(MAP_HASHLIST(map));
-
-    Force_Flex_Managed(MAP_PAIRLIST(map));
-
-    Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_MAP);
-    Tweak_Cell_Node1(out, MAP_PAIRLIST(map));
-    // second payload pointer not used
-
-    return out;
 }
 
 

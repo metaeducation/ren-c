@@ -2835,11 +2835,11 @@ Bounce Scanner_Executor(Level* const L) {
     //
     if (
         Cell_Has_Node1(TOP)
-        and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
-        and not Is_Node_A_Cell(Cell_Node1(TOP))
-        and Is_Stub_Source(cast(Stub*, Cell_Node1(TOP)))
+        and CELL_NODE1(TOP) != nullptr  // null legal in node slots ATM
+        and not Is_Node_A_Cell(CELL_NODE1(TOP))
+        and Is_Stub_Source(cast(Stub*, CELL_NODE1(TOP)))
     ){
-        Source* a = cast(Source*, Cell_Node1(TOP));
+        Source* a = cast(Source*, CELL_SERIESLIKE_NODE(TOP));
         a->misc.line = transcode->line;
         Tweak_Link_Filename(a, maybe transcode->file);
     }

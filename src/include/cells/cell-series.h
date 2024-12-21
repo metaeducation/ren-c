@@ -7,10 +7,10 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
         or (Any_Utf8_Kind(heart) and Stringlike_Has_Node(v))
     );
     UNUSED(heart);
-    if (Not_Node_Readable(Cell_Node1(v)))
+    if (Not_Node_Readable(CELL_SERIESLIKE_NODE(v)))
         fail (Error_Series_Data_Freed_Raw());
 
-    return c_cast(Flex*, Cell_Node1(v));
+    return cast(Flex*, CELL_SERIESLIKE_NODE(v));
 }
 
 #define Cell_Flex_Ensure_Mutable(v) \
@@ -138,7 +138,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // series stub needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
     );
-    Tweak_Cell_Node1(out, f);
+    CELL_SERIESLIKE_NODE(out) = m_cast(Flex*, f);  // const bit guides extract
     VAL_INDEX_RAW(out) = index;
 
     out->extra.node = binding;  // checked below if DEBUG_CHECK_BINDING

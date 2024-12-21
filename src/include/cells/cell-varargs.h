@@ -57,12 +57,21 @@
 #define VAL_VARARGS_SIGNED_PARAM_INDEX(v) \
     (v)->payload.split.one.i
 
-#define Tweak_Cell_Varargs_Phase        Tweak_Cell_Node2
-#define Extract_Cell_Varargs_Phase(v)   cast(Phase*, Cell_Node2(v))
+#define CELL_VARARGS_PHASE_NODE  CELL_NODE2
+
+INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_VARARGS);
+    return cast(Phase*, CELL_VARARGS_PHASE_NODE(c));
+}
+
+INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Phase* phase) {
+    assert(HEART_BYTE(c) == REB_VARARGS);
+    CELL_VARARGS_PHASE_NODE(c) = phase;
+}
 
 INLINE Array* Cell_Varargs_Source(const Cell* c) {
     assert(Cell_Heart(c) == REB_VARARGS);
-    return cast(Array*, m_cast(Node*, c->extra.node));
+    return cast(Array*, c->extra.node);
 }
 
 INLINE void Tweak_Cell_Varargs_Source(

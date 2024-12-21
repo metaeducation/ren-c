@@ -83,7 +83,7 @@ INLINE const Symbol* Link_Next_Synonym(const Symbol* symbol) {
 INLINE void Tweak_Link_Next_Synonym(Stub* symbol, const Stub* synonym) {
     assert(Is_Stub_Symbol(symbol));
     possibly(synonym == symbol);  // circularly linked list
-    symbol->link.node = synonym;
+    symbol->link.node = m_cast(Stub*, synonym);  // extracted as const
 }
 
 INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
@@ -111,7 +111,7 @@ INLINE Stub* Misc_Hitch(const Stub* stub) {
         or flavor_stub == FLAVOR_PATCH
     );
     UNUSED(flavor_stub);
-    Stub* hitch = u_cast(Stub*, m_cast(Node*, stub->misc.node));
+    Stub* hitch = u_cast(Stub*, stub->misc.node);
     Flavor flavor_hitch = Stub_Flavor(hitch);
     assert(
         flavor_hitch == FLAVOR_SYMBOL

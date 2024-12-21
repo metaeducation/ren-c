@@ -518,7 +518,7 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
 
   { //////////////////////////////////////////////////////////////////////////
 
-    const Node* node1 = Cell_Node1(out);
+    const Node* node1 = CELL_NODE1(out);
     if (Is_Node_A_Cell(node1)) {  // compressed 2-elements, sizeof(Stub)
         const Pairing* pairing = c_cast(Pairing*, node1);
         if (Is_Blank(Pairing_First(pairing))) {

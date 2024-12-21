@@ -130,21 +130,21 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
     Printf_Stderr("quote_byte=%d\n", QUOTE_BYTE(c));
 
     if (Cell_Has_Node1(c))
-        Printf_Stderr("has node1: %p\n", cast(void*, Cell_Node1(c)));
+        Printf_Stderr("has node1: %p\n", c_cast(void*, CELL_NODE1(c)));
     if (Cell_Has_Node2(c))
-        Printf_Stderr("has node2: %p\n", cast(void*, Cell_Node2(c)));
+        Printf_Stderr("has node2: %p\n", c_cast(void*, CELL_NODE2(c)));
 
     Node* containing = Try_Find_Containing_Node_Debug(c);
 
     if (not containing) {
         Printf_Stderr("No containing Stub or Pairing (global variable?)\n");
-        if (Cell_Has_Node1(c) and Is_Node_A_Stub(Cell_Node1(c))) {
+        if (Cell_Has_Node1(c) and Is_Node_A_Stub(CELL_NODE1(c))) {
             Printf_Stderr("Panicking node1 in case it helps\n");
-            Panic_Stub_Debug(cast(Stub*, Cell_Node1(c)));
+            Panic_Stub_Debug(c_cast(Stub*, CELL_NODE1(c)));
         }
-        if (Cell_Has_Node2(c) and Is_Node_A_Stub(Cell_Node2(c))) {
+        if (Cell_Has_Node2(c) and Is_Node_A_Stub(CELL_NODE2(c))) {
             Printf_Stderr("No node1, panicking node2 in case it helps\n");
-            Panic_Stub_Debug(cast(Stub*, Cell_Node2(c)));
+            Panic_Stub_Debug(c_cast(Stub*, CELL_NODE2(c)));
         }
         Printf_Stderr("No node1 or node2 for further info, aborting\n");
         abort();

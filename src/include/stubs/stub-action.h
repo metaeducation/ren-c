@@ -82,6 +82,17 @@
 //
 
 
+//=//// FRAME! Cell Slot Definitions //////////////////////////////////////=//
+//
+// These are used in the phase archetype slot, so they need to be defined
+// earlier than %cell-frame.h
+
+#define CELL_FRAME_COUPLING_NODE        CELL_EXTRA
+#define CELL_FRAME_PHASE_NODE           CELL_NODE1
+#define CELL_FRAME_LENS_OR_LABEL_NODE   CELL_NODE2
+
+
+
 //=//// PSEUDOTYPES FOR RETURN VALUES /////////////////////////////////////=//
 //
 // An arbitrary cell pointer may be returned from a native--in which case it
@@ -134,23 +145,22 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 }
 
 
-#define Tweak_Cell_Frame_Phase  Tweak_Cell_Node1
-
 // For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.
 //
 #define Phase_Archetype(phase) \
     Flex_Head_Dynamic(Element, ensure(Phase*, (phase)))
 
 INLINE Details* Phase_Details(Phase* p) {
-    while (not Is_Stub_Details(p))
-        p = cast(Phase*, Cell_Node1(Phase_Archetype(p)));
+    while (not Is_Stub_Details(p)) {
+        p = cast(Phase*, CELL_FRAME_PHASE_NODE(Phase_Archetype(p)));
+    }
     return cast(Details*, p);
 }
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    return Is_Stub_Details(cast(Stub*, Cell_Node1(v)));
+    return Is_Stub_Details(c_cast(Stub*, CELL_FRAME_PHASE_NODE(v)));
 }
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
@@ -162,15 +172,14 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 // before the place where the exemplar is to be found.
 //
 
-INLINE void Tweak_Cell_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f)
-  { Tweak_Cell_Node2(c, maybe f); }
-
-#define Extract_Cell_Frame_Lens_Or_Label(v)  cast(Flex*, Cell_Node2(v))
-
+INLINE void Tweak_Cell_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f) {
+    assert(HEART_BYTE(c) == REB_FRAME);
+    CELL_FRAME_LENS_OR_LABEL_NODE(c) = m_cast(Flex*, maybe f);
+}
 
 INLINE ParamList* Phase_Paramlist(Phase* p) {
     while (Is_Stub_Details(p))
-        p = u_cast(Phase*, Cell_Node1(Phase_Archetype(p)));
+        p = u_cast(Phase*, CELL_FRAME_PHASE_NODE(Phase_Archetype(p)));
     return u_cast(ParamList*, p);
 }
 
@@ -279,7 +288,7 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 // information that doesn't appear in their body.
 
 INLINE Option(VarList*) Misc_Details_Adjunct(Details* details) {
-    return cast(VarList*, m_cast(Node*, Details_Array(details)->misc.node));
+    return cast(VarList*, Details_Array(details)->misc.node);
 }
 
 INLINE void Tweak_Misc_Details_Adjunct(
@@ -317,7 +326,7 @@ INLINE void Tweak_Misc_Details_Adjunct(
 INLINE KeyList* Bonus_Keylist(VarList* c);
 
 INLINE KeyList* Link_Keylist_Ancestor(KeyList* keylist) {
-    KeyList* ancestor = cast(KeyList*, m_cast(Node*, keylist->link.node));
+    KeyList* ancestor = cast(KeyList*, keylist->link.node);
     assert(Is_Stub_Keylist(ancestor));
     possibly(ancestor == keylist);
     return ancestor;

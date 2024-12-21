@@ -102,7 +102,7 @@ INLINE void Tweak_Misc_Feedstub_Pending(
     Option(const Cell*) pending
 ){
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    stub->misc.node = maybe pending;
+    stub->misc.node = m_cast(Cell*, maybe pending);  // extracted as const
 }
 
 INLINE Option(Stub*) Link_Feedstub_Splice(Stub* stub) {

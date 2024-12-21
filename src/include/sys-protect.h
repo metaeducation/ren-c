@@ -154,7 +154,7 @@ INLINE const Source* Freeze_Source_Shallow(const Source* a) {
 #else
     INLINE const Cell* Known_Mutable(const Cell* c) {
         assert(Cell_Has_Node1(c));
-        const Flex* f = c_cast(Flex*, Cell_Node1(c));  // varlist, etc.
+        const Flex* f = c_cast(Flex*, CELL_NODE1(c));  // varlist, etc.
         assert(not Is_Flex_Read_Only(f));
         assert(Not_Cell_Flag(c, CONST));
         return c;
@@ -163,7 +163,7 @@ INLINE const Source* Freeze_Source_Shallow(const Source* a) {
 
 INLINE const Cell* Ensure_Mutable(const Cell* v) {
     assert(Cell_Has_Node1(v));
-    const Flex* f = c_cast(Flex*, Cell_Node1(v));  // varlist, etc.
+    const Flex* f = c_cast(Flex*, CELL_NODE1(v));  // varlist, etc.
 
     Fail_If_Read_Only_Flex(f);
 

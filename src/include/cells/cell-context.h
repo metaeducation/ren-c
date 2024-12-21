@@ -9,20 +9,23 @@
 // be checked elsewhere...or also check it before use.
 //
 
-INLINE VarList* Cell_Varlist(const Cell* v) {
-    assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
-    if (Not_Node_Readable(Cell_Node1(v))) {
-        if (HEART_BYTE(v) == REB_FRAME)
+INLINE VarList* Cell_Varlist(const Cell* c) {
+    assert(Any_Context_Kind(Cell_Heart_Unchecked(c)));
+
+    Node* node = CELL_NODE1(c);  // ParamList or Details
+    if (Not_Node_Readable(node)) {
+        if (HEART_BYTE(c) == REB_FRAME)
             fail (Error_Expired_Frame_Raw());  // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
     }
 
-    while (not Is_Stub_Varlist(cast(Stub*, Cell_Node1(v)))) {
-        assert(Cell_Heart_Unchecked(v) == REB_FRAME);
-        assert(Is_Stub_Details(cast(Stub*, Cell_Node1(v))));
-        v = Flex_Head_Dynamic(Cell, cast(Details*, Cell_Node1(v)));
+    while (not Is_Stub_Varlist(cast(Stub*, node))) {
+        assert(Cell_Heart_Unchecked(c) == REB_FRAME);
+        assert(Is_Stub_Details(cast(Stub*, node)));
+        c = Flex_Head_Dynamic(Cell, cast(Details*, CELL_FRAME_PHASE_NODE(c)));
+        node = CELL_NODE1(c);  // ParamList or Details
     }
-    return cast(VarList*, Cell_Node1(v));
+    return cast(VarList*, node);
 }
 
 INLINE Error* Cell_Error(const Cell* c) {

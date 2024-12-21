@@ -52,7 +52,7 @@
 //
 
 INLINE Option(Context*) Link_Inherit_Bind(Context* context)
-  { return u_cast(Context*, m_cast(Node*, context->link.node)); }
+  { return u_cast(Context*, context->link.node); }
 
 INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next)
   { context->link.node = maybe next; }
@@ -86,7 +86,7 @@ INLINE void Add_Link_Inherit_Bind(Context* context, Option(Context*) next) {
 // processed header)
 //
 INLINE Option(VarList*) Misc_Varlist_Adjunct(VarList* varlist) {
-    return cast(VarList*, m_cast(Node*, Varlist_Array(varlist)->misc.node));
+    return cast(VarList*, Varlist_Array(varlist)->misc.node);
 }
 
 INLINE void Tweak_Misc_Varlist_Adjunct(
@@ -112,7 +112,7 @@ INLINE Option(VarList*) Misc_Phase_Adjunct(Phase* a) {
 
 
 
-#define Tweak_Cell_Context_Varlist            Tweak_Cell_Node1
+#define CELL_CONTEXT_VARLIST_NODE  CELL_NODE1
 
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
@@ -196,12 +196,12 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
     assert(Cell_Heart(c) == REB_FRAME);
-    return cast(VarList*, m_cast(Node*, c->extra.node));
+    return cast(VarList*, CELL_FRAME_COUPLING_NODE(c));
 }
 
 INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
     assert(Cell_Heart(c) == REB_FRAME);
-    c->extra.node = maybe coupling;
+    CELL_FRAME_COUPLING_NODE(c) = maybe coupling;
 }
 
 
@@ -217,9 +217,9 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
             | CELL_MASK_ANY_CONTEXT
             | CELL_FLAG_PROTECTED  // should not be modified
     );
-    Tweak_Cell_Context_Varlist(rootvar, varlist);
+    CELL_CONTEXT_VARLIST_NODE(rootvar) = varlist;
     rootvar->extra.node = nullptr;  // no coupling, but extra is marked
-    Tweak_Cell_Frame_Lens_Or_Label(rootvar, nullptr);  // not a frame
+    CELL_FRAME_LENS_OR_LABEL_NODE(rootvar) = nullptr;  // not a frame
 }
 
 #define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \
@@ -272,7 +272,7 @@ INLINE const Symbol* Info_Let_Symbol(const Stub* stub) {
 
 INLINE void Tweak_Info_Let_Symbol(Stub* stub, const Symbol* symbol) {
     assert(Is_Stub_Let(stub));
-    stub->info.node = symbol;
+    stub->info.node = m_cast(Symbol*, symbol);  // extracted as const
 }
 
 

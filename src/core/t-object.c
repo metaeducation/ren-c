@@ -593,7 +593,7 @@ VarList* Copy_Varlist_Extra_Managed(
     // copied rootvar to the one just created.
     //
     Copy_Cell(dest, Varlist_Archetype(original));
-    Tweak_Cell_Context_Varlist(dest, varlist);
+    CELL_CONTEXT_VARLIST_NODE(dest) = varlist;
 
     if (CTX_TYPE(original) == REB_MODULE) {
         //

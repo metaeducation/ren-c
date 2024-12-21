@@ -120,7 +120,7 @@ INLINE void Tweak_Link_Filename(Source* source, Option(const String*) filename)
     assert(Stub_Flavor(source) == FLAVOR_SOURCE);
     if (filename) {
         Set_Stub_Flag(source, LINK_NODE_NEEDS_MARK);
-        source->link.node = unwrap filename;
+        source->link.node = m_cast(String*, unwrap filename);  // extract const
     }
     else {
         Clear_Stub_Flag(source, LINK_NODE_NEEDS_MARK);

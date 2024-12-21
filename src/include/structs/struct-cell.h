@@ -398,7 +398,7 @@ struct DateStruct  // see %sys-time.h
 };
 
 union AnyUnion {
-    const Node* node;  // all Node subclasses should be assigned to this [1]
+    Node* node;  // all Node subclasses should be assigned to this [1]
 
   #if DEBUG_USE_UNION_PUNS  // dodgy, use in debug watch at your own risk!
     Stub* stub_pun;  // *maybe* see node as a Stub

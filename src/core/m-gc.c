@@ -177,7 +177,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub*);
 // no longer bound through some flag in the cell.  For now it's not an issue
 // since that optimization was removed, but a similar issue could arise again.
 //
-static void Queue_Mark_Node_Deep(const Node** npp) {  // ** for canonizing
+static void Queue_Mark_Node_Deep(Node** npp) {  // ** for canonizing
     Byte nodebyte = NODE_BYTE(*npp);
     if (nodebyte & NODE_BYTEMASK_0x01_MARKED)  // includes canon decayed stub
         return;  // may not be finished marking yet, but has been queued
@@ -331,14 +331,17 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     in_mark = true;
   #endif
 
-    if (Is_Extra_Mark_Kind(heart) and c->extra.node)
-        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.node);
+    if (Is_Extra_Mark_Heart(heart))
+        if (c->extra.node)
+            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.node);
 
-    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE1) and Cell_Node1(c))
-        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.one.node);
+    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE1))
+        if (c->payload.split.one.node)
+            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.one.node);
 
-    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE2) and Cell_Node2(c))
-        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.two.node);
+    if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE2))
+        if (c->payload.split.two.node)
+            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.two.node);
 
   #if RUNTIME_CHECKS
     in_mark = false;
@@ -649,7 +652,7 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Guarded_Nodes(void)
 {
-    const void* *pp = Flex_Head(const void*, g_gc.guarded);
+    void* *pp = Flex_Head(void*, g_gc.guarded);
     REBLEN n = Flex_Used(g_gc.guarded);
     for (; n > 0; --n, ++pp) {
         if (FIRST_BYTE(*pp) == 0) {  // assume erased cell, tolerate [1]
@@ -657,7 +660,7 @@ static void Mark_Guarded_Nodes(void)
             continue;
         }
 
-        const Node** npp = cast(const Node**, pp);
+        Node** npp = cast(Node**, pp);
         if (Is_Node_A_Cell(*npp)) {
             assert(Not_Node_Marked(*npp));  // shouldn't live in array [2]
             Queue_Mark_Maybe_Erased_Cell_Deep(c_cast(Cell*, *npp));
@@ -749,7 +752,7 @@ static void Mark_Level(Level* L) {
     //    (skipped arguments picked up later are set to CELL_MASK_UNREADABLE).
 
     Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
-        cast(const Node**, m_cast(const Phase**, &L->u.action.original))
+        cast(Node**, m_cast(Phase**, &L->u.action.original))
     );
 
   #if DEBUG_LEVEL_LABELS
@@ -768,7 +771,7 @@ static void Mark_Level(Level* L) {
         );
 
         Queue_Mark_Node_Deep(  // may be incomplete, can't cast(VarList*) [2]
-            cast(const Node**, m_cast(const Array**, &L->varlist))
+            cast(Node**, m_cast(Array**, &L->varlist))
         );
         return;
     }

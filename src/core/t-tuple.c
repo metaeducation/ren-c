@@ -235,7 +235,7 @@ DECLARE_GENERICS(Sequence)
                 return Init_Any_List(OUT, as, a);
             }
 
-            const Node* node1 = Cell_Node1(v);
+            const Node* node1 = CELL_NODE1(v);
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [2]
                 const Pairing* p = c_cast(Pairing*, node1);
                 Context *binding = Cell_List_Binding(v);

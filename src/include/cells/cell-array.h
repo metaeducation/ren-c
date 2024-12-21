@@ -15,19 +15,21 @@ INLINE bool Listlike_Cell(const Cell* v) {
         return false;
     if (not Cell_Has_Node1(v))
         return false;
-    const Node* node1 = Cell_Node1(v);
+    const Node* node1 = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node1))
         return true;  // Cell_List_At() works, but Cell_Array() won't work!
     return Stub_Flavor(u_cast(const Flex*, node1)) == FLAVOR_SOURCE;
 }
 
-INLINE const Source* Cell_Array(const Cell* v) {
-    assert(Listlike_Cell(v));
-    assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
-    if (Not_Node_Readable(Cell_Node1(v)))
+INLINE const Source* Cell_Array(const Cell* c) {
+    assert(Listlike_Cell(c));
+
+    const Node* series = CELL_SERIESLIKE_NODE(c);
+    assert(Is_Node_A_Stub(series));  // not a pairing arraylike!
+    if (Not_Node_Readable(series))
         fail (Error_Series_Data_Freed_Raw());
 
-    return cast(Source*, Cell_Node1(v));
+    return c_cast(Source*, series);
 }
 
 #define Cell_Array_Ensure_Mutable(v) \
@@ -49,7 +51,7 @@ INLINE const Element* Cell_List_Len_At(
     Option(Sink(Length)) len_at_out,
     const Cell* v
 ){
-    const Node* node = Cell_Node1(v);
+    const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
         assert(Any_Sequence_Kind(Cell_Heart(v)));
         assert(VAL_INDEX_RAW(v) == 0);
@@ -71,7 +73,7 @@ INLINE const Element* Cell_List_At(
     Option(const Element**) tail_out,
     const Cell* v
 ){
-    const Node* node = Cell_Node1(v);
+    const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
         assert(Any_Sequence_Kind(Cell_Heart(v)));
         const Pairing* p = c_cast(Pairing*, node);
@@ -156,7 +158,7 @@ INLINE Element* Init_Relative_Block_At(
     REBLEN index
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_BLOCK);
-    Tweak_Cell_Node1(out, array);
+    CELL_SERIESLIKE_NODE(out) = array;
     VAL_INDEX_RAW(out) = index;
     Tweak_Cell_Relative_Binding(out, details);
     return out;

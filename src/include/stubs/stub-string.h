@@ -275,7 +275,7 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 INLINE Option(BookmarkList*) Link_Bookmarks(const String* string)
 {
     assert(Is_Stub_Non_Symbol(string));
-    return cast(BookmarkList*, m_cast(Node*, string->link.node));
+    return cast(BookmarkList*, string->link.node);
 }
 
 INLINE void Tweak_Link_Bookmarks(

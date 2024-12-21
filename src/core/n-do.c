@@ -373,7 +373,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     if (REF(step))  // !!! may be legal (or mandatory) in the future [1]
         return FAIL(":STEP not implemented for FRAME! in EVALUATE");
 
-    if (Not_Node_Readable(Cell_Node1(source)))
+    if (Not_Node_Readable(CELL_FRAME_PHASE_NODE(source)))
         return FAIL(Error_Series_Data_Freed_Raw());
 
     Option(const Atom*) with = nullptr;
@@ -506,7 +506,7 @@ DECLARE_NATIVE(eval_free)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    if (Not_Node_Readable(Cell_Node1(frame)))
+    if (Not_Node_Readable(CELL_FRAME_PHASE_NODE(frame)))
         return FAIL(Error_Series_Data_Freed_Raw());
 
     if (Is_Stub_Details(Cell_Frame_Phase(frame)))

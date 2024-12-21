@@ -971,7 +971,7 @@ void Clonify_And_Bind_Relative(
                 Cell_Pairing(v),
                 NODE_FLAG_MANAGED
             );
-            Tweak_Cell_Node1(v, copy);
+            CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
 
             deep = Pairing_Head(copy);
             deep_tail = Pairing_Tail(copy);
@@ -986,7 +986,7 @@ void Clonify_And_Bind_Relative(
             /* if (Any_Sequence(v)) */  // copy regardless? [3]
                 MIRROR_BYTE(copy) = MIRROR_BYTE(Cell_Array(v));
 
-            Tweak_Cell_Node1(v, copy);
+            CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
 
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
@@ -1003,7 +1003,7 @@ void Clonify_And_Bind_Relative(
         }
         else if (Any_Series_Kind(heart)) {
             Flex* copy = Copy_Flex_Core(NODE_FLAG_MANAGED, Cell_Flex(v));
-            Tweak_Cell_Node1(v, copy);
+            CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
         }
 
         // If we're going to copy deeply, we go back over the shallow
