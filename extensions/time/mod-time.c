@@ -70,7 +70,7 @@ DECLARE_NATIVE(now)
         // seconds portion (with the nanoseconds set to 0).  This achieves
         // that by extracting the seconds and then multiplying by nanoseconds.
         //
-        PAYLOAD(Time, OUT).nanoseconds = SECS_TO_NANO(VAL_SECS(OUT));
+        Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_SECS(OUT)));
     }
 
     if (REF(utc)) {
@@ -103,15 +103,14 @@ DECLARE_NATIVE(now)
     REBINT n = -1;
 
     if (REF(date)) {
-        PAYLOAD(Time, OUT).nanoseconds = NO_DATE_TIME;
+        Tweak_Cell_Nanoseconds(OUT, NO_DATE_TIME);
         VAL_ZONE(OUT) = NO_DATE_ZONE;
     }
     else if (REF(time)) {
         HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(zone)) {
-        PAYLOAD(Time, OUT).nanoseconds
-            = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
+        Tweak_Cell_Nanoseconds(OUT, VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC);
         HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(weekday))

@@ -513,7 +513,7 @@ DECLARE_GENERICS(Utf8)
           case SYM_CODEPOINT:
             if (
                 Stringlike_Has_Node(issue)
-                or EXTRA(issue).at_least_4[IDX_EXTRA_LEN] != 1
+                or issue->extra.at_least_4[IDX_EXTRA_LEN] != 1
             ){
                 return RAISE(Error_Not_One_Codepoint_Raw());
             }
@@ -716,7 +716,7 @@ DECLARE_GENERICS(Utf8)
             REBLEN len;
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-            assert(size + 1 <= Size_Of(PAYLOAD(Bytes, v).at_least_8));
+            assert(size + 1 <= Size_Of(v->payload.at_least_8));
 
             String* str = Make_String_Core(FLEX_MASK_MANAGED_STRING, size);
             memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'

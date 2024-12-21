@@ -48,9 +48,9 @@
 
 #define MAX_YEAR 0x3fff
 
-#define VAL_YEAR(v)     EXTRA(Ensure_Date(v)).date.year
-#define VAL_MONTH(v)    EXTRA(Ensure_Date(v)).date.month
-#define VAL_DAY(v)      EXTRA(Ensure_Date(v)).date.day
+#define VAL_YEAR(v)     Ensure_Date(v)->extra.date.year
+#define VAL_MONTH(v)    Ensure_Date(v)->extra.date.month
+#define VAL_DAY(v)      Ensure_Date(v)->extra.date.day
 
 #define ZONE_MINS 15
 
@@ -71,28 +71,28 @@
 //
 #define NO_DATE_ZONE -64
 
-INLINE bool Does_Date_Have_Time(const Cell* v)
+INLINE bool Does_Date_Have_Time(const Cell* c)
 {
-    assert(Cell_Heart(v) == REB_DATE);
-    if (PAYLOAD(Time, v).nanoseconds == NO_DATE_TIME) {
-        assert(EXTRA(v).date.zone == NO_DATE_ZONE);
+    assert(Cell_Heart(c) == REB_DATE);
+    if (c->payload.nanoseconds == NO_DATE_TIME) {
+        assert(c->extra.date.zone == NO_DATE_ZONE);
         return false;
     }
     return true;
 }
 
-INLINE bool Does_Date_Have_Zone(const Cell* v)
+INLINE bool Does_Date_Have_Zone(const Cell* c)
 {
-    assert(Cell_Heart(v) == REB_DATE);
-    if (EXTRA(v).date.zone == NO_DATE_ZONE)  // out of band of 7-bit field
+    assert(Cell_Heart(c) == REB_DATE);
+    if (c->extra.date.zone == NO_DATE_ZONE)  // out of band of 7-bit field
         return false;
-    assert(PAYLOAD(Time, v).nanoseconds != NO_DATE_TIME);
+    assert(c->payload.nanoseconds != NO_DATE_TIME);
     return true;
 }
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_ZONE(v) \
-        EXTRA(Ensure_Date(v)).date.zone
+        Ensure_Date(v)->extra.date.zone
 #else
     template<typename TP>
     struct ZoneHolder {
@@ -103,8 +103,8 @@ INLINE bool Does_Date_Have_Zone(const Cell* v)
           { assert(Cell_Heart(cell) == REB_DATE); }
 
         operator int () {  // stop accidental reads of NO_DATE_ZONE
-            assert(EXTRA(cell).date.zone != NO_DATE_ZONE);
-            return EXTRA(cell).date.zone;
+            assert(cell->extra.date.zone != NO_DATE_ZONE);
+            return cell->extra.date.zone;
         }
 
         template<
@@ -112,7 +112,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* v)
             typename std::enable_if<not std::is_const<U>::value, int>::type = 0
         >
         void operator=(int zone) {  // zone writes allow NO_DATE_ZONE
-            EXTRA(cell).date.zone = zone;
+            cell->extra.date.zone = zone;
         }
 
     };
@@ -126,9 +126,15 @@ INLINE bool Does_Date_Have_Zone(const Cell* v)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-INLINE REBI64 VAL_NANO(const Cell* v) {
-    assert(Cell_Heart(v) == REB_TIME or Does_Date_Have_Time(v));
-    return PAYLOAD(Time, v).nanoseconds;
+INLINE REBI64 VAL_NANO(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_TIME or Does_Date_Have_Time(c));
+    return c->payload.nanoseconds;
+}
+
+INLINE void Tweak_Cell_Nanoseconds(Cell* c, REBI64 nano) {
+    assert(HEART_BYTE(c) == REB_TIME or Cell_Heart(c) == REB_DATE);
+    possibly(nano == NO_DATE_TIME);
+    c->payload.nanoseconds = nano;
 }
 
 #define SECS_TO_NANO(seconds) \
@@ -182,6 +188,6 @@ INLINE Value* Init_Time_Nanoseconds(
     REBI64 nanoseconds
 ){
     Reset_Cell_Header_Noquote(v, CELL_MASK_TIME);
-    PAYLOAD(Time, v).nanoseconds = nanoseconds;
+    Tweak_Cell_Nanoseconds(v, nanoseconds);
     return cast(Value*, v);
 }

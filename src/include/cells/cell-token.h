@@ -102,7 +102,7 @@ INLINE bool IS_CHAR_CELL(const Cell* c) {
     if (Stringlike_Has_Node(c))
         return false;  // allocated form, too long to be a character
 
-    return EXTRA(c).at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
+    return c->extra.at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
 }
 
 INLINE bool IS_CHAR(const Atom* v) {
@@ -118,10 +118,10 @@ INLINE Codepoint Cell_Codepoint(const Cell* c) {  // must pass IS_CHAR_CELL()
     assert(Cell_Heart(c) == REB_ISSUE);
     assert(not Stringlike_Has_Node(c));
 
-    assert(EXTRA(c).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
+    assert(c->extra.at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
 
     Codepoint codepoint;
-    Back_Scan_Utf8_Char_Unchecked(&codepoint, PAYLOAD(Bytes, c).at_least_8);
+    Back_Scan_Utf8_Char_Unchecked(&codepoint, c->payload.at_least_8);
     return codepoint;
 }
 
@@ -137,16 +137,16 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
         and not Any_String_Kind(heart) and not Any_Word_Kind(heart)
     );
     assert(len <= size);
-    if (size + 1 > Size_Of(PAYLOAD(Bytes, out).at_least_8))
+    if (size + 1 > Size_Of(out->payload.at_least_8))
         return false;
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
-    memcpy(&PAYLOAD(Bytes, out).at_least_8, utf8, size + 1);  // copy '\0' term
-    PAYLOAD(Bytes, out).at_least_8[size] = '\0';
-    EXTRA(out).at_least_4[IDX_EXTRA_USED] = size;
-    EXTRA(out).at_least_4[IDX_EXTRA_LEN] = len;
+    memcpy(&out->payload.at_least_8, utf8, size + 1);  // copy '\0' term
+    out->payload.at_least_8[size] = '\0';
+    out->extra.at_least_4[IDX_EXTRA_USED] = size;
+    out->extra.at_least_4[IDX_EXTRA_LEN] = len;
     return true;
 }
 
@@ -194,11 +194,11 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     }
     else {
         Size encoded_size = Encoded_Size_For_Codepoint(c);
-        Encode_UTF8_Char(PAYLOAD(Bytes, out).at_least_8, c, encoded_size);
-        PAYLOAD(Bytes, out).at_least_8[encoded_size] = '\0';  // terminate
+        Encode_UTF8_Char(out->payload.at_least_8, c, encoded_size);
+        out->payload.at_least_8[encoded_size] = '\0';  // terminate
 
-        EXTRA(out).at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
-        EXTRA(out).at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
+        out->extra.at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
+        out->extra.at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
         HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
     }
 
@@ -267,24 +267,24 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         Size size;
         if (
             not limit
-            or *(unwrap limit) >= EXTRA(v).at_least_4[IDX_EXTRA_LEN]
+            or *(unwrap limit) >= v->extra.at_least_4[IDX_EXTRA_LEN]
         ){
-            len = EXTRA(v).at_least_4[IDX_EXTRA_LEN];
-            size = EXTRA(v).at_least_4[IDX_EXTRA_USED];
+            len = v->extra.at_least_4[IDX_EXTRA_LEN];
+            size = v->extra.at_least_4[IDX_EXTRA_USED];
         }
         else {
             len = 0;
-            Utf8(const*) at = cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
+            Utf8(const*) at = cast(Utf8(const*), v->payload.at_least_8);
             for (; len < *(unwrap limit); ++len)
                 at = Skip_Codepoint(at);
-            size = at - PAYLOAD(Bytes, v).at_least_8;
+            size = at - v->payload.at_least_8;
         }
 
         if (length_out)
             *(unwrap length_out) = len;
         if (size_out)
             *(unwrap size_out) = size;
-        return cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
+        return cast(Utf8(const*), v->payload.at_least_8);
     }
 
     Utf8(const*) utf8 = Cell_String_At(v);

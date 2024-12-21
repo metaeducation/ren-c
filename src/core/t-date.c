@@ -364,11 +364,11 @@ static Element* Init_Normalized_Date(
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_DATE)));
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_DATE);
-    EXTRA(out).date.year = year;
-    EXTRA(out).date.month = month + 1;
-    EXTRA(out).date.day = day + 1;
-    EXTRA(out).date.zone = tz;
-    PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME;
+    out->extra.date.year = year;
+    out->extra.date.month = month + 1;
+    out->extra.date.day = day + 1;
+    out->extra.date.zone = tz;
+    Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);
 
     return out;
 }
@@ -402,12 +402,12 @@ void Adjust_Date_Zone_Core(Cell* d, int zone)
         ++n;
     else {
         VAL_ZONE(d) = zone;  // usually done by Normalize
-        PAYLOAD(Time, d).nanoseconds = (nano + TIME_IN_DAY) % TIME_IN_DAY;
+        Tweak_Cell_Nanoseconds(d, (nano + TIME_IN_DAY) % TIME_IN_DAY);
         return;
     }
 
     Init_Normalized_Date(d, n, VAL_MONTH(d) - 1, VAL_YEAR(d), zone);
-    PAYLOAD(Time, d).nanoseconds = (nano + TIME_IN_DAY) % TIME_IN_DAY;
+    Tweak_Cell_Nanoseconds(d, (nano + TIME_IN_DAY) % TIME_IN_DAY);
 }
 
 
@@ -448,7 +448,7 @@ void Fold_Zone_Into_Date(Cell* d)
 void Adjust_Date_UTC(Cell* d)
 {
     if (not Does_Date_Have_Time(d)) {
-        PAYLOAD(Time, d).nanoseconds = 0;
+        Tweak_Cell_Nanoseconds(d, 0);
         VAL_ZONE(d) = 0;
     }
     else if (not Does_Date_Have_Zone(d)) {
@@ -613,7 +613,7 @@ Bounce Makehook_Date(Level* level_, Heart heart, Element* arg) {
         Normalize_Time(&secs, &day);
 
     Init_Normalized_Date(OUT, day, month, year, tz);
-    PAYLOAD(Time, OUT).nanoseconds = secs;
+    Tweak_Cell_Nanoseconds(OUT, secs);
 
     Adjust_Date_UTC(OUT);
     return OUT;
@@ -726,7 +726,7 @@ void Pick_Or_Poke_Date(
 
           case SYM_DATE: {
             Copy_Cell(out, adjusted);  // want the adjusted date
-            PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME;  // with no time
+            Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);  // with no time
             assert(not Does_Date_Have_Zone(out));  // time zone removed
             break; }
 
@@ -836,7 +836,7 @@ void Pick_Or_Poke_Date(
             else
                 fail (poke);
 
-            PAYLOAD(Time, v).nanoseconds = nano;
+            Tweak_Cell_Nanoseconds(v, nano);
 
           check_nanoseconds:
             if (
@@ -950,7 +950,7 @@ void Pick_Or_Poke_Date(
         VAL_MONTH(v) = month;
         VAL_DAY(v) = day;
         VAL_ZONE(v) = NO_DATE_ZONE;  // to be adjusted
-        PAYLOAD(Time, v).nanoseconds = nano;  // may be NO_DATE_TIME
+        Tweak_Cell_Nanoseconds(v, nano);  // may be NO_DATE_TIME
 
         // This is not a canon stored date, so we have to take into account
         // the separated zone variable (which may have been changed or cleared).
@@ -1146,7 +1146,7 @@ DECLARE_GENERICS(Date)
         Does_Date_Have_Zone(v) ? cast(int, VAL_ZONE(v)) : 0
     );
 
-    PAYLOAD(Time, OUT).nanoseconds = secs; // may be NO_DATE_TIME
+    Tweak_Cell_Nanoseconds(OUT, secs); // may be NO_DATE_TIME
     if (secs == NO_DATE_TIME)
         VAL_ZONE(OUT) = NO_DATE_ZONE;
     return OUT;
@@ -1193,8 +1193,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
         VAL_ZONE(OUT) = VAL_INT32(ARG(zone)) / ZONE_MINS;
 
     REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
-    PAYLOAD(Time, OUT).nanoseconds
-        = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano;
+    Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano);
 
     assert(Does_Date_Have_Time(OUT));
     return OUT;
@@ -1230,8 +1229,7 @@ DECLARE_NATIVE(make_time_sn)
     Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_TIME);
 
     REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
-    PAYLOAD(Time, OUT).nanoseconds
-        = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano;
+    Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano);
 
     return OUT;
 }

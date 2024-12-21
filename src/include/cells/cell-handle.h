@@ -43,11 +43,11 @@
 #define Tweak_Cell_Handle_Stub          Tweak_Cell_Node1
 #define Extract_Cell_Handle_Stub(c)     cast(Stub*, Cell_Node1(c))
 
-#define CELL_HANDLE_LENGTH_U(c)         EXTRA(c).u
+#define CELL_HANDLE_LENGTH_U(c)         (c)->extra.u
 
-#define CELL_HANDLE_CDATA_P(c)          PAYLOAD(Any, (c)).second.p
-#define CELL_HANDLE_CFUNC_P(c)          PAYLOAD(Any, (c)).second.cfunc
-#define CELL_HANDLE_NODE_P(c)           PAYLOAD(Any, (c)).second.node
+#define CELL_HANDLE_CDATA_P(c)          (c)->payload.split.two.p
+#define CELL_HANDLE_CFUNC_P(c)          (c)->payload.split.two.cfunc
+#define CELL_HANDLE_NODE_P(c)           (c)->payload.split.two.node
 
 
 INLINE bool Is_Handle_Cfunc(const Cell* v) {
@@ -134,7 +134,7 @@ INLINE Element* Init_Handle_Cdata(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
-    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
+    Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CDATA_P(out) = cdata;
     CELL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
 
@@ -149,7 +149,7 @@ INLINE Element* Init_Handle_Cfunc(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
-    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
+    Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CFUNC_P(out) = cfunc;
     CELL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
     return out;
@@ -163,7 +163,7 @@ INLINE Element* Init_Handle_Node(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_DONT_MARK_NODE1
     );
-    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
+    Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_NODE_P(out) = node;
     CELL_HANDLE_LENGTH_U(out) = 1;
     return out;

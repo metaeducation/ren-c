@@ -120,8 +120,8 @@ INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
     );
     Tweak_Cell_Binding(out, UNBOUND);
-    PAYLOAD(Any, out).first.u = ch;
-    Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
+    out->payload.split.one.u = ch;
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return out;
 }
@@ -131,7 +131,7 @@ INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
 
 INLINE char Cell_Return_Type(const Cell* cell) {
     assert(cast(Kind, Cell_Heart(cell)) == REB_T_RETURN_SIGNAL);
-    return cast(char, PAYLOAD(Any, cell).first.u);
+    return cast(char, cell->payload.split.one.u);
 }
 
 INLINE bool Is_Bounce_An_Atom(Bounce b)
@@ -139,7 +139,7 @@ INLINE bool Is_Bounce_An_Atom(Bounce b)
 
 INLINE char VAL_RETURN_SIGNAL(Bounce b) {
     assert(not Is_Bounce_An_Atom(b));
-    return PAYLOAD(Any, cast(Value*, b)).first.u;
+    return cast(Value*, b)->payload.split.one.u;
 }
 
 INLINE Atom* Atom_From_Bounce(Bounce b) {

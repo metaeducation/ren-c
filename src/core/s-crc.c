@@ -146,9 +146,9 @@ uint32_t Hash_Value(const Cell* cell)
         // build a `deci` type.  So it is safe to read the three pointers as
         // uintptr_t back, and hash them.
         //
-        hash = PAYLOAD(Any, cell).first.u;
-        hash ^= PAYLOAD(Any, cell).second.u;
-        hash ^= EXTRA(cell).u;
+        hash = cell->payload.split.one.u;
+        hash ^= cell->payload.split.two.u;
+        hash ^= cell->extra.u;
         break; }
 
       hash_pair:
@@ -219,8 +219,8 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_VAR_PATH: {
         if (not Sequence_Has_Node(cell)) {
             hash = Hash_Bytes(
-                PAYLOAD(Bytes, cell).at_least_8 + 1,
-                PAYLOAD(Bytes, cell).at_least_8[IDX_SEQUENCE_USED]
+                cell->payload.at_least_8 + 1,
+                cell->payload.at_least_8[IDX_SEQUENCE_USED]
             );
             break;
         }

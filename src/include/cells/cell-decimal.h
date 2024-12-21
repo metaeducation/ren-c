@@ -32,18 +32,18 @@
 //
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define VAL_DECIMAL(v) \
-        PAYLOAD(Decimal, (v)).dec
+    #define VAL_DECIMAL(c) \
+        (c)->payload.dec
 #else
     // allows an assert, but also lvalue: `VAL_DECIMAL(v) = xxx`
     //
-    INLINE REBDEC VAL_DECIMAL(const Cell* v) {
-        assert(Cell_Heart(v) == REB_DECIMAL or Cell_Heart(v) == REB_PERCENT);
-        return PAYLOAD(Decimal, v).dec;
+    INLINE REBDEC VAL_DECIMAL(const Cell* c) {
+        assert(Cell_Heart(c) == REB_DECIMAL or Cell_Heart(c) == REB_PERCENT);
+        return c->payload.dec;
     }
-    INLINE REBDEC & VAL_DECIMAL(Cell* v) {
-        assert(Cell_Heart(v) == REB_DECIMAL or Cell_Heart(v) == REB_PERCENT);
-        return PAYLOAD(Decimal, v).dec;
+    INLINE REBDEC & VAL_DECIMAL(Cell* c) {
+        assert(Cell_Heart(c) == REB_DECIMAL or Cell_Heart(c) == REB_PERCENT);
+        return c->payload.dec;
     }
 #endif
 
@@ -62,7 +62,7 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
-    PAYLOAD(Decimal, out).dec = dec;
+    out->payload.dec = dec;
     return out;
 }
 

@@ -610,7 +610,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
         ){
             return nullptr;
         }
-        assert(PAYLOAD(Time, TOP).nanoseconds != NO_DATE_TIME);
+        assert(TOP->payload.nanoseconds != NO_DATE_TIME);
         nanoseconds = VAL_NANO(TOP);
         DROP();  // !!! could reuse top cell for "efficiency"
     }
@@ -672,7 +672,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     VAL_MONTH(TOP) = month;
     VAL_DAY(TOP) = day;
     VAL_ZONE(cast(Cell*, TOP)) = NO_DATE_ZONE;  // Adjust_Date_Zone() needs
-    PAYLOAD(Time, TOP).nanoseconds = nanoseconds;
+    Tweak_Cell_Nanoseconds(TOP, nanoseconds);
 
     Adjust_Date_Zone_Core(TOP, tz);
 

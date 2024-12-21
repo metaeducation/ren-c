@@ -60,7 +60,7 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
 //
 #define INDEX_PATCHED (INT32_MAX - 1)  // directly points at variable patch
 
-#define CELL_WORD_INDEX_I32(v)         PAYLOAD(Any, (v)).second.i32
+#define CELL_WORD_INDEX_I32(c)         (c)->payload.split.two.i32
 
 INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
     assert(Wordlike_Cell(v));

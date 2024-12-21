@@ -60,9 +60,9 @@
 
 INLINE Element* Init_Blank_Untracked(Init(Element) out) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_BLANK);
-    Corrupt_Unused_Field(EXTRA(out).corrupt);  // doesn't get marked
-    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
-    Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
+    Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
+    Corrupt_Unused_Field(out->payload.split.one.corrupt);
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return out;
 }
@@ -87,9 +87,9 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out) {
 
 INLINE Element* Init_Trash_Untracked(Init(Element) out) {
     Reset_Cell_Header(out, QUASIFORM_2_COERCE_ONLY, CELL_MASK_BLANK);
-    Corrupt_Unused_Field(EXTRA(out).corrupt);  // doesn't get marked
-    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
-    Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
+    Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
+    Corrupt_Unused_Field(out->payload.split.one.corrupt);
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return out;
 }
@@ -135,9 +135,9 @@ INLINE bool Is_Trash(Need(const Element*) v)
 
 INLINE Value* Init_Nothing_Untracked(Init(Value) out) {
     Reset_Cell_Header(out, ANTIFORM_0_COERCE_ONLY, CELL_MASK_BLANK);
-    Corrupt_Unused_Field(EXTRA(out).corrupt);  // doesn't get marked
-    Corrupt_Unused_Field(PAYLOAD(Any, out).first.corrupt);
-    Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
+    Corrupt_Unused_Field(out->extra.corrupt);  // doesn't get marked
+    Corrupt_Unused_Field(out->payload.split.one.corrupt);
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return out;
 }

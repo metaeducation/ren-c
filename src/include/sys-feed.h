@@ -110,8 +110,8 @@
 #define FEED_IS_VARIADIC(feed) \
     (REB_COMMA == HEART_BYTE(Feed_Data(feed)))
 
-#define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, Feed_Data(feed)).vaptr
-#define FEED_PACKED(feed)           PAYLOAD(Comma, Feed_Data(feed)).packed
+#define FEED_VAPTR_POINTER(feed)    Feed_Data(feed)->payload.comma.vaptr
+#define FEED_PACKED(feed)           Feed_Data(feed)->payload.comma.packed
 
 INLINE const Element* At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));

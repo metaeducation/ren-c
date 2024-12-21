@@ -173,12 +173,12 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
     assert(Cell_Heart(c) == REB_FRAME);
-    return cast(VarList*, m_cast(Node*, EXTRA(c).node));
+    return cast(VarList*, m_cast(Node*, c->extra.node));
 }
 
 INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
     assert(Cell_Heart(c) == REB_FRAME);
-    EXTRA(c).node = maybe coupling;
+    c->extra.node = maybe coupling;
 }
 
 
@@ -195,7 +195,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
             | CELL_FLAG_PROTECTED  // should not be modified
     );
     Tweak_Cell_Context_Varlist(rootvar, varlist);
-    EXTRA(rootvar).node = nullptr;  // no coupling, but extra is marked
+    rootvar->extra.node = nullptr;  // no coupling, but extra is marked
     Tweak_Cell_Frame_Lens_Or_Label(rootvar, nullptr);  // not a frame
 }
 

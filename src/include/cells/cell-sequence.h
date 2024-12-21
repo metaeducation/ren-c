@@ -257,7 +257,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     );
     Tweak_Cell_Binding(e, UNBOUND);  // "arraylike", needs binding
     Tweak_Cell_Node1(e, p);
-    Corrupt_Unused_Field(PAYLOAD(Any, e).second.corrupt);
+    Corrupt_Unused_Field(e->payload.split.two.corrupt);
 
     return nullptr;
 }
@@ -292,7 +292,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths bindable, can't have garbage
 
-    if (size > Size_Of(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
+    if (size > Size_Of(out->payload.at_least_8) - 1) {  // too big
         Source* a = Make_Source_Managed(size);
         for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
@@ -300,8 +300,8 @@ INLINE Element* Init_Any_Sequence_Bytes(
         Init_Block(out, Freeze_Source_Shallow(a));  // !!! TBD: compact BLOB!
     }
     else {
-        PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = size;
-        Byte* dest = PAYLOAD(Bytes, out).at_least_8 + 1;
+        out->payload.at_least_8[IDX_SEQUENCE_USED] = size;
+        Byte* dest = out->payload.at_least_8 + 1;
         for (; size > 0; --size, ++data, ++dest)
             *dest = *data;
     }
@@ -320,7 +320,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 ){
     assert(Any_Sequence_Kind(heart));
 
-    if (len > Size_Of(PAYLOAD(Bytes, out).at_least_8) - 1)
+    if (len > Size_Of(out->payload.at_least_8) - 1)
         return nullptr;  // no optimization yet if won't fit in payload bytes
 
     if (len < 2)
@@ -332,9 +332,9 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths are bindable, can't be garbage
 
-    PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = len;
+    out->payload.at_least_8[IDX_SEQUENCE_USED] = len;
 
-    Byte* bp = PAYLOAD(Bytes, out).at_least_8 + 1;
+    Byte* bp = out->payload.at_least_8 + 1;
 
     const Value* item = head;
     REBLEN n;
@@ -443,7 +443,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     );
     Tweak_Cell_Binding(out, UNBOUND);  // "arraylike", needs binding
     Tweak_Cell_Node1(out, pairing);
-    Corrupt_Unused_Field(PAYLOAD(Any, out).second.corrupt);
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return nullptr;
 }
@@ -599,7 +599,7 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
 
     if (not Sequence_Has_Node(c)) {  // compressed bytes
         assert(not Cell_Has_Node2(c));
-        return PAYLOAD(Bytes, c).at_least_8[IDX_SEQUENCE_USED];
+        return c->payload.at_least_8[IDX_SEQUENCE_USED];
     }
 
     const Node* node1 = Cell_Node1(c);
@@ -652,8 +652,8 @@ INLINE Element* Derelativize_Sequence_At(
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));  // !!! should not be cell
 
     if (not Sequence_Has_Node(sequence)) {  // compressed bytes
-        assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
-        return Init_Integer(out, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
+        assert(n < sequence->payload.at_least_8[IDX_SEQUENCE_USED]);
+        return Init_Integer(out, sequence->payload.at_least_8[n + 1]);
     }
 
     const Node* node1 = Cell_Node1(sequence);

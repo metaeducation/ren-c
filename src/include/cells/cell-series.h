@@ -25,8 +25,8 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
 // one cell and not update the other cells referring to it.  Hence VAL_INDEX()
 // must be checked, or the routine called with it must.
 
-#define VAL_INDEX_RAW(v) \
-    PAYLOAD(Any, (v)).second.i
+#define VAL_INDEX_RAW(c) \
+    (c)->payload.split.two.i
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define VAL_INDEX_UNBOUNDED(v) \
@@ -141,7 +141,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     Tweak_Cell_Node1(out, f);
     VAL_INDEX_RAW(out) = index;
 
-    EXTRA(out).node = binding;  // checked below if DEBUG_CHECK_BINDING
+    out->extra.node = binding;  // checked below if DEBUG_CHECK_BINDING
 
   #if DEBUG_CHECK_BINDING
     if (Any_Bindable_Kind(heart))
@@ -154,7 +154,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     if (Any_Utf8_Kind(heart) and not Any_String_Kind(heart)) {
         Size utf8_size = Cell_String_Size_Limit_At(nullptr, out, UNLIMITED);
 
-        assert(utf8_size + 1 > Size_Of(PAYLOAD(Bytes, out).at_least_8));
+        assert(utf8_size + 1 > Size_Of(out->payload.at_least_8));
     }
   #endif
 

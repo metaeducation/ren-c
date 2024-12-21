@@ -578,9 +578,6 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 
 //=//// CELL PAYLOAD ACCESS ///////////////////////////////////////////////=//
 
-#define PAYLOAD(Type,cell) \
-    (cell)->payload.Type
-
 #define Cell_Has_Node1(c) \
     Not_Cell_Flag_Unchecked((c), DONT_MARK_NODE1)
 
@@ -600,20 +597,20 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 #define Tweak_Cell_Node1(c,n) do { \
     STATIC_ASSERT_LVALUE(c);  /* macro repeats c, make sure calls are safe */ \
     assert(Cell_Has_Node1(c)); \
-    PAYLOAD(Any, (c)).first.node = (n); \
+    (c)->payload.split.one.node = (n); \
 } while (0)
 
 #define Tweak_Cell_Node2(c,n) do { \
     STATIC_ASSERT_LVALUE(c);  /* macro repeats c, make sure calls are safe */ \
     assert(Cell_Has_Node2(c)); \
-    PAYLOAD(Any, (c)).second.node = (n); \
+    (c)->payload.split.two.node = (n); \
 } while (0)
 
 #define Cell_Node1(c) \
-    m_cast(Node*, PAYLOAD(Any, (c)).first.node)
+    m_cast(Node*, (c)->payload.split.one.node)
 
 #define Cell_Node2(c) \
-    m_cast(Node*, PAYLOAD(Any, (c)).second.node)
+    m_cast(Node*, (c)->payload.split.two.node)
 
 
 //=///// BINDING //////////////////////////////////////////////////////////=//
@@ -643,9 +640,6 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 //     and seemed to outweigh the need to dereference all the time.  The
 //     increased clarity of having unbound be nullptr is also in its benefit.
 //
-
-#define EXTRA(cell) \
-    (cell)->extra
 
 #if (! DEBUG_CHECK_BINDING)
     #define Assert_Cell_Binding_Valid(v)  NOOP
@@ -840,9 +834,9 @@ INLINE Cell* Move_Cell_Untracked(
     Assert_Cell_Header_Overwritable(c);
     c->header.bits = CELL_MASK_TRASH;  // fast overwrite
 
-    Corrupt_Pointer_If_Debug(EXTRA(c).corrupt);
-    Corrupt_Pointer_If_Debug(c->payload.Any.first.corrupt);
-    Corrupt_Pointer_If_Debug(c->payload.Any.second.corrupt);
+    Corrupt_Pointer_If_Debug(c->extra.corrupt);
+    Corrupt_Pointer_If_Debug(c->payload.split.one.corrupt);
+    Corrupt_Pointer_If_Debug(c->payload.split.two.corrupt);
 
     return out;
 }
@@ -895,9 +889,9 @@ INLINE Atom* Move_Atom_Untracked(
 
     a->header.bits = CELL_MASK_ERASED_0;  // legal state for atoms
 
-    Corrupt_Pointer_If_Debug(EXTRA(a).corrupt);
-    Corrupt_Pointer_If_Debug(a->payload.Any.first.corrupt);
-    Corrupt_Pointer_If_Debug(a->payload.Any.second.corrupt);
+    Corrupt_Pointer_If_Debug(a->extra.corrupt);
+    Corrupt_Pointer_If_Debug(a->payload.split.one.corrupt);
+    Corrupt_Pointer_If_Debug(a->payload.split.two.corrupt);
 
   #if DEBUG_TRACK_COPY_PRESERVES
     out->file = v->file;

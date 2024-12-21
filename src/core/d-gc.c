@@ -115,7 +115,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             const Flex* f = Cell_String(v);
             assert(Is_Flex_Frozen(f));
 
-            assert(Flex_Used(f) + 1 > Size_Of(PAYLOAD(Bytes, v).at_least_8));
+            assert(Flex_Used(f) + 1 > Size_Of(v->payload.at_least_8));
         }
         else {
             // it's bytes
@@ -268,7 +268,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // could apply to any OBJECT!, but the binding cheaply makes it
         // a method for that object.)
         //
-        if (EXTRA(v).node != nullptr) {
+        if (v->extra.node != nullptr) {
             if (CTX_TYPE(context) == REB_FRAME) {
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
@@ -279,9 +279,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 assert(Is_Stub_Let(Compact_Stub_From_Cell(v)));
         }
 
-        if (PAYLOAD(Any, v).second.node) {
+        if (v->payload.split.two.node) {
             assert(heart == REB_FRAME); // may be heap-based frame
-            assert(Is_Node_Marked(PAYLOAD(Any, v).second.node));  // phase or label
+            assert(Is_Node_Marked(v->payload.split.two.node));  // lens/label
         }
 
         const Value* archetype = Varlist_Archetype(context);
@@ -442,7 +442,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         //
         assert(Any_Context(archetype));
         assert(
-            EXTRA(archetype).node == nullptr
+            archetype->extra.node == nullptr
             or VAL_TYPE(archetype) == REB_FRAME
         );
 

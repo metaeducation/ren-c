@@ -343,10 +343,10 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
         Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.node);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE1) and Cell_Node1(c))
-        Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).first.node);
+        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.one.node);
 
     if (Not_Cell_Flag_Unchecked(c, DONT_MARK_NODE2) and Cell_Node2(c))
-        Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).second.node);
+        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->payload.split.two.node);
 
   #if RUNTIME_CHECKS
     in_mark = false;

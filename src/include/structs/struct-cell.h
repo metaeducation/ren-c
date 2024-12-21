@@ -118,7 +118,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //=//// CELL_FLAG_DONT_MARK_NODE1 /////////////////////////////////////////=//
 //
 // If this flag is *NOT* set, that indicates the cell uses the "Any" payload
-// and `PAYLOAD(Any, v).first.node` should be marked as a node by the GC
+// and Cell.payload.split.one.node should be marked as a node by the GC
 // (if it is not nullptr)
 //
 // IT'S IN THE REVERSE SENSE ON PURPOSE.  This means a "free" cell can have
@@ -138,7 +138,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //=//// CELL_FLAG_DONT_MARK_NODE2 ////////////////////////////////////////=//
 //
 // If this flag is *NOT* set, that indicates the cell uses the "Any" payload
-// and `PAYLOAD(Any, v).second.node` should be marked as a node by the GC
+// and Cell.payload.split.two.node should be marked as a node by the GC
 // (if it is not nullptr)
 //
 // IT'S IN THE REVERSE SENSE ON PURPOSE.  See CELL_FLAG_DONT_MARK_NODE1.
@@ -362,7 +362,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // This is a grab bag of all the different types that can be put in Cell and
 // Stub slots that are the size of a platform pointer.  It's what is used for
 // generic data representation in Stub.link, Stub.misc, Stub.info, Cell.extra,
-// Cell.payload.any.first, and Cell.payload.any.second.
+// Cell.payload.split.one, and Cell.payload.split.two.
 //
 // The idea is that extensions that want to have their own custom Stub or
 // Cell types would be able to define those custom types without needing to
@@ -497,22 +497,6 @@ union AnyUnion {
 //     https://stackoverflow.com/q/41298619/
 //
 
-struct CharacterPayloadStruct {  // see %sys-char.h
-    Byte size_then_encoded[8];
-};
-
-struct IntegerPayloadStruct { REBI64 i64; };  // see %sys-integer.h
-
-struct DecimalPayloadStruct { REBDEC dec; };  // see %sys-decimal.h
-
-struct TimePayloadStruct {  // see %sys-time.h
-    REBI64 nanoseconds;
-};
-
-struct BytesPayloadStruct
-{
-    Byte at_least_8[sizeof(uintptr_t) * 2];  // size depends on platform
-};
 
 // COMMA! is not Cell_Extra_Needs_Mark(), and doesn't use its payload.
 //
@@ -524,6 +508,7 @@ struct BytesPayloadStruct
 // make a special type for this.  But it hasn't been a problem so far.
 //
 struct CommaPayloadStruct {
+    //
     // A feed may be sourced from a va_list of pointers, or not.  If this is
     // NULL it is assumed that the values are sourced from a simple array.
     //
@@ -536,19 +521,46 @@ struct CommaPayloadStruct {
     const void* const* packed;
 };
 
-struct AnyPayloadStruct  // generic, for adding payloads after-the-fact
+struct SplitPayloadStruct  // generic, for adding payloads after-the-fact
 {
-    union AnyUnion first;
-    union AnyUnion second;
+    union AnyUnion one;
+    union AnyUnion two;
 };
 
 union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
+    //
+    // The i64 field is used by INTEGER!
+    //
+    // TIME! and DATE! also use an integer payload, but they use a different
+    // field for it.  This helps in searching for references to uses that
+    // relate to those types instead of integer.  But be careful not to
+    // assign to one and then read from the other, that isn't guaranteed
+    // to work in C++!
+    //
+    REBI64 i64;
+    REBI64 nanoseconds;
+
+    // The dec field is used by DECIMAL!
+    //
+    REBDEC dec;
+
+    // Small ISSUE!s which can fit entirely inside a cell use this space to
+    // store their UTF-8 data.  It's at least 8 bytes on 32-bit platforms,
+    // but 16 bytes on 64-bit.
+    //
+    // It's also used by TUPLE! and PATH! and CHAIN! for short byte sequences,
+    // like 1.2.3.4 -- not so much because this is important, but because
+    // historical Rebol did this for its only behavior of the TUPLE! type.
+    //
+    Byte at_least_8[sizeof(uintptr_t) * 2];
+
+    struct CommaPayloadStruct comma;
 
     // Due to strict aliasing, if a routine is going to generically access a
     // node (e.g. to exploit common checks for mutability) it has to do a
     // read through the same field that was assigned.  Hence, many types
-    // whose payloads are nodes use the generic "Any" payload, which is
-    // two separate variant fields.
+    // whose payloads are nodes use the "Split" payload, which is two separate
+    // variant fields.
     //
     // ANY-WORD?  // see %sys-word.h
     //     Symbol* symbol;  // word's non-canonized spelling, UTF-8 string
@@ -569,19 +581,8 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // VARARGS!  // see %sys-varargs.h
     //     REBINT signed_param_index;  // if negative, consider arg infix
     //     Phase* phase;  // where to look up parameter by its offset
-
-    struct CharacterPayloadStruct Character;
-    struct IntegerPayloadStruct Integer;
-    struct DecimalPayloadStruct Decimal;
-    struct TimePayloadStruct Time;
-    struct BytesPayloadStruct Bytes;
-    struct CommaPayloadStruct Comma;
-
-    struct AnyPayloadStruct Any;
-
-  #if DEBUG_USE_UNION_PUNS
-    int64_t int64_pun;
-  #endif
+    //
+    struct SplitPayloadStruct split;
 };
 
 

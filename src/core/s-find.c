@@ -556,7 +556,7 @@ REBLEN Find_Value_In_Binstr(
         if (molded) {
             Reset_Cell_Header_Noquote(temp, CELL_MASK_TEXT);
             Tweak_Cell_Node1(temp, molded);
-            PAYLOAD(Any, temp).second.u = 0;  // index
+            VAL_INDEX_RAW(temp) = 0;
         }
 
         REBLEN result = Find_Binstr_In_Binstr(

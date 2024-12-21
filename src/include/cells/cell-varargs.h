@@ -55,22 +55,22 @@
 //
 
 #define VAL_VARARGS_SIGNED_PARAM_INDEX(v) \
-    PAYLOAD(Any, (v)).first.i
+    (v)->payload.split.one.i
 
 #define Tweak_Cell_Varargs_Phase        Tweak_Cell_Node2
 #define Extract_Cell_Varargs_Phase(v)   cast(Phase*, Cell_Node2(v))
 
-INLINE Array* Cell_Varargs_Source(const Cell* v) {
-    assert(Cell_Heart(v) == REB_VARARGS);
-    return cast(Array*, m_cast(Node*, EXTRA(v).node));
+INLINE Array* Cell_Varargs_Source(const Cell* c) {
+    assert(Cell_Heart(c) == REB_VARARGS);
+    return cast(Array*, m_cast(Node*, c->extra.node));
 }
 
 INLINE void Tweak_Cell_Varargs_Source(
-    Cell* v,
+    Cell* c,
     Stub* source  // either a feed, or a frame varlist
 ){
-    assert(Cell_Heart(v) == REB_VARARGS);
-    EXTRA(v).node = source;
+    assert(Cell_Heart(c) == REB_VARARGS);
+    c->extra.node = source;
 }
 
 

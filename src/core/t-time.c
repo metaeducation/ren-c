@@ -443,7 +443,7 @@ void Poke_Time_Immediate(
         fail (picker);
     }
 
-    PAYLOAD(Time, value).nanoseconds = Join_Time(&tf, false);
+    Tweak_Cell_Nanoseconds(value, Join_Time(&tf, false));
 }
 
 

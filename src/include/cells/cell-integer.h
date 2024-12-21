@@ -35,28 +35,29 @@
 //
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define VAL_INT64(v) \
-        cast(REBI64, PAYLOAD(Integer, (v)).i64)
+    #define VAL_INT64(c) \
+        (c)->payload.i64
 
-    #define mutable_VAL_INT64(v) \
-        PAYLOAD(Integer, (v)).i64
+    #define mutable_VAL_INT64(c) \
+        (c)->payload.i64
 #else
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
     //
-    INLINE REBI64 VAL_INT64(const Cell* v) {
-        assert(Cell_Heart(v) == REB_INTEGER);
-        return PAYLOAD(Integer, v).i64;
+    INLINE REBI64 VAL_INT64(const Cell* c) {
+        assert(HEART_BYTE(c) == REB_INTEGER);
+        return c->payload.i64;
     }
-    INLINE REBI64 & mutable_VAL_INT64(Cell* v) {
-        assert(Cell_Heart(v) == REB_INTEGER);
-        return PAYLOAD(Integer, v).i64;
+    INLINE REBI64 & mutable_VAL_INT64(Cell* c) {
+        assert(HEART_BYTE(c) == REB_INTEGER);
+        Assert_Cell_Writable(c);
+        return c->payload.i64;
     }
 #endif
 
 INLINE Element* Init_Integer_Untracked(Init(Element) out, REBI64 i64) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_INTEGER);
-    Corrupt_Unused_Field(EXTRA(out).corrupt);
-    PAYLOAD(Integer, out).i64 = i64;
+    Corrupt_Unused_Field(out->extra.corrupt);
+    out->payload.i64 = i64;
 
     return out;
 }

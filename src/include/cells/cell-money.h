@@ -58,15 +58,15 @@
 INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
     deci amount;
 
-    uintptr_t u = EXTRA(v).u;
+    uintptr_t u = v->extra.u;
     assert(u <= UINT32_MAX);
     amount.m0 = u; // "significand, lowest part" (32 bits)
 
-    uintptr_t u1 = PAYLOAD(Any, v).first.u;
+    uintptr_t u1 = v->payload.split.one.u;
     assert(u1 <= UINT32_MAX);
     amount.m1 = u1; // "significand, continuation" (32 bits)
 
-    uintptr_t u2 = PAYLOAD(Any, v).second.u;
+    uintptr_t u2 = v->payload.split.two.u;
     assert(u2 <= UINT32_MAX);
 
     amount.e = cast(signed char, u2 & 0xFF);  // "exponent" (8 bits)
@@ -83,8 +83,8 @@ INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
 INLINE Element* Init_Money(Init(Element) out, deci amount) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_MONEY);
 
-    EXTRA(out).u = amount.m0;  // "significand, lowest part"
-    PAYLOAD(Any, out).first.u = amount.m1;  // "significand, continuation"
+    out->extra.u = amount.m0;  // "significand, lowest part"
+    out->payload.split.one.u = amount.m1;  // "significand, continuation"
 
     uintptr_t u2 = amount.m2;  // "significand, highest part" (23 bits)
 
@@ -94,7 +94,7 @@ INLINE Element* Init_Money(Init(Element) out, deci amount) {
     u2 <<= 8;  // shift so exponent can go in low byte
     u2 |= cast(unsigned char, amount.e);  // "exponent" (8 bits)"
 
-    PAYLOAD(Any, out).second.u = u2;
+    out->payload.split.two.u = u2;
 
     return out;
 }
