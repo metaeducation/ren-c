@@ -1239,17 +1239,21 @@ DECLARE_GENERICS(Frame)
             }
 
             const Source* a = Cell_Array(Details_At(details, 1));
-            if (Not_Source_Flag(a, HAS_FILE_LINE))
-                return nullptr;
 
             // !!! How to tell URL! vs FILE! ?
             //
-            if (prop == SYM_FILE)
-                Init_File(OUT, LINK(Filename, a));
-            else
-                Init_Integer(OUT, a->misc.line);
+            if (prop == SYM_FILE) {
+                Option(const String*) filename = Link_Filename(a);
+                if (not filename)
+                    return nullptr;
+                return Init_File(OUT, unwrap filename);
+            }
 
-            return OUT; }
+            assert(prop == SYM_LINE);
+            if (a->misc.line == 0)
+                return nullptr;
+
+            return Init_Integer(OUT, a->misc.line); }
 
           default:
             break;
@@ -1268,10 +1272,10 @@ DECLARE_GENERICS(Frame)
             return Init_File(OUT, unwrap file); }
 
           case SYM_LINE: {
-            LineNumber line = LineNumber_Of_Level(L);
-            if (line == 0)
+            Option(LineNumber) line = Line_Number_Of_Level(L);
+            if (not line)
                 return nullptr;
-            return Init_Integer(OUT, line); }
+            return Init_Integer(OUT, unwrap line); }
 
           case SYM_LABEL: {
             if (Try_Get_Action_Level_Label(OUT, L))

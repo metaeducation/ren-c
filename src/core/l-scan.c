@@ -2691,8 +2691,7 @@ Bounce Scanner_Executor(Level* const L) {
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     a->misc.line = transcode->line;
-    LINK(Filename, a) = maybe transcode->file;
-    Set_Source_Flag(a, HAS_FILE_LINE);
+    Tweak_Link_Filename(a, maybe transcode->file);
 
     Init_Any_List(PUSH(), heart, a);
 
@@ -2842,8 +2841,7 @@ Bounce Scanner_Executor(Level* const L) {
     ){
         Source* a = cast(Source*, Cell_Node1(TOP));
         a->misc.line = transcode->line;
-        LINK(Filename, a) = maybe transcode->file;
-        Set_Source_Flag(a, HAS_FILE_LINE);
+        Tweak_Link_Filename(a, maybe transcode->file);
     }
 
     if (transcode->at == nullptr)  // reached e.g. with a/'
@@ -2862,8 +2860,7 @@ Bounce Scanner_Executor(Level* const L) {
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     array->misc.line = transcode->line;
-    LINK(Filename, array) = maybe transcode->file;
-    Set_Source_Flag(array, HAS_FILE_LINE);
+    Tweak_Link_Filename(array, maybe transcode->file);
 
     if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
         DECLARE_ATOM (temp);
@@ -2971,8 +2968,7 @@ Source* Scan_UTF8_Managed(
     /* Set_Source_Flag(a, NEWLINE_AT_TAIL); */  // what heuristics for this?
 
     a->misc.line = 1;
-    LINK(Filename, a) = maybe file;
-    Set_Source_Flag(a, HAS_FILE_LINE);
+    Tweak_Link_Filename(a, maybe file);
 
     return a;
 }
@@ -3239,8 +3235,7 @@ DECLARE_NATIVE(transcode)
             Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
         a->misc.line = ss->line;
-        LINK(Filename, a) = maybe ss->file;
-        Set_Source_Flag(a, HAS_FILE_LINE);
+        Tweak_Link_Filename(a, maybe ss->file);
 
         Init_Block(OUT, a);
     }

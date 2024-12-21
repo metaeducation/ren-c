@@ -103,16 +103,16 @@ INLINE Array* Make_Array_For_Copy(
         flags |= SOURCE_FLAG_NEWLINE_AT_TAIL;
     }
 
+    Option(const String*) filename;
     if (
         Flavor_From_Flags(flags) == FLAVOR_SOURCE
         and original
         and Stub_Flavor(original) == FLAVOR_SOURCE
-        and Get_Source_Flag(c_cast(Source*, original), HAS_FILE_LINE)
+        and (filename = Link_Filename(c_cast(Source*, original)))
     ){
         Source* a = cast(Source*, Make_Array_Core(flags, capacity));
-        LINK(Filename, a) = LINK(Filename, original);
+        Tweak_Link_Filename(a, filename);
         a->misc.line = original->misc.line;
-        Set_Source_Flag(a, HAS_FILE_LINE);
         return a;
     }
 

@@ -314,15 +314,14 @@ Details* Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (Get_Source_Flag(Cell_Array(spec), HAS_FILE_LINE)) {
-        LINK(Filename, copy) = LINK(Filename, Cell_Array(spec));
+    Option(const String*) filename;
+    if ((filename = Link_Filename(Cell_Array(spec)))) {
+        Tweak_Link_Filename(copy, filename);
         copy->misc.line = Cell_Array(spec)->misc.line;
-        Set_Source_Flag(copy, HAS_FILE_LINE);
     }
-    else if (Get_Source_Flag(Cell_Array(body), HAS_FILE_LINE)) {
-        LINK(Filename, copy) = LINK(Filename, Cell_Array(body));
+    else if ((filename = Link_Filename(Cell_Array(body)))) {
+        Tweak_Link_Filename(copy, filename);
         copy->misc.line = Cell_Array(body)->misc.line;
-        Set_Source_Flag(copy, HAS_FILE_LINE);
     }
     else {
         // Ideally all source series should have a file and line numbering

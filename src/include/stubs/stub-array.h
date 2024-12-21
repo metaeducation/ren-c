@@ -104,6 +104,31 @@ INLINE void Prep_Array(
 }
 
 
+INLINE Option(const String*) Link_Filename(const Source* source) {
+    assert(Stub_Flavor(source) == FLAVOR_SOURCE);
+    if (Get_Stub_Flag(source, LINK_NODE_NEEDS_MARK)) {
+        const String* filename = cast(const String*, source->link.node);
+        assert(Stub_Flavor(filename) == FLAVOR_NONSYMBOL);
+        return filename;
+    }
+    assert(Is_Pointer_Corrupt_Debug(source->link.node));
+    return nullptr;
+}
+
+INLINE void Tweak_Link_Filename(Source* source, Option(const String*) filename)
+{
+    assert(Stub_Flavor(source) == FLAVOR_SOURCE);
+    if (filename) {
+        Set_Stub_Flag(source, LINK_NODE_NEEDS_MARK);
+        source->link.node = unwrap filename;
+    }
+    else {
+        Clear_Stub_Flag(source, LINK_NODE_NEEDS_MARK);
+        Corrupt_Pointer_If_Debug(source->link.node);
+    }
+}
+
+
 // Make an Array that is the right size to store Cells (and marked for the
 // garbage collector to look into recursively).  Array_Len() will be 0.
 //
@@ -137,11 +162,12 @@ INLINE Array* Make_Array_Core_Into(
     }
 
     if (Flavor_From_Flags(flags) == FLAVOR_SOURCE) {  // add file/line [1]
+        Option(const String*) filename;
         if (
             not Level_Is_Variadic(TOP_LEVEL) and
-            (Level_Array(TOP_LEVEL)->leader.bits & SOURCE_FLAG_HAS_FILE_LINE)
+            (filename = Link_Filename(Level_Array(TOP_LEVEL)))
         ){
-            LINK(Filename, a) = LINK(Filename, Level_Array(TOP_LEVEL));
+            Tweak_Link_Filename(u_cast(Source*, a), filename);
             a->misc.line = Level_Array(TOP_LEVEL)->misc.line;
         }
     }
@@ -163,8 +189,6 @@ INLINE Array* Make_Array_Core_Into(
 //
 // Note Stub_Cell() must be overwritten by the caller...it contains an erased
 // cell but the array length is 1, so that will assert if you don't.
-//
-// For `flags`, be sure to consider if you need SOURCE_FLAG_HAS_FILE_LINE.
 //
 INLINE Source* Alloc_Singular(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_SOURCE);

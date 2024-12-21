@@ -375,7 +375,9 @@ DECLARE_NATIVE(panic)
         }
     }
 
-    Panic_Core(p, tick, File_UTF8_Of_Level(level_), LineNumber_Of_Level(level_));
+    Panic_Core(
+        p, tick, File_UTF8_Of_Level(level_), maybe Line_Number_Of_Level(level_)
+    );
 }
 
 

@@ -306,12 +306,6 @@ INLINE Element* Move_Drop_Top_Stack_Element(Init(Element) out) {
 }
 
 
-// If Pop_Stack_Values_Core is used ARRAY_HAS_FILE_LINE, it means the system
-// will try to capture the file and line number associated with the current
-// level into the generated array.  But if there are other flags--like
-// ARRAY_FLAG_IS_DETAILS or ARRAY_FLAG_IS_VARLIST--you don't want to do
-// this, because the ->link and ->misc fields have other uses.
-//
 #define Pop_Source_From_Stack(base) \
     cast(Source*, Pop_Stack_Values_Core(FLEX_MASK_UNMANAGED_SOURCE, (base)))
 

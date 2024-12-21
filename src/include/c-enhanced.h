@@ -825,9 +825,6 @@
     #define Corrupt_Function_Pointer_If_Debug(p) \
         ((p) = 0)  // is there any way to do this generically in C?
 
-    #define SafeCorrupt_Pointer_Debug(p) \
-        ((p) = p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
-
     #define FreeCorrupt_Pointer_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
 
@@ -839,10 +836,6 @@
       { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
 
     #define Corrupt_Function_Pointer_If_Debug Corrupt_Pointer_If_Debug
-
-    template<class T>
-    INLINE void SafeCorrupt_Pointer_Debug(T* &p)
-      { p = p_cast(T*, cast(uintptr_t, 0x5AFE5AFE)); }
 
     template<class T>
     INLINE void FreeCorrupt_Pointer_Debug(T* &p)

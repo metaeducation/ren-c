@@ -136,9 +136,7 @@ Bounce Reflect_Core(Level* level_)
             if (not Any_List(v))
                 return nullptr;
             const Source* s = Cell_Array(v);
-            if (Not_Source_Flag(s, HAS_FILE_LINE))
-                return nullptr;
-            Option(const String*) file = LINK(Filename, s);
+            Option(const String*) file = Link_Filename(s);
             if (not file)
                 return nullptr;
             return Init_File(OUT, unwrap file); }
@@ -147,7 +145,7 @@ Bounce Reflect_Core(Level* level_)
             if (not Any_List(v))
                 return nullptr;
             const Source* s = Cell_Array(v);
-            if (Not_Source_Flag(s, HAS_FILE_LINE))
+            if (s->misc.line == 0)
                 return nullptr;
             return Init_Integer(OUT, s->misc.line); }
 

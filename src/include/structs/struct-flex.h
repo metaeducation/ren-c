@@ -169,8 +169,8 @@ STATIC_ASSERT(FLEX_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // MAP! keys.  This approach was chosen after realizing that a lot of times,
 // users don't care if something they use as a key gets locked.  So instead
 // of erroring by telling them they can't use an unlocked Flex as a MAP! key,
-// this locks it but changes the FLEX_FLAG_HAS_FILE_LINE to implicate the
-// point where the locking occurs.
+// this locks it but changes Link_Filename() to implicate the point where the
+// locking occurs.
 //
 // !!! The file-line feature is pending.
 //

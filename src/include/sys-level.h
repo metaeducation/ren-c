@@ -193,9 +193,7 @@ INLINE REBLEN Level_Expression_Index(Level* L) {  // !!! Not called?
 INLINE Option(const String*) File_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
         return nullptr;
-    if (Not_Source_Flag(Level_Array(L), HAS_FILE_LINE))
-        return nullptr;
-    return LINK(Filename, Level_Array(L));
+    return Link_Filename(Level_Array(L));
 }
 
 INLINE const char* File_UTF8_Of_Level(Level* L) {
@@ -206,10 +204,8 @@ INLINE const char* File_UTF8_Of_Level(Level* L) {
     return str ? String_UTF8(unwrap str) : "~anonymous~";
 }
 
-INLINE LineNumber LineNumber_Of_Level(Level* L) {
+INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
-        return 0;
-    if (Not_Source_Flag(Level_Array(L), HAS_FILE_LINE))
         return 0;
     return Level_Array(L)->misc.line;
 }
@@ -499,7 +495,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     // !!! TBD: the relevant file and line update when L->feed->array changes
     //
     L->file = File_UTF8_Of_Level(L);
-    L->line = LineNumber_Of_Level(L);
+    L->line = maybe Line_Number_Of_Level(L);
   #endif
 
     L->prior = TOP_LEVEL;

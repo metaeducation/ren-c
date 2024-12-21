@@ -323,9 +323,9 @@ const Value* Find_Error_For_Sym(SymId id)
 //    any existing near, but a less-random design is needed here.
 //
 // 5. For the file and line of the error, we look at SOURCE-flavored arrays,
-//    which have SOURCE_FLAG_HAS_FILE_LINE...which either was put on at
-//    the time of scanning, or derived when the code is running based on
-//    whatever information was on a running array.
+//    which have Link_Filename()...which either was put on at the time of
+//    scanning, or derived when the code is running based on whatever
+//    information was on a running array.
 //
 //    But we currently skip any calls from C (e.g. rebValue()).  Though
 //    rebValue() might someday accept reb__FILE__() and reb__LINE__(),
@@ -376,13 +376,13 @@ void Set_Location_Of_Error(
         if (Level_Is_Variadic(L)) {  // could rebValue() have file/line? [5]
             continue;
         }
-        if (Not_Source_Flag(Level_Array(L), HAS_FILE_LINE))
+        if (not Link_Filename(Level_Array(L)))
             continue;
         break;
     }
 
     if (L != BOTTOM_LEVEL) {  // found a level with file and line information
-        Option(const String*) file = LINK(Filename, Level_Array(L));
+        Option(const String*) file = Link_Filename(Level_Array(L));
         LineNumber line = Level_Array(L)->misc.line;
 
         if (file)

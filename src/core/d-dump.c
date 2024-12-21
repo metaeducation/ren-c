@@ -128,7 +128,7 @@ void Dump_Stack(Level* L)
     printf("LABEL: %s @ FILE: %s @ LINE: %" PRIuPTR "\n",  // uintptr_t format
         label,
         File_UTF8_Of_Level(L),
-        LineNumber_Of_Level(L)
+        maybe Line_Number_Of_Level(L)
     );
 
     Dump_Stack(L->prior);

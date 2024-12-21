@@ -25,16 +25,6 @@
 // has special interpretation of the LINK and MISC nodes to hold file and
 // line information.
 //
-
-#if CPLUSPLUS_11
-    struct Source : public Array {};
-#else
-    typedef Flex Source;
-#endif
-
-
-//=//// SOURCE_FLAG_HAS_FILE_LINE /////////////////////////////////////////=//
-//
 // The Flex Stub has two pointers in it, ->link and ->misc, which are
 // used for a variety of purposes (pointing to the KeyList for an object,
 // the C code that runs as the dispatcher for an Action, etc.)  But for
@@ -46,8 +36,10 @@
 //
 // We don't need a separate array flag for this.  We just assume that if a
 // link node is set to need marking, then the array has file and line info.
+//
 
-#define SOURCE_FLAG_HAS_FILE_LINE  STUB_FLAG_LINK_NODE_NEEDS_MARK
-
-#define LINK_Filename_TYPE          const String*
-#define HAS_LINK_Filename           FLAVOR_SOURCE
+#if CPLUSPLUS_11
+    struct Source : public Array {};
+#else
+    typedef Flex Source;
+#endif
