@@ -658,6 +658,16 @@ e-lib/emit [ver --{
      * in the case of being the final resolution of the return result.  Or it
      * can be a signal of a continuation (or delegation) of code.
      *
+     * It is const, because you can legally return const char* from natives.
+     * If you do so, the UTF-8 string will be treated as code which is run
+     * after the native C function is off the stack--but while the native
+     * is still in effect.  This allows doing things like `return "halt"`
+     * or `return "fail -{...}-"` which would cause problems by trying to
+     * cross C stack levels otherwise.
+     *
+     * (Richer behavior with splicing of values that does the same thing is
+     * offered by rebDelegate(...), but this is just a convenience for that.)
+     *
      * !!! Technically this is a Node* ... but we do not export the derived
      * relationship between Value and Node in C++ builds (and cannot do so in
      * a C build).  So a void* is the only way to get a `return` in a libRebol
@@ -666,7 +676,7 @@ e-lib/emit [ver --{
      * they are not passed `void*`, so you can't accidentaly pass them Bounce.
      */
 
-    typedef void* RebolBounce;
+    typedef const void* RebolBounce;
 
 
     /*
@@ -767,11 +777,12 @@ e-lib/emit [ver --{
      *
      *     Value* action = rebFunction(R"(
      *         -{Another way to do functions}-
+     *         return: [~]
      *         message [text!]
      *     ])",
      *     [](Context* binding) {
      *         rebElide("print [-{The message is:}-", message, "]");
-     *         return rebTrash();
+     *         return "~";  // note that returning strings runs delegated code!
      *     });
      */
 

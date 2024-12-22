@@ -367,9 +367,7 @@ e-hearts/emit [rebs --{
             REB_QUASIFORM = REB_MAX_HEART,
             REB_QUOTED,
             REB_ANTIFORM,
-            REB_MAX,
-
-            REB_T_RETURN_SIGNAL  /* signals throws, etc. */
+            REB_MAX
         };
     #else
         enum HeartEnum {
@@ -384,9 +382,7 @@ e-hearts/emit [rebs --{
             REB_QUASIFORM,
             REB_QUOTED,
             REB_ANTIFORM,
-            REB_MAX,
-
-            REB_T_RETURN_SIGNAL  /* signals throws, etc. */
+            REB_MAX
         };
     #endif
 

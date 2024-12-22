@@ -486,9 +486,7 @@ DECLARE_NATIVE(open_connection)
     //
     Connection* conn = rebTryAlloc(Connection);
     if (conn == nullptr)
-        return rebDelegate(
-            "fail -{Could not allocate Connection tracking object}-"
-        );
+        return "fail -{Could not allocate Connection tracking object}-";
     rebUnmanageMemory(conn);
 
     conn->hdbc = hdbc;
@@ -1631,7 +1629,7 @@ DECLARE_NATIVE(copy_odbc)
     Column* columns = list->columns;
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
-        return rebDelegate("fail -{Invalid statement object!}-");
+        return "fail -{Invalid statement object!}-";
 
     SQLRETURN rc;
 
@@ -1721,9 +1719,7 @@ DECLARE_NATIVE(copy_odbc)
             );
 
             if (col->buffer == nullptr and len == SQL_NO_TOTAL)
-                return rebDelegate(
-                    "fail -{ODBC driver gave SQL_NO_TOTAL for var-size field}-"
-                );
+                return "fail -{ODBC gave SQL_NO_TOTAL for var-size field}-";
 
             Option(SQLPOINTER) allocated;
 

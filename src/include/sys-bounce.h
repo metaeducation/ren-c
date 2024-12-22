@@ -1,6 +1,6 @@
 //
-//  File: %cell-bounce.h
-//  Summary: "Special Cell States Used for Trampoline Signaling"
+//  File: %sys-bounce.h
+//  Summary: "Special States Used for Trampoline/Dispatcher Signaling"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -31,37 +31,45 @@
 //       return "fail -{Error}-"
 //       return rebDelegate("fail -{Error}-")
 //
-// * Between "weird Cell" and "weird Stub" choices, "weird Cell" is smaller
-//   (4 platform pointers instead of 8).  So we go with a cell using an
-//   out-of-range HEART_BYTE.
+// * Using a Cell would put us in contention with discerning between legitmate
+//   Cells and these signals.
+//
+// The cleanest choice was deemed to be using the NODE_BYTE_WILD byte, which
+// doesn't carry NODE_FLAG_CELL.  We can make simple two byte global pointers
+// for the instances, that can be tested via switch() on their bytes or by
+// comparison to direct values.
+//
+// (Performance testing should be done to figure out what techniques are
+// faster.  No real A/B testing has been done as of yet.)
 //
 
-INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
-    Reset_Cell_Header_Noquote(
-        out,
-        FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
-    );
-    Tweak_Cell_Binding(out, UNBOUND);
-    out->payload.split.one.ch = ch;
-    Corrupt_Unused_Field(out->payload.split.two.corrupt);
-
-    return out;
+INLINE void Init_Bounce_Wild(WildTwo out, char ch) {
+    out[0] = NODE_BYTE_WILD;
+    out[1] = ch;
 }
 
-#define Init_Return_Signal(out,ch) \
-    TRACK(Init_Return_Signal_Untracked((out), (ch)))
+INLINE void Erase_Bounce_Wild(WildTwo out) {
+    out[0] = 0;
+    out[1] = 0;
+}
 
-INLINE bool Is_Bounce_An_Atom(Bounce b)
-  { return HEART_BYTE(cast(Value*, b)) != REB_T_RETURN_SIGNAL; }
+INLINE bool Is_Bounce_An_Atom(Bounce b) {
+    return (
+        FIRST_BYTE(b) & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL)
+    ) == (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL);
+}
+
+INLINE bool Is_Bounce_Wild(Bounce b)
+  { return FIRST_BYTE(b) == NODE_BYTE_WILD; }
 
 INLINE char Bounce_Type(Bounce b) {
-    assert(not Is_Bounce_An_Atom(b));
-    return cast(Value*, b)->payload.split.one.ch;
+    assert(Is_Bounce_Wild(b));
+    return SECOND_BYTE(b);
 }
 
 INLINE Atom* Atom_From_Bounce(Bounce b) {
     assert(Is_Bounce_An_Atom(b));
-    return cast(Atom*, b);
+    return cast(Atom*, m_cast(void*, b));
 }
 
 
@@ -74,13 +82,13 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // who thought the types had been checked.
 //
 #define C_REDO_UNCHECKED  'r'
-#define BOUNCE_REDO_UNCHECKED   cast(Bounce, &PG_Bounce_Redo_Unchecked)
+#define BOUNCE_REDO_UNCHECKED   cast(Bounce, &g_bounce_redo_unchecked)
 
 #define C_REDO_CHECKED  'R'
-#define BOUNCE_REDO_CHECKED  cast(Bounce, &PG_Bounce_Redo_Checked)
+#define BOUNCE_REDO_CHECKED  cast(Bounce, &g_bounce_redo_checked)
 
 #define C_DOWNSHIFTED  'd'
-#define BOUNCE_DOWNSHIFTED  cast(Bounce, &PG_Bounce_Downshifted)
+#define BOUNCE_DOWNSHIFTED  cast(Bounce, &g_bounce_downshifted)
 
 
 // Continuations are used to mitigate the problems that occur when the C stack
@@ -98,21 +106,21 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // function will be called back again when the continuation finishes.
 //
 #define C_CONTINUATION  'C'
-#define BOUNCE_CONTINUE  cast(Bounce, &PG_Bounce_Continuation)
+#define BOUNCE_CONTINUE  cast(Bounce, &g_bounce_continuation)
 
 
 // A dispatcher may want to run a "continuation" but not be called back.
 // This is referred to as delegation.
 //
 #define C_DELEGATION  'D'
-#define BOUNCE_DELEGATE  cast(Bounce, &PG_Bounce_Delegation)
+#define BOUNCE_DELEGATE  cast(Bounce, &g_bounce_delegation)
 
 
 // For starters, a simple signal for suspending stacks in order to be able to
 // try not using Asyncify (or at least not relying on it so heavily)
 //
 #define C_SUSPEND  'S'
-#define BOUNCE_SUSPEND  cast(Bounce, &PG_Bounce_Suspend)
+#define BOUNCE_SUSPEND  cast(Bounce, &g_bounce_suspend)
 
 
 // Intrinsic typecheckers want to be able to run in the same Level as an
@@ -120,19 +128,19 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // a special state for OKAY so that the L->out can be left as-is.
 //
 #define C_OKAY  'O'
-#define BOUNCE_OKAY  cast(Bounce, &PG_Bounce_Okay)
+#define BOUNCE_OKAY  cast(Bounce, &g_bounce_okay)
 
 
 // This signals that the evaluator is in a "thrown state".
 //
 #define C_THROWN  'T'
-#define BOUNCE_THROWN  cast(Bounce, &PG_Bounce_Thrown)
+#define BOUNCE_THROWN  cast(Bounce, &g_bounce_thrown)
 
 
 // This signals that the evaluator is in a "thrown state".
 //
 #define C_FAIL  'F'
-#define BOUNCE_FAIL  cast(Bounce, &PG_Bounce_Fail)
+#define BOUNCE_FAIL  cast(Bounce, &g_bounce_fail)
 
 
 // In order to be fast, intrinsics fold their typechecking into their native
@@ -142,4 +150,4 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // case is cheap, they simply return this bounce value.
 //
 #define C_BAD_INTRINSIC_ARG  'B'
-#define BOUNCE_BAD_INTRINSIC_ARG  cast(Bounce, &PG_Bounce_Downshifted)
+#define BOUNCE_BAD_INTRINSIC_ARG  cast(Bounce, &g_bounce_bad_intrinsic_arg)

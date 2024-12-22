@@ -880,7 +880,7 @@ Bounce Action_Executor(Level* L)
         Copy_Cell(OUT, r);
         Release_Api_Value_If_Unmanaged(r);
     }
-    else switch (Bounce_Type(b)) {
+    else if (Is_Bounce_Wild(b)) switch (Bounce_Type(b)) {
 
       case C_OKAY:  // essential to typechecker intrinsic optimization...
         Init_Okay(OUT);  // ...optimization doesn't write OUT, but we do here
@@ -889,6 +889,7 @@ Bounce Action_Executor(Level* L)
       case C_CONTINUATION:
         return BOUNCE_CONTINUE;  // Note: may not have pushed a new level...
 
+      bounce_delegate:
       case C_DELEGATION:
         Set_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL);
         STATE = 123;  // BOUNCE_CONTINUE does not allow STATE_0
@@ -926,6 +927,13 @@ Bounce Action_Executor(Level* L)
 
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");
+    }
+    else {
+        assert(Detect_Rebol_Pointer(b) == DETECTED_AS_UTF8);
+        assert(Link_Inherit_Bind(L->varlist) != nullptr);
+        assert(Is_Node_Managed(L->varlist));
+        rebDelegateCore(cast(RebolContext*, L->varlist), cast(const char*, b));
+        goto bounce_delegate;
     }
 
     goto check_output;

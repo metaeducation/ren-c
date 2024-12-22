@@ -366,6 +366,8 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 //
 typedef bool (Decider)(const Value* arg);
 
+typedef Byte WildTwo[2];
+
 
 //=//// INFIX MODES ///////////////////////////////////////////////////////=//
 //

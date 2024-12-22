@@ -483,13 +483,9 @@ DECLARE_NATIVE(rsa_generate_keypair)
 
     bool insecure = rebDid("insecure");
     if (not insecure and num_key_bits < 1024)
-        return rebDelegate(
-            "fail -{RSA key must be >= 1024 bits in size unless :INSECURE}-"
-        );
+        return "fail -{RSA key must be >= 1024 bits unless :INSECURE}-";
     if (num_key_bits > MBEDTLS_MPI_MAX_BITS)
-        return rebDelegate(
-            "fail -{RSA key bits exceeds MBEDTLS_MPI_MAX_BITS}-"
-        );
+        return "fail -{RSA key bits exceeds MBEDTLS_MPI_MAX_BITS}-";
 
     Value* error = nullptr;
     Value* public_key = nullptr;
@@ -641,9 +637,7 @@ DECLARE_NATIVE(rsa_encrypt)
     Value* e = rebValue("ensure [~null~ blob!] public-key.e");
 
     if (not n or not e)
-        return rebDelegate(
-            "fail -{RSA requires N and E components of key object}-"
-        );
+        return "fail -{RSA requires N and E components of key object}-";
 
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
@@ -789,20 +783,14 @@ DECLARE_NATIVE(rsa_decrypt)
     }
     else if (not p and not q) {
         if (not n or not e or not d)
-            return rebDelegate(
-                "fail -{N, E, and D needed to decrypt if P and Q are missing}-"
-            );
+            return "fail -{N, E, and D needed to decrypt if P and Q missing}-";
     }
     else if (not d and not n) {
         if (not e or not p or not q)
-            return rebDelegate(
-                "fail -{E, P, and Q needed to decrypt if D or N are missing}-"
-            );
+            return "fail -{E, P, and Q needed to decrypt if D or N missing}-";
     }
     else
-        return rebDelegate(
-            "fail -{Missing field combination in private key not allowed}-"
-        );
+        return "fail -{Missing field combination in private key not allowed}-";
 
     Value* dp = rebValue("match blob! private-key.dp");
     Value* dq = rebValue("match blob! private-key.dq");
@@ -817,9 +805,7 @@ DECLARE_NATIVE(rsa_decrypt)
         chinese_remainder_speedup = true;
     }
     else
-        return rebDelegate(
-            "fail -{All of DP, DQ, and QINV fields must be given, or none}-"
-        );
+        return "fail -{All of DP, DQ, and QINV must be given, or none}-";
 
   //=//// BEGIN MBEDTLS CODE REQUIRING CLEANUP /////////////////////////////=//
 
@@ -1475,9 +1461,7 @@ DECLARE_NATIVE(aes_stream)
     INCLUDE_PARAMS_OF_AES_STREAM;
 
     if (rebExtractHandleCleaner("ctx") != cleanup_aes_ctx)
-        return rebDelegate(
-            "fail [-{Not a AES context HANDLE!:}- @ctx]"
-        );
+        return "fail [-{Not a AES context HANDLE!:}- @ctx]";
 
     struct mbedtls_cipher_context_t *ctx
         = rebUnboxHandle(struct mbedtls_cipher_context_t*, "ctx");
@@ -1806,9 +1790,7 @@ DECLARE_NATIVE(startup_p)
     // !!! Should we fail here, or wait to fail until the system tries to
     // generate random data and cannot?
     //
-    return rebDelegate(
-        "fail -{Crypto STARTUP* couldn't initialize random number generation}-"
-    );
+    return "fail -{Crypto STARTUP* can't init random number generator}-";
 }
 
 

@@ -157,6 +157,10 @@ void* Probe_Core_Debug(
       case DETECTED_AS_FREE:
         Probe_Print_Helper(p, expr, "Freed PoolUnit (193)", file, line);
         goto cleanup;
+
+      case DETECTED_AS_WILD:
+        Probe_Print_Helper(p, expr, "Wild Pointer (194)", file, line);
+        goto cleanup;
     }
 
     // If we didn't jump to cleanup above, it's a Flex.  New switch().

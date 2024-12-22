@@ -89,9 +89,7 @@ DECLARE_NATIVE(locale)
 
     return text;
   #else
-    return rebDelegate(
-        "fail -{LOCALE not implemented natively for non-Windows}-"  // [1]
-    );
+    return "fail -{LOCALE not implemented natively for non-Windows}-";  // [1]
   #endif
 }
 

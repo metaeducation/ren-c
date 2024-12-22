@@ -2916,6 +2916,12 @@ Bounce Api_Function_Dispatcher(Level* const L)
     //    it would backed by an API cell form holding an unstable value,
     //    which is currently not legal.  Some rules and tightening would
     //    be needed, so for now we do `rebContinue("pack [...]")`
+    //
+    // 3. While it might seem more obvious for `return "some string"` to
+    //    give back a text string, it's actually far more useful to run
+    //    UTF-8 returns as delegated code:
+    //
+    //    https://forum.rebol.info/t/returning-a-string-from-a-native/2357
 
     assert(Is_Node_Managed(L->varlist));
     assert(Link_Inherit_Bind(L->varlist));  // must inherit from something (?)
@@ -2930,7 +2936,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     Bounce bounce = cast(Bounce, (*cfunc)(context));
 
     if (Is_Bounce_An_Atom(bounce)) {
-        Value* result = cast(Value*, bounce);
+        Value* result = cast(Value*, Atom_From_Bounce(bounce));
         Assert_Cell_Stable(result);  // can't make unstable directly [2]
         assert(Is_Api_Value(result));  // rebArg(), other violators?
         Copy_Cell(L->out, result);
@@ -2946,6 +2952,18 @@ Bounce Api_Function_Dispatcher(Level* const L)
     if (bounce == BOUNCE_CONTINUE) {  // wants callback after execution
         LEVEL_STATE_BYTE(L) = ST_API_FUNC_CONTINUING;
         return BOUNCE_CONTINUE;
+    }
+
+    PointerDetect detect = Detect_Rebol_Pointer(bounce);
+
+    if (detect == DETECTED_AS_UTF8) {  // runs code! [3]
+        if (FIRST_BYTE(bounce) == '~' and SECOND_BYTE(bounce) == '\0') {
+            Init_Nothing(L->out);
+            goto typecheck_out;  // make return "~" fast!
+        }
+        // ...could do other optimizations here...
+        LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
+        return rebDelegateCore(context, cast(const char*, bounce));
     }
 
     return Native_Fail_Result(

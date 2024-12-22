@@ -127,7 +127,8 @@ enum PointerDetectEnum {
     DETECTED_AS_CELL,
     DETECTED_AS_STUB,
     DETECTED_AS_END,  // a rebEND signal (Note: has char* alignment!)
-    DETECTED_AS_FREE
+    DETECTED_AS_FREE,
+    DETECTED_AS_WILD  // arbitrary out-of-band purposes
 };
 
 typedef enum PointerDetectEnum PointerDetect;
@@ -169,8 +170,8 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
         if (b == FREE_POOLUNIT_BYTE)  // 0xF6
             return DETECTED_AS_FREE;
 
-        if (b == NODE_BYTE_RESERVED)  // 0xF5
-            fail ("NODE_BYTE_RESERVED Encountered in Detect_Rebol_Pointer()");
+        if (b == NODE_BYTE_WILD)  // 0xF5
+            return DETECTED_AS_WILD;
 
         return DETECTED_AS_STUB;
     }

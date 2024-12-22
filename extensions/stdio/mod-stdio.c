@@ -123,7 +123,7 @@ DECLARE_NATIVE(write_stdout)
         // Yield to signals processing for cancellation requests.
         //
         if (rebWasHaltRequested())  // the test clears halt request
-            return rebDelegate("halt");
+            return "halt";
 
         REBLEN part;
         if (remaining <= 1024)
@@ -204,7 +204,7 @@ DECLARE_NATIVE(read_stdin)
     while (Binary_Len(b) < max) {  // inefficient, read one byte at a time
         if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(b, i))) {  // Ctrl-C
             if (rebWasHaltRequested())
-                return rebDelegate("halt");
+                return "halt";
             return rebDelegate("fail", Make_Non_Halt_Error("READ-STDIN"));
         }
         if (eof)
@@ -269,11 +269,8 @@ DECLARE_NATIVE(read_line)
     bool raw = REF(raw);
     bool hide = REF(hide);
 
-    if (hide)  // an interesting feature, but a very low-priority one
-        return rebDelegate("fail [",
-            "-{READ-LINE/HIDE not yet implemented:}-",
-            "https://github.com/rebol/rebol-issues/issues/476",
-        "]");
+    if (hide)  // https://github.com/rebol/rebol-issues/issues/476
+        return "fail -{READ-LINE:HIDE not yet implemented:}-";
 
     Value* line;
 
@@ -282,7 +279,7 @@ DECLARE_NATIVE(read_line)
         line = Read_Line(Term_IO);
         if (rebUnboxLogic(rebQ(line), "= '~halt~")) {
             rebRelease(line);
-            return rebDelegate("halt");  // Execute throwing HALT [1]
+            return "halt";  // Execute throwing HALT [1]
         }
         if (rebUnboxLogic(rebQ(line), "= '~escape~")) { // distinct from eof [2]
             rebRelease(line);
@@ -307,7 +304,7 @@ DECLARE_NATIVE(read_line)
         bool eof;
         if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
             if (rebWasHaltRequested())
-                return rebDelegate("halt");  // [1]
+                return "halt";  // [1]
 
             return rebDelegate("fail", Make_Non_Halt_Error("READ-LINE"));
         }
@@ -318,9 +315,7 @@ DECLARE_NATIVE(read_line)
             }
             if (raw)
                 break;  // caller should tell by no newline
-            return rebDelegate("fail [",
-                "-{READ-LINE without :RAW hit end of file with no newline}-",
-            "]");
+            return "fail -{READ-LINE without :RAW hit EOF with no newline}-";
         }
 
         Codepoint c;
@@ -333,16 +328,14 @@ DECLARE_NATIVE(read_line)
             while (trail != 0) {
                 if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
                     if (rebWasHaltRequested())
-                        return rebDelegate("halt");  // [1]
+                        return "halt";  // [1]
 
                     return rebDelegate(
                         "fail", Make_Non_Halt_Error("READ-LINE")
                     );
                 }
                 if (eof)
-                    return rebDelegate(
-                        "fail -{Incomplete UTF-8 sequence from stdin at EOF}-"
-                    );
+                    return "fail -{Incomplete stdin UTF-8 sequence at EOF}-";
                 ++size;
                 --trail;
             }
@@ -438,22 +431,18 @@ DECLARE_NATIVE(read_char)
         const bool buffered = false;
         Value* e = Try_Get_One_Console_Event(Term_IO, buffered, timeout_msec);
 
-        if (e == nullptr) {  // can smart terminal ever "disconnect" (?)
-            return rebDelegate(
-                "fail -{Unexpected EOF reached when using Smart Terminal API}-"
-            );
-        }
+        if (e == nullptr)  // can smart terminal ever "disconnect" (?)
+            return "fail -{Unexpected EOF reached with Smart Terminal API}-";
 
         if (rebUnboxLogic("quasi?", rebQ(e))) {
             if (rebUnboxLogic(rebQ(e), "= '~halt~"))  // Ctrl-C instead of key
-                return rebDelegate("halt");
+                return "halt";
 
             if (rebUnboxLogic(rebQ(e), "= '~timeout~"))
-                return rebDelegate("raise -{Timeout in READ-CHAR}-");
+                return "raise -{Timeout in READ-CHAR}-";
 
-            return rebDelegate(  // Note: no other signals at time of writing
-                "fail -{Unknown QUASI? signal in Try_Get_One_Console_Event()}-"
-            );
+            // Note: no other signals at time of writing
+            return "fail -{Unknown QUASI? from Try_Get_One_Console_Event()}-";
         }
 
         if (rebUnboxLogic("char? @", e))
@@ -483,9 +472,7 @@ DECLARE_NATIVE(read_char)
             goto retry;
         }
 
-        return rebDelegate(
-            "fail -{Unexpected type returned by Try_Get_One_Console_Event()}-"
-        );
+        return "fail -{Unexpected type from Try_Get_One_Console_Event()}-";
     }
     else  // we have a smart console but aren't using it (redirected to file?)
         goto read_from_stdin;
@@ -499,7 +486,7 @@ DECLARE_NATIVE(read_char)
 
     if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
         if (rebWasHaltRequested())
-            return rebDelegate("halt");
+            return "halt";
 
         return rebDelegate("fail", Make_Non_Halt_Error("READ-CHAR"));
     }
@@ -516,14 +503,12 @@ DECLARE_NATIVE(read_char)
         while (trail != 0) {
             if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
                 if (rebWasHaltRequested())
-                    return rebDelegate("halt");
+                    return "halt";
 
                 return rebDelegate("fail", Make_Non_Halt_Error("READ-CHAR"));
             }
             if (eof)
-                return rebDelegate(
-                    "fail -{Incomplete UTF-8 sequence from stdin at EOF}-"
-                );
+                return "fail -{Incomplete UTF-8 sequence from stdin at EOF}-";
 
             ++size;
             --trail;

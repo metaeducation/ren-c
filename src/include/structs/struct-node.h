@@ -61,7 +61,7 @@
 //
 #define NODE_FLAG_NODE \
     FLAG_LEFT_BIT(0)
-#define NODE_BYTEMASK_0x80_NODE 0x80
+#define NODE_BYTEMASK_0x80_NODE  0x80
 
 
 //=//// NODE_FLAG_UNREADABLE (second-leftmost bit) ////////////////////////=//
@@ -81,7 +81,7 @@
 //
 #define NODE_FLAG_UNREADABLE \
     FLAG_LEFT_BIT(1)
-#define NODE_BYTEMASK_0x40_UNREADABLE 0x40
+#define NODE_BYTEMASK_0x40_UNREADABLE  0x40
 
 
 //=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (third/fourth-leftmost bit) ////=//
@@ -97,11 +97,11 @@
 //
 #define NODE_FLAG_GC_ONE \
     FLAG_LEFT_BIT(2)
-#define NODE_BYTEMASK_0x20_GC_ONE 0x20
+#define NODE_BYTEMASK_0x20_GC_ONE  0x20
 
 #define NODE_FLAG_GC_TWO \
     FLAG_LEFT_BIT(3)
-#define NODE_BYTEMASK_0x10_GC_TWO 0x10
+#define NODE_BYTEMASK_0x10_GC_TWO  0x10
 
 
 //=//// NODE_FLAG_CELL (fifth-leftmost bit) //////////////////////////////=//
@@ -126,7 +126,7 @@
 //
 #define NODE_FLAG_CELL \
     FLAG_LEFT_BIT(4)
-#define NODE_BYTEMASK_0x08_CELL 0x08
+#define NODE_BYTEMASK_0x08_CELL  0x08
 
 
 //=//// NODE_FLAG_MANAGED (sixth-leftmost bit) ////////////////////////////=//
@@ -147,7 +147,7 @@
 //
 #define NODE_FLAG_MANAGED \
     FLAG_LEFT_BIT(5)
-#define NODE_BYTEMASK_0x04_MANAGED 0x04
+#define NODE_BYTEMASK_0x04_MANAGED  0x04
 
 
 //=//// NODE_FLAG_ROOT (seventh-leftmost bit) /////////////////////////////=//
@@ -161,7 +161,7 @@
 //
 #define NODE_FLAG_ROOT \
     FLAG_LEFT_BIT(6)
-#define NODE_BYTEMASK_0x02_ROOT 0x02
+#define NODE_BYTEMASK_0x02_ROOT  0x02
 
 
 //=//// NODE_FLAG_MARKED (eighth-leftmost bit) ////////////////////////////=//
@@ -185,7 +185,7 @@
 //
 #define NODE_FLAG_MARKED \
     FLAG_LEFT_BIT(7)
-#define NODE_BYTEMASK_0x01_MARKED 0x01
+#define NODE_BYTEMASK_0x01_MARKED  0x01
 
 #define DECAYED_NON_CANON_BYTE      0xC0  // 11000000: illegal UTF-8 [1]
 #define DECAYED_CANON_BYTE          0xC1  // 11000001: illegal UTF-8 [1]
@@ -202,18 +202,18 @@
 //
 // 0xF7 is used for END_SIGNAL_BYTE
 // 0xF6 is used for FREE_POOLUNIT_BYTE
-// 0xF5 is NODE_BYTE_RESERVED for when some new idea comes up.
+// 0xF5 is NODE_BYTE_WILD that is used for Bounce, and other purposes
 //
 // 1. At time of writing, the END_SIGNAL_BYTE must always be followed by a
 //    zero byte.  It's easy to do with C strings(*see rebEND definition*).
 //    Not strictly necessary--one byte suffices--but it's a good sanity check.
 
-#define END_SIGNAL_BYTE 0xF7  // followed by a zero byte [1]
+#define END_SIGNAL_BYTE  0xF7  // followed by a zero byte [1]
 STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
 
-#define FREE_POOLUNIT_BYTE 0xF6
+#define FREE_POOLUNIT_BYTE  0xF6
 
-#define NODE_BYTE_RESERVED 0xF5
+#define NODE_BYTE_WILD  0xF5  // not NODE_FLAG_CELL, use for whatever purposes
 
 
 //=//// Node Base Type: Empty Base Class (or minimal C struct) ////////////=//

@@ -162,9 +162,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         Option(SymId) property = Cell_Word_Id(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
-            return rebDelegate("fail [",
-                "-{DNS 'ports' do not currently support OPEN?, only READ}-",
-            "]");
+            return "fail -{DNS 'ports' don't support OPEN?, only READ}-";
 
           default:
             break;
@@ -210,9 +208,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
             //
           reverse_lookup:
             if (Cell_Sequence_Len(host) != 4)
-                return rebDelegate("fail [",
-                    "-{Reverse DNS lookup requires length 4 TUPLE!}-"
-                "]");
+                return "fail -{Reverse DNS lookup requires length 4 TUPLE!}-";
 
             // 93.184.216.34 => example.com
             char buf[MAX_TUPLE];
@@ -256,17 +252,13 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
             return Init_Nulled(OUT);  // "expected" failures, signal w/null
 
           case NO_RECOVERY:
-            return rebDelegate(
-              "fail -{A nonrecoverable name server error occurred}-"
-            );
+            return "fail -{A nonrecoverable name server error occurred}-";
 
           case TRY_AGAIN:
-            return rebDelegate(
-              "fail -{Temporary error on authoritative name server}-"
-            );
+            return "fail -{Temporary error on authoritative name server}-";
 
           default:
-            return rebDelegate("fail -{Unknown host error}-");
+            return "fail -{Unknown host error}-";
         } }
 
       case SYM_OPEN: {
@@ -288,9 +280,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 
       open_or_close_fail:
       case SYM_CLOSE:
-        return rebDelegate("fail [",
-            "-{DNS 'ports' do not currently support OPEN/CLOSE, only READ}-",
-        "]");
+        return "fail -{DNS 'ports' don't OPEN/CLOSE, only READ}-";
 
       default:
         break;

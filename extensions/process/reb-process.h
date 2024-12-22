@@ -24,7 +24,7 @@
 
 
 INLINE Bounce Delegate_Fail_Permission_Denied(void) {
-    return rebDelegate("fail -{The process does not have enough permission}-");
+    return "fail -{The process does not have enough permission}-";
 }
 
 INLINE Bounce Delegate_Fail_No_Process(const Value* arg) {

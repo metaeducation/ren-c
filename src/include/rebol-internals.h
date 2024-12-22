@@ -666,10 +666,9 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 #include "cells/cell-sequence.h"  // needs Derelativize()
 
-#include "cells/cell-bounce.h"
-
 //=//// EVALUATOR SERVICES ////////////////////////////////////////////////=//
 
+#include "sys-bounce.h"
 #include "sys-throw.h"
 #include "sys-feed.h"
 #include "sys-level.h"  // needs words for frame-label helpers

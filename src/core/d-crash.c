@@ -299,6 +299,14 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         Panic_Stub_Debug(u_cast(const Stub*, p));
       #endif
         break;
+
+      case DETECTED_AS_WILD:
+        strncat(
+            buf,
+            "Panic was passed a wild pointer",
+            PANIC_BUF_SIZE - strsize(buf)
+        );
+        break;
     }
 
   #if DEBUG_FANCY_PANIC

@@ -81,16 +81,16 @@ PVAR Value PG_Nothing_Value;
 //
 //     https://stackoverflow.com/q/51083356
 
-PVAR Value PG_Bounce_Redo_Unchecked;
-PVAR Value PG_Bounce_Redo_Checked;
-PVAR Value PG_Bounce_Downshifted;
-PVAR Value PG_Bounce_Thrown;
-PVAR Value PG_Bounce_Fail;
-PVAR Value PG_Bounce_Continuation;
-PVAR Value PG_Bounce_Delegation;
-PVAR Value PG_Bounce_Suspend;
-PVAR Value PG_Bounce_Okay;
-PVAR Value PG_Bounce_Bad_Intrinsic_Arg;
+PVAR WildTwo g_bounce_redo_unchecked;
+PVAR WildTwo g_bounce_redo_checked;
+PVAR WildTwo g_bounce_downshifted;
+PVAR WildTwo g_bounce_thrown;
+PVAR WildTwo g_bounce_fail;
+PVAR WildTwo g_bounce_continuation;
+PVAR WildTwo g_bounce_delegation;
+PVAR WildTwo g_bounce_suspend;
+PVAR WildTwo g_bounce_okay;
+PVAR WildTwo g_bounce_bad_intrinsic_arg;
 
 PVAR Flex* g_dispatcher_table;
 

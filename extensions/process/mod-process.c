@@ -260,7 +260,7 @@ static Bounce Delegate_Kill_Process(pid_t pid, int signal)
     switch (errno) {
       case EINVAL:
         return rebDelegate(
-          "fail [-{Invalid signal number:}-", rebI(signal), "]"
+            "fail [-{Invalid signal number:}-", rebI(signal), "]"
         );
 
       case EPERM:
@@ -538,26 +538,20 @@ DECLARE_NATIVE(set_env)
 
     if (Is_Nulled(value)) {
       #ifdef unsetenv  // use unsetenv() if available [2]
-        if (unsetenv(key_utf8) == -1)
-            return rebDelegate(  // fail frees rebAlloc() [1]
-              "fail -{unsetenv() couldn't unset environment variable}-"
-            );
+        if (unsetenv(key_utf8) == -1)  // fail frees rebAlloc() [1]
+            return "fail -{unsetenv() couldn't unset environment variable}-";
       #else
         int res = putenv(key_utf8);  // GNU-specific: putenv("NAME") unsets [3]
-        if (res == -1)
-            return rebDelegate(  // fail frees rebAlloc() [1]
-              "fail -{putenv() couldn't unset environment variable}-"
-            );
+        if (res == -1)  // fail frees rebAlloc() [1]
+            return "fail -{putenv() couldn't unset environment variable}-";
       #endif
     }
     else {
       #ifdef setenv
         char *val_utf8 = rebSpell(value);
         int res = setenv(key_utf8, val_utf8, 1);  // the 1 means "overwrite"
-        if (res == -1)
-            return rebDelegate(  // fail frees rebAlloc() [1]
-              "fail -{setenv() couldn't set environment variable}-"
-            );
+        if (res == -1)  // fail frees rebAlloc() [1]
+            return "fail -{setenv() couldn't set environment variable}-";
 
         rebFree(val_utf8);
       #else
@@ -568,10 +562,8 @@ DECLARE_NATIVE(set_env)
         char *duplicate = strdup(key_equals_val_utf8);
 
         if (putenv(duplicate) == -1) {  // !!! putenv() holds onto string! [2]
-            free(duplicate);
-            return rebDelegate(  // fail frees rebAlloc() [1]
-              "fail -{putenv() couldn't set environment variable}-"
-            );
+            free(duplicate);  // fail frees rebAlloc() [1]
+            return "fail -{putenv() couldn't set environment variable}-";
         }
 
       #if DEBUG_STATIC_ANALYZING  // trick analyzer to not see leak [4]

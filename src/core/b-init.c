@@ -336,16 +336,16 @@ static void Init_Root_Vars(void)
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
 
-    Init_Return_Signal(&PG_Bounce_Thrown, C_THROWN);
-    Init_Return_Signal(&PG_Bounce_Fail, C_FAIL);
-    Init_Return_Signal(&PG_Bounce_Redo_Unchecked, C_REDO_UNCHECKED);
-    Init_Return_Signal(&PG_Bounce_Redo_Checked, C_REDO_CHECKED);
-    Init_Return_Signal(&PG_Bounce_Downshifted, C_DOWNSHIFTED);
-    Init_Return_Signal(&PG_Bounce_Continuation, C_CONTINUATION);
-    Init_Return_Signal(&PG_Bounce_Delegation, C_DELEGATION);
-    Init_Return_Signal(&PG_Bounce_Suspend, C_SUSPEND);
-    Init_Return_Signal(&PG_Bounce_Okay, C_OKAY);
-    Init_Return_Signal(&PG_Bounce_Bad_Intrinsic_Arg, C_BAD_INTRINSIC_ARG);
+    Init_Bounce_Wild(g_bounce_thrown, C_THROWN);
+    Init_Bounce_Wild(g_bounce_fail, C_FAIL);
+    Init_Bounce_Wild(g_bounce_redo_unchecked, C_REDO_UNCHECKED);
+    Init_Bounce_Wild(g_bounce_redo_checked, C_REDO_CHECKED);
+    Init_Bounce_Wild(g_bounce_downshifted, C_DOWNSHIFTED);
+    Init_Bounce_Wild(g_bounce_continuation, C_CONTINUATION);
+    Init_Bounce_Wild(g_bounce_delegation, C_DELEGATION);
+    Init_Bounce_Wild(g_bounce_suspend, C_SUSPEND);
+    Init_Bounce_Wild(g_bounce_okay, C_OKAY);
+    Init_Bounce_Wild(g_bounce_bad_intrinsic_arg, C_BAD_INTRINSIC_ARG);
 
     PG_Empty_Array = Make_Source_Managed(0);
     Freeze_Source_Deep(PG_Empty_Array);
@@ -446,16 +446,16 @@ static void Shutdown_Root_Vars(void)
 
     Force_Erase_Cell(&PG_Nothing_Value);
 
-    Force_Erase_Cell(&PG_Bounce_Thrown);
-    Force_Erase_Cell(&PG_Bounce_Fail);
-    Force_Erase_Cell(&PG_Bounce_Redo_Unchecked);
-    Force_Erase_Cell(&PG_Bounce_Redo_Checked);
-    Force_Erase_Cell(&PG_Bounce_Downshifted);
-    Force_Erase_Cell(&PG_Bounce_Continuation);
-    Force_Erase_Cell(&PG_Bounce_Delegation);
-    Force_Erase_Cell(&PG_Bounce_Suspend);
-    Force_Erase_Cell(&PG_Bounce_Okay);
-    Force_Erase_Cell(&PG_Bounce_Bad_Intrinsic_Arg);
+    Erase_Bounce_Wild(g_bounce_thrown);
+    Erase_Bounce_Wild(g_bounce_fail);
+    Erase_Bounce_Wild(g_bounce_redo_unchecked);
+    Erase_Bounce_Wild(g_bounce_redo_checked);
+    Erase_Bounce_Wild(g_bounce_downshifted);
+    Erase_Bounce_Wild(g_bounce_continuation);
+    Erase_Bounce_Wild(g_bounce_delegation);
+    Erase_Bounce_Wild(g_bounce_suspend);
+    Erase_Bounce_Wild(g_bounce_okay);
+    Erase_Bounce_Wild(g_bounce_bad_intrinsic_arg);
 
     rebReleaseAndNull(&g_empty_text);
     rebReleaseAndNull(&g_empty_block);

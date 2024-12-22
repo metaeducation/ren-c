@@ -865,7 +865,7 @@ Bounce Call_Core(Level* level_) {
         //
         assert(false);
         rebFreeMaybe(infobuf);
-        return rebDelegate("fail -{Child process is stopped}-");
+        return "fail -{Child process is stopped}-";
     }
     else {
         non_errno_ret = -2048;  // !!! randomly picked
@@ -914,8 +914,7 @@ Bounce Call_Core(Level* level_) {
         );
     }
     else if (non_errno_ret < 0)
-        return rebDelegate("fail -{Unknown error happened in CALL}-");
-
+        return "fail -{Unknown error happened in CALL}-";
 
     // Call may not succeed if r != 0, but we still have to run cleanup
     // before reporting any error...
