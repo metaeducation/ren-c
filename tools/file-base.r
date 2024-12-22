@@ -38,6 +38,7 @@ core: [
     ;
     functionals/c-adapt.c
     functionals/c-augment.c
+    functionals/c-arrow.c
     functionals/c-chain.c
     functionals/c-combinator.c
     functionals/c-does.c

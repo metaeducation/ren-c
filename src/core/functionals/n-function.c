@@ -286,9 +286,9 @@ Details* Make_Interpreted_Action_May_Fail(
     assert(Is_Block(spec) and Is_Block(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
-    VarList* meta;
+    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
-        &meta,
+        &adjunct,
         spec,
         MKF_MASK_NONE,
         returner
@@ -304,7 +304,7 @@ Details* Make_Interpreted_Action_May_Fail(
     );
 
     assert(Misc_Phase_Adjunct(details) == nullptr);
-    Tweak_Misc_Phase_Adjunct(details, meta);
+    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action

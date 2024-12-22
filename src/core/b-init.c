@@ -746,10 +746,7 @@ void Startup_Core(void)
     Register_Dispatcher(&Adapter_Dispatcher, &Adapter_Details_Querier);
     Register_Dispatcher(&Encloser_Dispatcher, &Encloser_Details_Querier);
     Register_Dispatcher(&Lambda_Dispatcher, &Lambda_Details_Querier);
-    Register_Dispatcher(
-        &Lambda_Unoptimized_Dispatcher,
-        &Lambda_Details_Querier
-    );
+    Register_Dispatcher(&Arrow_Dispatcher, &Arrow_Details_Querier);
     Register_Dispatcher(&Cascader_Executor, &Cascader_Details_Querier);
     Register_Dispatcher(&Macro_Dispatcher, &Macro_Details_Querier);
     Register_Dispatcher(&Combinator_Dispatcher, &Combinator_Details_Querier);

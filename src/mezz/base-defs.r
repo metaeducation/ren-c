@@ -216,17 +216,19 @@ compose1: specialize (adapt compose/ [
 ]) [pattern: just ()]
 
 
-; If <end> is used, e.g. `x: -> [print "hi"]` then this will act like DOES.
-; (It's still up in the air whether DOES has different semantics or not.)
+; https://forum.rebol.info/t/for-lightweight-lambda-arrow-functions/2172
 ;
 ->: infix lambda [
-    'words "Names of arguments (will not be type checked)"
-        [blank! word! lit-word? meta-word! refinement? block! group!]
-    body "Code to execute"
+    @words "Names of arguments (will not be type checked)"
+        [<end> blank! word! lit-word? meta-word! refinement? block! group!]
+    body "Code to execute (will not be deep copied)"
         [block!]
 ][
-    if group? words [words: eval words]
-    lambda words body
+    case [
+        not words [words: []]  ; x: -> [print "hi"] will take no arguments
+        if group? words [words: eval words]
+    ]
+    arrow words body
 ]
 
 ; Particularly helpful for annotating when a branch result is used.
