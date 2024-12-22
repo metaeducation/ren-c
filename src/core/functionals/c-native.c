@@ -116,6 +116,7 @@ Details* Make_Native_Dispatch_Details(
 
     Flags details_flags = (
         DETAILS_FLAG_RAW_NATIVE
+            | DETAILS_FLAG_API_CONTINUATIONS_OK
             | DETAILS_FLAG_OWNS_PARAMLIST);
 
     if (native_type == NATIVE_INTRINSIC)
