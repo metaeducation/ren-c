@@ -159,7 +159,7 @@ enum {
 
 
 struct BinderStruct {
-    Option(Stub*) stump_list;
+    Option(Stump*) stump_list;
 
   #if RUNTIME_CHECKS && CPLUSPLUS_11
     //
@@ -193,25 +193,25 @@ struct BinderStruct {
 #endif
 
 
-INLINE const Symbol* Info_Stump_Bind_Symbol(const Stub* stump) {
+INLINE const Symbol* Info_Stump_Bind_Symbol(const Stump* stump) {
     assert(Is_Stub_Stump(stump));
-    return u_cast(const Symbol*, stump->info.node);
+    return u_cast(const Symbol*, INFO_STUMP_SYMBOL(stump));
 }
 
-INLINE void Tweak_Info_Stump_Bind_Symbol(Stub* stump, const Symbol* symbol) {
+INLINE void Tweak_Info_Stump_Bind_Symbol(Stump* stump, const Symbol* symbol) {
     assert(Is_Stub_Stump(stump));
-    stump->info.node = m_cast(Symbol*, symbol);  // extracted as const
+    INFO_STUMP_SYMBOL(stump) = m_cast(Symbol*, symbol);  // extracted as const
 }
 
-INLINE Option(Stub*) Link_Stump_Next(const Stub* stump) {
+INLINE Option(Stump*) Link_Stump_Next(const Stump* stump) {
     assert(Is_Stub_Stump(stump));
-    return u_cast(Stub*, stump->link.node);
+    return u_cast(Stump*, LINK_STUMP_NEXT(stump));
 }
 
-INLINE void Tweak_Link_Stump_Next(Stub* stump, Option(Stub*) next) {
+INLINE void Tweak_Link_Stump_Next(Stump* stump, Option(Stump*) next) {
     assert(Is_Stub_Stump(stump));
     assert(next == nullptr or Is_Stub_Stump(unwrap next));
-    stump->link.node = maybe next;
+    LINK_STUMP_NEXT(stump) = maybe next;
 }
 
 INLINE void Construct_Binder_Core(Binder* binder) {
@@ -224,7 +224,7 @@ INLINE void Construct_Binder_Core(Binder* binder) {
 
 INLINE void Destruct_Binder_Core(Binder* binder) {
     while (binder->stump_list != nullptr) {
-        Stub* stump = unwrap binder->stump_list;
+        Stump* stump = unwrap binder->stump_list;
         binder->stump_list = Link_Stump_Next(stump);
 
         const Symbol* symbol = Info_Stump_Bind_Symbol(stump);
@@ -245,9 +245,7 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
 
 // Tries to set the binder index, but return false if already there.
 //
-// 1. GC does not run during binding, and we want this as cheap as possible.
-//
-// 2. When we clean up the binder, we have to remove the MISC_IS_BIND_STUMP
+// 1. When we clean up the binder, we have to remove the MISC_IS_BIND_STUMP
 //    flag for all the symbols we attached stumps to.  But all we have is
 //    a singly linked list of the hitches, so the symbol has to be poked
 //    somewhere.  We aren't using the INFO bits, so we make this the kind
@@ -267,10 +265,7 @@ INLINE bool Try_Add_Binder_Index(
     if (Get_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP))
         return false;  // already has a mapping
 
-    Stub* stump = Make_Untracked_Stub(  // don't pay for manuals tracking
-        FLAG_FLAVOR(STUMP)
-            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // symbol (but no GC runs!) [1]
-    );
+    Stump* stump = cast(Stump*, Make_Untracked_Stub(STUB_MASK_STUMP));
     Tweak_Link_Stump_Next(stump, binder->stump_list);
     Tweak_Misc_Hitch(stump, Misc_Hitch(symbol));
     Tweak_Info_Stump_Bind_Symbol(stump, symbol);
@@ -279,7 +274,7 @@ INLINE bool Try_Add_Binder_Index(
     binder->stump_list = stump;
 
     Tweak_Misc_Hitch(m_cast(Symbol*, symbol), stump);
-    Set_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP);
+    Set_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP);  // must remove [1]
 
     return true;
 }
@@ -308,7 +303,7 @@ INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
     if (Not_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP))
         return 0;
 
-    Stub* stump = Misc_Hitch(symbol);
+    Stump* stump = cast(Stump*, Misc_Hitch(symbol));
     assert(Info_Stump_Bind_Symbol(stump) == symbol);
     REBINT index = VAL_INT32(Stub_Cell(stump));
     assert(index != 0);
@@ -330,7 +325,7 @@ INLINE void Update_Binder_Index(
     UNUSED(binder);
     assert(Get_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP));
 
-    Stub* stump = Misc_Hitch(symbol);
+    Stump* stump = cast(Stump*, Misc_Hitch(symbol));
     assert(Info_Stump_Bind_Symbol(stump) == symbol);
     assert(VAL_INT32(Stub_Cell(stump)) != 0);
     Init_Integer(Stub_Cell(stump), index);
@@ -392,7 +387,7 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Context* binding = Cell_Binding(v);
     if (Is_Stub_Patch(binding)) {
-        SeaOfVars* patch_context = Info_Patch_Sea(binding);
+        SeaOfVars* patch_context = Info_Patch_Sea(cast(Patch*, binding));
         binding = patch_context;
     }
     else if (Is_Stub_Let(binding))

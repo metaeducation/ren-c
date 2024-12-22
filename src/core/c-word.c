@@ -421,12 +421,12 @@ void GC_Kill_Interning(const Symbol* symbol)
         temp = Link_Next_Synonym(temp);
     Tweak_Link_Next_Synonym(m_cast(Symbol*, temp), synonym);  // maybe noop
 
-    Stub* patch = m_cast(Symbol*, symbol);  // cut symbol from module vars list
-    while (Misc_Hitch(patch) != symbol) {
-        assert(Not_Node_Marked(patch));  // no live vars with symbol's name [2]
-        patch = Misc_Hitch(patch);
+    Stub* stub = m_cast(Symbol*, symbol);  // cut symbol from module vars list
+    while (Misc_Hitch(stub) != symbol) {
+        assert(Not_Node_Marked(stub));  // no live vars with symbol's name [2]
+        stub = Misc_Hitch(stub);
     }
-    Tweak_Misc_Hitch(patch, Misc_Hitch(symbol));  // may be no-op
+    Tweak_Misc_Hitch(stub, Misc_Hitch(symbol));  // may be no-op
 
     Length num_slots = Flex_Used(g_symbols.by_hash);
     Symbol** symbols_by_hash = Flex_Head(Symbol*, g_symbols.by_hash);

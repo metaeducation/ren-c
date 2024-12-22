@@ -180,7 +180,7 @@ Value* Append_To_Sea_Core(
     else
         id = SYM_0;
 
-    Stub* patch;
+    Patch* patch;
     if (id and id < LIB_SYMS_MAX) {
         patch = &g_lib_patches[id];  // patch memory pre-allocated at boot [1]
         assert(INFO_PATCH_SEA(patch) == nullptr);  // don't double add
@@ -189,11 +189,7 @@ Value* Append_To_Sea_Core(
         TRACK(Erase_Cell(Stub_Cell(patch)));  // prepare for addition
     }
     else {
-        patch = Make_Untracked_Stub(
-            NODE_FLAG_MANAGED
-            | FLAG_FLAVOR(PATCH)
-            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache [2]
-        );
+        patch = cast(Patch*, Make_Untracked_Stub(STUB_MASK_PATCH));
     }
 
   //=//// ADD TO CIRCULARLY LINKED LIST HUNG ON SYMBOL ////////////////////=//
@@ -225,7 +221,7 @@ Value* Append_To_Sea_Core(
   blockscope {
     Stub *check = Misc_Hitch(patch);
     while (check != symbol) {  // walk chain to look for duplicates
-        assert(Info_Patch_Sea(check) != sea);
+        assert(Info_Patch_Sea(cast(Patch*, check)) != sea);
         check = Misc_Hitch(check);
     }
   }
@@ -528,7 +524,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
         return e;
     }
 
-    Option(Stub*) stump = cl->binder.stump_list;
+    Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
         Init_Nothing(Append_Context(context, symbol));
@@ -716,7 +712,7 @@ DECLARE_NATIVE(collect_words)
 
     StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
 
-    Option(Stub*) stump = cl->binder.stump_list;
+    Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         REBINT index = VAL_INT32(Stub_Cell(unwrap stump));
         assert(index != 0);
@@ -796,7 +792,7 @@ VarList* Make_Varlist_Detect_Managed(
         Set_Flex_Used(keylist, len);
 
         Key* key = Flex_Tail(Key, keylist);  // keys are backwards order
-        Option(Stub*) stump = cl->binder.stump_list;  // ALL not cl->base_stump
+        Option(Stump*) stump = cl->binder.stump_list;  // ALL, not base_stump
         for (; stump != nullptr; stump = Link_Stump_Next(unwrap stump)) {
             const Symbol* s = Info_Stump_Bind_Symbol(unwrap stump);
             --key;

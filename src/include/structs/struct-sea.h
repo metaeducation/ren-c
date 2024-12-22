@@ -75,12 +75,60 @@
 
 //=//// "PATCHES" FOR MODULE VARIABLES ////////////////////////////////////=//
 //
-// 1. Module variables are in a circularly linked list that includes the
+// 1. While it may seem that context keeps the module alive and not vice-versa
+//    (which marking the context in link might suggest) the reason for this is
+//    when patches are cached in variables; then the variable no longer refers
+//    directly to the module.
+//
+// 2. Module variables are in a circularly linked list that includes the
 //    symbol series holding that variable's name.  This means the variable
 //    can be looked up in that module by following the list reachable through
 //    the symbol in a WORD!.  It also means the spelling can be found in
 //    that list looking for the symbol.
+//
+
+#if CPLUSPLUS_11
+    struct Patch : public Stub {};
+#else
+    typedef Stub Patch;
+#endif
+
+#define STUB_MASK_PATCH ( \
+    FLAG_FLAVOR(PATCH) \
+        | NODE_FLAG_NODE \
+        | NODE_FLAG_MANAGED \
+        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* context, weird keepalive [1] */ \
+        | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* reserved */ \
+    )
 
 #define LINK_PATCH_RESERVED(patch)  STUB_LINK_UNMANAGED(patch)
-// MISC is used for MISC_HITCH() [1]
+// MISC is used for MISC_HITCH() [2]
 #define INFO_PATCH_SEA(patch)       STUB_INFO(patch)
+
+
+//=//// "STUMPS" USED FOR BINDING /////////////////////////////////////////=//
+//
+// A "Stump" is a Stub that is ephemeral that is hitched directly onto a
+// symbol.  It is used to build mappings from Symbols to indexes in a binder.
+//
+// 1. We mark the stub's info node as being a symbol, but there's no actual
+//    garbage collection that should be happening while the binder is in use.
+//    So there are unlikely to be any GC runs that would see this, unless
+//    it was a debug situation of some kind that wound up evaluating and
+//    triggering a GC when it wasn't supposed to.
+
+#if CPLUSPLUS_11
+    struct Stump : public Stub {};
+#else
+    typedef Stub Stump;
+#endif
+
+#define STUB_MASK_STUMP ( \
+    FLAG_FLAVOR(STUMP) \
+        | NODE_FLAG_NODE \
+        | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* next stump (not managed) */ \
+        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* symbol (but no GC runs!) [1] */ \
+    )
+
+#define LINK_STUMP_NEXT(stump)      STUB_LINK(stump)
+#define INFO_STUMP_SYMBOL(stump)    STUB_INFO(stump)

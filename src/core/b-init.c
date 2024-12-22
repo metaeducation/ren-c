@@ -157,11 +157,6 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 // Since no good literal form exists, the %sysobj.r file uses the words.  They
 // have to be defined before the point that it runs (along with the natives).
 //
-// 1. While it may seem that context keeps the lib alive and not vice-versa
-//    (which marking the context in link might suggest) the reason for this is
-//    when patches are cached in variables; then the variable no longer refers
-//    directly to the module.
-//
 static void Startup_Lib(void)
 {
     SeaOfVars* lib = Alloc_Sea_Core(NODE_FLAG_MANAGED);
@@ -172,16 +167,10 @@ static void Startup_Lib(void)
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // leave invalid
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &g_lib_patches[id];
+        Patch* patch = &g_lib_patches[id];
         assert(Is_Stub_Erased(patch));  // pre-boot state
 
-        patch->leader.bits = (
-            FLAG_FLAVOR(PATCH)
-            | NODE_FLAG_NODE
-            | NODE_FLAG_MANAGED
-            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // context, weird keepalive [1]
-            /* | STUB_FLAG_LINK_NODE_NEEDS_MARK */  // reserved
-        );
+        patch->leader.bits = STUB_MASK_PATCH;
 
         assert(INFO_PATCH_SEA(patch) == nullptr);
         assert(LINK_PATCH_RESERVED(patch) == nullptr);
@@ -230,7 +219,7 @@ static void Shutdown_Lib(void)
 
   #if RUNTIME_CHECKS  // verify patches point to g_lib_context before free [1]
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &g_lib_patches[id];
+        Patch* patch = &g_lib_patches[id];
         assert(Info_Patch_Sea(patch) == g_lib_context);
     }
   #endif
@@ -243,7 +232,7 @@ static void Shutdown_Lib(void)
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &g_lib_patches[id];
+        Patch* patch = &g_lib_patches[id];
 
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 

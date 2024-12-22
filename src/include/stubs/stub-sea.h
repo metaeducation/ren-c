@@ -40,14 +40,14 @@
 // directly to the Patch, meaning that search only needs to be done once.
 //
 
-INLINE SeaOfVars* Info_Patch_Sea(const Stub* patch) {
+INLINE SeaOfVars* Info_Patch_Sea(const Patch* patch) {
     assert(Is_Stub_Patch(patch));
     SeaOfVars* sea = cast(SeaOfVars*, INFO_PATCH_SEA(patch));
     assert(Is_Stub_Sea(sea));
     return sea;
 }
 
-INLINE void Tweak_Info_Patch_Sea(Stub* patch, SeaOfVars* sea) {
+INLINE void Tweak_Info_Patch_Sea(Patch* patch, SeaOfVars* sea) {
     assert(Is_Stub_Patch(patch));
     assert(sea != nullptr);
     INFO_PATCH_SEA(patch) = sea;
@@ -71,7 +71,7 @@ INLINE void Tweak_Misc_Sea_Adjunct(
 //    we can't be sure it's a match.  :-/  For this moment hope lib doesn't
 //    have two-cased variations of anything.
 //
-INLINE Option(Stub*) Sea_Patch(SeaOfVars* sea, const Symbol* sym, bool strict) {
+INLINE Option(Patch*) Sea_Patch(SeaOfVars* sea, const Symbol* sym, bool strict) {
     if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
@@ -84,13 +84,13 @@ INLINE Option(Stub*) Sea_Patch(SeaOfVars* sea, const Symbol* sym, bool strict) {
 
     Symbol* synonym = m_cast(Symbol*, sym);
     do {
-        Stub* patch = Misc_Hitch(sym);
+        Stub* stub = Misc_Hitch(sym);  // first item may be Stump
         if (Get_Flavor_Flag(SYMBOL, sym, MISC_IS_BIND_STUMP))
-            patch = Misc_Hitch(patch);  // skip binding stump
+            stub = Misc_Hitch(stub);  // skip binding Stump
 
-        for (; patch != sym; patch = Misc_Hitch(patch)) {
-            if (Info_Patch_Sea(patch) == sea)
-                return patch;
+        for (; stub != sym; stub = Misc_Hitch(stub)) {  // should be Patch
+            if (Info_Patch_Sea(cast(Patch*, stub)) == sea)
+                return cast(Patch*, stub);
         }
         if (strict)
             return nullptr;
@@ -101,7 +101,7 @@ INLINE Option(Stub*) Sea_Patch(SeaOfVars* sea, const Symbol* sym, bool strict) {
 }
 
 INLINE Value* Sea_Var(SeaOfVars* sea, const Symbol* sym, bool strict) {
-    Stub* patch = maybe Sea_Patch(sea, sym, strict);
+    Patch* patch = maybe Sea_Patch(sea, sym, strict);
     if (not patch)
         return nullptr;
     return cast(Value*, Stub_Cell(patch));

@@ -28,7 +28,7 @@ PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 // themselves, not pointers to them), arranged in canon order.  It provides
 // fast access to Patches for variables in LIB() by SymId.
 //
-PVAR Stub g_lib_patches[LIB_SYMS_MAX];
+PVAR Patch g_lib_patches[LIB_SYMS_MAX];  // Patch instances, not Patch pointers
 
 PVAR Element* g_lib_module;
 PVAR Element* g_sys_util_module;

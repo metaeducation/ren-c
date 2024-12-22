@@ -1065,7 +1065,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &g_lib_patches[id];
+        Patch* patch = &g_lib_patches[id];
         if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
             Queue_Mark_Maybe_Erased_Cell_Deep(Stub_Cell(patch));
@@ -1114,18 +1114,18 @@ REBLEN Recycle_Core(Flex* sweeplist)
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
-            Stub* patch = Misc_Hitch(*psym);
-            for (; patch != *psym; patch = Misc_Hitch(patch)) {
-                SeaOfVars* sea = Info_Patch_Sea(patch);
-                if (Is_Node_Marked(patch)) {
+            Stub* stub = Misc_Hitch(*psym);
+            for (; stub != *psym; stub = Misc_Hitch(stub)) {
+                SeaOfVars* sea = Info_Patch_Sea(cast(Patch*, stub));
+                if (Is_Node_Marked(stub)) {
                     assert(Is_Node_Marked(sea));
                     continue;
                 }
                 if (Is_Node_Marked(sea)) {
-                    Add_GC_Mark(patch);
+                    Add_GC_Mark(stub);
                     added_marks = true;
 
-                    Queue_Mark_Cell_Deep(Stub_Cell(patch));
+                    Queue_Mark_Cell_Deep(Stub_Cell(stub));
 
                     // We also have to keep the word alive, but not necessarily
                     // keep all the other declarations in other modules alive.
@@ -1166,7 +1166,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
-        Stub* patch = &g_lib_patches[id];
+        Patch* patch = &g_lib_patches[id];
         Remove_GC_Mark(patch);
     }
 

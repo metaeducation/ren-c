@@ -205,7 +205,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
 {
     const bool strict = true;
     if (Is_Module(context)) {
-        Stub* patch = maybe Sea_Patch(
+        Option(Patch*) patch = Sea_Patch(
             Cell_Module_Sea(context),
             Cell_Word_Symbol(word),
             strict
@@ -213,7 +213,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
         if (not patch)
             return false;
         Tweak_Cell_Word_Index(word, INDEX_PATCHED);
-        Tweak_Cell_Binding(word, patch);
+        Tweak_Cell_Binding(word, unwrap patch);
         return true;
     }
 

@@ -82,24 +82,22 @@ void Init_Evars(EVARS *e, const Cell* v) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
-            Stub* patch = Misc_Hitch(*psym);
+            Stub* stub = Misc_Hitch(*psym);
             if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
-                patch = Misc_Hitch(patch);  // skip binding stump
+                stub = Misc_Hitch(stub);  // skip binding stump
 
-            Stub* found = nullptr;
+            Stub* patch_found = nullptr;
 
-            for (; patch != *psym; patch = Misc_Hitch(patch)) {
-                if (e->ctx == Info_Patch_Sea(patch)) {
-                    found = patch;
+            for (; stub != *psym; stub = Misc_Hitch(stub)) {
+                if (e->ctx == Info_Patch_Sea(cast(Patch*, stub))) {
+                    patch_found = stub;
                     break;
                 }
-             /*   if (g_lib_context == Info_Patch_Sea(patch))
-                    found = patch;  // will match if not overridden */
             }
-            if (found) {
+            if (patch_found) {
                 Init_Any_Word(PUSH(), REB_WORD, *psym);
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                Tweak_Cell_Binding(TOP, found);
+                Tweak_Cell_Binding(TOP, patch_found);
             }
         }
 
@@ -595,14 +593,14 @@ SeaOfVars* Copy_Sea_Managed(SeaOfVars* original) {
         if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
             continue;
 
-        Stub* patch = Misc_Hitch(*psym);
+        Stub* stub = Misc_Hitch(*psym);
         if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
-            patch = Misc_Hitch(patch);  // skip binding stump
+            stub = Misc_Hitch(stub);  // skip binding stump
 
-        for (; patch != *psym; patch = Misc_Hitch(patch)) {
-            if (original == Info_Patch_Sea(patch)) {
+        for (; stub != *psym; stub = Misc_Hitch(stub)) {
+            if (original == Info_Patch_Sea(cast(Patch*, stub))) {
                 Value* var = Append_Context(copy, *psym);
-                Copy_Cell(var, Stub_Cell(patch));
+                Copy_Cell(var, Stub_Cell(stub));
                 break;
             }
         }
