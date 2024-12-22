@@ -234,31 +234,28 @@ bool Specialize_Action_Throws(
         // to whatever value was in the context the specialization is running
         // in, but this is likely the more useful behavior.
         //
-        DECLARE_ELEMENT (elem);
-        Init_Frame(elem, exemplar, label, coupling);
-        Tweak_Cell_Binding(unwrap def, Make_Use_Core(
-            elem,
-            Cell_List_Binding(unwrap def),
-            CELL_FLAG_USE_NOTE_SET_WORDS
-        ));
+        Use* use = Alloc_Use_Inherits_Core(
+            USE_FLAG_SET_WORDS_ONLY,
+            Cell_List_Binding(unwrap def)
+        );
+        Init_Frame(Stub_Cell(use), exemplar, label, coupling);
+
+        Tweak_Cell_Binding(unwrap def, use);
+        Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // protects exemplar
 
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
         Destruct_Binder_Core(binder);
 
-        // Run block and ignore result (unless it is thrown)
-        //
-        Push_Lifeguard(exemplar);
         bool threw = Eval_Any_List_At_Throws(out, unwrap def, SPECIFIED);
-        Drop_Lifeguard(exemplar);
 
         if (threw) {
             Drop_Data_Stack_To(lowest_stackindex);
             return true;
         }
 
-        Erase_Cell(out);
+        Erase_Cell(out);  // ignore result of specialization code
     }
 
     const Key* tail;

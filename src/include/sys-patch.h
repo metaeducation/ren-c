@@ -51,33 +51,30 @@
 
 
 //
-// Make_Use_Core: C
+// Alloc_Use_Inherits_Core: C
 //
-// Handles linking a "USE" stub into the binding chain.  Some contexts have a
-// ->next pointer available in them which they can use without a separate
-// allocation, but if that pointer is already occupied then a Use stub has to
-// be created to give it a place to put another chain's next pointer.
+// Handles linking a "USE" stub into a binding chain.  Caller must fill in
+// the Stub_Cell() of the resulting Use with a valid ANY-CONTEXT!, or WORD!
+// bound into a context.
 //
-INLINE Use* Make_Use_Core(
-    const Element* defs,  // must be a context or a WORD!
-    Context* parent,
-    Flags note
+// Note that sometimes a VarList or SeaOfVars have Link_Inherits_Bind()
+// pointers available in them which they can use without a separate
+// allocation.  But if that pointer is already occupied then a Use stub has
+// to be created as a holder to give it a place to put in another chain.
+//
+INLINE Use* Alloc_Use_Inherits_Core(
+    Flags flags,
+    Context* inherit
 ){
-    assert(note == CELL_MASK_ERASED_0 or note == CELL_FLAG_USE_NOTE_SET_WORDS);
+    assert(0 == (flags & ~(USE_FLAG_SET_WORDS_ONLY)));
 
-    Stub* use = Make_Untracked_Stub(STUB_MASK_USE);
-
-    assert(Any_Context(defs) or Is_Word(defs));
-    if (Is_Frame(defs))
-        assert(Is_Stub_Varlist(Cell_Frame_Phase(defs)));
-    Copy_Cell(Stub_Cell(use), defs);
-
-    if (note)
-        Stub_Cell(use)->header.bits |= note;
-
-    Tweak_Link_Inherit_Bind(use, parent);
+    Stub* use = Make_Untracked_Stub(STUB_MASK_USE | flags);
+    Tweak_Link_Inherit_Bind(use, inherit);
     Corrupt_Unused_Field(use->misc.corrupt);
     Corrupt_Unused_Field(use->info.corrupt);
 
     return use;
 }
+
+#define Alloc_Use_Inherits(inherit) \
+    Alloc_Use_Inherits_Core(STUB_MASK_0, (inherit))

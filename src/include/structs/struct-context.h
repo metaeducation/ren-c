@@ -83,3 +83,9 @@ typedef Context Use;
         | not STUB_FLAG_INFO_NODE_NEEDS_MARK  /* not yet used */ \
         | not STUB_FLAG_MISC_NODE_NEEDS_MARK  /* unused, was "Variant" [1] */ \
     )
+
+
+//=//// USE_FLAG_SET_WORDS_ONLY ///////////////////////////////////////////=//
+//
+#define USE_FLAG_SET_WORDS_ONLY \
+    STUB_SUBCLASS_FLAG_24

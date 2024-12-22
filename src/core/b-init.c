@@ -513,14 +513,12 @@ static void Init_System_Object(
     Init_Object(Sink_Lib_Var(SYM_SYSTEM), system);
     Init_Object(Sink_Lib_Var(SYM_SYS), system);
 
+    Use* use = Alloc_Use_Inherits(Cell_List_Binding(boot_sysobj_spec));
+    Copy_Cell(Stub_Cell(use), Varlist_Archetype(system));
+
     DECLARE_VALUE (sysobj_spec_virtual);
     Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
-
-    Tweak_Cell_Binding(sysobj_spec_virtual, Make_Use_Core(
-        Varlist_Archetype(system),
-        Cell_List_Binding(sysobj_spec_virtual),
-        CELL_MASK_ERASED_0
-    ));
+    Tweak_Cell_Binding(sysobj_spec_virtual, use);
 
     // Evaluate the block (will eval CONTEXTs within).
     //

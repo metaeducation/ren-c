@@ -567,12 +567,10 @@ DECLARE_NATIVE(wrap_p)
     if (e)
         return FAIL(unwrap e);
 
-    /* Tweak_Cell_Binding(list, Make_Use_Core(  // what should do what? [1]
-        Varlist_Archetype(context),
-        Cell_List_Binding(list),
-        CELL_MASK_ERASED_0
-    ));
-    return COPY(list); */
+    /*
+        Tweak_Cell_Binding(list, use);  // what should do what here?
+        return COPY(list);  // should this return a list?
+    */
 
     return NOTHING;
 }

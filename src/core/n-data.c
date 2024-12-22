@@ -50,8 +50,6 @@ DECLARE_NATIVE(bind)
     Value* v = ARG(value);
     Element* spec = cast(Element*, ARG(spec));
 
-    Sink(Element) spare = SPARE;
-
     if (Is_Block(spec)) {
         const Element* tail;
         const Element* at = Cell_List_At(&tail, spec);
@@ -63,16 +61,14 @@ DECLARE_NATIVE(bind)
             if (not Is_The_Word(at))
                 return FAIL("BLOCK! binds all @word for the moment");
 
-            Derelativize(spare, at, Cell_Binding(spec));
-            if (not IS_WORD_BOUND(spare))
-                return FAIL(Error_Not_Bound_Raw(spare));
+            Use* use = Alloc_Use_Inherits(Cell_Binding(v));
+            Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
+            HEART_BYTE(Stub_Cell(use)) = REB_WORD;
 
-            HEART_BYTE(spare) = REB_WORD;
-            Tweak_Cell_Binding(v, Make_Use_Core(
-                spare,
-                Cell_Binding(v),
-                CELL_MASK_ERASED_0
-            ));
+            if (not IS_WORD_BOUND(Stub_Cell(use)))
+                return FAIL(Error_Not_Bound_Raw(Stub_Cell(use)));
+
+            Tweak_Cell_Binding(v, use);
         }
 
         return COPY(v);
@@ -94,12 +90,11 @@ DECLARE_NATIVE(bind)
         if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
             return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
-        HEART_BYTE(spec) = REB_WORD;
-        Tweak_Cell_Binding(v, Make_Use_Core(
-            spec,
-            Cell_Binding(v),
-            CELL_MASK_ERASED_0
-        ));
+        Use* use = Alloc_Use_Inherits(Cell_Binding(v));
+        Copy_Cell(Stub_Cell(use), spec);
+        HEART_BYTE(Stub_Cell(use)) = REB_WORD;
+
+        Tweak_Cell_Binding(v, use);
 
         return COPY(v);
     }
@@ -117,11 +112,9 @@ DECLARE_NATIVE(bind)
     if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
         return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
 
-    Tweak_Cell_Binding(v, Make_Use_Core(
-        context,
-        Cell_Binding(v),
-        CELL_MASK_ERASED_0
-    ));
+    Use* use = Alloc_Use_Inherits(Cell_Binding(v));
+    Copy_Cell(Stub_Cell(use), context);
+    Tweak_Cell_Binding(v, use);
 
     return COPY(v);
 }
@@ -183,11 +176,10 @@ DECLARE_NATIVE(overbind)
     else
         assert(Any_Context(defs));
 
-    Tweak_Cell_Binding(v, Make_Use_Core(
-        defs,
-        Cell_List_Binding(v),
-        CELL_MASK_ERASED_0
-    ));
+    Use* use = Alloc_Use_Inherits(Cell_List_Binding(v));
+    Copy_Cell(Stub_Cell(use), defs);
+
+    Tweak_Cell_Binding(v, use);
 
     return COPY(v);
 }
@@ -271,11 +263,10 @@ DECLARE_NATIVE(without)
         );
     }
 
-    Tweak_Cell_Binding(v, Make_Use_Core(
-        Varlist_Archetype(ctx),
-        Cell_List_Binding(v),
-        CELL_MASK_ERASED_0
-    ));
+    Use* use = Alloc_Use_Inherits(Cell_List_Binding(v));
+    Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
+
+    Tweak_Cell_Binding(v, use);
 
     return COPY(v);
 }

@@ -97,7 +97,7 @@ INLINE Element* Derelativize_Untracked(
         }
         else if (
             Is_Stub_Use(context)
-            and Get_Cell_Flag(Stub_Cell(context), USE_NOTE_SET_WORDS)
+            and Get_Flavor_Flag(USE, context, SET_WORDS_ONLY)
         ){
             Tweak_Cell_Binding(out, Link_Inherit_Bind(context));
         }

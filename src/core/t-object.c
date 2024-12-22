@@ -446,13 +446,12 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
             tail,
             nullptr  // no parent (MAKE SOME-OBJ [...] calls DECLARE_GENERICS(Context))
         );
-        Init_Context_Cell(OUT, heart, ctx);
 
-        Tweak_Cell_Binding(arg, Make_Use_Core(
-            Varlist_Archetype(ctx),
-            Cell_List_Binding(arg),
-            CELL_MASK_ERASED_0
-        ));
+        Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
+        Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
+
+        Tweak_Cell_Binding(arg, use);  // arg is GC-safe, so use will be too
+        Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // keeps context alive
 
         bool threw = Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED);
         UNUSED(SPARE);  // result disregarded
@@ -460,7 +459,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
         if (threw)
             return BOUNCE_THROWN;
 
-        return OUT;
+        return Init_Context_Cell(OUT, heart, ctx);
     }
 
     // `make object! 10` - currently not prohibited for any context type
@@ -948,19 +947,18 @@ DECLARE_GENERICS(Context)
                 tail,
                 varlist
             );
-            Init_Context_Cell(OUT, heart, derived);
 
-            Tweak_Cell_Binding(def, Make_Use_Core(
-                Varlist_Archetype(derived),
-                Cell_List_Binding(def),
-                CELL_MASK_ERASED_0
-            ));
+            Use* use = Alloc_Use_Inherits(Cell_List_Binding(def));
+            Copy_Cell(Stub_Cell(use), Varlist_Archetype(derived));
+
+            Tweak_Cell_Binding(def, use);  // def is GC-safe, use will be too
+            Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // keeps derived alive
 
             DECLARE_ATOM (dummy);
             if (Eval_Any_List_At_Throws(dummy, def, SPECIFIED))
                 return BOUNCE_THROWN;
 
-            return OUT;
+            return Init_Context_Cell(OUT, heart, derived);
         }
 
         return Error_Bad_Make(heart, def); }
@@ -1128,9 +1126,12 @@ DECLARE_GENERICS(Context)
         if (e)
             return FAIL(unwrap e);
 
-        Use* use = Make_Use_Core(
-            context, Cell_Binding(def), CELL_FLAG_USE_NOTE_SET_WORDS
+        Use* use = Alloc_Use_Inherits_Core(
+            USE_FLAG_SET_WORDS_ONLY,
+            Cell_Binding(def)
         );
+        Copy_Cell(Stub_Cell(use), context);
+
         Tweak_Cell_Binding(def, use);
 
         bool threw = Eval_Any_List_At_Throws(OUT, def, SPECIFIED);

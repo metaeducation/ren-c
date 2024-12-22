@@ -708,20 +708,22 @@ DECLARE_NATIVE(applique)
         NOTHING_VALUE  // fill all slots with nothing to start
     );
     Manage_Flex(exemplar);
-    Init_Frame(
+    Init_Lensed_Frame(
         frame,
         exemplar,
-        Cell_Frame_Label(op),
+        Cell_Frame_Phase(op),
         Cell_Frame_Coupling(op)
     );
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
-    Tweak_Cell_Binding(def, Make_Use_Core(
-        cast(Element*, frame),
-        Cell_List_Binding(def),
-        CELL_FLAG_USE_NOTE_SET_WORDS
-    ));
+    Use* use = Alloc_Use_Inherits_Core(
+        USE_FLAG_SET_WORDS_ONLY,
+        Cell_List_Binding(def)
+    );
+    Copy_Cell(Stub_Cell(use), frame);
+
+    Tweak_Cell_Binding(def, use);
 
     STATE = ST_APPLIQUE_RUNNING_DEF_BLOCK;
     return CONTINUE(SPARE, def);  // first run block bound to frame

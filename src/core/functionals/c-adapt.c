@@ -102,18 +102,16 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Force_Level_Varlist_Managed(L);
 
-    Copy_Cell(SPARE, prelude);
-    Element* frame = Init_Lensed_Frame(
-        SCRATCH,
+    Use* use = Alloc_Use_Inherits(Cell_Binding(prelude));
+    Init_Lensed_Frame(
+        Stub_Cell(use),
         Level_Varlist(L),
         details,  // make only this action's inputs visible
         Level_Coupling(L)
     );
-    Tweak_Cell_Binding(SPARE, Make_Use_Core(  // must USE [1]
-        frame,
-        Cell_Binding(prelude),
-        CELL_MASK_ERASED_0
-    ));
+
+    Copy_Cell(SPARE, prelude);
+    Tweak_Cell_Binding(SPARE, use);  // must USE [1]
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         OUT,  // note: result is discarded

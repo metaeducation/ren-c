@@ -436,20 +436,16 @@ Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
             root_error // parent
         );
 
-        // Protect the error from GC by putting into out, which must be
-        // passed in as a GC-protecting value slot.
-        //
-        Init_Error(OUT, error);
+        Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
+        Init_Error(Stub_Cell(use), error);
 
-        Tweak_Cell_Binding(arg, Make_Use_Core(
-            Varlist_Archetype(error),
-            Cell_List_Binding(arg),
-            CELL_MASK_ERASED_0
-        ));
+        Tweak_Cell_Binding(arg, use);  // arg is GC protected, so Use is too
+        Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // protects Error in eval
 
-        DECLARE_ATOM (evaluated);
-        if (Eval_Any_List_At_Throws(evaluated, arg, SPECIFIED))
+        if (Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED))
             return BOUNCE_THROWN;
+
+        Erase_Cell(SPARE);  // ignore result of evaluation
 
         vars = ERR_VARS(error);
     }
@@ -465,7 +461,6 @@ Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
         // Minus the message, this is the default state of root_error.
 
         error = Copy_Varlist_Shallow_Managed(root_error);
-        Init_Error(OUT, error);
 
         vars = ERR_VARS(error);
         assert(Is_Nulled(&vars->type));
@@ -561,8 +556,7 @@ Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
         }
     }
 
-    assert(Is_Error(OUT));
-    return OUT;
+    return Init_Error(OUT, error);
 }
 
 

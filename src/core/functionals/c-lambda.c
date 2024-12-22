@@ -53,46 +53,30 @@ enum {
 //
 //  Lambda_Dispatcher: C
 //
-// Uses virtual binding (essentially like a USE)
+// Uses virtual binding, no prior relativized walk.
 //
 Bounce Lambda_Dispatcher(Level* const L)
-//
-// 1. We have to use Make_Use_Core() here, because it could be the case
-//    that a higher level wrapper used the frame and virtually bound it.
 {
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_LAMBDA_MAX);
 
-    const Value* block = Details_At(details, IDX_LAMBDA_BODY);
+    const Element* block = cast(Element*, Details_At(details, IDX_LAMBDA_BODY));
     assert(Is_Block(block));
 
+    assert(Link_Inherit_Bind(L->varlist) == nullptr);
+    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(block));
     Force_Level_Varlist_Managed(L);
 
-    DECLARE_ELEMENT (frame);
-    Init_Frame(
-        frame,
-        cast(ParamList*, Varlist_Of_Level_Force_Managed(L)),
-        Level_Label(L),
-        Level_Coupling(L)
-    );
-
-    Context* parent = Cell_List_Binding(block);
-    Use* use = Make_Use_Core(  // have to USE here [1]
-        frame,
-        parent,
-        CELL_MASK_ERASED_0
-    );
-
-    Copy_Cell(SPARE, block);
-    Tweak_Cell_Binding(SPARE, use);
+    Element* block_rebound = Copy_Cell(SPARE, block);
+    Tweak_Cell_Binding(SPARE, L->varlist);
 
     return DELEGATE_CORE(
         OUT,
         LEVEL_MASK_NONE,
         SPECIFIED,
-        stable_SPARE
+        block_rebound
     );
 }
 

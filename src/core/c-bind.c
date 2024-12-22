@@ -417,7 +417,7 @@ Option(Stub*) Get_Word_Container(
         assert(Is_Stub_Use(c));
 
         if (  // some USEs only affect SET-WORD!s
-            Get_Cell_Flag(Stub_Cell(c), USE_NOTE_SET_WORDS)
+            Get_Flavor_Flag(USE, c, SET_WORDS_ONLY)
             and not Is_Set_Word(any_word)
         ){
             goto next_context;
@@ -891,7 +891,8 @@ DECLARE_NATIVE(add_use_object) {
     if (L_binding)
         Set_Node_Managed_Bit(L_binding);
 
-    Use* use = Make_Use_Core(object, L_binding, CELL_MASK_ERASED_0);
+    Use* use = Alloc_Use_Inherits(L_binding);
+    Copy_Cell(Stub_Cell(use), object);
 
     Tweak_Cell_Binding(Feed_Data(L->feed), use);
 
@@ -1299,11 +1300,9 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //
     if (rebinding) {
-        Tweak_Cell_Binding(body_in_out, Make_Use_Core(
-            Varlist_Archetype(c),
-            Cell_List_Binding(body_in_out),
-            CELL_MASK_ERASED_0
-        ));
+        Use* use = Alloc_Use_Inherits(Cell_List_Binding(body_in_out));
+        Copy_Cell(Stub_Cell(use), Varlist_Archetype(c));
+        Tweak_Cell_Binding(body_in_out, use);
     }
 
     return c;
