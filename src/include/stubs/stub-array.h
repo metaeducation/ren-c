@@ -107,7 +107,9 @@ INLINE void Prep_Array(
 INLINE Option(const String*) Link_Filename(const Source* source) {
     assert(Stub_Flavor(source) == FLAVOR_SOURCE);
     if (Get_Stub_Flag(source, LINK_NODE_NEEDS_MARK)) {
-        const String* filename = cast(const String*, source->link.node);
+        const String* filename = cast(const String*,
+            LINK_SOURCE_FILENAME_NODE(source)
+        );
         assert(Stub_Flavor(filename) == FLAVOR_NONSYMBOL);
         return filename;
     }
@@ -120,7 +122,7 @@ INLINE void Tweak_Link_Filename(Source* source, Option(const String*) filename)
     assert(Stub_Flavor(source) == FLAVOR_SOURCE);
     if (filename) {
         Set_Stub_Flag(source, LINK_NODE_NEEDS_MARK);
-        source->link.node = m_cast(String*, unwrap filename);  // extract const
+        LINK_SOURCE_FILENAME_NODE(source) = m_cast(String*, unwrap filename);
     }
     else {
         Clear_Stub_Flag(source, LINK_NODE_NEEDS_MARK);
@@ -168,7 +170,7 @@ INLINE Array* Make_Array_Core_Into(
             (filename = Link_Filename(Level_Array(TOP_LEVEL)))
         ){
             Tweak_Link_Filename(u_cast(Source*, a), filename);
-            a->misc.line = Level_Array(TOP_LEVEL)->misc.line;
+            MISC_SOURCE_LINE(a) = MISC_SOURCE_LINE(Level_Array(TOP_LEVEL));
         }
     }
 

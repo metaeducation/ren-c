@@ -279,11 +279,13 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // Flex Flavor, not an extension-usable flag (due to flag scarcity).
         //
         if (Is_Stub_Varlist(a)) {  // bonus is keylist (if not module varlist)
-            if (BONUS_KEYLIST_RAW(a) == nullptr)
+            if (BONUS_VARLIST_KEYLIST(a) == nullptr)
                 assert(CTX_TYPE(cast(VarList*, a)) == REB_MODULE);
             else {
                 assert(CTX_TYPE(cast(VarList*, a)) != REB_MODULE);
-                assert(Is_Stub_Keylist(cast(Stub*, BONUS_KEYLIST_RAW(a))));
+                assert(Is_Stub_Keylist(
+                    cast(Stub*, BONUS_VARLIST_KEYLIST(a)))
+                );
                 Queue_Mark_Node_Deep(&a->content.dynamic.bonus.node);
             }
         }

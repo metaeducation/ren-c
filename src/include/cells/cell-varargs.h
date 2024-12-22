@@ -48,16 +48,15 @@
 //   will be kept going forward, or if functions will just be able to get
 //   access to their FRAME! and simulate varargs-like behavior that way.
 //
-// * If the extra->node of the varargs is not nullptr, it represents the
-//   frame in which this VARARGS! was tied to a parameter.  This 0-based
+// * If CELL_VARARGS_ORIGIN of the varargs is not nullptr, it represents the
+//   frame in which this VARARGS! was tied to a parameter.  A 0-based
 //   offset can be used to find the param the varargs is tied to, in order
 //   to know whether it is quoted or not (and its name for error delivery).
 //
 
-#define VAL_VARARGS_SIGNED_PARAM_INDEX(v) \
-    (v)->payload.split.one.i
-
-#define CELL_VARARGS_PHASE_NODE  CELL_NODE2
+#define CELL_VARARGS_ORIGIN(c)              CELL_EXTRA(c)
+#define CELL_VARARGS_SIGNED_PARAM_INDEX(c)  (c)->payload.split.one.i
+#define CELL_VARARGS_PHASE_NODE(c)          CELL_NODE2(c)
 
 INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
     assert(HEART_BYTE(c) == REB_VARARGS);
@@ -69,24 +68,24 @@ INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Phase* phase) {
     CELL_VARARGS_PHASE_NODE(c) = phase;
 }
 
-INLINE Array* Cell_Varargs_Source(const Cell* c) {
-    assert(Cell_Heart(c) == REB_VARARGS);
-    return cast(Array*, c->extra.node);
+INLINE Array* Cell_Varargs_Origin(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_VARARGS);
+    return cast(Array*, CELL_VARARGS_ORIGIN(c));
 }
 
-INLINE void Tweak_Cell_Varargs_Source(
+INLINE void Tweak_Cell_Varargs_Origin(
     Cell* c,
     Stub* source  // either a feed, or a frame varlist
 ){
-    assert(Cell_Heart(c) == REB_VARARGS);
-    c->extra.node = source;
+    assert(HEART_BYTE(c) == REB_VARARGS);
+    CELL_VARARGS_ORIGIN(c) = source;
 }
 
 
 INLINE Element* Init_Varargs_Untyped_Normal(Init(Element) out, Level* L) {
     Reset_Cell_Header_Noquote(out, CELL_MASK_VARARGS);
-    Tweak_Cell_Varargs_Source(out, L->varlist);  // frame-based VARARGS!
-    UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
+    Tweak_Cell_Varargs_Origin(out, L->varlist);  // frame-based VARARGS!
+    UNUSED(CELL_VARARGS_SIGNED_PARAM_INDEX(out));
     Tweak_Cell_Varargs_Phase(out, nullptr);  // set in typecheck
     return out;
 }
@@ -107,8 +106,8 @@ INLINE Element* Init_Varargs_Untyped_Infix(
     }
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_VARARGS);
-    Tweak_Cell_Varargs_Source(out, feed);
-    UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
+    Tweak_Cell_Varargs_Origin(out, feed);
+    UNUSED(CELL_VARARGS_SIGNED_PARAM_INDEX(out));
     Tweak_Cell_Varargs_Phase(out, nullptr);  // set in typecheck
     return out;
 }
@@ -120,7 +119,7 @@ INLINE bool Is_Block_Style_Varargs(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* source = Cell_Varargs_Source(vararg);
+    Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
         *shared_out = nullptr;  // avoid compiler warning in -Og build
         return false;  // it's an ordinary vararg, representing a FRAME!
@@ -144,7 +143,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* source = Cell_Varargs_Source(vararg);
+    Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
@@ -187,7 +186,7 @@ INLINE bool Is_Level_Style_Varargs_May_Fail(
 // they can be offered to any userspace routine.
 //
 #define Is_Varargs_Infix(v) \
-    (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0)
+    (CELL_VARARGS_SIGNED_PARAM_INDEX(v) < 0)
 
 
 INLINE const Param* Param_For_Varargs_Maybe_Null(
@@ -198,20 +197,20 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
 
     Phase* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {
-        if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. infix
+        if (CELL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. infix
             if (key)
                 *key = Phase_Key(
                     phase,
-                    (- VAL_VARARGS_SIGNED_PARAM_INDEX(v))
+                    (- CELL_VARARGS_SIGNED_PARAM_INDEX(v))
                 );
             return Phase_Param(
                 phase,
-                (- VAL_VARARGS_SIGNED_PARAM_INDEX(v))
+                (- CELL_VARARGS_SIGNED_PARAM_INDEX(v))
             );
         }
 
-        *key = Phase_Key(phase, VAL_VARARGS_SIGNED_PARAM_INDEX(v));
-        return Phase_Param(phase, VAL_VARARGS_SIGNED_PARAM_INDEX(v));
+        *key = Phase_Key(phase, CELL_VARARGS_SIGNED_PARAM_INDEX(v));
+        return Phase_Param(phase, CELL_VARARGS_SIGNED_PARAM_INDEX(v));
     }
 
     if (key)
@@ -220,7 +219,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
     // A vararg created from a block AND never passed as an argument so no
     // typeset or quoting settings available.  Treat as "normal" parameter.
     //
-    assert(not Is_Stub_Varlist(Cell_Varargs_Source(v)));
+    assert(not Is_Stub_Varlist(Cell_Varargs_Origin(v)));
     return nullptr;
 }
 

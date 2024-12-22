@@ -149,9 +149,14 @@ typedef enum {
     (NODE_FLAG_NODE \
         | FLAG_FLAVOR(DETAILS) \
         | STUB_FLAG_DYNAMIC \
-        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* adjunct */ \
-        /* LINK is dispatcher, a c function pointer, should not mark */ \
-        /* INFO was ParamList, that's now in the rootvar slot */ )
+        | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* don't mark dispatcher */ \
+        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* adjunct needs mark */ \
+        | not STUB_FLAG_INFO_NODE_NEEDS_MARK  /* info not currently used */ )
+
+#define LINK_DETAILS_DISPATCHER(details)  (details)->link.dispatcher
+#define MISC_DETAILS_ADJUNCT(details)     STUB_MISC(details)
+// INFO in details currently unused, just the info flags
+// BONUS in details currently unused
 
 
 //=//// PARAMETER CLASSES ////////////////////////////////////////////////=//

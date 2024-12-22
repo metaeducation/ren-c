@@ -202,25 +202,24 @@ INLINE bool Is_Flex_Biased(const Flex* f) {
 INLINE Length Flex_Bias(const Flex* f) {
     if (not Is_Flex_Biased(f))
         return 0;
-    return ((f)->content.dynamic.bonus.bias >> 16) & 0xffff;
+    return (BONUS_FLEX_BIAS(f) >> 16) & 0xffff;
 }
 
 #define MAX_FLEX_BIAS 0x1000
 
 INLINE void Set_Flex_Bias(Flex* f, REBLEN bias) {
     assert(Is_Flex_Biased(f));
-    f->content.dynamic.bonus.bias =
-        (f->content.dynamic.bonus.bias & 0xffff) | (bias << 16);
+    BONUS_FLEX_BIAS(f) = (BONUS_FLEX_BIAS(f) & 0xffff) | (bias << 16);
 }
 
 INLINE void Add_Flex_Bias(Flex* f, REBLEN b) {
     assert(Is_Flex_Biased(f));
-    f->content.dynamic.bonus.bias += b << 16;
+    BONUS_FLEX_BIAS(f) += b << 16;
 }
 
 INLINE void Subtract_Flex_Bias(Flex* f, REBLEN b) {
     assert(Is_Flex_Biased(f));
-    f->content.dynamic.bonus.bias -= b << 16;
+    BONUS_FLEX_BIAS(f) -= b << 16;
 }
 
 INLINE Length Flex_Rest(const Flex* f) {
@@ -525,7 +524,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_Stub_Non_Symbol(f)) {
-        Corrupt_If_Debug(f->misc.num_codepoints);  // catch violators [2]
+        Corrupt_If_Debug(MISC_STRING_NUM_CODEPOINTS(f));  // catch violators [2]
         Touch_Stub_If_Debug(f);
     }
   #endif

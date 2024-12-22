@@ -36,7 +36,7 @@
 
 //=//// SYMBOL_FLAG_ALL_ASCII /////////////////////////////////////////////=//
 //
-// Symbols don't store a Stub.misc.num_codepoints (they need space in the Stub
+// Symbols don't store a MISC_STRING_NUM_CODEPOINTS (need space in the Stub
 // for other properties).  They're assumed to be short, so counting their
 // codepoints isn't that slow.  But since they're immutable, we can save
 // whether they're all ASCII at creation time, tells us their num_codepoints
@@ -89,6 +89,7 @@
     STUB_SUBCLASS_FLAG_28
 
 
+
 // For a *read-only* Symbol, circularly linked list of othEr-CaSed string
 // forms.  It should be relatively quick to find the canon form on
 // average, since many-cased forms are somewhat rare.
@@ -101,20 +102,35 @@
         | FLAG_FLAVOR(SYMBOL) \
         | FLEX_FLAG_FIXED_SIZE \
         | NODE_FLAG_MANAGED \
-        /* | STUB_FLAG_LINK_NODE_NEEDS_MARK */ /* synonym not marked [1] */)
+        | not STUB_FLAG_MISC_NODE_NEEDS_MARK  /* hitches not marked */ \
+        | not STUB_FLAG_LINK_NODE_NEEDS_MARK  /* synonym not marked [1] */)
 
 #define FLEX_MASK_UNMANAGED_STRING  FLAG_FLAVOR(NONSYMBOL)
 
 #define FLEX_MASK_MANAGED_STRING \
     (FLAG_FLAVOR(NONSYMBOL) | NODE_FLAG_MANAGED)
 
+#define MISC_HITCH(symbol_or_patch_or_stump) \
+    STUB_MISC_UNMANAGED(symbol_or_patch_or_stump)
 
 
-// MISC in non-Symbol strings are used for Stub.misc.num_codepoints
-// MISC in Symbol strings used for "hitches"
+//=//// SYMBOL STRING STUB SLOT USAGE /////////////////////////////////////=//
+
+#define LINK_SYMBOL_SYNONYM(symbol)  STUB_LINK_UNMANAGED(symbol)
+// MISC for Symbol is MISC_HITCH()
+// INFO is the SymId plus some flags
+// BONUS is not currently used...
 
 
-//=//// KEY (POINTER TO SYMBOL) ////////////////////////////////////////=//
+//=//// NON-SYMBOL STRING STUB SLOT USAGE /////////////////////////////////=//
+
+#define LINK_STRING_BOOKMARKS(s)        STUB_LINK_UNMANAGED(s)
+#define MISC_STRING_NUM_CODEPOINTS(s)   (s)->misc.length
+// INFO is currently used for info flags regarding locking, etc.
+// BONUS is used for biasing from head of allocation
+
+
+//=//// KEY (POINTER TO SYMBOL) ///////////////////////////////////////////=//
 //
 // We want to be able to enumerate keys by incrementing across them.  The
 // things we increment across aren't Symbol Stubs, but pointers to Symbol

@@ -385,8 +385,8 @@ Bounce Makehook_Varargs(Level* level_, Heart heart, Element* arg) {
 
         Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_VARARGS);
         Tweak_Cell_Varargs_Phase(OUT, nullptr);
-        UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // corrupts in C++11
-        Tweak_Cell_Varargs_Source(OUT, array1);
+        UNUSED(CELL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // corrupts in C++11
+        Tweak_Cell_Varargs_Origin(OUT, array1);
 
         return OUT;
     }
@@ -534,9 +534,9 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
     // expired varargs, because the expired stub should be kept alive as
     // long as its identity is needed).
     //
-    if (Cell_Varargs_Source(a) == Cell_Varargs_Source(b))
+    if (Cell_Varargs_Origin(a) == Cell_Varargs_Origin(b))
         return 0;
-    return Cell_Varargs_Source(a) > Cell_Varargs_Source(b) ? 1 : -1;
+    return Cell_Varargs_Origin(a) > Cell_Varargs_Origin(b) ? 1 : -1;
 }
 
 

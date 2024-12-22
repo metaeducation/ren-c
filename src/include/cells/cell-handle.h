@@ -40,9 +40,9 @@
 //   the spec and has different forms for functions and data.
 //
 
-#define CELL_HANDLE_STUB_NODE           CELL_NODE1
+#define CELL_HANDLE_STUB(c)             CELL_NODE1(c)
 
-#define Extract_Cell_Handle_Stub(c)     cast(Stub*, CELL_HANDLE_STUB_NODE(c))
+#define Extract_Cell_Handle_Stub(c)     cast(Stub*, CELL_HANDLE_STUB(c))
 
 #define CELL_HANDLE_LENGTH_U(c)         (c)->extra.u
 
@@ -185,7 +185,7 @@ INLINE void Init_Handle_Managed_Common(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
             | CELL_FLAG_DONT_MARK_NODE2
     );
-    CELL_HANDLE_STUB_NODE(single) = stub;
+    CELL_HANDLE_STUB(single) = stub;
     CELL_HANDLE_LENGTH_U(single) = length;
     // caller fills in CELL_HANDLE_CDATA_P or CELL_HANDLE_CFUNC_P
 
@@ -200,7 +200,7 @@ INLINE void Init_Handle_Managed_Common(
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to stub
             | CELL_FLAG_DONT_MARK_NODE2
     );
-    CELL_HANDLE_STUB_NODE(out) = stub;
+    CELL_HANDLE_STUB(out) = stub;
 
     CELL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // corrupt avoids compiler warning
     CELL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing

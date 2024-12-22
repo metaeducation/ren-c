@@ -25,21 +25,27 @@
 // has special interpretation of the LINK and MISC nodes to hold file and
 // line information.
 //
-// The Flex Stub has two pointers in it, ->link and ->misc, which are
-// used for a variety of purposes (pointing to the KeyList for an object,
-// the C code that runs as the dispatcher for an Action, etc.)  But for
-// regular source Arrays, they can be used to store the filename and line
-// number, if applicable.
-//
-// Only Array preserves file and line info, as UTF-8 Strings need to use the
-// ->misc and ->link fields for caching purposes in String.
-//
-// We don't need a separate array flag for this.  We just assume that if a
-// link node is set to need marking, then the array has file and line info.
-//
 
 #if CPLUSPLUS_11
     struct Source : public Array {};
 #else
     typedef Flex Source;
 #endif
+
+
+//=//// SOURCE ARRAY SLOT USAGE ///////////////////////////////////////////=//
+//
+// There are many flags available for source arrays, so they could indicate
+// storing different kinds of information.  For now, the file and line is
+// the only option.
+//
+// Rather than let nullptr in the link slot indicate there is no filename,
+// the routines go on the basis of STUB_FLAG_LINK_NODE_NEEDS_MARK.  This lets
+// marking source arrays without a filename be a bit faster, since it doesn't
+// have to test for null.
+//
+
+#define LINK_SOURCE_FILENAME_NODE       STUB_LINK
+#define MISC_SOURCE_LINE(source)        (source)->misc.line
+// source arrays use their INFO for FLEX_INFO_XXX bits
+// source arrays BONUS_FLEX_BIAS()

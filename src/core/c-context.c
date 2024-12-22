@@ -50,7 +50,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 
     if (heart == REB_MODULE) {
         assert(capacity == 0);
-        BONUS_KEYLIST_RAW(a) = nullptr;
+        BONUS_VARLIST_KEYLIST(a) = nullptr;
     }
     else {
         KeyList* keylist = Make_Flex(
@@ -172,7 +172,7 @@ Value* Append_To_Sea_Core(
     Stub* patch;
     if (id and id < LIB_SYMS_MAX) {
         patch = &g_lib_patches[id];  // patch memory pre-allocated at boot [1]
-        assert(INFO_PATCH_SEA_RAW(patch) == nullptr);  // don't double add
+        assert(INFO_PATCH_SEA(patch) == nullptr);  // don't double add
         // patch->header.bits should be already set
 
         TRACK(Erase_Cell(Stub_Cell(patch)));  // prepare for addition

@@ -145,9 +145,9 @@ Bounce Reflect_Core(Level* level_)
             if (not Any_List(v))
                 return nullptr;
             const Source* s = Cell_Array(v);
-            if (s->misc.line == 0)
+            if (MISC_SOURCE_LINE(s) == 0)
                 return nullptr;
-            return Init_Integer(OUT, s->misc.line); }
+            return Init_Integer(OUT, MISC_SOURCE_LINE(s)); }
 
           default:
             break;

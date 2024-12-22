@@ -22,7 +22,7 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     while (not Is_Stub_Varlist(cast(Stub*, node))) {
         assert(Cell_Heart_Unchecked(c) == REB_FRAME);
         assert(Is_Stub_Details(cast(Stub*, node)));
-        c = Flex_Head_Dynamic(Cell, cast(Details*, CELL_FRAME_PHASE_NODE(c)));
+        c = Flex_Head_Dynamic(Cell, cast(Details*, CELL_FRAME_PHASE(c)));
         node = CELL_NODE1(c);  // ParamList or Details
     }
     return cast(VarList*, node);

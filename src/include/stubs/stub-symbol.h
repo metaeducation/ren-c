@@ -63,7 +63,7 @@ INLINE bool Is_String_Symbol(const String* s) {
 
 
 INLINE Option(SymId) Symbol_Id(const Symbol* s)
-  { return cast(SymId, SECOND_UINT16(&s->info)); }
+  { return cast(SymId, SECOND_UINT16(&s->info.flags)); }
 
 INLINE const Symbol* Canon_Symbol(SymId symid) {
     assert(cast(SymIdNum, symid) != 0);
@@ -75,7 +75,7 @@ INLINE const Symbol* Canon_Symbol(SymId symid) {
     Canon_Symbol(SYM_##name)
 
 INLINE const Symbol* Link_Next_Synonym(const Symbol* symbol) {
-    const Symbol* synonym = cast(const Symbol*, symbol->link.node);
+    const Symbol* synonym = cast(const Symbol*, LINK_SYMBOL_SYNONYM(symbol));
     possibly(synonym == symbol);  // circularly linked list
     return synonym;
 }
@@ -83,7 +83,7 @@ INLINE const Symbol* Link_Next_Synonym(const Symbol* symbol) {
 INLINE void Tweak_Link_Next_Synonym(Stub* symbol, const Stub* synonym) {
     assert(Is_Stub_Symbol(symbol));
     possibly(synonym == symbol);  // circularly linked list
-    symbol->link.node = m_cast(Stub*, synonym);  // extracted as const
+    LINK_SYMBOL_SYNONYM(symbol) = m_cast(Stub*, synonym);  // extract as const
 }
 
 INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
@@ -111,7 +111,7 @@ INLINE Stub* Misc_Hitch(const Stub* stub) {
         or flavor_stub == FLAVOR_PATCH
     );
     UNUSED(flavor_stub);
-    Stub* hitch = u_cast(Stub*, stub->misc.node);
+    Stub* hitch = u_cast(Stub*, MISC_HITCH(stub));
     Flavor flavor_hitch = Stub_Flavor(hitch);
     assert(
         flavor_hitch == FLAVOR_SYMBOL
@@ -137,7 +137,7 @@ INLINE void Tweak_Misc_Hitch(Stub* stub, Stub* hitch) {
         or flavor_hitch == FLAVOR_PATCH
     );
     UNUSED(flavor_hitch);
-    stub->misc.node = hitch;
+    MISC_HITCH(stub) = hitch;
 }
 
 

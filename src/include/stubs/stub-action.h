@@ -87,9 +87,9 @@
 // These are used in the phase archetype slot, so they need to be defined
 // earlier than %cell-frame.h
 
-#define CELL_FRAME_COUPLING_NODE        CELL_EXTRA
-#define CELL_FRAME_PHASE_NODE           CELL_NODE1
-#define CELL_FRAME_LENS_OR_LABEL_NODE   CELL_NODE2
+#define CELL_FRAME_COUPLING(c)         CELL_EXTRA(c)
+#define CELL_FRAME_PHASE(c)            CELL_NODE1(c)
+#define CELL_FRAME_LENS_OR_LABEL(c)    CELL_NODE2(c)
 
 
 
@@ -152,7 +152,7 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 
 INLINE Details* Phase_Details(Phase* p) {
     while (not Is_Stub_Details(p)) {
-        p = cast(Phase*, CELL_FRAME_PHASE_NODE(Phase_Archetype(p)));
+        p = cast(Phase*, CELL_FRAME_PHASE(Phase_Archetype(p)));
     }
     return cast(Details*, p);
 }
@@ -160,7 +160,7 @@ INLINE Details* Phase_Details(Phase* p) {
 
 INLINE bool Is_Frame_Details(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    return Is_Stub_Details(c_cast(Stub*, CELL_FRAME_PHASE_NODE(v)));
+    return Is_Stub_Details(c_cast(Stub*, CELL_FRAME_PHASE(v)));
 }
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
@@ -174,12 +174,12 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 
 INLINE void Tweak_Cell_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f) {
     assert(HEART_BYTE(c) == REB_FRAME);
-    CELL_FRAME_LENS_OR_LABEL_NODE(c) = m_cast(Flex*, maybe f);
+    CELL_FRAME_LENS_OR_LABEL(c) = m_cast(Flex*, maybe f);
 }
 
 INLINE ParamList* Phase_Paramlist(Phase* p) {
     while (Is_Stub_Details(p))
-        p = u_cast(Phase*, CELL_FRAME_PHASE_NODE(Phase_Archetype(p)));
+        p = u_cast(Phase*, CELL_FRAME_PHASE(Phase_Archetype(p)));
     return u_cast(ParamList*, p);
 }
 
@@ -200,11 +200,11 @@ INLINE Param* Phase_Params_Head(Phase* p) {
     return Flex_Head_Dynamic(Param, list) + 1;  // skip archetype
 }
 
-#define Details_Dispatcher(a) \
-    ensure(Details*, (a))->link.dispatcher
+INLINE Dispatcher* Details_Dispatcher(Details* details)
+  { return LINK_DETAILS_DISPATCHER(details); }
 
-#define Tweak_Details_Dispatcher(p,cfunc) \
-    (ensure(Details*, (p))->link.dispatcher = (cfunc))
+INLINE void Tweak_Details_Dispatcher(Details* details, Dispatcher* dispatcher)
+ { LINK_DETAILS_DISPATCHER(details) = dispatcher; }
 
 
 // The Array is the details identity itself.
@@ -281,22 +281,22 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
     Varlist_Len(Phase_Paramlist(a))
 
 
-//=//// META OBJECT ///////////////////////////////////////////////////////=//
+//=//// ADJUNCT OBJECT ////////////////////////////////////////////////////=//
 //
-// ACTION! details and ANY-CONTEXT? varlists can store a "meta" object.  It's
-// where information for HELP is saved, and it's how modules store out-of-band
-// information that doesn't appear in their body.
+// ACTION! details and ANY-CONTEXT? varlists can store an "adjunct" object.
+// The description for HELP is saved there for functions, and it's how modules
+// store out-of-band information that doesn't appear in their body.
+//
 
-INLINE Option(VarList*) Misc_Details_Adjunct(Details* details) {
-    return cast(VarList*, Details_Array(details)->misc.node);
-}
+INLINE Option(VarList*) Misc_Details_Adjunct(Details* details)
+  { return cast(VarList*, MISC_DETAILS_ADJUNCT(details)); }
 
 INLINE void Tweak_Misc_Details_Adjunct(
     Stub* details,  // may not be formed yet
     Option(VarList*) adjunct
 ){
     assert(Is_Stub_Details(details));
-    details->misc.node = maybe adjunct;
+    MISC_DETAILS_ADJUNCT(details) = maybe adjunct;
 }
 
 
@@ -326,7 +326,7 @@ INLINE void Tweak_Misc_Details_Adjunct(
 INLINE KeyList* Bonus_Keylist(VarList* c);
 
 INLINE KeyList* Link_Keylist_Ancestor(KeyList* keylist) {
-    KeyList* ancestor = cast(KeyList*, keylist->link.node);
+    KeyList* ancestor = cast(KeyList*, LINK_KEYLIST_ANCESTOR(keylist));
     assert(Is_Stub_Keylist(ancestor));
     possibly(ancestor == keylist);
     return ancestor;
@@ -334,7 +334,7 @@ INLINE KeyList* Link_Keylist_Ancestor(KeyList* keylist) {
 
 INLINE void Tweak_Link_Keylist_Ancestor(KeyList* keylist, KeyList* ancestor) {
     possibly(keylist == ancestor);  // keylists terminate on self
-    keylist->link.node = ancestor;
+    LINK_KEYLIST_ANCESTOR(keylist) = ancestor;
 }
 
 INLINE bool Action_Is_Base_Of(Phase* base, Phase* derived) {

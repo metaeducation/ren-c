@@ -35,7 +35,6 @@
 //   released and it is decayed to a singular.
 //
 
-
 #if NO_RUNTIME_CHECKS
     #define Assert_Varlist(c) NOOP
 #else
@@ -112,7 +111,7 @@ INLINE Option(VarList*) Misc_Phase_Adjunct(Phase* a) {
 
 
 
-#define CELL_CONTEXT_VARLIST_NODE  CELL_NODE1
+#define CELL_CONTEXT_VARLIST(c)  CELL_NODE1(c)
 
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
@@ -196,12 +195,12 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
     assert(Cell_Heart(c) == REB_FRAME);
-    return cast(VarList*, CELL_FRAME_COUPLING_NODE(c));
+    return cast(VarList*, CELL_FRAME_COUPLING(c));
 }
 
 INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
     assert(Cell_Heart(c) == REB_FRAME);
-    CELL_FRAME_COUPLING_NODE(c) = maybe coupling;
+    CELL_FRAME_COUPLING(c) = maybe coupling;
 }
 
 
@@ -217,9 +216,9 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
             | CELL_MASK_ANY_CONTEXT
             | CELL_FLAG_PROTECTED  // should not be modified
     );
-    CELL_CONTEXT_VARLIST_NODE(rootvar) = varlist;
+    CELL_CONTEXT_VARLIST(rootvar) = varlist;
     rootvar->extra.node = nullptr;  // no coupling, but extra is marked
-    CELL_FRAME_LENS_OR_LABEL_NODE(rootvar) = nullptr;  // not a frame
+    CELL_FRAME_LENS_OR_LABEL(rootvar) = nullptr;  // not a frame
 }
 
 #define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \
@@ -244,24 +243,21 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 // objects are not needed on running frame varlists, they can be on the phase.
 //
 
-#define BONUS_KEYLIST_RAW(varlist) \
-    *x_cast(Node**, &(varlist)->content.dynamic.bonus.node)
-
 INLINE KeyList* Bonus_Keylist(VarList* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    return cast(KeyList*, BONUS_KEYLIST_RAW(c));
+    return cast(KeyList*, BONUS_VARLIST_KEYLIST(c));
 }
 
 INLINE void Tweak_Bonus_Keylist_Shared(Flex* f, KeyList* keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
     Set_Flavor_Flag(KEYLIST, keylist, SHARED);
-    BONUS_KEYLIST_RAW(f) = keylist;
+    BONUS_VARLIST_KEYLIST(f) = keylist;
 }
 
 INLINE void Tweak_Bonus_Keylist_Unique(Flex* f, KeyList *keylist) {
     assert(Is_Stub_Varlist(f));  // may not be complete yet
     assert(Not_Flavor_Flag(KEYLIST, keylist, SHARED));
-    BONUS_KEYLIST_RAW(f) = keylist;
+    BONUS_VARLIST_KEYLIST(f) = keylist;
 }
 
 
@@ -276,20 +272,17 @@ INLINE void Tweak_Info_Let_Symbol(Stub* stub, const Symbol* symbol) {
 }
 
 
-#define LINK_PATCH_RESERVED_RAW(patch)  *x_cast(Node**, &(patch)->link.node)
-#define INFO_PATCH_SEA_RAW(patch)       *x_cast(Node**, &(patch)->info.node)
-
 INLINE SeaOfVars* Info_Patch_Sea(const Stub* patch) {
     assert(Is_Stub_Patch(patch));
-    SeaOfVars* sea = cast(SeaOfVars*, INFO_PATCH_SEA_RAW(patch));
+    SeaOfVars* sea = cast(SeaOfVars*, INFO_PATCH_SEA(patch));
     assert(CTX_TYPE(sea) == REB_MODULE);
     return sea;
 }
 
-INLINE void Tweak_Info_Patch_Sea(const Stub* patch, SeaOfVars* sea) {
+INLINE void Tweak_Info_Patch_Sea(Stub* patch, SeaOfVars* sea) {
     assert(Is_Stub_Patch(patch));
     assert(sea != nullptr);
-    INFO_PATCH_SEA_RAW(patch) = sea;
+    INFO_PATCH_SEA(patch) = sea;
 }
 
 
@@ -364,7 +357,7 @@ INLINE Option(Stub*) MOD_PATCH(SeaOfVars* sea, const Symbol* sym, bool strict) {
     if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
-            if (INFO_PATCH_SEA_RAW(&g_lib_patches[id]) == nullptr)  // [1]
+            if (INFO_PATCH_SEA(&g_lib_patches[id]) == nullptr)  // [1]
                 return nullptr;
 
             return &g_lib_patches[id];
@@ -429,14 +422,14 @@ INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
     assert(Is_Stub_Varlist(varlist));
     assert(CTX_TYPE(varlist) == REB_FRAME);
     assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
-    return varlist->misc.runlevel;
+    return MISC_VARLIST_RUNLEVEL(varlist);
 }
 
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
     assert(Is_Stub_Varlist(varlist));
     possibly(CTX_TYPE(varlist) == REB_FRAME);  // may not be fully formed yet
     assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
-    varlist->misc.runlevel = maybe L;
+    MISC_VARLIST_RUNLEVEL(varlist) = maybe L;
 }
 
 INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {

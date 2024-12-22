@@ -138,9 +138,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BITSET: {
         assert(Cell_Has_Node1(v));
-        if (Not_Node_Accessible_Canon(CELL_BITSET_BINARY_NODE(v)))
+        if (Not_Node_Accessible_Canon(CELL_BITSET_BINARY(v)))
             break;
-        const Flex* f = c_cast(Flex*, CELL_BITSET_BINARY_NODE(v));
+        const Flex* f = c_cast(Flex*, CELL_BITSET_BINARY(v));
         Assert_Flex_Term_Core(f);
         assert(Is_Node_Marked(f));
         break; }
@@ -222,7 +222,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
       case REB_FRAME: {
-        Node* node = CELL_FRAME_PHASE_NODE(v);
+        Node* node = CELL_FRAME_PHASE(v);
         if (not Is_Node_Readable(node))  // e.g. EVAL-FREE freed it
             break;
         if (Is_Stub_Varlist(cast(Stub*, node)))
@@ -232,8 +232,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         Details* details = cast(Details*, node);
         assert(Is_Node_Marked(details));
-        if (CELL_FRAME_LENS_OR_LABEL_NODE(v))
-            assert(Is_Node_Marked(CELL_FRAME_LENS_OR_LABEL_NODE(v)));
+        if (CELL_FRAME_LENS_OR_LABEL(v))
+            assert(Is_Node_Marked(CELL_FRAME_LENS_OR_LABEL(v)));
 
         // We used to check the [0] slot of the details holds an archetype
         // that is consistent with the details itself.  That is no longer true
@@ -248,7 +248,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
-        Node* node = CELL_CONTEXT_VARLIST_NODE(v);
+        Node* node = CELL_CONTEXT_VARLIST(v);
         if (Not_Node_Accessible_Canon(node))
             break;
 
@@ -445,7 +445,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Context_Deep.
 
-        if (not BONUS_KEYLIST_RAW(a)) {
+        if (not BONUS_VARLIST_KEYLIST(a)) {
             assert(VAL_TYPE(archetype) == REB_MODULE);
         }
         else {

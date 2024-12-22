@@ -603,15 +603,15 @@ INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
 // with a single define that can be used by those functions.  This way, you
 // can do:
 //
-//     #define CELL_SOMETHING_PROPERTY_A_NODE  CELL_EXTRA
-//     #define CELL_SOMETHING_PROPERTY_B_NODE  CELL_NODE1
-//     #define CELL_SOMETHING_PROPERTY_C_NODE  CELL_NODE2
+//     #define CELL_SOMETHING_PROPERTY_A(c)  CELL_EXTRA(c)
+//     #define CELL_SOMETHING_PROPERTY_B(c)  CELL_NODE1(c)
+//     #define CELL_SOMETHING_PROPERTY_C(c)  CELL_NODE2(c)
 //
 // Then, don't use CELL_NODE1/NODE2/EXTRA in any of the implementation.  This
 // makes it much easier to see up front what a certain cell's use of its
 // slots is, and a lot easier to adjust when there are changes.
 //
-#if NO_RUNTIME_CHECKS
+#if (! DEBUG_CHECK_GC_HEADER_FLAGS)
     #define Ensure_Cell_Has_Extra_Node(c)   (c)
     #define Ensure_Cell_Has_Node1(c)        (c)
     #define Ensure_Cell_Has_Node2(c)        (c)

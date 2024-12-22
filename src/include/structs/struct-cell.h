@@ -389,7 +389,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //    if the intent is immutability, or a conservative state of possible
 //    immutability (e.g. the CONST usermode status hasn't been checked)
 
-struct DateStruct  // see %sys-time.h
+struct YmdzStruct  // see %sys-time.h
 {
     unsigned year:16;
     unsigned month:4;
@@ -419,12 +419,10 @@ union AnyUnion {
 
     Codepoint codepoint;  // !!! Surrogates are "codepoints"...disallow them?
 
-    struct DateStruct date;
+    struct YmdzStruct ymdz;
 
     void *p;
     CFunction* cfunc;  // C function/data pointers pointers may differ in size
-
-    REBLEN bias;  // some dynamic Flexes use to track offset from allocation
 
     Dispatcher* dispatcher;
 
@@ -432,19 +430,13 @@ union AnyUnion {
 
     void *corrupt;  // see ASSIGN_UNUSED_FIELDS
 
-    void *fd;  // file descriptor (used by LIBRARY!)
-
     LineNumber line;  // see ARRAY_FLAG_FILE_LINE
 
-    Length num_codepoints;  // UTF-8 Everywhere caches to get String_Len()
+    Length length;  // UTF-8 Everywhere caches to get num_codepoints
 
     Option(RebolHandleCleaner*) cleaner;  // HANDLE!s use for GC finalization
 
-    bool negated;  // alternate bool name, used by bitset (easier to find)
-
-    Level* runlevel;  // used by running frames to map back to their Level
-
-    Level* suspended_level;  // used by yielder plugs to store suspended Level
+    Level* level;  // running frames map back to Level, yielder plugs suspend
 };
 
 

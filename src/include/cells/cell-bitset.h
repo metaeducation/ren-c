@@ -40,7 +40,7 @@
 
 #define MAX_BITSET 0x7fffffff
 
-#define CELL_BITSET_BINARY_NODE  CELL_NODE1
+#define CELL_BITSET_BINARY(c)  CELL_NODE1(c)
 
 
 // Because a BITSET! can get very large, the negation state is stored
@@ -49,15 +49,15 @@
 // Cells would see a change--hence the field is in the Flex.
 
 INLINE bool BITS_NOT(const Flex* f)
-  { return f->misc.negated; }
+  { return MISC_BITSET_NEGATED(f); }
 
 INLINE void INIT_BITS_NOT(Flex* f, bool negated)
-  { f->misc.negated = negated; }
+  { MISC_BITSET_NEGATED(f) = negated; }
 
 
 INLINE Binary* VAL_BITSET(const Cell* v) {
     assert(Cell_Heart(v) == REB_BITSET);
-    return cast(Binary*, CELL_BITSET_BINARY_NODE(v));
+    return cast(Binary*, CELL_BITSET_BINARY(v));
 }
 
 #define VAL_BITSET_Ensure_Mutable(v) \
@@ -68,8 +68,8 @@ INLINE Element* Init_Bitset(Init(Element) out, Binary* bset) {
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_BITSET);
     Corrupt_Unused_Field(out->extra.corrupt);
-    CELL_BITSET_BINARY_NODE(out) = bset;
-    Corrupt_Unused_Field(out->payload.split.two);
+    CELL_BITSET_BINARY(out) = bset;
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return out;
 }

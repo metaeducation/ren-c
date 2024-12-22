@@ -894,6 +894,16 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// This checks to make sure that when you are assigning or fetching something
+// like Stub.misc.node, then the flag like STUB_FLAG_MISC_NODE_NEEDS_MARK
+// is also set.  It's good for helping track down GC bugs, but just slows
+// things down most of the time...so default it to being off.
+//
+#if !defined(DEBUG_CHECK_GC_HEADER_FLAGS)
+    #define DEBUG_CHECK_GC_HEADER_FLAGS  0
+#endif
+
+
 // This is a *painfully* slow debug switch, which allows you to say that the
 // intrinsic functions never run intrinsically, but are called normally with
 // their own Level.  That means type checking is very slow, because things

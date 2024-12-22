@@ -101,7 +101,7 @@ bool Try_Flex_Data_Alloc(Flex* s, REBLEN capacity) {
     }
 
     if (Is_Flex_Biased(s))
-        s->content.dynamic.bonus.bias = 0;  // fully clear value [4]
+        BONUS_FLEX_BIAS(s) = 0;  // fully clear value [4]
     else {
         // Leave corrupt, or as existing bonus (if called in Expand_Flex())
     }
@@ -171,7 +171,7 @@ Flex* Copy_Flex_Core(Flags flags, const Flex* f)
         Set_Flex_Used(copy, used);
         *Flex_Tail(Byte, copy) = '\0';
         Tweak_Link_Bookmarks(cast(String*, copy), nullptr);  // !!! copy these?
-        copy->misc.num_codepoints = f->misc.num_codepoints;
+        MISC_STRING_NUM_CODEPOINTS(copy) = MISC_STRING_NUM_CODEPOINTS(f);
     }
     else if (Flex_Wide(f) == 1) {  // non-string BLOB!
         copy = Make_Flex_Core(flags, used + 1);  // term space

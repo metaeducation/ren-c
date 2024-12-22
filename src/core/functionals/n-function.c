@@ -317,11 +317,11 @@ Details* Make_Interpreted_Action_May_Fail(
     Option(const String*) filename;
     if ((filename = Link_Filename(Cell_Array(spec)))) {
         Tweak_Link_Filename(copy, filename);
-        copy->misc.line = Cell_Array(spec)->misc.line;
+        MISC_SOURCE_LINE(copy) = MISC_SOURCE_LINE(Cell_Array(spec));
     }
     else if ((filename = Link_Filename(Cell_Array(body)))) {
         Tweak_Link_Filename(copy, filename);
-        copy->misc.line = Cell_Array(body)->misc.line;
+        MISC_SOURCE_LINE(copy) = MISC_SOURCE_LINE(Cell_Array(body));
     }
     else {
         // Ideally all source series should have a file and line numbering

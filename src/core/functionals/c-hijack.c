@@ -334,8 +334,8 @@ DECLARE_NATIVE(hijack)
     Swap_Flex_Content(victim, proxy);  // after swap, victim is hijacker
 
     Element* victim_archetype = Phase_Archetype(victim);
-    assert(Cell_Frame_Phase(victim_archetype) == victim);  // inf. recursive!
-    CELL_FRAME_PHASE_NODE(victim_archetype) = proxy;  // adjust for swap
+    assert(CELL_FRAME_PHASE(victim_archetype) == victim);  // inf. recursive!
+    CELL_FRAME_PHASE(victim_archetype) = proxy;  // adjust for swap
 
     if (victim_unimplemented)
         return NOTHING;

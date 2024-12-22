@@ -565,7 +565,9 @@ REBLEN Modify_String_Or_Binary(
                 BOOKMARK_INDEX(book) += src_len_total;
                 BOOKMARK_OFFSET(book) += src_size_total;
             }
-            dst_flex->misc.num_codepoints = dst_len_old + src_len_total;
+            Tweak_Misc_Num_Codepoints(
+                cast(String*, dst_flex), dst_len_old + src_len_total
+            );
         }
     }
     else {  // CHANGE only expands if more content added than overwritten
@@ -701,7 +703,9 @@ REBLEN Modify_String_Or_Binary(
                 BOOKMARK_INDEX(book) = dst_idx;
                 BOOKMARK_OFFSET(book) = dst_off;
             }
-            dst_flex->misc.num_codepoints = dst_len_old + src_len_total - part;
+            Tweak_Misc_Num_Codepoints(
+                cast(String*, dst_flex), dst_len_old + src_len_total - part
+            );
         }
     }
 

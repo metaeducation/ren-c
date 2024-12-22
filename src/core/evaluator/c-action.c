@@ -778,12 +778,12 @@ Bounce Action_Executor(Level* L)
             Tweak_Cell_Varargs_Phase(ARG, phase);
 
             bool infix = false;  // !!! how does infix matter?
-            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [3]
+            CELL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [3]
                 infix
                     ? -(ARG - cast(Atom*, Level_Args_Head(L)) + 1)
                     : ARG - cast(Atom*, Level_Args_Head(L)) + 1;
 
-            assert(VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
+            assert(CELL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
             continue;
         }
 

@@ -112,7 +112,7 @@ INLINE Array* Make_Array_For_Copy(
     ){
         Source* a = cast(Source*, Make_Array_Core(flags, capacity));
         Tweak_Link_Filename(a, filename);
-        a->misc.line = original->misc.line;
+        MISC_SOURCE_LINE(a) = MISC_SOURCE_LINE(original);
         return a;
     }
 

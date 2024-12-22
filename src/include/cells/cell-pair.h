@@ -33,9 +33,9 @@
 
 #define PAIRING_LEN 2
 
-#define CELL_SERIESLIKE_NODE  CELL_NODE1
+#define CELL_SERIESLIKE_NODE(c)  CELL_NODE1(c)
 
-#define CELL_PAIRLIKE_PAIRING_NODE  CELL_SERIESLIKE_NODE
+#define CELL_PAIRLIKE_PAIRING_NODE(c)  CELL_SERIESLIKE_NODE(c)
 
 #define Pairing_Head(p) \
     c_cast(Element*, ensure(const Pairing*, (p)))

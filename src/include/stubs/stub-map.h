@@ -45,12 +45,12 @@ INLINE PairList* MAP_PAIRLIST(const_if_c Map* map)
 
 INLINE HashList* Link_Hashlist(const Array* pairlist) {
     assert(Is_Stub_Pairlist(pairlist));
-    return u_cast(HashList*, pairlist->link.node);
+    return u_cast(HashList*, LINK_PAIRLIST_HASHLIST_NODE(pairlist));
 }
 
 INLINE void Tweak_Link_Hashlist(Array* pairlist, HashList* hashlist) {
     assert(Is_Stub_Pairlist(pairlist));
-    pairlist->link.node = hashlist;
+    LINK_PAIRLIST_HASHLIST_NODE(pairlist) = hashlist;
 }
 
 #define MAP_HASHLIST(m) \

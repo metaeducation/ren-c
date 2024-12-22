@@ -364,10 +364,10 @@ static Element* Init_Normalized_Date(
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_DATE)));
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_DATE);
-    out->extra.date.year = year;
-    out->extra.date.month = month + 1;
-    out->extra.date.day = day + 1;
-    out->extra.date.zone = tz;
+    CELL_DATE_YMDZ(out).year = year;
+    CELL_DATE_YMDZ(out).month = month + 1;
+    CELL_DATE_YMDZ(out).day = day + 1;
+    CELL_DATE_YMDZ(out).zone = tz;
     Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);
 
     return out;

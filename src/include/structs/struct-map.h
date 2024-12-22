@@ -52,6 +52,12 @@
     typedef Flex Map;
 #endif
 
+
 #define FLEX_MASK_PAIRLIST \
     (FLAG_FLAVOR(PAIRLIST) \
         | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* hashlist */)
+
+#define LINK_PAIRLIST_HASHLIST_NODE(pairlist)  STUB_LINK(pairlist)
+// MISC is unused
+// INFO is normal flags
+// BONUS is unused currently, as the pairlist array is never biased

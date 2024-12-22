@@ -34,6 +34,9 @@
 //
 typedef Stub Context;
 
+#define LINK_CONTEXT_INHERIT_BIND(c)    STUB_LINK(c)
+// MISC, INFO, BONUS are alls used differently for different CONTEXT subtypes
+
 
 //=//// LET: STUB STORAGE FOR JUST ONE VARIABLE ///////////////////////////=//
 //
@@ -240,15 +243,22 @@ typedef Context Use;
         | FLAG_FLAVOR(VARLIST) \
         | STUB_FLAG_DYNAMIC \
         | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
-        /* STUB_FLAG_MISC_NODE_NEEDS_MARK */  /* no Adjunct */)
+        /* STUB_FLAG_MISC_NODE_NEEDS_MARK */  /* Runlevel, not Adjunct */)
 
 #define FLEX_MASK_VARLIST \
     (FLEX_MASK_LEVEL_VARLIST | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
+
+// LINK of VarList is LINK_CONTEXT_INHERIT_BIND
+#define BONUS_VARLIST_KEYLIST(varlist)     STUB_BONUS(varlist)
+#define MISC_VARLIST_RUNLEVEL(varlist)     (varlist)->misc.level
+
 
 #define FLEX_MASK_KEYLIST \
     (NODE_FLAG_NODE  /* NOT always dynamic */ \
         | FLAG_FLAVOR(KEYLIST) \
         | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
+
+#define LINK_KEYLIST_ANCESTOR(keylist)  STUB_LINK(keylist)
 
 
 #define Varlist_Array(ctx) \

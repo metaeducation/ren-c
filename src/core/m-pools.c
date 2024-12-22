@@ -1068,7 +1068,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_Stub_Non_Symbol(f))
-        f->misc.num_codepoints = 0xDECAFBAD;
+        Corrupt_If_Debug(MISC_STRING_NUM_CODEPOINTS(f));
   #endif
 
     if (was_dynamic)

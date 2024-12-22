@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -48,6 +48,32 @@
 //   See the distinction between Flex_Used() and String_Len().
 //
 
+
+INLINE Length Misc_Num_Codepoints(const String* s) {
+    assert(Is_Stub_Non_Symbol(s));
+    return MISC_STRING_NUM_CODEPOINTS(s);
+}
+
+INLINE void Tweak_Misc_Num_Codepoints(String* s, Length num_codepoints) {
+    assert(Is_Stub_Non_Symbol(s));
+    MISC_STRING_NUM_CODEPOINTS(s) = num_codepoints;
+}
+
+INLINE Option(BookmarkList*) Link_Bookmarks(const String* string) {
+    assert(Is_Stub_Non_Symbol(string));
+    return cast(BookmarkList*, string->link.node);
+}
+
+INLINE void Tweak_Link_Bookmarks(
+    const String* string,
+    Option(BookmarkList*) book
+){
+    assert(Is_Stub_Non_Symbol(string));
+    m_cast(String*, string)->link.node = maybe book;
+}
+
+
+//=//// STRING NAVIGATION /////////////////////////////////////////////////=//
 
 INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) utf8) {
     Byte* bp = x_cast(Byte*, utf8);
@@ -172,7 +198,7 @@ INLINE Utf8(*) Write_Codepoint(Utf8(*) utf8, Codepoint c) {
 INLINE bool Is_String_All_Ascii(const String* str) {
     if (Is_Stub_Symbol(str))
         return Get_Flavor_Flag(SYMBOL, str, ALL_ASCII);
-    return Flex_Used(str) == str->misc.num_codepoints;
+    return Flex_Used(str) == MISC_STRING_NUM_CODEPOINTS(str);
 }
 
 #define String_UTF8(s)      Flex_Head(char, ensure(const String*, s))
@@ -188,10 +214,10 @@ INLINE bool Is_String_All_Ascii(const String* str) {
 INLINE Length String_Len(const String* s) {
     if (not Is_String_Symbol(s)) {
       #if DEBUG_UTF8_EVERYWHERE
-        if (s->misc.num_codepoints > Flex_Used(s))  // includes 0xDECAFBAD
+        if (MISC_STRING_NUM_CODEPOINTS(s) > Flex_Used(s))  // 0xDECAFBAD counts
             panic(s);
       #endif
-        return s->misc.num_codepoints;  // length cached for non-ANY-WORD?
+        return MISC_STRING_NUM_CODEPOINTS(s);  // cache for non-ANY-WORD?
     }
 
     Length len = 0;  // no length cache; hope symbol is short!
@@ -215,7 +241,7 @@ INLINE REBLEN String_Index_At(
 
     if (Is_Stub_Non_Symbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
-        if (s->misc.num_codepoints > Flex_Used(s))  // includes 0xDECAFBAD
+        if (MISC_STRING_NUM_CODEPOINTS(s) > Flex_Used(s))  // also 0xDECAFBAD
             panic (s);
       #endif
 
@@ -240,7 +266,7 @@ INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
     assert(not Is_String_Symbol(s));
     assert(len <= used);
     assert(used == Flex_Used(s));
-    s->misc.num_codepoints = len;
+    MISC_STRING_NUM_CODEPOINTS(s) = len;
     assert(*Binary_At(s, used) == '\0');
     UNUSED(used);
 }
@@ -249,7 +275,7 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
     assert(not Is_String_Symbol(s));
     assert(len <= used);
     Set_Flex_Used(s, used);
-    s->misc.num_codepoints = len;
+    MISC_STRING_NUM_CODEPOINTS(s) = len;
     *Binary_At(s, used) = '\0';
 }
 
@@ -271,20 +297,6 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 
 #define BOOKMARK_OFFSET(b) \
     Flex_Head(Bookmark, (b))->offset
-
-INLINE Option(BookmarkList*) Link_Bookmarks(const String* string)
-{
-    assert(Is_Stub_Non_Symbol(string));
-    return cast(BookmarkList*, string->link.node);
-}
-
-INLINE void Tweak_Link_Bookmarks(
-    const String* string,
-    Option(BookmarkList*) book
-){
-    assert(Is_Stub_Non_Symbol(string));
-    m_cast(String*, string)->link.node = maybe book;
-}
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
     BookmarkList* books = Make_Flex(
@@ -426,7 +438,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
     }
 
   #if DEBUG_UTF8_EVERYWHERE  // see note on `len` at start of function
-    s->misc.num_codepoints = len;
+    MISC_STRING_NUM_CODEPOINTS(s) = len;
   #endif
 
     Encode_UTF8_Char(cp, c, size);

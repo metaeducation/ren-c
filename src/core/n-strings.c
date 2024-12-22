@@ -1124,9 +1124,9 @@ DECLARE_NATIVE(enline)
     if (delta == 0)
         return COPY(ARG(string)); // nothing to do
 
-    REBLEN old_len = s->misc.num_codepoints;
-    Expand_Flex_Tail(s, delta);  // corrupts str->misc.num_codepoints
-    s->misc.num_codepoints = old_len + delta;  // just adding CR's
+    REBLEN old_len = Misc_Num_Codepoints(s);
+    Expand_Flex_Tail(s, delta);  // corrupts misc.num_codepoints
+    Tweak_Misc_Num_Codepoints(s, old_len + delta);  // just adding CR's
 
     // One feature of using UTF-8 for strings is that CR/LF substitution can
     // stay a byte-oriented process..because UTF-8 doesn't reuse bytes in the

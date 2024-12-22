@@ -593,7 +593,7 @@ VarList* Copy_Varlist_Extra_Managed(
     // copied rootvar to the one just created.
     //
     Copy_Cell(dest, Varlist_Archetype(original));
-    CELL_CONTEXT_VARLIST_NODE(dest) = varlist;
+    CELL_CONTEXT_VARLIST(dest) = varlist;
 
     if (CTX_TYPE(original) == REB_MODULE) {
         //
@@ -613,7 +613,7 @@ VarList* Copy_Varlist_Extra_Managed(
         else {
             Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
         }
-        BONUS_KEYLIST_RAW(varlist) = nullptr;  // modules don't have keylists
+        BONUS_VARLIST_KEYLIST(varlist) = nullptr;  // modules don't have
         Tweak_Link_Inherit_Bind(varlist, nullptr);
 
         VarList* copy = cast(VarList*, varlist); // now a well-formed context
@@ -1250,10 +1250,10 @@ DECLARE_GENERICS(Frame)
             }
 
             assert(prop == SYM_LINE);
-            if (a->misc.line == 0)
+            if (MISC_SOURCE_LINE(a) == 0)
                 return nullptr;
 
-            return Init_Integer(OUT, a->misc.line); }
+            return Init_Integer(OUT, MISC_SOURCE_LINE(a)); }
 
           default:
             break;

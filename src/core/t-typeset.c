@@ -345,7 +345,7 @@ void Set_Parameter_Spec(
         *optimized = 0;  // signal termination (else tail is termination)
 
     Freeze_Source_Shallow(copy);  // !!! copy and freeze should likely be deep
-    CELL_PARAMETER_SPEC_NODE(param) = copy;
+    CELL_PARAMETER_SPEC(param) = copy;
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
 }

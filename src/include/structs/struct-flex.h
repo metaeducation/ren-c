@@ -266,3 +266,27 @@ STATIC_ASSERT(FLEX_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // functionality shouldn't require using them...only optimization features.
 
 #define FLEX_INFO_MASK_NONE 0
+
+
+//=//// FLEX SLOT USAGE ///////////////////////////////////////////////////=//
+//
+// As a building block for other types, Flex leaves Stub.misc and Stub.link
+// free for arbitrary use by subclasses.
+//
+// It's up to the subclass whether it uses STUB_FLAG_INFO_NEEDS_MARK, in
+// which case the FLEX_INFO_XXX flags will not be available, since the space
+// for the info flags will be taken up by the GC node.
+//
+// If a Flex is defined with STUB_FLAG_DYNAMIC and never changes the data
+// pointer to account for bias, then the subclass can use the "Bonus" space
+// for other arbitrary information.  But if the series is given to the
+// system mechanics, it will adjust the data pointer when data is taken
+// from the head...and remember how much was taken with the bias stored in
+// the "Bonus" location.
+//
+// (a non-dynamic Flex stores its data directly in the stub, e.g. a single
+// Cell of information or other packed data, in which case there is no
+// room for any Bonus, bias or otherwise).
+//
+
+#define BONUS_FLEX_BIAS(f)  (f)->content.dynamic.bonus.length

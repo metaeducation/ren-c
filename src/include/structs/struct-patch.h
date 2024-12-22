@@ -50,9 +50,10 @@
 //    the symbol in a WORD!.  It also means the spelling can be found in
 //    that list looking for the symbol.
 //
-//    LINK: Unused
-//    MISC: "Hitch" (links to other patches for other modules, and symbol) [1]
-//    INFO: Info_Patch_Sea()
+
+#define LINK_PATCH_RESERVED(patch)  STUB_LINK_UNMANAGED(patch)
+// MISC is used for MISC_HITCH() [1]
+#define INFO_PATCH_SEA(patch)       STUB_INFO(patch)
 
 
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//

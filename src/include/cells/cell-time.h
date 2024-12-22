@@ -32,6 +32,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
+#define CELL_DATE_YMDZ(c)  (c)->extra.ymdz
+
 #if DONT_CHECK_CELL_SUBCLASSES
     #define Ensure_Date(v)  (v)
 #else
@@ -48,9 +50,9 @@
 
 #define MAX_YEAR 0x3fff
 
-#define VAL_YEAR(v)     Ensure_Date(v)->extra.date.year
-#define VAL_MONTH(v)    Ensure_Date(v)->extra.date.month
-#define VAL_DAY(v)      Ensure_Date(v)->extra.date.day
+#define VAL_YEAR(v)     CELL_DATE_YMDZ(Ensure_Date(v)).year
+#define VAL_MONTH(v)    CELL_DATE_YMDZ(Ensure_Date(v)).month
+#define VAL_DAY(v)      CELL_DATE_YMDZ(Ensure_Date(v)).day
 
 #define ZONE_MINS 15
 
@@ -75,7 +77,7 @@ INLINE bool Does_Date_Have_Time(const Cell* c)
 {
     assert(Cell_Heart(c) == REB_DATE);
     if (c->payload.nanoseconds == NO_DATE_TIME) {
-        assert(c->extra.date.zone == NO_DATE_ZONE);
+        assert(CELL_DATE_YMDZ(c).zone == NO_DATE_ZONE);
         return false;
     }
     return true;
@@ -84,15 +86,15 @@ INLINE bool Does_Date_Have_Time(const Cell* c)
 INLINE bool Does_Date_Have_Zone(const Cell* c)
 {
     assert(Cell_Heart(c) == REB_DATE);
-    if (c->extra.date.zone == NO_DATE_ZONE)  // out of band of 7-bit field
+    if (CELL_DATE_YMDZ(c).zone == NO_DATE_ZONE)  // out of band of 7-bit field
         return false;
     assert(c->payload.nanoseconds != NO_DATE_TIME);
     return true;
 }
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define VAL_ZONE(v) \
-        Ensure_Date(v)->extra.date.zone
+    #define VAL_ZONE(c) \
+        CELL_DATE_YMDZ(Ensure_Date(c)).zone
 #else
     template<typename TP>
     struct ZoneHolder {
@@ -103,8 +105,8 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
           { assert(Cell_Heart(cell) == REB_DATE); }
 
         operator int () {  // stop accidental reads of NO_DATE_ZONE
-            assert(cell->extra.date.zone != NO_DATE_ZONE);
-            return cell->extra.date.zone;
+            assert(CELL_DATE_YMDZ(cell).zone != NO_DATE_ZONE);
+            return CELL_DATE_YMDZ(cell).zone;
         }
 
         template<
@@ -112,7 +114,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
             typename std::enable_if<not std::is_const<U>::value, int>::type = 0
         >
         void operator=(int zone) {  // zone writes allow NO_DATE_ZONE
-            cell->extra.date.zone = zone;
+            CELL_DATE_YMDZ(cell).zone = zone;
         }
 
     };

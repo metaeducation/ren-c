@@ -183,8 +183,8 @@ static void Startup_Lib(void)
             /* | STUB_FLAG_LINK_NODE_NEEDS_MARK */  // reserved
         );
 
-        assert(INFO_PATCH_SEA_RAW(patch) == nullptr);
-        assert(LINK_PATCH_RESERVED_RAW(patch) == nullptr);
+        assert(INFO_PATCH_SEA(patch) == nullptr);
+        assert(LINK_PATCH_RESERVED(patch) == nullptr);
         Tweak_Info_Patch_Sea(patch, g_lib_context);
 
         Symbol* symbol =  &g_symbols.builtin_canons[id];
@@ -248,9 +248,9 @@ static void Shutdown_Lib(void)
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 
         /* assert(Info_Patch_Sea(patch) == g_lib_context); */  // !!! freed
-        INFO_PATCH_SEA_RAW(patch) = nullptr;  // we already checked it [1]
+        INFO_PATCH_SEA(patch) = nullptr;  // we already checked it [1]
 
-        assert(LINK_PATCH_RESERVED_RAW(patch) == nullptr);
+        assert(LINK_PATCH_RESERVED(patch) == nullptr);
 
         Symbol* symbol = &g_symbols.builtin_canons[id];
 

@@ -60,7 +60,7 @@
 INLINE Phase* Cell_Frame_Phase(const Cell* c) {
     assert(HEART_BYTE(c) == REB_FRAME);
 
-    Node* node = CELL_FRAME_PHASE_NODE(c);  // const irrelevant
+    Node* node = CELL_FRAME_PHASE(c);  // const irrelevant
     if (Not_Node_Readable(node))
         fail (Error_Series_Data_Freed_Raw());
 
@@ -115,7 +115,7 @@ INLINE void Tweak_Cell_Frame_Lens(Cell* v, Phase* lens) {
 
 INLINE Option(Phase*) Cell_Frame_Lens(const Cell* c) {
     assert(HEART_BYTE(c) == REB_FRAME);
-    Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL_NODE(c));
+    Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL(c));
     if (not f or Is_Stub_Symbol(f))
         return nullptr;
     assert(Is_Stub_Varlist(f) or Is_Stub_Details(f));
@@ -124,7 +124,7 @@ INLINE Option(Phase*) Cell_Frame_Lens(const Cell* c) {
 
 INLINE Option(const Symbol*) Cell_Frame_Label(const Cell* c) {
     assert(HEART_BYTE(c) == REB_FRAME);
-    Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL_NODE(c));
+    Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL(c));
     if (not f)
         return nullptr;
     if (not Is_Stub_Symbol(f)) { // label in value
@@ -167,7 +167,7 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     Option(VarList*) coupling
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_FRAME);
-    CELL_FRAME_PHASE_NODE(out) = phase;
+    CELL_FRAME_PHASE(out) = phase;
     Tweak_Cell_Frame_Lens_Or_Label(out, maybe lens_or_label);
     Tweak_Cell_Frame_Coupling(out, coupling);
     return out;

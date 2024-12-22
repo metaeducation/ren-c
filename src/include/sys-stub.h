@@ -346,3 +346,57 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
     g_mem.num_black_stubs -= 1;
   #endif
 }
+
+
+//=//// STUB_LINK, STUB_MISC, STUB_INFO, STUB_BONUS ///////////////////////=//
+//
+// These are useful for pointing out in one place how stubs use their slots.
+//
+// (Try to put those definitions in the %struct-xxx.h files.  Those come
+// before these definitions are final, but if you just use macros it should
+// work...and keep the definitions alongside STUB_MASK_XXX and FLEX_MASK_XXX
+// so a cohesive picture of how the Stub uses slots can be edited together.)
+//
+
+#if (! DEBUG_CHECK_GC_HEADER_FLAGS)
+    #define Ensure_Stub_Link_Managed(s)  (s)
+    #define Ensure_Stub_Misc_Managed(s)  (s)
+    #define Ensure_Stub_Info_Managed(s)  (s)
+    #define Ensure_Stub_Bonus_Managed(s)  (s)
+#else
+    INLINE Stub* Ensure_Stub_Link_Managed(const_if_c Stub* s)
+      { assert(Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK)); return s; }
+
+    INLINE Stub* Ensure_Stub_Misc_Managed(const_if_c Stub* s)
+      { assert(Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK)); return s; }
+
+    INLINE Stub* Ensure_Stub_Info_Managed(const_if_c Stub* s)
+      { assert(Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK)); return s; }
+
+    INLINE Stub* Ensure_Stub_Bonus_Managed(const_if_c Stub* s)
+      { return s; }  // review: needs check
+
+  #if CPLUSPLUS_11
+    INLINE const Stub* Ensure_Stub_Link_Managed(const Stub* s)
+      { assert(Get_Stub_Flag(s, LINK_NODE_NEEDS_MARK)); return s; }
+
+    INLINE const Stub* Ensure_Stub_Misc_Managed(const Stub* s)
+      { assert(Get_Stub_Flag(s, MISC_NODE_NEEDS_MARK)); return s; }
+
+    INLINE const Stub* Ensure_Stub_Info_Managed(const Stub* s)
+      { assert(Get_Stub_Flag(s, INFO_NODE_NEEDS_MARK)); return s; }
+
+    INLINE const Stub* Ensure_Stub_Bonus_Managed(const Stub* s)
+      { return s; }  // review: needs check
+  #endif
+#endif
+
+#define STUB_LINK(s)  Ensure_Stub_Link_Managed(s)->link.node
+#define STUB_MISC(s)  Ensure_Stub_Misc_Managed(s)->misc.node
+#define STUB_INFO(s)  Ensure_Stub_Info_Managed(s)->info.node
+#define STUB_BONUS(s) Ensure_Stub_Bonus_Managed(s)->content.dynamic.bonus.node
+
+#define STUB_LINK_UNMANAGED(s)  (s)->link.node
+#define STUB_MISC_UNMANAGED(s)  (s)->misc.node
+#define STUB_INFO_UNMANAGED(s)  (s)->info.node
+#define STUB_BONUS_UNMANAGED(s) (s)->content.dynamic.bonus.node

@@ -24,12 +24,12 @@
 //   (but the discussion has not yet finaliezd).
 //
 
-#define CELL_MAP_PAIRLIST_NODE  CELL_NODE1
+#define CELL_MAP_PAIRLIST(c)  CELL_NODE1(c)
 
 INLINE const Map* VAL_MAP(const Cell* c) {
     assert(Cell_Heart(c) == REB_MAP);
 
-    Node* node = CELL_MAP_PAIRLIST_NODE(c);
+    Node* node = CELL_MAP_PAIRLIST(c);
     if (Not_Node_Readable(node))
         fail (Error_Series_Data_Freed_Raw());
 
@@ -55,8 +55,8 @@ INLINE Element* Init_Map(Init(Element) out, Map* map)
 
     Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_MAP);
     Corrupt_Unused_Field(out->extra.corrupt);
-    CELL_MAP_PAIRLIST_NODE(out) = MAP_PAIRLIST(map);
-    Corrupt_Unused_Field(out->payload.split.two);
+    CELL_MAP_PAIRLIST(out) = MAP_PAIRLIST(map);
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return out;
 }

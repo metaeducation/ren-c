@@ -207,7 +207,7 @@ INLINE const char* File_UTF8_Of_Level(Level* L) {
 INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
         return 0;
-    return Level_Array(L)->misc.line;
+    return MISC_SOURCE_LINE(Level_Array(L));
 }
 
 
@@ -270,7 +270,7 @@ INLINE Details* Ensure_Level_Details(Level* L) {
 
 INLINE void Tweak_Level_Phase(Level* L, Phase* phase) {
     assert(Is_Stub_Details(phase) or Is_Stub_Varlist(phase));
-    CELL_FRAME_PHASE_NODE(L->rootvar) = phase;
+    CELL_FRAME_PHASE(L->rootvar) = phase;
 }
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)

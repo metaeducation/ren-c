@@ -383,7 +383,7 @@ void Set_Location_Of_Error(
 
     if (L != BOTTOM_LEVEL) {  // found a level with file and line information
         Option(const String*) file = Link_Filename(Level_Array(L));
-        LineNumber line = Level_Array(L)->misc.line;
+        LineNumber line = MISC_SOURCE_LINE(Level_Array(L));
 
         if (file)
             Init_File(&vars->file, unwrap file);

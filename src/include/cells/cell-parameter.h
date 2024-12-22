@@ -61,13 +61,13 @@
 //   object, but Ren-C only uses a single pointer-to-symbol.)
 //
 
-#define CELL_PARAMETER_SPEC_NODE  CELL_NODE1
-#define CELL_PARAMETER_STRING_NODE  CELL_NODE2
+#define CELL_PARAMETER_SPEC(c)    CELL_NODE1(c)
+#define CELL_PARAMETER_STRING(c)  CELL_NODE2(c)
 
 INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     assert(HEART_BYTE(c) == REB_PARAMETER);
 
-    const Node* node = CELL_PARAMETER_SPEC_NODE(c);
+    const Node* node = CELL_PARAMETER_SPEC(c);
     if (node != nullptr and Not_Node_Readable(node))
         fail (Error_Series_Data_Freed_Raw());
 
@@ -300,12 +300,12 @@ INLINE ParamClass Cell_ParamClass(const Cell* param) {
 
 INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
-    return cast(const String*, CELL_PARAMETER_STRING_NODE(param));
+    return cast(const String*, CELL_PARAMETER_STRING(param));
 }
 
 INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
-    CELL_PARAMETER_STRING_NODE(param) = m_cast(String*, maybe string);
+    CELL_PARAMETER_STRING(param) = m_cast(String*, maybe string);
 }
 
 
@@ -456,8 +456,8 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
-    CELL_PARAMETER_SPEC_NODE(out) = nullptr;
-    CELL_PARAMETER_STRING_NODE(out) = nullptr;
+    CELL_PARAMETER_SPEC(out) = nullptr;
+    CELL_PARAMETER_STRING(out) = nullptr;
 
     return cast(Param*, out);
 }

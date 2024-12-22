@@ -458,7 +458,7 @@ void RunPromise(void)
 
     DECLARE_ATOM (code);
     Init_Block(code, a);
-    Tweak_Cell_Binding(code, info->binding);
+    Tweak_Cell_Binding(code, cast(Context*, info->binding));
 
     Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL);
 
@@ -543,7 +543,7 @@ void RunPromise(void)
         // Note: Expired, can't use VAL_CONTEXT
         //
         assert(Is_Frame(result));
-        const Node* frame_ctx = CELL_FRAME_PHASE_NODE(result);
+        const Node* frame_ctx = CELL_FRAME_PHASE(result);
         heapaddr_t throw_id = Heapaddr_From_Pointer(frame_ctx);
 
         EM_ASM(
