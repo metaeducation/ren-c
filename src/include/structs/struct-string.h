@@ -77,17 +77,24 @@
     STUB_SUBCLASS_FLAG_27
 
 
-//=//// SYMBOL_FLAG_MISC_IS_BIND_STUMP ////////////////////////////////////=//
+//=//// SYMBOL_FLAG_HITCH_IS_BIND_STUMP ///////////////////////////////////=//
 //
-// The symbol hash table itself doubles as a "binding table", by making an
-// in-progress bind point to a small stub to hold a binding index into an
-// object.  It's fastest for binding to keep this flag on the symbol (an
-// original incarnation had to follow the misc pointer and check a flag
-// on the next pointer that was reached, which was slower).
+// This flag caches a test that today could be written as:
 //
-#define SYMBOL_FLAG_MISC_IS_BIND_STUMP \
+//     Stub_Flavor(MISC_HITCH(symbol)) == FLAVOR_STUMP
+//
+// The flag originated prior to the existence of "stub flavors", so the only
+// way to know that a stub wasn't a module Patch stub was to test a flag.
+//
+// Now that there are flavors, the flag is only an optimization, but maybe
+// not a terrible one--since it means binding can quickly check a flag that
+// lives on the Symbol without having to dereference a pointer to navigate
+// to the next stub and then extract and test a flavor byte for it.  If
+// flags were scarce or the maintenance cost was high, this could be dropped,
+// but it seems to work well enough for now.
+//
+#define SYMBOL_FLAG_HITCH_IS_BIND_STUMP \
     STUB_SUBCLASS_FLAG_28
-
 
 
 // For a *read-only* Symbol, circularly linked list of othEr-CaSed string

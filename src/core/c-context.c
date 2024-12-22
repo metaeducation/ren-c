@@ -205,7 +205,7 @@ Value* Append_To_Sea_Core(
     //    for that symbol.  We skip over those.
 
     Stub* updating = m_cast(Symbol*, symbol);  // skip binding hitches [1]
-    if (Get_Flavor_Flag(SYMBOL, updating, MISC_IS_BIND_STUMP))
+    if (Get_Flavor_Flag(SYMBOL, updating, HITCH_IS_BIND_STUMP))
         updating = Misc_Hitch(updating);  // skip
 
     Tweak_Misc_Hitch(patch, Misc_Hitch(updating));

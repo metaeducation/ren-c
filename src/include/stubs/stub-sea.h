@@ -85,7 +85,7 @@ INLINE Option(Patch*) Sea_Patch(SeaOfVars* sea, const Symbol* sym, bool strict) 
     Symbol* synonym = m_cast(Symbol*, sym);
     do {
         Stub* stub = Misc_Hitch(sym);  // first item may be Stump
-        if (Get_Flavor_Flag(SYMBOL, sym, MISC_IS_BIND_STUMP))
+        if (Get_Flavor_Flag(SYMBOL, sym, HITCH_IS_BIND_STUMP))
             stub = Misc_Hitch(stub);  // skip binding Stump
 
         for (; stub != sym; stub = Misc_Hitch(stub)) {  // should be Patch

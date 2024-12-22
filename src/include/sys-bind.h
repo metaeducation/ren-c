@@ -228,8 +228,8 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
         binder->stump_list = Link_Stump_Next(stump);
 
         const Symbol* symbol = Info_Stump_Bind_Symbol(stump);
-        assert(Get_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP));
-        Clear_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP);
+        assert(Get_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP));
+        Clear_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP);
         Tweak_Misc_Hitch(m_cast(Symbol*, symbol), Misc_Hitch(stump));
 
         assert(Is_Node_Readable(stump));
@@ -245,7 +245,7 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
 
 // Tries to set the binder index, but return false if already there.
 //
-// 1. When we clean up the binder, we have to remove the MISC_IS_BIND_STUMP
+// 1. When we clean up the binder, we have to remove the HITCH_IS_BIND_STUMP
 //    flag for all the symbols we attached stumps to.  But all we have is
 //    a singly linked list of the hitches, so the symbol has to be poked
 //    somewhere.  We aren't using the INFO bits, so we make this the kind
@@ -262,7 +262,7 @@ INLINE bool Try_Add_Binder_Index(
   #endif
 
     assert(index != 0);
-    if (Get_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP))
+    if (Get_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP))
         return false;  // already has a mapping
 
     Stump* stump = cast(Stump*, Make_Untracked_Stub(STUB_MASK_STUMP));
@@ -274,7 +274,7 @@ INLINE bool Try_Add_Binder_Index(
     binder->stump_list = stump;
 
     Tweak_Misc_Hitch(m_cast(Symbol*, symbol), stump);
-    Set_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP);  // must remove [1]
+    Set_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP);  // must remove [1]
 
     return true;
 }
@@ -300,7 +300,7 @@ INLINE Option(REBINT) Try_Get_Binder_Index(  // 0 if not present
   #endif
 
     UNUSED(binder);
-    if (Not_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP))
+    if (Not_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP))
         return 0;
 
     Stump* stump = cast(Stump*, Misc_Hitch(symbol));
@@ -323,7 +323,7 @@ INLINE void Update_Binder_Index(
   #endif
 
     UNUSED(binder);
-    assert(Get_Flavor_Flag(SYMBOL, symbol, MISC_IS_BIND_STUMP));
+    assert(Get_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP));
 
     Stump* stump = cast(Stump*, Misc_Hitch(symbol));
     assert(Info_Stump_Bind_Symbol(stump) == symbol);

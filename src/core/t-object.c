@@ -83,7 +83,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                 continue;
 
             Stub* stub = Misc_Hitch(*psym);
-            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
+            if (Get_Flavor_Flag(SYMBOL, *psym, HITCH_IS_BIND_STUMP))
                 stub = Misc_Hitch(stub);  // skip binding stump
 
             Stub* patch_found = nullptr;
@@ -594,7 +594,7 @@ SeaOfVars* Copy_Sea_Managed(SeaOfVars* original) {
             continue;
 
         Stub* stub = Misc_Hitch(*psym);
-        if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
+        if (Get_Flavor_Flag(SYMBOL, *psym, HITCH_IS_BIND_STUMP))
             stub = Misc_Hitch(stub);  // skip binding stump
 
         for (; stub != *psym; stub = Misc_Hitch(stub)) {
