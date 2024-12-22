@@ -193,7 +193,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 bool Try_Advance_Evars(EVARS *e) {
     if (e->word) {
         while (++e->word != e->word_tail) {
-            e->var = MOD_VAR(
+            e->var = Sea_Var(
                 cast(SeaOfVars*, e->ctx), Cell_Word_Symbol(e->word), true
             );
             if (Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
@@ -1093,7 +1093,7 @@ DECLARE_GENERICS(Context)
             if (i) {
                 CELL_WORD_INDEX_I32(def) = unwrap i;
                 if (Is_Module(context))
-                    Tweak_Cell_Binding(def, MOD_PATCH(
+                    Tweak_Cell_Binding(def, Sea_Patch(
                         cast(SeaOfVars*, c), Cell_Word_Symbol(def), strict
                     ));
                 else

@@ -388,7 +388,7 @@ INLINE void Unbind_Any_Word(Cell* v) {
     Tweak_Cell_Binding(v, UNBOUND);
 }
 
-INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
+INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Context* binding = Cell_Binding(v);
     if (Is_Stub_Patch(binding)) {
@@ -398,7 +398,7 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
     else if (Is_Stub_Let(binding))
         fail ("LET variables have no context at this time");
 
-    return cast(VarList*, binding);
+    return binding;
 }
 
 

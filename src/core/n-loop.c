@@ -815,6 +815,10 @@ void Init_Loop_Each(Value* iterator, Value* data)
             les->u.eser.index = VAL_INDEX(data);
             les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
         }
+        else if (Is_Module(data)) {
+            les->flex = EMPTY_ARRAY;  // !!! workaround, not a Flex
+            Init_Evars(&les->u.evars, data);
+        }
         else if (Any_Context(data)) {
             les->flex = Varlist_Array(Cell_Varlist(data));
             Init_Evars(&les->u.evars, data);
@@ -929,7 +933,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 
                 if (heart == REB_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
-                    Tweak_Cell_Binding(var, MOD_PATCH(
+                    Tweak_Cell_Binding(var, Sea_Patch(
                         cast(SeaOfVars*, Cell_Varlist(les->data)),
                         Key_Symbol(les->u.evars.key),
                         true

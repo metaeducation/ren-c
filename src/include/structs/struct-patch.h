@@ -42,19 +42,6 @@
     STUB_SUBCLASS_FLAG_24
 
 
-//=//// "PATCHES" FOR MODULE VARIABLES ////////////////////////////////////=//
-//
-// 1. Module variables are in a circularly linked list that includes the
-//    symbol series holding that variable's name.  This means the variable
-//    can be looked up in that module by following the list reachable through
-//    the symbol in a WORD!.  It also means the spelling can be found in
-//    that list looking for the symbol.
-//
-
-#define LINK_PATCH_RESERVED(patch)  STUB_LINK_UNMANAGED(patch)
-// MISC is used for MISC_HITCH() [1]
-#define INFO_PATCH_SEA(patch)       STUB_INFO(patch)
-
 
 //=//// "LET" FOR VIRTUAL BINDING OF "MINI-OBJECT" ////////////////////////=//
 //

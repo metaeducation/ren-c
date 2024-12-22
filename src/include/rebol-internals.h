@@ -244,7 +244,11 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 #include "structs/struct-array.h"  // Flex subclass
 #include "structs/struct-source.h"  // array subclass used by BLOCK!, etc.
-#include "structs/struct-context.h"  // Array subclass (VarList, SeaOfVars)
+
+#include "structs/struct-context.h"  // Context superclass
+#include "structs/struct-varlist.h"
+#include "structs/struct-sea.h"  // !!! currently a subclass of VarList
+
 #include "structs/struct-action.h"  // Array subclass (Exemplar...)
 #include "structs/struct-map.h"  // Array subclass (PairList)
 
@@ -592,9 +596,14 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "stubs/stub-symbol.h"
 #include "stubs/stub-binary.h"  // Binary_At(), etc. used by strings
 #include "sys-utf8.h"
+
 #include "stubs/stub-string.h"  // SymId needed for typesets
-#include "stubs/stub-action.h"
+
 #include "stubs/stub-context.h"  // needs actions for FRAME! contexts
+#include "stubs/stub-sea.h"
+#include "stubs/stub-action.h"  // needed by stub-varlist ATM
+#include "stubs/stub-varlist.h"
+
 #include "stubs/stub-map.h"
 
 

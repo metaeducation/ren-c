@@ -341,18 +341,23 @@ DECLARE_NATIVE(set_location_of_error)
 
     Value* location = ARG(location);
 
-    VarList* context;
+    VarList* varlist;
     if (Is_Word(location)) {
-        if (not IS_WORD_BOUND(location))
-            return FAIL("SET-LOCATION-OF-ERROR requires bound WORD!");
-        context = VAL_WORD_CONTEXT(location);
+        Context* context;
+        if (
+            not IS_WORD_BOUND(location)
+            or CTX_TYPE(context = VAL_WORD_CONTEXT(location)) != REB_FRAME
+        ){
+            return FAIL("SET-LOCATION-OF-ERROR requires FRAME!-bound WORD!");
+        }
+        varlist = cast(VarList*, context);
     }
     else {
         assert(Is_Frame(location));
-        context = Cell_Varlist(location);
+        varlist = Cell_Varlist(location);
     }
 
-    Level* where = Level_Of_Varlist_May_Fail(context);
+    Level* where = Level_Of_Varlist_May_Fail(varlist);
 
     Error* error = Cell_Error(ARG(error));
     Set_Location_Of_Error(error, where);

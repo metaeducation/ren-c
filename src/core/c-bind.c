@@ -50,7 +50,7 @@ void Bind_Values_Inner_Loop(
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
-            Value* lookup = MOD_VAR(cast(SeaOfVars*, context), symbol, strict);
+            Value* lookup = Sea_Var(cast(SeaOfVars*, context), symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
                 Tweak_Cell_Binding(v, Compact_Stub_From_Cell(lookup));
@@ -201,7 +201,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
 {
     const bool strict = true;
     if (Is_Module(context)) {
-        Stub* patch = maybe MOD_PATCH(
+        Stub* patch = maybe Sea_Patch(
             cast(SeaOfVars*, Cell_Varlist(context)),
             Cell_Word_Symbol(word),
             strict
@@ -244,12 +244,7 @@ Let* Make_Let_Variable(
     const Symbol* symbol,
     Context* parent
 ){
-    Stub* let = Make_Untracked_Stub(  // payload is one variable
-        FLAG_FLAVOR(LET)
-            | NODE_FLAG_MANAGED
-            | STUB_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
-            | STUB_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
-    );
+    Stub* let = Make_Untracked_Stub(STUB_MASK_LET);  // one variable
 
     Init_Nothing(x_cast(Value*, Stub_Cell(let)));  // start as unset
 
@@ -263,7 +258,7 @@ Let* Make_Let_Variable(
     }
     Tweak_Link_Inherit_Bind(let, parent);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
-    Tweak_Info_Let_Symbol(let, symbol);  // surrogate for context key
+    INFO_LET_SYMBOL(let) = m_cast(Symbol*, symbol);
 
     return let;
 }
@@ -352,7 +347,7 @@ Option(Stub*) Get_Word_Container(
             VarList* vlist = cast(VarList*, c);
 
             if (CTX_TYPE(vlist) == REB_MODULE) {
-                Value* slot = MOD_VAR(cast(SeaOfVars*, vlist), symbol, true);
+                Value* slot = Sea_Var(cast(SeaOfVars*, vlist), symbol, true);
                 if (slot) {
                     *index_out = INDEX_PATCHED;
                     return Compact_Stub_From_Cell(slot);
@@ -436,7 +431,7 @@ Option(Stub*) Get_Word_Container(
         if (Is_Module(Stub_Cell(c))) {
             SeaOfVars* sea = cast(SeaOfVars*, Cell_Varlist(Stub_Cell(c)));
 
-            Value* var = MOD_VAR(sea, symbol, true);
+            Value* var = Sea_Var(sea, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
                 return Compact_Stub_From_Cell(var);

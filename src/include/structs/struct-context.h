@@ -20,15 +20,18 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// See %sys-action.h for information about the workings of REBACT and CONTEXT!
-// This file just defines basic structures and flags.
-//
-
-
 // Conceptually a Context maps from Key (Symbols) to values.  But what data
 // structure is used depends on the instance.  `Context` is the superclass of
 // all the variants that convey Key->Value relationships.
 //
+// Contexts are able to link in an inherited fashion, so lookups are done
+// according to chains of Context that are built up as the code runs.  So
+// you can wind up with a Context* for a Let variable, that points to
+// a Context* for a FRAME! VarList, that points to a Context! for a MODULE!
+// that was captured by the body block when a function was generated.
+//
+
+
 // (It may be that someday Pairings or Cell* are considered for binding, but
 // right now all instances are derived from Stub.)
 //
@@ -44,117 +47,17 @@ typedef Stub Context;
 // which is the size of two cells.  Because it is a Stub, words can bind
 // directly to it.
 //
+
 typedef Context Let;
 
+#define STUB_MASK_LET ( \
+    FLAG_FLAVOR(LET) \
+        | NODE_FLAG_MANAGED \
+        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* Inherit_Bind() */ \
+        | STUB_FLAG_INFO_NODE_NEEDS_MARK  /* Let symbol */ \
+    )
 
-//=//// VARLIST: SIMPLE ARRAY-BASED KEY/VALUE STORE ///////////////////////=//
-//
-// A "VarList" is the abstraction behind OBJECT!, PORT!, FRAME!, ERROR!, etc.
-// It maps keys to values using two parallel Flexes, whose indices line up in
-// correspondence:
-//
-//   "KEYLIST" - a Flex of pointer-sized elements holding Symbol* pointers
-//
-//   "VARLIST" - an Array which holds an archetypal ANY-CONTEXT? value in its
-//   [0] element, and then a cell-sized slot for each variable.
-//
-// A `VarList*` is an alias of the varlist's `Array*`, and keylists are
-// reached through the `->link` of the varlist.  The reason varlists
-// are used as the identity of the context is that keylists can be shared
-// between contexts.
-//
-// Indices into the arrays are 0-based for keys and 1-based for values, with
-// the [0] elements of the varlist used an archetypal value:
-//
-//    VARLIST ARRAY (aka VarList*) --Bonus--+
-//  +------------------------------+        |
-//  +          "ROOTVAR"           |        |
-//  | Archetype ANY-CONTEXT? Value |        v         KEYLIST SERIES
-//  +------------------------------+        +-------------------------------+
-//  |         Value Cell 1         |        |         Symbol* Key 1         |
-//  +------------------------------+        +-------------------------------+
-//  |         Value Cell 2         |        |         Symbol* key 2         |
-//  +------------------------------+        +-------------------------------+
-//  |         Value Cell ...       |        |         Symbol* key ...       |
-//  +------------------------------+        +-------------------------------+
-//
-// The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s cell.  This
-// trick allows a single VarList* pointer to be passed around rather than the
-// cell struct which is 4x larger, yet use existing memory to make a Value*
-// when needed (using Varlist_Archetype()).  ACTION!s have a similar trick.
-//
-// Contexts coordinate with words, which can have their VAL_WORD_CONTEXT()
-// set to a context's Array pointer.  Then they cache the index of that
-// word's symbol in the context's KeyList, for a fast lookup to get to the
-// corresponding var.
-//
-// 1. Not all VarList* can be Phase, only ParamList*.  But it's sufficiently
-//    annoying to not be able to do "VarList things" with a ParamList that
-//    in order for ParamList to be passed to places both that accept Phase
-//    and VarList, something has to give.  This is the tradeoff made.
-//
-//    (Ideally ParamList could multiply inherit from VarList and Phase.  But
-//    that would require virtual inheritance so that two copies of the
-//    underlying Flex aren't included, and virtual inheritance breaks all
-//    sorts of things...including the requirement that the C++ build make
-//    standard layout types.)
-//
-#if CPLUSPLUS_11
-    struct Phase : public Flex {};
-    struct KeyList : public Flex {};
-    struct VarList : public Phase {};  // pragmatic inheritance decision [1]
-#else
-    typedef Flex Phase;
-    typedef Flex KeyList;
-    typedef Flex VarList;
-#endif
-
-
-//=//// SEA OF VARIABLES: SPARSE KEY/VALUE STORE //////////////////////////=//
-//
-// In order to make MODULE more friendly to the idea of very large number of
-// words, variable instances for a module are stored not in an indexed block
-// form like a VarList...but distributed as individual Stub allocations which
-// are reachable from the symbol for the word.  This is referred to as the
-// "Sea of Variables" approach:
-//
-//                             SYMBOL HASH TABLE
-//  +-----------------+------------------+-----------------+-----------------+
-//  |     Symbol*     |     (Vacant)     |     Symbol*     |     Symbol*     |
-//  +-----------------+------------------+-----------------+-----------------+
-//           |
-//           v
-//  +-----------------+    +-------------------+    +-------------------+
-//  |     SYMBOL      |    | Module3's "PATCH" |    | Module7's "PATCH" |
-//  |    ["hitch"] ------->|     ["hitch"] -------->|     ["hitch"] --------v
-//  |                 |    |                   |    |                   |   |
-//  +-----------------+    |  CELL: [*|*|*|*]  |    |  CELL: [*|*|*|*]  |   |
-//           ^             |                   |    |                   |   |
-//           |             +-------------------+    +-------------------+   |
-//           |                                                              |
-//           |       hitch list is circularly linked back to symbol         |
-//           ^--------------------------------------------------------------+
-//
-// So if you have a symbol in your hand, you can go directly to the linked
-// list of "patches" for that symbol, and find instances of variables with
-// that symbol in modules.
-//
-// Enumerating all the variables in a "Sea" is not fast: you have to walk
-// the entire symbol hash table...and then for each symbol look through the
-// circularly-linked "hitch list" for any patches that say they are part
-// of that module.  Fortunately, enumerating variables in a module is an
-// infrequent operation.
-//
-// This approach works well for modules...because there's relatively few of
-// them, and collisions of the names used in them isn't overly frequent.  But
-// if you create hundreds or thousands of objects with many identical keys
-// this won't work well.
-//
-#if CPLUSPLUS_11
-    struct SeaOfVars : public VarList {};  // Variables hang off their Symbol
-#else
-    typedef Flex SeaOfVars;
-#endif
+#define INFO_LET_SYMBOL(let)  STUB_INFO(let)
 
 
 //=//// USE: CONTAINER FOR PUTTING CONTEXTS IN BINDING CHAINS /////////////=//
@@ -164,102 +67,19 @@ typedef Context Let;
 // chain--so a Use is a small container that can hold a reference to a
 // context as well as a link to the next thing in the binding chain.
 //
+// 1. MISC was once "Variant": a circularly linked list of variations of this
+//    USE with different Link_Inherit_Bind() data.  The idea was to assist in
+//    avoiding creating unnecessary duplicate chains.  Decay_Stub() would
+//    remove patches from the list during GC.  This idea may have some
+//    form that has merit, but that one didn't help anything.
+//
+
 typedef Context Use;
 
-
-//=//// ERROR VARLIST SUBLCASS ////////////////////////////////////////////=//
-//
-// Several implementation functions (e.g. Trap_XXX()) will return an optional
-// error.  This isn't very clear as Option(VarList*), so although "Error" is
-// a word that conflates the Stub with the ERROR! cell, we go along with
-// Option(Error*) as the pragmatically cleanest answer.
-//
-#if CPLUSPLUS_11
-    struct Error : public VarList {};
-#else
-    typedef VarList Error;
-#endif
-
-
-
-//=//// VARLIST_FLAG_24 ///////////////////////////////////////////////////=//
-//
-#define VARLIST_FLAG_24 \
-    STUB_SUBCLASS_FLAG_24
-
-
-//=//// FRAME_HAS_BEEN_INVOKED ////////////////////////////////////////////=//
-//
-// It is intrinsic to the design of Redbols that they are allowed to mutate
-// their argument cells.  Hence if you build a frame and then EVAL it, the
-// arguments will very likely be changed.  Being able to see these changes
-// from the outside in non-debugging cases is dangerous, since it's part of
-// the implementation detail of the function (like how it handles locals)
-// and is not part of the calling contract.
-//
-#define VARLIST_FLAG_FRAME_HAS_BEEN_INVOKED \
-    STUB_SUBCLASS_FLAG_25
-
-
-//=//// VARLIST_FLAG_PARAMLIST_LITERAL_FIRST ///////////////////////////////=//
-//
-// This is a calculated property, which is cached by Make_Dispatch_Details().
-//
-// This is another cached property, needed because lookahead/lookback is done
-// so frequently, and it's quicker to check a bit on the function than to
-// walk the parameter list every time that function is called.
-//
-#define VARLIST_FLAG_PARAMLIST_LITERAL_FIRST \
-    STUB_SUBCLASS_FLAG_26
-
-
-//=//// VARLIST_FLAG_IMMUTABLE ////////////////////////////////////////////=//
-//
-#define VARLIST_FLAG_IMMUTABLE \
-    STUB_SUBCLASS_FLAG_27
-
-
-// These are the flags which are scanned for and set during Make_Phase
-//
-#define PARAMLIST_MASK_CACHED \
-    (PARAMLIST_FLAG_QUOTES_FIRST)
-
-
-#define CELL_MASK_ANY_CONTEXT \
-    ((not CELL_FLAG_DONT_MARK_NODE1)  /* varlist */ \
-        | (not CELL_FLAG_DONT_MARK_NODE2)  /* phase (for FRAME!) */)
-
-
-
-// A context's varlist is always allocated dynamically, in order to speed
-// up variable access--no need to test USED_BYTE_OR_255 for 255.
-//
-// !!! Ideally this would carry a flag to tell a GC "shrinking" process not
-// to reclaim the dynamic memory to make a singular cell...but that flag
-// can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
-//
-#define FLEX_MASK_LEVEL_VARLIST \
-    (NODE_FLAG_NODE \
-        | FLAG_FLAVOR(VARLIST) \
-        | STUB_FLAG_DYNAMIC \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
-        /* STUB_FLAG_MISC_NODE_NEEDS_MARK */  /* Runlevel, not Adjunct */)
-
-#define FLEX_MASK_VARLIST \
-    (FLEX_MASK_LEVEL_VARLIST | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
-
-// LINK of VarList is LINK_CONTEXT_INHERIT_BIND
-#define BONUS_VARLIST_KEYLIST(varlist)     STUB_BONUS(varlist)
-#define MISC_VARLIST_RUNLEVEL(varlist)     (varlist)->misc.level
-
-
-#define FLEX_MASK_KEYLIST \
-    (NODE_FLAG_NODE  /* NOT always dynamic */ \
-        | FLAG_FLAVOR(KEYLIST) \
-        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
-
-#define LINK_KEYLIST_ANCESTOR(keylist)  STUB_LINK(keylist)
-
-
-#define Varlist_Array(ctx) \
-    x_cast(Array*, ensure(VarList*, ctx))
+#define STUB_MASK_USE ( \
+    FLAG_FLAVOR(USE) \
+        | NODE_FLAG_MANAGED \
+        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* Inherit_Bind() */ \
+        | not STUB_FLAG_INFO_NODE_NEEDS_MARK  /* not yet used */ \
+        | not STUB_FLAG_MISC_NODE_NEEDS_MARK  /* unused, was "Variant" [1] */ \
+    )

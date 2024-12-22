@@ -435,7 +435,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
 
             if (cl->sea) {
                 bool strict = true;
-                if (MOD_VAR(unwrap cl->sea, symbol, strict))
+                if (Sea_Var(unwrap cl->sea, symbol, strict))
                     continue;
             }
 
@@ -876,7 +876,7 @@ Source* Context_To_Array(const Cell* context, REBINT mode)
                 Setify(TOP_ELEMENT);
             if (Is_Module(context)) {
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
-                Tweak_Cell_Binding(TOP, MOD_PATCH(
+                Tweak_Cell_Binding(TOP, Sea_Patch(
                     cast(SeaOfVars*, e.ctx), Key_Symbol(e.key), true
                 ));
             }
@@ -934,7 +934,7 @@ Option(Index) Find_Symbol_In_Context(
         // list with other modules who also have variables of that name.
         //
         SeaOfVars* sea = cast(SeaOfVars*, Cell_Varlist(context));
-        return MOD_VAR(sea, symbol, strict) ? INDEX_PATCHED : 0;
+        return Sea_Var(sea, symbol, strict) ? INDEX_PATCHED : 0;
     }
 
     EVARS e;

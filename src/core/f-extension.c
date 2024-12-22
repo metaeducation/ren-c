@@ -346,7 +346,7 @@ DECLARE_NATIVE(unload_extension)
         OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
     */
 
-   Value* shutdown_action = MOD_VAR(
+   Value* shutdown_action = Sea_Var(
        cast(SeaOfVars*, Cell_Varlist(extension)),
        CANON(SHUTDOWN_P),
        true

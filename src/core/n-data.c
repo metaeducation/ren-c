@@ -223,7 +223,7 @@ DECLARE_NATIVE(has)
 
     Init_Any_Word(OUT, heart, symbol);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
-    Tweak_Cell_Binding(OUT, MOD_PATCH(cast(SeaOfVars*, ctx), symbol, strict));
+    Tweak_Cell_Binding(OUT, Sea_Patch(cast(SeaOfVars*, ctx), symbol, strict));
     return OUT;
 }
 
@@ -339,13 +339,13 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         // result in that word having a FRAME! incarnated as a Stub (if
         // it was not already reified.)
         //
-        VarList* c = VAL_WORD_CONTEXT(v);
+        Context* c = VAL_WORD_CONTEXT(v);
 
         // If it's a FRAME! we want the phase to match the execution phase at
         // the current moment of execution.
         //
         if (CTX_TYPE(c) == REB_FRAME) {
-            Level* L = Level_Of_Varlist_If_Running(c);
+            Level* L = Level_Of_Varlist_If_Running(cast(VarList*, c));
             if (L == nullptr)
                 Init_Frame(out, cast(ParamList*, c), ANONYMOUS, NONMETHOD);
             else {
@@ -358,8 +358,10 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
                 );
             }
         }
+        else if (CTX_TYPE(c) == REB_MODULE)
+            Init_Module(out, cast(SeaOfVars*, c));
         else
-            Copy_Cell(out, Varlist_Archetype(c));
+            Copy_Cell(out, Varlist_Archetype(cast(VarList*, c)));
         break; }
 
       default:
@@ -956,11 +958,11 @@ DECLARE_NATIVE(proxy_exports)
 
         bool strict = true;
 
-        const Value* src = MOD_VAR(source, symbol, strict);
+        const Value* src = Sea_Var(source, symbol, strict);
         if (src == nullptr)
             return FAIL(v);  // fail if unset value, also?
 
-        Value* dest = MOD_VAR(where, symbol, strict);
+        Value* dest = Sea_Var(where, symbol, strict);
         if (dest != nullptr) {
             // Fail if found?
         }
