@@ -1,6 +1,6 @@
 //
-//  File: %sys-bounce.h
-//  Summary: "BOUNCE_CONTINUE, BOUNCE_DELEGATE, etc. and Helpers"
+//  File: %sys-continuation.h
+//  Summary: "Continuation and Delegation Helpers"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -19,101 +19,7 @@
 // https://www.gnu.org/licenses/lgpl-3.0.html
 //
 //=////////////////////////////////////////////////////////////////////////=//
-//
 
-
-// 1. Generally speaking, generics (and most functions in the system) do
-//    not work on antiforms, quasiforms, or quoted datatypes.
-//
-//    For one thing, this would introduce uncomfortable questions, like:
-//    should the NEXT of ''[a b c] be [b c] or ''[b c] ?  This would take the
-//    already staggering combinatorics of the system up a notch by forcing
-//    "quote propagation" policies to be injected everywhere.
-//
-//    Yet there's another danger: if quoted/quasi items wind up giving an
-//    answer instead of an error for lots of functions, this will lead to
-//    carelessness in propagation of the marks...not stripping them off when
-//    they aren't needed.  This would lead to an undisciplined hodgepodge of
-//    marks that are effectively meaningless.  In addition to being ugly, that
-//    limits the potential for using the marks intentionally in a dialect
-//    later, if you're beholden to treating leaky quotes and quasis as if
-//    they were not there.
-//
-INLINE Bounce Run_Generic_Dispatch(
-    const Element* cue,
-    Level* L,
-    const Symbol* verb
-){
-    Heart heart = Cell_Heart_Ensure_Noquote(cue);  // no quoted/quasi/anti [1]
-
-    GenericHook* hook = Generic_Hook_For_Heart(heart);
-    return hook(L, verb);
-}
-
-
-// If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
-// the L->phase in the frame.  This function may be changed by the dispatcher
-// from what was originally called.
-//
-// Note it is not safe to let arbitrary user code change values in a
-// frame from expected types, and then let those reach an underlying native
-// who thought the types had been checked.
-//
-#define C_REDO_UNCHECKED 'r'
-#define BOUNCE_REDO_UNCHECKED \
-    cast(Bounce, &PG_Bounce_Redo_Unchecked)
-
-#define C_REDO_CHECKED 'R'
-#define BOUNCE_REDO_CHECKED \
-    cast(Bounce, &PG_Bounce_Redo_Checked)
-
-#define C_DOWNSHIFTED 'd'
-#define BOUNCE_DOWNSHIFTED \
-    cast(Bounce, &PG_Bounce_Downshifted)
-
-
-// Continuations are used to mitigate the problems that occur when the C stack
-// contains a mirror of frames corresponding to the frames for each stack
-// level.  Avoiding this means that routines that would be conceived as doing
-// a recursion instead return to the evaluator with a new request.  This helps
-// avoid crashes from C stack overflows and has many other advantages.  For a
-// similar approach and explanation, see:
-//
-// https://en.wikipedia.org/wiki/Stackless_Python
-//
-// What happens is that when a BOUNCE_CONTINUE comes back via the C `return`
-// for a native, that native's C stack variables are all gone.  But the heap
-// allocated Level stays intact and in the Rebol stack trace.  The native's C
-// function will be called back again when the continuation finishes.
-//
-#define C_CONTINUATION 'C'
-#define BOUNCE_CONTINUE \
-    cast(Bounce, &PG_Bounce_Continuation)
-
-
-// A dispatcher may want to run a "continuation" but not be called back.
-// This is referred to as delegation.
-//
-#define C_DELEGATION 'D'
-#define BOUNCE_DELEGATE \
-    cast(Bounce, &PG_Bounce_Delegation)
-
-
-// For starters, a simple signal for suspending stacks in order to be able to
-// try not using Asyncify (or at least not relying on it so heavily)
-//
-#define C_SUSPEND 'S'
-#define BOUNCE_SUSPEND \
-    cast(Bounce, &PG_Bounce_Suspend)
-
-
-// Intrinsic typecheckers want to be able to run in the same Level as an
-// action, but not overwrite the ->out cell of the level.  They motivate
-// a special state for OKAY so that the L->out can be left as-is.
-//
-#define C_OKAY 'O'
-#define BOUNCE_OKAY \
-    cast(Bounce, &PG_Bounce_Okay)
 
 
 //=//// CONTINUATION HELPER MACROS ////////////////////////////////////////=//

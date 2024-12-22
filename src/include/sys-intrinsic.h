@@ -43,16 +43,6 @@
 //   BOUNCE_FAIL, and the Level's out pointer.
 
 
-// In order to be fast, intrinsics fold their typechecking into their native
-// implementation.  If that check fails, then they want to act like they
-// were never called...which may mean erroring in some places, or just being
-// bypassed (e.g. if used as a typechecker).  To make sure their type check
-// case is cheap, they simply return this bounce value.
-//
-#define C_BAD_INTRINSIC_ARG 'B'
-#define BOUNCE_BAD_INTRINSIC_ARG \
-    cast(Bounce, &PG_Bounce_Downshifted)
-
 
 //=//// HELPERS TO PROCESS UNPROCESSED ARGUMENTS //////////////////////////=//
 //

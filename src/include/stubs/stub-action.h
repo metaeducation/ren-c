@@ -20,35 +20,6 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// As in historical Rebol, Ren-C has several different kinds of functions...
-// each of which have a different implementation path in the system.
-// But in Ren-C there is only one user-visible datatype from the user's
-// perspective for all of them, which is called "action" (FRAME! antiform).
-//
-// Each action has an associated C function that runs when it is invoked, and
-// this is called the "dispatcher".  A dispatcher may be general and reused
-// by many different actions.  For example: the same dispatcher code is used
-// for most `FUNC [...] [...]` instances--but each one has a different body
-// array and spec, so the behavior is different.  Other times a dispatcher can
-// be for a single function, such as with natives like IF that have C code
-// which is solely used to implement IF.
-//
-// The identity array for an action is called its "details".  It has an
-// archetypal value for the action in its [0] slot, but the other slots are
-// dispatcher-specific.  Different dispatchers lay out the details array with
-// different values that define the action instance.
-//
-// Some examples:
-//
-//     USER FUNCTIONS: 1-element array w/a BLOCK!, the body of the function
-//     GENERICS: 1-element array w/WORD! "verb" (OPEN, APPEND, etc)
-//     SPECIALIZATIONS: no contents needed besides the archetype
-//     ROUTINES/CALLBACKS: stylized array (REBRIN*)
-//     TYPECHECKERS: the TYPESET! to check against
-//
-// (See the comments in the %src/core/functionals/ directory for each function
-// variation for descriptions of how they use their details arrays.)
-//
 // Every action has an associated context known as the "exemplar" that defines
 // the parameters and locals.  The keylist of this exemplar is reused for
 // FRAME! instances of invocations (or pending invocations) of the action.
@@ -92,57 +63,6 @@
 #define CELL_FRAME_LENS_OR_LABEL(c)    CELL_NODE2(c)
 
 
-
-//=//// PSEUDOTYPES FOR RETURN VALUES /////////////////////////////////////=//
-//
-// An arbitrary cell pointer may be returned from a native--in which case it
-// will be checked to see if it is thrown and processed if it is, or checked
-// to see if it's an unmanaged API handle and released if it is...ultimately
-// putting the cell into L->out.
-//
-// Other special instructions need to be encoded somehow:
-//
-// * We don't want to use UTF-8 signals like `return "C"` for BOUNCE_CONTINUE.
-//   That would miss out on the opportunity to make `return "Some String"` a
-//   synonym for `return rebText("Some String")` which is appealing.
-//
-// * Between "weird Cell" and "weird Stub" choices, "weird Cell" is smaller
-//   (4 platform pointers instead of 8).  So we go with a cell using an
-//   out-of-range HEART_BYTE.
-//
-
-INLINE Value* Init_Return_Signal_Untracked(Init(Value) out, char ch) {
-    Reset_Cell_Header_Noquote(
-        out,
-        FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
-    );
-    Tweak_Cell_Binding(out, UNBOUND);
-    out->payload.split.one.u = ch;
-    Corrupt_Unused_Field(out->payload.split.two.corrupt);
-
-    return out;
-}
-
-#define Init_Return_Signal(out,ch) \
-    TRACK(Init_Return_Signal_Untracked((out), (ch)))
-
-INLINE char Cell_Return_Type(const Cell* cell) {
-    assert(cast(Kind, Cell_Heart(cell)) == REB_T_RETURN_SIGNAL);
-    return cast(char, cell->payload.split.one.u);
-}
-
-INLINE bool Is_Bounce_An_Atom(Bounce b)
-  { return HEART_BYTE(cast(Value*, b)) != REB_T_RETURN_SIGNAL; }
-
-INLINE char VAL_RETURN_SIGNAL(Bounce b) {
-    assert(not Is_Bounce_An_Atom(b));
-    return cast(Value*, b)->payload.split.one.u;
-}
-
-INLINE Atom* Atom_From_Bounce(Bounce b) {
-    assert(Is_Bounce_An_Atom(b));
-    return cast(Atom*, b);
-}
 
 
 // For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.

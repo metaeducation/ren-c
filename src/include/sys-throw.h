@@ -45,20 +45,6 @@
 //
 
 
-// This signals that the evaluator is in a "thrown state".
-//
-#define C_THROWN 'T'
-#define BOUNCE_THROWN \
-    cast(Bounce, &PG_Bounce_Thrown)
-
-
-// This signals that the evaluator is in a "thrown state".
-//
-#define C_FAIL 'F'
-#define BOUNCE_FAIL \
-    cast(Bounce, &PG_Bounce_Fail)
-
-
 // 1. An original constraint on asking if something was throwing was that only
 //    the top frame could be asked about.  But Action_Executor() is called to
 //    re-dispatch when there may be a frame above (kept there by request from

@@ -874,13 +874,13 @@ Bounce Action_Executor(Level* L)
     else if (b == nullptr) {  // API and internal code can both return `nullptr`
         Init_Nulled(OUT);
     }
-    else if (Is_Bounce_An_Atom(b)) {
+    else if (Is_Bounce_An_Atom(b)) {  // Cell pointer (must be Api cell)
         Atom* r = Atom_From_Bounce(b);
         assert(Is_Api_Value(r));
         Copy_Cell(OUT, r);
         Release_Api_Value_If_Unmanaged(r);
     }
-    else switch (VAL_RETURN_SIGNAL(b)) {  // it's a "pseudotype" instruction
+    else switch (Bounce_Type(b)) {
 
       case C_OKAY:  // essential to typechecker intrinsic optimization...
         Init_Okay(OUT);  // ...optimization doesn't write OUT, but we do here

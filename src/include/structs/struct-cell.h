@@ -407,6 +407,8 @@ union AnyUnion {
 
     bool bit;  // "wasteful" to just use for one flag, but fast read and write
 
+    char ch;
+
     Flags flags;
 
     intptr_t i;

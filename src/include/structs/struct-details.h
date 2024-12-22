@@ -1,6 +1,6 @@
 //
-//  File: %struct-action.h
-//  Summary: "Action structure definitions preceding %tmp-internals.h"
+//  File: %struct-details.h
+//  Summary: "Dispatcher Details definitions preceding %tmp-internals.h"
 //  Section: core
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -21,20 +21,33 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// See %sys-action.h for information about the workings of REBACT and ACTION!.
-// This file just defines basic structures and flags.
+// As in historical Rebol, Ren-C has several different kinds of functions...
+// each of which have a different implementation path in the system.
+//
+// Each action has an associated C function that runs when it is invoked, and
+// this is called the "dispatcher".  A dispatcher may be general and reused
+// by many different actions.  For example: the same dispatcher code is used
+// for most `FUNC [...] [...]` instances--but each one has a different body
+// array and spec, so the behavior is different.  Other times a dispatcher can
+// be for a single function, such as with natives like IF that have C code
+// which is solely used to implement IF.
+//
+// The information that lets function instances with the same Dispatcher
+// run differently is an array called its dispatch "Details".  So while
+// every FUNC in the system uses the same Dispatcher* C function, each one
+// has a different Details array that contains the unique body block and
+// points to a different ParamList* of parameter definitions to use.
+//
+// (See the comments in the %src/core/functionals/ directory for each function
+// variation for descriptions of how they use their details arrays.)
+//
 //
 
 #if CPLUSPLUS_11
     struct Details : public Phase {};
-    struct ParamList : public VarList {};  // see VarList (inherits from Phase)
 #else
     typedef Flex Details;
-    typedef Flex ParamList;
 #endif
-
-
-// Note: LINK on details is the DISPATCHER, on varlists it's KEYSOURCE
 
 
 //=//// DETAILS_FLAG_24 ///////////////////////////////////////////////////=//
@@ -134,16 +147,7 @@ typedef enum {
 #define DETAILS_MASK_NONE  0
 
 
-// Includes STUB_FLAG_DYNAMIC because an action's paramlist is always
-// allocated dynamically, in order to make access to the archetype and the
-// parameters faster than Array_At().  See code for Phase_Key(), etc.
-//
-// !!! This used to include FLEX_FLAG_FIXED_SIZE for both.  However, that
-// meant the mask was different for paramlists and context keylists (which
-// are nearing full convergence).  And on the details array, it got in the
-// way of HIJACK, which may perform expansion.  So that was removed.
-//
-#define FLEX_MASK_PARAMLIST FLEX_MASK_VARLIST
+//=//// DETAILS STUB SLOT USAGE ///////////////////////////////////////////=//
 
 #define FLEX_MASK_DETAILS \
     (NODE_FLAG_NODE \
@@ -158,6 +162,44 @@ typedef enum {
 // INFO in details currently unused, just the info flags
 // BONUS in details currently unused
 
+
+//=//// DETAILS "QUERIERS" ////////////////////////////////////////////////=//
+//
+// DetailsQueriers are used for getting things like the RETURN or BODY of
+// a function.  They are specific to each dispatcher (with a common querier
+// used by all DETAILS_FLAG_RAW_NATIVE functions).
+//
+
+typedef bool (DetailsQuerier)(
+    Sink(Value) out,
+    Details* details,
+    SymId property
+);
+
+typedef struct {
+    Dispatcher* dispatcher;
+    DetailsQuerier* querier;
+} DispatcherAndQuerier;
+
+
+
+
+#if CPLUSPLUS_11
+    struct ParamList : public VarList {};  // see VarList (inherits from Phase)
+#else
+    typedef Flex ParamList;
+#endif
+
+// Includes STUB_FLAG_DYNAMIC because an action's paramlist is always
+// allocated dynamically, in order to make access to the archetype and the
+// parameters faster than Array_At().  See code for Phase_Key(), etc.
+//
+// !!! This used to include FLEX_FLAG_FIXED_SIZE for both.  However, that
+// meant the mask was different for paramlists and context keylists (which
+// are nearing full convergence).  And on the details array, it got in the
+// way of HIJACK, which may perform expansion.  So that was removed.
+//
+#define FLEX_MASK_PARAMLIST FLEX_MASK_VARLIST
 
 //=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
 //
@@ -257,17 +299,3 @@ typedef enum {
     //
     PARAMCLASS_META
 } ParamClass;
-
-
-// DetailsQueriers are used for getting things like the RETURN or BODY of
-// a function.  They are specific to each dispatcher (with a common function
-// used by all natives).
-//
-typedef bool (DetailsQuerier)(
-    Sink(Value) out, Details* details, SymId property
-);
-
-typedef struct {
-    Dispatcher* dispatcher;
-    DetailsQuerier* querier;
-} DispatcherAndQuerier;

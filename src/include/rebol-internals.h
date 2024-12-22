@@ -249,7 +249,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include "structs/struct-varlist.h"
 #include "structs/struct-sea.h"  // !!! currently a subclass of VarList
 
-#include "structs/struct-action.h"  // Array subclass (Exemplar...)
+#include "structs/struct-details.h"  // Array subclass
 #include "structs/struct-map.h"  // Array subclass (PairList)
 
 #include "structs/struct-patch.h"
@@ -666,6 +666,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 #include "cells/cell-sequence.h"  // needs Derelativize()
 
+#include "cells/cell-bounce.h"
 
 //=//// EVALUATOR SERVICES ////////////////////////////////////////////////=//
 
@@ -675,7 +676,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "sys-intrinsic.h"  // helpers because intrinsics don't process args
 
 #include "sys-eval.h"  // low-level single-step evaluation API
-#include "sys-bounce.h"
+#include "sys-continuation.h"
 
 #include "sys-pick.h"
 
