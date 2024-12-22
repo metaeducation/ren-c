@@ -291,10 +291,8 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
-    if (CTX_TYPE(v) != REB_MODULE) {  // keylist is global symbol table
-        KeyList* keylist = Bonus_Keylist(v);
-        Assert_Flex_Managed(keylist);
-    }
+    KeyList* keylist = Bonus_Keylist(v);
+    Assert_Flex_Managed(keylist);
 
     assert(
         not Misc_Varlist_Adjunct(v)

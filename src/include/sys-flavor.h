@@ -81,6 +81,11 @@ enum StubFlavorEnum {
     //
     FLAVOR_PAIRLIST,
 
+    // A "Sea" of Vars is what's used to hold a sparse mapping of Symbol to
+    // Variable, such as with MODULE!
+    //
+    FLAVOR_SEA,
+
     FLAVOR_MIN_ANTIFORMS_OK,  //=//// BELOW HERE, ARRAYS CAN HOLD ANTIFORMS
 
     // The data stack is implemented as an array but has its own special

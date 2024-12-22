@@ -38,10 +38,13 @@
         if (not c)
             return SPECIFIED;
 
-        if (Is_Stub_Let(c) or Is_Stub_Use(c))
-            return c;  // virtual bind
-
-        assert(Is_Stub_Varlist(c));
+        Flavor flavor = Stub_Flavor(c);
+        assert(
+            flavor == FLAVOR_LET
+            or flavor == FLAVOR_USE
+            or flavor == FLAVOR_VARLIST
+            or flavor == FLAVOR_SEA
+        );
         return c;
     }
 #endif

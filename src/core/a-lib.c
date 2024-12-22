@@ -1090,7 +1090,7 @@ static bool Run_Va_Throws(  // va_end() handled by feed for all cases [1]
     );
 
     if (binding == nullptr) {
-        assert(Is_Stub_Varlist(g_user_context));
+        assert(Is_Stub_Sea(g_user_context));
         binding = cast(RebolContext*, g_user_context);
     }
 
@@ -1197,7 +1197,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     );
 
     if (binding == nullptr) {
-        assert(Is_Stub_Varlist(g_user_context));
+        assert(Is_Stub_Sea(g_user_context));
         binding = cast(RebolContext*, g_user_context);
     }
 

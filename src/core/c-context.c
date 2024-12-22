@@ -36,6 +36,7 @@
 VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 {
     assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make varlist
+    assert(heart != REB_MODULE);
 
     Array* a = Make_Array_Core(
         FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
@@ -48,23 +49,33 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     Alloc_Tail_Array(a);  // allocate rootvar
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
-    if (heart == REB_MODULE) {
-        assert(capacity == 0);
-        BONUS_VARLIST_KEYLIST(a) = nullptr;
-    }
-    else {
-        KeyList* keylist = Make_Flex(
-            FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,  // always shareable
-            KeyList,
-            capacity  // no terminator
-        );
-        Tweak_Link_Keylist_Ancestor(keylist, keylist);  // default to self
-        assert(Flex_Used(keylist) == 0);
+    KeyList* keylist = Make_Flex(
+        FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,  // always shareable
+        KeyList,
+        capacity  // no terminator
+    );
+    Tweak_Link_Keylist_Ancestor(keylist, keylist);  // default to self
+    assert(Flex_Used(keylist) == 0);
 
-        Tweak_Bonus_Keylist_Unique(a, keylist);  // not shared yet...
-    }
+    Tweak_Bonus_Keylist_Unique(a, keylist);  // not shared yet...
 
     return cast(VarList*, a);  // varlist pointer is context handle
+}
+
+
+//
+//  Alloc_Sea_Core: C
+//
+SeaOfVars* Alloc_Sea_Core(Flags flags) {
+    assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make sea
+
+    Stub* s = Prep_Stub(flags | FLEX_MASK_SEA, Alloc_Stub());
+    Force_Erase_Cell(&s->content.fixed.cell);
+    Init_Blank(Stub_Cell(s));
+    Tweak_Link_Inherit_Bind(s, nullptr);
+    s->misc.node = nullptr;  // adjunct
+
+    return cast(SeaOfVars*, s);
 }
 
 
@@ -272,7 +283,7 @@ static Value* Append_Context_Core(
     const Symbol* symbol,
     Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
 ){
-    if (CTX_TYPE(cast(VarList*, context)) == REB_MODULE)
+    if (Is_Stub_Sea(context))
         return Append_To_Sea_Core(cast(SeaOfVars*, context), symbol, any_word);
 
     return Append_To_Varlist_Core(cast(VarList*, context), symbol, any_word);
@@ -327,7 +338,7 @@ void Construct_Collector_Core(
     Construct_Binder_Core(&cl->binder);
 
     if (context) {
-        if (CTX_TYPE(unwrap context) == REB_MODULE)  // no binder preload [1]
+        if (Is_Stub_Sea(unwrap context))  // no binder preload [1]
             cl->sea = cast(SeaOfVars*, unwrap context);
         else {
             cl->sea = nullptr;
@@ -549,7 +560,7 @@ DECLARE_NATIVE(wrap_p)
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
 
-    Context* context = Cell_Varlist(ARG(context));
+    Context* context = Cell_Context(ARG(context));
     Element* list = cast(Element*, ARG(list));
 
     Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
@@ -933,7 +944,7 @@ Option(Index) Find_Symbol_In_Context(
         // Modules hang their variables off the symbol itself, in a linked
         // list with other modules who also have variables of that name.
         //
-        SeaOfVars* sea = cast(SeaOfVars*, Cell_Varlist(context));
+        SeaOfVars* sea = Cell_Module_Sea(context);
         return Sea_Var(sea, symbol, strict) ? INDEX_PATCHED : 0;
     }
 

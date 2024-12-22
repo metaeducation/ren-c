@@ -39,7 +39,7 @@ void Bind_Values_Inner_Loop(
     Binder* binder,
     Element* head,
     const Element* tail,
-    VarList* context,
+    Context* context,
     Option(SymId) add_midstream_types,
     Flags flags
 ){
@@ -48,9 +48,10 @@ void Bind_Values_Inner_Loop(
         if (Wordlike_Cell(v)) {
           const Symbol* symbol = Cell_Word_Symbol(v);
 
-          if (CTX_TYPE(context) == REB_MODULE) {
+          if (Is_Stub_Sea(context)) {
+            SeaOfVars* sea = cast(SeaOfVars*, context);
             bool strict = true;
-            Value* lookup = Sea_Var(cast(SeaOfVars*, context), symbol, strict);
+            Value* lookup = Sea_Var(sea, symbol, strict);
             if (lookup) {
                 Tweak_Cell_Word_Index(v, INDEX_PATCHED);
                 Tweak_Cell_Binding(v, Compact_Stub_From_Cell(lookup));
@@ -66,6 +67,9 @@ void Bind_Values_Inner_Loop(
             }
           }
           else {
+            assert(Is_Stub_Varlist(context));
+            VarList* varlist = cast(VarList*, context);
+
             REBINT n = maybe Try_Get_Binder_Index(binder, symbol);
             if (n > 0) {
                 //
@@ -74,13 +78,13 @@ void Bind_Values_Inner_Loop(
                 // which provides a feature of building up state about some
                 // words while still not including them in the bind.
                 //
-                assert(n <= Varlist_Len(context));
+                assert(n <= Varlist_Len(varlist));
 
                 // We're overwriting any previous binding, which may have
                 // been relative.
 
                 Tweak_Cell_Word_Index(v, n);
-                Tweak_Cell_Binding(v, context);
+                Tweak_Cell_Binding(v, varlist);
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -90,9 +94,9 @@ void Bind_Values_Inner_Loop(
                 )
             ){
                 //
-                // Word is not in context, so add it if option is specified
+                // Word is not in varlist, so add it if option is specified
                 //
-                Append_Context_Bind_Word(context, v);
+                Append_Context_Bind_Word(varlist, v);
                 Add_Binder_Index(binder, symbol, VAL_WORD_INDEX(v));
             }
           }
@@ -202,7 +206,7 @@ bool Try_Bind_Word(const Value* context, Value* word)
     const bool strict = true;
     if (Is_Module(context)) {
         Stub* patch = maybe Sea_Patch(
-            cast(SeaOfVars*, Cell_Varlist(context)),
+            Cell_Module_Sea(context),
             Cell_Word_Symbol(word),
             strict
         );
@@ -242,21 +246,13 @@ bool Try_Bind_Word(const Value* context, Value* word)
 //
 Let* Make_Let_Variable(
     const Symbol* symbol,
-    Context* parent
+    Option(Context*) inherit
 ){
     Stub* let = Make_Untracked_Stub(STUB_MASK_LET);  // one variable
 
     Init_Nothing(x_cast(Value*, Stub_Cell(let)));  // start as unset
 
-    if (parent) {
-        assert(
-            Is_Stub_Let(parent)
-            or Is_Stub_Use(parent)
-            or Is_Stub_Varlist(parent)
-        );
-        assert(Is_Node_Managed(parent));
-    }
-    Tweak_Link_Inherit_Bind(let, parent);  // linked list [1]
+    Tweak_Link_Inherit_Bind(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
     INFO_LET_SYMBOL(let) = m_cast(Symbol*, symbol);
 
@@ -343,18 +339,17 @@ Option(Stub*) Get_Word_Container(
 
       loop_body:
 
+        if (Is_Stub_Sea(c)) {
+            Value* slot = Sea_Var(cast(SeaOfVars*, c), symbol, true);
+            if (slot) {
+                *index_out = INDEX_PATCHED;
+                return Compact_Stub_From_Cell(slot);
+            }
+            goto next_context;
+        }
+
         if (Is_Stub_Varlist(c)) {
             VarList* vlist = cast(VarList*, c);
-
-            if (CTX_TYPE(vlist) == REB_MODULE) {
-                Value* slot = Sea_Var(cast(SeaOfVars*, vlist), symbol, true);
-                if (slot) {
-                    *index_out = INDEX_PATCHED;
-                    return Compact_Stub_From_Cell(slot);
-                }
-
-                goto next_context;
-            }
 
             if (
                 CTX_TYPE(vlist) == REB_FRAME
@@ -429,7 +424,7 @@ Option(Stub*) Get_Word_Container(
         }
 
         if (Is_Module(Stub_Cell(c))) {
-            SeaOfVars* sea = cast(SeaOfVars*, Cell_Varlist(Stub_Cell(c)));
+            SeaOfVars* sea = Cell_Module_Sea(Stub_Cell(c));
 
             Value* var = Sea_Var(sea, symbol, true);
             if (var) {
@@ -1392,15 +1387,16 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
         return;
     }
 
-    assert(Is_Stub_Varlist(binding));  // or SeaOfVars...
-
-    if (CTX_TYPE(cast(VarList*, binding)) == REB_MODULE) {
+    if (Is_Stub_Sea(binding)) {
         assert(
             Listlike_Cell(cell)
             or heart == REB_COMMA  // feed cells, use for binding ATM
         );
         // attachment binding no longer exists
+        return;
     }
+
+    assert(Is_Stub_Varlist(binding));
 }
 
 #endif

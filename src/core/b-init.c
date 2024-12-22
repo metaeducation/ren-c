@@ -164,10 +164,10 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
 //
 static void Startup_Lib(void)
 {
-    VarList* lib = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
+    SeaOfVars* lib = Alloc_Sea_Core(NODE_FLAG_MANAGED);
     ensure(nullptr, g_lib_module) = Alloc_Element();
-    Init_Context_Cell(g_lib_module, REB_MODULE, lib);
-    ensure(nullptr, g_lib_context) = cast(SeaOfVars*, lib);
+    Init_Module(g_lib_module, lib);
+    ensure(nullptr, g_lib_context) = lib;
 
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // leave invalid
 
@@ -225,10 +225,10 @@ static void Startup_Lib(void)
 static void Shutdown_Lib(void)
 {
     assert(librebol_binding == g_lib_context);
-    assert(Is_Stub_Varlist(g_lib_context));
+    assert(Is_Stub_Sea(g_lib_context));
     librebol_binding = nullptr;
 
-  #if RUNTIME_CHECKS  // verify patches point to g_lib_context before freeing [1]
+  #if RUNTIME_CHECKS  // verify patches point to g_lib_context before free [1]
     for (SymIdNum id = 1; id < LIB_SYMS_MAX; ++id) {
         Stub* patch = &g_lib_patches[id];
         assert(Info_Patch_Sea(patch) == g_lib_context);
@@ -236,7 +236,7 @@ static void Shutdown_Lib(void)
   #endif
 
     rebReleaseAndNull(&g_lib_module);
-    /* g_lib_context = nullptr; */  // do this at end of function [2]
+    dont(g_lib_context = nullptr);  // do this at end of function [2]
 
     Sweep_Stubs();  // free all managed Stubs so Lib is all that's left [3]
 
@@ -247,7 +247,7 @@ static void Shutdown_Lib(void)
 
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT
 
-        /* assert(Info_Patch_Sea(patch) == g_lib_context); */  // !!! freed
+        dont(assert(Info_Patch_Sea(patch) == g_lib_context));  // freed
         INFO_PATCH_SEA(patch) = nullptr;  // we already checked it [1]
 
         assert(LINK_PATCH_RESERVED(patch) == nullptr);
@@ -933,11 +933,11 @@ void Startup_Core(void)
     //  being confused with "the system object", which is a different thing.
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
-    VarList* util = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
+    SeaOfVars* util = Alloc_Sea_Core(NODE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(util, g_lib_context);
     ensure(nullptr, g_sys_util_module) = Alloc_Element();
-    Init_Context_Cell(g_sys_util_module, REB_MODULE, util);
-    ensure(nullptr, g_sys_util_context) = cast(SeaOfVars*, util);
+    Init_Module(g_sys_util_module, util);
+    ensure(nullptr, g_sys_util_context) = util;
 
     rebElide(
         //
@@ -1008,7 +1008,7 @@ void Startup_Core(void)
         Get_System(SYS_CONTEXTS, CTX_USER)
     ));
     rebUnmanage(g_user_module);
-    g_user_context = cast(SeaOfVars*, Cell_Varlist(g_user_module));
+    g_user_context = Cell_Module_Sea(g_user_module);
 
   //=//// FINISH UP ///////////////////////////////////////////////////////=//
 

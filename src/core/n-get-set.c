@@ -609,7 +609,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
                 out,
                 safe,
                 c_cast(Element*, at),
-                Cell_Varlist(out)  // need to find head of chain in object
+                Cell_Context(out)  // need to find head of chain in object
             );
             if (error)
                 return error;

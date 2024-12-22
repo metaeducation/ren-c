@@ -916,15 +916,22 @@
 // helps cue people into realizing that the omission was intentional, with
 // the advantage of showing the precise code they might think they need.
 //
+// `dont` exists to point out something you really *shouldn't* do, not
+// because it's unnecessary or redundant, but because it would break things.
+//
 #if NO_CPLUSPLUS_11
     #define possibly(expr)  NOOP
     #define unnecessary(expr)  NOOP
+    #define dont(expr)  NOOP
 #else
     #define possibly(expr) \
         static_assert(std::is_convertible<decltype((expr)), bool>::value, \
             "possibly() expression must be convertible to bool")
 
     #define unnecessary(expr) \
+        static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
+
+    #define dont(expr) \
         static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
 #endif
 

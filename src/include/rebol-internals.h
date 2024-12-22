@@ -306,7 +306,7 @@ struct Reb_Enum_Vars {
     // enumerating the array is the easiest near-term option.  This is a list
     // of the bound words.
     //
-    VarList* ctx;
+    Context* ctx;
     Array* wordlist;
     Value* word;
     Value* word_tail;

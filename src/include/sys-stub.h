@@ -154,15 +154,18 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 
 #define Is_Stub_String(f)           (Stub_Flavor(f) >= FLAVOR_MIN_STRING)
 #define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)
-#define Is_Stub_Non_Symbol(f)        (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
-
-#define Is_Stub_Keylist(f)          (Stub_Flavor(f) == FLAVOR_KEYLIST)
+#define Is_Stub_Non_Symbol(f)       (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
+#define Is_Stub_Stump(f)            (Stub_Flavor(f) == FLAVOR_STUMP)
 
 #define Is_Stub_Let(f)              (Stub_Flavor(f) == FLAVOR_LET)
 #define Is_Stub_Use(f)              (Stub_Flavor(f) == FLAVOR_USE)
+
 #define Is_Stub_Patch(f)            (Stub_Flavor(f) == FLAVOR_PATCH)
-#define Is_Stub_Stump(f)            (Stub_Flavor(f) == FLAVOR_STUMP)
+#define Is_Stub_Sea(f)              (Stub_Flavor(f) == FLAVOR_SEA)
+
+#define Is_Stub_Keylist(f)          (Stub_Flavor(f) == FLAVOR_KEYLIST)
 #define Is_Stub_Varlist(f)          (Stub_Flavor(f) == FLAVOR_VARLIST)
+
 #define Is_Stub_Pairlist(f)         (Stub_Flavor(f) == FLAVOR_PAIRLIST)
 #define Is_Stub_Details(f)          (Stub_Flavor(f) == FLAVOR_DETAILS)
 

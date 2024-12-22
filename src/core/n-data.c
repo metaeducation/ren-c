@@ -146,7 +146,7 @@ DECLARE_NATIVE(inside)
 
     Context* context;
     if (Any_Context(where))
-        context = Cell_Varlist(where);
+        context = Cell_Context(where);
     else if (Any_List(where))
         context = Cell_Binding(where);
     else {
@@ -207,7 +207,6 @@ DECLARE_NATIVE(has)
 {
     INCLUDE_PARAMS_OF_HAS;
 
-    VarList* ctx = Cell_Varlist(ARG(context));
     Value* v = ARG(value);
 
     assert(Any_Word(v));
@@ -218,12 +217,16 @@ DECLARE_NATIVE(has)
     Option(Index) index = Find_Symbol_In_Context(ARG(context), symbol, strict);
     if (not index)
         return nullptr;
-    if (CTX_TYPE(ctx) != REB_MODULE)
-        return Init_Any_Word_Bound(OUT, heart, symbol, ctx, unwrap index);
 
+    if (not Is_Module(ARG(context))) {
+        VarList* varlist = Cell_Varlist(ARG(context));
+        return Init_Any_Word_Bound(OUT, heart, symbol, varlist, unwrap index);
+    }
+
+    SeaOfVars* sea = Cell_Module_Sea(ARG(context));
     Init_Any_Word(OUT, heart, symbol);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
-    Tweak_Cell_Binding(OUT, Sea_Patch(cast(SeaOfVars*, ctx), symbol, strict));
+    Tweak_Cell_Binding(OUT, Sea_Patch(sea, symbol, strict));
     return OUT;
 }
 
@@ -945,8 +948,8 @@ DECLARE_NATIVE(proxy_exports)
 {
     INCLUDE_PARAMS_OF_PROXY_EXPORTS;
 
-    SeaOfVars* where = cast(SeaOfVars*, Cell_Varlist(ARG(where)));
-    SeaOfVars* source = cast(SeaOfVars*, Cell_Varlist(ARG(source)));
+    SeaOfVars* where = Cell_Module_Sea(ARG(where));
+    SeaOfVars* source = Cell_Module_Sea(ARG(source));
 
     const Element* tail;
     const Element* v = Cell_List_At(&tail, ARG(exports));

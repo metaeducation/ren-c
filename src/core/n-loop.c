@@ -934,7 +934,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
                 if (heart == REB_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
                     Tweak_Cell_Binding(var, Sea_Patch(
-                        cast(SeaOfVars*, Cell_Varlist(les->data)),
+                        Cell_Module_Sea(les->data),
                         Key_Symbol(les->u.evars.key),
                         true
                     ));

@@ -58,10 +58,19 @@
 //
 
 #if CPLUSPLUS_11
-    struct SeaOfVars : public VarList {};  // Variables hang off their Symbol
+    struct SeaOfVars : public Stub {};  // actual variables hang off of Symbols
 #else
-    typedef Flex SeaOfVars;
+    typedef Stub SeaOfVars;
 #endif
+
+
+#define FLEX_MASK_SEA \
+    (NODE_FLAG_NODE \
+        | FLAG_FLAVOR(SEA) \
+        | STUB_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
+        | STUB_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct metadata */)
+
+#define MISC_SEA_ADJUNCT(sea)      STUB_MISC(sea)
 
 
 //=//// "PATCHES" FOR MODULE VARIABLES ////////////////////////////////////=//

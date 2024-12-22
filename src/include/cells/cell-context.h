@@ -10,7 +10,10 @@
 //
 
 INLINE VarList* Cell_Varlist(const Cell* c) {
-    assert(Any_Context_Kind(Cell_Heart_Unchecked(c)));
+    assert(
+        HEART_BYTE(c) != REB_MODULE
+        and Any_Context_Kind(HEART_BYTE(c))
+    );
 
     Node* node = CELL_NODE1(c);  // ParamList or Details
     if (Not_Node_Readable(node)) {
@@ -26,6 +29,17 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
         node = CELL_NODE1(c);  // ParamList or Details
     }
     return cast(VarList*, node);
+}
+
+INLINE SeaOfVars* Cell_Module_Sea(const Cell* c) {
+    assert(HEART_BYTE(c) == REB_MODULE);
+    return cast(SeaOfVars*, CELL_NODE1(c));
+}
+
+INLINE Context* Cell_Context(const Cell* c) {
+    if (HEART_BYTE(c) == REB_MODULE)
+        return Cell_Module_Sea(c);
+    return Cell_Varlist(c);
 }
 
 INLINE Error* Cell_Error(const Cell* c) {
@@ -50,8 +64,7 @@ INLINE Element* Init_Context_Cell(
   #endif
     UNUSED(heart);
     Assert_Flex_Managed(c);
-    if (CTX_TYPE(c) != REB_MODULE)
-        Assert_Flex_Managed(Bonus_Keylist(c));
+    assert(CTX_TYPE(c) != REB_MODULE);  // catch straggling bad casts
     return Copy_Cell(out, Varlist_Archetype(c));
 }
 
@@ -61,6 +74,16 @@ INLINE Element* Init_Context_Cell(
 #define Init_Port(out,c) \
     Init_Context_Cell((out), REB_PORT, (c))
 
+
+
+INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
+    assert(Is_Node_Managed(sea));
+    Reset_Cell_Header_Noquote(out, CELL_MASK_MODULE);
+    CELL_EXTRA(out) = nullptr;
+    CELL_NODE1(out) = sea;
+    Corrupt_Unused_Field(out->payload.split.two.corrupt);
+    return out;
+}
 
 // Ports are unusual hybrids of user-mode code dispatched with native code, so
 // some things the user can do to the internals of a port might cause the
@@ -100,7 +123,7 @@ INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
     bool strict = false;
     Value* var;
     if (Is_Module(context)) {
-        var = Sea_Var(cast(SeaOfVars*, Cell_Varlist(context)), symbol, strict);
+        var = Sea_Var(Cell_Module_Sea(context), symbol, strict);
     }
     else {
         Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);

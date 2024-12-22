@@ -42,7 +42,7 @@ PVAR RebolContext* librebol_binding;  // global, set to g_lib_context
 
 PVAR bool g_current_uses_librebol;
 PVAR CFunction* const* g_native_cfunc_pos;
-PVAR VarList* g_currently_loading_module;
+PVAR SeaOfVars* g_currently_loading_module;
 
 //-- Various char tables:
 PVAR Byte* White_Chars;

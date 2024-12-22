@@ -245,7 +245,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       mark_object:
       case REB_OBJECT:
-      case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
         Node* node = CELL_CONTEXT_VARLIST(v);
@@ -294,6 +293,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // has gone bad, in which case it should be ignored.
 
         break; }
+
+      case REB_MODULE:  // add checks
+        break;
 
       case REB_VARARGS: {
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
@@ -376,7 +378,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         Context* binding = Cell_Binding(v);
         if (binding) {
             if (Is_Stub_Varlist(binding)) {
-                assert(CTX_TYPE(cast(VarList*, binding)) != REB_MODULE);
                 assert(index != 0);
             }
             else if (Is_Stub_Let(binding))
@@ -445,21 +446,16 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Context_Deep.
 
-        if (not BONUS_VARLIST_KEYLIST(a)) {
-            assert(VAL_TYPE(archetype) == REB_MODULE);
+        KeyList* keylist = Bonus_Keylist(cast(VarList*, m_cast(Array*, a)));
+        assert(Is_Stub_Keylist(keylist));
+
+        if (Is_Frame(archetype)) {
+            // Frames use paramlists as their "keylist", there is no
+            // place to put an ancestor link.
         }
         else {
-            KeyList* keylist = Bonus_Keylist(cast(VarList*, m_cast(Array*, a)));
-            assert(Is_Stub_Keylist(keylist));
-
-            if (Is_Frame(archetype)) {
-                // Frames use paramlists as their "keylist", there is no
-                // place to put an ancestor link.
-            }
-            else {
-                KeyList* ancestor = Link_Keylist_Ancestor(keylist);
-                UNUSED(ancestor);  // maybe keylist
-            }
+            KeyList* ancestor = Link_Keylist_Ancestor(keylist);
+            UNUSED(ancestor);  // maybe keylist
         }
     }
     else if (Is_Stub_Pairlist(a)) {

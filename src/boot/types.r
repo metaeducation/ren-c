@@ -201,9 +201,9 @@ varargs     "evaluator position for variable numbers of arguments"
                 [context     *       *]
 
     module      "loadable context of code and data"
-                (node1 node2)
+                (node1)
                 [any-inert?]
-                [context     *       *]
+                [context      *       *]
 
     error       "error context with id, arguments, and stack origin"
     ~raised~    (node1 node2)

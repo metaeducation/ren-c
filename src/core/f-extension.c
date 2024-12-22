@@ -184,15 +184,13 @@ DECLARE_NATIVE(load_extension)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    VarList* module_ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
-    Tweak_Link_Inherit_Bind(module_ctx, g_lib_context);
+    SeaOfVars* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    Tweak_Link_Inherit_Bind(sea, g_lib_context);
 
     g_native_cfunc_pos = cfuncs;
-    g_currently_loading_module = module_ctx;
+    g_currently_loading_module = sea;
 
-    DECLARE_ATOM (module);
-    Init_Context_Cell(module, REB_MODULE, module_ctx);
-    Push_Lifeguard(module);  // !!! Is GC guard unnecessary due to references?
+    Element* module = Init_Module(OUT, sea);  // guards lifetime
 
     Size script_size;
     Byte* script_utf8 = Decompress_Alloc_Core(
@@ -245,15 +243,14 @@ DECLARE_NATIVE(load_extension)
         panic ("NATIVE calls did not line up with stored C function count");
     g_native_cfunc_pos = nullptr;
 
-    assert(g_currently_loading_module == module_ctx);
+    assert(g_currently_loading_module == sea);
     g_currently_loading_module = nullptr;
 
     rebRelease(script);
 
-    Drop_Lifeguard(module);
     Drop_Lifeguard(collated);
 
-    rebElide("append system.extensions", Varlist_Archetype(module_ctx));
+    rebElide("append system.extensions", module);
 
     RebolContext** binding_ref
         = Cell_Handle_Pointer(RebolContext*, binding_ref_handle);
@@ -264,7 +261,8 @@ DECLARE_NATIVE(load_extension)
     // defined in a couple of extensions, but no protocol by which the
     // system will automatically call them on shutdown (yet)
 
-    return Init_Context_Cell(OUT, REB_MODULE, module_ctx);
+    assert(Cell_Module_Sea(OUT) == sea);
+    return OUT;
 }
 
 
@@ -347,7 +345,7 @@ DECLARE_NATIVE(unload_extension)
     */
 
    Value* shutdown_action = Sea_Var(
-       cast(SeaOfVars*, Cell_Varlist(extension)),
+       Cell_Module_Sea(extension),
        CANON(SHUTDOWN_P),
        true
     );

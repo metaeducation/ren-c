@@ -48,7 +48,7 @@
 // processed header)
 //
 INLINE Option(VarList*) Misc_Varlist_Adjunct(VarList* varlist) {
-    return cast(VarList*, Varlist_Array(varlist)->misc.node);
+    return cast(VarList*, MISC_VARLIST_ADJUNCT(varlist));
 }
 
 INLINE void Tweak_Misc_Varlist_Adjunct(
@@ -56,7 +56,7 @@ INLINE void Tweak_Misc_Varlist_Adjunct(
     Option(VarList*) adjunct
 ){
     assert(Is_Stub_Varlist(varlist));
-    varlist->misc.node = maybe adjunct;
+    MISC_VARLIST_ADJUNCT(varlist) = maybe adjunct;
 }
 
 INLINE void Tweak_Misc_Phase_Adjunct(Phase* a, Option(VarList*) adjunct) {
@@ -199,7 +199,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 //
 
 INLINE KeyList* Bonus_Keylist(VarList* c) {
-    assert(CTX_TYPE(c) != REB_MODULE);
+    assert(Is_Stub_Varlist(c));
     return cast(KeyList*, BONUS_VARLIST_KEYLIST(c));
 }
 
@@ -232,7 +232,7 @@ INLINE void Tweak_Bonus_Keylist_Unique(Flex* f, KeyList *keylist) {
 //
 
 INLINE REBLEN Varlist_Len(VarList* c) {
-    assert(CTX_TYPE(c) != REB_MODULE);
+    assert(Is_Stub_Varlist(c));
     return c->content.dynamic.used - 1;  // -1 for archetype
 }
 

@@ -116,7 +116,6 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     Tweak_Cell_Binding(out, binding);
 
     if (Is_Stub_Varlist(binding)) {
-        assert(CTX_TYPE(cast(VarList*, binding)) != REB_MODULE);  // must patch
         assert(symbol == *Varlist_Key(cast(VarList*, binding), index));
     }
     else {

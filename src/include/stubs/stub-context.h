@@ -32,8 +32,20 @@
 INLINE Option(Context*) Link_Inherit_Bind(Context* context)
   { return u_cast(Context*, context->link.node); }
 
-INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next)
-  { context->link.node = maybe next; }
+INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
+    if (next) {
+        Flavor flavor = Stub_Flavor(unwrap next);
+        assert(
+            flavor == FLAVOR_LET
+            or flavor == FLAVOR_USE
+            or flavor == FLAVOR_VARLIST
+            or flavor == FLAVOR_SEA
+        );
+        UNUSED(flavor);
+        assert(Is_Node_Managed(unwrap next));
+    }
+    context->link.node = maybe next;
+}
 
 INLINE void Add_Link_Inherit_Bind(Context* context, Option(Context*) next) {
     assert(context->link.node == nullptr);
@@ -48,6 +60,9 @@ INLINE const Element* Varlist_Archetype(VarList* c) {  // read-only form
 }
 
 INLINE Heart CTX_TYPE(Context* c) {
+    if (Is_Stub_Sea(c))
+        return REB_MODULE;
+    assert(Is_Stub_Varlist(c));
     return Cell_Heart(Varlist_Archetype(cast(VarList*, c)));
 }
 

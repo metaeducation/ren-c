@@ -43,7 +43,7 @@
 INLINE SeaOfVars* Info_Patch_Sea(const Stub* patch) {
     assert(Is_Stub_Patch(patch));
     SeaOfVars* sea = cast(SeaOfVars*, INFO_PATCH_SEA(patch));
-    assert(CTX_TYPE(sea) == REB_MODULE);
+    assert(Is_Stub_Sea(sea));
     return sea;
 }
 
@@ -51,6 +51,19 @@ INLINE void Tweak_Info_Patch_Sea(Stub* patch, SeaOfVars* sea) {
     assert(Is_Stub_Patch(patch));
     assert(sea != nullptr);
     INFO_PATCH_SEA(patch) = sea;
+}
+
+
+INLINE Option(VarList*) Misc_Sea_Adjunct(SeaOfVars* sea) {
+    return cast(VarList*, MISC_SEA_ADJUNCT(sea));
+}
+
+INLINE void Tweak_Misc_Sea_Adjunct(
+    Stub* sea,
+    Option(VarList*) adjunct
+){
+    assert(Is_Stub_Sea(sea));
+    MISC_SEA_ADJUNCT(sea) = maybe adjunct;
 }
 
 

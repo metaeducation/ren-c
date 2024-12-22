@@ -179,6 +179,15 @@ void* Probe_Core_Debug(
         Mold_Array_At(mo, cast(const Array*, f), 0, "[]");
         break;
 
+      case FLAVOR_SEA: {
+        Probe_Print_Helper(p, expr, "Sea of Variables", file, line);
+        DECLARE_ELEMENT (elem);
+        Init_Module(elem, cast(SeaOfVars*, m_cast(void*, p)));
+        Push_Lifeguard(elem);
+        MF_Context(mo, elem, false);
+        Drop_Lifeguard(elem);
+        break; }
+
       case FLAVOR_VARLIST: {  // currently same as FLAVOR_PARAMLIST
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
         DECLARE_ELEMENT (elem);

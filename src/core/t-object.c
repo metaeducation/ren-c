@@ -72,7 +72,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         e->index = INDEX_PATCHED;
 
-        e->ctx = Cell_Varlist(v);
+        e->ctx = Cell_Module_Sea(v);
 
         StackIndex base = TOP_INDEX;
 
@@ -116,15 +116,16 @@ void Init_Evars(EVARS *e, const Cell* v) {
     else {
         e->index = 0;  // will be bumped to 1
 
-        e->ctx = Cell_Varlist(v);
+        VarList* varlist = Cell_Varlist(v);
+        e->ctx = varlist;
 
-        e->var = Varlist_Slots_Head(e->ctx) - 1;
+        e->var = Varlist_Slots_Head(varlist) - 1;
 
-        assert(Flex_Used(Bonus_Keylist(e->ctx)) <= Varlist_Len(e->ctx));
+        assert(Flex_Used(Bonus_Keylist(varlist)) <= Varlist_Len(varlist));
 
         if (heart != REB_FRAME) {
             e->param = nullptr;
-            e->key = Varlist_Keys(&e->key_tail, e->ctx) - 1;
+            e->key = Varlist_Keys(&e->key_tail, varlist) - 1;
         }
         else {
 
@@ -134,7 +135,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
     //    This is because the Lens slot is used for a label when not lensed,
     //    common with antiforms.
 
-            e->var = Varlist_Slots_Head(e->ctx) - 1;
+            e->var = Varlist_Slots_Head(varlist) - 1;
 
             Phase* lens = maybe Cell_Frame_Lens(v);
             if (not lens) {  // unlensed, only inputs visible [1]
@@ -286,9 +287,9 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
     if (Cell_Heart(a) != Cell_Heart(b))  // e.g. ERROR! won't equal OBJECT!
         return Cell_Heart(a) > Cell_Heart(b) ? 1 : 0;
 
-    VarList* c1 = Cell_Varlist(a);
-    VarList* c2 = Cell_Varlist(b);
-    if (c1 == c2)
+    Node* n1 = CELL_NODE1(a);
+    Node* n2 = CELL_NODE1(b);
+    if (n1 == n2)
         return 0;  // short-circuit, always equal if same context pointer
 
     // Note: can't short circuit on unequal frame lengths alone, as hidden
@@ -429,9 +430,9 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
         if (not Any_List(arg))
             return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
 
-        VarList* ctx = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_MODULE, 0);
-        Tweak_Link_Inherit_Bind(ctx, Cell_Binding(arg));
-        return Init_Context_Cell(OUT, REB_MODULE, ctx);
+        SeaOfVars* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+        Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
+        return Init_Module(OUT, sea);
     }
 
     if (Is_Block(arg)) {
@@ -507,7 +508,10 @@ DECLARE_NATIVE(adjunct_of)
     }
     else {
         assert(Any_Context(v));
-        adjunct = Misc_Varlist_Adjunct(Cell_Varlist(v));
+        if (Is_Module(v))
+            adjunct = Misc_Sea_Adjunct(Cell_Module_Sea(v));
+        else
+            adjunct = Misc_Varlist_Adjunct(Cell_Varlist(v));
     }
 
     if (not adjunct)
@@ -552,10 +556,60 @@ DECLARE_NATIVE(set_adjunct)
     if (Is_Frame(v)) {
         Tweak_Misc_Phase_Adjunct(Cell_Frame_Phase(v), ctx);
     }
+    else if (Is_Module(v)) {
+        Tweak_Misc_Sea_Adjunct(Cell_Module_Sea(v), ctx);
+    }
     else
-        Tweak_Misc_Varlist_Adjunct(Varlist_Array(Cell_Varlist(v)), ctx);
+        Tweak_Misc_Varlist_Adjunct(Cell_Varlist(v), ctx);
 
     return COPY(adjunct);
+}
+
+
+//
+//  Copy_Sea_Managed: C
+//
+// Modules hold no data in the SeaOfVars.  Instead, the Symbols themselves
+// point to a linked list of variable instances from all the modules that use
+// that symbol.  So copying requires walking the global symbol list and
+// duplicating those links.
+//
+SeaOfVars* Copy_Sea_Managed(SeaOfVars* original) {
+    Stub* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+
+    if (Misc_Sea_Adjunct(original)) {
+        Tweak_Misc_Sea_Adjunct(sea, Copy_Varlist_Shallow_Managed(
+            unwrap Misc_Sea_Adjunct(original)
+        ));
+    }
+    else {
+        Tweak_Misc_Sea_Adjunct(sea, nullptr);
+    }
+    Tweak_Link_Inherit_Bind(sea, nullptr);
+
+    SeaOfVars* copy = cast(SeaOfVars*, sea);  // now a well-formed context
+    assert(Not_Stub_Flag(copy, DYNAMIC));
+
+    Symbol** psym = Flex_Head(Symbol*, g_symbols.by_hash);
+    Symbol** psym_tail = Flex_Tail(Symbol*, g_symbols.by_hash);
+    for (; psym != psym_tail; ++psym) {
+        if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
+            continue;
+
+        Stub* patch = Misc_Hitch(*psym);
+        if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
+            patch = Misc_Hitch(patch);  // skip binding stump
+
+        for (; patch != *psym; patch = Misc_Hitch(patch)) {
+            if (original == Info_Patch_Sea(patch)) {
+                Value* var = Append_Context(copy, *psym);
+                Copy_Cell(var, Stub_Cell(patch));
+                break;
+            }
+        }
+    }
+
+    return copy;
 }
 
 
@@ -574,17 +628,14 @@ VarList* Copy_Varlist_Extra_Managed(
     REBLEN extra,
     bool deeply
 ){
-    REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : Varlist_Len(original);
+    REBLEN len = Varlist_Len(original);
 
     Array* varlist = Make_Array_For_Copy(
         FLEX_MASK_VARLIST | NODE_FLAG_MANAGED,
         nullptr,  // original_array, N/A because link/misc used otherwise
         len + extra + 1
     );
-    if (CTX_TYPE(original) == REB_MODULE)
-        Set_Flex_Used(varlist, 1);  // all variables linked from word table
-    else
-        Set_Flex_Len(varlist, Varlist_Len(original) + 1);
+    Set_Flex_Len(varlist, Varlist_Len(original) + 1);
 
     Value* dest = Flex_Head(Value, varlist);
 
@@ -594,52 +645,6 @@ VarList* Copy_Varlist_Extra_Managed(
     //
     Copy_Cell(dest, Varlist_Archetype(original));
     CELL_CONTEXT_VARLIST(dest) = varlist;
-
-    if (CTX_TYPE(original) == REB_MODULE) {
-        //
-        // Copying modules is different because they have no data in the
-        // varlist and no keylist.  The symbols themselves point to a linked
-        // list of variable instances from all the modules that use that
-        // symbol.  So copying requires walking the global symbol list and
-        // duplicating those links.
-
-        assert(extra == 0);
-
-        if (Misc_Varlist_Adjunct(original)) {
-            Tweak_Misc_Varlist_Adjunct(varlist, Copy_Varlist_Shallow_Managed(
-                unwrap Misc_Varlist_Adjunct(original)
-            ));
-        }
-        else {
-            Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
-        }
-        BONUS_VARLIST_KEYLIST(varlist) = nullptr;  // modules don't have
-        Tweak_Link_Inherit_Bind(varlist, nullptr);
-
-        VarList* copy = cast(VarList*, varlist); // now a well-formed context
-        assert(Get_Stub_Flag(varlist, DYNAMIC));
-
-        Symbol** psym = Flex_Head(Symbol*, g_symbols.by_hash);
-        Symbol** psym_tail = Flex_Tail(Symbol*, g_symbols.by_hash);
-        for (; psym != psym_tail; ++psym) {
-            if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
-                continue;
-
-            Stub* patch = Misc_Hitch(*psym);
-            if (Get_Flavor_Flag(SYMBOL, *psym, MISC_IS_BIND_STUMP))
-                patch = Misc_Hitch(patch);  // skip binding stump
-
-            for (; patch != *psym; patch = Misc_Hitch(patch)) {
-                if (original == Info_Patch_Sea(patch)) {
-                    Value* var = Append_Context(copy, *psym);
-                    Copy_Cell(var, Stub_Cell(patch));
-                    break;
-                }
-            }
-        }
-
-        return copy;
-    }
 
     Assert_Flex_Managed(Bonus_Keylist(original));
 
@@ -712,7 +717,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
 {
     String* s = mo->string;
 
-    VarList* c = Cell_Varlist(v);
+    Context* c = Cell_Context(v);
 
     // Prevent endless mold loop:
     //
@@ -848,6 +853,9 @@ static Element* Copy_Any_Context(
         );
     }
 
+    if (Is_Module(context))
+        return Init_Module(out, Copy_Sea_Managed(Cell_Module_Sea(context)));
+
     return Init_Context_Cell(
         out,
         Cell_Heart_Ensure_Noquote(context),
@@ -868,7 +876,7 @@ DECLARE_GENERICS(Context)
     Element* context = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
     );
-    VarList* c = Cell_Varlist(context);
+    Context* c = Cell_Context(context);
     Heart heart = Cell_Heart(context);
 
     // !!! The PORT! datatype wants things like LENGTH OF to give answers
@@ -892,10 +900,14 @@ DECLARE_GENERICS(Context)
 
         switch (prop) {
           case SYM_LENGTH: // !!! Should this be legal?
-            return Init_Integer(OUT, Varlist_Len(c));
+            if (Is_Stub_Sea(c))
+                return FAIL("SeaOfVars length counting code not done yet");
+            return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
 
           case SYM_TAIL_Q: // !!! Should this be legal?
-            return Init_Logic(OUT, Varlist_Len(c) == 0);
+            if (Is_Stub_Sea(c))
+                return FAIL("SeaOfVars TAIL? not implemented");
+            return Init_Logic(OUT, Varlist_Len(cast(VarList*, c)) == 0);
 
           case SYM_WORDS:
             return Init_Block(OUT, Context_To_Array(context, 1));
@@ -924,6 +936,7 @@ DECLARE_GENERICS(Context)
         if (heart == REB_MODULE)
             return FAIL("Cannot MAKE derived MODULE! instances (yet?)");
 
+        VarList* varlist = cast(VarList*, c);
         if (Is_Block(def)) {
             const Element* tail;
             const Element* at = Cell_List_At(&tail, def);
@@ -933,7 +946,7 @@ DECLARE_GENERICS(Context)
                 heart,
                 at,
                 tail,
-                c
+                varlist
             );
             Init_Context_Cell(OUT, heart, derived);
 
@@ -971,7 +984,8 @@ DECLARE_GENERICS(Context)
                     "Only TO convert OBJECT! -> PORT! (weird internal code)"
                 );
 
-            VarList* copy = Copy_Varlist_Shallow_Managed(c);  // !!! copy [1]
+            VarList* v = cast(VarList*, c);
+            VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
             Value* rootvar = Rootvar_Of_Varlist(copy);
             HEART_BYTE(rootvar) = REB_PORT;
             return Init_Port(OUT, copy);
@@ -1014,7 +1028,7 @@ DECLARE_GENERICS(Context)
             and QUOTE_BYTE(var) == ANTIFORM_0
             and Cell_Frame_Coupling(var) == UNCOUPLED
         ){
-            Tweak_Cell_Frame_Coupling(OUT, c);
+            Tweak_Cell_Frame_Coupling(OUT, cast(VarList*, c));
         }
 
         return OUT; }
@@ -1147,7 +1161,10 @@ DECLARE_GENERICS(Context)
         if (not index)
             return nullptr;
 
-        return COPY(Varlist_Slot(c, unwrap index)); }
+        if (Is_Stub_Sea(c))
+            return FAIL("SeaOfVars SELECT not implemented yet");
+
+        return COPY(Varlist_Slot(cast(VarList*, c), unwrap index)); }
 
       default:
         break;

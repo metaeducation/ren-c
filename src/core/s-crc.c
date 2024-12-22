@@ -316,7 +316,6 @@ uint32_t Hash_Value(const Cell* cell)
         break;
 
       hash_object:
-      case REB_MODULE:
       case REB_ERROR:
       case REB_PORT:
       case REB_OBJECT:
@@ -333,6 +332,10 @@ uint32_t Hash_Value(const Cell* cell)
         // all ANY-CONTEXT? types at the moment.
         //
         hash = cast(uint32_t, i_cast(uintptr_t, Cell_Varlist(cell)) >> 4);
+        break;
+
+      case REB_MODULE:
+        hash = cast(uint32_t, i_cast(uintptr_t, Cell_Module_Sea(cell)) >> 4);
         break;
 
       case REB_MAP:
