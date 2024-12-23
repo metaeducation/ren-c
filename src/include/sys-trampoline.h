@@ -19,55 +19,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-
-
-//=////////////////////////////////////////////////////////////////////////=//
+// See %c-trampoline.c for an explanation of the Trampoline concept.
 //
-//     !!! EVALUATOR TICK COUNT - VERY USEFUL - READ THIS SECTION !!!
-//
-//=////////////////////////////////////////////////////////////////////////=//
-
-// The evaluator `tick` should be visible in the C debugger watchlist as a
-// local variable on each evaluator stack level.  So if a fail() happens at a
-// deterministic moment in a run, capture the number from the level of interest
-// and recompile for a breakpoint at that tick.
-//
-// If the tick is AFTER command line processing is done, you can request a tick
-// breakpoint that way with `--breakpoint NNN`
-//
-// Checked builds carry ticks many other places.  Stubs contain `Stub.tick`
-// when created, levels have a `Level.tick`, and the DEBUG_TRACK_EXTEND_CELLS
-// switch will double the size of cells so they can carry the tick, file, and
-// line where they were initialized.
-//
-// For custom updating of stored ticks to help debugging some scenarios, see
-// Touch_Stub() and Touch_Cell().  Note also that BREAK_NOW() can be called to
-// pause and dump state at any moment.
-
-#if RUNTIME_CHECKS && TRAMPOLINE_COUNTS_TICKS
-    extern Tick g_break_at_tick;  // in %c-trampoline.c for easy setting
-
-    #define Update_Tick_If_Enabled() \
-        do { \
-            if (g_tick < UINT64_MAX) /* avoid rollover */ \
-                g_tick += 1; \
-        } while (false)  // macro so that breakpoint is at right stack level!
-
-    #define Maybe_Debug_Break_On_Tick(L) \
-        do { \
-            if ( \
-                g_break_at_tick != 0 and g_tick >= g_break_at_tick \
-            ){ \
-                printf("BREAK_ON_TICK(%" PRIu64 ")\n", g_tick); \
-                Dump_Level_Location(L); \
-                debug_break(); /* see %debug_break.h */ \
-                g_break_at_tick = 0; \
-            } \
-        } while (false)  // macro so that breakpoint is at right stack level!
-#else
-    #define Update_Tick_If_Enabled() NOOP
-    #define Maybe_Debug_Break_On_Tick(L) NOOP
-#endif
 
 
 //=//// TRAMPOLINE_FLAG_RECYCLE ///////////////////////////////////////////=//

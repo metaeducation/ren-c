@@ -58,7 +58,7 @@
 #include "sys-core.h"
 
 
-#if TRAMPOLINE_COUNTS_TICKS  // <-- USEFUL!  SEE Maybe_Debug_Break_On_Tick()
+#if TRAMPOLINE_COUNTS_TICKS  // <-- VERY USEFUL! SEE %sys-tick.h FOR MORE INFO
 
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
     Tick g_break_at_tick =         0;
@@ -154,7 +154,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     possibly(L != TOP_LEVEL);  // e.g. REDUCE keeps an evaluator pushed
 
-    Maybe_Debug_Break_On_Tick(L);  // C-DEBUG-BREAK native calls land here
+    Maybe_Trampoline_Break_On_Tick(L);  // C-DEBUG-BREAK native calls land here
 
   //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
 

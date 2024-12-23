@@ -303,7 +303,7 @@ DECLARE_NATIVE(c_debug_break)
 
   #if (INCLUDE_C_DEBUG_BREAK_NATIVE)
     #if TRAMPOLINE_COUNTS_TICKS
-        g_break_at_tick = level_->tick;  // queue break for next step [1]
+        g_break_at_tick = g_tick + 1;  // queue break for next step [1]
         return Init_Nihil(OUT);
      #else
       #if RUNTIME_CHECKS

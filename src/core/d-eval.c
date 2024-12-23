@@ -49,7 +49,7 @@
 #define L_next_gotten   L->feed->gotten
 #define L_binding     Level_Binding(L)
 
-#if TRAMPOLINE_COUNTS_TICKS && DEBUG_HAS_PROBE
+#if DEBUG_HAS_PROBE
 
 //
 //  Dump_Level_Location: C
@@ -107,7 +107,48 @@ void Dump_Level_Location(Level* L)
     }
 }
 
-#endif
+
+//
+//  Where_Core_Debug: C
+//
+// !!! This should be merged with Dump_Level_Location()
+//
+void Where_Core_Debug(Level* L) {
+    if (FEED_IS_VARIADIC(L->feed))
+        Reify_Variadic_Feed_As_Array_Feed(L->feed, false);
+
+    REBLEN index = FEED_INDEX(L->feed);
+
+    if (index > 0) {
+        DECLARE_MOLDER (mo);
+        SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
+        mo->limit = 40 * 20;  // 20 lines of length 40, or so?
+
+        REBLEN before_index = index > 3 ? index - 3 : 0;
+        Push_Mold(mo);
+        Mold_Array_At(mo, Feed_Array(L->feed), before_index, "[]");
+        Throttle_Mold(mo);
+        printf("Where(Before):\n");
+        printf("%s\n\n", Binary_At(mo->string, mo->base.size));
+        Drop_Mold(mo);
+    }
+
+    DECLARE_MOLDER (mo);
+    SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
+    mo->limit = 40 * 20;  // 20 lines of length 40, or so?
+    Push_Mold(mo);
+    Mold_Array_At(mo, Feed_Array(L->feed), index, "[]");
+    Throttle_Mold(mo);
+    printf("Where(At):\n");
+    printf("%s\n\n", Binary_At(mo->string, mo->base.size));
+    Drop_Mold(mo);
+}
+
+
+void Where(Level* L)
+  { Where_Core_Debug(L); }  // Dump_Level_Location(L) ???
+
+#endif  // DEBUG_HAS_PROBE
 
 
 #if RUNTIME_CHECKS

@@ -169,6 +169,10 @@ TVAR TrampolineState g_ts;
     TVAR Tick g_tick;  // starts at 1, so 0 means (! TRAMPOLINE_COUNTS_TICKS)
 #endif
 
+#if RUNTIME_CHECKS
+    TVAR uintptr_t g_sporadic;  // counter behind SPORADICALLY()
+#endif
+
 TVAR MoldState g_mold;
 
 #if RUNTIME_CHECKS

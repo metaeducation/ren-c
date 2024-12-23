@@ -22,9 +22,6 @@
 // These are mostly RUNTIME_CHECKS routines to support the macros and
 // definitions in %sys-cell.h.
 //
-// These are not specific to any given type.  For the type-specific cell
-// code, see files with names like %t-word.c, %t-logic.c, %t-integer.c...
-//
 
 #include "sys-core.h"
 
@@ -33,20 +30,20 @@
 #if DEBUG_HAS_PROBE
 
 INLINE void Probe_Print_Helper(
-    const void *p,  // the Value*, Flex*, or UTF-8 char*
+    const void *p,  // the Cell*, Stub*, or UTF-8 char*
     const char *expr,  // stringified contents of the PROBE() macro
-    const char *label,  // detected type of `p` (see %rebnod.h)
-    const char *file,  // file where this PROBE() was invoked
-    int line  // line where this PROBE() was invoked
+    const char *type,  // detected type of `p` (see %struct-node.h)
+    Option(const char*) file,  // file where this PROBE() was invoked
+    Option(LineNumber) line  // line where this PROBE() was invoked
 ){
     printf(
         "\n-- (%s)=0x%p : %s : TICK %" PRIu64 " %s LINE %d\n",
         expr,
         p,
-        label,
+        type,
         TICK,  // 0 if not TRAMPOLINE_COUNTS_TICKS
-        file,
-        line
+        file ? unwrap file : "(no file)",
+        line ? cast(int, unwrap line) : 0
     );
 
     fflush(stdout);
@@ -69,11 +66,11 @@ INLINE void Probe_Molded_Value(Molder* mo, const Value* v)
 }
 
 void Probe_Cell_Print_Helper(
-  Molder* mo,
-  const void *p,
-  const char *expr,
-  const char *file,
-  int line
+    Molder* mo,
+    const void *p,
+    const char *expr,
+    Option(const char*) file,
+    Option(LineNumber) line
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
 
@@ -111,13 +108,16 @@ void Probe_Cell_Print_Helper(
 //
 void* Probe_Core_Debug(
     const void *p,
+    Length limit,
     const char *expr,
-    const char *file,
-    int line
+    Option(const char*) file,
+    Option(LineNumber) line
 ){
     DECLARE_MOLDER (mo);
-    SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
-    mo->limit = 10000;  // what's useful?
+    if (limit != 0) {
+        SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
+        mo->limit = 10000;  // what's useful?
+    }
 
     Push_Mold(mo);
 
@@ -143,9 +143,9 @@ void* Probe_Core_Debug(
         }
         goto cleanup;
 
-      case DETECTED_AS_CELL:
+      case DETECTED_AS_CELL: {
         Probe_Cell_Print_Helper(mo, p, expr, file, line);
-        goto cleanup;
+        goto cleanup; }
 
       case DETECTED_AS_END:
         Probe_Print_Helper(p, expr, "rebEND Signal (192)", file, line);
@@ -370,45 +370,17 @@ void* Probe_Core_Debug(
 // Version with fewer parameters, useful to call from the C debugger (which
 // cannot call macros like PROBE())
 //
-void Probe(const void *p)
-  { Probe_Core_Debug(p, "C debug", "N/A", 0); }
-
-
-//
-//  Where_Core_Debug: C
-//
-void Where_Core_Debug(Level* L) {
-    if (FEED_IS_VARIADIC(L->feed))
-        Reify_Variadic_Feed_As_Array_Feed(L->feed, false);
-
-    REBLEN index = FEED_INDEX(L->feed);
-
-    if (index > 0) {
-        DECLARE_MOLDER (mo);
-        SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
-        mo->limit = 40 * 20;  // 20 lines of length 40, or so?
-
-        REBLEN before_index = index > 3 ? index - 3 : 0;
-        Push_Mold(mo);
-        Mold_Array_At(mo, Feed_Array(L->feed), before_index, "[]");
-        Throttle_Mold(mo);
-        printf("Where(Before):\n");
-        printf("%s\n\n", Binary_At(mo->string, mo->base.size));
-        Drop_Mold(mo);
-    }
-
-    DECLARE_MOLDER (mo);
-    SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
-    mo->limit = 40 * 20;  // 20 lines of length 40, or so?
-    Push_Mold(mo);
-    Mold_Array_At(mo, Feed_Array(L->feed), index, "[]");
-    Throttle_Mold(mo);
-    printf("Where(At):\n");
-    printf("%s\n\n", Binary_At(mo->string, mo->base.size));
-    Drop_Mold(mo);
+void Probe(const void *p) {
+    Length limit = 0;  // unlimited
+    Option(const char*) file = nullptr;
+    Option(LineNumber) line = 0;
+    Probe_Core_Debug(p, limit, "Probe()", file, line);
 }
 
-void Where(Level* L)
-  { Where_Core_Debug(L); }
+void Probe_Limit(const void *p, Length limit) {
+    Option(const char*) file = nullptr;
+    Option(LineNumber) line = 0;
+    Probe_Core_Debug(p, limit, "Probe_Limit()", file, line);
+}
 
 #endif  // DEBUG_HAS_PROBE
