@@ -984,16 +984,14 @@ DECLARE_NATIVE(compose)
     Offset end_offset = ss->at - head;
     Init_Integer(PUSH(), end_offset);
 
-    Utf8(const*) at = cast(Utf8(const*), ss->at);  // was pre-validated UTF-8
-
     Codepoint c;
-    Utf8(const*) next = Utf8_Next(&c, at);
+    Utf8(const*) next = Utf8_Next(&c, ss->at);
 
     while (c != '\0') {
         if (c == '(')
             goto found_subsequent_string_pattern;
         ss->at = next;
-        next = Utf8_Next(&c, at);
+        next = Utf8_Next(&c, cast(Utf8(const*), ss->at));
     }
 
     Drop_Level(SUBLEVEL);
