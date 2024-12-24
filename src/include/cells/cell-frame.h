@@ -218,7 +218,7 @@ INLINE Element* Init_Frame_Untracked(
 
 #define Init_Lensed_Frame(out,identity,lens,coupling) \
     TRACK(Init_Frame_Untracked((out), (identity), \
-        ensure(Phase*, (lens)), (coupling)))
+        ensure(Option(Phase*), (lens)), (coupling)))
 
 
 //=//// ACTIONS (FRAME! Antiforms) ////////////////////////////////////////=//

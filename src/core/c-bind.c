@@ -323,6 +323,7 @@ Option(Stub*) Get_Word_Container(
     }
 
     Context* c = context;
+    Context* next;
 
   #if RUNTIME_CHECKS
     Corrupt_Pointer_If_Debug(context);  // make sure we use `c` below
@@ -330,107 +331,43 @@ Option(Stub*) Get_Word_Container(
     USED(context_in);
   #endif
 
-    while (c) {
-        goto loop_body;  // avoid compiler warnings on `goto next_context` [1]
+    goto loop_body;  // stylize loop to avoid annoying indentation level
 
-      next_context:
-        c = maybe Link_Inherit_Bind(c);
-        continue;
+  next_context: //////////////////////////////////////////////////////////////
 
-      loop_body:
+    c = next;
 
-        if (Is_Stub_Sea(c)) {
-            Value* slot = Sea_Var(cast(SeaOfVars*, c), symbol, true);
-            if (slot) {
-                *index_out = INDEX_PATCHED;
-                return Compact_Stub_From_Cell(slot);
-            }
-            goto next_context;
-        }
+  loop_body: /////////////////////////////////////////////////////////////////
 
-        if (Is_Stub_Varlist(c)) {
-            VarList* vlist = cast(VarList*, c);
+    if (c == nullptr)
+        return nullptr;
 
-            if (
-                CTX_TYPE(vlist) == REB_FRAME
-                and binding  // word has a cache for if it's in an action frame
-                and Action_Is_Base_Of(
-                    cast(Phase*, binding),
-                    cast(ParamList*, vlist)
-                )
-            ){
-                assert(CELL_WORD_INDEX_I32(any_word) <= 0);
-                if (CELL_WORD_INDEX_I32(any_word) == 0)
-                    goto next_context;
-                *index_out = -(CELL_WORD_INDEX_I32(any_word));
-                return vlist;
-            }
+    Flavor flavor = Stub_Flavor(c);
+    Option(Phase*) lens = nullptr;
 
-            DECLARE_ELEMENT (elem);
-            if (CTX_TYPE(vlist) == REB_FRAME) {
-                Details* lens = Phase_Details(cast(ParamList*, vlist));
-                Init_Lensed_Frame(
-                    elem, cast(ParamList*, vlist), lens, NONMETHOD
-                );
-            }
-            else {
-                Copy_Cell(elem, Varlist_Archetype(vlist));
-            }
+  //=//// ALTER `c` IF USE STUB ///////////////////////////////////////////=//
 
-            Option(Index) index = Find_Symbol_In_Context(  // must search
-                elem,
-                symbol,
-                true
-            );
+    // Sometimes the Link_Inherit_Bind() is already taken by another binding
+    // chain, and so a Use Stub has to be fabricated to hold an alternative
+    // binding to use in another chain.  But the effect should be the same,
+    // so we transform the context to the one that the Use Stub points to.
+    //
+    // 1. The "final phase" of a function application is allowed to use the
+    //    VarList of the Level directly as a context, and put the next context
+    //    into Link_Inherit_Bind().  There's no Lens in that case, so we use
+    //    the Details of the function as the Lens--providing full visibility
+    //    to all non-sealed locals and arguments.  A null lens cues this
+    //    behavior below, so we can't leave it null when we have a USE of a
+    //    Lens-less FRAME!.  Lensing with Details would incorrectly give
+    //    full visibility, so Lens with the ParamList.
 
-            // Note: if frame, caching here seems to slow things down?
-          #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
-            if (CTX_TYPE(vlist) == REB_FRAME) {
-                if (CELL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
-                    CELL_WORD_INDEX_I32(
-                        m_cast(Cell*, any_word)
-                    ) = -(maybe index);
-                    Tweak_Cell_Binding(
-                        m_cast(Cell*, any_word),
-                        Phase_Details(vlist)
-                    );
-                }
-            }
-          #endif
+    next = maybe Link_Inherit_Bind(c);  // save so we can update `c`
 
-            if (index) {
-                *index_out = unwrap index;
-                return vlist;
-            }
-
-          goto next_context;
-        }
-
-        if (Is_Stub_Let(c)) {
-            if (Info_Let_Symbol(c) == symbol) {
-                *index_out = INDEX_PATCHED;
-                return c;
-            }
-            goto next_context;
-        }
-
-        assert(Is_Stub_Use(c));
-
+    if (flavor == FLAVOR_USE) {
         if (  // some USEs only affect SET-WORD!s
             Get_Flavor_Flag(USE, c, SET_WORDS_ONLY)
             and not Is_Set_Word(any_word)
         ){
-            goto next_context;
-        }
-
-        if (Is_Module(Stub_Cell(c))) {
-            SeaOfVars* sea = Cell_Module_Sea(Stub_Cell(c));
-
-            Value* var = Sea_Var(sea, symbol, true);
-            if (var) {
-                *index_out = INDEX_PATCHED;
-                return Compact_Stub_From_Cell(var);
-            }
             goto next_context;
         }
 
@@ -443,23 +380,130 @@ Option(Stub*) Get_Word_Container(
             goto next_context;
         }
 
-        VarList* overload = Cell_Varlist(Stub_Cell(c));
-
-        REBLEN index = 1;
-        const Key* key_tail;
-        const Key* key = Varlist_Keys(&key_tail, overload);
-        for (; key != key_tail; ++key, ++index) {
-            if (Key_Symbol(key) != symbol)
-                continue;
-
-            *index_out = index;
-            return overload;
+        if (Is_Frame(Stub_Cell(c))) {
+            lens = Cell_Frame_Lens(Stub_Cell(c));
+            if (not lens)  // need lens to not default to full visibility [1]
+                lens = Phase_Paramlist(Cell_Frame_Phase(Stub_Cell(c)));
         }
 
+        c = Cell_Context(Stub_Cell(c));  // do search on other contexts
+        flavor = Stub_Flavor(c);
+    }
+
+  //=//// MODULE LOOKUP ///////////////////////////////////////////////////=//
+
+    // Module lookup is very common so we do it first.  It's relatively fast
+    // in most cases, see the definition of SeaOfVars for an explanation of
+    // the linked list of "Patch" pointed to by each Symbol, holding variables
+    // for any module that has that symbol in it.
+
+    if (flavor == FLAVOR_SEA) {
+        SeaOfVars* sea = cast(SeaOfVars*, c);
+        Option(Patch*) patch = Sea_Patch(sea, symbol, true);  // strict=true
+        if (patch) {
+            *index_out = INDEX_PATCHED;
+            return patch;
+        }
         goto next_context;
     }
 
-    return nullptr;
+  //=//// LET STUBS ///////////////////////////////////////////////////////=//
+
+    // A Let Stub is currently very simple, it just holds a single variable.
+    // There may be a way to unify this with VarList in such a way that the
+    // use of a single Symbol* key in the keylist position could cue it to
+    // know that it's a single element context, which could unify the way
+    // that Let and VarList work, though it would mean sacrificing the [0]
+    // slot which is needed by ParamList to hold the inherited phase.
+
+    if (flavor == FLAVOR_LET) {
+        if (Info_Let_Symbol(c) == symbol) {
+            *index_out = INDEX_PATCHED;
+            return c;
+        }
+        goto next_context;
+    }
+
+    assert(flavor == FLAVOR_VARLIST);
+
+  //=//// VARLIST LOOKUP //////////////////////////////////////////////////=//
+
+    // VarLists are currently very basic, and require us to do a linear search
+    // on the KeyList to see if a Symbol is present.  There aren't any fancy
+    // hashings to accelerate the search by accelerating with some method
+    // that might have some false positives about whether the key is there.
+    // (Symbols are immutable, and hence there could be some fingerprinting
+    // done that is tested against information stored in KeyLists.)  It's
+    // technically not as big a problem as it used to be, because modules
+    // are based on SeaOfVars and not VarLists...so VarLists have many
+    // fewer keys than they used to.
+    //
+    // But there are a couple of things that make searching in VarList more
+    // complicated.  One is that the VarList may be a frame, and the frame
+    // can even have duplicate keys--where only some of keys are applicable
+    // when viewing the frame through a certain "Lens".  The other thing is
+    // that there's an attempted acceleration of the search by caching a
+    // function's identity in WORD! cells and a negative index that tells
+    // you where to find the variable if that word is searched in a frame
+    // for that function.
+
+    VarList* vlist = cast(VarList*, c);
+
+    if (
+        CTX_TYPE(vlist) == REB_FRAME
+        and binding  // word has a cache for if it's in an action frame
+        and Action_Is_Base_Of(
+            cast(Phase*, binding),
+            cast(ParamList*, vlist)
+        )
+    ){
+        assert(CELL_WORD_INDEX_I32(any_word) <= 0);
+        if (CELL_WORD_INDEX_I32(any_word) == 0)
+            goto next_context;
+        *index_out = -(CELL_WORD_INDEX_I32(any_word));
+        return vlist;
+    }
+
+    DECLARE_ELEMENT (elem);
+    if (CTX_TYPE(vlist) == REB_FRAME) {
+        if (not lens) {  // want full visibility (Use would have defaulted...)
+            lens = Phase_Details(cast(ParamList*, vlist));
+        }
+        Init_Lensed_Frame(
+            elem, cast(ParamList*, vlist), lens, NONMETHOD
+        );
+    }
+    else {
+        Copy_Cell(elem, Varlist_Archetype(vlist));
+    }
+
+    Option(Index) index = Find_Symbol_In_Context(  // must search
+        elem,
+        symbol,
+        true
+    );
+
+    // Note: if frame, caching here seems to slow things down?
+  #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
+    if (CTX_TYPE(vlist) == REB_FRAME) {
+        if (CELL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
+            CELL_WORD_INDEX_I32(
+                m_cast(Cell*, any_word)
+            ) = -(maybe index);
+            Tweak_Cell_Binding(
+                m_cast(Cell*, any_word),
+                Phase_Details(vlist)
+            );
+        }
+    }
+  #endif
+
+    if (index) {
+        *index_out = unwrap index;
+        return vlist;
+    }
+
+    goto next_context;
 }
 
 
