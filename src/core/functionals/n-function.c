@@ -61,17 +61,14 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
+// * See LAMBDA for a variant that doesn't include definitional return.
+//   (An aspirational goal is that FUNC with definitional return could be
+//   built in usermode with LAMBDA.)
+//
 // * R3-Alpha defined FUNC in terms of MAKE ACTION! on a block.  There was
 //   no particular advantage to having an entry point to making functions
 //   from a spec and body that put them both in the same block, so FUNC
 //   serves as a more logical native entry point for that functionality.
-//
-// * While FUNC is intended to be an optimized native due to its commonality,
-//   the belief is still that it should be possible to build an equivalent
-//   (albeit slower) version in usermode out of other primitives.  The current
-//   plan is that those primitives would be RUNS of a FRAME!, and being able
-//   to ADAPT a block of code into that frame.  This makes ADAPT the more
-//   foundational operation for fusing interfaces with block bodies.
 //
 
 #include "sys-core.h"
@@ -88,6 +85,11 @@ enum {
 // Puts a definitional return ACTION! in the RETURN slot of the frame, and
 // runs the body block associated with this function.
 //
+// (At one time optimized dispatchers for cases like `func [...] []` were
+// used, that avoided running empty blocks.  These were deemed to be more
+// trouble than they were worth--at least for now--and so a common dispatcher
+// is used even for cases that could be optimized.)
+//
 Bounce Func_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
@@ -97,6 +99,32 @@ Bounce Func_Dispatcher(Level* const L)
         ST_FUNC_BODY_EXECUTING
     };
 
+    Details* details = Ensure_Level_Details(L);
+    assert(Details_Max(details) == IDX_FUNC_MAX);
+
+    if (THROWING) {  // might be a RETURN:RUN targeting this Level
+        assert(STATE == ST_FUNC_BODY_EXECUTING);
+        const Value* label = VAL_THROWN_LABEL(L);
+        if (
+            not Is_Frame(label)
+            or (
+                Cell_Frame_Phase(label)
+                != Cell_Frame_Phase(LIB(DEFINITIONAL_REDO))  // see definition
+            )
+            or Cell_Frame_Coupling(label) != cast(VarList*, L->varlist)
+        ){
+            return BOUNCE_THROWN;  // wasn't a REDO thrown to this level
+        }
+
+        CATCH_THROWN(OUT, level_);
+
+        if (Is_Nulled(OUT))
+            goto redo_with_current_frame_values;
+
+        assert(HEART_BYTE(OUT) == REB_FRAME);
+        goto reuse_level_to_run_frame_in_out;
+    }
+
     switch (STATE) {
       case ST_FUNC_INITIAL_ENTRY: goto initial_entry;
       case ST_FUNC_BODY_EXECUTING: goto body_finished_without_returning;
@@ -105,19 +133,18 @@ Bounce Func_Dispatcher(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. One way of handling RETURN would be if this dispatcher asked to
-    //    receive throws.  But for one thing, we wouldn't want to do type
-    //    checking of the return result in this dispatcher... RETURN needs
-    //    to do it so it can deliver the error at the source location where
-    //    the return is called, prior ot the throw.
+    // 1. Originally, this Dispatcher did not ask to receive throws.  The
+    //    DEFINITIONAL-RETURN function did all the work (it has to do type
+    //    checking to deliver good errors) and then used a generic UNWIND
+    //    supported by the Trampoline.
     //
-    //    So really all this function would be doing at that point would be
-    //    to catch the result.  The Trampoline has a generic UNWIND that
-    //    deals with that already.  So long as that exists, then this
-    //    dispatcher merely catching a "teleport" would be redundant.
-
-    Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_FUNC_MAX);
+    //    But realizations about redo mechanics meant that the Dispatchers
+    //    had to be complicit.  This eliminated generic REDO, so now it's
+    //    a specific aspect of RETURN:RUN's relationship to Func_Dispatcher()
+    //    and needs to be caught here.  That could mean that it's better to
+    //    give up the generic UNWIND and fold plain RETURN catching in with
+    //    RETURN:RUN catching, but that would require multiplexing the signal
+    //    of whether to :RUN or not into the thrown value.
 
     Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
@@ -132,9 +159,72 @@ Bounce Func_Dispatcher(Level* const L)
     Copy_Cell(SPARE, body);
     Tweak_Cell_Binding(SPARE, L->varlist);
 
-    unnecessary(Enable_Dispatcher_Catching_Of_Throws(L));  // RETURN unwind [1]
+    Enable_Dispatcher_Catching_Of_Throws(L);  // for RETURN:RUN, not RETURN [1]
 
     return CONTINUE(OUT, stable_SPARE);  // body result is discarded
+
+} redo_with_current_frame_values: { //////////////////////////////////////////
+
+    // This will trigger a call back to the evaluator with the same VarList.
+    // We will re-enter this dispatcher in the ST_FUNC_INITIAL_ENTRY state.
+    //
+    // 1. Because tail calls might use existing arguments and locals when
+    //    calculating the new call's locals and args, we can only avoid
+    //    allocating new memory for the args and locals if we reuse the frame
+    //    "as is"--assuming the values of the variables have been loaded with
+    //    what the recursion expects.  We still have to reset specialized
+    //    values back (including locals) to what a fresh call would have.
+
+    possibly(Link_Inherit_Bind(L->varlist) == nullptr);  // maybe assigned null
+    Tweak_Link_Inherit_Bind(L->varlist, nullptr);  // re-entry sets back
+
+    const Key* key_tail;
+    const Key* key = Phase_Keys(&key_tail, details);
+    L->u.action.key = key;
+    L->u.action.key_tail = key_tail;
+    Param* param = Phase_Params_Head(details);
+    L->u.action.param = param;
+    Value* arg = Level_Args_Head(L);
+    L->u.action.arg = arg;
+    for (; key != key_tail; ++key, ++arg, ++param) {
+        if (Is_Specialized(param)) {  // must reset [1]
+          #if DEBUG_POISON_UNINITIALIZED_CELLS
+            Poison_Cell(arg);
+          #endif
+            Blit_Param_Drop_Mark(arg, param);
+        }
+        else {
+            // assume arguments assigned to values desired for recursion
+        }
+    }
+
+    assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
+    Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
+
+    return BOUNCE_REDO_CHECKED;  // !!! should it clear DISPATCHER_CATCHES?
+
+} reuse_level_to_run_frame_in_out: { /////////////////////////////////////////
+
+    // This form of REDO allocates a new VarList, but reuses the Level.  It
+    // will gather new arguments from the callsite (the callsite's feed was
+    // captured and reassigned as L's feed before the throw of the REDO).
+
+    Drop_Action(L);
+
+    Restart_Action_Level(L);
+    Push_Action(L, cast(Value*, OUT));
+    Begin_Action(L, Cell_Frame_Label_Deep(OUT), PREFIX_0);
+
+    Erase_Cell(OUT);  // invariant for ST_ACTION_INITIAL_ENTRY
+
+    assert(Get_Executor_Flag(ACTION, L, IN_DISPATCH));
+    Clear_Executor_Flag(ACTION, L, IN_DISPATCH);
+
+    assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
+    Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
+
+    STATE = ST_ACTION_INITIAL_ENTRY;
+    return BOUNCE_CONTINUE;  // define a BOUNCE for this?
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
@@ -147,8 +237,6 @@ Bounce Func_Dispatcher(Level* const L)
     //    So this is the compromise chosen...at the moment.
 
     Init_Nothing(OUT);  // NOTHING, regardless of body result [1]
-
-    Details* details = Ensure_Level_Details(L);
 
     const Element* param = Quoted_Returner_Of_Paramlist(
         Phase_Paramlist(details), SYM_RETURN
@@ -230,51 +318,21 @@ bool Func_Details_Querier(
 //
 // This digests the spec block into a `paramlist` for parameter descriptions,
 // along with an associated `keylist` of the names of the parameters and
-// various locals.  A separate object that uses the same keylist is made
-// which maps the parameters to any descriptions that were in the spec.
-//
-// Due to the fact that the typesets in paramlists are "lossy" of information
-// in the source, another object is currently created as well that maps the
-// parameters to the BLOCK! of type information as it appears in the source.
-// Attempts are being made to close the gap between that and the paramlist, so
-// that separate arrays aren't needed for this closely related information:
-//
-// https://forum.rebol.info/t/1459
+// various locals.
 //
 // The C function dispatcher that is used for the resulting ACTION! varies.
 // For instance, if the body is empty then it picks a dispatcher that does
 // not bother running the code.  And if there's no return type specified,
 // a dispatcher that doesn't check the type is used.
 //
-// There is also a "definitional return" MKF_RETURN option used by FUNC, so
-// the body will introduce a RETURN specific to each action invocation, thus
-// acting more like:
+// 1. We capture the mutability flag that was in effect when this action was
+//    created.  The default FUNC dispatcher takes the body as <const>, but
+//    alternatives could be made which did not:
 //
-//     /return: lambda
-//         [{Returns a value from a function.} ^value [any-atom?]]
-//         [unwind:with (binding of $return) unmeta value]
-//     ]
-//     (body goes here)
+//        >> /f: func:mutable [] [b: [1 2 3] clear b]]
 //
-// This pattern addresses "Definitional Return" in a way that does not need to
-// build in RETURN as a language keyword in any specific form (in the sense
-// that functions do not itself require it).  See the LAMBDA generator for
-// an example...where UNWIND can be used to exit frames if you want to build
-// something return-like.
-//
-// FUNC optimizes by not internally building or executing the equivalent body,
-// but giving it back from BODY-OF.  This gives FUNC the edge to pretend to
-// add containing code and simulate its effects, while really only holding
-// onto the body the caller provided.
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// 1. At one time there were many optimized dispatchers for cases like
-//    `func [...] []` which would not bother running empty blocks, and which
-//    did not write into a temporary cell and then copy over the result in
-//    a later phase.  The introduction of LAMBDA as an alternative generator
-//    made these optimizations give diminishing returns, so they were all
-//    eliminated (though they set useful precedent for varying dispatchers).
+//        >> f
+//        == []
 //
 Details* Make_Interpreted_Action_May_Fail(
     const Element* spec,
@@ -312,57 +370,26 @@ Details* Make_Interpreted_Action_May_Fail(
         LENS_MODE_ALL_UNSEALED // we created exemplar, see all!
     );
 
-    // Favor the spec first, then the body, for file and line information.
-    //
     Option(const String*) filename;
-    if ((filename = Link_Filename(Cell_Array(spec)))) {
+    if ((filename = Link_Filename(Cell_Array(spec)))) {  // favor spec
         Tweak_Link_Filename(copy, filename);
         MISC_SOURCE_LINE(copy) = MISC_SOURCE_LINE(Cell_Array(spec));
     }
-    else if ((filename = Link_Filename(Cell_Array(body)))) {
+    else if ((filename = Link_Filename(Cell_Array(body)))) {  // body fallback
         Tweak_Link_Filename(copy, filename);
         MISC_SOURCE_LINE(copy) = MISC_SOURCE_LINE(Cell_Array(body));
     }
     else {
-        // Ideally all source series should have a file and line numbering
-        // At the moment, if a function is created in the body of another
-        // function it doesn't work...trying to fix that.
+        // Ideally Source arrays should be connected with *some* file and line
     }
 
-    // Save the relativized body in the action's details block.  Since it is
-    // a Cell* and not a Value*, the dispatcher must combine it with a
-    // running frame instance (the Level* received by the dispatcher) before
-    // executing the interpreted code.
-    //
     Cell* rebound = Init_Block(
         Details_At(details, IDX_INTERPRETED_BODY),
         copy
     );
     Tweak_Cell_Binding(rebound, Cell_List_Binding(body));
 
-    // Capture the mutability flag that was in effect when this action was
-    // created.  This allows the following to work:
-    //
-    //    >> eval mutable [/f: func [] [b: [1 2 3] clear b]]
-    //    >> f
-    //    == []
-    //
-    // So even though the invocation is outside the mutable section, we have
-    // a memory that it was created under those rules.  (It's better to do
-    // this based on the frame in effect than by looking at the CONST flag of
-    // the incoming body block, because otherwise ordinary Ren-C functions
-    // whose bodies were created from dynamic code would have mutable bodies
-    // by default--which is not a desirable consequence from merely building
-    // the body dynamically.)
-    //
-    // Note: besides the general concerns about mutability-by-default, when
-    // functions are allowed to modify their bodies with words relative to
-    // their frame, the words would refer to that specific recursion...and not
-    // get picked up by other recursions that see the common structure.  This
-    // means compatibility would be with the behavior of R3-Alpha CLOSURE,
-    // not with R3-Alpha FUNCTION.
-    //
-    if (Get_Cell_Flag(body, CONST))
+    if (Get_Cell_Flag(body, CONST))  // capture mutability flag [2]
         Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
 
     return details;
@@ -568,8 +595,8 @@ DECLARE_NATIVE(definitional_return)
 // actually use an instance of this native, and poke a binding into it to
 // identify the action.
 //
-// This means the RETURN that is in LIB is actually just a dummy function
-// which you will bind to and run if there is no definitional return in effect.
+// This means the RETURN that is in LIB is actually a "tripwire" (antiform
+// tag) to inform you that no definitional return is in effect.
 //
 // 1. The cached name for values holding this native is set to RETURN by the
 //    dispatchers that use it, overriding DEFINITIONAL-RETURN, which might
@@ -628,18 +655,6 @@ DECLARE_NATIVE(definitional_return)
     //
     //   https://en.wikipedia.org/wiki/Tail_call
     //
-    // 1. The function we are returning from is in the dispatching state, and
-    //    the level's state byte can be used by the dispatcher function when
-    //    that is the case.  We're pushing the level back to either the
-    //    argument-gathering phase (INITIAL_ENTRY) or typechecking phase.
-    //    Other flags pertinent to the dispatcher need to be cleared too.
-    //
-    // 2. Because tail calls might use existing arguments and locals when
-    //    calculating the new call's locals and args, we can only avoid
-    //    allocating new memory for the args and locals if we reuse the frame
-    //    "as is"--assuming the values of the variables have been loaded with
-    //    what the recursion expects.  We still have to reset specialized
-    //    values back (including locals) to what a fresh call would have.
 
     const Value* gather_args;
 
@@ -647,59 +662,60 @@ DECLARE_NATIVE(definitional_return)
         Is_Tag(atom)
         and strcmp(c_cast(char*, Cell_Utf8_At(atom)), "redo") == 0
     ){
-        Phase* redo_action = target_level->u.action.original;
-        const Key* key_tail;
-        const Key* key = Phase_Keys(&key_tail, redo_action);
-        target_level->u.action.key = key;
-        target_level->u.action.key_tail = key_tail;
-        Param* param = cast(Param*, Varlist_Slots_Head(Phase_Paramlist(redo_action)));
-        target_level->u.action.param = Phase_Params_Head(redo_action);
-        Value* arg = Level_Args_Head(target_level);
-        target_level->u.action.arg = arg;
-        for (; key != key_tail; ++key, ++arg, ++param) {
-            if (Is_Specialized(param)) {  // must reset [2]
-              #if DEBUG_POISON_UNINITIALIZED_CELLS
-                Poison_Cell(arg);
-              #endif
-                Blit_Param_Drop_Mark(arg, param);
-            }
-            else {
-                // assume arguments assigned to values desired for recursion
-            }
-        }
-
-        // leave phase as-is... we redo the phase we were in
-        // (also if we redid original, note there's no original_binding :-/)
-
         gather_args = LIB(NULL);
     }
     else if (Is_Action(atom) or Is_Frame(atom)) {  // just reuse Level
-        Drop_Action(target_level);
-
-        Restart_Action_Level(target_level);
-        Push_Action(target_level, atom);
-        Begin_Action(target_level, Cell_Frame_Label_Deep(atom), PREFIX_0);
+        gather_args = cast(Value*, atom);
 
         Release_Feed(target_level->feed);
         target_level->feed = return_level->feed;
         Add_Feed_Reference(return_level->feed);
-
-        Set_Node_Managed_Bit(target_level->varlist);
-
-        gather_args = LIB(OKAY);
     }
     else
         return FAIL("RETURN:RUN requires action, frame, or <redo> as argument");
 
     // We need to cooperatively throw a restart instruction up to the level
-    // of the frame.  Use REDO as the throw label that Eval_Core() will
-    // identify for that behavior.
+    // of the frame.  Use DEFINITIONAL-REDO as the throw label that Eval_Core()
+    // will identify for that behavior.
     //
-    Copy_Cell(SPARE, LIB(REDO));
+    Copy_Cell(SPARE, LIB(DEFINITIONAL_REDO));
     Tweak_Cell_Frame_Coupling(  // comment said "may have changed"?
         SPARE,
         Varlist_Of_Level_Force_Managed(target_level)
     );
 
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
+}
+
+
+//
+//  /definitional-redo: native [
+//
+//  "Internal throw signal used by RETURN:RUN"
+//
+//      return: []
+//  ]
+//
+DECLARE_NATIVE(definitional_redo)
+//
+// It would be possible to multiplex RETURN:RUN's functionality onto the throw
+// signal of DEFINITIONAL-RETURN.  It could use CELL_FLAG_NOTE on the thrown
+// value (which would be sneaky and lost if the throw mechanics didn't know
+// about the flag and copied cells, losing it).  Or it could be part of the
+// meta-representational mechanics, where any value that isn't a quoted or
+// quasiform was presumed to be a redo signal...and plain RETURN would just
+// unmeta the result.
+//
+// However, RETURN has been using a generic UNWIND facility provided by the
+// trampoline, which keeps that tested.  It also underscores the fact that
+// RETURN has to do the type checking while DEFINITIONAL-RETURN is still on
+// the stack, to deliver a good error message.
+//
+// What to do here can be revisited, but it was necessary to get rid of the
+// old signal that was a generic REDO command, because generic REDO no longer
+// makes sense.
+{
+    INCLUDE_PARAMS_OF_DEFINITIONAL_REDO;
+
+    return FAIL("DEFINITIONAL-REDO should not be called directly");
 }

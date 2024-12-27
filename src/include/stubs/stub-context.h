@@ -48,8 +48,8 @@ INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
 }
 
 INLINE void Add_Link_Inherit_Bind(Context* context, Option(Context*) next) {
-    assert(context->link.node == nullptr);
-    context->link.node = maybe next;
+    assert(LINK_CONTEXT_INHERIT_BIND(context) == nullptr);
+    LINK_CONTEXT_INHERIT_BIND(context) = maybe next;
 }
 
 

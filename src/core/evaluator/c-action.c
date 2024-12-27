@@ -132,7 +132,7 @@ Bounce Action_Executor(Level* L)
             assert(LEVEL_STATE_BYTE(L) != STATE_0);  // need to update
             goto dispatch_phase;  // wants to see the throw
         }
-        goto handle_thrown_maybe_redo;
+        goto handle_thrown;
     }
 
     if (Not_Action_Executor_Flag(L, IN_DISPATCH)) {
@@ -391,7 +391,7 @@ Bounce Action_Executor(Level* L)
                         cast(Element*, OUT),
                         SPECIFIED
                     )){
-                        goto handle_thrown_maybe_redo;
+                        goto handle_thrown;
                     }
                     Erase_Cell(OUT);
                 }
@@ -594,7 +594,7 @@ Bounce Action_Executor(Level* L)
                 //
                 Move_Atom(SPARE, ARG);
                 if (Eval_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
-                    goto handle_thrown_maybe_redo;
+                    goto handle_thrown;
             }
             break;
 
@@ -900,12 +900,12 @@ Bounce Action_Executor(Level* L)
         return BOUNCE_SUSPEND;
 
       case C_THROWN:
-        goto handle_thrown_maybe_redo;
+        goto handle_thrown;
 
       case C_FAIL:
         if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES))
             goto dispatch_phase;  // can run same cleanup code as for fail()
-        goto handle_thrown_maybe_redo;
+        goto handle_thrown;
 
       case C_REDO_UNCHECKED:
         Clear_Action_Executor_Flag(L, IN_DISPATCH);
@@ -924,7 +924,7 @@ Bounce Action_Executor(Level* L)
       case C_BAD_INTRINSIC_ARG:
         assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
         b = Native_Fail_Result(L, Error_Bad_Intrinsic_Arg_1(L));
-        goto handle_thrown_maybe_redo;
+        goto handle_thrown;
 
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");
@@ -986,36 +986,7 @@ Bounce Action_Executor(Level* L)
 
     return OUT;  // not thrown
 
-} handle_thrown_maybe_redo: {  ///////////////////////////////////////////////
-
-  // Until stackless is universal, an action dispatcher may make a stackful
-  // call to something that issues a REDO.  So we can't handle REDO at the
-  // top of this executor where we test for THROWING, the way we might if
-  // we could always expect continuations as the sources of throws.
-
-    const Value* label = VAL_THROWN_LABEL(level_);
-    if (Is_Frame(label)) {
-        if (
-            Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(REDO))  // REDO [1]
-            and Cell_Frame_Coupling(label) == cast(VarList*, L->varlist)
-        ){
-            CATCH_THROWN(OUT, level_);
-            assert(Is_Logic(OUT));  // signal if we want to gather args or not
-
-            assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
-            Clear_Action_Executor_Flag(L, IN_DISPATCH);
-
-            possibly(Get_Action_Executor_Flag(L, DISPATCHER_CATCHES));
-            Clear_Action_Executor_Flag(L, DISPATCHER_CATCHES);
-
-            if (Is_Okay(OUT)) {
-                STATE = ST_ACTION_FULFILLING_ARGS;
-                goto fulfill;
-            }
-            STATE = ST_ACTION_TYPECHECKING;
-            goto typecheck_then_dispatch;
-        }
-    }
+} handle_thrown: {  //////////////////////////////////////////////////////////
 
     Drop_Action(L);
 

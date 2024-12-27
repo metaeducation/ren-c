@@ -105,7 +105,7 @@
            return <success>
         ]
         clear-me: #some-junk
-        return:run :foo n - 1
+        return:run foo/ n - 1
     ]
 
     <success> = foo 100
@@ -115,7 +115,7 @@
 ; (But the savings are less, as it's only reusing the Level structure)
 (
     /foo: func [return: [tag!] block] [
-        return:run :append block [d e]
+        return:run append/ block [d e]
     ]
 
     [a b c [d e]] = foo [a b c]
