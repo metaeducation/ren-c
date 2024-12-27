@@ -1215,6 +1215,9 @@ DECLARE_GENERICS(Frame)
             // would be.  This might be confusing, however...if the phase
             // is drastically different.  Review.
 
+            if (Is_Frame_Details(frame))
+                return nullptr;  // not handled by Level lookup
+
             break; }
 
           case SYM_PARAMETERS:
