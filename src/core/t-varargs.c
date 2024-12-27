@@ -78,7 +78,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         const Value* child_gotten = maybe Lookup_Word(look, binding);
 
         if (child_gotten and Is_Action(child_gotten)) {
-            Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(child_gotten);
+            Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(child_gotten);
             if (infix_mode) {
                 if (
                     pclass == PARAMCLASS_NORMAL or

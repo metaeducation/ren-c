@@ -150,7 +150,7 @@ DECLARE_NATIVE(shove)
     if (Is_Frame(shovee)) {
         if (not label)
             label = Cell_Frame_Label_Deep(shovee);
-        infix_mode = Get_Cell_Infix_Mode(shovee);
+        infix_mode = Cell_Frame_Infix_Mode(shovee);
     }
     else {
         return FAIL(  // used to allow shoving into set-words, but... [1]

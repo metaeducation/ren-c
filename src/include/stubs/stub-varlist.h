@@ -146,7 +146,7 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 
 #define UNCOUPLED  g_empty_varlist  // instruct TUPLE! processing to couple [1]
 
-#define NONMETHOD  nullptr  // non-methods aren't coupled
+#define NONMETHOD  u_cast(Option(VarList*), nullptr)  // nonmethods not coupled
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
     assert(Cell_Heart(c) == REB_FRAME);

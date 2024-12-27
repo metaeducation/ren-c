@@ -272,7 +272,7 @@ bool Specialize_Action_Throws(
     // !!! Needs handling for interaction with REORDER.
     //
     bool first_param = true;
-    Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(specializee);
+    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(specializee);
 
     for (; key != tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param)) {  // was specialized in underlying phase
@@ -369,7 +369,7 @@ bool Specialize_Action_Throws(
     Init_Frame(out, exemplar, label, coupling);
     Actionify(out);
 
-    Set_Cell_Infix_Mode(out, infix_mode);
+    Tweak_Cell_Frame_Infix_Mode(out, infix_mode);
 
     return false;  // code block did not throw
 }

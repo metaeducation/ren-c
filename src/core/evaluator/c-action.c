@@ -112,7 +112,7 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
         return false;
     }
 
-    Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(unwrap feed->gotten);
+    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(unwrap feed->gotten);
     if (not infix_mode)
         return false;
 
@@ -860,7 +860,8 @@ Bounce Action_Executor(Level* L)
 } dispatch_phase: {  /////////////////////////////////////////////////////////
 
     // 1. After typechecking is complete, it "digs" through the phases until
-    //    it finds a Details*, so we should be
+    //    it finds a Details* and makes that the phase.
+
     assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
 
     Details* details = Ensure_Level_Details(L);  // guaranteed Details [1]

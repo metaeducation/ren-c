@@ -40,10 +40,26 @@
 // things like specializations and adaptations.  In each adapted phase,
 // different variables needed to be visible--e.g. someone could specialize
 // fields out of a function with a certain name, and then augment the
-// function with another field of the same name.  Which field should be
-// visible depended on how far into the composition an execution had gotten.
+// function with another field of the exact same name:
 //
-// That concept of "Lens" became another field in FRAME! cells.  Plus, it
+//     >> /ap10: specialize append/ [value: 10]
+//
+//     >> /ap10aug: augment ap10/ [value: make parameter! [any-element?]]
+//     ; whoa, now the frame has two fields named `value`!
+//
+//     >> /ap10plus: enclose ap10plus/ [append series value]
+//
+//     >> ap10plus [a b c] 10 20
+//     == [a b c 10 20]
+//
+// Which `value` field should be visible depends on how far in the composition
+// an execution is.  The ENCLOSE needs to see the augmented value, while the
+// APPEND native needs to see the original parameter.  This gave rise to the
+// concept of a "Lens" field in the FRAME! Cell to track which fields in the
+// VarList should be active for a particular Cell reference...so that KeyLists
+// containing duplicate keys be interpreted coherently.
+//
+// So the concept of "Lens" became another field in FRAME! cells.  Plus, it
 // was added that the way to say a frame wasn't running was to store a label
 // for the function in the lens slot so that a frame could indicate the
 // name that should show in the stack when being invoked.
@@ -230,8 +246,8 @@ INLINE Element* Init_Frame_Untracked(
 //
 //     for-each 'item block [print ["The item's kind is" kind of item]]
 //
-// That reference to ITEM is guaranteed to not be the antiform form, since it
-// is enumerating over a block.  Various places in the system are geared for
+// That reference to ITEM is guaranteed to not be an antiform, since it is
+// enumerating over a block.  Various places in the system are geared for
 // making it more difficult to assign antiform actions accidentally.
 //
 // The other big reason is for a "non-literal" distinction in parameters.
@@ -239,18 +255,21 @@ INLINE Element* Init_Frame_Untracked(
 // calculate what the replacement should be.  However, that ruled out the
 // ability to replace actual function instances--and doing otherwise would
 // require extra parameterization.  This lets the antiform state serve as
-// the signal that the function should be invoked, and not searched for.
+// the signal that the function should be invoked, and not searched for:
 //
-
-#define Init_Action(out,a,label,coupling) \
-    Actionify(cast(Value*, Init_Frame( \
-        ensure(Sink(Value), (out)), (a), (label), (coupling)) \
-    ))  // note that antiform frames can't have lenses, only labels
+//     >> replace [1 2 3 4 5] even?/ <even>
+//     == [1 <even> 3 <even> 5]  ; no actual EVEN? antiforms can be in block
+//
 
 INLINE Value* Actionify(Need(Value*) v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     return Coerce_To_Stable_Antiform(v);
 }
+
+#define Init_Action(out,a,label,coupling) \
+    Actionify(cast(Value*, Init_Frame( \
+        ensure(Sink(Value), (out)), (a), (label), (coupling)) \
+    ))  // note that antiform frames can't have lenses, only labels!
 
 INLINE Element* Deactivate_If_Action(Need(Value*) v) {
     if (Is_Action(v))
@@ -267,17 +286,17 @@ INLINE Element* Deactivate_If_Action(Need(Value*) v) {
 // checked quickly by the evaluator.
 //
 
-INLINE Option(InfixMode) Get_Cell_Infix_Mode(const Cell* c) {
+INLINE Option(InfixMode) Cell_Frame_Infix_Mode(const Cell* c) {
     assert(HEART_BYTE(c) == REB_FRAME);
     return u_cast(InfixMode, Get_Cell_Crumb(c));
 }
 
-INLINE void Set_Cell_Infix_Mode(Cell* c, Option(InfixMode) mode) {
+INLINE void Tweak_Cell_Frame_Infix_Mode(Cell* c, Option(InfixMode) mode) {
     assert(HEART_BYTE(c) == REB_FRAME);
     Set_Cell_Crumb(c, maybe mode);
 }
 
-INLINE bool Is_Cell_Infix(const Cell* c) {  // slightly faster than != PREFIX_0
+INLINE bool Is_Cell_Frame_Infix(const Cell* c) {  // faster than != PREFIX_0
     assert(HEART_BYTE(c) == REB_FRAME);
     return did (c->header.bits & CELL_MASK_CRUMB);
 }

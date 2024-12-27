@@ -985,7 +985,7 @@ DECLARE_NATIVE(infix_q)
     INCLUDE_PARAMS_OF_INFIX_Q;
 
     Element* frame = cast(Element*, ARG(frame));
-    return Init_Logic(OUT, Is_Cell_Infix(frame));
+    return Init_Logic(OUT, Is_Cell_Frame_Infix(frame));
 }
 
 
@@ -1011,18 +1011,18 @@ DECLARE_NATIVE(infix)
     if (REF(off)) {
         if (REF(defer) or REF(postpone))
             return FAIL(Error_Bad_Refines_Raw());
-        Set_Cell_Infix_Mode(OUT, PREFIX_0);
+        Tweak_Cell_Frame_Infix_Mode(OUT, PREFIX_0);
     }
     else if (REF(defer)) {  // not OFF, already checked
         if (REF(postpone))
             return FAIL(Error_Bad_Refines_Raw());
-        Set_Cell_Infix_Mode(OUT, INFIX_DEFER);
+        Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_DEFER);
     }
     else if (REF(postpone)) {  // not OFF or DEFER, we checked
-        Set_Cell_Infix_Mode(OUT, INFIX_POSTPONE);
+        Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_POSTPONE);
     }
     else
-        Set_Cell_Infix_Mode(OUT, INFIX_TIGHT);
+        Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_TIGHT);
 
     return OUT;
 }

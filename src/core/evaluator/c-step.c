@@ -380,7 +380,7 @@ Bounce Stepper_Executor(Level* L)
         if (
             not L_next_gotten
             or not Is_Action(unwrap L_next_gotten)
-            or not (infix_mode = Get_Cell_Infix_Mode(unwrap L_next_gotten))
+            or not (infix_mode = Cell_Frame_Infix_Mode(unwrap L_next_gotten))
         ){
             goto give_up_backward_quote_priority;
         }
@@ -544,7 +544,7 @@ Bounce Stepper_Executor(Level* L)
 
         Level* sub = Make_Action_Sublevel(L);
         Push_Action(sub, CURRENT);
-        Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(CURRENT);
+        Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
         assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
         Begin_Action(sub, Cell_Frame_Label_Deep(CURRENT), infix_mode);
         Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
@@ -726,7 +726,7 @@ Bounce Stepper_Executor(Level* L)
 
       run_action_in_out: { ///////////////////////////////////////////////////
 
-        Option(InfixMode) infix_mode = Get_Cell_Infix_Mode(OUT);
+        Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(OUT);
         const Symbol* label = Cell_Word_Symbol(CURRENT);  // use WORD!
 
         if (infix_mode) {
@@ -887,7 +887,7 @@ Bounce Stepper_Executor(Level* L)
 
         assert(Is_Action(OUT));
 
-        if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated
+        if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated
             Drop_Data_Stack_To(STACK_BASE);
             return FAIL("Use `->-` to shove left infix operands into CHAIN!s");
         }
@@ -1138,7 +1138,7 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;
         }
 
-        if (Is_Cell_Infix(OUT)) {  // too late, left already evaluated [6]
+        if (Is_Cell_Frame_Infix(OUT)) {  // too late, left already evaluated [6]
             Drop_Data_Stack_To(STACK_BASE);
             return FAIL("Use `->-` to shove left infix operands into PATH!s");
         }
@@ -1913,7 +1913,7 @@ Bounce Stepper_Executor(Level* L)
             and not Is_Frame(L_next)
             and not Is_Sigil(L_next)
         )
-        or not (infix_mode = Get_Cell_Infix_Mode(unwrap L_next_gotten))
+        or not (infix_mode = Cell_Frame_Infix_Mode(unwrap L_next_gotten))
     ){
       lookback_quote_too_late: // run as if starting new expression
 

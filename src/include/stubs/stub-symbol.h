@@ -40,14 +40,10 @@
 //
 
 // Some places permit an optional label (such as the names of function
-// invocations, which may not have an associated name).  To make the callsite
-// intent clearer for passing in a null Symbol*, use ANONYMOUS instead.
+// invocations, which may not have an associated name).  To make sure the
+// callsite intends to accept symbols, use ANONYMOUS instead of nullptr.
 //
-#if CHECK_OPTIONAL_TYPEMACRO
-    #define ANONYMOUS   Option(const Symbol*){nullptr}
-#else
-    #define ANONYMOUS   nullptr
-#endif
+#define ANONYMOUS  u_cast(Option(const Symbol*), nullptr)
 
 
 INLINE bool Is_String_Symbol(const String* s) {
