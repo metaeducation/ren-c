@@ -925,6 +925,10 @@ default-combinators: to map! reduce [
     ;
     ; arity-1 INTO may still be useful as a shorthand for SUBPARSE ONE, but
     ; it's also a little bit obtuse when read in context.
+    ;
+    ; !!! Note: Refinements aren't working as a general mechanic yet, so the
+    ; SUBPARSE:MATCH, SUBPARSE:RELAX, SUBPARSE:MATCH:RELAX, etc. have to be
+    ; handled by literal combinator specializations added to the map.
 
     'subparse combinator [
         "Recursion into other data with a rule, result of rule if match"
@@ -932,7 +936,9 @@ default-combinators: to map! reduce [
             [any-value? pack?]
         parser [action?]  ; !!! Easier expression of value-bearing parser?
         subparser [action?]
-        <local> subseries result'
+        :match "Return input on match, not synthesized value"
+        :relax "Don't have to match input completely, just don't mismatch"
+        <local> subseries subremainder result'
     ][
         [^subseries remainder]: parser input except e -> [
             ;
@@ -964,58 +970,16 @@ default-combinators: to map! reduce [
         ; If the entirety of the item at the list is matched by the
         ; supplied parser rule, then we advance past the item.
         ;
-        [^result' subseries]: subparser subseries except e -> [return raise e]
-        if not tail? subseries [
-            return raise "SUBPARSE rule succeeded, but didn't complete subseries"
+        [^result' subremainder]: subparser subseries except e -> [
+            return raise e
+        ]
+        if (not relax) and (not tail? subremainder) [
+            return raise "SUBPARSE succeeded, but didn't complete subseries"
+        ]
+        if match [
+            return subseries
         ]
         return unmeta result'
-    ]
-
-    'validate combinator [
-        "Recurse into other data with a rule, other data if match"
-        return: "Input if the rules matched"
-            [any-series?]
-        parser [action?]  ; !!! Easier expression of value-bearing parser?
-        subparser [action?]
-        <local> subseries subremainder
-    ][
-        [^subseries remainder]: parser input except e -> [
-            ;
-            ; If the parser in the first argument can't get a value to subparse
-            ; then we don't process it.
-            ;
-            ; !!! Review: should we allow non-value-bearing parsers that just
-            ; set limits on the input?
-            ;
-            return raise e
-        ]
-
-        if ^void = subseries [
-            fail "Cannot VALIDATE a void"
-        ]
-
-        if quasi? subseries [
-            fail "Cannot VALIDATE an antiform synthesized result"
-        ]
-
-        subseries: my unquote
-
-        case [
-            any-series? subseries []
-            any-sequence? subseries [subseries: as block! subseries]
-            return raise "Need SERIES! or SEQUENCE! input for use with VALIDATE"
-        ]
-
-        ; If the entirety of the item at the input list is matched by the
-        ; supplied parser rule, then we advance past the item.
-        ;
-        [# subremainder]: subparser subseries except e -> [
-            return raise e
-        ]
-        if not tail? subremainder [
-            return raise "VALIDATE rule succeeded, but didn't complete subseries"
-        ]
-        return subseries
     ]
 
     === COLLECT AND KEEP ===
@@ -2769,6 +2733,18 @@ default-combinators.opt: default-combinators.optional
 default-combinators.lit: default-combinators.literal
 default-combinators.(just @): default-combinators.one
 default-combinators.(just '): default-combinators.just
+
+
+=== HACKS TO COVER FOR LACK OF REFINEMENT SUPPORT ===
+
+; Just match literal CHAIN!s :-(
+
+s: default-combinators.subparse
+default-combinators.('subparse:match): (unrun s:match/)
+default-combinators.('subparse:relax): (unrun s:relax/)
+default-combinators.('subparse:match:relax): (unrun s:match:relax/)
+default-combinators.('subparse:relax:match): (unrun s:relax:match/)
+s: ~
 
 
 === COMPATIBILITY FOR NON-TAG KEYWORD FORMS ===

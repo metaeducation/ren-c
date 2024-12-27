@@ -298,6 +298,7 @@
 %parse/examples/tracked-word.parse.test.reb
 %parse/examples/trim.parse.test.reb
 %parse/examples/ugly-parse.parse.test.reb
+%parse/examples/validate-enclosure.parse.test.reb
 
 %reflectors/body-of.test.reb
 

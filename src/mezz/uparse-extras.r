@@ -29,7 +29,7 @@ Rebol [
         |
         let pattern: *in* block!, '=>, let branch: *in* block!
         (
-            if validate:combinators input pattern combinators (
+            if parse:match:combinators input pattern combinators (
                 branch
             ) also ^r' -> [
                 if not multi [
@@ -43,24 +43,3 @@ Rebol [
     ]]
     return unmeta result'
 ]
-
-
-; Note: Users could write `parse data [...rules... || <input>]` and get the
-; same effect generally.
-;
-; !!! It might be tempting to write this as an ADAPT which changes the
-; rules to be:
-;
-;    rules: reduce [rules '|| <input>]
-;
-; But if someone changed the meaning of <input> with different /COMBINATORS
-; that would not work.  This method will work regardless.
-;
-validate: (comment [redescribe [  ; redescribe not working at the moment (?)
-    "Process input in the parse dialect, return input if match"
-] ]
-    enclose parse*/ lambda [f [frame!]] [
-        eval f except [return null]
-        f.input
-    ]
-)
