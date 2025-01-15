@@ -298,6 +298,7 @@ decode-url: sys.util/decode-url/
     :i "Indent"
         [integer! text!]
 ][
+    path: default [null]
     i: default [""]
 
     let save-dir: what-dir

@@ -315,14 +315,14 @@ REBOL [
         [<end> element?]
     :web "Open web browser to related documentation."
 ][
-    if null? topic [  ; just `>> help` or `eval [help]` or similar
+    if unset? $topic [  ; just `>> help` or `eval [help]` or similar
         print-general-help
         return ~
     ]
 
     if web [
         if not word? topic [
-            fail "HELP/WEB only works on WORD! at this time"
+            fail "HELP:WEB only works on WORD! at this time"
         ]
 
         let string: to text! topic

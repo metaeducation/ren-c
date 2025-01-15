@@ -33,13 +33,13 @@
                 [when (yes? found) (log ["Skipping condition:" mold condition])]
 
                 ; Otherwise, try building a frame for the condition.  If the
-                ; frame is incomplete, slip the switch value into an ~end~ slot
+                ; frame is incomplete, slip switch value into antiform ~ slot
                 (
                     log ["Testing condition:" mold condition]
 
                     let f: make frame! make varargs! condition
-                    for-each [key param] (parameters of f) [
-                        all [not param.optional, '~end~ = ^f.(key)] then [
+                    for-each [key val] f [
+                        if unset? $val [
                             f.(key): :value
                             break
                         ]

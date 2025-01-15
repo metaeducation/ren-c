@@ -101,7 +101,7 @@
 [
     (did /foo: func [return: [any-value?] x] [])
 
-    ~no-arg~ !! (foo)
+    ~unspecified-arg~ !! (foo)
 ]
 
 ; ~()~ antiforms were VOID for a short time, but void is now its own thing

@@ -151,7 +151,7 @@ Bounce Action_Executor(Level* L)
             if (Cell_ParamClass(PARAM) != PARAMCLASS_META) {
                 if (Is_Barrier(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
-                    Init_Anti_Word(ARG, CANON(END));
+                    Init_Nothing_Due_To_End(ARG);
                 }
                 else
                     Decay_If_Unstable(ARG);
@@ -334,7 +334,7 @@ Bounce Action_Executor(Level* L)
     //    first-cut approximation by unbinding.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
-            Init_Anti_Word(ARG, CANON(END));
+            Init_Nothing_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -484,7 +484,7 @@ Bounce Action_Executor(Level* L)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Level_At_End(L)) {
-            Init_Anti_Word(ARG, CANON(END));
+            Init_Nothing_Due_To_End(ARG);
             goto continue_fulfilling;
         }
 
@@ -495,7 +495,7 @@ Bounce Action_Executor(Level* L)
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
-                Init_Anti_Word(ARG, CANON(END));
+                Init_Nothing_Due_To_End(ARG);
                 goto continue_fulfilling;
             }
 
@@ -735,7 +735,7 @@ Bounce Action_Executor(Level* L)
         Assert_Cell_Stable(ARG);  // implicitly asserts Ensure_Readable(ARG)
 
         if (Is_Typechecked(stable_ARG))
-            continue;
+            continue;  // Note: typechecked nothings are legal (e.g. locals)
 
         Phase* phase = Level_Phase(L);
         const Param* param = PARAM;
@@ -745,11 +745,9 @@ Bounce Action_Executor(Level* L)
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
-        if (Is_Nothing(stable_ARG)) {  // unspecialized
-            if (Get_Parameter_Flag(param, REFINEMENT)) {
-                Mark_Typechecked(Init_Nulled(ARG));
+        if (Is_Nothing(stable_ARG)) {  // other nothings are unspecified/"end"
+            if (Get_Parameter_Flag(param, ENDABLE))  // !!! "optional?"
                 continue;
-            }
             return FAIL(Error_Unspecified_Arg(L));
         }
 
@@ -759,16 +757,6 @@ Bounce Action_Executor(Level* L)
                 Mark_Typechecked(Init_Nulled(OUT));
                 continue;
             }
-            if (Get_Parameter_Flag(param, REFINEMENT)) {
-                Mark_Typechecked(Init_Nulled(ARG));
-                continue;
-            }
-        }
-        else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
-            if (Not_Parameter_Flag(param, ENDABLE))
-                return FAIL(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
-            Mark_Typechecked(Init_Nulled(ARG));  // use ^META for nuance
-            continue;
         }
 
         if (Get_Parameter_Flag(param, VARIADIC)) {  // can't check now [2]

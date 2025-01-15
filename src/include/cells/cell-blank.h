@@ -117,20 +117,20 @@ INLINE bool Is_Trash(Need(const Element*) v)
 //    >> nothing? print "Hello"
 //    == ~true~
 //
-// Picking antiform blank as the contents of unset variables has many benefits
-// over choosing something like an `~unset~` or `~nothing~` antiforms:
+// The name "nothing" (vs. "unset") was meditated on for quite some time,
+// and resolved as superior to trying to claim there's such a thing as an
+// "unset value".
+//
+// Picking antiform BLANK! as the contents of unset variables has many benefits
+// over choosing a WORD! antiform like `~unset~` or `~nothing~`:
 //
 //  * Reduces noise when looking at a list of variables to see which are unset
 //
-//  * We consider variables to be unset and not values, e.g. (unset? 'var).
+//  * We consider variables to be unset and not values, e.g. (unset? $var).
 //    This has less chance for confusion as if it were named ~unset~ people
 //    would likely expect `(unset? ~unset~)` to work.
 //
 //  * Quick way to unset variables, simply `(var: ~)`
-//
-// The choice of this name (vs. "unset") was meditated on for quite some time,
-// and resolved as superior to trying to claim there's such a thing as an
-// "unset value".
 //
 
 INLINE Value* Init_Nothing_Untracked(Init(Value) out) {
@@ -149,3 +149,21 @@ INLINE Value* Init_Nothing_Untracked(Init(Value) out) {
 
 #define NOTHING_VALUE \
     cast(const Value*, &PG_Nothing_Value)  // LIB(NOTHING) would be an action
+
+
+//=//// <end> SIGNALING WITH NOTHING (~ antiform) /////////////////////////=//
+//
+// Special handling is required in order to allow a kind of "light variadic"
+// form, where a parameter can be missing.
+//
+// For a time this was distinguished with a special ~end~ antiform.  But this
+// was rethought in light of the fact that the nothing antiform is unique
+// among stable antiforms, as needing to be a ^META parameter in order to be
+// passed to a function.  That means it can signal willingness of a parameter
+// to be "fully missing" no matter what position it is in an argument list.
+//
+// This macro helps keep track of those places in the source that are the
+// implementation of the "nothing due to end" behavior.
+//
+#define Init_Nothing_Due_To_End(out) \
+    Init_Nothing(out)

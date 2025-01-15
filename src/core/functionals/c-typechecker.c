@@ -460,7 +460,10 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                     Blit_Param_Drop_Mark(arg, param);
                 else {
                     Erase_Cell(arg);
-                    Init_Nothing(arg);
+                    if (Get_Parameter_Flag(param, REFINEMENT))
+                        Init_Nulled(arg);
+                    else
+                        Init_Nothing(arg);
                 }
             }
 

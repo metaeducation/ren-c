@@ -64,7 +64,10 @@ void Prep_Action_Level(
             Blit_Param_Drop_Mark(arg, param);
         else {
             Erase_Cell(arg);
-            Init_Nothing(arg);
+            if (Get_Parameter_Flag(param, REFINEMENT))
+                Init_Nulled(arg);
+            else
+                Init_Nothing(arg);
         }
     }
 

@@ -123,29 +123,23 @@ bind construct [
     specialize set/ [value: meta ~]  ; SET's value is a ^META parameter
 )
 
-/unset?: func [
+/unset?: redescribe [
     "Determine if a variable looks up to a `~` antiform"
-    return: [logic?]
-    var [word! path! tuple!]
-][
-    return nothing? get:any var
-]
+](
+    cascade [get:any/ nothing?/]
+)
 
-/vacant?: func [
-    "Determine if a variable is nothing, antiform tag, or antiform parameter"
-    return: [logic?]
-    var [word! path! tuple!]
-][
-    return vacancy? get:any var
-]
-
-/set?: func [
+/set?: redescribe [
     "Determine if a variable does not look up to the ~ antiform"
-    return: [logic?]
-    var [word! path! tuple!]
-][
-    return something? get:any var
-]
+](
+    cascade [get:any/ something?/]
+)
+
+/vacant?: redescribe [
+    "Determine if a variable is nothing or antiform tag"
+](
+    cascade [get:any/ vacancy?/]
+)
 
 /defined?: func [
     "Determine if a variable has a binding and is not unset"

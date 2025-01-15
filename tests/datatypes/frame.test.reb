@@ -132,7 +132,7 @@
 
     (f-outer-augment.public = 1020)
     (f-outer-augment.additional = 1020304)
-    (unset? $f-outer-augment.private)  ; we didn't assign it
+    (null? f-outer-augment.private)  ; we didn't assign it
 
     (f-inner-augment.public = 1020)
     (f-inner-augment.additional = 1020304)

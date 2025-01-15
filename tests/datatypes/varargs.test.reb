@@ -87,7 +87,7 @@
 
     ([] = eval [soft])
     ~literal-left-path~ !! (
-        a: ~end~
+        a: ~null~
         (a soft)
     )
     ([7] = eval [(1 + 2) (3 + 4) soft])
@@ -105,7 +105,7 @@
 
     ([] = eval [hard])
     ~literal-left-path~ !! (
-        a: ~end~
+        a: ~null~
         (a hard)
     )
     ([:(3 + 4)] = eval [:(1 + 2) :(3 + 4) hard])

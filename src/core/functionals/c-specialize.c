@@ -102,8 +102,12 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
           continue_unspecialized:
 
             Erase_Cell(arg);
-            if (placeholder)
-                Copy_Cell(arg, unwrap placeholder);
+            if (placeholder) {
+                if (Get_Parameter_Flag(param, REFINEMENT))
+                    Init_Nulled(arg);
+                else
+                    Copy_Cell(arg, unwrap placeholder);
+            }
             else
                 Copy_Cell(arg, param);
 

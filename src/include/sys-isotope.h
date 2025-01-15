@@ -69,7 +69,6 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
 
               case SYM_VOID:
               case SYM_OKAY:
-              case SYM_END:
               case SYM_NAN:
                 break;
 
