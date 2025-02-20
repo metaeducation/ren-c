@@ -50,9 +50,9 @@
 
 #if !defined(RUNTIME_CHECKS)  // prefer "RUNTIME_CHECKS" as integer #define
     #if defined(NDEBUG)
-       #define RUNTIME_CHECKS 0
+       #define RUNTIME_CHECKS  0
     #else
-       #define RUNTIME_CHECKS 1
+       #define RUNTIME_CHECKS  1
     #endif
 #endif
 #if !defined(NO_RUNTIME_CHECKS)
@@ -60,23 +60,23 @@
 #endif
 
 #if !defined(DEBUG_STATIC_ANALYZING)
-    #define DEBUG_STATIC_ANALYZING 0
+    #define DEBUG_STATIC_ANALYZING  0
 #endif
 
 #if !defined(CHECK_OPTIONAL_TYPEMACRO)
-    #define CHECK_OPTIONAL_TYPEMACRO 0
+    #define CHECK_OPTIONAL_TYPEMACRO  0
 #endif
 
 #if !defined(CHECK_NEVERNULL_TYPEMACRO)
-    #define CHECK_NEVERNULL_TYPEMACRO 0
+    #define CHECK_NEVERNULL_TYPEMACRO  0
 #endif
 
 #if !defined(DEBUG_USE_SINKS)
-    #define DEBUG_USE_SINKS 0
+    #define DEBUG_USE_SINKS  0
 #endif
 
-#if !defined(DEBUG_CHECK_INIT_SINKS_BUT_NOT_RAISED_OVERWRITES)
-    #define DEBUG_CHECK_INIT_SINKS_BUT_NOT_RAISED_OVERWRITES 0
+#if !defined(DEBUG_CHECK_INIT_SINKS)
+    #define DEBUG_CHECK_INIT_SINKS  0
 #endif
 
 #if !defined(ASSIGN_UNUSED_FIELDS)
@@ -1580,13 +1580,10 @@
 //
 // BUT if you want to double check the initializations, it should still work
 // to make Init() equivalent to Sink() and corrupt the cell.  It's not likely
-// to catch any bugs...AND YOU'LL LOSE THE CHECK IN Freshen_Cell_Header() THAT
-// YOU AREN'T OVERWRITING RAISED ERRORS (because the unwritable mask will set
-// the HEART_BYTE() and QUOTE_BYTE() to 255, so it will never be heart of
-// REB_ERROR with quote of ANTIFORM_0).  But, the option is there.
+// to catch any bugs...but it's not likely to hurt either.
 //
 #if DEBUG_USE_SINKS
-    #if DEBUG_CHECK_INIT_SINKS_BUT_NOT_RAISED_OVERWRITES
+    #if DEBUG_CHECK_INIT_SINKS
         #define InitTypemacro(T) NeedWrapper<T, true>  // sink=true
     #else
         #define InitTypemacro(T) NeedWrapper<T, false>  // sink=false
