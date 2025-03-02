@@ -42,7 +42,7 @@
 // SAFETY LEVEL
 //    * Normal usage:             cast()      // safe default choice
 //    * Not checked at all:       u_cast()    // use with fresh malloc()s
-//                                            // or critical debug speed paths
+//                                            //   ...or critical debug paths
 //
 // POINTER CONSTNESS
 //    * Preserving constness:     c_cast()    // T1* => T2* ...or...
@@ -56,11 +56,25 @@
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// * The C preprocessor doesn't know about templates, so it parses things
-//   like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
-//   headache for implementing the macros, but also if a macro produces a
-//   comma and gets passed to another macro.  To work around it, we wrap
-//   the product of the macro containing commas in parentheses.
+// A. The C preprocessor doesn't know about templates, so it parses things
+//    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
+//    headache for implementing the macros, but also if a macro produces a
+//    comma and gets passed to another macro.  To work around it, we wrap
+//    the product of the macro containing commas in parentheses.
+//
+// B. The casts are implemented with a static method of a templated struct vs.
+//    just as a templated function.  This is because partial specialization of
+//    function templates is not legal in C++ due to the fact that functions can
+//    be overloaded, while structs and classes can't:
+//
+//      http://www.gotw.ca/publications/mill17.htm
+//
+//    "If you're writing a function base template, prefer to write it as a
+//     single function template that should never be specialized or overloaded,
+//     and then implement the function template entirely as a simple handoff
+//     to a class template containing a static function with the same
+//     signature. Everyone can specialize that -- both fully and partially,
+//     and without affecting the results of overload resolution."
 //
 
 #ifndef C_CASTS_H  // "include guard" allows multiple #includes
@@ -209,6 +223,7 @@
 #else
     template<typename V, typename T>
     struct cast_helper {
+        // arithmetic/enum types that aren't explicitly convertible
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
             not shim::is_explicitly_convertible<V_,T_>::value and (
@@ -217,6 +232,7 @@
             ),
         T>::type convert(V_ v) { return static_cast<T>(v); }
 
+        // pointer-to-pointer conversions that aren't explicitly convertible
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
             not shim::is_explicitly_convertible<V_,T_>::value and (
@@ -224,6 +240,7 @@
             ),
         T>::type convert(V_ v) { return reinterpret_cast<T>(v); }
 
+        // for types that are explicitly convertible
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
             shim::is_explicitly_convertible<V_,T_>::value,
@@ -234,9 +251,9 @@
     struct cast_helper<V,void>
       { static void convert(V v) { (void)(v); } };  // void can't be constexpr
 
-    #define cast(T,v) \
+    #define cast(T,v)  /* needs outer parens, see [A] */ \
         (cast_helper<typename std::remove_reference< \
-            decltype(v)>::type, T>::convert(v))  // outer parens, see [A]
+            decltype(v)>::type, T>::convert(v))
 #endif
 
 
@@ -275,10 +292,10 @@
         >::type type;
     };
 
-    #define c_cast(TP,v) \
+    #define c_cast(TP,v)  /* needs outer parens, see [A] */ \
         (cast_helper< \
             decltype(v), typename c_cast_helper<TP,decltype(v)>::type \
-        >::convert(v))  // outer parens [1]
+        >::convert(v))
 #endif
 
 
@@ -340,7 +357,7 @@
         >::type type;
     };
 
-    #define x_cast(T,v) \
+    #define x_cast(T,v)  /* needs outer parens, see [A] */ \
         (const_cast<T>((typename x_cast_helper<T>::type)(v)))
 #endif
 
@@ -412,6 +429,57 @@
 
     #define rr_cast(v) \
         static_cast<typename rr_cast_helper<decltype(v)>::type>(v)
+#endif
+
+
+//=//// TYPE LIST HELPER //////////////////////////////////////////////////=//
+//
+// Type lists allow checking if a type is in a list of types at compile time:
+//
+//     template<typename T>
+//     void process(T value) {
+//         using NumericTypes = c_type_list<int, float, double>;
+//         static_assert(NumericTypes::contains<T>(), "T must be numeric");
+//         // ...
+//     }
+//
+// 1. Due to wanting C++11 compatibility, it must be `List::contains<T>()` with
+//    the parentheses, which is a bit of a wart.  C++14 or higher is needed
+//    for variable templates, which allows `List::contains<T>` without parens:
+//
+//        struct contains_impl {  /* instead of calling this `contains` */
+//            enum { value = false };
+//        };
+//        template<typename T>
+//        static constexpr bool contains = contains_impl<T>::value;
+//
+//    Without that capability, best we can do is to construct an instance via
+//    a default constructor (the parentheses), and then have a constexpr
+//    implicit boolean coercion for that instance.
+//
+#if CPLUSPLUS_11
+    template<typename... Ts>
+    struct c_type_list {
+        template<typename T>
+        struct contains {
+            enum { value = false };
+
+            // Allow usage without ::value in most contexts [1]
+            constexpr operator bool() const { return value; }
+        };
+    };
+
+    template<typename T1, typename... Ts>
+    struct c_type_list<T1, Ts...> {  // Specialization for non-empty lists
+        template<typename T>
+        struct contains {
+            enum { value = std::is_same<T, T1>::value or
+                        typename c_type_list<Ts...>::template contains<T>() };
+
+            // Allow usage without ::value in most contexts [1]
+            constexpr operator bool() const { return value; }
+        };
+    };
 #endif
 
 

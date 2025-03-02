@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -73,20 +73,6 @@
 //    smart pointers can overload cast_helper and extract that raw pointer,
 //    then delegate back to cast again)
 //
-// 2. The casts are implemented with a static method of a templated
-//    class vs. just as a templated function.  This is because partial
-//    specialization of function templates is not legal in C++ due to the
-//    fact that functions can be overloaded, while classes can't:
-//
-//      http://www.gotw.ca/publications/mill17.htm
-//
-//    "If you're writing a function base template, prefer to write it as a
-//     single function template that should never be specialized or overloaded,
-//     and then implement the function template entirely as a simple handoff
-//     to a class template containing a static function with the same
-//     signature. Everyone can specialize that -- both fully and partially,
-//     and without affecting the results of overload resolution."
-//
 // 3. We want to be able to pick different convert() implementations to use
 //    based on properties of the type we are casting from.  So there can be
 //    multiple convert() member functions.  Picking which operation is done
@@ -152,9 +138,8 @@ struct cast_helper<V*,const Node*> {  // [2]
         and not std::is_base_of<Node, V0>::value,  // downcasting, check [4]
     const Node*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value,
-            "downcast(Node*) works on [void* Byte*]"
+            c_type_list<void, Byte>::contains<V0>(),
+            "Invalid type for downcast to Node*"
         );
 
         if (not p)
@@ -202,10 +187,8 @@ struct cast_helper<V*,const Stub*> {  // [2]
         and not std::is_base_of<Stub, V0>::value,  // downcasting, check [4]
     const Stub*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value,
-            "downcast(Stub*) works on [void* Byte* Node*]"
+            c_type_list<void, Byte, Node>::contains<V0>(),
+            "Invalid type for downcast to Stub*"
         );
 
         if (not p)
@@ -260,11 +243,8 @@ struct cast_helper<V*,const Flex*> {  // [2]
         and not std::is_base_of<Flex, V0>::value,  // downcasting, check [4]
     const Flex*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value
-                or std::is_same<V0, Stub>::value,
-            "downcast(Flex*) works on [void* Byte* Node* Stub*]"
+            c_type_list<void,Byte,Node,Stub>::contains<V0>(),
+            "Invalid type for downcast to Flex*"
         );
 
         if (not p)
@@ -319,11 +299,8 @@ struct cast_helper<V*,const Binary*> {  // [2]
         and not std::is_base_of<Binary, V0>::value,  // downcasting, check [4]
     const Binary*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value
-                or std::is_same<V0, Flex>::value,
-            "downcast(Flex*) works on [void* Byte* Node* Flex*]"
+            c_type_list<void,Byte,Node,Flex>::contains<V0>(),
+            "Invalid type for downcast to Flex*"
         );
 
         if (not p)
@@ -361,13 +338,8 @@ struct cast_helper<V*,const String*> {  // [2]
 
     static const String* convert(V* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value
-                or std::is_same<V0, Stub>::value
-                or std::is_same<V0, Flex>::value
-                or std::is_same<V0, Binary>::value,
-            "downcast(String*) works on [void* Byte* Node* Stub* Flex* Binary*]"
+            c_type_list<void,Byte,Node,Stub,Flex,Binary>::contains<V0>(),
+            "Invalid type for downcast to String*"
         );
 
         if (not p)
@@ -408,15 +380,8 @@ struct cast_helper<V*,const Symbol*> {  // [2]
 
     static const Symbol* convert(V* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value
-                or std::is_same<V0, Stub>::value
-                or std::is_same<V0, Flex>::value
-                or std::is_same<V0, Binary>::value
-                or std::is_same<V0, String>::value,
-            "downcast(Symbol*) works on"
-                " [void* Byte* Node* Stub* Flex* Binary* String*]"
+            c_type_list<void,Byte,Node,Stub,Flex,Binary,String>::contains<V0>(),
+            "Invalid type for downcast to Symbol*"
         );
 
         if (not p)
@@ -480,12 +445,8 @@ struct cast_helper<V*,const Array*> {  // [2]
         and not std::is_base_of<Array, V0>::value,  // downcasting, checked [4]
     const Array*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Stub>::value
-                or std::is_same<V0, Node>::value
-                or std::is_same<V0, Flex>::value,
-            "downcast(Array*) works on [void* Byte* Node* Stub* Flex*]"
+            c_type_list<void,Byte,Stub,Node,Flex>::contains<V0>(),
+            "Invalid type for downcast to Array*"
         );
 
         if (not p)
@@ -524,13 +485,8 @@ struct cast_helper<V*,VarList*> {  // [2]
         and not std::is_const<V>::value,
     VarList*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value
-                or std::is_same<V0, Stub>::value
-                or std::is_same<V0, Flex>::value
-                or std::is_same<V0, Array>::value,
-            "downcast(VarList*) works on [void* Byte* Node* Stub* Flex* Array*]"
+            c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<V0>(),
+            "Invalid type for downcast to VarList*"
         );
 
         if (not p)
@@ -579,13 +535,8 @@ struct cast_helper<V*,Phase*> {  // [2]
         and not std::is_const<V>::value,
     Phase*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value
-                or std::is_same<V0, Stub>::value
-                or std::is_same<V0, Flex>::value
-                or std::is_same<V0, Array>::value,
-            "downcast(Phase*) works on [void* Byte* Node* Stub* Flex* Array*]"
+            c_type_list<void,Byte,Node,Stub,Flex,Array>::contains<V0>(),
+            "Invalid type for downcast to Phase*"
         );
 
         if (not p)
@@ -651,10 +602,8 @@ struct cast_helper<V*,Level*> {  // [2]
         and not std::is_const<V>::value,
     Level*>::type convert(V_* p) {
         static_assert(
-            std::is_same<V0, void>::value
-                or std::is_same<V0, Byte>::value
-                or std::is_same<V0, Node>::value,
-            "downcast(Level*) works on [void* Byte* Node*]"
+            c_type_list<void,Byte,Node>::contains<V0>(),
+            "Invalid type for downcast to Level*"
         );
 
         if (not p)
