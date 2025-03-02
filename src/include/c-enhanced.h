@@ -209,34 +209,23 @@
 #endif
 
 
-//=//// TYPE_TRAITS IN C++11 AND ABOVE ///////////////////////////////////=//
+//=//// INCLUDE "CASTS FOR THE MASSES" ////////////////////////////////////=//
 //
-// One of the most powerful tools you can get from allowing a C codebase to
-// compile as C++ comes from type_traits:
+// This defines macros of the style `cast(T, value)` as a replacement for the
+// hard-to-discern `(T)value` classic C cast.  The rationale is laid out in
+// this article:
 //
-// http://en.cppreference.com/w/cpp/header/type_traits
+//   http://blog.hostilefork.com/c-casts-for-the-masses/
 //
-// This is essentially an embedded query language for types, allowing one to
-// create compile-time errors for any C construction that isn't being used
-// in the way one might want.
+// ...but the implementation has evolved significantly since 2015.  Until the
+// article is updated to reflect the code, see the comments for details.
 //
-// 1. The type trait is_explicitly_convertible() is useful, but it was taken
-//    out of GCC.  This uses a simple implementation that was considered to
-//    be buggy for esoteric reasons, but is good enough for our purposes.
+// The file dependens on the definitions of CPLUSPLUS_11 and NO_CPLUSPLUS_11,
+// so inclusion can't be earlier than this point.
 //
-//    https://stackoverflow.com/a/16944130
+// (c-casts.h includes <type_traits>)
 //
-//    Note this is not defined in the `std::` namespace since it is a shim.
-//
-#if CPLUSPLUS_11
-    #include <type_traits>
-
-  namespace shim {
-    template<typename _From, typename _To>
-    struct is_explicitly_convertible : public std::is_constructible<_To, _From>
-      { };
-  }
-#endif
+#include "c-casts.h"
 
 
 //=//// FEATURE TESTING AND ATTRIBUTE MACROS //////////////////////////////=//
@@ -385,16 +374,18 @@
 // variation for the const case:
 //
 //    // C build mutable result even if const input (mutable case in C++)
-//    Member* Get_Member(const_if_c Object* o) {...}
+//    Member* Get_Member(const_if_c Object* ptr) { ... }
 //
 //    #if CPLUSPLUS_11
 //        // C++ build adds protection to the const input case
-//        const Member* Get_Member(const Object *o) {...}
+//        const Member* Get_Member(const Object *ptr) { ... }
 //    #endif
 //
-// Note: If writing a simple wrapper like this whose only purpose is to
-// pipe the const-correct output result from the input's constness, another
-// trick is to use `c_cast()` which is a "const-preserving cast".
+// Note: If writing a simple wrapper whose only purpose is to pipe the
+// const-correct output result from the input's constness, another trick is to
+// use `c_cast()` which is a "const-preserving cast".
+//
+//    #define Get_Member_As_Foo(ptr)  c_cast(Foo*, Get_Member(ptr))
 //
 #if CPLUSPLUS_11
     #define const_if_c
@@ -440,167 +431,6 @@
     #define INLINE inline
 #else
     #define INLINE static inline
-#endif
-
-
-//=//// CASTING MACROS ////////////////////////////////////////////////////=//
-//
-// This code is an evolution of ideas from "Casts for the Masses (in C)":
-//
-//   http://blog.hostilefork.com/c-casts-for-the-masses/
-//
-// It provides *easier-to-spot* variants of the parentheses cast, and also
-// helps document at the callsite what the purpose of the cast is.  When
-// built under C++11 with access to <type_traits>, the variants are able to
-// enforce their narrower policies.
-//
-// Also, the casts are designed to be "hookable" so that checks can be done
-// in instrumented C++ checked builds to ensure that the cast is good.  This
-// lets the callsites remain simple and clean while still getting the
-// advantage of debug checks when desired.
-//
-// These casts should not cost anything at runtime--unless non-constexpr
-// helpers are invoked.  Those are only used in the codebase for debug
-// features in the C++ builds, and release builds do not use them.  But since
-// they can slow the checked build down a bit, judicious use of the unchecked
-// u_cast() operation is worth it for speeding it up in certain functions.
-//
-// 1. The C preprocessor doesn't know about templates, so it parses things
-//    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
-//    headache for implementing the macros, but also if a macro produces a
-//    comma and gets passed to another macro.  To work around it, we wrap
-//    the product of the macro containing commas in parentheses.
-//
-#define u_cast(T,v) \
-    ((T)(v))  // unchecked cast, use e.g. when casting a fresh allocation
-
-#if NO_CPLUSPLUS_11
-    #define cast(T,v)       ((T)(v))  /* pointer-to-ptr, integral-to-int */
-    #define m_cast(T,v)     ((T)(v))  /* add mutability to pointer type only */
-    #define x_cast(T,v)     ((T)(v))  /* pointer cast that drops mutability */
-    #define c_cast(T,v)     ((T)(v))  /* mirror constness of input on output */
-    #define p_cast(T,v)     ((T)(v))  /* non-pointer to pointer */
-    #define i_cast(T,v)     ((T)(v))  /* non-integral to integral */
-    #define rr_cast(T,v)    ((T)(v))  /* simplifying remove-reference cast */
-#else
-    template<typename V, typename T>
-    struct cast_helper {
-        template<typename V_ = V, typename T_ = T>
-        static constexpr typename std::enable_if<
-            not shim::is_explicitly_convertible<V_,T_>::value and (
-                (std::is_arithmetic<V_>::value or std::is_enum<V_>::value)
-                and (std::is_arithmetic<T_>::value or std::is_enum<T_>::value)
-            ),
-        T>::type convert(V_ v) { return static_cast<T>(v); }
-
-        template<typename V_ = V, typename T_ = T>
-        static constexpr typename std::enable_if<
-            not shim::is_explicitly_convertible<V_,T_>::value and (
-                std::is_pointer<V_>::value and std::is_pointer<T_>::value
-            ),
-        T>::type convert(V_ v) { return reinterpret_cast<T>(v); }
-
-        template<typename V_ = V, typename T_ = T>
-        static constexpr typename std::enable_if<
-            shim::is_explicitly_convertible<V_,T_>::value,
-        T>::type convert(V_ v) { return static_cast<T>(v); }
-    };
-
-    template<typename V>
-    struct cast_helper<V,void>
-      { static void convert(V v) { (void)(v);} };  // void can't be constexpr
-
-    #define cast(T,v) \
-        (cast_helper<typename std::remove_reference< \
-            decltype(v)>::type, T>::convert(v))  // outer parens [1]
-
-    template<typename T, typename V>
-    constexpr T m_cast_helper(V v) {
-        static_assert(not std::is_const<T>::value,
-            "invalid m_cast() - requested a const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid m_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
-    }
-
-    #define m_cast(T,v) \
-        m_cast_helper<T>(v)
-
-    template<typename TQP>
-    struct x_cast_pointer_helper {
-        static_assert(std::is_pointer<TQP>::value, "x_cast() non pointer!");
-        typedef typename std::remove_pointer<TQP>::type TQ;
-        typedef typename std::add_const<TQ>::type TC;
-        typedef typename std::add_pointer<TC>::type type;
-    };
-
-    template<typename T>
-    struct x_cast_helper {
-        typedef typename std::conditional<
-            std::is_pointer<T>::value,
-            typename x_cast_pointer_helper<T>::type,
-            T
-        >::type type;
-    };
-
-    #define x_cast(T,v) \
-       (const_cast<T>((typename x_cast_helper<T>::type)(v)))
-
-    template<typename TP, typename VQPR>
-    struct c_cast_helper {
-        static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
-        typedef typename std::remove_reference<VQPR>::type VQP;
-        typedef typename std::remove_pointer<VQP>::type VQ;
-        typedef typename std::remove_pointer<TP>::type T;
-        typedef typename std::add_const<T>::type TC;
-        typedef typename std::add_pointer<TC>::type TCP;
-        typedef typename std::conditional<
-            std::is_const<VQ>::value,
-            TCP,
-            TP
-        >::type type;
-    };
-
-    #define c_cast(TP,v) \
-        (cast_helper< \
-            decltype(v), typename c_cast_helper<TP,decltype(v)>::type \
-        >::convert(v))  // outer parens [1]
-
-    template<typename TP, typename V>
-    constexpr TP p_cast_helper(V v) {
-        static_assert(std::is_pointer<TP>::value,
-            "invalid p_cast() - target type must be pointer");
-        static_assert(not std::is_pointer<V>::value,
-            "invalid p_cast() - source type can't be pointer");
-        return reinterpret_cast<TP>(static_cast<uintptr_t>(v));
-    }
-
-    #define p_cast(TP,v) \
-        p_cast_helper<TP>(v)
-
-    template<typename T, typename V>
-    constexpr T i_cast_helper(V v) {
-        static_assert(std::is_integral<T>::value,
-            "invalid i_cast() - target type must be integral");
-        static_assert(not std::is_integral<V>::value,
-            "invalid i_cast() - source type can't be integral");
-        return reinterpret_cast<T>(v);
-    }
-
-    #define i_cast(T,v) \
-        i_cast_helper<T>(v)
-
-    template<typename V>
-    struct rr_cast_helper {
-        typedef typename std::conditional<
-            std::is_reference<V>::value,
-            typename std::remove_reference<V>::type,
-            V
-        >::type type;
-    };
-
-    #define rr_cast(v) \
-        static_cast<typename rr_cast_helper<decltype(v)>::type>(v)
 #endif
 
 
@@ -909,7 +739,7 @@
 //
 // Separating it out like that may provide a better visual flow (e.g. the
 // comment might have made a line overlong), but also it's less likely to
-// get out of date because it is validating the expression.
+// get out of date because it checks that the expression is well-formed.
 //
 // `unnecessary` is another strange construct of this sort, where you can
 // put some code that people might think you have to write--but don't.  This
