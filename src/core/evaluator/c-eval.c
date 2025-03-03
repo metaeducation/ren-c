@@ -44,8 +44,8 @@
 //
 // * ...BUT a performance trick in Evaluator_Executor() is that if you're NOT
 //   debugging, it can actually avoid making its own Level* structure.  It's
-//   able to use the data stack for its holding cell of the last result, and
-//   can actually just pass through to the Stepper_Executor().
+//   able to use a cell in the Level structure for its holding of the last
+//   result, and can actually just pass through to the Stepper_Executor().
 //
 
 #include "sys-core.h"
