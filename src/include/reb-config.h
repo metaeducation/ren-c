@@ -734,7 +734,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // any problems are seen.
 //
 #if !defined(DEBUG_UTF8_EVERYWHERE)
-    #define DEBUG_UTF8_EVERYWHERE 0
+    #define DEBUG_UTF8_EVERYWHERE  0
 #endif
 #if DEBUG_UTF8_EVERYWHERE
   #if NO_CPLUSPLUS_11

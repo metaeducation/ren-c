@@ -978,20 +978,27 @@ DECLARE_NATIVE(compose)
 
 }} string_scan_result_in_top_scratch_is_transcode_state: { ///////////////////
 
+    // 1. While transcoding in a general case can't assume the data is valid
+    //    UTF-8, we're scanning an already validated UTF-8 TEXT! here.
+
     TranscodeState* ss = Cell_Handle_Pointer(TranscodeState, SCRATCH);
 
     Utf8(const*) head = Cell_Utf8_At(t);
     Offset end_offset = ss->at - head;
     Init_Integer(PUSH(), end_offset);
 
+    Utf8(const*) at = cast(Utf8(const*), ss->at);  // validated UTF-8 [1]
+
     Codepoint c;
-    Utf8(const*) next = Utf8_Next(&c, ss->at);
+    Utf8(const*) next = Utf8_Next(&c, at);
 
     while (c != '\0') {
-        if (c == '(')
+        if (c == '(') {
+            ss->at = at;
             goto found_subsequent_string_pattern;
-        ss->at = next;
-        next = Utf8_Next(&c, cast(Utf8(const*), ss->at));
+        }
+        at = next;
+        next = Utf8_Next(&c, cast(Utf8(const*), at));
     }
 
     Drop_Level(SUBLEVEL);
