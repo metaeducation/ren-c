@@ -78,10 +78,10 @@ void Push_Keys_And_Params_May_Fail(
 
     enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
 
-    DECLARE_ATOM (eval);
     Level* L = Make_Level_At(
         &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
+    Atom* eval = Level_Lifetime_Atom(L);
     Push_Level_Erase_Out_If_State_0(eval, L);
 
     if (*adjunct) {

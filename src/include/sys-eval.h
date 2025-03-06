@@ -62,6 +62,31 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
     return cast(Atom*, &L->u.eval.primed);
 }
 
+// !!! This is for historical non-stackless code, which needs a place to write
+// output for a stepper that has a lifetime at least as long as the Level.
+// e.g. this is illegal:
+//
+//      DECLARE_ATOM (result);  // stack-declared Cell
+//      Level* L = Make_Level_At(
+//          &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+//      );
+//      Push_Level_Erase_Out_If_State_0(result, L);
+//      fail ("This throws a level to the trampoline where result is dead");
+//
+// Simply put, when the Trampoline gets control after a longjmp() or throw, the
+// Level's L->out pointer will be corrupt...the stack-declared result is gone.
+//
+// Instead of DECLARE_ATOM, use Level_Lifetime_Atom(L).  This takes advantage
+// of the fact that there's a cell's worth of spare space which a stepper
+// that is not called by Evaluator_Executor() does not use.
+//
+INLINE Sink(Atom) Level_Lifetime_Atom(Level* L) {
+    assert(L->executor == &Stepper_Executor);
+    Force_Erase_Cell_Untracked(&L->u.eval.primed);
+    return cast(Atom*, &L->u.eval.primed);
+}
+
+
 // Does not check for ST_STEPPER_LEVEL_FINISHED, because generalized loops
 // may skip items and never actually call the executor.
 //
