@@ -109,7 +109,7 @@ DECLARE_NATIVE(augment)
 
     VarList* adjunct = nullptr;
 
-    Push_Keys_And_Holes_May_Fail(  // add spec parameters, may add duplicates
+    Push_Keys_And_Params_May_Fail(  // add spec parameters, may add duplicates
         &adjunct,
         spec,
         MKF_PARAMETER_SEEN,  // don't assume description string

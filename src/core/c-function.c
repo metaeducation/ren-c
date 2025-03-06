@@ -44,7 +44,7 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 
 
 //
-//  Push_Keys_And_Holes_May_Fail: C
+//  Push_Keys_And_Params_May_Fail: C
 //
 // This is an implementation routine for Make_Paramlist_Managed_May_Fail().
 // It was broken out into its own separate routine so that the AUGMENT
@@ -61,7 +61,7 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 //    first slot of the paramlist.  Initially it was the last slot...but this
 //    enables adding more arguments/refinements/locals in derived functions.
 //
-void Push_Keys_And_Holes_May_Fail(
+void Push_Keys_And_Params_May_Fail(
     VarList* *adjunct,
     const Value* spec,
     Flags flags,
@@ -624,7 +624,7 @@ ParamList* Make_Paramlist_Managed_May_Fail(
     // can be reused in AUGMENT.
     //
     *adjunct = nullptr;
-    Push_Keys_And_Holes_May_Fail(
+    Push_Keys_And_Params_May_Fail(
         adjunct,
         spec,
         flags,

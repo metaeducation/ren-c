@@ -220,7 +220,6 @@ REBOL [
             word! ["keyword"]
             group! ["splice"]
             frame! ["action"]
-            parameter! ["hole"]
             block! ["pack"]
             comma! ["barrier"]
             error! ["raised"]

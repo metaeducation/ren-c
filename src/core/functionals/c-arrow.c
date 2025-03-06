@@ -244,7 +244,7 @@ DECLARE_NATIVE(arrow)
   //=//// IF NOT OPTIMIZABLE, USE THE FULL PARAMLIST PROCESS //////////////=//
 
     if (not optimizable) {
-        Push_Keys_And_Holes_May_Fail(
+        Push_Keys_And_Params_May_Fail(
             &adjunct,
             spec,
             MKF_MASK_NONE,
