@@ -422,12 +422,11 @@ static Option(Error*) Trap_Collect_Inner_Loop(
 ){
     const Element* e = head;
     for (; e != tail; ++e) {
-        const Symbol* symbol;
-
         bool bound;
+        Option(const Symbol*) symbol = Try_Get_Settable_Word_Symbol(&bound, e);
+
         if (
-            (symbol = maybe Try_Get_Settable_Word_Symbol(&bound, e))
-            or (
+            symbol or (
                 (flags & COLLECT_ANY_WORD)
                 and Wordlike_Cell(e)
                 and (bound = IS_WORD_BOUND(e), symbol = Cell_Word_Symbol(e))
@@ -442,20 +441,20 @@ static Option(Error*) Trap_Collect_Inner_Loop(
 
             if (cl->sea) {
                 bool strict = true;
-                if (Sea_Var(unwrap cl->sea, symbol, strict))
+                if (Sea_Var(unwrap cl->sea, unwrap symbol, strict))
                     continue;
             }
 
             if (Try_Add_Binder_Index(
                 &cl->binder,
-                symbol,
+                unwrap symbol,
                 cl->next_index
             )){
                 ++cl->next_index;
             }
             else if (flags & COLLECT_NO_DUP) {
                 DECLARE_ELEMENT (duplicate);
-                Init_Word(duplicate, symbol);
+                Init_Word(duplicate, unwrap symbol);
                 return Error_Dup_Vars_Raw(duplicate);
             }
             else {
