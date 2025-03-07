@@ -29,7 +29,7 @@ Rebol [
         |
         let pattern: *in* block!, '=>, let branch: *in* block!
         (
-            if parse:match:combinators input pattern combinators (
+            if parse-match:combinators input pattern combinators (
                 branch
             ) also ^r' -> [
                 if not multi [

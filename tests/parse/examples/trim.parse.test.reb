@@ -145,13 +145,13 @@
         return series
     ]
 
-    ; UTRIM/AUTO measures first line indentation and removes indentation on
+    ; UTRIM:AUTO measures first line indentation and removes indentation on
     ; later lines relative to that.  Only makes sense for ANY-STRING?, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
     let indent: #  ; by default, remove all indentation (opt in to the REPEAT)
     if auto [
-        parse- series [
+        parse-thru series [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
             opt remove [some LF]
 

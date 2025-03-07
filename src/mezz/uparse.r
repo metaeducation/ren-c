@@ -927,8 +927,11 @@ default-combinators: to map! reduce [
     ; it's also a little bit obtuse when read in context.
     ;
     ; !!! Note: Refinements aren't working as a general mechanic yet, so the
-    ; SUBPARSE:MATCH, SUBPARSE:RELAX, SUBPARSE:MATCH:RELAX, etc. have to be
-    ; handled by literal combinator specializations added to the map.
+    ; SUBPARSE:RELAX, and SUBPARSE-MATCH:RELAX, etc. have to be handled by
+    ; literal combinator specializations added to the map. While :MATCH is
+    ; not a refinement on PARSE itself, it's a refinement here for expedience.
+    ;
+    ; https://forum.rebol.info/t/the-parse-of-progress/1349/2
 
     'subparse combinator [
         "Recursion into other data with a rule, result of rule if match"
@@ -2740,10 +2743,9 @@ default-combinators.(just '): default-combinators.just
 ; Just match literal CHAIN!s :-(
 
 s: default-combinators.subparse
-default-combinators.('subparse:match): (unrun s:match/)
+default-combinators.('subparse-match): (unrun s:match/)
 default-combinators.('subparse:relax): (unrun s:relax/)
-default-combinators.('subparse:match:relax): (unrun s:match:relax/)
-default-combinators.('subparse:relax:match): (unrun s:relax:match/)
+default-combinators.('subparse-match:relax): (unrun s:match:relax/)
 s: ~
 
 
@@ -3060,17 +3062,17 @@ comment [/combinatorize: func [
 ;
 ;     result: parse data rules except [...]
 ;
-; But there's a variant called PARSE:MATCH which returns the input matched,
+; But PARSE-MATCH is a simple wrapper that returns the input or NULL:
 ; or it returns null:
 ;
-;     >> parse:match "aaa" [some #a]
+;     >> parse-match "aaa" [some #a]
 ;     == "aaa"
 ;
-;     >> validate "aaa" [some #b]
+;     >> parse-match "aaa" [some #b]
 ;     == ~null~  ; anti
 ;
 ; So for those who prefer to use IF to know about a parse's success or failure
-; they can just use PARSE:MATCH instead.
+; they can just use PARSE-MATCH instead.
 ;
 ; There is a core implementation for this called PARSE*, which is exposed
 ; separately in order to allow handling the case when pending values have
@@ -3209,19 +3211,38 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     ]
 )
 
-parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
-    "Process input in the parse dialect, return how far reached"
-] ]
-    enclose parse*/ func [f] [
-        f.rules: compose $() [(f.rules) || accept <here>]
+; We do not implement PARSE-MATCH by rewriting the rules to [(rules) <input>]
+; to avoid dependence on the definition of the <input> combinator.
+;
+/parse-match: redescribe [
+    "Process input using PARSE, return input on success or null on mismatch"
+](
+    enclose parse/ func [f] [
+        eval f except [return null]
+        return f.input
+    ]
+)
 
-        let [^synthesized' pending]: eval-free:undecayed f except [
-            return null
+; Due to the layering it's hard to write PARSE-THRU without using the ACCEPT
+; and <here> combinators as they are defined.
+;
+/parse-thru: redescribe [
+    "Process input using PARSE, return how far reached or null on mismatch"
+](
+    cascade [
+        adapt parse:relax/ [  ; :RELAX irrelevant, drop from interface
+            if combinators and (any [
+                combinators.<here> != default-combinators.<here>
+                combinators.accept != default-combinators.accept
+            ]) [
+                fail [
+                    "Custom combinators redefining ACCEPT or <here> may"
+                    "break PARSE-THRU.  Review if this comes up."
+                ]
+            ]
+            rules: compose $() [(rules) accept <here>]
         ]
-        if not empty? pending [
-            fail "PARSE completed, but pending list was not empty"
-        ]
-        return heavy unmeta synthesized'
+        try/  ; want to return NULL instead of raised error on mismatch
     ]
 )
 

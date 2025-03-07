@@ -150,14 +150,12 @@
 )
 
 ; !!! Refinements aren't actually working on combinators, so this is done
-; via a hack which is literally matching SUBPARSE:MATCH ... the alternative
-; would be SUBPARSE-MATCH or a new name like VALIDATE.  This is aspirational
-; to "do what people expect"
+; via a hack which is literally matching SUBPARSE-MATCH
 
-(["abc" "def"] = parse [["abc" "def"]] [subparse:match block! [some text!]])
-~parse-mismatch~ !! (parse [['abc @def]] [subparse:match block! [some text!]])
+(["abc" "def"] = parse [["abc" "def"]] [subparse-match block! [some text!]])
+~parse-mismatch~ !! (parse [['abc @def]] [subparse-match block! [some text!]])
 
-("aaaabbbb" = parse [1 "aaaabbbb"] ['1 subparse:match:relax @ [some "a"]])
+("aaaabbbb" = parse [1 "aaaabbbb"] ['1 subparse-match:relax @ [some "a"]])
 
 ("a" = parse [1 "aaaabbbb"] ['1 subparse:relax @ [some "a"]])
 

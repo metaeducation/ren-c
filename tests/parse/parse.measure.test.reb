@@ -1,6 +1,6 @@
 ; %parse-measure.test.reb
 ;
-; Inspired by converting TRIM to UPARSE and calculating TRIM/AUTO indents.
+; Inspired by converting TRIM to UPARSE and calculating TRIM:AUTO indents.
 ; This measures the length in series units across a match.
 
 (3 = parse "aaa" [measure some "a"])

@@ -1,11 +1,6 @@
 ; %validate-enclosure.test.reb
 ;
-; At one point, VALIDATE was a combinator meaning "SUBPARSE:MATCH", that was
-; invented prior to the :MATCH refinement.  It stuck around because refinements
-; don't work with combinators yet.
-;
-; However, a loophole is that values can be recognized literally and used as
-; combinators.  So SUBPARSE:MATCH was changed to do that.
+; At one point, VALIDATE was a combinator meaning "SUBPARSE-MATCH"
 ;
 ; But for the time when VALIDATE existed as a combinator for a parse variant,
 ; there was also a usermode VALIDATE written as an enclosure of PARSE.  It was
@@ -15,11 +10,11 @@
 ; the same effect. It might be tempting to write this as an ADAPT which changes
 ; the rules to be:
 ;
-;    rules: reduce [rules '|| <input>]
+;    rules: reduce [rules <input>]
 ;
 ; But if someone changed the meaning of <input> with different :COMBINATORS
 ; that would not work.  ENCLOSE will work regardless.  But really, just use
-; PARSE:MATCH
+; PARSE-MATCH
 
 [
     (validate: enclose parse*/ func [f [frame!]] [

@@ -7,7 +7,7 @@
 
 (
     all [
-        let pos: parse- [... [a b]] [to '[a b]]
+        let pos: parse-thru [... [a b]] [to '[a b]]
         pos = [[a b]]
     ]
 )
@@ -16,7 +16,7 @@
 
 ; !!! Review: how do we SUBPARSE a QUOTED! series?
 ;
-;   pos: parse- [''[1 + 2]] [subparse quoted! [copy x to <end>]]
+;   pos: parse-thru [''[1 + 2]] [subparse quoted! [copy x to <end>]]
 ;   [] == pos
 ;   x == [1 + 2]
 ;
@@ -81,15 +81,15 @@
 ; tick marks from everything like ["ab"] to become ['ab]
 [
     (all [
-        let pos: parse- "abbbbbc" ['a some ['b]]
+        let pos: parse-thru "abbbbbc" ['a some ['b]]
         "c" = pos
     ])
     (all [
-        let pos: parse- "abbbbc" ['ab, some ['bc | 'b]]
+        let pos: parse-thru "abbbbc" ['ab, some ['bc | 'b]]
         "" = pos
     ])
     (all [
-        let pos: parse- "abc10def" ['abc '10]
+        let pos: parse-thru "abc10def" ['abc '10]
         "def" = pos
     ])
 

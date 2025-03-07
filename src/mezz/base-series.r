@@ -123,7 +123,7 @@ last: redescribe [
             rule: blank!
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM/HEAD/TAIL
+                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM:HEAD:TAIL
             ]
         ]
 
@@ -167,7 +167,7 @@ last: redescribe [
             ]
 
             if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM/HEAD/TAIL
+                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM:HEAD:TAIL
             ]
         ]
     ] else [
@@ -205,7 +205,7 @@ last: redescribe [
         return series
     ]
 
-    ; TRIM/AUTO measures first line indentation and removes indentation on
+    ; TRIM:AUTO measures first line indentation and removes indentation on
     ; later lines relative to that.  Only makes sense for ANY-STRING?, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;

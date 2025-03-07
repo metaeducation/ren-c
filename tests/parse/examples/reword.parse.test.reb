@@ -106,7 +106,7 @@ bind construct [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    parse- // [source rule :case case_REWORD] else [fail]  ; why fail?
+    parse-thru // [source rule :case case_REWORD] else [fail]  ; why fail?
     return out
 ]
 ok)

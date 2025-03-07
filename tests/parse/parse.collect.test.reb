@@ -280,13 +280,13 @@
 [
     (all [
         let x
-        let pos: parse- "aaabbb" [x: collect [keep [across some "a"]]]
+        let pos: parse-thru "aaabbb" [x: collect [keep [across some "a"]]]
         "bbb" = pos
         x = ["aaa"]
     ])
     (all [
         let x
-        let pos: parse- "aaabbbccc" [
+        let pos: parse-thru "aaabbbccc" [
             x: collect [keep [across some "a"] some "b" keep [across some "c"]]
         ]
         "" = pos
@@ -298,7 +298,7 @@
 [
     (all [
         let x
-        let pos: parse- [1 2 3] [
+        let pos: parse-thru [1 2 3] [
             x: collect [
                 keep integer! keep integer! keep text!
                 |
@@ -343,7 +343,7 @@
 [
     (all [
         let x
-        let pos: parse- [1 2 3] [
+        let pos: parse-thru [1 2 3] [
             x: collect [
                 keep integer!
                 keep spread (second [A [<pick> <me>] B])
@@ -355,7 +355,7 @@
     ])
     (all [
         let x
-        let pos: parse- [1 2 3] [
+        let pos: parse-thru [1 2 3] [
             x: collect [
                 keep integer!
                 keep (second [A [<pick> <me>] B])
