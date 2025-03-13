@@ -547,7 +547,7 @@ DECLARE_NATIVE(generator)  // could also be made in LIB with SPECIALIZE
 
     Copy_Cell(ARG(spec), EMPTY_BLOCK);
     USED(ARG(body));
-    return N_yielder(level_);
+    return NATIVE_CFUNC(yielder)(level_);
 }
 
 

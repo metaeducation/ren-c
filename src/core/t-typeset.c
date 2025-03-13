@@ -306,11 +306,11 @@ void Set_Parameter_Spec(
                 and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
             ){
                 Dispatcher* dispatcher = Details_Dispatcher(details);
-                if (dispatcher == &N_any_value_q)
+                if (dispatcher == NATIVE_CFUNC(any_value_q))
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
-                else if (dispatcher == &N_any_atom_q)
+                else if (dispatcher == NATIVE_CFUNC(any_atom_q))
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
-                else if (dispatcher == &N_nihil_q)
+                else if (dispatcher == NATIVE_CFUNC(nihil_q))
                     *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
                 else if (dispatcher == &Typechecker_Dispatcher) {
                     if (optimized == optimized_tail) {

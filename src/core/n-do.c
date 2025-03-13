@@ -919,7 +919,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
     INCLUDE_PARAMS_OF_APPLY;  // needs to be frame-compatible [1]
 
     if (STATE != STATE_0)  // [2]
-        return N_apply(level_);
+        return NATIVE_CFUNC(apply)(level_);
 
     Element* operation = cast(Element*, ARG(operation));
 
@@ -940,7 +940,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
     UNUSED(LOCAL(index));
     UNUSED(LOCAL(iterator));
 
-    return N_apply(level_);
+    return NATIVE_CFUNC(apply)(level_);
 }
 
 

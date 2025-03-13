@@ -1141,7 +1141,7 @@ sections: [
 
 nats: collect [
     for-each 'name native-names [
-        keep cscape [name "&N_${name}"]
+        keep cscape [name "&NATIVE_CFUNC(${name})"]
     ]
 ]
 

@@ -35,17 +35,28 @@
 
 #include "rebol-internals.h"
 
-// Helper for declaring a native dispatcher function.  Extensions do this
-// differently, by including the module name in the function name.
+//=//// NATIVES ////////////////////////////////////////////////////////////=//
 //
-#define DECLARE_NATIVE(name) \
-    Bounce N_##name(Level* level_)
+// The core has a different definition of DECLARE_NATIVE() than extensions.
+// Extensions have to include the module name in the function name, in case
+// they are linked directly into the executable--so their linknames aren't
+// ambiguous with core natives (or other extension natives) of the same name.
+//
+// 1. Because there are macros for things like `maybe`, trying to reuse the
+//    NATIVE_CFUNC() macro inside DECLARE_NATIVE() would expand maybe before
+//    passing it to the token paste.  It's easiest just to repeat `N_##name`
+//
+// 2. Forward definitions of DECLARE_NATIVE() for all the core natives.  This
+//    means functions are available via NATIVE_CFUNC() throughout the core code
+//    if it wants to explicitly reference a native's dispatcher function.
 
-// Forward definitions of DECLARE_NATIVE() and DECLARE_NATIVE() for all
-// the core natives.  This means functions are available as &N_native_name
-// throughout the core code if they are needed.
-//
-#include "tmp-native-fwd-decls.h"
+#define NATIVE_CFUNC(name)  N_##name  // e.g. NATIVE_CFUNC(foo) => N_foo
+
+#define DECLARE_NATIVE(name) \
+    Bounce N_##name(Level* level_)  // NATIVE_CFUNC(macro) would expand [1]
+
+#include "tmp-native-fwd-decls.h"  // forward declarations of natives [2]
+
 
 // %tmp-paramlists.h is the file that contains macros for natives and actions
 // that map their argument names to indices in the frame.  This defines the

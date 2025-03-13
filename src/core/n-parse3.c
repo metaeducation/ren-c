@@ -275,7 +275,7 @@ static bool Subparse_Throws(
     //
     Set_Executor_Flag(ACTION, L, IN_DISPATCH);
 
-    Bounce b = N_subparse(L);
+    Bounce b = NATIVE_CFUNC(subparse)(L);
 
     Drop_Action(L);
 
