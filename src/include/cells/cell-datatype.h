@@ -127,8 +127,5 @@ INLINE GenericHook* Generic_Hook_For_Heart(Heart h)
 INLINE CompareHook* Compare_Hook_For_Heart(Heart h)
   { return cast(CompareHook*, Builtin_Type_Hooks[h][IDX_COMPARE_HOOK]); }
 
-INLINE MakeHook* Makehook_For_Heart(Heart h)
-  { return cast(MakeHook*, Builtin_Type_Hooks[h][IDX_MAKE_HOOK]); }
-
 INLINE MoldHook* Mold_Hook_For_Heart(Heart h)
   { return cast(MoldHook*, Builtin_Type_Hooks[h][IDX_MOLD_HOOK]); }

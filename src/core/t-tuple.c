@@ -25,15 +25,19 @@
 #include "sys-core.h"
 
 
-//
-//  Makehook_Sequence: C
-//
 // !!! This contains some old ideas from R3-Alpha for what you might be able
 // to MAKE a TUPLE! from.  But primarily, this is an evaluative form of
 // TO TUPLE! on BLOCK!, with the checking that performs included.
 //
-Bounce Makehook_Sequence(Level* level_, Heart heart, Element* arg)
+IMPLEMENT_GENERIC(make, any_sequence)
 {
+    INCLUDE_PARAMS_OF_MAKE;
+
+    Heart heart = VAL_TYPE_HEART(ARG(type));
+    assert(Any_Sequence_Kind(heart));
+
+    Element* arg = Element_ARG(def);
+
     if (Is_Block(arg))
         return rebValue(
             CANON(TO), Datatype_From_Kind(heart), CANON(REDUCE), arg

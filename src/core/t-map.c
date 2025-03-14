@@ -361,16 +361,18 @@ void Append_Map(
 }
 
 
-//
-//  Makehook_Map: C
-//
 // !!! R3-Alpha TO of MAP! was like MAKE but wouldn't accept just a size.
 // Since TO MAP! doesn't do any evaluation, drop MAKE MAP! for now...it may
 // return as an evaluating or otherwise interesting form.
 //
-Bounce Makehook_Map(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_MAP);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, map)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_KIND(ARG(type)) == REB_MAP);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     if (Any_Number(arg))
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));

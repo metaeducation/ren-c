@@ -84,9 +84,6 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 }
 
 
-//
-//  Makehook_Word: C
-//
 // Historically, WORD! creation was done with AS and TO.
 //
 // (make word! [...]) was considered to mean (as word! unspaced [...]), but
@@ -100,8 +97,14 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 // There might be applications of things like (make word! 241) being a way
 // of creating a word based on its symbol ID.
 //
-Bounce Makehook_Word(Level* level_, Heart heart, Element* arg) {
+IMPLEMENT_GENERIC(make, word)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    Heart heart = VAL_TYPE_HEART(ARG(type));
     assert(Any_Word_Kind(heart));
+
+    Element* arg = Element_ARG(def);
 
     if (Any_Sequence(arg)) {  // (make word! '/a) or (make word! 'a:) etc.
         do {

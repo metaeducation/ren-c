@@ -107,9 +107,6 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 }
 
 
-//
-//  Makehook_Decimal: C
-//
 // !!! The current thinking on the distinction between MAKE and TO is that
 // TO should not do any evaluations (including not looking at what words are
 // bound to, only their spellings).  Also, TO should be more based on the
@@ -118,22 +115,12 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 // codepoint.  Hence historical conversions have been split into the TO
 // or MAKE as a rough idea of how these rules might be followed.
 //
-// 1. It isn't entirely clear why MAKE of PERCENT! should be allowed, the
-//    historical cases are strange:
-//
-//        >> make percent! 10:00
-//        == 36000%
-//
-//    It may be that MAKE PERCENT! of DECIMAL! would multiply by 100, and
-//    MAKE DECIMAL! of PERCENT! would divide by 100.  Other than that the
-//    scenarios are not clear.
-//
-// 2. MAKE DECIMAL! from a PATH! is a strange idea that allows evaluation of
+// 1. MAKE DECIMAL! from a PATH! is a strange idea that allows evaluation of
 //    arbitrary code.  (TO DECIMAL! of PATH! previously existed as a version
 //    that didn't evaluate groups, but still ran DIVIDE and could get things
 //    like division by zero, so got rid of that).  Weird but trying this.
 //
-// 3. Rebol2 and Red do this for some reason (your guess as good as mine):
+// 2. Rebol2 and Red do this for some reason (your guess as good as mine):
 //
 //        rebol2>> make decimal! [10 0]
 //        == 10.0
@@ -141,22 +128,24 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 //        rebol2>> make decimal! [10 2]
 //        == 1000.0
 //
-Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_DECIMAL or heart == REB_PERCENT);
+IMPLEMENT_GENERIC(make, decimal) {
+    INCLUDE_PARAMS_OF_MAKE;
 
-    if (heart == REB_PERCENT)
-        return FAIL("MAKE of PERCENT! not supported at this time");  // [1]
+    assert(VAL_TYPE_KIND(ARG(type)) == REB_DECIMAL);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     switch (VAL_TYPE(arg)) {
       case REB_ISSUE: {
         REBDEC d = cast(REBDEC, Cell_Codepoint(arg));
-        return Init_Decimal_Or_Percent_Untracked(OUT, heart, d); }
+        return Init_Decimal(OUT, d); }
 
       case REB_TIME: {
         REBDEC d = VAL_NANO(arg) * NANO;
         return Init_Decimal(OUT, d); }
 
-      case REB_PATH: {  // fractions as 1/2 are experimental use for PATH! [2]
+      case REB_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
         if (Cell_Sequence_Len(arg) != 2)
             return FAIL("Fraction experiment requires PATH! of length 2");
 
@@ -194,12 +183,12 @@ Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
         rebRelease(quotient);
         return Init_Decimal(OUT, d); }
 
-      case REB_BLOCK: {  // !!! what the heck is this for? [3]
+      case REB_BLOCK: {  // !!! what the heck is this for? [2]
         REBLEN len;
         const Element* item = Cell_List_Len_At(&len, arg);
 
         if (len != 2)
-            return RAISE(Error_Bad_Make(heart, arg));
+            return RAISE(Error_Bad_Make(REB_DECIMAL, arg));
 
         REBDEC d;
         if (Is_Integer(item))
@@ -236,7 +225,28 @@ Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
         break;
     }
 
-    return RAISE(Error_Bad_Make(heart, arg));
+    return RAISE(Error_Bad_Make(REB_DECIMAL, arg));
+}
+
+
+// 1. It isn't entirely clear why MAKE of PERCENT! should be allowed, the
+//    historical cases are strange:
+//
+//        >> make percent! 10:00
+//        == 36000%
+//
+//    It may be that MAKE PERCENT! of DECIMAL! would multiply by 100, and
+//    MAKE DECIMAL! of PERCENT! would divide by 100.  Other than that the
+//    scenarios are not clear.
+//
+IMPLEMENT_GENERIC(make, percent)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    UNUSED(ARG(type));
+    UNUSED(ARG(def));
+
+    return FAIL("MAKE of PERCENT! not supported at this time");  // [1]
 }
 
 

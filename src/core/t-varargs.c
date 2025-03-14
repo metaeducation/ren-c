@@ -358,12 +358,14 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 }
 
 
-//
-//  Makehook_Varargs: C
-//
-Bounce Makehook_Varargs(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_VARARGS);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, varargs)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_HEART(ARG(type)) == REB_VARARGS);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     // With MAKE VARARGS! on an ANY-LIST?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to

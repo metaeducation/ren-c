@@ -427,7 +427,6 @@ STATIC_ASSERT(INFIX_MODE_MAX == 3);  // must fit in Crumb
 enum Reb_Type_Hook_Index {
     IDX_GENERIC_HOOK,
     IDX_COMPARE_HOOK,
-    IDX_MAKE_HOOK,
     IDX_MOLD_HOOK,
     IDX_HOOK_NULLPTR,  // see notes on why null termination convention
     IDX_HOOKS_MAX

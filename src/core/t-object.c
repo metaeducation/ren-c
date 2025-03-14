@@ -341,17 +341,19 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 }
 
 
-//
-//  Makehook_Frame: C
-//
 // !!! The feature of MAKE FRAME! from a VARARGS! would be interesting as a
 // way to support usermode authoring of things like MATCH.
 //
 // For now just support ACTION! (or path/word to specify an action)
 //
-Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_FRAME);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, frame)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_KIND(ARG(type)) == REB_FRAME);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -415,22 +417,64 @@ Bounce Makehook_Frame(Level* level_, Heart heart, Element* arg) {
 }
 
 
-//
-//  Makehook_Context: C
-//
-Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
-    //
-    // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
-    //
-    assert(heart == REB_OBJECT or heart == REB_MODULE);
+IMPLEMENT_GENERIC(make, module)
+{
+    INCLUDE_PARAMS_OF_MAKE;
 
-    if (heart == REB_MODULE) {
-        if (not Any_List(arg))
-            return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
+    assert(VAL_TYPE_HEART(ARG(type)) == REB_MODULE);
+    UNUSED(ARG(type));
 
-        SeaOfVars* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
-        Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
-        return Init_Module(OUT, sea);
+    Element* arg = Element_ARG(def);
+
+    if (not Any_List(arg))
+        return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
+
+    SeaOfVars* sea = Alloc_Sea_Core(NODE_FLAG_MANAGED);
+    Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
+    return Init_Module(OUT, sea);
+}
+
+
+// Instance where MAKE allows not just a type, but an object instance to
+// inherit from.
+//
+IMPLEMENT_GENERIC(make, object)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(Is_Object(ARG(type)) or VAL_TYPE_HEART(ARG(type)) == REB_OBJECT);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
+
+    if (Is_Object(ARG(type))) {
+        VarList* varlist = cast(VarList*, Cell_Context(ARG(type)));
+        if (Is_Block(arg)) {
+            const Element* tail;
+            const Element* at = Cell_List_At(&tail, arg);
+
+            VarList* derived = Make_Varlist_Detect_Managed(
+                COLLECT_ONLY_SET_WORDS,
+                REB_OBJECT,
+                at,
+                tail,
+                varlist
+            );
+
+            Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
+            Copy_Cell(Stub_Cell(use), Varlist_Archetype(derived));
+
+            Tweak_Cell_Binding(arg, use);  // def is GC-safe, use will be too
+            Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // keeps derived alive
+
+            DECLARE_ATOM (dummy);
+            if (Eval_Any_List_At_Throws(dummy, arg, SPECIFIED))
+                return BOUNCE_THROWN;
+
+            return Init_Context_Cell(OUT, REB_OBJECT, derived);
+        }
+
+        return RAISE(Error_Bad_Make(REB_OBJECT, arg));
     }
 
     if (Is_Block(arg)) {
@@ -439,7 +483,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
 
         VarList* ctx = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            heart,
+            REB_OBJECT,
             at,
             tail,
             nullptr  // no parent (MAKE SOME-OBJ [...] calls DECLARE_GENERICS(Context))
@@ -457,7 +501,7 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
         if (threw)
             return BOUNCE_THROWN;
 
-        return Init_Context_Cell(OUT, heart, ctx);
+        return Init_Object(OUT, ctx);
     }
 
     // `make object! 10` - currently not prohibited for any context type
@@ -465,22 +509,22 @@ Bounce Makehook_Context(Level* level_, Heart heart, Element* arg) {
     if (Any_Number(arg)) {
         VarList* context = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            heart,
+            REB_OBJECT,
             Array_Head(EMPTY_ARRAY),  // scan for toplevel set-words (empty)
             Array_Tail(EMPTY_ARRAY),
             nullptr  // no parent
         );
 
-        return Init_Context_Cell(OUT, heart, context);
+        return Init_Object(OUT, context);
     }
 
     // make object! map!
     if (Is_Map(arg)) {
         VarList* c = Alloc_Varlist_From_Map(VAL_MAP(arg));
-        return Init_Context_Cell(OUT, heart, c);
+        return Init_Object(OUT, c);
     }
 
-    return RAISE(Error_Bad_Make(heart, arg));
+    return RAISE(Error_Bad_Make(REB_OBJECT, arg));
 }
 
 
@@ -922,44 +966,6 @@ DECLARE_GENERICS(Context)
 
         return FAIL(Error_Cannot_Reflect(VAL_TYPE(context), property)); }
 
-    //=//// MAKE SOME-OBJ [...] (MAKE OBJECT! Handled By TYPE-BLOCK!) //////=//
-
-      case SYM_MAKE: {
-        INCLUDE_PARAMS_OF_MAKE;
-
-        UNUSED(ARG(type));  // already in context
-        Element* def = cast(Element*, ARG(def));
-
-        if (heart == REB_MODULE)
-            return FAIL("Cannot MAKE derived MODULE! instances (yet?)");
-
-        VarList* varlist = cast(VarList*, c);
-        if (Is_Block(def)) {
-            const Element* tail;
-            const Element* at = Cell_List_At(&tail, def);
-
-            VarList* derived = Make_Varlist_Detect_Managed(
-                COLLECT_ONLY_SET_WORDS,
-                heart,
-                at,
-                tail,
-                varlist
-            );
-
-            Use* use = Alloc_Use_Inherits(Cell_List_Binding(def));
-            Copy_Cell(Stub_Cell(use), Varlist_Archetype(derived));
-
-            Tweak_Cell_Binding(def, use);  // def is GC-safe, use will be too
-            Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // keeps derived alive
-
-            DECLARE_ATOM (dummy);
-            if (Eval_Any_List_At_Throws(dummy, def, SPECIFIED))
-                return BOUNCE_THROWN;
-
-            return Init_Context_Cell(OUT, heart, derived);
-        }
-
-        return Error_Bad_Make(heart, def); }
 
     //=//// TO CONVERSION /////////////////////////////////////////////////=//
 

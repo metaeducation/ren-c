@@ -223,11 +223,14 @@ REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 }
 
 
-//
-//  Makehook_Utf8: C
-//
-Bounce Makehook_Utf8(Level* level_, Heart heart, Element* arg) {
+IMPLEMENT_GENERIC(make, any_utf8)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    Heart heart = VAL_TYPE_HEART(ARG(type));
     assert(Any_Utf8_Kind(heart));
+
+    Element* arg = Element_ARG(def);
 
     switch(VAL_TYPE(arg)) {
       case REB_INTEGER: {
@@ -251,8 +254,10 @@ Bounce Makehook_Utf8(Level* level_, Heart heart, Element* arg) {
 
         Codepoint c;
         if (*bp <= 0x80) {
-            if (size != 1)
-                return Makehook_String(level_, REB_ISSUE, arg);
+            if (size != 1) {
+                Init_Builtin_Datatype(ARG(type), REB_ISSUE);
+                return GENERIC_CFUNC(make, any_string)(level_);
+            }
 
             c = *bp;
         }
@@ -262,8 +267,10 @@ Bounce Makehook_Utf8(Level* level_, Heart heart, Element* arg) {
                 return RAISE(unwrap e);  // must be valid UTF8
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
-            if (size != 0)
-                return Makehook_String(level_, REB_ISSUE, arg);
+            if (size != 0) {
+                Init_Builtin_Datatype(ARG(type), REB_ISSUE);
+                return GENERIC_CFUNC(make, any_string)(level_);
+            }
         }
         Option(Error*) error = Trap_Init_Char(OUT, c);
         if (error)

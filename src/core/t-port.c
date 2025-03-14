@@ -37,15 +37,17 @@ REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 }
 
 
-//
-//  Makehook_Port: C
-//
 // Create a new port. This is done by calling the MAKE-PORT* function in
 // the system context.
 //
-Bounce Makehook_Port(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_PORT);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, port)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_HEART(ARG(type)) == REB_PORT);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     if (Is_Object(arg)) {
         //

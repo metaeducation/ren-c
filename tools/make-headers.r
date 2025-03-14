@@ -94,6 +94,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
         ; checked for the word NATIVE it would also have to look for paths
         ; if natives took refinements (as they once took NATIVE:BODY)
 
+        print mold header
         fail "%make-headers.r only understands C functions"
     ]
 

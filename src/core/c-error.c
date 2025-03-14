@@ -393,12 +393,7 @@ void Set_Location_Of_Error(
 }
 
 
-//
-// Makehook_Error: C
-//
-// Hook for MAKE ERROR! (distinct from MAKE for ANY-CONTEXT?, due to %types.r)
-//
-// Note: Most often system errors from %errors.r are thrown by C code using
+// Most often system errors from %errors.r are thrown by C code using
 // Make_Error(), but this routine accommodates verification of errors created
 // through user code...which may be mezzanine Rebol itself.  A goal is to not
 // allow any such errors to be formed differently than the C code would have
@@ -407,9 +402,14 @@ void Set_Location_Of_Error(
 // existing landscape so that if it is to be changed then it can be seen
 // exactly what is changing.
 //
-Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_ERROR);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, error)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_KIND(ARG(type)) == REB_ERROR);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     // Frame from the error object template defined in %sysobj.r
     //
@@ -418,13 +418,7 @@ Bounce Makehook_Error(Level* level_, Heart heart, Element* arg) {
     VarList* error;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
 
-    if (Is_Block(arg)) {
-        // If a block, then effectively MAKE OBJECT! on it.  Afterward,
-        // apply the same logic as if an OBJECT! had been passed in above.
-
-        // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
-        // code in DECLARE_GENERICS(Context) and code in DECLARE_NATIVE(construct))
-
+    if (Is_Block(arg)) {  // reuse MAKE OBJECT! logic for block
         const Element* tail;
         const Element* head = Cell_List_At(&tail, arg);
 
@@ -1297,19 +1291,11 @@ Error* Error_Bad_Void(void) {
 //
 //  Error_Unhandled: C
 //
-Error* Error_Unhandled(Level* level_, const Symbol* verb) {
-    switch (Symbol_Id(verb)) {
-      case SYM_AS:  // distinct error..?
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        return Error_Bad_Cast_Raw(ARG(element), ARG(type)); }
-
-      default:
-        break;
-    }
-
-    return Error_Cannot_Use(verb, ARG_N(1));
+Error* Error_Unhandled(Level* level_) {
+    UNUSED(level_);
+    return Error_User("Unhandled generic dispatch");  // !!! better error idea
 }
+
 
 //
 //  Startup_Errors: C

@@ -88,14 +88,17 @@ REBINT CT_List(const Cell* a, const Cell* b, bool strict)
 }
 
 
-//
-//  Makehook_List: C
-//
 // "Make Type" dispatcher for BLOCK!, GROUP!, FENCE!, and variants (THE-GROUP!,
 // TYPE-FENCE!, etc.)
 //
-Bounce Makehook_List(Level* level_, Heart heart, Element* arg) {
+IMPLEMENT_GENERIC(make, any_list)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    Heart heart = VAL_TYPE_HEART(ARG(type));
     assert(Any_List_Kind(heart));
+
+    Element* arg = Element_ARG(def);
 
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
@@ -618,22 +621,6 @@ DECLARE_GENERICS(List)
 
         return Series_Common_Action_Maybe_Unhandled(level_, verb); }
 
-    //=//// MAKE (special behavior for TYPE-BLOCK!) ///////////////////////=//
-
-      case SYM_MAKE: {
-        INCLUDE_PARAMS_OF_MAKE;
-
-        Element* type = cast(Element*, ARG(type));
-        Element* def = cast(Element*, ARG(def));
-
-        if (not Is_Type_Block(type))
-            return FAIL(Error_Bad_Make(VAL_TYPE(list), def));
-
-        Heart heart = VAL_TYPE_HEART(type);
-
-        MakeHook* hook = Makehook_For_Heart(heart);
-
-        return hook(level_, heart, def); }
 
   //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
 
@@ -1302,6 +1289,27 @@ DECLARE_GENERICS(List)
     }
 
     return UNHANDLED;
+}
+
+
+// !!! TYPE-XXX! are being rethought, but right now TYPE-BLOCK! has the
+// particular behavior of re-dispatching.
+//
+IMPLEMENT_GENERIC(make, type_block)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    Element* type = cast(Element*, ARG(type));
+
+    Element* def = cast(Element*, ARG(def));
+    USED(def);  // will be inherited via the level
+
+    if (not Is_Type_Block(type))
+        return UNHANDLED;
+
+    Heart heart = VAL_TYPE_HEART(type);
+
+    return Dispatch_Generic_Core(g_generic_make, heart, level_);
 }
 
 

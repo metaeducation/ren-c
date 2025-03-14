@@ -41,9 +41,6 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 }
 
 
-//
-//  Makehook_Integer: C
-//
 // 1. This is a kind of crazy historical idea where this works:
 //
 //        rebol2>> make integer! <11.2e-1>
@@ -69,9 +66,14 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 //    being scarcely clear why that's a logical TO moreso than 1, or 100, or
 //    anything else.  We move this oddity to MAKE.
 //
-Bounce Makehook_Integer(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_INTEGER);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, integer)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_HEART(ARG(type)) == REB_INTEGER);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Option(Error*) error = Trap_Transcode_One(OUT, REB_0, arg);

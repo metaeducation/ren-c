@@ -25,35 +25,6 @@
 #include "sys-core.h"
 
 
-//
-//  Makehook_Fail: C
-//
-Bounce Makehook_Fail(Level* level_, Heart heart, Element* arg) {
-    UNUSED(heart);
-    UNUSED(arg);
-
-    return RAISE("Datatype does not have a MAKE handler registered");
-}
-
-
-//
-//  Makehook_Unhooked: C
-//
-// MAKE STRUCT! is part of the FFI extension, but since user defined types
-// aren't ready yet as a general concept, this hook is overwritten in the
-// dispatch table when the extension loads.
-//
-Bounce Makehook_Unhooked(Level* level_, Heart heart, Element* arg) {
-    UNUSED(arg);
-
-    const Value* type = Datatype_From_Kind(heart);
-    UNUSED(type); // !!! put in error message?
-
-    return RAISE(
-        "Datatype is provided by an extension that's not currently loaded"
-    );
-}
-
 
 //
 //  /make: native:generic [
@@ -69,8 +40,12 @@ Bounce Makehook_Unhooked(Level* level_, Heart heart, Element* arg) {
 //
 DECLARE_NATIVE(make)
 {
-    Element* type = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(type, LEVEL, CANON(MAKE));
+    INCLUDE_PARAMS_OF_MAKE;
+
+    Element* type = cast(Element*, ARG(type));
+    UNUSED(ARG(def));
+
+    return Dispatch_Generic(make, type, LEVEL);
 }
 
 
@@ -300,7 +275,10 @@ DECLARE_NATIVE(to)
 
   #if NO_RUNTIME_CHECKS
 
-    return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(TO));
+    Bounce bounce = Run_Generic_Dispatch(e, TOP_LEVEL, CANON(TO));
+    /*if (bounce == UNHANDLED)  // distinct error for AS or TO ?
+        return Error_Bad_Cast_Raw(ARG(element), ARG(type)); */
+    return bounce;
 
   #else  // add monitor to ensure result is right
 

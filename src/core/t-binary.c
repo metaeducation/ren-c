@@ -159,14 +159,16 @@ DECLARE_NATIVE(decode_ieee_754) {
 }
 
 
+// See also: IMPLEMENT_GENERIC(make, any_string), which is similar.
 //
-//  Makehook_Blob: C
-//
-// See also: Makehook_String(), which is similar.
-//
-Bounce Makehook_Blob(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_BLOB);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, blob)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_KIND(ARG(type)) == REB_BLOB);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     switch (VAL_TYPE(arg)) {
       case REB_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(

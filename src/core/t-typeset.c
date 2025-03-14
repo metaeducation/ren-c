@@ -351,13 +351,9 @@ void Set_Parameter_Spec(
 }
 
 
-//
-//  Makehook_Parameter: C
-//
-Bounce Makehook_Parameter(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_PARAMETER);
-    UNUSED(heart);
-    return RAISE(Error_Bad_Make(REB_PARAMETER, arg));
+IMPLEMENT_GENERIC(make, parameter)
+{
+    return UNHANDLED;  // !!! Needs to be designed!
 }
 
 

@@ -509,12 +509,14 @@ Value* Time_Between_Dates(
 }
 
 
-//
-//  Makehook_Date: C
-//
-Bounce Makehook_Date(Level* level_, Heart heart, Element* arg) {
-    assert(heart == REB_DATE);
-    UNUSED(heart);
+IMPLEMENT_GENERIC(make, date)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    assert(VAL_TYPE_HEART(ARG(type)) == REB_DATE);
+    UNUSED(ARG(type));
+
+    Element* arg = Element_ARG(def);
 
     if (Any_List(arg))
         goto make_from_array;

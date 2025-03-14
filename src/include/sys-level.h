@@ -667,6 +667,9 @@ INLINE Level* Prep_Level_Core(
 #define ARG(name) \
     Level_Arg(level_, (p_##name##_))
 
+#define Element_ARG(name) \
+    cast(Element*, Level_Arg(level_, p_##name##_))
+
 #define LOCAL(name) \
     ARG(name)  // alias (should p_##name## be different to enforce?)
 
@@ -854,10 +857,15 @@ INLINE Atom* Native_Copy_Result_Untracked(
             Native_Fail_Result(level_, Derive_Error_From_Pointer(p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
-    // enough in DECLARE_GENERICS() handlers that it seems worthwhile.  It
-    // will customize the error based on the "verb".
+    // enough in DECLARE_GENERICS() handlers that it seems worthwhile.
     //
-    #define UNHANDLED   FAIL(Error_Unhandled(level_, verb))
+    // !!! Once it was customized based on the "verb" of a generic, but that
+    // mechanism has been removed.  Review what generic dispatch might do
+    // to make this better (distinct BOUNCE_UNHANDLED that only the generic
+    // dispatch mechanism understands, and slipstream verb into the generic
+    // somehow?)
+    //
+    #define UNHANDLED   FAIL(Error_Unhandled(level_))
 
     #define BASELINE   (&level_->baseline)
     #define STACK_BASE (level_->baseline.stack_base)

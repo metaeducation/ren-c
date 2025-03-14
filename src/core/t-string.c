@@ -306,18 +306,22 @@ static void reverse_string(String* str, REBLEN index, Length len)
 }
 
 
-//
-//  Makehook_String: C
-//
-// 1. Makehook_Issue() calls Makehook_String() in its implementation.
+// 1. IMPLEMENT_GENERIC(make, issue) calls IMPLEMENT_GENERIC(make, any_string)
+//    in its implementation.
 //
 // 2. !!! We can't really know how many bytes to allocate for a certain
 //    number of codepoints.  UTF-8 may take up to UNI_ENCODED_MAX bytes
 //    (typically 4) per CHAR!.  For now we just assume the integer is the
 //    expected *byte* capacity, not length, as we can do that.
 //
-Bounce Makehook_String(Level* level_, Heart heart, Element* def) {
+IMPLEMENT_GENERIC(make, any_string)
+{
+    INCLUDE_PARAMS_OF_MAKE;
+
+    Heart heart = VAL_TYPE_HEART(ARG(type));
     assert(Any_String_Kind(heart) or Any_Utf8_Kind(heart));  // issue calls [1]
+
+    Element* def = Element_ARG(def);
 
     if (Is_Integer(def))  // new string with given integer capacity [2]
         return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));

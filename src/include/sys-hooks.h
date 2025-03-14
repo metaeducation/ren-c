@@ -85,19 +85,6 @@ typedef struct {
 } GenericInfo;
 
 
-// PER-TYPE MAKE HOOKS: for `make datatype def`
-//
-// MAKE is a Generic, dispatching to DECLARE_GENERICS(Datatype) and DECLARE_GENERICS(Context).
-// The Datatype dispatcher sub-dispatches to these hook functions, which help
-// put the relevant code in the appropriate file.
-//
-// These functions must return an Element* to the type they are making
-// (either in the output cell given or an API cell)...or they can return
-// BOUNCE_THROWN if they throw.  (e.g. `make object! [return ...]` can throw)
-//
-typedef Bounce (MakeHook)(Level* level_, Heart heart, Element* def);
-
-
 // PER-TYPE TO HOOKS: for `to datatype value`
 //
 // These functions must return a Value* to the type they are making
