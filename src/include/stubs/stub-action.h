@@ -176,7 +176,7 @@ enum {
 #define IDX_INTERPRETED_BODY  1
 
 enum {
-    IDX_TYPECHECKER_DECIDER_INDEX = 1,  // datatype or type constraint to check
+    IDX_TYPECHECKER_DECIDER_BYTE = 1,  // datatype or type constraint to check
     IDX_TYPECHECKER_MAX
 };
 

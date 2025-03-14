@@ -363,7 +363,10 @@ typedef Bounce (Executor)(Level* level_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 // Deciders are a narrow kind of boolean predicate used in type checking.
+// There are as many as 255 deciders, so wherever a byte is used to pick a
+// decider use the DeciderByte type.
 //
+typedef Byte DeciderByte;
 typedef bool (Decider)(const Value* arg);
 
 typedef Byte WildTwo[2];

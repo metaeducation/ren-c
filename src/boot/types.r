@@ -496,3 +496,10 @@ antiform    "special states that cannot be stored in blocks"
 
 ; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)
 ; and no valid cell should have bits between REB_QUOTED and REB_MAX.
+
+; Note: ANY-VALUE? is currently defined in such a way that it tolerates the
+; state of an unset variable, since it's supposed to model anything that can
+; be stored in a variable (the `Value` typedef can hold antiform blank).  But
+; since the ANY-VALUE? function must thus take its argument as ^META to
+; receive the state, we don't automatically produce the ANY-VALUE? function
+; by means of this table.  It is a manually defined intrinsic native.

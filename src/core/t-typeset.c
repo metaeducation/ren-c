@@ -78,9 +78,9 @@ void Startup_Type_Predicates(void)
 {
     REBINT id;
     for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 1) {
-        REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q);  // skip REB_T_RETURN
+        REBINT decider_byte = REB_MAX + (id - SYM_ANY_UNIT_Q);
 
-        Details* details = Make_Typechecker(n);  // n is decider_index
+        Details* details = Make_Typechecker(decider_byte);
 
         Init_Action(
             Sink_Lib_Var(cast(SymId, id)),
@@ -168,8 +168,8 @@ void Set_Parameter_Spec(
     Set_Flex_Len(copy, len);
     Cell* dest = Array_Head(copy);
 
-    Byte* optimized = copy->misc.at_least_4;
-    Byte* optimized_tail = optimized + sizeof(uintptr_t);
+    DeciderByte* optimized = copy->misc.at_least_4;
+    DeciderByte* optimized_tail = optimized + sizeof(uintptr_t);
 
     for (; item != tail; ++item, ++dest) {
         Derelativize(dest, item, spec_binding);
@@ -321,7 +321,7 @@ void Set_Parameter_Spec(
                     assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
                     Value* index = Details_At(
-                        details, IDX_TYPECHECKER_DECIDER_INDEX
+                        details, IDX_TYPECHECKER_DECIDER_BYTE
                     );
                     *optimized = VAL_UINT8(index);
                     ++optimized;

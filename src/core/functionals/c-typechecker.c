@@ -72,8 +72,10 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         Details* details = Ensure_Cell_Frame_Details(SCRATCH);
-        Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
-        Decider* decider = g_instance_deciders[VAL_UINT8(index)];
+        DeciderByte decider_byte = VAL_UINT8(
+            Details_At(details, IDX_TYPECHECKER_DECIDER_BYTE)
+        );
+        Decider* decider = g_instance_deciders[decider_byte];
         return LOGIC(decider(v));
     }
 
@@ -84,10 +86,12 @@ Bounce Typechecker_Dispatcher(Level* const L)
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
-    Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
+    DeciderByte decider_byte = VAL_UINT8(
+        Details_At(details, IDX_TYPECHECKER_DECIDER_BYTE)
+    );
     Decider* decider = check_datatype
-        ? g_datatype_deciders[VAL_UINT8(index)]
-        : g_instance_deciders[VAL_UINT8(index)];
+        ? g_datatype_deciders[decider_byte]
+        : g_instance_deciders[decider_byte];
 
     return LOGIC(decider(v));
 }
@@ -145,9 +149,7 @@ bool Typechecker_Details_Querier(
 //    can fabricate that return without it taking up a cell's worth of space
 //    on each typechecker instantiation (that isn't intrinsic).
 //
-Details* Make_Typechecker(Offset decider_index) {
-    assert(decider_index != 0 and decider_index < 256);  // parameter cache [1]
-
+Details* Make_Typechecker(DeciderByte decider_byte) {  // parameter cache [1]
     DECLARE_ELEMENT (spec);  // simple spec [2]
     Source* spec_array = Make_Source_Managed(2);
     Set_Flex_Len(spec_array, 2);
@@ -172,8 +174,8 @@ Details* Make_Typechecker(Offset decider_index) {
     );
 
     Init_Integer(
-        Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX),
-        decider_index
+        Details_At(details, IDX_TYPECHECKER_DECIDER_BYTE),
+        decider_byte
     );
 
     return details;
@@ -673,8 +675,9 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
   blockscope {
     const Array* spec = maybe Cell_Parameter_Spec(param);
-    const Byte* optimized = spec->misc.at_least_4;
-    const Byte* optimized_tail = optimized + sizeof(spec->misc.at_least_4);
+    const DeciderByte* optimized = spec->misc.at_least_4;
+    const DeciderByte* optimized_tail
+        = optimized + sizeof(spec->misc.at_least_4);
 
     if (Is_Stable(atom)) {
         for (; optimized != optimized_tail; ++optimized) {
