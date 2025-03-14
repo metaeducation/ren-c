@@ -162,7 +162,7 @@
     )
 ]
 [#1977
-    ~scan-invalid~ !! (/f: func [:r] [1], do transcode:one "f/r/%")
+    ~bad-sequence-item~ !! (/f: func [:r] [1], do transcode:one "f/r/%")
 ]
 
 ; path evaluation order
