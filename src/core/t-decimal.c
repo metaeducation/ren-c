@@ -118,12 +118,22 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 // codepoint.  Hence historical conversions have been split into the TO
 // or MAKE as a rough idea of how these rules might be followed.
 //
-// 1. MAKE DECIMAL! from a PATH! is a strange idea that allows evaluation of
+// 1. It isn't entirely clear why MAKE of PERCENT! should be allowed, the
+//    historical cases are strange:
+//
+//        >> make percent! 10:00
+//        == 36000%
+//
+//    It may be that MAKE PERCENT! of DECIMAL! would multiply by 100, and
+//    MAKE DECIMAL! of PERCENT! would divide by 100.  Other than that the
+//    scenarios are not clear.
+//
+// 2. MAKE DECIMAL! from a PATH! is a strange idea that allows evaluation of
 //    arbitrary code.  (TO DECIMAL! of PATH! previously existed as a version
 //    that didn't evaluate groups, but still ran DIVIDE and could get things
 //    like division by zero, so got rid of that).  Weird but trying this.
 //
-// 2. Rebol2 and Red do this for some reason (your guess as good as mine):
+// 3. Rebol2 and Red do this for some reason (your guess as good as mine):
 //
 //        rebol2>> make decimal! [10 0]
 //        == 10.0
@@ -134,6 +144,9 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
     assert(heart == REB_DECIMAL or heart == REB_PERCENT);
 
+    if (heart == REB_PERCENT)
+        return FAIL("MAKE of PERCENT! not supported at this time");  // [1]
+
     switch (VAL_TYPE(arg)) {
       case REB_ISSUE: {
         REBDEC d = cast(REBDEC, Cell_Codepoint(arg));
@@ -141,9 +154,9 @@ Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
 
       case REB_TIME: {
         REBDEC d = VAL_NANO(arg) * NANO;
-        return Init_Decimal_Or_Divide_Percent(OUT, heart, d); }
+        return Init_Decimal(OUT, d); }
 
-      case REB_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
+      case REB_PATH: {  // fractions as 1/2 are experimental use for PATH! [2]
         if (Cell_Sequence_Len(arg) != 2)
             return FAIL("Fraction experiment requires PATH! of length 2");
 
@@ -172,16 +185,16 @@ Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
         REBDEC d;
         if (Is_Integer(quotient))
             d = cast(REBDEC, VAL_INT64(quotient));
-        else if (Is_Decimal(quotient) or Is_Percent(quotient))
+        else if (Is_Decimal(quotient))
             d = VAL_DECIMAL(quotient);
         else {
             rebRelease(quotient);
             return FAIL("Fraction PATH! didn't maket DECIMAL! or PERCENT!");
         }
         rebRelease(quotient);
-        return Init_Decimal_Or_Divide_Percent(OUT, heart, d); }
+        return Init_Decimal(OUT, d); }
 
-      case REB_BLOCK: {  // !!! what the heck is this for? [2]
+      case REB_BLOCK: {  // !!! what the heck is this for? [3]
         REBLEN len;
         const Element* item = Cell_List_Len_At(&len, arg);
 
@@ -217,7 +230,7 @@ Bounce Makehook_Decimal(Level* level_, Heart heart, Element* arg) {
             ++exp;
             d /= 10.0;
         }
-        return Init_Decimal_Or_Divide_Percent(OUT, heart, d); }
+        return Init_Decimal(OUT, d); }
 
       default:
         break;
@@ -276,7 +289,7 @@ void MF_Decimal(Molder* mo, const Cell* v, bool form)
     REBINT len = Emit_Decimal(
         buf,
         VAL_DECIMAL(v),
-        0, // e.g. not DEC_MOLD_PERCENT
+        0, // e.g. not DEC_MOLD_MINIMAL
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
@@ -297,11 +310,12 @@ void MF_Percent(Molder* mo, const Cell* v, bool form)
     REBINT len = Emit_Decimal(
         buf,
         VAL_DECIMAL(v),
-        DEC_MOLD_PERCENT,
+        DEC_MOLD_MINIMAL,
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
     Append_Ascii_Len(mo->string, s_cast(buf), len);
+    Append_Codepoint(mo->string, '%');
 }
 
 
@@ -327,7 +341,6 @@ DECLARE_GENERICS(Decimal)
     if (
         id == SYM_ADD
         || id == SYM_SUBTRACT
-        || id == SYM_MULTIPLY
         || id == SYM_DIVIDE
         || id == SYM_REMAINDER
         || id == SYM_POWER
@@ -343,8 +356,7 @@ DECLARE_GENERICS(Decimal)
             or heart == REB_MONEY
             or heart == REB_TIME
         ) and (
-            id == SYM_ADD ||
-            id == SYM_MULTIPLY
+            id == SYM_ADD
         )){
             Move_Cell(stable_OUT, ARG_N(2));
             Move_Cell(ARG_N(2), ARG_N(1));
@@ -379,22 +391,18 @@ DECLARE_GENERICS(Decimal)
             }
             else {
                 d2 = cast(REBDEC, VAL_INT64(arg));
-                heart = REB_DECIMAL;
+                heart = Cell_Heart(val);  // 10% * 2 => 20%
             }
 
             switch (id) {
 
             case SYM_ADD:
                 d1 += d2;
-                goto setDec;
+                return Init_Decimal_Or_Percent(OUT, heart, d1);
 
             case SYM_SUBTRACT:
                 d1 -= d2;
-                goto setDec;
-
-            case SYM_MULTIPLY:
-                d1 *= d2;
-                goto setDec;
+                return Init_Decimal_Or_Percent(OUT, heart, d1);
 
             case SYM_DIVIDE:
             case SYM_REMAINDER:
@@ -404,7 +412,7 @@ DECLARE_GENERICS(Decimal)
                     d1 /= d2;
                 else
                     d1 = fmod(d1, d2);
-                goto setDec;
+                return Init_Decimal_Or_Percent(OUT, heart, d1);
 
             case SYM_POWER:
                 if (d2 == 0) {
@@ -415,12 +423,12 @@ DECLARE_GENERICS(Decimal)
                     // https://rosettacode.org/wiki/Zero_to_the_zero_power
                     //
                     d1 = 1.0;
-                    goto setDec;
+                    return Init_Decimal_Or_Percent(OUT, heart, d1);
                 }
                 if (d1 == 0)
-                    goto setDec;
+                    return Init_Decimal_Or_Percent(OUT, heart, d1);
                 d1 = pow(d1, d2);
-                goto setDec;
+                return Init_Decimal_Or_Percent(OUT, heart, d1);
 
             default:
                 return FAIL(Error_Math_Args(VAL_TYPE(val), verb));
@@ -453,8 +461,6 @@ DECLARE_GENERICS(Decimal)
         Heart to = VAL_TYPE_HEART(ARG(type));
 
         REBDEC d = VAL_DECIMAL(val);
-        if (Is_Percent(val))
-            d = d * 100;  // "true" visual value, TO considers 10% -> 10
 
         if (Any_Utf8_Kind(to)) {
             DECLARE_MOLDER (mo);
@@ -489,11 +495,11 @@ DECLARE_GENERICS(Decimal)
 
       case SYM_NEGATE:
         d1 = -d1;
-        goto setDec;
+        return Init_Decimal_Or_Percent(OUT, heart, d1);
 
       case SYM_ABSOLUTE:
         if (d1 < 0) d1 = -d1;
-        goto setDec;
+        return Init_Decimal_Or_Percent(OUT, heart, d1);
 
       case SYM_EVEN_Q:
         d1 = fabs(fmod(d1, 2.0));
@@ -529,12 +535,12 @@ DECLARE_GENERICS(Decimal)
         d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
         if (Is_Percent(ARG(to))) {
             heart = REB_PERCENT;
-            goto setDec;
+            return Init_Decimal_Or_Percent(OUT, heart, d1);
         }
 
         if (Is_Integer(ARG(to)))
             return Init_Integer(OUT, cast(REBI64, d1));
-        goto setDec; }
+        return Init_Decimal_Or_Percent(OUT, heart, d1); }
 
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -552,7 +558,7 @@ DECLARE_GENERICS(Decimal)
             return NOTHING;
         }
         d1 = Random_Dec(d1, REF(secure));
-        goto setDec; }
+        return Init_Decimal_Or_Percent(OUT, heart, d1); }
 
       case SYM_COMPLEMENT:
         return Init_Integer(OUT, ~cast(REBINT, d1));
@@ -562,16 +568,30 @@ DECLARE_GENERICS(Decimal)
     }
 
     return UNHANDLED;
+}
 
-setDec:
-    if (not FINITE(d1))
-        return FAIL(Error_Overflow_Raw());
 
-    Reset_Cell_Header_Noquote(
-        TRACK(OUT),
-        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
-    );
-    VAL_DECIMAL(OUT) = d1;
+// 1. See DECLARE_NATIVE(multiply) for commutativity method of ordering types.
+//
+IMPLEMENT_GENERIC(multiply, decimal)
+{
+    INCLUDE_PARAMS_OF_MULTIPLY;
 
-    return OUT;
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(value1));
+    REBDEC d1 = VAL_DECIMAL(ARG(value1));
+
+    Value* v2 = ARG(value2);
+    REBDEC d2;
+    if (Is_Integer(v2))
+        d2 = cast(REBDEC, VAL_INT64(v2));
+    else
+        d2 = VAL_DECIMAL(v2);  // decimal ensured by MULTIPLY [1]
+
+    return Init_Decimal_Or_Percent(OUT, heart, d1 * d2);
+}
+
+
+IMPLEMENT_GENERIC(multiply, percent)  // defers to decimal behavior
+{
+    return GENERIC_CFUNC(multiply, decimal)(LEVEL);
 }

@@ -162,7 +162,6 @@ DECLARE_GENERICS(Integer)
     if (
         id == SYM_ADD
         or id == SYM_SUBTRACT
-        or id == SYM_MULTIPLY
         or id == SYM_DIVIDE
         or id == SYM_POWER
         or id == SYM_BITWISE_AND
@@ -182,8 +181,7 @@ DECLARE_GENERICS(Integer)
             REBLEN n = 0; // use to flag special case
             switch (id) {
             // Anything added to an integer is same as adding the integer:
-            case SYM_ADD:
-            case SYM_MULTIPLY: {
+            case SYM_ADD: {
                 // Swap parameter order:
                 Move_Cell(stable_OUT, val2);  // Use as temp workspace
                 Move_Cell(val2, val);
@@ -265,8 +263,6 @@ DECLARE_GENERICS(Integer)
 
         if (to == REB_DECIMAL or to == REB_PERCENT) {
             REBDEC d = cast(REBDEC, VAL_INT64(val));
-            if (to == REB_PERCENT)
-                d = d / 100;
             return Init_Decimal_Or_Percent(OUT, to, d);
         }
 
@@ -291,12 +287,6 @@ DECLARE_GENERICS(Integer)
         if (REB_I64_SUB_OF(num, arg, &anum))
             return RAISE(Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
-
-      case SYM_MULTIPLY: {
-        REBI64 p;
-        if (REB_I64_MUL_OF(num, arg, &p))
-            return RAISE(Error_Overflow_Raw());
-        return Init_Integer(OUT, p); }
 
       case SYM_DIVIDE:
         if (arg == 0)
@@ -406,4 +396,21 @@ DECLARE_GENERICS(Integer)
     }
 
     return UNHANDLED;
+}
+
+
+// 1. Both arguments are guaranteed to be integers due to the commutativity
+//    provided by DECLARE_NATIVE(multiply), see definition.
+//
+IMPLEMENT_GENERIC(multiply, integer)
+{
+    INCLUDE_PARAMS_OF_MULTIPLY;
+
+    REBI64 num1 = VAL_INT64(ARG(value1));
+    REBI64 num2 = VAL_INT64(ARG(value2));  // must be integer [1]
+
+    REBI64 result;
+    if (REB_I64_MUL_OF(num1, num2, &result))
+        return RAISE(Error_Overflow_Raw());
+    return Init_Integer(OUT, result);
 }

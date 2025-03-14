@@ -74,18 +74,3 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
 
 #define Init_Percent(out,dec) \
     TRACK(Init_Decimal_Or_Percent_Untracked((out), REB_PERCENT, (dec)))
-
-
-INLINE Element* Init_Decimal_Or_Divide_Percent_Untracked(
-    Init(Element) out,
-    Heart heart,
-    REBDEC dec
-){
-    if (heart == REB_PERCENT)
-        dec /= 100.0;
-
-    return Init_Decimal_Or_Percent_Untracked(out, heart, dec);
-}
-
-#define Init_Decimal_Or_Divide_Percent(out,heart,dec) \
-    TRACK(Init_Decimal_Or_Divide_Percent_Untracked((out),(heart),(dec)))

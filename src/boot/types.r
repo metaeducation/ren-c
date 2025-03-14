@@ -72,6 +72,11 @@ blank       "placeholder unit type"
             [any-unit? any-inert?]  ; allow as `branch`?
             [blank       -       +]
 
+integer     "64 bit integer"
+            (CELL_MASK_NO_NODES)  ; would change with bignum ints
+            [any-number? any-scalar? any-inert? any-sequencable?]
+            [integer     +       +]
+
 decimal     "64bit floating point number (IEEE standard)"
             (CELL_MASK_NO_NODES)
             [any-number? any-scalar? any-inert?]
@@ -81,6 +86,11 @@ percent     "special form of decimals (used mainly for layout)"
             (CELL_MASK_NO_NODES)
             [any-number? any-scalar? any-inert?]
             [decimal     *       +]
+
+pair        "two dimensional point or size"
+            (node1)
+            [any-scalar? any-inert?]
+            [pair        +       +]
 
 money       "high precision decimals with denomination (opt)"
             (CELL_MASK_NO_NODES)
@@ -96,16 +106,6 @@ date        "day, month, year, time of day, and timezone"
             (CELL_MASK_NO_NODES)
             [any-inert?]
             [date        +       +]
-
-integer     "64 bit integer"
-            (CELL_MASK_NO_NODES)  ; would change with bignum ints
-            [any-number? any-scalar? any-inert? any-sequencable?]
-            [integer     +       +]
-
-pair        "two dimensional point or size"
-            (node1)
-            [any-scalar? any-inert?]
-            [pair        +       +]
 
 parameter   "function parameter description"
             (node1 node2)

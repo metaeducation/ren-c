@@ -253,7 +253,7 @@ REBINT Emit_Integer(Byte* buf, REBI64 val)
 REBINT Emit_Decimal(
     Byte* cp,
     REBDEC d,
-    Flags flags, // DEC_MOLD_PERCENT, DEC_MOLD_MINIMAL
+    Flags flags, // DEC_MOLD_MINIMAL
     Byte point,
     REBINT decimal_digits
 ) {
@@ -271,8 +271,6 @@ REBINT Emit_Decimal(
 
     /* handle sign */
     if (sgn) *cp++ = '-';
-
-    if (flags & DEC_MOLD_PERCENT) e += 2;
 
     if ((e > decimal_digits) || (e <= -6)) {
         /* e-format */
@@ -322,9 +320,9 @@ REBINT Emit_Decimal(
         e = 0;
     }
 
-    // Add at least one zero after point (unless percent or pair):
+    // Add at least one zero after point (unless percent, at one time pair):
     if (*(cp - 1) == point) {
-        if ((flags & DEC_MOLD_PERCENT) || (flags & DEC_MOLD_MINIMAL))
+        if (flags & DEC_MOLD_MINIMAL)
             cp--;
         else
             *cp++ = '0';
@@ -337,7 +335,6 @@ REBINT Emit_Decimal(
         cp = b_cast(strchr(s_cast(cp), 0));
     }
 
-    if (flags & DEC_MOLD_PERCENT) *cp++ = '%';
     *cp = 0;
     return cp - start;
 }

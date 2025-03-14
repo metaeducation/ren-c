@@ -240,13 +240,6 @@ DECLARE_GENERICS(Money)
             deci_subtract(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
-      case SYM_MULTIPLY: {
-        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
-        return Init_Money(
-            OUT,
-            deci_multiply(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
-        ); }
-
       case SYM_DIVIDE: {
         Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Money(
@@ -315,4 +308,17 @@ DECLARE_GENERICS(Money)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(multiply, money)
+{
+    INCLUDE_PARAMS_OF_MULTIPLY;
+
+    deci d1 = VAL_MONEY_AMOUNT(ARG(value1));  // first generic arg is money
+
+    Value* money2 = Math_Arg_For_Money(SPARE, ARG(value2), CANON(MULTIPLY));
+    deci d2 = VAL_MONEY_AMOUNT(money2);
+
+    return Init_Money(OUT, deci_multiply(d1, d2));
 }

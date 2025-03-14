@@ -362,7 +362,6 @@ DECLARE_GENERICS(Sequence)
 
       case SYM_ADD:
       case SYM_SUBTRACT:
-      case SYM_MULTIPLY:
       case SYM_DIVIDE:
       case SYM_REMAINDER:
       case SYM_BITWISE_AND:
@@ -452,13 +451,6 @@ DECLARE_GENERICS(Sequence)
 
           case SYM_SUBTRACT: v -= a; break;
 
-          case SYM_MULTIPLY:
-            if (Is_Decimal(arg) || Is_Percent(arg))
-                v = cast(REBINT, v * dec);
-            else
-                v *= a;
-            break;
-
           case SYM_DIVIDE:
             if (Is_Decimal(arg) || Is_Percent(arg)) {
                 if (dec == 0.0)
@@ -522,6 +514,26 @@ DECLARE_GENERICS(Sequence)
 
     return Init_Tuple_Bytes(OUT, buf, len);
 }}
+
+
+IMPLEMENT_GENERIC(multiply, tuple)
+{
+    INCLUDE_PARAMS_OF_MULTIPLY;
+
+    Value* tuple1 = ARG(value1);  // dispatch is on first argument, a tuple
+
+    Value* arg2 = ARG(value2);
+    if (not Is_Integer(arg2))
+        return FAIL(PARAM(value2));  // used to support decimal/percent
+
+    return rebDelegate(
+        "join tuple! map-each 'i", tuple1, "[",
+            arg2, "* match integer! i else [",
+                "fail -{Can't multiply tuple unless all integers}-"
+            "]",
+        "]"
+    );
+}
 
 
 //

@@ -892,11 +892,6 @@ DECLARE_GENERICS(Utf8)
         chr -= arg;
         break; }
 
-      case SYM_MULTIPLY:
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-        chr *= arg;
-        break;
-
       case SYM_DIVIDE:
         arg = Math_Arg_For_Char(ARG_N(2), verb);
         if (arg == 0)

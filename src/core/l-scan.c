@@ -2419,10 +2419,8 @@ Bounce Scanner_Executor(Level* const L) {
         if (S->end != Try_Scan_Decimal_To_Stack(S->begin, len, false))
             return RAISE(Error_Syntax(S, token));
 
-        if (S->begin[len - 1] == '%') {
+        if (S->begin[len - 1] == '%')
             HEART_BYTE(TOP) = REB_PERCENT;
-            VAL_DECIMAL(TOP) /= 100.0;
-        }
         break;
 
       case TOKEN_MONEY:

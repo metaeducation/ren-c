@@ -489,7 +489,6 @@ DECLARE_GENERICS(Time)
     if (
         id == SYM_ADD
         or id == SYM_SUBTRACT
-        or id == SYM_MULTIPLY
         or id == SYM_DIVIDE
         or id == SYM_REMAINDER
     ){
@@ -538,14 +537,6 @@ DECLARE_GENERICS(Time)
                 secs = Add_Max(REB_TIME, secs, num * -SEC_SEC, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
-              case SYM_MULTIPLY:
-                secs *= num;
-                if (secs < -MAX_TIME || secs > MAX_TIME)
-                    return FAIL(
-                        Error_Type_Limit_Raw(Datatype_From_Kind(REB_TIME))
-                    );
-                return Init_Time_Nanoseconds(OUT, secs);
-
               case SYM_DIVIDE:
                 if (num == 0)
                     return FAIL(Error_Zero_Divide_Raw());
@@ -583,10 +574,6 @@ DECLARE_GENERICS(Time)
                     cast(int64_t, dec * -SEC_SEC),
                     MAX_TIME
                 );
-                return Init_Time_Nanoseconds(OUT, secs);
-
-              case SYM_MULTIPLY:
-                secs = cast(int64_t, secs * dec);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
@@ -692,4 +679,27 @@ DECLARE_GENERICS(Time)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(multiply, time)
+{
+    INCLUDE_PARAMS_OF_MULTIPLY;
+
+    REBI64 secs = VAL_NANO(ARG(value1));  // guaranteed to be a time
+    Value* v2 = ARG(value2);
+
+    if (Is_Integer(v2)) {
+        secs *= VAL_INT64(v2);
+        if (secs < -(MAX_TIME) or secs > MAX_TIME)
+            return FAIL(
+                Error_Type_Limit_Raw(Datatype_From_Kind(REB_TIME))
+            );
+    }
+    else if (Is_Decimal(v2))
+        secs = cast(int64_t, secs * VAL_DECIMAL(v2));
+    else
+        return FAIL(PARAM(value2));
+
+    return Init_Time_Nanoseconds(OUT, secs);
 }

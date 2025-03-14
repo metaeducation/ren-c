@@ -113,8 +113,7 @@ INLINE void Construct_Molder(Molder* mo) {
 
 // Special flags for decimal formatting:
 enum {
-    DEC_MOLD_PERCENT = 1 << 0,      // follow num with %
-    DEC_MOLD_MINIMAL = 1 << 1       // allow decimal to be integer
+    DEC_MOLD_MINIMAL = 1 << 0       // allow decimal to be integer
 };
 
 #define MAX_DIGITS 17   // number of digits

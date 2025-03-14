@@ -154,7 +154,7 @@ DECLARE_NATIVE(subtract)
 //
 //  /multiply: native:generic [
 //
-//  "Returns the second value subtracted from the first"
+//  "Returns the second value multiplied by the first"
 //
 //      return: [char? any-scalar?]
 //      value1 [char? any-scalar?]
@@ -162,9 +162,44 @@ DECLARE_NATIVE(subtract)
 //  ]
 //
 DECLARE_NATIVE(multiply)
+//
+// 1. Most languages want multiplication to be commutative (exceptions like
+//    matrix multiplication do exist, though that likely should be a different
+//    operation and reserve MULTIPLY for element-wise multiplication).  To
+//    ensure commutativity, we swap the arguments if their heart bytes are
+//    not in "canon order".
+//
+//    (Using the HEART_BYTE as the canon order is a bit of a hack, as the
+//    table can be reordered.  But we try to order the types in %types.r
+//    such that more complex types come later, so that we dispatch to the
+//    more complex type...e.g. multiplying a PAIR! by a DECIMAL! should
+//    should dispatch to the PAIR! code.)
+//
+// 2. Historical Redbol was very liberal about allowing you to perform a
+//    multiplication with non-DECIMAL!, non-INTEGER!.  For the sake of sanity
+//    it's being restricted.  MONEY! multiplication by MONEY! is an exception,
+//    due to the fact that it's a way of doing numbers in the fixed point
+//    math domain.
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(MULTIPLY));
+    INCLUDE_PARAMS_OF_MULTIPLY;
+
+    Element* e1 = cast(Element*, ARG(value1));
+    Element* e2 = cast(Element*, ARG(value2));
+
+    if (HEART_BYTE(e1) < HEART_BYTE(e2)) {  // simpler type is on left [1]
+        Move_Cell(stable_SPARE, e2);
+        Move_Cell(e2, e1);  // ...so move simpler type to be on the right
+        Move_Cell(e1, cast(Element*, SPARE));
+    }
+
+    if (
+        (not Is_Integer(e2) and not Is_Decimal(e2))
+        and not (Is_Money(e1) and Is_Money(e2))  // exception [2]
+    ){
+        return FAIL("Can only multiply by INTEGER! or DECIMAL!");  // [2]
+    }
+
+    return Dispatch_Generic(multiply, e1, LEVEL);
 }
 
 

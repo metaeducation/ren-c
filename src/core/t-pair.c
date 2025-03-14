@@ -258,7 +258,6 @@ DECLARE_GENERICS(Pair)
       case SYM_ADD:
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
-      case SYM_MULTIPLY:
         if (Is_Pair(ARG_N(2))) {
             x2 = Cell_Pair_First(ARG_N(2));
             y2 = Cell_Pair_Second(ARG_N(2));
@@ -299,4 +298,24 @@ DECLARE_GENERICS(Pair)
             "to integer! eval @", rebR(y_frame),
         "]"
     );
+}
+
+
+// 1. This cast to Value should not be necessary, Element should be tolerated
+//    by the API.  Review.
+//
+IMPLEMENT_GENERIC(multiply, pair)
+{
+    INCLUDE_PARAMS_OF_MULTIPLY;
+
+    Value* pair1 = ARG(value1);
+    Value* v2 = ARG(value2);
+
+    if (not Is_Integer(v2))
+        return FAIL(PARAM(value2));
+
+    return rebDelegate(CANON(MAKE), CANON(PAIR_X), "[",
+        CANON(MULTIPLY), v2, cast(Value*, Cell_Pair_First(pair1)),  // !!! [1]
+        CANON(MULTIPLY), v2, cast(Value*, Cell_Pair_Second(pair1)),
+    "]");
 }
