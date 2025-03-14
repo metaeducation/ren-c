@@ -38,7 +38,7 @@ native-info!: make object! [
 
     name: ~
     exported: ~
-    combinator: ~
+    native-type: ~  ; normal, intrinsic, combinator, generic
 
     file: ~
     line: "???"
@@ -80,7 +80,7 @@ export /extract-native-protos: func [
                 ["native" (native-type: 'normal)
                     opt [":combinator" (native-type: 'combinator)]
                     opt [":intrinsic" (native-type: 'intrinsic)]
-                    opt [":generic" (native-type: 'normal)]  ; !!! for now...
+                    opt [":generic" (native-type: 'generic)]
                 ] space
                 "[" thru "//  ]"
             ]
@@ -263,4 +263,53 @@ export /emit-include-params-macro: func [
     }--]
     e/emit newline
     e/emit newline
+]
+
+
+generic-info!: make object! [
+    name: ~
+    type: ~
+
+    found: 'no  ; will change to "yes" if it matches a native:generic decl
+
+    file: ~
+    line: "???"
+    ;
+    ; The original parser code was much more complex and was able to track the
+    ; LINE number.  UPARSE intends to be able to provide this as a <line>
+    ; combinator, but until it's a built-in feature having it in this code
+    ; is more complexity than it winds up being worth.
+]
+
+
+; R3-Alpha implemented generics with a large switch() statement inside a
+; C function where there was one function per datatype (functions could be
+; reused, e.g. GROUP! and BLOCK! both used the same function).  Ren-C takes
+; a step toward finer granularity by building tables of many functions.
+;
+export /extract-generic-implementations: func [
+    return: "Returns block of GENERIC-INFO! objects"
+        [block!]
+    c-source-file [file!]
+    <local> name type
+][
+    return collect [
+        parse3 read:string c-source-file [some [
+            "IMPLEMENT_GENERIC" [
+                "(" name: across to "," "," space type: across to ")" ")"
+                thru newline
+                (
+                    replace name "_q" "?"  ; use smarter parse rule...
+
+                    keep make generic-info! compose1 [
+                        name: (name)
+                        type: (quote as word! replace type "_" "-")
+                        file: (c-source-file)
+                    ]
+                )
+                | (fail ["Malformed generic in" c-source-file])
+            ]
+            | thru newline
+        ]]
+    ]
 ]

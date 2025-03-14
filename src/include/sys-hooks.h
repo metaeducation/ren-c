@@ -77,6 +77,13 @@ enum {
 
 #define CELL_FLAG_CFUNCS_NOTE_USE_LIBREBOL  CELL_FLAG_NOTE
 
+// GenericInfo is a replacement for all makehook, tohook, mold, compare, etc.
+//
+typedef struct {
+    DeciderByte decider_byte;  // derived from IMPLEMENT_GENERIC()'s type
+    Dispatcher* dispatcher;  // the function defined by IMPLEMENT_GENERIC()
+} GenericInfo;
+
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //

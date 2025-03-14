@@ -57,9 +57,7 @@ if args.GIT_COMMIT = "unknown" [
 
 prep-dir: join system.options.path %prep/
 
-mkdir:deep join prep-dir %include/
-mkdir:deep join prep-dir %boot/
-mkdir:deep join prep-dir %core/
+; trust that %make-types.r created prep/core, prep/include, prep/boot...
 
 
 === "MAKE VERSION INFORMATION AVAILABLE TO CORE C CODE" ===
@@ -138,658 +136,55 @@ sym-n: 1  ; counts up as symbols are added
     return null
 ]
 
+=== "LOAD DECIDER BYTE MAPPING" ===
 
-=== "DATATYPE DEFINITIONS" ===
+; At one time, processing of the %types.r table was done in this file.  Now
+; that is handled in %make-types.r and we merely read the product of that
+; process, e.g. a table of decider bytes, like:
+;
+;    blank 1
+;    integer 2
+;    decimal 3
+;    ...
+;    any_list 90
+;    any_bindable 91
+;    any_element 92
+;
+; We use this table to make symbols, e.g. SYM_BLANK or SYM_BLANK_X for `blank!`
+; or SYM_BLANK_Q for `blank?`
 
-type-table: load %types.r
+type-to-decider-byte: load (join prep-dir %boot/tmp-decider-bytes.r)
 
-/for-each-datatype: func [
-    "Iterate type table by creating an object for each row"
 
-    var "Word to set each time to the row made into an object record"
-        [word!]
-    body "Block to evaluate each time"
-        [block!]
-    <local>
-    name* antiname* description* typesets* class* make* mold* heart* cellmask*
-    completed* running* is-unstable* decorated pos
-    obj
-][
-    obj: construct compose1 [(setify var) ~]  ; make variable
-    body: overbind obj body  ; make variable visible to body
-    var: has obj var
+=== "SYMBOLS FOR DATATYPES" ===
 
-    heart*: 1  ; 0 is reserved
-    parse3:match type-table [some [
-        [opt some tag! <end> accept (okay)]
-        |
-        opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
-        name*: word!
-        description*: text!
-        [antiname*: quasiform! | (antiname*: null)]  ; quasiform is word in boot
-        [
-            ahead group! into [
-                ['CELL_MASK_NO_NODES <end>]
-                    (cellmask*: the (CELL_MASK_NO_NODES))
-                | ['node1 <end>]
-                    (cellmask*: the (CELL_FLAG_DONT_MARK_NODE2))
-                | [the :node1 <end>]
-                    (cellmask*: null)  ; don't define a CELL_MASK_XXX
-                | [the :node1 the :node2]
-                    (cellmask*: null)  ; don't define a CELL_MASK_XXX
-                | ['node1 'node2]
-                    (cellmask*: the (0))
-                | ['node2 <end>]
-                    (cellmask*: the (CELL_FLAG_DONT_MARK_NODE1))
-            ]
-            | pos: <here> (
-                fail ["Bad node1/node2 spec for" name* "in %types.r"]
-            )
-        ]
-        [is-unstable*: issue! | (is-unstable*: null)]
-        [typesets*: block!]
-        [ahead block! into [
-            class*: [word! | '- | '? | the 0]
-            make*: [word! | '* | '+ | '- | '? | the 0]
-            mold*: [word! | '+ | '- | '? | the 0]
-        ] (
-            name*: to text! name*
-            set var make object! [
-                name: name*
-                cellmask: cellmask*
-                heart: ensure integer! heart*
-                description: ensure text! description*
-                typesets: map-each 'any-name! typesets* [
-                    decorated: to text! any-name!
-                    assert [#"?" = take:last decorated]
-                    assert ["any-" = take:part decorated 4]
-                    decorated  ; has now been undecorated
-                ]
-                class: class*
-                antiname: either antiname* [to text! unquasi antiname*] [null]
-                unstable: switch is-unstable* [
-                    null ['no]
-                    #unstable ['yes]
-                    fail "unstable annotation must be #unstable"
-                ]
-                make: make*
-                mold: mold*
-            ]
-            repeat 1 body else [return null]  ; give body BREAK/CONTINUE
-        )]
-        (heart*: heart* + 1)
-    ]] else [
-        fail "Couldn't fully parse %types.r"
+for-each [name byte] type-to-decider-byte [
+    if find as text! name "any" [
+        break  ; done with just the datatpyes
     ]
-]
-
-/for-each-typerange: func [
-    "Iterate type table and create object for each <TYPE!>...</TYPE!> range"
-
-    var "Word to set each time to the typerange as an object record"
-        [word!]
-    body "Block to evaluate each time"
-        [block!]
-    <local> name* heart* any-name!* stack types* starting
-    obj
-][
-    obj: construct compose1 [(setify var) ~]  ; make variable
-    body: overbind obj body  ; make variable visible to body
-    var: has obj var
-
-    stack: copy []
-    types*: _  ; will be put in a block, can't be null
-
-    heart*: 1  ; 0 is reserved
-    cycle [  ; need to be in loop for BREAK to work
-        parse3:match type-table [some [not <end>
-            opt some [name*: tag! (
-                name*: to text! name*
-                lowercase name*
-                starting: not (#"/" = first name*)
-                if not starting [take name*]
-                any-name!*: to word! name*
-
-                ; The name ANY-META-VALUE! is used to produce functions like
-                ; ANY_META() in the C code.  Extract relevant name part.
-                ;
-                parse3:match name* [
-                    opt remove "any-"
-                    to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
-                    remove "?"
-                ] else [
-                    fail "Bad type category name"
-                ]
-
-                if starting [
-                    append stack spread reduce [heart* any-name!*]
-                    types*: copy []
-                ] else [
-                    assert [any-name!* = take:last stack]
-                    set var make object! [
-                        name: name*
-                        any-name!: any-name!*
-                        start: ensure integer! take:last stack
-                        end: heart*
-                        types: types*
-                    ]
-                    types*: _
-                    eval body  ; no support for BREAK/CONTINUE in bootstrap
-                ]
-            )]
-            [<end> | [
-                [name*: word! (if not blank? types* [
-                    name*: to text! name*
-                    assert [#"?" <> last name*]
-                    append types* to text! name*
-                ])]
-                text!
-                opt quasiform!
-                group!
-                opt issue!
-                block!
-                block!
-                (heart*: heart* + 1)
-            ]]
-        ]] else [
-            fail "Couldn't fully parse %types.r"
-        ]
-        assert [empty? stack]
-        break  ; doesn't return last value (bootstrap)
-    ]
-]
-
-
-=== "HEARTS ENUM FILE" ===
-
-e-hearts: make-emitter "Cell Hearts Enum" (
-    join prep-dir %include/tmp-hearts.h
-)
-
-rebs: collect [
-    for-each-datatype 't [
-        assert [sym-n == t.heart]  ; SYM_XXX should equal REB_XXX value
-        add-sym unspaced t.name
-
-        any [
-            t.name = "quasiform"
-            t.name = "quoted"
-            t.name = "antiform"
-        ] else [
-            keep cscape [t --{REB_${T.NAME} = $<T.HEART>}--]
-        ]
-    ]
-]
-
-kinds: collect [
-    for-each-datatype 't [
-        any [
-            t.name = "quasiform"
-            t.name = "quoted"
-            t.name = "antiform"
-        ] else [
-            keep cscape [t --{KIND_${T.NAME} = $<T.HEART>}--]
-        ]
-    ]
-]
-
-singlehearts: collect [  ; !!! Omit invalid singleheart values?
-    for-each-datatype 't [
-        keep cscape [t
-            --{SINGLEHEART_TAIL_BLANK_${T.NAME} = $<T.HEART * 256>}--
-        ]
-        keep cscape [t
-            --{SINGLEHEART_HEAD_BLANK_${T.NAME} = $<(T.HEART * 256) + 1>}--
-        ]
-    ]
-]
-
-e-hearts/emit [rebs --{
-    /*
-     * INTERNAL CELL HEART ENUM, e.g. REB_BLOCK or REB_TAG
-     *
-     * GENERATED FROM %TYPES.R
-     *
-     * Do not export these values via libRebol, as the numbers can change.
-     * Their ordering is for supporting tricks--like being able to quickly
-     * check if a type IS_BINDABLE().  So when types are added or removed, the
-     * numbers must shuffle around to preserve invariants.
-     *
-     * NOTE ABOUT C++11 ENUM TYPING: It is best not to specify an "underlying
-     * type" because that prohibits certain optimizations, which the compiler
-     * can make based on knowing a value is only in the range of the enum.
-     */
-    #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11  || defined(__clang__)
-        enum HeartKindEnum {
-            REB_0 = 0,  /* reserved */
-            $[Rebs],
-            REB_MAX_HEART,
-            REB_QUASIFORM = REB_MAX_HEART,
-            REB_QUOTED,
-            REB_ANTIFORM,
-            REB_MAX
-        };
-    #else
-        enum HeartEnum {
-            REB_0 = 0,  /* reserved falsey case for Option(Heart) */
-            $[Rebs],
-            REB_MAX_HEART,  /* one past valid types */
-        };
-
-        enum KindEnum {
-            KIND_0 = 0,  /* reserved falsey case for Option(Kind) */
-            $[Kinds],
-            REB_QUASIFORM,
-            REB_QUOTED,
-            REB_ANTIFORM,
-            REB_MAX
-        };
-    #endif
-
-    STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
-    STATIC_ASSERT(REB_MAX < 256);  /* Stored in bytes */
-
-    /*
-     * SINGLEHEART OPTIMIZED SEQUENCE DETECTION
-     *
-     * We want to use SingleHeart in switch() statements, but don't want them
-     * to be type-compatible with Heart or Kind types due to the extra flag of
-     * information they multiplex in.  Making a specialized enum type is
-     * kind of the only way to get that type checking, since implicit casts
-     * to integer to facilitate switching would let you use Heart or Kind.
-     */
-    enum SingleHeartEnum {
-        NOT_SINGLEHEART_0,  /* reserved falsey case for Option(SingleHeart) */
-
-        /*
-         * !!! VALUES INTENTIONALLY > 256, OUT OF RANGE OF HEART AND KIND !!!
-         *
-         * Distinct enum types won't compare directly due to -Wenum-compare.
-         * But pushing the values out of each others ranges is the only way to
-         * make C switch() give warnings when the wrong enum type is used in
-         * a `case` label.
-         */
-
-        /*
-         * !!! NOTE THAT ALL THESE COMBINATIONS ARE NOT ACTUALLY VALID !!!
-         *
-         * (e.g. there is no such thing as SINGLEHEART_TRAILING_BLANK_BLANK)
-         *
-         * It's just easier to make this enum and have the math work out by
-         * filling it with all the combinatorics...
-         */
-
-        $(Singlehearts),
-    };
-}--]
-e-hearts/emit newline
-
-e-hearts/write-emitted
-
-
-=== "MACROS LIKE Is_Block(), OTHER DATATYPE DEFINITIONS" ===
-
-e-types: make-emitter "Datatype Definitions" (
-    join prep-dir %include/tmp-typesets.h
-)
-
-e-types/emit [--{
-    /* Tables generated from %types.r for builtin typesets */
-    extern Decider* const g_instance_deciders[];
-    extern Decider* const g_datatype_deciders[];
-    extern uint_fast32_t const g_typeset_memberships[];
-}--]
-e-types/emit newline
-
-e-types/emit --{
-    /*
-     * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
-     *
-     * Originally these macros looked like:
-     *
-     *     #define Is_Text(cell) \
-     *         (VAL_TYPE(cell) == REB_TEXT)
-     *
-     * So you'd calculate REB_QUOTED, REB_QUASI, or REB_ANTIFORM from the
-     * QUOTE_BYTE(), and those would be filtered out and not match.
-     *
-     * This was changed to instead mask out the heart byte and quote byte
-     * from the header, and compare to the precise mask of NOQUOTE_1 with
-     * the specific heart byte:
-     *
-     *     #define Is_Text(cell) \
-     *         ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
-     *           == (FLAG_HEART_BYTE(REB_TEXT) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
-     *
-     * This avoids the branching in VAL_TYPE(), so it's a slight bit faster.
-     *
-     * Note that Ensure_Readable() is a no-op in the release build.
-     */
-
-    #define CELL_HEART_QUOTE_MASK \
-        (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
-}--
-e-types/emit newline
-
-for-each-datatype 't [
-    ;
-    ; Pseudotypes don't make macros or cell masks.
-    ;
-    if find ["quoted" "quasiform" "antiform"] ensure text! t.name  [
-        continue
-    ]
-
-    if t.cellmask [
-        e-types/emit [t --{
-            #define CELL_MASK_${T.NAME} \
-                (FLAG_HEART_BYTE(REB_${T.NAME}) | $<MOLD T.CELLMASK>)
-        }--]
-        e-types/emit newline
-    ]
-
-    e-types/emit [propercase-of t --{
-        #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
-            ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
-              == (FLAG_HEART_BYTE(REB_${T.NAME}) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
-    }--]
-    e-types/emit newline
+    add-sym name
 ]
 
 ; Type constraints: integer! is &(integer?) and distinct from &integer
 
-for-each-datatype 't [
-    add-sym unspaced [t.name "?"]
-    add-sym unspaced [t.name "!"]
+for-each [name byte] type-to-decider-byte [
+    if find as text! name "any" [
+        break  ; done with just the datatpyes
+    ]
+    add-sym unspaced [name "?"]
+    add-sym unspaced [name "!"]
 ]
 
-typeset-sets: copy []
+add-sym 'begin-typesets  ; useless symbol (make alias #define somehow?)
 
-for-each-datatype 't [
-    if t.antiname [  ; if there was a ~antiname~ in types.r for this type
-        append t.typesets "isotopic"  ; add to the Any_Isotopic() typeset
+for-each [name byte] type-to-decider-byte [
+    if not find as text! name "any" [
+        continue
     ]
-
-    for-each 'ts-name t.typesets [
-        let spot
-        if spot: select typeset-sets ts-name [
-            append spot t.name  ; not the first time we've seen this typeset
-            continue
-        ]
-
-        add-sym unspaced ["any-" ts-name "?"]
-
-        append typeset-sets ts-name
-        append typeset-sets reduce [t.name]
-
-        e-types/emit newline
-        e-types/emit [propercase-of ts-name --{
-            #define Any_${propercase-of Ts-Name}_Kind(k) \
-               (did (g_typeset_memberships[k] & TYPESET_FLAG_${TS-NAME}))
-
-            #define Any_${propercase-of Ts-Name}(v) \
-                Any_${propercase-of Ts-Name}_Kind(VAL_TYPE(v))
-        }--]
-    ]
+    add-sym unspaced [(replace copy as text! name "_" "-") "?"]
 ]
 
-for-each-typerange 'tr [
-    add-sym replace to text! tr.any-name! "!" "?"
-
-    append typeset-sets spread reduce [tr.name tr.types]
-
-    let proper-name: propercase-of tr.name
-
-    e-types/emit newline
-    e-types/emit [tr --{
-        INLINE bool Any_${Proper-Name}_Kind(Byte k)
-          { return k >= $<TR.START> and k < $<TR.END>; }
-
-        #define Any_${Proper-Name}(v) \
-            Any_${Proper-Name}_Kind(VAL_TYPE(v))
-    }--]
-]
-
-=== "GENERATE TYPESET_FLAG_XXX" ===
-
-; Non-range typesets are handled by checking a flag in a static array which
-; for each kind has a bitset of typeset flags for each set the kind is in.
-
-ts-index: 0
-
-for-each [ts-name types] typeset-sets [
-    if blank? types [continue]  ; done with ranges, no TS_XXX
-
-    e-types/emit [ts-name --{
-        #define TYPESET_FLAG_${TS-NAME} FLAG_LEFT_BIT($<ts-index>)
-    }--]
-    ts-index: ts-index + 1
-]
-assert [ts-index < 32]  ; typesets use uint_fast32_t
-
-e-types/emit newline
-
-
-add-sym 'datatypes  ; signal where the datatypes stop
-
-for-each-datatype 't [
-    if not t.antiname [continue]  ; no special name for antiform form
-
-    let need: either yes? t.unstable ["Atom"] ["Value"]
-
-    let proper-name: propercase-of t.antiname
-
-    ; Note: Ensure_Readable() not defined yet at this point, so defined as
-    ; a macro vs. an inline function.  Revisit.
-    ;
-    e-types/emit [t proper-name --{
-        INLINE bool Is_$<Proper-Name>_Core(Need(const $<Need>*) v) { \
-            return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-                == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART_BYTE(REB_$<T.NAME>))); \
-        }
-
-        #define Is_$<Proper-Name>(v) \
-            Is_$<Proper-Name>_Core(Ensure_Readable(v))
-
-        #define Is_Meta_Of_$<Proper-Name>(v) \
-        ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-            == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART_BYTE(REB_$<T.NAME>)))
-
-        #define Is_Quasi_$<Propercase-Of T.Name>(v) \
-            Is_Meta_Of_$<Proper-Name>(v)  /* alternative */
-    }--]
-    e-types/emit newline
-]
-
-e-types/write-emitted
-
-
-=== "BUILT-IN TYPE HOOKS TABLE" ===
-
-e-hooks: make-emitter "Built-in Type Hooks" (
-    join prep-dir %core/tmp-type-hooks.c
-)
-
-/hookname: infix func [
-    return: [text!]
-    prefix [text!] "e.g. T_ for T_Action"
-    t [object!] "type record (e.g. a row out of %types.r)"
-    column [word!] "which column we are deriving the hook's name based on"
-][
-    if t.(column) = 0 [return "nullptr"]
-
-    ; The CSCAPE mechanics lowercase all strings.  Uppercase it back.
-    ;
-    prefix: if prefix == "makehook_" [
-        "Makehook_"  ; migrating to propercase
-    ] else [
-        uppercase copy prefix
-    ]
-
-    return unspaced [prefix propercase-of (switch ensure word! t.(column) [
-        '+ [propercase-of t.name]  ; type has its own unique hook
-        '* [t.class]        ; type uses common hook for class
-        '? ['unhooked]      ; datatype provided by extension
-        '- ['fail]          ; service unavailable for type
-    ] else [
-        t.(column)      ; override with word in column
-    ])]
-]
-
-hook-list: collect [
-    keep cscape [--{
-        {  /* REB_0 is reserved */
-            cast(CFunction*, nullptr),  /* generic */
-            cast(CFunction*, nullptr),  /* compare */
-            cast(CFunction*, nullptr),  /* make */
-            cast(CFunction*, nullptr),  /* mold */
-            nullptr
-        }
-    }--]
-
-    for-each-datatype 't [
-        if find ["quoted" "quasiform" "antiform"] t.name [
-            continue  ; hooks only for basic types
-        ]
-
-        keep cscape [t --{
-            {  /* $<T.NAME> = $<T.HEART> */
-                cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
-                cast(CFunction*, ${"CT_" Hookname T 'Class}),  /* compare */
-                cast(CFunction*, ${"Makehook_" Hookname T 'Make}),
-                cast(CFunction*, ${"MF_" Hookname T 'Mold}),  /* mold */
-                nullptr
-            }
-        }--]
-    ]
-]
-
-e-hooks/emit [hook-list --{
-    #include "sys-core.h"
-
-    /* See comments in %sys-ordered.h */
-    CFunction* Builtin_Type_Hooks[REB_MAX_HEART][IDX_HOOKS_MAX] = {
-        $(Hook-List),
-    };
-}--]
-
-e-hooks/write-emitted
-
-
-=== "SYMBOL-TO-TYPESET-BITS MAPPING TABLE" ===
-
-; The typesets for things like ANY-BLOCK? etc. are specified in the %types.r
-; table, and turned into 64-bit bitsets.
-
-e-typesets: make-emitter "Built-in Typesets" (
-    join prep-dir %core/tmp-typesets.c
-)
-
-
-e-typesets/emit --{
-    #include "sys-core.h"
-}--
-e-typesets/emit newline
-
-instance-decider-names: copy []
-datatype-decider-names: copy []
-memberships: copy []
-
-for-each-datatype 't [
-    let proper-name: propercase-of t.name
-
-    e-typesets/emit [t --{
-        bool ${Proper-Name}_Instance_Decider(const Value* v)
-          { return Is_${Proper-Name}(v); }
-    }--]
-    e-typesets/emit newline
-    append instance-decider-names cscape [t
-        "${Proper-Name}_Instance_Decider"
-    ]
-
-    e-typesets/emit [t --{
-        bool ${Proper-Name}_Datatype_Decider(const Value* datatype)
-          { return VAL_TYPE_KIND(datatype) == REB_${T.NAME}; }
-    }--]
-    e-typesets/emit newline
-    append datatype-decider-names cscape [t
-        "${Proper-Name}_Datatype_Decider"
-    ]
-
-    let flagits: collect [
-        for-each [ts-name types] typeset-sets [
-            if blank? types [continue]
-            if not find types t.name [continue]
-
-            keep cscape [ts-name "TYPESET_FLAG_${TS-NAME}"]
-        ]
-    ]
-    if empty? flagits [
-        append memberships "0"
-    ] else [
-        append memberships cscape [flagits ts-name
-            --{($<Delimit "|" Flagits>)}--
-        ]
-    ]
-]
-
-for-each [ts-name types] typeset-sets [
-    let proper-name: propercase-of ts-name
-
-    e-typesets/emit [ts-name --{
-        bool Any_${Proper-Name}_Instance_Decider(const Value* arg)
-          { return Any_${Proper-Name}(arg); }
-    }--]
-    e-typesets/emit newline
-    append instance-decider-names cscape [ts-name
-        --{Any_${Proper-Name}_Instance_Decider}--
-    ]
-
-    e-typesets/emit [ts-name --{
-        bool Any_${Proper-Name}_Datatype_Decider(const Value* arg)
-          { return Any_${Proper-Name}_Kind(VAL_TYPE_KIND(arg)); }
-    }--]
-    e-typesets/emit newline
-    append datatype-decider-names cscape [ts-name
-        --{Any_${Proper-Name}_Datatype_Decider}--
-    ]
-]
-
-e-typesets/emit [--{
-    /*
-     * Instance Deciders are used when checking an instance of a type.
-     *
-     *     >> any-utf8? "abc"
-     *     == ~okay~  ; anti
-     *
-     *     >> any-utf8? [a b c]
-     *     == ~null~  ; anti
-     */
-    Decider* const g_instance_deciders[] = {
-        nullptr,  /* REB_0 is reserved */
-        &$(Instance-Decider-Names),
-    };
-
-    /*
-     * Datatype Deciders are used when asking about a type itself.
-     *
-     *     >> any-utf8?:type text!
-     *     == ~okay~  ; anti
-     *
-     *     >> any-utf8?:type block!
-     *     == ~null~  ; anti
-     */
-    Decider* const g_datatype_deciders[] = {
-        nullptr,  /* REB_0 is reserved */
-        &$(Datatype-Decider-Names),
-    };
-
-    uint_fast32_t const g_typeset_memberships[REB_MAX] = {
-        0,  /* REB_0 is reserved */
-        $(Memberships),
-    };
-}--]
-
-e-typesets/write-emitted
+add-sym 'end-typesets  ; useless symbol (make alias #define somehow?)
 
 
 === "SYMBOLS FOR LIB-WORDS.R" ===
@@ -1187,13 +582,17 @@ e-bootblock/emit [nats --{
     const REBLEN g_num_core_natives = NUM_NATIVES;
 }--]
 
+
 ; Build typespecs block (in same order as datatypes table)
 
+types-to-typespec: load join prep-dir %boot/tmp-typespecs.r
+
 boot-typespecs: collect [
-    for-each-datatype 't [
-        keep reduce [t.description]
+    for-each [type typespec] types-to-typespec [
+        keep reduce [typespec]
     ]
 ]
+
 
 ; Create main code section (compressed)
 

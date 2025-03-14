@@ -31,22 +31,8 @@
     pvs->u.path.picker
 
 
-// 1. Generally speaking, generics (and most functions in the system) do
-//    not work on antiforms, quasiforms, or quoted datatypes.
-//
-//    For one thing, this would introduce uncomfortable questions, like:
-//    should the NEXT of ''[a b c] be [b c] or ''[b c] ?  This would take the
-//    already staggering combinatorics of the system up a notch by forcing
-//    "quote propagation" policies to be injected everywhere.
-//
-//    Yet there's another danger: if quoted/quasi items wind up giving an
-//    answer instead of an error for lots of functions, this will lead to
-//    carelessness in propagation of the marks...not stripping them off when
-//    they aren't needed.  This would lead to an undisciplined hodgepodge of
-//    marks that are effectively meaningless.  In addition to being ugly, that
-//    limits the potential for using the marks intentionally in a dialect
-//    later, if you're beholden to treating leaky quotes and quasis as if
-//    they were not there.
+// Old concept of generics, based on each type directing to a single function
+// with a big switch() statement in it.
 //
 INLINE Bounce Run_Generic_Dispatch(
     const Element* cue,
@@ -58,6 +44,13 @@ INLINE Bounce Run_Generic_Dispatch(
     GenericHook* hook = Generic_Hook_For_Heart(heart);
     return hook(L, verb);
 }
+
+
+// New concept of generic dispatch: use sparse tables which are scanned for
+// during the build process to find IMPLEMENT_GENERIC(name, type) instances.
+//
+#define Dispatch_Generic(name,cue,L) \
+    Dispatch_Generic_Core(g_generic_##name, Cell_Heart_Ensure_Noquote(cue), (L))
 
 
 // For efficiency, native PICK-POKE* implementations reuse the level (this is

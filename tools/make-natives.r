@@ -77,7 +77,8 @@ src-dir: join repo-dir %src/
 output-dir: join system.options.path %prep/
 mkdir:deep join output-dir %boot/
 
-all-protos: copy []
+natives: copy []
+generics: copy []
 
 
 ;-------------------------------------------------------------------------
@@ -97,7 +98,8 @@ output-buffer: make text! 20000
             all [
                 %.c = suffix? file
             ][
-                append all-protos spread (extract-native-protos file)
+                append natives spread (extract-native-protos file)
+                append generics spread (extract-generic-implementations file)
             ]
         ]
     ]
@@ -131,18 +133,18 @@ leaders: [
 ]
 leader-protos: to map! []
 
-info: all-protos
-while [not tail? info] [
-    assert [text? info.1.name]  ; allows native names illegal in bootstrap
-    let name: to word! info.1.name  ; extract to avoid left-before-right eval
+pos: natives
+while [not tail? pos] [
+    assert [text? pos.1.name]  ; allows native names illegal in bootstrap
+    let name: to word! pos.1.name  ; extract to avoid left-before-right eval
     if find leaders name [
-        leader-protos.(name): take info  ; (info.1.name) would eval after TAKE!
+        leader-protos.(name): take pos  ; (pos.1.name) would eval after TAKE!
     ] else [
-        info: next info
+        pos: next pos
     ]
 ]
 
-insert all-protos spread collect [
+insert natives spread collect [
     for-each 'l leaders [
         if not leader-protos.(l) [
             fail ["Did not find" l "to put at head of natives list"]
@@ -173,7 +175,7 @@ append output-buffer ---{REBOL [
 ; comments to warn you not to edit there.  (The comments and newlines are
 ; removed by the process that does embedding in the EXE.)
 
-for-each 'info all-protos [
+for-each 'info natives [
     if yes? info.exported [
         fail "EXPORT is implied on %tmp-natives.r"
     ]
@@ -193,7 +195,7 @@ append output-buffer unspaced [
 
 write-if-changed (join output-dir %boot/tmp-natives.r) output-buffer
 
-print [(length of all-protos) "natives"]
+print [(length of natives) "natives"]
 print newline
 
 clear output-buffer
@@ -210,16 +212,16 @@ e-params: make-emitter "PARAM() and REFINE() Automatic Macros" (
     join output-dir %include/tmp-paramlists.h
 )
 
-for-each 'info all-protos [
+for-each 'info natives [
     emit-include-params-macro e-params info.proto
 ]
 
 e-params/write-emitted
 
 
-=== "EMIT DECLARE_NATIVE() or DECLARE_NATIVE() FORWARD DECLS" ===
+=== "EMIT DECLARE_NATIVE() FORWARD DECLS" ===
 
-e-forward: make-emitter "DECLARE_NATIVE() DECLARE_NATIVE() forward decls" (
+e-forward: make-emitter "DECLARE_NATIVE() forward decls" (
     join output-dir %include/tmp-native-fwd-decls.h
 )
 
@@ -235,9 +237,136 @@ e-forward/emit --{
 }--
 e-forward/emit newline
 
-for-each 'info all-protos [
+for-each 'info natives [
     e-forward/emit [info -{DECLARE_NATIVE(${info.name});}-]
     e-forward/emit newline
 ]
 
-e-forward/write-emitted  ; wait to see if we actually need it
+e-forward/write-emitted
+
+
+=== "LOAD DECIDER BYTE MAPPING" ===
+
+; %make-types.r creates a table of decider bytes, like:
+;
+;    blank 1
+;    integer 2
+;    decimal 3
+;    ...
+;    any_list 90
+;    any_bindable 91
+;    any_element 92
+;
+; The generic registry uses this, sorting the more specific values used in
+; IMPLEMENT_GENERIC() first in the table for each generic.
+
+type-to-decider-byte: load (join output-dir %boot/tmp-decider-bytes.r)
+
+
+=== "SORT GATHERED GENERICS IN DECIDER-BYTE ORDER" ===
+
+sort:compare generics func [a b] [
+    let bad: null
+    if a.name < b.name [return true]
+    let a-byte: (select name-to-typeset-byte a.type) else [
+        bad: a
+    ]
+    let b-byte: (select name-to-typeset-byte b.type) else [
+        bad: b
+    ]
+    if bad [
+        fail [
+            "Unknown builtin typeset (did you forget `any_`?)?" newline
+            "IMPLEMENT_GENERIC(" bad.name bad.type ") in" bad.file
+        ]
+    ]
+    if a-byte < b-byte [return true]
+    return false
+]
+
+
+=== "EMIT IMPLEMENT_GENERIC() FORWARD DECLS" ===
+
+e-forward: make-emitter "IMPLEMENT_GENERIC() forward decls" (
+    join output-dir %include/tmp-generic-fwd-decls.h
+)
+
+for-each 'info generics [
+    e-forward/emit [info -{IMPLEMENT_GENERIC(${info.name}, ${info.type});}-]
+    e-forward/emit newline
+]
+
+e-forward/emit newline
+
+; Every generic has an array of type byte + function pointer entries, that is
+; terminated with a zero byte.  We need to forward declare those as well.
+
+for-each 'info natives [
+    if info.native-type != 'generic [continue]
+
+    e-forward/emit [info -{
+        extern GenericInfo g_generic_${info.name}[];
+    }-]
+]
+
+e-forward/write-emitted
+
+
+=== "EMIT GENERIC DISPATCH TABLES" ===
+
+e-tables: make-emitter "GENERIC DISPATCH TABLES" (
+    join output-dir %core/tmp-generic-tables.c
+)
+
+e-tables/emit -{
+    #include "sys-core.h"
+    /* #include "tmp-generic-fwd-decls.h" */  // separate this out?
+}-
+
+for-each 'n-info natives [
+    if n-info.native-type != 'generic [continue]
+
+    let entries: collect [
+        last-byte: null
+        for-each 'g-info generics [
+            assert [text? g-info.name, text? n-info.name]
+
+            if g-info.name != n-info.name [continue]
+
+            let byte: select type-to-decider-byte g-info.type
+            assert [byte]  ; sort phase should have complained if not found
+
+            if byte = last-byte [  ; sorted, so only have to check last byte
+                fail [
+                    "Multiple IMPLEMENT_GENERIC(" g-info.name g-info.type ")"
+                ]
+            ]
+            last-byte: byte
+
+            g-info.found: 'yes
+            keep trim:tail cscape [g-info -{
+                {$<byte>, &GENERIC_CFUNC(${g-info.name}, ${g-info.type})}
+            }-]
+        ]
+        keep "{0, nullptr}"
+    ]
+
+    e-tables/emit [n-info -{
+        GenericInfo g_generic_${n-info.name}[] = {
+            $(Entries),
+        };
+    }-]
+
+    e-tables/emit newline
+]
+
+for-each 'info generics [
+    if info.found <> 'yes [
+        fail [
+            "Did not find generic to implement:" info.name newline
+            "Definition is in file:" info.file
+        ]
+    ]
+]
+
+e-tables/write-emitted

@@ -1952,6 +1952,7 @@ prep: make rebmake.entry-class [
             ]
         ]
 
+        keep ["$(REBOL)" join tools-dir %make-types.r]
         keep ["$(REBOL)" join tools-dir %make-natives.r]
         keep ["$(REBOL)" join tools-dir %make-headers.r]
         keep [

@@ -77,8 +77,8 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 void Startup_Type_Predicates(void)
 {
     REBINT id;
-    for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 1) {
-        REBINT decider_byte = REB_MAX + (id - SYM_ANY_UNIT_Q);
+    for (id = SYM_BEGIN_TYPESETS + 1; id != SYM_END_TYPESETS; id += 1) {
+        REBINT decider_byte = REB_MAX + (id - (SYM_BEGIN_TYPESETS + 1));
 
         Details* details = Make_Typechecker(decider_byte);
 

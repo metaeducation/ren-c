@@ -189,7 +189,7 @@ DECLARE_NATIVE(native)
 {
     INCLUDE_PARAMS_OF_NATIVE;
 
-    UNUSED(ARG(generic));  // commentary only, at this time
+    UNUSED(ARG(generic));  // only heeded by %make-natives.r to make tables
 
     if (not g_native_cfunc_pos)
         return FAIL(
@@ -228,6 +228,71 @@ DECLARE_NATIVE(native)
     }
 
     return OUT;
+}
+
+
+//
+//  Dispatch_Generic_Core: C
+//
+// When you define a native as `native:generic`, this means you can register
+// hooks for that native based on a type with IMPLEMENT_GENERIC().  In the
+// generic native's implementation you choose when to actually dispatch on
+// that type, and you can implement a generic for a single type like INTEGER!
+// or for simple typesets (ones that have "deciders") like ANY-LIST?.
+//
+// 1. Generally speaking, generics (and most functions in the system) do
+//    not work on antiforms, quasiforms, or quoted datatypes.
+//
+//    For one thing, this would introduce uncomfortable questions, like:
+//    should the NEXT of ''[a b c] be [b c] or ''[b c] ?  This would take the
+//    already staggering combinatorics of the system up a notch by forcing
+//    "quote propagation" policies to be injected everywhere.
+//
+//    Yet there's another danger: if quoted/quasi items wind up giving an
+//    answer instead of an error for lots of functions, this will lead to
+//    carelessness in propagation of the marks...not stripping them off when
+//    they aren't needed.  This would lead to an undisciplined hodgepodge of
+//    marks that are effectively meaningless.  In addition to being ugly, that
+//    limits the potential for using the marks intentionally in a dialect
+//    later, if you're beholden to treating leaky quotes and quasis as if
+//    they were not there.
+//
+// 2. We shouldn't have to call a function pointer here.  This points to the
+//    fact that deciders could be formulated in a much simpler way if they
+//    are only going to react to the type... at one point it seems that the
+//    idea was that deciders might look at more than just the type so that
+//    constraints like CHAR? could be implemented.  But those constraints
+//    are now intrinsics, which may be fast enough that we can speed up
+//    and simplify the decider checks.  Review.
+//
+Bounce Dispatch_Generic_Core(
+    GenericInfo* table,
+    Heart heart,  // no quoted/quasi/anti [1]
+    Level* level_
+){
+    while (true) {  // the table generation puts simple datatypes first [2]
+        if (table->decider_byte == 0)
+            goto not_handled;
+        if (table->decider_byte >= REB_MAX)
+            break;  // it's a "typeset" check
+        if (heart == table->decider_byte)
+            return table->dispatcher(level_);
+        ++table;
+    }
+
+    while (true) {  // this loop is never entered when the decider byte is 0
+        const Element* type = Datatype_From_Kind(heart);
+        if (g_datatype_deciders[table->decider_byte](type))  // !!! slow [2]
+            return table->dispatcher(level_);
+
+        ++table;
+        if (table->decider_byte == 0)
+            goto not_handled;
+    }
+
+  not_handled:
+
+    return FAIL("No dispatcher for datatype of generic");
 }
 
 
