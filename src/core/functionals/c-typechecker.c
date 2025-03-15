@@ -37,7 +37,7 @@
 
 
 //
-//  /decider-archetype: native [
+//  /typechecker-archetype: native [
 //
 //  "For internal use (builds parameters and return slot)"
 //
@@ -47,9 +47,9 @@
 //      :type "Test a concrete type, (integer?:type integer!) passes"
 //  ]
 //
-DECLARE_NATIVE(decider_archetype)
+DECLARE_NATIVE(typechecker_archetype)
 {
-    return FAIL("DECIDER-ARCHETYPE called (internal use only)");
+    return FAIL("TYPECHECKER-ARCHETYPE called (internal use only)");
 }
 
 
@@ -70,30 +70,32 @@ Bounce Typechecker_Dispatcher(Level* const L)
     if (bounce)
         return unwrap bounce;
 
+    Kind kind;
+    Details* details;
+
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Details* details = Ensure_Cell_Frame_Details(SCRATCH);
-        DeciderByte decider_byte = VAL_UINT8(
-            Details_At(details, IDX_TYPECHECKER_DECIDER_BYTE)
-        );
-        Decider* decider = g_instance_deciders[decider_byte];
-        return LOGIC(decider(v));
+        kind = VAL_TYPE(v);
+        details = Ensure_Cell_Frame_Details(SCRATCH);
+    }
+    else {
+        bool check_datatype = Cell_Logic(Level_Arg(L, 2));
+        if (check_datatype and not Is_Type_Block(v))
+            return RAISE("Datatype check on non-datatype (use TRY for NULL)");
+
+        if (check_datatype)
+            kind = VAL_TYPE_KIND(v);
+        else
+            kind = VAL_TYPE(v);
+
+        details = Ensure_Level_Details(L);
     }
 
-    bool check_datatype = Cell_Logic(Level_Arg(L, 2));
-    if (check_datatype and not Is_Type_Block(v))
-        return nullptr;
-
-    Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
-    DeciderByte decider_byte = VAL_UINT8(
-        Details_At(details, IDX_TYPECHECKER_DECIDER_BYTE)
+    TypesetByte typeset_byte = VAL_UINT8(
+        Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
     );
-    Decider* decider = check_datatype
-        ? g_datatype_deciders[decider_byte]
-        : g_instance_deciders[decider_byte];
-
-    return LOGIC(decider(v));
+    return LOGIC(Builtin_Typeset_Check(typeset_byte, kind));
 }
 
 
@@ -111,7 +113,7 @@ bool Typechecker_Details_Querier(
 
     switch (property) {
       case SYM_RETURN: {
-        const Value* archetype = LIB(DECIDER_ARCHETYPE);
+        const Value* archetype = LIB(TYPECHECKER_ARCHETYPE);
         Details* archetype_details = Ensure_Cell_Frame_Details(archetype);
         return Raw_Native_Details_Querier(
             out, archetype_details, SYM_RETURN
@@ -131,16 +133,15 @@ bool Typechecker_Details_Querier(
 // The typecheckers for things like INTEGER? and ANY-SERIES? are all created
 // at boot time.
 //
-// Each typechecker is implemented by one of up to 256 "Decider" functions
-// in a table.  This means that if a parameter recognizes that some of
-// the type checking funcions are typecheckers, it can extract which decider
-// function is implied via that byte... and then just have the table of bytes
-// to blast through the deciders when type checking the arguments.
+// Each typechecker is implemented by by using up to 255 typeset descriptions
+// in g_typesets[].  This means that if a parameter recognizes that some of
+// the type checking functions are typecheckers, it can extract the TypesetByte
+// encoded in that function... and then just have the table of bytes to blast
+// through when type checking the arguments.
 //
 // 1. While space is limited in the PARAMETER! Cell, it has a packed array of
-//    bytes it uses to store cached decider indices.  This way it doesn't look
-//    them up each time.  Hence there's currently a limit of 255 deciders
-//    (0 is reserved to prematurely terminate the array).
+//    bytes it uses to store cached TypesetByte.  This way it doesn't look
+//    them up each time.  0 is reserved to prematurely terminate the array.
 //
 // 2. We need a spec for our typecheckers, which is really just `value` with
 //    no type restrictions as the argument.  !!! REVIEW: add help strings?
@@ -149,7 +150,7 @@ bool Typechecker_Details_Querier(
 //    can fabricate that return without it taking up a cell's worth of space
 //    on each typechecker instantiation (that isn't intrinsic).
 //
-Details* Make_Typechecker(DeciderByte decider_byte) {  // parameter cache [1]
+Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     DECLARE_ELEMENT (spec);  // simple spec [2]
     Source* spec_array = Make_Source_Managed(2);
     Set_Flex_Len(spec_array, 2);
@@ -174,8 +175,8 @@ Details* Make_Typechecker(DeciderByte decider_byte) {  // parameter cache [1]
     );
 
     Init_Integer(
-        Details_At(details, IDX_TYPECHECKER_DECIDER_BYTE),
-        decider_byte
+        Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE),
+        typeset_byte
     );
 
     return details;
@@ -675,17 +676,17 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 
   blockscope {
     const Array* spec = maybe Cell_Parameter_Spec(param);
-    const DeciderByte* optimized = spec->misc.at_least_4;
-    const DeciderByte* optimized_tail
+    const TypesetByte* optimized = spec->misc.at_least_4;
+    const TypesetByte* optimized_tail
         = optimized + sizeof(spec->misc.at_least_4);
 
     if (Is_Stable(atom)) {
+        Kind kind = VAL_TYPE(Stable_Unchecked(atom));
         for (; optimized != optimized_tail; ++optimized) {
             if (*optimized == 0)
-                break;
+                break;  // premature end of list
 
-            Decider* decider = g_instance_deciders[*optimized];
-            if (decider(Stable_Unchecked(atom)))
+            if (Builtin_Typeset_Check(*optimized, kind))
                 goto return_true;
         }
     }
@@ -753,14 +754,14 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 //
 //  Init_Typechecker: C
 //
-// Give back an action antiform which can act as a checkerfor a datatype.
+// Give back an action antiform which can act as a checker for a datatype.
 //
 Value* Init_Typechecker(Init(Value) out, const Element* types) {
     if (Is_Type_Block(types)) {
         Kind kind = VAL_TYPE_KIND(types);
         Offset n = cast(Offset, kind);
 
-        SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
+        SymId constraint_sym = cast(SymId, REB_MAX + (n - 1));
         return Copy_Cell(out, Lib_Var(constraint_sym));
     }
 

@@ -98,7 +98,7 @@
 // functions that cost a little in the checked build for these very commonly
 // used functions... so it's only in the DEBUG_CHECK_CASTS builds.
 //
-// c_cast() is used so that if the input pointer is const, the output will
+// x_cast() is used so that if the input pointer is const, the output will
 // be a `const Byte*` and not a `Byte*`.
 
 #if (! DEBUG_CHECK_CASTS)  // use x_cast and throw away const knowledge

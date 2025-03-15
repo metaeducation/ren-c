@@ -48,25 +48,12 @@ Source* Startup_Datatypes(Array* boot_typespecs)
         // refer to a built-in datatype, without allocating a cell to
         // initialize.  This is done with Datatype_From_Kind().
         //
-        // Things like INTEGER! are defined to be &INTEGER
+        // Things like INTEGER! are defined to be &[INTEGER]
         //
-        SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
+        SymId datatype_sym = cast(SymId, REB_MAX + n - 1);
         Element* datatype = cast(Element*, Sink_Lib_Var(datatype_sym));
         Protect_Cell(Init_Builtin_Datatype(datatype, kind));
         assert(datatype == Datatype_From_Kind(kind));
-
-        // Things like INTEGER? are fast typechecking "intrinsics".  At one
-        // point these were constructed in the mezzanine, but it's faster and
-        // less error prone to just make them here.
-        //
-        SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
-        Details* details = Make_Typechecker(kind);
-        Init_Action(
-            Sink_Lib_Var(constraint_sym),
-            details,
-            Canon_Symbol(constraint_sym),  // cached symbol for function
-            UNBOUND
-        );
 
         // The "catalog of types" could be generated on demand by the system
         // instead of collected and put in the global context.

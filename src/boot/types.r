@@ -15,7 +15,7 @@ REBOL [
 
             name            "description"
             ~antiform~      (CELL_FLAG_XXX | CELL_FLAG_XXX)
-                            [constraints]  ; makes `g_typeset_memberships`
+                            [constraints]  ; makes `g_sparse_memberships`
                             [class       make    mold]
 
         name        - name of datatype (generates words)

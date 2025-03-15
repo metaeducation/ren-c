@@ -136,11 +136,11 @@ sym-n: 1  ; counts up as symbols are added
     return null
 ]
 
-=== "LOAD DECIDER BYTE MAPPING" ===
+=== "LOAD TYPESET BYTE MAPPING" ===
 
 ; At one time, processing of the %types.r table was done in this file.  Now
 ; that is handled in %make-types.r and we merely read the product of that
-; process, e.g. a table of decider bytes, like:
+; process, e.g. a table of TypesetByte, like:
 ;
 ;    blank 1
 ;    integer 2
@@ -153,35 +153,29 @@ sym-n: 1  ; counts up as symbols are added
 ; We use this table to make symbols, e.g. SYM_BLANK or SYM_BLANK_X for `blank!`
 ; or SYM_BLANK_Q for `blank?`
 
-type-to-decider-byte: load (join prep-dir %boot/tmp-decider-bytes.r)
+name-to-typeset-byte: load (join prep-dir %boot/tmp-typeset-bytes.r)
 
 
 === "SYMBOLS FOR DATATYPES" ===
 
-for-each [name byte] type-to-decider-byte [
+for-each [name byte] name-to-typeset-byte [
     if find as text! name "any" [
-        break  ; done with just the datatpyes
+        break  ; done with just the datatypes
     ]
     add-sym name
 ]
 
-; Type constraints: integer! is &(integer?) and distinct from &integer
-
-for-each [name byte] type-to-decider-byte [
+for-each [name byte] name-to-typeset-byte [
     if find as text! name "any" [
-        break  ; done with just the datatpyes
+        break  ; done with just the datatypes
     ]
-    add-sym unspaced [name "?"]
-    add-sym unspaced [name "!"]
+    add-sym unspaced [name "!"]  ; integer! holds &(integer?)
 ]
 
 add-sym 'begin-typesets  ; useless symbol (make alias #define somehow?)
 
-for-each [name byte] type-to-decider-byte [
-    if not find as text! name "any" [
-        continue
-    ]
-    add-sym unspaced [(replace copy as text! name "_" "-") "?"]
+for-each [name byte] name-to-typeset-byte [
+    add-sym unspaced [name "?"]
 ]
 
 add-sym 'end-typesets  ; useless symbol (make alias #define somehow?)

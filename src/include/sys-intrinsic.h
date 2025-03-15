@@ -26,8 +26,8 @@
 // The trick is that the argument and action are multiplexed onto the parent
 // Level, by making it give up its SPARE and SCRATCH cells.  The SPARE holds
 // the single argument, and the SCRATCH holds the action--so that any instance
-// data can be accessed (e.g. a Decider action can find the decider index
-// applicable to that Action instance, even though they all use a common
+// data can be accessed (e.g. a Typechecker can find the TypesetByte that
+// applies to that Action instance, even though they all use a common
 // C function Dispatcher).
 //
 // Intrinsics can also be run with their own Level and FRAME!--either when
@@ -75,6 +75,7 @@
 //
 // These helpers are used to perform the argument processing.
 //
+
 
 // If the intrinsic just wants to look at the heart byte and quote byte of
 // an unconstrained ^META parameter, that can be done without making

@@ -25,5 +25,5 @@
 
 (any-utf8?:type text!)
 (not any-utf8?:type integer!)
-(not any-utf8?:type "abc")
+(not try any-utf8?:type "abc")
 (any-list?:type block!)

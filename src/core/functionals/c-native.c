@@ -257,40 +257,15 @@ DECLARE_NATIVE(native)
 //    later, if you're beholden to treating leaky quotes and quasis as if
 //    they were not there.
 //
-// 2. We shouldn't have to call a function pointer here.  This points to the
-//    fact that deciders could be formulated in a much simpler way if they
-//    are only going to react to the type... at one point it seems that the
-//    idea was that deciders might look at more than just the type so that
-//    constraints like CHAR? could be implemented.  But those constraints
-//    are now intrinsics, which may be fast enough that we can speed up
-//    and simplify the decider checks.  Review.
-//
 Bounce Dispatch_Generic_Core(
     GenericInfo* table,
     Heart heart,  // no quoted/quasi/anti [1]
     Level* level_
 ){
-    while (true) {  // the table generation puts simple datatypes first [2]
-        if (table->decider_byte == 0)
-            goto not_handled;
-        if (table->decider_byte >= REB_MAX)
-            break;  // it's a "typeset" check
-        if (heart == table->decider_byte)
+    for (; table->typeset_byte != 0; ++table) {
+        if (Builtin_Typeset_Check(table->typeset_byte, heart))
             return table->dispatcher(level_);
-        ++table;
     }
-
-    while (true) {  // this loop is never entered when the decider byte is 0
-        const Element* type = Datatype_From_Kind(heart);
-        if (g_datatype_deciders[table->decider_byte](type))  // !!! slow [2]
-            return table->dispatcher(level_);
-
-        ++table;
-        if (table->decider_byte == 0)
-            goto not_handled;
-    }
-
-  not_handled:
 
     return FAIL("No dispatcher for datatype of generic");
 }

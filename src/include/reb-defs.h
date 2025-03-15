@@ -362,12 +362,15 @@ typedef struct LevelStruct Level;
 typedef Bounce (Executor)(Level* level_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
-// Deciders are a narrow kind of boolean predicate used in type checking.
-// There are as many as 255 deciders, so wherever a byte is used to pick a
-// decider use the DeciderByte type.
+// There are up to 255 built-in type predicates, which can be efficiently
+// referred to by byte and tested quickly.  The acceleration either involves
+// testing for whether something is a member of up to 31 typesets in the
+// g_sparse_memberships[] table, or a range of Kind values.
 //
-typedef Byte DeciderByte;
-typedef bool (Decider)(const Value* arg);
+// These aliases are used to help find places that use the optimization.
+//
+typedef Byte TypesetByte;
+typedef Flags TypesetFlags;  // Ranged or sparse bitset of typesets
 
 typedef Byte WildTwo[2];
 

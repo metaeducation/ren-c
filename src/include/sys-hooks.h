@@ -80,7 +80,7 @@ enum {
 // GenericInfo is a replacement for all makehook, tohook, mold, compare, etc.
 //
 typedef struct {
-    DeciderByte decider_byte;  // derived from IMPLEMENT_GENERIC()'s type
+    TypesetByte typeset_byte;  // derived from IMPLEMENT_GENERIC()'s type
     Dispatcher* dispatcher;  // the function defined by IMPLEMENT_GENERIC()
 } GenericInfo;
 

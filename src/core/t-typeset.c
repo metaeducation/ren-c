@@ -69,18 +69,19 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 //
 //  Startup_Type_Predicates: C
 //
-// Functions like ANY-SERIES? are built on top of macros like Any_Series(),
-// and are needed for typechecking in natives.  They have to be defined
-// before the natives try to form their parameter lists so they can be
-// queried for which "Decider" optimizations to cache in the parameter.
+// Functions like ANY-SERIES? leverage the g_typesets[] table, to do type
+// checking in a very efficient away, using intrinsics.  They have to be
+// defined before the natives try to form their parameter lists so they can be
+// queried for which TypesetByte to cache in the parameter.
 //
 void Startup_Type_Predicates(void)
 {
     REBINT id;
     for (id = SYM_BEGIN_TYPESETS + 1; id != SYM_END_TYPESETS; id += 1) {
-        REBINT decider_byte = REB_MAX + (id - (SYM_BEGIN_TYPESETS + 1));
+        REBINT typeset_byte = id - SYM_BEGIN_TYPESETS;  // starts at 1
+        assert(typeset_byte > 0 and typeset_byte < 256);
 
-        Details* details = Make_Typechecker(decider_byte);
+        Details* details = Make_Typechecker(typeset_byte);
 
         Init_Action(
             Sink_Lib_Var(cast(SymId, id)),
@@ -168,8 +169,8 @@ void Set_Parameter_Spec(
     Set_Flex_Len(copy, len);
     Cell* dest = Array_Head(copy);
 
-    DeciderByte* optimized = copy->misc.at_least_4;
-    DeciderByte* optimized_tail = optimized + sizeof(uintptr_t);
+    TypesetByte* optimized = copy->misc.at_least_4;
+    TypesetByte* optimized_tail = optimized + sizeof(uintptr_t);
 
     for (; item != tail; ++item, ++dest) {
         Derelativize(dest, item, spec_binding);
@@ -321,7 +322,7 @@ void Set_Parameter_Spec(
                     assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
 
                     Value* index = Details_At(
-                        details, IDX_TYPECHECKER_DECIDER_BYTE
+                        details, IDX_TYPECHECKER_TYPESET_BYTE
                     );
                     *optimized = VAL_UINT8(index);
                     ++optimized;

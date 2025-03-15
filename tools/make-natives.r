@@ -245,9 +245,9 @@ for-each 'info natives [
 e-forward/write-emitted
 
 
-=== "LOAD DECIDER BYTE MAPPING" ===
+=== "LOAD TYPESET BYTE MAPPING" ===
 
-; %make-types.r creates a table of decider bytes, like:
+; %make-types.r creates a table of TypesetByte, like:
 ;
 ;    blank 1
 ;    integer 2
@@ -260,7 +260,7 @@ e-forward/write-emitted
 ; The generic registry uses this, sorting the more specific values used in
 ; IMPLEMENT_GENERIC() first in the table for each generic.
 
-type-to-decider-byte: load (join output-dir %boot/tmp-decider-bytes.r)
+name-to-typeset-byte: load (join output-dir %boot/tmp-typeset-bytes.r)
 
 
 === "SORT GATHERED GENERICS IN DECIDER-BYTE ORDER" ===
@@ -333,7 +333,7 @@ for-each 'n-info natives [
 
             if g-info.name != n-info.name [continue]
 
-            let byte: select type-to-decider-byte g-info.type
+            let byte: select name-to-typeset-byte g-info.type
             assert [byte]  ; sort phase should have complained if not found
 
             if byte = last-byte [  ; sorted, so only have to check last byte

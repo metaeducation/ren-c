@@ -108,6 +108,22 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
     TRACK(Init_Builtin_Datatype_Untracked((out), (kind)))
 
 
+// Used by the Typechecker intrinsic, but also Generic dispatch and PARAMETER!
+// typechecking optimization.
+//
+INLINE bool Builtin_Typeset_Check(TypesetByte typeset_byte, Kind kind) {
+    TypesetFlags typeset = g_typesets[typeset_byte];
+
+    if (typeset & TYPESET_FLAG_0_RANGE) {  // trivial ranges ok (one datatype)
+        Byte start = THIRD_BYTE(&typeset);
+        Byte end = FOURTH_BYTE(&typeset);
+        return start <= kind and kind <= end;
+    }
+
+    return did (g_sparse_memberships[kind] & typeset);  // just a typeset flag
+}
+
+
 // This table is generated from %types.r - the actual table is located in
 // %tmp-dispatch.c and linked in only once.
 //

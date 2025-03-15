@@ -129,6 +129,10 @@ type-table: load %types.r
     ]
 ]
 
+; 1. Type ranges are inclusive, so the end is included in the range.  This is
+;    done so that checks of a single type look more sensible when done with
+;    a range (e.g. start and end are the same)
+;
 /for-each-typerange: func [
     "Iterate type table and create object for each <TYPE!>...</TYPE!> range"
 
@@ -176,7 +180,7 @@ type-table: load %types.r
                         name: name*
                         any-name!: any-name!*
                         start: ensure integer! take:last stack
-                        end: heart*
+                        end: heart* - 1  ; compare end using <=, not <, see [1]
                         types: types*
                     ]
                     types*: _
@@ -338,9 +342,8 @@ e-types: make-emitter "Datatype Definitions" (
 
 e-types/emit [--{
     /* Tables generated from %types.r for builtin typesets */
-    extern Decider* const g_instance_deciders[];
-    extern Decider* const g_datatype_deciders[];
-    extern uint_fast32_t const g_typeset_memberships[];
+    extern TypesetFlags const g_typesets[];  // up to 255 allowed
+    extern uint_fast32_t const g_sparse_memberships[];
 }--]
 e-types/emit newline
 
@@ -398,17 +401,15 @@ for-each-datatype 't [
     e-types/emit newline
 ]
 
-typeset-sets: copy []
+sparse-typesets: copy []
 
 for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
-    append typeset-sets spread reduce [tr.name tr.types]
-
     let proper-name: propercase-of tr.name
 
     e-types/emit newline
     e-types/emit [tr --{
         INLINE bool Any_${Proper-Name}_Kind(Byte k)
-          { return k >= $<TR.START> and k < $<TR.END>; }
+          { return k >= $<TR.START> and k <= $<TR.END>; }
 
         #define Any_${Proper-Name}(v) \
             Any_${Proper-Name}_Kind(VAL_TYPE(v))
@@ -422,18 +423,18 @@ for-each-datatype 't [
 
     for-each 'ts-name t.typesets [
         let spot
-        if spot: select typeset-sets ts-name [
+        if spot: select sparse-typesets ts-name [
             append spot t.name  ; not the first time we've seen this typeset
             continue
         ]
 
-        append typeset-sets ts-name
-        append typeset-sets reduce [t.name]
+        append sparse-typesets ts-name
+        append sparse-typesets reduce [t.name]
 
         e-types/emit newline
         e-types/emit [propercase-of ts-name --{
             #define Any_${propercase-of Ts-Name}_Kind(k) \
-               (did (g_typeset_memberships[k] & TYPESET_FLAG_${TS-NAME}))
+               (did (g_sparse_memberships[k] & TYPESET_FLAG_${TS-NAME}))
 
             #define Any_${propercase-of Ts-Name}(v) \
                 Any_${propercase-of Ts-Name}_Kind(VAL_TYPE(v))
@@ -447,17 +448,28 @@ for-each-datatype 't [
 ; Non-range typesets are handled by checking a flag in a static array which
 ; for each kind has a bitset of typeset flags for each set the kind is in.
 
-ts-index: 0
+e-types/emit -{
+    /* Furthest left bit is used to convey when a typeset table entry is based
+     * on a range of heart bytes as opposed to being a typeset bit.
+     */
+    #define TYPESET_FLAG_0_RANGE  FLAG_LEFT_BIT(0)
+}-
 
-for-each [ts-name types] typeset-sets [
-    if blank? types [continue]  ; done with ranges, no TS_XXX
+shift-by: 1  ; start at 1, since FLAG_LEFT_BIT(0) indicates a ranged typeset
 
+for-each [ts-name types] sparse-typesets [
     e-types/emit [ts-name --{
-        #define TYPESET_FLAG_${TS-NAME} (1 << $<ts-index>)
+        #define TYPESET_FLAG_${TS-NAME}  FLAG_LEFT_BIT($<shift-by>)
     }--]
-    ts-index: ts-index + 1
+    shift-by: me + 1
+
+    if shift-by > 32 [
+        fail [
+            "Current design only allows for 31 sparse typesets." newline
+            "64-bit integers would need to be used for more."
+        ]
+    ]
 ]
-assert [ts-index < 32]  ; typesets use uint_fast32_t
 
 e-types/emit newline
 
@@ -575,36 +587,20 @@ e-typesets/emit --{
 }--
 e-typesets/emit newline
 
-instance-decider-names: copy []
-datatype-decider-names: copy []
 memberships: copy []
+typeset-flags: copy []
 
 index: 1
 
 for-each-datatype 't [
     let proper-name: propercase-of t.name
 
-    e-typesets/emit [t --{
-        bool ${Proper-Name}_Instance_Decider(const Value* v)
-          { return Is_${Proper-Name}(v); }
-    }--]
-    e-typesets/emit newline
-    append instance-decider-names cscape [t
-        --{/* $<index> - $<t.name> */  &${Proper-Name}_Instance_Decider}--
-    ]
-
-    e-typesets/emit [t --{
-        bool ${Proper-Name}_Datatype_Decider(const Value* datatype)
-          { return VAL_TYPE_KIND(datatype) == REB_${T.NAME}; }
-    }--]
-    e-typesets/emit newline
-    append datatype-decider-names cscape [t
-        --{/* $<index> - $<t.name> */  &${Proper-Name}_Datatype_Decider}--
+    append typeset-flags cscape [t
+        --{/* $<index> - $<t.name> */  TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)}--
     ]
 
     let flagits: collect [
-        for-each [ts-name types] typeset-sets [
-            if blank? types [continue]
+        for-each [ts-name types] sparse-typesets [
             if not find types t.name [continue]
 
             keep cscape [ts-name "TYPESET_FLAG_${TS-NAME}"]
@@ -614,67 +610,48 @@ for-each-datatype 't [
         append memberships cscape [t -{/* $<index> - $<t.name> */  0}-]
     ] else [
         append memberships cscape [flagits t
-            --{/* $<index> - $<t.name> */  ($<Delimit "|" Flagits>)}--
+            --{/* $<index> - $<t.name> */  ($<Delimit " | " Flagits>)}--
         ]
     ]
 
     index: me + 1
 ]
 
-for-each [ts-name types] typeset-sets [
-    let proper-name: propercase-of ts-name
-
-    e-typesets/emit [ts-name --{
-        bool Any_${Proper-Name}_Instance_Decider(const Value* arg)
-          { return Any_${Proper-Name}(arg); }
-    }--]
-    e-typesets/emit newline
-    append instance-decider-names cscape [ts-name
-        --{/* $<index> - $<ts-name> */  &Any_${Proper-Name}_Instance_Decider}--
+for-each-typerange 'tr [  ; range, typeset is a start and end
+    append typeset-flags cscape [tr
+        --{/* $<index> - any-$<tr.name> */  TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<TR.START>) | FLAG_FOURTH_BYTE($<TR.END>)}--
     ]
+    index: index + 1
+]
 
-    e-typesets/emit [ts-name --{
-        bool Any_${Proper-Name}_Datatype_Decider(const Value* arg)
-          { return Any_${Proper-Name}_Kind(VAL_TYPE_KIND(arg)); }
-    }--]
-    e-typesets/emit newline
-    append datatype-decider-names cscape [ts-name
-        --{/* $<index> - $<ts-name> */  &Any_${Proper-Name}_Datatype_Decider}--
+for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
+    append typeset-flags cscape [ts-name
+        --{/* $<index> - any-$<ts-name> */  TYPESET_FLAG_${TS-NAME}}--
     ]
-
-    index: me + 1
+    index: index + 1
 ]
 
 e-typesets/emit [--{
     /*
-     * Instance Deciders are used when checking an instance of a type.
-     *
-     *     >> any-utf8? "abc"
-     *     == ~okay~  ; anti
-     *
-     *     >> any-utf8? [a b c]
-     *     == ~null~  ; anti
+     * Builtin "typesets" use either ranges or sparse bits to answer whether
+     * a type matches a typeset.  If the top bit TYPESET_FLAG_0_RANGE is not
+     * set, then the entry holds a single typeset flag which can be tested
+     * for in that datatype's g_sparse_memberships[] entry.  But if the top
+     * bit is set, then the bottom two bytes represent a range of heart
+     * bytes that you test to see if the Kind byte is between.
      */
-    Decider* const g_instance_deciders[] = {
-        /* 0 - <reserved> */  nullptr,
-        $(Instance-Decider-Names),
+    TypesetFlags const g_typesets[] = {
+        /* 0 - <reserved> */  0,
+        $(Typeset-Flags),
     };
 
     /*
-     * Datatype Deciders are used when asking about a type itself.
-     *
-     *     >> any-utf8?:type text!
-     *     == ~okay~  ; anti
-     *
-     *     >> any-utf8?:type block!
-     *     == ~null~  ; anti
+     * For each fundamental datatype, this is the OR'd together flags of all
+     * the sparse typesets that datatype is a member of.  There can be up
+     * to 31 of those TYPESET_FLAG_XXX flags in this model (avoids dependency
+     * on 64-bit integers, which we are attempting to excise from the system).
      */
-    Decider* const g_datatype_deciders[] = {
-        /* 0 - <reserved> */  nullptr,
-        $(Datatype-Decider-Names),
-    };
-
-    uint_fast32_t const g_typeset_memberships[REB_MAX] = {
+    uint_fast32_t const g_sparse_memberships[REB_MAX] = {
         /* 0 - <reserved> */  0,
         $(Memberships),
     };
@@ -683,34 +660,41 @@ e-typesets/emit [--{
 e-typesets/write-emitted
 
 
-=== "WRITE DECIDER MAPPING FOR GENERICS TO USE" ===
+=== "WRITE TYPESET MAPPING FOR GENERICS TO USE" ===
 
-; The generic table needs to know the integer values of types and deciders, so
-; that if you say IMPLEMENT_GENERIC(append, any-list) it knows which decider
-; byte ANY-LIST? corresponds to, and can put it after any more specific generic
-; handlers.  We just write the decider indices out to a file.
+; The generic table needs to know the integer values of types and typesets, so
+; that if you say IMPLEMENT_GENERIC(append, any-list) it knows the TypesetByte
+; ANY-LIST? corresponds to, and can put it after any more specific generic
+; handlers.  We just write the typeset indices out to a file.
 
-e-decider-bytes: make-emitter "Decider Byte Mapping" (
-    join prep-dir %boot/tmp-decider-bytes.r
+e-typeset-bytes: make-emitter "Typeset Byte Mapping" (
+    join prep-dir %boot/tmp-typeset-bytes.r
 )
 
-decider-byte: 1
+typeset-byte: 1
 
 for-each-datatype 't [
-    e-decider-bytes/emit [t -{
-        $<t.name> $<decider-byte>
+    e-typeset-bytes/emit [t -{
+        $<t.name> $<typeset-byte>
     }-]
-    decider-byte: me + 1
+    typeset-byte: me + 1
 ]
 
-for-each [ts-name types] typeset-sets [
-    e-decider-bytes/emit [ts-name -{
-        any-$<ts-name> $<decider-byte>
+for-each-typerange 'tr [
+    e-typeset-bytes/emit [tr -{
+        any-$<tr.name> $<typeset-byte>
     }-]
-    decider-byte: me + 1
+    typeset-byte: me + 1
 ]
 
-e-decider-bytes/write-emitted
+for-each [ts-name types] sparse-typesets [
+    e-typeset-bytes/emit [ts-name -{
+        any-$<ts-name> $<typeset-byte>
+    }-]
+    typeset-byte: me + 1
+]
+
+e-typeset-bytes/write-emitted
 
 
 === "WRITE TYPESPECS TABLE (USED BY HELP)" ===

@@ -79,8 +79,8 @@
 // very much like a native.  This makes it possible to write common code that
 // runs before or after the moment of dispatch, implementing invariants that
 // are specific to each generic.  Then implementations are more granular,
-// associating a datatype or other "decider" (like a typeset) in tables that
-// are assembled during the build preparation.
+// associating an implementation with a TypesetByte in tables that are
+// assembled during the build preparation.
 //
 // 1. At the moment, extensions are not allowed to define generics.  That
 //    would complicate the table generation, but such complications would
