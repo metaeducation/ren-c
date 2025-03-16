@@ -354,46 +354,6 @@ DECLARE_NATIVE(to_text)
 }
 
 
-enum COMPARE_CHR_FLAGS {
-    CC_FLAG_CASE = 1 << 0, // Case sensitive sort
-    CC_FLAG_REVERSE = 1 << 1 // Reverse sort order
-};
-
-
-//
-//  Compare_Chr: C
-//
-// This function is called by qsort_r, on behalf of the string sort
-// function.  The `thunk` is an argument passed through from the caller
-// and given to us by the sort routine, which tells us about the string
-// and the kind of sort that was requested.
-//
-// !!! As of UTF-8 everywhere, this will only work on all-ASCII strings.
-//
-static int Compare_Chr(void *thunk, const void *v1, const void *v2)
-{
-    REBLEN * const flags = cast(REBLEN*, thunk);
-
-    Byte b1 = *c_cast(Byte*, v1);
-    Byte b2 = *c_cast(Byte*, v2);
-
-    assert(b1 < 0x80 and b2 < 0x80);
-
-    if (*flags & CC_FLAG_CASE) {
-        if (*flags & CC_FLAG_REVERSE)
-            return b2 - b1;
-        else
-            return b1 - b2;
-    }
-    else {
-        if (*flags & CC_FLAG_REVERSE)
-            return LO_CASE(b2) - LO_CASE(b1);
-        else
-            return LO_CASE(b1) - LO_CASE(b2);
-    }
-}
-
-
 //
 //  Form_Uni_Hex: C
 //
@@ -1114,66 +1074,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
             reverse_string(str, VAL_INDEX(v), len);
         return OUT; }
 
-      case SYM_SORT: {
-        INCLUDE_PARAMS_OF_SORT;
-
-        UNUSED(PARAM(series));
-
-        String* str = Cell_String_Ensure_Mutable(v);  // just ensure mutability
-        UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
-
-        if (REF(all))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(compare))
-            return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
-
-        Copy_Cell(OUT, v);  // before index modification
-        REBLEN limit = Part_Len_May_Modify_Index(v, ARG(part));
-        if (limit <= 1)
-            return OUT;
-
-        Length len;
-        Size size;
-        const Byte* utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, v, &limit);
-
-        // Test for if the range is all ASCII can just be if (len == size)...
-        // that means every codepoint is one byte.
-        //
-        if (len != size)
-            return FAIL("Non-ASCII string sorting temporarily unavailable");
-
-        REBLEN skip;
-        if (not REF(skip))
-            skip = 1;
-        else {
-            skip = Get_Num_From_Arg(ARG(skip));
-            if (skip <= 0 or len % skip != 0 or skip > len)
-                return FAIL(PARAM(skip));
-        }
-
-        // Use fast quicksort library function:
-        REBLEN span = 1;
-        if (skip > 1) {
-            len /= skip;
-            span *= skip;
-        }
-
-        REBLEN thunk = 0;
-        if (REF(case))
-            thunk |= CC_FLAG_CASE;
-        if (REF(reverse))
-            thunk |= CC_FLAG_REVERSE;
-
-        reb_qsort_r(
-            m_cast(Byte*, utf8),  // ok due to cell mutability check
-            len,
-            span * sizeof(Byte),
-            &thunk,
-            Compare_Chr
-        );
-        return OUT; }
-
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
@@ -1305,6 +1205,105 @@ IMPLEMENT_GENERIC(reflect, any_string)
     }
 
     return GENERIC_CFUNC(reflect, any_series)(LEVEL);
+}
+
+
+enum COMPARE_CHR_FLAGS {
+    CC_FLAG_CASE = 1 << 0, // Case sensitive sort
+    CC_FLAG_REVERSE = 1 << 1 // Reverse sort order
+};
+
+
+// This function is called by qsort_r, on behalf of the string sort
+// function.  The `state` is an argument passed through from the caller
+// and given to us by the sort routine, which tells us about the string
+// and the kind of sort that was requested.
+//
+// !!! As of UTF-8 everywhere, this will only work on all-ASCII strings.
+//
+static int Qsort_Char_Callback(void *state, const void *v1, const void *v2)
+{
+    Flags* flags = cast(Flags*, state);
+
+    Byte b1 = *c_cast(Byte*, v1);
+    Byte b2 = *c_cast(Byte*, v2);
+
+    assert(b1 < 0x80 and b2 < 0x80);
+
+    if (*flags & CC_FLAG_CASE) {
+        if (*flags & CC_FLAG_REVERSE)
+            return b2 - b1;
+        else
+            return b1 - b2;
+    }
+    else {
+        if (*flags & CC_FLAG_REVERSE)
+            return LO_CASE(b2) - LO_CASE(b1);
+        else
+            return LO_CASE(b1) - LO_CASE(b2);
+    }
+}
+
+
+IMPLEMENT_GENERIC(sort, any_string)
+{
+    INCLUDE_PARAMS_OF_SORT;
+
+    Element* v = Element_ARG(series);
+    String* str = Cell_String_Ensure_Mutable(v);  // just ensure mutability
+    UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
+
+    if (REF(all))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    if (REF(compare))
+        return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+
+    Copy_Cell(OUT, v);  // before index modification
+    REBLEN limit = Part_Len_May_Modify_Index(v, ARG(part));
+    if (limit <= 1)
+        return OUT;
+
+    Length len;
+    Size size;
+    const Byte* utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, v, &limit);
+
+    // Test for if the range is all ASCII can just be if (len == size)...
+    // that means every codepoint is one byte.
+    //
+    if (len != size)
+        return FAIL("Non-ASCII string sorting temporarily unavailable");
+
+    REBLEN skip;
+    if (not REF(skip))
+        skip = 1;
+    else {
+        skip = Get_Num_From_Arg(ARG(skip));
+        if (skip <= 0 or len % skip != 0 or skip > len)
+            return FAIL(PARAM(skip));
+    }
+
+    // Use fast quicksort library function:
+    REBLEN span = 1;
+    if (skip > 1) {
+        len /= skip;
+        span *= skip;
+    }
+
+    Flags flags = 0;
+    if (REF(case))
+        flags |= CC_FLAG_CASE;
+    if (REF(reverse))
+        flags |= CC_FLAG_REVERSE;
+
+    bsd_qsort_r(
+        m_cast(Byte*, utf8),  // ok due to cell mutability check
+        len,
+        span * sizeof(Byte),
+        &flags,
+        &Qsort_Char_Callback
+    );
+    return OUT;
 }
 
 

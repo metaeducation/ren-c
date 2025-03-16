@@ -214,7 +214,7 @@ DECLARE_NATIVE(reverse)
 DECLARE_NATIVE(sort)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(SORT));
+    return Dispatch_Generic(sort, series, LEVEL);
 }
 
 

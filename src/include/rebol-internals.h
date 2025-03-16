@@ -139,6 +139,8 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include <stddef.h> // for offsetof()
 #include <inttypes.h>  // printf() abstractions e.g. for uint64_t (PRIu64)
 
+#include "bsd-qsort_r.h"  // qsort_r() varies by platform, bundle BSD version
+
 
 //=//// ALLOW ONLY MINIMAL USE OF STDIO.H IN RELEASE BUILDS ////////////////=//
 //
@@ -543,11 +545,6 @@ enum {
 
 #define ALL_BITS \
     ((REBLEN)(-1))
-
-
-typedef int cmp_t(void *, const void *, const void *);
-extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
-
 
 
 #include "tmp-constants.h"

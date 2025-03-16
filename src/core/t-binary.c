@@ -226,34 +226,6 @@ IMPLEMENT_GENERIC(make, blob)
 }
 
 
-enum COMPARE_CHR_FLAGS {
-    CC_FLAG_CASE = 1 << 0, // Case sensitive sort
-    CC_FLAG_REVERSE = 1 << 1 // Reverse sort order
-};
-
-
-//
-//  Compare_Byte: C
-//
-// This function is called by qsort_r, on behalf of the string sort
-// function.  The `thunk` is an argument passed through from the caller
-// and given to us by the sort routine, which tells us about the string
-// and the kind of sort that was requested.
-//
-static int Compare_Byte(void *thunk, const void *v1, const void *v2)
-{
-    Flags * const flags = cast(Flags*, thunk);
-
-    Byte b1 = *c_cast(Byte*, v1);
-    Byte b2 = *c_cast(Byte*, v2);
-
-    if (*flags & CC_FLAG_REVERSE)
-        return b2 - b1;
-    else
-        return b1 - b2;
-}
-
-
 // 1. Historial Rebol let you set your binary base molding in a global way.
 //    If this is to be a console setting, that's one thing...but having a
 //    flag like this changing the fundamental behavior is bad.  In addition
@@ -703,57 +675,6 @@ IMPLEMENT_GENERIC(oldgeneric, blob)
         }
         return COPY(v); }
 
-      case SYM_SORT: {
-        INCLUDE_PARAMS_OF_SORT;
-        UNUSED(PARAM(series));
-
-        if (REF(all))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(case)) {
-            // Ignored...all BLOB! sorts are case-sensitive.
-        }
-
-        if (REF(compare))
-            return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
-
-        Flags thunk = 0;
-
-        Copy_Cell(OUT, v);  // copy to output before index adjustment
-
-        REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* data_at = Cell_Blob_At_Ensure_Mutable(v);  // ^ index changes
-
-        if (len <= 1)
-            return OUT;
-
-        REBLEN skip;
-        if (not REF(skip))
-            skip = 1;
-        else {
-            skip = Get_Num_From_Arg(ARG(skip));
-            if (skip <= 0 or (len % skip != 0) or skip > len)
-                return FAIL(PARAM(skip));
-        }
-
-        Size size = 1;
-        if (skip > 1) {
-            len /= skip;
-            size *= skip;
-        }
-
-        if (REF(reverse))
-            thunk |= CC_FLAG_REVERSE;
-
-        reb_qsort_r(
-            data_at,
-            len,
-            size,
-            &thunk,
-            Compare_Byte
-        );
-        return OUT; }
-
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
@@ -996,6 +917,86 @@ IMPLEMENT_GENERIC(reflect, blob)
     }
 
     return GENERIC_CFUNC(reflect, any_series)(LEVEL);
+}
+
+
+enum COMPARE_CHR_FLAGS {
+    CC_FLAG_CASE = 1 << 0, // Case sensitive sort
+    CC_FLAG_REVERSE = 1 << 1 // Reverse sort order
+};
+
+
+// This function is called by qsort_r, on behalf of the string sort
+// function.  The `state` is an argument passed through from the caller
+// and given to us by the sort routine, which tells us about the string
+// and the kind of sort that was requested.
+//
+static int Qsort_Byte_Callback(void *state, const void *v1, const void *v2)
+{
+    Flags* flags = cast(Flags*, state);
+
+    Byte b1 = *c_cast(Byte*, v1);
+    Byte b2 = *c_cast(Byte*, v2);
+
+    if (*flags & CC_FLAG_REVERSE)
+        return b2 - b1;
+    else
+        return b1 - b2;
+}
+
+
+IMPLEMENT_GENERIC(sort, blob)
+{
+    INCLUDE_PARAMS_OF_SORT;
+
+    Element* v = Element_ARG(series);
+
+    if (REF(all))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    if (REF(case)) {
+        // Ignored...all BLOB! sorts are case-sensitive.
+    }
+
+    if (REF(compare))
+        return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+
+    Flags flags = 0;
+
+    Copy_Cell(OUT, v);  // copy to output before index adjustment
+
+    REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
+    Byte* data_at = Cell_Blob_At_Ensure_Mutable(v);  // ^ index changes
+
+    if (len <= 1)
+        return OUT;
+
+    REBLEN skip;
+    if (not REF(skip))
+        skip = 1;
+    else {
+        skip = Get_Num_From_Arg(ARG(skip));
+        if (skip <= 0 or (len % skip != 0) or skip > len)
+            return FAIL(PARAM(skip));
+    }
+
+    Size size = 1;
+    if (skip > 1) {
+        len /= skip;
+        size *= skip;
+    }
+
+    if (REF(reverse))
+        flags |= CC_FLAG_REVERSE;
+
+    bsd_qsort_r(
+        data_at,
+        len,
+        size,
+        &flags,
+        &Qsort_Byte_Callback
+    );
+    return OUT;
 }
 
 

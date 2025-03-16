@@ -378,49 +378,6 @@ REBINT Find_In_Array(
 }
 
 
-typedef struct {
-    bool cased;
-    bool reverse;
-    REBLEN offset;
-    const Value* comparator;
-} SortInfo;
-
-
-//
-//  Qsort_Values_Callback: C
-//
-static int Qsort_Values_Callback(void *arg, const void *p1, const void *p2)
-{
-    SortInfo* info = cast(SortInfo*, arg);
-
-    const Element* v1 = Known_Element(c_cast(Atom*, p1));
-    const Element* v2 = Known_Element(c_cast(Atom*, p2));
-    possibly(info->cased);  // !!! not applicable in LESSER? comparisons
-    bool strict = false;
-
-    DECLARE_VALUE (result);
-    if (rebRunThrows(
-        result,  // <-- output cell
-        rebRUN(info->comparator),
-            info->reverse ? rebQ(v1) : rebQ(v2),
-            info->reverse ? rebQ(v2) : rebQ(v1)
-    )){
-        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-    }
-
-    if (not Is_Logic(result))
-        fail ("SORT predicate must return logic (NULL or OKAY antiform)");
-
-    if (Cell_Logic(result))  // comparator has LESSER? semantics
-        return 1;  // returning 1 means lesser, it seems (?)
-
-    if (Equal_Values(v1, v2, strict))
-        return 0;
-
-    return -1;  // not lesser, and not equal, so assume greater
-}
-
-
 //
 //  Shuffle_Array: C
 //
@@ -985,61 +942,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
         }
         return COPY(list); }
 
-      case SYM_SORT: {
-        INCLUDE_PARAMS_OF_SORT;
-        UNUSED(PARAM(series));  // covered by `v`
-
-        Array* arr = Cell_Array_Ensure_Mutable(list);
-
-        SortInfo info;
-        info.cased = REF(case);
-        info.reverse = REF(reverse);
-        UNUSED(REF(all));  // !!! not used?
-
-        Value* cmp = ARG(compare);  // null if no :COMPARE
-        Deactivate_If_Action(cmp);
-        if (Is_Frame(cmp)) {
-            info.comparator = cmp;
-            info.offset = 0;
-        }
-        else if (Is_Integer(cmp)) {
-            info.comparator = nullptr;
-            info.offset = Int32(cmp) - 1;
-            fail ("INTEGER! support (e.g. column select) not working in sort");
-        }
-        else {
-            assert(Is_Nulled(cmp));
-            info.comparator = LIB(LESSER_Q);
-            info.offset = 0;
-        }
-
-        Copy_Cell(OUT, list);  // save list before messing with index
-
-        REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
-        if (len <= 1)
-            return OUT;
-        REBLEN index = VAL_INDEX(list);  // ^-- may have been modified
-
-        // Skip factor:
-        REBLEN skip;
-        if (Is_Nulled(ARG(skip)))
-            skip = 1;
-        else {
-            skip = Get_Num_From_Arg(ARG(skip));
-            if (skip <= 0 or len % skip != 0 or skip > len)
-                return FAIL(Error_Out_Of_Range(ARG(skip)));
-        }
-
-        reb_qsort_r(
-            Array_At(arr, index),
-            len / skip,
-            sizeof(Cell) * skip,
-            &info,
-            &Qsort_Values_Callback
-        );
-
-        return OUT; }
-
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
         UNUSED(PARAM(value));  // covered by `v`
@@ -1301,6 +1203,107 @@ IMPLEMENT_GENERIC(reflect, any_list)
     }
 
     return GENERIC_CFUNC(reflect, any_series)(LEVEL);
+}
+
+
+typedef struct {
+    bool cased;
+    bool reverse;
+    REBLEN offset;
+    const Value* comparator;
+} SortInfo;
+
+
+//
+//  Qsort_Values_Callback: C
+//
+static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
+{
+    SortInfo* info = cast(SortInfo*, state);
+
+    const Element* v1 = Known_Element(c_cast(Atom*, p1));
+    const Element* v2 = Known_Element(c_cast(Atom*, p2));
+    possibly(info->cased);  // !!! not applicable in LESSER? comparisons
+    bool strict = false;
+
+    DECLARE_VALUE (result);
+    if (rebRunThrows(
+        result,  // <-- output cell
+        rebRUN(info->comparator),
+            info->reverse ? rebQ(v1) : rebQ(v2),
+            info->reverse ? rebQ(v2) : rebQ(v1)
+    )){
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+    }
+
+    if (not Is_Logic(result))
+        fail ("SORT predicate must return logic (NULL or OKAY antiform)");
+
+    if (Cell_Logic(result))  // comparator has LESSER? semantics
+        return 1;  // returning 1 means lesser, it seems (?)
+
+    if (Equal_Values(v1, v2, strict))
+        return 0;
+
+    return -1;  // not lesser, and not equal, so assume greater
+}
+
+
+IMPLEMENT_GENERIC(sort, any_list)
+{
+    INCLUDE_PARAMS_OF_SORT;
+
+    Element* list = Element_ARG(series);
+    Array* arr = Cell_Array_Ensure_Mutable(list);
+
+    SortInfo info;
+    info.cased = REF(case);
+    info.reverse = REF(reverse);
+    UNUSED(REF(all));  // !!! not used?
+
+    Value* cmp = ARG(compare);  // null if no :COMPARE
+    Deactivate_If_Action(cmp);
+    if (Is_Frame(cmp)) {
+        info.comparator = cmp;
+        info.offset = 0;
+    }
+    else if (Is_Integer(cmp)) {
+        info.comparator = nullptr;
+        info.offset = Int32(cmp) - 1;
+        fail ("INTEGER! support (e.g. column select) not working in sort");
+    }
+    else {
+        assert(Is_Nulled(cmp));
+        info.comparator = LIB(LESSER_Q);
+        info.offset = 0;
+    }
+
+    Copy_Cell(OUT, list);  // save list before messing with index
+
+    REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
+    if (len <= 1)
+        return OUT;
+    REBLEN index = VAL_INDEX(list);  // ^-- may have been modified
+
+    // Skip factor:
+    REBLEN skip;
+    if (Is_Nulled(ARG(skip)))
+        skip = 1;
+    else {
+        skip = Get_Num_From_Arg(ARG(skip));
+        if (skip <= 0 or len % skip != 0 or skip > len)
+            return FAIL(Error_Out_Of_Range(ARG(skip)));
+    }
+
+    bsd_qsort_r(
+        Array_At(arr, index),
+        len / skip,
+        sizeof(Cell) * skip,
+        &info,
+        &Qsort_Values_Callback
+    );
+
+    return OUT;
 }
 
 
