@@ -404,7 +404,7 @@ bool Try_Match_For_Compose(
         if (VAL_TYPE(match_1) != VAL_TYPE(pattern_1))
             return false;
 
-        if (CT_String(match_1, pattern_1, 1) != 0)
+        if (CT_Utf8(match_1, pattern_1, 1) != 0)
             return false;
 
         VAL_INDEX_RAW(match) += 1;

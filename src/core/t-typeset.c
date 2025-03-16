@@ -212,7 +212,7 @@ void Set_Parameter_Spec(
             bool strict = false;
 
             if (
-                0 == CT_String(item, Root_Variadic_Tag, strict)
+                0 == CT_Utf8(item, Root_Variadic_Tag, strict)
             ){
                 // !!! The actual final notation for variadics is not decided
                 // on, so there is compatibility for now with the <...> form
@@ -223,22 +223,22 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_VARIADIC;
                 Init_Quasi_Word(dest, CANON(VARIADIC_Q)); // !!!
             }
-            else if (0 == CT_String(item, Root_End_Tag, strict)) {
+            else if (0 == CT_Utf8(item, Root_End_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_ENDABLE;
                 Init_Quasi_Word(dest, CANON(NULL));  // !!!
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
-            else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
+            else if (0 == CT_Utf8(item, Root_Maybe_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, CANON(VOID));  // !!!
             }
-            else if (0 == CT_String(item, Root_Const_Tag, strict)) {
+            else if (0 == CT_Utf8(item, Root_Const_Tag, strict)) {
                 *flags |= PARAMETER_FLAG_CONST;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, CANON(CONST));
             }
-            else if (0 == CT_String(item, Root_Unrun_Tag, strict)) {
+            else if (0 == CT_Utf8(item, Root_Unrun_Tag, strict)) {
                 // !!! Currently just commentary, degrading happens due
                 // to type checking.  Review this.
                 //

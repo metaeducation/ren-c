@@ -804,6 +804,26 @@ DECLARE_NATIVE(lesser_q)
 }
 
 
+// We want LESSER? to always give a soft failure through a raised error, so
+// that we can fall back on EQUAL?.  e.g.
+//
+//    >> [1 _ "a"] < [2 _ "b"]
+//    == ~okay~  ; null
+//
+// Even though BLANK! can't be compared with less than, the equality means
+// we let the test go through.
+//
+IMPLEMENT_GENERIC(lesser_q, any_element)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    UNUSED(ARG(value1));
+    UNUSED(ARG(value2));
+
+    return RAISE("Types are not comparable");
+}
+
+
 //
 //  /same?: native [
 //

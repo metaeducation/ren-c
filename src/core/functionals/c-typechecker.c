@@ -344,14 +344,21 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             if (Not_Antiform(v) or Cell_Heart(item) != Cell_Heart(v))
                 goto test_failed;
 
+            assert(v == SPARE);  // hack: temporarily make quasiform
+            QUOTE_BYTE(SPARE) = QUASIFORM_2_COERCE_ONLY;
+
             bool strict = false;  // !!! Is being case-insensitive good?
-            if (0 == Compare_Cells_Ignore_Quotes(
-                item,
-                cast(const Value*, v),  // stable antiform if we got here
+            bool equal = Equal_Values(
+                item,  // was a quasiform in the types list
+                Known_Element(v),  // we turned the antiform to a quasiform
                 strict
-            )){
+            );
+
+            QUOTE_BYTE(SPARE) = ANTIFORM_0_COERCE_ONLY;  // now put it back
+
+            if (equal)
                 goto test_succeeded;
-            }
+
             goto test_failed;
         }
 
@@ -362,14 +369,21 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             if (QUOTE_BYTE(item) - Quote_Shift(1) != QUOTE_BYTE(v))
                 goto test_failed;
 
+            assert(v == SPARE);  // hack: temporarily make quoted
+            Quotify(SPARE, 1);
+
             bool strict = false;  // !!! Is being case-insensitive good?
-            if (0 == Compare_Cells_Ignore_Quotes(
-                item,
-                cast(const Element*, v),
+            bool equal = Equal_Values(
+                item,  // was a quasiform in the types list
+                Known_Element(v),  // we turned the antiform to a quasiform
                 strict
-            )){
+            );
+
+            Unquotify(SPARE, 1);  // now put it back
+
+            if (equal)
                 goto test_succeeded;
-            }
+
             goto test_failed;
         }
 

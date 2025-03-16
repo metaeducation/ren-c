@@ -424,7 +424,7 @@ DECLARE_NATIVE(text_x_combinator)
         const Element* at = Cell_List_At(&tail, input);
         if (at == tail)  // no item to match against
             return nullptr;
-        if (Cmp_Value(at, v, true) != 0)  // not case-insensitive equal
+        if (not Equal_Values(at, v, true))  // not case-insensitive equal
             return nullptr;
 
         ++VAL_INDEX_UNBOUNDED(input);

@@ -226,15 +226,6 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 }
 
 
-//
-//  CT_String: C
-//
-REBINT CT_String(const Cell* a, const Cell* b, bool strict)
-{
-    return CT_Utf8(a, b, strict);
-}
-
-
 /***********************************************************************
 **
 **  Local Utility Functions

@@ -303,30 +303,16 @@ IMPLEMENT_GENERIC(exclude, any_series)
 
 
 //
-//  Cmp_Value: C
+//  Equal_Values: C
 //
-// Compare two values and return the difference.  Quoting level is heeded,
-// and values at distinct quoting levels are not considered equal.
+// Test to see if two values are equal.  Quoting level is heeded, and values
+// at distinct quoting levels are not considered equal.
 //
-//
-REBINT Cmp_Value(const Value* s, const Value* t, bool strict)
+bool Equal_Values(const Value* s, const Value* t, bool strict)
 {
-    Byte squotes = QUOTE_BYTE(s);
-    Byte tquotes = QUOTE_BYTE(t);
-    if (squotes != tquotes)
-        return squotes > tquotes ? 1 : -1;
+    if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
+        return false;
 
-    return Compare_Cells_Ignore_Quotes(s, t, strict);
-}
-
-
-//
-//  Compare_Cells_Ignore_Quotes: C
-//
-// Compare two cells and return the difference.  Quoting is ignored.
-//
-REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
-{
     Heart s_heart = Cell_Heart(s);
     Heart t_heart = Cell_Heart(t);
 
@@ -334,152 +320,91 @@ REBINT Compare_Cells_Ignore_Quotes(const Cell* s, const Value* t, bool strict)
         s_heart != t_heart
         and not (Any_Number_Kind(s_heart) and Any_Number_Kind(t_heart))
     ){
-        return s_heart > t_heart ? 1 : -1;
+        return false;
     }
 
-    // !!! The strange and ad-hoc way this routine was written has some
-    // special-case handling for numeric types.  It only allows the values to
-    // be of unequal types below if they are both ANY-NUMBER?, so those cases
-    // are more complex and jump around, reusing code via a goto and passing
-    // the canonized decimal form via d1/d2.
-    //
-    REBDEC d1;
-    REBDEC d2;
+    // !!! Apply accelerations here that don't need a frame?  :-/  I dislike
+    // the idea of duplicating the work, but it is undoubtedly a bit more
+    // costly to make and dispatch the frame, even if done elegantly.
 
-    switch (s_heart) {
-      case REB_INTEGER:
-        if (t_heart == REB_DECIMAL) {
-            d1 = cast(REBDEC, VAL_INT64(s));
-            d2 = VAL_DECIMAL(t);
-            goto chkDecimal;
-        }
-        return CT_Integer(s, t, strict);
+    Level* const L = Make_End_Level(
+        &Action_Executor,
+        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
+    );
+    const Value* action = LIB(EQUAL_Q);
+    Push_Action(L, action);
+    Begin_Action(L, Cell_Frame_Label_Deep(action), PREFIX_0);
 
-      case REB_PERCENT:
-      case REB_DECIMAL:
-      case REB_MONEY:
-        if (s_heart == REB_MONEY)
-            d1 = deci_to_decimal(VAL_MONEY_AMOUNT(s));
-        else
-            d1 = VAL_DECIMAL(s);
-        if (t_heart == REB_INTEGER)
-            d2 = cast(REBDEC, VAL_INT64(t));
-        else if (t_heart == REB_MONEY)
-            d2 = deci_to_decimal(VAL_MONEY_AMOUNT(t));
-        else
-            d2 = VAL_DECIMAL(t);
+    USE_LEVEL_SHORTHANDS (L);
+    INCLUDE_PARAMS_OF_EQUAL_Q;
 
-      chkDecimal:;
+    Copy_Cell(Erase_Cell(ARG(value1)), s);
+    Copy_Cell(Erase_Cell(ARG(value2)), t);
+    Init_Logic(Erase_Cell(ARG(strict)), strict);
 
-        if (Eq_Decimal(d1, d2))
-            return 0;
-        if (d1 < d2)
-            return -1;
-        return 1;
+    DECLARE_ATOM (out);
 
-      case REB_PAIR:
-        return CT_Pair(s, t, strict);
+    bool threw = Trampoline_Throws(out, L);
+    if (threw)
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-      case REB_TIME:
-        return CT_Time(s, t, strict);
+    return Cell_Logic(out);
+}
 
-      case REB_DATE:
-        return CT_Date(s, t, strict);
 
-      case REB_BLOCK:
-      case REB_META_BLOCK:
-      case REB_THE_BLOCK:
-      case REB_TYPE_BLOCK:
-      case REB_VAR_BLOCK:
-        //
-      case REB_FENCE:
-      case REB_META_FENCE:
-      case REB_THE_FENCE:
-      case REB_TYPE_FENCE:
-      case REB_VAR_FENCE:
-        //
-      case REB_GROUP:
-      case REB_META_GROUP:
-      case REB_THE_GROUP:
-      case REB_TYPE_GROUP:
-      case REB_VAR_GROUP:
-        return CT_List(s, t, strict);
+//
+//  Lesser_Value: C
+//
+// This dispatches to the LESSER? implementation.  It may not be able to
+// compare the types, e.g. ("A" < 1) is an error, so you get a bool.
+//
+bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
+{
+    if (QUOTE_BYTE(s) == ANTIFORM_0 or QUOTE_BYTE(t) == ANTIFORM_0)
+        return false;  // can't do less than on antiforms
 
-      case REB_CHAIN:
-      case REB_META_CHAIN:
-      case REB_THE_CHAIN:
-      case REB_TYPE_CHAIN:
-      case REB_VAR_CHAIN:
-        //
-      case REB_PATH:
-      case REB_META_PATH:
-      case REB_THE_PATH:
-      case REB_TYPE_PATH:
-      case REB_VAR_PATH:
-        //
-      case REB_TUPLE:
-      case REB_META_TUPLE:
-      case REB_THE_TUPLE:
-      case REB_TYPE_TUPLE:
-      case REB_VAR_TUPLE:
-        return CT_Sequence(s, t, strict);
+    if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
+        return false;  // comparisons against different-quoting levels illegal
 
-      case REB_MAP:
-        return CT_Map(s, t, strict);  // !!! Not implemented
+    Heart s_heart = Cell_Heart(s);
+    Heart t_heart = Cell_Heart(t);
 
-      case REB_SIGIL:
-        if (Cell_Sigil(s) == Cell_Sigil(t))
-            return 0;
-        return Cell_Sigil(s) > Cell_Sigil(t) ? 1 : 0;
-
-      case REB_TEXT:
-      case REB_FILE:
-      case REB_EMAIL:
-      case REB_URL:
-      case REB_TAG:
-      case REB_ISSUE:
-        return CT_String(s, t, strict);
-
-      case REB_BITSET:
-        return CT_Bitset(s, t, strict);
-
-      case REB_BLOB:
-        return CT_Blob(s, t, strict);
-
-      case REB_WORD:
-      case REB_META_WORD:
-      case REB_THE_WORD:
-      case REB_TYPE_WORD:
-      case REB_VAR_WORD:
-        return CT_Word(s, t, strict);
-
-      case REB_ERROR:
-      case REB_OBJECT:
-      case REB_MODULE:
-      case REB_PORT:
-        return CT_Context(s, t, strict);
-
-      case REB_FRAME:
-        return CT_Frame(s, t, strict);
-
-      case REB_BLANK:
-        assert(CT_Blank(s, t, strict) == 0);
-        return 0;  // shortcut call to comparison
-
-      case REB_HANDLE:
-        return CT_Handle(s, t, strict);
-
-      case REB_COMMA:
-        return CT_Comma(s, t, strict);
-
-      case REB_PARAMETER:
-        return CT_Parameter(s, t, strict);
-
-      default:
-        break;
+    if (
+        s_heart != t_heart
+        and not (Any_Number_Kind(s_heart) and Any_Number_Kind(t_heart))
+    ){
+        return false;
     }
 
-    panic (nullptr);  // all cases should be handled above
+    // !!! Apply accelerations here that don't need a frame?  :-/  I dislike
+    // the idea of duplicating the work, but it is undoubtedly a bit more
+    // costly to make and dispatch the frame, even if done elegantly.
+
+    Level* const L = Make_End_Level(
+        &Action_Executor,
+        FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | LEVEL_FLAG_RAISED_RESULT_OK
+    );
+    const Value* action = LIB(LESSER_Q);
+    Push_Action(L, action);
+    Begin_Action(L, Cell_Frame_Label_Deep(action), PREFIX_0);
+
+    USE_LEVEL_SHORTHANDS (L);
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    Copy_Cell(Erase_Cell(ARG(value1)), s);
+    Copy_Cell(Erase_Cell(ARG(value2)), t);
+
+    DECLARE_ATOM (out);
+
+    bool threw = Trampoline_Throws(out, L);
+    if (threw)
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+
+    if (Is_Raised(out))
+        return false;
+
+    *lesser = Cell_Logic(out);
+    return true;
 }
 
 
@@ -496,8 +421,9 @@ REBLEN Find_In_Array_Simple(
 ){
     const Element* value = Array_Head(array);
 
+    bool strict = false;
     for (; index < Array_Len(array); index++) {
-        if (0 == Cmp_Value(value + index, target, false))
+        if (Equal_Values(value + index, target, strict))
             return index;
     }
 

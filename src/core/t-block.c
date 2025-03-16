@@ -25,82 +25,97 @@
 #include "sys-core.h"
 
 
+// !!! Should sequence comparison delegate to this when it detects it has two
+// arrays to compare?  That requires canonization assurance.
 //
-//  CT_List: C
-//
-// "Compare Type" dispatcher for ANY-BLOCK?, ANY-GROUP?
-//
-// !!! Should CT_Path() delegate to this when it detects it has two arrays
-// to compare?  That requires canonization assurance.
-//
-REBINT CT_List(const Cell* a, const Cell* b, bool strict)
+IMPLEMENT_GENERIC(equal_q, any_list)
 {
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    Element* a = Element_ARG(value1);
+    Element* b = Element_ARG(value2);
+    bool strict = REF(strict);
+
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
-    REBLEN a_index = VAL_INDEX(a);
+    REBLEN a_index = VAL_INDEX(a);  // checks for out of bounds indices
     REBLEN b_index = VAL_INDEX(b);
 
-    if (a_array == b_array) {
-        if (a_index == b_index)
-            return 0;
-
-        if (a_index > b_index)
-            return 1;
-        return -1;
-    }
+    if (a_array == b_array)
+        return LOGIC(a_index == b_index);
 
     const Element* a_tail = Array_Tail(a_array);
     const Element* b_tail = Array_Tail(b_array);
     const Element* a_item = Array_At(a_array, a_index);
     const Element* b_item = Array_At(b_array, b_index);
+    Length a_len = a_tail - a_item;
+    Length b_len = b_tail - b_item;
 
-    if (a_item == a_tail or b_item == b_tail)
-        goto diff_of_ends;
+    if (a_len != b_len)
+        return LOGIC(a_index == b_index);
 
-    while (
-        VAL_TYPE(a_item) == VAL_TYPE(b_item)
-        or (Any_Number(a_item) and Any_Number(b_item))
-    ){
-        REBINT diff;
-        if ((diff = Cmp_Value(a_item, b_item, strict)) != 0)
-            return diff;
-
-        ++a_item;
-        ++b_item;
-
-        if (a_item == a_tail or b_item == b_tail)
-            goto diff_of_ends;
+    for (; a_item != a_tail; ++a_item, ++b_item) {
+        if (not Equal_Values(a_item, b_item, strict))
+            return LOGIC(false);
     }
 
-    return VAL_TYPE(a_item) > VAL_TYPE(b_item) ? 1 : -1;
-
-  diff_of_ends:
-    //
-    // Treat end as if it were a REB_xxx type of 0, so all other types would
-    // compare larger than it.
-    //
-    if (a_item == a_tail) {
-        if (b_item == b_tail)
-            return 0;
-        return -1;
-    }
-    return 1;
+    assert(b_item == b_tail);  // they were the same length
+    return LOGIC(true);  // got to the end
 }
 
 
-IMPLEMENT_GENERIC(equal_q, any_list)
-{
-    INCLUDE_PARAMS_OF_EQUAL_Q;
-
-    return LOGIC(CT_List(ARG(value1), ARG(value2), REF(strict)) == 0);
-}
-
-
+// In the rethought model of Ren-C, arbitrary lists cannot be compared for
+// being less than or greater than each other.  It's only legal if the
+// elements are pairwise comparable:
+//
+//     >> [1 "b"] < [2 "a"]
+//     == ~okay~  ; anti
+//
+//     >> ["b" 1] < [2 "a"]
+//     ** Error: Can't compare  ; raised error, not failure
+//
+//     >> try ["b" 1] < [2 "a"]
+//     == ~null~  ; anti
+//
 IMPLEMENT_GENERIC(lesser_q, any_list)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_List(ARG(value1), ARG(value2), true) == -1);
+    Element* a = Element_ARG(value1);
+    Element* b = Element_ARG(value2);
+
+    const Source* a_array = Cell_Array(a);
+    const Source* b_array = Cell_Array(b);
+    REBLEN a_index = VAL_INDEX(a);  // checks for out of bounds indices
+    REBLEN b_index = VAL_INDEX(b);
+
+    if (a_array == b_array)
+        return RAISE("Temporarily disallow compare unequal length lists");
+
+    const Element* a_tail = Array_Tail(a_array);
+    const Element* b_tail = Array_Tail(b_array);
+    const Element* a_item = Array_At(a_array, a_index);
+    const Element* b_item = Array_At(b_array, b_index);
+    Length a_len = a_tail - a_item;
+    Length b_len = b_tail - b_item;
+
+    if (a_len != b_len)
+        return LOGIC(false);  // different lengths not considered equal
+
+    for (; a_item != a_tail; ++a_item, ++b_item) {
+        bool lesser;
+        if (Try_Lesser_Value(&lesser, a_item, b_item))
+            return LOGIC(lesser);  // LESSER? result was meaningful
+
+        bool strict = true;
+        if (Equal_Values(a_item, b_item, strict))
+            continue;  // don't fret they couldn't compare with LESSER?
+
+        return RAISE("Couldn't compare values");  // fret
+    }
+
+    assert(b_item == b_tail);  // they were the same length
+    return LOGIC(true);  // got to the end
 }
 
 
@@ -268,7 +283,7 @@ REBINT Find_In_Array(
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
-                    0 != Cmp_Value(
+                    not Equal_Values(
                         item,
                         other,
                         did (flags & AM_FIND_CASE)
@@ -348,7 +363,7 @@ REBINT Find_In_Array(
 
     for (; index >= start and index < end; index += skip) {
         const Element* item = Array_At(array, index);
-        if (0 == Cmp_Value(
+        if (Equal_Values(
             item,
             pattern,
             did (flags & AM_FIND_CASE))
@@ -363,78 +378,46 @@ REBINT Find_In_Array(
 }
 
 
-struct sort_flags {
+typedef struct {
     bool cased;
     bool reverse;
     REBLEN offset;
-    Value* comparator;
-    bool all; // !!! not used?
-};
+    const Value* comparator;
+} SortInfo;
 
 
 //
-//  Compare_Val: C
+//  Qsort_Values_Callback: C
 //
-static int Compare_Val(void *arg, const void *v1, const void *v2)
+static int Qsort_Values_Callback(void *arg, const void *p1, const void *p2)
 {
-    struct sort_flags *flags = cast(struct sort_flags*, arg);
+    SortInfo* info = cast(SortInfo*, arg);
 
-    // !!!! BE SURE that 64 bit large difference comparisons work
-
-    if (flags->reverse)
-        return Cmp_Value(
-            c_cast(Value*, v2) + flags->offset,
-            c_cast(Value*, v1) + flags->offset,
-            flags->cased
-        );
-    else
-        return Cmp_Value(
-            c_cast(Value*, v1) + flags->offset,
-            c_cast(Value*, v2) + flags->offset,
-            flags->cased
-        );
-}
-
-
-//
-//  Compare_Val_Custom: C
-//
-static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
-{
-    struct sort_flags *flags = cast(struct sort_flags*, arg);
+    const Element* v1 = Known_Element(c_cast(Atom*, p1));
+    const Element* v2 = Known_Element(c_cast(Atom*, p2));
+    possibly(info->cased);  // !!! not applicable in LESSER? comparisons
+    bool strict = false;
 
     DECLARE_VALUE (result);
     if (rebRunThrows(
         result,  // <-- output cell
-        rebRUN(flags->comparator),
-            flags->reverse ? c_cast(Value*, v1) : c_cast(Value*, v2),
-            flags->reverse ? c_cast(Value*, v2) : c_cast(Value*, v1)
+        rebRUN(info->comparator),
+            info->reverse ? rebQ(v1) : rebQ(v2),
+            info->reverse ? rebQ(v2) : rebQ(v1)
     )){
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
-    REBINT tristate = -1;
+    if (not Is_Logic(result))
+        fail ("SORT predicate must return logic (NULL or OKAY antiform)");
 
-    if (Is_Logic(result)) {
-        if (Cell_Logic(result))
-            tristate = 1;
-    }
-    else if (Is_Integer(result)) {
-        if (VAL_INT64(result) > 0)
-            tristate = 1;
-        else if (VAL_INT64(result) == 0)
-            tristate = 0;
-    }
-    else if (Is_Decimal(result)) {
-        if (VAL_DECIMAL(result) > 0)
-            tristate = 1;
-        else if (VAL_DECIMAL(result) == 0)
-            tristate = 0;
-    }
-    else if (Is_Trigger(result))
-        tristate = 1;
+    if (Cell_Logic(result))  // comparator has LESSER? semantics
+        return 1;  // returning 1 means lesser, it seems (?)
 
-    return tristate;
+    if (Equal_Values(v1, v2, strict))
+        return 0;
+
+    return -1;  // not lesser, and not equal, so assume greater
 }
 
 
@@ -1008,25 +991,26 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
 
         Array* arr = Cell_Array_Ensure_Mutable(list);
 
-        struct sort_flags flags;
-        flags.cased = REF(case);
-        flags.reverse = REF(reverse);
-        flags.all = REF(all);  // !!! not used?
+        SortInfo info;
+        info.cased = REF(case);
+        info.reverse = REF(reverse);
+        UNUSED(REF(all));  // !!! not used?
 
         Value* cmp = ARG(compare);  // null if no :COMPARE
         Deactivate_If_Action(cmp);
         if (Is_Frame(cmp)) {
-            flags.comparator = cmp;
-            flags.offset = 0;
+            info.comparator = cmp;
+            info.offset = 0;
         }
         else if (Is_Integer(cmp)) {
-            flags.comparator = nullptr;
-            flags.offset = Int32(cmp) - 1;
+            info.comparator = nullptr;
+            info.offset = Int32(cmp) - 1;
+            fail ("INTEGER! support (e.g. column select) not working in sort");
         }
         else {
             assert(Is_Nulled(cmp));
-            flags.comparator = nullptr;
-            flags.offset = 0;
+            info.comparator = LIB(LESSER_Q);
+            info.offset = 0;
         }
 
         Copy_Cell(OUT, list);  // save list before messing with index
@@ -1050,8 +1034,8 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
             Array_At(arr, index),
             len / skip,
             sizeof(Cell) * skip,
-            &flags,
-            flags.comparator != nullptr ? &Compare_Val_Custom : &Compare_Val
+            &info,
+            &Qsort_Values_Callback
         );
 
         return OUT; }

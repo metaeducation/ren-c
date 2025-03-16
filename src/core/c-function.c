@@ -103,11 +103,11 @@ void Push_Keys_And_Params_May_Fail(
         bool strict = false;
         if (Is_Tag(item)) {
             flags |= MKF_PARAMETER_SEEN;  // don't look for description after
-            if (0 == CT_String(item, Root_With_Tag, strict)) {
+            if (0 == CT_Utf8(item, Root_With_Tag, strict)) {
                 mode = SPEC_MODE_WITH;
                 continue;
             }
-            else if (0 == CT_String(item, Root_Local_Tag, strict)) {
+            else if (0 == CT_Utf8(item, Root_Local_Tag, strict)) {
                 mode = SPEC_MODE_LOCAL;
                 continue;
             }

@@ -62,27 +62,15 @@ IMPLEMENT_GENERIC(moldify, blank)
 }
 
 
-//
-//  CT_Blank: C
-//
-// Must have a comparison function, otherwise SORT would not work on lists
-// with blanks in them.
-//
-REBINT CT_Blank(const Cell* a, const Cell* b, bool strict)
-{
-    UNUSED(strict);  // no strict form of comparison
-    UNUSED(a);
-    UNUSED(b);
-
-    return 0;  // All blanks are equal
-}
-
-
 IMPLEMENT_GENERIC(equal_q, blank)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Blank(ARG(value1), ARG(value2), REF(strict)) == 0);
+    UNUSED(ARG(value1));
+    UNUSED(ARG(value2));
+    UNUSED(ARG(strict));
+
+    return LOGIC(true);  // all blanks are equal
 }
 
 
@@ -112,7 +100,8 @@ IMPLEMENT_GENERIC(oldgeneric, blank)
 
         return Init_Blank(OUT); }
 
-      default: break;
+      default:
+        break;
     }
 
     return UNHANDLED;
@@ -231,86 +220,39 @@ IMPLEMENT_GENERIC(moldify, handle)
 }
 
 
-//
-//  CT_Handle: C
-//
-// !!! Comparing handles is something that wasn't in R3-Alpha and wasn't
-// specially covered by Cmp_Value() in R3-Alpha...it fell through to the
-// `default:` that just returned a "difference" of 0, so all handles were
-// equal.  Ren-C eliminated the default case and instead made comparison of
-// handles an error...but that meant comparing objects that contained
-// fields that were handles an error.  This meant code looking for "equal"
-// PORT!s via FIND did not work.  This raises a larger issue about sameness
-// vs. equality that should be studied.
-//
-REBINT CT_Handle(const Cell* a, const Cell* b, bool strict)
-{
-    UNUSED(strict);
-
-    // Shared handles are equal if their nodes are equal.  (It may not make
-    // sense to have other ideas of equality, e.g. if two nodes incidentally
-    // point to the same thing?)
-    //
-    if (Cell_Has_Node1(a)) {
-        if (not Cell_Has_Node1(b))
-            return 1;
-
-        if (CELL_NODE1(a) == CELL_NODE1(b))
-            return 0;
-
-        return CELL_NODE1(a) > CELL_NODE1(b) ? 1 : -1;
-    }
-    else if (Cell_Has_Node1(b))
-        return -1;
-
-    // There is no "identity" when it comes to a non-shared handles, so we
-    // can only compare the pointers.
-    //
-    if (Is_Handle_Cfunc(a)) {
-        if (not Is_Handle_Cfunc(b))
-            return 1;
-
-        if (Cell_Handle_Cfunc(a) == Cell_Handle_Cfunc(b))
-            return 0;
-
-        // !!! Function pointers aren't > or < comparable in ISO C.  This is
-        // indicative of what we know already, that HANDLE!s are members of
-        // "Eq" but not "Ord" (in Haskell speak).  Comparison is designed to
-        // not know whether we're asking for equality or orderedness and must
-        // return -1, 0, or 1...so until that is remedied, give back an
-        // inconsistent result that just conveys inequality.
-        //
-        return 1;
-    }
-    else if (Is_Handle_Cfunc(b))
-        return -1;
-
-    if (Cell_Handle_Pointer(Byte, a) == Cell_Handle_Pointer(Byte, b)) {
-        if (Cell_Handle_Len(a) == Cell_Handle_Len(b))
-            return 0;
-
-        return Cell_Handle_Len(a) > Cell_Handle_Len(b) ? 1 : -1;
-    }
-
-    return Cell_Handle_Pointer(Byte, a) > Cell_Handle_Pointer(Byte, b)
-        ? 1
-        : -1;
-}
-
-
 IMPLEMENT_GENERIC(equal_q, handle)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Handle(ARG(value1), ARG(value2), REF(strict)) == 0);
-}
+    Element* a = Element_ARG(value1);
+    Element* b = Element_ARG(value2);
+    UNUSED(ARG(strict));
 
+    if (Cell_Has_Node1(a) != Cell_Has_Node1(b))
+        return LOGIC(false);  // one is shared but other is not
 
-// !!! Currently, in order to have a comparison function a datatype must also
-// have a dispatcher for generics, and the comparison is essential.  Hence
-// this cannot use a `-` in the %reb-types.r in lieu of this dummy function.
-//
-IMPLEMENT_GENERIC(oldgeneric, handle)
-{
-    return UNHANDLED;
+    if (Cell_Has_Node1(a)) {  // shared handles not equal if nodes not equal
+        if (CELL_NODE1(a) != CELL_NODE1(b))
+            return LOGIC(false);
+    }
+
+    // There is no "identity" when it comes to a non-shared handle, so we
+    // can only compare the pointers.
+
+    if (Is_Handle_Cfunc(a) != Is_Handle_Cfunc(b))
+        return LOGIC(false);
+
+    if (Is_Handle_Cfunc(a)) {
+        if (Cell_Handle_Cfunc(a) != Cell_Handle_Cfunc(b))
+            return LOGIC(false);
+    }
+    else {
+        if (Cell_Handle_Pointer(Byte, a) != Cell_Handle_Pointer(Byte, b))
+            return LOGIC(false);
+
+        if (Cell_Handle_Len(a) != Cell_Handle_Len(b))
+            return LOGIC(false);
+    }
+
+    return LOGIC(Cell_Handle_Cleaner(a) == Cell_Handle_Cleaner(b));
 }

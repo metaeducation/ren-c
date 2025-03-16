@@ -328,9 +328,27 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
         if (diff != 0)
             goto finished;
 
-        diff = Cmp_Value(e1.var, e2.var, strict);
-        if (diff != 0)
-            goto finished;
+        bool lesser;
+        if (Try_Lesser_Value(&lesser, e1.var, e2.var)) {  // works w/LESSER?
+            if (lesser) {
+                diff = -1;
+                goto finished;
+            }
+
+            if (not Equal_Values(e1.var, e2.var, strict)) {
+                diff = 1;
+                goto finished;
+            }
+            continue;
+        }
+
+        if (Equal_Values(e1.var, e2.var, strict))  // if equal, we can continue
+            continue;
+
+        Shutdown_Evars(&e1);
+        Shutdown_Evars(&e2);
+
+        fail ("Illegal comparison");
     }
 
   finished:

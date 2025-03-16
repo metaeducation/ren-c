@@ -229,15 +229,6 @@ IMPLEMENT_GENERIC(reflect, port)
 }
 
 
-//
-//  CT_Url: C
-//
-REBINT CT_Url(const Cell* a, const Cell* b, bool strict)
-{
-    return CT_String(a, b, strict);
-}
-
-
 // The idea for dispatching a URL! is that it will dispatch to port schemes.
 // So it translates the request to open the port, then retriggers the action
 // on that port, then closes the port.

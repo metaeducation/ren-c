@@ -175,49 +175,38 @@ DECLARE_NATIVE(poke)
 }
 
 
+
+// 1. R3-Alpha and Red considered TUPLE! with any number of trailing zeros to
+//    be equivalent when not strict.  So (255.255.255.0 = 255.255.255), but
+//    if this is interesting it should be SAME-COLOR? or something like that.
 //
-//  CT_Sequence: C
-//
-// "Compare Type" dispatcher for ANY-PATH? and ANY-TUPLE?.
-//
-// Note: R3-Alpha considered TUPLE! with any number of trailing zeros to
-// be equivalent.  This meant `255.255.255.0` was equal to `255.255.255`.
-// Why this was considered useful is not clear...as that would make a
-// fully transparent alpha channel pixel equal to a fully opaque color.
-// This behavior is not preserved in Ren-C, so `same-color?` or something
-// else would be needed to get that intent.
-//
-REBINT CT_Sequence(const Cell* a, const Cell* b, bool strict)
-{
-    REBLEN len_a = Cell_Sequence_Len(a);
-    REBLEN len_b = Cell_Sequence_Len(b);
-
-    if (len_a != len_b)
-        return len_a < len_b ? -1 : 1;
-
-    DECLARE_ATOM (temp_a);
-    DECLARE_ATOM (temp_b);
-
-    REBLEN n;
-    for (n = 0; n < len_a; ++n) {
-        int compare = Cmp_Value(
-            Copy_Sequence_At(temp_a, c_cast(Cell*, a), n),  // !!! cast
-            Copy_Sequence_At(temp_b, c_cast(Cell*, b), n),  // !!! cast
-            strict
-        );
-        if (compare != 0)
-            return compare;
-    }
-
-    return 0;
-}
-
-
 IMPLEMENT_GENERIC(equal_q, any_sequence)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Sequence(ARG(value1), ARG(value2), REF(strict)) == 0);
+    Element* a = Element_ARG(value1);
+    Element* b = Element_ARG(value2);
+    bool strict = REF(strict);
+
+    Length a_len = Cell_Sequence_Len(a);
+    Length b_len = Cell_Sequence_Len(b);
+
+    if (a_len != b_len)  // different lengths not considered EQUAL? [1]
+        return LOGIC(false);
+
+    Sink(Element) a_item = SCRATCH;
+    Sink(Element) b_item = SPARE;
+
+    Offset n;
+    for (n = 0; n < a_len; ++n) {
+        Copy_Sequence_At(a_item, a, n);
+        Copy_Sequence_At(b_item, b, n);
+
+        if (not Equal_Values(a_item, b_item, strict))
+            return LOGIC(false);
+    }
+
+    return LOGIC(true);
 }
 
 
@@ -225,7 +214,35 @@ IMPLEMENT_GENERIC(lesser_q, any_sequence)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Sequence(ARG(value1), ARG(value2), true) == -1);
+    Element* a = Element_ARG(value1);
+    Element* b = Element_ARG(value2);
+
+    Length a_len = Cell_Sequence_Len(a);
+    Length b_len = Cell_Sequence_Len(b);
+
+    if (a_len != b_len)
+        return RAISE("Temporarily disallow compare unequal length sequences");
+
+    Sink(Element) a_item = SCRATCH;
+    Sink(Element) b_item = SPARE;
+
+    Offset n;
+    for (n = 0; n < a_len; ++n) {
+        Copy_Sequence_At(a_item, a, n);
+        Copy_Sequence_At(b_item, b, n);
+
+        bool lesser;
+        if (Try_Lesser_Value(&lesser, a_item, b_item))
+            return LOGIC(lesser);  // LESSER? result was meaningful
+
+        bool strict = true;
+        if (Equal_Values(a_item, b_item, strict))
+            continue;  // don't fret they couldn't compare with LESSER?
+
+        return RAISE("Couldn't compare values");  // fret
+    }
+
+    return LOGIC(true);
 }
 
 

@@ -153,14 +153,14 @@ REBINT Find_Key_Hashed(
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
         Value* k = Flex_At(Value, array, (n - 1) * wide); // stored key
-        if (0 == Cmp_Value(k, key, true)) {
+        if (Equal_Values(k, key, true)) {
             if (strict)
                 return slot; // don't need to check synonyms, stop looking
             goto found_synonym; // confirm exact match is the only match
         }
 
         if (not strict) {  // now do the non strict match (false)
-            if (0 == Cmp_Value(k, key, false)) {
+            if (Equal_Values(k, key, false)) {
 
               found_synonym:;
 
