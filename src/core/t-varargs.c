@@ -410,31 +410,6 @@ IMPLEMENT_GENERIC(oldgeneric, varargs)
     assert(Is_Varargs(value));
 
     switch (id) {
-    case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-
-        UNUSED(ARG(value)); // already have `value`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-
-        switch (property) {
-        case SYM_TAIL_Q: {
-            if (Do_Vararg_Op_Maybe_End_Throws(
-                OUT,
-                VARARG_OP_TAIL_Q,
-                value
-            )){
-                assert(false);
-                return THROWN;
-            }
-            assert(Is_Logic(OUT));
-            return OUT; }
-
-        default:
-            break;
-        }
-
-        break; }
-
       case SYM_PICK: {
         INCLUDE_PARAMS_OF_PICK;
         UNUSED(ARG(location));
@@ -534,6 +509,34 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
     if (Cell_Varargs_Origin(a) == Cell_Varargs_Origin(b))
         return 0;
     return Cell_Varargs_Origin(a) > Cell_Varargs_Origin(b) ? 1 : -1;
+}
+
+
+IMPLEMENT_GENERIC(reflect, varargs)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* vararg = Element_ARG(value);
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_TAIL_Q: {
+        if (Do_Vararg_Op_Maybe_End_Throws(
+            OUT,
+            VARARG_OP_TAIL_Q,
+            vararg
+        )){
+            assert(false);
+            return THROWN;
+        }
+        assert(Is_Logic(OUT));
+        return OUT; }
+
+      default:
+        break;
+    }
+
+    return UNHANDLED;
 }
 
 

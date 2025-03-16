@@ -28,18 +28,30 @@
 
 
 
-// !!! Some reflectors are more general and apply to all types (e.g. TYPE)
-// while others only apply to some types (e.g. LENGTH or HEAD only to series,
-// or perhaps things like PORT! that wish to act like a series).  This
-// suggests a need for a kind of hierarchy of handling.
 //
-// 1. See remarks on Run_Generic_Dispatch() for why we don't allow things
+//  /reflect: native:generic [
+//
+//  "Returns specific details about a value (used by OF, e.g. LENGTH OF)"
+//
+//      return: [any-value?]
+//      value [any-value?]
+//      property "Such as: type, length, spec, body, words, values, title"
+//          [word!]
+//  ]
+//
+DECLARE_NATIVE(reflect)
+//
+// 1. Some universal reflection could be accomplished by simply having a
+//    behavior for `IMPLEMENT_GENERIC(reflect, any_element)` and falling
+//    through to that from all the other reflect generics.  However, it
+//    is more efficient to do it this way...and it also means the generic
+//    machinery can enforce that it does not handle quoted/quasi/antiform.
+//
+// 2. See remarks on Dispatch_Generic() for why we don't allow things
 //    like (3 = length of ''[a b c]).  An exception is made for action
 //    antiforms, because they cannot be put in blocks, so their impact
 //    is limited...and we want things like (label of append/) to be able
 //    to work.  So only those are turned into the plain form here.
-//
-Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
@@ -47,7 +59,7 @@ Bounce Reflect_Core(Level* level_)
 
     Option(SymId) id = Cell_Word_Id(ARG(property));
 
-    switch (id) {
+    switch (id) {  // universal reflectors, hardcode behaviors [1]
       case SYM_HEART:
         if (Is_Nulled(v))
             return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
@@ -71,91 +83,18 @@ Bounce Reflect_Core(Level* level_)
         return Init_Sigil(OUT, unwrap sigil); }
 
       default:
-        // !!! Are there any other universal reflectors?
-        break;
+        break;  // !!! Are there any other universal reflectors?
     }
 
-    if (Is_Void(v))
+    if (Is_Void(v))  // obey void-in, null-out
         return nullptr;
 
-    if (Is_Action(v))  // special exemption for action types [1]
+    if (Is_Action(v))  // special exemption for action types [2]
         QUOTE_BYTE(v) = NOQUOTE_1;
     else if (QUOTE_BYTE(v) != NOQUOTE_1)
         fail ("REFLECT on quoted/quasi/anti only [HEART TYPE QUOTES SIGIL]");
 
-    if (Any_Series_Kind(Cell_Heart(v))) {  // common for series
-        switch (id) {
-          case SYM_INDEX:
-            return Init_Integer(OUT, VAL_INDEX_RAW(v) + 1);
-
-          case SYM_LENGTH:
-            return Init_Integer(OUT, Cell_Series_Len_At(v));
-
-          case SYM_HEAD:
-            Copy_Cell(OUT, v);
-            VAL_INDEX_RAW(OUT) = 0;
-            return Trust_Const(OUT);
-
-          case SYM_TAIL:
-            Copy_Cell(OUT, v);
-            VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(v);
-            return Trust_Const(OUT);
-
-          case SYM_HEAD_Q:
-            return Init_Logic(OUT, VAL_INDEX_RAW(v) == 0);
-
-          case SYM_TAIL_Q:
-            return Init_Logic(
-                OUT,
-                VAL_INDEX_RAW(v) == Cell_Series_Len_Head(v)
-            );
-
-          case SYM_PAST_Q:
-            return Init_Logic(
-                OUT,
-                VAL_INDEX_RAW(v) > Cell_Series_Len_Head(v)
-            );
-
-          case SYM_FILE: {
-            if (not Any_List(v))
-                return nullptr;
-            const Source* s = Cell_Array(v);
-            Option(const String*) file = Link_Filename(s);
-            if (not file)
-                return nullptr;
-            return Init_File(OUT, unwrap file); }
-
-          case SYM_LINE: {
-            if (not Any_List(v))
-                return nullptr;
-            const Source* s = Cell_Array(v);
-            if (MISC_SOURCE_LINE(s) == 0)
-                return nullptr;
-            return Init_Integer(OUT, MISC_SOURCE_LINE(s)); }
-
-          default:
-            break;
-        }
-    }
-
-    return Run_Generic_Dispatch(cast(Element*, v), LEVEL, CANON(REFLECT));
-}
-
-
-//
-//  /reflect: native:generic [
-//
-//  "Returns specific details about a value (used by OF, e.g. LENGTH OF)"
-//
-//      return: [any-value?]
-//      value [any-value?]
-//      property "Such as: type, length, spec, body, words, values, title"
-//          [word!]
-//  ]
-//
-DECLARE_NATIVE(reflect)
-{
-    return Reflect_Core(level_);
+    return Dispatch_Generic(reflect, cast(Element*, v), LEVEL);
 }
 
 
@@ -192,7 +131,7 @@ DECLARE_NATIVE(of)
     Copy_Cell(ARG(property), ARG(value));  // frame compatibility [1]
     Copy_Cell(ARG(value), stable_SPARE);
 
-    return Reflect_Core(level_);  // use same frame [2]
+    return NATIVE_CFUNC(reflect)(LEVEL);  // use same frame [2]
 }
 
 

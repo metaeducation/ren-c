@@ -534,35 +534,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_utf8)
     possibly(Any_String(issue));  // gets priority, but may delegate
 
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // same as `issue`
-
-        switch (Cell_Word_Id(ARG(property))) {
-          case SYM_CODEPOINT:
-            if (
-                Stringlike_Has_Node(issue)
-                or issue->extra.at_least_4[IDX_EXTRA_LEN] != 1
-            ){
-                return RAISE(Error_Not_One_Codepoint_Raw());
-            }
-            return Init_Integer(OUT, Cell_Codepoint(issue));
-
-          case SYM_SIZE: {
-            Size size;
-            Cell_Utf8_Size_At(&size, issue);
-            return Init_Integer(OUT, size); }
-
-          case SYM_LENGTH: {  // not ANY-SERIES?, REFLECT native doesn't handle
-            REBLEN len;
-            Cell_Utf8_Len_Size_At(&len, nullptr, issue);
-            return Init_Integer(OUT, len); }
-
-          default:
-            break;
-        }
-        return FAIL(PARAM(property)); }
-
       case SYM_COPY:  // since result is also immutable, Copy_Cell() suffices
         return Copy_Cell(OUT, issue);
 
@@ -992,6 +963,63 @@ IMPLEMENT_GENERIC(as, any_utf8)
         if (size == 0)
             return Init_Blank(OUT);
         return RAISE("Can only AS/TO convert empty series to BLANK!");
+    }
+
+    return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(reflect, issue)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* issue = Element_ARG(value);
+    assert(Is_Issue(issue));
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_CODEPOINT:
+        if (
+            Stringlike_Has_Node(issue)
+            or issue->extra.at_least_4[IDX_EXTRA_LEN] != 1
+        ){
+            return RAISE(Error_Not_One_Codepoint_Raw());
+        }
+        return Init_Integer(OUT, Cell_Codepoint(issue));
+
+      default:
+        break;
+    }
+
+    return GENERIC_CFUNC(reflect, any_utf8)(LEVEL);  // for LENGTH OF, etc.
+}
+
+
+IMPLEMENT_GENERIC(reflect, any_utf8)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* v = Element_ARG(value);
+    assert(Any_Utf8(v));
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_SIZE: {
+        possibly(Any_String(v));  // delegates here
+        Size size;
+        Cell_Utf8_Size_At(&size, v);
+        return Init_Integer(OUT, size); }
+
+      case SYM_LENGTH: {
+        assert(not Any_String(v));  // uses ANY-SERIES? reflect length code
+        REBLEN len;
+        Cell_Utf8_Len_Size_At(&len, nullptr, v);
+        return Init_Integer(OUT, len); }
+
+      default:
+        break;
     }
 
     return UNHANDLED;

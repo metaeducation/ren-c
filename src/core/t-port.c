@@ -215,14 +215,17 @@ IMPLEMENT_GENERIC(oldgeneric, port)
 //
 IMPLEMENT_GENERIC(skip, port)
 {
-    INCLUDE_PARAMS_OF_SKIP;
-
-    Element* series = Element_ARG(series);
-
-    UNUSED(ARG(offset));
-    UNUSED(ARG(unbounded));
-
+    Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(SKIP));
+}
+
+
+// !!! Same problem for REFLECT as for SKIP
+//
+IMPLEMENT_GENERIC(reflect, port)
+{
+    Element* series = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(series, LEVEL, CANON(REFLECT));
 }
 
 
@@ -254,7 +257,7 @@ IMPLEMENT_GENERIC(oldgeneric, url)
         return COPY(url);
     }
     else switch (id) {
-      case SYM_REFLECT:
+      /*case SYM_REFLECT:*/  // !!! Review, now a new generic
       case SYM_READ:
       case SYM_WRITE:
       case SYM_QUERY:

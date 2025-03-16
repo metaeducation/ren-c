@@ -130,6 +130,53 @@ IMPLEMENT_GENERIC(remove, any_series)
 }
 
 
+IMPLEMENT_GENERIC(reflect, any_series)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* v = Element_ARG(value);
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_INDEX:
+        return Init_Integer(OUT, VAL_INDEX_RAW(v) + 1);
+
+      case SYM_LENGTH:
+        return Init_Integer(OUT, Cell_Series_Len_At(v));
+
+      case SYM_HEAD:
+        Copy_Cell(OUT, v);
+        VAL_INDEX_RAW(OUT) = 0;
+        return Trust_Const(OUT);
+
+      case SYM_TAIL:
+        Copy_Cell(OUT, v);
+        VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(v);
+        return Trust_Const(OUT);
+
+      case SYM_HEAD_Q:
+        return Init_Logic(OUT, VAL_INDEX_RAW(v) == 0);
+
+      case SYM_TAIL_Q:
+        return Init_Logic(
+            OUT,
+            VAL_INDEX_RAW(v) == Cell_Series_Len_Head(v)
+        );
+
+      case SYM_PAST_Q:
+        return Init_Logic(
+            OUT,
+            VAL_INDEX_RAW(v) > Cell_Series_Len_Head(v)
+        );
+
+      default:
+        break;
+    }
+
+    return UNHANDLED;
+}
+
+
 IMPLEMENT_GENERIC(unique, any_series)  // single-arity set operation
 {
     INCLUDE_PARAMS_OF_UNIQUE;

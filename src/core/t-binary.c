@@ -340,47 +340,6 @@ IMPLEMENT_GENERIC(oldgeneric, blob)
 
     switch (id) {
 
-  //=//// REFLECT /////////////////////////////////////////////////////////=//
-
-    // 1. While it is technically the case that a binary *might* alias a
-    //    string and hence already be validated, the index might not be on
-    //    a codepoint boundary, and it's not worth optimizing for a scan
-    //    of one character.
-    //
-    // 2. Zero bytes are illegal in strings, and it was deemed that #"" was
-    //    better as an empty issue than as a conceptual "NUL codepoint".
-    //    But #{00} as NUL serves some of those purposes.
-
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // accounted for by `v`
-
-        Option(SymId) prop_id = Cell_Word_Id(ARG(property));
-        switch (prop_id) {
-          case SYM_SIZE: {
-            Size size;
-            Cell_Blob_Size_At(&size, v);
-            return Init_Integer(OUT, size); }
-
-          case SYM_CODEPOINT: {  // generally have to validate the UTF-8 [1]
-            Size size;
-            const Byte* bp = Cell_Blob_Size_At(&size, v);
-            if (size == 1 and *bp == 0)
-                return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
-            Codepoint c;
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
-            if (e)
-                return RAISE(unwrap e);
-            ++bp;  // Back_Scan() requires increment
-            if (bp != Binary_Tail(Cell_Binary(v)))
-                return RAISE(Error_Not_One_Codepoint_Raw());
-            return Init_Integer(OUT, c); }
-
-          default:
-            break;
-        }
-        return UNHANDLED; }
-
     //=//// COPY //////////////////////////////////////////////////////////=//
 
       case SYM_COPY: {
@@ -992,6 +951,51 @@ IMPLEMENT_GENERIC(as, blob)
     }
 
     return UNHANDLED;
+}
+
+
+// 1. While it is technically the case that a binary *might* alias a
+//    string and hence already be validated, the index might not be on
+//    a codepoint boundary, and it's not worth optimizing for a scan
+//    of one character.
+//
+// 2. Zero bytes are illegal in strings, and it was deemed that #"" was
+//    better as an empty issue than as a conceptual "NUL codepoint".
+//    But #{00} as NUL serves some of those purposes.
+//
+IMPLEMENT_GENERIC(reflect, blob)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* v = Element_ARG(value);
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_SIZE: {
+        Size size;
+        Cell_Blob_Size_At(&size, v);
+        return Init_Integer(OUT, size); }
+
+      case SYM_CODEPOINT: {  // generally have to validate the UTF-8 [1]
+        Size size;
+        const Byte* bp = Cell_Blob_Size_At(&size, v);
+        if (size == 1 and *bp == 0)
+            return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
+        Codepoint c;
+        Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
+        if (e)
+            return RAISE(unwrap e);
+        ++bp;  // Back_Scan() requires increment
+        if (bp != Binary_Tail(Cell_Binary(v)))
+            return RAISE(Error_Not_One_Codepoint_Raw());
+        return Init_Integer(OUT, c); }
+
+      default:
+        break;
+    }
+
+    return GENERIC_CFUNC(reflect, any_series)(LEVEL);
 }
 
 

@@ -89,20 +89,6 @@ IMPLEMENT_GENERIC(equal_q, blank)
 IMPLEMENT_GENERIC(oldgeneric, blank)
 {
     switch (Symbol_Id(Level_Verb(LEVEL))) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-
-        switch (Cell_Word_Id(ARG(property))) {
-          case SYM_INDEX:
-            return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(ARG(value))));
-
-          case SYM_LENGTH:
-            return Init_Integer(OUT, 0);
-
-          default: break;
-        }
-        break; }
-
       case SYM_SELECT:
       case SYM_FIND:
         return nullptr;
@@ -199,6 +185,30 @@ IMPLEMENT_GENERIC(as, blank)
 
     if (as == REB_BLOB)
         return Init_Blob(OUT, Cell_Binary(g_empty_blob));
+
+    return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(reflect, blank)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* blank = Element_ARG(value);
+    assert(Is_Blank(blank));
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_INDEX:
+        return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(blank)));
+
+      case SYM_LENGTH:
+        return Init_Integer(OUT, 0);
+
+      default:
+        break;
+    }
 
     return UNHANDLED;
 }

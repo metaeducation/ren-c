@@ -572,34 +572,6 @@ IMPLEMENT_GENERIC(oldgeneric, map)
     assert(Is_Map(map));
 
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // covered by `v`
-
-        const Map* m = VAL_MAP(map);
-
-        Value* property = ARG(property);
-        switch (Cell_Word_Id(property)) {
-          case SYM_LENGTH:
-            return Init_Integer(OUT, Num_Map_Entries_Used(m));
-
-          case SYM_VALUES:
-            return Init_Block(OUT, Map_To_Array(m, 1));
-
-          case SYM_WORDS:
-            return Init_Block(OUT, Map_To_Array(m, -1));
-
-          case SYM_BODY:
-            return Init_Block(OUT, Map_To_Array(m, 0));
-
-          case SYM_TAIL_Q:
-            return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
-
-          default:
-            break;
-        }
-        return FAIL(Error_Cannot_Reflect(REB_MAP, property)); }
-
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         if (Is_Antiform(ARG(value)))
@@ -797,6 +769,39 @@ IMPLEMENT_GENERIC(to, map) {
     if (to == REB_MAP) {
         bool deep = false;
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
+    }
+
+    return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(reflect, map)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* map = Element_ARG(value);
+    const Map* m = VAL_MAP(map);
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_LENGTH:
+        return Init_Integer(OUT, Num_Map_Entries_Used(m));
+
+      case SYM_VALUES:
+        return Init_Block(OUT, Map_To_Array(m, 1));
+
+      case SYM_WORDS:
+        return Init_Block(OUT, Map_To_Array(m, -1));
+
+      case SYM_BODY:
+        return Init_Block(OUT, Map_To_Array(m, 0));
+
+      case SYM_TAIL_Q:
+        return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
+
+      default:
+        break;
     }
 
     return UNHANDLED;

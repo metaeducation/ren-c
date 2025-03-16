@@ -157,33 +157,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_word)
     assert(Any_Word(word));
 
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-
-        UNUSED(ARG(value));
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-
-        switch (property) {
-          case SYM_LENGTH: {  // byte size stored, but not # of codepoints
-            const String* spelling = Cell_Word_Symbol(word);
-            Utf8(const*) cp = String_Head(spelling);
-            Utf8(const*) tail = String_Tail(spelling);
-            Length len = 0;
-            for (; cp != tail; cp = Skip_Codepoint(cp))  // manually walk
-                len = len + 1;
-            assert(Codepoint_At(cp) == '\0');
-            return Init_Integer(OUT, len); }
-
-          case SYM_BINDING: {
-            if (not Try_Get_Binding_Of(OUT, word))
-                return nullptr;
-
-            return OUT; }
-
-          default:
-            break;
-        }
-        break; }
 
       case SYM_COPY:
         return COPY(word);
@@ -256,4 +229,26 @@ IMPLEMENT_GENERIC(as, any_word)
         return Init_Blob(OUT, Cell_Word_Symbol(word));
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(reflect, any_word)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* word = Element_ARG(value);
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_BINDING: {
+        if (not Try_Get_Binding_Of(OUT, word))
+            return nullptr;
+
+        return OUT; }
+
+      default:
+        break;
+    }
+
+    return GENERIC_CFUNC(reflect, any_utf8)(LEVEL);  // e.g. LENGTH OF, etc.
 }

@@ -797,40 +797,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
 
     switch (id) {
 
-  //=//// REFLECT /////////////////////////////////////////////////////////=//
-
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // accounted for by `v`
-
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-        switch (property) {
-          case SYM_SIZE: {
-            Size size;
-            Cell_Utf8_Size_At(&size, v);
-            return Init_Integer(OUT, size); }
-
-          case SYM_CODEPOINT: {
-            const Byte* bp = Cell_String_At(v);  // downgrade validated Utf8(*)
-
-            Codepoint c;
-            if (
-                *bp != '\0'  // can't be at tail
-                and (
-                    bp = Back_Scan_Utf8_Char_Unchecked(&c, bp),
-                    ++bp  // Back_Scan() needs increment
-                )
-                and *bp == '\0'  // after one scan, must be at tail
-            ){
-                return Init_Integer(OUT, c);
-            }
-            return RAISE(Error_Not_One_Codepoint_Raw()); }
-
-          default:
-            break;
-        }
-        return UNHANDLED; }
-
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
       case SYM_PICK: {
@@ -1313,6 +1279,41 @@ IMPLEMENT_GENERIC(as, any_string)
     }
 
     return GENERIC_CFUNC(as, any_utf8)(LEVEL);
+}
+
+
+IMPLEMENT_GENERIC(reflect, any_string)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* v = Element_ARG(value);
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_SIZE:  // defer to calculation done by ANY-UTF8?
+        return GENERIC_CFUNC(reflect, any_utf8)(LEVEL);
+
+      case SYM_CODEPOINT: {
+        const Byte* bp = Cell_String_At(v);  // downgrade validated Utf8(*)
+
+        Codepoint c;
+        if (
+            *bp != '\0'  // can't be at tail
+            and (
+                bp = Back_Scan_Utf8_Char_Unchecked(&c, bp),
+                ++bp  // Back_Scan() needs increment
+            )
+            and *bp == '\0'  // after one scan, must be at tail
+        ){
+            return Init_Integer(OUT, c);
+        }
+        return RAISE(Error_Not_One_Codepoint_Raw()); }
+
+      default:
+        break;
+    }
+
+    return GENERIC_CFUNC(reflect, any_series)(LEVEL);
 }
 
 

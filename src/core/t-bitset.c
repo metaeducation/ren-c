@@ -595,26 +595,6 @@ IMPLEMENT_GENERIC(oldgeneric, bitset)
         }
         return nullptr; }
 
-
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value)); // covered by `v`
-
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-        switch (property) {
-          case SYM_LENGTH:
-            return Init_Integer(v, Binary_Len(VAL_BITSET(v)) * 8);
-
-          case SYM_TAIL_Q:
-            // Necessary to make EMPTY? work:
-            return Init_Logic(OUT, Binary_Len(VAL_BITSET(v)) == 0);
-
-          default:
-            break;
-        }
-
-        break; }
-
     // Add AND, OR, XOR
 
       case SYM_SELECT: {
@@ -685,6 +665,29 @@ IMPLEMENT_GENERIC(oldgeneric, bitset)
         INIT_BITS_NOT(bset, false);
         Clear_Flex(bset);
         return COPY(v); }
+
+      default:
+        break;
+    }
+
+    return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(reflect, bitset)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* bset = Element_ARG(value);
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_LENGTH:
+        return Init_Integer(OUT, Binary_Len(VAL_BITSET(bset)) * 8);
+
+      case SYM_TAIL_Q:
+        // Necessary to make EMPTY? work:
+        return Init_Logic(OUT, Binary_Len(VAL_BITSET(bset)) == 0);
 
       default:
         break;

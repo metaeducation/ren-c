@@ -4,7 +4,7 @@
 (url! = type of http://www.fm.tul.cz/~ladislav/rebol)
 
 ~bad-make-arg~ !! (make url! "http://example.com")
-~???~ !! (to url! "")
+~scan-invalid~ !! (to url! "")
 
 ("http://" = mold http://)
 ("http://a%2520b" = mold http://a%2520b)
@@ -107,3 +107,7 @@
 ; was used by the JavaScript extension for `write log::console "Whatever"`
 ;
 (url? foo::bar)
+
+(8 = length of http://a)
+(8 = size of http://a)
+(11 = size of http://😺)

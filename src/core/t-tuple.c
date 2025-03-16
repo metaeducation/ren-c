@@ -97,22 +97,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_sequence)
     Heart heart = Cell_Heart_Ensure_Noquote(sequence);
 
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));
-
-        switch (Cell_Word_Id(ARG(property))) {
-          case SYM_LENGTH:
-            return Init_Integer(OUT, len);
-
-          case SYM_INDEX:
-            return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(sequence)));
-
-          default:
-            return UNHANDLED;  // !!! binding? etc.
-        }
-        break; }
-
+        //
         // ANY-SEQUENCE? is immutable, so a shallow copy should be a no-op,
         // but it should be cheap for any similarly marked array.  Also, a
         // :DEEP copy of a path may copy groups that are mutable.
@@ -514,6 +499,29 @@ IMPLEMENT_GENERIC(as, any_sequence)
         return Trust_Const(OUT);
     }
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(reflect, any_sequence)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* seq = Element_ARG(value);
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_LENGTH: {
+        Length len = Cell_Sequence_Len(seq);
+        return Init_Integer(OUT, len); }
+
+      case SYM_INDEX:
+        return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(seq)));
+
+      default:
+        break;
+    }
+
+    return UNHANDLED;  // !!! what about BINDING OF, etc?
 }
 
 

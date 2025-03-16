@@ -945,40 +945,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_context)
         assert(id == SYM_PICK or id == SYM_POKE);
 
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // covered by `v`
-
-        Value* property = ARG(property);
-        Option(SymId) prop = Cell_Word_Id(property);
-
-        switch (prop) {
-          case SYM_LENGTH: // !!! Should this be legal?
-            if (Is_Stub_Sea(c))
-                return FAIL("SeaOfVars length counting code not done yet");
-            return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
-
-          case SYM_TAIL_Q: // !!! Should this be legal?
-            if (Is_Stub_Sea(c))
-                return FAIL("SeaOfVars TAIL? not implemented");
-            return Init_Logic(OUT, Varlist_Len(cast(VarList*, c)) == 0);
-
-          case SYM_WORDS:
-            return Init_Block(OUT, Context_To_Array(context, 1));
-
-          case SYM_VALUES:
-            return Init_Block(OUT, Context_To_Array(context, 2));
-
-          case SYM_BODY:
-            return Init_Block(OUT, Context_To_Array(context, 3));
-
-          default: break;
-        }
-
-        // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
-
-        return FAIL(Error_Cannot_Reflect(VAL_TYPE(context), property)); }
-
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(PARAM(value));  // covered by `context`
@@ -1195,6 +1161,44 @@ IMPLEMENT_GENERIC(to, any_context)
 }
 
 
+IMPLEMENT_GENERIC(reflect, any_context)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* context = Element_ARG(value);
+    Context* c = Cell_Context(context);
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_LENGTH: // !!! Should this be legal?
+        if (Is_Stub_Sea(c))
+            return FAIL("SeaOfVars length counting code not done yet");
+        return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
+
+      case SYM_TAIL_Q: // !!! Should this be legal?
+        if (Is_Stub_Sea(c))
+            return FAIL("SeaOfVars TAIL? not implemented");
+        return Init_Logic(OUT, Varlist_Len(cast(VarList*, c)) == 0);
+
+      case SYM_WORDS:
+        return Init_Block(OUT, Context_To_Array(context, 1));
+
+      case SYM_VALUES:
+        return Init_Block(OUT, Context_To_Array(context, 2));
+
+      case SYM_BODY:
+        return Init_Block(OUT, Context_To_Array(context, 3));
+
+      default: break;
+    }
+
+    // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
+
+    return UNHANDLED;
+}
+
+
 // FRAME! adds some additional reflectors to the usual things you can do with
 // an object, but falls through to Context for most things.
 //
@@ -1205,141 +1209,7 @@ IMPLEMENT_GENERIC(oldgeneric, frame)
 
     Element* frame = cast(Element*, ARG_N(1));
 
-    Phase* phase = Cell_Frame_Phase(frame);
-
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // covered by `frame`
-
-        Option(SymId) prop = Cell_Word_Id(ARG(property));
-
-        switch (prop) {
-          case SYM_COUPLING: {
-            Option(VarList*) coupling = Cell_Frame_Coupling(frame);
-            if (not coupling)  // NONMETHOD
-                return nullptr;
-            if (unwrap coupling == UNCOUPLED)
-                return NOTHING;
-            return COPY(Varlist_Archetype(unwrap coupling)); }
-
-          case SYM_LABEL: {
-            Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
-            if (label)
-                return Init_Word(OUT, unwrap label);
-
-            // If the frame is executing, we can look at the label in the
-            // Level*, which will tell us what the overall execution label
-            // would be.  This might be confusing, however...if the phase
-            // is drastically different.  Review.
-
-            if (Is_Frame_Details(frame))
-                return nullptr;  // not handled by Level lookup
-
-            break; }
-
-          case SYM_PARAMETERS:
-            return Init_Frame(
-                OUT,
-                Cell_Frame_Phase(frame),
-                ANONYMOUS,
-                Cell_Frame_Coupling(frame)
-            );
-
-          case SYM_WORDS:
-            return Init_Block(OUT, Context_To_Array(frame, 1));
-
-          case SYM_BODY:
-          case SYM_RETURN: {
-            Details* details = Phase_Details(phase);
-            DetailsQuerier* querier = Details_Querier(details);
-            if (not (*querier)(OUT, details, unwrap prop))
-                return FAIL("FRAME!'s Details does not offer BODY/RETURN");
-            return OUT; }
-
-          case SYM_FILE:
-          case SYM_LINE: {
-            if (not Is_Stub_Details(phase))
-                break;  // try to check and see if there's runtime info
-
-            Details* details = cast(Details*, phase);
-
-            // Use a heuristic that if the first element of a function's body
-            // is an Array with the file and line bits set, then that's what
-            // it returns for FILE OF and LINE OF.
-
-            if (
-                Details_Max(details) < 1
-                or not Any_List(Details_At(details, 1))
-            ){
-                return nullptr;
-            }
-
-            const Source* a = Cell_Array(Details_At(details, 1));
-
-            // !!! How to tell URL! vs FILE! ?
-            //
-            if (prop == SYM_FILE) {
-                Option(const String*) filename = Link_Filename(a);
-                if (not filename)
-                    return nullptr;
-                return Init_File(OUT, unwrap filename);
-            }
-
-            assert(prop == SYM_LINE);
-            if (MISC_SOURCE_LINE(a) == 0)
-                return nullptr;
-
-            return Init_Integer(OUT, MISC_SOURCE_LINE(a)); }
-
-          default:
-            break;
-        }
-
-        if (Is_Stub_Details(phase))
-            return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property)));
-
-        Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
-
-        switch (prop) {
-          case SYM_FILE: {
-            Option(const String*) file = File_Of_Level(L);
-            if (not file)
-                return nullptr;
-            return Init_File(OUT, unwrap file); }
-
-          case SYM_LINE: {
-            Option(LineNumber) line = Line_Number_Of_Level(L);
-            if (not line)
-                return nullptr;
-            return Init_Integer(OUT, unwrap line); }
-
-          case SYM_LABEL: {
-            if (Try_Get_Action_Level_Label(OUT, L))
-                return OUT;
-            return nullptr; }
-
-          case SYM_NEAR:
-            return Init_Near_For_Level(OUT, L);
-
-          case SYM_PARENT: {
-            //
-            // Only want action levels (though `pending? = true` ones count).
-            //
-            Level* parent = L;
-            while ((parent = parent->prior) != BOTTOM_LEVEL) {
-                if (not Is_Action_Level(parent))
-                    continue;
-
-                VarList* v_parent = Varlist_Of_Level_Force_Managed(parent);
-                return COPY(Varlist_Archetype(v_parent));
-            }
-            return nullptr; }
-
-          default:
-            break;
-        }
-        return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property))); }
 
   //=//// COPY /////////////////////////////////////////////////////////////=//
 
@@ -1365,6 +1235,144 @@ IMPLEMENT_GENERIC(oldgeneric, frame)
 
     return GENERIC_CFUNC(oldgeneric, any_context)(level_);
 }
+
+
+IMPLEMENT_GENERIC(reflect, frame)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* frame = Element_ARG(value);
+    Phase* phase = Cell_Frame_Phase(frame);
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_COUPLING: {
+        Option(VarList*) coupling = Cell_Frame_Coupling(frame);
+        if (not coupling)  // NONMETHOD
+            return nullptr;
+        if (unwrap coupling == UNCOUPLED)
+            return NOTHING;
+        return COPY(Varlist_Archetype(unwrap coupling)); }
+
+      case SYM_LABEL: {
+        Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
+        if (label)
+            return Init_Word(OUT, unwrap label);
+
+        // If the frame is executing, we can look at the label in the
+        // Level*, which will tell us what the overall execution label
+        // would be.  This might be confusing, however...if the phase
+        // is drastically different.  Review.
+
+        if (Is_Frame_Details(frame))
+            return nullptr;  // not handled by Level lookup
+
+        break; }
+
+      case SYM_PARAMETERS:
+        return Init_Frame(
+            OUT,
+            Cell_Frame_Phase(frame),
+            ANONYMOUS,
+            Cell_Frame_Coupling(frame)
+        );
+
+      case SYM_WORDS:
+        return Init_Block(OUT, Context_To_Array(frame, 1));
+
+      case SYM_BODY:
+      case SYM_RETURN: {
+        Details* details = Phase_Details(phase);
+        DetailsQuerier* querier = Details_Querier(details);
+        if (not (*querier)(OUT, details, unwrap id))
+            return FAIL("FRAME!'s Details does not offer BODY/RETURN");
+        return OUT; }
+
+      case SYM_FILE:
+      case SYM_LINE: {
+        if (not Is_Stub_Details(phase))
+            break;  // try to check and see if there's runtime info
+
+        Details* details = cast(Details*, phase);
+
+        // Use a heuristic that if the first element of a function's body
+        // is an Array with the file and line bits set, then that's what
+        // it returns for FILE OF and LINE OF.
+
+        if (
+            Details_Max(details) < 1
+            or not Any_List(Details_At(details, 1))
+        ){
+            return nullptr;
+        }
+
+        const Source* a = Cell_Array(Details_At(details, 1));
+
+        // !!! How to tell URL! vs FILE! ?
+        //
+        if (id == SYM_FILE) {
+            Option(const String*) filename = Link_Filename(a);
+            if (not filename)
+                return nullptr;
+            return Init_File(OUT, unwrap filename);
+        }
+
+        assert(id == SYM_LINE);
+        if (MISC_SOURCE_LINE(a) == 0)
+            return nullptr;
+
+        return Init_Integer(OUT, MISC_SOURCE_LINE(a)); }
+
+      default:
+        break;
+    }
+
+    if (Is_Stub_Details(phase))
+        return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property)));
+
+    Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+
+    switch (id) {
+      case SYM_FILE: {
+        Option(const String*) file = File_Of_Level(L);
+        if (not file)
+            return nullptr;
+        return Init_File(OUT, unwrap file); }
+
+      case SYM_LINE: {
+        Option(LineNumber) line = Line_Number_Of_Level(L);
+        if (not line)
+            return nullptr;
+        return Init_Integer(OUT, unwrap line); }
+
+      case SYM_LABEL: {
+        if (Try_Get_Action_Level_Label(OUT, L))
+            return OUT;
+        return nullptr; }
+
+      case SYM_NEAR:
+        return Init_Near_For_Level(OUT, L);
+
+      case SYM_PARENT: {
+        //
+        // Only want action levels (though `pending? = true` ones count).
+        //
+        Level* parent = L;
+        while ((parent = parent->prior) != BOTTOM_LEVEL) {
+            if (not Is_Action_Level(parent))
+                continue;
+
+            VarList* v_parent = Varlist_Of_Level_Force_Managed(parent);
+            return COPY(Varlist_Archetype(v_parent));
+        }
+        return nullptr; }
+
+      default:
+        break;
+    }
+    return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property))); }
+
 
 
 //

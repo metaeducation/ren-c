@@ -1291,6 +1291,34 @@ IMPLEMENT_GENERIC(as, any_list)
 }
 
 
+IMPLEMENT_GENERIC(reflect, any_list)
+{
+    INCLUDE_PARAMS_OF_REFLECT;
+
+    Element* list = Element_ARG(value);
+    const Source* s = Cell_Array(list);
+
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    switch (id) {
+      case SYM_FILE: {
+        Option(const String*) file = Link_Filename(s);
+        if (not file)
+            return nullptr;
+        return Init_File(OUT, unwrap file); }
+
+      case SYM_LINE: {
+        if (MISC_SOURCE_LINE(s) == 0)
+            return nullptr;
+        return Init_Integer(OUT, MISC_SOURCE_LINE(s)); }
+
+      default:
+        break;
+    }
+
+    return GENERIC_CFUNC(reflect, any_series)(LEVEL);
+}
+
 
 // !!! TYPE-XXX! are being rethought, but right now TYPE-BLOCK! has the
 // particular behavior of re-dispatching.
