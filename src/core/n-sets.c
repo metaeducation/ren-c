@@ -380,7 +380,7 @@ Flex* Make_Set_Operation_Flex(
 DECLARE_NATIVE(complement)
 {
     Element* e = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e, LEVEL, CANON(COMPLEMENT));
+    return Dispatch_Generic(complement, e, LEVEL);
 }
 
 
@@ -412,7 +412,7 @@ DECLARE_NATIVE(complement)
 DECLARE_NATIVE(intersect)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(INTERSECT));
+    return Dispatch_Generic(intersect, e1, LEVEL);
 }
 
 
@@ -444,7 +444,7 @@ DECLARE_NATIVE(intersect)
 DECLARE_NATIVE(union)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(UNION));
+    return Dispatch_Generic(union, e1, LEVEL);
 }
 
 
@@ -479,7 +479,7 @@ DECLARE_NATIVE(union)
 DECLARE_NATIVE(difference)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(DIFFERENCE));
+    return Dispatch_Generic(difference, e1, LEVEL);
 }
 
 
@@ -501,7 +501,7 @@ DECLARE_NATIVE(difference)
 DECLARE_NATIVE(exclude)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(EXCLUDE));
+    return Dispatch_Generic(exclude, e1, LEVEL);
 }
 
 
@@ -512,7 +512,6 @@ DECLARE_NATIVE(exclude)
 //
 //      return: [any-list? any-string? blob! bitset!]
 //      series [any-list? any-string? blob! bitset!]
-//      :dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
 //      :case "Use case-sensitive comparison (except bitsets)"
 //      :skip "Treat the series as records of fixed size"
 //          [integer!]
@@ -521,5 +520,5 @@ DECLARE_NATIVE(exclude)
 DECLARE_NATIVE(unique)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(UNIQUE));
+    return Dispatch_Generic(unique, e1, LEVEL);
 }

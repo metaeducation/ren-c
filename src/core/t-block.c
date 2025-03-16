@@ -683,13 +683,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
 
         return nullptr; }  // Array* is still fine, caller need not update
 
-
-      case SYM_UNIQUE:
-      case SYM_INTERSECT:
-      case SYM_UNION:
-      case SYM_DIFFERENCE:
-      case SYM_EXCLUDE:
-        //
       case SYM_REMOVE:
         return Series_Common_Action_Maybe_Unhandled(level_, verb);
 

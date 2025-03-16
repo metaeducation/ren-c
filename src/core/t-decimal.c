@@ -552,9 +552,6 @@ IMPLEMENT_GENERIC(oldgeneric, decimal)
         d1 = Random_Dec(d1, REF(secure));
         return Init_Decimal_Or_Percent(OUT, heart, d1); }
 
-      case SYM_COMPLEMENT:
-        return Init_Integer(OUT, ~cast(REBINT, d1));
-
       default:
         break;
     }
@@ -637,4 +634,14 @@ IMPLEMENT_GENERIC(multiply, decimal)
 IMPLEMENT_GENERIC(multiply, percent)  // defers to decimal behavior
 {
     return GENERIC_CFUNC(multiply, decimal)(LEVEL);
+}
+
+
+IMPLEMENT_GENERIC(complement, decimal)
+{
+    INCLUDE_PARAMS_OF_COMPLEMENT;
+
+    REBDEC d = VAL_DECIMAL(ARG(value));
+
+    return Init_Integer(OUT, ~cast(REBINT, d));  // !!! What is this good for?
 }

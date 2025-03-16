@@ -442,13 +442,6 @@ IMPLEMENT_GENERIC(oldgeneric, blob)
 
         return nullptr; }  // caller's Binary* is not stale, no update needed
 
-
-      case SYM_UNIQUE:
-      case SYM_INTERSECT:
-      case SYM_UNION:
-      case SYM_DIFFERENCE:
-      case SYM_EXCLUDE:
-        //
       case SYM_REMOVE:
         return Series_Common_Action_Maybe_Unhandled(level_, verb);
 

@@ -44,8 +44,6 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 ){
     Value* v = ARG_N(1);
 
-    Flags sop_flags;  // "SOP_XXX" Set Operation Flags
-
     Option(SymId) id = Symbol_Id(verb);
     switch (id) {
       case SYM_REMOVE: {
@@ -65,49 +63,6 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             Remove_Any_Series_Len(v, index, len);
 
         return COPY(v); }
-
-      case SYM_UNIQUE:  // Note: only has 1 argument, so dummy second arg
-        sop_flags = SOP_NONE;
-        goto set_operation;
-
-      case SYM_INTERSECT:
-        sop_flags = SOP_FLAG_CHECK;
-        goto set_operation;
-
-      case SYM_UNION:
-        sop_flags = SOP_FLAG_BOTH;
-        goto set_operation;
-
-      case SYM_DIFFERENCE:
-        sop_flags = SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT;
-        goto set_operation;
-
-      case SYM_EXCLUDE:
-        sop_flags = SOP_FLAG_CHECK | SOP_FLAG_INVERT;
-        goto set_operation;
-
-      set_operation: {
-        //
-        // Note: All set operations share a compatible spec.  The way that
-        // UNIQUE is compatible is via a dummy argument in the second
-        // parameter slot, so that the :CASE and :SKIP arguments line up.
-        //
-        INCLUDE_PARAMS_OF_DIFFERENCE;  // should all have compatible specs
-        UNUSED(ARG(value1));  // covered by `value`
-
-        return Init_Series(
-            OUT,
-            Cell_Heart_Ensure_Noquote(v),
-            Make_Set_Operation_Flex(
-                v,
-                (id == SYM_UNIQUE)
-                    ? cast(Value*, nullptr)  // C++98 ambiguous w/o cast
-                    : ARG(value2),
-                sop_flags,
-                REF(case),
-                REF(skip) ? Int32s(ARG(skip), 1) : 1
-            )
-        ); }
 
       default:
         break;
@@ -193,6 +148,131 @@ IMPLEMENT_GENERIC(at, any_series)
 
     VAL_INDEX_RAW(v) = i;
     return COPY(Trust_Const(v));
+}
+
+
+IMPLEMENT_GENERIC(unique, any_series)  // single-arity set operation
+{
+    INCLUDE_PARAMS_OF_UNIQUE;
+
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(series));
+
+    Flex* flex = Make_Set_Operation_Flex(
+        ARG(series),
+        nullptr,  // no ARG(value2)
+        SOP_NONE,
+        REF(case),
+        REF(skip) ? Int32s(ARG(skip), 1) : 1
+    );
+
+    return Init_Series(OUT, heart, flex);
+}
+
+
+// The policy for what to do with (intersect '[a b c] '{b c d}) isn't set in
+// stone yet.  R3-Alpha and Red prohibit anything but BLOCK!, while Ren-C
+// has historically made the result the same type as the first argument.
+//
+Option(Error*) Trap_Resolve_Dual_Hearts(
+    Sink(Heart) heart,
+    Value* value1,
+    Value* value2
+){
+    UNUSED(value2);
+    *heart = Cell_Heart_Ensure_Noquote(value1);
+    return nullptr;
+}
+
+
+IMPLEMENT_GENERIC(intersect, any_series)
+{
+    INCLUDE_PARAMS_OF_INTERSECT;
+
+    Heart heart;
+    Option(Error*) e = Trap_Resolve_Dual_Hearts(
+        &heart, ARG(value1), ARG(value2)
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    Flex* flex = Make_Set_Operation_Flex(
+        ARG(value1),
+        ARG(value2),
+        SOP_FLAG_CHECK,
+        REF(case),
+        REF(skip) ? Int32s(ARG(skip), 1) : 1
+    );
+
+    return Init_Series(OUT, heart, flex);
+}
+
+
+IMPLEMENT_GENERIC(union, any_series)
+{
+    INCLUDE_PARAMS_OF_UNION;
+
+    Heart heart;
+    Option(Error*) e = Trap_Resolve_Dual_Hearts(
+        &heart, ARG(value1), ARG(value2)
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    Flex* flex = Make_Set_Operation_Flex(
+        ARG(value1),
+        ARG(value2),
+        SOP_FLAG_BOTH,
+        REF(case),
+        REF(skip) ? Int32s(ARG(skip), 1) : 1
+    );
+
+    return Init_Series(OUT, heart, flex);
+}
+
+
+IMPLEMENT_GENERIC(difference, any_series)
+{
+    INCLUDE_PARAMS_OF_DIFFERENCE;
+
+    Heart heart;
+    Option(Error*) e = Trap_Resolve_Dual_Hearts(
+        &heart, ARG(value1), ARG(value2)
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    Flex* flex = Make_Set_Operation_Flex(
+        ARG(value1),
+        ARG(value2),
+        SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT,
+        REF(case),
+        REF(skip) ? Int32s(ARG(skip), 1) : 1
+    );
+
+    return Init_Series(OUT, heart, flex);
+}
+
+
+IMPLEMENT_GENERIC(exclude, any_series)
+{
+    INCLUDE_PARAMS_OF_EXCLUDE;
+
+    Heart heart;
+    Option(Error*) e = Trap_Resolve_Dual_Hearts(
+        &heart, ARG(data), ARG(exclusions)
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    Flex* flex = Make_Set_Operation_Flex(
+        ARG(data),
+        ARG(exclusions),
+        SOP_FLAG_CHECK | SOP_FLAG_INVERT,
+        REF(case),
+        REF(skip) ? Int32s(ARG(skip), 1) : 1
+    );
+
+    return Init_Series(OUT, heart, flex);
 }
 
 

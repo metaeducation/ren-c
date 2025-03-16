@@ -631,14 +631,6 @@ IMPLEMENT_GENERIC(oldgeneric, bitset)
             return nullptr;
         return Init_Logic(OUT, true); }
 
-      case SYM_COMPLEMENT: {
-        Binary* copy = cast(
-            Binary*,
-            Copy_Flex_Core(NODE_FLAG_MANAGED, VAL_BITSET(v))
-        );
-        INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(v)));
-        return Init_Bitset(OUT, copy); }
-
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
         Value* arg = ARG_N(2);
@@ -694,80 +686,168 @@ IMPLEMENT_GENERIC(oldgeneric, bitset)
         Clear_Flex(bset);
         return COPY(v); }
 
-      case SYM_INTERSECT:
-      case SYM_UNION:
-      case SYM_DIFFERENCE:
-      case SYM_EXCLUDE: {
-        Value* arg = ARG_N(2);
-        if (Is_Bitset(arg)) {
-            if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
-                return FAIL("Bitset negation not handled by set operations");
-            }
-            const Binary* bset = VAL_BITSET(arg);
-            Init_Blob(arg, bset);
-        }
-        else if (not Is_Blob(arg))
-            return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
-
-        bool negated_result = false;
-
-        if (BITS_NOT(VAL_BITSET(v))) {  // !!! see #2365
-            //
-            // !!! Narrowly handle the case of exclusion from a negated bitset
-            // as simply unioning, because %pdf-maker.r uses this.  General
-            // answer is on the Roaring Bitsets branch--this R3 stuff is junk.
-            //
-            if (id == SYM_EXCLUDE) {
-                negated_result = true;
-                id = SYM_UNION;
-            }
-            else
-                return FAIL(
-                    "Bitset negation not handled by (most) set operations"
-                );
-        }
-
-        const Binary* bset = VAL_BITSET(v);
-        Init_Blob(v, bset);
-
-        // !!! Until the replacement implementation with Roaring Bitmaps, the
-        // bitset is based on a BLOB!.  Reuse the code on the generated
-        // proxy values.
-        //
-        Value* action;
-        switch (id) {
-          case SYM_INTERSECT:
-            action = rebValue("unrun :bitwise-and");
-            break;
-
-          case SYM_UNION:
-            action = rebValue("unrun :bitwise-or");
-            break;
-
-          case SYM_DIFFERENCE:
-            action = rebValue("unrun :bitwise-xor");
-            break;
-
-          case SYM_EXCLUDE:
-            action = rebValue("unrun :bitwise-and-not");
-            break;
-
-          default:
-            panic (nullptr);
-        }
-
-        Value* processed = rebValue(rebR(action), rebQ(v), rebQ(arg));
-
-        Binary* bset_out = Cell_Binary_Known_Mutable(processed);
-        rebRelease(processed);
-
-        INIT_BITS_NOT(bset_out, negated_result);
-        Trim_Tail_Zeros(bset_out);
-        return Init_Bitset(OUT, bset_out); }
-
       default:
         break;
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(complement, bitset)
+{
+    INCLUDE_PARAMS_OF_COMPLEMENT;
+
+    Element* bset = Element_ARG(value);
+
+    Binary* copy = cast(
+        Binary*,
+        Copy_Flex_Core(NODE_FLAG_MANAGED, VAL_BITSET(bset))
+    );
+    INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(bset)));
+    return Init_Bitset(OUT, copy);
+}
+
+
+// !!! Until Roaring Bitmaps replacement, bitset is just a BLOB!, and reuses
+// the implementation of bitwise operators on BLOB! for set operations.
+//
+Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
+    Sink(Element*) blob1,
+    Sink(Element*) blob2,
+    SymId id,
+    Level* level_
+){
+    INCLUDE_PARAMS_OF_INTERSECT;  // assume arg compatibility
+
+    Element* bset = Element_ARG(value1);
+    Element* arg = Element_ARG(value2);
+
+    if (REF(skip))
+        return Error_Bad_Refines_Raw();
+
+    if (Is_Bitset(arg)) {
+        if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
+            return Error_User(
+                "Bitset negation not handled by set operations"
+            );
+        }
+        Init_Blob(arg, VAL_BITSET(arg));
+    }
+    else if (not Is_Blob(arg))
+        return Error_Math_Args(VAL_TYPE(arg), Canon_Symbol(id));
+
+    if (BITS_NOT(VAL_BITSET(bset))) {  // !!! see #2365
+        //
+        // !!! Narrowly handle the case of exclusion from a negated bitset
+        // as simply unioning, because %pdf-maker.r uses this.  General
+        // answer is on the Roaring Bitsets branch--this R3 stuff is junk.
+        //
+        if (id != SYM_EXCLUDE)
+            return Error_User(
+                "Bitset negation not handled by (most) set operations"
+            );
+    }
+
+    Init_Blob(bset, VAL_BITSET(bset));
+
+    *blob1 = bset;
+    *blob2 = arg;
+
+    return nullptr;
+}
+
+
+IMPLEMENT_GENERIC(intersect, bitset)
+{
+    INCLUDE_PARAMS_OF_INTERSECT;
+
+    Element* blob1;
+    Element* blob2;
+    Option(Error*) e = Blobify_Args_For_Bitset_Arity_2_Set_Operation(
+        &blob1, &blob2, SYM_INTERSECT, LEVEL
+    );
+    if (e)
+        return RAISE(e);
+
+    Value* processed = rebValue(CANON(BITWISE_AND), blob1, blob2);
+
+    Binary* bits_out = Cell_Binary_Known_Mutable(processed);
+    rebRelease(processed);
+
+    INIT_BITS_NOT(bits_out, false);
+    Trim_Tail_Zeros(bits_out);
+    return Init_Bitset(OUT, bits_out);
+}
+
+
+IMPLEMENT_GENERIC(union, bitset)
+{
+    Element* blob1;
+    Element* blob2;
+    Option(Error*) e = Blobify_Args_For_Bitset_Arity_2_Set_Operation(
+        &blob1, &blob2, SYM_UNION, LEVEL
+    );
+    if (e)
+        return RAISE(e);
+
+    Value* processed = rebValue(CANON(BITWISE_OR), blob1, blob2);
+
+    Binary* bits_out = Cell_Binary_Known_Mutable(processed);
+    rebRelease(processed);
+
+    INIT_BITS_NOT(bits_out, false);
+    Trim_Tail_Zeros(bits_out);
+    return Init_Bitset(OUT, bits_out);
+}
+
+
+IMPLEMENT_GENERIC(difference, bitset)
+{
+    Element* blob1;
+    Element* blob2;
+    Option(Error*) e = Blobify_Args_For_Bitset_Arity_2_Set_Operation(
+        &blob1, &blob2, SYM_DIFFERENCE, LEVEL
+    );
+    if (e)
+        return RAISE(e);
+
+    Value* processed = rebValue(CANON(BITWISE_XOR), blob1, blob2);
+
+    Binary* bits_out = Cell_Binary_Known_Mutable(processed);
+    rebRelease(processed);
+
+    INIT_BITS_NOT(bits_out, false);
+    Trim_Tail_Zeros(bits_out);
+    return Init_Bitset(OUT, bits_out);
+}
+
+
+IMPLEMENT_GENERIC(exclude, bitset)
+{
+    INCLUDE_PARAMS_OF_EXCLUDE;
+
+    bool negated_result = (
+        Is_Bitset(ARG_N(1)) and BITS_NOT(VAL_BITSET(ARG_N(1)))
+    );
+
+    Element* blob1;
+    Element* blob2;
+    Option(Error*) e = Blobify_Args_For_Bitset_Arity_2_Set_Operation(
+        &blob1, &blob2, SYM_EXCLUDE, LEVEL
+    );
+    if (e)
+        return RAISE(e);
+
+    const Symbol* operation =   // use UNION semantics if negated
+        negated_result ? CANON(BITWISE_OR) : CANON(BITWISE_AND_NOT);
+
+    Value* processed = rebValue(operation, blob1, blob2);
+
+    Binary* bits_out = Cell_Binary_Known_Mutable(processed);
+    rebRelease(processed);
+
+    INIT_BITS_NOT(bits_out, negated_result);
+    Trim_Tail_Zeros(bits_out);
+    return Init_Bitset(OUT, bits_out);
 }
