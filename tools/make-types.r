@@ -94,11 +94,7 @@ type-table: load %types.r
         ]
         [is-unstable*: issue! | (is-unstable*: null)]
         [typesets*: block!]
-        [ahead block! into [
-            class*: [word! | '- | '? | the 0]
-            make*: [word! | '* | '+ | '- | '? | the 0]
-            mold*: [word! | '+ | '- | '? | the 0]
-        ] (
+        (
             name*: to text! name*
             set var make object! [
                 name: name*
@@ -111,18 +107,15 @@ type-table: load %types.r
                     assert ["any-" = take:part decorated 4]
                     decorated  ; has now been undecorated
                 ]
-                class: class*
                 antiname: either antiname* [to text! unquasi antiname*] [null]
                 unstable: switch is-unstable* [
                     null ['no]
                     #unstable ['yes]
                     fail "unstable annotation must be #unstable"
                 ]
-                make: make*
-                mold: mold*
             ]
             repeat 1 body else [return null]  ; give body BREAK/CONTINUE
-        )]
+        )
         (heart*: heart* + 1)
     ]] else [
         fail "Couldn't fully parse %types.r"
@@ -197,7 +190,6 @@ type-table: load %types.r
                 opt quasiform!
                 group!
                 opt issue!
-                block!
                 block!
                 (heart*: heart* + 1)
             ]]
@@ -504,68 +496,6 @@ for-each-datatype 't [
 ]
 
 e-types/write-emitted
-
-
-=== "BUILT-IN TYPE HOOKS TABLE" ===
-
-e-hooks: make-emitter "Built-in Type Hooks" (
-    join prep-dir %core/tmp-type-hooks.c
-)
-
-/hookname: infix func [
-    return: [text!]
-    prefix [text!] "e.g. T_ for T_Action"
-    t [object!] "type record (e.g. a row out of %types.r)"
-    column [word!] "which column we are deriving the hook's name based on"
-][
-    if t.(column) = 0 [return "nullptr"]
-
-    ; The CSCAPE mechanics lowercase all strings.  Uppercase it back.
-    ;
-    prefix: uppercase copy prefix
-
-    return unspaced [prefix propercase-of (switch ensure word! t.(column) [
-        '+ [propercase-of t.name]  ; type has its own unique hook
-        '* [t.class]        ; type uses common hook for class
-        '? ['unhooked]      ; datatype provided by extension
-        '- ['fail]          ; service unavailable for type
-    ] else [
-        t.(column)      ; override with word in column
-    ])]
-]
-
-hook-list: collect [
-    keep cscape [--{
-        {  /* REB_0 is reserved */
-            cast(CFunction*, nullptr),  /* generic */
-            nullptr
-        }
-    }--]
-
-    for-each-datatype 't [
-        if find ["quoted" "quasiform" "antiform"] t.name [
-            continue  ; hooks only for basic types
-        ]
-
-        keep cscape [t --{
-            {  /* $<T.NAME> = $<T.HEART> */
-                cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
-                nullptr
-            }
-        }--]
-    ]
-]
-
-e-hooks/emit [hook-list --{
-    #include "sys-core.h"
-
-    /* See comments in %sys-ordered.h */
-    CFunction* Builtin_Type_Hooks[REB_MAX_HEART][IDX_HOOKS_MAX] = {
-        $(Hook-List),
-    };
-}--]
-
-e-hooks/write-emitted
 
 
 === "SYMBOL-TO-TYPESET-BITS MAPPING TABLE" ===

@@ -86,13 +86,9 @@ IMPLEMENT_GENERIC(equal_q, blank)
 }
 
 
-
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Blank)
+IMPLEMENT_GENERIC(oldgeneric, blank)
 {
-    switch (Symbol_Id(verb)) {
+    switch (Symbol_Id(Level_Verb(LEVEL))) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -296,16 +292,11 @@ IMPLEMENT_GENERIC(equal_q, handle)
 }
 
 
-//
-// DECLARE_GENERICS: C
-//
 // !!! Currently, in order to have a comparison function a datatype must also
 // have a dispatcher for generics, and the comparison is essential.  Hence
 // this cannot use a `-` in the %reb-types.r in lieu of this dummy function.
 //
-DECLARE_GENERICS(Handle)
+IMPLEMENT_GENERIC(oldgeneric, handle)
 {
-    UNUSED(verb);
-
     return UNHANDLED;
 }

@@ -502,7 +502,7 @@ IMPLEMENT_GENERIC(make, object)
             REB_OBJECT,
             at,
             tail,
-            nullptr  // no parent (MAKE SOME-OBJ [...] calls DECLARE_GENERICS(Context))
+            nullptr  // no parent (MAKE SOME-OBJ ... calls any_context generic)
         );
 
         Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
@@ -926,14 +926,9 @@ static Element* Copy_Any_Context(
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-// Handles object!, module!, and error! datatypes.
-//
-DECLARE_GENERICS(Context)
+IMPLEMENT_GENERIC(oldgeneric, any_context)
 {
-    Option(SymId) id = Symbol_Id(verb);
+    Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
     Element* context = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
@@ -1200,14 +1195,12 @@ DECLARE_GENERICS(Context)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
 // FRAME! adds some additional reflectors to the usual things you can do with
-// an object, but falls through to DECLARE_GENERICS(Context) for most things.
+// an object, but falls through to Context for most things.
 //
-DECLARE_GENERICS(Frame)
+IMPLEMENT_GENERIC(oldgeneric, frame)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* frame = cast(Element*,
@@ -1372,7 +1365,7 @@ DECLARE_GENERICS(Frame)
         break;
     }
 
-    return T_Context(level_, verb);
+    return GENERIC_CFUNC(oldgeneric, any_context)(level_);
 }
 
 

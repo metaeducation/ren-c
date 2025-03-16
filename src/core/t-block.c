@@ -620,13 +620,9 @@ IMPLEMENT_GENERIC(moldify, any_list)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-// Implementation of type dispatch for ANY-LIST? (ANY-BLOCK? and ANY-GROUP?)
-//
-DECLARE_GENERICS(List)
+IMPLEMENT_GENERIC(oldgeneric, any_list)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* list = cast(Element*,

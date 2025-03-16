@@ -174,9 +174,6 @@ REBINT Index_From_Picker_For_Pair(
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
 // !!! R3-Alpha turned all the PAIR! operations from integer to decimal, but
 // they had floating point precision (otherwise you couldn't fit a full cell
 // for two values into a single cell).  This meant they were neither INTEGER!
@@ -188,9 +185,9 @@ REBINT Index_From_Picker_For_Pair(
 // REVERSE swapping X and Y), this chains to retrigger the action onto the
 // pair elements and then return a pair made of that.
 //
-DECLARE_GENERICS(Pair)
+IMPLEMENT_GENERIC(oldgeneric, pair)
 {
-    Option(SymId) id = Symbol_Id(verb);
+    Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
     Element* v = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)

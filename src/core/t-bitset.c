@@ -554,11 +554,9 @@ void Trim_Tail_Zeros(Binary* bin)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Bitset)
+IMPLEMENT_GENERIC(oldgeneric, bitset)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* v = cast(Element*,

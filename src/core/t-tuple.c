@@ -87,16 +87,9 @@ IMPLEMENT_GENERIC(make, any_sequence)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-// !!! This is shared code between TUPLE! and PATH!.  The math operations
-// predate the unification, and are here to document what expected operations
-// were...though they should use the method of PAIR! to generate frames for
-// each operation and run them against each other.
-//
-DECLARE_GENERICS(Sequence)
+IMPLEMENT_GENERIC(oldgeneric, any_sequence)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* sequence = cast(Element*,
@@ -132,7 +125,7 @@ DECLARE_GENERICS(Sequence)
 
         HEART_BYTE(sequence) = REB_BLOCK;
 
-        Atom* r = Atom_From_Bounce(T_List(level_, verb));
+        Atom* r = Atom_From_Bounce(GENERIC_CFUNC(oldgeneric, any_list)(level_));
         assert(Cell_Heart(r) == REB_BLOCK);
 
         if (r != OUT)

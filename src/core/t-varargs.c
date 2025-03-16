@@ -399,15 +399,12 @@ IMPLEMENT_GENERIC(make, varargs)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
 // Handles the very limited set of operations possible on a VARARGS!
 // (evaluation state inspector/modifier during a DO).
 //
-DECLARE_GENERICS(Varargs)
+IMPLEMENT_GENERIC(oldgeneric, varargs)
 {
-    Option(SymId) id = Symbol_Id(verb);
+    Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
     Element* value = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)

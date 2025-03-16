@@ -202,11 +202,9 @@ static Value* Math_Arg_For_Money(
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Money)
+IMPLEMENT_GENERIC(oldgeneric, money)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* v = cast(Element*,

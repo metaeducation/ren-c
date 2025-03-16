@@ -479,11 +479,9 @@ void Poke_Time_Immediate(
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Time)
+IMPLEMENT_GENERIC(oldgeneric, time)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* time = cast(Element*,
@@ -632,7 +630,7 @@ DECLARE_GENERICS(Time)
             Move_Cell(stable_SPARE, ARG_N(1));
             Move_Cell(ARG_N(1), arg);
             Move_Cell(ARG_N(2), stable_SPARE);
-            return T_Date(level_, verb);
+            return GENERIC_CFUNC(oldgeneric, date)(level_);
         }
         return FAIL(Error_Math_Args(REB_TIME, verb));
     }

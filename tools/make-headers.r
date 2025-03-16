@@ -55,9 +55,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
         find proto "static"
         find proto "DECLARE_NATIVE(" ; Natives handled by make-natives.r
 
-        ; The DECLARE_GENERICS macro actually is expanded in %tmp-internals.h
-        ; Should we allow macro expansion or do something else?
-        ; `not find proto "DECLARE_GENERICS("]`
+        ; should anything be done here with IMPLEMENT_GENERIC() ?
     ] then [
         return ~
     ]

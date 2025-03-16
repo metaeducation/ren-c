@@ -826,25 +826,6 @@ DetailsQuerier* Details_Querier(Details *details) {
 
 
 //
-//  DECLARE_GENERICS: C
-//
-// This handler is used to fail for a type which cannot handle actions.
-//
-// !!! Currently all types have a DECLARE_GENERICS() handler for either themselves or
-// their class.  But having a handler that could be "swapped in" from a
-// default failing case is an idea that could be used as an interim step
-// to allow something like REB_GOB to fail by default, but have the failing
-// type handler swapped out by an extension.
-//
-DECLARE_GENERICS(Fail)
-{
-    UNUSED(verb);
-
-    return RAISE("Datatype does not have a dispatcher registered.");
-}
-
-
-//
 //  /couple: native [
 //
 //  "Associate an ACTION! with OBJECT! to use for `.field` member references"

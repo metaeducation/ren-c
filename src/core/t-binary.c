@@ -330,11 +330,9 @@ static Element* Copy_Blob_Part_At_May_Modify_Index(
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Blob)
+IMPLEMENT_GENERIC(oldgeneric, blob)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* v = cast(Element*,
@@ -523,7 +521,8 @@ DECLARE_GENERICS(Blob)
                 return Init_Any_String_At(OUT, as, str, index);
 
             Init_Any_String_At(ARG(element), REB_TEXT, str, index);
-            return T_String(level_, verb);  // delegate word validation/etc.
+            // delegate word validation/etc.
+            return GENERIC_CFUNC(oldgeneric, any_string)(level_);
         }
 
         if (as == REB_BLANK) {
@@ -583,8 +582,8 @@ DECLARE_GENERICS(Blob)
             i = Int32(setval);
         }
         else {
-            // !!! See notes in the DECLARE_GENERICS(String) about alternate cases
-            // for the POKE'd value.
+            // !!! See notes in the IMPLEMENT_GENERIC(oldgeneric, any_string)
+            // about alternate cases for the POKE'd value.
             //
             return FAIL(PARAM(value));
         }

@@ -148,16 +148,9 @@ IMPLEMENT_GENERIC(moldify, any_word)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-// The future plan for WORD! types is that they will be unified somewhat with
-// strings...but that bound words will have read-only data.  Under such a
-// plan, string-converting words would not be necessary for basic textual
-// operations.
-//
-DECLARE_GENERICS(Word)
+IMPLEMENT_GENERIC(oldgeneric, any_word)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* word = cast(Element*,
@@ -213,12 +206,12 @@ DECLARE_GENERICS(Word)
             goto handle_as_conversion;
 
         if (Any_String_Kind(to))  // need mutable copy
-            return T_Utf8(level_, verb);
+            return GENERIC_CFUNC(oldgeneric, any_utf8)(level_);
 
         if (Any_Utf8_Kind(to))
             goto handle_as_conversion;
 
-        return T_Utf8(level_, verb); }  // TO INTEGER!, etc.
+        return GENERIC_CFUNC(oldgeneric, any_utf8)(level_); }  // TO INTEGER!..
 
     //=//// AS CONVERSIONS ////////////////////////////////////////////////=//
 

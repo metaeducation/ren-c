@@ -89,28 +89,6 @@ typedef struct {
 typedef Bounce (ToHook)(Level* level_, Kind kind, Element* def);
 
 
-// Just requests what symbol a custom datatype wants to use for its type
-//
-typedef const Symbol* (SYMBOL_HOOK)(void);
-
-
-//
-// PER-TYPE GENERIC HOOKS: e.g. for `append value x` or `select value y`
-//
-// This is using the term in the sense of "generic functions":
-// https://en.wikipedia.org/wiki/Generic_function
-//
-// The current assumption (rightly or wrongly) is that the handler for
-// a generic action (e.g. APPEND) doesn't need a special hook for a
-// specific datatype, but that the class has a common function.  But note
-// any behavior for a specific type can still be accomplished by testing
-// the type passed into that common hook!
-//
-typedef Bounce (GenericHook)(Level* level_, const Symbol* verb);
-#define DECLARE_GENERICS(n) \
-    Bounce T_##n(Level* level_, const Symbol* verb)
-
-
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
 typedef Bounce (PORT_HOOK)(Level* level_, Value* port, const Symbol* verb);

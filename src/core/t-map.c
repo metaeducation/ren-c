@@ -564,12 +564,9 @@ IMPLEMENT_GENERIC(moldify, map)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Map)
+IMPLEMENT_GENERIC(oldgeneric, map)
 {
-    Option(SymId) id = Symbol_Id(verb);
+    Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
     Element* map = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)

@@ -84,14 +84,12 @@ IMPLEMENT_GENERIC(make, port)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
 // !!! The concept of port dispatch from R3-Alpha is that it delegates to a
 // handler which may be native code or user code.
 //
-DECLARE_GENERICS(Port)
+IMPLEMENT_GENERIC(oldgeneric, port)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* port = cast(Element*,
@@ -117,10 +115,10 @@ DECLARE_GENERICS(Port)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     // See Context_Common_Action_Maybe_Unhandled() for why general delegation
-    // to T_Context() is not performed.
+    // to Context is not performed.
     //
     if (id == SYM_PICK or id == SYM_POKE)
-        return T_Context(level_, verb);
+        return GENERIC_CFUNC(oldgeneric, any_context)(level_);
 
     VarList* ctx = Cell_Varlist(port);
     Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
@@ -225,15 +223,13 @@ REBINT CT_Url(const Cell* a, const Cell* b, bool strict)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
 // The idea for dispatching a URL! is that it will dispatch to port schemes.
 // So it translates the request to open the port, then retriggers the action
 // on that port, then closes the port.
 //
-DECLARE_GENERICS(Url)
+IMPLEMENT_GENERIC(oldgeneric, url)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* url = cast(Element*,
@@ -249,7 +245,7 @@ DECLARE_GENERICS(Url)
     }
     else switch (id) {
       case SYM_TO:  // defer to String (handles non-node-having case too)
-        return T_String(level_, verb);
+        return GENERIC_CFUNC(oldgeneric, any_string)(level_);
 
       case SYM_REFLECT:
       case SYM_READ:

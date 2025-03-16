@@ -122,20 +122,3 @@ INLINE bool Builtin_Typeset_Check(TypesetByte typeset_byte, Kind kind) {
 
     return did (g_sparse_memberships[kind] & typeset);  // just a typeset flag
 }
-
-
-// This table is generated from %types.r - the actual table is located in
-// %tmp-dispatch.c and linked in only once.
-//
-// No valid type has a null entry in the table.  Instead there is a hook in
-// the slot which will fail if it is ever called.
-//
-// !!! These used to be const, but the desire to have extension types change
-// from being "unhooked" to "hooked" meant they needed to be non-const.  The
-// importance of that design goal should be reviewed.
-//
-extern CFunction* Builtin_Type_Hooks[REB_MAX_HEART][IDX_HOOKS_MAX];
-
-
-INLINE GenericHook* Generic_Hook_For_Heart(Heart h)
-  { return cast(GenericHook*, Builtin_Type_Hooks[h][IDX_GENERIC_HOOK]); }

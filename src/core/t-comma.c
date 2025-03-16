@@ -76,12 +76,9 @@ IMPLEMENT_GENERIC(equal_q, comma)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Comma)
+IMPLEMENT_GENERIC(oldgeneric, comma)
 {
-    switch (Symbol_Id(verb)) {
+    switch (Symbol_Id(Level_Verb(LEVEL))) {
       case SYM_COPY: { // since (copy:deep [1, 2]) is legal, allow (copy ',)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(ARG(value));

@@ -782,18 +782,14 @@ bool Try_Get_Series_Index_From_Picker(
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-// Action handler for ANY-STRING?
-//
 // 1. When things like ISSUE! or URL! have a node, their considerations are
 //    not different from strings.  Their cell format has room for an index,
 //    and that index is valid.  The special case of TO conversions is written
 //    here so that non-node-having entities work.
 //
-DECLARE_GENERICS(String)
+IMPLEMENT_GENERIC(oldgeneric, any_string)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* v = cast(Element*,
@@ -846,7 +842,7 @@ DECLARE_GENERICS(String)
     // strings do).  Hence its concerns are a superset of those for strings.
 
       case SYM_TO:
-        return T_Utf8(level_, verb);
+        return GENERIC_CFUNC(oldgeneric, any_utf8)(level_);
 
   //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
 
@@ -861,7 +857,7 @@ DECLARE_GENERICS(String)
             return Inherit_Const(stable_OUT, v);
         }
 
-        return T_Utf8(level_, verb); }
+        return GENERIC_CFUNC(oldgeneric, any_utf8)(level_); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

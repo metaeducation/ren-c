@@ -27,22 +27,6 @@
 #include <errno.h>
 
 
-//
-//  DECLARE_GENERICS: C
-//
-// There's no actual "Unhooked" data type, it is used as a placeholder for
-// if a datatype (such as STRUCT!) is going to have its behavior loaded by
-// an extension.
-//
-DECLARE_GENERICS(Unhooked)
-{
-    UNUSED(verb);
-
-    return RAISE(
-        "Datatype does not have its DECLARE_GENERICS() handler loaded by extension"
-    );
-}
-
 
 // !!! Some reflectors are more general and apply to all types (e.g. TYPE)
 // while others only apply to some types (e.g. LENGTH or HEAD only to series,

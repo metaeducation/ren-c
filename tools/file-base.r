@@ -238,7 +238,6 @@ core: [
 ;
 generated: [
     %tmp-boot-block.c
-    %tmp-type-hooks.c
     %tmp-typesets.c
     %tmp-builtin-extension-table.c
     %tmp-rebol-api-table.c

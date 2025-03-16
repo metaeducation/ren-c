@@ -175,11 +175,9 @@ IMPLEMENT_GENERIC(moldify, integer)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Integer)
+IMPLEMENT_GENERIC(oldgeneric, integer)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* val = cast(Element*,
@@ -230,19 +228,19 @@ DECLARE_GENERICS(Integer)
             case SYM_POWER:
                 if (Is_Decimal(val2) || Is_Percent(val2)) {
                     Init_Decimal(val, cast(REBDEC, num));  // convert
-                    return T_Decimal(level_, verb);
+                    return GENERIC_CFUNC(oldgeneric, decimal)(level_);
                 }
                 if (Is_Money(val2)) {
                     Init_Money(val, int_to_deci(VAL_INT64(val)));
-                    return T_Money(level_, verb);
+                    return GENERIC_CFUNC(oldgeneric, money)(level_);
                 }
                 if (n > 0) {
                     if (Is_Time(val2)) {
                         Init_Time_Nanoseconds(val, SEC_TIME(VAL_INT64(val)));
-                        return T_Time(level_, verb);
+                        return GENERIC_CFUNC(oldgeneric, time)(level_);
                     }
                     if (Is_Date(val2))
-                        return T_Date(level_, verb);
+                        return GENERIC_CFUNC(oldgeneric, date)(level_);
                 }
 
             default:
@@ -332,7 +330,7 @@ DECLARE_GENERICS(Integer)
       case SYM_POWER:
         Init_Decimal(ARG_N(1), cast(REBDEC, num));
         Init_Decimal(ARG_N(2), cast(REBDEC, arg));
-        return T_Decimal(level_, verb);
+        return GENERIC_CFUNC(oldgeneric, decimal)(level_);
 
       case SYM_REMAINDER:
         if (arg == 0)

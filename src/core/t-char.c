@@ -524,11 +524,9 @@ IMPLEMENT_GENERIC(moldify, issue)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Utf8)
+IMPLEMENT_GENERIC(oldgeneric, any_utf8)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* issue = cast(Element*,
@@ -857,7 +855,7 @@ DECLARE_GENERICS(Utf8)
 
     if (Stringlike_Has_Node(issue)) {
         assert(not IS_CHAR(issue));  // no string math
-        return T_String(level_, verb);
+        return GENERIC_CFUNC(oldgeneric, any_string)(level_);
     }
 
     switch (id) {

@@ -41,21 +41,6 @@
 
 #include "sys-core.h"
 
-//
-//  CT_Quoted: C
-//
-// !!! Currently, in order to have a GENERIC dispatcher (e.g. DECLARE_GENERICS())
-// then one also must implement a comparison function.  However, compare
-// functions specifically take noquote cells, so you can't pass REB_QUOTED to
-// them.  The handling for QUOTED? is in the comparison dispatch itself.
-//
-REBINT CT_Quoted(const Cell* a, const Cell* b, bool strict)
-{
-    UNUSED(a); UNUSED(b); UNUSED(strict);
-    assert(!"CT_Quoted should never be called");
-    return 0;
-}
-
 
 //
 //  /the: native [

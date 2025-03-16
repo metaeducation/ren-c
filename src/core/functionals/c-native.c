@@ -272,6 +272,38 @@ Bounce Dispatch_Generic_Core(
 
 
 //
+//  /oldgeneric: native:generic [
+//
+//  "Generic aggregator for the old-style generic dispatch"
+//
+//      return: [~] "Not actually used"
+//  ]
+//
+DECLARE_NATIVE(oldgeneric)
+{
+    INCLUDE_PARAMS_OF_OLDGENERIC;
+
+    return FAIL("This should never be called");
+}
+
+
+//
+//   Run_Generic_Dispatch: C
+//
+// !!! Old concept of generics, based on each type directing to a single
+// function with a big switch() statement in it.
+//
+Bounce Run_Generic_Dispatch(
+    const Element* cue,
+    Level* L,
+    const Symbol* verb
+){
+    L->u.action.label = verb;  // !!! hack for Level_Verb() for now
+    return Dispatch_Generic(oldgeneric, cue, L);
+}
+
+
+//
 //  Init_Action_Adjunct_Shim: C
 //
 // Make_Paramlist_Managed_May_Fail() needs the object archetype ACTION-ADJUNCT

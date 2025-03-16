@@ -364,11 +364,9 @@ IMPLEMENT_GENERIC(moldify, percent)
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Decimal)
+IMPLEMENT_GENERIC(oldgeneric, decimal)
 {
+    const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
     Element* val = cast(Element*,
@@ -428,7 +426,7 @@ DECLARE_GENERICS(Decimal)
             }
             else if (heart == REB_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
-                return T_Money(level_, verb);
+                return GENERIC_CFUNC(oldgeneric, money)(level_);
             }
             else if (heart == REB_ISSUE) {
                 d2 = cast(REBDEC, Cell_Codepoint(arg));

@@ -998,12 +998,9 @@ void Pick_Or_Poke_Date(
 }
 
 
-//
-//  DECLARE_GENERICS: C
-//
-DECLARE_GENERICS(Date)
+IMPLEMENT_GENERIC(oldgeneric, date)
 {
-    Option(SymId) id = Symbol_Id(verb);
+    Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
     Element* v = cast(Element*,
         (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)

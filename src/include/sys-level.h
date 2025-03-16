@@ -262,6 +262,15 @@ INLINE ParamList* Level_Varlist(Level* L) {
 #define Level_Phase(L) \
     Cell_Frame_Phase((L)->rootvar)
 
+// !!! This is just hacked in for compatibility with oldgeneric.  The old
+// generic dispatcher will override whatever the actual label was used
+// to do the dispatch with the verb.  This will potentially lead to confusing
+// errors if the call was done through an aliased name, until things get
+// sorted out.
+//
+#define Level_Verb(L)  (unwrap (L)->u.action.label)
+
+
 INLINE Details* Ensure_Level_Details(Level* L) {
     Phase* phase = Level_Phase(L);
     assert(Is_Stub_Details(phase));
@@ -857,7 +866,7 @@ INLINE Atom* Native_Copy_Result_Untracked(
             Native_Fail_Result(level_, Derive_Error_From_Pointer(p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
-    // enough in DECLARE_GENERICS() handlers that it seems worthwhile.
+    // enough in IMPLEMENT_GENERIC() handlers that it seems worthwhile.
     //
     // !!! Once it was customized based on the "verb" of a generic, but that
     // mechanism has been removed.  Review what generic dispatch might do
