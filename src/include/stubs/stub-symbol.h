@@ -62,8 +62,8 @@ INLINE Option(SymId) Symbol_Id(const Symbol* s)
   { return cast(SymId, SECOND_UINT16(&s->info.flags)); }
 
 INLINE const Symbol* Canon_Symbol(SymId symid) {
-    assert(cast(SymIdNum, symid) != 0);
-    assert(cast(SymIdNum, symid) < ALL_SYMS_MAX);
+    assert(cast(SymId16, symid) != 0);
+    assert(cast(SymId16, symid) < ALL_SYMS_MAX);
     return &g_symbols.builtin_canons[symid];
 }
 

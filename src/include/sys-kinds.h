@@ -65,6 +65,8 @@
 //    calls all use the `cast()` macro anyway.
 //
 
+#include "tmp-hearts.h"  // HeartEnum and KindEnum (REB_BLOCK, REB_TEXT, etc.)
+
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11 || defined(__clang__)
     typedef enum HeartKindEnum Heart;  // avoid enum compare warnings [1]
     typedef enum HeartKindEnum Kind;
@@ -79,7 +81,7 @@
         Kind (enum KindEnum kind) : byte (kind) {}
         explicit Kind (Byte byte) : byte {byte} {}
         explicit Kind (SymId id) {
-            assert(cast(SymIdNum, id) < REB_MAX);
+            assert(cast(SymId16, id) < REB_MAX);
             byte = id;
         }
 

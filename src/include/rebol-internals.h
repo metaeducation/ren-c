@@ -224,7 +224,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 // and some are only forward declared.  See notes in %structs/README.md
 //
 
-#include "tmp-symid.h"  // small integer IDs for words (e.g. SYM_THRU, SYM_ON)
+#include "sys-symid.h"  // small integer IDs for words (e.g. SYM_THRU, SYM_ON)
 
 #include "reb-defs.h"  // basic typedefs like Byte (wraps symbol IDs as SymId)
 
@@ -233,8 +233,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 #include "mem-pools.h"
 
-#include "tmp-hearts.h"  // HeartEnum and KindEnum (REB_BLOCK, REB_TEXT, etc.)
-#include "sys-kinds.h"  // defines Heart and Kind as safe wrappers if C++
+#include "sys-kinds.h"  // defines Heart and Kind (safe wrappers if C++)
 
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"

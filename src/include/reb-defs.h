@@ -271,38 +271,6 @@ typedef intptr_t StackIndex;  // 0 for empty stack ([0] entry poison)
 #define Init InitTypemacro
 
 
-//=//// SYMBOL IDs ////////////////////////////////////////////////////////=//
-//
-// Built-in symbols get a hardcoded integer number that can be used in the
-// C code--for instance in switch() statements.  However, any symbols which
-// are not in the hardcoded table have a symbol ID of 0.
-//
-// We want to avoid bugs that can happen when you say things like:
-//
-//     if (Cell_Word_Id(a) == Cell_Word_Id(b)) { ... }
-//
-// If you were allowed to do that, then all non-built-ins would give back
-// SYM_) and appear to be equal.  It's a tricky enough bug to catch to warrant
-// an extra check in C++ that disallows comparing SYMIDs with ==
-//
-// So we wrap the enum into an Option(), which the C++ build is able to do
-// added type checking on.  It also prohibits comparisons unless you unwrap
-// the values, which in checked builds has a runtime check of non-zeroness.
-//
-
-typedef enum SymIdEnum SymId;
-
-typedef uint_fast16_t SymIdNum;  // 16 bits for SymId in symbol header
-
-#define SYM_0 \
-    cast(Option(SymId),  cast(SymId, 0))  // 0 cast needed if not -fpermissive
-
-#if CHECK_OPTIONAL_TYPEMACRO && CPLUSPLUS_11
-    bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;
-    void operator!=(Option(SymId)& a, Option(SymId)& b) = delete;
-#endif
-
-
 //=//// STRING MODES //////////////////////////////////////////////////////=//
 //
 // Ren-C is prescriptive about disallowing 0 bytes in strings to more safely

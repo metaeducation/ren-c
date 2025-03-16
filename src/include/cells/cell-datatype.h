@@ -56,7 +56,7 @@
 
 INLINE bool IS_KIND_SYM(SymId id) {
     assert(id != SYM_0);
-    return u_cast(SymIdNum, id) < u_cast(SymIdNum, REB_MAX);
+    return u_cast(SymId16, id) < u_cast(SymId16, REB_MAX);
 }
 
 INLINE Kind KIND_FROM_SYM(SymId s) {
@@ -65,7 +65,7 @@ INLINE Kind KIND_FROM_SYM(SymId s) {
 }
 
 #define SYM_FROM_KIND(k) \
-    cast(SymId, u_cast(SymIdNum, (k)))
+    cast(SymId, u_cast(SymId16, (k)))
 
 
 #define VAL_TYPE_SYMBOL(v) \
