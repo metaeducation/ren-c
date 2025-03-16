@@ -1,5 +1,5 @@
 //
-//  File: %sys-flavor.h
+//  File: %enum-flavor.h
 //  Summary: "Stub Subclass Type Enumeration"
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/

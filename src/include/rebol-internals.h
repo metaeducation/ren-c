@@ -224,7 +224,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 // and some are only forward declared.  See notes in %structs/README.md
 //
 
-#include "sys-symid.h"  // small integer IDs for words (e.g. SYM_THRU, SYM_ON)
+#include "enums/enum-symid.h"  // 16-bit IDs for words (e.g. SYM_THRU, SYM_ON)
 
 #include "reb-defs.h"  // basic typedefs like Byte (wraps symbol IDs as SymId)
 
@@ -233,7 +233,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 #include "mem-pools.h"
 
-#include "sys-kinds.h"  // defines Heart and Kind (safe wrappers if C++)
+#include "enums/enum-kinds.h"  // defines Heart and Kind (safe wrappers if C++)
 
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"
@@ -264,10 +264,9 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 #include "structs/struct-state.h"  // state of variables restored on jumps
 #include "structs/struct-level.h"  // C struct for running level, uses feed
 
-#include "tmp-typesets.h"
+#include "enums/enum-typesets.h"  // built-in order dependent type checks
 
-#include "sys-ordered.h"  // changing the type enum *must* update these macros
-#include "sys-flavor.h"  // Flex subclass byte (uses sizeof(Cell))
+#include "enums/enum-flavor.h"  // Flex subclass byte (uses sizeof(Cell))
 
 
 #include "sys-hooks.h"  // function pointer definitions

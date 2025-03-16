@@ -19,6 +19,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// This file is included by extensions that use %librebol.h and also those
+// that use %sys-core.h, so it shouldn't refer to anything that isn't
+// available in librebol.
+//
 
 // See notes on definition in %c-enhanced.h
 //

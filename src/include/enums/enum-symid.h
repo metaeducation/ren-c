@@ -1,5 +1,5 @@
 //
-//  File: %sys-symid.h
+//  File: %enum-symid.h
 //  Summary: "Small 16-bit integers for built-in symbols"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/

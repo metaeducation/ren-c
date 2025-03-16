@@ -77,25 +77,3 @@ typedef struct {
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
 typedef Bounce (PORT_HOOK)(Level* level_, Value* port, const Symbol* verb);
-
-
-//=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//
-//
-// Parameter lists of composed/derived functions still must have compatible
-// frames with their underlying C code.  This makes parameter enumeration of
-// a derived function a 2-pass process that is a bit tricky.
-//
-// !!! Due to a current limitation of the prototype scanner, a function type
-// can't be used directly in a function definition and have it be picked up
-// for %tmp-internals.h, it has to be a typedef.
-//
-typedef enum {
-    PHF_UNREFINED = 1 << 0  // a /refinement that takes an arg, made "normal"
-} Reb_Param_Hook_Flags;
-#define PHF_MASK_NONE 0
-typedef bool (PARAM_HOOK)(
-    const Key* key,
-    const Param* param,
-    Flags flags,
-    void *opaque
-);

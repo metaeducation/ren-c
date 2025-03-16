@@ -1,6 +1,6 @@
 //
-//  File: %sys-ordered.h
-//  Summary: "Order-dependent type macros"
+//  File: %enum-typesets.h
+//  Summary: "Optimized built in typesets and order-dependent type macros"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -36,6 +36,8 @@
 //   TOKEN_XXX values.  That might be interesting to exploit for an
 //   optimization in the future...see notes on the tokens regarding this.
 
+
+#include "tmp-typesets.h"
 
 
 //=//// EXTRA NEEDING GC MARK /////////////////////////////////////////////=//
