@@ -1248,11 +1248,22 @@ DECLARE_NATIVE(switch)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    // 1. Originally this called the "guts" of comparison by default, instead
+    //    of invoking the EQUAL? native.  But the comparison guts are no
+    //    longer available without a frame.  So really this just needs to
+    //    be worked on and sped up, such as to create one frame and reuse
+    //    it over and over.  Review.
+
     assert(Is_Cell_Erased(right));  // initial condition
     assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
     if (REF(type) and REF(predicate))
         return FAIL(Error_Bad_Refines_Raw());
+
+    if (not REF(type) and not REF(predicate)) {
+        Copy_Cell(predicate, LIB(EQUAL_Q));  // no more builtin comparison [1]
+        QUOTE_BYTE(predicate) = NOQUOTE_1;
+    }
 
     Level* sub = Make_Level_At(
         &Stepper_Executor,
@@ -1335,15 +1346,9 @@ DECLARE_NATIVE(switch)
             goto next_switch_step;
         }
     }
-    else if (Is_Nulled(predicate)) {
-        Decay_If_Unstable(right);
-
-        const bool strict = false;
-        Copy_Cell(SCRATCH, left);  // don't alter left directly, see [1]
-        if (0 != Compare_Modify_Values(SCRATCH, cast(Value*, right), strict))
-            goto next_switch_step;
-    }
     else {
+        assert(not Is_Nulled(predicate));
+
         if (rebRunThrows(
             cast(Sink(Value), SCRATCH),  // <-- output cell
             predicate,

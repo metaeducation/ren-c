@@ -286,6 +286,31 @@ REBINT CT_Decimal(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, decimal)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Decimal(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, decimal)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Decimal(ARG(value1), ARG(value2), true) == -1);
+}
+
+
+IMPLEMENT_GENERIC(zeroify, decimal)
+{
+    INCLUDE_PARAMS_OF_ZEROIFY;
+    UNUSED(ARG(example));  // always gives 0x0
+
+    return Init_Decimal(OUT, 0.0);;
+}
+
+
 //
 //  MF_Decimal: C
 //

@@ -651,152 +651,6 @@ DECLARE_NATIVE(square_root)
 }
 
 
-//  CT_Fail: C
-//
-REBINT CT_Fail(const Cell* a, const Cell* b, bool strict)
-{
-    UNUSED(a);
-    UNUSED(b);
-    UNUSED(strict);
-
-    fail ("Cannot compare type");
-}
-
-
-//  CT_Unhooked: C
-//
-REBINT CT_Unhooked(const Cell* a, const Cell* b, bool strict)
-{
-    UNUSED(a);
-    UNUSED(b);
-    UNUSED(strict);
-
-    fail ("Datatype does not have type comparison handler registered");
-}
-
-
-//
-//  Compare_Modify_Values: C
-//
-// Compare 2 values depending on level of strictness.
-//
-// !!! This routine (may) modify the value cells for 'a' and 'b' in
-// order to coerce them for easier comparison.  Most usages are
-// in native code that can overwrite its argument values without
-// that being a problem, so it doesn't matter.
-//
-REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
-{
-    // Note: `(first ['a]) = (first [a])` was true in historical Rebol, due
-    // the rules of "lax equality".  This is a harmful choice, and has been
-    // removed:
-    //
-    // https://forum.rebol.info/t/1133/7
-    //
-    if (QUOTE_BYTE(a) != QUOTE_BYTE(b))
-        return QUOTE_BYTE(a) > QUOTE_BYTE(b) ? 1 : -1;
-
-    QUOTE_BYTE(a) = NOQUOTE_1;
-    QUOTE_BYTE(b) = NOQUOTE_1;
-
-    Heart a_heart = Cell_Heart(a);
-    Heart b_heart = Cell_Heart(b);
-
-    if (a_heart != b_heart) {
-        //
-        // If types not matching is a problem, callers to this routine should
-        // check that for themselves before calling.  It is assumed that
-        // "strict" here still allows coercion, e.g. `1 < 1.1` should work.
-        //
-        switch (a_heart) {
-          case REB_INTEGER:
-            if (b_heart == REB_DECIMAL || b_heart == REB_PERCENT) {
-                Init_Decimal(a, cast(REBDEC, VAL_INT64(a)));
-                goto compare;
-            }
-            else if (b_heart == REB_MONEY) {
-                Init_Money(a, int_to_deci(VAL_INT64(a)));
-                goto compare;
-            }
-            break;
-
-          case REB_DECIMAL:
-          case REB_PERCENT:
-            if (b_heart == REB_INTEGER) {
-                Init_Decimal(b, cast(REBDEC, VAL_INT64(b)));
-                goto compare;
-            }
-            else if (b_heart == REB_MONEY) {
-                Init_Money(a, decimal_to_deci(VAL_DECIMAL(a)));
-                goto compare;
-            }
-            else if (b_heart == REB_DECIMAL || b_heart == REB_PERCENT)
-                goto compare;  // equivalent types
-            break;
-
-          case REB_MONEY:
-            if (b_heart == REB_INTEGER) {
-                Init_Money(b, int_to_deci(VAL_INT64(b)));
-                goto compare;
-            }
-            if (b_heart == REB_DECIMAL || b_heart == REB_PERCENT) {
-                Init_Money(b, decimal_to_deci(VAL_DECIMAL(b)));
-                goto compare;
-            }
-            break;
-
-          case REB_WORD:
-          case REB_META_WORD:
-            if (Any_Word_Kind(b_heart))
-                goto compare;
-            break;
-
-          case REB_EMAIL:
-          case REB_URL:
-          case REB_ISSUE:  // !!! This needs rethinking!
-            if (
-                Any_Utf8_Kind(b_heart)
-                and not Any_Word_Kind(b_heart)
-                and not Any_String_Kind(b_heart)
-            ){
-                goto compare;
-            }
-            break;
-
-          case REB_TEXT:
-          case REB_FILE:
-          case REB_TAG:
-            if (Any_String_Kind(b_heart))
-                goto compare;
-            break;
-
-          default:
-            break;
-        }
-
-        if (not strict)
-            return a_heart > b_heart ? 1 : -1;  // !!! Review
-
-        fail (Error_Invalid_Compare_Raw(
-            Datatype_From_Kind(a_heart),
-            Datatype_From_Kind(b_heart)
-        ));
-    }
-
-  compare:;
-
-    // At this point, the types should match...e.g. be able to be passed to
-    // the same comparison dispatcher.  They might not be *exactly* equal.
-    //
-    CompareHook* hook = Compare_Hook_For_Heart(Cell_Heart(a));
-    assert(Compare_Hook_For_Heart(Cell_Heart(b)) == hook);
-
-    REBINT diff = hook(a, b, strict);
-    assert(diff == 0 or diff == 1 or diff == -1);
-    return diff;
-}
-
-
 //
 //  /vacancy?: native [
 //
@@ -843,91 +697,110 @@ DECLARE_NATIVE(defaultable_q)
 }
 
 
-//  EQUAL? < EQUIV? < STRICT-EQUAL? < SAME?
+//=////////////////////////////////////////////////////////////////////////=//
+//
+//  EQUAL? and LESSER?: BASIS FOR ALL COMPARISONS
+//
+//=/////////////////////////////////////////////////////////////////////////=//
+//
+// The way things work in Ren-C are similar to Ord and Eq in Haskell, or how
+// C++ standard library sorts solely in terms of operator< and operator==.
+//
+// So GREATER? is defined as just NOT LESSER? and NOT EQUAL?.
+//
+// LESSER? is more limited in Ren-C than in R3-Alpha or Red.  You can only
+// compare like types, and you can only compare blocks that are element-wise
+// comparable.
+//
+//     >> [1 "a"] < [1 "b"]
+//     == ~okay~  ; anti
+//
+//     >> ["a" 1] < [1 "b"]
+//     ** Error: Non-comparable types (e.g. "a" < 1 is nonsensical)
+//
+// Hence you cannot sort an arbitrary block by the default LESSER? comparator.
+// If you want to impose order on non-comparable types, you must use a custom
+// comparison function that knows how to compare them.
+//
+
 
 //
-//  /equal?: native [
+//  /equal?: native:generic [
 //
 //  "TRUE if the values are equal"
 //
 //      return: [logic?]
 //      value1 [something?]
 //      value2 [something?]
+//      :strict "Use strict comparison rules"
 //  ]
 //
 DECLARE_NATIVE(equal_q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    bool strict = false;
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff == 0);
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
+    bool strict = REF(strict);
+
+    if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
+        return nullptr;
+
+    QUOTE_BYTE(v1) = NOQUOTE_1;
+    QUOTE_BYTE(v2) = NOQUOTE_1;
+
+    if (VAL_TYPE(v1) != VAL_TYPE(v2)) {  // !!! need generic "coercibility"
+        if (strict)
+            return nullptr;
+
+        if (Is_Integer(v1) and Is_Decimal(v2))
+            Init_Decimal(v1, cast(REBDEC, VAL_INT64(v1)));
+        else if (Is_Decimal(v1) and Is_Integer(v2))
+            Init_Decimal(v2, cast(REBDEC, VAL_INT64(v2)));
+        else
+            return nullptr;
+    }
+
+    return Dispatch_Generic(equal_q, v1, LEVEL);
 }
 
 
 //
-//  /not-equal?: native [
+//  /lesser?: native:generic [
 //
-//  "TRUE if the values are not equal"
-//
-//      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
-//  ]
-//
-DECLARE_NATIVE(not_equal_q)
-{
-    INCLUDE_PARAMS_OF_NOT_EQUAL_Q;
-
-    bool strict = false;
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff != 0);
-}
-
-
-//
-//  /strict-equal?: native [
-//
-//  "TRUE if the values are strictly equal"
+//  "TRUE if the first value is less than the second value"
 //
 //      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
+//      value1 [element?]  ; !!! Don't allow antiforms? [1]
+//      value2 [element?]
 //  ]
 //
-DECLARE_NATIVE(strict_equal_q)
+DECLARE_NATIVE(lesser_q)
+//
+// 1. Although EQUAL? has to allow antiforms, e.g. for (value = null), it's
+//    not clear that LESSER? should accept them.
 {
-    INCLUDE_PARAMS_OF_STRICT_EQUAL_Q;
+    INCLUDE_PARAMS_OF_LESSER_Q;
 
-    if (VAL_TYPE(ARG(value1)) != VAL_TYPE(ARG(value2)))
-        return Init_Logic(OUT, false);  // don't allow coercion
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
 
-    bool strict = true;
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff == 0);
-}
+    if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
+        return RAISE("Differing quote levels are not comparable");
 
+    QUOTE_BYTE(v1) = NOQUOTE_1;
+    QUOTE_BYTE(v2) = NOQUOTE_1;
 
-//
-//  /strict-not-equal?: native [
-//
-//  "TRUE if the values are not strictly equal"
-//
-//      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
-//  ]
-//
-DECLARE_NATIVE(strict_not_equal_q)
-{
-    INCLUDE_PARAMS_OF_STRICT_NOT_EQUAL_Q;
+    if (VAL_TYPE(v1) != VAL_TYPE(v2)) {  // !!! need generic "coercibility"
+        if (Is_Integer(v1) and Is_Decimal(v2))
+            Init_Decimal(v1, cast(REBDEC, VAL_INT64(v1)));
+        else if (Is_Decimal(v1) and Is_Integer(v2))
+            Init_Decimal(v2, cast(REBDEC, VAL_INT64(v2)));
+        else
+            return RAISE("Types are not comparable");
+    }
 
-    if (VAL_TYPE(ARG(value1)) != VAL_TYPE(ARG(value2)))
-        return Init_Logic(OUT, true);  // don't allow coercion
-
-    bool strict = true;
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff != 0);
+    return Dispatch_Generic(lesser_q, v1, LEVEL);
 }
 
 
@@ -937,17 +810,17 @@ DECLARE_NATIVE(strict_not_equal_q)
 //  "TRUE if the values are identical"
 //
 //      return: [logic?]
-//      value1 [something?]
+//      value1 [something?]  ; !!! antiforms okay? e.g. "same splice"?
 //      value2 [something?]
 //  ]
 //
 DECLARE_NATIVE(same_q)
 //
-// This used to be "strictness mode 3" of Compare_Modify_Values.  However,
-// folding SAME?-ness in required the comparisons to take REBVALs instead
-// of just Cells, when only a limited number of types supported it.
-// Rather than incur a cost for all comparisons, this handles the issue
-// specially for those types which support it.
+// !!! It's not clear that SAME? should be answering for types like INTEGER!
+// or other immediates with the same answer as EQUAL?.  It might should be
+// that SAME? only works on things that are references, like series and
+// objects, and gives you a raised error that you can TRY on to then fall
+// back on equality if that is meaningful to your situation.
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
@@ -1008,73 +881,10 @@ DECLARE_NATIVE(same_q)
         );
     }
 
-    // For other types, just fall through to strict equality comparison
-    //
-    // !!! What about user extension types, like IMAGE! and STRUCT!?  It
-    // seems that "sameness" should go through whatever extension mechanism
-    // for comparison user defined types would have.
-    //
-    bool strict = true;
-    return Init_Logic(OUT, Compare_Modify_Values(v1, v2, strict) == 0);
-}
+    Meta_Quotify(v1);  // may be null or other antiform :-/
+    Meta_Quotify(v2);
 
-
-//
-//  /lesser?: native [
-//
-//  "TRUE if the first value is less than the second value"
-//
-//      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
-//  ]
-//
-DECLARE_NATIVE(lesser_q)
-{
-    INCLUDE_PARAMS_OF_LESSER_Q;
-
-    // !!! R3-Alpha and Red both behave thusly:
-    //
-    //     >> -4.94065645841247E-324 < 0.0
-    //     == true
-    //
-    //     >> -4.94065645841247E-324 = 0.0
-    //     == true
-    //
-    // This is to say that the `=` is operating under non-strict rules, while
-    // the `<` is still strict to see the difference.  Kept this way for
-    // compatibility for now.
-    //
-    // BUT one exception is made for dates, so that they will compare
-    // (26-Jul-2021/7:41:45.314 > 26-Jul-2021) to be false.  This requires
-    // being willing to consider them equal, hence non-strict.
-    //
-    bool strict =
-        HEART_BYTE(ARG(value1)) != REB_DATE
-        and HEART_BYTE(ARG(value2)) != REB_DATE;
-
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff == -1);
-}
-
-
-//
-//  /equal-or-lesser?: native [
-//
-//  "TRUE if the first value is equal to or less than the second value"
-//
-//      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
-//  ]
-//
-DECLARE_NATIVE(equal_or_lesser_q)
-{
-    INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
-
-    bool strict = true;  // see notes in LESSER?
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff == -1 or diff == 0);
+    return rebDelegate("strict-equal?", v1, v2);
 }
 
 
@@ -1092,12 +902,41 @@ DECLARE_NATIVE(greater_q)
 {
     INCLUDE_PARAMS_OF_GREATER_Q;
 
-    bool strict =  // see notes in LESSER?
-        HEART_BYTE(ARG(value1)) != REB_DATE
-        and HEART_BYTE(ARG(value2)) != REB_DATE;
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
 
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff == 1);
+    Quotify(v1, 1);
+    Quotify(v2, 1);
+
+    return rebDelegate(
+        "not any [equal?:strict", v1, v2, "lesser?", v1, v2, "]"
+    );
+}
+
+
+//
+//  /equal-or-lesser?: native [
+//
+//  "TRUE if the first value is equal to or less than the second value"
+//
+//      return: [logic?]
+//      value1 [something?]
+//      value2 [something?]
+//  ]
+//
+DECLARE_NATIVE(equal_or_lesser_q)
+{
+    INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
+
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
+
+    Quotify(v1, 1);
+    Quotify(v2, 1);
+
+    return rebDelegate(
+        "any [equal?:strict", v1, v2, "lesser?", v1, v2, "]"
+    );
 }
 
 
@@ -1115,9 +954,15 @@ DECLARE_NATIVE(greater_or_equal_q)
 {
     INCLUDE_PARAMS_OF_GREATER_OR_EQUAL_Q;
 
-    bool strict = true;  // see notes in LESSER?
-    REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(OUT, diff == 1 or diff == 0);
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
+
+    Quotify(v1, 1);
+    Quotify(v2, 1);
+
+    return rebDelegate(
+        "any [equal?:strict", v1, v2, "not lesser?", v1, v2, "]"
+    );
 }
 
 
@@ -1135,28 +980,17 @@ DECLARE_NATIVE(maximum)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
-    const Value* value1 = ARG(value1);
-    const Value* value2 = ARG(value2);
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
 
-    if (Is_Pair(value1) || Is_Pair(value2)) {
-        Min_Max_Pair(OUT, value1, value2, true);
-    }
-    else {
-        DECLARE_ATOM (coerced1);
-        Copy_Cell(coerced1, value1);
-        DECLARE_ATOM (coerced2);
-        Copy_Cell(coerced2, value2);
+    Quotify(v1, 1);
+    Quotify(v2, 1);
 
-        bool strict = false;
-        REBINT diff = Compare_Modify_Values(coerced1, coerced2, strict);
-        if (diff == 1)
-            Copy_Cell(OUT, value1);
-        else {
-            assert(diff == 0 or diff == -1);
-            Copy_Cell(OUT, value2);
-        }
-    }
-    return OUT;
+    return rebDelegate(
+        "either lesser?", v1, v2,
+            v2,  // quoted, so acts as "soft quoted branch"
+            v1
+    );
 }
 
 
@@ -1174,70 +1008,56 @@ DECLARE_NATIVE(minimum)
 {
     INCLUDE_PARAMS_OF_MINIMUM;
 
-    const Value* value1 = ARG(value1);
-    const Value* value2 = ARG(value2);
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
 
-    if (Is_Pair(ARG(value1)) || Is_Pair(ARG(value2))) {
-        Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
-    }
-    else {
-        DECLARE_ATOM (coerced1);
-        Copy_Cell(coerced1, value1);
-        DECLARE_ATOM (coerced2);
-        Copy_Cell(coerced2, value2);
+    Quotify(v1, 1);
+    Quotify(v2, 1);
 
-        bool strict = false;
-        REBINT diff = Compare_Modify_Values(coerced1, coerced2, strict);
-        if (diff == -1)
-            Copy_Cell(OUT, value1);
-        else {
-            assert(diff == 0 or diff == 1);
-            Copy_Cell(OUT, value2);
-        }
-    }
-    return OUT;
+    return rebDelegate(
+        "either lesser?", v1, v2,
+            v1,  // quoted, so acts as "soft quoted branch"
+            v2
+    );
 }
 
 
-INLINE Element* Init_Zeroed_Hack(Sink(Element) out, Heart heart) {
-    //
-    // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
-    // that clearing the payload of a value and then setting the header made
-    // it the `zero?` of that type.  Review uses.
-    //
-    if (heart == REB_PAIR) {
-        Init_Pair(out, 0, 0);
-    }
-    else {
-        Reset_Cell_Header_Noquote(
-            TRACK(out), FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
-        );
-        memset(&out->extra, 0, sizeof(out->extra));
-        memset(&out->payload, 0, sizeof(out->payload));
-    }
-    return out;
+//
+//  /zeroify: native:generic [
+//
+//  "Zeroed value of the same type and length (1.5 => 1.0, 1.2.3 => 0.0.0)"
+//
+//     return: [any-element?]
+//     example [any-element?]
+//  ]
+//
+DECLARE_NATIVE(zeroify)
+{
+    INCLUDE_PARAMS_OF_ZEROIFY;
+
+    Element* example = Element_ARG(example);
+
+    return Dispatch_Generic(zeroify, example, LEVEL);
 }
 
 
 //
 //  /negative?: native [
 //
-//  "Returns TRUE if the number is negative"
+//  "Returns TRUE if the value is negative"
 //
 //      return: [logic?]
-//      number [any-number? money! time! pair!]
+//      value [any-number? money! time! pair!]
 //  ]
 //
 DECLARE_NATIVE(negative_q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
-    DECLARE_ATOM (zero);
-    Init_Zeroed_Hack(zero, Cell_Heart_Ensure_Noquote(ARG(number)));
+    Value* v = ARG(value);
+    Quotify(v, 1);  // not necessary for scalars, but futureproof it
 
-    bool strict = true;  // don't report "close to zero" as "equal to zero"
-    REBINT diff = Compare_Modify_Values(ARG(number), zero, strict);
-    return Init_Logic(OUT, diff == -1);
+    return rebDelegate(CANON(LESSER_Q), v, CANON(ZEROIFY), v);
 }
 
 
@@ -1247,19 +1067,17 @@ DECLARE_NATIVE(negative_q)
 //  "Returns TRUE if the value is positive"
 //
 //      return: [logic?]
-//      number [any-number? money! time! pair!]
+//      value [any-number? money! time! pair!]
 //  ]
 //
 DECLARE_NATIVE(positive_q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
-    DECLARE_ATOM (zero);
-    Init_Zeroed_Hack(zero, Cell_Heart_Ensure_Noquote(ARG(number)));
+    Value* v = ARG(value);
+    Quotify(v, 1);  // not necessary for scalars, but futureproof it
 
-    bool strict = true;  // don't report "close to zero" as "equal to zero"
-    REBINT diff = Compare_Modify_Values(ARG(number), zero, strict);
-    return Init_Logic(OUT, diff == 1);
+    return rebDelegate(CANON(GREATER_Q), v, CANON(ZEROIFY), v);
 }
 
 
@@ -1269,7 +1087,7 @@ DECLARE_NATIVE(positive_q)
 //  "Returns TRUE if the value is zero (for its datatype)"
 //
 //      return: [logic?]
-//      value
+//      value [any-scalar? pair! char?]
 //  ]
 //
 DECLARE_NATIVE(zero_q)
@@ -1277,32 +1095,7 @@ DECLARE_NATIVE(zero_q)
     INCLUDE_PARAMS_OF_ZERO_Q;
 
     Value* v = ARG(value);
-    if (QUOTE_BYTE(v) != NOQUOTE_1)
-        return Init_Logic(OUT, false);
+    Quotify(v, 1);  // not necessary for scalars, but futureproof it
 
-    Heart heart = Cell_Heart_Ensure_Noquote(v);
-
-    if (heart == REB_ISSUE)  // special case, `#` represents the '\0' codepoint
-        return Init_Logic(OUT, IS_CHAR(v) and Cell_Codepoint(v) == 0);
-
-    if (not Any_Scalar_Kind(heart))
-        return Init_Logic(OUT, false);
-
-    if (heart == REB_TUPLE) {
-        REBLEN len = Cell_Sequence_Len(v);
-        REBLEN i;
-        for (i = 0; i < len; ++i) {
-            Copy_Sequence_At(SPARE, v, i);
-            if (not Is_Integer(SPARE) or VAL_INT64(SPARE) != 0)
-                return Init_Logic(OUT, false);
-        }
-        return Init_Logic(OUT, true);
-    }
-
-    DECLARE_ATOM (zero);
-    Init_Zeroed_Hack(zero, heart);
-
-    bool strict = true;  // don't report "close to zero" as "equal to zero"
-    REBINT diff = Compare_Modify_Values(ARG(value), zero, strict);
-    return Init_Logic(OUT, diff == 0);
+    return rebDelegate(CANON(EQUAL_Q), v, CANON(ZEROIFY), v);
 }

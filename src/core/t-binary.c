@@ -64,6 +64,23 @@ REBINT CT_Blob(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, blob)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Blob(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, blob)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Blob(ARG(value1), ARG(value2), true) == -1);
+}
+
+
+
 /***********************************************************************
 **
 **  Local Utility Functions

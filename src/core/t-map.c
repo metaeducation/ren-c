@@ -75,6 +75,14 @@ REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, map)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Map(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
 //
 //  Make_Map: C
 //

@@ -67,6 +67,31 @@ REBINT CT_Money(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, money)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Money(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, money)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Money(ARG(value1), ARG(value2), true) == -1);
+}
+
+
+IMPLEMENT_GENERIC(zeroify, money)
+{
+    INCLUDE_PARAMS_OF_ZEROIFY;
+    UNUSED(ARG(example));  // always gives $0
+
+    return Init_Money(OUT, int_to_deci(0));
+}
+
+
 IMPLEMENT_GENERIC(make, money)
 {
     INCLUDE_PARAMS_OF_MAKE;

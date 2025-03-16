@@ -341,6 +341,22 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, any_context)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Context(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, any_context)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Context(ARG(value1), ARG(value2), true) == -1);
+}
+
+
 // !!! The feature of MAKE FRAME! from a VARARGS! would be interesting as a
 // way to support usermode authoring of things like MATCH.
 //
@@ -1380,6 +1396,22 @@ REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
         return a_coupling > b_coupling ? 1 : -1;
 
     return CT_Context(a, b, strict);
+}
+
+
+IMPLEMENT_GENERIC(equal_q, frame)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Frame(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, frame)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Frame(ARG(value1), ARG(value2), true) == 0);
 }
 
 

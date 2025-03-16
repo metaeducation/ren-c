@@ -98,6 +98,38 @@ REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, date)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Date(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+// !!! R3-Alpha and Red both behave thusly:
+//
+//     >> -4.94065645841247E-324 < 0.0
+//     == true
+//
+//     >> -4.94065645841247E-324 = 0.0
+//     == true
+//
+// This is to say that the `=` is operating under non-strict rules, while
+// the `<` is still strict to see the difference.  Kept this way for
+// compatibility for now.
+//
+// BUT one exception is made for dates, so that they will compare
+// (26-Jul-2021/7:41:45.314 > 26-Jul-2021) to be false.  This requires
+// being willing to consider them equal, hence non-strict.
+//
+IMPLEMENT_GENERIC(lesser_q, date)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Date(ARG(value1), ARG(value2), false) == -1);
+}
+
+
 //
 //  MF_Date: C
 //

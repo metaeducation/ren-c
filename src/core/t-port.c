@@ -37,6 +37,14 @@ REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, port)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Port(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
 // Create a new port. This is done by calling the MAKE-PORT* function in
 // the system context.
 //

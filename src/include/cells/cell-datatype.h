@@ -140,8 +140,5 @@ extern CFunction* Builtin_Type_Hooks[REB_MAX_HEART][IDX_HOOKS_MAX];
 INLINE GenericHook* Generic_Hook_For_Heart(Heart h)
   { return cast(GenericHook*, Builtin_Type_Hooks[h][IDX_GENERIC_HOOK]); }
 
-INLINE CompareHook* Compare_Hook_For_Heart(Heart h)
-  { return cast(CompareHook*, Builtin_Type_Hooks[h][IDX_COMPARE_HOOK]); }
-
 INLINE MoldHook* Mold_Hook_For_Heart(Heart h)
   { return cast(MoldHook*, Builtin_Type_Hooks[h][IDX_MOLD_HOOK]); }

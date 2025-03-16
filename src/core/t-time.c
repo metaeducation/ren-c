@@ -233,6 +233,31 @@ REBINT CT_Time(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, time)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Time(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, time)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Time(ARG(value1), ARG(value2), true) == -1);
+}
+
+
+IMPLEMENT_GENERIC(zeroify, time)
+{
+    INCLUDE_PARAMS_OF_ZEROIFY;
+    UNUSED(ARG(example));  // always gives 0:00
+
+    return Init_Time_Nanoseconds(OUT, 0);
+}
+
+
 IMPLEMENT_GENERIC(make, time)
 {
     INCLUDE_PARAMS_OF_MAKE;

@@ -61,6 +61,23 @@ REBINT CT_Pair(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, pair)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Pair(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(zeroify, pair)
+{
+    INCLUDE_PARAMS_OF_ZEROIFY;
+    UNUSED(ARG(example));  // always gives 0x0
+
+    return Init_Pair(OUT, 0, 0);
+}
+
+
 IMPLEMENT_GENERIC(make, pair)
 {
     INCLUDE_PARAMS_OF_MAKE;

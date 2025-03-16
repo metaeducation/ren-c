@@ -542,6 +542,14 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, varargs)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Varargs(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
 //
 //  MF_Varargs: C
 //

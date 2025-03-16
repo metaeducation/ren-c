@@ -88,6 +88,22 @@ REBINT CT_List(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, any_list)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_List(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, any_list)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_List(ARG(value1), ARG(value2), true) == -1);
+}
+
+
 // "Make Type" dispatcher for BLOCK!, GROUP!, FENCE!, and variants (THE-GROUP!,
 // TYPE-FENCE!, etc.)
 //

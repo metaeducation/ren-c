@@ -41,6 +41,32 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, integer)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Integer(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, integer)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Integer(ARG(value1), ARG(value2), true) == -1);
+}
+
+
+IMPLEMENT_GENERIC(zeroify, integer)
+{
+    INCLUDE_PARAMS_OF_ZEROIFY;
+    UNUSED(ARG(example));  // always gives 0
+
+    return Init_Integer(OUT, 0);
+}
+
+
+
 // 1. This is a kind of crazy historical idea where this works:
 //
 //        rebol2>> make integer! <11.2e-1>

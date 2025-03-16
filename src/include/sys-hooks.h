@@ -38,17 +38,6 @@ enum {
 };
 
 
-// PER-TYPE COMPARE HOOKS, to support GREATER?, EQUAL?, LESSER?...
-//
-// Every datatype should have a comparison function, because otherwise a
-// block containing an instance of that type cannot SORT.  Like the
-// generic dispatchers, compare hooks are done on a per-class basis, with
-// no overrides for individual types (only if they are the only type in
-// their class).
-//
-typedef REBINT (CompareHook)(const Cell*, const Cell*, bool strict);
-
-
 //
 // EXTENSION COLLATOR FUNCTION DEFINITION
 //

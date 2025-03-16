@@ -89,6 +89,15 @@ REBINT CT_Blank(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, blank)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Blank(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+
 //
 //  DECLARE_GENERICS: C
 //
@@ -283,6 +292,14 @@ REBINT CT_Handle(const Cell* a, const Cell* b, bool strict)
     return Cell_Handle_Pointer(Byte, a) > Cell_Handle_Pointer(Byte, b)
         ? 1
         : -1;
+}
+
+
+IMPLEMENT_GENERIC(equal_q, handle)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Handle(ARG(value1), ARG(value2), REF(strict)) == 0);
 }
 
 

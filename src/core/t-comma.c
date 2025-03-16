@@ -63,6 +63,14 @@ REBINT CT_Comma(const Cell* a, const Cell* b, bool strict)
 }
 
 
+IMPLEMENT_GENERIC(equal_q, comma)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Comma(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
 //
 //  DECLARE_GENERICS: C
 //

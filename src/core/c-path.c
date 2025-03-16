@@ -211,3 +211,50 @@ REBINT CT_Sequence(const Cell* a, const Cell* b, bool strict)
 
     return 0;
 }
+
+
+IMPLEMENT_GENERIC(equal_q, any_sequence)
+{
+    INCLUDE_PARAMS_OF_EQUAL_Q;
+
+    return LOGIC(CT_Sequence(ARG(value1), ARG(value2), REF(strict)) == 0);
+}
+
+
+IMPLEMENT_GENERIC(lesser_q, any_sequence)
+{
+    INCLUDE_PARAMS_OF_LESSER_Q;
+
+    return LOGIC(CT_Sequence(ARG(value1), ARG(value2), true) == -1);
+}
+
+
+// !!! We need to zeroify 1.2.3 as 0.0.0 which is used in things like the
+// ZERO? test (we don't have a hook for ZERO?, it's built on top of EQUAL?
+// and zeroify).  However should it be willing to zeroify any tuple, such
+// as A.B.C, or should it only be willing to zeroify things that are all
+// numbers?  For now, let's insist on zeroification of numeric sequences
+// and wait to see if a more general need arises.
+//
+IMPLEMENT_GENERIC(zeroify, any_sequence)
+{
+    INCLUDE_PARAMS_OF_ZEROIFY;
+
+    Element* sequence = Element_ARG(example);
+
+    Heart heart = Cell_Heart(sequence);
+    assert(Any_Sequence_Kind(heart));
+
+    REBLEN len = Cell_Sequence_Len(sequence);
+    REBLEN n;
+    for (n = 0; n < len; ++n) {
+        if (not Is_Integer(Copy_Sequence_At(SPARE, sequence, n)))
+            return FAIL("Can only zeroify sequences of integers at this time");
+        Init_Integer(PUSH(), 0);
+    }
+    Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
+    assert(not error);
+    UNUSED(error);
+
+    return OUT;
+}

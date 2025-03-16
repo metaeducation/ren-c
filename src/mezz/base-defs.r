@@ -87,6 +87,21 @@ lib: system.contexts.lib  ; alias for faster access
 /and-not+: infix bitwise-and-not/
 
 
+; It's easier to pre-process CASCADE's block in usermode, which also offers a
+; lower-level version CASCADE* that just takes a block of frames.
+;
+/cascade: adapt cascade*/ [
+    pipeline: reduce:predicate pipeline unrun/
+]
+
+
+; Equality variants (note: bootstrap needs to REDESCRIBE)
+
+/not-equal?: cascade [equal?/ not/] ; should optimize for intrinsics
+/strict-equal?: equal?:strict/
+/strict-not-equal?: cascade [strict-equal?/ not/]
+
+
 ; COMPARISON OPERATORS
 ;
 ; !!! See discussion about the future of comparison operators:
@@ -177,14 +192,6 @@ lib: system.contexts.lib  ; alias for faster access
 ; recognize.  map x each [a b c] [...]` will give you x as a, then b, then c.
 ;
 each: quote/
-
-
-; It's easier to pre-process CASCADE's block in usermode, which also offers a
-; lower-level version CASCADE* that just takes a block of frames.
-;
-/cascade: adapt cascade*/ [
-    pipeline: reduce:predicate pipeline unrun/
-]
 
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.
