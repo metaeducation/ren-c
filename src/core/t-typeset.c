@@ -452,8 +452,8 @@ DECLARE_NATIVE(decorate_parameter)
 {
     INCLUDE_PARAMS_OF_DECORATE_PARAMETER;
 
-    Element* element = cast(Element*, ARG(element));
-    Element* param = cast(Element*, ARG(parameter));
+    Element* element = Element_ARG(element);
+    Element* param = Element_ARG(parameter);
     return COPY(Decorate_According_To_Parameter(element, param));
 }
 

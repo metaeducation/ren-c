@@ -778,7 +778,7 @@ DECLARE_NATIVE(get)
 {
     INCLUDE_PARAMS_OF_GET;
 
-    Element* source = cast(Element*, ARG(source));
+    Element* source = Element_ARG(source);
 
     if (Any_Chain(source)) {  // GET-WORD, SET-WORD, SET-GROUP, etc.
         if (Try_Get_Sequence_Singleheart(source))
@@ -1185,7 +1185,7 @@ DECLARE_NATIVE(set)
     if (Is_Void(ARG(target)))
         return COPY(setval);   // same behavior for SET as [10 = (void): 10]
 
-    Element* target = cast(Element*, ARG(target));
+    Element* target = Element_ARG(target);
     if (Any_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
 
@@ -1250,7 +1250,7 @@ DECLARE_NATIVE(set_accessor)
 {
     INCLUDE_PARAMS_OF_SET_ACCESSOR;
 
-    Element* word = cast(Element*, ARG(var));
+    Element* word = Element_ARG(var);
     Value* action = ARG(action);
 
     Value* var = Lookup_Mutable_Word_May_Fail(word, SPECIFIED);

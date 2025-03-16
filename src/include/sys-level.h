@@ -677,7 +677,7 @@ INLINE Level* Prep_Level_Core(
     Level_Arg(level_, (p_##name##_))
 
 #define Element_ARG(name) \
-    cast(Element*, Level_Arg(level_, p_##name##_))
+    Known_Element(Level_Arg(level_, p_##name##_))  // checked build asserts
 
 #define LOCAL(name) \
     ARG(name)  // alias (should p_##name## be different to enforce?)

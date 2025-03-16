@@ -412,8 +412,8 @@ DECLARE_NATIVE(function)
 {
     INCLUDE_PARAMS_OF_FUNCTION;
 
-    Element* spec = cast(Element*, ARG(spec));
-    Element* body = cast(Element*, ARG(body));
+    Element* spec = Element_ARG(spec);
+    Element* body = Element_ARG(body);
 
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,

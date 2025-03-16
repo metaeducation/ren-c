@@ -146,7 +146,7 @@ DECLARE_NATIVE(encode_ieee_754) {
 DECLARE_NATIVE(decode_ieee_754) {
     INCLUDE_PARAMS_OF_DECODE_IEEE_754;
 
-    Element* blob = cast(Element*, ARG(blob));
+    Element* blob = Element_ARG(blob);
 
     if (Cell_Series_Len_At(ARG(options)))
         return FAIL("IEEE-754 single precision not currently supported");
@@ -1273,7 +1273,7 @@ DECLARE_NATIVE(add_to_binary)
 {
     INCLUDE_PARAMS_OF_ADD_TO_BINARY;
 
-    Element* blob = cast(Element*, ARG(blob));
+    Element* blob = Element_ARG(blob);
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
     REBINT delta = VAL_INT32(ARG(delta));

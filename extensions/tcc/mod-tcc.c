@@ -279,8 +279,8 @@ DECLARE_NATIVE(make_native)
 {
     INCLUDE_PARAMS_OF_MAKE_NATIVE;
 
-    Element* spec = cast(Element*, ARG(spec));
-    Element* source = cast(Element*, ARG(source));
+    Element* spec = Element_ARG(spec);
+    Element* source = Element_ARG(source);
 
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(

@@ -133,7 +133,7 @@ DECLARE_NATIVE(pick)
         Init_Integer(picker, 2);
     }
 
-    Element* location = cast(Element*, ARG(location));
+    Element* location = Element_ARG(location);
     return Run_Generic_Dispatch(location, LEVEL, CANON(PICK));
 }
 

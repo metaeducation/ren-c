@@ -797,7 +797,7 @@ DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Element* types = cast(Element*, ARG(types));
+    Element* types = Element_ARG(types);
     return Init_Typechecker(OUT, types);
 }
 

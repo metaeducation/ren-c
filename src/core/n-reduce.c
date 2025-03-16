@@ -44,7 +44,7 @@ DECLARE_NATIVE(reduce)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Element* v = cast(Element*, ARG(value));  // newline flag leveraged [2]
+    Element* v = Element_ARG(value);  // newline flag leveraged [2]
     Value* predicate = ARG(predicate);
 
     enum {
@@ -871,8 +871,8 @@ DECLARE_NATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
-    Element* pattern = cast(Element*, ARG(pattern));
-    Element* t = cast(Element*, ARG(template));
+    Element* pattern = Element_ARG(pattern);
+    Element* t = Element_ARG(template);
 
     USED(ARG(predicate));  // used by Composer_Executor() via main_level
     USED(ARG(deep));

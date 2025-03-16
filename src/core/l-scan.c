@@ -3064,7 +3064,7 @@ DECLARE_NATIVE(transcode)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 
-    Element* source = Ensure_Element(ARG(source));
+    Element* source = Element_ARG(source);
 
     Size size;
     const Byte* bp = Cell_Bytes_At(&size, source);
@@ -3150,7 +3150,7 @@ DECLARE_NATIVE(transcode)
     if (Any_Word(ARG(line)))
         Get_Var_May_Fail(
             line_number,
-            cast(Element*, ARG(line)),
+            Element_ARG(line),
             SPECIFIED
         );
     else
@@ -3242,7 +3242,7 @@ DECLARE_NATIVE(transcode)
 
     if (REF(line) and Is_Word(ARG(line))) {  // wanted the line number updated
         Element* line_int = Init_Integer(SCRATCH, ss->line);
-        const Element* line_var = cast(Element*, ARG(line));
+        const Element* line_var = Element_ARG(line);
         if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
             return THROWN;
     }

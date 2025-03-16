@@ -125,7 +125,7 @@ DECLARE_NATIVE(join)
 {
     INCLUDE_PARAMS_OF_JOIN;
 
-    Element* base = cast(Element*, ARG(base));
+    Element* base = Element_ARG(base);
     Value* rest = ARG(rest);
 
     Value* original_index = LOCAL(original_index);

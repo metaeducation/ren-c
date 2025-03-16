@@ -160,7 +160,7 @@ DECLARE_NATIVE(arrow)
     INCLUDE_PARAMS_OF_ARROW;
 
     Value* spec = ARG(spec);
-    Element* body = cast(Element*, ARG(body));
+    Element* body = Element_ARG(body);
 
     bool optimizable = true;
 

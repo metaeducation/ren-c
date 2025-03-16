@@ -40,7 +40,7 @@ DECLARE_NATIVE(form)
 {
     INCLUDE_PARAMS_OF_FORM;
 
-    Element* elem = cast(Element*, ARG(value));
+    Element* elem = Element_ARG(value);
 
     return Init_Text(OUT, Copy_Form_Element(elem, 0));
 }

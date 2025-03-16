@@ -54,7 +54,7 @@ DECLARE_NATIVE(reeval)
     //
     UNUSED(ARG(expressions));
 
-    Element* v = cast(Element*, ARG(value));
+    Element* v = Element_ARG(value);
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
@@ -105,7 +105,7 @@ DECLARE_NATIVE(shove)
     if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(right)))
         return FAIL("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
-    Element* left = cast(Element*, ARG(left));
+    Element* left = Element_ARG(left);
 
     if (Is_Level_At_End(L))  // shouldn't be for WORD!/PATH! unless APPLY
         return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
@@ -274,7 +274,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    Element* source = cast(Element*, ARG(source));
+    Element* source = Element_ARG(source);
 
     enum {
         ST_EVALUATE_INITIAL_ENTRY = STATE_0,
@@ -921,7 +921,7 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
     if (STATE != STATE_0)  // [2]
         return NATIVE_CFUNC(apply)(level_);
 
-    Element* operation = cast(Element*, ARG(operation));
+    Element* operation = Element_ARG(operation);
 
     Option(Error*) error = Trap_Get_Var(
         SPARE, GROUPS_OK, operation, SPECIFIED

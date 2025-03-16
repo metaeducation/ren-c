@@ -616,7 +616,7 @@ IMPLEMENT_GENERIC(oldgeneric, map)
 
         REBINT n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
-            cast(Element*, ARG(value)),
+            Element_ARG(value),
             nullptr,  // nullptr indicates it will only search, not modify
             REF(case)
         );
@@ -647,7 +647,7 @@ IMPLEMENT_GENERIC(oldgeneric, map)
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),
-            cast(Element*, ARG(key)),
+            Element_ARG(key),
             val,  // non-nullptr means modify
             REF(case)
         );

@@ -213,7 +213,20 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
 
 //=//// ENSURE THINGS ARE ELEMENTS ////////////////////////////////////////=//
 //
-// An array element can't be an antiform.
+// An array element can't be an antiform.  Use Known_Element() when you are
+// sure you have an element and only want it checked in the debug build, and
+// Ensure_Element() when you are not sure and want to raise an error.
+//
+
+#if NO_RUNTIME_CHECKS
+    #define Known_Element(cell) \
+        cast(Element*, (cell))
+#else
+    INLINE Element* Known_Element(const_if_c Atom* cell) {
+        assert(QUOTE_BYTE(cell) != ANTIFORM_0);
+        return u_cast(Element*, cell);
+    }
+#endif
 
 INLINE Element* Ensure_Element(const_if_c Atom* cell) {
     if (QUOTE_BYTE(cell) == ANTIFORM_0)
@@ -225,8 +238,19 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
     INLINE const Element* Ensure_Element(const Atom* cell)
       { return Ensure_Element(m_cast(Atom*, cell)); }
 
+  #if RUNTIME_CHECKS
+    INLINE const Element* Known_Element(const Atom* cell) {
+        assert(QUOTE_BYTE(cell) != ANTIFORM_0);
+        return c_cast(Element*, cell);
+    }
+  #endif
+
   #if CHECK_CELL_SUBCLASSES
     void Ensure_Element(const Element*) = delete;
+
+    #if RUNTIME_CHECKS
+        void Known_Element(const Element*) = delete;
+    #endif
   #endif
 #endif
 

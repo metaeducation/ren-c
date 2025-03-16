@@ -556,7 +556,7 @@ DECLARE_NATIVE(wrap_p)
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
 
     Context* context = Cell_Context(ARG(context));
-    Element* list = cast(Element*, ARG(list));
+    Element* list = Element_ARG(list);
 
     Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
     if (e)
@@ -587,7 +587,7 @@ DECLARE_NATIVE(wrap)
 {
     INCLUDE_PARAMS_OF_WRAP;
 
-    Element* list = cast(Element*, ARG(list));
+    Element* list = Element_ARG(list);
 
     const Element* tail;
     const Element* at = Cell_List_At(&tail, list);

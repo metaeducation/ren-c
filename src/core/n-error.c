@@ -39,7 +39,7 @@ DECLARE_NATIVE(try)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Element* meta = cast(Element*, ARG(atom));
+    Element* meta = Element_ARG(atom);
 
     if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
         return Init_Nulled(OUT);
@@ -257,7 +257,7 @@ DECLARE_NATIVE(except)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Element* meta_atom = cast(Element*, ARG(atom));
+    Element* meta_atom = Element_ARG(atom);
     Value* branch = ARG(branch);
 
     if (not Is_Meta_Of_Raised(meta_atom))

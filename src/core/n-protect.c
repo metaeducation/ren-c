@@ -38,7 +38,7 @@
 DECLARE_NATIVE(const) {
     INCLUDE_PARAMS_OF_CONST;
 
-    Element* e = cast(Element*, ARG(value));
+    Element* e = Element_ARG(value);
     Set_Cell_Flag(e, CONST);
 
     return COPY(e);
@@ -80,7 +80,7 @@ DECLARE_NATIVE(mutable)
 {
     INCLUDE_PARAMS_OF_MUTABLE;
 
-    Element* e = cast(Element*, ARG(value));
+    Element* e = Element_ARG(value);
     Clear_Cell_Flag(e, CONST);
 
     return COPY(e);
@@ -385,7 +385,7 @@ DECLARE_NATIVE(protect)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    Element* e = cast(Element*, ARG(value));
+    Element* e = Element_ARG(value);
     if (Any_Word(e) or Any_Tuple(e)) {
         if (REF(hide))
             Init_Word(SPARE, CANON(HIDE));
@@ -448,7 +448,7 @@ DECLARE_NATIVE(unprotect)
     if (REF(hide))
         fail ("Cannot un-hide an object field once hidden");
 
-    Element* e = cast(Element*, ARG(value));
+    Element* e = Element_ARG(value);
     if (Any_Word(e) or Any_Tuple(e)) {
         Init_Word(SPARE, CANON(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(

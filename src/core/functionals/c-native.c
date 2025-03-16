@@ -196,7 +196,7 @@ DECLARE_NATIVE(native)
             "NATIVE is for internal use during boot and extension loading"
         );
 
-    Element* spec = cast(Element*, ARG(spec));
+    Element* spec = Element_ARG(spec);
 
     if (REF(combinator) and REF(intrinsic))
         return FAIL(Error_Bad_Refines_Raw());

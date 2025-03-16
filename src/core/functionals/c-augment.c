@@ -86,8 +86,8 @@ DECLARE_NATIVE(augment)
 {
     INCLUDE_PARAMS_OF_AUGMENT;
 
-    Element* spec = cast(Element*, ARG(spec));
-    Element* original = cast(Element*, ARG(original));
+    Element* spec = Element_ARG(spec);
+    Element* original = Element_ARG(original);
 
     Option(const Symbol*) label = Cell_Frame_Label_Deep(original);
     Option(VarList*) coupling = Cell_Frame_Coupling(original);

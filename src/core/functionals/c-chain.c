@@ -280,7 +280,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
 
     Atom* out = OUT;  // plan ahead for factoring into Cascade_Action(out..
 
-    Element* pipeline = cast(Element*, ARG(pipeline));
+    Element* pipeline = Element_ARG(pipeline);
     const Element* tail;
     const Element* first = Cell_List_At(&tail, pipeline);
 

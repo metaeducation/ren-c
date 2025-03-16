@@ -1195,7 +1195,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
     const Element* val;
     if (not Is_Block(ARG(value)))
-        val = cast(Element*, ARG(value));
+        val = Element_ARG(value);
     else {
         ports = ARG(value);
 

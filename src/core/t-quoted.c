@@ -63,7 +63,7 @@ DECLARE_NATIVE(the)
 {
     INCLUDE_PARAMS_OF_THE;
 
-    Element* v = cast(Element*, ARG(value));
+    Element* v = Element_ARG(value);
 
     if (REF(soft) and Is_Soft_Escapable_Group(v)) {
         if (Eval_Any_List_At_Throws(OUT, v, SPECIFIED))
@@ -93,7 +93,7 @@ DECLARE_NATIVE(just)
 {
     INCLUDE_PARAMS_OF_JUST;
 
-    Element* quoted = cast(Element*, ARG(element));
+    Element* quoted = Element_ARG(element);
     return COPY(quoted);
 }
 
@@ -114,7 +114,7 @@ DECLARE_NATIVE(quote)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
     if (depth < 0)
@@ -257,7 +257,7 @@ DECLARE_NATIVE(unquasi)
 {
     INCLUDE_PARAMS_OF_UNQUASI;
 
-    Element* quasi = cast(Element*, ARG(quasiform));
+    Element* quasi = Element_ARG(quasiform);
     return COPY(Unquasify(quasi));
 }
 
@@ -302,7 +302,7 @@ DECLARE_NATIVE(anti)
 {
     INCLUDE_PARAMS_OF_ANTI;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
 
     if (Is_Quoted(e))
         return FAIL("QUOTED! values have no antiform");
@@ -527,7 +527,7 @@ DECLARE_NATIVE(pack)
 {
     INCLUDE_PARAMS_OF_PACK;
 
-    Element* block = cast(Element*, ARG(block));
+    Element* block = Element_ARG(block);
 
     if (Pack_Native_Core_Throws(OUT, block, LIB(META)))  // no raised [1]
         return THROWN;
@@ -555,7 +555,7 @@ DECLARE_NATIVE(pack_p)
 {
     INCLUDE_PARAMS_OF_PACK_P;
 
-    Element* block = cast(Element*, ARG(block));
+    Element* block = Element_ARG(block);
 
     if (Pack_Native_Core_Throws(OUT, block, LIB(META_P)))  // raise ok [1]
         return THROWN;

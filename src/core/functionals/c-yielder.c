@@ -509,8 +509,8 @@ DECLARE_NATIVE(yielder)
 {
     INCLUDE_PARAMS_OF_YIELDER;
 
-    Element* spec = cast(Element*, ARG(spec));
-    Element* body = cast(Element*, ARG(body));
+    Element* spec = Element_ARG(spec);
+    Element* body = Element_ARG(body);
 
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,
@@ -597,7 +597,7 @@ DECLARE_NATIVE(definitional_yield)
       default: assert(false);
     }
 
-    Element* meta = cast(Element*, ARG(atom));
+    Element* meta = Element_ARG(atom);
 
   //=//// EXTRACT YIELDER FROM DEFINITIONAL YIELD'S CELL ///////////////////=//
 

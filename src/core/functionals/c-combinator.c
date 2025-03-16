@@ -242,8 +242,8 @@ DECLARE_NATIVE(combinator)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
-    Element* spec = cast(Element*, ARG(spec));
-    Element* body = cast(Element*, ARG(body));
+    Element* spec = Element_ARG(spec);
+    Element* body = Element_ARG(body);
 
     // This creates the expanded spec and puts it in a block which manages it.
     // That might not be needed if the Make_Paramlist_Managed() could take an

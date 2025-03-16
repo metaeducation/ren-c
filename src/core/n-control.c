@@ -1443,7 +1443,7 @@ DECLARE_NATIVE(default)
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
-    Element* target = cast(Element*, ARG(target));
+    Element* target = Element_ARG(target);
     Value* branch = ARG(branch);
     Value* predicate = ARG(predicate);
 
@@ -1524,8 +1524,8 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
 {
     INCLUDE_PARAMS_OF_CATCH_P;
 
-    Element* block = cast(Element*, ARG(block));
-    Element* name = cast(Element*, ARG(name));
+    Element* block = Element_ARG(block);
+    Element* name = Element_ARG(name);
     Level* catch_level = level_;
 
     enum {

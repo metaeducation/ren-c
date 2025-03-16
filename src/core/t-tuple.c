@@ -194,7 +194,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_sequence)
       handle_as_conversion:
       case SYM_AS: {
         INCLUDE_PARAMS_OF_AS;
-        Element* v = cast(Element*, ARG(element));  // sequence
+        Element* v = Element_ARG(element);  // sequence
         Heart as = VAL_TYPE_HEART(ARG(type));
 
         if (Any_Sequence_Kind(as)) {  // not all aliasings are legal [1]

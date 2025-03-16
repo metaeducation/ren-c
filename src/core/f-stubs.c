@@ -568,7 +568,7 @@ DECLARE_NATIVE(setify)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
 
     return COPY(Setify(e));
 }
@@ -602,7 +602,7 @@ DECLARE_NATIVE(getify)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
 
     return COPY(Getify(e));
 }
@@ -749,7 +749,7 @@ DECLARE_NATIVE(plain)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
 
     return COPY(Plainify(e));
 }
@@ -768,7 +768,7 @@ DECLARE_NATIVE(unchain)
 {
     INCLUDE_PARAMS_OF_UNCHAIN;
 
-    Element* e = cast(Element*, ARG(chain));
+    Element* e = Element_ARG(chain);
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
@@ -791,7 +791,7 @@ DECLARE_NATIVE(unpath)
 {
     INCLUDE_PARAMS_OF_UNPATH;
 
-    Element* e = cast(Element*, ARG(chain));
+    Element* e = Element_ARG(chain);
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
@@ -814,7 +814,7 @@ DECLARE_NATIVE(untuple)
 {
     INCLUDE_PARAMS_OF_UNTUPLE;
 
-    Element* e = cast(Element*, ARG(chain));
+    Element* e = Element_ARG(chain);
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)

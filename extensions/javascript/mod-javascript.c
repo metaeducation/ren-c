@@ -903,8 +903,8 @@ DECLARE_NATIVE(js_native)
 {
     INCLUDE_PARAMS_OF_JS_NATIVE;
 
-    Element* spec = cast(Element*, ARG(spec));
-    Element* source = cast(Element*, ARG(source));
+    Element* spec = Element_ARG(spec);
+    Element* source = Element_ARG(source);
 
     StackIndex base = TOP_INDEX;
 

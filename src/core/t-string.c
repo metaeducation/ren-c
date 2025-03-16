@@ -1363,7 +1363,7 @@ DECLARE_NATIVE(decode_utf_8)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF_8;
 
-    Element* blob = cast(Element*, ARG(blob));
+    Element* blob = Element_ARG(blob);
 
     if (Cell_Series_Len_At(ARG(options)))
         return FAIL("UTF-8 Decoder Options not Designed Yet");

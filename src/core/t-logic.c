@@ -104,7 +104,7 @@ DECLARE_NATIVE(logical)
 {
     INCLUDE_PARAMS_OF_LOGICAL;
 
-    Element* n = cast(Element*, ARG(number));
+    Element* n = Element_ARG(number);
     return Init_Logic(OUT, VAL_INT64(n) != 0);
 }
 
@@ -494,7 +494,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_AND_1;
 
     Value* left = ARG(left);
-    Element* right = cast(Element*, ARG(right));
+    Element* right = Element_ARG(right);
 
     if (Is_Inhibitor(left))
         return Init_Logic(OUT, false);
@@ -522,7 +522,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_OR_1;
 
     Value* left = ARG(left);
-    Element* right = cast(Element*, ARG(right));
+    Element* right = Element_ARG(right);
 
     if (Is_Trigger(left))
         return Init_Logic(OUT, true);
@@ -550,7 +550,7 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_XOR_1;
 
     Value* left = ARG(left);
-    Element* right = cast(Element*, ARG(right));
+    Element* right = Element_ARG(right);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
@@ -583,7 +583,7 @@ DECLARE_NATIVE(unless)
     INCLUDE_PARAMS_OF_UNLESS;
 
     Value* left = ARG(left);
-    Element* meta_right = cast(Element*, ARG(right));
+    Element* meta_right = Element_ARG(right);
 
     if (Is_Meta_Of_Void(meta_right) or Is_Meta_Of_Null(meta_right))
         return COPY(left);

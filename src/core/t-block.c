@@ -770,7 +770,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
       handle_as_conversion:
       case SYM_AS: {
         INCLUDE_PARAMS_OF_AS;
-        Element* v = cast(Element*, ARG(element));  // list
+        Element* v = Element_ARG(element);  // list
         Heart as = VAL_TYPE_HEART(ARG(type));
 
         if (Any_List_Kind(as)) {
@@ -1316,9 +1316,9 @@ IMPLEMENT_GENERIC(make, type_block)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Element* type = cast(Element*, ARG(type));
+    Element* type = Element_ARG(type);
 
-    Element* def = cast(Element*, ARG(def));
+    Element* def = Element_ARG(def);
     USED(def);  // will be inherited via the level
 
     if (not Is_Type_Block(type))

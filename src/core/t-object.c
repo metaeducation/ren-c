@@ -1115,7 +1115,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_context)
       case SYM_EXTEND: {
         INCLUDE_PARAMS_OF_EXTEND;
         UNUSED(ARG(context));
-        Element* def = cast(Element*, ARG(def));
+        Element* def = Element_ARG(def);
 
         if (Is_Word(def)) {
             bool strict = true;

@@ -359,7 +359,7 @@ DECLARE_NATIVE(to_char)
 {
     INCLUDE_PARAMS_OF_TO_CHAR;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
     if (Is_Integer(e)) {
         uint32_t c = VAL_UINT32(e);
         Option(Error*) error = Trap_Init_Char(OUT, c);
@@ -409,7 +409,7 @@ DECLARE_NATIVE(nul_q)
 {
     INCLUDE_PARAMS_OF_NUL_Q;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
     return Init_Logic(OUT, Is_NUL(e));
 }
 
@@ -598,7 +598,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_utf8)
       handle_to_conversion:
       case SYM_TO: {
         INCLUDE_PARAMS_OF_TO;
-        Element* v = cast(Element*, ARG(element));  // issue, email, etc.
+        Element* v = Element_ARG(element);  // issue, email, etc.
         Heart to = VAL_TYPE_HEART(ARG(type));
         possibly(Any_Word(v));  // delegates some cases
 
@@ -729,7 +729,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_utf8)
       handle_as_conversion:
       case SYM_AS: {
         INCLUDE_PARAMS_OF_AS;
-        Element* v = cast(Element*, ARG(element));  // issue, email, etc.
+        Element* v = Element_ARG(element);  // issue, email, etc.
         Heart as = VAL_TYPE_HEART(ARG(type));
         assert(not Any_Word(v));  // not delegated
 

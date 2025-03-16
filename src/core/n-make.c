@@ -42,7 +42,7 @@ DECLARE_NATIVE(make)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Element* type = cast(Element*, ARG(type));
+    Element* type = Element_ARG(type);
     UNUSED(ARG(def));
 
     return Dispatch_Generic(make, type, LEVEL);
@@ -233,7 +233,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     Option(const Symbol*) label = Level_Label(level_);
 
-    Element* type = cast(Element*, ARG(type));
+    Element* type = Element_ARG(type);
     STATE = VAL_TYPE_HEART(type);  // generic code may trash TYPE when it runs
     Copy_Cell(SPARE, ARG(element));  // may trash ELEMENT too, save in SPARE
 
@@ -270,7 +270,7 @@ DECLARE_NATIVE(to)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
     UNUSED(ARG(type));
 
   #if NO_RUNTIME_CHECKS
@@ -317,7 +317,7 @@ DECLARE_NATIVE(as)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* e = cast(Element*, ARG(element));
+    Element* e = Element_ARG(element);
     Kind as = VAL_TYPE_KIND(ARG(type));
     if (as >= REB_MAX_HEART)
         return FAIL("AS can't alias to quoted/quasiform/antiform");

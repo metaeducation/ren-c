@@ -82,8 +82,8 @@ DECLARE_NATIVE(add)
 {
     INCLUDE_PARAMS_OF_ADD;
 
-    Element* e1 = cast(Element*, ARG(value1));
-    Element* e2 = cast(Element*, ARG(value2));
+    Element* e1 = Element_ARG(value1);
+    Element* e2 = Element_ARG(value2);
 
     if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
         if (not Is_Integer(e2))
@@ -130,8 +130,8 @@ DECLARE_NATIVE(subtract)
 {
     INCLUDE_PARAMS_OF_SUBTRACT;
 
-    Element* e1 = cast(Element*, ARG(value1));
-    Element* e2 = cast(Element*, ARG(value2));
+    Element* e1 = Element_ARG(value1);
+    Element* e2 = Element_ARG(value2);
 
     if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
         if (Is_NUL(e2))
@@ -183,8 +183,8 @@ DECLARE_NATIVE(multiply)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Element* e1 = cast(Element*, ARG(value1));
-    Element* e2 = cast(Element*, ARG(value2));
+    Element* e1 = Element_ARG(value1);
+    Element* e2 = Element_ARG(value2);
 
     if (HEART_BYTE(e1) < HEART_BYTE(e2)) {  // simpler type is on left [1]
         Move_Cell(stable_SPARE, e2);

@@ -153,7 +153,7 @@ DECLARE_NATIVE(dump)
     INCLUDE_PARAMS_OF_DUMP;
 
   #if RUNTIME_CHECKS
-    Element* v = cast(Element*, ARG(value));
+    Element* v = Element_ARG(value);
 
     PROBE(v);
     printf("=> ");

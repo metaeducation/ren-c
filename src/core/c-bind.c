@@ -927,7 +927,7 @@ DECLARE_NATIVE(add_let_binding)
 DECLARE_NATIVE(add_use_object) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
-    Element* object = cast(Element*, ARG(object));
+    Element* object = Element_ARG(object);
 
     Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(ARG(frame)));
     Context* L_binding = Level_Binding(L);

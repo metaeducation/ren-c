@@ -48,7 +48,7 @@ DECLARE_NATIVE(bind)
     INCLUDE_PARAMS_OF_BIND;
 
     Value* v = ARG(value);
-    Element* spec = cast(Element*, ARG(spec));
+    Element* spec = Element_ARG(spec);
 
     if (Is_Block(spec)) {
         const Element* tail;
@@ -134,7 +134,7 @@ DECLARE_NATIVE(inside)
 {
     INCLUDE_PARAMS_OF_INSIDE;
 
-    Element* element = cast(Element*, ARG(element));
+    Element* element = Element_ARG(element);
     Value* where = ARG(where);
 
     Context* context;
@@ -166,8 +166,8 @@ DECLARE_NATIVE(overbind)
 {
     INCLUDE_PARAMS_OF_OVERBIND;
 
-    Element* v = cast(Element*, ARG(value));
-    Element* defs = cast(Element*, ARG(definitions));
+    Element* v = Element_ARG(value);
+    Element* defs = Element_ARG(definitions);
 
     if (Is_Word(defs)) {
         if (IS_WORD_UNBOUND(defs))
@@ -846,7 +846,7 @@ DECLARE_NATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    Element* source = cast(Element*, ARG(source));
+    Element* source = Element_ARG(source);
 
     if (Any_Word(source)) {
         HEART_BYTE(source) = REB_WORD;
@@ -984,7 +984,7 @@ DECLARE_NATIVE(infix_q)
 {
     INCLUDE_PARAMS_OF_INFIX_Q;
 
-    Element* frame = cast(Element*, ARG(frame));
+    Element* frame = Element_ARG(frame);
     return Init_Logic(OUT, Is_Cell_Frame_Infix(frame));
 }
 
@@ -1041,7 +1041,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Element* meta = cast(Element*, ARG(value));
+    Element* meta = Element_ARG(value);
 
     return UNMETA(meta);
 }
@@ -1458,7 +1458,7 @@ DECLARE_NATIVE(space_q)
 DECLARE_NATIVE(heavy) {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    Element* meta = cast(Element*, ARG(atom));
+    Element* meta = Element_ARG(atom);
 
     if (Is_Meta_Of_Void(meta))
         return Init_Heavy_Void(OUT);
@@ -1482,7 +1482,7 @@ DECLARE_NATIVE(heavy) {
 DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Element* meta = cast(Element*, ARG(atom));
+    Element* meta = Element_ARG(atom);
 
     if (not Is_Meta_Of_Pack(meta))
         return UNMETA(meta);
