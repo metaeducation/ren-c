@@ -629,13 +629,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
     Context* binding = Cell_List_Binding(list);
 
     switch (id) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));
-        UNUSED(ARG(property));
-
-        return Series_Common_Action_Maybe_Unhandled(level_, verb); }
-
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -682,9 +675,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
         Copy_Cell(at, c_cast(Element*, setval));
 
         return nullptr; }  // Array* is still fine, caller need not update
-
-      case SYM_REMOVE:
-        return Series_Common_Action_Maybe_Unhandled(level_, verb);
 
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;

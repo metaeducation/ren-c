@@ -28,49 +28,6 @@
 
 #define THE_SIGN(v) ((v < 0) ? -1 : (v > 0) ? 1 : 0)
 
-//
-//  Series_Common_Action_Maybe_Unhandled: C
-//
-// This routine is called to handle actions on ANY-SERIES? that can be taken
-// care of without knowing what specific kind of series it is.  So generally
-// index manipulation, and things like LENGTH/etc.
-//
-// It only works when the operation in question applies to an understanding of
-// a series as containing fixed-size units.
-//
-Bounce Series_Common_Action_Maybe_Unhandled(
-    Level* level_,
-    const Symbol* verb
-){
-    Value* v = ARG_N(1);
-
-    Option(SymId) id = Symbol_Id(verb);
-    switch (id) {
-      case SYM_REMOVE: {
-        INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PARAM(series));  // accounted for by `value`
-
-        Ensure_Mutable(v);  // !!! Review making this extract
-
-        REBINT len;
-        if (REF(part))
-            len = Part_Len_May_Modify_Index(v, ARG(part));
-        else
-            len = 1;
-
-        REBIDX index = VAL_INDEX_RAW(v);
-        if (index < Cell_Series_Len_Head(v) and len != 0)
-            Remove_Any_Series_Len(v, index, len);
-
-        return COPY(v); }
-
-      default:
-        break;
-    }
-
-    return UNHANDLED;
-}
-
 
 // Common code for series that just tweaks the index (doesn't matter if it's
 // a TEXT!, BLOCK!, BLOB!, etc.)
@@ -148,6 +105,28 @@ IMPLEMENT_GENERIC(at, any_series)
 
     VAL_INDEX_RAW(v) = i;
     return COPY(Trust_Const(v));
+}
+
+
+IMPLEMENT_GENERIC(remove, any_series)
+{
+    INCLUDE_PARAMS_OF_REMOVE;
+
+    Element* v = Element_ARG(series);
+
+    Ensure_Mutable(v);  // !!! Review making this extract
+
+    REBINT len;
+    if (REF(part))
+        len = Part_Len_May_Modify_Index(v, ARG(part));
+    else
+        len = 1;
+
+    REBIDX index = VAL_INDEX_RAW(v);
+    if (index < Cell_Series_Len_Head(v) and len != 0)
+        Remove_Any_Series_Len(v, index, len);
+
+    return COPY(v);
 }
 
 

@@ -112,9 +112,6 @@ IMPLEMENT_GENERIC(oldgeneric, port)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // See Context_Common_Action_Maybe_Unhandled() for why general delegation
-    // to Context is not performed.
-    //
     if (id == SYM_PICK or id == SYM_POKE)
         return GENERIC_CFUNC(oldgeneric, any_context)(level_);
 

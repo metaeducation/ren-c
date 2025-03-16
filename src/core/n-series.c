@@ -135,7 +135,7 @@ DECLARE_NATIVE(take)
 DECLARE_NATIVE(remove)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(REMOVE));
+    return Dispatch_Generic(remove, series, LEVEL);
 }
 
 
