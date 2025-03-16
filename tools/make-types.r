@@ -557,6 +557,14 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
     index: index + 1
 ]
 
+; add ANY-ELEMENT? to the absolute end of the list, so it hooks last
+;
+append typeset-flags cscape [tr
+    --{/* $<index> - any-element */  TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(1) | FLAG_FOURTH_BYTE(REB_QUOTED)}--
+]
+index: index + 1
+
+
 e-typesets/emit [--{
     /*
      * Builtin "typesets" use either ranges or sparse bits to answer whether
@@ -619,6 +627,11 @@ for-each [ts-name types] sparse-typesets [
     }-]
     typeset-byte: me + 1
 ]
+
+e-typeset-bytes/emit [ts-name -{
+    any-element $<typeset-byte>
+}-]
+typeset-byte: me + 1
 
 e-typeset-bytes/write-emitted
 

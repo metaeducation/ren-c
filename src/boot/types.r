@@ -45,7 +45,7 @@ REBOL [
 ]
 
 ; ============== BEGIN "ELEMENTS" THAT CAN BE PUT IN BLOCKS ==================
-<ANY-ELEMENT?>
+; <ANY-ELEMENT?>  (Note: added manually to make sure it's the last typeset)
 ; ============================================================================
 
 blank       "placeholder unit type"
@@ -402,7 +402,7 @@ quoted      "container for arbitrary levels of quoting"
 
 
 ; =============== END "ELEMENTS" THAT CAN BE PUT IN BLOCKS ===================
-</ANY-ELEMENT?>
+; </ANY-ELEMENT?>  (Note: added manually to make sure it's the last typeset)
 ; ============================================================================
 
 antiform    "special states that cannot be stored in blocks"

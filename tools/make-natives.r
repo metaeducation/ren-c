@@ -253,9 +253,9 @@ e-forward/write-emitted
 ;    integer 2
 ;    decimal 3
 ;    ...
-;    any_list 90
-;    any_bindable 91
-;    any_element 92
+;    any-list 90
+;    any-bindable 91
+;    any-element 92
 ;
 ; The generic registry uses this, sorting the more specific values used in
 ; IMPLEMENT_GENERIC() first in the table for each generic.

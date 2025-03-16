@@ -146,9 +146,9 @@ sym-n: 1  ; counts up as symbols are added
 ;    integer 2
 ;    decimal 3
 ;    ...
-;    any_list 90
-;    any_bindable 91
-;    any_element 92
+;    any-list 90
+;    any-bindable 91
+;    any-element 92
 ;
 ; We use this table to make symbols, e.g. SYM_BLANK or SYM_BLANK_X for `blank!`
 ; or SYM_BLANK_Q for `blank?`
