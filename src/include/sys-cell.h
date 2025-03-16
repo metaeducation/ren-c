@@ -848,6 +848,8 @@ INLINE Cell* Copy_Cell_Untracked(
 // only costs one platform-pointer-sized write operation more than a cell
 // copy, so future-proofing for that scenario has some value.
 //
+// Note: Not being willing to disrupt flags currently means that Move_Cell()
+// doesn't work on API cells.  Review.
 
 #define CELL_MASK_TRASH \
     (NODE_FLAG_NODE | NODE_FLAG_CELL \

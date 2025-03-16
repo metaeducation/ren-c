@@ -232,8 +232,13 @@ DECLARE_NATIVE(sort)
 //
 DECLARE_NATIVE(skip)
 {
-    Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(SKIP));
+    INCLUDE_PARAMS_OF_SKIP;
+
+    Element* series = Element_ARG(series);
+    USED(ARG(offset));  // other args get passed via LEVEL
+    USED(ARG(unbounded));
+
+    return Dispatch_Generic(skip, series, LEVEL);
 }
 
 
@@ -252,7 +257,7 @@ DECLARE_NATIVE(skip)
 DECLARE_NATIVE(at)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(AT));
+    return Dispatch_Generic(AT, series, LEVEL);
 }
 
 

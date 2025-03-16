@@ -793,7 +793,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
     Option(SymId) id = Symbol_Id(verb);
 
     Element* v = cast(Element*, ARG_N(1));
-    assert(Any_Utf8(v) and Stringlike_Has_Node(v));
+    assert(Any_String(v));
 
     switch (id) {
 
@@ -883,9 +883,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
       case SYM_UNION:
       case SYM_DIFFERENCE:
       case SYM_EXCLUDE:
-        //
-      case SYM_SKIP:
-      case SYM_AT:
         return Series_Common_Action_Maybe_Unhandled(level_, verb);
 
       case SYM_REMOVE: {

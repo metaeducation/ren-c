@@ -690,8 +690,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
       case SYM_DIFFERENCE:
       case SYM_EXCLUDE:
         //
-      case SYM_SKIP:
-      case SYM_AT:
       case SYM_REMOVE:
         return Series_Common_Action_Maybe_Unhandled(level_, verb);
 

@@ -212,6 +212,23 @@ IMPLEMENT_GENERIC(oldgeneric, port)
 }}
 
 
+// !!! SKIP has a meaning for ANY-SERIES? that's different from what it means
+// when used with ports.  Right now we make the port case go through the old
+// generic dispatch, but this points to a bunch of design work to do.  :-(
+//
+IMPLEMENT_GENERIC(skip, port)
+{
+    INCLUDE_PARAMS_OF_SKIP;
+
+    Element* series = Element_ARG(series);
+
+    UNUSED(ARG(offset));
+    UNUSED(ARG(unbounded));
+
+    return Run_Generic_Dispatch(series, LEVEL, CANON(SKIP));
+}
+
+
 //
 //  CT_Url: C
 //
@@ -266,7 +283,7 @@ IMPLEMENT_GENERIC(oldgeneric, url)
     // The frame was built for the verb we want to apply, so tweak it so that
     // it has the PORT! in the argument slot, and run the action.
     //
-    Move_Cell(ARG_N(1), port);
+    Copy_Cell(ARG_N(1), port);  // can't Move_Cell() on an API cell
     rebRelease(port);
 
     assert(STATE == STATE_0);  // retriggered frame must act like initial entry

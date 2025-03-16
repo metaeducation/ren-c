@@ -48,71 +48,6 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
     Option(SymId) id = Symbol_Id(verb);
     switch (id) {
-      case SYM_SKIP: {
-        INCLUDE_PARAMS_OF_SKIP;
-        UNUSED(ARG(series));  // covered by `v`
-
-        // `skip x logic` means `either logic [skip x] [x]` (this is reversed
-        // from R3-Alpha and Rebol2, which skipped when false)
-        //
-        REBI64 i;
-        if (Is_Logic(ARG(offset))) {
-            if (Cell_Logic(ARG(offset)))
-                i = cast(REBI64, VAL_INDEX_RAW(v)) + 1;
-            else
-                i = cast(REBI64, VAL_INDEX_RAW(v));
-        }
-        else {
-            // `skip series 1` means second element, add offset as-is
-            //
-            REBINT offset = Get_Num_From_Arg(ARG(offset));
-            i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
-        }
-
-        if (not REF(unbounded)) {
-            if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
-                return nullptr;
-        }
-
-        VAL_INDEX_RAW(v) = i;
-        return COPY(Trust_Const(v)); }
-
-      case SYM_AT: {
-        INCLUDE_PARAMS_OF_AT;
-        UNUSED(ARG(series));  // covered by `v`
-
-        REBINT offset = Get_Num_From_Arg(ARG(index));
-        REBI64 i;
-
-        // `at series 1` is first element, e.g. [0] in C.  Adjust offset.
-        //
-        // Note: Rebol2 and Red treat AT 1 and AT 0 as being the same:
-        //
-        //     rebol2>> at next next "abcd" 1
-        //     == "cd"
-        //
-        //     rebol2>> at next next "abcd" 0
-        //     == "cd"
-        //
-        // That doesn't make a lot of sense...but since `series/0` will always
-        // return NULL and `series/-1` returns the previous element, it hints
-        // at special treatment for index 0 (which is C-index -1).
-        //
-        // !!! Currently left as an open question.
-
-        if (offset > 0)
-            i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset) - 1;
-        else
-            i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
-
-        if (REF(bounded)) {
-            if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
-                return nullptr;
-        }
-
-        VAL_INDEX_RAW(v) = i;
-        return COPY(Trust_Const(v)); }
-
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
         UNUSED(PARAM(series));  // accounted for by `value`
@@ -179,6 +114,85 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     }
 
     return UNHANDLED;
+}
+
+
+// Common code for series that just tweaks the index (doesn't matter if it's
+// a TEXT!, BLOCK!, BLOB!, etc.)
+//
+// 1. `skip x logic` means `either logic [skip x] [x]` (this is reversed
+//    from R3-Alpha and Rebol2, which skipped when false)
+//
+IMPLEMENT_GENERIC(skip, any_series)
+{
+    INCLUDE_PARAMS_OF_SKIP;
+
+    Element* v = Element_ARG(series);
+    assert(Any_Series(v));
+
+    REBI64 i;
+    if (Is_Logic(ARG(offset))) {  // preserve a behavior for SKIP of LOGIC [1]
+        if (Cell_Logic(ARG(offset)))
+            i = cast(REBI64, VAL_INDEX_RAW(v)) + 1;
+        else
+            i = cast(REBI64, VAL_INDEX_RAW(v));
+    }
+    else {  // `skip series 1` means second element, add offset as-is
+        REBINT offset = Get_Num_From_Arg(ARG(offset));
+        i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
+    }
+
+    if (not REF(unbounded)) {
+        if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
+            return nullptr;
+    }
+
+    VAL_INDEX_RAW(v) = i;
+    return COPY(Trust_Const(v));
+}
+
+
+// Common code for series that just tweaks the index (doesn't matter if it's
+// a TEXT!, BLOCK!, BLOB!, etc.)
+//
+// `at series 1` is first element, e.g. [0] in C.  Adjust offset.
+//
+// Note: Rebol2 and Red treat AT 1 and AT 0 as being the same:
+//
+//     rebol2>> at next next "abcd" 1
+//     == "cd"
+//
+//     rebol2>> at next next "abcd" 0
+//     == "cd"
+//
+// That doesn't make a lot of sense...but since `series/0` will always
+// return NULL and `series/-1` returns the previous element, it hints
+// at special treatment for index 0 (which is C-index -1).
+//
+// !!! Currently left as an open question.
+//
+IMPLEMENT_GENERIC(at, any_series)
+{
+    INCLUDE_PARAMS_OF_AT;
+
+    Element* v = Element_ARG(series);
+    assert(Any_Series(v));
+
+    REBINT offset = Get_Num_From_Arg(ARG(index));
+    REBI64 i;
+
+    if (offset > 0)
+        i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset) - 1;
+    else
+        i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
+
+    if (REF(bounded)) {
+        if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
+            return nullptr;
+    }
+
+    VAL_INDEX_RAW(v) = i;
+    return COPY(Trust_Const(v));
 }
 
 
