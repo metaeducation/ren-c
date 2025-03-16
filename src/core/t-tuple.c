@@ -540,9 +540,6 @@ IMPLEMENT_GENERIC(multiply, tuple)
 }
 
 
-//
-//  MF_Sequence: C
-//
 // 1. We ignore CELL_FLAG_NEWLINE_BEFORE here for the sequence elements
 //    themselves.  But any embedded BLOCK! or GROUP! which do have newlines in
 //    them can make newlines, e.g.:
@@ -551,8 +548,14 @@ IMPLEMENT_GENERIC(multiply, tuple)
 //            b c d
 //         ]/e
 //
-void MF_Sequence(Molder* mo, const Cell* c, bool form)
+IMPLEMENT_GENERIC(moldify, any_sequence)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* c = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     Heart heart = Cell_Heart(c);
@@ -607,4 +610,6 @@ void MF_Sequence(Molder* mo, const Cell* c, bool form)
             Mold_Element(mo, element);  // ignore CELL_FLAG_NEWLINE_BEFORE [1]
         }
     }
+
+    return NOTHING;
 }

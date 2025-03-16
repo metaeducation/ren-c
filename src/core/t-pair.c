@@ -129,16 +129,21 @@ void Min_Max_Pair(
 }
 
 
-//
-//  MF_Pair: C
-//
-void MF_Pair(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, pair)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 
     Append_Codepoint(mo->string, 'x');
 
     Mold_Or_Form_Element(mo, Cell_Pair_Second(v), form);
+
+    return NOTHING;
 }
 
 

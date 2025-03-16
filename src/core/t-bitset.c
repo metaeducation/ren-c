@@ -78,11 +78,14 @@ Binary* Make_Bitset(REBLEN num_bits)
 }
 
 
-//
-//  MF_Bitset: C
-//
-void MF_Bitset(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, bitset)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form); // all bitsets are "molded" at this time
 
     Begin_Non_Lexical_Mold(mo, v); // #[bitset! or make bitset!
@@ -92,14 +95,18 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
     if (BITS_NOT(bset))
         Append_Ascii(mo->string, "[not bits ");
 
-    DECLARE_ELEMENT (binary);
-    Init_Blob(binary, bset);
-    MF_Blob(mo, binary, false); // false = mold, don't form
+    Init_Blob(v, bset);
+    Init_Nulled(ARG(form));  // form = false
+    Bounce bounce = GENERIC_CFUNC(moldify, blob)(LEVEL);
+    assert(bounce == NOTHING);  // !!! generically it could BOUNCE_CONTINUE...
+    UNUSED(bounce);
 
     if (BITS_NOT(bset))
         Append_Codepoint(mo->string, ']');
 
     End_Non_Lexical_Mold(mo);
+
+    return NOTHING;
 }
 
 

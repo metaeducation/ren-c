@@ -432,27 +432,35 @@ static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 }
 
 
-//
-//  MF_Sigil: C
-//
-void MF_Sigil(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, sigil)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
+
+    return NOTHING;
 }
 
 
-//
-//  MF_Issue: C
-//
-void MF_Issue(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, issue)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     if (form) {
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
             fail (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
 
         Append_Any_Utf8_Limit(mo->string, v, UNLIMITED);
-        return;
+        return NOTHING;
     }
 
     Length len;
@@ -463,14 +471,14 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
     if (len == 0) {
         Append_Codepoint(mo->string, '"');
         Append_Codepoint(mo->string, '"');
-        return;
+        return NOTHING;
     }
 
     bool no_quotes = true;
     Codepoint c = Codepoint_At(cp);
 
     if (len == 1 and c == ' ')
-        return;  // # is notationally a space character
+        return NOTHING;  // # is notationally a space character
 
     // !!! This should be smarter and share code with FILE! on whether
     // it's necessary to use double quotes or braces, and how escaping
@@ -511,6 +519,8 @@ void MF_Issue(Molder* mo, const Cell* v, bool form)
         const String* s = Cell_String(v);  // !!! needs node
         Mold_Text_Flex_At(mo, s, 0);
     }
+
+    return NOTHING;
 }
 
 

@@ -25,25 +25,6 @@
 #include "sys-core.h"
 
 
-//
-//  MF_Void: C
-//
-// Prior to generalized quoting, VOID did not have a rendering function and
-// it was considered an error to try and mold them.  When quoting arrived,
-// escaped VOID was renderable as its ticks, followed by nothing.  This is
-// the "nothing" part, saving on a special-case for that.
-//
-void MF_Void(Molder* mo, const Cell* v, bool form)
-{
-    UNUSED(mo);
-    UNUSED(form);
-    UNUSED(v);
-}
-
-
-//
-//  MF_Blank: C
-//
 // Considerable debate was invested into whether BLANK! should act like a
 // space when formed in string contexts.  As blanks have moved further away
 // from representing "nothing" (delegating shades of that to NULL and VOID)
@@ -64,12 +45,20 @@ void MF_Void(Molder* mo, const Cell* v, bool form)
 //    >> append "abc" _   ; is it better to support this than not?
 //    == "abc_"
 //
-void MF_Blank(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, blank)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(v);
     UNUSED(form);
 
     Append_Ascii(mo->string, "_");
+
+    return NOTHING;
 }
 
 
@@ -215,16 +204,20 @@ DECLARE_GENERICS(Blank)
 }
 
 
-
-//
-//  MF_Handle: C
-//
-void MF_Handle(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, handle)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);  // !!! Handles have "no printable form", what to do here?
     UNUSED(v);
 
     Append_Ascii(mo->string, "#[handle!]");
+
+    return NOTHING;
 }
 
 

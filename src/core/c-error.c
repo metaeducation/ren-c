@@ -1461,16 +1461,19 @@ static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
 }
 
 
-//
-//  MF_Error: C
-//
-void MF_Error(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, error)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     // Protect against recursion. !!!!
     //
     if (not form) {
-        MF_Context(mo, v, false);
-        return;
+        Init_Nulled(ARG(form));  // form = false;
+        return GENERIC_CFUNC(moldify, any_context)(LEVEL);
     }
 
     Error* error = Cell_Error(v);
@@ -1561,4 +1564,6 @@ void MF_Error(Molder* mo, const Cell* v, bool form)
         else
             Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
     }
+
+    return NOTHING;
 }

@@ -130,16 +130,15 @@ IMPLEMENT_GENERIC(lesser_q, date)
 }
 
 
-//
-//  MF_Date: C
-//
-void MF_Date(Molder* mo, const Cell* v_orig, bool form)
+IMPLEMENT_GENERIC(moldify, date)
 {
-    // We can't/shouldn't modify the incoming date value we are molding, so we
-    // make a copy that we can tweak during the emit process
+    INCLUDE_PARAMS_OF_MOLDIFY;
 
-    DECLARE_ELEMENT (v);
-    Copy_Dequoted_Cell(v, v_orig);
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);  // calls MOLDIFY on the time component, may heed
+
+    UNUSED(form);
 
     if (
         VAL_MONTH(v) == 0
@@ -148,7 +147,7 @@ void MF_Date(Molder* mo, const Cell* v_orig, bool form)
         or VAL_DAY(v) > 31
     ) {
         Append_Ascii(mo->string, "?date?");
-        return;
+        return NOTHING;
     }
 
     // Date bits are stored in canon UTC form.  But for rendering, the year
@@ -175,7 +174,9 @@ void MF_Date(Molder* mo, const Cell* v_orig, bool form)
 
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->string, '/');
-        MF_Time(mo, v, form);
+        Bounce bounce = GENERIC_CFUNC(moldify, time)(LEVEL);  // REF(form)?
+        assert(bounce == NOTHING);  // !!! generically might BOUNCE_CONTINUE...
+        UNUSED(bounce);
 
         if (zone != NO_DATE_ZONE) {
             bp = &buf[0];
@@ -195,6 +196,8 @@ void MF_Date(Molder* mo, const Cell* v_orig, bool form)
             Append_Ascii(mo->string, s_cast(buf));
         }
     }
+
+    return NOTHING;
 }
 
 

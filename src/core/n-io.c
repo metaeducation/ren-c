@@ -47,6 +47,30 @@ DECLARE_NATIVE(form)
 
 
 //
+//  /moldify: native:generic [
+//
+//  "Stopgap concept for methodizing mold using new generics"
+//
+//      return: [~]  ; returning a string would be too slow to compound
+//      element [element?]
+//      molder "Settings for the mold, including in progress series"
+//          [handle!]
+//      form "Do not put system delimiters on item"
+//          [logic?]
+//  ]
+//
+DECLARE_NATIVE(moldify)
+{
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    USED(ARG(molder));  // passed via LEVEL
+    USED(ARG(form));
+
+    return Dispatch_Generic(moldify, ARG(element), LEVEL);
+}
+
+
+//
 //  /mold: native [
 //
 //  "Converts value to a REBOL-readable string"

@@ -506,17 +506,20 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 }
 
 
-//
-//  MF_Map: C
-//
-void MF_Map(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, map)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     const Map* m = VAL_MAP(v);
 
     // Prevent endless mold loop:
     if (Find_Pointer_In_Flex(g_mold.stack, m) != NOT_FOUND) {
         Append_Ascii(mo->string, "...]");
-        return;
+        return NOTHING;
     }
 
     Push_Pointer_To_Flex(g_mold.stack, m);
@@ -556,6 +559,8 @@ void MF_Map(Molder* mo, const Cell* v, bool form)
     End_Non_Lexical_Mold(mo);
 
     Drop_Pointer_From_Flex(g_mold.stack, m);
+
+    return NOTHING;
 }
 
 

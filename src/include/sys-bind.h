@@ -145,7 +145,7 @@ INLINE Element* Derelativize_Untracked(
 // to strip the quotes off (typically).
 //
 INLINE Element* Copy_Dequoted_Cell(Sink(Element) out, const Cell* in) {
-    assert(QUOTE_BYTE(in) != ANTIFORM_0);
+    Assert_Cell_Stable(in);
     Copy_Cell(out, c_cast(Element*, in));
     QUOTE_BYTE(out) = NOQUOTE_1;
     return out;

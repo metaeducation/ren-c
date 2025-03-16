@@ -311,13 +311,16 @@ IMPLEMENT_GENERIC(zeroify, decimal)
 }
 
 
+// Code mostly duplicated in Percent.
 //
-//  MF_Decimal: C
-//
-// Code mostly duplicated in MF_Percent.
-//
-void MF_Decimal(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, decimal)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     Byte buf[60];
@@ -329,16 +332,21 @@ void MF_Decimal(Molder* mo, const Cell* v, bool form)
         mo->digits
     );
     Append_Ascii_Len(mo->string, s_cast(buf), len);
+
+    return NOTHING;
 }
 
 
+// Code mostly duplicated in Decimal.
 //
-//  MF_Percent: C
-//
-// Code mostly duplicated in MF_Decimal.
-//
-void MF_Percent(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, percent)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     Byte buf[60];
@@ -351,6 +359,8 @@ void MF_Percent(Molder* mo, const Cell* v, bool form)
     );
     Append_Ascii_Len(mo->string, s_cast(buf), len);
     Append_Codepoint(mo->string, '%');
+
+    return NOTHING;
 }
 
 

@@ -538,7 +538,6 @@ hook-list: collect [
     keep cscape [--{
         {  /* REB_0 is reserved */
             cast(CFunction*, nullptr),  /* generic */
-            cast(CFunction*, nullptr),  /* mold */
             nullptr
         }
     }--]
@@ -551,7 +550,6 @@ hook-list: collect [
         keep cscape [t --{
             {  /* $<T.NAME> = $<T.HEART> */
                 cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
-                cast(CFunction*, ${"MF_" Hookname T 'Mold}),  /* mold */
                 nullptr
             }
         }--]

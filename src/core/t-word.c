@@ -128,10 +128,14 @@ IMPLEMENT_GENERIC(make, word)
 }
 
 
-//
-//  MF_Word: C
-//
-void MF_Word(Molder* mo, const Cell* v, bool form) {
+IMPLEMENT_GENERIC(moldify, any_word)
+{
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     Option(Sigil) sigil = Sigil_Of_Kind(Cell_Heart(v));
@@ -139,6 +143,8 @@ void MF_Word(Molder* mo, const Cell* v, bool form) {
         Append_Codepoint(mo->string, Symbol_For_Sigil(unwrap sigil));
 
     Append_Spelling(mo->string, Cell_Word_Symbol(v));
+
+    return NOTHING;
 }
 
 

@@ -188,7 +188,11 @@ void* Probe_Core_Debug(
         DECLARE_ELEMENT (elem);
         Init_Module(elem, cast(SeaOfVars*, m_cast(void*, p)));
         Push_Lifeguard(elem);
-        MF_Context(mo, elem, false);
+
+        DECLARE_ELEMENT (molder);
+        Init_Handle_Cdata(molder, mo, 1);
+        rebElide(CANON(MOLDIFY), elem, molder, rebQ(LIB(NULL)));
+
         Drop_Lifeguard(elem);
         break; }
 
@@ -218,7 +222,11 @@ void* Probe_Core_Debug(
         Details* details = cast(Details*, m_cast(void*, p));
         Init_Frame(frame, details, ANONYMOUS, NONMETHOD);
         Push_Lifeguard(frame);
-        MF_Frame(mo, frame, false);
+
+        DECLARE_ELEMENT (molder);
+        Init_Handle_Cdata(molder, mo, 1);
+        rebElide(CANON(MOLDIFY), frame, molder, rebQ(LIB(NULL)));
+
         Drop_Lifeguard(frame);
         break; }
 

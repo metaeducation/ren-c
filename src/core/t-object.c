@@ -767,11 +767,14 @@ VarList* Copy_Varlist_Extra_Managed(
 }
 
 
-//
-//  MF_Context: C
-//
-void MF_Context(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, any_context)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     String* s = mo->string;
 
     Context* c = Cell_Context(v);
@@ -789,7 +792,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
             Append_Codepoint(s, ']');
             End_Non_Lexical_Mold(mo);
         }
-        return;
+        return NOTHING;
     }
     Push_Pointer_To_Flex(g_mold.stack, c);
 
@@ -822,7 +825,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
             Trim_Tail(mo, '\n');
 
         Drop_Pointer_From_Flex(g_mold.stack, c);
-        return;
+        return NOTHING;
     }
 
     // Otherwise we are molding
@@ -874,6 +877,8 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
     End_Non_Lexical_Mold(mo);
 
     Drop_Pointer_From_Flex(g_mold.stack, c);
+
+    return NOTHING;
 }
 
 
@@ -1415,15 +1420,19 @@ IMPLEMENT_GENERIC(lesser_q, frame)
 }
 
 
-//
-//  MF_Frame: C
-//
-void MF_Frame(Molder* mo, const Cell* v, bool form) {
+IMPLEMENT_GENERIC(moldify, frame)
+{
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
 
     if (QUOTE_BYTE(v) != QUASIFORM_2) {
-        MF_Context(mo, v, form);
-        return;
+        return GENERIC_CFUNC(moldify, any_context)(LEVEL);  // heeds REF(form)
     }
+
+    bool form = REF(form);
+    UNUSED(form);
 
     Append_Ascii(mo->string, "#[frame! ");
 
@@ -1447,6 +1456,8 @@ void MF_Frame(Molder* mo, const Cell* v, bool form) {
 
     Append_Codepoint(mo->string, ']');
     End_Non_Lexical_Mold(mo);
+
+    return NOTHING;
 }
 
 

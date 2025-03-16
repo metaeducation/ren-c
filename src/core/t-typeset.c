@@ -358,11 +358,14 @@ IMPLEMENT_GENERIC(make, parameter)
 }
 
 
-//
-//  MF_Parameter: C
-//
-void MF_Parameter(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, parameter)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     if (not form) {
         Begin_Non_Lexical_Mold(mo, v);  // #[parameter! or make parameter!
     }
@@ -382,6 +385,8 @@ void MF_Parameter(Molder* mo, const Cell* v, bool form)
     if (not form) {
         End_Non_Lexical_Mold(mo);
     }
+
+    return NOTHING;
 }
 
 

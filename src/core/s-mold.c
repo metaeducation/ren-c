@@ -348,38 +348,6 @@ void Form_Array_At(
 
 
 //
-//  MF_Fail: C
-//
-void MF_Fail(Molder* mo, const Cell* v, bool form)
-{
-    UNUSED(form);
-    UNUSED(mo);
-
-  #if RUNTIME_CHECKS
-    UNUSED(v);
-    fail ("Cannot MOLD or FORM datatype.");
-  #else
-    panic(v);
-  #endif
-}
-
-
-//
-//  MF_Unhooked: C
-//
-void MF_Unhooked(Molder* mo, const Cell* v, bool form)
-{
-    UNUSED(mo);
-    UNUSED(form);
-
-    const Value* type = Datatype_From_Kind(Cell_Heart(v));
-    UNUSED(type); // !!! put in error message?
-
-    fail ("Datatype does not have extension with a MOLD handler registered");
-}
-
-
-//
 //  Mold_Or_Form_Cell_Ignore_Quotes: C
 //
 // Variation which molds a cell.  Quoting is not considered, but quasi is.
@@ -403,18 +371,27 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
             return;
     }
 
-    MoldHook* hook = Mold_Hook_For_Heart(Cell_Heart(cell));
+    DECLARE_ELEMENT (element);
+    Copy_Dequoted_Cell(element, cell);
+    Quotify(element, 1);
+
+    DECLARE_ELEMENT (molder);
+    Init_Handle_Cdata(molder, mo, 1);
+
+    DECLARE_VALUE (formval);
+    Init_Logic(formval, form);
+    Meta_Quotify(formval);
 
     if (
         GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
         or (QUOTE_BYTE(cell) & NONQUASI_BIT)
     ){
-        hook(mo, cell, form);
+        rebElide(CANON(MOLDIFY), element, molder, formval);
     }
     else {
         Append_Codepoint(mo->string, '~');
         if (HEART_BYTE(cell) != REB_BLANK) {
-            hook(mo, cell, form);
+            rebElide(CANON(MOLDIFY), element, molder, formval);
             Append_Codepoint(mo->string, '~');
         }
     }

@@ -134,11 +134,14 @@ IMPLEMENT_GENERIC(make, money)
 }
 
 
-//
-//  MF_Money: C
-//
-void MF_Money(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, money)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     if (mo->opts & MOLD_FLAG_LIMIT) {
@@ -149,6 +152,8 @@ void MF_Money(Molder* mo, const Cell* v, bool form)
     Byte buf[60];
     REBINT len = deci_to_string(buf, VAL_MONEY_AMOUNT(v), '$', '.');
     Append_Ascii_Len(mo->string, s_cast(buf), len);
+
+    return NOTHING;
 }
 
 

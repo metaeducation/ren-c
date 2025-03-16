@@ -89,16 +89,6 @@ typedef struct {
 typedef Bounce (ToHook)(Level* level_, Kind kind, Element* def);
 
 
-// PER-TYPE MOLD HOOKS: for `mold value` and `form value`
-//
-// Note: ERROR! may be a context, but it has its own special FORM-ing
-// beyond the class (falls through to ANY-CONTEXT? for mold), and BLOB!
-// has a different handler than strings.  So not all molds are driven by
-// their class entirely.
-//
-typedef void (MoldHook)(Molder* mo, const Cell* v, bool form);
-
-
 // Just requests what symbol a custom datatype wants to use for its type
 //
 typedef const Symbol* (SYMBOL_HOOK)(void);

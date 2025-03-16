@@ -550,16 +550,20 @@ IMPLEMENT_GENERIC(equal_q, varargs)
 }
 
 
-//
-//  MF_Varargs: C
-//
 // The molding of a VARARGS! does not necessarily have complete information,
 // because it doesn't want to perform evaluations...or advance any frame it
 // is tied to.  However, a few things are knowable; such as if the varargs
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(Molder* mo, const Cell* v, bool form) {
+IMPLEMENT_GENERIC(moldify, varargs)
+{
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     Begin_Non_Lexical_Mold(mo, v);  // #[varargs! or make varargs!
@@ -630,6 +634,8 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
     Append_Codepoint(mo->string, ']');
 
     End_Non_Lexical_Mold(mo);
+
+    return NOTHING;
 }
 
 

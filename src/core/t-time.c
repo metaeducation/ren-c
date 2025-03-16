@@ -178,11 +178,14 @@ Option(const Byte*) Try_Scan_Time_To_Stack(
 }
 
 
-//
-//  MF_Time: C
-//
-void MF_Time(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, time)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
     if (VAL_NANO(v) < cast(REBI64, 0))  // account for the sign if present
@@ -212,6 +215,8 @@ void MF_Time(Molder* mo, const Cell* v, bool form)
         Append_Int_Pad(mo->string, tf.n, -9);
         Trim_Tail(mo, '0');
     }
+
+    return NOTHING;
 }
 
 

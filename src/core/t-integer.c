@@ -157,16 +157,21 @@ void Hex_String_To_Integer(Value* out, const Value* value)  // !!! UNUSED
 }
 
 
-//
-//  MF_Integer: C
-//
-void MF_Integer(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, integer)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
     Append_Ascii_Len(mo->string, s_cast(buf), len);
+
+    return NOTHING;
 }
 
 

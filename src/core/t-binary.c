@@ -254,17 +254,20 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 }
 
 
-//
-//  MF_Blob: C
-//
 // 1. Historial Rebol let you set your binary base molding in a global way.
 //    If this is to be a console setting, that's one thing...but having a
 //    flag like this changing the fundamental behavior is bad.  In addition
 //    to the general variability of how a program would run, it was using
 //    a setting in the system object...which is not avaliable in early boot.
 //
-void MF_Blob(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, blob)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
 
     Size size;
@@ -307,6 +310,8 @@ void MF_Blob(Molder* mo, const Cell* v, bool form)
 
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED))
         Append_Codepoint(mo->string, '}');
+
+    return NOTHING;
 }
 
 

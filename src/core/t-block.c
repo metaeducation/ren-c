@@ -555,11 +555,14 @@ bool Try_Pick_Block(
 }
 
 
-//
-//  MF_List: C
-//
-void MF_List(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, any_list)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
 
     Heart heart = Cell_Heart(v);  // may be quoted, but mold renders the quotes
@@ -568,7 +571,7 @@ void MF_List(Molder* mo, const Cell* v, bool form)
         Option(VarList*) context = nullptr;
         bool relax = false;
         Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), context, relax);
-        return;
+        return NOTHING;
     }
 
     Sigil sigil = maybe Sigil_Of_Kind(heart);
@@ -612,6 +615,8 @@ void MF_List(Molder* mo, const Cell* v, bool form)
         panic (v);
 
     Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
+
+    return NOTHING;
 }
 
 

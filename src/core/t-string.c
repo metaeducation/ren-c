@@ -624,9 +624,6 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
 }
 
 
-//
-//  MF_Url: C
-//
 // R3-Alpha's philosophy on URL! was:
 //
 // "Only alphanumerics [0-9a-zA-Z], the special characters $-_.+!*'(),
@@ -640,20 +637,33 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-void MF_Url(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, url)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
+
+    return NOTHING;
 }
 
 
-//
-//  MF_Email: C
-//
-void MF_Email(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, email)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
+
+    return NOTHING;
 }
 
 
@@ -686,9 +696,6 @@ static void Mold_Tag(Molder* mo, const Cell* v)
 }
 
 
-//
-//  MF_String: C
-//
 // 1. The R3-Alpha forming logic was that every string type besides TAG!
 //    would form with no delimiters, e.g. `form #foo` is just foo.  Ren-C
 //    removes the exception for tags, and more of the system treats tag
@@ -701,8 +708,14 @@ static void Mold_Tag(Molder* mo, const Cell* v)
 //        >> find "ab<c>d" quote <c>
 //        == "<c>d"
 //
-void MF_String(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, any_string)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     String* buf = mo->string;
 
     Heart heart = Cell_Heart(v);
@@ -710,7 +723,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
 
     if (form) {  // TAG! is not an exception--forms without delimiters [1]
         Append_Any_Utf8(buf, v);
-        return;
+        return NOTHING;
     }
 
     switch (heart) {
@@ -733,6 +746,8 @@ void MF_String(Molder* mo, const Cell* v, bool form)
       default:
         panic (v);
     }
+
+    return NOTHING;
 }
 
 

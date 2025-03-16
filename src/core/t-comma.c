@@ -23,14 +23,17 @@
 #include "sys-core.h"
 
 
-//
-//  MF_Comma: C
-//
 // The special behavior of commas makes them "glue" their rendering to the
 // thing on their left.
 //
-void MF_Comma(Molder* mo, const Cell* v, bool form)
+IMPLEMENT_GENERIC(moldify, comma)
 {
+    INCLUDE_PARAMS_OF_MOLDIFY;
+
+    Element* v = Element_ARG(element);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    bool form = REF(form);
+
     UNUSED(form);
     UNUSED(v);
 
@@ -44,6 +47,8 @@ void MF_Comma(Molder* mo, const Cell* v, bool form)
     }
     else
         Append_Codepoint(mo->string, ',');
+
+    return NOTHING;
 }
 
 

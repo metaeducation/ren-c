@@ -534,34 +534,37 @@ DECLARE_NATIVE(join)
     Push_Mold(mo);
 
   blockscope {
-    OnStack(Value*) at = Data_Stack_At(Value, STACK_BASE + 1);
-    OnStack(Value*) tail = Data_Stack_At(Value, TOP_INDEX + 1);
+    StackIndex at = STACK_BASE + 1;
+    StackIndex tail = TOP_INDEX + 1;
 
     for (; at != tail; ++at) {
-        if (Get_Cell_Flag(at, STACK_NOTE_MOLD)) {
+        bool mold = Get_Cell_Flag(Data_Stack_At(Value, at), STACK_NOTE_MOLD);
+        Value* v = Copy_Cell(stable_SPARE, Data_Stack_At(Value, at));
+
+        if (mold) {
             assert(NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD));
-            if (Is_Splice(at))
+            if (Is_Splice(v))
                 SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-            Mold_Or_Form_Cell_Ignore_Quotes(mo, at, false);
+            Mold_Or_Form_Cell_Ignore_Quotes(mo, v, false);
             CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
             continue;
         }
 
-        assert(not Is_Antiform(at));  // non-molded splices push items
+        assert(not Is_Antiform(v));  // non-molded splices push items
 
-        if (Any_List(at))  // guessing a behavior is bad [4]
+        if (Any_List(v))  // guessing a behavior is bad [4]
             return FAIL("JOIN requires @var to mold lists");
 
-        if (Any_Sequence(at))  // can have lists in them, dicey [4]
+        if (Any_Sequence(v))  // can have lists in them, dicey [4]
             return FAIL("JOIN requires @var to mold sequences");
 
-        if (Sigil_Of(cast(Element*, at)))
+        if (Sigil_Of(cast(Element*, v)))
             return FAIL("JOIN requires @var for elements with sigils");
 
-        if (Is_Blank(at))
+        if (Is_Blank(v))
             return FAIL("JOIN only treats source-level BLANK! as space");
 
-        Form_Element(mo, cast(Element*, at));
+        Form_Element(mo, cast(Element*, v));
     }
   }
 
