@@ -25,19 +25,6 @@
 //
 
 
-// The API Action Details can be built manually by things like the TCC
-// extension.  It doesn't want to use rebFunction() because it allows a weird
-// behavior of defining a function and then having it compiled on demand
-// into something that uses the Api_Function_Dispatcher(), and it wants to
-// reuse the paramlist it already has.
-//
-enum {
-    IDX_API_ACTION_CFUNC = 1,  // HANDLE! of RebolActionCFunction*
-    IDX_API_ACTION_BINDING_BLOCK,  // BLOCK! so binding is GC marked
-    IDX_API_ACTION_MAX
-};
-
-
 //
 // EXTENSION COLLATOR FUNCTION DEFINITION
 //
