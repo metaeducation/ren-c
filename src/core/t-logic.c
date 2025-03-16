@@ -392,23 +392,6 @@ DECLARE_NATIVE(nand_q)
 
 
 //
-//  /to-logic: native [
-//
-//  "true if value is NOT a LOGIC! false or NULL"
-//
-//      return: [logic?]
-//      value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(to_logic)
-{
-    INCLUDE_PARAMS_OF_TO_LOGIC;
-
-    return Init_Logic(OUT, Is_Trigger(ARG(value)));
-}
-
-
-//
 //  /null-if-zero: native [
 //
 //  "Null if the integer input is a zero"
@@ -444,6 +427,28 @@ DECLARE_NATIVE(not_1)  // see TO-C-NAME
         return unwrap bounce;
 
     return LOGIC(Is_Inhibitor(v));
+}
+
+
+//
+//  /to-logic: native:intrinsic [
+//
+//  "Returns logic of what's given (null if null, okay for everything else)"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_NATIVE(to_logic)
+{
+    INCLUDE_PARAMS_OF_TO_LOGIC;
+
+    DECLARE_VALUE (v);
+    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    if (bounce)
+        return unwrap bounce;
+
+    return LOGIC(Is_Trigger(v));
 }
 
 

@@ -13,7 +13,7 @@
     (''30 = ^ (10 + 20 eval:undecayed [comment "hi"]))
     (''30 = ^ (10 + 20 eval:undecayed make frame! func [] [return ~[]~]))
 
-    (didn't eval [null])
+    (else? eval [null])
     ('~[~null~]~ = ^ eval:undecayed [if okay [null]])
     (^void = ^ eval:undecayed [if null [<a>]])
     (^void = ^ eval:undecayed [10 + 20 if null [<a>]])

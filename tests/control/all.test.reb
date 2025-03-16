@@ -24,7 +24,7 @@
             void? x
         ]
     )
-    (void? if did all [] [<did>])
+    (void? all [])
     (void? all [] then [<then>])
     (<else> = all [] else [<else>])
 

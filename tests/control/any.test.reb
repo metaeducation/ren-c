@@ -21,7 +21,7 @@
             void? x
         ]
     )
-    (<didn't> = if didn't any [] [<didn't>])
+    (<didn't> = if else? any [] [<didn't>])
     (<else> = any [] else [<else>])
     (void? (1 + 2 any []))
     (null = (1 + 2 any [1 > 2, 3 > 4]))

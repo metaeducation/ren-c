@@ -420,9 +420,9 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
 
 //
-//  /did: native [
+//  /then?: native [
 //
-//  "Tests for not being a 'pure' null or void (IF DID is prefix THEN)"
+//  "Tests for not being a 'pure' null or void (IF THEN? is prefix THEN)"
 //
 //      return: [logic?]
 //      ^atom "Argument to test"
@@ -431,28 +431,9 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
-DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
-//
-// DID exists as a complement to antiforms to help solve conflation of falsey
-// values with conditional tests.  One example:
-//
-//     >> match [logic? integer!] false
-//     == ~false~  ; anti
-//
-//     >> if (match [logic? integer!] false) [print "Want this to run"]
-//     ** Error: We save you by not letting antiforms be conditionally tested
-//
-//     >> did match [logic? integer!] false
-//     == ~true~  ; DID tolerates antiforms, returns false only on true NULL
-//
-//     >> if (did match [logic? integer!] false) [print "Praise isotopes!"]
-//     Praise isotopes!
-//
-// By making routines that intend to return ANY-VALUE? (even falsey ones) on
-// success return the falsey ones as antiforms, incorrect uses can be caught
-// and guided to use DID or DIDN'T (or whatever they actually meant).
+DECLARE_NATIVE(then_q)
 {
-    INCLUDE_PARAMS_OF_DID_1;
+    INCLUDE_PARAMS_OF_THEN_Q;
 
     Value* in = ARG(atom);
     USED(ARG(decay));  // used by helper
@@ -476,7 +457,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Quotify(Quasify(Init_Word(ARG(branch), CANON(DID_1))));  // [1]
+    Quotify(Quasify(Init_Word(ARG(branch), CANON(THEN_Q))));  // [1]
 
     goto reifying_input;
 
@@ -515,9 +496,9 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
 
 //
-//  /didn't: native [
+//  /else?: native [
 //
-//  "Test for being a 'pure' null or void (`IF DIDN'T` is prefix `ELSE`)"
+//  "Test for being a 'pure' null or void (`IF ELSE?` is prefix `ELSE`)"
 //
 //      return: [logic?]
 //      ^atom "Argument to test"
@@ -526,9 +507,9 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
-DECLARE_NATIVE(didnt)
+DECLARE_NATIVE(else_q)
 {
-    INCLUDE_PARAMS_OF_DIDNT;
+    INCLUDE_PARAMS_OF_ELSE_Q;
 
     Value* in = ARG(atom);
     USED(ARG(decay));  // used by helper

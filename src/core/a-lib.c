@@ -1571,59 +1571,12 @@ void API_rebJumps(
 //
 //  rebDid: API
 //
-// Analogue of DID, asks "Would the supplied expression run a THEN"
-// See DECLARE_NATIVE(did_1) for explanation.
-//
-// !!! This does not handle antiform OBJECT!, an experimental concept where
-// if the object supports a THEN method it would pass the DID test.  Review
-// this in light of whether antiform objects are going to be kept.
-//
-bool API_rebDid(
-    RebolContext* binding,
-    const void* p, void* vaptr
-){
-    ENTER_API;
-
-    DECLARE_ATOM (condition);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding, condition, p, vaptr);
-
-    return not Is_Nulled(condition) and not Is_Void(condition);
-}
-
-
-//
-//  rebDidnt: API
-//
-// Analogue of DIDN'T, asks "Would the supplied expression run an ELSE"
-// See DECLARE_NATIVE(didnt) for explanation.
-//
-// !!! This does not handle antiform OBJECT!, an experimental concept where
-// if the object supports a ELSE method it would pass the DIDN'T test.  Review
-// this in light of whether antiform objects are going to be kept.
-//
-bool API_rebDidnt(
-    RebolContext* binding,
-    const void* p, void* vaptr
-){
-    ENTER_API;
-
-    DECLARE_ATOM (condition);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(binding, condition, p, vaptr);
-
-    return Is_Nulled(condition) or Is_Void(condition);
-}
-
-
-//
-//  rebTruthy: API
-//
 // Simply returns the logical result, with no returned handle to release.
 //
-// !!! The name is bad, but it's hard to think of a good name now that
-// rebDid() is taken for other purposes.  Avoid this and use rebDid() if
-// at all possible.
+// If you know the argument is either NULL or OKAY antiforms, then you can
+// use rebUnboxLogic() to get a runtime check of that.  This tests ANY-VALUE?
 //
-bool API_rebTruthy(
+bool API_rebDid(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
@@ -1639,10 +1592,28 @@ bool API_rebTruthy(
 //
 //  rebNot: API
 //
-// !!! If this were going to be a macro like (not (rebTruthy(...))) it
+// !!! If this were going to be a macro like (not (rebDid(...))) it
 // would have to be a variadic macro.  Not worth it. use separate entry point.
 //
 bool API_rebNot(
+    RebolContext* binding,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    DECLARE_VALUE (condition);
+    Run_Va_Decay_May_Fail_Calls_Va_End(binding, condition, p, vaptr);
+
+    return Is_Inhibitor(condition);  // will fail() on (most) antiforms
+}
+
+
+//
+//  rebDidnt: API
+//
+// Synonym for rebNot()
+//
+bool API_rebDidnt(
     RebolContext* binding,
     const void* p, void* vaptr
 ){

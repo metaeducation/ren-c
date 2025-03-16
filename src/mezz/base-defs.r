@@ -57,15 +57,22 @@ lib: system.contexts.lib  ; alias for faster access
 
 /??: probe/  ; shorthand for debug sessions, not to be committed
 
-; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
+; Pre-decaying specializations for THEN?, ELSE?, THEN, ELSE, ALSO
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 ;
-/did*: did:decay/
-/didn't*: didn't:decay/
+/then?*: then?:decay/
+/else?*: else?:decay/
 /*then: then:decay/
 /*also: also:decay/
 /*else: else:decay/
+/branched?: then?/  ; alias, maybe more catchy?
+
+
+; Logic synonyms DID and DIDN'T, sometimes look better
+
+/did: to-logic/
+/didn't: not/
 
 
 ; ARITHMETIC OPERATORS
