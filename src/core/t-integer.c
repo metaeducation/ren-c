@@ -180,9 +180,7 @@ IMPLEMENT_GENERIC(oldgeneric, integer)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* val = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* val = cast(Element*, ARG_N(1));
     REBI64 num = VAL_INT64(val);
 
     REBI64 arg;
@@ -256,56 +254,6 @@ IMPLEMENT_GENERIC(oldgeneric, integer)
       case SYM_COPY:
         Copy_Cell(OUT, val);
         return OUT;
-
-    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // val
-        Heart to = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
-            DECLARE_MOLDER (mo);
-            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-            Push_Mold(mo);
-            Mold_Element(mo, val);
-
-            const String* s;
-            if (Any_String_Kind(to))
-                s = Pop_Molded_String(mo);
-            else {
-                if (Try_Init_Small_Utf8(
-                    OUT,
-                    to,
-                    cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-                    String_Len(mo->string) - mo->base.index,
-                    String_Size(mo->string) - mo->base.size
-                )){
-                    return OUT;
-                }
-                s = Pop_Molded_String(mo);
-                Freeze_Flex(s);
-            }
-            return Init_Any_String(OUT, to, s);
-        }
-
-        if (Any_List_Kind(to))
-            return rebValue(CANON(ENVELOP), ARG(type), val);
-
-        if (to == REB_DECIMAL or to == REB_PERCENT) {
-            REBDEC d = cast(REBDEC, VAL_INT64(val));
-            return Init_Decimal_Or_Percent(OUT, to, d);
-        }
-
-        if (to == REB_MONEY) {
-            deci d = int_to_deci(VAL_INT64(val));
-            return Init_Money(OUT, d);
-        }
-
-        if (to == REB_INTEGER)
-            return COPY(val);
-
-        return UNHANDLED; }
 
       case SYM_ADD: {
         REBI64 anum;
@@ -425,6 +373,58 @@ IMPLEMENT_GENERIC(oldgeneric, integer)
       default:
         break;
     }
+
+    return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(to, integer)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* val = Element_ARG(element);
+    Heart to = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
+        DECLARE_MOLDER (mo);
+        SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+        Push_Mold(mo);
+        Mold_Element(mo, val);
+
+        const String* s;
+        if (Any_String_Kind(to))
+            s = Pop_Molded_String(mo);
+        else {
+            if (Try_Init_Small_Utf8(
+                OUT,
+                to,
+                cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
+                String_Len(mo->string) - mo->base.index,
+                String_Size(mo->string) - mo->base.size
+            )){
+                return OUT;
+            }
+            s = Pop_Molded_String(mo);
+            Freeze_Flex(s);
+        }
+        return Init_Any_String(OUT, to, s);
+    }
+
+    if (Any_List_Kind(to))
+        return rebValue(CANON(ENVELOP), ARG(type), val);
+
+    if (to == REB_DECIMAL or to == REB_PERCENT) {
+        REBDEC d = cast(REBDEC, VAL_INT64(val));
+        return Init_Decimal_Or_Percent(OUT, to, d);
+    }
+
+    if (to == REB_MONEY) {
+        deci d = int_to_deci(VAL_INT64(val));
+        return Init_Money(OUT, d);
+    }
+
+    if (to == REB_INTEGER)
+        return COPY(val);
 
     return UNHANDLED;
 }

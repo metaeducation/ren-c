@@ -74,21 +74,6 @@ typedef struct {
 } GenericInfo;
 
 
-// PER-TYPE TO HOOKS: for `to datatype value`
-//
-// These functions must return a Value* to the type they are making
-// (either in the output cell or an API cell).  They are NOT allowed to
-// throw, and are not supposed to make use of any binding information in
-// blocks they are passed...so no evaluations should be performed.
-//
-// !!! Note: It is believed in the future that MAKE would be constructor
-// like and decided by the destination type, while TO would be "cast"-like
-// and decided by the source type.  For now, the destination decides both,
-// which means TO-ness and MAKE-ness are a bit too similar.
-//
-typedef Bounce (ToHook)(Level* level_, Kind kind, Element* def);
-
-
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
 typedef Bounce (PORT_HOOK)(Level* level_, Value* port, const Symbol* verb);

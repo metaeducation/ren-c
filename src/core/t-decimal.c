@@ -369,9 +369,7 @@ IMPLEMENT_GENERIC(oldgeneric, decimal)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* val = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* val = cast(Element*, ARG_N(1));
     REBDEC d1 = VAL_DECIMAL(val);
 
     Value* arg;
@@ -487,55 +485,6 @@ IMPLEMENT_GENERIC(oldgeneric, decimal)
       case SYM_COPY:
         return Copy_Cell(OUT, val);
 
-    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
-
-    // 1. Right now the intelligence that gets 1% to render that way instead
-    //    of 1.0% is in FORM.  We don't repeat that here, but just call the
-    //    form process and drop the trailing %.  Should be factored better.
-    //
-    //    !!! Note this is buggy right now (doesn't happen in Red):
-    //
-    //        >> form 1.1%
-    //        == "1.1000000000000001%"
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // val
-        Heart to = VAL_TYPE_HEART(ARG(type));
-
-        REBDEC d = VAL_DECIMAL(val);
-
-        if (Any_Utf8_Kind(to)) {
-            DECLARE_MOLDER (mo);
-            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-            Push_Mold(mo);
-            Mold_Element(mo, val);
-            const String* s = Pop_Molded_String(mo);
-            if (not Any_String_Kind(to))
-                Freeze_Flex(s);
-            Init_Any_String(OUT, to, s);
-            if (Is_Percent(val))  // leverage (buggy) rendering 1% vs 1.0% [1]
-                rebElide("take:last", OUT);
-            return OUT;
-        }
-
-        if (to == REB_DECIMAL or to == REB_PERCENT)
-            return Init_Decimal_Or_Percent(OUT, to, d);
-
-        if (to == REB_MONEY)
-            return Init_Money(OUT, decimal_to_deci(d));
-
-        if (to == REB_INTEGER) {
-            REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));
-            if (leftover != 0.0)
-                return FAIL(
-                    "Can't TO INTEGER! a DECIMAL! w/digits after decimal point"
-                );
-            return Init_Integer(OUT, cast(REBI64, d));
-        }
-
-        return UNHANDLED; }
-
       case SYM_NEGATE:
         d1 = -d1;
         return Init_Decimal_Or_Percent(OUT, heart, d1);
@@ -608,6 +557,57 @@ IMPLEMENT_GENERIC(oldgeneric, decimal)
 
       default:
         break;
+    }
+
+    return UNHANDLED;
+}
+
+
+// 1. Right now the intelligence that gets 1% to render that way instead
+//    of 1.0% is in FORM.  We don't repeat that here, but just call the
+//    form process and drop the trailing %.  Should be factored better.
+//
+//    !!! Note this is buggy right now (doesn't happen in Red):
+//
+//        >> form 1.1%
+//        == "1.1000000000000001%"
+//
+IMPLEMENT_GENERIC(to, decimal)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* val = Element_ARG(element);
+    Heart to = VAL_TYPE_HEART(ARG(type));
+
+    REBDEC d = VAL_DECIMAL(val);
+
+    if (Any_Utf8_Kind(to)) {
+        DECLARE_MOLDER (mo);
+        SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+        Push_Mold(mo);
+        Mold_Element(mo, val);
+        const String* s = Pop_Molded_String(mo);
+        if (not Any_String_Kind(to))
+            Freeze_Flex(s);
+        Init_Any_String(OUT, to, s);
+        if (Is_Percent(val))  // leverage (buggy) rendering 1% vs 1.0% [1]
+            rebElide("take:last", OUT);
+        return OUT;
+    }
+
+    if (to == REB_DECIMAL or to == REB_PERCENT)
+        return Init_Decimal_Or_Percent(OUT, to, d);
+
+    if (to == REB_MONEY)
+        return Init_Money(OUT, decimal_to_deci(d));
+
+    if (to == REB_INTEGER) {
+        REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));
+        if (leftover != 0.0)
+            return FAIL(
+                "Can't TO INTEGER! a DECIMAL! w/digits after decimal point"
+            );
+        return Init_Integer(OUT, cast(REBI64, d));
     }
 
     return UNHANDLED;

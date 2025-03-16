@@ -568,9 +568,7 @@ IMPLEMENT_GENERIC(oldgeneric, map)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
-    Element* map = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* map = cast(Element*, ARG_N(1));
     assert(Is_Map(map));
 
     switch (id) {
@@ -693,27 +691,6 @@ IMPLEMENT_GENERIC(oldgeneric, map)
 
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), REF(deep))); }
 
-    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
-
-    // 1. MAP! does not retain order at this time.  It also allows you to
-    //    add duplicates in TO MAP!.  These undermine the reversibility
-    //    requirement, so that's currently disabled in To_Checker_Dispatcher()
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // v
-        Heart to = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_List_Kind(to))  // !!! not ordered! [1]
-            return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
-
-        if (to == REB_MAP) {
-            bool deep = false;
-            return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
-        }
-
-        return UNHANDLED; }
-
       case SYM_CLEAR: {
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
@@ -798,6 +775,28 @@ IMPLEMENT_GENERIC(oldgeneric, map)
 
       default:
         break;
+    }
+
+    return UNHANDLED;
+}
+
+
+// 1. MAP! does not retain order at this time.  It also allows you to
+//    add duplicates in TO MAP!.  These undermine the reversibility
+//    requirement, so that's currently disabled in To_Checker_Dispatcher()
+//
+IMPLEMENT_GENERIC(to, map) {
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* map = Element_ARG(element);
+    Heart to = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_List_Kind(to))  // !!! not ordered! [1]
+        return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
+
+    if (to == REB_MAP) {
+        bool deep = false;
+        return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
     }
 
     return UNHANDLED;

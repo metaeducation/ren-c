@@ -189,9 +189,7 @@ IMPLEMENT_GENERIC(oldgeneric, pair)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
-    Element* v = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* v = cast(Element*, ARG_N(1));
     Value* x1 = Cell_Pair_First(v);
     Value* y1 = Cell_Pair_Second(v);
 
@@ -199,46 +197,6 @@ IMPLEMENT_GENERIC(oldgeneric, pair)
     Value* y2 = nullptr;
 
     switch (id) {
-
-    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));
-        Heart to = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_List_Kind(to)) {
-            Source* a = Make_Source_Managed(2);
-            Set_Flex_Len(a, 2);
-            Copy_Cell(Array_At(a, 0), Cell_Pair_First(v));
-            Copy_Cell(Array_At(a, 1), Cell_Pair_Second(v));
-            return Init_Any_List(OUT, to, a);
-        }
-
-        if (Any_String_Kind(to) or to == REB_ISSUE) {
-            DECLARE_MOLDER (mo);
-            Push_Mold(mo);
-            Mold_Element(mo, Cell_Pair_First(v));
-            Append_Codepoint(mo->string, ' ');
-            Mold_Element(mo, Cell_Pair_Second(v));
-            if (Any_String_Kind(to))
-                return Init_Any_String(OUT, to, Pop_Molded_String(mo));
-
-            if (Try_Init_Small_Utf8_Untracked(
-                OUT,
-                to,
-                cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-                String_Len(mo->string) - mo->base.index,
-                String_Size(mo->string) - mo->base.size
-            )){
-                return OUT;
-            }
-            String* s = Pop_Molded_String(mo);
-            Freeze_Flex(s);
-            return Init_Any_String(OUT, to, s);
-        }
-
-        return UNHANDLED; }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -319,6 +277,50 @@ IMPLEMENT_GENERIC(oldgeneric, pair)
             "to integer! eval @", rebR(y_frame),
         "]"
     );
+}
+
+
+//=//// TO CONVERSIONS ////////////////////////////////////////////////=//
+
+IMPLEMENT_GENERIC(to, pair)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* v = Element_ARG(element);
+    Heart to = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_List_Kind(to)) {
+        Source* a = Make_Source_Managed(2);
+        Set_Flex_Len(a, 2);
+        Copy_Cell(Array_At(a, 0), Cell_Pair_First(v));
+        Copy_Cell(Array_At(a, 1), Cell_Pair_Second(v));
+        return Init_Any_List(OUT, to, a);
+    }
+
+    if (Any_String_Kind(to) or to == REB_ISSUE) {
+        DECLARE_MOLDER (mo);
+        Push_Mold(mo);
+        Mold_Element(mo, Cell_Pair_First(v));
+        Append_Codepoint(mo->string, ' ');
+        Mold_Element(mo, Cell_Pair_Second(v));
+        if (Any_String_Kind(to))
+            return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+
+        if (Try_Init_Small_Utf8_Untracked(
+            OUT,
+            to,
+            cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
+            String_Len(mo->string) - mo->base.index,
+            String_Size(mo->string) - mo->base.size
+        )){
+            return OUT;
+        }
+        String* s = Pop_Molded_String(mo);
+        Freeze_Flex(s);
+        return Init_Any_String(OUT, to, s);
+    }
+
+    return UNHANDLED;
 }
 
 

@@ -92,9 +92,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_sequence)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* sequence = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* sequence = cast(Element*, ARG_N(1));
     Length len = Cell_Sequence_Len(sequence);
     Heart heart = Cell_Heart_Ensure_Noquote(sequence);
 
@@ -134,165 +132,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_sequence)
         Freeze_Source_Shallow(Cell_Array_Known_Mutable(OUT));
         HEART_BYTE(OUT) = heart;
         return OUT; }
-
-  //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
-
-  // 1. We can only convert up the hierarchy.  e.g. a path like a:b/c:d can't
-  //    be converted "TO" a chain as a:b:c:d ... while such a chain could be
-  //    constructed, it can't reuse the allocation.
-  //
-  //    !!! Should this restriction be what AS does, while TO will actually
-  //    "flatten"?  How useful is the flattening operation, really?
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // sequence
-        Heart to = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_Sequence_Kind(to))  // e.g. `to the-chain! 'a.b.c` [1]
-            goto handle_as_conversion;  // immutable, same code
-
-        if (Any_List_Kind(to)) {  // !!! Should list have isomorphic binding?
-            Source* a = Make_Source_Managed(1);
-            Set_Flex_Len(a, 1);
-            Copy_Cell(Array_Head(a), sequence);
-            Plainify(Array_Head(a));  // to block! @a.b.c -> [a.b.c]
-            return Init_Any_List(OUT, to, a);
-        }
-
-        if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
-            DECLARE_MOLDER (mo);
-            Push_Mold(mo);
-            Plainify(sequence);  // to text! @a.b.c -> "a.b.c"
-            Form_Element(mo, sequence);
-            const String* s = Pop_Molded_String(mo);
-            if (not Any_String_Kind(to))
-                Freeze_Flex(s);
-            return Init_Any_String(OUT, to, s);
-        }
-
-        return UNHANDLED; }
-
-  //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
-
-    // 1. If you have a PATH! like "a.b/c.d" and you change the heart byte
-    //    to a TUPLE!, you'd get "a.b.c.d" which would be an invalidly
-    //    constructed tuple of length 2, with two tuples in it.  The TO
-    //    conversion code constructs new tuples, but AS is supposed to be
-    //    for efficiency.  The code should be merged into a version that is
-    //    efficient when it can be: TO and AS should maybe be the same.
-    //
-    // 2. Pairings are usually the same size as stubs...but not always.  If the
-    //    UNUSUAL_CELL_SIZE flag is set, pairings will be in their own pool.
-    //    Were there a strong incentive to have separate code for that case,
-    //    we could reuse the node...but the case is not that strong.  It may be
-    //    that AS should not be willing to alias sequences since compressed
-    //    cases will force new allocations (e.g. aliasing a refinement has to
-    //    make a new array, since the symbol absolutely can't be mutated into
-    //    an array node).  Review.
-
-      handle_as_conversion:
-      case SYM_AS: {
-        INCLUDE_PARAMS_OF_AS;
-        Element* v = Element_ARG(element);  // sequence
-        Heart as = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_Sequence_Kind(as)) {  // not all aliasings are legal [1]
-            REBINT i;
-            for (i = 0; i < len; ++i) {
-                Copy_Sequence_At(SPARE, v, i);
-                if (not Any_Sequence(SPARE))
-                    continue;
-
-                assert(not Any_Path(SPARE));  // impossible!
-                if (Any_Chain(SPARE) and (as == REB_TUPLE or as == REB_CHAIN))
-                    return FAIL(
-                        "Can't AS alias CHAIN!-containing sequence"
-                        "as TUPLE! or CHAIN!"
-                    );
-
-                if (Any_Tuple(SPARE) and as == REB_TUPLE)
-                    return FAIL(
-                        "Can't AS alias TUPLE!-containing sequence as TUPLE!"
-                    );
-            }
-
-            Copy_Cell(OUT, v);
-            HEART_BYTE(OUT) = as;
-            return Trust_Const(OUT);
-        }
-
-        if (Any_List_Kind(as)) {  // give immutable form, try to share memory
-            if (not Sequence_Has_Node(v)) {  // byte packed sequence
-                Source* a = Make_Source_Managed(len);
-                Set_Flex_Len(a, len);
-                Offset i;
-                for (i = 0; i < len; ++i)
-                    Copy_Sequence_At(Array_At(a, i), sequence, i);
-                return Init_Any_List(OUT, as, a);
-            }
-
-            const Node* node1 = CELL_NODE1(v);
-            if (Is_Node_A_Cell(node1)) {  // reusing node complicated [2]
-                const Pairing* p = c_cast(Pairing*, node1);
-                Context *binding = Cell_List_Binding(v);
-                Source* a = Make_Source_Managed(2);
-                Set_Flex_Len(a, 2);
-                Derelativize(Array_At(a, 0), Pairing_First(p), binding);
-                Derelativize(Array_At(a, 1), Pairing_Second(p), binding);
-                Freeze_Source_Shallow(a);
-                Init_Block(v, a);
-            }
-            else switch (Stub_Flavor(c_cast(Flex*, node1))) {
-              case FLAVOR_SYMBOL: {
-                Source* a = Make_Source_Managed(2);
-                Set_Flex_Len(a, 2);
-                if (Get_Cell_Flag(v, LEADING_BLANK)) {
-                    Init_Blank(Array_At(a, 0));
-                    Copy_Cell(Array_At(a, 1), v);
-                    HEART_BYTE(Array_At(a, 1)) = REB_WORD;
-                }
-                else {
-                    Copy_Cell(Array_At(a, 0), v);
-                    HEART_BYTE(Array_At(a, 0)) = REB_WORD;
-                    Init_Blank(Array_At(a, 1));
-                }
-                Freeze_Source_Shallow(a);
-                Init_Block(v, a);
-                break; }
-
-              case FLAVOR_SOURCE: {
-                const Source* a = Cell_Array(v);
-                if (MIRROR_BYTE(a)) {  // .[a] or (xxx): compression
-                    Source* two = Make_Source_Managed(2);
-                    Set_Flex_Len(two, 2);
-                    Cell* tweak;
-                    if (Get_Cell_Flag(v, LEADING_BLANK)) {
-                        Init_Blank(Array_At(two, 0));
-                        tweak = Copy_Cell(Array_At(two, 1), v);
-                    }
-                    else {
-                        tweak = Copy_Cell(Array_At(two, 0), v);
-                        Init_Blank(Array_At(two, 1));
-                    }
-                    HEART_BYTE(tweak) = MIRROR_BYTE(a);
-                    Clear_Cell_Flag(tweak, LEADING_BLANK);
-                    Init_Block(v, two);
-                }
-                else {
-                    assert(Is_Source_Frozen_Shallow(a));
-                    HEART_BYTE(v) = REB_BLOCK;
-                }
-                break; }
-
-              default:
-                assert(false);
-            }
-            HEART_BYTE(v) = as;
-            Copy_Cell(OUT, v);
-            return Trust_Const(OUT);
-        }
-        return UNHANDLED; }
 
       case SYM_PICK: {
         INCLUDE_PARAMS_OF_PICK;
@@ -511,6 +350,171 @@ IMPLEMENT_GENERIC(oldgeneric, any_sequence)
 
     return Init_Tuple_Bytes(OUT, buf, len);
 }}
+
+
+// 1. We can only convert up the hierarchy.  e.g. a path like a:b/c:d can't
+//    be converted "TO" a chain as a:b:c:d ... while such a chain could be
+//    constructed, it can't reuse the allocation.
+//
+//    !!! Should this restriction be what AS does, while TO will actually
+//    "flatten"?  How useful is the flattening operation, really?
+//
+IMPLEMENT_GENERIC(to, any_sequence)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* seq = Element_ARG(element);
+
+    Heart to = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_Sequence_Kind(to))  // e.g. `to the-chain! 'a.b.c` [1]
+        return GENERIC_CFUNC(as, any_sequence)(LEVEL);  // immutable, same code
+
+    if (Any_List_Kind(to)) {  // !!! Should list have isomorphic binding?
+        Source* a = Make_Source_Managed(1);
+        Set_Flex_Len(a, 1);
+        Copy_Cell(Array_Head(a), seq);
+        Plainify(Array_Head(a));  // to block! @a.b.c -> [a.b.c]
+        return Init_Any_List(OUT, to, a);
+    }
+
+    if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
+        DECLARE_MOLDER (mo);
+        Push_Mold(mo);
+        Plainify(seq);  // to text! @a.b.c -> "a.b.c"
+        Form_Element(mo, seq);
+        const String* s = Pop_Molded_String(mo);
+        if (not Any_String_Kind(to))
+            Freeze_Flex(s);
+        return Init_Any_String(OUT, to, s);
+    }
+
+    return UNHANDLED;
+}
+
+
+// 1. If you have a PATH! like "a.b/c.d" and you change the heart byte
+//    to a TUPLE!, you'd get "a.b.c.d" which would be an invalidly
+//    constructed tuple of length 2, with two tuples in it.  The TO
+//    conversion code constructs new tuples, but AS is supposed to be
+//    for efficiency.  The code should be merged into a version that is
+//    efficient when it can be: TO and AS should maybe be the same.
+//
+// 2. Pairings are usually the same size as stubs...but not always.  If the
+//    UNUSUAL_CELL_SIZE flag is set, pairings will be in their own pool.
+//    Were there a strong incentive to have separate code for that case,
+//    we could reuse the node...but the case is not that strong.  It may be
+//    that AS should not be willing to alias sequences since compressed
+//    cases will force new allocations (e.g. aliasing a refinement has to
+//    make a new array, since the symbol absolutely can't be mutated into
+//    an array node).  Review.
+//
+IMPLEMENT_GENERIC(as, any_sequence)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Element* seq = Element_ARG(element);  // sequence
+    Length len = Cell_Sequence_Len(seq);
+
+    Heart as = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_Sequence_Kind(as)) {  // not all aliasings are legal [1]
+        REBINT i;
+        for (i = 0; i < len; ++i) {
+            Copy_Sequence_At(SPARE, seq, i);
+            if (not Any_Sequence(SPARE))
+                continue;
+
+            assert(not Any_Path(SPARE));  // impossible!
+            if (Any_Chain(SPARE) and (as == REB_TUPLE or as == REB_CHAIN))
+                return FAIL(
+                    "Can't AS alias CHAIN!-containing sequence"
+                    "as TUPLE! or CHAIN!"
+                );
+
+            if (Any_Tuple(SPARE) and as == REB_TUPLE)
+                return FAIL(
+                    "Can't AS alias TUPLE!-containing sequence as TUPLE!"
+                );
+        }
+
+        Copy_Cell(OUT, seq);
+        HEART_BYTE(OUT) = as;
+        return Trust_Const(OUT);
+    }
+
+    if (Any_List_Kind(as)) {  // give immutable form, try to share memory
+        if (not Sequence_Has_Node(seq)) {  // byte packed sequence
+            Source* a = Make_Source_Managed(len);
+            Set_Flex_Len(a, len);
+            Offset i;
+            for (i = 0; i < len; ++i)
+                Copy_Sequence_At(Array_At(a, i), seq, i);
+            return Init_Any_List(OUT, as, a);
+        }
+
+        const Node* node1 = CELL_NODE1(seq);
+        if (Is_Node_A_Cell(node1)) {  // reusing node complicated [2]
+            const Pairing* p = c_cast(Pairing*, node1);
+            Context *binding = Cell_List_Binding(seq);
+            Source* a = Make_Source_Managed(2);
+            Set_Flex_Len(a, 2);
+            Derelativize(Array_At(a, 0), Pairing_First(p), binding);
+            Derelativize(Array_At(a, 1), Pairing_Second(p), binding);
+            Freeze_Source_Shallow(a);
+            Init_Block(seq, a);
+        }
+        else switch (Stub_Flavor(c_cast(Flex*, node1))) {
+          case FLAVOR_SYMBOL: {
+            Source* a = Make_Source_Managed(2);
+            Set_Flex_Len(a, 2);
+            if (Get_Cell_Flag(seq, LEADING_BLANK)) {
+                Init_Blank(Array_At(a, 0));
+                Copy_Cell(Array_At(a, 1), seq);
+                HEART_BYTE(Array_At(a, 1)) = REB_WORD;
+            }
+            else {
+                Copy_Cell(Array_At(a, 0), seq);
+                HEART_BYTE(Array_At(a, 0)) = REB_WORD;
+                Init_Blank(Array_At(a, 1));
+            }
+            Freeze_Source_Shallow(a);
+            Init_Block(seq, a);
+            break; }
+
+          case FLAVOR_SOURCE: {
+            const Source* a = Cell_Array(seq);
+            if (MIRROR_BYTE(a)) {  // .[a] or (xxx): compression
+                Source* two = Make_Source_Managed(2);
+                Set_Flex_Len(two, 2);
+                Cell* tweak;
+                if (Get_Cell_Flag(seq, LEADING_BLANK)) {
+                    Init_Blank(Array_At(two, 0));
+                    tweak = Copy_Cell(Array_At(two, 1), seq);
+                }
+                else {
+                    tweak = Copy_Cell(Array_At(two, 0), seq);
+                    Init_Blank(Array_At(two, 1));
+                }
+                HEART_BYTE(tweak) = MIRROR_BYTE(a);
+                Clear_Cell_Flag(tweak, LEADING_BLANK);
+                Init_Block(seq, two);
+            }
+            else {
+                assert(Is_Source_Frozen_Shallow(a));
+                HEART_BYTE(seq) = REB_BLOCK;
+            }
+            break; }
+
+          default:
+            assert(false);
+        }
+        HEART_BYTE(seq) = as;
+        Copy_Cell(OUT, seq);
+        return Trust_Const(OUT);
+    }
+    return UNHANDLED;
+}
 
 
 IMPLEMENT_GENERIC(multiply, tuple)

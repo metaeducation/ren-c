@@ -1002,9 +1002,7 @@ IMPLEMENT_GENERIC(oldgeneric, date)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
-    Element* v = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* v = cast(Element*, ARG_N(1));
     assert(Is_Date(v));
 
     REBLEN day = VAL_DAY(v) - 1;

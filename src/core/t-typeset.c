@@ -462,9 +462,7 @@ IMPLEMENT_GENERIC(oldgeneric, parameter)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
-    Element* param = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* param = cast(Element*, ARG_N(1));
     assert(Is_Parameter(param));
 
     switch (id) {

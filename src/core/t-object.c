@@ -930,11 +930,8 @@ IMPLEMENT_GENERIC(oldgeneric, any_context)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
-    Element* context = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* context = cast(Element*, ARG_N(1));
     Context* c = Cell_Context(context);
-    Heart heart = Cell_Heart(context);
 
     // !!! The PORT! datatype wants things like LENGTH OF to give answers
     // based on the content of the port, not the number of fields in the
@@ -981,40 +978,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_context)
         // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
 
         return FAIL(Error_Cannot_Reflect(VAL_TYPE(context), property)); }
-
-
-    //=//// TO CONVERSION /////////////////////////////////////////////////=//
-
-    // 1. !!! Cannot convert TO a PORT! without copying the whole context...
-    //    which raises the question of why convert an object to a port,
-    //    vs. making it as a port to begin with (?)  Look into why
-    //    system.standard.port is made with CONTEXT and not with MAKE PORT!
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // context
-        Heart to = VAL_TYPE_HEART(ARG(type));
-        assert(heart != to);  // TO should have called COPY in this case
-
-        if (to == REB_PORT) {
-            if (heart != REB_OBJECT)
-                return FAIL(
-                    "Only TO convert OBJECT! -> PORT! (weird internal code)"
-                );
-
-            VarList* v = cast(VarList*, c);
-            VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
-            Value* rootvar = Rootvar_Of_Varlist(copy);
-            HEART_BYTE(rootvar) = REB_PORT;
-            return Init_Port(OUT, copy);
-        }
-
-        if (to == VAL_TYPE(context)) {  // can't TO FRAME! an ERROR!, etc.
-            bool deep = false;
-            return Copy_Any_Context(OUT, context, deep);
-        }
-
-        return UNHANDLED; }
 
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
         INCLUDE_PARAMS_OF_COPY;
@@ -1195,6 +1158,43 @@ IMPLEMENT_GENERIC(oldgeneric, any_context)
 }
 
 
+// 1. !!! Cannot convert TO a PORT! without copying the whole context...
+//    which raises the question of why convert an object to a port,
+//    vs. making it as a port to begin with (?)  Look into why
+//    system.standard.port is made with CONTEXT and not with MAKE PORT!
+//
+IMPLEMENT_GENERIC(to, any_context)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* context = Element_ARG(element);
+    Context* c = Cell_Context(context);
+    Heart heart = Cell_Heart(context);
+    Heart to = VAL_TYPE_HEART(ARG(type));
+    assert(heart != to);  // TO should have called COPY in this case
+
+    if (to == REB_PORT) {
+        if (heart != REB_OBJECT)
+            return FAIL(
+                "Only TO convert OBJECT! -> PORT! (weird internal code)"
+            );
+
+        VarList* v = cast(VarList*, c);
+        VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
+        Value* rootvar = Rootvar_Of_Varlist(copy);
+        HEART_BYTE(rootvar) = REB_PORT;
+        return Init_Port(OUT, copy);
+    }
+
+    if (to == VAL_TYPE(context)) {  // can't TO FRAME! an ERROR!, etc.
+        bool deep = false;
+        return Copy_Any_Context(OUT, context, deep);
+    }
+
+    return UNHANDLED;
+}
+
+
 // FRAME! adds some additional reflectors to the usual things you can do with
 // an object, but falls through to Context for most things.
 //
@@ -1203,9 +1203,7 @@ IMPLEMENT_GENERIC(oldgeneric, frame)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* frame = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* frame = cast(Element*, ARG_N(1));
 
     Phase* phase = Cell_Frame_Phase(frame);
 

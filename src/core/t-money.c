@@ -207,55 +207,9 @@ IMPLEMENT_GENERIC(oldgeneric, money)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* v = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* v = cast(Element*, ARG_N(1));
 
     switch (id) {
-
-    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // v
-        Heart to = VAL_TYPE_HEART(ARG(type));
-
-        deci d = VAL_MONEY_AMOUNT(v);
-
-        if (to == REB_DECIMAL or to == REB_PERCENT)
-            return Init_Decimal_Or_Percent(OUT, to, deci_to_decimal(d));
-
-        if (to == REB_INTEGER) {  // !!! how to check for digits after dot?
-            REBI64 i = deci_to_int(d);
-            deci reverse = int_to_deci(i);
-            if (not deci_is_equal(d, reverse))
-                return RAISE(
-                    "Can't TO INTEGER! a MONEY! w/digits after decimal point"
-                );
-            return Init_Integer(OUT, i);
-        }
-
-        if (Any_Utf8_Kind(to)) {
-            if (d.e != 0 or d.m1 != 0 or d.m2 != 0)
-                Init_Decimal(v, deci_to_decimal(d));
-            else
-                Init_Integer(v, deci_to_int(d));
-
-            DECLARE_MOLDER (mo);
-            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-            Push_Mold(mo);
-            Mold_Element(mo, v);
-            const String* s = Pop_Molded_String(mo);
-            if (not Any_String_Kind(to))
-                Freeze_Flex(s);
-            return Init_Any_String(OUT, to, s);;
-        }
-
-        if (to == REB_MONEY)
-            return COPY(v);
-
-        return UNHANDLED; }
-
       case SYM_ADD: {
         Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Money(
@@ -339,6 +293,52 @@ IMPLEMENT_GENERIC(oldgeneric, money)
 
     return UNHANDLED;
 }
+
+
+IMPLEMENT_GENERIC(to, money)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* v = Element_ARG(element);
+    Heart to = VAL_TYPE_HEART(ARG(type));
+
+    deci d = VAL_MONEY_AMOUNT(v);
+
+    if (to == REB_DECIMAL or to == REB_PERCENT)
+        return Init_Decimal_Or_Percent(OUT, to, deci_to_decimal(d));
+
+    if (to == REB_INTEGER) {  // !!! how to check for digits after dot?
+        REBI64 i = deci_to_int(d);
+        deci reverse = int_to_deci(i);
+        if (not deci_is_equal(d, reverse))
+            return RAISE(
+                "Can't TO INTEGER! a MONEY! w/digits after decimal point"
+            );
+        return Init_Integer(OUT, i);
+    }
+
+    if (Any_Utf8_Kind(to)) {
+        if (d.e != 0 or d.m1 != 0 or d.m2 != 0)
+            Init_Decimal(v, deci_to_decimal(d));
+        else
+            Init_Integer(v, deci_to_int(d));
+
+        DECLARE_MOLDER (mo);
+        SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+        Push_Mold(mo);
+        Mold_Element(mo, v);
+        const String* s = Pop_Molded_String(mo);
+        if (not Any_String_Kind(to))
+            Freeze_Flex(s);
+        return Init_Any_String(OUT, to, s);;
+    }
+
+    if (to == REB_MONEY)
+        return COPY(v);
+
+    return UNHANDLED;
+}
+
 
 
 IMPLEMENT_GENERIC(multiply, money)

@@ -271,11 +271,13 @@ DECLARE_NATIVE(to)
     INCLUDE_PARAMS_OF_TO;
 
     Element* e = Element_ARG(element);
-    UNUSED(ARG(type));
+    Kind as = VAL_TYPE_KIND(ARG(type));
+    if (as >= REB_MAX_HEART)
+        return FAIL("TO can't produce quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS
 
-    Bounce bounce = Run_Generic_Dispatch(e, TOP_LEVEL, CANON(TO));
+    Bounce bounce = Dispatch_Generic(to, e, LEVEL);
     /*if (bounce == UNHANDLED)  // distinct error for AS or TO ?
         return Error_Bad_Cast_Raw(ARG(element), ARG(type)); */
     return bounce;
@@ -283,11 +285,11 @@ DECLARE_NATIVE(to)
   #else  // add monitor to ensure result is right
 
     if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(TO));
+        return Dispatch_Generic(to, e, LEVEL);
 
     assert(Not_Level_Flag(LEVEL, CHECKING_TO));
     Set_Level_Flag(LEVEL, CHECKING_TO);
-    return Downshift_For_To_Or_As_Checker(level_);
+    return Downshift_For_To_Or_As_Checker(LEVEL);
   #endif
 }
 
@@ -324,13 +326,12 @@ DECLARE_NATIVE(as)
 
   #if NO_RUNTIME_CHECKS
 
-    UNUSED(ARG(type));
-    return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(AS));
+    return Dispatch_Generic(as, e, LEVEL);
 
   #else  // add monitor to ensure result is right
 
     if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Run_Generic_Dispatch(e, TOP_LEVEL, CANON(AS));
+        return Dispatch_Generic(as, e, TOP_LEVEL);
 
     assert(Not_Level_Flag(LEVEL, CHECKING_TO));
     return Downshift_For_To_Or_As_Checker(LEVEL);

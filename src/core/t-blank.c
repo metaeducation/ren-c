@@ -115,73 +115,6 @@ IMPLEMENT_GENERIC(oldgeneric, blank)
         UNUSED(ARG(location));
         return RAISE(Error_Bad_Pick_Raw(ARG(picker))); }
 
-    //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
-
-      // Because BLANK! is considered EMPTY?, its TO and AS equivalencies are
-      // to empty series.  TO conversions have to create new stubs, so that
-      // the series are freshly mutable.
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));
-        Heart as = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_List_Kind(as))
-            return Init_Any_List(OUT, as, Make_Source(0));
-
-        if (Any_String_Kind(as))
-            return Init_Any_String(OUT, as, Make_String(0));
-
-        if (Any_Word_Kind(as))
-            return UNHANDLED;
-
-        if (as == REB_ISSUE) {
-            bool check = Try_Init_Small_Utf8(
-                OUT, as, cast(Utf8(const*), ""), 0, 0
-            );
-            assert(check);
-            UNUSED(check);
-            return OUT;
-        }
-
-        if (as == REB_BLOB)
-          return Init_Blob(OUT, Make_Binary(0));
-
-        return UNHANDLED; }
-
-    //=//// AS CONVERSIONS ////////////////////////////////////////////////=//
-
-      // AS conversions of blanks to any series or utf8 type can create an
-      // immutable empty instance, using globally allocated nodes if needed.
-
-      case SYM_AS: {
-        INCLUDE_PARAMS_OF_AS;
-        UNUSED(ARG(element));
-        Heart as = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_List_Kind(as))
-            return Init_Any_List(OUT, as, Cell_Array(g_empty_block));
-
-        if (Any_String_Kind(as))
-            return Init_Any_String(OUT, as, Cell_String(g_empty_text));
-
-        if (Any_Word_Kind(as))
-            return UNHANDLED;
-
-        if (as == REB_ISSUE) {
-            bool check = Try_Init_Small_Utf8(
-                OUT, as, cast(Utf8(const*), ""), 0, 0
-            );
-            assert(check);
-            UNUSED(check);
-            return OUT;
-        }
-
-        if (as == REB_BLOB)
-            return Init_Blob(OUT, Cell_Binary(g_empty_blob));
-
-        return UNHANDLED; }
-
       case SYM_COPY: {  // since (copy:deep [1 _ 2]) is legal, allow (copy _)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(ARG(value));
@@ -195,6 +128,77 @@ IMPLEMENT_GENERIC(oldgeneric, blank)
 
       default: break;
     }
+
+    return UNHANDLED;
+}
+
+
+// Because BLANK! is considered EMPTY?, its TO and AS equivalencies are
+// to empty series.  TO conversions have to create new stubs, so that
+// the series are freshly mutable.
+//
+IMPLEMENT_GENERIC(to, blank)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    UNUSED(ARG(element));
+    Heart as = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_List_Kind(as))
+        return Init_Any_List(OUT, as, Make_Source(0));
+
+    if (Any_String_Kind(as))
+        return Init_Any_String(OUT, as, Make_String(0));
+
+    if (Any_Word_Kind(as))
+        return UNHANDLED;
+
+    if (as == REB_ISSUE) {
+        bool check = Try_Init_Small_Utf8(
+            OUT, as, cast(Utf8(const*), ""), 0, 0
+        );
+        assert(check);
+        UNUSED(check);
+        return OUT;
+    }
+
+    if (as == REB_BLOB)
+        return Init_Blob(OUT, Make_Binary(0));
+
+    return UNHANDLED;
+}
+
+
+// AS conversions of blanks to any series or utf8 type can create an
+// immutable empty instance, using globally allocated nodes if needed.
+//
+IMPLEMENT_GENERIC(as, blank)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    UNUSED(ARG(element));
+    Heart as = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_List_Kind(as))
+        return Init_Any_List(OUT, as, Cell_Array(g_empty_block));
+
+    if (Any_String_Kind(as))
+        return Init_Any_String(OUT, as, Cell_String(g_empty_text));
+
+    if (Any_Word_Kind(as))
+        return UNHANDLED;
+
+    if (as == REB_ISSUE) {
+        bool check = Try_Init_Small_Utf8(
+            OUT, as, cast(Utf8(const*), ""), 0, 0
+        );
+        assert(check);
+        UNUSED(check);
+        return OUT;
+    }
+
+    if (as == REB_BLOB)
+        return Init_Blob(OUT, Cell_Binary(g_empty_blob));
 
     return UNHANDLED;
 }

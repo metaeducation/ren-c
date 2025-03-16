@@ -625,9 +625,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* list = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* list = cast(Element*, ARG_N(1));
     Context* binding = Cell_List_Binding(list);
 
     switch (id) {
@@ -638,175 +636,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
 
         return Series_Common_Action_Maybe_Unhandled(level_, verb); }
 
-
-  //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
-
-  // 1. Historically, TO conversions have been binding agnostic.  Using AS
-  //    will give you the same binding as the original but no copy, while
-  //    COPY will give you the same binding as the original.  Should this
-  //    code delegate to changing the heart byte of "whatever COPY does?"
-  //
-  // 2. The scanner uses the data stack, but it could just take sequential
-  //    cells in any array...and the data stack just being an example of that.
-  //    Then we wouldn't have to push the cells here.
-  //
-  // 3. While it may not seem useful (to word! [...]) only works on single
-  //    element blocks with a word in them, e.g. (to word! [a]).  All other
-  //    blocks are errors.
-
-      case SYM_TO: {
-        INCLUDE_PARAMS_OF_TO;
-        UNUSED(ARG(element));  // list
-        Heart to = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_List_Kind(to)) {
-            Length len;
-            const Element* at = Cell_List_Len_At(&len, list);
-            return Init_Any_List(
-                OUT, to, Copy_Values_Len_Shallow(at, len)  // !!! binding? [1]
-            );
-        }
-
-        if (Any_Sequence_Kind(to)) {  // (to path! [a/b/c]) -> a/b/c
-            Length len;
-            const Element* item = Cell_List_Len_At(&len, list);
-            if (Cell_Series_Len_At(list) != 1)
-                return RAISE("Can't TO ANY-SEQUENCE? on list with length > 1");
-
-            if (
-                (Is_Path(item) and Any_Path_Kind(to))
-                or (Is_Chain(item) and Any_Chain_Kind(to))
-                or (Is_Tuple(item) and Any_Tuple_Kind(to))
-            ){
-                Copy_Cell(OUT, item);
-                HEART_BYTE(OUT) = to;
-                return OUT;
-            }
-
-            return RAISE("TO ANY-SEQUENCE? needs list with a sequence in it");
-        }
-
-        if (Any_Word_Kind(to)) {  // to word! '{a} -> a, see [3]
-            Length len;
-            const Element* item = Cell_List_Len_At(&len, list);
-            if (Cell_Series_Len_At(list) != 1)
-                return RAISE("Can't TO ANY-WORD? on list with length > 1");
-            if (not Is_Word(item))
-                return RAISE("TO ANY-WORD? needs list with one word in it");
-            Copy_Cell(OUT, item);
-            HEART_BYTE(OUT) = to;
-            return OUT;
-        }
-
-        if (Any_Utf8_Kind(to)) {  // to tag! [1 a #b] => <1 a #b>
-            assert(not Any_Word_Kind(to));
-
-            DECLARE_MOLDER (mo);
-            SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
-            Push_Mold(mo);
-
-            Mold_Or_Form_Element(mo, list, false);
-            if (Any_String_Kind(to))
-                return Init_Any_String(OUT, to, Pop_Molded_String(mo));
-
-            Init_Utf8_Non_String(
-                OUT,
-                to,
-                cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-                String_Len(mo->string) - mo->base.index,
-                String_Size(mo->string) - mo->base.size
-            );
-            Drop_Mold(mo);
-            return OUT;
-        }
-
-        if (to == REB_INTEGER) {
-            Length len;
-            const Element* at = Cell_List_Len_At(&len, list);
-            if (len != 1 or not Is_Integer(at))
-                return RAISE("TO INTEGER! works on 1-element integer lists");
-            return COPY(at);
-        }
-
-        if (to == REB_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
-            Length len = Cell_Series_Len_At(list);
-            if (len % 2 != 0)
-                return RAISE("TO MAP! of list must have even number of items");
-
-            const Element* tail;
-            const Element* at = Cell_List_At(&tail, list);
-
-            Map* map = Make_Map(len / 2);  // map size is half block length
-            Append_Map(map, at, tail, len);
-            Rehash_Map(map);
-            return Init_Map(OUT, map);
-        }
-
-        if (to == REB_PAIR) {
-            const Element* tail;
-            const Element* item = Cell_List_At(&tail, list);
-
-            if (
-                Is_Integer(item) and Is_Integer(item + 1)
-                and (tail == item + 2)
-            ){
-                return Init_Pair(OUT, VAL_INT64(item), VAL_INT64(item + 1));
-            }
-            return FAIL("TO PAIR! only works on lists with two integers");
-        }
-
-        if (to == REB_BLANK)
-            goto handle_as_conversion;
-
-        return UNHANDLED; }
-
-  //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
-
-    // 1. The init of a listlike sequence may not use the array you pass in.
-    //    But regardless, the AS locks it...because whether it decides to
-    //    use the array or not is an implementation detail.  It will reuse
-    //    the array at least some of the time, so freeze it all of the time.
-
-      handle_as_conversion:
-      case SYM_AS: {
-        INCLUDE_PARAMS_OF_AS;
-        Element* v = Element_ARG(element);  // list
-        Heart as = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_List_Kind(as)) {
-            HEART_BYTE(v) = as;
-            return Copy_Cell(OUT, v);
-        }
-
-        if (Any_Sequence_Kind(as)) {
-            if (not Is_Source_Frozen_Shallow(Cell_Array(v)))  // freeze it [1]
-                Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(v));
-
-            DECLARE_ELEMENT (temp);  // need to rebind
-            Option(Error*) error = Trap_Init_Any_Sequence_At_Listlike(
-                temp,
-                as,
-                Cell_Array(v),
-                VAL_INDEX(v)
-            );
-            if (error)
-                return FAIL(unwrap error);
-
-            /* Tweak_Cell_Binding(temp) = Cell_Binding(v); */  // may be unfit
-            Derelativize(OUT, temp, Cell_Binding(v));  // try this instead (?)
-
-            return OUT;
-        }
-
-        if (as == REB_BLANK) {
-            Length len;
-            Cell_List_Len_At(&len, v);
-            if (len == 0)
-                return Init_Blank(OUT);
-            return RAISE("Can only AS/TO convert empty series to BLANK!");
-        }
-
-        return UNHANDLED; }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -1307,6 +1136,179 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
 
     return UNHANDLED;
 }
+
+
+// 1. Historically, TO conversions have been binding agnostic.  Using AS
+//    will give you the same binding as the original but no copy, while
+//    COPY will give you the same binding as the original.  Should this
+//    code delegate to changing the heart byte of "whatever COPY does?"
+//
+// 2. The scanner uses the data stack, but it could just take sequential
+//    cells in any array...and the data stack just being an example of that.
+//    Then we wouldn't have to push the cells here.
+//
+// 3. While it may not seem useful (to word! [...]) only works on single
+//    element blocks with a word in them, e.g. (to word! [a]).  All other
+//    blocks are errors.
+//
+IMPLEMENT_GENERIC(to, any_list)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    Element* list = Element_ARG(element);
+    Heart to = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_List_Kind(to)) {
+        Length len;
+        const Element* at = Cell_List_Len_At(&len, list);
+        return Init_Any_List(
+            OUT, to, Copy_Values_Len_Shallow(at, len)  // !!! binding? [1]
+        );
+    }
+
+    if (Any_Sequence_Kind(to)) {  // (to path! [a/b/c]) -> a/b/c
+        Length len;
+        const Element* item = Cell_List_Len_At(&len, list);
+        if (Cell_Series_Len_At(list) != 1)
+            return RAISE("Can't TO ANY-SEQUENCE? on list with length > 1");
+
+        if (
+            (Is_Path(item) and Any_Path_Kind(to))
+            or (Is_Chain(item) and Any_Chain_Kind(to))
+            or (Is_Tuple(item) and Any_Tuple_Kind(to))
+        ){
+            Copy_Cell(OUT, item);
+            HEART_BYTE(OUT) = to;
+            return OUT;
+        }
+
+        return RAISE("TO ANY-SEQUENCE? needs list with a sequence in it");
+    }
+
+    if (Any_Word_Kind(to)) {  // to word! '{a} -> a, see [3]
+        Length len;
+        const Element* item = Cell_List_Len_At(&len, list);
+        if (Cell_Series_Len_At(list) != 1)
+            return RAISE("Can't TO ANY-WORD? on list with length > 1");
+        if (not Is_Word(item))
+            return RAISE("TO ANY-WORD? needs list with one word in it");
+        Copy_Cell(OUT, item);
+        HEART_BYTE(OUT) = to;
+        return OUT;
+    }
+
+    if (Any_Utf8_Kind(to)) {  // to tag! [1 a #b] => <1 a #b>
+        assert(not Any_Word_Kind(to));
+
+        DECLARE_MOLDER (mo);
+        SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+        Push_Mold(mo);
+
+        Mold_Or_Form_Element(mo, list, false);
+        if (Any_String_Kind(to))
+            return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+
+        Init_Utf8_Non_String(
+            OUT,
+            to,
+            cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
+            String_Len(mo->string) - mo->base.index,
+            String_Size(mo->string) - mo->base.size
+        );
+        Drop_Mold(mo);
+        return OUT;
+    }
+
+    if (to == REB_INTEGER) {
+        Length len;
+        const Element* at = Cell_List_Len_At(&len, list);
+        if (len != 1 or not Is_Integer(at))
+            return RAISE("TO INTEGER! works on 1-element integer lists");
+        return COPY(at);
+    }
+
+    if (to == REB_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
+        Length len = Cell_Series_Len_At(list);
+        if (len % 2 != 0)
+            return RAISE("TO MAP! of list must have even number of items");
+
+        const Element* tail;
+        const Element* at = Cell_List_At(&tail, list);
+
+        Map* map = Make_Map(len / 2);  // map size is half block length
+        Append_Map(map, at, tail, len);
+        Rehash_Map(map);
+        return Init_Map(OUT, map);
+    }
+
+    if (to == REB_PAIR) {
+        const Element* tail;
+        const Element* item = Cell_List_At(&tail, list);
+
+        if (
+            Is_Integer(item) and Is_Integer(item + 1)
+            and (tail == item + 2)
+        ){
+            return Init_Pair(OUT, VAL_INT64(item), VAL_INT64(item + 1));
+        }
+        return FAIL("TO PAIR! only works on lists with two integers");
+    }
+
+    if (to == REB_BLANK)
+        return GENERIC_CFUNC(as, any_list)(LEVEL);
+
+    return UNHANDLED;
+}
+
+
+// 1. The init of a listlike sequence may not use the array you pass in.
+//    But regardless, the AS locks it...because whether it decides to
+//    use the array or not is an implementation detail.  It will reuse
+//    the array at least some of the time, so freeze it all of the time.
+//
+IMPLEMENT_GENERIC(as, any_list)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Element* list = Element_ARG(element);
+    Heart as = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_List_Kind(as)) {
+        HEART_BYTE(list) = as;
+        return Copy_Cell(OUT, list);
+    }
+
+    if (Any_Sequence_Kind(as)) {
+        if (not Is_Source_Frozen_Shallow(Cell_Array(list)))  // freeze it [1]
+            Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(list));
+
+        DECLARE_ELEMENT (temp);  // need to rebind
+        Option(Error*) error = Trap_Init_Any_Sequence_At_Listlike(
+            temp,
+            as,
+            Cell_Array(list),
+            VAL_INDEX(list)
+        );
+        if (error)
+            return FAIL(unwrap error);
+
+        /* Tweak_Cell_Binding(temp) = Cell_Binding(list); */  // may be unfit
+        Derelativize(OUT, temp, Cell_Binding(list));  // try this instead (?)
+
+        return OUT;
+    }
+
+    if (as == REB_BLANK) {  // !!! think it needs to make list immutable?
+        Length len;
+        Cell_List_Len_At(&len, list);
+        if (len == 0)
+            return Init_Blank(OUT);
+        return RAISE("Can only AS/TO convert empty series to BLANK!");
+    }
+
+    return UNHANDLED;
+}
+
 
 
 // !!! TYPE-XXX! are being rethought, but right now TYPE-BLOCK! has the

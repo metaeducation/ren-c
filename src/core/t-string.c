@@ -792,9 +792,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* v = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* v = cast(Element*, ARG_N(1));
     assert(Any_Utf8(v) and Stringlike_Has_Node(v));
 
     switch (id) {
@@ -832,32 +830,6 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
             break;
         }
         return UNHANDLED; }
-
-  //=//// TO CONVERSIONS //////////////////////////////////////////////////=//
-
-    // TO conversions of strings make copies (if the destination is mutable),
-    // and hence need only use read routines like Cell_Utf8_XXX() to access
-    // the bytes.  The ANY-UTF8? handler needs to deal with cells that might
-    // use storage in their cell for the data, or an allocated node (as all
-    // strings do).  Hence its concerns are a superset of those for strings.
-
-      case SYM_TO:
-        return GENERIC_CFUNC(oldgeneric, any_utf8)(level_);
-
-  //=//// AS CONVERSIONS //////////////////////////////////////////////////=//
-
-      case SYM_AS: {
-        INCLUDE_PARAMS_OF_AS;
-        UNUSED(ARG(element));  // v
-        Heart as = VAL_TYPE_HEART(ARG(type));
-
-        if (Any_String_Kind(as)) {  // special handling not in Utf8 generic
-            Copy_Cell(OUT, v);
-            HEART_BYTE(OUT) = as;
-            return Inherit_Const(stable_OUT, v);
-        }
-
-        return GENERIC_CFUNC(oldgeneric, any_utf8)(level_); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -1313,6 +1285,44 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
     }
 
     return UNHANDLED;
+}
+
+
+// TO conversions of strings make copies (if the destination is mutable),
+// and hence need only use read routines like Cell_Utf8_XXX() to access
+// the bytes.  The ANY-UTF8? handler needs to deal with cells that might
+// use storage in their cell for the data, or an allocated node (as all
+// strings do).  Hence its concerns are a superset of those for strings.
+//
+// (We could just omit a TO handler here and it would fall through to
+// the ANY-UTF8? generic, but this gives an opportunity to inject debug
+// code and also to explain why there's not specific code for strings.)
+//
+IMPLEMENT_GENERIC(to, any_string)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    USED(ARG(element));
+    USED(ARG(type));
+
+    return GENERIC_CFUNC(to, any_utf8)(LEVEL);
+}
+
+
+IMPLEMENT_GENERIC(as, any_string)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Element* v = Element_ARG(element);
+    Heart as = VAL_TYPE_HEART(ARG(type));
+
+    if (Any_String_Kind(as)) {  // special handling not in Utf8 generic
+        Copy_Cell(OUT, v);
+        HEART_BYTE(OUT) = as;
+        return Inherit_Const(stable_OUT, v);
+    }
+
+    return GENERIC_CFUNC(as, any_utf8)(LEVEL);
 }
 
 

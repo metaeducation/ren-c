@@ -92,9 +92,7 @@ IMPLEMENT_GENERIC(oldgeneric, port)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* port = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* port = cast(Element*, ARG_N(1));
     assert(Is_Port(port));
 
     enum {
@@ -232,9 +230,7 @@ IMPLEMENT_GENERIC(oldgeneric, url)
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
 
-    Element* url = cast(Element*,
-        (id == SYM_TO or id == SYM_AS) ? ARG_N(2) : ARG_N(1)
-    );
+    Element* url = cast(Element*, ARG_N(1));
     assert(Is_Url(url));
 
     if (id == SYM_COPY) {
@@ -244,9 +240,6 @@ IMPLEMENT_GENERIC(oldgeneric, url)
         return COPY(url);
     }
     else switch (id) {
-      case SYM_TO:  // defer to String (handles non-node-having case too)
-        return GENERIC_CFUNC(oldgeneric, any_string)(level_);
-
       case SYM_REFLECT:
       case SYM_READ:
       case SYM_WRITE:
@@ -278,4 +271,17 @@ IMPLEMENT_GENERIC(oldgeneric, url)
 
     assert(STATE == STATE_0);  // retriggered frame must act like initial entry
     return BOUNCE_CONTINUE;
+}
+
+
+// defer to String (handles non-node-having case too)
+//
+IMPLEMENT_GENERIC(to, url)
+{
+    INCLUDE_PARAMS_OF_TO;
+
+    USED(ARG(type));  // deferred to string via LEVEL
+    USED(ARG(element));
+
+    return GENERIC_CFUNC(to, any_string)(LEVEL);
 }
