@@ -1,12 +1,12 @@
 //
-//  File: %sys-patch.h
-//  Summary: "Definitions for Virtual Binding Patches"
+//  File: %stub-use.h
+//  Summary: "Definitions for Virtual Use Patches"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2020-2021 Ren-C Open Source Contributors
+// Copyright 2020-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -18,36 +18,6 @@
 // https://www.gnu.org/licenses/lgpl-3.0.html
 //
 //=////////////////////////////////////////////////////////////////////////=//
-//
-// Virtual Binding patches are small singular arrays which form linked lists
-// of contexts.  Patches are in priority order, so that if a word is found in
-// the head patch it will resolve there instead of later in the list.
-//
-//=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-
-
-
-#if NO_RUNTIME_CHECKS
-    #define Cell_List_Binding(v) \
-        Cell_Binding(v)
-#else
-    INLINE Context* Cell_List_Binding(const Cell* v) {
-        assert(Listlike_Cell(v));
-        Context* c = Cell_Binding(v);
-        if (not c)
-            return SPECIFIED;
-
-        Flavor flavor = Stub_Flavor(c);
-        assert(
-            flavor == FLAVOR_LET
-            or flavor == FLAVOR_USE
-            or flavor == FLAVOR_VARLIST
-            or flavor == FLAVOR_SEA
-        );
-        return c;
-    }
-#endif
 
 
 //

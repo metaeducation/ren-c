@@ -168,6 +168,28 @@ INLINE Element* Init_Relative_Block_At(
     Init_Relative_Block_At((out), (action), (array), 0)
 
 
+#if NO_RUNTIME_CHECKS
+    #define Cell_List_Binding(v) \
+        Cell_Binding(v)
+#else
+    INLINE Context* Cell_List_Binding(const Cell* v) {
+        assert(Listlike_Cell(v));
+        Context* c = Cell_Binding(v);
+        if (not c)
+            return SPECIFIED;
+
+        Flavor flavor = Stub_Flavor(c);
+        assert(
+            flavor == FLAVOR_LET
+            or flavor == FLAVOR_USE
+            or flavor == FLAVOR_VARLIST
+            or flavor == FLAVOR_SEA
+        );
+        return c;
+    }
+#endif
+
+
 //=//// "PACKS" (BLOCK! Antiforms) ////////////////////////////////////////=//
 //
 // BLOCK! antiforms are exploited as a mechanism for bundling values in a way

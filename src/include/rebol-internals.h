@@ -655,7 +655,7 @@ enum {
 
 #include "cells/cell-parameter.h"
 
-#include "sys-patch.h"
+#include "stubs/stub-use.h"
 #include "sys-bind.h"
 
 #include "cells/cell-datatype.h"  // needs Derelativize()
