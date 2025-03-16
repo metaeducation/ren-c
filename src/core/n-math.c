@@ -925,8 +925,8 @@ DECLARE_NATIVE(greater_q)
     Value* v1 = ARG(value1);
     Value* v2 = ARG(value2);
 
-    Quotify(v1, 1);
-    Quotify(v2, 1);
+    Quotify(v1);
+    Quotify(v2);
 
     return rebDelegate(
         "not any [equal?:strict", v1, v2, "lesser?", v1, v2, "]"
@@ -951,8 +951,8 @@ DECLARE_NATIVE(equal_or_lesser_q)
     Value* v1 = ARG(value1);
     Value* v2 = ARG(value2);
 
-    Quotify(v1, 1);
-    Quotify(v2, 1);
+    Quotify(v1);
+    Quotify(v2);
 
     return rebDelegate(
         "any [equal?:strict", v1, v2, "lesser?", v1, v2, "]"
@@ -977,8 +977,8 @@ DECLARE_NATIVE(greater_or_equal_q)
     Value* v1 = ARG(value1);
     Value* v2 = ARG(value2);
 
-    Quotify(v1, 1);
-    Quotify(v2, 1);
+    Quotify(v1);
+    Quotify(v2);
 
     return rebDelegate(
         "any [equal?:strict", v1, v2, "not lesser?", v1, v2, "]"
@@ -1003,8 +1003,8 @@ DECLARE_NATIVE(maximum)
     Value* v1 = ARG(value1);
     Value* v2 = ARG(value2);
 
-    Quotify(v1, 1);
-    Quotify(v2, 1);
+    Quotify(v1);
+    Quotify(v2);
 
     return rebDelegate(
         "either lesser?", v1, v2,
@@ -1031,8 +1031,8 @@ DECLARE_NATIVE(minimum)
     Value* v1 = ARG(value1);
     Value* v2 = ARG(value2);
 
-    Quotify(v1, 1);
-    Quotify(v2, 1);
+    Quotify(v1);
+    Quotify(v2);
 
     return rebDelegate(
         "either lesser?", v1, v2,
@@ -1075,7 +1075,7 @@ DECLARE_NATIVE(negative_q)
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
     Value* v = ARG(value);
-    Quotify(v, 1);  // not necessary for scalars, but futureproof it
+    Quotify(v);  // not necessary for scalars, but futureproof it
 
     return rebDelegate(CANON(LESSER_Q), v, CANON(ZEROIFY), v);
 }
@@ -1095,7 +1095,7 @@ DECLARE_NATIVE(positive_q)
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
     Value* v = ARG(value);
-    Quotify(v, 1);  // not necessary for scalars, but futureproof it
+    Quotify(v);  // not necessary for scalars, but futureproof it
 
     return rebDelegate(CANON(GREATER_Q), v, CANON(ZEROIFY), v);
 }
@@ -1115,7 +1115,7 @@ DECLARE_NATIVE(zero_q)
     INCLUDE_PARAMS_OF_ZERO_Q;
 
     Value* v = ARG(value);
-    Quotify(v, 1);  // not necessary for scalars, but futureproof it
+    Quotify(v);  // not necessary for scalars, but futureproof it
 
     return rebDelegate(CANON(EQUAL_Q), v, CANON(ZEROIFY), v);
 }

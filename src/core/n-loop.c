@@ -1676,7 +1676,7 @@ DECLARE_NATIVE(map_each)
     if (Is_Blank(ARG(data)))  // should have same result as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
-    Quotify(ARG(data), 1);  // dialect, in theory [1]
+    Quotify(ARG(data));  // dialect, in theory [1]
 
     const Value* map_action = LIB(MAP);
     Details* details = Ensure_Cell_Frame_Details(map_action);
@@ -1763,7 +1763,7 @@ DECLARE_NATIVE(map)
         not Is_Quoted(data)
         or Cell_Num_Quotes(data) != 1
         or not (
-            Any_Series(Unquotify(data, 1))
+            Any_Series(Unquotify(data))
             or Any_Path(data)  // has been unquoted
             or Any_Context(data)
             or Any_Sequence(data)
@@ -1978,7 +1978,7 @@ DECLARE_NATIVE(for)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Quoted(value)) {
-        Unquotify(value, 1);
+        Unquotify(value);
 
         if (not (Any_Series(value) or Any_Sequence(value)))
             return FAIL(PARAM(value));

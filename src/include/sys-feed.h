@@ -274,7 +274,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         }
         else {
             assert(Is_Quoted(single));
-            Unquotify(Copy_Cell(&feed->fetched, single), 1);
+            Unquotify(Copy_Cell(&feed->fetched, single));
             feed->p = &feed->fetched;
         }
         GC_Kill_Flex(inst1);

@@ -583,7 +583,7 @@ IMPLEMENT_GENERIC(moldify, varargs)
             break;
 
           case PARAMCLASS_JUST:
-            Quotify(Init_Word(param_word, Key_Symbol(key)), 1);
+            Quotify(Init_Word(param_word, Key_Symbol(key)));
             break;
 
           case PARAMCLASS_THE:
@@ -591,7 +591,7 @@ IMPLEMENT_GENERIC(moldify, varargs)
             break;
 
           case PARAMCLASS_SOFT:
-            Quotify(Getify(Init_Word(param_word, Key_Symbol(key))), 1);
+            Quotify(Getify(Init_Word(param_word, Key_Symbol(key))));
             break;
 
           default:

@@ -230,7 +230,7 @@ DECLARE_NATIVE(inline)
         // turn it into a block.
         //
         Source* a = Alloc_Singular(FLEX_MASK_UNMANAGED_SOURCE);
-        Unquotify(Move_Cell(Stub_Cell(a), splice), 1);
+        Unquotify(Move_Cell(Stub_Cell(a), splice));
         Init_Block(splice, a);
         Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }

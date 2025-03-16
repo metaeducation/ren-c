@@ -1942,13 +1942,13 @@ static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
             Init_Sigil(PUSH(), unwrap S->sigil_pending);
         S->sigil_pending = SIGIL_0;
         if (S->quotes_pending) {
-            Quotify(TOP, S->quotes_pending);
+            Quotify_Depth(TOP, S->quotes_pending);
             S->quotes_pending = 0;
         }
     }
     else if (S->quotes_pending != 0) {
         Init_Sigil(PUSH(), SIGIL_QUOTE);
-        Quotify(TOP, S->quotes_pending - 1);
+        Quotify_Depth(TOP, S->quotes_pending - 1);
         S->quotes_pending = 0;
     }
 
@@ -1972,7 +1972,7 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
     }
     if (S->quotes_pending != 0) {
         assert(QUOTE_BYTE(e) <= QUASIFORM_2);
-        Quotify(e, S->quotes_pending);
+        Quotify_Depth(e, S->quotes_pending);
         S->quotes_pending = 0;
     }
     return nullptr;
@@ -2227,7 +2227,7 @@ Bounce Scanner_Executor(Level* const L) {
                 or Is_Lex_End_List(S->end[1])
             ){
                 Init_Sigil(PUSH(), SIGIL_QUASI);  // it's ~~
-                Quotify(TOP, S->quotes_pending);
+                Quotify_Depth(TOP, S->quotes_pending);
                 S->quotes_pending = 0;
 
                 assert(transcode->at == S->end);  // token consumed one tilde

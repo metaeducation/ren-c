@@ -1486,7 +1486,7 @@ RebolValue* API_rebQuote(
     Value* result = Alloc_Value();
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
 
-    return Quotify(result, 1);  // nulled cells legal for API if quoted
+    return Quotify(result);  // nulled cells legal for API if quoted
 }
 
 
@@ -2387,7 +2387,7 @@ RebolNodeInternal* API_rebUNQUOTING(const void* p)
         fail ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
     }
 
-    Unquotify(v, 1);
+    Unquotify(v);
     return cast(RebolNodeInternal*, stub);  // cast needed in C
 }
 

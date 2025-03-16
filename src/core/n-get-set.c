@@ -202,7 +202,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
 
             Move_Cell(PUSH(), out);
             if (at == head)
-                Quotify(TOP, 1);  // signify not literal
+                Quotify(TOP);  // signify not literal
         }
         else  // Note: must keep words at head as-is for writeback!
             Derelativize(PUSH(), at, at_binding);
@@ -616,7 +616,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             return nullptr;
         }
 
-        Quotify(out, 1);  // may be FRAME!, would run if seen literally in EVAL
+        Quotify(out);  // may be FRAME!, would run if seen literally in EVAL
 
         DECLARE_ATOM (temp);
         if (rebRunThrows(
@@ -703,7 +703,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
         Copy_Cell(out, at);
-        Unquotify(out, 1);
+        Unquotify(out);
     }
     else if (Is_Word(at)) {
         const Value* slot;
@@ -976,7 +976,7 @@ bool Set_Var_Core_Updater_Throws(
 
                 Move_Cell(PUSH(), cast(Element*, temp));
                 if (at == head)
-                    Quotify(TOP, 1);  // signal it was not literally the head
+                    Quotify(TOP);  // signal it was not literally the head
             }
             else  // Note: must keep WORD!s at head as-is for writeback
                 Derelativize(PUSH(), at, at_binding);
@@ -1011,7 +1011,7 @@ bool Set_Var_Core_Updater_Throws(
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
         Copy_Cell(out, at);
-        Unquotify(out, 1);
+        Unquotify(out);
     }
     else if (Is_Word(at)) {
         const Value* slot;
@@ -1032,7 +1032,7 @@ bool Set_Var_Core_Updater_Throws(
 
     while (stackindex != stackindex_top) {
         Move_Cell(temp, out);
-        Quotify(temp, 1);
+        Quotify(temp);
         const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell

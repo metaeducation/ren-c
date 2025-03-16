@@ -631,7 +631,7 @@ static REBIXO Parse_One_Rule(
         switch (VAL_TYPE(rule)) {
           case REB_QUOTED:
             Copy_Cell(SPARE, rule);
-            rule = cast(Element*, Unquotify(SPARE, 1));
+            rule = cast(Element*, Unquotify(SPARE));
             break;  // fall through to direct match
 
           case REB_THE_WORD: {
@@ -1050,7 +1050,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         DECLARE_VALUE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_BINDING);
-            Unquotify(temp, 1);
+            Unquotify(temp);
         }
         else if (Is_The_Word(rule)) {
             Get_Var_May_Fail(temp, rule, P_RULE_BINDING);
@@ -1126,7 +1126,7 @@ static void Handle_Mark_Rule(
     //
     //     parse just '''{abc} ["a" mark x:]` => '''{bc}
 
-    Quotify(ARG(position), P_NUM_QUOTES);
+    Quotify_Depth(ARG(position), P_NUM_QUOTES);
 
     Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or Is_Set_Word(rule)) {
@@ -1139,7 +1139,7 @@ static void Handle_Mark_Rule(
         // in SPARE?)
         //
         DECLARE_ATOM (temp);
-        Quotify(Derelativize(OUT, rule, context), 1);
+        Quotify(Derelativize(OUT, rule, context));
         if (rebRunThrows(
             cast(Value*, temp),  // <-- output cell
             CANON(SET), OUT, ARG(position)

@@ -373,7 +373,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 
     DECLARE_ELEMENT (element);
     Copy_Dequoted_Cell(element, cell);
-    Quotify(element, 1);
+    Quotify(element);
 
     DECLARE_ELEMENT (molder);
     Init_Handle_Cdata(molder, mo, 1);

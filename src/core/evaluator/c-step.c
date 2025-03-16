@@ -1656,7 +1656,7 @@ Bounce Stepper_Executor(Level* L)
       case REB_META_BLOCK:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         HEART_BYTE(OUT) = REB_BLOCK;
-        Quotify(OUT, 1);
+        Quotify(OUT);
         goto lookahead;
 
 

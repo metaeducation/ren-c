@@ -422,7 +422,7 @@ Element* Decorate_According_To_Parameter(
         break; }
 
       case PARAMCLASS_JUST:
-        Quotify(e, 1);
+        Quotify(e);
         break;
 
       case PARAMCLASS_THE:

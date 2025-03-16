@@ -513,7 +513,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
         Count num_quotes = Cell_Num_Quotes(composee);
 
         if (not Is_Nulled(out))  // don't add quoting levels (?)
-            Quotify(out, num_quotes);
+            Quotify_Depth(out, num_quotes);
         return nullptr;
     }
 
@@ -732,7 +732,7 @@ Bounce Composer_Executor(Level* const L)
         assert(Any_Plain_Kind(list_heart));
 
     if (list_quote_byte & NONQUASI_BIT)
-        Quotify(TOP, list_quote_byte / 2);  // add to existing quotes
+        Quotify_Depth(TOP, list_quote_byte / 2);  // add to existing quotes
     else {
         if (QUOTE_BYTE(TOP) != NOQUOTE_1)
             return FAIL(

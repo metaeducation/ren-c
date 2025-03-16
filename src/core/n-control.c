@@ -476,7 +476,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Quotify(Quasify(Init_Word(ARG(branch), CANON(DID_1))), 1);  // [1]
+    Quotify(Quasify(Init_Word(ARG(branch), CANON(DID_1))));  // [1]
 
     goto reifying_input;
 

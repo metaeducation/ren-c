@@ -120,7 +120,7 @@ DECLARE_NATIVE(quote)
     if (depth < 0)
         return FAIL(PARAM(depth));
 
-    Quotify(e, depth);
+    Quotify_Depth(e, depth);
     return COPY(e);
 }
 
@@ -216,7 +216,7 @@ DECLARE_NATIVE(unquote)
     if (depth > Cell_Num_Quotes(v))
         return FAIL("Value not quoted enough for unquote depth requested");
 
-    Unquotify(Copy_Cell(OUT, v), depth);
+    Unquotify_Depth(Copy_Cell(OUT, v), depth);
     return OUT;
 }
 
@@ -449,7 +449,7 @@ DECLARE_NATIVE(lazy)
         return nullptr;
 
     if (Is_Quoted(v))
-        return Unquotify(Copy_Cell(OUT, v), 1);
+        return Unquotify(Copy_Cell(OUT, v));
 
     if (Is_Block(v)) {
         if (rebRunThrows(cast(Value*, OUT), CANON(MAKE), CANON(OBJECT_X), v))

@@ -72,7 +72,7 @@ INLINE Count Cell_Num_Quotes(const Cell* v) {
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
 //
-INLINE Cell* Quotify_Core(Cell* v, Count depth) {
+INLINE Cell* Quotify_Depth_Core(Cell* v, Count depth) {
     if (depth == 0)
         return v;
 
@@ -84,40 +84,43 @@ INLINE Cell* Quotify_Core(Cell* v, Count depth) {
 }
 
 #if DONT_CHECK_CELL_SUBCLASSES
-    #define Quotify Quotify_Core
+    #define Quotify_Depth Quotify_Depth_Core
 #else
-    INLINE Value* Quotify(Value* v, Count depth)
-        { return c_cast(Value*, Quotify_Core(v, depth)); }
+    INLINE Value* Quotify_Depth(Value* v, Count depth)
+        { return c_cast(Value*, Quotify_Depth_Core(v, depth)); }
 
-    INLINE Cell* Quotify(Cell* v, Count depth)
-        { return Quotify_Core(v, depth); }
+    INLINE Cell* Quotify_Depth(Cell* v, Count depth)
+        { return Quotify_Depth_Core(v, depth); }
 #endif
 
 
 // Turns 'X into X, or '''''[1 + 2] into '''(1 + 2), etc.
 //
-INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
-    if (unquotes == 0) {
+INLINE Cell* Unquotify_Depth_Core(Cell* v, Count depth) {
+    if (depth == 0) {
         assert(QUOTE_BYTE(v) != ANTIFORM_0);
         return v;
     }
 
-    if (unquotes > Cell_Num_Quotes(v))
+    if (depth > Cell_Num_Quotes(v))
         fail ("Attempt to set quoting level of value to less than 0");
 
-    QUOTE_BYTE(v) -= Quote_Shift(unquotes);
+    QUOTE_BYTE(v) -= Quote_Shift(depth);
     return v;
 }
 
 #if DONT_CHECK_CELL_SUBCLASSES
-    #define Unquotify Unquotify_Core
+    #define Unquotify_Depth Unquotify_Depth_Core
 #else
-    INLINE Element* Unquotify(Value* v, Count depth)
-        { return cast(Element*, Unquotify_Core(v, depth)); }
+    INLINE Element* Unquotify_Depth(Value* v, Count depth)
+        { return cast(Element*, Unquotify_Depth_Core(v, depth)); }
 
-    INLINE Cell* Unquotify(Cell* v, Count depth)
-        { return Unquotify_Core(v, depth); }
+    INLINE Cell* Unquotify_Depth(Cell* v, Count depth)
+        { return Unquotify_Depth_Core(v, depth); }
 #endif
+
+#define Quotify(v)      Quotify_Depth((v), 1)
+#define Unquotify(v)    Unquotify_Depth((v), 1)
 
 INLINE Count Dequotify(Cell* v) {
     Count depth = Cell_Num_Quotes(v);
@@ -323,14 +326,14 @@ INLINE Element* Meta_Quotify(Cell* v) {
         QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // anti must mean valid quasi
         return cast(Element*, v);
     }
-    return cast(Element*, Quotify(v, 1));  // a non-antiform winds up quoted
+    return cast(Element*, Quotify(v));  // a non-antiform winds up quoted
 }
 
 INLINE Atom* Meta_Unquotify_Undecayed(Atom* a) {
     if (QUOTE_BYTE(a) == QUASIFORM_2)
         Coerce_To_Antiform(a);  // Note: not all quasiforms are valid antiforms
     else
-        Unquotify_Core(a, 1);  // will assert the input is quoted
+        Unquotify(a);  // will assert the input is quoted
     return a;
 }
 
