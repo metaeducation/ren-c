@@ -969,60 +969,64 @@ IMPLEMENT_GENERIC(as, any_utf8)
 }
 
 
-IMPLEMENT_GENERIC(reflect, issue)
+//
+//  /codepoint-of: native:generic [
+//
+//  "Get the singular codepoint that an ISSUE! or BINARY! correspond to"
+//
+//      return: [~null~ integer!]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(codepoint_of)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* issue = Element_ARG(value);
-    assert(Is_Issue(issue));
-
-    Option(SymId) id = Cell_Word_Id(ARG(property));
-
-    switch (id) {
-      case SYM_CODEPOINT:
-        if (
-            Stringlike_Has_Node(issue)
-            or issue->extra.at_least_4[IDX_EXTRA_LEN] != 1
-        ){
-            return RAISE(Error_Not_One_Codepoint_Raw());
-        }
-        return Init_Integer(OUT, Cell_Codepoint(issue));
-
-      default:
-        break;
-    }
-
-    return GENERIC_CFUNC(reflect, any_utf8)(LEVEL);  // for LENGTH OF, etc.
+    return Dispatch_Generic(codepoint_of, Element_ARG(element), LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(reflect, any_utf8)
+IMPLEMENT_GENERIC(codepoint_of, issue)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* v = Element_ARG(value);
-    assert(Any_Utf8(v));
+    Element* issue = Element_ARG(element);
+    assert(Is_Issue(issue));
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
-
-    switch (id) {
-      case SYM_SIZE: {
-        possibly(Any_String(v));  // delegates here
-        Size size;
-        Cell_Utf8_Size_At(&size, v);
-        return Init_Integer(OUT, size); }
-
-      case SYM_LENGTH: {
-        assert(not Any_String(v));  // uses ANY-SERIES? reflect length code
-        REBLEN len;
-        Cell_Utf8_Len_Size_At(&len, nullptr, v);
-        return Init_Integer(OUT, len); }
-
-      default:
-        break;
+    if (
+        Stringlike_Has_Node(issue)
+        or issue->extra.at_least_4[IDX_EXTRA_LEN] != 1
+    ){
+        return RAISE(Error_Not_One_Codepoint_Raw());
     }
+    return Init_Integer(OUT, Cell_Codepoint(issue));
+}
 
-    return UNHANDLED;
+
+IMPLEMENT_GENERIC(length_of, any_utf8)
+{
+    INCLUDE_PARAMS_OF_LENGTH_OF;
+
+    Element* v = Element_ARG(element);
+    possibly(Any_Word(v));  // !!! should WORD! disallow LENGTH OF ?
+
+    REBLEN len;
+    Cell_Utf8_Len_Size_At(&len, nullptr, v);
+    return Init_Integer(OUT, len);
+}
+
+
+IMPLEMENT_GENERIC(size_of, any_utf8)
+{
+    INCLUDE_PARAMS_OF_SIZE_OF;
+
+    Element* v = Element_ARG(element);
+    possibly(Any_String(v));  // delegates here
+    possibly(Any_Word(v));  // !!! should WORD! disable `size of`?
+
+    Size size;
+    Cell_Utf8_Size_At(&size, v);
+    return Init_Integer(OUT, size);
 }
 
 

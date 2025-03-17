@@ -407,7 +407,7 @@ default-combinators: to map! reduce [
         [^result' pos]: parser input except e -> [
             return raise e  ; the parse rule did not match
         ]
-        if (index? pos) <= (index? input) [
+        if (index of pos) <= (index of input) [
             return raise "FURTHER rule matched, but did not advance the input"
         ]
         remainder: pos
@@ -3288,7 +3288,7 @@ sys.util.parse: parse/  ; !!! expose UPARSE to SYS.UTIL module, hack...
     ]
 
     let remainder: unquote second unquasi result'
-    if (index? remainder) > (index? get var) [
+    if (index of remainder) > (index of get var) [
         set var remainder
     ]
 

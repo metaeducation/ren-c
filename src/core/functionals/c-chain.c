@@ -237,7 +237,7 @@ bool Cascader_Details_Querier(
     assert(Details_Max(details) == IDX_CASCADER_MAX);
 
     switch (property) {
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Element* pipeline = cast(Element*,
             Details_At(details, IDX_CASCADER_PIPELINE)
         );
@@ -247,7 +247,7 @@ bool Cascader_Details_Querier(
 
         Details* last_details = Phase_Details(Cell_Frame_Phase(last));
         DetailsQuerier* querier = Details_Querier(last_details);
-        return (*querier)(out, last_details, SYM_RETURN); }
+        return (*querier)(out, last_details, SYM_RETURN_OF); }
 
       default:
         break;

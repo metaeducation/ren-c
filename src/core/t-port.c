@@ -37,6 +37,23 @@ REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 }
 
 
+//
+//  /open?: native:generic [
+//
+//  "Test if a port is open (or other type?)"
+//
+//      return: [logic?]
+//      element [fundamental?]
+//  ]
+//
+DECLARE_NATIVE(open_q)
+{
+    INCLUDE_PARAMS_OF_OPEN_Q;
+
+    return Dispatch_Generic(open_q, Element_ARG(element), LEVEL);
+}
+
+
 IMPLEMENT_GENERIC(equal_q, port)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
@@ -209,26 +226,6 @@ IMPLEMENT_GENERIC(oldgeneric, port)
 }}
 
 
-// !!! SKIP has a meaning for ANY-SERIES? that's different from what it means
-// when used with ports.  Right now we make the port case go through the old
-// generic dispatch, but this points to a bunch of design work to do.  :-(
-//
-IMPLEMENT_GENERIC(skip, port)
-{
-    Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(SKIP));
-}
-
-
-// !!! Same problem for REFLECT as for SKIP
-//
-IMPLEMENT_GENERIC(reflect, port)
-{
-    Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(REFLECT));
-}
-
-
 // The idea for dispatching a URL! is that it will dispatch to port schemes.
 // So it translates the request to open the port, then retriggers the action
 // on that port, then closes the port.
@@ -248,7 +245,7 @@ IMPLEMENT_GENERIC(oldgeneric, url)
         return COPY(url);
     }
     else switch (id) {
-      /*case SYM_REFLECT:*/  // !!! Review, now a new generic
+      /*case SYM_REFLECT:*/  // !!! Review separate XXX-OF and XXX? generics
       case SYM_READ:
       case SYM_WRITE:
       case SYM_QUERY:

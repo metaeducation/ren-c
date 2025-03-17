@@ -77,56 +77,20 @@ binary!: blob!
 /context: specialize make/ [type: object!]
 
 
-; To be more visually pleasing, properties like LENGTH can be extracted using
-; a reflector as simply `length of series`, with no hyphenation.  This is
-; because OF quotes the word on the left, and passes it to REFLECT.
+; It's not clear that HEAD and TAIL should be defined like this out of the
+; box.  HEAD-OF and HEAD OF can be used.
 ;
-; There are bootstrap reasons to keep versions like WORDS-OF alive.  Though
-; WORDS OF syntax could be faked in R3-Alpha (by making WORDS a function that
-; quotes the OF and throws it away, then runs the reflector on the second
-; argument), that faking would preclude naming variables "words".
+; https://forum.rebol.info/t/de-verbification-noun-of-x-vs-noun-x/1368
 ;
-; Beyond the bootstrap, there could be other reasons to have hyphenated
-; versions.  It could be that performance-critical code would want faster
-; processing (a TYPE-OF specialization is slightly faster than TYPE OF, and
-; a TYPE-OF native written specifically for the purpose would be even faster).
-;
-; Also, HELP isn't designed to "see into" reflectors, to get a list of them
-; or what they do.  (This problem parallels others like not being able to
-; type HELP PARSE and get documentation of the parse dialect...there's no
-; link between HELP OF and all the things you could ask about.)  There's also
-; no information about specific return types, which could be given here
-; with REDESCRIBE.
-;
-/length-of: specialize reflect/ [property: 'length]
-/words-of: specialize reflect/ [property: 'words]
-/values-of: specialize reflect/ [property: 'values]
-/index-of: specialize reflect/ [property: 'index]
-/type-of: specialize reflect/ [property: 'type]
-/binding-of: specialize reflect/ [property: 'binding]
-/head-of: specialize reflect/ [property: 'head]
-/tail-of: specialize reflect/ [property: 'tail]
-/file-of: specialize reflect/ [property: 'file]
-/line-of: specialize reflect/ [property: 'line]
-/body-of: specialize reflect/ [property: 'body]
-
-
-; General renamings away from non-LOGIC!-ending-in-?-functions
-; https://trello.com/c/DVXmdtIb
-;
-index?: index-of/
-offset?: offset-of/
-sign?: sign-of/
-suffix?: suffix-of/
-length?: length-of/
 head: head-of/
 tail: tail-of/
 
+
+; !!! These cases still linger as question mark routines that don't return
+; LOGIC!, and they seem like they need greater rethinking in general.  What
+; replaces them (for ones that are kept) might be new.
+;
 comment [
-    ; !!! Less common cases still linger as question mark routines that
-    ; don't return LOGIC!, and they seem like they need greater rethinking in
-    ; general. What replaces them (for ones that are kept) might be new.
-    ;
     encoding?: null
     file-type?: null
     speed?: null

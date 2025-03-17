@@ -2969,8 +2969,9 @@ bool Api_Function_Details_Querier(
     assert(Details_Max(details) == IDX_API_ACTION_MAX);
 
     switch (property) {
-      case SYM_RETURN: {
-        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
+      case SYM_RETURN_OF: {
+        ParamList* paramlist = Phase_Paramlist(details);
+        Extract_Paramlist_Returner(out, paramlist, SYM_RETURN);
         return true; }
 
       default:

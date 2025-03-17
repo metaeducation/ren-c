@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -27,111 +27,229 @@
 #include <errno.h>
 
 
-
 //
-//  /reflect: native:generic [
+//  /type-of: native [
 //
-//  "Returns specific details about a value (used by OF, e.g. LENGTH OF)"
+//  "Give back the type of a value (all quoted values return QUOTED!)"
 //
-//      return: [any-value?]
-//      value [any-value?]
-//      property "Such as: type, length, spec, body, words, values, title"
-//          [word!]
+//      return: [type-block!]
+//      value "TYPE-OF null will return a raised error, use TRY if meant"
+//          [any-value?]
 //  ]
 //
-DECLARE_NATIVE(reflect)
+DECLARE_NATIVE(type_of)
+{
+    INCLUDE_PARAMS_OF_TYPE_OF;
+
+    Value* v = ARG(value);
+
+    if (Is_Nulled(v))
+        return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
+
+    return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
+}
+
+
 //
-// 1. Some universal reflection could be accomplished by simply having a
-//    behavior for `IMPLEMENT_GENERIC(reflect, any_element)` and falling
-//    through to that from all the other reflect generics.  However, it
-//    is more efficient to do it this way...and it also means the generic
-//    machinery can enforce that it does not handle quoted/quasi/antiform.
+//  /heart-of: native [
 //
-// 2. See remarks on Dispatch_Generic() for why we don't allow things
+//  "Give back a cell's heart (e.g. HEART OF ~FOO~ or ''FOO is WORD!)"
+//
+//      return: [~null~ type-block!]
+//      element "Antiforms not accepted, use (heart of meta value) if needed"
+//          [<maybe> element?]
+//  ]
+//
+DECLARE_NATIVE(heart_of)
+{
+    INCLUDE_PARAMS_OF_HEART_OF;
+
+    return Init_Builtin_Datatype(OUT, Cell_Heart(ARG(element)));
+}
+
+
+//
+//  /quotes-of: native [
+//
+//  "Return how many quote levels are on a value (quasiforms have 0 quotes)"
+//
+//      return: [~null~ integer!]
+//      element [<maybe> element?]
+//  ]
+//
+DECLARE_NATIVE(quotes_of)
+{
+    INCLUDE_PARAMS_OF_QUOTES_OF;
+
+    return Init_Integer(OUT, Cell_Num_Quotes(ARG(element)));
+}
+
+
+//
+//  /sigil-of: native:generic [
+//
+//  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
+//
+//      return: [~null~ sigil!]
+//      element [<maybe> element?]
+//  ]
+//
+DECLARE_NATIVE(sigil_of)
+{
+    INCLUDE_PARAMS_OF_SIGIL_OF;
+
+    Element* elem = Element_ARG(element);
+
+    Option(Sigil) sigil = Sigil_Of(elem);
+    if (not sigil)
+        return nullptr;
+    return Init_Sigil(OUT, unwrap sigil);
+}
+
+
+//
+//  /length-of: native:generic [
+//
+//  "Get the length (in series units, e.g. codepoints) of series or other type"
+//
+//      return: [~null~ integer!]
+//      element [<maybe> fundamental?]  ; not quoted or quasi [1]
+//  ]
+//
+DECLARE_NATIVE(length_of)
+//
+// 1. See remarks on Dispatch_Generic() for why we don't allow things
 //    like (3 = length of ''[a b c]).  An exception is made for action
 //    antiforms, because they cannot be put in blocks, so their impact
 //    is limited...and we want things like (label of append/) to be able
 //    to work.  So only those are turned into the plain form here.
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Value* v = ARG(value);
+    return Dispatch_Generic(length_of, Element_ARG(element), LEVEL);
+}
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
 
-    switch (id) {  // universal reflectors, hardcode behaviors [1]
-      case SYM_HEART:
-        if (Is_Nulled(v))
-            return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
-        return Init_Builtin_Datatype(OUT, Cell_Heart(v));
+//
+//  /size-of: native:generic [
+//
+//  "Get the size (in bytes, e.g. UTF-encoded bytes) of series or other type"
+//
+//      return: [~null~ integer!]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(size_of)
+//
+// 1. The SIZE-OF native used to be distinct from the SIZE OF reflector, but
+//    now that these things are unified the usermode SIZE-OF for checking the
+//    size of a file! or url! would conflict.  There's not currently a way
+//    to write generics in usermode, but that ability is scheduled.  Hack
+//    it in just for now.
+{
+    INCLUDE_PARAMS_OF_SIZE_OF;
 
-      case SYM_TYPE:  // currently synonym for KIND, may change
-        if (Is_Nulled(v))
-            return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
-        return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
+    Element* elem = Element_ARG(element);
 
-      case SYM_QUOTES:
-        return Init_Integer(OUT, Cell_Num_Quotes(v));
+    if (Is_File(elem) or Is_Url(elem))  // !!! hack in FILE! and URL! [1]
+        return rebDelegate(
+            "all wrap [info: info?", elem, "info.size]"
+        );
 
-      case SYM_SIGIL: {
-        if (Is_Antiform(v))
-            return FAIL("Can't take SIGIL OF an antiform");
+    return Dispatch_Generic(size_of, elem, LEVEL);
+}
 
-        Option(Sigil) sigil = Sigil_Of(cast(Element*, v));
-        if (not sigil)
-            return nullptr;
-        return Init_Sigil(OUT, unwrap sigil); }
 
-      default:
-        break;  // !!! Are there any other universal reflectors?
-    }
+//
+//  /index-of: native:generic [
+//
+//  "Get the index of a series type"
+//
+//      return: [~null~ integer!]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(index_of)
+//
+// !!! Should there be a generalized error catch all for ANY-ELEMENT? which
+// says `return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(elem)));`?  Review.
+{
+    INCLUDE_PARAMS_OF_INDEX_OF;
 
-    if (Is_Void(v))  // obey void-in, null-out
-        return nullptr;
+    return Dispatch_Generic(index_of, Element_ARG(element), LEVEL);
+}
 
-    if (Is_Action(v))  // special exemption for action types [2]
-        QUOTE_BYTE(v) = NOQUOTE_1;
-    else if (QUOTE_BYTE(v) != NOQUOTE_1)
-        fail ("REFLECT on quoted/quasi/anti only [HEART TYPE QUOTES SIGIL]");
 
-    return Dispatch_Generic(reflect, cast(Element*, v), LEVEL);
+//
+//  /offset-of: native:generic [
+//
+//  "Get the offset of a series type or port (zero-based?)"
+//
+//      return: [~null~ integer!]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(offset_of)
+{
+    INCLUDE_PARAMS_OF_OFFSET_OF;
+
+    return Dispatch_Generic(offset_of, Element_ARG(element), LEVEL);
 }
 
 
 //
 //  /of: infix native [
 //
-//  "Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)"
+//  "Call XXX-OF functions without a hyphen, e.g. HEAD OF X => HEAD-OF X"
 //
 //      return: [any-value?]
 //      @(property) "Escapable slot for WORD!"
 //          [word!]
-//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(of)
-//
-// 1. Ugly hack to make OF frame-compatible with REFLECT.  If there was a
-//    separate dispatcher for REFLECT it could be called with proper
-//    parameterization, but as things are it expects the arguments to fit the
-//    type action dispatcher rule... dispatch item in first arg, property in
-//    the second.
-//
-// 2. OF is called often enough to be worth it to do some kind of optimization
-//    so it's not much slower than a REFLECT; e.g. you don't want it building
-//    a separate frame to make the REFLECT call in just because of the
-//    parameter reorder.
 {
     INCLUDE_PARAMS_OF_OF;
 
-    Value* prop = ARG(property);
+    Element* prop = Element_ARG(property);
     assert(Is_Word(prop));
+    const Symbol* sym = Cell_Word_Symbol(prop);
 
-    Copy_Cell(SPARE, prop);
-    Copy_Cell(ARG(property), ARG(value));  // frame compatibility [1]
-    Copy_Cell(ARG(value), stable_SPARE);
+    Byte buffer[256];
+    Size size = String_Size(sym);
+    Mem_Copy(buffer, String_UTF8(sym), size);
+    buffer[size] = '-';
+    ++size;
+    buffer[size] = 'o';
+    ++size;
+    buffer[size] = 'f';
+    ++size;
 
-    return NATIVE_CFUNC(reflect)(LEVEL);  // use same frame [2]
+    Element* prop_of = Init_Word(SPARE, Intern_UTF8_Managed(buffer, size));
+
+    const Value* fetched;
+    Option(Error*) e = Trap_Lookup_Word(
+        &fetched,
+        prop_of,
+        Feed_Binding(LEVEL->feed)
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    if (not Is_Action(fetched))
+        return FAIL("OF looked up to a value that wasn't an ACTION!");
+
+    Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
+
+    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
+    Copy_Meta_Cell(Evaluator_Level_Current(sub), fetched);
+    QUOTE_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_1;  // plain FRAME!
+    sub->u.eval.current_gotten = nullptr;
+
+    if (Trampoline_Throws(OUT, sub))  // review: rewrite stackless
+        return THROWN;
+
+    return OUT;
 }
 
 

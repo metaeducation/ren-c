@@ -313,7 +313,10 @@ bind construct [
     class-types: [@universal @application @context-specific @private]
 ][
     let data-start: data  ; may not be at head
-    let index: accessor does [1 + offset-of data-start data]  ; effective index
+
+    let index: accessor does [
+        1 + (index of data-start) - (index of data)
+    ]  ; effective index
 
     let mode: #type
     let [class tag val size constructed]
@@ -1995,18 +1998,14 @@ sys.util/make-scheme [
             return port
         ]
 
-        /reflect: func [port [port!] property [word!]] [
-            return switch property [
-                'open? [
-                    all [port.state, open? port.state.connection]
-                ]
+        /open?: func [port [port!]] [
+            return all [port.state, open? port.state.connection]
+        ]
 
-                'length [
-                    ; actor is not an object!, so this isn't a recursive call
-                    ;
-                    either port.data [length of port.data] [0]
-                ]
-            ]
+        /length-of: func [port [port!]] [
+            ; actor is not an object!, so this isn't a recursive call
+            ;
+            return either port.data [length of port.data] [0]
         ]
 
         /close: func [return: [port!] port [port!]] [

@@ -266,7 +266,7 @@ bool Func_Details_Querier(
 
   //=////RETURN ///////////////////////////////////////////////////////////=//
 
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
         return true; }
 
@@ -284,7 +284,7 @@ bool Func_Details_Querier(
     // 2. Index 7 (or 6 in zero-based C) should be #BODY, a "real" body.  To
     //    give it the appearance of executing code in place, we use a GROUP!.
 
-      case SYM_BODY: {
+      case SYM_BODY_OF: {
         Element* body = cast(Element*, Array_At(details, IDX_DETAILS_1));
 
         Value* example = Get_System(SYS_STANDARD, STD_FUNC_BODY);  // [1]

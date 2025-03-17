@@ -167,9 +167,6 @@ IMPLEMENT_GENERIC(make, any_list)
         }
         return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
     }
-    else if (Any_Context(arg)) {
-        return Init_Any_List(OUT, heart, Context_To_Array(arg, 3));
-    }
     else if (Is_Varargs(arg)) {
         //
         // Converting a VARARGS! to an ANY-LIST? involves spooling those
@@ -1177,32 +1174,84 @@ IMPLEMENT_GENERIC(as, any_list)
 }
 
 
-IMPLEMENT_GENERIC(reflect, any_list)
+//
+//  /file-of: native:generic [
+//
+//  "Get the file (or URL) that a value was loaded from, if possible"
+//
+//      return: "Raised error if no file available (use TRY to get NULL)"
+//          [~null~ file! url!]
+//      element "Typically only ANY-LIST? know their file"
+//          [<maybe> element?]
+//  ]
+//
+DECLARE_NATIVE(file_of)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* list = Element_ARG(value);
+    Element* elem = Element_ARG(element);
+    QUOTE_BYTE(elem) = NOQUOTE_1;  // allow line-of and file-of on quoted/quasi
+
+    return Dispatch_Generic(file_of, elem, LEVEL);
+}
+
+IMPLEMENT_GENERIC(file_of, any_element)  // generic fallthrough: raise error
+{
+    return RAISE("No file available for element");
+}
+
+
+//
+//  /line-of: native:generic [
+//
+//  "Get the line number that a value was loaded from, if possible"
+//
+//      return: "Raised error if no line available (use TRY to get NULL)"
+//          [~null~ integer!]
+//      element "Typically only ANY-LIST? know their file"
+//          [<maybe> element?]
+//  ]
+//
+DECLARE_NATIVE(line_of)
+{
+    INCLUDE_PARAMS_OF_LINE_OF;
+
+    Element* elem = Element_ARG(element);
+    QUOTE_BYTE(elem) = NOQUOTE_1;  // allow line-of and file-of on quoted/quasi
+
+    return Dispatch_Generic(file_of, elem, LEVEL);
+}
+
+IMPLEMENT_GENERIC(line_of, any_element)  // generic fallthrough: raise error
+{
+    return RAISE("No line available for element");
+}
+
+
+IMPLEMENT_GENERIC(file_of, any_list)
+{
+    INCLUDE_PARAMS_OF_FILE_OF;
+
+    Element* list = Element_ARG(element);
     const Source* s = Cell_Array(list);
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Option(const String*) file = Link_Filename(s);
+    if (not file)
+        return RAISE("No file available for list");
+    return Init_File(OUT, unwrap file);  // !!! or URL! (track with bit...)
+}
 
-    switch (id) {
-      case SYM_FILE: {
-        Option(const String*) file = Link_Filename(s);
-        if (not file)
-            return nullptr;
-        return Init_File(OUT, unwrap file); }
 
-      case SYM_LINE: {
-        if (MISC_SOURCE_LINE(s) == 0)
-            return nullptr;
-        return Init_Integer(OUT, MISC_SOURCE_LINE(s)); }
+IMPLEMENT_GENERIC(line_of, any_list)
+{
+    INCLUDE_PARAMS_OF_LINE_OF;
 
-      default:
-        break;
-    }
+    Element* list = Element_ARG(element);
+    const Source* s = Cell_Array(list);
 
-    return GENERIC_CFUNC(reflect, any_series)(LEVEL);
+    if (MISC_SOURCE_LINE(s) == 0)
+        return RAISE("No line available for list");
+    return Init_Integer(OUT, MISC_SOURCE_LINE(s));
 }
 
 

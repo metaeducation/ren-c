@@ -107,11 +107,11 @@ bool Lambda_Details_Querier(
     assert(Details_Max(details) == IDX_LAMBDA_MAX);
 
     switch (property) {
-      case SYM_RETURN:
+      case SYM_RETURN_OF:
         Init_Nulled(out);  // unconstrained parameter, instead?
         return true;
 
-      case SYM_BODY: {
+      case SYM_BODY_OF: {
         Copy_Cell(out, Details_At(details, IDX_LAMBDA_BODY));
         assert(Is_Block(out));  // !!! just return as-is, even if relativized?
         return true; }

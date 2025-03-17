@@ -126,11 +126,11 @@ bool Arrow_Details_Querier(
     assert(Details_Max(details) == IDX_ARROW_MAX);
 
     switch (property) {
-      case SYM_RETURN:
+      case SYM_RETURN_OF:
         Init_Nulled(out);  // unconstrained parameter, instead?
         return true;
 
-      case SYM_BODY: {
+      case SYM_BODY_OF: {
         Copy_Cell(out, Details_At(details, IDX_ARROW_BODY));
         assert(Is_Block(out));  // not relativized...give back mutable?
         return true; }

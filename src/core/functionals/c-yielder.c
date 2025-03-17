@@ -475,7 +475,7 @@ bool Yielder_Details_Querier(
     // back...it always includes the definitional error for generator being
     // exhausted (how to add this legitimately?)
 
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_YIELD);
         return true; }
 

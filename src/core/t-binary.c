@@ -875,6 +875,18 @@ IMPLEMENT_GENERIC(as, blob)
 }
 
 
+IMPLEMENT_GENERIC(size_of, blob)
+{
+    INCLUDE_PARAMS_OF_SIZE_OF;
+
+    Element* blob = Element_ARG(element);
+
+    Size size;
+    Cell_Blob_Size_At(&size, blob);
+    return Init_Integer(OUT, size);
+}
+
+
 // 1. While it is technically the case that a binary *might* alias a
 //    string and hence already be validated, the index might not be on
 //    a codepoint boundary, and it's not worth optimizing for a scan
@@ -884,39 +896,27 @@ IMPLEMENT_GENERIC(as, blob)
 //    better as an empty issue than as a conceptual "NUL codepoint".
 //    But #{00} as NUL serves some of those purposes.
 //
-IMPLEMENT_GENERIC(reflect, blob)
+IMPLEMENT_GENERIC(codepoint_of, blob)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* v = Element_ARG(value);
+    Element* blob = Element_ARG(element);
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Size size;
+    const Byte* bp = Cell_Blob_Size_At(&size, blob);
+    if (size == 1 and *bp == 0)
+        return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
 
-    switch (id) {
-      case SYM_SIZE: {
-        Size size;
-        Cell_Blob_Size_At(&size, v);
-        return Init_Integer(OUT, size); }
+    Codepoint c;
+    Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
+    if (e)
+        return RAISE(unwrap e);
+    ++bp;  // Back_Scan() requires increment
 
-      case SYM_CODEPOINT: {  // generally have to validate the UTF-8 [1]
-        Size size;
-        const Byte* bp = Cell_Blob_Size_At(&size, v);
-        if (size == 1 and *bp == 0)
-            return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
-        Codepoint c;
-        Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
-        if (e)
-            return RAISE(unwrap e);
-        ++bp;  // Back_Scan() requires increment
-        if (bp != Binary_Tail(Cell_Binary(v)))
-            return RAISE(Error_Not_One_Codepoint_Raw());
-        return Init_Integer(OUT, c); }
+    if (bp != Binary_Tail(Cell_Binary(blob)))
+        return RAISE(Error_Not_One_Codepoint_Raw());
 
-      default:
-        break;
-    }
-
-    return GENERIC_CFUNC(reflect, any_series)(LEVEL);
+    return Init_Integer(OUT, c);
 }
 
 

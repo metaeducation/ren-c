@@ -700,26 +700,10 @@ static Bounce Transport_Actor(
         // setting be configured?
     }
 
-    if (sock->stream == nullptr) {
-        //
-        // Actions for an unopened socket
-        //
+    if (sock->stream == nullptr) {  // Actions for an unopened socket
         switch (Symbol_Id(verb)) {
-          case SYM_REFLECT: {
-            INCLUDE_PARAMS_OF_REFLECT;
-
-            UNUSED(ARG(value));  // covered by `port`
-            Option(SymId) property = Cell_Word_Id(ARG(property));
-
-            switch (property) {
-              case SYM_OPEN_Q:
-                return Init_False(OUT);
-
-              default:
-                break;
-            }
-
-            return FAIL(Error_On_Port(SYM_NOT_OPEN, port, -12)); }
+          case SYM_OPEN_Q:
+            return Init_False(OUT);
 
           case SYM_OPEN: {
             Value* arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
@@ -795,33 +779,20 @@ static Bounce Transport_Actor(
   //=//// ACTIONS ON "OPEN" SOCKETS ////////////////////////////////////////=//
 
     switch (Symbol_Id(verb)) { // Ordered by frequency
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
+      case SYM_LENGTH_OF: {
+        return Init_Integer(
+            OUT,
+            Is_Blob(port_data) ? Cell_Series_Len_Head(port_data) : 0
+        ); }
 
-        UNUSED(ARG(value)); // covered by `port`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-
-        switch (property) {
-          case SYM_LENGTH: {
-            return Init_Integer(
-                OUT,
-                Is_Blob(port_data) ? Cell_Series_Len_Head(port_data) : 0
-            ); }
-
-          case SYM_OPEN_Q:
-            //
-            // Connect for clients, bind for servers:
-            //
-            return Init_Logic(
-                OUT,
-                (sock->modes & RSM_BIND) or (sock->stream != nullptr)
-            );
-
-          default:
-            break;
-        }
-
-        break; }
+      case SYM_OPEN_Q:
+        //
+        // Connect for clients, bind for servers:
+        //
+        return Init_Logic(
+            OUT,
+            (sock->modes & RSM_BIND) or (sock->stream != nullptr)
+        );
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
@@ -1195,7 +1166,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
     const Element* val;
     if (not Is_Block(ARG(value)))
-        val = Element_ARG(value);
+        val = cast(Element*, ARG(value));
     else {
         ports = ARG(value);
 

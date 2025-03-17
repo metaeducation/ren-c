@@ -179,27 +179,12 @@ IMPLEMENT_GENERIC(as, blank)
 }
 
 
-IMPLEMENT_GENERIC(reflect, blank)
+IMPLEMENT_GENERIC(length_of, blank)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_LENGTH_OF;
+    UNUSED(ARG(element));
 
-    Element* blank = Element_ARG(value);
-    assert(Is_Blank(blank));
-
-    Option(SymId) id = Cell_Word_Id(ARG(property));
-
-    switch (id) {
-      case SYM_INDEX:
-        return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(blank)));
-
-      case SYM_LENGTH:
-        return Init_Integer(OUT, 0);
-
-      default:
-        break;
-    }
-
-    return UNHANDLED;
+    return Init_Integer(OUT, 0);
 }
 
 

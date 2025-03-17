@@ -104,7 +104,7 @@ bool Oneshot_Details_Querier(
     UNUSED(details);
 
     switch (property) {
-      case SYM_RETURN:
+      case SYM_RETURN_OF:
         Init_Nulled(out);  // unconstrained parameter, instead?
         return true;
 

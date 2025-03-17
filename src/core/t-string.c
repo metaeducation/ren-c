@@ -1173,38 +1173,25 @@ IMPLEMENT_GENERIC(as, any_string)
 }
 
 
-IMPLEMENT_GENERIC(reflect, any_string)
+IMPLEMENT_GENERIC(codepoint_of, any_string)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* v = Element_ARG(value);
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Element* str = Element_ARG(element);
+    const Byte* bp = Cell_String_At(str);  // downgrade validated Utf8(*)
 
-    switch (id) {
-      case SYM_SIZE:  // defer to calculation done by ANY-UTF8?
-        return GENERIC_CFUNC(reflect, any_utf8)(LEVEL);
-
-      case SYM_CODEPOINT: {
-        const Byte* bp = Cell_String_At(v);  // downgrade validated Utf8(*)
-
-        Codepoint c;
-        if (
-            *bp != '\0'  // can't be at tail
-            and (
-                bp = Back_Scan_Utf8_Char_Unchecked(&c, bp),
-                ++bp  // Back_Scan() needs increment
-            )
-            and *bp == '\0'  // after one scan, must be at tail
-        ){
-            return Init_Integer(OUT, c);
-        }
-        return RAISE(Error_Not_One_Codepoint_Raw()); }
-
-      default:
-        break;
+    Codepoint c;
+    if (
+        *bp != '\0'  // can't be at tail
+        and (
+            bp = Back_Scan_Utf8_Char_Unchecked(&c, bp),
+            ++bp  // Back_Scan() needs increment
+        )
+        and *bp == '\0'  // after one scan, must be at tail
+    ){
+        return Init_Integer(OUT, c);
     }
-
-    return GENERIC_CFUNC(reflect, any_series)(LEVEL);
+    return RAISE(Error_Not_One_Codepoint_Raw());
 }
 
 

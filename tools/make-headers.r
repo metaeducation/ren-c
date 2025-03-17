@@ -198,7 +198,7 @@ for-each 'item file-base.core [
     ]
 
     assert [
-        %.c = suffix? file
+        %.c = suffix-of file
         not find:match file "host-"
         not find:match file "os-"
     ]

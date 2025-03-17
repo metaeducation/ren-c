@@ -24,7 +24,7 @@
 // If possible, it will store encoded UTF-8 data entirely in a cell...saving
 // on allocations and improving locality.  In this system, a "character" is
 // simply a sigle-length token, which is translated to a codepoint using the
-// `CODEPOINT OF` reflector, or by using FIRST on the token.
+// `CODEPOINT OF` operation, or by using FIRST on the token.
 //
 // REB_ISSUE has two forms: one with a separate node allocation and one that
 // stores data where a node and index would be.  Stringlike_Has_Node()
@@ -67,7 +67,7 @@
 // error if you try to insert it into a string, but still allowing you to
 // insert it into blobs.
 //
-// To help make bring some uniformity to this, the CODEPOINT OF reflector
+// To help make bring some uniformity to this, the CODEPOINT OF function
 // will give back codepoints for binaries that represent UTF-8, including
 // giving back 0 for #{00}.  CODEPOINT OF thus works on all strings, e.g.
 // (codepoint of <A>) -> 65.  But the only way you can get 0 back is if you

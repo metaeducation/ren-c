@@ -96,7 +96,7 @@ output-buffer: make text! 20000
         case [
             dir? file [gather-natives file]
             all [
-                %.c = suffix? file
+                %.c = suffix-of file
             ][
                 append natives spread (extract-native-protos file)
                 append generics spread (extract-generic-implementations file)

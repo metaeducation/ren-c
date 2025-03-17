@@ -333,13 +333,13 @@ bool Reframer_Details_Querier(
     assert(Details_Max(details) == IDX_REFRAMER_MAX);
 
     switch (property) {
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Element* shim = cast(Element*, Details_At(details, IDX_REFRAMER_SHIM));
         assert(Is_Frame(shim));
 
         Details* shim_details = Phase_Details(Cell_Frame_Phase(shim));
         DetailsQuerier* querier = Details_Querier(shim_details);
-        return (*querier)(out, shim_details, SYM_RETURN); }
+        return (*querier)(out, shim_details, SYM_RETURN_OF); }
 
       default:
         break;

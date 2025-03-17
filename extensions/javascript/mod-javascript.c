@@ -868,11 +868,11 @@ bool Javascript_Details_Querier(
     SymId property
 ){
     switch (property) {
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
         return true; }
 
-      case SYM_BODY: {
+      case SYM_BODY_OF: {
         Copy_Cell(out, Details_At(details, IDX_JS_NATIVE_SOURCE));
         assert(Is_Text(out));
         return true; }

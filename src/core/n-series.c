@@ -231,6 +231,10 @@ DECLARE_NATIVE(sort)
 //  ]
 //
 DECLARE_NATIVE(skip)
+//
+// !!! SKIP has a meaning for ANY-SERIES? that's different from what it means
+// when used with ports.  Right now we make the port case go through the old
+// generic dispatch, but this points to a bunch of design work to do.  :-(
 {
     INCLUDE_PARAMS_OF_SKIP;
 

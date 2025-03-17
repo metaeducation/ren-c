@@ -163,7 +163,7 @@ bool Macro_Details_Querier(
     assert(Details_Max(details) == IDX_MACRO_MAX);
 
     switch (property) {
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
         return true; }
 

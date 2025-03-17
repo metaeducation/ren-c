@@ -280,30 +280,6 @@ compose1: specialize (adapt compose/ [
 ]
 
 
-; !!! REDESCRIBE not defined yet
-;
-; head?
-; "Returns TRUE if a series is at its beginning"
-; series [any-series? port!]
-;
-; tail?
-; "Returns TRUE if series is at or past its end; or empty for other types"
-; series [any-series? object! port! bitset! map! blank! varargs!]
-;
-; past?
-; "Returns TRUE if series is past its end"
-; series [any-series? port!]
-;
-; open?
-; "Returns TRUE if port is open"
-; port [port!]
-
-/head?: specialize reflect/ [property: 'head?]
-/tail?: specialize reflect/ [property: 'tail?]
-/past?: specialize reflect/ [property: 'past?]
-/open?: specialize reflect/ [property: 'open?]
-
-
 /empty?: func [
     "OKAY if blank or void, if empty, or if index is at or beyond its tail"
     return: [logic?]

@@ -173,7 +173,7 @@
         res: ~
         all [
             "sum dolor sit amet." == parse str [thru #p res: <here> to <end>]
-            9 = index? res
+            9 = index of res
         ]
     )
 ]

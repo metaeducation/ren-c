@@ -57,47 +57,26 @@ rule-start
 rule-end
 
 
-;=== REFLECTORS ===
-;
-; These words are used for things like REFLECT SOME-FUNCTION 'BODY, which then
-; has a convenience wrapper which is infix and doesn't need a quote, as OF.
-; (e.g. BODY OF SOME-FUNCTION)
-;
-type
-heart
-quotes
-index
-xy  ; !!! There was an INDEX?/XY, which is an XY reflector for the time being
-length
-codepoint
-head
-tail
-head?
-tail?
-past?
-open?
-spec
-body
-words
-parameters
-escapable
-normal
-class
-values
-types
-title
-binding
-#file
-line
-near
-label
-#sigil
-coupling
-
+type  ; used by TYPECHECKER
 value ; used by TYPECHECKER to name the argument of the generated function
 
 ; See notes on ACTION-ADJUNCT in %sysobj.r
 description
+
+
+; PARAMETER! FIELDS AND VALUES
+
+class  ; parameter.fields
+escapable
+#optional
+spec
+#text
+
+normal  ; parameter classes
+#meta
+#the
+#just
+
 
 x
 y
@@ -200,7 +179,6 @@ shutdown*
 ; via a pre-published dictionary of strings, committed to as a registry.
 
 ; Event:
-#type  ; declared in this file as a reflector
 key
 #port
 mode

@@ -121,6 +121,23 @@ DECLARE_NATIVE(bind)
 
 
 //
+//  /binding-of: native:generic [
+//
+//  "Get the binding of a value (binding is a loooong work in progress...)"
+//
+//      return: [~null~ any-context? 'let]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(binding_of)
+{
+    INCLUDE_PARAMS_OF_BINDING_OF;
+
+    return Dispatch_Generic(binding_of, Element_ARG(element), LEVEL);
+}
+
+
+//
 //  /inside: native [
 //
 //  "Returns a view of the input bound virtually to the context"

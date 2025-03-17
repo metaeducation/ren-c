@@ -1238,15 +1238,6 @@ Error* Error_Bad_Make(Kind type, const Cell* spec)
 
 
 //
-//  Error_Cannot_Reflect: C
-//
-Error* Error_Cannot_Reflect(Kind type, const Value* arg)
-{
-    return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
-}
-
-
-//
 //  Error_On_Port: C
 //
 Error* Error_On_Port(SymId id, Value* port, REBINT err_code)

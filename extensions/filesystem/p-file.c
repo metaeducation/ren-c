@@ -181,52 +181,37 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
     switch (Symbol_Id(verb)) {
 
-    //=//// REFLECT ////////////////////////////////////////////////////////=//
+      case SYM_OFFSET_OF:
+        return Init_Integer(OUT, file->offset);
 
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
+      case SYM_LENGTH_OF: {
+        //
+        // Comment said "clip at zero"
+        //
+        uint64_t size = File_Size_Cacheable_May_Fail(port);
+        return Init_Integer(OUT, size - file->offset); }
 
-        UNUSED(ARG(value)); // implicitly comes from `port`
-        Option(SymId) property = Cell_Word_Id(ARG(property));
+      case SYM_HEAD_OF:
+        file->offset = 0;
+        return COPY(port);
 
-        switch (property) {
-          case SYM_OFFSET:
-            return Init_Integer(OUT, file->offset);
+      case SYM_TAIL_OF:
+        file->offset = File_Size_Cacheable_May_Fail(port);
+        return COPY(port);
 
-          case SYM_LENGTH: {
-            //
-            // Comment said "clip at zero"
-            //
-            uint64_t size = File_Size_Cacheable_May_Fail(port);
-            return Init_Integer(OUT, size - file->offset); }
+      case SYM_HEAD_Q:
+        return Init_Logic(OUT, file->offset == 0);
 
-          case SYM_HEAD:
-            file->offset = 0;
-            return COPY(port);
+      case SYM_TAIL_Q: {
+        uint64_t size = File_Size_Cacheable_May_Fail(port);
+        return Init_Logic(OUT, file->offset >= size); }
 
-          case SYM_TAIL:
-            file->offset = File_Size_Cacheable_May_Fail(port);
-            return COPY(port);
+      case SYM_PAST_Q: {
+        uint64_t size = File_Size_Cacheable_May_Fail(port);
+        return Init_Logic(OUT, file->offset > size); }
 
-          case SYM_HEAD_Q:
-            return Init_Logic(OUT, file->offset == 0);
-
-          case SYM_TAIL_Q: {
-            uint64_t size = File_Size_Cacheable_May_Fail(port);
-            return Init_Logic(OUT, file->offset >= size); }
-
-          case SYM_PAST_Q: {
-            uint64_t size = File_Size_Cacheable_May_Fail(port);
-            return Init_Logic(OUT, file->offset > size); }
-
-          case SYM_OPEN_Q:
-            return Init_Logic(OUT, did (file->id != FILEHANDLE_NONE));
-
-          default:
-            break;
-        }
-
-        break; }
+      case SYM_OPEN_Q:
+        return Init_Logic(OUT, did (file->id != FILEHANDLE_NONE));
 
     //=//// READ ///////////////////////////////////////////////////////////=//
 

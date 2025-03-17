@@ -512,31 +512,22 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(reflect, varargs)
+IMPLEMENT_GENERIC(tail_q, varargs)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* vararg = Element_ARG(value);
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Element* vararg = Element_ARG(element);
 
-    switch (id) {
-      case SYM_TAIL_Q: {
-        if (Do_Vararg_Op_Maybe_End_Throws(
-            OUT,
-            VARARG_OP_TAIL_Q,
-            vararg
-        )){
-            assert(false);
-            return THROWN;
-        }
-        assert(Is_Logic(OUT));
-        return OUT; }
-
-      default:
-        break;
+    if (Do_Vararg_Op_Maybe_End_Throws(
+        OUT,
+        VARARG_OP_TAIL_Q,
+        vararg
+    )){
+        assert(false);
+        return THROWN;
     }
-
-    return UNHANDLED;
+    assert(Is_Logic(OUT));
+    return OUT;
 }
 
 

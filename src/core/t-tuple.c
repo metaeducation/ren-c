@@ -502,26 +502,13 @@ IMPLEMENT_GENERIC(as, any_sequence)
 }
 
 
-IMPLEMENT_GENERIC(reflect, any_sequence)
+IMPLEMENT_GENERIC(length_of, any_sequence)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* seq = Element_ARG(value);
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Element* seq = Element_ARG(element);
 
-    switch (id) {
-      case SYM_LENGTH: {
-        Length len = Cell_Sequence_Len(seq);
-        return Init_Integer(OUT, len); }
-
-      case SYM_INDEX:
-        return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(seq)));
-
-      default:
-        break;
-    }
-
-    return UNHANDLED;  // !!! what about BINDING OF, etc?
+    return Init_Integer(OUT, Cell_Sequence_Len(seq));
 }
 
 

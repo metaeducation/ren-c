@@ -435,10 +435,12 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
 //
 //  Map_To_Array: C
 //
-// what: -1 - words, +1 - values, 0 -both
+// what: -1 => words, +1 => values, 0 => both
 //
 Source* Map_To_Array(const Map* map, REBINT what)
 {
+    assert(what == 0 or what == 1 or what == -1);
+
     Count count = Num_Map_Entries_Used(map);
     Length len = count * ((what == 0) ? 2 : 1);
     Source* a = Make_Source(len);
@@ -775,36 +777,47 @@ IMPLEMENT_GENERIC(to, map) {
 }
 
 
-IMPLEMENT_GENERIC(reflect, map)
+IMPLEMENT_GENERIC(length_of, map)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* map = Element_ARG(value);
+    Element* map = Element_ARG(element);
     const Map* m = VAL_MAP(map);
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    return Init_Integer(OUT, Num_Map_Entries_Used(m));
+}
 
-    switch (id) {
-      case SYM_LENGTH:
-        return Init_Integer(OUT, Num_Map_Entries_Used(m));
 
-      case SYM_VALUES:
-        return Init_Block(OUT, Map_To_Array(m, 1));
+IMPLEMENT_GENERIC(words_of, map)
+{
+    INCLUDE_PARAMS_OF_WORDS_OF;
 
-      case SYM_WORDS:
-        return Init_Block(OUT, Map_To_Array(m, -1));
+    Element* map = Element_ARG(element);
+    const Map* m = VAL_MAP(map);
 
-      case SYM_BODY:
-        return Init_Block(OUT, Map_To_Array(m, 0));
+    return Init_Block(OUT, Map_To_Array(m, -1));
+}
 
-      case SYM_TAIL_Q:
-        return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
 
-      default:
-        break;
-    }
+IMPLEMENT_GENERIC(values_of, map)
+{
+    INCLUDE_PARAMS_OF_VALUES_OF;
 
-    return UNHANDLED;
+    Element* map = Element_ARG(element);
+    const Map* m = VAL_MAP(map);
+
+    return Init_Block(OUT, Map_To_Array(m, 1));
+}
+
+
+IMPLEMENT_GENERIC(tail_q, map)
+{
+    INCLUDE_PARAMS_OF_TAIL_Q;
+
+    Element* map = Element_ARG(element);
+    const Map* m = VAL_MAP(map);
+
+    return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
 }
 
 

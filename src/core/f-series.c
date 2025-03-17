@@ -130,50 +130,175 @@ IMPLEMENT_GENERIC(remove, any_series)
 }
 
 
-IMPLEMENT_GENERIC(reflect, any_series)
+IMPLEMENT_GENERIC(length_of, any_series)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* v = Element_ARG(value);
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Element* ser = Element_ARG(element);
+    return Init_Integer(OUT, Cell_Series_Len_At(ser));
+}
 
-    switch (id) {
-      case SYM_INDEX:
-        return Init_Integer(OUT, VAL_INDEX_RAW(v) + 1);
 
-      case SYM_LENGTH:
-        return Init_Integer(OUT, Cell_Series_Len_At(v));
+IMPLEMENT_GENERIC(index_of, any_series)  // 1-based
+{
+    INCLUDE_PARAMS_OF_INDEX_OF;
 
-      case SYM_HEAD:
-        Copy_Cell(OUT, v);
-        VAL_INDEX_RAW(OUT) = 0;
-        return Trust_Const(OUT);
+    Element* ser = Element_ARG(element);
+    return Init_Integer(OUT, VAL_INDEX_RAW(ser) + 1);
+}
 
-      case SYM_TAIL:
-        Copy_Cell(OUT, v);
-        VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(v);
-        return Trust_Const(OUT);
 
-      case SYM_HEAD_Q:
-        return Init_Logic(OUT, VAL_INDEX_RAW(v) == 0);
+IMPLEMENT_GENERIC(offset_of, any_series)  // 0-based
+{
+    INCLUDE_PARAMS_OF_OFFSET_OF;
 
-      case SYM_TAIL_Q:
-        return Init_Logic(
-            OUT,
-            VAL_INDEX_RAW(v) == Cell_Series_Len_Head(v)
-        );
+    Element* ser = Element_ARG(element);
+    return Init_Integer(OUT, VAL_INDEX_RAW(ser));
+}
 
-      case SYM_PAST_Q:
-        return Init_Logic(
-            OUT,
-            VAL_INDEX_RAW(v) > Cell_Series_Len_Head(v)
-        );
 
-      default:
-        break;
-    }
+//
+//  /head-of: native:generic [
+//
+//  "Get the head of a series (or other type...? HEAD of a PORT?)"
+//
+//      return: [~null~ fundamental?]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(head_of)
+{
+    INCLUDE_PARAMS_OF_HEAD_OF;
 
-    return UNHANDLED;
+    return Dispatch_Generic(head_of, Element_ARG(element), LEVEL);
+}
+
+
+//
+//  /tail-of: native:generic [
+//
+//  "Get the tail of a series (or other type...? TAIL of a PORT?)"
+//
+//      return: [~null~ fundamental?]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(tail_of)
+{
+    INCLUDE_PARAMS_OF_TAIL_OF;
+
+    return Dispatch_Generic(tail_of, Element_ARG(element), LEVEL);
+}
+
+
+//
+//  /head?: native:generic [
+//
+//  "Test if something is at the head position"
+//
+//      return: [logic?]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(head_q)
+{
+    INCLUDE_PARAMS_OF_HEAD_Q;
+
+    return Dispatch_Generic(head_q, Element_ARG(element), LEVEL);
+}
+
+
+//
+//  /tail?: native:generic [
+//
+//  "Test if something is at the tail position"
+//
+//      return: [logic?]
+//      element [fundamental?]
+//  ]
+//
+DECLARE_NATIVE(tail_q)
+{
+    INCLUDE_PARAMS_OF_TAIL_Q;
+
+    return Dispatch_Generic(tail_q, Element_ARG(element), LEVEL);
+}
+
+
+//
+//  /past?: native:generic [
+//
+//  "Test if something is past the tail position"
+//
+//      return: [logic?]
+//      element [fundamental?]
+//  ]
+//
+DECLARE_NATIVE(past_q)
+{
+    INCLUDE_PARAMS_OF_PAST_Q;
+
+    return Dispatch_Generic(past_q, Element_ARG(element), LEVEL);
+}
+
+
+IMPLEMENT_GENERIC(head_of, any_series)
+{
+    INCLUDE_PARAMS_OF_HEAD_OF;
+
+    Element* ser = Element_ARG(element);
+
+    Copy_Cell(OUT, ser);
+    VAL_INDEX_RAW(OUT) = 0;
+    return Trust_Const(OUT);
+}
+
+
+IMPLEMENT_GENERIC(tail_of, any_series)
+{
+    INCLUDE_PARAMS_OF_TAIL_OF;
+
+    Element* ser = Element_ARG(element);
+
+    Copy_Cell(OUT, ser);
+    VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(ser);
+    return Trust_Const(OUT);
+}
+
+
+IMPLEMENT_GENERIC(head_q, any_series)
+{
+    INCLUDE_PARAMS_OF_HEAD_Q;
+
+    Element* ser = Element_ARG(element);
+
+    return Init_Logic(OUT, VAL_INDEX_RAW(ser) == 0);
+}
+
+
+IMPLEMENT_GENERIC(tail_q, any_series)
+{
+    INCLUDE_PARAMS_OF_TAIL_Q;
+
+    Element* ser = Element_ARG(element);
+
+    return Init_Logic(
+        OUT,
+        VAL_INDEX_RAW(ser) == Cell_Series_Len_Head(ser)
+    );
+}
+
+
+IMPLEMENT_GENERIC(past_q, any_series)
+{
+    INCLUDE_PARAMS_OF_PAST_Q;
+
+    Element* ser = Element_ARG(element);
+
+    return Init_Logic(
+        OUT,
+        VAL_INDEX_RAW(ser) > Cell_Series_Len_Head(ser)
+    );
 }
 
 

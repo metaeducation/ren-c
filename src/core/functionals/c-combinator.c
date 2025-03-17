@@ -122,13 +122,13 @@ bool Combinator_Details_Querier(
     assert(Details_Max(details) == IDX_COMBINATOR_MAX);
 
     switch (property) {
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
         assert(Is_Frame(body));  // takes 1 arg (a FRAME!)
 
         Details* body_details = Phase_Details(Cell_Frame_Phase(body));
         DetailsQuerier* querier = Details_Querier(body_details);
-        return (*querier)(out, body_details, SYM_RETURN); }
+        return (*querier)(out, body_details, SYM_RETURN_OF); }
 
       default:
         break;

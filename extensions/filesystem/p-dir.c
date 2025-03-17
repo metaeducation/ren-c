@@ -131,36 +131,20 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 
     switch (Symbol_Id(verb)) {
 
-    //=//// REFLECT ////////////////////////////////////////////////////////=//
+        // !!! Previously the directory synchronously read all the entries
+        // on OPEN.  That method is being rethought.
+        //
+      case SYM_LENGTH_OF:
+        return rebValue("length of read", port);
 
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // implicitly supplied as `port`
-
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-
-        switch (property) {
-            //
-            // !!! Previously the directory synchronously read all the entries
-            // on OPEN.  That method is being rethought.
-            //
-          case SYM_LENGTH:
-            return rebValue("length of read", port);
-
-            // !!! Directories were never actually really "opened" in R3-Alpha.
-            // It is likely desirable to allow someone to open a directory and
-            // hold it open--to lock it from being deleted, or to be able to
-            // enumerate it one item at a time (e.g. to shortcut enumerating
-            // all of it).
-            //
-          case SYM_OPEN_Q:
-            return Init_Logic(OUT, false);
-
-          default:
-            break;
-        }
-
-        break; }
+        // !!! Directories were never actually really "opened" in R3-Alpha.
+        // It is likely desirable to allow someone to open a directory and
+        // hold it open--to lock it from being deleted, or to be able to
+        // enumerate it one item at a time (e.g. to shortcut enumerating
+        // all of it).
+        //
+      case SYM_OPEN_Q:
+        return Init_Logic(OUT, false);
 
     //=//// READ ///////////////////////////////////////////////////////////=//
 

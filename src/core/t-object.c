@@ -1179,41 +1179,83 @@ IMPLEMENT_GENERIC(to, any_context)
 }
 
 
-IMPLEMENT_GENERIC(reflect, any_context)
+// !!! Should this be legal?
+//
+IMPLEMENT_GENERIC(length_of, any_context)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* context = Element_ARG(value);
+    Element* context = Element_ARG(element);
     Context* c = Cell_Context(context);
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    if (Is_Stub_Sea(c))
+        return FAIL("SeaOfVars length counting code not done yet");
+    return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
+}
 
-    switch (id) {
-      case SYM_LENGTH: // !!! Should this be legal?
-        if (Is_Stub_Sea(c))
-            return FAIL("SeaOfVars length counting code not done yet");
-        return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
 
-      case SYM_TAIL_Q: // !!! Should this be legal?
-        if (Is_Stub_Sea(c))
-            return FAIL("SeaOfVars TAIL? not implemented");
-        return Init_Logic(OUT, Varlist_Len(cast(VarList*, c)) == 0);
+//
+//  /words-of: native:generic [
+//
+//  "Get the keys of a context or map (should be KEYS-OF)"
+//
+//      return: [~null~ block!]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(words_of)
+{
+    INCLUDE_PARAMS_OF_WORDS_OF;
 
-      case SYM_WORDS:
-        return Init_Block(OUT, Context_To_Array(context, 1));
+    return Dispatch_Generic(words_of, Element_ARG(element), LEVEL);
+}
 
-      case SYM_VALUES:
-        return Init_Block(OUT, Context_To_Array(context, 2));
 
-      case SYM_BODY:
-        return Init_Block(OUT, Context_To_Array(context, 3));
+IMPLEMENT_GENERIC(words_of, any_context)
+{
+    INCLUDE_PARAMS_OF_WORDS_OF;
 
-      default: break;
-    }
+    Element* context = Element_ARG(element);
+    return Init_Block(OUT, Context_To_Array(context, 1));
+}
 
-    // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
 
-    return UNHANDLED;
+//
+//  /values-of: native:generic [
+//
+//  "Get the values of a context or map (may fail if context has antiforms)"
+//
+//      return: [~null~ block!]
+//      element [<maybe> fundamental?]
+//  ]
+//
+DECLARE_NATIVE(values_of)
+{
+    INCLUDE_PARAMS_OF_VALUES_OF;
+
+    return Dispatch_Generic(values_of, Element_ARG(element), LEVEL);
+}
+
+
+IMPLEMENT_GENERIC(values_of, any_context)
+{
+    INCLUDE_PARAMS_OF_WORDS_OF;
+
+    Element* context = Element_ARG(element);
+    return Init_Block(OUT, Context_To_Array(context, 2));
+}
+
+
+IMPLEMENT_GENERIC(tail_q, any_context)
+{
+    INCLUDE_PARAMS_OF_TAIL_Q;
+
+    Element* context = Element_ARG(element);
+    Context* c = Cell_Context(context);
+
+    if (Is_Stub_Sea(c))
+        return FAIL("SeaOfVars TAIL? not implemented");
+    return Init_Logic(OUT, Varlist_Len(cast(VarList*, c)) == 0);
 }
 
 
@@ -1255,142 +1297,296 @@ IMPLEMENT_GENERIC(oldgeneric, frame)
 }
 
 
-IMPLEMENT_GENERIC(reflect, frame)
+//
+//  /parameters-of: native [
+//
+//  "Get the unspecialized PARAMETER! descriptions for a FRAME! or ACTION?"
+//
+//      return: "Frame with lens showing only PARAMETER! values"
+//          [frame!]
+//      frame [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(parameters_of)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_PARAMETERS_OF;
 
-    Element* frame = Element_ARG(value);
+    Element* frame = Element_ARG(frame);
+
+    return Init_Frame(
+        OUT,
+        Cell_Frame_Phase(frame),
+        ANONYMOUS,
+        Cell_Frame_Coupling(frame)
+    );
+}
+
+
+//
+//  /return-of: native [
+//
+//  "Get the return parameter specification (if any) of a frame"
+//
+//      return: "Raised error if no return available (use TRY to get NULL)"
+//          [parameter!]
+//      frame [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(return_of)
+{
+    INCLUDE_PARAMS_OF_RETURN_OF;
+
+    Element* frame = Element_ARG(frame);
     Phase* phase = Cell_Frame_Phase(frame);
 
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Details* details = Phase_Details(phase);
+    DetailsQuerier* querier = Details_Querier(details);
+    if (not (*querier)(OUT, details, SYM_RETURN_OF))
+        return RAISE("Frame Details does not offer RETURN, use TRY for NULL");
 
-    switch (id) {
-      case SYM_COUPLING: {
-        Option(VarList*) coupling = Cell_Frame_Coupling(frame);
-        if (not coupling)  // NONMETHOD
-            return nullptr;
-        if (unwrap coupling == UNCOUPLED)
-            return NOTHING;
-        return COPY(Varlist_Archetype(unwrap coupling)); }
+    return OUT;
+}
 
-      case SYM_LABEL: {
-        Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
-        if (label)
-            return Init_Word(OUT, unwrap label);
 
-        // If the frame is executing, we can look at the label in the
-        // Level*, which will tell us what the overall execution label
-        // would be.  This might be confusing, however...if the phase
-        // is drastically different.  Review.
+//
+//  /body-of: native [
+//
+//  "Get a loose representation of a function's implementation"
+//
+//      return: "Raised error if no body available (use TRY to get NULL)"
+//          [block! raised!]
+//      frame [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(body_of)  // !!! should this be SOURCE-OF ?
+//
+// Getting the "body" of a function is dicey, because it's not a question
+// that always has an answer (e.g. what's the "body" of a native? or of
+// a specialization?)  But if you're writing a command like SOURCE it's good
+// to give as best an answer as you can give.
+{
+    INCLUDE_PARAMS_OF_BODY_OF;
 
-        if (Is_Frame_Details(frame))
-            return nullptr;  // not handled by Level lookup
+    Element* frame = Element_ARG(frame);
+    Phase* phase = Cell_Frame_Phase(frame);
 
-        break; }
+    Details* details = Phase_Details(phase);
+    DetailsQuerier* querier = Details_Querier(details);
+    if (not (*querier)(OUT, details, SYM_BODY_OF))
+        return RAISE("Frame Details does not offer BODY, use TRY for NULL");
 
-      case SYM_PARAMETERS:
-        return Init_Frame(
-            OUT,
-            Cell_Frame_Phase(frame),
-            ANONYMOUS,
-            Cell_Frame_Coupling(frame)
-        );
+    return OUT;
+}
 
-      case SYM_WORDS:
-        return Init_Block(OUT, Context_To_Array(frame, 1));
 
-      case SYM_BODY:
-      case SYM_RETURN: {
-        Details* details = Phase_Details(phase);
-        DetailsQuerier* querier = Details_Querier(details);
-        if (not (*querier)(OUT, details, unwrap id))
-            return FAIL("FRAME!'s Details does not offer BODY/RETURN");
-        return OUT; }
+//
+//  /coupling-of: native [
+//
+//  "Get what object a FRAME! or ACTION? uses to looks up .XXX references"
+//
+//      return: "Returns NOTHING if uncoupled, ~null~ if non-method"
+//          [~ ~null~ object!]
+//      frame [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(coupling_of)
+{
+    INCLUDE_PARAMS_OF_COUPLING_OF;
 
-      case SYM_FILE:
-      case SYM_LINE: {
-        if (not Is_Stub_Details(phase))
-            break;  // try to check and see if there's runtime info
+    Element* frame = Element_ARG(frame);
+    Option(VarList*) coupling = Cell_Frame_Coupling(frame);
 
-        Details* details = cast(Details*, phase);
+    if (not coupling)  // NONMETHOD
+        return nullptr;
 
-        // Use a heuristic that if the first element of a function's body
-        // is an Array with the file and line bits set, then that's what
-        // it returns for FILE OF and LINE OF.
+    if (unwrap coupling == UNCOUPLED)
+        return NOTHING;
 
-        if (
-            Details_Max(details) < 1
-            or not Any_List(Details_At(details, 1))
-        ){
-            return nullptr;
-        }
+    return COPY(Varlist_Archetype(unwrap coupling));
+}
 
-        const Source* a = Cell_Array(Details_At(details, 1));
 
-        // !!! How to tell URL! vs FILE! ?
-        //
-        if (id == SYM_FILE) {
-            Option(const String*) filename = Link_Filename(a);
-            if (not filename)
-                return nullptr;
-            return Init_File(OUT, unwrap filename);
-        }
+//
+//  /label-of: native [
+//
+//  "Get the cached name a FRAME! or ACTION? was last referred to by"
+//
+//      return: [~null~ word!]
+//      frame [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(label_of)
+//
+// 1. If the frame is executing, we can look at the label in the Level*, which
+//    will tell us what the overall execution label would be.  This might be
+//    confusing, however...if the phase is drastically different.  Review.
+{
+    INCLUDE_PARAMS_OF_LABEL_OF;
 
-        assert(id == SYM_LINE);
-        if (MISC_SOURCE_LINE(a) == 0)
-            return nullptr;
+    Element* frame = Element_ARG(frame);
 
-        return Init_Integer(OUT, MISC_SOURCE_LINE(a)); }
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
+    if (label)
+        return Init_Word(OUT, unwrap label);
 
-      default:
-        break;
-    }
+    if (Is_Frame_Details(frame))
+        return nullptr;  // not handled by Level lookup
 
+    Phase* phase = Cell_Frame_Phase(frame);
     if (Is_Stub_Details(phase))
-        return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property)));
+        return FAIL("Phase not details error... should this return NULL?");
 
     Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
 
-    switch (id) {
-      case SYM_FILE: {
-        Option(const String*) file = File_Of_Level(L);
-        if (not file)
-            return nullptr;
-        return Init_File(OUT, unwrap file); }
+    if (Try_Get_Action_Level_Label(OUT, L))  // look at L's label [1]
+        return OUT;
+    return nullptr;
+}
 
-      case SYM_LINE: {
-        Option(LineNumber) line = Line_Number_Of_Level(L);
-        if (not line)
-            return nullptr;
-        return Init_Integer(OUT, unwrap line); }
 
-      case SYM_LABEL: {
-        if (Try_Get_Action_Level_Label(OUT, L))
-            return OUT;
-        return nullptr; }
+// 1. Heuristic that if the first element of a function's body is an Array
+//    with the file and line bits set, then that's what it returns for FILE OF
+//    and LINE OF.
+//
+static void File_Line_Frame_Heuristic(
+    Sink(Level*) level,
+    Sink(const Source*) source,
+    Element* frame
+){
+    Phase* phase = Cell_Frame_Phase(frame);
 
-      case SYM_NEAR:
-        return Init_Near_For_Level(OUT, L);
+    if (Is_Stub_Details(phase)) {
+        Details* details = cast(Details*, phase);
 
-      case SYM_PARENT: {
-        //
-        // Only want action levels (though `pending? = true` ones count).
-        //
-        Level* parent = L;
-        while ((parent = parent->prior) != BOTTOM_LEVEL) {
-            if (not Is_Action_Level(parent))
-                continue;
-
-            VarList* v_parent = Varlist_Of_Level_Force_Managed(parent);
-            return COPY(Varlist_Archetype(v_parent));
+        if (  // heuristic check [1]
+            Details_Max(details) < 1
+            or not Any_List(Details_At(details, 1))
+        ){
+            *level = nullptr;
+            *source = nullptr;
+            return;
         }
-        return nullptr; }
 
-      default:
-        break;
+        *source = Cell_Array(Details_At(details, 1));
+        *level = nullptr;
     }
-    return FAIL(Error_Cannot_Reflect(REB_FRAME, ARG(property))); }
+    else { // try to check and see if there's runtime info
+        if (Is_Stub_Details(phase)) {
+            *level = nullptr;
+            *source = nullptr;
+            return;
+        }
 
+        *source = nullptr;
+        *level = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+    }
+}
+
+
+IMPLEMENT_GENERIC(file_of, frame)
+{
+    INCLUDE_PARAMS_OF_FILE_OF;
+
+    Element* frame = Element_ARG(element);
+    Level* L;
+    const Source* a;
+    File_Line_Frame_Heuristic(&L, &a, frame);
+
+    if (a) {
+        Option(const String*) filename = Link_Filename(a);
+        if (filename)
+            return Init_File(OUT, unwrap filename);  // !!! URL! vs. FILE! ?
+    }
+
+    if (L) {
+        Option(const String*) file = File_Of_Level(L);
+        if (file)
+            return Init_File(OUT, unwrap file);
+    }
+
+    return RAISE("File not available for frame");
+}
+
+
+IMPLEMENT_GENERIC(line_of, frame)
+{
+    INCLUDE_PARAMS_OF_LINE_OF;
+
+    Element* frame = Element_ARG(element);
+    Level* L;
+    const Source* a;
+    File_Line_Frame_Heuristic(&L, &a, frame);
+
+    if (a) {
+        if (MISC_SOURCE_LINE(a) != 0)
+            return Init_Integer(OUT, MISC_SOURCE_LINE(a));
+    }
+
+    if (L) {
+        Option(LineNumber) line = Line_Number_Of_Level(L);
+        if (line)
+            return Init_Integer(OUT, unwrap line);
+    }
+
+    return RAISE("Line not available for frame");
+}
+
+
+//
+//  /near-of: native [
+//
+//  "Get the near information for an executing frame"
+//
+//      return: [~null~ block!]
+//      frame [<maybe> <unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(near_of)
+{
+    INCLUDE_PARAMS_OF_NEAR_OF;
+
+    Element* frame = Element_ARG(frame);
+    Phase* phase = Cell_Frame_Phase(frame);
+
+    if (Is_Stub_Details(phase))
+        return FAIL("Phase is details, can't get NEAR-OF");
+
+    Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+    return Init_Near_For_Level(OUT, L);
+}
+
+
+//
+//  /parent-of: native [
+//
+//  "Get the frame corresponding to the parent of a frame"
+//
+//      return: [~null~ frame!]
+//      frame [<maybe> <unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(parent_of)
+{
+    INCLUDE_PARAMS_OF_PARENT_OF;
+
+    Element* frame = Element_ARG(frame);
+    Phase* phase = Cell_Frame_Phase(frame);
+
+    if (Is_Stub_Details(phase))
+        return FAIL("Phase is details, can't get PARENT-OF");
+
+    Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
+    Level* parent = L;
+
+    while ((parent = parent->prior) != BOTTOM_LEVEL) {
+        if (not Is_Action_Level(parent))  // Only want action levels
+            continue;
+
+        VarList* v_parent = Varlist_Of_Level_Force_Managed(parent);
+        return COPY(Varlist_Archetype(v_parent));
+    }
+    return nullptr;
+}
 
 
 //

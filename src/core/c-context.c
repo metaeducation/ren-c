@@ -556,7 +556,7 @@ DECLARE_NATIVE(wrap_p)
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
 
     Context* context = Cell_Context(ARG(context));
-    Element* list = Element_ARG(list);
+    Element* list = cast(Element*, ARG(list));
 
     Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
     if (e)
@@ -587,7 +587,7 @@ DECLARE_NATIVE(wrap)
 {
     INCLUDE_PARAMS_OF_WRAP;
 
-    Element* list = Element_ARG(list);
+    Element* list = cast(Element*, ARG(list));
 
     const Element* tail;
     const Element* at = Cell_List_At(&tail, list);
@@ -895,12 +895,11 @@ Source* Context_To_Array(const Cell* context, REBINT mode)
 
         if (mode & 2) {
             //
-            // Context might have voids, which denote the value have not
-            // been set.  These contexts cannot be converted to blocks,
-            // since lists may not contain void.
+            // Context might have antiforms, which cannot be put in blocks.
+            // This whole idea needs review.
             //
-            if (Is_Nulled(e.var))
-                fail (Error_Null_Object_Block_Raw());
+            if (Is_Antiform(e.var))
+                fail (Error_Anti_Object_Block_Raw());
 
             Copy_Cell(PUSH(), e.var);
         }

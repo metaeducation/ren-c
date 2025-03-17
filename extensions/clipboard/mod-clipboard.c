@@ -48,22 +48,8 @@ static Bounce Clipboard_Actor(
     const Symbol* verb
 ){
     switch (Symbol_Id(verb)) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // implied by `port`
-
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-        assert(property != 0);
-
-        switch (property) {
-          case SYM_OPEN_Q:
-            return Init_Logic(OUT, true); // !!! need "port state"?  :-/
-
-        default:
-            break;
-        }
-
-        break; }
+      case SYM_OPEN_Q:
+        return Init_Logic(OUT, true); // !!! need "port state"?  :-/
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;

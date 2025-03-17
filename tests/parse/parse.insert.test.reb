@@ -156,14 +156,14 @@
                 seek (mark)
                 insert (spread letters)
                 after: <here>
-                seek (skip pos (index? after) - (index? mark))
+                seek (skip pos (index of after) - (index of mark))
 
                 ; Try equivalent of Red's `insert only mark letters`
                 pos: <here>
                 seek (mark)
                 insert (letters)
                 after: <here>
-                seek (skip pos (index? after) - (index? mark))
+                seek (skip pos (index of after) - (index of mark))
 
                 'b 'c
             ]
@@ -183,7 +183,7 @@
                 seek (mark)
                 insert (letter)
                 after: <here>
-                seek (skip pos (index? after) - (index? mark))
+                seek (skip pos (index of after) - (index of mark))
 
                 'c
             ]

@@ -12,7 +12,7 @@
 ;(
 ;    all [
 ;        path? a: transcode:one "[a b c]/2"
-;        2 == index? a
+;        2 == index of a
 ;    ]
 ;)
 

@@ -232,23 +232,14 @@ IMPLEMENT_GENERIC(as, any_word)
 }
 
 
-IMPLEMENT_GENERIC(reflect, any_word)
+IMPLEMENT_GENERIC(binding_of, any_word)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_BINDING_OF;
 
-    Element* word = Element_ARG(value);
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Element* any_word = Element_ARG(element);
 
-    switch (id) {
-      case SYM_BINDING: {
-        if (not Try_Get_Binding_Of(OUT, word))
-            return nullptr;
+    if (not Try_Get_Binding_Of(OUT, any_word))
+        return nullptr;
 
-        return OUT; }
-
-      default:
-        break;
-    }
-
-    return GENERIC_CFUNC(reflect, any_utf8)(LEVEL);  // e.g. LENGTH OF, etc.
+    return OUT;
 }

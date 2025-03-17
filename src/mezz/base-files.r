@@ -52,16 +52,11 @@ REBOL [
     return select maybe query target 'type
 ]
 
-/size-of: size?: func [
-    "Returns the size of a file"
-    return: [~null~ integer!]
-    target [file! url!]
-][
-    return all [
-        info: info? target
-        info.size
-    ]
-]
+; !!! size-of used to be defined here, but it's a generic and so it has to
+; be implemented differently, until generics can be written in usermode.
+;
+; See size-of native for the hacked in code.
+
 
 /modified?: func [
     "Returns the last modified date of a file"

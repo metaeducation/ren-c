@@ -154,7 +154,7 @@
         #d == parse txt [opt some further some [remove "l" | one]]
         all [
             txt = "Heo word"
-            8 = length? txt
+            8 = length of txt
         ]
     )
 ]

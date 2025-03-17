@@ -299,20 +299,8 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
     VarList* ctx = Cell_Varlist(port);
 
     switch (Symbol_Id(verb)) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value)); // implied by `port`
-
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-        switch (property) {
-          case SYM_OPEN_Q:
-            return Init_Logic(OUT, true);  // stdio port always open
-
-          default:
-            break;
-        }
-
-        break; }
+      case SYM_OPEN_Q:
+        return Init_Logic(OUT, true);  // stdio port always open
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;

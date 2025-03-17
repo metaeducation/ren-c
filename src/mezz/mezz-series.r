@@ -40,20 +40,6 @@ REBOL [
     decode-IEEE-754/
     encode-IEEE-754/)
 
-; !!! Although this follows the -OF naming convention, it doesn't fit the
-; pattern of a reflector as it takes two arguments.  Moreover, it is a bit
-; sketchy...it doesn't check to see that the two series are the same, and
-; if all it's doing is plain subtraction it seems like a poor primitive to
-; be stuck with giving a name and suggested greater semantics to.  Review.
-;
-/offset-of: lambda [
-    "Returns the offset between two series positions."
-    series1 [any-series?]
-    series2 [any-series?]
-][
-    (index of series2) - (index of series1)
-]
-
 
 /last?: /single?: lambda [
     "Returns okay if the series length is 1."
@@ -282,7 +268,7 @@ bind construct [
             [
                 [
                     any-keyword-suffix-rule (
-                        append:part out a offset? a b  ; output before prefix
+                        append:part out a ((index of b) - (index of a))
 
                         let v: apply select/ [
                             values keyword-match

@@ -167,7 +167,7 @@
         res: ~
         all [
             #{00DEADBEEF00} == parse bin [thru #{BABE} res: <here> to <end>]
-            9 = index? res
+            9 = index of res
         ]
     )
 ]

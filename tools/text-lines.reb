@@ -214,7 +214,7 @@ import <bootstrap-shim.r>
     ]
 
     if zero? line [line: null] else [
-        line: reduce [line 1 + subtract index? position index? eol]
+        line: reduce [line 1 + subtract (index of position) (index of eol)]
     ]
 
     return line

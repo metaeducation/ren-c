@@ -250,7 +250,7 @@ Script: [
     varargs-take-last:  "VARARGS! does not support TAKE-ing only :LAST item"
 
     null-vararg-list:   "Can't MAKE ANY-LIST? from VARARGS! allowing ~null~"
-    null-object-block:  "Can't create block from object if it has null values"
+    anti-object-block:  "Can't create block from object if it has antiforms"
 
     conflicting-key:    [:arg1 "key conflicts; use SELECT or PUT with :CASE"]
 

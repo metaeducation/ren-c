@@ -189,7 +189,7 @@ bool Encloser_Details_Querier(
     assert(Details_Max(details) == IDX_ENCLOSER_MAX);
 
     switch (property) {
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Element* outer = cast(Element*, Details_At(details, IDX_ENCLOSER_OUTER));
         assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 

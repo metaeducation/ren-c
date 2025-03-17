@@ -194,6 +194,6 @@
 
 [https://github.com/red/red/issues/5171 (
     blk: copy [1 2 3 4 5 6]
-    insert blk spread skip blk -2 + length? blk
-    [5 6 1 2 3 4 5 6] = head blk
+    insert blk spread skip blk -2 + length of blk
+    [5 6 1 2 3 4 5 6] = head of blk
 )]

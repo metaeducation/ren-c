@@ -300,10 +300,13 @@ export /extract-generic-implementations: func [
                 thru newline
                 (
                     replace name "_q" "?"  ; use smarter parse rule...
+                    replace name "_" "-"
+
+                    replace type "_" "-"
 
                     keep make generic-info! compose1 [
                         name: (name)
-                        type: (quote as word! replace type "_" "-")
+                        type: (quote as word! type)
                         file: (c-source-file)
                     ]
                 )

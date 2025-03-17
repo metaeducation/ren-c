@@ -674,26 +674,24 @@ IMPLEMENT_GENERIC(oldgeneric, bitset)
 }
 
 
-IMPLEMENT_GENERIC(reflect, bitset)
+IMPLEMENT_GENERIC(length_of, bitset)
 {
-    INCLUDE_PARAMS_OF_REFLECT;
+    INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* bset = Element_ARG(value);
-    Option(SymId) id = Cell_Word_Id(ARG(property));
+    Element* bset = Element_ARG(element);
 
-    switch (id) {
-      case SYM_LENGTH:
-        return Init_Integer(OUT, Binary_Len(VAL_BITSET(bset)) * 8);
+    return Init_Integer(OUT, Binary_Len(VAL_BITSET(bset)) * 8);
+}
 
-      case SYM_TAIL_Q:
-        // Necessary to make EMPTY? work:
-        return Init_Logic(OUT, Binary_Len(VAL_BITSET(bset)) == 0);
 
-      default:
-        break;
-    }
+// This is necessary to make EMPTY? work:
+//
+IMPLEMENT_GENERIC(tail_q, bitset)
+{
+    INCLUDE_PARAMS_OF_TAIL_Q;
 
-    return UNHANDLED;
+    Element* bset = Element_ARG(element);
+    return Init_Logic(OUT, Binary_Len(VAL_BITSET(bset)) == 0);
 }
 
 

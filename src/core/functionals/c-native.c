@@ -45,7 +45,7 @@ bool Raw_Native_Details_Querier(
     SymId property
 ){
     switch (property) {
-      case SYM_RETURN: {
+      case SYM_RETURN_OF: {
         Value* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
         assert(Is_Parameter(param));
         Copy_Cell(out, param);

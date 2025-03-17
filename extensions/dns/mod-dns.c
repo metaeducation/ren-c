@@ -155,20 +155,8 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
     Value* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
 
     switch (Symbol_Id(verb)) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));  // covered by `port`
-
-        Option(SymId) property = Cell_Word_Id(ARG(property));
-        switch (property) {
-          case SYM_OPEN_Q:
-            return "fail -{DNS 'ports' don't support OPEN?, only READ}-";
-
-          default:
-            break;
-        }
-
-        break; }
+      case SYM_OPEN_Q:
+        return "fail -{DNS 'ports' don't support OPEN?, only READ}-";
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
