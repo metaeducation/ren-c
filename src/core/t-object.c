@@ -359,7 +359,7 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, any_context)
+IMPLEMENT_GENERIC(EQUAL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -367,7 +367,7 @@ IMPLEMENT_GENERIC(equal_q, any_context)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, any_context)
+IMPLEMENT_GENERIC(LESSER_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -380,7 +380,7 @@ IMPLEMENT_GENERIC(lesser_q, any_context)
 //
 // For now just support ACTION! (or path/word to specify an action)
 //
-IMPLEMENT_GENERIC(make, frame)
+IMPLEMENT_GENERIC(MAKE, Is_Frame)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -451,7 +451,7 @@ IMPLEMENT_GENERIC(make, frame)
 }
 
 
-IMPLEMENT_GENERIC(make, module)
+IMPLEMENT_GENERIC(MAKE, Is_Module)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -472,7 +472,7 @@ IMPLEMENT_GENERIC(make, module)
 // Instance where MAKE allows not just a type, but an object instance to
 // inherit from.
 //
-IMPLEMENT_GENERIC(make, object)
+IMPLEMENT_GENERIC(MAKE, Is_Object)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -785,7 +785,7 @@ VarList* Copy_Varlist_Extra_Managed(
 }
 
 
-IMPLEMENT_GENERIC(moldify, any_context)
+IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -944,7 +944,7 @@ static Element* Copy_Any_Context(
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, any_context)
+IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
@@ -1147,7 +1147,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_context)
 //    vs. making it as a port to begin with (?)  Look into why
 //    system.standard.port is made with CONTEXT and not with MAKE PORT!
 //
-IMPLEMENT_GENERIC(to, any_context)
+IMPLEMENT_GENERIC(TO, Any_Context)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -1181,7 +1181,7 @@ IMPLEMENT_GENERIC(to, any_context)
 
 // !!! Should this be legal?
 //
-IMPLEMENT_GENERIC(length_of, any_context)
+IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
@@ -1207,11 +1207,11 @@ DECLARE_NATIVE(words_of)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    return Dispatch_Generic(words_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(WORDS_OF, Element_ARG(element), LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(words_of, any_context)
+IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
@@ -1233,11 +1233,11 @@ DECLARE_NATIVE(values_of)
 {
     INCLUDE_PARAMS_OF_VALUES_OF;
 
-    return Dispatch_Generic(values_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(VALUES_OF, Element_ARG(element), LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(values_of, any_context)
+IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
@@ -1246,7 +1246,7 @@ IMPLEMENT_GENERIC(values_of, any_context)
 }
 
 
-IMPLEMENT_GENERIC(tail_q, any_context)
+IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
@@ -1262,7 +1262,7 @@ IMPLEMENT_GENERIC(tail_q, any_context)
 // FRAME! adds some additional reflectors to the usual things you can do with
 // an object, but falls through to Context for most things.
 //
-IMPLEMENT_GENERIC(oldgeneric, frame)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Frame)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -1293,7 +1293,7 @@ IMPLEMENT_GENERIC(oldgeneric, frame)
         break;
     }
 
-    return GENERIC_CFUNC(oldgeneric, any_context)(level_);
+    return GENERIC_CFUNC(OLDGENERIC, Any_Context)(level_);
 }
 
 
@@ -1483,7 +1483,7 @@ static void File_Line_Frame_Heuristic(
 }
 
 
-IMPLEMENT_GENERIC(file_of, frame)
+IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
@@ -1508,7 +1508,7 @@ IMPLEMENT_GENERIC(file_of, frame)
 }
 
 
-IMPLEMENT_GENERIC(line_of, frame)
+IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
@@ -1617,7 +1617,7 @@ REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, frame)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Frame)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -1625,7 +1625,7 @@ IMPLEMENT_GENERIC(equal_q, frame)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, frame)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Frame)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -1633,7 +1633,7 @@ IMPLEMENT_GENERIC(lesser_q, frame)
 }
 
 
-IMPLEMENT_GENERIC(moldify, frame)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -1641,7 +1641,7 @@ IMPLEMENT_GENERIC(moldify, frame)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
 
     if (QUOTE_BYTE(v) != QUASIFORM_2) {
-        return GENERIC_CFUNC(moldify, any_context)(LEVEL);  // heeds REF(form)
+        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds REF(form)
     }
 
     bool form = REF(form);

@@ -263,7 +263,7 @@ e-forward/write-emitted
 name-to-typeset-byte: load (join output-dir %boot/tmp-typeset-bytes.r)
 
 
-=== "SORT GATHERED GENERICS IN DECIDER-BYTE ORDER" ===
+=== "SORT GATHERED GENERICS IN TYPESET-BYTE ORDER" ===
 
 sort:compare generics func [a b] [
     let bad: null
@@ -292,7 +292,9 @@ e-forward: make-emitter "IMPLEMENT_GENERIC() forward decls" (
 )
 
 for-each 'info generics [
-    e-forward/emit [info -{IMPLEMENT_GENERIC(${info.name}, ${info.type});}-]
+    e-forward/emit [info
+        -{IMPLEMENT_GENERIC(${INFO.NAME}, ${Info.Proper-Type});}-
+    ]
     e-forward/emit newline
 ]
 
@@ -305,7 +307,7 @@ for-each 'info natives [
     if info.native-type != 'generic [continue]
 
     e-forward/emit [info -{
-        extern GenericInfo g_generic_${info.name}[];
+        extern GenericTable g_generic_${INFO.NAME}[];
     }-]
 ]
 
@@ -344,15 +346,16 @@ for-each 'n-info natives [
             last-byte: byte
 
             g-info.found: 'yes
-            keep trim:tail cscape [g-info -{
-                {$<byte>, &GENERIC_CFUNC(${g-info.name}, ${g-info.type})}
+
+            keep trim:tail cscape [g-info proper-type -{
+                {$<byte>, &GENERIC_CFUNC(${G-INFO.NAME}, ${G-Info.Proper-Type})}
             }-]
         ]
         keep "{0, nullptr}"
     ]
 
     e-tables/emit [n-info -{
-        GenericInfo g_generic_${n-info.name}[] = {
+        GenericTable g_generic_${N-INFO.NAME}[] = {
             $(Entries),
         };
     }-]

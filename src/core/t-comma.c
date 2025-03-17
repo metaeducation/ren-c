@@ -26,7 +26,7 @@
 // The special behavior of commas makes them "glue" their rendering to the
 // thing on their left.
 //
-IMPLEMENT_GENERIC(moldify, comma)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Comma)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -68,7 +68,7 @@ REBINT CT_Comma(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, comma)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Comma)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -76,7 +76,7 @@ IMPLEMENT_GENERIC(equal_q, comma)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, comma)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Comma)
 {
     switch (Symbol_Id(Level_Verb(LEVEL))) {
       case SYM_COPY: { // since (copy:deep [1, 2]) is legal, allow (copy ',)

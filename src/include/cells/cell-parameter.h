@@ -257,8 +257,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 //
 // The ANY-ATOM? check takes its argument as a meta parameter, so it doesn't
 // fit the TypesetByte optimization.  It's likely that TypesetByte should
-// be rethought so that things like SPLICE? can be deciders, probably by
-// grouping all the meta deciders together at the end of the list.
+// be rethought so that things like SPLICE? can be accelerated typesets.
 //
 #define PARAMETER_FLAG_ANY_ATOM_OK \
     FLAG_LEFT_BIT(19)

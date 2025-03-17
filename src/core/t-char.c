@@ -223,7 +223,7 @@ REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, any_utf8)
+IMPLEMENT_GENERIC(EQUAL_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -231,7 +231,7 @@ IMPLEMENT_GENERIC(equal_q, any_utf8)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, any_utf8)
+IMPLEMENT_GENERIC(LESSER_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -239,7 +239,7 @@ IMPLEMENT_GENERIC(lesser_q, any_utf8)
 }
 
 
-IMPLEMENT_GENERIC(make, any_utf8)
+IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -272,7 +272,7 @@ IMPLEMENT_GENERIC(make, any_utf8)
         if (*bp <= 0x80) {
             if (size != 1) {
                 Init_Builtin_Datatype(ARG(type), REB_ISSUE);
-                return GENERIC_CFUNC(make, any_string)(level_);
+                return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
 
             c = *bp;
@@ -285,7 +285,7 @@ IMPLEMENT_GENERIC(make, any_utf8)
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
                 Init_Builtin_Datatype(ARG(type), REB_ISSUE);
-                return GENERIC_CFUNC(make, any_string)(level_);
+                return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
         Option(Error*) error = Trap_Init_Char(OUT, c);
@@ -432,7 +432,7 @@ static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 }
 
 
-IMPLEMENT_GENERIC(moldify, sigil)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Sigil)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -447,7 +447,7 @@ IMPLEMENT_GENERIC(moldify, sigil)
 }
 
 
-IMPLEMENT_GENERIC(moldify, issue)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -524,7 +524,7 @@ IMPLEMENT_GENERIC(moldify, issue)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, any_utf8)
+IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -543,7 +543,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_utf8)
 
     if (Stringlike_Has_Node(issue)) {
         assert(not IS_CHAR(issue));  // no string math
-        return GENERIC_CFUNC(oldgeneric, any_string)(level_);
+        return GENERIC_CFUNC(OLDGENERIC, Any_String)(level_);
     }
 
     switch (id) {
@@ -710,7 +710,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_utf8)
 //    This optimization may not be particularly important, but it points
 //    to a potential family of such optimizations.
 //
-IMPLEMENT_GENERIC(to, any_utf8)
+IMPLEMENT_GENERIC(TO, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -731,7 +731,7 @@ IMPLEMENT_GENERIC(to, any_utf8)
     if (Any_Word_Kind(to)) {
         assert(not Any_Word(v));  // does not delegate this case
         if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v)))
-            return GENERIC_CFUNC(as, any_utf8)(LEVEL);  // immutable src
+            return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
 
         Size size;  // TO conversion of mutable data, can't reuse stub
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
@@ -742,7 +742,7 @@ IMPLEMENT_GENERIC(to, any_utf8)
     if (to == REB_ISSUE) {  // may have to make node if source mutable
         if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v))) {
             possibly(Any_Word(v));
-            return GENERIC_CFUNC(as, any_utf8)(LEVEL);  // immutable src
+            return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
         }
 
         Length len;
@@ -825,7 +825,7 @@ IMPLEMENT_GENERIC(to, any_utf8)
     }
 
     if (to == REB_BLANK)
-        return GENERIC_CFUNC(as, any_utf8)(LEVEL);
+        return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);
 
     return UNHANDLED;
 }
@@ -842,7 +842,7 @@ IMPLEMENT_GENERIC(to, any_utf8)
 //    if we create a node we have to give it the same constraints that
 //    would apply if we had reused one.
 //
-IMPLEMENT_GENERIC(as, any_utf8)
+IMPLEMENT_GENERIC(AS, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -954,7 +954,7 @@ IMPLEMENT_GENERIC(as, any_utf8)
                 Freeze_Flex(s);
             }
         }
-        return GENERIC_CFUNC(to, any_string)(LEVEL);  // not optimized yet
+        return GENERIC_CFUNC(TO, Any_String)(LEVEL);  // not optimized yet
     }
 
     if (as == REB_BLANK) {
@@ -982,11 +982,11 @@ DECLARE_NATIVE(codepoint_of)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    return Dispatch_Generic(codepoint_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(CODEPOINT_OF, Element_ARG(element), LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(codepoint_of, issue)
+IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Issue)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
@@ -1003,7 +1003,7 @@ IMPLEMENT_GENERIC(codepoint_of, issue)
 }
 
 
-IMPLEMENT_GENERIC(length_of, any_utf8)
+IMPLEMENT_GENERIC(LENGTH_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
@@ -1016,7 +1016,7 @@ IMPLEMENT_GENERIC(length_of, any_utf8)
 }
 
 
-IMPLEMENT_GENERIC(size_of, any_utf8)
+IMPLEMENT_GENERIC(SIZE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 

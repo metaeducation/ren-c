@@ -163,7 +163,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
         &adjunct,
         spec,
         MKF_MASK_NONE,
-        SYM_0  // return type for all deciders is the same [3]
+        SYM_0  // return type for all typecheckers is the same [3]
     );
     assert(adjunct == nullptr);
 

@@ -75,7 +75,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, map)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -373,7 +373,7 @@ void Append_Map(
 // Since TO MAP! doesn't do any evaluation, drop MAKE MAP! for now...it may
 // return as an evaluating or otherwise interesting form.
 //
-IMPLEMENT_GENERIC(make, map)
+IMPLEMENT_GENERIC(MAKE, Is_Map)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -508,7 +508,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 }
 
 
-IMPLEMENT_GENERIC(moldify, map)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -566,7 +566,7 @@ IMPLEMENT_GENERIC(moldify, map)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, map)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
@@ -759,7 +759,7 @@ IMPLEMENT_GENERIC(oldgeneric, map)
 //    add duplicates in TO MAP!.  These undermine the reversibility
 //    requirement, so that's currently disabled in To_Checker_Dispatcher()
 //
-IMPLEMENT_GENERIC(to, map) {
+IMPLEMENT_GENERIC(TO, Is_Map) {
     INCLUDE_PARAMS_OF_TO;
 
     Element* map = Element_ARG(element);
@@ -777,7 +777,7 @@ IMPLEMENT_GENERIC(to, map) {
 }
 
 
-IMPLEMENT_GENERIC(length_of, map)
+IMPLEMENT_GENERIC(LENGTH_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
@@ -788,7 +788,7 @@ IMPLEMENT_GENERIC(length_of, map)
 }
 
 
-IMPLEMENT_GENERIC(words_of, map)
+IMPLEMENT_GENERIC(WORDS_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
@@ -799,7 +799,7 @@ IMPLEMENT_GENERIC(words_of, map)
 }
 
 
-IMPLEMENT_GENERIC(values_of, map)
+IMPLEMENT_GENERIC(VALUES_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_VALUES_OF;
 
@@ -810,7 +810,7 @@ IMPLEMENT_GENERIC(values_of, map)
 }
 
 
-IMPLEMENT_GENERIC(tail_q, map)
+IMPLEMENT_GENERIC(TAIL_Q, Is_Map)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 

@@ -41,7 +41,7 @@ REBINT CT_Integer(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, integer)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -49,7 +49,7 @@ IMPLEMENT_GENERIC(equal_q, integer)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, integer)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -57,7 +57,7 @@ IMPLEMENT_GENERIC(lesser_q, integer)
 }
 
 
-IMPLEMENT_GENERIC(zeroify, integer)
+IMPLEMENT_GENERIC(ZEROIFY, Is_Integer)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(example));  // always gives 0
@@ -92,7 +92,7 @@ IMPLEMENT_GENERIC(zeroify, integer)
 //    being scarcely clear why that's a logical TO moreso than 1, or 100, or
 //    anything else.  We move this oddity to MAKE.
 //
-IMPLEMENT_GENERIC(make, integer)
+IMPLEMENT_GENERIC(MAKE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -157,7 +157,7 @@ void Hex_String_To_Integer(Value* out, const Value* value)  // !!! UNUSED
 }
 
 
-IMPLEMENT_GENERIC(moldify, integer)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -175,7 +175,7 @@ IMPLEMENT_GENERIC(moldify, integer)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, integer)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -226,19 +226,19 @@ IMPLEMENT_GENERIC(oldgeneric, integer)
             case SYM_POWER:
                 if (Is_Decimal(val2) || Is_Percent(val2)) {
                     Init_Decimal(val, cast(REBDEC, num));  // convert
-                    return GENERIC_CFUNC(oldgeneric, decimal)(level_);
+                    return GENERIC_CFUNC(OLDGENERIC, Is_Decimal)(level_);
                 }
                 if (Is_Money(val2)) {
                     Init_Money(val, int_to_deci(VAL_INT64(val)));
-                    return GENERIC_CFUNC(oldgeneric, money)(level_);
+                    return GENERIC_CFUNC(OLDGENERIC, Is_Money)(level_);
                 }
                 if (n > 0) {
                     if (Is_Time(val2)) {
                         Init_Time_Nanoseconds(val, SEC_TIME(VAL_INT64(val)));
-                        return GENERIC_CFUNC(oldgeneric, time)(level_);
+                        return GENERIC_CFUNC(OLDGENERIC, Is_Time)(level_);
                     }
                     if (Is_Date(val2))
-                        return GENERIC_CFUNC(oldgeneric, date)(level_);
+                        return GENERIC_CFUNC(OLDGENERIC, Is_Date)(level_);
                 }
 
             default:
@@ -278,7 +278,7 @@ IMPLEMENT_GENERIC(oldgeneric, integer)
       case SYM_POWER:
         Init_Decimal(ARG_N(1), cast(REBDEC, num));
         Init_Decimal(ARG_N(2), cast(REBDEC, arg));
-        return GENERIC_CFUNC(oldgeneric, decimal)(level_);
+        return GENERIC_CFUNC(OLDGENERIC, Is_Decimal)(level_);
 
       case SYM_REMAINDER:
         if (arg == 0)
@@ -378,7 +378,7 @@ IMPLEMENT_GENERIC(oldgeneric, integer)
 }
 
 
-IMPLEMENT_GENERIC(to, integer)
+IMPLEMENT_GENERIC(TO, Is_Integer)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -433,7 +433,7 @@ IMPLEMENT_GENERIC(to, integer)
 // 1. Both arguments are guaranteed to be integers due to the commutativity
 //    provided by DECLARE_NATIVE(multiply), see definition.
 //
-IMPLEMENT_GENERIC(multiply, integer)
+IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 

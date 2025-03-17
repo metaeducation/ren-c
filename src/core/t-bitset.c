@@ -48,7 +48,7 @@ REBINT CT_Bitset(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, bitset)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -56,7 +56,7 @@ IMPLEMENT_GENERIC(equal_q, bitset)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, bitset)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -78,7 +78,7 @@ Binary* Make_Bitset(REBLEN num_bits)
 }
 
 
-IMPLEMENT_GENERIC(moldify, bitset)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -97,7 +97,7 @@ IMPLEMENT_GENERIC(moldify, bitset)
 
     Init_Blob(v, bset);
     Init_Nulled(ARG(form));  // form = false
-    Bounce bounce = GENERIC_CFUNC(moldify, blob)(LEVEL);
+    Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Blob)(LEVEL);
     assert(bounce == NOTHING);  // !!! generically it could BOUNCE_CONTINUE...
     UNUSED(bounce);
 
@@ -110,7 +110,7 @@ IMPLEMENT_GENERIC(moldify, bitset)
 }
 
 
-IMPLEMENT_GENERIC(make, bitset)
+IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -554,7 +554,7 @@ void Trim_Tail_Zeros(Binary* bin)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, bitset)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -674,7 +674,7 @@ IMPLEMENT_GENERIC(oldgeneric, bitset)
 }
 
 
-IMPLEMENT_GENERIC(length_of, bitset)
+IMPLEMENT_GENERIC(LENGTH_OF, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
@@ -686,7 +686,7 @@ IMPLEMENT_GENERIC(length_of, bitset)
 
 // This is necessary to make EMPTY? work:
 //
-IMPLEMENT_GENERIC(tail_q, bitset)
+IMPLEMENT_GENERIC(TAIL_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
@@ -695,7 +695,7 @@ IMPLEMENT_GENERIC(tail_q, bitset)
 }
 
 
-IMPLEMENT_GENERIC(complement, bitset)
+IMPLEMENT_GENERIC(COMPLEMENT, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_COMPLEMENT;
 
@@ -759,7 +759,7 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
 }
 
 
-IMPLEMENT_GENERIC(intersect, bitset)
+IMPLEMENT_GENERIC(INTERSECT, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_INTERSECT;
 
@@ -782,7 +782,7 @@ IMPLEMENT_GENERIC(intersect, bitset)
 }
 
 
-IMPLEMENT_GENERIC(union, bitset)
+IMPLEMENT_GENERIC(UNION, Is_Bitset)
 {
     Element* blob1;
     Element* blob2;
@@ -803,7 +803,7 @@ IMPLEMENT_GENERIC(union, bitset)
 }
 
 
-IMPLEMENT_GENERIC(difference, bitset)
+IMPLEMENT_GENERIC(DIFFERENCE, Is_Bitset)
 {
     Element* blob1;
     Element* blob2;
@@ -824,7 +824,7 @@ IMPLEMENT_GENERIC(difference, bitset)
 }
 
 
-IMPLEMENT_GENERIC(exclude, bitset)
+IMPLEMENT_GENERIC(EXCLUDE, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_EXCLUDE;
 

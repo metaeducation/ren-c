@@ -128,7 +128,8 @@ bool almost_equal(REBDEC a, REBDEC b, REBI64 max_diff) {
 //        rebol2>> make decimal! [10 2]
 //        == 1000.0
 //
-IMPLEMENT_GENERIC(make, decimal) {
+IMPLEMENT_GENERIC(MAKE, Is_Decimal)
+{
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(VAL_TYPE_KIND(ARG(type)) == REB_DECIMAL);
@@ -239,7 +240,7 @@ IMPLEMENT_GENERIC(make, decimal) {
 //    MAKE DECIMAL! of PERCENT! would divide by 100.  Other than that the
 //    scenarios are not clear.
 //
-IMPLEMENT_GENERIC(make, percent)
+IMPLEMENT_GENERIC(MAKE, Is_Percent)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -286,7 +287,7 @@ REBINT CT_Decimal(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, decimal)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -294,7 +295,7 @@ IMPLEMENT_GENERIC(equal_q, decimal)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, decimal)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -302,7 +303,7 @@ IMPLEMENT_GENERIC(lesser_q, decimal)
 }
 
 
-IMPLEMENT_GENERIC(zeroify, decimal)
+IMPLEMENT_GENERIC(ZEROIFY, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(example));  // always gives 0x0
@@ -313,7 +314,7 @@ IMPLEMENT_GENERIC(zeroify, decimal)
 
 // Code mostly duplicated in Percent.
 //
-IMPLEMENT_GENERIC(moldify, decimal)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -339,7 +340,7 @@ IMPLEMENT_GENERIC(moldify, decimal)
 
 // Code mostly duplicated in Decimal.
 //
-IMPLEMENT_GENERIC(moldify, percent)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Percent)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -364,7 +365,7 @@ IMPLEMENT_GENERIC(moldify, percent)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, decimal)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -424,7 +425,7 @@ IMPLEMENT_GENERIC(oldgeneric, decimal)
             }
             else if (heart == REB_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
-                return GENERIC_CFUNC(oldgeneric, money)(level_);
+                return GENERIC_CFUNC(OLDGENERIC, Is_Money)(level_);
             }
             else if (heart == REB_ISSUE) {
                 d2 = cast(REBDEC, Cell_Codepoint(arg));
@@ -569,7 +570,7 @@ IMPLEMENT_GENERIC(oldgeneric, decimal)
 //        >> form 1.1%
 //        == "1.1000000000000001%"
 //
-IMPLEMENT_GENERIC(to, decimal)
+IMPLEMENT_GENERIC(TO, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -613,7 +614,7 @@ IMPLEMENT_GENERIC(to, decimal)
 
 // 1. See DECLARE_NATIVE(multiply) for commutativity method of ordering types.
 //
-IMPLEMENT_GENERIC(multiply, decimal)
+IMPLEMENT_GENERIC(MULTIPLY, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
@@ -631,13 +632,13 @@ IMPLEMENT_GENERIC(multiply, decimal)
 }
 
 
-IMPLEMENT_GENERIC(multiply, percent)  // defers to decimal behavior
+IMPLEMENT_GENERIC(MULTIPLY, Is_Percent)  // defers to decimal behavior
 {
-    return GENERIC_CFUNC(multiply, decimal)(LEVEL);
+    return GENERIC_CFUNC(MULTIPLY, Is_Decimal)(LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(complement, decimal)
+IMPLEMENT_GENERIC(COMPLEMENT, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_COMPLEMENT;
 

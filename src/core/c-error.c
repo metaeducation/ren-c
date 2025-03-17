@@ -402,7 +402,7 @@ void Set_Location_Of_Error(
 // existing landscape so that if it is to be changed then it can be seen
 // exactly what is changing.
 //
-IMPLEMENT_GENERIC(make, error)
+IMPLEMENT_GENERIC(MAKE, Error)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -1452,7 +1452,7 @@ static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
 }
 
 
-IMPLEMENT_GENERIC(moldify, error)
+IMPLEMENT_GENERIC(MOLDIFY, Error)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -1464,7 +1464,7 @@ IMPLEMENT_GENERIC(moldify, error)
     //
     if (not form) {
         Init_Nulled(ARG(form));  // form = false;
-        return GENERIC_CFUNC(moldify, any_context)(LEVEL);
+        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);
     }
 
     Error* error = Cell_Error(v);

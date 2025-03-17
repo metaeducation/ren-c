@@ -50,11 +50,11 @@ DECLARE_NATIVE(open_q)
 {
     INCLUDE_PARAMS_OF_OPEN_Q;
 
-    return Dispatch_Generic(open_q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(OPEN_Q, Element_ARG(element), LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(equal_q, port)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Port)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -65,7 +65,7 @@ IMPLEMENT_GENERIC(equal_q, port)
 // Create a new port. This is done by calling the MAKE-PORT* function in
 // the system context.
 //
-IMPLEMENT_GENERIC(make, port)
+IMPLEMENT_GENERIC(MAKE, Is_Port)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -104,7 +104,7 @@ IMPLEMENT_GENERIC(make, port)
 // !!! The concept of port dispatch from R3-Alpha is that it delegates to a
 // handler which may be native code or user code.
 //
-IMPLEMENT_GENERIC(oldgeneric, port)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -130,7 +130,7 @@ IMPLEMENT_GENERIC(oldgeneric, port)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (id == SYM_PICK or id == SYM_POKE)
-        return GENERIC_CFUNC(oldgeneric, any_context)(level_);
+        return GENERIC_CFUNC(OLDGENERIC, Any_Context)(level_);
 
     VarList* ctx = Cell_Varlist(port);
     Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
@@ -230,7 +230,7 @@ IMPLEMENT_GENERIC(oldgeneric, port)
 // So it translates the request to open the port, then retriggers the action
 // on that port, then closes the port.
 //
-IMPLEMENT_GENERIC(oldgeneric, url)
+IMPLEMENT_GENERIC(OLDGENERIC, Url)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -281,12 +281,12 @@ IMPLEMENT_GENERIC(oldgeneric, url)
 
 // defer to String (handles non-node-having case too)
 //
-IMPLEMENT_GENERIC(to, url)
+IMPLEMENT_GENERIC(TO, Url)
 {
     INCLUDE_PARAMS_OF_TO;
 
     USED(ARG(type));  // deferred to string via LEVEL
     USED(ARG(element));
 
-    return GENERIC_CFUNC(to, any_string)(LEVEL);
+    return GENERIC_CFUNC(TO, Any_String)(LEVEL);
 }

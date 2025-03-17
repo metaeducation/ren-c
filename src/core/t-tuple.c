@@ -29,7 +29,7 @@
 // to MAKE a TUPLE! from.  But primarily, this is an evaluative form of
 // TO TUPLE! on BLOCK!, with the checking that performs included.
 //
-IMPLEMENT_GENERIC(make, any_sequence)
+IMPLEMENT_GENERIC(MAKE, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -87,7 +87,7 @@ IMPLEMENT_GENERIC(make, any_sequence)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, any_sequence)
+IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -108,7 +108,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_sequence)
 
         HEART_BYTE(sequence) = REB_BLOCK;
 
-        Atom* r = Atom_From_Bounce(GENERIC_CFUNC(oldgeneric, any_list)(level_));
+        Atom* r = Atom_From_Bounce(GENERIC_CFUNC(OLDGENERIC, Any_List)(level_));
         assert(Cell_Heart(r) == REB_BLOCK);
 
         if (r != OUT)
@@ -344,7 +344,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_sequence)
 //    !!! Should this restriction be what AS does, while TO will actually
 //    "flatten"?  How useful is the flattening operation, really?
 //
-IMPLEMENT_GENERIC(to, any_sequence)
+IMPLEMENT_GENERIC(TO, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -353,7 +353,7 @@ IMPLEMENT_GENERIC(to, any_sequence)
     Heart to = VAL_TYPE_HEART(ARG(type));
 
     if (Any_Sequence_Kind(to))  // e.g. `to the-chain! 'a.b.c` [1]
-        return GENERIC_CFUNC(as, any_sequence)(LEVEL);  // immutable, same code
+        return GENERIC_CFUNC(AS, Any_Sequence)(LEVEL);  // immutable, same code
 
     if (Any_List_Kind(to)) {  // !!! Should list have isomorphic binding?
         Source* a = Make_Source_Managed(1);
@@ -394,7 +394,7 @@ IMPLEMENT_GENERIC(to, any_sequence)
 //    make a new array, since the symbol absolutely can't be mutated into
 //    an array node).  Review.
 //
-IMPLEMENT_GENERIC(as, any_sequence)
+IMPLEMENT_GENERIC(AS, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -502,7 +502,7 @@ IMPLEMENT_GENERIC(as, any_sequence)
 }
 
 
-IMPLEMENT_GENERIC(length_of, any_sequence)
+IMPLEMENT_GENERIC(LENGTH_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
@@ -512,18 +512,18 @@ IMPLEMENT_GENERIC(length_of, any_sequence)
 }
 
 
-IMPLEMENT_GENERIC(multiply, tuple)
+IMPLEMENT_GENERIC(MULTIPLY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Value* tuple1 = ARG(value1);  // dispatch is on first argument, a tuple
+    Value* seq1 = ARG(value1);  // dispatch is on first argument, a tuple
 
     Value* arg2 = ARG(value2);
     if (not Is_Integer(arg2))
         return FAIL(PARAM(value2));  // used to support decimal/percent
 
     return rebDelegate(
-        "join tuple! map-each 'i", tuple1, "[",
+        "join type of", seq1, "map-each 'i", seq1, "[",
             arg2, "* match integer! i else [",
                 "fail -{Can't multiply tuple unless all integers}-"
             "]",
@@ -540,7 +540,7 @@ IMPLEMENT_GENERIC(multiply, tuple)
 //            b c d
 //         ]/e
 //
-IMPLEMENT_GENERIC(moldify, any_sequence)
+IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 

@@ -86,9 +86,18 @@
 //    would complicate the table generation, but such complications would
 //    be necessary if user types were going to handle the generic.
 //
-// 2. See DECLARE_NATIVE() noates for why G_##name##_##type is repeated here.
+// 2. See DECLARE_NATIVE() notes for why G_##name##_##type is repeated here.
 //
 // 3. Forward definitions of IMPLEMENT_GENERIC() for all the generics.
+//
+//    The name should be all caps, and the type propercase, e.g.:
+//
+//        IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
+//        IMPLEMENT_GENERIC(APPEND, Any_List)
+//
+//    It's done this way to easily generate SYM_APPEND through token pasting,
+//    and the type is propercase so it looks like a function Any_List()
+//    instead of a variable (any_list).
 
 #define GENERIC_CFUNC(name,type)  G_##name##_##type  // no extension form [1]
 

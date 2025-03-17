@@ -199,7 +199,7 @@ DECLARE_NATIVE(multiply)
         return FAIL("Can only multiply by INTEGER! or DECIMAL!");  // [2]
     }
 
-    return Dispatch_Generic(multiply, e1, LEVEL);
+    return Dispatch_Generic(MULTIPLY, e1, LEVEL);
 }
 
 
@@ -761,7 +761,7 @@ DECLARE_NATIVE(equal_q)
             return nullptr;
     }
 
-    return Dispatch_Generic(equal_q, v1, LEVEL);
+    return Dispatch_Generic(EQUAL_Q, v1, LEVEL);
 }
 
 
@@ -800,7 +800,7 @@ DECLARE_NATIVE(lesser_q)
             return RAISE("Types are not comparable");
     }
 
-    return Dispatch_Generic(lesser_q, v1, LEVEL);
+    return Dispatch_Generic(LESSER_Q, v1, LEVEL);
 }
 
 
@@ -813,7 +813,7 @@ DECLARE_NATIVE(lesser_q)
 // Even though BLANK! can't be compared with less than, the equality means
 // we let the test go through.
 //
-IMPLEMENT_GENERIC(lesser_q, any_element)
+IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -1057,7 +1057,7 @@ DECLARE_NATIVE(zeroify)
 
     Element* example = Element_ARG(example);
 
-    return Dispatch_Generic(zeroify, example, LEVEL);
+    return Dispatch_Generic(ZEROIFY, example, LEVEL);
 }
 
 

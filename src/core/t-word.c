@@ -97,7 +97,7 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 // There might be applications of things like (make word! 241) being a way
 // of creating a word based on its symbol ID.
 //
-IMPLEMENT_GENERIC(make, word)
+IMPLEMENT_GENERIC(MAKE, Is_Word)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -128,7 +128,7 @@ IMPLEMENT_GENERIC(make, word)
 }
 
 
-IMPLEMENT_GENERIC(moldify, any_word)
+IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -148,7 +148,7 @@ IMPLEMENT_GENERIC(moldify, any_word)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, any_word)
+IMPLEMENT_GENERIC(OLDGENERIC, Any_Word)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_word)
 // be aliases of words, so TO conversions of strings to word may be able
 // to reuse the symbol underlying the string).
 //
-IMPLEMENT_GENERIC(to, any_word)
+IMPLEMENT_GENERIC(TO, Any_Word)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -183,19 +183,19 @@ IMPLEMENT_GENERIC(to, any_word)
     Heart to = VAL_TYPE_HEART(ARG(type));
 
     if (Any_Word_Kind(to))
-        return GENERIC_CFUNC(as, any_word)(LEVEL);  // immutable alias
+        return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // immutable alias
 
     if (Any_String_Kind(to))  // need mutable copy
-        return GENERIC_CFUNC(to, any_utf8)(LEVEL);
+        return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
 
     if (Any_Utf8_Kind(to))
-        return GENERIC_CFUNC(as, any_word)(LEVEL);  // non-string, immutable
+        return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // non-string, immutable
 
-    return GENERIC_CFUNC(to, any_utf8)(LEVEL);  // TO INTEGER!, etc.
+    return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);  // TO INTEGER!, etc.
 }
 
 
-IMPLEMENT_GENERIC(as, any_word)
+IMPLEMENT_GENERIC(AS, Any_Word)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -232,7 +232,7 @@ IMPLEMENT_GENERIC(as, any_word)
 }
 
 
-IMPLEMENT_GENERIC(binding_of, any_word)
+IMPLEMENT_GENERIC(BINDING_OF, Any_Word)
 {
     INCLUDE_PARAMS_OF_BINDING_OF;
 

@@ -126,7 +126,7 @@ DECLARE_NATIVE(length_of)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    return Dispatch_Generic(length_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(LENGTH_OF, Element_ARG(element), LEVEL);
 }
 
 
@@ -156,7 +156,7 @@ DECLARE_NATIVE(size_of)
             "all wrap [info: info?", elem, "info.size]"
         );
 
-    return Dispatch_Generic(size_of, elem, LEVEL);
+    return Dispatch_Generic(SIZE_OF, elem, LEVEL);
 }
 
 
@@ -176,7 +176,7 @@ DECLARE_NATIVE(index_of)
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
-    return Dispatch_Generic(index_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(INDEX_OF, Element_ARG(element), LEVEL);
 }
 
 
@@ -193,7 +193,7 @@ DECLARE_NATIVE(offset_of)
 {
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
-    return Dispatch_Generic(offset_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(OFFSET_OF, Element_ARG(element), LEVEL);
 }
 
 

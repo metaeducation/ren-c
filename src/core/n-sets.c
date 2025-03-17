@@ -380,7 +380,7 @@ Flex* Make_Set_Operation_Flex(
 DECLARE_NATIVE(complement)
 {
     Element* e = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(complement, e, LEVEL);
+    return Dispatch_Generic(COMPLEMENT, e, LEVEL);
 }
 
 
@@ -412,7 +412,7 @@ DECLARE_NATIVE(complement)
 DECLARE_NATIVE(intersect)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(intersect, e1, LEVEL);
+    return Dispatch_Generic(INTERSECT, e1, LEVEL);
 }
 
 
@@ -444,7 +444,7 @@ DECLARE_NATIVE(intersect)
 DECLARE_NATIVE(union)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(union, e1, LEVEL);
+    return Dispatch_Generic(UNION, e1, LEVEL);
 }
 
 
@@ -479,7 +479,7 @@ DECLARE_NATIVE(union)
 DECLARE_NATIVE(difference)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(difference, e1, LEVEL);
+    return Dispatch_Generic(DIFFERENCE, e1, LEVEL);
 }
 
 
@@ -501,7 +501,7 @@ DECLARE_NATIVE(difference)
 DECLARE_NATIVE(exclude)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(exclude, e1, LEVEL);
+    return Dispatch_Generic(EXCLUDE, e1, LEVEL);
 }
 
 
@@ -520,5 +520,5 @@ DECLARE_NATIVE(exclude)
 DECLARE_NATIVE(unique)
 {
     Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(unique, e1, LEVEL);
+    return Dispatch_Generic(UNIQUE, e1, LEVEL);
 }

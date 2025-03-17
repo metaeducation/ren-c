@@ -133,7 +133,7 @@ DECLARE_NATIVE(binding_of)
 {
     INCLUDE_PARAMS_OF_BINDING_OF;
 
-    return Dispatch_Generic(binding_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(BINDING_OF, Element_ARG(element), LEVEL);
 }
 
 

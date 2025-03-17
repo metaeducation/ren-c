@@ -64,7 +64,7 @@ REBINT CT_Blob(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, blob)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Blob)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -72,7 +72,7 @@ IMPLEMENT_GENERIC(equal_q, blob)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, blob)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Blob)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -176,9 +176,9 @@ DECLARE_NATIVE(decode_ieee_754) {
 }
 
 
-// See also: IMPLEMENT_GENERIC(make, any_string), which is similar.
+// See also: IMPLEMENT_GENERIC(MAKE, Any_String), which is similar.
 //
-IMPLEMENT_GENERIC(make, blob)
+IMPLEMENT_GENERIC(MAKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -232,7 +232,7 @@ IMPLEMENT_GENERIC(make, blob)
 //    to the general variability of how a program would run, it was using
 //    a setting in the system object...which is not avaliable in early boot.
 //
-IMPLEMENT_GENERIC(moldify, blob)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -302,7 +302,7 @@ static Element* Copy_Blob_Part_At_May_Modify_Index(
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, blob)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -359,7 +359,7 @@ IMPLEMENT_GENERIC(oldgeneric, blob)
             i = Int32(setval);
         }
         else {
-            // !!! See notes in the IMPLEMENT_GENERIC(oldgeneric, any_string)
+            // !!! See notes in the IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             // about alternate cases for the POKE'd value.
             //
             return FAIL(PARAM(value));
@@ -726,7 +726,7 @@ IMPLEMENT_GENERIC(oldgeneric, blob)
 //    implementation transformations doesn't fit).  Keep compatible for
 //    right now, but ultimately MAKE or AS should be used for this.
 //
-IMPLEMENT_GENERIC(to, blob)
+IMPLEMENT_GENERIC(TO, Is_Blob)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -749,7 +749,7 @@ IMPLEMENT_GENERIC(to, blob)
     }
 
     if (to == REB_BLANK)
-        return GENERIC_CFUNC(as, blob)(LEVEL);
+        return GENERIC_CFUNC(AS, Is_Blob)(LEVEL);
 
     return UNHANDLED;
 }
@@ -772,7 +772,7 @@ IMPLEMENT_GENERIC(to, blob)
 //    also to allow aliasing the binary in place.  Ultimately that
 //    may supplant AS, but this is what we have for now.
 //
-IMPLEMENT_GENERIC(as, blob)
+IMPLEMENT_GENERIC(AS, Is_Blob)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -860,7 +860,7 @@ IMPLEMENT_GENERIC(as, blob)
 
         Init_Any_String_At(ARG(element), REB_TEXT, str, index);
         // delegate word validation/etc.
-        return GENERIC_CFUNC(as, any_string)(level_);
+        return GENERIC_CFUNC(AS, Any_String)(level_);
     }
 
     if (as == REB_BLANK) {
@@ -875,7 +875,7 @@ IMPLEMENT_GENERIC(as, blob)
 }
 
 
-IMPLEMENT_GENERIC(size_of, blob)
+IMPLEMENT_GENERIC(SIZE_OF, Is_Blob)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 
@@ -896,7 +896,7 @@ IMPLEMENT_GENERIC(size_of, blob)
 //    better as an empty issue than as a conceptual "NUL codepoint".
 //    But #{00} as NUL serves some of those purposes.
 //
-IMPLEMENT_GENERIC(codepoint_of, blob)
+IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
@@ -945,7 +945,7 @@ static int Qsort_Byte_Callback(void *state, const void *v1, const void *v2)
 }
 
 
-IMPLEMENT_GENERIC(sort, blob)
+IMPLEMENT_GENERIC(SORT, Is_Blob)
 {
     INCLUDE_PARAMS_OF_SORT;
 

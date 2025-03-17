@@ -358,7 +358,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 }
 
 
-IMPLEMENT_GENERIC(make, varargs)
+IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -402,7 +402,7 @@ IMPLEMENT_GENERIC(make, varargs)
 // Handles the very limited set of operations possible on a VARARGS!
 // (evaluation state inspector/modifier during a DO).
 //
-IMPLEMENT_GENERIC(oldgeneric, varargs)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Varargs)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
@@ -512,7 +512,7 @@ REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(tail_q, varargs)
+IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
@@ -531,7 +531,7 @@ IMPLEMENT_GENERIC(tail_q, varargs)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, varargs)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -545,7 +545,7 @@ IMPLEMENT_GENERIC(equal_q, varargs)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-IMPLEMENT_GENERIC(moldify, varargs)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 

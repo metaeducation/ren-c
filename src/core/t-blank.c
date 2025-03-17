@@ -45,7 +45,7 @@
 //    >> append "abc" _   ; is it better to support this than not?
 //    == "abc_"
 //
-IMPLEMENT_GENERIC(moldify, blank)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Blank)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -62,7 +62,7 @@ IMPLEMENT_GENERIC(moldify, blank)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, blank)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Blank)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -74,7 +74,7 @@ IMPLEMENT_GENERIC(equal_q, blank)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, blank)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Blank)
 {
     switch (Symbol_Id(Level_Verb(LEVEL))) {
       case SYM_SELECT:
@@ -112,7 +112,7 @@ IMPLEMENT_GENERIC(oldgeneric, blank)
 // to empty series.  TO conversions have to create new stubs, so that
 // the series are freshly mutable.
 //
-IMPLEMENT_GENERIC(to, blank)
+IMPLEMENT_GENERIC(TO, Is_Blank)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -147,7 +147,7 @@ IMPLEMENT_GENERIC(to, blank)
 // AS conversions of blanks to any series or utf8 type can create an
 // immutable empty instance, using globally allocated nodes if needed.
 //
-IMPLEMENT_GENERIC(as, blank)
+IMPLEMENT_GENERIC(AS, Is_Blank)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -179,7 +179,7 @@ IMPLEMENT_GENERIC(as, blank)
 }
 
 
-IMPLEMENT_GENERIC(length_of, blank)
+IMPLEMENT_GENERIC(LENGTH_OF, Is_Blank)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
     UNUSED(ARG(element));
@@ -188,7 +188,7 @@ IMPLEMENT_GENERIC(length_of, blank)
 }
 
 
-IMPLEMENT_GENERIC(moldify, handle)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Handle)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -205,7 +205,7 @@ IMPLEMENT_GENERIC(moldify, handle)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, handle)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Handle)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 

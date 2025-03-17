@@ -35,7 +35,7 @@
 // 1. `skip x logic` means `either logic [skip x] [x]` (this is reversed
 //    from R3-Alpha and Rebol2, which skipped when false)
 //
-IMPLEMENT_GENERIC(skip, any_series)
+IMPLEMENT_GENERIC(SKIP, Any_Series)
 {
     INCLUDE_PARAMS_OF_SKIP;
 
@@ -83,7 +83,7 @@ IMPLEMENT_GENERIC(skip, any_series)
 //
 // !!! Currently left as an open question.
 //
-IMPLEMENT_GENERIC(at, any_series)
+IMPLEMENT_GENERIC(AT, Any_Series)
 {
     INCLUDE_PARAMS_OF_AT;
 
@@ -108,7 +108,7 @@ IMPLEMENT_GENERIC(at, any_series)
 }
 
 
-IMPLEMENT_GENERIC(remove, any_series)
+IMPLEMENT_GENERIC(REMOVE, Any_Series)
 {
     INCLUDE_PARAMS_OF_REMOVE;
 
@@ -130,7 +130,7 @@ IMPLEMENT_GENERIC(remove, any_series)
 }
 
 
-IMPLEMENT_GENERIC(length_of, any_series)
+IMPLEMENT_GENERIC(LENGTH_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
@@ -139,7 +139,7 @@ IMPLEMENT_GENERIC(length_of, any_series)
 }
 
 
-IMPLEMENT_GENERIC(index_of, any_series)  // 1-based
+IMPLEMENT_GENERIC(INDEX_OF, Any_Series)  // 1-based
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
@@ -148,7 +148,7 @@ IMPLEMENT_GENERIC(index_of, any_series)  // 1-based
 }
 
 
-IMPLEMENT_GENERIC(offset_of, any_series)  // 0-based
+IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
 {
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
@@ -170,7 +170,7 @@ DECLARE_NATIVE(head_of)
 {
     INCLUDE_PARAMS_OF_HEAD_OF;
 
-    return Dispatch_Generic(head_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(HEAD_OF, Element_ARG(element), LEVEL);
 }
 
 
@@ -187,7 +187,7 @@ DECLARE_NATIVE(tail_of)
 {
     INCLUDE_PARAMS_OF_TAIL_OF;
 
-    return Dispatch_Generic(tail_of, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(TAIL_OF, Element_ARG(element), LEVEL);
 }
 
 
@@ -204,7 +204,7 @@ DECLARE_NATIVE(head_q)
 {
     INCLUDE_PARAMS_OF_HEAD_Q;
 
-    return Dispatch_Generic(head_q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(HEAD_Q, Element_ARG(element), LEVEL);
 }
 
 
@@ -221,7 +221,7 @@ DECLARE_NATIVE(tail_q)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    return Dispatch_Generic(tail_q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(TAIL_Q, Element_ARG(element), LEVEL);
 }
 
 
@@ -238,11 +238,11 @@ DECLARE_NATIVE(past_q)
 {
     INCLUDE_PARAMS_OF_PAST_Q;
 
-    return Dispatch_Generic(past_q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(PAST_Q, Element_ARG(element), LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(head_of, any_series)
+IMPLEMENT_GENERIC(HEAD_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_HEAD_OF;
 
@@ -254,7 +254,7 @@ IMPLEMENT_GENERIC(head_of, any_series)
 }
 
 
-IMPLEMENT_GENERIC(tail_of, any_series)
+IMPLEMENT_GENERIC(TAIL_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_TAIL_OF;
 
@@ -266,7 +266,7 @@ IMPLEMENT_GENERIC(tail_of, any_series)
 }
 
 
-IMPLEMENT_GENERIC(head_q, any_series)
+IMPLEMENT_GENERIC(HEAD_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_HEAD_Q;
 
@@ -276,7 +276,7 @@ IMPLEMENT_GENERIC(head_q, any_series)
 }
 
 
-IMPLEMENT_GENERIC(tail_q, any_series)
+IMPLEMENT_GENERIC(TAIL_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
@@ -289,7 +289,7 @@ IMPLEMENT_GENERIC(tail_q, any_series)
 }
 
 
-IMPLEMENT_GENERIC(past_q, any_series)
+IMPLEMENT_GENERIC(PAST_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_PAST_Q;
 
@@ -302,7 +302,7 @@ IMPLEMENT_GENERIC(past_q, any_series)
 }
 
 
-IMPLEMENT_GENERIC(unique, any_series)  // single-arity set operation
+IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 
@@ -335,7 +335,7 @@ Option(Error*) Trap_Resolve_Dual_Hearts(
 }
 
 
-IMPLEMENT_GENERIC(intersect, any_series)
+IMPLEMENT_GENERIC(INTERSECT, Any_Series)
 {
     INCLUDE_PARAMS_OF_INTERSECT;
 
@@ -358,7 +358,7 @@ IMPLEMENT_GENERIC(intersect, any_series)
 }
 
 
-IMPLEMENT_GENERIC(union, any_series)
+IMPLEMENT_GENERIC(UNION, Any_Series)
 {
     INCLUDE_PARAMS_OF_UNION;
 
@@ -381,7 +381,7 @@ IMPLEMENT_GENERIC(union, any_series)
 }
 
 
-IMPLEMENT_GENERIC(difference, any_series)
+IMPLEMENT_GENERIC(DIFFERENCE, Any_Series)
 {
     INCLUDE_PARAMS_OF_DIFFERENCE;
 
@@ -404,7 +404,7 @@ IMPLEMENT_GENERIC(difference, any_series)
 }
 
 
-IMPLEMENT_GENERIC(exclude, any_series)
+IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
 {
     INCLUDE_PARAMS_OF_EXCLUDE;
 

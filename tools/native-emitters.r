@@ -269,6 +269,7 @@ export /emit-include-params-macro: func [
 generic-info!: make object! [
     name: ~
     type: ~
+    proper-type: ~  ; propercased type, with Is_XXX
 
     found: 'no  ; will change to "yes" if it matches a native:generic decl
 
@@ -291,22 +292,39 @@ export /extract-generic-implementations: func [
     return: "Returns block of GENERIC-INFO! objects"
         [block!]
     c-source-file [file!]
-    <local> name type
+    <local> name proper-type name* type*
 ][
     return collect [
         parse3 read:string c-source-file [some [
             "IMPLEMENT_GENERIC" [
-                "(" name: across to "," "," space type: across to ")" ")"
+                "(" name*: across to "," "," space type*: across to ")" ")"
                 thru newline
                 (
+                    name: uppercase copy name*
+                    proper-type: propercase copy type*
+
+                    if (name <> name*) or (proper-type <> type*) [
+                        fail [
+                            "Bad casing, should be"
+                            "IMPLEMENT_GENERIC(" name "," proper-type ")"
+                            "and not"
+                            "IMPLEMENT_GENERIC(" name* "," type* ")"
+                        ]
+                    ]
+
+                    lowercase name
+                    lowercase type*
+
                     replace name "_q" "?"  ; use smarter parse rule...
                     replace name "_" "-"
 
-                    replace type "_" "-"
+                    replace type* "_" "-"
+                    replace type* "is-" void
 
                     keep make generic-info! compose1 [
                         name: (name)
-                        type: (quote as word! type)
+                        type: (quote as word! type*)
+                        proper-type: (proper-type)
                         file: (c-source-file)
                     ]
                 )

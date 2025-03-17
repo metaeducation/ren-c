@@ -180,7 +180,7 @@ DECLARE_NATIVE(poke)
 //    be equivalent when not strict.  So (255.255.255.0 = 255.255.255), but
 //    if this is interesting it should be SAME-COLOR? or something like that.
 //
-IMPLEMENT_GENERIC(equal_q, any_sequence)
+IMPLEMENT_GENERIC(EQUAL_Q, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -210,7 +210,7 @@ IMPLEMENT_GENERIC(equal_q, any_sequence)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, any_sequence)
+IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -253,7 +253,7 @@ IMPLEMENT_GENERIC(lesser_q, any_sequence)
 // numbers?  For now, let's insist on zeroification of numeric sequences
 // and wait to see if a more general need arises.
 //
-IMPLEMENT_GENERIC(zeroify, any_sequence)
+IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
 

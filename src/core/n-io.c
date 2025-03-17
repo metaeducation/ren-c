@@ -66,7 +66,7 @@ DECLARE_NATIVE(moldify)
     USED(ARG(molder));  // passed via LEVEL
     USED(ARG(form));
 
-    return Dispatch_Generic(moldify, ARG(element), LEVEL);
+    return Dispatch_Generic(MOLDIFY, ARG(element), LEVEL);
 }
 
 

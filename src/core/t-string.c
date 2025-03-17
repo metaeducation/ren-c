@@ -297,7 +297,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
 }
 
 
-// 1. IMPLEMENT_GENERIC(make, issue) calls IMPLEMENT_GENERIC(make, any_string)
+// 1. IMPLEMENT_GENERIC(MAKE, Is_Issue) calls GENERIC_CFUNC(MAKE, Any_String)
 //    in its implementation.
 //
 // 2. !!! We can't really know how many bytes to allocate for a certain
@@ -305,7 +305,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
 //    (typically 4) per CHAR!.  For now we just assume the integer is the
 //    expected *byte* capacity, not length, as we can do that.
 //
-IMPLEMENT_GENERIC(make, any_string)
+IMPLEMENT_GENERIC(MAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -588,7 +588,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-IMPLEMENT_GENERIC(moldify, url)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Url)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -603,7 +603,7 @@ IMPLEMENT_GENERIC(moldify, url)
 }
 
 
-IMPLEMENT_GENERIC(moldify, email)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -659,7 +659,7 @@ static void Mold_Tag(Molder* mo, const Cell* v)
 //        >> find "ab<c>d" quote <c>
 //        == "<c>d"
 //
-IMPLEMENT_GENERIC(moldify, any_string)
+IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -738,7 +738,7 @@ bool Try_Get_Series_Index_From_Picker(
 //    and that index is valid.  The special case of TO conversions is written
 //    here so that non-node-having entities work.
 //
-IMPLEMENT_GENERIC(oldgeneric, any_string)
+IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -1145,18 +1145,18 @@ IMPLEMENT_GENERIC(oldgeneric, any_string)
 // the ANY-UTF8? generic, but this gives an opportunity to inject debug
 // code and also to explain why there's not specific code for strings.)
 //
-IMPLEMENT_GENERIC(to, any_string)
+IMPLEMENT_GENERIC(TO, Any_String)
 {
     INCLUDE_PARAMS_OF_TO;
 
     USED(ARG(element));
     USED(ARG(type));
 
-    return GENERIC_CFUNC(to, any_utf8)(LEVEL);
+    return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(as, any_string)
+IMPLEMENT_GENERIC(AS, Any_String)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -1169,11 +1169,11 @@ IMPLEMENT_GENERIC(as, any_string)
         return Inherit_Const(stable_OUT, v);
     }
 
-    return GENERIC_CFUNC(as, any_utf8)(LEVEL);
+    return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);
 }
 
 
-IMPLEMENT_GENERIC(codepoint_of, any_string)
+IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
@@ -1232,7 +1232,7 @@ static int Qsort_Char_Callback(void *state, const void *v1, const void *v2)
 }
 
 
-IMPLEMENT_GENERIC(sort, any_string)
+IMPLEMENT_GENERIC(SORT, Any_String)
 {
     INCLUDE_PARAMS_OF_SORT;
 

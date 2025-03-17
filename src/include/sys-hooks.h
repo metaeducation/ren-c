@@ -53,12 +53,11 @@ enum {
 
 #define CELL_FLAG_CFUNCS_NOTE_USE_LIBREBOL  CELL_FLAG_NOTE
 
-// GenericInfo is a replacement for all makehook, tohook, mold, compare, etc.
-//
+
 typedef struct {
     TypesetByte typeset_byte;  // derived from IMPLEMENT_GENERIC()'s type
     Dispatcher* dispatcher;  // the function defined by IMPLEMENT_GENERIC()
-} GenericInfo;
+} GenericTable;
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class

@@ -34,8 +34,12 @@
 // New concept of generic dispatch: use sparse tables which are scanned for
 // during the build process to find IMPLEMENT_GENERIC(name, type) instances.
 //
+// The name is taken in all-caps so we can get a SYM_XXX from token pasting.
+//
 #define Dispatch_Generic(name,cue,L) \
-    Dispatch_Generic_Core(g_generic_##name, Cell_Heart_Ensure_Noquote(cue), (L))
+    Dispatch_Generic_Core( \
+        SYM_##name, g_generic_##name, Cell_Heart_Ensure_Noquote(cue), (L) \
+    )
 
 
 // For efficiency, native PICK-POKE* implementations reuse the level (this is

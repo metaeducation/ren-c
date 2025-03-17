@@ -67,7 +67,7 @@ REBINT CT_Money(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, money)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Money)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -75,7 +75,7 @@ IMPLEMENT_GENERIC(equal_q, money)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, money)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Money)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -83,7 +83,7 @@ IMPLEMENT_GENERIC(lesser_q, money)
 }
 
 
-IMPLEMENT_GENERIC(zeroify, money)
+IMPLEMENT_GENERIC(ZEROIFY, Is_Money)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(example));  // always gives $0
@@ -92,7 +92,7 @@ IMPLEMENT_GENERIC(zeroify, money)
 }
 
 
-IMPLEMENT_GENERIC(make, money)
+IMPLEMENT_GENERIC(MAKE, Is_Money)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -134,7 +134,7 @@ IMPLEMENT_GENERIC(make, money)
 }
 
 
-IMPLEMENT_GENERIC(moldify, money)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -202,7 +202,7 @@ static Value* Math_Arg_For_Money(
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, money)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Money)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -295,7 +295,7 @@ IMPLEMENT_GENERIC(oldgeneric, money)
 }
 
 
-IMPLEMENT_GENERIC(to, money)
+IMPLEMENT_GENERIC(TO, Is_Money)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -341,7 +341,7 @@ IMPLEMENT_GENERIC(to, money)
 
 
 
-IMPLEMENT_GENERIC(multiply, money)
+IMPLEMENT_GENERIC(MULTIPLY, Is_Money)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 

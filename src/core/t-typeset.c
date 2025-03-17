@@ -354,13 +354,13 @@ void Set_Parameter_Spec(
 }
 
 
-IMPLEMENT_GENERIC(make, parameter)
+IMPLEMENT_GENERIC(MAKE, Is_Parameter)
 {
     return UNHANDLED;  // !!! Needs to be designed!
 }
 
 
-IMPLEMENT_GENERIC(moldify, parameter)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -460,7 +460,7 @@ DECLARE_NATIVE(decorate_parameter)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, parameter)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Parameter)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 

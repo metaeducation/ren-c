@@ -61,7 +61,7 @@ REBINT CT_Pair(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, pair)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Pair)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -69,7 +69,7 @@ IMPLEMENT_GENERIC(equal_q, pair)
 }
 
 
-IMPLEMENT_GENERIC(zeroify, pair)
+IMPLEMENT_GENERIC(ZEROIFY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(example));  // always gives 0x0
@@ -78,7 +78,7 @@ IMPLEMENT_GENERIC(zeroify, pair)
 }
 
 
-IMPLEMENT_GENERIC(make, pair)
+IMPLEMENT_GENERIC(MAKE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -129,7 +129,7 @@ void Min_Max_Pair(
 }
 
 
-IMPLEMENT_GENERIC(moldify, pair)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -185,7 +185,7 @@ REBINT Index_From_Picker_For_Pair(
 // REVERSE swapping X and Y), this chains to retrigger the action onto the
 // pair elements and then return a pair made of that.
 //
-IMPLEMENT_GENERIC(oldgeneric, pair)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Pair)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
@@ -282,7 +282,7 @@ IMPLEMENT_GENERIC(oldgeneric, pair)
 
 //=//// TO CONVERSIONS ////////////////////////////////////////////////=//
 
-IMPLEMENT_GENERIC(to, pair)
+IMPLEMENT_GENERIC(TO, Is_Pair)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -327,7 +327,7 @@ IMPLEMENT_GENERIC(to, pair)
 // 1. This cast to Value should not be necessary, Element should be tolerated
 //    by the API.  Review.
 //
-IMPLEMENT_GENERIC(multiply, pair)
+IMPLEMENT_GENERIC(MULTIPLY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 

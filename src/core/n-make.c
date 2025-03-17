@@ -45,7 +45,7 @@ DECLARE_NATIVE(make)
     Element* type = Element_ARG(type);
     UNUSED(ARG(def));
 
-    return Dispatch_Generic(make, type, LEVEL);
+    return Dispatch_Generic(MAKE, type, LEVEL);
 }
 
 
@@ -277,7 +277,7 @@ DECLARE_NATIVE(to)
 
   #if NO_RUNTIME_CHECKS
 
-    Bounce bounce = Dispatch_Generic(to, e, LEVEL);
+    Bounce bounce = Dispatch_Generic(TO, e, LEVEL);
     /*if (bounce == UNHANDLED)  // distinct error for AS or TO ?
         return Error_Bad_Cast_Raw(ARG(element), ARG(type)); */
     return bounce;
@@ -285,7 +285,7 @@ DECLARE_NATIVE(to)
   #else  // add monitor to ensure result is right
 
     if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Dispatch_Generic(to, e, LEVEL);
+        return Dispatch_Generic(TO, e, LEVEL);
 
     assert(Not_Level_Flag(LEVEL, CHECKING_TO));
     Set_Level_Flag(LEVEL, CHECKING_TO);
@@ -315,12 +315,12 @@ DECLARE_NATIVE(as)
 
   #if NO_RUNTIME_CHECKS
 
-    return Dispatch_Generic(as, e, LEVEL);
+    return Dispatch_Generic(AS, e, LEVEL);
 
   #else  // add monitor to ensure result is right
 
     if (LEVEL->prior->executor == &To_Or_As_Checker_Executor)
-        return Dispatch_Generic(as, e, TOP_LEVEL);
+        return Dispatch_Generic(AS, e, TOP_LEVEL);
 
     assert(Not_Level_Flag(LEVEL, CHECKING_TO));
     return Downshift_For_To_Or_As_Checker(LEVEL);

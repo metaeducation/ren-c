@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -238,7 +238,7 @@ DECLARE_NATIVE(native)
 // hooks for that native based on a type with IMPLEMENT_GENERIC().  In the
 // generic native's implementation you choose when to actually dispatch on
 // that type, and you can implement a generic for a single type like INTEGER!
-// or for simple typesets (ones that have "deciders") like ANY-LIST?.
+// or for builtin typesets like ANY-LIST?.
 //
 // 1. Generally speaking, generics (and most functions in the system) do
 //    not work on antiforms, quasiforms, or quoted datatypes.
@@ -257,17 +257,39 @@ DECLARE_NATIVE(native)
 //    later, if you're beholden to treating leaky quotes and quasis as if
 //    they were not there.
 //
+// 2. R3-Alpha PORT! really baked in the concept of the switch()-based
+//    dispatch, and an "actor" model depending on it.  It's going to take
+//    a bit longer to break it out of that idea.  Bridge for the meantime
+//    to translate new calls into old calls using the passed-in SymId.
+//
 Bounce Dispatch_Generic_Core(
-    GenericInfo* table,
+    SymId symid,
+    GenericTable* table,
     Heart heart,  // no quoted/quasi/anti [1]
-    Level* level_
+    Level* const L
 ){
-    for (; table->typeset_byte != 0; ++table) {
-        if (Builtin_Typeset_Check(table->typeset_byte, heart))
-            return table->dispatcher(level_);
+    USE_LEVEL_SHORTHANDS (L);
+
+    if (heart == REB_PORT and symid != SYM_OLDGENERIC) {  // !!! Legacy [2]
+        switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
+          case SYM_MAKE:
+          case SYM_EQUAL_Q:
+            break;  // fall through to modern dispatch
+
+          default:
+            L->u.action.label = Canon_Symbol(symid);  // !!! Level_Verb() hack
+            return GENERIC_CFUNC(OLDGENERIC, Is_Port)(L);
+        }
     }
 
-    return FAIL("No dispatcher for datatype of generic");
+    for (; table->typeset_byte != 0; ++table) {
+        if (Builtin_Typeset_Check(table->typeset_byte, heart))
+            return table->dispatcher(L);
+    }
+
+    DECLARE_ELEMENT (name);
+    Init_Word(name, Canon_Symbol(symid));
+    return FAIL(Error_Cannot_Use_Raw(name, Datatype_From_Kind(heart)));
 }
 
 
@@ -299,7 +321,7 @@ Bounce Run_Generic_Dispatch(
     const Symbol* verb
 ){
     L->u.action.label = verb;  // !!! hack for Level_Verb() for now
-    return Dispatch_Generic(oldgeneric, cue, L);
+    return Dispatch_Generic(OLDGENERIC, cue, L);
 }
 
 

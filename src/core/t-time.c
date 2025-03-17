@@ -178,7 +178,7 @@ Option(const Byte*) Try_Scan_Time_To_Stack(
 }
 
 
-IMPLEMENT_GENERIC(moldify, time)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -238,7 +238,7 @@ REBINT CT_Time(const Cell* a, const Cell* b, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, time)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Time)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -246,7 +246,7 @@ IMPLEMENT_GENERIC(equal_q, time)
 }
 
 
-IMPLEMENT_GENERIC(lesser_q, time)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Time)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -254,7 +254,7 @@ IMPLEMENT_GENERIC(lesser_q, time)
 }
 
 
-IMPLEMENT_GENERIC(zeroify, time)
+IMPLEMENT_GENERIC(ZEROIFY, Is_Time)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
     UNUSED(ARG(example));  // always gives 0:00
@@ -263,7 +263,7 @@ IMPLEMENT_GENERIC(zeroify, time)
 }
 
 
-IMPLEMENT_GENERIC(make, time)
+IMPLEMENT_GENERIC(MAKE, Is_Time)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -479,7 +479,7 @@ void Poke_Time_Immediate(
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, time)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -628,7 +628,7 @@ IMPLEMENT_GENERIC(oldgeneric, time)
             Move_Cell(stable_SPARE, ARG_N(1));
             Move_Cell(ARG_N(1), arg);
             Move_Cell(ARG_N(2), stable_SPARE);
-            return GENERIC_CFUNC(oldgeneric, date)(level_);
+            return GENERIC_CFUNC(OLDGENERIC, Is_Date)(level_);
         }
         return FAIL(Error_Math_Args(REB_TIME, verb));
     }
@@ -710,7 +710,7 @@ IMPLEMENT_GENERIC(oldgeneric, time)
 }
 
 
-IMPLEMENT_GENERIC(multiply, time)
+IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 

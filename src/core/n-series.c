@@ -135,7 +135,7 @@ DECLARE_NATIVE(take)
 DECLARE_NATIVE(remove)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(remove, series, LEVEL);
+    return Dispatch_Generic(REMOVE, series, LEVEL);
 }
 
 
@@ -214,7 +214,7 @@ DECLARE_NATIVE(reverse)
 DECLARE_NATIVE(sort)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(sort, series, LEVEL);
+    return Dispatch_Generic(SORT, series, LEVEL);
 }
 
 
@@ -242,7 +242,7 @@ DECLARE_NATIVE(skip)
     USED(ARG(offset));  // other args get passed via LEVEL
     USED(ARG(unbounded));
 
-    return Dispatch_Generic(skip, series, LEVEL);
+    return Dispatch_Generic(SKIP, series, LEVEL);
 }
 
 

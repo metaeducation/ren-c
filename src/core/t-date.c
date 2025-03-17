@@ -98,7 +98,7 @@ REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
 }
 
 
-IMPLEMENT_GENERIC(equal_q, date)
+IMPLEMENT_GENERIC(EQUAL_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -122,7 +122,7 @@ IMPLEMENT_GENERIC(equal_q, date)
 // (26-Jul-2021/7:41:45.314 > 26-Jul-2021) to be false.  This requires
 // being willing to consider them equal, hence non-strict.
 //
-IMPLEMENT_GENERIC(lesser_q, date)
+IMPLEMENT_GENERIC(LESSER_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -130,7 +130,7 @@ IMPLEMENT_GENERIC(lesser_q, date)
 }
 
 
-IMPLEMENT_GENERIC(moldify, date)
+IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(moldify, date)
 
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->string, '/');
-        Bounce bounce = GENERIC_CFUNC(moldify, time)(LEVEL);  // REF(form)?
+        Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // REF(form)?
         assert(bounce == NOTHING);  // !!! generically might BOUNCE_CONTINUE...
         UNUSED(bounce);
 
@@ -544,7 +544,7 @@ Value* Time_Between_Dates(
 }
 
 
-IMPLEMENT_GENERIC(make, date)
+IMPLEMENT_GENERIC(MAKE, Is_Date)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -998,7 +998,7 @@ void Pick_Or_Poke_Date(
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, date)
+IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
 {
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 

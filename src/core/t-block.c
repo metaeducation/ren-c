@@ -28,7 +28,7 @@
 // !!! Should sequence comparison delegate to this when it detects it has two
 // arrays to compare?  That requires canonization assurance.
 //
-IMPLEMENT_GENERIC(equal_q, any_list)
+IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
@@ -77,7 +77,7 @@ IMPLEMENT_GENERIC(equal_q, any_list)
 //     >> try ["b" 1] < [2 "a"]
 //     == ~null~  ; anti
 //
-IMPLEMENT_GENERIC(lesser_q, any_list)
+IMPLEMENT_GENERIC(LESSER_Q, Any_List)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
@@ -122,7 +122,7 @@ IMPLEMENT_GENERIC(lesser_q, any_list)
 // "Make Type" dispatcher for BLOCK!, GROUP!, FENCE!, and variants (THE-GROUP!,
 // TYPE-FENCE!, etc.)
 //
-IMPLEMENT_GENERIC(make, any_list)
+IMPLEMENT_GENERIC(MAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -492,7 +492,7 @@ bool Try_Pick_Block(
 }
 
 
-IMPLEMENT_GENERIC(moldify, any_list)
+IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
@@ -557,7 +557,7 @@ IMPLEMENT_GENERIC(moldify, any_list)
 }
 
 
-IMPLEMENT_GENERIC(oldgeneric, any_list)
+IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 {
     const Symbol* verb = Level_Verb(LEVEL);
     Option(SymId) id = Symbol_Id(verb);
@@ -1015,7 +1015,7 @@ IMPLEMENT_GENERIC(oldgeneric, any_list)
 //    element blocks with a word in them, e.g. (to word! [a]).  All other
 //    blocks are errors.
 //
-IMPLEMENT_GENERIC(to, any_list)
+IMPLEMENT_GENERIC(TO, Any_List)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -1119,7 +1119,7 @@ IMPLEMENT_GENERIC(to, any_list)
     }
 
     if (to == REB_BLANK)
-        return GENERIC_CFUNC(as, any_list)(LEVEL);
+        return GENERIC_CFUNC(AS, Any_List)(LEVEL);
 
     return UNHANDLED;
 }
@@ -1130,7 +1130,7 @@ IMPLEMENT_GENERIC(to, any_list)
 //    use the array or not is an implementation detail.  It will reuse
 //    the array at least some of the time, so freeze it all of the time.
 //
-IMPLEMENT_GENERIC(as, any_list)
+IMPLEMENT_GENERIC(AS, Any_List)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -1192,10 +1192,10 @@ DECLARE_NATIVE(file_of)
     Element* elem = Element_ARG(element);
     QUOTE_BYTE(elem) = NOQUOTE_1;  // allow line-of and file-of on quoted/quasi
 
-    return Dispatch_Generic(file_of, elem, LEVEL);
+    return Dispatch_Generic(FILE_OF, elem, LEVEL);
 }
 
-IMPLEMENT_GENERIC(file_of, any_element)  // generic fallthrough: raise error
+IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough: raise error
 {
     return RAISE("No file available for element");
 }
@@ -1219,16 +1219,16 @@ DECLARE_NATIVE(line_of)
     Element* elem = Element_ARG(element);
     QUOTE_BYTE(elem) = NOQUOTE_1;  // allow line-of and file-of on quoted/quasi
 
-    return Dispatch_Generic(file_of, elem, LEVEL);
+    return Dispatch_Generic(FILE_OF, elem, LEVEL);
 }
 
-IMPLEMENT_GENERIC(line_of, any_element)  // generic fallthrough: raise error
+IMPLEMENT_GENERIC(LINE_OF, Any_Element)  // generic fallthrough: raise error
 {
     return RAISE("No line available for element");
 }
 
 
-IMPLEMENT_GENERIC(file_of, any_list)
+IMPLEMENT_GENERIC(FILE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
@@ -1242,7 +1242,7 @@ IMPLEMENT_GENERIC(file_of, any_list)
 }
 
 
-IMPLEMENT_GENERIC(line_of, any_list)
+IMPLEMENT_GENERIC(LINE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
@@ -1298,7 +1298,7 @@ static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
 }
 
 
-IMPLEMENT_GENERIC(sort, any_list)
+IMPLEMENT_GENERIC(SORT, Any_List)
 {
     INCLUDE_PARAMS_OF_SORT;
 
@@ -1359,7 +1359,7 @@ IMPLEMENT_GENERIC(sort, any_list)
 // !!! TYPE-XXX! are being rethought, but right now TYPE-BLOCK! has the
 // particular behavior of re-dispatching.
 //
-IMPLEMENT_GENERIC(make, type_block)
+IMPLEMENT_GENERIC(MAKE, Type_Block)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
@@ -1373,7 +1373,7 @@ IMPLEMENT_GENERIC(make, type_block)
 
     Heart heart = VAL_TYPE_HEART(type);
 
-    return Dispatch_Generic_Core(g_generic_make, heart, level_);
+    return Dispatch_Generic_Core(SYM_MAKE, g_generic_MAKE, heart, level_);
 }
 
 
