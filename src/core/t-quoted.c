@@ -247,9 +247,9 @@ DECLARE_NATIVE(quasi)
 //
 //  /unquasi: native [
 //
-//  "Turn quasiforms into common forms"
+//  "Turn quasiforms into fundamental forms"
 //
-//      return: [any-isotopic?]  ; a non-quasi, non-quoted element
+//      return: [fundamental?]
 //      quasiform [quasi?]
 //  ]
 //
@@ -760,7 +760,7 @@ DECLARE_NATIVE(maybe)
 //
 //  "Removes all levels of quoting from a (potentially) quoted element"
 //
-//      return: [element?]
+//      return: [fundamental?]
 //      element [<maybe> element?]
 //  ]
 //

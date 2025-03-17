@@ -35,7 +35,9 @@ NUL
 
 atom?
 element?
+fundamental?
 quasi?
+bindable?
 
 newline
 space

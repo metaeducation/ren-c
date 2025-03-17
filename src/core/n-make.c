@@ -263,7 +263,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 //      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
 //          [element?]
 //      type [<maybe> type-block!]
-//      element [<maybe> element?]
+//      element [<maybe> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(to)
@@ -299,20 +299,9 @@ DECLARE_NATIVE(to)
 //
 //  "Aliases underlying data of one value to act as another of same class"
 //
-//      return: [
-//          ~null~ integer!
-//          any-sequence? any-series? any-word? any-utf8?
-//          frame!
-//          blank!
-//      ]
+//      return: [~null~ fundamental?]
 //      type [type-block!]
-//      element [
-//          <maybe>
-//          integer!
-//          any-sequence? any-series? any-word? any-utf8?
-//          frame!
-//          blank!
-//      ]
+//      element [<maybe> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(as)

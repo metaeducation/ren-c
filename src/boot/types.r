@@ -48,6 +48,10 @@ REBOL [
 ; <ANY-ELEMENT?>  (Note: added manually to make sure it's the last typeset)
 ; ============================================================================
 
+; ===== BEGIN "FUNDAMENTALS" THAT AREN'T QUOTED, QUASI, OR ANTIFORM ==========
+<ANY-FUNDAMENTAL?>
+; ============================================================================
+
 blank       "placeholder unit type"
 ~nothing~   (CELL_MASK_NO_NODES)
             [any-unit? any-inert?]  ; allow as `branch`?
@@ -181,7 +185,7 @@ varargs     "evaluator position for variable numbers of arguments"
 ; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Cell's "extra" USED FOR BINDING
 ; ============================================================================
 
-<BINDABLE?>
+<ANY-BINDABLE?>
 
 <ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
@@ -371,7 +375,11 @@ comma       "separator between full evaluations (that is otherwise invisible)"
 ~barrier~   (CELL_MASK_NO_NODES)
 #unstable   [any-unit?]  ; NOT inert
 
-</BINDABLE?>
+</ANY-BINDABLE?>
+
+; ======= END "FUNDAMENTALS" THAT AREN'T QUOTED, QUASI, OR ANTIFORM ==========
+</ANY-FUNDAMENTAL?>
+; ============================================================================
 
 
 ; ============================================================================
