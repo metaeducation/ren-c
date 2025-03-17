@@ -457,13 +457,13 @@ INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
       case ANTIFORM_0_COERCE_ONLY: {  // use this constant rarely!
         Byte heart = HEART_BYTE(v);
         assert(  // can't answer VAL_TYPE() for unstable isotopes
-            heart != REB_BLOCK
+            heart != REB_0
+            and heart != REB_BLOCK
             and heart != REB_COMMA
             and heart != REB_ERROR
             and heart != REB_OBJECT
         );
-        UNUSED(heart);
-        return REB_ANTIFORM; }
+        return u_cast(Kind, heart + REB_QUOTED); }
 
       case NOQUOTE_1: {
         return u_cast(Kind, HEART_BYTE(v)); }

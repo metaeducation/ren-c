@@ -74,7 +74,7 @@ DECLARE_NATIVE(okay_q)
 //
 //  "Tells you if the argument is either the ~null~ or ~okay~ antiform"
 //
-//      return: "null or okay"  ; can't use LOGIC? to typecheck
+//      return: [keyword?]  ; Note: using LOGIC? to typecheck is recursive
 //      value
 //  ]
 //

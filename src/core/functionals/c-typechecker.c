@@ -545,7 +545,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
           case REB_TYPE_BLOCK: {
             Kind k;
             if (Is_Antiform(v) and Is_Antiform_Unstable(v))
-                k = REB_ANTIFORM;
+                fail ("What should we do here?");
             else
                 k = VAL_TYPE(v);
             if (VAL_TYPE_KIND(test) != k)

@@ -1012,7 +1012,7 @@ DECLARE_NATIVE(infix_q)
 //  "For functions that gets 1st argument from left, e.g (/+: infix get $add)"
 //
 //      return: "Antiform action"
-//          [antiform?]  ; [action?] comes after INFIX in bootstrap
+//          [action?]
 //      action [<unrun> frame!]
 //      :off "Give back a non-infix version of the passed in function"
 //      :defer "Allow one full expression on the left to evaluate"
@@ -1394,28 +1394,6 @@ DECLARE_NATIVE(something_q)
         return unwrap bounce;
 
     return LOGIC(not Is_Meta_Of_Nothing(meta));
-}
-
-
-//
-//  /tripwire?: native:intrinsic [
-//
-//  "Is argument antiform tag (acts like an unset variable with a message)"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(tripwire_q)
-{
-    INCLUDE_PARAMS_OF_TRIPWIRE_Q;
-
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(Is_Tripwire(v));
 }
 
 

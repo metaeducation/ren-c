@@ -162,12 +162,13 @@ INLINE Count Dequotify(Cell* v) {
 //
 // Unstable antiforms like packs (block antiforms), error antiforms, and object
 // antiforms aren't just not allowed in blocks, they can't be in variables.
-//
 
 INLINE bool Is_Antiform(const Atom* a)
   { return QUOTE_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
 
 #define Not_Antiform(a) (not Is_Antiform(a))
+
+#undef Any_Antiform  // range-based check useful for typesets, but slower
 
 INLINE bool Is_Antiform_Unstable(const Atom* a) {
     // Assume Is_Antiform() checked Ensure_Readable()

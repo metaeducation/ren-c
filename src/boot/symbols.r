@@ -114,7 +114,7 @@ local
 
 ; properties for action TWEAK function
 ;
-barrier
+#barrier
 defer
 postpone
 

@@ -58,9 +58,18 @@
 // Note that the HEART_BYTE() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the quote byte do not affect it.
+//
+// 1. There's a range check created automatically for ANY-BINDABLE?, and
+//    that's good for fitting into the typeset optimization cases.  But it
+//    requires two comparisons, and due to careful organization of %types.r
+//    this particular check can be accomplished in the core code with a single
+//    comparison.  Is_Bindable() was the historical name of the function
+//    and reads a bit beter than Any_Bindable().
 
 INLINE bool Is_Bindable_Heart(Heart h)
   { return h >= REB_WORD; }
+
+#undef Any_Bindable  // use Is_Bindable(), faster than a range check [1]
 
 #define Is_Bindable(v) \
     Is_Bindable_Heart(Cell_Heart_Unchecked(v))  // readable checked elsewhere

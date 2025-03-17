@@ -19,6 +19,10 @@ REBOL [
        tables used by %make-boot.r, as well as C source files that are
        included by the build.
     }--
+    Notes: --{
+        This file has evolved over time and could be simplified drastically
+        if some time and effort were put into it... it's very repetitive.
+    }--
 ]
 
 
@@ -57,7 +61,9 @@ type-table: load %types.r
     body "Block to evaluate each time"
         [block!]
     <local>
-    name* antiname* description* typesets* class* make* mold* heart* cellmask*
+    name* description*
+    antiname* antidescription*
+    typesets* heart* cellmask*
     completed* running* is-unstable* decorated pos
     obj
 ][
@@ -72,8 +78,12 @@ type-table: load %types.r
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
         name*: word!
         description*: text!
-        [antiname*: quasiform! | (antiname*: null)]  ; quasiform is word in boot
         [
+            ; quasiform is word in boot
+            antiname*: quasiform!, antidescription*: text!
+            |
+            (antiname*: null, antidescription: null)
+        ][
             ahead group! into [
                 ['CELL_MASK_NO_NODES <end>]
                     (cellmask*: the (CELL_MASK_NO_NODES))
@@ -108,6 +118,7 @@ type-table: load %types.r
                     decorated  ; has now been undecorated
                 ]
                 antiname: either antiname* [to text! unquasi antiname*] [null]
+                antidescription: antidescription*
                 unstable: switch is-unstable* [
                     null ['no]
                     #unstable ['yes]
@@ -187,7 +198,7 @@ type-table: load %types.r
                     append types* to text! name*
                 ])]
                 text!
-                opt quasiform!
+                opt [quasiform! text!]
                 group!
                 opt issue!
                 block!
@@ -202,130 +213,6 @@ type-table: load %types.r
 ]
 
 
-=== "HEARTS ENUM FILE" ===
-
-e-hearts: make-emitter "Cell Hearts Enum" (
-    join prep-dir %include/tmp-hearts.h
-)
-
-rebs: collect [
-    for-each-datatype 't [
-        any [
-            t.name = "quasiform"
-            t.name = "quoted"
-            t.name = "antiform"
-        ] else [
-            keep cscape [t --{REB_${T.NAME} = $<T.HEART>}--]
-        ]
-    ]
-]
-
-kinds: collect [
-    for-each-datatype 't [
-        any [
-            t.name = "quasiform"
-            t.name = "quoted"
-            t.name = "antiform"
-        ] else [
-            keep cscape [t --{KIND_${T.NAME} = $<T.HEART>}--]
-        ]
-    ]
-]
-
-singlehearts: collect [  ; !!! Omit invalid singleheart values?
-    for-each-datatype 't [
-        keep cscape [t
-            --{SINGLEHEART_TAIL_BLANK_${T.NAME} = $<T.HEART * 256>}--
-        ]
-        keep cscape [t
-            --{SINGLEHEART_HEAD_BLANK_${T.NAME} = $<(T.HEART * 256) + 1>}--
-        ]
-    ]
-]
-
-e-hearts/emit [rebs --{
-    /*
-     * INTERNAL CELL HEART ENUM, e.g. REB_BLOCK or REB_TAG
-     *
-     * GENERATED FROM %TYPES.R
-     *
-     * Do not export these values via libRebol, as the numbers can change.
-     * Their ordering is for supporting tricks--like being able to quickly
-     * check if a type IS_BINDABLE().  So when types are added or removed, the
-     * numbers must shuffle around to preserve invariants.
-     *
-     * NOTE ABOUT C++11 ENUM TYPING: It is best not to specify an "underlying
-     * type" because that prohibits certain optimizations, which the compiler
-     * can make based on knowing a value is only in the range of the enum.
-     */
-    #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11  || defined(__clang__)
-        enum HeartKindEnum {
-            REB_0 = 0,  /* reserved */
-            $[Rebs],
-            REB_MAX_HEART,
-            REB_QUASIFORM = REB_MAX_HEART,
-            REB_QUOTED,
-            REB_ANTIFORM,
-            REB_MAX
-        };
-    #else
-        enum HeartEnum {
-            REB_0 = 0,  /* reserved falsey case for Option(Heart) */
-            $[Rebs],
-            REB_MAX_HEART,  /* one past valid types */
-        };
-
-        enum KindEnum {
-            KIND_0 = 0,  /* reserved falsey case for Option(Kind) */
-            $[Kinds],
-            REB_QUASIFORM,
-            REB_QUOTED,
-            REB_ANTIFORM,
-            REB_MAX
-        };
-    #endif
-
-    STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
-    STATIC_ASSERT(REB_MAX < 256);  /* Stored in bytes */
-
-    /*
-     * SINGLEHEART OPTIMIZED SEQUENCE DETECTION
-     *
-     * We want to use SingleHeart in switch() statements, but don't want them
-     * to be type-compatible with Heart or Kind types due to the extra flag of
-     * information they multiplex in.  Making a specialized enum type is
-     * kind of the only way to get that type checking, since implicit casts
-     * to integer to facilitate switching would let you use Heart or Kind.
-     */
-    enum SingleHeartEnum {
-        NOT_SINGLEHEART_0,  /* reserved falsey case for Option(SingleHeart) */
-
-        /*
-         * !!! VALUES INTENTIONALLY > 256, OUT OF RANGE OF HEART AND KIND !!!
-         *
-         * Distinct enum types won't compare directly due to -Wenum-compare.
-         * But pushing the values out of each others ranges is the only way to
-         * make C switch() give warnings when the wrong enum type is used in
-         * a `case` label.
-         */
-
-        /*
-         * !!! NOTE THAT ALL THESE COMBINATIONS ARE NOT ACTUALLY VALID !!!
-         *
-         * (e.g. there is no such thing as SINGLEHEART_TRAILING_BLANK_BLANK)
-         *
-         * It's just easier to make this enum and have the math work out by
-         * filling it with all the combinatorics...
-         */
-
-        $(Singlehearts),
-    };
-}--]
-e-hearts/emit newline
-
-e-hearts/write-emitted
-
-
 === "MACROS LIKE Is_Block(), OTHER DATATYPE DEFINITIONS" ===
 
 e-types: make-emitter "Datatype Definitions" (
@@ -335,7 +222,7 @@ e-types: make-emitter "Datatype Definitions" (
 e-types/emit [--{
     /* Tables generated from %types.r for builtin typesets */
     extern TypesetFlags const g_typesets[];  // up to 255 allowed
-    extern uint_fast32_t const g_sparse_memberships[];
+    extern uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT];
 }--]
 e-types/emit newline
 
@@ -370,13 +257,6 @@ e-types/emit --{
 e-types/emit newline
 
 for-each-datatype 't [
-    ;
-    ; Pseudotypes don't make macros or cell masks.
-    ;
-    if find ["quoted" "quasiform" "antiform"] ensure text! t.name  [
-        continue
-    ]
-
     if t.cellmask [
         e-types/emit [t --{
             #define CELL_MASK_${T.NAME} \
@@ -486,7 +366,7 @@ for-each-datatype 't [
             Is_$<Proper-Name>_Core(Ensure_Readable(v))
 
         #define Is_Meta_Of_$<Proper-Name>(v) \
-        ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+            ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
             == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART_BYTE(REB_$<T.NAME>)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(v) \
@@ -498,33 +378,16 @@ for-each-datatype 't [
 e-types/write-emitted
 
 
-=== "SYMBOL-TO-TYPESET-BITS MAPPING TABLE" ===
+=== "CALCULATE SPARSE TYPESET MEMBERSHIPS" ===
 
-; The typesets for things like ANY-BLOCK? etc. are specified in the %types.r
-; table, and turned into 64-bit bitsets.
-
-e-typesets: make-emitter "Built-in Typesets" (
-    join prep-dir %core/tmp-typesets.c
-)
-
-
-e-typesets/emit --{
-    #include "sys-core.h"
-}--
-e-typesets/emit newline
+; Some typesets in %types.r are in tag ranges like <ANY-XXX?>...</ANY-XXX?>.
+; These can be checked by range.  Others are in a block with the type, like
+; [any-unit? any-inert?].  These sparse typesets get TYPESET_FLAG_XXX that
+; are collected into a `g_sparse_memberships[]` C array.
 
 memberships: copy []
-typeset-flags: copy []
-
-index: 1
 
 for-each-datatype 't [
-    let proper-name: propercase-of t.name
-
-    append typeset-flags cscape [t
-        --{/* $<index> - $<t.name> */  TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)}--
-    ]
-
     let flagits: collect [
         for-each [ts-name types] sparse-typesets [
             if not find types t.name [continue]
@@ -533,37 +396,205 @@ for-each-datatype 't [
         ]
     ]
     if empty? flagits [
-        append memberships cscape [t -{/* $<index> - $<t.name> */  0}-]
+        append memberships cscape [t -{/* $<t.name> - $<t.heart> */  0}-]
     ] else [
         append memberships cscape [flagits t
-            --{/* $<index> - $<t.name> */  ($<Delimit " | " Flagits>)}--
+            --{/* $<t.name> - $<t.heart> */  ($<Delimit " | " Flagits>)}--
         ]
     ]
+]
+
+
+=== "SYMBOL-TO-TYPESET-BITS MAPPING TABLE" ===
+
+e-typesets: make-emitter "Built-in Typesets (Ranged and Sparse)" (
+    join prep-dir %core/tmp-typesets.c
+)
+e-typesets/emit --{
+    #include "sys-core.h"
+}--
+e-typesets/emit newline
+
+e-typeset-bytes: make-emitter "Typeset Byte Mapping" (
+    join prep-dir %boot/tmp-typeset-bytes.r
+)
+
+e-typespecs: make-emitter "Type Help Descriptions" (
+    join prep-dir %boot/tmp-typespecs.r
+)
+
+fundamentals: make block! 128  ; "REB_XXX = (num)" for all HEART_BYTE
+pseudotype-kinds: make block! 128  ; "KIND_XXX = (num)" for all HEART_BYTE
+pseudotypes: make block! 128  ; "REB_XXX = (num)" for all pseudotypes
+
+singlehearts: make block! 256  ; tricky thing, see description in comments
+
+typeset-flags: copy []
+
+index: 1
+
+
+for-each-datatype 't [  ; fundamentals
+    append fundamentals cscape [t --{REB_${T.NAME} = $<index>}--]
+
+    append pseudotype-kinds cscape [t --{KIND_${T.NAME} = $<index>}--]
+
+    append singlehearts cscape [t
+        --{SINGLEHEART_TAIL_BLANK_${T.NAME} = $<index * 256>}--
+    ]
+    append singlehearts cscape [t
+        --{SINGLEHEART_HEAD_BLANK_${T.NAME} = $<(index * 256) + 1>}--
+    ]
+
+    e-typeset-bytes/emit [t -{
+        $<t.name> $<index>
+    }-]
+
+    e-typespecs/emit [t -{
+        $<t.name> $<mold t.description>
+    }-]
+
+    append typeset-flags cscape [t --{
+        /* $<index> - $<t.name> */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
+    }--]
 
     index: me + 1
 ]
 
-for-each-typerange 'tr [  ; range, typeset is a start and end
-    append typeset-flags cscape [tr
-        --{/* $<index> - any-$<tr.name> */  TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<TR.START>) | FLAG_FOURTH_BYTE($<TR.END>)}--
+max-heart-index: index
+
+; Emit the pseudotype for QUASIFORM!
+(
+    append memberships cscape [-{/* quasiform - $<index> */  0}-]
+
+    append pseudotypes cscape [--{REB_QUASIFORM = $<index>}--]
+
+    e-typeset-bytes/emit [-{
+        quasiform $<index>
+    }-]
+
+    e-typespecs/emit [-{
+        quasiform "value which evaluates to an antiform"
+    }-]
+
+    append typeset-flags cscape [--{
+        /* $<index> - quasiform */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
+    }--]
+
+    index: me + 1
+)
+
+; Emit the pseudotype for QUOTED!
+(
+    append memberships cscape [
+        --{/* quoted - $<index> */  (TYPESET_FLAG_BRANCH)}--
     ]
+
+    append pseudotypes cscape [--{REB_QUOTED = $<index>}--]
+
+    e-typeset-bytes/emit [-{
+        quoted $<index>
+    }-]
+
+    e-typespecs/emit [-{
+        quoted "container for arbitrary levels of quoting"
+    }-]
+
+    append typeset-flags cscape [--{
+        /* $<index> - quoted */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
+    }--]
+
+    index: me + 1
+)
+
+first-antiform-index: index
+
+for-each-datatype 't [  ; now generate bytes for antiforms
+    if t.antiname [
+        append pseudotypes cscape [t --{REB_${T.ANTINAME} = $<index>}--]
+
+        e-typeset-bytes/emit [t -{
+            ${t.antiname} $<index>
+        }-]
+
+        e-typespecs/emit [t -{
+            $<t.antiname> $<mold t.antidescription>
+        }-]
+
+        append typeset-flags cscape [t --{
+            /* $<index> - ${t.antiname} */
+            TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
+        }--]
+    ] else [
+        append pseudotypes cscape [t --{REB_$<index> = $<index>}--]
+
+        e-typeset-bytes/emit [t -{
+            ~ $<index>
+        }-]
+
+        e-typespecs/emit [t -{
+            ~ ~
+        }-]
+
+        append typeset-flags cscape [t --{
+            /* $<index> - <unused> */  0
+        }--]
+    ]
+    index: me + 1
+]
+
+; antiform range check (core uses Is_Antiform() which just checks heart byte)
+(
+    e-typeset-bytes/emit [no-tildes -{
+        any-antiform $<index>
+    }-]
+
+    append typeset-flags cscape [t --{
+        /* $<index> - any-antiform */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<first-antiform-index>) | FLAG_FOURTH_BYTE($<index - 1>)
+    }--]
+    index: me + 1
+)
+
+for-each-typerange 'tr [  ; range, typeset is a start and end
+    e-typeset-bytes/emit [tr -{
+        any-$<tr.name> $<index>
+    }-]
+
+    append typeset-flags cscape [tr --{
+        /* $<index> - any-$<tr.name> */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<TR.START>) | FLAG_FOURTH_BYTE($<TR.END>)
+    }--]
     index: index + 1
 ]
 
 for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
-    append typeset-flags cscape [ts-name
-        --{/* $<index> - any-$<ts-name> */  TYPESET_FLAG_${TS-NAME}}--
-    ]
+    e-typeset-bytes/emit [ts-name -{
+        any-$<ts-name> $<index>
+    }-]
+
+    append typeset-flags cscape [ts-name --{
+        /* $<index> - any-$<ts-name> */
+        TYPESET_FLAG_${TS-NAME}
+    }--]
     index: index + 1
 ]
 
 ; add ANY-ELEMENT? to the absolute end of the list, so it hooks last
-;
-append typeset-flags cscape [tr
-    --{/* $<index> - any-element */  TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(1) | FLAG_FOURTH_BYTE(REB_QUOTED)}--
-]
-index: index + 1
+(
+    e-typeset-bytes/emit [ts-name -{
+        any-element $<index>
+    }-]
 
+    append typeset-flags cscape [tr --{
+        /* $<index> - any-element */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(1) | FLAG_FOURTH_BYTE(REB_QUOTED)
+    }--]
+    index: index + 1
+)
 
 e-typesets/emit [--{
     /*
@@ -585,7 +616,7 @@ e-typesets/emit [--{
      * to 31 of those TYPESET_FLAG_XXX flags in this model (avoids dependency
      * on 64-bit integers, which we are attempting to excise from the system).
      */
-    uint_fast32_t const g_sparse_memberships[REB_MAX] = {
+    uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT] = {
         /* 0 - <reserved> */  0,
         $(Memberships),
     };
@@ -593,62 +624,94 @@ e-typesets/emit [--{
 
 e-typesets/write-emitted
 
-
-=== "WRITE TYPESET MAPPING FOR GENERICS TO USE" ===
-
-; The generic table needs to know the integer values of types and typesets, so
-; that if you say IMPLEMENT_GENERIC(append, any-list) it knows the TypesetByte
-; ANY-LIST? corresponds to, and can put it after any more specific generic
-; handlers.  We just write the typeset indices out to a file.
-
-e-typeset-bytes: make-emitter "Typeset Byte Mapping" (
-    join prep-dir %boot/tmp-typeset-bytes.r
-)
-
-typeset-byte: 1
-
-for-each-datatype 't [
-    e-typeset-bytes/emit [t -{
-        $<t.name> $<typeset-byte>
-    }-]
-    typeset-byte: me + 1
-]
-
-for-each-typerange 'tr [
-    e-typeset-bytes/emit [tr -{
-        any-$<tr.name> $<typeset-byte>
-    }-]
-    typeset-byte: me + 1
-]
-
-for-each [ts-name types] sparse-typesets [
-    e-typeset-bytes/emit [ts-name -{
-        any-$<ts-name> $<typeset-byte>
-    }-]
-    typeset-byte: me + 1
-]
-
-e-typeset-bytes/emit [ts-name -{
-    any-element $<typeset-byte>
-}-]
-typeset-byte: me + 1
-
 e-typeset-bytes/write-emitted
 
+e-typespecs/write-emitted
 
-=== "WRITE TYPESPECS TABLE (USED BY HELP)" ===
 
-; When you say `help integer!` there is a table of help strings which are
-; generated from %types.r
+=== "EMIT THE HEARTS" ===
 
-e-typespecs: make-emitter "Type Specs Mapping" (
-    join prep-dir %boot/tmp-typespecs.r
+e-hearts: make-emitter "Cell Hearts Enum" (
+    join prep-dir %include/tmp-hearts.h
 )
 
-for-each-datatype 't [
-    e-typespecs/emit [t -{
-        $<t.name> $<mold t.description>
-    }-]
-]
+e-hearts/emit [rebs --{
+    /*
+     * INTERNAL CELL HEART ENUM, e.g. REB_BLOCK or REB_TAG
+     *
+     * GENERATED FROM %TYPES.R
+     *
+     * Do not export these values via libRebol, as the numbers can change.
+     * Their ordering is for supporting tricks--like being able to quickly
+     * check if a type IS_BINDABLE().  So when types are added or removed, the
+     * numbers must shuffle around to preserve invariants.
+     *
+     * NOTE ABOUT C++11 ENUM TYPING: It is best not to specify an "underlying
+     * type" because that prohibits certain optimizations, which the compiler
+     * can make based on knowing a value is only in the range of the enum.
+     */
+    #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11 || defined(__clang__)
+        enum HeartKindEnum {
+            REB_0 = 0,  /* reserved */
+            $[Fundamentals],
+            $[Pseudotypes],
+            REB_MAX
+        };
+    #else
+        enum HeartEnum {
+            REB_0 = 0,  /* reserved falsey case for Option(Heart) */
+            $(Fundamentals),
+        };
 
-e-typespecs/write-emitted
+        enum KindEnum {
+            KIND_0 = 0,  /* reserved falsey case for Option(Kind) */
+            /* KIND_XXX placeholders for values in range of heart byte */
+            $[Pseudotype-Kinds],
+            /* REB_XXX pseudotypes for vlaues out of range of heart byte */
+            $[Pseudotypes],
+            REB_MAX
+        };
+    #endif
+
+    #define REB_MAX_HEART  $<max-heart-index>
+    #define REB_MAX_ELEMENT  $<first-antiform-index>
+
+    STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
+    STATIC_ASSERT(REB_MAX < 256);  /* Stored in bytes */
+
+    /*
+     * SINGLEHEART OPTIMIZED SEQUENCE DETECTION
+     *
+     * We want to use SingleHeart in switch() statements, but don't want them
+     * to be type-compatible with Heart or Kind types due to the extra flag of
+     * information they multiplex in.  Making a specialized enum type is
+     * kind of the only way to get that type checking, since implicit casts
+     * to integer to facilitate switching would let you use Heart or Kind.
+     */
+    enum SingleHeartEnum {
+        NOT_SINGLEHEART_0,  /* reserved falsey case for Option(SingleHeart) */
+
+        /*
+         * !!! VALUES INTENTIONALLY > 256, OUT OF RANGE OF HEART AND KIND !!!
+         *
+         * Distinct enum types won't compare directly due to -Wenum-compare.
+         * But pushing the values out of each others ranges is the only way to
+         * make C switch() give warnings when the wrong enum type is used in
+         * a `case` label.
+         */
+
+        /*
+         * !!! NOTE THAT ALL THESE COMBINATIONS ARE NOT ACTUALLY VALID !!!
+         *
+         * (e.g. there is no such thing as SINGLEHEART_TRAILING_BLANK_BLANK)
+         *
+         * It's just easier to make this enum and have the math work out by
+         * filling it with all the combinatorics...
+         */
+
+        $(Singlehearts),
+    };
+}--]
+e-hearts/emit newline
+
+e-hearts/write-emitted

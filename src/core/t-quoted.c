@@ -564,28 +564,6 @@ DECLARE_NATIVE(pack_p)
 
 
 //
-//  /splice?: native:intrinsic [
-//
-//  "Tells you if argument is a splice (antiform group)"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(splice_q)
-{
-    INCLUDE_PARAMS_OF_SPLICE_Q;
-
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(Is_Splice(v));
-}
-
-
-//
 //  /lazy?: native:intrinsic [
 //
 //  "Tells you if argument is a lazy value (antiform object)"
@@ -624,50 +602,6 @@ DECLARE_NATIVE(pack_q)
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_BLOCK);
-}
-
-
-//
-//  /keyword?: native:intrinsic [
-//
-//  "Tells you if argument is an antiform word, reserved for special purposes"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(keyword_q)
-{
-    INCLUDE_PARAMS_OF_KEYWORD_Q;
-
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(Is_Keyword(v));
-}
-
-
-//
-//  /action?: native:intrinsic [
-//
-//  "Tells you if argument is an action (antiform frame)"
-//
-//      return: [logic?]
-//      value
-//  ]
-//
-DECLARE_NATIVE(action_q)
-{
-    INCLUDE_PARAMS_OF_ACTION_Q;
-
-    DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
-    if (bounce)
-        return unwrap bounce;
-
-    return LOGIC(Is_Action(v));
 }
 
 

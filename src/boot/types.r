@@ -14,13 +14,16 @@ REBOL [
         This table is used to make C defines and intialization tables.
 
             name            "description"
-            ~antiform~      (CELL_FLAG_XXX | CELL_FLAG_XXX)
+            ~antiform~      "antinotes"
+                            (node flags)
                             [constraints]  ; makes `g_sparse_memberships`
 
         name        - name of datatype (generates words)
         description - short statement of type's purpose (used by HELP)
-        antiform    - if present, the name of the antiform of the type
-        constraints - type constraints this type will answer true to
+        antiform    - (optional) the name of the antiform of the type
+        antinotes   - (optional) if antiform, statement of antiform purpose
+        node flags  - indication of if cell payload slot 1 or 2 hold nodes
+        constraints - sparse type constraints this type will answer true to
     }--
     Notes: --{
       * Code should avoid dependence on exact values of the heart bytes.
@@ -44,16 +47,13 @@ REBOL [
     }--
 ]
 
-; ============== BEGIN "ELEMENTS" THAT CAN BE PUT IN BLOCKS ==================
-; <ANY-ELEMENT?>  (Note: added manually to make sure it's the last typeset)
-; ============================================================================
-
 ; ===== BEGIN "FUNDAMENTALS" THAT AREN'T QUOTED, QUASI, OR ANTIFORM ==========
 <ANY-FUNDAMENTAL?>
 ; ============================================================================
 
 blank       "placeholder unit type"
-~nothing~   (CELL_MASK_NO_NODES)
+~nothing~   "state held by unset variables, can't be passed as normal argument"
+            (CELL_MASK_NO_NODES)
             [any-unit? any-inert?]  ; allow as `branch`?
 
 integer     "64 bit integer"
@@ -115,7 +115,8 @@ blob        "series of bytes"
                 [any-series? any-utf8? any-inert?]
 
     tag         "markup string (HTML or XML)"
-    ~tripwire~  (node1)
+    ~tripwire~  "unset variable state with informative message"
+                (node1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
 
 </ANY-STRING?>
@@ -159,7 +160,8 @@ varargs     "evaluator position for variable numbers of arguments"
 <ANY-CONTEXT?>
 
     object      "context of names with values"
-    ~lazy~      (node1 node2)
+    ~lazy~      "unstable antiform object for lazy evaluation (WIP)"
+                (node1 node2)
     #unstable   [any-inert?]
 
     module      "loadable context of code and data"
@@ -167,7 +169,8 @@ varargs     "evaluator position for variable numbers of arguments"
                 [any-inert?]
 
     error       "error context with id, arguments, and stack origin"
-    ~raised~    (node1 node2)
+    ~raised~    "trappable error cooperatively returned from a function call"
+                (node1 node2)
     #unstable   [any-inert?]
 
     port        "external series, an I/O channel"
@@ -175,7 +178,8 @@ varargs     "evaluator position for variable numbers of arguments"
                 [any-inert?]
 
     frame       "arguments and locals of a function state"
-    ~action~    (node1 node2)
+    ~action~    "will trigger function execution from words"
+                (node1 node2)
                 [any-branch?]
 
 </ANY-CONTEXT?>
@@ -190,7 +194,8 @@ varargs     "evaluator position for variable numbers of arguments"
 <ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     word        "evaluates a variable or action"
-    ~keyword~   (node1)
+    ~keyword~   "special constant values (e.g. ~null~, ~void~)"
+                (node1)
                 [any-utf8? any-plain-value? any-sequencable?]
 
     meta-word   "word that quotes product or turns quasiforms to antiforms"
@@ -294,7 +299,8 @@ varargs     "evaluator position for variable numbers of arguments"
   <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     block       "list of elements that blocks evaluation unless EVAL is used"
-    ~pack~      (node1)
+    ~pack~      "multi-return that can be unpacked or decays to first item"
+                (node1)
     #unstable   [any-series? any-branch? any-plain-value? any-sequencable?]
 
     meta-block  "block that evaluates to produce a quoted block"
@@ -344,7 +350,8 @@ varargs     "evaluator position for variable numbers of arguments"
   <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     group       "list that evaluates expressions as an isolated group"
-    ~splice~    (node1)
+    ~splice~    "fragment of multiple values without a surrounding block"
+                (node1)
                 [any-series? any-plain-value? any-sequencable?]
 
     meta-group  "group that quotes product or turns antiforms to quasiforms"
@@ -372,7 +379,8 @@ varargs     "evaluator position for variable numbers of arguments"
 ; that was FEED-specific.  Better ideas welcome.
 
 comma       "separator between full evaluations (that is otherwise invisible)"
-~barrier~   (CELL_MASK_NO_NODES)
+~barrier~   "elision state that is discarded by the evaluator"
+            (CELL_MASK_NO_NODES)
 #unstable   [any-unit?]  ; NOT inert
 
 </ANY-BINDABLE?>
@@ -383,47 +391,26 @@ comma       "separator between full evaluations (that is otherwise invisible)"
 
 
 ; ============================================================================
-; QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"
+; ABOVE THESE ARE QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"
 ; ============================================================================
 
-; The REB_QUOTED, REB_QUASIFORM, and REB_ANTIFORM enum values never appear in
-; the HEART_BYTE() of a cell.  These are synthesized datatypes when the
-; QUOTE_BYTE() contains values other than one (NOQUOTE_1).
+; The REB_QUOTED, REB_QUASIFORM, and all the antiform types (REB_SPLICE,
+; REB_NOTHING, etc.) enum values never appear in the HEART_BYTE() of a cell.
+; These are synthesized datatypes when the QUOTE_BYTE() contains values other
+; than one (NOQUOTE_1).
 ;
 ; They're not inert... QUASIFORM? becomes ANTIFORM? when evaluated, and QUOTED?
 ; removes one level of quoting.  (ANTIFORM? should never be seen by the
 ; evaluator, only produced by it.)
 ;
-; NOTE: These are in the %types.r table because that drives the creation of
-; things like "type spec strings" as well as the QUOTED? and QUOTED? usermode
-; functions, which are in specific places expected for a "datatype".  The
-; macros for testing Is_Quoted()/Is_Quasiform()/Is_Antiform() are exempted and
-; written by hand.
-
-quasiform   "value which evaluates to an antiform"
-            (:node1 :node2)
-            []
-
-quoted      "container for arbitrary levels of quoting"
-            (:node1 :node2)
-            [any-branch?]
-
-
-; =============== END "ELEMENTS" THAT CAN BE PUT IN BLOCKS ===================
-; </ANY-ELEMENT?>  (Note: added manually to make sure it's the last typeset)
-; ============================================================================
-
-antiform    "special states that cannot be stored in blocks"
-            (:node1 :node2)
-            []
-
-
-; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)
-; and no valid cell should have bits between REB_QUOTED and REB_MAX.
-
-; Note: ANY-VALUE? is currently defined in such a way that it tolerates the
-; state of an unset variable, since it's supposed to model anything that can
-; be stored in a variable (the `Value` typedef can hold antiform blank).  But
-; since the ANY-VALUE? function must thus take its argument as ^META to
-; receive the state, we don't automatically produce the ANY-VALUE? function
-; by means of this table.  It is a manually defined intrinsic native.
+; NOTE: These were once in the %types.r table, due to that driving the
+; creation of help strings and usermode functions like QUOTED? and QUASIFORM?.
+; However the sheer number of edge cases involved made it better to clean
+; up the %make-types.r process to do the pseudotype generation itself.
+;
+; (Just one example: ANY-VALUE? is currently defined in such a way that it
+; tolerates the state of an unset variable, since it's supposed to model
+; anything that can be stored in a variable (the `Value` typedef can hold
+; antiform blank).  But since the ANY-VALUE? function must thus take its
+; argument as ^META to receive the state, we don't automatically produce the
+; ANY-VALUE? function by means of this table, it has to be a native.)

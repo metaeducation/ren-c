@@ -65,7 +65,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
     if (Is_Blank(arg))
         return false;
 
-    fail (Error_Unexpected_Type(REB_ANTIFORM, VAL_TYPE(arg)));
+    fail (Error_Unexpected_Type(REB_INTEGER, VAL_TYPE(arg)));
 }
 
 

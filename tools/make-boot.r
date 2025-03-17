@@ -162,6 +162,10 @@ for-each [name byte] name-to-typeset-byte [
     if find as text! name "any" [
         break  ; done with just the datatypes
     ]
+    if name = '~ [
+        name: unspaced ["antiform-" byte]
+    ]
+
     add-sym name
 ]
 
@@ -169,12 +173,18 @@ for-each [name byte] name-to-typeset-byte [
     if find as text! name "any" [
         break  ; done with just the datatypes
     ]
+    if name = '~ [
+        name: unspaced ["antiform-" byte]
+    ]
     add-sym unspaced [name "!"]  ; integer! holds &(integer?)
 ]
 
 add-sym 'begin-typesets  ; useless symbol (make alias #define somehow?)
 
 for-each [name byte] name-to-typeset-byte [
+    if name = '~ [
+        name: unspaced ["antiform-" byte]
+    ]
     add-sym unspaced [name "?"]
 ]
 

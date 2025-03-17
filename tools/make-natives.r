@@ -117,8 +117,7 @@ gather-natives join src-dir %core/
 leaders: [
     native
     logic?
-    antiform?
-    action?
+    antiform?  ; needs to accept unstable antiforms, overwrites auto-gen case
     infix
     any-value?
     any-atom?
