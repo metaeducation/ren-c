@@ -75,7 +75,7 @@
 
 enum {
     IDX_FUNC_BODY = IDX_INTERPRETED_BODY,
-    IDX_FUNC_MAX
+    MAX_IDX_FUNC = IDX_FUNC_BODY
 };
 
 
@@ -100,7 +100,7 @@ Bounce Func_Dispatcher(Level* const L)
     };
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_FUNC_MAX);
+    assert(Details_Max(details) == MAX_IDX_FUNC);
 
     if (THROWING) {  // might be a RETURN:RUN targeting this Level
         assert(STATE == ST_FUNC_BODY_EXECUTING);
@@ -260,7 +260,7 @@ bool Func_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Func_Dispatcher);
-    assert(Details_Max(details) == IDX_FUNC_MAX);
+    assert(Details_Max(details) == MAX_IDX_FUNC);
 
     switch (property) {
 
@@ -420,7 +420,7 @@ DECLARE_NATIVE(function)
         body,
         SYM_RETURN,  // has a RETURN: in the paramlist
         &Func_Dispatcher,
-        IDX_FUNC_MAX  // archetype and one array slot (will be filled)
+        MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     );
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);

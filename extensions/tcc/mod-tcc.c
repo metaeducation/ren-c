@@ -84,14 +84,10 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 
 enum {
     IDX_TCC_NATIVE_CONTEXT = 1,
-
     IDX_TCC_NATIVE_LINKNAME,  // auto-generated if unspecified
-
     IDX_TCC_NATIVE_SOURCE,  // textual source code
-
     IDX_TCC_NATIVE_STATE,  // will be a BLANK! until COMPILE happens
-
-    IDX_TCC_NATIVE_MAX
+    MAX_IDX_TCC_NATIVE = IDX_TCC_NATIVE_STATE
 };
 
 
@@ -294,7 +290,7 @@ DECLARE_NATIVE(make_native)
         DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
-        IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
+        MAX_IDX_TCC_NATIVE  // details len [source module linkname tcc_state]
     );
 
     // !!! Natives on the stack can specify where APIs like rebValue() should
@@ -665,7 +661,7 @@ DECLARE_NATIVE(compile_p)
             DETAILS_FLAG_OWNS_PARAMLIST,
             Phase_Archetype(details_tcc),  // reuse paramlist
             &Api_Function_Dispatcher,
-            IDX_API_ACTION_MAX
+            MAX_IDX_API_ACTION
         );
 
         Init_Handle_Cfunc(

@@ -37,7 +37,7 @@
 
 enum {
     IDX_CASCADER_PIPELINE = 1,  // BLOCK! of what should be all FRAME!
-    IDX_CASCADER_MAX
+    MAX_IDX_CASCADER = IDX_CASCADER_PIPELINE
 };
 
 
@@ -146,7 +146,7 @@ Bounce Cascader_Executor(Level* const L)
     //    runs from the top.)
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_CASCADER_MAX);
+    assert(Details_Max(details) == MAX_IDX_CASCADER);
 
     Element* pipeline = Init_Block(
         SPARE,  // index of BLOCK! is current step
@@ -234,7 +234,7 @@ bool Cascader_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Cascader_Executor);
-    assert(Details_Max(details) == IDX_CASCADER_MAX);
+    assert(Details_Max(details) == MAX_IDX_CASCADER);
 
     switch (property) {
       case SYM_RETURN_OF: {
@@ -297,7 +297,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
         DETAILS_MASK_NONE,
         first,  // cascade has same interface as its first action [2]
         &Cascader_Executor,
-        IDX_CASCADER_MAX  // details array capacity
+        MAX_IDX_CASCADER  // details array capacity
     );
     Force_Value_Frozen_Shallow(pipeline);
     Copy_Cell(  // index of this block gets incremented as pipeline executes

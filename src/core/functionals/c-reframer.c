@@ -63,7 +63,7 @@
 enum {
     IDX_REFRAMER_SHIM = 1,  // action that can manipulate the reframed frame
     IDX_REFRAMER_PARAM_INDEX,  // index in shim that receives FRAME!
-    IDX_REFRAMER_MAX
+    MAX_IDX_REFRAMER = IDX_REFRAMER_PARAM_INDEX
 };
 
 
@@ -284,7 +284,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_REFRAMER_MAX);
+    assert(Details_Max(details) == MAX_IDX_REFRAMER);
 
     Value* shim = Details_At(details, IDX_REFRAMER_SHIM);
     assert(Is_Frame(shim));
@@ -330,7 +330,7 @@ bool Reframer_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Reframer_Dispatcher);
-    assert(Details_Max(details) == IDX_REFRAMER_MAX);
+    assert(Details_Max(details) == MAX_IDX_REFRAMER);
 
     switch (property) {
       case SYM_RETURN_OF: {
@@ -488,7 +488,7 @@ DECLARE_NATIVE(reframer)
         exemplar,  // shim minus the frame argument
         label,
         &Reframer_Dispatcher,
-        IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]
+        MAX_IDX_REFRAMER  // details array capacity => [shim, param_index]
     );
 
     Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(shim));

@@ -119,7 +119,7 @@ bool Combinator_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Combinator_Dispatcher);
-    assert(Details_Max(details) == IDX_COMBINATOR_MAX);
+    assert(Details_Max(details) == MAX_IDX_COMBINATOR);
 
     switch (property) {
       case SYM_RETURN_OF: {
@@ -264,7 +264,7 @@ DECLARE_NATIVE(combinator)
         DETAILS_MASK_NONE,
         Phase_Archetype(paramlist),
         &Combinator_Dispatcher,
-        IDX_COMBINATOR_MAX  // details array capacity
+        MAX_IDX_COMBINATOR  // details array capacity
     );
 
     // !!! As with FUNC, we copy and bind the block the user gives us.  This

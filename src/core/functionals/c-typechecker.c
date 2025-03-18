@@ -90,7 +90,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
         details = Ensure_Level_Details(L);
     }
 
-    assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
+    assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
     TypesetByte typeset_byte = VAL_UINT8(
         Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
@@ -108,7 +108,7 @@ bool Typechecker_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Typechecker_Dispatcher);
-    assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
+    assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
     UNUSED(details);
 
     switch (property) {
@@ -171,7 +171,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
         DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
         Phase_Archetype(paramlist),
         &Typechecker_Dispatcher,
-        IDX_TYPECHECKER_MAX  // details array capacity
+        MAX_IDX_TYPECHECKER  // details array capacity
     );
 
     Init_Integer(

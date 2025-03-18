@@ -57,7 +57,7 @@
 enum {
     IDX_ADAPTER_PRELUDE = 1,  // Relativized block to run before Adaptee
     /* IDX_ADAPTER_ADAPTEE, */  // Adaptee is implicit (Details rootvar)
-    IDX_ADAPTER_MAX
+    MAX_IDX_ADAPTER = IDX_ADAPTER_PRELUDE
 };
 
 
@@ -72,7 +72,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_ADAPTER_MAX);
+    assert(Details_Max(details) == MAX_IDX_ADAPTER);
 
     enum {
         ST_ADAPTER_INITIAL_ENTRY = STATE_0,
@@ -144,7 +144,7 @@ bool Adapter_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Adapter_Dispatcher);
-    assert(Details_Max(details) == IDX_ADAPTER_MAX);
+    assert(Details_Max(details) == MAX_IDX_ADAPTER);
 
     switch (property) {
       case SYM_RETURN_OF: {
@@ -194,7 +194,7 @@ DECLARE_NATIVE(adapt)
         DETAILS_MASK_NONE,
         adaptee,  // same parameters as adaptee [1]
         &Adapter_Dispatcher,
-        IDX_ADAPTER_MAX  // details array capacity => [prelude]
+        MAX_IDX_ADAPTER
     );
 
     Source* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(  // copy [2]

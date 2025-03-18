@@ -696,7 +696,7 @@ Details* Make_Dispatch_Details(
     Flags flags,
     const Value* exemplar,  // FRAME! "interface" is keyword in MSVC :-(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
-    REBLEN details_capacity  // capacity of Phase_Details (including archetype)
+    Option(Index) details_max  // 1-based max index desired for Phase_Details
 ){
     assert(0 == (flags & (~ (  // make sure no stray flags passed in
         DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC
@@ -705,16 +705,14 @@ Details* Make_Dispatch_Details(
             | DETAILS_FLAG_OWNS_PARAMLIST
     ))));
 
-    assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
-
     // "details" for an action is an array of cells which can be anything
     // the dispatcher understands it to be, by contract.
     //
     Array* a = Make_Array_Core(
         FLEX_MASK_DETAILS | NODE_FLAG_MANAGED | flags,
-        details_capacity  // if 1, then only Phase_Archetype()
+        (maybe details_max) + 1  // if max is 0, then only Phase_Archetype()
     );
-    Set_Flex_Len(a, details_capacity);
+    Set_Flex_Len(a, (maybe details_max) + 1);
 
     assert(HEART_BYTE(exemplar) == REB_FRAME);
     assert(

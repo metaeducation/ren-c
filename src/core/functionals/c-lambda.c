@@ -60,7 +60,7 @@
 
 enum {
     IDX_LAMBDA_BODY = IDX_INTERPRETED_BODY,
-    IDX_LAMBDA_MAX
+    MAX_IDX_LAMBDA = IDX_LAMBDA_BODY
 };
 
 
@@ -74,7 +74,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_LAMBDA_MAX);
+    assert(Details_Max(details) == MAX_IDX_LAMBDA);
 
     const Element* block = cast(Element*, Details_At(details, IDX_LAMBDA_BODY));
     assert(Is_Block(block));
@@ -104,7 +104,7 @@ bool Lambda_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Lambda_Dispatcher);
-    assert(Details_Max(details) == IDX_LAMBDA_MAX);
+    assert(Details_Max(details) == MAX_IDX_LAMBDA);
 
     switch (property) {
       case SYM_RETURN_OF:
@@ -148,7 +148,7 @@ DECLARE_NATIVE(lambda)
         body,
         SYM_0,  // no RETURN: in the paramlist
         &Lambda_Dispatcher,
-        IDX_LAMBDA_MAX  // archetype and one array slot (will be filled)
+        MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     );
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);

@@ -126,7 +126,7 @@ Details* Make_Native_Dispatch_Details(
         details_flags,
         Phase_Archetype(paramlist),
         dispatcher,  // dispatcher is unique to this native
-        IDX_RAW_NATIVE_MAX  // details array capacity
+        MAX_IDX_RAW_NATIVE  // details array capacity
     );
 
     Pop_Unpopped_Return(Details_At(details, IDX_RAW_NATIVE_RETURN), base);
@@ -143,7 +143,7 @@ Details* Make_Native_Dispatch_Details(
             DETAILS_MASK_NONE,  // *not* a native, calls one...
             native,
             &Combinator_Dispatcher,
-            IDX_COMBINATOR_MAX  // details array capacity
+            MAX_IDX_COMBINATOR  // details array capacity
         );
 
         // !!! Not strictly needed, as it's available as Details[0]

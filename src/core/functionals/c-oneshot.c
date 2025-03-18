@@ -45,7 +45,7 @@
 
 enum {
     IDX_ONESHOT_COUNTER = 1,  // Count that is going down to 0
-    IDX_ONESHOT_MAX
+    MAX_IDX_ONESHOT = IDX_ONESHOT_COUNTER
 };
 
 
@@ -57,7 +57,7 @@ Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_ONESHOT_MAX);
+    assert(Details_Max(details) == MAX_IDX_ONESHOT);
 
     Value* n = Details_At(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) == 0)
@@ -77,7 +77,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_ONESHOT_MAX);
+    assert(Details_Max(details) == MAX_IDX_ONESHOT);
 
     Value* n = Details_At(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) < 0) {
@@ -160,7 +160,7 @@ DECLARE_NATIVE(n_shot)
         DETAILS_MASK_NONE,
         LIB(DO_BRANCH),
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
-        IDX_ONESHOT_MAX  // details array capacity
+        MAX_IDX_ONESHOT  // details array capacity
     );
     Init_Integer(Details_At(details, IDX_ONESHOT_COUNTER), n);
 

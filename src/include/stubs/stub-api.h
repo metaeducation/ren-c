@@ -46,7 +46,7 @@
 enum {
     IDX_API_ACTION_CFUNC = 1,  // HANDLE! of RebolActionCFunction*
     IDX_API_ACTION_BINDING_BLOCK,  // BLOCK! so binding is GC marked
-    IDX_API_ACTION_MAX
+    MAX_IDX_API_ACTION = IDX_API_ACTION_BINDING_BLOCK
 };
 
 

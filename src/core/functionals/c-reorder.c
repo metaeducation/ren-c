@@ -59,7 +59,7 @@
 
 enum {
     IDX_REORDERER_REORDEREE = 1,  // saves the function being reordered
-    IDX_REORDERER_MAX
+    MAX_IDX_REORDERER = IDX_REORDERER_REORDEREE
 };
 
 
@@ -75,7 +75,7 @@ enum {
 //
 Bounce Reorderer_Dispatcher(Level* L) {
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_REORDERER_MAX);
+    assert(Details_Max(details) == MAX_IDX_REORDERER);
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
@@ -97,7 +97,7 @@ bool Reorderer_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Reorderer_Dispatcher);
-    assert(Details_Max(details) == IDX_REORDERER_MAX);
+    assert(Details_Max(details) == MAX_IDX_REORDERER);
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
@@ -252,7 +252,7 @@ DECLARE_NATIVE(reorder)
         DETAILS_MASK_NONE,
         Phase_Archetype(paramlist),
         &Reorderer_Dispatcher,
-        IDX_REORDERER_MAX
+        MAX_IDX_REORDERER
     );
 
     Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(original));

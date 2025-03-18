@@ -300,7 +300,7 @@ enum {
     //
     IDX_JS_NATIVE_IS_AWAITER,
 
-    IDX_JS_NATIVE_MAX
+    MAX_IDX_JS_NATIVE = IDX_JS_NATIVE_IS_AWAITER
 };
 
 
@@ -719,7 +719,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_JS_NATIVE_MAX);
+    assert(Details_Max(details) == MAX_IDX_JS_NATIVE);
 
     TRACE(
         "JavaScript_Dispatcher(%s, %d)",
@@ -921,7 +921,7 @@ DECLARE_NATIVE(js_native)
             | DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),
         &JavaScript_Dispatcher,
-        IDX_JS_NATIVE_MAX  // details len [source module handle]
+        MAX_IDX_JS_NATIVE
     );
 
     // !!! Natives on the stack can specify where APIs like reb.Run() should

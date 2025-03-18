@@ -144,14 +144,14 @@ INLINE Array* Details_Array(Details* details) {
 // array, you must know it is dynamic.  So we can take advantage of that for
 // better performance.
 //
-INLINE Value* Details_At(Details* details, Length n) {
+INLINE Value* Details_At(Details* details, Index idx) {
     Array* a = Details_Array(details);
-    assert(n != 0 and n < Array_Len(a));
-    return Flex_Head_Dynamic(Value, a) + n;
+    assert(idx != 0 and idx < Array_Len(a));
+    return Flex_Head_Dynamic(Value, a) + idx;
 }
 
 #define Details_Max(details) \
-    Array_Len(Details_Array(details))
+    (Array_Len(Details_Array(details)) - 1)
 
 #define IDX_DETAILS_1 1  // Common index used for code body location
 
@@ -160,12 +160,12 @@ INLINE Value* Details_At(Details* details, Length n) {
 //
 enum {
     IDX_RAW_NATIVE_RETURN = 1,  // return type for natives
-    IDX_RAW_NATIVE_MAX
+    MAX_IDX_RAW_NATIVE = IDX_RAW_NATIVE_RETURN
 };
 
 enum {
     IDX_COMBINATOR_BODY = 1,  // either native or BLOCK!
-    IDX_COMBINATOR_MAX
+    MAX_IDX_COMBINATOR = IDX_COMBINATOR_BODY
 };
 
 // If you use Make_Interpreted_Action_May_Fail() then it will automatically
@@ -177,7 +177,7 @@ enum {
 
 enum {
     IDX_TYPECHECKER_TYPESET_BYTE = 1,  // datatype or type constraint to check
-    IDX_TYPECHECKER_MAX
+    MAX_IDX_TYPECHECKER = IDX_TYPECHECKER_TYPESET_BYTE
 };
 
 

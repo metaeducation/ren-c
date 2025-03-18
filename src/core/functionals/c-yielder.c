@@ -109,7 +109,7 @@ enum {
     IDX_YIELDER_ORIGINAL_FRAME,  // varlist identity to steal on resume
     IDX_YIELDER_PLUG,  // saved when you YIELD (captures data stack etc.)
     IDX_YIELDER_META_YIELDED,  // the argument YIELD was passed
-    IDX_YIELDER_MAX
+    MAX_IDX_YIELDER = IDX_YIELDER_META_YIELDED
 };
 
 //=//// YIELDER STATE BYTE (DIFFERENT: VERY LIMITED!) /////////////////////=//
@@ -465,7 +465,7 @@ bool Yielder_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Yielder_Dispatcher);
-    assert(Details_Max(details) == IDX_YIELDER_MAX);
+    assert(Details_Max(details) == MAX_IDX_YIELDER);
 
     switch (property) {
 
@@ -517,7 +517,7 @@ DECLARE_NATIVE(yielder)
         body,  // relativized and put in Details array at IDX_YIELDER_BODY
         SYM_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
         &Yielder_Dispatcher,
-        IDX_YIELDER_MAX  // details array capacity
+        MAX_IDX_YIELDER  // details array capacity
     );
 
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));

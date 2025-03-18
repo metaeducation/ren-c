@@ -66,7 +66,7 @@
 enum {
     IDX_ENCLOSER_OUTER = 1,  // ACTION! that gets control of inner's FRAME!
     /* IDX_ENCLOSER_INNER, */  // Inner function implicit (Details rootvar)
-    IDX_ENCLOSER_MAX
+    MAX_IDX_ENCLOSER = IDX_ENCLOSER_OUTER
 };
 
 
@@ -118,7 +118,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_ENCLOSER_MAX);
+    assert(Details_Max(details) == MAX_IDX_ENCLOSER);
 
     Element* inner = Phase_Archetype(details);
     assert(Is_Frame(inner));  // same args as f
@@ -186,7 +186,7 @@ bool Encloser_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Encloser_Dispatcher);
-    assert(Details_Max(details) == IDX_ENCLOSER_MAX);
+    assert(Details_Max(details) == MAX_IDX_ENCLOSER);
 
     switch (property) {
       case SYM_RETURN_OF: {
@@ -232,7 +232,7 @@ DECLARE_NATIVE(enclose)
         DETAILS_MASK_NONE,
         inner,  // same interface as inner [1]
         &Encloser_Dispatcher,
-        IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
+        MAX_IDX_ENCLOSER  // details array capacity => [inner, outer]
     );
 
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);

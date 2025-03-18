@@ -79,7 +79,7 @@
 
 enum {
     IDX_ARROW_BODY = 1,  // note this doesn't use IDX_INTERPRETED_BODY
-    IDX_ARROW_MAX
+    MAX_IDX_ARROW = IDX_ARROW_BODY
 };
 
 
@@ -93,7 +93,7 @@ Bounce Arrow_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == IDX_ARROW_MAX);
+    assert(Details_Max(details) == MAX_IDX_ARROW);
 
     const Element* block = cast(Element*, Details_At(details, IDX_ARROW_BODY));
     assert(Is_Block(block));
@@ -123,7 +123,7 @@ bool Arrow_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Arrow_Dispatcher);
-    assert(Details_Max(details) == IDX_ARROW_MAX);
+    assert(Details_Max(details) == MAX_IDX_ARROW);
 
     switch (property) {
       case SYM_RETURN_OF:
@@ -265,7 +265,7 @@ DECLARE_NATIVE(arrow)
         DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Lambda_Dispatcher,
-        IDX_ARROW_MAX
+        MAX_IDX_ARROW
     );
 
     assert(Misc_Phase_Adjunct(details) == nullptr);

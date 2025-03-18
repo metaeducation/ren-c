@@ -2966,7 +2966,7 @@ bool Api_Function_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Api_Function_Dispatcher);
-    assert(Details_Max(details) == IDX_API_ACTION_MAX);
+    assert(Details_Max(details) == MAX_IDX_API_ACTION);
 
     switch (property) {
       case SYM_RETURN_OF: {
@@ -3053,7 +3053,7 @@ RebolValue* API_rebFunctionFlipped(
             DETAILS_FLAG_API_CONTINUATIONS_OK,
         Phase_Archetype(paramlist),
         &Api_Function_Dispatcher,
-        IDX_API_ACTION_MAX
+        MAX_IDX_API_ACTION
     );
 
     Init_Handle_Cfunc(

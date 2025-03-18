@@ -38,7 +38,7 @@
 
 enum {
     IDX_MACRO_BODY = IDX_INTERPRETED_BODY,
-    IDX_MACRO_MAX
+    MAX_IDX_MACRO = IDX_MACRO_BODY
 };
 
 
@@ -160,7 +160,7 @@ bool Macro_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Macro_Dispatcher);
-    assert(Details_Max(details) == IDX_MACRO_MAX);
+    assert(Details_Max(details) == MAX_IDX_MACRO);
 
     switch (property) {
       case SYM_RETURN_OF: {
@@ -199,7 +199,7 @@ DECLARE_NATIVE(macro)
         body,
         SYM_RETURN,
         &Macro_Dispatcher,
-        IDX_MACRO_MAX  // details capacity, just body slot (and archetype)
+        MAX_IDX_MACRO  // details capacity, just body slot (and archetype)
     );
 
     return Init_Action(OUT, details, ANONYMOUS, UNBOUND);

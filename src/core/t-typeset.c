@@ -321,7 +321,7 @@ void Set_Parameter_Spec(
                         continue;
                     }
 
-                    assert(Details_Max(details) == IDX_TYPECHECKER_MAX);
+                    assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
                     Value* index = Details_At(
                         details, IDX_TYPECHECKER_TYPESET_BYTE

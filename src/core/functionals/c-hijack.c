@@ -83,7 +83,7 @@
 
 enum {
     IDX_HIJACKER_FRAME = 1,  // The action to run in lieu of the original one
-    IDX_HIJACKER_MAX
+    MAX_IDX_HIJACKER = IDX_HIJACKER_FRAME
 };
 
 
@@ -253,7 +253,7 @@ bool Hijacker_Details_Querier(
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Hijacker_Dispatcher);
-    assert(Details_Max(details) == IDX_HIJACKER_MAX);
+    assert(Details_Max(details) == MAX_IDX_HIJACKER);
 
     Value* hijacker = Details_At(details, IDX_HIJACKER_FRAME);
 
@@ -322,8 +322,8 @@ DECLARE_NATIVE(hijack)
             ? &Unimplemented_Dispatcher
             : &Hijacker_Dispatcher,
         hijack_void
-            ? 1  // no data used (stub is still dynamic)
-            : IDX_HIJACKER_MAX  // tried just archetype, it was messed up [2]
+            ? 0  // no data used (stub is still dynamic)
+            : MAX_IDX_HIJACKER  // tried just archetype, it was messed up [2]
     );
 
     if (not hijack_void)
