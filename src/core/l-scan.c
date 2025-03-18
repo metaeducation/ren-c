@@ -108,8 +108,8 @@ INLINE bool Scan_Mode_Matches(Level* L, Byte mode) {
 }
 
 INLINE Sigil Sigil_From_Token(Token t) {
-    assert(t < u_cast(int, SIGIL_MAX));
     assert(t != u_cast(int, SIGIL_0));
+    assert(t <= u_cast(int, MAX_SIGIL));
     return u_cast(Sigil, t);
 }
 
