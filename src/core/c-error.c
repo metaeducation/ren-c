@@ -1082,8 +1082,8 @@ Error* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 //
 Error* Error_Unexpected_Type(Kind expected, Kind actual)
 {
-    assert(expected < REB_MAX);
-    assert(actual < REB_MAX);
+    assert(expected <= REB_MAX);
+    assert(actual <= REB_MAX);
 
     return Error_Expect_Val_Raw(
         Datatype_From_Kind(expected),

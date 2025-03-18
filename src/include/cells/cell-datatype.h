@@ -56,7 +56,7 @@
 
 INLINE bool IS_KIND_SYM(SymId id) {
     assert(id != SYM_0);
-    return u_cast(SymId16, id) < u_cast(SymId16, REB_MAX);
+    return u_cast(SymId16, id) <= u_cast(SymId16, REB_MAX);
 }
 
 INLINE Kind KIND_FROM_SYM(SymId s) {
@@ -97,7 +97,7 @@ INLINE Value* Init_Builtin_Datatype_Untracked(
     Init(Element) out,
     Kind kind
 ){
-    assert(kind < REB_MAX);
+    assert(kind <= REB_MAX);
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
 
     Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, kind)));

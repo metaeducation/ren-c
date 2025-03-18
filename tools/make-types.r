@@ -222,7 +222,7 @@ e-types: make-emitter "Datatype Definitions" (
 e-types/emit [--{
     /* Tables generated from %types.r for builtin typesets */
     extern TypesetFlags const g_typesets[];  // up to 255 allowed
-    extern uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT];
+    extern uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT + 1];
 }--]
 e-types/emit newline
 
@@ -462,7 +462,7 @@ for-each-datatype 't [  ; fundamentals
     index: me + 1
 ]
 
-max-heart-index: index
+reb-max-heart: index - 1
 
 ; Emit the pseudotype for QUASIFORM!
 (
@@ -546,6 +546,8 @@ for-each-datatype 't [  ; now generate bytes for antiforms
     index: me + 1
 ]
 
+reb-max: index - 1
+
 ; antiform range check (core uses Is_Antiform() which just checks heart byte)
 (
     e-typeset-bytes/emit [no-tildes -{
@@ -596,6 +598,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
     index: index + 1
 )
 
+
 e-typesets/emit [--{
     /*
      * Builtin "typesets" use either ranges or sparse bits to answer whether
@@ -616,7 +619,7 @@ e-typesets/emit [--{
      * to 31 of those TYPESET_FLAG_XXX flags in this model (avoids dependency
      * on 64-bit integers, which we are attempting to excise from the system).
      */
-    uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT] = {
+    uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT + 1] = {
         /* 0 - <reserved> */  0,
         $(Memberships),
     };
@@ -654,8 +657,7 @@ e-hearts/emit [rebs --{
         enum HeartKindEnum {
             REB_0 = 0,  /* reserved */
             $[Fundamentals],
-            $[Pseudotypes],
-            REB_MAX
+            $(Pseudotypes),
         };
     #else
         enum HeartEnum {
@@ -668,16 +670,16 @@ e-hearts/emit [rebs --{
             /* KIND_XXX placeholders for values in range of heart byte */
             $[Pseudotype-Kinds],
             /* REB_XXX pseudotypes for vlaues out of range of heart byte */
-            $[Pseudotypes],
-            REB_MAX
+            $(Pseudotypes),
         };
     #endif
 
-    #define REB_MAX_HEART  $<max-heart-index>
-    #define REB_MAX_ELEMENT  $<first-antiform-index>
+    #define REB_MAX $<reb-max>
+    #define REB_MAX_HEART  $<reb-max-heart>
+    #define REB_MAX_ELEMENT  $<first-antiform-index - 1>
 
-    STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
-    STATIC_ASSERT(REB_MAX < 256);  /* Stored in bytes */
+    STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART) + 1);
+    STATIC_ASSERT(REB_MAX <= 256);  /* Stored in bytes */
 
     /*
      * SINGLEHEART OPTIMIZED SEQUENCE DETECTION

@@ -81,7 +81,7 @@
         Kind (enum KindEnum kind) : byte (kind) {}
         explicit Kind (Byte byte) : byte {byte} {}
         explicit Kind (SymId id) {
-            assert(cast(SymId16, id) < REB_MAX);
+            assert(cast(SymId16, id) <= REB_MAX);
             byte = id;
         }
 

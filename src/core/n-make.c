@@ -271,8 +271,8 @@ DECLARE_NATIVE(to)
     INCLUDE_PARAMS_OF_TO;
 
     Element* e = Element_ARG(element);
-    Kind as = VAL_TYPE_KIND(ARG(type));
-    if (as >= REB_MAX_HEART)
+    Kind to = VAL_TYPE_KIND(ARG(type));
+    if (to > REB_MAX_HEART)
         return FAIL("TO can't produce quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS
@@ -310,7 +310,7 @@ DECLARE_NATIVE(as)
 
     Element* e = Element_ARG(element);
     Kind as = VAL_TYPE_KIND(ARG(type));
-    if (as >= REB_MAX_HEART)
+    if (as > REB_MAX_HEART)
         return FAIL("AS can't alias to quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS

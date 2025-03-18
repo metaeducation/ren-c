@@ -327,7 +327,7 @@ Bounce Stepper_Executor(Level* L)
     /* assert(Not_Level_At_End(L)); */  // edge case with rebValue("") [1]
     if (Is_Level_At_End(L)) {
         Init_Void(OUT);
-        STATE = REB_MAX;  // can't leave as STATE_0
+        STATE = REB_BLANK;  // can't leave as STATE_0
         goto finished;
     }
 

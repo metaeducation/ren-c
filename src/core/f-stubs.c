@@ -212,9 +212,9 @@ REBI64 Int64s(const Value* val, REBINT sign)
 //
 const Element* Datatype_From_Kind(Kind kind)
 {
-    assert(kind < REB_MAX);
+    assert(kind <= REB_MAX);
     Offset n = cast(Offset, kind);
-    SymId datatype_sym = cast(SymId, REB_MAX + (n - 1));
+    SymId datatype_sym = cast(SymId, REB_MAX + n);
     const Value* type = Lib_Var(datatype_sym);  // succeeds
     assert(Is_Type_Block(type));
     return c_cast(Element*, type);

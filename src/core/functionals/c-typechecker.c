@@ -775,7 +775,7 @@ Value* Init_Typechecker(Init(Value) out, const Element* types) {
         Kind kind = VAL_TYPE_KIND(types);
         Offset n = cast(Offset, kind);
 
-        SymId constraint_sym = cast(SymId, REB_MAX + (n - 1));
+        SymId constraint_sym = cast(SymId, REB_MAX + n);
         return Copy_Cell(out, Lib_Var(constraint_sym));
     }
 

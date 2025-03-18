@@ -34,14 +34,14 @@
 //
 Source* Startup_Datatypes(Array* boot_typespecs)
 {
-    if (Array_Len(boot_typespecs) != REB_MAX - 1)  // exclude REB_0
+    if (Array_Len(boot_typespecs) != REB_MAX)  // exclude REB_0
         panic (boot_typespecs);
 
-    Source* catalog = Make_Source(REB_MAX - 1);
+    Source* catalog = Make_Source(REB_MAX);
 
     REBINT n = 1;
 
-    for (; n < REB_MAX; ++n) {
+    for (; n <= REB_MAX; ++n) {
         Kind kind = cast(Kind, n);
 
         // Many places in the system want to be able to just off-the-cuff
@@ -50,7 +50,7 @@ Source* Startup_Datatypes(Array* boot_typespecs)
         //
         // Things like INTEGER! are defined to be &[INTEGER]
         //
-        SymId datatype_sym = cast(SymId, REB_MAX + n - 1);
+        SymId datatype_sym = cast(SymId, REB_MAX + n);
         Element* datatype = cast(Element*, Sink_Lib_Var(datatype_sym));
         Protect_Cell(Init_Builtin_Datatype(datatype, kind));
         assert(datatype == Datatype_From_Kind(kind));
