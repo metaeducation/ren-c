@@ -48,14 +48,12 @@
 
 #include "tmp-constants.h" // need the extern definitions
 
-const char Str_REBOL[] = "REBOL";
-
 // A panic() indicates a serious malfunction, and should not make use of
 // Rebol-structured error message delivery in the release build.
 
-const char Str_Panic_Title[] = "PANIC! (Internal Error)";
+const char g_panic_title[] = "PANIC! (Internal Error)";
 
-const char Str_Panic_Directions[] = {
+const char g_panic_directions[] = {
     "If you need to file a bug in the issue tracker, please give thorough\n"
     "details on how to reproduce the problem:\n"
     "\n"
@@ -64,38 +62,15 @@ const char Str_Panic_Directions[] = {
     "Include the following information in the report:\n\n"
 };
 
-const char * Hex_Digits = "0123456789ABCDEF";
-
-const char * const Esc_Names[] = {
-    // Must match enum REBOL_Esc_Codes!
-    "line",
-    "tab",
-    "page",
-    "escape",
-    "esc",
-    "back",
-    "del",
-    "null"
-};
-
-const unsigned char Esc_Codes[] = {
-    // Must match enum REBOL_Esc_Codes!
-    10,     // line
-    9,      // tab
-    12,     // page
-    27,     // escape
-    27,     // esc
-    8,      // back
-    127,    // del
-    0       // null
-};
+const char* g_hex_digits = "0123456789ABCDEF";
 
 // Zen Point on naming cues: was "Month_Lengths", but said 29 for Feb! --@HF
-const unsigned char Month_Max_Days[12] = {
+const unsigned char g_month_max_days[12] = {
     31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-const char * const Month_Names[12] = {
+
+const char * const g_month_names[12] = {
     "January", "February", "March", "April", "May", "June", "July", "August",
     "September", "October", "November", "December"
 };
@@ -103,7 +78,7 @@ const char * const Month_Names[12] = {
 
 // Used by scanner. Keep in sync with TokenEnum in %scan.h file!
 //
-const char * const Token_Names[] = {
+const char * const g_token_names[] = {
     "!token-0!",
     "caret",
     "ampersand",

@@ -618,7 +618,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
             return nullptr;
 
         for (num = 0; num != 12; ++num) {
-            const Byte* month_name = cb_cast(Month_Names[num]);
+            const Byte* month_name = cb_cast(g_month_names[num]);
             if (0 == Compare_Ascii_Uncased(month_name, cp, size))
                 break;
         }
@@ -667,7 +667,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
         }
     }
 
-    if (year > MAX_YEAR || day < 1 || day > Month_Max_Days[month-1])
+    if (year > MAX_YEAR || day < 1 || day > g_month_max_days[month-1])
         return nullptr;
 
     // Check February for leap year or century:

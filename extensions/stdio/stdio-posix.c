@@ -134,8 +134,8 @@ void Write_IO(const Value* data, REBLEN len)
             const Byte* bp = Cell_Blob_At(data);
             for (; bp != tail; ++bp) {
                 char digits[2];
-                digits[0] = Hex_Digits[*bp / 16];
-                digits[1] = Hex_Digits[*bp % 16];
+                digits[0] = g_hex_digits[*bp / 16];
+                digits[1] = g_hex_digits[*bp % 16];
                 long total = write(STDOUT_FILENO, digits, 2);
                 if (total < 0) {
                     ok = false;

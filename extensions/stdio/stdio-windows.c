@@ -279,8 +279,8 @@ void Write_IO(const Value* data, REBLEN len)
             const Byte* bp = Cell_Blob_At(data);
             for (; bp != tail; ++bp) {
                 WCHAR digits[2];
-                digits[0] = Hex_Digits[*bp / 16];
-                digits[1] = Hex_Digits[*bp % 16];
+                digits[0] = g_hex_digits[*bp / 16];
+                digits[1] = g_hex_digits[*bp % 16];
                 DWORD total_wide_chars;
                 ok = WriteConsoleW(
                     Stdout_Handle,

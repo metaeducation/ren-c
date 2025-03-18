@@ -46,7 +46,7 @@ typedef enum SigilEnum Sigil;
 
 
 //
-//  Tokens returned by the scanner.  Keep in sync with Token_Names[].
+//  Tokens returned by the scanner.  Keep in sync with g_token_names[].
 //
 // There is an optimization in place where the tokens for sigils align with
 // the sigil value, making it easy to get a sigil from a token.
@@ -399,7 +399,7 @@ INLINE bool Ascii_Char_Needs_Percent_Encoding(Byte b) {
 }
 
 
-enum EscapeCodeEnum {  // Must match Esc_Names[]!
+enum EscapeCodeEnum {  // Must match g_escape_info[]!
     ESC_LINE,
     ESC_TAB,
     ESC_PAGE,
@@ -408,8 +408,15 @@ enum EscapeCodeEnum {  // Must match Esc_Names[]!
     ESC_BACK,
     ESC_DEL,
     ESC_NULL,
-    ESC_MAX
+    MAX_ESC = ESC_NULL
 };
+
+typedef struct {
+    unsigned char byte;
+    const char* name;
+} EscapeInfo;
+
+extern const EscapeInfo g_escape_info[MAX_ESC + 1];
 
 
 #define ANY_CR_LF_END(c) ((c) == '\0' or (c) == CR or (c) == LF)

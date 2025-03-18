@@ -309,7 +309,7 @@ for-each 'line read:lines %a-constants.c [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse3:match line [to -{const }- constd: across to -{ =}- to <end>] [
+        parse3:match line [constd: across to -{ =}- to <end>] [
             e-strings/emit [constd --{
                 extern $<Constd>;
             }--]

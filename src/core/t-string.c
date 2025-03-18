@@ -33,14 +33,14 @@
 
 #define MAX_QUOTED_STR  50  // max length of "string" before going to { }
 
-Byte* Char_Escapes;
+Byte* g_char_escapes;
 #define MAX_ESC_CHAR (0x60-1) // size of escape table
-#define IS_CHR_ESC(c) ((c) <= MAX_ESC_CHAR and Char_Escapes[c])
+#define IS_CHR_ESC(c) ((c) <= MAX_ESC_CHAR and g_char_escapes[c])
 
-Byte* URL_Escapes;
+Byte* g_url_escapes;
 #define MAX_URL_CHAR (0x80-1)
-#define IS_URL_ESC(c)  ((c) <= MAX_URL_CHAR and (URL_Escapes[c] & ESC_URL))
-#define IS_FILE_ESC(c) ((c) <= MAX_URL_CHAR and (URL_Escapes[c] & ESC_FILE))
+#define IS_URL_ESC(c)  ((c) <= MAX_URL_CHAR and (g_url_escapes[c] & ESC_URL))
+#define IS_FILE_ESC(c) ((c) <= MAX_URL_CHAR and (g_url_escapes[c] & ESC_FILE))
 
 enum {
     ESC_URL = 1,
@@ -366,7 +366,7 @@ Byte* Form_Uni_Hex(Byte* out, REBLEN n)
     Byte* bp = &buffer[10];
 
     while (n != 0) {
-        *(--bp) = Hex_Digits[n & 0xf];
+        *(--bp) = g_hex_digits[n & 0xf];
         n >>= 4;
     }
 
@@ -442,7 +442,7 @@ void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
     }
 
     Append_Codepoint(buf, '^');
-    Append_Codepoint(buf, Char_Escapes[c]);
+    Append_Codepoint(buf, g_char_escapes[c]);
 }
 
 
@@ -1363,27 +1363,27 @@ DECLARE_NATIVE(decode_utf_8)
 //
 void Startup_String(void)
 {
-    Char_Escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_ESC_CHAR + 1);
+    g_char_escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_ESC_CHAR + 1);
 
-    Byte* cp = Char_Escapes;
+    Byte* cp = g_char_escapes;
     Byte c;
     for (c = '@'; c <= '_'; c++)
         *cp++ = c;
 
-    Char_Escapes[cast(Byte, '\t')] = '-'; // tab
-    Char_Escapes[cast(Byte, '\n')] = '/'; // line feed
-    Char_Escapes[cast(Byte, '"')] = '"';
-    Char_Escapes[cast(Byte, '^')] = '^';
+    g_char_escapes[cast(Byte, '\t')] = '-'; // tab
+    g_char_escapes[cast(Byte, '\n')] = '/'; // line feed
+    g_char_escapes[cast(Byte, '"')] = '"';
+    g_char_escapes[cast(Byte, '^')] = '^';
 
-    URL_Escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_URL_CHAR + 1);
+    g_url_escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_URL_CHAR + 1);
 
     for (c = 0; c <= ' '; c++)
-        URL_Escapes[c] = ESC_URL | ESC_FILE;
+        g_url_escapes[c] = ESC_URL | ESC_FILE;
 
     const Byte* dc = cb_cast(";%\"()[]{}<>");
 
     for (c = strsize(dc); c > 0; c--)
-        URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+        g_url_escapes[*dc++] = ESC_URL | ESC_FILE;
 }
 
 
@@ -1392,6 +1392,6 @@ void Startup_String(void)
 //
 void Shutdown_String(void)
 {
-    Free_Memory_N(Byte, MAX_ESC_CHAR + 1, Char_Escapes);
-    Free_Memory_N(Byte, MAX_URL_CHAR + 1, URL_Escapes);
+    Free_Memory_N(Byte, MAX_ESC_CHAR + 1, g_char_escapes);
+    Free_Memory_N(Byte, MAX_URL_CHAR + 1, g_url_escapes);
 }

@@ -61,7 +61,7 @@ void Form_Hex_Pad(
     len = MIN(len, MAX_HEX_LEN);
     *bp-- = 0;
     while (val != sgn && len > 0) {
-        *bp-- = Hex_Digits[val & 0xf];
+        *bp-- = g_hex_digits[val & 0xf];
         val >>= 4;
         len--;
     }
@@ -81,8 +81,8 @@ void Form_Hex_Pad(
 //
 void Form_Hex2(Molder* mo, Byte b)
 {
-    Append_Codepoint(mo->string, Hex_Digits[(b & 0xf0) >> 4]);
-    Append_Codepoint(mo->string, Hex_Digits[b & 0xf]);
+    Append_Codepoint(mo->string, g_hex_digits[(b & 0xf0) >> 4]);
+    Append_Codepoint(mo->string, g_hex_digits[b & 0xf]);
 }
 
 
@@ -94,8 +94,8 @@ void Form_Hex2(Molder* mo, Byte b)
 void Form_Hex_Esc(Molder* mo, Byte b)
 {
     Append_Codepoint(mo->string, '%');
-    Append_Codepoint(mo->string, Hex_Digits[(b & 0xf0) >> 4]);
-    Append_Codepoint(mo->string, Hex_Digits[b & 0xf]);
+    Append_Codepoint(mo->string, g_hex_digits[(b & 0xf0) >> 4]);
+    Append_Codepoint(mo->string, g_hex_digits[b & 0xf]);
 }
 
 
@@ -113,14 +113,14 @@ void Form_RGBA(Molder* mo, const Byte* dp)
 
     Byte* bp = Binary_At(mo->string, used_old);  // potentially new buffer
 
-    bp[0] = Hex_Digits[(dp[0] >> 4) & 0xf];
-    bp[1] = Hex_Digits[dp[0] & 0xf];
-    bp[2] = Hex_Digits[(dp[1] >> 4) & 0xf];
-    bp[3] = Hex_Digits[dp[1] & 0xf];
-    bp[4] = Hex_Digits[(dp[2] >> 4) & 0xf];
-    bp[5] = Hex_Digits[dp[2] & 0xf];
-    bp[6] = Hex_Digits[(dp[3] >> 4) & 0xf];
-    bp[7] = Hex_Digits[dp[3] & 0xf];
+    bp[0] = g_hex_digits[(dp[0] >> 4) & 0xf];
+    bp[1] = g_hex_digits[dp[0] & 0xf];
+    bp[2] = g_hex_digits[(dp[1] >> 4) & 0xf];
+    bp[3] = g_hex_digits[dp[1] & 0xf];
+    bp[4] = g_hex_digits[(dp[2] >> 4) & 0xf];
+    bp[5] = g_hex_digits[dp[2] & 0xf];
+    bp[6] = g_hex_digits[(dp[3] >> 4) & 0xf];
+    bp[7] = g_hex_digits[dp[3] & 0xf];
     bp[8] = '\0';
 
     Term_String_Len_Size(mo->string, len_old + 8, used_old + 8);

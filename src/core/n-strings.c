@@ -870,8 +870,8 @@ DECLARE_NATIVE(enhex)
         REBLEN n;
         for (n = 0; n != encoded_size; ++n) {  // use uppercase hex digits [2]
             Append_Codepoint(mo->string, '%');
-            Append_Codepoint(mo->string, Hex_Digits[(encoded[n] & 0xf0) >> 4]);
-            Append_Codepoint(mo->string, Hex_Digits[encoded[n] & 0xf]);
+            Append_Codepoint(mo->string, g_hex_digits[(encoded[n] & 0xf0) >> 4]);
+            Append_Codepoint(mo->string, g_hex_digits[encoded[n] & 0xf]);
         }
     }
 

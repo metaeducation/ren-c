@@ -239,7 +239,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     fflush(stdout);
   #endif
 
-    strncat(buf, Str_Panic_Directions, PANIC_BUF_SIZE - 0);
+    strncat(buf, g_panic_directions, PANIC_BUF_SIZE - 0);
     strncat(buf, "\n", PANIC_BUF_SIZE - strsize(buf));
 
     if (not p) {
@@ -310,11 +310,11 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     }
 
   #if DEBUG_FANCY_PANIC
-    Printf_Stderr("%s\n", Str_Panic_Title);
+    Printf_Stderr("%s\n", g_panic_title);
     Printf_Stderr("%s\n", buf);
   #else
     // How to report panic conditions in builds with no printf() linked?
-    UNUSED(Str_Panic_Title);
+    UNUSED(g_panic_title);
     UNUSED(buf);
   #endif
 

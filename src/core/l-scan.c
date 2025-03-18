@@ -52,6 +52,18 @@
 #include "sys-core.h"
 
 
+const EscapeInfo g_escape_info[MAX_ESC + 1] = {  // must match EscapeCodeEnum
+    {10, "line"},
+    {9, "tab"},
+    {12, "page"},
+    {27, "escape"},
+    {27, "esc"},
+    {8, "back"},
+    {127, "del"},
+    {0, "null"}
+};
+
+
 // Prefer these to XXX_Executor_Flag(SCAN) in this file (much faster!)
 
 #define Get_Scan_Executor_Flag(L,name) \
@@ -538,11 +550,13 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
         }
 
         // Check for identifiers
-        for (c = 0; c < ESC_MAX; c++) {
-            cp = maybe Try_Diff_Bytes_Uncased(bp, cb_cast(Esc_Names[c]));
+        for (c = 0; c <= MAX_ESC; c++) {
+            cp = maybe Try_Diff_Bytes_Uncased(
+                bp, cb_cast(g_escape_info[c].name)
+            );
             if (cp and *cp == ')') {
                 bp = cp + 1;
-                *out = Esc_Codes[c];
+                *out = g_escape_info[c].byte;
                 return bp;
             }
         }
@@ -878,7 +892,7 @@ static Error* Error_Syntax(ScanState* S, Token token) {
     assert(S->end >= S->begin);  // can get out of sync [1]
 
     DECLARE_ELEMENT (token_name);
-    Init_Text(token_name, Make_String_UTF8(Token_Names[token]));
+    Init_Text(token_name, Make_String_UTF8(g_token_names[token]));
 
     DECLARE_ELEMENT (token_text);
     Init_Text(
@@ -2978,7 +2992,7 @@ Source* Scan_UTF8_Managed(
 void Startup_Scanner(void)
 {
     REBLEN n = 0;
-    while (Token_Names[n])
+    while (g_token_names[n])
         ++n;
     assert(cast(Token, n) == MAX_TOKEN + 1);
 

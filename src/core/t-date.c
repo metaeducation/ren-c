@@ -164,7 +164,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 
     bp = Form_Int(bp, VAL_DAY(v));
     *bp++ = dash;
-    memcpy(bp, Month_Names[VAL_MONTH(v) - 1], 3);
+    memcpy(bp, g_month_names[VAL_MONTH(v) - 1], 3);
     bp += 3;
     *bp++ = dash;
     bp = Form_Int_Pad(bp, VAL_YEAR(v), 6, -4, '0');
@@ -210,7 +210,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 static REBLEN Month_Length(REBLEN month, REBLEN year)
 {
     if (month != 1)
-        return Month_Max_Days[month];
+        return g_month_max_days[month];
 
     return (
         ((year % 4) == 0) and  // divisible by four is a leap year
@@ -604,7 +604,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
     if (month < 1 or month > 12)
         goto bad_make;
 
-    if (year > MAX_YEAR or day < 1 or day > Month_Max_Days[month-1])
+    if (year > MAX_YEAR or day < 1 or day > g_month_max_days[month-1])
         goto bad_make;
 
     // Check February for leap year or century:
