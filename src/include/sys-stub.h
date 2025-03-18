@@ -131,9 +131,9 @@ INLINE Flavor Flavor_From_Flags(Flags flags)
 
 INLINE Size Wide_For_Flavor(Flavor flavor) {
     assert(flavor != FLAVOR_0);
-    if (flavor <= FLAVOR_MAX_HOLDS_CELLS)
+    if (flavor <= MAX_FLAVOR_HOLDS_CELLS)
         return sizeof(Cell);
-    if (flavor >= FLAVOR_MIN_BYTESIZE)
+    if (flavor >= MIN_FLAVOR_BYTESIZE)
         return 1;
     if (flavor == FLAVOR_BOOKMARKLIST)
         return sizeof(Bookmark);
@@ -148,11 +148,11 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
     Wide_For_Flavor(Stub_Flavor(f))
 
 
-#define Stub_Holds_Cells(f)         (Stub_Flavor(f) <= FLAVOR_MAX_HOLDS_CELLS)
+#define Stub_Holds_Cells(f)         (Stub_Flavor(f) <= MAX_FLAVOR_HOLDS_CELLS)
 
 #define Is_Stub_Source(f)           (Stub_Flavor(f) == FLAVOR_SOURCE)
 
-#define Is_Stub_String(f)           (Stub_Flavor(f) >= FLAVOR_MIN_STRING)
+#define Is_Stub_String(f)           (Stub_Flavor(f) >= MIN_FLAVOR_STRING)
 #define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)
 #define Is_Stub_Non_Symbol(f)       (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
 #define Is_Stub_Stump(f)            (Stub_Flavor(f) == FLAVOR_STUMP)
@@ -293,7 +293,7 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
 //
 INLINE Stub* Make_Untracked_Stub(Flags flags) {
     Flavor flavor = Flavor_From_Flags(flags);
-    assert(flavor != FLAVOR_0 and flavor < FLAVOR_MAX);
+    assert(flavor != FLAVOR_0 and flavor <= MAX_FLAVOR);
     UNUSED(flavor);
     assert(not (flags & (STUB_FLAG_DYNAMIC | FLEX_FLAG_FIXED_SIZE)));
     Stub* s = Prep_Stub(flags | FLEX_FLAG_FIXED_SIZE, Alloc_Stub());

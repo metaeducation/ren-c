@@ -480,7 +480,7 @@ void Assert_Flex_Basics_Core(const Flex* f)
         panic (f);
 
     assert(FLAVOR_BYTE(f) != FLAVOR_0);
-    assert(FLAVOR_BYTE(f) < FLAVOR_MAX);
+    assert(FLAVOR_BYTE(f) <= MAX_FLAVOR);
 
     assert(Flex_Used(f) <= Flex_Rest(f));
 

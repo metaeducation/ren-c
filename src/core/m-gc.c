@@ -392,10 +392,10 @@ static void Propagate_All_GC_Marks(void)
         for (; v != tail; ++v) {
           #if RUNTIME_CHECKS
             Flavor flavor = Stub_Flavor(a);
-            assert(flavor <= FLAVOR_MAX_HOLDS_CELLS);
+            assert(flavor <= MAX_FLAVOR_HOLDS_CELLS);
 
             if (QUOTE_BYTE(v) == ANTIFORM_0) {
-                if (flavor < FLAVOR_MIN_ANTIFORMS_OK)
+                if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                     panic (v);  // antiforms not legal in many array types
 
                 if (Is_Antiform_Unstable(cast(Atom*, v)))  // always illegal

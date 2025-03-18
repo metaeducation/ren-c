@@ -86,7 +86,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_SEA,
 
-    FLAVOR_MIN_ANTIFORMS_OK,  //=//// BELOW HERE, ARRAYS CAN HOLD ANTIFORMS
+    MIN_FLAVOR_ANTIFORMS_OK,  //=//// BELOW HERE, ARRAYS CAN HOLD ANTIFORMS
 
     // The data stack is implemented as an array but has its own special
     // marking routine.  However, antiforms are legal in the data stack... but
@@ -96,7 +96,7 @@ enum StubFlavorEnum {
     // (This is also used by "PLUG" cells which preserve the datastack, along
     // with some additional values.)
     //
-    FLAVOR_DATASTACK = FLAVOR_MIN_ANTIFORMS_OK,
+    FLAVOR_DATASTACK = MIN_FLAVOR_ANTIFORMS_OK,
 
     // This indicates this Flex represents the "varlist" of a context (which
     // is interchangeable with the identity of the varlist itself).  See
@@ -127,7 +127,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_PATCH,
 
-    FLAVOR_MAX_HOLDS_CELLS = FLAVOR_PATCH,  //=//// ^-- WIDTH IS sizeof(Cell)
+    MAX_FLAVOR_HOLDS_CELLS = FLAVOR_PATCH,  //=//// ^-- WIDTH IS sizeof(Cell)
 
     // For the moment all Flexes that don't store Cells or or byte data of
     // WIDTH=1 store items of size pointer.
@@ -143,13 +143,13 @@ enum StubFlavorEnum {
     FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(Bookmark)
     FLAVOR_DISPATCHERTABLE,  // also outlier, sizeof(DispatcherAndQuerier)
 
-    FLAVOR_MIN_BYTESIZE,  //=/////////////////// BELOW THIS LINE HAS WIDTH = 1
+    MIN_FLAVOR_BYTESIZE,  //=/////////////////// BELOW THIS LINE HAS WIDTH = 1
 
-    FLAVOR_BINARY = FLAVOR_MIN_BYTESIZE,
+    FLAVOR_BINARY = MIN_FLAVOR_BYTESIZE,
 
-    FLAVOR_MIN_STRING,  //=////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
+    MIN_FLAVOR_STRING,  //=////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
 
-    FLAVOR_NONSYMBOL = FLAVOR_MIN_STRING,
+    FLAVOR_NONSYMBOL = MIN_FLAVOR_STRING,
 
     // While the content format is UTF-8 for both ANY-STRING? and ANY-WORD?,
     // String.misc and String.link are used differently.  Non-symbols cache
@@ -173,7 +173,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 
-    FLAVOR_MAX
+    MAX_FLAVOR = FLAVOR_THE_GLOBAL_INACCESSIBLE
 };
 
 typedef enum StubFlavorEnum Flavor;

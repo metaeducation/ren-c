@@ -569,7 +569,7 @@ INLINE Flex* Make_Flex_Into(
     REBLEN capacity
 ){
     Flavor flavor = Flavor_From_Flags(flags);
-    assert(flavor != FLAVOR_0 and flavor < FLAVOR_MAX);
+    assert(flavor != FLAVOR_0 and flavor <= MAX_FLAVOR);
 
     size_t wide = Wide_For_Flavor(flavor);
     if (cast(REBU64, capacity) * wide > INT32_MAX)

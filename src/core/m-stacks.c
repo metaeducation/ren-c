@@ -187,7 +187,7 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
         assert(not (src->header.bits & CELL_MASK_PERSIST));  // would copy [1]
         if (Is_Antiform(src)) {  // only ok in some arrays
             Assert_Cell_Stable(src);
-            if (flavor < FLAVOR_MIN_ANTIFORMS_OK)
+            if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                 panic ("Unexpected antiform found on data stack");
         }
 
