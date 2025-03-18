@@ -383,6 +383,8 @@ set '&run-word? refinement3!
 refinement!: get-word!
 /refinement?: get-word?/
 
+chain!: path!  ; works in some places (a:b scans as a PATH! in bootstrap EXE)
+
 char?!: char!  ; modern char is ISSUE! constraint
 logic?!: logic!  ; modern logic is ANTIFORM! constraint
 set-word?!: set-word!  ; modern set-word is CHAIN constraint

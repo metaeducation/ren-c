@@ -14,7 +14,7 @@ REBOL [
         This table is used to make C defines and intialization tables.
 
             name            "description"
-            ~antiform~      "antinotes"
+            ~antiform~      "antinotes"    ; ~antiform~:U means unstable
                             (node flags)
                             [constraints]  ; makes `g_sparse_memberships`
 
@@ -160,18 +160,18 @@ varargs     "evaluator position for variable numbers of arguments"
 <ANY-CONTEXT?>
 
     object      "context of names with values"
-    ~lazy~      "unstable antiform object for lazy evaluation (WIP)"
+    ~lazy~:U    "unstable antiform object for lazy evaluation (WIP)"
                 (node1 node2)
-    #unstable   [any-inert?]
+                [any-inert?]
 
     module      "loadable context of code and data"
                 (node1)
                 [any-inert?]
 
     error       "error context with id, arguments, and stack origin"
-    ~raised~    "trappable error cooperatively returned from a function call"
+    ~raised~:U  "trappable error cooperatively returned from a function call"
                 (node1 node2)
-    #unstable   [any-inert?]
+                [any-inert?]
 
     port        "external series, an I/O channel"
                 (node1 node2)
@@ -299,9 +299,9 @@ varargs     "evaluator position for variable numbers of arguments"
   <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     block       "list of elements that blocks evaluation unless EVAL is used"
-    ~pack~      "multi-return that can be unpacked or decays to first item"
+    ~pack~:U    "multi-return that can be unpacked or decays to first item"
                 (node1)
-    #unstable   [any-series? any-branch? any-plain-value? any-sequencable?]
+                [any-series? any-branch? any-plain-value? any-sequencable?]
 
     meta-block  "block that evaluates to produce a quoted block"
                 (node1)
@@ -378,10 +378,10 @@ varargs     "evaluator position for variable numbers of arguments"
 ; It's an implementation detail which would require inventing another datatype
 ; that was FEED-specific.  Better ideas welcome.
 
-comma       "separator between full evaluations (that is otherwise invisible)"
-~barrier~   "elision state that is discarded by the evaluator"
-            (CELL_MASK_NO_NODES)
-#unstable   [any-unit?]  ; NOT inert
+comma         "separator between full evaluations (otherwise invisible)"
+~barrier~:U   "elision state that is discarded by the evaluator"
+              (CELL_MASK_NO_NODES)
+              [any-unit?]  ; NOT inert
 
 </ANY-BINDABLE?>
 

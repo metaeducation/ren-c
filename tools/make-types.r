@@ -64,7 +64,7 @@ type-table: load %types.r
     name* description*
     antiname* antidescription*
     typesets* heart* cellmask*
-    completed* running* is-unstable* decorated pos
+    completed* running* unstable* decorated pos
     obj
 ][
     obj: construct compose1 [(setify var) ~]  ; make variable
@@ -81,8 +81,14 @@ type-table: load %types.r
         [
             ; quasiform is word in boot
             antiname*: quasiform!, antidescription*: text!
+            (unstable*: 'no)
             |
-            (antiname*: null, antidescription: null)
+            ; unstable is conveyed by ~antiform~:U (path in bootstrap)
+            ahead chain! into [antiname*: quasiform!, ['U | (fail "need U!")]],
+            antidescription*: text!
+            (unstable*: 'yes)
+            |
+            (antiname*: null, antidescription*: null, unstable*: null)
         ][
             ahead group! into [
                 ['CELL_MASK_NO_NODES <end>]
@@ -102,7 +108,6 @@ type-table: load %types.r
                 fail ["Bad node1/node2 spec for" name* "in %types.r"]
             )
         ]
-        [is-unstable*: issue! | (is-unstable*: null)]
         [typesets*: block!]
         (
             name*: to text! name*
@@ -119,11 +124,7 @@ type-table: load %types.r
                 ]
                 antiname: either antiname* [to text! unquasi antiname*] [null]
                 antidescription: antidescription*
-                unstable: switch is-unstable* [
-                    null ['no]
-                    #unstable ['yes]
-                    fail "unstable annotation must be #unstable"
-                ]
+                unstable: unstable*
             ]
             repeat 1 body else [return null]  ; give body BREAK/CONTINUE
         )
@@ -198,9 +199,8 @@ type-table: load %types.r
                     append types* to text! name*
                 ])]
                 text!
-                opt [quasiform! text!]
+                opt [[quasiform! | path!] text!]
                 group!
-                opt issue!
                 block!
                 (heart*: heart* + 1)
             ]]
