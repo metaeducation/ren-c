@@ -183,7 +183,7 @@ enum LexDelimitEnum {
     LEX_DELIMIT_LINEFEED,           // 0A line-feed
     LEX_DELIMIT_RETURN,             // 0D return
 
-    LEX_DELIMIT_MAX_WHITESPACE = LEX_DELIMIT_RETURN,
+    MAX_LEX_DELIMIT_WHITESPACE = LEX_DELIMIT_RETURN,
 
     LEX_DELIMIT_COMMA,              // 2C , - expression barrier
     LEX_DELIMIT_LEFT_PAREN,         // 28 (
@@ -191,7 +191,7 @@ enum LexDelimitEnum {
     LEX_DELIMIT_LEFT_BRACKET,       // 5B [
     LEX_DELIMIT_RIGHT_BRACKET,      // 5D ]
 
-    LEX_DELIMIT_MAX_HARD = LEX_DELIMIT_RIGHT_BRACKET,
+    MAX_LEX_DELIMIT_HARD = LEX_DELIMIT_RIGHT_BRACKET,
     //
     // ^-- As a step toward "Plan -4", the above delimiters are considered to
     // always terminate, e.g. a URL `http://example.com/a)` will not pick up
@@ -208,9 +208,9 @@ enum LexDelimitEnum {
     LEX_DELIMIT_PERIOD,             // 2E . - decimal, tuple, file
     LEX_DELIMIT_TILDE,              // 7E ~ - used only by quasiforms
 
-    LEX_DELIMIT_MAX
+    MAX_LEX_DELIMIT = LEX_DELIMIT_TILDE
 };
-STATIC_ASSERT(LEX_DELIMIT_MAX <= 16);
+STATIC_ASSERT(MAX_LEX_DELIMIT < 16);
 typedef enum LexDelimitEnum LexDelimit;
 
 #define Get_Lex_Delimit(b) \
@@ -238,13 +238,13 @@ STATIC_ASSERT(LEX_DELIMIT == 0 and LEX_DELIMIT_SPACE == 0);
     (0 == Lex_Of(b))  // requires LEX_DELIMIT == 0 and LEX_DELIMIT_SPACE == 0
 
 #define Is_Lex_Whitespace(b) \
-    (Lex_Of(b) <= LEX_DELIMIT_MAX_WHITESPACE)  // requires LEX_DELIMIT == 0
+    (Lex_Of(b) <= MAX_LEX_DELIMIT_WHITESPACE)  // requires LEX_DELIMIT == 0
 
 #define Is_Lex_Not_Delimit(b)           (Lex_Of(b) >= LEX_SPECIAL)
 #define Is_Lex_Word_Or_Number(b)        (Lex_Of(b) >= LEX_WORD)
 
 #define Is_Lex_Delimit_Hard(byte) \
-    (Get_Lex_Delimit(byte) <= LEX_DELIMIT_MAX_HARD)
+    (Get_Lex_Delimit(byte) <= MAX_LEX_DELIMIT_HARD)
 
 //
 //  Special Chars (encoded in the LEX_VALUE field)
@@ -275,9 +275,9 @@ enum LexSpecialEnum {               // The order is important!
 
     LEX_SPECIAL_UTF8_ERROR,  // !!! This wasn't actually used e.g. by UTFE
 
-    LEX_SPECIAL_MAX
+    MAX_LEX_SPECIAL = LEX_SPECIAL_UTF8_ERROR
 };
-STATIC_ASSERT(LEX_SPECIAL_MAX <= 16);
+STATIC_ASSERT(MAX_LEX_SPECIAL < 16);
 typedef enum LexSpecialEnum LexSpecial;
 
 #define Get_Lex_Special(b) \

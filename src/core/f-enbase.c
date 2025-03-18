@@ -198,7 +198,7 @@ static Binary* Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
                 accum = 0;
             }
         }
-        else if (!*cp || lex > LEX_DELIMIT_MAX_WHITESPACE)
+        else if (!*cp || lex > MAX_LEX_DELIMIT_WHITESPACE)
             goto err;
     }
     if (count)
