@@ -344,21 +344,20 @@ ob: make object! boot-sysobj
     prefix
     depth
 ][
-    let items: collect [
-        let n: 1
+    let n: 1
 
+    let items: collect [
         for-each 'field words-of obj [
             keep cscape [prefix field n "${PREFIX}_${FIELD} = $<n>"]
             n: n + 1
         ]
-
-        keep cscape [prefix "${PREFIX}_MAX"]
     ]
 
-    e/emit [prefix items --{
+    e/emit [prefix items n --{
         enum ${PREFIX}_object {
             $(Items),
         };
+        #define MAX_${PREFIX}  $<n - 1>
     }--]
 
     if depth > 1 [

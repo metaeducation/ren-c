@@ -97,7 +97,7 @@ INLINE void FAIL_IF_BAD_PORT(Value* port) {
 
     VarList* ctx = Cell_Varlist(port);
     if (
-        Varlist_Len(ctx) < (STD_PORT_MAX - 1)
+        Varlist_Len(ctx) < MAX_STD_PORT
         or not Is_Object(Varlist_Slot(ctx, STD_PORT_SPEC))
     ){
         fail (Error_Invalid_Port_Raw());
