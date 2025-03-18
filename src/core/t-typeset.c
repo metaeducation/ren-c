@@ -77,8 +77,8 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 void Startup_Type_Predicates(void)
 {
     REBINT id;
-    for (id = SYM_BEGIN_TYPESETS + 1; id != SYM_END_TYPESETS; id += 1) {
-        REBINT typeset_byte = id - SYM_BEGIN_TYPESETS;  // starts at 1
+    for (id = MIN_SYM_TYPESETS; id <= MAX_SYM_TYPESETS; id += 1) {
+        REBINT typeset_byte = id - MIN_SYM_TYPESETS + 1;  // starts at 1
         assert(typeset_byte > 0 and typeset_byte < 256);
 
         Details* details = Make_Typechecker(typeset_byte);

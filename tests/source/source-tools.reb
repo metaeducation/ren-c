@@ -175,7 +175,7 @@ export analyse: context [
             let malloc-found: copy []
 
             let malloc-check: [
-                and identifier "malloc" (
+                ahead identifier "malloc" (
                     append malloc-found try text-line-of position
                 )
             ]
@@ -372,7 +372,7 @@ export analyse: context [
                 [
                     eol count-line
                     | #"^-" (append tabbed line)
-                    | wsp and [line-ending | alt-ending] (
+                    | wsp ahead [line-ending | alt-ending] (
                         append whitespace-at-eol line
                     )
                     | one
@@ -465,8 +465,8 @@ c-parser-extension: context bind c-lexical.grammar bind proto-parser [
 
     last-func-end: null
 
-    lbrace: [and punctuator "{"]
-    rbrace: [and punctuator "}"]
+    lbrace: [ahead punctuator "{"]
+    rbrace: [ahead punctuator "}"]
     braced: [lbrace opt some [braced | not ahead rbrace one] rbrace]
 
     function-spacing-rule: (

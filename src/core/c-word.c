@@ -533,7 +533,7 @@ void Startup_Builtin_Symbols(
 
     Byte* tail = bytes + uncompressed_size;
     Byte* at = bytes;
-    for (SymId16 id = 1; id < ALL_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_BUILTIN; ++id) {
         assert(at < tail);
 
         Size size = *at;  // length prefix byte
@@ -579,7 +579,7 @@ void Shutdown_Builtin_Symbols(void)
 {
     assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));
 
-    for (SymId16 id = 1; id < ALL_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_BUILTIN; ++id) {
         Symbol* canon = &g_symbols.builtin_canons[id];
         Decay_Stub(canon);
     }

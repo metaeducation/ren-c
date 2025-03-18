@@ -210,7 +210,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 //
 INLINE Option(SymId) VAL_CMD(const Cell* v) {
     Option(SymId) sym = Cell_Word_Id(v);
-    if (sym >= SYM_SET and sym <= SYM_END)
+    if (sym >= MIN_SYM_PARSE3 and sym <= MAX_SYM_PARSE3)
         return sym;
     return SYM_0;
 }
@@ -1427,17 +1427,11 @@ DECLARE_NATIVE(subparse)
                 fail (Error_Parse3_Command(L));
             }
 
-            if (cmd > SYM_BREAK)  // R3-Alpha claimed "optimization"
-                goto skip_pre_rule;  // but jump tables are fast, review
+            assert(cmd >= MIN_SYM_PARSE3 and cmd <= MAX_SYM_PARSE3);
+            if (cmd >= MIN_SYM_PARSE3_MATCH)
+                goto skip_pre_rule;
 
             switch (cmd) {
-              case SYM_WHILE:
-                fail (
-                    "Please replace PARSE3's WHILE with OPT SOME -or-"
-                    " OPT FURTHER SOME--it's being reclaimed as arity-2."
-                    " https://forum.rebol.info/t/1540/12"
-                );
-
               case SYM_SOME:
                 assert(
                     (mincount == 1 or mincount == 0)  // could be OPT SOME
@@ -1448,12 +1442,12 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-              case SYM_ANY:
-                fail (
-                    "Please replace PARSE3's ANY with OPT SOME"
-                    " -- it's being reclaimed for a new construct"
-                    " https://forum.rebol.info/t/1540/12"
-                );
+              case SYM_OPT:
+              case SYM_OPTIONAL:
+                P_FLAGS |= PF_OPTIONAL;
+                mincount = 0;
+                FETCH_NEXT_RULE(L);
+                goto pre_rule;
 
               case SYM_REPEAT:
                 //
@@ -1510,22 +1504,6 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-              case SYM_TRY:
-                fail ("Please use OPT or OPTIONAL instead of TRY in PARSE");
-
-              case SYM_OPT:
-              case SYM_OPTIONAL:
-                P_FLAGS |= PF_OPTIONAL;
-                mincount = 0;
-                FETCH_NEXT_RULE(L);
-                goto pre_rule;
-
-              case SYM_COPY:
-                fail ("COPY not supported in PARSE3 (use SET-WORD!+ACROSS)");
-
-              case SYM_SET:
-                fail ("SET not supported in PARSE3 (use SET-WORD!)");
-
               case SYM_LET:
                 FETCH_NEXT_RULE(L);
 
@@ -1575,7 +1553,6 @@ DECLARE_NATIVE(subparse)
                 }
                 goto pre_rule; }
 
-              case SYM_AND_1:  // see TO-C-NAME
               case SYM_AHEAD:
                 P_FLAGS |= PF_AHEAD;
                 FETCH_NEXT_RULE(L);
@@ -1669,16 +1646,10 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto post_match_processing;
 
-              case SYM_LIMIT:
-                fail ("LIMIT not implemented");
-
               case SYM__Q_Q:
                 Print_Parse_Index(L);
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
-
-              case SYM_RETURN:
-                fail ("RETURN keyword switched to ACCEPT in PARSE3/UPARSE");
 
               case SYM_SEEK: {
                 FETCH_NEXT_RULE(L);  // skip the SEEK word
@@ -1686,6 +1657,38 @@ DECLARE_NATIVE(subparse)
                 HANDLE_SEEK_RULE_UPDATE_BEGIN(L, P_RULE, P_RULE_BINDING);
                 FETCH_NEXT_RULE(L);  // e.g. skip the `x` in `seek x`
                 goto pre_rule; }
+
+              case SYM_AND_1:  // see TO-C-NAME
+                fail ("Please replace PARSE3's AND with AHEAD");
+
+              case SYM_WHILE:
+                fail (
+                    "Please replace PARSE3's WHILE with OPT SOME -or-"
+                    " OPT FURTHER SOME--it's being reclaimed as arity-2."
+                    " https://forum.rebol.info/t/1540/12"
+                );
+
+              case SYM_ANY:
+                fail (
+                    "Please replace PARSE3's ANY with OPT SOME"
+                    " -- it's being reclaimed for a new construct"
+                    " https://forum.rebol.info/t/1540/12"
+                );
+
+              case SYM_TRY:
+                fail ("Please use OPT or OPTIONAL instead of TRY in PARSE");
+
+              case SYM_COPY:
+                fail ("COPY not supported in PARSE3 (use SET-WORD!+ACROSS)");
+
+              case SYM_SET:
+                fail ("SET not supported in PARSE3 (use SET-WORD!)");
+
+              case SYM_LIMIT:
+                fail ("LIMIT not implemented");
+
+              case SYM_RETURN:
+                fail ("RETURN keyword switched to ACCEPT in PARSE3/UPARSE");
 
               default:  // the list above should be exhaustive
                 assert(false);
@@ -1843,9 +1846,6 @@ DECLARE_NATIVE(subparse)
                     : END_FLAG;
                 break;
 
-              case SYM_END:
-                fail ("Use <end> instead of END in PARSE3");
-
               case SYM_TO:
               case SYM_THRU: {
                 if (P_AT_END)
@@ -1865,9 +1865,6 @@ DECLARE_NATIVE(subparse)
                 else
                     i = To_Thru_Non_Block_Rule(L, subrule, is_thru);
                 break; }
-
-              case SYM_QUOTE:
-                fail ("Use THE instead of QUOTE in PARSE3 for literal match");
 
               case SYM_THE: {
                 if (not Stub_Holds_Cells(P_INPUT))
@@ -1974,6 +1971,12 @@ DECLARE_NATIVE(subparse)
 
                 Erase_Cell(OUT);  // restore invariant
                 break; }
+
+              case SYM_QUOTE:
+                fail ("Use THE instead of QUOTE in PARSE3 for literal match");
+
+              case SYM_END:
+                fail ("Use <end> instead of END in PARSE3");
 
               default:
                 fail (Error_Parse3_Rule());

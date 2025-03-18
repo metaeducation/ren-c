@@ -19,7 +19,7 @@ REBOL [
 
         If new natives or otherwise are introduced which overlap with the
         names in this list, then the entry in this list must be removed.
-        That means there is no lordering contract about the relative values
+        That means there is no ordering contract about the relative values
         of symbols in this file.  See %lib-words.r for that application.
 
         ISSUE! is used to denote items that should already exist.
@@ -57,7 +57,7 @@ rule-start
 rule-end
 
 
-type  ; used by TYPECHECKER
+#type  ; used by TYPECHECKER
 value ; used by TYPECHECKER to name the argument of the generated function
 
 ; See notes on ACTION-ADJUNCT in %sysobj.r
@@ -128,17 +128,12 @@ decode
 encode
 
 
-*** ; !!! Temporary placeholder for ellipsis; will have to be special trick
-#varargs
+... ; !!! Temporary placeholder for ellipsis; will have to be special trick
 
 bits
 
-offset
 data
 flags
-
-parent
-size
 
 uid
 euid

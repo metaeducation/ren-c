@@ -181,7 +181,7 @@ Value* Append_To_Sea_Core(
         id = SYM_0;
 
     Patch* patch;
-    if (id and id < LIB_SYMS_MAX) {
+    if (id and id < MAX_SYM_LIB_PREMADE) {
         patch = &g_lib_patches[id];  // patch memory pre-allocated at boot [1]
         assert(INFO_PATCH_SEA(patch) == nullptr);  // don't double add
         // patch->header.bits should be already set

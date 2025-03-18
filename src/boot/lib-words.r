@@ -53,54 +53,76 @@ print  ; used by PRINT* hack
 ; that are all BLANK! to these words.  Different meanings in bootstrap exe
 ; so just use strings.
 ;
-"/"
-"."
-":"
+/  ; SYM_SLASH_1
+.  ; SYM_DOT_1
+:  ; SYM_COLON_1
 
-; PARSE - These words must not be reserved above!!  The range of consecutive
-; index numbers are used by PARSE to detect keywords.
+
+; === SEQUENTIAL PARSE3 SYMBOLS FOR SWITCH() ===
 ;
-set  ; must be first first (SYM_SET referred to by GET_VAR() in %n-parse3.c)
-let
-copy  ; `copy x rule` deprecated, use `x: across rule` for this intent
-across
-some
-any  ; no longer a parse keyword, use TRY SOME FURTHER for precise meaning
-further  ; https://forum.rebol.info/t/1593
-opt
-optional
-try  ; deprecated: use OPTIONAL or OPT
-not  ; turned to _not_ for SYM__NOT_, see TO-C-NAME for why this is weird
-and  ; turned to _and_ for SYM__AND_, see TO-C-NAME for why this is weird
-ahead  ; Ren-C addition (also in Red)
-remove
-insert
-change
-bypass
-when
-reject
-while  ; no longer supported, use TRY SOME for precise meaning
-repeat
-limit
-seek  ; Ren-C addition
-??
-"|"  ; Text form to gloss over bootstrap issue (was BAR! datatype)
-"||"
-accept
-break
-; ^--prep words above
-    return  ; removed: https://github.com/metaeducation/ren-c/pull/898
-; v--match words below
-skip
-one
-to
-thru
-quote  ; !!! kept for compatibility, but use THE instead
-the
-do
-into
-spread
-end  ; must be last (SYM_END referred to by GET_VAR() in %n-parse3.c)
+; An R3-Alpha optimization that we preserve (for now) is that the keywords
+; being switch()'d on in PARSE are in a fixed symbol range.  This makes it
+; a quick test to tell if something is a parse pre-match or match keyword.
+;
+; There's also value to having these "packed densely" for the switch statement
+; itself, so the compiler can use a jump table.  Try to keep these in order
+; and matching the PARSE3 code, for as long as it's relevant (which will
+; likely be some time, as UPARSE is going to be too slow for day-to-day
+; bootstrapping in the foreseeable future)
+;
+<MIN_SYM_PARSE3>  ; no </> means next symbol (SYM_SOME is MIN_SYM_PARSE3)
+    some
+    opt
+    optional
+    repeat
+    further  ; https://forum.rebol.info/t/1593
+    let
+    not  ; turned to _not_ for SYM__NOT_, see TO-C-NAME for why this is weird
+    ahead  ; Ren-C addition (also in Red)
+    remove
+    insert
+    change
+    when
+    accept
+    break
+    reject
+    bypass
+    ??
+    seek  ; Ren-C addition
+    ;
+    ; DEPRECATED PARSE PRE-MATCH WORDS (still have case statements for errors,
+    ; but put these cases last in case it doesn't do a jump table)
+    ;
+    and  ; replaced by AHEAD
+    while  ; new meaning in UPARSE, use OPT SOME for old meaning
+    any  ; new meaning in UPARSE, use OPT SOME FURTHER for old meaning
+    try  ; short-lived idea to replace OPTIONAL or OPT
+    copy  ; use `x: across rule` for this intent
+    set  ; deprecated in PARSE3 (should it be supported?)
+    limit  ; was never implemented
+    return  ; is ACCEPT now to not confuse with FUNC's RETURN
+<MIN_SYM_PARSE3_MATCH>
+    skip
+    one
+    to
+    thru
+    the
+    into
+    ;
+    ; DEPRECATED PARSE MATCH WORDS
+    ;
+    quote  ; use THE instead
+    end
+</MAX_SYM_PARSE3>  ;  </> means prior symbol (SYM_END is MAX_SYM_PARSE3)
+
+
+;
+; PARSE KEYWORDS NOT PART OF switch() STATEMENT
+;
+across  ; SYM_ACROSS checked as part of SET-WORD!'s code
+|  ; done when skipping across rules
+||  ; would be done skipping across rules, but not implemented in PARSE3
+
 
 ; definitional forms as DEFINITIONAL-RETURN, DEFINITIONAL-BREAK, ...
 #return

@@ -1064,7 +1064,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
-    for (SymId16 id = 1; id < LIB_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
         if (Not_Node_Marked(patch)) {  // this loop's prior steps can mark
             Add_GC_Mark(patch);
@@ -1165,7 +1165,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
 
-    for (SymId16 id = 1; id < LIB_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
         Remove_GC_Mark(patch);
     }
@@ -1174,7 +1174,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));  // skip SYM_0
 
-    for (SymId16 id = 1; id < ALL_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_BUILTIN; ++id) {
         Symbol* canon = &g_symbols.builtin_canons[id];
         Remove_GC_Mark_If_Marked(canon);
     }

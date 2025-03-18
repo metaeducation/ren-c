@@ -214,6 +214,57 @@ DECLARE_NATIVE(of)
     Element* prop = Element_ARG(property);
     assert(Is_Word(prop));
     const Symbol* sym = Cell_Word_Symbol(prop);
+    const Symbol* sym_of;
+
+    Option(SymId) opt_id = Symbol_Id(sym);
+    if (opt_id and cast(SymId16, opt_id) <= MAX_SYM_BUILTIN - 1)
+        goto check_if_next_is_sym_of;
+
+    goto no_optimization;
+
+  check_if_next_is_sym_of: { /////////////////////////////////////////////////
+
+    // In order to speed up the navigation from builtin symbols like HEAD to
+    // find HEAD-OF, the %make-boot.r process attempts to reorder the symbols
+    // in such a way that HEAD-OF is the SymId immediately after HEAD.
+    //
+    // This can't always be done.  e.g. if the symbol is in an order-dependent
+    // range, such as datatypes: SIGIL can't be followed by SIGIL-OF because
+    // SIGIL-OF is not a datatype.  It also obviously won't work for an -OF
+    // function that the user (or unprocessed Mezzanine) comes up with after
+    // the fact.  So we check to see if the next symbol is an -OF match and
+    // save on symbol hashing and lookup.
+    //
+    // (This could be optimized at load time if symbols carried a flag that
+    // said the next symbol was an -OF, but rather than take a symbol flag
+    // for now we just do the relatively cheap check.)
+
+    SymId id = unwrap opt_id;
+
+    const Byte* utf8 = String_Head(Canon_Symbol(id));
+    SymId next_id = cast(SymId, cast(int, id) + 1);
+    const Byte* maybe_utf8_of = String_Head(Canon_Symbol(next_id));
+    while (true) {
+        if (*maybe_utf8_of == '\0')  // hit end of what would be "longer"
+            goto no_optimization;
+        if (*utf8 == '\0')  // hit end of what would be "shorter"...
+            break;  // might be a match if "-of" are next 3 chars!
+        if (*utf8 != *maybe_utf8_of)  // mismatch before end of shorter
+            goto no_optimization;
+        ++utf8;
+        ++maybe_utf8_of;
+    }
+    if (
+        maybe_utf8_of[0] == '-'
+        and maybe_utf8_of[1] == 'o'
+        and maybe_utf8_of[2] == 'f'
+        and maybe_utf8_of[3] == '\0'
+    ){
+        sym_of = Canon_Symbol(next_id);
+        goto have_sym_of;
+    }
+
+} no_optimization: { /////////////////////////////////////////////////////////
 
     Byte buffer[256];
     Size size = String_Size(sym);
@@ -224,8 +275,11 @@ DECLARE_NATIVE(of)
     ++size;
     buffer[size] = 'f';
     ++size;
+    sym_of = Intern_UTF8_Managed(buffer, size);
 
-    Element* prop_of = Init_Word(SPARE, Intern_UTF8_Managed(buffer, size));
+} have_sym_of: { /////////////////////////////////////////////////////////////
+
+    Element* prop_of = Init_Word(SPARE, sym_of);
 
     const Value* fetched;
     Option(Error*) e = Trap_Lookup_Word(
@@ -239,18 +293,17 @@ DECLARE_NATIVE(of)
     if (not Is_Action(fetched))
         return FAIL("OF looked up to a value that wasn't an ACTION!");
 
-    Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
+    Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
+        | LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
     Copy_Meta_Cell(Evaluator_Level_Current(sub), fetched);
     QUOTE_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_1;  // plain FRAME!
     sub->u.eval.current_gotten = nullptr;
 
-    if (Trampoline_Throws(OUT, sub))  // review: rewrite stackless
-        return THROWN;
-
-    return OUT;
-}
+    Push_Level_Erase_Out_If_State_0(OUT, sub);
+    return DELEGATE_SUBLEVEL(sub);  // !!! could/should we replace this level?
+}}
 
 
 //

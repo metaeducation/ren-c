@@ -380,7 +380,7 @@ typedef struct {
 } MemoryState;
 
 typedef struct {
-    Symbol builtin_canons[ALL_SYMS_MAX + 1];
+    Symbol builtin_canons[MAX_SYM_BUILTIN + 1];
 
     Flex* by_hash;  // Symbol* pointers indexed by hash
     REBLEN num_slots_in_use;  // Total symbol hash slots (+deleteds)

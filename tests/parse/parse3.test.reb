@@ -402,14 +402,8 @@
     o.a = s
 )]
 
-; AHEAD and AND are synonyms
-;
 (
     parse3 ["aa"] [ahead text! into ["a" "a"]]
-    ok
-)
-(
-    parse3 ["aa"] [and text! into ["a" "a"]]
     ok
 )
 

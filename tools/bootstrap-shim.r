@@ -989,6 +989,9 @@ get-path!: func3 [] [
     fail ["Very limited DECODE abilities in bootstrap, no:" mold codec]
 ]
 
+/noop: does []
+
+
 === "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
 
 )  ; see earlier remarks for why this group exists, close it now

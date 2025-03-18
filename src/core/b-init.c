@@ -166,7 +166,7 @@ static void Startup_Lib(void)
 
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // leave invalid
 
-    for (SymId16 id = 1; id < LIB_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
         assert(Is_Stub_Erased(patch));  // pre-boot state
 
@@ -218,7 +218,7 @@ static void Shutdown_Lib(void)
     librebol_binding = nullptr;
 
   #if RUNTIME_CHECKS  // verify patches point to g_lib_context before free [1]
-    for (SymId16 id = 1; id < LIB_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
         assert(Info_Patch_Sea(patch) == g_lib_context);
     }
@@ -231,7 +231,7 @@ static void Shutdown_Lib(void)
 
     assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));
 
-    for (SymId16 id = 1; id < LIB_SYMS_MAX; ++id) {
+    for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
 
         Force_Erase_Cell(Stub_Cell(patch));  // re-init to 0, overwrite PROTECT

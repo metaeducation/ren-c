@@ -100,7 +100,7 @@ export proto-parser: context [
         fileheader: [
             (data: null)
             doubleslashed-lines
-            and is-fileheader
+            ahead is-fileheader
             eoh: <here>
             (
                 if set? $emit-fileheader [

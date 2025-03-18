@@ -74,7 +74,7 @@ INLINE void Tweak_Misc_Sea_Adjunct(
 INLINE Option(Patch*) Sea_Patch(SeaOfVars* sea, const Symbol* sym, bool strict) {
     if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
-        if (id != 0 and id < LIB_SYMS_MAX) {
+        if (id != 0 and id <= MAX_SYM_LIB_PREMADE) {
             if (INFO_PATCH_SEA(&g_lib_patches[id]) == nullptr)  // [1]
                 return nullptr;
 
@@ -108,21 +108,21 @@ INLINE Value* Sea_Var(SeaOfVars* sea, const Symbol* sym, bool strict) {
 }
 
 INLINE Value* Mutable_Lib_Var(SymId id) {
-    assert(id < LIB_SYMS_MAX);
+    assert(id <= MAX_SYM_LIB_PREMADE);
     Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
     assert(Not_Cell_Flag(slot, PROTECTED));
     return slot;
 }
 
 INLINE const Value* Lib_Var(SymId id) {
-    assert(id < LIB_SYMS_MAX);
+    assert(id <= MAX_SYM_LIB_PREMADE);
     Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
     assert(not Is_Nothing(slot));
     return slot;
 }
 
 INLINE Sink(Value) Sink_Lib_Var(SymId id) {
-    assert(id < LIB_SYMS_MAX);
+    assert(id <= MAX_SYM_LIB_PREMADE);
     return cast(Value*, Stub_Cell(&g_lib_patches[id]));
 }
 

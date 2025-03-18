@@ -107,32 +107,69 @@ e-symbols: make-emitter "Symbol ID (SymId) Enumeration Type and Values" (
     join prep-dir %include/tmp-symid.h
 )
 
-syms-words: copy []
-syms-cscape: copy []
+sym-table: copy []
 
-; SYM_0 is reserved for symbols that do not have baked-in ID numbers.
+; Symbols are added to the list without corresponding to any specific number.
+; It will try to preserve the symbols in the order you add them, but once
+; you add the <reorderable> placeholder all symbols after that point are
+; subject to reordering.
 ;
-sym-n: 1  ; counts up as symbols are added
-
 /add-sym: func [
-    "Add SYM_XXX to enumeration"
-    return: [~null~ integer!]
-    word [word! text!]
-    :exists "return ID of existing SYM_XXX constant if already exists"
-    <with> sym-n
+    "Add SYM_XXX or <PLACEHOLDER> signal to enumeration (order may adjust)"
+    return: "position of an already existing symbol if found"
+        [~null~ block!]
+    item "If TAG!, then the / in </FOO> means mark *before* last added symbol"
+        [word! text! tag!]
+    :relax "tolerate an already-added symbol"
+    :placeholder "add marker, filtered out and made a #define at end"
 ][
-    if let pos: find syms-words as text! word [
-        if exists [return index of pos]
-        fail ["Duplicate word specified" word]
+    if placeholder [
+        append sym-table item
+        return null
     ]
 
-    append syms-words as text! word
-    append syms-cscape cscape [
-        sym-n word
-        --{/* $<Word> */ SYM_${FORM WORD} = $<sym-n>}--
+    let name: case [
+        text? item [item]
+        word? item [
+            to text! item  ; force word to text
+        ]
+    ] else [
+        fail ["ADD-SYM without :PLACEHOLDER requires WORD! or TEXT!"]
     ]
-    sym-n: sym-n + 1
 
+    let pos: find sym-table name
+    if pos: find sym-table name [
+        if relax [return pos]
+        probe sym-table
+        fail ["Duplicate symbol string specified:" name]
+    ]
+
+    ; The OF native interprets things like LENGTH OF by looking up LENGTH-OF
+    ; and dispatching it.  Help it do the symbol mapping from XXX to XXX-OF
+    ; for all the built-in XXX-OF natives by placing the XXX-OF symbol
+    ; directly after XXX.  This may mean putting it after an already added
+    ; symbol, or the additional symbol will be added here.
+    ;
+    ; 1. We can't do this for some things, e.g. SYM_SIGIL needs its position
+    ;    to be fixed in the datatypes.  So SIGIL-OF is handled specially.
+    ;
+    let base
+    all [
+        parse3:match name [base: across to "-of" "-of"]
+        base <> "sigil"  ; can't do optimization [1]
+        base <> "file"  ; also needs an exception
+    ] then [
+        if pos: find sym-table base [
+            if find pos <MAX_SYM_LIB_PREMADE> [
+                fail ["Reorder would disrupt symbol ordering for:" name]
+            ]
+            insert (next pos) name  ; put it after existing entry
+            return null
+        ]
+        append sym-table base  ; put it in before adding the -OF variant
+    ]
+
+    append sym-table name
     return null
 ]
 
@@ -179,7 +216,7 @@ for-each [name byte] name-to-typeset-byte [
     add-sym unspaced [name "!"]  ; integer! holds &(integer?)
 ]
 
-add-sym 'begin-typesets  ; useless symbol (make alias #define somehow?)
+add-sym:placeholder <MIN_SYM_TYPESETS>
 
 for-each [name byte] name-to-typeset-byte [
     if name = '~ [
@@ -188,7 +225,7 @@ for-each [name byte] name-to-typeset-byte [
     add-sym unspaced [name "?"]
 ]
 
-add-sym 'end-typesets  ; useless symbol (make alias #define somehow?)
+add-sym:placeholder </MAX_SYM_TYPESETS>
 
 
 === "SYMBOLS FOR LIB-WORDS.R" ===
@@ -202,12 +239,19 @@ add-sym 'end-typesets  ; useless symbol (make alias #define somehow?)
 ; name will have to use the slot position established for these words.
 
 for-each 'term load %lib-words.r [
-    if issue? term [
-        if not find syms-words as text! term [
-            fail ["Expected symbol for" term "from [native type]"]
+    case [
+        issue? term [
+            term: as word! term
+            if not add-sym:relax term [  ; returns POS if already present
+                fail ["Expected symbol for" term "from [native type]"]
+            ]
         ]
-    ] else [
-        add-sym term
+        tag? term [  ; want to mark things like where parse keywords are
+            add-sym:placeholder term
+        ]
+        <default> [
+            add-sym term
+        ]
     ]
 ]
 
@@ -219,7 +263,7 @@ for-each 'term load %lib-words.r [
 ; to that is that the SYM_XXX values for the names of the natives index into
 ; a fixed block.  We put them after the ordered words in lib.
 
-first-native-sym: sym-n
+add-sym:placeholder <MIN_SYM_NATIVE>
 
 native-names: copy []
 
@@ -230,13 +274,16 @@ boot-natives: stripload:gather (
 insert boot-natives "["
 append boot-natives "]"
 for-each 'name native-names [
-    if first-native-sym < ((add-sym:exists name) else [0]) [
+    let pos: add-sym:relax name
+    if not pos [  ; not a duplicate
+        continue
+    ]
+    if find <MIN_SYM_NATIVE> pos [
         fail ["Native name collision found:" name]
     ]
 ]
 
-
-lib-syms-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
+add-sym:placeholder </MAX_SYM_LIB_PREMADE>
 
 
 === "SYMBOLS FOR SYMBOLS.R" ===
@@ -252,7 +299,7 @@ for-each 'term load %symbols.r [
         add-sym term
     ] else [
         assert [issue? term]
-        if not find syms-words as text! term [
+        if not find sym-table as text! term [
             fail ["Expected symbol for" term "from [native type]"]
         ]
     ]
@@ -379,7 +426,7 @@ e-errfuncs/emit --{
      */
 }--
 
-first-error-sym: sym-n
+add-sym:placeholder <MIN_SYM_ERRORS>
 
 boot-errors: load %errors.r
 
@@ -399,8 +446,11 @@ for-each [sw-cat list] boot-errors [
 
         ; Add a SYM_XXX constant for the error's ID word
         ;
-        if first-error-sym < (add-sym:exists id else [0]) [
-            fail ["Duplicate error ID found:" id]
+        let pos: add-sym:relax id
+        if pos [
+            if not find pos <MIN_SYM_ERRORS> [
+                fail ["Duplicate error ID found:" id]
+            ]
         ]
 
         let arity: 0
@@ -506,7 +556,109 @@ for-each 'section [boot-constants boot-base boot-system-util boot-mezz] [
 ; lead to the function definitions.
 
 for-each 'item sys-toplevel [
-    add-sym:exists as word! item
+    add-sym:relax as word! item
+]
+
+
+=== "EMIT SYMBOLS AND PRUNE SPECIAL SIGNALS FROM sym-table" ===
+
+add-sym:placeholder </MAX_SYM_BUILTIN>
+
+symid: 1  ; SYM_0 is reserved for symbols that do not have baked-in ID numbers
+
+lib-syms-max: ~
+
+sym-enum-items: copy []
+placeholder-define-items: copy []
+
+for-next 'pos sym-table [
+    while [tag? pos.1] [  ; remove placeholders, add defines
+        let definition: as text! pos.1
+        take pos
+
+        let delta
+        let name
+        if definition.1 = #"/" [  ; inclusive maximum
+            definition: next definition
+            delta: -1
+            name: first back pos
+        ] else [
+            delta: 0
+            name: first pos
+        ]
+
+        assert [text? name]
+
+        append placeholder-define-items cscape [
+            -{#define $<DEFINITION>  $<symid + delta>  /* $<Name> */}-
+        ]
+    ]
+
+    if tail? pos [
+        break
+    ]
+
+    if not text? pos.1 [
+        fail ["Unknown item in sym-table table:" pos.1]
+    ]
+
+    let name: pos.1
+    append sym-enum-items cscape [symid name
+        --{/* $<Name> */  SYM_${FORM NAME} = $<symid>}--
+    ]
+    symid: symid + 1
+]
+
+e-symbols/emit [syms-cscape --{
+    /*
+     * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
+     *
+     * ANY-WORD? uses internings of UTF-8 character strings.  An arbitrary
+     * number of these are created at runtime, and can be garbage collected
+     * when no longer in use.  But a pre-determined set of internings are
+     * assigned 16-bit integer "SYM" compile-time-constants, to be used in
+     * switch() for efficiency in the core.
+     *
+     * Datatypes are given symbol numbers at the start of the list, so that
+     * their SYM_XXX values will be identical to their REB_XXX values.
+     *
+     * The file %words.r contains a list of spellings that are given ID
+     * numbers recognized by the core.
+     *
+     * Errors raised by the core are identified by the symbol number of their
+     * ID (there are no fixed-integer values for these errors as R3-Alpha
+     * tried to do with RE_XXX numbers, which fluctuated and were of dubious
+     * benefit when symbol comparison is available).
+     *
+     * Note: Any interning that *does not have* a compile-time constant
+     * assigned to it will have a symbol ID of 0.  See Option(SymId) for how
+     * potential bugs like `Cell_Word_Id(a) == Cell_Word_Id(b)` are mitigated
+     * by preventing such comparisons.
+     */
+    enum SymIdEnum {
+        SYM_0 = 0,
+        $(Sym-Enum-Items),
+        /* SYM_MAX would conflate w/symbol for `max`, use MAX_SYM_BUILTIN */
+    };
+
+    /*
+     * These definitions are derived from markers added during the symbol
+     * table creation process via ADD-SYM:PLACEHOLDER (and are much better
+     * than hardcoding symbol IDs in source the way R3-Alpha did it!)
+     */
+    $[Placeholder-Define-Items]
+}--]
+
+print [symid "words + natives + errors"]
+
+e-symbols/write-emitted
+
+/add-sym: func [:relax :placeholder] [
+    ;
+    ; Tripwires not available in bootstrap, see:
+    ; https://forum.rebol.info/t/tripwire-in-the-wild/2278/4
+    ;
+    fail "Symbol table finalized, can't ADD-SYM at this point"
 ]
 
 
@@ -545,8 +697,8 @@ nats: collect [
 ]
 
 symbol-strings: join blob! collect [
-    for-each 'word syms-words [
-        let utf-8: as blob! word
+    for-each 'name sym-table [
+        let utf-8: to blob! name
         keep encode [BE + 1] length of utf-8  ; one byte length max
         keep utf-8
     ]
@@ -681,45 +833,3 @@ e-boot/emit [fields --{
 }--]
 
 e-boot/write-emitted
-
-
-=== "EMIT SYMBOLS" ===
-
-e-symbols/emit [syms-cscape --{
-    /*
-     * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
-     *
-     * ANY-WORD? uses internings of UTF-8 character strings.  An arbitrary
-     * number of these are created at runtime, and can be garbage collected
-     * when no longer in use.  But a pre-determined set of internings are
-     * assigned small integer "SYM" compile-time-constants, to be used in
-     * switch() for efficiency in the core.
-     *
-     * Datatypes are given symbol numbers at the start of the list, so that
-     * their SYM_XXX values will be identical to their REB_XXX values.
-     *
-     * The file %words.r contains a list of spellings that are given ID
-     * numbers recognized by the core.
-     *
-     * Errors raised by the core are identified by the symbol number of their
-     * ID (there are no fixed-integer values for these errors as R3-Alpha
-     * tried to do with RE_XXX numbers, which fluctuated and were of dubious
-     * benefit when symbol comparison is available).
-     *
-     * Note: Any interning that *does not have* a compile-time constant
-     * assigned to it will have a symbol ID of 0.  See Option(SymId) for how
-     * potential bugs like `Cell_Word_Id(a) == Cell_Word_Id(b)` are mitigated
-     * by preventing such comparisons.
-     */
-    enum SymIdEnum {
-        SYM_0 = 0,
-        $(Syms-Cscape),
-    };
-
-    #define LIB_SYMS_MAX $<lib-syms-max>
-    #define ALL_SYMS_MAX $<sym-n>
-}--]
-
-print [sym-n "words + natives + errors"]
-
-e-symbols/write-emitted

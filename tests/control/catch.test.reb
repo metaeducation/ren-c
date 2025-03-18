@@ -36,11 +36,11 @@
     (a: 1 catch [a: error? throw 2] :a =? 1)
 ]
 [#1535
-    (blank = catch [word of throw blank])
+    (blank = catch [words of throw blank])
 ]
 (blank = catch [values of throw blank])
 [#1945
-    (blank = catch [spec-of throw blank])
+    (blank = catch [spec of throw blank])
 ]
 ; throw should not be caught by TRAP
 (a: 1 catch [a: error? trap [throw 2]] :a =? 1)
