@@ -164,8 +164,11 @@ enum {
     // for the STATE byte in those cases.  This is helpful for knowing what
     // the mode of an evaluator level is, and makes the value on hand for
     // easy use in the "hot" level header location.
+    //
+    // Since we can only evaluate Element, we start the stepper custom states
+    // right after REB_MAX_ELEMENT (inclusive... REB_QUOTED = REB_MAX_ELEMENT)
 
-    ST_STEPPER_REB_MAX = REB_MAX,
+    ST_STEPPER_REB_MAX = REB_MAX_ELEMENT,
 
 
   //=//// STEPPER STATES ABOVE REB_MAX ////////////////////////////////////=//
