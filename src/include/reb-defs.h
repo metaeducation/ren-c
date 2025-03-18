@@ -349,13 +349,13 @@ typedef Byte WildTwo[2];
 //   will run greedily as part of the same evaluation step as the thing to
 //   its left:
 //
-//       >> add 1 2 * 3  ; multiply runs greedily when it sees the 2
+//       >> add 1 2 * 3  ; `*` runs greedily when it sees the 2
 //       == 7
 //
 //   Despite that greediness, an already in progress infix operation will be
 //   allowed to complete before another starts:
 //
-//       >> 1 + 2 * 3  ; plus sets FEED_FLAG_NO_LOOKAHEAD, suppresses multiply
+//       >> 1 + 2 * 3  ; `+` sets FEED_FLAG_NO_LOOKAHEAD, suppresses `*`
 //       == 9
 //
 // * INFIX_DEFER - this mode of infix doesn't run immediately the first
@@ -368,16 +368,16 @@ typedef Byte WildTwo[2];
 //   operator to run before it will.  Like a deferring operator, it is only
 //   allowed to appear after the last parameter of an expression except it
 //   closes out *all* the parameters on the stack vs. just one.
-//
-enum InfixModeEnum {
+
+typedef enum {
     PREFIX_0 = 0,  // zero so you can test (not infix_mode) for prefix
     INFIX_TIGHT,  // "normal"? "immediate"?
     INFIX_DEFER,
     INFIX_POSTPONE,
-    INFIX_MODE_MAX = INFIX_POSTPONE
-};
-typedef enum InfixModeEnum InfixMode;
-STATIC_ASSERT(INFIX_MODE_MAX == 3);  // must fit in Crumb
+    MAX_INFIX_MODE = INFIX_POSTPONE
+} InfixMode;
+
+STATIC_ASSERT(MAX_INFIX_MODE < 4);  // must fit in Crumb
 
 
 typedef struct rebol_time_fields {
