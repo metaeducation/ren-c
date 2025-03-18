@@ -3248,25 +3248,25 @@ RebolValue* API_rebCollateExtension_internal(
     void* cfuncs,  // should be CFunction** [1]
     int cfuncs_len
 ){
-    Source* a = Make_Source(IDX_COLLATOR_MAX);  // details
-    Set_Flex_Len(a, IDX_COLLATOR_MAX);
+    Source* a = Make_Source(MAX_COLLATOR + 1);  // details
+    Set_Flex_Len(a, MAX_COLLATOR + 1);
 
     Init_Handle_Cdata(
-        Array_At(a, IDX_COLLATOR_BINDING_REF),
+        Array_At(a, COLLATOR_BINDING_REF),
         binding_ref,
         1
     );
     Init_Handle_Cdata(
-        Array_At(a, IDX_COLLATOR_SCRIPT),
+        Array_At(a, COLLATOR_SCRIPT),
         m_cast(Byte*, script_compressed),  // !!! by contract, don't change!
         script_compressed_size
     );
     Init_Integer(
-        Array_At(a, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS),
+        Array_At(a, COLLATOR_SCRIPT_NUM_CODEPOINTS),
         script_num_codepoints
     );
     Element* cfuncs_handle = Init_Handle_Cdata(
-        Array_At(a, IDX_COLLATOR_CFUNCS),
+        Array_At(a, COLLATOR_CFUNCS),
         cfuncs,
         cfuncs_len
     );

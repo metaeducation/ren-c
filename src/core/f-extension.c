@@ -93,7 +93,7 @@ DECLARE_NATIVE(builtin_extensions)
 
         Value* details = (*collator)(nullptr);  // don't pass g_librebol [1]
         assert(Is_Block(details));
-        assert(Cell_Series_Len_At(details) == IDX_COLLATOR_MAX);
+        assert(Cell_Series_Len_At(details) == MAX_COLLATOR + 1);
 
         Copy_Cell(Alloc_Tail_Array(list), Ensure_Element(details));
         rebRelease(details);
@@ -132,7 +132,7 @@ DECLARE_NATIVE(load_extension)
 {
     INCLUDE_PARAMS_OF_LOAD_EXTENSION;
 
-    // See IDX_COLLATOR_MAX for collated block contents, which include init
+    // See MAX_COLLATOR for collated block contents, which include init
     // and shutdown functions, as well as Rebol script source, plus Dispatcher
     // functions for each native.
     //
@@ -161,17 +161,17 @@ DECLARE_NATIVE(load_extension)
         rebRelease(library);  // should we hang onto it, and pass italong?
     }
 
-    assert(Array_Len(collated) == IDX_COLLATOR_MAX);
+    assert(Array_Len(collated) == MAX_COLLATOR + 1);
     Push_Lifeguard(collated);
 
     const Cell* binding_ref_handle
-        = Array_At(collated, IDX_COLLATOR_BINDING_REF);
+        = Array_At(collated, COLLATOR_BINDING_REF);
     const Cell* script_compressed
-        = Array_At(collated, IDX_COLLATOR_SCRIPT);
+        = Array_At(collated, COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
-        = VAL_UINT32(Array_At(collated, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
+        = VAL_UINT32(Array_At(collated, COLLATOR_SCRIPT_NUM_CODEPOINTS));
     const Cell* cfuncs_handle
-        = Array_At(collated, IDX_COLLATOR_CFUNCS);
+        = Array_At(collated, COLLATOR_CFUNCS);
 
     REBLEN num_natives = Cell_Handle_Len(cfuncs_handle);
     CFunction* *cfuncs = Cell_Handle_Pointer(
