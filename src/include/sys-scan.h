@@ -90,7 +90,7 @@ enum TokenEnum {
     TOKEN_PATH,  // only triggered in leading slash cases (/ // /foo /foo.bar)
     TOKEN_CONSTRUCT,
     TOKEN_END,
-    TOKEN_MAX
+    MAX_TOKEN = TOKEN_END
 };
 typedef enum TokenEnum Token;
 

@@ -2980,7 +2980,7 @@ void Startup_Scanner(void)
     REBLEN n = 0;
     while (Token_Names[n])
         ++n;
-    assert(cast(Token, n) == TOKEN_MAX);
+    assert(cast(Token, n) == MAX_TOKEN + 1);
 
     // The details of what ASCII characters must be percent encoded
     // are contained in RFC 3896, but a summary is here:
