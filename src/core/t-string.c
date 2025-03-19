@@ -968,22 +968,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Term_String_Len_Size(s, index, offset);
         return COPY(v); }
 
-    //-- Creation:
-
-      case SYM_COPY: {
-        INCLUDE_PARAMS_OF_COPY;
-
-        UNUSED(PARAM(value));
-        UNUSED(REF(deep));  // :DEEP is historically ignored on ANY-STRING?
-
-        REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
-
-        return Init_Any_String(
-            OUT,
-            Cell_Heart_Ensure_Noquote(v),
-            Copy_String_At_Limit(v, &len)
-        ); }
-
     //-- Special actions:
 
       case SYM_SWAP: {
@@ -1103,6 +1087,24 @@ IMPLEMENT_GENERIC(AS, Any_String)
     }
 
     return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);
+}
+
+
+IMPLEMENT_GENERIC(COPY, Any_String)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    Element* any_string = Element_ARG(value);
+
+    UNUSED(REF(deep));  // :DEEP is historically ignored on ANY-STRING?
+
+    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(part));
+
+    return Init_Any_String(
+        OUT,
+        Cell_Heart_Ensure_Noquote(any_string),
+        Copy_String_At_Limit(any_string, &len)
+    );
 }
 
 

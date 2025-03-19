@@ -79,14 +79,38 @@ Bounce Copy_Quoter_Executor(Level* level_)
 //  ]
 //
 DECLARE_NATIVE(copy)
+//
+// 1. R3-Alpha and Red limit COPY to series, object, or function.  Ren-C had
+//    the idea that COPY should be able to copy any value, but the merits of
+//    that being meaningful are actually questionable.  The old dispatch
+//    model had many types doing trivial cell copies and failing if you
+//    passed a :PART but ignoring :DEEP... rather than writing those trivial
+//    generic handlers all over the place for now we make that the fallback
+//    for all types that don't have a specific handler registered.  This may
+//    well be taken out and just error if there's not a non-trivial copy.
 {
-    Value* v = ARG_N(1);
+    INCLUDE_PARAMS_OF_COPY;
 
-    if (QUOTE_BYTE(v) == NOQUOTE_1)  // don't have to requote/etc.
-        return Run_Generic_Dispatch(cast(Element*, v), LEVEL, CANON(COPY));
+    Element* elem = Element_ARG(value);
 
-    Byte quote_byte = QUOTE_BYTE(v);
-    QUOTE_BYTE(v) = NOQUOTE_1;
+    GenericTable* table = GENERIC_TABLE(COPY);
+    Heart heart = Cell_Heart(elem);
+    Dispatcher* dispatcher = maybe Try_Get_Generic_Dispatcher(table, heart);
+
+    if (not dispatcher) {  // trivial copy, is it good to do so? [1]
+        if (REF(part))
+            return FAIL(Error_Bad_Refines_Raw());
+
+        UNUSED(REF(deep));  // historically we ignore it
+
+        return COPY(elem);
+    }
+
+    if (QUOTE_BYTE(elem) == NOQUOTE_1)  // don't have to requote/etc.
+        return (*dispatcher)(LEVEL);
+
+    Byte quote_byte = QUOTE_BYTE(elem);
+    QUOTE_BYTE(elem) = NOQUOTE_1;
 
     Option(const Symbol*) label = Level_Label(level_);
     Option(VarList*) coupling = Level_Coupling(level_);

@@ -251,10 +251,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
     switch (id) {
-      case SYM_COPY:
-        Copy_Cell(OUT, val);
-        return OUT;
-
       case SYM_ADD: {
         REBI64 anum;
         if (REB_I64_ADD_OF(num, arg, &anum))

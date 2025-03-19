@@ -74,24 +74,3 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Comma)
 
     return LOGIC(CT_Comma(ARG(value1), ARG(value2), REF(strict)) == 0);
 }
-
-
-IMPLEMENT_GENERIC(OLDGENERIC, Is_Comma)
-{
-    switch (Symbol_Id(Level_Verb(LEVEL))) {
-      case SYM_COPY: { // since (copy:deep [1, 2]) is legal, allow (copy ',)
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(ARG(value));
-
-        if (REF(part))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        UNUSED(REF(deep));
-
-        return Init_Comma(OUT); }
-
-      default: break;
-    }
-
-    return UNHANDLED;
-}

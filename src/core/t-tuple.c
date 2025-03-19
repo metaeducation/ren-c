@@ -94,30 +94,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
 
     Element* sequence = cast(Element*, ARG_N(1));
     Length len = Cell_Sequence_Len(sequence);
-    Heart heart = Cell_Heart_Ensure_Noquote(sequence);
 
     switch (id) {
-        //
-        // ANY-SEQUENCE? is immutable, so a shallow copy should be a no-op,
-        // but it should be cheap for any similarly marked array.  Also, a
-        // :DEEP copy of a path may copy groups that are mutable.
-        //
-      case SYM_COPY: {
-        if (not Listlike_Cell(sequence))
-            return Copy_Cell(level_->out, sequence);
-
-        HEART_BYTE(sequence) = REB_BLOCK;
-
-        Atom* r = Atom_From_Bounce(GENERIC_CFUNC(OLDGENERIC, Any_List)(level_));
-        assert(Cell_Heart(r) == REB_BLOCK);
-
-        if (r != OUT)
-            Copy_Cell(OUT, r);
-
-        Freeze_Source_Shallow(Cell_Array_Known_Mutable(OUT));
-        HEART_BYTE(OUT) = heart;
-        return OUT; }
-
 
     // !!! RANDOM is SHUFFLE by default, so same question about mutability
     // and if SHUFFLE:COPY should be a thing.  RANDOM:ONLY picks an item out
@@ -461,6 +439,55 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
         return Trust_Const(OUT);
     }
     return UNHANDLED;
+}
+
+
+// ANY-SEQUENCE? is immutable, so a shallow copy should be a no-op.  However
+// if it contains series values then COPY:DEEP may be meaningful.
+//
+// 1. We could do some clever optimizations here probably, in that we could
+//    move the sequence out of the way and then be able to reuse the frame
+//    just to invoke the COPY generic dispatchers of the elements inside.
+//    But this is a low priority.  Most cases will probably be fast as it
+//    is rare to be interested in copying a sequence at all.
+//
+IMPLEMENT_GENERIC(COPY, Any_Sequence)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    Element* seq = Element_ARG(value);
+    bool deep = REF(deep);
+    Value* part = ARG(part);
+
+    if (not deep or Wordlike_Cell(seq)) {  // wordlike is /A or :B etc
+        if (part)
+            return FAIL(part);
+        return COPY(seq);
+    }
+
+    bool trivial_copy = true;
+
+    Length len = Cell_Sequence_Len(seq);
+    Offset n;
+    for (n = 0; n < len; ++len) {  // first let's see if it's a trivial copy
+        Copy_Sequence_At(SPARE, seq, n);
+        Heart item_heart = Cell_Heart(SPARE);
+        if (Try_Get_Generic_Dispatcher(GENERIC_TABLE(COPY), item_heart)) {
+            trivial_copy = false;
+            break;
+        }
+    }
+
+    if (trivial_copy)  // something like a/1/foo
+        return COPY(seq);
+
+    const Value* type = Type_Of(seq);
+
+    return rebDelegate(  // slow, but not a high priority to write it fast [1]
+        "as @", type, "copy // ["
+            "as block! @", rebQ(seq), ":part @", part, ":deep ~okay~"
+        "]"
+    );
 }
 
 

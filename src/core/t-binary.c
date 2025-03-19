@@ -311,17 +311,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
     assert(Is_Blob(v));
 
     switch (id) {
-
-    //=//// COPY //////////////////////////////////////////////////////////=//
-
-      case SYM_COPY: {
-        INCLUDE_PARAMS_OF_COPY;
-
-        UNUSED(PARAM(value));
-        UNUSED(REF(deep));  // :DEEP is historically ignored on BLOB!
-
-        return Copy_Blob_Part_At_May_Modify_Index(OUT, v, ARG(part)); }
-
     //-- Modification:
       case SYM_APPEND:
       case SYM_INSERT:
@@ -803,6 +792,17 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(COPY, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    Element* blob = Element_ARG(value);
+    UNUSED(REF(deep));  // :DEEP is historically ignored on BLOB!
+
+    return Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(part));
 }
 
 

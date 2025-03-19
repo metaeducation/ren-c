@@ -533,14 +533,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     assert(Any_Utf8(issue) and not Any_Word(issue));
     possibly(Any_String(issue));  // gets priority, but may delegate
 
-    switch (id) {
-      case SYM_COPY:  // since result is also immutable, Copy_Cell() suffices
-        return Copy_Cell(OUT, issue);
-
-      default:
-        break;
-    }
-
     if (Stringlike_Has_Node(issue)) {
         assert(not IS_CHAR(issue));  // no string math
         return GENERIC_CFUNC(OLDGENERIC, Any_String)(level_);

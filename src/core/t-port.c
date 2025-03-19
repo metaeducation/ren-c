@@ -235,14 +235,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Url)
     Element* url = cast(Element*, ARG_N(1));
     assert(Is_Url(url));
 
-    if (id == SYM_COPY) {
-        //
-        // https://forum.rebol.info/t/copy-and-port/1699
-        //
-        return COPY(url);
-    }
-    else switch (id) {
-      /*case SYM_REFLECT:*/  // !!! Review separate XXX-OF and XXX? generics
+    switch (id) {
       case SYM_READ:
       case SYM_WRITE:
       case SYM_QUERY:

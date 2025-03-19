@@ -1061,9 +1061,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
     }
     else {
         switch (id) {
-          case SYM_COPY:
-            return COPY(v);  // immediate type, just copy bits
-
           case SYM_EVEN_Q:
             return Init_Logic(OUT, ((~day) & 1) == 0);
 

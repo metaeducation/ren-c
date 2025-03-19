@@ -615,20 +615,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
         return COPY(v); }
 
-      case SYM_COPY: {
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PARAM(value));
-
-        if (REF(part) or REF(deep))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        Binary* copy = cast(
-            Binary*,
-            Copy_Flex_Core(NODE_FLAG_MANAGED, VAL_BITSET(v))
-        );
-        INIT_BITS_NOT(copy, BITS_NOT(VAL_BITSET(v)));
-        return Init_Bitset(OUT, copy); }
-
       case SYM_CLEAR: {
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
         INIT_BITS_NOT(bset, false);
@@ -673,6 +659,23 @@ IMPLEMENT_GENERIC(POKE, Is_Bitset) {
         return FAIL(PARAM(picker));
     }
     return nullptr;
+}
+
+
+IMPLEMENT_GENERIC(COPY, Is_Bitset)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    Element* bset = Element_ARG(value);
+    Binary* bits = VAL_BITSET(bset);
+
+    if (REF(part) or REF(deep))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    Binary* copy = cast(Binary*, Copy_Flex_Core(NODE_FLAG_MANAGED, bits));
+    INIT_BITS_NOT(copy, BITS_NOT(bits));
+
+    return Init_Bitset(OUT, copy);
 }
 
 

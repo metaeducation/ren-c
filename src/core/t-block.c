@@ -739,38 +739,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         return COPY(list);
     }
 
-    //-- Creation:
-
-      case SYM_COPY: {
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PARAM(value));
-
-        REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(part));
-
-        const Array* arr = Cell_Array(list);
-        REBLEN index = VAL_INDEX(list);
-
-        Flags flags = FLEX_MASK_MANAGED_SOURCE;
-
-        // We shouldn't be returning a const value from the copy, but if the
-        // input value was const and we don't copy some types deeply, those
-        // types should retain the constness intended for them.
-        //
-        flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);
-
-        Source* copy = cast(Source*, Copy_Array_Core_Managed(
-            flags, // flags
-            arr,
-            index, // at
-            tail, // tail
-            0, // extra
-            REF(deep)
-        ));
-
-        Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
-        Tweak_Cell_Binding(OUT, Cell_List_Binding(list));
-        return OUT; }
-
     //-- Special actions:
 
       case SYM_SWAP: {
@@ -1032,6 +1000,40 @@ IMPLEMENT_GENERIC(AS, Any_List)
     }
 
     return UNHANDLED;
+}
+
+
+// 1. We shouldn't be returning a const value from the copy, but if the input
+//    value was const and we don't copy some types deeply, those types should
+//    retain the constness intended for them.
+//
+IMPLEMENT_GENERIC(COPY, Any_List)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    Element* list = Element_ARG(value);
+
+    REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(part));
+
+    const Array* arr = Cell_Array(list);
+    REBLEN index = VAL_INDEX(list);
+
+    Flags flags = FLEX_MASK_MANAGED_SOURCE;
+
+    flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);  // retain [1]
+
+    Source* copy = cast(Source*, Copy_Array_Core_Managed(
+        flags, // flags
+        arr,
+        index, // at
+        tail, // tail
+        0, // extra
+        REF(deep)
+    ));
+
+    Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
+    Tweak_Cell_Binding(OUT, Cell_List_Binding(list));
+    return OUT;
 }
 
 

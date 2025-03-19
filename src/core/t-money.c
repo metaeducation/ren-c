@@ -284,9 +284,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Money)
             result = not result;
         return Init_Logic(OUT, result != 0); }
 
-      case SYM_COPY:
-        return COPY(v);
-
       default:
         break;
     }

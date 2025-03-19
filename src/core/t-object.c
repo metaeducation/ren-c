@@ -919,7 +919,7 @@ const Symbol* Symbol_From_Picker(const Element* context, const Element* picker)
 //
 static Element* Copy_Any_Context(
     Sink(Element) out,
-    Element* context,
+    const Element* context,
     bool deep
 ){
     if (Is_Frame(context)) {  // handled specially [1]
@@ -960,15 +960,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
     assert(not Is_Port(context));
 
     switch (id) {
-      case SYM_COPY: {  // Note: words are not copied and bindings not changed!
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PARAM(value));  // covered by `context`
-
-        if (REF(part))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        bool deep = REF(deep);
-        return Copy_Any_Context(OUT, context, deep); }
 
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
@@ -1130,6 +1121,22 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 }
 
 
+// Note that words are not copied and bindings not changed!
+//
+IMPLEMENT_GENERIC(COPY, Any_Context)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    const Element* context = Element_ARG(value);
+
+    if (REF(part))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    bool deep = REF(deep);
+    return Copy_Any_Context(OUT, context, deep);
+}
+
+
 IMPLEMENT_GENERIC(PICK, Any_Context)
 {
     INCLUDE_PARAMS_OF_PICK;
@@ -1262,41 +1269,35 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
 }
 
 
-// FRAME! adds some additional reflectors to the usual things you can do with
-// an object, but falls through to Context for most things.
+// Copying a frame has a little bit more to deal with than copying an object,
+// and needs to initialize the lens correctly.
 //
-IMPLEMENT_GENERIC(OLDGENERIC, Is_Frame)
+IMPLEMENT_GENERIC(COPY, Is_Frame)
 {
-    const Symbol* verb = Level_Verb(LEVEL);
-    Option(SymId) id = Symbol_Id(verb);
+    INCLUDE_PARAMS_OF_COPY;
 
-    Element* frame = cast(Element*, ARG_N(1));
+    const Element* frame = Element_ARG(value);
 
-    switch (id) {
+    if (REF(deep))
+        return FAIL("COPY/DEEP on FRAME! not implemented");
 
-  //=//// COPY /////////////////////////////////////////////////////////////=//
+    if (REF(part))
+        return FAIL(Error_Bad_Refines_Raw());
 
-      case SYM_COPY: {
-        ParamList* copy = Make_Varlist_For_Action(
-            frame,
-            TOP_INDEX,
-            nullptr,  // no binder
-            nullptr  // no placeholder, use parameters
-        );
+    ParamList* copy = Make_Varlist_For_Action(
+        frame,
+        TOP_INDEX,
+        nullptr,  // no binder
+        nullptr  // no placeholder, use parameters
+    );
 
-        ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(frame));
-        return Init_Lensed_Frame(
-            OUT,
-            copy,
-            lens,
-            Cell_Frame_Coupling(frame)
-        ); }
-
-      default:
-        break;
-    }
-
-    return GENERIC_CFUNC(OLDGENERIC, Any_Context)(level_);
+    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(frame));
+    return Init_Lensed_Frame(
+        OUT,
+        copy,
+        lens,
+        Cell_Frame_Coupling(frame)
+    );
 }
 
 

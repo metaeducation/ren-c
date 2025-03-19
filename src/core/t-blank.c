@@ -84,17 +84,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blank)
       case SYM_TAKE:
         return RAISE(Error_Nothing_To_Take_Raw());
 
-      case SYM_COPY: {  // since (copy:deep [1 _ 2]) is legal, allow (copy _)
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(ARG(value));
-
-        if (REF(part))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        UNUSED(REF(deep));
-
-        return Init_Blank(OUT); }
-
       default:
         break;
     }

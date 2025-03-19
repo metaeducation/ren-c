@@ -608,9 +608,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
     else {
         // unary actions
         switch (id) {
-          case SYM_COPY:
-            return COPY(time);  // immediate type, just copy bits
-
           case SYM_ODD_Q:
             return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) != 0);
 

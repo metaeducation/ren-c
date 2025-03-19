@@ -483,9 +483,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 
     // unary actions
     switch (id) {
-      case SYM_COPY:
-        return Copy_Cell(OUT, val);
-
       case SYM_NEGATE:
         d1 = -d1;
         return Init_Decimal_Or_Percent(OUT, heart, d1);

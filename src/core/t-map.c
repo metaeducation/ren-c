@@ -656,15 +656,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         return Init_Map(OUT, m); }
 
-      case SYM_COPY: {
-        INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PARAM(value));
-
-        if (REF(part))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        return Init_Map(OUT, Copy_Map(VAL_MAP(map), REF(deep))); }
-
       case SYM_CLEAR: {
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
@@ -704,6 +695,19 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(COPY, Is_Map)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    const Element* map = Element_ARG(value);
+
+    if (REF(part))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    return Init_Map(OUT, Copy_Map(VAL_MAP(map), REF(deep)));
 }
 
 

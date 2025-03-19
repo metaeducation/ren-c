@@ -148,27 +148,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 }
 
 
-IMPLEMENT_GENERIC(OLDGENERIC, Any_Word)
-{
-    const Symbol* verb = Level_Verb(LEVEL);
-    Option(SymId) id = Symbol_Id(verb);
-
-    Element* word = cast(Element*, ARG_N(1));
-    assert(Any_Word(word));
-
-    switch (id) {
-
-      case SYM_COPY:
-        return COPY(word);
-
-      default:
-        break;
-    }
-
-    return UNHANDLED;
-}
-
-
 // WORD!s as a subset of string don't have any particular separate rules
 // for TO conversions that immutable strings don't have (and strings may
 // be aliases of words, so TO conversions of strings to word may be able
