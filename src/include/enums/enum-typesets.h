@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -46,11 +46,11 @@
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the quote byte do not affect it.
 
-#define Is_Extra_Mark_Heart(k) \
-    ((k) >= TYPE_VARARGS)
+#define Is_Extra_Mark_Heart(heart) \
+    ((heart) >= TYPE_VARARGS)
 
-#define Cell_Extra_Needs_Mark(v) \
-    Is_Extra_Mark_Heart(HEART_BYTE(v))  // readable checked elsewhere
+#define Cell_Extra_Needs_Mark(cell) \
+    Is_Extra_Mark_Heart(HEART_BYTE(cell))  // readable checked elsewhere
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
@@ -102,30 +102,30 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 
 //=//// SIGIL TRANSFORMATION //////////////////////////////////////////////=//
 
-INLINE Heart Sigilize_Any_Plain_Type(Sigil sigil, Byte k) {
-    assert(Any_Plain_Type(k));
-    assert(sigil != SIGIL_0 and sigil < SIGIL_QUOTE);
-    return cast(Heart, k + u_cast(Byte, sigil));
+INLINE Heart Sigilize_Any_Plain_Heart(Sigil sigil, Heart h) {
+    assert(Any_Plain_Type(h));
+    assert(sigil != SIGIL_0 and sigil <= MAX_SIGIL_FUNDAMENTAL);
+    return cast(Heart, h + u_cast(Byte, sigil));
 }
 
-INLINE Heart Plainify_Any_Meta_Type(Byte k) {
-    assert(Any_Meta_Type(k));
-    return cast(Heart, k - 1);
+INLINE Heart Plainify_Any_Meta_Heart(Heart h) {
+    assert(Any_Meta_Type(h));
+    return cast(Heart, h - 1);
 }
 
-INLINE Heart Plainify_Any_Type_Type(Byte k) {
-    assert(Any_Meta_Type(k));
-    return cast(Heart, k - 2);
+INLINE Heart Plainify_Any_Type_Heart(Heart h) {
+    assert(Any_Meta_Type(h));
+    return cast(Heart, h - 2);
 }
 
-INLINE Heart Plainify_Any_The_Type(Byte k) {
-    assert(Any_The_Type(k));
-    return cast(Heart, k - 3);
+INLINE Heart Plainify_Any_The_Heart(Heart h) {
+    assert(Any_The_Type(h));
+    return cast(Heart, h - 3);
 }
 
-INLINE Heart Plainify_Any_Var_Type(Byte k) {
-    assert(Any_Var_Type(k));
-    return cast(Heart, k - 4);
+INLINE Heart Plainify_Any_Var_Heart(Heart h) {
+    assert(Any_Var_Type(h));
+    return cast(Heart, h - 4);
 }
 
 

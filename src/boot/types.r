@@ -28,7 +28,7 @@ REBOL [
     Notes: --{
       * Code should avoid dependence on exact values of the heart bytes.
         Any relative ordering dependencies not captured in this type table
-        should be captured as macros/functions in %sys-ordered.h
+        should be captured as macros/functions in %enum-typesets.h
 
       * ANY-SCALAR? is weird at this point, because TUPLE? may or may not be
         fully numeric (1.2.3 vs alpha.beta.gamma).  What the this was for
@@ -191,7 +191,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-BINDABLE?>
 
-<ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Type())
+<ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     word        "evaluates a variable or action"
     ~keyword~   "special constant values (e.g. ~null~, ~void~)"
@@ -219,7 +219,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-SEQUENCE?>
 
-  <ANY-TUPLE?>  ; (order matters, see Sigilize_Any_Plain_Type())
+  <ANY-TUPLE?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     tuple       "member selection with inert bias"
                 (:node1)
@@ -243,7 +243,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
   </ANY-TUPLE?>
 
-  <ANY-CHAIN?>  ; (order matters, see Sigilize_Any_Plain_Type())
+  <ANY-CHAIN?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     chain       "refinement and function call dialect"
                 (:node1)
@@ -267,7 +267,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
   </ANY-CHAIN?>
 
-  <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Type())
+  <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     path        "member or refinement selection with execution bias"
                 (:node1)
@@ -296,7 +296,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-LIST?>
 
-  <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Type())
+  <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     block       "list of elements that blocks evaluation unless EVAL is used"
     ~pack~:U    "multi-return that can be unpacked or decays to first item"
@@ -322,7 +322,7 @@ varargs     "evaluator position for variable numbers of arguments"
   </ANY-BLOCK?>
 
 
-  <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Type())
+  <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     fence       "list of elements that are used in construction via MAKE"
                 (node1)
@@ -347,7 +347,7 @@ varargs     "evaluator position for variable numbers of arguments"
   </ANY-FENCE?>
 
 
-  <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Type())
+  <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Heart())
 
     group       "list that evaluates expressions as an isolated group"
     ~splice~    "fragment of multiple values without a surrounding block"

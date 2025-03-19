@@ -578,7 +578,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
             return Error_Cant_Decorate_Type_Raw(out);
         }
 
-        HEART_BYTE(out) = Sigilize_Any_Plain_Type(sigil, Cell_Heart(out));
+        HEART_BYTE(out) = Sigilize_Any_Plain_Heart(sigil, Cell_Heart(out));
         return nullptr;  // pathness or tupleness vanished, just the value
     }
 

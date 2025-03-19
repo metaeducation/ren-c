@@ -1746,7 +1746,7 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_VAR_TUPLE:
       case TYPE_VAR_CHAIN:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        HEART_BYTE(OUT) = Plainify_Any_Var_Type(STATE);
+        HEART_BYTE(OUT) = Plainify_Any_Var_Heart(cast(Heart, STATE));
         goto lookahead;
 
 

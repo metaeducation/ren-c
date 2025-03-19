@@ -1978,7 +1978,7 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
         if (not Any_Plain_Type(heart))
             return Error_Syntax(S, TOKEN_BLANK);  // !!! token?
 
-        HEART_BYTE(e) = Sigilize_Any_Plain_Type(
+        HEART_BYTE(e) = Sigilize_Any_Plain_Heart(
             unwrap S->sigil_pending,
             heart
         );
