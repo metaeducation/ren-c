@@ -129,9 +129,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (id == SYM_PICK or id == SYM_POKE)
-        return GENERIC_CFUNC(OLDGENERIC, Any_Context)(level_);
-
     VarList* ctx = Cell_Varlist(port);
     Value* actor = Varlist_Slot(ctx, STD_PORT_ACTOR);
 

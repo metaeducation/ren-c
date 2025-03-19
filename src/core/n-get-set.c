@@ -849,7 +849,7 @@ DECLARE_NATIVE(get)
 // cell will have steps with any GROUP!s evaluated.
 //
 // It tries to improve efficiency by handling cases that don't need methodized
-// calling of POKE* up front.  If a frame is needed, then it leverages that a
+// calling of POKE up front.  If a frame is needed, then it leverages that a
 // frame with pushed cells is available to avoid needing more temporaries.
 //
 // **Almost all parts of the system should go through this code for assignment,

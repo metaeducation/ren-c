@@ -20,15 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Pathing was not designed well in R3-Alpha, and Ren-C has been trying to
-// evolve the model into something more coherent:
-//
-// https://forum.rebol.info/t/the-pathing-and-picking-predicament-pans-out/1704
-//
 
-
-#define PVS_PICKER(pvs) \
-    pvs->u.path.picker
 
 
 // New concept of generic dispatch: use sparse tables which are scanned for
@@ -41,27 +33,6 @@
         SYM_##name, g_generic_##name, Cell_Heart_Ensure_Noquote(cue), (L) \
     )
 
-
-// For efficiency, native PICK-POKE* implementations reuse the level (this is
-// somewhat comparable to R3-Alpha's "PVS" struct, reused for all the path
-// dispatches...but with the added protections levels have with the GC).
-//
-// For pokes, the poke location of the value that is doing the chaining to
-// another pickpoke needs to be preserved...because the bits in the container
-// may need to be updated for some immediate types, as their storage is
-// actually in the container.
-//
-INLINE Bounce Run_Pickpoke_Dispatch(
-    Level* level_,
-    const Symbol* verb,
-    const Value* new_location
-){
-    Copy_Cell(PUSH(), ARG_N(1));
-    Copy_Cell(ARG_N(1), new_location);
-    Bounce r = Run_Generic_Dispatch(cast(Element*, ARG_N(1)), level_, verb);
-    Move_Drop_Top_Stack_Value(ARG_N(1));
-    return r;
-}
 
 // If you pass in a nullptr for the steps in the Get_Var() and Set_Var()
 // mechanics, they will disallow groups.  This is a safety measure which helps

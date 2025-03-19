@@ -564,37 +564,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
     switch (id) {
 
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        bool bit = Check_Bits(VAL_BITSET(v), picker, false);
-
-        return Init_Logic(OUT, bit); }
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-
-        Value* setval = ARG(value);
-
-        Binary* bset = cast(Binary*, VAL_BITSET_Ensure_Mutable(v));
-        if (not Set_Bits(
-            bset,
-            picker,
-            BITS_NOT(bset) ? Is_Inhibitor(setval) : Is_Trigger(setval)
-        )){
-            return FAIL(PARAM(picker));
-        }
-        return nullptr; }
-
     // Add AND, OR, XOR
 
       case SYM_SELECT: {
@@ -671,6 +640,39 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Is_Bitset)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* bset = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    bool bit = Check_Bits(VAL_BITSET(bset), picker, false);
+
+    return Init_Logic(OUT, bit);
+}
+
+
+IMPLEMENT_GENERIC(POKE, Is_Bitset) {
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* bset = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    Value* poke = ARG(value);
+
+    Binary* bits = cast(Binary*, VAL_BITSET_Ensure_Mutable(bset));
+    if (not Set_Bits(
+        bits,
+        picker,
+        BITS_NOT(bits) ? Is_Inhibitor(poke) : Is_Trigger(poke)
+    )){
+        return FAIL(PARAM(picker));
+    }
+    return nullptr;
 }
 
 

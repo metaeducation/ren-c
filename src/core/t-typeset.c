@@ -460,103 +460,88 @@ DECLARE_NATIVE(decorate_parameter)
 }
 
 
-IMPLEMENT_GENERIC(OLDGENERIC, Is_Parameter)
+IMPLEMENT_GENERIC(PICK, Is_Parameter)
 {
-    Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
+    INCLUDE_PARAMS_OF_PICK;
 
-    Element* param = cast(Element*, ARG_N(1));
-    assert(Is_Parameter(param));
+    const Element* param = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
 
-    switch (id) {
+    if (not Is_Word(picker))
+        return FAIL(picker);
 
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
+    switch (Cell_Word_Id(picker)) {
+      case SYM_TEXT: {
+        Option(const String*) string = Cell_Parameter_String(param);
+        if (not string)
+            return nullptr;
+        return Init_Text(OUT, unwrap string); }
 
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
+      case SYM_SPEC: {
+        Option(const Source*) spec = Cell_Parameter_Spec(param);
+        if (not spec)
+            return nullptr;
+        return Init_Block(OUT, unwrap spec); }
 
-        const Value* picker = ARG(picker);
-        if (not Is_Word(picker))
-            return FAIL(picker);
+      case SYM_OPTIONAL:
+        return Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT));
 
-        switch (Cell_Word_Id(picker)) {
-          case SYM_TEXT: {
-            Option(const String*) string = Cell_Parameter_String(param);
-            if (not string)
-                return nullptr;
-            return Init_Text(OUT, unwrap string); }
+      case SYM_CLASS:
+        switch (Cell_ParamClass(param)) {
+          case PARAMCLASS_NORMAL:
+            return Init_Word(OUT, CANON(NORMAL));
 
-          case SYM_SPEC: {
-            Option(const Source*) spec = Cell_Parameter_Spec(param);
-            if (not spec)
-                return nullptr;
-            return Init_Block(OUT, unwrap spec); }
+          case PARAMCLASS_META:
+            return Init_Word(OUT, CANON(META));
 
-          case SYM_OPTIONAL:
-            return Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT));
+          case PARAMCLASS_THE:
+          case PARAMCLASS_SOFT:
+            return Init_Word(OUT, CANON(THE));
 
-          case SYM_CLASS:
-            switch (Cell_ParamClass(param)) {
-              case PARAMCLASS_NORMAL:
-                return Init_Word(OUT, CANON(NORMAL));
+          case PARAMCLASS_JUST:
+            return Init_Word(OUT, CANON(JUST));
 
-              case PARAMCLASS_META:
-                return Init_Word(OUT, CANON(META));
-
-              case PARAMCLASS_THE:
-              case PARAMCLASS_SOFT:
-                return Init_Word(OUT, CANON(THE));
-
-              case PARAMCLASS_JUST:
-                return Init_Word(OUT, CANON(JUST));
-
-              default: assert(false);
-            }
-            panic (nullptr);
-
-          case SYM_ESCAPABLE:
-            return Init_Logic(OUT, Cell_ParamClass(param) == PARAMCLASS_SOFT);
-
-          /* case SYM_DECORATED: */  // No symbol! Use DECORATE-PARAMETER...
-
-          default:
-            break;
+          default: assert(false);
         }
+        panic (nullptr);
 
-        return RAISE(Error_Bad_Pick_Raw(picker)); }
+      case SYM_ESCAPABLE:
+        return Init_Logic(OUT, Cell_ParamClass(param) == PARAMCLASS_SOFT);
 
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        if (not Is_Word(picker))
-            return FAIL(picker);
-
-        Value* setval = ARG(value);
-
-        switch (Cell_Word_Id(picker)) {
-          case SYM_TEXT: {
-            if (not Is_Text(setval))
-                return FAIL(setval);
-            String* string = Copy_String_At(setval);
-            Manage_Flex(string);
-            Freeze_Flex(string);
-            Set_Parameter_String(param, string);
-            return COPY(param); }  // update to container (e.g. varlist) needed
-
-          default:
-            break;
-        }
-
-        return FAIL(Error_Bad_Pick_Raw(picker)); }
+      /* case SYM_DECORATED: */  // No symbol! Use DECORATE-PARAMETER...
 
       default:
         break;
     }
 
-    return UNHANDLED;
+    return RAISE(Error_Bad_Pick_Raw(picker));
 }
+
+
+IMPLEMENT_GENERIC(POKE, Is_Parameter)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* param = Element_ARG(location);
+
+    const Element* picker = Element_ARG(picker);
+    if (not Is_Word(picker))
+        return FAIL(picker);
+
+    Value* poke = ARG(value);
+
+    switch (Cell_Word_Id(picker)) {
+      case SYM_TEXT: {
+        if (not Is_Text(poke))
+            return FAIL(poke);
+        String* string = Copy_String_At(poke);
+        Manage_Flex(string);
+        Freeze_Flex(string);
+        Set_Parameter_String(param, string);
+        return COPY(param); }  // update to container (e.g. varlist) needed
+
+      default:
+        break;
+    }
+
+    return FAIL(Error_Bad_Pick_Raw(picker)); }

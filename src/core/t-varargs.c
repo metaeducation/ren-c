@@ -410,31 +410,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Varargs)
     assert(Is_Varargs(value));
 
     switch (id) {
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        if (not Is_Integer(picker))
-            return FAIL(picker);
-
-        if (VAL_INT32(picker) != 1)
-            return FAIL(Error_Varargs_No_Look_Raw());
-
-        if (Do_Vararg_Op_Maybe_End_Throws(
-            OUT,
-            VARARG_OP_FIRST,
-            value
-        )){
-            assert(false); // VARARG_OP_FIRST can't throw
-            return THROWN;
-        }
-        if (Is_Barrier(OUT))
-            Init_Nulled(OUT);
-
-        return OUT; }
-
-
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
@@ -489,6 +464,34 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Varargs)
 
     return UNHANDLED;
 }
+
+
+IMPLEMENT_GENERIC(PICK, Varargs)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* varargs = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    if (not Is_Integer(picker))
+        return FAIL(picker);
+
+    if (VAL_INT32(picker) != 1)
+        return FAIL(Error_Varargs_No_Look_Raw());
+
+    if (Do_Vararg_Op_Maybe_End_Throws(
+        OUT,
+        VARARG_OP_FIRST,
+        varargs
+    )){
+        assert(false); // VARARG_OP_FIRST can't throw
+        return THROWN;
+    }
+    if (Is_Barrier(OUT))
+        Init_Nulled(OUT);
+
+    return OUT; }
+
 
 
 //

@@ -677,76 +677,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         return Init_Map(OUT, m); }
 
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        if (Is_Antiform(picker))
-            return RAISE(Error_Bad_Antiform(picker));
-
-        bool strict = false;
-
-        REBINT n = Find_Map_Entry(
-            m_cast(Map*, VAL_MAP(map)),  // not modified
-            c_cast(Element*, picker),
-            nullptr,  // no value, so map not changed
-            strict
-        );
-
-        if (n == 0)
-            return nullptr;
-
-        const Value* val = Array_At(
-            MAP_PAIRLIST(VAL_MAP(map)),
-            ((n - 1) * 2) + 1
-        );
-        if (Is_Zombie(val))
-            return nullptr;
-
-        return Copy_Cell(OUT, val); }
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        if (Is_Antiform(picker))
-            return RAISE(Error_Bad_Antiform(picker));
-
-        // Fetching and setting with path-based access is case-preserving for
-        // initial insertions.  However, the case-insensitivity means that all
-        // writes after that to the same key will not be overriding the key,
-        // it will just change the data value for the existing key.  SELECT and
-        // the operation tentatively named PUT should be used if a map is to
-        // distinguish multiple casings of the same key.
-        //
-        bool strict = false;
-
-        Value* setval = ARG(value);  // Note: VOID interpreted as remove key
-
-        if (Is_Void(setval)) {
-            // removal signal
-        }
-        else if (Is_Antiform(setval))  // other antiforms not allowed in maps
-            return RAISE(Error_Bad_Antiform(setval));
-
-        REBINT n = Find_Map_Entry(
-            VAL_MAP_Ensure_Mutable(map),  // modified
-            c_cast(Element*, picker),
-            setval,  // value to set (either ARG(value) or L->out)
-            strict
-        );
-
-        assert(n != 0);
-        UNUSED(n);
-
-        return nullptr; }  // no upstream changes needed for Map* reference
-
       default:
         break;
     }
@@ -774,6 +704,73 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Is_Map)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* map = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    bool strict = false;
+
+    REBINT n = Find_Map_Entry(
+        m_cast(Map*, VAL_MAP(map)),  // not modified
+        c_cast(Element*, picker),
+        nullptr,  // no value, so map not changed
+        strict
+    );
+
+    if (n == 0)
+        return nullptr;
+
+    const Element* val = Array_At(
+        MAP_PAIRLIST(VAL_MAP(map)),
+        ((n - 1) * 2) + 1
+    );
+    if (Is_Zombie(val))
+        return nullptr;
+
+    return Copy_Cell(OUT, val);
+}
+
+
+// 1. Fetching and setting with path-based access is case-preserving for
+//    initial insertions.  However, the case-insensitivity means that all
+//    writes after that to the same key will not be overriding the key,
+//    it will just change the data value for the existing key.  SELECT and
+//    the operation tentatively named PUT should be used if a map is to
+//    distinguish multiple casings of the same key.
+//
+IMPLEMENT_GENERIC(POKE, Is_Map) {
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* map = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    bool strict = false;  // case-preserving [1]
+
+    Value* poke = ARG(value);  // Note: VOID interpreted as remove key
+
+    if (Is_Void(poke)) {
+        // removal signal
+    }
+    else if (Is_Antiform(poke))  // other antiforms not allowed in maps
+        return RAISE(Error_Bad_Antiform(poke));
+
+    REBINT n = Find_Map_Entry(
+        VAL_MAP_Ensure_Mutable(map),  // modified
+        picker,
+        poke,  // value to set (either ARG(value) or L->out)
+        strict
+    );
+
+    assert(n != 0);
+    UNUSED(n);
+
+    return nullptr;  // no upstream changes needed for Map* reference
 }
 
 

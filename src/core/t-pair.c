@@ -148,8 +148,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
 
 REBINT Index_From_Picker_For_Pair(
-    const Value* pair,
-    const Value* picker
+    const Element* pair,
+    const Element* picker
 ){
     UNUSED(pair); // Might the picker be pair-sensitive?
 
@@ -197,40 +197,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Pair)
     Value* y2 = nullptr;
 
     switch (id) {
-
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        REBINT n = Index_From_Picker_For_Pair(v, picker);
-        const Value* which = (n == 1) ? Cell_Pair_First(v) : Cell_Pair_Second(v);
-
-        return Copy_Cell(OUT, which); }
-
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        REBINT n = Index_From_Picker_For_Pair(v, picker);
-
-        Value* setval = ARG(value);
-
-        if (not Is_Integer(setval))
-            return FAIL(PARAM(value));
-
-        Value* which = (n == 1) ? Cell_Pair_First(v) : Cell_Pair_Second(v);
-        Copy_Cell(which, setval);
-
-        return nullptr; }
-
-
       case SYM_REVERSE:
         return Init_Pair(OUT, Cell_Pair_Y(v), Cell_Pair_X(v));
 
@@ -321,6 +287,41 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Is_Pair)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* pair = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    REBINT n = Index_From_Picker_For_Pair(pair, picker);
+
+    Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
+    return Copy_Cell(OUT, which);
+}
+
+
+IMPLEMENT_GENERIC(POKE, Is_Pair)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* pair = Element_ARG(location);
+
+    const Element* picker = Element_ARG(picker);
+    REBINT n = Index_From_Picker_For_Pair(pair, picker);
+
+    Value* poke = ARG(value);
+
+    if (not Is_Integer(poke))
+        return FAIL(PARAM(value));
+
+    Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
+    Copy_Cell(which, poke);
+
+    return nullptr;
 }
 
 

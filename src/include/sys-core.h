@@ -101,6 +101,8 @@
 
 #define GENERIC_CFUNC(name,type)  G_##name##_##type  // no extension form [1]
 
+#define GENERIC_TABLE(name)  g_generic_##name  // name is all caps
+
 #define IMPLEMENT_GENERIC(name,type) \
     Bounce G_##name##_##type(Level* level_)  // doesn't use GENERIC_CFUNC() [2]
 

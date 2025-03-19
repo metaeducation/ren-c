@@ -677,8 +677,8 @@ static REBINT Int_From_Date_Arg(const Value* poke) {
 //
 void Pick_Or_Poke_Date(
     Option(Sink(Value)) opt_out,
-    Value* v,
-    const Value* picker,
+    Element* v,
+    const Element* picker,
     Option(const Value*) opt_poke
 ){
     Option(SymId) sym;
@@ -1010,37 +1010,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
     REBLEN year = VAL_YEAR(v);
     REBI64 secs = Does_Date_Have_Time(v) ? VAL_NANO(v) : NO_DATE_TIME;
 
-    if (id == SYM_PICK) {
-
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-
-        Pick_Or_Poke_Date(OUT, v, picker, nullptr);
-        return OUT;
-    }
-    else if (id == SYM_POKE) {
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-
-        Value* setval = ARG(value);
-
-        Pick_Or_Poke_Date(nullptr, v, picker, setval);
-
-        // This is a case where the bits are stored in the cell, so
-        // whoever owns this cell has to write it back.
-        //
-        return COPY(v);
-    }
-
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
         Value* arg = ARG_N(2);
         REBINT type = VAL_TYPE(arg);
@@ -1182,6 +1151,33 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
     if (secs == NO_DATE_TIME)
         VAL_ZONE(OUT) = NO_DATE_ZONE;
     return OUT;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Is_Date)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    Element* date = Element_ARG(location);  // needs to not be const
+    const Element* picker = Element_ARG(picker);
+
+    Pick_Or_Poke_Date(OUT, date, picker, nullptr);  // won't modify date
+    return OUT;
+}
+
+
+IMPLEMENT_GENERIC(POKE, Is_Date)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* date = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    Value* poke = ARG(value);
+
+    Pick_Or_Poke_Date(nullptr, date, picker, poke);
+
+    return COPY(date);  // all bits stored in the cell, cell owner must writeback
 }
 
 

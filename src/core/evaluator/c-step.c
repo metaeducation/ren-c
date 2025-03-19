@@ -971,7 +971,7 @@ Bounce Stepper_Executor(Level* L)
 
     //=//// TUPLE! /////////////////////////////////////////////////////////=//
     //
-    // TUPLE! runs through an extensible mechanism based on PICK* and POKE*.
+    // TUPLE! runs through an extensible mechanism based on PICK and POKE.
     // Hence `a.b.c` is kind of like a shorthand for `pick (pick a 'b) 'c`.
     //
     // In actuality, the mechanism is more sophisticated than that...because

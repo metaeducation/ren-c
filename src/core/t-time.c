@@ -376,7 +376,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 //
 //  Pick_Time: C
 //
-void Pick_Time(Sink(Value) out, const Cell* value, const Value* picker)
+void Pick_Time(Sink(Value) out, const Cell* value, const Element* picker)
 {
     REBINT i;
     if (Is_Word(picker)) {
@@ -419,8 +419,8 @@ void Pick_Time(Sink(Value) out, const Cell* value, const Value* picker)
 //  Poke_Time_Immediate: C
 //
 void Poke_Time_Immediate(
-    Value* value,
-    const Value* picker,
+    Element* time,
+    const Element* picker,
     const Value* poke
 ) {
     REBINT i;
@@ -439,7 +439,7 @@ void Poke_Time_Immediate(
         fail (picker);
 
     REB_TIMEF tf;
-    Split_Time(VAL_NANO(value), &tf); // loses sign
+    Split_Time(VAL_NANO(time), &tf); // loses sign
 
     REBINT n;
     if (Is_Integer(poke) || Is_Decimal(poke))
@@ -475,7 +475,7 @@ void Poke_Time_Immediate(
         fail (picker);
     }
 
-    Tweak_Cell_Nanoseconds(value, Join_Time(&tf, false));
+    Tweak_Cell_Nanoseconds(time, Join_Time(&tf, false));
 }
 
 
@@ -486,33 +486,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
     Element* time = cast(Element*, ARG_N(1));
     REBI64 secs = VAL_NANO(time);
-
-    if (id == SYM_PICK) {
-
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-
-        Pick_Time(OUT, time, picker);
-        return OUT;
-    }
-    else if (id == SYM_POKE) {
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-
-        Value* setval = ARG(value);
-
-        Poke_Time_Immediate(time, picker, setval);
-        return COPY(time);  // caller needs to update their time bits
-    }
 
     if (
         id == SYM_ADD
@@ -707,6 +680,32 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Is_Time)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* time = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    Pick_Time(OUT, time, picker);
+    return OUT;
+}
+
+
+IMPLEMENT_GENERIC(POKE, Is_Time)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* time = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    Value* poke = ARG(value);
+
+    Poke_Time_Immediate(time, picker, poke);
+    return COPY(time);  // caller needs to update their time bits
 }
 
 

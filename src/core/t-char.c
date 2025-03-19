@@ -546,35 +546,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
         return GENERIC_CFUNC(OLDGENERIC, Any_String)(level_);
     }
 
-    switch (id) {
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        if (not Is_Integer(picker))
-            return FAIL(PARAM(picker));
-
-        REBI64 n = VAL_INT64(picker);
-        if (n <= 0)
-            return RAISE(Error_Bad_Pick_Raw(picker));
-
-        REBLEN len;
-        Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, issue);
-        if (n > len)
-            return nullptr;
-
-        Codepoint c;
-        cp = Utf8_Next(&c, cp);
-        for (; n != 1; --n)
-            cp = Utf8_Next(&c, cp);
-
-        return Init_Char_Unchecked(OUT, c); }
-
-      default:
-        break;
-    }
-
     // !!! All the math operations below are inherited from the CHAR!
     // implementation, and will not work if the ISSUE! length is > 1.
     //
@@ -966,6 +937,34 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Is_Issue)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* issue = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    if (not Is_Integer(picker))
+        return FAIL(PARAM(picker));
+
+    REBI64 n = VAL_INT64(picker);
+    if (n <= 0)
+        return RAISE(Error_Bad_Pick_Raw(picker));
+
+    REBLEN len;
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, issue);
+    if (n > len)
+        return nullptr;
+
+    Codepoint c;
+    cp = Utf8_Next(&c, cp);
+    for (; n != 1; --n)
+        cp = Utf8_Next(&c, cp);
+
+    return Init_Char_Unchecked(OUT, c);
 }
 
 

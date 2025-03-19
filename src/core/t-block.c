@@ -409,8 +409,8 @@ void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 
 
 static REBINT Try_Get_Array_Index_From_Picker(
-    const Value* v,
-    const Value* picker
+    const Element* v,
+    const Element* picker
 ){
     REBINT n;
 
@@ -440,21 +440,6 @@ static REBINT Try_Get_Array_Index_From_Picker(
             }
         }
     }
-    else if (Is_Logic(picker)) {
-        //
-        // !!! PICK in R3-Alpha historically would use a logic TRUE to get
-        // the first element in a list, and a logic FALSE to get the second.
-        // It did this regardless of how many elements were in the list.
-        // (For safety, it has been suggested lists > length 2 should fail).
-        //
-        if (Cell_Logic(picker))
-            n = VAL_INDEX(v);
-        else
-            n = VAL_INDEX(v) + 1;
-    }
-    else if (Is_Antiform(picker)) {
-        fail (Error_Bad_Antiform(picker));
-    }
     else {
         // For other values, act like a SELECT and give the following item.
         // (Note Find_In_Array_Simple returns the list length if missed,
@@ -477,9 +462,9 @@ static REBINT Try_Get_Array_Index_From_Picker(
 // Fills out with NULL if no pick.
 //
 bool Try_Pick_Block(
-    Sink(Value) out,
-    const Value* block,
-    const Value* picker
+    Sink(Element) out,
+    const Element* block,
+    const Element* picker
 ){
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
@@ -566,53 +551,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
     Context* binding = Cell_List_Binding(list);
 
     switch (id) {
-
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
-        if (n < 0 or n >= Cell_Series_Len_Head(list))
-            return RAISE(Error_Bad_Pick_Raw(picker));
-
-        const Element* at = Array_At(Cell_Array(list), n);
-
-        Copy_Cell(OUT, at);
-        Inherit_Const(stable_OUT, list);
-        return OUT; }
-
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-
-        const Value* setval = ARG(value);
-
-        if (Is_Antiform(setval))
-            return FAIL(Error_Bad_Antiform(setval));  // can't put in blocks
-
-        // !!! If we are jumping here from getting updated bits, then
-        // if the block isn't immutable or locked from modification, the
-        // memory may have moved!  There's no way to guarantee semantics
-        // of an update if we don't lock the array for the poke duration.
-        //
-        REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
-        if (n < 0 or n >= Cell_Series_Len_Head(list))
-            return FAIL(Error_Out_Of_Range(picker));
-
-        Array* mut_arr = Cell_Array_Ensure_Mutable(list);
-        Element* at = Array_At(mut_arr, n);
-        Copy_Cell(at, c_cast(Element*, setval));
-
-        return nullptr; }  // Array* is still fine, caller need not update
-
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
@@ -958,7 +896,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
                     % (Cell_Series_Len_Head(list) - index))
             );
 
-            if (not Try_Pick_Block(OUT, list, ARG(seed)))
+            if (not Try_Pick_Block(OUT, list, Element_ARG(seed)))
                 return nullptr;
             return Inherit_Const(stable_OUT, list);
         }
@@ -1174,6 +1112,54 @@ IMPLEMENT_GENERIC(AS, Any_List)
 }
 
 
+IMPLEMENT_GENERIC(PICK, Any_List)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* list = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
+    if (n < 0 or n >= Cell_Series_Len_Head(list))
+        return RAISE(Error_Bad_Pick_Raw(picker));
+
+    const Element* at = Array_At(Cell_Array(list), n);
+
+    Copy_Cell(OUT, at);
+    return Inherit_Const(OUT, list);
+}
+
+
+IMPLEMENT_GENERIC(POKE, Any_List)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* list = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    const Value* setval = ARG(value);
+
+    if (Is_Antiform(setval))
+        return FAIL(Error_Bad_Antiform(setval));  // can't put in blocks
+
+    // !!! If we are jumping here from getting updated bits, then
+    // if the block isn't immutable or locked from modification, the
+    // memory may have moved!  There's no way to guarantee semantics
+    // of an update if we don't lock the array for the poke duration.
+    //
+    REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
+    if (n < 0 or n >= Cell_Series_Len_Head(list))
+        return FAIL(Error_Out_Of_Range(picker));
+
+    Array* mut_arr = Cell_Array_Ensure_Mutable(list);
+    Element* at = Array_At(mut_arr, n);
+    Copy_Cell(at, c_cast(Element*, setval));
+
+    return nullptr;  // Array* is still fine, caller need not update
+}
+
+
+
 //
 //  /file-of: native:generic [
 //
@@ -1373,7 +1359,7 @@ IMPLEMENT_GENERIC(MAKE, Type_Block)
 
     Heart heart = VAL_TYPE_HEART(type);
 
-    return Dispatch_Generic_Core(SYM_MAKE, g_generic_MAKE, heart, level_);
+    return Dispatch_Generic_Core(SYM_MAKE, GENERIC_TABLE(MAKE), heart, level_);
 }
 
 

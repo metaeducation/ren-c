@@ -900,7 +900,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 }
 
 
-const Symbol* Symbol_From_Picker(const Value* context, const Value* picker)
+const Symbol* Symbol_From_Picker(const Element* context, const Element* picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -957,10 +957,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
     //
     // https://forum.rebol.info/t/1689
     //
-    // At the moment only PICK and POKE are routed here.
-    //
-    if (Is_Port(context))
-        assert(id == SYM_PICK or id == SYM_POKE);
+    assert(not Is_Port(context));
 
     switch (id) {
       case SYM_COPY: {  // Note: words are not copied and bindings not changed!
@@ -973,59 +970,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         bool deep = REF(deep);
         return Copy_Any_Context(OUT, context, deep); }
 
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        const Symbol* symbol = Symbol_From_Picker(context, picker);
-
-        const Value* var = TRY_VAL_CONTEXT_VAR(context, symbol);
-        if (not var)
-            return RAISE(Error_Bad_Pick_Raw(picker));
-
-        Copy_Cell(OUT, var);
-
-        if (
-            HEART_BYTE(var) == REB_FRAME
-            and QUOTE_BYTE(var) == ANTIFORM_0
-            and Cell_Frame_Coupling(var) == UNCOUPLED
-        ){
-            Tweak_Cell_Frame_Coupling(OUT, cast(VarList*, c));
-        }
-
-        return OUT; }
-
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        const Symbol* symbol = Symbol_From_Picker(context, picker);
-
-        Value* setval = ARG(value);
-
-        Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
-        if (not var)
-            return FAIL(Error_Bad_Pick_Raw(picker));
-
-        assert(Not_Cell_Flag(var, PROTECTED));
-        Copy_Cell(var, setval);
-        return nullptr; }  // caller's VarList* is not stale, no update needed
-
-
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
       case SYM_PROTECT_P: {
         INCLUDE_PARAMS_OF_PROTECT_P;
         UNUSED(ARG(location));
 
-        const Value* picker = ARG(picker);
+        const Element* picker = Element_ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         Value* setval = ARG(value);
@@ -1179,6 +1130,57 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 }
 
 
+IMPLEMENT_GENERIC(PICK, Any_Context)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* context = Element_ARG(location);
+    Context* c = Cell_Context(context);
+
+    const Element* picker = Element_ARG(picker);
+    const Symbol* symbol = Symbol_From_Picker(context, picker);
+
+    const Value* var = TRY_VAL_CONTEXT_VAR(context, symbol);
+    if (not var)
+        return RAISE(Error_Bad_Pick_Raw(picker));
+
+    Copy_Cell(OUT, var);
+
+    if (
+        HEART_BYTE(var) == REB_FRAME
+        and QUOTE_BYTE(var) == ANTIFORM_0
+        and Cell_Frame_Coupling(var) == UNCOUPLED
+    ){
+        Tweak_Cell_Frame_Coupling(OUT, cast(VarList*, c));
+    }
+
+    return OUT;
+}
+
+
+IMPLEMENT_GENERIC(POKE, Any_Context)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* context = Element_ARG(location);
+    possibly(Is_Port(context));
+
+    const Element* picker = Element_ARG(picker);
+    const Symbol* symbol = Symbol_From_Picker(context, picker);
+
+    Value* setval = ARG(value);
+
+    Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
+    if (not var)
+        return FAIL(Error_Bad_Pick_Raw(picker));
+
+    assert(Not_Cell_Flag(var, PROTECTED));
+    Copy_Cell(var, setval);
+    return nullptr;  // VarList* in cell not changed, caller need not update
+}
+
+
+
 // !!! Should this be legal?
 //
 IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
@@ -1187,6 +1189,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 
     Element* context = Element_ARG(element);
     Context* c = Cell_Context(context);
+    possibly(Is_Port(context));
 
     if (Is_Stub_Sea(c))
         return FAIL("SeaOfVars length counting code not done yet");

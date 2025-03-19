@@ -84,11 +84,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blank)
       case SYM_TAKE:
         return RAISE(Error_Nothing_To_Take_Raw());
 
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-        return RAISE(Error_Bad_Pick_Raw(ARG(picker))); }
-
       case SYM_COPY: {  // since (copy:deep [1 _ 2]) is legal, allow (copy _)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(ARG(value));
@@ -176,6 +171,18 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
         return Init_Blob(OUT, Cell_Binary(g_empty_blob));
 
     return UNHANDLED;
+}
+
+
+// The concept is that wherever it can, blank responds the same way that an
+// empty list would.  So, we give a raised error you can TRY to disarm.
+//
+IMPLEMENT_GENERIC(PICK, Is_Blank)
+{
+    INCLUDE_PARAMS_OF_PICK;
+    UNUSED(ARG(location));
+
+    return RAISE(Error_Bad_Pick_Raw(ARG(picker)));  // act as out of range [1]
 }
 
 

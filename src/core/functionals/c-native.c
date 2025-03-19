@@ -274,6 +274,8 @@ Bounce Dispatch_Generic_Core(
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
           case SYM_EQUAL_Q:
+          case SYM_PICK:
+          case SYM_POKE:
             break;  // fall through to modern dispatch
 
           default:

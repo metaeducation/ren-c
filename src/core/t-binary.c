@@ -322,57 +322,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
 
         return Copy_Blob_Part_At_May_Modify_Index(OUT, v, ARG(part)); }
 
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        REBINT n;
-        if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
-            return RAISE(Error_Bad_Pick_Raw(picker));
-
-        Byte b = *Binary_At(Cell_Binary(v), n);
-
-        return Init_Integer(OUT, b);
-      }
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        REBINT n;
-        if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
-            return FAIL(Error_Out_Of_Range(picker));
-
-        Value* setval = ARG(value);
-
-        REBINT i;
-        if (IS_CHAR(setval)) {
-            i = Cell_Codepoint(setval);
-        }
-        else if (Is_Integer(setval)) {
-            i = Int32(setval);
-        }
-        else {
-            // !!! See notes in the IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
-            // about alternate cases for the POKE'd value.
-            //
-            return FAIL(PARAM(value));
-        }
-
-        if (i > 0xff)
-            return FAIL(Error_Out_Of_Range(setval));
-
-        Binary* b = Cell_Binary_Ensure_Mutable(v);
-        Binary_Head(b)[n] = cast(Byte, i);
-
-        return nullptr; }  // caller's Binary* is not stale, no update needed
-
     //-- Modification:
       case SYM_APPEND:
       case SYM_INSERT:
@@ -872,6 +821,60 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* blob = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    REBINT n;
+    if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
+        return RAISE(Error_Bad_Pick_Raw(picker));
+
+    Byte b = *Binary_At(Cell_Binary(blob), n);
+
+    return Init_Integer(OUT, b);
+}
+
+
+IMPLEMENT_GENERIC(POKE, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* blob = Element_ARG(location);
+
+    const Element* picker = Element_ARG(picker);
+    REBINT n;
+    if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
+        return FAIL(Error_Out_Of_Range(picker));
+
+    Value* poke = ARG(value);
+
+    REBINT i;
+    if (IS_CHAR(poke)) {
+        i = Cell_Codepoint(poke);
+    }
+    else if (Is_Integer(poke)) {
+        i = Int32(poke);
+    }
+    else {
+        // !!! See notes in the IMPLEMENT_GENERIC(POKE, Any_String)
+        // about alternate cases for the POKE'd value.
+        //
+        return FAIL(PARAM(value));
+    }
+
+    if (i > 0xff)
+        return FAIL(Error_Out_Of_Range(poke));
+
+    Binary* bin = Cell_Binary_Ensure_Mutable(blob);
+    Binary_Head(bin)[n] = cast(Byte, i);
+
+    return nullptr;  // caller's Binary* is not stale, no update needed
 }
 
 

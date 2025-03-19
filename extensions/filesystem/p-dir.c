@@ -129,7 +129,9 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
         dir->path = path;
     }
 
-    switch (Symbol_Id(verb)) {
+    Option(SymId) id = Symbol_Id(verb);
+
+    switch (id) {
 
         // !!! Previously the directory synchronously read all the entries
         // on OPEN.  That method is being rethought.

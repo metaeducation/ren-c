@@ -118,24 +118,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         HEART_BYTE(OUT) = heart;
         return OUT; }
 
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-
-        REBINT n;
-        if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
-            n = Int32(picker) - 1;
-        }
-        else
-            return FAIL(picker);
-
-        if (n < 0 or n >= Cell_Sequence_Len(sequence))
-            return RAISE(Error_Bad_Pick_Raw(picker));
-
-        Copy_Sequence_At(OUT, sequence, n);
-        return OUT; }
 
     // !!! Should REVERSE of a sequence be supported, when sequences are
     // fundamentally immutable?  Probably not, but this replaces code that was
@@ -499,6 +481,28 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
         return Trust_Const(OUT);
     }
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(PICK, Any_Sequence)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* seq = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    REBINT n;
+    if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
+        n = Int32(picker) - 1;
+    }
+    else
+        return FAIL(picker);
+
+    if (n < 0 or n >= Cell_Sequence_Len(seq))
+        return RAISE(Error_Bad_Pick_Raw(picker));
+
+    Copy_Sequence_At(OUT, seq, n);
+    return OUT;
 }
 
 

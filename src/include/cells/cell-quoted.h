@@ -166,6 +166,10 @@ INLINE Count Dequotify(Cell* v) {
 INLINE bool Is_Antiform(const Atom* a)
   { return QUOTE_BYTE(Ensure_Readable(a)) == ANTIFORM_0; }
 
+#if CPLUSPLUS_11
+    INLINE bool Is_Antiform(const Element* elem) = delete;
+#endif
+
 #define Not_Antiform(a) (not Is_Antiform(a))
 
 #undef Any_Antiform  // range-based check useful for typesets, but slower

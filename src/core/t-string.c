@@ -710,8 +710,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 //
 bool Try_Get_Series_Index_From_Picker(
     REBINT *out,
-    const Value* v,
-    const Value* picker
+    const Element* v,
+    const Element* picker
 ){
     if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
         fail (Error_Bad_Pick_Raw(picker));
@@ -747,54 +747,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
     assert(Any_String(v));
 
     switch (id) {
-
-    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_PICK: {
-        INCLUDE_PARAMS_OF_PICK;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        REBINT n;
-        if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
-            return RAISE(Error_Bad_Pick_Raw(picker));
-
-        Codepoint c = Get_Char_At(Cell_String(v), n);
-
-        return Init_Char_Unchecked(OUT, c); }
-
-
-    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
-
-      case SYM_POKE: {
-        INCLUDE_PARAMS_OF_POKE;
-        UNUSED(ARG(location));
-
-        const Value* picker = ARG(picker);
-        REBINT n;
-        if (not Try_Get_Series_Index_From_Picker(&n, v, picker))
-            return FAIL(Error_Out_Of_Range(picker));
-
-        Value* setval = ARG(value);
-
-        Codepoint c;
-        if (IS_CHAR(setval)) {
-            c = Cell_Codepoint(setval);
-        }
-        else if (Is_Integer(setval)) {
-            c = Int32(setval);
-        }
-        else  // CHANGE is a better route for splicing/removal/etc.
-            return FAIL(PARAM(value));
-
-        if (c == 0)
-            return FAIL(Error_Illegal_Zero_Byte_Raw());
-
-        String* s = Cell_String_Ensure_Mutable(v);
-        Set_Char_At(s, n, c);
-
-        return nullptr; }  // Array* is still fine, caller need not update
-
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
@@ -1171,6 +1123,57 @@ IMPLEMENT_GENERIC(AS, Any_String)
 
     return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);
 }
+
+
+IMPLEMENT_GENERIC(PICK, Any_String)
+{
+    INCLUDE_PARAMS_OF_PICK;
+
+    const Element* any_string = Element_ARG(location);
+    const Element* picker = Element_ARG(picker);
+
+    REBINT n;
+    if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
+        return RAISE(Error_Bad_Pick_Raw(picker));
+
+    Codepoint c = Get_Char_At(Cell_String(any_string), n);
+
+    return Init_Char_Unchecked(OUT, c);
+}
+
+
+IMPLEMENT_GENERIC(POKE, Any_String)
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    Element* any_string = Element_ARG(location);
+
+    const Element* picker = Element_ARG(picker);
+    REBINT n;
+    if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
+        return FAIL(Error_Out_Of_Range(picker));
+
+    Value* poke = ARG(value);
+
+    Codepoint c;
+    if (IS_CHAR(poke)) {
+        c = Cell_Codepoint(poke);
+    }
+    else if (Is_Integer(poke)) {
+        c = Int32(poke);
+    }
+    else  // CHANGE is a better route for splicing/removal/etc.
+        return FAIL(PARAM(value));
+
+    if (c == 0)
+        return FAIL(Error_Illegal_Zero_Byte_Raw());
+
+    String* s = Cell_String_Ensure_Mutable(any_string);
+    Set_Char_At(s, n, c);
+
+    return nullptr;  // String* in Cell unchanged, caller need not update
+}
+
 
 
 IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)

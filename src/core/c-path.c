@@ -101,52 +101,56 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 
 
 //
-//  /pick: native [
+//  /pick: native:generic [
 //
 //  "Perform a path picking operation, same as `:(location).(picker)`"
 //
 //      return: "Picked value, or null if picker can't fulfill the request"
 //          [any-value?]
-//      location [<maybe> <unrun> element?]
+//      location [<maybe> <unrun> fundamental?]  ; can't pick from quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element? logic?]
 //  ]
 //
 DECLARE_NATIVE(pick)
 //
-// In R3-Alpha, PICK was an "action", which dispatched on types through the
-// "action mechanic" for the following types:
+// R3-Alpha had PD_Xxx() functions which were hooks for "Path Dispatch", which
+// was distinct from the code that ran the PICK action.
 //
-//     [any-series? map! gob! pair! date! time! tuple! bitset! port! varargs!]
+// Ren-C rethought this to build tuple dispatch on top of PICK and POKE.
+// So `foo.(expr)` and `pick foo (expr)` will always give the same answer
 //
-// In Ren-C, PICK is rethought to use the same dispatch mechanic as tuples,
-// to cut down on the total number of operations the system has to define.
+// 1. !!! PICK in R3-Alpha historically would use a logic TRUE to get the first
+//    element in a list, and a logic FALSE to get the second.  It did this
+//    regardless of how many elements were in the list.  For safety, it has
+//    been suggested lists > length 2 should fail).
 {
     INCLUDE_PARAMS_OF_PICK;
 
     Value* picker = ARG(picker);
 
-    if (Is_Okay(picker)) {
+    if (Is_Okay(picker)) {  // !!! should we verify that LENGTH-OF is 2? [1]
         Init_Integer(picker, 1);
     }
     else if (Is_Nulled(picker)) {
         Init_Integer(picker, 2);
     }
+    assert(not Is_Antiform(picker));  // LOGIC? is the only supported antiform
 
     Element* location = Element_ARG(location);
-    return Run_Generic_Dispatch(location, LEVEL, CANON(PICK));
+    return Dispatch_Generic(PICK, location, LEVEL);
 }
 
 
 //
-//  /poke: native [
+//  /poke: native:generic [
 //
 //  "Perform a path poking operation, same as `(location).(picker): :value`"
 //
 //      return: "Updated location state"  ; not the input value, see [1]
-//          [~null~ element?]
+//          [~null~ fundamental?]
 //      location "(modified)"
-//          [<maybe> element?]
+//          [<maybe> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<maybe> element?]
 //      value [any-value?]
@@ -171,7 +175,7 @@ DECLARE_NATIVE(poke)
 // in obj.date would have to be changed.
 {
     Element* location = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(location, LEVEL, CANON(POKE));
+    return Dispatch_Generic(POKE, location, LEVEL);
 }
 
 
