@@ -312,13 +312,14 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Decimal)
 }
 
 
-// Code mostly duplicated in Percent.
-//
-IMPLEMENT_GENERIC(MOLDIFY, Is_Decimal)
+IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
     Element* v = Element_ARG(element);
+    Heart heart = Cell_Heart_Ensure_Noquote(v);
+    assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
+
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
     bool form = REF(form);
 
@@ -328,38 +329,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Decimal)
     REBINT len = Emit_Decimal(
         buf,
         VAL_DECIMAL(v),
-        0, // e.g. not DEC_MOLD_MINIMAL
+        heart == TYPE_PERCENT ? DEC_MOLD_MINIMAL : 0,
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
     Append_Ascii_Len(mo->string, s_cast(buf), len);
 
-    return NOTHING;
-}
-
-
-// Code mostly duplicated in Decimal.
-//
-IMPLEMENT_GENERIC(MOLDIFY, Is_Percent)
-{
-    INCLUDE_PARAMS_OF_MOLDIFY;
-
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
-
-    UNUSED(form);
-
-    Byte buf[60];
-    REBINT len = Emit_Decimal(
-        buf,
-        VAL_DECIMAL(v),
-        DEC_MOLD_MINIMAL,
-        GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
-        mo->digits
-    );
-    Append_Ascii_Len(mo->string, s_cast(buf), len);
-    Append_Codepoint(mo->string, '%');
+    if (heart == TYPE_PERCENT)
+        Append_Ascii(mo->string, "%");
 
     return NOTHING;
 }
@@ -611,7 +588,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
 
 // 1. See DECLARE_NATIVE(multiply) for commutativity method of ordering types.
 //
-IMPLEMENT_GENERIC(MULTIPLY, Is_Decimal)
+IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
@@ -623,19 +600,13 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Decimal)
     if (Is_Integer(v2))
         d2 = cast(REBDEC, VAL_INT64(v2));
     else
-        d2 = VAL_DECIMAL(v2);  // decimal ensured by MULTIPLY [1]
+        d2 = VAL_DECIMAL(v2);  // decimal/percent ensured by MULTIPLY [1]
 
     return Init_Decimal_Or_Percent(OUT, heart, d1 * d2);
 }
 
 
-IMPLEMENT_GENERIC(MULTIPLY, Is_Percent)  // defers to decimal behavior
-{
-    return GENERIC_CFUNC(MULTIPLY, Is_Decimal)(LEVEL);
-}
-
-
-IMPLEMENT_GENERIC(COMPLEMENT, Is_Decimal)
+IMPLEMENT_GENERIC(COMPLEMENT, Any_Float)
 {
     INCLUDE_PARAMS_OF_COMPLEMENT;
 
