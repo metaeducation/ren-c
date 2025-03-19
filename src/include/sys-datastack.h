@@ -130,6 +130,7 @@
         operator Need(const Value*) () const { return p; }
         operator Need(Element*) () const { return p; }
         operator Need(const Element*) () const { return p; }
+        operator SymbolOrValue(const*) () const { return p; }
 
         explicit operator Byte* () const { return cast(Byte*, p); }
 

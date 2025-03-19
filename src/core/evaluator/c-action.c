@@ -641,10 +641,10 @@ Bounce Action_Executor(Level* L)
 
         assert(Is_Pushed_Refinement(TOP));
 
-        if (not Cell_Binding(TOP)) {  // the loop didn't index it
+        if (not Cell_Binding(TOP)) {  // duplicate or junk, loop didn't index
             Refinify_Pushed_Refinement(TOP_ELEMENT);
             Copy_Cell(SPARE, TOP);  // FAIL() uses the data stack
-            return FAIL(Error_Bad_Parameter_Raw(SPARE));  // duplicate or junk
+            return FAIL(Error_Bad_Parameter_Raw(stable_SPARE));
         }
 
         // Level_Args_Head offsets are 0-based, while index is 1-based.

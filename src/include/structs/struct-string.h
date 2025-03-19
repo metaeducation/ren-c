@@ -144,3 +144,39 @@
 // Stubs... so a Key* is a pointer to a pointer.
 //
 typedef const Symbol* Key;
+
+
+//=//// SYMBOL OR VALUE CONVENIENCE CLASS /////////////////////////////////=//
+//
+// When you make a call to make errors, you can pass a Symbol* or a Value*.
+// In the C++ build we simply accept either and make it possible to extract
+// as a void* suitable for passing to variadics, which then can use
+// Detect_Rebol_Pointer() to figure out what it is.
+//
+#if NO_CPLUSPLUS_11
+    #define SymbolOrValue(const_star) \
+        void const_star
+
+    #define Extract_SoV(sov) \
+        (sov)
+#else
+    struct SymbolOrValueHolder {
+        const void* p;
+
+        SymbolOrValueHolder(const Symbol* s) : p (s) {}
+        SymbolOrValueHolder(const Value* v) : p (v) {}
+
+        SymbolOrValueHolder(Need(Value*)& v) : p (v) {}
+        SymbolOrValueHolder(Need(Element*)& e) : p (e) {}
+        SymbolOrValueHolder(Sink(Value)& v) : p (v) {}
+        SymbolOrValueHolder(Sink(Element)& e) : p (e) {}
+        /*SymbolOrValueHolder(Init(Value)& v) : p (v) {}*/  // Sink / Value*
+        /*SymbolOrValueHolder(Init(Element)& e) : p (e) {}*/  // Sink / Element*
+    };
+
+    #define SymbolOrValue(const_star) \
+        SymbolOrValueHolder
+
+    #define Extract_SoV(sov) \
+        (sov).p
+#endif

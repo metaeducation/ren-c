@@ -103,7 +103,7 @@ uint32_t Get_Hash_Prime_May_Fail(uint32_t minimum)
 {
     Option(uint32_t) prime = Try_Get_Hash_Prime(minimum);
     if (not prime) {  // larger than hash prime table
-        DECLARE_ATOM (temp);
+        DECLARE_ELEMENT (temp);
         Init_Integer(temp, minimum);
         fail (Error_Size_Limit_Raw(temp));
     }

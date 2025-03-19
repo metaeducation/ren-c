@@ -57,7 +57,8 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
 
     if (not Any_Isotopic_Kind(heart)) {
         QUOTE_BYTE(c) = NOQUOTE_1;
-        fail (Error_Non_Isotopic_Type_Raw(c));
+        Value* v = cast(Value*, c);
+        fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
@@ -72,9 +73,11 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
               case SYM_NAN:
                 break;
 
-              default:
+              default: {
                 QUOTE_BYTE(c) = NOQUOTE_1;
-                fail (Error_Illegal_Keyword_Raw(c));  // only a few legal [4]
+                Value* v = cast(Value*, c);
+                fail (Error_Illegal_Keyword_Raw(v));  // only a few legal [4]
+              }
             }
 
             Unbind_Any_Word(c);

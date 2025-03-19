@@ -1121,8 +1121,8 @@ DECLARE_NATIVE(case)
     bool matched = Is_Trigger(stable_SPARE);
 
     if (not matched) {
-        if (not Any_Branch(branch))
-            return FAIL(Error_Bad_Value_Raw(branch));  // like IF [1]
+        if (not Any_Branch(branch))  // like IF [1]
+            return FAIL(Error_Bad_Value_Raw(cast(Value*, branch)));  // stable
 
         goto handle_next_clause;
     }

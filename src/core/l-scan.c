@@ -2875,7 +2875,7 @@ Bounce Scanner_Executor(Level* const L) {
     Tweak_Link_Filename(array, maybe transcode->file);
 
     if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
-        DECLARE_ATOM (temp);
+        DECLARE_ELEMENT (temp);
         Init_Block(temp, array);
         return RAISE(Error_Malconstruct_Raw(temp));
     }
@@ -2884,7 +2884,7 @@ Bounce Scanner_Executor(Level* const L) {
         //
         // #[true] #[false] #[none] #[unset] -- no equivalents.
         //
-        DECLARE_ATOM (temp);
+        DECLARE_ELEMENT (temp);
         Init_Block(temp, array);
         return RAISE(Error_Malconstruct_Raw(temp));
     }
@@ -2901,7 +2901,7 @@ Bounce Scanner_Executor(Level* const L) {
         return FAIL("#[xxx! [...]] construction syntax no longer supported");
     }
     else {
-        DECLARE_ATOM (temp);
+        DECLARE_ELEMENT (temp);
         Init_Block(temp, array);
         return RAISE(Error_Malconstruct_Raw(temp));
     }

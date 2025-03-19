@@ -356,7 +356,10 @@ void Set_Location_Of_Error(
             continue;
 
         PUSH();
-        if (not Try_Get_Action_Level_Label(TOP, L))
+        Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
+        if (label)
+            Init_Word(TOP, unwrap label);
+        else
             Init_Trash(TOP);  // [2]
 
         if (Is_Level_Fulfilling(L)) { // differentiate fulfilling levels [3]
@@ -654,12 +657,7 @@ Error* Make_Error_Managed_Vaptr(
             const void *p = va_arg(*vaptr, const void*);
 
             if (p == nullptr) {
-                //
-                // !!! Should variadic error take `nullptr` instead of
-                // "nulled cells"?
-                //
-                assert(!"nullptr passed to Make_Error_Managed_Vaptr()");
-                Init_Nulled(var);
+                Init_Nulled(var);  // we permit both nulled cells and nullptr
             }
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
@@ -667,8 +665,13 @@ Error* Make_Error_Managed_Vaptr(
                 Init_Nothing_Due_To_End(var);
                 break;
 
-              case DETECTED_AS_CELL : {
+              case DETECTED_AS_CELL: {
                 Copy_Cell(var, c_cast(Value*, p));
+                break; }
+
+              case DETECTED_AS_STUB: {  // let symbols act as words
+                assert(Is_Stub_Symbol(c_cast(Stub*, p)));
+                Init_Word(var, c_cast(Symbol*, p));
                 break; }
 
               default:
@@ -814,16 +817,7 @@ Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
 //
 Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 {
-    DECLARE_ELEMENT (param_word);
-    Init_Word(param_word, symbol);
-
-    DECLARE_ELEMENT (label_word);
-    if (label)
-        Init_Word(label_word, unwrap label);
-    else
-        Init_Nulled(label_word);
-
-    return Error_No_Arg_Raw(label_word, param_word);
+    return Error_No_Arg_Raw(maybe label, symbol);
 }
 
 
@@ -833,17 +827,10 @@ Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 Error* Error_Unspecified_Arg(Level* L) {
     assert(Is_Nothing(L->u.action.arg));
 
-    DECLARE_ELEMENT (param_word);
-    Init_Word(param_word, Key_Symbol(L->u.action.key));
+    const Symbol* param_symbol = Key_Symbol(L->u.action.key);
 
-    Option(const Symbol*) label = Level_Label(L);
-    DECLARE_ELEMENT (label_word);
-    if (label)
-        Init_Word(label_word, unwrap label);
-    else
-        Init_Nulled(label_word);
-
-    return Error_Unspecified_Arg_Raw(label_word, param_word);
+    Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
+    return Error_Unspecified_Arg_Raw(maybe label, param_symbol);
 }
 
 
@@ -903,15 +890,12 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 
     REBLEN index = 1 + (param - headparam);
 
-    DECLARE_ATOM (label);
-    if (not Try_Get_Action_Level_Label(label, L))
-        Init_Word(label, CANON(ANONYMOUS));
+    Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
 
-    DECLARE_ATOM (param_name);
-    Init_Word(param_name, Key_Symbol(Phase_Key(Level_Phase(L), index)));
+    const Symbol* param_symbol = Key_Symbol(Phase_Key(Level_Phase(L), index));
 
     Value* arg = Level_Arg(L, index);
-    return Error_Invalid_Arg_Raw(label, param_name, arg);
+    return Error_Invalid_Arg_Raw(maybe label, param_symbol, arg);
 }
 
 
@@ -930,32 +914,26 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     Details* details;
     Value* arg;
-    DECLARE_ATOM (label);
+    Option(const Symbol*) label;
 
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         details = Ensure_Cell_Frame_Details(SCRATCH);
         arg = stable_SPARE;
-        Option(const Symbol*) symbol = Cell_Frame_Label_Deep(SCRATCH);
-        if (symbol)
-            Init_Word(label, unwrap symbol);
-        else
-            Init_Word(label, CANON(ANONYMOUS));
+        label = Cell_Frame_Label_Deep(SCRATCH);
     }
     else {
         details = Ensure_Level_Details(L);
         arg = Level_Arg(L, 2);
-        if (not Try_Get_Action_Level_Label(label, L))
-            Init_Word(label, CANON(ANONYMOUS));
+        label = Try_Get_Action_Level_Label(L);
     }
 
     Param* param = Phase_Param(details, 2);
     assert(Is_Parameter(param));
     UNUSED(param);
 
-    DECLARE_ATOM (param_name);
-    Init_Word(param_name, Key_Symbol(Phase_Key(details, 2)));
+    const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 2));
 
-    return Error_Invalid_Arg_Raw(label, param_name, arg);
+    return Error_Invalid_Arg_Raw(maybe label, param_symbol, arg);
 }
 
 
@@ -982,7 +960,7 @@ Error* Error_Bad_Value(const Value* value)
 //
 //  Error_Bad_Null: C
 //
-Error* Error_Bad_Null(const Cell* target) {
+Error* Error_Bad_Null(const Element* target) {
     return Error_Bad_Null_Raw(target);
 }
 
@@ -992,7 +970,7 @@ Error* Error_Bad_Null(const Cell* target) {
 //
 Error* Error_No_Catch_For_Throw(Level* level_)
 {
-    DECLARE_ATOM (label);
+    DECLARE_VALUE (label);
     Copy_Cell(label, VAL_THROWN_LABEL(level_));
 
     DECLARE_ATOM (arg);
@@ -1003,12 +981,10 @@ Error* Error_No_Catch_For_Throw(Level* level_)
         return Cell_Error(label);
     }
 
-    if (Is_Antiform(label))
-        Meta_Quotify(label);  // !!! Review... stops errors in molding
-    if (Is_Antiform(arg))
-        Meta_Quotify(arg);  // !!! Review... stops errors in molding
+    if (Is_Antiform(arg) and Is_Antiform_Unstable(arg))
+        Meta_Quotify(arg);  // !!! Review, error can't take Atom*
 
-    return Error_No_Catch_Raw(arg, label);
+    return Error_No_Catch_Raw(cast(Value*, arg), label);
 }
 
 
@@ -1045,10 +1021,7 @@ Error* Error_Out_Of_Range(const Cell* arg)
 //
 Error* Error_Protected_Key(const Symbol* sym)
 {
-    DECLARE_ELEMENT (key_name);
-    Init_Word(key_name, sym);
-
-    return Error_Protected_Word_Raw(key_name);
+    return Error_Protected_Word_Raw(sym);
 }
 
 
@@ -1057,9 +1030,7 @@ Error* Error_Protected_Key(const Symbol* sym)
 //
 Error* Error_Math_Args(Kind type, const Symbol* verb)
 {
-    DECLARE_ATOM (verb_cell);
-    Init_Word(verb_cell, verb);
-    return Error_Not_Related_Raw(verb_cell, Datatype_From_Kind(type));
+    return Error_Not_Related_Raw(verb, Datatype_From_Kind(type));
 }
 
 //
@@ -1067,13 +1038,7 @@ Error* Error_Math_Args(Kind type, const Symbol* verb)
 //
 Error* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 {
-    DECLARE_ATOM (verb_cell);
-    Init_Word(verb_cell, verb);
-
-    fail (Error_Cannot_Use_Raw(
-        verb_cell,
-        Datatype_From_Kind(VAL_TYPE(first_arg))
-    ));
+    return Error_Cannot_Use_Raw(verb, Datatype_From_Kind(VAL_TYPE(first_arg)));
 }
 
 
@@ -1111,8 +1076,7 @@ Error* Error_Arg_Type(
     if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return Cell_Error(arg);
 
-    DECLARE_ELEMENT (param_word);
-    Init_Word(param_word, Key_Symbol(key));
+    const Symbol* param_symbol = Key_Symbol(key);
 
     DECLARE_VALUE (label);
     if (name)
@@ -1130,7 +1094,7 @@ Error* Error_Arg_Type(
     return Error_Expect_Arg_Raw(
         label,
         spec,
-        param_word
+        param_symbol
     );
 }
 
@@ -1170,13 +1134,7 @@ Error* Error_Phase_Arg_Type(
 //
 Error* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 {
-    DECLARE_ATOM (name);
-    if (label)
-        Init_Word(name, unwrap label);
-    else
-        Init_Nulled(name);
-
-    return Error_No_Logic_Typecheck_Raw(name);
+    return Error_No_Logic_Typecheck_Raw(maybe label);
 }
 
 
@@ -1185,13 +1143,7 @@ Error* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 //
 Error* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 {
-    DECLARE_ATOM (name);
-    if (label)
-        Init_Word(name, unwrap label);
-    else
-        Init_Nulled(name);
-
-    return Error_No_Arg_Typecheck_Raw(name);
+    return Error_No_Arg_Typecheck_Raw(maybe label);
 }
 
 //
@@ -1203,9 +1155,9 @@ Error* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 //
 Error* Error_Bad_Argless_Refine(const Key* key)
 {
-    DECLARE_ELEMENT (word);
-    Refinify(Init_Word(word, Key_Symbol(key)));
-    return Error_Bad_Argless_Refine_Raw(word);
+    DECLARE_ELEMENT (refinement);
+    Refinify(Init_Word(refinement, Key_Symbol(key)));
+    return Error_Bad_Argless_Refine_Raw(refinement);
 }
 
 
@@ -1213,25 +1165,17 @@ Error* Error_Bad_Argless_Refine(const Key* key)
 //  Error_Bad_Return_Type: C
 //
 Error* Error_Bad_Return_Type(Level* L, Atom* atom) {
-    DECLARE_VALUE (label);
-    if (not Try_Get_Action_Level_Label(label, L))
-        Init_Nulled(label);
-
-    if (Is_Void(atom))  // void's "kind" is null, no type (good idea?)
-        return Error_Bad_Void_Return_Raw(label);
-
-    if (Is_Pack(atom) and Is_Pack_Undecayable(atom))
-        return Error_User("Bad return pack (undecayable elements)");
+    Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
 
     Kind kind = VAL_TYPE(atom);
-    return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
+    return Error_Bad_Return_Type_Raw(maybe label, Datatype_From_Kind(kind));
 }
 
 
 //
 //  Error_Bad_Make: C
 //
-Error* Error_Bad_Make(Kind type, const Cell* spec)
+Error* Error_Bad_Make(Kind type, const Element* spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1333,6 +1277,12 @@ VarList* Startup_Errors(const Element* boot_errors)
 //
 //  Startup_Stackoverflow: C
 //
+// 1. The original "No memory" error let you supply the size of the request
+//    that could not be fulfilled.  But if you're creating a new out of memory
+//    error with that identity, you need an allocation... and out of memory
+//    errors can't work this way.  It may be that the error is generated after
+//    the stack is unwound and memory freed up.
+//
 void Startup_Stackoverflow(void)
 {
     ensure(nullptr, g_error_stack_overflow) = Init_Error(
@@ -1340,14 +1290,8 @@ void Startup_Stackoverflow(void)
         Error_Stack_Overflow_Raw()
     );
 
-    // !!! The original "No memory" error let you supply the size of the
-    // request that could not be fulfilled.  But if you are creating a new
-    // out of memory error with that identity, you need to do an allocation...
-    // and out of memory errors can't work this way.  It may be that the
-    // error is generated after the stack is unwound and memory freed up.
-    //
-    DECLARE_ATOM (temp);
-    Init_Integer(temp, 1020);
+    DECLARE_ELEMENT (temp);
+    Init_Integer(temp, 1020);  // !!! arbitrary [1]
 
     ensure(nullptr, g_error_no_memory) = Init_Error(
         Alloc_Value(),

@@ -569,11 +569,8 @@ ParamList* Pop_Paramlist_May_Fail(
     //
     Destruct_Binder(binder);
 
-    if (duplicate) {
-        DECLARE_ATOM (word);
-        Init_Word(word, duplicate);
-        fail (Error_Dup_Vars_Raw(word));
-    }
+    if (duplicate)
+        fail (Error_Dup_Vars_Raw(duplicate));
 
     Assert_Flex_Term_If_Needed(paramlist);
     return cast(ParamList*, paramlist);

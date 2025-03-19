@@ -485,20 +485,23 @@ for-each [sw-cat list] boot-errors [
                 ; calls are made.
                 ;
                 count-up 'i arity [
-                    keep unspaced ["const Cell* arg" i]
+                    keep cscape [i "SymbolOrValue(const*) arg$<i>"]
                 ]
             ]
             args: collect [
-                count-up 'i arity [keep unspaced ["arg" i]]
+                count-up 'i arity [keep cscape [i "Extract_SoV(arg$<i>)"]]
                 keep "rebEND"
             ]
         ]
 
         e-errfuncs/emit [message cat id f-name params args --{
             /* $<Mold Message> */
-            INLINE Error* Error_${F-Name}_Raw($<Delimit ", " Params>) {
+            INLINE Error* Error_${F-Name}_Raw(
+                $(Params),
+            ){
                 return Make_Error_Managed(
-                    SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>
+                    SYM_${CAT}, SYM_${ID},
+                    $(Args),
                 );
             }
         }--]

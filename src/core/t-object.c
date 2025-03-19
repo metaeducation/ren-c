@@ -1442,8 +1442,10 @@ DECLARE_NATIVE(label_of)
 
     Level* L = Level_Of_Varlist_May_Fail(cast(ParamList*, phase));
 
-    if (Try_Get_Action_Level_Label(OUT, L))  // look at L's label [1]
-        return OUT;
+    label = Try_Get_Action_Level_Label(L);
+    if (label)
+        return Init_Word(OUT, unwrap label);
+
     return nullptr;
 }
 

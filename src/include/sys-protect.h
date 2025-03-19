@@ -152,7 +152,7 @@ INLINE const Source* Freeze_Source_Shallow(const Source* a) {
 #if NO_RUNTIME_CHECKS
     #define Known_Mutable(v) v
 #else
-    INLINE const Cell* Known_Mutable(const Cell* c) {
+    INLINE const Value* Known_Mutable(const Value* c) {
         assert(Cell_Has_Node1(c));
         const Flex* f = c_cast(Flex*, CELL_NODE1(c));  // varlist, etc.
         assert(not Is_Flex_Read_Only(f));
@@ -161,7 +161,7 @@ INLINE const Source* Freeze_Source_Shallow(const Source* a) {
     }
 #endif
 
-INLINE const Cell* Ensure_Mutable(const Cell* v) {
+INLINE const Value* Ensure_Mutable(const Value* v) {
     assert(Cell_Has_Node1(v));
     const Flex* f = c_cast(Flex*, CELL_NODE1(v));  // varlist, etc.
 

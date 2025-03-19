@@ -1183,11 +1183,8 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
             fail ("Switching PARSE series is not allowed");
         index = VAL_INDEX(rule);
     }
-    else {  // #1263
-        DECLARE_ATOM (specific);
-        Derelativize(specific, rule, P_RULE_BINDING);
-        fail (Error_Parse3_Series_Raw(specific));
-    }
+    else  // #1263
+        fail (Error_Parse3_Series_Raw(rule));
 
     if (index > P_INPUT_LEN)
         P_POS = P_INPUT_LEN;

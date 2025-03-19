@@ -482,11 +482,8 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
         var = Varlist_Slot(c, index);
     }
 
-    if (Get_Cell_Flag(var, PROTECTED)) {  // protect is per-cell [2]
-        DECLARE_ATOM (unwritable);
-        Init_Word(unwritable, Cell_Word_Symbol(any_word));
-        fail (Error_Protected_Word_Raw(unwritable));
-    }
+    if (Get_Cell_Flag(var, PROTECTED))  // protect is per-cell [2]
+        fail (Error_Protected_Word_Raw(Cell_Word_Symbol(any_word)));
 
     return var;
 }

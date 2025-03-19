@@ -168,11 +168,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     else
         action = Varlist_Slot(Cell_Varlist(actor), unwrap index);
 
-    if (not action or not Is_Action(action)) {
-        DECLARE_ATOM (verb_cell);
-        Init_Word(verb_cell, verb);
-        return FAIL(Error_No_Port_Action_Raw(verb_cell));
-    }
+    if (not action or not Is_Action(action))
+        return FAIL(Error_No_Port_Action_Raw(verb));
 
     Push_Redo_Action_Level(OUT, level_, action);
 

@@ -368,25 +368,20 @@ INLINE ParamList* Varlist_Of_Level_Force_Managed(Level* L) {
 //    up skipping the Action level in a stack trace by thinking its label has
 //    been accounted for by the intrinsic).
 
-INLINE Option(Element*) Try_Get_Action_Level_Label(
-    Sink(Element) out,
-    Level* L
-){
+INLINE Option(const Symbol*) Try_Get_Action_Level_Label(Level* L) {
     assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));  // be cautious [1]
     assert(Is_Action_Level(L));
   #if DEBUG_LEVEL_LABELS
     assert(L->label_utf8);
   #endif
-    if (L->u.action.label)
-        return Init_Word(out, unwrap L->u.action.label);
-    return nullptr;
+    return L->u.action.label;
 }
 
 INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
     assert(Is_Action_Level(L));
     if (L->u.action.label)
         return String_UTF8(unwrap L->u.action.label);
-    return "[anonymous]";
+    return "~anonymous~";
 }
 
 INLINE void Set_Action_Level_Label(Level* L, Option(const Symbol*) label) {
