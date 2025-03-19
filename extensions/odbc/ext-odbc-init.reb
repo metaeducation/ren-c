@@ -114,7 +114,7 @@ sys.util/make-scheme [
         ][
             let statement: port.locals
             if get maybe has statement 'hstmt [
-                remove find head statement.database.statements port
+                remove find (head of statement.database.statements) port
                 close-statement statement
                 return port
             ]

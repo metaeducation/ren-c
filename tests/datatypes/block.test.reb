@@ -25,10 +25,10 @@
 
 ; #848
 (
-    [1] = copy:part tail [1] -2147483648
+    [1] = copy:part tail of [1] -2147483648
 )
 ~out-of-range~ !! (
-    copy:part tail [1] -2147483649
+    copy:part tail of [1] -2147483649
 )
 ~out-of-range~ !! (
     copy:part tail of [1] -9223372036854775808

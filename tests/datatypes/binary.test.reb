@@ -32,15 +32,15 @@
 
 
 [#1791
-    (#{E188B4} = head insert #{} "^(1234)")
-    (#{E188B400} = head insert #{00} "^(1234)")
-    (#{E188B40000} = head insert #{0000} "^(1234)")
+    (#{E188B4} = head of insert #{} "^(1234)")
+    (#{E188B400} = head of insert #{00} "^(1234)")
+    (#{E188B40000} = head of insert #{0000} "^(1234)")
 
     (#{E188B4} = append #{} "^(1234)")
     (#{00E188B4} = append #{00} "^(1234)")
     (#{0000E188B4} = append #{0000} "^(1234)")
 
-    (#{E188B4} = head change #{} "^(1234)")
-    (#{E188B4} = head change #{00} "^(1234)")
-    (#{E188B4} = head change #{0000} "^(1234)")
+    (#{E188B4} = head of change #{} "^(1234)")
+    (#{E188B4} = head of change #{00} "^(1234)")
+    (#{E188B4} = head of change #{0000} "^(1234)")
 ]

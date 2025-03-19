@@ -767,10 +767,10 @@ default-combinators: to map! reduce [
             (elide where: my unquote)
 
             integer? where [
-                remainder: at head input where
+                remainder: at (head of input) where
             ]
             any-series? :where [
-                if not same? head input head where [
+                if not same? (head of input) (head of where) [
                     fail "Series SEEK in UPARSE must be in the same series"
                 ]
                 remainder: where

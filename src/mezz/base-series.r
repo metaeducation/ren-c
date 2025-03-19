@@ -82,10 +82,6 @@ last: redescribe [
     :with "Same as :ALL, but removes specific characters"
         [char? text! blob! integer! block! bitset!]
 ][
-    let tail_TRIM: tail
-    tail: lib/tail/
-    let head_TRIM: head
-    head: lib/head/
     let all_TRIM: all
     all: lib/all/
 
@@ -96,7 +92,7 @@ last: redescribe [
     ; https://github.com/rebol/rebol-issues/issues/2288
     ;
     if any-context? series [
-        if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
+        if any [head tail auto lines all_TRIM with] [
             fail 'core/bad-refines
         ]
         trimmed: make (type of series) collect [
@@ -122,8 +118,8 @@ last: redescribe [
             ]
             rule: blank!
 
-            if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM:HEAD:TAIL
+            if not any [head tail] [
+                head: tail: #  ; plain TRIM => TRIM:HEAD:TAIL
             ]
         ]
 
@@ -134,11 +130,11 @@ last: redescribe [
             if any [
                 all [
                     auto
-                    any [head_TRIM tail_TRIM lines]
+                    any [head tail lines]
                 ]
                 all [
                     any [all_TRIM with]
-                    any [auto head_TRIM tail_TRIM lines]
+                    any [auto head tail lines]
                 ]
             ][
                 fail 'core/bad-refines
@@ -151,7 +147,7 @@ last: redescribe [
                 charset with
             ]
 
-            if any [all_TRIM lines head_TRIM tail_TRIM] [append rule newline]
+            if any [all_TRIM lines head tail] [append rule newline]
         ]
 
         blob? series [
@@ -166,8 +162,8 @@ last: redescribe [
                 charset with
             ]
 
-            if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: #  ; plain TRIM => TRIM:HEAD:TAIL
+            if not any [head tail] [
+                head: tail: #  ; plain TRIM => TRIM:HEAD:TAIL
             ]
         ]
     ] else [
@@ -182,11 +178,11 @@ last: redescribe [
     ]
 
     case:all [
-        head_TRIM [
+        head [
             parse3 series [remove [opt some rule] to <end>]
         ]
 
-        tail_TRIM [
+        tail [
             parse3 series [opt some [remove [some rule <end>] | one]]  ; #2289
         ]
     ] then [

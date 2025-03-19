@@ -41,7 +41,7 @@ import <bootstrap-shim.r>
             "and end with newline."
         ]
     ]
-    if pos: back tail-of text [remove pos]
+    if pos: back tail of text [remove pos]
     return text
 ]
 
@@ -74,7 +74,7 @@ import <bootstrap-shim.r>
     if not equal? newline try pos.1 [insert pos indent]
 
     ; Clear indent from tail if present.
-    if indent = pos: skip tail-of text 0 - length of indent [clear pos]
+    if indent = pos: skip tail of text 0 - length of indent [clear pos]
     append text newline
 
     return text

@@ -141,7 +141,7 @@ decode-url: sys.util/decode-url/
         return path
     ]
 
-    return to url! head insert path unspaced [
+    return to url! head of insert path unspaced [
         form scheme.scheme "://"
         if scheme.user [
             unspaced [

@@ -77,15 +77,6 @@ binary!: blob!
 /context: specialize make/ [type: object!]
 
 
-; It's not clear that HEAD and TAIL should be defined like this out of the
-; box.  HEAD-OF and HEAD OF can be used.
-;
-; https://forum.rebol.info/t/de-verbification-noun-of-x-vs-noun-x/1368
-;
-head: head-of/
-tail: tail-of/
-
-
 ; !!! These cases still linger as question mark routines that don't return
 ; LOGIC!, and they seem like they need greater rethinking in general.  What
 ; replaces them (for ones that are kept) might be new.

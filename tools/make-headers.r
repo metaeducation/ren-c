@@ -123,7 +123,7 @@ prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
     ;
     all [
         find:match directive "#endif"
-        let position: find-last tail-of emitter.buf-emit "#if"
+        let position: find-last (tail of emitter.buf-emit) "#if"
         elide rewrite-if-directives position
     ]
 ]

@@ -66,7 +66,7 @@ target-platform: null
     return to-logic any [  ; TO-LOGIC for bootstrap (xxx? returns #[true])
         void? suffix
         empty? suffix
-        suffix = (skip tail-of s negate length of suffix)
+        suffix = (skip tail of s negate length of suffix)
     ]
 ]
 
@@ -243,7 +243,7 @@ windows: make platform-class [
         cmd [object!]
     ][
         let f: file-to-local cmd.file
-        if #"\" = last f [remove back tail-of f]
+        if #"\" = last f [remove back tail of f]
         return either dir? cmd.file [
             spaced ["if not exist" f "mkdir" f]
         ][
@@ -256,7 +256,7 @@ windows: make platform-class [
         cmd [object!]
     ][
         let f: file-to-local cmd.file
-        if #"\" = last f [remove back tail-of f]
+        if #"\" = last f [remove back tail of f]
         return either dir? cmd.file [
             ;
             ; Note: If you have Git shell tools installed on Windows, then

@@ -350,7 +350,8 @@ data-descriptor-sig: #{504B0708}
     ; Finding the central directory is done empirically by scanning from
     ; the end of file, looking for the end-of-central-sig.
     ;
-    if not let central-end-pos: find-reverse (tail source) end-of-central-sig [
+    let central-end-pos: find-reverse (tail of source) end-of-central-sig
+    if not central-end-pos [
         fail "Could not find end of central directory signature"
     ]
     let num-central-entries

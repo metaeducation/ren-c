@@ -54,10 +54,10 @@
         new-line block 'yes
         -{[^/    a b c]}- = mold block
     )(
-        new-line tail block 'yes
+        new-line (tail of block) 'yes
         -{[^/    a b c^/]}- = mold block
     )(
-        -{[^/]}- = mold tail block
+        -{[^/]}- = mold tail-of block
     )
 ]
 
@@ -83,7 +83,7 @@
 (
     block: copy [a b c]
     new-line block 'yes
-    new-line tail block 'yes
+    new-line (tail of block) 'yes
     append block spread [d e f]
     -{[^/    a b c^/    d e f]}- = mold block
 )
@@ -91,7 +91,7 @@
 (
     block: copy [a b c]
     new-line block 'yes
-    new-line tail block 'yes
+    new-line (tail of block) 'yes
     append:line block spread [d e f]
     -{[^/    a b c^/    d e f^/]}- = mold block
 )
@@ -105,7 +105,7 @@
 (
     block: copy [a b c]
     new-line block 'yes
-    new-line tail block 'yes
+    new-line (tail of block) 'yes
     append:line block spread [d e f]
     -{[^/    a b c^/    d e f^/]}- = mold block
 )

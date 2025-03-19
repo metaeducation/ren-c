@@ -24,7 +24,7 @@
     block: copy [a b c d]
     block: my next
     block: my insert spread data
-    block: my head
+    block: my head-of
 
     block = [a 3 4 b c d]
 )

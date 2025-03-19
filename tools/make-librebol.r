@@ -117,7 +117,7 @@ api-objects: make block! 50
                     ;
                     trim:head:tail param
 
-                    pos: back tail param
+                    pos: back tail of param
                     while [pick identifier-chars pos.1] [
                         pos: back pos
                     ]

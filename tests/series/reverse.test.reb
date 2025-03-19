@@ -15,7 +15,7 @@
     ; ]
     before: collect [
         for-next 'pos data [keep boolean new-line? pos]
-        keep boolean new-line? tail data
+        keep boolean new-line? tail of data
     ]
 
     reverse data
@@ -26,7 +26,7 @@
     ; ]
     after: collect [
         for-next 'pos data [keep boolean new-line? pos]
-        keep boolean new-line? tail data
+        keep boolean new-line? tail of data
     ]
 
     all [

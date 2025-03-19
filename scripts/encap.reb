@@ -1260,9 +1260,13 @@ generic-format: context [
 
     print ["Original executable is" length of executable "bytes long."]
 
-    ; !!! Note: LIB. qualifier needed on ZIP due to binding dependency.  "Sea
-    ; of words" resolves this problem (not committed to master yet).  Also,
-    ; head tuple support is still pending...use GROUP!
+    ; !!! Should ZIP be taken for compression, or the FP-like Zip?
+    ;
+    ;    >> zip [1 2 3] [4 5 6]
+    ;    == [[1 4] [2 5] [3 6]]
+    ;
+    ;    >> zip:with [1 2 3] [4 5 6] add/
+    ;    == [5 7 9]
     ;
     let compressed: copy #{}
     lib/zip:deep:verbose compressed spec

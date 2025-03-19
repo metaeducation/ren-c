@@ -121,7 +121,7 @@ whitelisted: [
 ][
     body: compose (inside body '()) body
     new-line:all body 'no
-    append:line log spread (head insert body label)
+    append:line log spread (head of insert body label)
 ]
 
 export analyse: context [

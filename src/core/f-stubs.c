@@ -393,8 +393,8 @@ REBLEN Part_Len_May_Modify_Index(
 
     if (len > UINT32_MAX) {
         //
-        // Tests had `[1] = copy:part tail [1] -2147483648`, where trying to
-        // do `len = -len` couldn't make a positive 32-bit version of that
+        // Tests had `[1] = copy:part tail of [1] -2147483648`, where trying
+        // to do `len = -len` couldn't make a positive 32-bit version of that
         // negative value.  For now, use REBI64 to do the calculation.
         //
         fail ("Length out of range for :PART refinement");

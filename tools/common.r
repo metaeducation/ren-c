@@ -426,7 +426,7 @@ export /stripload: func [
     if gather [
         append (ensure block! get gather) spread collect [
             for-next 't text [
-                let newline-pos: find t newline else [tail text]
+                let newline-pos: find t newline else [tail of text]
                 if not let colon-pos: find:part t ":" newline-pos [
                     t: newline-pos
                     continue

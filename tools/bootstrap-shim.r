@@ -165,7 +165,9 @@ sys.util/rescue [
 ; 1. Using SET-WORD!s here also helps searchability if you're looking for
 ;    where `func3: ...` is defined.
 
-for-each [alias] [  ; SET-WORD!s for readability + findability [1]
+system.contexts.user.tail: <!!! REVIEW WHY THIS ASSIGNMENT IS NEEDED !!!>
+
+for-each [alias] [
     parse3:                     ; PARSE is a completely new model ("UPARSE")
     func3:                      ; FUNC refinements are their own args, more...
     function3:                  ; no FUNCTION at present (TBD: FUNC synonym)
@@ -179,10 +181,14 @@ for-each [alias] [  ; SET-WORD!s for readability + findability [1]
     mold3:                      ; MOLD takes splices instead of MOLD/ONLY
     and3:                       ; AND takes GROUP!s on right (not BLOCK!)
     or3:                        ; OR takes GROUP!s on right (not BLOCK!)
-    refinement3?                ; Former refinements of /FOO now :FOO
-    refinement3!                ; ...
-    bind3                       ; BIND's arguments reversed
+    refinement3?:               ; Former refinements of /FOO now :FOO
+    refinement3!:               ; ...
+    bind3:                      ; BIND's arguments reversed
+    head3:                      ; use HEAD OF instead
+    tail3:                      ; use TAIL OF instead
 ][
+    assert [set-word? alias]  ; SET-WORD!s for readability + findability [1]
+
     ; Assign the alias what the existing version (minus the terminal "3") is
     ; (e.g. func3: func/)
     ;
@@ -974,7 +980,7 @@ get-path!: func3 [] [
 /encode: func3 [codec arg [text! integer!]] [
     if codec = [BE + 1] [
         assert [all [integer? arg, arg < 256, arg >= 0]]
-        return head change copy #{00} arg
+        return head of change copy #{00} arg
     ]
     if codec = 'UTF-8 [
         assert [text? arg]

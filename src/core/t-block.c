@@ -258,7 +258,7 @@ REBINT Find_In_Array(
     REBINT start;
     if (skip < 0) {
         start = 0;
-        --index;  // (find:skip tail [1 2] 2 -1) should start at the *2*
+        --index;  // (find:skip tail of [1 2] 2 -1) should start at the *2*
     }
     else
         start = index;
@@ -419,7 +419,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         if (n == 0)
             return -1;  // Rebol2/Red convention: 0 is not a pick
         if (n < 0)
-            ++n; // Rebol2/Red convention: `pick tail [a b c] -1` is `c`
+            ++n; // Rebol2/Red convention: (pick tail [a b c] -1) is `c`
         n += VAL_INDEX(v) - 1;
     }
     else if (Is_Word(picker)) {

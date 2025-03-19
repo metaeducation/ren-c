@@ -22,10 +22,6 @@
     :with "Same as :ALL but removes specific characters"
         [char? text! blob! integer! block! bitset!]
 ][
-    let tail_TRIM: :tail
-    tail: get $lib/tail
-    let head_TRIM: :head
-    head: get $lib/head
     let all_TRIM: :all
     all: get $lib/all
 
@@ -36,7 +32,7 @@
     ; https://github.com/rebol/rebol-issues/issues/2288
     ;
     if any-context? series [
-        if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
+        if any [head tail auto lines all_TRIM with] [
             fail 'core/bad-refines
         ]
         trimmed: make (type of series) collect [
@@ -62,8 +58,8 @@
             ]
             rule: blank!
 
-            if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: okay  ; plain utrim => utrim/HEAD/TAIL
+            if not any [head tail] [
+                head: tail: okay  ; plain utrim => utrim/HEAD/TAIL
             ]
         ]
 
@@ -74,11 +70,11 @@
             if any [
                 all [
                     auto
-                    any [head_TRIM tail_TRIM lines]
+                    any [head tail lines]
                 ]
                 all [
                     any [all_TRIM with]
-                    any [auto head_TRIM tail_TRIM lines]
+                    any [auto head tail lines]
                 ]
             ][
                 fail 'core/bad-refines
@@ -91,7 +87,7 @@
                 charset with
             ]
 
-            if any [all_TRIM lines head_TRIM tail_TRIM] [append rule newline]
+            if any [all_TRIM lines head tail] [append rule newline]
         ]
 
         blob? series [
@@ -106,8 +102,8 @@
                 charset with
             ]
 
-            if not any [head_TRIM tail_TRIM] [
-                head_TRIM: tail_TRIM: okay  ; plain utrim => utrim/HEAD/TAIL
+            if not any [head tail] [
+                head: tail: okay  ; plain utrim => utrim/HEAD/TAIL
             ]
         ]
     ] else [
@@ -122,11 +118,11 @@
     ]
 
     case:all [
-        head_TRIM [
+        head [
             parse series [opt remove [some rule] to <end>]
         ]
 
-        tail_TRIM [
+        tail [
             parse series [opt some [remove [some rule <end>] | <next>]]  ; #2289
         ]
     ] then [

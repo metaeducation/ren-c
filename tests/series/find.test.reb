@@ -71,7 +71,7 @@
 [
     ("" = find "" "")
     ("a" = find "a" "")
-    ("" = find tail "a" "")
+    ("" = find tail of "a" "")
     (null = find "" "a")
 
     ("ab" = find "ab" "a")
@@ -80,23 +80,23 @@
 
     ("" = find-reverse "" "")
     ("a" = find-reverse "a" "")
-    ("" = find-reverse tail "a" "")
+    ("" = find-reverse tail of "a" "")
     (null = find-reverse "" "a")
 
-    ("ab" = find-reverse tail "ab" "a")
-    ("b" = find-reverse tail "ab" "b")
-    (null = find-reverse tail "ab" "c")
+    ("ab" = find-reverse tail of "ab" "a")
+    ("b" = find-reverse tail of "ab" "b")
+    (null = find-reverse tail of "ab" "c")
 ]
 
 [
-    ("def" = find:skip tail "abcdef" "def" -3)
-    (null = find:skip tail "abcdef" "def" -2)
-    ("def" = find:skip tail "abcdef" "def" -1)
+    ("def" = find:skip tail of "abcdef" "def" -3)
+    (null = find:skip tail of "abcdef" "def" -2)
+    ("def" = find:skip tail of "abcdef" "def" -1)
 
-    ("abcdef" = find:skip tail "abcdef" "abc" -3)
-    ("abcdef" = find:skip tail "abcdef" "abc" -2)
-    (null = find:skip back tail "abcdef" "abc" -2)
-    ("abcdef" = find:skip tail "abcdef" "abc" -1)
+    ("abcdef" = find:skip tail of "abcdef" "abc" -3)
+    ("abcdef" = find:skip tail of "abcdef" "abc" -2)
+    (null = find:skip back tail of "abcdef" "abc" -2)
+    ("abcdef" = find:skip tail of "abcdef" "abc" -1)
 ]
 
 ("cd" = find skip "abcd" 2 "cd")
@@ -110,9 +110,9 @@
     (null = find ab "c")
 
     ; !!! String search in blob only supports :skip of 1 for now (e.g no -1)
-    ;(ab = find-reverse tail ab "a")
-    ;((as blob! "b") = find-reverse tail ab "b")
-    ;(null = find-reverse tail ab "c")
+    ;(ab = find-reverse tail of ab "a")
+    ;((as blob! "b") = find-reverse tail of ab "b")
+    ;(null = find-reverse tail of ab "c")
 ]
 
 (null = find "api-transient" "to")
@@ -139,7 +139,7 @@
 
 [
     (#{C386} = find:skip as blob! "Æ" "Æ" 1)
-    (#{C386} = find:skip tail as blob! "Æ" "Æ" -1)
+    (#{C386} = find:skip tail of as blob! "Æ" "Æ" -1)
 ]
 
 [
