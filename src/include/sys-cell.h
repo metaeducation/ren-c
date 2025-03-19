@@ -271,7 +271,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 //=//// UNREADABLE CELLS //////////////////////////////////////////////////=//
 //
 // Unreadable cells are write-only cells.  They will give errors on attempts
-// to read from them e.g. with VAL_TYPE(), which is similar to erased cells.
+// to read from them e.g. with Type_Of(), which is similar to erased cells.
 // But with the advantage that they have NODE_FLAG_NODE and NODE_FLAG_CELL
 // set in their header, hence they do not conflate with empty UTF-8 strings.
 // The GC tolerates them in places where an erased cell would trigger an
@@ -443,36 +443,36 @@ INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* c) {
 }
 
 
-//=//// VALUE TYPE (always REB_XXX <= REB_MAX) ////////////////////////////=//
+//=//// VALUE TYPE (always TYPE_XXX <= MAX_TYPE) ////////////////////////////=//
 //
 // When asking about a value's "type", you want to see something like a
 // double-quoted WORD! as a QUOTED! value...though it's a WORD! underneath.
 //
-// (Instead of VAL_TYPE(), use Cell_Heart() if you wish to know that the cell
+// (Instead of Type_Of(), use Cell_Heart() if you wish to know that the cell
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
-INLINE Kind VAL_TYPE_UNCHECKED(const Atom* a) {
-    switch (QUOTE_BYTE(a)) {
+INLINE Type Type_Of_Unchecked(const Atom* atom) {
+    switch (QUOTE_BYTE(atom)) {
       case ANTIFORM_0_COERCE_ONLY:  // use this constant rarely!
-        return u_cast(Kind, HEART_BYTE(a) + REB_QUOTED);
+        return u_cast(Type, HEART_BYTE(atom) + TYPE_QUOTED);
 
       case NOQUOTE_1:
-        return u_cast(Kind, HEART_BYTE(a));
+        return u_cast(Type, HEART_BYTE(atom));
 
       case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
-        return REB_QUASIFORM;
+        return TYPE_QUASIFORM;
 
       default:
-        return REB_QUOTED;
+        return TYPE_QUOTED;
     }
 }
 
 #if NO_RUNTIME_CHECKS
-    #define VAL_TYPE VAL_TYPE_UNCHECKED
+    #define Type_Of  Type_Of_Unchecked
 #else
-    #define VAL_TYPE(v) \
-        VAL_TYPE_UNCHECKED(Ensure_Readable(v))
+    #define Type_Of(atom) \
+        Type_Of_Unchecked(Ensure_Readable(atom))
 #endif
 
 
@@ -845,7 +845,7 @@ INLINE Cell* Copy_Cell_Untracked(
 
 #define CELL_MASK_TRASH \
     (NODE_FLAG_NODE | NODE_FLAG_CELL \
-        | FLAG_HEART_BYTE(REB_BLANK) | FLAG_QUOTE_BYTE(NOQUOTE_1) \
+        | FLAG_HEART_BYTE(TYPE_BLANK) | FLAG_QUOTE_BYTE(NOQUOTE_1) \
         | CELL_MASK_NO_NODES)
 
 INLINE Cell* Move_Cell_Untracked(

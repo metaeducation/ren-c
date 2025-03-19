@@ -191,7 +191,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-BINDABLE?>
 
-<ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+<ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Type())
 
     word        "evaluates a variable or action"
     ~keyword~   "special constant values (e.g. ~null~, ~void~)"
@@ -219,7 +219,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-SEQUENCE?>
 
-  <ANY-TUPLE?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+  <ANY-TUPLE?>  ; (order matters, see Sigilize_Any_Plain_Type())
 
     tuple       "member selection with inert bias"
                 (:node1)
@@ -243,7 +243,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
   </ANY-TUPLE?>
 
-  <ANY-CHAIN?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+  <ANY-CHAIN?>  ; (order matters, see Sigilize_Any_Plain_Type())
 
     chain       "refinement and function call dialect"
                 (:node1)
@@ -267,7 +267,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
   </ANY-CHAIN?>
 
-  <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+  <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Type())
 
     path        "member or refinement selection with execution bias"
                 (:node1)
@@ -296,7 +296,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 <ANY-LIST?>
 
-  <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+  <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Type())
 
     block       "list of elements that blocks evaluation unless EVAL is used"
     ~pack~:U    "multi-return that can be unpacked or decays to first item"
@@ -322,7 +322,7 @@ varargs     "evaluator position for variable numbers of arguments"
   </ANY-BLOCK?>
 
 
-  <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+  <ANY-FENCE?>  ; (order matters, see Sigilize_Any_Plain_Type())
 
     fence       "list of elements that are used in construction via MAKE"
                 (node1)
@@ -347,7 +347,7 @@ varargs     "evaluator position for variable numbers of arguments"
   </ANY-FENCE?>
 
 
-  <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Kind())
+  <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Type())
 
     group       "list that evaluates expressions as an isolated group"
     ~splice~    "fragment of multiple values without a surrounding block"
@@ -394,8 +394,8 @@ comma         "separator between full evaluations (otherwise invisible)"
 ; ABOVE THESE ARE QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"
 ; ============================================================================
 
-; The REB_QUOTED, REB_QUASIFORM, and all the antiform types (REB_SPLICE,
-; REB_NOTHING, etc.) enum values never appear in the HEART_BYTE() of a cell.
+; The TYPE_QUOTED, TYPE_QUASIFORM, and all the antiform types (TYPE_SPLICE,
+; TYPE_NOTHING, etc.) enum values never appear in the HEART_BYTE() of a cell.
 ; These are synthesized datatypes when the QUOTE_BYTE() contains values other
 ; than one (NOQUOTE_1).
 ;

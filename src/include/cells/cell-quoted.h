@@ -178,10 +178,10 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
     // Assume Is_Antiform() checked Ensure_Readable()
     assert(QUOTE_BYTE(a) == ANTIFORM_0);
     return (
-        HEART_BYTE(a) == REB_BLOCK  // Is_Pack()
-        or HEART_BYTE(a) == REB_ERROR  // Is_Raised()
-        or HEART_BYTE(a) == REB_COMMA  // Is_Barrier()
-        or HEART_BYTE(a) == REB_OBJECT  // Is_Lazy()
+        HEART_BYTE(a) == TYPE_BLOCK  // Is_Pack()
+        or HEART_BYTE(a) == TYPE_ERROR  // Is_Raised()
+        or HEART_BYTE(a) == TYPE_COMMA  // Is_Barrier()
+        or HEART_BYTE(a) == TYPE_OBJECT  // Is_Lazy()
     );
 }
 
@@ -190,10 +190,10 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
 
 INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
     return (
-        heart != REB_BLOCK  // Is_Pack()
-        and heart != REB_ERROR  // Is_Raised()
-        and heart != REB_COMMA  // Is_Barrier()
-        and heart != REB_OBJECT  // Is_Lazy()
+        heart != TYPE_BLOCK  // Is_Pack()
+        and heart != TYPE_ERROR  // Is_Raised()
+        and heart != TYPE_COMMA  // Is_Barrier()
+        and heart != TYPE_OBJECT  // Is_Lazy()
     );
 }
 
@@ -202,10 +202,10 @@ INLINE bool Is_Stable(Need(const Atom*) a) {  // repeat for non-inlined speed
     if (QUOTE_BYTE(a) != ANTIFORM_0)
         return true;
     return (
-        HEART_BYTE(a) != REB_BLOCK  // Is_Pack()
-        and HEART_BYTE(a) != REB_ERROR  // Is_Raised()
-        and HEART_BYTE(a) != REB_COMMA  // Is_Barrier()
-        and HEART_BYTE(a) != REB_OBJECT  // Is_Lazy()
+        HEART_BYTE(a) != TYPE_BLOCK  // Is_Pack()
+        and HEART_BYTE(a) != TYPE_ERROR  // Is_Raised()
+        and HEART_BYTE(a) != TYPE_COMMA  // Is_Barrier()
+        and HEART_BYTE(a) != TYPE_OBJECT  // Is_Lazy()
     );
 }
 
@@ -313,7 +313,7 @@ INLINE Atom* Degrade(Atom* a) {
 
 // Meta quoting is a superset of plain quoting.  It has the twist that it can
 // quote antiforms to produce quasiforms.  This is done by META (alias ^)
-// and the REB_META_XXX family of values (like ^WORD, ^TU.P.LE...)
+// and the TYPE_META_XXX family of values (like ^WORD, ^TU.P.LE...)
 //
 // It's hard to summarize in one place all the various applications of this
 // feature!  But it's critical to accomplishing composability by which a

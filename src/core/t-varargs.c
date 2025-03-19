@@ -20,7 +20,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The VARARGS! data type implements an abstraction layer over an eval level
-// or arbitrary array of values.  All copied instances of a REB_VARARGS value
+// or arbitrary array of values.  All copied instances of a TYPE_VARARGS value
 // remain in sync as values are TAKE-d out of them.  Once they report
 // reaching a TAIL? they will always report TAIL?...until the call that
 // spawned them is off the stack, at which point they will report an error.
@@ -362,7 +362,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_HEART(ARG(type)) == REB_VARARGS);
+    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_VARARGS);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -395,7 +395,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 
     // !!! Permit FRAME! ?
 
-    return FAIL(Error_Bad_Make(REB_VARARGS, arg));
+    return FAIL(Error_Bad_Make(TYPE_VARARGS, arg));
 }
 
 
@@ -454,7 +454,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Varargs)
             Move_Cell(PUSH(), Decay_If_Unstable(OUT));
         }
 
-        // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
+        // !!! What if caller wanted a TYPE_GROUP, TYPE_PATH, or an /INTO?
         //
         return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE)); }
 
@@ -581,7 +581,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             break;
 
           case PARAMCLASS_THE:
-            Init_Any_Word(param_word, REB_THE_WORD, Key_Symbol(key));
+            Init_Any_Word(param_word, TYPE_THE_WORD, Key_Symbol(key));
             break;
 
           case PARAMCLASS_SOFT:

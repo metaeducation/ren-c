@@ -200,7 +200,7 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
         DECLARE_ELEMENT (elem);
         VarList* varlist = cast(VarList*, m_cast(void*, p));
-        if (CTX_TYPE(varlist) == REB_FRAME) {
+        if (CTX_TYPE(varlist) == TYPE_FRAME) {
             if (
                 Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK)
                 and Not_Node_Managed(varlist)

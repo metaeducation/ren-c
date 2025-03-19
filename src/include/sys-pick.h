@@ -70,7 +70,7 @@ INLINE Bounce Dispatch_Generic_Core(
 
     return Native_Fail_Result(  // can't use FAIL() macro in %sys-core.h [1]
         level_, Derive_Error_From_Pointer(
-            Error_Cannot_Use_Raw(name, Datatype_From_Kind(heart))
+            Error_Cannot_Use_Raw(name, Datatype_From_Type(heart))
         )
     );
 }

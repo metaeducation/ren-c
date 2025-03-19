@@ -59,17 +59,17 @@
 #define CELL_VARARGS_PHASE_NODE(c)          CELL_NODE2(c)
 
 INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_VARARGS);
+    assert(HEART_BYTE(c) == TYPE_VARARGS);
     return cast(Phase*, CELL_VARARGS_PHASE_NODE(c));
 }
 
 INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Phase* phase) {
-    assert(HEART_BYTE(c) == REB_VARARGS);
+    assert(HEART_BYTE(c) == TYPE_VARARGS);
     CELL_VARARGS_PHASE_NODE(c) = phase;
 }
 
 INLINE Array* Cell_Varargs_Origin(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_VARARGS);
+    assert(HEART_BYTE(c) == TYPE_VARARGS);
     return cast(Array*, CELL_VARARGS_ORIGIN(c));
 }
 
@@ -77,7 +77,7 @@ INLINE void Tweak_Cell_Varargs_Origin(
     Cell* c,
     Stub* source  // either a feed, or a frame varlist
 ){
-    assert(HEART_BYTE(c) == REB_VARARGS);
+    assert(HEART_BYTE(c) == TYPE_VARARGS);
     CELL_VARARGS_ORIGIN(c) = source;
 }
 
@@ -117,7 +117,7 @@ INLINE bool Is_Block_Style_Varargs(
     Element* *shared_out,
     const Cell* vararg
 ){
-    assert(Cell_Heart(vararg) == REB_VARARGS);
+    assert(Cell_Heart(vararg) == TYPE_VARARGS);
 
     Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
@@ -141,7 +141,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
     Level* *L_out,
     const Cell* vararg
 ){
-    assert(Cell_Heart(vararg) == REB_VARARGS);
+    assert(Cell_Heart(vararg) == TYPE_VARARGS);
 
     Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
@@ -193,7 +193,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
     const Key* *key,
     const Cell* v
 ){
-    assert(Cell_Heart(v) == REB_VARARGS);
+    assert(Cell_Heart(v) == TYPE_VARARGS);
 
     Phase* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {

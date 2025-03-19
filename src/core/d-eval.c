@@ -98,7 +98,7 @@ void Dump_Level_Location(Level* L)
 
         Init_Any_List_At_Core(
             dump,
-            REB_BLOCK,
+            TYPE_BLOCK,
             Level_Array(L),
             Level_Array_Index(L),
             L_binding

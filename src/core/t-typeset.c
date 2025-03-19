@@ -32,8 +32,8 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
 
-    assert(Cell_Heart(a) == REB_PARAMETER);
-    assert(Cell_Heart(b) == REB_PARAMETER);
+    assert(Cell_Heart(a) == TYPE_PARAMETER);
+    assert(Cell_Heart(b) == TYPE_PARAMETER);
 
     if (
         Cell_Parameter_Spec(a) != Cell_Parameter_Spec(b)
@@ -179,16 +179,16 @@ void Set_Parameter_Spec(
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
         if (Is_Quasiform(item)) {
-            if (Cell_Heart(item) == REB_BLANK) {
+            if (Cell_Heart(item) == TYPE_BLANK) {
                 *flags |= PARAMETER_FLAG_NOTHING_DEFINITELY_OK;
                 continue;
             }
             if (not Is_Stable_Antiform_Heart(Cell_Heart(item))) {
-                if (Cell_Heart(item) != REB_BLOCK)  // typecheck packs ok
+                if (Cell_Heart(item) != TYPE_BLOCK)  // typecheck packs ok
                     fail (item);
             }
 
-            if (Cell_Heart(item) != REB_WORD) {
+            if (Cell_Heart(item) != TYPE_WORD) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
@@ -210,7 +210,7 @@ void Set_Parameter_Spec(
             continue;
         }
 
-        if (Cell_Heart(item) == REB_TAG) {  // literal check of tag [2]
+        if (Cell_Heart(item) == TYPE_TAG) {  // literal check of tag [2]
             bool strict = false;
 
             if (
@@ -253,7 +253,7 @@ void Set_Parameter_Spec(
         }
 
         const Value* lookup;
-        if (Cell_Heart(item) == REB_WORD) {  // allow abstraction [3]
+        if (Cell_Heart(item) == TYPE_WORD) {  // allow abstraction [3]
             lookup = maybe Lookup_Word(item, spec_binding);
             if (not lookup)  // not even bound to anything
                 fail (item);
@@ -266,7 +266,7 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            if (Is_Antiform(lookup) and Cell_Heart(lookup) != REB_FRAME)
+            if (Is_Antiform(lookup) and Cell_Heart(lookup) != TYPE_FRAME)
                 fail (item);
             if (Is_Quoted(lookup))
                 fail (item);
@@ -276,18 +276,18 @@ void Set_Parameter_Spec(
 
         Heart heart = Cell_Heart(lookup);
 
-        if (heart == REB_TYPE_BLOCK) {
+        if (heart == TYPE_TYPE_BLOCK) {
             if (optimized == optimized_tail) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            *optimized = VAL_TYPE_KIND(lookup);
+            *optimized = Cell_Datatype_Type(lookup);
             ++optimized;
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
         }
         else if (
-            heart == REB_TYPE_WORD
-            or heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE
+            heart == TYPE_TYPE_WORD
+            or heart == TYPE_TYPE_PATH or heart == TYPE_TYPE_TUPLE
         ){
             const Value* slot;
             Option(Error*) error = Trap_Lookup_Word(
@@ -297,11 +297,11 @@ void Set_Parameter_Spec(
                 fail (unwrap error);
             if (not Is_Action(slot))
                 fail ("TYPE-WORD! must look up to an action for now");
-            heart = REB_FRAME;
+            heart = TYPE_FRAME;
             lookup = slot;
             goto handle_predicate;
         }
-        else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
+        else if (heart == TYPE_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
           handle_predicate: {
             Details* details = maybe Try_Cell_Frame_Details(lookup);
             if (
@@ -420,7 +420,7 @@ Element* Decorate_According_To_Parameter(
       case PARAMCLASS_SOFT: {
         Source *a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
         Move_Cell(Stub_Cell(a), e);
-        Init_Any_List(e, REB_THE_GROUP, a);
+        Init_Any_List(e, TYPE_THE_GROUP, a);
         break; }
 
       case PARAMCLASS_JUST:

@@ -158,20 +158,20 @@ enum {
     ST_STEPPER_INITIAL_ENTRY = STATE_0,
 
 
-  //=//// STEPPER STATES BELOW REB_MAX RESERVED FOR DATATYPE //////////////=//
+  //=//// STEPPER STATES BELOW MAX_TYPE RESERVED FOR DATATYPE //////////////=//
 
-    // The stepper uses REB_XXX types of the current cell being processed
+    // The stepper uses TYPE_XXX types of the current cell being processed
     // for the STATE byte in those cases.  This is helpful for knowing what
     // the mode of an evaluator level is, and makes the value on hand for
     // easy use in the "hot" level header location.
     //
     // Since we can only evaluate Element, we start the stepper custom states
-    // right after REB_MAX_ELEMENT (inclusive... REB_QUOTED = REB_MAX_ELEMENT)
+    // right after MAX_TYPE_ELEMENT (inclusive... TYPE_QUOTED = MAX_TYPE_ELEMENT)
 
-    ST_STEPPER_REB_MAX = REB_MAX_ELEMENT,
+    ST_STEPPER_MAX_TYPE = MAX_TYPE_ELEMENT,
 
 
-  //=//// STEPPER STATES ABOVE REB_MAX ////////////////////////////////////=//
+  //=//// STEPPER STATES ABOVE MAX_TYPE ////////////////////////////////////=//
 
     ST_STEPPER_LOOKING_AHEAD,
     ST_STEPPER_REEVALUATING,

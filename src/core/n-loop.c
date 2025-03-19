@@ -254,7 +254,7 @@ static Bounce Loop_Series_Common(
         }
 
         if (
-            VAL_TYPE(var) != VAL_TYPE(start)
+            Type_Of(var) != Type_Of(start)
             or Cell_Flex(var) != Cell_Flex(start)
         ){
             return FAIL("Can only change series index, not series to iterate");
@@ -329,7 +329,7 @@ static Bounce Loop_Integer_Common(
         }
 
         if (not Is_Integer(var))
-            return FAIL(Error_Invalid_Type(VAL_TYPE(var)));
+            return FAIL(Error_Invalid_Type(Type_Of(var)));
 
         if (REB_I64_ADD_OF(*state, bump, state))
             return FAIL(Error_Overflow_Raw());
@@ -412,7 +412,7 @@ static Bounce Loop_Number_Common(
         }
 
         if (not Is_Decimal(var))
-            return FAIL(Error_Invalid_Type(VAL_TYPE(var)));
+            return FAIL(Error_Invalid_Type(Type_Of(var)));
 
         *state += b;
     }
@@ -908,7 +908,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 
         Heart heart = Cell_Heart_Ensure_Noquote(les->data);
 
-        if (Any_List_Kind(heart)) {
+        if (Any_List_Type(heart)) {
             if (var)
                 Copy_Cell(
                     var,
@@ -922,16 +922,16 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        if (Any_Context_Kind(heart)) {
+        if (Any_Context_Type(heart)) {
             if (var) {
                 assert(les->u.evars.index != 0);
                 Init_Any_Word(
                     var,
-                    REB_WORD,
+                    TYPE_WORD,
                     Key_Symbol(les->u.evars.key)
                 );
 
-                if (heart == REB_MODULE) {
+                if (heart == TYPE_MODULE) {
                     Tweak_Cell_Word_Index(var, INDEX_PATCHED);
                     Tweak_Cell_Binding(var, Sea_Patch(
                         Cell_Module_Sea(les->data),
@@ -964,7 +964,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        if (heart == REB_MAP) {
+        if (heart == TYPE_MAP) {
             assert(les->u.eser.index % 2 == 0);  // should be on key slot
 
             const Value* key;
@@ -1007,7 +1007,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        if (Any_String_Kind(heart)) {
+        if (Any_String_Type(heart)) {
             if (var)
                 Init_Char_Unchecked(
                     var,
@@ -1018,7 +1018,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
             continue;
         }
 
-        if (heart == REB_BLOB) {
+        if (heart == TYPE_BLOB) {
             const Binary* b = c_cast(Binary*, les->flex);
             if (var)
                 Init_Integer(var, Binary_Head(b)[les->u.eser.index]);
@@ -1625,7 +1625,7 @@ DECLARE_NATIVE(remove_each)
     if (breaking)
         return nullptr;
 
-    assert(VAL_TYPE(OUT) == VAL_TYPE(data));
+    assert(Type_Of(OUT) == Type_Of(data));
 
 }} return_pack: { //////////////////////////////////////////////////////////=//
 
@@ -2030,7 +2030,7 @@ DECLARE_NATIVE(for)
     Value* var = Varlist_Slot(Cell_Varlist(vars), 1);  // not movable, see #2274
 
     if (not Is_Integer(var))
-        return FAIL(Error_Invalid_Type(VAL_TYPE(var)));
+        return FAIL(Error_Invalid_Type(Type_Of(var)));
 
     if (VAL_INT64(var) == VAL_INT64(value))
         return BRANCHED(OUT);

@@ -96,24 +96,24 @@ IMPLEMENT_GENERIC(MAKE, Is_Money)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_KIND(ARG(type)) == REB_MONEY);
+    assert(Cell_Datatype_Type(ARG(type)) == TYPE_MONEY);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
 
-    switch (VAL_TYPE(arg)) {
-      case REB_INTEGER:
+    switch (Type_Of(arg)) {
+      case TYPE_INTEGER:
         return Init_Money(OUT, int_to_deci(VAL_INT64(arg)));
 
-      case REB_DECIMAL:
-      case REB_PERCENT:
+      case TYPE_DECIMAL:
+      case TYPE_PERCENT:
         return Init_Money(OUT, decimal_to_deci(VAL_DECIMAL(arg)));
 
-      case REB_MONEY:
+      case TYPE_MONEY:
         return Copy_Cell(OUT, arg);
 
-      case REB_TEXT: {
-        Option(Error*) error = Trap_Transcode_One(OUT, REB_0, arg);
+      case TYPE_TEXT: {
+        Option(Error*) error = Trap_Transcode_One(OUT, TYPE_0, arg);
         if (error)
             return RAISE(unwrap error);
         if (Is_Money(OUT))
@@ -122,7 +122,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Money)
             return Init_Money(OUT, decimal_to_deci(Dec64(stable_OUT)));
         break; }
 
-      case REB_BLOB:
+      case TYPE_BLOB:
         Bin_To_Money_May_Fail(OUT, arg);
         return OUT;
 
@@ -130,7 +130,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Money)
         break;
     }
 
-    return RAISE(Error_Bad_Make(REB_MONEY, arg));
+    return RAISE(Error_Bad_Make(TYPE_MONEY, arg));
 }
 
 
@@ -198,7 +198,7 @@ static Value* Math_Arg_For_Money(
         return store;
     }
 
-    fail (Error_Math_Args(REB_MONEY, verb));
+    fail (Error_Math_Args(TYPE_MONEY, verb));
 }
 
 
@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Money)
             REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
             Reset_Cell_Header_Noquote(
                 TRACK(OUT),
-                FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
+                FLAG_HEART_BYTE(Type_Of(to)) | CELL_MASK_NO_NODES
             );
             VAL_DECIMAL(OUT) = dec;
             return OUT;
@@ -274,7 +274,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Money)
             REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(OUT));
             return Init_Integer(OUT, i64);
         }
-        HEART_BYTE(OUT) = REB_MONEY;
+        HEART_BYTE(OUT) = TYPE_MONEY;
         return OUT; }
 
       case SYM_EVEN_Q:
@@ -297,14 +297,14 @@ IMPLEMENT_GENERIC(TO, Is_Money)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(element);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
     deci d = VAL_MONEY_AMOUNT(v);
 
-    if (to == REB_DECIMAL or to == REB_PERCENT)
+    if (to == TYPE_DECIMAL or to == TYPE_PERCENT)
         return Init_Decimal_Or_Percent(OUT, to, deci_to_decimal(d));
 
-    if (to == REB_INTEGER) {  // !!! how to check for digits after dot?
+    if (to == TYPE_INTEGER) {  // !!! how to check for digits after dot?
         REBI64 i = deci_to_int(d);
         deci reverse = int_to_deci(i);
         if (not deci_is_equal(d, reverse))
@@ -314,7 +314,7 @@ IMPLEMENT_GENERIC(TO, Is_Money)
         return Init_Integer(OUT, i);
     }
 
-    if (Any_Utf8_Kind(to)) {
+    if (Any_Utf8_Type(to)) {
         if (d.e != 0 or d.m1 != 0 or d.m2 != 0)
             Init_Decimal(v, deci_to_decimal(d));
         else
@@ -325,12 +325,12 @@ IMPLEMENT_GENERIC(TO, Is_Money)
         Push_Mold(mo);
         Mold_Element(mo, v);
         const String* s = Pop_Molded_String(mo);
-        if (not Any_String_Kind(to))
+        if (not Any_String_Type(to))
             Freeze_Flex(s);
         return Init_Any_String(OUT, to, s);;
     }
 
-    if (to == REB_MONEY)
+    if (to == TYPE_MONEY)
         return COPY(v);
 
     return UNHANDLED;

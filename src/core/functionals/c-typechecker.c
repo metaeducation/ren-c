@@ -70,11 +70,11 @@ Bounce Typechecker_Dispatcher(Level* const L)
     if (bounce)
         return unwrap bounce;
 
-    Kind kind;
+    Type type;
     Details* details;
 
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        kind = VAL_TYPE(v);
+        type = Type_Of(v);
         details = Ensure_Cell_Frame_Details(SCRATCH);
     }
     else {
@@ -83,9 +83,9 @@ Bounce Typechecker_Dispatcher(Level* const L)
             return RAISE("Datatype check on non-datatype (use TRY for NULL)");
 
         if (check_datatype)
-            kind = VAL_TYPE_KIND(v);
+            type = Cell_Datatype_Type(v);
         else
-            kind = VAL_TYPE(v);
+            type = Type_Of(v);
 
         details = Ensure_Level_Details(L);
     }
@@ -95,7 +95,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
     TypesetByte typeset_byte = VAL_UINT8(
         Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
     );
-    return LOGIC(Builtin_Typeset_Check(typeset_byte, kind));
+    return LOGIC(Builtin_Typeset_Check(typeset_byte, type));
 }
 
 
@@ -284,7 +284,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     Context* derived;
     bool match_all;
 
-    if (Cell_Heart(tests) == REB_PARAMETER) {  // usually antiform
+    if (Cell_Heart(tests) == TYPE_PARAMETER) {  // usually antiform
         const Array* array = maybe Cell_Parameter_Spec(tests);
         if (array == nullptr)
             return true;  // implicitly all is permitted
@@ -293,27 +293,27 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         derived = SPECIFIED;
         match_all = false;
     }
-    else switch (VAL_TYPE(tests)) {
-      case REB_TYPE_BLOCK:
-        return Is_Stable(v) and (VAL_TYPE(v) == VAL_TYPE_KIND(tests));
+    else switch (Type_Of(tests)) {
+      case TYPE_TYPE_BLOCK:
+        return Is_Stable(v) and (Type_Of(v) == Cell_Datatype_Type(tests));
 
-      case REB_BLOCK:
+      case TYPE_BLOCK:
         item = Cell_List_At(&tail, tests);
         derived = Derive_Binding(tests_binding, tests);
         match_all = false;
         break;
 
-      case REB_GROUP:
-      case REB_TYPE_GROUP:
+      case TYPE_GROUP:
+      case TYPE_TYPE_GROUP:
         item = Cell_List_At(&tail, tests);
         derived = Derive_Binding(tests_binding, tests);
         match_all = true;
         break;
 
-      case REB_QUASIFORM:
-      case REB_QUOTED:
-      case REB_TYPE_WORD:
-      case REB_WORD:
+      case TYPE_QUASIFORM:
+      case TYPE_QUOTED:
+      case TYPE_TYPE_WORD:
+      case TYPE_WORD:
         item = c_cast(Element*, tests);
         tail = c_cast(Element*, tests) + 1;
         derived = tests_binding;
@@ -331,7 +331,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 
         if (Is_Quasiform(item)) {  // quasiforms e.g. [~null~] mean antiform
-            if (Cell_Heart(item) == REB_BLOCK) {  // typecheck pack
+            if (Cell_Heart(item) == TYPE_BLOCK) {  // typecheck pack
                 if (not Is_Pack(v))
                     goto test_failed;
                 if (Typecheck_Pack_In_Spare_Uses_Scratch(L, item))
@@ -387,31 +387,31 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             goto test_failed;
         }
 
-        Kind kind;
+        Type type;
         const Value* test;
         if (
-            VAL_TYPE_UNCHECKED(item) == REB_WORD
-            or VAL_TYPE_UNCHECKED(item) == REB_TYPE_WORD
+            Type_Of_Unchecked(item) == TYPE_WORD
+            or Type_Of_Unchecked(item) == TYPE_TYPE_WORD
         ){
             label = Cell_Word_Symbol(item);
             Option(Error*) error = Trap_Lookup_Word(&test, item, derived);
             if (error)
                 fail (unwrap error);
-            kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
+            type = Type_Of(test);  // e.g. TYPE-BLOCK! <> BLOCK!
         }
         else {
             test = item;
-            switch (VAL_TYPE_UNCHECKED(test)) {
-              case REB_BLOCK:
-                kind = REB_TYPE_BLOCK;
+            switch (Type_Of_Unchecked(test)) {
+              case TYPE_BLOCK:
+                type = TYPE_TYPE_BLOCK;
                 break;
 
-              case REB_GROUP:
-                kind = REB_TYPE_GROUP;
+              case TYPE_GROUP:
+                type = TYPE_TYPE_GROUP;
                 break;
 
               default:
-                kind = VAL_TYPE_UNCHECKED(test);
+                type = Type_Of_Unchecked(test);
                 break;
             }
         }
@@ -419,7 +419,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         if (Is_Action(test))
             goto run_action;
 
-        switch (kind) {
+        switch (type) {
           run_action: {
           #if (! DEBUG_DISABLE_INTRINSICS)
             Details* details = maybe Try_Cell_Frame_Details(test);
@@ -513,7 +513,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 goto test_failed;
             break; }
 
-          case REB_TYPE_WORD:
+          case TYPE_TYPE_WORD:
             if (not Typecheck_Atom_In_Spare_Uses_Scratch(
                 L, test, tests_binding
             )){
@@ -521,7 +521,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             }
             break;
 
-          case REB_TYPE_GROUP: {
+          case TYPE_TYPE_GROUP: {
             Context* sub_binding = Derive_Binding(tests_binding, test);
             if (not Typecheck_Atom_In_Spare_Uses_Scratch(
                 L, test, sub_binding
@@ -530,11 +530,11 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             }
             break; }
 
-          case REB_QUOTED:
-          case REB_QUASIFORM: {
+          case TYPE_QUOTED:
+          case TYPE_QUASIFORM: {
             fail ("QUOTED? and QUASI? not supported in TYPE-XXX!"); }
 
-          case REB_PARAMETER: {
+          case TYPE_PARAMETER: {
             if (not Typecheck_Atom_In_Spare_Uses_Scratch(
                 L, test, SPECIFIED
             )){
@@ -542,9 +542,9 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             }
             break; }
 
-          case REB_TYPE_BLOCK: {
-            Kind k = VAL_TYPE(v);
-            if (VAL_TYPE_KIND(test) != k)
+          case TYPE_TYPE_BLOCK: {
+            Type t = Type_Of(v);
+            if (Cell_Datatype_Type(test) != t)
                 goto test_failed;
             break; }
 
@@ -691,12 +691,12 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
         = optimized + sizeof(spec->misc.at_least_4);
 
     if (Is_Stable(atom)) {
-        Kind kind = VAL_TYPE(Stable_Unchecked(atom));
+        Type type = Type_Of(Stable_Unchecked(atom));
         for (; optimized != optimized_tail; ++optimized) {
             if (*optimized == 0)
                 break;  // premature end of list
 
-            if (Builtin_Typeset_Check(*optimized, kind))
+            if (Builtin_Typeset_Check(*optimized, type))
                 goto return_true;
         }
     }
@@ -768,10 +768,10 @@ bool Typecheck_Coerce_Uses_Spare_And_Scratch(
 //
 Value* Init_Typechecker(Init(Value) out, const Element* types) {
     if (Is_Type_Block(types)) {
-        Kind kind = VAL_TYPE_KIND(types);
-        Offset n = cast(Offset, kind);
+        Type t = Cell_Datatype_Type(types);
+        Offset n = cast(Offset, t);
 
-        SymId constraint_sym = cast(SymId, REB_MAX + n);
+        SymId constraint_sym = cast(SymId, MAX_TYPE + n);
         return Copy_Cell(out, Lib_Var(constraint_sym));
     }
 
@@ -880,12 +880,12 @@ DECLARE_NATIVE(match)
         return Init_Nulled(OUT);
     }
 
-    switch (VAL_TYPE(test)) {
-      case REB_PARAMETER:
-      case REB_BLOCK:
-      case REB_TYPE_WORD:
-      case REB_TYPE_GROUP:
-      case REB_TYPE_BLOCK:
+    switch (Type_Of(test)) {
+      case TYPE_PARAMETER:
+      case TYPE_BLOCK:
+      case TYPE_TYPE_WORD:
+      case TYPE_TYPE_GROUP:
+      case TYPE_TYPE_BLOCK:
         Copy_Cell(SPARE, v);
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
             return nullptr;

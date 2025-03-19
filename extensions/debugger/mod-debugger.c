@@ -196,10 +196,10 @@ DECLARE_NATIVE(resume)
 
     Value* expr = ARG(expression);
     if (Is_Nulled(expr))  // e.g. <end> (actually null not legal)
-        Init_Any_List(expr, REB_META_GROUP, EMPTY_ARRAY);
+        Init_Any_List(expr, TYPE_META_GROUP, EMPTY_ARRAY);
     else {
         assert(Is_Block(expr));
-        HEART_BYTE(expr) = REB_META_GROUP;
+        HEART_BYTE(expr) = TYPE_META_GROUP;
     }
 
     // We throw with /NAME as identity of the RESUME function.  (Note: there

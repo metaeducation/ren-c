@@ -106,10 +106,10 @@ INLINE void Reset_Evaluator_Erase_Out(Level* L) {
 }
 
 #define Init_Pushed_Refinement(out,symbol) \
-    Init_Any_Word((out), REB_THE_WORD, symbol)
+    Init_Any_Word((out), TYPE_THE_WORD, symbol)
 
 #define Init_Pushable_Refinement_Bound(out,symbol,context,index) \
-    Init_Any_Word_Bound((out), REB_THE_WORD, (symbol), (context), (index))
+    Init_Any_Word_Bound((out), TYPE_THE_WORD, (symbol), (context), (index))
 
 #define Is_Pushed_Refinement Is_The_Word
 

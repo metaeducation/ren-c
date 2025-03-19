@@ -65,7 +65,7 @@
 #define CELL_PARAMETER_STRING(c)  CELL_NODE2(c)
 
 INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_PARAMETER);
+    assert(HEART_BYTE(c) == TYPE_PARAMETER);
 
     const Node* node = CELL_PARAMETER_SPEC(c);
     if (node != nullptr and Not_Node_Readable(node))
@@ -79,12 +79,12 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
     #define PARAMETER_FLAGS(p)  (p)->extra.flags
 #else
     INLINE const uintptr_t& PARAMETER_FLAGS(const Cell* p) {
-        assert(Cell_Heart_Unchecked(p) == REB_PARAMETER);
+        assert(Cell_Heart_Unchecked(p) == TYPE_PARAMETER);
         return p->extra.flags;
     }
 
     INLINE uintptr_t& PARAMETER_FLAGS(Cell* p) {
-        assert(Cell_Heart_Unchecked(p) == REB_PARAMETER);
+        assert(Cell_Heart_Unchecked(p) == TYPE_PARAMETER);
         return p->extra.flags;
     }
 #endif
@@ -292,18 +292,18 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 
 INLINE ParamClass Cell_ParamClass(const Cell* param) {
-    assert(HEART_BYTE(param) == REB_PARAMETER);
+    assert(HEART_BYTE(param) == TYPE_PARAMETER);
     ParamClass pclass = u_cast(ParamClass, PARAMCLASS_BYTE(param));
     return pclass;
 }
 
 INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
-    assert(HEART_BYTE(param) == REB_PARAMETER);
+    assert(HEART_BYTE(param) == TYPE_PARAMETER);
     return cast(const String*, CELL_PARAMETER_STRING(param));
 }
 
 INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
-    assert(HEART_BYTE(param) == REB_PARAMETER);
+    assert(HEART_BYTE(param) == TYPE_PARAMETER);
     CELL_PARAMETER_STRING(param) = m_cast(String*, maybe string);
 }
 
@@ -356,7 +356,7 @@ INLINE void Mark_Typechecked(const Value* v) {
 }
 
 INLINE bool Is_Parameter_Final_Type(const Param* p) {
-    assert(HEART_BYTE(p) == REB_PARAMETER);
+    assert(HEART_BYTE(p) == TYPE_PARAMETER);
     return Get_Parameter_Flag(p, FINAL_TYPECHECK);
 }
 
@@ -420,7 +420,7 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
   #endif
     out->header.bits = (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(REB_WORD)
+            | FLAG_HEART_BYTE(TYPE_WORD)
             | FLAG_QUOTE_BYTE(ANTIFORM_0_COERCE_ONLY)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_NODE2  // index shouldn't be marked
@@ -478,7 +478,7 @@ INLINE bool Any_Vacancy(Need(const Value*) a) {
         return false;
 
     Heart heart = Cell_Heart(a);
-    if (heart == REB_BLANK or heart == REB_TAG)
+    if (heart == TYPE_BLANK or heart == TYPE_TAG)
         return true;
 
     return false;

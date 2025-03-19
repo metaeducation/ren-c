@@ -70,7 +70,7 @@
 
 INLINE bool Is_Logic(Need(const Value*) v) {
     Assert_Cell_Readable(v);
-    if (QUOTE_BYTE(v) != ANTIFORM_0 or HEART_BYTE(v) != REB_WORD)
+    if (QUOTE_BYTE(v) != ANTIFORM_0 or HEART_BYTE(v) != TYPE_WORD)
         return false;
     Option(SymId) id = Cell_Word_Id(v);
     return id == SYM_NULL or id == SYM_OKAY;
@@ -82,14 +82,14 @@ INLINE bool Is_Logic(Need(const Value*) v) {
 #define Init_Okay(out) \
     Init_Any_Word_Untracked( \
         (out), \
-        REB_WORD, \
+        TYPE_WORD, \
         ANTIFORM_0_COERCE_ONLY,  /* OKAY is valid keyword symbol */ \
         CANON(OKAY))
 
 INLINE Value* Init_Logic(Init(Value) out, bool flag) {
     return Init_Any_Word_Untracked(
         out,
-        REB_WORD,
+        TYPE_WORD,
         ANTIFORM_0_COERCE_ONLY,  // OKAY and NULL are valid keyword symbols
         flag ? CANON(OKAY) : CANON(NULL)
     );
@@ -97,7 +97,7 @@ INLINE Value* Init_Logic(Init(Value) out, bool flag) {
 
 INLINE bool Cell_Logic(Need(const Value*) v) {
     assert(Is_Antiform(v));
-    assert(HEART_BYTE(v) == REB_WORD);
+    assert(HEART_BYTE(v) == TYPE_WORD);
     SymId id = unwrap Cell_Word_Id(v);
     assert(id == SYM_NULL or id == SYM_OKAY);
     return id == SYM_OKAY;
@@ -160,7 +160,7 @@ INLINE bool Cell_Logic(Need(const Value*) v) {
 INLINE bool Is_Boolean(const Value* v) {
     Assert_Cell_Readable(v);
 
-    if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != REB_WORD)
+    if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != TYPE_WORD)
         return false;
 
     Option(SymId) id = Cell_Word_Id(v);
@@ -187,7 +187,7 @@ INLINE bool Cell_True(Need(const Value*) v) {  // corresponds to TRUE?
 
 INLINE bool Is_OnOff(const Value* v) {
     Assert_Cell_Readable(v);
-    if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != REB_WORD)
+    if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != TYPE_WORD)
         return false;
     Option(SymId) id = Cell_Word_Id(v);
     return id == SYM_ON or id == SYM_OFF;
@@ -213,7 +213,7 @@ INLINE bool Cell_On(const Value* v) {  // corresponds to ON?
 
 INLINE bool Is_YesNo(const Value* v) {
     Assert_Cell_Readable(v);
-    if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != REB_WORD)
+    if (QUOTE_BYTE(v) != NOQUOTE_1 or HEART_BYTE(v) != TYPE_WORD)
         return false;
     Option(SymId) id = Cell_Word_Id(v);
     return id == SYM_YES or id == SYM_NO;
@@ -257,7 +257,7 @@ INLINE bool Is_Trigger(const Value* v) {
     Assert_Cell_Readable(v);
 
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
-        if (HEART_BYTE(v) != REB_WORD)
+        if (HEART_BYTE(v) != TYPE_WORD)
             return true;  // !!! are all non-word antiforms truthy?
         Option(SymId) id = Cell_Word_Id(v);
         if (id == SYM_NULL)

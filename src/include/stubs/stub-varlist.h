@@ -149,12 +149,12 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 #define NONMETHOD  u_cast(Option(VarList*), nullptr)  // nonmethods not coupled
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
-    assert(Cell_Heart(c) == REB_FRAME);
+    assert(Cell_Heart(c) == TYPE_FRAME);
     return cast(VarList*, CELL_FRAME_COUPLING(c));
 }
 
 INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
-    assert(Cell_Heart(c) == REB_FRAME);
+    assert(Cell_Heart(c) == TYPE_FRAME);
     CELL_FRAME_COUPLING(c) = maybe coupling;
 }
 
@@ -163,7 +163,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Array* varlist,
     Heart heart
 ){
-    assert(heart != REB_FRAME);  // use Tweak_Frame_Varlist_Rootvar() instead
+    assert(heart != TYPE_FRAME);  // use Tweak_Frame_Varlist_Rootvar() instead
     Cell* rootvar = Array_Head(varlist);
     Reset_Cell_Header_Noquote(
         rootvar,
@@ -277,14 +277,14 @@ INLINE Value* Varlist_Slots(Sink(const Value*) tail, VarList* v) {
 
 INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
     assert(Is_Stub_Varlist(varlist));
-    assert(CTX_TYPE(varlist) == REB_FRAME);
+    assert(CTX_TYPE(varlist) == TYPE_FRAME);
     assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
     return MISC_VARLIST_RUNLEVEL(varlist);
 }
 
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
     assert(Is_Stub_Varlist(varlist));
-    possibly(CTX_TYPE(varlist) == REB_FRAME);  // may not be fully formed yet
+    possibly(CTX_TYPE(varlist) == TYPE_FRAME);  // may not be fully formed yet
     assert(Not_Stub_Flag(varlist, MISC_NODE_NEEDS_MARK));
     MISC_VARLIST_RUNLEVEL(varlist) = maybe L;
 }

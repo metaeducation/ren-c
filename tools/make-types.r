@@ -222,7 +222,7 @@ e-types: make-emitter "Datatype Definitions" (
 e-types/emit [--{
     /* Tables generated from %types.r for builtin typesets */
     extern TypesetFlags const g_typesets[];  // up to 255 allowed
-    extern uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT + 1];
+    extern uint_fast32_t const g_sparse_memberships[MAX_TYPE_ELEMENT + 1];
 }--]
 e-types/emit newline
 
@@ -233,9 +233,9 @@ e-types/emit --{
      * Originally these macros looked like:
      *
      *     #define Is_Text(cell) \
-     *         (VAL_TYPE(cell) == REB_TEXT)
+     *         (Type_Of(cell) == TYPE_TEXT)
      *
-     * So you'd calculate REB_QUOTED, REB_QUASI, or REB_ANTIFORM from the
+     * So you'd calculate TYPE_QUOTED, TYPE_QUASI, or TYPE_ANTIFORM from the
      * QUOTE_BYTE(), and those would be filtered out and not match.
      *
      * This was changed to instead mask out the heart byte and quote byte
@@ -244,9 +244,9 @@ e-types/emit --{
      *
      *     #define Is_Text(cell) \
      *         ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
-     *           == (FLAG_HEART_BYTE(REB_TEXT) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
+     *           == (FLAG_HEART_BYTE(TYPE_TEXT) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
      *
-     * This avoids the branching in VAL_TYPE(), so it's a slight bit faster.
+     * This avoids the branching in Type_Of(), so it's a slight bit faster.
      *
      * Note that Ensure_Readable() is a no-op in the release build.
      */
@@ -260,7 +260,7 @@ for-each-datatype 't [
     if t.cellmask [
         e-types/emit [t --{
             #define CELL_MASK_${T.NAME} \
-                (FLAG_HEART_BYTE(REB_${T.NAME}) | $<MOLD T.CELLMASK>)
+                (FLAG_HEART_BYTE(TYPE_${T.NAME}) | $<MOLD T.CELLMASK>)
         }--]
         e-types/emit newline
     ]
@@ -268,7 +268,7 @@ for-each-datatype 't [
     e-types/emit [propercase-of t --{
         #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
             ((Ensure_Readable(cell)->header.bits & CELL_HEART_QUOTE_MASK) \
-              == (FLAG_HEART_BYTE(REB_${T.NAME}) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
+              == (FLAG_HEART_BYTE(TYPE_${T.NAME}) | FLAG_QUOTE_BYTE(NOQUOTE_1)))
     }--]
     e-types/emit newline
 ]
@@ -280,11 +280,11 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
 
     e-types/emit newline
     e-types/emit [tr --{
-        INLINE bool Any_${Proper-Name}_Kind(Byte k)
+        INLINE bool Any_${Proper-Name}_Type(Byte k)
           { return k >= $<TR.START> and k <= $<TR.END>; }
 
         #define Any_${Proper-Name}(v) \
-            Any_${Proper-Name}_Kind(VAL_TYPE(v))
+            Any_${Proper-Name}_Type(Type_Of(v))
     }--]
 ]
 
@@ -305,11 +305,11 @@ for-each-datatype 't [
 
         e-types/emit newline
         e-types/emit [propercase-of ts-name --{
-            #define Any_${propercase-of Ts-Name}_Kind(k) \
+            #define Any_${propercase-of Ts-Name}_Type(k) \
                (did (g_sparse_memberships[k] & TYPESET_FLAG_${TS-NAME}))
 
             #define Any_${propercase-of Ts-Name}(v) \
-                Any_${propercase-of Ts-Name}_Kind(VAL_TYPE(v))
+                Any_${propercase-of Ts-Name}_Type(Type_Of(v))
         }--]
     ]
 ]
@@ -359,7 +359,7 @@ for-each-datatype 't [
     e-types/emit [t proper-name --{
         INLINE bool Is_$<Proper-Name>_Core(Need(const $<Need>*) v) { \
             return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-                == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART_BYTE(REB_$<T.NAME>))); \
+                == (FLAG_QUOTE_BYTE_ANTIFORM_0 | FLAG_HEART_BYTE(TYPE_$<T.NAME>))); \
         }
 
         #define Is_$<Proper-Name>(v) \
@@ -367,7 +367,7 @@ for-each-datatype 't [
 
         #define Is_Meta_Of_$<Proper-Name>(v) \
             ((Ensure_Readable(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-            == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART_BYTE(REB_$<T.NAME>)))
+            == (FLAG_QUOTE_BYTE_QUASIFORM_2 | FLAG_HEART_BYTE(TYPE_$<T.NAME>)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(v) \
             Is_Meta_Of_$<Proper-Name>(v)  /* alternative */
@@ -423,9 +423,9 @@ e-typespecs: make-emitter "Type Help Descriptions" (
     join prep-dir %boot/tmp-typespecs.r
 )
 
-fundamentals: make block! 128  ; "REB_XXX = (num)" for all HEART_BYTE
-pseudotype-kinds: make block! 128  ; "KIND_XXX = (num)" for all HEART_BYTE
-pseudotypes: make block! 128  ; "REB_XXX = (num)" for all pseudotypes
+fundamentals: make block! 128  ; "TYPE_XXX = (num)" for all HEART_BYTE
+pseudotype-hearts: make block! 128  ; "PSEUDO_XXX = (num)" for all HEART_BYTE
+pseudotypes: make block! 128  ; "TYPE_XXX = (num)" for all pseudotypes
 
 singlehearts: make block! 256  ; tricky thing, see description in comments
 
@@ -435,9 +435,9 @@ index: 1
 
 
 for-each-datatype 't [  ; fundamentals
-    append fundamentals cscape [t --{REB_${T.NAME} = $<index>}--]
+    append fundamentals cscape [t --{TYPE_${T.NAME} = $<index>}--]
 
-    append pseudotype-kinds cscape [t --{KIND_${T.NAME} = $<index>}--]
+    append pseudotype-hearts cscape [t --{PSEUDO_${T.NAME} = $<index>}--]
 
     append singlehearts cscape [t
         --{SINGLEHEART_TAIL_BLANK_${T.NAME} = $<index * 256>}--
@@ -462,13 +462,13 @@ for-each-datatype 't [  ; fundamentals
     index: me + 1
 ]
 
-reb-max-heart: index - 1
+max-heart: index - 1
 
 ; Emit the pseudotype for QUASIFORM!
 (
     append memberships cscape [-{/* quasiform - $<index> */  0}-]
 
-    append pseudotypes cscape [--{REB_QUASIFORM = $<index>}--]
+    append pseudotypes cscape [--{TYPE_QUASIFORM = $<index>}--]
 
     e-typeset-bytes/emit [-{
         quasiform $<index>
@@ -492,7 +492,7 @@ reb-max-heart: index - 1
         --{/* quoted - $<index> */  (TYPESET_FLAG_BRANCH)}--
     ]
 
-    append pseudotypes cscape [--{REB_QUOTED = $<index>}--]
+    append pseudotypes cscape [--{TYPE_QUOTED = $<index>}--]
 
     e-typeset-bytes/emit [-{
         quoted $<index>
@@ -514,7 +514,7 @@ first-antiform-index: index
 
 for-each-datatype 't [  ; now generate bytes for antiforms
     if t.antiname [
-        append pseudotypes cscape [t --{REB_${T.ANTINAME} = $<index>}--]
+        append pseudotypes cscape [t --{TYPE_${T.ANTINAME} = $<index>}--]
 
         e-typeset-bytes/emit [t -{
             ${t.antiname} $<index>
@@ -529,7 +529,7 @@ for-each-datatype 't [  ; now generate bytes for antiforms
             TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
         }--]
     ] else [
-        append pseudotypes cscape [t --{REB_$<index> = $<index>}--]
+        append pseudotypes cscape [t --{TYPE_$<index> = $<index>}--]
 
         e-typeset-bytes/emit [t -{
             ~ $<index>
@@ -546,7 +546,7 @@ for-each-datatype 't [  ; now generate bytes for antiforms
     index: me + 1
 ]
 
-reb-max: index - 1
+max-type: index - 1
 
 ; antiform range check (core uses Is_Antiform() which just checks heart byte)
 (
@@ -593,7 +593,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --{
         /* $<index> - any-element */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(1) | FLAG_FOURTH_BYTE(REB_QUOTED)
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(1) | FLAG_FOURTH_BYTE(TYPE_QUOTED)
     }--]
     index: index + 1
 )
@@ -606,7 +606,7 @@ e-typesets/emit [--{
      * set, then the entry holds a single typeset flag which can be tested
      * for in that datatype's g_sparse_memberships[] entry.  But if the top
      * bit is set, then the bottom two bytes represent a range of heart
-     * bytes that you test to see if the Kind byte is between.
+     * bytes that you test to see if the Type byte is between.
      */
     TypesetFlags const g_typesets[] = {
         /* 0 - <reserved> */  0,
@@ -619,7 +619,7 @@ e-typesets/emit [--{
      * to 31 of those TYPESET_FLAG_XXX flags in this model (avoids dependency
      * on 64-bit integers, which we are attempting to excise from the system).
      */
-    uint_fast32_t const g_sparse_memberships[REB_MAX_ELEMENT + 1] = {
+    uint_fast32_t const g_sparse_memberships[MAX_TYPE_ELEMENT + 1] = {
         /* 0 - <reserved> */  0,
         $(Memberships),
     };
@@ -640,7 +640,7 @@ e-hearts: make-emitter "Cell Hearts Enum" (
 
 e-hearts/emit [rebs --{
     /*
-     * INTERNAL CELL HEART ENUM, e.g. REB_BLOCK or REB_TAG
+     * INTERNAL CELL HEART ENUM, e.g. TYPE_BLOCK or TYPE_TAG
      *
      * GENERATED FROM %TYPES.R
      *
@@ -654,41 +654,41 @@ e-hearts/emit [rebs --{
      * can make based on knowing a value is only in the range of the enum.
      */
     #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11 || defined(__clang__)
-        enum HeartKindEnum {
-            REB_0 = 0,  /* reserved */
+        typedef enum {
+            TYPE_0 = 0,  /* reserved */
             $[Fundamentals],
             $(Pseudotypes),
-        };
+        } TypeEnum;
     #else
-        enum HeartEnum {
-            REB_0 = 0,  /* reserved falsey case for Option(Heart) */
+        typedef enum {
+            TYPE_0 = 0,  /* reserved falsey case for Option(Heart) */
             $(Fundamentals),
-        };
+        } HeartEnum;
 
-        enum KindEnum {
-            KIND_0 = 0,  /* reserved falsey case for Option(Kind) */
-            /* KIND_XXX placeholders for values in range of heart byte */
-            $[Pseudotype-Kinds],
-            /* REB_XXX pseudotypes for vlaues out of range of heart byte */
+        typedef enum {
+            PSEUDO_0 = 0,  /* reserved falsey case for Option(Type) */
+            /* PSEUDO_XXX placeholders for values in range of heart byte */
+            $[Pseudotype-Hearts],
+            /* TYPE_XXX pseudotypes for vlaues out of range of heart byte */
             $(Pseudotypes),
-        };
+        } TypeEnum;
     #endif
 
-    #define REB_MAX $<reb-max>
-    #define REB_MAX_HEART  $<reb-max-heart>
-    #define REB_MAX_ELEMENT  $<first-antiform-index - 1>
+    #define MAX_TYPE $<max-type>
+    #define MAX_HEART  $<max-heart>
+    #define MAX_TYPE_ELEMENT  $<first-antiform-index - 1>
 
-    STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART) + 1);
-    STATIC_ASSERT(REB_MAX <= 256);  /* Stored in bytes */
+    STATIC_ASSERT(u_cast(int, TYPE_QUASIFORM) == u_cast(int, MAX_HEART) + 1);
+    STATIC_ASSERT(MAX_TYPE <= 256);  /* Stored in bytes */
 
     /*
      * SINGLEHEART OPTIMIZED SEQUENCE DETECTION
      *
      * We want to use SingleHeart in switch() statements, but don't want them
-     * to be type-compatible with Heart or Kind types due to the extra flag of
-     * information they multiplex in.  Making a specialized enum type is
+     * to be type-compatible with Heart or Type variables due to the extra flag
+     * of information they multiplex in.  Making a specialized enum type is
      * kind of the only way to get that type checking, since implicit casts
-     * to integer to facilitate switching would let you use Heart or Kind.
+     * to integer to facilitate switching would let you use Heart or Type.
      */
     enum SingleHeartEnum {
         NOT_SINGLEHEART_0,  /* reserved falsey case for Option(SingleHeart) */

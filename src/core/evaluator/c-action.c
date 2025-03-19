@@ -100,7 +100,7 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
     if (Is_Feed_At_End(feed))
         return false;
 
-    if (VAL_TYPE_UNCHECKED(At_Feed(feed)) != REB_WORD)
+    if (Type_Of_Unchecked(At_Feed(feed)) != TYPE_WORD)
         return false;
 
     feed->gotten = Lookup_Word(At_Feed(feed), Feed_Binding(feed));

@@ -267,19 +267,19 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_HEART(ARG(type)) == REB_TIME);
+    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_TIME);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
 
-    switch (VAL_TYPE(arg)) {
-      case REB_INTEGER:  // interpret as seconds
+    switch (Type_Of(arg)) {
+      case TYPE_INTEGER:  // interpret as seconds
         if (VAL_INT64(arg) < -MAX_SECONDS or VAL_INT64(arg) > MAX_SECONDS)
             return FAIL(Error_Out_Of_Range(arg));
 
         return Init_Time_Nanoseconds(OUT, VAL_INT64(arg) * SEC_SEC);
 
-      case REB_DECIMAL:
+      case TYPE_DECIMAL:
         if (
             VAL_DECIMAL(arg) < cast(REBDEC, -MAX_SECONDS)
             or VAL_DECIMAL(arg) > cast(REBDEC, MAX_SECONDS)
@@ -288,7 +288,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
         }
         return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
-      case REB_BLOCK: { // [hh mm ss]
+      case TYPE_BLOCK: { // [hh mm ss]
         const Element* tail;
         const Element* item = Cell_List_At(&tail, arg);
 
@@ -369,7 +369,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 
   bad_make:
 
-    return RAISE(Error_Bad_Make(REB_TIME, arg));
+    return RAISE(Error_Bad_Make(TYPE_TIME, arg));
 }
 
 
@@ -494,18 +494,18 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         or id == SYM_REMAINDER
     ){
         Value* arg = ARG_N(2);
-        REBINT type = VAL_TYPE(arg);
+        REBINT type = Type_Of(arg);
 
-        if (type == REB_TIME) {     // handle TIME - TIME cases
+        if (type == TYPE_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
             switch (id) {
               case SYM_ADD:
-                secs = Add_Max(REB_TIME, secs, secs2, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, secs2, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_SUBTRACT:
-                secs = Add_Max(REB_TIME, secs, -secs2, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, -secs2, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
@@ -523,19 +523,19 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 return Init_Time_Nanoseconds(OUT, secs);
 
               default:
-                return FAIL(Error_Math_Args(REB_TIME, verb));
+                return FAIL(Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == REB_INTEGER) {     // handle TIME - INTEGER cases
+        else if (type == TYPE_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
             switch (id) {
               case SYM_ADD:
-                secs = Add_Max(REB_TIME, secs, num * SEC_SEC, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, num * SEC_SEC, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_SUBTRACT:
-                secs = Add_Max(REB_TIME, secs, num * -SEC_SEC, MAX_TIME);
+                secs = Add_Max(TYPE_TIME, secs, num * -SEC_SEC, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
@@ -552,16 +552,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 return Init_Time_Nanoseconds(OUT, secs);
 
               default:
-                return FAIL(Error_Math_Args(REB_TIME, verb));
+                return FAIL(Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == REB_DECIMAL) {     // handle TIME - DECIMAL cases
+        else if (type == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
             switch (id) {
               case SYM_ADD:
                 secs = Add_Max(
-                    REB_TIME,
+                    TYPE_TIME,
                     secs,
                     cast(int64_t, dec * SEC_SEC),
                     MAX_TIME
@@ -570,7 +570,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
               case SYM_SUBTRACT:
                 secs = Add_Max(
-                    REB_TIME,
+                    TYPE_TIME,
                     secs,
                     cast(int64_t, dec * -SEC_SEC),
                     MAX_TIME
@@ -589,10 +589,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                goto decTime; */
 
               default:
-                return FAIL(Error_Math_Args(REB_TIME, verb));
+                return FAIL(Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (type == REB_DATE and id == SYM_ADD) {
+        else if (type == TYPE_DATE and id == SYM_ADD) {
             //
             // We're adding a time and a date, code for which exists in the
             // date dispatcher already.  Instead of repeating the code here in
@@ -603,7 +603,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
             Move_Cell(ARG_N(2), stable_SPARE);
             return GENERIC_CFUNC(OLDGENERIC, Is_Date)(level_);
         }
-        return FAIL(Error_Math_Args(REB_TIME, verb));
+        return FAIL(Error_Math_Args(TYPE_TIME, verb));
     }
     else {
         // unary actions
@@ -717,7 +717,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
         secs *= VAL_INT64(v2);
         if (secs < -(MAX_TIME) or secs > MAX_TIME)
             return FAIL(
-                Error_Type_Limit_Raw(Datatype_From_Kind(REB_TIME))
+                Error_Type_Limit_Raw(Datatype_From_Type(TYPE_TIME))
             );
     }
     else if (Is_Decimal(v2))

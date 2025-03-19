@@ -274,11 +274,11 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead; }
       #endif
 
-      case REB_SIGIL:
+      case TYPE_SIGIL:
         goto sigil_rightside_in_out;
 
-      case REB_GROUP:
-      case REB_META_GROUP:
+      case TYPE_GROUP:
+      case TYPE_META_GROUP:
         goto lookahead;
 
       case ST_STEPPER_SET_GROUP:
@@ -295,7 +295,7 @@ Bounce Stepper_Executor(Level* L)
 
         goto set_block_rightside_result_in_out;
 
-      case REB_FRAME:
+      case TYPE_FRAME:
         goto lookahead;
 
     #if RUNTIME_CHECKS
@@ -327,7 +327,7 @@ Bounce Stepper_Executor(Level* L)
     /* assert(Not_Level_At_End(L)); */  // edge case with rebValue("") [1]
     if (Is_Level_At_End(L)) {
         Init_Void(OUT);
-        STATE = REB_BLANK;  // can't leave as STATE_0
+        STATE = TYPE_BLANK;  // can't leave as STATE_0
         goto finished;
     }
 
@@ -372,7 +372,7 @@ Bounce Stepper_Executor(Level* L)
     Phase* infixed;
 
     switch (HEART_BYTE(L_next)) {  // words and chains on right may look back
-      case REB_WORD: {
+      case TYPE_WORD: {
         L_next_gotten = Lookup_Word(
             L_next,
             Feed_Binding(L->feed)  // L_binding breaks here [2]
@@ -387,7 +387,7 @@ Bounce Stepper_Executor(Level* L)
         infixed = Cell_Frame_Phase(unwrap L_next_gotten);
         break; }
 
-      case REB_CHAIN:
+      case TYPE_CHAIN:
         goto give_up_backward_quote_priority;  // should be enfixable!
 
       default:
@@ -428,8 +428,8 @@ Bounce Stepper_Executor(Level* L)
     if (
         Is_Feed_At_End(L->feed)  // v-- OUT is what used to be on left
         and (
-            VAL_TYPE_UNCHECKED(OUT) == REB_WORD
-            or VAL_TYPE_UNCHECKED(OUT) == REB_PATH
+            Type_Of_Unchecked(OUT) == TYPE_WORD
+            or Type_Of_Unchecked(OUT) == TYPE_PATH
         )
     ){  // exemption: put OUT back in CURRENT and CURRENT back in feed [2]
         Move_Atom(&L->feed->fetched, CURRENT);
@@ -442,12 +442,12 @@ Bounce Stepper_Executor(Level* L)
         Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
 
         if (Is_Word(CURRENT)) {
-            STATE = REB_WORD;
+            STATE = TYPE_WORD;
             goto word_common;
         }
 
         assert(Is_Path(CURRENT));
-        STATE = REB_PATH;
+        STATE = TYPE_PATH;
         goto path_common;
     }
 
@@ -470,7 +470,7 @@ Bounce Stepper_Executor(Level* L)
 
   //=//// BEGIN MAIN SWITCH STATEMENT /////////////////////////////////////=//
 
-    // This switch is done with a case for all REB_XXX values, in order to
+    // This switch is done with a case for all TYPE_XXX values, in order to
     // facilitate use of a "jump table optimization":
     //
     // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
@@ -483,7 +483,7 @@ Bounce Stepper_Executor(Level* L)
     //    level.  Binding is left as-is in both cases, and not influenced by
     //    the current binding of the evaluator (antiforms are always unbound).
     //
-    // 2. The Stepper_Executor()'s state bytes are a superset of the VAL_TYPE
+    // 2. The Stepper_Executor()'s state bytes are a superset of the Type_Of()
     //    of processed values.  See the ST_STEPPER_XXX enumeration.
 
     assert(Is_Cell_Erased(OUT));
@@ -492,11 +492,11 @@ Bounce Stepper_Executor(Level* L)
         Copy_Cell(OUT, CURRENT);
         if (QUOTE_BYTE(CURRENT) == QUASIFORM_2) {
             Coerce_To_Antiform(OUT);  // checks that antiform is legal
-            STATE = REB_QUASIFORM;  // can't leave as STATE_0
+            STATE = TYPE_QUASIFORM;  // can't leave as STATE_0
         }
         else {
             QUOTE_BYTE(OUT) -= Quote_Shift(1);
-            STATE = REB_QUOTED;  // can't leave as STATE_0
+            STATE = TYPE_QUOTED;  // can't leave as STATE_0
         }
     }
     else switch ((STATE = HEART_BYTE(CURRENT))) {  // states include type [2]
@@ -521,7 +521,7 @@ Bounce Stepper_Executor(Level* L)
     //   https://forum.rebol.info/t/1387/6
     //
 
-      case REB_COMMA:
+      case TYPE_COMMA:
         Init_Barrier(OUT);
         goto skip_lookahead;  // skip lookahead, see notes there
 
@@ -538,7 +538,7 @@ Bounce Stepper_Executor(Level* L)
     // 1. If an infix function is run at this moment, it will not have a left
     //    hand side argument.
 
-      case REB_FRAME: {
+      case TYPE_FRAME: {
         if (Cell_Frame_Lens(CURRENT))  // running frame if lensed
             return FAIL("Use REDO to restart a running FRAME! (can't EVAL)");
 
@@ -568,7 +568,7 @@ Bounce Stepper_Executor(Level* L)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        STATE = REB_FRAME;
+        STATE = TYPE_FRAME;
         return CONTINUE_SUBLEVEL(TOP_LEVEL); }
 
 
@@ -622,7 +622,7 @@ Bounce Stepper_Executor(Level* L)
     //    that will error on FEED_NOTE_META to prevent the suspended-animation
     //    antiforms from being seen by any other part of the code.
 
-      case REB_SIGIL: {
+      case TYPE_SIGIL: {
         Sigil sigil = Cell_Sigil(CURRENT);
         switch (sigil) {
           case SIGIL_QUOTE:
@@ -697,7 +697,7 @@ Bounce Stepper_Executor(Level* L)
     // set, but to the antiform of blank e.g. NOTHING).  Should the word
     // look up to an antiform FRAME!, then that "Action" will be invoked.
     //
-    // NOTE: The usual dispatch of infix functions is *not* via a REB_WORD in
+    // NOTE: The usual dispatch of infix functions is *not* via a TYPE_WORD in
     // this switch, it's by some code at the `lookahead:` label.  You only see
     // infix here when there was nothing to the left, so cases like `(+ 1 2)`
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
@@ -711,7 +711,7 @@ Bounce Stepper_Executor(Level* L)
 
       word_common: ///////////////////////////////////////////////////////////
 
-      case REB_WORD: {
+      case TYPE_WORD: {
         Option(Error*) error = Trap_Get_Any_Word(OUT, CURRENT, L_binding);
         if (error)
             return FAIL(unwrap error);  // don't conflate with function result
@@ -809,7 +809,7 @@ Bounce Stepper_Executor(Level* L)
     // CHAIN! with leading or trailing blanks, CHAIN! has to break that down
     // and dispatch to the appropriate behavior.
 
-      case REB_CHAIN: {
+      case TYPE_CHAIN: {
         switch (Try_Get_Sequence_Singleheart(CURRENT)) {
           case NOT_SINGLEHEART_0:
             break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
@@ -914,10 +914,10 @@ Bounce Stepper_Executor(Level* L)
     // https://forum.rebol.info/t/1301
 
       handle_get_word:  // jumps here for CHAIN! that's like a GET-WORD!
-      case REB_META_WORD: {
+      case TYPE_META_WORD: {
         assert(
             (STATE == ST_STEPPER_GET_WORD and Is_Word(CURRENT))
-            or (STATE == REB_META_WORD and Is_Meta_Word(CURRENT))
+            or (STATE == TYPE_META_WORD and Is_Meta_Word(CURRENT))
         );
         Option(Error*) error = Trap_Get_Any_Word_Maybe_Vacant(
             OUT,
@@ -927,7 +927,7 @@ Bounce Stepper_Executor(Level* L)
         if (error)
             return FAIL(unwrap error);
 
-        if (STATE == REB_META_WORD)
+        if (STATE == TYPE_META_WORD)
             Meta_Quotify(OUT);
 
         goto lookahead; }
@@ -948,13 +948,13 @@ Bounce Stepper_Executor(Level* L)
     //        >> 1 + 2 (comment "hi")
     //        == 3  ; e.g. not void
 
-      case REB_GROUP:
-      case REB_META_GROUP: {
+      case TYPE_GROUP:
+      case TYPE_META_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // [2]
 
-        if (STATE == REB_META_GROUP)
+        if (STATE == TYPE_META_GROUP)
             flags |= LEVEL_FLAG_META_RESULT;
 
         Level* sub = Make_Level_At_Inherit_Const(
@@ -984,7 +984,7 @@ Bounce Stepper_Executor(Level* L)
     // WORD! and GET-WORD!, and will error...directing you use GET:ANY if
     // fetching nothing is what you actually intended.
 
-      case REB_TUPLE: {
+      case TYPE_TUPLE: {
         Copy_Sequence_At(SPARE, CURRENT, 0);
         bool blank_at_head = Is_Blank(SPARE);
         if (
@@ -1059,7 +1059,7 @@ Bounce Stepper_Executor(Level* L)
     //    which uses an infix WORD! to mediate the interaction.
 
       path_common:
-      case REB_PATH: {
+      case TYPE_PATH: {
         bool slash_at_head;
         bool slash_at_tail;
         Option(SingleHeart) single = Try_Get_Sequence_Singleheart(CURRENT);
@@ -1238,18 +1238,18 @@ Bounce Stepper_Executor(Level* L)
             Init_Meta_Of_Void(CURRENT);  // can't put voids in feed position
             goto handle_generic_set;
         }
-        else switch (VAL_TYPE(SPARE)) {
-          case REB_BLOCK :
+        else switch (Type_Of(SPARE)) {
+          case TYPE_BLOCK :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
             STATE = ST_STEPPER_SET_BLOCK;
             goto handle_set_block;
 
-          case REB_WORD :
+          case TYPE_WORD :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
             STATE = ST_STEPPER_SET_WORD;
             goto handle_generic_set;
 
-          case REB_TUPLE :
+          case TYPE_TUPLE :
             Copy_Cell(CURRENT, cast(Element*, SPARE));
             STATE = ST_STEPPER_SET_TUPLE;
             goto handle_generic_set;
@@ -1277,10 +1277,10 @@ Bounce Stepper_Executor(Level* L)
     // the plain (unfriendly) forms.
 
       handle_get_tuple:
-      case REB_META_TUPLE: {
+      case TYPE_META_TUPLE: {
         assert(
             (STATE == ST_STEPPER_GET_TUPLE and Is_Tuple(CURRENT))
-            or (STATE == REB_META_TUPLE and Is_Meta_Tuple(CURRENT))
+            or (STATE == TYPE_META_TUPLE and Is_Meta_Tuple(CURRENT))
         );
         Option(Error*) error = Trap_Get_Any_Tuple_Maybe_Vacant(
             OUT,
@@ -1294,7 +1294,7 @@ Bounce Stepper_Executor(Level* L)
             goto lookahead;  // e.g. EXCEPT might want to see raised error
         }
 
-        if (STATE == REB_META_TUPLE)
+        if (STATE == TYPE_META_TUPLE)
             Meta_Quotify(OUT);
 
         goto lookahead; }
@@ -1383,7 +1383,7 @@ Bounce Stepper_Executor(Level* L)
 
             bool circle_this;
 
-            if (heart == REB_FENCE) {  // [x {y}]: ... fence means eval to that
+            if (heart == TYPE_FENCE) {  // [x {y}]: ... fence means eval to that
                 if (circled)
                     return FAIL("Can only {Circle} one multi-return result");
                 Length len_at = Cell_Series_Len_At(check);
@@ -1407,7 +1407,7 @@ Bounce Stepper_Executor(Level* L)
 
             bool is_optional;
 
-            if (heart == REB_CHAIN) {
+            if (heart == TYPE_CHAIN) {
                 Option(SingleHeart) single;
                 if (
                     not (single = Try_Get_Sequence_Singleheart(CURRENT))
@@ -1426,20 +1426,20 @@ Bounce Stepper_Executor(Level* L)
                 is_optional = false;
 
             if (
-                heart == REB_GROUP
-                or heart == REB_THE_GROUP
-                or heart == REB_META_GROUP
+                heart == TYPE_GROUP
+                or heart == TYPE_THE_GROUP
+                or heart == TYPE_META_GROUP
             ){
                 if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
                     Drop_Data_Stack_To(STACK_BASE);
                     goto return_thrown;
                 }
                 Decay_If_Unstable(SPARE);
-                if (heart == REB_THE_GROUP)
+                if (heart == TYPE_THE_GROUP)
                     Theify(stable_SPARE);  // transfer @ decoration to product
-                else if (heart == REB_META_GROUP)
+                else if (heart == TYPE_META_GROUP)
                     Metafy(stable_SPARE);  // transfer ^ decoration to product
-                else if (heart == REB_GROUP and Is_Void(SPARE))
+                else if (heart == TYPE_GROUP and Is_Void(SPARE))
                     Init_Trash(SPARE);  // [(void)]: ... pass thru
 
                 heart = Cell_Heart(SPARE);
@@ -1457,14 +1457,14 @@ Bounce Stepper_Executor(Level* L)
             if (
                 // ^xxx is indicator of a ^META result [4]
                 //
-                (heart == REB_SIGIL and Cell_Sigil(TOP) == SIGIL_META)
-                or heart == REB_META_WORD
-                or heart == REB_META_TUPLE
+                (heart == TYPE_SIGIL and Cell_Sigil(TOP) == SIGIL_META)
+                or heart == TYPE_META_WORD
+                or heart == TYPE_META_TUPLE
             ){
                 continue;
             }
 
-            if (heart == REB_WORD or heart == REB_TUPLE)
+            if (heart == TYPE_WORD or heart == TYPE_TUPLE)
                 continue;
 
             if (Is_Space(TOP) or Is_Trash(TOP))  // nameless decay vs. no decay
@@ -1556,7 +1556,7 @@ Bounce Stepper_Executor(Level* L)
                     return FAIL("Not enough values for required multi-return");
 
                 // match typical input of meta which will be Meta_Unquotify'd
-                // (special handling in REB_META_WORD and REB_META_TUPLE
+                // (special handling in TYPE_META_WORD and TYPE_META_TUPLE
                 // below will actually use plain null to distinguish)
                 //
                 Init_Meta_Of_Null(SPARE);
@@ -1564,12 +1564,12 @@ Bounce Stepper_Executor(Level* L)
             else
                 Copy_Cell(SPARE, pack_meta_at);
 
-            if (var_heart == REB_SIGIL and Cell_Sigil(var) == SIGIL_META)
+            if (var_heart == TYPE_SIGIL and Cell_Sigil(var) == SIGIL_META)
                 goto circled_check;  // leave as meta the way it came in
 
             if (
-                var_heart == REB_META_WORD
-                or var_heart == REB_META_TUPLE
+                var_heart == TYPE_META_WORD
+                or var_heart == TYPE_META_TUPLE
             ){
                 if (pack_meta_at == pack_meta_tail) {  // special detection
                     Set_Var_May_Fail(var, SPECIFIED, LIB(NULL));
@@ -1581,7 +1581,7 @@ Bounce Stepper_Executor(Level* L)
 
             Meta_Unquotify_Undecayed(SPARE);
 
-            if (var_heart == REB_BLANK) {
+            if (var_heart == TYPE_BLANK) {
                 assert(Is_Trash(var));  // [~ ...]: -> no name, but don't decay
                 goto circled_check;
             }
@@ -1591,14 +1591,14 @@ Bounce Stepper_Executor(Level* L)
 
             Decay_If_Unstable(SPARE);  // if pack in slot, resolve it
 
-            if (var_heart == REB_ISSUE) {
+            if (var_heart == TYPE_ISSUE) {
                 assert(Is_Space(var));  // [# ...]: -> no name, but decay
                 goto circled_check;
             }
 
             if (
-                var_heart == REB_WORD or var_heart == REB_TUPLE
-                or var_heart == REB_THE_WORD or var_heart == REB_THE_TUPLE
+                var_heart == TYPE_WORD or var_heart == TYPE_TUPLE
+                or var_heart == TYPE_THE_WORD or var_heart == TYPE_THE_TUPLE
             ){
                 DECLARE_VALUE (dummy);
                 if (Set_Var_Core_Throws(
@@ -1653,9 +1653,9 @@ Bounce Stepper_Executor(Level* L)
     //
     // (It's hard to think of another meaning that would be sensible.)
 
-      case REB_META_BLOCK:
+      case TYPE_META_BLOCK:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        HEART_BYTE(OUT) = REB_BLOCK;
+        HEART_BYTE(OUT) = TYPE_BLOCK;
         Quotify(OUT);
         goto lookahead;
 
@@ -1665,13 +1665,13 @@ Bounce Stepper_Executor(Level* L)
     // FENCE! is the newest part in the box, and it's not clear exactly how
     // it will work yet.
 
-      case REB_FENCE:
+      case TYPE_FENCE:
         return FAIL("Precise behavior of FENCE! not known yet");
 
 
     //=//// META-FENCE! ///////////////////////////////////////////////////=//
 
-      case REB_META_FENCE:
+      case TYPE_META_FENCE:
         return FAIL("Don't know what META-FENCE! is going to do yet");
 
 
@@ -1707,13 +1707,13 @@ Bounce Stepper_Executor(Level* L)
     // and not have a degree of freedom that it can't distinguish from being
     // called as (import 'xml) or (import 'json/1.1.2)
 
-      case REB_THE_BLOCK:
-      case REB_THE_FENCE:
-      case REB_THE_GROUP:
-      case REB_THE_WORD:
-      case REB_THE_PATH:
-      case REB_THE_CHAIN:
-      case REB_THE_TUPLE:
+      case TYPE_THE_BLOCK:
+      case TYPE_THE_FENCE:
+      case TYPE_THE_GROUP:
+      case TYPE_THE_WORD:
+      case TYPE_THE_PATH:
+      case TYPE_THE_CHAIN:
+      case TYPE_THE_TUPLE:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         goto lookahead;
 
@@ -1738,39 +1738,39 @@ Bounce Stepper_Executor(Level* L)
     //     >> get 'var
     //     ** Error: var is unbound
 
-      case REB_VAR_BLOCK:
-      case REB_VAR_FENCE:
-      case REB_VAR_GROUP:
-      case REB_VAR_WORD:
-      case REB_VAR_PATH:
-      case REB_VAR_TUPLE:
-      case REB_VAR_CHAIN:
+      case TYPE_VAR_BLOCK:
+      case TYPE_VAR_FENCE:
+      case TYPE_VAR_GROUP:
+      case TYPE_VAR_WORD:
+      case TYPE_VAR_PATH:
+      case TYPE_VAR_TUPLE:
+      case TYPE_VAR_CHAIN:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-        HEART_BYTE(OUT) = Plainify_Any_Var_Kind(STATE);
+        HEART_BYTE(OUT) = Plainify_Any_Var_Type(STATE);
         goto lookahead;
 
 
-      case REB_BLOCK:
+      case TYPE_BLOCK:
         //
-      case REB_BLOB:
+      case TYPE_BLOB:
         //
-      case REB_TEXT:
-      case REB_FILE:
-      case REB_EMAIL:
-      case REB_URL:
-      case REB_TAG:
-      case REB_ISSUE:
+      case TYPE_TEXT:
+      case TYPE_FILE:
+      case TYPE_EMAIL:
+      case TYPE_URL:
+      case TYPE_TAG:
+      case TYPE_ISSUE:
         //
-      case REB_BITSET:
+      case TYPE_BITSET:
         //
-      case REB_MAP:
+      case TYPE_MAP:
         //
-      case REB_VARARGS:
+      case TYPE_VARARGS:
         //
-      case REB_OBJECT:
-      case REB_MODULE:
-      case REB_ERROR:
-      case REB_PORT:
+      case TYPE_OBJECT:
+      case TYPE_MODULE:
+      case TYPE_ERROR:
+      case TYPE_PORT:
         goto inert;
 
 
@@ -1781,26 +1781,26 @@ Bounce Stepper_Executor(Level* L)
     //=///////////////////////////////////////////////////////////////////=//
 
     inert:
-      case REB_BLANK:  // once blanks evaluated to null, but that was panned
-      case REB_INTEGER:
-      case REB_DECIMAL:
-      case REB_PERCENT:
-      case REB_MONEY:
-      case REB_PAIR:
-      case REB_TIME:
-      case REB_DATE:
+      case TYPE_BLANK:  // once blanks evaluated to null, but that was panned
+      case TYPE_INTEGER:
+      case TYPE_DECIMAL:
+      case TYPE_PERCENT:
+      case TYPE_MONEY:
+      case TYPE_PAIR:
+      case TYPE_TIME:
+      case TYPE_DATE:
         //
-      case REB_PARAMETER:
+      case TYPE_PARAMETER:
         //
-      case REB_TYPE_BLOCK:
-      case REB_TYPE_FENCE:
-      case REB_TYPE_GROUP:
-      case REB_TYPE_WORD:
-      case REB_TYPE_PATH:
-      case REB_TYPE_CHAIN:
-      case REB_TYPE_TUPLE:
+      case TYPE_TYPE_BLOCK:
+      case TYPE_TYPE_FENCE:
+      case TYPE_TYPE_GROUP:
+      case TYPE_TYPE_WORD:
+      case TYPE_TYPE_PATH:
+      case TYPE_TYPE_CHAIN:
+      case TYPE_TYPE_TUPLE:
         //
-      case REB_HANDLE:
+      case TYPE_HANDLE:
 
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         goto lookahead;
@@ -1820,7 +1820,7 @@ Bounce Stepper_Executor(Level* L)
     //    [pos val]: evaluate:step [1 + 2 * 3]
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
-    // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
+    // cannot just dispatch on TYPE_INTEGER in the switch() above, give you 1,
     // and consider its job done.  It has to notice that the word `+` looks up
     // to an ACTION! whose cell has an InfixMode set in the header.
     //
@@ -1874,15 +1874,15 @@ Bounce Stepper_Executor(Level* L)
         goto finished;  // hitting end is common, avoid do_next's switch()
     }
 
-    switch (VAL_TYPE_UNCHECKED(L_next)) {
-      case REB_WORD:
+    switch (Type_Of_Unchecked(L_next)) {
+      case TYPE_WORD:
         if (not L_next_gotten)
             L_next_gotten = Lookup_Word(L_next, Feed_Binding(L->feed));
         else
             assert(L_next_gotten == Lookup_Word(L_next, Feed_Binding(L->feed)));
         break;  // need to check for lookahead
 
-      case REB_FRAME:
+      case TYPE_FRAME:
         L_next_gotten = L_next;
         break;
 

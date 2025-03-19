@@ -96,13 +96,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_HEART(ARG(type)) == REB_INTEGER);
+    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_INTEGER);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
 
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
-        Option(Error*) error = Trap_Transcode_One(OUT, REB_0, arg);
+        Option(Error*) error = Trap_Transcode_One(OUT, TYPE_0, arg);
         if (not error) {
             if (Is_Integer(OUT))
                 return OUT;
@@ -111,7 +111,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
             return RAISE(Error_User("Trap_Transcode_One() gave unwanted type"));
         }
 
-        return FAIL(Error_Bad_Make(REB_INTEGER, arg));
+        return FAIL(Error_Bad_Make(TYPE_INTEGER, arg));
     }
 
     if (Is_Time(arg))  // !!! (make integer! 1:00) -> 3600 :-( [3]
@@ -127,7 +127,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
     if (Is_Money(arg))  // !!! Better idea than MAKE for this?
         return Init_Integer(OUT, deci_to_int(VAL_MONEY_AMOUNT(arg)));
 
-    return FAIL(Error_Bad_Make(REB_INTEGER, arg));
+    return FAIL(Error_Bad_Make(TYPE_INTEGER, arg));
 }
 
 
@@ -147,7 +147,7 @@ void Hex_String_To_Integer(Value* out, const Element* value)  // !!! UNUSED
     }
 
     if (not Try_Scan_Hex_Integer(out, bp, utf8_size, utf8_size))
-        fail (Error_Bad_Make(REB_INTEGER, value));
+        fail (Error_Bad_Make(TYPE_INTEGER, value));
 
     // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
     // might run afoul of 64-bit range limit.
@@ -244,7 +244,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             default:
                 break;
             }
-            return FAIL(Error_Math_Args(REB_INTEGER, verb));
+            return FAIL(Error_Math_Args(TYPE_INTEGER, verb));
         }
     }
     else
@@ -339,7 +339,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             );
             Reset_Cell_Header_Noquote(
                 TRACK(OUT),
-                FLAG_HEART_BYTE(VAL_TYPE(to)) | CELL_MASK_NO_NODES
+                FLAG_HEART_BYTE(Type_Of(to)) | CELL_MASK_NO_NODES
             );
             VAL_DECIMAL(OUT) = dec;
             return OUT;
@@ -379,16 +379,16 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     INCLUDE_PARAMS_OF_TO;
 
     Element* val = Element_ARG(element);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
+    if (Any_Utf8_Type(to) and not Any_Word_Type(to)) {
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
         Mold_Element(mo, val);
 
         const String* s;
-        if (Any_String_Kind(to))
+        if (Any_String_Type(to))
             s = Pop_Molded_String(mo);
         else {
             if (Try_Init_Small_Utf8(
@@ -406,20 +406,20 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
         return Init_Any_String(OUT, to, s);
     }
 
-    if (Any_List_Kind(to))
+    if (Any_List_Type(to))
         return rebValue(CANON(ENVELOP), ARG(type), val);
 
-    if (to == REB_DECIMAL or to == REB_PERCENT) {
+    if (to == TYPE_DECIMAL or to == TYPE_PERCENT) {
         REBDEC d = cast(REBDEC, VAL_INT64(val));
         return Init_Decimal_Or_Percent(OUT, to, d);
     }
 
-    if (to == REB_MONEY) {
+    if (to == TYPE_MONEY) {
         deci d = int_to_deci(VAL_INT64(val));
         return Init_Money(OUT, d);
     }
 
-    if (to == REB_INTEGER)
+    if (to == TYPE_INTEGER)
         return COPY(val);
 
     return UNHANDLED;

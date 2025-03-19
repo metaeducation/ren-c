@@ -114,7 +114,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_KIND(ARG(type)) == REB_BITSET);
+    assert(Cell_Datatype_Type(ARG(type)) == TYPE_BITSET);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -151,18 +151,18 @@ REBINT Find_Max_Bit(const Value* val)
 {
     REBLEN maxi = 0;
 
-    switch (VAL_TYPE(val)) {
+    switch (Type_Of(val)) {
 
-    case REB_INTEGER:
+    case TYPE_INTEGER:
         maxi = Int32s(val, 0);
         break;
 
-    case REB_TEXT:
-    case REB_FILE:
-    case REB_EMAIL:
-    case REB_URL:
-    case REB_ISSUE:
-    case REB_TAG: {
+    case TYPE_TEXT:
+    case TYPE_FILE:
+    case TYPE_EMAIL:
+    case TYPE_URL:
+    case TYPE_ISSUE:
+    case TYPE_TAG: {
         REBLEN len;
         Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
         for (; len > 0; --len) {
@@ -174,12 +174,12 @@ REBINT Find_Max_Bit(const Value* val)
         maxi++;
         break; }
 
-    case REB_BLOB:
+    case TYPE_BLOB:
         if (Cell_Series_Len_At(val) != 0)
             maxi = Cell_Series_Len_At(val) * 8 - 1;
         break;
 
-    case REB_BLOCK: {
+    case TYPE_BLOCK: {
         const Element* tail;
         const Element* item = Cell_List_At(&tail, val);
         for (; item != tail; ++item) {
@@ -190,7 +190,7 @@ REBINT Find_Max_Bit(const Value* val)
         //maxi++;
         break; }
 
-    case REB_BLANK:
+    case TYPE_BLANK:
         maxi = 0;
         break;
 
@@ -306,7 +306,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     }
 
     if (not Is_Block(val))
-        fail (Error_Invalid_Type(VAL_TYPE(val)));
+        fail (Error_Invalid_Type(Type_Of(val)));
 
     const Element* tail;
     const Element* item = Cell_List_At(&tail, val);
@@ -345,15 +345,15 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             else
                 Set_Bit(bset, c, set);
         }
-        else switch (VAL_TYPE(item)) {
-        case REB_ISSUE: {
+        else switch (Type_Of(item)) {
+        case TYPE_ISSUE: {
             if (not IS_CHAR(item)) {  // no special handling for hyphen
                 Set_Bits(bset, item, set);
                 break;
             }
             break; }
 
-        case REB_INTEGER: {
+        case TYPE_INTEGER: {
             REBLEN n = Int32s(item, 0);
             if (n > MAX_BITSET)
                 return false;
@@ -378,16 +378,16 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 Set_Bit(bset, n, set);
             break; }
 
-        case REB_BLOB:
-        case REB_TEXT:
-        case REB_FILE:
-        case REB_EMAIL:
-        case REB_URL:
-        case REB_TAG:
+        case TYPE_BLOB:
+        case TYPE_TEXT:
+        case TYPE_FILE:
+        case TYPE_EMAIL:
+        case TYPE_URL:
+        case TYPE_TAG:
             Set_Bits(bset, item, set);
             break;
 
-        case REB_WORD: {
+        case TYPE_WORD: {
             // Special: BITS #{000...}
             if (not Is_Word(item) or Cell_Word_Id(item) != SYM_BITS)
                 return false;
@@ -452,7 +452,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     }
 
     if (!Any_List(val))
-        fail (Error_Invalid_Type(VAL_TYPE(val)));
+        fail (Error_Invalid_Type(Type_Of(val)));
 
     // Loop through block of bit specs
 
@@ -460,9 +460,9 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     const Element* item = Cell_List_At(&tail, val);
     for (; item != tail; item++) {
 
-        switch (VAL_TYPE(item)) {
+        switch (Type_Of(item)) {
 
-        case REB_ISSUE: {
+        case TYPE_ISSUE: {
             if (not IS_CHAR(item)) {
                 if (Check_Bits(bset, item, uncased))
                     return true;
@@ -489,7 +489,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                     return true;
             break; }
 
-        case REB_INTEGER: {
+        case TYPE_INTEGER: {
             REBLEN n = Int32s(item, 0);
             if (n > 0xffff)
                 return false;
@@ -515,19 +515,19 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                     return true;
             break; }
 
-        case REB_BLOB:
-        case REB_TEXT:
-        case REB_FILE:
-        case REB_EMAIL:
-        case REB_URL:
-        case REB_TAG:
-//      case REB_ISSUE:
+        case TYPE_BLOB:
+        case TYPE_TEXT:
+        case TYPE_FILE:
+        case TYPE_EMAIL:
+        case TYPE_URL:
+        case TYPE_TAG:
+//      case TYPE_ISSUE:
             if (Check_Bits(bset, item, uncased))
                 return true;
             break;
 
         default:
-            fail (Error_Invalid_Type(VAL_TYPE(item)));
+            fail (Error_Invalid_Type(Type_Of(item)));
         }
     }
     return false;
@@ -741,7 +741,7 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
         Init_Blob(arg, VAL_BITSET(arg));
     }
     else if (not Is_Blob(arg))
-        return Error_Math_Args(VAL_TYPE(arg), Canon_Symbol(id));
+        return Error_Math_Args(Type_Of(arg), Canon_Symbol(id));
 
     if (BITS_NOT(VAL_BITSET(bset))) {  // !!! see #2365
         //

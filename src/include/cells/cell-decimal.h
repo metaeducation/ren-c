@@ -38,11 +38,11 @@
     // allows an assert, but also lvalue: `VAL_DECIMAL(v) = xxx`
     //
     INLINE REBDEC VAL_DECIMAL(const Cell* c) {
-        assert(Cell_Heart(c) == REB_DECIMAL or Cell_Heart(c) == REB_PERCENT);
+        assert(Cell_Heart(c) == TYPE_DECIMAL or Cell_Heart(c) == TYPE_PERCENT);
         return c->payload.dec;
     }
     INLINE REBDEC & VAL_DECIMAL(Cell* c) {
-        assert(Cell_Heart(c) == REB_DECIMAL or Cell_Heart(c) == REB_PERCENT);
+        assert(Cell_Heart(c) == TYPE_DECIMAL or Cell_Heart(c) == TYPE_PERCENT);
         return c->payload.dec;
     }
 #endif
@@ -53,7 +53,7 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
     Heart heart,
     REBDEC dec
 ){
-    assert(heart == REB_DECIMAL or heart == REB_PERCENT);
+    assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     if (not FINITE(dec))
         fail (Error_Overflow_Raw());
@@ -70,7 +70,7 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
     TRACK(Init_Decimal_Or_Percent_Untracked((out),(heart),(dec)))
 
 #define Init_Decimal(out,dec) \
-    TRACK(Init_Decimal_Or_Percent_Untracked((out), REB_DECIMAL, (dec)))
+    TRACK(Init_Decimal_Or_Percent_Untracked((out), TYPE_DECIMAL, (dec)))
 
 #define Init_Percent(out,dec) \
-    TRACK(Init_Decimal_Or_Percent_Untracked((out), REB_PERCENT, (dec)))
+    TRACK(Init_Decimal_Or_Percent_Untracked((out), TYPE_PERCENT, (dec)))

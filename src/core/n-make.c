@@ -150,7 +150,7 @@ DECLARE_NATIVE(copy)
 Bounce To_Or_As_Checker_Executor(Level* const L)
 {
     Heart to_or_as = cast(Heart, LEVEL_STATE_BYTE(L));
-    assert(to_or_as != REB_0);
+    assert(to_or_as != TYPE_0);
 
     Element* input = cast(Element*, Level_Spare(L));
     Heart from = Cell_Heart_Ensure_Noquote(input);
@@ -180,7 +180,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 
     Decay_If_Unstable(OUT);  // should packs from TO be legal?
 
-    if (VAL_TYPE(OUT) != to_or_as)
+    if (Type_Of(OUT) != to_or_as)
         return FAIL("Forward TO/AS transform produced wrong type");
 
     if (
@@ -203,7 +203,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Erase_Cell(ARG(type));
     Erase_Cell(ARG(element));
 
-    Copy_Cell(ARG(type), Datatype_From_Kind(from));
+    Copy_Cell(ARG(type), Datatype_From_Type(from));
     Copy_Cell(ARG(element), cast(Element*, stable_OUT));
     STATE = STATE_0;
 
@@ -226,8 +226,8 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 
     Decay_If_Unstable(reverse);  // should packs from TO be legal?
 
-    if (to_or_as == REB_MAP) {  // doesn't preserve order requirement :-/
-        if (VAL_TYPE(cast(Value*, reverse)) != VAL_TYPE(input))
+    if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
+        if (Type_Of(cast(Value*, reverse)) != Type_Of(input))
             return FAIL("Reverse TO/AS of MAP! didn't produce original type");
         return OUT;
     }
@@ -258,7 +258,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     Option(const Symbol*) label = Level_Label(level_);
 
     Element* type = Element_ARG(type);
-    STATE = VAL_TYPE_HEART(type);  // generic code may trash TYPE when it runs
+    STATE = Cell_Datatype_Heart(type);  // generic code may trash TYPE when it runs
     Copy_Cell(SPARE, ARG(element));  // may trash ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
@@ -295,8 +295,8 @@ DECLARE_NATIVE(to)
     INCLUDE_PARAMS_OF_TO;
 
     Element* e = Element_ARG(element);
-    Kind to = VAL_TYPE_KIND(ARG(type));
-    if (to > REB_MAX_HEART)
+    Type to = Cell_Datatype_Type(ARG(type));
+    if (to > MAX_HEART)
         return FAIL("TO can't produce quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS
@@ -333,8 +333,8 @@ DECLARE_NATIVE(as)
     INCLUDE_PARAMS_OF_AS;
 
     Element* e = Element_ARG(element);
-    Kind as = VAL_TYPE_KIND(ARG(type));
-    if (as > REB_MAX_HEART)
+    Type as = Cell_Datatype_Type(ARG(type));
+    if (as > MAX_HEART)
         return FAIL("AS can't alias to quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS

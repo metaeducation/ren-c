@@ -256,7 +256,7 @@ static void Shutdown_Lib(void)
 
 static Element* Make_Locked_Tag(const char *utf8) { // helper
     Element* t = cast(Element*, rebText(utf8));
-    HEART_BYTE(t) = REB_TAG;
+    HEART_BYTE(t) = TYPE_TAG;
 
     Force_Value_Frozen_Deep(t);
     return t;
@@ -367,7 +367,7 @@ static void Init_Root_Vars(void)
     Tweak_Bonus_Keylist_Unique(a, keylist);
     Tweak_Link_Keylist_Ancestor(keylist, keylist);  // terminate in self
 
-    Tweak_Non_Frame_Varlist_Rootvar(a, REB_OBJECT);
+    Tweak_Non_Frame_Varlist_Rootvar(a, TYPE_OBJECT);
 
     g_empty_varlist = cast(VarList*, a);
 
@@ -483,7 +483,7 @@ static void Init_System_Object(
     //
     VarList* system = Make_Varlist_Detect_Managed(
         COLLECT_ONLY_SET_WORDS,
-        REB_OBJECT, // type
+        TYPE_OBJECT, // type
         spec_head, // scan for toplevel set-words
         spec_tail,
         nullptr  // parent
@@ -540,7 +540,7 @@ static void Init_System_Object(
     //
     Init_Object(
         Get_System(SYS_CODECS, 0),
-        Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_OBJECT, 10)
+        Alloc_Varlist_Core(NODE_FLAG_MANAGED, TYPE_OBJECT, 10)
     );
 
     // The "standard error" template was created as an OBJECT!, because the
@@ -550,11 +550,11 @@ static void Init_System_Object(
   blockscope {
     Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
     VarList* c = Cell_Varlist(std_error);
-    HEART_BYTE(std_error) = REB_ERROR;
+    HEART_BYTE(std_error) = TYPE_ERROR;
 
     Value* rootvar = Rootvar_Of_Varlist(c);
     assert(Get_Cell_Flag(rootvar, PROTECTED));
-    HEART_BYTE(rootvar) = REB_ERROR;
+    HEART_BYTE(rootvar) = TYPE_ERROR;
   }
 }
 

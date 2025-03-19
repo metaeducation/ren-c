@@ -1649,11 +1649,11 @@ intptr_t API_rebUnbox(
     if (Is_Logic(result)) {
         return Cell_Logic(result) ? 1 : 0;
     }
-    else switch (VAL_TYPE(result)) {
-      case REB_INTEGER:
+    else switch (Type_Of(result)) {
+      case TYPE_INTEGER:
         return VAL_INT64(result);
 
-      case REB_ISSUE:
+      case TYPE_ISSUE:
         return Cell_Codepoint(result);
 
       default:
@@ -1813,7 +1813,7 @@ void* API_rebUnboxHandleCData(
     DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
 
-    if (VAL_TYPE(v) != REB_HANDLE)
+    if (Type_Of(v) != TYPE_HANDLE)
         fail ("rebUnboxHandleCData() called on non-HANDLE!");
 
     if (size_out)
@@ -1836,7 +1836,7 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
     DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, v, p, vaptr);
 
-    if (VAL_TYPE(v) != REB_HANDLE)
+    if (Type_Of(v) != TYPE_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
     Stub* stub = Extract_Cell_Handle_Stub(v);

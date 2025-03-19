@@ -42,7 +42,7 @@
     ERR_VARS(Cell_Varlist(v))
 
 #define Init_Error(v,c) \
-    Init_Context_Cell((v), REB_ERROR, (c))
+    Init_Context_Cell((v), TYPE_ERROR, (c))
 
 INLINE void Force_Location_Of_Error(Error* error, Level* where) {
     ERROR_VARS *vars = ERR_VARS(error);

@@ -9,9 +9,9 @@
 
 INLINE bool Listlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
-    if (Any_List_Kind(Cell_Heart_Unchecked(v)))
+    if (Any_List_Type(Cell_Heart_Unchecked(v)))
         return true;
-    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
+    if (not Any_Sequence_Type(Cell_Heart_Unchecked(v)))
         return false;
     if (not Cell_Has_Node1(v))
         return false;
@@ -53,7 +53,7 @@ INLINE const Element* Cell_List_Len_At(
 ){
     const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
-        assert(Any_Sequence_Kind(Cell_Heart(v)));
+        assert(Any_Sequence_Type(Cell_Heart(v)));
         assert(VAL_INDEX_RAW(v) == 0);
         if (len_at_out)
             *(unwrap len_at_out) = PAIRING_LEN;
@@ -75,7 +75,7 @@ INLINE const Element* Cell_List_At(
 ){
     const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
-        assert(Any_Sequence_Kind(Cell_Heart(v)));
+        assert(Any_Sequence_Type(Cell_Heart(v)));
         const Pairing* p = c_cast(Pairing*, node);
         if (tail_out)
             *(unwrap tail_out) = Pairing_Tail(p);
@@ -146,9 +146,9 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 #define Init_Any_List(v,t,a) \
     Init_Any_List_At((v), (t), (a), 0)
 
-#define Init_Block(v,a)     Init_Any_List((v), REB_BLOCK, (a))
-#define Init_Group(v,a)     Init_Any_List((v), REB_GROUP, (a))
-#define Init_Fence(v,a)     Init_Any_List((v), REB_FENCE, (a))
+#define Init_Block(v,a)     Init_Any_List((v), TYPE_BLOCK, (a))
+#define Init_Group(v,a)     Init_Any_List((v), TYPE_GROUP, (a))
+#define Init_Fence(v,a)     Init_Any_List((v), TYPE_FENCE, (a))
 
 
 INLINE Element* Init_Relative_Block_At(
@@ -214,7 +214,7 @@ INLINE Element* Init_Relative_Block_At(
 //
 
 INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
-    Init_Any_List_At_Core_Untracked(out, REB_BLOCK, a, 0, SPECIFIED);
+    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, a, 0, SPECIFIED);
     return Coerce_To_Unstable_Antiform(out);
 }
 
@@ -223,7 +223,7 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
 
 #define Init_Meta_Pack(out,a) \
     TRACK(Quasify(Init_Any_List_At_Core_Untracked( \
-        (out), REB_BLOCK, (a), 0, SPECIFIED)))
+        (out), TYPE_BLOCK, (a), 0, SPECIFIED)))
 
 
 //=//// "NIHIL" (empty BLOCK! Antiform Pack, ~[]~) ////////////////////////=//
@@ -276,7 +276,7 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
 
 INLINE Value* Splicify(Need(Value*) v) {
     assert(Any_List(v) and QUOTE_BYTE(v) == NOQUOTE_1);
-    HEART_BYTE(v) = REB_GROUP;
+    HEART_BYTE(v) = TYPE_GROUP;
     return Coerce_To_Stable_Antiform(v);
 }
 

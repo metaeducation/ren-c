@@ -1975,10 +1975,10 @@ static Option(Error*) Trap_Apply_Pending_Decorations(
 ){
     if (S->sigil_pending) {
         Heart heart = Cell_Heart_Ensure_Noquote(e);
-        if (not Any_Plain_Kind(heart))
+        if (not Any_Plain_Type(heart))
             return Error_Syntax(S, TOKEN_BLANK);  // !!! token?
 
-        HEART_BYTE(e) = Sigilize_Any_Plain_Kind(
+        HEART_BYTE(e) = Sigilize_Any_Plain_Type(
             unwrap S->sigil_pending,
             heart
         );
@@ -2434,7 +2434,7 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(S, token));
 
         if (S->begin[len - 1] == '%')
-            HEART_BYTE(TOP) = REB_PERCENT;
+            HEART_BYTE(TOP) = TYPE_PERCENT;
         break;
 
       case TOKEN_MONEY:
@@ -2524,7 +2524,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (S->end - 1 != S->begin + 1 + size)
             return RAISE(Error_Syntax(S, token));
 
-        Init_Any_String(PUSH(), REB_TAG, s);
+        Init_Any_String(PUSH(), TYPE_TAG, s);
         break; }
 
       case TOKEN_CONSTRUCT: {
@@ -2682,13 +2682,13 @@ Bounce Scanner_Executor(Level* const L) {
     Heart heart;
     switch (LEVEL_STATE_BYTE(SUBLEVEL)) {
       case ST_SCANNER_BLOCK_MODE:
-        heart = REB_BLOCK;
+        heart = TYPE_BLOCK;
         break;
       case ST_SCANNER_FENCE_MODE:
-        heart = REB_FENCE;
+        heart = TYPE_FENCE;
         break;
       case ST_SCANNER_GROUP_MODE:
-        heart = REB_GROUP;
+        heart = TYPE_GROUP;
         break;
       default:
         panic (L);
@@ -2720,17 +2720,17 @@ Bounce Scanner_Executor(Level* const L) {
     switch (sub_mode) {
       case '/':
         assert(not Scan_Mode_Matches(L, '/'));  // should have continued
-        heart = REB_PATH;
+        heart = TYPE_PATH;
         break;
 
       case ':':
         assert(not Scan_Mode_Matches(L, ':'));  // should have continued
-        heart = REB_CHAIN;
+        heart = TYPE_CHAIN;
         break;
 
       case '.':
         assert(not Scan_Mode_Matches(L, '.'));  // should have continued
-        heart = REB_TUPLE;
+        heart = TYPE_TUPLE;
         break;
 
       default:
@@ -2811,7 +2811,7 @@ Bounce Scanner_Executor(Level* const L) {
             DECLARE_ATOM (items);
             Init_Any_List(
                 items,
-                REB_THE_BLOCK,  // don't want to evaluate
+                TYPE_THE_BLOCK,  // don't want to evaluate
                 Pop_Source_From_Stack(stackindex_path_head - 1)
             );
             Push_Lifeguard(items);

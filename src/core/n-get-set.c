@@ -38,7 +38,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
         VarList* frame_varlist;
         if (Is_Stub_Varlist(c)) {  // ordinary FUNC frame context
             frame_varlist = cast(VarList*, c);
-            if (CTX_TYPE(frame_varlist) != REB_FRAME)
+            if (CTX_TYPE(frame_varlist) != TYPE_FRAME)
                 continue;
         }
         else if (Is_Stub_Use(c)) {  // e.g. LAMBDA or DOES uses this
@@ -85,7 +85,7 @@ static Option(Error*) Trap_Get_Wordlike_Cell_Maybe_Vacant(
         return nullptr;
     }
 
-    assert(HEART_BYTE(lookup) == REB_FRAME);  // alias accessors as WORD! ?
+    assert(HEART_BYTE(lookup) == TYPE_FRAME);  // alias accessors as WORD! ?
     assert(QUOTE_BYTE(lookup) == ANTIFORM_0);
 
     DECLARE_ELEMENT (accessor);
@@ -152,7 +152,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
             return error;
         if (steps_out and steps_out != GROUPS_OK) {
             Derelativize(unwrap steps_out, tuple, context);
-            HEART_BYTE(unwrap steps_out) = REB_THE_TUPLE;  // REB_THE_WORD ?
+            HEART_BYTE(unwrap steps_out) = TYPE_THE_TUPLE;  // TYPE_THE_WORD ?
         }
         if (dot_at_head and Is_Action(out)) {  // need the coupling
             if (Cell_Frame_Coupling(out) == UNCOUPLED) {
@@ -224,7 +224,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
 
     if (steps_out and steps_out != GROUPS_OK) {
         Source* a = Pop_Source_From_Stack(base);
-        Init_Any_List(unwrap steps_out, REB_THE_BLOCK, a);
+        Init_Any_List(unwrap steps_out, TYPE_THE_BLOCK, a);
     }
     else
         Drop_Data_Stack_To(base);
@@ -287,7 +287,7 @@ Option(Error*) Trap_Get_Var_Maybe_Vacant(
 
         if (steps_out and steps_out != GROUPS_OK) {
             Derelativize(unwrap steps_out, var, context);
-            HEART_BYTE(unwrap steps_out) = REB_THE_WORD;
+            HEART_BYTE(unwrap steps_out) = TYPE_THE_WORD;
         }
         return nullptr;
     }
@@ -876,7 +876,7 @@ bool Set_Var_Core_Updater_Throws(
 
     Heart var_heart = Cell_Heart(var);
 
-    if (Any_Word_Kind(var_heart)) {
+    if (Any_Word_Type(var_heart)) {
 
       set_target:
 
@@ -915,7 +915,7 @@ bool Set_Var_Core_Updater_Throws(
             // If the variable is a compressed path form like `a.` then turn
             // it into a plain word.
             //
-            HEART_BYTE(unwrap steps_out) = REB_WORD;
+            HEART_BYTE(unwrap steps_out) = TYPE_WORD;
         }
         return false;  // did not throw
     }
@@ -927,7 +927,7 @@ bool Set_Var_Core_Updater_Throws(
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (Any_Sequence_Kind(var_heart)) {
+    if (Any_Sequence_Type(var_heart)) {
         if (not Sequence_Has_Node(var))  // compressed byte form
             fail (var);
 
@@ -938,7 +938,7 @@ bool Set_Var_Core_Updater_Throws(
         else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, LEADING_BLANK)) {  // `/a` or `.a`
-                if (Any_Tuple_Kind(var_heart))
+                if (Any_Tuple_Type(var_heart))
                     context = Adjust_Context_For_Coupling(context);
                 goto set_target;
             }

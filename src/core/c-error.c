@@ -60,7 +60,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         Flex* f = m_cast(Flex*, c_cast(Flex* , p));  // don't mutate
         if (not Is_Stub_Varlist(f))
             panic (f);  // only kind of Flex allowed are contexts of ERROR!
-        if (CTX_TYPE(cast(VarList*, f)) != REB_ERROR)
+        if (CTX_TYPE(cast(VarList*, f)) != TYPE_ERROR)
             panic (f);
         return cast(Error*, f); }
 
@@ -134,7 +134,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 Error* Fail_Abruptly_Helper(Error* error)
 {
     Assert_Varlist(error);
-    assert(CTX_TYPE(error) == REB_ERROR);
+    assert(CTX_TYPE(error) == TYPE_ERROR);
 
     // You can't abruptly fail during the handling of abrupt failure.
     //
@@ -409,7 +409,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_KIND(ARG(type)) == REB_ERROR);
+    assert(Cell_Datatype_Type(ARG(type)) == TYPE_ERROR);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -427,7 +427,7 @@ IMPLEMENT_GENERIC(MAKE, Error)
 
         error = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            REB_ERROR, // type
+            TYPE_ERROR, // type
             head, // values to scan for toplevel set-words
             tail,
             root_error // parent
@@ -683,7 +683,7 @@ Error* Make_Error_Managed_Vaptr(
 
     assert(Varlist_Len(varlist) == Varlist_Len(root_varlist) + expected_args);
 
-    HEART_BYTE(Rootvar_Of_Varlist(varlist)) = REB_ERROR;
+    HEART_BYTE(Rootvar_Of_Varlist(varlist)) = TYPE_ERROR;
 
     // C struct mirroring fixed portion of error fields
     //
@@ -993,9 +993,9 @@ Error* Error_No_Catch_For_Throw(Level* level_)
 //
 // <type> type is not allowed here.
 //
-Error* Error_Invalid_Type(Kind kind)
+Error* Error_Invalid_Type(Type type)
 {
-    return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));
+    return Error_Invalid_Type_Raw(Datatype_From_Type(type));
 }
 
 
@@ -1028,9 +1028,9 @@ Error* Error_Protected_Key(const Symbol* sym)
 //
 //  Error_Math_Args: C
 //
-Error* Error_Math_Args(Kind type, const Symbol* verb)
+Error* Error_Math_Args(Type type, const Symbol* verb)
 {
-    return Error_Not_Related_Raw(verb, Datatype_From_Kind(type));
+    return Error_Not_Related_Raw(verb, Datatype_From_Type(type));
 }
 
 //
@@ -1038,21 +1038,21 @@ Error* Error_Math_Args(Kind type, const Symbol* verb)
 //
 Error* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 {
-    return Error_Cannot_Use_Raw(verb, Datatype_From_Kind(VAL_TYPE(first_arg)));
+    return Error_Cannot_Use_Raw(verb, Datatype_Of(first_arg));
 }
 
 
 //
 //  Error_Unexpected_Type: C
 //
-Error* Error_Unexpected_Type(Kind expected, Kind actual)
+Error* Error_Unexpected_Type(Type expected, Type actual)
 {
-    assert(expected <= REB_MAX);
-    assert(actual <= REB_MAX);
+    assert(expected <= MAX_TYPE);
+    assert(actual <= MAX_TYPE);
 
     return Error_Expect_Val_Raw(
-        Datatype_From_Kind(expected),
-        Datatype_From_Kind(actual)
+        Datatype_From_Type(expected),
+        Datatype_From_Type(actual)
     );
 }
 
@@ -1167,17 +1167,16 @@ Error* Error_Bad_Argless_Refine(const Key* key)
 Error* Error_Bad_Return_Type(Level* L, Atom* atom) {
     Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
 
-    Kind kind = VAL_TYPE(atom);
-    return Error_Bad_Return_Type_Raw(maybe label, Datatype_From_Kind(kind));
+    return Error_Bad_Return_Type_Raw(maybe label, Datatype_Of(atom));
 }
 
 
 //
 //  Error_Bad_Make: C
 //
-Error* Error_Bad_Make(Kind type, const Element* spec)
+Error* Error_Bad_Make(Type type, const Element* spec)
 {
-    return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
+    return Error_Bad_Make_Arg_Raw(Datatype_From_Type(type), spec);
 }
 
 

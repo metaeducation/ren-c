@@ -622,7 +622,7 @@ e-symbols/emit [syms-cscape --{
      * switch() for efficiency in the core.
      *
      * Datatypes are given symbol numbers at the start of the list, so that
-     * their SYM_XXX values will be identical to their REB_XXX values.
+     * their SYM_XXX values will be identical to their TYPE_XXX values.
      *
      * The file %words.r contains a list of spellings that are given ID
      * numbers recognized by the core.

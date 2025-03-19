@@ -1189,14 +1189,14 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     }
 
     if (val != nullptr) {
-        switch (VAL_TYPE(val)) {
-          case REB_INTEGER:
-          case REB_DECIMAL:
-          case REB_TIME:
+        switch (Type_Of(val)) {
+          case TYPE_INTEGER:
+          case TYPE_DECIMAL:
+          case TYPE_TIME:
             timeout = Milliseconds_From_Value(val);
             break;
 
-          case REB_PORT: {
+          case TYPE_PORT: {
             Source* single = Make_Source(1);
             Append_Value(single, val);
             Init_Block(ARG(value), single);
@@ -1205,7 +1205,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
             timeout = ALL_BITS;
             break; }
 
-          case REB_BLANK:
+          case TYPE_BLANK:
             timeout = ALL_BITS; // wait for all windows
             break;
 

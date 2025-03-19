@@ -52,9 +52,9 @@
 
 INLINE bool Pairlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
-    if (Cell_Heart_Unchecked(v) == REB_PAIR)
+    if (Cell_Heart_Unchecked(v) == TYPE_PAIR)
         return true;
-    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
+    if (not Any_Sequence_Type(Cell_Heart_Unchecked(v)))
         return false;
     if (not Sequence_Has_Node(v))  // compressed bytes
         return false;
@@ -85,7 +85,7 @@ INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
 
     Reset_Cell_Header_Noquote(
         out,
-        CELL_MASK_PAIR | FLAG_HEART_BYTE(REB_PAIR)
+        CELL_MASK_PAIR | FLAG_HEART_BYTE(TYPE_PAIR)
     );
     Corrupt_Unused_Field(out->extra.corrupt);
     CELL_PAIRLIKE_PAIRING_NODE(out) = p;

@@ -26,7 +26,7 @@
 // simply a sigle-length token, which is translated to a codepoint using the
 // `CODEPOINT OF` operation, or by using FIRST on the token.
 //
-// REB_ISSUE has two forms: one with a separate node allocation and one that
+// TYPE_ISSUE has two forms: one with a separate node allocation and one that
 // stores data where a node and index would be.  Stringlike_Has_Node()
 // is what discerns the two categories, and can only be treated as a string
 // when it has that flag.  Hence generically speaking, ISSUE! is not considered
@@ -75,7 +75,7 @@
 //
 
 INLINE bool Is_Cell_NUL(const Cell* c) {
-    if (Cell_Heart(c) != REB_BLOB)
+    if (Cell_Heart(c) != TYPE_BLOB)
         return false;
 
     Size size;
@@ -96,7 +96,7 @@ INLINE bool IS_CHAR_CELL(const Cell* c) {
     if (Is_Cell_NUL(c))
         return true;
 
-    if (Cell_Heart(c) != REB_ISSUE)
+    if (Cell_Heart(c) != TYPE_ISSUE)
         return false;
 
     if (Stringlike_Has_Node(c))
@@ -115,7 +115,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* c) {  // must pass IS_CHAR_CELL()
     if (Is_Cell_NUL(c))
         return 0;
 
-    assert(Cell_Heart(c) == REB_ISSUE);
+    assert(Cell_Heart(c) == TYPE_ISSUE);
     assert(not Stringlike_Has_Node(c));
 
     assert(c->extra.at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
@@ -133,8 +133,8 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
     Size size
 ){
     assert(
-        Any_Utf8_Kind(heart)
-        and not Any_String_Kind(heart) and not Any_Word_Kind(heart)
+        Any_Utf8_Type(heart)
+        and not Any_String_Type(heart) and not Any_Word_Type(heart)
     );
     assert(len <= size);
     if (size + 1 > Size_Of(out->payload.at_least_8))
@@ -171,13 +171,13 @@ INLINE Element* Init_Utf8_Non_String(
 }
 
 #define Init_Email(out,utf8,size,len) \
-    Init_Utf8_Non_String((out), REB_EMAIL, (utf8), (size), (len))
+    Init_Utf8_Non_String((out), TYPE_EMAIL, (utf8), (size), (len))
 
 #define Init_Url(out,utf8,size,len) \
-    Init_Utf8_Non_String((out), REB_URL, (utf8), (size), (len))
+    Init_Utf8_Non_String((out), TYPE_URL, (utf8), (size), (len))
 
 #define Init_Issue(out,utf8,size,len) \
-    Init_Utf8_Non_String((out), REB_ISSUE, (utf8), (size), (len))
+    Init_Utf8_Non_String((out), TYPE_ISSUE, (utf8), (size), (len))
 
 
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING?)
@@ -186,7 +186,7 @@ INLINE Element* Init_Utf8_Non_String(
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(TYPE_ISSUE) | CELL_MASK_NO_NODES
     );
 
     if (c == 0) {  // NUL is #{00}, a BLOB! not an ISSUE! (see Is_NUL())
@@ -199,7 +199,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 
         out->extra.at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
         out->extra.at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
-        HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
+        HEART_BYTE(out) = TYPE_ISSUE;  // heart is TEXT, presents as issue
     }
 
     assert(Cell_Codepoint(out) == c);
@@ -261,7 +261,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
   #endif
 
     if (not Stringlike_Has_Node(v)) {  // SIGIL!, some ISSUE!...
-        assert(not Any_String_Kind(Cell_Heart(v)));
+        assert(not Any_String_Type(Cell_Heart(v)));
 
         REBLEN len;
         Size size;

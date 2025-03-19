@@ -46,7 +46,7 @@ DECLARE_NATIVE(type_of)
     if (Is_Nulled(v))
         return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
 
-    return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
+    return Init_Builtin_Datatype(OUT, Type_Of(v));
 }
 
 
@@ -172,7 +172,7 @@ DECLARE_NATIVE(size_of)
 DECLARE_NATIVE(index_of)
 //
 // !!! Should there be a generalized error catch all for ANY-ELEMENT? which
-// says `return RAISE(Error_Type_Has_No_Index_Raw(Type_Of(elem)));`?  Review.
+// says `return RAISE(Error_Type_Has_No_Index_Raw(Datatype_Of(elem)));`?  Review.
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
@@ -755,7 +755,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 
   end_date:
 
-    // Overwriting scanned REB_TIME...
+    // Overwriting scanned TYPE_TIME...
     // payload.time.nanoseconds set
     // may be NO_DATE_TIME, don't Freshen_Cell_Header()
     //
@@ -859,7 +859,7 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 
     if (Try_Init_Small_Utf8(
         TOP,
-        REB_EMAIL,
+        TYPE_EMAIL,
         String_Head(s),
         String_Len(s),
         String_Size(s)
@@ -869,7 +869,7 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     }
 
     Freeze_Flex(s);
-    Init_Any_String(TOP, REB_EMAIL, s);
+    Init_Any_String(TOP, TYPE_EMAIL, s);
     return cp;
 }
 
@@ -939,7 +939,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
 
     if (Try_Init_Small_Utf8(
         TOP,
-        REB_URL,
+        TYPE_URL,
         String_Head(s),
         String_Len(s),
         String_Size(s)
@@ -949,7 +949,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
     }
 
     Freeze_Flex(s);
-    Init_Any_String(TOP, REB_URL, s);
+    Init_Any_String(TOP, TYPE_URL, s);
 
     return cp + len;
 }

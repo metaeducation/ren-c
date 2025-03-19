@@ -61,7 +61,7 @@ INLINE const Element* Varlist_Archetype(VarList* c) {  // read-only form
 
 INLINE Heart CTX_TYPE(Context* c) {
     if (Is_Stub_Sea(c))
-        return REB_MODULE;
+        return TYPE_MODULE;
     assert(Is_Stub_Varlist(c));
     return Cell_Heart(Varlist_Archetype(cast(VarList*, c)));
 }

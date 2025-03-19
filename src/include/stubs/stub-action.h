@@ -79,7 +79,7 @@ INLINE Details* Phase_Details(Phase* p) {
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
-    assert(HEART_BYTE(v) == REB_FRAME);
+    assert(HEART_BYTE(v) == TYPE_FRAME);
     return Is_Stub_Details(c_cast(Stub*, CELL_FRAME_PHASE(v)));
 }
 
@@ -93,7 +93,7 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 //
 
 INLINE void Tweak_Cell_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
     CELL_FRAME_LENS_OR_LABEL(c) = m_cast(Flex*, maybe f);
 }
 
@@ -302,7 +302,7 @@ INLINE const Element* Quoted_Returner_Of_Paramlist(
     Value* param = Phase_Params_Head(paramlist);
     assert(
         QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-        and HEART_BYTE(param) == REB_PARAMETER
+        and HEART_BYTE(param) == TYPE_PARAMETER
     );
     return cast(Element*, param);
 }

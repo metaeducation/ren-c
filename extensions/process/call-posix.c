@@ -160,8 +160,8 @@ Bounce Call_Core(Level* level_) {
         UNUSED(mode);
         goto null_input_buffer;
     }
-    else switch (VAL_TYPE(ARG(input))) {
-      case REB_TEXT: {
+    else switch (Type_Of(ARG(input))) {
+      case TYPE_TEXT: {
         inbuf_size = rebSpellInto(nullptr, 0, ARG(input));
         inbuf = rebAllocN(char, inbuf_size);
         size_t check;
@@ -169,7 +169,7 @@ Bounce Call_Core(Level* level_) {
         UNUSED(check);
         break; }
 
-      case REB_FILE: {
+      case TYPE_FILE: {
         size_t size;
         inbuf = s_cast(rebBytes(  // !!! why fileNAME size passed in???
             &size,
@@ -178,7 +178,7 @@ Bounce Call_Core(Level* level_) {
         inbuf_size = size;
         break; }
 
-      case REB_BLOB: {
+      case TYPE_BLOB: {
         inbuf = s_cast(rebBytes(&inbuf_size, ARG(input)));
         break; }
 
@@ -959,7 +959,7 @@ Bounce Call_Core(Level* level_) {
         rebFail_OS (ret);
 
     if (REF(info)) {
-        VarList* info = Alloc_Varlist(REB_OBJECT, 2);
+        VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), forked_pid);
         if (REF(wait))

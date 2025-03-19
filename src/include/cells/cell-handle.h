@@ -52,12 +52,12 @@
 
 
 INLINE bool Is_Handle_Cfunc(const Cell* v) {
-    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
+    assert(Cell_Heart_Unchecked(v) == TYPE_HANDLE);
     return CELL_HANDLE_LENGTH_U(v) == 0;
 }
 
 INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
-    assert(Cell_Heart_Unchecked(c) == REB_HANDLE);
+    assert(Cell_Heart_Unchecked(c) == TYPE_HANDLE);
     if (not Cell_Has_Node1(c))
         return m_cast(Cell*, c);  // changing instance won't be seen by copies
     return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
@@ -65,7 +65,7 @@ INLINE Cell* Extract_Cell_Handle_Canon(const_if_c Cell* c) {
 
 #if CPLUSPLUS_11
     INLINE const Cell* Extract_Cell_Handle_Canon(const Cell* c) {
-        assert(Cell_Heart_Unchecked(c) == REB_HANDLE);
+        assert(Cell_Heart_Unchecked(c) == TYPE_HANDLE);
         if (not Cell_Has_Node1(c))
             return c;  // changing handle instance won't be seen by copies
         return Stub_Cell(Extract_Cell_Handle_Stub(c));  // has shared node
@@ -102,7 +102,7 @@ INLINE CFunction* Cell_Handle_Cfunc(const Cell* v) {
 }
 
 INLINE Option(RebolHandleCleaner*) Cell_Handle_Cleaner(const Cell* v) {
-    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
+    assert(Cell_Heart_Unchecked(v) == TYPE_HANDLE);
     if (not Cell_Has_Node1(v))
         return nullptr;
     return Extract_Cell_Handle_Stub(v)->misc.cleaner;
@@ -133,7 +133,7 @@ INLINE Element* Init_Handle_Cdata(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(TYPE_HANDLE) | CELL_MASK_NO_NODES
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CDATA_P(out) = cdata;
@@ -148,7 +148,7 @@ INLINE Element* Init_Handle_Cfunc(
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(TYPE_HANDLE) | CELL_MASK_NO_NODES
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_CFUNC_P(out) = cfunc;
@@ -162,7 +162,7 @@ INLINE Element* Init_Handle_Node(
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_DONT_MARK_NODE1
+        FLAG_HEART_BYTE(TYPE_HANDLE) | CELL_FLAG_DONT_MARK_NODE1
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     CELL_HANDLE_NODE_P(out) = m_cast(Node*, node);  // extracted as const
@@ -181,7 +181,7 @@ INLINE void Init_Handle_Managed_Common(
     Cell* single = Stub_Cell(stub);
     Reset_Cell_Header_Noquote(
         single,
-        FLAG_HEART_BYTE(REB_HANDLE)
+        FLAG_HEART_BYTE(TYPE_HANDLE)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to singular
             | CELL_FLAG_DONT_MARK_NODE2
     );
@@ -196,7 +196,7 @@ INLINE void Init_Handle_Managed_Common(
     //
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_BYTE(REB_HANDLE)
+        FLAG_HEART_BYTE(TYPE_HANDLE)
             | (not CELL_FLAG_DONT_MARK_NODE1)  // points to stub
             | CELL_FLAG_DONT_MARK_NODE2
     );

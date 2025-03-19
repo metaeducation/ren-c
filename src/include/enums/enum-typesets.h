@@ -23,7 +23,7 @@
 // The ordering of types in %types.r encodes properties of the types for
 // efficiency.  So adding or removing a type generally means shuffling their
 // values.  Hence their numbering is subject to change as an implementation
-// detail--and the specific integer values of things like REB_BLOCK should
+// detail--and the specific integer values of things like TYPE_BLOCK should
 // never be exposed through the API.
 //
 // Many macros are generated automatically to do the range-based checks for
@@ -47,7 +47,7 @@
 // indicators in the quote byte do not affect it.
 
 #define Is_Extra_Mark_Heart(k) \
-    ((k) >= REB_VARARGS)
+    ((k) >= TYPE_VARARGS)
 
 #define Cell_Extra_Needs_Mark(v) \
     Is_Extra_Mark_Heart(HEART_BYTE(v))  // readable checked elsewhere
@@ -67,7 +67,7 @@
 //    and reads a bit beter than Any_Bindable().
 
 INLINE bool Is_Bindable_Heart(Heart h)
-  { return h >= REB_WORD; }
+  { return h >= TYPE_WORD; }
 
 #undef Any_Bindable  // use Is_Bindable(), faster than a range check [1]
 
@@ -75,13 +75,13 @@ INLINE bool Is_Bindable_Heart(Heart h)
     Is_Bindable_Heart(Cell_Heart_Unchecked(v))  // readable checked elsewhere
 
 INLINE bool Bindable_Heart_Is_Any_Word(Heart heart) {
-    assert(heart >= REB_WORD);  // inlined Is_Bindable_Heart()
-    return heart < REB_TUPLE;
+    assert(heart >= TYPE_WORD);  // inlined Is_Bindable_Heart()
+    return heart < TYPE_TUPLE;
 }
 
 INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
-    assert(heart >= REB_WORD);  // inlined Is_Bindable_Heart()
-    return heart >= REB_BLOCK;
+    assert(heart >= TYPE_WORD);  // inlined Is_Bindable_Heart()
+    return heart >= TYPE_BLOCK;
 }
 
 
@@ -91,46 +91,46 @@ INLINE bool Bindable_Heart_Is_Any_List(Heart heart) {
 // you want them (sometimes you want `value`, sometimes you don't)
 //
 
-#define Any_Get_Kind Any_Get_Value_Kind
-#define Any_Set_Kind Any_Set_Value_Kind
-#define Any_Type_Kind Any_Type_Value_Kind
-#define Any_Meta_Kind Any_Meta_Value_Kind
-#define Any_The_Kind Any_The_Value_Kind
-#define Any_Plain_Kind Any_Plain_Value_Kind
-#define Any_Var_Kind Any_Var_Value_Kind
+#define Any_Get_Type    Any_Get_Value_Type
+#define Any_Set_Type    Any_Set_Value_Type
+#define Any_Type_Type   Any_Type_Value_Type
+#define Any_Meta_Type   Any_Meta_Value_Type
+#define Any_The_Type    Any_The_Value_Type
+#define Any_Plain_Type  Any_Plain_Value_Type
+#define Any_Var_Type    Any_Var_Value_Type
 
 
 //=//// SIGIL TRANSFORMATION //////////////////////////////////////////////=//
 
-INLINE Heart Sigilize_Any_Plain_Kind(Sigil sigil, Byte k) {
-    assert(Any_Plain_Kind(k));
+INLINE Heart Sigilize_Any_Plain_Type(Sigil sigil, Byte k) {
+    assert(Any_Plain_Type(k));
     assert(sigil != SIGIL_0 and sigil < SIGIL_QUOTE);
     return cast(Heart, k + u_cast(Byte, sigil));
 }
 
-INLINE Heart Plainify_Any_Meta_Kind(Byte k) {
-    assert(Any_Meta_Kind(k));
+INLINE Heart Plainify_Any_Meta_Type(Byte k) {
+    assert(Any_Meta_Type(k));
     return cast(Heart, k - 1);
 }
 
-INLINE Heart Plainify_Any_Type_Kind(Byte k) {
-    assert(Any_Meta_Kind(k));
+INLINE Heart Plainify_Any_Type_Type(Byte k) {
+    assert(Any_Meta_Type(k));
     return cast(Heart, k - 2);
 }
 
-INLINE Heart Plainify_Any_The_Kind(Byte k) {
-    assert(Any_The_Kind(k));
+INLINE Heart Plainify_Any_The_Type(Byte k) {
+    assert(Any_The_Type(k));
     return cast(Heart, k - 3);
 }
 
-INLINE Heart Plainify_Any_Var_Kind(Byte k) {
-    assert(Any_Var_Kind(k));
+INLINE Heart Plainify_Any_Var_Type(Byte k) {
+    assert(Any_Var_Type(k));
     return cast(Heart, k - 4);
 }
 
 
-INLINE bool Any_Sequence_Or_List_Kind(Byte k)  // !!! optimize?
-  { return Any_Sequence_Kind(k) or Any_List_Kind(k); }
+INLINE bool Any_Sequence_Or_List_Type(Byte k)  // !!! optimize?
+  { return Any_Sequence_Type(k) or Any_List_Type(k); }
 
-INLINE bool Any_Bytes_Kind(Byte k)
-  { return Any_Utf8_Kind(k) or k == REB_BLOB; }
+INLINE bool Any_Bytes_Type(Byte k)
+  { return Any_Utf8_Type(k) or k == TYPE_BLOB; }

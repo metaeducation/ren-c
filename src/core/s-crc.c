@@ -120,12 +120,12 @@ uint32_t Hash_Value(const Cell* cell)
     uint32_t hash;
 
     switch (heart) {
-      case REB_BLANK:
-      case REB_COMMA:
+      case TYPE_BLANK:
+      case TYPE_COMMA:
         hash = 0;
         break;
 
-      case REB_INTEGER:
+      case TYPE_INTEGER:
         //
         // R3-Alpha XOR'd with (VAL_INT64(val) >> 32).  But: "XOR with high
         // bits collapses -1 with 0 etc.  (If your key k is |k| < 2^32 high
@@ -134,13 +134,13 @@ uint32_t Hash_Value(const Cell* cell)
         hash = cast(uint32_t, VAL_INT64(cell));
         break;
 
-      case REB_DECIMAL:
-      case REB_PERCENT:
+      case TYPE_DECIMAL:
+      case TYPE_PERCENT:
         // depends on INT64 sharing the DEC64 bits
         hash = (VAL_INT64(cell) >> 32) ^ (VAL_INT64(cell));
         break;
 
-      case REB_MONEY: {
+      case TYPE_MONEY: {
         //
         // Writes the 3 pointer fields as three uintptr_t integer values to
         // build a `deci` type.  So it is safe to read the three pointers as
@@ -153,15 +153,15 @@ uint32_t Hash_Value(const Cell* cell)
 
       hash_pair:
         //
-      case REB_PAIR:
+      case TYPE_PAIR:
         hash = Hash_Value(Cell_Pair_First(cell));
         hash ^= Hash_Value(Cell_Pair_Second(cell));
         break;
 
-      case REB_TIME:
-      case REB_DATE:
+      case TYPE_TIME:
+      case TYPE_DATE:
         hash = VAL_NANO(cell) ^ (VAL_NANO(cell) / SEC_SEC);
-        if (heart == REB_DATE) {
+        if (heart == TYPE_DATE) {
             //
             // !!! This hash used to be done with an illegal-in-C union alias
             // of bit fields.  This shift is done to account for the number
@@ -178,45 +178,45 @@ uint32_t Hash_Value(const Cell* cell)
         }
         break;
 
-      case REB_BLOB: {
+      case TYPE_BLOB: {
         Size size;
         const Byte* data = Cell_Blob_Size_At(&size, cell);
         hash = Hash_Bytes(data, size);
         break; }
 
-      case REB_BITSET: {  // current implementation is a binary
+      case TYPE_BITSET: {  // current implementation is a binary
         Binary* b = VAL_BITSET(cell);
         hash = Hash_Bytes(Binary_Head(b), Binary_Len(b));
         break; }
 
-      case REB_TEXT:
-      case REB_FILE:
-      case REB_EMAIL:
-      case REB_URL:
-      case REB_TAG:
-      case REB_SIGIL:  // same payload as issue, but always short
-      case REB_ISSUE: {
+      case TYPE_TEXT:
+      case TYPE_FILE:
+      case TYPE_EMAIL:
+      case TYPE_URL:
+      case TYPE_TAG:
+      case TYPE_SIGIL:  // same payload as issue, but always short
+      case TYPE_ISSUE: {
         REBLEN len;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, cell);
         hash = Hash_UTF8_Len_Caseless(utf8, len);
         break; }
 
-      case REB_CHAIN:
-      case REB_THE_CHAIN:
-      case REB_META_CHAIN:
-      case REB_TYPE_CHAIN:
-      case REB_VAR_CHAIN:
+      case TYPE_CHAIN:
+      case TYPE_THE_CHAIN:
+      case TYPE_META_CHAIN:
+      case TYPE_TYPE_CHAIN:
+      case TYPE_VAR_CHAIN:
         //
-      case REB_TUPLE:
-      case REB_THE_TUPLE:
-      case REB_TYPE_TUPLE:
-      case REB_VAR_TUPLE:
+      case TYPE_TUPLE:
+      case TYPE_THE_TUPLE:
+      case TYPE_TYPE_TUPLE:
+      case TYPE_VAR_TUPLE:
         //
-      case REB_PATH:
-      case REB_THE_PATH:
-      case REB_META_PATH:
-      case REB_TYPE_PATH:
-      case REB_VAR_PATH: {
+      case TYPE_PATH:
+      case TYPE_THE_PATH:
+      case TYPE_META_PATH:
+      case TYPE_TYPE_PATH:
+      case TYPE_VAR_PATH: {
         if (not Sequence_Has_Node(cell)) {
             hash = Hash_Bytes(
                 cell->payload.at_least_8 + 1,
@@ -244,23 +244,23 @@ uint32_t Hash_Value(const Cell* cell)
 
       hash_any_list:
         //
-      case REB_BLOCK:
-      case REB_THE_BLOCK:
-      case REB_META_BLOCK:
-      case REB_TYPE_BLOCK:
-      case REB_VAR_BLOCK:
+      case TYPE_BLOCK:
+      case TYPE_THE_BLOCK:
+      case TYPE_META_BLOCK:
+      case TYPE_TYPE_BLOCK:
+      case TYPE_VAR_BLOCK:
         //
-      case REB_FENCE:
-      case REB_THE_FENCE:
-      case REB_META_FENCE:
-      case REB_TYPE_FENCE:
-      case REB_VAR_FENCE:
+      case TYPE_FENCE:
+      case TYPE_THE_FENCE:
+      case TYPE_META_FENCE:
+      case TYPE_TYPE_FENCE:
+      case TYPE_VAR_FENCE:
         //
-      case REB_GROUP:
-      case REB_THE_GROUP:
-      case REB_META_GROUP:
-      case REB_TYPE_GROUP:
-      case REB_VAR_GROUP:
+      case TYPE_GROUP:
+      case TYPE_THE_GROUP:
+      case TYPE_META_GROUP:
+      case TYPE_TYPE_GROUP:
+      case TYPE_VAR_GROUP:
         //
         //
         // !!! Lame hash just to get it working.  There will be lots of
@@ -278,7 +278,7 @@ uint32_t Hash_Value(const Cell* cell)
         hash = Array_Len(Cell_Array(cell));
         break;
 
-      case REB_PARAMETER:
+      case TYPE_PARAMETER:
         //
         // "These types are currently not supported."
         //
@@ -288,11 +288,11 @@ uint32_t Hash_Value(const Cell* cell)
 
       hash_any_word:
         //
-      case REB_WORD:
-      case REB_THE_WORD:
-      case REB_META_WORD:
-      case REB_TYPE_WORD:
-      case REB_VAR_WORD: {
+      case TYPE_WORD:
+      case TYPE_THE_WORD:
+      case TYPE_META_WORD:
+      case TYPE_TYPE_WORD:
+      case TYPE_VAR_WORD: {
         //
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer
@@ -305,7 +305,7 @@ uint32_t Hash_Value(const Cell* cell)
         hash = Hash_String(Cell_Word_Symbol(cell));
         break; }
 
-      case REB_FRAME:
+      case TYPE_FRAME:
         //
         // Because function equality is by identity only and they are
         // immutable once created, it is legal to put them in hashes.
@@ -316,9 +316,9 @@ uint32_t Hash_Value(const Cell* cell)
         break;
 
       hash_object:
-      case REB_ERROR:
-      case REB_PORT:
-      case REB_OBJECT:
+      case TYPE_ERROR:
+      case TYPE_PORT:
+      case TYPE_OBJECT:
         //
         // !!! ANY-CONTEXT has a uniquely identifying context pointer for that
         // context.  However, this does not help with "natural =" comparison
@@ -334,11 +334,11 @@ uint32_t Hash_Value(const Cell* cell)
         hash = cast(uint32_t, i_cast(uintptr_t, Cell_Varlist(cell)) >> 4);
         break;
 
-      case REB_MODULE:
+      case TYPE_MODULE:
         hash = cast(uint32_t, i_cast(uintptr_t, Cell_Module_Sea(cell)) >> 4);
         break;
 
-      case REB_MAP:
+      case TYPE_MAP:
         //
         // Looking up a map in a map is fairly analogous to looking up an
         // object in a map.  If one is permitted, so should the other be.
@@ -348,7 +348,7 @@ uint32_t Hash_Value(const Cell* cell)
         hash = cast(uint32_t, i_cast(uintptr_t, VAL_MAP(cell)) >> 4);
         break;
 
-      case REB_HANDLE:
+      case TYPE_HANDLE:
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //

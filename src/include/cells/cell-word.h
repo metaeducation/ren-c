@@ -34,9 +34,9 @@
 
 INLINE bool Wordlike_Cell(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
-    if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
+    if (Any_Word_Type(Cell_Heart_Unchecked(v)))
         return true;
-    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
+    if (not Any_Sequence_Type(Cell_Heart_Unchecked(v)))
         return false;
     if (not Cell_Has_Node1(v))
         return false;
@@ -73,7 +73,7 @@ INLINE Element* Init_Any_Word_Untracked(
     Byte quote_byte,
     const Symbol* sym
 ){
-    assert(Any_Word_Kind(heart));
+    assert(Any_Word_Type(heart));
     Freshen_Cell_Header(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
@@ -90,11 +90,11 @@ INLINE Element* Init_Any_Word_Untracked(
 #define Init_Any_Word(out,heart,spelling) \
     TRACK(Init_Any_Word_Untracked((out), (heart), NOQUOTE_1, (spelling)))
 
-#define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
-#define Init_Type_Word(out,str)     Init_Any_Word((out), REB_TYPE_WORD, (str))
-#define Init_The_Word(out,str)      Init_Any_Word((out), REB_THE_WORD, (str))
-#define Init_Meta_Word(out,str)     Init_Any_Word((out), REB_META_WORD, (str))
-#define Init_Var_Word(out,str)      Init_Any_Word((out), REB_VAR_WORD, (str))
+#define Init_Word(out,str)          Init_Any_Word((out), TYPE_WORD, (str))
+#define Init_Type_Word(out,str)     Init_Any_Word((out), TYPE_TYPE_WORD, (str))
+#define Init_The_Word(out,str)      Init_Any_Word((out), TYPE_THE_WORD, (str))
+#define Init_Meta_Word(out,str)     Init_Any_Word((out), TYPE_META_WORD, (str))
+#define Init_Var_Word(out,str)      Init_Any_Word((out), TYPE_VAR_WORD, (str))
 
 INLINE Value* Init_Any_Word_Bound_Untracked(
     Sink(Element) out,
@@ -103,7 +103,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
     Context* binding,  // spelling determined by linked-to thing
     REBLEN index  // must be INDEX_PATCHED if LET patch
 ){
-    assert(Any_Word_Kind(heart));
+    assert(Any_Word_Type(heart));
     assert(index != 0);
     Reset_Cell_Header_Noquote(
         out,
@@ -133,11 +133,11 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
 
 #define Init_Quasi_Word(out,symbol) \
     TRACK(Init_Any_Word_Untracked( \
-        (out), REB_WORD, QUASIFORM_2_COERCE_ONLY, (symbol)))
+        (out), TYPE_WORD, QUASIFORM_2_COERCE_ONLY, (symbol)))
 
 #define Init_Anti_Word_Untracked(out,symbol) \
     Coerce_To_Stable_Antiform(Init_Any_Word_Untracked( \
-        (out), REB_WORD, NOQUOTE_1, (symbol)))  // must validate symbol
+        (out), TYPE_WORD, NOQUOTE_1, (symbol)))  // must validate symbol
 
 #define Init_Anti_Word(out,symbol) \
     TRACK(Init_Anti_Word_Untracked((out), (symbol)))
@@ -161,7 +161,7 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 //
 INLINE bool Is_Bar(const Value* v) {
     return (
-        HEART_BYTE(v) == REB_WORD
+        HEART_BYTE(v) == TYPE_WORD
         and QUOTE_BYTE(v) == NOQUOTE_1
         and Cell_Word_Symbol(v) == CANON(BAR_1)  // caseless | always canon
     );
@@ -169,7 +169,7 @@ INLINE bool Is_Bar(const Value* v) {
 
 INLINE bool Is_Bar_Bar(const Atom* v) {
     return (
-        HEART_BYTE(v) == REB_WORD
+        HEART_BYTE(v) == TYPE_WORD
         and QUOTE_BYTE(v) == NOQUOTE_1
         and Cell_Word_Symbol(v) == CANON(_B_B)  // caseless || always canon
     );

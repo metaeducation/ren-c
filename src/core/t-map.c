@@ -377,7 +377,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_KIND(ARG(type)) == REB_MAP);
+    assert(Cell_Datatype_Type(ARG(type)) == TYPE_MAP);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -385,7 +385,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     if (Any_Number(arg))
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
 
-    return FAIL(Error_Bad_Make(REB_MAP, arg));
+    return FAIL(Error_Bad_Make(TYPE_MAP, arg));
 }
 
 
@@ -492,7 +492,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 
     // See Alloc_Varlist() - cannot use it directly because no Collect_Words
 
-    VarList* c = Alloc_Varlist(REB_OBJECT, count);
+    VarList* c = Alloc_Varlist(TYPE_OBJECT, count);
 
     const Value* mval_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
     const Value* mval = Flex_Head(Value, MAP_PAIRLIST(map));
@@ -684,12 +684,12 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     INCLUDE_PARAMS_OF_TO;
 
     Element* map = Element_ARG(element);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_List_Kind(to))  // !!! not ordered! [1]
+    if (Any_List_Type(to))  // !!! not ordered! [1]
         return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
 
-    if (to == REB_MAP) {
+    if (to == TYPE_MAP) {
         bool deep = false;
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
     }

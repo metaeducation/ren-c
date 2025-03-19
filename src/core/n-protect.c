@@ -532,10 +532,10 @@ void Force_Value_Frozen_Core(
 
     Heart heart = Cell_Heart(v);
 
-    if (heart == REB_FRAME and Is_Frame_Details(v))
+    if (heart == TYPE_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable
 
-    if (Any_List_Kind(heart)) {
+    if (Any_List_Type(heart)) {
         const Source* a = Cell_Array(v);
         if (deep) {
             if (not Is_Source_Frozen_Deep(a)) {
@@ -552,7 +552,7 @@ void Force_Value_Frozen_Core(
             }
         }
     }
-    else if (Any_Context_Kind(heart)) {
+    else if (Any_Context_Type(heart)) {
         VarList* c = Cell_Varlist(v);
         if (deep) {
             /*if (not Is_Context_Frozen_Deep(c)) {*/  // !!! review
@@ -564,7 +564,7 @@ void Force_Value_Frozen_Core(
         else
             fail ("What does a shallow freeze of a context mean?");
     }
-    else if (Any_Series_Kind(heart)) {
+    else if (Any_Series_Type(heart)) {
         UNUSED(deep);
 
         const Flex* f = Cell_Flex(v);
@@ -574,7 +574,7 @@ void Force_Value_Frozen_Core(
                 Set_Flex_Info(f, AUTO_LOCKED);
         }
     }
-    else if (Any_Sequence_Kind(heart)) {
+    else if (Any_Sequence_Type(heart)) {
         // No freezing needed
     }
     else

@@ -202,7 +202,7 @@ DECLARE_NATIVE(arrow)
         else if (Is_Quoted(item)) {
             if (Cell_Num_Quotes(item) != 1)
                 return FAIL(item);
-            if (Cell_Heart(item) == REB_WORD)
+            if (Cell_Heart(item) == TYPE_WORD)
                 pclass = PARAMCLASS_JUST;
             else
                 return FAIL(item);

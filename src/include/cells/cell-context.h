@@ -11,19 +11,19 @@
 
 INLINE VarList* Cell_Varlist(const Cell* c) {
     assert(
-        HEART_BYTE(c) != REB_MODULE
-        and Any_Context_Kind(HEART_BYTE(c))
+        HEART_BYTE(c) != TYPE_MODULE
+        and Any_Context_Type(HEART_BYTE(c))
     );
 
     Node* node = CELL_NODE1(c);  // ParamList or Details
     if (Not_Node_Readable(node)) {
-        if (HEART_BYTE(c) == REB_FRAME)
+        if (HEART_BYTE(c) == TYPE_FRAME)
             fail (Error_Expired_Frame_Raw());  // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
     }
 
     while (not Is_Stub_Varlist(cast(Stub*, node))) {
-        assert(Cell_Heart_Unchecked(c) == REB_FRAME);
+        assert(Cell_Heart_Unchecked(c) == TYPE_FRAME);
         assert(Is_Stub_Details(cast(Stub*, node)));
         c = Flex_Head_Dynamic(Cell, cast(Details*, CELL_FRAME_PHASE(c)));
         node = CELL_NODE1(c);  // ParamList or Details
@@ -32,18 +32,18 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
 }
 
 INLINE SeaOfVars* Cell_Module_Sea(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_MODULE);
+    assert(HEART_BYTE(c) == TYPE_MODULE);
     return cast(SeaOfVars*, CELL_NODE1(c));
 }
 
 INLINE Context* Cell_Context(const Cell* c) {
-    if (HEART_BYTE(c) == REB_MODULE)
+    if (HEART_BYTE(c) == TYPE_MODULE)
         return Cell_Module_Sea(c);
     return Cell_Varlist(c);
 }
 
 INLINE Error* Cell_Error(const Cell* c) {
-    assert(Cell_Heart(c) == REB_ERROR);
+    assert(Cell_Heart(c) == TYPE_ERROR);
     return cast(Error*, Cell_Varlist(c));
 }
 
@@ -64,15 +64,15 @@ INLINE Element* Init_Context_Cell(
   #endif
     UNUSED(heart);
     Assert_Flex_Managed(c);
-    assert(CTX_TYPE(c) != REB_MODULE);  // catch straggling bad casts
+    assert(CTX_TYPE(c) != TYPE_MODULE);  // catch straggling bad casts
     return Copy_Cell(out, Varlist_Archetype(c));
 }
 
 #define Init_Object(out,c) \
-    Init_Context_Cell((out), REB_OBJECT, (c))
+    Init_Context_Cell((out), TYPE_OBJECT, (c))
 
 #define Init_Port(out,c) \
-    Init_Context_Cell((out), REB_PORT, (c))
+    Init_Context_Cell((out), TYPE_PORT, (c))
 
 
 

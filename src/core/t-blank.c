@@ -101,18 +101,18 @@ IMPLEMENT_GENERIC(TO, Is_Blank)
     INCLUDE_PARAMS_OF_TO;
 
     UNUSED(ARG(element));
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_List_Kind(as))
+    if (Any_List_Type(as))
         return Init_Any_List(OUT, as, Make_Source(0));
 
-    if (Any_String_Kind(as))
+    if (Any_String_Type(as))
         return Init_Any_String(OUT, as, Make_String(0));
 
-    if (Any_Word_Kind(as))
+    if (Any_Word_Type(as))
         return UNHANDLED;
 
-    if (as == REB_ISSUE) {
+    if (as == TYPE_ISSUE) {
         bool check = Try_Init_Small_Utf8(
             OUT, as, cast(Utf8(const*), ""), 0, 0
         );
@@ -121,7 +121,7 @@ IMPLEMENT_GENERIC(TO, Is_Blank)
         return OUT;
     }
 
-    if (as == REB_BLOB)
+    if (as == TYPE_BLOB)
         return Init_Blob(OUT, Make_Binary(0));
 
     return UNHANDLED;
@@ -136,18 +136,18 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
     INCLUDE_PARAMS_OF_AS;
 
     UNUSED(ARG(element));
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_List_Kind(as))
+    if (Any_List_Type(as))
         return Init_Any_List(OUT, as, Cell_Array(g_empty_block));
 
-    if (Any_String_Kind(as))
+    if (Any_String_Type(as))
         return Init_Any_String(OUT, as, Cell_String(g_empty_text));
 
-    if (Any_Word_Kind(as))
+    if (Any_Word_Type(as))
         return UNHANDLED;
 
-    if (as == REB_ISSUE) {
+    if (as == TYPE_ISSUE) {
         bool check = Try_Init_Small_Utf8(
             OUT, as, cast(Utf8(const*), ""), 0, 0
         );
@@ -156,7 +156,7 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
         return OUT;
     }
 
-    if (as == REB_BLOB)
+    if (as == TYPE_BLOB)
         return Init_Blob(OUT, Cell_Binary(g_empty_blob));
 
     return UNHANDLED;

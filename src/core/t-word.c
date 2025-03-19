@@ -101,8 +101,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = VAL_TYPE_HEART(ARG(type));
-    assert(Any_Word_Kind(heart));
+    Heart heart = Cell_Datatype_Heart(ARG(type));
+    assert(Any_Word_Type(heart));
 
     Element* arg = Element_ARG(def);
 
@@ -138,7 +138,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 
     UNUSED(form);
 
-    Option(Sigil) sigil = Sigil_Of_Kind(Cell_Heart(v));
+    Option(Sigil) sigil = Sigil_Of_Type(Cell_Heart(v));
     if (sigil)
         Append_Codepoint(mo->string, Symbol_For_Sigil(unwrap sigil));
 
@@ -159,15 +159,15 @@ IMPLEMENT_GENERIC(TO, Any_Word)
 
     USED(ARG(element));  // deferred to other generic implementations
 
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_Word_Kind(to))
+    if (Any_Word_Type(to))
         return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // immutable alias
 
-    if (Any_String_Kind(to))  // need mutable copy
+    if (Any_String_Type(to))  // need mutable copy
         return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
 
-    if (Any_Utf8_Kind(to))
+    if (Any_Utf8_Type(to))
         return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // non-string, immutable
 
     return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);  // TO INTEGER!, etc.
@@ -179,18 +179,18 @@ IMPLEMENT_GENERIC(AS, Any_Word)
     INCLUDE_PARAMS_OF_AS;
 
     Element* word = Element_ARG(element);
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_Word_Kind(as)) {
+    if (Any_Word_Type(as)) {
         Copy_Cell(OUT, word);
         HEART_BYTE(OUT) = as;
         return OUT;
     }
 
-    if (Any_String_Kind(as))  // will be an immutable string
+    if (Any_String_Type(as))  // will be an immutable string
         return Init_Any_String(OUT, as, Cell_Word_Symbol(word));
 
-    if (as == REB_ISSUE) {  // immutable (note no EMAIL! or URL! possible)
+    if (as == TYPE_ISSUE) {  // immutable (note no EMAIL! or URL! possible)
         const Symbol* s = Cell_Word_Symbol(word);
         if (Try_Init_Small_Utf8(  // invariant: fit in cell if it can
             OUT,
@@ -204,7 +204,7 @@ IMPLEMENT_GENERIC(AS, Any_Word)
         return Init_Any_String(OUT, as, s);
     }
 
-    if (as == REB_BLOB)  // will be an immutable blob
+    if (as == TYPE_BLOB)  // will be an immutable blob
         return Init_Blob(OUT, Cell_Word_Symbol(word));
 
     return UNHANDLED;
@@ -231,7 +231,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Word)
     Element* any_word = Element_ARG(element);
     Value* part = ARG(part);
 
-    const Value* type = Type_Of(any_word);
+    const Value* type = Datatype_Of(any_word);
 
     return Delegate_Operation_To_Text(LIB(REVERSE), type, any_word, part);
 }

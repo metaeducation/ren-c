@@ -117,7 +117,7 @@ void Begin_Non_Lexical_Mold(Molder* mo, const Cell* v)
 {
     Append_Ascii(mo->string, "#[");
 
-    const Symbol* type_name = Canon_Symbol(SYM_FROM_KIND(Cell_Heart(v)));
+    const Symbol* type_name = Canon_Symbol(Symbol_Id_From_Type(Cell_Heart(v)));
     Append_Spelling(mo->string, type_name);
     Append_Codepoint(mo->string, '!');  // `#[object!` not `#[object`
 
@@ -390,7 +390,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     }
     else {
         Append_Codepoint(mo->string, '~');
-        if (HEART_BYTE(cell) != REB_BLANK) {
+        if (HEART_BYTE(cell) != TYPE_BLANK) {
             rebElide(CANON(MOLDIFY), element, molder, formval);
             Append_Codepoint(mo->string, '~');
         }

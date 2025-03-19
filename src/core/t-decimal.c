@@ -132,21 +132,21 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_KIND(ARG(type)) == REB_DECIMAL);
+    assert(Cell_Datatype_Type(ARG(type)) == TYPE_DECIMAL);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
 
-    switch (VAL_TYPE(arg)) {
-      case REB_ISSUE: {
+    switch (Type_Of(arg)) {
+      case TYPE_ISSUE: {
         REBDEC d = cast(REBDEC, Cell_Codepoint(arg));
         return Init_Decimal(OUT, d); }
 
-      case REB_TIME: {
+      case TYPE_TIME: {
         REBDEC d = VAL_NANO(arg) * NANO;
         return Init_Decimal(OUT, d); }
 
-      case REB_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
+      case TYPE_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
         if (Cell_Sequence_Len(arg) != 2)
             return FAIL("Fraction experiment requires PATH! of length 2");
 
@@ -184,12 +184,12 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         rebRelease(quotient);
         return Init_Decimal(OUT, d); }
 
-      case REB_BLOCK: {  // !!! what the heck is this for? [2]
+      case TYPE_BLOCK: {  // !!! what the heck is this for? [2]
         REBLEN len;
         const Element* item = Cell_List_Len_At(&len, arg);
 
         if (len != 2)
-            return RAISE(Error_Bad_Make(REB_DECIMAL, arg));
+            return RAISE(Error_Bad_Make(TYPE_DECIMAL, arg));
 
         REBDEC d;
         if (Is_Integer(item))
@@ -226,7 +226,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         break;
     }
 
-    return RAISE(Error_Bad_Make(REB_DECIMAL, arg));
+    return RAISE(Error_Bad_Make(TYPE_DECIMAL, arg));
 }
 
 
@@ -389,14 +389,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
     ){
         arg = ARG_N(2);
         if (QUOTE_BYTE(arg) != NOQUOTE_1)
-            return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
+            return FAIL(Error_Math_Args(Type_Of(arg), verb));
 
         heart = Cell_Heart(arg);
         if ((
-            heart == REB_PAIR
-            or heart == REB_TUPLE
-            or heart == REB_MONEY
-            or heart == REB_TIME
+            heart == TYPE_PAIR
+            or heart == TYPE_TUPLE
+            or heart == TYPE_MONEY
+            or heart == TYPE_TIME
         ) and (
             id == SYM_ADD
         )){
@@ -407,29 +407,29 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         }
 
         // If the type of the second arg is something we can handle:
-        if (heart == REB_DECIMAL
-            || heart == REB_INTEGER
-            || heart == REB_PERCENT
-            || heart == REB_MONEY
-            || heart == REB_ISSUE
+        if (heart == TYPE_DECIMAL
+            || heart == TYPE_INTEGER
+            || heart == TYPE_PERCENT
+            || heart == TYPE_MONEY
+            || heart == TYPE_ISSUE
         ){
-            if (heart == REB_DECIMAL) {
+            if (heart == TYPE_DECIMAL) {
                 d2 = VAL_DECIMAL(arg);
             }
-            else if (heart == REB_PERCENT) {
+            else if (heart == TYPE_PERCENT) {
                 d2 = VAL_DECIMAL(arg);
                 if (id == SYM_DIVIDE)
-                    heart = REB_DECIMAL;
+                    heart = TYPE_DECIMAL;
                 else if (not Is_Percent(val))
                     heart = Cell_Heart_Ensure_Noquote(val);
             }
-            else if (heart == REB_MONEY) {
+            else if (heart == TYPE_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
                 return GENERIC_CFUNC(OLDGENERIC, Is_Money)(level_);
             }
-            else if (heart == REB_ISSUE) {
+            else if (heart == TYPE_ISSUE) {
                 d2 = cast(REBDEC, Cell_Codepoint(arg));
-                heart = REB_DECIMAL;
+                heart = TYPE_DECIMAL;
             }
             else {
                 d2 = cast(REBDEC, VAL_INT64(arg));
@@ -473,10 +473,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 return Init_Decimal_Or_Percent(OUT, heart, d1);
 
             default:
-                return FAIL(Error_Math_Args(VAL_TYPE(val), verb));
+                return FAIL(Error_Math_Args(Type_Of(val), verb));
             }
         }
-        return FAIL(Error_Math_Args(VAL_TYPE(val), verb));
+        return FAIL(Error_Math_Args(Type_Of(val), verb));
     }
 
     heart = Cell_Heart_Ensure_Noquote(val);
@@ -510,7 +510,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
         if (not REF(to)) {
-            if (heart == REB_PERCENT)
+            if (heart == TYPE_PERCENT)
                 Init_Decimal(ARG(to), 0.01L);  // round 5.5% -> 6%
             else
                 Init_Integer(ARG(to), 1);
@@ -524,7 +524,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 
         d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
         if (Is_Percent(ARG(to))) {
-            heart = REB_PERCENT;
+            heart = TYPE_PERCENT;
             return Init_Decimal_Or_Percent(OUT, heart, d1);
         }
 
@@ -572,17 +572,17 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     INCLUDE_PARAMS_OF_TO;
 
     Element* val = Element_ARG(element);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
     REBDEC d = VAL_DECIMAL(val);
 
-    if (Any_Utf8_Kind(to)) {
+    if (Any_Utf8_Type(to)) {
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
         Mold_Element(mo, val);
         const String* s = Pop_Molded_String(mo);
-        if (not Any_String_Kind(to))
+        if (not Any_String_Type(to))
             Freeze_Flex(s);
         Init_Any_String(OUT, to, s);
         if (Is_Percent(val))  // leverage (buggy) rendering 1% vs 1.0% [1]
@@ -590,13 +590,13 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
         return OUT;
     }
 
-    if (to == REB_DECIMAL or to == REB_PERCENT)
+    if (to == TYPE_DECIMAL or to == TYPE_PERCENT)
         return Init_Decimal_Or_Percent(OUT, to, d);
 
-    if (to == REB_MONEY)
+    if (to == TYPE_MONEY)
         return Init_Money(OUT, decimal_to_deci(d));
 
-    if (to == REB_INTEGER) {
+    if (to == TYPE_INTEGER) {
         REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));
         if (leftover != 0.0)
             return FAIL(

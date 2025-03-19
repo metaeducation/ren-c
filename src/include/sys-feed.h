@@ -75,7 +75,7 @@
     (&(feed)->singular)
 
 #define Feed_Data(feed) \
-    Stub_Cell(&(feed)->singular)  // REB_BLOCK, REB_COMMA if va_list
+    Stub_Cell(&(feed)->singular)  // TYPE_BLOCK, TYPE_COMMA if va_list
 
 
 // Nullptr is used by the API to indicate null cells.  We want the frequent
@@ -128,7 +128,7 @@ INLINE void Tweak_Link_Feedstub_Splice(
     Misc_Feedstub_Pending(&(feed)->singular)
 
 #define FEED_IS_VARIADIC(feed) \
-    (REB_COMMA == HEART_BYTE(Feed_Data(feed)))
+    (TYPE_COMMA == HEART_BYTE(Feed_Data(feed)))
 
 #define FEED_VAPTR_POINTER(feed)    Feed_Data(feed)->payload.comma.vaptr
 #define FEED_PACKED(feed)           Feed_Data(feed)->payload.comma.packed
@@ -220,7 +220,7 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 //    and those internal cells are legal to pass to the API.
 //
 // 2. Various mechanics rely on the array feed being a "generic array", that
-//    can be put into a REB_BLOCK.  This means it cannot hold antiforms
+//    can be put into a TYPE_BLOCK.  This means it cannot hold antiforms
 //    (or voids).  But we want to hold antiforms and voids in suspended
 //    animation in case there is an @ operator in the feed that will turn
 //    them back into those forms.  So in those cases, meta it and set a
@@ -317,7 +317,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // in debugging than putting the actions themselves.
         //
       case FLAVOR_SYMBOL: {
-        Init_Any_Word(&feed->fetched, REB_WORD, c_cast(Symbol*, f));
+        Init_Any_Word(&feed->fetched, TYPE_WORD, c_cast(Symbol*, f));
         feed->p = &feed->fetched;
         break; }
 
@@ -397,7 +397,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         Finalize_Variadic_Feed(feed);
 
         feed->p = Array_Head(reified);
-        Init_Any_List_At(Feed_Data(feed), REB_BLOCK, reified, 1);
+        Init_Any_List_At(Feed_Data(feed), TYPE_BLOCK, reified, 1);
         Tweak_Feed_Binding(feed, binding);
         break; }
 
@@ -658,7 +658,7 @@ INLINE Feed* Prep_Array_Feed(
     if (first) {
         feed->p = unwrap first;
         Init_Any_List_At_Core(
-            Feed_Data(feed), REB_BLOCK, array, index, binding
+            Feed_Data(feed), TYPE_BLOCK, array, index, binding
         );
     }
     else {
@@ -666,7 +666,7 @@ INLINE Feed* Prep_Array_Feed(
         if (feed->p == Array_Tail(array))
             feed->p = &PG_Feed_At_End;
         Init_Any_List_At_Core(
-            Feed_Data(feed), REB_BLOCK, array, index + 1, binding
+            Feed_Data(feed), TYPE_BLOCK, array, index + 1, binding
         );
     }
 
@@ -770,7 +770,7 @@ INLINE Feed* Prep_At_Feed(
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
-    assert(Any_List_Kind(Cell_Heart(list)));
+    assert(Any_List_Type(Cell_Heart(list)));
 
     Flags flags = FEED_MASK_DEFAULT
         | (parent_flags & FEED_FLAG_CONST)  // inherit

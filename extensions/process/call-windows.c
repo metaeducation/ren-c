@@ -125,9 +125,9 @@ static bool Try_Init_Startupinfo_Sink(
             *hsink = *hwrite;
         }
     }
-    else switch (VAL_TYPE(arg)) {
-      case REB_TEXT:  // write to pre-existing TEXT!
-      case REB_BLOB:  // write to pre-existing BLOB!
+    else switch (Type_Of(arg)) {
+      case TYPE_TEXT:  // write to pre-existing TEXT!
+      case TYPE_BLOB:  // write to pre-existing BLOB!
         if (not CreatePipe(hread, hwrite, NULL, 0))
             return false;
 
@@ -141,7 +141,7 @@ static bool Try_Init_Startupinfo_Sink(
         *hsink = *hwrite;
         break;
 
-      case REB_FILE: {  // write to file
+      case TYPE_FILE: {  // write to file
         WCHAR *local_wide = rebSpellWide("file-to-local @", arg);
 
         // !!! This was done in two steps, is this necessary?
@@ -347,8 +347,8 @@ Bounce Call_Core(Level* level_) {
              );  // don't offer any stdin
         }
     }
-    else switch (VAL_TYPE(ARG(input))) {
-      case REB_TEXT: {  // feed standard input from TEXT!
+    else switch (Type_Of(ARG(input))) {
+      case TYPE_TEXT: {  // feed standard input from TEXT!
         //
         // See notes at top of file about why UTF-16/UCS-2 are not used here.
         // Pipes and file redirects are generally understood in Windows to
@@ -361,7 +361,7 @@ Bounce Call_Core(Level* level_) {
         UNUSED(check);
         goto input_via_buffer; }
 
-      case REB_BLOB:  // feed standard input from BLOB! (full-band)
+      case TYPE_BLOB:  // feed standard input from BLOB! (full-band)
         inbuf = rebBytes(&inbuf_size, ARG(input));
 
       input_via_buffer:
@@ -379,7 +379,7 @@ Bounce Call_Core(Level* level_) {
         si.hStdInput = hInputRead;
         break;
 
-      case REB_FILE: {  // feed standard input from file contents
+      case TYPE_FILE: {  // feed standard input from file contents
         WCHAR *local_wide = rebSpellWide("file-to-local", ARG(input));
 
         hInputRead = CreateFile(
@@ -731,7 +731,7 @@ Bounce Call_Core(Level* level_) {
         rebFail_OS (ret);
 
     if (REF(info)) {
-        VarList* info = Alloc_Varlist(REB_OBJECT, 2);
+        VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), pid);
         if (REF(wait))

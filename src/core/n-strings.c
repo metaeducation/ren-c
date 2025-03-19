@@ -235,14 +235,14 @@ DECLARE_NATIVE(join)
 
     Heart result_heart;
     if (Is_Type_Block(base))
-        result_heart = VAL_TYPE_HEART(base);
+        result_heart = Cell_Datatype_Heart(base);
     else
         result_heart = Cell_Heart_Ensure_Noquote(base);
 
-    if (Any_Utf8_Kind(result_heart) or result_heart == REB_BLOB)
+    if (Any_Utf8_Type(result_heart) or result_heart == TYPE_BLOB)
         goto start_mold_join;
 
-    assert(Any_List_Kind(result_heart) or Any_Sequence_Kind(result_heart));
+    assert(Any_List_Type(result_heart) or Any_Sequence_Type(result_heart));
     goto start_stack_join;
 
   start_mold_join: { /////////////////////////////////////////////////////////
@@ -265,7 +265,7 @@ DECLARE_NATIVE(join)
     //    add a blank back.
 
     if (not Is_Type_Block(base)) {
-        if (Any_Sequence_Kind(result_heart)) {
+        if (Any_Sequence_Type(result_heart)) {
             Length len = Cell_Sequence_Len(base);
             REBINT i;
             for (i = 0; i < len; ++i)
@@ -352,7 +352,7 @@ DECLARE_NATIVE(join)
         if (Is_The_Group(item)) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Derelativize(SCRATCH, item, Level_Binding(sub));
-            HEART_BYTE(SCRATCH) = REB_BLOCK;  // the-block is different
+            HEART_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different
             Fetch_Next_In_Feed(sub->feed);
 
             SUBLEVEL->baseline.stack_base = TOP_INDEX;
@@ -519,11 +519,11 @@ DECLARE_NATIVE(join)
 
     Heart heart;
     if (Is_Type_Block(base))
-        heart = VAL_TYPE_HEART(base);
+        heart = Cell_Datatype_Heart(base);
     else
         heart = Cell_Heart_Ensure_Noquote(base);
 
-    if (heart == REB_BLOB)
+    if (heart == TYPE_BLOB)
         goto finish_blob_join;
 
     goto finish_utf8_join;
@@ -576,17 +576,17 @@ DECLARE_NATIVE(join)
     Size size = String_Size(mo->string) - mo->base.size;
     Length len = String_Len(mo->string) - mo->base.index;
 
-    if (Any_Word_Kind(heart)) {
+    if (Any_Word_Type(heart)) {
         const Symbol* s = Intern_UTF8_Managed(utf8, size);
         Init_Any_Word(OUT, heart, s);
     }
-    else if (Any_String_Kind(heart)) {
+    else if (Any_String_Type(heart)) {
         Init_Any_String(OUT, heart, Pop_Molded_String(mo));
     }
-    else if (heart == REB_ISSUE) {
+    else if (heart == TYPE_ISSUE) {
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
     }
-    else if (heart == REB_EMAIL) {
+    else if (heart == TYPE_EMAIL) {
         if (
             cast(const Byte*, utf8) + size
             != Try_Scan_Email_To_Stack(utf8, size)
@@ -595,7 +595,7 @@ DECLARE_NATIVE(join)
         }
         Move_Drop_Top_Stack_Element(OUT);
     }
-    else if (heart == REB_URL) {
+    else if (heart == TYPE_URL) {
         if (
             cast(const Byte*, utf8) + size
             != Try_Scan_URL_To_Stack(utf8, size)
@@ -641,28 +641,28 @@ DECLARE_NATIVE(join)
 
             Drop_Mold(mo);
         }
-        else switch (VAL_TYPE(at)) {
-          case REB_BLANK:
+        else switch (Type_Of(at)) {
+          case TYPE_BLANK:
             return FAIL("JOIN only treats source-level BLANK! as space");
 
-          case REB_INTEGER:
+          case TYPE_INTEGER:
             Expand_Flex_Tail(buf, 1);
             *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can fail()
             break;
 
-          case REB_BLOB: {
+          case TYPE_BLOB: {
             Size size;
             const Byte* data = Cell_Blob_Size_At(&size, at);
             Expand_Flex_Tail(buf, size);
             memcpy(Binary_At(buf, used), data, size);
             break; }
 
-          case REB_ISSUE:
-          case REB_TEXT:
-          case REB_FILE:
-          case REB_EMAIL:
-          case REB_URL:
-          case REB_TAG: {
+          case TYPE_ISSUE:
+          case TYPE_TEXT:
+          case TYPE_FILE:
+          case TYPE_EMAIL:
+          case TYPE_URL:
+          case TYPE_TAG: {
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, at);
 
@@ -705,11 +705,11 @@ DECLARE_NATIVE(join)
 
     Heart heart;
     if (Is_Type_Block(base))
-        heart = VAL_TYPE_HEART(base);
+        heart = Cell_Datatype_Heart(base);
     else
         heart = Cell_Heart_Ensure_Noquote(base);
 
-    if (Any_Sequence_Kind(heart)) {
+    if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
         if (error)
             return RAISE(unwrap error);

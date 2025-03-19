@@ -60,7 +60,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
     e->lens_mode = LENS_MODE_ALL_UNSEALED;  // ensure not uninitialized
 
-    if (heart == REB_MODULE) {  // !!! module enumeration is bad/slow [2]
+    if (heart == TYPE_MODULE) {  // !!! module enumeration is bad/slow [2]
 
   //=//// MODULE ENUMERATION //////////////////////////////////////////////=//
 
@@ -95,7 +95,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
                 }
             }
             if (patch_found) {
-                Init_Any_Word(PUSH(), REB_WORD, *psym);
+                Init_Any_Word(PUSH(), TYPE_WORD, *psym);
                 Tweak_Cell_Word_Index(TOP, INDEX_PATCHED);
                 Tweak_Cell_Binding(TOP, patch_found);
             }
@@ -121,7 +121,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         assert(Flex_Used(Bonus_Keylist(varlist)) <= Varlist_Len(varlist));
 
-        if (heart != REB_FRAME) {
+        if (heart != TYPE_FRAME) {
             e->param = nullptr;
             e->key = Varlist_Keys(&e->key_tail, varlist) - 1;
         }
@@ -279,8 +279,8 @@ void Shutdown_Evars(EVARS *e)
 //
 REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 {
-    assert(Any_Context_Kind(Cell_Heart(a)));
-    assert(Any_Context_Kind(Cell_Heart(b)));
+    assert(Any_Context_Type(Cell_Heart(a)));
+    assert(Any_Context_Type(Cell_Heart(b)));
 
     if (Cell_Heart(a) != Cell_Heart(b))  // e.g. ERROR! won't equal OBJECT!
         return Cell_Heart(a) > Cell_Heart(b) ? 1 : 0;
@@ -384,7 +384,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_KIND(ARG(type)) == REB_FRAME);
+    assert(Cell_Datatype_Type(ARG(type)) == TYPE_FRAME);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -433,7 +433,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
     if (not Is_Frame(arg))
-        return RAISE(Error_Bad_Make(REB_FRAME, arg));
+        return RAISE(Error_Bad_Make(TYPE_FRAME, arg));
 
     Option(VarList*) coupling = Cell_Frame_Coupling(arg);
 
@@ -455,7 +455,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_HEART(ARG(type)) == REB_MODULE);
+    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_MODULE);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -476,7 +476,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Is_Object(ARG(type)) or VAL_TYPE_HEART(ARG(type)) == REB_OBJECT);
+    assert(Is_Object(ARG(type)) or Cell_Datatype_Heart(ARG(type)) == TYPE_OBJECT);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -489,7 +489,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 
             VarList* derived = Make_Varlist_Detect_Managed(
                 COLLECT_ONLY_SET_WORDS,
-                REB_OBJECT,
+                TYPE_OBJECT,
                 at,
                 tail,
                 varlist
@@ -505,10 +505,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             if (Eval_Any_List_At_Throws(dummy, arg, SPECIFIED))
                 return BOUNCE_THROWN;
 
-            return Init_Context_Cell(OUT, REB_OBJECT, derived);
+            return Init_Context_Cell(OUT, TYPE_OBJECT, derived);
         }
 
-        return RAISE(Error_Bad_Make(REB_OBJECT, arg));
+        return RAISE(Error_Bad_Make(TYPE_OBJECT, arg));
     }
 
     if (Is_Block(arg)) {
@@ -517,7 +517,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 
         VarList* ctx = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            REB_OBJECT,
+            TYPE_OBJECT,
             at,
             tail,
             nullptr  // no parent (MAKE SOME-OBJ ... calls any_context generic)
@@ -543,7 +543,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
     if (Any_Number(arg)) {
         VarList* context = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            REB_OBJECT,
+            TYPE_OBJECT,
             Array_Head(EMPTY_ARRAY),  // scan for toplevel set-words (empty)
             Array_Tail(EMPTY_ARRAY),
             nullptr  // no parent
@@ -558,7 +558,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         return Init_Object(OUT, c);
     }
 
-    return RAISE(Error_Bad_Make(REB_OBJECT, arg));
+    return RAISE(Error_Bad_Make(TYPE_OBJECT, arg));
 }
 
 
@@ -751,7 +751,7 @@ VarList* Copy_Varlist_Extra_Managed(
             Bonus_Keylist(original)
         );
     else {
-        assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
+        assert(CTX_TYPE(original) != TYPE_FRAME);  // can't expand FRAME!s
 
         KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
             FLEX_MASK_KEYLIST | NODE_FLAG_MANAGED,
@@ -770,7 +770,7 @@ VarList* Copy_Varlist_Extra_Managed(
     // frame.  The pointer is NULLed out when the stack level completes.
     // If we're copying a frame here, we know it's not running.
     //
-    if (CTX_TYPE(original) == REB_FRAME)
+    if (CTX_TYPE(original) == TYPE_FRAME)
         Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
     else {
         // !!! Should the meta object be copied for other context types?
@@ -1096,11 +1096,11 @@ IMPLEMENT_GENERIC(TO, Any_Context)
     Element* context = Element_ARG(element);
     Context* c = Cell_Context(context);
     Heart heart = Cell_Heart(context);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
     assert(heart != to);  // TO should have called COPY in this case
 
-    if (to == REB_PORT) {
-        if (heart != REB_OBJECT)
+    if (to == TYPE_PORT) {
+        if (heart != TYPE_OBJECT)
             return FAIL(
                 "Only TO convert OBJECT! -> PORT! (weird internal code)"
             );
@@ -1108,11 +1108,11 @@ IMPLEMENT_GENERIC(TO, Any_Context)
         VarList* v = cast(VarList*, c);
         VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
         Value* rootvar = Rootvar_Of_Varlist(copy);
-        HEART_BYTE(rootvar) = REB_PORT;
+        HEART_BYTE(rootvar) = TYPE_PORT;
         return Init_Port(OUT, copy);
     }
 
-    if (to == VAL_TYPE(context)) {  // can't TO FRAME! an ERROR!, etc.
+    if (to == Type_Of(context)) {  // can't TO FRAME! an ERROR!, etc.
         bool deep = false;
         return Copy_Any_Context(OUT, context, deep);
     }
@@ -1154,7 +1154,7 @@ IMPLEMENT_GENERIC(PICK, Any_Context)
     Copy_Cell(OUT, var);
 
     if (
-        HEART_BYTE(var) == REB_FRAME
+        HEART_BYTE(var) == TYPE_FRAME
         and QUOTE_BYTE(var) == ANTIFORM_0
         and Cell_Frame_Coupling(var) == UNCOUPLED
     ){
@@ -1740,7 +1740,7 @@ DECLARE_NATIVE(construct)
 
     VarList* varlist = Make_Varlist_Detect_Managed(
         COLLECT_ONLY_SET_WORDS,
-        parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?
+        parent ? CTX_TYPE(parent) : TYPE_OBJECT,  // !!! Presume object?
         at,
         tail,
         parent

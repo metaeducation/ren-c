@@ -74,7 +74,7 @@
 
 
 INLINE Phase* Cell_Frame_Phase(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
 
     Node* node = CELL_FRAME_PHASE(c);  // const irrelevant
     if (Not_Node_Readable(node))
@@ -124,13 +124,13 @@ INLINE Option(Details*) Try_Cell_Frame_Details(const Cell* c) {
 // stop being "cheap".
 
 INLINE void Tweak_Cell_Frame_Lens(Cell* v, Phase* lens) {
-    assert(HEART_BYTE(v) == REB_FRAME);  // may be protected (e.g. archetype)
+    assert(HEART_BYTE(v) == TYPE_FRAME);  // may be protected (e.g. archetype)
     assert(Is_Stub_Varlist(lens) or Is_Stub_Details(lens));
     Tweak_Cell_Frame_Lens_Or_Label(v, lens);
 }
 
 INLINE Option(Phase*) Cell_Frame_Lens(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL(c));
     if (not f or Is_Stub_Symbol(f))
         return nullptr;
@@ -139,7 +139,7 @@ INLINE Option(Phase*) Cell_Frame_Lens(const Cell* c) {
 }
 
 INLINE Option(const Symbol*) Cell_Frame_Label(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_LENS_OR_LABEL(c));
     if (not f)
         return nullptr;
@@ -158,7 +158,7 @@ INLINE Option(const Symbol*) Cell_Frame_Label_Deep(const Cell* c) {
 }
 
 INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
     Assert_Cell_Writable(c);  // archetype R/O
     Tweak_Cell_Frame_Lens_Or_Label(c, label);
 }
@@ -287,16 +287,16 @@ INLINE Element* Deactivate_If_Action(Need(Value*) v) {
 //
 
 INLINE Option(InfixMode) Cell_Frame_Infix_Mode(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
     return u_cast(InfixMode, Get_Cell_Crumb(c));
 }
 
 INLINE void Tweak_Cell_Frame_Infix_Mode(Cell* c, Option(InfixMode) mode) {
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
     Set_Cell_Crumb(c, maybe mode);
 }
 
 INLINE bool Is_Cell_Frame_Infix(const Cell* c) {  // faster than != PREFIX_0
-    assert(HEART_BYTE(c) == REB_FRAME);
+    assert(HEART_BYTE(c) == TYPE_FRAME);
     return did (c->header.bits & CELL_MASK_CRUMB);
 }

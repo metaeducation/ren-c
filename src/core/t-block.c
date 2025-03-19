@@ -126,8 +126,8 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = VAL_TYPE_HEART(ARG(type));
-    assert(Any_List_Kind(heart));
+    Heart heart = Cell_Datatype_Heart(ARG(type));
+    assert(Any_List_Type(heart));
 
     Element* arg = Element_ARG(def);
 
@@ -340,7 +340,7 @@ REBINT Find_In_Array(
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
                         Cell_Word_Symbol(item) == pattern_symbol
-                        and VAL_TYPE(item) == VAL_TYPE(pattern)
+                        and Type_Of(item) == Type_Of(pattern)
                     ){
                         return index;
                     }
@@ -496,7 +496,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
         return NOTHING;
     }
 
-    Sigil sigil = maybe Sigil_Of_Kind(heart);
+    Sigil sigil = maybe Sigil_Of_Type(heart);
     switch (sigil) {
       case SIGIL_0:  // no decoration
         break;
@@ -527,11 +527,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
         CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
         sep = "\000\000";
     }
-    else if (Any_Block_Kind(heart))
+    else if (Any_Block_Type(heart))
         sep = "[]";
-    else if (Any_Group_Kind(heart))
+    else if (Any_Group_Type(heart))
         sep = "()";
-    else if (Any_Fence_Kind(heart))
+    else if (Any_Fence_Type(heart))
         sep = "{}";
     else
         panic (v);
@@ -849,9 +849,9 @@ IMPLEMENT_GENERIC(TO, Any_List)
     INCLUDE_PARAMS_OF_TO;
 
     Element* list = Element_ARG(element);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_List_Kind(to)) {
+    if (Any_List_Type(to)) {
         Length len;
         const Element* at = Cell_List_Len_At(&len, list);
         return Init_Any_List(
@@ -859,16 +859,16 @@ IMPLEMENT_GENERIC(TO, Any_List)
         );
     }
 
-    if (Any_Sequence_Kind(to)) {  // (to path! [a/b/c]) -> a/b/c
+    if (Any_Sequence_Type(to)) {  // (to path! [a/b/c]) -> a/b/c
         Length len;
         const Element* item = Cell_List_Len_At(&len, list);
         if (Cell_Series_Len_At(list) != 1)
             return RAISE("Can't TO ANY-SEQUENCE? on list with length > 1");
 
         if (
-            (Is_Path(item) and Any_Path_Kind(to))
-            or (Is_Chain(item) and Any_Chain_Kind(to))
-            or (Is_Tuple(item) and Any_Tuple_Kind(to))
+            (Is_Path(item) and Any_Path_Type(to))
+            or (Is_Chain(item) and Any_Chain_Type(to))
+            or (Is_Tuple(item) and Any_Tuple_Type(to))
         ){
             Copy_Cell(OUT, item);
             HEART_BYTE(OUT) = to;
@@ -878,7 +878,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return RAISE("TO ANY-SEQUENCE? needs list with a sequence in it");
     }
 
-    if (Any_Word_Kind(to)) {  // to word! '{a} -> a, see [3]
+    if (Any_Word_Type(to)) {  // to word! '{a} -> a, see [3]
         Length len;
         const Element* item = Cell_List_Len_At(&len, list);
         if (Cell_Series_Len_At(list) != 1)
@@ -890,15 +890,15 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return OUT;
     }
 
-    if (Any_Utf8_Kind(to)) {  // to tag! [1 a #b] => <1 a #b>
-        assert(not Any_Word_Kind(to));
+    if (Any_Utf8_Type(to)) {  // to tag! [1 a #b] => <1 a #b>
+        assert(not Any_Word_Type(to));
 
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
 
         Mold_Or_Form_Element(mo, list, false);
-        if (Any_String_Kind(to))
+        if (Any_String_Type(to))
             return Init_Any_String(OUT, to, Pop_Molded_String(mo));
 
         Init_Utf8_Non_String(
@@ -912,7 +912,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return OUT;
     }
 
-    if (to == REB_INTEGER) {
+    if (to == TYPE_INTEGER) {
         Length len;
         const Element* at = Cell_List_Len_At(&len, list);
         if (len != 1 or not Is_Integer(at))
@@ -920,7 +920,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return COPY(at);
     }
 
-    if (to == REB_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
+    if (to == TYPE_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
         Length len = Cell_Series_Len_At(list);
         if (len % 2 != 0)
             return RAISE("TO MAP! of list must have even number of items");
@@ -934,7 +934,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return Init_Map(OUT, map);
     }
 
-    if (to == REB_PAIR) {
+    if (to == TYPE_PAIR) {
         const Element* tail;
         const Element* item = Cell_List_At(&tail, list);
 
@@ -947,7 +947,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return FAIL("TO PAIR! only works on lists with two integers");
     }
 
-    if (to == REB_BLANK)
+    if (to == TYPE_BLANK)
         return GENERIC_CFUNC(AS, Any_List)(LEVEL);
 
     return UNHANDLED;
@@ -964,14 +964,14 @@ IMPLEMENT_GENERIC(AS, Any_List)
     INCLUDE_PARAMS_OF_AS;
 
     Element* list = Element_ARG(element);
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_List_Kind(as)) {
+    if (Any_List_Type(as)) {
         HEART_BYTE(list) = as;
         return Copy_Cell(OUT, list);
     }
 
-    if (Any_Sequence_Kind(as)) {
+    if (Any_Sequence_Type(as)) {
         if (not Is_Source_Frozen_Shallow(Cell_Array(list)))  // freeze it [1]
             Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(list));
 
@@ -991,7 +991,7 @@ IMPLEMENT_GENERIC(AS, Any_List)
         return OUT;
     }
 
-    if (as == REB_BLANK) {  // !!! think it needs to make list immutable?
+    if (as == TYPE_BLANK) {  // !!! think it needs to make list immutable?
         Length len;
         Cell_List_Len_At(&len, list);
         if (len == 0)
@@ -1361,7 +1361,7 @@ IMPLEMENT_GENERIC(MAKE, Type_Block)
     if (not Is_Type_Block(type))
         return UNHANDLED;
 
-    Heart heart = VAL_TYPE_HEART(type);
+    Heart heart = Cell_Datatype_Heart(type);
 
     return Dispatch_Generic_Core(SYM_MAKE, GENERIC_TABLE(MAKE), heart, level_);
 }
@@ -1520,8 +1520,8 @@ DECLARE_NATIVE(glom)
 
     if (Is_Splice(result)) {
         splice = true;
-        assert(HEART_BYTE(result) == REB_GROUP);
-        HEART_BYTE(result) = REB_BLOCK;  // interface is for blocks
+        assert(HEART_BYTE(result) == TYPE_GROUP);
+        HEART_BYTE(result) = TYPE_BLOCK;  // interface is for blocks
         QUOTE_BYTE(result) = NOQUOTE_1;
     }
 
@@ -1612,7 +1612,7 @@ void Assert_Array_Core(const Array* a)
         }
 
         Assert_Cell_Readable(item);
-        if (HEART_BYTE(item) > REB_MAX) {
+        if (HEART_BYTE(item) > MAX_TYPE) {
             printf("Invalid HEART_BYTE() at index %d\n", cast(int, n));
             panic (a);
         }

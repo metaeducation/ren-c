@@ -67,7 +67,7 @@ Flex* Make_Set_Operation_Flex(
 
         if (Any_List(val1)) {
             if (!Any_List(val2))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
 
             // As long as they're both arrays, we're willing to do:
             //
@@ -84,13 +84,13 @@ Flex* Make_Set_Operation_Flex(
             //      <abcde>
 
             if (not Any_String((val2)))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
         }
         else {
             // Binaries only operate with other binaries
             assert(Is_Blob(val1));
             if (not Is_Blob(val2))
-                fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
+                fail (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
         }
     }
 

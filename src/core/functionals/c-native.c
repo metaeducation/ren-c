@@ -269,7 +269,7 @@ bool Try_Dispatch_Generic_Core(
     Heart heart,  // no quoted/quasi/anti [1]
     Level* const L
 ){
-    if (heart == REB_PORT and symid != SYM_OLDGENERIC) {  // !!! Legacy [2]
+    if (heart == TYPE_PORT and symid != SYM_OLDGENERIC) {  // !!! Legacy [2]
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
           case SYM_EQUAL_Q:
@@ -341,7 +341,7 @@ static void Init_Action_Adjunct_Shim(void) {
     SymId field_syms[1] = {
         SYM_DESCRIPTION
     };
-    VarList* adjunct = Alloc_Varlist_Core(NODE_FLAG_MANAGED, REB_OBJECT, 2);
+    VarList* adjunct = Alloc_Varlist_Core(NODE_FLAG_MANAGED, TYPE_OBJECT, 2);
     REBLEN i = 1;
     for (; i != 2; ++i)
         Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));
@@ -423,7 +423,7 @@ Source* Startup_Natives(const Element* boot_natives)
     assert(Cell_Frame_Phase(LIB(NATIVE)) == the_native_details);
 
     DECLARE_ATOM (skipped);
-    Init_Any_List_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
+    Init_Any_List_At(skipped, TYPE_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_ATOM (discarded);
     if (Eval_Any_List_At_Throws(discarded, skipped, lib))

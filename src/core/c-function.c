@@ -273,12 +273,12 @@ void Push_Keys_And_Params_May_Fail(
         bool refinement = false;  // paths with blanks at head are refinements
         bool local = false;
         bool is_returner = false;
-        if (heart == REB_CHAIN or heart == REB_META_CHAIN) {
+        if (heart == TYPE_CHAIN or heart == TYPE_META_CHAIN) {
             switch (Try_Get_Sequence_Singleheart(item)) {
               case LEADING_BLANK_AND(WORD): {
                 refinement = true;
                 symbol = Cell_Refinement_Symbol(item);
-                if (heart == REB_META_PATH) {
+                if (heart == TYPE_META_PATH) {
                     if (not quoted)
                         pclass = PARAMCLASS_META;
                 }
@@ -319,22 +319,22 @@ void Push_Keys_And_Params_May_Fail(
                 }
             }
         }
-        else if (Any_Word_Kind(heart)) {
+        else if (Any_Word_Type(heart)) {
             symbol = Cell_Word_Symbol(item);
 
-            if (heart == REB_THE_WORD) {  // output
+            if (heart == TYPE_THE_WORD) {  // output
                 if (quoted)
                     fail ("Can't quote THE-WORD! parameters");
                 pclass = PARAMCLASS_THE;
             }
             else {
-                if (heart == REB_WORD) {
+                if (heart == TYPE_WORD) {
                     if (quoted)
                         pclass = PARAMCLASS_JUST;
                     else
                         pclass = PARAMCLASS_NORMAL;
                 }
-                else if (heart == REB_META_WORD) {
+                else if (heart == TYPE_META_WORD) {
                     if (not quoted)
                         pclass = PARAMCLASS_META;
                 }
@@ -391,7 +391,7 @@ void Push_Keys_And_Params_May_Fail(
             if (Is_Cell_Readable(param)) {
                 assert(
                     QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3
-                    and HEART_BYTE(param) == REB_PARAMETER
+                    and HEART_BYTE(param) == TYPE_PARAMETER
                 );
                 if (SYM_RETURN == unwrap returner)
                     fail ("Duplicate RETURN: in function spec");
@@ -655,7 +655,7 @@ void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
 {
     assert(TOP_INDEX == base + 2);
     assert(
-        HEART_BYTE(TOP) == REB_PARAMETER
+        HEART_BYTE(TOP) == TYPE_PARAMETER
         and QUOTE_BYTE(TOP) == ONEQUOTE_NONQUASI_3
     );
     QUOTE_BYTE(TOP) = NOQUOTE_1;
@@ -711,7 +711,7 @@ Details* Make_Dispatch_Details(
     );
     Set_Flex_Len(a, (maybe details_max) + 1);
 
-    assert(HEART_BYTE(exemplar) == REB_FRAME);
+    assert(HEART_BYTE(exemplar) == TYPE_FRAME);
     assert(
         QUOTE_BYTE(exemplar) == NOQUOTE_1
         or QUOTE_BYTE(exemplar) == ANTIFORM_0  // allow action antiform
@@ -840,7 +840,7 @@ DECLARE_NATIVE(couple)
     Value* action_or_frame = ARG(action);  // could also be a FRAME!
     Value* coupling = ARG(coupling);
 
-    assert(Cell_Heart(action_or_frame) == REB_FRAME);
+    assert(Cell_Heart(action_or_frame) == TYPE_FRAME);
 
     if (Is_Nulled(coupling))
         Tweak_Cell_Frame_Coupling(action_or_frame, nullptr);
@@ -868,7 +868,7 @@ DECLARE_NATIVE(uncouple)
 
     Value* action_or_frame = ARG(action);  // could also be a FRAME!
 
-    assert(Cell_Heart(action_or_frame) == REB_FRAME);
+    assert(Cell_Heart(action_or_frame) == TYPE_FRAME);
 
     Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
 

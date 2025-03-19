@@ -233,7 +233,7 @@ typedef RebolBounce Bounce;  // just void* - not smart class, not Node* [2]
 
 #include "mem-pools.h"
 
-#include "enums/enum-kinds.h"  // defines Heart and Kind (safe wrappers if C++)
+#include "enums/enum-types.h"  // defines Heart and Type (safe wrappers if C++)
 
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"

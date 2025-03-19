@@ -42,13 +42,13 @@ INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
     if (sigil == SIGIL_QUASI)
         Init_Utf8_Non_String(
             out,
-            REB_SIGIL,
+            TYPE_SIGIL,
             cast(Utf8(const*), "~~"),  // must be "validated UTF-8"
             2,  // 2 codepoints
             2);  // in 2 bytes
     else {
         Init_Char_Unchecked(out, Symbol_For_Sigil(sigil));
-        HEART_BYTE(out) = REB_SIGIL;
+        HEART_BYTE(out) = TYPE_SIGIL;
     }
 
     out->extra.at_least_4[IDX_EXTRA_SIGIL] = sigil;
@@ -56,27 +56,27 @@ INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
 }
 
 INLINE Sigil Cell_Sigil(const Cell* cell) {
-    assert(Cell_Heart(cell) == REB_SIGIL);
+    assert(Cell_Heart(cell) == TYPE_SIGIL);
     Byte sigil_byte = cell->extra.at_least_4[IDX_EXTRA_SIGIL];
     assert(sigil_byte != SIGIL_0 and sigil_byte <= MAX_SIGIL);
     return u_cast(Sigil, sigil_byte);
 }
 
-INLINE Option(Sigil) Sigil_Of_Kind(Kind k) {
-    if (k == REB_QUOTED)
+INLINE Option(Sigil) Sigil_Of_Type(Type t) {
+    if (t == TYPE_QUOTED)
         return SIGIL_QUOTE;
-    if (k == REB_QUASIFORM)
+    if (t == TYPE_QUASIFORM)
         return SIGIL_QUASI;
-    if (Any_Meta_Kind(k))
+    if (Any_Meta_Type(t))
         return SIGIL_META;
-    if (Any_Type_Kind(k))
+    if (Any_Type_Type(t))
         return SIGIL_TYPE;
-    if (Any_The_Kind(k))
+    if (Any_The_Type(t))
         return SIGIL_THE;
-    if (Any_Var_Kind(k))
+    if (Any_Var_Type(t))
         return SIGIL_VAR;
     return SIGIL_0;
 }
 
 #define Sigil_Of(e) \
-    Sigil_Of_Kind(VAL_TYPE(e))
+    Sigil_Of_Type(Type_Of(e))

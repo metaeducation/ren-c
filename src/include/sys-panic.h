@@ -28,7 +28,7 @@
 // The best thing to do is to pass in whatever Cell or Flex subclass
 // (including Array*, VarList*, Phase*...) is a useful "smoking gun":
 //
-//     if (VAL_TYPE(value) == REB_QUASIFORM)
+//     if (Type_Of(value) == TYPE_QUASIFORM)
 //         panic (value);  // checked build points out this file and line
 //
 //     if (Array_Len(array) < 2)

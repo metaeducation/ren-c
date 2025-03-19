@@ -150,7 +150,7 @@
 
 #define FETCH_TO_BAR_OR_END(L) \
     while (not P_AT_END and not ( \
-        VAL_TYPE_UNCHECKED(P_RULE) == REB_WORD \
+        Type_Of_Unchecked(P_RULE) == TYPE_WORD \
         and Cell_Word_Symbol(P_RULE) == CANON(BAR_1) \
     )){ \
         FETCH_NEXT_RULE(L); \
@@ -237,7 +237,7 @@ static bool Subparse_Throws(
     Level* const L,
     Flags flags
 ){
-    assert(Any_Series_Kind(Cell_Heart(input)));
+    assert(Any_Series_Type(Cell_Heart(input)));
 
     Push_Level_Erase_Out_If_State_0(out, L);  // checks for C stack overflow
 
@@ -548,7 +548,7 @@ static REBIXO Parse_One_Rule(
         else if (
             (Is_Text(rule) or Is_Blob(rule))
             and (Cell_Series_Len_At(rule) == 0)
-            and (Any_String_Kind(P_HEART) or P_HEART == REB_BLOB)
+            and (Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
             // archaic (compared to UPARSE).  But while that design stabilizes,
@@ -577,11 +577,11 @@ static REBIXO Parse_One_Rule(
         }
         fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
-    else switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
-      case REB_INTEGER:
+    else switch (Type_Of(rule)) {  // handle w/same behavior for all P_INPUT
+      case TYPE_INTEGER:
         fail ("Non-rule-count INTEGER! in PARSE must be literal, use QUOTE");
 
-      case REB_BLOCK: {
+      case TYPE_BLOCK: {
         //
         // Process subrule in its own frame.  It will not change P_POS
         // directly (it will have its own P_POSITION_VALUE).  Hence the return
@@ -628,21 +628,21 @@ static REBIXO Parse_One_Rule(
     if (Stub_Holds_Cells(P_INPUT)) {
         const Element* item = Array_At(P_INPUT_ARRAY, pos);
 
-        switch (VAL_TYPE(rule)) {
-          case REB_QUOTED:
+        switch (Type_Of(rule)) {
+          case TYPE_QUOTED:
             Copy_Cell(SPARE, rule);
             rule = cast(Element*, Unquotify(SPARE));
             break;  // fall through to direct match
 
-          case REB_THE_WORD: {
+          case TYPE_THE_WORD: {
             Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
             rule = Ensure_Element(SPARE);
             break; }  // all through to direct match
 
-          case REB_TYPE_WORD:
-          case REB_TYPE_BLOCK:
-          case REB_TYPE_GROUP:
-          case REB_PARAMETER: {
+          case TYPE_TYPE_WORD:
+          case TYPE_TYPE_BLOCK:
+          case TYPE_TYPE_GROUP:
+          case TYPE_PARAMETER: {
             assert(rule != SPARE);
             Copy_Cell(SPARE, item);
             if (Typecheck_Atom_In_Spare_Uses_Scratch(
@@ -652,9 +652,9 @@ static REBIXO Parse_One_Rule(
             }
             return END_FLAG; }
 
-          case REB_TEXT:
-          case REB_ISSUE:
-          case REB_BLANK:
+          case TYPE_TEXT:
+          case TYPE_ISSUE:
+          case TYPE_BLANK:
             break;  // all interpreted literally
 
           default:
@@ -670,7 +670,7 @@ static REBIXO Parse_One_Rule(
         return END_FLAG;
     }
     else {
-        assert(Any_String_Kind(P_HEART) or P_HEART == REB_BLOB);
+        assert(Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB);
 
         if (Is_The_Word(rule)) {
             Get_Var_May_Fail(SPARE, rule, P_RULE_BINDING);
@@ -695,9 +695,9 @@ static REBIXO Parse_One_Rule(
         if (
             Cell_Num_Quotes(rule) == 1  // '<a> will mold to "<a>"
             or (Cell_Num_Quotes(rule) == 0 and (
-                rule_heart == REB_TEXT
-                or rule_heart == REB_ISSUE
-                or rule_heart == REB_BLOB
+                rule_heart == TYPE_TEXT
+                or rule_heart == TYPE_ISSUE
+                or rule_heart == TYPE_BLOB
             ))
         ){
             REBLEN len;
@@ -714,14 +714,14 @@ static REBIXO Parse_One_Rule(
                 return END_FLAG;
             return index + len;
         }
-        else switch (VAL_TYPE(rule)) {
-          case REB_BITSET: {
+        else switch (Type_Of(rule)) {
+          case TYPE_BITSET: {
             //
             // Check current char/byte against character set, advance matches
             //
             bool uncased;
             Codepoint uni;
-            if (P_HEART == REB_BLOB) {
+            if (P_HEART == TYPE_BLOB) {
                 uni = *Binary_At(P_INPUT_BINARY, P_POS);
                 uncased = false;
             }
@@ -835,7 +835,7 @@ static REBIXO To_Thru_Block_Rule(
                 fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
 
             // Try to match it:
-            if (Any_List_Kind(P_HEART) or Any_Sequence_Kind(P_HEART)) {
+            if (Any_List_Type(P_HEART) or Any_Sequence_Type(P_HEART)) {
                 if (Any_List(rule))
                     fail (Error_Parse3_Rule());
 
@@ -853,7 +853,7 @@ static REBIXO To_Thru_Block_Rule(
                     return VAL_INDEX(iter) - 1;  // back up
                 }
             }
-            else if (P_HEART == REB_BLOB) {
+            else if (P_HEART == TYPE_BLOB) {
                 Byte ch1 = *Cell_Blob_At(iter);
 
                 if (VAL_INDEX(iter) == P_INPUT_LEN) {
@@ -913,7 +913,7 @@ static REBIXO To_Thru_Block_Rule(
                     fail (Error_Parse3_Rule());
             }
             else {
-                assert(Any_String_Kind(P_HEART));
+                assert(Any_String_Type(P_HEART));
 
                 Codepoint unadjusted = Get_Char_At(
                     P_INPUT_STRING,
@@ -1021,13 +1021,13 @@ static REBIXO To_Thru_Non_Block_Rule(
         fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
 
-    Kind kind = VAL_TYPE(rule);
-    assert(kind != REB_BLOCK);
+    Type t = Type_Of(rule);
+    assert(t != TYPE_BLOCK);
 
-    if (kind == REB_WORD and Cell_Word_Id(rule) == SYM_END)
+    if (t == TYPE_WORD and Cell_Word_Id(rule) == SYM_END)
         fail ("Use <end> instead of END in PARSE3");
 
-    if (kind == REB_TAG) {
+    if (t == TYPE_TAG) {
         bool strict = true;
         if (0 == CT_Utf8(rule, Root_End_Tag, strict)) {
             return P_INPUT_LEN;
@@ -1128,12 +1128,12 @@ static void Handle_Mark_Rule(
 
     Quotify_Depth(ARG(position), P_NUM_QUOTES);
 
-    Kind k = VAL_TYPE(rule);
-    if (k == REB_WORD or Is_Set_Word(rule)) {
+    Type t = Type_Of(rule);
+    if (t == TYPE_WORD or Is_Set_Word(rule)) {
         Copy_Cell(Sink_Word_May_Fail(rule, context), ARG(position));
     }
     else if (
-        k == REB_PATH or k == REB_TUPLE or Is_Set_Tuple(rule)
+        t == TYPE_PATH or t == TYPE_TUPLE or Is_Set_Tuple(rule)
     ){
         // !!! Assume we might not be able to corrupt SPARE (rule may be
         // in SPARE?)
@@ -1162,23 +1162,23 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    Kind k = VAL_TYPE(rule);
-    if (k == REB_WORD or k == REB_TUPLE) {
+    Type t = Type_Of(rule);
+    if (t == TYPE_WORD or t == TYPE_TUPLE) {
         Get_Var_May_Fail(SPARE, rule, context);
         if (Is_Antiform(SPARE))
             fail (Error_Bad_Antiform(SPARE));
         rule = cast(Element*, SPARE);
-        k = VAL_TYPE(rule);
+        t = Type_Of(rule);
     }
 
     REBINT index;
-    if (k == REB_INTEGER) {
+    if (t == TYPE_INTEGER) {
         index = VAL_INT32(rule);
         if (index < 1)
             fail ("Cannot SEEK a negative integer position");
         --index;  // Rebol is 1-based, C is 0 based...
     }
-    else if (Any_Series_Kind(k)) {
+    else if (Any_Series_Type(t)) {
         if (Cell_Flex(rule) != P_INPUT)
             fail ("Switching PARSE series is not allowed");
         index = VAL_INDEX(rule);
@@ -1777,17 +1777,17 @@ DECLARE_NATIVE(subparse)
         }
         fail ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
-    else switch (VAL_TYPE(rule)) {
-      case REB_GROUP:
+    else switch (Type_Of(rule)) {
+      case TYPE_GROUP:
         goto process_group;  // GROUP! can make WORD! that fetches GROUP!
 
-      case REB_INTEGER:  // Specify repeat count
+      case TYPE_INTEGER:  // Specify repeat count
         fail (
             "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
             " (use REPEAT)"
         );
 
-      case REB_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
+      case TYPE_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
         bool strict = true;
         if (0 == CT_Utf8(rule, Root_Here_Tag, strict)) {
             FETCH_NEXT_RULE(L);  // not being assigned with set-word!, no-op
@@ -1915,7 +1915,7 @@ DECLARE_NATIVE(subparse)
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
                 }
-                else if (Any_Path_Kind(Cell_Heart(into))) {
+                else if (Any_Path_Type(Cell_Heart(into))) {
                     //
                     // Can't PARSE an ANY-PATH? because it has no position
                     // But would be inconvenient if INTO did not support.
@@ -1927,7 +1927,7 @@ DECLARE_NATIVE(subparse)
                     into = cast(Element*, rebValue("as block! @", SPARE));
                 }
                 else if (
-                    not Any_Series_Kind(Cell_Heart(into))
+                    not Any_Series_Type(Cell_Heart(into))
                 ){
                     i = END_FLAG;  // `parse [1] [into [...]`, rejects
                     break;
@@ -2110,7 +2110,7 @@ DECLARE_NATIVE(subparse)
                     set_or_copy_word,
                     P_RULE_BINDING
                 );
-                if (Any_List_Kind(P_HEART)) {
+                if (Any_List_Type(P_HEART)) {
                     //
                     // Act like R3-Alpha in preserving GROUP! vs. BLOCK!
                     // distinction (which Rebol2 did not).  But don't keep
@@ -2118,7 +2118,7 @@ DECLARE_NATIVE(subparse)
                     //
                     Init_Any_List(
                         sink,
-                        Any_Group_Kind(P_HEART) ? REB_GROUP : REB_BLOCK,
+                        Any_Group_Type(P_HEART) ? TYPE_GROUP : TYPE_BLOCK,
                         Copy_Source_At_Max_Shallow(
                             P_INPUT_ARRAY,
                             begin,
@@ -2126,14 +2126,14 @@ DECLARE_NATIVE(subparse)
                         )
                     );
                 }
-                else if (P_HEART == REB_BLOB) {
+                else if (P_HEART == TYPE_BLOB) {
                     Init_Blob(  // R3-Alpha behavior (e.g. not AS TEXT!)
                         sink,
                         Copy_Binary_At_Len(P_INPUT_BINARY, begin, count)
                     );
                 }
                 else {
-                    assert(Any_String_Kind(P_HEART));
+                    assert(Any_String_Type(P_HEART));
 
                     DECLARE_ATOM (begin_val);
                     Init_Series_At(begin_val, P_HEART, P_INPUT, begin);
@@ -2192,7 +2192,7 @@ DECLARE_NATIVE(subparse)
                         set_or_copy_word, P_RULE_BINDING
                     );
 
-                    if (P_HEART == REB_BLOB)
+                    if (P_HEART == TYPE_BLOB)
                         Init_Integer(var, *Binary_At(P_INPUT_BINARY, begin));
                     else
                         Init_Char_Unchecked(
@@ -2369,7 +2369,7 @@ DECLARE_NATIVE(parse3)
 
     assert(Any_Series(input));
 
-    if (not Any_Series_Kind(Cell_Heart(input)))
+    if (not Any_Series_Type(Cell_Heart(input)))
         fail ("PARSE input must be an ANY-SERIES? (use AS BLOCK! for PATH!)");
 
     Level* sub = Make_Level_At(

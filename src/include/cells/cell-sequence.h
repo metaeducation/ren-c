@@ -113,35 +113,35 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     const Element* e,
     bool is_head
 ){
-    assert(Any_Sequence_Kind(sequence_heart));
+    assert(Any_Sequence_Type(sequence_heart));
 
     Heart h = Cell_Heart(e);
 
     if (is_head) {
         if (
             Is_Quoted(e)  // note quasiforms legal, even at head [1]
-            or Sigil_Of_Kind(h)
+            or Sigil_Of_Type(h)
         ){
             goto bad_sequence_item;
         }
     }
 
-    if (Any_Path_Kind(h))  // path can't put be put in path, tuple, or chain
+    if (Any_Path_Type(h))  // path can't put be put in path, tuple, or chain
         goto bad_sequence_item;
 
-    if (Any_Chain_Kind(h)) {  // inserting a chain
-        if (Any_Path_Kind(sequence_heart))
+    if (Any_Chain_Type(h)) {  // inserting a chain
+        if (Any_Path_Type(sequence_heart))
             return nullptr;  // chains can only be put in paths
         goto bad_sequence_item;
     }
 
-    if (Any_Tuple_Kind(h)) {  // inserting a tuple
-        if (not Any_Tuple_Kind(sequence_heart))
+    if (Any_Tuple_Type(h)) {  // inserting a tuple
+        if (not Any_Tuple_Type(sequence_heart))
             return nullptr;  // legal in non-tuple sequences (path, chain)
         goto bad_sequence_item;
     }
 
-    if (h == REB_BLANK) {
+    if (h == TYPE_BLANK) {
         if (QUOTE_BYTE(e) == QUASIFORM_2)  // ~ is quasiform blank (trash)
             return nullptr;  // Legal, e.g. `~/home/Projects/ren-c/README.md`
 
@@ -149,20 +149,20 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
         return Error_Bad_Sequence_Blank_Raw();  // blank only legal at head
     }
 
-    if (not Any_Sequencable_Kind(h))
+    if (not Any_Sequencable_Type(h))
         goto bad_sequence_item;
 
-    if (h == REB_WORD) {
+    if (h == TYPE_WORD) {
         const Symbol* symbol = Cell_Word_Symbol(e);
-        if (symbol == CANON(DOT_1) and not Any_Tuple_Kind(sequence_heart))
+        if (symbol == CANON(DOT_1) and not Any_Tuple_Type(sequence_heart))
             return nullptr;
         if (
-            sequence_heart != REB_CHAIN  // !!! temporary for //: -- review
+            sequence_heart != TYPE_CHAIN  // !!! temporary for //: -- review
             and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
         ){
             goto bad_sequence_item;  //  [<| |>] => <|/|>  ; tag
         }
-        if (Any_Path_Kind(sequence_heart))
+        if (Any_Path_Type(sequence_heart))
             return nullptr;
         if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
             goto bad_sequence_item;  // e.g. contains a slash
@@ -172,7 +172,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
   bad_sequence_item:
 
-    return Error_Bad_Sequence_Item_Raw(Datatype_From_Kind(sequence_heart), e);
+    return Error_Bad_Sequence_Item_Raw(Datatype_From_Type(sequence_heart), e);
 }
 
 
@@ -203,7 +203,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     Flags flag
 ){
     assert(flag == CELL_MASK_ERASED_0 or flag == CELL_FLAG_LEADING_BLANK);
-    assert(Any_Sequence_Kind(heart));
+    assert(Any_Sequence_Type(heart));
 
     Option(Error*) error = Trap_Check_Sequence_Element(
         heart,
@@ -215,23 +215,23 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
 
     if (Is_Word(e)) {  // see notes at top of file on `/a` cell optimization
         e->header.bits |= flag;
-        HEART_BYTE(e) = heart;  // e.g. REB_WORD => REB_PATH
+        HEART_BYTE(e) = heart;  // e.g. TYPE_WORD => TYPE_PATH
         return nullptr;
     }
 
     if (Any_List(e)) {  // try mirror optimization
         assert(Is_Group(e) or Is_Block(e));  // only valid kinds
         const Source* a = Cell_Array(e);
-        if (MIRROR_BYTE(a) == REB_0 or MIRROR_BYTE(a) == Cell_Heart(e)) {
+        if (MIRROR_BYTE(a) == TYPE_0 or MIRROR_BYTE(a) == Cell_Heart(e)) {
             MIRROR_BYTE(a) = Cell_Heart(e);  // remember what kind it is
-            HEART_BYTE(e) = heart;  // e.g. REB_BLOCK => REB_PATH
+            HEART_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
             return nullptr;
         }
     }
 
     if (Is_Integer(e)) {
-        if (heart == REB_TUPLE) {
+        if (heart == TYPE_TUPLE) {
             return Error_User(  // reserve notation for future use [1]
                 "5. and .5 currently reserved, please use 5.0 and 0.5"
             );
@@ -285,7 +285,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
     const Byte* data,
     Size size
 ){
-    assert(Any_Sequence_Kind(heart));
+    assert(Any_Sequence_Type(heart));
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
@@ -310,7 +310,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
 }
 
 #define Init_Tuple_Bytes(out,data,len) \
-    Init_Any_Sequence_Bytes((out), REB_TUPLE, (data), (len));
+    Init_Any_Sequence_Bytes((out), TYPE_TUPLE, (data), (len));
 
 INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     Init(Element) out,
@@ -318,7 +318,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     const Value* head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
 ){
-    assert(Any_Sequence_Kind(heart));
+    assert(Any_Sequence_Type(heart));
 
     if (len > Size_Of(out->payload.at_least_8) - 1)
         return nullptr;  // no optimization yet if won't fit in payload bytes
@@ -359,16 +359,16 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     const Element* first,
     const Element* second
 ){
-    assert(Any_Sequence_Kind(heart));
+    assert(Any_Sequence_Type(heart));
 
     if (
         (Is_Trash(first) and Is_Trash(second))  // ~/~ is a WORD!
         or (Is_Blank(first) and Is_Blank(second))  // plain / is a WORD!
     ){
-        if (Any_Path_Kind(heart))
+        if (Any_Path_Type(heart))
             Init_Word(out, CANON(SLASH_1));
         else {
-            assert(Any_Tuple_Kind(heart));
+            assert(Any_Tuple_Type(heart));
             Init_Word(out, CANON(DOT_1));
         }
         if (Is_Trash(first))
@@ -393,7 +393,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         REBI64 i1 = VAL_INT64(first);
         REBI64 i2 = VAL_INT64(second);
 
-        if (Any_Tuple_Kind(heart)) {  // conflates with decimal, e.g. 10.20
+        if (Any_Tuple_Type(heart)) {  // conflates with decimal, e.g. 10.20
             REBI64 magnitude = 1;
             REBI64 r = i2;
             do {
@@ -406,7 +406,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             return nullptr;
         }
 
-        if (Any_Chain_Kind(heart)) {  // conflates with time, e.g. 10:20
+        if (Any_Chain_Type(heart)) {  // conflates with time, e.g. 10:20
             REBI64 nano = ((i1 * 60 * 60) + (i2 * 60)) * SEC_SEC;
             Init_Time_Nanoseconds(out, nano);
             return nullptr;
@@ -461,10 +461,8 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
     if (error)
         return error;
 
-    if (not Any_Sequence(out)) {
-        const Element* type = Datatype_From_Kind(VAL_TYPE(out));
-        return Error_Conflated_Sequence_Raw(type, out);
-    }
+    if (not Any_Sequence(out))
+        return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
 
     return nullptr;
 }
@@ -515,10 +513,8 @@ INLINE Option(Error*) Trap_Pop_Sequence(
     if (error)
         return error;
 
-    if (not Any_Sequence(out)) {
-        const Element* type = Datatype_From_Kind(VAL_TYPE(out));
-        return Error_Conflated_Sequence_Raw(type, out);
-    }
+    if (not Any_Sequence(out))
+        return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
 
     return nullptr;
 }
@@ -565,7 +561,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
                 return error;
         }
 
-        Sigil sigil = maybe Sigil_Of_Kind(sequence_heart);
+        Sigil sigil = maybe Sigil_Of_Type(sequence_heart);
         if (not sigil)  // just wanted a plain pa/th or tu.p.le
             return nullptr;  // let the item just decay to itself as-is
 
@@ -582,7 +578,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
             return Error_Cant_Decorate_Type_Raw(out);
         }
 
-        HEART_BYTE(out) = Sigilize_Any_Plain_Kind(sigil, Cell_Heart(out));
+        HEART_BYTE(out) = Sigilize_Any_Plain_Type(sigil, Cell_Heart(out));
         return nullptr;  // pathness or tupleness vanished, just the value
     }
 
@@ -595,7 +591,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
 // optimized fashion using Refinify()
 
 INLINE Length Cell_Sequence_Len(const Cell* c) {
-    assert(Any_Sequence_Kind(Cell_Heart(c)));
+    assert(Any_Sequence_Type(Cell_Heart(c)));
 
     if (not Sequence_Has_Node(c)) {  // compressed bytes
         assert(not Cell_Has_Node2(c));
@@ -612,8 +608,8 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
 
       case FLAVOR_SOURCE : {  // uncompressed sequence
         const Source* a = c_cast(Source*, node1);
-        if (MIRROR_BYTE(a) != REB_0)
-            return 2;  // e.g. `(a):` stores REB_GROUP in the mirror byte
+        if (MIRROR_BYTE(a) != TYPE_0)
+            return 2;  // e.g. `(a):` stores TYPE_GROUP in the mirror byte
         assert(Array_Len(a) >= 2);
         assert(Is_Source_Frozen_Shallow(a));
         return Array_Len(a); }
@@ -649,7 +645,7 @@ INLINE Element* Derelativize_Sequence_At(
     REBLEN n
 ){
     assert(out != sequence);
-    assert(Any_Sequence_Kind(Cell_Heart(sequence)));  // !!! should not be cell
+    assert(Any_Sequence_Type(Cell_Heart(sequence)));  // !!! should not be cell
 
     if (not Sequence_Has_Node(sequence)) {  // compressed bytes
         assert(n < sequence->payload.at_least_8[IDX_SEQUENCE_USED]);
@@ -672,13 +668,13 @@ INLINE Element* Derelativize_Sequence_At(
             return Init_Blank(out);
 
         Derelativize(out, sequence, context);  // [2]
-        HEART_BYTE(out) = REB_WORD;
+        HEART_BYTE(out) = TYPE_WORD;
         QUOTE_BYTE(out) = NOQUOTE_1;  // [3]
         return out; }
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
         const Source* a = c_cast(Source*, CELL_SERIESLIKE_NODE(sequence));
-        if (MIRROR_BYTE(a) != REB_0) {  // [4]
+        if (MIRROR_BYTE(a) != TYPE_0) {  // [4]
             assert(n < 2);
             if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
                 return Init_Blank(out);
@@ -715,7 +711,7 @@ INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
 }
 
 INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
-    assert(Any_Sequence_Kind(Cell_Heart(sequence)));
+    assert(Any_Sequence_Type(Cell_Heart(sequence)));
 
     // Getting the binding for any of the optimized types means getting
     // the binding for *that item in the sequence*; the sequence itself
@@ -735,7 +731,7 @@ INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
 
       case FLAVOR_SOURCE: {  // uncompressed sequence
         const Source* a = Cell_Array(sequence);
-        if (MIRROR_BYTE(a) != REB_0)
+        if (MIRROR_BYTE(a) != TYPE_0)
             return SPECIFIED;
         return Cell_Binding(sequence); }
 
@@ -783,7 +779,7 @@ INLINE void Get_Tuple_Bytes(
     const Cell* tuple,
     Size buf_size
 ){
-    assert(Cell_Heart(tuple) == REB_TUPLE);
+    assert(Cell_Heart(tuple) == TYPE_TUPLE);
     if (not Try_Get_Sequence_Bytes(buf, tuple, buf_size))
         fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
 }
@@ -799,25 +795,25 @@ INLINE void Get_Tuple_Bytes(
 //
 INLINE bool IS_QUOTED_PATH(const Cell* v) {
     return Cell_Num_Quotes(v) == 1
-        and Cell_Heart(v) == REB_PATH;
+        and Cell_Heart(v) == TYPE_PATH;
 }
 
 INLINE Element* Init_Set_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    HEART_BYTE(out) = REB_CHAIN;
+    HEART_BYTE(out) = TYPE_CHAIN;
     return out;
 }
 
 INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    HEART_BYTE(out) = REB_CHAIN;
+    HEART_BYTE(out) = TYPE_CHAIN;
     Set_Cell_Flag(out, LEADING_BLANK);
     return out;
 }
 
 
 INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
-    assert(Any_Sequence_Kind(Cell_Heart(c)));
+    assert(Any_Sequence_Type(Cell_Heart(c)));
 
     if (not Sequence_Has_Node(c))  // compressed bytes
         return NOT_SINGLEHEART_0;
@@ -837,13 +833,13 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
     const Flex* f = cast(Flex*, CELL_NODE1(c));
     if (Stub_Flavor(f) == FLAVOR_SYMBOL) {
         if (c->header.bits & CELL_FLAG_LEADING_BLANK)
-            return Leading_Blank_And(REB_WORD);
+            return Leading_Blank_And(TYPE_WORD);
 
-        return Trailing_Blank_And(REB_WORD);
+        return Trailing_Blank_And(TYPE_WORD);
     }
 
     Heart mirror = u_cast(Heart, MIRROR_BYTE(u_cast(const Source*, f)));
-    if (mirror == REB_0)  // s actually is sequence elements, not one element
+    if (mirror == TYPE_0)  // s actually is sequence elements, not one element
         return NOT_SINGLEHEART_0;
 
     if (c->header.bits & CELL_FLAG_LEADING_BLANK)
@@ -857,7 +853,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
 
 INLINE bool Is_Get_Word_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -867,7 +863,7 @@ INLINE bool Is_Get_Word(const Value* v)
 
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -892,7 +888,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
             *(unwrap bound) = IS_WORD_BOUND(e);
         return Cell_Word_Symbol(e);
     }
-    if (HEART_BYTE(e) != REB_PATH)
+    if (HEART_BYTE(e) != TYPE_PATH)
         return nullptr;
     if (LEADING_BLANK_AND(CHAIN) != Try_Get_Sequence_Singleheart(e))
         return nullptr;  // e is not /?:?:? style path
@@ -914,7 +910,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
 
 INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -924,7 +920,7 @@ INLINE bool Is_Get_Tuple(const Value* v)
 
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -937,7 +933,7 @@ INLINE bool Is_Set_Tuple(const Value* v)
 
 INLINE bool Is_Get_Block_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -947,7 +943,7 @@ INLINE bool Is_Get_Block(const Value* v)
 
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -960,7 +956,7 @@ INLINE bool Is_Set_Block(const Value* v)
 
 INLINE bool Is_Get_Group_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -970,7 +966,7 @@ INLINE bool Is_Get_Group(const Value* v)
 
 INLINE bool Is_Set_Group_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == REB_CHAIN and
+        Cell_Heart(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -983,7 +979,7 @@ INLINE bool Any_Set_Value(const Value* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
         QUOTE_BYTE(v) == NOQUOTE_1
-        and HEART_BYTE(v) == REB_CHAIN
+        and HEART_BYTE(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Trailing_Blank(unwrap single)
     );
@@ -993,7 +989,7 @@ INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
         QUOTE_BYTE(v) == NOQUOTE_1
-        and HEART_BYTE(v) == REB_CHAIN
+        and HEART_BYTE(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Leading_Blank(unwrap single)
     );
@@ -1001,7 +997,7 @@ INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
 
 INLINE Element* Refinify(Element* e) {
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        e, REB_CHAIN, CELL_FLAG_LEADING_BLANK
+        e, TYPE_CHAIN, CELL_FLAG_LEADING_BLANK
     );
     if (error)
         fail (unwrap error);

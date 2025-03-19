@@ -44,14 +44,14 @@
 INLINE bool Is_Void(Need(const Value*) v) {
     Assert_Cell_Readable(v);
     return QUOTE_BYTE(v) == ANTIFORM_0
-        and HEART_BYTE(v) == REB_WORD
+        and HEART_BYTE(v) == TYPE_WORD
         and Cell_Word_Id(v) == SYM_VOID;
 }
 
 #define Init_Void_Untracked(out) \
     Init_Any_Word_Untracked( \
         (out), \
-        REB_WORD, \
+        TYPE_WORD, \
         ANTIFORM_0_COERCE_ONLY,  /* VOID is valid keyword symbol */ \
         CANON(VOID))
 
@@ -64,7 +64,7 @@ INLINE bool Is_Void(Need(const Value*) v) {
 INLINE bool Is_Quasi_Void(const Cell* v) {
     if (not Is_Quasiform(v))
         return false;
-    if (HEART_BYTE(v) != REB_WORD)
+    if (HEART_BYTE(v) != TYPE_WORD)
         return false;
     return Cell_Word_Id(v) == SYM_VOID;
 }

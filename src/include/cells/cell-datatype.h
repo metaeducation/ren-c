@@ -54,71 +54,68 @@
 //   start of the enumeration.
 //
 
-INLINE bool IS_KIND_SYM(SymId id) {
+INLINE bool Is_Symbol_Id_For_A_Type(SymId id) {
     assert(id != SYM_0);
-    return u_cast(SymId16, id) <= u_cast(SymId16, REB_MAX);
+    return u_cast(SymId16, id) <= u_cast(SymId16, MAX_TYPE);
 }
 
-INLINE Kind KIND_FROM_SYM(SymId s) {
-    assert(IS_KIND_SYM(s));
-    return cast(Kind, s);
+INLINE Type Type_From_Symbol_Id(SymId id) {
+    assert(Is_Symbol_Id_For_A_Type(id));
+    return cast(Type, id);
 }
 
-#define SYM_FROM_KIND(k) \
+#define Symbol_Id_From_Type(k) \
     cast(SymId, u_cast(SymId16, (k)))
 
-
-#define VAL_TYPE_SYMBOL(v) \
-    Cell_Word_Symbol(v)
-
-INLINE Kind VAL_TYPE_KIND(const Cell* v) {
-    assert(Cell_Heart(v) == REB_TYPE_BLOCK);
+INLINE Type Cell_Datatype_Type(const Cell* v) {
+    assert(Cell_Heart(v) == TYPE_TYPE_BLOCK);
     if (Cell_Series_Len_At(v) != 1)
         fail ("Type blocks only allowed one element for now");
     const Element* item = Cell_List_At(nullptr, v);
     if (not Is_Word(item))
         fail ("Type blocks only allowed WORD! items for now");
     Option(SymId) id = Cell_Word_Id(item);
-    if (not id or not IS_KIND_SYM(unwrap id))
+    if (not id or not Is_Symbol_Id_For_A_Type(unwrap id))
         fail ("Type blocks only allowed builtin types for now");
-    return cast(Kind, unwrap id);
+    return cast(Type, unwrap id);
 }
 
-INLINE Heart VAL_TYPE_HEART(const Cell* v) {
-    Kind k = VAL_TYPE_KIND(v);
-    if (k >= REB_QUASIFORM)
+INLINE Heart Cell_Datatype_Heart(const Cell* v) {
+    Type t = Cell_Datatype_Type(v);
+    assert(t != TYPE_0);
+    if (t > MAX_HEART)
         fail ("Didn't expect QUOTED or QUASIFORM or ANTIFORM for type");
-    return cast(Heart, k);
+    return cast(Heart, t);
 }
 
 // Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
 //
 INLINE Value* Init_Builtin_Datatype_Untracked(
     Init(Element) out,
-    Kind kind
+    Type type
 ){
-    assert(kind <= REB_MAX);
+    assert(type <= MAX_TYPE);
     Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
 
-    Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, kind)));
-    return Init_Any_List(out, REB_TYPE_BLOCK, a);
+    Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, type)));
+    return Init_Any_List(out, TYPE_TYPE_BLOCK, a);
 }
 
-#define Init_Builtin_Datatype(out,kind) \
-    TRACK(Init_Builtin_Datatype_Untracked((out), (kind)))
+#define Init_Builtin_Datatype(out,type) \
+    TRACK(Init_Builtin_Datatype_Untracked((out), (type)))
 
 
 // Used by the Typechecker intrinsic, but also Generic dispatch and PARAMETER!
 // typechecking optimization.
 //
-INLINE bool Builtin_Typeset_Check(TypesetByte typeset_byte, Kind kind) {
+INLINE bool Builtin_Typeset_Check(TypesetByte typeset_byte, Type type) {
     TypesetFlags typeset = g_typesets[typeset_byte];
 
     if (typeset & TYPESET_FLAG_0_RANGE) {  // trivial ranges ok (one datatype)
         Byte start = THIRD_BYTE(&typeset);
         Byte end = FOURTH_BYTE(&typeset);
-        return start <= kind and kind <= end;
+        return start <= type and type <= end;
     }
 
-    return did (g_sparse_memberships[kind] & typeset);  // just a typeset flag
+    return did (g_sparse_memberships[type] & typeset);  // just a typeset flag
 }

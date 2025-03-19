@@ -69,7 +69,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_HEART(ARG(type)) == REB_PORT);
+    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_PORT);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -83,7 +83,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         //
         VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
         Value* rootvar = Rootvar_Of_Varlist(context);
-        HEART_BYTE(rootvar) = REB_PORT;
+        HEART_BYTE(rootvar) = TYPE_PORT;
         return Init_Port(OUT, context);
     }
 

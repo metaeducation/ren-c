@@ -749,7 +749,7 @@ DECLARE_NATIVE(equal_q)
     QUOTE_BYTE(v1) = NOQUOTE_1;
     QUOTE_BYTE(v2) = NOQUOTE_1;
 
-    if (VAL_TYPE(v1) != VAL_TYPE(v2)) {  // !!! need generic "coercibility"
+    if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (strict)
             return nullptr;
 
@@ -791,7 +791,7 @@ DECLARE_NATIVE(lesser_q)
     QUOTE_BYTE(v1) = NOQUOTE_1;
     QUOTE_BYTE(v2) = NOQUOTE_1;
 
-    if (VAL_TYPE(v1) != VAL_TYPE(v2)) {  // !!! need generic "coercibility"
+    if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (Is_Integer(v1) and Is_Decimal(v2))
             Init_Decimal(v1, cast(REBDEC, VAL_INT64(v1)));
         else if (Is_Decimal(v1) and Is_Integer(v2))
@@ -847,7 +847,7 @@ DECLARE_NATIVE(same_q)
     Value* v1 = ARG(value1);
     Value* v2 = ARG(value2);
 
-    if (VAL_TYPE(v1) != VAL_TYPE(v2))
+    if (Type_Of(v1) != Type_Of(v2))
         return Init_Logic(OUT, false);  // not "same" value if not same type
 
     if (Is_Bitset(v1))  // same if binaries are same

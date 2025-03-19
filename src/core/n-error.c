@@ -178,7 +178,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     if (Is_Block(code)) {
         sub = Make_Level_At(
             &Stepper_Executor,
-            code,  // REB_BLOCK or REB_GROUP
+            code,  // TYPE_BLOCK or TYPE_GROUP
             flags
         );
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
@@ -288,7 +288,7 @@ DECLARE_NATIVE(raised_q)
     Byte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_ERROR);
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_ERROR);
 }
 
 
@@ -321,7 +321,7 @@ DECLARE_NATIVE(unraised_q)
     Byte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(not (quote_byte == ANTIFORM_0 and heart == REB_ERROR));
+    return LOGIC(not (quote_byte == ANTIFORM_0 and heart == TYPE_ERROR));
 }
 
 
@@ -346,7 +346,7 @@ DECLARE_NATIVE(set_location_of_error)
         Context* context;
         if (
             not IS_WORD_BOUND(location)
-            or CTX_TYPE(context = VAL_WORD_CONTEXT(location)) != REB_FRAME
+            or CTX_TYPE(context = VAL_WORD_CONTEXT(location)) != TYPE_FRAME
         ){
             return FAIL("SET-LOCATION-OF-ERROR requires FRAME!-bound WORD!");
         }

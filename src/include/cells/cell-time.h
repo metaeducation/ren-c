@@ -38,12 +38,12 @@
     #define Ensure_Date(v)  (v)
 #else
     INLINE const Cell* Ensure_Date(const Cell* v) {
-        assert(Cell_Heart(v) == REB_DATE);
+        assert(Cell_Heart(v) == TYPE_DATE);
         return v;
     }
 
     INLINE Element* Ensure_Date(Atom* v) {
-        assert(VAL_TYPE(v) == REB_DATE);
+        assert(Type_Of(v) == TYPE_DATE);
         return cast(Element*, v);
     }
 #endif
@@ -75,7 +75,7 @@
 
 INLINE bool Does_Date_Have_Time(const Cell* c)
 {
-    assert(Cell_Heart(c) == REB_DATE);
+    assert(Cell_Heart(c) == TYPE_DATE);
     if (c->payload.nanoseconds == NO_DATE_TIME) {
         assert(CELL_DATE_YMDZ(c).zone == NO_DATE_ZONE);
         return false;
@@ -85,7 +85,7 @@ INLINE bool Does_Date_Have_Time(const Cell* c)
 
 INLINE bool Does_Date_Have_Zone(const Cell* c)
 {
-    assert(Cell_Heart(c) == REB_DATE);
+    assert(Cell_Heart(c) == TYPE_DATE);
     if (CELL_DATE_YMDZ(c).zone == NO_DATE_ZONE)  // out of band of 7-bit field
         return false;
     assert(c->payload.nanoseconds != NO_DATE_TIME);
@@ -102,7 +102,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
         T* cell;
 
         ZoneHolder(T* cell) : cell (cell)
-          { assert(Cell_Heart(cell) == REB_DATE); }
+          { assert(Cell_Heart(cell) == TYPE_DATE); }
 
         operator int () {  // stop accidental reads of NO_DATE_ZONE
             assert(CELL_DATE_YMDZ(cell).zone != NO_DATE_ZONE);
@@ -129,12 +129,12 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
 //=////////////////////////////////////////////////////////////////////////=//
 
 INLINE REBI64 VAL_NANO(const Cell* c) {
-    assert(HEART_BYTE(c) == REB_TIME or Does_Date_Have_Time(c));
+    assert(HEART_BYTE(c) == TYPE_TIME or Does_Date_Have_Time(c));
     return c->payload.nanoseconds;
 }
 
 INLINE void Tweak_Cell_Nanoseconds(Cell* c, REBI64 nano) {
-    assert(HEART_BYTE(c) == REB_TIME or Cell_Heart(c) == REB_DATE);
+    assert(HEART_BYTE(c) == TYPE_TIME or Cell_Heart(c) == TYPE_DATE);
     possibly(nano == NO_DATE_TIME);
     c->payload.nanoseconds = nano;
 }

@@ -32,42 +32,44 @@
 // the integer datatype value).  Returns an array of words for the added
 // datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %boot/types.r
 //
+// 1. Things like INTEGER! are defined to be &[INTEGER]
+//
+// 2. Many places in the system want to be able to just off-the-cuff refer to
+//    a built-in datatype, without allocating a cell to initialize.  This is
+//    done with Datatype_From_Type(), that returns it from the lib context.
+//
+// 3. R3-Alpha had a number of "catalogs" in the global context.  There's no
+//    real reason that the "catalog of types" isn't generated on demand by the
+//    system instead of collected and put in the global context whether you
+//    ever want it or not.
+//
 Source* Startup_Datatypes(Array* boot_typespecs)
 {
-    if (Array_Len(boot_typespecs) != REB_MAX)  // exclude REB_0
+    if (Array_Len(boot_typespecs) != MAX_TYPE)  // exclude TYPE_0
         panic (boot_typespecs);
 
-    Source* catalog = Make_Source(REB_MAX);
+    Source* catalog = Make_Source(MAX_TYPE);
 
-    REBINT n = 1;
+    Index n = 1;
 
-    for (; n <= REB_MAX; ++n) {
-        Kind kind = cast(Kind, n);
+    for (; n <= MAX_TYPE; ++n) {
+        Type type = cast(Type, n);
 
-        // Many places in the system want to be able to just off-the-cuff
-        // refer to a built-in datatype, without allocating a cell to
-        // initialize.  This is done with Datatype_From_Kind().
-        //
-        // Things like INTEGER! are defined to be &[INTEGER]
-        //
-        SymId datatype_sym = cast(SymId, REB_MAX + n);
-        Element* datatype = cast(Element*, Sink_Lib_Var(datatype_sym));
-        Protect_Cell(Init_Builtin_Datatype(datatype, kind));
-        assert(datatype == Datatype_From_Kind(kind));
+        SymId datatype_id = cast(SymId, MAX_TYPE + n);
+        Element* datatype = cast(Element*, Sink_Lib_Var(datatype_id));
+        Protect_Cell(Init_Builtin_Datatype(datatype, type));  // datatype [1]
+        assert(datatype == Datatype_From_Type(type));  // convenient [2]
 
-        // The "catalog of types" could be generated on demand by the system
-        // instead of collected and put in the global context.
-        //
-        Value* word = Init_Any_Word(
+        Element* word = Init_Any_Word(
             Alloc_Tail_Array(catalog),
-            REB_WORD,
-            Canon_Symbol(datatype_sym)
+            TYPE_WORD,
+            Canon_Symbol(datatype_id)
         );
         Tweak_Cell_Word_Index(word, INDEX_PATCHED);
-        Tweak_Cell_Binding(word, &g_lib_patches[datatype_sym]);
+        Tweak_Cell_Binding(word, &g_lib_patches[datatype_id]);
     }
 
-    return catalog;
+    return catalog;  // could be generated on demand [3]
 }
 
 

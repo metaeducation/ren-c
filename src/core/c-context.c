@@ -36,7 +36,7 @@
 VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 {
     assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make varlist
-    assert(heart != REB_MODULE);
+    assert(heart != TYPE_MODULE);
 
     Array* a = Make_Array_Core(
         FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
@@ -378,7 +378,7 @@ void Collect_Context_Keys(
     Collector *cl,
     VarList* context
 ){
-    assert(CTX_TYPE(context) != REB_MODULE);
+    assert(CTX_TYPE(context) != TYPE_MODULE);
 
     const Key* tail;
     const Key* key = Varlist_Keys(&tail, context);
@@ -601,7 +601,7 @@ DECLARE_NATIVE(wrap)
 
     VarList* varlist = Make_Varlist_Detect_Managed(
         flags,
-        REB_OBJECT,  // !!! Presume object?
+        TYPE_OBJECT,  // !!! Presume object?
         at,
         tail,
         parent
@@ -667,7 +667,7 @@ DECLARE_NATIVE(collect_words)
         const Element* check_tail;
         const Element* check = Cell_List_At(&check_tail, ignore);
         for (; check != check_tail; ++check) {
-            if (not Any_Word_Kind(Cell_Heart(check)))
+            if (not Any_Word_Type(Cell_Heart(check)))
                 return FAIL(Error_Bad_Value(check));
         }
     }
@@ -748,7 +748,7 @@ VarList* Make_Varlist_Detect_Managed(
     const Element* tail,
     Option(VarList*) parent
 ) {
-    assert(heart != REB_MODULE);
+    assert(heart != TYPE_MODULE);
 
   //=//// COLLECT KEYS (FROM PARENT AND WALKING HEAD->TAIL) ///////////////=//
 
@@ -931,7 +931,7 @@ Option(Index) Find_Symbol_In_Context(
 ){
     Byte heart = HEART_BYTE(context);
 
-    if (heart == REB_MODULE) {
+    if (heart == TYPE_MODULE) {
         //
         // Modules hang their variables off the symbol itself, in a linked
         // list with other modules who also have variables of that name.

@@ -205,31 +205,30 @@ REBI64 Int64s(const Value* val, REBINT sign)
 
 
 //
-//  Datatype_From_Kind: C
+//  Datatype_From_Type: C
 //
-// Returns the specified datatype value from the system context.
-// The datatypes are all at the head of the context.
+// Returns the specified datatype Value from the LIB context.
+// The datatypes are all at the head of the LIB context.
 //
-const Element* Datatype_From_Kind(Kind kind)
+const Value* Datatype_From_Type(Type type)
 {
-    assert(kind <= REB_MAX);
-    Offset n = cast(Offset, kind);
-    SymId datatype_sym = cast(SymId, REB_MAX + n);
-    const Value* type = Lib_Var(datatype_sym);  // succeeds
-    assert(Is_Type_Block(type));
-    return c_cast(Element*, type);
+    assert(type <= MAX_TYPE);
+    SymId id = cast(SymId, MAX_TYPE + type);
+    const Value* datatype = Lib_Var(id);  // should always succeed
+    assert(Is_Type_Block(datatype));
+    return datatype;
 }
 
 
 //
-//  Type_Of: C
+//  Datatype_Of: C
 //
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-const Value* Type_Of(const Atom* value)
+const Value* Datatype_Of(const Atom* value)
 {
-    return Datatype_From_Kind(VAL_TYPE(value));
+    return Datatype_From_Type(Type_Of(value));
 }
 
 
@@ -269,10 +268,10 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 // !!! Overlaps with Assert_Varlist, review folding them together.
 //
-void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
-    assert(CTX_TYPE(v) == kind);
+void Extra_Init_Context_Cell_Checks_Debug(Type type, VarList* v) {
+    assert(CTX_TYPE(v) == type);
 
-    if (kind == REB_FRAME)  // may not have Misc_Varlist_Adjunct()
+    if (type == TYPE_FRAME)  // may not have Misc_Varlist_Adjunct()
         assert(
             (v->leader.bits & FLEX_MASK_LEVEL_VARLIST)
             == FLEX_MASK_LEVEL_VARLIST
@@ -286,7 +285,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
     //
-    assert(archetype->extra.node == nullptr or kind == REB_FRAME);
+    assert(archetype->extra.node == nullptr or type == TYPE_FRAME);
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
@@ -296,7 +295,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, VarList* v) {
 
     assert(
         not Misc_Varlist_Adjunct(v)
-        or Any_Context_Kind(CTX_TYPE(unwrap Misc_Varlist_Adjunct(v)))
+        or Any_Context_Type(CTX_TYPE(unwrap Misc_Varlist_Adjunct(v)))
     );
 }
 
@@ -319,7 +318,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
     if (Get_Stub_Flag(phase, MISC_NODE_NEEDS_MARK)) {
         assert(
             Misc_Phase_Adjunct(phase) == nullptr
-            or Any_Context_Kind(CTX_TYPE(unwrap Misc_Phase_Adjunct(phase)))
+            or Any_Context_Type(CTX_TYPE(unwrap Misc_Phase_Adjunct(phase)))
         );
     }
     else
@@ -366,7 +365,7 @@ REBLEN Part_Len_May_Modify_Index(
     else {  // must be same series
         if (
             Is_Issue(part)
-            or VAL_TYPE(series) != VAL_TYPE(part)  // !!! allow AS aliases?
+            or Type_Of(series) != Type_Of(part)  // !!! allow AS aliases?
             or Cell_Flex(series) != Cell_Flex(part)
         ){
             fail (Error_Invalid_Part_Raw(part));
@@ -459,7 +458,7 @@ int64_t Add_Max(Option(Heart) heart, int64_t n, int64_t m, int64_t maxi)
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
         if (heart)
-            fail (Error_Type_Limit_Raw(Datatype_From_Kind(unwrap heart)));
+            fail (Error_Type_Limit_Raw(Datatype_From_Type(unwrap heart)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -473,7 +472,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n * m;
     if (r < -maxi or r > maxi)
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(heart)));
+        fail (Error_Type_Limit_Raw(Datatype_From_Type(heart)));
     return cast(int, r); // !!! (?) review this cast
 }
 
@@ -487,7 +486,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 //
 Element* Setify(Element* out) {  // called on stack values; can't call eval
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        out, REB_CHAIN, CELL_MASK_ERASED_0
+        out, TYPE_CHAIN, CELL_MASK_ERASED_0
     );
     if (error)
         fail (unwrap error);
@@ -502,7 +501,7 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 // the element alone, e.g. `a:` -> `a` or `:[a b]` -> `[a b]`
 //
 Option(Error*) Trap_Unsingleheart(Element* out) {
-    assert(Any_Sequence_Kind(Cell_Heart(out)));
+    assert(Any_Sequence_Type(Cell_Heart(out)));
     if (not Sequence_Has_Node(out)) {
         goto unchain_error;  // compressed bytes don't encode blanks
     }
@@ -528,13 +527,13 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
 
     const Flex* f = c_cast(Flex*, node1);
     if (Is_Stub_Symbol(f)) {
-        HEART_BYTE(out) = REB_WORD;
+        HEART_BYTE(out) = TYPE_WORD;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary?
         return nullptr;
     }
 
     Heart h = u_cast(Heart, MIRROR_BYTE(c_cast(Source*, f)));
-    if (h != REB_0) {  // no length 2 sequence arrays unless mirror
+    if (h != TYPE_0) {  // no length 2 sequence arrays unless mirror
         HEART_BYTE(out) = h;
         Clear_Cell_Flag(out, LEADING_BLANK);  // !!! necessary
         return nullptr;
@@ -574,7 +573,7 @@ DECLARE_NATIVE(setify)
 //
 Element* Getify(Element* out) {  // called on stack values; can't call eval
     Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        out, REB_CHAIN, CELL_FLAG_LEADING_BLANK
+        out, TYPE_CHAIN, CELL_FLAG_LEADING_BLANK
     );
     if (error)
         fail (unwrap error);
@@ -611,20 +610,20 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
         return Init_Sigil(out, SIGIL_META);
 
     Heart heart = Cell_Heart(out);
-    if (Any_Word_Kind(heart)) {
-        HEART_BYTE(out) = REB_META_WORD;
+    if (Any_Word_Type(heart)) {
+        HEART_BYTE(out) = TYPE_META_WORD;
     }
-    else if (Any_Path_Kind(heart)) {
-        HEART_BYTE(out) = REB_META_PATH;
+    else if (Any_Path_Type(heart)) {
+        HEART_BYTE(out) = TYPE_META_PATH;
     }
-    else if (Any_Tuple_Kind(heart)) {
-        HEART_BYTE(out) = REB_META_TUPLE;
+    else if (Any_Tuple_Type(heart)) {
+        HEART_BYTE(out) = TYPE_META_TUPLE;
     }
-    else if (Any_Block_Kind(heart)) {
-        HEART_BYTE(out) = REB_META_BLOCK;
+    else if (Any_Block_Type(heart)) {
+        HEART_BYTE(out) = TYPE_META_BLOCK;
     }
-    else if (Any_Group_Kind(heart)) {
-        HEART_BYTE(out) = REB_META_GROUP;
+    else if (Any_Group_Type(heart)) {
+        HEART_BYTE(out) = TYPE_META_GROUP;
     }
     else
         fail ("Cannot METAFY");
@@ -660,20 +659,20 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
         return Init_Sigil(out, SIGIL_THE);
 
     Heart heart = Cell_Heart(out);
-    if (Any_Word_Kind(heart)) {
-        HEART_BYTE(out) = REB_THE_WORD;
+    if (Any_Word_Type(heart)) {
+        HEART_BYTE(out) = TYPE_THE_WORD;
     }
-    else if (Any_Path_Kind(heart)) {
-        HEART_BYTE(out) = REB_THE_PATH;
+    else if (Any_Path_Type(heart)) {
+        HEART_BYTE(out) = TYPE_THE_PATH;
     }
-    else if (Any_Tuple_Kind(heart)) {
-        HEART_BYTE(out) = REB_THE_TUPLE;
+    else if (Any_Tuple_Type(heart)) {
+        HEART_BYTE(out) = TYPE_THE_TUPLE;
     }
-    else if (Any_Block_Kind(heart)) {
-        HEART_BYTE(out) = REB_THE_BLOCK;
+    else if (Any_Block_Type(heart)) {
+        HEART_BYTE(out) = TYPE_THE_BLOCK;
     }
-    else if (Any_Group_Kind(heart)) {
-        HEART_BYTE(out) = REB_THE_GROUP;
+    else if (Any_Group_Type(heart)) {
+        HEART_BYTE(out) = TYPE_THE_GROUP;
     }
     else
         fail ("Cannot THEIFY");
@@ -710,20 +709,20 @@ DECLARE_NATIVE(inert)
 //
 Element* Plainify(Element* e) {
     Heart heart = Cell_Heart(e);
-    if (Any_Word_Kind(heart)) {
-        HEART_BYTE(e) = REB_WORD;
+    if (Any_Word_Type(heart)) {
+        HEART_BYTE(e) = TYPE_WORD;
     }
-    else if (Any_Path_Kind(heart)) {
-        HEART_BYTE(e) = REB_PATH;
+    else if (Any_Path_Type(heart)) {
+        HEART_BYTE(e) = TYPE_PATH;
     }
-    else if (Any_Tuple_Kind(heart)) {
-        HEART_BYTE(e) = REB_TUPLE;
+    else if (Any_Tuple_Type(heart)) {
+        HEART_BYTE(e) = TYPE_TUPLE;
     }
-    else if (Any_Block_Kind(heart)) {
-        HEART_BYTE(e) = REB_BLOCK;
+    else if (Any_Block_Type(heart)) {
+        HEART_BYTE(e) = TYPE_BLOCK;
     }
-    else if (Any_Group_Kind(heart)) {
-        HEART_BYTE(e) = REB_GROUP;
+    else if (Any_Group_Type(heart)) {
+        HEART_BYTE(e) = TYPE_GROUP;
     }
     return e;
 }

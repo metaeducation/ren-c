@@ -82,13 +82,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_HEART(ARG(type)) == REB_PAIR);
+    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_PAIR);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
 
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
-        Option(Error*) error = Trap_Transcode_One(OUT, REB_PAIR, arg);
+        Option(Error*) error = Trap_Transcode_One(OUT, TYPE_PAIR, arg);
         if (error)
             return RAISE(unwrap error);
         return OUT;
@@ -100,7 +100,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
     if (Is_Block(arg))
         return rebValue(CANON(TO), CANON(PAIR_X), CANON(REDUCE), arg);
 
-    return RAISE(Error_Bad_Make(REB_PAIR, arg));
+    return RAISE(Error_Bad_Make(TYPE_PAIR, arg));
 }
 
 
@@ -250,9 +250,9 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(element);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_List_Kind(to)) {
+    if (Any_List_Type(to)) {
         Source* a = Make_Source_Managed(2);
         Set_Flex_Len(a, 2);
         Copy_Cell(Array_At(a, 0), Cell_Pair_First(v));
@@ -260,13 +260,13 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_String_Kind(to) or to == REB_ISSUE) {
+    if (Any_String_Type(to) or to == TYPE_ISSUE) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Mold_Element(mo, Cell_Pair_First(v));
         Append_Codepoint(mo->string, ' ');
         Mold_Element(mo, Cell_Pair_Second(v));
-        if (Any_String_Kind(to))
+        if (Any_String_Type(to))
             return Init_Any_String(OUT, to, Pop_Molded_String(mo));
 
         if (Try_Init_Small_Utf8_Untracked(

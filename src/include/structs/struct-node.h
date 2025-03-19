@@ -88,7 +88,7 @@
 //
 // Both Cell* and Stub* have two bits in their NODE_BYTE which can be called
 // out for attention from the GC.  Though these bits are scarce, sacrificing
-// them means not needing to do a switch() on the REB_TYPE of the cell to
+// them means not needing to do a switch() on the TYPE_TYPE of the cell to
 // know how to mark them.
 //
 // The third potentially-node-holding slot in a cell ("Extra") is deemed

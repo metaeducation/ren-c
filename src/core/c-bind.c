@@ -450,7 +450,7 @@ Option(Stub*) Get_Word_Container(
     VarList* vlist = cast(VarList*, c);
 
     if (
-        CTX_TYPE(vlist) == REB_FRAME
+        CTX_TYPE(vlist) == TYPE_FRAME
         and binding  // word has a cache for if it's in an action frame
         and Action_Is_Base_Of(
             cast(Phase*, binding),
@@ -465,7 +465,7 @@ Option(Stub*) Get_Word_Container(
     }
 
     DECLARE_ELEMENT (elem);
-    if (CTX_TYPE(vlist) == REB_FRAME) {
+    if (CTX_TYPE(vlist) == TYPE_FRAME) {
         if (not lens) {  // want full visibility (Use would have defaulted...)
             lens = Phase_Details(cast(ParamList*, vlist));
         }
@@ -485,7 +485,7 @@ Option(Stub*) Get_Word_Container(
 
     // Note: if frame, caching here seems to slow things down?
   #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
-    if (CTX_TYPE(vlist) == REB_FRAME) {
+    if (CTX_TYPE(vlist) == TYPE_FRAME) {
         if (CELL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
             CELL_WORD_INDEX_I32(
                 m_cast(Cell*, any_word)
@@ -692,18 +692,18 @@ DECLARE_NATIVE(let)
             where = SPARE;
         }
 
-        Init_Any_Word_Bound(where, REB_WORD, symbol, bindings, INDEX_PATCHED);
-        if (HEART_BYTE(vars) != REB_WORD) {  // more complex than we'd like [1]
+        Init_Any_Word_Bound(where, TYPE_WORD, symbol, bindings, INDEX_PATCHED);
+        if (HEART_BYTE(vars) != TYPE_WORD) {  // more complex than we'd like [1]
             Setify(where);
-            if (HEART_BYTE(vars) == REB_PATH) {
+            if (HEART_BYTE(vars) == TYPE_PATH) {
                 Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-                    where, REB_PATH, CELL_FLAG_LEADING_BLANK
+                    where, TYPE_PATH, CELL_FLAG_LEADING_BLANK
                 );
                 assert(not error);  // was a path when we got it!
                 UNUSED(error);
             }
             else
-                assert(HEART_BYTE(vars) == REB_CHAIN);
+                assert(HEART_BYTE(vars) == TYPE_CHAIN);
         }
 
         Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
@@ -749,15 +749,15 @@ DECLARE_NATIVE(let)
             if (Is_Set_Word(temp))
                 goto wordlike;
             else switch (Cell_Heart(temp)) {  // permit quasi
-              case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
-              case REB_BLANK:  // is multi-return opt-out for dialect, passthru
+              case TYPE_ISSUE:  // is multi-return opt-in for dialect, passthru
+              case TYPE_BLANK:  // is multi-return opt-out for dialect, passthru
                 Derelativize(PUSH(), temp, temp_binding);
                 break;
 
               wordlike:
-              case REB_WORD:
-              case REB_META_WORD:
-              case REB_THE_WORD: {
+              case TYPE_WORD:
+              case TYPE_META_WORD:
+              case TYPE_THE_WORD: {
                 Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
                 symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Variable(symbol, bindings);
@@ -782,7 +782,7 @@ DECLARE_NATIVE(let)
             assert(Is_Set_Block(vars));
             Setify(Init_Any_List(
                 where,  // may be SPARE, and vars may point to it
-                REB_BLOCK,
+                TYPE_BLOCK,
                 Pop_Managed_Source_From_Stack(STACK_BASE)
             ));
         }
@@ -994,7 +994,7 @@ void Clonify_And_Bind_Relative(
         CELL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
         Tweak_Cell_Relative_Binding(v, unwrap relative);
     }
-    else if (deeply and (Any_Series_Kind(heart) or Any_Sequence_Kind(heart))) {
+    else if (deeply and (Any_Series_Type(heart) or Any_Sequence_Type(heart))) {
         //
         // Objects and Flexes get shallow copied at minimum
         //
@@ -1026,7 +1026,7 @@ void Clonify_And_Bind_Relative(
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
             //
-            if (Any_Sequence_Kind(heart))
+            if (Any_Sequence_Type(heart))
                 Freeze_Source_Shallow(copy);
 
             // !!! At one point, arrays were marked relative as well as the
@@ -1036,7 +1036,7 @@ void Clonify_And_Bind_Relative(
             deep = Array_Head(copy);
             deep_tail = Array_Tail(copy);
         }
-        else if (Any_Series_Kind(heart)) {
+        else if (Any_Series_Type(heart)) {
             Flex* copy = Copy_Flex_Core(NODE_FLAG_MANAGED, Cell_Flex(v));
             CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
         }
@@ -1225,7 +1225,7 @@ VarList* Virtual_Bind_Deep_To_New_Context(
     // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    VarList* c = Alloc_Varlist(REB_OBJECT, num_vars);
+    VarList* c = Alloc_Varlist(TYPE_OBJECT, num_vars);
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but note that a fail() cannot happen while binders are
@@ -1401,7 +1401,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     assert(Is_Node_A_Stub(binding));
     assert(Is_Node_Readable(binding));
 
-    if (heart == REB_FRAME) {
+    if (heart == TYPE_FRAME) {
         assert(Is_Stub_Varlist(binding));  // actions/frames bind contexts only
         return;
     }
@@ -1433,7 +1433,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     if (Is_Stub_Sea(binding)) {
         assert(
             Listlike_Cell(cell)
-            or heart == REB_COMMA  // feed cells, use for binding ATM
+            or heart == TYPE_COMMA  // feed cells, use for binding ATM
         );
         // attachment binding no longer exists
         return;

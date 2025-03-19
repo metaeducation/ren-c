@@ -1,7 +1,7 @@
 // %cell-binary.h
 
 INLINE const Binary* Cell_Binary(const Cell* v) {
-    assert(Cell_Heart(v) == REB_BLOB);
+    assert(Cell_Heart(v) == TYPE_BLOB);
     return c_cast(Binary*, Cell_Flex(v));
 }
 
@@ -39,10 +39,10 @@ INLINE const Byte* Cell_Blob_Size_At(
     m_cast(Byte*, Cell_Blob_At(Known_Mutable(v)))
 
 #define Init_Blob(out,blob) \
-    Init_Series((out), REB_BLOB, (blob))
+    Init_Series((out), TYPE_BLOB, (blob))
 
 #define Init_Blob_At(out,blob,offset) \
-    Init_Series_At((out), REB_BLOB, (blob), (offset))
+    Init_Series_At((out), TYPE_BLOB, (blob), (offset))
 
 
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//
@@ -67,10 +67,10 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     Option(const Length*) limit_in
 ){
     Heart heart = Cell_Heart(c);
-    assert(Any_Bytes_Kind(heart));
+    assert(Any_Bytes_Type(heart));
 
     Length len_at;
-    if (heart == REB_BLOB)
+    if (heart == TYPE_BLOB)
         Cell_Blob_Size_At(&len_at, c);
     else
         len_at = Cell_String_Len_At(c);
@@ -83,17 +83,17 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 
     Corrupt_Pointer_If_Debug(limit_in);
 
-    if (heart == REB_BLOB) {
+    if (heart == TYPE_BLOB) {
         *size_out = limit;
         return Cell_Blob_At(c);
     }
 
-    if (Any_Utf8_Kind(heart)) {
+    if (Any_Utf8_Type(heart)) {
         *size_out = Cell_String_Size_Limit_At(nullptr, c, &limit);
         return Cell_String_At(c);
     }
 
-    assert(Any_Word_Kind(Cell_Heart(c)));
+    assert(Any_Word_Type(Cell_Heart(c)));
     assert(limit == Cell_Series_Len_At(c));
 
     const String* spelling = Cell_Word_Symbol(c);

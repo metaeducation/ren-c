@@ -182,16 +182,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_KIND(ARG(type)) == REB_BLOB);
+    assert(Cell_Datatype_Type(ARG(type)) == TYPE_BLOB);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
 
-    switch (VAL_TYPE(arg)) {
-      case REB_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
+    switch (Type_Of(arg)) {
+      case TYPE_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
         return Init_Blob(OUT, Make_Binary(Int32s(arg, 0)));
 
-      case REB_TUPLE: {
+      case TYPE_TUPLE: {
         REBLEN len = Cell_Sequence_Len(arg);
         Binary* b = Make_Binary(len);
         Byte* head = Binary_Head(b);
@@ -203,7 +203,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
             "TUPLE! did not consist entirely of INTEGER! values 0-255"
         ); }
 
-      case REB_BITSET:
+      case TYPE_BITSET:
         return Init_Blob(
             OUT,
             Make_Binary_From_Sized_Bytes(
@@ -212,7 +212,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
             )
         );
 
-      case REB_MONEY: {
+      case TYPE_MONEY: {
         Binary* b = Make_Binary(12);
         deci_to_binary(Binary_Head(b), VAL_MONEY_AMOUNT(arg));
         Term_Binary_Len(b, 12);
@@ -222,7 +222,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
         break;
     }
 
-    return RAISE(Error_Bad_Make(REB_BLOB, arg));
+    return RAISE(Error_Bad_Make(TYPE_BLOB, arg));
 }
 
 
@@ -296,7 +296,7 @@ static Element* Copy_Blob_Part_At_May_Modify_Index(
 
     return Init_Series(
         out,
-        REB_BLOB,
+        TYPE_BLOB,
         Copy_Binary_At_Len(Cell_Binary(blob), VAL_INDEX(blob), len)
     );
 }
@@ -509,7 +509,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_BITWISE_AND_NOT: {
         Value* arg = ARG_N(2);
         if (not Is_Blob(arg))
-            return FAIL(Error_Math_Args(VAL_TYPE(arg), verb));
+            return FAIL(Error_Math_Args(Type_Of(arg), verb));
 
         Size t0;
         const Byte* p0 = Cell_Blob_Size_At(&t0, v);
@@ -572,14 +572,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
-        return Init_Series(OUT, REB_BLOB, bin); }
+        return Init_Series(OUT, TYPE_BLOB, bin); }
 
     //-- Special actions:
 
       case SYM_SWAP: {
         Value* arg = ARG_N(2);
 
-        if (VAL_TYPE(v) != VAL_TYPE(arg))
+        if (Type_Of(v) != Type_Of(arg))
             return FAIL(Error_Not_Same_Type_Raw());
 
         Byte* v_at = Cell_Blob_At_Ensure_Mutable(v);
@@ -651,9 +651,9 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(element);
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_String_Kind(to)) {  // (to text! binary) questionable [1]
+    if (Any_String_Type(to)) {  // (to text! binary) questionable [1]
         Size size;
         const Byte* at = Cell_Blob_Size_At(&size, v);
         return Init_Any_String(
@@ -663,12 +663,12 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
         );
     }
 
-    if (to == REB_BLOB) {
+    if (to == TYPE_BLOB) {
         const Value* part = LIB(NULL);  // no :PART, copy to end
         return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
     }
 
-    if (to == REB_BLANK)
+    if (to == TYPE_BLANK)
         return GENERIC_CFUNC(AS, Is_Blob)(LEVEL);
 
     return UNHANDLED;
@@ -697,15 +697,15 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     INCLUDE_PARAMS_OF_AS;
 
     Element* v = Element_ARG(element);
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
 
     const Binary* bin = Cell_Binary(v);
 
-    if (as == REB_BLOB)  // (as blob! data) when data may be text or blob
+    if (as == TYPE_BLOB)  // (as blob! data) when data may be text or blob
         return Copy_Cell(OUT, v);
 
-    if (Any_Utf8_Kind(as)) {  // convert to a string as first step [1]
-        if (Any_Word_Kind(as)) {  // early fail on this, to save time
+    if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
+        if (Any_Word_Type(as)) {  // early fail on this, to save time
             if (VAL_INDEX(v) != 0)  // (vs. failing on AS WORD! of string)
                 return FAIL("Can't alias BLOB! as WORD! unless at head");
         }
@@ -775,15 +775,15 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
             }
         }
 
-        if (Any_String_Kind(as))
+        if (Any_String_Type(as))
             return Init_Any_String_At(OUT, as, str, index);
 
-        Init_Any_String_At(ARG(element), REB_TEXT, str, index);
+        Init_Any_String_At(ARG(element), TYPE_TEXT, str, index);
         // delegate word validation/etc.
         return GENERIC_CFUNC(AS, Any_String)(level_);
     }
 
-    if (as == REB_BLANK) {
+    if (as == TYPE_BLANK) {
         Size size;
         Cell_Bytes_At(&size, v);
         if (size == 0)

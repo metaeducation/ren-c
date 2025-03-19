@@ -94,7 +94,7 @@ DECLARE_NATIVE(reduce)
 
     Level* sub = Make_Level_At(
         &Stepper_Executor,
-        v,  // REB_BLOCK or REB_GROUP
+        v,  // TYPE_BLOCK or TYPE_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
             | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
     );
@@ -366,16 +366,16 @@ bool Try_Match_For_Compose(
     Context* binding = Cell_Binding(pattern);
 
     if (Is_Group(pattern)) {  // top level only has to match plain heart [1]
-        if (not Any_Group_Kind(Cell_Heart(at)))
+        if (not Any_Group_Type(Cell_Heart(at)))
             return false;
     }
     else if (Is_Fence(pattern)) {
-        if (not Any_Fence_Kind(Cell_Heart(at)))
+        if (not Any_Fence_Type(Cell_Heart(at)))
             return false;
     }
     else {
         assert(Is_Block(pattern));
-        if (not Any_Block_Kind(Cell_Heart(at)))
+        if (not Any_Block_Type(Cell_Heart(at)))
             return false;
     }
 
@@ -392,7 +392,7 @@ bool Try_Match_For_Compose(
         const Element* pattern_1 = Cell_List_Item_At(pattern);
 
         if (Any_List(pattern_1)) {
-            if (VAL_TYPE(match_1) != VAL_TYPE(pattern_1))
+            if (Type_Of(match_1) != Type_Of(pattern_1))
                 return false;
             pattern = pattern_1;
             Copy_Cell(match, match_1);
@@ -401,7 +401,7 @@ bool Try_Match_For_Compose(
         if (not (Is_Tag(pattern_1) or Is_File(pattern_1)))
             fail ("COMPOSE non-list patterns just TAG! and FILE! atm");
 
-        if (VAL_TYPE(match_1) != VAL_TYPE(pattern_1))
+        if (Type_Of(match_1) != Type_Of(pattern_1))
             return false;
 
         if (CT_Utf8(match_1, pattern_1, 1) != 0)
@@ -412,7 +412,7 @@ bool Try_Match_For_Compose(
     }
 
     QUOTE_BYTE(match) = NOQUOTE_1;  // want to get rid of quasi, too
-    HEART_BYTE(match) = REB_BLOCK;
+    HEART_BYTE(match) = TYPE_BLOCK;
     Tweak_Cell_Binding(match, binding);  // override? combine?
     return true;
 }
@@ -441,10 +441,10 @@ static void Push_Composer_Level(
 ){
     Heart heart = Cell_Heart(e);
     const Value* adjusted = nullptr;
-    if (Any_Sequence_Kind(heart))  // allow sequences [1]
+    if (Any_Sequence_Type(heart))  // allow sequences [1]
         adjusted = rebValue(CANON(AS), CANON(BLOCK_X), rebQ(e));
     else
-        assert(Any_List_Kind(heart));
+        assert(Any_List_Type(heart));
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Composer_Executor,
@@ -492,7 +492,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 ){
     Heart heart = Cell_Heart(composee);
 
-    if (Any_Sequence_Kind(heart)) {
+    if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Cell_Heart(composee),
@@ -505,8 +505,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
             not Any_Sequence(out)  // so instead, things like [~/~ . ///]
             and not conflate  // do not allow decay to "sequence-looking" words
         ){
-            const Element* type = Datatype_From_Kind(VAL_TYPE(out));
-            return Error_Conflated_Sequence_Raw(type, out);
+            return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
         }
 
         assert(QUOTE_BYTE(composee) & NONQUASI_BIT);  // no antiform/quasiform
@@ -659,13 +658,13 @@ Bounce Composer_Executor(Level* const L)
 
     Heart heart = Cell_Heart(at);  // quoted groups match [1]
 
-    if (not Any_Sequence_Or_List_Kind(heart)) {  // won't substitute/recurse
+    if (not Any_Sequence_Or_List_Type(heart)) {  // won't substitute/recurse
         Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
     if (not Try_Match_For_Compose(SPARE, at, pattern)) {
-        if (deep or Any_Sequence_Kind(heart)) {  // sequences same level
+        if (deep or Any_Sequence_Type(heart)) {  // sequences same level
             // compose:deep $() [does [(1 + 2)] nested] => [does [3] nested]
 
             Push_Composer_Level(OUT, main_level, at, L_binding);
@@ -706,7 +705,7 @@ Bounce Composer_Executor(Level* const L)
         return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
     if (Is_Void(OUT)) {
-        if (Any_Plain_Kind(list_heart) and list_quote_byte == NOQUOTE_1) {
+        if (Any_Plain_Type(list_heart) and list_quote_byte == NOQUOTE_1) {
             L->u.compose.changed = true;
             goto handle_next_item;  // compose $() [(void)] => []
         }
@@ -724,12 +723,12 @@ Bounce Composer_Executor(Level* const L)
     else
         Copy_Cell(PUSH(), cast(Element*, OUT));
 
-    if (Any_Meta_Kind(list_heart))
+    if (Any_Meta_Type(list_heart))
         Metafy(TOP);
-    else if (Any_The_Kind(list_heart))
+    else if (Any_The_Type(list_heart))
         Theify(TOP);
     else
-        assert(Any_Plain_Kind(list_heart));
+        assert(Any_Plain_Type(list_heart));
 
     if (list_quote_byte & NONQUASI_BIT)
         Quotify_Depth(TOP, list_quote_byte / 2);  // add to existing quotes
@@ -755,7 +754,7 @@ Bounce Composer_Executor(Level* const L)
 
     // compose $() [(spread [a b]) merges] => [a b merges]... [3]
 
-    if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Kind(list_heart))
+    if (list_quote_byte != NOQUOTE_1 or not Any_Plain_Type(list_heart))
         return RAISE("Currently can only splice plain unquoted ANY-LIST?s");
 
     assert(Is_Splice(OUT));  // GROUP! at "quoting level -1" means splice
@@ -1042,11 +1041,11 @@ DECLARE_NATIVE(compose)
     StackIndex index = VAL_INT32(SCRATCH) + STACK_BASE;
 
     assert(Is_Integer(Data_Stack_At(Element, index - 1)));  // start offset
-    assert(VAL_TYPE(Data_Stack_At(Element, index)) == VAL_TYPE(pattern));
+    assert(Type_Of(Data_Stack_At(Element, index)) == Type_Of(pattern));
     assert(Is_Integer(Data_Stack_At(Element, index + 1)));  // end offset
 
     Copy_Cell(SPARE, Data_Stack_At(Element, index));
-    HEART_BYTE(SPARE) = REB_BLOCK;
+    HEART_BYTE(SPARE) = TYPE_BLOCK;
     Tweak_Cell_Binding(SPARE, Cell_Binding(pattern));
 
     Init_Integer(SCRATCH, index - STACK_BASE);

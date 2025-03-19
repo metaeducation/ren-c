@@ -66,7 +66,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (not Is_Stub_Varlist(binding))
             break;
 
-        if (CTX_TYPE(cast(VarList*, binding)) != REB_FRAME)
+        if (CTX_TYPE(cast(VarList*, binding)) != TYPE_FRAME)
             break;
 
         KeyList* keylist = Bonus_Keylist(cast(VarList*, binding));
@@ -81,7 +81,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break;
     }
 
-    // This switch was originally done via contiguous REB_XXX values, in order
+    // This switch was originally done via contiguous TYPE_XXX values, in order
     // to facilitate use of a "jump table optimization":
     //
     // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
@@ -94,23 +94,23 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Cell_Erased(v));
         break;
 
-      case REB_BLANK:
-      case REB_COMMA:
+      case TYPE_BLANK:
+      case TYPE_COMMA:
         break;
 
-      case REB_INTEGER:
-      case REB_DECIMAL:
-      case REB_PERCENT:
-      case REB_MONEY:
+      case TYPE_INTEGER:
+      case TYPE_DECIMAL:
+      case TYPE_PERCENT:
+      case TYPE_MONEY:
         break;
 
-      case REB_SIGIL:
+      case TYPE_SIGIL:
         assert(not Stringlike_Has_Node(v));
         break;
 
-      case REB_EMAIL:
-      case REB_URL:
-      case REB_ISSUE: {
+      case TYPE_EMAIL:
+      case TYPE_URL:
+      case TYPE_ISSUE: {
         if (Stringlike_Has_Node(v)) {
             const Flex* f = Cell_String(v);
             assert(Is_Flex_Frozen(f));
@@ -122,21 +122,21 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break; }
 
-      case REB_PAIR: {
+      case TYPE_PAIR: {
         Pairing* pairing = x_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
         assert(Is_Node_Marked(pairing));
         break; }
 
-      case REB_TIME:
-      case REB_DATE:
+      case TYPE_TIME:
+      case TYPE_DATE:
         break;
 
-      case REB_PARAMETER: {
+      case TYPE_PARAMETER: {
         if (Cell_Parameter_Spec(v))
             assert(Is_Node_Marked(unwrap Cell_Parameter_Spec(v)));
         break; }
 
-      case REB_BITSET: {
+      case TYPE_BITSET: {
         assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(CELL_BITSET_BINARY(v)))
             break;
@@ -145,14 +145,14 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Node_Marked(f));
         break; }
 
-      case REB_MAP: {
+      case TYPE_MAP: {
         assert(Cell_Has_Node1(v));
         const Map* map = VAL_MAP(v);
         assert(Is_Node_Marked(map));
         assert(Stub_Holds_Cells(MAP_PAIRLIST(map)));
         break; }
 
-      case REB_HANDLE: { // See %sys-handle.h
+      case TYPE_HANDLE: { // See %sys-handle.h
         if (not Cell_Has_Node1(v)) {
             // simple handle, no GC interaction
         }
@@ -182,7 +182,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break; }
 
-      case REB_BLOB: {
+      case TYPE_BLOB: {
         assert(Cell_Has_Node1(v));
         if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
@@ -193,9 +193,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Node_Marked(b));
         break; }
 
-      case REB_TEXT:
-      case REB_FILE:
-      case REB_TAG: {
+      case TYPE_TEXT:
+      case TYPE_FILE:
+      case TYPE_TAG: {
         if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
@@ -221,7 +221,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
-      case REB_FRAME: {
+      case TYPE_FRAME: {
         Node* node = CELL_FRAME_PHASE(v);
         if (not Is_Node_Readable(node))  // e.g. EVAL-FREE freed it
             break;
@@ -244,9 +244,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       mark_object:
-      case REB_OBJECT:
-      case REB_ERROR:
-      case REB_PORT: {
+      case TYPE_OBJECT:
+      case TYPE_ERROR:
+      case TYPE_PORT: {
         Node* node = CELL_CONTEXT_VARLIST(v);
         if (Not_Node_Accessible_Canon(node))
             break;
@@ -269,7 +269,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // a method for that object.)
         //
         if (CELL_EXTRA(v) != nullptr) {
-            if (CTX_TYPE(context) == REB_FRAME) {
+            if (CTX_TYPE(context) == TYPE_FRAME) {
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
                 if (L)  // comes from execution, not MAKE FRAME!
@@ -280,7 +280,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
 
         if (v->payload.split.two.node) {
-            assert(heart == REB_FRAME); // may be heap-based frame
+            assert(heart == TYPE_FRAME); // may be heap-based frame
             assert(Is_Node_Marked(v->payload.split.two.node));  // lens/label
         }
 
@@ -294,33 +294,33 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         break; }
 
-      case REB_MODULE:  // add checks
+      case TYPE_MODULE:  // add checks
         break;
 
-      case REB_VARARGS: {
+      case TYPE_VARARGS: {
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
         Phase* phase = Extract_Cell_Varargs_Phase(v);
         if (phase)  // null if came from MAKE VARARGS!
             assert(Is_Node_Marked(phase));
         break; }
 
-      case REB_BLOCK:
-      case REB_THE_BLOCK:
-      case REB_META_BLOCK:
-      case REB_TYPE_BLOCK:
-      case REB_VAR_BLOCK:
+      case TYPE_BLOCK:
+      case TYPE_THE_BLOCK:
+      case TYPE_META_BLOCK:
+      case TYPE_TYPE_BLOCK:
+      case TYPE_VAR_BLOCK:
         //
-      case REB_FENCE:
-      case REB_THE_FENCE:
-      case REB_META_FENCE:
-      case REB_TYPE_FENCE:
-      case REB_VAR_FENCE:
+      case TYPE_FENCE:
+      case TYPE_THE_FENCE:
+      case TYPE_META_FENCE:
+      case TYPE_TYPE_FENCE:
+      case TYPE_VAR_FENCE:
         //
-      case REB_GROUP:
-      case REB_THE_GROUP:
-      case REB_META_GROUP:
-      case REB_TYPE_GROUP:
-      case REB_VAR_GROUP: {
+      case TYPE_GROUP:
+      case TYPE_THE_GROUP:
+      case TYPE_META_GROUP:
+      case TYPE_TYPE_GROUP:
+      case TYPE_VAR_GROUP: {
         if (Not_Node_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
@@ -329,25 +329,25 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Node_Marked(a));
         break; }
 
-      case REB_TUPLE:
-      case REB_THE_TUPLE:
-      case REB_META_TUPLE:
-      case REB_TYPE_TUPLE:
-      case REB_VAR_TUPLE:
+      case TYPE_TUPLE:
+      case TYPE_THE_TUPLE:
+      case TYPE_META_TUPLE:
+      case TYPE_TYPE_TUPLE:
+      case TYPE_VAR_TUPLE:
         goto any_sequence;
 
-      case REB_CHAIN:
-      case REB_THE_CHAIN:
-      case REB_META_CHAIN:
-      case REB_TYPE_CHAIN:
-      case REB_VAR_CHAIN:
+      case TYPE_CHAIN:
+      case TYPE_THE_CHAIN:
+      case TYPE_META_CHAIN:
+      case TYPE_TYPE_CHAIN:
+      case TYPE_VAR_CHAIN:
         goto any_sequence;
 
-      case REB_PATH:
-      case REB_THE_PATH:
-      case REB_META_PATH:
-      case REB_TYPE_PATH:
-      case REB_VAR_PATH:
+      case TYPE_PATH:
+      case TYPE_THE_PATH:
+      case TYPE_META_PATH:
+      case TYPE_TYPE_PATH:
+      case TYPE_VAR_PATH:
         goto any_sequence;
 
       any_sequence: {
@@ -358,11 +358,11 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Node_Marked(node1));
         break; }
 
-      case REB_WORD:
-      case REB_THE_WORD:
-      case REB_META_WORD:
-      case REB_TYPE_WORD:
-      case REB_VAR_WORD: {
+      case TYPE_WORD:
+      case TYPE_THE_WORD:
+      case TYPE_META_WORD:
+      case TYPE_TYPE_WORD:
+      case TYPE_VAR_WORD: {
         assert(Cell_Has_Node1(v));
 
         const String *spelling = Cell_Word_Symbol(v);
@@ -439,7 +439,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         assert(Any_Context(archetype));
         assert(
             archetype->extra.node == nullptr
-            or VAL_TYPE(archetype) == REB_FRAME
+            or Type_Of(archetype) == TYPE_FRAME
         );
 
         // These queueings cannot be done in Queue_Mark_Context_Deep

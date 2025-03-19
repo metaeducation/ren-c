@@ -125,7 +125,7 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
   #endif
 
     Heart heart = Cell_Heart(c);
-    const char *type = String_UTF8(Canon_Symbol(SYM_FROM_KIND(heart)));
+    const char *type = String_UTF8(Canon_Symbol(Symbol_Id_From_Type(heart)));
     Printf_Stderr("cell_heart=%s\n", type);
     Printf_Stderr("quote_byte=%d\n", QUOTE_BYTE(c));
 
@@ -264,7 +264,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         Printf_Stderr("Stub detected...\n");
         if (FLAVOR_BYTE(s) == FLAVOR_VARLIST) {
             Printf_Stderr("...and it's a varlist...\n");
-            if (CTX_TYPE(x_cast(VarList*, s)) == REB_ERROR) {
+            if (CTX_TYPE(x_cast(VarList*, s)) == TYPE_ERROR) {
                 Printf_Stderr("...and it's an Error, trying to PROBE...\n");
                 PROBE(s);  // this may crash recursively if it's corrupt
             }
@@ -279,7 +279,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       case DETECTED_AS_END: {
       #if DEBUG_FANCY_PANIC
         const Cell* c = c_cast(Cell*, p);
-        if (HEART_BYTE(c) == REB_ERROR) {
+        if (HEART_BYTE(c) == TYPE_ERROR) {
             Printf_Stderr("...panic on an ERROR! Cell, trying to PROBE...");
             PROBE(c);
         }

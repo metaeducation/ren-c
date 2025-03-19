@@ -121,7 +121,7 @@ Bounce Func_Dispatcher(Level* const L)
         if (Is_Nulled(OUT))
             goto redo_with_current_frame_values;
 
-        assert(HEART_BYTE(OUT) == REB_FRAME);
+        assert(HEART_BYTE(OUT) == TYPE_FRAME);
         goto reuse_level_to_run_frame_in_out;
     }
 
@@ -434,7 +434,7 @@ DECLARE_NATIVE(function)
 // desire to jump to a particular level in the stack with a return value.
 // It is used in the implementation of the UNWIND native.
 //
-// See notes is %sys-frame.h about how there is no actual REB_THROWN type.
+// See notes is %sys-frame.h about how there is no actual TYPE_THROWN type.
 //
 Bounce Init_Thrown_Unwind_Value(
     Level* level_,
@@ -543,7 +543,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     Atom* atom  // coercion needs mutability
 ){
     assert(  // to be in specialized slot, RETURN can't be a plain PARAMETER!
-        HEART_BYTE(param) == REB_PARAMETER
+        HEART_BYTE(param) == TYPE_PARAMETER
         and (
             QUOTE_BYTE(param) == NOQUOTE_1
             or QUOTE_BYTE(param) == ONEQUOTE_NONQUASI_3

@@ -274,7 +274,7 @@ static void Reverse_String(String* str, REBLEN index, Length len)
         Init_Text(temp, Pop_Molded_String(mo));
 
         DECLARE_VALUE (string);  // !!! Temp value, string type is irrelevant
-        Init_Any_String_At(string, REB_TEXT, str, index);
+        Init_Any_String_At(string, TYPE_TEXT, str, index);
         Modify_String_Or_Binary(  // CHANGE:PART to overwrite reversed portion
             string,
             SYM_CHANGE,
@@ -302,8 +302,8 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = VAL_TYPE_HEART(ARG(type));
-    assert(Any_String_Kind(heart) or Any_Utf8_Kind(heart));  // issue calls [1]
+    Heart heart = Cell_Datatype_Heart(ARG(type));
+    assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // issue calls [1]
 
     Element* def = Element_ARG(def);
 
@@ -333,7 +333,7 @@ DECLARE_NATIVE(to_text)
         const Byte* at = Cell_Blob_Size_At(&size, ARG(value));
         return Init_Any_String(
             OUT,
-            REB_TEXT,
+            TYPE_TEXT,
             Append_UTF8_May_Fail(
                 nullptr,
                 cs_cast(at),
@@ -663,7 +663,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
     String* buf = mo->string;
 
     Heart heart = Cell_Heart(v);
-    assert(Any_Utf8_Kind(heart));
+    assert(Any_Utf8_Type(heart));
 
     if (form) {  // TAG! is not an exception--forms without delimiters [1]
         Append_Any_Utf8(buf, v);
@@ -671,11 +671,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
     }
 
     switch (heart) {
-      case REB_TEXT:
+      case TYPE_TEXT:
         Mold_Text_Flex_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
 
-      case REB_FILE:
+      case TYPE_FILE:
         if (Cell_String_Len_At(v) == 0) {
             Append_Ascii(buf, "%\"\"");
             break;
@@ -683,7 +683,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
         Mold_File(mo, v);
         break;
 
-      case REB_TAG:
+      case TYPE_TAG:
         Mold_Tag(mo, v);
         break;
 
@@ -973,7 +973,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_SWAP: {
         Value* arg = ARG_N(2);
 
-        if (VAL_TYPE(v) != VAL_TYPE(arg))
+        if (Type_Of(v) != Type_Of(arg))
             return FAIL(Error_Not_Same_Type_Raw());
 
         String* v_str = Cell_String_Ensure_Mutable(v);
@@ -1078,9 +1078,9 @@ IMPLEMENT_GENERIC(AS, Any_String)
     INCLUDE_PARAMS_OF_AS;
 
     Element* v = Element_ARG(element);
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_String_Kind(as)) {  // special handling not in Utf8 generic
+    if (Any_String_Type(as)) {  // special handling not in Utf8 generic
         Copy_Cell(OUT, v);
         HEART_BYTE(OUT) = as;
         return Inherit_Const(stable_OUT, v);
@@ -1346,7 +1346,7 @@ DECLARE_NATIVE(decode_utf_8)
     if (Cell_Series_Len_At(ARG(options)))
         return FAIL("UTF-8 Decoder Options not Designed Yet");
 
-    Heart heart = REB_TEXT;  // should options let you specify? [1]
+    Heart heart = TYPE_TEXT;  // should options let you specify? [1]
 
     Size size;
     const Byte* at = Cell_Blob_Size_At(&size, blob);

@@ -114,7 +114,7 @@ INLINE Element* Derelativize_Untracked(
         const Stub* stub1 = c_cast(Stub*, node1);
         if (FLAVOR_SYMBOL == Stub_Flavor(stub1)) {  // x. or /x, wordlike
             if (
-                Any_Tuple_Kind(heart)
+                Any_Tuple_Type(heart)
                 and Get_Cell_Flag(v, LEADING_BLANK)  // !!! HACK for .word form
             ){
                 context = Adjust_Context_For_Coupling(context);
@@ -542,7 +542,7 @@ INLINE Context* Derive_Binding(
 // BINDING CONVENIENCE MACROS
 //
 // WARNING: Don't pass these routines something like a singular Value* (such
-// as a REB_BLOCK) which you wish to have bound.  You must pass its *contents*
+// as a TYPE_BLOCK) which you wish to have bound.  You must pass its *contents*
 // as an array...as the plural "values" in the name implies!
 //
 // So don't do this:

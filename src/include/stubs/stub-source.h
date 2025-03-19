@@ -68,8 +68,8 @@
 //
 // This is taken advantage of by when sequences hold only a list (and a blank),
 // to put the list type into the array, so the array itself can be the payload
-// of the sequence.  The heart of the cell is the sequence heart (REB_CHAIN,
-// REB_PATH, REB_TUPLE...) but then the implied heart of the contained list
+// of the sequence.  The heart of the cell is the sequence heart (TYPE_CHAIN,
+// TYPE_PATH, TYPE_TUPLE...) but then the implied heart of the contained list
 // comes out of the array.  This works most of the time (unless the array is
 // aliased via AS as another type that's also put in a sequence, which forces
 // an allocation of a stub to hold the aliased array).

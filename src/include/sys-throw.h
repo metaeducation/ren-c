@@ -1,6 +1,6 @@
 //
 //  File: %sys-throw.h
-//  Summary: "Simulated datatype for throws, in lieu of REB_THROWN"
+//  Summary: "Simulated datatype for throws, in lieu of TYPE_THROWN"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -24,7 +24,7 @@
 // indicating the "label" of the throw.
 //
 // You cannot fit both values into a single value's bits of course.  One way
-// to approach the problem would be to create a new REB_THROWN type with
+// to approach the problem would be to create a new TYPE_THROWN type with
 // two fields (like a PAIR!).  But since there can only be one thrown value
 // on an evaluator thread at a time, trampoline-globals are used instead.
 //

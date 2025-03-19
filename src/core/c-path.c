@@ -38,7 +38,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     const Source* a,
     Offset offset
 ){
-    assert(Any_Sequence_Kind(heart));
+    assert(Any_Sequence_Type(heart));
     assert(Is_Node_Managed(a));
     Assert_Flex_Term_If_Needed(a);
     assert(Is_Source_Frozen_Shallow(a));  // must be immutable (may be aliased)
@@ -264,7 +264,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
     Element* sequence = Element_ARG(example);
 
     Heart heart = Cell_Heart(sequence);
-    assert(Any_Sequence_Kind(heart));
+    assert(Any_Sequence_Type(heart));
 
     REBLEN len = Cell_Sequence_Len(sequence);
     REBLEN n;

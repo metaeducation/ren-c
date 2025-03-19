@@ -155,28 +155,28 @@ bool Pushed_Continuation(
         goto pushed_continuation;
     }
 
-    switch (VAL_TYPE(branch)) {
-      case REB_BLANK:
+    switch (Type_Of(branch)) {
+      case TYPE_BLANK:
         if (flags & LEVEL_FLAG_BRANCH)
             Init_Heavy_Null(out);
         else
             Init_Nulled(out);
         goto just_use_out;
 
-      case REB_QUOTED:
+      case TYPE_QUOTED:
         Derelativize(out, c_cast(Element*, branch), binding);
         Unquotify(out);
         if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
             Init_Heavy_Null(out);
         goto just_use_out;
 
-      case REB_META_BLOCK:
-      case REB_BLOCK: {
+      case TYPE_META_BLOCK:
+      case TYPE_BLOCK: {
         Level* L = Make_Level_At_Core(
             &Evaluator_Executor, branch, binding, flags
         );
         Init_Void(Evaluator_Primed_Cell(L));
-        if (Cell_Heart_Unchecked(branch) == REB_META_BLOCK) {
+        if (Cell_Heart_Unchecked(branch) == TYPE_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);
         }
@@ -184,7 +184,7 @@ bool Pushed_Continuation(
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
 
-      case REB_CHAIN: {  // effectively REDUCE
+      case TYPE_CHAIN: {  // effectively REDUCE
         if (not Is_Get_Block(branch))
             fail ("GET-BLOCK! is only CHAIN branch currently working");
 
@@ -211,13 +211,13 @@ bool Pushed_Continuation(
 
         arg = First_Unspecialized_Arg(&param, L);
         Derelativize(arg, c_cast(Element*, branch), binding);
-        HEART_BYTE(arg) = REB_BLOCK;  // :[1 + 2] => [3], not :[3]
+        HEART_BYTE(arg) = TYPE_BLOCK;  // :[1 + 2] => [3], not :[3]
 
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }
 
       handle_action:
-      case REB_FRAME: {
+      case TYPE_FRAME: {
         Push_Frame_Continuation(out, flags, branch, with);
         goto pushed_continuation; }
 

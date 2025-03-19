@@ -185,10 +185,10 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 //
 REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 {
-    assert(Any_Utf8_Kind(Cell_Heart(a)));
-    assert(Any_Utf8_Kind(Cell_Heart(b)));
+    assert(Any_Utf8_Type(Cell_Heart(a)));
+    assert(Any_Utf8_Type(Cell_Heart(b)));
 
-    if (Cell_Heart(a) == REB_ISSUE or Cell_Heart(b) == REB_ISSUE)
+    if (Cell_Heart(a) == TYPE_ISSUE or Cell_Heart(b) == TYPE_ISSUE)
         strict = true;  // always true? [1]
 
     REBLEN l1;
@@ -243,14 +243,14 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = VAL_TYPE_HEART(ARG(type));
-    assert(Any_Utf8_Kind(heart));
+    Heart heart = Cell_Datatype_Heart(ARG(type));
+    assert(Any_Utf8_Type(heart));
 
     Element* arg = Element_ARG(def);
 
-    switch(VAL_TYPE(arg)) {
-      case REB_INTEGER: {
-        if (heart != REB_ISSUE)
+    switch(Type_Of(arg)) {
+      case TYPE_INTEGER: {
+        if (heart != TYPE_ISSUE)
             fail ("Only ISSUE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
@@ -259,8 +259,8 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             return RAISE(unwrap error);
         return OUT; }
 
-      case REB_BLOB: {
-        if (heart != REB_ISSUE)
+      case TYPE_BLOB: {
+        if (heart != TYPE_ISSUE)
             fail ("Only ISSUE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
@@ -271,7 +271,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1) {
-                Init_Builtin_Datatype(ARG(type), REB_ISSUE);
+                Init_Builtin_Datatype(ARG(type), TYPE_ISSUE);
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
 
@@ -284,7 +284,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
-                Init_Builtin_Datatype(ARG(type), REB_ISSUE);
+                Init_Builtin_Datatype(ARG(type), TYPE_ISSUE);
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
@@ -416,18 +416,18 @@ DECLARE_NATIVE(nul_q)
 
 static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 {
-    switch (VAL_TYPE(arg)) {
-      case REB_ISSUE:
+    switch (Type_Of(arg)) {
+      case TYPE_ISSUE:
         return Cell_Codepoint(arg);
 
-      case REB_INTEGER:
+      case TYPE_INTEGER:
         return VAL_INT32(arg);
 
-      case REB_DECIMAL:
+      case TYPE_DECIMAL:
         return cast(REBINT, VAL_DECIMAL(arg));
 
       default:
-        fail (Error_Math_Args(REB_ISSUE, verb));
+        fail (Error_Math_Args(TYPE_ISSUE, verb));
     }
 }
 
@@ -678,10 +678,10 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(element);  // issue, email, etc.
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
     possibly(Any_Word(v));  // delegates some cases
 
-    if (Any_String_Kind(to)) {  // always need mutable new copy of data
+    if (Any_String_Type(to)) {  // always need mutable new copy of data
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
@@ -691,7 +691,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Any_String(OUT, to, s);
     }
 
-    if (Any_Word_Kind(to)) {
+    if (Any_Word_Type(to)) {
         assert(not Any_Word(v));  // does not delegate this case
         if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v)))
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -702,7 +702,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Any_Word(OUT, to, sym);
     }
 
-    if (to == REB_ISSUE) {  // may have to make node if source mutable
+    if (to == TYPE_ISSUE) {  // may have to make node if source mutable
         if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v))) {
             possibly(Any_Word(v));
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -716,12 +716,12 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         );
     }
 
-    if (to == REB_EMAIL or to == REB_URL or to == REB_SIGIL) {
+    if (to == TYPE_EMAIL or to == TYPE_URL or to == TYPE_SIGIL) {
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
 
-        if (to == REB_EMAIL) {
+        if (to == TYPE_EMAIL) {
             if (
                 cast(const Byte*, utf8) + size
                 != Try_Scan_Email_To_Stack(utf8, size)
@@ -731,7 +731,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
             return Move_Drop_Top_Stack_Element(OUT);
         }
 
-        if (to == REB_URL) {
+        if (to == TYPE_URL) {
             if (
                 cast(const Byte*, utf8) + size
                 != Try_Scan_URL_To_Stack(utf8, size)
@@ -741,20 +741,20 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
             return Move_Drop_Top_Stack_Element(OUT);
         }
 
-        assert(to == REB_SIGIL);  // transcoding is slow--need to refactor
-        Option(Error*) error = Trap_Transcode_One(OUT, REB_SIGIL, v);
+        assert(to == TYPE_SIGIL);  // transcoding is slow--need to refactor
+        Option(Error*) error = Trap_Transcode_One(OUT, TYPE_SIGIL, v);
         if (error)
             return RAISE(unwrap error);
         return OUT;
     }
 
     if (
-        to == REB_INTEGER
-        or to == REB_DECIMAL
-        or to == REB_PERCENT
-        or to == REB_DATE
-        or to == REB_TIME
-        or to == REB_PAIR
+        to == TYPE_INTEGER
+        or to == TYPE_DECIMAL
+        or to == TYPE_PERCENT
+        or to == TYPE_DATE
+        or to == TYPE_TIME
+        or to == TYPE_PAIR
     ){
         Option(Error*) error = Trap_Transcode_One(OUT, to, v);
         if (error)
@@ -762,15 +762,15 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return OUT;
     }
 
-    if (Any_Sequence_Kind(to)) {  // to the-tuple! "a.b.c" -> @a.b.c
+    if (Any_Sequence_Type(to)) {  // to the-tuple! "a.b.c" -> @a.b.c
         Heart plain;
-        if (Any_Tuple_Kind(to))
-            plain = REB_TUPLE;
-        else if (Any_Chain_Kind(to))
-            plain = REB_CHAIN;
+        if (Any_Tuple_Type(to))
+            plain = TYPE_TUPLE;
+        else if (Any_Chain_Type(to))
+            plain = TYPE_CHAIN;
         else {
-            assert(Any_Path_Kind(to));
-            plain = REB_PATH;
+            assert(Any_Path_Type(to));
+            plain = TYPE_PATH;
         }
         Option(Error*) error = Trap_Transcode_One(OUT, plain, v);
         if (error)
@@ -779,7 +779,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return OUT;
     }
 
-    if (Any_List_Kind(to)) {  // limited TRANSCODE (how limited?...) [1]
+    if (Any_List_Type(to)) {  // limited TRANSCODE (how limited?...) [1]
         if (Stringlike_Has_Node(v)) {
             if (Stub_Flavor(Cell_String(v)) == FLAVOR_SYMBOL)  // [2]
                 return rebValue(CANON(ENVELOP), ARG(type), rebQ(v));
@@ -787,7 +787,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return rebValue(CANON(AS), ARG(type), CANON(TRANSCODE), rebQ(v));
     }
 
-    if (to == REB_BLANK)
+    if (to == TYPE_BLANK)
         return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);
 
     return UNHANDLED;
@@ -810,10 +810,10 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
     INCLUDE_PARAMS_OF_AS;
 
     Element* v = Element_ARG(element);  // issue, email, etc.
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
     assert(not Any_Word(v));  // not delegated
 
-    if (Any_String_Kind(as)) {  // have to create a Flex if not node [1]
+    if (Any_String_Type(as)) {  // have to create a Flex if not node [1]
         assert(not Any_String(v));  // not delegated by string generic
         if (Stringlike_Has_Node(v)) {
             possibly(Is_Flex_Frozen(Cell_String(v)));
@@ -834,11 +834,11 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         memcpy(Flex_Data(str), utf8, size + 1);  // +1 to include '\0'
         Term_String_Len_Size(str, len, size);
         Freeze_Flex(str);
-        possibly(as == REB_BLOB);  // index 0 so byte transform not needed
+        possibly(as == TYPE_BLOB);  // index 0 so byte transform not needed
         return Init_Series(OUT, as, str);
     }}
 
-    if (Any_Word_Kind(as)) {  // aliasing as an ANY-WORD? freezes data
+    if (Any_Word_Type(as)) {  // aliasing as an ANY-WORD? freezes data
         if (Stringlike_Has_Node(v)) {
             const String* str = Cell_String(v);
             if (VAL_INDEX(v) != 0)
@@ -863,21 +863,21 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         return OUT;
     }
 
-    if (as == REB_BLOB) {  // resulting binary is UTF-8 constrained [2]
+    if (as == TYPE_BLOB) {  // resulting binary is UTF-8 constrained [2]
         if (Stringlike_Has_Node(v)) {
             Init_Blob_At(
                 OUT,
                 Cell_String(v),
                 VAL_BYTEOFFSET(v)  // index has to be in terms of bytes
             );
-            HEART_BYTE(OUT) = REB_BLOB;
+            HEART_BYTE(OUT) = TYPE_BLOB;
             return OUT;
         }
 
         goto make_small_utf8_at_index_0;
     }
 
-    if (as == REB_INTEGER) {
+    if (as == TYPE_INTEGER) {
         if (not IS_CHAR(v))
         return FAIL(
             "AS INTEGER! only supports what-were-CHAR! issues ATM"
@@ -885,8 +885,8 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         return Init_Integer(OUT, Cell_Codepoint(v));
     }
 
-    if (as == REB_ISSUE) {  // try to fit in cell, or use frozen string
-        assert(not Any_Word_Kind(as) and not (Any_String_Kind(as)));
+    if (as == TYPE_ISSUE) {  // try to fit in cell, or use frozen string
+        assert(not Any_Word_Type(as) and not (Any_String_Type(as)));
 
         if (Stringlike_Has_Node(v)) {
             const String *s = Cell_String(v);
@@ -908,7 +908,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         return OUT;
     }
 
-    if (as == REB_EMAIL or as == REB_URL or as == REB_SIGIL) {
+    if (as == TYPE_EMAIL or as == TYPE_URL or as == TYPE_SIGIL) {
         if (Stringlike_Has_Node(v)) {
             const String *s = Cell_String(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
@@ -920,7 +920,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         return GENERIC_CFUNC(TO, Any_String)(LEVEL);  // not optimized yet
     }
 
-    if (as == REB_BLANK) {
+    if (as == TYPE_BLANK) {
         Size size;
         Cell_Utf8_Size_At(&size, v);
         if (size == 0)
@@ -967,7 +967,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Is_Issue)
     Element* issue = Element_ARG(element);
     Value* part = ARG(part);
 
-    const Value* type = Datatype_From_Kind(REB_ISSUE);
+    const Value* type = Datatype_From_Type(TYPE_ISSUE);
 
     return Delegate_Operation_To_Text(LIB(REVERSE), type, issue, part);
 }

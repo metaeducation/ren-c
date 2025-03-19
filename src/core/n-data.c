@@ -63,7 +63,7 @@ DECLARE_NATIVE(bind)
 
             Use* use = Alloc_Use_Inherits(Cell_Binding(v));
             Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
-            HEART_BYTE(Stub_Cell(use)) = REB_WORD;
+            HEART_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
             if (not IS_WORD_BOUND(Stub_Cell(use)))
                 return FAIL(Error_Not_Bound_Raw(Stub_Cell(use)));
@@ -92,7 +92,7 @@ DECLARE_NATIVE(bind)
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(v));
         Copy_Cell(Stub_Cell(use), spec);
-        HEART_BYTE(Stub_Cell(use)) = REB_WORD;
+        HEART_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
         Tweak_Cell_Binding(v, use);
 
@@ -334,10 +334,10 @@ DECLARE_NATIVE(use)
 //
 bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 {
-    switch (VAL_TYPE(v)) {
-    case REB_WORD:
-    case REB_META_WORD:
-    case REB_THE_WORD: {
+    switch (Type_Of(v)) {
+    case TYPE_WORD:
+    case TYPE_META_WORD:
+    case TYPE_THE_WORD: {
         if (IS_WORD_UNBOUND(v))
             return false;
 
@@ -355,7 +355,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
         // If it's a FRAME! we want the phase to match the execution phase at
         // the current moment of execution.
         //
-        if (CTX_TYPE(c) == REB_FRAME) {
+        if (CTX_TYPE(c) == TYPE_FRAME) {
             Level* L = Level_Of_Varlist_If_Running(cast(VarList*, c));
             if (L == nullptr)
                 Init_Frame(out, cast(ParamList*, c), ANONYMOUS, NONMETHOD);
@@ -369,7 +369,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
                 );
             }
         }
-        else if (CTX_TYPE(c) == REB_MODULE)
+        else if (CTX_TYPE(c) == TYPE_MODULE)
             Init_Module(out, cast(SeaOfVars*, c));
         else
             Copy_Cell(out, Varlist_Archetype(cast(VarList*, c)));
@@ -696,7 +696,7 @@ DECLARE_NATIVE(quasi_word_q)
     if (b)
         return unwrap b;
 
-    return LOGIC(Is_Quasiform(e) and HEART_BYTE(e) == REB_WORD);
+    return LOGIC(Is_Quasiform(e) and HEART_BYTE(e) == TYPE_WORD);
 }
 
 
@@ -741,7 +741,7 @@ DECLARE_NATIVE(lit_word_q)
         return unwrap b;
 
     return LOGIC(
-        QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and HEART_BYTE(e) == REB_WORD
+        QUOTE_BYTE(e) == ONEQUOTE_NONQUASI_3 and HEART_BYTE(e) == TYPE_WORD
     );
 }
 
@@ -866,12 +866,12 @@ DECLARE_NATIVE(resolve)
     Element* source = Element_ARG(source);
 
     if (Any_Word(source)) {
-        HEART_BYTE(source) = REB_WORD;
+        HEART_BYTE(source) = TYPE_WORD;
         return COPY(source);
     }
 
     if (Any_Tuple(source)) {
-        HEART_BYTE(source) = REB_TUPLE;
+        HEART_BYTE(source) = TYPE_TUPLE;
         return COPY(source);
     }
 
@@ -1271,7 +1271,7 @@ DECLARE_NATIVE(barrier_q)
     Byte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_COMMA);
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_COMMA);
 }
 
 

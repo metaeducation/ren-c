@@ -160,7 +160,7 @@ DECLARE_NATIVE(meta)
         REF(lite)  // META:LITE handles quasiforms specially
         and Is_Quasiform(meta)
     ){
-        if (HEART_BYTE(meta) == REB_WORD) {  // keywords pass thru
+        if (HEART_BYTE(meta) == TYPE_WORD) {  // keywords pass thru
             QUOTE_BYTE(meta) = ANTIFORM_0_COERCE_ONLY;  // ^META validated [1]
             return COPY(meta);
         }
@@ -409,7 +409,7 @@ DECLARE_NATIVE(spread)
     Value* v = ARG(value);
 
     if (Any_List(v)) {  // most common case
-        HEART_BYTE(v) = REB_GROUP;  // throws away original heart
+        HEART_BYTE(v) = TYPE_GROUP;  // throws away original heart
         Coerce_To_Stable_Antiform(v);
         return COPY(v);
     }
@@ -580,7 +580,7 @@ DECLARE_NATIVE(lazy_q)
     Byte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_OBJECT);
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_OBJECT);
 }
 
 
@@ -601,7 +601,7 @@ DECLARE_NATIVE(pack_q)
     Byte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
-    return LOGIC(quote_byte == ANTIFORM_0 and heart == REB_BLOCK);
+    return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_BLOCK);
 }
 
 

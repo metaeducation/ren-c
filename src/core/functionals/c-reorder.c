@@ -183,7 +183,7 @@ DECLARE_NATIVE(reorder)
         else if (Is_Quoted(item)) {
             if (
                 Cell_Num_Quotes(item) != 1
-                or not Any_Word_Kind(Cell_Heart(item))
+                or not Any_Word_Type(Cell_Heart(item))
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD?");
                 goto cleanup_binder;
@@ -212,7 +212,7 @@ DECLARE_NATIVE(reorder)
             goto cleanup_binder;
         }
 
-        Init_Any_Word_Bound(PUSH(), REB_WORD, symbol, paramlist, index);
+        Init_Any_Word_Bound(PUSH(), TYPE_WORD, symbol, paramlist, index);
     }
 
     // Make sure that all parameters that were mandatory got a place in the

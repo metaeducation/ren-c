@@ -331,7 +331,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 // There are up to 255 built-in type predicates, which can be efficiently
 // referred to by byte and tested quickly.  The acceleration either involves
 // testing for whether something is a member of up to 31 typesets in the
-// g_sparse_memberships[] table, or a range of Kind values.
+// g_sparse_memberships[] table, or a range of Type values.
 //
 // These aliases are used to help find places that use the optimization.
 //

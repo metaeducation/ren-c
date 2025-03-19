@@ -151,7 +151,7 @@ REBINT Find_Binstr_In_Binstr(
 ){
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
 
-    bool is_2_str = (Cell_Heart(binstr2) != REB_BLOB);
+    bool is_2_str = (Cell_Heart(binstr2) != TYPE_BLOB);
     Size size2;
     Length len2;
     const Byte* head2;
@@ -181,7 +181,7 @@ REBINT Find_Binstr_In_Binstr(
         return VAL_INDEX(binstr1);
     }
 
-    bool is_1_str = (Cell_Heart(binstr1) != REB_BLOB);
+    bool is_1_str = (Cell_Heart(binstr1) != TYPE_BLOB);
     assert(not (is_1_str and not is_2_str));  // see `IMPORTANT` comment above
 
     // The search window size in units of binstr1.  It's the length or size of
@@ -215,7 +215,7 @@ REBINT Find_Binstr_In_Binstr(
     const Byte* cp1;  // binstr1 position that is current test head of match
     Length len_head1;
     Size size_at1;
-    if (Cell_Heart(binstr1) == REB_BLOB) {
+    if (Cell_Heart(binstr1) == TYPE_BLOB) {
         cp1 = Cell_Blob_Size_At(&size_at1, binstr1);
         len_head1 = Cell_Series_Len_Head(binstr1);
     }
@@ -451,7 +451,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
-    bool is_str = (Cell_Heart(binstr) != REB_BLOB);
+    bool is_str = (Cell_Heart(binstr) != TYPE_BLOB);
 
     const Byte* cp1 = is_str ? Cell_String_At(binstr) : Cell_Blob_At(binstr);
     Codepoint c1;
@@ -514,12 +514,12 @@ REBLEN Find_Value_In_Binstr(
     Heart binstr_heart = Cell_Heart(binstr);
     Heart pattern_heart = Cell_Heart(pattern);
 
-    if (REB_BLOB == pattern_heart and binstr_heart != REB_BLOB) {
+    if (TYPE_BLOB == pattern_heart and binstr_heart != TYPE_BLOB) {
         //
         // Can't search for BLOB! in an ANY-STRING? (might match on a "half
         // codepoint").  Solution is to alias input as UTF-8 binary.
         //
-        if (binstr_heart != REB_BLOB)
+        if (binstr_heart != TYPE_BLOB)
             fail (Error_Find_String_Binary_Raw());
     }
 
@@ -527,12 +527,12 @@ REBLEN Find_Value_In_Binstr(
     if (
         num_quotes == 1
         or (num_quotes == 0 and (
-            Any_Utf8_Kind(pattern_heart)
-            or REB_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
-            or REB_BLOB == pattern_heart  // binstr_heart checked for REB_BLOB
+            Any_Utf8_Type(pattern_heart)
+            or TYPE_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
+            or TYPE_BLOB == pattern_heart  // binstr_heart checked for TYPE_BLOB
         ))
     ){
-        if (binstr_heart != REB_BLOB and (
+        if (binstr_heart != TYPE_BLOB and (
             IS_CHAR_CELL(pattern) and Cell_Codepoint(pattern) == 0
         )){
             return NOT_FOUND;  // can't find NUL # in strings, only BLOB!
@@ -549,7 +549,7 @@ REBLEN Find_Value_In_Binstr(
         //   == "<c>d"
 
         String* molded = nullptr;
-        if (num_quotes == 1 or Cell_Heart(pattern) == REB_INTEGER)
+        if (num_quotes == 1 or Cell_Heart(pattern) == TYPE_INTEGER)
             molded = Copy_Mold_Cell_Ignore_Quotes(pattern, 0);
 
         DECLARE_ELEMENT (temp);  // !!! Note: unmanaged
@@ -576,7 +576,7 @@ REBLEN Find_Value_In_Binstr(
     }
     else if (
         QUOTE_BYTE(pattern) == NOQUOTE_1
-        and pattern_heart == REB_BITSET
+        and pattern_heart == TYPE_BITSET
     ){
         return Find_Bitset_In_Binstr(
             len,

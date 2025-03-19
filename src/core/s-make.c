@@ -233,7 +233,7 @@ void Append_Any_Utf8_Limit(
     Option(const Length*) limit
 ){
     assert(not Is_Flex_Frozen(dst));
-    assert(Any_Utf8_Kind(Cell_Heart(src)));
+    assert(Any_Utf8_Type(Cell_Heart(src)));
 
     Length len;
     Size size;
@@ -381,31 +381,31 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
 
     const Element* val = Cell_List_Item_At(blk);
     for (; limit > 0; val++, limit--) {
-        switch (VAL_TYPE(val)) {
-          case REB_BLANK:
+        switch (Type_Of(val)) {
+          case TYPE_BLANK:
             break;
 
-          case REB_QUASIFORM:
+          case TYPE_QUASIFORM:
             fail (Error_Bad_Value(val));
 
-          case REB_INTEGER:
+          case TYPE_INTEGER:
             Expand_Flex_Tail(buf, 1);
             *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can fail()
             break;
 
-          case REB_BLOB: {
+          case TYPE_BLOB: {
             Size size;
             const Byte* data = Cell_Blob_Size_At(&size, val);
             Expand_Flex_Tail(buf, size);
             memcpy(Binary_At(buf, tail), data, size);
             break; }
 
-          case REB_ISSUE:
-          case REB_TEXT:
-          case REB_FILE:
-          case REB_EMAIL:
-          case REB_URL:
-          case REB_TAG: {
+          case TYPE_ISSUE:
+          case TYPE_TEXT:
+          case TYPE_FILE:
+          case TYPE_EMAIL:
+          case TYPE_URL:
+          case TYPE_TAG: {
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
 

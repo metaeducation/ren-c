@@ -98,7 +98,7 @@ INLINE Element* Init_Trash_Untracked(Init(Element) out) {
     TRACK(Init_Trash_Untracked(out))
 
 INLINE bool Is_Trash(Need(const Element*) v)
-  { return HEART_BYTE(v) == REB_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
+  { return HEART_BYTE(v) == TYPE_BLANK and QUOTE_BYTE(v) == QUASIFORM_2; }
 
 
 //=//// '~' ANTIFORM (a.k.a. NOTHING) /////////////////////////////////////=//

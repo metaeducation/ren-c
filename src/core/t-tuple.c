@@ -33,14 +33,14 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = VAL_TYPE_HEART(ARG(type));
-    assert(Any_Sequence_Kind(heart));
+    Heart heart = Cell_Datatype_Heart(ARG(type));
+    assert(Any_Sequence_Type(heart));
 
     Element* arg = Element_ARG(def);
 
     if (Is_Block(arg))
         return rebValue(
-            CANON(TO), Datatype_From_Kind(heart), CANON(REDUCE), arg
+            CANON(TO), Datatype_From_Type(heart), CANON(REDUCE), arg
         );
 
     if (Is_Text(arg)) {
@@ -83,7 +83,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         return OUT;
     }
 
-    return RAISE(Error_Bad_Make(REB_TUPLE, arg));
+    return RAISE(Error_Bad_Make(TYPE_TUPLE, arg));
 }
 
 
@@ -199,7 +199,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         ap = abuf;
     }
     else
-        return FAIL(Error_Math_Args(REB_TUPLE, verb));
+        return FAIL(Error_Math_Args(TYPE_TUPLE, verb));
 
     REBLEN temp = len;
     for (; temp > 0; --temp, ++vp) {
@@ -290,12 +290,12 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 
     Element* seq = Element_ARG(element);
 
-    Heart to = VAL_TYPE_HEART(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_Sequence_Kind(to))  // e.g. `to the-chain! 'a.b.c` [1]
+    if (Any_Sequence_Type(to))  // e.g. `to the-chain! 'a.b.c` [1]
         return GENERIC_CFUNC(AS, Any_Sequence)(LEVEL);  // immutable, same code
 
-    if (Any_List_Kind(to)) {  // !!! Should list have isomorphic binding?
+    if (Any_List_Type(to)) {  // !!! Should list have isomorphic binding?
         Source* a = Make_Source_Managed(1);
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), seq);
@@ -303,13 +303,13 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_Utf8_Kind(to) and not Any_Word_Kind(to)) {
+    if (Any_Utf8_Type(to) and not Any_Word_Type(to)) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Plainify(seq);  // to text! @a.b.c -> "a.b.c"
         Form_Element(mo, seq);
         const String* s = Pop_Molded_String(mo);
-        if (not Any_String_Kind(to))
+        if (not Any_String_Type(to))
             Freeze_Flex(s);
         return Init_Any_String(OUT, to, s);
     }
@@ -341,9 +341,9 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
     Element* seq = Element_ARG(element);  // sequence
     Length len = Cell_Sequence_Len(seq);
 
-    Heart as = VAL_TYPE_HEART(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(type));
 
-    if (Any_Sequence_Kind(as)) {  // not all aliasings are legal [1]
+    if (Any_Sequence_Type(as)) {  // not all aliasings are legal [1]
         REBINT i;
         for (i = 0; i < len; ++i) {
             Copy_Sequence_At(SPARE, seq, i);
@@ -351,13 +351,13 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
                 continue;
 
             assert(not Any_Path(SPARE));  // impossible!
-            if (Any_Chain(SPARE) and (as == REB_TUPLE or as == REB_CHAIN))
+            if (Any_Chain(SPARE) and (as == TYPE_TUPLE or as == TYPE_CHAIN))
                 return FAIL(
                     "Can't AS alias CHAIN!-containing sequence"
                     "as TUPLE! or CHAIN!"
                 );
 
-            if (Any_Tuple(SPARE) and as == REB_TUPLE)
+            if (Any_Tuple(SPARE) and as == TYPE_TUPLE)
                 return FAIL(
                     "Can't AS alias TUPLE!-containing sequence as TUPLE!"
                 );
@@ -368,7 +368,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
         return Trust_Const(OUT);
     }
 
-    if (Any_List_Kind(as)) {  // give immutable form, try to share memory
+    if (Any_List_Type(as)) {  // give immutable form, try to share memory
         if (not Sequence_Has_Node(seq)) {  // byte packed sequence
             Source* a = Make_Source_Managed(len);
             Set_Flex_Len(a, len);
@@ -396,11 +396,11 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
             if (Get_Cell_Flag(seq, LEADING_BLANK)) {
                 Init_Blank(Array_At(a, 0));
                 Copy_Cell(Array_At(a, 1), seq);
-                HEART_BYTE(Array_At(a, 1)) = REB_WORD;
+                HEART_BYTE(Array_At(a, 1)) = TYPE_WORD;
             }
             else {
                 Copy_Cell(Array_At(a, 0), seq);
-                HEART_BYTE(Array_At(a, 0)) = REB_WORD;
+                HEART_BYTE(Array_At(a, 0)) = TYPE_WORD;
                 Init_Blank(Array_At(a, 1));
             }
             Freeze_Source_Shallow(a);
@@ -427,7 +427,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
             }
             else {
                 assert(Is_Source_Frozen_Shallow(a));
-                HEART_BYTE(seq) = REB_BLOCK;
+                HEART_BYTE(seq) = TYPE_BLOCK;
             }
             break; }
 
@@ -481,7 +481,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     if (trivial_copy)  // something like a/1/foo
         return COPY(seq);
 
-    const Value* type = Type_Of(seq);
+    const Value* type = Datatype_Of(seq);
 
     return rebDelegate(  // slow, but not a high priority to write it fast [1]
         "as @", type, "copy // ["
@@ -530,7 +530,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
         part = MIN(temp, len);
     }
 
-    const Value* type = Type_Of(seq);
+    const Value* type = Datatype_Of(seq);
 
     return rebDelegate(  // !!! slow, but not a high priority to write it fast
         "as @", type, "reverse:part copy as block!", rebQ(seq), rebI(part)
@@ -589,22 +589,22 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
     Heart heart = Cell_Heart(c);
 
     char interstitial;
-    if (Any_Tuple_Kind(heart))
+    if (Any_Tuple_Type(heart))
         interstitial = '.';
-    else if (Any_Chain_Kind(heart))
+    else if (Any_Chain_Type(heart))
         interstitial = ':';
     else {
-        assert(Any_Path_Kind(heart));
+        assert(Any_Path_Type(heart));
         interstitial = '/';
     }
 
-    if (Any_Meta_Kind(heart))
+    if (Any_Meta_Type(heart))
         Append_Codepoint(mo->string, '^');
-    else if (Any_The_Kind(heart))
+    else if (Any_The_Type(heart))
         Append_Codepoint(mo->string, '@');
-    else if (Any_Type_Kind(heart))
+    else if (Any_Type_Type(heart))
         Append_Codepoint(mo->string, '&');
-    else if (Any_Var_Kind(heart))
+    else if (Any_Var_Type(heart))
         Append_Codepoint(mo->string, '$');
 
     DECLARE_ELEMENT (element);
@@ -627,10 +627,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
                 const Symbol* s = Cell_Word_Symbol(element);
                 if (Get_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
                     assert(
-                        Any_Chain_Kind(heart)
+                        Any_Chain_Type(heart)
                         and Cell_Sequence_Len(c) == 2
                     );
-                if (Any_Tuple_Kind(heart))
+                if (Any_Tuple_Type(heart))
                     assert(Not_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE));
                 UNUSED(s);
             }

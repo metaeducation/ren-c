@@ -36,7 +36,7 @@
 //
 // * HEART_BYTE: the second byte indicates what type of information the other
 //   3 slots in the cell describe.  It corresponds to a datatype, such as
-//   REB_INTEGER, REB_BLOCK, REB_TEXT, tec.
+//   TYPE_INTEGER, TYPE_BLOCK, TYPE_TEXT, tec.
 //
 // * QUOTE_BYTE: the third byte indicates how quoted something is, or if it
 //   is a quaisform or antiform.  See %sys-quoted.h for more on how the byte
@@ -155,7 +155,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // The "heart" is the fundamental datatype of a cell, dictating its payload
 // layout and interpretation.
 //
-// Most of the time code wants to check the VAL_TYPE() of a cell and not it's
+// Most of the time code wants to check the Type_Of() of a cell and not it's
 // HEART, because that treats quoted cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
 
@@ -168,11 +168,11 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // quoting byte is reserved for whether the contained value is a quasiform,
 // each quoting level effectively adds 2 to the quote byte.
 //
-// A cell's underlying "HEART" can report it as something like a REB_WORD, but
-// if the quoting byte is > 1 VAL_TYPE() says it is REB_QUOTED.  This has the
+// A cell's underlying "HEART" can report it as something like a TYPE_WORD, but
+// if the quoting byte is > 1 Type_Of() says it is TYPE_QUOTED.  This has the
 // potential to cause confusion in the internals.  But the type system is used
 // to check at compile-time so that different views of the same cell don't
-// get conflated, e.g. Cell* can't have VAL_TYPE() taken on it.
+// get conflated, e.g. Cell* can't have Type_Of() taken on it.
 //
 // 1. See the documentation point [1] on HEART_BYTE for why no ensure().
 //
@@ -615,7 +615,7 @@ union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //    https://stackoverflow.com/a/76426676
 //
 #if CHECK_CELL_SUBCLASSES
-    struct alignas(ALIGN_SIZE) Cell : public Node  // VAL_TYPE() illegal
+    struct alignas(ALIGN_SIZE) Cell : public Node  // Type_Of() illegal
 #elif CPLUSPLUS_11
     struct alignas(ALIGN_SIZE) RebolValueStruct : public Node
 #elif C_11

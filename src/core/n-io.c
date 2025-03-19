@@ -303,16 +303,16 @@ DECLARE_NATIVE(new_line_q)
 REBLEN Milliseconds_From_Value(const Value* v) {
     REBINT msec;
 
-    switch (VAL_TYPE(v)) {
-    case REB_INTEGER:
+    switch (Type_Of(v)) {
+    case TYPE_INTEGER:
         msec = 1000 * Int32(v);
         break;
 
-    case REB_DECIMAL:
+    case TYPE_DECIMAL:
         msec = cast(REBINT, 1000 * VAL_DECIMAL(v));
         break;
 
-    case REB_TIME:
+    case TYPE_TIME:
         msec = cast(REBINT, VAL_NANO(v) / (SEC_SEC / 1000));
         break;
 

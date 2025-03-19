@@ -1431,7 +1431,7 @@
 
 //=//// CORRUPT UNUSED FIELDS /////////////////////////////////////////////=//
 //
-// It would seem that structs--such as the Cell struct for REB_BLANK--which
+// It would seem that structs--such as the Cell struct for TYPE_BLANK--which
 // don't use their payloads could just leave them uninitialized...saving time
 // on the assignments.
 //

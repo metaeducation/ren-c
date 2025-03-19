@@ -55,14 +55,14 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
     if (not Is_Stable_Antiform_Heart(heart))
         assert(not Is_Api_Value(c));  // no unstable antiforms in API [1]
 
-    if (not Any_Isotopic_Kind(heart)) {
+    if (not Any_Isotopic_Type(heart)) {
         QUOTE_BYTE(c) = NOQUOTE_1;
         Value* v = cast(Value*, c);
         fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
-        if (Any_Word_Kind(heart)) {
+        if (Any_Word_Type(heart)) {
             switch (Cell_Word_Id(c)) {
               case SYM_NULL:
                 assert(not Is_Api_Value(c));  // API uses nullptr [3]
@@ -83,11 +83,11 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
             Unbind_Any_Word(c);
         }
         else {
-            assert(Any_List_Kind(heart) or heart == REB_COMMA);
+            assert(Any_List_Type(heart) or heart == TYPE_COMMA);
             Tweak_Cell_Binding(c, UNBOUND);
         }
     }
-    else if (heart == REB_FRAME) {
+    else if (heart == TYPE_FRAME) {
         if (Cell_Frame_Lens(c))  // no lens on antiforms...show only inputs
             Tweak_Cell_Frame_Lens_Or_Label(c, ANONYMOUS);
     }
@@ -109,7 +109,7 @@ INLINE Atom* Coerce_To_Unstable_Antiform(Atom* a) {
 INLINE Element* Coerce_To_Quasiform(Value* v) {
     Heart heart = Cell_Heart(v);
 
-    if (not Any_Isotopic_Kind(heart)) {
+    if (not Any_Isotopic_Type(heart)) {
         QUOTE_BYTE(v) = NOQUOTE_1;
         fail (Error_Non_Isotopic_Type_Raw(v));
     }
@@ -121,7 +121,7 @@ INLINE Element* Coerce_To_Quasiform(Value* v) {
 INLINE Option(Error*) Trap_Coerce_To_Quasiform(Value* v) {
     Heart heart = Cell_Heart(v);
 
-    if (not Any_Isotopic_Kind(heart)) {
+    if (not Any_Isotopic_Type(heart)) {
         QUOTE_BYTE(v) = NOQUOTE_1;
         return Error_Non_Isotopic_Type_Raw(v);
     }

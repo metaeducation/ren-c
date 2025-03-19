@@ -396,7 +396,7 @@ static Element* Init_Normalized_Date(
     }
 
     if (year < 0 or year > MAX_YEAR)
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_DATE)));
+        fail (Error_Type_Limit_Raw(Datatype_From_Type(TYPE_DATE)));
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_DATE);
     CELL_DATE_YMDZ(out).year = year;
@@ -548,7 +548,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(VAL_TYPE_HEART(ARG(type)) == REB_DATE);
+    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_DATE);
     UNUSED(ARG(type));
 
     Element* arg = Element_ARG(def);
@@ -657,7 +657,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 
 } bad_make: {  ///////////////////////////////////////////////////////////////
 
-    return RAISE(Error_Bad_Make(REB_DATE, arg));
+    return RAISE(Error_Bad_Make(TYPE_DATE, arg));
 }}
 
 
@@ -1012,13 +1012,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
         Value* arg = ARG_N(2);
-        REBINT type = VAL_TYPE(arg);
+        REBINT type = Type_Of(arg);
 
-        if (type == REB_DATE) {
+        if (type == TYPE_DATE) {
             if (id == SYM_SUBTRACT)
                 return Init_Integer(OUT, Days_Between_Dates(v, arg));
         }
-        else if (type == REB_TIME) {
+        else if (type == TYPE_TIME) {
             if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)
                     secs = 0;
@@ -1032,7 +1032,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
                 goto fix_time;
             }
         }
-        else if (type == REB_INTEGER) {
+        else if (type == TYPE_INTEGER) {
             REBINT num = Int32(arg);
             if (id == SYM_ADD) {
                 day += num;
@@ -1043,7 +1043,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
                 goto fix_date;
             }
         }
-        else if (type == REB_DECIMAL) {
+        else if (type == TYPE_DECIMAL) {
             REBDEC dec = Dec64(arg);
             if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)
@@ -1120,7 +1120,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
             //
             if (not Is_Date(val2))
                 return FAIL(
-                    Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2))
+                    Error_Unexpected_Type(Type_Of(val1), Type_Of(val2))
                 );
 
             return Time_Between_Dates(OUT, val1, val2); }
