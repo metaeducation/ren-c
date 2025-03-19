@@ -606,24 +606,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         }
         return COPY(v); }
 
-      case SYM_REVERSE: {
-        INCLUDE_PARAMS_OF_REVERSE;
-        UNUSED(ARG(series));
-
-        REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* bp = Cell_Blob_At_Ensure_Mutable(v);  // index may've changed
-
-        if (len > 0) {
-            REBLEN n = 0;
-            REBLEN m = len - 1;
-            for (; n < len / 2; n++, m--) {
-                Byte b = bp[n];
-                bp[n] = bp[m];
-                bp[m] = b;
-            }
-        }
-        return COPY(v); }
-
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
@@ -875,6 +857,28 @@ IMPLEMENT_GENERIC(POKE, Is_Blob)
     Binary_Head(bin)[n] = cast(Byte, i);
 
     return nullptr;  // caller's Binary* is not stale, no update needed
+}
+
+
+IMPLEMENT_GENERIC(REVERSE, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_REVERSE;
+
+    Element* blob = Element_ARG(series);
+
+    REBLEN len = Part_Len_May_Modify_Index(blob, ARG(part));
+    Byte* bp = Cell_Blob_At_Ensure_Mutable(blob);  // index may've changed
+
+    if (len > 0) {
+        REBLEN n = 0;
+        REBLEN m = len - 1;
+        for (; n < len / 2; n++, m--) {
+            Byte b = bp[n];
+            bp[n] = bp[m];
+            bp[m] = b;
+        }
+    }
+    return COPY(blob);
 }
 
 

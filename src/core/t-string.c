@@ -232,11 +232,15 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 **
 ***********************************************************************/
 
-
-static void reverse_string(String* str, REBLEN index, Length len)
+// 1. !!! This is an inefficient method for reversing strings with variable
+//    size codepoints.  Better way could work in place:
+//
+//      https://stackoverflow.com/q/199260/
+//
+static void Reverse_String(String* str, REBLEN index, Length len)
 {
-    if (len == 0)
-        return; // if non-zero, at least one character in the string
+    if (len <= 1)
+        return;  // zero or one characters means reverse is a noop
 
     if (
         Is_String_All_Ascii(str)
@@ -252,16 +256,11 @@ static void reverse_string(String* str, REBLEN index, Length len)
             bp[m] = b;
         }
     }
-    else {
-        // !!! This is an inefficient method for reversing strings with
-        // variable size codepoints.  Better way could work in place:
-        //
-        // https://stackoverflow.com/q/199260/
-
+    else {  // !!! inefficient reversal for variable-size codepoints [1]
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
 
-        Length len_head = String_Len(str);
+        Length len_head = String_Len(str);  // should be same after we're done
 
         Utf8(const*) utf8 = String_Tail(str);  // last exists due to len != 0
         Count n;
@@ -274,12 +273,9 @@ static void reverse_string(String* str, REBLEN index, Length len)
         DECLARE_VALUE (temp);
         Init_Text(temp, Pop_Molded_String(mo));
 
-        // Effectively do a CHANGE:PART to overwrite the reversed portion of
-        // the string (from the input value's index to the tail).
-
         DECLARE_VALUE (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, REB_TEXT, str, index);
-        Modify_String_Or_Binary(
+        Modify_String_Or_Binary(  // CHANGE:PART to overwrite reversed portion
             string,
             SYM_CHANGE,
             temp,
@@ -288,10 +284,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
             1 // dup count
         );
 
-        // Regardless of whether the whole string was reversed or just some
-        // part from the index to the tail, the length shouldn't change.
-        //
-        assert(Cell_Series_Len_Head(string) == len_head);
+        assert(Cell_Series_Len_Head(string) == len_head);  // shouldn't change
         UNUSED(len_head);
     }
 }
@@ -1014,18 +1007,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         }
         return COPY(v); }
 
-      case SYM_REVERSE: {
-        INCLUDE_PARAMS_OF_REVERSE;
-        UNUSED(ARG(series));
-
-        String* str = Cell_String_Ensure_Mutable(v);
-
-        Copy_Cell(OUT, v);  // save before index adjustment
-        REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
-        if (len > 0)
-            reverse_string(str, VAL_INDEX(v), len);
-        return OUT; }
-
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
@@ -1174,6 +1155,20 @@ IMPLEMENT_GENERIC(POKE, Any_String)
     return nullptr;  // String* in Cell unchanged, caller need not update
 }
 
+
+IMPLEMENT_GENERIC(REVERSE, Any_String)
+{
+    INCLUDE_PARAMS_OF_REVERSE;
+
+    Element* any_string = Element_ARG(series);
+
+    String* s = Cell_String_Ensure_Mutable(any_string);
+
+    Copy_Cell(OUT, any_string);  // save before index adjustment
+    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(part));
+    Reverse_String(s, VAL_INDEX(any_string), len);
+    return OUT;
+}
 
 
 IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)

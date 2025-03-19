@@ -243,3 +243,16 @@ IMPLEMENT_GENERIC(BINDING_OF, Any_Word)
 
     return OUT;
 }
+
+
+IMPLEMENT_GENERIC(REVERSE_OF, Any_Word)
+{
+    INCLUDE_PARAMS_OF_REVERSE_OF;
+
+    Element* any_word = Element_ARG(element);
+    Value* part = ARG(part);
+
+    const Value* type = Type_Of(any_word);
+
+    return Delegate_Operation_To_Text(LIB(REVERSE), type, any_word, part);
+}

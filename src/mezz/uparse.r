@@ -1435,7 +1435,7 @@ default-combinators: to map! reduce [
         ]
 
         if <delay> = first value [
-            if length of value = 1 [
+            if 1 = length of value [
                 fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups

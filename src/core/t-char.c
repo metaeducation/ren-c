@@ -968,6 +968,19 @@ IMPLEMENT_GENERIC(PICK, Is_Issue)
 }
 
 
+IMPLEMENT_GENERIC(REVERSE_OF, Is_Issue)
+{
+    INCLUDE_PARAMS_OF_REVERSE_OF;
+
+    Element* issue = Element_ARG(element);
+    Value* part = ARG(part);
+
+    const Value* type = Datatype_From_Kind(REB_ISSUE);
+
+    return Delegate_Operation_To_Text(LIB(REVERSE), type, issue, part);
+}
+
+
 //
 //  /codepoint-of: native:generic [
 //

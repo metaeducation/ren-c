@@ -197,9 +197,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Pair)
     Value* y2 = nullptr;
 
     switch (id) {
-      case SYM_REVERSE:
-        return Init_Pair(OUT, Cell_Pair_Y(v), Cell_Pair_X(v));
-
       case SYM_ADD:
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
@@ -322,6 +319,19 @@ IMPLEMENT_GENERIC(POKE, Is_Pair)
     Copy_Cell(which, poke);
 
     return nullptr;
+}
+
+
+IMPLEMENT_GENERIC(REVERSE, Is_Pair)
+{
+    INCLUDE_PARAMS_OF_REVERSE;
+
+    if (REF(part))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    const Element* pair = Element_ARG(series);
+
+    return Init_Pair(OUT, Cell_Pair_Y(pair), Cell_Pair_X(pair));
 }
 
 

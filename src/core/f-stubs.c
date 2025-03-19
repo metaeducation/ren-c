@@ -345,18 +345,11 @@ REBLEN Part_Len_May_Modify_Index(
     Value* series,  // ANY-SERIES? value whose index may be modified
     const Value* part  // :PART (number, position in value, or BLANK! cell)
 ){
-    if (Any_Sequence(series)) {
-        if (not Is_Nulled(part))
-            fail (":PART cannot be used with ANY-SEQUENCE");
-
-        return Cell_Sequence_Len(series);
-    }
-
     assert(Is_Issue(series) or Any_Series(series));
 
     if (Is_Nulled(part)) {  // indicates :PART refinement unused
         if (not Is_Issue(series))
-            return Cell_Series_Len_At(series);  // leave index alone, use plain length
+            return Cell_Series_Len_At(series);  // use plain length
 
         Size size;
         Cell_Utf8_Size_At(&size, series);

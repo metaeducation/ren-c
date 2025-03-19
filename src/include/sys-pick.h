@@ -1,13 +1,12 @@
 //
-//  File: %sys-pick.h
-//  Summary: "Definitions for Processing Sequence Picking/Poking"
+//  File: %sys-generic.h
+//  Summary: "Definitions for Generic Function Dispatch"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2015 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,18 +19,85 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-
-
-
-// New concept of generic dispatch: use sparse tables which are scanned for
-// during the build process to find IMPLEMENT_GENERIC(name, type) instances.
+// Ren-C has a new concept of generic dispatch using sparse tables which are
+// scanned during the build process to find IMPLEMENT_GENERIC(name, typeset)
+// instances.
 //
-// The name is taken in all-caps so we can get a SYM_XXX from token pasting.
+//   https://forum.rebol.info/c/development/optimization/53
+//
+
+// `name` is taken in all-caps so we can get a SYM_XXX from token pasting.
 //
 #define Dispatch_Generic(name,cue,L) \
     Dispatch_Generic_Core( \
         SYM_##name, g_generic_##name, Cell_Heart_Ensure_Noquote(cue), (L) \
     )
+
+#define Try_Dispatch_Generic(bounce,name,cue,L) \
+    Try_Dispatch_Generic_Core( \
+        bounce, SYM_##name, g_generic_##name, \
+        Cell_Heart_Ensure_Noquote(cue), (L) \
+    )
+
+// Generic Dispatch if you just want it to fail if there's no handler.
+// (Some clients use Try_Dispatch_Generic_Core(), so they can take an
+// alternative action if no handler is registered... e.g. REVERSE-OF will
+// fall back on COPY and REVERSE.)
+//
+// 1. return FAIL() can't be used in %sys-core.h because not everything that
+//    includes %sys-core.h defines the helper macros.  We want this to be
+//    fast and get inlined, so expand the macro manually.
+//
+INLINE Bounce Dispatch_Generic_Core(
+    SymId symid,
+    GenericTable* table,
+    Heart heart,  // no quoted/quasi/anti [1]
+    Level* level_
+){
+    Bounce bounce;
+    if (Try_Dispatch_Generic_Core(
+        &bounce,
+        symid,
+        table,
+        heart,
+        level_
+    )){
+        return bounce;
+    }
+
+    DECLARE_ELEMENT (name);
+    Init_Word(name, Canon_Symbol(symid));
+
+    return Native_Fail_Result(  // can't use FAIL() macro in %sys-core.h [1]
+        level_, Derive_Error_From_Pointer(
+            Error_Cannot_Use_Raw(name, Datatype_From_Kind(heart))
+        )
+    );
+}
+
+
+INLINE Option(Dispatcher*) Try_Get_Generic_Dispatcher(
+    const GenericTable* table,
+    Heart heart
+){
+    for (; table->typeset_byte != 0; ++table) {
+        if (Builtin_Typeset_Check(table->typeset_byte, heart))
+            return table->dispatcher;
+    }
+    return nullptr;
+}
+
+
+// There's a common pattern in functions like REVERSE-OF or APPEND-OF which
+// is that they're willing to run on WORD! or ISSUE!, but just want to delegate
+// to running the operation on a copy made of the value interpreted as text...
+// then converted back again.  This should be optimized, but for now just
+// use the libRebol API to do it quick and dirty.
+//
+#define Delegate_Operation_To_Text(operation, type, element, part) \
+    rebDelegate("as @", type, rebRUN(operation), "copy // [", \
+        "as text! @", element, ":part @", part, \
+    "]")
 
 
 // If you pass in a nullptr for the steps in the Get_Var() and Set_Var()

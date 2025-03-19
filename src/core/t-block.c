@@ -800,83 +800,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         }
         return COPY(list); }
 
-      case SYM_REVERSE: {
-        INCLUDE_PARAMS_OF_REVERSE;
-        UNUSED(ARG(series));  // covered by `v`
-
-        Source* arr = Cell_Array_Ensure_Mutable(list);
-        REBLEN index = VAL_INDEX(list);
-
-        REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
-        if (len == 0)
-            return COPY(list); // !!! do 1-element reversals update newlines?
-
-        Cell* front = Array_At(arr, index);
-        Cell* back = front + len - 1;
-
-        // We must reverse the sense of the newline markers as well, #2326
-        // Elements that used to be the *end* of lines now *start* lines.
-        // So really this just means taking newline pointers that were
-        // on the next element and putting them on the previous element.
-
-        bool line_back;
-        if (back == Array_Last(arr)) // !!! review tail newline handling
-            line_back = Get_Source_Flag(arr, NEWLINE_AT_TAIL);
-        else
-            line_back = Get_Cell_Flag(back + 1, NEWLINE_BEFORE);
-
-        for (len /= 2; len > 0; --len, ++front, --back) {
-            bool line_front = Get_Cell_Flag(front + 1, NEWLINE_BEFORE);
-
-            Cell temp;
-            temp.header = front->header;
-            temp.extra = front->extra;
-            temp.payload = front->payload;
-          #if DEBUG_TRACK_EXTEND_CELLS
-            temp.file = front->file;
-            temp.line = front->line;
-            temp.tick = front->tick;
-            temp.touch = front->touch;
-          #endif
-
-            // When we move the back cell to the front position, it gets the
-            // newline flag based on the flag state that was *after* it.
-            //
-            front->header = back->header;
-            front->extra = back->extra;
-            front->payload = back->payload;
-          #if DEBUG_TRACK_EXTEND_CELLS
-            front->file = back->file;
-            front->line = back->line;
-            front->tick = back->tick;
-            front->touch = back->touch;
-          #endif
-            if (line_back)
-                Set_Cell_Flag(front, NEWLINE_BEFORE);
-            else
-                Clear_Cell_Flag(front, NEWLINE_BEFORE);
-
-            // We're pushing the back pointer toward the front, so the flag
-            // that was on the back will be the after for the next blit.
-            //
-            line_back = Get_Cell_Flag(back, NEWLINE_BEFORE);
-            back->header = temp.header;
-            back->extra = temp.extra;
-            back->payload = temp.payload;
-          #if DEBUG_TRACK_EXTEND_CELLS
-            back->file = temp.file;
-            back->line = temp.line;
-            back->tick = temp.tick;
-            back->touch = temp.touch;
-          #endif
-
-            if (line_front)
-                Set_Cell_Flag(back, NEWLINE_BEFORE);
-            else
-                Clear_Cell_Flag(back, NEWLINE_BEFORE);
-        }
-        return COPY(list); }
-
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
         UNUSED(PARAM(value));  // covered by `v`
@@ -1158,6 +1081,85 @@ IMPLEMENT_GENERIC(POKE, Any_List)
     return nullptr;  // Array* is still fine, caller need not update
 }
 
+
+// 1. We must reverse the sense of the newline markers as well, #2326
+//    Elements that used to be the *end* of lines now *start* lines.  So
+//    really this just means taking newline pointers that were on the next
+//    element and putting them on the previous element.
+//
+// 2. When we move the back cell to the front position, it gets the newline
+//    flag based on the flag state that was *after* it.
+//
+// 3. We're pushing the back pointer toward the front, so the flag that was
+//    on the back will be the after for the next blit.
+//
+IMPLEMENT_GENERIC(REVERSE, Any_List)
+{
+    INCLUDE_PARAMS_OF_REVERSE;
+
+    Element* list = Element_ARG(series);
+
+    Source* arr = Cell_Array_Ensure_Mutable(list);
+    REBLEN index = VAL_INDEX(list);
+
+    REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
+    if (len == 0)
+        return COPY(list); // !!! do 1-element reversals update newlines?
+
+    Element* front = Array_At(arr, index);
+    Element* back = front + len - 1;
+
+    bool line_back;  // must reverse sense of newlines [1]
+    if (back == Array_Last(arr)) // !!! review tail newline handling
+        line_back = Get_Source_Flag(arr, NEWLINE_AT_TAIL);
+    else
+        line_back = Get_Cell_Flag(back + 1, NEWLINE_BEFORE);
+
+    for (len /= 2; len > 0; --len, ++front, --back) {
+        bool line_front = Get_Cell_Flag(front + 1, NEWLINE_BEFORE);
+
+        Element temp;
+        temp.header = front->header;
+        temp.extra = front->extra;
+        temp.payload = front->payload;
+      #if DEBUG_TRACK_EXTEND_CELLS
+        temp.file = front->file;
+        temp.line = front->line;
+        temp.tick = front->tick;
+        temp.touch = front->touch;
+      #endif
+
+        front->header = back->header;
+        front->extra = back->extra;
+        front->payload = back->payload;
+      #if DEBUG_TRACK_EXTEND_CELLS
+        front->file = back->file;
+        front->line = back->line;
+        front->tick = back->tick;
+        front->touch = back->touch;
+      #endif
+        if (line_back)  // back to front gets flag that was *after* it [2]
+            Set_Cell_Flag(front, NEWLINE_BEFORE);
+        else
+            Clear_Cell_Flag(front, NEWLINE_BEFORE);
+
+        line_back = Get_Cell_Flag(back, NEWLINE_BEFORE);
+        back->header = temp.header;
+        back->extra = temp.extra;
+        back->payload = temp.payload;
+      #if DEBUG_TRACK_EXTEND_CELLS
+        back->file = temp.file;
+        back->line = temp.line;
+        back->tick = temp.tick;
+        back->touch = temp.touch;
+      #endif
+        if (line_front)  // flag on back will be after for next blit [3]
+            Set_Cell_Flag(back, NEWLINE_BEFORE);
+        else
+            Clear_Cell_Flag(back, NEWLINE_BEFORE);
+    }
+    return COPY(list);
+}
 
 
 //

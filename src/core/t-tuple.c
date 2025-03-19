@@ -119,26 +119,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         return OUT; }
 
 
-    // !!! Should REVERSE of a sequence be supported, when sequences are
-    // fundamentally immutable?  Probably not, but this replaces code that was
-    // outdated and completely buggy.
-
-      case SYM_REVERSE: {
-        INCLUDE_PARAMS_OF_REVERSE;
-        UNUSED(PARAM(series));
-
-        Length part = len;
-
-        if (REF(part)) {
-            Length temp = Get_Num_From_Arg(ARG(part));
-            part = MIN(temp, len);
-        }
-
-        return rebDelegate(
-            "let t: type of", rebQ(sequence),
-            "as t reverse:part copy as block!", rebQ(sequence), rebI(part)
-        ); }
-
     // !!! RANDOM is SHUFFLE by default, so same question about mutability
     // and if SHUFFLE:COPY should be a thing.  RANDOM:ONLY picks an item out
     // of a series at random (should be default for random?)
@@ -503,6 +483,31 @@ IMPLEMENT_GENERIC(PICK, Any_Sequence)
 
     Copy_Sequence_At(OUT, seq, n);
     return OUT;
+}
+
+
+// Sequences (TUPLE!, PATH!, etc.) are not mutable, so they don't support
+// REVERSE, only REVERSE OF which creates a new sequence.
+//
+IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
+{
+    INCLUDE_PARAMS_OF_REVERSE_OF;
+
+    const Element* seq = Element_ARG(element);
+
+    Length len = Cell_Sequence_Len(seq);
+    Length part = len;
+
+    if (REF(part)) {
+        Length temp = Get_Num_From_Arg(ARG(part));
+        part = MIN(temp, len);
+    }
+
+    const Value* type = Type_Of(seq);
+
+    return rebDelegate(  // !!! slow, but not a high priority to write it fast
+        "as @", type, "reverse:part copy as block!", rebQ(seq), rebI(part)
+    );
 }
 
 

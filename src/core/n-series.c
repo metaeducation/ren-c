@@ -188,7 +188,32 @@ DECLARE_NATIVE(swap)
 DECLARE_NATIVE(reverse)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(REVERSE));
+    return Dispatch_Generic(REVERSE, series, LEVEL);
+}
+
+
+//
+//  /reverse-of: native:generic [
+//
+//  "Give a copy of the reversal of a value (works on immutable types)"
+//
+//      return: [fundamental?]
+//      element "At position if series"
+//          [<maybe> fundamental?]
+//      :part "Limits to a given length or position"
+//          [any-number? any-series?]
+//  ]
+//
+DECLARE_NATIVE(reverse_of)
+{
+    Element* elem = cast(Element*, ARG_N(1));
+
+    Bounce bounce;
+    if (Try_Dispatch_Generic(&bounce, REVERSE_OF, elem, LEVEL))
+        return bounce;
+
+    Quotify(elem);
+    return rebDelegate("reverse copy", elem);
 }
 
 

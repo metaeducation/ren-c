@@ -262,14 +262,13 @@ DECLARE_NATIVE(native)
 //    a bit longer to break it out of that idea.  Bridge for the meantime
 //    to translate new calls into old calls using the passed-in SymId.
 //
-Bounce Dispatch_Generic_Core(
+bool Try_Dispatch_Generic_Core(
+    Sink(Bounce) bounce,
     SymId symid,
     GenericTable* table,
     Heart heart,  // no quoted/quasi/anti [1]
     Level* const L
 ){
-    USE_LEVEL_SHORTHANDS (L);
-
     if (heart == REB_PORT and symid != SYM_OLDGENERIC) {  // !!! Legacy [2]
         switch (symid) {  // exempt port's IMPLEMENT_GENERIC() cases
           case SYM_MAKE:
@@ -280,18 +279,17 @@ Bounce Dispatch_Generic_Core(
 
           default:
             L->u.action.label = Canon_Symbol(symid);  // !!! Level_Verb() hack
-            return GENERIC_CFUNC(OLDGENERIC, Is_Port)(L);
+            *bounce = GENERIC_CFUNC(OLDGENERIC, Is_Port)(L);
+            return true;
         }
     }
 
-    for (; table->typeset_byte != 0; ++table) {
-        if (Builtin_Typeset_Check(table->typeset_byte, heart))
-            return table->dispatcher(L);
-    }
+    Dispatcher* dispatcher = maybe Try_Get_Generic_Dispatcher(table, heart);
+    if (not dispatcher)
+        return false;  // not handled--some clients want to try more things
 
-    DECLARE_ELEMENT (name);
-    Init_Word(name, Canon_Symbol(symid));
-    return FAIL(Error_Cannot_Use_Raw(name, Datatype_From_Kind(heart)));
+    *bounce = (*dispatcher)(L);
+    return true;  // handled, even if it threw
 }
 
 
