@@ -9,7 +9,7 @@
 ; be tested for and reacted to easily with things like DID, DIDN'T, THEN, ELSE.
 
 (null? null)
-~type-of-null~ !! (antiform! = type of null)
+~type-of-null~ !! (keyword! = type of null)
 (null = try type of null)
 
 (not null? 1)

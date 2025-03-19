@@ -77,7 +77,7 @@ DECLARE_NATIVE(moldify)
 //
 //      return: "null if input is void, if truncated returns integer /LIMIT "
 //          [~null~ ~[text! [~null~ integer!]]~]
-//      value [<maybe> element? splice?]
+//      value [<maybe> element? splice!]
 //      :flat "No indentation"
 //      :limit "Limit to a certain length"
 //          [integer!]

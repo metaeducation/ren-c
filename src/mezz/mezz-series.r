@@ -57,7 +57,7 @@ REBOL [
     size "Size or block of sizes for each dimension"
         [<maybe> integer! block!]
     :initial "Initial value (will be called each time if action)"
-        [element? action?]
+        [element? action!]
     <local> rest block
 ][
     initial: default ['~]  ; if not specified, array will be all trash
@@ -102,9 +102,9 @@ REBOL [
     target "Series to replace within (modified)"
         [any-series?]
     pattern "Value to be replaced (converted if necessary)"
-        [~void~ element? splice? action?]
+        [~void~ element? splice! action!]
     replacement "Value to replace with (called each time if action)"
-        [~void~ element? splice? action?]
+        [~void~ element? splice! action!]
 
     :one "Replace one (or zero) occurrences"
     :case "Case-sensitive replacement"  ; !!! Note this aliases CASE native!
@@ -502,7 +502,7 @@ bind construct [
             bitset!  ; set of characters to split by
             char? text!  ; text to split by
             quoted!  ; literally look for value
-            splice?  ; split on a splice's literal contents
+            splice!  ; split on a splice's literal contents
             quasiform!  ; alternate way to pass in splice or void
         ]
     :into "If dlm is integer, split in n pieces (vs. pieces of length n)"

@@ -890,7 +890,7 @@ bool Javascript_Details_Querier(
 //
 //  "Create ACTION! from textual JavaScript code"
 //
-//      return: [action?]
+//      return: [action!]
 //      spec "Function specification (similar to the one used by FUNCTION)"
 //          [block!]
 //      source "JavaScript code as a text string" [text!]

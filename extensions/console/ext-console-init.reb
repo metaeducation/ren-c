@@ -458,7 +458,7 @@ bind construct [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [~null~ block! group!]
     result "^META result from PRIOR eval, non-quoted error, or exit code #"
-        [~null~ error! quoted? quasi? integer!]
+        [~null~ error! quoted! quasiform! integer!]
     resumable "Is the RESUME function allowed to exit this console"
         [yesno?]
     skin "Console skin to use if the console has to be launched"

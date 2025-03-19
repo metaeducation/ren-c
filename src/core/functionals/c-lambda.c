@@ -129,7 +129,7 @@ bool Lambda_Details_Querier(
 //
 //  "Make an anonymous function that doesn't define a local RETURN"
 //
-//      return: [action?]
+//      return: [action!]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
 //      body "Code implementing the lambda"

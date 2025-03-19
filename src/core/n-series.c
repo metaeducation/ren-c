@@ -36,7 +36,7 @@
 //      series "At position (modified)"
 //          [<maybe> any-series? port! map! object! bitset! port!]
 //      value "What to insert (antiform groups will splice, e.g. SPREAD)"
-//          [~void~ element? splice?]
+//          [~void~ element? splice!]
 //      :part "Limits to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the insert a specified number of times"
@@ -60,7 +60,7 @@ DECLARE_NATIVE(insert)  // Must be frame-compatible with APPEND, CHANGE
 //      series "Any position (modified)"
 //          [<maybe> any-series? port! map! object! module! bitset!]
 //      value "What to append (antiform groups will splice, e.g. SPREAD)"
-//          [~void~ element? splice?]
+//          [~void~ element? splice!]
 //      :part "Limits to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the insert a specified number of times"
@@ -84,7 +84,7 @@ DECLARE_NATIVE(append)  // Must be frame-compatible with CHANGE, INSERT
 //      series "At position (modified)"
 //          [<maybe> any-series? port!]
 //      value "The new value (antiform groups will splice, e.g. SPREAD)"
-//          [~void~ element? splice?]
+//          [~void~ element? splice!]
 //      :part "Limits the amount to change to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the change a specified number of times"
@@ -299,7 +299,7 @@ DECLARE_NATIVE(at)
 //          [~null~ ~[any-series? any-series?]~]
 //      series [<maybe> blank! any-series?]
 //      pattern "What to find, if an action call as a predicate on each item"
-//          [<maybe> element? splice? action?]
+//          [<maybe> element? splice! action!]
 //      :part "Limits the search to a given length or position"
 //          [any-number? any-series? pair!]
 //      :case "Characters are case-sensitive"
@@ -322,7 +322,7 @@ DECLARE_NATIVE(find)  // Must be frame-compatible with SELECT
 //
 //      return: [any-value?]
 //      series [<maybe> blank! any-series? any-context? map! bitset!]
-//      value [<maybe> element? splice? action?]
+//      value [<maybe> element? splice! action!]
 //      :part "Limits the search to a given length or position"
 //          [any-number? any-series? pair!]
 //      :case "Characters are case-sensitive"

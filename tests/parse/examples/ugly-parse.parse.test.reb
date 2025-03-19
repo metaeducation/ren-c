@@ -13,7 +13,7 @@
     ugly-combinators: copy default-combinators
 
     ugly-combinators.(group!): combinator [
-        return: [any-value? pack?]
+        return: [any-value? pack!]
         :pending [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [group?]

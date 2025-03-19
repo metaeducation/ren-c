@@ -2,7 +2,7 @@
 (logic? okay)
 (logic? null)
 (not logic? 1)
-(antiform! = try type of okay)
+(keyword! = type of okay)
 (null = try type of null)
 
 ((on? 'on) = true? 'true)

@@ -409,7 +409,7 @@ Details* Alloc_Action_From_Exemplar(
 //
 //  "Make a function that manipulates an invocation at the callsite"
 //
-//      return: [action?]
+//      return: [action!]
 //      shim "The action that has a FRAME! (or QUOTED?) argument to supply"
 //          [<unrun> frame!]
 //      :parameter "Shim parameter receiving the frame--defaults to last"

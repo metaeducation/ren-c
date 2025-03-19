@@ -148,7 +148,7 @@ export analyse: context [
         return all [
             let filetype: select extensions extension-of file
             let type: has source filetype
-            (reeval (ensure action?! get type) file
+            (reeval (ensure action! get type) file
                 (read %% (repo-dir)/(file)))
         ]
     ]

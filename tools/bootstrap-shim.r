@@ -240,7 +240,6 @@ yesno?!: word!
 blob!: binary!
 /blob?: binary?/
 
-logic?!: make typeset! [~null~ nothing!]
 /to-logic: func3 [x] [
     either x [~] [null]
 ]
@@ -386,7 +385,6 @@ refinement!: get-word!
 chain!: path!  ; works in some places (a:b scans as a PATH! in bootstrap EXE)
 
 char?!: char!  ; modern char is ISSUE! constraint
-logic?!: logic!  ; modern logic is ANTIFORM! constraint
 set-word?!: set-word!  ; modern set-word is CHAIN constraint
 get-word?!: get-word!  ; modern get-word is CHAIN constraint
 set-tuple?!: set-path!  ; modern tuple exists, set-tuple is CHAIN constraint
@@ -669,6 +667,7 @@ get-path!: func3 [] [
     replace types 'element? 'any-value!
     replace types 'action? 'action!
     replace types 'lit-word? 'lit-word!
+    replace types 'logic? 'logic!
     replace types <variadic> <...>
     return types
 ]

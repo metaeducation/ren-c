@@ -452,21 +452,13 @@ INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* c) {
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
-INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
-    switch (QUOTE_BYTE(v)) {
-      case ANTIFORM_0_COERCE_ONLY: {  // use this constant rarely!
-        Byte heart = HEART_BYTE(v);
-        assert(  // can't answer VAL_TYPE() for unstable isotopes
-            heart != REB_0
-            and heart != REB_BLOCK
-            and heart != REB_COMMA
-            and heart != REB_ERROR
-            and heart != REB_OBJECT
-        );
-        return u_cast(Kind, heart + REB_QUOTED); }
+INLINE Kind VAL_TYPE_UNCHECKED(const Atom* a) {
+    switch (QUOTE_BYTE(a)) {
+      case ANTIFORM_0_COERCE_ONLY:  // use this constant rarely!
+        return u_cast(Kind, HEART_BYTE(a) + REB_QUOTED);
 
-      case NOQUOTE_1: {
-        return u_cast(Kind, HEART_BYTE(v)); }
+      case NOQUOTE_1:
+        return u_cast(Kind, HEART_BYTE(a));
 
       case QUASIFORM_2_COERCE_ONLY:  // use this constant rarely!
         return REB_QUASIFORM;

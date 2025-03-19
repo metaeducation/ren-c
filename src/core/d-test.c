@@ -36,7 +36,7 @@
 
     static int Subroutine(void) {
         return rebUnboxInteger(
-            "assert [action? :print]",
+            "assert [action? print/]",
             "add 304 696"
         );
     }

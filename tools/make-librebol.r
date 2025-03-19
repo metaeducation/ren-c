@@ -725,7 +725,7 @@ e-lib/emit [ver --{
      *
      *     void Subroutine(void) {
      *         rebElide(
-     *             "assert [action? :print]",
+     *             "assert [action? print/]",
      *             "print -{Subroutine() has original ASSERT and PRINT!}-"
      *         );
      *     }

@@ -67,7 +67,7 @@ REBOL [
 /make-file-block-parts: func [
     return: [block!]
     block [block!]
-    predicate [action?]
+    predicate [action!]
     <local> last-was-slash item
 ][
     ; Current idea is to analyze for "slash coherence"
@@ -141,7 +141,7 @@ REBOL [
 /make-file-tuple-parts: func [
     return: [block!]
     tuple [tuple!]
-    predicate [action?]
+    predicate [action!]
     <local> text item
 ][
     tuple: as block! tuple
@@ -177,7 +177,7 @@ REBOL [
 /make-file-path-parts: func [
     return: [block!]
     path [path!]
-    predicate [action?]
+    predicate [action!]
     <local> item
 ][
     path: as block! path
@@ -232,7 +232,7 @@ REBOL [
 
     return: [~null~ file!]
     def [<maybe> word! path! tuple! block!]
-    :predicate [action?]
+    :predicate [action!]
     <local> result
 ][
     predicate: default [:identity]

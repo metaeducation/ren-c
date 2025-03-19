@@ -325,7 +325,7 @@ REBOL [
         if match [word! path!] :item [item: get item]
 
         switch:type :item [
-            action?! [
+            action! [
                 use-librebol: 'yes
                 unrun :item
             ]

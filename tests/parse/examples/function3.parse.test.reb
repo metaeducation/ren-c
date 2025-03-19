@@ -10,7 +10,7 @@
 (/function3: func [
     "Augment action with <static>, <in>, <with> features"
 
-    return: [action?]
+    return: [action!]
     spec "Help string (opt) followed by arg words (and opt type and string)"
         [block!]
     body "The body block of the function"

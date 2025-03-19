@@ -51,9 +51,6 @@ nothing?!: &nothing?
 void?!: &void?
 char?!: &char?
 space?!: &space?
-splice?!: &splice?
-logic?!: &logic?
-action?!: &action?
 
 blank: _
 

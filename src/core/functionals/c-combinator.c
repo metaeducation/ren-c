@@ -352,7 +352,7 @@ void Push_Parser_Sublevel(
 //
 //      return: "PARSER's result if it succeeds, otherwise NULL"
 //          [any-value?]
-//      parser [action?]
+//      parser [action!]
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
@@ -466,7 +466,7 @@ DECLARE_NATIVE(text_x_combinator)
 //
 //      return: "Result of last successful match"
 //          [any-value?]
-//      parser [action?]
+//      parser [action!]
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
@@ -552,7 +552,7 @@ DECLARE_NATIVE(some_combinator)
 //
 //      return: "parser result if it succeeded and advanced input, else NULL"
 //          [any-value?]
-//      parser [action?]
+//      parser [action!]
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
@@ -740,7 +740,7 @@ static bool Combinator_Param_Hook(
 //  "Analyze combinator parameters in rules to produce a specialized parser"
 //
 //      return: "Parser function and advanced position in rules"
-//          [~[action? block!]~]
+//          [~[action! block!]~]
 //      combinator "Parser combinator taking input, but also other parameters"
 //          [frame!]
 //      rules [block!]

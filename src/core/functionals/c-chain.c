@@ -262,7 +262,7 @@ bool Cascader_Details_Querier(
 //
 //  "Create a processing pipeline of actions, each consuming the last result"
 //
-//      return: [action?]
+//      return: [action!]
 //      pipeline "Block of ACTION!s to apply (will be LOCKed)"
 //          [block!]
 //  ]

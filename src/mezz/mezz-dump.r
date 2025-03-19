@@ -137,7 +137,7 @@ bind construct [
 /dumps: infix func [
     "Fast generator for dumping function that uses assigned name for prefix"
 
-    return: [action?]
+    return: [action!]
     @(name) [set-word?]
     @(value) "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word? set-tuple? group! block!]

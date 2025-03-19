@@ -33,7 +33,7 @@
     /pointfree*: func [
         "Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming"
 
-        return: [action?]
+        return: [action!]
         frame [<unrun> frame!]
         block "Invocation by example (BLANK!s are unspecialized)"
             [block!]
@@ -121,7 +121,7 @@
     pf: infix func [
         "Declare action by example instantiation, missing args unspecialized"
 
-        return: [action?]
+        return: [action!]
         @(left) "Enforces nothing to the left of the pointfree expression"
             [<end>]
         @expression "POINTFREE expression, BLANK!s are unspecialized arg slots"

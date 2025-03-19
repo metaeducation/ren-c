@@ -1,6 +1,6 @@
 ; %infix.test.reb
 
-(antiform! = type of +/)
+(action! = type of +/)
 (infix? +/)
 
 (infix? +/)

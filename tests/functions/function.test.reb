@@ -190,7 +190,7 @@
 )
 ; two-function return tests
 (
-    /g: func [return: [integer!] f [action?]] [f [return 1] 2]
+    /g: func [return: [integer!] f [action!]] [f [return 1] 2]
     1 = g :eval
 )
 ; BREAK out of a function
@@ -449,7 +449,7 @@
 )]
 
 (
-    /foo: lambda [^arg [~null~ pack? <end> ~void~ integer!]] [arg]
+    /foo: lambda [^arg [~null~ pack! <end> ~void~ integer!]] [arg]
     all [
         (the '1020) = (foo 1020)
         '~[]~ = (foo comment "HI")

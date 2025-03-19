@@ -148,7 +148,7 @@ bool Arrow_Details_Querier(
 //
 //  "Makes an anonymous function that doesn't copy its body, can unpack args"
 //
-//      return: [action?]
+//      return: [action!]
 //      spec "Names of arguments"
 //          [blank! word! lit-word? meta-word! refinement? block!]
 //      body "Code to execute"

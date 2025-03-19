@@ -1436,7 +1436,7 @@ DECLARE_NATIVE(groupify)
 //      example "Example's binding (or lack of) will be used"
 //          [type-block! any-list?]
 //      content "Void input is treated the same as an empty splice"
-//          [~void~ element? splice?]
+//          [~void~ element? splice!]
 //  ]
 //
 DECLARE_NATIVE(envelop)
@@ -1489,7 +1489,7 @@ DECLARE_NATIVE(envelop)
 //
 //      return: [blank! block!]
 //      accumulator [blank! block!]
-//      result [~void~ element? splice?]
+//      result [~void~ element? splice!]
 //  ]
 //
 DECLARE_NATIVE(glom)

@@ -1214,7 +1214,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //  "Internal support function for PARSE (acts as variadic to consume rules)"
 //
 //      return: [~null~ integer!]
-//      input [any-series? any-list? quoted?]
+//      input [any-series? any-list? quoted!]
 //      flags [integer!]
 //      <local> position num-quotes save lookback
 //  ]

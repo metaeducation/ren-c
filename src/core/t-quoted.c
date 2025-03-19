@@ -131,7 +131,7 @@ DECLARE_NATIVE(quote)
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
 //      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
-//          [quoted? quasi? keyword? element? error!]
+//          [quoted! quasiform! keyword! element? error!]
 //      ^atom [any-atom?]
 //      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //      :except "If argument is antiform ERROR!, give back as plain ERROR!"
@@ -177,7 +177,7 @@ DECLARE_NATIVE(meta)
 //
 //  "META operator that works on any value (errors, packs, barriers, etc.)"
 //
-//      return: [quoted! quasi?]
+//      return: [quoted! quasiform!]
 //      ^atom
 //  ]
 //
@@ -226,7 +226,7 @@ DECLARE_NATIVE(unquote)
 //
 //  "Constructs a quasi form of the evaluated argument"
 //
-//      return: [quasi?]
+//      return: [quasiform!]
 //      value "Any non-QUOTED! value for which quasiforms are legal"
 //          [any-isotopic?]
 //  ]
@@ -250,7 +250,7 @@ DECLARE_NATIVE(quasi)
 //  "Turn quasiforms into fundamental forms"
 //
 //      return: [fundamental?]
-//      quasiform [quasi?]
+//      quasiform [quasiform!]
 //  ]
 //
 DECLARE_NATIVE(unquasi)
@@ -322,7 +322,7 @@ DECLARE_NATIVE(anti)
 //
 //      return: [any-atom?]
 //      value "Can be plain or antiform like ~null~ or ~void~ if :LITE"
-//          [keyword? element? quoted? quasi?]
+//          [keyword! element? quoted! quasiform!]
 //      :lite "Pass thru ~null~ and ~void~ antiforms as-is"
 //  ]
 //
@@ -360,7 +360,7 @@ DECLARE_NATIVE(unmeta)
 //  "Variant of UNMETA that can synthesize any atom (raised, pack, barrier...)"
 //
 //      return: [any-atom?]
-//      metaform [quoted? quasi?]
+//      metaform [quoted! quasiform?]
 //  ]
 //
 DECLARE_NATIVE(unmeta_p)
@@ -378,8 +378,8 @@ DECLARE_NATIVE(unmeta_p)
 //  "Make block arguments splice"
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
-//          [~null~ ~void~ element? splice?]
-//      value [~null~ ~void~ blank! any-list? quasi?]  ; see [1] [2] [3]
+//          [~null~ ~void~ element? splice!]
+//      value [~null~ ~void~ blank! any-list? quasiform!]  ; see [1] [2] [3]
 //  ]
 //
 DECLARE_NATIVE(spread)
@@ -435,7 +435,7 @@ DECLARE_NATIVE(spread)
 //      return: "Antiform of OBJECT! or unquoted value (pass null and void)"
 //          [~null~ ~void~ element? lazy?]
 //      object "Will do MAKE OBJECT! on BLOCK!"
-//          [~null~ ~void~ quoted? object! block!]
+//          [~null~ ~void~ quoted! object! block!]
 //  ]
 //
 DECLARE_NATIVE(lazy)
@@ -513,7 +513,7 @@ INLINE bool Pack_Native_Core_Throws(
 //  "Create a pack of arguments from a list, no raised errors (or see PACK*)"
 //
 //      return: "Antiform of BLOCK!"
-//          [pack?]
+//          [pack!]
 //      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
 //          [<maybe> the-block! block!]
 //  ]
@@ -541,7 +541,7 @@ DECLARE_NATIVE(pack)
 //  "Create a pack of arguments from a list, raised errors okay (or see PACK)"
 //
 //      return: "Antiform of BLOCK!"
-//          [pack?]
+//          [pack!]
 //      block "Reduce if plain BLOCK!, not if THE-BLOCK!"
 //          [<maybe> the-block! block!]
 //  ]
@@ -610,8 +610,8 @@ DECLARE_NATIVE(pack_q)
 //
 //  "Make frames run when fetched through word access"
 //
-//      return: [action?]
-//      frame [frame! action?]
+//      return: [action!]
+//      frame [frame! action!]
 //  ]
 //
 DECLARE_NATIVE(runs)
@@ -635,10 +635,10 @@ DECLARE_NATIVE(runs)
 //
 //  /unrun: native [
 //
-//  "Give back a frame! for action? input"
+//  "Give back a frame! for action! input"
 //
 //      return: [frame!]
-//      action [<maybe> frame! action?]
+//      action [<maybe> frame! action!]
 //  ]
 //
 DECLARE_NATIVE(unrun)

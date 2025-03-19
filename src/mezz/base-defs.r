@@ -170,9 +170,9 @@ lib: system.contexts.lib  ; alias for faster access
 /elide-if-void: func [
     "Argument is evaluative, but discarded if void"
 
-    return: [any-value? pack?]
+    return: [any-value? pack!]
     ^value' "Evaluated value to be ignored"
-        [any-value? pack?]  ; pack? is passed through
+        [any-value? pack!]  ; pack! is passed through
 ][
     if value' = ^void [return ~[]~]
     return unmeta value'

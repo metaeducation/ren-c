@@ -191,7 +191,7 @@ error: ~
 /process-tests: func [
     return: [~]
     test-sources [block!]
-    handler [action?]
+    handler [action!]
 ][
     let flags
     let value

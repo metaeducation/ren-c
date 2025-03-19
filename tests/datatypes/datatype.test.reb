@@ -21,8 +21,6 @@
 
 (type-word? &even?)  ; a type constraint
 
-(type-word? logic?!)  ; a type constraint, not a datatype (for the moment...)
-
 (any-utf8?:type text!)
 (not any-utf8?:type integer!)
 (not try any-utf8?:type "abc")

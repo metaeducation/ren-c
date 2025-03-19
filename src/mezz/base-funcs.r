@@ -106,7 +106,7 @@ bind construct [
 /redescribe: func [
     "Mutate action description with new title and/or new argument notes"
 
-    return: [action?]
+    return: [action!]
     spec "Either a string description, or a spec block"
         [block!]
     action "(modified) Action whose description is to be updated"
@@ -401,7 +401,7 @@ bind construct [
 /trap+: func [
     "Experimental variation of TRAP using THENable mechanics"
 
-    return: [pack?]
+    return: [pack!]
     code [block!]
     <local> result
 ][
@@ -573,7 +573,7 @@ bind construct [
 /accessor: infix func [
     return: [~]
     var [set-word?]
-    action [action?]
+    action [action!]
 ][
     set-accessor var action/
 ]
@@ -613,7 +613,7 @@ bind construct [
             error!  ; already constructed error
             the-word!  ; invalid-arg error with variable name/value
             text!  ; textual error message
-            tripwire?  ; same as text (but more attention grabbing at callsite)
+            tripwire!  ; same as text (but more attention grabbing at callsite)
             block!  ; mixture of object error spec and message
             word! path! url!  ; increasing specificity of error ID
         ]

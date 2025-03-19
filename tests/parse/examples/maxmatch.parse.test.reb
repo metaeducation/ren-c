@@ -20,9 +20,9 @@
         "Match maximum of two rules, keeping side effects of both if match"
 
         return: "Result of the longest match (favors first parser if equal)"
-           [any-value? pack?]
-        parser1 [action?]
-        parser2 [action?]
+           [any-value? pack!]
+        parser1 [action!]
+        parser2 [action!]
         <local> error1 error2 result1' result2' remainder1 remainder2
     ][
         error1: trap [[^result1' remainder1]: parser1 input]
@@ -196,10 +196,10 @@
         "Match maximum of two rules, keeping side effects of both if match"
 
         return: "Result of the longest match (favors first parser if equal)"
-           [any-value? pack?]
+           [any-value? pack!]
         :pending [blank! block!]
-        parser1 [action?]
-        parser2 [action?]
+        parser1 [action!]
+        parser2 [action!]
         <local>
             error1 error2 result1' result2'
             remainder1 remainder2 pending1 pending2

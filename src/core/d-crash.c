@@ -394,7 +394,7 @@ DECLARE_NATIVE(panic)
 //
 //  "Version of RAISE of definitional error that only takes ERROR!"
 //
-//      return: [raised?]
+//      return: [raised!]
 //      reason [error!]
 //  ]
 //

@@ -56,7 +56,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
 ;
 /make-quit: lambda [
     "Make a quit function out of a plain THROW"
-    quit* [action?]
+    quit* [action!]
     :console "Just integer, no argument acts like quit 0"  ; [1]
 ][
     func compose:deep $() [
@@ -256,7 +256,7 @@ lib.exit: ~<See SYS.UTIL/EXIT>~
     "Execution facility for Rebol or other Languages/Dialects (see also: EVAL)"
 
     return: "Evaluative product, or error"
-        [any-value? raised?]
+        [any-value? raised!]
     source "Files interpreted based on extension, dialects based on 'kind'"
         [
             <maybe>  ; opts out of the DO, returns null

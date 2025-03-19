@@ -33,11 +33,11 @@
 //
 //  "Binds words or words in lists to the specified context"
 //
-//      return: [frame! action? any-list? any-path? any-word? quoted?]
+//      return: [frame! action! any-list? any-path? any-word? quoted!]
 //      spec "Target context or a word whose binding should be the target"
 //          [block! the-word? any-context?]
 //      value "Value whose bound form is to be returned"
-//          [any-list? any-path? any-word? quoted?]
+//          [any-list? any-path? any-word? quoted!]
 //  ]
 //
 DECLARE_NATIVE(bind)
@@ -1012,7 +1012,7 @@ DECLARE_NATIVE(infix_q)
 //  "For functions that gets 1st argument from left, e.g (/+: infix get $add)"
 //
 //      return: "Antiform action"
-//          [action?]
+//          [action!]
 //      action [<unrun> frame!]
 //      :off "Give back a non-infix version of the passed in function"
 //      :defer "Allow one full expression on the left to evaluate"
@@ -1050,8 +1050,8 @@ DECLARE_NATIVE(infix)
 //
 //  "Returns input value (https://en.wikipedia.org/wiki/Identity_function)"
 //
-//      return: [any-value? pack?]
-//      ^value [any-value? pack?]
+//      return: [any-value? pack!]
+//      ^value [any-value? pack!]
 //  ]
 //
 DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
@@ -1353,7 +1353,7 @@ DECLARE_NATIVE(nothing_q)
 //
 //  "Has no effect, besides returning antiform BLANK! (aka NOTHING)"
 //
-//      return: [nothing?]
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(noop)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
@@ -1446,8 +1446,8 @@ DECLARE_NATIVE(space_q)
 //
 //  "Make the heavy form of NULL or VOID (passes through all other values)"
 //
-//      return: [any-value? pack?]
-//      ^atom [any-value? pack?]
+//      return: [any-value? pack!]
+//      ^atom [any-value? pack!]
 //  ]
 //
 DECLARE_NATIVE(heavy) {
@@ -1470,8 +1470,8 @@ DECLARE_NATIVE(heavy) {
 //
 //  "Make the light form of NULL or VOID (passes through all other values)"
 //
-//      return: [any-value? pack?]
-//      ^atom [any-value? pack?]
+//      return: [any-value? pack!]
+//      ^atom [any-value? pack!]
 //  ]
 //
 DECLARE_NATIVE(light) {

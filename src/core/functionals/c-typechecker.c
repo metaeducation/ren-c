@@ -543,11 +543,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             break; }
 
           case REB_TYPE_BLOCK: {
-            Kind k;
-            if (Is_Antiform(v) and Is_Antiform_Unstable(v))
-                fail ("What should we do here?");
-            else
-                k = VAL_TYPE(v);
+            Kind k = VAL_TYPE(v);
             if (VAL_TYPE_KIND(test) != k)
                 goto test_failed;
             break; }
@@ -790,7 +786,7 @@ Value* Init_Typechecker(Init(Value) out, const Element* types) {
 //
 //  "Make a function for checking types (generated function gives LOGIC!)"
 //
-//      return: [action?]
+//      return: [action!]
 //      types [type-word! type-block!]
 //  ]
 //
@@ -919,7 +915,7 @@ DECLARE_NATIVE(match)
 //
 //  "Make a specialization of the MATCH function for a fixed type argument"
 //
-//      return: [action?]
+//      return: [action!]
 //      test "Type specification, can use NULL instead of [null?]"  ; [1]
 //          [~null~ block! type-word! type-group! type-block! parameter!]
 //  ]

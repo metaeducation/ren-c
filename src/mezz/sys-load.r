@@ -40,7 +40,7 @@ REBOL [
     "Try to match a data blob! as being a script, definitional fail if not"
 
     return: "Null, or the ~[header rest line]~"
-        [~[[~null~ block!] [~null~ blob!] [~null~ integer!]]~ raised?]
+        [~[[~null~ block!] [~null~ blob!] [~null~ integer!]]~ raised!]
 
     data [blob!]
     :file [file! url!]

@@ -1151,7 +1151,7 @@ void Set_Var_May_Fail(
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [~void~ any-word? any-tuple? any-group?
 //          any-get-value? any-set-value? the-block!]
-//      ^value [raised? any-value?]  ; tunnels failure
+//      ^value [raised! any-value?]  ; tunnels failure
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]
@@ -1237,7 +1237,7 @@ DECLARE_NATIVE(set)
 //
 //      return: [~]
 //      var [word!]
-//      action [action?]
+//      action [action!]
 //  ]
 //
 DECLARE_NATIVE(set_accessor)

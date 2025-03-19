@@ -74,7 +74,7 @@ DECLARE_NATIVE(okay_q)
 //
 //  "Tells you if the argument is either the ~null~ or ~okay~ antiform"
 //
-//      return: [keyword?]  ; Note: using LOGIC? to typecheck is recursive
+//      return: [keyword!]  ; Note: using LOGIC? to typecheck is recursive
 //      value
 //  ]
 //
@@ -576,7 +576,7 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 //      left "Expression which will always be evaluated"
 //          [any-value?]
 //      ^right "Expression that's also always evaluated (can't short circuit)"
-//          [pack? any-value?]  ; not literal GROUP! as with XOR
+//          [pack! any-value?]  ; not literal GROUP! as with XOR
 //  ]
 //
 DECLARE_NATIVE(unless)

@@ -269,7 +269,7 @@ bool Hijacker_Details_Querier(
 //  "Cause all existing references to a frame to invoke another frame"
 //
 //      return: "New identity for calling victim (nothing if victim was TBD)"
-//          [action? ~]
+//          [action! ~]
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
 //      hijacker "The frame to run in its place (void to leave TBD)"

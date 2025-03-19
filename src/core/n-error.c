@@ -57,7 +57,7 @@ DECLARE_NATIVE(try)
 //  "Sandbox code to intercept failures at ANY depth (including typos)"
 //
 //      return: "ERROR! if raised, else ^META of the result"
-//          [error! quoted? quasi? blank!]
+//          [error! quoted! quasiform! blank!]
 //      code "Code to sandbox and monitor"
 //          [<unrun> frame! any-list?]
 //      :relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
@@ -139,7 +139,7 @@ DECLARE_NATIVE(enrescue)
 //  "Tries to EVAL a block, trapping raised errors"
 //
 //      return: "ERROR! if raised, else the ^META of the result"
-//          [error! quasi? quoted? blank!]
+//          [error! quasiform! quoted! blank!]
 //      code "Code to execute and monitor"
 //          [block! frame!]
 //  ]

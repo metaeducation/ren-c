@@ -1,7 +1,7 @@
 ; functions/define/func.r
 ; recursive safety
 (
-    /f: func [return: [action?]] [
+    /f: func [return: [action!]] [
         return lambda [x] [
             either x = 1 [
                 reeval f 2

@@ -6,7 +6,7 @@
 [(
     /giulio-generate: func [
         "Make a generator"
-        return: [action?]
+        return: [action!]
         init [block!] "Init code"
         condition [block! blank!] "While condition"
         iteration [block!] "Step code"
@@ -44,7 +44,7 @@
 
     /read-lines: func [
         "Makes a generator that yields lines from a file or port"
-        return: [action?]
+        return: [action!]
         src [~null~ port! file!]
         :delimiter [blob! char? text! bitset!]
         :keep "Don't remove delimiter"

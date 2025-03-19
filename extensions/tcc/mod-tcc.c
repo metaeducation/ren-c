@@ -262,7 +262,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 //  "Create an ACTION! which is compiled from a C source TEXT!"
 //
 //      return: "Function value, will be compiled on demand or by COMPILE"
-//          [action?]
+//          [action!]
 //      spec "Rebol parameter definitions (similar to FUNCTION's spec)"
 //          [block!]
 //      source "C source of the native implementation"

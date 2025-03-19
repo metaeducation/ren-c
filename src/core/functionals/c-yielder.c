@@ -70,7 +70,7 @@ bool Is_Error_Done_Signal(const Cell* c) {
 //
 //  "Give back a raised error with the id DONE-ENUMERATING (pass to YIELD)"
 //
-//      return: [raised?]
+//      return: [raised!]
 //  ]
 //
 DECLARE_NATIVE(done) {
@@ -491,7 +491,7 @@ bool Yielder_Details_Querier(
 //  /yielder: native [
 //
 //      return: "Action that can be called repeatedly until it yields NULL"
-//          [action?]
+//          [action!]
 //      spec "Arguments passed in to each call for the generator"
 //          [block!]
 //      body "Code containing YIELD statements"
@@ -533,7 +533,7 @@ DECLARE_NATIVE(yielder)
 //  /generator: native [
 //
 //      return: "Arity-0 action you can call repeatedly until it yields NULL"
-//          [action?]
+//          [action!]
 //      :spec [] "internal use only"
 //      body "Code containing YIELD statements"
 //          [block!]

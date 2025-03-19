@@ -52,7 +52,7 @@
 //
 //  "Make action that will EVAL a BLOCK!"
 //
-//      return: [action?]
+//      return: [action!]
 //      source [block!]  ; allow other types? [1]
 //  ]
 //

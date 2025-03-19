@@ -112,7 +112,7 @@ bool Reorderer_Details_Querier(
 //
 //  "Create variation of a frame with its parameters reordered"
 //
-//      return: [action?]
+//      return: [action!]
 //      original [<unrun> frame!]
 //      ordering "Parameter WORD!s, all required parameters must be mentioned"
 //          [block!]

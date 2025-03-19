@@ -1243,7 +1243,7 @@ DECLARE_NATIVE(decode_integer)
 //  "Do big-endian math on a binary blob with an integer"
 //
 //      return: "Same number of bytes as original, error on overflow"
-//          [blob! raised?]
+//          [blob! raised!]
 //      blob [blob!]
 //      delta "Can be positive or negative"
 //          [integer!]

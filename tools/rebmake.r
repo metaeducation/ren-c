@@ -59,7 +59,7 @@ target-platform: null
 ]
 
 /ends-with?: func [
-    return: [logic?!]
+    return: [logic?]
     s [any-string?]
     suffix [~void~ any-string?]
 ][
@@ -444,7 +444,7 @@ compiler-class: make object! [
 
     /check: method [
         "Check if the compiler is available"
-        return: [logic?!]
+        return: [logic?]
         path [<maybe> any-string?]
     ][
         fail "TBD"
@@ -457,7 +457,7 @@ gcc: make compiler-class [
 
     /check: method [
         "Assigns .exec-file, extracts the compiler version"
-        return: [logic?!]
+        return: [logic?]
         :exec [file!]
     ][
         let digit: charset "0123456789"
@@ -817,7 +817,7 @@ ld: make linker-class [
     ]
 
     /check: method [
-        return: [logic?!]
+        return: [logic?]
         :exec [file!]
     ][
         let version: copy ""
@@ -1043,7 +1043,7 @@ strip-class: make object! [
 strip: make strip-class [
     id: "gnu"
     /check: method [
-        return: [logic?!]
+        return: [logic?]
         :exec [file!]
     ][
         .exec-file: exec: default ["strip"]

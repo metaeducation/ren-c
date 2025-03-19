@@ -268,7 +268,7 @@ enum {
     //    (foo,)  ; sees an end
     //    (foo anti ',)  ; also sees an end
     //
-    //    /bar: func [^y [barrier? integer!]] [...]
+    //    /bar: func [^y [barrier! integer!]] [...]
     //
     //    (bar,)  ; sees an barrier antiform ~,~
     //    (bar anti ',)  ; same

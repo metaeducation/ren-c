@@ -180,7 +180,7 @@ bool Macro_Details_Querier(
 //
 //  "Makes function that generates code to splice into the execution stream"
 //
-//      return: [action?]
+//      return: [action!]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
 //      body "Code implementing the macro--use RETURN to yield a result"
@@ -213,7 +213,7 @@ DECLARE_NATIVE(macro)
 //
 //      return: [any-value?]
 //      splice "If quoted single value, if blank no insertion (e.g. invisible)"
-//          [blank! block! quoted?]
+//          [blank! block! quoted!]
 //  ]
 //
 DECLARE_NATIVE(inline)

@@ -115,7 +115,7 @@ DECLARE_NATIVE(latin1_q)
 //      base [type-block! any-utf8? any-list? any-sequence? blob!]
 //      rest "Plain [...] blocks reduced, @[...] block items used as is"
 //          [~void~ block! the-block! any-utf8? blob!]
-//      :with [element? splice?]
+//      :with [element? splice!]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"
 //      <local> original-index

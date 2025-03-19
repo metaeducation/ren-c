@@ -399,7 +399,7 @@ bind construct [
 ; move to the competed state.
 
 /make-state-updater: func [
-    return: [action?]
+    return: [action!]
     direction ['read 'write]
     transdialect "dialected mapping from state to legal next states"
         [block!]

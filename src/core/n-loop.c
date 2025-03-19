@@ -1068,7 +1068,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //          [blank! word! the-word? block!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series? any-context? map! any-sequence?
-//           action?]  ; action support experimental, e.g. generators
+//           action!]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //      <local> iterator
@@ -1177,7 +1177,7 @@ DECLARE_NATIVE(for_each)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [blank! word! the-word! block!]
 //      data "The series to traverse"
-//          [<maybe> blank! any-series? any-context? map! action?]
+//          [<maybe> blank! any-series? any-context? map! action!]
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
 //      <local> iterator
@@ -1650,7 +1650,7 @@ DECLARE_NATIVE(remove_each)
 //          [blank! word! the-word! block!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series? any-sequence? any-context?
-//           action?]
+//           action!]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //      <local> iterator
@@ -1699,7 +1699,7 @@ DECLARE_NATIVE(map_each)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [blank! word! the-word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
-//          [<maybe> blank! quoted? action?]
+//          [<maybe> blank! quoted! action!]
 //      @(body) "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //      <local> iterator
@@ -1948,7 +1948,7 @@ DECLARE_NATIVE(repeat)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [blank! word! the-word! block!]
 //      value "Maximum number or series to traverse"
-//          [<maybe> any-number? any-sequence? quoted? block! action?]
+//          [<maybe> any-number? any-sequence? quoted! block! action!]
 //      body [<const> block!]
 //  ]
 //
