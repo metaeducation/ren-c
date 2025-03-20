@@ -893,58 +893,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             Codepoint_At(String_At(Cell_String(v), ret))
         ); }
 
-      case SYM_TAKE: {
-        INCLUDE_PARAMS_OF_TAKE;
-
-        Ensure_Mutable(v);
-
-        UNUSED(PARAM(series));
-
-        if (REF(deep))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        REBLEN len;
-        if (REF(part)) {
-            len = Part_Len_May_Modify_Index(v, ARG(part));
-            if (len == 0) {
-                Heart heart = Cell_Heart_Ensure_Noquote(v);
-                return Init_Any_String(OUT, heart, Make_String(0));
-            }
-        } else
-            len = 1;
-
-        // Note that :PART can change index
-
-        REBLEN tail = Cell_Series_Len_Head(v);
-
-        if (REF(last)) {
-            if (len > tail) {
-                VAL_INDEX_RAW(v) = 0;
-                len = tail;
-            }
-            else
-                VAL_INDEX_RAW(v) = tail - len;
-        }
-
-        if (VAL_INDEX(v) >= tail) {
-            if (not REF(part))
-                return RAISE(Error_Nothing_To_Take_Raw());
-            Heart heart = Cell_Heart_Ensure_Noquote(v);
-            return Init_Any_String(OUT, heart, Make_String(0));
-        }
-
-        // if no :PART, just return value, else return string
-        //
-        if (REF(part)) {
-            Heart heart = Cell_Heart_Ensure_Noquote(v);
-            Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
-        }
-        else
-            Init_Char_Unchecked(OUT, Codepoint_At(Cell_String_At(v)));
-
-        Remove_Any_Series_Len(v, VAL_INDEX(v), len);
-        return OUT; }
-
       case SYM_CLEAR: {
         String* s = Cell_String_Ensure_Mutable(v);
 
@@ -1110,6 +1058,60 @@ IMPLEMENT_GENERIC(POKE, Any_String)
     Set_Char_At(s, n, c);
 
     return nullptr;  // String* in Cell unchanged, caller need not update
+}
+
+
+IMPLEMENT_GENERIC(TAKE, Any_String)
+{
+    INCLUDE_PARAMS_OF_TAKE;
+
+    Element* v = Element_ARG(series);
+    Ensure_Mutable(v);
+
+    if (REF(deep))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    REBLEN len;
+    if (REF(part)) {
+        len = Part_Len_May_Modify_Index(v, ARG(part));
+        if (len == 0) {
+            Heart heart = Cell_Heart_Ensure_Noquote(v);
+            return Init_Any_String(OUT, heart, Make_String(0));
+        }
+    } else
+        len = 1;
+
+    // Note that :PART can change index
+
+    REBLEN tail = Cell_Series_Len_Head(v);
+
+    if (REF(last)) {
+        if (len > tail) {
+            VAL_INDEX_RAW(v) = 0;
+            len = tail;
+        }
+        else
+            VAL_INDEX_RAW(v) = tail - len;
+    }
+
+    if (VAL_INDEX(v) >= tail) {
+        if (not REF(part))
+            return RAISE(Error_Nothing_To_Take_Raw());
+        Heart heart = Cell_Heart_Ensure_Noquote(v);
+        return Init_Any_String(OUT, heart, Make_String(0));
+    }
+
+    // if no :PART, just return value, else return string
+    //
+    if (REF(part)) {
+        Heart heart = Cell_Heart_Ensure_Noquote(v);
+        Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
+    }
+    else
+        Init_Char_Unchecked(OUT, Codepoint_At(Cell_String_At(v)));
+
+    Remove_Any_Series_Len(v, VAL_INDEX(v), len);
+    return OUT;
 }
 
 

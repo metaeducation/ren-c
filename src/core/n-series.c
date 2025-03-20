@@ -116,7 +116,7 @@ DECLARE_NATIVE(change)  // Must be frame-compatible with APPEND, INSERT
 DECLARE_NATIVE(take)
 {
     Element* series = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(series, LEVEL, CANON(TAKE));
+    return Dispatch_Generic(TAKE, series, LEVEL);
 }
 
 

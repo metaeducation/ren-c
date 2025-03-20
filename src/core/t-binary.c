@@ -428,61 +428,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
 
         return Init_Integer(OUT, *Binary_At(Cell_Binary(v), ret)); }
 
-      case SYM_TAKE: {
-        INCLUDE_PARAMS_OF_TAKE;
-
-        Binary* b = Cell_Binary_Ensure_Mutable(v);
-
-        UNUSED(PARAM(series));
-
-        if (REF(deep))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        REBINT len;
-        if (REF(part)) {
-            len = Part_Len_May_Modify_Index(v, ARG(part));
-            if (len == 0) {
-                Heart heart = Cell_Heart_Ensure_Noquote(v);
-                return Init_Series(OUT, heart, Make_Binary(0));
-            }
-        } else
-            len = 1;
-
-        // Note that :PART can change index
-
-        REBINT tail = Cell_Series_Len_Head(v);
-
-        if (REF(last)) {
-            if (tail - len < 0) {
-                VAL_INDEX_RAW(v) = 0;
-                len = tail;
-            }
-            else
-                VAL_INDEX_RAW(v) = tail - len;
-        }
-
-        if (VAL_INDEX(v) >= tail) {
-            if (not REF(part))
-                return RAISE(Error_Nothing_To_Take_Raw());
-
-            Heart heart = Cell_Heart_Ensure_Noquote(v);
-            return Init_Series(OUT, heart, Make_Binary(0));
-        }
-
-        // if no :PART, just return value, else return string
-        //
-        if (not REF(part)) {
-            Init_Integer(OUT, *Cell_Blob_At(v));
-        }
-        else {
-            Init_Blob(
-                OUT,
-                Copy_Binary_At_Len(b, VAL_INDEX(v), len)
-            );
-        }
-        Remove_Any_Series_Len(v, VAL_INDEX(v), len);  // bad UTF-8 alias fails
-        return OUT; }
-
       case SYM_CLEAR: {
         Binary* b = Cell_Binary_Ensure_Mutable(v);
 
@@ -821,6 +766,55 @@ IMPLEMENT_GENERIC(POKE, Is_Blob)
     Binary_Head(bin)[n] = cast(Byte, i);
 
     return nullptr;  // caller's Binary* is not stale, no update needed
+}
+
+
+IMPLEMENT_GENERIC(TAKE, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_TAKE;
+
+    Element* blob = Element_ARG(series);
+    Binary* bin = Cell_Binary_Ensure_Mutable(blob);
+    Heart heart = Cell_Heart_Ensure_Noquote(blob);
+
+    if (REF(deep))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    REBINT len;
+    if (REF(part)) {
+        len = Part_Len_May_Modify_Index(blob, ARG(part));
+        if (len == 0)
+            return Init_Series(OUT, heart, Make_Binary(0));
+    } else
+        len = 1;
+
+    REBINT tail = Cell_Series_Len_Head(blob);  // Note :PART can change index
+
+    if (REF(last)) {
+        if (tail - len < 0) {
+            VAL_INDEX_RAW(blob) = 0;
+            len = tail;
+        }
+        else
+            VAL_INDEX_RAW(blob) = tail - len;
+    }
+
+    REBLEN index = VAL_INDEX(blob);
+
+    if (index >= tail) {
+        if (not REF(part))
+            return RAISE(Error_Nothing_To_Take_Raw());
+
+        return Init_Series(OUT, heart, Make_Binary(0));
+    }
+
+    if (not REF(part))  // just return byte value
+        Init_Integer(OUT, *Cell_Blob_At(blob));
+    else  // return binary series
+        Init_Blob(OUT, Copy_Binary_At_Len(bin, index, len));
+
+    Remove_Any_Series_Len(blob, index, len);  // bad UTF-8 alias fails
+    return OUT;
 }
 
 

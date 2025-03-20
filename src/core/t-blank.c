@@ -81,9 +81,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blank)
       case SYM_FIND:
         return nullptr;
 
-      case SYM_TAKE:
-        return RAISE(Error_Nothing_To_Take_Raw());
-
       default:
         break;
     }

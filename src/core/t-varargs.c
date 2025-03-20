@@ -399,70 +399,60 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 }
 
 
-// Handles the very limited set of operations possible on a VARARGS!
-// (evaluation state inspector/modifier during a DO).
+// !!! It's not clear that TAKE is the best place to put the concept of
+// getting the next value of a VARARGS!, though it seems to fit.
 //
-IMPLEMENT_GENERIC(OLDGENERIC, Is_Varargs)
+// 1. Usually TAKE has a series type which it can mirror on the output, e.g.
+//    (take:part '{a b c d} 2) => {a b}.  But VARARGS! doesn't have a series
+//    type so we just use BLOCK!.  Presumably that's the best answer?
+//
+IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 {
-    Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
+    INCLUDE_PARAMS_OF_TAKE;
 
-    Element* value = cast(Element*, ARG_N(1));
-    assert(Is_Varargs(value));
+    Element* varargs = cast(Element*, ARG(series));
 
-    switch (id) {
-    case SYM_TAKE: {
-        INCLUDE_PARAMS_OF_TAKE;
+    if (REF(deep))
+        return FAIL(Error_Bad_Refines_Raw());
+    if (REF(last))
+        return FAIL(Error_Varargs_Take_Last_Raw());
 
-        UNUSED(PARAM(series));
-        if (REF(deep))
-            return FAIL(Error_Bad_Refines_Raw());
-        if (REF(last))
-            return FAIL(Error_Varargs_Take_Last_Raw());
-
-        if (not REF(part)) {
-            if (Do_Vararg_Op_Maybe_End_Throws(
-                OUT,
-                VARARG_OP_TAKE,
-                value
-            )){
-                return THROWN;
-            }
-            if (Is_Barrier(OUT))
-                return RAISE(Error_Nothing_To_Take_Raw());
-            return OUT;
+    if (not REF(part)) {
+        if (Do_Vararg_Op_Maybe_End_Throws(
+            OUT,
+            VARARG_OP_TAKE,
+            varargs
+        )){
+            return THROWN;
         }
-
-        assert(TOP_INDEX == STACK_BASE);
-
-        if (not Is_Integer(ARG(part)))
-            return FAIL(PARAM(part));
-
-        REBINT limit = VAL_INT32(ARG(part));
-        if (limit < 0)
-            limit = 0;
-
-        while (limit-- > 0) {
-            if (Do_Vararg_Op_Maybe_End_Throws(
-                OUT,
-                VARARG_OP_TAKE,
-                value
-            )){
-                return THROWN;
-            }
-            if (Is_Barrier(OUT))
-                break;
-            Move_Cell(PUSH(), Decay_If_Unstable(OUT));
-        }
-
-        // !!! What if caller wanted a TYPE_GROUP, TYPE_PATH, or an /INTO?
-        //
-        return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE)); }
-
-    default:
-        break;
+        if (Is_Barrier(OUT))
+            return RAISE(Error_Nothing_To_Take_Raw());
+        return OUT;
     }
 
-    return UNHANDLED;
+    assert(TOP_INDEX == STACK_BASE);
+
+    if (not Is_Integer(ARG(part)))
+        return FAIL(PARAM(part));
+
+    REBINT limit = VAL_INT32(ARG(part));
+    if (limit < 0)
+        limit = 0;
+
+    while (limit-- > 0) {
+        if (Do_Vararg_Op_Maybe_End_Throws(
+            OUT,
+            VARARG_OP_TAKE,
+            varargs
+        )){
+            return THROWN;
+        }
+        if (Is_Barrier(OUT))
+            break;
+        Move_Cell(PUSH(), Decay_If_Unstable(OUT));
+    }
+
+    return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));  // block? [1]
 }
 
 

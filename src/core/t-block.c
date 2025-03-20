@@ -551,51 +551,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
     Context* binding = Cell_List_Binding(list);
 
     switch (id) {
-      case SYM_TAKE: {
-        INCLUDE_PARAMS_OF_TAKE;
-
-        UNUSED(PARAM(series));
-        if (REF(deep))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        Source* arr = Cell_Array_Ensure_Mutable(list);
-
-        REBLEN len;
-        if (REF(part)) {
-            len = Part_Len_May_Modify_Index(list, ARG(part));
-            if (len == 0)
-                return Init_Any_List(
-                    OUT, Cell_Heart(list), Make_Source_Managed(0)
-                );
-        }
-        else
-            len = 1;
-
-        REBLEN index = VAL_INDEX(list); // Partial() can change index
-
-        if (REF(last))
-            index = Cell_Series_Len_Head(list) - len;
-
-        if (index >= Cell_Series_Len_Head(list)) {
-            if (not REF(part))
-                return RAISE(Error_Nothing_To_Take_Raw());
-
-            return Init_Any_List(
-                OUT, Cell_Heart(list), Make_Source_Managed(0)
-            );
-        }
-
-        if (REF(part))
-            Init_Any_List(
-                OUT,
-                Cell_Heart(list),
-                Copy_Source_At_Max_Shallow(arr, index, len)
-            );
-        else
-            Derelativize(OUT, &Array_Head(arr)[index], binding);
-
-        Remove_Flex_Units(arr, index, len);
-        return OUT; }
 
     //-- Search:
 
@@ -1053,6 +1008,51 @@ IMPLEMENT_GENERIC(POKE, Any_List)
     Copy_Cell(at, c_cast(Element*, setval));
 
     return nullptr;  // Array* is still fine, caller need not update
+}
+
+
+IMPLEMENT_GENERIC(TAKE, Any_List)
+{
+    INCLUDE_PARAMS_OF_TAKE;
+
+    if (REF(deep))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    Element* list = Element_ARG(series);
+    Heart heart = Cell_Heart_Ensure_Noquote(list);  // TAKE gives same heart
+
+    Source* arr = Cell_Array_Ensure_Mutable(list);
+
+    REBLEN len;
+    if (REF(part)) {
+        len = Part_Len_May_Modify_Index(list, ARG(part));
+        if (len == 0)
+            return Init_Any_List(OUT, heart, Make_Source_Managed(0));
+    }
+    else
+        len = 1;
+
+    REBLEN index = VAL_INDEX(list); // Partial() can change index
+
+    if (REF(last))
+        index = Cell_Series_Len_Head(list) - len;
+
+    if (index >= Cell_Series_Len_Head(list)) {
+        if (not REF(part))
+            return RAISE(Error_Nothing_To_Take_Raw());
+
+        return Init_Any_List(OUT, heart, Make_Source_Managed(0));
+    }
+
+    if (REF(part)) {
+        Source* copy = Copy_Source_At_Max_Shallow(arr, index, len);
+        Init_Any_List(OUT, heart, copy);
+    }
+    else
+        Derelativize(OUT, Array_At(arr, index), Cell_List_Binding(list));
+
+    Remove_Flex_Units(arr, index, len);
+    return OUT;
 }
 
 
