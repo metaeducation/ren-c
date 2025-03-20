@@ -33,10 +33,10 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(type));
+    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
     assert(Any_Sequence_Type(heart));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Is_Block(arg))
         return rebValue(
@@ -263,9 +263,9 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* seq = Element_ARG(element);
+    Element* seq = Element_ARG(ELEMENT);
 
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_Sequence_Type(to))  // e.g. `to the-chain! 'a.b.c` [1]
         return GENERIC_CFUNC(AS, Any_Sequence)(LEVEL);  // immutable, same code
@@ -313,10 +313,10 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* seq = Element_ARG(element);  // sequence
+    Element* seq = Element_ARG(ELEMENT);  // sequence
     Length len = Cell_Sequence_Len(seq);
 
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_Sequence_Type(as)) {  // not all aliasings are legal [1]
         REBINT i;
@@ -431,9 +431,9 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* seq = Element_ARG(value);
-    bool deep = REF(deep);
-    Value* part = ARG(part);
+    Element* seq = Element_ARG(VALUE);
+    bool deep = REF(DEEP);
+    Value* part = ARG(PART);
 
     if (not deep or Wordlike_Cell(seq)) {  // wordlike is /A or :B etc
         if (part)
@@ -474,8 +474,8 @@ IMPLEMENT_GENERIC(PICK, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* seq = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* seq = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     REBINT n;
     if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
@@ -499,8 +499,8 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
-    Element* seq = Element_ARG(element);
-    Value* part = ARG(part);
+    Element* seq = Element_ARG(ELEMENT);
+    Value* part = ARG(PART);
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
@@ -522,10 +522,10 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_RANDOM_PICK;
 
-    Element* seq = Element_ARG(collection);
+    Element* seq = Element_ARG(COLLECTION);
 
     if (Wordlike_Cell(seq)) {  // e.g. FOO: or :FOO [1]
-        REBI64 one_or_two = Random_Range(2, REF(secure));
+        REBI64 one_or_two = Random_Range(2, REF(SECURE));
         if (one_or_two == 1)
             return Init_Blank(OUT);
         Copy_Cell(OUT, seq);
@@ -535,7 +535,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     if (Pairlike_Cell(seq)) {  // e.g. A/B
         assert(Listlike_Cell(seq));  // all pairlikes are also listlike
-        REBI64 one_or_two = Random_Range(2, REF(secure));
+        REBI64 one_or_two = Random_Range(2, REF(SECURE));
         if (one_or_two == 1)
             return COPY(Cell_Pair_First(seq));
         return COPY(Cell_Pair_Second(seq));
@@ -551,7 +551,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     Byte used = seq->payload.at_least_8[IDX_SEQUENCE_USED];
 
-    REBI64 rand = Random_Range(used, REF(secure));  // from 1 to used
+    REBI64 rand = Random_Range(used, REF(SECURE));  // from 1 to used
     return Init_Integer(OUT, seq->payload.at_least_8[rand]);
 }
 
@@ -560,10 +560,10 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
-    Element* seq = Element_ARG(element);
-    Value* part = ARG(part);
+    Element* seq = Element_ARG(ELEMENT);
+    Value* part = ARG(PART);
 
-    if (REF(secure) or REF(part))
+    if (REF(SECURE) or REF(PART))
         return (Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
@@ -579,7 +579,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* seq = Element_ARG(element);
+    Element* seq = Element_ARG(ELEMENT);
 
     return Init_Integer(OUT, Cell_Sequence_Len(seq));
 }
@@ -589,12 +589,12 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Value* seq1 = ARG(value1);  // dispatch is on first argument
+    Value* seq1 = ARG(VALUE1);  // dispatch is on first argument
     assert(Any_Sequence(seq1));
 
-    Value* arg2 = ARG(value2);
+    Value* arg2 = ARG(VALUE2);
     if (not Is_Integer(arg2))
-        return FAIL(PARAM(value2));  // formerly supported decimal/percent
+        return FAIL(PARAM(VALUE2));  // formerly supported decimal/percent
 
     return rebDelegate(
         "join type of", seq1, "map-each 'i", seq1, "[",
@@ -618,9 +618,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* c = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* c = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
 

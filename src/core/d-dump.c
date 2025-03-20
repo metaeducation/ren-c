@@ -148,12 +148,12 @@ void Dump_Stack(Level* L)
 //      @value [word!]
 //  ]
 //
-DECLARE_NATIVE(dump)
+DECLARE_NATIVE(DUMP)
 {
     INCLUDE_PARAMS_OF_DUMP;
 
   #if RUNTIME_CHECKS
-    Element* v = Element_ARG(value);
+    Element* v = Element_ARG(VALUE);
 
     PROBE(v);
     printf("=> ");
@@ -171,7 +171,7 @@ DECLARE_NATIVE(dump)
 
     return NOTHING;
   #else
-    UNUSED(ARG(value));
+    UNUSED(ARG(VALUE));
     return FAIL(Error_Checked_Build_Only_Raw());
   #endif
 }

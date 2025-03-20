@@ -544,7 +544,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
 //      list [<maybe> any-list?]
 //  ]
 //
-DECLARE_NATIVE(wrap_p)
+DECLARE_NATIVE(WRAP_P)
 //
 // 1. !!! It's not clear what the right set of primitives are...we may want
 //    to expand based on a block and then run the block with a different
@@ -555,8 +555,8 @@ DECLARE_NATIVE(wrap_p)
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
 
-    Context* context = Cell_Context(ARG(context));
-    Element* list = cast(Element*, ARG(list));
+    Context* context = Cell_Context(ARG(CONTEXT));
+    Element* list = cast(Element*, ARG(LIST));
 
     Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
     if (e)
@@ -583,20 +583,20 @@ DECLARE_NATIVE(wrap_p)
 //      :set "Use semantics for WRAP of a SET-BLOCK for list argument"
 //  ]
 //
-DECLARE_NATIVE(wrap)
+DECLARE_NATIVE(WRAP)
 {
     INCLUDE_PARAMS_OF_WRAP;
 
-    Element* list = cast(Element*, ARG(list));
+    Element* list = cast(Element*, ARG(LIST));
 
     const Element* tail;
     const Element* at = Cell_List_At(&tail, list);
     VarList* parent = nullptr;
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-    if (REF(set))
+    if (REF(SET))
         flags = COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES | COLLECT_ANY_WORD;
-    if (REF(deep))
+    if (REF(DEEP))
         flags |= COLLECT_ANY_LIST_DEEP;
 
     VarList* varlist = Make_Varlist_Detect_Managed(
@@ -631,17 +631,17 @@ DECLARE_NATIVE(wrap)
 //          [block! object!]
 //  ]
 //
-DECLARE_NATIVE(collect_words)
+DECLARE_NATIVE(COLLECT_WORDS)
 {
     INCLUDE_PARAMS_OF_COLLECT_WORDS;
 
     Flags flags;
-    if (REF(set))
+    if (REF(SET))
         flags = COLLECT_ONLY_SET_WORDS;
     else
         flags = COLLECT_ANY_WORD;
 
-    if (REF(deep))
+    if (REF(DEEP))
         flags |= COLLECT_ANY_LIST_DEEP;
 
   //=//// GENERATE DUMMY BINDINGS FOR THE IGNORED SYMBOLS /////////////////=//
@@ -661,7 +661,7 @@ DECLARE_NATIVE(collect_words)
     //    `function [/test /test] []` calls COLLECT-WORDS and tries to ignore
     //    both tests.  Debug build counts the number (overkill, tests binder).
 
-    Value* ignore = ARG(ignore);
+    Value* ignore = ARG(IGNORE);
 
     if (Is_Block(ignore)) {  // avoid fail in mid-collect [1]
         const Element* check_tail;
@@ -703,7 +703,7 @@ DECLARE_NATIVE(collect_words)
   //=//// RUN COMMON COLLECTION CODE //////////////////////////////////////=//
 
     const Element* block_tail;
-    const Element* block_at = Cell_List_At(&block_tail, ARG(block));
+    const Element* block_at = Cell_List_At(&block_tail, ARG(BLOCK));
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, block_at, block_tail);
     if (e)

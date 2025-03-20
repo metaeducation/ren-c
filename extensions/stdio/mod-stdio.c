@@ -54,7 +54,7 @@ extern Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb);
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_console_actor_handle)
+DECLARE_NATIVE(GET_CONSOLE_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &Console_Actor);
     return OUT;
@@ -67,7 +67,7 @@ DECLARE_NATIVE(get_console_actor_handle)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(startup_p)
+DECLARE_NATIVE(STARTUP_P)
 //
 // 1. Besides making buffers or other initialization, the platform startup does
 //    things like figure out if the input or output have been redirected to a
@@ -92,7 +92,7 @@ DECLARE_NATIVE(startup_p)
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
-DECLARE_NATIVE(write_stdout)
+DECLARE_NATIVE(WRITE_STDOUT)
 //
 // 1. It is sometimes desirable to write raw binary data to stdout.  e.g. CGI
 //    scripts may be hooked up to stream data for a download, and not want the
@@ -109,7 +109,7 @@ DECLARE_NATIVE(write_stdout)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Is_Issue(v)) {  // [3]
         Value *alias = rebValue("as text!", v);
@@ -167,7 +167,7 @@ static Value* Make_Non_Halt_Error(const char* name) {
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(read_stdin)
+DECLARE_NATIVE(READ_STDIN)
 //
 // READ-LINE caters to the needs of the console and always returns TEXT!.  So
 // it will error if input is redirected from a file that is not UTF-8.  But
@@ -198,7 +198,7 @@ DECLARE_NATIVE(read_stdin)
 
     bool eof = false;
 
-    Size max = VAL_UINT32(ARG(size));
+    Size max = VAL_UINT32(ARG(SIZE));
     Binary* b = Make_Binary(max);
     REBLEN i = 0;
     while (Binary_Len(b) < max) {  // inefficient, read one byte at a time
@@ -230,7 +230,7 @@ DECLARE_NATIVE(read_stdin)
 //      :hide "Mask input with a * character (not implemented)"
 //  ]
 //
-DECLARE_NATIVE(read_line)
+DECLARE_NATIVE(READ_LINE)
 //
 // 1. !!! When this primitive was based on READ of SYSTEM.PORTS.INPUT, that
 //    READ would give back ~halt~ on a Ctrl-C (vs. having the READ execute
@@ -261,13 +261,13 @@ DECLARE_NATIVE(read_line)
     INCLUDE_PARAMS_OF_READ_LINE;
 
   #if RUNTIME_CHECKS
-    rebElide("assert [@stdin =", ARG(source), "]");
+    rebElide("assert [@stdin =", ARG(SOURCE), "]");
   #else
-    UNUSED(ARG(source));
+    UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = REF(raw);
-    bool hide = REF(hide);
+    bool raw = REF(RAW);
+    bool hide = REF(HIDE);
 
     if (hide)  // https://github.com/rebol/rebol-issues/issues/476
         return "fail -{READ-LINE:HIDE not yet implemented:}-";
@@ -387,7 +387,7 @@ DECLARE_NATIVE(read_line)
 //          [integer! decimal!]
 //  ]
 //
-DECLARE_NATIVE(read_char)
+DECLARE_NATIVE(READ_CHAR)
 //
 // Note: There is no EOF signal here as in READ-LINE.  Because READ-LINE in
 // /RAW mode needed to distinguish between termination due to newline and
@@ -404,20 +404,20 @@ DECLARE_NATIVE(read_char)
     INCLUDE_PARAMS_OF_READ_CHAR;
 
   #if RUNTIME_CHECKS
-    rebElide("assert [@stdin =", ARG(source), "]");
+    rebElide("assert [@stdin =", ARG(SOURCE), "]");
   #else
-    UNUSED(ARG(source));
+    UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = REF(raw);
+    bool raw = REF(RAW);
 
     int timeout_msec;
-    if (not REF(timeout))
+    if (not REF(TIMEOUT))
         timeout_msec = 0;  // "no timeout" in Try_Get_One_Console_Event() [1]
     else {
         timeout_msec = rebUnboxInteger("case [",
-            "decimal?", ARG(timeout), "[1000 * round:up", ARG(timeout), "]",
-            "integer?", ARG(timeout), "[1000 *", ARG(timeout), "]",
+            "decimal?", ARG(TIMEOUT), "[1000 * round:up", ARG(TIMEOUT), "]",
+            "integer?", ARG(TIMEOUT), "[1000 *", ARG(TIMEOUT), "]",
             "fail ~<unreachable>~",
         "]");
 
@@ -532,7 +532,7 @@ DECLARE_NATIVE(read_char)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(shutdown_p)
+DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 

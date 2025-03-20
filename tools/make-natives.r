@@ -33,11 +33,11 @@ REBOL [
         //      :refinement "Refinement description here"
         //  ]
         //
-        DECLARE_NATIVE(native_name) {
+        DECLARE_NATIVE(NATIVE_NAME) {
             INCLUDE_PARAMS_OF_NATIVE_NAME;
 
-            if (REF(refinement)) {
-                 int i = VAL_INT32(ARG(argument));
+            if (REF(REFINEMENT)) {
+                 int i = VAL_INT32(ARG(ARGUMENT));
                  /* etc, etc. */
             }
             return OUT;
@@ -228,7 +228,7 @@ e-forward/emit --{
     /*
      * NATIVE PROTOTYPES
      *
-     * DECLARE_NATIVE() is a macro expanding so DECLARE_NATIVE(parse) will
+     * DECLARE_NATIVE() is a macro expanding so DECLARE_NATIVE(PARSE) will
      * define a function named `N_parse`.  The prototypes are included in a
      * system-wide header so you can call a native dispatcher directly if
      * you need to.
@@ -237,7 +237,7 @@ e-forward/emit --{
 e-forward/emit newline
 
 for-each 'info natives [
-    e-forward/emit [info -{DECLARE_NATIVE(${info.name});}-]
+    e-forward/emit [info -{DECLARE_NATIVE(${INFO.NAME});}-]
     e-forward/emit newline
 ]
 

@@ -40,12 +40,12 @@
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(reduce)
+DECLARE_NATIVE(REDUCE)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Element* v = Element_ARG(value);  // newline flag leveraged [2]
-    Value* predicate = ARG(predicate);
+    Element* v = Element_ARG(VALUE);  // newline flag leveraged [2]
+    Value* predicate = ARG(PREDICATE);
 
     enum {
         ST_REDUCE_INITIAL_ENTRY = STATE_0,
@@ -106,7 +106,7 @@ DECLARE_NATIVE(reduce)
     // 2. We want the output newline status to mirror newlines of the start
     //    of the eval positions.  But when the evaluation callback happens,
     //    we won't have the starting value anymore.  Cache the newline flag on
-    //    the ARG(value) cell, as newline flags on ARG()s are available.
+    //    the ARG(VALUE) cell, as newline flags on ARG()s are available.
 
     if (Is_Feed_At_End(SUBLEVEL->feed))
         goto finished;
@@ -219,7 +219,7 @@ DECLARE_NATIVE(reduce)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(reduce_each)
+DECLARE_NATIVE(REDUCE_EACH)
 //
 // !!! There used to be a /COMMAS refinement on this, which allowed you to
 // see source-level commas.  Once comma antiforms took over the barrier role,
@@ -233,9 +233,9 @@ DECLARE_NATIVE(reduce_each)
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
-    Value* vars = ARG(vars);
-    Value* block = ARG(block);
-    Value* body = ARG(body);
+    Value* vars = ARG(VARS);
+    Value* block = ARG(BLOCK);
+    Value* body = ARG(BODY);
 
     bool breaking = false;
 
@@ -260,10 +260,10 @@ DECLARE_NATIVE(reduce_each)
         flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
-        ARG(vars)
+        ARG(BODY),  // may be updated, will still be GC safe
+        ARG(VARS)
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
 
     assert(Is_Block(body));
     Add_Definitional_Break_Continue(body, level_);
@@ -579,12 +579,17 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 //
 Bounce Composer_Executor(Level* const L)
 {
-    USE_LEVEL_SHORTHANDS (L);
+    if (Is_Throwing(L))  // no state to cleanup (just data stack, auto-cleaned)
+        return Native_Thrown_Result(L);
 
-    if (THROWING)
-        return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
+    Level* main_level = L->u.compose.main_level;  // invoked COMPOSE native
 
-  //=//// EXTRACT ARGUMENTS FROM THE ORIGINAL COMPOSE CALL ////////////////=//
+    bool deep;
+    Element* pattern;
+    bool conflate;
+    Value* predicate;
+
+{ //=//// EXTRACT ARGUMENTS FROM THE ORIGINAL COMPOSE CALL ////////////////=//
 
     // We have levels for each "recursion" that processes the :DEEP blocks in
     // the COMPOSE.  (These don't recurse as C functions, the levels are
@@ -593,35 +598,22 @@ Bounce Composer_Executor(Level* const L)
     // But each level wants to access the arguments to the COMPOSE that
     // kicked off the process.  A pointer to the Level of the main compose is
     // tucked into each Composer_Executor() level to use.
-    //
-    // !!! IF YOU REARRANGE THESE, YOU HAVE TO UPDATE THE NUMBERING ALSO !!!
 
-    DECLARE_PARAM(1, pattern);
-    DECLARE_PARAM(2, template);
-    DECLARE_PARAM(3, deep);
-    DECLARE_PARAM(4, conflate);
-    DECLARE_PARAM(5, predicate);
+    Level* level_ = main_level;  // level_ is L outside this scope
 
-    Level* main_level = L->u.compose.main_level;  // invoked COMPOSE native
+    INCLUDE_PARAMS_OF_COMPOSE;
 
-    UNUSED(Level_Arg(main_level, p_template_));  // accounted for by Level feed
+    UNUSED(ARG(TEMPLATE));  // accounted for by Level feed
+    deep = REF(DEEP);
+    pattern = Element_ARG(PATTERN);
+    conflate = REF(CONFLATE);
+    predicate = ARG(PREDICATE);
 
-    bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
-
-    Element* pattern = cast(Element*, Level_Arg(main_level, p_pattern_));
-
-    bool conflate;
-    if (Is_Nulled(Level_Arg(main_level, p_conflate_)))
-        conflate = false;
-    else {
-        assert(Is_Okay(Level_Arg(main_level, p_conflate_)));
-        conflate = true;
-    }
-
-    Value* predicate = Level_Arg(main_level, p_predicate_);
     assert(Is_Nulled(predicate) or Is_Frame(predicate));
 
-  //=//////////////////////////////////////////////////////////////////////=//
+} //=//////////////////////////////////////////////////////////////////////=//
+
+    USE_LEVEL_SHORTHANDS (L);  // defines level_ as L now that args extracted
 
     enum {
         ST_COMPOSER_INITIAL_ENTRY = STATE_0,
@@ -832,7 +824,7 @@ Bounce Composer_Executor(Level* const L)
 
 
 //
-//  /compose: native [  ; !!! IMPORTANT! IF YOU REARRANGE ARGS, SEE [1] !!!
+//  /compose: native [
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
@@ -859,22 +851,15 @@ Bounce Composer_Executor(Level* const L)
 //  ; Note: :ONLY is intentionally no longer supported
 //  https://forum.rebol.info/t/the-superpowers-of-ren-cs-revamped-compose/979/7
 //
-DECLARE_NATIVE(compose)
-//
-// 1. Composer_Executor() accesses the arguments of the COMPOSE that spawned
-//    it by index.  The trick used to name arguments and pick up `level_->`
-//    does not work there because level_ is the level of an executor with
-//    no varlist.  There's diminishing returns to coming up with a super
-//    clever way to work around this, so instead heed this warning and go
-//    update Composer_Executor() if these arguments are reordered.
+DECLARE_NATIVE(COMPOSE)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
-    Element* pattern = Element_ARG(pattern);
-    Element* t = Element_ARG(template);
+    Element* pattern = Element_ARG(PATTERN);
+    Element* t = Element_ARG(TEMPLATE);
 
-    USED(ARG(predicate));  // used by Composer_Executor() via main_level
-    USED(ARG(deep));
+    USED(ARG(PREDICATE));  // used by Composer_Executor() via main_level
+    USED(ARG(DEEP));
 
     enum {
         ST_COMPOSE_INITIAL_ENTRY = STATE_0,
@@ -918,7 +903,7 @@ DECLARE_NATIVE(compose)
     if (not Is_Raised(OUT)) {  // sublevel was killed
         assert(Is_Trash(OUT));
         Option(Error*) e = Trap_Finalize_Composer_Level(
-            OUT, SUBLEVEL, t, REF(conflate)
+            OUT, SUBLEVEL, t, REF(CONFLATE)
         );
         if (e)
             return FAIL(unwrap e);
@@ -1112,14 +1097,14 @@ DECLARE_NATIVE(compose)
 //      line [text!]
 //  ]
 //
-DECLARE_NATIVE(print_p)
+DECLARE_NATIVE(PRINT_P)
 {
     INCLUDE_PARAMS_OF_PRINT_P;
 
     Init_Group(SPARE, EMPTY_ARRAY);
     Tweak_Cell_Binding(SPARE, Level_Binding(level_));
 
-    return rebDelegate(CANON(PRINT), CANON(COMPOSE), rebQ(SPARE), ARG(line));
+    return rebDelegate(CANON(PRINT), CANON(COMPOSE), rebQ(SPARE), ARG(LINE));
 }
 
 
@@ -1166,17 +1151,17 @@ static void Flatten_Core(
 //      :deep
 //  ]
 //
-DECLARE_NATIVE(flatten)
+DECLARE_NATIVE(FLATTEN)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 
     const Element* tail;
-    Element* at = Cell_List_At_Ensure_Mutable(&tail, ARG(block));
+    Element* at = Cell_List_At_Ensure_Mutable(&tail, ARG(BLOCK));
     Flatten_Core(
         at,
         tail,
-        Cell_List_Binding(ARG(block)),
-        REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
+        Cell_List_Binding(ARG(BLOCK)),
+        REF(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));

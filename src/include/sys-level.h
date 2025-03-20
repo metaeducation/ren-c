@@ -640,15 +640,10 @@ INLINE Level* Prep_Level_Core(
 // are used in natives.  They capture the implicit Level* passed to every
 // DECLARE_NATIVE ('level_') and read the information out cleanly, like this:
 //
-//     DECLARE_PARAM(1, foo);
-//     DECLARE_PARAM(2, bar);
+//     DECLARE_PARAM(1, FOO);
+//     DECLARE_PARAM(2, BAR);
 //
-//     if (Is_Integer(ARG(foo)) and REF(bar)) { ... }
-//
-// The DECLARE_PARAM macro uses token pasting to name indexes being declared as
-// `p_name` instead of just `name`.  This prevents collisions with C/C++
-// identifiers, so DECLARE_PARAM(case) and DECLARE_PARAM(new) would make
-// `p_case` and `p_new` instead of just `case` and `new` as the variable names.
+//     if (Is_Integer(ARG(FOO)) and REF(BAR)) { ... }
 //
 // ARG() gives a mutable pointer to the argument's cell.  REF() is typically
 // used with refinements, and gives a const reference where NULLED cells are
@@ -660,31 +655,29 @@ INLINE Level* Prep_Level_Core(
 // slot for natives to hold values once they are no longer needed.
 //
 // It is also possible to get the typeset-with-symbol for a particular
-// parameter or refinement, e.g. with `PARAM(foo)` or `PARAM(bar)`.
+// parameter or refinement, e.g. with `PARAM(FOO)` or `PARAM(BAR)`.
 
 #define DECLARE_PARAM(n,name) \
-    static const int p_##name##_ = n
+    static const int param_##name##_ = n
 
 #define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use
 
 #define ARG(name) \
-    Level_Arg(level_, (p_##name##_))
+    Level_Arg(level_, (param_##name##_))
 
 #define Element_ARG(name) \
-    Known_Element(Level_Arg(level_, p_##name##_))  // checked build asserts
-
-#define LOCAL(name) \
-    ARG(name)  // alias (should p_##name## be different to enforce?)
-
-#define PARAM(name) \
-    Phase_Param(Level_Phase(level_), (p_##name##_))  // a TYPESET!
-
-#define PARAM_SYMBOL(name) \
-    Key_Symbol(Phase_Key(Level_Phase(level_), (p_##name##_)))
+    Known_Element(Level_Arg(level_, param_##name##_))  // checked build asserts
 
 #define REF(name) \
-    (not Is_Nulled(ARG(name)))
+    (not Is_Nulled(Level_Arg(level_, (param_##name##_))))
+
+#define LOCAL(name) \
+    Level_Arg(level_, (param_##name##_))  // alias (enforce not argument?)
+
+#define PARAM(name) \
+    Phase_Param(Level_Phase(level_), (param_##name##_))  // a TYPESET!
+
 
 #define ARG_N(n) \
     Level_Arg(level_, (n))

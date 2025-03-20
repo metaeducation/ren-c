@@ -132,10 +132,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(type)) == TYPE_DECIMAL);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_DECIMAL);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     switch (Type_Of(arg)) {
       case TYPE_ISSUE: {
@@ -244,8 +244,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Percent)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    UNUSED(ARG(type));
-    UNUSED(ARG(def));
+    UNUSED(ARG(TYPE));
+    UNUSED(ARG(DEF));
 
     return FAIL("MAKE of PERCENT! not supported at this time");  // [1]
 }
@@ -291,7 +291,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Decimal(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Decimal(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -299,14 +299,14 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Decimal(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Decimal(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
 IMPLEMENT_GENERIC(ZEROIFY, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
-    UNUSED(ARG(example));  // always gives 0x0
+    UNUSED(ARG(EXAMPLE));  // always gives 0x0
 
     return Init_Decimal(OUT, 0.0);;
 }
@@ -316,12 +316,12 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
+    Element* v = Element_ARG(ELEMENT);
     Heart heart = Cell_Heart_Ensure_Noquote(v);
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
 
@@ -482,30 +482,30 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 
       case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(value));  // extracted as d1, others are passed via level_
-        USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
-        USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
+        USED(ARG(VALUE));  // extracted as d1, others are passed via level_
+        USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
+        USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-        if (not REF(to)) {
+        if (not REF(TO)) {
             if (heart == TYPE_PERCENT)
-                Init_Decimal(ARG(to), 0.01L);  // round 5.5% -> 6%
+                Init_Decimal(ARG(TO), 0.01L);  // round 5.5% -> 6%
             else
-                Init_Integer(ARG(to), 1);
+                Init_Integer(ARG(TO), 1);
         }
 
-        if (Is_Money(ARG(to)))
+        if (Is_Money(ARG(TO)))
             return Init_Money(OUT, Round_Deci(decimal_to_deci(d1), level_));
 
-        if (Is_Time(ARG(to)))
-            return FAIL(PARAM(to));
+        if (Is_Time(ARG(TO)))
+            return FAIL(PARAM(TO));
 
-        d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
-        if (Is_Percent(ARG(to))) {
+        d1 = Round_Dec(d1, level_, Dec64(ARG(TO)));
+        if (Is_Percent(ARG(TO))) {
             heart = TYPE_PERCENT;
             return Init_Decimal_Or_Percent(OUT, heart, d1);
         }
 
-        if (Is_Integer(ARG(to)))
+        if (Is_Integer(ARG(TO)))
             return Init_Integer(OUT, cast(REBI64, d1));
         return Init_Decimal_Or_Percent(OUT, heart, d1); }
 
@@ -530,8 +530,8 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* val = Element_ARG(element);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* val = Element_ARG(ELEMENT);
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     REBDEC d = VAL_DECIMAL(val);
 
@@ -572,7 +572,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Any_Float)
 {
     INCLUDE_PARAMS_OF_RANDOMIZE;
 
-    const Element* val = Element_ARG(seed);
+    const Element* val = Element_ARG(SEED);
 
     REBDEC d = VAL_DECIMAL(val);
     REBI64 i;
@@ -587,27 +587,27 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
 {
     INCLUDE_PARAMS_OF_RANDOM;
 
-    const Element* val = Element_ARG(max);
+    const Element* val = Element_ARG(MAX);
     Heart heart = Cell_Heart_Ensure_Noquote(val);
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     REBDEC d = VAL_DECIMAL(val);
-    REBDEC rand = Random_Dec(d, REF(secure));
+    REBDEC rand = Random_Dec(d, REF(SECURE));
 
     return Init_Decimal_Or_Percent(OUT, heart, rand);
 }
 
 
-// 1. See DECLARE_NATIVE(multiply) for commutativity method of ordering types.
+// 1. See DECLARE_NATIVE(MULTIPLY) for commutativity method of ordering types.
 //
 IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(value1));
-    REBDEC d1 = VAL_DECIMAL(ARG(value1));
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(VALUE1));
+    REBDEC d1 = VAL_DECIMAL(ARG(VALUE1));
 
-    Value* v2 = ARG(value2);
+    Value* v2 = ARG(VALUE2);
     REBDEC d2;
     if (Is_Integer(v2))
         d2 = cast(REBDEC, VAL_INT64(v2));
@@ -622,7 +622,7 @@ IMPLEMENT_GENERIC(COMPLEMENT, Any_Float)
 {
     INCLUDE_PARAMS_OF_COMPLEMENT;
 
-    REBDEC d = VAL_DECIMAL(ARG(value));
+    REBDEC d = VAL_DECIMAL(ARG(VALUE));
 
     return Init_Integer(OUT, ~cast(REBINT, d));  // !!! What is this good for?
 }

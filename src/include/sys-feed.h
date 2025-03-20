@@ -531,7 +531,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 //
 //    1. REPEAT defines its body parameter as <const>
 //
-//    2. When REPEAT runs Eval_Any_List_At_Throws() on the const ARG(body), the
+//    2. When REPEAT runs Eval_Any_List_At_Throws() on the const ARG(BODY), the
 //       feed gets FEED_FLAG_CONST due to the CELL_FLAG_CONST.
 //
 //    3. The argument to append is handled by the inert processing branch

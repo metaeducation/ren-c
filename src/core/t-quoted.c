@@ -53,7 +53,7 @@
 //      :soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-TUPLE!"
 //  ]
 //
-DECLARE_NATIVE(the)
+DECLARE_NATIVE(THE)
 //
 // Note: THE is not a perfect synonym for the action assigned to @ as far as
 // the API is concerned, because the evaluator has special handling for
@@ -63,9 +63,9 @@ DECLARE_NATIVE(the)
 {
     INCLUDE_PARAMS_OF_THE;
 
-    Element* v = Element_ARG(value);
+    Element* v = Element_ARG(VALUE);
 
-    if (REF(soft) and Is_Soft_Escapable_Group(v)) {
+    if (REF(SOFT) and Is_Soft_Escapable_Group(v)) {
         if (Eval_Any_List_At_Throws(OUT, v, SPECIFIED))
             return THROWN;
         return OUT;
@@ -87,13 +87,13 @@ DECLARE_NATIVE(the)
 //      'element [element?]
 //  ]
 //
-DECLARE_NATIVE(just)
+DECLARE_NATIVE(JUST)
 //
 // Note: JUST:SOFT doesn't make any sense, it cannot evaluate without binding.
 {
     INCLUDE_PARAMS_OF_JUST;
 
-    Element* quoted = Element_ARG(element);
+    Element* quoted = Element_ARG(ELEMENT);
     return COPY(quoted);
 }
 
@@ -110,15 +110,15 @@ DECLARE_NATIVE(just)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(quote)
+DECLARE_NATIVE(QUOTE)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
-    Element* e = Element_ARG(element);
-    REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
+    Element* e = Element_ARG(ELEMENT);
+    REBINT depth = REF(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1;
 
     if (depth < 0)
-        return FAIL(PARAM(depth));
+        return FAIL(PARAM(DEPTH));
 
     Quotify_Depth(e, depth);
     return COPY(e);
@@ -137,7 +137,7 @@ DECLARE_NATIVE(quote)
 //      :except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
 //
-DECLARE_NATIVE(meta)
+DECLARE_NATIVE(META)
 //
 // 1. Most code has to go through Coerce_To_Antiform()...even code that has
 //    a quasiform in its hand (as not all quasiforms can be antiforms).  But
@@ -146,18 +146,18 @@ DECLARE_NATIVE(meta)
 {
     INCLUDE_PARAMS_OF_META;
 
-    Value* meta = ARG(atom); // arg already ^META, no need to Meta_Quotify()
+    Value* meta = ARG(ATOM); // arg already ^META, no need to Meta_Quotify()
 
     if (Is_Meta_Of_Raised(meta)) {
-        if (not REF(except))
-            return FAIL(Cell_Error(ARG(atom)));
+        if (not REF(EXCEPT))
+            return FAIL(Cell_Error(ARG(ATOM)));
 
         QUOTE_BYTE(meta) = NOQUOTE_1;
         return COPY(meta);  // no longer meta, just a plain ERROR!
     }
 
     if (
-        REF(lite)  // META:LITE handles quasiforms specially
+        REF(LITE)  // META:LITE handles quasiforms specially
         and Is_Quasiform(meta)
     ){
         if (HEART_BYTE(meta) == TYPE_WORD) {  // keywords pass thru
@@ -181,7 +181,7 @@ DECLARE_NATIVE(meta)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(meta_p)
+DECLARE_NATIVE(META_P)
 {
     INCLUDE_PARAMS_OF_META_P;
 
@@ -202,16 +202,16 @@ DECLARE_NATIVE(meta_p)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(unquote)
+DECLARE_NATIVE(UNQUOTE)
 {
     INCLUDE_PARAMS_OF_UNQUOTE;
 
-    Element* v = Element_ARG(value);
+    Element* v = Element_ARG(VALUE);
 
-    Count depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
+    Count depth = (REF(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1);
 
     if (depth < 0)
-        return FAIL(PARAM(depth));
+        return FAIL(PARAM(DEPTH));
 
     if (depth > Element_Num_Quotes(v))
         return FAIL("Value not quoted enough for unquote depth requested");
@@ -232,7 +232,7 @@ DECLARE_NATIVE(unquote)
 //      :pass "If input is already a quasiform, then pass it trhough"
 //  ]
 //
-DECLARE_NATIVE(quasi)
+DECLARE_NATIVE(QUASI)
 //
 // Not all datatypes have quasiforms.  For example:  ~:foo:~ is interpreted
 // as a 3-element CHAIN! with quasi-blanks in the first and last spots.  We
@@ -241,10 +241,10 @@ DECLARE_NATIVE(quasi)
 {
     INCLUDE_PARAMS_OF_QUASI;
 
-    Element* elem = Element_ARG(element);
+    Element* elem = Element_ARG(ELEMENT);
 
     if (Is_Quasiform(elem)) {
-        if (REF(pass))
+        if (REF(PASS))
             return COPY(elem);
         return FAIL("Use QUASI:PASS if QUASI argument is already a quasiform");
     }
@@ -268,11 +268,11 @@ DECLARE_NATIVE(quasi)
 //      quasiform [quasiform!]
 //  ]
 //
-DECLARE_NATIVE(unquasi)
+DECLARE_NATIVE(UNQUASI)
 {
     INCLUDE_PARAMS_OF_UNQUASI;
 
-    Element* quasi = Element_ARG(quasiform);
+    Element* quasi = Element_ARG(QUASIFORM);
     return COPY(Unquasify(quasi));
 }
 
@@ -286,7 +286,7 @@ DECLARE_NATIVE(unquasi)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(antiform_q)
+DECLARE_NATIVE(ANTIFORM_Q)
 //
 // !!! This can be deceptive, in the sense that you could ask if something
 // like an antiform pack is an antiform, and it will say yes...but then
@@ -313,11 +313,11 @@ DECLARE_NATIVE(antiform_q)
 //          [element?]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
-DECLARE_NATIVE(anti)
+DECLARE_NATIVE(ANTI)
 {
     INCLUDE_PARAMS_OF_ANTI;
 
-    Element* elem = Element_ARG(element);
+    Element* elem = Element_ARG(ELEMENT);
 
     if (Is_Quoted(elem))
         return FAIL("QUOTED! values have no antiform");
@@ -345,20 +345,20 @@ DECLARE_NATIVE(anti)
 //      :lite "Pass thru ~null~ and ~void~ antiforms as-is"
 //  ]
 //
-DECLARE_NATIVE(unmeta)
+DECLARE_NATIVE(UNMETA)
 {
     INCLUDE_PARAMS_OF_UNMETA;
 
-    Value* meta = ARG(value);
+    Value* meta = ARG(VALUE);
 
     if (QUOTE_BYTE(meta) == ANTIFORM_0) {
-        if (not REF(lite) or not Is_Keyword(meta))
+        if (not REF(LITE) or not Is_Keyword(meta))
             return FAIL("UNMETA only keyword antiforms (e.g. ~null~) if :LITE");
         return COPY(meta);
     }
 
     if (QUOTE_BYTE(meta) == NOQUOTE_1) {
-        if (not REF(lite))
+        if (not REF(LITE))
             return FAIL("UNMETA only takes non quoted/quasi things if :LITE");
         Copy_Cell(OUT, meta);
 
@@ -369,7 +369,7 @@ DECLARE_NATIVE(unmeta)
         return OUT;
     }
 
-    if (QUOTE_BYTE(meta) == QUASIFORM_2 and REF(lite))
+    if (QUOTE_BYTE(meta) == QUASIFORM_2 and REF(LITE))
         return FAIL(
             "UNMETA:LITE does not accept quasiforms (plain forms are meta)"
         );
@@ -387,11 +387,11 @@ DECLARE_NATIVE(unmeta)
 //      metaform [quoted! quasiform?]
 //  ]
 //
-DECLARE_NATIVE(unmeta_p)
+DECLARE_NATIVE(UNMETA_P)
 {
     INCLUDE_PARAMS_OF_UNMETA_P;
 
-    Copy_Cell(OUT, ARG(metaform));
+    Copy_Cell(OUT, ARG(METAFORM));
     return Meta_Unquotify_Undecayed(OUT);
 }
 
@@ -406,7 +406,7 @@ DECLARE_NATIVE(unmeta_p)
 //      value [~null~ ~void~ blank! any-list? quasiform!]  ; see [1] [2] [3]
 //  ]
 //
-DECLARE_NATIVE(spread)
+DECLARE_NATIVE(SPREAD)
 //
 // !!! The name SPREAD is being chosen because it is more uncommon than splice,
 // and there is no particular contention for its design.  SPLICE may be a more
@@ -430,7 +430,7 @@ DECLARE_NATIVE(spread)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Any_List(v)) {  // most common case
         Copy_Cell(OUT, v);
@@ -467,11 +467,11 @@ DECLARE_NATIVE(spread)
 //          [~null~ ~void~ quoted! object! block!]
 //  ]
 //
-DECLARE_NATIVE(lazy)
+DECLARE_NATIVE(LAZY)
 {
     INCLUDE_PARAMS_OF_LAZY;
 
-    Value* v = ARG(object);
+    Value* v = ARG(OBJECT);
     if (Is_Void(v))
         return VOID;
     if (Is_Nulled(v))
@@ -547,7 +547,7 @@ INLINE bool Pack_Native_Core_Throws(
 //          [<maybe> the-block! block!]
 //  ]
 //
-DECLARE_NATIVE(pack)
+DECLARE_NATIVE(PACK)
 //
 // 1. Using the predicate META means that raised errors aren't tolerated in
 //    the main pack routine.  You have to use PACK*, which uses META* instead.
@@ -556,7 +556,7 @@ DECLARE_NATIVE(pack)
 {
     INCLUDE_PARAMS_OF_PACK;
 
-    Element* block = Element_ARG(block);
+    Element* block = Element_ARG(BLOCK);
 
     if (Pack_Native_Core_Throws(OUT, block, LIB(META)))  // no raised [1]
         return THROWN;
@@ -575,7 +575,7 @@ DECLARE_NATIVE(pack)
 //          [<maybe> the-block! block!]
 //  ]
 //
-DECLARE_NATIVE(pack_p)
+DECLARE_NATIVE(PACK_P)
 //
 // 1. Using the predicate META* means that raised errors will be tolerated
 //    by PACK*, whereas PACK does not.
@@ -584,7 +584,7 @@ DECLARE_NATIVE(pack_p)
 {
     INCLUDE_PARAMS_OF_PACK_P;
 
-    Element* block = Element_ARG(block);
+    Element* block = Element_ARG(BLOCK);
 
     if (Pack_Native_Core_Throws(OUT, block, LIB(META_P)))  // raise ok [1]
         return THROWN;
@@ -601,7 +601,7 @@ DECLARE_NATIVE(pack_p)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(lazy_q)
+DECLARE_NATIVE(LAZY_Q)
 {
     INCLUDE_PARAMS_OF_LAZY_Q;
 
@@ -622,7 +622,7 @@ DECLARE_NATIVE(lazy_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(pack_q)
+DECLARE_NATIVE(PACK_Q)
 {
     INCLUDE_PARAMS_OF_PACK_Q;
 
@@ -643,7 +643,7 @@ DECLARE_NATIVE(pack_q)
 //      frame [frame! action!]
 //  ]
 //
-DECLARE_NATIVE(runs)
+DECLARE_NATIVE(RUNS)
 //
 // 1. Is allowing things that are already antiforms a good idea?
 //
@@ -652,7 +652,7 @@ DECLARE_NATIVE(runs)
 {
     INCLUDE_PARAMS_OF_RUNS;
 
-    Value* frame = ARG(frame);
+    Value* frame = ARG(FRAME);
     if (Is_Action(frame))  // already antiform, no need to pay for coercion [1]
         return COPY(frame);
 
@@ -675,11 +675,11 @@ DECLARE_NATIVE(runs)
 //      action [<maybe> frame! action!]
 //  ]
 //
-DECLARE_NATIVE(unrun)
+DECLARE_NATIVE(UNRUN)
 {
     INCLUDE_PARAMS_OF_UNRUN;
 
-    Value* action = ARG(action);  // may or may not be antiform
+    Value* action = ARG(ACTION);  // may or may not be antiform
     QUOTE_BYTE(action) = NOQUOTE_1;  // now it's known to not be antiform
     return COPY(action);
 }
@@ -694,7 +694,7 @@ DECLARE_NATIVE(unrun)
 //      value
 //  ]
 //
-DECLARE_NATIVE(maybe)
+DECLARE_NATIVE(MAYBE)
 //
 // 1. !!! Should MAYBE of a parameter pack be willing to twist that parameter
 //    pack, e.g. with a NULL in the first slot--into one with a void in the
@@ -732,7 +732,7 @@ DECLARE_NATIVE(maybe)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(noquote)
+DECLARE_NATIVE(NOQUOTE)
 {
     INCLUDE_PARAMS_OF_NOQUOTE;
 

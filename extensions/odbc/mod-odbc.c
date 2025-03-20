@@ -363,7 +363,7 @@ CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
 //          ['utf-8 'latin-1 'utf-16]
 //  ]
 //
-DECLARE_NATIVE(odbc_set_char_encoding)
+DECLARE_NATIVE(ODBC_SET_CHAR_ENCODING)
 //
 // UTF-8 is preferred to UTF8: https://stackoverflow.com/q/809620/
 {
@@ -392,7 +392,7 @@ DECLARE_NATIVE(odbc_set_char_encoding)
 //          [text!]
 //  ]
 //
-DECLARE_NATIVE(open_connection)
+DECLARE_NATIVE(OPEN_CONNECTION)
 {
     INCLUDE_PARAMS_OF_OPEN_CONNECTION;
 
@@ -512,7 +512,7 @@ DECLARE_NATIVE(open_connection)
 //      statement [object!]
 //  ]
 //
-DECLARE_NATIVE(open_statement)
+DECLARE_NATIVE(OPEN_STATEMENT)
 //
 // !!! Similar to previous routines, this takes an empty statement object in
 // to initialize.
@@ -1215,7 +1215,7 @@ void Describe_ODBC_Results(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(insert_odbc)
+DECLARE_NATIVE(INSERT_ODBC)
 {
     INCLUDE_PARAMS_OF_INSERT_ODBC;
 
@@ -1615,7 +1615,7 @@ Value* ODBC_Column_To_Rebol_Value(
 //      :part [integer!]
 //  ]
 //
-DECLARE_NATIVE(copy_odbc)
+DECLARE_NATIVE(COPY_ODBC)
 {
     INCLUDE_PARAMS_OF_COPY_ODBC;
 
@@ -1794,7 +1794,7 @@ DECLARE_NATIVE(copy_odbc)
 //      commit [logic?]
 //  ]
 //
-DECLARE_NATIVE(update_odbc)
+DECLARE_NATIVE(UPDATE_ODBC)
 {
     INCLUDE_PARAMS_OF_UPDATE_ODBC;
 
@@ -1843,7 +1843,7 @@ DECLARE_NATIVE(update_odbc)
 //      statement [object!]
 //  ]
 //
-DECLARE_NATIVE(close_statement)
+DECLARE_NATIVE(CLOSE_STATEMENT)
 {
     INCLUDE_PARAMS_OF_CLOSE_STATEMENT;
 
@@ -1884,7 +1884,7 @@ DECLARE_NATIVE(close_statement)
 //      connection [object!]
 //  ]
 //
-DECLARE_NATIVE(close_connection)
+DECLARE_NATIVE(CLOSE_CONNECTION)
 {
     INCLUDE_PARAMS_OF_CLOSE_CONNECTION;
 
@@ -1921,7 +1921,7 @@ DECLARE_NATIVE(close_connection)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(startup_p)
+DECLARE_NATIVE(STARTUP_P)
 //
 // To use ODBC you must initialize a SQL_HANDLE_ENV.  We do this lazily in
 // OPEN-CONNECTION vs. at startup, so you don't pay for it unless you actually
@@ -1946,7 +1946,7 @@ DECLARE_NATIVE(startup_p)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(shutdown_p)
+DECLARE_NATIVE(SHUTDOWN_P)
 //
 // We have to "neutralize" all the HANDLE! objects that we have allocated when
 // the extension unloads.  Because if we don't, the final garbage collect pass

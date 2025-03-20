@@ -39,22 +39,22 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
 {
     INCLUDE_PARAMS_OF_SKIP;
 
-    Element* v = Element_ARG(series);
+    Element* v = Element_ARG(SERIES);
     assert(Any_Series(v));
 
     REBI64 i;
-    if (Is_Logic(ARG(offset))) {  // preserve a behavior for SKIP of LOGIC [1]
-        if (Cell_Logic(ARG(offset)))
+    if (Is_Logic(ARG(OFFSET))) {  // preserve a behavior for SKIP of LOGIC [1]
+        if (Cell_Logic(ARG(OFFSET)))
             i = cast(REBI64, VAL_INDEX_RAW(v)) + 1;
         else
             i = cast(REBI64, VAL_INDEX_RAW(v));
     }
     else {  // `skip series 1` means second element, add offset as-is
-        REBINT offset = Get_Num_From_Arg(ARG(offset));
+        REBINT offset = Get_Num_From_Arg(ARG(OFFSET));
         i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
     }
 
-    if (not REF(unbounded)) {
+    if (not REF(UNBOUNDED)) {
         if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
             return nullptr;
     }
@@ -87,10 +87,10 @@ IMPLEMENT_GENERIC(AT, Any_Series)
 {
     INCLUDE_PARAMS_OF_AT;
 
-    Element* v = Element_ARG(series);
+    Element* v = Element_ARG(SERIES);
     assert(Any_Series(v));
 
-    REBINT offset = Get_Num_From_Arg(ARG(index));
+    REBINT offset = Get_Num_From_Arg(ARG(INDEX));
     REBI64 i;
 
     if (offset > 0)
@@ -98,7 +98,7 @@ IMPLEMENT_GENERIC(AT, Any_Series)
     else
         i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
 
-    if (REF(bounded)) {
+    if (REF(BOUNDED)) {
         if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
             return nullptr;
     }
@@ -112,13 +112,13 @@ IMPLEMENT_GENERIC(REMOVE, Any_Series)
 {
     INCLUDE_PARAMS_OF_REMOVE;
 
-    Element* v = Element_ARG(series);
+    Element* v = Element_ARG(SERIES);
 
     Ensure_Mutable(v);  // !!! Review making this extract
 
     REBINT len;
-    if (REF(part))
-        len = Part_Len_May_Modify_Index(v, ARG(part));
+    if (REF(PART))
+        len = Part_Len_May_Modify_Index(v, ARG(PART));
     else
         len = 1;
 
@@ -134,7 +134,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
     return Init_Integer(OUT, Cell_Series_Len_At(ser));
 }
 
@@ -143,7 +143,7 @@ IMPLEMENT_GENERIC(INDEX_OF, Any_Series)  // 1-based
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
     return Init_Integer(OUT, VAL_INDEX_RAW(ser) + 1);
 }
 
@@ -152,7 +152,7 @@ IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
 {
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
     return Init_Integer(OUT, VAL_INDEX_RAW(ser));
 }
 
@@ -166,11 +166,11 @@ IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(head_of)
+DECLARE_NATIVE(HEAD_OF)
 {
     INCLUDE_PARAMS_OF_HEAD_OF;
 
-    return Dispatch_Generic(HEAD_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(HEAD_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -183,11 +183,11 @@ DECLARE_NATIVE(head_of)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(tail_of)
+DECLARE_NATIVE(TAIL_OF)
 {
     INCLUDE_PARAMS_OF_TAIL_OF;
 
-    return Dispatch_Generic(TAIL_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(TAIL_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -200,11 +200,11 @@ DECLARE_NATIVE(tail_of)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(head_q)
+DECLARE_NATIVE(HEAD_Q)
 {
     INCLUDE_PARAMS_OF_HEAD_Q;
 
-    return Dispatch_Generic(HEAD_Q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(HEAD_Q, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -217,11 +217,11 @@ DECLARE_NATIVE(head_q)
 //      element [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(tail_q)
+DECLARE_NATIVE(TAIL_Q)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    return Dispatch_Generic(TAIL_Q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(TAIL_Q, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -234,11 +234,11 @@ DECLARE_NATIVE(tail_q)
 //      element [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(past_q)
+DECLARE_NATIVE(PAST_Q)
 {
     INCLUDE_PARAMS_OF_PAST_Q;
 
-    return Dispatch_Generic(PAST_Q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(PAST_Q, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -246,7 +246,7 @@ IMPLEMENT_GENERIC(HEAD_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_HEAD_OF;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
 
     Copy_Cell(OUT, ser);
     VAL_INDEX_RAW(OUT) = 0;
@@ -258,7 +258,7 @@ IMPLEMENT_GENERIC(TAIL_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_TAIL_OF;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
 
     Copy_Cell(OUT, ser);
     VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(ser);
@@ -270,7 +270,7 @@ IMPLEMENT_GENERIC(HEAD_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_HEAD_Q;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
 
     return Init_Logic(OUT, VAL_INDEX_RAW(ser) == 0);
 }
@@ -280,7 +280,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
 
     return Init_Logic(
         OUT,
@@ -293,7 +293,7 @@ IMPLEMENT_GENERIC(PAST_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_PAST_Q;
 
-    Element* ser = Element_ARG(element);
+    Element* ser = Element_ARG(ELEMENT);
 
     return Init_Logic(
         OUT,
@@ -306,14 +306,14 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(series));
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(SERIES));
 
     Flex* flex = Make_Set_Operation_Flex(
-        ARG(series),
-        nullptr,  // no ARG(value2)
+        ARG(SERIES),
+        nullptr,  // no ARG(VALUE2)
         SOP_NONE,
-        REF(case),
-        REF(skip) ? Int32s(ARG(skip), 1) : 1
+        REF(CASE),
+        REF(SKIP) ? Int32s(ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -341,17 +341,17 @@ IMPLEMENT_GENERIC(INTERSECT, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(value1), ARG(value2)
+        &heart, ARG(VALUE1), ARG(VALUE2)
     );
     if (e)
         return FAIL(unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
-        ARG(value1),
-        ARG(value2),
+        ARG(VALUE1),
+        ARG(VALUE2),
         SOP_FLAG_CHECK,
-        REF(case),
-        REF(skip) ? Int32s(ARG(skip), 1) : 1
+        REF(CASE),
+        REF(SKIP) ? Int32s(ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -364,17 +364,17 @@ IMPLEMENT_GENERIC(UNION, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(value1), ARG(value2)
+        &heart, ARG(VALUE1), ARG(VALUE2)
     );
     if (e)
         return FAIL(unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
-        ARG(value1),
-        ARG(value2),
+        ARG(VALUE1),
+        ARG(VALUE2),
         SOP_FLAG_BOTH,
-        REF(case),
-        REF(skip) ? Int32s(ARG(skip), 1) : 1
+        REF(CASE),
+        REF(SKIP) ? Int32s(ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -387,17 +387,17 @@ IMPLEMENT_GENERIC(DIFFERENCE, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(value1), ARG(value2)
+        &heart, ARG(VALUE1), ARG(VALUE2)
     );
     if (e)
         return FAIL(unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
-        ARG(value1),
-        ARG(value2),
+        ARG(VALUE1),
+        ARG(VALUE2),
         SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-        REF(case),
-        REF(skip) ? Int32s(ARG(skip), 1) : 1
+        REF(CASE),
+        REF(SKIP) ? Int32s(ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -410,17 +410,17 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
 
     Heart heart;
     Option(Error*) e = Trap_Resolve_Dual_Hearts(
-        &heart, ARG(data), ARG(exclusions)
+        &heart, ARG(DATA), ARG(EXCLUSIONS)
     );
     if (e)
         return FAIL(unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
-        ARG(data),
-        ARG(exclusions),
+        ARG(DATA),
+        ARG(EXCLUSIONS),
         SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-        REF(case),
-        REF(skip) ? Int32s(ARG(skip), 1) : 1
+        REF(CASE),
+        REF(SKIP) ? Int32s(ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -463,9 +463,9 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    Copy_Cell(Erase_Cell(ARG(value1)), s);
-    Copy_Cell(Erase_Cell(ARG(value2)), t);
-    Init_Logic(Erase_Cell(ARG(strict)), strict);
+    Copy_Cell(Erase_Cell(ARG(VALUE1)), s);
+    Copy_Cell(Erase_Cell(ARG(VALUE2)), t);
+    Init_Logic(Erase_Cell(ARG(STRICT)), strict);
 
     DECLARE_ATOM (out);
 
@@ -516,8 +516,8 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    Copy_Cell(Erase_Cell(ARG(value1)), s);
-    Copy_Cell(Erase_Cell(ARG(value2)), t);
+    Copy_Cell(Erase_Cell(ARG(VALUE1)), s);
+    Copy_Cell(Erase_Cell(ARG(VALUE2)), t);
 
     DECLARE_ATOM (out);
 

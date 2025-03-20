@@ -52,7 +52,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Bitset(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Bitset(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -60,7 +60,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Bitset(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Bitset(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
@@ -82,9 +82,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form); // all bitsets are "molded" at this time
 
@@ -96,7 +96,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
         Append_Ascii(mo->string, "[not bits ");
 
     Init_Blob(v, bset);
-    Init_Nulled(ARG(form));  // form = false
+    Init_Nulled(ARG(FORM));  // form = false
     Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Blob)(LEVEL);
     assert(bounce == NOTHING);  // !!! generically it could BOUNCE_CONTINUE...
     UNUSED(bounce);
@@ -114,10 +114,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(type)) == TYPE_BITSET);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_BITSET);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
@@ -568,15 +568,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        if (Is_Antiform(ARG(value)))
-            return FAIL(ARG(value));
+        if (Is_Antiform(ARG(VALUE)))
+            return FAIL(ARG(VALUE));
 
-        UNUSED(PARAM(series));  // covered by `v`
+        UNUSED(PARAM(SERIES));  // covered by `v`
 
-        if (REF(part) or REF(skip) or REF(match))
+        if (REF(PART) or REF(SKIP) or REF(MATCH))
             return FAIL(Error_Bad_Refines_Raw());
 
-        if (not Check_Bits(VAL_BITSET(v), ARG(value), REF(case)))
+        if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), REF(CASE)))
             return nullptr;
         return Init_Logic(OUT, true); }
 
@@ -603,15 +603,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PARAM(series));  // covered by `v`
+        UNUSED(PARAM(SERIES));  // covered by `v`
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
-        if (not REF(part))
+        if (not REF(PART))
             return FAIL(Error_Missing_Arg_Raw());
 
-        if (not Set_Bits(bset, ARG(part), false))
-            return FAIL(PARAM(part));
+        if (not Set_Bits(bset, ARG(PART), false))
+            return FAIL(PARAM(PART));
 
         return COPY(v); }
 
@@ -633,8 +633,8 @@ IMPLEMENT_GENERIC(PICK, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* bset = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* bset = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     bool bit = Check_Bits(VAL_BITSET(bset), picker, false);
 
@@ -645,10 +645,10 @@ IMPLEMENT_GENERIC(PICK, Is_Bitset)
 IMPLEMENT_GENERIC(POKE, Is_Bitset) {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* bset = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    Element* bset = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = ARG(value);
+    Value* poke = ARG(VALUE);
 
     Binary* bits = cast(Binary*, VAL_BITSET_Ensure_Mutable(bset));
     if (not Set_Bits(
@@ -656,7 +656,7 @@ IMPLEMENT_GENERIC(POKE, Is_Bitset) {
         picker,
         BITS_NOT(bits) ? Is_Inhibitor(poke) : Is_Trigger(poke)
     )){
-        return FAIL(PARAM(picker));
+        return FAIL(PARAM(PICKER));
     }
     return nullptr;
 }
@@ -666,10 +666,10 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* bset = Element_ARG(value);
+    Element* bset = Element_ARG(VALUE);
     Binary* bits = VAL_BITSET(bset);
 
-    if (REF(part) or REF(deep))
+    if (REF(PART) or REF(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
     Binary* copy = cast(Binary*, Copy_Flex_Core(NODE_FLAG_MANAGED, bits));
@@ -683,7 +683,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* bset = Element_ARG(element);
+    Element* bset = Element_ARG(ELEMENT);
 
     return Init_Integer(OUT, Binary_Len(VAL_BITSET(bset)) * 8);
 }
@@ -695,7 +695,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* bset = Element_ARG(element);
+    Element* bset = Element_ARG(ELEMENT);
     return Init_Logic(OUT, Binary_Len(VAL_BITSET(bset)) == 0);
 }
 
@@ -704,7 +704,7 @@ IMPLEMENT_GENERIC(COMPLEMENT, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_COMPLEMENT;
 
-    Element* bset = Element_ARG(value);
+    Element* bset = Element_ARG(VALUE);
 
     Binary* copy = cast(
         Binary*,
@@ -726,10 +726,10 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
 ){
     INCLUDE_PARAMS_OF_INTERSECT;  // assume arg compatibility
 
-    Element* bset = Element_ARG(value1);
-    Element* arg = Element_ARG(value2);
+    Element* bset = Element_ARG(VALUE1);
+    Element* arg = Element_ARG(VALUE2);
 
-    if (REF(skip))
+    if (REF(SKIP))
         return Error_Bad_Refines_Raw();
 
     if (Is_Bitset(arg)) {

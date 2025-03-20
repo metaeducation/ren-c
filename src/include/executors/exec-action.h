@@ -183,7 +183,7 @@ STATIC_ASSERT(
 //
 // It is also used to indicate to a ST_STEPPER_REEVALUATING frame whether
 // to run an ACTION! cell as infix or not.  The reason this may be overridden
-// on what's in the action can be seen in the DECLARE_NATIVE(shove) code.
+// on what's in the action can be seen in the DECLARE_NATIVE(SHOVE) code.
 //
 #define ACTION_EXECUTOR_FLAG_INFIX_A \
     LEVEL_FLAG_30

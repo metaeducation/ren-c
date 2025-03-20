@@ -38,11 +38,11 @@
 //      y [integer!]
 //  ]
 //
-DECLARE_NATIVE(as_pair)
+DECLARE_NATIVE(AS_PAIR)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
-    return Init_Pair(OUT, VAL_INT64(ARG(x)), VAL_INT64(ARG(y)));
+    return Init_Pair(OUT, VAL_INT64(ARG(X)), VAL_INT64(ARG(Y)));
 }
 
 
@@ -65,14 +65,14 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Pair)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Pair(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Pair(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
 IMPLEMENT_GENERIC(ZEROIFY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
-    UNUSED(ARG(example));  // always gives 0x0
+    UNUSED(ARG(EXAMPLE));  // always gives 0x0
 
     return Init_Pair(OUT, 0, 0);
 }
@@ -82,10 +82,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_PAIR);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_PAIR);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
         Option(Error*) error = Trap_Transcode_One(OUT, TYPE_PAIR, arg);
@@ -133,9 +133,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 
@@ -249,8 +249,8 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(element);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* v = Element_ARG(ELEMENT);
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_List_Type(to)) {
         Source* a = Make_Source_Managed(2);
@@ -291,8 +291,8 @@ IMPLEMENT_GENERIC(PICK, Is_Pair)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* pair = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* pair = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
@@ -305,15 +305,15 @@ IMPLEMENT_GENERIC(POKE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* pair = Element_ARG(location);
+    Element* pair = Element_ARG(LOCATION);
 
-    const Element* picker = Element_ARG(picker);
+    const Element* picker = Element_ARG(PICKER);
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
-    Value* poke = ARG(value);
+    Value* poke = ARG(VALUE);
 
     if (not Is_Integer(poke))
-        return FAIL(PARAM(value));
+        return FAIL(PARAM(VALUE));
 
     Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
     Copy_Cell(which, poke);
@@ -326,10 +326,10 @@ IMPLEMENT_GENERIC(REVERSE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_REVERSE;
 
-    if (REF(part))
+    if (REF(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
-    const Element* pair = Element_ARG(series);
+    const Element* pair = Element_ARG(SERIES);
 
     return Init_Pair(OUT, Cell_Pair_Y(pair), Cell_Pair_X(pair));
 }
@@ -342,11 +342,11 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Value* pair1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Value* pair1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
 
     if (not Is_Integer(v2))
-        return FAIL(PARAM(value2));
+        return FAIL(PARAM(VALUE2));
 
     return rebDelegate(CANON(MAKE), CANON(PAIR_X), "[",
         CANON(MULTIPLY), v2, cast(Value*, Cell_Pair_First(pair1)),  // !!! [1]

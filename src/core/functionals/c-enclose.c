@@ -217,7 +217,7 @@ bool Encloser_Details_Querier(
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(enclose)
+DECLARE_NATIVE(ENCLOSE)
 //
 // 1. The ENCLOSE'd function will have the same arguments and refinements, so
 //    it can reuse the interface of INNER.  But note that the return result
@@ -225,8 +225,8 @@ DECLARE_NATIVE(enclose)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
-    Value* inner = ARG(inner);
-    Value* outer = ARG(outer);
+    Value* inner = ARG(INNER);
+    Value* outer = ARG(OUTER);
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,

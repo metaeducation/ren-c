@@ -2790,11 +2790,11 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebFail_OS()
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(api_transient)
+DECLARE_NATIVE(API_TRANSIENT)
 {
     INCLUDE_PARAMS_OF_API_TRANSIENT;
 
-    Value* v = Copy_Cell(Alloc_Value(), ARG(value));
+    Value* v = Copy_Cell(Alloc_Value(), ARG(VALUE));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
     Stub* stub = Compact_Stub_From_Cell(v);
     Set_Flavor_Flag(API, stub, RELEASE);

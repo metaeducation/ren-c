@@ -112,7 +112,7 @@ typedef RebolValue Value;
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(request_file_p)
+DECLARE_NATIVE(REQUEST_FILE_P)
 {
     INCLUDE_PARAMS_OF_REQUEST_FILE_P;
 
@@ -487,7 +487,7 @@ int CALLBACK ReqDirCallbackProc(
 //          [file!]
 //  ]
 //
-DECLARE_NATIVE(request_dir_p)
+DECLARE_NATIVE(REQUEST_DIR_P)
 //
 // !!! This came from Saphirion/Atronix R3-View.  It said "WARNING: TEMPORARY
 // implementation! Used only by host-core.c Will be most probably changed

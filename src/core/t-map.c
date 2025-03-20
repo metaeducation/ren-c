@@ -79,7 +79,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Map(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Map(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -377,10 +377,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(type)) == TYPE_MAP);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_MAP);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Any_Number(arg))
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
@@ -512,9 +512,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     const Map* m = VAL_MAP(v);
 
@@ -576,21 +576,21 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
     switch (id) {
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        if (Is_Antiform(ARG(value)))
-            return FAIL(ARG(value));
+        if (Is_Antiform(ARG(VALUE)))
+            return FAIL(ARG(VALUE));
 
-        UNUSED(PARAM(series));  // covered by `v`
+        UNUSED(PARAM(SERIES));  // covered by `v`
 
-        if (REF(part) or REF(skip) or REF(match))
+        if (REF(PART) or REF(SKIP) or REF(MATCH))
             return FAIL(Error_Bad_Refines_Raw());
 
         const Map* m = VAL_MAP(map);
 
         REBINT n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
-            Element_ARG(value),
+            Element_ARG(VALUE),
             nullptr,  // nullptr indicates it will only search, not modify
-            REF(case)
+            REF(CASE)
         );
 
         if (n == 0)
@@ -604,10 +604,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
       case SYM_PUT: {
         INCLUDE_PARAMS_OF_PUT;
-        UNUSED(ARG(series)); // extracted to `map`
+        UNUSED(ARG(SERIES)); // extracted to `map`
 
-        Value* key = ARG(key);
-        Value* val = ARG(value);
+        Value* key = ARG(KEY);
+        Value* val = ARG(VALUE);
 
         if (Is_Void(key))
             return FAIL(Error_Bad_Void());  // tolerate?
@@ -619,20 +619,20 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),
-            Element_ARG(key),
+            Element_ARG(KEY),
             val,  // non-nullptr means modify
-            REF(case)
+            REF(CASE)
         );
         UNUSED(n);
 
-        return COPY(ARG(value)); }
+        return COPY(ARG(VALUE)); }
 
       case SYM_INSERT:
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PARAM(series));
+        UNUSED(PARAM(SERIES));
 
-        Value* value = ARG(value);
+        Value* value = ARG(VALUE);
         if (Is_Void(value))
             return COPY(map);  // don't fail on read only if it would be a no-op
 
@@ -645,10 +645,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
-        if (REF(line) or REF(dup))
+        if (REF(LINE) or REF(DUP))
             return FAIL(Error_Bad_Refines_Raw());
 
-        REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
+        REBLEN len = Part_Len_May_Modify_Index(value, ARG(PART));
         const Element* tail;
         const Element* at = Cell_List_At(&tail, value);  // w/modified index
 
@@ -683,8 +683,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 IMPLEMENT_GENERIC(TO, Is_Map) {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* map = Element_ARG(element);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* map = Element_ARG(ELEMENT);
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_List_Type(to))  // !!! not ordered! [1]
         return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
@@ -702,12 +702,12 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    const Element* map = Element_ARG(value);
+    const Element* map = Element_ARG(VALUE);
 
-    if (REF(part))
+    if (REF(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
-    return Init_Map(OUT, Copy_Map(VAL_MAP(map), REF(deep)));
+    return Init_Map(OUT, Copy_Map(VAL_MAP(map), REF(DEEP)));
 }
 
 
@@ -715,8 +715,8 @@ IMPLEMENT_GENERIC(PICK, Is_Map)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* map = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* map = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     bool strict = false;
 
@@ -751,12 +751,12 @@ IMPLEMENT_GENERIC(PICK, Is_Map)
 IMPLEMENT_GENERIC(POKE, Is_Map) {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* map = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    Element* map = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     bool strict = false;  // case-preserving [1]
 
-    Value* poke = ARG(value);  // Note: VOID interpreted as remove key
+    Value* poke = ARG(VALUE);  // Note: VOID interpreted as remove key
 
     if (Is_Void(poke)) {
         // removal signal
@@ -767,7 +767,7 @@ IMPLEMENT_GENERIC(POKE, Is_Map) {
     REBINT n = Find_Map_Entry(
         VAL_MAP_Ensure_Mutable(map),  // modified
         picker,
-        poke,  // value to set (either ARG(value) or L->out)
+        poke,  // value to set (either ARG(VALUE) or L->out)
         strict
     );
 
@@ -782,7 +782,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* map = Element_ARG(element);
+    Element* map = Element_ARG(ELEMENT);
     const Map* m = VAL_MAP(map);
 
     return Init_Integer(OUT, Num_Map_Entries_Used(m));
@@ -793,7 +793,7 @@ IMPLEMENT_GENERIC(WORDS_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    Element* map = Element_ARG(element);
+    Element* map = Element_ARG(ELEMENT);
     const Map* m = VAL_MAP(map);
 
     return Init_Block(OUT, Map_To_Array(m, -1));
@@ -804,7 +804,7 @@ IMPLEMENT_GENERIC(VALUES_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_VALUES_OF;
 
-    Element* map = Element_ARG(element);
+    Element* map = Element_ARG(ELEMENT);
     const Map* m = VAL_MAP(map);
 
     return Init_Block(OUT, Map_To_Array(m, 1));
@@ -815,7 +815,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Map)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* map = Element_ARG(element);
+    Element* map = Element_ARG(ELEMENT);
     const Map* m = VAL_MAP(map);
 
     return Init_Logic(OUT, Num_Map_Entries_Used(m) == 0);
@@ -834,7 +834,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Map)
 //      :case "Perform a case-sensitive search"
 //  ]
 //
-DECLARE_NATIVE(put)
+DECLARE_NATIVE(PUT)
 //
 // !!! PUT was added by Red as the complement to SELECT, which offers a /CASE
 // refinement for adding keys to MAP!s case-sensitively.  The name may not

@@ -47,7 +47,7 @@
 //      :type "Test a concrete type, (integer?:type integer!) passes"
 //  ]
 //
-DECLARE_NATIVE(typechecker_archetype)
+DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
 {
     return FAIL("TYPECHECKER-ARCHETYPE called (internal use only)");
 }
@@ -790,7 +790,7 @@ Value* Init_Typechecker(Init(Value) out, const Element* types) {
 //      types [type-word! type-block!]
 //  ]
 //
-DECLARE_NATIVE(typechecker)
+DECLARE_NATIVE(TYPECHECKER)
 //
 // Compare with MATCHER:
 //
@@ -807,7 +807,7 @@ DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Element* types = Element_ARG(types);
+    Element* types = Element_ARG(TYPES);
     return Init_Typechecker(OUT, types);
 }
 
@@ -826,7 +826,7 @@ DECLARE_NATIVE(typechecker)
 //      :meta "Return the ^^META result (allows checks on NULL and VOID)"
 //  ]
 //
-DECLARE_NATIVE(match)
+DECLARE_NATIVE(MATCH)
 //
 // Note: Ambitious ideas for the "MATCH dialect" are on hold, and this function
 // just does some fairly simple matching:
@@ -860,16 +860,16 @@ DECLARE_NATIVE(match)
 {
     INCLUDE_PARAMS_OF_MATCH;
 
-    Value* v = ARG(value);
-    Value* test = ARG(test);
+    Value* v = ARG(VALUE);
+    Value* test = ARG(TEST);
 
-    if (not REF(meta)) {
+    if (not REF(META)) {
         if (Is_Nulled(v))
             return FAIL(Error_Need_Non_Null_Raw());  // [1]
     }
 
     if (Is_Nulled(test)) {
-        if (not REF(meta))
+        if (not REF(META))
             return FAIL(
                 "Can't give coherent answer for NULL matching without /META"
             );
@@ -893,17 +893,17 @@ DECLARE_NATIVE(match)
 
       default:
         assert(false);  // all test types should be accounted for in switch
-        return FAIL(PARAM(test));
+        return FAIL(PARAM(TEST));
     }
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
-    if (Is_Void(v) and not REF(meta))  // not a good case of void-in-null-out
+    if (Is_Void(v) and not REF(META))  // not a good case of void-in-null-out
         return FAIL("~void~ antiform needs MATCH:META if in set being tested");
 
     Copy_Cell(OUT, v);
 
-    if (REF(meta))
+    if (REF(META))
         Meta_Quotify(OUT);
 
     return OUT;
@@ -920,7 +920,7 @@ DECLARE_NATIVE(match)
 //          [~null~ block! type-word! type-group! type-block! parameter!]
 //  ]
 //
-DECLARE_NATIVE(matcher)
+DECLARE_NATIVE(MATCHER)
 //
 // This is a bit faster at making a specialization than usermode code.
 //
@@ -944,7 +944,7 @@ DECLARE_NATIVE(matcher)
 {
     INCLUDE_PARAMS_OF_MATCHER;
 
-    Value* test = ARG(test);
+    Value* test = ARG(TEST);
 
     Source* a = Make_Source_Managed(2);
     Set_Flex_Len(a, 2);

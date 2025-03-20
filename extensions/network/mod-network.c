@@ -797,13 +797,13 @@ static Bounce Transport_Actor(
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(source));
+        UNUSED(PARAM(SOURCE));
 
-        if (REF(seek))
+        if (REF(SEEK))
             return FAIL(Error_Bad_Refines_Raw());
 
-        UNUSED(PARAM(string)); // handled in dispatcher
-        UNUSED(PARAM(lines)); // handled in dispatcher
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
             return FAIL(Error_On_Port(SYM_NOT_CONNECTED, port, -15));
@@ -813,11 +813,11 @@ static Bounce Transport_Actor(
         rebreq->actual = 0;
         rebreq->result = nullptr;
 
-        if (REF(part)) {
-            if (not Is_Integer(ARG(part)))
-                return FAIL(PARAM(part));
+        if (REF(PART)) {
+            if (not Is_Integer(ARG(PART)))
+                return FAIL(PARAM(PART));
 
-            rebreq->length_store = VAL_INT32(ARG(part));
+            rebreq->length_store = VAL_INT32(ARG(PART));
             rebreq->length = &rebreq->length_store;
         }
         else {
@@ -853,9 +853,9 @@ static Bounce Transport_Actor(
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
-        UNUSED(PARAM(destination));
+        UNUSED(PARAM(DESTINATION));
 
-        if (REF(seek) or REF(append) or REF(lines))
+        if (REF(SEEK) or REF(APPEND) or REF(LINES))
             return FAIL(Error_Bad_Refines_Raw());
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
@@ -868,7 +868,7 @@ static Bounce Transport_Actor(
         // that point (always UTF-8 bytes)...but the port model needs a top
         // to bottom review of what types are accepted where and why.
         //
-        Value* data = ARG(data);
+        Value* data = ARG(DATA);
 
         // When we get the callback we'll get the libuv req pointer, which is
         // the same pointer as the rebreq (first struct member).
@@ -896,7 +896,7 @@ static Bounce Transport_Actor(
         // this as an angle on efficiency.
         //
         rebreq->binary = rebValue(
-            "as blob! copy:part", data, rebQ(ARG(part))
+            "as blob! copy:part", data, rebQ(ARG(PART))
         );
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 
@@ -1007,7 +1007,7 @@ static Bounce UDP_Actor(Level* level_, Value* port, const Symbol* verb)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_tcp_actor_handle)
+DECLARE_NATIVE(GET_TCP_ACTOR_HANDLE)
 {
     INCLUDE_PARAMS_OF_GET_TCP_ACTOR_HANDLE;
 
@@ -1024,7 +1024,7 @@ DECLARE_NATIVE(get_tcp_actor_handle)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_udp_actor_handle)
+DECLARE_NATIVE(GET_UDP_ACTOR_HANDLE)
 //
 // !!! Note: has not been ported to libuv.
 {
@@ -1069,7 +1069,7 @@ void halt_poll_timer_callback(uv_timer_t* handle) {
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(startup_p)
+DECLARE_NATIVE(STARTUP_P)
 //
 // Intialize networking libraries and related interfaces.  This needs to be
 // called prior to any socket functions.
@@ -1112,7 +1112,7 @@ DECLARE_NATIVE(startup_p)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(shutdown_p)
+DECLARE_NATIVE(SHUTDOWN_P)
 //
 // 1. uv_close() on a timer is just a request, you have to actually run the
 //    event loop to have it get freed and finalized.  If you don't run the
@@ -1153,7 +1153,7 @@ DECLARE_NATIVE(shutdown_p)
 //      value [~null~ any-number? time! port! block!]
 //  ]
 //
-DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
+DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
 //
 // WAIT* expects a BLOCK! argument to have been pre-reduced; this means it
 // does not have to implement the reducing process "stacklessly" itself.  The
@@ -1165,10 +1165,10 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     Value* ports = nullptr;
 
     const Element* val;
-    if (not Is_Block(ARG(value)))
-        val = cast(Element*, ARG(value));
+    if (not Is_Block(ARG(VALUE)))
+        val = cast(Element*, ARG(VALUE));
     else {
-        ports = ARG(value);
+        ports = ARG(VALUE);
 
         REBLEN num_pending = 0;
         const Element* tail;
@@ -1199,8 +1199,8 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
           case TYPE_PORT: {
             Source* single = Make_Source(1);
             Append_Value(single, val);
-            Init_Block(ARG(value), single);
-            ports = ARG(value);
+            Init_Block(ARG(VALUE), single);
+            ports = ARG(VALUE);
 
             timeout = ALL_BITS;
             break; }

@@ -830,15 +830,15 @@ DetailsQuerier* Details_Querier(Details *details) {
 //      coupling [~null~ object! frame!]
 //  ]
 //
-DECLARE_NATIVE(couple)
+DECLARE_NATIVE(COUPLE)
 //
 // !!! Should this require an :OVERRIDE if the action already has a non-null
 // coupling in its cell?
 {
     INCLUDE_PARAMS_OF_COUPLE;
 
-    Value* action_or_frame = ARG(action);  // could also be a FRAME!
-    Value* coupling = ARG(coupling);
+    Value* action_or_frame = ARG(ACTION);  // could also be a FRAME!
+    Value* coupling = ARG(COUPLING);
 
     assert(Cell_Heart(action_or_frame) == TYPE_FRAME);
 
@@ -862,11 +862,11 @@ DECLARE_NATIVE(couple)
 //      action [action! frame!]
 //  ]
 //
-DECLARE_NATIVE(uncouple)
+DECLARE_NATIVE(UNCOUPLE)
 {
     INCLUDE_PARAMS_OF_UNCOUPLE;
 
-    Value* action_or_frame = ARG(action);  // could also be a FRAME!
+    Value* action_or_frame = ARG(ACTION);  // could also be a FRAME!
 
     assert(Cell_Heart(action_or_frame) == TYPE_FRAME);
 

@@ -102,7 +102,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Date(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -126,7 +126,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Date(ARG(value1), ARG(value2), false) == -1);
+    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), false) == -1);
 }
 
 
@@ -134,9 +134,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);  // calls MOLDIFY on the time component, may heed
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);  // calls MOLDIFY on the time component, may heed
 
     UNUSED(form);
 
@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->string, '/');
-        Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // REF(form)?
+        Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // REF(FORM)?
         assert(bounce == NOTHING);  // !!! generically might BOUNCE_CONTINUE...
         UNUSED(bounce);
 
@@ -548,10 +548,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_DATE);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_DATE);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Any_List(arg))
         goto make_from_array;
@@ -1070,13 +1070,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
           case SYM_DIFFERENCE: {
             INCLUDE_PARAMS_OF_DIFFERENCE;
 
-            Value* val1 = ARG(value1);
-            Value* val2 = ARG(value2);
+            Value* val1 = ARG(VALUE1);
+            Value* val2 = ARG(VALUE2);
 
-            if (REF(case))
+            if (REF(CASE))
                 return FAIL(Error_Bad_Refines_Raw());
 
-            if (REF(skip))
+            if (REF(SKIP))
                 return FAIL(Error_Bad_Refines_Raw());
 
             // !!! Plain SUBTRACT on dates has historically given INTEGER! of
@@ -1123,8 +1123,8 @@ IMPLEMENT_GENERIC(PICK, Is_Date)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    Element* date = Element_ARG(location);  // needs to not be const
-    const Element* picker = Element_ARG(picker);
+    Element* date = Element_ARG(LOCATION);  // needs to not be const
+    const Element* picker = Element_ARG(PICKER);
 
     Pick_Or_Poke_Date(OUT, date, picker, nullptr);  // won't modify date
     return OUT;
@@ -1135,10 +1135,10 @@ IMPLEMENT_GENERIC(POKE, Is_Date)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* date = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    Element* date = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = ARG(value);
+    Value* poke = ARG(VALUE);
 
     Pick_Or_Poke_Date(nullptr, date, picker, poke);
 
@@ -1150,7 +1150,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Date)
 {
     INCLUDE_PARAMS_OF_RANDOMIZE;
 
-    Element* date = Element_ARG(seed);
+    Element* date = Element_ARG(SEED);
 
     REBLEN year = VAL_YEAR(date);  // unhandled if 0?
     REBI64 nano = Does_Date_Have_Time(date) ? VAL_NANO(date) : 0;
@@ -1168,13 +1168,13 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
 {
     INCLUDE_PARAMS_OF_RANDOM;
 
-    Element* date = Element_ARG(max);
+    Element* date = Element_ARG(MAX);
 
     REBLEN year = VAL_YEAR(date);
     if (year == 0)
         return UNHANDLED;
 
-    const bool secure = REF(secure);
+    const bool secure = REF(SECURE);
 
     REBLEN rand_year = Random_Range(year, secure);
     REBLEN rand_month = Random_Range(12, secure);
@@ -1219,7 +1219,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
 //      zone [~null~ integer!]
 //  ]
 //
-DECLARE_NATIVE(make_date_ymdsnz)
+DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
 //
 // !!! This native exists to avoid adding specialized C routines to the API
 // for the purposes of date creation in NOW.  Ideally there would be a nicer
@@ -1231,17 +1231,17 @@ DECLARE_NATIVE(make_date_ymdsnz)
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
     Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_DATE);
-    VAL_YEAR(OUT) = VAL_INT32(ARG(year));
-    VAL_MONTH(OUT) = VAL_INT32(ARG(month));
-    VAL_DAY(OUT) = VAL_INT32(ARG(day));
+    VAL_YEAR(OUT) = VAL_INT32(ARG(YEAR));
+    VAL_MONTH(OUT) = VAL_INT32(ARG(MONTH));
+    VAL_DAY(OUT) = VAL_INT32(ARG(DAY));
 
-    if (Is_Nulled(ARG(zone)))
+    if (Is_Nulled(ARG(ZONE)))
         VAL_ZONE(OUT) = NO_DATE_ZONE;
     else
-        VAL_ZONE(OUT) = VAL_INT32(ARG(zone)) / ZONE_MINS;
+        VAL_ZONE(OUT) = VAL_INT32(ARG(ZONE)) / ZONE_MINS;
 
-    REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
-    Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano);
+    REBI64 nano = Is_Nulled(ARG(NANO)) ? 0 : VAL_INT64(ARG(NANO));
+    Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + nano);
 
     assert(Does_Date_Have_Time(OUT));
     return OUT;
@@ -1260,7 +1260,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
 //          [~null~ integer!]
 //  ]
 //
-DECLARE_NATIVE(make_time_sn)
+DECLARE_NATIVE(MAKE_TIME_SN)
 //
 // !!! The MAKE TIME! as defined by historical Rebol lacked granularity to
 // to add fractions of seconds (it was `make time! [hour minutes seconds]`).
@@ -1276,8 +1276,8 @@ DECLARE_NATIVE(make_time_sn)
 
     Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_TIME);
 
-    REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
-    Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano);
+    REBI64 nano = Is_Nulled(ARG(NANO)) ? 0 : VAL_INT64(ARG(NANO));
+    Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + nano);
 
     return OUT;
 }

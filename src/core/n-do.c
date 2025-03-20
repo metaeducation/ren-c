@@ -46,15 +46,15 @@
 //          [~null~ element? <variadic>]
 //  ]
 //
-DECLARE_NATIVE(reeval)
+DECLARE_NATIVE(REEVAL)
 {
     INCLUDE_PARAMS_OF_REEVAL;
 
     // REEVAL only *acts* variadic, but uses ST_STEPPER_REEVALUATING
     //
-    UNUSED(ARG(expressions));
+    UNUSED(ARG(EXPRESSIONS));
 
-    Element* v = Element_ARG(value);
+    Element* v = Element_ARG(VALUE);
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
@@ -81,7 +81,7 @@ DECLARE_NATIVE(reeval)
 //          [<variadic> <end> element?]
 //  ]
 //
-DECLARE_NATIVE(shove)
+DECLARE_NATIVE(SHOVE)
 //
 // PATH!s do not do infix lookup in Rebol, and there are good reasons for this
 // in terms of both performance and semantics.  However, it is sometimes
@@ -102,13 +102,13 @@ DECLARE_NATIVE(shove)
     INCLUDE_PARAMS_OF_SHOVE;
 
     Level* L;
-    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(right)))
+    if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(RIGHT)))
         return FAIL("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
-    Element* left = Element_ARG(left);
+    Element* left = Element_ARG(LEFT);
 
     if (Is_Level_At_End(L))  // shouldn't be for WORD!/PATH! unless APPLY
-        return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
+        return COPY(ARG(LEFT));  // ...because evaluator wants `help <-` to work
 
   //=//// RESOLVE ACTION ON RIGHT (LOOKUP VAR, EVAL GROUP...) /////////////=//
   //
@@ -120,7 +120,7 @@ DECLARE_NATIVE(shove)
   //
   //    Is that useful enough to bother supporting?
 
-    Value* shovee = ARG(right); // reuse variadic arg cell for the shoved-into
+    Value* shovee = ARG(RIGHT); // reuse variadic arg cell for the shoved-into
     Option(const Symbol*) label = nullptr;
 
     const Element* right = At_Level(L);
@@ -257,7 +257,7 @@ DECLARE_NATIVE(shove)
 //      :step "Do one step of evaluation (return null position if at tail)"
 //  ]
 //
-DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
+DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //
 // 1. When operating stepwise, the primary result shifts to be the position,
 //    to be more useful for knowing if there are more steps to take.  It also
@@ -274,7 +274,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    Element* source = Element_ARG(source);
+    Element* source = Element_ARG(SOURCE);
 
     enum {
         ST_EVALUATE_INITIAL_ENTRY = STATE_0,
@@ -327,10 +327,10 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     //    just does the same thing as [1 + 2] and gives 3, not '3)
 
     if (Cell_Series_Len_At(source) == 0) {
-        if (REF(step))  // `eval:step []` doesn't "count" [1]
+        if (REF(STEP))  // `eval:step []` doesn't "count" [1]
             return nullptr;  // need pure null for THEN/ELSE to work right
 
-        if (REF(undecayed))
+        if (REF(UNDECAYED))
             Init_Nihil(OUT);  // undecayed allows vanishing
         else
             Init_Void(OUT);  // `eval []` is ~void~
@@ -341,16 +341,16 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level* sub = Make_Level_At(
-        REF(step) ? &Stepper_Executor : &Evaluator_Executor,
+        REF(STEP) ? &Stepper_Executor : &Evaluator_Executor,
         source,  // all lists treated the same [2]
         flags
     );
-    if (not REF(step))
+    if (not REF(STEP))
         Init_Nihil(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    if (not REF(step)) {  // plain evaluation to end, maybe invisible
-        if (REF(undecayed))
+    if (not REF(STEP)) {  // plain evaluation to end, maybe invisible
+        if (REF(UNDECAYED))
             return DELEGATE_SUBLEVEL(sub);
 
         STATE = ST_EVALUATE_RUNNING_TO_END;
@@ -370,7 +370,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     //    a better way to abstract things like "accumulated LETs".  It may
     //    evolve that EVAL:STEP on a BLOCK! actually produces a FRAME!...
 
-    if (REF(step))  // !!! may be legal (or mandatory) in the future [1]
+    if (REF(STEP))  // !!! may be legal (or mandatory) in the future [1]
         return FAIL(":STEP not implemented for FRAME! in EVALUATE");
 
     if (Not_Node_Readable(CELL_FRAME_PHASE(source)))
@@ -401,7 +401,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     //    the varargs came from.  It's still on the stack, and we don't want
     //    to disrupt its state.  Use a sublevel.
 
-    if (REF(step))
+    if (REF(STEP))
         return FAIL(":STEP not implemented for VARARGS! in EVALUATE");
 
     Element* position;
@@ -446,7 +446,7 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
     //    probably be to make EVALUATE return something with more limited
     //    privileges... more like a FRAME!/VARARGS!.
 
-    assert(REF(step));
+    assert(REF(STEP));
 
     Forget_Cell_Was_Lifeguard(source);  // unprotect so we can edit for return
 
@@ -459,12 +459,12 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 
 } result_in_out: {  //////////////////////////////////////////////////////////
 
-    if (not REF(undecayed)) {
+    if (not REF(UNDECAYED)) {
         if (Is_Elision(OUT))
             Init_Void(OUT);
     }
 
-    if (REF(step)) {
+    if (REF(STEP)) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
@@ -487,11 +487,11 @@ DECLARE_NATIVE(evaluate)  // synonym as EVAL in mezzanine
 //      :undecayed "Don't convert NIHIL or COMMA! antiforms to VOID"
 //  ]
 //
-DECLARE_NATIVE(eval_free)
+DECLARE_NATIVE(EVAL_FREE)
 {
     INCLUDE_PARAMS_OF_EVAL_FREE;
 
-    Value* frame = ARG(frame);
+    Value* frame = ARG(FRAME);
 
     enum {
         ST_EVAL_FREE_INITIAL_ENTRY = STATE_0,
@@ -545,7 +545,7 @@ DECLARE_NATIVE(eval_free)
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
-    if (REF(undecayed))
+    if (REF(UNDECAYED))
         return DELEGATE_SUBLEVEL(L);
 
     STATE = ST_EVAL_FREE_EVALUATING;
@@ -555,7 +555,7 @@ DECLARE_NATIVE(eval_free)
 
     Decay_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE
 
-    if (not REF(undecayed)) {
+    if (not REF(UNDECAYED)) {
         if (Is_Elision(OUT))
             Init_Void(OUT);
     }
@@ -576,7 +576,7 @@ DECLARE_NATIVE(eval_free)
 //      <local> frame
 //  ]
 //
-DECLARE_NATIVE(applique)
+DECLARE_NATIVE(APPLIQUE)
 //
 // 1. Make a FRAME! for the ACTION!, weaving in the ordered refinements
 //    collected on the stack (if any).  Any refinements that are used in any
@@ -586,10 +586,10 @@ DECLARE_NATIVE(applique)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    Value* op = ARG(operation);
-    Value* def = ARG(def);
+    Value* op = ARG(OPERATION);
+    Value* def = ARG(DEF);
 
-    Value* frame = LOCAL(frame);  // GC-safe cell for FRAME!
+    Value* frame = LOCAL(FRAME);  // GC-safe cell for FRAME!
 
     enum {
         ST_APPLIQUE_INITIAL_ENTRY = STATE_0,
@@ -654,7 +654,7 @@ DECLARE_NATIVE(applique)
 //      <local> frame index iterator  ; update // native if this changes [1]
 //  ]
 //
-DECLARE_NATIVE(apply)
+DECLARE_NATIVE(APPLY)
 //
 // 1. For efficiency, the // infix version of APPLY is native, and just calls
 //    right through to the apply code without going through any "Bounce"
@@ -663,11 +663,11 @@ DECLARE_NATIVE(apply)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    Value* op = ARG(operation);
-    Value* args = ARG(args);
+    Value* op = ARG(OPERATION);
+    Value* args = ARG(ARGS);
 
-    Value* frame = ARG(frame);  // local variable for holding GC-safe frame
-    Value* iterator = ARG(iterator);  // reuse to hold Evars iterator
+    Value* frame = ARG(FRAME);  // local variable for holding GC-safe frame
+    Value* iterator = ARG(ITERATOR);  // reuse to hold Evars iterator
 
     Value* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
@@ -696,7 +696,7 @@ DECLARE_NATIVE(apply)
         if (THROWING)
             goto finalize_apply;
         if (Not_Cell_Readable(iterator)) {
-            assert(REF(relax));
+            assert(REF(RELAX));
             goto handle_next_item;
         }
         goto unlabeled_step_result_in_spare;
@@ -796,7 +796,7 @@ DECLARE_NATIVE(apply)
         if (Is_Get_Word(at))  // catch e.g. :DUP :LINE [1]
             return FAIL(Error_Need_Non_End_Raw(lookback));
 
-        Init_Integer(ARG(index), unwrap index);
+        Init_Integer(ARG(INDEX), unwrap index);
     }
     else if (Not_Cell_Readable(iterator)) {
         STATE = ST_APPLY_UNLABELED_EVAL_STEP;
@@ -809,7 +809,7 @@ DECLARE_NATIVE(apply)
 
         while (true) {
             if (not Try_Advance_Evars(e)) {
-                if (not REF(relax))
+                if (not REF(RELAX))
                     return FAIL(Error_Apply_Too_Many_Raw());
 
                 Shutdown_Evars(e);
@@ -841,7 +841,7 @@ DECLARE_NATIVE(apply)
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
-    REBLEN index = VAL_UINT32(ARG(index));
+    REBLEN index = VAL_UINT32(ARG(INDEX));
 
     var = Varlist_Slot(Cell_Varlist(frame), index);
     param = Phase_Param(Cell_Frame_Phase(op), index);
@@ -875,7 +875,7 @@ DECLARE_NATIVE(apply)
     //    DELEGATE itself rule that out automatically?  It asserts for now.
 
     if (Not_Cell_Readable(iterator))
-        assert(REF(relax));
+        assert(REF(RELAX));
     else {
         EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
         Shutdown_Evars(e);
@@ -906,7 +906,7 @@ DECLARE_NATIVE(apply)
 //      <local> frame index iterator ; need frame compatibility with APPLY [1]
 //  ]
 //
-DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
+DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 // 1. See notes on APPLY for the required frame compatibility.
 //
@@ -919,9 +919,9 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
     INCLUDE_PARAMS_OF_APPLY;  // needs to be frame-compatible [1]
 
     if (STATE != STATE_0)  // [2]
-        return NATIVE_CFUNC(apply)(level_);
+        return NATIVE_CFUNC(APPLY)(level_);
 
-    Element* operation = Element_ARG(operation);
+    Element* operation = Element_ARG(OPERATION);
 
     Option(Error*) error = Trap_Get_Var(
         SPARE, GROUPS_OK, operation, SPECIFIED
@@ -931,16 +931,16 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     if (not Is_Action(SPARE) and not Is_Frame(SPARE))
         return FAIL(SPARE);
-    Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(operation)
+    Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(OPERATION)
 
-    Copy_Cell(ARG(operation), stable_SPARE);
-    UNUSED(REF(relax));
-    UNUSED(REF(args));
-    UNUSED(LOCAL(frame));
-    UNUSED(LOCAL(index));
-    UNUSED(LOCAL(iterator));
+    Copy_Cell(ARG(OPERATION), stable_SPARE);
+    UNUSED(REF(RELAX));
+    UNUSED(REF(ARGS));
+    UNUSED(LOCAL(FRAME));
+    UNUSED(LOCAL(INDEX));
+    UNUSED(LOCAL(ITERATOR));
 
-    return NATIVE_CFUNC(apply)(level_);
+    return NATIVE_CFUNC(APPLY)(level_);
 }
 
 
@@ -963,12 +963,12 @@ DECLARE_NATIVE(_s_s)  // [_s]lash [_s]lash (see TO-C-NAME)
 //      args [any-value? <variadic>]
 //  ]
 //
-DECLARE_NATIVE(run)
+DECLARE_NATIVE(RUN)
 {
     INCLUDE_PARAMS_OF_RUN;
 
-    Value* action = ARG(frame);
-    UNUSED(ARG(args));  // uses internal mechanisms to act variadic
+    Value* action = ARG(FRAME);
+    UNUSED(ARG(ARGS));  // uses internal mechanisms to act variadic
 
     Level* sub = Make_Action_Sublevel(level_);
     Push_Level_Erase_Out_If_State_0(OUT, sub);

@@ -391,7 +391,7 @@ bool Specialize_Action_Throws(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(specialize)
+DECLARE_NATIVE(SPECIALIZE)
 //
 // 1. Refinement specializations via path are pushed to the stack, giving
 //    order information that can't be meaningfully gleaned from an arbitrary
@@ -400,8 +400,8 @@ DECLARE_NATIVE(specialize)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
-    Value* specializee = ARG(original);
-    Value* def = ARG(def);
+    Value* specializee = ARG(ORIGINAL);
+    Value* def = ARG(DEF);
 
     if (Specialize_Action_Throws(
         OUT,

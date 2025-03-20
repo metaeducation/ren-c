@@ -37,11 +37,11 @@
 //          [any-value?]
 //  ]
 //
-DECLARE_NATIVE(type_of)
+DECLARE_NATIVE(TYPE_OF)
 {
     INCLUDE_PARAMS_OF_TYPE_OF;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Is_Nulled(v))
         return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
@@ -60,11 +60,11 @@ DECLARE_NATIVE(type_of)
 //          [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(heart_of)
+DECLARE_NATIVE(HEART_OF)
 {
     INCLUDE_PARAMS_OF_HEART_OF;
 
-    return Init_Builtin_Datatype(OUT, Cell_Heart(ARG(element)));
+    return Init_Builtin_Datatype(OUT, Cell_Heart(ARG(ELEMENT)));
 }
 
 
@@ -77,11 +77,11 @@ DECLARE_NATIVE(heart_of)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(quotes_of)
+DECLARE_NATIVE(QUOTES_OF)
 {
     INCLUDE_PARAMS_OF_QUOTES_OF;
 
-    return Init_Integer(OUT, Element_Num_Quotes(Element_ARG(element)));
+    return Init_Integer(OUT, Element_Num_Quotes(Element_ARG(ELEMENT)));
 }
 
 
@@ -94,11 +94,11 @@ DECLARE_NATIVE(quotes_of)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(sigil_of)
+DECLARE_NATIVE(SIGIL_OF)
 {
     INCLUDE_PARAMS_OF_SIGIL_OF;
 
-    Element* elem = Element_ARG(element);
+    Element* elem = Element_ARG(ELEMENT);
 
     Option(Sigil) sigil = Sigil_Of(elem);
     if (not sigil)
@@ -116,7 +116,7 @@ DECLARE_NATIVE(sigil_of)
 //      element [<maybe> fundamental?]  ; not quoted or quasi [1]
 //  ]
 //
-DECLARE_NATIVE(length_of)
+DECLARE_NATIVE(LENGTH_OF)
 //
 // 1. See remarks on Dispatch_Generic() for why we don't allow things
 //    like (3 = length of ''[a b c]).  An exception is made for action
@@ -126,7 +126,7 @@ DECLARE_NATIVE(length_of)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    return Dispatch_Generic(LENGTH_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(LENGTH_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -139,7 +139,7 @@ DECLARE_NATIVE(length_of)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(size_of)
+DECLARE_NATIVE(SIZE_OF)
 //
 // 1. The SIZE-OF native used to be distinct from the SIZE OF reflector, but
 //    now that these things are unified the usermode SIZE-OF for checking the
@@ -149,7 +149,7 @@ DECLARE_NATIVE(size_of)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 
-    Element* elem = Element_ARG(element);
+    Element* elem = Element_ARG(ELEMENT);
 
     if (Is_File(elem) or Is_Url(elem))  // !!! hack in FILE! and URL! [1]
         return rebDelegate(
@@ -169,14 +169,14 @@ DECLARE_NATIVE(size_of)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(index_of)
+DECLARE_NATIVE(INDEX_OF)
 //
 // !!! Should there be a generalized error catch all for ANY-ELEMENT? which
 // says `return RAISE(Error_Type_Has_No_Index_Raw(Datatype_Of(elem)));`?  Review.
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
-    return Dispatch_Generic(INDEX_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(INDEX_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -189,11 +189,11 @@ DECLARE_NATIVE(index_of)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(offset_of)
+DECLARE_NATIVE(OFFSET_OF)
 {
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
-    return Dispatch_Generic(OFFSET_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(OFFSET_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -207,11 +207,11 @@ DECLARE_NATIVE(offset_of)
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(of)
+DECLARE_NATIVE(OF)
 {
     INCLUDE_PARAMS_OF_OF;
 
-    Element* prop = Element_ARG(property);
+    Element* prop = Element_ARG(PROPERTY);
     assert(Is_Word(prop));
     const Symbol* sym = Cell_Word_Symbol(prop);
     const Symbol* sym_of;
@@ -1037,7 +1037,7 @@ Option(const Byte*) Try_Scan_Binary_To_Stack(
 //          [blob!]
 //  ]
 //
-DECLARE_NATIVE(scan_net_header)
+DECLARE_NATIVE(SCAN_NET_HEADER)
 //
 // !!! This routine used to be a feature of CONSTRUCT in R3-Alpha, and was
 // used by %prot-http.r.  The idea was that instead of providing a parent
@@ -1052,7 +1052,7 @@ DECLARE_NATIVE(scan_net_header)
 
     Source* result = Make_Source_Managed(10);  // Guess at size (data stack?)
 
-    Value* header = ARG(header);
+    Value* header = ARG(HEADER);
     Size size;
     const Byte* cp = Cell_Bytes_At(&size, header);
     UNUSED(size);  // !!! Review semantics

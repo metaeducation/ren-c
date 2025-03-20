@@ -904,7 +904,7 @@
     }
 
     // We want to be able to write UNUSED() for things that aren't used
-    // even if they are RValues and can't be corrupted, like UNUSED(REF(foo)).
+    // even if they are RValues and can't be corrupted, like UNUSED(REF(FOO)).
     //
     template<typename T>
     void Unused_Helper(const T& ref)

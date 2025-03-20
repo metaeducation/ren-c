@@ -34,7 +34,7 @@
 //      value
 //  ]
 //
-DECLARE_NATIVE(null_q)
+DECLARE_NATIVE(NULL_Q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
@@ -56,7 +56,7 @@ DECLARE_NATIVE(null_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(okay_q)
+DECLARE_NATIVE(OKAY_Q)
 {
     INCLUDE_PARAMS_OF_OKAY_Q;
 
@@ -78,7 +78,7 @@ DECLARE_NATIVE(okay_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(logic_q)
+DECLARE_NATIVE(LOGIC_Q)
 {
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
@@ -100,11 +100,11 @@ DECLARE_NATIVE(logic_q)
 //      number [integer!]
 //  ]
 //
-DECLARE_NATIVE(logical)
+DECLARE_NATIVE(LOGICAL)
 {
     INCLUDE_PARAMS_OF_LOGICAL;
 
-    Element* n = Element_ARG(number);
+    Element* n = Element_ARG(NUMBER);
     return Init_Logic(OUT, VAL_INT64(n) != 0);
 }
 
@@ -118,7 +118,7 @@ DECLARE_NATIVE(logical)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(boolean_q)
+DECLARE_NATIVE(BOOLEAN_Q)
 {
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
@@ -140,7 +140,7 @@ DECLARE_NATIVE(boolean_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(onoff_q)
+DECLARE_NATIVE(ONOFF_Q)
 {
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
@@ -162,7 +162,7 @@ DECLARE_NATIVE(onoff_q)
 //      value [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(yesno_q)
+DECLARE_NATIVE(YESNO_Q)
 {
     INCLUDE_PARAMS_OF_YESNO_Q;
 
@@ -184,11 +184,11 @@ DECLARE_NATIVE(yesno_q)
 //      word ['true 'false]
 //  ]
 //
-DECLARE_NATIVE(true_q)
+DECLARE_NATIVE(TRUE_Q)
 {
     INCLUDE_PARAMS_OF_TRUE_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_TRUE);
+    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_TRUE);
 }
 
 
@@ -201,11 +201,11 @@ DECLARE_NATIVE(true_q)
 //      word ['true 'false]
 //  ]
 //
-DECLARE_NATIVE(false_q)
+DECLARE_NATIVE(FALSE_Q)
 {
     INCLUDE_PARAMS_OF_FALSE_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_FALSE);
+    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_FALSE);
 }
 
 
@@ -218,11 +218,11 @@ DECLARE_NATIVE(false_q)
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(boolean)
+DECLARE_NATIVE(BOOLEAN)
 {
     INCLUDE_PARAMS_OF_BOOLEAN;
 
-    return Init_Word(OUT, Is_Trigger(ARG(value)) ? CANON(TRUE) : CANON(FALSE));
+    return Init_Word(OUT, Is_Trigger(ARG(VALUE)) ? CANON(TRUE) : CANON(FALSE));
 }
 
 
@@ -235,11 +235,11 @@ DECLARE_NATIVE(boolean)
 //      word ['yes 'no]
 //  ]
 //
-DECLARE_NATIVE(yes_q)
+DECLARE_NATIVE(YES_Q)
 {
     INCLUDE_PARAMS_OF_YES_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_YES);
+    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_YES);
 }
 
 
@@ -252,11 +252,11 @@ DECLARE_NATIVE(yes_q)
 //      word ['yes 'no]
 //  ]
 //
-DECLARE_NATIVE(no_q)
+DECLARE_NATIVE(NO_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_NO);
+    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_NO);
 }
 
 
@@ -269,11 +269,11 @@ DECLARE_NATIVE(no_q)
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(to_yesno)
+DECLARE_NATIVE(TO_YESNO)
 {
     INCLUDE_PARAMS_OF_TO_YESNO;
 
-    return Init_Word(OUT, Is_Trigger(ARG(value)) ? CANON(YES) : CANON(NO));
+    return Init_Word(OUT, Is_Trigger(ARG(VALUE)) ? CANON(YES) : CANON(NO));
 }
 
 
@@ -286,11 +286,11 @@ DECLARE_NATIVE(to_yesno)
 //      word ['on 'off]
 //  ]
 //
-DECLARE_NATIVE(on_q)
+DECLARE_NATIVE(ON_Q)
 {
     INCLUDE_PARAMS_OF_ON_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_ON);
+    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_ON);
 }
 
 
@@ -303,11 +303,11 @@ DECLARE_NATIVE(on_q)
 //      word ['on 'off]
 //  ]
 //
-DECLARE_NATIVE(off_q)
+DECLARE_NATIVE(OFF_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    return Init_Logic(OUT, Cell_Word_Id(ARG(word)) == SYM_OFF);
+    return Init_Logic(OUT, Cell_Word_Id(ARG(WORD)) == SYM_OFF);
 }
 
 
@@ -320,11 +320,11 @@ DECLARE_NATIVE(off_q)
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(to_onoff)
+DECLARE_NATIVE(TO_ONOFF)
 {
     INCLUDE_PARAMS_OF_TO_ONOFF;
 
-    return Init_Word(OUT, Is_Trigger(ARG(value)) ? CANON(ON) : CANON(OFF));
+    return Init_Word(OUT, Is_Trigger(ARG(VALUE)) ? CANON(ON) : CANON(OFF));
 }
 
 
@@ -338,11 +338,11 @@ DECLARE_NATIVE(to_onoff)
 //      value2 [any-value?]
 //  ]
 //
-DECLARE_NATIVE(and_q)
+DECLARE_NATIVE(AND_Q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    if (Is_Trigger(ARG(value1)) && Is_Trigger(ARG(value2)))
+    if (Is_Trigger(ARG(VALUE1)) && Is_Trigger(ARG(VALUE2)))
         return Init_Logic(OUT, true);
 
     return Init_Logic(OUT, false);
@@ -359,11 +359,11 @@ DECLARE_NATIVE(and_q)
 //      value2 [any-value?]
 //  ]
 //
-DECLARE_NATIVE(nor_q)
+DECLARE_NATIVE(NOR_Q)
 {
     INCLUDE_PARAMS_OF_NOR_Q;
 
-    if (Is_Inhibitor(ARG(value1)) && Is_Inhibitor(ARG(value2)))
+    if (Is_Inhibitor(ARG(VALUE1)) && Is_Inhibitor(ARG(VALUE2)))
         return Init_Logic(OUT, true);
 
     return Init_Logic(OUT, false);
@@ -380,13 +380,13 @@ DECLARE_NATIVE(nor_q)
 //      value2 [any-value?]
 //  ]
 //
-DECLARE_NATIVE(nand_q)
+DECLARE_NATIVE(NAND_Q)
 {
     INCLUDE_PARAMS_OF_NAND_Q;
 
     return Init_Logic(
         OUT,
-        Is_Trigger(ARG(value1)) and Is_Trigger(ARG(value2))
+        Is_Trigger(ARG(VALUE1)) and Is_Trigger(ARG(VALUE2))
     );
 }
 
@@ -400,11 +400,11 @@ DECLARE_NATIVE(nand_q)
 //      integer [integer!]
 //  ]
 //
-DECLARE_NATIVE(null_if_zero)
+DECLARE_NATIVE(NULL_IF_ZERO)
 {
     INCLUDE_PARAMS_OF_NULL_IF_ZERO;
 
-    return Init_Logic(OUT, VAL_INT64(ARG(integer)) != 0);
+    return Init_Logic(OUT, VAL_INT64(ARG(INTEGER)) != 0);
 }
 
 
@@ -417,7 +417,7 @@ DECLARE_NATIVE(null_if_zero)
 //      value
 //  ]
 //
-DECLARE_NATIVE(not_1)  // see TO-C-NAME
+DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
@@ -439,7 +439,7 @@ DECLARE_NATIVE(not_1)  // see TO-C-NAME
 //      value
 //  ]
 //
-DECLARE_NATIVE(to_logic)
+DECLARE_NATIVE(TO_LOGIC)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
@@ -494,12 +494,12 @@ INLINE bool Do_Logic_Right_Side_Throws(
 //          [group! tuple! word!]
 //  ]
 //
-DECLARE_NATIVE(and_1)  // see TO-C-NAME
+DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_AND_1;
 
-    Value* left = ARG(left);
-    Element* right = Element_ARG(right);
+    Value* left = ARG(LEFT);
+    Element* right = Element_ARG(RIGHT);
 
     if (Is_Inhibitor(left))
         return Init_Logic(OUT, false);
@@ -522,12 +522,12 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 //          [group! tuple! word!]
 //  ]
 //
-DECLARE_NATIVE(or_1)  // see TO-C-NAME
+DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_OR_1;
 
-    Value* left = ARG(left);
-    Element* right = Element_ARG(right);
+    Value* left = ARG(LEFT);
+    Element* right = Element_ARG(RIGHT);
 
     if (Is_Trigger(left))
         return Init_Logic(OUT, true);
@@ -550,12 +550,12 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 //          [group! tuple! word!]
 //  ]
 //
-DECLARE_NATIVE(xor_1)  // see TO-C-NAME
+DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_XOR_1;
 
-    Value* left = ARG(left);
-    Element* right = Element_ARG(right);
+    Value* left = ARG(LEFT);
+    Element* right = Element_ARG(RIGHT);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
@@ -579,7 +579,7 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 //          [pack! any-value?]  ; not literal GROUP! as with XOR
 //  ]
 //
-DECLARE_NATIVE(unless)
+DECLARE_NATIVE(UNLESS)
 //
 // Though this routine is similar to XOR, it is different enough in usage and
 // looks from AND/OR/XOR to warrant not needing XOR's protection (e.g. forcing
@@ -587,8 +587,8 @@ DECLARE_NATIVE(unless)
 {
     INCLUDE_PARAMS_OF_UNLESS;
 
-    Value* left = ARG(left);
-    Element* meta_right = Element_ARG(right);
+    Value* left = ARG(LEFT);
+    Element* meta_right = Element_ARG(RIGHT);
 
     if (Is_Meta_Of_Void(meta_right) or Is_Meta_Of_Null(meta_right))
         return COPY(left);

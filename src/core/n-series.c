@@ -44,7 +44,7 @@
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
 //  ]
 //
-DECLARE_NATIVE(insert)  // Must be frame-compatible with APPEND, CHANGE
+DECLARE_NATIVE(INSERT)  // Must be frame-compatible with APPEND, CHANGE
 {
     Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(INSERT));
@@ -68,7 +68,7 @@ DECLARE_NATIVE(insert)  // Must be frame-compatible with APPEND, CHANGE
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
 //  ]
 //
-DECLARE_NATIVE(append)  // Must be frame-compatible with CHANGE, INSERT
+DECLARE_NATIVE(APPEND)  // Must be frame-compatible with CHANGE, INSERT
 {
     Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(APPEND));
@@ -92,7 +92,7 @@ DECLARE_NATIVE(append)  // Must be frame-compatible with CHANGE, INSERT
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
 //  ]
 //
-DECLARE_NATIVE(change)  // Must be frame-compatible with APPEND, INSERT
+DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT
 {
     Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(CHANGE));
@@ -113,7 +113,7 @@ DECLARE_NATIVE(change)  // Must be frame-compatible with APPEND, INSERT
 //      :last "Take it from the tail end"
 //  ]
 //
-DECLARE_NATIVE(take)
+DECLARE_NATIVE(TAKE)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Dispatch_Generic(TAKE, series, LEVEL);
@@ -132,7 +132,7 @@ DECLARE_NATIVE(take)
 //          [any-number? any-series? pair! char?]
 //  ]
 //
-DECLARE_NATIVE(remove)
+DECLARE_NATIVE(REMOVE)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Dispatch_Generic(REMOVE, series, LEVEL);
@@ -149,7 +149,7 @@ DECLARE_NATIVE(remove)
 //          [<maybe> any-series? port! map! bitset!]
 //  ]
 //
-DECLARE_NATIVE(clear)
+DECLARE_NATIVE(CLEAR)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(CLEAR));
@@ -166,7 +166,7 @@ DECLARE_NATIVE(clear)
 //      series2 [any-series?] "At position (modified)"
 //  ]
 //
-DECLARE_NATIVE(swap)
+DECLARE_NATIVE(SWAP)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(SWAP));
@@ -185,7 +185,7 @@ DECLARE_NATIVE(swap)
 //          [any-number? any-series?]
 //  ]
 //
-DECLARE_NATIVE(reverse)
+DECLARE_NATIVE(REVERSE)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Dispatch_Generic(REVERSE, series, LEVEL);
@@ -204,7 +204,7 @@ DECLARE_NATIVE(reverse)
 //          [any-number? any-series?]
 //  ]
 //
-DECLARE_NATIVE(reverse_of)
+DECLARE_NATIVE(REVERSE_OF)
 {
     Element* elem = cast(Element*, ARG_N(1));
 
@@ -244,7 +244,7 @@ DECLARE_NATIVE(reverse_of)
 //      :reverse "Reverse sort order"
 //  ]
 //
-DECLARE_NATIVE(sort)
+DECLARE_NATIVE(SORT)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Dispatch_Generic(SORT, series, LEVEL);
@@ -263,7 +263,7 @@ DECLARE_NATIVE(sort)
 //      :unbounded "Return out of bounds series if before tail or after head"
 //  ]
 //
-DECLARE_NATIVE(skip)
+DECLARE_NATIVE(SKIP)
 //
 // !!! SKIP has a meaning for ANY-SERIES? that's different from what it means
 // when used with ports.  Right now we make the port case go through the old
@@ -271,9 +271,9 @@ DECLARE_NATIVE(skip)
 {
     INCLUDE_PARAMS_OF_SKIP;
 
-    Element* series = Element_ARG(series);
-    USED(ARG(offset));  // other args get passed via LEVEL
-    USED(ARG(unbounded));
+    Element* series = Element_ARG(SERIES);
+    USED(ARG(OFFSET));  // other args get passed via LEVEL
+    USED(ARG(UNBOUNDED));
 
     return Dispatch_Generic(SKIP, series, LEVEL);
 }
@@ -291,7 +291,7 @@ DECLARE_NATIVE(skip)
 //      :bounded "Return null if index is before tail or after head"
 //  ]
 //
-DECLARE_NATIVE(at)
+DECLARE_NATIVE(AT)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Dispatch_Generic(AT, series, LEVEL);
@@ -316,7 +316,7 @@ DECLARE_NATIVE(at)
 //      :match "Performs comparison and returns the tail of the match"
 //  ]
 //
-DECLARE_NATIVE(find)  // Must be frame-compatible with SELECT
+DECLARE_NATIVE(FIND)  // Must be frame-compatible with SELECT
 {
     Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(FIND));
@@ -339,7 +339,7 @@ DECLARE_NATIVE(find)  // Must be frame-compatible with SELECT
 //      :match  ; for frame compatibility with FIND
 //  ]
 //
-DECLARE_NATIVE(select)  // Must be frame-compatible with FIND
+DECLARE_NATIVE(SELECT)  // Must be frame-compatible with FIND
 {
     Element* series = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(series, LEVEL, CANON(SELECT));

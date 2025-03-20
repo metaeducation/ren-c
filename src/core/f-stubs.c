@@ -556,11 +556,11 @@ Option(Error*) Trap_Unsingleheart(Element* out) {
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(setify)
+DECLARE_NATIVE(SETIFY)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
-    Element* e = Element_ARG(element);
+    Element* e = Element_ARG(ELEMENT);
 
     return COPY(Setify(e));
 }
@@ -590,11 +590,11 @@ Element* Getify(Element* out) {  // called on stack values; can't call eval
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(getify)
+DECLARE_NATIVE(GETIFY)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
-    Element* e = Element_ARG(element);
+    Element* e = Element_ARG(ELEMENT);
 
     return COPY(Getify(e));
 }
@@ -641,11 +641,11 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
 //      value [~void~ element?]  ; void makes @ as a SIGIL!
 //  ]
 //
-DECLARE_NATIVE(metafy)
+DECLARE_NATIVE(METAFY)
 {
     INCLUDE_PARAMS_OF_METAFY;
 
-    return COPY(Metafy(ARG(value)));
+    return COPY(Metafy(ARG(VALUE)));
 }
 
 
@@ -690,7 +690,7 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
 //      value [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(inert)
+DECLARE_NATIVE(INERT)
 //
 // Operators such as ANY and ALL have a behavior variation for @[xxx] blocks
 // that assume the content is already reduced.  This helps to produce that
@@ -698,7 +698,7 @@ DECLARE_NATIVE(inert)
 {
     INCLUDE_PARAMS_OF_INERT;
 
-    return COPY(Theify(ARG(value)));
+    return COPY(Theify(ARG(VALUE)));
 }
 
 
@@ -737,11 +737,11 @@ Element* Plainify(Element* e) {
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(plain)
+DECLARE_NATIVE(PLAIN)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 
-    Element* e = Element_ARG(element);
+    Element* e = Element_ARG(ELEMENT);
 
     return COPY(Plainify(e));
 }
@@ -756,11 +756,11 @@ DECLARE_NATIVE(plain)
 //      chain [<maybe> chain!]
 //  ]
 //
-DECLARE_NATIVE(unchain)
+DECLARE_NATIVE(UNCHAIN)
 {
     INCLUDE_PARAMS_OF_UNCHAIN;
 
-    Element* e = Element_ARG(chain);
+    Element* e = Element_ARG(CHAIN);
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
@@ -779,11 +779,11 @@ DECLARE_NATIVE(unchain)
 //      chain [<maybe> path!]
 //  ]
 //
-DECLARE_NATIVE(unpath)
+DECLARE_NATIVE(UNPATH)
 {
     INCLUDE_PARAMS_OF_UNPATH;
 
-    Element* e = Element_ARG(chain);
+    Element* e = Element_ARG(CHAIN);
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)
@@ -802,11 +802,11 @@ DECLARE_NATIVE(unpath)
 //      chain [<maybe> tuple!]
 //  ]
 //
-DECLARE_NATIVE(untuple)
+DECLARE_NATIVE(UNTUPLE)
 {
     INCLUDE_PARAMS_OF_UNTUPLE;
 
-    Element* e = Element_ARG(chain);
+    Element* e = Element_ARG(CHAIN);
 
     Option(Error*) error = Trap_Unsingleheart(e);
     if (error)

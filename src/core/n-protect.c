@@ -35,10 +35,10 @@
 //          [<maybe> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
 //
-DECLARE_NATIVE(const) {
+DECLARE_NATIVE(CONST) {
     INCLUDE_PARAMS_OF_CONST;
 
-    Element* e = Element_ARG(value);
+    Element* e = Element_ARG(VALUE);
     Set_Cell_Flag(e, CONST);
 
     return COPY(e);
@@ -54,14 +54,14 @@ DECLARE_NATIVE(const) {
 //      value [any-series? any-context?]
 //  ]
 //
-DECLARE_NATIVE(const_q) {
+DECLARE_NATIVE(CONST_Q) {
     INCLUDE_PARAMS_OF_CONST_Q;
 
     // !!! Should this integrate the question of if the series is immutable,
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(OUT, Get_Cell_Flag(ARG(value), CONST));
+    return Init_Logic(OUT, Get_Cell_Flag(ARG(VALUE), CONST));
 }
 
 
@@ -76,11 +76,11 @@ DECLARE_NATIVE(const_q) {
 //          [<maybe> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]
 //
-DECLARE_NATIVE(mutable)
+DECLARE_NATIVE(MUTABLE)
 {
     INCLUDE_PARAMS_OF_MUTABLE;
 
-    Element* e = Element_ARG(value);
+    Element* e = Element_ARG(VALUE);
     Clear_Cell_Flag(e, CONST);
 
     return COPY(e);
@@ -96,14 +96,14 @@ DECLARE_NATIVE(mutable)
 //      value [any-series? any-context?]
 //  ]
 //
-DECLARE_NATIVE(mutable_q) {
+DECLARE_NATIVE(MUTABLE_Q) {
     INCLUDE_PARAMS_OF_MUTABLE_Q;
 
     // !!! Should this integrate the question of if the series is immutable,
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(OUT, Not_Cell_Flag(ARG(value), CONST));
+    return Init_Logic(OUT, Not_Cell_Flag(ARG(VALUE), CONST));
 }
 
 
@@ -269,24 +269,24 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    UNUSED(PARAM(hide)); // unused here, but processed in caller
+    UNUSED(PARAM(HIDE)); // unused here, but processed in caller
 
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     // flags has PROT_SET bit (set or not)
 
-    if (REF(deep))
+    if (REF(DEEP))
         flags |= PROT_DEEP;
-    //if (REF(words))
+    //if (REF(WORDS))
     //  flags |= PROT_WORDS;
 
     if (Any_Word(value) || Any_Sequence(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
-        return COPY(ARG(value));
+        return COPY(ARG(VALUE));
     }
 
     if (Is_Block(value)) {
-        if (REF(words)) {
+        if (REF(WORDS)) {
             const Element* tail;
             const Element* item = Cell_List_At(&tail, value);
             for (; item != tail; ++item) {
@@ -294,9 +294,9 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                 Derelativize(word, item, Cell_List_Binding(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
-            return COPY(ARG(value));
+            return COPY(ARG(VALUE));
         }
-        if (REF(values)) {
+        if (REF(VALUES)) {
             const Value* var;
             const Element* tail;
             const Element* item = Cell_List_At(&tail, value);
@@ -327,7 +327,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                 if (flags & PROT_DEEP)
                     Uncolor(m_cast(Value*, var));
             }
-            return COPY(ARG(value));
+            return COPY(ARG(VALUE));
         }
     }
 
@@ -339,7 +339,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     if (flags & PROT_DEEP)
         Uncolor(value);
 
-    return COPY(ARG(value));
+    return COPY(ARG(VALUE));
 }
 
 
@@ -357,7 +357,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 //      value ['protect 'unprotect 'hide]
 //  ]
 //
-DECLARE_NATIVE(protect_p)
+DECLARE_NATIVE(PROTECT_P)
 {
     Element* location = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(location, LEVEL, CANON(PROTECT_P));
@@ -381,13 +381,13 @@ DECLARE_NATIVE(protect_p)
 //      :hide "Hide variables (avoid binding and lookup)"
 //  ]
 //
-DECLARE_NATIVE(protect)
+DECLARE_NATIVE(PROTECT)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    Element* e = Element_ARG(value);
+    Element* e = Element_ARG(VALUE);
     if (Any_Word(e) or Any_Tuple(e)) {
-        if (REF(hide))
+        if (REF(HIDE))
             Init_Word(SPARE, CANON(HIDE));
         else
             Init_Word(SPARE, CANON(PROTECT));
@@ -406,13 +406,13 @@ DECLARE_NATIVE(protect)
 
     // Avoid unused parameter warnings (core routine handles them via level_)
     //
-    UNUSED(PARAM(deep));
-    UNUSED(PARAM(words));
-    UNUSED(PARAM(values));
+    UNUSED(PARAM(DEEP));
+    UNUSED(PARAM(WORDS));
+    UNUSED(PARAM(VALUES));
 
     Flags flags = PROT_SET;
 
-    if (REF(hide))
+    if (REF(HIDE))
         flags |= PROT_HIDE;
     else
         flags |= PROT_WORD; // there is no unhide
@@ -434,21 +434,21 @@ DECLARE_NATIVE(protect)
 //      :hide "HACK to make PROTECT and UNPROTECT have the same signature"
 //  ]
 //
-DECLARE_NATIVE(unprotect)
+DECLARE_NATIVE(UNPROTECT)
 {
     INCLUDE_PARAMS_OF_UNPROTECT;
 
     // Avoid unused parameter warnings (core handles them via frame)
     //
-    UNUSED(PARAM(value));
-    UNUSED(PARAM(deep));
-    UNUSED(PARAM(words));
-    UNUSED(PARAM(values));
+    UNUSED(PARAM(VALUE));
+    UNUSED(PARAM(DEEP));
+    UNUSED(PARAM(WORDS));
+    UNUSED(PARAM(VALUES));
 
-    if (REF(hide))
+    if (REF(HIDE))
         fail ("Cannot un-hide an object field once hidden");
 
-    Element* e = Element_ARG(value);
+    Element* e = Element_ARG(VALUE);
     if (Any_Word(e) or Any_Tuple(e)) {
         Init_Word(SPARE, CANON(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(
@@ -500,11 +500,11 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(locked_q)
+DECLARE_NATIVE(LOCKED_Q)
 {
     INCLUDE_PARAMS_OF_LOCKED_Q;
 
-    return Init_Logic(OUT, Is_Value_Frozen_Deep(ARG(value)));
+    return Init_Logic(OUT, Is_Value_Frozen_Deep(ARG(VALUE)));
 }
 
 
@@ -595,18 +595,18 @@ void Force_Value_Frozen_Core(
 //  ;       [any-series?]  ; not exposed for the moment
 //  ]
 //
-DECLARE_NATIVE(freeze)
+DECLARE_NATIVE(FREEZE)
 {
     INCLUDE_PARAMS_OF_FREEZE;
 
-    // REF(blame) is not exposed as a feature because there's nowhere to store
+    // REF(BLAME) is not exposed as a feature because there's nowhere to store
     // locking information in the Flex.  So the only thing that happens if
     // you pass in something other than null is FLEX_FLAG_AUTO_LOCKED is set
     // to deliver a message that the system locked something implicitly.  We
     // don't want to say that here, so hold off on the feature.
     //
     Flex* locker = nullptr;
-    Force_Value_Frozen_Core(ARG(value), REF(deep), locker);
+    Force_Value_Frozen_Core(ARG(VALUE), REF(DEEP), locker);
 
-    return COPY(ARG(value));
+    return COPY(ARG(VALUE));
 }

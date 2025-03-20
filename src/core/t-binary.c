@@ -68,7 +68,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Blob)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Blob(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Blob(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -76,7 +76,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Blob)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Blob(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Blob(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
@@ -100,12 +100,12 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Blob)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(encode_ieee_754) {
+DECLARE_NATIVE(ENCODE_IEEE_754) {
     INCLUDE_PARAMS_OF_ENCODE_IEEE_754;
 
-    Value* arg = ARG(arg);
+    Value* arg = ARG(ARG);
 
-    if (Cell_Series_Len_At(ARG(options)))
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
         return FAIL("IEEE-754 single precision not currently supported");
 
     assert(sizeof(REBDEC) == 8);
@@ -143,12 +143,12 @@ DECLARE_NATIVE(encode_ieee_754) {
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(decode_ieee_754) {
+DECLARE_NATIVE(DECODE_IEEE_754) {
     INCLUDE_PARAMS_OF_DECODE_IEEE_754;
 
-    Element* blob = Element_ARG(blob);
+    Element* blob = Element_ARG(BLOB);
 
-    if (Cell_Series_Len_At(ARG(options)))
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
         return FAIL("IEEE-754 single precision not currently supported");
 
     Size size;
@@ -182,10 +182,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(type)) == TYPE_BLOB);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_BLOB);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     switch (Type_Of(arg)) {
       case TYPE_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
@@ -236,9 +236,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
 
@@ -316,16 +316,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
-        UNUSED(PARAM(series));  // covered by `v`
+        UNUSED(PARAM(SERIES));  // covered by `v`
 
-        Value* arg = ARG(value);
+        Value* arg = ARG(VALUE);
         assert(not Is_Nulled(arg));  // not an ~null~ parameter
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(v, ARG(part));
+            len = Part_Len_May_Modify_Index(v, ARG(PART));
         else
-            len = Part_Limit_Append_Insert(ARG(part));
+            len = Part_Limit_Append_Insert(ARG(PART));
 
         // Note that while inserting or appending VOID is a no-op, CHANGE with
         // a :PART can actually erase data.
@@ -337,9 +337,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         }
 
         Flags flags = 0;
-        if (REF(part))
+        if (REF(PART))
             flags |= AM_PART;
-        if (REF(line))
+        if (REF(LINE))
             flags |= AM_LINE;
 
         // !!! This mimics the historical behavior for now:
@@ -361,17 +361,17 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
         }
         else if (Any_List(arg) or Any_Sequence(arg))
-            return FAIL(ARG(value));
+            return FAIL(ARG(VALUE));
         else
             assert(not Is_Antiform(arg));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
             unwrap id,
-            ARG(value),
+            ARG(VALUE),
             flags,
             len,
-            REF(dup) ? Int32(ARG(dup)) : 1
+            REF(DUP) ? Int32(ARG(DUP)) : 1
         );
         return COPY(v); }
 
@@ -379,23 +379,23 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
-        UNUSED(PARAM(series));  // covered by `v`
+        UNUSED(PARAM(SERIES));  // covered by `v`
 
-        if (Is_Antiform(ARG(pattern)))
-            return FAIL(ARG(pattern));
+        if (Is_Antiform(ARG(PATTERN)))
+            return FAIL(ARG(PATTERN));
 
-        const Element* pattern = Element_ARG(pattern);
+        const Element* pattern = Element_ARG(PATTERN);
 
         Flags flags = (
-            (REF(match) ? AM_FIND_MATCH : 0)
-            | (REF(case) ? AM_FIND_CASE : 0)
+            (REF(MATCH) ? AM_FIND_MATCH : 0)
+            | (REF(CASE) ? AM_FIND_CASE : 0)
         );
 
-        REBINT tail = Part_Tail_May_Modify_Index(v, ARG(part));
+        REBINT tail = Part_Tail_May_Modify_Index(v, ARG(PART));
 
         REBINT skip;
-        if (REF(skip))
-            skip = VAL_INT32(ARG(skip));
+        if (REF(SKIP))
+            skip = VAL_INT32(ARG(SKIP));
         else
             skip = 1;
 
@@ -559,8 +559,8 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(element);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* v = Element_ARG(ELEMENT);
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_String_Type(to)) {  // (to text! binary) questionable [1]
         Size size;
@@ -605,8 +605,8 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* v = Element_ARG(element);
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    Element* v = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     const Binary* bin = Cell_Binary(v);
 
@@ -687,7 +687,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
         if (Any_String_Type(as))
             return Init_Any_String_At(OUT, as, str, index);
 
-        Init_Any_String_At(ARG(element), TYPE_TEXT, str, index);
+        Init_Any_String_At(ARG(ELEMENT), TYPE_TEXT, str, index);
         // delegate word validation/etc.
         return GENERIC_CFUNC(AS, Any_String)(level_);
     }
@@ -708,10 +708,10 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* blob = Element_ARG(value);
-    UNUSED(REF(deep));  // :DEEP is historically ignored on BLOB!
+    Element* blob = Element_ARG(VALUE);
+    UNUSED(REF(DEEP));  // :DEEP is historically ignored on BLOB!
 
-    return Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(part));
+    return Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART));
 }
 
 
@@ -719,8 +719,8 @@ IMPLEMENT_GENERIC(PICK, Is_Blob)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* blob = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* blob = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
@@ -736,14 +736,14 @@ IMPLEMENT_GENERIC(POKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* blob = Element_ARG(location);
+    Element* blob = Element_ARG(LOCATION);
 
-    const Element* picker = Element_ARG(picker);
+    const Element* picker = Element_ARG(PICKER);
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, blob, picker))
         return FAIL(Error_Out_Of_Range(picker));
 
-    Value* poke = ARG(value);
+    Value* poke = ARG(VALUE);
 
     REBINT i;
     if (IS_CHAR(poke)) {
@@ -756,7 +756,7 @@ IMPLEMENT_GENERIC(POKE, Is_Blob)
         // !!! See notes in the IMPLEMENT_GENERIC(POKE, Any_String)
         // about alternate cases for the POKE'd value.
         //
-        return FAIL(PARAM(value));
+        return FAIL(PARAM(VALUE));
     }
 
     if (i > 0xff)
@@ -773,16 +773,16 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_TAKE;
 
-    Element* blob = Element_ARG(series);
+    Element* blob = Element_ARG(SERIES);
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
     Heart heart = Cell_Heart_Ensure_Noquote(blob);
 
-    if (REF(deep))
+    if (REF(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
     REBINT len;
-    if (REF(part)) {
-        len = Part_Len_May_Modify_Index(blob, ARG(part));
+    if (REF(PART)) {
+        len = Part_Len_May_Modify_Index(blob, ARG(PART));
         if (len == 0)
             return Init_Series(OUT, heart, Make_Binary(0));
     } else
@@ -790,7 +790,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     REBINT tail = Cell_Series_Len_Head(blob);  // Note :PART can change index
 
-    if (REF(last)) {
+    if (REF(LAST)) {
         if (tail - len < 0) {
             VAL_INDEX_RAW(blob) = 0;
             len = tail;
@@ -802,13 +802,13 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     REBLEN index = VAL_INDEX(blob);
 
     if (index >= tail) {
-        if (not REF(part))
+        if (not REF(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
 
         return Init_Series(OUT, heart, Make_Binary(0));
     }
 
-    if (not REF(part))  // just return byte value
+    if (not REF(PART))  // just return byte value
         Init_Integer(OUT, *Cell_Blob_At(blob));
     else  // return binary series
         Init_Blob(OUT, Copy_Binary_At_Len(bin, index, len));
@@ -822,9 +822,9 @@ IMPLEMENT_GENERIC(REVERSE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_REVERSE;
 
-    Element* blob = Element_ARG(series);
+    Element* blob = Element_ARG(SERIES);
 
-    REBLEN len = Part_Len_May_Modify_Index(blob, ARG(part));
+    REBLEN len = Part_Len_May_Modify_Index(blob, ARG(PART));
     Byte* bp = Cell_Blob_At_Ensure_Mutable(blob);  // index may've changed
 
     if (len > 0) {
@@ -849,7 +849,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_RANDOMIZE;
 
-    Element* blob = Element_ARG(seed);
+    Element* blob = Element_ARG(SEED);
     possibly(Is_Stub_String(Cell_Binary(blob)));  // may be aliased UTF-8 [1]
 
     Size size;
@@ -865,7 +865,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
 {
     INCLUDE_PARAMS_OF_RANDOM_PICK;
 
-    Element* blob = Element_ARG(collection);
+    Element* blob = Element_ARG(COLLECTION);
 
     REBINT tail = Cell_Series_Len_Head(blob);
     REBINT index = VAL_INDEX(blob);
@@ -873,7 +873,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
     if (index >= tail)
         return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
-    index += Random_Int(REF(secure)) % (tail - index);
+    index += Random_Int(REF(SECURE)) % (tail - index);
     const Binary* bin = Cell_Binary(blob);
     return Init_Integer(OUT, *Binary_At(bin, index));
 }
@@ -883,13 +883,13 @@ IMPLEMENT_GENERIC(SHUFFLE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_SHUFFLE;
 
-    Element* blob = Element_ARG(series);
+    Element* blob = Element_ARG(SERIES);
 
     REBINT index = VAL_INDEX(blob);
 
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
-    bool secure = REF(secure);
+    bool secure = REF(SECURE);
     REBLEN n;
     for (n = Binary_Len(bin) - index; n > 1;) {
         REBLEN k = index + Random_Int(secure) % n;
@@ -906,7 +906,7 @@ IMPLEMENT_GENERIC(SIZE_OF, Is_Blob)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 
-    Element* blob = Element_ARG(element);
+    Element* blob = Element_ARG(ELEMENT);
 
     Size size;
     Cell_Blob_Size_At(&size, blob);
@@ -927,7 +927,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* blob = Element_ARG(element);
+    Element* blob = Element_ARG(ELEMENT);
 
     Size size;
     const Byte* bp = Cell_Blob_Size_At(&size, blob);
@@ -976,35 +976,35 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 {
     INCLUDE_PARAMS_OF_SORT;
 
-    Element* v = Element_ARG(series);
+    Element* v = Element_ARG(SERIES);
 
-    if (REF(all))
+    if (REF(ALL))
         return FAIL(Error_Bad_Refines_Raw());
 
-    if (REF(case)) {
+    if (REF(CASE)) {
         // Ignored...all BLOB! sorts are case-sensitive.
     }
 
-    if (REF(compare))
+    if (REF(COMPARE))
         return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Flags flags = 0;
 
     Copy_Cell(OUT, v);  // copy to output before index adjustment
 
-    REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
+    REBLEN len = Part_Len_May_Modify_Index(v, ARG(PART));
     Byte* data_at = Cell_Blob_At_Ensure_Mutable(v);  // ^ index changes
 
     if (len <= 1)
         return OUT;
 
     REBLEN skip;
-    if (not REF(skip))
+    if (not REF(SKIP))
         skip = 1;
     else {
-        skip = Get_Num_From_Arg(ARG(skip));
+        skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or (len % skip != 0) or skip > len)
-            return FAIL(PARAM(skip));
+            return FAIL(PARAM(SKIP));
     }
 
     Size size = 1;
@@ -1013,7 +1013,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
         size *= skip;
     }
 
-    if (REF(reverse))
+    if (REF(REVERSE))
         flags |= CC_FLAG_REVERSE;
 
     bsd_qsort_r(
@@ -1039,13 +1039,13 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 //      :LE "Encode as little-endian (default is big-endian)"
 //  ]
 //
-DECLARE_NATIVE(encode_integer)
+DECLARE_NATIVE(ENCODE_INTEGER)
 {
     INCLUDE_PARAMS_OF_ENCODE_INTEGER;
 
-    bool little = REF(le);
+    bool little = REF(LE);
 
-    Value* options = ARG(options);
+    Value* options = ARG(OPTIONS);
     if (Cell_Series_Len_At(options) != 2)
         return FAIL("ENCODE-INTEER needs length 2 options for now");
 
@@ -1075,7 +1075,7 @@ DECLARE_NATIVE(encode_integer)
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
-    REBI64 i = VAL_INT64(ARG(num));
+    REBI64 i = VAL_INT64(ARG(NUM));
     if (no_sign and i < 0)
         return FAIL("Unsigned ENCODE-INTEGER received signed input value");
 
@@ -1104,7 +1104,7 @@ DECLARE_NATIVE(encode_integer)
     }
     if (i != 0)
         return rebDelegate(
-            "fail [", ARG(num), "-{exceeds}-", rebI(num_bytes), "-{bytes}-]"
+            "fail [", ARG(NUM), "-{exceeds}-", rebI(num_bytes), "-{bytes}-]"
         );
 
     // The process of byte production of a positive number shouldn't give us
@@ -1113,7 +1113,7 @@ DECLARE_NATIVE(encode_integer)
     if (not no_sign and not negative and *(bp - delta) >= 0x80)
         return rebDelegate(
             "fail [",
-                ARG(num), "-{aliases a negative value with signed}-",
+                ARG(NUM), "-{aliases a negative value with signed}-",
                 "-{encoding of only}-", rebI(num_bytes), "-{bytes}-",
             "]"
         );
@@ -1136,7 +1136,7 @@ DECLARE_NATIVE(encode_integer)
 //      :LE "Decode as little-endian (default is big-endian)"
 //  ]
 //
-DECLARE_NATIVE(decode_integer)
+DECLARE_NATIVE(DECODE_INTEGER)
 //
 // !!! This routine may wind up being folded into DECODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but
@@ -1144,12 +1144,12 @@ DECLARE_NATIVE(decode_integer)
 {
     INCLUDE_PARAMS_OF_DECODE_INTEGER;
 
-    bool little = REF(le);
+    bool little = REF(LE);
 
     Size bin_size;
-    const Byte* bin_data = Cell_Blob_Size_At(&bin_size, ARG(binary));
+    const Byte* bin_data = Cell_Blob_Size_At(&bin_size, ARG(BINARY));
 
-    Value* options = ARG(options);
+    Value* options = ARG(OPTIONS);
 
     REBLEN arity = Cell_Series_Len_At(options);
     if (arity != 1 and arity != 2)
@@ -1230,7 +1230,7 @@ DECLARE_NATIVE(decode_integer)
     // leading 0x00 or 0xFF stripped away
     //
     if (n > 8)
-        return FAIL(Error_Out_Of_Range(ARG(binary)));
+        return FAIL(Error_Out_Of_Range(ARG(BINARY)));
 
     REBI64 i = 0;
 
@@ -1251,7 +1251,7 @@ DECLARE_NATIVE(decode_integer)
     }
 
     if (no_sign and i < 0)  // may become signed via shift due to 63-bit limit
-        return FAIL(Error_Out_Of_Range(ARG(binary)));
+        return FAIL(Error_Out_Of_Range(ARG(BINARY)));
 
     return Init_Integer(OUT, i);
 }
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(decode_integer)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(add_to_binary)
+DECLARE_NATIVE(ADD_TO_BINARY)
 //
 //    >> add-to-binary #{4B} 1
 //    == #{4C}
@@ -1294,10 +1294,10 @@ DECLARE_NATIVE(add_to_binary)
 {
     INCLUDE_PARAMS_OF_ADD_TO_BINARY;
 
-    Element* blob = Element_ARG(blob);
+    Element* blob = Element_ARG(BLOB);
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
-    REBINT delta = VAL_INT32(ARG(delta));
+    REBINT delta = VAL_INT32(ARG(DELTA));
 
     if (delta == 0)  // adding or subtracting 0 works, even #{} + 0
         return COPY(blob);

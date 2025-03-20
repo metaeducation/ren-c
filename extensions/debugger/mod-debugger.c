@@ -110,7 +110,7 @@ bool Do_Breakpoint_Throws(
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(breakpoint_p)
+DECLARE_NATIVE(BREAKPOINT_P)
 //
 // !!! Need definition to test for N_DEBUGGER_breakpoint function
 {
@@ -145,7 +145,7 @@ DECLARE_NATIVE(breakpoint_p)
 //          "Run the given code if breakpoint does not override"
 //  ]
 //
-DECLARE_NATIVE(pause)
+DECLARE_NATIVE(PAUSE)
 //
 // !!! Need definition to test for N_DEBUGGER_pause function
 {
@@ -154,7 +154,7 @@ DECLARE_NATIVE(pause)
     if (Do_Breakpoint_Throws(
         OUT,
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
-        ARG(code)  // default result if RESUME does not override
+        ARG(CODE)  // default result if RESUME does not override
     )){
         return THROWN;
     }
@@ -173,7 +173,7 @@ DECLARE_NATIVE(pause)
 //          [<end> block!]
 //  ]
 //
-DECLARE_NATIVE(resume)
+DECLARE_NATIVE(RESUME)
 //
 // The CONSOLE makes a wall to prevent arbitrary THROWs and FAILs from ending
 // a level of interactive inspection.  But RESUME is special, (with a throw
@@ -194,7 +194,7 @@ DECLARE_NATIVE(resume)
 {
     INCLUDE_PARAMS_OF_RESUME;
 
-    Value* expr = ARG(expression);
+    Value* expr = ARG(EXPRESSION);
     if (Is_Nulled(expr))  // e.g. <end> (actually null not legal)
         Init_Any_List(expr, TYPE_META_GROUP, EMPTY_ARRAY);
     else {
@@ -232,9 +232,9 @@ DECLARE_NATIVE(resume)
 //          "Number of steps to take (default is 1) or IN, OUT, OVER"
 //  ]
 //
-DECLARE_NATIVE(step)
+DECLARE_NATIVE(STEP)
 {
     INCLUDE_PARAMS_OF_STEP;
-    UNUSED(ARG(amount));
+    UNUSED(ARG(AMOUNT));
     fail ("STEP's methodology was deprecated, it is being re-implemented");
 }

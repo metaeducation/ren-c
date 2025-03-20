@@ -55,7 +55,7 @@ extern Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb);
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(startup_p)
+DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -71,7 +71,7 @@ DECLARE_NATIVE(startup_p)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_file_actor_handle)
+DECLARE_NATIVE(GET_FILE_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &File_Actor);
     return OUT;
@@ -86,7 +86,7 @@ DECLARE_NATIVE(get_file_actor_handle)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(shutdown_p)
+DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
@@ -102,7 +102,7 @@ DECLARE_NATIVE(shutdown_p)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_dir_actor_handle)
+DECLARE_NATIVE(GET_DIR_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &Dir_Actor);
     return OUT;
@@ -500,13 +500,13 @@ String* To_Local_Path(const Value* file, Flags flags) {
 //      :dir "Ensure input path is treated as a directory"
 //  ]
 //
-DECLARE_NATIVE(local_to_file)
+DECLARE_NATIVE(LOCAL_TO_FILE)
 {
     INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
-    Value* path = ARG(path);
+    Value* path = ARG(PATH);
     if (Is_File(path)) {
-        if (not REF(pass))
+        if (not REF(PASS))
             return "fail -{LOCAL-TO-FILE needs :PASS to passthru FILE!}-";
 
         return Init_File(OUT, Copy_String_At(path));  // many callers modify
@@ -514,7 +514,7 @@ DECLARE_NATIVE(local_to_file)
 
     return Init_File(
         OUT,
-        To_REBOL_Path(path, REF(dir) ? PATH_OPT_SRC_IS_DIR : 0)
+        To_REBOL_Path(path, REF(DIR) ? PATH_OPT_SRC_IS_DIR : 0)
     );
 }
 
@@ -533,13 +533,13 @@ DECLARE_NATIVE(local_to_file)
 //      :no-tail-slash "do not add a slash or backslash to directory tail"
 //  ]
 //
-DECLARE_NATIVE(file_to_local)
+DECLARE_NATIVE(FILE_TO_LOCAL)
 {
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
-    Value* path = ARG(path);
+    Value* path = ARG(PATH);
     if (Is_Text(path)) {
-        if (not REF(pass))
+        if (not REF(PASS))
             return "-{FILE-TO-LOCAL needs :PASS to passthru STRING!}-";
 
         return Init_Text(OUT, Copy_String_At(path));  // callers modify
@@ -550,8 +550,8 @@ DECLARE_NATIVE(file_to_local)
         To_Local_Path(
             path,
             REB_FILETOLOCAL_0
-                | (REF(full) ? REB_FILETOLOCAL_FULL : 0)
-                | (REF(no_tail_slash) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
+                | (REF(FULL) ? REB_FILETOLOCAL_FULL : 0)
+                | (REF(NO_TAIL_SLASH) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
         )
     );
 }
@@ -565,7 +565,7 @@ DECLARE_NATIVE(file_to_local)
 //      return: [~null~ file! url!]
 //  ]
 //
-DECLARE_NATIVE(what_dir)
+DECLARE_NATIVE(WHAT_DIR)
 {
     INCLUDE_PARAMS_OF_WHAT_DIR;
 
@@ -606,11 +606,11 @@ DECLARE_NATIVE(what_dir)
 //      path [<maybe> file! url!]
 //  ]
 //
-DECLARE_NATIVE(change_dir)
+DECLARE_NATIVE(CHANGE_DIR)
 {
     INCLUDE_PARAMS_OF_CHANGE_DIR;
 
-    Value* arg = ARG(path);
+    Value* arg = ARG(PATH);
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
     if (Is_Url(arg)) {
@@ -626,7 +626,7 @@ DECLARE_NATIVE(change_dir)
         bool success = Set_Current_Dir_Value(arg);
 
         if (not success)
-            return FAIL(PARAM(path));
+            return FAIL(PARAM(PATH));
     }
 
     Copy_Cell(current_path, arg);
@@ -645,7 +645,7 @@ extern Value* Get_Current_Exec(void);
 //      return: [~null~ file!]
 //  ]
 //
-DECLARE_NATIVE(get_current_exec)
+DECLARE_NATIVE(GET_CURRENT_EXEC)
 {
     INCLUDE_PARAMS_OF_GET_CURRENT_EXEC;
 

@@ -173,7 +173,7 @@ bool Adapter_Details_Querier(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(adapt)
+DECLARE_NATIVE(ADAPT)
 //
 // 1. The adaptee is in the Details[0] slot, so we don't need a separate
 //    place to put it.
@@ -187,8 +187,8 @@ DECLARE_NATIVE(adapt)
 {
     INCLUDE_PARAMS_OF_ADAPT;
 
-    Value* adaptee = ARG(original);
-    Value* prelude = ARG(prelude);
+    Value* adaptee = ARG(ORIGINAL);
+    Value* prelude = ARG(PRELUDE);
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,

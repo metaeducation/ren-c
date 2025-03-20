@@ -416,7 +416,7 @@ Details* Alloc_Action_From_Exemplar(
 //          [word!]  ; parameter not checked for FRAME! type compatibility [1]
 //  ]
 //
-DECLARE_NATIVE(reframer)
+DECLARE_NATIVE(REFRAMER)
 //
 // 1. At one time, the REFRAMER generator would typecheck a dummy FRAME! so
 //    that at creation time you'd get an error if you specified a parameter
@@ -439,13 +439,13 @@ DECLARE_NATIVE(reframer)
 {
     INCLUDE_PARAMS_OF_REFRAMER;
 
-    Phase* shim = Cell_Frame_Phase(ARG(shim));
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(shim));
+    Phase* shim = Cell_Frame_Phase(ARG(SHIM));
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(SHIM));
 
     DECLARE_BINDER (binder);
     Construct_Binder(binder);
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
-        ARG(shim),
+        ARG(SHIM),
         STACK_BASE,
         binder,
         nullptr  // no placeholder, leave parameter! antiforms
@@ -461,8 +461,8 @@ DECLARE_NATIVE(reframer)
     const Key* key;
     const Param* param;
 
-    if (REF(parameter)) {
-        const Symbol* symbol = Cell_Word_Symbol(ARG(parameter));
+    if (REF(PARAMETER)) {
+        const Symbol* symbol = Cell_Word_Symbol(ARG(PARAMETER));
         param_index = maybe Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
             Destruct_Binder(binder);
@@ -491,7 +491,7 @@ DECLARE_NATIVE(reframer)
         MAX_IDX_REFRAMER  // details array capacity => [shim, param_index]
     );
 
-    Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(shim));
+    Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(SHIM));
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
     return Init_Action(OUT, details, label, NONMETHOD);

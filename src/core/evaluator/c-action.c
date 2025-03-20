@@ -62,7 +62,7 @@
 #define L_next_gotten       L->feed->gotten
 #define L_binding           Level_Binding(L)
 
-#undef ARG                       // undefine the ARG(x) macro that natives use
+#undef ARG                       // undefine the ARG(X) macro that natives use
 #define ARG L->u.action.arg      // ...aredefine as currently fulfilling arg
 #define stable_ARG Stable_Unchecked(ARG)
 
@@ -986,7 +986,7 @@ Bounce Action_Executor(Level* L)
 //  Push_Action: C
 //
 // Allocate the Array of Values inspected by a function when executed (the
-// Cells behind ARG(name), REF(name), ARG_N(3),  etc.)
+// Cells behind ARG(NAME), REF(NAME), ARG_N(3),  etc.)
 //
 // The argument slots are left uninitialized at the outset, and are fulfilled
 // as the Action_Executor() walks through the parameter list.  This makes the

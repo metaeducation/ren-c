@@ -238,12 +238,12 @@ Source* Expanded_Combinator_Spec(const Value* original)
 //      body [block!]
 //  ]
 //
-DECLARE_NATIVE(combinator)
+DECLARE_NATIVE(COMBINATOR)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
-    Element* spec = Element_ARG(spec);
-    Element* body = Element_ARG(body);
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
 
     // This creates the expanded spec and puts it in a block which manages it.
     // That might not be needed if the Make_Paramlist_Managed() could take an
@@ -293,9 +293,9 @@ DECLARE_NATIVE(combinator)
 //
 // This service routine does a faster version of something like:
 //
-//     Value* result = rebValue("apply", rebQ(ARG(parser)), "[",
-//         ":input", rebQ(ARG(input)),  // quote avoids becoming const
-//         ":remainder @", ARG(remainder),
+//     Value* result = rebValue("apply", rebQ(ARG(PARSER)), "[",
+//         ":input", rebQ(ARG(INPUT)),  // quote avoids becoming const
+//         ":remainder @", ARG(REMAINDER),
 //     "]");
 //
 // But it only works on parsers that were created from specializations of
@@ -356,15 +356,15 @@ void Push_Parser_Sublevel(
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
-DECLARE_NATIVE(opt_combinator)
+DECLARE_NATIVE(OPT_COMBINATOR)
 {
     INCLUDE_PARAMS_OF_OPT_COMBINATOR;
 
-    Value* remainder = ARG(remainder);  // output (combinator implicit)
+    Value* remainder = ARG(REMAINDER);  // output (combinator implicit)
 
-    Value* input = ARG(input);  // combinator implicit
-    Value* parser = ARG(parser);
-    UNUSED(ARG(state));  // combinator implicit
+    Value* input = ARG(INPUT);  // combinator implicit
+    Value* parser = ARG(PARSER);
+    UNUSED(ARG(STATE));  // combinator implicit
 
     enum {
         ST_OPT_COMBINATOR_INITIAL_ENTRY = STATE_0,
@@ -409,15 +409,15 @@ DECLARE_NATIVE(opt_combinator)
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
-DECLARE_NATIVE(text_x_combinator)
+DECLARE_NATIVE(TEXT_X_COMBINATOR)
 {
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
-    VarList* state = Cell_Varlist(ARG(state));
+    VarList* state = Cell_Varlist(ARG(STATE));
     bool cased = Is_Trigger(Varlist_Slot(state, IDX_UPARSE_PARAM_CASE));
 
-    Element* v = Element_ARG(value);
-    Element* input = Element_ARG(input);
+    Element* v = Element_ARG(VALUE);
+    Element* input = Element_ARG(INPUT);
 
     if (Any_List(input)) {
         const Element* tail;
@@ -428,7 +428,7 @@ DECLARE_NATIVE(text_x_combinator)
             return nullptr;
 
         ++VAL_INDEX_UNBOUNDED(input);
-        Copy_Cell(ARG(remainder), input);
+        Copy_Cell(ARG(REMAINDER), input);
 
         Derelativize(OUT, at, Cell_List_Binding(input));
         return OUT;  // Note: returns item in array, not rule, when an array!
@@ -450,7 +450,7 @@ DECLARE_NATIVE(text_x_combinator)
 
     assert(index == VAL_INDEX(input));  // asked for AM_FIND_MATCH
     VAL_INDEX_UNBOUNDED(input) += len;
-    Copy_Cell(ARG(remainder), input);
+    Copy_Cell(ARG(REMAINDER), input);
 
     // If not a list, we have return the rule on match since there's
     // no isolated value to capture.
@@ -470,15 +470,15 @@ DECLARE_NATIVE(text_x_combinator)
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
-DECLARE_NATIVE(some_combinator)
+DECLARE_NATIVE(SOME_COMBINATOR)
 {
     INCLUDE_PARAMS_OF_SOME_COMBINATOR;
 
-    Value* remainder = ARG(remainder);
-    Value* parser = ARG(parser);
-    Value* input = ARG(input);
+    Value* remainder = ARG(REMAINDER);
+    Value* parser = ARG(PARSER);
+    Value* input = ARG(INPUT);
 
-    Value* state = ARG(state);
+    Value* state = ARG(STATE);
     Array* loops = Cell_Array_Ensure_Mutable(
         Varlist_Slot(Cell_Varlist(state), IDX_UPARSE_PARAM_LOOPS)
     );
@@ -556,14 +556,14 @@ DECLARE_NATIVE(some_combinator)
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
 //
-DECLARE_NATIVE(further_combinator)
+DECLARE_NATIVE(FURTHER_COMBINATOR)
 {
     INCLUDE_PARAMS_OF_FURTHER_COMBINATOR;
 
-    Value* remainder = ARG(remainder);
-    Value* input = ARG(input);
-    Value* parser = ARG(parser);
-    UNUSED(ARG(state));
+    Value* remainder = ARG(REMAINDER);
+    Value* input = ARG(INPUT);
+    Value* parser = ARG(PARSER);
+    UNUSED(ARG(STATE));
 
     enum {
         ST_FURTHER_COMBINATOR_INITIAL_ENTRY = STATE_0,
@@ -616,7 +616,7 @@ static bool Combinator_Param_Hook(
     Level* level_ = s->level_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    UNUSED(REF(path));  // used by caller of hook
+    UNUSED(REF(PATH));  // used by caller of hook
 
     Option(SymId) symid = Key_Id(key);
 
@@ -634,23 +634,23 @@ static bool Combinator_Param_Hook(
     // done based on the offset of the param from the head.
 
     REBLEN offset = param - Phase_Params_Head(
-        Cell_Frame_Phase(ARG(combinator))
+        Cell_Frame_Phase(ARG(COMBINATOR))
     );
     Value* var = Varlist_Slots_Head(s->ctx) + offset;
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
-        Copy_Cell(var, ARG(state));
+        Copy_Cell(var, ARG(STATE));
     }
-    else if (symid == SYM_VALUE and REF(value)) {
+    else if (symid == SYM_VALUE and REF(VALUE)) {
         //
         // The "value" parameter only has special meaning for datatype
         // combinators, e.g. TEXT!.  Otherwise a combinator can have an
         // argument named value for other purposes.
         //
-        Copy_Cell(var, ARG(value));
+        Copy_Cell(var, ARG(VALUE));
     }
     else if (symid == SYM_RULE_START) {
-        Copy_Cell(var, ARG(rule_start));
+        Copy_Cell(var, ARG(RULE_START));
     }
     else if (symid == SYM_RULE_END) {
         s->rule_end = var;  // can't set until rules consumed, let caller do it
@@ -673,7 +673,7 @@ static bool Combinator_Param_Hook(
         // Quoted parameters represent a literal element captured from rules.
         //
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, ARG(rules));
+        const Element* item = Cell_List_At(&tail, ARG(RULES));
 
         if (
             item == tail
@@ -685,12 +685,12 @@ static bool Combinator_Param_Hook(
         }
         else {
             if (Cell_ParamClass(param) == PARAMCLASS_THE)
-                Derelativize(var, item, Cell_List_Binding(ARG(rules)));
+                Derelativize(var, item, Cell_List_Binding(ARG(RULES)));
             else {
                 assert(Cell_ParamClass(param) == PARAMCLASS_JUST);
                 Copy_Cell(var, item);
             }
-            ++VAL_INDEX_UNBOUNDED(ARG(rules));
+            ++VAL_INDEX_UNBOUNDED(ARG(RULES));
         }
         break; }
 
@@ -699,7 +699,7 @@ static bool Combinator_Param_Hook(
         // Need to make PARSIFY a native!  Work around it for now...
         //
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, ARG(rules));
+        const Element* item = Cell_List_At(&tail, ARG(RULES));
         if (
             item == tail
             or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
@@ -718,9 +718,9 @@ static bool Combinator_Param_Hook(
                 assert(!"LET failed");
             Element* temp = cast(Element*, SPARE);
             Value* parser = rebValue(
-                "[#", temp, "]: parsify", rebQ(ARG(state)), ARG(rules)
+                "[#", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
             );
-            Get_Var_May_Fail(ARG(rules), temp, SPECIFIED);
+            Get_Var_May_Fail(ARG(RULES), temp, SPECIFIED);
             Copy_Cell(var, parser);
             rebRelease(parser);
         }
@@ -750,7 +750,7 @@ static bool Combinator_Param_Hook(
 //      <local> rule-start
 //  ]
 //
-DECLARE_NATIVE(combinatorize)
+DECLARE_NATIVE(COMBINATORIZE)
 //
 // While *parsers* take one argument (the input), *parser combinators* may take
 // more.  If the arguments are quoted, then they are taken literally from the
@@ -772,12 +772,12 @@ DECLARE_NATIVE(combinatorize)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    Phase* phase = Cell_Frame_Phase(ARG(combinator));
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(combinator));
-    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(combinator));
+    Phase* phase = Cell_Frame_Phase(ARG(COMBINATOR));
+    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(COMBINATOR));
+    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(COMBINATOR));
 
-    Value* rule_start = ARG(rule_start);
-    Copy_Cell(rule_start, ARG(rules));
+    Value* rule_start = ARG(RULE_START);
+    Copy_Cell(rule_start, ARG(RULES));
     if (VAL_INDEX(rule_start) > 0)
         VAL_INDEX_RAW(rule_start) -= 1;
 
@@ -786,11 +786,11 @@ DECLARE_NATIVE(combinatorize)
     // when it doesn't end in /.  Now /ONLY is not used.  Review general
     // mechanisms for refinements on combinators.
     //
-    if (REF(path))
+    if (REF(PATH))
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     ParamList* paramlist = Make_Varlist_For_Action(
-        ARG(combinator),
+        ARG(COMBINATOR),
         TOP_INDEX,
         nullptr,
         nullptr  // leave unspecialized slots with parameter! antiforms
@@ -802,8 +802,8 @@ DECLARE_NATIVE(combinatorize)
 
     Push_Lifeguard(s.ctx);  // Combinator_Param_Hook may call evaluator
 
-    USED(REF(state));
-    USED(REF(value));
+    USED(REF(STATE));
+    USED(REF(VALUE));
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);
@@ -818,7 +818,7 @@ DECLARE_NATIVE(combinatorize)
 
     // For debug and tracing, combinators are told where their rule end is
     //
-    Copy_Cell(s.rule_end, ARG(rules));
+    Copy_Cell(s.rule_end, ARG(RULES));
 
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
@@ -826,7 +826,7 @@ DECLARE_NATIVE(combinatorize)
     Init_Frame(Array_At(pack, 0), paramlist, label, coupling);
     Quasify_Isotopic_Fundamental(Array_At(pack, 0));
 
-    Copy_Meta_Cell(Array_At(pack, 1), ARG(rules));  // advanced by param hook
+    Copy_Meta_Cell(Array_At(pack, 1), ARG(RULES));  // advanced by param hook
 
     return Init_Pack(OUT, pack);
 }

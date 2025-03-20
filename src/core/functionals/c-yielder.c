@@ -73,7 +73,7 @@ bool Is_Error_Done_Signal(const Cell* c) {
 //      return: [raised!]
 //  ]
 //
-DECLARE_NATIVE(done) {
+DECLARE_NATIVE(DONE) {
     INCLUDE_PARAMS_OF_DONE;
 
     Copy_Cell(OUT, g_error_done_enumerating);
@@ -90,7 +90,7 @@ DECLARE_NATIVE(done) {
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(done_q) {
+DECLARE_NATIVE(DONE_Q) {
     INCLUDE_PARAMS_OF_DONE_Q;
 
     DECLARE_ELEMENT (meta);
@@ -499,7 +499,7 @@ bool Yielder_Details_Querier(
 //      ; :resettable  ; should yielders offer a reset facility?
 //  ]
 //
-DECLARE_NATIVE(yielder)
+DECLARE_NATIVE(YIELDER)
 //
 // 1. Having the generated yielder offer a :RESET that puts it back to the
 //    initial state might be a useful feature.  Though not all generators
@@ -509,8 +509,8 @@ DECLARE_NATIVE(yielder)
 {
     INCLUDE_PARAMS_OF_YIELDER;
 
-    Element* spec = Element_ARG(spec);
-    Element* body = Element_ARG(body);
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
 
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,
@@ -539,15 +539,15 @@ DECLARE_NATIVE(yielder)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(generator)  // could also be made in LIB with SPECIALIZE
+DECLARE_NATIVE(GENERATOR)  // could also be made in LIB with SPECIALIZE
 {
     INCLUDE_PARAMS_OF_GENERATOR;
 
     assert(STATE == STATE_0);
 
-    Copy_Cell(ARG(spec), EMPTY_BLOCK);
-    USED(ARG(body));
-    return NATIVE_CFUNC(yielder)(level_);
+    Copy_Cell(ARG(SPEC), EMPTY_BLOCK);
+    USED(ARG(BODY));
+    return NATIVE_CFUNC(YIELDER)(LEVEL);
 }
 
 
@@ -563,7 +563,7 @@ DECLARE_NATIVE(generator)  // could also be made in LIB with SPECIALIZE
 //      :final "Yield, but also signal the yielder or generator is done"
 //  ]
 //
-DECLARE_NATIVE(definitional_yield)
+DECLARE_NATIVE(DEFINITIONAL_YIELD)
 //
 // 1. It would be possible to give yielders a definitional RETURN, with the
 //    meaning "YIELD but then be finished".  e.g.
@@ -597,7 +597,7 @@ DECLARE_NATIVE(definitional_yield)
       default: assert(false);
     }
 
-    Element* meta = Element_ARG(atom);
+    Element* meta = Element_ARG(ATOM);
 
   //=//// EXTRACT YIELDER FROM DEFINITIONAL YIELD'S CELL ///////////////////=//
 
@@ -631,7 +631,7 @@ DECLARE_NATIVE(definitional_yield)
     // of one value, YIELD DONE, or YIELD of any other raised error which the
     // yielder will promote to an abrupt failure.
 
-    if (Is_Meta_Of_Raised(meta) or REF(final)) {  // not resumable, throw
+    if (Is_Meta_Of_Raised(meta) or REF(FINAL)) {  // not resumable, throw
         Init_Action(
             SPARE,  // use as label for throw
             Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),

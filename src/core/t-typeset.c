@@ -309,11 +309,11 @@ void Set_Parameter_Spec(
                 and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
             ){
                 Dispatcher* dispatcher = Details_Dispatcher(details);
-                if (dispatcher == NATIVE_CFUNC(any_value_q))
+                if (dispatcher == NATIVE_CFUNC(ANY_VALUE_Q))
                     *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
-                else if (dispatcher == NATIVE_CFUNC(any_atom_q))
+                else if (dispatcher == NATIVE_CFUNC(ANY_ATOM_Q))
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
-                else if (dispatcher == NATIVE_CFUNC(nihil_q))
+                else if (dispatcher == NATIVE_CFUNC(NIHIL_Q))
                     *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
                 else if (dispatcher == &Typechecker_Dispatcher) {
                     if (optimized == optimized_tail) {
@@ -364,9 +364,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     if (not form) {
         Begin_Non_Lexical_Mold(mo, v);  // #[parameter! or make parameter!
@@ -450,12 +450,12 @@ Element* Decorate_According_To_Parameter(
 //      element [element?]
 //  ]
 //
-DECLARE_NATIVE(decorate_parameter)
+DECLARE_NATIVE(DECORATE_PARAMETER)
 {
     INCLUDE_PARAMS_OF_DECORATE_PARAMETER;
 
-    Element* element = Element_ARG(element);
-    Element* param = Element_ARG(parameter);
+    Element* element = Element_ARG(ELEMENT);
+    Element* param = Element_ARG(PARAMETER);
     return COPY(Decorate_According_To_Parameter(element, param));
 }
 
@@ -464,8 +464,8 @@ IMPLEMENT_GENERIC(PICK, Is_Parameter)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* param = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* param = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Word(picker))
         return FAIL(picker);
@@ -522,13 +522,13 @@ IMPLEMENT_GENERIC(POKE, Is_Parameter)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* param = Element_ARG(location);
+    Element* param = Element_ARG(LOCATION);
 
-    const Element* picker = Element_ARG(picker);
+    const Element* picker = Element_ARG(PICKER);
     if (not Is_Word(picker))
         return FAIL(picker);
 
-    Value* poke = ARG(value);
+    Value* poke = ARG(VALUE);
 
     switch (Cell_Word_Id(picker)) {
       case SYM_TEXT: {

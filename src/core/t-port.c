@@ -46,11 +46,11 @@ REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 //      element [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(open_q)
+DECLARE_NATIVE(OPEN_Q)
 {
     INCLUDE_PARAMS_OF_OPEN_Q;
 
-    return Dispatch_Generic(OPEN_Q, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(OPEN_Q, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -58,7 +58,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Port)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Port(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Port(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -69,10 +69,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_PORT);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_PORT);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Is_Object(arg)) {
         //
@@ -188,14 +188,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     if (id == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(source));
-        UNUSED(PARAM(part));
-        UNUSED(PARAM(seek));
+        UNUSED(PARAM(SOURCE));
+        UNUSED(PARAM(PART));
+        UNUSED(PARAM(SEEK));
 
         if (Is_Nulled(OUT))
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
-        if ((REF(string) or REF(lines)) and not Is_Text(OUT)) {
+        if ((REF(STRING) or REF(LINES)) and not Is_Text(OUT)) {
             if (not Is_Blob(OUT))
                 return FAIL(
                     "READ :STRING or :LINES used on a non-BLOB!/STRING! read"
@@ -207,7 +207,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
             Init_Text(OUT, decoded);
         }
 
-        if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
+        if (REF(LINES)) { // caller wants a BLOCK! of STRING!s, not one string
             assert(Is_Text(OUT));
 
             DECLARE_ELEMENT (temp);
@@ -272,8 +272,8 @@ IMPLEMENT_GENERIC(TO, Url)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    USED(ARG(type));  // deferred to string via LEVEL
-    USED(ARG(element));
+    USED(ARG(TYPE));  // deferred to string via LEVEL
+    USED(ARG(ELEMENT));
 
     return GENERIC_CFUNC(TO, Any_String)(LEVEL);
 }

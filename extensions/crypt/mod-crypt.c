@@ -202,7 +202,7 @@ uint32_t Compute_IPC(const unsigned char* data, size_t size)
 //          [blob! text!]
 //  ]
 //
-DECLARE_NATIVE(checksum)
+DECLARE_NATIVE(CHECKSUM)
 //
 // !!! The return value of this function was initially integers, and expanded
 // to be either INTEGER! or BLOB!.  Allowing integer results gives some
@@ -220,7 +220,7 @@ DECLARE_NATIVE(checksum)
 // !!! There was a :HASH option that took an integer and claimed to "return
 // a hash value with given size".  But what it did was:
 //
-//    REBINT sum = VAL_INT32(ARG(hash));
+//    REBINT sum = VAL_INT32(ARG(HASH));
 //    if (sum <= 1)
 //        sum = 1;
 //    Init_Integer(OUT, Hash_Bytes(data, len) % sum);
@@ -469,7 +469,7 @@ void Get_Padding_And_Hash_From_Spec(
 //      :insecure "Allow insecure key sizes--for teaching purposes only"
 //  ]
 //
-DECLARE_NATIVE(rsa_generate_keypair)
+DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
 {
     INCLUDE_PARAMS_OF_RSA_GENERATE_KEYPAIR;
 
@@ -616,7 +616,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
 //      public-key [object!]
 //  ]
 //
-DECLARE_NATIVE(rsa_encrypt)
+DECLARE_NATIVE(RSA_ENCRYPT)
 {
     INCLUDE_PARAMS_OF_RSA_ENCRYPT;
 
@@ -749,7 +749,7 @@ DECLARE_NATIVE(rsa_encrypt)
 //      private-key [object!]
 //  ]
 //
-DECLARE_NATIVE(rsa_decrypt)
+DECLARE_NATIVE(RSA_DECRYPT)
 {
     INCLUDE_PARAMS_OF_RSA_DECRYPT;
 
@@ -986,7 +986,7 @@ DECLARE_NATIVE(rsa_decrypt)
 //      :insecure "Don't raise errors if base/modulus choice becomes suspect"
 //  ]
 //
-DECLARE_NATIVE(dh_generate_keypair)
+DECLARE_NATIVE(DH_GENERATE_KEYPAIR)
 {
     INCLUDE_PARAMS_OF_DH_GENERATE_KEYPAIR;
 
@@ -1199,7 +1199,7 @@ DECLARE_NATIVE(dh_generate_keypair)
 //          [blob!]
 //  ]
 //
-DECLARE_NATIVE(dh_compute_secret)
+DECLARE_NATIVE(DH_COMPUTE_SECRET)
 {
     INCLUDE_PARAMS_OF_DH_COMPUTE_SECRET;
 
@@ -1358,7 +1358,7 @@ static void cleanup_aes_ctx(const Value* v)
 //      :decrypt "Make cipher context for decryption (default is to encrypt)"
 //  ]
 //
-DECLARE_NATIVE(aes_key)
+DECLARE_NATIVE(AES_KEY)
 {
     INCLUDE_PARAMS_OF_AES_KEY;
 
@@ -1448,7 +1448,7 @@ DECLARE_NATIVE(aes_key)
 //      data [blob!]
 //  ]
 //
-DECLARE_NATIVE(aes_stream)
+DECLARE_NATIVE(AES_STREAM)
 //
 // 1. !!! Saphir's AES code worked with zero-padded chunks, so you always
 //    got a multiple of 16 bytes out.  That doesn't seem optimal for a
@@ -1549,7 +1549,7 @@ static const struct mbedtls_ecp_curve_info* Ecp_Curve_Info_From_Name(
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(ecc_generate_keypair)
+DECLARE_NATIVE(ECC_GENERATE_KEYPAIR)
 //
 // !!! Note: using curve25519 seems to always give a y coordinate of zero
 // in the public key.  Is this correct (it seems to yield the right secret)?
@@ -1640,7 +1640,7 @@ DECLARE_NATIVE(ecc_generate_keypair)
 //          [blob! object!]
 //  ]
 //
-DECLARE_NATIVE(ecdh_shared_secret)
+DECLARE_NATIVE(ECDH_SHARED_SECRET)
 //
 // 1. It's not clear whether if you omit the parentheses in this case if the
 //    binding should be updated to include the LET.  Bracket with a group
@@ -1753,7 +1753,7 @@ EXTERN_C int tf_snprintf(char* s, size_t n, const char* fmt, ...);
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(startup_p)
+DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -1802,7 +1802,7 @@ DECLARE_NATIVE(startup_p)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(shutdown_p)
+DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 

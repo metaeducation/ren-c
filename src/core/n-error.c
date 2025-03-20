@@ -35,11 +35,11 @@
 //      ^atom [any-atom?]  ; e.g. TRY on a pack returns the pack
 //  ]
 //
-DECLARE_NATIVE(try)
+DECLARE_NATIVE(TRY)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Element* meta = Element_ARG(atom);
+    Element* meta = Element_ARG(ATOM);
 
     if (Is_Meta_Of_Void(meta) or Is_Meta_Of_Null(meta))
         return Init_Nulled(OUT);
@@ -63,7 +63,7 @@ DECLARE_NATIVE(try)
 //      :relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
 //  ]
 //
-DECLARE_NATIVE(enrescue)
+DECLARE_NATIVE(ENRESCUE)
 //
 // Note: During boot, this operation is removed from LIB and moved to the
 // system utilities, so it is typically called as SYS.UTIL/ENRESCUE.  Reason
@@ -73,7 +73,7 @@ DECLARE_NATIVE(enrescue)
 {
     INCLUDE_PARAMS_OF_ENRESCUE;
 
-    Value* code = ARG(code);
+    Value* code = ARG(CODE);
 
     enum {
         ST_ENRESCUE_INITIAL_ENTRY = STATE_0,
@@ -119,7 +119,7 @@ DECLARE_NATIVE(enrescue)
     }
 
     if (not Is_Throwing_Failure(LEVEL)) {  // non-ERROR! throws
-        if (REF(relax))
+        if (REF(RELAX))
             return BOUNCE_THROWN;  // e.g. RETURN, THROW
         return Init_Error(OUT, Error_No_Catch_For_Throw(LEVEL));
     }
@@ -144,7 +144,7 @@ DECLARE_NATIVE(enrescue)
 //          [block! frame!]
 //  ]
 //
-DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
+DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 //
 // Unlike SYS.UTIL/RESCUE, the ENTRAP function only reacts to errors from the
 // functions it directly calls via LEVEL_FLAG_RAISED_RESULT_OK.  Hence it
@@ -153,7 +153,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
-    Value* code = ARG(code);
+    Value* code = ARG(CODE);
 
     enum {
         ST_ENTRAP_INITIAL_ENTRY = STATE_0,
@@ -238,7 +238,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //          [<unrun> any-branch?]
 //  ]
 //
-DECLARE_NATIVE(except)
+DECLARE_NATIVE(EXCEPT)
 //
 // 1. Although THEN and ELSE will not operate on invisible input, it is legal
 //    to trap a definitional error coming from a function that evaluates to
@@ -257,8 +257,8 @@ DECLARE_NATIVE(except)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Element* meta_atom = Element_ARG(atom);
-    Value* branch = ARG(branch);
+    Element* meta_atom = Element_ARG(ATOM);
+    Value* branch = ARG(BRANCH);
 
     if (not Is_Meta_Of_Raised(meta_atom))
         return UNMETA(meta_atom);  // pass thru anything not a raised error
@@ -280,7 +280,7 @@ DECLARE_NATIVE(except)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(raised_q)
+DECLARE_NATIVE(RAISED_Q)
 {
     INCLUDE_PARAMS_OF_RAISED_Q;
 
@@ -301,7 +301,7 @@ DECLARE_NATIVE(raised_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(unraised_q)
+DECLARE_NATIVE(UNRAISED_Q)
 //
 // !!! What this should be called is still under debate.  It may be that it
 // should be called SUCCESS?, e.g.
@@ -335,11 +335,11 @@ DECLARE_NATIVE(unraised_q)
 //      location [frame! any-word?]
 //  ]
 //
-DECLARE_NATIVE(set_location_of_error)
+DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
 {
     INCLUDE_PARAMS_OF_SET_LOCATION_OF_ERROR;
 
-    Value* location = ARG(location);
+    Value* location = ARG(LOCATION);
 
     VarList* varlist;
     if (Is_Word(location)) {
@@ -359,7 +359,7 @@ DECLARE_NATIVE(set_location_of_error)
 
     Level* where = Level_Of_Varlist_May_Fail(varlist);
 
-    Error* error = Cell_Error(ARG(error));
+    Error* error = Cell_Error(ARG(ERROR));
     Set_Location_Of_Error(error, where);
 
     return nullptr;

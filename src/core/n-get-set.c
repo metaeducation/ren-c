@@ -775,11 +775,11 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
 //      :steps "Provide invariant way to get this variable again"
 //  ]
 //
-DECLARE_NATIVE(get)
+DECLARE_NATIVE(GET)
 {
     INCLUDE_PARAMS_OF_GET;
 
-    Element* source = Element_ARG(source);
+    Element* source = Element_ARG(SOURCE);
 
     if (Any_Chain(source)) {  // GET-WORD, SET-WORD, SET-GROUP, etc.
         if (Try_Get_Sequence_Singleheart(source))
@@ -787,15 +787,15 @@ DECLARE_NATIVE(get)
     }
 
     Value* steps;
-    if (REF(steps))
-        steps = ARG(steps);
-    else if (REF(groups))
+    if (REF(STEPS))
+        steps = ARG(STEPS);
+    else if (REF(GROUPS))
         steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
 
     if (Any_Group(source)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
-        if (not REF(groups))
+        if (not REF(GROUPS))
             return FAIL(Error_Bad_Get_Group_Raw(source));
 
         if (steps != GROUPS_OK)
@@ -824,7 +824,7 @@ DECLARE_NATIVE(get)
     if (error)
         return RAISE(unwrap error);
 
-    if (not REF(any))
+    if (not REF(ANY))
         if (Any_Vacancy(stable_OUT))
             return RAISE(Error_Bad_Word_Get(source, stable_OUT));
 
@@ -1156,7 +1156,7 @@ void Set_Var_May_Fail(
 //      :groups "Allow GROUP! Evaluations"
 //  ]
 //
-DECLARE_NATIVE(set)
+DECLARE_NATIVE(SET)
 //
 // 1. We want parity between (set $x expression) and (x: expression).  It is
 //    very useful that you can write (e: trap [x: expression]) and in the case
@@ -1175,33 +1175,33 @@ DECLARE_NATIVE(set)
 {
     INCLUDE_PARAMS_OF_SET;
 
-    Value* setval = ARG(value);
+    Value* setval = ARG(VALUE);
 
     if (Is_Meta_Of_Raised(setval))
         return UNMETA(cast(Element*, setval));  // passthru raised errors [1]
 
     Meta_Unquotify_Decayed(setval);  // in future, no decay for SET BLOCK! [2]
 
-    if (Is_Void(ARG(target)))
+    if (Is_Void(ARG(TARGET)))
         return COPY(setval);   // same behavior for SET as [10 = (void): 10]
 
-    Element* target = Element_ARG(target);
+    Element* target = Element_ARG(TARGET);
     if (Any_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
         Unchain(target);
 
     Value* steps;
-    if (REF(groups))
+    if (REF(GROUPS))
         steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
 
-    if (not REF(any)) {
+    if (not REF(ANY)) {
         // !!! The only SET prohibitions will be on antiform actions, TBD
         // (more general filtering available via accessors)
     }
 
     if (Any_Group(target)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
-        if (not REF(groups))
+        if (not REF(GROUPS))
             return FAIL(Error_Bad_Get_Group_Raw(target));
 
         if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
@@ -1240,7 +1240,7 @@ DECLARE_NATIVE(set)
 //      action [action!]
 //  ]
 //
-DECLARE_NATIVE(set_accessor)
+DECLARE_NATIVE(SET_ACCESSOR)
 //
 // 1. While Get_Var()/Set_Var() and their variants are specially written to
 //    know about accessors, lower level code is not.  Only code that is
@@ -1250,8 +1250,8 @@ DECLARE_NATIVE(set_accessor)
 {
     INCLUDE_PARAMS_OF_SET_ACCESSOR;
 
-    Element* word = Element_ARG(var);
-    Value* action = ARG(action);
+    Element* word = Element_ARG(VAR);
+    Value* action = ARG(ACTION);
 
     Value* var = Lookup_Mutable_Word_May_Fail(word, SPECIFIED);
     Copy_Cell(var, action);
@@ -1272,7 +1272,7 @@ DECLARE_NATIVE(set_accessor)
 //      return: [~null~ object!]
 //  ]
 //
-DECLARE_NATIVE(dot_1)
+DECLARE_NATIVE(DOT_1)
 {
     INCLUDE_PARAMS_OF_DOT_1;
 

@@ -155,12 +155,12 @@ bool Arrow_Details_Querier(
 //          [<const> block!]
 //  ]
 //
-DECLARE_NATIVE(arrow)
+DECLARE_NATIVE(ARROW)
 {
     INCLUDE_PARAMS_OF_ARROW;
 
-    Value* spec = ARG(spec);
-    Element* body = Element_ARG(body);
+    Value* spec = ARG(SPEC);
+    Element* body = Element_ARG(BODY);
 
     bool optimizable = true;
 

@@ -125,7 +125,7 @@ bool Oneshot_Details_Querier(
 //      branch [any-branch?]
 //  ]
 //
-DECLARE_NATIVE(do_branch)
+DECLARE_NATIVE(DO_BRANCH)
 //
 // !!! This function only exists to serve as the interface for the generated
 // function from N-SHOT.  More thinking is necessary about how to layer DO
@@ -134,7 +134,7 @@ DECLARE_NATIVE(do_branch)
 // implementation...)  Revisit.
 {
     INCLUDE_PARAMS_OF_DO_BRANCH;
-    UNUSED(ARG(branch));
+    UNUSED(ARG(BRANCH));
 
     return FAIL("DO-BRANCH is theoretical and not part of an API yet.");
 }
@@ -150,11 +150,11 @@ DECLARE_NATIVE(do_branch)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(n_shot)
+DECLARE_NATIVE(N_SHOT)
 {
     INCLUDE_PARAMS_OF_N_SHOT;
 
-    REBI64 n = VAL_INT64(ARG(n));
+    REBI64 n = VAL_INT64(ARG(N));
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,

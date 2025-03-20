@@ -182,9 +182,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
@@ -242,7 +242,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Time)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Time(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Time(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -250,14 +250,14 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Time)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Time(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Time(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
 IMPLEMENT_GENERIC(ZEROIFY, Is_Time)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
-    UNUSED(ARG(example));  // always gives 0:00
+    UNUSED(ARG(EXAMPLE));  // always gives 0:00
 
     return Init_Time_Nanoseconds(OUT, 0);
 }
@@ -267,10 +267,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_TIME);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_TIME);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     switch (Type_Of(arg)) {
       case TYPE_INTEGER:  // interpret as seconds
@@ -624,17 +624,17 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
           case SYM_ROUND: {
             INCLUDE_PARAMS_OF_ROUND;
-            USED(ARG(value));  // aliased as v, others are passed via level_
-            USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
-            USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
+            USED(ARG(VALUE));  // aliased as v, others are passed via level_
+            USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
+            USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-            if (not REF(to)) {
-                Init_True(ARG(to));  // by default make it /TO seconds
+            if (not REF(TO)) {
+                Init_True(ARG(TO));  // by default make it /TO seconds
                 secs = Round_Int(secs, level_, SEC_SEC);
                 return Init_Time_Nanoseconds(OUT, secs);
             }
 
-            Value* to = ARG(to);
+            Value* to = ARG(TO);
             if (Is_Time(to)) {
                 secs = Round_Int(secs, level_, VAL_NANO(to));
                 return Init_Time_Nanoseconds(OUT, secs);
@@ -654,7 +654,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 return COPY(to);
             }
 
-            return FAIL(PARAM(to)); }
+            return FAIL(PARAM(TO)); }
 
           default:
             break;
@@ -669,8 +669,8 @@ IMPLEMENT_GENERIC(PICK, Is_Time)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* time = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* time = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     Pick_Time(OUT, time, picker);
     return OUT;
@@ -681,10 +681,10 @@ IMPLEMENT_GENERIC(POKE, Is_Time)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* time = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    Element* time = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
-    Value* poke = ARG(value);
+    Value* poke = ARG(VALUE);
 
     Poke_Time_Immediate(time, picker, poke);
     return COPY(time);  // caller needs to update their time bits
@@ -695,7 +695,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Time)
 {
     INCLUDE_PARAMS_OF_RANDOMIZE;
 
-    const Element* time = Element_ARG(seed);
+    const Element* time = Element_ARG(SEED);
     REBI64 secs = VAL_NANO(time);
 
     Set_Random(secs);
@@ -707,10 +707,10 @@ IMPLEMENT_GENERIC(RANDOM, Is_Time)
 {
     INCLUDE_PARAMS_OF_RANDOM;
 
-    Element* time = Element_ARG(max);
+    Element* time = Element_ARG(MAX);
     REBI64 secs = VAL_NANO(time);
 
-    REBI64 rand_secs = Random_Range(secs / SEC_SEC, REF(secure)) * SEC_SEC;
+    REBI64 rand_secs = Random_Range(secs / SEC_SEC, REF(SECURE)) * SEC_SEC;
     return Init_Time_Nanoseconds(OUT, rand_secs);
 }
 
@@ -719,8 +719,8 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    REBI64 secs = VAL_NANO(ARG(value1));  // guaranteed to be a time
-    Value* v2 = ARG(value2);
+    REBI64 secs = VAL_NANO(ARG(VALUE1));  // guaranteed to be a time
+    Value* v2 = ARG(VALUE2);
 
     if (Is_Integer(v2)) {
         secs *= VAL_INT64(v2);
@@ -732,7 +732,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
     else if (Is_Decimal(v2))
         secs = cast(int64_t, secs * VAL_DECIMAL(v2));
     else
-        return FAIL(PARAM(value2));
+        return FAIL(PARAM(VALUE2));
 
     return Init_Time_Nanoseconds(OUT, secs);
 }

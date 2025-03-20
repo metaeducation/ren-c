@@ -271,12 +271,12 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 //          [text!]
 //  ]
 //
-DECLARE_NATIVE(make_native)
+DECLARE_NATIVE(MAKE_NATIVE)
 {
     INCLUDE_PARAMS_OF_MAKE_NATIVE;
 
-    Element* spec = Element_ARG(spec);
-    Element* source = Element_ARG(source);
+    Element* spec = Element_ARG(SPEC);
+    Element* source = Element_ARG(SOURCE);
 
     VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed_May_Fail(
@@ -308,8 +308,8 @@ DECLARE_NATIVE(make_native)
         );
     }
 
-    if (REF(linkname)) {
-        Value* linkname = ARG(linkname);
+    if (REF(LINKNAME)) {
+        Value* linkname = ARG(LINKNAME);
 
         if (Is_Flex_Frozen(Cell_String(linkname)))
             Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
@@ -356,7 +356,7 @@ DECLARE_NATIVE(make_native)
 //      :files "COMPILABLES is a list of TEXT! specifying local filenames"
 //  ]
 //
-DECLARE_NATIVE(compile_p)
+DECLARE_NATIVE(COMPILE_P)
 {
     INCLUDE_PARAMS_OF_COMPILE_P;
 
@@ -394,7 +394,7 @@ DECLARE_NATIVE(compile_p)
 
   //=//// SET UP OPTIONS FOR THE TCC STATE FROM CONFIG ////////////////////=//
 
-    Value* config = ARG(config);
+    Value* config = ARG(CONFIG);
 
     // Sets options (same syntax as the TCC command line, minus commands like
     // displaying the version or showing the TCC tool's help)
@@ -440,11 +440,11 @@ DECLARE_NATIVE(compile_p)
 
   //=//// SPECIFY USER NATIVES (OR DISK FILES) TO COMPILE /////////////////=//
 
-    Value* compilables = ARG(compilables);
+    Value* compilables = ARG(COMPILABLES);
 
     assert(TOP_INDEX == STACK_BASE);  // natives are pushed to the stack
 
-    if (REF(files)) {
+    if (REF(FILES)) {
         const Element* tail;
         const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
@@ -458,7 +458,7 @@ DECLARE_NATIVE(compile_p)
             rebFree(filename_utf8);
         }
 
-        if (REF(inspect)) {  // nothing to show, besides the file list
+        if (REF(INSPECT)) {  // nothing to show, besides the file list
             Drop_Lifeguard(handle);
             return rebText(":INSPECT => <file list>");
         }
@@ -540,7 +540,7 @@ DECLARE_NATIVE(compile_p)
         // To help in debugging, it can be useful to see what is compiling
         // this is similar in spirit to the -E option for preprocessing only)
         //
-        if (REF(inspect)) {
+        if (REF(INSPECT)) {
             Drop_Lifeguard(handle);
             Drop_Data_Stack_To(STACK_BASE);  // don't modify collected natives
             return Init_Text(OUT, Pop_Molded_String(mo));
@@ -603,7 +603,7 @@ DECLARE_NATIVE(compile_p)
     // On Windows it doesn't do this, but on the other hand it doesn't seem
     // *able* to do it.  It can only see tcc_add_symbol() exported symbols.
     //
-    if (REF(librebol)) {
+    if (REF(LIBREBOL)) {
         //
         // .inc file contains calls for each function in %a-lib.c like:
         //

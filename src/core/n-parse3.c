@@ -104,31 +104,31 @@
 //
 #define USE_PARAMS_OF_SUBPARSE \
     INCLUDE_PARAMS_OF_SUBPARSE; \
-    USED(ARG(input)); \
-    USED(ARG(flags)); \
-    USED(ARG(num_quotes)); \
-    USED(ARG(position)); \
-    USED(ARG(save)); \
-    USED(ARG(lookback))
+    USED(ARG(INPUT)); \
+    USED(ARG(FLAGS)); \
+    USED(ARG(NUM_QUOTES)); \
+    USED(ARG(POSITION)); \
+    USED(ARG(SAVE)); \
+    USED(ARG(LOOKBACK))
 
 #define P_AT_END            Is_Level_At_End(level_)
 #define P_RULE              At_Level(level_)  // rvalue
 #define P_RULE_BINDING      Level_Binding(level_)
 
-#define P_HEART             Cell_Heart_Ensure_Noquote(ARG(input))
-#define P_INPUT             Cell_Flex(ARG(input))
-#define P_INPUT_BINARY      Cell_Binary(ARG(input))
-#define P_INPUT_STRING      Cell_String(ARG(input))
-#define P_INPUT_ARRAY       Cell_Array(ARG(input))
-#define P_INPUT_SPECIFIER   Cell_List_Binding(ARG(input))
-#define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(input))
-#define P_INPUT_LEN         Cell_Series_Len_Head(ARG(input))
+#define P_HEART             Cell_Heart_Ensure_Noquote(ARG(INPUT))
+#define P_INPUT             Cell_Flex(ARG(INPUT))
+#define P_INPUT_BINARY      Cell_Binary(ARG(INPUT))
+#define P_INPUT_STRING      Cell_String(ARG(INPUT))
+#define P_INPUT_ARRAY       Cell_Array(ARG(INPUT))
+#define P_INPUT_SPECIFIER   Cell_List_Binding(ARG(INPUT))
+#define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(INPUT))
+#define P_INPUT_LEN         Cell_Series_Len_Head(ARG(INPUT))
 
-#define P_FLAGS             mutable_VAL_INT64(ARG(flags))
+#define P_FLAGS             mutable_VAL_INT64(ARG(FLAGS))
 
-#define P_NUM_QUOTES        VAL_INT32(ARG(num_quotes))
+#define P_NUM_QUOTES        VAL_INT32(ARG(NUM_QUOTES))
 
-#define P_POS               VAL_INDEX_UNBOUNDED(ARG(position))
+#define P_POS               VAL_INDEX_UNBOUNDED(ARG(POSITION))
 
 // !!! The way that PARSE works, it will sometimes run the thing it finds
 // in the list...but if it's a WORD! or PATH! it will look it up and run
@@ -139,9 +139,9 @@
 // always put the fetched rule in the same place...and then the binding
 // is only used when the rule *isn't* in that cell.
 //
-#define P_SAVE              ARG(save)
+#define P_SAVE              ARG(SAVE)
 #define rule_binding() \
-    (rule == ARG(save) ? SPECIFIED : P_RULE_BINDING)
+    (rule == ARG(SAVE) ? SPECIFIED : P_RULE_BINDING)
 
 
 #define FETCH_NEXT_RULE(L) \
@@ -254,20 +254,20 @@ static bool Subparse_Throws(
     INCLUDE_PARAMS_OF_SUBPARSE;
 
     Derelativize(
-        Erase_Cell(ARG(input)),
+        Erase_Cell(ARG(INPUT)),
         c_cast(Element*, input),
         input_binding
     );
 
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
-    Init_Integer(Erase_Cell(ARG(flags)), flags);
+    Init_Integer(Erase_Cell(ARG(FLAGS)), flags);
 
     // Locals in frame would be unset on entry if called by action dispatch.
     //
-    Init_Nothing(Erase_Cell(ARG(num_quotes)));
-    Init_Nothing(Erase_Cell(ARG(position)));
-    Init_Nothing(Erase_Cell(ARG(save)));
-    Init_Nothing(Erase_Cell(ARG(lookback)));
+    Init_Nothing(Erase_Cell(ARG(NUM_QUOTES)));
+    Init_Nothing(Erase_Cell(ARG(POSITION)));
+    Init_Nothing(Erase_Cell(ARG(SAVE)));
+    Init_Nothing(Erase_Cell(ARG(LOOKBACK)));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
@@ -275,7 +275,7 @@ static bool Subparse_Throws(
     //
     Set_Executor_Flag(ACTION, L, IN_DISPATCH);
 
-    Bounce b = NATIVE_CFUNC(subparse)(L);
+    Bounce b = NATIVE_CFUNC(SUBPARSE)(L);
 
     Drop_Action(L);
 
@@ -602,7 +602,7 @@ static REBIXO Parse_One_Rule(
         if (Subparse_Throws(
             &interrupted,
             subresult,
-            ARG(position),  // affected by P_POS assignment above
+            ARG(POSITION),  // affected by P_POS assignment above
             SPECIFIED,
             sub,
             (P_FLAGS & PF_FIND_MASK)
@@ -702,8 +702,8 @@ static REBIXO Parse_One_Rule(
             REBLEN len;
             REBINT index = Find_Value_In_Binstr(
                 &len,
-                Element_ARG(position),
-                Cell_Series_Len_Head(ARG(position)),
+                Element_ARG(POSITION),
+                Cell_Series_Len_Head(ARG(POSITION)),
                 rule,
                 (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH
                     | (Is_Issue(rule) ? AM_FIND_CASE : 0),
@@ -766,7 +766,7 @@ static REBIXO To_Thru_Block_Rule(
     // positioned on the end cell or null terminator of a string may match.
     //
     DECLARE_ELEMENT (iter);
-    Copy_Cell(iter, Element_ARG(position));  // need to slide pos
+    Copy_Cell(iter, Element_ARG(POSITION));  // need to slide pos
     for (
         ;
         VAL_INDEX_RAW(iter) <= P_INPUT_LEN;
@@ -1092,8 +1092,8 @@ static REBIXO To_Thru_Non_Block_Rule(
     REBLEN len;  // e.g. if a TAG!, match length includes < and >
     REBINT i = Find_Value_In_Binstr(
         &len,
-        Element_ARG(position),
-        Cell_Series_Len_Head(ARG(position)),
+        Element_ARG(POSITION),
+        Cell_Series_Len_Head(ARG(POSITION)),
         rule,
         (P_FLAGS & PF_FIND_MASK),
         1  // skip
@@ -1124,11 +1124,11 @@ static void Handle_Mark_Rule(
     //
     //     parse just '''{abc} ["a" mark x:]` => '''{bc}
 
-    Quotify_Depth(Element_ARG(position), P_NUM_QUOTES);
+    Quotify_Depth(Element_ARG(POSITION), P_NUM_QUOTES);
 
     Type t = Type_Of(rule);
     if (t == TYPE_WORD or Is_Set_Word(rule)) {
-        Copy_Cell(Sink_Word_May_Fail(rule, context), ARG(position));
+        Copy_Cell(Sink_Word_May_Fail(rule, context), ARG(POSITION));
     }
     else if (
         t == TYPE_PATH or t == TYPE_TUPLE or Is_Set_Tuple(rule)
@@ -1140,7 +1140,7 @@ static void Handle_Mark_Rule(
         Quotify(Derelativize(OUT, rule, context));
         if (rebRunThrows(
             cast(Value*, temp),  // <-- output cell
-            CANON(SET), OUT, ARG(position)
+            CANON(SET), OUT, ARG(POSITION)
         )){
             fail (Error_No_Catch_For_Throw(LEVEL));
         }
@@ -1149,7 +1149,7 @@ static void Handle_Mark_Rule(
     else
         fail (Error_Parse3_Variable(level_));
 
-    Dequotify(Element_ARG(position));  // go back to 0 quote level
+    Dequotify(Element_ARG(POSITION));  // go back to 0 quote level
 }
 
 
@@ -1217,7 +1217,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //      <local> position num-quotes save lookback
 //  ]
 //
-DECLARE_NATIVE(subparse)
+DECLARE_NATIVE(SUBPARSE)
 //
 // Rules are matched until one of these things happens:
 //
@@ -1248,7 +1248,7 @@ DECLARE_NATIVE(subparse)
 {
     INCLUDE_PARAMS_OF_SUBPARSE;
 
-    UNUSED(ARG(flags));  // used via P_FLAGS
+    UNUSED(ARG(FLAGS));  // used via P_FLAGS
 
     Level* L = level_;  // nice alias of implicit native parameter
 
@@ -1260,16 +1260,16 @@ DECLARE_NATIVE(subparse)
     // But we save the number of quotes in a local variable.  This way we can
     // put the quotes back on whenever doing a COPY etc.
     //
-    assert(Is_Nothing(ARG(num_quotes)));
-    Init_Integer(ARG(num_quotes), Element_Num_Quotes(Element_ARG(input)));
-    Dequotify(Element_ARG(input));
+    assert(Is_Nothing(ARG(NUM_QUOTES)));
+    Init_Integer(ARG(NUM_QUOTES), Element_Num_Quotes(Element_ARG(INPUT)));
+    Dequotify(Element_ARG(INPUT));
 
     // Make sure index position is not past END
-    if (VAL_INDEX_UNBOUNDED(ARG(input)) > Cell_Series_Len_Head(ARG(input)))
-        VAL_INDEX_RAW(ARG(input)) = Cell_Series_Len_Head(ARG(input));
+    if (VAL_INDEX_UNBOUNDED(ARG(INPUT)) > Cell_Series_Len_Head(ARG(INPUT)))
+        VAL_INDEX_RAW(ARG(INPUT)) = Cell_Series_Len_Head(ARG(INPUT));
 
-    assert(Is_Nothing(ARG(position)));
-    Copy_Cell(ARG(position), ARG(input));
+    assert(Is_Nothing(ARG(POSITION)));
+    Copy_Cell(ARG(POSITION), ARG(INPUT));
 
   #if RUNTIME_CHECKS
     //
@@ -1524,7 +1524,7 @@ DECLARE_NATIVE(subparse)
                     goto handle_set;
                 }
 
-                set_or_copy_word = Copy_Cell(LOCAL(lookback), P_RULE);
+                set_or_copy_word = Copy_Cell(LOCAL(LOOKBACK), P_RULE);
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
@@ -1590,7 +1590,7 @@ DECLARE_NATIVE(subparse)
                 if (Is_Trigger(Stable_Unchecked(condition)))
                     goto pre_rule;
 
-                Init_Nulled(ARG(position));  // not found
+                Init_Nulled(ARG(POSITION));  // not found
                 goto post_match_processing; }
 
               case SYM_ACCEPT: {
@@ -1603,7 +1603,7 @@ DECLARE_NATIVE(subparse)
                 DECLARE_ATOM (thrown_arg);
                 if (Is_Tag(P_RULE)) {
                     if (rebUnboxLogic(P_RULE, "= <here>"))
-                        Copy_Cell(thrown_arg, ARG(position));
+                        Copy_Cell(thrown_arg, ARG(POSITION));
                     else
                         fail ("PARSE3 ACCEPT TAG! only works with <here>");
                 }
@@ -1637,7 +1637,7 @@ DECLARE_NATIVE(subparse)
                 goto return_thrown; }
 
               case SYM_BYPASS:  // skip to next alternate
-                Init_Nulled(ARG(position));  // not found
+                Init_Nulled(ARG(POSITION));  // not found
                 FETCH_NEXT_RULE(L);
                 goto post_match_processing;
 
@@ -1733,7 +1733,7 @@ DECLARE_NATIVE(subparse)
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
-        set_or_copy_word = Copy_Cell(LOCAL(lookback), rule);
+        set_or_copy_word = Copy_Cell(LOCAL(LOOKBACK), rule);
         FETCH_NEXT_RULE(L);
 
         if (Is_Word(P_RULE) and Cell_Word_Id(P_RULE) == SYM_ACROSS) {
@@ -1869,7 +1869,7 @@ DECLARE_NATIVE(subparse)
                     fail (Error_Parse3_End());
 
                 if (not subrule) {  // capture only on iteration #1
-                    subrule = Copy_Cell(LOCAL(lookback), P_RULE);
+                    subrule = Copy_Cell(LOCAL(LOOKBACK), P_RULE);
                     FETCH_NEXT_RULE(L);
                 }
 
@@ -1989,7 +1989,7 @@ DECLARE_NATIVE(subparse)
             if (Subparse_Throws(
                 &interrupted,
                 SPARE,
-                ARG(position),
+                ARG(POSITION),
                 SPECIFIED,
                 sub,
                 (P_FLAGS & PF_FIND_MASK)  // no PF_ONE_RULE
@@ -2009,7 +2009,7 @@ DECLARE_NATIVE(subparse)
             if (interrupted) {  // ACCEPT or REJECT ran
                 assert(i != THROWN_FLAG);
                 if (i == END_FLAG)
-                    Init_Nulled(ARG(position));
+                    Init_Nulled(ARG(POSITION));
                 else
                     P_POS = i;
                 break;
@@ -2038,7 +2038,7 @@ DECLARE_NATIVE(subparse)
         //
         if (i == END_FLAG) {  // this match failed
             if (count < mincount) {
-                Init_Nulled(ARG(position));  // num matches not enough
+                Init_Nulled(ARG(POSITION));  // num matches not enough
             }
             else {
                 // just keep index as is.
@@ -2055,7 +2055,7 @@ DECLARE_NATIVE(subparse)
         //
         if (P_POS == i and (P_FLAGS & PF_FURTHER)) {
             if (not (P_FLAGS & PF_LOOPING))
-                Init_Nulled(ARG(position));  // fail the rule, not loop
+                Init_Nulled(ARG(POSITION));  // fail the rule, not loop
             break;
         }
 
@@ -2068,9 +2068,9 @@ DECLARE_NATIVE(subparse)
     // up...but at the very least, such checks should only be needed right
     // after potential group executions (which includes subrules).
     //
-    if (not Is_Nulled(ARG(position)))
+    if (not Is_Nulled(ARG(POSITION)))
         if (P_POS > P_INPUT_LEN)
-            Init_Nulled(ARG(position));  // not found
+            Init_Nulled(ARG(POSITION));  // not found
 
 
     //==////////////////////////////////////////////////////////////////==//
@@ -2089,15 +2089,15 @@ DECLARE_NATIVE(subparse)
 
     if (P_FLAGS & PF_STATE_MASK) {
         if (P_FLAGS & PF_NOT) {
-            if ((P_FLAGS & PF_NOT2) and not Is_Nulled(ARG(position)))
-                Init_Nulled(ARG(position));  // not found
+            if ((P_FLAGS & PF_NOT2) and not Is_Nulled(ARG(POSITION)))
+                Init_Nulled(ARG(POSITION));  // not found
             else {
-                Copy_Cell(ARG(position), ARG(input));
+                Copy_Cell(ARG(POSITION), ARG(INPUT));
                 P_POS = begin;
             }
         }
 
-        if (not Is_Nulled(ARG(position))) {
+        if (not Is_Nulled(ARG(POSITION))) {
             //
             // Set count to how much input was advanced
             //
@@ -2201,9 +2201,9 @@ DECLARE_NATIVE(subparse)
             }
 
             if (P_FLAGS & PF_REMOVE) {
-                Ensure_Mutable(ARG(position));
+                Ensure_Mutable(ARG(POSITION));
                 if (count)
-                    Remove_Any_Series_Len(ARG(position), begin, count);
+                    Remove_Any_Series_Len(ARG(POSITION), begin, count);
                 P_POS = begin;
             }
 
@@ -2246,7 +2246,7 @@ DECLARE_NATIVE(subparse)
                     // last minute that allows protects or unprotects
                     // to happen in rule processing if GROUP!s execute.
                     //
-                    Source* a = Cell_Array_Ensure_Mutable(ARG(position));
+                    Source* a = Cell_Array_Ensure_Mutable(ARG(POSITION));
                     P_POS = Modify_Array(
                         a,
                         begin,
@@ -2265,7 +2265,7 @@ DECLARE_NATIVE(subparse)
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
 
                     P_POS = Modify_String_Or_Binary(  // checks read-only
-                        ARG(position),
+                        ARG(POSITION),
                         (P_FLAGS & PF_CHANGE)
                             ? SYM_CHANGE
                             : SYM_INSERT,
@@ -2285,7 +2285,7 @@ DECLARE_NATIVE(subparse)
         set_or_copy_word = NULL;
     }
 
-    if (Is_Nulled(ARG(position))) {
+    if (Is_Nulled(ARG(POSITION))) {
         if (P_FLAGS & PF_ONE_RULE)
             goto return_null;
 
@@ -2296,7 +2296,7 @@ DECLARE_NATIVE(subparse)
         // Jump to the alternate rule and reset input
         //
         FETCH_NEXT_RULE(L);
-        Copy_Cell(ARG(position), ARG(input));  // P_POS may be null
+        Copy_Cell(ARG(POSITION), ARG(INPUT));  // P_POS may be null
         begin = P_INPUT_IDX;
     }
 
@@ -2337,14 +2337,14 @@ DECLARE_NATIVE(subparse)
 //      :relax "Don't require reaching the tail of the input for success"
 //  ]
 //
-DECLARE_NATIVE(parse3)
+DECLARE_NATIVE(PARSE3)
 //
 // https://forum.rebol.info/t/1084
 {
     INCLUDE_PARAMS_OF_PARSE3;
 
-    Value* input = ARG(input);
-    Value* rules = ARG(rules);
+    Value* input = ARG(INPUT);
+    Value* rules = ARG(RULES);
 
     if (Any_Sequence(input)) {
         if (rebRunThrows(
@@ -2382,7 +2382,7 @@ DECLARE_NATIVE(parse3)
         OUT,
         input, SPECIFIED,
         sub,
-        (REF(case) ? AM_FIND_CASE : 0)
+        (REF(CASE) ? AM_FIND_CASE : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating
         // as case-insensitive bytes for ASCII characters.
@@ -2402,7 +2402,7 @@ DECLARE_NATIVE(parse3)
     }
 
     if (Is_Nulled(OUT)) {  // a match failed (but may be at end of input)
-        if (REF(match))
+        if (REF(MATCH))
             return nullptr;
         return RAISE(Error_Parse3_Incomplete_Raw());
     }
@@ -2411,14 +2411,14 @@ DECLARE_NATIVE(parse3)
     assert(index <= Cell_Series_Len_Head(input));
 
     if (index != Cell_Series_Len_Head(input)) {  // didn't reach end of input
-        if (REF(match))
+        if (REF(MATCH))
             return nullptr;
-        if (not REF(relax))
+        if (not REF(RELAX))
             return RAISE(Error_Parse3_Incomplete_Raw());
     }
 
-    if (REF(match))
-        return COPY(ARG(input));
+    if (REF(MATCH))
+        return COPY(ARG(INPUT));
 
     return NOTHING;  // no synthesized result in PARSE3 unless ACCEPT
 }
@@ -2432,7 +2432,7 @@ DECLARE_NATIVE(parse3)
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(parse_accept)
+DECLARE_NATIVE(PARSE_ACCEPT)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "accept".
@@ -2449,7 +2449,7 @@ DECLARE_NATIVE(parse_accept)
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(parse_break)
+DECLARE_NATIVE(PARSE_BREAK)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "break".
@@ -2466,7 +2466,7 @@ DECLARE_NATIVE(parse_break)
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(parse_reject)
+DECLARE_NATIVE(PARSE_REJECT)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "reject".

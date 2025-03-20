@@ -63,7 +63,7 @@ void Shutdown_Extension_Loader(void)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(builtin_extensions)
+DECLARE_NATIVE(BUILTIN_EXTENSIONS)
 //
 // The config file used by %make.r marks extensions:
 //
@@ -112,7 +112,7 @@ DECLARE_NATIVE(builtin_extensions)
 //          [file! block!]  ; !!! Should it take a LIBRARY! instead?
 //  ]
 //
-DECLARE_NATIVE(load_extension)
+DECLARE_NATIVE(LOAD_EXTENSION)
 //
 // An "Extension" is a form of module which has associated native code.  There
 // are two ways of getting that native code: one is through a "DLL", and
@@ -138,13 +138,13 @@ DECLARE_NATIVE(load_extension)
     //
     Array* collated;
 
-    if (Is_Block(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
-        collated = Cell_Array_Ensure_Mutable(ARG(where));  // already "collated"
+    if (Is_Block(ARG(WHERE))) {  // It's one of the BUILTIN-EXTENSIONS
+        collated = Cell_Array_Ensure_Mutable(ARG(WHERE));  // already "collated"
     }
     else {  // It's a DLL, must locate and call its RX_Collate() function
-        assert(Is_File(ARG(where)));
+        assert(Is_File(ARG(WHERE)));
 
-        Value* library = rebValue("make library!", ARG(where));
+        Value* library = rebValue("make library!", ARG(WHERE));
 
         Value* collated_block = rebValue(
             "run-library-collator", library, "{RX_Collate}"
@@ -152,7 +152,7 @@ DECLARE_NATIVE(load_extension)
 
         if (not collated_block or not Is_Block(collated_block)) {
             rebElide("close", library);
-            return FAIL(Error_Bad_Extension_Raw(ARG(where)));
+            return FAIL(Error_Bad_Extension_Raw(ARG(WHERE)));
         }
 
         collated = Cell_Array_Ensure_Mutable(collated_block);
@@ -289,7 +289,7 @@ static Bounce Unloaded_Dispatcher(Level* level_)
 //          [module!]
 //  ]
 //
-DECLARE_NATIVE(unload_extension)
+DECLARE_NATIVE(UNLOAD_EXTENSION)
 //
 // !!! The initial extension model had support for not just loading extensions
 // from a DLL, but also unloading them.  It raises a lot of questions that are
@@ -303,7 +303,7 @@ DECLARE_NATIVE(unload_extension)
 {
     INCLUDE_PARAMS_OF_UNLOAD_EXTENSION;
 
-    Value* extension = ARG(extension);
+    Value* extension = ARG(EXTENSION);
 
     Value* pos = rebValue(CANON(FIND), "system.extensions", extension);
 
@@ -336,7 +336,7 @@ DECLARE_NATIVE(unload_extension)
     // Note: The mechanical act of unloading a DLL involved these calls.
     /*
         if (not IS_LIBRARY(lib))
-            return FAIL(PARAM(ext));
+            return FAIL(PARAM(EXT));
 
         if (IS_LIB_CLOSED(VAL_LIBRARY(lib)))
             return FAIL(Error_Bad_Library_Raw());

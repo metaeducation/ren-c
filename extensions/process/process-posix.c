@@ -17,7 +17,7 @@ static Bounce Delegate_Kill_Process(pid_t pid, int signal);
 //      return: [integer!]
 //  ]
 //
-DECLARE_NATIVE(get_pid)
+DECLARE_NATIVE(GET_PID)
 {
     INCLUDE_PARAMS_OF_GET_PID;
 
@@ -34,7 +34,7 @@ DECLARE_NATIVE(get_pid)
 //      return: [integer!]
 //  ]
 //
-DECLARE_NATIVE(get_uid)
+DECLARE_NATIVE(GET_UID)
 {
     INCLUDE_PARAMS_OF_GET_UID;
 
@@ -50,7 +50,7 @@ DECLARE_NATIVE(get_uid)
 //      return: [integer!]
 //  ]
 //
-DECLARE_NATIVE(get_euid)
+DECLARE_NATIVE(GET_EUID)
 {
     INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -66,7 +66,7 @@ DECLARE_NATIVE(get_euid)
 //      return: [integer!]
 //  ]
 //
-DECLARE_NATIVE(get_gid)
+DECLARE_NATIVE(GET_GID)
 {
     INCLUDE_PARAMS_OF_GET_UID;
 
@@ -82,7 +82,7 @@ DECLARE_NATIVE(get_gid)
 //      return: [integer!]
 //  ]
 //
-DECLARE_NATIVE(get_egid)
+DECLARE_NATIVE(GET_EGID)
 {
     INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -101,16 +101,16 @@ DECLARE_NATIVE(get_egid)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(set_uid)
+DECLARE_NATIVE(SET_UID)
 {
     INCLUDE_PARAMS_OF_SET_UID;
 
-    if (setuid(VAL_INT32(ARG(uid))) >= 0)
-        return COPY(ARG(uid));
+    if (setuid(VAL_INT32(ARG(UID))) >= 0)
+        return COPY(ARG(UID));
 
     switch (errno) {
       case EINVAL:
-        return FAIL(PARAM(uid));
+        return FAIL(PARAM(UID));
 
       case EPERM:
         return Delegate_Fail_Permission_Denied();
@@ -132,16 +132,16 @@ DECLARE_NATIVE(set_uid)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(set_euid)
+DECLARE_NATIVE(SET_EUID)
 {
     INCLUDE_PARAMS_OF_SET_EUID;
 
-    if (seteuid(VAL_INT32(ARG(euid))) >= 0)
-        return COPY(ARG(euid));
+    if (seteuid(VAL_INT32(ARG(EUID))) >= 0)
+        return COPY(ARG(EUID));
 
     switch (errno) {
       case EINVAL:
-        return FAIL(PARAM(euid));
+        return FAIL(PARAM(EUID));
 
       case EPERM:
         return Delegate_Fail_Permission_Denied();
@@ -163,16 +163,16 @@ DECLARE_NATIVE(set_euid)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(set_gid)
+DECLARE_NATIVE(SET_GID)
 {
     INCLUDE_PARAMS_OF_SET_GID;
 
-    if (setgid(VAL_INT32(ARG(gid))) >= 0)
-        return COPY(ARG(gid));
+    if (setgid(VAL_INT32(ARG(GID))) >= 0)
+        return COPY(ARG(GID));
 
     switch (errno) {
       case EINVAL:
-        return FAIL(PARAM(gid));
+        return FAIL(PARAM(GID));
 
       case EPERM:
         return Delegate_Fail_Permission_Denied();
@@ -194,16 +194,16 @@ DECLARE_NATIVE(set_gid)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(set_egid)
+DECLARE_NATIVE(SET_EGID)
 {
     INCLUDE_PARAMS_OF_SET_EGID;
 
-    if (setegid(VAL_INT32(ARG(egid))) >= 0)
-        return COPY(ARG(egid));
+    if (setegid(VAL_INT32(ARG(EGID))) >= 0)
+        return COPY(ARG(EGID));
 
     switch (errno) {
       case EINVAL:
-        return FAIL(PARAM(egid));
+        return FAIL(PARAM(EGID));
 
       case EPERM:
         return Delegate_Fail_Permission_Denied();
@@ -227,12 +227,12 @@ DECLARE_NATIVE(set_egid)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(send_signal)
+DECLARE_NATIVE(SEND_SIGNAL)
 {
     INCLUDE_PARAMS_OF_SEND_SIGNAL;
 
-    pid_t pid = rebUnboxInteger(ARG(pid));
-    int signal = rebUnboxInteger(ARG(signal));
+    pid_t pid = rebUnboxInteger(ARG(PID));
+    int signal = rebUnboxInteger(ARG(SIGNAL));
 
     // !!! Is called `send-signal` but only seems to call kill (?)
     //

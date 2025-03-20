@@ -346,11 +346,11 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //      :value "Interpret reason as a value cell to debug dump, vs. a message"
 //  ]
 //
-DECLARE_NATIVE(panic)
+DECLARE_NATIVE(PANIC)
 {
     INCLUDE_PARAMS_OF_PANIC;
 
-    Value* v = ARG(reason);  // remove quote level from @reason
+    Value* v = ARG(REASON);  // remove quote level from @reason
 
   #if TRAMPOLINE_COUNTS_TICKS
     Tick tick = level_->tick;  // use Level's tick instead of g_tick
@@ -364,7 +364,7 @@ DECLARE_NATIVE(panic)
 
     const void *p;
 
-    if (REF(value)) {  // interpret reason as value to diagnose
+    if (REF(VALUE)) {  // interpret reason as value to diagnose
         p = v;
     }
     else {  // interpret reason as a message
@@ -398,11 +398,11 @@ DECLARE_NATIVE(panic)
 //      reason [error!]
 //  ]
 //
-DECLARE_NATIVE(raise_p)
+DECLARE_NATIVE(RAISE_P)
 {
     INCLUDE_PARAMS_OF_RAISE_P;
 
-    Value* v = ARG(reason);
+    Value* v = ARG(REASON);
 
     return Raisify(COPY(v));
 }
@@ -418,12 +418,12 @@ DECLARE_NATIVE(raise_p)
 //      :blame [word!]
 //  ]
 //
-DECLARE_NATIVE(fail)
+DECLARE_NATIVE(FAIL)
 {
     INCLUDE_PARAMS_OF_FAIL;
 
-    Value* reason = ARG(reason);
-    Value* blame = ARG(blame);
+    Value* reason = ARG(REASON);
+    Value* blame = ARG(BLAME);
 
   #if NO_RUNTIME_CHECKS
     UNUSED(blame);

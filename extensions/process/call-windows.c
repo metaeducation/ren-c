@@ -195,23 +195,23 @@ static bool Try_Init_Startupinfo_Sink(
 Bounce Call_Core(Level* level_) {
     INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
-    UNUSED(REF(console));  // !!! This is not paid attention to (?)
+    UNUSED(REF(CONSOLE));  // !!! This is not paid attention to (?)
 
     // Make sure that if the output or error series are STRING! or BLOB!,
     // they are not read-only, before we try appending to them.
     //
-    if (Is_Text(ARG(output)) or Is_Blob(ARG(output)))
-        Ensure_Mutable(ARG(output));
-    if (Is_Text(ARG(error)) or Is_Blob(ARG(error)))
-        Ensure_Mutable(ARG(error));
+    if (Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT)))
+        Ensure_Mutable(ARG(OUTPUT));
+    if (Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR)))
+        Ensure_Mutable(ARG(ERROR));
 
     bool flag_wait;
     if (
-        REF(wait)
+        REF(WAIT)
         or (
-            Is_Text(ARG(input)) or Is_Blob(ARG(input))
-            or Is_Text(ARG(output)) or Is_Blob(ARG(output))
-            or Is_Text(ARG(error)) or Is_Blob(ARG(error))
+            Is_Text(ARG(INPUT)) or Is_Blob(ARG(INPUT))
+            or Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT))
+            or Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR))
         )  // I/O redirection implies /WAIT
     ){
         flag_wait = true;
@@ -227,11 +227,11 @@ Bounce Call_Core(Level* level_) {
     int argc;
     const REBWCHAR **argv;
 
-    if (Is_Text(ARG(command))) {  // Windows takes command-lines by default
+    if (Is_Text(ARG(COMMAND))) {  // Windows takes command-lines by default
 
       text_command:
 
-        if (REF(shell)) {
+        if (REF(SHELL)) {
             //
             // Do not pass /U for UCS-2, see notes at top of file.
             //
@@ -240,11 +240,11 @@ Bounce Call_Core(Level* level_) {
             // the facility.
             //
             cmd = rebSpellWide(
-                "unspaced [--{cmd.exe /C \"}--", ARG(command), "--{\"}--]"
+                "unspaced [--{cmd.exe /C \"}--", ARG(COMMAND), "--{\"}--]"
             );
         }
         else {
-            cmd = rebSpellWide(ARG(command));
+            cmd = rebSpellWide(ARG(COMMAND));
         }
 
         argc = 1;
@@ -252,10 +252,10 @@ Bounce Call_Core(Level* level_) {
 
         // !!! Make two copies because it frees cmd and all the argv.  Review.
         //
-        argv[0] = rebSpellWide(ARG(command));
+        argv[0] = rebSpellWide(ARG(COMMAND));
         argv[1] = nullptr;
     }
-    else if (Is_Block(ARG(command))) {
+    else if (Is_Block(ARG(COMMAND))) {
         //
         // In order for argv-call to work with Windows reliably, it has to do
         // proper escaping of its arguments when forming a string.  We
@@ -263,13 +263,13 @@ Bounce Call_Core(Level* level_) {
         //
         // https://github.com/rebol/rebol-issues/issues/2225
 
-        Value* text = rebValue("argv-block-to-command*", ARG(command));
-        Copy_Cell(ARG(command), text);
+        Value* text = rebValue("argv-block-to-command*", ARG(COMMAND));
+        Copy_Cell(ARG(COMMAND), text);
         rebRelease(text);
         goto text_command;
     }
     else
-        fail (PARAM(command));
+        fail (PARAM(COMMAND));
 
     REBU64 pid = 1020;  // avoid uninitialized warning, garbage value
     DWORD exit_code = 304;  // ...same...
@@ -305,7 +305,7 @@ Bounce Call_Core(Level* level_) {
     HANDLE hErrorWrite = 0;
     HANDLE hErrorRead = 0;
 
-    UNUSED(REF(info));
+    UNUSED(REF(INFO));
 
     unsigned char* inbuf = nullptr;
     size_t inbuf_size = 0;
@@ -316,11 +316,11 @@ Bounce Call_Core(Level* level_) {
 
     //=//// INPUT SOURCE SETUP ////////////////////////////////////////////=//
 
-    if (not REF(input)) {  // get stdin normally (usually from user console)
+    if (not REF(INPUT)) {  // get stdin normally (usually from user console)
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     }
-    else if (Is_Word(ARG(input))) {
-        char mode = Get_Char_For_Stream_Mode(ARG(input));
+    else if (Is_Word(ARG(INPUT))) {
+        char mode = Get_Char_For_Stream_Mode(ARG(INPUT));
         if (mode == 'i') {  // !!! make inheritable (correct?)
             if (not SetHandleInformation(
                 hInputRead,
@@ -347,22 +347,22 @@ Bounce Call_Core(Level* level_) {
              );  // don't offer any stdin
         }
     }
-    else switch (Type_Of(ARG(input))) {
+    else switch (Type_Of(ARG(INPUT))) {
       case TYPE_TEXT: {  // feed standard input from TEXT!
         //
         // See notes at top of file about why UTF-16/UCS-2 are not used here.
         // Pipes and file redirects are generally understood in Windows to
         // *not* use those encodings, and transmit raw bytes.
         //
-        inbuf_size = rebSpellInto(nullptr, 0, ARG(input));
+        inbuf_size = rebSpellInto(nullptr, 0, ARG(INPUT));
         inbuf = rebAllocBytes(inbuf_size + 1);
-        size_t check = rebSpellInto(cast(char*, inbuf), inbuf_size, ARG(input));
+        size_t check = rebSpellInto(cast(char*, inbuf), inbuf_size, ARG(INPUT));
         assert(check == inbuf_size);
         UNUSED(check);
         goto input_via_buffer; }
 
       case TYPE_BLOB:  // feed standard input from BLOB! (full-band)
-        inbuf = rebBytes(&inbuf_size, ARG(input));
+        inbuf = rebBytes(&inbuf_size, ARG(INPUT));
 
       input_via_buffer:
 
@@ -380,7 +380,7 @@ Bounce Call_Core(Level* level_) {
         break;
 
       case TYPE_FILE: {  // feed standard input from file contents
-        WCHAR *local_wide = rebSpellWide("file-to-local", ARG(input));
+        WCHAR *local_wide = rebSpellWide("file-to-local", ARG(INPUT));
 
         hInputRead = CreateFile(
             local_wide,
@@ -400,7 +400,7 @@ Bounce Call_Core(Level* level_) {
         break; }
 
       default:
-        panic (ARG(input));
+        panic (ARG(INPUT));
     }
 
     //=//// OUTPUT SINK SETUP /////////////////////////////////////////////=//
@@ -410,7 +410,7 @@ Bounce Call_Core(Level* level_) {
         &hOutputWrite,
         &hOutputRead,
         STD_OUTPUT_HANDLE,
-        ARG(output)
+        ARG(OUTPUT)
     )){
         goto stdout_error;
     }
@@ -422,7 +422,7 @@ Bounce Call_Core(Level* level_) {
         &hErrorWrite,
         &hErrorRead,
         STD_ERROR_HANDLE,
-        ARG(error)
+        ARG(ERROR)
     )){
         goto stderr_error;
     }
@@ -699,27 +699,27 @@ Bounce Call_Core(Level* level_) {
     // remarks at the top of file about how piped data is not generally
     // assumed to be UCS-2.
     //
-    if (Is_Text(ARG(output))) {
+    if (Is_Text(ARG(OUTPUT))) {
         Value* output_val = rebRepossess(outbuf, outbuf_used);
-        rebElide("insert", ARG(output), "deline", output_val);
+        rebElide("insert", ARG(OUTPUT), "deline", output_val);
         rebRelease(output_val);
     }
-    else if (Is_Blob(ARG(output))) {
+    else if (Is_Blob(ARG(OUTPUT))) {
         Value* output_val = rebRepossess(outbuf, outbuf_used);
-        rebElide("insert", ARG(output), output_val);
+        rebElide("insert", ARG(OUTPUT), output_val);
         rebRelease(output_val);
     }
     else
         assert(outbuf == nullptr);
 
-    if (Is_Text(ARG(error))) {
+    if (Is_Text(ARG(ERROR))) {
         Value* error_val = rebRepossess(errbuf, errbuf_used);
-        rebElide("insert", ARG(error), "deline", error_val);
+        rebElide("insert", ARG(ERROR), "deline", error_val);
         rebRelease(error_val);
     }
-    else if (Is_Blob(ARG(error))) {
+    else if (Is_Blob(ARG(ERROR))) {
         Value* error_val = rebRepossess(errbuf, errbuf_used);
-        rebElide("append", ARG(error), error_val);
+        rebElide("append", ARG(ERROR), error_val);
         rebRelease(error_val);
     }
     else
@@ -730,11 +730,11 @@ Bounce Call_Core(Level* level_) {
     if (ret != 0)
         rebFail_OS (ret);
 
-    if (REF(info)) {
+    if (REF(INFO)) {
         VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), pid);
-        if (REF(wait))
+        if (REF(WAIT))
             Init_Integer(Append_Context(info, CANON(EXIT_CODE)), exit_code);
 
         return Init_Object(OUT, info);
@@ -743,7 +743,7 @@ Bounce Call_Core(Level* level_) {
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (REF(wait))
+    if (REF(WAIT))
         return Init_Integer(OUT, exit_code);
 
     return Init_Integer(OUT, pid);

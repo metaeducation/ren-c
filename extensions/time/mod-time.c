@@ -47,7 +47,7 @@ extern Value* Get_Current_Datetime_Value(void);
 //      :local "Give time in current zone without including the time zone"
 //  ]
 //
-DECLARE_NATIVE(now)
+DECLARE_NATIVE(NOW)
 {
     INCLUDE_PARAMS_OF_NOW;
 
@@ -63,7 +63,7 @@ DECLARE_NATIVE(now)
     Copy_Cell(OUT, timestamp);
     rebRelease(timestamp);
 
-    if (not REF(precise)) {
+    if (not REF(PRECISE)) {
         //
         // The "time" field is measured in nanoseconds, and the historical
         // meaning of not using precise measurement was to use only the
@@ -73,14 +73,14 @@ DECLARE_NATIVE(now)
         Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_SECS(OUT)));
     }
 
-    if (REF(utc)) {
+    if (REF(UTC)) {
         //
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
         VAL_ZONE(OUT) = 0;
     }
-    else if (REF(local)) {
+    else if (REF(LOCAL)) {
         //
         // Clear out the time zone flag
         //
@@ -88,13 +88,13 @@ DECLARE_NATIVE(now)
     }
     else {
         if (
-            REF(year)
-            or REF(month)
-            or REF(day)
-            or REF(time)
-            or REF(date)
-            or REF(weekday)
-            or REF(yearday)
+            REF(YEAR)
+            or REF(MONTH)
+            or REF(DAY)
+            or REF(TIME)
+            or REF(DATE)
+            or REF(WEEKDAY)
+            or REF(YEARDAY)
         ){
             Fold_Zone_Into_Date(OUT);
         }
@@ -102,26 +102,26 @@ DECLARE_NATIVE(now)
 
     REBINT n = -1;
 
-    if (REF(date)) {
+    if (REF(DATE)) {
         Tweak_Cell_Nanoseconds(OUT, NO_DATE_TIME);
         VAL_ZONE(OUT) = NO_DATE_ZONE;
     }
-    else if (REF(time)) {
+    else if (REF(TIME)) {
         HEART_BYTE(OUT) = TYPE_TIME;
     }
-    else if (REF(zone)) {
+    else if (REF(ZONE)) {
         Tweak_Cell_Nanoseconds(OUT, VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC);
         HEART_BYTE(OUT) = TYPE_TIME;
     }
-    else if (REF(weekday))
+    else if (REF(WEEKDAY))
         n = Week_Day(stable_OUT);
-    else if (REF(yearday))
+    else if (REF(YEARDAY))
         n = Julian_Date(stable_OUT);
-    else if (REF(year))
+    else if (REF(YEAR))
         n = VAL_YEAR(OUT);
-    else if (REF(month))
+    else if (REF(MONTH))
         n = VAL_MONTH(OUT);
-    else if (REF(day))
+    else if (REF(DAY))
         n = VAL_DAY(OUT);
 
     if (n > 0)

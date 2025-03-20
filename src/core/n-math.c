@@ -54,7 +54,7 @@
 //      number [any-number? pair! money! time!]
 //  ]
 //
-DECLARE_NATIVE(negate)
+DECLARE_NATIVE(NEGATE)
 {
     Element* number = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(number, LEVEL, CANON(NEGATE));
@@ -71,7 +71,7 @@ DECLARE_NATIVE(negate)
 //      value2 [char? any-scalar? date!]
 //  ]
 //
-DECLARE_NATIVE(add)
+DECLARE_NATIVE(ADD)
 //
 // 1. See comments on Is_NUL() about #{00} as a NUL? state for the CHAR? type
 //    constraint.  We preserve (NUL + 65) -> #A and (#A - NUL) -> 0 partially
@@ -82,8 +82,8 @@ DECLARE_NATIVE(add)
 {
     INCLUDE_PARAMS_OF_ADD;
 
-    Element* e1 = Element_ARG(value1);
-    Element* e2 = Element_ARG(value2);
+    Element* e1 = Element_ARG(VALUE1);
+    Element* e2 = Element_ARG(VALUE2);
 
     if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
         if (not Is_Integer(e2))
@@ -123,15 +123,15 @@ DECLARE_NATIVE(add)
 //      value2 [char? any-scalar? date!]
 //  ]
 //
-DECLARE_NATIVE(subtract)
+DECLARE_NATIVE(SUBTRACT)
 //
 // 1. Preservation of R3-Alpha's NUL math behaviors is narrow, isolated here
 //    for easy review and/or removal.
 {
     INCLUDE_PARAMS_OF_SUBTRACT;
 
-    Element* e1 = Element_ARG(value1);
-    Element* e2 = Element_ARG(value2);
+    Element* e1 = Element_ARG(VALUE1);
+    Element* e2 = Element_ARG(VALUE2);
 
     if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
         if (Is_NUL(e2))
@@ -161,7 +161,7 @@ DECLARE_NATIVE(subtract)
 //      value2 [char? any-scalar?]
 //  ]
 //
-DECLARE_NATIVE(multiply)
+DECLARE_NATIVE(MULTIPLY)
 //
 // 1. Most languages want multiplication to be commutative (exceptions like
 //    matrix multiplication do exist, though that likely should be a different
@@ -183,8 +183,8 @@ DECLARE_NATIVE(multiply)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Element* e1 = Element_ARG(value1);
-    Element* e2 = Element_ARG(value2);
+    Element* e1 = Element_ARG(VALUE1);
+    Element* e2 = Element_ARG(VALUE2);
 
     if (HEART_BYTE(e1) < HEART_BYTE(e2)) {  // simpler type is on left [1]
         Move_Cell(stable_SPARE, e2);
@@ -213,7 +213,7 @@ DECLARE_NATIVE(multiply)
 //      value2 [char? any-scalar?]
 //  ]
 //
-DECLARE_NATIVE(divide)
+DECLARE_NATIVE(DIVIDE)
 {
     Element* e1 = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(e1, LEVEL, CANON(DIVIDE));
@@ -231,7 +231,7 @@ DECLARE_NATIVE(divide)
 //      value2 [char? any-scalar?]
 //  ]
 //
-DECLARE_NATIVE(remainder)
+DECLARE_NATIVE(REMAINDER)
 {
     Element* e1 = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(e1, LEVEL, CANON(REMAINDER));
@@ -248,7 +248,7 @@ DECLARE_NATIVE(remainder)
 //      exponent [any-number?]
 //  ]
 //
-DECLARE_NATIVE(power)
+DECLARE_NATIVE(POWER)
 {
     Element* number = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(number, LEVEL, CANON(POWER));
@@ -264,7 +264,7 @@ DECLARE_NATIVE(power)
 //      value [any-number? pair! money! time!]
 //  ]
 //
-DECLARE_NATIVE(absolute)
+DECLARE_NATIVE(ABSOLUTE)
 {
     Element* e = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(e, LEVEL, CANON(ABSOLUTE));
@@ -288,7 +288,7 @@ DECLARE_NATIVE(absolute)
 //      :half-ceiling "Halves round in positive direction"
 //  ]
 //
-DECLARE_NATIVE(round)
+DECLARE_NATIVE(ROUND)
 {
     Element* e = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(e, LEVEL, CANON(ROUND));
@@ -304,7 +304,7 @@ DECLARE_NATIVE(round)
 //      number [any-number? char? date! money! time! pair!]
 //  ]
 //
-DECLARE_NATIVE(odd_q)
+DECLARE_NATIVE(ODD_Q)
 {
     Element* number = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(number, LEVEL, CANON(ODD_Q));
@@ -320,7 +320,7 @@ DECLARE_NATIVE(odd_q)
 //      number [any-number? char? date! money! time! pair!]
 //  ]
 //
-DECLARE_NATIVE(even_q)
+DECLARE_NATIVE(EVEN_Q)
 {
     Element* number = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(number, LEVEL, CANON(EVEN_Q));
@@ -337,7 +337,7 @@ DECLARE_NATIVE(even_q)
 //          [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(randomize)
+DECLARE_NATIVE(RANDOMIZE)
 //
 // Note: It may not be a great idea to allow randomization on lists, it
 // may be the case that there's some kind of "randomize dialect" in which a
@@ -361,7 +361,7 @@ DECLARE_NATIVE(randomize)
 //      :secure "Old refinement from R3-Alpha: Review"
 //  ]
 //
-DECLARE_NATIVE(random)
+DECLARE_NATIVE(RANDOM)
 //
 // RANDOM may be a good candidate for a dialect, e.g.:
 //
@@ -386,16 +386,16 @@ DECLARE_NATIVE(random)
 //      :secure "Old refinement from R3-Alpha: Review"
 //  ]
 //
-DECLARE_NATIVE(random_between)
+DECLARE_NATIVE(RANDOM_BETWEEN)
 //
 // !!! Should this function make sure the types are comparable, and that max
 // is greater than min, before dispatching?  Probably not, that's exppensive.
 {
     INCLUDE_PARAMS_OF_RANDOM_BETWEEN;
 
-    Element* min = Element_ARG(min);
-    Element* max = Element_ARG(max);
-    USED(REF(secure));  // passed through via LEVEL
+    Element* min = Element_ARG(MIN);
+    Element* max = Element_ARG(MAX);
+    USED(REF(SECURE));  // passed through via LEVEL
 
     if (Type_Of(min) != Type_Of(max))
         return RAISE("RANDOM-BETWEEN requires MIN and MAX of same type");
@@ -415,7 +415,7 @@ DECLARE_NATIVE(random_between)
 //      :secure "Old refinement from R3-Alpha: Review"
 //  ]
 //
-DECLARE_NATIVE(random_pick)
+DECLARE_NATIVE(RANDOM_PICK)
 //
 // While RANDOM_PICK is written as its own generic that can be optimized, for
 // most types it can easily be implemented based on RANDOM + LENGTH_OF + PICK.
@@ -459,7 +459,7 @@ DECLARE_NATIVE(random_pick)
 //      :secure "Old refinement from R3-Alpha: Review"
 //  ]
 //
-DECLARE_NATIVE(shuffle)
+DECLARE_NATIVE(SHUFFLE)
 {
     Element* series = cast(Element*, ARG_N(1));
     return Dispatch_Generic(SHUFFLE, series, LEVEL);
@@ -478,13 +478,13 @@ DECLARE_NATIVE(shuffle)
 //          [any-number? any-series?]
 //  ]
 //
-DECLARE_NATIVE(shuffle_of)
+DECLARE_NATIVE(SHUFFLE_OF)
 {
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
-    Element* elem = cast(Element*, ARG(element));
-    USED(REF(secure));  // other args get passed via LEVEL
-    USED(REF(part));
+    Element* elem = cast(Element*, ARG(ELEMENT));
+    USED(REF(SECURE));  // other args get passed via LEVEL
+    USED(REF(PART));
 
     Bounce bounce;
     if (Try_Dispatch_Generic(&bounce, SHUFFLE_OF, elem, LEVEL))
@@ -579,11 +579,11 @@ static Option(Error*) Trap_Arc_Trans(
 //      :radians "ANGLE is specified in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(cosine)
+DECLARE_NATIVE(COSINE)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(angle), REF(radians), SYM_COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(ANGLE), REF(RADIANS), SYM_COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -601,11 +601,11 @@ DECLARE_NATIVE(cosine)
 //      :radians "ANGLE is specified in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(sine)
+DECLARE_NATIVE(SINE)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(angle), REF(radians), SYM_SINE));
+    REBDEC dval = sin(Trig_Value(ARG(ANGLE), REF(RADIANS), SYM_SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -623,11 +623,11 @@ DECLARE_NATIVE(sine)
 //      :radians "ANGLE is specified in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(tangent)
+DECLARE_NATIVE(TANGENT)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(angle), REF(radians), SYM_TANGENT);
+    REBDEC dval = Trig_Value(ARG(ANGLE), REF(RADIANS), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
@@ -645,12 +645,12 @@ DECLARE_NATIVE(tangent)
 //      :radians "Returns result in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(arccosine)
+DECLARE_NATIVE(ARCCOSINE)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
     Option(Error*) e = Trap_Arc_Trans(
-        OUT, ARG(cosine), REF(radians), SYM_COSINE
+        OUT, ARG(COSINE), REF(RADIANS), SYM_COSINE
     );
     if (e)
         return FAIL(unwrap e);
@@ -668,11 +668,11 @@ DECLARE_NATIVE(arccosine)
 //      :radians "Returns result in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(arcsine)
+DECLARE_NATIVE(ARCSINE)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Option(Error*) e = Trap_Arc_Trans(OUT, ARG(sine), REF(radians), SYM_SINE);
+    Option(Error*) e = Trap_Arc_Trans(OUT, ARG(SINE), REF(RADIANS), SYM_SINE);
     if (e)
         return FAIL(unwrap e);
     return OUT;
@@ -689,12 +689,12 @@ DECLARE_NATIVE(arcsine)
 //      :radians "Returns result in radians (in degrees by default)"
 //  ]
 //
-DECLARE_NATIVE(arctangent)
+DECLARE_NATIVE(ARCTANGENT)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
     Option(Error*) e = Trap_Arc_Trans(
-        OUT, ARG(tangent), REF(radians), SYM_TANGENT
+        OUT, ARG(TANGENT), REF(RADIANS), SYM_TANGENT
     );
     if (e)
         return FAIL(unwrap e);
@@ -711,12 +711,12 @@ DECLARE_NATIVE(arctangent)
 //      power [any-number?]
 //  ]
 //
-DECLARE_NATIVE(exp)
+DECLARE_NATIVE(EXP)
 {
     INCLUDE_PARAMS_OF_EXP;
 
     static REBDEC eps = EPS;
-    REBDEC dval = pow(eps, AS_DECIMAL(ARG(power)));
+    REBDEC dval = pow(eps, AS_DECIMAL(ARG(POWER)));
 
     // !!! Check_Overflow(dval);
 
@@ -733,11 +733,11 @@ DECLARE_NATIVE(exp)
 //      value [any-number?]
 //  ]
 //
-DECLARE_NATIVE(log_10)
+DECLARE_NATIVE(LOG_10)
 {
     INCLUDE_PARAMS_OF_LOG_10;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
@@ -754,11 +754,11 @@ DECLARE_NATIVE(log_10)
 //      value [any-number?]
 //  ]
 //
-DECLARE_NATIVE(log_2)
+DECLARE_NATIVE(LOG_2)
 {
     INCLUDE_PARAMS_OF_LOG_2;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
@@ -775,11 +775,11 @@ DECLARE_NATIVE(log_2)
 //      value [any-number?]
 //  ]
 //
-DECLARE_NATIVE(log_e)
+DECLARE_NATIVE(LOG_E)
 {
     INCLUDE_PARAMS_OF_LOG_E;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
@@ -796,11 +796,11 @@ DECLARE_NATIVE(log_e)
 //      value [any-number?]
 //  ]
 //
-DECLARE_NATIVE(square_root)
+DECLARE_NATIVE(SQUARE_ROOT)
 {
     INCLUDE_PARAMS_OF_SQUARE_ROOT;
 
-    REBDEC dval = AS_DECIMAL(ARG(value));
+    REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval < 0)
         fail (Error_Positive_Raw());
 
@@ -817,7 +817,7 @@ DECLARE_NATIVE(square_root)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(vacancy_q)
+DECLARE_NATIVE(VACANCY_Q)
 //
 // 1. Because BLANK! antiforms signify unspecialized function call slots,
 //    they must be taken as ^META values if passed as an argument--even
@@ -825,7 +825,7 @@ DECLARE_NATIVE(vacancy_q)
 {
     INCLUDE_PARAMS_OF_VACANCY_Q;
 
-    Value* v = ARG(value);  // meta
+    Value* v = ARG(VALUE);  // meta
     Meta_Unquotify_Known_Stable(v);  // checked ANY-VALUE?, so stable [1]
     return Init_Logic(OUT, Any_Vacancy(v));
 }
@@ -840,7 +840,7 @@ DECLARE_NATIVE(vacancy_q)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(defaultable_q)
+DECLARE_NATIVE(DEFAULTABLE_Q)
 //
 // 1. Because PARAMETER! antiforms signify unspecialized function call slots,
 //    they must be taken as ^META values if passed as an argument--even
@@ -848,7 +848,7 @@ DECLARE_NATIVE(defaultable_q)
 {
     INCLUDE_PARAMS_OF_DEFAULTABLE_Q;
 
-    Value* v = ARG(value);  // meta
+    Value* v = ARG(VALUE);  // meta
     Meta_Unquotify_Known_Stable(v);  // checked as ANY-VALUE?, so stable [1]
     return Init_Logic(OUT, Any_Vacancy(v) or Is_Void(v) or Is_Nulled(v));
 }
@@ -892,13 +892,13 @@ DECLARE_NATIVE(defaultable_q)
 //      :strict "Use strict comparison rules"
 //  ]
 //
-DECLARE_NATIVE(equal_q)
+DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
-    bool strict = REF(strict);
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
+    bool strict = REF(STRICT);
 
     if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
         return nullptr;
@@ -932,15 +932,15 @@ DECLARE_NATIVE(equal_q)
 //      value2 [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(lesser_q)
+DECLARE_NATIVE(LESSER_Q)
 //
 // 1. Although EQUAL? has to allow antiforms, e.g. for (value = null), it's
 //    not clear that LESSER? should accept them.
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
 
     if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
         return RAISE("Differing quote levels are not comparable");
@@ -974,8 +974,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    UNUSED(ARG(value1));
-    UNUSED(ARG(value2));
+    UNUSED(ARG(VALUE1));
+    UNUSED(ARG(VALUE2));
 
     return RAISE("Types are not comparable");
 }
@@ -991,7 +991,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
 //      value2 [something?]
 //  ]
 //
-DECLARE_NATIVE(same_q)
+DECLARE_NATIVE(SAME_Q)
 //
 // !!! It's not clear that SAME? should be answering for types like INTEGER!
 // or other immediates with the same answer as EQUAL?.  It might should be
@@ -1001,8 +1001,8 @@ DECLARE_NATIVE(same_q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Value* v1 = ARG(VALUE1);
+    Value* v2 = ARG(VALUE2);
 
     if (Type_Of(v1) != Type_Of(v2))
         return Init_Logic(OUT, false);  // not "same" value if not same type
@@ -1075,12 +1075,12 @@ DECLARE_NATIVE(same_q)
 //      value2 [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(greater_q)
+DECLARE_NATIVE(GREATER_Q)
 {
     INCLUDE_PARAMS_OF_GREATER_Q;
 
-    Element* v1 = Element_ARG(value1);
-    Element* v2 = Element_ARG(value2);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1101,12 +1101,12 @@ DECLARE_NATIVE(greater_q)
 //      value2 [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(equal_or_lesser_q)
+DECLARE_NATIVE(EQUAL_OR_LESSER_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
 
-    Element* v1 = Element_ARG(value1);
-    Element* v2 = Element_ARG(value2);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1127,12 +1127,12 @@ DECLARE_NATIVE(equal_or_lesser_q)
 //      value2 [fundamental?]
 //  ]
 //
-DECLARE_NATIVE(greater_or_equal_q)
+DECLARE_NATIVE(GREATER_OR_EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_GREATER_OR_EQUAL_Q;
 
-    Element* v1 = Element_ARG(value1);
-    Element* v2 = Element_ARG(value2);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1153,12 +1153,12 @@ DECLARE_NATIVE(greater_or_equal_q)
 //      value2 [any-scalar? date! any-series?]
 //  ]
 //
-DECLARE_NATIVE(maximum)
+DECLARE_NATIVE(MAXIMUM)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
-    Element* v1 = Element_ARG(value1);
-    Element* v2 = Element_ARG(value2);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1181,12 +1181,12 @@ DECLARE_NATIVE(maximum)
 //      value2 [any-scalar? date! any-series?]
 //  ]
 //
-DECLARE_NATIVE(minimum)
+DECLARE_NATIVE(MINIMUM)
 {
     INCLUDE_PARAMS_OF_MINIMUM;
 
-    Element* v1 = Element_ARG(value1);
-    Element* v2 = Element_ARG(value2);
+    Element* v1 = Element_ARG(VALUE1);
+    Element* v2 = Element_ARG(VALUE2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1208,11 +1208,11 @@ DECLARE_NATIVE(minimum)
 //     example [any-element?]
 //  ]
 //
-DECLARE_NATIVE(zeroify)
+DECLARE_NATIVE(ZEROIFY)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
 
-    Element* example = Element_ARG(example);
+    Element* example = Element_ARG(EXAMPLE);
 
     return Dispatch_Generic(ZEROIFY, example, LEVEL);
 }
@@ -1227,11 +1227,11 @@ DECLARE_NATIVE(zeroify)
 //      value [any-number? money! time! pair!]
 //  ]
 //
-DECLARE_NATIVE(negative_q)
+DECLARE_NATIVE(NEGATIVE_Q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
-    Element* v = Element_ARG(value);
+    Element* v = Element_ARG(VALUE);
 
     Quotify(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(LESSER_Q), v, CANON(ZEROIFY), v);
@@ -1247,11 +1247,11 @@ DECLARE_NATIVE(negative_q)
 //      value [any-number? money! time! pair!]
 //  ]
 //
-DECLARE_NATIVE(positive_q)
+DECLARE_NATIVE(POSITIVE_Q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
-    Element* v = Element_ARG(value);
+    Element* v = Element_ARG(VALUE);
 
     Quotify(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(GREATER_Q), v, CANON(ZEROIFY), v);
@@ -1267,11 +1267,11 @@ DECLARE_NATIVE(positive_q)
 //      value [any-scalar? pair! char?]
 //  ]
 //
-DECLARE_NATIVE(zero_q)
+DECLARE_NATIVE(ZERO_Q)
 {
     INCLUDE_PARAMS_OF_ZERO_Q;
 
-    Element* v = Element_ARG(value);
+    Element* v = Element_ARG(VALUE);
 
     Quotify(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(EQUAL_Q), v, CANON(ZEROIFY), v);

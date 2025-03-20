@@ -53,13 +53,13 @@ static Bounce Clipboard_Actor(
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
-        UNUSED(ARG(source));  // implied by `port`
+        UNUSED(ARG(SOURCE));  // implied by `port`
 
-        if (REF(part) or REF(seek))
+        if (REF(PART) or REF(SEEK))
             return FAIL(Error_Bad_Refines_Raw());
 
-        UNUSED(REF(string));  // handled in dispatcher
-        UNUSED(REF(lines));  // handled in dispatcher
+        UNUSED(REF(STRING));  // handled in dispatcher
+        UNUSED(REF(LINES));  // handled in dispatcher
 
         SetLastError(NO_ERROR);
         if (not IsClipboardFormatAvailable(CF_UNICODETEXT)) {
@@ -98,12 +98,12 @@ static Bounce Clipboard_Actor(
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
-        UNUSED(ARG(destination));  // implied by `port`
+        UNUSED(ARG(DESTINATION));  // implied by `port`
 
-        if (REF(append) or REF(lines))
+        if (REF(APPEND) or REF(LINES))
             return FAIL(Error_Bad_Refines_Raw());
 
-        Value* data = ARG(data);
+        Value* data = ARG(DATA);
 
         // !!! Traditionally the currency of READ and WRITE is binary data.
         // R3-Alpha had a behavior of ostensibly taking string or binary, but
@@ -115,8 +115,8 @@ static Bounce Clipboard_Actor(
         // Handle :PART refinement:
         //
         REBINT len = Cell_Series_Len_At(data);
-        if (REF(part) and VAL_INT32(ARG(part)) < len)
-            len = VAL_INT32(ARG(part));
+        if (REF(PART) and VAL_INT32(ARG(PART)) < len)
+            len = VAL_INT32(ARG(PART));
 
         if (not OpenClipboard(nullptr))
             return "fail -{OpenClipboard() fail on clipboard write}-";
@@ -159,9 +159,9 @@ static Bounce Clipboard_Actor(
 
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
-        UNUSED(PARAM(spec));
+        UNUSED(PARAM(SPEC));
 
-        if (REF(new) or REF(read) or REF(write))
+        if (REF(NEW) or REF(READ) or REF(WRITE))
             return FAIL(Error_Bad_Refines_Raw());
 
         // !!! Currently just ignore (it didn't do anything)
@@ -190,7 +190,7 @@ static Bounce Clipboard_Actor(
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_clipboard_actor_handle)
+DECLARE_NATIVE(GET_CLIPBOARD_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &Clipboard_Actor);
     return OUT;

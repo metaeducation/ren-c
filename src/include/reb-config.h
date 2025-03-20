@@ -485,13 +485,13 @@ Special internal defines used by RT, not Host-Kit developers:
     #define ALLOW_SPORADICALLY_NON_DETERMINISTIC RUNTIME_CHECKS
 #endif
 
-// See debugbreak.h and DECLARE_NATIVE(c_debug_break)...useful!
+// See debugbreak.h and DECLARE_NATIVE(C_DEBUG_BREAK)...useful!
 //
 #if !defined(INCLUDE_C_DEBUG_BREAK_NATIVE)
     #define INCLUDE_C_DEBUG_BREAK_NATIVE  RUNTIME_CHECKS
 #endif
 
-// See DECLARE_NATIVE(test_librebol)
+// See DECLARE_NATIVE(TEST_LIBREBOL)
 //
 #if !defined(INCLUDE_TEST_LIBREBOL_NATIVE)
     #define INCLUDE_TEST_LIBREBOL_NATIVE  RUNTIME_CHECKS

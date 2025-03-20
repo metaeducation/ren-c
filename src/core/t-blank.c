@@ -49,9 +49,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blank)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(v);
     UNUSED(form);
@@ -66,9 +66,9 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Blank)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    UNUSED(ARG(value1));
-    UNUSED(ARG(value2));
-    UNUSED(ARG(strict));
+    UNUSED(ARG(VALUE1));
+    UNUSED(ARG(VALUE2));
+    UNUSED(ARG(STRICT));
 
     return LOGIC(true);  // all blanks are equal
 }
@@ -97,8 +97,8 @@ IMPLEMENT_GENERIC(TO, Is_Blank)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    UNUSED(ARG(element));
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    UNUSED(ARG(ELEMENT));
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_List_Type(as))
         return Init_Any_List(OUT, as, Make_Source(0));
@@ -132,8 +132,8 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    UNUSED(ARG(element));
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    UNUSED(ARG(ELEMENT));
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_List_Type(as))
         return Init_Any_List(OUT, as, Cell_Array(g_empty_block));
@@ -166,16 +166,16 @@ IMPLEMENT_GENERIC(AS, Is_Blank)
 IMPLEMENT_GENERIC(PICK, Is_Blank)
 {
     INCLUDE_PARAMS_OF_PICK;
-    UNUSED(ARG(location));
+    UNUSED(ARG(LOCATION));
 
-    return RAISE(Error_Bad_Pick_Raw(ARG(picker)));  // act as out of range [1]
+    return RAISE(Error_Bad_Pick_Raw(ARG(PICKER)));  // act as out of range [1]
 }
 
 
 IMPLEMENT_GENERIC(LENGTH_OF, Is_Blank)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
-    UNUSED(ARG(element));
+    UNUSED(ARG(ELEMENT));
 
     return Init_Integer(OUT, 0);
 }
@@ -185,9 +185,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Handle)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);  // !!! Handles have "no printable form", what to do here?
     UNUSED(v);
@@ -202,9 +202,9 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Handle)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    Element* a = Element_ARG(value1);
-    Element* b = Element_ARG(value2);
-    UNUSED(ARG(strict));
+    Element* a = Element_ARG(VALUE1);
+    Element* b = Element_ARG(VALUE2);
+    UNUSED(ARG(STRICT));
 
     if (Cell_Has_Node1(a) != Cell_Has_Node1(b))
         return LOGIC(false);  // one is shared but other is not

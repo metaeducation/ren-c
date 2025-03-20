@@ -43,28 +43,31 @@
 // they are linked directly into the executable--so their linknames aren't
 // ambiguous with core natives (or other extension natives) of the same name.
 //
-// 1. Because there are macros for things like `maybe`, trying to reuse the
+// 1. The `name` argument is taken as uppercase.  This helps use token pasting
+//    to get the functions SYM_XXX name via SYM_##name.
+//
+// 2. Because there are macros for things like `maybe`, trying to reuse the
 //    NATIVE_CFUNC() macro inside DECLARE_NATIVE() would expand maybe before
 //    passing it to the token paste.  It's easiest just to repeat `N_##name`
 //
-// 2. Forward definitions of DECLARE_NATIVE() for all the core natives.  This
+// 3. Forward definitions of DECLARE_NATIVE() for all the core natives.  This
 //    means functions are available via NATIVE_CFUNC() throughout the core code
 //    if it wants to explicitly reference a native's dispatcher function.
 //
-// 3. %tmp-paramlists.h is the file containing macros for natives and actions
+// 4. %tmp-paramlists.h is the file containing macros for natives and actions
 //    that map their argument names to indices in the frame.  This defines the
 //    macros like INCLUDE_ARGS_OF_INSERT which then allow you to naturally
-//    write things like REF(part) and ARG(limit), instead of the brittle
+//    write things like REF(PART) and ARG(LIMIT), instead of the brittle
 //    integer-based system used in R3-Alpha such as D_REF(7) and ARG_N(3).
 
-#define NATIVE_CFUNC(name)  N_##name  // e.g. NATIVE_CFUNC(foo) => N_foo
+#define NATIVE_CFUNC(name)  N_##name  // e.g. NATIVE_CFUNC(FOO) => N_FOO [1]
 
 #define DECLARE_NATIVE(name) \
-    Bounce N_##name(Level* level_)  // NATIVE_CFUNC(macro) would expand [1]
+    Bounce N_##name(Level* level_)  // NATIVE_CFUNC(macro) would expand [2]
 
-#include "tmp-native-fwd-decls.h"  // forward declarations of natives [2]
+#include "tmp-native-fwd-decls.h"  // forward declarations of natives [3]
 
-#include "tmp-paramlists.h"  // INCLUDE_ARGS_OF_XXX macro definitions [3]
+#include "tmp-paramlists.h"  // INCLUDE_ARGS_OF_XXX macro definitions [4]
 
 
 //=//// GENERICS ///////////////////////////////////////////////////////////=//

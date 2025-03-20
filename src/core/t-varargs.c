@@ -362,10 +362,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_VARARGS);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_VARARGS);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     // With MAKE VARARGS! on an ANY-LIST?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to
@@ -410,14 +410,14 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_TAKE;
 
-    Element* varargs = cast(Element*, ARG(series));
+    Element* varargs = cast(Element*, ARG(SERIES));
 
-    if (REF(deep))
+    if (REF(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
-    if (REF(last))
+    if (REF(LAST))
         return FAIL(Error_Varargs_Take_Last_Raw());
 
-    if (not REF(part)) {
+    if (not REF(PART)) {
         if (Do_Vararg_Op_Maybe_End_Throws(
             OUT,
             VARARG_OP_TAKE,
@@ -432,10 +432,10 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 
     assert(TOP_INDEX == STACK_BASE);
 
-    if (not Is_Integer(ARG(part)))
-        return FAIL(PARAM(part));
+    if (not Is_Integer(ARG(PART)))
+        return FAIL(PARAM(PART));
 
-    REBINT limit = VAL_INT32(ARG(part));
+    REBINT limit = VAL_INT32(ARG(PART));
     if (limit < 0)
         limit = 0;
 
@@ -460,8 +460,8 @@ IMPLEMENT_GENERIC(PICK, Varargs)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* varargs = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* varargs = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
         return FAIL(picker);
@@ -509,7 +509,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* vararg = Element_ARG(element);
+    Element* vararg = Element_ARG(ELEMENT);
 
     if (Do_Vararg_Op_Maybe_End_Throws(
         OUT,
@@ -528,7 +528,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Varargs(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Varargs(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -542,9 +542,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
 
@@ -630,11 +630,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(variadic_q)
+DECLARE_NATIVE(VARIADIC_Q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    Phase* phase = Cell_Frame_Phase(ARG(frame));
+    Phase* phase = Cell_Frame_Phase(ARG(FRAME));
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);

@@ -45,7 +45,7 @@
 //      value [logic? integer! tuple! blob!]
 //  ]
 //
-DECLARE_NATIVE(bitwise_not)
+DECLARE_NATIVE(BITWISE_NOT)
 {
     if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
@@ -79,7 +79,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
 //      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
-DECLARE_NATIVE(bitwise_and)
+DECLARE_NATIVE(BITWISE_AND)
 {
     if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
@@ -102,7 +102,7 @@ DECLARE_NATIVE(bitwise_and)
 //      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
-DECLARE_NATIVE(bitwise_or)
+DECLARE_NATIVE(BITWISE_OR)
 {
     if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
@@ -125,7 +125,7 @@ DECLARE_NATIVE(bitwise_or)
 //      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
-DECLARE_NATIVE(bitwise_xor)
+DECLARE_NATIVE(BITWISE_XOR)
 {
    if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
@@ -148,7 +148,7 @@ DECLARE_NATIVE(bitwise_xor)
 //      value2 [logic? integer! char? tuple! blob!]
 //  ]
 //
-DECLARE_NATIVE(bitwise_and_not)
+DECLARE_NATIVE(BITWISE_AND_NOT)
 {
    if (Is_Logic(ARG_N(1))) {
         bool b1 = Cell_Logic(ARG_N(1));
@@ -188,23 +188,23 @@ DECLARE_NATIVE(bitwise_and_not)
 //      :logical "Logical shift (sign bit ignored)"
 //  ]
 //
-DECLARE_NATIVE(shift)
+DECLARE_NATIVE(SHIFT)
 {
     INCLUDE_PARAMS_OF_SHIFT;
 
-    REBI64 b = VAL_INT64(ARG(bits));
-    Value* a = ARG(value);
+    REBI64 b = VAL_INT64(ARG(BITS));
+    Value* a = ARG(VALUE);
 
     if (b < 0) {
         REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
         if (c >= 64) {
-            if (REF(logical))
+            if (REF(LOGICAL))
                 mutable_VAL_INT64(a) = 0;
             else
                 mutable_VAL_INT64(a) >>= 63;
         }
         else {
-            if (REF(logical))
+            if (REF(LOGICAL))
                 mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
             else
                 mutable_VAL_INT64(a) >>= cast(REBI64, c);
@@ -212,13 +212,13 @@ DECLARE_NATIVE(shift)
     }
     else {
         if (b >= 64) {
-            if (REF(logical))
+            if (REF(LOGICAL))
                 mutable_VAL_INT64(a) = 0;
             else if (VAL_INT64(a) != 0)
                 fail (Error_Overflow_Raw());
         }
         else {
-            if (REF(logical))
+            if (REF(LOGICAL))
                 mutable_VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
             else {
                 REBU64 c = cast(REBU64, INT64_MIN) >> b;
@@ -237,7 +237,7 @@ DECLARE_NATIVE(shift)
         }
     }
 
-    return COPY(ARG(value));
+    return COPY(ARG(VALUE));
 }
 
 

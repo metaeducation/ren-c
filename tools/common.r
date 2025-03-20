@@ -91,8 +91,8 @@ export /to-c-name: func [
         ; These are in the set of what are known as "alterative tokens".  They
         ; aren't exactly keywords (and in C they're just done with #define).
         ; Hence they are involved with the preproessor which means that
-        ; "clever" macros like ARG(not) or REF(and) will be invoked as
-        ; ARG(!) or REF(&&).  So instead use ARG(_not_) and REF(_and_), etc.
+        ; "clever" macros like ARG(NOT) or REF(AND) will be invoked as
+        ; ARG(!) or REF(&&).  So instead use ARG(_NOT_) and REF(_AND_), etc.
         ;
         ; (Complete list here for completeness, despite many being unused.)
         ;

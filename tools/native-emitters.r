@@ -221,10 +221,10 @@ export /emit-include-params-macro: func [
                 n = 1  ; first parameter
             ] then [
                 keep cscape [
-                    param-name "DECLARE_INTRINSIC_PARAM(${param-name})"
+                    param-name "DECLARE_INTRINSIC_PARAM(${PARAM-NAME})"
                 ]
             ] else [
-                keep cscape [n param-name "DECLARE_PARAM($<n>, ${param-name})"]
+                keep cscape [n param-name "DECLARE_PARAM($<n>, ${PARAM-NAME})"]
             ]
             n: n + 1
         ]

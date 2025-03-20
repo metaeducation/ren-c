@@ -91,7 +91,7 @@ bool Try_Catch_Break_Or_Continue(
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(definitional_break)
+DECLARE_NATIVE(DEFINITIONAL_BREAK)
 //
 // BREAK is implemented via a thrown signal that bubbles up through the stack.
 // It uses the value of its own native function as the name of the throw,
@@ -128,7 +128,7 @@ DECLARE_NATIVE(definitional_break)
 //          [any-value?]
 //  ]
 //
-DECLARE_NATIVE(definitional_continue)
+DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 //
 // CONTINUE is implemented via a thrown signal that bubbles up through the
 // stack.  It uses the value of its own native function as the name of the
@@ -139,8 +139,8 @@ DECLARE_NATIVE(definitional_continue)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
-    Value* with = ARG(with);
-    if (not REF(with))
+    Value* with = ARG(WITH);
+    if (not REF(WITH))
         Init_Void(with);  // See: https://forum.rebol.info/t/1965/3 [1]
 
     Level* continue_level = LEVEL;  // Level of this CONTINUE call
@@ -442,17 +442,17 @@ static Bounce Loop_Number_Common(
 //          "Code to evaluate"
 //  ]
 //
-DECLARE_NATIVE(cfor)
+DECLARE_NATIVE(CFOR)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
-    Value* body = ARG(body);
+    Value* body = ARG(BODY);
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        ARG(word)
+        ARG(WORD)
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(word), context));
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -460,47 +460,47 @@ DECLARE_NATIVE(cfor)
     Value* var = Varlist_Slot(context, 1);  // not movable, see #2274
 
     if (
-        Is_Integer(ARG(start))
-        and Is_Integer(ARG(end))
-        and Is_Integer(ARG(bump))
+        Is_Integer(ARG(START))
+        and Is_Integer(ARG(END))
+        and Is_Integer(ARG(BUMP))
     ){
         return Loop_Integer_Common(
             level_,
             var,
-            ARG(body),
-            VAL_INT64(ARG(start)),
-            Is_Decimal(ARG(end))
-                ? cast(REBI64, VAL_DECIMAL(ARG(end)))
-                : VAL_INT64(ARG(end)),
-            VAL_INT64(ARG(bump))
+            ARG(BODY),
+            VAL_INT64(ARG(START)),
+            Is_Decimal(ARG(END))
+                ? cast(REBI64, VAL_DECIMAL(ARG(END)))
+                : VAL_INT64(ARG(END)),
+            VAL_INT64(ARG(BUMP))
         );
     }
 
-    if (Any_Series(ARG(start))) {
-        if (Any_Series(ARG(end))) {
+    if (Any_Series(ARG(START))) {
+        if (Any_Series(ARG(END))) {
             return Loop_Series_Common(
                 level_,
                 var,
-                ARG(body),
-                ARG(start),
-                VAL_INDEX(ARG(end)),
-                Int32(ARG(bump))
+                ARG(BODY),
+                ARG(START),
+                VAL_INDEX(ARG(END)),
+                Int32(ARG(BUMP))
             );
         }
         else {
             return Loop_Series_Common(
                 level_,
                 var,
-                ARG(body),
-                ARG(start),
-                Int32s(ARG(end), 1) - 1,
-                Int32(ARG(bump))
+                ARG(BODY),
+                ARG(START),
+                Int32s(ARG(END), 1) - 1,
+                Int32(ARG(BUMP))
             );
         }
     }
 
     return Loop_Number_Common(
-        level_, var, ARG(body), ARG(start), ARG(end), ARG(bump)
+        level_, var, ARG(BODY), ARG(START), ARG(END), ARG(BUMP)
     );
 }
 
@@ -522,17 +522,17 @@ DECLARE_NATIVE(cfor)
 //          [<const> any-branch?]
 //  ]
 //
-DECLARE_NATIVE(for_skip)
+DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    Value* series = ARG(series);
-    Value* body = ARG(body);
+    Value* series = ARG(SERIES);
+    Value* body = ARG(BODY);
 
     if (Is_Blank(series))
         return VOID;
 
-    REBINT skip = Int32(ARG(skip));
+    REBINT skip = Int32(ARG(SKIP));
     if (skip == 0) {
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
@@ -542,9 +542,9 @@ DECLARE_NATIVE(for_skip)
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        ARG(word)
+        ARG(WORD)
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(word), context));
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -577,7 +577,7 @@ DECLARE_NATIVE(for_skip)
             VAL_INDEX_UNBOUNDED(var) = index;
         }
 
-        if (Eval_Branch_Throws(OUT, ARG(body))) {
+        if (Eval_Branch_Throws(OUT, ARG(BODY))) {
             bool breaking;
             if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
                 return THROWN;
@@ -595,7 +595,7 @@ DECLARE_NATIVE(for_skip)
         var = Real_Var_From_Pseudo(pseudo_var);
 
         if (Is_Nulled(var))
-            return FAIL(PARAM(word));
+            return FAIL(PARAM(WORD));
         if (not Any_Series(var))
             return FAIL(var);
 
@@ -624,12 +624,12 @@ DECLARE_NATIVE(for_skip)
 //          [any-value?]
 //  ]
 //
-DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
+DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
-    Value* with = ARG(with);
-    if (not REF(with))
+    Value* with = ARG(WITH);
+    if (not REF(WITH))
         Init_Void(with);  // See: https://forum.rebol.info/t/1965/3
 
     Level* stop_level = LEVEL;  // Level of this STOP call
@@ -685,7 +685,7 @@ void Add_Definitional_Stop(
 //          [<const> any-branch?]
 //  ]
 //
-DECLARE_NATIVE(cycle)
+DECLARE_NATIVE(CYCLE)
 //
 // 1. Most loops are not allowed to explicitly return a value and stop looping,
 //    because that would make it impossible to tell from the outside whether
@@ -703,7 +703,7 @@ DECLARE_NATIVE(cycle)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    Value* body = ARG(body);
+    Value* body = ARG(BODY);
 
     enum {
         ST_CYCLE_INITIAL_ENTRY = STATE_0,
@@ -1074,15 +1074,15 @@ void Shutdown_Loop_Each(Value* iterator)
 //      <local> iterator
 //  ]
 //
-DECLARE_NATIVE(for_each)
+DECLARE_NATIVE(FOR_EACH)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;
 
-    Value* vars = ARG(vars);  // transformed to context on initial_entry
-    Value* data = ARG(data);
-    Value* body = ARG(body);  // bound to vars context on initial_entry
+    Value* vars = ARG(VARS);  // transformed to context on initial_entry
+    Value* data = ARG(DATA);
+    Value* body = ARG(BODY);  // bound to vars context on initial_entry
 
-    Value* iterator = LOCAL(iterator);  // reuse to hold Loop_Each_State
+    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
 
     bool breaking = false;
 
@@ -1183,7 +1183,7 @@ DECLARE_NATIVE(for_each)
 //      <local> iterator
 //  ]
 //
-DECLARE_NATIVE(every)
+DECLARE_NATIVE(EVERY)
 //
 // 1. In light of other tolerances in the system for voids in logic tests
 //    (see ALL & ANY), EVERY treats a void as "no vote".
@@ -1197,11 +1197,11 @@ DECLARE_NATIVE(every)
 {
     INCLUDE_PARAMS_OF_EVERY;
 
-    Value* vars = ARG(vars);  // transformed to context on initial_entry
-    Value* data = ARG(data);
-    Value* body = ARG(body);  // bound to vars context on initial_entry
+    Value* vars = ARG(VARS);  // transformed to context on initial_entry
+    Value* data = ARG(DATA);
+    Value* body = ARG(BODY);  // bound to vars context on initial_entry
 
-    Value* iterator = LOCAL(iterator);  // place to store iteration state
+    Value* iterator = LOCAL(ITERATOR);  // place to store iteration state
 
     enum {
         ST_EVERY_INITIAL_ENTRY = STATE_0,
@@ -1229,10 +1229,10 @@ DECLARE_NATIVE(every)
         return VOID;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
-        ARG(vars)
+        ARG(BODY),  // may be updated, will still be GC safe
+        ARG(VARS)
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), pseudo_vars_ctx));
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
 
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1311,7 +1311,7 @@ DECLARE_NATIVE(every)
 //          [<const> block!]
 //  ]
 //
-DECLARE_NATIVE(remove_each)
+DECLARE_NATIVE(REMOVE_EACH)
 //
 // 1. For reasons of semantics and performance, REMOVE-EACH does not actually
 //    perform removals "as it goes".  It could run afoul of any number of
@@ -1347,8 +1347,8 @@ DECLARE_NATIVE(remove_each)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
-    Value* data = ARG(data);
-    Value* body = ARG(body);
+    Value* data = ARG(DATA);
+    Value* body = ARG(BODY);
 
     Count removals = 0;
 
@@ -1368,9 +1368,9 @@ DECLARE_NATIVE(remove_each)
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        ARG(vars)
+        ARG(VARS)
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
 
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
@@ -1656,7 +1656,7 @@ DECLARE_NATIVE(remove_each)
 //      <local> iterator
 //  ]
 //
-DECLARE_NATIVE(map_each)
+DECLARE_NATIVE(MAP_EACH)
 //
 // MAP-EACH lacks the planned flexibility of MAP.  The syntax of FOR and MAP
 // are intended to be generic to work with generators or a dialect.
@@ -1669,14 +1669,14 @@ DECLARE_NATIVE(map_each)
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
-    UNUSED(PARAM(vars));
-    UNUSED(PARAM(body));
-    UNUSED(LOCAL(iterator));
+    UNUSED(PARAM(VARS));
+    UNUSED(PARAM(BODY));
+    UNUSED(LOCAL(ITERATOR));
 
-    if (Is_Blank(ARG(data)))  // should have same result as empty list
+    if (Is_Blank(ARG(DATA)))  // should have same result as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
-    Quotify(Element_ARG(data));  // dialect, in theory [1]
+    Quotify(Element_ARG(DATA));  // dialect, in theory [1]
 
     const Value* map_action = LIB(MAP);
     Details* details = Ensure_Cell_Frame_Details(map_action);
@@ -1705,7 +1705,7 @@ DECLARE_NATIVE(map_each)
 //      <local> iterator
 //  ]
 //
-DECLARE_NATIVE(map)
+DECLARE_NATIVE(MAP)
 //
 // 1. Void is allowed for skipping map elements:
 //
@@ -1721,16 +1721,16 @@ DECLARE_NATIVE(map)
     INCLUDE_PARAMS_OF_MAP;
 
     bool invoke_frame = false;
-    if (Is_Action(ARG(data))) {
+    if (Is_Action(ARG(DATA))) {
         invoke_frame = true;
-        QUOTE_BYTE(ARG(data)) = NOQUOTE_1;
+        QUOTE_BYTE(ARG(DATA)) = NOQUOTE_1;
     }
 
-    Element* vars = Element_ARG(vars);  // becomes context on initial_entry
-    Element* data = Element_ARG(data);  // action invokes, frame enumerates
-    Element* body = Element_ARG(body);  // bound to vars on initial_entry
+    Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
+    Element* data = Element_ARG(DATA);  // action invokes, frame enumerates
+    Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Value* iterator = LOCAL(iterator);  // reuse to hold Loop_Each_State
+    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
 
     enum {
         ST_MAP_INITIAL_ENTRY = STATE_0,
@@ -1781,10 +1781,10 @@ DECLARE_NATIVE(map)
     }
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
-        ARG(vars)
+        ARG(BODY),  // may be updated, will still be GC safe
+        ARG(VARS)
     );
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), pseudo_vars_ctx));
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
 
     Init_Loop_Each(iterator, data);  // all paths must clean this up...
     STATE = ST_MAP_INITIALIZED_ITERATOR;
@@ -1870,7 +1870,7 @@ DECLARE_NATIVE(map)
 //          [<unrun> <const> block! frame!]
 //  ]
 //
-DECLARE_NATIVE(repeat)
+DECLARE_NATIVE(REPEAT)
 //
 // 1. We pass the index into the body if it's an ACTION! as we count.  But if
 //    it's a LOGIC! TRUE no index is passed, because we don't count.  If we
@@ -1879,8 +1879,8 @@ DECLARE_NATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Value* count = ARG(count);
-    Value* body = ARG(body);
+    Value* count = ARG(COUNT);
+    Value* body = ARG(BODY);
 
     Value* index = cast(Value*, SPARE);  // spare cell holds current index
 
@@ -1958,13 +1958,13 @@ DECLARE_NATIVE(repeat)
 //      body [<const> block!]
 //  ]
 //
-DECLARE_NATIVE(for)
+DECLARE_NATIVE(FOR)
 {
     INCLUDE_PARAMS_OF_FOR;
 
-    Element* vars = Element_ARG(vars);
-    Element* value = Element_ARG(value);
-    Element* body = Element_ARG(body);
+    Element* vars = Element_ARG(VARS);
+    Element* value = Element_ARG(VALUE);
+    Element* body = Element_ARG(BODY);
 
     enum {
         ST_FOR_INITIAL_ENTRY = STATE_0,
@@ -1987,7 +1987,7 @@ DECLARE_NATIVE(for)
         Unquotify(value);
 
         if (not (Any_Series(value) or Any_Sequence(value)))
-            return FAIL(PARAM(value));
+            return FAIL(PARAM(VALUE));
 
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
@@ -1995,7 +1995,7 @@ DECLARE_NATIVE(for)
         rebPushContinuation_internal(
             cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
-            CANON(FOR_EACH), rebQ(ARG(vars)), rebQ(value), body
+            CANON(FOR_EACH), rebQ(ARG(VARS)), rebQ(value), body
         );
         return BOUNCE_DELEGATE;
     }
@@ -2011,7 +2011,7 @@ DECLARE_NATIVE(for)
         Add_Definitional_Break_Continue(body, level_);
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(body, vars);
-    Remember_Cell_Is_Lifeguard(Init_Object(ARG(vars), context));
+    Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
 
     assert(Varlist_Len(context) == 1);
 
@@ -2062,7 +2062,7 @@ DECLARE_NATIVE(for)
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(until)
+DECLARE_NATIVE(UNTIL)
 //
 // 1. When CONTINUE has an argument, it acts as if the loop body evaluated to
 //    that argument.  But UNTIL's condition and body are the same.  That means
@@ -2082,8 +2082,8 @@ DECLARE_NATIVE(until)
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
-    Value* body = ARG(body);
-    Value* predicate = ARG(predicate);
+    Value* body = ARG(BODY);
+    Value* predicate = ARG(PREDICATE);
 
     Atom* condition;  // can point to OUT or SPARE
 
@@ -2163,7 +2163,7 @@ DECLARE_NATIVE(until)
 //      body [<unrun> <const> block! frame!]
 //  ]
 //
-DECLARE_NATIVE(while)
+DECLARE_NATIVE(WHILE)
 //
 // 1. It was considered if `while true [...]` should infinite loop, and then
 //    `while false [...]` never ran.  However, that could lead to accidents
@@ -2190,8 +2190,8 @@ DECLARE_NATIVE(while)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    Value* condition = ARG(condition);
-    Value* body = ARG(body);
+    Value* condition = ARG(CONDITION);
+    Value* body = ARG(BODY);
 
     enum {
         ST_WHILE_INITIAL_ENTRY = STATE_0,

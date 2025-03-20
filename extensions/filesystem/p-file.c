@@ -218,9 +218,9 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(source));
-        UNUSED(PARAM(string)); // handled in dispatcher
-        UNUSED(PARAM(lines)); // handled in dispatcher
+        UNUSED(PARAM(SOURCE));
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         // Handle the READ %file shortcut case, where the FILE! has been
         // converted into a PORT! but has not been opened yet.
@@ -246,10 +246,10 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // !!! R3-Alpha would bound the seek to the file size; that's flaky
         // and might give people a wrong impression.  Let it error.
 
-        if (REF(seek)) {
-            int64_t seek = VAL_INT64(ARG(seek));
+        if (REF(SEEK)) {
+            int64_t seek = VAL_INT64(ARG(SEEK));
             if (seek <= 0)
-                return FAIL(PARAM(seek));
+                return FAIL(PARAM(SEEK));
             file->offset = seek;
         }
 
@@ -281,8 +281,8 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         REBLEN len = file_size - file->offset;  // default is read everything
 
-        if (REF(part)) {
-            int64_t limit = VAL_INT64(ARG(part));
+        if (REF(PART)) {
+            int64_t limit = VAL_INT64(ARG(PART));
             if (limit < 0) {
                 result = rebValue(
                     "make error! {Negative :PART passed to READ of file}"
@@ -322,26 +322,26 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_APPEND;
 
-        if (Is_Antiform(ARG(value)))
-            return FAIL(PARAM(value));
+        if (Is_Antiform(ARG(VALUE)))
+            return FAIL(PARAM(VALUE));
 
-        if (REF(part) or REF(dup) or REF(line))
+        if (REF(PART) or REF(DUP) or REF(LINE))
             return FAIL(Error_Bad_Refines_Raw());
 
-        assert(Is_Port(ARG(series)));  // !!! poorly named
-        return rebValue("write:append @", ARG(series), "@", ARG(value)); }
+        assert(Is_Port(ARG(SERIES)));  // !!! poorly named
+        return rebValue("write:append @", ARG(SERIES), "@", ARG(VALUE)); }
 
     //=//// WRITE //////////////////////////////////////////////////////////=//
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
-        UNUSED(PARAM(destination));
+        UNUSED(PARAM(DESTINATION));
 
-        if (REF(seek) and REF(append))
+        if (REF(SEEK) and REF(APPEND))
             return FAIL(Error_Bad_Refines_Raw());
 
-        Value* data = ARG(data);  // binary, string, or block
+        Value* data = ARG(DATA);  // binary, string, or block
 
         // Handle the WRITE %file shortcut case, where the FILE! is converted
         // to a PORT! but it hasn't been opened yet.
@@ -362,11 +362,11 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         }
         else {
             int flags = 0;
-            if (REF(seek)) {  // do not create
+            if (REF(SEEK)) {  // do not create
                 flags |= UV_FS_O_WRONLY;
             }
-            else if (REF(append)) {  // do not truncate
-                assert(not REF(seek));  // checked above
+            else if (REF(APPEND)) {  // do not truncate
+                assert(not REF(SEEK));  // checked above
                 flags |= UV_FS_O_WRONLY | UV_FS_O_CREAT;
             }
             else
@@ -384,14 +384,14 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
       blockscope {
         uint64_t file_size = File_Size_Cacheable_May_Fail(port);
 
-        if (REF(append)) {
+        if (REF(APPEND)) {
             //
             // We assume WRITE:APPEND has the same semantics as WRITE:SEEK to
             // the end of the file.  This means the position before the call is
             // lost, and WRITE after a WRITE:APPEND will always write to the
             // new end of the file.
             //
-            assert(not REF(seek));  // checked above
+            assert(not REF(SEEK));  // checked above
             file->offset = file_size;
         }
         else {
@@ -399,8 +399,8 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             //
             // https://discourse.julialang.org/t/why-is-seek-zero-based/55569/
             //
-            if (REF(seek)) {
-                int64_t seek = VAL_INT64(ARG(seek));
+            if (REF(SEEK)) {
+                int64_t seek = VAL_INT64(ARG(SEEK));
                 if (seek <= 0)
                     result = rebValue(
                         "make error! {Negative :PART passed to READ of file}"
@@ -420,7 +420,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
            }
         }
 
-        REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
+        REBLEN len = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
 
         if (Is_Block(data)) {  // will produce TEXT! from the data
             //
@@ -435,7 +435,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             const Element* item = Cell_List_Item_At(data);
             for (; remain != 0; --remain, ++item) {
                 Form_Element(mo, item);
-                if (REF(lines))
+                if (REF(LINES))
                     Append_Codepoint(mo->string, LF);
             }
 
@@ -481,11 +481,11 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PARAM(spec));
+        UNUSED(PARAM(SPEC));
 
         Flags flags = 0;
 
-        if (REF(new))
+        if (REF(NEW))
             flags |= UV_FS_O_CREAT | UV_FS_O_TRUNC;
 
         // The flag condition for O_RDWR is not just the OR'ing together of
@@ -493,13 +493,13 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // of /READ and /WRITE even though it's the same as not specifying
         // either to make it easier for generic calling via APPLY.
         //
-        if (REF(read) and REF(write)) {
+        if (REF(READ) and REF(WRITE)) {
             flags |= UV_FS_O_RDWR;
         }
-        else if (REF(read)) {
+        else if (REF(READ)) {
             flags |= UV_FS_O_RDONLY;
         }
-        else if (REF(write)) {
+        else if (REF(WRITE)) {
             flags |= UV_FS_O_WRONLY;
         }
         else
@@ -519,21 +519,21 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PARAM(value));
+        UNUSED(PARAM(VALUE));
 
-        if (REF(deep))
+        if (REF(DEEP))
             return FAIL(Error_Bad_Refines_Raw());
 
         return rebValue(CANON(APPLIQUE), CANON(READ), "[",
             "source:", port,
-            "part:", rebQ(ARG(part)),
+            "part:", rebQ(ARG(PART)),
         "]"); }
 
     //=//// CLOSE //////////////////////////////////////////////////////////=//
 
       case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
-        UNUSED(PARAM(port));
+        UNUSED(PARAM(PORT));
 
         if (file->id == FILEHANDLE_NONE) {
             //
@@ -555,7 +555,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
       case SYM_DELETE: {
         INCLUDE_PARAMS_OF_DELETE;
-        UNUSED(PARAM(port));
+        UNUSED(PARAM(PORT));
 
         if (file->id != FILEHANDLE_NONE) {
             Value* error = Close_File(port);
@@ -581,7 +581,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
       case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
-        UNUSED(ARG(from));  // implicitly same as `port`
+        UNUSED(ARG(FROM));  // implicitly same as `port`
 
         int flags = -1;
         size_t index = -1;
@@ -598,7 +598,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             closed_temporarily = true;
         }
 
-        Value* rename_error = Rename_File_Or_Directory(port, ARG(to));
+        Value* rename_error = Rename_File_Or_Directory(port, ARG(TO));
 
         if (closed_temporarily) {
             Value* open_error = Open_File(port, flags);
@@ -617,7 +617,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             return FAIL(Error_No_Rename_Raw(file->path));
         }
 
-        Copy_Cell(file->path, ARG(to));  // !!! this mutates the spec, bad?
+        Copy_Cell(file->path, ARG(TO));  // !!! this mutates the spec, bad?
 
         return COPY(port); }
 
@@ -646,7 +646,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
       case SYM_QUERY: {
         INCLUDE_PARAMS_OF_QUERY;
-        UNUSED(PARAM(target));
+        UNUSED(PARAM(TARGET));
 
         Value* info = Query_File_Or_Directory(port);
         if (Is_Error(info)) {
@@ -670,10 +670,10 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
       case SYM_SKIP: {
         INCLUDE_PARAMS_OF_SKIP;
 
-        UNUSED(PARAM(series));
-        UNUSED(REF(unbounded));  // !!! Should :UNBOUNDED behave differently?
+        UNUSED(PARAM(SERIES));
+        UNUSED(REF(UNBOUNDED));  // !!! Should :UNBOUNDED behave differently?
 
-        int64_t offset = VAL_INT64(ARG(offset));
+        int64_t offset = VAL_INT64(ARG(OFFSET));
         if (offset < 0 and cast(uint64_t, -offset) > file->offset) {
             //
             // !!! Can't go negative with indices; consider using signed

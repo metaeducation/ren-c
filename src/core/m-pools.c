@@ -969,11 +969,11 @@ void Swap_Flex_Content(Flex* a, Flex* b)
 //      series2 [any-series?]
 //  ]
 //
-DECLARE_NATIVE(swap_contents)
+DECLARE_NATIVE(SWAP_CONTENTS)
 {
     INCLUDE_PARAMS_OF_SWAP_CONTENTS;
 
-    if (Any_List(ARG(series1)) != Any_List(ARG(series2)))
+    if (Any_List(ARG(SERIES1)) != Any_List(ARG(SERIES2)))
         return FAIL("Can only SWAP-CONTENTS of arrays with other arrays");
 
     // !!! This is a conservative check, as some binaries could be swapped
@@ -982,11 +982,11 @@ DECLARE_NATIVE(swap_contents)
     // Let the user do their own aliasing for now, since the checks are
     // annoying to write.
     //
-    if (Is_Blob(ARG(series1)) != Is_Blob(ARG(series2)))
+    if (Is_Blob(ARG(SERIES1)) != Is_Blob(ARG(SERIES2)))
         return FAIL("Can only SWAP-CONTENTS of binaries with other binaries");
 
-    Flex* f1 = Cell_Flex_Ensure_Mutable(ARG(series1));
-    Flex* f2 = Cell_Flex_Ensure_Mutable(ARG(series2));
+    Flex* f1 = Cell_Flex_Ensure_Mutable(ARG(SERIES1));
+    Flex* f2 = Cell_Flex_Ensure_Mutable(ARG(SERIES2));
     Swap_Flex_Content(f1, f2);
 
     return NOTHING;

@@ -34,7 +34,7 @@
 //      port [port! file! url! block!]
 //  ]
 //
-DECLARE_NATIVE(create)
+DECLARE_NATIVE(CREATE)
 {
     Element* port = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(port, LEVEL, CANON(CREATE));
@@ -50,7 +50,7 @@ DECLARE_NATIVE(create)
 //      port [port! file! url! block!]
 //  ]
 //
-DECLARE_NATIVE(delete)
+DECLARE_NATIVE(DELETE)
 {
     Element* port = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(port, LEVEL, CANON(DELETE));
@@ -69,7 +69,7 @@ DECLARE_NATIVE(delete)
 //      :write "Open for write access"
 //  ]
 //
-DECLARE_NATIVE(open)
+DECLARE_NATIVE(OPEN)
 {
     Element* spec = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(spec, LEVEL, CANON(OPEN));
@@ -85,7 +85,7 @@ DECLARE_NATIVE(open)
 //      spec [port!]
 //  ]
 //
-DECLARE_NATIVE(connect)
+DECLARE_NATIVE(CONNECT)
 {
     Element* port = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(port, LEVEL, CANON(CONNECT));
@@ -101,7 +101,7 @@ DECLARE_NATIVE(connect)
 //      port [port!]
 //  ]
 //
-DECLARE_NATIVE(close)
+DECLARE_NATIVE(CLOSE)
 {
     Element* port = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(port, LEVEL, CANON(CLOSE));
@@ -130,7 +130,7 @@ DECLARE_NATIVE(close)
 //      :lines "Convert to block of strings (implies /string)"
 //  ]
 //
-DECLARE_NATIVE(read)
+DECLARE_NATIVE(READ)
 {
     Element* port = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(port, LEVEL, CANON(READ));
@@ -154,7 +154,7 @@ DECLARE_NATIVE(read)
 //      :lines "Write each value in a block as a separate line"
 //  ]
 //
-DECLARE_NATIVE(write)
+DECLARE_NATIVE(WRITE)
 {
     Element* port = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(port, LEVEL, CANON(WRITE));
@@ -170,7 +170,7 @@ DECLARE_NATIVE(write)
 //      target [port! file! url! block!]
 //  ]
 //
-DECLARE_NATIVE(query)
+DECLARE_NATIVE(QUERY)
 {
     Element* port = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(port, LEVEL, CANON(QUERY));
@@ -189,7 +189,7 @@ DECLARE_NATIVE(query)
 //      value
 //  ]
 //
-DECLARE_NATIVE(modify)
+DECLARE_NATIVE(MODIFY)
 {
     Element* target = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(target, LEVEL, CANON(MODIFY));
@@ -206,7 +206,7 @@ DECLARE_NATIVE(modify)
 //      to [port! file! url! block!]
 //  ]
 //
-DECLARE_NATIVE(rename)
+DECLARE_NATIVE(RENAME)
 {
     Element* from = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(from, LEVEL, CANON(RENAME));

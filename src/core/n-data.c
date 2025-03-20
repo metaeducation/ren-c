@@ -40,22 +40,22 @@
 //          [any-list? any-path? any-word? quoted!]
 //  ]
 //
-DECLARE_NATIVE(bind)
+DECLARE_NATIVE(BIND)
 //
 // !!! The "BIND dialect" is just being mapped out.  Right now, it accepts
 // a context, or a THE-WORD!, or a block of THE-WORD!s.
 {
     INCLUDE_PARAMS_OF_BIND;
 
-    Value* v = ARG(value);
-    Element* spec = Element_ARG(spec);
+    Value* v = ARG(VALUE);
+    Element* spec = Element_ARG(SPEC);
 
     if (Is_Block(spec)) {
         const Element* tail;
         const Element* at = Cell_List_At(&tail, spec);
 
         if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
-            return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
+            return FAIL(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         for (; at != tail; ++at) {
             if (not Is_The_Word(at))
@@ -88,7 +88,7 @@ DECLARE_NATIVE(bind)
             return FAIL(Error_Not_Bound_Raw(spec));
 
         if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
-            return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
+            return FAIL(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(v));
         Copy_Cell(Stub_Cell(use), spec);
@@ -110,7 +110,7 @@ DECLARE_NATIVE(bind)
     }
 
     if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
-        return FAIL(Error_Invalid_Arg(level_, PARAM(value)));
+        return FAIL(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
     Use* use = Alloc_Use_Inherits(Cell_Binding(v));
     Copy_Cell(Stub_Cell(use), context);
@@ -129,11 +129,11 @@ DECLARE_NATIVE(bind)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(binding_of)
+DECLARE_NATIVE(BINDING_OF)
 {
     INCLUDE_PARAMS_OF_BINDING_OF;
 
-    return Dispatch_Generic(BINDING_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(BINDING_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -147,12 +147,12 @@ DECLARE_NATIVE(binding_of)
 //      element [<maybe> element?]  ; QUOTED? support?
 //  ]
 //
-DECLARE_NATIVE(inside)
+DECLARE_NATIVE(INSIDE)
 {
     INCLUDE_PARAMS_OF_INSIDE;
 
-    Element* element = Element_ARG(element);
-    Value* where = ARG(where);
+    Element* element = Element_ARG(ELEMENT);
+    Value* where = ARG(WHERE);
 
     Context* context;
     if (Any_Context(where))
@@ -179,12 +179,12 @@ DECLARE_NATIVE(inside)
 //      value [<maybe> any-list?]  ; QUOTED? support?
 //  ]
 //
-DECLARE_NATIVE(overbind)
+DECLARE_NATIVE(OVERBIND)
 {
     INCLUDE_PARAMS_OF_OVERBIND;
 
-    Element* v = Element_ARG(value);
-    Element* defs = Element_ARG(definitions);
+    Element* v = Element_ARG(VALUE);
+    Element* defs = Element_ARG(DEFINITIONS);
 
     if (Is_Word(defs)) {
         if (IS_WORD_UNBOUND(defs))
@@ -212,27 +212,27 @@ DECLARE_NATIVE(overbind)
 //      value [<maybe> any-word?]  ; QUOTED? support?
 //  ]
 //
-DECLARE_NATIVE(has)
+DECLARE_NATIVE(HAS)
 {
     INCLUDE_PARAMS_OF_HAS;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     assert(Any_Word(v));
     Heart heart = Cell_Heart(v);
 
     const Symbol* symbol = Cell_Word_Symbol(v);
     const bool strict = true;
-    Option(Index) index = Find_Symbol_In_Context(ARG(context), symbol, strict);
+    Option(Index) index = Find_Symbol_In_Context(ARG(CONTEXT), symbol, strict);
     if (not index)
         return nullptr;
 
-    if (not Is_Module(ARG(context))) {
-        VarList* varlist = Cell_Varlist(ARG(context));
+    if (not Is_Module(ARG(CONTEXT))) {
+        VarList* varlist = Cell_Varlist(ARG(CONTEXT));
         return Init_Any_Word_Bound(OUT, heart, symbol, varlist, unwrap index);
     }
 
-    SeaOfVars* sea = Cell_Module_Sea(ARG(context));
+    SeaOfVars* sea = Cell_Module_Sea(ARG(CONTEXT));
     Init_Any_Word(OUT, heart, symbol);
     Tweak_Cell_Word_Index(OUT, INDEX_PATCHED);
     Tweak_Cell_Binding(OUT, Sea_Patch(sea, symbol, strict));
@@ -251,12 +251,12 @@ DECLARE_NATIVE(has)
 //      value [<const> <maybe> any-word? any-list?]  ; QUOTED? support?
 //  ]
 //
-DECLARE_NATIVE(without)
+DECLARE_NATIVE(WITHOUT)
 {
     INCLUDE_PARAMS_OF_WITHOUT;
 
-    VarList* ctx = Cell_Varlist(ARG(context));
-    Value* v = ARG(value);
+    VarList* ctx = Cell_Varlist(ARG(CONTEXT));
+    Value* v = ARG(VALUE);
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
     // input word as-is if the word wasn't in the requested context, while
@@ -267,7 +267,7 @@ DECLARE_NATIVE(without)
         const Symbol* symbol = Cell_Word_Symbol(v);
         const bool strict = true;
         Option(Index) index = Find_Symbol_In_Context(
-            ARG(context), symbol, strict
+            ARG(CONTEXT), symbol, strict
         );
         if (not index)
             return nullptr;
@@ -301,7 +301,7 @@ DECLARE_NATIVE(without)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(use)
+DECLARE_NATIVE(USE)
 //
 // !!! USE is somewhat deprecated, because LET does something very similar
 // without bringing in indentation and an extra block.  The USE word is being
@@ -313,8 +313,8 @@ DECLARE_NATIVE(use)
 {
     INCLUDE_PARAMS_OF_USE;
 
-    Value* vars = ARG(vars);
-    Value* body = ARG(body);
+    Value* vars = ARG(VARS);
+    Value* body = ARG(BODY);
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be replaced with rebound copy, or left the same
@@ -397,7 +397,7 @@ bool Try_Get_Binding_Of(Sink(Value) out, const Value* v)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(refinement_q)
+DECLARE_NATIVE(REFINEMENT_Q)
 {
     INCLUDE_PARAMS_OF_REFINEMENT_Q;
 
@@ -419,7 +419,7 @@ DECLARE_NATIVE(refinement_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(set_word_q)
+DECLARE_NATIVE(SET_WORD_Q)
 {
     INCLUDE_PARAMS_OF_SET_WORD_Q;
 
@@ -441,7 +441,7 @@ DECLARE_NATIVE(set_word_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(set_run_word_q)
+DECLARE_NATIVE(SET_RUN_WORD_Q)
 {
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
@@ -463,7 +463,7 @@ DECLARE_NATIVE(set_run_word_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(run_word_q)
+DECLARE_NATIVE(RUN_WORD_Q)
 {
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
@@ -489,7 +489,7 @@ DECLARE_NATIVE(run_word_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(get_word_q)
+DECLARE_NATIVE(GET_WORD_Q)
 {
     INCLUDE_PARAMS_OF_GET_WORD_Q;
 
@@ -511,7 +511,7 @@ DECLARE_NATIVE(get_word_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(set_tuple_q)
+DECLARE_NATIVE(SET_TUPLE_Q)
 {
     INCLUDE_PARAMS_OF_SET_TUPLE_Q;
 
@@ -533,7 +533,7 @@ DECLARE_NATIVE(set_tuple_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(get_tuple_q)
+DECLARE_NATIVE(GET_TUPLE_Q)
 {
     INCLUDE_PARAMS_OF_GET_TUPLE_Q;
 
@@ -555,7 +555,7 @@ DECLARE_NATIVE(get_tuple_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(set_group_q)
+DECLARE_NATIVE(SET_GROUP_Q)
 {
     INCLUDE_PARAMS_OF_SET_GROUP_Q;
 
@@ -577,7 +577,7 @@ DECLARE_NATIVE(set_group_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(get_group_q)
+DECLARE_NATIVE(GET_GROUP_Q)
 {
     INCLUDE_PARAMS_OF_GET_GROUP_Q;
 
@@ -599,7 +599,7 @@ DECLARE_NATIVE(get_group_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(set_block_q)
+DECLARE_NATIVE(SET_BLOCK_Q)
 {
     INCLUDE_PARAMS_OF_SET_BLOCK_Q;
 
@@ -621,7 +621,7 @@ DECLARE_NATIVE(set_block_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(get_block_q)
+DECLARE_NATIVE(GET_BLOCK_Q)
 {
     INCLUDE_PARAMS_OF_GET_BLOCK_Q;
 
@@ -643,7 +643,7 @@ DECLARE_NATIVE(get_block_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(any_set_value_q)
+DECLARE_NATIVE(ANY_SET_VALUE_Q)
 {
     INCLUDE_PARAMS_OF_ANY_SET_VALUE_Q;
 
@@ -665,7 +665,7 @@ DECLARE_NATIVE(any_set_value_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(any_get_value_q)
+DECLARE_NATIVE(ANY_GET_VALUE_Q)
 {
     INCLUDE_PARAMS_OF_ANY_GET_VALUE_Q;
 
@@ -687,7 +687,7 @@ DECLARE_NATIVE(any_get_value_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(quasi_word_q)
+DECLARE_NATIVE(QUASI_WORD_Q)
 {
     INCLUDE_PARAMS_OF_QUASI_WORD_Q;
 
@@ -709,7 +709,7 @@ DECLARE_NATIVE(quasi_word_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(char_q)
+DECLARE_NATIVE(CHAR_Q)
 {
     INCLUDE_PARAMS_OF_CHAR_Q;
 
@@ -731,7 +731,7 @@ DECLARE_NATIVE(char_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(lit_word_q)
+DECLARE_NATIVE(LIT_WORD_Q)
 {
     INCLUDE_PARAMS_OF_LIT_WORD_Q;
 
@@ -755,7 +755,7 @@ DECLARE_NATIVE(lit_word_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(lit_path_q)
+DECLARE_NATIVE(LIT_PATH_Q)
 {
     INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
@@ -779,7 +779,7 @@ DECLARE_NATIVE(lit_path_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(any_inert_q)
+DECLARE_NATIVE(ANY_INERT_Q)
 {
     INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
@@ -804,11 +804,11 @@ DECLARE_NATIVE(any_inert_q)
 //          "Process nested blocks"
 //  ]
 //
-DECLARE_NATIVE(unbind)
+DECLARE_NATIVE(UNBIND)
 {
     INCLUDE_PARAMS_OF_UNBIND;
 
-    Value* word = ARG(word);
+    Value* word = ARG(WORD);
 
     if (Any_Word(word) or Is_Set_Word(word))
         Unbind_Any_Word(word);
@@ -818,7 +818,7 @@ DECLARE_NATIVE(unbind)
         const Element* tail;
         Element* at = Cell_List_At_Ensure_Mutable(&tail, word);
         Option(VarList*) context = nullptr;
-        Unbind_Values_Core(at, tail, context, REF(deep));
+        Unbind_Values_Core(at, tail, context, REF(DEEP));
     }
 
     return COPY(word);
@@ -834,11 +834,11 @@ DECLARE_NATIVE(unbind)
 //      value [any-list? any-word?]
 //  ]
 //
-DECLARE_NATIVE(bindable)
+DECLARE_NATIVE(BINDABLE)
 {
     INCLUDE_PARAMS_OF_BINDABLE;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Any_Word(v))
         Unbind_Any_Word(v);
@@ -861,11 +861,11 @@ DECLARE_NATIVE(bindable)
 //      source [any-word? any-tuple? any-chain? path!]
 //  ]
 //
-DECLARE_NATIVE(resolve)
+DECLARE_NATIVE(RESOLVE)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    Element* source = Element_ARG(source);
+    Element* source = Element_ARG(SOURCE);
 
     if (Any_Word(source)) {
         HEART_BYTE(source) = TYPE_WORD;
@@ -931,7 +931,7 @@ DECLARE_NATIVE(resolve)
 //          [<maybe> block!]
 //  ]
 //
-DECLARE_NATIVE(proxy_exports)
+DECLARE_NATIVE(PROXY_EXPORTS)
 //
 // PROXY-EXPORTS is a renaming of what remains of the R3-Alpha concept of
 // "RESOLVE" (a word that has been repurposed).  It was a function that was
@@ -958,14 +958,14 @@ DECLARE_NATIVE(proxy_exports)
 {
     INCLUDE_PARAMS_OF_PROXY_EXPORTS;
 
-    SeaOfVars* where = Cell_Module_Sea(ARG(where));
-    SeaOfVars* source = Cell_Module_Sea(ARG(source));
+    SeaOfVars* where = Cell_Module_Sea(ARG(WHERE));
+    SeaOfVars* source = Cell_Module_Sea(ARG(SOURCE));
 
     const Element* tail;
-    const Element* v = Cell_List_At(&tail, ARG(exports));
+    const Element* v = Cell_List_At(&tail, ARG(EXPORTS));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
-            return FAIL(ARG(exports));
+            return FAIL(ARG(EXPORTS));
 
         const Symbol* symbol = Cell_Word_Symbol(v);
 
@@ -986,7 +986,7 @@ DECLARE_NATIVE(proxy_exports)
         Copy_Cell(dest, src);
     }
 
-    return COPY(ARG(where));
+    return COPY(ARG(WHERE));
 }
 
 
@@ -999,11 +999,11 @@ DECLARE_NATIVE(proxy_exports)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(infix_q)
+DECLARE_NATIVE(INFIX_Q)
 {
     INCLUDE_PARAMS_OF_INFIX_Q;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
     return Init_Logic(OUT, Is_Cell_Frame_Infix(frame));
 }
 
@@ -1021,23 +1021,23 @@ DECLARE_NATIVE(infix_q)
 //      :postpone "Allow arbitrary numbers of expressions on left to evaluate"
 //  ]
 //
-DECLARE_NATIVE(infix)
+DECLARE_NATIVE(INFIX)
 {
     INCLUDE_PARAMS_OF_INFIX;
 
-    Actionify(Copy_Cell(OUT, ARG(action)));
+    Actionify(Copy_Cell(OUT, ARG(ACTION)));
 
-    if (REF(off)) {
-        if (REF(defer) or REF(postpone))
+    if (REF(OFF)) {
+        if (REF(DEFER) or REF(POSTPONE))
             return FAIL(Error_Bad_Refines_Raw());
         Tweak_Cell_Frame_Infix_Mode(OUT, PREFIX_0);
     }
-    else if (REF(defer)) {  // not OFF, already checked
-        if (REF(postpone))
+    else if (REF(DEFER)) {  // not OFF, already checked
+        if (REF(POSTPONE))
             return FAIL(Error_Bad_Refines_Raw());
         Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_DEFER);
     }
-    else if (REF(postpone)) {  // not OFF or DEFER, we checked
+    else if (REF(POSTPONE)) {  // not OFF or DEFER, we checked
         Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_POSTPONE);
     }
     else
@@ -1056,11 +1056,11 @@ DECLARE_NATIVE(infix)
 //      ^value [any-value? pack!]
 //  ]
 //
-DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
+DECLARE_NATIVE(IDENTITY) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Element* meta = Element_ARG(value);
+    Element* meta = Element_ARG(VALUE);
 
     return UNMETA(meta);
 }
@@ -1075,11 +1075,11 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //      memory [<maybe> blank! any-series? any-context? handle!]
 //  ]
 //
-DECLARE_NATIVE(free)
+DECLARE_NATIVE(FREE)
 {
     INCLUDE_PARAMS_OF_FREE;
 
-    Value* v = ARG(memory);
+    Value* v = ARG(MEMORY);
     if (Is_Blank(v))
         return NOTHING;
 
@@ -1105,7 +1105,7 @@ DECLARE_NATIVE(free)
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(free_q)
+DECLARE_NATIVE(FREE_Q)
 //
 // 1. Currently we don't have a "decayed" form of pairing...because Cells use
 //    the NODE_FLAG_UNREADABLE for meaningfully unreadable cells, that have a
@@ -1117,7 +1117,7 @@ DECLARE_NATIVE(free_q)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Is_Void(v) or Is_Nulled(v))
         return nullptr;
@@ -1146,11 +1146,11 @@ DECLARE_NATIVE(free_q)
 //      value2 [any-series?]
 //  ]
 //
-DECLARE_NATIVE(aliases_q)
+DECLARE_NATIVE(ALIASES_Q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
-    return Init_Logic(OUT, Cell_Flex(ARG(value1)) == Cell_Flex(ARG(value2)));
+    return Init_Logic(OUT, Cell_Flex(ARG(VALUE1)) == Cell_Flex(ARG(VALUE2)));
 }
 
 
@@ -1163,7 +1163,7 @@ DECLARE_NATIVE(aliases_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(any_value_q)
+DECLARE_NATIVE(ANY_VALUE_Q)
 //
 // This works in concert with the decaying mechanisms of typechecking.  So
 // if you say your function has [return: [any-value?]] and you try to return
@@ -1192,7 +1192,7 @@ DECLARE_NATIVE(any_value_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(non_void_value_q)
+DECLARE_NATIVE(NON_VOID_VALUE_Q)
 //
 // Being able to specify that a function does not accept voids on its type
 // checking is fundamentally different from taking ANY-VALUE? and then failing
@@ -1224,7 +1224,7 @@ DECLARE_NATIVE(non_void_value_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(any_atom_q)
+DECLARE_NATIVE(ANY_ATOM_Q)
 //
 // !!! ELEMENT? isn't ANY-ELEMENT?, so should this just be ATOM?  The policy
 // for putting ANY- in front of things has been in flux.
@@ -1245,7 +1245,7 @@ DECLARE_NATIVE(any_atom_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(nihil_q)
+DECLARE_NATIVE(NIHIL_Q)
 {
     INCLUDE_PARAMS_OF_NIHIL_Q;
 
@@ -1265,7 +1265,7 @@ DECLARE_NATIVE(nihil_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(barrier_q)
+DECLARE_NATIVE(BARRIER_Q)
 {
     INCLUDE_PARAMS_OF_BARRIER_Q;
 
@@ -1286,7 +1286,7 @@ DECLARE_NATIVE(barrier_q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(elision_q)
+DECLARE_NATIVE(ELISION_Q)
 {
     INCLUDE_PARAMS_OF_ELISION_Q;
 
@@ -1306,7 +1306,7 @@ DECLARE_NATIVE(elision_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(void_q)
+DECLARE_NATIVE(VOID_Q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
@@ -1328,7 +1328,7 @@ DECLARE_NATIVE(void_q)
 //      ^value [any-value?]  ; must be ^META
 //  ]
 //
-DECLARE_NATIVE(nothing_q)
+DECLARE_NATIVE(NOTHING_Q)
 //
 // 1. Antiform blanks are considered to be unspecialized slots, as they are
 //    what is used to fill arguments in MAKE FRAME!.  So if you try to invoke
@@ -1358,7 +1358,7 @@ DECLARE_NATIVE(nothing_q)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(noop)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
+DECLARE_NATIVE(NOOP)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
 //
 // This function is preferred to having a function called NOTHING, due to the
 // potential confusion of people not realizing that (get $nothing) would be
@@ -1379,7 +1379,7 @@ DECLARE_NATIVE(noop)  // lack of a hyphen has wide precedent, e.g. jQuery.noop
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(something_q)
+DECLARE_NATIVE(SOMETHING_Q)
 //
 // See notes on NOTHING?  This is useful because comparisons in particular do
 // not allow you to compare against NOTHING.
@@ -1408,7 +1408,7 @@ DECLARE_NATIVE(something_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(trash_q)
+DECLARE_NATIVE(TRASH_Q)
 {
     INCLUDE_PARAMS_OF_TRASH_Q;
 
@@ -1430,7 +1430,7 @@ DECLARE_NATIVE(trash_q)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(space_q)
+DECLARE_NATIVE(SPACE_Q)
 {
     INCLUDE_PARAMS_OF_SPACE_Q;
 
@@ -1452,10 +1452,10 @@ DECLARE_NATIVE(space_q)
 //      ^atom [any-value? pack!]
 //  ]
 //
-DECLARE_NATIVE(heavy) {
+DECLARE_NATIVE(HEAVY) {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    Element* meta = Element_ARG(atom);
+    Element* meta = Element_ARG(ATOM);
 
     if (Is_Meta_Of_Void(meta))
         return Init_Heavy_Void(OUT);
@@ -1476,10 +1476,10 @@ DECLARE_NATIVE(heavy) {
 //      ^atom [any-value? pack!]
 //  ]
 //
-DECLARE_NATIVE(light) {
+DECLARE_NATIVE(LIGHT) {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Element* meta = Element_ARG(atom);
+    Element* meta = Element_ARG(ATOM);
 
     if (not Is_Meta_Of_Pack(meta))
         return UNMETA(meta);
@@ -1509,7 +1509,7 @@ DECLARE_NATIVE(light) {
 //      atom
 //  ]
 //
-DECLARE_NATIVE(decay)
+DECLARE_NATIVE(DECAY)
 //
 // 1. We take the argument as a plain (non-^META) parameter in order to make
 //    the decay process happen in the parameter fulfillment, because an idea
@@ -1538,7 +1538,7 @@ DECLARE_NATIVE(decay)
 //      value
 //  ]
 //
-DECLARE_NATIVE(reify)
+DECLARE_NATIVE(REIFY)
 //
 // There isn't a /NOQUASI refinement to REIFY so it can be an intrinsic.  This
 // speeds up all REIFY operations, and (noquasi reify ...) will be faster
@@ -1569,7 +1569,7 @@ DECLARE_NATIVE(reify)
 //      element [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(noquasi)
+DECLARE_NATIVE(NOQUASI)
 {
     INCLUDE_PARAMS_OF_NOQUASI;
 
@@ -1592,11 +1592,11 @@ DECLARE_NATIVE(noquasi)
 //      element [element?]
 //  ]
 //
-DECLARE_NATIVE(degrade)
+DECLARE_NATIVE(DEGRADE)
 {
     INCLUDE_PARAMS_OF_DEGRADE;
 
-    Element* elem = Element_ARG(element);
+    Element* elem = Element_ARG(ELEMENT);
     if (not Is_Quasiform(elem))
         return COPY(elem);
 
@@ -1619,7 +1619,7 @@ DECLARE_NATIVE(degrade)
 //      value
 //  ]
 //
-DECLARE_NATIVE(noantiform)
+DECLARE_NATIVE(NOANTIFORM)
 {
     INCLUDE_PARAMS_OF_NOANTIFORM;
 

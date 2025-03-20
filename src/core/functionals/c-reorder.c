@@ -118,12 +118,12 @@ bool Reorderer_Details_Querier(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(reorder)
+DECLARE_NATIVE(REORDER)
 {
     INCLUDE_PARAMS_OF_REORDER;
 
-    Phase* reorderee = Cell_Frame_Phase(ARG(original));
-    Option(const Symbol*) label  = Cell_Frame_Label_Deep(ARG(original));
+    Phase* reorderee = Cell_Frame_Phase(ARG(ORIGINAL));
+    Option(const Symbol*) label  = Cell_Frame_Label_Deep(ARG(ORIGINAL));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the
@@ -164,7 +164,7 @@ DECLARE_NATIVE(reorder)
     // be pushed.
     //
     const Element* item;  // starts as tail
-    const Element* at = Cell_List_At(&item, ARG(ordering));
+    const Element* at = Cell_List_At(&item, ARG(ORDERING));
     for (; at != item--; ) {
         const Symbol* symbol;
 
@@ -255,7 +255,7 @@ DECLARE_NATIVE(reorder)
         MAX_IDX_REORDERER
     );
 
-    Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(original));
+    Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(ORIGINAL));
 
     Drop_Data_Stack_To(STACK_BASE);  // !!! None of this works ATM.
     return Init_Action(OUT, details, label, UNBOUND);

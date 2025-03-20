@@ -303,7 +303,7 @@ else [
 
 cfunc-forward-decls: collect [
     for-each 'info all-protos [
-        keep cscape [info "DECLARE_NATIVE(${Info.Name})"]
+        keep cscape [info "DECLARE_NATIVE(${INFO.NAME})"]
     ]
 ]
 
@@ -387,7 +387,7 @@ script-compressed: gzip script-uncompressed
 
 cfunc-names: collect [  ; must be in the order that NATIVE is called!
     for-each 'info all-protos [
-        keep cscape [mod info "N_${MOD}_${Info.Name}"]
+        keep cscape [mod info "N_${MOD}_${INFO.NAME}"]
     ]
 ]
 

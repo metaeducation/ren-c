@@ -241,7 +241,7 @@ export analyse: context [
                 ] [
                     ;
                     ; It's a `/some-name?: native [...]`, so we expect
-                    ; `DECLARE_NATIVE(some_name_q)` to be correctly lined up
+                    ; `DECLARE_NATIVE(SOME_NAME_Q)` to be correctly lined up
                     ; as the "to-c-name" of the Rebol set-word
                     ;
                     if (

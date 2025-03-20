@@ -185,24 +185,24 @@ Details* Make_Native_Dispatch_Details(
 //      :generic "This native delegates to type-specific code"
 //  ]
 //
-DECLARE_NATIVE(native)
+DECLARE_NATIVE(NATIVE)
 {
     INCLUDE_PARAMS_OF_NATIVE;
 
-    UNUSED(ARG(generic));  // only heeded by %make-natives.r to make tables
+    UNUSED(ARG(GENERIC));  // only heeded by %make-natives.r to make tables
 
     if (not g_native_cfunc_pos)
         return FAIL(
             "NATIVE is for internal use during boot and extension loading"
         );
 
-    Element* spec = Element_ARG(spec);
+    Element* spec = Element_ARG(SPEC);
 
-    if (REF(combinator) and REF(intrinsic))
+    if (REF(COMBINATOR) and REF(INTRINSIC))
         return FAIL(Error_Bad_Refines_Raw());
 
-    NativeType native_type = REF(combinator) ? NATIVE_COMBINATOR
-        : REF(intrinsic) ? NATIVE_INTRINSIC
+    NativeType native_type = REF(COMBINATOR) ? NATIVE_COMBINATOR
+        : REF(INTRINSIC) ? NATIVE_INTRINSIC
         : NATIVE_NORMAL;
 
     CFunction* cfunc = *g_native_cfunc_pos;
@@ -338,7 +338,7 @@ Bounce Delegate_Operation_With_Part(
 //      return: [~] "Not actually used"
 //  ]
 //
-DECLARE_NATIVE(oldgeneric)
+DECLARE_NATIVE(OLDGENERIC)
 {
     INCLUDE_PARAMS_OF_OLDGENERIC;
 

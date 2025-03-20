@@ -36,11 +36,11 @@
 //          [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(form)
+DECLARE_NATIVE(FORM)
 {
     INCLUDE_PARAMS_OF_FORM;
 
-    Element* elem = Element_ARG(value);
+    Element* elem = Element_ARG(VALUE);
 
     return Init_Text(OUT, Copy_Form_Element(elem, 0));
 }
@@ -59,14 +59,14 @@ DECLARE_NATIVE(form)
 //          [logic?]
 //  ]
 //
-DECLARE_NATIVE(moldify)
+DECLARE_NATIVE(MOLDIFY)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    USED(ARG(molder));  // passed via LEVEL
-    USED(ARG(form));
+    USED(ARG(MOLDER));  // passed via LEVEL
+    USED(ARG(FORM));
 
-    return Dispatch_Generic(MOLDIFY, ARG(element), LEVEL);
+    return Dispatch_Generic(MOLDIFY, ARG(ELEMENT), LEVEL);
 }
 
 
@@ -83,18 +83,18 @@ DECLARE_NATIVE(moldify)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(mold)
+DECLARE_NATIVE(MOLD)
 {
     INCLUDE_PARAMS_OF_MOLD;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     DECLARE_MOLDER (mo);
-    if (REF(flat))
+    if (REF(FLAT))
         SET_MOLD_FLAG(mo, MOLD_FLAG_INDENT);
-    if (REF(limit)) {
+    if (REF(LIMIT)) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
-        mo->limit = Int32(ARG(limit));
+        mo->limit = Int32(ARG(LIMIT));
     }
 
     Push_Mold(mo);
@@ -114,8 +114,8 @@ DECLARE_NATIVE(mold)
     Meta_Quotify(Init_Text(Array_At(pack, 0), popped));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
-        assert(REF(limit));
-        Copy_Meta_Cell(Array_At(pack, 1), ARG(limit));
+        assert(REF(LIMIT));
+        Copy_Meta_Cell(Array_At(pack, 1), ARG(LIMIT));
     }
     else
         Init_Meta_Of_Null(Array_At(pack, 1));
@@ -134,7 +134,7 @@ DECLARE_NATIVE(mold)
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
-DECLARE_NATIVE(write_stdout)
+DECLARE_NATIVE(WRITE_STDOUT)
 //
 // This code isn't supposed to run during normal bootup.  But for debugging
 // we don't want a parallel set of PRINT operations and specializations just
@@ -143,7 +143,7 @@ DECLARE_NATIVE(write_stdout)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
   #if (! DEBUG_HAS_PROBE)
     UNUSED(v);
@@ -180,22 +180,22 @@ DECLARE_NATIVE(write_stdout)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(new_line)
+DECLARE_NATIVE(NEW_LINE)
 {
     INCLUDE_PARAMS_OF_NEW_LINE;
 
-    bool mark = Cell_Yes(ARG(mark));
+    bool mark = Cell_Yes(ARG(MARK));
 
-    Value* pos = ARG(position);
+    Value* pos = ARG(POSITION);
     const Element* tail;
     Element* item = Cell_List_At_Ensure_Mutable(&tail, pos);
     Source* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
-    if (REF(all))
+    if (REF(ALL))
         skip = 1;
-    else if (REF(skip)) {
-        skip = Int32s(ARG(skip), 1);
+    else if (REF(SKIP)) {
+        skip = Int32s(ARG(SKIP), 1);
         if (skip < 1)
             skip = 1;
     }
@@ -238,11 +238,11 @@ DECLARE_NATIVE(new_line)
 //          [block! group! varargs!]
 //  ]
 //
-DECLARE_NATIVE(new_line_q)
+DECLARE_NATIVE(NEW_LINE_Q)
 {
     INCLUDE_PARAMS_OF_NEW_LINE_Q;
 
-    Value* pos = ARG(position);
+    Value* pos = ARG(POSITION);
 
     const Source* arr;
     const Element* item;
@@ -341,7 +341,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
 //       file [file!]
 //  ]
 //
-DECLARE_NATIVE(basic_read)
+DECLARE_NATIVE(BASIC_READ)
 //
 // !!! The filesystem support in Ren-C is based on libuv, and if you try and
 // build the Posix implementation of libuv on WASI a lot is missing.  It's not
@@ -355,10 +355,10 @@ DECLARE_NATIVE(basic_read)
     INCLUDE_PARAMS_OF_BASIC_READ;
 
   #if (! TO_WASI)
-    UNUSED(ARG(file));
+    UNUSED(ARG(FILE));
     return FAIL("BASIC-READ is a simple demo used in WASI only");
   #else
-    const String* filename = Cell_String(ARG(file));
+    const String* filename = Cell_String(ARG(FILE));
     FILE* f = fopen(String_UTF8(filename), "rb");
     if (f == nullptr)
         return FAIL(rebError_OS(errno));
@@ -386,24 +386,24 @@ DECLARE_NATIVE(basic_read)
 //       data [blob! text!]
 //  ]
 //
-DECLARE_NATIVE(basic_write)
+DECLARE_NATIVE(BASIC_WRITE)
 //
 // !!! See remarks on BASIC-READ.
 {
     INCLUDE_PARAMS_OF_BASIC_WRITE;
 
   #if (! TO_WASI)
-    UNUSED(ARG(file));
-    UNUSED(ARG(data));
+    UNUSED(ARG(FILE));
+    UNUSED(ARG(DATA));
     return FAIL("BASIC-WRITE is a simple demo used in WASI only");
   #else
-    const String* filename = Cell_String(ARG(file));
+    const String* filename = Cell_String(ARG(FILE));
     FILE* f = fopen(String_UTF8(filename), "wb");
     if (f == nullptr)
         return FAIL(rebError_OS(errno));
 
     Size size;
-    const Byte* data = Cell_Bytes_At(&size, ARG(data));
+    const Byte* data = Cell_Bytes_At(&size, ARG(DATA));
     fwrite(data, size, 1, f);
     fclose(f);
 

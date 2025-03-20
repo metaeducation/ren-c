@@ -230,7 +230,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Utf8(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -238,7 +238,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Utf8(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
@@ -246,10 +246,10 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(type));
+    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
     assert(Any_Utf8_Type(heart));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     switch(Type_Of(arg)) {
       case TYPE_INTEGER: {
@@ -274,7 +274,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1) {
-                Init_Builtin_Datatype(ARG(type), TYPE_ISSUE);
+                Init_Builtin_Datatype(ARG(TYPE), TYPE_ISSUE);
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
 
@@ -287,7 +287,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
-                Init_Builtin_Datatype(ARG(type), TYPE_ISSUE);
+                Init_Builtin_Datatype(ARG(TYPE), TYPE_ISSUE);
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
@@ -316,7 +316,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 //      codepoint [integer!]
 //  ]
 //
-DECLARE_NATIVE(make_char)  // Note: currently synonym for (NUL + codepoint)
+DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
 //
 // Note: Consideration was given to (make-char [1 + 2] -> #3) as a way to
 // get an assured single-character result from a mold.  (to-char mold 1 + 2)
@@ -328,7 +328,7 @@ DECLARE_NATIVE(make_char)  // Note: currently synonym for (NUL + codepoint)
 {
     INCLUDE_PARAMS_OF_MAKE_CHAR;
 
-    uint32_t c = VAL_UINT32(ARG(codepoint));
+    uint32_t c = VAL_UINT32(ARG(CODEPOINT));
     Option(Error*) error = Trap_Init_Char(OUT, c);
     if (error)
         return RAISE(unwrap error);
@@ -346,7 +346,7 @@ DECLARE_NATIVE(make_char)  // Note: currently synonym for (NUL + codepoint)
 //      element [char? any-utf8? blob!]
 //  ]
 //
-DECLARE_NATIVE(to_char)
+DECLARE_NATIVE(TO_CHAR)
 //
 // !!! For efficiency, this avoids things like (to-char [A] -> #A).
 // It could be that this was implemented in terms of TO ISSUE! and then got
@@ -362,7 +362,7 @@ DECLARE_NATIVE(to_char)
 {
     INCLUDE_PARAMS_OF_TO_CHAR;
 
-    Element* e = Element_ARG(element);
+    Element* e = Element_ARG(ELEMENT);
     if (Is_Integer(e)) {
         uint32_t c = VAL_UINT32(e);
         Option(Error*) error = Trap_Init_Char(OUT, c);
@@ -408,11 +408,11 @@ DECLARE_NATIVE(to_char)
 //      element [element?]
 //  ]
 //
-DECLARE_NATIVE(nul_q)
+DECLARE_NATIVE(NUL_Q)
 {
     INCLUDE_PARAMS_OF_NUL_Q;
 
-    Element* e = Element_ARG(element);
+    Element* e = Element_ARG(ELEMENT);
     return Init_Logic(OUT, Is_NUL(e));
 }
 
@@ -439,9 +439,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Sigil)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
@@ -454,9 +454,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     if (form) {
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
@@ -664,8 +664,8 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(element);  // issue, email, etc.
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* v = Element_ARG(ELEMENT);  // issue, email, etc.
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
     possibly(Any_Word(v));  // delegates some cases
 
     if (Any_String_Type(to)) {  // always need mutable new copy of data
@@ -713,7 +713,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
                 cast(const Byte*, utf8) + size
                 != Try_Scan_Email_To_Stack(utf8, size)
             ){
-                return RAISE(Error_Scan_Invalid_Raw(ARG(type), v));
+                return RAISE(Error_Scan_Invalid_Raw(ARG(TYPE), v));
             }
             return Move_Drop_Top_Stack_Element(OUT);
         }
@@ -723,7 +723,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
                 cast(const Byte*, utf8) + size
                 != Try_Scan_URL_To_Stack(utf8, size)
             ){
-                return RAISE(Error_Scan_Invalid_Raw(ARG(type), v));
+                return RAISE(Error_Scan_Invalid_Raw(ARG(TYPE), v));
             }
             return Move_Drop_Top_Stack_Element(OUT);
         }
@@ -769,9 +769,9 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     if (Any_List_Type(to)) {  // limited TRANSCODE (how limited?...) [1]
         if (Stringlike_Has_Node(v)) {
             if (Stub_Flavor(Cell_String(v)) == FLAVOR_SYMBOL)  // [2]
-                return rebValue(CANON(ENVELOP), ARG(type), rebQ(v));
+                return rebValue(CANON(ENVELOP), ARG(TYPE), rebQ(v));
         }
-        return rebValue(CANON(AS), ARG(type), CANON(TRANSCODE), rebQ(v));
+        return rebValue(CANON(AS), ARG(TYPE), CANON(TRANSCODE), rebQ(v));
     }
 
     if (to == TYPE_BLANK)
@@ -796,8 +796,8 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* v = Element_ARG(element);  // issue, email, etc.
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    Element* v = Element_ARG(ELEMENT);  // issue, email, etc.
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
     assert(not Any_Word(v));  // not delegated
 
     if (Any_String_Type(as)) {  // have to create a Flex if not node [1]
@@ -923,11 +923,11 @@ IMPLEMENT_GENERIC(PICK, Is_Issue)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* issue = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* issue = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
-        return FAIL(PARAM(picker));
+        return FAIL(PARAM(PICKER));
 
     REBI64 n = VAL_INT64(picker);
     if (n <= 0)
@@ -951,8 +951,8 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
-    Element* any_utf8 = Element_ARG(element);
-    Value* part = ARG(part);
+    Element* any_utf8 = Element_ARG(ELEMENT);
+    Value* part = ARG(PART);
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
 
@@ -969,7 +969,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_RANDOMIZE;
 
-    Element* any_utf8 = Element_ARG(seed);
+    Element* any_utf8 = Element_ARG(SEED);
 
     Size utf8_size;
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, any_utf8);
@@ -982,7 +982,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Issue)
 {
     INCLUDE_PARAMS_OF_RANDOM;
 
-    Element* issue = Element_ARG(max);
+    Element* issue = Element_ARG(MAX);
 
     if (not IS_CHAR(issue))
         return FAIL("RANDOM only for single-character ISSUE!");
@@ -992,7 +992,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Issue)
         return UNHANDLED;
 
     while (true) {
-        Codepoint rand = cast(Codepoint, 1 + (Random_Int(REF(secure)) % c));
+        Codepoint rand = cast(Codepoint, 1 + (Random_Int(REF(SECURE)) % c));
 
         Option(Error*) e = Trap_Init_Char(OUT, rand);
         if (not e)
@@ -1008,10 +1008,10 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
-    Element* any_utf8 = Element_ARG(element);
-    Value* part = ARG(part);
+    Element* any_utf8 = Element_ARG(ELEMENT);
+    Value* part = ARG(PART);
 
-    if (REF(secure))
+    if (REF(SECURE))
         return FAIL(Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
@@ -1032,11 +1032,11 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(codepoint_of)
+DECLARE_NATIVE(CODEPOINT_OF)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    return Dispatch_Generic(CODEPOINT_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(CODEPOINT_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -1044,7 +1044,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Issue)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* issue = Element_ARG(element);
+    Element* issue = Element_ARG(ELEMENT);
     assert(Is_Issue(issue));
 
     if (
@@ -1061,7 +1061,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* v = Element_ARG(element);
+    Element* v = Element_ARG(ELEMENT);
     possibly(Any_Word(v));  // !!! should WORD! disallow LENGTH OF ?
 
     REBLEN len;
@@ -1074,7 +1074,7 @@ IMPLEMENT_GENERIC(SIZE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 
-    Element* v = Element_ARG(element);
+    Element* v = Element_ARG(ELEMENT);
     possibly(Any_String(v));  // delegates here
     possibly(Any_Word(v));  // !!! should WORD! disable `size of`?
 
@@ -1094,19 +1094,19 @@ IMPLEMENT_GENERIC(SIZE_OF, Any_Utf8)
 //      :extended "Permit 4 or 5 trailing bytes, not legal in the UTF-8 spec"
 //  ]
 //
-DECLARE_NATIVE(trailing_bytes_for_utf8)
+DECLARE_NATIVE(TRAILING_BYTES_FOR_UTF8)
 //
 // !!! This is knowledge Rebol has, and it can be useful for anyone writing
 // code that processes UTF-8 (e.g. the terminal).  Might as well expose it.
 {
     INCLUDE_PARAMS_OF_TRAILING_BYTES_FOR_UTF8;
 
-    REBINT byte = VAL_INT32(ARG(first_byte));
+    REBINT byte = VAL_INT32(ARG(FIRST_BYTE));
     if (byte < 0 or byte > 255)
-        return FAIL(Error_Out_Of_Range(ARG(first_byte)));
+        return FAIL(Error_Out_Of_Range(ARG(FIRST_BYTE)));
 
     uint_fast8_t trail = g_trailing_bytes_for_utf8[cast(Byte, byte)];
-    if (trail > 3 and not REF(extended)) {
+    if (trail > 3 and not REF(EXTENDED)) {
         assert(trail == 4 or trail == 5);
         return FAIL(
             "Use :EXTENDED with TRAILING-BYTES-FOR-UTF-8 for 4 or 5 bytes"

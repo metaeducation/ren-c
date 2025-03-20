@@ -193,7 +193,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //          [any-branch?]
 //  ]
 //
-DECLARE_NATIVE(if)
+DECLARE_NATIVE(IF)
 //
 // 1. ~null~ antiforms are branch inhibitors, while ~void~ antiforms will
 //    trigger an abrupt failure.  (Voids opt out of "voting" in aggregate
@@ -207,8 +207,8 @@ DECLARE_NATIVE(if)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    Value* condition = ARG(condition);
-    Value* branch = ARG(branch);
+    Value* condition = ARG(CONDITION);
+    Value* branch = ARG(BRANCH);
 
     if (Is_Inhibitor(condition))  // [1]
         return VOID;
@@ -230,15 +230,15 @@ DECLARE_NATIVE(if)
 //          [any-branch?]
 //  ]
 //
-DECLARE_NATIVE(either)
+DECLARE_NATIVE(EITHER)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
-    Value* condition = ARG(condition);
+    Value* condition = ARG(CONDITION);
 
     Value* branch = Is_Trigger(condition)  // [1] on IF native
-        ? ARG(okay_branch)
-        : ARG(null_branch);
+        ? ARG(OKAY_BRANCH)
+        : ARG(NULL_BRANCH);
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // [2] on IF native
 }
@@ -308,8 +308,8 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 ){
     INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
 
-    Atom* in = ARG(atom);  /* !!! Wrong, rewrite this routine */
-    Value* branch = ARG(branch);
+    Atom* in = ARG(ATOM);  /* !!! Wrong, rewrite this routine */
+    Value* branch = ARG(BRANCH);
 
     if (Is_Meta_Of_Nihil(in))
         return FAIL("THEN/ELSE can't operate on empty pack input (e.g. NIHIL)");
@@ -386,7 +386,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
     assert(not Is_Lazy(in));
 
-    if (Is_Stable(in) and (Is_Void(in) or (REF(decay) and Is_Heavy_Void(in)))) {
+    if (Is_Stable(in) and (Is_Void(in) or (REF(DECAY) and Is_Heavy_Void(in)))) {
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
             if (Is_Pack(in)) {
@@ -399,7 +399,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         return DELEGATE_BRANCH(OUT, branch, in);  // else of void
     }
 
-    if (Is_Nulled(in) or (REF(decay) and Is_Heavy_Null(in))) {
+    if (Is_Nulled(in) or (REF(DECAY) and Is_Heavy_Null(in))) {
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
             Copy_Cell(OUT, in);  // then of null, may be pack
@@ -431,13 +431,13 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
-DECLARE_NATIVE(then_q)
+DECLARE_NATIVE(THEN_Q)
 {
     INCLUDE_PARAMS_OF_THEN_Q;
 
-    Value* in = ARG(atom);
-    USED(ARG(decay));  // used by helper
-    USED(ARG(branch));
+    Value* in = ARG(ATOM);
+    USED(ARG(DECAY));  // used by helper
+    USED(ARG(BRANCH));
 
     switch (STATE) {
       case ST_THENABLE_INITIAL_ENTRY :
@@ -458,7 +458,7 @@ DECLARE_NATIVE(then_q)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Quotify(
-        Quasify_Isotopic_Fundamental(Init_Word(ARG(branch), CANON(THEN_Q)))
+        Quasify_Isotopic_Fundamental(Init_Word(ARG(BRANCH), CANON(THEN_Q)))
     );  // [1]
 
     goto reifying_input;
@@ -509,18 +509,18 @@ DECLARE_NATIVE(then_q)
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
-DECLARE_NATIVE(else_q)
+DECLARE_NATIVE(ELSE_Q)
 {
     INCLUDE_PARAMS_OF_ELSE_Q;
 
-    Value* in = ARG(atom);
-    USED(ARG(decay));  // used by helper
-    USED(ARG(branch));
+    Value* in = ARG(ATOM);
+    USED(ARG(DECAY));  // used by helper
+    USED(ARG(BRANCH));
 
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_Logic(OUT, true);
 
-    if (REF(decay) and Is_Quasi_Null(in))
+    if (REF(DECAY) and Is_Quasi_Null(in))
         return Init_Logic(OUT, true);
 
     return Init_Logic(OUT, false);
@@ -541,14 +541,14 @@ DECLARE_NATIVE(else_q)
 //          [<unrun> ~void~ any-branch?]
 //  ]
 //
-DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
+DECLARE_NATIVE(THEN)  // see `tweak :then 'defer' on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Value* in = ARG(atom);
-    Deactivate_If_Action(ARG(branch));
-    USED(ARG(branch));  // used by helper
-    USED(ARG(decay));
+    Value* in = ARG(ATOM);
+    Deactivate_If_Action(ARG(BRANCH));
+    USED(ARG(BRANCH));  // used by helper
+    USED(ARG(DECAY));
 
     switch (STATE) {
       case ST_THENABLE_INITIAL_ENTRY :
@@ -583,14 +583,14 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer' on` in %base-defs.r
 //      @(branch) [<unrun> ~void~ any-branch?]
 //  ]
 //
-DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
+DECLARE_NATIVE(ELSE)  // see `tweak :else 'defer 'on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Value* in = ARG(atom);
-    Deactivate_If_Action(ARG(branch));
-    USED(ARG(branch));  // used by helper
-    USED(ARG(decay));
+    Value* in = ARG(ATOM);
+    Deactivate_If_Action(ARG(BRANCH));
+    USED(ARG(BRANCH));  // used by helper
+    USED(ARG(DECAY));
 
     switch (STATE) {
       case ST_THENABLE_INITIAL_ENTRY :
@@ -626,13 +626,13 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer 'on` in %base-defs.r
 //          [<unrun> ~void~ any-branch?]
 //  ]
 //
-DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
+DECLARE_NATIVE(ALSO)  // see `tweak :also 'defer 'on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Value* in = ARG(atom);
-    Value* branch = ARG(branch);
-    Deactivate_If_Action(ARG(branch));
+    Value* in = ARG(ATOM);
+    Value* branch = ARG(BRANCH);
+    Deactivate_If_Action(ARG(BRANCH));
 
     enum {
         ST_ALSO_INITIAL_ENTRY = STATE_0,
@@ -662,7 +662,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
         return Raisify(OUT);
     }
 
-    if (REF(decay) and Is_Meta_Of_Heavy_Null(in))
+    if (REF(DECAY) and Is_Meta_Of_Heavy_Null(in))
         return Init_Heavy_Null(OUT);
 
     STATE = ST_ALSO_RUNNING_BRANCH;
@@ -692,7 +692,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(all)
+DECLARE_NATIVE(ALL)
 //
 // 1. Historically there has been controversy over what should be done about
 //    (all []) and (any []).  Languages that have variadic short-circuiting
@@ -716,8 +716,8 @@ DECLARE_NATIVE(all)
 {
     INCLUDE_PARAMS_OF_ALL;
 
-    Value* block = ARG(block);
-    Value* predicate = ARG(predicate);
+    Value* block = ARG(BLOCK);
+    Value* predicate = ARG(PREDICATE);
 
     Value* condition;  // will be found in OUT or scratch
 
@@ -843,7 +843,7 @@ DECLARE_NATIVE(all)
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(any)
+DECLARE_NATIVE(ANY)
 //
 // 1. Don't let ANY return something falsey, but using heavy form means that
 //    it can work with DID/THEN
@@ -854,8 +854,8 @@ DECLARE_NATIVE(any)
 {
     INCLUDE_PARAMS_OF_ANY;
 
-    Value* predicate = ARG(predicate);
-    Value* block = ARG(block);
+    Value* predicate = ARG(PREDICATE);
+    Value* block = ARG(BLOCK);
 
     Value* condition;  // could point to OUT or SPARE
 
@@ -979,12 +979,12 @@ DECLARE_NATIVE(any)
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(case)
+DECLARE_NATIVE(CASE)
 {
     INCLUDE_PARAMS_OF_CASE;
 
-    Value* cases = ARG(cases);
-    Value* predicate = ARG(predicate);
+    Value* cases = ARG(CASES);
+    Value* predicate = ARG(PREDICATE);
 
     Atom* branch = SCRATCH;
 
@@ -1136,7 +1136,7 @@ DECLARE_NATIVE(case)
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    if (not REF(all)) {
+    if (not REF(ALL)) {
         Drop_Level(SUBLEVEL);
         return BRANCHED(OUT);
     }
@@ -1165,7 +1165,7 @@ DECLARE_NATIVE(case)
     //    This counts as a "branch taken", so void and null are boxed into an
     //    antiform pack.
 
-    assert(REF(all) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
+    assert(REF(ALL) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
 
     Drop_Level(SUBLEVEL);
 
@@ -1197,13 +1197,13 @@ DECLARE_NATIVE(case)
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(switch)
+DECLARE_NATIVE(SWITCH)
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
-    Value* left = ARG(value);
-    Value* predicate = ARG(predicate);
-    Value* cases = ARG(cases);
+    Value* left = ARG(VALUE);
+    Value* predicate = ARG(PREDICATE);
+    Value* cases = ARG(CASES);
 
     Atom* right = SPARE;
 
@@ -1221,7 +1221,7 @@ DECLARE_NATIVE(switch)
         goto right_result_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
-        if (not REF(all)) {
+        if (not REF(ALL)) {
             Drop_Level(SUBLEVEL);
             return BRANCHED(OUT);
         }
@@ -1241,10 +1241,10 @@ DECLARE_NATIVE(switch)
     assert(Is_Cell_Erased(right));  // initial condition
     assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
-    if (REF(type) and REF(predicate))
+    if (REF(TYPE) and REF(PREDICATE))
         return FAIL(Error_Bad_Refines_Raw());
 
-    if (not REF(type) and not REF(predicate)) {
+    if (not REF(TYPE) and not REF(PREDICATE)) {
         Copy_Cell(predicate, LIB(EQUAL_Q));  // no more builtin comparison [1]
         QUOTE_BYTE(predicate) = NOQUOTE_1;
     }
@@ -1317,7 +1317,7 @@ DECLARE_NATIVE(switch)
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
-    if (REF(type)) {
+    if (REF(TYPE)) {
         Decay_If_Unstable(right);
 
         if (not Any_Type_Value(right))
@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(switch)
     //    These cases still count as "branch taken", so if a null or void fall
     //    out they will be put in a pack.  (See additional remarks in CASE)
 
-    assert(REF(all) or Is_Cell_Erased(OUT));
+    assert(REF(ALL) or Is_Cell_Erased(OUT));
 
     Drop_Level(SUBLEVEL);
 
@@ -1411,7 +1411,7 @@ DECLARE_NATIVE(switch)
 //      <local> steps
 //  ]
 //
-DECLARE_NATIVE(default)
+DECLARE_NATIVE(DEFAULT)
 //
 // 1. The TARGET may be something like a TUPLE! that contains GROUP!s.  This
 //    could put us at risk of double-evaluation if we do a GET to check the
@@ -1427,11 +1427,11 @@ DECLARE_NATIVE(default)
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
-    Element* target = Element_ARG(target);
-    Value* branch = ARG(branch);
-    Value* predicate = ARG(predicate);
+    Element* target = Element_ARG(TARGET);
+    Value* branch = ARG(BRANCH);
+    Value* predicate = ARG(PREDICATE);
 
-    Element* steps = cast(Element*, LOCAL(steps));  // hold resolved steps [1]
+    Element* steps = cast(Element*, LOCAL(STEPS));  // hold resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,
@@ -1504,12 +1504,12 @@ DECLARE_NATIVE(default)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
+DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 {
     INCLUDE_PARAMS_OF_CATCH_P;
 
-    Element* block = Element_ARG(block);
-    Element* name = Element_ARG(name);
+    Element* block = Element_ARG(BLOCK);
+    Element* name = Element_ARG(NAME);
     Level* catch_level = level_;
 
     enum {
@@ -1543,7 +1543,7 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
 
     STATE = ST_CATCH_RUNNING_CODE;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // not caught by default
-    return CONTINUE_BRANCH(OUT, ARG(block));
+    return CONTINUE_BRANCH(OUT, ARG(BLOCK));
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
@@ -1573,11 +1573,11 @@ DECLARE_NATIVE(catch_p)  // specialized to plain CATCH w/ NAME="THROW" in boot
 //          [any-atom?]
 //  ]
 //
-DECLARE_NATIVE(definitional_throw)
+DECLARE_NATIVE(DEFINITIONAL_THROW)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_THROW;
 
-    Atom* atom = Copy_Cell(SPARE, ARG(atom));
+    Atom* atom = Copy_Cell(SPARE, ARG(ATOM));
     Meta_Unquotify_Undecayed(atom);
 
     Level* throw_level = LEVEL;  // Level of this RETURN call

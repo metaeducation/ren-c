@@ -136,36 +136,36 @@ INLINE bool Set_Nonblocking_Fails(int fd) {
 Bounce Call_Core(Level* level_) {
     INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
-    UNUSED(REF(console));  // !!! actually not paid attention to, why?
+    UNUSED(REF(CONSOLE));  // !!! actually not paid attention to, why?
 
     // Make sure that if the output or error series are STRING! or BLOB!,
     // they are not read-only, before we try appending to them.
     //
-    if (Is_Text(ARG(output)) or Is_Blob(ARG(output)))
-        Ensure_Mutable(ARG(output));
-    if (Is_Text(ARG(error)) or Is_Blob(ARG(error)))
-        Ensure_Mutable(ARG(error));
+    if (Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT)))
+        Ensure_Mutable(ARG(OUTPUT));
+    if (Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR)))
+        Ensure_Mutable(ARG(ERROR));
 
     char *inbuf;
     size_t inbuf_size;
 
-    if (not REF(input)) {
+    if (not REF(INPUT)) {
       null_input_buffer:
         inbuf = nullptr;
         inbuf_size = 0;
     }
-    else if (Is_Word(ARG(input))) {
-        char mode = Get_Char_For_Stream_Mode(ARG(input));
+    else if (Is_Word(ARG(INPUT))) {
+        char mode = Get_Char_For_Stream_Mode(ARG(INPUT));
         assert(mode == 'i' or mode == 'n');
         UNUSED(mode);
         goto null_input_buffer;
     }
-    else switch (Type_Of(ARG(input))) {
+    else switch (Type_Of(ARG(INPUT))) {
       case TYPE_TEXT: {
-        inbuf_size = rebSpellInto(nullptr, 0, ARG(input));
+        inbuf_size = rebSpellInto(nullptr, 0, ARG(INPUT));
         inbuf = rebAllocN(char, inbuf_size);
         size_t check;
-        check = rebSpellInto(inbuf, inbuf_size, ARG(input));
+        check = rebSpellInto(inbuf, inbuf_size, ARG(INPUT));
         UNUSED(check);
         break; }
 
@@ -173,23 +173,23 @@ Bounce Call_Core(Level* level_) {
         size_t size;
         inbuf = s_cast(rebBytes(  // !!! why fileNAME size passed in???
             &size,
-            "file-to-local", ARG(input)
+            "file-to-local", ARG(INPUT)
         ));
         inbuf_size = size;
         break; }
 
       case TYPE_BLOB: {
-        inbuf = s_cast(rebBytes(&inbuf_size, ARG(input)));
+        inbuf = s_cast(rebBytes(&inbuf_size, ARG(INPUT)));
         break; }
 
       default:
-        panic (ARG(input));  // typechecking should not have allowed it
+        panic (ARG(INPUT));  // typechecking should not have allowed it
     }
 
-    bool flag_wait = REF(wait) or (
-        Is_Text(ARG(input)) or Is_Blob(ARG(input))
-        or Is_Text(ARG(output)) or Is_Blob(ARG(output))
-        or Is_Text(ARG(error)) or Is_Blob(ARG(error))
+    bool flag_wait = REF(WAIT) or (
+        Is_Text(ARG(INPUT)) or Is_Blob(ARG(INPUT))
+        or Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT))
+        or Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR))
     );  // I/O redirection implies /WAIT
 
     // We synthesize the argc and argv from the "command", and in the process
@@ -199,9 +199,9 @@ Bounce Call_Core(Level* level_) {
     int argc;
     char **argv;
 
-    Value* command = ARG(command);
+    Value* command = ARG(COMMAND);
 
-    if (REF(shell)) {
+    if (REF(SHELL)) {
 
       //=//// SHELL-BASED INVOCATION: COMMAND IS ONE BIG STRING ////////////=//
 
@@ -241,7 +241,7 @@ Bounce Call_Core(Level* level_) {
             shcmd = rebSpell("argv-block-to-command*", command);
         }
         else
-            return FAIL(PARAM(command));
+            return FAIL(PARAM(COMMAND));
 
         // Getting the environment variable via a usermode call helps paper
         // over weird getenv() quirks, but also gives a pointer we can free in
@@ -290,9 +290,9 @@ Bounce Call_Core(Level* level_) {
             rebRelease(parsed);
         }
         else if (not Is_Block(command))
-            return FAIL(PARAM(command));
+            return FAIL(PARAM(COMMAND));
 
-        const Value* block = ARG(command);
+        const Value* block = ARG(COMMAND);
         argc = Cell_Series_Len_At(block);
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));
@@ -301,7 +301,7 @@ Bounce Call_Core(Level* level_) {
         int i;
         for (i = 0; i < argc; ++param, ++i) {
             if (not Is_Text(param))  // usermode layer ensures FILE! converted
-                return FAIL(PARAM(command));
+                return FAIL(PARAM(COMMAND));
             argv[i] = rebSpell(param);
         }
         argv[argc] = nullptr;
@@ -347,17 +347,17 @@ Bounce Call_Core(Level* level_) {
 
     pid_t forked_pid = -1;
 
-    if (Is_Text(ARG(input)) or Is_Blob(ARG(input))) {
+    if (Is_Text(ARG(INPUT)) or Is_Blob(ARG(INPUT))) {
         if (Open_Pipe_Fails(stdin_pipe))
             goto stdin_pipe_err;
     }
 
-    if (Is_Text(ARG(output)) or Is_Blob(ARG(output))) {
+    if (Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT))) {
         if (Open_Pipe_Fails(stdout_pipe))
             goto stdout_pipe_err;
     }
 
-    if (Is_Text(ARG(error)) or Is_Blob(ARG(error))) {
+    if (Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR))) {
         if (Open_Pipe_Fails(stderr_pipe))
             goto stdout_pipe_err;
     }
@@ -381,18 +381,18 @@ Bounce Call_Core(Level* level_) {
         //
         // http://stackoverflow.com/questions/15126925/
 
-        if (not REF(input)) {
+        if (not REF(INPUT)) {
           inherit_stdin_from_parent:
             NOOP;  // it's the default
         }
-        else if (Is_Text(ARG(input)) or Is_Blob(ARG(input))) {
+        else if (Is_Text(ARG(INPUT)) or Is_Blob(ARG(INPUT))) {
             close(stdin_pipe[W]);
             if (dup2(stdin_pipe[R], STDIN_FILENO) < 0)
                 goto child_error;
             close(stdin_pipe[R]);
         }
-        else if (Is_File(ARG(input))) {
-            char *local_utf8 = rebSpell("file-to-local", ARG(input));
+        else if (Is_File(ARG(INPUT))) {
+            char *local_utf8 = rebSpell("file-to-local", ARG(INPUT));
 
             int fd = open(local_utf8, O_RDONLY);
 
@@ -404,8 +404,8 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (Is_Word(ARG(input))) {
-            char mode = Get_Char_For_Stream_Mode(ARG(input));
+        else if (Is_Word(ARG(INPUT))) {
+            char mode = Get_Char_For_Stream_Mode(ARG(INPUT));
             if (mode == 'i')
                 goto inherit_stdin_from_parent;
 
@@ -418,20 +418,20 @@ Bounce Call_Core(Level* level_) {
             close(fd);
         }
         else
-            panic(ARG(input));
+            panic(ARG(INPUT));
 
-        if (not REF(output)) {
+        if (not REF(OUTPUT)) {
           inherit_stdout_from_parent:
             NOOP;  // it's the default
         }
-        else if (Is_Text(ARG(output)) or Is_Blob(ARG(output))) {
+        else if (Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT))) {
             close(stdout_pipe[R]);
             if (dup2(stdout_pipe[W], STDOUT_FILENO) < 0)
                 goto child_error;
             close(stdout_pipe[W]);
         }
-        else if (Is_File(ARG(output))) {
-            char *local_utf8 = rebSpell("file-to-local", ARG(output));
+        else if (Is_File(ARG(OUTPUT))) {
+            char *local_utf8 = rebSpell("file-to-local", ARG(OUTPUT));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
 
@@ -443,8 +443,8 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (Is_Word(ARG(output))) {
-            char mode = Get_Char_For_Stream_Mode(ARG(output));
+        else if (Is_Word(ARG(OUTPUT))) {
+            char mode = Get_Char_For_Stream_Mode(ARG(OUTPUT));
             if (mode == 'i')
                 goto inherit_stdout_from_parent;
 
@@ -457,18 +457,18 @@ Bounce Call_Core(Level* level_) {
             close(fd);
         }
 
-        if (not REF(error)) {
+        if (not REF(ERROR)) {
           inherit_stderr_from_parent:
             NOOP;  // it's the default
         }
-        else if (Is_Text(ARG(error)) or Is_Blob(ARG(error))) {
+        else if (Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR))) {
             close(stderr_pipe[R]);
             if (dup2(stderr_pipe[W], STDERR_FILENO) < 0)
                 goto child_error;
             close(stderr_pipe[W]);
         }
-        else if (Is_File(ARG(error))) {
-            char *local_utf8 = rebSpell("file-to-local", ARG(error));
+        else if (Is_File(ARG(ERROR))) {
+            char *local_utf8 = rebSpell("file-to-local", ARG(ERROR));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
 
@@ -480,8 +480,8 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (Is_Word(ARG(error))) {
-            char mode = Get_Char_For_Stream_Mode(ARG(error));
+        else if (Is_Word(ARG(ERROR))) {
+            char mode = Get_Char_For_Stream_Mode(ARG(ERROR));
             if (mode == 'i')
                 goto inherit_stderr_from_parent;
 
@@ -927,27 +927,27 @@ Bounce Call_Core(Level* level_) {
 
     rebFree(argv);
 
-    if (Is_Text(ARG(output))) {
+    if (Is_Text(ARG(OUTPUT))) {
         Value* output_val = rebRepossess(outbuf, outbuf_used);
-        rebElide("insert", ARG(output), output_val);
+        rebElide("insert", ARG(OUTPUT), output_val);
         rebRelease(output_val);
     }
-    else if (Is_Blob(ARG(output))) {  // same (but could be different...)
+    else if (Is_Blob(ARG(OUTPUT))) {  // same (but could be different...)
         Value* output_val = rebRepossess(outbuf, outbuf_used);
-        rebElide("insert", ARG(output), output_val);
+        rebElide("insert", ARG(OUTPUT), output_val);
         rebRelease(output_val);
     }
     else
         assert(outbuf == nullptr);
 
-    if (Is_Text(ARG(error))) {
+    if (Is_Text(ARG(ERROR))) {
         Value* error_val = rebRepossess(errbuf, errbuf_used);
-        rebElide("insert", ARG(error), error_val);
+        rebElide("insert", ARG(ERROR), error_val);
         rebRelease(error_val);
     }
-    else if (Is_Blob(ARG(error))) {  // same (but could be different...)
+    else if (Is_Blob(ARG(ERROR))) {  // same (but could be different...)
         Value* error_val = rebRepossess(errbuf, errbuf_used);
-        rebElide("insert", ARG(error), error_val);
+        rebElide("insert", ARG(ERROR), error_val);
         rebRelease(error_val);
     }
     else
@@ -958,11 +958,11 @@ Bounce Call_Core(Level* level_) {
     if (ret != 0)
         rebFail_OS (ret);
 
-    if (REF(info)) {
+    if (REF(INFO)) {
         VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), forked_pid);
-        if (REF(wait))
+        if (REF(WAIT))
             Init_Integer(Append_Context(info, CANON(EXIT_CODE)), exit_code);
 
         return Init_Object(OUT, info);
@@ -971,7 +971,7 @@ Bounce Call_Core(Level* level_) {
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (REF(wait))
+    if (REF(WAIT))
         return Init_Integer(OUT, exit_code);
 
     return Init_Integer(OUT, forked_pid);

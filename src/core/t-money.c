@@ -71,7 +71,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Money)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Money(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Money(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -79,14 +79,14 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Money)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Money(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Money(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
 IMPLEMENT_GENERIC(ZEROIFY, Is_Money)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
-    UNUSED(ARG(example));  // always gives $0
+    UNUSED(ARG(EXAMPLE));  // always gives $0
 
     return Init_Money(OUT, int_to_deci(0));
 }
@@ -96,10 +96,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Money)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(type)) == TYPE_MONEY);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_MONEY);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     switch (Type_Of(arg)) {
       case TYPE_INTEGER:
@@ -138,9 +138,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
 
@@ -248,11 +248,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Money)
 
       case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(value));  // aliased as v, others are passed via level_
-        USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
-        USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
+        USED(ARG(VALUE));  // aliased as v, others are passed via level_
+        USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
+        USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-        Value* to = ARG(to);
+        Value* to = ARG(TO);
         if (Is_Nulled(to))
             Init_Money(to, decimal_to_deci(1.0L));
 
@@ -296,8 +296,8 @@ IMPLEMENT_GENERIC(TO, Is_Money)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(element);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* v = Element_ARG(ELEMENT);
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     deci d = VAL_MONEY_AMOUNT(v);
 
@@ -342,9 +342,9 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Money)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    deci d1 = VAL_MONEY_AMOUNT(ARG(value1));  // first generic arg is money
+    deci d1 = VAL_MONEY_AMOUNT(ARG(VALUE1));  // first generic arg is money
 
-    Value* money2 = Math_Arg_For_Money(SPARE, ARG(value2), CANON(MULTIPLY));
+    Value* money2 = Math_Arg_For_Money(SPARE, ARG(VALUE2), CANON(MULTIPLY));
     deci d2 = VAL_MONEY_AMOUNT(money2);
 
     return Init_Money(OUT, deci_multiply(d1, d2));

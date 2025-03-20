@@ -42,16 +42,16 @@
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(stats)
+DECLARE_NATIVE(STATS)
 {
     INCLUDE_PARAMS_OF_STATS;
 
     REBI64 num_evals = g_ts.total_eval_cycles + g_ts.eval_dose - g_ts.eval_countdown;
 
-    if (REF(evals))
+    if (REF(EVALS))
         return Init_Integer(OUT, num_evals);
 
-    if (REF(profile)) {
+    if (REF(PROFILE)) {
       #if DEBUG_COLLECT_STATS
         return rebValue("make object! [",
             "evals:", rebI(num_evals),
@@ -70,19 +70,19 @@ DECLARE_NATIVE(stats)
     }
 
   #if RUNTIME_CHECKS
-    if (REF(pool)) {
-        Value* pool_id = ARG(pool);
+    if (REF(POOL)) {
+        Value* pool_id = ARG(POOL);
         Dump_All_Flex_In_Pool(VAL_INT32(pool_id));
         return nullptr;
     }
 
-    if (REF(show))
+    if (REF(SHOW))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Flex(REF(show)));
+    return Init_Integer(OUT, Inspect_Flex(REF(SHOW)));
   #else
-    UNUSED(REF(show));
-    UNUSED(ARG(pool));
+    UNUSED(REF(SHOW));
+    UNUSED(ARG(POOL));
 
     return FAIL(Error_Checked_Build_Only_Raw());
   #endif
@@ -102,7 +102,7 @@ DECLARE_NATIVE(stats)
 //      'instruction ['on 'off]
 //  ]
 //
-DECLARE_NATIVE(callgrind)
+DECLARE_NATIVE(CALLGRIND)
 //
 // Note: In order to start callgrind without collecting data by default (so
 // that you can instrument just part of the code) use:
@@ -123,7 +123,7 @@ DECLARE_NATIVE(callgrind)
     INCLUDE_PARAMS_OF_CALLGRIND;
 
   #if defined(INCLUDE_CALLGRIND_NATIVE)
-    switch (Cell_Word_Id(ARG(instruction))) {
+    switch (Cell_Word_Id(ARG(INSTRUCTION))) {
       case SYM_ON:
         PG_Callgrind_On = true;
         CALLGRIND_START_INSTRUMENTATION;
@@ -141,7 +141,7 @@ DECLARE_NATIVE(callgrind)
     }
     return NOTHING;
   #else
-    UNUSED(ARG(instruction));
+    UNUSED(ARG(INSTRUCTION));
     return FAIL("Executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
   #endif
 }

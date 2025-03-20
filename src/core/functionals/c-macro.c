@@ -187,12 +187,12 @@ bool Macro_Details_Querier(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(macro)
+DECLARE_NATIVE(MACRO)
 {
     INCLUDE_PARAMS_OF_MACRO;
 
-    Element* spec = Element_ARG(spec);
-    Element* body = Element_ARG(body);
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
 
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,
@@ -216,11 +216,11 @@ DECLARE_NATIVE(macro)
 //          [~void~ block! quoted!]
 //  ]
 //
-DECLARE_NATIVE(inline)
+DECLARE_NATIVE(INLINE)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
-    Value* code = ARG(code);
+    Value* code = ARG(CODE);
     if (Is_Void(code)) {
         // do nothing, just return invisibly
     }
@@ -232,11 +232,11 @@ DECLARE_NATIVE(inline)
         Source* a = Alloc_Singular(FLEX_MASK_UNMANAGED_SOURCE);
         Unquotify(Move_Cell(Stub_Cell(a), cast(Element*, code)));
         Init_Block(code, a);
-        Splice_Block_Into_Feed(level_->feed, ARG(code));
+        Splice_Block_Into_Feed(level_->feed, ARG(CODE));
     }
     else {
         assert(Is_Block(code));
-        Splice_Block_Into_Feed(level_->feed, ARG(code));
+        Splice_Block_Into_Feed(level_->feed, ARG(CODE));
     }
 
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE);

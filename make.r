@@ -1322,7 +1322,7 @@ switch user-config.debug [
             "DEBUG_USE_UNION_PUNS=1"
             "INCLUDE_C_DEBUG_BREAK_NATIVE=1"
 
-            ; Adds CALLGRIND, see DECLARE_NATIVE(callgrind) for implementation
+            ; Adds CALLGRIND, see DECLARE_NATIVE(CALLGRIND) for implementation
             ;
             "INCLUDE_CALLGRIND_NATIVE=1"
         ]

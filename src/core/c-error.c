@@ -34,7 +34,7 @@
 //    fail ("UTF-8 string");  // delivers error with that text
 //    fail (api_value);       // ensure it's an ERROR!, release and use as-is
 //    fail (error_context);   // use the Error* as-is
-//    fail (PARAM(name));     // impliciate parameter as having a bad value
+//    fail (PARAM(NAME));     // impliciate parameter as having a bad value
 //    fail (other_cell);      // just report as a generic "bad value"
 //
 // 1. We would face an ambiguity in taking API handles, as to whether that
@@ -118,7 +118,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 // it automatically (but with no ID...the string becomes the "ID")
 //
 // If the pointer is to a function parameter of the current native (e.g. what
-// you get for PARAM(name) in a native), then it will report both the
+// you get for PARAM(NAME) in a native), then it will report both the
 // parameter name and value as being implicated as a problem.  This only
 // works for the current topmost stack level.
 //
@@ -409,10 +409,10 @@ IMPLEMENT_GENERIC(MAKE, Error)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(type)) == TYPE_ERROR);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_ERROR);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     // Frame from the error object template defined in %sysobj.r
     //
@@ -1399,14 +1399,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Error)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     // Protect against recursion. !!!!
     //
     if (not form) {
-        Init_Nulled(ARG(form));  // form = false;
+        Init_Nulled(ARG(FORM));  // form = false;
         return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);
     }
 

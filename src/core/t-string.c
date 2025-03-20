@@ -302,10 +302,10 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(type));
+    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
     assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // issue calls [1]
 
-    Element* def = Element_ARG(def);
+    Element* def = Element_ARG(DEF);
 
     if (Is_Integer(def))  // new string with given integer capacity [2]
         return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));
@@ -324,13 +324,13 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 //      :relax "Allow invisible codepoints like CR when converting BLOB!"
 //  ]
 //
-DECLARE_NATIVE(to_text)
+DECLARE_NATIVE(TO_TEXT)
 {
     INCLUDE_PARAMS_OF_TO_TEXT;
 
-    if (Is_Blob(ARG(value)) and REF(relax)) {
+    if (Is_Blob(ARG(VALUE)) and REF(RELAX)) {
         Size size;
-        const Byte* at = Cell_Blob_Size_At(&size, ARG(value));
+        const Byte* at = Cell_Blob_Size_At(&size, ARG(VALUE));
         return Init_Any_String(
             OUT,
             TYPE_TEXT,
@@ -343,7 +343,7 @@ DECLARE_NATIVE(to_text)
         );
     }
 
-    return rebValue("to text! @", ARG(value));
+    return rebValue("to text! @", ARG(VALUE));
 }
 
 
@@ -585,9 +585,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Url)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
@@ -600,9 +600,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
@@ -656,9 +656,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     String* buf = mo->string;
 
@@ -743,13 +743,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        UNUSED(PARAM(series)); // already accounted for
+        UNUSED(PARAM(SERIES)); // already accounted for
 
         String* s = Cell_String_Ensure_Mutable(v);
 
         REBINT limit;
-        if (REF(part))
-            limit = Part_Len_May_Modify_Index(v, ARG(part));
+        if (REF(PART))
+            limit = Part_Len_May_Modify_Index(v, ARG(PART));
         else
             limit = 1;
 
@@ -776,16 +776,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PARAM(series));
+        UNUSED(PARAM(SERIES));
 
-        Value* arg = ARG(value);
+        Value* arg = ARG(VALUE);
         assert(not Is_Nulled(arg));  // not an ~null~ parameter
 
         REBLEN len; // length of target
         if (Symbol_Id(verb) == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(v, ARG(part));
+            len = Part_Len_May_Modify_Index(v, ARG(PART));
         else
-            len = Part_Limit_Append_Insert(ARG(part));
+            len = Part_Limit_Append_Insert(ARG(PART));
 
         // Note that while inserting or appending NULL is a no-op, CHANGE with
         // a :PART can actually erase data.
@@ -797,9 +797,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         }
 
         Flags flags = 0;
-        if (REF(part))
+        if (REF(PART))
             flags |= AM_PART;
-        if (REF(line))
+        if (REF(LINE))
             flags |= AM_LINE;
 
         // !!! This mimics historical type tolerance, e.g. not everything that
@@ -818,7 +818,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             QUOTE_BYTE(arg) = NOQUOTE_1;
         }
         else if (Any_List(arg))
-            return FAIL(ARG(value));  // no `append "abc" [d e]` w/o SPREAD
+            return FAIL(ARG(VALUE));  // no `append "abc" [d e]` w/o SPREAD
         else
             assert(not Is_Antiform(arg));
 
@@ -828,7 +828,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             arg,
             flags,
             len,
-            REF(dup) ? Int32(ARG(dup)) : 1
+            REF(DUP) ? Int32(ARG(DUP)) : 1
         );
         return COPY(v); }
 
@@ -836,30 +836,30 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
-        if (Is_Antiform(ARG(pattern)))
-            return FAIL(PARAM(pattern));
+        if (Is_Antiform(ARG(PATTERN)))
+            return FAIL(PARAM(PATTERN));
 
-        UNUSED(PARAM(series));
+        UNUSED(PARAM(SERIES));
 
         Flags flags = (
-            (REF(match) ? AM_FIND_MATCH : 0)
-            | (REF(case) ? AM_FIND_CASE : 0)
+            (REF(MATCH) ? AM_FIND_MATCH : 0)
+            | (REF(CASE) ? AM_FIND_CASE : 0)
         );
 
-        REBLEN tail = Part_Tail_May_Modify_Index(v, ARG(part));
+        REBLEN tail = Part_Tail_May_Modify_Index(v, ARG(PART));
 
         REBINT skip;
-        if (REF(skip)) {
-            skip = VAL_INT32(ARG(skip));
+        if (REF(SKIP)) {
+            skip = VAL_INT32(ARG(SKIP));
             if (skip == 0)
-                return FAIL(PARAM(skip));
+                return FAIL(PARAM(SKIP));
         }
         else
             skip = 1;
 
         REBLEN len;
         REBINT find = Find_Value_In_Binstr(
-            &len, v, tail, Element_ARG(pattern), flags, skip
+            &len, v, tail, Element_ARG(PATTERN), flags, skip
         );
 
         if (find == NOT_FOUND)
@@ -969,8 +969,8 @@ IMPLEMENT_GENERIC(TO, Any_String)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    USED(ARG(element));
-    USED(ARG(type));
+    USED(ARG(ELEMENT));
+    USED(ARG(TYPE));
 
     return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
 }
@@ -980,8 +980,8 @@ IMPLEMENT_GENERIC(AS, Any_String)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* v = Element_ARG(element);
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    Element* v = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_String_Type(as)) {  // special handling not in Utf8 generic
         Copy_Cell(OUT, v);
@@ -997,11 +997,11 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* any_string = Element_ARG(value);
+    Element* any_string = Element_ARG(VALUE);
 
-    UNUSED(REF(deep));  // :DEEP is historically ignored on ANY-STRING?
+    UNUSED(REF(DEEP));  // :DEEP is historically ignored on ANY-STRING?
 
-    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(part));
+    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(PART));
 
     return Init_Any_String(
         OUT,
@@ -1015,8 +1015,8 @@ IMPLEMENT_GENERIC(PICK, Any_String)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* any_string = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* any_string = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
@@ -1032,14 +1032,14 @@ IMPLEMENT_GENERIC(POKE, Any_String)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* any_string = Element_ARG(location);
+    Element* any_string = Element_ARG(LOCATION);
 
-    const Element* picker = Element_ARG(picker);
+    const Element* picker = Element_ARG(PICKER);
     REBINT n;
     if (not Try_Get_Series_Index_From_Picker(&n, any_string, picker))
         return FAIL(Error_Out_Of_Range(picker));
 
-    Value* poke = ARG(value);
+    Value* poke = ARG(VALUE);
 
     Codepoint c;
     if (IS_CHAR(poke)) {
@@ -1049,7 +1049,7 @@ IMPLEMENT_GENERIC(POKE, Any_String)
         c = Int32(poke);
     }
     else  // CHANGE is a better route for splicing/removal/etc.
-        return FAIL(PARAM(value));
+        return FAIL(PARAM(VALUE));
 
     if (c == 0)
         return FAIL(Error_Illegal_Zero_Byte_Raw());
@@ -1065,15 +1065,15 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_TAKE;
 
-    Element* v = Element_ARG(series);
+    Element* v = Element_ARG(SERIES);
     Ensure_Mutable(v);
 
-    if (REF(deep))
+    if (REF(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
     REBLEN len;
-    if (REF(part)) {
-        len = Part_Len_May_Modify_Index(v, ARG(part));
+    if (REF(PART)) {
+        len = Part_Len_May_Modify_Index(v, ARG(PART));
         if (len == 0) {
             Heart heart = Cell_Heart_Ensure_Noquote(v);
             return Init_Any_String(OUT, heart, Make_String(0));
@@ -1085,7 +1085,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     REBLEN tail = Cell_Series_Len_Head(v);
 
-    if (REF(last)) {
+    if (REF(LAST)) {
         if (len > tail) {
             VAL_INDEX_RAW(v) = 0;
             len = tail;
@@ -1095,7 +1095,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     }
 
     if (VAL_INDEX(v) >= tail) {
-        if (not REF(part))
+        if (not REF(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
         Heart heart = Cell_Heart_Ensure_Noquote(v);
         return Init_Any_String(OUT, heart, Make_String(0));
@@ -1103,7 +1103,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     // if no :PART, just return value, else return string
     //
-    if (REF(part)) {
+    if (REF(PART)) {
         Heart heart = Cell_Heart_Ensure_Noquote(v);
         Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
     }
@@ -1119,12 +1119,12 @@ IMPLEMENT_GENERIC(REVERSE, Any_String)
 {
     INCLUDE_PARAMS_OF_REVERSE;
 
-    Element* any_string = Element_ARG(series);
+    Element* any_string = Element_ARG(SERIES);
 
     String* s = Cell_String_Ensure_Mutable(any_string);
 
     Copy_Cell(OUT, any_string);  // save before index adjustment
-    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(part));
+    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(PART));
     Reverse_String(s, VAL_INDEX(any_string), len);
     return OUT;
 }
@@ -1134,7 +1134,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
 {
     INCLUDE_PARAMS_OF_RANDOM_PICK;
 
-    Element* v = Element_ARG(collection);
+    Element* v = Element_ARG(COLLECTION);
 
     REBLEN index = VAL_INDEX(v);
     REBLEN tail = Cell_Series_Len_Head(v);
@@ -1142,7 +1142,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
     if (index >= tail)
         return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
-    index += Random_Int(REF(secure)) % (tail - index);
+    index += Random_Int(REF(SECURE)) % (tail - index);
 
     return Init_Char_Unchecked(
         OUT,
@@ -1161,7 +1161,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
 {
     INCLUDE_PARAMS_OF_SHUFFLE;
 
-    Element* any_string = Element_ARG(series);
+    Element* any_string = Element_ARG(SERIES);
 
     REBLEN index = VAL_INDEX(any_string);
 
@@ -1175,7 +1175,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
             any_string  // return string at original position
         );
 
-    bool secure = REF(secure);
+    bool secure = REF(SECURE);
 
     REBLEN n;
     for (n = String_Len(str) - index; n > 1;) {
@@ -1193,7 +1193,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* str = Element_ARG(element);
+    Element* str = Element_ARG(ELEMENT);
     const Byte* bp = Cell_String_At(str);  // downgrade validated Utf8(*)
 
     Codepoint c;
@@ -1252,18 +1252,18 @@ IMPLEMENT_GENERIC(SORT, Any_String)
 {
     INCLUDE_PARAMS_OF_SORT;
 
-    Element* v = Element_ARG(series);
+    Element* v = Element_ARG(SERIES);
     String* str = Cell_String_Ensure_Mutable(v);  // just ensure mutability
     UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
 
-    if (REF(all))
+    if (REF(ALL))
         return FAIL(Error_Bad_Refines_Raw());
 
-    if (REF(compare))
+    if (REF(COMPARE))
         return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Copy_Cell(OUT, v);  // before index modification
-    REBLEN limit = Part_Len_May_Modify_Index(v, ARG(part));
+    REBLEN limit = Part_Len_May_Modify_Index(v, ARG(PART));
     if (limit <= 1)
         return OUT;
 
@@ -1278,12 +1278,12 @@ IMPLEMENT_GENERIC(SORT, Any_String)
         return FAIL("Non-ASCII string sorting temporarily unavailable");
 
     REBLEN skip;
-    if (not REF(skip))
+    if (not REF(SKIP))
         skip = 1;
     else {
-        skip = Get_Num_From_Arg(ARG(skip));
+        skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or len % skip != 0 or skip > len)
-            return FAIL(PARAM(skip));
+            return FAIL(PARAM(SKIP));
     }
 
     // Use fast quicksort library function:
@@ -1294,9 +1294,9 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     }
 
     Flags flags = 0;
-    if (REF(case))
+    if (REF(CASE))
         flags |= CC_FLAG_CASE;
-    if (REF(reverse))
+    if (REF(REVERSE))
         flags |= CC_FLAG_REVERSE;
 
     bsd_qsort_r(
@@ -1320,12 +1320,12 @@ IMPLEMENT_GENERIC(SORT, Any_String)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(encode_utf_8) {
+DECLARE_NATIVE(ENCODE_UTF_8) {
     INCLUDE_PARAMS_OF_ENCODE_UTF_8;
 
-    Value* arg = ARG(arg);
+    Value* arg = ARG(ARG);
 
-    if (Cell_Series_Len_At(ARG(options)))
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
         return FAIL("UTF-8 Encoder Options not Designed Yet");
 
     Size utf8_size;
@@ -1348,7 +1348,7 @@ DECLARE_NATIVE(encode_utf_8) {
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(decode_utf_8)
+DECLARE_NATIVE(DECODE_UTF_8)
 //
 // 1. It's pretty easy to say (as tag! decode 'UTF8 some-binary).  Admittedly
 //    that's longer than (to tag! some-binary) or (make tag! some-binary),
@@ -1357,9 +1357,9 @@ DECLARE_NATIVE(decode_utf_8)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF_8;
 
-    Element* blob = Element_ARG(blob);
+    Element* blob = Element_ARG(BLOB);
 
-    if (Cell_Series_Len_At(ARG(options)))
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
         return FAIL("UTF-8 Decoder Options not Designed Yet");
 
     Heart heart = TYPE_TEXT;  // should options let you specify? [1]

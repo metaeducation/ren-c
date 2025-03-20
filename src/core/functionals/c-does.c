@@ -56,7 +56,7 @@
 //      source [block!]  ; allow other types? [1]
 //  ]
 //
-DECLARE_NATIVE(does)
+DECLARE_NATIVE(DOES)
 //
 // 1. There is an open question if you should be able to pass DOES anything
 //    that you could pass and use as a branch, e.g.:
@@ -78,7 +78,7 @@ DECLARE_NATIVE(does)
 {
     INCLUDE_PARAMS_OF_DOES;
 
-    Value* source = ARG(source);
+    Value* source = ARG(SOURCE);
 
     if (Is_Block(source))
         return rebValue(CANON(LAMBDA), EMPTY_BLOCK, source);

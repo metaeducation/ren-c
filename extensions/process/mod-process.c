@@ -103,7 +103,7 @@
 //          ['none 'inherit text! blob! file!]
 //  ]
 //
-DECLARE_NATIVE(call_internal_p)
+DECLARE_NATIVE(CALL_INTERNAL_P)
 //
 // !!! Parameter usage may require WAIT mode even if not explicitly requested.
 // /WAIT should be default, with /ASYNC (or otherwise) as exception!
@@ -121,7 +121,7 @@ DECLARE_NATIVE(call_internal_p)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(get_os_browsers)
+DECLARE_NATIVE(GET_OS_BROWSERS)
 //
 // !!! Using the %1 convention is not necessarily ideal vs. having some kind
 // of more "structural" result, it was just easy because it's how the string
@@ -225,7 +225,7 @@ DECLARE_NATIVE(get_os_browsers)
 //          [integer! decimal! time!]
 //  ]
 //
-DECLARE_NATIVE(sleep)
+DECLARE_NATIVE(SLEEP)
 //
 // !!! This was a temporary workaround for the fact that it is not currently
 // possible to do a WAIT on a time from within an AWAKE handler.  A proper
@@ -239,7 +239,7 @@ DECLARE_NATIVE(sleep)
 {
     INCLUDE_PARAMS_OF_SLEEP;
 
-    REBLEN msec = Milliseconds_From_Value(ARG(duration));
+    REBLEN msec = Milliseconds_From_Value(ARG(DURATION));
 
   #if TO_WINDOWS
     Sleep(msec);
@@ -286,19 +286,19 @@ static Bounce Delegate_Kill_Process(pid_t pid, int signal)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(terminate)
+DECLARE_NATIVE(TERMINATE)
 {
     INCLUDE_PARAMS_OF_TERMINATE;
 
   #if TO_WINDOWS
 
-    if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(pid))))
+    if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(PID))))
         return RAISE(
           "QUIT or SYS.UTIL/EXIT terminate current process, not TERMINATE"
         );
 
     DWORD err = 0;
-    HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, VAL_INT32(ARG(pid)));
+    HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, VAL_INT32(ARG(PID)));
     if (ph == NULL) {
         err = GetLastError();
         switch (err) {
@@ -306,7 +306,7 @@ DECLARE_NATIVE(terminate)
             return Delegate_Fail_Permission_Denied();
 
           case ERROR_INVALID_PARAMETER:
-            return Delegate_Fail_No_Process(ARG(pid));
+            return Delegate_Fail_No_Process(ARG(PID));
 
           default:
             return Delegate_Fail_Terminate_Failed(err);
@@ -322,7 +322,7 @@ DECLARE_NATIVE(terminate)
     CloseHandle(ph);
     switch (err) {
       case ERROR_INVALID_HANDLE:
-        return Delegate_Fail_No_Process(ARG(pid));
+        return Delegate_Fail_No_Process(ARG(PID));
 
       default:
         return Delegate_Fail_Terminate_Failed(err);
@@ -330,13 +330,13 @@ DECLARE_NATIVE(terminate)
 
   #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 
-    if (getpid() == VAL_INT32(ARG(pid))) {  // signal not reliable for this
+    if (getpid() == VAL_INT32(ARG(PID))) {  // signal not reliable for this
         return FAIL(
             "QUIT or SYS.UTIL/EXIT to terminate current process, instead"
         );
     }
 
-    return Delegate_Kill_Process(VAL_INT32(ARG(pid)), SIGTERM);
+    return Delegate_Kill_Process(VAL_INT32(ARG(PID)), SIGTERM);
 
   #else
 
@@ -357,7 +357,7 @@ DECLARE_NATIVE(terminate)
 //          [<maybe> text! word!]
 //  ]
 //
-DECLARE_NATIVE(get_env)
+DECLARE_NATIVE(GET_ENV)
 //
 // !!! Prescriptively speaking, it is typically considered a bad idea to treat
 // an empty string environment variable as different from an unset one:
@@ -371,7 +371,7 @@ DECLARE_NATIVE(get_env)
 {
     INCLUDE_PARAMS_OF_GET_ENV;
 
-    Value* variable = ARG(variable);
+    Value* variable = ARG(VARIABLE);
 
     Value* error = nullptr;
 
@@ -412,7 +412,7 @@ DECLARE_NATIVE(get_env)
             DWORD dwerr = GetLastError();
             if (dwerr == 0) {  // in case this ever happens, give more info
                 error = rebValue("make error! spaced [",
-                    "-{Mystery bug getting environment var}- @", ARG(variable),
+                    "-{Mystery bug getting environment var}- @", ARG(VARIABLE),
                     "-{with length reported as}-", rebI(val_len_plus_one - 1),
                     "-{but returned length from fetching is}-", rebI(val_len),
                 "]");
@@ -471,7 +471,7 @@ DECLARE_NATIVE(get_env)
 //          "Value to set the variable to, or NULL to unset it"
 //  ]
 //
-DECLARE_NATIVE(set_env)
+DECLARE_NATIVE(SET_ENV)
 //
 // !!! WARNING: While reading environment variables from a C program is fine,
 // writing them is a generally sketchy proposition and should probably be
@@ -516,8 +516,8 @@ DECLARE_NATIVE(set_env)
 {
     INCLUDE_PARAMS_OF_SET_ENV;
 
-    Value* variable = ARG(variable);
-    Value* value = ARG(value);
+    Value* variable = ARG(VARIABLE);
+    Value* value = ARG(VALUE);
 
   #if TO_WINDOWS
     WCHAR* key_wide = rebSpellWide(variable);
@@ -578,7 +578,7 @@ DECLARE_NATIVE(set_env)
     rebFree(key_utf8);
   #endif
 
-    return COPY(ARG(value));
+    return COPY(ARG(VALUE));
 }
 
 
@@ -590,7 +590,7 @@ DECLARE_NATIVE(set_env)
 //      return: [map!]
 //  ]
 //
-DECLARE_NATIVE(list_env)
+DECLARE_NATIVE(LIST_ENV)
 {
     INCLUDE_PARAMS_OF_LIST_ENV;
 

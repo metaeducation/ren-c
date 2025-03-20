@@ -61,7 +61,7 @@ typedef RebolValue Value;
 //      return: [blob!]
 //  ]
 //
-DECLARE_NATIVE(generate)
+DECLARE_NATIVE(GENERATE)
 {
     INCLUDE_PARAMS_OF_GENERATE;
 

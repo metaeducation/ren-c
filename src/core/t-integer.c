@@ -45,7 +45,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Integer(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Integer(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -53,14 +53,14 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Integer(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Integer(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
 IMPLEMENT_GENERIC(ZEROIFY, Is_Integer)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
-    UNUSED(ARG(example));  // always gives 0
+    UNUSED(ARG(EXAMPLE));  // always gives 0
 
     return Init_Integer(OUT, 0);
 }
@@ -96,10 +96,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_INTEGER);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_INTEGER);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Option(Error*) error = Trap_Transcode_One(OUT, TYPE_0, arg);
@@ -161,9 +161,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
 
@@ -316,14 +316,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 
       case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
-        USED(ARG(value));  // extracted as d1, others are passed via level_
-        USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
-        USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
+        USED(ARG(VALUE));  // extracted as d1, others are passed via level_
+        USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
+        USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-        if (not REF(to))
+        if (not REF(TO))
             return Init_Integer(OUT, Round_Int(num, level_, 0L));
 
-        Value* to = ARG(to);
+        Value* to = ARG(TO);
         if (Is_Nulled(to))
             Init_Integer(to, 1);
 
@@ -345,8 +345,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             return OUT;
         }
 
-        if (Is_Time(ARG(to)))
-            return FAIL(PARAM(to));
+        if (Is_Time(ARG(TO)))
+            return FAIL(PARAM(TO));
 
         return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to))); }
 
@@ -362,8 +362,8 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* val = Element_ARG(element);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* val = Element_ARG(ELEMENT);
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_Utf8_Type(to) and not Any_Word_Type(to)) {
         DECLARE_MOLDER (mo);
@@ -391,7 +391,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     }
 
     if (Any_List_Type(to))
-        return rebValue(CANON(ENVELOP), ARG(type), val);
+        return rebValue(CANON(ENVELOP), ARG(TYPE), val);
 
     if (to == TYPE_DECIMAL or to == TYPE_PERCENT) {
         REBDEC d = cast(REBDEC, VAL_INT64(val));
@@ -414,7 +414,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_RANDOMIZE;
 
-    REBI64 num = VAL_INT64(Element_ARG(seed));
+    REBI64 num = VAL_INT64(Element_ARG(SEED));
 
     Set_Random(num);
     return NOTHING;
@@ -425,12 +425,12 @@ IMPLEMENT_GENERIC(RANDOM, Is_Integer)
 {
     INCLUDE_PARAMS_OF_RANDOM;
 
-    REBI64 max = VAL_INT64(Element_ARG(max));
+    REBI64 max = VAL_INT64(Element_ARG(MAX));
 
     if (max == 0)
-        return FAIL(PARAM(max));  // range is 1 to max, inclusive
+        return FAIL(PARAM(MAX));  // range is 1 to max, inclusive
 
-    return Init_Integer(OUT, Random_Range(max, REF(secure)));
+    return Init_Integer(OUT, Random_Range(max, REF(SECURE)));
 }
 
 
@@ -438,27 +438,27 @@ IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
 {
     INCLUDE_PARAMS_OF_RANDOM_BETWEEN;
 
-    REBI64 min = VAL_INT64(Element_ARG(min));
-    REBI64 max = VAL_INT64(Element_ARG(max));
+    REBI64 min = VAL_INT64(Element_ARG(MIN));
+    REBI64 max = VAL_INT64(Element_ARG(MAX));
 
     if (max < min)
-        return FAIL(PARAM(max));  // 0 to 0 is okay, but disallow 1 to 0
+        return FAIL(PARAM(MAX));  // 0 to 0 is okay, but disallow 1 to 0
 
-    REBI64 rand = Random_Range(1 + max - min, REF(secure));  // 1-based
+    REBI64 rand = Random_Range(1 + max - min, REF(SECURE));  // 1-based
 
     return Init_Integer(OUT, rand + min - 1);
 }
 
 
 // 1. Both arguments are guaranteed to be integers due to the commutativity
-//    provided by DECLARE_NATIVE(multiply), see definition.
+//    provided by DECLARE_NATIVE(MULTIPLY), see definition.
 //
 IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    REBI64 num1 = VAL_INT64(ARG(value1));
-    REBI64 num2 = VAL_INT64(ARG(value2));  // must be integer [1]
+    REBI64 num1 = VAL_INT64(ARG(VALUE1));
+    REBI64 num2 = VAL_INT64(ARG(VALUE2));  // must be integer [1]
 
     REBI64 result;
     if (REB_I64_MUL_OF(num1, num2, &result))

@@ -112,7 +112,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
 //          [<maybe> element? logic?]
 //  ]
 //
-DECLARE_NATIVE(pick)
+DECLARE_NATIVE(PICK)
 //
 // R3-Alpha had PD_Xxx() functions which were hooks for "Path Dispatch", which
 // was distinct from the code that ran the PICK action.
@@ -127,7 +127,7 @@ DECLARE_NATIVE(pick)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    Value* picker = ARG(picker);
+    Value* picker = ARG(PICKER);
 
     if (Is_Okay(picker)) {  // !!! should we verify that LENGTH-OF is 2? [1]
         Init_Integer(picker, 1);
@@ -137,7 +137,7 @@ DECLARE_NATIVE(pick)
     }
     assert(not Is_Antiform(picker));  // LOGIC? is the only supported antiform
 
-    Element* location = Element_ARG(location);
+    Element* location = Element_ARG(LOCATION);
     return Dispatch_Generic(PICK, location, LEVEL);
 }
 
@@ -156,7 +156,7 @@ DECLARE_NATIVE(pick)
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(poke)
+DECLARE_NATIVE(POKE)
 //
 // Note: In Ren-C, POKE underlies the implementation of SET on TUPLE!.
 // For it to work, the return value is the cell contents that should be
@@ -188,9 +188,9 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    Element* a = Element_ARG(value1);
-    Element* b = Element_ARG(value2);
-    bool strict = REF(strict);
+    Element* a = Element_ARG(VALUE1);
+    Element* b = Element_ARG(VALUE2);
+    bool strict = REF(STRICT);
 
     Length a_len = Cell_Sequence_Len(a);
     Length b_len = Cell_Sequence_Len(b);
@@ -218,8 +218,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    Element* a = Element_ARG(value1);
-    Element* b = Element_ARG(value2);
+    Element* a = Element_ARG(VALUE1);
+    Element* b = Element_ARG(VALUE2);
 
     Length a_len = Cell_Sequence_Len(a);
     Length b_len = Cell_Sequence_Len(b);
@@ -261,7 +261,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
 
-    Element* sequence = Element_ARG(example);
+    Element* sequence = Element_ARG(EXAMPLE);
 
     Heart heart = Cell_Heart(sequence);
     assert(Any_Sequence_Type(heart));

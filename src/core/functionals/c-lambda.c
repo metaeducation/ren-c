@@ -136,12 +136,12 @@ bool Lambda_Details_Querier(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(lambda)
+DECLARE_NATIVE(LAMBDA)
 {
     INCLUDE_PARAMS_OF_LAMBDA;
 
-    Element* spec = Element_ARG(spec);
-    Element* body = Element_ARG(body);
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
 
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,

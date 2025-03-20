@@ -408,12 +408,12 @@ Details* Make_Interpreted_Action_May_Fail(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(function)
+DECLARE_NATIVE(FUNCTION)
 {
     INCLUDE_PARAMS_OF_FUNCTION;
 
-    Element* spec = Element_ARG(spec);
-    Element* body = Element_ARG(body);
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
 
     Details* details = Make_Interpreted_Action_May_Fail(
         spec,
@@ -508,7 +508,7 @@ Bounce Init_Thrown_Unwind_Value(
 //          [any-atom?]
 //  ]
 //
-DECLARE_NATIVE(unwind)
+DECLARE_NATIVE(UNWIND)
 //
 // UNWIND is implemented via a throw that bubbles through the stack.  Using
 // UNWIND's action Value with a target `binding` field is the protocol
@@ -525,9 +525,9 @@ DECLARE_NATIVE(unwind)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 
-    Value* level = ARG(level);
+    Value* level = ARG(LEVEL);
 
-    Copy_Cell(SPARE, ARG(result));  // SPARE can hold unstable isotopes
+    Copy_Cell(SPARE, ARG(RESULT));  // SPARE can hold unstable isotopes
     Meta_Unquotify_Undecayed(SPARE);
 
     return Init_Thrown_Unwind_Value(LEVEL, level, SPARE, level_);
@@ -588,7 +588,7 @@ bool Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
 //      ;   [<variadic> any-value?]  ; would force this frame managed
 //  ]
 //
-DECLARE_NATIVE(definitional_return)
+DECLARE_NATIVE(DEFINITIONAL_RETURN)
 //
 // Returns in Ren-C are functions that are aware of the function they return
 // to.  So the dispatchers for functions that provide return e.g. FUNC will
@@ -614,7 +614,7 @@ DECLARE_NATIVE(definitional_return)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Atom* atom = Copy_Cell(OUT, ARG(atom));  // ARG can't be unstable
+    Atom* atom = Copy_Cell(OUT, ARG(ATOM));  // ARG can't be unstable
     Meta_Unquotify_Undecayed(atom);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
@@ -632,7 +632,7 @@ DECLARE_NATIVE(definitional_return)
         Phase_Paramlist(target_details), SYM_RETURN
     );
 
-    if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
+    if (not REF(RUN)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]
             LEVEL, return_param, OUT
         )){
@@ -696,7 +696,7 @@ DECLARE_NATIVE(definitional_return)
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(definitional_redo)
+DECLARE_NATIVE(DEFINITIONAL_REDO)
 //
 // It would be possible to multiplex RETURN:RUN's functionality onto the throw
 // signal of DEFINITIONAL-RETURN.  It could use CELL_FLAG_NOTE on the thrown

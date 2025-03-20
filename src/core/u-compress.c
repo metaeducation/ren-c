@@ -388,7 +388,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
 //          [integer! blob! text!]
 //  ]
 //
-DECLARE_NATIVE(checksum_core)
+DECLARE_NATIVE(CHECKSUM_CORE)
 //
 // Most checksum and hashing algorithms are optional in the build (at time of
 // writing they are all in the "Crypt" extension).  This is because they come
@@ -414,13 +414,13 @@ DECLARE_NATIVE(checksum_core)
 {
     INCLUDE_PARAMS_OF_CHECKSUM_CORE;
 
-    REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
+    REBLEN len = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
 
     Size size;
-    const Byte* data = Cell_Bytes_Limit_At(&size, ARG(data), &len);
+    const Byte* data = Cell_Bytes_Limit_At(&size, ARG(DATA), &len);
 
     uLong crc;  // Note: zlib.h defines "crc32" as "z_crc32"
-    switch (Cell_Word_Id(ARG(method))) {
+    switch (Cell_Word_Id(ARG(METHOD))) {
       case SYM_CRC32:
         crc = crc32_z(0L, data, size);
         break;
@@ -462,20 +462,20 @@ DECLARE_NATIVE(checksum_core)
 //          ['zlib 'gzip]
 //  ]
 //
-DECLARE_NATIVE(deflate)
+DECLARE_NATIVE(DEFLATE)
 {
     INCLUDE_PARAMS_OF_DEFLATE;
 
-    REBLEN limit = Part_Len_May_Modify_Index(ARG(data), ARG(part));
+    REBLEN limit = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
 
     Size size;
-    const Byte* bp = Cell_Bytes_Limit_At(&size, ARG(data), &limit);
+    const Byte* bp = Cell_Bytes_Limit_At(&size, ARG(DATA), &limit);
 
     Option(SymId) envelope;
-    if (not REF(envelope))
+    if (not REF(ENVELOPE))
         envelope = SYM_0;
     else {
-        envelope = Cell_Word_Id(ARG(envelope));
+        envelope = Cell_Word_Id(ARG(ENVELOPE));
         switch (envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:
@@ -513,7 +513,7 @@ DECLARE_NATIVE(deflate)
 //          ['zlib 'gzip 'detect]
 //  ]
 //
-DECLARE_NATIVE(inflate)
+DECLARE_NATIVE(INFLATE)
 //
 // GZIP is a slight variant envelope which uses a CRC32 checksum.  For data
 // whose original size was < 2^32 bytes, the gzip envelope stored that size...
@@ -528,30 +528,30 @@ DECLARE_NATIVE(inflate)
     INCLUDE_PARAMS_OF_INFLATE;
 
     REBINT max;
-    if (REF(max)) {
-        max = Int32s(ARG(max), 1);
+    if (REF(MAX)) {
+        max = Int32s(ARG(MAX), 1);
         if (max < 0)
-            return FAIL(PARAM(max));
+            return FAIL(PARAM(MAX));
     }
     else
         max = -1;
 
     const Byte* data;
     Size size;
-    if (Is_Blob(ARG(data))) {
-        size = Part_Len_May_Modify_Index(ARG(data), ARG(part));
-        data = Cell_Blob_At(ARG(data));  // after (in case index modified)
+    if (Is_Blob(ARG(DATA))) {
+        size = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
+        data = Cell_Blob_At(ARG(DATA));  // after (in case index modified)
     }
     else {
-        size = Cell_Handle_Len(ARG(data));
-        data = Cell_Handle_Pointer(Byte, ARG(data));
+        size = Cell_Handle_Len(ARG(DATA));
+        data = Cell_Handle_Pointer(Byte, ARG(DATA));
     }
 
     Option(SymId) envelope;
-    if (not REF(envelope))
+    if (not REF(ENVELOPE))
         envelope = SYM_0;
     else {
-        envelope = Cell_Word_Id(ARG(envelope));
+        envelope = Cell_Word_Id(ARG(ENVELOPE));
         switch (envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:

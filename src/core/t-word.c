@@ -101,10 +101,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(type));
+    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
     assert(Any_Word_Type(heart));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Any_Sequence(arg)) {  // (make word! '/a) or (make word! 'a:) etc.
         do {
@@ -132,9 +132,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Word)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     UNUSED(form);
 
@@ -157,9 +157,9 @@ IMPLEMENT_GENERIC(TO, Any_Word)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    USED(ARG(element));  // deferred to other generic implementations
+    USED(ARG(ELEMENT));  // deferred to other generic implementations
 
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_Word_Type(to))
         return GENERIC_CFUNC(AS, Any_Word)(LEVEL);  // immutable alias
@@ -178,8 +178,8 @@ IMPLEMENT_GENERIC(AS, Any_Word)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* word = Element_ARG(element);
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    Element* word = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_Word_Type(as)) {
         Copy_Cell(OUT, word);
@@ -215,7 +215,7 @@ IMPLEMENT_GENERIC(BINDING_OF, Any_Word)
 {
     INCLUDE_PARAMS_OF_BINDING_OF;
 
-    Element* any_word = Element_ARG(element);
+    Element* any_word = Element_ARG(ELEMENT);
 
     if (not Try_Get_Binding_Of(OUT, any_word))
         return nullptr;

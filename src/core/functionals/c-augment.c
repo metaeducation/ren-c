@@ -69,7 +69,7 @@
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(augment)
+DECLARE_NATIVE(AUGMENT)
 //
 // 1. We reuse the process from Make_Paramlist_Managed_May_Fail(), which
 //    pushes WORD! and PARAMETER! antiform pairs for each argument.
@@ -86,8 +86,8 @@ DECLARE_NATIVE(augment)
 {
     INCLUDE_PARAMS_OF_AUGMENT;
 
-    Element* spec = Element_ARG(spec);
-    Element* original = Element_ARG(original);
+    Element* spec = Element_ARG(SPEC);
+    Element* original = Element_ARG(ORIGINAL);
 
     Option(const Symbol*) label = Cell_Frame_Label_Deep(original);
     Option(VarList*) coupling = Cell_Frame_Coupling(original);
@@ -116,8 +116,8 @@ DECLARE_NATIVE(augment)
         SYM_0  // if original had no return, we don't add
     );
 
-    Phase* prior = Cell_Frame_Phase(ARG(original));
-    Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(original));
+    Phase* prior = Cell_Frame_Phase(ARG(ORIGINAL));
+    Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(ORIGINAL));
 
     ParamList* paramlist = Pop_Paramlist_May_Fail(  // checks dups
         STACK_BASE, prior, prior_coupling

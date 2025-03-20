@@ -65,11 +65,11 @@
 //          [any-value?]  ; ^META to allow passing antiform blank (NOTHING)
 //  ]
 //
-DECLARE_NATIVE(test_librebol)
+DECLARE_NATIVE(TEST_LIBREBOL)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
 
-    Value* v = Meta_Unquotify_Known_Stable(ARG(value));
+    Value* v = Meta_Unquotify_Known_Stable(ARG(VALUE));
     UNUSED(v);
 
   #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
@@ -205,7 +205,7 @@ DECLARE_NATIVE(test_librebol)
 //          [integer! percent!]
 //  ]
 //
-DECLARE_NATIVE(fuzz)
+DECLARE_NATIVE(FUZZ)
 //
 // 1. A negative g_mem.fuzz_factor will just count ticks.
 //
@@ -217,16 +217,16 @@ DECLARE_NATIVE(fuzz)
     INCLUDE_PARAMS_OF_FUZZ;
 
   #if RUNTIME_CHECKS
-    if (Is_Integer(ARG(factor))) {
-        g_mem.fuzz_factor = - VAL_INT32(ARG(factor));  // negative [1]
+    if (Is_Integer(ARG(FACTOR))) {
+        g_mem.fuzz_factor = - VAL_INT32(ARG(FACTOR));  // negative [1]
     }
     else {
-        assert(Is_Percent(ARG(factor)));
-        g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(factor));  // positive [2]
+        assert(Is_Percent(ARG(FACTOR)));
+        g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(FACTOR));  // positive [2]
     }
     return NOTHING;
   #else
-    UNUSED(ARG(factor));
+    UNUSED(ARG(FACTOR));
     return FAIL("FUZZ is only availble in RUNTIME_CHECKS builds");
   #endif
 }

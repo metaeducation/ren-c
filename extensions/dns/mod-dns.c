@@ -160,13 +160,13 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
-        UNUSED(PARAM(source));  // covered by `port`
+        UNUSED(PARAM(SOURCE));  // covered by `port`
 
-        if (REF(part) or REF(seek))
+        if (REF(PART) or REF(SEEK))
             return FAIL(Error_Bad_Refines_Raw());
 
-        UNUSED(PARAM(string)); // handled in dispatcher
-        UNUSED(PARAM(lines)); // handled in dispatcher
+        UNUSED(PARAM(STRING)); // handled in dispatcher
+        UNUSED(PARAM(LINES)); // handled in dispatcher
 
         Value* host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
@@ -252,9 +252,9 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PARAM(spec));
+        UNUSED(PARAM(SPEC));
 
-        if (REF(new) or REF(read) or REF(write))
+        if (REF(NEW) or REF(READ) or REF(WRITE))
             return FAIL(Error_Bad_Refines_Raw());
 
         // !!! All the information the DNS needs is at the moment in the
@@ -286,7 +286,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 //      return: [handle!]
 //  ]
 //
-DECLARE_NATIVE(get_dns_actor_handle)
+DECLARE_NATIVE(GET_DNS_ACTOR_HANDLE)
 {
     Make_Port_Actor_Handle(OUT, &DNS_Actor);
     return OUT;

@@ -267,7 +267,7 @@ bool Cascader_Details_Querier(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
+DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
 //
 // 1. !!! Current validation is that all are frames.  Should there be other
 //    checks?  (That inputs match outputs in the pipeline?)  Should it be a
@@ -280,7 +280,7 @@ DECLARE_NATIVE(cascade_p)  // see extended CASCADE in %base-defs.r
 
     Atom* out = OUT;  // plan ahead for factoring into Cascade_Action(out..
 
-    Element* pipeline = Element_ARG(pipeline);
+    Element* pipeline = Element_ARG(PIPELINE);
     const Element* tail;
     const Element* first = Cell_List_At(&tail, pipeline);
 

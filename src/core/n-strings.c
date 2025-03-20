@@ -61,11 +61,11 @@ static bool Check_Char_Range(const Value* val, Codepoint limit)
 //      value [any-string? char? integer!]
 //  ]
 //
-DECLARE_NATIVE(ascii_q)
+DECLARE_NATIVE(ASCII_Q)
 {
     INCLUDE_PARAMS_OF_ASCII_Q;
 
-    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0x7f));
+    return Init_Logic(OUT, Check_Char_Range(ARG(VALUE), 0x7f));
 }
 
 
@@ -78,11 +78,11 @@ DECLARE_NATIVE(ascii_q)
 //      value [any-string? char? integer!]
 //  ]
 //
-DECLARE_NATIVE(latin1_q)
+DECLARE_NATIVE(LATIN1_Q)
 {
     INCLUDE_PARAMS_OF_LATIN1_Q;
 
-    return Init_Logic(OUT, Check_Char_Range(ARG(value), 0xff));
+    return Init_Logic(OUT, Check_Char_Range(ARG(VALUE), 0xff));
 }
 
 
@@ -121,16 +121,16 @@ DECLARE_NATIVE(latin1_q)
 //      <local> original-index
 //  ]
 //
-DECLARE_NATIVE(join)
+DECLARE_NATIVE(JOIN)
 {
     INCLUDE_PARAMS_OF_JOIN;
 
-    Element* base = Element_ARG(base);
-    Value* rest = ARG(rest);
+    Element* base = Element_ARG(BASE);
+    Value* rest = ARG(REST);
 
-    Value* original_index = LOCAL(original_index);
+    Value* original_index = LOCAL(ORIGINAL_INDEX);
 
-    Value* delimiter = ARG(with);
+    Value* delimiter = ARG(WITH);
     possibly(Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
 
     enum {
@@ -188,12 +188,12 @@ DECLARE_NATIVE(join)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    if (REF(head) and not Is_Nulled(delimiter))
+    if (REF(HEAD) and not Is_Nulled(delimiter))
         Form_Element(mo, cast(Element*, delimiter));
 
     Form_Element(mo, cast(Element*, rest));
 
-    if (REF(tail) and not Is_Nulled(delimiter))
+    if (REF(TAIL) and not Is_Nulled(delimiter))
         Form_Element(mo, cast(Element*, delimiter));
 
     return Init_Text(OUT, Pop_Molded_String(mo));
@@ -250,7 +250,7 @@ DECLARE_NATIVE(join)
     if (not Is_Type_Block(base))
         Copy_Cell(PUSH(), base);
 
-    if (REF(head) and not Is_Nulled(delimiter))  // speculatively start with
+    if (REF(HEAD) and not Is_Nulled(delimiter))  // speculatively start with
         Copy_Cell(PUSH(), cast(Element*, delimiter));  // may be tossed
 
     Init_Integer(original_index, TOP_INDEX);
@@ -282,7 +282,7 @@ DECLARE_NATIVE(join)
         }
     }
 
-    if (REF(head) and not Is_Nulled(delimiter))  // speculatively start with
+    if (REF(HEAD) and not Is_Nulled(delimiter))  // speculatively start with
         Copy_Cell(PUSH(), cast(Element*, delimiter));  // may be tossed
 
     Init_Integer(original_index, TOP_INDEX);
@@ -514,7 +514,7 @@ DECLARE_NATIVE(join)
         return rebValue(CANON(COPY), rebQ(base));
     }
 
-    if (REF(tail) and not Is_Nulled(delimiter))
+    if (REF(TAIL) and not Is_Nulled(delimiter))
         Copy_Cell(PUSH(), cast(Element*, delimiter));
 
     Heart heart;
@@ -605,7 +605,7 @@ DECLARE_NATIVE(join)
         Move_Drop_Top_Stack_Element(OUT);
     }
     else
-        return FAIL(PARAM(base));
+        return FAIL(PARAM(BASE));
 
     if (mo->string)
         Drop_Mold(mo);
@@ -700,7 +700,7 @@ DECLARE_NATIVE(join)
         return rebValue(CANON(COPY), rebQ(base));
     }
 
-    if (REF(tail) and not Is_Nulled(delimiter))
+    if (REF(TAIL) and not Is_Nulled(delimiter))
         Copy_Cell(PUSH(), cast(Element*, delimiter));
 
     Heart heart;
@@ -740,22 +740,22 @@ DECLARE_NATIVE(join)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(debase)
+DECLARE_NATIVE(DEBASE)
 {
     INCLUDE_PARAMS_OF_DEBASE;
 
     Size size;
-    const Byte* bp = Cell_Bytes_At(&size, ARG(value));
+    const Byte* bp = Cell_Bytes_At(&size, ARG(VALUE));
 
     REBINT base = 64;
-    if (REF(base))
-        base = VAL_INT32(ARG(base));
+    if (REF(BASE))
+        base = VAL_INT32(ARG(BASE));
     else
         base = 64;
 
     Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&bp, size, base, 0);
     if (not decoded)
-        return FAIL(Error_Invalid_Data_Raw(ARG(value)));
+        return FAIL(Error_Invalid_Data_Raw(ARG(VALUE)));
 
     return Init_Blob(OUT, decoded);
 }
@@ -773,18 +773,18 @@ DECLARE_NATIVE(debase)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(enbase)
+DECLARE_NATIVE(ENBASE)
 {
     INCLUDE_PARAMS_OF_ENBASE;
 
     REBINT base;
-    if (REF(base))
-        base = VAL_INT32(ARG(base));
+    if (REF(BASE))
+        base = VAL_INT32(ARG(BASE));
     else
         base = 64;
 
     Size size;
-    const Byte* bp = Cell_Bytes_At(&size, ARG(value));
+    const Byte* bp = Cell_Bytes_At(&size, ARG(VALUE));
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -804,7 +804,7 @@ DECLARE_NATIVE(enbase)
         break;
 
       default:
-        return FAIL(PARAM(base));
+        return FAIL(PARAM(BASE));
     }
 
     return Init_Text(OUT, Pop_Molded_String(mo));
@@ -822,7 +822,7 @@ DECLARE_NATIVE(enbase)
 //          [any-string?]
 //  ]
 //
-DECLARE_NATIVE(enhex)
+DECLARE_NATIVE(ENHEX)
 //
 // 1. !!! Length 4 should be legal here, but a warning in an older GCC is
 //    complaining that Encode_UTF8_Char reaches out of array bounds when it
@@ -844,7 +844,7 @@ DECLARE_NATIVE(enhex)
     Push_Mold (mo);
 
     REBLEN len;
-    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(string));
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(STRING));
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -877,7 +877,7 @@ DECLARE_NATIVE(enhex)
 
     return Init_Any_String(
         OUT,
-        Cell_Heart_Ensure_Noquote(ARG(string)),
+        Cell_Heart_Ensure_Noquote(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -895,7 +895,7 @@ DECLARE_NATIVE(enhex)
 //      :blob "Give result as a binary BLOB!, permits %00 encodings"  ; [1]
 //  ]
 //
-DECLARE_NATIVE(dehex)
+DECLARE_NATIVE(DEHEX)
 //
 // 1. Ren-C is committed to having string types not contain the 0 codepoint,
 //    but it's explicitly legal for percent encoding to allow %00 in URLs.
@@ -905,13 +905,13 @@ DECLARE_NATIVE(dehex)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
-    if (REF(blob))
+    if (REF(BLOB))
         return FAIL("DEHEX:BLOB not yet implemented, but will permit %00");
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    Utf8(const*) cp = Cell_Utf8_Head(ARG(string));
+    Utf8(const*) cp = Cell_Utf8_Head(ARG(STRING));
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -990,7 +990,7 @@ DECLARE_NATIVE(dehex)
 
     return Init_Any_String(
         OUT,
-        Cell_Heart_Ensure_Noquote(ARG(string)),
+        Cell_Heart_Ensure_Noquote(ARG(STRING)),
         Pop_Molded_String(mo)
     );
 }
@@ -1007,16 +1007,16 @@ DECLARE_NATIVE(dehex)
 //      :lines "Return block of lines (works for LF, CR-LF endings)"
 //  ]
 //
-DECLARE_NATIVE(deline)
+DECLARE_NATIVE(DELINE)
 {
     INCLUDE_PARAMS_OF_DELINE;
 
     // AS TEXT! verifies the UTF-8 validity of a BLOB!, and checks for any
     // embedded '\0' bytes, illegal in texts...without copying the input.
     //
-    Value* input = rebValue("as text!", ARG(input));
+    Value* input = rebValue("as text!", ARG(INPUT));
 
-    if (REF(lines)) {
+    if (REF(LINES)) {
         Init_Block(OUT, Split_Lines(cast(Element*, input)));
         rebRelease(input);
         return OUT;
@@ -1084,11 +1084,11 @@ DECLARE_NATIVE(deline)
 //      string [any-string?] "(modified)"
 //  ]
 //
-DECLARE_NATIVE(enline)
+DECLARE_NATIVE(ENLINE)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
-    Value* val = ARG(string);
+    Value* val = ARG(STRING);
 
     String* s = Cell_String_Ensure_Mutable(val);
     REBLEN idx = VAL_INDEX(val);
@@ -1125,7 +1125,7 @@ DECLARE_NATIVE(enline)
     }
 
     if (delta == 0)
-        return COPY(ARG(string)); // nothing to do
+        return COPY(ARG(STRING)); // nothing to do
 
     REBLEN old_len = Misc_Num_Codepoints(s);
     Expand_Flex_Tail(s, delta);  // corrupts misc.num_codepoints
@@ -1161,7 +1161,7 @@ DECLARE_NATIVE(enline)
         --size;
     }
 
-    return COPY(ARG(string));
+    return COPY(ARG(STRING));
 }
 
 
@@ -1177,23 +1177,23 @@ DECLARE_NATIVE(enline)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(entab)
+DECLARE_NATIVE(ENTAB)
 {
     INCLUDE_PARAMS_OF_ENTAB;
 
     REBINT tabsize;
-    if (REF(size))
-        tabsize = Int32s(ARG(size), 1);
+    if (REF(SIZE))
+        tabsize = Int32s(ARG(SIZE), 1);
     else
         tabsize = TAB_SIZE;
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    REBLEN len = Cell_Series_Len_At(ARG(string));
+    REBLEN len = Cell_Series_Len_At(ARG(STRING));
 
-    Utf8(const*) up = Cell_String_At(ARG(string));
-    REBLEN index = VAL_INDEX(ARG(string));
+    Utf8(const*) up = Cell_String_At(ARG(STRING));
+    REBLEN index = VAL_INDEX(ARG(STRING));
 
     REBINT n = 0;
     for (; index < len; index++) {
@@ -1236,7 +1236,7 @@ DECLARE_NATIVE(entab)
         }
     }
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(string));
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(STRING));
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 
@@ -1253,15 +1253,15 @@ DECLARE_NATIVE(entab)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(detab)
+DECLARE_NATIVE(DETAB)
 {
     INCLUDE_PARAMS_OF_DETAB;
 
-    REBLEN len = Cell_Series_Len_At(ARG(string));
+    REBLEN len = Cell_Series_Len_At(ARG(STRING));
 
     REBINT tabsize;
-    if (REF(size))
-        tabsize = Int32s(ARG(size), 1);
+    if (REF(SIZE))
+        tabsize = Int32s(ARG(SIZE), 1);
     else
         tabsize = TAB_SIZE;
 
@@ -1270,8 +1270,8 @@ DECLARE_NATIVE(detab)
 
     // Estimate new length based on tab expansion:
 
-    Utf8(const*) cp = Cell_String_At(ARG(string));
-    REBLEN index = VAL_INDEX(ARG(string));
+    Utf8(const*) cp = Cell_String_At(ARG(STRING));
+    REBLEN index = VAL_INDEX(ARG(STRING));
 
     REBLEN n = 0;
 
@@ -1295,7 +1295,7 @@ DECLARE_NATIVE(detab)
         Append_Codepoint(mo->string, c);
     }
 
-    Heart heart = Cell_Heart_Ensure_Noquote(ARG(string));
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(STRING));
     return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 
@@ -1312,11 +1312,11 @@ DECLARE_NATIVE(detab)
 //          [any-number? any-string?]
 //  ]
 //
-DECLARE_NATIVE(lowercase)
+DECLARE_NATIVE(LOWERCASE)
 {
     INCLUDE_PARAMS_OF_LOWERCASE;
 
-    Change_Case(OUT, ARG(string), ARG(part), false);
+    Change_Case(OUT, ARG(STRING), ARG(PART), false);
     return OUT;
 }
 
@@ -1333,11 +1333,11 @@ DECLARE_NATIVE(lowercase)
 //          [any-number? any-string?]
 //  ]
 //
-DECLARE_NATIVE(uppercase)
+DECLARE_NATIVE(UPPERCASE)
 {
     INCLUDE_PARAMS_OF_UPPERCASE;
 
-    Change_Case(OUT, ARG(string), ARG(part), true);
+    Change_Case(OUT, ARG(STRING), ARG(PART), true);
     return OUT;
 }
 
@@ -1353,15 +1353,15 @@ DECLARE_NATIVE(uppercase)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(to_hex)
+DECLARE_NATIVE(TO_HEX)
 {
     INCLUDE_PARAMS_OF_TO_HEX;
 
-    Value* arg = ARG(value);
+    Value* arg = ARG(VALUE);
 
     REBLEN len;
-    if (REF(size))
-        len = VAL_INT64(ARG(size));
+    if (REF(SIZE))
+        len = VAL_INT64(ARG(SIZE));
     else
         len = 0;  // !!! avoid compiler warning--but rethink this routine
 
@@ -1369,7 +1369,7 @@ DECLARE_NATIVE(to_hex)
     Push_Mold(mo);
 
     if (Is_Integer(arg)) {
-        if (not REF(size) or len > MAX_HEX_LEN)
+        if (not REF(SIZE) or len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
@@ -1377,7 +1377,7 @@ DECLARE_NATIVE(to_hex)
     else if (Is_Tuple(arg)) {
         REBLEN n;
         if (
-            not REF(size)
+            not REF(SIZE)
             or len > 2 * MAX_TUPLE
             or len > 2 * Cell_Sequence_Len(arg)
         ){
@@ -1389,14 +1389,14 @@ DECLARE_NATIVE(to_hex)
             Form_Hex2(mo, 0);
     }
     else
-        return FAIL(PARAM(value));
+        return FAIL(PARAM(VALUE));
 
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
     assert(len == String_Size(mo->string) - mo->base.size);
     if (not Try_Scan_Issue_To_Stack(Binary_At(mo->string, mo->base.size), len))
-        return FAIL(PARAM(value));
+        return FAIL(PARAM(VALUE));
 
     Move_Drop_Top_Stack_Element(OUT);
     Drop_Mold(mo);
@@ -1414,7 +1414,7 @@ DECLARE_NATIVE(to_hex)
 //      data [blob!]
 //  ]
 //
-DECLARE_NATIVE(invalid_utf8_q)
+DECLARE_NATIVE(INVALID_UTF8_Q)
 //
 // !!! A motivation for adding this native was because R3-Alpha did not fully
 // validate UTF-8 input, for perceived reasons of performance:
@@ -1429,7 +1429,7 @@ DECLARE_NATIVE(invalid_utf8_q)
 {
     INCLUDE_PARAMS_OF_INVALID_UTF8_Q;
 
-    Value* arg = ARG(data);
+    Value* arg = ARG(DATA);
 
     Size size;
     const Byte* utf8 = Cell_Blob_Size_At(&size, arg);

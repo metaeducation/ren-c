@@ -32,9 +32,9 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    Element* a = Element_ARG(value1);
-    Element* b = Element_ARG(value2);
-    bool strict = REF(strict);
+    Element* a = Element_ARG(VALUE1);
+    Element* b = Element_ARG(VALUE2);
+    bool strict = REF(STRICT);
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
@@ -81,8 +81,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    Element* a = Element_ARG(value1);
-    Element* b = Element_ARG(value2);
+    Element* a = Element_ARG(VALUE1);
+    Element* b = Element_ARG(VALUE2);
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
@@ -126,10 +126,10 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Heart(ARG(type));
+    Heart heart = Cell_Datatype_Heart(ARG(TYPE));
     assert(Any_List_Type(heart));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
@@ -481,9 +481,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
 
@@ -557,28 +557,28 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
       case SYM_FIND:
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_FIND; // must be same as select
-        UNUSED(PARAM(series));
+        UNUSED(PARAM(SERIES));
 
-        Value* pattern = ARG(pattern);
+        Value* pattern = ARG(PATTERN);
 
         if (Is_Void(pattern))
             return nullptr;  // VOID in, NULL out
 
         Flags flags = (
-            (REF(match) ? AM_FIND_MATCH : 0)
-            | (REF(case) ? AM_FIND_CASE : 0)
+            (REF(MATCH) ? AM_FIND_MATCH : 0)
+            | (REF(CASE) ? AM_FIND_CASE : 0)
         );
 
-        REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(part));
+        REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(PART));
 
         const Array* arr = Cell_Array(list);
         REBLEN index = VAL_INDEX(list);
 
         REBINT skip;
-        if (REF(skip)) {
-            skip = VAL_INT32(ARG(skip));
+        if (REF(SKIP)) {
+            skip = VAL_INT32(ARG(SKIP));
             if (skip == 0)
-                return FAIL(PARAM(skip));
+                return FAIL(PARAM(SKIP));
         }
         else
             skip = 1;
@@ -628,16 +628,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PARAM(series));
+        UNUSED(PARAM(SERIES));
 
-        Value* arg = ARG(value);
+        Value* arg = ARG(VALUE);
         assert(not Is_Nulled(arg));  // not ~null~ in typecheck
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(list, ARG(part));
+            len = Part_Len_May_Modify_Index(list, ARG(PART));
         else
-            len = Part_Limit_Append_Insert(ARG(part));
+            len = Part_Limit_Append_Insert(ARG(PART));
 
         // Note that while inserting or appending VOID is a no-op, CHANGE with
         // a :PART can actually erase data.
@@ -665,9 +665,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         else
             assert(not Is_Antiform(arg));
 
-        if (REF(part))
+        if (REF(PART))
             flags |= AM_PART;
-        if (REF(line))
+        if (REF(LINE))
             flags |= AM_LINE;
 
         VAL_INDEX_RAW(OUT) = Modify_Array(
@@ -677,7 +677,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             arg,
             flags,
             len,
-            REF(dup) ? Int32(ARG(dup)) : 1
+            REF(DUP) ? Int32(ARG(DUP)) : 1
         );
         return OUT; }
 
@@ -698,11 +698,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
       case SYM_SWAP: {
         INCLUDE_PARAMS_OF_SWAP;
-        UNUSED(ARG(series1));
+        UNUSED(ARG(SERIES1));
 
-        Value* arg = ARG(series2);
+        Value* arg = ARG(SERIES2);
         if (not Any_List(arg))
-            return FAIL(PARAM(series2));
+            return FAIL(PARAM(SERIES2));
 
         REBLEN index = VAL_INDEX(list);
 
@@ -775,8 +775,8 @@ IMPLEMENT_GENERIC(TO, Any_List)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* list = Element_ARG(element);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Element* list = Element_ARG(ELEMENT);
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_List_Type(to)) {
         Length len;
@@ -890,8 +890,8 @@ IMPLEMENT_GENERIC(AS, Any_List)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* list = Element_ARG(element);
-    Heart as = Cell_Datatype_Heart(ARG(type));
+    Element* list = Element_ARG(ELEMENT);
+    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_List_Type(as)) {
         HEART_BYTE(list) = as;
@@ -938,9 +938,9 @@ IMPLEMENT_GENERIC(COPY, Any_List)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* list = Element_ARG(value);
+    Element* list = Element_ARG(VALUE);
 
-    REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(part));
+    REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(PART));
 
     const Array* arr = Cell_Array(list);
     REBLEN index = VAL_INDEX(list);
@@ -955,7 +955,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         index, // at
         tail, // tail
         0, // extra
-        REF(deep)
+        REF(DEEP)
     ));
 
     Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
@@ -968,8 +968,8 @@ IMPLEMENT_GENERIC(PICK, Any_List)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* list = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    const Element* list = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
     REBINT n = Try_Get_Array_Index_From_Picker(list, picker);
     if (n < 0 or n >= Cell_Series_Len_Head(list))
@@ -986,10 +986,10 @@ IMPLEMENT_GENERIC(POKE, Any_List)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* list = Element_ARG(location);
-    const Element* picker = Element_ARG(picker);
+    Element* list = Element_ARG(LOCATION);
+    const Element* picker = Element_ARG(PICKER);
 
-    const Value* setval = ARG(value);
+    const Value* setval = ARG(VALUE);
 
     if (Is_Antiform(setval))
         return FAIL(Error_Bad_Antiform(setval));  // can't put in blocks
@@ -1015,17 +1015,17 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_TAKE;
 
-    if (REF(deep))
+    if (REF(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
-    Element* list = Element_ARG(series);
+    Element* list = Element_ARG(SERIES);
     Heart heart = Cell_Heart_Ensure_Noquote(list);  // TAKE gives same heart
 
     Source* arr = Cell_Array_Ensure_Mutable(list);
 
     REBLEN len;
-    if (REF(part)) {
-        len = Part_Len_May_Modify_Index(list, ARG(part));
+    if (REF(PART)) {
+        len = Part_Len_May_Modify_Index(list, ARG(PART));
         if (len == 0)
             return Init_Any_List(OUT, heart, Make_Source_Managed(0));
     }
@@ -1034,17 +1034,17 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 
     REBLEN index = VAL_INDEX(list); // Partial() can change index
 
-    if (REF(last))
+    if (REF(LAST))
         index = Cell_Series_Len_Head(list) - len;
 
     if (index >= Cell_Series_Len_Head(list)) {
-        if (not REF(part))
+        if (not REF(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
 
         return Init_Any_List(OUT, heart, Make_Source_Managed(0));
     }
 
-    if (REF(part)) {
+    if (REF(PART)) {
         Source* copy = Copy_Source_At_Max_Shallow(arr, index, len);
         Init_Any_List(OUT, heart, copy);
     }
@@ -1071,12 +1071,12 @@ IMPLEMENT_GENERIC(REVERSE, Any_List)
 {
     INCLUDE_PARAMS_OF_REVERSE;
 
-    Element* list = Element_ARG(series);
+    Element* list = Element_ARG(SERIES);
 
     Source* arr = Cell_Array_Ensure_Mutable(list);
     REBLEN index = VAL_INDEX(list);
 
-    REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
+    REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
     if (len == 0)
         return COPY(list); // !!! do 1-element reversals update newlines?
 
@@ -1142,7 +1142,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 {
     INCLUDE_PARAMS_OF_RANDOM_PICK;
 
-    Element* list = Element_ARG(collection);
+    Element* list = Element_ARG(COLLECTION);
 
     REBLEN index = VAL_INDEX(list);
     if (index >= Cell_Series_Len_Head(list))
@@ -1150,7 +1150,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     Element* spare = Init_Integer(
         SPARE,
-        1 + (Random_Int(REF(secure))
+        1 + (Random_Int(REF(SECURE))
             % (Cell_Series_Len_Head(list) - index))
     );
 
@@ -1164,10 +1164,10 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
 {
     INCLUDE_PARAMS_OF_SHUFFLE;
 
-    Element* list = Element_ARG(series);
+    Element* list = Element_ARG(SERIES);
 
     Array* arr = Cell_Array_Ensure_Mutable(list);
-    Shuffle_Array(arr, VAL_INDEX(list), REF(secure));
+    Shuffle_Array(arr, VAL_INDEX(list), REF(SECURE));
     return COPY(list);
 }
 
@@ -1183,11 +1183,11 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
 //          [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(file_of)
+DECLARE_NATIVE(FILE_OF)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* elem = Element_ARG(element);
+    Element* elem = Element_ARG(ELEMENT);
     QUOTE_BYTE(elem) = NOQUOTE_1;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
@@ -1210,11 +1210,11 @@ IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough: raise error
 //          [<maybe> element?]
 //  ]
 //
-DECLARE_NATIVE(line_of)
+DECLARE_NATIVE(LINE_OF)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* elem = Element_ARG(element);
+    Element* elem = Element_ARG(ELEMENT);
     QUOTE_BYTE(elem) = NOQUOTE_1;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
@@ -1230,7 +1230,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* list = Element_ARG(element);
+    Element* list = Element_ARG(ELEMENT);
     const Source* s = Cell_Array(list);
 
     Option(const String*) file = Link_Filename(s);
@@ -1244,7 +1244,7 @@ IMPLEMENT_GENERIC(LINE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* list = Element_ARG(element);
+    Element* list = Element_ARG(ELEMENT);
     const Source* s = Cell_Array(list);
 
     if (MISC_SOURCE_LINE(s) == 0)
@@ -1300,15 +1300,15 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 {
     INCLUDE_PARAMS_OF_SORT;
 
-    Element* list = Element_ARG(series);
+    Element* list = Element_ARG(SERIES);
     Array* arr = Cell_Array_Ensure_Mutable(list);
 
     SortInfo info;
-    info.cased = REF(case);
-    info.reverse = REF(reverse);
-    UNUSED(REF(all));  // !!! not used?
+    info.cased = REF(CASE);
+    info.reverse = REF(REVERSE);
+    UNUSED(REF(ALL));  // !!! not used?
 
-    Value* cmp = ARG(compare);  // null if no :COMPARE
+    Value* cmp = ARG(COMPARE);  // null if no :COMPARE
     Deactivate_If_Action(cmp);
     if (Is_Frame(cmp)) {
         info.comparator = cmp;
@@ -1327,19 +1327,19 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 
     Copy_Cell(OUT, list);  // save list before messing with index
 
-    REBLEN len = Part_Len_May_Modify_Index(list, ARG(part));
+    REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
     if (len <= 1)
         return OUT;
     REBLEN index = VAL_INDEX(list);  // ^-- may have been modified
 
     // Skip factor:
     REBLEN skip;
-    if (Is_Nulled(ARG(skip)))
+    if (Is_Nulled(ARG(SKIP)))
         skip = 1;
     else {
-        skip = Get_Num_From_Arg(ARG(skip));
+        skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or len % skip != 0 or skip > len)
-            return FAIL(Error_Out_Of_Range(ARG(skip)));
+            return FAIL(Error_Out_Of_Range(ARG(SKIP)));
     }
 
     bsd_qsort_r(
@@ -1361,9 +1361,9 @@ IMPLEMENT_GENERIC(MAKE, Type_Block)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Element* type = Element_ARG(type);
+    Element* type = Element_ARG(TYPE);
 
-    Element* def = Element_ARG(def);
+    Element* def = Element_ARG(DEF);
     USED(def);  // will be inherited via the level
 
     if (not Is_Type_Block(type))
@@ -1385,11 +1385,11 @@ IMPLEMENT_GENERIC(MAKE, Type_Block)
 //          [~void~ element?]
 //  ]
 //
-DECLARE_NATIVE(blockify)
+DECLARE_NATIVE(BLOCKIFY)
 {
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
     if (Is_Block(v))
         return COPY(v);
 
@@ -1415,11 +1415,11 @@ DECLARE_NATIVE(blockify)
 //          [~void~ element?]
 //  ]
 //
-DECLARE_NATIVE(groupify)
+DECLARE_NATIVE(GROUPIFY)
 {
     INCLUDE_PARAMS_OF_GROUPIFY;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
     if (Is_Group(v))
         return COPY(v);
 
@@ -1447,20 +1447,20 @@ DECLARE_NATIVE(groupify)
 //          [~void~ element? splice!]
 //  ]
 //
-DECLARE_NATIVE(envelop)
+DECLARE_NATIVE(ENVELOP)
 //
 // Prototyped using API calls.  Improve performance once it's hammered out.
 {
     INCLUDE_PARAMS_OF_ENVELOP;
 
-    Value* content = ARG(content);
+    Value* content = ARG(CONTENT);
 
     Element* copy;
 
-    if (Is_Type_Block(ARG(example)))
-        copy = cast(Element*, rebValue(CANON(MAKE), ARG(example), rebI(1)));
+    if (Is_Type_Block(ARG(EXAMPLE)))
+        copy = cast(Element*, rebValue(CANON(MAKE), ARG(EXAMPLE), rebI(1)));
     else
-        copy = cast(Element*, rebValue("copy:deep", rebQ(ARG(example))));
+        copy = cast(Element*, rebValue("copy:deep", rebQ(ARG(EXAMPLE))));
 
     Length len;
     if (
@@ -1500,7 +1500,7 @@ DECLARE_NATIVE(envelop)
 //      result [~void~ element? splice!]
 //  ]
 //
-DECLARE_NATIVE(glom)
+DECLARE_NATIVE(GLOM)
 //
 // GLOM was designed to bubble up `pending` values (e.g. collected values) in
 // UPARSE, which are lists...but often they will be empty.  So creating lots of
@@ -1516,8 +1516,8 @@ DECLARE_NATIVE(glom)
     // that or just take advantage of it if it's expedient (e.g. avoid a
     // resize by moving the data within an array and returning a 0 index).
 
-    Value* accumulator = ARG(accumulator);
-    Value* result = ARG(result);
+    Value* accumulator = ARG(ACCUMULATOR);
+    Value* result = ARG(RESULT);
 
     // !!! This logic is repeated in APPEND etc.  It should be factored out.
     //

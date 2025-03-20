@@ -3079,17 +3079,17 @@ Option(Error*) Trap_Transcode_One(
 //      <local> buffer
 //  ]
 //
-DECLARE_NATIVE(transcode)
+DECLARE_NATIVE(TRANSCODE)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 
-    Element* source = Element_ARG(source);
+    Element* source = Element_ARG(SOURCE);
 
     Size size;
     const Byte* bp = Cell_Bytes_At(&size, source);
 
     TranscodeState* ss;
-    Value* ss_buffer = LOCAL(buffer);  // kept as a BLOB!, gets GC'd
+    Value* ss_buffer = LOCAL(BUFFER);  // kept as a BLOB!, gets GC'd
 
     enum {
         ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
@@ -3158,22 +3158,22 @@ DECLARE_NATIVE(transcode)
         Term_Binary(m_cast(Binary*, Cell_Binary(source)));
 
     Option(const String*) file;
-    if (REF(file)) {
-        file = Cell_String(ARG(file));
+    if (REF(FILE)) {
+        file = Cell_String(ARG(FILE));
         Freeze_Flex(unwrap file);  // freezes vs. interning [2]
     }
     else
         file = ANONYMOUS;
 
     Value* line_number = stable_SCRATCH;  // use as scratch space
-    if (Any_Word(ARG(line)))
+    if (Any_Word(ARG(LINE)))
         Get_Var_May_Fail(
             line_number,
-            Element_ARG(line),
+            Element_ARG(LINE),
             SPECIFIED
         );
     else
-        Copy_Cell(line_number, ARG(line));
+        Copy_Cell(line_number, ARG(LINE));
 
     LineNumber start_line;
     if (Is_Nulled(line_number)) {
@@ -3182,7 +3182,7 @@ DECLARE_NATIVE(transcode)
     else if (Is_Integer(line_number)) {
         start_line = VAL_INT32(line_number);
         if (start_line <= 0)
-            return FAIL(PARAM(line));  // definitional?
+            return FAIL(PARAM(LINE));  // definitional?
     }
     else
         return FAIL(":LINE must be INTEGER! or an ANY-WORD? integer variable");
@@ -3201,7 +3201,7 @@ DECLARE_NATIVE(transcode)
         | LEVEL_FLAG_RAISED_RESULT_OK  // want to pass on definitional error
         | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
 
-    if (REF(next) or REF(one))
+    if (REF(NEXT) or REF(ONE))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Binary* bin = Make_Binary(sizeof(TranscodeState));
@@ -3230,7 +3230,7 @@ DECLARE_NATIVE(transcode)
         return OUT;  // the raised error
     }
 
-    if (REF(one)) {  // want *exactly* one element
+    if (REF(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)
             return RAISE("Transcode was empty (or all comments)");
         assert(TOP_INDEX == STACK_BASE + 1);
@@ -3238,7 +3238,7 @@ DECLARE_NATIVE(transcode)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    if (REF(next)) {
+    if (REF(NEXT)) {
         if (TOP_INDEX == STACK_BASE)
             Init_Nulled(OUT);
         else {
@@ -3259,14 +3259,14 @@ DECLARE_NATIVE(transcode)
 
     Drop_Level(SUBLEVEL);
 
-    if (REF(line) and Is_Word(ARG(line))) {  // wanted the line number updated
+    if (REF(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
         Element* line_int = Init_Integer(SCRATCH, ss->line);
-        const Element* line_var = Element_ARG(line);
+        const Element* line_var = Element_ARG(LINE);
         if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
             return THROWN;
     }
 
-    if (not REF(next)) {
+    if (not REF(NEXT)) {
         assert(Is_Block(OUT));  // should be single block result
         return OUT;
     }

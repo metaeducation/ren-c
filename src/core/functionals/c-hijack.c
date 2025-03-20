@@ -276,7 +276,7 @@ bool Hijacker_Details_Querier(
 //          [<unrun> frame! ~void~]
 //  ]
 //
-DECLARE_NATIVE(hijack)
+DECLARE_NATIVE(HIJACK)
 //
 // 1. It may seem useful to change the interface to that of the hijacker,
 //    so that any added refinements would be exposed.  However, that would
@@ -299,16 +299,16 @@ DECLARE_NATIVE(hijack)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
-    Phase* victim = Cell_Frame_Phase(ARG(victim));
+    Phase* victim = Cell_Frame_Phase(ARG(VICTIM));
 
-    bool hijack_void = Is_Void(ARG(hijacker));
+    bool hijack_void = Is_Void(ARG(HIJACKER));
 
     bool victim_unimplemented =
         Is_Stub_Details(victim) and
         Details_Dispatcher(cast(Details*, victim)) == &Unimplemented_Dispatcher;
 
     if (not hijack_void) {
-        Phase* hijacker = Cell_Frame_Phase(ARG(hijacker));
+        Phase* hijacker = Cell_Frame_Phase(ARG(HIJACKER));
         if (victim == hijacker)
             return FAIL("Cannot HIJACK function with itself");  // right?
     }
@@ -317,7 +317,7 @@ DECLARE_NATIVE(hijack)
 
     Details* proxy = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
-        ARG(victim),  // not changing the interface [1]
+        ARG(VICTIM),  // not changing the interface [1]
         hijack_void
             ? &Unimplemented_Dispatcher
             : &Hijacker_Dispatcher,
@@ -327,7 +327,7 @@ DECLARE_NATIVE(hijack)
     );
 
     if (not hijack_void)
-        Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), ARG(hijacker));
+        Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), ARG(HIJACKER));
 
     Tweak_Misc_Phase_Adjunct(proxy, adjunct);  // shared reference [3]
 
@@ -343,7 +343,7 @@ DECLARE_NATIVE(hijack)
     return Init_Action(
         OUT,
         proxy,  // after Swap_Flex_Content(), new identity for victim
-        Cell_Frame_Label(ARG(victim)),
-        Cell_Frame_Coupling(ARG(victim))
+        Cell_Frame_Label(ARG(VICTIM)),
+        Cell_Frame_Coupling(ARG(VICTIM))
     );
 }

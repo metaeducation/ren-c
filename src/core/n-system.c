@@ -33,7 +33,7 @@
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(halt)
+DECLARE_NATIVE(HALT)
 {
     INCLUDE_PARAMS_OF_HALT;
 
@@ -52,13 +52,13 @@ DECLARE_NATIVE(halt)
 //      :abrupt "Don't shut down, end process immediately (leaks in Valgrind)"
 //  ]
 //
-DECLARE_NATIVE(exit)  // moved to SYS.UTIL/EXIT by boot code, for safety
+DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
 {
     INCLUDE_PARAMS_OF_EXIT;
 
-    int status = VAL_INT32(ARG(status));  // exit() takes an int
+    int status = VAL_INT32(ARG(STATUS));  // exit() takes an int
 
-    if (REF(abrupt))  // doesn't run Shutdown_Core()
+    if (REF(ABRUPT))  // doesn't run Shutdown_Core()
         exit(status);
 
     exit(status);  // !!! Clean shutdown interop with trampoline TBD
@@ -81,26 +81,26 @@ DECLARE_NATIVE(exit)  // moved to SYS.UTIL/EXIT by boot code, for safety
 //      :verbose "Dump information about Flexes being recycled (debug only)"
 //  ]
 //
-DECLARE_NATIVE(recycle)
+DECLARE_NATIVE(RECYCLE)
 {
     INCLUDE_PARAMS_OF_RECYCLE;
 
-    if (REF(off)) {
+    if (REF(OFF)) {
         g_gc.disabled = true;
         return nullptr;
     }
 
-    if (REF(on)) {
+    if (REF(ON)) {
         g_gc.disabled = false;
         g_gc.ballast = MEM_BALLAST;
     }
 
-    if (REF(ballast)) {
+    if (REF(BALLAST)) {
         g_gc.disabled = false;
-        g_gc.ballast = VAL_INT32(ARG(ballast));
+        g_gc.ballast = VAL_INT32(ARG(BALLAST));
     }
 
-    if (REF(torture)) {
+    if (REF(TORTURE)) {
         g_gc.disabled = false;
         g_gc.ballast = 0;
     }
@@ -110,7 +110,7 @@ DECLARE_NATIVE(recycle)
 
     REBLEN count;
 
-    if (REF(verbose)) {
+    if (REF(VERBOSE)) {
       #if RUNTIME_CHECKS
         Flex* sweeplist = Make_Flex(FLAG_FLAVOR(NODELIST), Flex, 100);
         count = Recycle_Core(sweeplist);
@@ -135,7 +135,7 @@ DECLARE_NATIVE(recycle)
         count = Recycle();
     }
 
-    if (REF(watch)) {
+    if (REF(WATCH)) {
       #if RUNTIME_CHECKS
         // There might should be some kind of generic way to set these kinds
         // of flags individually, perhaps having them live in SYSTEM/...
@@ -161,24 +161,24 @@ DECLARE_NATIVE(recycle)
 //      limit [any-number?]
 //  ]
 //
-DECLARE_NATIVE(limit_usage)
+DECLARE_NATIVE(LIMIT_USAGE)
 {
     INCLUDE_PARAMS_OF_LIMIT_USAGE;
 
-    Option(SymId) sym = Cell_Word_Id(ARG(field));
+    Option(SymId) sym = Cell_Word_Id(ARG(FIELD));
 
     // !!! comment said "Only gets set once"...why?
     //
     if (sym == SYM_EVAL) {
         if (not g_ts.eval_cycles_limit)
-            g_ts.eval_cycles_limit = Int64(ARG(limit));
+            g_ts.eval_cycles_limit = Int64(ARG(LIMIT));
     }
     else if (sym == SYM_MEMORY) {
         if (not g_mem.usage_limit)
-            g_mem.usage_limit = Int64(ARG(limit));
+            g_mem.usage_limit = Int64(ARG(LIMIT));
     }
     else
-        return FAIL(PARAM(field));
+        return FAIL(PARAM(FIELD));
 
     return NOTHING;
 }
@@ -194,7 +194,7 @@ DECLARE_NATIVE(limit_usage)
 //          [any-value?]
 //  ]
 //
-DECLARE_NATIVE(check)  // !!! Review the necessity of this (hasn't been used)
+DECLARE_NATIVE(CHECK)  // !!! Review the necessity of this (hasn't been used)
 //
 // This forces an integrity check to run on a series.  In R3-Alpha there was
 // no checked build, so this was a simple validity check and it returned an
@@ -205,7 +205,7 @@ DECLARE_NATIVE(check)  // !!! Review the necessity of this (hasn't been used)
     INCLUDE_PARAMS_OF_CHECK;
 
   #if RUNTIME_CHECKS
-    Value* value = ARG(value);
+    Value* value = ARG(VALUE);
 
     Check_Memory_Debug();  // if memory is bad, all other bets are off
 
@@ -222,7 +222,7 @@ DECLARE_NATIVE(check)  // !!! Review the necessity of this (hasn't been used)
 
     return COPY(value);
   #else
-    UNUSED(ARG(value));
+    UNUSED(ARG(VALUE));
     return FAIL(Error_Checked_Build_Only_Raw());
   #endif
 }
@@ -265,7 +265,7 @@ int ceil_log2(unsigned long long x) {
 //      return: [~null~ integer!]
 //  ]
 //
-DECLARE_NATIVE(c_debug_tick)
+DECLARE_NATIVE(C_DEBUG_TICK)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_TICK;
 
@@ -285,7 +285,7 @@ DECLARE_NATIVE(c_debug_tick)
 //      return: [~[]~] "Invisible"
 //  ]
 //
-DECLARE_NATIVE(c_debug_break)
+DECLARE_NATIVE(C_DEBUG_BREAK)
 //
 // 1. If we are counting ticks, we can put off actually breaking until the
 //    trampoline is right about to run the next step.  For instance with:

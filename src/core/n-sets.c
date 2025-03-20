@@ -377,7 +377,7 @@ Flex* Make_Set_Operation_Flex(
 //      value [bitset!]
 //  ]
 //
-DECLARE_NATIVE(complement)
+DECLARE_NATIVE(COMPLEMENT)
 {
     Element* e = cast(Element*, ARG_N(1));
     return Dispatch_Generic(COMPLEMENT, e, LEVEL);
@@ -409,7 +409,7 @@ DECLARE_NATIVE(complement)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(intersect)
+DECLARE_NATIVE(INTERSECT)
 {
     Element* e1 = cast(Element*, ARG_N(1));
     return Dispatch_Generic(INTERSECT, e1, LEVEL);
@@ -441,7 +441,7 @@ DECLARE_NATIVE(intersect)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(union)
+DECLARE_NATIVE(UNION)
 {
     Element* e1 = cast(Element*, ARG_N(1));
     return Dispatch_Generic(UNION, e1, LEVEL);
@@ -476,7 +476,7 @@ DECLARE_NATIVE(union)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(difference)
+DECLARE_NATIVE(DIFFERENCE)
 {
     Element* e1 = cast(Element*, ARG_N(1));
     return Dispatch_Generic(DIFFERENCE, e1, LEVEL);
@@ -498,7 +498,7 @@ DECLARE_NATIVE(difference)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(exclude)
+DECLARE_NATIVE(EXCLUDE)
 {
     Element* e1 = cast(Element*, ARG_N(1));
     return Dispatch_Generic(EXCLUDE, e1, LEVEL);
@@ -517,7 +517,7 @@ DECLARE_NATIVE(exclude)
 //          [integer!]
 //  ]
 //
-DECLARE_NATIVE(unique)
+DECLARE_NATIVE(UNIQUE)
 {
     Element* e1 = cast(Element*, ARG_N(1));
     return Dispatch_Generic(UNIQUE, e1, LEVEL);

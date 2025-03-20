@@ -50,7 +50,7 @@ typedef RebolValue Value;
 //          territory*: Full localized name of the country/region}--
 //  ]
 //
-DECLARE_NATIVE(locale)
+DECLARE_NATIVE(LOCALE)
 //
 // 1. This function only needs to make OS calls on Windows.  The POSIX version
 //    parses environment variables and uses compiled-in tables.  See the HIJACK
@@ -137,7 +137,7 @@ DECLARE_NATIVE(locale)
 //      value [text!]
 //  ]
 //
-DECLARE_NATIVE(setlocale)
+DECLARE_NATIVE(SETLOCALE)
 {
     INCLUDE_PARAMS_OF_SETLOCALE;
 

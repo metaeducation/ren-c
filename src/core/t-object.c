@@ -363,7 +363,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Context(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Context(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -371,7 +371,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Context(ARG(value1), ARG(value2), true) == -1);
+    return LOGIC(CT_Context(ARG(VALUE1), ARG(VALUE2), true) == -1);
 }
 
 
@@ -384,10 +384,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(type)) == TYPE_FRAME);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_FRAME);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -455,10 +455,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Heart(ARG(type)) == TYPE_MODULE);
-    UNUSED(ARG(type));
+    assert(Cell_Datatype_Heart(ARG(TYPE)) == TYPE_MODULE);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
     if (not Any_List(arg))
         return RAISE("Currently only (MAKE MODULE! LIST) is allowed");
@@ -476,13 +476,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Is_Object(ARG(type)) or Cell_Datatype_Heart(ARG(type)) == TYPE_OBJECT);
-    UNUSED(ARG(type));
+    assert(Is_Object(ARG(TYPE)) or Cell_Datatype_Heart(ARG(TYPE)) == TYPE_OBJECT);
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(def);
+    Element* arg = Element_ARG(DEF);
 
-    if (Is_Object(ARG(type))) {
-        VarList* varlist = cast(VarList*, Cell_Context(ARG(type)));
+    if (Is_Object(ARG(TYPE))) {
+        VarList* varlist = cast(VarList*, Cell_Context(ARG(TYPE)));
         if (Is_Block(arg)) {
             const Element* tail;
             const Element* at = Cell_List_At(&tail, arg);
@@ -571,11 +571,11 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 //      value [<unrun> <maybe> frame! any-context?]
 //  ]
 //
-DECLARE_NATIVE(adjunct_of)
+DECLARE_NATIVE(ADJUNCT_OF)
 {
     INCLUDE_PARAMS_OF_ADJUNCT_OF;
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     Option(VarList*) adjunct;
     if (Is_Frame(v)) {
@@ -606,13 +606,13 @@ DECLARE_NATIVE(adjunct_of)
 //      adjunct [~null~ any-context?]
 //  ]
 //
-DECLARE_NATIVE(set_adjunct)
+DECLARE_NATIVE(SET_ADJUNCT)
 //
 // See notes accompanying the `adjunct` field in DetailsAdjunct/VarlistAdjunct.
 {
     INCLUDE_PARAMS_OF_SET_ADJUNCT;
 
-    Value* adjunct = ARG(adjunct);
+    Value* adjunct = ARG(ADJUNCT);
 
     Option(VarList*) ctx;
     if (Any_Context(adjunct)) {
@@ -626,7 +626,7 @@ DECLARE_NATIVE(set_adjunct)
         ctx = nullptr;
     }
 
-    Value* v = ARG(value);
+    Value* v = ARG(VALUE);
 
     if (Is_Frame(v)) {
         Tweak_Misc_Phase_Adjunct(Cell_Frame_Phase(v), ctx);
@@ -789,9 +789,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
-    bool form = REF(form);
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
+    bool form = REF(FORM);
 
     String* s = mo->string;
 
@@ -965,12 +965,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
       case SYM_PROTECT_P: {
         INCLUDE_PARAMS_OF_PROTECT_P;
-        UNUSED(ARG(location));
+        UNUSED(ARG(LOCATION));
 
-        const Element* picker = Element_ARG(picker);
+        const Element* picker = Element_ARG(PICKER);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-        Value* setval = ARG(value);
+        Value* setval = ARG(VALUE);
 
         Value* var = m_cast(Value*, TRY_VAL_CONTEXT_VAR(context, symbol));
         if (not var)
@@ -1003,8 +1003,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
       case SYM_EXTEND: {
         INCLUDE_PARAMS_OF_EXTEND;
-        UNUSED(ARG(context));
-        Element* def = Element_ARG(def);
+        UNUSED(ARG(CONTEXT));
+        Element* def = Element_ARG(DEF);
 
         if (Is_Word(def)) {
             bool strict = true;
@@ -1028,7 +1028,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         assert(Is_Block(def));
 
         CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-        if (REF(prebound))
+        if (REF(PREBOUND))
             flags |= COLLECT_TOLERATE_PREBOUND;
 
         Option(Error*) e = Trap_Wrap_Extend_Core(c, def, flags);
@@ -1051,12 +1051,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        UNUSED(ARG(series));  // extracted as `c`
+        UNUSED(ARG(SERIES));  // extracted as `c`
 
-        if (REF(part) or REF(skip) or REF(match))
+        if (REF(PART) or REF(SKIP) or REF(MATCH))
             return FAIL(Error_Bad_Refines_Raw());
 
-        Value* pattern = ARG(value);
+        Value* pattern = ARG(VALUE);
         if (Is_Antiform(pattern))
             return FAIL(pattern);
 
@@ -1066,7 +1066,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         Option(Index) index = Find_Symbol_In_Context(
             context,
             Cell_Word_Symbol(pattern),
-            REF(case)
+            REF(CASE)
         );
         if (not index)
             return nullptr;
@@ -1093,10 +1093,10 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* context = Element_ARG(element);
+    Element* context = Element_ARG(ELEMENT);
     Context* c = Cell_Context(context);
     Heart heart = Cell_Heart(context);
-    Heart to = Cell_Datatype_Heart(ARG(type));
+    Heart to = Cell_Datatype_Heart(ARG(TYPE));
     assert(heart != to);  // TO should have called COPY in this case
 
     if (to == TYPE_PORT) {
@@ -1127,12 +1127,12 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    const Element* context = Element_ARG(value);
+    const Element* context = Element_ARG(VALUE);
 
-    if (REF(part))
+    if (REF(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
-    bool deep = REF(deep);
+    bool deep = REF(DEEP);
     return Copy_Any_Context(OUT, context, deep);
 }
 
@@ -1141,10 +1141,10 @@ IMPLEMENT_GENERIC(PICK, Any_Context)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    const Element* context = Element_ARG(location);
+    const Element* context = Element_ARG(LOCATION);
     Context* c = Cell_Context(context);
 
-    const Element* picker = Element_ARG(picker);
+    const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
     const Value* var = TRY_VAL_CONTEXT_VAR(context, symbol);
@@ -1169,13 +1169,13 @@ IMPLEMENT_GENERIC(POKE, Any_Context)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    Element* context = Element_ARG(location);
+    Element* context = Element_ARG(LOCATION);
     possibly(Is_Port(context));
 
-    const Element* picker = Element_ARG(picker);
+    const Element* picker = Element_ARG(PICKER);
     const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-    Value* setval = ARG(value);
+    Value* setval = ARG(VALUE);
 
     Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
     if (not var)
@@ -1194,7 +1194,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* context = Element_ARG(element);
+    Element* context = Element_ARG(ELEMENT);
     Context* c = Cell_Context(context);
     possibly(Is_Port(context));
 
@@ -1213,11 +1213,11 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(words_of)
+DECLARE_NATIVE(WORDS_OF)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    return Dispatch_Generic(WORDS_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(WORDS_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -1225,7 +1225,7 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    Element* context = Element_ARG(element);
+    Element* context = Element_ARG(ELEMENT);
     return Init_Block(OUT, Context_To_Array(context, 1));
 }
 
@@ -1239,11 +1239,11 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(values_of)
+DECLARE_NATIVE(VALUES_OF)
 {
     INCLUDE_PARAMS_OF_VALUES_OF;
 
-    return Dispatch_Generic(VALUES_OF, Element_ARG(element), LEVEL);
+    return Dispatch_Generic(VALUES_OF, Element_ARG(ELEMENT), LEVEL);
 }
 
 
@@ -1251,7 +1251,7 @@ IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    Element* context = Element_ARG(element);
+    Element* context = Element_ARG(ELEMENT);
     return Init_Block(OUT, Context_To_Array(context, 2));
 }
 
@@ -1260,7 +1260,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* context = Element_ARG(element);
+    Element* context = Element_ARG(ELEMENT);
     Context* c = Cell_Context(context);
 
     if (Is_Stub_Sea(c))
@@ -1276,12 +1276,12 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    const Element* frame = Element_ARG(value);
+    const Element* frame = Element_ARG(VALUE);
 
-    if (REF(deep))
+    if (REF(DEEP))
         return FAIL("COPY/DEEP on FRAME! not implemented");
 
-    if (REF(part))
+    if (REF(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
     ParamList* copy = Make_Varlist_For_Action(
@@ -1311,11 +1311,11 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(parameters_of)
+DECLARE_NATIVE(PARAMETERS_OF)
 {
     INCLUDE_PARAMS_OF_PARAMETERS_OF;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
 
     return Init_Frame(
         OUT,
@@ -1336,11 +1336,11 @@ DECLARE_NATIVE(parameters_of)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(return_of)
+DECLARE_NATIVE(RETURN_OF)
 {
     INCLUDE_PARAMS_OF_RETURN_OF;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
     Phase* phase = Cell_Frame_Phase(frame);
 
     Details* details = Phase_Details(phase);
@@ -1362,7 +1362,7 @@ DECLARE_NATIVE(return_of)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(body_of)  // !!! should this be SOURCE-OF ?
+DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
 //
 // Getting the "body" of a function is dicey, because it's not a question
 // that always has an answer (e.g. what's the "body" of a native? or of
@@ -1371,7 +1371,7 @@ DECLARE_NATIVE(body_of)  // !!! should this be SOURCE-OF ?
 {
     INCLUDE_PARAMS_OF_BODY_OF;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
     Phase* phase = Cell_Frame_Phase(frame);
 
     Details* details = Phase_Details(phase);
@@ -1393,11 +1393,11 @@ DECLARE_NATIVE(body_of)  // !!! should this be SOURCE-OF ?
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(coupling_of)
+DECLARE_NATIVE(COUPLING_OF)
 {
     INCLUDE_PARAMS_OF_COUPLING_OF;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
     Option(VarList*) coupling = Cell_Frame_Coupling(frame);
 
     if (not coupling)  // NONMETHOD
@@ -1419,7 +1419,7 @@ DECLARE_NATIVE(coupling_of)
 //      frame [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(label_of)
+DECLARE_NATIVE(LABEL_OF)
 //
 // 1. If the frame is executing, we can look at the label in the Level*, which
 //    will tell us what the overall execution label would be.  This might be
@@ -1427,7 +1427,7 @@ DECLARE_NATIVE(label_of)
 {
     INCLUDE_PARAMS_OF_LABEL_OF;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
 
     Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
     if (label)
@@ -1493,7 +1493,7 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* frame = Element_ARG(element);
+    Element* frame = Element_ARG(ELEMENT);
     Level* L;
     const Source* a;
     File_Line_Frame_Heuristic(&L, &a, frame);
@@ -1518,7 +1518,7 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* frame = Element_ARG(element);
+    Element* frame = Element_ARG(ELEMENT);
     Level* L;
     const Source* a;
     File_Line_Frame_Heuristic(&L, &a, frame);
@@ -1547,11 +1547,11 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
 //      frame [<maybe> <unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(near_of)
+DECLARE_NATIVE(NEAR_OF)
 {
     INCLUDE_PARAMS_OF_NEAR_OF;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
     Phase* phase = Cell_Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
@@ -1571,11 +1571,11 @@ DECLARE_NATIVE(near_of)
 //      frame [<maybe> <unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(parent_of)
+DECLARE_NATIVE(PARENT_OF)
 {
     INCLUDE_PARAMS_OF_PARENT_OF;
 
-    Element* frame = Element_ARG(frame);
+    Element* frame = Element_ARG(FRAME);
     Phase* phase = Cell_Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
@@ -1627,7 +1627,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Frame)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Frame(ARG(value1), ARG(value2), REF(strict)) == 0);
+    return LOGIC(CT_Frame(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
 }
 
 
@@ -1635,7 +1635,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Frame)
 {
     INCLUDE_PARAMS_OF_LESSER_Q;
 
-    return LOGIC(CT_Frame(ARG(value1), ARG(value2), true) == 0);
+    return LOGIC(CT_Frame(ARG(VALUE1), ARG(VALUE2), true) == 0);
 }
 
 
@@ -1643,14 +1643,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(element);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(molder));
+    Element* v = Element_ARG(ELEMENT);
+    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
     if (QUOTE_BYTE(v) != QUASIFORM_2) {
-        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds REF(form)
+        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds REF(FORM)
     }
 
-    bool form = REF(form);
+    bool form = REF(FORM);
     UNUSED(form);
 
     Append_Ascii(mo->string, "#[frame! ");
@@ -1692,7 +1692,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 //          [object!]
 //  ]
 //
-DECLARE_NATIVE(construct)
+DECLARE_NATIVE(CONSTRUCT)
 //
 // 1. In R3-Alpha you could do:
 //
@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(construct)
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
-    Value* spec = ARG(spec);
+    Value* spec = ARG(SPEC);
 
     enum {
         ST_CONSTRUCT_INITIAL_ENTRY = STATE_0,
@@ -1731,8 +1731,8 @@ DECLARE_NATIVE(construct)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    VarList* parent = REF(with)
-        ? Cell_Varlist(ARG(with))
+    VarList* parent = REF(WITH)
+        ? Cell_Varlist(ARG(WITH))
         : nullptr;
 
     const Element* tail;
@@ -1842,7 +1842,7 @@ DECLARE_NATIVE(construct)
 //      :prebound "Tolerate pre-existing bindings on set words (do not collect)"
 //  ]
 //
-DECLARE_NATIVE(extend)
+DECLARE_NATIVE(EXTEND)
 {
     Element* number = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(number, LEVEL, CANON(EXTEND));

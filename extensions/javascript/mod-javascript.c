@@ -897,14 +897,14 @@ bool Javascript_Details_Querier(
 //      :awaiter "Uses async JS function, invocation will implicitly `await`"
 //  ]
 //
-DECLARE_NATIVE(js_native)
+DECLARE_NATIVE(JS_NATIVE)
 //
 // Note: specialized as JS-AWAITER in %ext-javascript-init.reb
 {
     INCLUDE_PARAMS_OF_JS_NATIVE;
 
-    Element* spec = Element_ARG(spec);
-    Element* source = Element_ARG(source);
+    Element* spec = Element_ARG(SPEC);
+    Element* source = Element_ARG(SOURCE);
 
     StackIndex base = TOP_INDEX;
 
@@ -944,7 +944,7 @@ DECLARE_NATIVE(js_native)
     // !!! A bit wasteful to use a whole cell for this--could just be whether
     // the ID is positive or negative.  Keep things clear, optimize later.
     //
-    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), REF(awaiter));
+    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), REF(AWAITER));
 
   //=//// MAKE ASCII SOURCE FOR JAVASCRIPT FUNCTION ///////////////////////=//
 
@@ -985,14 +985,14 @@ DECLARE_NATIVE(js_native)
 
     Append_Ascii(mo->string, "let f = ");  // variable we store function in
 
-    if (REF(awaiter))
+    if (REF(AWAITER))
         Append_Ascii(mo->string, "async ");  // run inside rebPromise() [1]
 
     Append_Ascii(mo->string, "function (reb) {");  // just one arg [2]
     Append_Any_Utf8(mo->string, source);
     Append_Ascii(mo->string, "};\n");  // end `function() {`
 
-    if (REF(awaiter))
+    if (REF(AWAITER))
         Append_Ascii(mo->string, "f.is_awaiter = true;\n");
     else
         Append_Ascii(mo->string, "f.is_awaiter = false;\n");
@@ -1082,7 +1082,7 @@ DECLARE_NATIVE(js_native)
 //      :value "Return a Rebol value"
 //  ]
 //
-DECLARE_NATIVE(js_eval_p)
+DECLARE_NATIVE(JS_EVAL_P)
 //
 // Note: JS-EVAL is a higher-level routine built on this JS-EVAL* native, that
 // can accept a BLOCK! with escaped-in Rebol values, via JS-DO-DIALECT-HELPER.
@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(js_eval_p)
 {
     INCLUDE_PARAMS_OF_JS_EVAL_P;
 
-    Value* source = ARG(source);
+    Value* source = ARG(SOURCE);
 
     const char *utf8 = c_cast(char*, Cell_Utf8_At(source));
     heapaddr_t addr;
@@ -1104,10 +1104,10 @@ DECLARE_NATIVE(js_eval_p)
     // !!! Note that if `eval()` is redefined, then all invocations will be
     // "indirect" and there will hence be no local evaluations.
     //
-    if (REF(value))
+    if (REF(VALUE))
         goto want_result;
 
-    if (REF(local))
+    if (REF(LOCAL))
         addr = EM_ASM_INT(
             { try { eval(UTF8ToString($0)); return 0 }
                 catch(e) { return reb.JavaScriptError(e, $1) }
@@ -1135,7 +1135,7 @@ DECLARE_NATIVE(js_eval_p)
     //
     // !!! All other types come back as nothing (~ antiform).  Error instead?
     //
-    if (REF(local)) {
+    if (REF(LOCAL)) {
         addr = EM_ASM_INT(
             { try { return reb.Box(eval(UTF8ToString($0))) }  // direct (local)
               catch(e) { return reb.JavaScriptError(e, $1) }
@@ -1176,7 +1176,7 @@ DECLARE_NATIVE(js_eval_p)
 //      return: [~]
 //  ]
 //
-DECLARE_NATIVE(startup_p)
+DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
@@ -1211,12 +1211,12 @@ DECLARE_NATIVE(startup_p)
 //      enable [logic?]
 //  ]
 //
-DECLARE_NATIVE(js_trace)
+DECLARE_NATIVE(JS_TRACE)
 {
     INCLUDE_PARAMS_OF_JS_TRACE;
 
   #if DEBUG_JAVASCRIPT_EXTENSION
-    PG_Probe_Failures = PG_JS_Trace = Cell_Logic(ARG(enable));
+    PG_Probe_Failures = PG_JS_Trace = Cell_Logic(ARG(ENABLE));
     return NOTHING;
   #else
     return FAIL(

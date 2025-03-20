@@ -58,7 +58,7 @@
 //      :function "Traces functions only (less output)"
 //  ]
 //
-DECLARE_NATIVE(trace)
+DECLARE_NATIVE(TRACE)
 //
 // Ren-C seeks to completely redesign tracing in a generalized way, such that
 // dialects can have their own tracing fit into the architecture.  The old
@@ -74,8 +74,8 @@ DECLARE_NATIVE(trace)
 {
     INCLUDE_PARAMS_OF_TRACE;
 
-    UNUSED(ARG(mode));
-    UNUSED(ARG(function));
+    UNUSED(ARG(MODE));
+    UNUSED(ARG(FUNCTION));
 
     return FAIL("TRACE is being redesigned in light of Trampolines/Stackless");
 }

@@ -521,7 +521,7 @@ Option(Stub*) Get_Word_Container(
 //      <local> bindings-holder
 //  ]
 //
-DECLARE_NATIVE(let)
+DECLARE_NATIVE(LET)
 //
 // 0. There's a contention at the moment with `let (...): default [...]`, as
 //    we want the LET to win.  So this means we have to make left win in a
@@ -597,13 +597,13 @@ DECLARE_NATIVE(let)
 {
     INCLUDE_PARAMS_OF_LET;
 
-    Value* vars = ARG(vars);
+    Value* vars = ARG(VARS);
 
-    UNUSED(ARG(expression));
+    UNUSED(ARG(EXPRESSION));
     Level* L = level_;  // fake variadic [1]
     Context* L_binding = Level_Binding(L);
 
-    Value* bindings_holder = LOCAL(bindings_holder);
+    Value* bindings_holder = LOCAL(BINDINGS_HOLDER);
 
     enum {
         ST_LET_INITIAL_ENTRY = STATE_0,
@@ -869,7 +869,7 @@ DECLARE_NATIVE(let)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(add_let_binding)
+DECLARE_NATIVE(ADD_LET_BINDING)
 //
 // !!! At time of writing, there are no "first class environments" that
 // expose the "Specifier" chain in arrays.  So the arrays themselves are
@@ -883,10 +883,10 @@ DECLARE_NATIVE(add_let_binding)
 {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
-    Value* env = ARG(environment);
+    Value* env = ARG(ENVIRONMENT);
     Context* parent;
 
-    Value* v = Meta_Unquotify_Known_Stable(ARG(value));  // can be nothing [1]
+    Value* v = Meta_Unquotify_Known_Stable(ARG(VALUE));  // can be nothing [1]
 
     if (Is_Frame(env)) {
         Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(env));
@@ -898,7 +898,7 @@ DECLARE_NATIVE(add_let_binding)
         parent = Cell_List_Binding(env);
     }
 
-    Let* let = Make_Let_Variable(Cell_Word_Symbol(ARG(word)), parent);
+    Let* let = Make_Let_Variable(Cell_Word_Symbol(ARG(WORD)), parent);
 
     Move_Cell(Stub_Cell(let), v);
 
@@ -924,12 +924,12 @@ DECLARE_NATIVE(add_let_binding)
 //      object [object!]
 //  ]
 //
-DECLARE_NATIVE(add_use_object) {
+DECLARE_NATIVE(ADD_USE_OBJECT) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
-    Element* object = Element_ARG(object);
+    Element* object = Element_ARG(OBJECT);
 
-    Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(ARG(frame)));
+    Level* L = Level_Of_Varlist_May_Fail(Cell_Varlist(ARG(FRAME)));
     Context* L_binding = Level_Binding(L);
 
     if (L_binding)

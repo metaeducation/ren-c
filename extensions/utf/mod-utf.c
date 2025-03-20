@@ -150,11 +150,11 @@ static String* Decode_UCS2(  // [1]
 //      data [blob!]
 //  ]
 //
-DECLARE_NATIVE(identify_text_q)
+DECLARE_NATIVE(IDENTIFY_TEXT_Q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_TEXT_Q;
 
-    UNUSED(ARG(data)); // see notes on decode-text
+    UNUSED(ARG(DATA)); // see notes on decode-text
 
     return Init_Logic(OUT, true);
 }
@@ -170,12 +170,12 @@ DECLARE_NATIVE(identify_text_q)
 //      options [block!]
 //  ]
 //
-DECLARE_NATIVE(decode_text)
+DECLARE_NATIVE(DECODE_TEXT)
 {
     INCLUDE_PARAMS_OF_DECODE_TEXT;
 
-    if (Cell_Series_Len_At(ARG(options)))
-        return FAIL(ARG(options));
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
+        return FAIL(ARG(OPTIONS));
 
     // !!! The original code for R3-Alpha would simply alias the incoming
     // binary as a string.  This is essentially a Latin1 interpretation.
@@ -188,7 +188,7 @@ DECLARE_NATIVE(decode_text)
     // having wider format support might be a good thing.
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, ARG(data));
+    const Byte* data = Cell_Blob_Size_At(&size, ARG(DATA));
     return rebSizedText(cs_cast(data), size);
 }
 
@@ -203,14 +203,14 @@ DECLARE_NATIVE(decode_text)
 //      options [block!]
 //  ]
 //
-DECLARE_NATIVE(encode_text)
+DECLARE_NATIVE(ENCODE_TEXT)
 {
     INCLUDE_PARAMS_OF_ENCODE_TEXT;
 
-    if (Cell_Series_Len_At(ARG(options)))
-        return FAIL(ARG(options));
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
+        return FAIL(ARG(OPTIONS));
 
-    UNUSED(PARAM(string));
+    UNUSED(PARAM(STRING));
 
     return FAIL(".txt codec not currently implemented (what should it do?)");
 }
@@ -263,7 +263,7 @@ static Binary* Encode_UCS2(  // [1]
 //      data [blob!]
 //  ]
 //
-DECLARE_NATIVE(identify_utf16le_q)
+DECLARE_NATIVE(IDENTIFY_UTF16LE_Q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_UTF16LE_Q;
 
@@ -272,7 +272,7 @@ DECLARE_NATIVE(identify_utf16le_q)
     // general ".txt" codec...because if you ask specifically to decode a
     // stream as UTF-16-LE, then you may be willing to tolerate no BOM.
     //
-    UNUSED(ARG(data));
+    UNUSED(ARG(DATA));
 
     return Init_Logic(OUT, true);
 }
@@ -288,15 +288,15 @@ DECLARE_NATIVE(identify_utf16le_q)
 //      options [block!]
 //  ]
 //
-DECLARE_NATIVE(decode_utf16le)
+DECLARE_NATIVE(DECODE_UTF16LE)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
-    if (Cell_Series_Len_At(ARG(options)))
-        return FAIL(ARG(options));
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
+        return FAIL(ARG(OPTIONS));
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, ARG(data));
+    const Byte* data = Cell_Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = true;
     Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
@@ -321,15 +321,15 @@ DECLARE_NATIVE(decode_utf16le)
 //      options [block!]
 //  ]
 //
-DECLARE_NATIVE(encode_utf16le)
+DECLARE_NATIVE(ENCODE_UTF16LE)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
-    if (Cell_Series_Len_At(ARG(options)))
-        return FAIL(ARG(options));
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
+        return FAIL(ARG(OPTIONS));
 
     Length len;
-    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(TEXT));
 
     const bool little_endian = true;
     Init_Blob(OUT, Encode_UCS2(utf8, len, little_endian));
@@ -350,7 +350,7 @@ DECLARE_NATIVE(encode_utf16le)
 //      data [blob!]
 //  ]
 //
-DECLARE_NATIVE(identify_utf16be_q)
+DECLARE_NATIVE(IDENTIFY_UTF16BE_Q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_UTF16BE_Q;
 
@@ -359,7 +359,7 @@ DECLARE_NATIVE(identify_utf16be_q)
     // general ".txt" codec...because if you ask specifically to decode a
     // stream as UTF-16-BE, then you may be willing to tolerate no BOM.
     //
-    UNUSED(ARG(data));
+    UNUSED(ARG(DATA));
 
     return Init_Logic(OUT, true);
 }
@@ -375,15 +375,15 @@ DECLARE_NATIVE(identify_utf16be_q)
 //      options [block!]
 //  ]
 //
-DECLARE_NATIVE(decode_utf16be)
+DECLARE_NATIVE(DECODE_UTF16BE)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
-    if (Cell_Series_Len_At(ARG(options)))
-        return FAIL(ARG(options));
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
+        return FAIL(ARG(OPTIONS));
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, ARG(data));
+    const Byte* data = Cell_Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = false;
     Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
@@ -408,15 +408,15 @@ DECLARE_NATIVE(decode_utf16be)
 //      options [block!]
 //  ]
 //
-DECLARE_NATIVE(encode_utf16be)
+DECLARE_NATIVE(ENCODE_UTF16BE)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
-    if (Cell_Series_Len_At(ARG(options)))
-        return FAIL(ARG(options));
+    if (Cell_Series_Len_At(ARG(OPTIONS)))
+        return FAIL(ARG(OPTIONS));
 
     Length len;
-    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(TEXT));
 
     const bool little_endian = false;
     Init_Blob(OUT, Encode_UCS2(utf8, len, little_endian));

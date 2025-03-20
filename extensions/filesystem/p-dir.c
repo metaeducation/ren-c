@@ -153,9 +153,9 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(source));
+        UNUSED(PARAM(SOURCE));
 
-        if (REF(part) or REF(seek) or REF(string) or REF(lines))
+        if (REF(PART) or REF(SEEK) or REF(STRING) or REF(LINES))
             return FAIL(Error_Bad_Refines_Raw());
 
         assert(TOP_INDEX == STACK_BASE);
@@ -196,15 +196,15 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 
       case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
-        UNUSED(ARG(from));  // already have as port parameter
+        UNUSED(ARG(FROM));  // already have as port parameter
 
-        Value* error = Rename_File_Or_Directory(port, ARG(to));
+        Value* error = Rename_File_Or_Directory(port, ARG(TO));
         if (error) {
             rebRelease(error);  // !!! throws away details
             return FAIL(Error_No_Rename_Raw(dir->path));  // higher level error
         }
 
-        Copy_Cell(dir->path, ARG(to));  // !!! this mutates the spec, bad?
+        Copy_Cell(dir->path, ARG(TO));  // !!! this mutates the spec, bad?
 
         return COPY(port); }
 
@@ -232,12 +232,12 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PARAM(spec));
+        UNUSED(PARAM(SPEC));
 
-        if (REF(read) or REF(write))
+        if (REF(READ) or REF(WRITE))
             return FAIL(Error_Bad_Refines_Raw());
 
-        if (REF(new)) {
+        if (REF(NEW)) {
             Value* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details

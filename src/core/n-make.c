@@ -38,12 +38,12 @@
 //          [<maybe> <unrun> element?]  ; <unrun> action for FRAME!
 //  ]
 //
-DECLARE_NATIVE(make)
+DECLARE_NATIVE(MAKE)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Element* type = Element_ARG(type);
-    UNUSED(ARG(def));
+    Element* type = Element_ARG(TYPE);
+    UNUSED(ARG(DEF));
 
     return Dispatch_Generic(MAKE, type, LEVEL);
 }
@@ -78,7 +78,7 @@ Bounce Copy_Quoter_Executor(Level* level_)
 //      ; Once had :TYPES, but that is disabled for now
 //  ]
 //
-DECLARE_NATIVE(copy)
+DECLARE_NATIVE(COPY)
 //
 // 1. R3-Alpha and Red limit COPY to series, object, or function.  Ren-C had
 //    the idea that COPY should be able to copy any value, but the merits of
@@ -91,17 +91,17 @@ DECLARE_NATIVE(copy)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* elem = Element_ARG(value);
+    Element* elem = Element_ARG(VALUE);
 
     GenericTable* table = GENERIC_TABLE(COPY);
     Heart heart = Cell_Heart(elem);
     Dispatcher* dispatcher = maybe Try_Get_Generic_Dispatcher(table, heart);
 
     if (not dispatcher) {  // trivial copy, is it good to do so? [1]
-        if (REF(part))
+        if (REF(PART))
             return FAIL(Error_Bad_Refines_Raw());
 
-        UNUSED(REF(deep));  // historically we ignore it
+        UNUSED(REF(DEEP));  // historically we ignore it
 
         return COPY(elem);
     }
@@ -200,11 +200,11 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
 
     INCLUDE_PARAMS_OF_TO;
-    Erase_Cell(ARG(type));
-    Erase_Cell(ARG(element));
+    Erase_Cell(ARG(TYPE));
+    Erase_Cell(ARG(ELEMENT));
 
-    Copy_Cell(ARG(type), Datatype_From_Type(from));
-    Copy_Cell(ARG(element), cast(Element*, stable_OUT));
+    Copy_Cell(ARG(TYPE), Datatype_From_Type(from));
+    Copy_Cell(ARG(ELEMENT), cast(Element*, stable_OUT));
     STATE = STATE_0;
 
     assert(Get_Level_Flag(level_, TRAMPOLINE_KEEPALIVE));
@@ -257,9 +257,9 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     Option(const Symbol*) label = Level_Label(level_);
 
-    Element* type = Element_ARG(type);
+    Element* type = Element_ARG(TYPE);
     STATE = Cell_Datatype_Heart(type);  // generic code may trash TYPE when it runs
-    Copy_Cell(SPARE, ARG(element));  // may trash ELEMENT too, save in SPARE
+    Copy_Cell(SPARE, ARG(ELEMENT));  // may trash ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
 
@@ -290,12 +290,12 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(to)
+DECLARE_NATIVE(TO)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* e = Element_ARG(element);
-    Type to = Cell_Datatype_Type(ARG(type));
+    Element* e = Element_ARG(ELEMENT);
+    Type to = Cell_Datatype_Type(ARG(TYPE));
     if (to > MAX_HEART)
         return FAIL("TO can't produce quoted/quasiform/antiform");
 
@@ -303,7 +303,7 @@ DECLARE_NATIVE(to)
 
     Bounce bounce = Dispatch_Generic(TO, e, LEVEL);
     /*if (bounce == UNHANDLED)  // distinct error for AS or TO ?
-        return Error_Bad_Cast_Raw(ARG(element), ARG(type)); */
+        return Error_Bad_Cast_Raw(ARG(ELEMENT), ARG(TYPE)); */
     return bounce;
 
   #else  // add monitor to ensure result is right
@@ -328,12 +328,12 @@ DECLARE_NATIVE(to)
 //      element [<maybe> fundamental?]
 //  ]
 //
-DECLARE_NATIVE(as)
+DECLARE_NATIVE(AS)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* e = Element_ARG(element);
-    Type as = Cell_Datatype_Type(ARG(type));
+    Element* e = Element_ARG(ELEMENT);
+    Type as = Cell_Datatype_Type(ARG(TYPE));
     if (as > MAX_HEART)
         return FAIL("AS can't alias to quoted/quasiform/antiform");
 
