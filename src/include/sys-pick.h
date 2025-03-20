@@ -76,6 +76,10 @@ INLINE Bounce Dispatch_Generic_Core(
 }
 
 
+#define Handles_Generic(name, type) \
+    (did Try_Get_Generic_Dispatcher(g_generic_##name, type))
+
+
 INLINE Option(Dispatcher*) Try_Get_Generic_Dispatcher(
     const GenericTable* table,
     Heart heart
@@ -86,18 +90,6 @@ INLINE Option(Dispatcher*) Try_Get_Generic_Dispatcher(
     }
     return nullptr;
 }
-
-
-// There's a common pattern in functions like REVERSE-OF or APPEND-OF which
-// is that they're willing to run on WORD! or ISSUE!, but just want to delegate
-// to running the operation on a copy made of the value interpreted as text...
-// then converted back again.  This should be optimized, but for now just
-// use the libRebol API to do it quick and dirty.
-//
-#define Delegate_Operation_To_Text(operation, type, element, part) \
-    rebDelegate("as @", type, rebRUN(operation), "copy // [", \
-        "as text! @", element, ":part @", part, \
-    "]")
 
 
 // If you pass in a nullptr for the steps in the Get_Var() and Set_Var()

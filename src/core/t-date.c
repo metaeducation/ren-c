@@ -1067,38 +1067,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
           case SYM_ODD_Q:
             return Init_Logic(OUT, (day & 1) == 0);
 
-          case SYM_RANDOM: {
-            INCLUDE_PARAMS_OF_RANDOM;
-            UNUSED(PARAM(value));
-
-            if (REF(only))
-                return FAIL(Error_Bad_Refines_Raw());
-
-            const bool secure = REF(secure);
-
-            if (REF(seed)) {
-                //
-                // Note that nsecs not set often for dates (requires /precise)
-                //
-                Set_Random(
-                    (cast(REBI64, year) << 48)
-                    + (cast(REBI64, Julian_Date(v)) << 32)
-                    + secs
-                );
-                return NOTHING;
-            }
-
-            if (year == 0) break;
-
-            year = Random_Range(year, secure);
-            month = Random_Range(12, secure);
-            day = Random_Range(31, secure);
-
-            if (secs != NO_DATE_TIME)
-                secs = Random_Range(TIME_IN_DAY, secure);
-
-            goto fix_date; }
-
           case SYM_DIFFERENCE: {
             INCLUDE_PARAMS_OF_DIFFERENCE;
 
@@ -1175,6 +1143,61 @@ IMPLEMENT_GENERIC(POKE, Is_Date)
     Pick_Or_Poke_Date(nullptr, date, picker, poke);
 
     return COPY(date);  // all bits stored in the cell, cell owner must writeback
+}
+
+
+IMPLEMENT_GENERIC(RANDOMIZE, Is_Date)
+{
+    INCLUDE_PARAMS_OF_RANDOMIZE;
+
+    Element* date = Element_ARG(seed);
+
+    REBLEN year = VAL_YEAR(date);  // unhandled if 0?
+    REBI64 nano = Does_Date_Have_Time(date) ? VAL_NANO(date) : 0;
+
+    Set_Random(  // Note that nano not set often for dates (requires :PRECISE)
+        (cast(REBI64, year) << 48)
+        + (cast(REBI64, Julian_Date(date)) << 32)
+        + nano
+    );
+    return NOTHING;
+}
+
+
+IMPLEMENT_GENERIC(RANDOM, Is_Date)
+{
+    INCLUDE_PARAMS_OF_RANDOM;
+
+    Element* date = Element_ARG(max);
+
+    REBLEN year = VAL_YEAR(date);
+    if (year == 0)
+        return UNHANDLED;
+
+    const bool secure = REF(secure);
+
+    REBLEN rand_year = Random_Range(year, secure);
+    REBLEN rand_month = Random_Range(12, secure);
+    REBLEN rand_day = Random_Range(31, secure);
+
+    REBI64 rand_nano;
+    if (Does_Date_Have_Time(date))
+        rand_nano = Random_Range(TIME_IN_DAY, secure);
+    else
+        rand_nano = NO_DATE_TIME;
+
+    Init_Normalized_Date(
+        OUT,
+        rand_day,
+        rand_month,
+        rand_year,
+        Does_Date_Have_Zone(date) ? cast(int, VAL_ZONE(date)) : 0
+    );
+
+    Tweak_Cell_Nanoseconds(OUT, rand_nano);  // may be NO_DATE_TIME
+    if (rand_nano == NO_DATE_TIME)
+        VAL_ZONE(OUT) = NO_DATE_ZONE;
+    return OUT;
 }
 
 

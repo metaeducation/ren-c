@@ -105,7 +105,7 @@
 
             plaintext: copy #{}
             repeat (random capacity) - 1 [
-                append plaintext (random 256) - 1
+                append plaintext (random-between 0 255)
             ]
 
             ; Should return a different result (most) every time...if it ever

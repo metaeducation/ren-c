@@ -656,21 +656,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
             return FAIL(PARAM(to)); }
 
-          case SYM_RANDOM: {
-            INCLUDE_PARAMS_OF_RANDOM;
-
-            UNUSED(PARAM(value));
-
-            if (REF(only))
-                return FAIL(Error_Bad_Refines_Raw());
-
-            if (REF(seed)) {
-                Set_Random(secs);
-                return NOTHING;
-            }
-            secs = Random_Range(secs / SEC_SEC, REF(secure)) * SEC_SEC;
-            return Init_Time_Nanoseconds(OUT, secs); }
-
           default:
             break;
         }
@@ -703,6 +688,30 @@ IMPLEMENT_GENERIC(POKE, Is_Time)
 
     Poke_Time_Immediate(time, picker, poke);
     return COPY(time);  // caller needs to update their time bits
+}
+
+
+IMPLEMENT_GENERIC(RANDOMIZE, Is_Time)
+{
+    INCLUDE_PARAMS_OF_RANDOMIZE;
+
+    const Element* time = Element_ARG(seed);
+    REBI64 secs = VAL_NANO(time);
+
+    Set_Random(secs);
+    return NOTHING;
+}
+
+
+IMPLEMENT_GENERIC(RANDOM, Is_Time)
+{
+    INCLUDE_PARAMS_OF_RANDOM;
+
+    Element* time = Element_ARG(max);
+    REBI64 secs = VAL_NANO(time);
+
+    REBI64 rand_secs = Random_Range(secs / SEC_SEC, REF(secure)) * SEC_SEC;
+    return Init_Time_Nanoseconds(OUT, rand_secs);
 }
 
 

@@ -294,6 +294,43 @@ bool Try_Dispatch_Generic_Core(
 
 
 //
+//   Delegate_Operation_With_Part: C
+//
+// There's a common pattern in functions like REVERSE-OF or APPEND-OF which
+// is that they're willing to run on immutable types, but delegate to running
+// on a copy of the data aliased as a mutable type.
+//
+// It's easiest to build that pattern on top of functions that exist, as there
+// isn't a strong need to write error-prone "efficient" code to do it.
+//
+// 1. To speed up slightly, callers are expected to quote (or metaquote) the
+//    cells so they can be passed to the API without rebQ() calls.
+//
+Bounce Delegate_Operation_With_Part(
+    SymId operation,
+    SymId delegate,
+    // arguments are passed as quoted/meta [1]
+    const Element* meta_datatype,
+    const Element* quoted_element,
+    const Element* meta_part
+){
+    assert(delegate == SYM_TEXT_X or delegate == SYM_BLOCK_X);
+
+    assert(Any_Metaform(meta_datatype));  // note: likely only quasiform soon
+    assert(Is_Quoted(quoted_element));
+    assert(Any_Metaform(meta_part));
+
+    return rebDelegate(
+        CANON(AS), meta_datatype, Canon_Symbol(operation),
+            CANON(COPY), CANON(_S_S), "[",
+                CANON(AS), Canon_Symbol(delegate), quoted_element,
+                ":part", meta_part,
+            "]"
+    );
+}
+
+
+//
 //  /oldgeneric: native:generic [
 //
 //  "Generic aggregator for the old-style generic dispatch"

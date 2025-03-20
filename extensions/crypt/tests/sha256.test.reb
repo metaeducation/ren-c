@@ -69,15 +69,15 @@
         )
     ]
 
-    random:seed "Deterministic Behavior Desired"
+    randomize "Deterministic Behavior Desired"
     repeat 100 (wrap [
         data-len: random 1024
         data: make blob! data-len
-        repeat data-len [append data (random 256) - 1]
+        repeat data-len [append data (random-between 0 255)]
 
         key-len: random 512
         key: make blob! key-len
-        repeat key-len [append data (random 256) - 1]
+        repeat key-len [append data (random-between 0 255)]
 
         a: hmac-sha256 data key
         b: checksum:key 'sha256 data key

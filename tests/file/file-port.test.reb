@@ -250,7 +250,7 @@
         ;
         len: random 1024
         data: make blob! len
-        repeat len [append data (-1 + random 256)]
+        repeat len [append data (random-between 0 255)]
 
         applique fuzzwrite/ [
             destination: p

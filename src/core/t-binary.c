@@ -596,43 +596,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         }
         return COPY(v); }
 
-      case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-
-        UNUSED(PARAM(value));
-
-        if (REF(seed)) { // binary contents are the seed
-            Size size;
-            const Byte* data = Cell_Blob_Size_At(&size, v);
-            Set_Random(crc32_z(0L, data, size));
-            return NOTHING;
-        }
-
-        REBINT tail = Cell_Series_Len_Head(v);
-        REBINT index = VAL_INDEX(v);
-
-        if (REF(only)) {
-            if (index >= tail)
-                return Init_Blank(OUT);
-
-            index += Random_Int(REF(secure)) % (tail - index);
-            const Binary* b = Cell_Binary(v);
-            return Init_Integer(OUT, *Binary_At(b, index));  // PICK
-        }
-
-        Binary* b = Cell_Binary_Ensure_Mutable(v);
-
-        bool secure = REF(secure);
-        REBLEN n;
-        for (n = Binary_Len(b) - index; n > 1;) {
-            REBLEN k = index + Random_Int(secure) % n;
-            n--;
-            Byte swap = *Binary_At(b, k);
-            *Binary_At(b, k) = *Binary_At(b, n + index);
-            *Binary_At(b, n + index) = swap;
-        }
-        return COPY(v); }
-
       default:
         break;
     }
@@ -878,6 +841,68 @@ IMPLEMENT_GENERIC(REVERSE, Is_Blob)
             bp[n] = bp[m];
             bp[m] = b;
         }
+    }
+    return COPY(blob);
+}
+
+
+// 1. This repeats behavior for RANDOMIZE of Any_Utf8, but since not all UTF-8
+//    data has a node the way BLOB! does, and the indices need translation
+//    if it's a series-based UTF-8 from codepoint index to byte index... it's
+//    just easier to factor it like this.
+//
+IMPLEMENT_GENERIC(RANDOMIZE, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_RANDOMIZE;
+
+    Element* blob = Element_ARG(seed);
+    possibly(Is_Stub_String(Cell_Binary(blob)));  // may be aliased UTF-8 [1]
+
+    Size size;
+    const Byte* data = Cell_Blob_Size_At(&size, blob);
+    Set_Random(crc32_z(0L, data, size));
+    return NOTHING;
+}
+
+
+// See notes on RANDOM-PICK on whether specializations like this are worth it.
+//
+IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_RANDOM_PICK;
+
+    Element* blob = Element_ARG(collection);
+
+    REBINT tail = Cell_Series_Len_Head(blob);
+    REBINT index = VAL_INDEX(blob);
+
+    if (index >= tail)
+        return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+
+    index += Random_Int(REF(secure)) % (tail - index);
+    const Binary* bin = Cell_Binary(blob);
+    return Init_Integer(OUT, *Binary_At(bin, index));
+}
+
+
+IMPLEMENT_GENERIC(SHUFFLE, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_SHUFFLE;
+
+    Element* blob = Element_ARG(series);
+
+    REBINT index = VAL_INDEX(blob);
+
+    Binary* bin = Cell_Binary_Ensure_Mutable(blob);
+
+    bool secure = REF(secure);
+    REBLEN n;
+    for (n = Binary_Len(bin) - index; n > 1;) {
+        REBLEN k = index + Random_Int(secure) % n;
+        n--;
+        Byte swap = *Binary_At(bin, k);
+        *Binary_At(bin, k) = *Binary_At(bin, n + index);
+        *Binary_At(bin, n + index) = swap;
     }
     return COPY(blob);
 }

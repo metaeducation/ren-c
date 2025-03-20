@@ -222,7 +222,7 @@
 (#"Ǿ" = add #"^(ff)" #"^(ff)")
 
 (
-    random:seed "let's be deterministic"
+    randomize "let's be deterministic"
     codepoints: [
         #"b"  ; 1 utf-8 byte
         #"à"  ; 2 utf-8 bytes encoded
@@ -239,11 +239,11 @@
             e: copy ""
             picks: copy []
             count-up 'i len [
-                append s random:only codepoints
+                append s random-pick codepoints
                 append e c
                 append picks i
             ]
-            random picks  ; randomize positions so not always in order
+            shuffle picks  ; randomize positions so not always in order
             for-each 'i picks [
                 comment [
                     print ["Trying" i "/" len "in" mold s]

@@ -991,51 +991,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         }
         return COPY(v); }
 
-      case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-
-        UNUSED(PARAM(value));
-
-        if (REF(seed)) { // string/binary contents are the seed
-            assert(Any_String(v));
-
-            Size utf8_size;
-            Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
-            Set_Random(crc32_z(0L, utf8, utf8_size));
-            return NOTHING;
-        }
-
-        REBLEN index = VAL_INDEX(v);
-        REBLEN tail = Cell_Series_Len_Head(v);
-
-        if (REF(only)) {
-            if (index >= tail)
-                return nullptr;
-            index += Random_Int(REF(secure)) % (tail - index);
-
-            return Init_Char_Unchecked(
-                OUT,
-                Get_Char_At(Cell_String(v), index)
-            );
-        }
-
-        String* str = Cell_String_Ensure_Mutable(v);
-
-        if (not Is_String_All_Ascii(str))
-            return FAIL("UTF-8 Everywhere: String shuffle temp. unavailable");
-
-        bool secure = REF(secure);
-
-        REBLEN n;
-        for (n = String_Len(str) - index; n > 1;) {
-            REBLEN k = index + (Random_Int(secure) % n);
-            n--;
-            Codepoint swap = Get_Char_At(str, k);
-            Set_Char_At(str, k, Get_Char_At(str, n + index));
-            Set_Char_At(str, n + index, swap);
-        }
-        return COPY(v); }
-
       default:
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
@@ -1170,6 +1125,65 @@ IMPLEMENT_GENERIC(REVERSE, Any_String)
     REBINT len = Part_Len_May_Modify_Index(any_string, ARG(part));
     Reverse_String(s, VAL_INDEX(any_string), len);
     return OUT;
+}
+
+
+IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
+{
+    INCLUDE_PARAMS_OF_RANDOM_PICK;
+
+    Element* v = Element_ARG(collection);
+
+    REBLEN index = VAL_INDEX(v);
+    REBLEN tail = Cell_Series_Len_Head(v);
+
+    if (index >= tail)
+        return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+
+    index += Random_Int(REF(secure)) % (tail - index);
+
+    return Init_Char_Unchecked(
+        OUT,
+        Get_Char_At(Cell_String(v), index)
+    );
+}
+
+
+// 1. It hasn't been a priority to write a fast shuffle algorithm for non
+//    ASCII strings.  (Or even ASCII ones really, but the code existed in
+//    R3-Alpha for that and so it was kept).  It's of little concern, so
+//    if there's any non-ASCII codepoints we just use MAP-EACH to make
+//    new shuffled data to replace in the string up to the tail.
+//
+IMPLEMENT_GENERIC(SHUFFLE, Any_String)
+{
+    INCLUDE_PARAMS_OF_SHUFFLE;
+
+    Element* any_string = Element_ARG(series);
+
+    REBLEN index = VAL_INDEX(any_string);
+
+    String* str = Cell_String_Ensure_Mutable(any_string);
+
+    if (not Is_String_All_Ascii(str))  // slow is better than not at all [1]
+        return rebDelegate(
+            "let shuffled: unspaced shuffle map-each 'c", any_string, "[c]"
+            "take:part", any_string, "tail of", any_string,  // drop tail
+            "append", any_string, "shuffled",  // add shuffled bit
+            any_string  // return string at original position
+        );
+
+    bool secure = REF(secure);
+
+    REBLEN n;
+    for (n = String_Len(str) - index; n > 1;) {
+        REBLEN k = index + (Random_Int(secure) % n);
+        n--;
+        Codepoint swap = Get_Char_At(str, k);
+        Set_Char_At(str, k, Get_Char_At(str, n + index));
+        Set_Char_At(str, n + index, swap);
+    }
+    return COPY(any_string);
 }
 
 

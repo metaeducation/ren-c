@@ -768,34 +768,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         }
         return COPY(list); }
 
-      case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-        UNUSED(PARAM(value));  // covered by `v`
-
-        REBLEN index = VAL_INDEX(list);
-
-        if (REF(seed))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(only)) { // pick an element out of the list
-            if (index >= Cell_Series_Len_Head(list))
-                return nullptr;
-
-            Init_Integer(
-                ARG(seed),
-                1 + (Random_Int(REF(secure))
-                    % (Cell_Series_Len_Head(list) - index))
-            );
-
-            if (not Try_Pick_Block(OUT, list, Element_ARG(seed)))
-                return nullptr;
-            return Inherit_Const(stable_OUT, list);
-        }
-
-        Array* arr = Cell_Array_Ensure_Mutable(list);
-        Shuffle_Array(arr, VAL_INDEX(list), REF(secure));
-        return COPY(list); }
-
     // !!! The ability to transform some BLOCK!s into PORT!s for some actions
     // was hardcoded in a fairly ad-hoc way in R3-Alpha, which was based on
     // an integer range of action numbers.  Ren-C turned these numbers into
@@ -1160,6 +1132,42 @@ IMPLEMENT_GENERIC(REVERSE, Any_List)
         else
             Clear_Cell_Flag(back, NEWLINE_BEFORE);
     }
+    return COPY(list);
+}
+
+
+// See notes on RANDOM-PICK on whether specializations like this are worth it.
+//
+IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
+{
+    INCLUDE_PARAMS_OF_RANDOM_PICK;
+
+    Element* list = Element_ARG(collection);
+
+    REBLEN index = VAL_INDEX(list);
+    if (index >= Cell_Series_Len_Head(list))
+        return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+
+    Element* spare = Init_Integer(
+        SPARE,
+        1 + (Random_Int(REF(secure))
+            % (Cell_Series_Len_Head(list) - index))
+    );
+
+    if (not Try_Pick_Block(OUT, list, spare))
+        return nullptr;
+    return Inherit_Const(OUT, list);
+}
+
+
+IMPLEMENT_GENERIC(SHUFFLE, Any_List)
+{
+    INCLUDE_PARAMS_OF_SHUFFLE;
+
+    Element* list = Element_ARG(series);
+
+    Array* arr = Cell_Array_Ensure_Mutable(list);
+    Shuffle_Array(arr, VAL_INDEX(list), REF(secure));
     return COPY(list);
 }
 

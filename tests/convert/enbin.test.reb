@@ -19,10 +19,10 @@
 (32 = decode [LE +] #{20000000})
 
 (
-    random:seed "Reproducible Permutations!"
+    randomize "Reproducible Permutations!"
     repeat 1000 wrap [
-        endian: random:only [be le]
-        signedness: random:only [+ +/-]
+        endian: random-pick [be le]
+        signedness: random-pick [+ +/-]
         num-bytes: random 8
 
         settings: reduce [endian signedness num-bytes]

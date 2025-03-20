@@ -25,6 +25,9 @@
 
 #include "sys-core.h"
 
+#undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
+#include "sys-zlib.h"  // for crc32_z()
+
 
 // Index into the table below with the first byte of a UTF-8 sequence to
 // get the number of trailing bytes that are supposed to follow it.
@@ -618,22 +621,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
       case SYM_ODD_Q:
         return Init_Logic(OUT, did (chr & 1));
 
-      case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-
-        UNUSED(PARAM(value));
-        if (REF(only))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(seed)) {
-            Set_Random(chr);
-            return NOTHING;
-        }
-        if (chr == 0)
-            break;
-        chr = cast(Codepoint, 1 + (Random_Int(REF(secure)) % chr));
-        break; }
-
       default:
         return UNHANDLED;
     }
@@ -960,16 +947,79 @@ IMPLEMENT_GENERIC(PICK, Is_Issue)
 }
 
 
-IMPLEMENT_GENERIC(REVERSE_OF, Is_Issue)
+IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
-    Element* issue = Element_ARG(element);
+    Element* any_utf8 = Element_ARG(element);
     Value* part = ARG(part);
 
-    const Value* type = Datatype_From_Type(TYPE_ISSUE);
+    Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
 
-    return Delegate_Operation_To_Text(LIB(REVERSE), type, issue, part);
+    return Delegate_Operation_With_Part(
+        SYM_REVERSE, SYM_TEXT_X,
+        Meta_Quotify(datatype), Quotify(any_utf8), Meta_Quotify(part)
+    );
+}
+
+
+// !!! This is how R3-Alpha randomized based on strings.  Is it good?
+//
+IMPLEMENT_GENERIC(RANDOMIZE, Any_Utf8)
+{
+    INCLUDE_PARAMS_OF_RANDOMIZE;
+
+    Element* any_utf8 = Element_ARG(seed);
+
+    Size utf8_size;
+    Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, any_utf8);
+    Set_Random(crc32_z(0L, utf8, utf8_size));
+    return NOTHING;
+}
+
+
+IMPLEMENT_GENERIC(RANDOM, Is_Issue)
+{
+    INCLUDE_PARAMS_OF_RANDOM;
+
+    Element* issue = Element_ARG(max);
+
+    if (not IS_CHAR(issue))
+        return FAIL("RANDOM only for single-character ISSUE!");
+
+    Codepoint c = Cell_Codepoint(issue);
+    if (c == 0)
+        return UNHANDLED;
+
+    while (true) {
+        Codepoint rand = cast(Codepoint, 1 + (Random_Int(REF(secure)) % c));
+
+        Option(Error*) e = Trap_Init_Char(OUT, rand);
+        if (not e)
+            break;
+        unnecessary(Free_Unmanaged_Flex(unwrap e));  // errors are prealloc'd
+    }
+
+    return OUT;
+}
+
+
+IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
+{
+    INCLUDE_PARAMS_OF_SHUFFLE_OF;
+
+    Element* any_utf8 = Element_ARG(element);
+    Value* part = ARG(part);
+
+    if (REF(secure))
+        return FAIL(Error_Bad_Refines_Raw());
+
+    Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
+
+    return Delegate_Operation_With_Part(
+        SYM_SHUFFLE, SYM_TEXT_X,
+        Meta_Quotify(datatype), Quotify(any_utf8), Meta_Quotify(part)
+    );
 }
 
 

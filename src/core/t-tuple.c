@@ -96,31 +96,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     Length len = Cell_Sequence_Len(sequence);
 
     switch (id) {
-
-    // !!! RANDOM is SHUFFLE by default, so same question about mutability
-    // and if SHUFFLE:COPY should be a thing.  RANDOM:ONLY picks an item out
-    // of a series at random (should be default for random?)
-    //
-    // !!! Historical Redbol treated RANDOM of a TUPLE! as using each of the
-    // tuple values as a maximum of the chosen number, which seems kind of
-    // useless unless you say `random 255.255.255.255` to try and get a
-    // random IPv4 address.  :-/  All of this needs rethinking.
-
-      case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-        UNUSED(ARG(value));
-
-        if (REF(seed) or REF(secure))
-            return (Error_Bad_Refines_Raw());
-
-        if (REF(only))
-            return rebDelegate("random:only as block!", rebQ(sequence));
-
-        return rebDelegate(
-            "let t: type of", rebQ(sequence),
-            "as t random as block!", rebQ(sequence)
-        ); }
-
       case SYM_ADD:
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
@@ -473,7 +448,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     for (n = 0; n < len; ++len) {  // first let's see if it's a trivial copy
         Copy_Sequence_At(SPARE, seq, n);
         Heart item_heart = Cell_Heart(SPARE);
-        if (Try_Get_Generic_Dispatcher(GENERIC_TABLE(COPY), item_heart)) {
+        if (Handles_Generic(COPY, item_heart)) {
             trivial_copy = false;
             break;
         }
@@ -482,11 +457,14 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     if (trivial_copy)  // something like a/1/foo
         return COPY(seq);
 
-    const Value* type = Datatype_Of(seq);
+    Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
+    Meta_Quotify(datatype);
+    Quotify(seq);
+    Meta_Quotify(part);
     return rebDelegate(  // slow, but not a high priority to write it fast [1]
-        "as @", type, "copy // ["
-            "as block! @", rebQ(seq), ":part @", part, ":deep ~okay~"
+        CANON(AS), datatype, CANON(COPY), CANON(_S_S), "[",
+            CANON(AS), CANON(BLOCK_X), seq, ":part", part, ":deep ~okay~"
         "]"
     );
 }
@@ -521,20 +499,78 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
-    const Element* seq = Element_ARG(element);
+    Element* seq = Element_ARG(element);
+    Value* part = ARG(part);
 
-    Length len = Cell_Sequence_Len(seq);
-    Length part = len;
+    Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
-    if (REF(part)) {
-        Length temp = Get_Num_From_Arg(ARG(part));
-        part = MIN(temp, len);
+    return Delegate_Operation_With_Part(
+        SYM_REVERSE, SYM_BLOCK_X,
+        Meta_Quotify(datatype), Quotify(seq), Meta_Quotify(part)
+    );
+}
+
+
+// See notes on RANDOM-PICK on whether specializations like this are worth it.
+//
+// 1. When a sequence has a Symbol* in its Payload, that implies that it is
+//    a sequence representing a BLANK! and a WORD!.  A flag controls whether
+//    that is a leading blank or trailing blank.  We don't care which--all
+//    we do is have a 50-50 chance of making a blank or a word.
+//
+IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
+{
+    INCLUDE_PARAMS_OF_RANDOM_PICK;
+
+    Element* seq = Element_ARG(collection);
+
+    if (Wordlike_Cell(seq)) {  // e.g. FOO: or :FOO [1]
+        REBI64 one_or_two = Random_Range(2, REF(secure));
+        if (one_or_two == 1)
+            return Init_Blank(OUT);
+        Copy_Cell(OUT, seq);
+        HEART_BYTE(OUT) = TYPE_WORD;
+        return OUT;
     }
 
-    const Value* type = Datatype_Of(seq);
+    if (Pairlike_Cell(seq)) {  // e.g. A/B
+        assert(Listlike_Cell(seq));  // all pairlikes are also listlike
+        REBI64 one_or_two = Random_Range(2, REF(secure));
+        if (one_or_two == 1)
+            return COPY(Cell_Pair_First(seq));
+        return COPY(Cell_Pair_Second(seq));
+    }
 
-    return rebDelegate(  // !!! slow, but not a high priority to write it fast
-        "as @", type, "reverse:part copy as block!", rebQ(seq), rebI(part)
+    if (Listlike_Cell(seq)) {  // alias as BLOCK! and dispatch to list pick
+        possibly(Pairlike_Cell(seq));  // why we tested pairlike first
+        HEART_BYTE(seq) = TYPE_BLOCK;
+        return GENERIC_CFUNC(RANDOM_PICK, Any_List)(LEVEL);
+    }
+
+    assert(not Sequence_Has_Node(seq));  // packed byte sequence
+
+    Byte used = seq->payload.at_least_8[IDX_SEQUENCE_USED];
+
+    REBI64 rand = Random_Range(used, REF(secure));  // from 1 to used
+    return Init_Integer(OUT, seq->payload.at_least_8[rand]);
+}
+
+
+IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
+{
+    INCLUDE_PARAMS_OF_SHUFFLE_OF;
+
+    Element* seq = Element_ARG(element);
+    Value* part = ARG(part);
+
+    if (REF(secure) or REF(part))
+        return (Error_Bad_Refines_Raw());
+
+    Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+
+    return Delegate_Operation_With_Part(
+        SYM_SHUFFLE, SYM_BLOCK_X,
+        Meta_Quotify(datatype), Quotify(seq), Meta_Quotify(part)
     );
 }
 
@@ -553,16 +589,17 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Value* seq1 = ARG(value1);  // dispatch is on first argument, a tuple
+    Value* seq1 = ARG(value1);  // dispatch is on first argument
+    assert(Any_Sequence(seq1));
 
     Value* arg2 = ARG(value2);
     if (not Is_Integer(arg2))
-        return FAIL(PARAM(value2));  // used to support decimal/percent
+        return FAIL(PARAM(value2));  // formerly supported decimal/percent
 
     return rebDelegate(
         "join type of", seq1, "map-each 'i", seq1, "[",
             arg2, "* match integer! i else [",
-                "fail -{Can't multiply tuple unless all integers}-"
+                "fail -{Can't multiply sequence unless all integers}-"
             "]",
         "]"
     );

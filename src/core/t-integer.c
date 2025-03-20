@@ -350,22 +350,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 
         return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to))); }
 
-      case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-
-        UNUSED(PARAM(value));
-
-        if (REF(only))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(seed)) {
-            Set_Random(num);
-            return NOTHING;
-        }
-        if (num == 0)
-            return FAIL(ARG(value));
-        return Init_Integer(OUT, Random_Range(num, REF(secure))); }
-
       default:
         break;
     }
@@ -423,6 +407,46 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
         return COPY(val);
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(RANDOMIZE, Is_Integer)
+{
+    INCLUDE_PARAMS_OF_RANDOMIZE;
+
+    REBI64 num = VAL_INT64(Element_ARG(seed));
+
+    Set_Random(num);
+    return NOTHING;
+}
+
+
+IMPLEMENT_GENERIC(RANDOM, Is_Integer)
+{
+    INCLUDE_PARAMS_OF_RANDOM;
+
+    REBI64 max = VAL_INT64(Element_ARG(max));
+
+    if (max == 0)
+        return FAIL(PARAM(max));  // range is 1 to max, inclusive
+
+    return Init_Integer(OUT, Random_Range(max, REF(secure)));
+}
+
+
+IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
+{
+    INCLUDE_PARAMS_OF_RANDOM_BETWEEN;
+
+    REBI64 min = VAL_INT64(Element_ARG(min));
+    REBI64 max = VAL_INT64(Element_ARG(max));
+
+    if (max < min)
+        return FAIL(PARAM(max));  // 0 to 0 is okay, but disallow 1 to 0
+
+    REBI64 rand = Random_Range(1 + max - min, REF(secure));  // 1-based
+
+    return Init_Integer(OUT, rand + min - 1);
 }
 
 

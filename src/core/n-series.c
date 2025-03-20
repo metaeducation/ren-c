@@ -212,8 +212,16 @@ DECLARE_NATIVE(reverse_of)
     if (Try_Dispatch_Generic(&bounce, REVERSE_OF, elem, LEVEL))
         return bounce;
 
+    Heart heart = Cell_Heart_Ensure_Noquote(elem);
+    if (
+        not Handles_Generic(REVERSE, heart)
+        or not Handles_Generic(COPY, heart)
+    ){
+        return UNHANDLED;
+    }
+
     Quotify(elem);
-    return rebDelegate("reverse copy", elem);
+    return rebDelegate(CANON(REVERSE), CANON(COPY), elem);
 }
 
 

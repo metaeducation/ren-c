@@ -509,24 +509,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
             return Init_Integer(OUT, cast(REBI64, d1));
         return Init_Decimal_Or_Percent(OUT, heart, d1); }
 
-      case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-
-        UNUSED(PARAM(value));
-        if (REF(only))
-            return FAIL(Error_Bad_Refines_Raw());
-
-        if (REF(seed)) {
-            REBDEC d = VAL_DECIMAL(val);
-            REBI64 i;
-            assert(sizeof(d) == sizeof(i));
-            memcpy(&i, &d, sizeof(d));
-            Set_Random(i); // use IEEE bits
-            return NOTHING;
-        }
-        d1 = Random_Dec(d1, REF(secure));
-        return Init_Decimal_Or_Percent(OUT, heart, d1); }
-
       default:
         break;
     }
@@ -583,6 +565,36 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     }
 
     return UNHANDLED;
+}
+
+
+IMPLEMENT_GENERIC(RANDOMIZE, Any_Float)
+{
+    INCLUDE_PARAMS_OF_RANDOMIZE;
+
+    const Element* val = Element_ARG(seed);
+
+    REBDEC d = VAL_DECIMAL(val);
+    REBI64 i;
+    assert(sizeof(d) == sizeof(i));
+    memcpy(&i, &d, sizeof(d));  // use IEEE bits (is there a better way?)
+    Set_Random(i);
+    return NOTHING;
+}
+
+
+IMPLEMENT_GENERIC(RANDOM, Any_Float)
+{
+    INCLUDE_PARAMS_OF_RANDOM;
+
+    const Element* val = Element_ARG(max);
+    Heart heart = Cell_Heart_Ensure_Noquote(val);
+    assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
+
+    REBDEC d = VAL_DECIMAL(val);
+    REBDEC rand = Random_Dec(d, REF(secure));
+
+    return Init_Decimal_Or_Percent(OUT, heart, rand);
 }
 
 

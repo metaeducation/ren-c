@@ -510,8 +510,8 @@ update-write-state: make-state-updater 'write [
     ;
     let epoch: 1-Jan-1970/0:00+0:00
     ctx.client-random: to-4bin to-integer difference now:precise epoch
-    random:seed now:time:precise
-    repeat 28 [append ctx.client-random (random-secure 256) - 1]
+    randomize now:time:precise
+    repeat 28 [append ctx.client-random (random-between 0 255)]
 
     let cs-data: join blob! inert map-each 'item cipher-suites [
         maybe match blob! item
@@ -680,8 +680,8 @@ update-write-state: make-state-updater 'write [
         <rsa> [
             ; generate pre-master-secret
             ctx.pre-master-secret: copy ctx.ver-bytes
-            random:seed now:time:precise
-            repeat 46 [append ctx.pre-master-secret (random-secure 256) - 1]
+            randomize now:time:precise
+            repeat 46 [append ctx.pre-master-secret (random-between 0 255)]
 
             ; encrypt pre-master-secret
             let rsa-key: rsa-make-key
@@ -897,7 +897,7 @@ update-write-state: make-state-updater 'write [
         ;  which is equal to the SecurityParameters.block_size."
         ;
         ctx.client-iv: copy #{}
-        repeat ctx.block-size [append ctx.client-iv (random-secure 256) - 1]
+        repeat ctx.block-size [append ctx.client-iv (random-between 0 255)]
     ]
 
     ; Message Authentication Code

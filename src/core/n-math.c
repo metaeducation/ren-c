@@ -328,21 +328,178 @@ DECLARE_NATIVE(even_q)
 
 
 //
+//  /randomize: native:generic [
+//
+//  "Seed random number generator"
+//
+//      return: [~]
+//      seed "Pass e.g. NOW:TIME:PRECISE for nondeterminism"
+//          [fundamental?]
+//  ]
+//
+DECLARE_NATIVE(randomize)
+//
+// Note: It may not be a great idea to allow randomization on lists, it
+// may be the case that there's some kind of "randomize dialect" in which a
+// a block specification could be meaningful.  If someone wants to use a
+// block as a random seed they could randomize on the mold of it... but
+// also we may want to expose the hash of a block for other reasons.
+{
+    Element* seed = cast(Element*, ARG_N(1));
+    return Dispatch_Generic(RANDOMIZE, seed, LEVEL);
+}
+
+
+//
 //  /random: native:generic [
 //
-//  "Rounds a numeric value; halves round up (away from zero) by default"
+//  "Returns random value of the given type, 'zero' to max (see also SHUFFLE)"
 //
-//      return: [~ element?]  ; !!! nothing if :SEED, should be RANDOMIZE?
-//      value "Maximum value of result (modified when series)"
-//      :seed "Restart or randomize"
-//      :secure "Returns a cryptographically secure random number"
-//      :only "Pick a random value from a series"  ; !!! consider SHUFFLE
+//      return: [element?]
+//      max "Maximum value of result (inclusive)"
+//          [fundamental?]
+//      :secure "Old refinement from R3-Alpha: Review"
 //  ]
 //
 DECLARE_NATIVE(random)
+//
+// RANDOM may be a good candidate for a dialect, e.g.:
+//
+//     random [between 10 and 20 distribution 'normal]
+//
+// This application opens up now, since RANDOM-PICK is used to pick a random
+// item out of a block, and SHUFFLE and SHUFFLE-OF give you shuffled lists.
 {
-    Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, CANON(RANDOM));
+    Element* max = cast(Element*, ARG_N(1));
+    return Dispatch_Generic(RANDOM, max, LEVEL);
+}
+
+
+//
+//  /random-between: native:generic [
+//
+//  "Random value of the given type between min and max (inclusive)"
+//
+//      return: [element?]
+//      min [fundamental?]
+//      max [fundamental?]
+//      :secure "Old refinement from R3-Alpha: Review"
+//  ]
+//
+DECLARE_NATIVE(random_between)
+//
+// !!! Should this function make sure the types are comparable, and that max
+// is greater than min, before dispatching?  Probably not, that's exppensive.
+{
+    INCLUDE_PARAMS_OF_RANDOM_BETWEEN;
+
+    Element* min = Element_ARG(min);
+    Element* max = Element_ARG(max);
+    USED(REF(secure));  // passed through via LEVEL
+
+    if (Type_Of(min) != Type_Of(max))
+        return RAISE("RANDOM-BETWEEN requires MIN and MAX of same type");
+
+    return Dispatch_Generic(RANDOM_BETWEEN, min, LEVEL);
+}
+
+
+//
+//  /random-pick: native:generic [
+//
+//  "Picks an arbitrary member out of a collection (see also SHUFFLE, RANDOM)"
+//
+//      return: "Raised error if empty, use TRY RANDOM-PICK to get ~null~"
+//          [raised! element?]
+//      collection [fundamental?]
+//      :secure "Old refinement from R3-Alpha: Review"
+//  ]
+//
+DECLARE_NATIVE(random_pick)
+//
+// While RANDOM_PICK is written as its own generic that can be optimized, for
+// most types it can easily be implemented based on RANDOM + LENGTH_OF + PICK.
+// The choice to have specialized implementations for ANY-LIST? and BLOB?
+// and ANY-STRING? are mostly based on history.  However there was no code
+// for ISSUE!, and the details of cells that don't have nodes make it such
+// that it makes more sense to avoid the pitfallls of reimplementing all that.
+//
+// It may be that the RANDOM_PICK specializations should be deleted where
+// they are not necessary, to cut down on the total amount of code and
+// potential for error.
+{
+    Element* collection = cast(Element*, ARG_N(1));
+
+    Bounce bounce;
+    if (Try_Dispatch_Generic(&bounce, RANDOM_PICK, collection, LEVEL))
+        return bounce;
+
+    Heart heart = Cell_Heart_Ensure_Noquote(collection);
+    if (
+        not Handles_Generic(LENGTH_OF, heart)
+        or not Handles_Generic(PICK, heart)
+    ){
+        return UNHANDLED;
+    }
+
+    Quotify(collection);
+    return rebDelegate(
+        CANON(PICK), collection, CANON(RANDOM), CANON(LENGTH_OF), collection
+    );
+}
+
+
+//
+//  /shuffle: native:generic [
+//
+//  "Randomly shuffle the contents of a series in place (see also RANDOM)"
+//
+//      return: [element?]
+//      series [fundamental?]
+//      :secure "Old refinement from R3-Alpha: Review"
+//  ]
+//
+DECLARE_NATIVE(shuffle)
+{
+    Element* series = cast(Element*, ARG_N(1));
+    return Dispatch_Generic(SHUFFLE, series, LEVEL);
+}
+
+
+//
+//  /shuffle-of: native:generic [
+//
+//  "Give back a shuffled copy of the argument (can be immutable)"
+//
+//      return: [element?]
+//      element [fundamental?]
+//      :secure "Returns a cryptographically secure random number"
+//      :part "Limits to a given length or position"
+//          [any-number? any-series?]
+//  ]
+//
+DECLARE_NATIVE(shuffle_of)
+{
+    INCLUDE_PARAMS_OF_SHUFFLE_OF;
+
+    Element* elem = cast(Element*, ARG(element));
+    USED(REF(secure));  // other args get passed via LEVEL
+    USED(REF(part));
+
+    Bounce bounce;
+    if (Try_Dispatch_Generic(&bounce, SHUFFLE_OF, elem, LEVEL))
+        return bounce;
+
+    Heart heart = Cell_Heart_Ensure_Noquote(elem);
+    if (
+        not Handles_Generic(SHUFFLE, heart)
+        or not Handles_Generic(COPY, heart)
+    ){
+        return UNHANDLED;
+    }
+
+    Quotify(elem);
+    return rebDelegate(CANON(SHUFFLE), CANON(COPY), elem);
 }
 
 
