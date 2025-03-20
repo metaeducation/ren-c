@@ -150,7 +150,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     if (Get_Level_Flag(L1, RAISED_RESULT_OK))
         flags |= LEVEL_FLAG_RAISED_RESULT_OK;  // inherit failure tolerance
 
-    DECLARE_ATOM (block);
+    DECLARE_ELEMENT (block);
     Init_Block(block, normals);
     Level* L2 = Make_Level_At(&Action_Executor, block, flags);
     L2->baseline.stack_base = base;
@@ -326,8 +326,10 @@ DECLARE_NATIVE(HIJACK)
             : MAX_IDX_HIJACKER  // tried just archetype, it was messed up [2]
     );
 
-    if (not hijack_void)
-        Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), ARG(HIJACKER));
+    if (not hijack_void) {
+        Element* hijacker = Element_ARG(HIJACKER);
+        Copy_Cell(Details_At(proxy, IDX_HIJACKER_FRAME), hijacker);
+    }
 
     Tweak_Misc_Phase_Adjunct(proxy, adjunct);  // shared reference [3]
 

@@ -204,7 +204,7 @@ ParamList* Make_Varlist_For_Action(
 bool Specialize_Action_Throws(
     Sink(Value) out,
     const Value* specializee,
-    Option(Value*) def,  // !!! REVIEW: binding modified directly, not copied
+    Option(Element*) def,  // !!! REVIEW: binding modified directly, not copied
     StackIndex lowest_stackindex
 ){
     assert(out != specializee);
@@ -400,8 +400,8 @@ DECLARE_NATIVE(SPECIALIZE)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
-    Value* specializee = ARG(ORIGINAL);
-    Value* def = ARG(DEF);
+    Element* specializee = Element_ARG(ORIGINAL);
+    Element* def = Element_ARG(DEF);
 
     if (Specialize_Action_Throws(
         OUT,

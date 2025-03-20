@@ -663,11 +663,11 @@ DECLARE_NATIVE(APPLY)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    Value* op = ARG(OPERATION);
-    Value* args = ARG(ARGS);
+    Element* op = Element_ARG(OPERATION);
+    Element* args = Element_ARG(ARGS);
 
-    Value* frame = ARG(FRAME);  // local variable for holding GC-safe frame
-    Value* iterator = ARG(ITERATOR);  // reuse to hold Evars iterator
+    Value* frame = LOCAL(FRAME);  // local variable for holding GC-safe frame
+    Value* iterator = LOCAL(ITERATOR);  // reuse to hold Evars iterator
 
     Value* var;  // may come from evars iterator or found by index
     Param* param;  // (same)

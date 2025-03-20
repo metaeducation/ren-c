@@ -147,7 +147,7 @@ INLINE bool Eval_Step_Throws(Atom* out, Level* L) {
 INLINE bool Eval_Any_List_At_Core_Throws(
     Atom* out,
     Flags flags,
-    const Cell* list,
+    const Element* list,
     Context* context
 ){
     Level* L = Make_Level_At_Core(

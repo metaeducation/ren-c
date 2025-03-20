@@ -491,7 +491,7 @@ DECLARE_NATIVE(REFRAMER)
         MAX_IDX_REFRAMER  // details array capacity => [shim, param_index]
     );
 
-    Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(SHIM));
+    Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), Element_ARG(SHIM));
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
     return Init_Action(OUT, details, label, NONMETHOD);

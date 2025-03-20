@@ -456,7 +456,7 @@ void RunPromise(void)
     assert(Not_Node_Managed(a));  // took off so it didn't GC
     Set_Node_Managed_Bit(a);  // but need it back on to execute it
 
-    DECLARE_ATOM (code);
+    DECLARE_ELEMENT (code);
     Init_Block(code, a);
     Tweak_Cell_Binding(code, cast(Context*, info->binding));
 

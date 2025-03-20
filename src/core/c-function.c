@@ -63,7 +63,7 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 //
 void Push_Keys_And_Params_May_Fail(
     VarList* *adjunct,
-    const Value* spec,
+    const Element* spec,
     Flags flags,
     Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){

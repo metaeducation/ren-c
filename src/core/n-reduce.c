@@ -233,9 +233,9 @@ DECLARE_NATIVE(REDUCE_EACH)
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
-    Value* vars = ARG(VARS);
-    Value* block = ARG(BLOCK);
-    Value* body = ARG(BODY);
+    Element* vars = Element_ARG(VARS);
+    Element* block = Element_ARG(BLOCK);
+    Element* body = Element_ARG(BODY);
 
     bool breaking = false;
 
@@ -260,8 +260,8 @@ DECLARE_NATIVE(REDUCE_EACH)
         flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
-        ARG(BODY),  // may be updated, will still be GC safe
-        ARG(VARS)
+        body,  // may be updated, will still be GC safe
+        vars
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
 
@@ -440,23 +440,23 @@ static void Push_Composer_Level(
     Context* context
 ){
     Heart heart = Cell_Heart(e);
-    const Value* adjusted = nullptr;
+    Option(const Element*) adjusted = nullptr;
     if (Any_Sequence_Type(heart))  // allow sequences [1]
-        adjusted = rebValue(CANON(AS), CANON(BLOCK_X), rebQ(e));
+        adjusted = Known_Element(rebValue(CANON(AS), CANON(BLOCK_X), rebQ(e)));
     else
         assert(Any_List_Type(heart));
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Composer_Executor,
-        adjusted ? adjusted : e,
-        Derive_Binding(context, adjusted ? adjusted : e),
+        adjusted ? unwrap adjusted : e,
+        Derive_Binding(context, adjusted ? unwrap adjusted : e),
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
     );
     Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may raise definitional failure
 
     if (adjusted)
-        rebRelease(adjusted);
+        rebRelease(unwrap adjusted);
 
     sub->u.compose.main_level = main_level;   // pass options [2]
     sub->u.compose.changed = false;

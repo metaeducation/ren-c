@@ -143,7 +143,7 @@ bool Pushed_Continuation(
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
         Level* grouper = Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch
-            branch,
+            c_cast(Element*, branch),
             binding,
             (flags & (~ LEVEL_FLAG_BRANCH))
         );
@@ -164,16 +164,22 @@ bool Pushed_Continuation(
         goto just_use_out;
 
       case TYPE_QUOTED:
+        Unquotify(Derelativize(out, c_cast(Element*, branch), binding));
+        goto just_use_out;
+
+      case TYPE_QUASIFORM:
         Derelativize(out, c_cast(Element*, branch), binding);
-        Unquotify(cast(Element*, out));
+        Meta_Unquotify_Undecayed(out);
         if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
             Init_Heavy_Null(out);
+        else if (Is_Void(out) and (flags & LEVEL_FLAG_BRANCH))
+            Init_Heavy_Void(out);
         goto just_use_out;
 
       case TYPE_META_BLOCK:
       case TYPE_BLOCK: {
         Level* L = Make_Level_At_Core(
-            &Evaluator_Executor, branch, binding, flags
+            &Evaluator_Executor, c_cast(Element*, branch), binding, flags
         );
         Init_Void(Evaluator_Primed_Cell(L));
         if (Cell_Heart_Unchecked(branch) == TYPE_META_BLOCK) {

@@ -159,7 +159,7 @@ DECLARE_NATIVE(ARROW)
 {
     INCLUDE_PARAMS_OF_ARROW;
 
-    Value* spec = ARG(SPEC);
+    Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
     bool optimizable = true;

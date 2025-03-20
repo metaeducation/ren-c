@@ -950,9 +950,10 @@ DECLARE_NATIVE(MATCHER)
     Set_Flex_Len(a, 2);
     Init_Set_Word(Array_At(a, 0), CANON(TEST));
     Copy_Meta_Cell(Array_At(a, 1), test);
-    Init_Block(SPARE, a);
 
-    if (Specialize_Action_Throws(OUT, LIB(MATCH), stable_SPARE, STACK_BASE))
+    Element* block_in_spare = Init_Block(SPARE, a);
+
+    if (Specialize_Action_Throws(OUT, LIB(MATCH), block_in_spare, STACK_BASE))
         return THROWN;
 
     return OUT;

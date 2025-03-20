@@ -1308,7 +1308,7 @@ void API_rebPushContinuation_internal(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (block);
+    DECLARE_ELEMENT (block);
     RebolContext* dummy_binding = nullptr;  // transcode ignores
     Corrupt_Pointer_If_Debug(dummy_binding);
     API_rebTranscodeInto(dummy_binding, block, p, vaptr);  // use "API_" [1]

@@ -122,6 +122,7 @@ DECLARE_NATIVE(REORDER)
 {
     INCLUDE_PARAMS_OF_REORDER;
 
+    Element* original = Element_ARG(ORIGINAL);
     Phase* reorderee = Cell_Frame_Phase(ARG(ORIGINAL));
     Option(const Symbol*) label  = Cell_Frame_Label_Deep(ARG(ORIGINAL));
 
@@ -255,7 +256,7 @@ DECLARE_NATIVE(REORDER)
         MAX_IDX_REORDERER
     );
 
-    Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(ORIGINAL));
+    Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), original);
 
     Drop_Data_Stack_To(STACK_BASE);  // !!! None of this works ATM.
     return Init_Action(OUT, details, label, UNBOUND);

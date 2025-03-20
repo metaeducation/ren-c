@@ -94,15 +94,14 @@ DECLARE_NATIVE(LATIN1_Q)
 
 
 #define Push_Join_Delimiter_If_Pending() do { \
-    if (not Is_Nulled(delimiter) and  \
-      Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)) { \
-        Copy_Cell(PUSH(), delimiter); \
-        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING); \
+    if (delimiter and Get_Cell_Flag(ARG(WITH), DELIMITER_NOTE_PENDING)) { \
+        Copy_Cell(PUSH(), ARG(WITH)); \
+        Clear_Cell_Flag(ARG(WITH), DELIMITER_NOTE_PENDING); \
     } \
   } while (0)
 
-#define Mark_Join_Delimiter_Pending() \
-    Set_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING)
+#define Mark_Join_Delimiter_Pending()  \
+    Set_Cell_Flag(ARG(WITH), DELIMITER_NOTE_PENDING) \
 
 
 //
@@ -126,12 +125,17 @@ DECLARE_NATIVE(JOIN)
     INCLUDE_PARAMS_OF_JOIN;
 
     Element* base = Element_ARG(BASE);
-    Value* rest = ARG(REST);
+    Option(Element*) rest = Is_Void(ARG(REST))
+        ? nullptr
+        : Element_ARG(REST);
 
     Value* original_index = LOCAL(ORIGINAL_INDEX);
 
-    Value* delimiter = ARG(WITH);
-    possibly(Get_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
+    Option(Element*) delimiter = Is_Nulled(ARG(WITH))
+        ? nullptr
+        : Element_ARG(WITH);
+    if (delimiter)
+        possibly(Get_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
 
     enum {
         ST_JOIN_INITIAL_ENTRY = STATE_0,
@@ -146,15 +150,15 @@ DECLARE_NATIVE(JOIN)
             CELL_FLAG_DELIMITER_NOTE_PENDING
             == CELL_FLAG_PARAM_NOTE_TYPECHECKED
         );
-        assert(Get_Cell_Flag(delimiter, PARAM_NOTE_TYPECHECKED));
-        Clear_Cell_Flag(delimiter, PARAM_NOTE_TYPECHECKED);
+        assert(Get_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED));
+        Clear_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED);
 
-        if (Is_Void(rest)) {  // simple base case: nullptr or COPY
+        if (not rest) {  // simple base case: nullptr or COPY
             if (Is_Type_Block(base))
                 return nullptr;
             return rebValue(CANON(COPY), base);
         }
-        if (Is_Type_Block(base) and Any_Utf8(rest))
+        if (Is_Type_Block(base) and Any_Utf8(unwrap rest))
             goto simple_join;
         goto join_initial_entry; }
 
@@ -166,10 +170,10 @@ DECLARE_NATIVE(JOIN)
         goto stack_step_result_in_spare;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
-        if (Is_The_Block(rest))
+        if (Is_The_Block(unwrap rest))
             SUBLEVEL->executor = &Inert_Stepper_Executor;
         else {
-            assert(Is_Block(rest));
+            assert(Is_Block(unwrap rest));
             SUBLEVEL->executor = &Stepper_Executor;
         }
         assert(Get_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT));
@@ -183,18 +187,18 @@ DECLARE_NATIVE(JOIN)
     // 1. Hard to unify this mold with code below that uses a level due to
     //    asserts on states balancing.  Easiest to repeat a small bit of code!
 
-    assert(Any_Utf8(rest));  // shortcut, no evals needed [1]
+    assert(Any_Utf8(unwrap rest));  // shortcut, no evals needed [1]
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    if (REF(HEAD) and not Is_Nulled(delimiter))
-        Form_Element(mo, cast(Element*, delimiter));
+    if (REF(HEAD) and delimiter)
+        Form_Element(mo, unwrap delimiter);
 
-    Form_Element(mo, cast(Element*, rest));
+    Form_Element(mo, unwrap rest);
 
-    if (REF(TAIL) and not Is_Nulled(delimiter))
-        Form_Element(mo, cast(Element*, delimiter));
+    if (REF(TAIL) and delimiter)
+        Form_Element(mo, unwrap delimiter);
 
     return Init_Text(OUT, Pop_Molded_String(mo));
 
@@ -211,19 +215,19 @@ DECLARE_NATIVE(JOIN)
     Level* sub;
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
-    if (Is_Block(rest)) {
-        sub = Make_Level_At(&Stepper_Executor, rest, flags);
+    if (Is_Block(unwrap rest)) {
+        sub = Make_Level_At(&Stepper_Executor, unwrap rest, flags);
     }
-    else if (Is_The_Block(rest))
-        sub = Make_Level_At(&Inert_Stepper_Executor, rest, flags);
+    else if (Is_The_Block(unwrap rest))
+        sub = Make_Level_At(&Inert_Stepper_Executor, unwrap rest, flags);
     else {
         Feed* feed = Prep_Array_Feed(  // leverage feed mechanics [1]
             Alloc_Feed(),
-            rest,  // first--in this case, the only value in the feed...
+            unwrap rest,  // first--in this case, the only value in the feed...
             EMPTY_ARRAY,  // ...because we're using the empty array after that
             0,  // ...at index 0
             SPECIFIED,  // !!! context shouldn't matter
-            FEED_MASK_DEFAULT | (rest->header.bits & FEED_FLAG_CONST)
+            FEED_MASK_DEFAULT | ((unwrap rest)->header.bits & FEED_FLAG_CONST)
         );
 
         sub = Make_Level(&Inert_Stepper_Executor, feed, flags);
@@ -231,7 +235,8 @@ DECLARE_NATIVE(JOIN)
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
-    assert(Not_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING));
+    if (delimiter)
+        assert(Not_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
 
     Heart result_heart;
     if (Is_Type_Block(base))
@@ -250,8 +255,8 @@ DECLARE_NATIVE(JOIN)
     if (not Is_Type_Block(base))
         Copy_Cell(PUSH(), base);
 
-    if (REF(HEAD) and not Is_Nulled(delimiter))  // speculatively start with
-        Copy_Cell(PUSH(), cast(Element*, delimiter));  // may be tossed
+    if (REF(HEAD) and delimiter)  // speculatively start with
+        Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
     Init_Integer(original_index, TOP_INDEX);
 
@@ -282,8 +287,8 @@ DECLARE_NATIVE(JOIN)
         }
     }
 
-    if (REF(HEAD) and not Is_Nulled(delimiter))  // speculatively start with
-        Copy_Cell(PUSH(), cast(Element*, delimiter));  // may be tossed
+    if (REF(HEAD) and delimiter)  // speculatively start with
+        Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
     Init_Integer(original_index, TOP_INDEX);
 
@@ -318,7 +323,7 @@ DECLARE_NATIVE(JOIN)
         goto finish_mold_join;
 
     const Element* item = At_Level(sub);
-    if (Is_Block(item) and not Is_Nulled(delimiter)) {  // hack [1]
+    if (Is_Block(item) and delimiter) {  // hack [1]
         Derelativize(SPARE, item, Level_Binding(sub));
         Fetch_Next_In_Feed(sub->feed);
 
@@ -334,7 +339,8 @@ DECLARE_NATIVE(JOIN)
     }
 
     if (Is_Blank(item)) {  // BLANK! acts as space [2]
-        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
+        if (delimiter)
+            Clear_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING);
         Init_Space(PUSH());
         Fetch_Next_In_Feed(sub->feed);
         goto next_mold_step;
@@ -416,7 +422,8 @@ DECLARE_NATIVE(JOIN)
         return RAISE(Error_Bad_Antiform(SPARE));
 
     if (Is_Issue(SPARE)) {  // do not delimit (unified w/char) [5]
-        Clear_Cell_Flag(delimiter, DELIMITER_NOTE_PENDING);
+        if (delimiter)
+            Clear_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING);
         Copy_Cell(PUSH(), stable_SPARE);
         goto next_mold_step;
     }
@@ -514,8 +521,8 @@ DECLARE_NATIVE(JOIN)
         return rebValue(CANON(COPY), rebQ(base));
     }
 
-    if (REF(TAIL) and not Is_Nulled(delimiter))
-        Copy_Cell(PUSH(), cast(Element*, delimiter));
+    if (REF(TAIL) and delimiter)
+        Copy_Cell(PUSH(), unwrap delimiter);
 
     Heart heart;
     if (Is_Type_Block(base))
@@ -700,8 +707,8 @@ DECLARE_NATIVE(JOIN)
         return rebValue(CANON(COPY), rebQ(base));
     }
 
-    if (REF(TAIL) and not Is_Nulled(delimiter))
-        Copy_Cell(PUSH(), cast(Element*, delimiter));
+    if (REF(TAIL) and delimiter)
+        Copy_Cell(PUSH(), unwrap delimiter);
 
     Heart heart;
     if (Is_Type_Block(base))
@@ -725,7 +732,6 @@ DECLARE_NATIVE(JOIN)
     }
 
     return OUT;
-
 }}
 
 

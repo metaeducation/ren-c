@@ -763,14 +763,19 @@ INLINE Feed* Prep_Variadic_Feed(
 #define Make_Variadic_Feed(p,vaptr,flags) \
     Prep_Variadic_Feed(Alloc_Feed(), (p), (vaptr), (flags))
 
+// 1. Tolerating quoted and quasiform lists is allowed due to the fact that
+//    sometimes feeds are made for things like (compose '~[a b (1 + 2) c]~),
+//    and if we forced the caller to drop the quasi or quoted state then they
+//    have to store that information somewhere, which would be extra work.
+//
 INLINE Feed* Prep_At_Feed(
     void *preallocated,
-    const Cell* list,  // array is extracted and HOLD put on
+    const Element* list,  // array is extracted and HOLD put on
     Context* binding,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
-    assert(Any_List_Type(Cell_Heart(list)));
+    assert(Any_List_Type(Cell_Heart(list)));  // tolerates quasi/quoted [1]
 
     Flags flags = FEED_MASK_DEFAULT
         | (parent_flags & FEED_FLAG_CONST)  // inherit

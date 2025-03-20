@@ -597,7 +597,7 @@ DECLARE_NATIVE(LET)
 {
     INCLUDE_PARAMS_OF_LET;
 
-    Value* vars = ARG(VARS);
+    Element* vars = Element_ARG(VARS);
 
     UNUSED(ARG(EXPRESSION));
     Level* L = level_;  // fake variadic [1]
@@ -635,25 +635,28 @@ DECLARE_NATIVE(LET)
         if (Eval_Any_List_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
 
-        Decay_If_Unstable(SPARE);
+        Value* result = Decay_If_Unstable(SPARE);
 
-        if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
+        if (Is_Quoted(result))  // should (let 'x: <whatever>) be legal? [3]
             return FAIL("QUOTED? escapes not supported at top level of LET");
 
+        if (Is_Antiform(result))
+            return FAIL(Error_Bad_Antiform(result));
+
         if (
-            Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, SPARE))
-            or Is_Set_Block(stable_SPARE)
+            Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, result))
+            or Is_Set_Block(result)
         ){
             // Allow `(set-word):` to ignore redundant colon [2]
         }
-        else if (Is_Word(stable_SPARE) or Is_Block(stable_SPARE)) {
+        else if (Is_Word(result) or Is_Block(result)) {
             if (Is_Set_Group(vars))
                 Setify(cast(Element*, SPARE));  //  let ('word): -> let word:
         }
         else
             return FAIL("LET GROUP! limited to WORD! and BLOCK!");  // [4]
 
-        vars = stable_SPARE;
+        vars = cast(Element*, result);
     }
 
     //=//// GENERATE NEW BLOCK IF QUOTED? OR GROUP! ELEMENTS ///////////////=//
@@ -1167,8 +1170,8 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 // !!! Loops should probably free their objects by default when finished
 //
 VarList* Virtual_Bind_Deep_To_New_Context(
-    Value* body_in_out, // input *and* output parameter
-    Value* spec
+    Element* body_in_out, // input *and* output parameter
+    Element* spec
 ){
     // !!! This just hacks in GROUP! behavior, because the :param convention
     // does not support groups and gives GROUP! by value.  In the stackless
@@ -1179,7 +1182,9 @@ VarList* Virtual_Bind_Deep_To_New_Context(
         if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Decay_If_Unstable(temp);
-        Move_Cell(spec, cast(Value*, temp));
+        if (Is_Antiform(temp))
+            fail (Error_Bad_Antiform(temp));
+        Move_Cell(spec, cast(Element*, temp));
     }
 
     REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;

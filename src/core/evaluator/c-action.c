@@ -592,8 +592,8 @@ Bounce Action_Executor(Level* L)
                 // We did not defer the literal argument.  If the argument
                 // is a GROUP!, it has to be evaluated.
                 //
-                Move_Atom(SPARE, ARG);
-                if (Eval_Any_List_At_Throws(ARG, SPARE, SPECIFIED))
+                Element* arg_in_spare = Move_Cell(SPARE, cast(Element*, ARG));
+                if (Eval_Any_List_At_Throws(ARG, arg_in_spare, SPECIFIED))
                     goto handle_thrown;
             }
             break;

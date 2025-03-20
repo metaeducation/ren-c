@@ -505,7 +505,7 @@ static void Init_System_Object(
     Use* use = Alloc_Use_Inherits(Cell_List_Binding(boot_sysobj_spec));
     Copy_Cell(Stub_Cell(use), Varlist_Archetype(system));
 
-    DECLARE_VALUE (sysobj_spec_virtual);
+    DECLARE_ELEMENT (sysobj_spec_virtual);
     Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
     Tweak_Cell_Binding(sysobj_spec_virtual, use);
 

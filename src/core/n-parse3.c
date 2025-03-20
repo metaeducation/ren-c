@@ -2343,8 +2343,8 @@ DECLARE_NATIVE(PARSE3)
 {
     INCLUDE_PARAMS_OF_PARSE3;
 
-    Value* input = ARG(INPUT);
-    Value* rules = ARG(RULES);
+    Element* input = Element_ARG(INPUT);
+    Element* rules = Element_ARG(RULES);
 
     if (Any_Sequence(input)) {
         if (rebRunThrows(
@@ -2353,7 +2353,7 @@ DECLARE_NATIVE(PARSE3)
         )){
             return THROWN;
         }
-        Move_Cell(input, stable_SPARE);
+        Move_Cell(input, Known_Element(SPARE));
     }
     else if (Is_Url(input)) {
         if (rebRunThrows(
@@ -2362,7 +2362,7 @@ DECLARE_NATIVE(PARSE3)
         )){
             return THROWN;
         }
-        Move_Cell(input, stable_SPARE);
+        Move_Cell(input, Known_Element(SPARE));
     }
 
     assert(Any_Series(input));

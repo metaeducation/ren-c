@@ -101,7 +101,7 @@ Bounce Macro_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Ensure_Level_Details(L);
-    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
+    Element* body = cast(Element*, Details_At(details, IDX_DETAILS_1));
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
@@ -117,13 +117,13 @@ Bounce Macro_Dispatcher(Level* const L)
     //
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 
-    Copy_Cell(SPARE, body);
-    Tweak_Cell_Binding(SPARE, L->varlist);
+    Element* body_in_spare = Copy_Cell(SPARE, body);
+    Tweak_Cell_Binding(body_in_spare, L->varlist);
 
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.
     //
-    if (Eval_Any_List_At_Throws(OUT, SPARE, SPECIFIED)) {
+    if (Eval_Any_List_At_Throws(OUT, body_in_spare, SPECIFIED)) {
         const Value* label = VAL_THROWN_LABEL(L);
         if (
             Is_Frame(label)  // catch UNWIND here [2]

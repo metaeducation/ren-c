@@ -73,7 +73,7 @@ DECLARE_NATIVE(ENRESCUE)
 {
     INCLUDE_PARAMS_OF_ENRESCUE;
 
-    Value* code = ARG(CODE);
+    Element* code = Element_ARG(CODE);
 
     enum {
         ST_ENRESCUE_INITIAL_ENTRY = STATE_0,
@@ -153,7 +153,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
-    Value* code = ARG(CODE);
+    Element* code = Element_ARG(CODE);
 
     enum {
         ST_ENTRAP_INITIAL_ENTRY = STATE_0,

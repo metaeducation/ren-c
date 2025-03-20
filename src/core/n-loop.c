@@ -446,11 +446,12 @@ DECLARE_NATIVE(CFOR)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
-    Value* body = ARG(BODY);
+    Element* word = Element_ARG(WORD);
+    Element* body = Element_ARG(BODY);
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        ARG(WORD)
+        word
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
@@ -526,8 +527,9 @@ DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    Value* series = ARG(SERIES);
-    Value* body = ARG(BODY);
+    Element* word = Element_ARG(WORD);
+    Element* series = Element_ARG(SERIES);
+    Element* body = Element_ARG(BODY);
 
     if (Is_Blank(series))
         return VOID;
@@ -542,7 +544,7 @@ DECLARE_NATIVE(FOR_SKIP)
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        ARG(WORD)
+        word
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), context));
 
@@ -1078,9 +1080,9 @@ DECLARE_NATIVE(FOR_EACH)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;
 
-    Value* vars = ARG(VARS);  // transformed to context on initial_entry
+    Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
     Value* data = ARG(DATA);
-    Value* body = ARG(BODY);  // bound to vars context on initial_entry
+    Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
     Value* iterator = LOCAL(ITERATOR);  // reuse to hold Loop_Each_State
 
@@ -1197,9 +1199,9 @@ DECLARE_NATIVE(EVERY)
 {
     INCLUDE_PARAMS_OF_EVERY;
 
-    Value* vars = ARG(VARS);  // transformed to context on initial_entry
+    Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
     Value* data = ARG(DATA);
-    Value* body = ARG(BODY);  // bound to vars context on initial_entry
+    Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
     Value* iterator = LOCAL(ITERATOR);  // place to store iteration state
 
@@ -1229,8 +1231,8 @@ DECLARE_NATIVE(EVERY)
         return VOID;
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        ARG(BODY),  // may be updated, will still be GC safe
-        ARG(VARS)
+        body,  // may be updated, will still be GC safe
+        vars
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
 
@@ -1347,8 +1349,9 @@ DECLARE_NATIVE(REMOVE_EACH)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
-    Value* data = ARG(DATA);
-    Value* body = ARG(BODY);
+    Element* vars = Element_ARG(VARS);
+    Element* data = Element_ARG(DATA);
+    Element* body = Element_ARG(BODY);
 
     Count removals = 0;
 
@@ -1368,7 +1371,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     VarList* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        ARG(VARS)
+        vars
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), context));
 
@@ -1781,8 +1784,8 @@ DECLARE_NATIVE(MAP)
     }
 
     VarList* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        ARG(BODY),  // may be updated, will still be GC safe
-        ARG(VARS)
+        body,  // may be updated, will still be GC safe
+        vars
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
 

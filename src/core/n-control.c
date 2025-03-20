@@ -716,7 +716,7 @@ DECLARE_NATIVE(ALL)
 {
     INCLUDE_PARAMS_OF_ALL;
 
-    Value* block = ARG(BLOCK);
+    Element* block = Element_ARG(BLOCK);
     Value* predicate = ARG(PREDICATE);
 
     Value* condition;  // will be found in OUT or scratch
@@ -854,8 +854,8 @@ DECLARE_NATIVE(ANY)
 {
     INCLUDE_PARAMS_OF_ANY;
 
+    Element* block = Element_ARG(BLOCK);
     Value* predicate = ARG(PREDICATE);
-    Value* block = ARG(BLOCK);
 
     Value* condition;  // could point to OUT or SPARE
 
@@ -983,7 +983,7 @@ DECLARE_NATIVE(CASE)
 {
     INCLUDE_PARAMS_OF_CASE;
 
-    Value* cases = ARG(CASES);
+    Element* cases = Element_ARG(CASES);
     Value* predicate = ARG(PREDICATE);
 
     Atom* branch = SCRATCH;
@@ -1091,8 +1091,10 @@ DECLARE_NATIVE(CASE)
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
 
-    Derelativize(branch, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL));
-    Inherit_Const(branch, cases);  // branch needs to respect const [1]
+    Element* at_in_spare = Derelativize(
+        branch, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL)
+    );
+    Inherit_Const(at_in_spare, cases);  // branch needs to respect const [1]
 
     Fetch_Next_In_Feed(SUBLEVEL->feed);
 
@@ -1101,7 +1103,7 @@ DECLARE_NATIVE(CASE)
 
     Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
-        branch,  // non "THE-" GROUP! branches are run unconditionally
+        at_in_spare,  // non "THE-" GROUP! branches are run unconditionally
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     );
@@ -1202,8 +1204,8 @@ DECLARE_NATIVE(SWITCH)
     INCLUDE_PARAMS_OF_SWITCH;
 
     Value* left = ARG(VALUE);
+    Element* cases = Element_ARG(CASES);
     Value* predicate = ARG(PREDICATE);
-    Value* cases = ARG(CASES);
 
     Atom* right = SPARE;
 

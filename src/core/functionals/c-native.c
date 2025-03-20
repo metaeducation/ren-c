@@ -459,7 +459,7 @@ Source* Startup_Natives(const Element* boot_natives)
 
     assert(Cell_Frame_Phase(LIB(NATIVE)) == the_native_details);
 
-    DECLARE_ATOM (skipped);
+    DECLARE_ELEMENT (skipped);
     Init_Any_List_At(skipped, TYPE_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_ATOM (discarded);

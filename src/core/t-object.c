@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(CONSTRUCT)
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
-    Value* spec = ARG(SPEC);
+    Element* spec = Element_ARG(SPEC);
 
     enum {
         ST_CONSTRUCT_INITIAL_ENTRY = STATE_0,

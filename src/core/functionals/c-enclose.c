@@ -225,8 +225,8 @@ DECLARE_NATIVE(ENCLOSE)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
-    Value* inner = ARG(INNER);
-    Value* outer = ARG(OUTER);
+    Element* inner = Element_ARG(INNER);
+    Element* outer = Element_ARG(OUTER);
 
     Details* details = Make_Dispatch_Details(
         DETAILS_MASK_NONE,
