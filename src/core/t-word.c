@@ -173,41 +173,62 @@ IMPLEMENT_GENERIC(TO, Any_Word)
     return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);  // TO INTEGER!, etc.
 }
 
-
-IMPLEMENT_GENERIC(AS, Any_Word)
-{
-    INCLUDE_PARAMS_OF_AS;
-
-    Element* word = Element_ARG(ELEMENT);
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
-
+//
+//  Trap_Alias_Any_Word_As: C
+//
+Option(Error*) Trap_Alias_Any_Word_As(
+    Sink(Element) out,
+    const Element* word,
+    Heart as
+){
     if (Any_Word_Type(as)) {
-        Copy_Cell(OUT, word);
-        HEART_BYTE(OUT) = as;
-        return OUT;
+        Copy_Cell(out, word);
+        HEART_BYTE(out) = as;
+        return nullptr;
     }
 
-    if (Any_String_Type(as))  // will be an immutable string
-        return Init_Any_String(OUT, as, Cell_Word_Symbol(word));
+    if (Any_String_Type(as)) {  // will be an immutable string
+        Init_Any_String(out, as, Cell_Word_Symbol(word));
+        return nullptr;
+    }
 
     if (as == TYPE_ISSUE) {  // immutable (note no EMAIL! or URL! possible)
         const Symbol* s = Cell_Word_Symbol(word);
         if (Try_Init_Small_Utf8(  // invariant: fit in cell if it can
-            OUT,
+            out,
             as,
             String_Head(s),
             String_Len(s),
             String_Size(s)
         )){
-            return OUT;
+            return nullptr;
         }
-        return Init_Any_String(OUT, as, s);
+        Init_Any_String(out, as, s);
+        return nullptr;
     }
 
-    if (as == TYPE_BLOB)  // will be an immutable blob
-        return Init_Blob(OUT, Cell_Word_Symbol(word));
+    if (as == TYPE_BLOB) {  // will be an immutable blob
+        Init_Blob(out, Cell_Word_Symbol(word));
+        return nullptr;
+    }
 
-    return UNHANDLED;
+    return Error_Invalid_Type(as);
+}
+
+
+IMPLEMENT_GENERIC(AS, Any_Word)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Option(Error*) e = Trap_Alias_Any_Word_As(
+        OUT,
+        Element_ARG(ELEMENT),
+        Cell_Datatype_Heart(ARG(TYPE))
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    return OUT;
 }
 
 

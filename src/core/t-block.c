@@ -881,21 +881,23 @@ IMPLEMENT_GENERIC(TO, Any_List)
 }
 
 
+//
+//  Trap_Alias_Any_List_As: C
+//
 // 1. The init of a listlike sequence may not use the array you pass in.
 //    But regardless, the AS locks it...because whether it decides to
 //    use the array or not is an implementation detail.  It will reuse
 //    the array at least some of the time, so freeze it all of the time.
 //
-IMPLEMENT_GENERIC(AS, Any_List)
-{
-    INCLUDE_PARAMS_OF_AS;
-
-    Element* list = Element_ARG(ELEMENT);
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
-
+Option(Error*) Trap_Alias_Any_List_As(
+    Sink(Element) out,
+    const Element* list,
+    Heart as
+){
     if (Any_List_Type(as)) {
         HEART_BYTE(list) = as;
-        return Copy_Cell(OUT, list);
+        Copy_Cell(out, list);
+        return nullptr;
     }
 
     if (Any_Sequence_Type(as)) {
@@ -903,30 +905,48 @@ IMPLEMENT_GENERIC(AS, Any_List)
             Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(list));
 
         DECLARE_ELEMENT (temp);  // need to rebind
-        Option(Error*) error = Trap_Init_Any_Sequence_At_Listlike(
+        Option(Error*) e = Trap_Init_Any_Sequence_At_Listlike(
             temp,
             as,
             Cell_Array(list),
             VAL_INDEX(list)
         );
-        if (error)
-            return FAIL(unwrap error);
+        if (e)
+            return e;
 
         /* Tweak_Cell_Binding(temp) = Cell_Binding(list); */  // may be unfit
-        Derelativize(OUT, temp, Cell_Binding(list));  // try this instead (?)
+        Derelativize(out, temp, Cell_Binding(list));  // try this instead (?)
 
-        return OUT;
+        return nullptr;
     }
 
     if (as == TYPE_BLANK) {  // !!! think it needs to make list immutable?
         Length len;
         Cell_List_Len_At(&len, list);
-        if (len == 0)
-            return Init_Blank(OUT);
-        return RAISE("Can only AS/TO convert empty series to BLANK!");
+        if (len == 0) {
+            Init_Blank(out);
+            return nullptr;
+        }
+        return Error_User("Can only AS/TO convert empty series to BLANK!");
     }
 
-    return UNHANDLED;
+    return Error_Invalid_Type(as);
+}
+
+
+IMPLEMENT_GENERIC(AS, Any_List)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Option(Error*) e = Trap_Alias_Any_List_As(
+        OUT,
+        Element_ARG(ELEMENT),
+        Cell_Datatype_Heart(ARG(TYPE))
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    return OUT;
 }
 
 

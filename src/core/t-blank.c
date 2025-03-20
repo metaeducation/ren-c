@@ -125,38 +125,61 @@ IMPLEMENT_GENERIC(TO, Is_Blank)
 }
 
 
+//
+//   Trap_Alias_Blank_As: C
+//
 // AS conversions of blanks to any series or utf8 type can create an
 // immutable empty instance, using globally allocated nodes if needed.
 //
+Option(Error*) Trap_Alias_Blank_As(
+    Sink(Element) out,  // unlike TO BLANK!, AS BLANK! result will be immutable
+    const Element* blank,
+    Heart as
+){
+    assert(Is_Blank(blank));
+    UNUSED(blank);
+
+    if (Any_List_Type(as)) {
+        Init_Any_List(out, as, Cell_Array(g_empty_block));
+        return nullptr;
+    }
+
+    if (Any_String_Type(as)) {
+        Init_Any_String(out, as, Cell_String(g_empty_text));
+        return nullptr;
+    }
+
+    if (as == TYPE_ISSUE) {
+        bool check = Try_Init_Small_Utf8(
+            out, as, cast(Utf8(const*), ""), 0, 0
+        );
+        assert(check);
+        UNUSED(check);
+        return nullptr;
+    }
+
+    if (as == TYPE_BLOB) {
+        Init_Blob(out, Cell_Binary(g_empty_blob));
+        return nullptr;
+    }
+
+    return Error_Invalid_Type(as);
+}
+
+
 IMPLEMENT_GENERIC(AS, Is_Blank)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    UNUSED(ARG(ELEMENT));
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
+    Option(Error*) e = Trap_Alias_Blank_As(
+        OUT,
+        Element_ARG(ELEMENT),  // note: not used, just asserts that it's blank
+        Cell_Datatype_Heart(ARG(TYPE))
+    );
+    if (e)
+        return FAIL(unwrap e);
 
-    if (Any_List_Type(as))
-        return Init_Any_List(OUT, as, Cell_Array(g_empty_block));
-
-    if (Any_String_Type(as))
-        return Init_Any_String(OUT, as, Cell_String(g_empty_text));
-
-    if (Any_Word_Type(as))
-        return UNHANDLED;
-
-    if (as == TYPE_ISSUE) {
-        bool check = Try_Init_Small_Utf8(
-            OUT, as, cast(Utf8(const*), ""), 0, 0
-        );
-        assert(check);
-        UNUSED(check);
-        return OUT;
-    }
-
-    if (as == TYPE_BLOB)
-        return Init_Blob(OUT, Cell_Binary(g_empty_blob));
-
-    return UNHANDLED;
+    return OUT;
 }
 
 

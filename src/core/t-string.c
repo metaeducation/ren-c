@@ -976,20 +976,42 @@ IMPLEMENT_GENERIC(TO, Any_String)
 }
 
 
+//
+//  Trap_Any_String_As: C
+//
+// 1. The reason that strings have a different AS aliasing is that it keeps
+//    the AS ANY-UTF8? generic from having to worry about converting types
+//    with indices.
+//
+Option(Error*) Trap_Any_String_As(
+    Sink(Element) out,
+    const Element* any_string,
+    Heart as
+){
+    if (Any_String_Type(as)) {  // special handling not in Utf8 generic [1]
+        Copy_Cell(out, any_string);
+        HEART_BYTE(out) = as;
+        Inherit_Const(out, any_string);
+        return nullptr;
+    }
+
+    return Trap_Alias_Any_Utf8_As(out, any_string, as);
+}
+
+
 IMPLEMENT_GENERIC(AS, Any_String)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* v = Element_ARG(ELEMENT);
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
+    Option(Error*) e = Trap_Any_String_As(
+        OUT,
+        Element_ARG(ELEMENT),
+        Cell_Datatype_Heart(ARG(TYPE))
+    );
+    if (e)
+        return FAIL(unwrap e);
 
-    if (Any_String_Type(as)) {  // special handling not in Utf8 generic
-        Copy_Cell(OUT, v);
-        HEART_BYTE(OUT) = as;
-        return Inherit_Const(stable_OUT, v);
-    }
-
-    return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);
+    return OUT;
 }
 
 

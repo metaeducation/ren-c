@@ -293,6 +293,9 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 }
 
 
+//
+//  Trap_Alias_Any_Sequence_As: C
+//
 // 1. If you have a PATH! like "a.b/c.d" and you change the heart byte
 //    to a TUPLE!, you'd get "a.b.c.d" which would be an invalidly
 //    constructed tuple of length 2, with two tuples in it.  The TO
@@ -309,38 +312,38 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 //    make a new array, since the symbol absolutely can't be mutated into
 //    an array node).  Review.
 //
-IMPLEMENT_GENERIC(AS, Any_Sequence)
-{
-    INCLUDE_PARAMS_OF_AS;
-
-    Element* seq = Element_ARG(ELEMENT);  // sequence
+Option(Error*) Trap_Alias_Any_Sequence_As(
+    Sink(Element) out,
+    const Element* seq,
+    Heart as
+){
     Length len = Cell_Sequence_Len(seq);
-
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
 
     if (Any_Sequence_Type(as)) {  // not all aliasings are legal [1]
         REBINT i;
         for (i = 0; i < len; ++i) {
-            Copy_Sequence_At(SPARE, seq, i);
-            if (not Any_Sequence(SPARE))
+            DECLARE_ELEMENT (temp);
+            Copy_Sequence_At(temp, seq, i);
+            if (not Any_Sequence(temp))
                 continue;
 
-            assert(not Any_Path(SPARE));  // impossible!
-            if (Any_Chain(SPARE) and (as == TYPE_TUPLE or as == TYPE_CHAIN))
-                return FAIL(
+            assert(not Any_Path(temp));  // impossible!
+            if (Any_Chain(temp) and (as == TYPE_TUPLE or as == TYPE_CHAIN))
+                return Error_User(
                     "Can't AS alias CHAIN!-containing sequence"
                     "as TUPLE! or CHAIN!"
                 );
 
-            if (Any_Tuple(SPARE) and as == TYPE_TUPLE)
-                return FAIL(
+            if (Any_Tuple(temp) and as == TYPE_TUPLE)
+                return Error_User(
                     "Can't AS alias TUPLE!-containing sequence as TUPLE!"
                 );
         }
 
-        Copy_Cell(OUT, seq);
-        HEART_BYTE(OUT) = as;
-        return Trust_Const(OUT);
+        Trust_Const(Copy_Cell(out, seq));
+        HEART_BYTE(out) = as;
+        possibly(Get_Cell_Flag(out, LEADING_BLANK));
+        return nullptr;
     }
 
     if (Any_List_Type(as)) {  // give immutable form, try to share memory
@@ -350,7 +353,8 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
             Offset i;
             for (i = 0; i < len; ++i)
                 Copy_Sequence_At(Array_At(a, i), seq, i);
-            return Init_Any_List(OUT, as, a);
+            Init_Any_List(out, as, a);
+            return nullptr;
         }
 
         const Node* node1 = CELL_NODE1(seq);
@@ -362,7 +366,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
             Derelativize(Array_At(a, 0), Pairing_First(p), binding);
             Derelativize(Array_At(a, 1), Pairing_Second(p), binding);
             Freeze_Source_Shallow(a);
-            Init_Block(seq, a);
+            Init_Any_List(out, as, a);
         }
         else switch (Stub_Flavor(c_cast(Flex*, node1))) {
           case FLAVOR_SYMBOL: {
@@ -379,7 +383,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
                 Init_Blank(Array_At(a, 1));
             }
             Freeze_Source_Shallow(a);
-            Init_Block(seq, a);
+            Init_Any_List(out, as, a);
             break; }
 
           case FLAVOR_SOURCE: {
@@ -398,23 +402,39 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
                 }
                 HEART_BYTE(tweak) = MIRROR_BYTE(a);
                 Clear_Cell_Flag(tweak, LEADING_BLANK);
-                Init_Block(seq, two);
+                Init_Any_List(out, as, two);
             }
             else {
                 assert(Is_Source_Frozen_Shallow(a));
-                HEART_BYTE(seq) = TYPE_BLOCK;
+                Copy_Cell(out, seq);
+                HEART_BYTE(out) = TYPE_BLOCK;
+                Clear_Cell_Flag(out, LEADING_BLANK);  // don't want stray flag
             }
             break; }
 
           default:
             assert(false);
         }
-        HEART_BYTE(seq) = as;
-        Clear_Cell_Flag(seq, LEADING_BLANK);  // don't want stray flag
-        Copy_Cell(OUT, seq);
-        return Trust_Const(OUT);
+        return nullptr;
     }
-    return UNHANDLED;
+
+    return Error_Invalid_Type(as);;
+}
+
+
+IMPLEMENT_GENERIC(AS, Any_Sequence)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Option(Error*) e = Trap_Alias_Any_Sequence_As(
+        OUT,
+        Element_ARG(ELEMENT),
+        Cell_Datatype_Heart(ARG(TYPE))
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    return OUT;
 }
 
 

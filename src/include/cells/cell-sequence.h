@@ -1037,3 +1037,13 @@ INLINE Element* Untuple(Element* out) {
     UNUSED(error);
     return out;
 }
+
+
+INLINE Element* Blockify_Any_Sequence(Element* seq) {  // always works
+    DECLARE_ELEMENT (temp);
+    Option(Error*) e = Trap_Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK);
+    assert(not e);
+    UNUSED(e);
+    Copy_Cell(seq, temp);
+    return seq;
+}

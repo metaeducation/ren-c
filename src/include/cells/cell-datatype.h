@@ -83,8 +83,7 @@ INLINE Type Cell_Datatype_Type(const Cell* v) {
 INLINE Heart Cell_Datatype_Heart(const Cell* v) {
     Type t = Cell_Datatype_Type(v);
     assert(t != TYPE_0);
-    if (t > MAX_HEART)
-        fail ("Didn't expect QUOTED or QUASIFORM or ANTIFORM for type");
+    assert(t <= MAX_HEART);  // should not be a QUOTED or QUASIFORM or ANTIFORM
     return cast(Heart, t);
 }
 

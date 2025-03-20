@@ -1913,20 +1913,12 @@ DECLARE_NATIVE(SUBPARSE)
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
                 }
-                else if (Any_Path_Type(Cell_Heart(into))) {
-                    //
-                    // Can't PARSE an ANY-PATH? because it has no position
-                    // But would be inconvenient if INTO did not support.
-                    // Transform implicitly into a BLOCK! form.
-                    //
-                    // !!! Review faster way of sharing the AS transform.
-                    //
+                else if (Any_Sequence(into)) {  // need position, alias BLOCK!
                     Derelativize(SPARE, into, P_INPUT_SPECIFIER);
-                    into = cast(Element*, rebValue("as block! @", SPARE));
+
+                    into = Blockify_Any_Sequence(cast(Element*, SPARE));
                 }
-                else if (
-                    not Any_Series_Type(Cell_Heart(into))
-                ){
+                else if (not Any_Series(into)) {
                     i = END_FLAG;  // `parse [1] [into [...]`, rejects
                     break;
                 }
@@ -2329,7 +2321,7 @@ DECLARE_NATIVE(SUBPARSE)
 //          [any-value?]
 //
 //      input "Input series to parse"
-//          [<maybe> any-series? any-sequence? url!]
+//          [<maybe> any-series? any-sequence? any-utf8?]
 //      rules "Rules to parse by"
 //          [<maybe> block!]
 //      :case "Uses case-sensitive comparison"
@@ -2340,35 +2332,27 @@ DECLARE_NATIVE(SUBPARSE)
 DECLARE_NATIVE(PARSE3)
 //
 // https://forum.rebol.info/t/1084
+//
+// 1. The mechanics of PARSE actually require the input to be a series, since
+//    it stores the "current" parse position as the index in that series cell.
+//    But it's nice to be able to say (parse #aaabbb [some "a" some "b"])
+//    instead of (parse as text! #aaabbb [some "a" some "b"]), or to be
+//    able to parse sequences.  So we implicitly alias non-series types as
+//    series in order to make the input more flexible.
 {
     INCLUDE_PARAMS_OF_PARSE3;
 
     Element* input = Element_ARG(INPUT);
     Element* rules = Element_ARG(RULES);
 
-    if (Any_Sequence(input)) {
-        if (rebRunThrows(
-            cast(Value*, SPARE),  // <-- output cell
-            CANON(AS), CANON(BLOCK_X), rebQ(input)
-        )){
-            return THROWN;
-        }
-        Move_Cell(input, Known_Element(SPARE));
+    if (Any_Sequence(input)) {  // needs index [1]
+        Blockify_Any_Sequence(input);
     }
-    else if (Is_Url(input)) {
-        if (rebRunThrows(
-            cast(Value*, SPARE),  // <-- output cell
-            CANON(AS), CANON(TEXT_X), input
-        )){
-            return THROWN;
-        }
-        Move_Cell(input, Known_Element(SPARE));
+    else if (Any_Utf8(input) and not Any_Series(input)) {  // needs index [1]
+        Textify_Any_Utf8(input);  // <input> won't preserve input type :-/
     }
 
     assert(Any_Series(input));
-
-    if (not Any_Series_Type(Cell_Heart(input)))
-        fail ("PARSE input must be an ANY-SERIES? (use AS BLOCK! for PATH!)");
 
     Level* sub = Make_Level_At(
         &Action_Executor,  // !!! Parser_Executor?

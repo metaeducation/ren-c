@@ -194,3 +194,13 @@ INLINE Element* Init_Any_String_At(
 
 #define EMPTY_TEXT \
     g_empty_text
+
+
+INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
+    DECLARE_ELEMENT (temp);
+    Option(Error*) e = Trap_Alias_Any_Utf8_As(temp, any_utf8, TYPE_TEXT);
+    assert(not e);
+    UNUSED(e);
+    Copy_Cell(any_utf8, temp);
+    return any_utf8;
+}

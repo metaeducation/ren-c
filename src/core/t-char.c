@@ -781,6 +781,9 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 }
 
 
+//
+//  Trap_Alias_Any_Utf8_As: C
+//
 // 1. If the payload of non-string UTF-8 value lives in the Cell itself,
 //    a read-only Flex must be created for the data...because otherwise
 //    there isn't room for an index (which ANY-STRING? needs).  For
@@ -792,12 +795,11 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 //    if we create a node we have to give it the same constraints that
 //    would apply if we had reused one.
 //
-IMPLEMENT_GENERIC(AS, Any_Utf8)
-{
-    INCLUDE_PARAMS_OF_AS;
-
-    Element* v = Element_ARG(ELEMENT);  // issue, email, etc.
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
+Option(Error*) Trap_Alias_Any_Utf8_As(
+    Sink(Element) out,
+    const Element* v,
+    Heart as
+){
     assert(not Any_Word(v));  // not delegated
 
     if (Any_String_Type(as)) {  // have to create a Flex if not node [1]
@@ -805,9 +807,9 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         if (Stringlike_Has_Node(v)) {
             possibly(Is_Flex_Frozen(Cell_String(v)));
             possibly(Is_Stub_Symbol(Cell_String(v)));
-            Copy_Cell(OUT, v);
-            HEART_BYTE(OUT) = as;
-            return OUT;
+            Copy_Cell(out, v);
+            HEART_BYTE(out) = as;
+            return nullptr;
         }
 
     make_small_utf8_at_index_0: { //////////////////////////////////////
@@ -822,21 +824,24 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         Term_String_Len_Size(str, len, size);
         Freeze_Flex(str);
         possibly(as == TYPE_BLOB);  // index 0 so byte transform not needed
-        return Init_Series(OUT, as, str);
+        Init_Series(out, as, str);
+        return nullptr;
     }}
 
     if (Any_Word_Type(as)) {  // aliasing as an ANY-WORD? freezes data
         if (Stringlike_Has_Node(v)) {
             const String* str = Cell_String(v);
             if (VAL_INDEX(v) != 0)
-                return FAIL("Can't alias string as WORD! unless at head");
+                return Error_User("Can't alias string as WORD! unless at head");
 
-            if (Is_String_Symbol(str))  // already frozen and checked!
-                return Init_Any_Word(OUT, as, cast(const Symbol*, str));
+            if (Is_String_Symbol(str)) {  // already frozen and checked!
+                Init_Any_Word(out, as, cast(const Symbol*, str));
+                return nullptr;
+            }
 
             if (not Is_Flex_Frozen(str)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return FAIL(Error_Alias_Constrains_Raw());
+                    return Error_Alias_Constrains_Raw();
                 Freeze_Flex(str);
             }
         }
@@ -846,19 +851,19 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         Size size;
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
         const Symbol* sym = Intern_UTF8_Managed(at, size);
-        Init_Any_Word(OUT, as, sym);
-        return OUT;
+        Init_Any_Word(out, as, sym);
+        return nullptr;
     }
 
     if (as == TYPE_BLOB) {  // resulting binary is UTF-8 constrained [2]
         if (Stringlike_Has_Node(v)) {
             Init_Blob_At(
-                OUT,
+                out,
                 Cell_String(v),
                 VAL_BYTEOFFSET(v)  // index has to be in terms of bytes
             );
-            HEART_BYTE(OUT) = TYPE_BLOB;
-            return OUT;
+            HEART_BYTE(out) = TYPE_BLOB;
+            return nullptr;
         }
 
         goto make_small_utf8_at_index_0;
@@ -866,10 +871,11 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 
     if (as == TYPE_INTEGER) {
         if (not IS_CHAR(v))
-        return FAIL(
-            "AS INTEGER! only supports what-were-CHAR! issues ATM"
-        );
-        return Init_Integer(OUT, Cell_Codepoint(v));
+            return Error_User(
+                "AS INTEGER! only supports what-were-CHAR! issues ATM"
+            );
+        Init_Integer(out, Cell_Codepoint(v));
+        return nullptr;
     }
 
     if (as == TYPE_ISSUE) {  // try to fit in cell, or use frozen string
@@ -879,7 +885,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
             const String *s = Cell_String(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return FAIL(Error_Alias_Constrains_Raw());
+                    return Error_Alias_Constrains_Raw();
                 Freeze_Flex(s);
             }
         }
@@ -887,12 +893,12 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
         Length len;
         Size size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
 
-        if (Try_Init_Small_Utf8(OUT, as, Cell_String_At(v), len, size))
-            return OUT;
+        if (Try_Init_Small_Utf8(out, as, Cell_String_At(v), len, size))
+            return nullptr;
 
-        Copy_Cell(OUT, v);  // index heeded internally, not exposed
-        HEART_BYTE(OUT) = as;
-        return OUT;
+        Copy_Cell(out, v);  // index heeded internally, not exposed
+        HEART_BYTE(out) = as;
+        return nullptr;
     }
 
     if (as == TYPE_EMAIL or as == TYPE_URL or as == TYPE_SIGIL) {
@@ -900,22 +906,47 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
             const String *s = Cell_String(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return FAIL(Error_Alias_Constrains_Raw());
+                    return Error_Alias_Constrains_Raw();
                 Freeze_Flex(s);
             }
         }
-        return GENERIC_CFUNC(TO, Any_String)(LEVEL);  // not optimized yet
+        // have to validate the email or URL.  Build on top of logic in
+        // the TO routine to do that, even though it copies the String.
+        //
+        const Value* datatype_as = Datatype_From_Type(as);
+        Value* result = rebValue(CANON(TO), rebQ(datatype_as), rebQ(v));
+        Copy_Cell(out, Known_Element(result));
+        rebRelease(result);
+        return nullptr;
     }
 
     if (as == TYPE_BLANK) {
         Size size;
         Cell_Utf8_Size_At(&size, v);
-        if (size == 0)
-            return Init_Blank(OUT);
-        return RAISE("Can only AS/TO convert empty series to BLANK!");
+        if (size == 0) {
+            Init_Blank(out);
+            return nullptr;
+        }
+        return Error_User("Can only AS/TO convert empty series to BLANK!");
     }
 
-    return UNHANDLED;
+    return Error_Invalid_Type(as);
+}
+
+
+IMPLEMENT_GENERIC(AS, Any_Utf8)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Option(Error*) e = Trap_Alias_Any_Utf8_As(
+        OUT,
+        Element_ARG(ELEMENT),
+        Cell_Datatype_Heart(ARG(TYPE))
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    return OUT;
 }
 
 

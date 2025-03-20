@@ -583,47 +583,49 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     return UNHANDLED;
 }
 
-
+//
+//   Trap_Alias_Blob_As: C
+//
 // The key aliasing AS conversion for binary BLOB!s is as UTF-8 data.
 // It's a fair bit of effort, but can potentially save significantly
 // on memory with things like `as text! read %some-file.txt` using no
 // additional memory when that file is large.
 //
-// 1. We first aliases the BLOB's Binary data as a string (if possible).
+// 1. We first alias the BLOB's Binary data as a string (if possible).
 //    Then if further conversion is needed to an ANY-WORD? or non-string
 //    UTF-8 type (like ISSUE! or URL!), that subdispatches to the code
 //    that converts strings.
 //
-// 2. At one time there was an attempt to factor this code so that it
-//    could be called by an AS-TEXT native with additional parameters.
-//    This seems more like the idea that there should be an option
-//    to the DECODE 'UTF-8 codec to specify many more options, but then
-//    also to allow aliasing the binary in place.  Ultimately that
-//    may supplant AS, but this is what we have for now.
+// 2. There's no way to pass AS options for narrowing the validation of the
+//    UTF-8 (e.g. no emoji or non-printable characters).  And DECODE 'UTF-8
+//    can have those options, but it copies the data instead of aliasing it.
+//    This suggests a need for some factoring of validation out from decoding.
 //
-IMPLEMENT_GENERIC(AS, Is_Blob)
-{
-    INCLUDE_PARAMS_OF_AS;
+Option(Error*) Trap_Alias_Blob_As(
+    Sink(Element) out,
+    const Element* blob,
+    Heart as
+){
+    const Binary* bin = Cell_Binary(blob);
 
-    Element* v = Element_ARG(ELEMENT);
-    Heart as = Cell_Datatype_Heart(ARG(TYPE));
-
-    const Binary* bin = Cell_Binary(v);
-
-    if (as == TYPE_BLOB)  // (as blob! data) when data may be text or blob
-        return Copy_Cell(OUT, v);
+    if (as == TYPE_BLOB) {  // (as blob! data) when data may be text or blob
+        Copy_Cell(out, blob);
+        return nullptr;
+    }
 
     if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
         if (Any_Word_Type(as)) {  // early fail on this, to save time
-            if (VAL_INDEX(v) != 0)  // (vs. failing on AS WORD! of string)
-                return FAIL("Can't alias BLOB! as WORD! unless at head");
+            if (VAL_INDEX(blob) != 0)  // (vs. failing on AS WORD! of string)
+                return Error_User("Can't alias BLOB! as WORD! unless at head");
         }
 
-        Size byteoffset = VAL_INDEX(v);
+        Size byteoffset = VAL_INDEX(blob);
 
         const Byte* at_ptr = Binary_At(bin, byteoffset);
         if (Is_Continuation_Byte(*at_ptr))  // must be on codepoint start
-            fail ("Index at codepoint to convert blob to ANY-STRING?");
+            return Error_User(
+                "Index must be at codepoint to convert BLOB! to ANY-STRING?"
+            );
 
         enum Reb_Strmode strmode = STRMODE_ALL_CODEPOINTS;  // allow CR [2]
 
@@ -634,8 +636,8 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
             or strmode != STRMODE_ALL_CODEPOINTS
         ){
             if (not Is_Flex_Frozen(bin))
-                if (Get_Cell_Flag(v, CONST))
-                    fail (Error_Alias_Constrains_Raw());
+                if (Get_Cell_Flag(blob, CONST))
+                    return Error_Alias_Constrains_Raw();
 
             Length num_codepoints = 0;
 
@@ -684,23 +686,44 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
             }
         }
 
-        if (Any_String_Type(as))
-            return Init_Any_String_At(OUT, as, str, index);
+        if (Any_String_Type(as)) {
+            Init_Any_String_At(out, as, str, index);
+            return nullptr;
+        }
 
-        Init_Any_String_At(ARG(ELEMENT), TYPE_TEXT, str, index);
-        // delegate word validation/etc.
-        return GENERIC_CFUNC(AS, Any_String)(level_);
+        DECLARE_ELEMENT (any_string);
+        Init_Any_String_At(any_string, TYPE_TEXT, str, index);
+
+        return Trap_Any_String_As(out, any_string, as);
     }
 
     if (as == TYPE_BLANK) {
         Size size;
-        Cell_Bytes_At(&size, v);
-        if (size == 0)
-            return Init_Blank(OUT);
-        return RAISE("Can only AS/TO convert empty series to BLANK!");
+        Cell_Bytes_At(&size, blob);
+        if (size == 0) {
+            Init_Blank(out);
+            return nullptr;
+        }
+        return Error_User("Can only AS/TO convert empty series to BLANK!");
     }
 
-    return UNHANDLED;
+    return Error_Invalid_Type(as);
+}
+
+
+IMPLEMENT_GENERIC(AS, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_AS;
+
+    Option(Error*) e = Trap_Alias_Blob_As(
+        OUT,
+        Element_ARG(ELEMENT),
+        Cell_Datatype_Heart(ARG(TYPE))
+    );
+    if (e)
+        return FAIL(unwrap e);
+
+    return OUT;
 }
 
 
@@ -976,7 +999,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 {
     INCLUDE_PARAMS_OF_SORT;
 
-    Element* v = Element_ARG(SERIES);
+    Element* blob = Element_ARG(SERIES);
 
     if (REF(ALL))
         return FAIL(Error_Bad_Refines_Raw());
@@ -990,10 +1013,10 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 
     Flags flags = 0;
 
-    Copy_Cell(OUT, v);  // copy to output before index adjustment
+    Copy_Cell(OUT, blob);  // copy to output before index adjustment
 
-    REBLEN len = Part_Len_May_Modify_Index(v, ARG(PART));
-    Byte* data_at = Cell_Blob_At_Ensure_Mutable(v);  // ^ index changes
+    REBLEN len = Part_Len_May_Modify_Index(blob, ARG(PART));
+    Byte* data_at = Cell_Blob_At_Ensure_Mutable(blob);  // ^ index changes
 
     if (len <= 1)
         return OUT;

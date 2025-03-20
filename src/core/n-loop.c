@@ -774,7 +774,7 @@ struct Reb_Enum_Series {
 
 typedef struct Reb_Enum_Series ESER;
 
-struct Loop_Each_State {
+typedef struct {
     Value* data;  // possibly API handle if converted from sequence
     const Flex* flex;  // Flex being enumerated (if applicable)
     union {
@@ -783,23 +783,34 @@ struct Loop_Each_State {
     } u;
     bool took_hold;
     bool more_data;
-};
+} LoopEachState;
 
 //
-//  Init_Loop_Each: C
+//  Init_Loop_Each_May_Alias_Data: C
 //
-void Init_Loop_Each(Value* iterator, Value* data)
+// 1. Iterating sequences is currently rare, so rather than trying to figure
+//    out how to iterate the various optimized forms just turn them into
+//    a BLOCK!.  This builds on top of the AS aliasing code, which may be
+//    able to reuse an Array if the sequence is uncompressed.  Note that
+//    each iteration of the same optimized series would create a new block,
+//    so it may be that AS aliasing should deoptimize the sequences (though
+//    this would break the invariant that sequences that could be optimized
+//    are optimized).
+//
+void Init_Loop_Each_May_Alias_Data(Value* iterator, Value* data)
 {
-    struct Loop_Each_State *les = Try_Alloc_Memory(struct Loop_Each_State);
+    assert(not Is_Api_Value(data));  // used to be cue to free, but not now
 
-    // !!! Temporarily turn any sequences into a BLOCK!, rather than worry over
-    // figuring out how to iterate optimized ANY-SEQUENCE.  Review as part of
-    // an overall vetting of "generic iteration" (is a poor substitute for).
-    //
-    assert(not Is_Api_Value(data));  // we will free API handles
-    if (Any_Sequence(data)) {
-        data = rebValue(CANON(AS), CANON(BLOCK_X), rebQ(data));
-        rebUnmanage(data);
+    LoopEachState *les = Try_Alloc_Memory(LoopEachState);
+
+    if (Any_Sequence(data)) {  // alias paths, chains, tuples as BLOCK!
+        DECLARE_ELEMENT (temp);
+        Option(Error*) e = Trap_Alias_Any_Sequence_As(
+            temp, cast(Element*, data), TYPE_BLOCK
+        );
+        assert(not e);
+        UNUSED(e);
+        Copy_Cell(data, temp);
     }
 
     if (Is_Action(data)) {
@@ -870,8 +881,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
 //
 static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 {
-    struct Loop_Each_State *les;
-    les = Cell_Handle_Pointer(struct Loop_Each_State, iterator);
+    LoopEachState *les = Cell_Handle_Pointer(LoopEachState, iterator);
 
     if (not les->more_data)
         return false;
@@ -1042,8 +1052,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, VarList* vars_ctx)
 //
 void Shutdown_Loop_Each(Value* iterator)
 {
-    struct Loop_Each_State *les;
-    les = Cell_Handle_Pointer(struct Loop_Each_State, iterator);
+    LoopEachState *les = Cell_Handle_Pointer(LoopEachState, iterator);
 
     if (les->took_hold)  // release read-only lock
         Clear_Flex_Flag(les->flex, FIXED_SIZE);
@@ -1051,10 +1060,7 @@ void Shutdown_Loop_Each(Value* iterator)
     if (Any_Context(les->data))
         Shutdown_Evars(&les->u.evars);
 
-    if (Is_Api_Value(les->data))  // free data last (used above)
-        rebRelease(les->data);
-
-    Free_Memory(struct Loop_Each_State, les);
+    Free_Memory(LoopEachState, les);
     Init_Unreadable(iterator);
 }
 
@@ -1126,7 +1132,7 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Init_Loop_Each(iterator, data);  // all paths must clean this up...
+    Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
     STATE = ST_FOR_EACH_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_for_each
 
@@ -1239,7 +1245,7 @@ DECLARE_NATIVE(EVERY)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    Init_Loop_Each(iterator, data);  // all paths must clean this up...
+    Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
     STATE = ST_EVERY_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_every
 
@@ -1789,7 +1795,7 @@ DECLARE_NATIVE(MAP)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), pseudo_vars_ctx));
 
-    Init_Loop_Each(iterator, data);  // all paths must clean this up...
+    Init_Loop_Each_May_Alias_Data(iterator, data);  // all paths must cleanup
     STATE = ST_MAP_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_map
 
