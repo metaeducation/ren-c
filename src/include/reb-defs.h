@@ -192,20 +192,18 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
         }
     };
 
-    template<typename T>
-    T operator<<(  // see definition of Option() for explanation
+    INLINE uintptr_t operator<<(  // see definition of Option() for explanation
         const UnwrapHelper& left,
-        OptionWrapper<Index> option
+        const OptionWrapper<Index>& option
     ){
         UNUSED(left);
         assert(option.wrapped);  // non-0 check
         return option.wrapped;
     }
 
-    template<typename T>
-    T operator<<(  // see definition of Option() for explanation
+    INLINE uintptr_t operator<<(  // see definition of Option() for explanation
         const MaybeHelper& left,
-        OptionWrapper<Index> option
+        const OptionWrapper<Index>& option
     ){
         UNUSED(left);
         return option.wrapped;

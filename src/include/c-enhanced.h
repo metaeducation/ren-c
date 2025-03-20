@@ -1181,14 +1181,20 @@
     struct MaybeHelper {};
 
     template<typename T>
-    T operator<<(const UnwrapHelper& left, OptionWrapper<T> option) {  // [5]
+    T operator<<(  // [5]
+        const UnwrapHelper& left,
+        const OptionWrapper<T>& option
+    ){
         UNUSED(left);
         assert(option.wrapped);  // non-null pointers or int/enum checks != 0
         return option.wrapped;
     }
 
     template<typename T>
-    T operator<<(const MaybeHelper& left, OptionWrapper<T> option) {  // [5]
+    T operator<<(  // [5]
+        const MaybeHelper& left,
+        const OptionWrapper<T>& option
+    ){
         UNUSED(left);
         return option.wrapped;
     }
