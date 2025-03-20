@@ -214,6 +214,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
         return error;
 
     if (Is_Word(e)) {  // see notes at top of file on `/a` cell optimization
+        e->header.bits &= (~ CELL_FLAG_LEADING_BLANK);
         e->header.bits |= flag;
         HEART_BYTE(e) = heart;  // e.g. TYPE_WORD => TYPE_PATH
         return nullptr;

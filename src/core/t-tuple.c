@@ -435,6 +435,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
             assert(false);
         }
         HEART_BYTE(seq) = as;
+        Clear_Cell_Flag(seq, LEADING_BLANK);  // don't want stray flag
         Copy_Cell(OUT, seq);
         return Trust_Const(OUT);
     }
