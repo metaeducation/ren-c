@@ -215,14 +215,14 @@ INLINE Element* Init_Relative_Block_At(
 
 INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
     Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, a, 0, SPECIFIED);
-    return Coerce_To_Unstable_Antiform(out);
+    return Destabilize_Unbound_Fundamental(out);
 }
 
 #define Init_Pack(out,a) \
     TRACK(Init_Pack_Untracked((out), (a)))
 
 #define Init_Meta_Pack(out,a) \
-    TRACK(Quasify(Init_Any_List_At_Core_Untracked( \
+    TRACK(Quasify_Isotopic_Fundamental(Init_Any_List_At_Core_Untracked( \
         (out), TYPE_BLOCK, (a), 0, SPECIFIED)))
 
 
@@ -274,15 +274,20 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
 //    == [a b c d e]
 //
 
-INLINE Value* Splicify(Need(Value*) v) {
-    assert(Any_List(v) and QUOTE_BYTE(v) == NOQUOTE_1);
-    HEART_BYTE(v) = TYPE_GROUP;
-    return Coerce_To_Stable_Antiform(v);
+INLINE Value* Splicify(Need(Value*) val) {
+    assert(Any_List(val) and QUOTE_BYTE(val) == NOQUOTE_1);
+    HEART_BYTE(val) = TYPE_GROUP;  // splice drops knowledge of list type
+    Option(Error*) e = Trap_Coerce_To_Antiform(cast(Atom*, val));
+    assert(not e);
+    UNUSED(e);
+    assert(Is_Splice(val));
+    return val;
 }
 
 INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
     Init_Group(out, a);
-    return Coerce_To_Stable_Antiform(out);
+    QUOTE_BYTE(out) = ANTIFORM_0_COERCE_ONLY;
+    return out;
 }
 
 #define Init_Splice(out,a) \

@@ -505,9 +505,9 @@ REBINT Find_Bitset_In_Binstr(
 //
 REBLEN Find_Value_In_Binstr(
     REBLEN *len,
-    const Cell* binstr,
+    const Element* binstr,
     REBLEN end,
-    const Cell* pattern,
+    const Element* pattern,
     REBLEN flags,
     REBINT skip
 ){
@@ -523,7 +523,7 @@ REBLEN Find_Value_In_Binstr(
             fail (Error_Find_String_Binary_Raw());
     }
 
-    Count num_quotes = Cell_Num_Quotes(pattern);
+    Count num_quotes = Element_Num_Quotes(pattern);
     if (
         num_quotes == 1
         or (num_quotes == 0 and (

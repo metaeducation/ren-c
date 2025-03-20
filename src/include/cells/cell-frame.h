@@ -261,9 +261,13 @@ INLINE Element* Init_Frame_Untracked(
 //     == [1 <even> 3 <even> 5]  ; no actual EVEN? antiforms can be in block
 //
 
-INLINE Value* Actionify(Need(Value*) v) {
-    assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);
-    return Coerce_To_Stable_Antiform(v);
+INLINE Value* Actionify(Need(Value*) val) {
+    assert(Is_Frame(val) and QUOTE_BYTE(val) == NOQUOTE_1);
+    Option(Error*) e = Trap_Coerce_To_Antiform(cast(Atom*, val));
+    assert(not e);
+    UNUSED(e);
+    assert(Is_Action(val));
+    return val;
 }
 
 #define Init_Action(out,a,label,coupling) \

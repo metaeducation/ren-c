@@ -457,7 +457,9 @@ DECLARE_NATIVE(then_q)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Quotify(Quasify(Init_Word(ARG(branch), CANON(THEN_Q))));  // [1]
+    Quotify(
+        Quasify_Isotopic_Fundamental(Init_Word(ARG(branch), CANON(THEN_Q)))
+    );  // [1]
 
     goto reifying_input;
 
@@ -656,7 +658,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
 
     if (Is_Meta_Of_Raised(in)) {  // definitional failure, skip
         Copy_Cell(OUT, in);
-        Unquasify(stable_OUT);
+        QUOTE_BYTE(OUT) = NOQUOTE_1;
         return Raisify(OUT);
     }
 
@@ -664,7 +666,8 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer 'on` in %base-defs.r
         return Init_Heavy_Null(OUT);
 
     STATE = ST_ALSO_RUNNING_BRANCH;
-    return CONTINUE(SPARE, branch, Meta_Unquotify_Undecayed(in));
+    Copy_Cell(SCRATCH, in);
+    return CONTINUE(SPARE, branch, Meta_Unquotify_Undecayed(SCRATCH));
 
 } return_original_input: {  //////////////////////////////////////////////////
 

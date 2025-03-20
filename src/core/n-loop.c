@@ -1676,7 +1676,7 @@ DECLARE_NATIVE(map_each)
     if (Is_Blank(ARG(data)))  // should have same result as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
-    Quotify(ARG(data));  // dialect, in theory [1]
+    Quotify(Element_ARG(data));  // dialect, in theory [1]
 
     const Value* map_action = LIB(MAP);
     Details* details = Ensure_Cell_Frame_Details(map_action);
@@ -1720,9 +1720,15 @@ DECLARE_NATIVE(map)
 {
     INCLUDE_PARAMS_OF_MAP;
 
-    Value* vars = ARG(vars);  // transformed to context on initial_entry
-    Value* data = ARG(data);
-    Value* body = ARG(body);  // bound to vars context on initial_entry
+    bool invoke_frame = false;
+    if (Is_Action(ARG(data))) {
+        invoke_frame = true;
+        QUOTE_BYTE(ARG(data)) = NOQUOTE_1;
+    }
+
+    Element* vars = Element_ARG(vars);  // becomes context on initial_entry
+    Element* data = Element_ARG(data);  // action invokes, frame enumerates
+    Element* body = Element_ARG(body);  // bound to vars on initial_entry
 
     Value* iterator = LOCAL(iterator);  // reuse to hold Loop_Each_State
 
@@ -1756,12 +1762,12 @@ DECLARE_NATIVE(map)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    if (Is_Action(data)) {
+    if (invoke_frame) {
         // treat as a generator
     }
     else if (
         not Is_Quoted(data)
-        or Cell_Num_Quotes(data) != 1
+        or Element_Num_Quotes(data) != 1
         or not (
             Any_Series(Unquotify(data))
             or Any_Path(data)  // has been unquoted
@@ -1956,9 +1962,9 @@ DECLARE_NATIVE(for)
 {
     INCLUDE_PARAMS_OF_FOR;
 
-    Value* vars = ARG(vars);
-    Value* value = ARG(value);
-    Value* body = ARG(body);
+    Element* vars = Element_ARG(vars);
+    Element* value = Element_ARG(value);
+    Element* body = Element_ARG(body);
 
     enum {
         ST_FOR_INITIAL_ENTRY = STATE_0,

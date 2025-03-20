@@ -175,7 +175,7 @@ bool Init_Invokable_From_Feed_Throws(
         Fetch_Next_In_Feed(feed);  // we've seen it now
 
     if (not Is_Action(out)) {
-        Quotify(out);
+        Quotify(Known_Element(out));
         return false;
     }
 
@@ -255,7 +255,7 @@ bool Init_Frame_From_Feed_Throws(
         nullptr  // leave unspecialized slots with parameter! antiforms
     );
 
-    Unquotify(Copy_Cell(Varlist_Slot(exemplar, 2), out));
+    Unquotify(Copy_Cell(Varlist_Slot(exemplar, 2), cast(Element*, out)));
 
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?

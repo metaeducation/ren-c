@@ -630,8 +630,7 @@ static REBIXO Parse_One_Rule(
 
         switch (Type_Of(rule)) {
           case TYPE_QUOTED:
-            Copy_Cell(SPARE, rule);
-            rule = cast(Element*, Unquotify(SPARE));
+            rule = Unquotify(Copy_Cell(SPARE, rule));
             break;  // fall through to direct match
 
           case TYPE_THE_WORD: {
@@ -693,8 +692,8 @@ static REBIXO Parse_One_Rule(
         //
         Heart rule_heart = Cell_Heart(rule);
         if (
-            Cell_Num_Quotes(rule) == 1  // '<a> will mold to "<a>"
-            or (Cell_Num_Quotes(rule) == 0 and (
+            Element_Num_Quotes(rule) == 1  // '<a> will mold to "<a>"
+            or (Element_Num_Quotes(rule) == 0 and (
                 rule_heart == TYPE_TEXT
                 or rule_heart == TYPE_ISSUE
                 or rule_heart == TYPE_BLOB
@@ -703,7 +702,7 @@ static REBIXO Parse_One_Rule(
             REBLEN len;
             REBINT index = Find_Value_In_Binstr(
                 &len,
-                ARG(position),
+                Element_ARG(position),
                 Cell_Series_Len_Head(ARG(position)),
                 rule,
                 (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH
@@ -766,8 +765,8 @@ static REBIXO To_Thru_Block_Rule(
     // block rule might be something like `to [{a} | <end>]`.  e.g. being
     // positioned on the end cell or null terminator of a string may match.
     //
-    DECLARE_ATOM (iter);
-    Copy_Cell(iter, ARG(position));  // need to slide pos
+    DECLARE_ELEMENT (iter);
+    Copy_Cell(iter, Element_ARG(position));  // need to slide pos
     for (
         ;
         VAL_INDEX_RAW(iter) <= P_INPUT_LEN;
@@ -1049,8 +1048,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_VALUE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
-            Derelativize(temp, rule, P_RULE_BINDING);
-            Unquotify(temp);
+            Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
         }
         else if (Is_The_Word(rule)) {
             Get_Var_May_Fail(temp, rule, P_RULE_BINDING);
@@ -1094,7 +1092,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     REBLEN len;  // e.g. if a TAG!, match length includes < and >
     REBINT i = Find_Value_In_Binstr(
         &len,
-        ARG(position),
+        Element_ARG(position),
         Cell_Series_Len_Head(ARG(position)),
         rule,
         (P_FLAGS & PF_FIND_MASK),
@@ -1126,7 +1124,7 @@ static void Handle_Mark_Rule(
     //
     //     parse just '''{abc} ["a" mark x:]` => '''{bc}
 
-    Quotify_Depth(ARG(position), P_NUM_QUOTES);
+    Quotify_Depth(Element_ARG(position), P_NUM_QUOTES);
 
     Type t = Type_Of(rule);
     if (t == TYPE_WORD or Is_Set_Word(rule)) {
@@ -1151,7 +1149,7 @@ static void Handle_Mark_Rule(
     else
         fail (Error_Parse3_Variable(level_));
 
-    Dequotify(ARG(position));  // go back to 0 quote level
+    Dequotify(Element_ARG(position));  // go back to 0 quote level
 }
 
 
@@ -1263,8 +1261,8 @@ DECLARE_NATIVE(subparse)
     // put the quotes back on whenever doing a COPY etc.
     //
     assert(Is_Nothing(ARG(num_quotes)));
-    Init_Integer(ARG(num_quotes), Cell_Num_Quotes(ARG(input)));
-    Dequotify(ARG(input));
+    Init_Integer(ARG(num_quotes), Element_Num_Quotes(Element_ARG(input)));
+    Dequotify(Element_ARG(input));
 
     // Make sure index position is not past END
     if (VAL_INDEX_UNBOUNDED(ARG(input)) > Cell_Series_Len_Head(ARG(input)))

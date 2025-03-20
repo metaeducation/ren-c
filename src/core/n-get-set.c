@@ -202,7 +202,7 @@ Option(Error*) Trap_Get_Any_Tuple_Maybe_Vacant(
 
             Move_Cell(PUSH(), out);
             if (at == head)
-                Quotify(TOP);  // signify not literal
+                Quotify(TOP_ELEMENT);  // signify not literal
         }
         else  // Note: must keep words at head as-is for writeback!
             Derelativize(PUSH(), at, at_binding);
@@ -616,7 +616,8 @@ Option(Error*) Trap_Get_Path_Push_Refinements(
             return nullptr;
         }
 
-        Quotify(out);  // may be FRAME!, would run if seen literally in EVAL
+        possibly(Is_Frame(out));
+        Quotify(Known_Element(out));  // frame would run if eval sees unquoted
 
         DECLARE_ATOM (temp);
         if (rebRunThrows(
@@ -703,7 +704,7 @@ Option(Error*) Trap_Get_From_Steps_On_Stack_Maybe_Vacant(
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
         Copy_Cell(out, at);
-        Unquotify(out);
+        Unquotify(Known_Element(out));
     }
     else if (Is_Word(at)) {
         const Value* slot;
@@ -976,7 +977,7 @@ bool Set_Var_Core_Updater_Throws(
 
                 Move_Cell(PUSH(), cast(Element*, temp));
                 if (at == head)
-                    Quotify(TOP);  // signal it was not literally the head
+                    Quotify(TOP_ELEMENT);  // signal not literally the head
             }
             else  // Note: must keep WORD!s at head as-is for writeback
                 Derelativize(PUSH(), at, at_binding);
@@ -1010,8 +1011,7 @@ bool Set_Var_Core_Updater_Throws(
   blockscope {
     OnStack(Element*) at = Data_Stack_At(Element, stackindex);
     if (Is_Quoted(at)) {
-        Copy_Cell(out, at);
-        Unquotify(out);
+        Unquotify(Copy_Cell(out, at));
     }
     else if (Is_Word(at)) {
         const Value* slot;
@@ -1032,7 +1032,7 @@ bool Set_Var_Core_Updater_Throws(
 
     while (stackindex != stackindex_top) {
         Move_Cell(temp, out);
-        Quotify(temp);
+        Quotify(Known_Element(temp));
         const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
@@ -1048,7 +1048,7 @@ bool Set_Var_Core_Updater_Throws(
     // Now do a the final step, an update (often a poke)
 
     Move_Cell(temp, out);
-    Byte quote_byte = QUOTE_BYTE(temp);
+    QuoteByte quote_byte = QUOTE_BYTE(temp);
     QUOTE_BYTE(temp) = ONEQUOTE_NONQUASI_3;
     const Node* ins = rebQ(cast(Value*, Data_Stack_Cell_At(stackindex)));
     assert(Is_Action(updater));

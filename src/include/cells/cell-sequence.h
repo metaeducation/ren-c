@@ -372,7 +372,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             Init_Word(out, CANON(DOT_1));
         }
         if (Is_Trash(first))
-            Quasify(out);
+            Quasify_Isotopic_Fundamental(out);
         return nullptr;
     }
 
@@ -791,12 +791,6 @@ INLINE void Get_Tuple_Bytes(
 
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
-// !!! Temporary workaround for what was IS_META_PATH() (now not its own type)
-//
-INLINE bool IS_QUOTED_PATH(const Cell* v) {
-    return Cell_Num_Quotes(v) == 1
-        and Cell_Heart(v) == TYPE_PATH;
-}
 
 INLINE Element* Init_Set_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);

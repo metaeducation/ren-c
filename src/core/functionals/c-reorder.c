@@ -182,7 +182,7 @@ DECLARE_NATIVE(reorder)
         }
         else if (Is_Quoted(item)) {
             if (
-                Cell_Num_Quotes(item) != 1
+                Element_Num_Quotes(item) != 1
                 or not Any_Word_Type(Cell_Heart(item))
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD?");

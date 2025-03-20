@@ -53,7 +53,7 @@ void Startup_Data_Stack(Length capacity)
     g_ds.movable_tail = Array_Tail(g_ds.array);  // signals PUSH() out of space
 
     g_ds.index = 1;
-    g_ds.movable_top = Flex_At(Cell, g_ds.array, g_ds.index);
+    g_ds.movable_top = Flex_At(Value, g_ds.array, g_ds.index);
     Expand_Data_Stack_May_Fail(capacity);  // leverage expansion logic [1]
 
     DROP();  // drop the hypothetical thing that triggered the expand
@@ -123,9 +123,9 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     REBLEN len_old = Array_Len(g_ds.array);
 
     assert(len_old == g_ds.index);  // only request expansion when tail hit
-    assert(g_ds.movable_top == Flex_Tail(Cell, g_ds.array));
+    assert(g_ds.movable_top == Flex_Tail(Value, g_ds.array));
     assert(
-        g_ds.movable_top - Flex_Head(Cell, g_ds.array)
+        g_ds.movable_top - Flex_Head(Value, g_ds.array)
         == cast(int, len_old)
     );
 
@@ -137,20 +137,20 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 
     Extend_Flex_If_Necessary(g_ds.array, amount);
 
-    g_ds.movable_top = Flex_At(Cell, g_ds.array, g_ds.index);  // needs update
+    g_ds.movable_top = Flex_At(Value, g_ds.array, g_ds.index);  // needs update
 
     REBLEN len_new = len_old + amount;
     Set_Flex_Len(g_ds.array, len_new);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
-    Cell* poison = g_ds.movable_top;
+    Value* poison = g_ds.movable_top;
     REBLEN n;
     for (n = len_old; n < len_new; ++n, ++poison)
         Force_Poison_Cell(poison);
-    assert(poison == Flex_Tail(Cell, g_ds.array));
+    assert(poison == Flex_Tail(Value, g_ds.array));
   #endif
 
-    g_ds.movable_tail = Flex_Tail(Cell, g_ds.array);  // next expansion point
+    g_ds.movable_tail = Flex_Tail(Value, g_ds.array);  // next expansion point
 }
 
 

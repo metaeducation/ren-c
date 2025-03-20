@@ -196,8 +196,7 @@
     cast(OnStack(Value*), cast(Value*, g_ds.movable_top))
 
 #define TOP_ELEMENT \
-    (assert(QUOTE_BYTE(g_ds.movable_top) != ANTIFORM_0), \
-        cast(OnStack(Element*), cast(Element*, g_ds.movable_top)))
+    cast(OnStack(Element*), Known_Element(g_ds.movable_top))
 
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to

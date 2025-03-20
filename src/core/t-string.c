@@ -859,7 +859,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 
         REBLEN len;
         REBINT find = Find_Value_In_Binstr(
-            &len, v, tail, ARG(pattern), flags, skip
+            &len, v, tail, Element_ARG(pattern), flags, skip
         );
 
         if (find == NOT_FOUND)

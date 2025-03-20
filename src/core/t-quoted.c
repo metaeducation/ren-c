@@ -206,41 +206,56 @@ DECLARE_NATIVE(unquote)
 {
     INCLUDE_PARAMS_OF_UNQUOTE;
 
-    Value* v = ARG(value);
+    Element* v = Element_ARG(value);
 
     Count depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
 
     if (depth < 0)
         return FAIL(PARAM(depth));
 
-    if (depth > Cell_Num_Quotes(v))
+    if (depth > Element_Num_Quotes(v))
         return FAIL("Value not quoted enough for unquote depth requested");
 
-    Unquotify_Depth(Copy_Cell(OUT, v), depth);
-    return OUT;
+    return Unquotify_Depth(Copy_Cell(OUT, v), depth);
 }
 
 
 //
 //  /quasi: native [
 //
-//  "Constructs a quasi form of the evaluated argument"
+//  "Constructs a quasi form of the evaluated argument (if legal)"
 //
-//      return: [quasiform!]
-//      value "Any non-QUOTED! value for which quasiforms are legal"
-//          [any-isotopic?]
+//      return: "Raises an error if type cannot make the quasiform"
+//          [quasiform! raised!]
+//      element "Any non-QUOTED! value for which quasiforms are legal"
+//          [fundamental? quasiform!]
+//      :pass "If input is already a quasiform, then pass it trhough"
 //  ]
 //
 DECLARE_NATIVE(quasi)
+//
+// Not all datatypes have quasiforms.  For example:  ~:foo:~ is interpreted
+// as a 3-element CHAIN! with quasi-blanks in the first and last spots.  We
+// choose that interpretation because it is more useful, and also goes along
+// with being able to have ~/home/whoever as a PATH!.
 {
     INCLUDE_PARAMS_OF_QUASI;
 
-    Value* v = ARG(value);
+    Element* elem = Element_ARG(element);
 
-    if (Is_Quoted(v))
-        return FAIL("Quoted values do not have quasiforms");
+    if (Is_Quasiform(elem)) {
+        if (REF(pass))
+            return COPY(elem);
+        return FAIL("Use QUASI:PASS if QUASI argument is already a quasiform");
+    }
 
-    return COPY(Quasify(v));
+    Copy_Cell(OUT, elem);
+
+    Option(Error*) e = Trap_Coerce_To_Quasiform(OUT);
+    if (e)
+        return RAISE(unwrap e);  // RAISE so (try quasi ':foo:) gives null
+
+    return OUT;
 }
 
 
@@ -280,7 +295,7 @@ DECLARE_NATIVE(antiform_q)
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
     Heart heart;
-    Byte quote_byte;
+    QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0);
@@ -302,16 +317,20 @@ DECLARE_NATIVE(anti)
 {
     INCLUDE_PARAMS_OF_ANTI;
 
-    Element* e = Element_ARG(element);
+    Element* elem = Element_ARG(element);
 
-    if (Is_Quoted(e))
+    if (Is_Quoted(elem))
         return FAIL("QUOTED! values have no antiform");
 
-    if (Is_Quasiform(e))  // Review: Allow this?
+    if (Is_Quasiform(elem))  // Review: Allow this?
         return FAIL("QUASIFORM! values can be made into antiforms with UNMETA");
 
-    Copy_Cell(OUT, e);
-    return Coerce_To_Antiform(OUT);
+    Copy_Cell(OUT, elem);
+    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
+    if (e)
+        return FAIL(unwrap e);
+
+    return OUT;
 }
 
 
@@ -342,7 +361,12 @@ DECLARE_NATIVE(unmeta)
         if (not REF(lite))
             return FAIL("UNMETA only takes non quoted/quasi things if :LITE");
         Copy_Cell(OUT, meta);
-        return Coerce_To_Antiform(OUT);
+
+        Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
+        if (e)
+            return FAIL(unwrap e);
+
+        return OUT;
     }
 
     if (QUOTE_BYTE(meta) == QUASIFORM_2 and REF(lite))
@@ -409,9 +433,14 @@ DECLARE_NATIVE(spread)
     Value* v = ARG(value);
 
     if (Any_List(v)) {  // most common case
-        HEART_BYTE(v) = TYPE_GROUP;  // throws away original heart
-        Coerce_To_Stable_Antiform(v);
-        return COPY(v);
+        Copy_Cell(OUT, v);
+        HEART_BYTE(OUT) = TYPE_GROUP;  // throws away original heart
+
+        Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
+        assert(not e);
+        UNUSED(e);
+        assert(Is_Splice(OUT));
+        return OUT;
     }
 
     if (Is_Blank(v))
@@ -449,7 +478,7 @@ DECLARE_NATIVE(lazy)
         return nullptr;
 
     if (Is_Quoted(v))
-        return Unquotify(Copy_Cell(OUT, v));
+        return Unquotify(Copy_Cell(OUT, cast(Element*, v)));
 
     if (Is_Block(v)) {
         if (rebRunThrows(cast(Value*, OUT), CANON(MAKE), CANON(OBJECT_X), v))
@@ -459,7 +488,7 @@ DECLARE_NATIVE(lazy)
         Copy_Cell(OUT, v);
 
     assert(Is_Object(OUT));
-    return Coerce_To_Unstable_Antiform(OUT);;
+    return Destabilize_Unbound_Fundamental(OUT);
 }
 
 
@@ -577,7 +606,7 @@ DECLARE_NATIVE(lazy_q)
     INCLUDE_PARAMS_OF_LAZY_Q;
 
     Heart heart;
-    Byte quote_byte;
+    QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_OBJECT);
@@ -598,7 +627,7 @@ DECLARE_NATIVE(pack_q)
     INCLUDE_PARAMS_OF_PACK_Q;
 
     Heart heart;
-    Byte quote_byte;
+    QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_BLOCK);
@@ -627,8 +656,13 @@ DECLARE_NATIVE(runs)
     if (Is_Action(frame))  // already antiform, no need to pay for coercion [1]
         return COPY(frame);
 
-    Coerce_To_Stable_Antiform(frame);  // typechecks specialization, etc. [2]
-    return COPY(frame);
+    Copy_Cell(OUT, frame);
+
+    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // same code as anti [2]
+    if (e)
+        return FAIL(unwrap e);
+
+    return OUT;
 }
 
 

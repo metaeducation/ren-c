@@ -70,7 +70,7 @@ INLINE void Tweak_Cell_Word_Index(Cell* v, Index i) {
 INLINE Element* Init_Any_Word_Untracked(
     Sink(Element) out,
     Heart heart,
-    Byte quote_byte,
+    QuoteByte quote_byte,
     const Symbol* sym
 ){
     assert(Any_Word_Type(heart));
@@ -134,13 +134,6 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
 #define Init_Quasi_Word(out,symbol) \
     TRACK(Init_Any_Word_Untracked( \
         (out), TYPE_WORD, QUASIFORM_2_COERCE_ONLY, (symbol)))
-
-#define Init_Anti_Word_Untracked(out,symbol) \
-    Coerce_To_Stable_Antiform(Init_Any_Word_Untracked( \
-        (out), TYPE_WORD, NOQUOTE_1, (symbol)))  // must validate symbol
-
-#define Init_Anti_Word(out,symbol) \
-    TRACK(Init_Anti_Word_Untracked((out), (symbol)))
 
 
 // Helper calls strsize() so you can more easily use literals at callsite.

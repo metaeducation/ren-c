@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018-2022 Ren-C Open Source Contributors
+// Copyright 2018-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -59,75 +59,67 @@
 // problems in Rebol languages.
 //
 
-INLINE Count Cell_Num_Quotes(const Cell* v) {
+INLINE Count Element_Num_Quotes(const Element* v) {
     assert(QUOTE_BYTE(v) != ANTIFORM_0);
     return (QUOTE_BYTE(v) - NOQUOTE_1) >> 1;
 }
 
-#define Is_Unquoted(v) \
-    (QUOTE_BYTE(Ensure_Readable(v)) == NOQUOTE_1)
+#define Is_Unquoted(cell) \
+    (QUOTE_BYTE(Ensure_Readable(cell)) == NOQUOTE_1)
 
-#define Is_Quoted(v) \
-    (QUOTE_BYTE(Ensure_Readable(v)) >= ONEQUOTE_NONQUASI_3)
+#define Is_Quoted(cell) \
+    (QUOTE_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_3)
+
+INLINE bool Any_Metaform(const Cell* cell) {  // quasiform or quoted
+    QuoteByte quote_byte = QUOTE_BYTE(Ensure_Readable(cell));
+    return (
+        quote_byte == QUASIFORM_2
+        or quote_byte == ONEQUOTE_NONQUASI_3
+        or quote_byte == ONEQUOTE_QUASI_4
+    );
+}
+
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
 //
-INLINE Cell* Quotify_Depth_Core(Cell* v, Count depth) {
-    if (depth == 0)
-        return v;
+INLINE Element* Quotify_Depth(Element* elem, Count depth) {
+    assert(QUOTE_BYTE(elem) != ANTIFORM_0);
 
-    if (Cell_Num_Quotes(v) + depth >  MAX_QUOTE_DEPTH)
+    if (depth == 0)
+        return elem;
+
+    if (Element_Num_Quotes(elem) + depth >  MAX_QUOTE_DEPTH)
         fail ("Quoting Depth of 126 Exceeded");
 
-    QUOTE_BYTE(v) += Quote_Shift(depth);
-    return v;
+    QUOTE_BYTE(elem) += Quote_Shift(depth);
+    return elem;
 }
-
-#if DONT_CHECK_CELL_SUBCLASSES
-    #define Quotify_Depth Quotify_Depth_Core
-#else
-    INLINE Value* Quotify_Depth(Value* v, Count depth)
-        { return c_cast(Value*, Quotify_Depth_Core(v, depth)); }
-
-    INLINE Cell* Quotify_Depth(Cell* v, Count depth)
-        { return Quotify_Depth_Core(v, depth); }
-#endif
 
 
 // Turns 'X into X, or '''''[1 + 2] into '''(1 + 2), etc.
 //
-INLINE Cell* Unquotify_Depth_Core(Cell* v, Count depth) {
-    if (depth == 0) {
-        assert(QUOTE_BYTE(v) != ANTIFORM_0);
-        return v;
-    }
+INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
+    assert(QUOTE_BYTE(elem) != ANTIFORM_0);
 
-    if (depth > Cell_Num_Quotes(v))
+    if (depth == 0)
+        return elem;
+
+    if (depth > Element_Num_Quotes(elem))
         fail ("Attempt to set quoting level of value to less than 0");
 
-    QUOTE_BYTE(v) -= Quote_Shift(depth);
-    return v;
+    QUOTE_BYTE(elem) -= Quote_Shift(depth);
+    return elem;
 }
 
-#if DONT_CHECK_CELL_SUBCLASSES
-    #define Unquotify_Depth Unquotify_Depth_Core
-#else
-    INLINE Element* Unquotify_Depth(Value* v, Count depth)
-        { return cast(Element*, Unquotify_Depth_Core(v, depth)); }
+#define Quotify(elem)      Quotify_Depth((elem), 1)
+#define Unquotify(elem)    Unquotify_Depth((elem), 1)
 
-    INLINE Cell* Unquotify_Depth(Cell* v, Count depth)
-        { return Unquotify_Depth_Core(v, depth); }
-#endif
-
-#define Quotify(v)      Quotify_Depth((v), 1)
-#define Unquotify(v)    Unquotify_Depth((v), 1)
-
-INLINE Count Dequotify(Cell* v) {
-    Count depth = Cell_Num_Quotes(v);
-    if (QUOTE_BYTE(v) & NONQUASI_BIT)
-        QUOTE_BYTE(v) = NOQUOTE_1;
+INLINE Count Dequotify(Element* elem) {
+    Count depth = Element_Num_Quotes(elem);
+    if (QUOTE_BYTE(elem) & NONQUASI_BIT)
+        QUOTE_BYTE(elem) = NOQUOTE_1;
     else
-        QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // exception--already quasi!
+        QUOTE_BYTE(elem) = QUASIFORM_2_COERCE_ONLY;  // already quasi
     return depth;
 }
 
@@ -269,24 +261,31 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 //   operations in the ^META domain to easily use functions like ALL and ANY
 //   on the meta values.  (See the FOR-BOTH example.)
 
-INLINE Cell* Coerce_To_Antiform(Cell* c);
-INLINE Value* Coerce_To_Stable_Antiform(Value* v);
-INLINE Atom* Coerce_To_Unstable_Antiform(Atom* a);
-INLINE Element* Coerce_To_Quasiform(Value* v);
+INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom);
+INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v);
 
 #define Is_Quasiform(v) \
     (QUOTE_BYTE(Ensure_Readable(v)) == QUASIFORM_2)
 
-INLINE Element* Unquasify(Value* v) {
-    assert(QUOTE_BYTE(v) == QUASIFORM_2);
-    QUOTE_BYTE(v) = NOQUOTE_1;
-    return u_cast(Element*, v);
+INLINE Element* Unquasify(Element* elem) {
+    assert(QUOTE_BYTE(elem) == QUASIFORM_2);
+    QUOTE_BYTE(elem) = NOQUOTE_1;
+    return elem;
 }
 
-INLINE Element* Quasify(Value* v) {
-    assert(QUOTE_BYTE(v) == NOQUOTE_1);  // e.g. can't quote void
-    Coerce_To_Quasiform(v);
-    return u_cast(Element*, v);
+INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
+    assert(Any_Isotopic(elem));
+    assert(QUOTE_BYTE(elem) == NOQUOTE_1);
+    QUOTE_BYTE(elem) = QUASIFORM_2_COERCE_ONLY;
+    return elem;
+}
+
+INLINE Atom* Destabilize_Unbound_Fundamental(Need(Atom*) atom) {
+    assert(Any_Isotopic(atom));
+    assert(QUOTE_BYTE(atom) == NOQUOTE_1);
+    QUOTE_BYTE(atom) = ANTIFORM_0_COERCE_ONLY;
+    assert(Is_Antiform_Unstable(atom));
+    return atom;
 }
 
 INLINE Element* Quasify_Antiform(Atom* v) {
@@ -299,13 +298,6 @@ INLINE Element* Reify(Atom* v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0)
         QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // all antiforms can be quasi
     return cast(Element*, v);
-}
-
-INLINE Atom* Degrade(Atom* a) {
-    assert(not Is_Antiform(a));
-    if (QUOTE_BYTE(a) == QUASIFORM_2)
-        Coerce_To_Antiform(a);
-    return a;
 }
 
 
@@ -326,26 +318,29 @@ INLINE Atom* Degrade(Atom* a) {
 #define Is_Metaform(v) \
     (QUOTE_BYTE(Ensure_Readable(v)) >= QUASIFORM_2)  // quasi or quoted
 
-INLINE Element* Meta_Quotify(Cell* v) {
-    if (QUOTE_BYTE(v) == ANTIFORM_0) {
-        QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // anti must mean valid quasi
-        return cast(Element*, v);
+INLINE Element* Meta_Quotify(Atom* atom) {
+    if (QUOTE_BYTE(atom) == ANTIFORM_0) {
+        QUOTE_BYTE(atom) = QUASIFORM_2_COERCE_ONLY;  // anti means quasi valid
+        return cast(Element*, atom);
     }
-    return cast(Element*, Quotify(v));  // a non-antiform winds up quoted
+    return Quotify(cast(Element*, atom));  // a non-antiform winds up quoted
 }
 
-INLINE Atom* Meta_Unquotify_Undecayed(Atom* a) {
-    if (QUOTE_BYTE(a) == QUASIFORM_2)
-        Coerce_To_Antiform(a);  // Note: not all quasiforms are valid antiforms
-    else
-        Unquotify(a);  // will assert the input is quoted
-    return a;
+INLINE Atom* Meta_Unquotify_Undecayed(Need(Atom*) atom) {
+    if (QUOTE_BYTE(atom) == QUASIFORM_2) {
+        Option(Error*) e = Trap_Coerce_To_Antiform(atom);
+        if (e)
+            fail (unwrap e);  // !!! shouldn't abruptly fail :-(
+
+        return atom;
+    }
+    return Unquotify(cast(Element*, atom));  // asserts that it's quoted
 }
 
-INLINE Value* Meta_Unquotify_Known_Stable(Value* v) {
-    Meta_Unquotify_Undecayed(v);
-    Assert_Cell_Stable(v);
-    return v;
+INLINE Value* Meta_Unquotify_Known_Stable(Need(Value*) val) {
+    Meta_Unquotify_Undecayed(cast(Atom*, val));
+    Assert_Cell_Stable(val);
+    return val;
 }
 
 INLINE Value* Decay_If_Unstable(Need(Atom*) v);

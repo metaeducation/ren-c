@@ -558,7 +558,7 @@ INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
     );
 }
 
-INLINE void Reset_Cell_Header(Cell* c, Byte quote_byte, uintptr_t flags)
+INLINE void Reset_Cell_Header(Cell* c, QuoteByte quote_byte, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE_ANTIFORM_0);
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set

@@ -771,8 +771,8 @@ DECLARE_NATIVE(equal_q)
 //  "TRUE if the first value is less than the second value"
 //
 //      return: [logic?]
-//      value1 [element?]  ; !!! Don't allow antiforms? [1]
-//      value2 [element?]
+//      value1 [fundamental?]  ; !!! Don't allow antiforms? [1]
+//      value2 [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(lesser_q)
@@ -914,16 +914,16 @@ DECLARE_NATIVE(same_q)
 //  "TRUE if the first value is greater than the second value"
 //
 //      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
+//      value1 [fundamental?]
+//      value2 [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(greater_q)
 {
     INCLUDE_PARAMS_OF_GREATER_Q;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Element* v1 = Element_ARG(value1);
+    Element* v2 = Element_ARG(value2);
 
     Quotify(v1);
     Quotify(v2);
@@ -940,16 +940,16 @@ DECLARE_NATIVE(greater_q)
 //  "TRUE if the first value is equal to or less than the second value"
 //
 //      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
+//      value1 [fundamental?]
+//      value2 [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(equal_or_lesser_q)
 {
     INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Element* v1 = Element_ARG(value1);
+    Element* v2 = Element_ARG(value2);
 
     Quotify(v1);
     Quotify(v2);
@@ -966,16 +966,16 @@ DECLARE_NATIVE(equal_or_lesser_q)
 //  "TRUE if the first value is greater than or equal to the second value"
 //
 //      return: [logic?]
-//      value1 [something?]
-//      value2 [something?]
+//      value1 [fundamental?]
+//      value2 [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(greater_or_equal_q)
 {
     INCLUDE_PARAMS_OF_GREATER_OR_EQUAL_Q;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Element* v1 = Element_ARG(value1);
+    Element* v2 = Element_ARG(value2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1000,8 +1000,8 @@ DECLARE_NATIVE(maximum)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Element* v1 = Element_ARG(value1);
+    Element* v2 = Element_ARG(value2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1028,8 +1028,8 @@ DECLARE_NATIVE(minimum)
 {
     INCLUDE_PARAMS_OF_MINIMUM;
 
-    Value* v1 = ARG(value1);
-    Value* v2 = ARG(value2);
+    Element* v1 = Element_ARG(value1);
+    Element* v2 = Element_ARG(value2);
 
     Quotify(v1);
     Quotify(v2);
@@ -1074,9 +1074,9 @@ DECLARE_NATIVE(negative_q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
-    Value* v = ARG(value);
-    Quotify(v);  // not necessary for scalars, but futureproof it
+    Element* v = Element_ARG(value);
 
+    Quotify(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(LESSER_Q), v, CANON(ZEROIFY), v);
 }
 
@@ -1094,9 +1094,9 @@ DECLARE_NATIVE(positive_q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
-    Value* v = ARG(value);
-    Quotify(v);  // not necessary for scalars, but futureproof it
+    Element* v = Element_ARG(value);
 
+    Quotify(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(GREATER_Q), v, CANON(ZEROIFY), v);
 }
 
@@ -1114,8 +1114,8 @@ DECLARE_NATIVE(zero_q)
 {
     INCLUDE_PARAMS_OF_ZERO_Q;
 
-    Value* v = ARG(value);
-    Quotify(v);  // not necessary for scalars, but futureproof it
+    Element* v = Element_ARG(value);
 
+    Quotify(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(EQUAL_Q), v, CANON(ZEROIFY), v);
 }

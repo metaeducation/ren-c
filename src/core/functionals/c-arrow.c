@@ -200,7 +200,7 @@ DECLARE_NATIVE(arrow)
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Quoted(item)) {
-            if (Cell_Num_Quotes(item) != 1)
+            if (Element_Num_Quotes(item) != 1)
                 return FAIL(item);
             if (Cell_Heart(item) == TYPE_WORD)
                 pclass = PARAMCLASS_JUST;

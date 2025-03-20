@@ -713,7 +713,8 @@ INLINE Bounce Native_Void_Result_Untracked(
 
 INLINE Bounce Native_Unmeta_Result(Level* level_, const Element* v) {
     assert(not THROWING);
-    return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
+    Copy_Cell(level_->out, v);
+    return Meta_Unquotify_Undecayed(level_->out);
 }
 
 INLINE Bounce Native_Nothing_Result_Untracked(
@@ -850,6 +851,11 @@ INLINE Atom* Native_Copy_Result_Untracked(
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNMETA(v)   Native_Unmeta_Result(level_, (v))
     #define BRANCHED(v) Native_Branched_Result(level_, (v))
+
+    // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY
+    // or nullptr.  This means that trying to make LOGIC(b) "more efficient"
+    // by doing Init_Okay(OUT) or Init_Nulled(OUT) will break things.
+    //
     #define OKAY        BOUNCE_OKAY
     #define LOGIC(b)    ((b) == true ? BOUNCE_OKAY : nullptr)
 

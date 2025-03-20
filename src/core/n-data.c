@@ -759,12 +759,14 @@ DECLARE_NATIVE(lit_path_q)
 {
     INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
-    DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(e, LEVEL);
+    DECLARE_ELEMENT (elem);
+    Option(Bounce) b = Trap_Bounce_Maybe_Element_Intrinsic(elem, LEVEL);
     if (b)
         return unwrap b;
 
-    return LOGIC(IS_QUOTED_PATH(e));
+    return LOGIC(
+        Cell_Heart(elem) == TYPE_PATH and Element_Num_Quotes(elem) == 1
+    );
 }
 
 
@@ -1171,11 +1173,11 @@ DECLARE_NATIVE(any_value_q)
     INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
     Heart heart;
-    Byte quote_byte;
+    QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     if (quote_byte != ANTIFORM_0)
-        return OKAY;
+        return LOGIC(true);
 
     return LOGIC(Is_Stable_Antiform_Heart(heart));
 }
@@ -1268,7 +1270,7 @@ DECLARE_NATIVE(barrier_q)
     INCLUDE_PARAMS_OF_BARRIER_Q;
 
     Heart heart;
-    Byte quote_byte;
+    QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_COMMA);
@@ -1586,16 +1588,25 @@ DECLARE_NATIVE(noquasi)
 //
 //  "Make quasiforms into their antiforms, pass thru other values"
 //
-//      return: [any-value?]
-//      value [any-value?]  ; should input be enforced as ELEMENT?
+//      return: [any-atom?]
+//      element [element?]
 //  ]
 //
 DECLARE_NATIVE(degrade)
 {
     INCLUDE_PARAMS_OF_DEGRADE;
 
-    Value* v = ARG(value);
-    return Degrade(Copy_Cell(OUT, v));
+    Element* elem = Element_ARG(element);
+    if (not Is_Quasiform(elem))
+        return COPY(elem);
+
+    Copy_Cell(OUT, elem);
+
+    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
+    if (e)
+        return (unwrap e);
+
+    return OUT;
 }
 
 

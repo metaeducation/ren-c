@@ -725,7 +725,7 @@ DECLARE_NATIVE(let)
 
             if (Is_Quoted(temp)) {
                 Derelativize(PUSH(), temp, temp_binding);
-                Unquotify(TOP);  // drop quote in output block [5]
+                Unquotify(TOP_ELEMENT);  // drop quote in output block [5]
                 altered = true;
                 continue;  // do not make binding
             }

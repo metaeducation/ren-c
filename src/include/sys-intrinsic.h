@@ -83,7 +83,7 @@
 //
 INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
     Sink(Heart) heart,
-    Sink(Byte) quote_byte,
+    Sink(QuoteByte) quote_byte,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {

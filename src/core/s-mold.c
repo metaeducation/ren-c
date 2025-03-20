@@ -418,7 +418,7 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     }
 
     REBLEN i;
-    for (i = 0; i < Cell_Num_Quotes(e); ++i)
+    for (i = 0; i < Element_Num_Quotes(e); ++i)
         Append_Codepoint(mo->string, '\'');
 
     Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);

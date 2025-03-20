@@ -285,7 +285,7 @@ DECLARE_NATIVE(raised_q)
     INCLUDE_PARAMS_OF_RAISED_Q;
 
     Heart heart;
-    Byte quote_byte;
+    QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(quote_byte == ANTIFORM_0 and heart == TYPE_ERROR);
@@ -318,7 +318,7 @@ DECLARE_NATIVE(unraised_q)
     INCLUDE_PARAMS_OF_UNRAISED_Q;
 
     Heart heart;
-    Byte quote_byte;
+    QuoteByte quote_byte;
     Get_Heart_And_Quote_Of_Atom_Intrinsic(&heart, &quote_byte, LEVEL);
 
     return LOGIC(not (quote_byte == ANTIFORM_0 and heart == TYPE_ERROR));

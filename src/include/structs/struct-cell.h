@@ -183,6 +183,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //    So this makes it possible to read the antiform quote byte but not
 //    to write it through the ANTIFORM_0 definition.
 
+typedef Byte QuoteByte;  // help document when Byte means a quoting byte
+
 #define QUOTE_BYTE(cell) \
     THIRD_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
 
@@ -191,7 +193,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define NONQUASI_BIT                1
 #define QUASIFORM_2_COERCE_ONLY     2
 #define ONEQUOTE_NONQUASI_3         3  // non-quasiquoted state of 1 quote
-#define ONEQUOTE_QUASI_3            4  // quasiquoted state of 1 quote
+#define ONEQUOTE_QUASI_4            4  // quasiquoted state of 1 quote
 
 #if RUNTIME_CHECKS && CPLUSPLUS_11  // Stop `QUOTE_BYTE(cell) = ANTIFORM_0` [2]
     struct Antiform_0_Struct {};

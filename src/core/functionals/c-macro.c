@@ -212,31 +212,31 @@ DECLARE_NATIVE(macro)
 //  "Inject a list of content into the execution stream, or single value"
 //
 //      return: [any-value?]
-//      splice "If quoted single value, if blank no insertion (e.g. invisible)"
-//          [blank! block! quoted!]
+//      code "If quoted single value, if void no insertion (e.g. invisible)"
+//          [~void~ block! quoted!]
 //  ]
 //
 DECLARE_NATIVE(inline)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
-    Value* splice = ARG(splice);
-    if (Is_Blank(splice)) {
+    Value* code = ARG(code);
+    if (Is_Void(code)) {
         // do nothing, just return invisibly
     }
-    else if (Is_Quoted(splice)) {
+    else if (Is_Quoted(code)) {
         //
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
         //
         Source* a = Alloc_Singular(FLEX_MASK_UNMANAGED_SOURCE);
-        Unquotify(Move_Cell(Stub_Cell(a), splice));
-        Init_Block(splice, a);
-        Splice_Block_Into_Feed(level_->feed, ARG(splice));
+        Unquotify(Move_Cell(Stub_Cell(a), cast(Element*, code)));
+        Init_Block(code, a);
+        Splice_Block_Into_Feed(level_->feed, ARG(code));
     }
     else {
-        assert(Is_Block(splice));
-        Splice_Block_Into_Feed(level_->feed, ARG(splice));
+        assert(Is_Block(code));
+        Splice_Block_Into_Feed(level_->feed, ARG(code));
     }
 
     Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE);

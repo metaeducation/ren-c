@@ -381,9 +381,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         INCLUDE_PARAMS_OF_FIND;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Value* pattern = ARG(pattern);
-        if (Is_Antiform(pattern))
-            return FAIL(pattern);
+        if (Is_Antiform(ARG(pattern)))
+            return FAIL(ARG(pattern));
+
+        const Element* pattern = Element_ARG(pattern);
 
         Flags flags = (
             (REF(match) ? AM_FIND_MATCH : 0)

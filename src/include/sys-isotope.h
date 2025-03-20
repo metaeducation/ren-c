@@ -49,23 +49,28 @@
 //    usage, though dialects can use quasi words however they want.
 //
 
-INLINE Cell* Coerce_To_Antiform(Cell* c) {
-    Heart heart = Cell_Heart(c);
+// 1. The convention here is that you have to pass an Atom in, because at
+//    the end of the operation you'll have either a Value* or an Atom*.
+//    If you were allowed to pass in an Element*, then you'd have an invalid
+//    Element at the callsite when the operation completed.
+//
+INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
+    Element* elem = Known_Element(atom);  // guaranteed element on input (?)
+    Heart heart = Cell_Heart(atom);
 
     if (not Is_Stable_Antiform_Heart(heart))
-        assert(not Is_Api_Value(c));  // no unstable antiforms in API [1]
+        assert(not Is_Api_Value(elem));  // no unstable antiforms in API [1]
 
     if (not Any_Isotopic_Type(heart)) {
-        QUOTE_BYTE(c) = NOQUOTE_1;
-        Value* v = cast(Value*, c);
-        fail (Error_Non_Isotopic_Type_Raw(v));
+        QUOTE_BYTE(elem) = NOQUOTE_1;
+        fail (Error_Non_Isotopic_Type_Raw(elem));
     }
 
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
         if (Any_Word_Type(heart)) {
-            switch (Cell_Word_Id(c)) {
+            switch (Cell_Word_Id(elem)) {
               case SYM_NULL:
-                assert(not Is_Api_Value(c));  // API uses nullptr [3]
+                assert(not Is_Api_Value(elem));  // API uses nullptr [3]
                 break;
 
               case SYM_VOID:
@@ -74,54 +79,35 @@ INLINE Cell* Coerce_To_Antiform(Cell* c) {
                 break;
 
               default: {
-                QUOTE_BYTE(c) = NOQUOTE_1;
-                Value* v = cast(Value*, c);
-                fail (Error_Illegal_Keyword_Raw(v));  // only a few legal [4]
+                QUOTE_BYTE(elem) = NOQUOTE_1;
+                return Error_Illegal_Keyword_Raw(elem);  // only a few ok [4]
               }
             }
 
-            Unbind_Any_Word(c);
+            Unbind_Any_Word(elem);
         }
         else {
             assert(Any_List_Type(heart) or heart == TYPE_COMMA);
-            Tweak_Cell_Binding(c, UNBOUND);
+            Tweak_Cell_Binding(elem, UNBOUND);
         }
     }
     else if (heart == TYPE_FRAME) {
-        if (Cell_Frame_Lens(c))  // no lens on antiforms...show only inputs
-            Tweak_Cell_Frame_Lens_Or_Label(c, ANONYMOUS);
+        if (Cell_Frame_Lens(elem))  // no lens on antiforms...show only inputs
+            Tweak_Cell_Frame_Lens_Or_Label(elem, ANONYMOUS);
     }
 
-    QUOTE_BYTE(c) = ANTIFORM_0_COERCE_ONLY;  // nowhere else should assign!
-    return c;
+    QUOTE_BYTE(atom) = ANTIFORM_0_COERCE_ONLY;  // nowhere else should assign!
+    return nullptr;  // no error
 }
 
-INLINE Value* Coerce_To_Stable_Antiform(Value* v) {
-    assert(Is_Stable_Antiform_Heart(Cell_Heart(v)));
-    return cast(Value*, Coerce_To_Antiform(v));
-}
-
-INLINE Atom* Coerce_To_Unstable_Antiform(Atom* a) {
-    assert(not Is_Stable_Antiform_Heart(Cell_Heart(a)));
-    return cast(Atom*, Coerce_To_Antiform(a));
-}
-
-INLINE Element* Coerce_To_Quasiform(Value* v) {
+// 1. There's an exception in the case of KEYWORD! which is the antiform of
+//    WORD!.  Only a limited set of them are allowed to exist.  But all
+//    words are allowed to be quasiforms.
+//
+INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
     Heart heart = Cell_Heart(v);
 
-    if (not Any_Isotopic_Type(heart)) {
-        QUOTE_BYTE(v) = NOQUOTE_1;
-        fail (Error_Non_Isotopic_Type_Raw(v));
-    }
-
-    QUOTE_BYTE(v) = QUASIFORM_2_COERCE_ONLY;  // few places should assign
-    return cast(Element*, v);
-}
-
-INLINE Option(Error*) Trap_Coerce_To_Quasiform(Value* v) {
-    Heart heart = Cell_Heart(v);
-
-    if (not Any_Isotopic_Type(heart)) {
+    if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
         QUOTE_BYTE(v) = NOQUOTE_1;
         return Error_Non_Isotopic_Type_Raw(v);
     }

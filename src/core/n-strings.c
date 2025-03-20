@@ -367,7 +367,7 @@ DECLARE_NATIVE(join)
         Push_Join_Delimiter_If_Pending();
 
         Copy_Cell(PUSH(), item);
-        Unquotify(TOP);
+        Unquotify(TOP_ELEMENT);
         Set_Cell_Flag(TOP, STACK_NOTE_MOLD);
 
         Mark_Join_Delimiter_Pending();

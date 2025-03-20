@@ -489,9 +489,15 @@ Bounce Stepper_Executor(Level* L)
     assert(Is_Cell_Erased(OUT));
 
     if (QUOTE_BYTE(CURRENT) != NOQUOTE_1) {  // quasiform or quoted [1]
+        assert(QUOTE_BYTE(CURRENT) != ANTIFORM_0);
+
         Copy_Cell(OUT, CURRENT);
+
         if (QUOTE_BYTE(CURRENT) == QUASIFORM_2) {
-            Coerce_To_Antiform(OUT);  // checks that antiform is legal
+            Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
+            if (e)
+                return FAIL(unwrap e);
+
             STATE = TYPE_QUASIFORM;  // can't leave as STATE_0
         }
         else {
@@ -644,7 +650,7 @@ Bounce Stepper_Executor(Level* L)
             }
 
             if (antiform)  // exception [2]
-                Meta_Unquotify_Known_Stable(cast(Element*, L->out));
+                Meta_Unquotify_Known_Stable(L->out);
             break; }
 
           case SIGIL_META:  // ^
@@ -1656,7 +1662,7 @@ Bounce Stepper_Executor(Level* L)
       case TYPE_META_BLOCK:
         Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
         HEART_BYTE(OUT) = TYPE_BLOCK;
-        Quotify(OUT);
+        Quotify(cast(Element*, OUT));
         goto lookahead;
 
 

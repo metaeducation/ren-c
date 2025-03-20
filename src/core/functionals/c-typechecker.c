@@ -370,7 +370,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 goto test_failed;
 
             assert(v == SPARE);  // hack: temporarily make quoted
-            Quotify(SPARE);
+            Quotify(Known_Element(SPARE));
 
             bool strict = false;  // !!! Is being case-insensitive good?
             bool equal = Equal_Values(
@@ -379,7 +379,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 strict
             );
 
-            Unquotify(SPARE);  // now put it back
+            Unquotify(Known_Element(SPARE));  // now put it back
 
             if (equal)
                 goto test_succeeded;

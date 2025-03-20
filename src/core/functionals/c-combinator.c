@@ -416,8 +416,8 @@ DECLARE_NATIVE(text_x_combinator)
     VarList* state = Cell_Varlist(ARG(state));
     bool cased = Is_Trigger(Varlist_Slot(state, IDX_UPARSE_PARAM_CASE));
 
-    Value* v = ARG(value);
-    Value* input = ARG(input);
+    Element* v = Element_ARG(value);
+    Element* input = Element_ARG(input);
 
     if (Any_List(input)) {
         const Element* tail;
@@ -823,7 +823,8 @@ DECLARE_NATIVE(combinatorize)
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
-    Quasify(Init_Frame(Array_At(pack, 0), paramlist, label, coupling));
+    Init_Frame(Array_At(pack, 0), paramlist, label, coupling);
+    Quasify_Isotopic_Fundamental(Array_At(pack, 0));
 
     Copy_Meta_Cell(Array_At(pack, 1), ARG(rules));  // advanced by param hook
 

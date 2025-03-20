@@ -1485,8 +1485,10 @@ RebolValue* API_rebQuote(
 
     Value* result = Alloc_Value();
     Run_Va_Decay_May_Fail_Calls_Va_End(binding, result, p, vaptr);
+    if (Is_Antiform(result))
+        fail ("rebQuote() called on expression that returned an antiform");
 
-    return Quotify(result);  // nulled cells legal for API if quoted
+    return Quotify(cast(Element*, result));
 }
 
 
@@ -2350,15 +2352,10 @@ RebolNodeInternal* API_rebUNQUOTING(const void* p)
     }
 
     Cell* v = Stub_Cell(stub);
-    if (
-        QUOTE_BYTE(v) == NOQUOTE_1
-        or QUOTE_BYTE(v) == QUASIFORM_2
-        or QUOTE_BYTE(v) == ANTIFORM_0
-    ){
+    if (not Is_Quoted(v))
         fail ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
-    }
 
-    Unquotify(v);
+    Unquotify(cast(Element*, v));
     return cast(RebolNodeInternal*, stub);  // cast needed in C
 }
 

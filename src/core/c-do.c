@@ -165,7 +165,7 @@ bool Pushed_Continuation(
 
       case TYPE_QUOTED:
         Derelativize(out, c_cast(Element*, branch), binding);
-        Unquotify(out);
+        Unquotify(cast(Element*, out));
         if (Is_Nulled(out) and (flags & LEVEL_FLAG_BRANCH))
             Init_Heavy_Null(out);
         goto just_use_out;

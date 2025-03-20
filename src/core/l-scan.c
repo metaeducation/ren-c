@@ -1956,13 +1956,13 @@ static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
             Init_Sigil(PUSH(), unwrap S->sigil_pending);
         S->sigil_pending = SIGIL_0;
         if (S->quotes_pending) {
-            Quotify_Depth(TOP, S->quotes_pending);
+            Quotify_Depth(TOP_ELEMENT, S->quotes_pending);
             S->quotes_pending = 0;
         }
     }
     else if (S->quotes_pending != 0) {
         Init_Sigil(PUSH(), SIGIL_QUOTE);
-        Quotify_Depth(TOP, S->quotes_pending - 1);
+        Quotify_Depth(TOP_ELEMENT, S->quotes_pending - 1);
         S->quotes_pending = 0;
     }
 
@@ -1971,22 +1971,21 @@ static Option(Error*) Trap_Flush_Pending_Sigils(ScanState* S) {
 
 static Option(Error*) Trap_Apply_Pending_Decorations(
     ScanState* S,
-    OnStack(Value*) e
+    OnStack(Element*) top
 ){
     if (S->sigil_pending) {
-        Heart heart = Cell_Heart_Ensure_Noquote(e);
+        Heart heart = Cell_Heart_Ensure_Noquote(top);
         if (not Any_Plain_Type(heart))
             return Error_Syntax(S, TOKEN_BLANK);  // !!! token?
 
-        HEART_BYTE(e) = Sigilize_Any_Plain_Heart(
+        HEART_BYTE(top) = Sigilize_Any_Plain_Heart(
             unwrap S->sigil_pending,
             heart
         );
         S->sigil_pending = SIGIL_0;
     }
     if (S->quotes_pending != 0) {
-        assert(QUOTE_BYTE(e) <= QUASIFORM_2);
-        Quotify_Depth(e, S->quotes_pending);
+        Quotify_Depth(top, S->quotes_pending);
         S->quotes_pending = 0;
     }
     return nullptr;
@@ -2158,7 +2157,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (*S->end == '~') {
             if (S->sigil_pending != SIGIL_QUASI)
                 return FAIL("Comma only followed by ~ for ~,~ quasiform");
-            Quasify(Init_Comma(PUSH()));
+            Quasify_Isotopic_Fundamental(Init_Comma(PUSH()));
             S->sigil_pending = SIGIL_0;
         }
         else {
@@ -2241,7 +2240,7 @@ Bounce Scanner_Executor(Level* const L) {
                 or Is_Lex_End_List(S->end[1])
             ){
                 Init_Sigil(PUSH(), SIGIL_QUASI);  // it's ~~
-                Quotify_Depth(TOP, S->quotes_pending);
+                Quotify_Depth(TOP_ELEMENT, S->quotes_pending);
                 S->quotes_pending = 0;
 
                 assert(transcode->at == S->end);  // token consumed one tilde
@@ -2571,9 +2570,9 @@ Bounce Scanner_Executor(Level* const L) {
         if (*transcode->at != '~')
             return RAISE(Error_Syntax(S, TOKEN_TILDE));
 
-        Option(Error*) error = Trap_Coerce_To_Quasiform(TOP);
-        if (error)
-            return RAISE(unwrap error);
+        Option(Error*) e = Trap_Coerce_To_Quasiform(TOP_ELEMENT);
+        if (e)
+            return RAISE(unwrap e);
 
         ++transcode->at;  // must compensate the `transcode->at = S->end`
         S->sigil_pending = SIGIL_0;
@@ -2593,7 +2592,9 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (Is_Interstitial_Scan(L)) {  // adding to existing path/chain/tuple
         if (STATE == *transcode->at) {
-            Option(Error*) error = Trap_Apply_Pending_Decorations(S, TOP);
+            Option(Error*) error = Trap_Apply_Pending_Decorations(
+                S, TOP_ELEMENT
+            );
             if (error)
                 return RAISE(unwrap error);
 
@@ -2632,7 +2633,9 @@ Bounce Scanner_Executor(Level* const L) {
             or *transcode->at == ','
             or *transcode->at == ';'
         ){
-            Option(Error*) error = Trap_Apply_Pending_Decorations(S, TOP);
+            Option(Error*) error = Trap_Apply_Pending_Decorations(
+                S, TOP_ELEMENT
+            );
             if (error)
                 return RAISE(unwrap error);
             goto done;
@@ -2657,7 +2660,9 @@ Bounce Scanner_Executor(Level* const L) {
     //    process paths or other arrays...because the newline belongs on the
     //    whole array...not the first element of it).
 
-    Option(Error*) error = Trap_Apply_Pending_Decorations(S, TOP);
+    Option(Error*) error = Trap_Apply_Pending_Decorations(
+        S, TOP_ELEMENT
+    );
     if (error)
         return RAISE(unwrap error);
 

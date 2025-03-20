@@ -109,7 +109,7 @@ DECLARE_NATIVE(copy)
     if (QUOTE_BYTE(elem) == NOQUOTE_1)  // don't have to requote/etc.
         return (*dispatcher)(LEVEL);
 
-    Byte quote_byte = QUOTE_BYTE(elem);
+    QuoteByte quote_byte = QUOTE_BYTE(elem);
     QUOTE_BYTE(elem) = NOQUOTE_1;
 
     Option(const Symbol*) label = Level_Label(level_);
