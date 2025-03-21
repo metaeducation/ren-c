@@ -151,7 +151,7 @@ REBINT Find_Binstr_In_Binstr(
 ){
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
 
-    bool is_2_str = (Cell_Heart(binstr2) != TYPE_BLOB);
+    bool is_2_str = (Heart_Of(binstr2) != TYPE_BLOB);
     Size size2;
     Length len2;
     const Byte* head2;
@@ -181,7 +181,7 @@ REBINT Find_Binstr_In_Binstr(
         return VAL_INDEX(binstr1);
     }
 
-    bool is_1_str = (Cell_Heart(binstr1) != TYPE_BLOB);
+    bool is_1_str = (Heart_Of(binstr1) != TYPE_BLOB);
     assert(not (is_1_str and not is_2_str));  // see `IMPORTANT` comment above
 
     // The search window size in units of binstr1.  It's the length or size of
@@ -215,7 +215,7 @@ REBINT Find_Binstr_In_Binstr(
     const Byte* cp1;  // binstr1 position that is current test head of match
     Length len_head1;
     Size size_at1;
-    if (Cell_Heart(binstr1) == TYPE_BLOB) {
+    if (Heart_Of(binstr1) == TYPE_BLOB) {
         cp1 = Cell_Blob_Size_At(&size_at1, binstr1);
         len_head1 = Cell_Series_Len_Head(binstr1);
     }
@@ -451,7 +451,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
-    bool is_str = (Cell_Heart(binstr) != TYPE_BLOB);
+    bool is_str = (Heart_Of(binstr) != TYPE_BLOB);
 
     const Byte* cp1 = is_str ? Cell_String_At(binstr) : Cell_Blob_At(binstr);
     Codepoint c1;
@@ -511,8 +511,8 @@ REBLEN Find_Value_In_Binstr(
     REBLEN flags,
     REBINT skip
 ){
-    Heart binstr_heart = Cell_Heart(binstr);
-    Heart pattern_heart = Cell_Heart(pattern);
+    Heart binstr_heart = Heart_Of(binstr);
+    Heart pattern_heart = Heart_Of(pattern);
 
     if (TYPE_BLOB == pattern_heart and binstr_heart != TYPE_BLOB) {
         //
@@ -549,7 +549,7 @@ REBLEN Find_Value_In_Binstr(
         //   == "<c>d"
 
         String* molded = nullptr;
-        if (num_quotes == 1 or Cell_Heart(pattern) == TYPE_INTEGER)
+        if (num_quotes == 1 or Heart_Of(pattern) == TYPE_INTEGER)
             molded = Copy_Mold_Cell_Ignore_Quotes(pattern, 0);
 
         DECLARE_ELEMENT (temp);  // !!! Note: unmanaged

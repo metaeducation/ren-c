@@ -56,7 +56,7 @@
 // Try_Advance_Evars() on even the first.
 //
 void Init_Evars(EVARS *e, const Cell* v) {
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
 
     e->lens_mode = LENS_MODE_ALL_UNSEALED;  // ensure not uninitialized
 
@@ -279,11 +279,11 @@ void Shutdown_Evars(EVARS *e)
 //
 REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 {
-    assert(Any_Context_Type(Cell_Heart(a)));
-    assert(Any_Context_Type(Cell_Heart(b)));
+    assert(Any_Context_Type(Heart_Of(a)));
+    assert(Any_Context_Type(Heart_Of(b)));
 
-    if (Cell_Heart(a) != Cell_Heart(b))  // e.g. ERROR! won't equal OBJECT!
-        return Cell_Heart(a) > Cell_Heart(b) ? 1 : 0;
+    if (Heart_Of(a) != Heart_Of(b))  // e.g. ERROR! won't equal OBJECT!
+        return Heart_Of(a) > Heart_Of(b) ? 1 : 0;
 
     Node* n1 = CELL_NODE1(a);
     Node* n2 = CELL_NODE1(b);
@@ -1095,7 +1095,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 
     Element* context = Element_ARG(ELEMENT);
     Context* c = Cell_Context(context);
-    Heart heart = Cell_Heart(context);
+    Heart heart = Heart_Of(context);
     Heart to = Cell_Datatype_Heart(ARG(TYPE));
     assert(heart != to);  // TO should have called COPY in this case
 

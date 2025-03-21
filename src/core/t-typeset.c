@@ -32,8 +32,8 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
 
-    assert(Cell_Heart(a) == TYPE_PARAMETER);
-    assert(Cell_Heart(b) == TYPE_PARAMETER);
+    assert(Heart_Of(a) == TYPE_PARAMETER);
+    assert(Heart_Of(b) == TYPE_PARAMETER);
 
     if (
         Cell_Parameter_Spec(a) != Cell_Parameter_Spec(b)
@@ -179,16 +179,16 @@ void Set_Parameter_Spec(
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
         if (Is_Quasiform(item)) {
-            if (Cell_Heart(item) == TYPE_BLANK) {
+            if (Heart_Of(item) == TYPE_BLANK) {
                 *flags |= PARAMETER_FLAG_NOTHING_DEFINITELY_OK;
                 continue;
             }
-            if (not Is_Stable_Antiform_Heart(Cell_Heart(item))) {
-                if (Cell_Heart(item) != TYPE_BLOCK)  // typecheck packs ok
+            if (not Is_Stable_Antiform_Heart(Heart_Of(item))) {
+                if (Heart_Of(item) != TYPE_BLOCK)  // typecheck packs ok
                     fail (item);
             }
 
-            if (Cell_Heart(item) != TYPE_WORD) {
+            if (Heart_Of(item) != TYPE_WORD) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
@@ -210,7 +210,7 @@ void Set_Parameter_Spec(
             continue;
         }
 
-        if (Cell_Heart(item) == TYPE_TAG) {  // literal check of tag [2]
+        if (Heart_Of(item) == TYPE_TAG) {  // literal check of tag [2]
             bool strict = false;
 
             if (
@@ -253,7 +253,7 @@ void Set_Parameter_Spec(
         }
 
         const Value* lookup;
-        if (Cell_Heart(item) == TYPE_WORD) {  // allow abstraction [3]
+        if (Heart_Of(item) == TYPE_WORD) {  // allow abstraction [3]
             lookup = maybe Lookup_Word(item, spec_binding);
             if (not lookup)  // not even bound to anything
                 fail (item);
@@ -266,7 +266,7 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            if (Is_Antiform(lookup) and Cell_Heart(lookup) != TYPE_FRAME)
+            if (Is_Antiform(lookup) and Heart_Of(lookup) != TYPE_FRAME)
                 fail (item);
             if (Is_Quoted(lookup))
                 fail (item);
@@ -274,7 +274,7 @@ void Set_Parameter_Spec(
         else
             lookup = item;
 
-        Heart heart = Cell_Heart(lookup);
+        Heart heart = Heart_Of(lookup);
 
         if (heart == TYPE_TYPE_BLOCK) {
             if (optimized == optimized_tail) {

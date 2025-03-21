@@ -1,7 +1,7 @@
 // %cell-binary.h
 
 INLINE const Binary* Cell_Binary(const Cell* v) {
-    assert(Cell_Heart(v) == TYPE_BLOB);
+    assert(Heart_Of(v) == TYPE_BLOB);
     return c_cast(Binary*, Cell_Flex(v));
 }
 
@@ -66,7 +66,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     const Cell* c,
     Option(const Length*) limit_in
 ){
-    Heart heart = Cell_Heart(c);
+    Heart heart = Heart_Of(c);
     assert(Any_Bytes_Type(heart));
 
     Length len_at;
@@ -93,7 +93,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
         return Cell_String_At(c);
     }
 
-    assert(Any_Word_Type(Cell_Heart(c)));
+    assert(Any_Word_Type(Heart_Of(c)));
     assert(limit == Cell_Series_Len_At(c));
 
     const String* spelling = Cell_Word_Symbol(c);

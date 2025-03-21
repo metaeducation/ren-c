@@ -219,7 +219,7 @@ DECLARE_NATIVE(HAS)
     Value* v = ARG(VALUE);
 
     assert(Any_Word(v));
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
 
     const Symbol* symbol = Cell_Word_Symbol(v);
     const bool strict = true;
@@ -765,7 +765,7 @@ DECLARE_NATIVE(LIT_PATH_Q)
         return unwrap b;
 
     return LOGIC(
-        Cell_Heart(elem) == TYPE_PATH and Element_Num_Quotes(elem) == 1
+        Heart_Of(elem) == TYPE_PATH and Element_Num_Quotes(elem) == 1
     );
 }
 
@@ -1211,7 +1211,7 @@ DECLARE_NATIVE(NON_VOID_VALUE_Q)
     if (Is_Meta_Of_Void(meta))
         return nullptr;
 
-    return LOGIC(Is_Stable_Antiform_Heart(Cell_Heart(meta)));
+    return LOGIC(Is_Stable_Antiform_Heart(Heart_Of(meta)));
 }
 
 

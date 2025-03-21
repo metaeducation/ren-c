@@ -88,14 +88,14 @@ INLINE void Get_Heart_And_Quote_Of_Atom_Intrinsic(
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         Value* arg = Level_Arg(L, 1);  // already checked
-        *heart = Cell_Heart(arg);
+        *heart = Heart_Of(arg);
         assert(QUOTE_BYTE(arg) >= QUASIFORM_2);
         *quote_byte = QUOTE_BYTE(arg) - Quote_Shift(1);  // calculate "unmeta"
         return;
     }
 
     Atom* arg = Level_Spare(L);  // typecheckers can't modify SPARE (!)
-    *heart = Cell_Heart(arg);
+    *heart = Heart_Of(arg);
     *quote_byte = QUOTE_BYTE(arg);  // not meta, as-is
     return;
 }

@@ -26,7 +26,7 @@
 // like a word, but should not be confused with them.
 //
 // This distinction has led to a difference in considering the "Type_Of()" of
-// a cell in comparison with the "Cell_Heart()".  If you ask a word at any
+// a cell in comparison with the "Heart_Of()".  If you ask a word at any
 // quoting level what the heart of the cell is, it will say TYPE_WORD.  But
 // only a word at the NOQUOTE_1 quoting level will respond with TYPE_WORD to
 // Type_Of().  Otherwise it gives TYPE_QUOTED, TYPE_QUASIFORM, or an antiform
@@ -40,7 +40,7 @@
 //
 // Unfortunately, there's no such thing as "enum inheritance" in C++ to step
 // in and help, by making the result of Type_Of() a superset of states that
-// are returned from Cell_Heart(), and prohibiting passing the superset
+// are returned from Heart_Of(), and prohibiting passing the superset
 // state to routines that only expect the subset.  This file does the next
 // best thing by making a wrapper class that can accept either of two
 // enums as initialization, but can only be passed where the superset is

@@ -149,12 +149,12 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 #define NONMETHOD  u_cast(Option(VarList*), nullptr)  // nonmethods not coupled
 
 INLINE Option(VarList*) Cell_Frame_Coupling(const Cell* c) {
-    assert(Cell_Heart(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == TYPE_FRAME);
     return cast(VarList*, CELL_FRAME_COUPLING(c));
 }
 
 INLINE void Tweak_Cell_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
-    assert(Cell_Heart(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == TYPE_FRAME);
     CELL_FRAME_COUPLING(c) = maybe coupling;
 }
 

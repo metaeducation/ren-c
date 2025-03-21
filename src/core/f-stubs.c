@@ -501,7 +501,7 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 // the element alone, e.g. `a:` -> `a` or `:[a b]` -> `[a b]`
 //
 Option(Error*) Trap_Unsingleheart(Element* out) {
-    assert(Any_Sequence_Type(Cell_Heart(out)));
+    assert(Any_Sequence_Type(Heart_Of(out)));
     if (not Sequence_Has_Node(out)) {
         goto unchain_error;  // compressed bytes don't encode blanks
     }
@@ -609,7 +609,7 @@ Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
     if (Is_Void(out))
         return Init_Sigil(out, SIGIL_META);
 
-    Heart heart = Cell_Heart(out);
+    Heart heart = Heart_Of(out);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(out) = TYPE_META_WORD;
     }
@@ -658,7 +658,7 @@ Value* Theify(Value* out) {  // called on stack values; can't call evaluator
     if (Is_Void(out))
         return Init_Sigil(out, SIGIL_THE);
 
-    Heart heart = Cell_Heart(out);
+    Heart heart = Heart_Of(out);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(out) = TYPE_THE_WORD;
     }
@@ -708,7 +708,7 @@ DECLARE_NATIVE(INERT)
 // Turn a value into its "plain" equivalent.  This works for all Elements.
 //
 Element* Plainify(Element* e) {
-    Heart heart = Cell_Heart(e);
+    Heart heart = Heart_Of(e);
     if (Any_Word_Type(heart)) {
         HEART_BYTE(e) = TYPE_WORD;
     }

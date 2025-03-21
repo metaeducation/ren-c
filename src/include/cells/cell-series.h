@@ -1,7 +1,7 @@
 // %cell-series.h
 
 INLINE const Flex* Cell_Flex(const Cell* v) {
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
     assert(
         Any_Series_Type(heart)
         or (Any_Utf8_Type(heart) and Stringlike_Has_Node(v))
@@ -61,7 +61,7 @@ INLINE bool Stringlike_Cell(const Cell* v);  // forward decl
 // unsigned REBLEN.
 //
 INLINE REBLEN VAL_INDEX_STRINGLIKE_OK(const Cell* v) {
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
     assert(Any_Series_Type(heart) or Stringlike_Cell(v));
     UNUSED(heart);
     assert(Cell_Has_Node1(v));
@@ -76,7 +76,7 @@ INLINE REBLEN VAL_INDEX_STRINGLIKE_OK(const Cell* v) {
 // unsigned REBLEN.
 //
 INLINE REBLEN VAL_INDEX(const Cell* v) {
-    assert(Any_Series_Type(Cell_Heart(v)));
+    assert(Any_Series_Type(Heart_Of(v)));
     return VAL_INDEX_STRINGLIKE_OK(v);
 }
 

@@ -124,7 +124,7 @@ ATTRIBUTE_NO_RETURN void Panic_Cell_Debug(const Cell* c) {
     Printf_Stderr("No Cell track info (see DEBUG_TRACK_EXTEND_CELLS)\n");
   #endif
 
-    Heart heart = Cell_Heart(c);
+    Heart heart = Heart_Of(c);
     const char *type = String_UTF8(Canon_Symbol(Symbol_Id_From_Type(heart)));
     Printf_Stderr("cell_heart=%s\n", type);
     Printf_Stderr("quote_byte=%d\n", QUOTE_BYTE(c));

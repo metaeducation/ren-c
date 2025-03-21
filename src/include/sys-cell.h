@@ -434,7 +434,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 #define Cell_Heart_Unchecked(c) \
     u_cast(Heart, HEART_BYTE(c))
 
-#define Cell_Heart(c) \
+#define Heart_Of(c) \
     Cell_Heart_Unchecked(Ensure_Readable(c))
 
 INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* c) {
@@ -448,7 +448,7 @@ INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* c) {
 // When asking about a value's "type", you want to see something like a
 // double-quoted WORD! as a QUOTED! value...though it's a WORD! underneath.
 //
-// (Instead of Type_Of(), use Cell_Heart() if you wish to know that the cell
+// (Instead of Type_Of(), use Heart_Of() if you wish to know that the cell
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
@@ -680,7 +680,7 @@ INLINE void Reset_Cell_Header(Cell* c, QuoteByte quote_byte, uintptr_t flags)
         ((c)->extra.node = binding)
 #else
     INLINE void Tweak_Cell_Binding(Cell* c, Option(Context*) binding) {
-        assert(Is_Bindable_Heart(Cell_Heart(c)));
+        assert(Is_Bindable_Heart(Heart_Of(c)));
         Assert_Cell_Writable(c);
         c->extra.node = maybe binding;
         if (binding)

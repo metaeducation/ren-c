@@ -63,7 +63,7 @@ INLINE Heart CTX_TYPE(Context* c) {
     if (Is_Stub_Sea(c))
         return TYPE_MODULE;
     assert(Is_Stub_Varlist(c));
-    return Cell_Heart(Varlist_Archetype(cast(VarList*, c)));
+    return Heart_Of(Varlist_Archetype(cast(VarList*, c)));
 }
 
 

@@ -94,7 +94,7 @@ DECLARE_NATIVE(COPY)
     Element* elem = Element_ARG(VALUE);
 
     GenericTable* table = GENERIC_TABLE(COPY);
-    Heart heart = Cell_Heart(elem);
+    Heart heart = Heart_Of(elem);
     Dispatcher* dispatcher = maybe Try_Get_Generic_Dispatcher(table, heart);
 
     if (not dispatcher) {  // trivial copy, is it good to do so? [1]

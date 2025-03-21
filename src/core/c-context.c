@@ -667,7 +667,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
         const Element* check_tail;
         const Element* check = Cell_List_At(&check_tail, ignore);
         for (; check != check_tail; ++check) {
-            if (not Any_Word_Type(Cell_Heart(check)))
+            if (not Any_Word_Type(Heart_Of(check)))
                 return FAIL(Error_Bad_Value(check));
         }
     }

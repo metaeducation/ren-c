@@ -75,7 +75,7 @@
 //
 
 INLINE bool Is_Cell_NUL(const Cell* c) {
-    if (Cell_Heart(c) != TYPE_BLOB)
+    if (Heart_Of(c) != TYPE_BLOB)
         return false;
 
     Size size;
@@ -96,7 +96,7 @@ INLINE bool IS_CHAR_CELL(const Cell* c) {
     if (Is_Cell_NUL(c))
         return true;
 
-    if (Cell_Heart(c) != TYPE_ISSUE)
+    if (Heart_Of(c) != TYPE_ISSUE)
         return false;
 
     if (Stringlike_Has_Node(c))
@@ -115,7 +115,7 @@ INLINE Codepoint Cell_Codepoint(const Cell* c) {  // must pass IS_CHAR_CELL()
     if (Is_Cell_NUL(c))
         return 0;
 
-    assert(Cell_Heart(c) == TYPE_ISSUE);
+    assert(Heart_Of(c) == TYPE_ISSUE);
     assert(not Stringlike_Has_Node(c));
 
     assert(c->extra.at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
@@ -261,7 +261,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
   #endif
 
     if (not Stringlike_Has_Node(v)) {  // SIGIL!, some ISSUE!...
-        assert(not Any_String_Type(Cell_Heart(v)));
+        assert(not Any_String_Type(Heart_Of(v)));
 
         REBLEN len;
         Size size;

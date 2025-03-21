@@ -237,7 +237,7 @@ static bool Subparse_Throws(
     Level* const L,
     Flags flags
 ){
-    assert(Any_Series_Type(Cell_Heart(input)));
+    assert(Any_Series_Type(Heart_Of(input)));
 
     Push_Level_Erase_Out_If_State_0(out, L);  // checks for C stack overflow
 
@@ -690,7 +690,7 @@ static REBIXO Parse_One_Rule(
         //
         // The return value may also be more useful.
         //
-        Heart rule_heart = Cell_Heart(rule);
+        Heart rule_heart = Heart_Of(rule);
         if (
             Element_Num_Quotes(rule) == 1  // '<a> will mold to "<a>"
             or (Element_Num_Quotes(rule) == 0 and (

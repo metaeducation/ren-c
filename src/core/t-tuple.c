@@ -467,7 +467,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     Offset n;
     for (n = 0; n < len; ++len) {  // first let's see if it's a trivial copy
         Copy_Sequence_At(SPARE, seq, n);
-        Heart item_heart = Cell_Heart(SPARE);
+        Heart item_heart = Heart_Of(SPARE);
         if (Handles_Generic(COPY, item_heart)) {
             trivial_copy = false;
             break;
@@ -644,7 +644,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
 
     UNUSED(form);
 
-    Heart heart = Cell_Heart(c);
+    Heart heart = Heart_Of(c);
 
     char interstitial;
     if (Any_Tuple_Type(heart))

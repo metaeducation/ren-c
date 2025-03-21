@@ -115,7 +115,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 ){
     assert(Any_Sequence_Type(sequence_heart));
 
-    Heart h = Cell_Heart(e);
+    Heart h = Heart_Of(e);
 
     if (is_head) {
         if (
@@ -223,8 +223,8 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     if (Any_List(e)) {  // try mirror optimization
         assert(Is_Group(e) or Is_Block(e));  // only valid kinds
         const Source* a = Cell_Array(e);
-        if (MIRROR_BYTE(a) == TYPE_0 or MIRROR_BYTE(a) == Cell_Heart(e)) {
-            MIRROR_BYTE(a) = Cell_Heart(e);  // remember what kind it is
+        if (MIRROR_BYTE(a) == TYPE_0 or MIRROR_BYTE(a) == Heart_Of(e)) {
+            MIRROR_BYTE(a) = Heart_Of(e);  // remember what kind it is
             HEART_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
             return nullptr;
@@ -579,7 +579,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
             return Error_Cant_Decorate_Type_Raw(out);
         }
 
-        HEART_BYTE(out) = Sigilize_Any_Plain_Heart(sigil, Cell_Heart(out));
+        HEART_BYTE(out) = Sigilize_Any_Plain_Heart(sigil, Heart_Of(out));
         return nullptr;  // pathness or tupleness vanished, just the value
     }
 
@@ -592,7 +592,7 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
 // optimized fashion using Refinify()
 
 INLINE Length Cell_Sequence_Len(const Cell* c) {
-    assert(Any_Sequence_Type(Cell_Heart(c)));
+    assert(Any_Sequence_Type(Heart_Of(c)));
 
     if (not Sequence_Has_Node(c)) {  // compressed bytes
         assert(not Cell_Has_Node2(c));
@@ -646,7 +646,7 @@ INLINE Element* Derelativize_Sequence_At(
     REBLEN n
 ){
     assert(out != sequence);
-    assert(Any_Sequence_Type(Cell_Heart(sequence)));  // !!! should not be cell
+    assert(Any_Sequence_Type(Heart_Of(sequence)));  // !!! should not be cell
 
     if (not Sequence_Has_Node(sequence)) {  // compressed bytes
         assert(n < sequence->payload.at_least_8[IDX_SEQUENCE_USED]);
@@ -712,7 +712,7 @@ INLINE Byte Cell_Sequence_Byte_At(const Cell* sequence, REBLEN n) {
 }
 
 INLINE Context* Cell_Sequence_Binding(const Cell* sequence) {
-    assert(Any_Sequence_Type(Cell_Heart(sequence)));
+    assert(Any_Sequence_Type(Heart_Of(sequence)));
 
     // Getting the binding for any of the optimized types means getting
     // the binding for *that item in the sequence*; the sequence itself
@@ -780,7 +780,7 @@ INLINE void Get_Tuple_Bytes(
     const Cell* tuple,
     Size buf_size
 ){
-    assert(Cell_Heart(tuple) == TYPE_TUPLE);
+    assert(Heart_Of(tuple) == TYPE_TUPLE);
     if (not Try_Get_Sequence_Bytes(buf, tuple, buf_size))
         fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
 }
@@ -808,7 +808,7 @@ INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
 
 
 INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
-    assert(Any_Sequence_Type(Cell_Heart(c)));
+    assert(Any_Sequence_Type(Heart_Of(c)));
 
     if (not Sequence_Has_Node(c))  // compressed bytes
         return NOT_SINGLEHEART_0;
@@ -817,10 +817,10 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         const Pairing* p = u_cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
 
         if (Is_Blank(Pairing_First(p)))
-            return Leading_Blank_And(Cell_Heart(Pairing_Second(p)));
+            return Leading_Blank_And(Heart_Of(Pairing_Second(p)));
 
         if (Is_Blank(Pairing_Second(p)))
-            return Trailing_Blank_And(Cell_Heart(Pairing_First(p)));
+            return Trailing_Blank_And(Heart_Of(Pairing_First(p)));
 
         return NOT_SINGLEHEART_0;
     }
@@ -848,7 +848,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
 
 INLINE bool Is_Get_Word_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -858,7 +858,7 @@ INLINE bool Is_Get_Word(const Value* v)
 
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(WORD) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -905,7 +905,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
 
 INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -915,7 +915,7 @@ INLINE bool Is_Get_Tuple(const Value* v)
 
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(TUPLE) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -928,7 +928,7 @@ INLINE bool Is_Set_Tuple(const Value* v)
 
 INLINE bool Is_Get_Block_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -938,7 +938,7 @@ INLINE bool Is_Get_Block(const Value* v)
 
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(BLOCK) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -951,7 +951,7 @@ INLINE bool Is_Set_Block(const Value* v)
 
 INLINE bool Is_Get_Group_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         LEADING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }
@@ -961,7 +961,7 @@ INLINE bool Is_Get_Group(const Value* v)
 
 INLINE bool Is_Set_Group_Cell(const Cell* c) {
     return (
-        Cell_Heart(c) == TYPE_CHAIN and
+        Heart_Of(c) == TYPE_CHAIN and
         TRAILING_BLANK_AND(GROUP) == Try_Get_Sequence_Singleheart(c)
     );
 }

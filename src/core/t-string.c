@@ -662,7 +662,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
     String* buf = mo->string;
 
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
     assert(Any_Utf8_Type(heart));
 
     if (form) {  // TAG! is not an exception--forms without delimiters [1]

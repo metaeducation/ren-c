@@ -64,7 +64,7 @@ DECLARE_NATIVE(HEART_OF)
 {
     INCLUDE_PARAMS_OF_HEART_OF;
 
-    return Init_Builtin_Datatype(OUT, Cell_Heart(ARG(ELEMENT)));
+    return Init_Builtin_Datatype(OUT, Heart_Of(ARG(ELEMENT)));
 }
 
 

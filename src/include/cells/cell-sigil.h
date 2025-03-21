@@ -56,7 +56,7 @@ INLINE Element* Init_Sigil(Init(Element) out, Sigil sigil) {
 }
 
 INLINE Sigil Cell_Sigil(const Cell* cell) {
-    assert(Cell_Heart(cell) == TYPE_SIGIL);
+    assert(Heart_Of(cell) == TYPE_SIGIL);
     Byte sigil_byte = cell->extra.at_least_4[IDX_EXTRA_SIGIL];
     assert(sigil_byte != SIGIL_0 and sigil_byte <= MAX_SIGIL);
     return u_cast(Sigil, sigil_byte);

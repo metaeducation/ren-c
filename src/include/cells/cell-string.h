@@ -2,11 +2,11 @@
 
 
 INLINE bool Stringlike_Cell(const Cell* v) {
-    return Any_Utf8_Type(Cell_Heart(v)) and Stringlike_Has_Node(v);
+    return Any_Utf8_Type(Heart_Of(v)) and Stringlike_Has_Node(v);
 }
 
 INLINE const String* Cell_String(const Cell* v) {
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
     if (Any_Word_Type(heart))
         return Cell_Word_Symbol(v);
 
@@ -26,7 +26,7 @@ INLINE const String* Cell_String(const Cell* v) {
 //
 INLINE Length Cell_Series_Len_Head(const Cell* v) {
     const Flex* f = Cell_Flex(v);
-    if (Is_Stub_String(f) and Cell_Heart(v) != TYPE_BLOB)
+    if (Is_Stub_String(f) and Heart_Of(v) != TYPE_BLOB)
         return String_Len(c_cast(String*, f));
     return Flex_Used(f);
 }
@@ -53,7 +53,7 @@ INLINE Length Cell_Series_Len_At(const Cell* v) {
 }
 
 INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
-    assert(Any_Utf8_Type(Cell_Heart(c)));
+    assert(Any_Utf8_Type(Heart_Of(c)));
 
     if (not Cell_Has_Node1(c))  // must store bytes in cell direct
         return cast(Utf8(const*), c->payload.at_least_8);
@@ -63,7 +63,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
 }
 
 INLINE Utf8(const*) Cell_String_At(const Cell* v) {
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
 
     if (not Any_String_Type(heart))  // non-positional: URL, ISSUE, WORD...
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
@@ -78,7 +78,7 @@ INLINE Utf8(const*) Cell_String_At(const Cell* v) {
 
 
 INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
-    assert(Any_Utf8_Type(Cell_Heart(c)));
+    assert(Any_Utf8_Type(Heart_Of(c)));
 
     if (not Stringlike_Has_Node(c)) {  // content in cell direct
         Size size = c->extra.at_least_4[IDX_EXTRA_USED];
@@ -98,7 +98,7 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
 
 
 INLINE REBLEN Cell_String_Len_At(const Cell* c) {
-    Heart heart = Cell_Heart(c);
+    Heart heart = Heart_Of(c);
     if (Any_String_Type(heart))  // can have an index position
         return Cell_Series_Len_At(c);
 
@@ -149,7 +149,7 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
     const Cell* v,
     REBLEN index
 ){
-    assert(Any_String_Type(Cell_Heart(v)));
+    assert(Any_String_Type(Heart_Of(v)));
 
     Utf8(const*) at;
 

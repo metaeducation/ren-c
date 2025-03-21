@@ -751,7 +751,7 @@ DECLARE_NATIVE(LET)
 
             if (Is_Set_Word(temp))
                 goto wordlike;
-            else switch (Cell_Heart(temp)) {  // permit quasi
+            else switch (Heart_Of(temp)) {  // permit quasi
               case TYPE_ISSUE:  // is multi-return opt-in for dialect, passthru
               case TYPE_BLANK:  // is multi-return opt-out for dialect, passthru
                 Derelativize(PUSH(), temp, temp_binding);

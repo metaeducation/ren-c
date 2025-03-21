@@ -366,16 +366,16 @@ bool Try_Match_For_Compose(
     Context* binding = Cell_Binding(pattern);
 
     if (Is_Group(pattern)) {  // top level only has to match plain heart [1]
-        if (not Any_Group_Type(Cell_Heart(at)))
+        if (not Any_Group_Type(Heart_Of(at)))
             return false;
     }
     else if (Is_Fence(pattern)) {
-        if (not Any_Fence_Type(Cell_Heart(at)))
+        if (not Any_Fence_Type(Heart_Of(at)))
             return false;
     }
     else {
         assert(Is_Block(pattern));
-        if (not Any_Block_Type(Cell_Heart(at)))
+        if (not Any_Block_Type(Heart_Of(at)))
             return false;
     }
 
@@ -439,7 +439,7 @@ static void Push_Composer_Level(
     const Element* e,  // list or sequence, may be quasi or quoted
     Context* context
 ){
-    Heart heart = Cell_Heart(e);
+    Heart heart = Heart_Of(e);
     Option(const Element*) adjusted = nullptr;
     if (Any_Sequence_Type(heart))  // allow sequences [1]
         adjusted = Known_Element(rebValue(CANON(AS), CANON(BLOCK_X), rebQ(e)));
@@ -490,12 +490,12 @@ static Option(Error*) Trap_Finalize_Composer_Level(
     const Element* composee,  // special handling if the output is a sequence
     bool conflate
 ){
-    Heart heart = Cell_Heart(composee);
+    Heart heart = Heart_Of(composee);
 
     if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
             out,
-            Cell_Heart(composee),
+            Heart_Of(composee),
             L->baseline.stack_base
         );
         if (error)
@@ -648,7 +648,7 @@ Bounce Composer_Executor(Level* const L)
 
     const Element* at = At_Level(L);
 
-    Heart heart = Cell_Heart(at);  // quoted groups match [1]
+    Heart heart = Heart_Of(at);  // quoted groups match [1]
 
     if (not Any_Sequence_Or_List_Type(heart)) {  // won't substitute/recurse
         Copy_Cell(PUSH(), at);  // keep newline flag
@@ -685,7 +685,7 @@ Bounce Composer_Executor(Level* const L)
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
-    Heart list_heart = Cell_Heart(At_Level(L));
+    Heart list_heart = Heart_Of(At_Level(L));
     Byte list_quote_byte = QUOTE_BYTE(At_Level(L));
 
     Decay_If_Unstable(OUT);
@@ -876,7 +876,7 @@ DECLARE_NATIVE(COMPOSE2)
         if (Any_The_Value(pattern)) {  // @() means use pattern's binding
             if (Cell_Binding(pattern) == nullptr)
                 return FAIL("@... patterns must have bindings");
-            HEART_BYTE(pattern) = Plainify_Any_The_Heart(Cell_Heart(pattern));
+            HEART_BYTE(pattern) = Plainify_Any_The_Heart(Heart_Of(pattern));
         }
         else if (Any_Plain_Value(pattern)) {
             Tweak_Cell_Binding(pattern, Cell_List_Binding(input));

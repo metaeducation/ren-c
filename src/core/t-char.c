@@ -188,10 +188,10 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 //
 REBINT CT_Utf8(const Cell* a, const Cell* b, bool strict)
 {
-    assert(Any_Utf8_Type(Cell_Heart(a)));
-    assert(Any_Utf8_Type(Cell_Heart(b)));
+    assert(Any_Utf8_Type(Heart_Of(a)));
+    assert(Any_Utf8_Type(Heart_Of(b)));
 
-    if (Cell_Heart(a) == TYPE_ISSUE or Cell_Heart(b) == TYPE_ISSUE)
+    if (Heart_Of(a) == TYPE_ISSUE or Heart_Of(b) == TYPE_ISSUE)
         strict = true;  // always true? [1]
 
     REBLEN l1;

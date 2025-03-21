@@ -487,7 +487,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
 
-    Heart heart = Cell_Heart(v);  // may be quoted, but mold renders the quotes
+    Heart heart = Heart_Of(v);  // may be quoted, but mold renders the quotes
 
     if (form) {
         Option(VarList*) context = nullptr;

@@ -68,7 +68,7 @@ INLINE Type Type_From_Symbol_Id(SymId id) {
     cast(SymId, u_cast(SymId16, (k)))
 
 INLINE Type Cell_Datatype_Type(const Cell* v) {
-    assert(Cell_Heart(v) == TYPE_TYPE_BLOCK);
+    assert(Heart_Of(v) == TYPE_TYPE_BLOCK);
     if (Cell_Series_Len_At(v) != 1)
         fail ("Type blocks only allowed one element for now");
     const Element* item = Cell_List_At(nullptr, v);

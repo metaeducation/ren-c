@@ -56,7 +56,7 @@ void Shutdown_Yielder_Errors(void)
 //  Is_Error_Done_Signal: C
 //
 bool Is_Error_Done_Signal(const Cell* c) {
-    assert(Cell_Heart(c) == TYPE_ERROR);
+    assert(Heart_Of(c) == TYPE_ERROR);
 
     ERROR_VARS *vars = ERR_VARS(Cell_Error(c));
     if (not Is_Word(&vars->id))

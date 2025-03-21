@@ -117,7 +117,7 @@ INLINE bool Is_Block_Style_Varargs(
     Element* *shared_out,
     const Cell* vararg
 ){
-    assert(Cell_Heart(vararg) == TYPE_VARARGS);
+    assert(Heart_Of(vararg) == TYPE_VARARGS);
 
     Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
@@ -141,7 +141,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Null(
     Level* *L_out,
     const Cell* vararg
 ){
-    assert(Cell_Heart(vararg) == TYPE_VARARGS);
+    assert(Heart_Of(vararg) == TYPE_VARARGS);
 
     Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
@@ -193,7 +193,7 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
     const Key* *key,
     const Cell* v
 ){
-    assert(Cell_Heart(v) == TYPE_VARARGS);
+    assert(Heart_Of(v) == TYPE_VARARGS);
 
     Phase* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {

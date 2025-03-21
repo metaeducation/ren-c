@@ -56,7 +56,7 @@
 //
 INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
     Element* elem = Known_Element(atom);  // guaranteed element on input (?)
-    Heart heart = Cell_Heart(atom);
+    Heart heart = Heart_Of(atom);
 
     if (not Is_Stable_Antiform_Heart(heart))
         assert(not Is_Api_Value(elem));  // no unstable antiforms in API [1]
@@ -105,7 +105,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
 //    words are allowed to be quasiforms.
 //
 INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
-    Heart heart = Cell_Heart(v);
+    Heart heart = Heart_Of(v);
 
     if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
         QUOTE_BYTE(v) = NOQUOTE_1;
@@ -161,7 +161,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         while (++pack_meta_at != pack_meta_tail) {
             if (not Is_Quasiform(pack_meta_at))
                 continue;
-            if (Is_Stable_Antiform_Heart(Cell_Heart(pack_meta_at)))
+            if (Is_Stable_Antiform_Heart(Heart_Of(pack_meta_at)))
                 continue;
             DECLARE_ATOM (temp);
             Copy_Cell(temp, pack_meta_at);

@@ -43,7 +43,7 @@ INLINE Context* Cell_Context(const Cell* c) {
 }
 
 INLINE Error* Cell_Error(const Cell* c) {
-    assert(Cell_Heart(c) == TYPE_ERROR);
+    assert(Heart_Of(c) == TYPE_ERROR);
     return cast(Error*, Cell_Varlist(c));
 }
 

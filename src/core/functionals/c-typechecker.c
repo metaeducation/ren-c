@@ -284,7 +284,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     Context* derived;
     bool match_all;
 
-    if (Cell_Heart(tests) == TYPE_PARAMETER) {  // usually antiform
+    if (Heart_Of(tests) == TYPE_PARAMETER) {  // usually antiform
         const Array* array = maybe Cell_Parameter_Spec(tests);
         if (array == nullptr)
             return true;  // implicitly all is permitted
@@ -331,7 +331,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 
         if (Is_Quasiform(item)) {  // quasiforms e.g. [~null~] mean antiform
-            if (Cell_Heart(item) == TYPE_BLOCK) {  // typecheck pack
+            if (Heart_Of(item) == TYPE_BLOCK) {  // typecheck pack
                 if (not Is_Pack(v))
                     goto test_failed;
                 if (Typecheck_Pack_In_Spare_Uses_Scratch(L, item))
@@ -339,9 +339,9 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
                 goto test_failed;
             }
 
-            assert(Is_Stable_Antiform_Heart(Cell_Heart(item)));
+            assert(Is_Stable_Antiform_Heart(Heart_Of(item)));
 
-            if (Not_Antiform(v) or Cell_Heart(item) != Cell_Heart(v))
+            if (Not_Antiform(v) or Heart_Of(item) != Heart_Of(v))
                 goto test_failed;
 
             assert(v == SPARE);  // hack: temporarily make quasiform

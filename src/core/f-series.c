@@ -438,8 +438,8 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
     if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
         return false;
 
-    Heart s_heart = Cell_Heart(s);
-    Heart t_heart = Cell_Heart(t);
+    Heart s_heart = Heart_Of(s);
+    Heart t_heart = Heart_Of(t);
 
     if (
         s_heart != t_heart
@@ -491,8 +491,8 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     if (QUOTE_BYTE(s) != QUOTE_BYTE(t))
         return false;  // comparisons against different-quoting levels illegal
 
-    Heart s_heart = Cell_Heart(s);
-    Heart t_heart = Cell_Heart(t);
+    Heart s_heart = Heart_Of(s);
+    Heart t_heart = Heart_Of(t);
 
     if (
         s_heart != t_heart

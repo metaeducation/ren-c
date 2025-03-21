@@ -1623,7 +1623,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         Swap_Flex_Content(popped, s);  // swap Flex identity [3]
 
         Free_Unmanaged_Flex(popped);  // frees incoming Flex's data
-        Init_Any_String(OUT, Cell_Heart(data), s);
+        Init_Any_String(OUT, Heart_Of(data), s);
     }
 
   done_finalizing:

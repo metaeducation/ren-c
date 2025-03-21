@@ -265,7 +265,7 @@ void Push_Keys_And_Params_May_Fail(
             quoted = true;
         }
 
-        Heart heart = Cell_Heart(item);
+        Heart heart = Heart_Of(item);
 
         const Symbol* symbol = nullptr;  // avoids compiler warning
         ParamClass pclass = PARAMCLASS_0;  // error if not changed
@@ -840,7 +840,7 @@ DECLARE_NATIVE(COUPLE)
     Value* action_or_frame = ARG(ACTION);  // could also be a FRAME!
     Value* coupling = ARG(COUPLING);
 
-    assert(Cell_Heart(action_or_frame) == TYPE_FRAME);
+    assert(Heart_Of(action_or_frame) == TYPE_FRAME);
 
     if (Is_Nulled(coupling))
         Tweak_Cell_Frame_Coupling(action_or_frame, nullptr);
@@ -868,7 +868,7 @@ DECLARE_NATIVE(UNCOUPLE)
 
     Value* action_or_frame = ARG(ACTION);  // could also be a FRAME!
 
-    assert(Cell_Heart(action_or_frame) == TYPE_FRAME);
+    assert(Heart_Of(action_or_frame) == TYPE_FRAME);
 
     Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
 

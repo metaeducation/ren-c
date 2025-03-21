@@ -3051,7 +3051,7 @@ Option(Error*) Trap_Transcode_One(
         return error;
     }
     Meta_Unquotify_Known_Stable(trapped);
-    if (heart and Cell_Heart(trapped) != heart) {
+    if (heart and Heart_Of(trapped) != heart) {
         rebRelease(trapped);
         return Error_User("Trap_Transcode_One() gave unwanted type");
     }

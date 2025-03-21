@@ -368,7 +368,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         if (QUOTE_BYTE(arg) != NOQUOTE_1)
             return FAIL(Error_Math_Args(Type_Of(arg), verb));
 
-        heart = Cell_Heart(arg);
+        heart = Heart_Of(arg);
         if ((
             heart == TYPE_PAIR
             or heart == TYPE_TUPLE
@@ -410,7 +410,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
             }
             else {
                 d2 = cast(REBDEC, VAL_INT64(arg));
-                heart = Cell_Heart(val);  // 10% * 2 => 20%
+                heart = Heart_Of(val);  // 10% * 2 => 20%
             }
 
             switch (id) {

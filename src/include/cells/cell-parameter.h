@@ -477,7 +477,7 @@ INLINE bool Any_Vacancy(Need(const Value*) a) {
     if (Not_Antiform(a))
         return false;
 
-    Heart heart = Cell_Heart(a);
+    Heart heart = Heart_Of(a);
     if (heart == TYPE_BLANK or heart == TYPE_TAG)
         return true;
 

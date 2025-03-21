@@ -1385,7 +1385,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Quoted(check))
                 return FAIL("QUOTED? not currently permitted in SET-BLOCK!s");
 
-            Heart heart = Cell_Heart(check);
+            Heart heart = Heart_Of(check);
 
             bool circle_this;
 
@@ -1404,7 +1404,7 @@ Bounce Stepper_Executor(Level* L)
                     return FAIL("{Circle} only one element in multi-return");
 
                 circle_this = true;
-                heart = Cell_Heart(CURRENT);
+                heart = Heart_Of(CURRENT);
             }
             else {
                 circle_this = false;
@@ -1425,7 +1425,7 @@ Bounce Stepper_Executor(Level* L)
                 }
                 Unchain(CURRENT);
                 heart = Heart_Of_Singleheart(unwrap single);
-                assert(heart == Cell_Heart(CURRENT));
+                assert(heart == Heart_Of(CURRENT));
                 is_optional = true;
             }
             else
@@ -1448,7 +1448,7 @@ Bounce Stepper_Executor(Level* L)
                 else if (heart == TYPE_GROUP and Is_Void(SPARE))
                     Init_Trash(SPARE);  // [(void)]: ... pass thru
 
-                heart = Cell_Heart(SPARE);
+                heart = Heart_Of(SPARE);
                 Copy_Cell(PUSH(), stable_SPARE);
             }
             else
@@ -1555,7 +1555,7 @@ Bounce Stepper_Executor(Level* L)
             Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
 
             assert(QUOTE_BYTE(var) == NOQUOTE_1 or Is_Trash(var));
-            Heart var_heart = Cell_Heart(var);
+            Heart var_heart = Heart_Of(var);
 
             if (pack_meta_at == pack_meta_tail) {
                 if (not is_optional)

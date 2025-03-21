@@ -53,7 +53,7 @@ INLINE const Element* Cell_List_Len_At(
 ){
     const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
-        assert(Any_Sequence_Type(Cell_Heart(v)));
+        assert(Any_Sequence_Type(Heart_Of(v)));
         assert(VAL_INDEX_RAW(v) == 0);
         if (len_at_out)
             *(unwrap len_at_out) = PAIRING_LEN;
@@ -75,7 +75,7 @@ INLINE const Element* Cell_List_At(
 ){
     const Node* node = CELL_SERIESLIKE_NODE(v);
     if (Is_Node_A_Cell(node)) {
-        assert(Any_Sequence_Type(Cell_Heart(v)));
+        assert(Any_Sequence_Type(Heart_Of(v)));
         const Pairing* p = c_cast(Pairing*, node);
         if (tail_out)
             *(unwrap tail_out) = Pairing_Tail(p);
