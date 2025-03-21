@@ -259,8 +259,8 @@ void Push_Keys_And_Params_May_Fail(
   //=//// ANY-WORD? PARAMETERS THEMSELVES /////////////////////////////////=//
 
         bool quoted = false;  // single quoting level used as signal in spec
-        if (Element_Num_Quotes(item) > 0) {
-            if (Element_Num_Quotes(item) > 1)
+        if (Quotes_Of(item) > 0) {
+            if (Quotes_Of(item) > 1)
                 fail (Error_Bad_Func_Def_Raw(item));
             quoted = true;
         }

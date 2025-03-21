@@ -1776,7 +1776,7 @@ DECLARE_NATIVE(MAP)
     }
     else if (
         not Is_Quoted(data)
-        or Element_Num_Quotes(data) != 1
+        or Quotes_Of(data) != 1
         or not (
             Any_Series(Unquotify(data))
             or Any_Path(data)  // has been unquoted

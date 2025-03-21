@@ -692,8 +692,8 @@ static REBIXO Parse_One_Rule(
         //
         Heart rule_heart = Heart_Of(rule);
         if (
-            Element_Num_Quotes(rule) == 1  // '<a> will mold to "<a>"
-            or (Element_Num_Quotes(rule) == 0 and (
+            Quotes_Of(rule) == 1  // '<a> will mold to "<a>"
+            or (Quotes_Of(rule) == 0 and (
                 rule_heart == TYPE_TEXT
                 or rule_heart == TYPE_ISSUE
                 or rule_heart == TYPE_BLOB
@@ -1261,7 +1261,7 @@ DECLARE_NATIVE(SUBPARSE)
     // put the quotes back on whenever doing a COPY etc.
     //
     assert(Is_Nothing(ARG(NUM_QUOTES)));
-    Init_Integer(ARG(NUM_QUOTES), Element_Num_Quotes(Element_ARG(INPUT)));
+    Init_Integer(ARG(NUM_QUOTES), Quotes_Of(Element_ARG(INPUT)));
     Dequotify(Element_ARG(INPUT));
 
     // Make sure index position is not past END

@@ -509,7 +509,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
         }
 
         assert(QUOTE_BYTE(composee) & NONQUASI_BIT);  // no antiform/quasiform
-        Count num_quotes = Element_Num_Quotes(composee);
+        Count num_quotes = Quotes_Of(composee);
 
         if (not Is_Nulled(out))  // don't add quoting levels (?)
             Quotify_Depth(Known_Element(out), num_quotes);

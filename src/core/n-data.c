@@ -765,7 +765,7 @@ DECLARE_NATIVE(LIT_PATH_Q)
         return unwrap b;
 
     return LOGIC(
-        Heart_Of(elem) == TYPE_PATH and Element_Num_Quotes(elem) == 1
+        Heart_Of(elem) == TYPE_PATH and Quotes_Of(elem) == 1
     );
 }
 

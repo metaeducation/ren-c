@@ -183,7 +183,7 @@ DECLARE_NATIVE(REORDER)
         }
         else if (Is_Quoted(item)) {
             if (
-                Element_Num_Quotes(item) != 1
+                Quotes_Of(item) != 1
                 or not Any_Word_Type(Heart_Of(item))
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD?");

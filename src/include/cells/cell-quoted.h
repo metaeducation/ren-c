@@ -59,7 +59,7 @@
 // problems in Rebol languages.
 //
 
-INLINE Count Element_Num_Quotes(const Element* v) {
+INLINE Count Quotes_Of(const Element* v) {
     assert(QUOTE_BYTE(v) != ANTIFORM_0);
     return (QUOTE_BYTE(v) - NOQUOTE_1) >> 1;
 }
@@ -88,7 +88,7 @@ INLINE Element* Quotify_Depth(Element* elem, Count depth) {
     if (depth == 0)
         return elem;
 
-    if (Element_Num_Quotes(elem) + depth >  MAX_QUOTE_DEPTH)
+    if (Quotes_Of(elem) + depth >  MAX_QUOTE_DEPTH)
         fail ("Quoting Depth of 126 Exceeded");
 
     QUOTE_BYTE(elem) += Quote_Shift(depth);
@@ -104,7 +104,7 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
     if (depth == 0)
         return elem;
 
-    if (depth > Element_Num_Quotes(elem))
+    if (depth > Quotes_Of(elem))
         fail ("Attempt to set quoting level of value to less than 0");
 
     QUOTE_BYTE(elem) -= Quote_Shift(depth);
@@ -115,7 +115,7 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
 #define Unquotify(elem)    Unquotify_Depth((elem), 1)
 
 INLINE Count Dequotify(Element* elem) {
-    Count depth = Element_Num_Quotes(elem);
+    Count depth = Quotes_Of(elem);
     if (QUOTE_BYTE(elem) & NONQUASI_BIT)
         QUOTE_BYTE(elem) = NOQUOTE_1;
     else

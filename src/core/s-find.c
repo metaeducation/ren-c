@@ -523,7 +523,7 @@ REBLEN Find_Value_In_Binstr(
             fail (Error_Find_String_Binary_Raw());
     }
 
-    Count num_quotes = Element_Num_Quotes(pattern);
+    Count num_quotes = Quotes_Of(pattern);
     if (
         num_quotes == 1
         or (num_quotes == 0 and (

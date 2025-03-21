@@ -200,7 +200,7 @@ DECLARE_NATIVE(ARROW)
             symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Quoted(item)) {
-            if (Element_Num_Quotes(item) != 1)
+            if (Quotes_Of(item) != 1)
                 return FAIL(item);
             if (Heart_Of(item) == TYPE_WORD)
                 pclass = PARAMCLASS_JUST;

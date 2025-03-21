@@ -81,7 +81,7 @@ DECLARE_NATIVE(QUOTES_OF)
 {
     INCLUDE_PARAMS_OF_QUOTES_OF;
 
-    return Init_Integer(OUT, Element_Num_Quotes(Element_ARG(ELEMENT)));
+    return Init_Integer(OUT, Quotes_Of(Element_ARG(ELEMENT)));
 }
 
 

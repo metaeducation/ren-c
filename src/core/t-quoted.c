@@ -213,7 +213,7 @@ DECLARE_NATIVE(UNQUOTE)
     if (depth < 0)
         return FAIL(PARAM(DEPTH));
 
-    if (depth > Element_Num_Quotes(v))
+    if (depth > Quotes_Of(v))
         return FAIL("Value not quoted enough for unquote depth requested");
 
     return Unquotify_Depth(Copy_Cell(OUT, v), depth);
