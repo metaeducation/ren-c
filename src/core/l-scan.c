@@ -87,7 +87,7 @@ INLINE bool Is_Interstitial_Scan(Level* L)  // speedy check via flag
 
 INLINE bool Is_List_Scan(Level* L) {  // only used in errors, need not be fast
     Byte mode = LEVEL_STATE_BYTE(L);
-    return mode == ']' or mode == ')';
+    return mode == ']' or mode == ')' or mode == '}';
 }
 
 INLINE bool Is_Lex_Sub_Interstitial(Level *L, Byte sub) {
@@ -457,16 +457,16 @@ static Error* Error_Missing(ScanState* S, Byte wanted) {
     if (Is_Lex_End_List(wanted))
         Update_Error_Near_For_Line(
             error,
-            S->ss,
+            S->transcode,
             S->start_line,
             S->start_line_head
         );
     else
         Update_Error_Near_For_Line(
             error,
-            S->ss,
-            S->ss->line,
-            S->ss->line_head
+            S->transcode,
+            S->transcode->line,
+            S->transcode->line_head
         );
     return error;
 }
@@ -732,7 +732,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
           linefeed:
             if (Not_Cell_Flag(TOP, STACK_NOTE_BRACED))
                 return Error_User("Plain quoted strings not multi-line");
-            ++S->ss->line;
+            ++S->transcode->line;
             break;
 
           default:
@@ -964,7 +964,7 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
 {
     assert(Is_Pointer_Corrupt_Debug(S->end));  // prescan only uses ->begin
 
-    const Byte* cp = S->ss->at;
+    const Byte* cp = S->transcode->at;
     LexFlags flags = 0;  // flags for all LEX_SPECIALs seen after S->begin[0]
 
     while (Is_Lex_Space(*cp))  // skip whitespace (if any)
@@ -1127,9 +1127,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     Level* L
 ){
     ScanState* S = &L->u.scan;
-    TranscodeState* ss = S->ss;
+    TranscodeState* transcode = S->transcode;
 
-    Corrupt_Pointer_If_Debug(S->begin);  // S->begin skips ss->at's whitespace
+    Corrupt_Pointer_If_Debug(S->begin);  // S->begin skips ->at's whitespace
     Corrupt_Pointer_If_Debug(S->end);  // this routine should set S->end
 
   acquisition_loop: //////////////////////////////////////////////////////////
@@ -1140,7 +1140,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     //     rebElide("print [{The value is}", some_value, "]");
     //
     // We scan one string component at a time, pushing the appropriate items.
-    // Each time a UTF-8 source fragment being scanned is exhausted, ss->at
+    // Each time a UTF-8 source fragment being scanned is exhausted, ->at
     // will be set to nullptr and this loop is run to see if there's more
     // input to be processed--either values to splice, or other fragments
     // of UTF-8 source.
@@ -1150,7 +1150,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     // evaluator), potentially bypassing the need to create an intermediary
     // BLOCK! structure to hold the code.
     //
-    while (not ss->at) {
+    while (not transcode->at) {
         if (L->feed->p == nullptr) {  // API null, can't be in feed, use BLANK
             Init_Quasi_Null(PUSH());
             Set_Cell_Flag(TOP, FEED_NOTE_META);
@@ -1188,7 +1188,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             break; }
 
           case DETECTED_AS_UTF8: {  // String segment, scan it ordinarily.
-            ss->at = c_cast(Byte*, L->feed->p);  // breaks the loop...
+            transcode->at = c_cast(Byte*, L->feed->p);  // breaks the loop...
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.
@@ -1199,10 +1199,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             // as a BLOCK! before scanning, which might be able to give more
             // context for the error-causing input.
             //
-            if (not ss->line_head) {
+            if (not transcode->line_head) {
                 assert(FEED_VAPTR(L->feed) or FEED_PACKED(L->feed));
                 assert(not S->start_line_head);
-                S->start_line_head = ss->line_head = S->begin;
+                S->start_line_head = transcode->line_head = S->begin;
             }
             break; }
 
@@ -1327,7 +1327,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             // not cover the case of CR that are embedded in multi-line
             // string literals.
             //
-            enum Reb_Strmode strmode = STRMODE_NO_CR;  // ss->strmode ?
+            enum Reb_Strmode strmode = STRMODE_NO_CR;  // transcode->strmode ?
             if (strmode == STRMODE_CRLF_TO_LF) {
                 if (cp[1] == LF) {
                     ++cp;
@@ -1341,7 +1341,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
           case LEX_DELIMIT_LINEFEED:
           delimit_line_feed:
-            ss->line++;
+            ++transcode->line;
             S->end = cp + 1;
             return LOCATED(TOKEN_NEWLINE);
 
@@ -1435,7 +1435,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             // to check if there's a variadic pointer in effect to see if
             // there's more content yet to come.
             //
-            ss->at = nullptr;
+            transcode->at = nullptr;
             Corrupt_Pointer_If_Debug(S->begin);
             Corrupt_Pointer_If_Debug(S->end);
             goto acquisition_loop;
@@ -1933,7 +1933,7 @@ Level* Make_Scan_Level(
     UNUSED(mode);
 
     ScanState* S = &L->u.scan;
-    S->ss = transcode;
+    S->transcode = transcode;
 
     S->start_line_head = transcode->line_head;
     S->start_line = transcode->line;
@@ -2074,7 +2074,7 @@ Bounce Scanner_Executor(Level* const L) {
   #endif
 
     ScanState* S = &level_->u.scan;
-    TranscodeState* transcode = S->ss;
+    TranscodeState* transcode = S->transcode;
 
     DECLARE_MOLDER (mo);
 
@@ -3088,8 +3088,8 @@ DECLARE_NATIVE(TRANSCODE)
     Size size;
     const Byte* bp = Cell_Bytes_At(&size, source);
 
-    TranscodeState* ss;
-    Value* ss_buffer = LOCAL(BUFFER);  // kept as a BLOB!, gets GC'd
+    TranscodeState* transcode;
+    Value* transcode_buffer = LOCAL(BUFFER);  // kept as a BLOB!, gets GC'd
 
     enum {
         ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
@@ -3102,9 +3102,9 @@ DECLARE_NATIVE(TRANSCODE)
         goto initial_entry;
 
       case ST_TRANSCODE_SCANNING:
-        ss = cast(
+        transcode = cast(
             TranscodeState*,
-            Binary_Head(Cell_Binary_Known_Mutable(ss_buffer))
+            Binary_Head(Cell_Binary_Known_Mutable(transcode_buffer))
         );
         goto scan_to_stack_maybe_failed;
 
@@ -3190,7 +3190,7 @@ DECLARE_NATIVE(TRANSCODE)
     // Because we're building a frame, we can't make a {bp, END} packed array
     // and start up a variadic feed...because the stack variable would go
     // bad as soon as we yielded to the trampoline.  Have to use an END feed
-    // and preload the ss->at of the scanner here.
+    // and preload the transcode->at of the scanner here.
     //
     // Note: Could reuse global TG_End_Feed if context was null.
 
@@ -3205,14 +3205,14 @@ DECLARE_NATIVE(TRANSCODE)
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Binary* bin = Make_Binary(sizeof(TranscodeState));
-    ss = cast(TranscodeState*, Binary_Head(bin));
-    Init_Transcode(ss, file, start_line, bp);
+    transcode = cast(TranscodeState*, Binary_Head(bin));
+    Init_Transcode(transcode, file, start_line, bp);
     Term_Binary_Len(bin, sizeof(TranscodeState));
-    Init_Blob(ss_buffer, bin);
+    Init_Blob(transcode_buffer, bin);
 
     UNUSED(size);  // currently we don't use this information
 
-    Level* sub = Make_Scan_Level(ss, feed, flags);
+    Level* sub = Make_Scan_Level(transcode, feed, flags);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     STATE = ST_TRANSCODE_SCANNING;
@@ -3251,8 +3251,8 @@ DECLARE_NATIVE(TRANSCODE)
         if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
             Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
-        MISC_SOURCE_LINE(a) = ss->line;
-        Tweak_Link_Filename(a, maybe ss->file);
+        MISC_SOURCE_LINE(a) = transcode->line;
+        Tweak_Link_Filename(a, maybe transcode->file);
 
         Init_Block(OUT, a);
     }
@@ -3260,7 +3260,7 @@ DECLARE_NATIVE(TRANSCODE)
     Drop_Level(SUBLEVEL);
 
     if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
-        Element* line_int = Init_Integer(SCRATCH, ss->line);
+        Element* line_int = Init_Integer(SCRATCH, transcode->line);
         const Element* line_var = Element_ARG(LINE);
         if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
             return THROWN;
@@ -3282,8 +3282,8 @@ DECLARE_NATIVE(TRANSCODE)
 
     if (Is_Blob(source)) {
         const Binary* b = Cell_Binary(source);
-        if (ss->at)
-            VAL_INDEX_UNBOUNDED(rest) = ss->at - Binary_Head(b);
+        if (transcode->at)
+            VAL_INDEX_UNBOUNDED(rest) = transcode->at - Binary_Head(b);
         else
             VAL_INDEX_UNBOUNDED(rest) = Binary_Len(b);
     }
@@ -3300,8 +3300,8 @@ DECLARE_NATIVE(TRANSCODE)
         // (It would probably be better if the scanner kept count, though
         // maybe that would make it slower when this isn't needed?)
         //
-        if (ss->at)
-            VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->at);
+        if (transcode->at)
+            VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, transcode->at);
         else
             VAL_INDEX_RAW(rest) += Binary_Tail(Cell_String(source)) - bp;
     }
@@ -3392,17 +3392,17 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
-    TranscodeState ss;
+    TranscodeState transcode;
     const LineNumber start_line = 1;
     Init_Transcode(
-        &ss,
+        &transcode,
         ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
         start_line,
         nullptr  // let scanner fetch feed->p Utf8 as new S->begin
     );
 
     Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
-    Level* L = Make_Scan_Level(&ss, feed, flags);
+    Level* L = Make_Scan_Level(&transcode, feed, flags);
 
     DECLARE_ATOM (temp);
     Push_Level_Erase_Out_If_State_0(temp, L);

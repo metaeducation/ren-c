@@ -945,12 +945,12 @@ DECLARE_NATIVE(COMPOSE2)
 
   found_first_string_pattern: { ///////////////////////////////////////////////
 
-    TranscodeState* ss = Try_Alloc_Memory(TranscodeState);
-    Init_Handle_Cdata(SCRATCH, ss, 1);
+    TranscodeState* transcode = Try_Alloc_Memory(TranscodeState);
+    Init_Handle_Cdata(SCRATCH, transcode, 1);
 
     const LineNumber start_line = 1;
     Init_Transcode(
-        ss,
+        transcode,
         ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
         start_line,
         at  // we'll reset this on each pattern find
@@ -962,7 +962,7 @@ DECLARE_NATIVE(COMPOSE2)
         | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN)
         | SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
-    Level* sub = Make_Scan_Level(ss, TG_End_Feed, flags);
+    Level* sub = Make_Scan_Level(transcode, TG_End_Feed, flags);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
@@ -976,20 +976,20 @@ DECLARE_NATIVE(COMPOSE2)
     // 1. While transcoding in a general case can't assume the data is valid
     //    UTF-8, we're scanning an already validated UTF-8 TEXT! here.
 
-    TranscodeState* ss = Cell_Handle_Pointer(TranscodeState, SCRATCH);
+    TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, SCRATCH);
 
     Utf8(const*) head = Cell_Utf8_At(input);
-    Offset end_offset = ss->at - head;
+    Offset end_offset = transcode->at - head;
     Init_Integer(PUSH(), end_offset);
 
-    Utf8(const*) at = cast(Utf8(const*), ss->at);  // validated UTF-8 [1]
+    Utf8(const*) at = cast(Utf8(const*), transcode->at);  // validated UTF-8 [1]
 
     Codepoint c;
     Utf8(const*) next = Utf8_Next(&c, at);
 
     while (c != '\0') {
         if (c == '(') {
-            ss->at = at;
+            transcode->at = at;
             goto found_subsequent_string_pattern;
         }
         at = next;
@@ -997,12 +997,12 @@ DECLARE_NATIVE(COMPOSE2)
     }
 
     Drop_Level(SUBLEVEL);
-    Free_Memory(TranscodeState, ss);
+    Free_Memory(TranscodeState, transcode);
     goto string_start_evaluations;
 
   found_subsequent_string_pattern: { /////////////////////////////////////////
 
-    Offset start_offset = ss->at - head;
+    Offset start_offset = transcode->at - head;
     Init_Integer(PUSH(), start_offset);
     assert(STATE == ST_COMPOSE_STRING_SCAN);
     return CONTINUE_SUBLEVEL(SUBLEVEL);

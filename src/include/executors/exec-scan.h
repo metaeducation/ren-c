@@ -125,7 +125,7 @@ typedef struct TranscodeStateStruct TranscodeState;
 
 
 struct ScannerExecutorStateStruct {  // each array scan has a level
-    TranscodeState* ss;  // shared state of where the scanner head currently is
+    TranscodeState* transcode;  // shared state of where the scan head is
 
     // Beginning and end positions of currently processed token.
     //
