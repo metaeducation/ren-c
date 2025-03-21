@@ -65,7 +65,7 @@ DECLARE_NATIVE(THE)
 
     Element* v = Element_ARG(VALUE);
 
-    if (REF(SOFT) and Is_Soft_Escapable_Group(v)) {
+    if (Bool_ARG(SOFT) and Is_Soft_Escapable_Group(v)) {
         if (Eval_Any_List_At_Throws(OUT, v, SPECIFIED))
             return THROWN;
         return OUT;
@@ -115,7 +115,7 @@ DECLARE_NATIVE(QUOTE)
     INCLUDE_PARAMS_OF_QUOTE;
 
     Element* e = Element_ARG(ELEMENT);
-    REBINT depth = REF(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1;
+    REBINT depth = Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1;
 
     if (depth < 0)
         return FAIL(PARAM(DEPTH));
@@ -149,7 +149,7 @@ DECLARE_NATIVE(META)
     Value* meta = ARG(ATOM); // arg already ^META, no need to Meta_Quotify()
 
     if (Is_Meta_Of_Raised(meta)) {
-        if (not REF(EXCEPT))
+        if (not Bool_ARG(EXCEPT))
             return FAIL(Cell_Error(ARG(ATOM)));
 
         QUOTE_BYTE(meta) = NOQUOTE_1;
@@ -157,7 +157,7 @@ DECLARE_NATIVE(META)
     }
 
     if (
-        REF(LITE)  // META:LITE handles quasiforms specially
+        Bool_ARG(LITE)  // META:LITE handles quasiforms specially
         and Is_Quasiform(meta)
     ){
         if (HEART_BYTE(meta) == TYPE_WORD) {  // keywords pass thru
@@ -208,7 +208,7 @@ DECLARE_NATIVE(UNQUOTE)
 
     Element* v = Element_ARG(VALUE);
 
-    Count depth = (REF(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1);
+    Count depth = (Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1);
 
     if (depth < 0)
         return FAIL(PARAM(DEPTH));
@@ -244,7 +244,7 @@ DECLARE_NATIVE(QUASI)
     Element* elem = Element_ARG(ELEMENT);
 
     if (Is_Quasiform(elem)) {
-        if (REF(PASS))
+        if (Bool_ARG(PASS))
             return COPY(elem);
         return FAIL("Use QUASI:PASS if QUASI argument is already a quasiform");
     }
@@ -352,13 +352,13 @@ DECLARE_NATIVE(UNMETA)
     Value* meta = ARG(VALUE);
 
     if (QUOTE_BYTE(meta) == ANTIFORM_0) {
-        if (not REF(LITE) or not Is_Keyword(meta))
+        if (not Bool_ARG(LITE) or not Is_Keyword(meta))
             return FAIL("UNMETA only keyword antiforms (e.g. ~null~) if :LITE");
         return COPY(meta);
     }
 
     if (QUOTE_BYTE(meta) == NOQUOTE_1) {
-        if (not REF(LITE))
+        if (not Bool_ARG(LITE))
             return FAIL("UNMETA only takes non quoted/quasi things if :LITE");
         Copy_Cell(OUT, meta);
 
@@ -369,7 +369,7 @@ DECLARE_NATIVE(UNMETA)
         return OUT;
     }
 
-    if (QUOTE_BYTE(meta) == QUASIFORM_2 and REF(LITE))
+    if (QUOTE_BYTE(meta) == QUASIFORM_2 and Bool_ARG(LITE))
         return FAIL(
             "UNMETA:LITE does not accept quasiforms (plain forms are meta)"
         );

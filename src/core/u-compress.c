@@ -472,7 +472,7 @@ DECLARE_NATIVE(DEFLATE)
     const Byte* bp = Cell_Bytes_Limit_At(&size, ARG(DATA), &limit);
 
     Option(SymId) envelope;
-    if (not REF(ENVELOPE))
+    if (not Bool_ARG(ENVELOPE))
         envelope = SYM_0;
     else {
         envelope = Cell_Word_Id(ARG(ENVELOPE));
@@ -528,7 +528,7 @@ DECLARE_NATIVE(INFLATE)
     INCLUDE_PARAMS_OF_INFLATE;
 
     REBINT max;
-    if (REF(MAX)) {
+    if (Bool_ARG(MAX)) {
         max = Int32s(ARG(MAX), 1);
         if (max < 0)
             return FAIL(PARAM(MAX));
@@ -548,7 +548,7 @@ DECLARE_NATIVE(INFLATE)
     }
 
     Option(SymId) envelope;
-    if (not REF(ENVELOPE))
+    if (not Bool_ARG(ENVELOPE))
         envelope = SYM_0;
     else {
         envelope = Cell_Word_Id(ARG(ENVELOPE));

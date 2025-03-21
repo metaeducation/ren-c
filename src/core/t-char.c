@@ -230,7 +230,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Utf8(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -441,7 +441,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Sigil)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
@@ -456,7 +456,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Issue)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     if (form) {
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
@@ -1023,7 +1023,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Issue)
         return UNHANDLED;
 
     while (true) {
-        Codepoint rand = cast(Codepoint, 1 + (Random_Int(REF(SECURE)) % c));
+        Codepoint rand = cast(Codepoint, 1 + (Random_Int(Bool_ARG(SECURE)) % c));
 
         Option(Error*) e = Trap_Init_Char(OUT, rand);
         if (not e)
@@ -1042,7 +1042,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
     Element* any_utf8 = Element_ARG(ELEMENT);
     Value* part = ARG(PART);
 
-    if (REF(SECURE))
+    if (Bool_ARG(SECURE))
         return FAIL(Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
@@ -1137,7 +1137,7 @@ DECLARE_NATIVE(TRAILING_BYTES_FOR_UTF8)
         return FAIL(Error_Out_Of_Range(ARG(FIRST_BYTE)));
 
     uint_fast8_t trail = g_trailing_bytes_for_utf8[cast(Byte, byte)];
-    if (trail > 3 and not REF(EXTENDED)) {
+    if (trail > 3 and not Bool_ARG(EXTENDED)) {
         assert(trail == 4 or trail == 5);
         return FAIL(
             "Use :EXTENDED with TRAILING-BYTES-FOR-UTF-8 for 4 or 5 bytes"

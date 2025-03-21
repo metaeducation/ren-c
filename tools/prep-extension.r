@@ -257,7 +257,7 @@ e1/emit newline
 
 e1/emit --{
     /*
-     * INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
+     * INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), Bool_ARG(), ARG()
      *
      * Note these are not technically required if the extension uses
      * librebol.

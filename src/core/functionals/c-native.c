@@ -198,11 +198,11 @@ DECLARE_NATIVE(NATIVE)
 
     Element* spec = Element_ARG(SPEC);
 
-    if (REF(COMBINATOR) and REF(INTRINSIC))
+    if (Bool_ARG(COMBINATOR) and Bool_ARG(INTRINSIC))
         return FAIL(Error_Bad_Refines_Raw());
 
-    NativeType native_type = REF(COMBINATOR) ? NATIVE_COMBINATOR
-        : REF(INTRINSIC) ? NATIVE_INTRINSIC
+    NativeType native_type = Bool_ARG(COMBINATOR) ? NATIVE_COMBINATOR
+        : Bool_ARG(INTRINSIC) ? NATIVE_INTRINSIC
         : NATIVE_NORMAL;
 
     CFunction* cfunc = *g_native_cfunc_pos;

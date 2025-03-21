@@ -155,7 +155,7 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 
         UNUSED(PARAM(SOURCE));
 
-        if (REF(PART) or REF(SEEK) or REF(STRING) or REF(LINES))
+        if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(STRING) or Bool_ARG(LINES))
             return FAIL(Error_Bad_Refines_Raw());
 
         assert(TOP_INDEX == STACK_BASE);
@@ -234,10 +234,10 @@ Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 
         UNUSED(PARAM(SPEC));
 
-        if (REF(READ) or REF(WRITE))
+        if (Bool_ARG(READ) or Bool_ARG(WRITE))
             return FAIL(Error_Bad_Refines_Raw());
 
-        if (REF(NEW)) {
+        if (Bool_ARG(NEW)) {
             Value* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details

@@ -195,7 +195,7 @@ static bool Try_Init_Startupinfo_Sink(
 Bounce Call_Core(Level* level_) {
     INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
-    UNUSED(REF(CONSOLE));  // !!! This is not paid attention to (?)
+    UNUSED(Bool_ARG(CONSOLE));  // !!! This is not paid attention to (?)
 
     // Make sure that if the output or error series are STRING! or BLOB!,
     // they are not read-only, before we try appending to them.
@@ -207,7 +207,7 @@ Bounce Call_Core(Level* level_) {
 
     bool flag_wait;
     if (
-        REF(WAIT)
+        Bool_ARG(WAIT)
         or (
             Is_Text(ARG(INPUT)) or Is_Blob(ARG(INPUT))
             or Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT))
@@ -231,7 +231,7 @@ Bounce Call_Core(Level* level_) {
 
       text_command:
 
-        if (REF(SHELL)) {
+        if (Bool_ARG(SHELL)) {
             //
             // Do not pass /U for UCS-2, see notes at top of file.
             //
@@ -305,7 +305,7 @@ Bounce Call_Core(Level* level_) {
     HANDLE hErrorWrite = 0;
     HANDLE hErrorRead = 0;
 
-    UNUSED(REF(INFO));
+    UNUSED(Bool_ARG(INFO));
 
     unsigned char* inbuf = nullptr;
     size_t inbuf_size = 0;
@@ -316,7 +316,7 @@ Bounce Call_Core(Level* level_) {
 
     //=//// INPUT SOURCE SETUP ////////////////////////////////////////////=//
 
-    if (not REF(INPUT)) {  // get stdin normally (usually from user console)
+    if (not Bool_ARG(INPUT)) {  // get stdin normally (usually from user console)
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     }
     else if (Is_Word(ARG(INPUT))) {
@@ -730,11 +730,11 @@ Bounce Call_Core(Level* level_) {
     if (ret != 0)
         rebFail_OS (ret);
 
-    if (REF(INFO)) {
+    if (Bool_ARG(INFO)) {
         VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), pid);
-        if (REF(WAIT))
+        if (Bool_ARG(WAIT))
             Init_Integer(Append_Context(info, CANON(EXIT_CODE)), exit_code);
 
         return Init_Object(OUT, info);
@@ -743,7 +743,7 @@ Bounce Call_Core(Level* level_) {
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (REF(WAIT))
+    if (Bool_ARG(WAIT))
         return Init_Integer(OUT, exit_code);
 
     return Init_Integer(OUT, pid);

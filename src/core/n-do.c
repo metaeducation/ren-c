@@ -327,10 +327,10 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    just does the same thing as [1 + 2] and gives 3, not '3)
 
     if (Cell_Series_Len_At(source) == 0) {
-        if (REF(STEP))  // `eval:step []` doesn't "count" [1]
+        if (Bool_ARG(STEP))  // `eval:step []` doesn't "count" [1]
             return nullptr;  // need pure null for THEN/ELSE to work right
 
-        if (REF(UNDECAYED))
+        if (Bool_ARG(UNDECAYED))
             Init_Nihil(OUT);  // undecayed allows vanishing
         else
             Init_Void(OUT);  // `eval []` is ~void~
@@ -341,16 +341,16 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level* sub = Make_Level_At(
-        REF(STEP) ? &Stepper_Executor : &Evaluator_Executor,
+        Bool_ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
         source,  // all lists treated the same [2]
         flags
     );
-    if (not REF(STEP))
+    if (not Bool_ARG(STEP))
         Init_Nihil(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    if (not REF(STEP)) {  // plain evaluation to end, maybe invisible
-        if (REF(UNDECAYED))
+    if (not Bool_ARG(STEP)) {  // plain evaluation to end, maybe invisible
+        if (Bool_ARG(UNDECAYED))
             return DELEGATE_SUBLEVEL(sub);
 
         STATE = ST_EVALUATE_RUNNING_TO_END;
@@ -370,7 +370,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    a better way to abstract things like "accumulated LETs".  It may
     //    evolve that EVAL:STEP on a BLOCK! actually produces a FRAME!...
 
-    if (REF(STEP))  // !!! may be legal (or mandatory) in the future [1]
+    if (Bool_ARG(STEP))  // !!! may be legal (or mandatory) in the future [1]
         return FAIL(":STEP not implemented for FRAME! in EVALUATE");
 
     if (Not_Node_Readable(CELL_FRAME_PHASE(source)))
@@ -401,7 +401,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    the varargs came from.  It's still on the stack, and we don't want
     //    to disrupt its state.  Use a sublevel.
 
-    if (REF(STEP))
+    if (Bool_ARG(STEP))
         return FAIL(":STEP not implemented for VARARGS! in EVALUATE");
 
     Element* position;
@@ -446,7 +446,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    probably be to make EVALUATE return something with more limited
     //    privileges... more like a FRAME!/VARARGS!.
 
-    assert(REF(STEP));
+    assert(Bool_ARG(STEP));
 
     Forget_Cell_Was_Lifeguard(source);  // unprotect so we can edit for return
 
@@ -459,12 +459,12 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
 } result_in_out: {  //////////////////////////////////////////////////////////
 
-    if (not REF(UNDECAYED)) {
+    if (not Bool_ARG(UNDECAYED)) {
         if (Is_Elision(OUT))
             Init_Void(OUT);
     }
 
-    if (REF(STEP)) {
+    if (Bool_ARG(STEP)) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Meta_Cell(Array_At(pack, 0), source);  // pack wants META values
@@ -545,7 +545,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
-    if (REF(UNDECAYED))
+    if (Bool_ARG(UNDECAYED))
         return DELEGATE_SUBLEVEL(L);
 
     STATE = ST_EVAL_FREE_EVALUATING;
@@ -555,7 +555,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     Decay_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE
 
-    if (not REF(UNDECAYED)) {
+    if (not Bool_ARG(UNDECAYED)) {
         if (Is_Elision(OUT))
             Init_Void(OUT);
     }
@@ -696,7 +696,7 @@ DECLARE_NATIVE(APPLY)
         if (THROWING)
             goto finalize_apply;
         if (Not_Cell_Readable(iterator)) {
-            assert(REF(RELAX));
+            assert(Bool_ARG(RELAX));
             goto handle_next_item;
         }
         goto unlabeled_step_result_in_spare;
@@ -809,7 +809,7 @@ DECLARE_NATIVE(APPLY)
 
         while (true) {
             if (not Try_Advance_Evars(e)) {
-                if (not REF(RELAX))
+                if (not Bool_ARG(RELAX))
                     return FAIL(Error_Apply_Too_Many_Raw());
 
                 Shutdown_Evars(e);
@@ -875,7 +875,7 @@ DECLARE_NATIVE(APPLY)
     //    DELEGATE itself rule that out automatically?  It asserts for now.
 
     if (Not_Cell_Readable(iterator))
-        assert(REF(RELAX));
+        assert(Bool_ARG(RELAX));
     else {
         EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
         Shutdown_Evars(e);
@@ -934,8 +934,8 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
     Deactivate_If_Action(SPARE);  // APPLY has <unrun> on ARG(OPERATION)
 
     Copy_Cell(ARG(OPERATION), stable_SPARE);
-    UNUSED(REF(RELAX));
-    UNUSED(REF(ARGS));
+    UNUSED(Bool_ARG(RELAX));
+    UNUSED(Bool_ARG(ARGS));
     UNUSED(LOCAL(FRAME));
     UNUSED(LOCAL(INDEX));
     UNUSED(LOCAL(ITERATOR));

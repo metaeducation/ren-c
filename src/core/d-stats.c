@@ -48,10 +48,10 @@ DECLARE_NATIVE(STATS)
 
     REBI64 num_evals = g_ts.total_eval_cycles + g_ts.eval_dose - g_ts.eval_countdown;
 
-    if (REF(EVALS))
+    if (Bool_ARG(EVALS))
         return Init_Integer(OUT, num_evals);
 
-    if (REF(PROFILE)) {
+    if (Bool_ARG(PROFILE)) {
       #if DEBUG_COLLECT_STATS
         return rebValue("make object! [",
             "evals:", rebI(num_evals),
@@ -70,18 +70,18 @@ DECLARE_NATIVE(STATS)
     }
 
   #if RUNTIME_CHECKS
-    if (REF(POOL)) {
+    if (Bool_ARG(POOL)) {
         Value* pool_id = ARG(POOL);
         Dump_All_Flex_In_Pool(VAL_INT32(pool_id));
         return nullptr;
     }
 
-    if (REF(SHOW))
+    if (Bool_ARG(SHOW))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Flex(REF(SHOW)));
+    return Init_Integer(OUT, Inspect_Flex(Bool_ARG(SHOW)));
   #else
-    UNUSED(REF(SHOW));
+    UNUSED(Bool_ARG(SHOW));
     UNUSED(ARG(POOL));
 
     return FAIL(Error_Checked_Build_Only_Raw());

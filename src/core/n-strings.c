@@ -192,12 +192,12 @@ DECLARE_NATIVE(JOIN)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    if (REF(HEAD) and delimiter)
+    if (Bool_ARG(HEAD) and delimiter)
         Form_Element(mo, unwrap delimiter);
 
     Form_Element(mo, unwrap rest);
 
-    if (REF(TAIL) and delimiter)
+    if (Bool_ARG(TAIL) and delimiter)
         Form_Element(mo, unwrap delimiter);
 
     return Init_Text(OUT, Pop_Molded_String(mo));
@@ -255,7 +255,7 @@ DECLARE_NATIVE(JOIN)
     if (not Is_Type_Block(base))
         Copy_Cell(PUSH(), base);
 
-    if (REF(HEAD) and delimiter)  // speculatively start with
+    if (Bool_ARG(HEAD) and delimiter)  // speculatively start with
         Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
     Init_Integer(original_index, TOP_INDEX);
@@ -287,7 +287,7 @@ DECLARE_NATIVE(JOIN)
         }
     }
 
-    if (REF(HEAD) and delimiter)  // speculatively start with
+    if (Bool_ARG(HEAD) and delimiter)  // speculatively start with
         Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
     Init_Integer(original_index, TOP_INDEX);
@@ -521,7 +521,7 @@ DECLARE_NATIVE(JOIN)
         return rebValue(CANON(COPY), rebQ(base));
     }
 
-    if (REF(TAIL) and delimiter)
+    if (Bool_ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
 
     Heart heart;
@@ -707,7 +707,7 @@ DECLARE_NATIVE(JOIN)
         return rebValue(CANON(COPY), rebQ(base));
     }
 
-    if (REF(TAIL) and delimiter)
+    if (Bool_ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
 
     Heart heart;
@@ -754,7 +754,7 @@ DECLARE_NATIVE(DEBASE)
     const Byte* bp = Cell_Bytes_At(&size, ARG(VALUE));
 
     REBINT base = 64;
-    if (REF(BASE))
+    if (Bool_ARG(BASE))
         base = VAL_INT32(ARG(BASE));
     else
         base = 64;
@@ -784,7 +784,7 @@ DECLARE_NATIVE(ENBASE)
     INCLUDE_PARAMS_OF_ENBASE;
 
     REBINT base;
-    if (REF(BASE))
+    if (Bool_ARG(BASE))
         base = VAL_INT32(ARG(BASE));
     else
         base = 64;
@@ -911,7 +911,7 @@ DECLARE_NATIVE(DEHEX)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
-    if (REF(BLOB))
+    if (Bool_ARG(BLOB))
         return FAIL("DEHEX:BLOB not yet implemented, but will permit %00");
 
     DECLARE_MOLDER (mo);
@@ -1022,7 +1022,7 @@ DECLARE_NATIVE(DELINE)
     //
     Value* input = rebValue("as text!", ARG(INPUT));
 
-    if (REF(LINES)) {
+    if (Bool_ARG(LINES)) {
         Init_Block(OUT, Split_Lines(cast(Element*, input)));
         rebRelease(input);
         return OUT;
@@ -1188,7 +1188,7 @@ DECLARE_NATIVE(ENTAB)
     INCLUDE_PARAMS_OF_ENTAB;
 
     REBINT tabsize;
-    if (REF(SIZE))
+    if (Bool_ARG(SIZE))
         tabsize = Int32s(ARG(SIZE), 1);
     else
         tabsize = TAB_SIZE;
@@ -1266,7 +1266,7 @@ DECLARE_NATIVE(DETAB)
     REBLEN len = Cell_Series_Len_At(ARG(STRING));
 
     REBINT tabsize;
-    if (REF(SIZE))
+    if (Bool_ARG(SIZE))
         tabsize = Int32s(ARG(SIZE), 1);
     else
         tabsize = TAB_SIZE;
@@ -1366,7 +1366,7 @@ DECLARE_NATIVE(TO_HEX)
     Value* arg = ARG(VALUE);
 
     REBLEN len;
-    if (REF(SIZE))
+    if (Bool_ARG(SIZE))
         len = VAL_INT64(ARG(SIZE));
     else
         len = 0;  // !!! avoid compiler warning--but rethink this routine
@@ -1375,7 +1375,7 @@ DECLARE_NATIVE(TO_HEX)
     Push_Mold(mo);
 
     if (Is_Integer(arg)) {
-        if (not REF(SIZE) or len > MAX_HEX_LEN)
+        if (not Bool_ARG(SIZE) or len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
@@ -1383,7 +1383,7 @@ DECLARE_NATIVE(TO_HEX)
     else if (Is_Tuple(arg)) {
         REBLEN n;
         if (
-            not REF(SIZE)
+            not Bool_ARG(SIZE)
             or len > 2 * MAX_TUPLE
             or len > 2 * Cell_Sequence_Len(arg)
         ){

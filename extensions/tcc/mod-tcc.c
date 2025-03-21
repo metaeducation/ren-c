@@ -308,7 +308,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
         );
     }
 
-    if (REF(LINKNAME)) {
+    if (Bool_ARG(LINKNAME)) {
         Value* linkname = ARG(LINKNAME);
 
         if (Is_Flex_Frozen(Cell_String(linkname)))
@@ -444,7 +444,7 @@ DECLARE_NATIVE(COMPILE_P)
 
     assert(TOP_INDEX == STACK_BASE);  // natives are pushed to the stack
 
-    if (REF(FILES)) {
+    if (Bool_ARG(FILES)) {
         const Element* tail;
         const Element* item = Cell_List_At(&tail, compilables);
         for (; item != tail; ++item) {
@@ -458,7 +458,7 @@ DECLARE_NATIVE(COMPILE_P)
             rebFree(filename_utf8);
         }
 
-        if (REF(INSPECT)) {  // nothing to show, besides the file list
+        if (Bool_ARG(INSPECT)) {  // nothing to show, besides the file list
             Drop_Lifeguard(handle);
             return rebText(":INSPECT => <file list>");
         }
@@ -540,7 +540,7 @@ DECLARE_NATIVE(COMPILE_P)
         // To help in debugging, it can be useful to see what is compiling
         // this is similar in spirit to the -E option for preprocessing only)
         //
-        if (REF(INSPECT)) {
+        if (Bool_ARG(INSPECT)) {
             Drop_Lifeguard(handle);
             Drop_Data_Stack_To(STACK_BASE);  // don't modify collected natives
             return Init_Text(OUT, Pop_Molded_String(mo));
@@ -603,7 +603,7 @@ DECLARE_NATIVE(COMPILE_P)
     // On Windows it doesn't do this, but on the other hand it doesn't seem
     // *able* to do it.  It can only see tcc_add_symbol() exported symbols.
     //
-    if (REF(LIBREBOL)) {
+    if (Bool_ARG(LIBREBOL)) {
         //
         // .inc file contains calls for each function in %a-lib.c like:
         //

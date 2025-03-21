@@ -32,7 +32,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Comma)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
     UNUSED(v);
@@ -72,5 +72,5 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Comma)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Comma(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Comma(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }

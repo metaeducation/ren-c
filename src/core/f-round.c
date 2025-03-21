@@ -45,7 +45,7 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
     union {REBDEC d; REBI64 i;} m;
     REBI64 j;
 
-    if (REF(TO)) {
+    if (Bool_ARG(TO)) {
         if (scale == 0.0)
             fail (Error_Zero_Divide_Raw());
         scale = fabs(scale);
@@ -73,9 +73,9 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
         scale = 1.0 / scale;
         dec = dec * scale;
     }
-    if (REF(DOWN) or REF(FLOOR) or REF(CEILING)) {
-        if (REF(FLOOR)) dec = floor(dec);
-        else if (REF(DOWN)) dec = Dec_Trunc(dec);
+    if (Bool_ARG(DOWN) or Bool_ARG(FLOOR) or Bool_ARG(CEILING)) {
+        if (Bool_ARG(FLOOR)) dec = floor(dec);
+        else if (Bool_ARG(DOWN)) dec = Dec_Trunc(dec);
         else dec = ceil(dec);
     } else {
         /*  integer-compare fabs(dec) and floor(fabs(dec)) + 0.5,
@@ -86,12 +86,12 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
         m.d = floor(m.d) + 0.5;
         if (j - m.i < -10) dec = Dec_Trunc(dec);
         else if (j - m.i > 10) dec = Dec_Away(dec);
-        else if (REF(EVEN)) {
+        else if (Bool_ARG(EVEN)) {
             if (fmod(fabs(dec), 2.0) < 1.0) dec = Dec_Trunc(dec);
             else dec = Dec_Away(dec);
         }
-        else if (REF(HALF_DOWN)) dec = Dec_Trunc(dec);
-        else if (REF(HALF_CEILING)) dec = ceil(dec);
+        else if (Bool_ARG(HALF_DOWN)) dec = Dec_Trunc(dec);
+        else if (Bool_ARG(HALF_CEILING)) dec = ceil(dec);
         else dec = Dec_Away(dec);
     }
 
@@ -153,7 +153,7 @@ REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
     /* using safe unsigned arithmetic */
     REBU64 sc, n, r, m, s;
 
-    if (REF(TO)) {
+    if (Bool_ARG(TO)) {
         if (scale == 0)
             fail (Error_Zero_Divide_Raw());
         sc = Int_Abs(scale);
@@ -165,9 +165,9 @@ REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
     s = sc - r;
     if (r == 0) return num;
 
-    if (REF(DOWN) or REF(FLOOR) or REF(CEILING)) {
-        if (REF(DOWN)) {Int_Trunc; return num;}
-        if (REF(FLOOR)) {Int_Floor; return num;}
+    if (Bool_ARG(DOWN) or Bool_ARG(FLOOR) or Bool_ARG(CEILING)) {
+        if (Bool_ARG(DOWN)) {Int_Trunc; return num;}
+        if (Bool_ARG(FLOOR)) {Int_Floor; return num;}
         Int_Ceil;
         return num;
     }
@@ -177,12 +177,12 @@ REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
     else if (r > s) {Int_Away; return num;}
 
     /* half */
-    if (REF(EVEN)) {
+    if (Bool_ARG(EVEN)) {
         if ((n / sc) & 1) {Int_Away; return num;}
         else {Int_Trunc; return num;}
     }
-    if (REF(HALF_DOWN)) {Int_Trunc; return num;}
-    if (REF(HALF_CEILING)) {Int_Ceil; return num;}
+    if (Bool_ARG(HALF_DOWN)) {Int_Trunc; return num;}
+    if (Bool_ARG(HALF_CEILING)) {Int_Ceil; return num;}
 
     Int_Away; return num; /* this is round_half_away */
 }
@@ -197,18 +197,18 @@ deci Round_Deci(deci num, Level* level_)
     INCLUDE_PARAMS_OF_ROUND;
     UNUSED(ARG(VALUE));  // was extracted as `num`
 
-    deci scale = decimal_to_deci(REF(TO) ? Dec64(ARG(TO)) : 1.0);
+    deci scale = decimal_to_deci(Bool_ARG(TO) ? Dec64(ARG(TO)) : 1.0);
 
     if (deci_is_zero(scale))
         fail (Error_Zero_Divide_Raw());
     scale = deci_abs(scale);
 
-    if (REF(EVEN)) return deci_half_even(num, scale);
-    if (REF(DOWN)) return deci_truncate(num, scale);
-    if (REF(HALF_DOWN)) return deci_half_truncate(num, scale);
-    if (REF(FLOOR)) return deci_floor(num, scale);
-    if (REF(CEILING)) return deci_ceil(num, scale);
-    if (REF(HALF_CEILING)) return deci_half_ceil(num, scale);
+    if (Bool_ARG(EVEN)) return deci_half_even(num, scale);
+    if (Bool_ARG(DOWN)) return deci_truncate(num, scale);
+    if (Bool_ARG(HALF_DOWN)) return deci_half_truncate(num, scale);
+    if (Bool_ARG(FLOOR)) return deci_floor(num, scale);
+    if (Bool_ARG(CEILING)) return deci_ceil(num, scale);
+    if (Bool_ARG(HALF_CEILING)) return deci_half_ceil(num, scale);
 
     return deci_half_away(num, scale);
 }

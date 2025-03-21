@@ -944,7 +944,7 @@ DECLARE_NATIVE(JS_NATIVE)
     // !!! A bit wasteful to use a whole cell for this--could just be whether
     // the ID is positive or negative.  Keep things clear, optimize later.
     //
-    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), REF(AWAITER));
+    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), Bool_ARG(AWAITER));
 
   //=//// MAKE ASCII SOURCE FOR JAVASCRIPT FUNCTION ///////////////////////=//
 
@@ -985,14 +985,14 @@ DECLARE_NATIVE(JS_NATIVE)
 
     Append_Ascii(mo->string, "let f = ");  // variable we store function in
 
-    if (REF(AWAITER))
+    if (Bool_ARG(AWAITER))
         Append_Ascii(mo->string, "async ");  // run inside rebPromise() [1]
 
     Append_Ascii(mo->string, "function (reb) {");  // just one arg [2]
     Append_Any_Utf8(mo->string, source);
     Append_Ascii(mo->string, "};\n");  // end `function() {`
 
-    if (REF(AWAITER))
+    if (Bool_ARG(AWAITER))
         Append_Ascii(mo->string, "f.is_awaiter = true;\n");
     else
         Append_Ascii(mo->string, "f.is_awaiter = false;\n");
@@ -1104,10 +1104,10 @@ DECLARE_NATIVE(JS_EVAL_P)
     // !!! Note that if `eval()` is redefined, then all invocations will be
     // "indirect" and there will hence be no local evaluations.
     //
-    if (REF(VALUE))
+    if (Bool_ARG(VALUE))
         goto want_result;
 
-    if (REF(LOCAL))
+    if (Bool_ARG(LOCAL))
         addr = EM_ASM_INT(
             { try { eval(UTF8ToString($0)); return 0 }
                 catch(e) { return reb.JavaScriptError(e, $1) }
@@ -1135,7 +1135,7 @@ DECLARE_NATIVE(JS_EVAL_P)
     //
     // !!! All other types come back as nothing (~ antiform).  Error instead?
     //
-    if (REF(LOCAL)) {
+    if (Bool_ARG(LOCAL)) {
         addr = EM_ASM_INT(
             { try { return reb.Box(eval(UTF8ToString($0))) }  // direct (local)
               catch(e) { return reb.JavaScriptError(e, $1) }

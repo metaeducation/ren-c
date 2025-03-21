@@ -68,7 +68,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Blob)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Blob(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Blob(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -238,7 +238,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
 
@@ -337,9 +337,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         }
 
         Flags flags = 0;
-        if (REF(PART))
+        if (Bool_ARG(PART))
             flags |= AM_PART;
-        if (REF(LINE))
+        if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
         // !!! This mimics the historical behavior for now:
@@ -371,7 +371,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             ARG(VALUE),
             flags,
             len,
-            REF(DUP) ? Int32(ARG(DUP)) : 1
+            Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
         );
         return COPY(v); }
 
@@ -387,14 +387,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         const Element* pattern = Element_ARG(PATTERN);
 
         Flags flags = (
-            (REF(MATCH) ? AM_FIND_MATCH : 0)
-            | (REF(CASE) ? AM_FIND_CASE : 0)
+            (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
+            | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
         REBINT tail = Part_Tail_May_Modify_Index(v, ARG(PART));
 
         REBINT skip;
-        if (REF(SKIP))
+        if (Bool_ARG(SKIP))
             skip = VAL_INT32(ARG(SKIP));
         else
             skip = 1;
@@ -732,7 +732,7 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
     INCLUDE_PARAMS_OF_COPY;
 
     Element* blob = Element_ARG(VALUE);
-    UNUSED(REF(DEEP));  // :DEEP is historically ignored on BLOB!
+    UNUSED(Bool_ARG(DEEP));  // :DEEP is historically ignored on BLOB!
 
     return Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART));
 }
@@ -800,11 +800,11 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
     Heart heart = Cell_Heart_Ensure_Noquote(blob);
 
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
     REBINT len;
-    if (REF(PART)) {
+    if (Bool_ARG(PART)) {
         len = Part_Len_May_Modify_Index(blob, ARG(PART));
         if (len == 0)
             return Init_Series(OUT, heart, Make_Binary(0));
@@ -813,7 +813,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     REBINT tail = Cell_Series_Len_Head(blob);  // Note :PART can change index
 
-    if (REF(LAST)) {
+    if (Bool_ARG(LAST)) {
         if (tail - len < 0) {
             VAL_INDEX_RAW(blob) = 0;
             len = tail;
@@ -825,13 +825,13 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     REBLEN index = VAL_INDEX(blob);
 
     if (index >= tail) {
-        if (not REF(PART))
+        if (not Bool_ARG(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
 
         return Init_Series(OUT, heart, Make_Binary(0));
     }
 
-    if (not REF(PART))  // just return byte value
+    if (not Bool_ARG(PART))  // just return byte value
         Init_Integer(OUT, *Cell_Blob_At(blob));
     else  // return binary series
         Init_Blob(OUT, Copy_Binary_At_Len(bin, index, len));
@@ -896,7 +896,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
     if (index >= tail)
         return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
-    index += Random_Int(REF(SECURE)) % (tail - index);
+    index += Random_Int(Bool_ARG(SECURE)) % (tail - index);
     const Binary* bin = Cell_Binary(blob);
     return Init_Integer(OUT, *Binary_At(bin, index));
 }
@@ -912,7 +912,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Is_Blob)
 
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
-    bool secure = REF(SECURE);
+    bool secure = Bool_ARG(SECURE);
     REBLEN n;
     for (n = Binary_Len(bin) - index; n > 1;) {
         REBLEN k = index + Random_Int(secure) % n;
@@ -1001,14 +1001,14 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 
     Element* blob = Element_ARG(SERIES);
 
-    if (REF(ALL))
+    if (Bool_ARG(ALL))
         return FAIL(Error_Bad_Refines_Raw());
 
-    if (REF(CASE)) {
+    if (Bool_ARG(CASE)) {
         // Ignored...all BLOB! sorts are case-sensitive.
     }
 
-    if (REF(COMPARE))
+    if (Bool_ARG(COMPARE))
         return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Flags flags = 0;
@@ -1022,7 +1022,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
         return OUT;
 
     REBLEN skip;
-    if (not REF(SKIP))
+    if (not Bool_ARG(SKIP))
         skip = 1;
     else {
         skip = Get_Num_From_Arg(ARG(SKIP));
@@ -1036,7 +1036,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
         size *= skip;
     }
 
-    if (REF(REVERSE))
+    if (Bool_ARG(REVERSE))
         flags |= CC_FLAG_REVERSE;
 
     bsd_qsort_r(
@@ -1066,7 +1066,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 {
     INCLUDE_PARAMS_OF_ENCODE_INTEGER;
 
-    bool little = REF(LE);
+    bool little = Bool_ARG(LE);
 
     Value* options = ARG(OPTIONS);
     if (Cell_Series_Len_At(options) != 2)
@@ -1167,7 +1167,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
 {
     INCLUDE_PARAMS_OF_DECODE_INTEGER;
 
-    bool little = REF(LE);
+    bool little = Bool_ARG(LE);
 
     Size bin_size;
     const Byte* bin_data = Cell_Blob_Size_At(&bin_size, ARG(BINARY));

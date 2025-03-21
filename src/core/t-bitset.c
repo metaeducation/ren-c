@@ -52,7 +52,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Bitset(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Bitset(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -84,7 +84,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form); // all bitsets are "molded" at this time
 
@@ -573,10 +573,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        if (REF(PART) or REF(SKIP) or REF(MATCH))
+        if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
             return FAIL(Error_Bad_Refines_Raw());
 
-        if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), REF(CASE)))
+        if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), Bool_ARG(CASE)))
             return nullptr;
         return Init_Logic(OUT, true); }
 
@@ -607,7 +607,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
-        if (not REF(PART))
+        if (not Bool_ARG(PART))
             return FAIL(Error_Missing_Arg_Raw());
 
         if (not Set_Bits(bset, ARG(PART), false))
@@ -669,7 +669,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     Element* bset = Element_ARG(VALUE);
     Binary* bits = VAL_BITSET(bset);
 
-    if (REF(PART) or REF(DEEP))
+    if (Bool_ARG(PART) or Bool_ARG(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
     Binary* copy = cast(Binary*, Copy_Flex_Core(NODE_FLAG_MANAGED, bits));
@@ -729,7 +729,7 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
     Element* bset = Element_ARG(VALUE1);
     Element* arg = Element_ARG(VALUE2);
 
-    if (REF(SKIP))
+    if (Bool_ARG(SKIP))
         return Error_Bad_Refines_Raw();
 
     if (Is_Bitset(arg)) {

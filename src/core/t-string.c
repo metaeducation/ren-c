@@ -328,7 +328,7 @@ DECLARE_NATIVE(TO_TEXT)
 {
     INCLUDE_PARAMS_OF_TO_TEXT;
 
-    if (Is_Blob(ARG(VALUE)) and REF(RELAX)) {
+    if (Is_Blob(ARG(VALUE)) and Bool_ARG(RELAX)) {
         Size size;
         const Byte* at = Cell_Blob_Size_At(&size, ARG(VALUE));
         return Init_Any_String(
@@ -587,7 +587,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Url)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
@@ -602,7 +602,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->string, v);
@@ -658,7 +658,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     String* buf = mo->string;
 
@@ -748,7 +748,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         String* s = Cell_String_Ensure_Mutable(v);
 
         REBINT limit;
-        if (REF(PART))
+        if (Bool_ARG(PART))
             limit = Part_Len_May_Modify_Index(v, ARG(PART));
         else
             limit = 1;
@@ -797,9 +797,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         }
 
         Flags flags = 0;
-        if (REF(PART))
+        if (Bool_ARG(PART))
             flags |= AM_PART;
-        if (REF(LINE))
+        if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
         // !!! This mimics historical type tolerance, e.g. not everything that
@@ -828,7 +828,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             arg,
             flags,
             len,
-            REF(DUP) ? Int32(ARG(DUP)) : 1
+            Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
         );
         return COPY(v); }
 
@@ -842,14 +842,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         UNUSED(PARAM(SERIES));
 
         Flags flags = (
-            (REF(MATCH) ? AM_FIND_MATCH : 0)
-            | (REF(CASE) ? AM_FIND_CASE : 0)
+            (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
+            | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
         REBLEN tail = Part_Tail_May_Modify_Index(v, ARG(PART));
 
         REBINT skip;
-        if (REF(SKIP)) {
+        if (Bool_ARG(SKIP)) {
             skip = VAL_INT32(ARG(SKIP));
             if (skip == 0)
                 return FAIL(PARAM(SKIP));
@@ -1021,7 +1021,7 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 
     Element* any_string = Element_ARG(VALUE);
 
-    UNUSED(REF(DEEP));  // :DEEP is historically ignored on ANY-STRING?
+    UNUSED(Bool_ARG(DEEP));  // :DEEP is historically ignored on ANY-STRING?
 
     REBINT len = Part_Len_May_Modify_Index(any_string, ARG(PART));
 
@@ -1090,11 +1090,11 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     Element* v = Element_ARG(SERIES);
     Ensure_Mutable(v);
 
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
     REBLEN len;
-    if (REF(PART)) {
+    if (Bool_ARG(PART)) {
         len = Part_Len_May_Modify_Index(v, ARG(PART));
         if (len == 0) {
             Heart heart = Cell_Heart_Ensure_Noquote(v);
@@ -1107,7 +1107,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     REBLEN tail = Cell_Series_Len_Head(v);
 
-    if (REF(LAST)) {
+    if (Bool_ARG(LAST)) {
         if (len > tail) {
             VAL_INDEX_RAW(v) = 0;
             len = tail;
@@ -1117,7 +1117,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     }
 
     if (VAL_INDEX(v) >= tail) {
-        if (not REF(PART))
+        if (not Bool_ARG(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
         Heart heart = Cell_Heart_Ensure_Noquote(v);
         return Init_Any_String(OUT, heart, Make_String(0));
@@ -1125,7 +1125,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     // if no :PART, just return value, else return string
     //
-    if (REF(PART)) {
+    if (Bool_ARG(PART)) {
         Heart heart = Cell_Heart_Ensure_Noquote(v);
         Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
     }
@@ -1164,7 +1164,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
     if (index >= tail)
         return RAISE(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
-    index += Random_Int(REF(SECURE)) % (tail - index);
+    index += Random_Int(Bool_ARG(SECURE)) % (tail - index);
 
     return Init_Char_Unchecked(
         OUT,
@@ -1197,7 +1197,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
             any_string  // return string at original position
         );
 
-    bool secure = REF(SECURE);
+    bool secure = Bool_ARG(SECURE);
 
     REBLEN n;
     for (n = String_Len(str) - index; n > 1;) {
@@ -1278,10 +1278,10 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     String* str = Cell_String_Ensure_Mutable(v);  // just ensure mutability
     UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
 
-    if (REF(ALL))
+    if (Bool_ARG(ALL))
         return FAIL(Error_Bad_Refines_Raw());
 
-    if (REF(COMPARE))
+    if (Bool_ARG(COMPARE))
         return FAIL(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Copy_Cell(OUT, v);  // before index modification
@@ -1300,7 +1300,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
         return FAIL("Non-ASCII string sorting temporarily unavailable");
 
     REBLEN skip;
-    if (not REF(SKIP))
+    if (not Bool_ARG(SKIP))
         skip = 1;
     else {
         skip = Get_Num_From_Arg(ARG(SKIP));
@@ -1316,9 +1316,9 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     }
 
     Flags flags = 0;
-    if (REF(CASE))
+    if (Bool_ARG(CASE))
         flags |= CC_FLAG_CASE;
-    if (REF(REVERSE))
+    if (Bool_ARG(REVERSE))
         flags |= CC_FLAG_REVERSE;
 
     bsd_qsort_r(

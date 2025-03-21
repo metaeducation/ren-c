@@ -58,7 +58,7 @@ DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
 
     int status = VAL_INT32(ARG(STATUS));  // exit() takes an int
 
-    if (REF(ABRUPT))  // doesn't run Shutdown_Core()
+    if (Bool_ARG(ABRUPT))  // doesn't run Shutdown_Core()
         exit(status);
 
     exit(status);  // !!! Clean shutdown interop with trampoline TBD
@@ -85,22 +85,22 @@ DECLARE_NATIVE(RECYCLE)
 {
     INCLUDE_PARAMS_OF_RECYCLE;
 
-    if (REF(OFF)) {
+    if (Bool_ARG(OFF)) {
         g_gc.disabled = true;
         return nullptr;
     }
 
-    if (REF(ON)) {
+    if (Bool_ARG(ON)) {
         g_gc.disabled = false;
         g_gc.ballast = MEM_BALLAST;
     }
 
-    if (REF(BALLAST)) {
+    if (Bool_ARG(BALLAST)) {
         g_gc.disabled = false;
         g_gc.ballast = VAL_INT32(ARG(BALLAST));
     }
 
-    if (REF(TORTURE)) {
+    if (Bool_ARG(TORTURE)) {
         g_gc.disabled = false;
         g_gc.ballast = 0;
     }
@@ -110,7 +110,7 @@ DECLARE_NATIVE(RECYCLE)
 
     REBLEN count;
 
-    if (REF(VERBOSE)) {
+    if (Bool_ARG(VERBOSE)) {
       #if RUNTIME_CHECKS
         Flex* sweeplist = Make_Flex(FLAG_FLAVOR(NODELIST), Flex, 100);
         count = Recycle_Core(sweeplist);
@@ -135,7 +135,7 @@ DECLARE_NATIVE(RECYCLE)
         count = Recycle();
     }
 
-    if (REF(WATCH)) {
+    if (Bool_ARG(WATCH)) {
       #if RUNTIME_CHECKS
         // There might should be some kind of generic way to set these kinds
         // of flags individually, perhaps having them live in SYSTEM/...

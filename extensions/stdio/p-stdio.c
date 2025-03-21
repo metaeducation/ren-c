@@ -307,10 +307,10 @@ Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
 
         UNUSED(PARAM(SOURCE));
 
-        if (REF(PART))
+        if (Bool_ARG(PART))
             return FAIL(Error_Bad_Refines_Raw());
 
-        if (REF(SEEK))
+        if (Bool_ARG(SEEK))
             return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher

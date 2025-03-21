@@ -55,11 +55,11 @@ static Bounce Clipboard_Actor(
         INCLUDE_PARAMS_OF_READ;
         UNUSED(ARG(SOURCE));  // implied by `port`
 
-        if (REF(PART) or REF(SEEK))
+        if (Bool_ARG(PART) or Bool_ARG(SEEK))
             return FAIL(Error_Bad_Refines_Raw());
 
-        UNUSED(REF(STRING));  // handled in dispatcher
-        UNUSED(REF(LINES));  // handled in dispatcher
+        UNUSED(Bool_ARG(STRING));  // handled in dispatcher
+        UNUSED(Bool_ARG(LINES));  // handled in dispatcher
 
         SetLastError(NO_ERROR);
         if (not IsClipboardFormatAvailable(CF_UNICODETEXT)) {
@@ -100,7 +100,7 @@ static Bounce Clipboard_Actor(
         INCLUDE_PARAMS_OF_WRITE;
         UNUSED(ARG(DESTINATION));  // implied by `port`
 
-        if (REF(APPEND) or REF(LINES))
+        if (Bool_ARG(APPEND) or Bool_ARG(LINES))
             return FAIL(Error_Bad_Refines_Raw());
 
         Value* data = ARG(DATA);
@@ -115,7 +115,7 @@ static Bounce Clipboard_Actor(
         // Handle :PART refinement:
         //
         REBINT len = Cell_Series_Len_At(data);
-        if (REF(PART) and VAL_INT32(ARG(PART)) < len)
+        if (Bool_ARG(PART) and VAL_INT32(ARG(PART)) < len)
             len = VAL_INT32(ARG(PART));
 
         if (not OpenClipboard(nullptr))
@@ -161,7 +161,7 @@ static Bounce Clipboard_Actor(
         INCLUDE_PARAMS_OF_OPEN;
         UNUSED(PARAM(SPEC));
 
-        if (REF(NEW) or REF(READ) or REF(WRITE))
+        if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
             return FAIL(Error_Bad_Refines_Raw());
 
         // !!! Currently just ignore (it didn't do anything)

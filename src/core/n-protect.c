@@ -275,9 +275,9 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
     // flags has PROT_SET bit (set or not)
 
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         flags |= PROT_DEEP;
-    //if (REF(WORDS))
+    //if (Bool_ARG(WORDS))
     //  flags |= PROT_WORDS;
 
     if (Any_Word(value) || Any_Sequence(value)) {
@@ -286,7 +286,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     }
 
     if (Is_Block(value)) {
-        if (REF(WORDS)) {
+        if (Bool_ARG(WORDS)) {
             const Element* tail;
             const Element* item = Cell_List_At(&tail, value);
             for (; item != tail; ++item) {
@@ -296,7 +296,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             }
             return COPY(ARG(VALUE));
         }
-        if (REF(VALUES)) {
+        if (Bool_ARG(VALUES)) {
             const Value* var;
             const Element* tail;
             const Element* item = Cell_List_At(&tail, value);
@@ -387,7 +387,7 @@ DECLARE_NATIVE(PROTECT)
 
     Element* e = Element_ARG(VALUE);
     if (Any_Word(e) or Any_Tuple(e)) {
-        if (REF(HIDE))
+        if (Bool_ARG(HIDE))
             Init_Word(SPARE, CANON(HIDE));
         else
             Init_Word(SPARE, CANON(PROTECT));
@@ -412,7 +412,7 @@ DECLARE_NATIVE(PROTECT)
 
     Flags flags = PROT_SET;
 
-    if (REF(HIDE))
+    if (Bool_ARG(HIDE))
         flags |= PROT_HIDE;
     else
         flags |= PROT_WORD; // there is no unhide
@@ -445,7 +445,7 @@ DECLARE_NATIVE(UNPROTECT)
     UNUSED(PARAM(WORDS));
     UNUSED(PARAM(VALUES));
 
-    if (REF(HIDE))
+    if (Bool_ARG(HIDE))
         fail ("Cannot un-hide an object field once hidden");
 
     Element* e = Element_ARG(VALUE);
@@ -599,14 +599,14 @@ DECLARE_NATIVE(FREEZE)
 {
     INCLUDE_PARAMS_OF_FREEZE;
 
-    // REF(BLAME) is not exposed as a feature because there's nowhere to store
+    // Bool_ARG(BLAME) is not exposed as a feature because there's nowhere to store
     // locking information in the Flex.  So the only thing that happens if
     // you pass in something other than null is FLEX_FLAG_AUTO_LOCKED is set
     // to deliver a message that the system locked something implicitly.  We
     // don't want to say that here, so hold off on the feature.
     //
     Flex* locker = nullptr;
-    Force_Value_Frozen_Core(ARG(VALUE), REF(DEEP), locker);
+    Force_Value_Frozen_Core(ARG(VALUE), Bool_ARG(DEEP), locker);
 
     return COPY(ARG(VALUE));
 }

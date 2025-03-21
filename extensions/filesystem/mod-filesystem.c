@@ -506,7 +506,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 
     Value* path = ARG(PATH);
     if (Is_File(path)) {
-        if (not REF(PASS))
+        if (not Bool_ARG(PASS))
             return "fail -{LOCAL-TO-FILE needs :PASS to passthru FILE!}-";
 
         return Init_File(OUT, Copy_String_At(path));  // many callers modify
@@ -514,7 +514,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 
     return Init_File(
         OUT,
-        To_REBOL_Path(path, REF(DIR) ? PATH_OPT_SRC_IS_DIR : 0)
+        To_REBOL_Path(path, Bool_ARG(DIR) ? PATH_OPT_SRC_IS_DIR : 0)
     );
 }
 
@@ -539,7 +539,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
 
     Value* path = ARG(PATH);
     if (Is_Text(path)) {
-        if (not REF(PASS))
+        if (not Bool_ARG(PASS))
             return "-{FILE-TO-LOCAL needs :PASS to passthru STRING!}-";
 
         return Init_Text(OUT, Copy_String_At(path));  // callers modify
@@ -550,8 +550,8 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
         To_Local_Path(
             path,
             REB_FILETOLOCAL_0
-                | (REF(FULL) ? REB_FILETOLOCAL_FULL : 0)
-                | (REF(NO_TAIL_SLASH) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
+                | (Bool_ARG(FULL) ? REB_FILETOLOCAL_FULL : 0)
+                | (Bool_ARG(NO_TAIL_SLASH) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
         )
     );
 }

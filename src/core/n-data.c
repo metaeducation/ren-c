@@ -818,7 +818,7 @@ DECLARE_NATIVE(UNBIND)
         const Element* tail;
         Element* at = Cell_List_At_Ensure_Mutable(&tail, word);
         Option(VarList*) context = nullptr;
-        Unbind_Values_Core(at, tail, context, REF(DEEP));
+        Unbind_Values_Core(at, tail, context, Bool_ARG(DEEP));
     }
 
     return COPY(word);
@@ -1027,17 +1027,17 @@ DECLARE_NATIVE(INFIX)
 
     Actionify(Copy_Cell(OUT, ARG(ACTION)));
 
-    if (REF(OFF)) {
-        if (REF(DEFER) or REF(POSTPONE))
+    if (Bool_ARG(OFF)) {
+        if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
             return FAIL(Error_Bad_Refines_Raw());
         Tweak_Cell_Frame_Infix_Mode(OUT, PREFIX_0);
     }
-    else if (REF(DEFER)) {  // not OFF, already checked
-        if (REF(POSTPONE))
+    else if (Bool_ARG(DEFER)) {  // not OFF, already checked
+        if (Bool_ARG(POSTPONE))
             return FAIL(Error_Bad_Refines_Raw());
         Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_DEFER);
     }
-    else if (REF(POSTPONE)) {  // not OFF or DEFER, we checked
+    else if (Bool_ARG(POSTPONE)) {  // not OFF or DEFER, we checked
         Tweak_Cell_Frame_Infix_Mode(OUT, INFIX_POSTPONE);
     }
     else

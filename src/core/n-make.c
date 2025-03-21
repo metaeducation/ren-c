@@ -98,10 +98,10 @@ DECLARE_NATIVE(COPY)
     Dispatcher* dispatcher = maybe Try_Get_Generic_Dispatcher(table, heart);
 
     if (not dispatcher) {  // trivial copy, is it good to do so? [1]
-        if (REF(PART))
+        if (Bool_ARG(PART))
             return FAIL(Error_Bad_Refines_Raw());
 
-        UNUSED(REF(DEEP));  // historically we ignore it
+        UNUSED(Bool_ARG(DEEP));  // historically we ignore it
 
         return COPY(elem);
     }

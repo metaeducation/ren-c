@@ -461,7 +461,7 @@ DECLARE_NATIVE(REFRAMER)
     const Key* key;
     const Param* param;
 
-    if (REF(PARAMETER)) {
+    if (Bool_ARG(PARAMETER)) {
         const Symbol* symbol = Cell_Word_Symbol(ARG(PARAMETER));
         param_index = maybe Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {

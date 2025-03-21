@@ -1401,7 +1401,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Error)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     // Protect against recursion. !!!!
     //

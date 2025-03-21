@@ -386,7 +386,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
     assert(not Is_Lazy(in));
 
-    if (Is_Stable(in) and (Is_Void(in) or (REF(DECAY) and Is_Heavy_Void(in)))) {
+    if (Is_Stable(in) and (Is_Void(in) or (Bool_ARG(DECAY) and Is_Heavy_Void(in)))) {
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
             if (Is_Pack(in)) {
@@ -399,7 +399,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         return DELEGATE_BRANCH(OUT, branch, in);  // else of void
     }
 
-    if (Is_Nulled(in) or (REF(DECAY) and Is_Heavy_Null(in))) {
+    if (Is_Nulled(in) or (Bool_ARG(DECAY) and Is_Heavy_Null(in))) {
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
             Copy_Cell(OUT, in);  // then of null, may be pack
@@ -520,7 +520,7 @@ DECLARE_NATIVE(ELSE_Q)
     if (Is_Meta_Of_Void(in) or Is_Meta_Of_Null(in))
         return Init_Logic(OUT, true);
 
-    if (REF(DECAY) and Is_Quasi_Null(in))
+    if (Bool_ARG(DECAY) and Is_Quasi_Null(in))
         return Init_Logic(OUT, true);
 
     return Init_Logic(OUT, false);
@@ -662,7 +662,7 @@ DECLARE_NATIVE(ALSO)  // see `tweak :also 'defer 'on` in %base-defs.r
         return Raisify(OUT);
     }
 
-    if (REF(DECAY) and Is_Meta_Of_Heavy_Null(in))
+    if (Bool_ARG(DECAY) and Is_Meta_Of_Heavy_Null(in))
         return Init_Heavy_Null(OUT);
 
     STATE = ST_ALSO_RUNNING_BRANCH;
@@ -1138,7 +1138,7 @@ DECLARE_NATIVE(CASE)
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    if (not REF(ALL)) {
+    if (not Bool_ARG(ALL)) {
         Drop_Level(SUBLEVEL);
         return BRANCHED(OUT);
     }
@@ -1167,7 +1167,7 @@ DECLARE_NATIVE(CASE)
     //    This counts as a "branch taken", so void and null are boxed into an
     //    antiform pack.
 
-    assert(REF(ALL) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
+    assert(Bool_ARG(ALL) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
 
     Drop_Level(SUBLEVEL);
 
@@ -1223,7 +1223,7 @@ DECLARE_NATIVE(SWITCH)
         goto right_result_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
-        if (not REF(ALL)) {
+        if (not Bool_ARG(ALL)) {
             Drop_Level(SUBLEVEL);
             return BRANCHED(OUT);
         }
@@ -1243,10 +1243,10 @@ DECLARE_NATIVE(SWITCH)
     assert(Is_Cell_Erased(right));  // initial condition
     assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
-    if (REF(TYPE) and REF(PREDICATE))
+    if (Bool_ARG(TYPE) and Bool_ARG(PREDICATE))
         return FAIL(Error_Bad_Refines_Raw());
 
-    if (not REF(TYPE) and not REF(PREDICATE)) {
+    if (not Bool_ARG(TYPE) and not Bool_ARG(PREDICATE)) {
         Copy_Cell(predicate, LIB(EQUAL_Q));  // no more builtin comparison [1]
         QUOTE_BYTE(predicate) = NOQUOTE_1;
     }
@@ -1319,7 +1319,7 @@ DECLARE_NATIVE(SWITCH)
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
-    if (REF(TYPE)) {
+    if (Bool_ARG(TYPE)) {
         Decay_If_Unstable(right);
 
         if (not Any_Type_Value(right))
@@ -1380,7 +1380,7 @@ DECLARE_NATIVE(SWITCH)
     //    These cases still count as "branch taken", so if a null or void fall
     //    out they will be put in a pack.  (See additional remarks in CASE)
 
-    assert(REF(ALL) or Is_Cell_Erased(OUT));
+    assert(Bool_ARG(ALL) or Is_Cell_Erased(OUT));
 
     Drop_Level(SUBLEVEL);
 

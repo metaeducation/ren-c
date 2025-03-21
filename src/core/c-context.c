@@ -594,9 +594,9 @@ DECLARE_NATIVE(WRAP)
     VarList* parent = nullptr;
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-    if (REF(SET))
+    if (Bool_ARG(SET))
         flags = COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES | COLLECT_ANY_WORD;
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         flags |= COLLECT_ANY_LIST_DEEP;
 
     VarList* varlist = Make_Varlist_Detect_Managed(
@@ -636,12 +636,12 @@ DECLARE_NATIVE(COLLECT_WORDS)
     INCLUDE_PARAMS_OF_COLLECT_WORDS;
 
     Flags flags;
-    if (REF(SET))
+    if (Bool_ARG(SET))
         flags = COLLECT_ONLY_SET_WORDS;
     else
         flags = COLLECT_ANY_WORD;
 
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         flags |= COLLECT_ANY_LIST_DEEP;
 
   //=//// GENERATE DUMMY BINDINGS FOR THE IGNORED SYMBOLS /////////////////=//

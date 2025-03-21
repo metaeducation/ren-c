@@ -266,8 +266,8 @@ DECLARE_NATIVE(READ_LINE)
     UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = REF(RAW);
-    bool hide = REF(HIDE);
+    bool raw = Bool_ARG(RAW);
+    bool hide = Bool_ARG(HIDE);
 
     if (hide)  // https://github.com/rebol/rebol-issues/issues/476
         return "fail -{READ-LINE:HIDE not yet implemented:}-";
@@ -409,10 +409,10 @@ DECLARE_NATIVE(READ_CHAR)
     UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = REF(RAW);
+    bool raw = Bool_ARG(RAW);
 
     int timeout_msec;
-    if (not REF(TIMEOUT))
+    if (not Bool_ARG(TIMEOUT))
         timeout_msec = 0;  // "no timeout" in Try_Get_One_Console_Event() [1]
     else {
         timeout_msec = rebUnboxInteger("case [",

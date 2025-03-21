@@ -366,7 +366,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     if (not form) {
         Begin_Non_Lexical_Mold(mo, v);  // #[parameter! or make parameter!

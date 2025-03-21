@@ -58,7 +58,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Port)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Port(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Port(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -195,7 +195,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         if (Is_Nulled(OUT))
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
-        if ((REF(STRING) or REF(LINES)) and not Is_Text(OUT)) {
+        if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(OUT)) {
             if (not Is_Blob(OUT))
                 return FAIL(
                     "READ :STRING or :LINES used on a non-BLOB!/STRING! read"
@@ -207,7 +207,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
             Init_Text(OUT, decoded);
         }
 
-        if (REF(LINES)) { // caller wants a BLOCK! of STRING!s, not one string
+        if (Bool_ARG(LINES)) { // caller wants a BLOCK! of STRING!s, not one string
             assert(Is_Text(OUT));
 
             DECLARE_ELEMENT (temp);

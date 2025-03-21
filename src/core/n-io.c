@@ -90,9 +90,9 @@ DECLARE_NATIVE(MOLD)
     Value* v = ARG(VALUE);
 
     DECLARE_MOLDER (mo);
-    if (REF(FLAT))
+    if (Bool_ARG(FLAT))
         SET_MOLD_FLAG(mo, MOLD_FLAG_INDENT);
-    if (REF(LIMIT)) {
+    if (Bool_ARG(LIMIT)) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
         mo->limit = Int32(ARG(LIMIT));
     }
@@ -114,7 +114,7 @@ DECLARE_NATIVE(MOLD)
     Meta_Quotify(Init_Text(Array_At(pack, 0), popped));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
-        assert(REF(LIMIT));
+        assert(Bool_ARG(LIMIT));
         Copy_Meta_Cell(Array_At(pack, 1), ARG(LIMIT));
     }
     else
@@ -192,9 +192,9 @@ DECLARE_NATIVE(NEW_LINE)
     Source* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
-    if (REF(ALL))
+    if (Bool_ARG(ALL))
         skip = 1;
-    else if (REF(SKIP)) {
+    else if (Bool_ARG(SKIP)) {
         skip = Int32s(ARG(SKIP), 1);
         if (skip < 1)
             skip = 1;

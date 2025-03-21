@@ -246,7 +246,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // !!! R3-Alpha would bound the seek to the file size; that's flaky
         // and might give people a wrong impression.  Let it error.
 
-        if (REF(SEEK)) {
+        if (Bool_ARG(SEEK)) {
             int64_t seek = VAL_INT64(ARG(SEEK));
             if (seek <= 0)
                 return FAIL(PARAM(SEEK));
@@ -281,7 +281,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         REBLEN len = file_size - file->offset;  // default is read everything
 
-        if (REF(PART)) {
+        if (Bool_ARG(PART)) {
             int64_t limit = VAL_INT64(ARG(PART));
             if (limit < 0) {
                 result = rebValue(
@@ -325,7 +325,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         if (Is_Antiform(ARG(VALUE)))
             return FAIL(PARAM(VALUE));
 
-        if (REF(PART) or REF(DUP) or REF(LINE))
+        if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
             return FAIL(Error_Bad_Refines_Raw());
 
         assert(Is_Port(ARG(SERIES)));  // !!! poorly named
@@ -338,7 +338,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         UNUSED(PARAM(DESTINATION));
 
-        if (REF(SEEK) and REF(APPEND))
+        if (Bool_ARG(SEEK) and Bool_ARG(APPEND))
             return FAIL(Error_Bad_Refines_Raw());
 
         Value* data = ARG(DATA);  // binary, string, or block
@@ -362,11 +362,11 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         }
         else {
             int flags = 0;
-            if (REF(SEEK)) {  // do not create
+            if (Bool_ARG(SEEK)) {  // do not create
                 flags |= UV_FS_O_WRONLY;
             }
-            else if (REF(APPEND)) {  // do not truncate
-                assert(not REF(SEEK));  // checked above
+            else if (Bool_ARG(APPEND)) {  // do not truncate
+                assert(not Bool_ARG(SEEK));  // checked above
                 flags |= UV_FS_O_WRONLY | UV_FS_O_CREAT;
             }
             else
@@ -384,14 +384,14 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
       blockscope {
         uint64_t file_size = File_Size_Cacheable_May_Fail(port);
 
-        if (REF(APPEND)) {
+        if (Bool_ARG(APPEND)) {
             //
             // We assume WRITE:APPEND has the same semantics as WRITE:SEEK to
             // the end of the file.  This means the position before the call is
             // lost, and WRITE after a WRITE:APPEND will always write to the
             // new end of the file.
             //
-            assert(not REF(SEEK));  // checked above
+            assert(not Bool_ARG(SEEK));  // checked above
             file->offset = file_size;
         }
         else {
@@ -399,7 +399,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             //
             // https://discourse.julialang.org/t/why-is-seek-zero-based/55569/
             //
-            if (REF(SEEK)) {
+            if (Bool_ARG(SEEK)) {
                 int64_t seek = VAL_INT64(ARG(SEEK));
                 if (seek <= 0)
                     result = rebValue(
@@ -435,7 +435,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
             const Element* item = Cell_List_Item_At(data);
             for (; remain != 0; --remain, ++item) {
                 Form_Element(mo, item);
-                if (REF(LINES))
+                if (Bool_ARG(LINES))
                     Append_Codepoint(mo->string, LF);
             }
 
@@ -485,7 +485,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 
         Flags flags = 0;
 
-        if (REF(NEW))
+        if (Bool_ARG(NEW))
             flags |= UV_FS_O_CREAT | UV_FS_O_TRUNC;
 
         // The flag condition for O_RDWR is not just the OR'ing together of
@@ -493,13 +493,13 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         // of /READ and /WRITE even though it's the same as not specifying
         // either to make it easier for generic calling via APPLY.
         //
-        if (REF(READ) and REF(WRITE)) {
+        if (Bool_ARG(READ) and Bool_ARG(WRITE)) {
             flags |= UV_FS_O_RDWR;
         }
-        else if (REF(READ)) {
+        else if (Bool_ARG(READ)) {
             flags |= UV_FS_O_RDONLY;
         }
-        else if (REF(WRITE)) {
+        else if (Bool_ARG(WRITE)) {
             flags |= UV_FS_O_WRONLY;
         }
         else
@@ -521,7 +521,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(PARAM(VALUE));
 
-        if (REF(DEEP))
+        if (Bool_ARG(DEEP))
             return FAIL(Error_Bad_Refines_Raw());
 
         return rebValue(CANON(APPLIQUE), CANON(READ), "[",
@@ -671,7 +671,7 @@ Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
         INCLUDE_PARAMS_OF_SKIP;
 
         UNUSED(PARAM(SERIES));
-        UNUSED(REF(UNBOUNDED));  // !!! Should :UNBOUNDED behave differently?
+        UNUSED(Bool_ARG(UNBOUNDED));  // !!! Should :UNBOUNDED behave differently?
 
         int64_t offset = VAL_INT64(ARG(OFFSET));
         if (offset < 0 and cast(uint64_t, -offset) > file->offset) {

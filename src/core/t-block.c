@@ -34,7 +34,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 
     Element* a = Element_ARG(VALUE1);
     Element* b = Element_ARG(VALUE2);
-    bool strict = REF(STRICT);
+    bool strict = Bool_ARG(STRICT);
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
@@ -483,7 +483,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
 
@@ -565,8 +565,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             return nullptr;  // VOID in, NULL out
 
         Flags flags = (
-            (REF(MATCH) ? AM_FIND_MATCH : 0)
-            | (REF(CASE) ? AM_FIND_CASE : 0)
+            (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
+            | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
         REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(PART));
@@ -575,7 +575,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         REBLEN index = VAL_INDEX(list);
 
         REBINT skip;
-        if (REF(SKIP)) {
+        if (Bool_ARG(SKIP)) {
             skip = VAL_INT32(ARG(SKIP));
             if (skip == 0)
                 return FAIL(PARAM(SKIP));
@@ -665,9 +665,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         else
             assert(not Is_Antiform(arg));
 
-        if (REF(PART))
+        if (Bool_ARG(PART))
             flags |= AM_PART;
-        if (REF(LINE))
+        if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
         VAL_INDEX_RAW(OUT) = Modify_Array(
@@ -677,7 +677,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             arg,
             flags,
             len,
-            REF(DUP) ? Int32(ARG(DUP)) : 1
+            Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
         );
         return OUT; }
 
@@ -975,7 +975,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         index, // at
         tail, // tail
         0, // extra
-        REF(DEEP)
+        Bool_ARG(DEEP)
     ));
 
     Init_Any_List(OUT, Cell_Heart_Ensure_Noquote(list), copy);
@@ -1035,7 +1035,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_TAKE;
 
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
 
     Element* list = Element_ARG(SERIES);
@@ -1044,7 +1044,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     Source* arr = Cell_Array_Ensure_Mutable(list);
 
     REBLEN len;
-    if (REF(PART)) {
+    if (Bool_ARG(PART)) {
         len = Part_Len_May_Modify_Index(list, ARG(PART));
         if (len == 0)
             return Init_Any_List(OUT, heart, Make_Source_Managed(0));
@@ -1054,17 +1054,17 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 
     REBLEN index = VAL_INDEX(list); // Partial() can change index
 
-    if (REF(LAST))
+    if (Bool_ARG(LAST))
         index = Cell_Series_Len_Head(list) - len;
 
     if (index >= Cell_Series_Len_Head(list)) {
-        if (not REF(PART))
+        if (not Bool_ARG(PART))
             return RAISE(Error_Nothing_To_Take_Raw());
 
         return Init_Any_List(OUT, heart, Make_Source_Managed(0));
     }
 
-    if (REF(PART)) {
+    if (Bool_ARG(PART)) {
         Source* copy = Copy_Source_At_Max_Shallow(arr, index, len);
         Init_Any_List(OUT, heart, copy);
     }
@@ -1170,7 +1170,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     Element* spare = Init_Integer(
         SPARE,
-        1 + (Random_Int(REF(SECURE))
+        1 + (Random_Int(Bool_ARG(SECURE))
             % (Cell_Series_Len_Head(list) - index))
     );
 
@@ -1187,7 +1187,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
     Element* list = Element_ARG(SERIES);
 
     Array* arr = Cell_Array_Ensure_Mutable(list);
-    Shuffle_Array(arr, VAL_INDEX(list), REF(SECURE));
+    Shuffle_Array(arr, VAL_INDEX(list), Bool_ARG(SECURE));
     return COPY(list);
 }
 
@@ -1324,9 +1324,9 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     Array* arr = Cell_Array_Ensure_Mutable(list);
 
     SortInfo info;
-    info.cased = REF(CASE);
-    info.reverse = REF(REVERSE);
-    UNUSED(REF(ALL));  // !!! not used?
+    info.cased = Bool_ARG(CASE);
+    info.reverse = Bool_ARG(REVERSE);
+    UNUSED(Bool_ARG(ALL));  // !!! not used?
 
     Value* cmp = ARG(COMPARE);  // null if no :COMPARE
     Deactivate_If_Action(cmp);

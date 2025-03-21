@@ -787,15 +787,15 @@ DECLARE_NATIVE(GET)
     }
 
     Value* steps;
-    if (REF(STEPS))
+    if (Bool_ARG(STEPS))
         steps = ARG(STEPS);
-    else if (REF(GROUPS))
+    else if (Bool_ARG(GROUPS))
         steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
 
     if (Any_Group(source)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
-        if (not REF(GROUPS))
+        if (not Bool_ARG(GROUPS))
             return FAIL(Error_Bad_Get_Group_Raw(source));
 
         if (steps != GROUPS_OK)
@@ -824,7 +824,7 @@ DECLARE_NATIVE(GET)
     if (error)
         return RAISE(unwrap error);
 
-    if (not REF(ANY))
+    if (not Bool_ARG(ANY))
         if (Any_Vacancy(stable_OUT))
             return RAISE(Error_Bad_Word_Get(source, stable_OUT));
 
@@ -1190,18 +1190,18 @@ DECLARE_NATIVE(SET)
         Unchain(target);
 
     Value* steps;
-    if (REF(GROUPS))
+    if (Bool_ARG(GROUPS))
         steps = GROUPS_OK;
     else
         steps = nullptr;  // no GROUP! evals
 
-    if (not REF(ANY)) {
+    if (not Bool_ARG(ANY)) {
         // !!! The only SET prohibitions will be on antiform actions, TBD
         // (more general filtering available via accessors)
     }
 
     if (Any_Group(target)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
-        if (not REF(GROUPS))
+        if (not Bool_ARG(GROUPS))
             return FAIL(Error_Bad_Get_Group_Raw(target));
 
         if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))

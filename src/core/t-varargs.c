@@ -412,12 +412,12 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 
     Element* varargs = cast(Element*, ARG(SERIES));
 
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         return FAIL(Error_Bad_Refines_Raw());
-    if (REF(LAST))
+    if (Bool_ARG(LAST))
         return FAIL(Error_Varargs_Take_Last_Raw());
 
-    if (not REF(PART)) {
+    if (not Bool_ARG(PART)) {
         if (Do_Vararg_Op_Maybe_End_Throws(
             OUT,
             VARARG_OP_TAKE,
@@ -528,7 +528,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Varargs(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Varargs(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -544,7 +544,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
 

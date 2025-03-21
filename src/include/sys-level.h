@@ -643,9 +643,9 @@ INLINE Level* Prep_Level_Core(
 //     DECLARE_PARAM(1, FOO);
 //     DECLARE_PARAM(2, BAR);
 //
-//     if (Is_Integer(ARG(FOO)) and REF(BAR)) { ... }
+//     if (Is_Integer(ARG(FOO)) and Bool_ARG(BAR)) { ... }
 //
-// ARG() gives a mutable pointer to the argument's cell.  REF() is typically
+// ARG() gives a mutable pointer to the argument's cell.  Bool_ARG() is typically
 // used with refinements, and gives a const reference where NULLED cells are
 // turned into C nullptr.
 //
@@ -669,7 +669,7 @@ INLINE Level* Prep_Level_Core(
 #define Element_ARG(name) \
     Known_Element(Level_Arg(level_, param_##name##_))  // checked build asserts
 
-#define REF(name) \
+#define Bool_ARG(name) \
     (not Is_Nulled(Level_Arg(level_, (param_##name##_))))
 
 #define LOCAL(name) \

@@ -863,13 +863,13 @@ DECLARE_NATIVE(MATCH)
     Value* v = ARG(VALUE);
     Value* test = ARG(TEST);
 
-    if (not REF(META)) {
+    if (not Bool_ARG(META)) {
         if (Is_Nulled(v))
             return FAIL(Error_Need_Non_Null_Raw());  // [1]
     }
 
     if (Is_Nulled(test)) {
-        if (not REF(META))
+        if (not Bool_ARG(META))
             return FAIL(
                 "Can't give coherent answer for NULL matching without /META"
             );
@@ -898,12 +898,12 @@ DECLARE_NATIVE(MATCH)
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
-    if (Is_Void(v) and not REF(META))  // not a good case of void-in-null-out
+    if (Is_Void(v) and not Bool_ARG(META))  // not a good case of void-in-null-out
         return FAIL("~void~ antiform needs MATCH:META if in set being tested");
 
     Copy_Cell(OUT, v);
 
-    if (REF(META))
+    if (Bool_ARG(META))
         Meta_Quotify(OUT);
 
     return OUT;

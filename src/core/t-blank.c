@@ -51,7 +51,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blank)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(v);
     UNUSED(form);
@@ -210,7 +210,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Handle)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);  // !!! Handles have "no printable form", what to do here?
     UNUSED(v);

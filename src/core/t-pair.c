@@ -65,7 +65,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Pair)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Pair(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Pair(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -135,7 +135,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 
@@ -326,7 +326,7 @@ IMPLEMENT_GENERIC(REVERSE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_REVERSE;
 
-    if (REF(PART))
+    if (Bool_ARG(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
     const Element* pair = Element_ARG(SERIES);

@@ -799,7 +799,7 @@ static Bounce Transport_Actor(
 
         UNUSED(PARAM(SOURCE));
 
-        if (REF(SEEK))
+        if (Bool_ARG(SEEK))
             return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
@@ -813,7 +813,7 @@ static Bounce Transport_Actor(
         rebreq->actual = 0;
         rebreq->result = nullptr;
 
-        if (REF(PART)) {
+        if (Bool_ARG(PART)) {
             if (not Is_Integer(ARG(PART)))
                 return FAIL(PARAM(PART));
 
@@ -855,7 +855,7 @@ static Bounce Transport_Actor(
 
         UNUSED(PARAM(DESTINATION));
 
-        if (REF(SEEK) or REF(APPEND) or REF(LINES))
+        if (Bool_ARG(SEEK) or Bool_ARG(APPEND) or Bool_ARG(LINES))
             return FAIL(Error_Bad_Refines_Raw());
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)

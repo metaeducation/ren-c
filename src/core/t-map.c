@@ -79,7 +79,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Map(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Map(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -514,7 +514,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     const Map* m = VAL_MAP(v);
 
@@ -581,7 +581,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        if (REF(PART) or REF(SKIP) or REF(MATCH))
+        if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
             return FAIL(Error_Bad_Refines_Raw());
 
         const Map* m = VAL_MAP(map);
@@ -590,7 +590,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
             Element_ARG(VALUE),
             nullptr,  // nullptr indicates it will only search, not modify
-            REF(CASE)
+            Bool_ARG(CASE)
         );
 
         if (n == 0)
@@ -621,7 +621,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
             VAL_MAP_Ensure_Mutable(map),
             Element_ARG(KEY),
             val,  // non-nullptr means modify
-            REF(CASE)
+            Bool_ARG(CASE)
         );
         UNUSED(n);
 
@@ -645,7 +645,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
-        if (REF(LINE) or REF(DUP))
+        if (Bool_ARG(LINE) or Bool_ARG(DUP))
             return FAIL(Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(PART));
@@ -704,10 +704,10 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
 
     const Element* map = Element_ARG(VALUE);
 
-    if (REF(PART))
+    if (Bool_ARG(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
-    return Init_Map(OUT, Copy_Map(VAL_MAP(map), REF(DEEP)));
+    return Init_Map(OUT, Copy_Map(VAL_MAP(map), Bool_ARG(DEEP)));
 }
 
 

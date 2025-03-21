@@ -363,7 +363,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Context(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Context(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -791,7 +791,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     String* s = mo->string;
 
@@ -1028,7 +1028,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         assert(Is_Block(def));
 
         CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-        if (REF(PREBOUND))
+        if (Bool_ARG(PREBOUND))
             flags |= COLLECT_TOLERATE_PREBOUND;
 
         Option(Error*) e = Trap_Wrap_Extend_Core(c, def, flags);
@@ -1053,7 +1053,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         INCLUDE_PARAMS_OF_SELECT;
         UNUSED(ARG(SERIES));  // extracted as `c`
 
-        if (REF(PART) or REF(SKIP) or REF(MATCH))
+        if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
             return FAIL(Error_Bad_Refines_Raw());
 
         Value* pattern = ARG(VALUE);
@@ -1066,7 +1066,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         Option(Index) index = Find_Symbol_In_Context(
             context,
             Cell_Word_Symbol(pattern),
-            REF(CASE)
+            Bool_ARG(CASE)
         );
         if (not index)
             return nullptr;
@@ -1129,10 +1129,10 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
 
     const Element* context = Element_ARG(VALUE);
 
-    if (REF(PART))
+    if (Bool_ARG(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
-    bool deep = REF(DEEP);
+    bool deep = Bool_ARG(DEEP);
     return Copy_Any_Context(OUT, context, deep);
 }
 
@@ -1278,10 +1278,10 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
 
     const Element* frame = Element_ARG(VALUE);
 
-    if (REF(DEEP))
+    if (Bool_ARG(DEEP))
         return FAIL("COPY/DEEP on FRAME! not implemented");
 
-    if (REF(PART))
+    if (Bool_ARG(PART))
         return FAIL(Error_Bad_Refines_Raw());
 
     ParamList* copy = Make_Varlist_For_Action(
@@ -1627,7 +1627,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Frame)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Frame(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Frame(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -1647,10 +1647,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
     if (QUOTE_BYTE(v) != QUASIFORM_2) {
-        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds REF(FORM)
+        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds Bool_ARG(FORM)
     }
 
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
     UNUSED(form);
 
     Append_Ascii(mo->string, "#[frame! ");
@@ -1731,7 +1731,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    VarList* parent = REF(WITH)
+    VarList* parent = Bool_ARG(WITH)
         ? Cell_Varlist(ARG(WITH))
         : nullptr;
 

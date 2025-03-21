@@ -119,7 +119,7 @@ DECLARE_NATIVE(ENRESCUE)
     }
 
     if (not Is_Throwing_Failure(LEVEL)) {  // non-ERROR! throws
-        if (REF(RELAX))
+        if (Bool_ARG(RELAX))
             return BOUNCE_THROWN;  // e.g. RETURN, THROW
         return Init_Error(OUT, Error_No_Catch_For_Throw(LEVEL));
     }

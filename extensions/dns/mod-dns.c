@@ -162,7 +162,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
         INCLUDE_PARAMS_OF_READ;
         UNUSED(PARAM(SOURCE));  // covered by `port`
 
-        if (REF(PART) or REF(SEEK))
+        if (Bool_ARG(PART) or Bool_ARG(SEEK))
             return FAIL(Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
@@ -254,7 +254,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 
         UNUSED(PARAM(SPEC));
 
-        if (REF(NEW) or REF(READ) or REF(WRITE))
+        if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
             return FAIL(Error_Bad_Refines_Raw());
 
         // !!! All the information the DNS needs is at the moment in the

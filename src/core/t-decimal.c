@@ -291,7 +291,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Decimal(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Decimal(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -321,7 +321,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
 
@@ -486,7 +486,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
         USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-        if (not REF(TO)) {
+        if (not Bool_ARG(TO)) {
             if (heart == TYPE_PERCENT)
                 Init_Decimal(ARG(TO), 0.01L);  // round 5.5% -> 6%
             else
@@ -592,7 +592,7 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     REBDEC d = VAL_DECIMAL(val);
-    REBDEC rand = Random_Dec(d, REF(SECURE));
+    REBDEC rand = Random_Dec(d, Bool_ARG(SECURE));
 
     return Init_Decimal_Or_Percent(OUT, heart, rand);
 }

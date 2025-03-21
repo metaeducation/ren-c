@@ -45,7 +45,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Integer(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Integer(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -163,7 +163,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);
 
@@ -320,7 +320,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
         USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-        if (not REF(TO))
+        if (not Bool_ARG(TO))
             return Init_Integer(OUT, Round_Int(num, level_, 0L));
 
         Value* to = ARG(TO);
@@ -430,7 +430,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Integer)
     if (max == 0)
         return FAIL(PARAM(MAX));  // range is 1 to max, inclusive
 
-    return Init_Integer(OUT, Random_Range(max, REF(SECURE)));
+    return Init_Integer(OUT, Random_Range(max, Bool_ARG(SECURE)));
 }
 
 
@@ -444,7 +444,7 @@ IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
     if (max < min)
         return FAIL(PARAM(MAX));  // 0 to 0 is okay, but disallow 1 to 0
 
-    REBI64 rand = Random_Range(1 + max - min, REF(SECURE));  // 1-based
+    REBI64 rand = Random_Range(1 + max - min, Bool_ARG(SECURE));  // 1-based
 
     return Init_Integer(OUT, rand + min - 1);
 }

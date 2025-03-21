@@ -140,7 +140,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
     Value* with = ARG(WITH);
-    if (not REF(WITH))
+    if (not Bool_ARG(WITH))
         Init_Void(with);  // See: https://forum.rebol.info/t/1965/3 [1]
 
     Level* continue_level = LEVEL;  // Level of this CONTINUE call
@@ -631,7 +631,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
     Value* with = ARG(WITH);
-    if (not REF(WITH))
+    if (not Bool_ARG(WITH))
         Init_Void(with);  // See: https://forum.rebol.info/t/1965/3
 
     Level* stop_level = LEVEL;  // Level of this STOP call

@@ -631,7 +631,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     // of one value, YIELD DONE, or YIELD of any other raised error which the
     // yielder will promote to an abrupt failure.
 
-    if (Is_Meta_Of_Raised(meta) or REF(FINAL)) {  // not resumable, throw
+    if (Is_Meta_Of_Raised(meta) or Bool_ARG(FINAL)) {  // not resumable, throw
         Init_Action(
             SPARE,  // use as label for throw
             Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),

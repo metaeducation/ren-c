@@ -184,7 +184,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);
+    bool form = Bool_ARG(FORM);
 
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
@@ -242,7 +242,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Time)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Time(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Time(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -628,7 +628,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
             USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
             USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-            if (not REF(TO)) {
+            if (not Bool_ARG(TO)) {
                 Init_True(ARG(TO));  // by default make it /TO seconds
                 secs = Round_Int(secs, level_, SEC_SEC);
                 return Init_Time_Nanoseconds(OUT, secs);
@@ -710,7 +710,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Time)
     Element* time = Element_ARG(MAX);
     REBI64 secs = VAL_NANO(time);
 
-    REBI64 rand_secs = Random_Range(secs / SEC_SEC, REF(SECURE)) * SEC_SEC;
+    REBI64 rand_secs = Random_Range(secs / SEC_SEC, Bool_ARG(SECURE)) * SEC_SEC;
     return Init_Time_Nanoseconds(OUT, rand_secs);
 }
 

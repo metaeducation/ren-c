@@ -57,7 +57,7 @@
 // 4. %tmp-paramlists.h is the file containing macros for natives and actions
 //    that map their argument names to indices in the frame.  This defines the
 //    macros like INCLUDE_ARGS_OF_INSERT which then allow you to naturally
-//    write things like REF(PART) and ARG(LIMIT), instead of the brittle
+//    write things like Bool_ARG(PART) and ARG(LIMIT), instead of the brittle
 //    integer-based system used in R3-Alpha such as D_REF(7) and ARG_N(3).
 
 #define NATIVE_CFUNC(name)  N_##name  // e.g. NATIVE_CFUNC(FOO) => N_FOO [1]

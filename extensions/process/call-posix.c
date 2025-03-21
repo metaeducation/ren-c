@@ -136,7 +136,7 @@ INLINE bool Set_Nonblocking_Fails(int fd) {
 Bounce Call_Core(Level* level_) {
     INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
-    UNUSED(REF(CONSOLE));  // !!! actually not paid attention to, why?
+    UNUSED(Bool_ARG(CONSOLE));  // !!! actually not paid attention to, why?
 
     // Make sure that if the output or error series are STRING! or BLOB!,
     // they are not read-only, before we try appending to them.
@@ -149,7 +149,7 @@ Bounce Call_Core(Level* level_) {
     char *inbuf;
     size_t inbuf_size;
 
-    if (not REF(INPUT)) {
+    if (not Bool_ARG(INPUT)) {
       null_input_buffer:
         inbuf = nullptr;
         inbuf_size = 0;
@@ -186,7 +186,7 @@ Bounce Call_Core(Level* level_) {
         panic (ARG(INPUT));  // typechecking should not have allowed it
     }
 
-    bool flag_wait = REF(WAIT) or (
+    bool flag_wait = Bool_ARG(WAIT) or (
         Is_Text(ARG(INPUT)) or Is_Blob(ARG(INPUT))
         or Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT))
         or Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR))
@@ -201,7 +201,7 @@ Bounce Call_Core(Level* level_) {
 
     Value* command = ARG(COMMAND);
 
-    if (REF(SHELL)) {
+    if (Bool_ARG(SHELL)) {
 
       //=//// SHELL-BASED INVOCATION: COMMAND IS ONE BIG STRING ////////////=//
 
@@ -381,7 +381,7 @@ Bounce Call_Core(Level* level_) {
         //
         // http://stackoverflow.com/questions/15126925/
 
-        if (not REF(INPUT)) {
+        if (not Bool_ARG(INPUT)) {
           inherit_stdin_from_parent:
             NOOP;  // it's the default
         }
@@ -420,7 +420,7 @@ Bounce Call_Core(Level* level_) {
         else
             panic(ARG(INPUT));
 
-        if (not REF(OUTPUT)) {
+        if (not Bool_ARG(OUTPUT)) {
           inherit_stdout_from_parent:
             NOOP;  // it's the default
         }
@@ -457,7 +457,7 @@ Bounce Call_Core(Level* level_) {
             close(fd);
         }
 
-        if (not REF(ERROR)) {
+        if (not Bool_ARG(ERROR)) {
           inherit_stderr_from_parent:
             NOOP;  // it's the default
         }
@@ -958,11 +958,11 @@ Bounce Call_Core(Level* level_) {
     if (ret != 0)
         rebFail_OS (ret);
 
-    if (REF(INFO)) {
+    if (Bool_ARG(INFO)) {
         VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), forked_pid);
-        if (REF(WAIT))
+        if (Bool_ARG(WAIT))
             Init_Integer(Append_Context(info, CANON(EXIT_CODE)), exit_code);
 
         return Init_Object(OUT, info);
@@ -971,7 +971,7 @@ Bounce Call_Core(Level* level_) {
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (REF(WAIT))
+    if (Bool_ARG(WAIT))
         return Init_Integer(OUT, exit_code);
 
     return Init_Integer(OUT, forked_pid);

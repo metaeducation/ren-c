@@ -102,7 +102,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), REF(STRICT)) == 0);
+    return LOGIC(CT_Date(ARG(VALUE1), ARG(VALUE2), Bool_ARG(STRICT)) == 0);
 }
 
 
@@ -136,7 +136,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 
     Element* v = Element_ARG(ELEMENT);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = REF(FORM);  // calls MOLDIFY on the time component, may heed
+    bool form = Bool_ARG(FORM);  // calls MOLDIFY on the time component, may heed
 
     UNUSED(form);
 
@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->string, '/');
-        Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // REF(FORM)?
+        Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // Bool_ARG(FORM)?
         assert(bounce == NOTHING);  // !!! generically might BOUNCE_CONTINUE...
         UNUSED(bounce);
 
@@ -1073,10 +1073,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
             Value* val1 = ARG(VALUE1);
             Value* val2 = ARG(VALUE2);
 
-            if (REF(CASE))
+            if (Bool_ARG(CASE))
                 return FAIL(Error_Bad_Refines_Raw());
 
-            if (REF(SKIP))
+            if (Bool_ARG(SKIP))
                 return FAIL(Error_Bad_Refines_Raw());
 
             // !!! Plain SUBTRACT on dates has historically given INTEGER! of
@@ -1174,7 +1174,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
     if (year == 0)
         return UNHANDLED;
 
-    const bool secure = REF(SECURE);
+    const bool secure = Bool_ARG(SECURE);
 
     REBLEN rand_year = Random_Range(year, secure);
     REBLEN rand_month = Random_Range(12, secure);

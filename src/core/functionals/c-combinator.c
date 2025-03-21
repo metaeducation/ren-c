@@ -616,7 +616,7 @@ static bool Combinator_Param_Hook(
     Level* level_ = s->level_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    UNUSED(REF(PATH));  // used by caller of hook
+    UNUSED(Bool_ARG(PATH));  // used by caller of hook
 
     Option(SymId) symid = Key_Id(key);
 
@@ -641,7 +641,7 @@ static bool Combinator_Param_Hook(
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
         Copy_Cell(var, ARG(STATE));
     }
-    else if (symid == SYM_VALUE and REF(VALUE)) {
+    else if (symid == SYM_VALUE and Bool_ARG(VALUE)) {
         //
         // The "value" parameter only has special meaning for datatype
         // combinators, e.g. TEXT!.  Otherwise a combinator can have an
@@ -786,7 +786,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     // when it doesn't end in /.  Now /ONLY is not used.  Review general
     // mechanisms for refinements on combinators.
     //
-    if (REF(PATH))
+    if (Bool_ARG(PATH))
         fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     ParamList* paramlist = Make_Varlist_For_Action(
@@ -802,8 +802,8 @@ DECLARE_NATIVE(COMBINATORIZE)
 
     Push_Lifeguard(s.ctx);  // Combinator_Param_Hook may call evaluator
 
-    USED(REF(STATE));
-    USED(REF(VALUE));
+    USED(Bool_ARG(STATE));
+    USED(Bool_ARG(VALUE));
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);

@@ -604,9 +604,9 @@ Bounce Composer_Executor(Level* const L)
     INCLUDE_PARAMS_OF_COMPOSE2;
 
     UNUSED(ARG(TEMPLATE));  // accounted for by Level feed
-    deep = REF(DEEP);
+    deep = Bool_ARG(DEEP);
     pattern = Element_ARG(PATTERN);
-    conflate = REF(CONFLATE);
+    conflate = Bool_ARG(CONFLATE);
     predicate = ARG(PREDICATE);
 
     assert(Is_Nulled(predicate) or Is_Frame(predicate));
@@ -914,7 +914,7 @@ DECLARE_NATIVE(COMPOSE2)
     if (not Is_Raised(OUT)) {  // sublevel was killed
         assert(Is_Trash(OUT));
         Option(Error*) e = Trap_Finalize_Composer_Level(
-            OUT, SUBLEVEL, input, REF(CONFLATE)
+            OUT, SUBLEVEL, input, Bool_ARG(CONFLATE)
         );
         if (e)
             return FAIL(unwrap e);
@@ -1173,7 +1173,7 @@ DECLARE_NATIVE(FLATTEN)
         at,
         tail,
         Cell_List_Binding(ARG(BLOCK)),
-        REF(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
+        Bool_ARG(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));

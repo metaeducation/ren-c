@@ -395,7 +395,7 @@ DECLARE_NATIVE(RANDOM_BETWEEN)
 
     Element* min = Element_ARG(MIN);
     Element* max = Element_ARG(MAX);
-    USED(REF(SECURE));  // passed through via LEVEL
+    USED(Bool_ARG(SECURE));  // passed through via LEVEL
 
     if (Type_Of(min) != Type_Of(max))
         return RAISE("RANDOM-BETWEEN requires MIN and MAX of same type");
@@ -483,8 +483,8 @@ DECLARE_NATIVE(SHUFFLE_OF)
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
     Element* elem = cast(Element*, ARG(ELEMENT));
-    USED(REF(SECURE));  // other args get passed via LEVEL
-    USED(REF(PART));
+    USED(Bool_ARG(SECURE));  // other args get passed via LEVEL
+    USED(Bool_ARG(PART));
 
     Bounce bounce;
     if (Try_Dispatch_Generic(&bounce, SHUFFLE_OF, elem, LEVEL))
@@ -583,7 +583,7 @@ DECLARE_NATIVE(COSINE)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(ANGLE), REF(RADIANS), SYM_COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -605,7 +605,7 @@ DECLARE_NATIVE(SINE)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(ANGLE), REF(RADIANS), SYM_SINE));
+    REBDEC dval = sin(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -627,7 +627,7 @@ DECLARE_NATIVE(TANGENT)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(ANGLE), REF(RADIANS), SYM_TANGENT);
+    REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
@@ -650,7 +650,7 @@ DECLARE_NATIVE(ARCCOSINE)
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
     Option(Error*) e = Trap_Arc_Trans(
-        OUT, ARG(COSINE), REF(RADIANS), SYM_COSINE
+        OUT, ARG(COSINE), Bool_ARG(RADIANS), SYM_COSINE
     );
     if (e)
         return FAIL(unwrap e);
@@ -672,7 +672,7 @@ DECLARE_NATIVE(ARCSINE)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Option(Error*) e = Trap_Arc_Trans(OUT, ARG(SINE), REF(RADIANS), SYM_SINE);
+    Option(Error*) e = Trap_Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE);
     if (e)
         return FAIL(unwrap e);
     return OUT;
@@ -694,7 +694,7 @@ DECLARE_NATIVE(ARCTANGENT)
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
     Option(Error*) e = Trap_Arc_Trans(
-        OUT, ARG(TANGENT), REF(RADIANS), SYM_TANGENT
+        OUT, ARG(TANGENT), Bool_ARG(RADIANS), SYM_TANGENT
     );
     if (e)
         return FAIL(unwrap e);
@@ -898,7 +898,7 @@ DECLARE_NATIVE(EQUAL_Q)
 
     Value* v1 = ARG(VALUE1);
     Value* v2 = ARG(VALUE2);
-    bool strict = REF(STRICT);
+    bool strict = Bool_ARG(STRICT);
 
     if (QUOTE_BYTE(v1) != QUOTE_BYTE(v2))
         return nullptr;

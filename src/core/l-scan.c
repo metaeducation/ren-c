@@ -3158,7 +3158,7 @@ DECLARE_NATIVE(TRANSCODE)
         Term_Binary(m_cast(Binary*, Cell_Binary(source)));
 
     Option(const String*) file;
-    if (REF(FILE)) {
+    if (Bool_ARG(FILE)) {
         file = Cell_String(ARG(FILE));
         Freeze_Flex(unwrap file);  // freezes vs. interning [2]
     }
@@ -3201,7 +3201,7 @@ DECLARE_NATIVE(TRANSCODE)
         | LEVEL_FLAG_RAISED_RESULT_OK  // want to pass on definitional error
         | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
 
-    if (REF(NEXT) or REF(ONE))
+    if (Bool_ARG(NEXT) or Bool_ARG(ONE))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Binary* bin = Make_Binary(sizeof(TranscodeState));
@@ -3230,7 +3230,7 @@ DECLARE_NATIVE(TRANSCODE)
         return OUT;  // the raised error
     }
 
-    if (REF(ONE)) {  // want *exactly* one element
+    if (Bool_ARG(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)
             return RAISE("Transcode was empty (or all comments)");
         assert(TOP_INDEX == STACK_BASE + 1);
@@ -3238,7 +3238,7 @@ DECLARE_NATIVE(TRANSCODE)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    if (REF(NEXT)) {
+    if (Bool_ARG(NEXT)) {
         if (TOP_INDEX == STACK_BASE)
             Init_Nulled(OUT);
         else {
@@ -3259,14 +3259,14 @@ DECLARE_NATIVE(TRANSCODE)
 
     Drop_Level(SUBLEVEL);
 
-    if (REF(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
+    if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // wanted the line number updated
         Element* line_int = Init_Integer(SCRATCH, ss->line);
         const Element* line_var = Element_ARG(LINE);
         if (Set_Var_Core_Throws(SPARE, nullptr, line_var, SPECIFIED, line_int))
             return THROWN;
     }
 
-    if (not REF(NEXT)) {
+    if (not Bool_ARG(NEXT)) {
         assert(Is_Block(OUT));  // should be single block result
         return OUT;
     }

@@ -632,7 +632,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         Phase_Paramlist(target_details), SYM_RETURN
     );
 
-    if (not REF(RUN)) {  // plain simple RETURN (not weird tail-call)
+    if (not Bool_ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
         if (not Typecheck_Coerce_Return_Uses_Spare_And_Scratch(  // do now [2]
             LEVEL, return_param, OUT
         )){

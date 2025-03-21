@@ -364,7 +364,7 @@ DECLARE_NATIVE(PANIC)
 
     const void *p;
 
-    if (REF(VALUE)) {  // interpret reason as value to diagnose
+    if (Bool_ARG(VALUE)) {  // interpret reason as value to diagnose
         p = v;
     }
     else {  // interpret reason as a message
